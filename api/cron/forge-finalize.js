@@ -55,6 +55,7 @@ import { markLaneUnhealthy } from '../_lib/forge-lane-health.js';
 import { markProviderCooldown } from '../_lib/provider-health.js';
 import { resolveTier } from '../_lib/forge-tiers.js';
 import { acquireLock, cacheGet, cacheSet } from '../_lib/cache.js';
+import { sendOpsAlert } from '../_lib/alerts.js';
 import { getRedis } from '../_lib/redis.js';
 import { NIM_TRELLIS_COOLDOWN_KEY, nimCooldownSeconds } from '../forge.js';
 import { mapPoolSettled } from '../_lib/pool.js';
@@ -157,6 +158,25 @@ export function decideFailedSweep({
 	// Bounded chain, same cap as the attended path.
 	if (hop >= maxHops) return 'terminal';
 	return 'redispatch';
+}
+
+const NVCF_RESUB_INFLIGHT_TTL_S = 5 * 60;
+
+// Written BEFORE the paid NVCF submission. A tick cut off mid-flight (Cloud Run
+// withdraws CPU once wrapCron answers) leaves this marker as proof an attempt
+// began, and a slow-but-alive attempt is never re-fired by a later tick.
+async function markResubmitInflight(jobId) {
+	await cacheSet(`nvcf:resub-inflight:${jobId}`, String(Date.now()), NVCF_RESUB_INFLIGHT_TTL_S);
+}
+
+// console.warn from this handler has never reached Cloud Logging, so a failed
+// resubmit goes to the durable ops_alerts sink as well.
+async function alertResubmitFailed(row, err) {
+	await sendOpsAlert(
+		'forge-finalize: NVCF resubmit failed',
+		`creation ${row.id}: ${err?.message || err}`,
+		{ signature: 'forge-finalize:nvcf-resubmit-failed', severity: 'warn' },
+	).catch(() => {});
 }
 
 /**
@@ -529,8 +549,13 @@ export async function sweepRow(row, { gcp, nvidia }) {
 						await cacheGet(`nvcf:stall-resub:${row.replicate_job_id}`).catch(() => null),
 					),
 				});
-				if (stallDecision === 'resubmit' && (await acquireLock(`nvcf:stall-lock:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S))) {
+				if (
+					stallDecision === 'resubmit' &&
+					!(await cacheGet(`nvcf:resub-inflight:${row.replicate_job_id}`).catch(() => null)) &&
+					(await acquireLock(`nvcf:stall-lock:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S))
+				) {
 					try {
+						await markResubmitInflight(row.replicate_job_id);
 						const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
 						await cacheSet(`nvcf:stall-resub:${row.replicate_job_id}`, '1', NVCF_ALIAS_TTL_S);
 						if (resub.taskId) {
@@ -554,6 +579,7 @@ export async function sweepRow(row, { gcp, nvidia }) {
 						}
 					} catch (err) {
 						console.warn(`[forge-finalize] NVCF stall resubmit failed: ${err?.message || err}`);
+						await alertResubmitFailed(row, err);
 					}
 				}
 			}
@@ -563,8 +589,12 @@ export async function sweepRow(row, { gcp, nvidia }) {
 				// once-per-job resub lock so the two paths can't double-submit.
 				// The alias keeps the row's handle stable; the next tick polls the
 				// resubmitted task and materializes onto this same row.
-				if (await acquireLock(`nvcf:resub:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S)) {
+				if (
+					!(await cacheGet(`nvcf:resub-inflight:${row.replicate_job_id}`).catch(() => null)) &&
+					(await acquireLock(`nvcf:resub:${row.replicate_job_id}`, NVCF_ALIAS_TTL_S))
+				) {
 					try {
+						await markResubmitInflight(row.replicate_job_id);
 						const resub = await nvidia.textTo3d({ prompt: row.prompt, tier: resolveTier(row.tier) });
 						if (resub.taskId) {
 							await cacheSet(`nvcf:alias:${row.replicate_job_id}`, resub.taskId, NVCF_ALIAS_TTL_S);
@@ -587,6 +617,7 @@ export async function sweepRow(row, { gcp, nvidia }) {
 						}
 					} catch (err) {
 						console.warn(`[forge-finalize] NVCF resubmit failed: ${err?.message || err}`);
+						await alertResubmitFailed(row, err);
 					}
 				}
 				// Lock held by a prior recovery or the resubmit failed: the lane is

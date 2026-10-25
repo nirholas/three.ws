@@ -15,7 +15,8 @@ import { mapPoolSettled } from '../api/_lib/pool.js';
 // hoisted above every import (including transitive ones like
 // api/_lib/rate-limit.js's own `sql` import), so the mocked values must come
 // from vi.hoisted rather than a plain top-level const.
-const { sql, gcpStatus, nvidiaStatus, notifyForgeFailed, markProviderCooldown } = vi.hoisted(() => ({
+const { sql, gcpStatus, nvidiaStatus, notifyForgeFailed, markProviderCooldown, sendOpsAlert } = vi.hoisted(() => ({
+	sendOpsAlert: vi.fn(async () => {}),
 	sql: vi.fn(async () => []),
 	gcpStatus: vi.fn(async () => {
 		throw new Error('reap pass must not poll gcp');
@@ -48,6 +49,8 @@ vi.mock('../api/_lib/forge-notify.js', () => ({
 }));
 
 vi.mock('../api/_lib/provider-health.js', () => ({ markProviderCooldown }));
+
+vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert }));
 
 const {
 	decodeWorkerEnvelope,
@@ -302,5 +305,66 @@ describe('TTL reap runs ahead of the live poll', () => {
 		sql.mockImplementation(async () => []);
 		expect(await reapExpiredRows()).toBe(0);
 		expect(notifyForgeFailed).not.toHaveBeenCalled();
+	});
+});
+
+// Measured 2026-10-25: 15 text-prompt nvidia rows failed "NVCF request not
+// found or expired" in 2 days and not one `[forge-finalize]` log line reached
+// Cloud Logging in 7 days, so nobody could tell whether the same-lane resubmit
+// ever ran. The resubmit must leave a durable marker BEFORE the paid NVCF
+// submission, so a tick cut off mid-flight is distinguishable from "never tried".
+describe('nvidia resubmit on expiry', () => {
+	function nvidiaRow(n) {
+		return {
+			id: `nv-row-${n}`,
+			replicate_job_id: `3f2b9c1e-0000-4000-8000-00000000${String(n).padStart(4, '0')}`,
+			client_key: `client-${n}`,
+			user_id: null,
+			prompt: 'a test prompt',
+			preview_image_url: null,
+			backend: 'nvidia',
+			tier: 'draft',
+			path: 'image',
+			created_at: new Date(Date.now() - 5 * 60_000).toISOString(),
+			destination: null,
+			internal: false,
+		};
+	}
+	const expiredStatus = async () => ({
+		status: 'failed',
+		code: 'nvcf_expired',
+		error: 'NVCF request not found or expired',
+	});
+
+	it('resubmits a text-prompt nvidia row whose request id expired', async () => {
+		const textTo3d = vi.fn(async () => ({ taskId: 'resubmit-task-id' }));
+		const out = await sweepRow(nvidiaRow(1), { gcp: null, nvidia: { status: expiredStatus, textTo3d } });
+		expect(out.resubmitted).toBe(1);
+		expect(out.failed).toBe(0);
+		expect(out.done).toBe(0);
+		expect(textTo3d).toHaveBeenCalledTimes(1);
+	});
+
+	it('records an in-flight marker before the NVCF submission is made', async () => {
+		const { cacheGet } = await import('../api/_lib/cache.js');
+		const row = nvidiaRow(2);
+		let markerSeenDuringSubmit = null;
+		const textTo3d = vi.fn(async () => {
+			markerSeenDuringSubmit = await cacheGet(`nvcf:resub-inflight:${row.replicate_job_id}`);
+			return { taskId: 'resubmit-task-id-2' };
+		});
+		await sweepRow(row, { gcp: null, nvidia: { status: expiredStatus, textTo3d } });
+		expect(markerSeenDuringSubmit).toBeTruthy();
+	});
+
+	it('routes a failed resubmit through the durable ops alert, not only console.warn', async () => {
+		sendOpsAlert.mockClear();
+		const textTo3d = vi.fn(async () => {
+			throw new Error('NVCF down');
+		});
+		const out = await sweepRow(nvidiaRow(3), { gcp: null, nvidia: { status: expiredStatus, textTo3d } });
+		expect(out.resubmitted).toBe(0);
+		expect(sendOpsAlert).toHaveBeenCalledTimes(1);
+		expect(sendOpsAlert.mock.calls[0][1]).toContain('NVCF down');
 	});
 });
