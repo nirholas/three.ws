@@ -614,4 +614,31 @@ contract PortfolioFeeTest is PortfolioFixture {
         );
         factory.deploy(c);
     }
+
+    function test_rebalanceTimingFloorsAreEnforcedAtConstruction() public {
+        uint256 id = _publish(keccak256("instant"), 0, creator);
+        Portfolio.Config memory c = Portfolio.Config({
+            name: "Instant",
+            symbol: "INST",
+            registry: address(registry),
+            manifestId: id,
+            constituents: _constituents(),
+            seedUnits: _seedUnits(),
+            feeBps: 100,
+            rebalanceInterval: 30 days,
+            rebalanceDelay: 0,
+            auctionDuration: 6 hours,
+            startPayoutBps: 9_700,
+            endPayoutBps: 10_000
+        });
+        vm.prank(creator);
+        vm.expectRevert(abi.encodeWithSelector(Portfolio.RebalanceDelayTooShort.selector, uint32(0)));
+        factory.deploy(c);
+
+        c.rebalanceDelay = 1 days;
+        c.rebalanceInterval = 0;
+        vm.prank(creator);
+        vm.expectRevert(abi.encodeWithSelector(Portfolio.RebalanceIntervalTooShort.selector, uint32(0)));
+        factory.deploy(c);
+    }
 }

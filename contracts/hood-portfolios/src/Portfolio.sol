@@ -106,6 +106,15 @@ contract Portfolio is ERC20, ReentrancyGuard {
     /// a property of the deployed vault rather than a parameter anyone can raise later.
     uint16 public constant MAX_END_PAYOUT_BPS = 10_100;
 
+    /// @notice Shortest timelock between a rebalance proposal and its auction opening.
+    /// @dev The creator picks the target basket and anyone may fill it, so without a floor a creator
+    /// could propose skewed targets and fill them in the same transaction. This window is what lets
+    /// holders redeem before an unfavourable rebalance opens.
+    uint32 public constant MIN_REBALANCE_DELAY = 1 days;
+
+    /// @notice Shortest gap between two rebalance proposals.
+    uint32 public constant MIN_REBALANCE_INTERVAL = 1 days;
+
     /// @notice Shares minted for the very first issuance, per unit of `seedUnits`.
     uint256 public constant ONE = 1e18;
 
@@ -164,6 +173,8 @@ contract Portfolio is ERC20, ReentrancyGuard {
     error SeedUnitRequired(address token);
     error FeeTooHigh(uint16 bps);
     error PayoutOutOfRange(uint16 startBps, uint16 endBps);
+    error RebalanceDelayTooShort(uint32 delay);
+    error RebalanceIntervalTooShort(uint32 interval);
     error ZeroShares();
     error ConstituentHalted(address token);
     error NotYetDue(uint64 nextAt);
@@ -203,6 +214,8 @@ contract Portfolio is ERC20, ReentrancyGuard {
         if (n > 32) revert TooManyConstituents(n);
         if (c.seedUnits.length != n) revert BadArrayLength();
         if (c.feeBps > MAX_FEE_BPS) revert FeeTooHigh(c.feeBps);
+        if (c.rebalanceDelay < MIN_REBALANCE_DELAY) revert RebalanceDelayTooShort(c.rebalanceDelay);
+        if (c.rebalanceInterval < MIN_REBALANCE_INTERVAL) revert RebalanceIntervalTooShort(c.rebalanceInterval);
         if (c.startPayoutBps > 10_000 || c.endPayoutBps < c.startPayoutBps || c.endPayoutBps > MAX_END_PAYOUT_BPS) {
             revert PayoutOutOfRange(c.startPayoutBps, c.endPayoutBps);
         }

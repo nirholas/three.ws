@@ -28,7 +28,7 @@ sentinel `0xEee…EeE`.
 
 | Function | Access | Effect |
 | --- | --- | --- |
-| `createAgent(agentToken, agentAuthority, buybackBps)` | owner **or** `agentAuthority` | Register an agent token once |
+| `createAgent(agentToken, agentAuthority, buybackBps)` | owner only | Register an agent token once |
 | `acceptPayment(agentToken, currency, amount, memo, startTime, endTime)` | anyone | Pull ERC-20, credit payment vault, settle invoice |
 | `acceptPaymentNative(agentToken, memo, startTime, endTime)` | anyone (payable) | Same, native currency |
 | `distributePayments(agentToken, currency)` | anyone | Split payment vault → buyback + withdraw vaults by `buybackBps` |

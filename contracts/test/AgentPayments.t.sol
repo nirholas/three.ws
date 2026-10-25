@@ -173,8 +173,8 @@ contract AgentPaymentsTest is Test {
         vm.prank(owner);
         ap.setRouterAllowed(address(router), true);
 
-        // Register the agent (self-registration: authority == msg.sender).
-        vm.prank(authority);
+        // Register the agent (owner-only registration).
+        vm.prank(owner);
         ap.createAgent(address(agentTok), authority, BUYBACK_BPS);
 
         usdc.mint(payer, 1_000e18);
@@ -195,9 +195,24 @@ contract AgentPaymentsTest is Test {
     }
 
     function testCannotDoubleRegister() public {
-        vm.prank(authority);
+        vm.prank(owner);
         vm.expectRevert(AgentPayments.AgentExists.selector);
         ap.createAgent(address(agentTok), authority, 0);
+    }
+
+    function testAttackerCannotSquatTokenByNamingThemself() public {
+        MockERC20 other = new MockERC20("Q", "Q");
+        address attacker = address(0xBAD);
+        vm.prank(attacker);
+        vm.expectRevert(AgentPayments.NotAgentAuthority.selector);
+        ap.createAgent(address(other), attacker, 0);
+
+        // The platform owner can still register the real authority.
+        vm.prank(owner);
+        ap.createAgent(address(other), authority, 0);
+        (address auth,, bool exists) = ap.getAgentConfig(address(other));
+        assertEq(auth, authority);
+        assertTrue(exists);
     }
 
     function testForeignAuthorityCannotRegister() public {
@@ -612,7 +627,7 @@ contract AgentPaymentsTest is Test {
 
     function testZeroBpsSendsEverythingToTheAuthority() public {
         MockERC20 other = new MockERC20("N", "N");
-        vm.prank(authority);
+        vm.prank(owner);
         ap.createAgent(address(other), authority, 0);
 
         vm.startPrank(payer);
@@ -628,7 +643,7 @@ contract AgentPaymentsTest is Test {
 
     function testFullBpsSendsEverythingToBuyback() public {
         MockERC20 other = new MockERC20("F", "F");
-        vm.prank(authority);
+        vm.prank(owner);
         ap.createAgent(address(other), authority, 10_000);
 
         vm.startPrank(payer);

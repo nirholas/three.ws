@@ -129,14 +129,15 @@ contract AgentPayments is ReentrancyGuard, Ownable {
     // ── Agent registration ───────────────────────────────────────────────────
 
     /**
-     * @notice Register an agent token. Callable by the platform owner (on behalf
-     *         of a user) or self-registered when `agentAuthority == msg.sender`,
-     *         which prevents registration front-running with a foreign authority.
+     * @notice Register an agent token. Platform owner only: the owner verifies
+     *         off-chain that `agentAuthority` controls `agentToken` and registers
+     *         on the user's behalf. Open self-registration would let anyone claim
+     *         any token first and receive its payments.
      */
     function createAgent(address agentToken, address agentAuthority, uint16 buybackBps) external {
         if (agentToken == address(0) || agentAuthority == address(0)) revert ZeroAddress();
         if (buybackBps > BPS_DENOMINATOR) revert InvalidBps();
-        if (msg.sender != owner() && msg.sender != agentAuthority) revert NotAgentAuthority();
+        if (msg.sender != owner()) revert NotAgentAuthority();
         if (_agents[agentToken].exists) revert AgentExists();
 
         _agents[agentToken] = AgentConfig({authority: agentAuthority, buybackBps: buybackBps, exists: true});
