@@ -21,6 +21,7 @@ import { createRenderer, loadModel } from '../packages/tty-3d/src/index.js';
 import { ansi, ColorMode } from '../packages/tty-3d/src/term.js';
 import { getAvatar } from './_lib/avatars.js';
 import { error, rateLimited, redirect, wantsHtmlNavigation, wrap } from './_lib/http.js';
+import { fetchModel } from './_lib/fetch-model.js';
 import { clientIp, limits } from './_lib/rate-limit.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './_lib/ssrf-guard.js';
 
@@ -44,6 +45,7 @@ export function defaultModelPath(cwd = process.cwd()) {
 	return null;
 }
 
+const MAX_MODEL_BYTES = 64 * 1024 * 1024;
 const MAX_FRAMES = 600;
 const MAX_SECONDS = 45;
 const MIN_COLS = 20;
@@ -99,6 +101,17 @@ export async function resolveSource(query) {
 	return { url: local, label: 'default agent' };
 }
 
+// Remote models are fetched by the pinned, per-hop validated fetcher (redirects
+// handled manually, every hop resolved and connection-pinned), never by loadModel's
+// own redirect-following fetch. Applies to src and to a stored avatar model_url.
+async function loadSource(url) {
+	if (/^https?:\/\//i.test(url)) {
+		const { bytes } = await fetchModel(url, { maxBytes: MAX_MODEL_BYTES });
+		return loadModel(bytes);
+	}
+	return loadModel(url);
+}
+
 function banner(label, info, cols) {
 	const left = `three.ws  ${label}`;
 	const right = `${info.triangles.toLocaleString('en-US')} tris${info.skinned ? '  rigged' : ''}`;
@@ -141,9 +154,11 @@ export default wrap(async function handler(req, res) {
 
 	let model;
 	try {
-		model = await loadModel(source.url);
+		model = await loadSource(source.url);
 	} catch (err) {
-		return error(res, 502, 'model_unavailable', `could not read that model: ${err.message}`);
+		// Upstream detail (status, resolver verdicts) stays out of the response:
+		// it would turn this endpoint into an internal-network probe.
+		return error(res, 502, 'model_unavailable', 'could not read that model');
 	}
 
 	const renderer = createRenderer(model, {
