@@ -166,7 +166,7 @@ export const POLICY = {
 		domain_check: r('domains'),
 		domain_pricing: r('domains'),
 		domain_register_quote: w('domains'),
-		domain_register: f('domains', 'confirm_spend', 'domain_register_quote', ['domain', 'auto_renew', 'privacy']),
+		domain_register: f('domains', 'confirm_spend', 'domain_register_quote', ['domain', 'contact', 'auto_renew', 'privacy']),
 		domain_status: r('domains'),
 		domain_connect: w('domains'),
 		domain_connect_status: r('domains'),

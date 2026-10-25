@@ -162,7 +162,11 @@ export async function checkPersonaSpend({ personaId, sessionId, usdc }) {
 			cap_usdc: PERSONA_SPEND_CAPS.maxPerCallUsdc,
 		};
 	}
-	const spent = await sessionSpentUsdc(personaId, sessionId);
+	// The session id is caller-chosen, so a fresh one must not reset the cap:
+	// every spend is also booked to the persona's UTC-day bucket, and that
+	// bucket is held to the same ceiling whatever session_id the caller sends.
+	const daily = await sessionSpentUsdc(personaId, defaultSessionId(personaId));
+	const spent = Math.max(await sessionSpentUsdc(personaId, sessionId), daily);
 	if (spent + amount > PERSONA_SPEND_CAPS.maxPerSessionUsdc) {
 		return {
 			ok: false,
@@ -178,6 +182,8 @@ export async function checkPersonaSpend({ personaId, sessionId, usdc }) {
 /** Record a SETTLED spend (call only after the on-chain transfer confirms). */
 export async function recordPersonaSpend({ personaId, sessionId, usdc, tool, toAddress, signature }) {
 	const row = { personaId, sessionId, usdc: Number(usdc), tool, toAddress, signature };
-	if (dbConfigured()) return dbRecordSpend(row);
-	return fsRecordSpend(row);
+	const record = dbConfigured() ? dbRecordSpend : fsRecordSpend;
+	await record(row);
+	const dailyId = defaultSessionId(personaId);
+	if (sessionId !== dailyId) await record({ ...row, sessionId: dailyId });
 }

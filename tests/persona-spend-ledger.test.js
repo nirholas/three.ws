@@ -61,14 +61,14 @@ describe('persona spend ledger — cumulative per-session cap', () => {
 		expect(over.code).toBe('over_session_cap');
 	});
 
-	it('a DIFFERENT session for the same persona has its own independent cap', async () => {
+	it('a DIFFERENT persona has its own independent cap', async () => {
 		const personaId = 'persona_sessionisolate01';
 		await recordPersonaSpend({ personaId, sessionId: 'session-x', usdc: PERSONA_SPEND_CAPS.maxPerSessionUsdc, tool: 'persona_send', toAddress: 'A', signature: 'sig-x' });
 		const exhausted = await checkPersonaSpend({ personaId, sessionId: 'session-x', usdc: 0.01 });
 		expect(exhausted.ok).toBe(false);
 
-		const freshSession = await checkPersonaSpend({ personaId, sessionId: 'session-y', usdc: 0.01 });
-		expect(freshSession.ok).toBe(true);
+		const otherPersona = await checkPersonaSpend({ personaId: 'persona_sessionisolate02', sessionId: 'session-x', usdc: 0.01 });
+		expect(otherPersona.ok).toBe(true);
 	});
 
 	it('sessionSpentUsdc sums exactly what was recorded', async () => {
@@ -84,5 +84,21 @@ describe('persona spend ledger — default session bucketing', () => {
 	it('defaultSessionId groups by persona + UTC day', () => {
 		const id = defaultSessionId('persona_defaultbucket01');
 		expect(id).toMatch(/^persona_defaultbucket01:\d{4}-\d{2}-\d{2}$/);
+	});
+});
+
+describe('persona spend ledger - cap cannot be reset with a fresh session_id', () => {
+	it('spend recorded under one session counts against another session of the same persona', async () => {
+		const personaId = 'persona_freshsession001';
+		const cap = PERSONA_SPEND_CAPS.maxPerSessionUsdc;
+		const perCall = PERSONA_SPEND_CAPS.maxPerCallUsdc;
+		let spent = 0;
+		while (spent + perCall <= cap + 1e-9) {
+			await recordPersonaSpend({ personaId, sessionId: 'session-a', usdc: perCall, tool: 'persona_send' });
+			spent += perCall;
+		}
+		const gate = await checkPersonaSpend({ personaId, sessionId: 'session-b', usdc: perCall });
+		expect(gate.ok).toBe(false);
+		expect(gate.code).toBe('over_session_cap');
 	});
 });
