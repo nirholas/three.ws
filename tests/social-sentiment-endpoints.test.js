@@ -32,11 +32,13 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 // suite's cache state is deterministic and isolated from the real module:
 // same pattern as tests/pump-bonding.test.js.
 const cache = new Map();
+const lkgTtlsSeen = [];
 vi.mock('../api/_lib/cache.js', () => ({
 	cacheGet: async (k) => (cache.has(k) ? cache.get(k) : null),
 	cacheSet: async (k, v) => { cache.set(k, v); },
 	cacheWrapLastGood: async (key, ttlSeconds, fn, opts = {}) => {
 		const { staleTtlSeconds = 24 * 3600, withMeta = false } = opts;
+		lkgTtlsSeen.push(staleTtlSeconds);
 		const lkgKey = `${key}:lkg`;
 		const hit = cache.has(key) ? cache.get(key) : null;
 		if (hit !== null && hit !== undefined) return withMeta ? { value: hit, stale: false } : hit;
@@ -57,6 +59,7 @@ vi.mock('../api/_lib/cache.js', () => ({
 
 beforeEach(() => {
 	cache.clear();
+	lkgTtlsSeen.length = 0;
 });
 
 const { default: sentimentHandler } = await import('../api/social/sentiment.js');
@@ -304,5 +307,37 @@ describe('POST /api/social/sentiment-pulse', () => {
 		expect(out.overall.count).toBe(2);
 		expect(out.sources.pumpfunStatus).toBe('stale');
 		expect(out.sources.pumpfunCount).toBe(2);
+	});
+});
+
+describe('pump-callouts last-known-good TTL knob', () => {
+	async function lkgTtlWithEnv(env) {
+		const saved = {};
+		for (const [k, v] of Object.entries(env)) {
+			saved[k] = process.env[k];
+			process.env[k] = v;
+		}
+		try {
+			vi.resetModules();
+			const { fetchPumpFunCallouts } = await import('../api/_lib/pump-callouts.js');
+			vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+				new Response(JSON.stringify({ callouts: [] }), { status: 200, headers: { 'content-type': 'application/json' } }),
+			);
+			await fetchPumpFunCallouts('THREEsynthetic1111111111111111111111111111', 5);
+			return lkgTtlsSeen.at(-1);
+		} finally {
+			for (const [k, v] of Object.entries(saved)) {
+				if (v === undefined) delete process.env[k];
+				else process.env[k] = v;
+			}
+		}
+	}
+
+	it('ignores the bonding cache env var', async () => {
+		expect(await lkgTtlWithEnv({ PUMP_BONDING_LKG_TTL_S: '42' })).toBe(1800);
+	});
+
+	it('reads its own dedicated env var', async () => {
+		expect(await lkgTtlWithEnv({ PUMP_CALLOUTS_LKG_TTL_S: '77' })).toBe(77);
 	});
 });

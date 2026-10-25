@@ -27,7 +27,7 @@ export const PUMP_CALLOUT_PAGE_MAX = 100;
 // fetch. Last-known-good: survives a Cloudflare 403/rate-limit window so a
 // mint with a prior successful fetch degrades to stale data, never a 502.
 const LIVE_TTL_S = Number(process.env.PUMP_CALLOUTS_TTL_S || 25);
-const LKG_TTL_S = Number(process.env.PUMP_BONDING_LKG_TTL_S || 1800);
+const LKG_TTL_S = Number(process.env.PUMP_CALLOUTS_LKG_TTL_S || 1800);
 
 /**
  * Map raw pump.fun callout rows into the scorer's post shape, newest first.
