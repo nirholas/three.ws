@@ -1976,3 +1976,7 @@ Migration `20261024193900_fix_account_link_codes_collision.sql` was applied to p
 ## 2026-10-25 order 451 closed (nvidia expiry resubmit durability)
 
 Diagnostic test passed unmodified, so branch A: the same-lane resubmit logic is correct and the defect was durability and observability. `api/cron/forge-finalize.js` now writes an `nvcf:resub-inflight:` marker before the NVCF submission (defers a duplicate paid submit while fresh) and routes a failed resubmit through `sendOpsAlert`. Three cases added to `tests/forge-finalize.test.js` (fix commit d269cc4ef). The live lost_task backlog drain is pending a deploy.
+
+## 2026-10-25 order 453 closed (/healthz world masked as unknown)
+
+`checkWorld()` in `api/_lib/ops/subsystem-health.js` now falls back to the durable `ops_alerts` rows (`world-health:status-http` / `status-unreachable`, last_seen within 40 minutes) when the Redis cache entry is missing or stale, so a real outage reports `down` instead of `unknown`. Six new cases in `tests/subsystem-health.test.js`. `STRUCTURE.md` and `deploy/world/README.md` now state that `hyperfy-world` was deleted 2026-10-23. No GCP infra touched. Commit: see git log for the `fix(ops): stop /healthz masking` subject.
