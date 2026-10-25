@@ -174,6 +174,7 @@ export default wrap(async (req, res) => {
 					from split_distributions sd
 					where sd.recipient_user_id = ${user.id}
 					  and sd.mode = 'ledger'
+					  and sd.status = 'accrued'
 					  and sd.currency_mint = ${currency_mint}
 				) - (
 					select coalesce(sum(w2.amount), 0)::bigint

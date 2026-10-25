@@ -298,12 +298,15 @@ export async function clearListingSplit(sql, agentId, skill) {
  * @param {bigint|string} o.netAtomics - the creator's net (after platform fee)
  * @param {string} o.currencyMint
  * @param {string} o.chain
+ * @param {boolean} [o.settledToWallet] - the buyer paid the seller's payout wallet directly
  * @returns {Promise<Array<{address, recipient_user_id, share_bps, amount:string, mode, status}>>}
  */
-export async function recordSplitDistribution(sql, { purchaseId, split, netAtomics, currencyMint, chain }) {
+export async function recordSplitDistribution(sql, { purchaseId, split, netAtomics, currencyMint, chain, settledToWallet = false }) {
 	const allocations = allocateAtomics(netAtomics, split.recipients);
 	const mode = split.split_mode === 'onchain' ? 'onchain' : 'ledger';
-	const status = mode === 'onchain' ? 'settled' : 'accrued';
+	// A net the buyer already paid to the seller's wallet is informational: crediting
+	// it again would let the treasury pay the same money out a second time.
+	const status = mode === 'onchain' || settledToWallet ? 'settled' : 'accrued';
 
 	const out = [];
 	for (const a of allocations) {

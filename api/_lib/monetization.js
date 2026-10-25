@@ -152,12 +152,12 @@ export async function getAvailableBalance(userId, currencyMint = null) {
 			? await sql`
 				SELECT COALESCE(SUM(amount), 0)::bigint AS amt
 				FROM split_distributions
-				WHERE recipient_user_id = ${userId} AND mode = 'ledger' AND currency_mint = ${currencyMint}
+				WHERE recipient_user_id = ${userId} AND mode = 'ledger' AND status = 'accrued' AND currency_mint = ${currencyMint}
 			`
 			: await sql`
 				SELECT COALESCE(SUM(amount), 0)::bigint AS amt
 				FROM split_distributions
-				WHERE recipient_user_id = ${userId} AND mode = 'ledger'
+				WHERE recipient_user_id = ${userId} AND mode = 'ledger' AND status = 'accrued'
 			`;
 		splitOut = Number(outRow.amt);
 		splitIn = Number(inRow.amt);

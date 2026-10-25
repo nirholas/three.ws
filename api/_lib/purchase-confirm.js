@@ -598,6 +598,7 @@ async function finalizeSkillConfirmation(pur, txSignature, payoutAddress, platfo
 					netAtomics: netAmt,
 					currencyMint: pur.currency_mint,
 					chain: pur.chain,
+					settledToWallet: true,
 				});
 				await logEvent(pur.id, 'split_recorded', {
 					split_id: split.id,
