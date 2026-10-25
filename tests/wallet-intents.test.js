@@ -164,3 +164,35 @@ describe('describeIntent', () => {
 		expect(text.toLowerCase()).toMatch(/freeze/);
 	});
 });
+
+describe('on_mail_received sender matching', () => {
+	it('matches the sender by exact address or domain, never by substring', async () => {
+		const { mailSenderMatches } = await import('../api/_lib/wallet-intents.js');
+		expect(mailSenderMatches('billing@acme.example', 'billing@acme.example')).toBe(true);
+		expect(mailSenderMatches('acme.example', 'billing@acme.example')).toBe(true);
+		expect(mailSenderMatches('@acme.example', 'billing@acme.example')).toBe(true);
+		expect(mailSenderMatches('acme.example', 'ops@mail.acme.example')).toBe(true);
+		expect(mailSenderMatches('acme.example', 'x@evilacme.example')).toBe(false);
+		expect(mailSenderMatches('acme.example', 'acme.example@evil.example')).toBe(false);
+		expect(mailSenderMatches('billing@acme.example', 'xbilling@acme.example.evil.example')).toBe(false);
+	});
+});
+
+describe('on_mail_received authentication gate', () => {
+	it('fires only for a DMARC-aligned sender and fails closed without auth results', async () => {
+		const { isAuthenticatedSender } = await import('../api/_lib/mail/spam.js');
+		expect(isAuthenticatedSender({ spf: 'pass', dkim: 'pass', dmarc: 'pass' })).toBe(true);
+		expect(isAuthenticatedSender({ spf: 'pass', dkim: 'none', dmarc: 'fail' })).toBe(false);
+		expect(isAuthenticatedSender({ spf: 'none', dkim: 'none', dmarc: 'none' })).toBe(false);
+		expect(isAuthenticatedSender(undefined)).toBe(false);
+	});
+
+	it('onMailReceived refuses to fire for an unauthenticated message', async () => {
+		const { onMailReceived } = await import('../api/_lib/wallet-intents.js');
+		const { sql } = await import('../api/_lib/db.js');
+		sql.mockClear();
+		const out = await onMailReceived('agent-1', { message_id: 'm1', from: 'a@acme.example', subject: 's', authenticated: false });
+		expect(out).toMatchObject({ fired: 0 });
+		expect(sql).not.toHaveBeenCalled();
+	});
+});

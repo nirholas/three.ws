@@ -28,7 +28,9 @@ console.log(guards.length+' guards, '+unwired.length+' unwired'); unwired.forEac
 ```
 
 Measured 2026-09-04: 73 guards, 39 unwired. Measured 2026-09-08 after this pass: 80 guards,
-35 unwired, and every one of the 35 has a row below.
+35 unwired, and every one of the 35 has a row below. Re-run 2026-10-25: 107 guards, 42 unwired,
+and all 42 still have a row (the registry in `data/guards.json` has grown with the new gate
+guards, for example `check:mcp-counts` and `check:site-builder-embeds`, which are wired, not unwired).
 [tests/guard-wiring.test.js](../../tests/guard-wiring.test.js) fails if a guard drops off
 `gate` or off the deploy path, and fails if a newly unwired guard has no row here.
 

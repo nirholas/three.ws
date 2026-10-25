@@ -317,6 +317,24 @@ describe('GET /api/permissions/metadata', () => {
 	});
 });
 
+describe('public delegation reads are limited to published agents', () => {
+	const sqlText = () => sqlMock.mock.calls.map((c) => c[0].join(' ')).join('\n');
+
+	it('metadata only resolves an agent that is published', async () => {
+		sqlQueue.push([]);
+		const res = await call({ action: 'metadata', query: `?agentId=${AGENT}` });
+		expect(res.statusCode).toBe(404);
+		expect(sqlText()).toMatch(/is_published\s*=\s*true/);
+	});
+
+	it('the unauthenticated agentId list only returns delegations of published agents', async () => {
+		sqlQueue.push([]);
+		const res = await call({ action: 'list', query: `?agentId=${AGENT}` });
+		expect(res.statusCode).toBe(200);
+		expect(sqlText()).toMatch(/is_published\s*=\s*true/);
+	});
+});
+
 describe('GET /api/permissions/verify', () => {
 	it.each([
 		['', 'hash query param is required'],

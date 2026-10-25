@@ -268,6 +268,32 @@ describe('PATCH /api/vaults/:id terms', () => {
 		}));
 	});
 
+	describe('once backers hold shares, the owner cannot loosen the terms they joined under', () => {
+		const BACKED = { ...OPEN_VAULT, total_shares: '5000000' };
+
+		it('refuses a fee, drawdown or budget increase with 409 and writes nothing', async () => {
+			for (const patch of [
+				{ performanceFeeBps: 2000 },
+				{ maxDrawdownBps: 5000 },
+				{ maxPerTradeUsdc: 20 },
+				{ dailyBudgetUsdc: 500 },
+			]) {
+				getVaultMock.mockResolvedValue(BACKED);
+				const { res, out } = await call(vaultDetailHandler, patchReq({ action: 'terms', ...patch }));
+				expect(res.statusCode, JSON.stringify(patch)).toBe(409);
+				expect(out.error).toBe('terms_locked_for_backers');
+			}
+			expect(updateVaultTermsMock).not.toHaveBeenCalled();
+		});
+
+		it('still lets the owner tighten terms or leave them unchanged', async () => {
+			getVaultMock.mockResolvedValue(BACKED);
+			const { res } = await call(vaultDetailHandler, patchReq({ action: 'terms', performanceFeeBps: 500, maxDrawdownBps: 1000, maxPerTradeUsdc: 2, dailyBudgetUsdc: 20 }));
+			expect(res.statusCode).toBe(200);
+			expect(updateVaultTermsMock).toHaveBeenCalledTimes(1);
+		});
+	});
+
 	it('answers 404 for a malformed vault id in the path, never a database error', async () => {
 		const { res, out } = await call(vaultDetailHandler, mkReq({ method: 'PATCH', url: '/api/vaults/not-a-uuid', body: { action: 'pause' } }));
 		expect(res.statusCode).toBe(404);

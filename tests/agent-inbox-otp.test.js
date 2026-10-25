@@ -36,6 +36,7 @@ vi.mock('../api/_lib/mail/service.js', () => {
 
 const { extractCodes, parseSender } = await import('../api/_lib/mail/extract.js');
 const { senderTrust, pickResult, waitForCode } = await import('../api/_lib/mail/otp.js');
+const { scoreInbound, isAuthenticatedSender } = await import('../api/_lib/mail/spam.js');
 const { normalizeAllowlist } = await import('../api/_lib/mail/controls.js');
 
 const AUTH_OK = { spf: 'pass', dkim: 'pass', dmarc: 'pass' };
@@ -241,5 +242,36 @@ describe('waitForCode', () => {
 		const r = await waitForCode({ userId: 'u', agentId: 'a', timeoutSec: 9999 }, { ...c, fetchRows: async () => [] });
 		expect(r.found).toBe(false);
 		expect(r.waited_s).toBeLessThanOrEqual(90);
+	});
+});
+
+describe('inbound Authentication-Results trust', () => {
+	const MINE = 'amazonses.com; spf=pass; dkim=pass; dmarc=pass header.from=real.example';
+	const FORGED = 'attacker.example; spf=pass; dkim=pass; dmarc=pass header.from=bank.example';
+
+	it('ignores a sender-supplied header and trusts only the receiving MTA authserv-id', () => {
+		const v = scoreInbound({ 'Authentication-Results': [FORGED] });
+		expect(isAuthenticatedSender(v.auth)).toBe(false);
+	});
+
+	it('takes the topmost instance from the trusted authserv-id even when forged copies follow', () => {
+		const failing = 'amazonses.com; spf=fail; dkim=fail; dmarc=fail header.from=bank.example';
+		const v = scoreInbound({ 'Authentication-Results': [failing, FORGED] });
+		expect(v.auth.dmarc).toBe('fail');
+		expect(isAuthenticatedSender(v.auth)).toBe(false);
+	});
+
+	it('skips a forged instance that precedes the trusted one', () => {
+		const v = scoreInbound({ 'Authentication-Results': [FORGED, MINE] });
+		expect(v.auth.dmarc).toBe('pass');
+	});
+
+	it('accepts a genuine single header', () => {
+		expect(isAuthenticatedSender(scoreInbound({ 'authentication-results': MINE }).auth)).toBe(true);
+	});
+
+	it('does not let a forged dmarc=pass inside a comment of a failing trusted header win', () => {
+		const v = scoreInbound({ 'Authentication-Results': 'amazonses.com; dmarc=fail header.from=x.example (dmarc=pass)' });
+		expect(v.auth.dmarc).toBe('fail');
 	});
 });

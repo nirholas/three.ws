@@ -295,7 +295,7 @@ describe('GET /oauth/authorize', () => {
 		seedClient({ name: 'Grok Bot', client_uri: 'https://grok.example/bot', redirect_uris: ['https://cb.grok.example/cb'] });
 		const res = await call('authorize', { query: authorizeQuery({ redirect_uri: 'https://cb.grok.example/cb' }) });
 		expect(res.body).toContain('Authorize <b>Grok Bot</b>');
-		expect(res.body).toContain('Site: grok.example');
+		expect(res.body).toContain('Site: cb.grok.example (registered as grok.example)');
 		expect(res.body).toContain('can never spend from a wallet');
 		expect(res.body).toContain('/dashboard/settings#connected-apps');
 	});
@@ -638,7 +638,7 @@ describe('POST /oauth/register for a cloud connector', () => {
 		const consent = await call('authorize', { query: { ...authorizeQuery({ client_id: body.client_id, redirect_uri: GROK.redirect_uris[0] }) } });
 		expect(consent.statusCode).toBe(200);
 		expect(consent.body).toContain('Authorize <b>Grok Bot</b>');
-		expect(consent.body).toContain('Site: grok.com');
+		expect(consent.body).toContain('Site: connectors.grok-cloud.example');
 	});
 
 	it.each([
@@ -680,7 +680,7 @@ describe('consent screen for a cloud connector', () => {
 		const res = await call('authorize', { query: authorizeQuery() });
 		expect(res.statusCode).toBe(200);
 		expect(res.body).toContain('Authorize <b>Grok Bot</b>');
-		expect(res.body).toContain('Site: grok.com');
+		expect(res.body).toContain('Site: client.example');
 		expect(res.body).toContain('This app registered itself.');
 		expect(res.body).toContain('can never spend from a wallet');
 		expect(res.body).toContain('<li>Read your avatars</li>');

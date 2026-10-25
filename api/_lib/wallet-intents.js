@@ -1507,16 +1507,33 @@ export async function onStreamSettled(agentId, stream) {
 }
 
 /**
+ * Sender filter for on_mail_received. The filter is an exact address, a domain
+ * ("acme.example" or "@acme.example"), and a domain also covers its subdomains.
+ * Never a substring, so "acme.example" cannot match "acme.example@evil.example".
+ */
+export function mailSenderMatches(filter, from) {
+	const f = String(filter || '').trim().toLowerCase();
+	const sender = String(from || '').trim().toLowerCase();
+	const at = sender.lastIndexOf('@');
+	if (!f || at < 1) return false;
+	if (f.includes('@') && !f.startsWith('@')) return f === sender;
+	const wanted = f.replace(/^@/, '');
+	const domain = sender.slice(at + 1);
+	return domain === wanted || domain.endsWith(`.${wanted}`);
+}
+
+/**
  * Fired by agent mail after an inbound message is stored. Evaluates this
  * agent's on_mail_received intents against the sender and subject filters the
  * owner wrote, then runs the matching ones. Only notify and freeze can pair
  * with this trigger (normalizeIntent enforces it), so nothing here signs a
  * transaction, and neither action reads the email: the notification carries
- * the owner's own message, never the sender's words. One fire per message.
+ * the owner's own message, never the sender's words. One fire per message. Fails closed unless the sender passed DMARC (mail.authenticated).
  *
- * @param {object} mail { message_id, from, subject, spam_score }
+ * @param {object} mail { message_id, from, subject, spam_score, authenticated }
  */
 export async function onMailReceived(agentId, mail) {
+	if (mail?.authenticated !== true) return { fired: 0, reason: 'unauthenticated_sender' };
 	try {
 		const rows = await sql`
 			SELECT * FROM agent_wallet_intents
@@ -1527,7 +1544,7 @@ export async function onMailReceived(agentId, mail) {
 		const subject = String(mail.subject || '').toLowerCase();
 		const intents = rows.map(rowToIntent).filter((i) => {
 			if (!['notify', 'freeze'].includes(i.action.type)) return false;
-			if (i.trigger.from_contains && !from.includes(i.trigger.from_contains)) return false;
+			if (i.trigger.from_contains && !mailSenderMatches(i.trigger.from_contains, from)) return false;
 			if (i.trigger.subject_contains && !subject.includes(i.trigger.subject_contains)) return false;
 			return true;
 		});

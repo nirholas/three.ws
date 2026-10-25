@@ -20,6 +20,7 @@ import { CHAIN_BY_ID, tokenExplorerUrl, addressExplorerUrl } from './_lib/erc800
 import { publicUrl, thumbnailUrl } from './_lib/r2.js';
 import { isErc8004AgentId, isUuid } from './_lib/validate.js';
 import { env } from './_lib/env.js';
+import { readEmbedGateByAsset } from './_lib/embed-gate.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -182,7 +183,10 @@ export default wrap(async (req, res) => {
 
 		if (rows.length) {
 			const r = rows[0];
-			const glb = publicUrl(r.storage_key);
+			// A token-gated avatar keeps its model URL out of the page, matching
+			// api/embed/resolve.js: the gate is only unlocked through gate-verify.
+			const gated = !!(await readEmbedGateByAsset(`avatar:${r.id}`).catch(() => ({ gated: true })));
+			const glb = gated ? null : publicUrl(r.storage_key);
 			const handle = r.owner_username
 				? `@${r.owner_username}`
 				: r.owner_wallet
@@ -196,13 +200,14 @@ export default wrap(async (req, res) => {
 				description: r.description || '',
 				image: thumbnailUrl(r.thumbnail_key),
 				glbUrl: glb,
-				has3d: true,
+				has3d: !gated,
+				gated,
 				tags: r.tags || [],
 				source: r.source || null,
 				featured: r.featured === true || r.featured === 't',
 				viewCount: Number(r.view_count) || 0,
 				createdAt: r.created_at,
-				viewerUrl: `/app#model=${encodeURIComponent(glb)}`,
+				viewerUrl: glb ? `/app#model=${encodeURIComponent(glb)}` : null,
 				author: handle
 					? {
 						handle,

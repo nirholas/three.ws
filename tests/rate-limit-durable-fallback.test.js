@@ -82,6 +82,13 @@ function overQuotaRedis(counter) {
 	};
 }
 
+const SHEBANG_ERROR = 'Command failed: ERR Unexpected flag in script shebang: allow-key-locking';
+
+function shebangRedis() {
+	const reject = () => Promise.reject(new Error(SHEBANG_ERROR));
+	return { eval: reject, evalsha: reject, scriptLoad: reject };
+}
+
 beforeEach(() => {
 	vi.stubEnv('VITEST', '1');
 });
@@ -102,6 +109,33 @@ describe('isRedisQuotaError', () => {
 		const { isRedisQuotaError } = await loadRateLimit({ redis: null, sqlStub: makeSqlStub() });
 		expect(isRedisQuotaError(new Error('operation aborted due to timeout'))).toBe(false);
 		expect(isRedisQuotaError(undefined)).toBe(false);
+	});
+});
+
+describe('isRedisShebangIncompatibilityError', () => {
+	it('recognises the OSS Redis rejection of the allow-key-locking script flag', async () => {
+		const { isRedisShebangIncompatibilityError } = await loadRateLimit({ redis: null, sqlStub: makeSqlStub() });
+		expect(isRedisShebangIncompatibilityError(new Error(SHEBANG_ERROR))).toBe(true);
+	});
+
+	it('does not mistake a timeout or an exhausted allowance for it', async () => {
+		const { isRedisShebangIncompatibilityError } = await loadRateLimit({ redis: null, sqlStub: makeSqlStub() });
+		expect(isRedisShebangIncompatibilityError(new Error('operation aborted due to timeout'))).toBe(false);
+		expect(isRedisShebangIncompatibilityError(new Error(QUOTA_ERROR))).toBe(false);
+		expect(isRedisShebangIncompatibilityError(undefined)).toBe(false);
+	});
+
+	it('still decides requests and reports the incompatibility through rateLimiterHealth', async () => {
+		const stub = makeSqlStub();
+		const { limits, rateLimiterHealth } = await loadRateLimit({ redis: shebangRedis(), sqlStub: stub });
+		const open = await limits.cohortsIp('203.0.113.9');
+		expect(open.success).toBe(true);
+		expect(open.reason).toBe('rate_limiter_degraded');
+		const durable = await limits.withdrawalPerUser('u');
+		expect(durable.reason).toBe('rate_limiter_degraded_postgres');
+		const h = rateLimiterHealth();
+		expect(h.scriptIncompatible).toBe(true);
+		expect(h.quotaExhausted).toBe(false);
 	});
 });
 

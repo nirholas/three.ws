@@ -32,6 +32,7 @@ import { cors, error, json, readJson, wrap, rateLimited, setRateLimitHeaders } f
 import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../../../_lib/auth.js';
 import { requireCsrf } from '../../../_lib/csrf.js';
 import { limits, clientIp } from '../../../_lib/rate-limit.js';
+import { assertBearerMaySpend } from '../../../_lib/spend-scope.js';
 import * as svc from '../../../_lib/agent-market/service.js';
 
 async function principal(req) {
@@ -49,12 +50,15 @@ function denied(res, status, code, message) {
 
 // Resolve and authorize the caller for a route. Returns the user or null after
 // answering the request.
-async function authorize(req, res, { scope, write }) {
+async function authorize(req, res, { scope, write, spend }) {
 	const user = await principal(req);
 	if (!user) return denied(res, 401, 'unauthorized', 'sign in, or send a three.ws API key as `Authorization: Bearer sk_live_…`');
 	if (user.source !== 'session' && scope && !hasScope(user.scope, scope)) {
 		return denied(res, 403, 'insufficient_scope', `this endpoint requires the "${scope}" scope`);
 	}
+	// Routes that can sweep a wallet to a chosen payout address or hand it to a
+	// buyer need the spend scope; agents:write alone (a connector key) is not enough.
+	if (spend && user.source !== 'session') assertBearerMaySpend({ scope: user.scope }, req);
 	if (write && user.source === 'session' && !(await requireCsrf(req, res, user.id))) return null;
 	return user;
 }
@@ -81,20 +85,20 @@ const ROUTES = [
 		const { action, ...params } = ctx.body || {};
 		return svc.previewAction(ctx.user, action, params);
 	}],
-	['POST', 'listings', { scope: 'agents:write', write: true }, (ctx) => svc.createListing(ctx.user, ctx.body, { confirm: ctx.body.confirm === true })],
+	['POST', 'listings', { scope: 'agents:write', write: true, spend: true }, (ctx) => svc.createListing(ctx.user, ctx.body, { confirm: ctx.body.confirm === true })],
 	['GET', 'listings/:id', { optional: true }, (ctx) => svc.getListingDetail(ctx.params.id, ctx.user?.id)],
-	['POST', 'listings/:id/delist', { scope: 'agents:write', write: true }, (ctx) => svc.delistListing(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
+	['POST', 'listings/:id/delist', { scope: 'agents:write', write: true, spend: true }, (ctx) => svc.delistListing(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
 	['POST', 'listings/:id/bids', { scope: 'wallet:trade', write: true }, (ctx) =>
 		svc.placeBid(ctx.user, { ...ctx.body, listing_id: ctx.params.id }, { confirm: ctx.body.confirm === true, kind: 'bid' })],
 	['POST', 'listings/:id/buy', { scope: 'wallet:trade', write: true }, (ctx) =>
 		svc.placeBid(ctx.user, { ...ctx.body, listing_id: ctx.params.id }, { confirm: ctx.body.confirm === true, kind: 'buy_now' })],
 	['POST', 'bids/:id/confirm', { scope: 'wallet:trade', write: true }, (ctx) => svc.confirmBidFunding(ctx.user, ctx.params.id, { signature: ctx.body.signature || null })],
 	['POST', 'bids/:id/transaction', { scope: 'wallet:trade', write: true }, (ctx) => svc.rebuildFundingTransaction(ctx.user, ctx.params.id)],
-	['POST', 'bids/:id/accept', { scope: 'agents:write', write: true }, (ctx) => svc.acceptBid(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
+	['POST', 'bids/:id/accept', { scope: 'agents:write', write: true, spend: true }, (ctx) => svc.acceptBid(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
 	['POST', 'bids/:id/reject', { scope: 'agents:write', write: true }, (ctx) => svc.rejectBid(ctx.user, ctx.params.id)],
 	['POST', 'bids/:id/withdraw', { scope: 'wallet:trade', write: true }, (ctx) => svc.withdrawBid(ctx.user, ctx.params.id, { confirm: ctx.body.confirm === true })],
 	['GET', 'transfers/:id', { scope: 'agents:read' }, (ctx) => svc.getTransferForViewer(ctx.params.id, ctx.user)],
-	['POST', 'transfers/:id/resume', { scope: 'agents:write', write: true }, (ctx) => svc.resumeTransfer(ctx.user, ctx.params.id)],
+	['POST', 'transfers/:id/resume', { scope: 'agents:write', write: true, spend: true }, (ctx) => svc.resumeTransfer(ctx.user, ctx.params.id)],
 ];
 
 function match(segs) {

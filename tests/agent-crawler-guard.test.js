@@ -1,6 +1,6 @@
 // The Crawl worker's network fence (workers/agent-crawler/guard.js): every
 // address a crawled page reaches is checked here before the browser connects.
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { guardHost, guardedFetch, isBlockedAddress } from '../workers/agent-crawler/guard.js';
 
 describe('isBlockedAddress', () => {
@@ -65,5 +65,31 @@ describe('guardedFetch redirects', () => {
 	it('refuses a non-http scheme in a redirect', async () => {
 		globalThis.fetch = async () => new Response(null, { status: 302, headers: { location: 'file:///etc/passwd' } });
 		await expect(guardedFetch('https://8.8.8.8/x')).rejects.toThrow();
+	});
+});
+
+describe('guardedLookup (DNS rebinding)', () => {
+	it('re-checks the answer at connect time, so a flipped record is refused', async () => {
+		const dns = (await import('node:dns/promises')).default;
+		const { guardedLookup } = await import('../workers/agent-crawler/guard.js');
+		const answers = [[{ address: '8.8.8.8', family: 4 }], [{ address: '169.254.169.254', family: 4 }]];
+		const spy = vi.spyOn(dns, 'lookup').mockImplementation(async () => answers.shift());
+		const lookup = (host) => new Promise((resolve) => guardedLookup(host, { all: true }, (err, addrs) => resolve({ err, addrs })));
+		const first = await lookup('rebind.example');
+		expect(first.err).toBeNull();
+		expect(first.addrs[0].address).toBe('8.8.8.8');
+		const second = await lookup('rebind.example');
+		expect(second.err?.message).toMatch(/refused private host/);
+		spy.mockRestore();
+	});
+
+	it('connects a hostname only through the pinned lookup, never through global fetch', async () => {
+		const dns = (await import('node:dns/promises')).default;
+		const spy = vi.spyOn(dns, 'lookup').mockResolvedValue([{ address: '10.0.0.5', family: 4 }]);
+		let fetched = false;
+		globalThis.fetch = async () => { fetched = true; return new Response('x'); };
+		await expect(guardedFetch('http://public-looking.example/robots.txt')).rejects.toThrow();
+		expect(fetched).toBe(false);
+		spy.mockRestore();
 	});
 });

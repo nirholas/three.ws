@@ -22,7 +22,7 @@
 // prompt to benchmark p95 latency and alert when it exceeds 3 seconds
 // (api/_lib/x402/autonomous-registry.js → 'llm-proxy-latency').
 //
-// Body:  { model: "fast"|"smart"|string, prompt: string, max_tokens?: number }
+// Body:  { model: "fast"|"smart"|"claude-haiku-4-5-20251001", prompt: string, max_tokens?: number }
 // Price: $0.005 USDC (5 000 atomics)  -  covers one cheap completion
 //
 // Response 200:
@@ -65,16 +65,21 @@ function uptoChargeFor(tokensUsed) {
 // Map the caller-facing model alias to llmComplete options.
 // "fast"  → Groq leads the free chain (sub-second latency, sufficient for short prompts)
 // "smart" → same chain, Anthropic backstop moves to the preferred position via anthropicModel
-// any other string → treated as a direct anthropicModel hint (falls through to paid backstop)
+// Only the models the flat per-token rate was priced for are accepted. Any
+// other string would flow verbatim to the paid Anthropic/Vertex lanes and let a
+// caller pick a model that costs more than UPTO_ATOMICS_PER_TOKEN covers.
+const PRICED_ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 function resolveModelOpts(modelAlias) {
-	if (!modelAlias || modelAlias === 'fast') {
+	if (modelAlias === 'fast') {
 		return { preferNvidia: false }; // default free chain, Groq leads
 	}
-	if (modelAlias === 'smart') {
-		return { anthropicModel: 'claude-haiku-4-5-20251001', preferNvidia: false };
+	if (modelAlias === 'smart' || modelAlias === PRICED_ANTHROPIC_MODEL) {
+		return { anthropicModel: PRICED_ANTHROPIC_MODEL, preferNvidia: false };
 	}
-	// Treat the string as an explicit anthropicModel (last-resort paid lane only).
-	return { anthropicModel: String(modelAlias), preferNvidia: false };
+	const err = new Error('"model" must be "fast", "smart", or "' + PRICED_ANTHROPIC_MODEL + '"');
+	err.status = 400;
+	err.code = 'invalid_model';
+	throw err;
 }
 
 // Single source of truth: api/_lib/service-catalog/services/llm-proxy.js is
@@ -97,7 +102,7 @@ const INPUT_SCHEMA = {
 		model: {
 			type: 'string',
 			default: 'fast',
-			description: '"fast" (default, Groq), "smart" (Anthropic Haiku), or a specific model string.',
+			description: '"fast" (default, Groq), "smart" (Anthropic Haiku), or the pinned Haiku model id.',
 		},
 		prompt: {
 			type: 'string',
@@ -231,7 +236,7 @@ export default paidEndpoint({
 		}
 
 		const maxTokens = Math.min(Math.max(parseInt(body?.max_tokens ?? 256, 10) || 256, 1), 2048);
-		const modelAlias = body?.model || 'fast';
+		const modelAlias = body?.model ?? 'fast';
 		const opts = resolveModelOpts(modelAlias);
 
 		const t0 = Date.now();

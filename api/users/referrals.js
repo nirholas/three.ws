@@ -1,4 +1,4 @@
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { cors, json, error, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getMembershipCard, getReferredUsers, getReferralFunnel } from '../_lib/referrals.js';
@@ -21,6 +21,8 @@ export default wrap(async (req, res) => {
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in required');
+	if (bearer && !hasScope(bearer.scope, 'profile'))
+		return error(res, 403, 'insufficient_scope', 'requires profile scope');
 	const userId = session?.id ?? bearer.userId;
 
 	const rl = await limits.authedReadIp(clientIp(req));

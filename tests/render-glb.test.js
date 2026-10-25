@@ -21,6 +21,42 @@ describe('renderGlbToPng — input validation', () => {
 	});
 });
 
+describe('render request lockdown: chromium must not fetch GLB-referenced URLs', () => {
+	const base = 'https://unpkg.com/three@0.176.0/';
+
+	it('allows inline payloads and the pinned three.js modules only', async () => {
+		const { isAllowedRenderRequestUrl } = await import('../api/_lib/render-glb.js');
+		expect(isAllowedRenderRequestUrl('data:image/png;base64,AAAA', base)).toBe(true);
+		expect(isAllowedRenderRequestUrl('blob:null/abc', base)).toBe(true);
+		expect(isAllowedRenderRequestUrl(`${base}build/three.module.js`, base)).toBe(true);
+		expect(isAllowedRenderRequestUrl('http://169.254.169.254/x.png', base)).toBe(false);
+		expect(isAllowedRenderRequestUrl('http://10.0.0.5/tex.png', base)).toBe(false);
+		expect(isAllowedRenderRequestUrl('https://unpkg.com/evil@1.0.0/x.js', base)).toBe(false);
+	});
+
+	it('aborts a request for an http image URI and continues an allowed one', async () => {
+		const { lockDownPageRequests } = await import('../api/_lib/render-glb.js');
+		let handler;
+		let intercept = false;
+		const page = {
+			setRequestInterception: async (v) => { intercept = v; },
+			on: (ev, fn) => { if (ev === 'request') handler = fn; },
+		};
+		await lockDownPageRequests(page, base);
+		expect(intercept).toBe(true);
+		const mk = (url) => {
+			const calls = [];
+			return { calls, url: () => url, continue: async () => calls.push('continue'), abort: async () => calls.push('abort') };
+		};
+		const bad = mk('http://169.254.169.254/latest/meta-data');
+		const good = mk(`${base}build/three.module.js`);
+		handler(bad);
+		handler(good);
+		expect(bad.calls).toEqual(['abort']);
+		expect(good.calls).toEqual(['continue']);
+	});
+});
+
 // A batch runner charges a bounded retry against a model each time its render
 // fails. If chromium is OOM-killed mid-batch, every remaining render fails
 // instantly with "Connection closed." — and without this classifier the runner

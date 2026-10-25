@@ -4,7 +4,9 @@
 // message with verdict headers before we see it:
 //   X-SES-Spam-Verdict   PASS | FAIL | GRAY | PROCESSING_FAILED
 //   X-SES-Virus-Verdict  PASS | FAIL | GRAY | PROCESSING_FAILED
-//   Authentication-Results  spf=, dkim=, dmarc= results for the sender
+//   Authentication-Results  spf=, dkim=, dmarc= results for the sender; only the
+//                        topmost instance whose authserv-id is a trusted receiver
+//                        (amazonses.com, plus MAIL_AUTHSERV_IDS) is read
 // scoreInbound() folds those into one 0 to 10 score we store and show. Nothing
 // here trusts the sender: a missing header counts as "unknown", never as a pass.
 
@@ -13,6 +15,41 @@ function header(headers, name) {
 	const want = name.toLowerCase();
 	for (const [k, v] of Object.entries(headers)) {
 		if (String(k).toLowerCase() === want) return Array.isArray(v) ? v.join(', ') : String(v);
+	}
+	return null;
+}
+
+// Every instance of a header, in delivered order (topmost first).
+function headerValues(headers, name) {
+	if (!headers) return [];
+	const want = name.toLowerCase();
+	const out = [];
+	for (const [k, v] of Object.entries(headers)) {
+		if (String(k).toLowerCase() !== want) continue;
+		for (const item of Array.isArray(v) ? v : [v]) out.push(String(item));
+	}
+	return out;
+}
+
+// authserv-ids of the receiving MTA whose Authentication-Results we believe.
+// Any other instance was added by the sender or an upstream hop and is ignored.
+function trustedAuthservIds() {
+	const extra = String(process.env.MAIL_AUTHSERV_IDS || '')
+		.split(',')
+		.map((x) => x.trim().toLowerCase())
+		.filter(Boolean);
+	return new Set(['amazonses.com', ...extra]);
+}
+
+/**
+ * The topmost Authentication-Results instance stamped by a trusted receiving
+ * MTA, or null. Missing means unknown, which parses to all "none" (fail closed).
+ */
+function trustedAuthResults(headers) {
+	const trusted = trustedAuthservIds();
+	for (const value of headerValues(headers, 'authentication-results')) {
+		const id = value.trim().split(';')[0].trim().split(/\s+/)[0].toLowerCase();
+		if (trusted.has(id)) return value;
 	}
 	return null;
 }
@@ -27,12 +64,21 @@ function verdict(v) {
 /** Parse spf/dkim/dmarc results out of an Authentication-Results header. */
 export function parseAuthResults(value) {
 	const out = { spf: 'none', dkim: 'none', dmarc: 'none' };
-	const s = String(value || '');
+	const s = String(value || '').replace(/\([^)]*\)/g, ' ');
 	for (const key of Object.keys(out)) {
 		const m = s.match(new RegExp(`\\b${key}\\s*=\\s*([a-z]+)`, 'i'));
 		if (m) out[key] = m[1].toLowerCase();
 	}
 	return out;
+}
+
+/**
+ * True only when the receiving MTA reported DMARC pass, meaning the From domain
+ * is authenticated and aligned. Missing or unparseable results fail closed, so
+ * automation never keys off a sender the pipeline could not verify.
+ */
+export function isAuthenticatedSender(auth) {
+	return String(auth?.dmarc || '').toLowerCase() === 'pass';
 }
 
 /**
@@ -43,7 +89,7 @@ export function parseAuthResults(value) {
 export function scoreInbound(headers) {
 	const spamVerdict = verdict(header(headers, 'x-ses-spam-verdict'));
 	const virusVerdict = verdict(header(headers, 'x-ses-virus-verdict'));
-	const auth = parseAuthResults(header(headers, 'authentication-results'));
+	const auth = parseAuthResults(trustedAuthResults(headers));
 
 	let score = 0;
 	if (spamVerdict === 'FAIL') score += 6;

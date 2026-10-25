@@ -11,6 +11,30 @@ import {
 
 const MAX_R2_BYTES = 50 * 1024 * 1024;
 
+// Pins land on the platform's metered provider account, so each user gets a
+// rolling 24h byte budget in addition to the hourly request limit.
+const DAILY_PIN_BYTES = 100 * 1024 * 1024;
+
+/**
+ * The bytes must be what `kind` claims: a glTF binary starts with the "glTF"
+ * magic, a manifest is a JSON object. Returns an error message or null.
+ */
+function contentMismatch(kind, buf) {
+	if (kind === 'glb') {
+		return buf.byteLength >= 12 && buf.subarray(0, 4).toString('latin1') === 'glTF'
+			? null
+			: 'kind "glb" requires a glTF binary (missing glTF header)';
+	}
+	try {
+		const parsed = JSON.parse(buf.toString('utf8'));
+		return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+			? null
+			: 'kind "manifest" requires a JSON object';
+	} catch {
+		return 'kind "manifest" requires valid JSON';
+	}
+}
+
 // The inline lane's real ceiling is the request body, not the decoded payload.
 //
 // `readJson` defaults to a 1,000,000-byte limit, and this handler used to take
@@ -138,10 +162,12 @@ function ensurePinsTable() {
 				kind       text         not null,
 				created_at timestamptz  not null default now()
 			)
-		`.catch((err) => {
-			pinsTableReady = null;
-			throw err;
-		});
+		`
+			.then(() => sql`alter table pins add column if not exists byte_length bigint not null default 0`)
+			.catch((err) => {
+				pinsTableReady = null;
+				throw err;
+			});
 	}
 	return pinsTableReady;
 }
@@ -300,6 +326,9 @@ export default wrap(async (req, res) => {
 			}
 		}
 
+		const mismatch = contentMismatch(kind, buf);
+		if (mismatch) return error(res, 400, 'validation_error', mismatch);
+
 		// Checked here rather than ahead of the validation above, so a caller who
 		// sent an oversized payload or a source URL we do not own always learns
 		// that from a 4xx. Ordered the other way, a deployment missing its provider
@@ -314,13 +343,27 @@ export default wrap(async (req, res) => {
 			);
 		}
 
+		await ensurePinsTable();
+		const [usage] = await sql`
+			select coalesce(sum(byte_length), 0)::bigint as used
+			from pins
+			where user_id = ${userId} and created_at > now() - interval '24 hours'
+		`;
+		if (Number(usage?.used ?? 0) + buf.byteLength > DAILY_PIN_BYTES) {
+			return error(
+				res,
+				429,
+				'pin_quota_exceeded',
+				`daily pinning quota of ${DAILY_PIN_BYTES / (1024 * 1024)} MB reached; try again later`,
+			);
+		}
+
 		const pinned = await pinToIPFS(buf, filename);
 		const { cid, provider } = pinned;
 
-		await ensurePinsTable();
 		await sql`
-			insert into pins (user_id, source_url, cid, provider, kind)
-			values (${userId}, ${sourceUrlForRecord(sourceUrl, buf.byteLength)}, ${cid}, ${provider}, ${kind})
+			insert into pins (user_id, source_url, cid, provider, kind, byte_length)
+			values (${userId}, ${sourceUrlForRecord(sourceUrl, buf.byteLength)}, ${cid}, ${provider}, ${kind}, ${buf.byteLength})
 		`;
 
 		return json(res, 200, {

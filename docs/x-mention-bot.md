@@ -124,6 +124,11 @@ automatic safety guard below, decides, composes a reply, and records (or, with
 also calls `runFollowUps()` for jobs that outlived a mention's bounded wait;
 see "Late replies" below.
 
+Once `handleMention` has recorded a mention row, any throw (the kill-switch
+read, the ignore branch, the guard, the brain, the send) is caught and written
+back as `decision = 'error'`. A row is never left at `decision = null` by a
+failure, because the next tick sees it as a duplicate and would never revisit it.
+
 ## The automatic safety guard
 
 Every mention `runMentionTick` hands to `handleMention` is checked by
@@ -401,7 +406,10 @@ Two surfaces, same signals, different audiences:
   oldest-undecided lag, or more than 20% hourly error rate at a minimum
   5-decision sample (so one early error never flaps it); `paused` always
   wins over lag or errors, since mentions are still recorded while paused,
-  just never decided or sent.
+  just never decided or sent. Rows whose `account_ref` ends in `-evidence`
+  (the synthetic account the `scripts/x-mention-*-dry-run.mjs` scripts write
+  under) are excluded from these aggregates, so test fixtures never feed the
+  live signal.
 - **Public:** `GET /api/x/mention-bot/status`
   ([`api/x/mention-bot/status.js`](../api/x/mention-bot/status.js)), rate
   limited and cached 60s, returns `status`, `mode`, `handlesServed`,

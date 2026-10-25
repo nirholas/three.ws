@@ -231,8 +231,9 @@ number or an unsubscribe link is not offered. Pass `from` or compare
 
 1. the sender must be on `code_senders`;
 2. the message must be authentic: delivered inside the platform, or DMARC
-   pass, or SPF and DKIM both pass, so a forged `From` on a listed domain is
-   skipped (the result counts it under `skipped.sender_not_authenticated`);
+   pass (SPF and DKIM passing for some other domain proves nothing about the
+   `From` address, so they no longer count on their own), so a forged `From` on
+   a listed domain is skipped (the result counts it under `skipped.sender_not_authenticated`);
 3. the message must not be filed as spam.
 
 Only the matched value leaves the extractor: it matches a strict character

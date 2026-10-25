@@ -76,7 +76,7 @@ For each missing day, `daily`:
 1. Films the feature's scenario against production with `proveItem`. The run's read values (counts, statuses) become facts the copy may quote. A feature whose scenario fails is skipped for the rest of the run, and the next partner in the rotation takes the day.
 2. Builds a brief from the registry entry, the head and pattern, and the names of the other partners (so the copy can be checked for partners the feature does not involve).
 3. Asks the model chain (`callModelChain`) for `{ post, thread, headline, body, prompt, why }`, with the house voice ([announce-voice.md](announce-voice.md)) and the keeper exemplar in the system prompt.
-4. Lints the draft and sends every finding back for a rewrite, up to three attempts.
+4. Lints the draft and sends every finding back for a rewrite, up to three attempts. Each language finding names the post it belongs to (`head`, `reply 2`, `headline`, `body`), and the links rule lists the links it found, including a bare `three.ws` that X turns into a link, so the rewrite touches the right post.
 5. Builds the queue item (`itemFor`), attaches the reel, builds the head from it (`rebuildHead`), validates it, writes the story to `data/x-content/stories/<id>.json`, and hands it to `x:content adopt` and `advance`.
 
 The series lint (`seriesFindings`) adds these rules on top of the pipeline's own:
@@ -84,6 +84,7 @@ The series lint (`seriesFindings`) adds these rules on top of the pipeline's own
 - The designation appears word for word. No `forbidden` phrase appears.
 - No @mentions anywhere: a tag puts a partner's name next to ours, and that is a person's decision.
 - The head post names the partner and links the feature's surface. One reply links the partner's page.
+- One link per post (a bare `three.ws` counts as one).
 - Three to five replies, and at least three registry facts quoted, in plain prose rather than quotation marks.
 - No copy about where the media sits ("this reply", "the card above").
 - No other partner is named unless the feature's own facts name it.
@@ -116,9 +117,9 @@ Spotlights are tier 1, which normally waits for the owner. `"series": ["partners
 Once every seven days the series also writes a partner deep-dive as an X Article: one partner, every feature in its registry entry, filmed and measured that day. `daily` writes it when it is due (`--no-article` skips it), and `article --partner <id>` writes one on demand.
 
 1. Every feature's scenario is filmed against production. The lead feature's run binds to the Article's own id, so its reel is the proof the Article's post carries; the others are filmed under `<id>-<feature>`. Four or more frames from the reels become inline figures in `public/x-media/<id>/`, and the cover is built from the lead reel.
-2. `articleBlocks` builds the Article's code and tables from data, never from the model: a table of the runs (surface, length, values read), a facts table per feature with the evidence behind each sentence, each scenario as JSON, and for API surfaces the real request with the response production returned.
+2. `articleBlocks` builds the Article's code and tables from data, never from the model: a table of the runs (surface, length, values read), a step log per feature (each step, its target, pass or fail and timing), a facts table per feature with the evidence behind each sentence, each scenario as JSON, for API surfaces the real request with the response production returned, and a roster table of every partner on the partners page with its designation and what three.ws built on it. The step log and roster keep a single-feature partner above the gate's code and table minimum.
 3. The model writes the prose around them as `TITLE / POST / --- / markdown`, placing every block once as `{{block:NAME}}` and the figures as `{{figure:N}}`. `assembleArticle` substitutes them and names any block missing, repeated or unknown.
-4. The draft must pass the queue's Article gate (an 80 to 100 character title, 2400 words over at least eight sections, at least four images, enough code and tables, a section on every partner listed on the partners page, a Try it section) plus the series lint, with every finding fed back for up to three attempts.
+4. The draft must pass the queue's Article gate (an 80 to 100 character title, 2400 words over at least eight sections, at least four images, enough code and tables, a section on every partner listed on the partners page, a Try it section) plus the series lint, with every finding fed back for up to three attempts. The model gets a 16,000 token budget for the Article.
 5. Claims come from the designation, the registry facts the prose quotes, and the lead run's values only (a non-lead run is not the proof the post carries, so its numbers stay in the tables). The item is a tier 1 Article with `spotlight: { partner, article: true, features }`, written to `data/x-content/articles/<id>.md` and handed to `adopt` and `advance`.
 
 Rotation goes to the partner whose last Article is oldest, ties by `order`. Articles post in the queue's Article slot, not the series slot, and wait for the owner's `approve` like any tier 1 Article.
@@ -136,13 +137,13 @@ npm run x:partners -- article --partner ibm --dry-run   # film and draft the dee
 
 `--ship` on `daily` or `one` passes `--ship` to `advance`, which bundles approved spotlights for production through the overlay ([x-content-pipeline.md](x-content-pipeline.md), "Publishing without a deploy"). Shipping publishes, so it is an owner-approved step.
 
-To keep the series in stock unattended, run `daily` once a day on a machine with a browser and ffmpeg, after materializing production's overlay:
+To keep the series in stock unattended, run `daily` once a day on a machine with a browser and ffmpeg, after materializing production's overlay (the bundles live on Google Cloud Storage when `X_CONTENT_BUNDLE_BUCKET` is set, otherwise on R2; the first pull on a bucket never published to succeeds with an empty overlay):
 
 ```bash
 npm run x:bundle -- pull --dir /tmp/x-overlay
 npm run x:partners -- daily --days 3 --overlay /tmp/x-overlay --ship
 ```
 
-That run is packaged as a Cloud Run Job. [deploy/x-partners/](../deploy/x-partners/) holds the image (Node, Chromium, ffmpeg and a colour emoji font, so the reels film the way they do on a workstation) and its entrypoint, which pulls the overlay and runs `daily --days 3 --ship`. `node scripts/create-x-partners-job.mjs` prints the plan; `--apply` builds the image, creates the job `three-ws-x-partners` with the production service's env and secret references, and schedules it daily at 08:10 UTC through Cloud Scheduler. Applying it ships posts unattended, so it is an owner-approved step.
+That run is packaged as a Cloud Run Job. [deploy/x-partners/](../deploy/x-partners/) holds the image (Node, Chromium, ffmpeg and a colour emoji font, so the reels film the way they do on a workstation) and its entrypoint, which pulls the overlay and runs `daily --days 3 --ship`. `node scripts/create-x-partners-job.mjs` prints the plan; `--apply` builds the image, creates the job `three-ws-x-partners` with the production service's env and secret references, and schedules it daily at 08:10 UTC through Cloud Scheduler. The task times out after three hours (10800 s) and never retries, because three spotlights plus the weekly deep dive outran the earlier one-hour limit. Applying it ships posts unattended, so it is an owner-approved step.
 
 Keeping three days in stock means a failed run, a flaky surface, or a model outage costs nothing: the slot still has a reviewed spotlight waiting.

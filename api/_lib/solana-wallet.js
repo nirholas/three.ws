@@ -11,8 +11,14 @@ import { recoverSolanaAgentKeypair } from './agent-wallet.js';
  *   { publicKey, signTransaction(tx), sendAndConfirm(tx, conn) }
  * publicKey is a PublicKey (not a string) so it can be used with web3.js directly.
  */
-export async function loadWallet(encryptedSecret) {
-	const kp = await recoverSolanaAgentKeypair(encryptedSecret);
+export async function loadWallet(encryptedSecret, audit) {
+	if (!audit?.agentId) {
+		throw Object.assign(new Error('loadWallet requires audit.agentId so the signing mode is enforced and the key use is recorded'), {
+			status: 500,
+			code: 'audit_required',
+		});
+	}
+	const kp = await recoverSolanaAgentKeypair(encryptedSecret, audit);
 
 	function signTransaction(tx) {
 		if (tx instanceof VersionedTransaction) {

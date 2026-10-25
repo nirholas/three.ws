@@ -48,6 +48,22 @@ export function clampTermBps(value, bound) {
 	return Math.max(bound.min, Math.min(bound.max, n));
 }
 
+/**
+ * Which terms in `patch` leave the backers worse off than the terms they joined
+ * under: a higher performance fee, a looser drawdown breaker, or a larger
+ * per-trade or daily spend ceiling. Returns the patch keys that do. The caller
+ * refuses these while the vault has outstanding shares; lowering any of them,
+ * or touching the per-backer cap (which only gates new deposits), is always fine.
+ */
+export function backerHostileTermChanges(vault, patch) {
+	const hostile = [];
+	if (patch.performanceFeeBps != null && patch.performanceFeeBps > Number(vault.performance_fee_bps)) hostile.push('performanceFeeBps');
+	if (patch.maxDrawdownBps != null && patch.maxDrawdownBps > Number(vault.max_drawdown_bps)) hostile.push('maxDrawdownBps');
+	if (patch.maxPerTradeAtomics != null && patch.maxPerTradeAtomics > toBig(vault.max_per_trade_atomics)) hostile.push('maxPerTradeUsdc');
+	if (patch.dailyBudgetAtomics != null && patch.dailyBudgetAtomics > toBig(vault.daily_budget_atomics)) hostile.push('dailyBudgetUsdc');
+	return hostile;
+}
+
 /** Coerce a value (BigInt | number | numeric-string | null) to BigInt atomics. */
 export function toBig(v) {
 	if (typeof v === 'bigint') return v;

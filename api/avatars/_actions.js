@@ -16,7 +16,8 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { isValidGlbHeader } from '../_lib/glb-inspect.js';
-import { isPrivateIPv4, isPrivateIPv6 } from '../_lib/ip-classify.js';
+import { pickReconstructParams } from '../_lib/reconstruct-params.js';
+import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../_lib/ssrf-guard.js';
 import { getRegenProviderCandidates, getRegenProviderByName, getRegenProviderForJob, BYOK_REGEN_PROVIDERS } from '../_lib/regen-provider.js';
 import { resolveProviderKey } from '../_lib/forge-provider-key.js';
 import { finalizeReconstructStage, pollRiggingStage } from '../_lib/reconstruct-finalize.js';
@@ -247,65 +248,44 @@ const handleUpload = wrap(async (req, res) => {
 // points at loopback, private, link-local, or cloud-metadata ranges before a
 // single byte is read. Streamed with a hard byte cap and a wall-clock timeout.
 const REMOTE_FETCH_TIMEOUT_MS = 20_000;
-const MAX_REMOTE_REDIRECTS = 5;
 
-async function fetchRemoteGlb(rawUrl, maxBytes) {
+export async function fetchRemoteGlb(rawUrl, maxBytes) {
 	let target;
 	try {
 		target = new URL(rawUrl);
 	} catch {
 		throw fetchError(400, 'invalid_url', 'source_url is not a valid URL');
 	}
-	const ac = new AbortController();
-	const timer = setTimeout(() => ac.abort(), REMOTE_FETCH_TIMEOUT_MS);
+	if (!['http:', 'https:'].includes(target.protocol)) {
+		throw fetchError(400, 'unsupported_scheme', 'only http(s) URLs can be imported');
+	}
 	try {
-		let resp;
-		for (let hop = 0; hop <= MAX_REMOTE_REDIRECTS; hop++) {
-			if (!['http:', 'https:'].includes(target.protocol)) {
-				throw fetchError(400, 'unsupported_scheme', 'only http(s) URLs can be imported');
-			}
-			await assertPublicHost(target.hostname);
-			resp = await fetch(target.href, {
-				redirect: 'manual',
-				signal: ac.signal,
+		// IP-pinned: every hop's address is validated and the socket connects to
+		// exactly that address, so DNS cannot change between check and connect.
+		const resp = await fetchSafePublicUrlPinned(
+			target.href,
+			{
+				signal: AbortSignal.timeout(REMOTE_FETCH_TIMEOUT_MS),
 				headers: { accept: 'model/gltf-binary,application/octet-stream,*/*' },
-			});
-			if (resp.status >= 300 && resp.status < 400 && resp.headers.get('location')) {
-				if (hop === MAX_REMOTE_REDIRECTS) throw fetchError(502, 'too_many_redirects', 'source URL redirected too many times');
-				target = new URL(resp.headers.get('location'), target);
-				continue;
-			}
-			break;
-		}
+			},
+			{ allowHttp: true, maxBytes },
+		);
 		if (!resp.ok) throw fetchError(502, 'fetch_failed', `source URL returned HTTP ${resp.status}`);
-
-		const declared = Number(resp.headers.get('content-length'));
-		if (Number.isFinite(declared) && declared > maxBytes) {
-			throw fetchError(413, 'payload_too_large', `source file is ${declared} bytes — max ${maxBytes}`);
-		}
-
-		const reader = resp.body?.getReader();
-		if (!reader) throw fetchError(502, 'empty_body', 'source URL returned no body');
-		const chunks = [];
-		let total = 0;
-		for (;;) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			total += value.length;
-			if (total > maxBytes) {
-				await reader.cancel();
-				throw fetchError(413, 'payload_too_large', `source file exceeds ${maxBytes} bytes`);
-			}
-			chunks.push(value);
-		}
-		return Buffer.concat(chunks.map((c) => Buffer.from(c)));
+		return Buffer.from(await resp.arrayBuffer());
 	} catch (err) {
+		if (err instanceof SsrfBlockedError) {
+			console.warn('[avatar-upload] ssrf blocked:', err.message);
+			throw fetchError(400, 'blocked_host', 'source_url host is not allowed');
+		}
+		if (err instanceof MaxBytesExceededError) {
+			throw fetchError(413, 'payload_too_large', `source file exceeds ${maxBytes} bytes`);
+		}
 		if (err.code && err.status) throw err;
-		if (err.name === 'AbortError') throw fetchError(504, 'fetch_timeout', 'source URL timed out');
+		if (err.name === 'AbortError' || err.name === 'TimeoutError' || /abort|timed? ?out/i.test(err?.message || '')) {
+			throw fetchError(504, 'fetch_timeout', 'source URL timed out');
+		}
 		console.warn('[avatar-upload] remote fetch failed:', err?.message);
 		throw fetchError(502, 'fetch_failed', 'could not fetch the source URL');
-	} finally {
-		clearTimeout(timer);
 	}
 }
 
@@ -314,36 +294,6 @@ function fetchError(status, code, message) {
 	err.status = status;
 	err.code = code;
 	return err;
-}
-
-// Reject hostnames that resolve to non-public address space (SSRF defense).
-async function assertPublicHost(hostname) {
-	const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
-	if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal') || host.endsWith('.local')) {
-		console.warn('[avatar-upload] ssrf blocked: reserved hostname', host);
-		throw fetchError(400, 'blocked_host', 'source_url host is not allowed');
-	}
-	const { lookup } = await import('dns/promises');
-	let records;
-	try {
-		records = await lookup(host, { all: true });
-	} catch {
-		throw fetchError(400, 'dns_failure', 'could not resolve source_url host');
-	}
-	for (const { address } of records) {
-		if (isPrivateAddress(address)) {
-			console.warn('[avatar-upload] ssrf blocked: private address', host, '->', address);
-			throw fetchError(400, 'blocked_host', 'source_url resolves to a non-public address');
-		}
-	}
-}
-
-// Shared classifier (api/_lib/ip-classify.js): a hand-rolled copy here only
-// recognised the dotted `::ffff:a.b.c.d` spelling, so `[::ffff:7f00:1]` (the
-// same loopback address, in the form the URL parser itself normalizes to)
-// sailed through to the fetch.
-function isPrivateAddress(ip) {
-	return ip.includes(':') ? isPrivateIPv6(ip) : isPrivateIPv4(ip);
 }
 
 function readRawBody(req, limit) {
@@ -1227,7 +1177,7 @@ const handleReconstruct = wrap(async (req, res) => {
 			submission = await submitWithTransientRetry(provider.instance, {
 				userId,
 				mode: provider.mode,
-				params: { ...(body.params ?? {}), ...provider.params, images: photos, name: body.name },
+				params: { ...pickReconstructParams(body.params), ...provider.params, images: photos, name: body.name },
 				sourceUrl: photos[0],
 			});
 			usedProvider = provider;

@@ -278,9 +278,10 @@ export async function confirmBuy({ buyerAgentId, previewId }) {
 			reference: invoice.reference,
 			memo: invoiceChainMemo(invoice.number),
 			category: 'purchase',
-			// The destination is the seller agent's platform wallet, resolved here
-			// from the offer, never from the caller. Every numeric cap still runs.
-			destinationTrust: 'system',
+			// The seller wallet is resolved from an offer the buying agent picked, not
+			// one the owner approved, so it gets no destination trust: when the owner
+			// has switched the allowlist on, the seller must be on it. Every numeric
+			// cap runs either way.
 			rowMeta: { action: 'agent_buy', order_id: order.id, offer_id: offer.id, invoice_id: invoice.id },
 		});
 	} catch (err) {

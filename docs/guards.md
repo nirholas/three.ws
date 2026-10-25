@@ -60,7 +60,7 @@ The order inside this chain is load-bearing. The frontend build empties `dist/`,
 npm run deploy:gcp:submit
 ```
 
-The last gate before code leaves the machine, and the only one that can see the finished artifact and the database it is about to ship over at the same time. It checks that no migration is pending, that nothing the server imports at runtime would be excluded from the build context, and that the decoder assets `dist/` must carry are really there. A failure here is still cheap: nothing has been deployed.
+The last gate before code leaves the machine, and the only one that can see the finished artifact and the database it is about to ship over at the same time. It checks that no migration is pending, that nothing the server imports at runtime would be excluded from the build context, that the decoder assets `dist/` must carry are really there, and that every handler and shared module under `api/` still imports without throwing. A failure here is still cheap: nothing has been deployed.
 
 ### Pre-push
 
@@ -71,6 +71,8 @@ The hook checks the CLAUDE.md hard rules against **exactly the commits being pus
 ```
 node scripts/check-rules.mjs --base <remote sha> --head <local sha>
 ```
+
+The same run also lints the subject line of every pushed commit: a generic subject such as `sync working tree`, `wip` or `update`, or one shorter than 15 characters after the type prefix, rejects the push. Fix it with `git commit --amend` (last commit) or a rebase. Merge commits and the neutral revert wording are exempt.
 
 That scoping is the whole design. Several agents share this working tree, so a check against the worktree would block your push over somebody else's half-finished file. Diffing two commits sees only your work. It also means a violation introduced and fixed within the same push range does not block, because the two-endpoint diff shows the net result.
 
@@ -167,6 +169,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | 3D Studio OpenAPI sync | `npm run check:studio-openapi` | The Actions file in the OpenAI submission kit is byte-identical to the OpenAPI schema the site serves. |
 | Live event window | `npm run check:event` | `public/event.json` describes an event that will actually happen, on every surface that reads it. |
 | Cron schedule drift | `npm run check:cron-syntax`, `npm run check:cron-drift` | Valid expressions, and agreement with the running Cloud Scheduler jobs. |
+| Cron budget wiring | `npm run check:cron-budget-wiring` | Every cron that `vercel.json` grants more than the 120s default budget exports a matching `maxDuration` and passes it to `wrapCron` as `maxDurationMs`, so a long cron cannot answer 503 `cron_timeout` at the default. |
 
 ### Build and deploy
 
@@ -199,14 +202,13 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Fleet wallet flows | `npm run audit:wallet-flows` | Where the platform's SOL is, where it went, and whether any is leaking. |
 | Relayer balances | `npm run check:relayer-balances` | Every configured Solana signer is above its documented minimum. |
 | LLM spend metering | `npm run audit:llm-metering` | Every LLM lane that spends money reports a real cost, never exactly $0 and never an unknown. |
-| Grok model catalog | `npm run check:xai-models` | Every Grok model id the platform routes to is one xAI still serves, no new xAI chat model goes uncatalogued, and each catalogued price, context window and capability matches xAI's own figures. Reads the xAI models API with a key, xAI's public model docs without one. |
+| Grok model catalog | `npm run check:xai-models` | Every Grok model id in `GROK_MODELS` (`api/_lib/chat-models.js`) is one xAI still serves, every chat model xAI serves is catalogued, and each catalogued price, context window, image input, tool calling and reasoning-effort set matches xAI's own figures, so no failover rung calls a retired model and Grok spend is metered at the real price. Reads the xAI models API with a key, xAI's public model docs without one. |
 | Cron liveness | `npm run audit:cron-liveness` | Each cron in `vercel.json` resolves to a handler that exists, imports, answers a live request, and refuses an unauthenticated one. |
 | Custodial key health | `npm run audit:custodial-keys` | Every stored custodial Solana secret still decrypts under the current `WALLET_ENCRYPTION_KEY`. |
 | Home credential health | `npm run audit:home-credentials` | Every stored Home Assistant token still decrypts under the current `WALLET_ENCRYPTION_KEY`, so no connected house is sealed. |
 | Hands-free voice loop | `npm run check:home-voice` | Nothing about listening loads before opt-in, an ambient "yeah" never confirms a guarded action, and the agent does not wake itself. |
 | Delegation contract addresses | `npm run check:erc7710` | Every delegation-manager address is a deployed contract. |
 | Connector reviewer path | `npm run audit:mcp-reviewer` | Every paid tool on the published stdio server answers an unpaid call with a clean, priced x402 challenge, and the reviewer entitlement lifts the paywall only for the right secret. |
-| Grok model catalog | `npm run check:xai-models` | Every Grok id in `api/_lib/chat-models.js` is one xAI still serves, every chat model xAI serves is catalogued, and the context windows and prices match, so no failover rung calls a retired model and Grok spend is metered at the real price. Needs network. |
 | Earnings board agreement | `npm run check:earnings-board` | Every row of the live earnings leaderboard matches that agent's own Earned card over the same window: creator fees, service income, total and rank. Read-only; `--base <url>` points it at a local server. |
 
 ---

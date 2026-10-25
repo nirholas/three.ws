@@ -185,6 +185,23 @@ describe('ranking', () => {
 		expect(res.items).toHaveLength(0);
 	});
 
+	it('tells a storage failure apart from a legitimately empty result and does not memoize it', async () => {
+		const healthy = getPublicObjectBuffer.getMockImplementation();
+		getPublicObjectBuffer.mockImplementation(async (key) => {
+			if (key === 'objects/library/manifest.json') throw new Error('R2 request failed: 500');
+			return healthy(key);
+		});
+		const down = await searchCatalog({ q: 'wrench' });
+		expect(down.items).toHaveLength(0);
+		expect(down.degraded).toBe(true);
+
+		getPublicObjectBuffer.mockImplementation(healthy);
+		const up = await searchCatalog({ q: 'wrench' });
+		expect(up.items[0].id).toBe('object:adjustable_wrench');
+		expect(up.degraded).toBe(false);
+		expect((await searchCatalog({ q: 'submarine' })).degraded).toBe(false);
+	});
+
 	it('filters by kind, category, and tag', async () => {
 		expect((await searchCatalog({ kind: 'character' })).items[0].id).toBe('character:abe');
 		expect((await searchCatalog({ category: 'FURNITURE' })).items[0].id).toBe('object:wooden_chair');

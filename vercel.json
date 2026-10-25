@@ -198,7 +198,7 @@
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "accelerometer=(), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(self), serial=(), usb=(), xr-spatial-tracking=(self)",
-				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com; report-uri /api/client-errors"
+				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com; report-uri /api/client-errors"
 			},
 			"continue": true
 		},
@@ -233,7 +233,7 @@
 		{
 			"src": "/(login|register|forgot-password|reset-password|account|settings|wallet|pay|paywall|vanity-wallet|eth-vanity|evm-wallet|dashboard|dashboard-next|dashboard-classic)(/.*)?$",
 			"headers": {
-				"content-security-policy": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://challenges.cloudflare.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://challenges.cloudflare.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-frame-options": "SAMEORIGIN"
 			},
 			"continue": true
@@ -1216,7 +1216,7 @@
 		{
 			"src": "/apps/shopify/?$",
 			"headers": {
-				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws https://cdn.shopify.com; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com; report-uri /api/client-errors"
+				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws https://cdn.shopify.com; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com; report-uri /api/client-errors"
 			},
 			"continue": true
 		},
@@ -1905,7 +1905,7 @@
 		{
 			"src": "/forge/embed/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
@@ -2104,7 +2104,7 @@
 		{
 			"src": "/walk-embed/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"cross-origin-resource-policy": "cross-origin"
@@ -2134,7 +2134,7 @@
 		{
 			"src": "/viewer/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"cross-origin-resource-policy": "cross-origin"
@@ -2374,7 +2374,7 @@
 		{
 			"src": "/assistant-frame/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "autoplay=*",
@@ -2397,7 +2397,7 @@
 		{
 			"src": "/embed/v1/gated/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"cross-origin-resource-policy": "cross-origin"
@@ -2407,7 +2407,7 @@
 		{
 			"src": "/embed/v1/gated.html",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"cross-origin-resource-policy": "cross-origin"
@@ -2445,7 +2445,7 @@
 		{
 			"src": "/embodiment/embed/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), autoplay=(self), xr-spatial-tracking=*",
@@ -2456,7 +2456,7 @@
 		{
 			"src": "/embed/dextools-boost/?",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"cross-origin-resource-policy": "cross-origin"
@@ -2466,7 +2466,7 @@
 		{
 			"src": "/embed/avatar",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
@@ -2477,7 +2477,7 @@
 		{
 			"src": "/embed/avatar/([a-z0-9_-]{3,30})",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
@@ -2512,7 +2512,7 @@
 		{
 			"src": "/widget",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*, autoplay=*",
@@ -2523,7 +2523,7 @@
 		{
 			"src": "/widget/",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*, autoplay=*",
@@ -2534,7 +2534,7 @@
 		{
 			"src": "/widget\\.html$",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*, autoplay=*",
@@ -2562,7 +2562,7 @@
 		{
 			"src": "/chart-companion",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"cross-origin-resource-policy": "cross-origin"
 			},
 			"dest": "/chart-companion.html"
@@ -2570,7 +2570,7 @@
 		{
 			"src": "/chart-companion/",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"cross-origin-resource-policy": "cross-origin"
 			},
 			"dest": "/chart-companion.html"
@@ -2578,7 +2578,7 @@
 		{
 			"src": "/coin3d",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"cross-origin-resource-policy": "cross-origin"
 			},
 			"dest": "/coin3d.html"
@@ -2586,7 +2586,7 @@
 		{
 			"src": "/coin3d/",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"cross-origin-resource-policy": "cross-origin"
 			},
 			"dest": "/coin3d.html"
@@ -5252,7 +5252,7 @@
 		{
 			"src": "/agent/([^/]+)/embed",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
@@ -5913,7 +5913,7 @@
 		{
 			"src": "/agents/([^/.]+)/embed",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
@@ -6881,7 +6881,7 @@
 		{
 			"src": "/a-embed",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
@@ -6891,7 +6891,7 @@
 		{
 			"src": "/a/(\\d+)/(\\d+)/embed",
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
@@ -6912,7 +6912,7 @@
 				}
 			],
 			"headers": {
-				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), autoplay=(self), xr-spatial-tracking=*"

@@ -43,3 +43,16 @@ describe('dependency-pin advisories (prompt 429)', () => {
 		expect(gte(pkg.version, '5.0.1')).toBe(true);
 	});
 });
+
+describe('dependency-pin advisories (prompt 444)', () => {
+	it('every fast-xml-parser copy in the lockfile resolves to a version >= 5.7.0 (GHSA-gh4j-gqv2-49f6)', () => {
+		const paths = Object.keys(lock.packages).filter(
+			(p) => p === 'node_modules/fast-xml-parser' || p.endsWith('/node_modules/fast-xml-parser'),
+		);
+		expect(paths.length).toBeGreaterThan(0);
+		const vulnerable = paths
+			.filter((p) => !gte(lock.packages[p].version, '5.7.0'))
+			.map((p) => `${p}@${lock.packages[p].version}`);
+		expect(vulnerable).toEqual([]);
+	});
+});

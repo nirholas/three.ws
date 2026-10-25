@@ -76,7 +76,11 @@ const parse = (res) => (res.body ? JSON.parse(res.body) : undefined);
 
 // A data: URL carrying `bytes` of raw payload, the exact shape saveFileToPinata builds.
 const inlineGlb = (bytes) =>
-	'data:model/gltf-binary;base64,' + Buffer.alloc(bytes, 0x41).toString('base64');
+	'data:model/gltf-binary;base64,' +
+	Buffer.concat([Buffer.from('glTF'), Buffer.alloc(Math.max(0, bytes - 4), 0x41)]).toString('base64');
+
+const inlineManifest = (obj = { name: 'agent' }) =>
+	'data:application/json;base64,' + Buffer.from(JSON.stringify(obj)).toString('base64');
 
 let pinataCalls = [];
 const realFetch = globalThis.fetch;
@@ -159,7 +163,7 @@ describe('POST /api/pinning/pin', () => {
 
 	it('falls back to the kind default when the filename is not a string', async () => {
 		const res = mkRes();
-		await handler(mkReq({ body: { sourceUrl: inlineGlb(64), kind: 'manifest', filename: { a: 1 } } }), res);
+		await handler(mkReq({ body: { sourceUrl: inlineManifest(), kind: 'manifest', filename: { a: 1 } } }), res);
 
 		expect(res.statusCode).toBe(200);
 		expect(pinataCalls[0].init.body.get('file').name).toBe('manifest.json');
@@ -188,16 +192,49 @@ describe('POST /api/pinning/pin', () => {
 	it('reports an unconfigured deployment as 503 once the request is valid', async () => {
 		delete process.env.PINATA_JWT;
 		const res = mkRes();
-		await handler(mkReq({ body: { sourceUrl: inlineGlb(64), kind: 'manifest' } }), res);
+		await handler(mkReq({ body: { sourceUrl: inlineManifest(), kind: 'manifest' } }), res);
 
 		expect(res.statusCode).toBe(503);
 		expect(parse(res).error).toBe('pinning_unconfigured');
 	});
 
+	it('refuses a glb whose bytes are not a glTF binary', async () => {
+		const res = mkRes();
+		const junk = 'data:model/gltf-binary;base64,' + Buffer.alloc(1024, 0x41).toString('base64');
+		await handler(mkReq({ body: { sourceUrl: junk, kind: 'glb' } }), res);
+		expect(res.statusCode).toBe(400);
+		expect(parse(res).error).toBe('validation_error');
+		expect(pinataCalls).toHaveLength(0);
+	});
+
+	it('refuses a manifest that is not a JSON object', async () => {
+		for (const text of ['not json at all', '[1,2]', '"str"']) {
+			const res = mkRes();
+			const url = 'data:application/json;base64,' + Buffer.from(text).toString('base64');
+			await handler(mkReq({ body: { sourceUrl: url, kind: 'manifest' } }), res);
+			expect(res.statusCode).toBe(400);
+			expect(parse(res).error).toBe('validation_error');
+		}
+		expect(pinataCalls).toHaveLength(0);
+	});
+
+	it('refuses a pin that would exceed the per-user daily byte quota', async () => {
+		sqlMock.mockImplementation(async (strings) => {
+			const q = Array.isArray(strings) ? strings.join('?') : '';
+			return q.includes('sum(byte_length)') ? [{ used: String(100 * 1024 * 1024) }] : [];
+		});
+		const res = mkRes();
+		await handler(mkReq({ body: { sourceUrl: inlineGlb(1024), kind: 'glb' } }), res);
+		sqlMock.mockImplementation(async () => []);
+		expect(res.statusCode).toBe(429);
+		expect(parse(res).error).toBe('pin_quota_exceeded');
+		expect(pinataCalls).toHaveLength(0);
+	});
+
 	it('requires a signed-in caller', async () => {
 		sessionUser.value = null;
 		const res = mkRes();
-		await handler(mkReq({ body: { sourceUrl: inlineGlb(64), kind: 'manifest' } }), res);
+		await handler(mkReq({ body: { sourceUrl: inlineManifest(), kind: 'manifest' } }), res);
 
 		expect(res.statusCode).toBe(401);
 		expect(parse(res).error).toBe('unauthorized');

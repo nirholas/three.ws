@@ -18,6 +18,12 @@
 // The same join and the same code generation back the free MCP tools
 // (search_catalog / get_catalog_item / get_item_source), so a client that
 // speaks HTTP and a client that speaks MCP get identical answers.
+//
+// Search responses carry `degraded: boolean`. It is true only when a manifest
+// read failed for a reason other than "never published" (a storage outage), in
+// which case a whole kind may be missing from `items`; the response is then
+// `Cache-Control: no-store` so the edge cannot keep answering "nothing matches"
+// after storage recovers.
 
 import { cors, error, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
@@ -29,10 +35,12 @@ const MAX_LIMIT = 50;
 const DEFAULT_LIMIT = 12;
 
 // The manifests behind this change only when a publish job runs, and the
-// response carries no caller state, so it is safe to hold at the edge. The
-// module-level memo already absorbs most repeat traffic; this stops the rest
-// before it reaches an instance.
+// response carries no caller state, so a healthy answer is safe to hold at the
+// edge. The module-level memo already absorbs most repeat traffic; this stops the
+// rest before it reaches an instance. A degraded search answer (storage outage)
+// is the exception and is sent no-store.
 const CACHE = 'public, s-maxage=300, stale-while-revalidate=3600';
+const DEGRADED_CACHE = 'no-store';
 
 function parseInteger(raw, { fallback, min, max }) {
 	if (raw == null || raw === '') return fallback;
@@ -97,6 +105,6 @@ export default wrap(async (req, res) => {
 		offset,
 	});
 
-	res.setHeader('Cache-Control', CACHE);
+	res.setHeader('Cache-Control', result.degraded ? DEGRADED_CACHE : CACHE);
 	return json(res, 200, { ok: true, ...result });
 });

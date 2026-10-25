@@ -172,7 +172,10 @@ function checkRateLimiter() {
 				status: 'degraded',
 				detail: `redis circuit open, retries in ${Math.round(h.circuitReopensInMs / 1000)}s; ${h.durableFallback ? 'serving from Postgres' : 'money buckets failing closed'}`,
 				backend: h.durableFallback ? 'postgres' : 'none',
-				hint: 'Transient Redis fault. The breaker probes on an escalating backoff and closes on the first success.',
+				scriptIncompatible: h.scriptIncompatible,
+				hint: h.scriptIncompatible
+					? 'Redis script incompatibility (not transient): the backend rejects the @upstash/ratelimit Lua shebang. Pin @upstash/ratelimit below 2.1.0; see rate-limit.js.'
+					: 'Transient Redis fault. The breaker probes on an escalating backoff and closes on the first success.',
 			};
 		}
 		return { ...base, status: 'ok', detail: 'upstash healthy', backend: 'upstash' };

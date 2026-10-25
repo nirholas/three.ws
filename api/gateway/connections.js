@@ -5,7 +5,8 @@
 //                                              and how to reach each bot
 //   POST   { action:'issue' }                  → { code, expires_at }   a code to send
 //                                              the bot as /link <code>
-//   POST   { action:'redeem', code }           → { link }   pair the chat that printed it
+//   POST   { action:'preview', code }          → { chat, confirm }   which chat printed the code
+//   POST   { action:'redeem', code, confirm }  → { link }   pair that chat; confirm comes from preview
 //   PATCH  { id, notify?, default_agent_id? }  → { link }
 //   DELETE ?id=                                → { revoked: true }
 //
@@ -21,14 +22,16 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { limits } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import {
-	listLinksForUser, issueSiteCode, redeemChatCode, revokeLink, setLinkNotify, setLinkDefaultAgent, GatewayError,
+	listLinksForUser, issueSiteCode, redeemChatCode, peekChatCode, revokeLink, setLinkNotify, setLinkDefaultAgent, GatewayError,
 } from '../_lib/gateway/store.js';
 import { normalizePairCode, formatPairCode } from '../_lib/gateway/codes.js';
+import { signPairConfirm, verifyPairConfirm } from '../_lib/gateway/confirm.js';
 import { gatewayBots, sendPlatformText } from '../_lib/gateway/bots.js';
 
 const postBody = z.discriminatedUnion('action', [
 	z.object({ action: z.literal('issue') }),
-	z.object({ action: z.literal('redeem'), code: z.string().min(8).max(16) }),
+	z.object({ action: z.literal('preview'), code: z.string().min(8).max(16) }),
+	z.object({ action: z.literal('redeem'), code: z.string().min(8).max(16), confirm: z.string().max(200).optional() }),
 ]);
 const patchBody = z.object({
 	id: z.string().uuid(),
@@ -91,6 +94,14 @@ export default wrap(async (req, res) => {
 			}
 			const code = normalizePairCode(body.code);
 			if (!code) return error(res, 400, 'code_invalid', 'Codes are eight characters, like ABCD-EFGH.');
+			if (body.action === 'preview') {
+				const chat = await peekChatCode({ code, userId: user.id });
+				return json(res, 200, { chat, confirm: await signPairConfirm(user.id, code) }, { 'cache-control': 'no-store' });
+			}
+			if (!body.confirm) return error(res, 400, 'confirm_required', 'Confirm which chat you are pairing first.');
+			if (!(await verifyPairConfirm(body.confirm, user.id, code))) {
+				return error(res, 400, 'confirm_invalid', 'That confirmation expired or does not match this code. Preview the code again.');
+			}
 			const link = await redeemChatCode({ code, userId: user.id });
 			return json(res, 201, { link: linkOut((await readLink(user.id, link.id)) || link) });
 		}

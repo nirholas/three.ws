@@ -134,12 +134,15 @@ function normalize(row, kind) {
  * generated one of the same name, matching /api/animations/library) and sorted
  * by kind then title so paging is stable across calls.
  *
- * @returns {Promise<{ items: object[], generated_at: object, counts: object }>}
+ * @returns {Promise<{ items: object[], generated_at: object, counts: object, total: number, degraded: boolean }>}
+ *   `degraded` is true when any manifest read failed for a reason other than
+ *   "never published", so the item list may be missing a whole kind.
  */
 async function loadCatalog() {
 	const results = await Promise.all(SOURCES.map((s) => readManifest(s)));
 	const byId = new Map();
 	const generatedAt = {};
+	const degraded = results.some((r) => r.degraded);
 	for (let i = 0; i < SOURCES.length; i++) {
 		const { kind } = SOURCES[i];
 		const { rows, generatedAt: at } = results[i];
@@ -154,7 +157,7 @@ async function loadCatalog() {
 	);
 	const counts = {};
 	for (const kind of KINDS) counts[kind] = items.filter((i) => i.kind === kind).length;
-	return { items, generated_at: generatedAt, counts, total: items.length };
+	return { items, generated_at: generatedAt, counts, total: items.length, degraded };
 }
 
 /** The cached catalog, refreshed at most once per TTL. Concurrent misses share one load. */
@@ -228,7 +231,7 @@ function scoreItem(item, terms, { requireAll = true } = {}) {
  * @param {string} [opts.tag]      Exact (case-insensitive) tag match.
  * @param {number} [opts.limit]    Page size (default 12).
  * @param {number} [opts.offset]   Page offset (default 0).
- * @returns {Promise<{ items, total, matched, relaxed, offset, next_offset, facets, generated_at }>}
+ * @returns {Promise<{ items, total, matched, relaxed, offset, next_offset, facets, generated_at, degraded }>}
  */
 export async function searchCatalog({ q, kind, category, tag, limit = 12, offset = 0 } = {}) {
 	const catalog = await getCatalog();
@@ -278,6 +281,7 @@ export async function searchCatalog({ q, kind, category, tag, limit = 12, offset
 		next_offset: start + page.length < scored.length ? start + page.length : null,
 		facets: facetsFor(scored.map((s) => s.item)),
 		generated_at: catalog.generated_at,
+		degraded: catalog.degraded,
 	};
 }
 

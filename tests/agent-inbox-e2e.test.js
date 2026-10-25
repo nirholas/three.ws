@@ -68,7 +68,7 @@ const provider = (text) => ({
 		html: null,
 		messageId: '<synthetic-1@acme.example>',
 		headers: {
-			'Authentication-Results': 'mx; spf=pass smtp.mailfrom=acme.example; dkim=pass header.d=acme.example; dmarc=pass header.from=acme.example',
+			'Authentication-Results': 'amazonses.com; spf=pass smtp.mailfrom=acme.example; dkim=pass header.d=acme.example; dmarc=pass header.from=acme.example',
 		},
 		attachments: [],
 	}),

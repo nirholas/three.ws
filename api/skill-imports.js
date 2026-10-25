@@ -33,6 +33,7 @@ import { getRequestUser, hasScope } from './_lib/auth.js';
 import { cors, json, text, wrap, error, readJson, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { requireCsrf } from './_lib/csrf.js';
+import { selfOrigin } from './_lib/self-origin.js';
 import { CustomSkillError } from './_lib/agent-custom-skills.js';
 import { CATEGORIES } from './_lib/skill-import-sources.js';
 import {
@@ -75,8 +76,7 @@ export default wrap(async (req, res) => {
 		// Public: the published registry, readable by any importer.
 		if (seg[0] === 'published' && req.method === 'GET') {
 			if (seg[1] === 'manifest.json' && seg.length === 2) {
-				const origin = `https://${req.headers['x-forwarded-host'] || req.headers.host || 'three.ws'}`;
-				return json(res, 200, await publishedManifest(origin.includes('localhost') ? 'https://three.ws' : origin), PUBLIC_CACHE);
+				return json(res, 200, await publishedManifest(selfOrigin(req)), PUBLIC_CACHE);
 			}
 			if (seg.length === 3 && seg[2] === 'SKILL.md') {
 				const body = await publishedSkillFile(seg[1]);

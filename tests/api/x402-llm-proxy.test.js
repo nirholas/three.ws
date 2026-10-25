@@ -148,6 +148,27 @@ describe('POST /api/x402/llm-proxy', () => {
 		expect(body.response_signature).toBeUndefined();
 	});
 
+	it('rejects a model outside the priced allowlist with 400 and never calls the provider', async () => {
+		const { llmComplete } = await import('../../api/_lib/llm.js');
+		for (const model of ['claude-opus-4-1-20250805', 'gpt-5', { id: 'x' }, ['fast']]) {
+			llmComplete.mockClear();
+			const res = await call(jsonReq({ model, prompt: 'hi' }, internalKey()));
+			expect(res.statusCode).toBe(400);
+			expect(res.json().error).toBe('invalid_model');
+			expect(llmComplete).not.toHaveBeenCalled();
+		}
+	});
+
+	it('still serves the fast and smart aliases and the pinned haiku id', async () => {
+		const { llmComplete } = await import('../../api/_lib/llm.js');
+		for (const model of ['fast', 'smart', 'claude-haiku-4-5-20251001']) {
+			llmComplete.mockClear();
+			const res = await call(jsonReq({ model, prompt: 'hi' }, internalKey()));
+			expect(res.statusCode).toBe(200);
+			expect(llmComplete).toHaveBeenCalledTimes(1);
+		}
+	});
+
 	it('rejects a missing prompt with 400 and never calls the provider', async () => {
 		const { llmComplete } = await import('../../api/_lib/llm.js');
 		llmComplete.mockClear();

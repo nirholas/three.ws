@@ -12,7 +12,7 @@ import {
 import { randomToken, randomDigits, sha256 } from '../_lib/crypto.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
-import { limits, clientIp } from '../_lib/rate-limit.js';
+import { limits, clientIp, ipRateKey } from '../_lib/rate-limit.js';
 import captcha, { verifyBypassToken } from './captcha.js';
 import { parse, loginBody, registerBody, usernameRegisterBody, username as usernameValidator, displayName, email, password, bio as bioValidator, profileLocation, httpUrl, avatarVisibility } from '../_lib/validate.js';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../_lib/email.js';
@@ -42,15 +42,18 @@ async function handleLogin(req, res) {
 	// real humans who solved the puzzle aren't stuck behind the same counter as
 	// the bots that triggered the limit in the first place.
 	const captchaToken = req.headers['x-captcha-token'];
+	const ipKey = ipRateKey(ip);
 	if (captchaToken && verifyBypassToken(ip, captchaToken)) {
-		const rl = await limits.authIpCaptcha(ip);
+		const rl = await limits.authIpCaptcha(ipKey);
 		if (!rl.success) return rateLimited(res, rl, 'too many attempts; try again later', { captcha_available: true });
 	} else {
-		const rl = await limits.authIp(ip);
+		const rl = await limits.authIp(ipKey);
 		if (!rl.success) return rateLimited(res, rl, 'too many attempts; try again later', { captcha_available: true });
 	}
 	const raw = await readJson(req);
 	const body = parse(loginBody, raw);
+	const accountRl = await limits.authAccount(await sha256(body.email.toLowerCase()));
+	if (!accountRl.success) return rateLimited(res, accountRl, 'too many attempts for this account; try again later');
 	const isEmail = body.email.includes('@');
 	const rows = isEmail
 		? await sql`select id, email, password_hash, display_name, plan, avatar_url, referral_code from users where email = ${body.email} and deleted_at is null limit 1`

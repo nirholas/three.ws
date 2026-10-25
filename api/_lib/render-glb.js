@@ -15,7 +15,7 @@
 import { env } from './env.js';
 import { fetchModel } from './fetch-model.js';
 import { scriptJson, safeCssColor } from './render-safe.js';
-import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_VERSION, threeImportMap } from './three-cdn.js';
+import { DEFAULT_THREE_BASE, resolveThreeCdn, THREE_CDN_HOSTS, THREE_VERSION, threeImportMap } from './three-cdn.js';
 import { thumbnailPoseClip, thumbnailPoseModules, THUMBNAIL_POSE_SPECIFIER } from './pose-runtime.js';
 
 // Cap on GLB bytes pulled into the renderer. Anything larger risks OOM /
@@ -433,6 +433,36 @@ function withStageTimeout(promise, ms, stage) {
 	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
+// Chromium parses the GLB in-page, so a GLB whose images or buffers carry an
+// http(s) URI would make the browser fetch that URL from inside our network.
+// The renderer needs only inline payloads and the pinned three.js modules, so
+// every other request is refused at the page boundary.
+export function isAllowedRenderRequestUrl(url, threeBase) {
+	if (typeof url !== 'string') return false;
+	if (url.startsWith('data:') || url.startsWith('blob:') || url === 'about:blank') return true;
+	const bases = new Set([
+		threeBase,
+		THREE_CDN_HOSTS.unpkg(THREE_VERSION),
+		THREE_CDN_HOSTS.jsdelivr(THREE_VERSION),
+	]);
+	for (const base of bases) {
+		if (base && url.startsWith(base)) return true;
+	}
+	return false;
+}
+
+export async function lockDownPageRequests(page, threeBase) {
+	await page.setRequestInterception(true);
+	page.on('request', (req) => {
+		if (req.isInterceptResolutionHandled?.()) return;
+		if (isAllowedRenderRequestUrl(req.url(), threeBase)) {
+			req.continue().catch(() => {});
+		} else {
+			req.abort('blockedbyclient').catch(() => {});
+		}
+	});
+}
+
 // One page lifecycle on the shared browser: boot page, load the inline viewer,
 // wait for the first clean frame, screenshot.
 async function renderOnce({ glbBase64, width, height, background, backdrop, poseClip, onPose }) {
@@ -447,6 +477,7 @@ async function renderOnce({ glbBase64, width, height, background, backdrop, pose
 		// unpkg outage would otherwise hang the module import until the
 		// watchdog below fires and every poster comes back blank.
 		const { base: threeBase } = await resolveThreeCdn(THREE_VERSION);
+		await lockDownPageRequests(page, threeBase);
 		const html = viewerHtml({ glbBase64, width, height, background, backdrop, poseClip, threeBase });
 		// data: URL avoids needing a network fetch for the bootstrap page itself.
 		// importmap dependencies (three, GLTFLoader) still come from the CDN.

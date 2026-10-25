@@ -35,7 +35,7 @@ import { insertNotification } from './notify.js';
  * var can't mint a fortune.
  *
  * @param {Record<string,string|undefined>} [e]
- * @returns {{ enabled: boolean, referredUsd: number, referrerUsd: number, monthlyCap: number }}
+ * @returns {{ enabled: boolean, referredUsd: number, referrerUsd: number, monthlyCap: number, dailyCap: number }}
  */
 export function parseRewardConfig(e = process.env) {
 	const num = (raw, dflt, max) => {
@@ -58,6 +58,9 @@ export function parseRewardConfig(e = process.env) {
 		// Caps farm-and-burn rings without throttling a genuinely viral member —
 		// raise via env for a real influencer.
 		monthlyCap: int(e.REFERRAL_ACTIVATION_MONTHLY_CAP, 200, 100_000),
+		// Max rewarded activations per referrer per rolling day, so a scripted ring
+		// cannot spend the whole monthly allowance in one burst.
+		dailyCap: int(e.REFERRAL_ACTIVATION_DAILY_CAP, 20, 100_000),
 	};
 }
 
@@ -199,7 +202,14 @@ export async function grantReferralActivationReward({ referredUserId }) {
 				  and kind = 'grant'
 				  and created_at > now() - interval '30 days'
 			`;
-			if (Number(count) >= cfg.monthlyCap) {
+			const [{ count: dayCount }] = await sql`
+				select count(*)::int as count from credit_ledger
+				where user_id = ${referrerId}
+				  and ref_type = 'referral_activation'
+				  and kind = 'grant'
+				  and created_at > now() - interval '1 day'
+			`;
+			if (Number(count) >= cfg.monthlyCap || Number(dayCount) >= cfg.dailyCap) {
 				referrerCapped = true;
 			} else {
 				const r = await creditAccount({

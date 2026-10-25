@@ -25,7 +25,8 @@ import { resolveAccount } from '../_lib/account-auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { assertBearerMaySpend } from '../_lib/spend-scope.js';
-import { limits } from '../_lib/rate-limit.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { createStreamSlots } from '../_lib/stream-slots.js';
 import { TeamError } from '../_lib/teams/roles.js';
 import { KINDS, findingsSince } from '../_lib/teams/findings.js';
 import {
@@ -37,6 +38,7 @@ const isUuid = (s) => typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f
 
 const HEARTBEAT_MS = 15_000;
 const POLL_MS = 2_000;
+const streamSlots = createStreamSlots({ perKey: 4, total: 200 });
 const MAX_DURATION_MS = 280_000; // end before the request timeout; EventSource reconnects
 
 function teamError(res, e) {
@@ -144,6 +146,15 @@ async function stream(req, res, id, url, { headOnly }) {
 	const auth = await viewer(req, res);
 	const { team } = await loadTeamFor(id, auth?.userId || null);
 
+	let release = null;
+	if (!headOnly) {
+		release = streamSlots.acquire(clientIp(req));
+		if (!release) {
+			res.setHeader('Retry-After', '30');
+			return error(res, 429, 'too_many_streams', 'too many open finding streams; close one and retry');
+		}
+	}
+
 	res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
 	res.setHeader('Cache-Control', 'no-cache, no-transform');
 	res.setHeader('X-Accel-Buffering', 'no');
@@ -200,7 +211,7 @@ async function stream(req, res, id, url, { headOnly }) {
 	const pollTimer = setInterval(poll, POLL_MS);
 	const heartbeat = setInterval(() => { try { res.write(':hb\n\n'); } catch { /* closed */ } }, HEARTBEAT_MS);
 	const deadline = setTimeout(() => { cleanup(); try { res.end(); } catch { /* closed */ } }, MAX_DURATION_MS);
-	function cleanup() { clearInterval(pollTimer); clearInterval(heartbeat); clearTimeout(deadline); }
+	function cleanup() { clearInterval(pollTimer); clearInterval(heartbeat); clearTimeout(deadline); release(); }
 	req.on('close', cleanup);
 	res.on('close', cleanup);
 	await poll();

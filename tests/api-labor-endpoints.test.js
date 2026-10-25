@@ -73,6 +73,7 @@ vi.mock('../api/_lib/agent-labor.js', async () => {
 		parseAtomics: econ.parseAtomics,
 		parseThree: econ.parseThree,
 		_toBig: econ.toBig,
+		_shapeBounty: (b) => ({ id: b.id, reward_three: econ.atomicsToThree(b.reward_atomics) }),
 		getBounty: vi.fn(async () => laborState.bounty ?? null),
 		getBid: vi.fn(async () => laborState.bid ?? null),
 		listBidsForBounty: vi.fn(async () => laborState.bids ?? []),
@@ -132,6 +133,7 @@ const deliver = (await import('../api/labor/deliver.js')).default;
 const settle = (await import('../api/labor/settle.js')).default;
 const release = (await import('../api/labor/release.js')).default;
 const post = (await import('../api/labor/post.js')).default;
+const bountyRead = (await import('../api/labor/bounty.js')).default;
 
 function makeRes() {
 	return {
@@ -320,5 +322,46 @@ describe('labor/post: reward and deadline parsing', () => {
 		expect(body.ok).toBe(true);
 		expect(laborState.created.deadline).toBe('2026-09-01T12:00:00.000Z');
 		expect(String(laborState.created.rewardAtomics)).toBe('5000000');
+	});
+});
+
+describe('labor bounty read: deliverable visibility', () => {
+	const POSTER = 'poster-user';
+	const WORKER = 'worker-user';
+	const SECRET = { output: 'escrowed work product' };
+
+	function prime(jobExtra = {}) {
+		laborState.bounty = { id: BOUNTY_ID, poster_user_id: POSTER, poster_agent_id: AGENT_ID, reward_atomics: '1000000', status: 'awarded' };
+		laborState.job = {
+			id: JOB_ID, status: 'delivered', worker_agent_id: WORKER_ID, worker_user_id: WORKER,
+			deliverable: SECRET, price_atomics: '1000000', settled_at: null, ...jobExtra,
+		};
+	}
+	const read = () => call(bountyRead, `/api/labor/bounty?id=${BOUNTY_ID}`, undefined, 'GET');
+
+	it('withholds the deliverable from anonymous and unrelated viewers before settlement', async () => {
+		prime();
+		for (const session of [null, { id: STRANGER }]) {
+			authState.session = session;
+			const { status, body } = await read();
+			expect(status).toBe(200);
+			expect(body.data.job.deliverable).toBeNull();
+		}
+	});
+
+	it('shows the deliverable to the poster and the worker before settlement', async () => {
+		prime();
+		for (const id of [POSTER, WORKER]) {
+			authState.session = { id };
+			const { body } = await read();
+			expect(body.data.job.deliverable).toEqual(SECRET);
+		}
+	});
+
+	it('shows the deliverable to anyone once the job is settled', async () => {
+		prime({ status: 'settled', settled_at: '2026-10-01T00:00:00Z' });
+		authState.session = null;
+		const { body } = await read();
+		expect(body.data.job.deliverable).toEqual(SECRET);
 	});
 });

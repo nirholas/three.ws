@@ -46,6 +46,9 @@ export default wrap(async (req, res) => {
 
 	if (!(await requireCsrf(req, res, session.id))) return;
 
+	const claimRl = await limits.referralClaimIp(clientIp(req));
+	if (!claimRl.success) return rateLimited(res, claimRl);
+
 	const body = await readJson(req);
 	const code = String(body?.code || '').trim().toUpperCase();
 	if (!CODE_RE.test(code)) return error(res, 400, 'invalid_code', 'malformed referral code');

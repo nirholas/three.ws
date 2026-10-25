@@ -16,7 +16,7 @@
  */
 
 import { sql } from '../../_lib/db.js';
-import { authenticateBearer, extractBearer, getSessionUser } from '../../_lib/auth.js';
+import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../../_lib/auth.js';
 import { cors, error, json, method, wrap, rateLimited } from '../../_lib/http.js';
 import { clientIp, limits } from '../../_lib/rate-limit.js';
 
@@ -38,6 +38,8 @@ export default wrap(async (req, res) => {
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
 	const userId = session?.id || bearer?.userId;
 	if (!userId) return error(res, 401, 'unauthorized', 'sign in required');
+	if (bearer && !hasScope(bearer.scope, 'profile'))
+		return error(res, 403, 'insufficient_scope', 'requires profile scope');
 
 	const rl = await limits.widgetRead(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);

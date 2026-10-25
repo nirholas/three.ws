@@ -142,13 +142,14 @@ export async function revokeRefreshToken(secret, clientId) {
 // __Host- prefix requires Path=/; Secure; no Domain — browser enforces cookie
 // can't be set by any subdomain, eliminating subdomain cookie injection.
 const SESSION_COOKIE = '__Host-sid';
-// Tolerate cookies from the legacy name for a single deploy cycle so existing
-// sessions survive the cutover. Read-only — never re-issue under this name.
+// The unprefixed legacy name is never read (any sibling subdomain can plant it,
+// which would allow session fixation). It is only cleared on logout so old
+// browsers drop it.
 const LEGACY_COOKIE = 'sid';
 
 function readSessionCookie(req) {
 	const cookie = req.headers.cookie || '';
-	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/) || cookie.match(/(?:^|;\s*)sid=([^;]+)/);
+	const m = cookie.match(/(?:^|;\s*)__Host-sid=([^;]+)/);
 	return m ? decodeURIComponent(m[1]) : null;
 }
 

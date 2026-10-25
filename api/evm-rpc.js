@@ -42,6 +42,25 @@ export const ALLOWED_METHODS = new Set([
 
 const MAX_BATCH = 10;
 const ENDPOINT_TIMEOUT_MS = 10_000;
+const MAX_LOG_BLOCK_SPAN = 2000;
+const MAX_CALL_PARAMS = 2;
+
+const HEX_QTY = /^0x[0-9a-fA-F]{1,16}$/;
+
+// eth_getLogs is the one read whose upstream cost scales with its arguments, so
+// it must name a contract (or one block hash) and a bounded numeric block span.
+function logsReason(params) {
+	const f = Array.isArray(params) ? params[0] : null;
+	if (!f || typeof f !== 'object') return 'malformed_request';
+	if (f.blockHash !== undefined) return /^0x[0-9a-fA-F]{64}$/.test(f.blockHash) ? null : 'malformed_request';
+	if (!f.address || (Array.isArray(f.address) && (f.address.length === 0 || f.address.length > 10))) {
+		return 'logs_scope_required';
+	}
+	if (!HEX_QTY.test(f.fromBlock ?? '') || !HEX_QTY.test(f.toBlock ?? '')) return 'logs_range_too_large';
+	const span = BigInt(f.toBlock) - BigInt(f.fromBlock);
+	if (span < 0n || span > BigInt(MAX_LOG_BLOCK_SPAN)) return 'logs_range_too_large';
+	return null;
+}
 
 /** True when the chain id is one the server failover table knows. */
 export function isKnownChainId(chainId) {
@@ -58,6 +77,13 @@ export function rejectReason(body) {
 		if (!e || typeof e !== 'object') return 'malformed_request';
 		if (typeof e.method !== 'string') return 'malformed_request';
 		if (!ALLOWED_METHODS.has(e.method)) return 'method_not_allowed';
+		if (e.method === 'eth_getLogs') {
+			const r = logsReason(e.params);
+			if (r) return r;
+		}
+		if (e.method === 'eth_call' && Array.isArray(e.params) && e.params.length > MAX_CALL_PARAMS) {
+			return 'params_not_allowed';
+		}
 	}
 	return null;
 }
@@ -151,8 +177,22 @@ export default wrap(async function handler(req, res) {
 				? 'this RPC method is not permitted through the proxy (read-only methods only)'
 				: reason === 'batch_too_large'
 					? `batch exceeds ${MAX_BATCH} requests`
-					: 'malformed JSON-RPC request';
+					: reason === 'logs_scope_required'
+						? 'eth_getLogs needs an address or blockHash'
+						: reason === 'logs_range_too_large'
+							? `eth_getLogs needs numeric fromBlock/toBlock spanning at most ${MAX_LOG_BLOCK_SPAN} blocks`
+							: reason === 'params_not_allowed'
+								? 'eth_call accepts at most a call object and a block tag'
+								: 'malformed JSON-RPC request';
 		return error(res, reason === 'method_not_allowed' ? 403 : 400, reason, msg);
+	}
+
+	// The first token was charged above; a batch fans out into one upstream call
+	// per entry, so charge the rest individually.
+	const entryCount = Array.isArray(body) ? body.length : 1;
+	for (let i = 1; i < entryCount; i++) {
+		const extra = await limits.evmRpcIp(ip);
+		if (!extra.success) return rateLimited(res, extra, 'too many RPC requests');
 	}
 
 	const endpoints = evmRpcEndpoints(chainId);

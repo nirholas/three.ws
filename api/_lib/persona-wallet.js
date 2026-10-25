@@ -41,7 +41,7 @@ import { USDC_MINT_BY_NETWORK, USDC_DECIMALS } from './vault-jupiter.js';
 import { valuateHoldings } from './portfolio.js';
 import { solUsdPrice, explorerAccountUrl, explorerTxUrl } from './avatar-wallet.js';
 import { solanaReputation } from '../_mcp/tools/solana.js';
-import { checkPersonaSpend, recordPersonaSpend, defaultSessionId, PERSONA_SPEND_CAPS } from './persona-spend-ledger.js';
+import { reservePersonaSpend, finalizePersonaSpend, releasePersonaSpend, defaultSessionId, PERSONA_SPEND_CAPS } from './persona-spend-ledger.js';
 import { fetchUpstreamJson } from './upstream-fetch.js';
 
 const HMAC_DOMAIN = 'three.ws:persona-wallet:v1:';
@@ -256,12 +256,13 @@ export async function getPersonaIdentity(personaId, { network = 'mainnet' } = {}
 /**
  * Send USDC from a persona's own wallet to a destination address — the shared
  * implementation behind `persona_tip` and `persona_send`. Fully guarded:
- *   1. checkPersonaSpend() enforces the per-call AND per-session USDC caps
- *      BEFORE any key is touched — a breach never gets near a signature.
+ *   1. reservePersonaSpend() enforces the per-call AND per-session USDC caps
+ *      and books the amount atomically BEFORE any key is touched, so parallel
+ *      calls cannot each pass a stale total.
  *   2. Real settlement rides the SAME MEV-aware execution engine
  *      (submitProtected) every other outbound transfer on the platform uses.
- *   3. recordPersonaSpend() durably logs the settled amount so the session cap
- *      is enforceable across process restarts / instances.
+ *   3. finalizePersonaSpend() stamps the signature on the reserved row (a failed
+ *      transfer releases it), so the cap holds across restarts / instances.
  * Returns a structured result; only ever throws on a caller error (bad address)
  * BEFORE any spend is reserved.
  */
@@ -279,8 +280,9 @@ export async function sendPersonaUsdc({ personaId, sessionId, to, usdc, tool = '
 		return { status: 'failed', code: 'self_payment', message: 'A persona cannot tip itself.' };
 	}
 
-	const gate = await checkPersonaSpend({ personaId, sessionId: session, usdc: amount });
+	const gate = await reservePersonaSpend({ personaId, sessionId: session, usdc: amount, tool, toAddress: toPk.toBase58() });
 	if (!gate.ok) return { status: 'blocked', ...gate };
+	const reservation = gate.reservation;
 
 	const conn = solanaConnection(net);
 	const mintPk = new PublicKey(USDC_MINT_BY_NETWORK[net]);
@@ -302,10 +304,13 @@ export async function sendPersonaUsdc({ personaId, sessionId, to, usdc, tool = '
 			return result.signature;
 		});
 	} catch (e) {
+		await releasePersonaSpend(reservation).catch(() => {});
 		return { status: 'failed', code: e?.code || 'send_failed', message: (e?.message || 'the transfer did not settle').slice(0, 200) };
 	}
 
-	await recordPersonaSpend({ personaId, sessionId: session, usdc: amount, tool, toAddress: toPk.toBase58(), signature }).catch(() => {});
+	// The reserved row already counts toward every cap; a failed finalize only
+	// loses the signature on it, never the spend.
+	await finalizePersonaSpend(reservation, signature).catch(() => {});
 
 	return {
 		status: 'ok',

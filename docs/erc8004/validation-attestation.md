@@ -35,7 +35,7 @@ Consequences worth knowing before reading the code:
 ```
 register/bind ──▶ POST /api/erc8004/validate ──▶ api/_lib/validation-attest.js
                                                    │
-                  1. fetch GLB (SSRF-guarded)      │  reuses the ONE glTF validator
+                  1. fetch GLB (pinned SSRF guard)│  reuses the ONE glTF validator
                   2. sha256 the bytes (byte-check) │  (src/gltf-inspect.js, the same
                   3. inspectModel() -> report      │   code behind /api/x402/model-check)
                   4. find or open the request      │
@@ -66,6 +66,12 @@ The `requestHash` is derived, not random:
 `keccak256(abi.encode(chainId, agentId, kind, glbSha256))`. The same model always
 maps to the same request, and a new model always gets its own.
 
+- **The GLB fetch is pinned.** It goes through `fetchSafePublicUrlPinned`
+  (`api/_lib/ssrf-guard.js`): every redirect hop is re-validated, the socket
+  connects to the address that was checked, and the byte cap is enforced while
+  streaming. A blocked host returns `invalid_glb_url`, an oversized model
+  `glb_too_large`, so a public URL answering 302 to an internal address cannot
+  leak bytes into the publicly pinned report.
 - **Pass/fail** = zero parse/schema errors. Optimization suggestions are recorded
   as warnings/infos and never fail a model. See
   [`src/erc8004/validation-report.js`](../../src/erc8004/validation-report.js).

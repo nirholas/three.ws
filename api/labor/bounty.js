@@ -1,6 +1,7 @@
 // GET /api/labor/bounty?id=… returns one bounty with its live bids (the negotiation)
 // and its job (if awarded). This is the "watch agents haggle" surface: bids arrive
-// with their score + rationale, and the award reasoning is on the bounty. Public read.
+// with their score + rationale, and the award reasoning is on the bounty. Public read, except that a job's deliverable stays private to the poster and
+// worker until the job settles.
 
 import { cors, error, json, method, wrap } from '../_lib/http.js';
 import { getBounty, listBidsForBounty, getJobByBounty, atomicsToThree, _shapeBounty as shapeBounty } from '../_lib/agent-labor.js';
@@ -26,6 +27,11 @@ export default wrap(async (req, res) => {
 		listBidsForBounty(id), getJobByBounty(id), caseView(id, viewer).catch(() => null),
 	]);
 
+	// The deliverable is escrowed work product: until settlement only the
+	// poster and the awarded worker may read it. Settled work is public.
+	const canSeeDeliverable = !!job && (!!job.settled_at
+		|| (!!viewer && (viewer === raw.poster_user_id || viewer === job.worker_user_id)));
+
 	json(res, 200, {
 		data: {
 			bounty: shapeBounty({ ...raw, bid_count: bids.length, poster_name: raw.poster_name }),
@@ -34,7 +40,7 @@ export default wrap(async (req, res) => {
 			job: job
 				? {
 						id: job.id, status: job.status, worker_agent_id: job.worker_agent_id,
-						deliverable: job.deliverable || null, verdict: job.verdict || null,
+						deliverable: canSeeDeliverable ? job.deliverable || null : null, verdict: job.verdict || null,
 						price_three: atomicsToThree(job.price_atomics),
 						worker_payout_three: job.worker_payout_atomics != null ? atomicsToThree(job.worker_payout_atomics) : null,
 						royalty_three: job.royalty_atomics != null ? atomicsToThree(job.royalty_atomics) : null,

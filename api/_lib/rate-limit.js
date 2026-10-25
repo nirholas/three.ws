@@ -218,6 +218,29 @@ export function isRedisQuotaError(err) {
 	return /max requests limit exceeded/i.test(String(err?.message || err || ''));
 }
 
+// Open-source Redis and Valkey (for example behind a self-hosted SRH proxy) reject
+// the `#!lua flags=allow-key-locking` shebang that @upstash/ratelimit >= 2.1.0
+// prefixes to its scripts, an Upstash-hosted-only extension. The rejection is
+// deterministic, so no backoff can ever clear it: classify it apart from a
+// transient fault so logs and /healthz stop calling it self-healing.
+export function isRedisShebangIncompatibilityError(err) {
+	return /unexpected flag in script shebang/i.test(String(err?.message || err || ''));
+}
+
+let _shebangWarnedAt = 0;
+let _lastFailureShebang = false;
+function warnShebangIncompatibilityOnce(name, err) {
+	const t = Date.now();
+	if (t - _shebangWarnedAt < 60_000) return;
+	_shebangWarnedAt = t;
+	console.error(
+		`[rate-limit] FATAL INCOMPATIBILITY: the Redis backend rejects @upstash/ratelimit's Lua ` +
+			`script shebang for "${name}" (likely open-source Redis/Valkey behind the SRH proxy, not ` +
+			`Upstash-hosted). Not transient: pin @upstash/ratelimit below 2.1.0 or patch the scripts.`,
+		err?.message || err,
+	);
+}
+
 let _quotaWarnedAt = 0;
 function warnQuotaOnce() {
 	const t = Date.now();
@@ -265,6 +288,7 @@ function circuitRecordSuccess() {
 	circuitOpenUntil = 0;
 	circuitTrialInFlight = false;
 	circuitRearms = 0;
+	_lastFailureShebang = false;
 }
 
 function circuitRecordFailure() {
@@ -293,6 +317,7 @@ export function rateLimiterHealth() {
 		circuitOpen: circuitOpenUntil !== 0 && Date.now() < circuitOpenUntil,
 		circuitReopensInMs: Math.max(0, circuitOpenUntil - Date.now()),
 		quotaExhausted: _quotaWarnedAt > 0,
+		scriptIncompatible: _lastFailureShebang,
 		durableFallback: pgAvailable(),
 		// Outside production a bucket with no backend degrades to the permissive
 		// memory limiter rather than denying, so "no Redis, no Postgres" is the
@@ -327,7 +352,9 @@ function resilientLimiter(rl, name, opts) {
 			} catch (err) {
 				if (!err?.circuitOpen) {
 					circuitRecordFailure();
+					_lastFailureShebang = isRedisShebangIncompatibilityError(err);
 					if (isRedisQuotaError(err)) warnQuotaOnce();
+					else if (_lastFailureShebang) warnShebangIncompatibilityOnce(name, err);
 					else warnDegradedOnce(name, err);
 				}
 				if (durable) return durable.limit(id);
@@ -356,7 +383,9 @@ function resilientLimiter(rl, name, opts) {
 			} catch (err) {
 				if (!err?.circuitOpen) {
 					circuitRecordFailure();
+					_lastFailureShebang = isRedisShebangIncompatibilityError(err);
 					if (isRedisQuotaError(err)) warnQuotaOnce();
+					else if (_lastFailureShebang) warnShebangIncompatibilityOnce(name, err);
 					else warnDegradedOnce(name, err);
 				}
 				if (durable) return durable.refund(id);
@@ -642,6 +671,12 @@ export const limits = {
 	// the guess rate, and `registerIp` (5/h) caps account creation independently.
 	authIp: (ip) =>
 		getLimiter('auth:ip', { limit: 50, window: '10 m', critical: true, degradeToMemory: true }).limit(ip),
+	// Per-account login bucket (key = hash of the lowercased login id). authIp
+	// alone is evaded by rotating addresses; this caps guesses at one account
+	// whatever the source. Sized above a human's retries so lockout abuse is
+	// bounded to a 15 minute pause on login for that account.
+	authAccount: (key) =>
+		getLimiter('auth:account', { limit: 30, window: '15 m', critical: true, degradeToMemory: true }).limit(key),
 	registerIp: (ip) =>
 		getLimiter('register:ip', { limit: 5, window: '1 h', critical: true, degradeToMemory: true }).limit(ip),
 	// `three-ws login` device links (api/cli/[action].js). Starting a link is
@@ -879,6 +914,11 @@ export const limits = {
 	// table can't be flooded from one IP.
 	referralVisitIp: (ip) =>
 		getLimiter('referral:visit:ip', { limit: 60, window: '5 m' }).limit(ip),
+	// Referral attribution claims (POST /api/users/referral-claim). A real person
+	// claims once per account, so a handful per IP per day covers shared NAT while
+	// stopping one machine from attributing a stream of throwaway accounts.
+	referralClaimIp: (ip) =>
+		getLimiter('referral:claim:ip', { limit: 10, window: '1 d', critical: true, degradeToMemory: true }).limit(ip),
 	vanityGalleryPublishIp: (ip) =>
 		getLimiter('vanity:gallery:publish:ip', { limit: 12, window: '10 m' }).limit(ip),
 	vanityGalleryReadIp: (ip) =>
@@ -2549,6 +2589,23 @@ const TRUSTED_PROXY_HOPS = (() => {
 // So: read X-Forwarded-For, walk it from the RIGHT, skip the hops we append, and
 // take the next address. Fall back to the socket only when there is no XFF at all
 // (local dev, tests, direct container access) — there, the socket IS the client.
+/**
+ * Rate-limit bucket key for an IP. IPv6 subscribers are routinely handed a whole
+ * /64, so a per-address bucket is trivially evaded; collapse IPv6 to its /64.
+ * IPv4 (and anything unparseable) is returned unchanged.
+ */
+export function ipRateKey(ip) {
+	const s = String(ip ?? '');
+	if (!s.includes(':') || /^::ffff:\d+\.\d+\.\d+\.\d+$/i.test(s)) return s;
+	const [head, tail] = s.split('::');
+	const headGroups = head ? head.split(':') : [];
+	const tailGroups = tail === undefined ? [] : tail ? tail.split(':') : [];
+	const missing = tail === undefined ? 0 : 8 - headGroups.length - tailGroups.length;
+	const groups = [...headGroups, ...Array(Math.max(0, missing)).fill('0'), ...tailGroups];
+	if (groups.length !== 8) return s;
+	return groups.slice(0, 4).map((g) => g.toLowerCase().replace(/^0+(?=.)/, '')).join(':') + '::/64';
+}
+
 export function clientIp(req) {
 	const xff = req.headers?.['x-forwarded-for'];
 	if (xff) {

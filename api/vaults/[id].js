@@ -17,7 +17,7 @@ import {
 import { computeVaultNav } from '../_lib/vault-wallet.js';
 import {
 	sharePriceE6, roiBps, toBig, usdcToAtomics, settleRedemption,
-	TERM_BOUNDS, clampTermBps,
+	TERM_BOUNDS, clampTermBps, backerHostileTermChanges,
 } from '../_lib/vault-accounting.js';
 import { isUuid } from '../_lib/validate.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
@@ -168,6 +168,15 @@ async function handlePatch(req, res, id) {
 		const effectivePerTrade = patch.maxPerTradeAtomics ?? toBig(vault.max_per_trade_atomics);
 		const effectiveDaily = patch.dailyBudgetAtomics ?? toBig(vault.daily_budget_atomics);
 		if (effectivePerTrade > effectiveDaily) return error(res, 400, 'validation_error', 'per-trade ceiling cannot exceed the daily budget');
+		// Backers deposited under the terms on record. While any shares are
+		// outstanding the owner may tighten those terms but not loosen them; to
+		// change them for real, close the vault so backers can redeem first.
+		if (toBig(vault.total_shares) > 0n) {
+			const hostile = backerHostileTermChanges(vault, patch);
+			if (hostile.length) {
+				return error(res, 409, 'terms_locked_for_backers', `${hostile.join(', ')} cannot be raised while backers hold shares. Lower it, or close the vault so backers can redeem first.`);
+			}
+		}
 		const next = await updateVaultTerms(vault.id, patch);
 		await recordVaultEvent({ vaultId: vault.id, type: 'terms', userId: who.userId, reason: 'terms updated', meta: { patch: Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, v == null ? null : String(v)])) } });
 		return json(res, 200, { data: { vault: next } }, { 'cache-control': 'no-store' });

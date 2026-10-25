@@ -11,7 +11,7 @@
 // enforces case-insensitive global uniqueness and every ?ref= lookup matches
 // without per-call lowering.
 
-import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { cors, json, error, method, wrap, rateLimited, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -26,7 +26,7 @@ async function resolveAuth(req) {
 	const session = await getSessionUser(req);
 	if (session) return { userId: session.id, session };
 	const bearer = await authenticateBearer(extractBearer(req));
-	if (bearer) return { userId: bearer.userId, session: null };
+	if (bearer) return { userId: bearer.userId, session: null, scope: bearer.scope };
 	return null;
 }
 
@@ -51,6 +51,8 @@ export default wrap(async (req, res) => {
 
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+	if (!auth.session && !hasScope(auth.scope, 'profile'))
+		return error(res, 403, 'insufficient_scope', 'requires profile scope');
 
 	if (req.method === 'GET') {
 		const url = new URL(req.url, 'http://localhost');

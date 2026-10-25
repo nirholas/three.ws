@@ -117,6 +117,13 @@ describe('every value-moving tool family refuses a connector key', () => {
 		}
 	});
 
+	it('sniper: arming the launch sniper is refused, and its own scope check no longer accepts agents:write', async () => {
+		expectBrowserRefusal(await call('threews-agent', 'sniper_activate', { agent_id: '00000000-0000-4000-8000-000000000000', per_trade_sol: 0.1, daily_budget_sol: 1, confirm_spend: true }), { tool: 'sniper_activate' });
+		const { readFileSync } = await import('node:fs');
+		const src = readFileSync(new URL('../api/_mcpagent/sniper-alert-tools.js', import.meta.url), 'utf8');
+		expect(src).toMatch(/const TRADE_SCOPES = \['wallet:trade'\];/);
+	});
+
 	it('predictions: open, close and redeem; a watch moves nothing and is left to its handler', async () => {
 		for (const name of ['predictions_open', 'predictions_close', 'predictions_redeem']) {
 			expectBrowserRefusal(await call('threews-agent', name, {}), { tool: name });

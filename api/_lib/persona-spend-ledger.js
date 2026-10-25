@@ -15,6 +15,7 @@
  * bounds a runaway/looped caller even with no session id supplied.
  */
 
+import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -22,6 +23,8 @@ import { sql } from './db.js';
 import { databaseConfigured } from './env.js';
 
 const dbConfigured = () => databaseConfigured();
+
+const PENDING = 'pending:';
 
 function envNumber(key, fallback) {
 	const raw = process.env[key];
@@ -92,6 +95,36 @@ async function dbRecordSpend({ personaId, sessionId, usdc, tool, toAddress, sign
 	`;
 }
 
+/**
+ * Atomic reserve: one statement sums the bucket and inserts the pending row only
+ * when the total stays within the cap, so concurrent callers cannot all pass a
+ * stale read. Returns true when the row was inserted.
+ */
+async function dbReserve({ personaId, sessionId, usdc, tool, toAddress, rid, cap }) {
+	await ensureSchema();
+	const rows = await sql`
+		insert into persona_wallet_spend_events (persona_id, session_id, usdc, tool, to_address, signature)
+		select ${personaId}, ${sessionId}, ${usdc}, ${tool}, ${toAddress || null}, ${PENDING + rid}
+		where (
+			select coalesce(sum(usdc), 0)::float8
+			from persona_wallet_spend_events
+			where persona_id = ${personaId} and session_id = ${sessionId}
+		) + ${usdc} <= ${cap}
+		returning id
+	`;
+	return rows.length > 0;
+}
+
+async function dbFinalize(rid, signature) {
+	await ensureSchema();
+	await sql`update persona_wallet_spend_events set signature = ${signature || null} where signature = ${PENDING + rid}`;
+}
+
+async function dbRelease(rid) {
+	await ensureSchema();
+	await sql`delete from persona_wallet_spend_events where signature = ${PENDING + rid}`;
+}
+
 // ── filesystem backend (local/dev/test fallback) ──────────────────────────────
 
 function storeDir() {
@@ -132,6 +165,33 @@ async function fsRecordSpend({ personaId, sessionId, usdc, tool, toAddress, sign
 	const events = await fsSessionEvents(personaId, sessionId);
 	events.push({ usdc, tool, to_address: toAddress || null, signature: signature || null, created_at: new Date().toISOString() });
 	await fs.writeFile(await fsFile(personaId, sessionId), JSON.stringify(events, null, 2), 'utf8');
+}
+
+// Serialises the read-modify-write on the fs backend inside one process.
+let _fsLock = Promise.resolve();
+function withFsLock(fn) {
+	const run = _fsLock.then(fn, fn);
+	_fsLock = run.catch(() => {});
+	return run;
+}
+
+async function fsReserve({ personaId, sessionId, usdc, tool, toAddress, rid, cap }) {
+	return withFsLock(async () => {
+		const events = await fsSessionEvents(personaId, sessionId);
+		const total = events.reduce((sum, e) => sum + Number(e.usdc || 0), 0);
+		if (total + usdc > cap) return false;
+		events.push({ usdc, tool, to_address: toAddress || null, signature: PENDING + rid, created_at: new Date().toISOString() });
+		await fs.writeFile(await fsFile(personaId, sessionId), JSON.stringify(events, null, 2), 'utf8');
+		return true;
+	});
+}
+
+async function fsRewrite(personaId, sessionId, rid, mutate) {
+	return withFsLock(async () => {
+		const events = await fsSessionEvents(personaId, sessionId);
+		const next = mutate(events, PENDING + rid);
+		await fs.writeFile(await fsFile(personaId, sessionId), JSON.stringify(next, null, 2), 'utf8');
+	});
 }
 
 // ── public API ────────────────────────────────────────────────────────────────
@@ -186,4 +246,55 @@ export async function recordPersonaSpend({ personaId, sessionId, usdc, tool, toA
 	await record(row);
 	const dailyId = defaultSessionId(personaId);
 	if (sessionId !== dailyId) await record({ ...row, sessionId: dailyId });
+}
+
+/**
+ * Check the caps AND book the spend in one atomic step, before anything is
+ * signed. A failed transfer must call `releasePersonaSpend`; a settled one calls
+ * `finalizePersonaSpend`. Because the pending row counts toward both the session
+ * and the UTC-day bucket immediately, parallel calls cannot each pass a stale
+ * read of the total. Returns `{ ok: true, reservation }` or a refusal shaped
+ * like `checkPersonaSpend`'s.
+ */
+export async function reservePersonaSpend({ personaId, sessionId, usdc, tool, toAddress }) {
+	const gate = await checkPersonaSpend({ personaId, sessionId, usdc });
+	if (!gate.ok) return gate;
+	const amount = Number(usdc);
+	const cap = PERSONA_SPEND_CAPS.maxPerSessionUsdc;
+	const rid = randomUUID();
+	const dailyId = defaultSessionId(personaId);
+	const buckets = sessionId === dailyId ? [sessionId] : [sessionId, dailyId];
+	const reserve = dbConfigured() ? dbReserve : fsReserve;
+	const booked = [];
+	for (const bucket of buckets) {
+		const ok = await reserve({ personaId, sessionId: bucket, usdc: amount, tool, toAddress, rid, cap });
+		if (!ok) {
+			await releasePersonaSpend({ personaId, rid, buckets: booked });
+			return {
+				ok: false,
+				code: 'over_session_cap',
+				message: `This session has already reached its $${cap} USDC cap, so $${amount} would exceed it.`,
+				cap_usdc: cap,
+			};
+		}
+		booked.push(bucket);
+	}
+	return { ok: true, spent_usdc: gate.spent_usdc, reservation: { personaId, rid, buckets: booked } };
+}
+
+/** Attach the settled signature to a reservation. The spend stays counted either way. */
+export async function finalizePersonaSpend({ personaId, rid, buckets }, signature) {
+	if (dbConfigured()) return dbFinalize(rid, signature);
+	for (const bucket of buckets) {
+		await fsRewrite(personaId, bucket, rid, (events, marker) =>
+			events.map((e) => (e.signature === marker ? { ...e, signature: signature || null } : e)));
+	}
+}
+
+/** Void a reservation whose transfer never settled. */
+export async function releasePersonaSpend({ personaId, rid, buckets }) {
+	if (dbConfigured()) return dbRelease(rid);
+	for (const bucket of buckets) {
+		await fsRewrite(personaId, bucket, rid, (events, marker) => events.filter((e) => e.signature !== marker));
+	}
 }

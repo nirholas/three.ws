@@ -49,6 +49,7 @@ function makeRes() {
 describe('/api/evm-rpc method allowlist', () => {
 	it('accepts every read-only method and refuses everything else', () => {
 		for (const m of ALLOWED_METHODS) {
+			if (m === 'eth_getLogs') continue; // scoped separately: see read cost bounds
 			expect(rejectReason({ jsonrpc: '2.0', id: 1, method: m, params: [] })).toBeNull();
 		}
 		expect(rejectReason({ method: 'eth_sendRawTransaction', params: ['0x'] })).toBe('method_not_allowed');
@@ -74,6 +75,41 @@ describe('/api/evm-rpc method allowlist', () => {
 		await handler({ url: '/api/evm-rpc?chainId=999999', body: { method: 'eth_chainId' } }, res);
 		expect(res._json.status).toBe(400);
 		expect(res._json.body.error).toBe('unknown_chain');
+	});
+});
+
+describe('/api/evm-rpc read cost bounds', () => {
+	const logs = (f) => ({ jsonrpc: '2.0', id: 1, method: 'eth_getLogs', params: [f] });
+	const ADDR = '0x' + '11'.repeat(20);
+
+	it('refuses eth_getLogs without an address or blockHash', () => {
+		expect(rejectReason(logs({ fromBlock: '0x1', toBlock: '0x2' }))).toBe('logs_scope_required');
+	});
+
+	it('refuses eth_getLogs spanning more than 2000 blocks or with open-ended tags', () => {
+		expect(rejectReason(logs({ address: ADDR, fromBlock: '0x0', toBlock: '0xffffff' }))).toBe('logs_range_too_large');
+		expect(rejectReason(logs({ address: ADDR, fromBlock: '0x0', toBlock: 'latest' }))).toBe('logs_range_too_large');
+		expect(rejectReason(logs({ address: ADDR }))).toBe('logs_range_too_large');
+	});
+
+	it('accepts a bounded eth_getLogs and a blockHash query', () => {
+		expect(rejectReason(logs({ address: ADDR, fromBlock: '0x10', toBlock: '0x20' }))).toBeNull();
+		expect(rejectReason(logs({ blockHash: '0x' + 'ab'.repeat(32) }))).toBeNull();
+	});
+
+	it('refuses eth_call with state-override params', () => {
+		const call = { jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: ADDR }, 'latest', {}] };
+		expect(rejectReason(call)).toBe('params_not_allowed');
+		expect(rejectReason({ ...call, params: [{ to: ADDR }, 'latest'] })).toBeNull();
+	});
+
+	it('charges the per-IP limiter once per batch entry', async () => {
+		const { limits } = await import('../api/_lib/rate-limit.js');
+		limits.evmRpcIp.mockClear();
+		const res = makeRes();
+		const batch = Array.from({ length: 5 }, (_, i) => ({ jsonrpc: '2.0', id: i, method: 'eth_chainId' }));
+		await handler({ url: '/api/evm-rpc?chainId=1', body: batch }, res);
+		expect(limits.evmRpcIp).toHaveBeenCalledTimes(5);
 	});
 });
 

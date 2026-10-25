@@ -185,6 +185,19 @@ async function consumeCode(id, { userId, linkId }) {
 	if (!row) throw new GatewayError('code_used', 'That code was just used. Ask for a new one.', 410);
 }
 
+/** Site side: which chat printed this code, without consuming it. */
+export async function peekChatCode({ code, userId }) {
+	const row = await loadLiveCode(code, 'chat');
+	const existing = await getLiveLink(row.platform, row.chat_id);
+	if (existing && existing.user_id !== userId) {
+		throw new GatewayError('chat_taken', 'That chat is already paired to a different three.ws account. Send /unlink in the chat from that account first.', 409);
+	}
+	return {
+		platform: row.platform, chat_title: row.chat_title, chat_type: row.chat_type,
+		platform_username: row.platform_username, already_linked: Boolean(existing),
+	};
+}
+
 /** Site side: a signed-in owner redeems a code the bot printed. */
 export async function redeemChatCode({ code, userId }) {
 	const row = await loadLiveCode(code, 'chat');

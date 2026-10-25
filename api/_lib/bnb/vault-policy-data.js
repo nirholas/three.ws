@@ -107,7 +107,7 @@ export async function buildBuyPolicyData({ bucket, object, buyer, network }) {
 
 	const policyMsg = Policy.fromPartial({
 		id: '0', // assigned by Greenfield on settlement — never fabricated here.
-		principal: { type: PrincipalType.PRINCIPAL_TYPE_GNFD_ACCOUNT, value: buyer },
+		principal: { type: PrincipalType.PRINCIPAL_TYPE_GNFD_ACCOUNT, value: buyer.toLowerCase() },
 		resourceType: ResourceType.RESOURCE_TYPE_OBJECT,
 		resourceId,
 		statements: [

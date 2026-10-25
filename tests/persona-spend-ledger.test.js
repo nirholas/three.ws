@@ -14,6 +14,9 @@ const {
 	sessionSpentUsdc,
 	defaultSessionId,
 	PERSONA_SPEND_CAPS,
+	reservePersonaSpend,
+	releasePersonaSpend,
+	finalizePersonaSpend,
 } = await import('../api/_lib/persona-spend-ledger.js');
 
 beforeEach(async () => {
@@ -100,5 +103,45 @@ describe('persona spend ledger - cap cannot be reset with a fresh session_id', (
 		const gate = await checkPersonaSpend({ personaId, sessionId: 'session-b', usdc: perCall });
 		expect(gate.ok).toBe(false);
 		expect(gate.code).toBe('over_session_cap');
+	});
+});
+
+describe('persona spend ledger - atomic reservation', () => {
+	it('parallel reservations cannot exceed the session cap', async () => {
+		const personaId = 'persona_race000000001';
+		const sessionId = 'race-session';
+		const perCall = PERSONA_SPEND_CAPS.maxPerCallUsdc;
+		const attempts = Math.ceil(PERSONA_SPEND_CAPS.maxPerSessionUsdc / perCall) + 4;
+		const results = await Promise.all(
+			Array.from({ length: attempts }, () => reservePersonaSpend({ personaId, sessionId, usdc: perCall, tool: 'persona_tip' })),
+		);
+		const granted = results.filter((r) => r.ok).length;
+		expect(granted).toBe(Math.floor(PERSONA_SPEND_CAPS.maxPerSessionUsdc / perCall));
+		expect(await sessionSpentUsdc(personaId, sessionId)).toBeLessThanOrEqual(PERSONA_SPEND_CAPS.maxPerSessionUsdc);
+	});
+
+	it('a released reservation frees its budget and a finalized one keeps it', async () => {
+		const personaId = 'persona_release00000001';
+		const sessionId = 'release-session';
+		const first = await reservePersonaSpend({ personaId, sessionId, usdc: 0.5, tool: 'persona_tip' });
+		expect(first.ok).toBe(true);
+		expect(await sessionSpentUsdc(personaId, sessionId)).toBeCloseTo(0.5);
+		await releasePersonaSpend(first.reservation);
+		expect(await sessionSpentUsdc(personaId, sessionId)).toBe(0);
+		const second = await reservePersonaSpend({ personaId, sessionId, usdc: 0.5, tool: 'persona_tip' });
+		await finalizePersonaSpend(second.reservation, 'sig-final');
+		expect(await sessionSpentUsdc(personaId, sessionId)).toBeCloseTo(0.5);
+	});
+
+	it('a fresh session id cannot reset the daily bucket through reservations', async () => {
+		const personaId = 'persona_daily000000001';
+		const perCall = PERSONA_SPEND_CAPS.maxPerCallUsdc;
+		const n = Math.floor(PERSONA_SPEND_CAPS.maxPerSessionUsdc / perCall);
+		for (let i = 0; i < n; i++) {
+			expect((await reservePersonaSpend({ personaId, sessionId: `s-${i}`, usdc: perCall, tool: 't' })).ok).toBe(true);
+		}
+		const over = await reservePersonaSpend({ personaId, sessionId: 'brand-new', usdc: perCall, tool: 't' });
+		expect(over.ok).toBe(false);
+		expect(over.code).toBe('over_session_cap');
 	});
 });

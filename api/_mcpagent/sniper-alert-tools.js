@@ -56,7 +56,7 @@ const CREATE = { readOnlyHint: false, destructiveHint: false, idempotentHint: fa
 // Removes a row for good; a second call finds nothing to remove.
 const DELETE = { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false };
 
-const TRADE_SCOPES = ['wallet:trade', 'agents:write'];
+const TRADE_SCOPES = ['wallet:trade'];
 
 function refusal(text, reason, extra = {}) {
 	return { content: [{ type: 'text', text }], structuredContent: { ok: false, reason, ...extra }, isError: true };

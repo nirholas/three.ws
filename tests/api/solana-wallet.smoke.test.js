@@ -22,6 +22,7 @@ import {
 const ENABLED = process.env.SOLANA_DEVNET_SMOKE === '1';
 const RPC = process.env.SOLANA_DEVNET_RPC ?? 'https://api.devnet.solana.com';
 
+const SMOKE_AGENT_ID = '00000000-0000-4000-8000-000000000000';
 const maybe = ENABLED ? describe : describe.skip;
 
 maybe('solana-wallet (devnet smoke)', () => {
@@ -30,7 +31,7 @@ maybe('solana-wallet (devnet smoke)', () => {
 		process.env.JWT_SECRET ??= 'devnet-smoke-secret';
 
 		const { encrypted_secret, address } = await generateSolanaAgentWallet();
-		const wallet = await loadWallet(encrypted_secret);
+		const wallet = await loadWallet(encrypted_secret, { agentId: SMOKE_AGENT_ID, reason: 'smoke' });
 		expect(wallet.publicKey.toBase58()).toBe(address);
 
 		const ctx = { wallet, skillConfig: { rpc: RPC, maxTransferSol: 1 } };
@@ -64,7 +65,7 @@ maybe('solana-wallet (devnet smoke)', () => {
 	it('rejects transferSol over the cap', async () => {
 		process.env.JWT_SECRET ??= 'devnet-smoke-secret';
 		const { encrypted_secret } = await generateSolanaAgentWallet();
-		const wallet = await loadWallet(encrypted_secret);
+		const wallet = await loadWallet(encrypted_secret, { agentId: SMOKE_AGENT_ID, reason: 'smoke' });
 		const ctx = { wallet, skillConfig: { rpc: RPC, maxTransferSol: 0.001 } };
 		const recipient = Keypair.generate();
 		const res = await transferSol(

@@ -8,7 +8,7 @@
 //
 // Storage mirrors api/_lib/x402/idempotency-cache.js: Upstash Redis in
 // production (atomic INCRBY), an in-process Map fallback for dev/CI/tests. In
-// production without Redis the fallback only guards a single function replica —
+// production without Redis reads and reservations are refused (fail closed):
 // set UPSTASH_REDIS_REST_URL/TOKEN for cross-replica budget enforcement.
 //
 // Amounts are atomic units (USDC has 6 decimals). They comfortably fit in a
@@ -19,14 +19,22 @@
 import { env } from '../env.js';
 import { getRedis as _getSharedRedis } from '../redis.js';
 
-const IS_PROD = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
+// Read at call time so the guard follows the real environment.
+const isProd = () => process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
 
 const redis = _getSharedRedis();
-if (!redis && IS_PROD) {
-	console.warn(
-		'[a2a-spend-ledger] UPSTASH_REDIS_REST_URL/TOKEN not set; using per-instance ' +
-			'memory fallback. Cross-replica mandate budget enforcement requires Redis.',
+if (!redis && isProd()) {
+	console.error(
+		'[a2a-spend-ledger] UPSTASH_REDIS_REST_URL/TOKEN not set in production; ' +
+			'mandate spend is refused (fail closed) because a per-instance memory ' +
+			'ledger would multiply every mandate budget by the instance count.',
 	);
+}
+
+// The in-process Map is a dev/CI convenience only. In production a missing
+// Redis means the shared budget cannot be proven, so reads and reservations fail.
+function assertLedgerAvailable() {
+	if (!redis && isProd()) throw new Error('spend ledger unavailable');
 }
 
 const KEY_PREFIX = 'a2a:spend:';
@@ -76,6 +84,7 @@ function memorySet(key, spent, ttlSec) {
  */
 export async function spent(mandateId) {
 	const key = fullKey(mandateId);
+	assertLedgerAvailable();
 	if (!redis) return memoryGet(key);
 	try {
 		const raw = await redis.get(key);
@@ -105,6 +114,7 @@ export async function reserve(mandateId, amount, cap, ttlSec) {
 	const amt = asSafeInt(amount, 'amount');
 	const capInt = asSafeInt(cap, 'cap');
 	const key = fullKey(mandateId);
+	assertLedgerAvailable();
 
 	if (!redis) {
 		const current = memoryGet(key);
@@ -153,6 +163,8 @@ export async function release(mandateId, amount) {
 	const amt = asSafeInt(amount, 'amount');
 	const key = fullKey(mandateId);
 
+	// Nothing was reserved anywhere shared, so there is nothing to give back.
+	if (!redis && isProd()) return -1;
 	if (!redis) {
 		const current = memoryGet(key);
 		const next = Math.max(0, current - amt);

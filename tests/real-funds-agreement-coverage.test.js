@@ -38,12 +38,15 @@ const EXEMPT = {
 	'api/avatars/fork.js': 'creates a fresh empty wallet for the fork; no funds move',
 	'api/irl/world-lines.js': 'agent key signs a proof-of-presence message; no transfer',
 	'api/labor/bid.js': 'bids move no money',
-	'api/labor/deliver.js': 'settlement pays the worker; the payer signed when posting',
-	'api/labor/release.js': 'moderator-only admin path',
 	'api/labor/tick.js': 'cron-only (requireCron)',
 	'api/swarms/[id].js': 'read-only state and stream',
 	'api/trading/scan.js': 'read-only candidate preview; never loads a key',
 	'api/user/wallet/history.js': 'read-only history',
+	'api/_mcpagent/dispatch.js': 'only imports perps/service.js to compute hiddenTools (read-only); wires the catalog, never recovers a key or moves funds itself',
+	'api/actions/agent-tip.js': 'builds an unsigned Blink transaction the caller own wallet signs; the agent is only the transfer recipient, never the signer',
+	'api/creator-payouts.js': 'manages payout wallet registration and reads only; the actual transfer (sendFromAgentWallet/runDistribution in _lib/creator-payouts.js) runs from a cron, outside this route',
+	'api/pump/launch-intents.js': 'confirm records the approval only; executeApprovedFundedLaunch (the custodial signer) runs from a separate approval executor, not this route',
+	'api/skills/import.js': 'imports agent-pumpfun.js only for its RPC endpoint (solanaConnection) to fetch an Anchor IDL; never calls the unrelated signing export',
 };
 
 // Routes whose every money path runs through one api/_lib service that holds
@@ -51,6 +54,7 @@ const EXEMPT = {
 // checks the named module really calls the gate.
 const DELEGATED = {
 	'api/_mcpagent/perps-tools.js': 'api/_lib/perps/service.js',
+	'api/_mcpagent/named-services-tools.js': 'api/_mcpagent/tools.js',
 };
 
 function walk(dir, out = []) {
@@ -94,7 +98,8 @@ describe('real-funds agreement coverage', () => {
 	it.each(keyRoutes.map((r) => [r.file, r]))('%s enforces the signed agreements or is exempt with a reason', (file, { src }) => {
 		if (EXEMPT[file]) return;
 		if (DELEGATED[file]) {
-			expect(src.includes(DELEGATED[file].replace(/^api\/_lib\//, '_lib/')), `${file} no longer imports ${DELEGATED[file]}`).toBe(true);
+			const imported = [...src.matchAll(/(?:from\s+|import\s*\(\s*)['"](\.[^'"]+)['"]/g)].map((m) => resolve(dirname(join(ROOT, file)), m[1]));
+			expect(imported.includes(resolve(ROOT, DELEGATED[file])), `${file} no longer imports ${DELEGATED[file]}`).toBe(true);
 			expect(GATE.test(readFileSync(join(ROOT, DELEGATED[file]), 'utf8')), `${DELEGATED[file]} no longer enforces the agreements`).toBe(true);
 			return;
 		}

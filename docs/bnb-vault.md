@@ -5,8 +5,8 @@ encrypted 3D models: sellers list an encrypted GLB, buyers pay on-chain and
 receive the key to decrypt and view it. Buying one is a real BSC transaction
 against a real smart contract, which triggers a real cross-chain call into
 Greenfield's programmable storage: a genuinely unique capability BNB Chain
-has that Ethereum L1, Base, and (mostly) Solana don't (see
-`prompts/bnb-chain/00-CONTEXT.md`'s verified facts). This page is for
+has that Ethereum L1, Base, and (mostly) Solana don't (hub addresses and
+their verification are recorded in [`contracts/DEPLOYMENTS.md`](../contracts/DEPLOYMENTS.md)). This page is for
 developers: it explains what the vault is, how it's built, and how to
 reproduce the proof yourself. Everything here is real code against real
 endpoints; nothing is mocked.
@@ -109,7 +109,8 @@ not tabbable behind an `aria-hidden` wrapper.
 ## 4. Reproducing the proof
 
 The public BSC testnet deploy is blocked on a funded deployer key (same wall
-documented across prompts 07/09/10/11/13/14/18 in `prompts/bnb-chain/PROGRESS.md`). Every
+recorded in the GreenfieldVault and WorldMoves sections of
+[`contracts/DEPLOYMENTS.md`](../contracts/DEPLOYMENTS.md)). Every
 piece of logic above is provable today against a **local anvil fork** — the
 same technique prompt 11 used at the exported-function level, extended here
 to drive the actual running HTTP endpoints and a real headless browser:
@@ -130,14 +131,15 @@ Greenfield chain lookup that cannot be mocked locally. That's the single
 remaining gap, and it's the same funded-account wall as everywhere else in
 this campaign, not a bug in this code path.
 
-## 5. Honest gaps (as of 2026-07-08)
+## 5. Honest gaps (re-checked 2026-10-25)
 
 - **Public testnet deploy**: code-complete (`contracts/script/DeployGreenfieldVault.s.sol`
   dry-run succeeds against the live testnet RPC), blocked on a funded
-  `BNB_TESTNET_DEPLOYER_KEY`.
+  `BNB_TESTNET_DEPLOYER_KEY`. The latest dry run in `contracts/DEPLOYMENTS.md`
+  is 1,711,362 total gas with 41/41 `forge test` passing. The one-command
+  deploy-and-prove path is `node scripts/bnb-testnet-deploy-prove.mjs --broadcast`.
 - **Real Greenfield object upload**: `api/bnb/vault-upload.js` is real and
-  complete, blocked on a funded `GREENFIELD_VAULT_OPERATOR_KEY`. Prompt 13's
-  own E2E proof confirmed exactly how far the wire reaches with a throwaway
+  complete, blocked on a funded `GREENFIELD_VAULT_OPERATOR_KEY`. The earlier E2E proof confirmed exactly how far the wire reaches with a throwaway
   (never-funded) operator key configured: `GET /api/vault/download` gets
   past the "not configured" guard and reaches LIVE Greenfield testnet
   infrastructure through the real SDK client, failing with a specific real

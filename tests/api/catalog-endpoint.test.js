@@ -38,8 +38,12 @@ const MANIFESTS = {
 	'animations/library/generated/manifest.json': null,
 };
 
+// Keys whose read fails with a real storage error (not "never published").
+const FAILING = new Set();
+
 vi.mock('../../api/_lib/r2.js', () => ({
 	getPublicObjectBuffer: vi.fn(async (key) => {
+		if (FAILING.has(key)) throw new Error('R2 request failed: 500');
 		const value = MANIFESTS[key];
 		if (value == null) {
 			const err = new Error('NoSuchKey');
@@ -96,7 +100,10 @@ function invoke(url) {
 	return handler(req, res).then(() => ({ status, body, headers }));
 }
 
-beforeEach(() => resetCatalogCache());
+beforeEach(() => {
+	FAILING.clear();
+	resetCatalogCache();
+});
 
 describe('GET /api/catalog', () => {
 	it('searches across every library', async () => {
@@ -142,5 +149,29 @@ describe('GET /api/catalog', () => {
 	it('is cacheable at the edge', async () => {
 		const { headers } = await invoke('/api/catalog?q=chair');
 		expect(headers['cache-control']).toContain('s-maxage=300');
+	});
+
+	it('marks the response degraded and uncacheable when a manifest read fails for a reason other than not-yet-published', async () => {
+		FAILING.add('objects/library/manifest.json');
+		const { status, body, headers } = await invoke('/api/catalog');
+		expect(status).toBe(200);
+		expect(body.items.map((i) => i.id)).toEqual(['character:abe']);
+		expect(body.degraded).toBe(true);
+		expect(headers['cache-control']).toBe('no-store');
+	});
+
+	it('does not memoize a degraded load, so the next call retries storage', async () => {
+		FAILING.add('objects/library/manifest.json');
+		expect((await invoke('/api/catalog?q=chair')).body.matched).toBe(0);
+		FAILING.clear();
+		const { body, headers } = await invoke('/api/catalog?q=chair');
+		expect(body.items[0].id).toBe('object:wooden_chair');
+		expect(body.degraded).toBe(false);
+		expect(headers['cache-control']).toContain('s-maxage=300');
+	});
+
+	it('reports a healthy catalog (including a never-published manifest) as not degraded', async () => {
+		const { body } = await invoke('/api/catalog?q=chair');
+		expect(body.degraded).toBe(false);
 	});
 });

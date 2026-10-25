@@ -32,7 +32,7 @@ import { insertNotification } from '../notify.js';
 import { onMailReceived } from '../wallet-intents.js';
 import { evaluateMailRules } from './rules.js';
 import { mailDomain, MAX_INBOUND_ATTACHMENT_BYTES, MAX_INBOUND_TOTAL_BYTES } from './config.js';
-import { scoreInbound } from './spam.js';
+import { scoreInbound, isAuthenticatedSender } from './spam.js';
 import { normalizeMessageId, normalizeSubject, parseAddress, parseReferences, threadCandidates } from './threading.js';
 
 function recipientsOnDomain(list, domain) {
@@ -168,6 +168,7 @@ export async function ingestReceived({ provider, event }) {
 				text: email.text,
 				created_at: new Date().toISOString(),
 				spam_score: verdict.score,
+				authenticated: isAuthenticatedSender(verdict.auth),
 			});
 		}
 	}
@@ -195,7 +196,9 @@ async function afterReceived(mb, msg) {
 		from: msg.from,
 		subject: msg.subject,
 		spam_score: msg.spam_score,
+		authenticated: msg.authenticated === true,
 	});
+	if (msg.authenticated !== true) return;
 	await evaluateMailRules({ mailbox: mb, message: msg });
 }
 
@@ -248,6 +251,7 @@ export async function deliverLocal({ fromMailbox, sent, recipients }) {
 			text: sent.text_body,
 			created_at: row.created_at,
 			spam_score: 0,
+			authenticated: true,
 		});
 	}
 	return delivered;

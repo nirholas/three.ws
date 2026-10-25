@@ -3736,7 +3736,11 @@ async function handleStrategyCloseAll(req, res) {
 	const enc = row.meta?.encrypted_solana_secret;
 	if (!enc) return error(res, 409, 'conflict', 'agent has no solana wallet');
 
-	const wallet = await loadWallet(enc);
+	const wallet = await loadWallet(enc, {
+		agentId: body.agentId,
+		userId: auth.userId,
+		reason: 'pump_close_all',
+	});
 	const rt = makeRuntime({
 		wallet,
 		agentId: body.agentId,
@@ -3773,7 +3777,7 @@ async function loadAgentWalletForStrategy(agentId, userId) {
 			new Error('agent has no solana wallet — provision via /api/agents/:id/solana'),
 			{ status: 409 },
 		);
-	const wallet = await loadWallet(enc);
+	const wallet = await loadWallet(enc, { agentId, userId, reason: 'pump_strategy' });
 	return { wallet, address: wallet.publicKey.toBase58(), meta: row.meta };
 }
 

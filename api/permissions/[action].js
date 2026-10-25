@@ -367,7 +367,7 @@ async function handleList(req, res) {
 	const limitParam = Math.min(200, Math.max(1, parseInt(rawLimit || '50', 10)));
 	const offset = Math.max(0, parseInt(rawOffset || '0', 10));
 
-	// agentId-only path: public, no auth required
+	// agentId-only path: public, no auth required, published agents only
 	if (agentId && !delegator) {
 		let rows;
 		try {
@@ -377,6 +377,10 @@ async function handleList(req, res) {
 					scope, status, expires_at, created_at, last_redeemed_at, redemption_count
 				FROM agent_delegations
 				WHERE agent_id = ${agentId}
+				  AND EXISTS (
+					SELECT 1 FROM agent_identities ai
+					WHERE ai.id = agent_delegations.agent_id AND ai.deleted_at IS NULL AND ai.is_published = true
+				  )
 				  AND (${statusParam} = 'all' OR status = ${statusParam})
 				  AND (${chainId}::integer IS NULL OR chain_id = ${chainId}::integer)
 				ORDER BY created_at DESC
@@ -523,10 +527,11 @@ async function handleMetadata(req, res) {
 		return error(res, 400, 'validation_error', 'chainId must be a positive integer');
 	}
 
-	// Verify agent exists
+	// Public endpoint: an unpublished agent's delegations (wallet addresses, scope)
+	// stay private to their owner, so it reads as not found here.
 	const [agent] = await sql`
 		SELECT id FROM agent_identities
-		WHERE id = ${agentId} AND deleted_at IS NULL
+		WHERE id = ${agentId} AND deleted_at IS NULL AND is_published = true
 		LIMIT 1
 	`;
 	if (!agent) {
