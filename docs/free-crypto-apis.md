@@ -64,7 +64,7 @@ We only use Kraken, Coinbase, and Bitfinex as price fallbacks. Every other major
 
 | Provider | Free offering | Key? | Notes |
 | --- | --- | --- | --- |
-| CoinGlass | Free developer tier | Yes | Cross-exchange open interest, funding, liquidations, long/short ratios. Complements our Hyperliquid-only derivatives view in `api/coin/derivatives.js`. |
+| CoinGlass | Free developer tier | Yes | Cross-exchange open interest, funding, liquidations, long/short ratios. Complements our derivatives view in `api/coin/derivatives.js` (CoinGecko venue tickers, with Hyperliquid as the backup and a Deribit options block alongside). |
 | Binance/Bybit funding + OI endpoints | Keyless | No | Raw per-venue inputs if we aggregate ourselves. |
 
 ## On-chain analytics and indexing (EVM + multichain)

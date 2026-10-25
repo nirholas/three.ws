@@ -1,6 +1,6 @@
 # Run receipts: what each stage was expected to do, and what it did
 
-Every generation the free 3D Studio runs (`forge_avatar`, `text_to_avatar`, `mesh_forge`, `forge_free`, `rig_mesh`, `refine_model`) writes a **run receipt**. A receipt walks the pipeline stage by stage. For each stage it records:
+Every generation the free 3D Studio starts (`forge_avatar`, `text_to_avatar`, `mesh_forge`, `forge_free`, `rig_mesh`) writes a **run receipt**. `refine_model` does not write one. A receipt walks the pipeline stage by stage. For each stage it records:
 
 - the **expected** result
 - the **observed** result

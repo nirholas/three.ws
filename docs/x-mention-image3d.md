@@ -14,12 +14,12 @@ The picture is only used when its poster is the person who wrote the mention. An
 1. Fetch from X's photo CDN only (`pbs.twimg.com/media/...`, https, the `large` rendition). Redirects are refused. The download has a 5 MB cap (`X_MEDIA_MAX_BYTES` in `api/_lib/x-media-image.js`), a 15 second timeout, a JPEG or PNG Content-Type check and a magic-byte check. A URL on any other host is a skip with reason `image_rejected:not_cdn` and no request is made. A too-large, wrong-type or stalled picture gets a reply pointing at https://three.ws/forge.
 2. Review with a vision model for ages-13+ safety and for one reconstructable subject. This fails closed: with no vision provider the bot replies with the /forge link and generates nothing. An unsafe picture gets a fixed refusal that echoes nothing from the post. Text typed after "3D this" also passes the studio prompt safety check.
 3. Store the picture and run the image-to-3D lane, attributed to the system bot account and the X author (`forge_creations.x_author_id`) so the author can claim it later. Creations are unlisted.
-4. Reply with the rendered PNG and `/m/<creation id>`. A job that outlives `X_MAKE_BUDGET_MS` is recorded as `pending` and `finishPendingImage3d` replies once when it completes, or with the failure reply after `X_MAKE_GIVE_UP_MS`.
+4. Reply with the rendered PNG and `/m/<creation id>`. Before attaching the PNG the bot probes the render URL (`posterRenders`, 90 second timeout); if the render service refuses the mesh (for example a size cap) the reply is link-only. Every success reply also gets a claim line from `withClaimNote` in `api/_lib/x-creation-claim.js`: "Saved to your library." when the author has linked the same X account, otherwise a link to `/x/claim`, where linking X moves the creation into their library. A job that outlives `X_MAKE_BUDGET_MS` is recorded as `pending` and `finishPendingImage3d` replies once when it completes, or with the failure reply after `X_MAKE_GIVE_UP_MS`.
 
 ## Code
 
 - `api/_lib/x-media-image.js`: `fetchXImage`, `xMediaUrl`, `XMediaError`.
-- `api/_lib/x-mention-image3d.js`: `handleImage3d`, `finishPendingImage3d`, `reviewImage`, `isOwnImage`, `composeImage3dReply`.
+- `api/_lib/x-mention-image3d.js`: `handleImage3d`, `finishPendingImage3d`, `reviewImage`, `isOwnImage`, `composeImage3dReply`, `cleanSubject` (drops a leading article such as "a" or "the" from the subject), `posterRenders`.
 - `tests/x-mention-image3d.test.js`: own image, someone else's image, non-CDN URL, oversized image, moderation and the pending follow-up.
 - `scripts/x-mention-image3d-dry-run.mjs`: real dry runs from real mentions that carry photos; writes `prompts/x-grok/_generated/image3d-dry-run.json`.
 

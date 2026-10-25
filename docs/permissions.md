@@ -99,6 +99,8 @@ const signed = await signDelegation(delegation, signer);
 // signed.hash      — keccak256 of the struct (safe to log; never log the signature)
 ```
 
+To check a delegation against the chain from code, call `isDelegationValid({ hash, chainId, delegation? })` from the same module. It has three outcomes, not two: `{ valid: true }`, `{ valid: false, reason }` naming what is wrong (for example `delegation_revoked`), and `{ valid: null, reason: 'rpc_unavailable' }` when no RPC could be reached. An outage is not evidence of revocation, so callers decide deliberately whether null fails closed. The RPC is the pinned `rpcUrl` or `RPC_URL_<chainId>` first, then the same-origin proxy and public hosts.
+
 Then store the signed delegation via `POST /api/permissions/grant`:
 
 ```js

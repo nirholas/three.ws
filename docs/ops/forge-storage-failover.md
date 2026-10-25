@@ -50,7 +50,8 @@ inline as a `data:` URI, and the generation continues:
 
 "Storage infrastructure fault" is `isStorageInfrastructureError` in
 [api/_lib/r2.js](../../api/_lib/r2.js): a rejected or revoked credential, a
-missing bucket, an unreachable endpoint. Object-level faults are not included,
+missing bucket, an account not entitled to R2 (`NotEntitled`), an unreachable
+endpoint. Object-level faults are not included,
 because those blame the object and the fallback would be wrong.
 
 ### Which lanes may receive an inline view
@@ -58,7 +59,7 @@ because those blame the object and the fallback would be wrong.
 Only ours. `backendAcceptsInlineViews` in
 [api/_lib/forge-tiers.js](../../api/_lib/forge-tiers.js) is true exactly for the
 backends whose `provider` is `gcp` (`trellis2`, `trellis_selfhost`, `hunyuan3d`,
-`modly`, `modly_hunyuan`, `triposg`),
+`modly`, `modly_hunyuan`, `triposg`, `pixal3d`, `anigen`, `partcrafter`),
 and it is derived from the registry rather than a hand-written list, so a backend
 added later is classified by what it is.
 
@@ -75,6 +76,10 @@ that names the real cause and suggests the lanes that can still run:
   "retry_backends": ["trellis_selfhost", "hunyuan3d"]
 }
 ```
+
+When the write failure happens later, after a lane was already chosen, the
+handler answers a generic 503 `storage_unavailable` with `retry_after: 60`
+instead of a 502 carrying the vendor's sentence.
 
 That path also closes the information leak: a caller is no longer told to check
 our secret access key.
@@ -119,5 +124,5 @@ listed in `/.well-known/x402.json`.
 
 - Daily automated version of the same bar: [api/cron/forge-smoke.js](../../api/cron/forge-smoke.js), 09:30 UTC, alerts to ops Telegram.
 - Which failure classes recur, from the outcome ledger: [forge-error-triage.md](./forge-error-triage.md).
-- The credential's own health signal: [api/_lib/ops/object-storage-health.js](../../api/_lib/ops/object-storage-health.js).
+- The credential's own health signal: [api/_lib/ops/object-storage-health.js](../../api/_lib/ops/object-storage-health.js). It retries the signed list once after a 300 ms backoff before classifying the bucket down (`metrics.retried`), so a one-off network blip does not page, while two consecutive failures still do.
 - Worker URLs and env: [gcp-model-workers.md](./gcp-model-workers.md).

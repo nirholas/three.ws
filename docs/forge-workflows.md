@@ -161,6 +161,7 @@ The For Each loop semantics, the typed-port model and the idea of a local-GPU ge
 | `src/forge-workflows/editor.js` | Canvas, nodes, links, pan and zoom. |
 | `src/forge-workflows/inspector.js` | The settings panel. |
 | `src/forge-workflows/results.js` | Preview viewer and result links. |
+| `src/forge-workflows/ui.js` | Small DOM helpers shared by the editor, inspector and page. |
 | `src/forge-workflows/templates.js` | The four templates. |
 | `tests/forge-workflows-graph.test.js`, `tests/forge-workflows-runner.test.js` | Unit tests for the graph and the runner. |
 

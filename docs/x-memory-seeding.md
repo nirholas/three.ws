@@ -83,6 +83,11 @@ than failing at the X API. The scope sets and both guards live in
 resolves to the full set, so a typo can never silently narrow what a posting
 surface asks for.
 
+A third guard, `X_MENTION_REQUIRED_SCOPES` (`tweet.read users.read tweet.write`),
+covers an agent answering mentions from its own X account (the "Answer mentions"
+section of the agent editor's X panel). A read-only seeding connection does not
+carry it, so that panel shows a reconnect link instead of enabling the policy.
+
 Connections made before scopes were recorded store an empty scope string. Those
 are treated as unknown rather than as empty, so neither guard blocks them.
 

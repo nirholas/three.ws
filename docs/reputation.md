@@ -11,7 +11,7 @@ Traditional rating systems (app stores, review sites) share a structural weaknes
 On-chain reputation addresses all three:
 
 - **Permanent.** The blockchain is append-only. A submitted score exists as long as the chain does.
-- **Publicly verifiable.** Anyone can read the `ReputationRegistry` contract directly — no API key, no account required.
+- **Publicly verifiable.** Anyone can read the `ReputationRegistry` contract directly, with no API key and no account.
 - **Sybil-resistant.** Every review is tied to the wallet that signed it, and creating fake identities costs real gas.
 - **Composable.** Other applications can read the same reputation data. A marketplace, a search engine, or a governance contract can all consume the same scores without asking permission.
 
@@ -97,7 +97,7 @@ Chains covered: Base (8453, the default), Base Sepolia (84532), Ethereum (1), Op
 What the page renders:
 
 - **Aggregate stats.** Attestation count, average star rating over the scored ones, and a 1-to-5 distribution bar. The count is labelled "attestations", not "reviews": most addresses hold attestations written against other EAS schemas (verifications, name claims), and calling those reviews would overstate the address's review history.
-- **The attestation list**, filterable by All / Scored / With comments, paged 30 at a time with a running "Showing X of Y" and a **Show more** button, so a heavily attested address does not silently truncate.
+- **The attestation list**, filterable by All / Scored / With comments, paged 30 at a time with a running "Showing X of Y" and a **Show N more** button, so a heavily attested address does not silently truncate.
 - **Every attestation's payload.** A review renders as stars plus its comment. An attestation written against any other schema renders its decoded fields (name and value) with the schema string as a tag, so no card is a blank row with only an address and a timestamp.
 - **An ERC-8004 badge** when the address owns an agent in the Identity Registry on that chain, showing the registry's own vote count and average, linking out to the agent's registry token on the block explorer and to [/agent-identities](https://three.ws/agent-identities).
 - **A review form**, wallet-gated. Writes go to Base Sepolia, a free test network, which the form states plainly before you sign.

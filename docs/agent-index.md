@@ -138,7 +138,9 @@ The monitor reports both legs. Read them differently:
   blocks faster than the crawl consumes them keeps a fresh cursor forever while
   falling further behind every tick. The monitor therefore reports **blocks
   behind head**, and the crawl grows its block window while a chain is behind
-  (halving it when a provider rejects the range) so a fast chain can actually
+  (halving it when a provider rejects the range, bounded by a 60-second
+  per-chain wall-clock budget after which it checkpoints the cursor instead of
+  retrying blind) so a fast chain can actually
   close the gap. One window per chain per tick holds a slow chain but cannot
   drain a fast one, so after the first pass over every chain the cron spends
   whatever is left of its budget on a **catch-up pass**: it re-picks the chain
@@ -178,7 +180,8 @@ resumes from the last signature or block it recorded; when the RPC answering the
 call no longer serves it, the read throws, the cursor is never written, and
 every later tick re-asks for the same dead history. Both legs recover from it
 now. [`api/_lib/solana/cursor-recovery.js`](../api/_lib/solana/cursor-recovery.js)
-recognizes an unresolvable cursor signature and restarts that agent's sweep from
+recognizes an unresolvable cursor signature (including a lane that reports the
+history is not on the node) and restarts that agent's sweep from
 the head, and the EVM crawl skips forward once per tick past a pruned-history
 rejection instead of letting the range backoff retry something it cannot fix.
 The blocks skipped that way are published on the health board
@@ -186,7 +189,8 @@ The blocks skipped that way are published on the health board
 is already gone and no tick can bring it back.
 
 Solana leads the verdict, and here that is correctness rather than preference:
-an EVM-only fault caps the subsystem at `degraded` instead of `down`, since a
+an EVM-only fault caps the subsystem at `degraded` instead of `down` whenever the
+Solana leg is not itself `down` (fresh or merely degraded), since a
 secondary chain months behind head changes nothing on the agent profile a reader
 actually opens. The detail line says so whenever the cap applies.
 

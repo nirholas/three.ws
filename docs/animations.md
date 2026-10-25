@@ -1,6 +1,6 @@
 # Animations
 
-Animations are the motion clips (idle, wave, dance, and about 3,000 more) that bring three.ws avatars to life. Browse and preview every clip at [three.ws/animations](https://three.ws/animations); this page is the developer reference for how the clip collections are organized, how the runtime loads them, and how agents pick which clip to play.
+Animations are the motion clips (idle, wave, dance, 113 curated clips plus a CC0 library of 200+ more) that bring three.ws avatars to life. Browse and preview every clip at [three.ws/animations](https://three.ws/animations); this page is the developer reference for how the clip collections are organized, how the runtime loads them, and how agents pick which clip to play.
 
 > For how FBX, GLB, and clip JSON relate — the formats, the conversions, and the full generate→rig→animate→export chain — see **[docs/3d-asset-pipeline.md](3d-asset-pipeline.md)**. This page is the runtime registry and agent-slot reference.
 
@@ -131,14 +131,14 @@ Its measured companion is `public/animations/signatures.json`: a motion-signatur
 
 - **Poster thumbnails**: a WebP still of the preview avatar posed mid-motion, rendered offline by `node scripts/build-animation-thumbnails.mjs` (which drives `scripts/thumbnail-harness.html` in headless Chromium through the site's own retarget engine). Curated thumbs are committed at `public/animations/thumbs/<name>.webp`; library thumbs upload to R2 alongside their clips via `npm run cc0-library:upload`, which publishes each one as the manifest entry's `thumb` URL. Added a clip? Re-run the thumbnail script, then re-upload. **The library manifest's `thumb` field is the only source of truth for a library thumbnail.** Coverage is partial, and the gallery renders the clip's icon for those instead of guessing a CDN path: the guess 404s on every one of them, which cost a blocked cross-origin request per card.
 - **Categories**: the bulk library carries no category metadata, so `src/animation-categories.js` derives one per clip from its label (ordered keyword rules; curated clips keep their hand-assigned `animation-presets.js` category). Covered by `tests/animation-categories.test.js`, which also asserts <10% of the real library falls into the "More" catch-all.
-- **Per-clip credit**: every bulk-library card shows its source pack and license next to the category chip (`src/animations-gallery.js` `normalizeFullLibraryClip`), pulled straight from the manifest's `source`/`license` fields. See "Licensing" below.
+- **Per-clip credit**: every bulk-library card shows its source pack and license next to the category chip (`src/animations-gallery.js` `normalizeFullLibraryClip`), pulled straight from the manifest's `source`/`license` fields. The curated studio manifest carries no such fields, so `studioClipCredit()` in the same file classifies those clips by name prefix (Avaturn, Mixamo, three.js examples) to match `public/animations/LICENSES.md`; a clip whose source is unresolved stays uncredited. See "Licensing" below.
 - **Live previews** — one shared WebGL engine (`src/animations-live-preview.js`) serves every card hover and the detail modal: a single renderer + preview avatar; the canvas moves into whichever card is previewing. Nothing 3D loads until the first hover.
 - **Deep links**: `?clip=<id>` opens a clip's detail modal directly; `q`, `cat`, `filter`, and `sort` round-trip through the URL so filtered views are shareable. Every one of them is validated against the values the controls can represent, so a hand-edited `?sort=bogus` falls back to `featured` rather than blanking the sort menu, and an arriving `?filter=once` presses the matching segmented button instead of filtering invisibly.
 - **Detail modal**: a real dialog. Focus moves into it on open, Tab wraps inside it, Escape closes it and returns focus to the card that opened it. Arrow keys step through the filtered list (except while a slider is focused, which owns its own arrows), and Space toggles playback. The transport row only appears once a clip is actually on the stage, so a preview that fails to load shows the error and its Studio link rather than controls that do nothing.
 
 ## Licensing
 
-The curated 131-clip default avatar set (`public/animations/clips/`, built from
+The curated 113-clip default avatar set (`public/animations/clips/`, built from
 `mx-*.fbx` Mixamo sources and the MIT/CC0 three.js example-model clips) ships
 baked into the site and is out of scope for this section: Adobe's Mixamo terms
 permit using those clips in a project, which is exactly what the default

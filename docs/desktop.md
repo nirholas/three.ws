@@ -153,7 +153,7 @@ gems onto the account, so nothing mined before signing in is lost. The server
 refuses a dig that comes sooner than the dig time allows (`429 dig_too_soon`,
 with `retry_in_sec`), stops at 300 digs a day (`429 daily_cap`) and rejects an
 unknown vein (`400 invalid_node`). Table and rules: `api/_lib/world-gems.js`;
-storage: migration `20261015000000_world_gems.sql`.
+storage: migration `api/_lib/migrations/20261015000000_world_gems.sql`.
 
 ## The Grid
 
@@ -169,7 +169,7 @@ A second place to walk: a neon wireframe room where the platform's apps are thin
 - **Theme.** The CTRL design system (Windows-12 lineage): Mica gradients, glass
   and blur presets, the CTRL token names, light and dark. Dark is the default.
   Light follows the site-wide `twx_theme` switch, so the desktop and every
-  framed page flip together. Tokens: `src/desktop/theme.css`.
+  framed page flip together. Tokens: `src/desktop/theme.css`, which resolves colours and motion timings from the site-wide canonical vars in `/tokens.css` (the desktop page links that sheet).
 - **Shell.** Floating taskbar with pinned and running apps, Start menu, system
   tray, notification centre and calendar, lock screen, power menu, Run and About
   dialogs, desktop icons and files, right-click menus. `src/desktop/shell.js`

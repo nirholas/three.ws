@@ -50,6 +50,7 @@ Files:
 | [api/_lib/onchain-deploy.js](../api/_lib/onchain-deploy.js) | Shared mint logic — collection resolution, manifest pin, Core mint, DB persist. |
 | [scripts/deploy-agents-onchain.mjs](../scripts/deploy-agents-onchain.mjs) | CLI runner — dry-run preview, canary, full fleet. |
 | [scripts/register-agents-onchain.mjs](../scripts/register-agents-onchain.mjs) | CLI back-fill: enrols already-minted agents that have a Core asset but no Agent Identity PDA (same `--network` / `--limit` / `--dry-run` / `--confirm` flags). |
+| [scripts/register-8004-agents.mjs](../scripts/register-8004-agents.mjs) | CLI back-fill for the 8004 registry enrolment (see [Open Solana agent registry](solana-agent-registry.md)). |
 | [api/_lib/solana-collection.js](../api/_lib/solana-collection.js) | Collection authority + address helpers. |
 | [api/_lib/three-brand.js](../api/_lib/three-brand.js) | Manifest + on-chain attributes builders. |
 
@@ -135,7 +136,7 @@ On a confirmed mint, `deployAgentOnce()` writes to `agent_identities.meta`:
 
 `sol_mint_address` is the canonical key every read path uses (explore, discover, profiles). It also makes re-runs **idempotent**: an agent that already has it is skipped. (Devnet runs are isolated under `meta.devnet` so they never block a real mainnet mint.) An `agent_actions` row (`type: solana.deploy`) is logged, and on mainnet a truthful `agent-onchain` feed event fires.
 
-Right after the mint, `registerAgentOnce()` enrols the asset in the Metaplex Agent Registry. The collection authority signs (the owner still never signs and needs no SOL), the Agent Identity PDA's URI is set to the agent's live `/api/agents/:id/registration` document rather than a pinned snapshot (the registry program has no instruction to change a URI later, so a mutable endpoint keeps `active`, services, and the model current), and an `agent_registry` block is merged into the same `meta` (`standard: metaplex-agent-registry`, `program`, `identity_pda`, `asset`, `collection`, `authority`, `registration_uri`, `network`, `tx_hash`, `registered_at`; under `meta.devnet` for devnet runs). A second `agent_actions` row (`type: solana.register`) is logged. A registry failure never undoes the mint: the asset and `sol_mint_address` are already persisted, the runner prints `registry skipped: <error> (back-fill later)`, and `scripts/register-agents-onchain.mjs` picks up every agent that has `sol_mint_address` but no `agent_registry.identity_pda`.
+Right after the mint, `registerAgentOnce()` enrols the asset in the Metaplex Agent Registry. The collection authority signs (the owner still never signs and needs no SOL), the Agent Identity PDA's URI is set to the agent's live `/api/agents/:id/registration` document rather than a pinned snapshot (the registry program has no instruction to change a URI later, so a mutable endpoint keeps `active`, services, and the model current), and an `agent_registry` block is merged into the same `meta` (`standard: metaplex-agent-registry`, `program`, `identity_pda`, `asset`, `collection`, `authority`, `registration_uri`, `network`, `tx_hash`, `registered_at`; under `meta.devnet` for devnet runs). A second `agent_actions` row (`type: solana.register`) is logged. The same step also enrols the agent in the open 8004 Solana agent registry (`register8004Agent` in `api/_lib/solana-8004.js`, stored as `meta.registry_8004`). It is always on for devnet and opt-in on mainnet via `SOLANA_8004_REGISTER_MAINNET=1`, and a failure there is reported and left for `scripts/register-8004-agents.mjs`; see [Open Solana agent registry](solana-agent-registry.md). A Metaplex registry failure never undoes the mint: the asset and `sol_mint_address` are already persisted, the runner prints `registry skipped: <error> (back-fill later)`, and `scripts/register-agents-onchain.mjs` picks up every agent that has `sol_mint_address` but no `agent_registry.identity_pda`.
 
 ---
 
@@ -279,6 +280,7 @@ A confirmed canary asset shows `inCollection=true`, `royalty=500bps`, `attrs=11`
 ## See also
 
 - [Solana agents](solana.md) — the single-agent, user-signed registration flow.
+- [Open Solana agent registry](solana-agent-registry.md): the 8004 enrolment and trust tiers.
 - [ERC-8004](erc8004.md) — the EVM on-chain identity path.
 - [Agent manifest](agent-manifest.md) — the metadata schema.
 - [Mint mark ("3ws")](mint-mark.md) — vanity marking for three.ws launches.

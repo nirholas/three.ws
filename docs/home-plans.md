@@ -283,6 +283,13 @@ with a real conversation rather than only with a unit test:
   arm is recognised with no live entity list and therefore in precisely the degraded states where
   somebody most needs to lock up.
 
+Home tools are also **only offered to the agent's owner**. When a signed-in visitor chats with an
+agent they do not own, `homeToolsOffered` in [`api/chat.js`](../api/chat.js) withholds every home
+tool for that turn, because the other account's persona and custom skills share the prompt and the
+tools would run under the visitor's authority. A turn with no agent, or with the visitor's own
+agent, keeps them. That is a trust boundary rather than a quota, so it applies on every plan, and
+it does not touch the safety exemption: the exemption governs limits, not who may be offered a tool.
+
 The gate also **fails open**. An unreadable entitlement row or an unreachable usage counter
 resolves to "allowed", never to "refused": a quota that errs must err toward serving the user, and
 refusing a person access to their own house over a billing hiccup is the failure this lane is least

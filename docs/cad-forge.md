@@ -28,7 +28,7 @@ Describe a mechanical part in a sentence and get real CAD: a parametric [build12
 
 The page shows each of these stages live, including the kernel's actual error text during a repair. Nothing is shown to you until the kernel has accepted it.
 
-The writer is a model ladder in [`api/_lib/cad/writer.js`](../api/_lib/cad/writer.js): Kimi K3 on NVIDIA NIM first, then Nemotron Super, then gpt-oss-120b on Groq, then the platform's general LLM chain. The order came from a bake-off against the real kernel.
+The writer is a model ladder in [`api/_lib/cad/writer.js`](../api/_lib/cad/writer.js): Kimi K3 on NVIDIA NIM first, then Nemotron 3.5 Lightning, then gpt-oss-120b on Groq, then the platform's general LLM chain. The order came from a bake-off against the real kernel.
 
 ### Kernel adjustments
 

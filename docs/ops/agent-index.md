@@ -109,6 +109,7 @@ gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_
 | EVM `block range` / `response size` / `query returned more than` / `ranges over N blocks` | The window was too wide. dRPC's free tier says `ranges over 10000 blocks` for any window above about 100 blocks, so its number is not the real ceiling. | Self-healing: `backoffChunkSize()` halves it in place and the width is persisted in `chunk_size`. |
 | EVM `limit exceeded` | A plan or compute limit, **not** a range ceiling. | Shrinking does not help. Deliberately excluded from `isRangeRejection`. |
 | EVM `ENOTFOUND` / `HTTP 401 … tenant disabled` / `chain is not available on free plan` | The lane is gone, not busy. | Replace it in that chain's `rpcUrls` with a lane probed to serve `eth_getLogs` at the chain's window. A failing tick still banks `head_block` and `blocks_behind`, so a chain stuck on dead lanes shows its real backlog instead of the 0 its last good crawl left. |
+| EVM `shrink loop exceeded 60000ms budget at chunk N` (in `last_error`) | One chain's shrink-retry loop ran past `ERC8004_CHAIN_BUDGET_MS` (a slow or rejecting lane burning wall clock). | Self-healing: the crawl checkpoints `head_block`, `blocks_behind` and `chunk_size` and returns, so the next tick resumes instead of replaying the same blocks. Persistent means the chain's lanes are slow: replace them in `rpcUrls`. |
 | EVM `HTTP 403 from <host>` | A lane refused us with no readable JSON-RPC body. | The body is read first now, so a bare status here means the lane returned nothing to classify. The chain needs a lane that answers from a datacenter IP; see the `rpcUrls` note in `api/_lib/erc8004-chains.js`. |
 
 ## Recovery: drain a wedged backlog now
@@ -139,9 +140,10 @@ that is months behind changes nothing they can see.
 Read the numbers from `index-lag.js`; they are exported so nothing has to quote
 them. Two rules shape the verdict:
 
-- **An EVM-only fault caps at `degraded`.** Letting a stale secondary cursor
-  drive the whole subsystem to `down` reports an outage no user is having, and
-  it buries the Solana leg's real state.
+- **An EVM-only fault caps at `degraded`.** The cap applies whenever the Solana
+  leg is anything short of `down` (fresh, or merely degraded). Letting a stale
+  secondary cursor drive the whole subsystem to `down` reports an outage no user
+  is having, and it buries the Solana leg's real state.
 - **The Solana error rate is scored, not just the cursor age.** The sweep stamps
   `last_indexed_at` on the failure path too (deliberately, so one unreadable
   account cannot hold the oldest-first queue head forever), which means a wedged

@@ -57,6 +57,8 @@ The README carries animated charts rendered by `scripts/lib/profile-visuals.mjs`
 | `languages` | Extruded donut of primary languages that spins in 3D |
 | `punchcard` | Repo creation by weekday and hour (UTC) |
 
+The README header also carries a star-history "Top Committer 2026" badge on its own centered row under the follower badges.
+
 The same run adds an **About** section (the owner's background, first person) and a **How I build** section of coding analytics, rendered by `scripts/lib/profile-visuals.mjs` from numbers computed in `scripts/lib/profile-activity.mjs`:
 
 | Asset | What it shows |

@@ -7,7 +7,8 @@ on research it can cite from that board, so no trade ever happens on a hunch,
 and no specialist redoes work another one already did.
 
 Pages: [/teams](https://three.ws/teams) (your teams, assemble a new one) ·
-`/teams/<id>` (one team: the squad, the console, the board) · API: `/api/teams`
+`/teams/<id>` (one team: the squad, the console, the board) ·
+`/teams/<id>/chat` (talk to the squad, see [Team chat](./team-chat.md)) · API: `/api/teams`
 
 ## The four roles
 
@@ -122,6 +123,9 @@ curl -N -b cookies.txt https://three.ws/api/teams/$TEAM/findings/stream
   per account.
 - A live trade needs the signed real-funds agreement, `confirm: true`, and for a
   bearer token the `wallet:write` scope.
+- A bearer token also needs `wallet:write` to change the spend caps
+  (`per_trade_sol`, `daily_budget_sol`) with `PATCH /api/teams/:id`, because the
+  caps live on the Trader's trade limits. A session cookie does not.
 
 ## Where it lives
 

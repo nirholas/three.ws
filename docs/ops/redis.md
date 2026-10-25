@@ -187,21 +187,23 @@ to `local` (no Redis command) or must stay Redis-backed.
 | `mcp3dGenerate`, `mcpValidate`, `mcpInspect`, `mcpOptimize`, `mcpBazaar`, `mcpAgent`, `mcpAgentPay` | critical | paid compute / paid tools |
 | `avatarPayoutDaily`, `agentBuy`, `x402PayGlobal`, `videoGenerateUser`, `videoGenerateGlobal` | critical | real money movement |
 | `bountyJudge`, `voiceClone`, `ttsSpeakUser`, `ttsSpeakIp` | critical | paid synthesis / inference |
-| all other `*Ip` / `*User` read & write limiters | cross-instance-required | distributed per-principal caps; fail open on outage |
+| further `local` read/poll guards (`authedReadIp`, `mcpIp`, `mcpUser`, `walletRead`, `imgProxyIp`, `galaxyIp`, and others; grep `local: true` in `rate-limit.js` for the full set) | local | per-instance flood guards, zero Redis commands |
+| all other `*Ip` / `*User` read & write limiters | cross-instance-required | distributed per-principal caps; fail open on outage unless marked `critical` in `rate-limit.js` |
 
 ### Direct Redis usage (cache, feeds, ledgers)
 
 | File | Class | Operation |
 | --- | --- | --- |
-| `api/_lib/cache.js` | cross-instance-required | shared cache GET/SET/DEL (read-memo + single-flight in front to cut burn); `cacheWrapLastGood()` keeps a `<key>:lkg` sibling (24h) that is served when a refresh throws, so an upstream blip returns last-good data instead of an error |
+| `api/_lib/cache.js` | cross-instance-required | shared cache GET/SET/DEL plus `cacheSetIfAbsent` (`SET NX EX`, per-instance memory as the degraded fallback) (read-memo + single-flight in front to cut burn); `cacheWrapLastGood()` keeps a `<key>:lkg` sibling (24h) that is served when a refresh throws, so an upstream blip returns last-good data instead of an error |
 | `api/_lib/feed.js` | cross-instance-required | activity feed LPUSH/LTRIM/LRANGE (8s read-coalesce window) |
 | `api/_lib/usage.js` | cross-instance-required | usage-event buffer RPUSH/LRANGE/LTRIM (batched flush) |
 | `api/_lib/x402-spending-ledger.js` | critical / cross-instance-required | atomic INCRBY spend caps per hour/day/address |
-| `api/_lib/a2a/spend-ledger.js` | critical / cross-instance-required | agent-to-agent daily payout caps |
-| `api/_lib/x402/idempotency-cache.js` | critical / cross-instance-required | payment replay dedup (GET/SET) |
+| `api/_lib/a2a/spend-ledger.js` | critical / cross-instance-required | agent-to-agent daily payout caps; in production with no Redis, reads and reservations are refused (fail closed) because a per-instance ledger would multiply every mandate budget by the instance count |
+| `api/_lib/x402/idempotency-cache.js` | critical / cross-instance-required | payment replay dedup (GET/SET); proofs are hashed over the payment's canonical identity so re-encoding a header cannot dodge the check |
+| `api/_lib/idempotency.js` | cross-instance-required | shared `Idempotency-Key` store (24h): atomic claim via `cacheSetIfAbsent`, used by the v1 agents API, the free 3D studio and `runOnce` callers |
 | `api/_lib/builds-store.js` | cross-instance-required | build metadata + per-mint index cache |
 | `api/_lib/alerts.js` | cross-instance-required | ops-alert dedup + hourly ceiling |
-| `api/x402-pay.js`, `api/feed-stream.js`, `api/_lib/channel-feed-sources.js`, `api/_lib/pumpfun-mcp.js` | cross-instance-required | demo payment feed + feed reads |
+| `api/x402-pay.js`, `api/feed-stream.js`, `api/_lib/channel-feed-sources.js`, `api/_lib/pumpfun-mcp.js` | cross-instance-required | paid-call feed (`x402:pay:feed`) + feed reads |
 | `api/cron/uptime-check.js`, `api/cron/quota-check.js`, `api/cron/flush-usage-events.js` | cross-instance-required | cron cache snapshots + buffer drain |
 
 > The spend-ledger and idempotency entries are both critical (money-moving) and

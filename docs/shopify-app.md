@@ -83,7 +83,10 @@ Four webhooks, registered via GraphQL `webhookSubscriptionCreate` right after
 OAuth completes (`api/_lib/shopify/webhook-register.js`), each verified
 against `X-Shopify-Hmac-Sha256` (`api/_lib/shopify/webhook-verify.js`) and
 claimed against a delivery-id ledger (`shopify_webhook_deliveries`) before any
-handler logic runs, so a Shopify retry never double-processes:
+handler logic runs, so a Shopify retry never double-processes. If a handler's
+side effect throws, the claim is released (`applyClaimed` in `webhook-verify.js`)
+before the 5xx goes back, so Shopify's retry runs the effect again instead of
+hitting the ledger and skipping an erasure or uninstall:
 
 - `customers/data_request`, `customers/redact`: no-ops. This app never reads
   customer data (scopes are `read_products,write_products` only) and stores

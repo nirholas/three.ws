@@ -44,6 +44,10 @@ poll would have, so an abandoned job still lands in the library. Design notes:
 - **BYOK jobs (meshy/tripo) stay browser-driven.** They authenticate with the
   user's own key, which the status poll resolves from request context; a cron has
   no user context to decrypt it. They age out via the same window.
+- **A full avatar library closes the job instead of retrying it.** Materialization
+  refused by the plan quota is the owner's to fix, so the sweep fails the job with
+  the same `PLAN_LIMIT_JOB_ERROR` copy (`error_kind = 'input'`) the status poll
+  relays, rather than re-running the refused step every tick.
 - A provider 404 (`gcp_task_missing`) is terminal here, so a job whose worker
   record is genuinely gone resolves instead of being retried forever.
 
@@ -270,7 +274,7 @@ on one L4 (24 GB); an A100 is only needed for throughput, not any single stage.
 
 ## Deploy
 
-The worker is already provisioned on Cloud Run GPU. From a clean tree:
+The worker is already provisioned on Cloud Run (CPU-only, 8 vCPU / 16 GiB, `DEVICE=cpu`). From a clean tree:
 
 ```bash
 gcloud builds submit \

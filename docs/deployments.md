@@ -46,7 +46,7 @@ What lives elsewhere: the *creation* path for a Solana identity is documented in
 
 **The live feed** itself, newest first. Each row carries the agent's name (linked to its token or asset page on that chain's explorer), a truncated description, `3D` and `x402` capability tags, the chain name, the owner address (linked to the explorer), a relative timestamp with the absolute time on hover, and a `tx` link to the registration transaction where one is known.
 
-Feed images are third-party data: whatever URL the agent's owner published on-chain, frequently on an IPFS gateway. Every remote image is routed through the same-origin `/api/img` proxy, which resolves IPFS across gateways, follows a metadata document to the real art, and always answers with a valid image, so a row never fires a failing request. Anything that is not an `http(s)`, `ipfs`, or `ar` URL degrades to a monogram tile.
+Feed images are third-party data: whatever URL the agent's owner published on-chain, frequently on an IPFS gateway. Every remote image is routed through the same-origin `/api/img` proxy, which resolves IPFS across gateways, follows a metadata document to the real art, and always answers with a valid image, so a row never fires a failing request. Proxied SVGs are served under a sandboxed, script-free policy. Anything that is not an `http(s)`, `ipfs`, or `ar` URL degrades to a monogram tile. Art stored by three.ws itself (a Solana mint's `image_key`) is returned as a same-origin `/cdn/` URL, never the raw bucket domain.
 
 **Controls:**
 
@@ -205,7 +205,7 @@ Percentages are integers, rounded, so a capability held by a very small fraction
 ### Caching and failure
 
 - `view=stats` is cached server-side for 60 seconds and served with `cache-control: public, max-age=30`.
-- The **first unfiltered feed page** (no `cursor`, no `chain`, `kind=all`) is cached server-side for 20 seconds and served with `max-age=12`, to shield the database from a thundering herd. Filtered and paged requests go straight to the database with no cache header.
+- The **first unfiltered feed page** (no `cursor`, no `chain`, `kind=all`) is cached server-side for 20 seconds and served with `max-age=12`, to shield the database from a thundering herd. Filtered and paged requests skip the server-side cache and go straight to the database, though they are still served with `max-age=12`.
 - A database outage returns `503 service_unavailable`. Any other failure returns `502 deployments_failed`. The page renders its reconnecting state with a retry rather than a blank feed.
 
 ---

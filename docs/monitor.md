@@ -1,7 +1,7 @@
 # Agent Monitor
 
 **[`/monitor`](https://three.ws/monitor)** is the ops room for the three.ws
-agent fleet: twelve live panels on one screen, each one a real public endpoint
+agent fleet: eleven live panels on one screen, each one a real public endpoint
 polled on its own cadence.
 
 Every other agent surface answers one question well.
@@ -36,7 +36,7 @@ the same probe data as the Systems panel, and a refresh-all button.
 
 Every endpoint above is public and unauthenticated. Nothing on this page needs a
 session, and nothing on it is admin-only. The authenticated operator view lives
-elsewhere: `/api/ops/health` behind `OPS_SECRET` for subsystem probes.
+elsewhere: `/api/ops/health` behind an admin session or `OPS_SECRET` for subsystem probes.
 
 ---
 
@@ -47,7 +47,7 @@ The board is meant to be driven, not just watched.
 | Control | Where | What it does |
 |---|---|---|
 | Search | Fleet | Server-side search on name and description (`q=`), debounced |
-| Sort | Fleet | `live` (most recent action), `newest`, `popular`, `name` |
+| Sort | Fleet | `live` (default, labeled "recently active": ordered by most recent action), `newest`, `popular`, `name` |
 | Prev / next / full | Spotlight | Cycle the roster without leaving the board; `full` opens the avatar fullscreen |
 | main / dev | Money Pulse | Switch the whole pulse read between mainnet and devnet |
 | 7d / 30d / 90d | A2A Hires | Re-query the hire ledger |
@@ -76,7 +76,7 @@ text selection alive in a panel that updates every 15 seconds.
 **A failed panel degrades alone.** Each panel catches its own error, badges
 itself `stale`, and offers a retry button. A panel that already rendered good
 data keeps showing it rather than blanking, because last-known-good beats an
-empty box. One dead endpoint never takes the board down.
+empty box. One dead endpoint never takes the board down. A thumbnail that fails to load (fleet, On Air, Leaders and Forge Feed rows) swaps to the designed fallback tile rather than the browser's broken-image glyph.
 
 **Empty is a designed state, not a void.** No crews yet, no casts running, no
 hires this window: each empty panel says what would fill it and links to the

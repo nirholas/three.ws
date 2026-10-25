@@ -271,7 +271,7 @@ AVATURN_API_URL=https://api.avaturn.me
 **Retired; no code reads them.** Both still appear in `.env.example`, but the photo pipeline no longer builds an editor URL in the browser: `src/avatar-creator.js` opens the `@avaturn/sdk` editor against the session URL that `/api/onboarding/avaturn-session` mints server-side from `AVATURN_API_KEY`. Setting either variable changes nothing.
 
 #### `AVATAR_REGEN_PROVIDER`
-**Optional.** Platform provider for avatar regeneration and reconstruction: `replicate`, `huggingface`, or `gcp` (`api/_lib/regen-provider.js`). When unset the provider is inferred from credentials, paid first: `REPLICATE_API_TOKEN` selects Replicate, then `GCP_RECONSTRUCTION_URL` the self-hosted Cloud Run worker, then `HF_TOKEN` the HF Spaces queue; with none of those the platform provider is `none` and the reconstruct endpoint falls back to a user's stored BYOK key (Meshy, Tripo) before answering `501`.
+**Optional.** Platform provider for avatar regeneration and reconstruction: `replicate`, `huggingface`, or `gcp` (`api/_lib/regen-provider.js`). When unset the provider is inferred from credentials, paid first: `REPLICATE_API_TOKEN` selects Replicate, then `GCP_RECONSTRUCTION_URL` the self-hosted Cloud Run worker, then `HF_TOKEN` the HF Spaces queue; `TRIPO_API_KEY` adds Tripo as a last house-key lane for avatar auto-rig (it is never inferred as the primary); with none of those the platform provider is `none` and the reconstruct endpoint falls back to a user's stored BYOK key (Meshy, Tripo) before answering `501`.
 
 ```
 AVATAR_REGEN_PROVIDER=replicate
@@ -409,7 +409,7 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 {
   "src": "/agent/([^/]+)/embed",
   "headers": {
-    "content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://3d-agent.vercel.app https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
+    "content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; report-uri /api/client-errors",
     "x-content-type-options": "nosniff",
     "referrer-policy": "strict-origin-when-cross-origin",
     "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",

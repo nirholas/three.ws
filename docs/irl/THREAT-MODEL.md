@@ -109,8 +109,11 @@ is a speed bump with a real slope; it is not a wall.
 > That made the limits simultaneously useless (no per-attacker ceiling) and harmful
 > (one caller exhausted everyone's budget; `/api/irl/privacy` answered 429 to its
 > first caller). `clientIp()` now reads `X-Forwarded-For` right-to-left, skipping the
-> hops our own infrastructure appends and ignoring the caller-settable prefix. The
-> numbers above assume that fix is deployed; see `tests/client-ip-proxy.test.js`.
+> hops our own infrastructure appends (`TRUSTED_PROXY_HOPS`, default 1: the load
+> balancer) and ignoring the caller-settable prefix. On the direct `*.run.app` host,
+> which bypasses the balancer, no trailing hop is skipped, so a spoofed header cannot
+> rotate buckets there. IPv6 callers collapse to their /64 (`ipRateKey`). The numbers
+> above assume that fix is deployed; see `tests/client-ip-proxy.test.js`.
 
 ## The control that does hold: private pins
 

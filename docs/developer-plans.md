@@ -87,7 +87,7 @@ That call is a v1 call, so a key asking about its own quota spends one call of i
 
 ## Upgrade, downgrade, cancel
 
-Plan changes are made from the dashboard with a signed-in session and a CSRF token; an API key can read its plan but never buy one. Three payment assets are accepted:
+Plan changes are made from the dashboard with a signed-in session and a CSRF token; an API key can read its plan but cannot use these routes to buy one (the one exception is the agent x402 path below). Three payment assets are accepted:
 
 | Asset | How it settles |
 | --- | --- |
@@ -103,9 +103,13 @@ Plan changes are made from the dashboard with a signed-in session and a CSRF tok
 
 **Receipts.** Every settlement writes a receipt (plan, amount, asset, transaction signature or ledger id, period covered) that is listed on the Plan tab, returned by `GET /api/v1/me/dev-plan/receipts`, and sent by email. A wallet payment is idempotent on its signature: confirming the same transaction twice returns the same receipt.
 
+### Agents: upgrade with one x402 payment
+
+An agent that signed itself up can upgrade with no human and no form. `POST /api/billing/agent-upgrade?plan=builder` (or `scale`) with the account's API key (scope `agents:write`) answers 402 with the exact USDC-on-Solana price for moving that account to the plan today: the full price from Free, the pro-rata difference mid-period. Pay it and repeat the call with the x402 payment header. The payment settles before the handler runs, so the plan is granted only against a landed transaction, and a transaction signature can fund only one plan change. The 200 body carries the receipt and a scoped API key (read, generate, agents, wallet:read) that can never spend. `$THREE` is not offered on this route; pay in `$THREE` through the checkout above.
+
 ### The wallet flow over the API
 
-1. `POST /api/v1/me/dev-plan/checkout` with `{ "plan": "builder", "asset": "USDC", "wallet": "<your Solana address>" }`. The response holds `checkout` (`pay_to`, `amount_atomics`, `amount_usd`, `chain: "solana"`, `expires_at`) and `tx_base64`, the unsigned transfer.
+1. `POST /api/v1/me/dev-plan/checkout` with `{ "plan": "builder", "asset": "USDC", "wallet": "<your Solana address>" }`. If wallet payments are not configured the answer is HTTP 503 `payments_not_configured`; pay with credits or retry shortly. The response holds `checkout` (`pay_to`, `amount_atomics`, `amount_usd`, `chain: "solana"`, `expires_at`) and `tx_base64`, the unsigned transfer.
 2. Review the recipient, amount, asset and chain, then sign and send `tx_base64` with your wallet.
 3. `POST /api/v1/me/dev-plan/confirm` with `{ "checkout_id", "tx_signature" }`. While the chain is still confirming the answer is HTTP 202 `{ "status": "pending", "reason" }`; poll again. Once confirmed it answers `{ "status": "paid", "receipt" }` and the plan is in force.
 
@@ -126,7 +130,8 @@ Plan changes are made from the dashboard with a signed-in session and a CSRF tok
 | Plan table, calculation note, `$THREE` discount | `api/_lib/dev-plans/config.js` |
 | Gate (burst, concurrency, quota, headers, 429 and 402) | `api/_lib/dev-plans/quota.js`, called from `api/_lib/gateway.js` |
 | Subscriptions and period rollover | `api/_lib/dev-plans/subscription.js` |
-| Quotes, checkouts, confirmation, receipts | `api/_lib/dev-plans/billing.js` |
+| Quotes, checkouts, confirmation, receipts, x402 plan payments | `api/_lib/dev-plans/billing.js` |
+| Agent x402 upgrade | `api/billing/agent-upgrade.js` |
 | Per-key analytics | `api/_lib/dev-plans/analytics.js` |
 | Key cache and immediate invalidation | `api/_lib/api-key-cache.js` |
 | Allowlist parsing and matching | `api/_lib/ip-allowlist.js` |

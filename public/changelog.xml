@@ -31,6 +31,14 @@
 			<description>The Greenfield SDK and the Bot Framework expression library each carried a nested fast-xml-parser 4.5.7 that the version-scoped override never reached, leaving the XMLBuilder comment and CDATA injection advisory (GHSA-gh4j-gqv2-49f6) open. The override now applies to every copy, all of them resolve to 5.11.2, and a lockfile test guards every nested path.</description>
 		</item>
 		<item>
+			<title>Chat pairing and X connect returns land on a working Connections page</title>
+			<link>https://three.ws/settings/connections</link>
+			<guid isPermaLink="false">2026-10-25:Chat pairing and X connect returns land on a working Connections page</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The /settings/connections link that the Telegram and Discord bots, the notification settings and the X connect flow all send people to returned a 404. Every /settings subpath now serves the settings app, and a new Connections tab lists paired chats, toggles notifications, picks the default agent, unpairs, issues a pairing code and redeems the code a bot prints.</description>
+		</item>
+		<item>
 			<title>Commit feed cron skips quietly on a lock-check fault</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-25:Commit feed cron skips quietly on a lock-check fault</guid>

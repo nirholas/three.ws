@@ -73,7 +73,7 @@ an RPC blip must not report a healthy fleet as starved.
   retries up to five times, so a full sweep takes about a minute. Point it at
   the production Helius endpoint for a fast run.
 - SOL/USD comes from `api/_lib/sol-price.js`, the platform's nine-source
-  failover chain, so the dollar columns are spot. If every source is down it
+  failover chain (ordered by recent canary health, so a degraded source is tried last), so the dollar columns are spot. If every source is down it
   falls back to the last price stamped into `sniper_trade_analytics`.
 
 ## Related

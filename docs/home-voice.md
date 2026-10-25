@@ -40,6 +40,10 @@ listener's own machine, and both are served from three.ws itself rather than a C
 always-on microphone feature, a third-party fetch on the audio path would put a stranger's server
 in the room.
 
+The home tools ride the agent turn only when it is the caller's own: `/api/chat` withholds them
+(`homeToolsOffered`) when a visitor talks to an agent they do not own, because another account's
+persona and skills share that prompt and the tools act with the visitor's authority.
+
 ---
 
 ## What leaves your device, and what does not

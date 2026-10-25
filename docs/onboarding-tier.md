@@ -3,7 +3,7 @@
 three.ws ships a lot of surface: over 100 nav destinations and a homepage that
 runs from text-to-3D through autonomous trading, on-chain identity and pay-per-call
 payments. For someone who already knows the platform that breadth is the point.
-For someone arriving for the first time it was the problem — the product's core
+For someone arriving for the first time it was the problem: the product's core
 promise (make a 3D avatar, give it a brain, put it on your site) was competing for
 attention with a trading terminal.
 
@@ -14,15 +14,22 @@ and once a visitor asks for it, it stays open on every page and every visit.
 
 **Nothing is removed. Only deferred.**
 
+Where the homepage half lives: since 2026-10-11 `/` serves the web desktop
+(`pages/desktop.html`) and the long-form homepage described below, with the start
+path and the advanced gate, is served at [/classic](https://three.ws/classic)
+from `pages/home.html`. The nav half applies on every page that mounts
+`public/nav.js`; pages framed inside the desktop hide that header because the
+desktop's taskbar is the navigation.
+
 ---
 
 ## What a first-time visitor sees
 
 | Surface | Lite tier | Full tier |
 | --- | --- | --- |
-| Nav menus | Build, Discover, Learn (~30 links) | + Launch (~126 links in all) |
-| Homepage | Hero, start path, Forge, embed demo, the three doors, community, pose, AR, showcase | + trading, capabilities grid, token economy, live economy, Oracle, pay-per-call, developer platform, the stack |
-| Mobile drawer | the same ~30 destinations in one flat list | all ~126 |
+| Nav menus | Build, Discover, Learn (~30 links) | + Launch (~147 links in all) |
+| Homepage (`/classic`) | Hero, start path, Forge, embed demo, the three doors, community, pose, AR, showcase | + trading, capabilities grid, token economy, live economy, Oracle, pay-per-call, developer platform, the stack |
+| Mobile drawer | the same ~30 destinations in one flat list | all ~147 |
 
 Directly under the homepage hero sits the **start path**: three steps, each with an
 honest time estimate, in the order the product actually works.
@@ -46,7 +53,7 @@ Any of these flips the same preference, and every other surface follows immediat
 - **"Show the advanced platform"** on the homepage's advanced gate
 - Any **topic chip** on that gate (Autonomous trading, Token economy, Oracle
   scoring, …), which expands and jumps to that section
-- **Following a link into a gated section** — a shared `three.ws/#home-x402` URL
+- **Following a link into a gated section**: a shared `three.ws/classic#home-x402` URL
   reveals its section for that visit rather than landing on a page that appears
   to be missing content
 - Programmatically: `window.twsTier.set(false)` for full, `true` for lite,
@@ -76,7 +83,7 @@ dropdown and drawer wiring binds document-level listeners once at mount, so
 re-rendering the menus would strand those listeners on detached nodes. Every
 destination is always in the DOM; CSS decides what is visible.
 
-**It never flashes.** The class is applied before paint — in the homepage's inline
+**It never flashes.** The class is applied before paint, in the classic homepage's inline
 `<head>` boot script, and at the top of `nav.js` before the menus are rendered. A
 visitor never sees advanced content appear and then vanish.
 
@@ -100,16 +107,16 @@ Add it to `public/nav-data.js` as usual. Then decide the tier:
 
 Tag it `advanced` when someone would have to already know what it is to want it:
 trading terminals, payment protocols, on-chain intel, capture rigs. Leave it in the
-lite tier when it serves **creating, publishing, or browsing** — that is the journey
+lite tier when it serves **creating, publishing, or browsing**: that is the journey
 the lite tier exists to protect. `tier` works at three levels; the widest one wins:
 
-- **group** — the whole menu disappears from the nav bar (this is how `Launch` is
+- **group**: the whole menu disappears from the nav bar (this is how `Launch` is
   handled). A wholly-advanced group deliberately gets no "show everything" footer:
   that control could only ever collapse the menu the visitor is reading.
-- **column** — one column of a mega menu, e.g. `Money & social`. The popover
+- **column**: one column of a mega menu, e.g. `Money & social`. The popover
   re-lays its grid to the remaining column count (`lite-cols-N`), so a hidden
   column never leaves an empty track.
-- **item** — a single row.
+- **item**: a single row.
 
 ### Adding a homepage section
 
@@ -139,6 +146,6 @@ drift silently, since the four files involved have no import edge between them:
 
 ## Related
 
-- [`public/nav-data.js`](../public/nav-data.js) — the single source of truth for every menu
-- [`STRUCTURE.md`](../STRUCTURE.md) — where every product surface lives
-- [`docs/start-here.md`](start-here.md) — the same journey, written for a human rather than a maintainer
+- [`public/nav-data.js`](../public/nav-data.js): the single source of truth for every menu
+- [`STRUCTURE.md`](../STRUCTURE.md): where every product surface lives
+- [`docs/start-here.md`](start-here.md): the same journey, written for a human rather than a maintainer

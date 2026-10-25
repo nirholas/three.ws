@@ -3,7 +3,7 @@
 AR Studio turns your camera view into an infinite canvas. Place as many 3D models and avatars as you like into the room around you, drawn from your own forges, the community gallery, a pasted GLB link, or brand-new ones forged from a text prompt without leaving the scene. It scales from full WebXR immersive AR down to camera passthrough down to a desktop 3D preview, and it can go multiplayer: open a shared room and everyone in it builds the same scene live. Share an arrangement with a link, or hand it to your phone with a QR code.
 
 Page: [/ar/studio](https://three.ws/ar/studio)
-API: `POST /api/forge` (in-view text-to-3D) · `GET /api/forge-gallery` (your and community models) · `GET /api/objects/library` (the CC0 prop library). Multiplayer runs on a Colyseus room, `studio_world`.
+API: `POST /api/forge` (in-view text-to-3D) · `GET /api/forge-gallery` (your and community models) · `GET /api/objects/library` (the CC0 prop library) · `POST /api/forge-scene-objects` (scene from a photo). Multiplayer runs on a Colyseus room, `studio_world`.
 
 ## Why it exists
 
@@ -28,7 +28,7 @@ Edit the shared modules in `packages/ar-studio`, not in `src/`. The directory is
 
 ### Model sources
 
-`addModel({ src, title })` normalizes the URL (https or site-relative only), enforces a 20-model cap, clones the loaded template (using SkeletonUtils for skinned rigs), and drops it on the floor in front of the camera. The "Add models" tray has five tabs:
+`addModel({ src, title })` normalizes the URL (https or site-relative only), enforces a 20-model cap, clones the loaded template (using SkeletonUtils for skinned rigs), and drops it on the floor in front of the camera. The "Add models" tray has six tabs:
 
 - **Recent forges**: read from local storage (`twx_ar_forge_recent`), shared with `/ar` so one forge history opens in two doors.
 - **Yours**: `GET /api/forge-gallery?limit=24` with an `x-forge-client` header (your anonymous browser id). Forge cards are titled with the first clause of the prompt they were generated from (`cardTitleFromPrompt`), with the whole prompt as the tooltip; a poster that fails to load falls back to the cube mark a poster-less item uses.
@@ -37,8 +37,9 @@ Edit the shared modules in `packages/ar-studio`, not in `src/`. The directory is
 
 Both gallery reads and the objects manifest answer with `Access-Control-Allow-Origin: *`: they are public, keyless, read-only feeds, and the standalone studio (npm `3d-ar-studio`) offers them as its Community and Objects tabs from whatever origin a developer embedded it on. Rate limiting, not origin, is the control.
 - **GLB link**: paste any https `.glb`: a forge result, a viewer share link's `src`, or your own hosting.
+- **From a photo**: paste a public https photo link and `POST /api/forge-scene-objects` (SAM 3D Objects) finds the objects in it and rebuilds them as one GLB with a named node per object, laid out like the photo. The tab polls `GET /api/forge-scene-objects?job=<id>` every 4 seconds (up to 150 polls) and drops the finished scene in as a single model titled "Photo scene". The endpoint answers `503 backend_unconfigured` until the GPU worker ([`workers/model-sam3d-objects`](../workers/model-sam3d-objects/README.md), 32 GB+ GPU) is deployed and `MODEL_SAM3D_URL` is set, and the tab shows that message; requests from comprehensively sanctioned territories are refused before any work is queued.
 
-A sixth source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free NVIDIA NIM / TRELLIS lane), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. A seventh is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
+A seventh source is the **in-view forge**: the dock form calls `POST /api/forge` with `{ prompt, backend: 'nvidia' }` (the free NVIDIA NIM / TRELLIS lane), polls `GET /api/forge?job=<id>` until the GLB is ready, remembers it, and drops it into the scene. An eighth is deep links: repeatable `?src=` (paired with `?title=`) and `?forge=<prompt>` boot content on open.
 
 ### Device-capability ladder
 

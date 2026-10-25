@@ -36,7 +36,7 @@ The draft is validated with `validateBundle` from `@three-ws/skill-import`, the 
 | Action | Effect |
 | --- | --- |
 | Install on this agent | Adds the hosted bundle URI to this agent's `skills` and nothing else. The agent's next run can call the new tool. |
-| Publish to marketplace | Creates the listing through the existing marketplace flow, owned by the owner. It does not install anything by itself. |
+| Publish to marketplace | Creates the listing through the existing marketplace flow, owned by the owner, after the draft passes the marketplace safety scan (`scanSkillBundle`). A `blocked` verdict is refused with `422 skill_blocked`; a `review` verdict creates the listing held for admin review and not public until approved. It does not install anything by itself. |
 | Dismiss | Hides the candidate. Dismissing an installed candidate uninstalls it, and the agent's `skills` no longer contains it. |
 | Redraft | Retries the draft for an `invalid` candidate. |
 

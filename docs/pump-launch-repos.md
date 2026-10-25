@@ -75,8 +75,11 @@ lamport delta before committing mainnet SOL.
 
 ## Safety
 
-- **Localhost only.** The UI never binds a public route; keys never leave your
-  machine.
+- **Meant for localhost only.** The UI is a local tool with no authentication and
+  serves the key bundle download, and `server.listen` is called without a host, so
+  Node accepts connections on every interface. Run it on a machine you trust and
+  keep port `4599` firewalled; never forward or tunnel it. Keys never leave your
+  machine through the app itself, and key files are written with mode `0600`.
 - **Nothing is sent until you Launch** against a funded master. `generate`,
   `verify`, `preflight`, and repo browsing are all free and offline of on-chain
   spend.

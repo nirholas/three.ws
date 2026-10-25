@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-25T12:02:24.949Z",
+	"generated_at": "2026-10-25T12:02:47.812Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4206,
+	"total": 4207,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -38,6 +38,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Chat pairing and X connect returns land on a working Connections page",
+			"summary": "The /settings/connections link that the Telegram and Discord bots, the notification settings and the X connect flow all send people to returned a 404. Every /settings subpath now serves the settings app, and a new Connections tab lists paired chats, toggles notifications, picks the default agent, unpairs, issues a pairing code and redeems the code a bot prints.",
+			"link": "/settings/connections",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1544,16 +1554,6 @@
 			"tags": [
 				"feature",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "Free voice is back: the Edge lane speaks again",
-			"summary": "Microsoft changed the handshake on its free Read Aloud service, so the default Edge voice lane answered every request with an error. The lane now speaks the current protocol, so the /voice page and every agent that uses the free voice can talk again.",
-			"link": "/voice",
-			"tags": [
-				"fix"
 			]
 		}
 	]

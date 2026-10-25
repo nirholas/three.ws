@@ -22,6 +22,15 @@ script can call it: the first request answers `402 Payment Required` with a quot
 equal to that skill's `price_per_call_usd`, the caller pays in USDC, and the
 response carries the skill's tool schema and content so the caller can run it.
 
+The same priced skill can also be redeemed on three more rails, all through
+`/api/skills/:id/invoke`: `mpp` (HTTP `Payment` authentication scheme), `a2a`
+(JSON-RPC `message/send` with the a2a-x402 extension) and `ap2` (Intent Mandate in,
+Cart Mandate out). The author picks the enabled rails per skill
+(`marketplace_skills.rails`, default `x402` and `a2a`). Every rail settles through
+the same verify path and the same split, and each accrual's ledger `source` is the
+rail that carried it. On `/api/x402/skill-call`, a skill with `x402` switched off
+answers `404 rail_disabled` and lists its `enabled_rails`.
+
 There is no re-access grant. Unlike a buy-once asset download, every invocation
 is a fresh payment, which is what "per call" actually means.
 
@@ -39,7 +48,7 @@ redeem leg described in [Activation](#activation-owner-gated) below.
 | | Per-call x402 rail | In-app runtime |
 | --- | --- | --- |
 | Caller | Any paying wallet | An agent on three.ws |
-| Ledger `source` | `x402` | `skill-runtime` |
+| Ledger `source` | the rail used (`x402`, `mpp`, `a2a`, `ap2`) | `skill-runtime` |
 | Lands as | `settled` (money already moved) | `pending` |
 | Chain | Solana first, Base second | EVM, behind a flag |
 | Status | Live | Accrual live, settlement owner-gated |
@@ -91,7 +100,8 @@ published a skill and it is earning, Creator Studio shows you the money even if
 you never created an agent.
 
 **`GET /api/users/me/earnings`** is the same data as JSON, for the signed-in
-author. It returns `pending_usd`, `settling_usd`, `settled_usd`,
+author (a session, or a bearer token carrying the `profile` scope; other tokens
+get `403 insufficient_scope`). It returns `pending_usd`, `settling_usd`, `settled_usd`,
 `platform_fee_usd`, and an `entries` array where each royalty entry carries
 `source`, `network`, `tx_hash`, and `platform_fee_usd` alongside the amount.
 

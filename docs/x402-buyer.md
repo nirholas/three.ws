@@ -1,6 +1,6 @@
 # x402 Buyer Client
 
-To consume a paid [x402 endpoint](x402-endpoints.md) — ours or anyone's — a
+To consume a paid [x402 endpoint](x402-endpoints.md), ours or anyone's, a
 caller has to perform the "402 dance": probe the URL, read the payment challenge,
 sign and settle a payment, then retry with an `X-PAYMENT` header. three.ws ships a
 buyer client that wraps that whole sequence in one call, with spending-cap
@@ -48,24 +48,41 @@ if (!ok) {
 | `method`, `headers`, `body` | no | Standard request shape; an object `body` is JSON-encoded. |
 | `caps` | recommended | Spending-cap envelope: `address` plus `maxPerCall` / `maxPerHour` / `maxPerDay` in USDC atomics. |
 | `signPayment({ requirement })` | **yes** | Returns the signed payment payload for the chosen requirement. |
-| `preferNetwork` | no | Pick which advertised network to pay on — a network string, or a function over the `accepts` array. |
+| `preferNetwork` | no | Pick which advertised network to pay on, a network string, or a function over the `accepts` array. |
+| `preferScheme` | no | `'upto'` takes an escrow-backed offer when one is advertised, so you pay the measured charge rather than the cap. |
+| `preferProtocol` | no | `'mpp'` pays an MPP Solana charge when the server offers one. By default an x402 `accepts` list wins. |
+| `dryRun` | no | Stops after the cap check and returns the quote and every offer, signing and paying nothing. |
 | `fetchImpl` | no | Inject a custom `fetch` (tests, proxies). |
 
 ### Why you supply `signPayment`
 
-Signing differs per chain — EIP-712 `transferWithAuthorization` on Base, a signed
-`VersionedTransaction` on Solana, a contract call on BSC — so the caller owns it.
+Signing differs per chain, EIP-712 `transferWithAuthorization` on Base, a signed
+`VersionedTransaction` on Solana, a contract call on BSC, so the caller owns it.
 The client owns only the cap check, the header dance, and settlement parsing. The
 callback receives the selected `requirement` from the 402 challenge and returns
 the payment payload to attach.
+
+### x402 or MPP from one call
+
+A 402 can speak either protocol. When a server offers only an MPP
+`WWW-Authenticate: Payment` Solana charge (or you set `preferProtocol: 'mpp'`),
+`buyerFetch` expresses the charge as the equivalent `exact` requirement, so caps
+and `signPayment` see one shape. `signPayment` must return a Solana exact payload
+(`{ payload: { transaction } }`), which goes back as `Authorization: Payment`, and
+the receipt is read from `Payment-Receipt`. Results carry `protocol: 'x402' | 'mpp'`;
+a `dryRun` result is `{ ok: true, dryRun: true, protocol, quote, offers: { x402, mpp } }`.
+See [MPP on Solana](mpp-solana.md).
 
 ### Spending caps
 
 Caps are enforced as a reserve → commit / rollback transaction in
 `x402-spending-cap.js`, so a call is **counted before it fires** and rolled back if
-it fails — caps hold even across concurrent calls. The store is Redis-backed when
+it fails, caps hold even across concurrent calls. The store is Redis-backed when
 available. If a call would exceed any window, `buyerFetch` returns
-`{ ok: false, abort: true, reason }` **without paying**. The platform-wide ceiling
+`{ ok: false, abort: true, reason }` **without paying**. For an `upto` payment the cap is reserved up front, and once
+the settlement reports the measured charge the unused part of the reservation is
+released, so the hourly and daily windows reflect real spend
+([x402 upto](x402-upto.md)). The platform-wide ceiling
 defaults live in env (`X402_MAX_PER_CALL_ATOMIC`, `X402_MAX_PER_HOUR_ATOMIC`,
 `X402_MAX_PER_DAY_ATOMIC`; see [Configuration](configuration.md)).
 
@@ -107,9 +124,9 @@ guarantees: [Pending settlement](x402-settlement-pending.md).
 
 ## Related
 
-- [x402 protocol](x402.md) — the underlying challenge/settle mechanics.
-- [x402 paid endpoints](x402-endpoints.md) — what you can buy from us.
-- [Autonomous x402 loop](autonomous-x402.md) — uses this client on a schedule.
+- [x402 protocol](x402.md), the underlying challenge/settle mechanics.
+- [x402 paid endpoints](x402-endpoints.md), what you can buy from us.
+- [Autonomous x402 loop](autonomous-x402.md), uses this client on a schedule.
 - [Pending settlement](x402-settlement-pending.md): the `settlement_pending`
   outcome, what a buyer does with it, and how the books close afterwards.
 - [Payment Sessions](payment-sessions.md#get-apix402outbound-receipts): the

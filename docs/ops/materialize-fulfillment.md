@@ -122,6 +122,29 @@ Always configured, because it needs a person rather than a credential.
 - There is no webhook. `verifyWebhook()` refuses every delivery rather than
   leaving an unauthenticated door open on a lane that cannot call it.
 
+### `craftcloud`, quotes and a reserved cart
+
+[api/_lib/print/adapters/craftcloud.js](../../api/_lib/print/adapters/craftcloud.js).
+Craftcloud (All3DP) fronts a network of about 186 print shops through a public
+API that needs no key, so the adapter is always configured and is registered
+ahead of `partner-cn` and `manual`. It uploads the model, prices it across the
+whole catalog and takes the cheapest live quote. It goes exactly as far as
+reserving a cart (price locked, quote and shipping selected, the referral
+voucher applied when one is set) and no further: creating an upstream order
+exposes a payment step, which is a spend, so an operator completes checkout on
+Craftcloud by hand. For that reason `status()` and `cancel()` have no upstream
+order to poll.
+
+The same adapter powers the buyer-direct "Get it printed" flow
+(`POST /api/print/craftcloud-quote`, [src/craftcloud-print.js](../../src/craftcloud-print.js)),
+where the buyer pays Craftcloud rather than three.ws; see
+[../materialize.md](../materialize.md) for how that differs from the paid
+in-house pipeline.
+
+Optional env: `PRINT_CRAFTCLOUD_VOUCHER_CODE` (a referral code pasted in from a
+Craftcloud account made by hand), `PRINT_CRAFTCLOUD_API_BASE` and
+`PRINT_CRAFTCLOUD_CUSTOMER_API_BASE` (host overrides).
+
 ### `partner-cn`, wired and waiting on a contract
 
 [api/_lib/print/adapters/partner-cn.js](../../api/_lib/print/adapters/partner-cn.js).
@@ -146,11 +169,11 @@ the credentials exist.
 
 ### Adding a lane
 
-1. Write the module beside the other two, satisfying the interface above.
+1. Write the module beside the others, satisfying the interface above.
 2. Register it in [adapters/index.js](../../api/_lib/print/adapters/index.js).
    Order matters: the first configured adapter that supports an order is the
-   default route, and `manual` is deliberately last. A contracted partner
-   should take a job it can run; a human should take everything else.
+   default route, and `manual` is deliberately last. A lane that can run a job
+   without a human should take it; a human should take everything else.
 3. Add it to the conformance suite's adapter list in
    [tests/print-adapter-contract.test.js](../../tests/print-adapter-contract.test.js).
    Every adapter runs through the same checks; that is the point.
@@ -247,6 +270,7 @@ reloads, so it can be acted on rather than glimpsed.
 | `OPS_SECRET` | script access to the ops API | The dedicated ops credential. Never `CRON_SECRET`. |
 | `CRON_SECRET` | the sweep | Standard cron gate. |
 | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_PRINT_OPS_CHAT_ID` | Telegram paging | Falls back to `TELEGRAM_ALERTS_CHAT_ID`. Without either, paging degrades to the bell and `ops_alerts`. |
+| `PRINT_CRAFTCLOUD_VOUCHER_CODE` | referral discount on Craftcloud carts | Optional. The adapter works without it. |
 | `PRINT_PARTNER_CN_URL` + `PRINT_PARTNER_CN_KEY` | the partner lane | Absent today. Until both exist the adapter is not registered at all. |
 
 ## Diagnosing a stuck order

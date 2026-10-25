@@ -7,7 +7,7 @@ Two kinds of schedule ride the same rails:
 | Kind | What it does each period | Table | Cron |
 |---|---|---|---|
 | **Subscription** | Transfers a fixed USDC amount to an agent's wallet | `agent_subscriptions` | `/api/cron/run-subscriptions`, hourly |
-| **DCA strategy** | Swaps a fixed USDC amount into a target token through Uniswap V3 | `dca_strategies` | `/api/cron/run-dca`, hourly |
+| **DCA strategy** | Swaps a fixed USDC amount into a target token through Uniswap V3 | `orders` (rail `evm`, see [Schema](#schema)) | `/api/cron/run-dca`, hourly |
 
 Both are managed at **[/recurring](https://three.ws/recurring)**.
 
@@ -51,6 +51,8 @@ Resuming never back-fills. A schedule resumed after two missed weeks charges onc
 ## API
 
 All endpoints require a signed-in session (or a bearer API key on `/api/agent-subscriptions`). Cookie-session mutations need the double-submit CSRF token from `/api/csrf-token`.
+
+Two gates apply to anything that arms a charge. Creating or resuming a schedule (subscription or DCA) needs a signed Terms of Service, Risk Disclosure and Agent Wallet Agreement on the account, otherwise it is refused with `403 risk_ack_required`. And a bearer API key needs the `wallet:write` scope to create or resume a subscription; without it the call is refused with the "needs a browser session on three.ws" answer. Pausing and cancelling stop money moving, so any key that owns the schedule may do them. DCA strategies accept a browser session only.
 
 ### Subscriptions
 
@@ -108,7 +110,7 @@ Cancelling stops the charges and leaves the permission alone. To stop the agent 
 
 ### DCA strategies
 
-`/api/dca-strategies` has the same lifecycle with a path-addressed id.
+`/api/dca-strategies` has the same lifecycle with a path-addressed id. It is a compatibility facade over the unified order store: the `<id>` is the strategy's order id (the old `dca_strategies` id is accepted too), and the unified endpoint covering both the Solana and EVM rails is `/api/agents/:id/orders/dca`.
 
 ```bash
 curl -X POST https://three.ws/api/dca-strategies \
@@ -158,10 +160,11 @@ Recurring charges settle through `/api/permissions/redeem`, which needs the EVM 
 |---|---|
 | `agent_subscriptions` | One row per subscription schedule, with `status`, `next_charge_at`, `consecutive_failures`, `last_error_code`, `paused_at`, `resumed_at` |
 | `subscription_charges` | One row per charge attempt: `status`, `code`, `outcome`, `tx_hash`, `amount`, `period_start_at`. A partial unique index on `(subscription_id, period_start_at)` for successful charges makes a double-charge impossible to record |
-| `dca_strategies` | One row per DCA schedule, same lifecycle columns |
-| `dca_executions` | One row per swap attempt, with the quote, the divergence, and the fill |
+| `orders` | One row per DCA schedule (`type` `dca`, `network` `evm`, `venue` `evm_delegation`), with `status`, `next_fire_at`, the period in `schedule.interval_seconds`, `slippage_bps` and `delegation_id` |
+| `order_fills` | One row per swap attempt, with the quote, the divergence, and the fill. The attempt log is served in the legacy `executions[]` shape |
+| `dca_strategies`, `dca_executions` | Legacy tables. Their rows were copied into `orders` and `order_fills` (migration `20261010210000_orders_any_token`) and are only read to adopt rows an older image wrote during a rollout |
 
-Definitions live in [api/\_lib/schema.sql](../api/_lib/schema.sql); the lifecycle columns and the charge ledger were added by [20260813191500_recurring_payment_lifecycle.sql](../api/_lib/migrations/20260813191500_recurring_payment_lifecycle.sql).
+Definitions live in [api/\_lib/schema.sql](../api/_lib/schema.sql) and [api/\_lib/dca-unified.js](../api/_lib/dca-unified.js); the subscription lifecycle columns and the charge ledger were added by [20260813191500_recurring_payment_lifecycle.sql](../api/_lib/migrations/20260813191500_recurring_payment_lifecycle.sql).
 
 ---
 

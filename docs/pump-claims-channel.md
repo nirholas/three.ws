@@ -209,7 +209,7 @@ State lives in `app_settings` under `pump_claims_push_telegram`:
 
 This limit is specific to **ordinary wallet claims**. The GitHub fee-claim path
 (`_fetchGithubClaimsFromRpc`) always runs a direct RPC scan, independent of
-`PUMPFUN_BOT_URL`; see "Verifying it" below for a live check of that path.
+`PUMPFUN_BOT_URL`; see "Verifying it" above for a live check of that path.
 
 `scanFirstClaims` prefers the `PUMPFUN_BOT_URL` indexer for wallet claims and
 falls back to a direct RPC scan of the pump program's recent signatures. **That

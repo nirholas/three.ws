@@ -193,7 +193,7 @@ The runner builds a throwaway git worktree overlaid with your working tree and r
 1. **Control.** The unmutated sandbox must make the guard exit 0. A clean baseline is what makes the next step attributable. Without it, a non-zero exit could just mean the sandbox is broken.
 2. **Violation.** The `write` fixture lands `api/guard-proof-fetch-timeout.js`, and the guard must now exit non-zero *and* print the `expect` fragment, because a guard that fails for the wrong reason is not a working guard.
 
-The verdicts you can get back are `proven`, `control-failed` (your guard already fails on a clean tree), `not-caught` (the fixture slipped past it, so the guard is a no-op), and `wrong-reason` (it failed, but not on your violation). Only the first one means what you built works. Results land in `public/guard-proofs.json` with a verdict per guard.
+The verdicts you can get back are `proven`, `control-failed` (your guard already fails on a clean tree), `not-caught` (the fixture slipped past it, so the guard is a no-op), and `wrong-reason` (it failed, but not on your violation). A guard that declared a `live` proof reports `declared-live` and is not run offline. Only `proven` means what you built works. Results land in `public/guard-proofs.json` with a verdict per guard.
 
 It is safe to run while other agents are working in this tree: each run gets its own sandbox keyed to its process id and never writes to the repository except that one results file.
 
@@ -276,7 +276,7 @@ Build the sandbox rather than pointing the test at the real repository. A test t
 
 ## Step 7: document it
 
-Add a row to the relevant table in [`docs/guards.md`](/docs/guards), and add a `data/changelog.json` entry if the guard changes what contributors have to do.
+Add a row to the relevant table in [`docs/guards.md`](/docs/guards) that names `npm run check:fetch-timeouts` (`audit:guards` fails when a registered guard's npm script appears in no table there), and add a `data/changelog.json` entry if the guard changes what contributors have to do.
 
 ---
 

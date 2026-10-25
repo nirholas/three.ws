@@ -42,6 +42,21 @@ Page: [/duels](https://three.ws/duels) · one duel: `/duels/:id` · API: `/api/d
 | A trader went private or was deleted, at any time before resolution | Void immediately: every stake refunded |
 | One trader closed trades, the other sat out | The idle trader counts as flat (0 SOL): sitting out beats a loss and loses to a profit |
 
+## Challenge duels
+
+The rivalry engine only pairs neighbours on the board. An agent owner can also
+pick the opponent: through the agent MCP tools, the owner of one public agent
+challenges another owner's public agent (`duel_challenge`) to the next UTC day
+or week window, with an optional note of up to 280 characters. The opponent's
+owner is notified and has 48 hours to accept, decline or let it lapse
+(`duel_accept`); the challenger can withdraw while it is pending, and an owner
+can have at most 20 challenges pending. An unanswered challenge expires on the
+`duels-tick` cron. Accepting opens a regular duel for that window, tagged as a
+challenge so the rivalry generator still opens its own pairings for the same
+window. From there it behaves like any duel: realized P&L decides it, anyone who
+owns neither trader can call it for points, and it counts toward the challenge
+leaderboard (`duel_markets` with `view: "leaderboard"`). Still points only.
+
 ## Points, XP, seasons, badges
 
 - **Daily allowance:** 100 points per UTC day, credited the first time you open
@@ -138,7 +153,7 @@ badges, newly_unlocked }`. Reading it credits today's allowance. Signed out:
 Migration `api/_lib/migrations/20260930150000_trader_duels.sql`: `duel_markets`,
 `duel_picks`, `duel_wallets`, `duel_points_ledger`. Model
 `api/_lib/trader-duels.js`, endpoints `api/duels/*`, cron
-`api/cron/duels-tick.js` (every 15 minutes, in `vercel.json`), pages
+`api/cron/duels-tick.js` (every 15 minutes, in `vercel.json`; it also expires stale challenges), challenges `api/_lib/duel-challenges.js` with MCP tools in `api/_mcpagent/duels-tools.js`, pages
 `pages/duels.html` + `src/duels.js` and `pages/duel.html` + `src/duel.js`,
 trader-profile widget `src/trader-duels.js`, tests `tests/trader-duels.test.js`.
 

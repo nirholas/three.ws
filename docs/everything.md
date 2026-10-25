@@ -1,6 +1,6 @@
 # /everything: browse every feature by goal
 
-three.ws has about 340 product pages. The nav shows roughly 30 of them to a first-time visitor on purpose (see [onboarding-tier.md](onboarding-tier.md)), and `/sitemap` lists all of them by section. Neither answers the question a visitor actually has: "I want to animate my avatar, where do I go?"
+three.ws has about 400 product pages. The nav shows roughly 30 of them to a first-time visitor on purpose (see [onboarding-tier.md](onboarding-tier.md)), and `/sitemap` lists all of them by section. Neither answers the question a visitor actually has: "I want to animate my avatar, where do I go?"
 
 `/everything` answers it. Every product page is assigned one **goal** (a job), and the page is a searchable directory of those goals.
 
