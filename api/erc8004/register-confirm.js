@@ -50,7 +50,18 @@ export default wrap(async (req, res) => {
 	const ownerHex = getAddress('0x' + log.topics[2].slice(-40)).toLowerCase();
 	if (onChainId !== body.agentId) return error(res, 422, 'mismatch', 'agentId mismatch');
 	if (ownerHex !== body.ownerAddress.toLowerCase()) return error(res, 422, 'mismatch', 'ownerAddress mismatch');
-	await sql`
+	// The on-chain Registered log is public, so anyone can replay a stranger's
+	// mint here. Only the user who controls the owner wallet may index or bind it.
+	const callerId = session?.id || bearer?.userId || null;
+	const [linked] = callerId
+		? await sql`
+			SELECT id FROM user_wallets
+			WHERE user_id = ${callerId} AND lower(address) = ${ownerHex}
+			LIMIT 1
+		`
+		: [];
+	if (!linked) return error(res, 403, 'forbidden', 'ownerAddress is not a wallet linked to your account');
+	const inserted = await sql`
 		INSERT INTO erc8004_agents_index
 			(chain_id, agent_id, owner, registry, agent_uri,
 			 registered_block, registered_tx, registered_at, last_seen_at)
@@ -58,8 +69,10 @@ export default wrap(async (req, res) => {
 			(${body.chainId}, ${onChainId}, ${ownerHex}, ${chain.registry.toLowerCase()},
 			 ${body.metadataUri}, ${Number.parseInt(receipt.blockNumber, 16)}, ${body.txHash}, now(), now())
 		ON CONFLICT (chain_id, agent_id) DO NOTHING
+		RETURNING agent_id
 	`;
-	await enrichMetadata(body.chainId, onChainId, body.metadataUri).catch(() => {});
+	// Only a row this call created takes the caller-supplied metadata URI.
+	if (inserted?.length) await enrichMetadata(body.chainId, onChainId, body.metadataUri).catch(() => {});
 
 	// When binding an existing three.ws agent, persist the unified on-chain block
 	// onto its agent_identities row. Owner-scoped: only the user who owns the row
