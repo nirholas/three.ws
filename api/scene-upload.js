@@ -68,7 +68,7 @@ export default wrap(async (req, res) => {
 
 	const contentType =
 		typeof body?.content_type === 'string' ? body.content_type.trim().toLowerCase() : '';
-	const ext = CONTENT_TYPE_EXT[contentType];
+	const ext = Object.hasOwn(CONTENT_TYPE_EXT, contentType) ? CONTENT_TYPE_EXT[contentType] : null;
 	if (!ext) {
 		return json(res, 400, {
 			error: 'invalid_content_type',

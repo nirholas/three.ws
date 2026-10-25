@@ -75,7 +75,9 @@ async function presignVideo(req, res, body) {
 
 	const contentType =
 		typeof body?.content_type === 'string' ? body.content_type.trim().toLowerCase() : '';
-	const ext = VIDEO_CONTENT_TYPE_EXT[contentType];
+	const ext = Object.hasOwn(VIDEO_CONTENT_TYPE_EXT, contentType)
+		? VIDEO_CONTENT_TYPE_EXT[contentType]
+		: null;
 	if (!ext) {
 		return json(res, 400, {
 			error: 'invalid_content_type',
