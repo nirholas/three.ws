@@ -1,27 +1,19 @@
 {
 	"$generated": "npm run docs:freshness (scripts/doc-freshness.mjs)",
 	"$doc": "/docs/freshness",
-	"generatedAt": "2026-10-25T11:55:57.553Z",
-	"commit": "1e4d9b491",
+	"generatedAt": "2026-10-25T12:01:17.367Z",
+	"commit": "c1a7b8411",
 	"totals": {
 		"docs": 979,
-		"stale": 164,
+		"stale": 111,
 		"watch": 530,
-		"fresh": 131,
+		"fresh": 179,
 		"unverifiable": 146,
-		"snapshot": 8,
-		"reviewed": 130,
-		"trackedFiles": 5253
+		"snapshot": 13,
+		"reviewed": 163,
+		"trackedFiles": 5266
 	},
 	"docs": {
-		"STRUCTURE.md": {
-			"s": "stale",
-			"g": 16.606,
-			"d": "2026-10-25",
-			"f": 36,
-			"n": 2734,
-			"v": "2026-10-11"
-		},
 		"docs/security/review-2026-06-24.md": {
 			"s": "snapshot",
 			"g": 4.032,
@@ -30,118 +22,20 @@
 			"n": 28,
 			"v": "2026-09-17"
 		},
-		"docs/forge-pipeline.md": {
-			"s": "stale",
-			"g": 3.404,
-			"d": "2026-10-12",
-			"f": 17,
-			"n": 51,
-			"v": "2026-09-17"
-		},
-		"docs/security/audit-2026-10-25/FINDINGS-DETAIL.md": {
-			"s": "stale",
-			"g": 3.376,
-			"d": "2026-10-25",
-			"f": 8,
-			"n": 35
-		},
-		"docs/open-source-credits.md": {
-			"s": "stale",
-			"g": 3.343,
-			"d": "2026-10-13",
-			"f": 11,
-			"n": 34
-		},
 		"docs/security/SECURITY_AUDIT.md": {
 			"s": "snapshot",
-			"g": 3.31,
+			"g": 3.26,
 			"d": "2026-10-08",
 			"f": 14,
 			"n": 40,
 			"v": "2026-09-17"
 		},
-		"docs/site-performance.md": {
+		"docs/skill-royalties.md": {
 			"s": "stale",
-			"g": 3.071,
-			"d": "2026-10-23",
-			"f": 9,
-			"n": 43,
-			"v": "2026-10-23"
-		},
-		"docs/guards.md": {
-			"s": "stale",
-			"g": 2.901,
-			"d": "2026-10-23",
-			"f": 14,
-			"n": 121,
-			"v": "2026-09-17"
-		},
-		"docs/seeker-app.md": {
-			"s": "stale",
-			"g": 2.78,
-			"d": "2026-09-03",
-			"f": 5,
-			"n": 9,
-			"v": "2026-09-17"
-		},
-		"docs/agent-abilities/chapters/04-the-mind.md": {
-			"s": "stale",
-			"g": 2.738,
-			"d": "2026-10-09",
-			"f": 12,
-			"n": 31
-		},
-		"docs/oracle.md": {
-			"s": "stale",
-			"g": 2.729,
-			"d": "2026-10-23",
-			"f": 5,
-			"n": 37,
-			"v": "2026-10-23"
-		},
-		"docs/ux-flows/07-crypto-trading-analytics.md": {
-			"s": "stale",
-			"g": 2.677,
-			"d": "2026-10-23",
-			"f": 9,
-			"n": 116,
-			"v": "2026-10-23"
-		},
-		"docs/agora.md": {
-			"s": "stale",
-			"g": 2.669,
-			"d": "2026-09-01",
-			"f": 7,
-			"n": 18
-		},
-		"docs/aws-builder-center-claims-ledger.md": {
-			"s": "stale",
-			"g": 2.501,
-			"d": "2026-10-08",
-			"f": 11,
-			"n": 18
-		},
-		"docs/agent-mail.md": {
-			"s": "stale",
-			"g": 2.5,
-			"d": "2026-10-23",
-			"f": 3,
-			"n": 15
-		},
-		"docs/ibm-community-long-running-mcp-tools-post.md": {
-			"s": "stale",
-			"g": 2.426,
-			"d": "2026-10-10",
-			"f": 9,
-			"n": 19
-		},
-		"docs/pumpfun-program/UPSTREAM-pumpswap-virtual-quote-reserves.md": {
-			"s": "stale",
-			"g": 2.425,
-			"d": "2026-09-17",
-			"f": 7,
-			"n": 13,
-			"v": "2026-09-17"
+			"g": 2.547,
+			"d": "2026-08-13",
+			"f": 6,
+			"n": 7
 		},
 		"docs/agora/tasks/05-commons-scaffold.md": {
 			"s": "snapshot",
@@ -151,299 +45,35 @@
 			"n": 16,
 			"v": "2026-09-17"
 		},
-		"docs/x-partner-series.md": {
+		"docs/ops/redis.md": {
 			"s": "stale",
-			"g": 2.389,
+			"g": 2.353,
+			"d": "2026-09-02",
+			"f": 8,
+			"n": 21
+		},
+		"docs/ux-flows/05-discovery-social.md": {
+			"s": "stale",
+			"g": 2.047,
+			"d": "2026-10-23",
+			"f": 5,
+			"n": 61,
+			"v": "2026-10-23"
+		},
+		"docs/ops/production-log-triage.md": {
+			"s": "stale",
+			"g": 2.045,
+			"d": "2026-10-25",
+			"f": 12,
+			"n": 91
+		},
+		"docs/vaults.md": {
+			"s": "stale",
+			"g": 1.7,
 			"d": "2026-10-11",
-			"f": 6,
-			"n": 7
-		},
-		"docs/x-mention-bot.md": {
-			"s": "stale",
-			"g": 2.344,
-			"d": "2026-10-24",
-			"f": 5,
-			"n": 47
-		},
-		"docs/chatgpt-ar.md": {
-			"s": "stale",
-			"g": 2.338,
-			"d": "2026-10-09",
-			"f": 11,
-			"n": 26,
-			"v": "2026-09-17"
-		},
-		"docs/ops/x-story-findings-2026-09-30.md": {
-			"s": "stale",
-			"g": 2.277,
-			"d": "2026-10-01",
-			"f": 6,
-			"n": 13
-		},
-		"docs/character-studio.md": {
-			"s": "stale",
-			"g": 2.263,
-			"d": "2026-09-01",
-			"f": 8,
-			"n": 28
-		},
-		"docs/ops/guard-wiring.md": {
-			"s": "stale",
-			"g": 2.222,
-			"d": "2026-10-14",
-			"f": 13,
-			"n": 40
-		},
-		"docs/ibm-community-doc-freshness-post.md": {
-			"s": "stale",
-			"g": 2.173,
-			"d": "2026-10-08",
-			"f": 10,
-			"n": 26
-		},
-		"docs/domains.md": {
-			"s": "stale",
-			"g": 2.167,
-			"d": "2026-10-10",
-			"f": 5,
-			"n": 9
-		},
-		"docs/prompts/05-agents-rest-parity.md": {
-			"s": "stale",
-			"g": 2.123,
-			"d": "2026-09-22",
-			"f": 9,
-			"n": 12
-		},
-		"docs/agent-wallet-api.md": {
-			"s": "stale",
-			"g": 2.077,
-			"d": "2026-10-14",
-			"f": 8,
-			"n": 30,
-			"v": "2026-09-17"
-		},
-		"docs/erc8004/validation-attestation.md": {
-			"s": "stale",
-			"g": 2.069,
-			"d": "2026-09-01",
-			"f": 6,
-			"n": 14
-		},
-		"docs/internal/fable-playbook.md": {
-			"s": "stale",
-			"g": 2.042,
-			"d": "2026-10-09",
-			"f": 13,
-			"n": 37,
-			"v": "2026-09-17"
-		},
-		"docs/money-map.md": {
-			"s": "stale",
-			"g": 2.035,
-			"d": "2026-09-30",
-			"f": 11,
-			"n": 19,
-			"v": "2026-09-17"
-		},
-		"docs/a2a-payments.md": {
-			"s": "stale",
-			"g": 2.03,
-			"d": "2026-10-10",
-			"f": 6,
-			"n": 10,
-			"v": "2026-09-17"
-		},
-		"docs/agent-abilities/ABILITIES.md": {
-			"s": "stale",
-			"g": 2.026,
-			"d": "2026-10-09",
-			"f": 15,
-			"n": 151,
-			"v": "2026-10-23"
-		},
-		"docs/agent-abilities/FULL-ARTICLE.md": {
-			"s": "stale",
-			"g": 2.026,
-			"d": "2026-10-23",
-			"f": 15,
-			"n": 151,
-			"v": "2026-10-23"
-		},
-		"docs/drops.md": {
-			"s": "stale",
-			"g": 2.026,
-			"d": "2026-09-08",
-			"f": 5,
-			"n": 12
-		},
-		"docs/btn-pill-migration.md": {
-			"s": "stale",
-			"g": 2.025,
-			"d": "2026-09-17",
-			"f": 5,
-			"n": 6,
-			"v": "2026-09-17"
-		},
-		"docs/paired-coins.md": {
-			"s": "stale",
-			"g": 2.024,
-			"d": "2026-10-09",
-			"f": 6,
-			"n": 16
-		},
-		"docs/labor-market.md": {
-			"s": "stale",
-			"g": 2.013,
-			"d": "2026-10-23",
-			"f": 3,
-			"n": 17,
-			"v": "2026-09-17"
-		},
-		"docs/risk-acknowledgment.md": {
-			"s": "stale",
-			"g": 2.008,
-			"d": "2026-10-23",
-			"f": 5,
-			"n": 34,
-			"v": "2026-10-23"
-		},
-		"docs/ops/llm-lanes.md": {
-			"s": "stale",
-			"g": 2.004,
-			"d": "2026-10-11",
-			"f": 9,
-			"n": 22
-		},
-		"docs/prompts/11-agent-mail.md": {
-			"s": "stale",
-			"g": 1.99,
-			"d": "2026-09-22",
-			"f": 6,
-			"n": 7
-		},
-		"docs/animation-seeding.md": {
-			"s": "stale",
-			"g": 1.982,
-			"d": "2026-09-18",
-			"f": 7,
-			"n": 19
-		},
-		"docs/hold-to-access.md": {
-			"s": "stale",
-			"g": 1.972,
-			"d": "2026-10-10",
-			"f": 7,
-			"n": 23
-		},
-		"docs/ca2x402.md": {
-			"s": "stale",
-			"g": 1.93,
-			"d": "2026-09-01",
-			"f": 6,
-			"n": 12
-		},
-		"docs/pump-platform-fee.md": {
-			"s": "stale",
-			"g": 1.925,
-			"d": "2026-09-16",
-			"f": 6,
-			"n": 7,
-			"v": "2026-09-17"
-		},
-		"docs/api-reference.md": {
-			"s": "stale",
-			"g": 1.904,
-			"d": "2026-10-24",
-			"f": 8,
-			"n": 304
-		},
-		"docs/ops/search-indexing.md": {
-			"s": "stale",
-			"g": 1.89,
-			"d": "2026-10-09",
-			"f": 8,
-			"n": 20,
-			"v": "2026-09-17"
-		},
-		"docs/copy-trading.md": {
-			"s": "stale",
-			"g": 1.886,
-			"d": "2026-09-17",
-			"f": 7,
-			"n": 21,
-			"v": "2026-09-17"
-		},
-		"docs/bnb-vault.md": {
-			"s": "stale",
-			"g": 1.863,
-			"d": "2026-08-15",
-			"f": 5,
-			"n": 19
-		},
-		"docs/shipfeed.md": {
-			"s": "stale",
-			"g": 1.833,
-			"d": "2026-10-09",
-			"f": 3,
-			"n": 8
-		},
-		"docs/3d-api.md": {
-			"s": "stale",
-			"g": 1.797,
-			"d": "2026-09-03",
-			"f": 7,
-			"n": 12
-		},
-		"docs/page-performance.md": {
-			"s": "stale",
-			"g": 1.736,
-			"d": "2026-09-17",
-			"f": 5,
-			"n": 14,
-			"v": "2026-09-17"
-		},
-		"docs/ar.md": {
-			"s": "stale",
-			"g": 1.726,
-			"d": "2026-09-08",
-			"f": 10,
-			"n": 13
-		},
-		"docs/aws-builder-center-open-weight-3d-forge.md": {
-			"s": "stale",
-			"g": 1.713,
-			"d": "2026-10-08",
-			"f": 9,
-			"n": 16
-		},
-		"docs/event-readiness/LIVE-OPS.md": {
-			"s": "stale",
-			"g": 1.692,
-			"d": "2026-08-08",
-			"f": 8,
-			"n": 14
-		},
-		"docs/aws-builder-center-agent-payment-sessions.md": {
-			"s": "stale",
-			"g": 1.676,
-			"d": "2026-08-22",
-			"f": 5,
-			"n": 5
-		},
-		"docs/fact-check.md": {
-			"s": "stale",
-			"g": 1.654,
-			"d": "2026-09-09",
 			"f": 4,
-			"n": 8
-		},
-		"docs/discord-activity.md": {
-			"s": "stale",
-			"g": 1.643,
-			"d": "2026-10-13",
-			"f": 5,
-			"n": 8
+			"n": 11,
+			"v": "2026-09-17"
 		},
 		"docs/coinmarketcap-article-2026-10-radar-strategy-lab.md": {
 			"s": "stale",
@@ -462,7 +92,7 @@
 		},
 		"docs/agent-abilities/chapters/09-the-agent-economy.md": {
 			"s": "stale",
-			"g": 1.597,
+			"g": 1.588,
 			"d": "2026-08-25",
 			"f": 9,
 			"n": 12
@@ -489,13 +119,6 @@
 			"f": 5,
 			"n": 15
 		},
-		"docs/skill-royalties.md": {
-			"s": "stale",
-			"g": 1.547,
-			"d": "2026-08-13",
-			"f": 5,
-			"n": 7
-		},
 		"docs/selfie-to-avatar.md": {
 			"s": "stale",
 			"g": 1.542,
@@ -518,19 +141,19 @@
 			"n": 14,
 			"v": "2026-09-17"
 		},
-		"docs/three-thesis.md": {
-			"s": "stale",
-			"g": 1.518,
-			"d": "2026-09-30",
-			"f": 10,
-			"n": 31
-		},
 		"docs/ops/materialize-fulfillment.md": {
 			"s": "stale",
 			"g": 1.511,
 			"d": "2026-10-09",
 			"f": 3,
 			"n": 13
+		},
+		"docs/agent-commerce.md": {
+			"s": "stale",
+			"g": 1.5,
+			"d": "2026-10-23",
+			"f": 2,
+			"n": 16
 		},
 		"docs/agent-index.md": {
 			"s": "stale",
@@ -553,14 +176,6 @@
 			"d": "2026-10-10",
 			"f": 3,
 			"n": 22
-		},
-		"docs/event-readiness/07-platform-smoke-sweep.md": {
-			"s": "stale",
-			"g": 1.5,
-			"d": "2026-09-01",
-			"f": 7,
-			"n": 13,
-			"v": "2026-09-17"
 		},
 		"docs/github-growth.md": {
 			"s": "stale",
@@ -597,6 +212,13 @@
 			"f": 2,
 			"n": 4
 		},
+		"docs/three-thesis.md": {
+			"s": "stale",
+			"g": 1.497,
+			"d": "2026-09-30",
+			"f": 10,
+			"n": 31
+		},
 		"docs/i18n.md": {
 			"s": "stale",
 			"g": 1.492,
@@ -619,6 +241,14 @@
 			"n": 68,
 			"v": "2026-10-23"
 		},
+		"docs/event-readiness/07-platform-smoke-sweep.md": {
+			"s": "stale",
+			"g": 1.467,
+			"d": "2026-09-01",
+			"f": 7,
+			"n": 13,
+			"v": "2026-09-17"
+		},
 		"docs/ar-studio.md": {
 			"s": "stale",
 			"g": 1.465,
@@ -632,13 +262,6 @@
 			"d": "2026-08-07",
 			"f": 4,
 			"n": 6
-		},
-		"docs/desktop.md": {
-			"s": "stale",
-			"g": 1.452,
-			"d": "2026-10-12",
-			"f": 5,
-			"n": 34
 		},
 		"docs/everything.md": {
 			"s": "stale",
@@ -722,12 +345,12 @@
 			"f": 4,
 			"n": 6
 		},
-		"docs/ops/redis.md": {
+		"docs/desktop.md": {
 			"s": "stale",
-			"g": 1.353,
-			"d": "2026-09-02",
-			"f": 7,
-			"n": 21
+			"g": 1.369,
+			"d": "2026-10-12",
+			"f": 5,
+			"n": 34
 		},
 		"docs/trader-duels.md": {
 			"s": "stale",
@@ -779,6 +402,13 @@
 			"f": 6,
 			"n": 9
 		},
+		"docs/mcp-3d-studio.md": {
+			"s": "stale",
+			"g": 1.311,
+			"d": "2026-10-09",
+			"f": 6,
+			"n": 13
+		},
 		"docs/configuration.md": {
 			"s": "stale",
 			"g": 1.306,
@@ -786,13 +416,6 @@
 			"f": 11,
 			"n": 31,
 			"v": "2026-09-17"
-		},
-		"docs/x-posts/open-weight-3d-forge-thread.md": {
-			"s": "stale",
-			"g": 1.305,
-			"d": "2026-10-08",
-			"f": 8,
-			"n": 12
 		},
 		"docs/forge-workflows.md": {
 			"s": "stale",
@@ -831,6 +454,20 @@
 			"f": 4,
 			"n": 13
 		},
+		"docs/x-posts/open-weight-3d-forge-thread.md": {
+			"s": "stale",
+			"g": 1.255,
+			"d": "2026-10-08",
+			"f": 8,
+			"n": 12
+		},
+		"docs/approvals.md": {
+			"s": "stale",
+			"g": 1.254,
+			"d": "2026-10-23",
+			"f": 7,
+			"n": 18
+		},
 		"docs/copy-coach.md": {
 			"s": "stale",
 			"g": 1.25,
@@ -845,12 +482,12 @@
 			"f": 2,
 			"n": 9
 		},
-		"docs/erc8004.md": {
+		"docs/simready-assets.md": {
 			"s": "stale",
 			"g": 1.25,
-			"d": "2026-10-10",
+			"d": "2026-10-24",
 			"f": 3,
-			"n": 15
+			"n": 7
 		},
 		"docs/x402-buyer.md": {
 			"s": "stale",
@@ -910,6 +547,13 @@
 			"f": 5,
 			"n": 9
 		},
+		"docs/erc8004.md": {
+			"s": "stale",
+			"g": 1.2,
+			"d": "2026-10-10",
+			"f": 3,
+			"n": 15
+		},
 		"docs/ops/trading-bot-report.md": {
 			"s": "stale",
 			"g": 1.2,
@@ -939,14 +583,6 @@
 			"f": 4,
 			"n": 7
 		},
-		"docs/forge-background-generation.md": {
-			"s": "stale",
-			"g": 1.185,
-			"d": "2026-09-17",
-			"f": 5,
-			"n": 12,
-			"v": "2026-09-17"
-		},
 		"docs/shared-utilities.md": {
 			"s": "stale",
 			"g": 1.18,
@@ -961,27 +597,12 @@
 			"f": 2,
 			"n": 7
 		},
-		"docs/vaults.md": {
-			"s": "stale",
-			"g": 1.167,
-			"d": "2026-10-11",
-			"f": 3,
-			"n": 11,
-			"v": "2026-09-17"
-		},
 		"docs/ibm.md": {
 			"s": "stale",
 			"g": 1.165,
 			"d": "2026-09-18",
 			"f": 6,
 			"n": 21
-		},
-		"docs/approvals.md": {
-			"s": "stale",
-			"g": 1.156,
-			"d": "2026-10-23",
-			"f": 6,
-			"n": 18
 		},
 		"docs/3d-asset-pipeline.md": {
 			"s": "stale",
@@ -1005,12 +626,13 @@
 			"f": 3,
 			"n": 10
 		},
-		"docs/tutorials/agent-spending-envelope.md": {
+		"docs/forge-background-generation.md": {
 			"s": "stale",
 			"g": 1.135,
-			"d": "2026-08-14",
-			"f": 6,
-			"n": 8
+			"d": "2026-09-17",
+			"f": 5,
+			"n": 12,
+			"v": "2026-09-17"
 		},
 		"docs/agora/tasks/08-humans-first-class.md": {
 			"s": "stale",
@@ -1026,6 +648,13 @@
 			"f": 2,
 			"n": 4
 		},
+		"docs/tutorials/agent-spending-envelope.md": {
+			"s": "stale",
+			"g": 1.117,
+			"d": "2026-08-14",
+			"f": 6,
+			"n": 8
+		},
 		"docs/first-contribution.md": {
 			"s": "stale",
 			"g": 1.106,
@@ -1039,6 +668,13 @@
 			"d": "2026-09-01",
 			"f": 3,
 			"n": 7
+		},
+		"docs/architecture.md": {
+			"s": "stale",
+			"g": 1.09,
+			"d": "2026-10-10",
+			"f": 7,
+			"n": 17
 		},
 		"docs/prompts/03-mcp-tool-policy-skill.md": {
 			"s": "stale",
@@ -1069,28 +705,12 @@
 			"f": 8,
 			"n": 13
 		},
-		"docs/ux-flows/09-x402-agent-commerce.md": {
-			"s": "stale",
-			"g": 1.071,
-			"d": "2026-10-23",
-			"f": 9,
-			"n": 81,
-			"v": "2026-10-23"
-		},
 		"docs/mcp.md": {
 			"s": "stale",
 			"g": 1.063,
 			"d": "2026-10-24",
 			"f": 4,
 			"n": 53
-		},
-		"docs/ux-flows/05-discovery-social.md": {
-			"s": "stale",
-			"g": 1.047,
-			"d": "2026-10-23",
-			"f": 4,
-			"n": 61,
-			"v": "2026-10-23"
 		},
 		"docs/x-posts/universal-retargeting-thread.md": {
 			"s": "stale",
@@ -1113,14 +733,6 @@
 			"d": "2026-09-01",
 			"f": 5,
 			"n": 7
-		},
-		"docs/event-readiness/18-coin-wars-portal.md": {
-			"s": "stale",
-			"g": 1.033,
-			"d": "2026-09-17",
-			"f": 3,
-			"n": 13,
-			"v": "2026-09-17"
 		},
 		"docs/user-wallet.md": {
 			"s": "stale",
@@ -1223,13 +835,6 @@
 			"f": 1,
 			"n": 15
 		},
-		"docs/simready-assets.md": {
-			"s": "stale",
-			"g": 1,
-			"d": "2026-10-24",
-			"f": 2,
-			"n": 7
-		},
 		"docs/team-chat.md": {
 			"s": "stale",
 			"g": 1,
@@ -1245,13 +850,6 @@
 			"n": 2,
 			"v": "2026-09-17"
 		},
-		"docs/ops/production-log-triage.md": {
-			"s": "watch",
-			"g": 0.968,
-			"d": "2026-10-25",
-			"f": 10,
-			"n": 91
-		},
 		"docs/event-readiness/12-photo-mode-share.md": {
 			"s": "watch",
 			"g": 0.965,
@@ -1265,13 +863,6 @@
 			"d": "2026-08-13",
 			"f": 3,
 			"n": 4
-		},
-		"docs/aws-builder-center-before-the-signature.md": {
-			"s": "watch",
-			"g": 0.954,
-			"d": "2026-09-11",
-			"f": 4,
-			"n": 7
 		},
 		"docs/exit-lab.md": {
 			"s": "watch",
@@ -1308,6 +899,13 @@
 			"f": 15,
 			"n": 28,
 			"v": "2026-09-17"
+		},
+		"docs/aws-builder-center-before-the-signature.md": {
+			"s": "watch",
+			"g": 0.925,
+			"d": "2026-09-11",
+			"f": 4,
+			"n": 7
 		},
 		"docs/financial-controls.md": {
 			"s": "watch",
@@ -1347,6 +945,14 @@
 			"n": 29,
 			"v": "2026-09-17"
 		},
+		"docs/ux-flows/09-x402-agent-commerce.md": {
+			"s": "watch",
+			"g": 0.904,
+			"d": "2026-10-23",
+			"f": 9,
+			"n": 81,
+			"v": "2026-10-23"
+		},
 		"docs/x-posts/ar-quick-look-fix-x-post.md": {
 			"s": "watch",
 			"g": 0.901,
@@ -1382,6 +988,13 @@
 			"f": 5,
 			"n": 5
 		},
+		"docs/agent-skills.md": {
+			"s": "watch",
+			"g": 0.878,
+			"d": "2026-10-24",
+			"f": 7,
+			"n": 19
+		},
 		"docs/forge-off.md": {
 			"s": "watch",
 			"g": 0.875,
@@ -1395,6 +1008,14 @@
 			"d": "2026-07-11",
 			"f": 3,
 			"n": 3
+		},
+		"docs/event-readiness/18-coin-wars-portal.md": {
+			"s": "watch",
+			"g": 0.867,
+			"d": "2026-09-17",
+			"f": 3,
+			"n": 13,
+			"v": "2026-09-17"
 		},
 		"docs/x402-ring-economy.md": {
 			"s": "watch",
@@ -1468,13 +1089,6 @@
 			"f": 4,
 			"n": 8
 		},
-		"docs/three-microbuy.md": {
-			"s": "watch",
-			"g": 0.819,
-			"d": "2026-08-15",
-			"f": 4,
-			"n": 8
-		},
 		"docs/ibm-event-offer-map.md": {
 			"s": "watch",
 			"g": 0.806,
@@ -1488,6 +1102,13 @@
 			"d": "2026-09-09",
 			"f": 6,
 			"n": 15
+		},
+		"docs/three-microbuy.md": {
+			"s": "watch",
+			"g": 0.799,
+			"d": "2026-08-15",
+			"f": 4,
+			"n": 8
 		},
 		"docs/ops/gcp-production.md": {
 			"s": "watch",
@@ -1610,13 +1231,13 @@
 			"f": 2,
 			"n": 11
 		},
-		"docs/ops/forge-error-triage.md": {
+		"docs/ux-flows/11-account-dashboard.md": {
 			"s": "watch",
-			"g": 0.726,
-			"d": "2026-09-17",
-			"f": 4,
-			"n": 12,
-			"v": "2026-09-17"
+			"g": 0.75,
+			"d": "2026-10-23",
+			"f": 5,
+			"n": 50,
+			"v": "2026-10-23"
 		},
 		"docs/draft-agent-mint.md": {
 			"s": "watch",
@@ -1733,19 +1354,28 @@
 			"f": 4,
 			"n": 7
 		},
+		"docs/social-layer.md": {
+			"s": "watch",
+			"g": 0.679,
+			"d": "2026-10-23",
+			"f": 3,
+			"n": 30,
+			"v": "2026-10-23"
+		},
+		"docs/ops/forge-error-triage.md": {
+			"s": "watch",
+			"g": 0.676,
+			"d": "2026-09-17",
+			"f": 4,
+			"n": 12,
+			"v": "2026-09-17"
+		},
 		"docs/prompts/30-trading-tool-parity.md": {
 			"s": "watch",
 			"g": 0.676,
 			"d": "2026-09-22",
 			"f": 3,
 			"n": 3
-		},
-		"docs/authentication.md": {
-			"s": "watch",
-			"g": 0.675,
-			"d": "2026-10-11",
-			"f": 3,
-			"n": 18
 		},
 		"docs/money-feed.md": {
 			"s": "watch",
@@ -1804,12 +1434,12 @@
 			"f": 3,
 			"n": 8
 		},
-		"docs/research/competitor-teardown-2026-09.md": {
-			"s": "snapshot",
-			"g": 0.654,
-			"d": "2026-09-30",
-			"f": 6,
-			"n": 17,
+		"docs/ops/gcp-credits.md": {
+			"s": "watch",
+			"g": 0.656,
+			"d": "2026-10-23",
+			"f": 10,
+			"n": 72,
 			"v": "2026-10-23"
 		},
 		"docs/aws-builder-center-immutable-embed-releases.md": {
@@ -1826,6 +1456,13 @@
 			"f": 3,
 			"n": 10
 		},
+		"docs/authentication.md": {
+			"s": "watch",
+			"g": 0.651,
+			"d": "2026-10-11",
+			"f": 3,
+			"n": 18
+		},
 		"docs/event-readiness/02-play-mobile.md": {
 			"s": "watch",
 			"g": 0.643,
@@ -1840,19 +1477,20 @@
 			"f": 5,
 			"n": 8
 		},
-		"docs/agent-skills.md": {
-			"s": "watch",
-			"g": 0.637,
-			"d": "2026-10-24",
-			"f": 6,
-			"n": 19
-		},
 		"docs/solana-pumpfun.md": {
 			"s": "watch",
 			"g": 0.636,
 			"d": "2026-10-09",
 			"f": 3,
 			"n": 13
+		},
+		"docs/research/competitor-teardown-2026-09.md": {
+			"s": "snapshot",
+			"g": 0.633,
+			"d": "2026-09-30",
+			"f": 6,
+			"n": 17,
+			"v": "2026-10-23"
 		},
 		"docs/modly.md": {
 			"s": "watch",
@@ -1867,13 +1505,6 @@
 			"d": "2026-08-13",
 			"f": 2,
 			"n": 3
-		},
-		"docs/security.md": {
-			"s": "watch",
-			"g": 0.625,
-			"d": "2026-10-12",
-			"f": 5,
-			"n": 9
 		},
 		"docs/agora/tasks/04-professions.md": {
 			"s": "watch",
@@ -1917,14 +1548,6 @@
 			"f": 3,
 			"n": 3
 		},
-		"docs/agent-economy-volume.md": {
-			"s": "watch",
-			"g": 0.6,
-			"d": "2026-10-09",
-			"f": 2,
-			"n": 6,
-			"v": "2026-09-17"
-		},
 		"docs/terminal.md": {
 			"s": "watch",
 			"g": 0.597,
@@ -1948,19 +1571,20 @@
 			"f": 5,
 			"n": 7
 		},
+		"docs/agent-economy-volume.md": {
+			"s": "watch",
+			"g": 0.591,
+			"d": "2026-10-09",
+			"f": 2,
+			"n": 6,
+			"v": "2026-09-17"
+		},
 		"docs/event-readiness/22-venue-projector-mode.md": {
 			"s": "watch",
 			"g": 0.591,
 			"d": "2026-09-01",
 			"f": 4,
 			"n": 8
-		},
-		"docs/architecture.md": {
-			"s": "watch",
-			"g": 0.59,
-			"d": "2026-10-10",
-			"f": 6,
-			"n": 17
 		},
 		"docs/huggingface-3d-ai-agent-platform.md": {
 			"s": "watch",
@@ -2005,20 +1629,19 @@
 			"n": 43,
 			"v": "2026-10-23"
 		},
-		"docs/ops/gcp-credits.md": {
-			"s": "watch",
-			"g": 0.579,
-			"d": "2026-10-23",
-			"f": 9,
-			"n": 72,
-			"v": "2026-10-23"
-		},
 		"docs/play-live-events.md": {
 			"s": "watch",
 			"g": 0.577,
 			"d": "2026-08-13",
 			"f": 2,
 			"n": 13
+		},
+		"docs/security.md": {
+			"s": "watch",
+			"g": 0.575,
+			"d": "2026-10-12",
+			"f": 5,
+			"n": 9
 		},
 		"docs/ops/home-operations.md": {
 			"s": "watch",
@@ -2027,6 +1650,14 @@
 			"f": 2,
 			"n": 22,
 			"v": "2026-09-17"
+		},
+		"docs/avatar-thumbnails.md": {
+			"s": "watch",
+			"g": 0.57,
+			"d": "2026-10-23",
+			"f": 4,
+			"n": 30,
+			"v": "2026-10-23"
 		},
 		"docs/ops/gcp-logs.md": {
 			"s": "watch",
@@ -2150,13 +1781,6 @@
 			"n": 8,
 			"v": "2026-09-17"
 		},
-		"docs/forge.md": {
-			"s": "watch",
-			"g": 0.518,
-			"d": "2026-10-24",
-			"f": 2,
-			"n": 28
-		},
 		"docs/trade-receipts.md": {
 			"s": "watch",
 			"g": 0.515,
@@ -2215,13 +1839,6 @@
 			"f": 1,
 			"n": 3,
 			"v": "2026-09-17"
-		},
-		"docs/agent-commerce.md": {
-			"s": "watch",
-			"g": 0.5,
-			"d": "2026-10-23",
-			"f": 1,
-			"n": 16
 		},
 		"docs/agent-self-onboarding.md": {
 			"s": "watch",
@@ -2335,13 +1952,6 @@
 			"d": "2026-10-09",
 			"f": 1,
 			"n": 10
-		},
-		"docs/partners/tripo.md": {
-			"s": "watch",
-			"g": 0.5,
-			"d": "2026-10-23",
-			"f": 1,
-			"n": 5
 		},
 		"docs/persona-hub.md": {
 			"s": "watch",
@@ -2669,13 +2279,6 @@
 			"f": 2,
 			"n": 2
 		},
-		"docs/field.md": {
-			"s": "watch",
-			"g": 0.396,
-			"d": "2026-10-11",
-			"f": 2,
-			"n": 5
-		},
 		"docs/glasses/research.md": {
 			"s": "watch",
 			"g": 0.393,
@@ -2752,13 +2355,6 @@
 			"d": "2026-10-09",
 			"f": 5,
 			"n": 10
-		},
-		"docs/seo.md": {
-			"s": "watch",
-			"g": 0.355,
-			"d": "2026-10-08",
-			"f": 4,
-			"n": 16
 		},
 		"docs/tutorials/deploy-to-vercel-custom-domain.md": {
 			"s": "watch",
@@ -2881,13 +2477,6 @@
 			"f": 1,
 			"n": 5
 		},
-		"docs/coin-launches.md": {
-			"s": "watch",
-			"g": 0.333,
-			"d": "2026-10-14",
-			"f": 1,
-			"n": 5
-		},
 		"docs/ibm-community-defi-3d-sperax-publishing-kit.md": {
 			"s": "watch",
 			"g": 0.333,
@@ -2943,6 +2532,13 @@
 			"d": "2026-08-06",
 			"f": 1,
 			"n": 1
+		},
+		"docs/skill-import.md": {
+			"s": "watch",
+			"g": 0.333,
+			"d": "2026-10-10",
+			"f": 1,
+			"n": 3
 		},
 		"docs/start-here.md": {
 			"s": "watch",
@@ -3001,27 +2597,19 @@
 			"f": 2,
 			"n": 3
 		},
+		"docs/seo.md": {
+			"s": "watch",
+			"g": 0.321,
+			"d": "2026-10-08",
+			"f": 4,
+			"n": 16
+		},
 		"docs/tutorials/find-a-better-exit-policy.md": {
 			"s": "watch",
 			"g": 0.321,
 			"d": "2026-08-15",
 			"f": 2,
 			"n": 2
-		},
-		"docs/avatar-thumbnails.md": {
-			"s": "watch",
-			"g": 0.32,
-			"d": "2026-10-23",
-			"f": 3,
-			"n": 30,
-			"v": "2026-10-23"
-		},
-		"docs/agent-abilities/chapters/08-screens.md": {
-			"s": "watch",
-			"g": 0.319,
-			"d": "2026-09-01",
-			"f": 4,
-			"n": 12
 		},
 		"docs/ops/site-health-audit-2026-09-15.md": {
 			"s": "watch",
@@ -3030,6 +2618,13 @@
 			"f": 4,
 			"n": 4
 		},
+		"README.md": {
+			"s": "watch",
+			"g": 0.318,
+			"d": "2026-10-25",
+			"f": 7,
+			"n": 242
+		},
 		"docs/event-markets.md": {
 			"s": "watch",
 			"g": 0.313,
@@ -3037,12 +2632,19 @@
 			"f": 2,
 			"n": 50
 		},
-		"docs/mcp-3d-studio.md": {
+		"docs/field.md": {
 			"s": "watch",
-			"g": 0.311,
-			"d": "2026-10-09",
-			"f": 5,
-			"n": 13
+			"g": 0.313,
+			"d": "2026-10-11",
+			"f": 2,
+			"n": 5
+		},
+		"docs/agent-abilities/chapters/08-screens.md": {
+			"s": "watch",
+			"g": 0.309,
+			"d": "2026-09-01",
+			"f": 4,
+			"n": 12
 		},
 		"docs/the-first-19-weeks.md": {
 			"s": "watch",
@@ -3130,6 +2732,13 @@
 			"f": 2,
 			"n": 8
 		},
+		"docs/forge.md": {
+			"s": "watch",
+			"g": 0.268,
+			"d": "2026-10-24",
+			"f": 2,
+			"n": 28
+		},
 		"docs/openai-community-physical-world-post.md": {
 			"s": "watch",
 			"g": 0.268,
@@ -3200,6 +2809,13 @@
 			"f": 1,
 			"n": 4
 		},
+		"docs/coin-launches.md": {
+			"s": "watch",
+			"g": 0.25,
+			"d": "2026-10-14",
+			"f": 1,
+			"n": 5
+		},
 		"docs/nvidia-forum-model-retirement-post.md": {
 			"s": "watch",
 			"g": 0.25,
@@ -3213,6 +2829,13 @@
 			"d": "2026-08-14",
 			"f": 1,
 			"n": 2
+		},
+		"docs/partners/tripo.md": {
+			"s": "watch",
+			"g": 0.25,
+			"d": "2026-10-23",
+			"f": 1,
+			"n": 5
 		},
 		"docs/PROTOCOL-vanity.md": {
 			"s": "watch",
@@ -3256,27 +2879,12 @@
 			"f": 1,
 			"n": 1
 		},
-		"docs/ux-flows/11-account-dashboard.md": {
-			"s": "watch",
-			"g": 0.25,
-			"d": "2026-10-23",
-			"f": 4,
-			"n": 50,
-			"v": "2026-10-23"
-		},
 		"docs/x402-fresh-workers.md": {
 			"s": "watch",
 			"g": 0.25,
 			"d": "2026-09-22",
 			"f": 2,
 			"n": 9
-		},
-		"docs/fee-bridge.md": {
-			"s": "watch",
-			"g": 0.249,
-			"d": "2026-09-17",
-			"f": 5,
-			"n": 7
 		},
 		"docs/announcements/activity-mcp.md": {
 			"s": "watch",
@@ -3359,6 +2967,13 @@
 			"s": "watch",
 			"g": 0.233,
 			"d": "2026-09-04",
+			"f": 5,
+			"n": 7
+		},
+		"docs/fee-bridge.md": {
+			"s": "watch",
+			"g": 0.228,
+			"d": "2026-09-17",
 			"f": 5,
 			"n": 7
 		},
@@ -3568,6 +3183,13 @@
 			"n": 2,
 			"v": "2026-09-17"
 		},
+		"docs/x402-upto.md": {
+			"s": "watch",
+			"g": 0.2,
+			"d": "2026-10-24",
+			"f": 1,
+			"n": 5
+		},
 		"docs/api/forge-x402.md": {
 			"s": "watch",
 			"g": 0.199,
@@ -3610,13 +3232,12 @@
 			"f": 3,
 			"n": 3
 		},
-		"docs/social-layer.md": {
+		"docs/build.md": {
 			"s": "watch",
-			"g": 0.179,
-			"d": "2026-10-23",
-			"f": 2,
-			"n": 30,
-			"v": "2026-10-23"
+			"g": 0.177,
+			"d": "2026-10-25",
+			"f": 4,
+			"n": 17
 		},
 		"docs/audit/python-deps-2026-09-07.md": {
 			"s": "watch",
@@ -3752,13 +3373,6 @@
 			"f": 1,
 			"n": 2
 		},
-		"docs/payment-sessions.md": {
-			"s": "watch",
-			"g": 0.143,
-			"d": "2026-10-15",
-			"f": 1,
-			"n": 10
-		},
 		"docs/prompts/25-sandboxed-code-execution.md": {
 			"s": "watch",
 			"g": 0.143,
@@ -3870,6 +3484,13 @@
 			"d": "2026-09-07",
 			"f": 1,
 			"n": 1
+		},
+		"docs/payment-sessions.md": {
+			"s": "watch",
+			"g": 0.125,
+			"d": "2026-10-15",
+			"f": 1,
+			"n": 10
 		},
 		"docs/restyle.md": {
 			"s": "watch",
@@ -4077,13 +3698,6 @@
 			"f": 2,
 			"n": 3
 		},
-		"README.md": {
-			"s": "watch",
-			"g": 0.082,
-			"d": "2026-10-25",
-			"f": 4,
-			"n": 242
-		},
 		"docs/github-memory-seeding.md": {
 			"s": "watch",
 			"g": 0.08,
@@ -4176,6 +3790,13 @@
 			"d": "2026-07-18",
 			"f": 1,
 			"n": 1
+		},
+		"CLAUDE.md": {
+			"s": "watch",
+			"g": 0.066,
+			"d": "2026-10-25",
+			"f": 3,
+			"n": 18
 		},
 		"docs/coinmarketcap-live-article.md": {
 			"s": "watch",
@@ -4339,6 +3960,14 @@
 			"f": 1,
 			"n": 2
 		},
+		"docs/ops/cron-auth.md": {
+			"s": "watch",
+			"g": 0.041,
+			"d": "2026-10-25",
+			"f": 2,
+			"n": 14,
+			"v": "2026-09-17"
+		},
 		"docs/remix.md": {
 			"s": "watch",
 			"g": 0.041,
@@ -4423,34 +4052,12 @@
 			"f": 1,
 			"n": 2
 		},
-		"CLAUDE.md": {
-			"s": "watch",
-			"g": 0.029,
-			"d": "2026-10-25",
-			"f": 1,
-			"n": 18
-		},
-		"docs/build.md": {
-			"s": "watch",
-			"g": 0.029,
-			"d": "2026-10-25",
-			"f": 1,
-			"n": 17
-		},
 		"docs/inference-node-operator.md": {
 			"s": "watch",
 			"g": 0.029,
 			"d": "2026-08-14",
 			"f": 1,
 			"n": 5
-		},
-		"docs/ops/cron-auth.md": {
-			"s": "watch",
-			"g": 0.029,
-			"d": "2026-10-25",
-			"f": 1,
-			"n": 14,
-			"v": "2026-09-17"
 		},
 		"docs/trenches.md": {
 			"s": "watch",
@@ -5041,6 +4648,22 @@
 			"f": 1,
 			"n": 1
 		},
+		"docs/3d-api.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 15,
+			"v": "2026-10-25"
+		},
+		"docs/a2a-payments.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-10",
+			"f": 0,
+			"n": 12,
+			"v": "2026-10-25"
+		},
 		"docs/accessibility.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5069,12 +4692,28 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/agent-abilities/ABILITIES.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-09",
+			"f": 0,
+			"n": 151,
+			"v": "2026-10-25"
+		},
 		"docs/agent-abilities/chapters/02-motion.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-08-05",
 			"f": 0,
 			"n": 0
+		},
+		"docs/agent-abilities/chapters/04-the-mind.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 31,
+			"v": "2026-10-25"
 		},
 		"docs/agent-abilities/chapters/10-the-agent-wallet.md": {
 			"s": "unverifiable",
@@ -5090,6 +4729,14 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/agent-abilities/FULL-ARTICLE.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-23",
+			"f": 0,
+			"n": 152,
+			"v": "2026-10-25"
+		},
 		"docs/agent-abilities/PRODUCTION-NOTES.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -5103,6 +4750,14 @@
 			"d": "2026-07-10",
 			"f": 0,
 			"n": 0
+		},
+		"docs/agent-mail.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 15,
+			"v": "2026-10-25"
 		},
 		"docs/agent-screen-control.md": {
 			"s": "fresh",
@@ -5133,12 +4788,28 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/agent-wallet-api.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 30,
+			"v": "2026-10-25"
+		},
 		"docs/agi.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-09-01",
 			"f": 0,
 			"n": 1
+		},
+		"docs/agora.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 19,
+			"v": "2026-10-25"
 		},
 		"docs/agora/tasks/06-economy-visuals.md": {
 			"s": "fresh",
@@ -5153,6 +4824,14 @@
 			"d": "2026-08-06",
 			"f": 0,
 			"n": 5
+		},
+		"docs/animation-seeding.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-09-18",
+			"f": 0,
+			"n": 22,
+			"v": "2026-10-25"
 		},
 		"docs/announcement-coverage-telegram.md": {
 			"s": "unverifiable",
@@ -5175,6 +4854,14 @@
 			"f": 0,
 			"n": 1
 		},
+		"docs/api-reference.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-24",
+			"f": 0,
+			"n": 304,
+			"v": "2026-10-25"
+		},
 		"docs/api/readme-3d.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5189,6 +4876,14 @@
 			"f": 0,
 			"n": 8,
 			"v": "2026-10-23"
+		},
+		"docs/ar.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-09-08",
+			"f": 0,
+			"n": 13,
+			"v": "2026-10-25"
 		},
 		"docs/atomic.md": {
 			"s": "fresh",
@@ -5226,12 +4921,36 @@
 			"f": 0,
 			"n": 17
 		},
+		"docs/aws-builder-center-agent-payment-sessions.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 5,
+			"v": "2026-10-25"
+		},
+		"docs/aws-builder-center-claims-ledger.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 19,
+			"v": "2026-10-25"
+		},
 		"docs/aws-builder-center-marketplace-x402.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-08-22",
 			"f": 0,
 			"n": 0
+		},
+		"docs/aws-builder-center-open-weight-3d-forge.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-08",
+			"f": 0,
+			"n": 17,
+			"v": "2026-10-25"
 		},
 		"docs/aws-partner-spotlight.md": {
 			"s": "unverifiable",
@@ -5240,12 +4959,52 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/bnb-vault.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 20,
+			"v": "2026-10-25"
+		},
+		"docs/btn-pill-migration.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 6,
+			"v": "2026-10-25"
+		},
+		"docs/ca2x402.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 12,
+			"v": "2026-10-25"
+		},
 		"docs/capture.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-08-16",
 			"f": 0,
 			"n": 2
+		},
+		"docs/character-studio.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 28,
+			"v": "2026-10-25"
+		},
+		"docs/chatgpt-ar.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 26,
+			"v": "2026-10-25"
 		},
 		"docs/clash.md": {
 			"s": "fresh",
@@ -5374,6 +5133,14 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/copy-trading.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 22,
+			"v": "2026-10-25"
+		},
 		"docs/cosmos.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5403,6 +5170,14 @@
 			"f": 0,
 			"n": 1
 		},
+		"docs/discord-activity.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 10,
+			"v": "2026-10-25"
+		},
 		"docs/dissolve.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -5416,6 +5191,22 @@
 			"d": "2026-08-13",
 			"f": 0,
 			"n": 0
+		},
+		"docs/domains.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 9,
+			"v": "2026-10-25"
+		},
+		"docs/drops.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 12,
+			"v": "2026-10-25"
 		},
 		"docs/economy-solver.md": {
 			"s": "fresh",
@@ -5440,6 +5231,14 @@
 			"n": 5,
 			"v": "2026-10-23"
 		},
+		"docs/erc8004/validation-attestation.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 15,
+			"v": "2026-10-25"
+		},
 		"docs/event-markets-staking.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5454,6 +5253,14 @@
 			"f": 0,
 			"n": 14,
 			"v": "2026-09-17"
+		},
+		"docs/event-readiness/LIVE-OPS.md": {
+			"s": "snapshot",
+			"g": 0,
+			"d": "2026-08-08",
+			"f": 0,
+			"n": 14,
+			"v": "2026-10-25"
 		},
 		"docs/event-readiness/README.md": {
 			"s": "unverifiable",
@@ -5476,6 +5283,14 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/fact-check.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 8,
+			"v": "2026-10-25"
+		},
 		"docs/feedback.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5490,6 +5305,14 @@
 			"d": "2026-10-09",
 			"f": 0,
 			"n": 0
+		},
+		"docs/forge-pipeline.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 62,
+			"v": "2026-10-25"
 		},
 		"docs/fundraising/nvidia-inception-capital-connect.md": {
 			"s": "fresh",
@@ -5518,6 +5341,22 @@
 			"d": "2026-08-05",
 			"f": 0,
 			"n": 0
+		},
+		"docs/guards.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 122,
+			"v": "2026-10-25"
+		},
+		"docs/hold-to-access.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 26,
+			"v": "2026-10-25"
 		},
 		"docs/home-assistant-community-post.md": {
 			"s": "unverifiable",
@@ -5575,12 +5414,28 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/ibm-community-doc-freshness-post.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 26,
+			"v": "2026-10-25"
+		},
 		"docs/ibm-community-live-reaction-jessica.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-08-20",
 			"f": 0,
 			"n": 0
+		},
+		"docs/ibm-community-long-running-mcp-tools-post.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-10",
+			"f": 0,
+			"n": 19,
+			"v": "2026-10-25"
 		},
 		"docs/ibm-community-recap-jessica.md": {
 			"s": "unverifiable",
@@ -5610,6 +5465,14 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/internal/fable-playbook.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 40,
+			"v": "2026-10-25"
+		},
 		"docs/knock.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5623,6 +5486,14 @@
 			"d": "2026-10-23",
 			"f": 0,
 			"n": 10
+		},
+		"docs/labor-market.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-23",
+			"f": 0,
+			"n": 17,
+			"v": "2026-10-25"
 		},
 		"docs/launch-intents.md": {
 			"s": "fresh",
@@ -5751,6 +5622,14 @@
 			"f": 0,
 			"n": 4
 		},
+		"docs/money-map.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 19,
+			"v": "2026-10-25"
+		},
 		"docs/mpp-solana.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5830,12 +5709,36 @@
 			"n": 7,
 			"v": "2026-10-23"
 		},
+		"docs/open-source-credits.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 34,
+			"v": "2026-10-25"
+		},
 		"docs/open-source-footprint.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-09-02",
 			"f": 0,
 			"n": 2
+		},
+		"docs/ops/guard-wiring.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 40,
+			"v": "2026-10-25"
+		},
+		"docs/ops/llm-lanes.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 28,
+			"v": "2026-10-25"
 		},
 		"docs/ops/mcp-registry-namespace.md": {
 			"s": "fresh",
@@ -5858,6 +5761,14 @@
 			"f": 0,
 			"n": 3
 		},
+		"docs/ops/search-indexing.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 23,
+			"v": "2026-10-25"
+		},
 		"docs/ops/worker-and-avatar-rules.md": {
 			"s": "fresh",
 			"g": 0,
@@ -5865,12 +5776,44 @@
 			"f": 0,
 			"n": 4
 		},
+		"docs/ops/x-story-findings-2026-09-30.md": {
+			"s": "snapshot",
+			"g": 0,
+			"d": "2026-10-01",
+			"f": 0,
+			"n": 13,
+			"v": "2026-10-25"
+		},
 		"docs/ops/x402-prepaid.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-10-23",
 			"f": 0,
 			"n": 4
+		},
+		"docs/oracle.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 38,
+			"v": "2026-10-25"
+		},
+		"docs/page-performance.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 14,
+			"v": "2026-10-25"
+		},
+		"docs/paired-coins.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-09",
+			"f": 0,
+			"n": 16,
+			"v": "2026-10-25"
 		},
 		"docs/partners/dextools-collab-kit.md": {
 			"s": "fresh",
@@ -5956,12 +5899,28 @@
 			"f": 0,
 			"n": 4
 		},
+		"docs/prompts/05-agents-rest-parity.md": {
+			"s": "snapshot",
+			"g": 0,
+			"d": "2026-09-22",
+			"f": 0,
+			"n": 12,
+			"v": "2026-10-25"
+		},
 		"docs/prompts/06-agents-sdk.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-09-22",
 			"f": 0,
 			"n": 2
+		},
+		"docs/prompts/11-agent-mail.md": {
+			"s": "snapshot",
+			"g": 0,
+			"d": "2026-09-22",
+			"f": 0,
+			"n": 7,
+			"v": "2026-10-25"
 		},
 		"docs/prompts/20-local-agent-runtime-tui.md": {
 			"s": "unverifiable",
@@ -6032,6 +5991,14 @@
 			"d": "2026-10-08",
 			"f": 0,
 			"n": 0
+		},
+		"docs/pump-platform-fee.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 9,
+			"v": "2026-10-25"
 		},
 		"docs/pumpfun-program/docs/BREAKING_FEE_RECIPIENT.md": {
 			"s": "unverifiable",
@@ -6229,6 +6196,14 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/pumpfun-program/UPSTREAM-pumpswap-virtual-quote-reserves.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-09-17",
+			"f": 0,
+			"n": 13,
+			"v": "2026-10-25"
+		},
 		"docs/pumpfun-program/UPSTREAM-v3-trades-fee-sweeps-announcement.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -6299,6 +6274,14 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/risk-acknowledgment.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-23",
+			"f": 0,
+			"n": 34,
+			"v": "2026-10-25"
+		},
 		"docs/robinhood-portfolios.md": {
 			"s": "fresh",
 			"g": 0,
@@ -6327,12 +6310,28 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/security/audit-2026-10-25/FINDINGS-DETAIL.md": {
+			"s": "snapshot",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 35,
+			"v": "2026-10-25"
+		},
 		"docs/security/audit-2026-10-25/REPORT.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-10-25",
 			"f": 0,
 			"n": 1
+		},
+		"docs/seeker-app.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 9,
+			"v": "2026-10-25"
 		},
 		"docs/seeker-publishing.md": {
 			"s": "fresh",
@@ -6349,6 +6348,14 @@
 			"f": 0,
 			"n": 0
 		},
+		"docs/shipfeed.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 8,
+			"v": "2026-10-25"
+		},
 		"docs/sign-language.md": {
 			"s": "fresh",
 			"g": 0,
@@ -6363,19 +6370,20 @@
 			"f": 0,
 			"n": 3
 		},
+		"docs/site-performance.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 43,
+			"v": "2026-10-25"
+		},
 		"docs/skill-directory-listings.md": {
 			"s": "unverifiable",
 			"g": 0,
 			"d": "2026-10-24",
 			"f": 0,
 			"n": 0
-		},
-		"docs/skill-import.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-10-10",
-			"f": 0,
-			"n": 3
 		},
 		"docs/skill-supply-scan.md": {
 			"s": "fresh",
@@ -6694,6 +6702,14 @@
 			"f": 0,
 			"n": 10
 		},
+		"docs/ux-flows/07-crypto-trading-analytics.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-23",
+			"f": 0,
+			"n": 118,
+			"v": "2026-10-25"
+		},
 		"docs/vendored-design-libraries.md": {
 			"s": "fresh",
 			"g": 0,
@@ -6765,6 +6781,22 @@
 			"d": "2026-08-14",
 			"f": 0,
 			"n": 3
+		},
+		"docs/x-mention-bot.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 47,
+			"v": "2026-10-25"
+		},
+		"docs/x-partner-series.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 7,
+			"v": "2026-10-25"
 		},
 		"docs/x-posts/3d-ar-studio-launch.md": {
 			"s": "unverifiable",
@@ -6948,13 +6980,6 @@
 			"f": 0,
 			"n": 0
 		},
-		"docs/x402-upto.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-10-24",
-			"f": 0,
-			"n": 5
-		},
 		"docs/x402-vscode.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -6996,6 +7021,14 @@
 			"d": "2026-06-10",
 			"f": 0,
 			"n": 0
+		},
+		"STRUCTURE.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": "2026-10-25",
+			"f": 0,
+			"n": 2742,
+			"v": "2026-10-25"
 		}
 	}
 }

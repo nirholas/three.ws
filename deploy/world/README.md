@@ -2,8 +2,14 @@
 
 Build and deploy config for the multiplayer 3D world at **https://world.three.ws**.
 
+> **Status as of 2026-10-25 (order 453): not deployed.** The `hyperfy-world` Cloud Run service
+> was deleted on 2026-10-23 (owner action, confirmed in the Cloud Run audit log), so
+> `https://world.three.ws` currently returns 404. The world-health cron keeps alerting and
+> `/healthz` reports `world` as `down`. Everything below describes the config to use if the
+> owner redeploys; nothing here is live today.
+
 The world is a [Hyperfy](https://github.com/hyperfy-xyz/hyperfy) server pinned to an exact
-upstream commit and rebuilt with three local patches. It runs as its own Cloud Run service
+upstream commit and rebuilt with three local patches. When deployed it runs as its own Cloud Run service
 (`hyperfy-world`, `us-central1`), separate from the main `three-ws-api` container. World state —
 the SQLite database and every uploaded asset — lives in the GCS bucket `world-three-ws-data`,
 mounted at `/app/world`, so the container itself is stateless and can be rebuilt without losing
