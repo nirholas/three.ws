@@ -13,6 +13,7 @@
 // yawDeg) — see studio-schemas.js. The client maps them to its own local floor,
 // or, when co-located via a QR marker, to the same physical spot.
 
+import { createHash } from 'node:crypto';
 import { Room } from '@colyseus/core';
 
 import { StudioModel, StudioViewer, StudioState } from '../studio-schemas.js';
@@ -62,6 +63,9 @@ export class StudioRoom extends Room {
 		this._modelSeq = 0;
 		// Per-session op-rate ledger: sessionId → { windowStart, count }.
 		this._opLedger = new Map();
+		// modelId -> private owner key. The key is the client's bearer id and is
+		// never synced; peers only ever see ownerHandle(key).
+		this._modelOwners = new Map();
 	}
 
 	onCreate(options) {
@@ -104,6 +108,21 @@ export class StudioRoom extends Room {
 		return client.userData?.ownerId || client.sessionId;
 	}
 
+	// Public, one-way handle for an owner key. Synced state carries this, never
+	// the key, so a peer cannot replay what it reads as its own clientId.
+	_ownerHandle(key) {
+		return createHash('sha256').update(`${this.roomKey}\0${key}`).digest('hex').slice(0, 24);
+	}
+
+	_owners() {
+		return (this._modelOwners ||= new Map());
+	}
+
+	_ownsModel(client, modelId) {
+		const key = this._owners().get(modelId);
+		return key !== undefined && key === this._ownerKey(client);
+	}
+
 	// Token-bucket-ish per-second op gate. Returns false (drop) when a client
 	// exceeds OPS_PER_SEC in the current 1 s window — a flood can't spam the room.
 	_opOk(sessionId) {
@@ -131,7 +150,7 @@ export class StudioRoom extends Room {
 		}
 		const owner = this._ownerKey(client);
 		let owned = 0;
-		for (const [, m] of this.state.models) if (m.ownerId === owner) owned++;
+		for (const [, key] of this._owners()) if (key === owner) owned++;
 		if (owned >= MAX_MODELS_PER_OWNER) {
 			client.send('model:reject', { reason: 'owner_full' });
 			return;
@@ -150,8 +169,9 @@ export class StudioRoom extends Room {
 		m.yawDeg = ((num(payload.yawDeg) % 360) + 360) % 360;
 		m.scale = clamp(num(payload.scale, 1), SCALE_MIN, SCALE_MAX);
 		m.height = clamp(num(payload.height, 0), 0, 20);
-		m.ownerId = owner;
+		m.ownerId = this._ownerHandle(owner);
 		m.ts = Date.now();
+		this._owners().set(m.id, owner);
 		this.state.models.set(m.id, m);
 	}
 
@@ -160,7 +180,7 @@ export class StudioRoom extends Room {
 		if (!payload || typeof payload.id !== 'string') return;
 		const m = this.state.models.get(payload.id);
 		if (!m) return;
-		if (m.ownerId !== this._ownerKey(client)) return; // owner-only moves
+		if (!this._ownsModel(client, payload.id)) return; // owner-only moves
 		if (Number.isFinite(payload.relEast)) m.relEast = clamp(payload.relEast, -COORD_BOUND, COORD_BOUND);
 		if (Number.isFinite(payload.relNorth)) m.relNorth = clamp(payload.relNorth, -COORD_BOUND, COORD_BOUND);
 		if (Number.isFinite(payload.yawDeg)) m.yawDeg = ((payload.yawDeg % 360) + 360) % 360;
@@ -173,8 +193,9 @@ export class StudioRoom extends Room {
 		if (!payload || typeof payload.id !== 'string') return;
 		const m = this.state.models.get(payload.id);
 		if (!m) return;
-		if (m.ownerId !== this._ownerKey(client)) return; // owner-only removes
+		if (!this._ownsModel(client, payload.id)) return; // owner-only removes
 		this.state.models.delete(payload.id);
+		this._owners().delete(payload.id);
 	}
 
 	_handleHeartbeat(client) {
@@ -193,9 +214,10 @@ export class StudioRoom extends Room {
 		const v = new StudioViewer();
 		v.id = client.sessionId;
 		v.name = String(options?.name || '').slice(0, STR_MAX);
-		v.ownerId = client.userData.ownerId;
+		v.ownerId = this._ownerHandle(this._ownerKey(client));
 		v.tsServer = Date.now();
 		this.state.viewers.set(client.sessionId, v);
+		client.send('self', { ownerId: v.ownerId });
 		console.log(`${this._tag()} +join (viewers=${this.state.viewers.size}, models=${this.state.models.size})`);
 	}
 
@@ -220,6 +242,7 @@ export class StudioRoom extends Room {
 
 	onDispose() {
 		this._opLedger.clear();
+		this._owners().clear();
 		console.log(`${this._tag()} disposed`);
 	}
 }

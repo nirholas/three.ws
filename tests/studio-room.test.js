@@ -49,7 +49,7 @@ describe('StudioRoom — model:spawn', () => {
 		expect(room.state.models.size).toBe(1);
 		const m = [...room.state.models.values()][0];
 		expect(m.src).toBe(HTTPS);
-		expect(m.ownerId).toBe('alice'); // stable owner key, not sessionId
+		expect(m.ownerId).toBe(room._ownerHandle('alice')); // stable owner handle, not the raw key
 		expect(m.relEast).toBe(1);
 		expect(m.scale).toBe(1.5);
 	});
@@ -145,5 +145,31 @@ describe('StudioRoom — rate limiting', () => {
 		for (let i = 0; i < 25; i++) room._opOk(alice.sessionId); // spend the budget
 		room._handleSpawn(alice, { src: HTTPS, relEast: 0, relNorth: 0 });
 		expect(room.state.models.size).toBe(0); // rate-limited before any write
+	});
+});
+
+describe('StudioRoom - owner key is never published', () => {
+	it('syncs an opaque owner handle, so a peer cannot replay it as a clientId', () => {
+		const room = makeRoom();
+		const alice = makeClient(room, { sessionId: 's_a', ownerId: 'alice-secret' });
+		const mallory = makeClient(room, { sessionId: 's_m', ownerId: 'mallory' });
+		join(room, alice); join(room, mallory);
+		room._handleSpawn(alice, { src: HTTPS, relEast: 0, relNorth: 0, id: 'M1' });
+		const published = room.state.models.get('M1').ownerId;
+		expect(published).not.toBe('alice-secret');
+
+		// Mallory rejoins asserting the value she read from synced state.
+		const replay = makeClient(room, { sessionId: 's_r', ownerId: published });
+		join(room, replay);
+		room._handleUpdate(replay, { id: 'M1', relEast: 9 });
+		expect(room.state.models.get('M1').relEast).toBe(0);
+		room._handleRemove(replay, { id: 'M1' });
+		expect(room.state.models.has('M1')).toBe(true);
+
+		// The real owner (same secret, new session) still controls the model.
+		const aliceAgain = makeClient(room, { sessionId: 's_a2', ownerId: 'alice-secret' });
+		join(room, aliceAgain);
+		room._handleUpdate(aliceAgain, { id: 'M1', relEast: 4 });
+		expect(room.state.models.get('M1').relEast).toBe(4);
 	});
 });

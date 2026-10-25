@@ -57,13 +57,18 @@ describe('discord-activity-auth', () => {
 		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 
-	it('fetchDiscordUser re-verifies the token against /users/@me', async () => {
-		fetchSpy.mockResolvedValue({ ok: true, json: async () => ({ id: '123456789', username: 'alice', global_name: 'Alice', avatar: 'abc' }) });
+	it('fetchDiscordUser re-verifies the token against /oauth2/@me and returns the user', async () => {
+		fetchSpy.mockResolvedValue({ ok: true, json: async () => ({ application: { id: 'test-client-id' }, user: { id: '123456789', username: 'alice', global_name: 'Alice', avatar: 'abc' } }) });
 		const user = await fetchDiscordUser('tok-123');
 		expect(user).toEqual({ id: '123456789', username: 'alice', globalName: 'Alice', avatar: 'abc' });
 		const [url, init] = fetchSpy.mock.calls[0];
-		expect(url).toBe('https://discord.com/api/users/@me');
+		expect(url).toBe('https://discord.com/api/oauth2/@me');
 		expect(init.headers.Authorization).toBe('Bearer tok-123');
+	});
+
+	it('fetchDiscordUser rejects a token issued to a different Discord application', async () => {
+		fetchSpy.mockResolvedValue({ ok: true, json: async () => ({ application: { id: 'some-other-app' }, user: { id: '123456789', username: 'alice' } }) });
+		await expect(fetchDiscordUser('foreign-app-token')).rejects.toMatchObject({ code: 'wrong_audience', status: 401 });
 	});
 
 	it('fetchDiscordUser surfaces a rejected token as a DiscordActivityAuthError', async () => {

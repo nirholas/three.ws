@@ -3,7 +3,7 @@
 // access_token discordSdk.commands.authenticate() returned plus the instance's
 // guild/channel/instance ids (all from discordSdk.instanceId etc., never
 // trusted as identity on their own); this handler re-checks the token against
-// Discord's own /users/@me before minting anything, so a forged client claim
+// Discord's own /oauth2/@me before minting anything, so a forged client claim
 // can never seat an impostor in someone else's room.
 
 import { cors, json, method, error, readJson, wrap } from '../_lib/http.js';
@@ -34,7 +34,12 @@ export default wrap(async (req, res) => {
 		throw e;
 	}
 
-	await ensureRoom({ roomId: instanceId, guildId, channelId });
+	// An instance id is bound to the guild/channel it was first seen with; a later
+	// request claiming the same id under another guild or channel is a squat.
+	const room = await ensureRoom({ roomId: instanceId, guildId, channelId });
+	if (String(room.guild_id) !== guildId || String(room.channel_id) !== channelId) {
+		return error(res, 403, 'room_mismatch', 'this instance belongs to a different guild or channel');
+	}
 	await upsertParticipant({ roomId: instanceId, discordUserId: user.id, username: user.username, globalName: user.globalName });
 	await appendEvent({ roomId: instanceId, kind: 'join', actorDiscordId: user.id, payload: { username: user.username } });
 

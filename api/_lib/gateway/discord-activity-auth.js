@@ -10,7 +10,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { env } from '../env.js';
 
 const DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token';
-const DISCORD_USER_URL = 'https://discord.com/api/users/@me';
+const DISCORD_TOKEN_INFO_URL = 'https://discord.com/api/oauth2/@me';
 const SESSION_TTL_S = 4 * 3600;
 
 export function discordActivityConfigured() {
@@ -49,15 +49,23 @@ export async function exchangeActivityCode(code) {
 	return { accessToken: data.access_token, scope: data.scope || null };
 }
 
-/** Verify an access token is real by asking Discord who it belongs to. */
+/**
+ * Verify an access token is real AND was issued to this Discord application, by
+ * asking Discord who it belongs to. /oauth2/@me reports the token's application,
+ * so a token minted for any other app is refused.
+ */
 export async function fetchDiscordUser(accessToken) {
 	if (typeof accessToken !== 'string' || !accessToken) throw new DiscordActivityAuthError('bad_token', 'access_token is required', 400);
-	const resp = await fetch(DISCORD_USER_URL, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(8000) });
+	const resp = await fetch(DISCORD_TOKEN_INFO_URL, { headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(8000) });
 	const data = await resp.json().catch(() => null);
-	if (!resp.ok || !data?.id) {
+	if (!resp.ok || !data?.user?.id) {
 		throw new DiscordActivityAuthError('user_fetch_failed', data?.message || 'Discord rejected the access token', 502);
 	}
-	return { id: String(data.id), username: data.username, globalName: data.global_name || null, avatar: data.avatar || null };
+	if (String(data.application?.id || '') !== process.env.DISCORD_CLIENT_ID) {
+		throw new DiscordActivityAuthError('wrong_audience', 'access token was not issued to this application', 401);
+	}
+	const u = data.user;
+	return { id: String(u.id), username: u.username, globalName: u.global_name || null, avatar: u.avatar || null };
 }
 
 function sign(payload) {

@@ -94,6 +94,7 @@ export class StudioNet {
 		this._destroyed = false;
 		this._presenceQueued = false;
 		this._modelsQueued = false;
+		this._selfHandle = '';
 	}
 
 	/** Subscribe: 'status' | 'models' | 'model' | 'presence' | 'reject'. */
@@ -168,6 +169,10 @@ export class StudioNet {
 				$viewers.onRemove(() => this._queuePresence());
 			}
 
+			this.room.onMessage('self', (msg) => {
+				this._selfHandle = String(msg?.ownerId || '');
+				this._queueModels();
+			});
 			this.room.onMessage('model:reject', (msg) => this._emit('reject', msg));
 			this.room.onLeave((code) => {
 				if (this._destroyed || code === 1000) return;
@@ -209,7 +214,7 @@ export class StudioNet {
 			scale: m.scale,
 			height: m.height,
 			ownerId: m.ownerId,
-			mine: !!this.clientId && m.ownerId === this.clientId,
+			mine: !!this._selfHandle && m.ownerId === this._selfHandle,
 		};
 	}
 
