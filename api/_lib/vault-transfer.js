@@ -82,7 +82,7 @@ async function payoutUsdc({ vault, toAddress, atomics, userId, reason }) {
  *
  * @returns {Promise<object>} result envelope
  */
-export async function depositToVault({ vault, backerAgent, userId, usdcAtomics, idempotencyKey }) {
+export async function depositToVault({ vault, backerAgent, userId, usdcAtomics, minSharesOut, idempotencyKey }) {
 	const network = netOf(vault.network);
 	const amount = toBig(usdcAtomics);
 	if (amount <= 0n) return { status: 'failed', code: 'zero_amount', message: 'deposit must be positive' };
@@ -94,6 +94,17 @@ export async function depositToVault({ vault, backerAgent, userId, usdcAtomics, 
 	if (depositExceedsCap(contributed, amount, vault.per_backer_cap_atomics)) {
 		return { status: 'blocked', code: 'backer_cap', message: 'this deposit would exceed the per-backer cap for this vault', detail: { cap_atomics: String(vault.per_backer_cap_atomics), contributed_atomics: String(contributed) } };
 	}
+
+	// Quote BEFORE any funds move. The vault NAV includes the live USDC balance of
+	// a public address, so an outside donation can inflate it until a deposit
+	// floors to zero shares. Refuse a deposit that would mint nothing, or fewer
+	// shares than the caller's min_shares_out.
+	const minOut = minSharesOut == null ? 1n : toBig(minSharesOut);
+	const floorShares = minOut > 1n ? minOut : 1n;
+	const quoteNav = await computeVaultNav(vault, await getOpenPositions(vault.id));
+	const quoted = sharesForDeposit(amount, quoteNav.navAtomics, vault.total_shares);
+	if (quoted <= 0n) return { status: 'blocked', code: 'zero_shares', message: 'this deposit is too small to mint any shares at the current vault price' };
+	if (quoted < floorShares) return { status: 'blocked', code: 'min_shares_out', message: 'this deposit would mint fewer shares than your minimum', detail: { quoted_shares: String(quoted), min_shares_out: String(floorShares) } };
 
 	// Real, guarded USDC transfer from the backer's agent wallet → vault wallet.
 	const transfer = await transferUsdcGuarded({
@@ -113,6 +124,21 @@ export async function depositToVault({ vault, backerAgent, userId, usdcAtomics, 
 	const nav = await computeVaultNav(vault, positions);
 	const navBefore = nav.navAtomics > amount ? nav.navAtomics - amount : 0n;
 	const minted = sharesForDeposit(amount, navBefore, vault.total_shares);
+	if (minted < floorShares) {
+		// NAV moved between the quote and the mint: hand the funds back rather than keep them for no shares.
+		const secretVault = await getVaultWithSecret(vault.id);
+		let refund = null;
+		try {
+			refund = await payoutUsdc({ vault: secretVault, toAddress: backerAgent.meta.solana_address, atomics: amount, userId, reason: 'deposit_refund' });
+		} catch (e) {
+			logAudit({ userId, action: 'vault.deposit_refund_failed', resourceId: vault.id, meta: { usdc_atomics: String(amount), signature, error: String(e?.message || e) } });
+		}
+		return {
+			status: 'failed', code: 'min_shares_out', signature,
+			message: refund ? 'the vault price moved and the deposit would have minted too few shares; it was refunded' : 'the vault price moved and the deposit would have minted too few shares; the refund needs manual settlement',
+			detail: { refund_signature: refund?.signature || null },
+		};
+	}
 
 	const eventId = await recordVaultEvent({
 		vaultId: vault.id, type: 'deposit', userId, backerAgentId: backerAgent.id,

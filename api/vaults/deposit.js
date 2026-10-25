@@ -38,6 +38,8 @@ export default wrap(async (req, res) => {
 	if (!isUuid(backerAgentId)) return error(res, 400, 'validation_error', 'backerAgentId must be an agent id');
 	if (!(usdc > 0)) return error(res, 400, 'validation_error', 'usdc must be a positive number');
 
+	let minSharesOut = body.min_shares_out ?? body.minSharesOut ?? null;
+	if (minSharesOut != null && !/^\d+$/.test(String(minSharesOut))) return error(res, 400, 'validation_error', 'min_shares_out must be a non-negative integer');
 	const vault = await getVault(vaultId);
 	if (!vault) return error(res, 404, 'not_found', 'vault not found');
 
@@ -52,6 +54,7 @@ export default wrap(async (req, res) => {
 	const result = await depositToVault({
 		vault, backerAgent, userId,
 		usdcAtomics: usdcToAtomics(usdc),
+		minSharesOut,
 		idempotencyKey: String(body.idempotency_key || `vault-deposit:${vaultId}:${backerAgentId}:${randomUUID()}`).slice(0, 128),
 	});
 
