@@ -89,6 +89,59 @@ export function classifyCall({ domain, service, entityId, attributes = {} } = {}
 	return { guarded: false, risk: null, reason: '' };
 }
 
+/** Home Assistant target selectors other than entity_id. Each expands to a set we cannot see. */
+const SELECTOR_KEYS = ['area_id', 'device_id', 'label_id', 'floor_id'];
+
+function hasValue(v) {
+	return Array.isArray(v) ? v.length > 0 : v !== undefined && v !== null && v !== '';
+}
+
+/** True when service data targets by area, device, label or floor instead of entity id. */
+export function hasSelectorTargets(data) {
+	return SELECTOR_KEYS.some((k) => hasValue(data?.[k]));
+}
+
+/** Every entity id named in service data: a string, a comma list, or an array. */
+export function entityIdsOfData(data) {
+	const raw = data?.entity_id;
+	const list = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',') : [];
+	return list.filter((v) => typeof v === 'string').map((v) => v.trim()).filter(Boolean);
+}
+
+/**
+ * Classify a whole service call, not just its first entity.
+ *
+ * Home Assistant expands entity lists, "all", and area/device/label/floor
+ * selectors itself, so the gate must look at every target it can see and treat
+ * a selector it cannot resolve as the riskiest thing it could expand to.
+ *
+ * @returns {{ guarded: boolean, risk: ('security'|'physical'|null), reason: string, entityIds: string[], unresolved: boolean }}
+ *   entityIds are the guarded entities that need a standing allowance;
+ *   unresolved means a selector hides targets, so no allowance can cover it.
+ */
+export function classifyCallTargets({ domain, service, data = {}, states = {} } = {}) {
+	const ids = entityIdsOfData(data);
+	let first = null;
+	const guardedIds = [];
+	for (const entityId of ids) {
+		const v = classifyCall({ domain, service, entityId, attributes: states[entityId]?.attributes });
+		if (v.guarded) {
+			guardedIds.push(entityId);
+			first ??= v;
+		}
+	}
+	if (first) return { ...first, entityIds: guardedIds, unresolved: false };
+
+	const selectors = hasSelectorTargets(data) || ids.includes('all');
+	if (selectors) {
+		const worst = ['lock', 'valve', 'alarm_control_panel', 'cover'].includes(String(domain).toLowerCase())
+			? classifyCall({ domain, service, entityId: undefined, attributes: { device_class: 'garage' } })
+			: { guarded: false, risk: null, reason: '' };
+		if (worst.guarded) return { ...worst, entityIds: [], unresolved: true };
+	}
+	return { guarded: false, risk: null, reason: '', entityIds: [], unresolved: false };
+}
+
 /**
  * A standing allowance is per entity and per direction, never per domain: a user
  * who lets the agent open the office door has not let it open the front door.

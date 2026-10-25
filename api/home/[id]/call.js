@@ -24,7 +24,7 @@
 // refused unlock is the single most important row in that table: it is the
 // evidence that the gate held.
 
-import { classifyCall, flattenEntities } from '@three-ws/home-bridge';
+import { classifyCall, entityIdsOfData, flattenEntities, hasSelectorTargets } from '@three-ws/home-bridge';
 
 import { requireCsrf } from '../../_lib/csrf.js';
 import { canAssertConfirmation, CONFIRMATION_REQUIRES_SESSION, outOfScopeEntities, resolveHomeAccess } from '../../_lib/home/access.js';
@@ -77,7 +77,7 @@ export default wrap(async (req, res) => {
 	const confirmed = body.confirmed === true;
 
 	const action = `${domain}.${service}`;
-	const targets = entityIdsOf(data);
+	const targets = entityIdsOfData(data);
 
 	// WHO may say yes, asked before WHICH ROLE may say yes.
 	//
@@ -187,6 +187,10 @@ export default wrap(async (req, res) => {
 				access.scope,
 				targets.map((id) => ({ entityId: id, areaId: areaOf.get(id) ?? null })),
 			);
+			// area_id, device_id, label_id and floor_id are expanded by Home Assistant
+			// into entities this check never sees, so a scoped member may only name
+			// entities, which are what the scope is written in.
+			if (hasSelectorTargets(data)) refused.push(...['area_id', 'device_id', 'label_id', 'floor_id'].filter((k) => data[k]));
 			if (refused.length) {
 				logHomeAction({
 					homeId: home.id, userId: caller.userId, actor: actorFor(caller), channel: 'websocket',
@@ -281,13 +285,6 @@ async function syncAllowList(bridge, homeId) {
 	const live = new Set(await listAllowedEntities(homeId).catch(() => []));
 	for (const existing of allowList.list()) if (!live.has(existing)) allowList.remove(existing);
 	for (const id of live) allowList.add(id);
-}
-
-/** entity_id is a string or an array of them; the log wants the array either way. */
-function entityIdsOf(data) {
-	const id = data?.entity_id;
-	if (Array.isArray(id)) return id.filter((v) => typeof v === 'string');
-	return typeof id === 'string' ? [id] : [];
 }
 
 /** A bearer caller is an agent principal; a cookie session is a person at a screen. */

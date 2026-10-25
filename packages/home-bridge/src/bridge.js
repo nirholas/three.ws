@@ -12,7 +12,7 @@ import {
 import { ERR, HomeBridgeError } from './errors.js';
 import { resolveIntent } from './intents.js';
 import { buildHomeGraph, domainOf } from './rooms.js';
-import { classifyCall, createAllowList } from './safety.js';
+import { classifyCallTargets, createAllowList } from './safety.js';
 import { normalizeBaseUrl } from './url.js';
 
 /**
@@ -379,15 +379,11 @@ export class HomeBridge {
 	 */
 	async call(domain, service, data = {}, options = {}) {
 		this.#assertConnected();
-		const entityId = firstEntityId(data);
-		const verdict = classifyCall({
-			domain,
-			service,
-			entityId,
-			attributes: entityId ? this.#states[entityId]?.attributes : undefined,
-		});
+		const verdict = classifyCallTargets({ domain, service, data, states: this.#states });
+		const entityId = verdict.entityIds[0] ?? firstEntityId(data);
 
-		if (verdict.guarded && !options.confirmed && !(entityId && this.allowList.has(entityId))) {
+		const allowed = !verdict.unresolved && verdict.entityIds.every((id) => this.allowList.has(id));
+		if (verdict.guarded && !options.confirmed && !allowed) {
 			const err = new HomeBridgeError(ERR.NEEDS_CONFIRMATION, verdict.reason);
 			err.pending = { domain, service, data, risk: verdict.risk, entityId };
 			throw err;

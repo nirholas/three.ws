@@ -8,6 +8,6 @@ export { ERR_CANNOT_CONNECT, ERR_INVALID_AUTH } from 'home-assistant-js-websocke
 export { MACROS, matchMacro, resolveIntent } from './intents.js';
 export { connectHomeMcp } from './mcp.js';
 export { buildHomeGraph, domainOf, flattenEntities, summarizeClimate, summarizeLighting, summarizeSecurity } from './rooms.js';
-export { classifyCall, classifyMcpCall, createAllowList, isSafetyAction, isSafetyMcpCall, resolveMcpTargets, GUARDED_COVER_CLASSES, GUARDED_DOMAINS } from './safety.js';
+export { classifyCall, classifyCallTargets, entityIdsOfData, hasSelectorTargets, classifyMcpCall, createAllowList, isSafetyAction, isSafetyMcpCall, resolveMcpTargets, GUARDED_COVER_CLASSES, GUARDED_DOMAINS } from './safety.js';
 export { createRelayTransport, relayCloseError, RELAY_PROTOCOL_VERSION } from './transport-relay.js';
 export { isPrivateHost, normalizeBaseUrl } from './url.js';
