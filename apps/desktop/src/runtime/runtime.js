@@ -10,7 +10,7 @@
 import { randomUUID } from 'node:crypto';
 import { canonicalJson, payloadHash, confirmationTable, confirmationText } from './hash.js';
 import { validateStrategyConfig, matchesEntry, shouldExit, effectivePriceImpactPct } from './strategy-schema.js';
-import { createPumpFeed } from './feed.js';
+import { createPumpFeed, cleanTokenLabel } from './feed.js';
 import { quoteBuy, quoteSell } from './curve.js';
 
 export const APPROVAL_TTL_MS = 15 * 60 * 1000;
@@ -309,7 +309,7 @@ export function createRuntime({ stateStore, keystore, log, feed = createPumpFeed
 	}
 
 	const buyRow = (agent, p, symbol) => ({
-		recipient: p.mint, recipient_label: symbol ? `$${symbol}` : null, amount: p.amount_sol, asset: 'SOL', chain: 'solana', network: agent.network, side: 'buy',
+		recipient: p.mint, recipient_label: cleanTokenLabel(symbol) ? `$${cleanTokenLabel(symbol)}` : null, amount: p.amount_sol, asset: 'SOL', chain: 'solana', network: agent.network, side: 'buy',
 	});
 
 	// ── scheduler ────────────────────────────────────────────────────────────

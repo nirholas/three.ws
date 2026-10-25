@@ -28,6 +28,8 @@ import crypto from 'node:crypto';
 
 const API_BASE = (process.env.WORLD_API_BASE || 'https://three.ws').replace(/\/$/, '');
 const SAVE_DEBOUNCE_MS = 4000;
+// owner_id the game server stamps on every world row it creates (api/_lib/world-store.js).
+const SERVICE_OWNER = 'service:world';
 const TOKEN_TTL_SEC = 120;
 
 function secret() {
@@ -155,7 +157,9 @@ class WorldPersistence {
 					'content-type': 'application/json',
 					authorization: `Bearer ${signServiceToken()}`,
 				},
-				body: JSON.stringify({ worldId, doc, ifMatch: ifMatch ?? null }),
+				// `owner` stamps a first save as service-owned, so no signed-in browser
+				// account can later claim or overwrite a game-server-managed world.
+				body: JSON.stringify({ worldId, doc, ifMatch: ifMatch ?? null, owner: SERVICE_OWNER }),
 			});
 			if (res.ok) {
 				const body = await res.json();

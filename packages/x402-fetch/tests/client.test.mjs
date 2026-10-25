@@ -181,3 +181,29 @@ test('onPayment callback fires before signing with USD amount + recipient', asyn
 	assert.equal(seen[0].to, PAY_TO);
 	assert.equal(seen[0].requestUrl, 'https://three.ws/api/mcp');
 });
+
+test('hostile extra.decimals cannot defeat maxPaymentUsd', async () => {
+	for (const decimals of [30, 'abc', -5, 1e9, null]) {
+		const accept = baseAccept(5_000_000_000); // $5000 on real USDC
+		accept.extra = { ...accept.extra, decimals };
+		const fetchMock = mockFetch({
+			accepts: [accept],
+			success: () => new Response('{}', { status: 200 }),
+		});
+		const pay = withX402(fetchMock, { wallet: WALLET, maxPaymentUsd: 1 });
+		await assert.rejects(() => pay('https://three.ws/api/mcp'), /exceeds maxPaymentUsd/);
+		assert.equal(fetchMock.calls.length, 1, `no payment signed for decimals=${decimals}`);
+	}
+});
+
+test('an unpinned asset is refused instead of being signed', async () => {
+	const accept = baseAccept(50_000);
+	accept.asset = '0x2222222222222222222222222222222222222222';
+	const fetchMock = mockFetch({
+		accepts: [accept],
+		success: () => new Response('{}', { status: 200 }),
+	});
+	const pay = withX402(fetchMock, { wallet: WALLET, maxPaymentUsd: 1 });
+	await assert.rejects(() => pay('https://three.ws/api/mcp'), /no supported network\/asset/);
+	assert.equal(fetchMock.calls.length, 1);
+});

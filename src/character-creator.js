@@ -16,6 +16,7 @@
 // loads pre-unlocked from /api/cosmetics/catalog. On save we persist the avatar +
 // equipped loadout via the shared hand-off (play-handoff) and jump into /play.
 
+import { isReadyPlayerMeOrigin } from './rpm-origin.js';
 import {
 	Scene, PerspectiveCamera, WebGLRenderer, Group,
 	HemisphereLight, DirectionalLight, Color, PMREMGenerator,
@@ -384,7 +385,7 @@ class CharacterCreator {
 		// RPM posts a JSON string event; the GLB URL arrives on v1.avatar.exported.
 		if (!this._rpmListener) {
 			this._rpmListener = (ev) => {
-				if (!/readyplayer\.me/.test(ev.origin)) return;
+				if (ev.source !== frame.contentWindow || !isReadyPlayerMeOrigin(ev.origin)) return;
 				let data = ev.data;
 				try { if (typeof data === 'string') data = JSON.parse(data); } catch { return; }
 				if (data?.source !== 'readyplayerme') return;
@@ -408,6 +409,10 @@ class CharacterCreator {
 	_closeRpm() {
 		const modal = $('cc-rpm-modal');
 		const frame = $('cc-rpm-frame');
+		if (this._rpmListener) {
+			window.removeEventListener('message', this._rpmListener);
+			this._rpmListener = null;
+		}
 		modal.classList.remove('open');
 		modal.hidden = true;
 		frame.src = 'about:blank';

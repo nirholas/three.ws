@@ -23,6 +23,14 @@
 import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto';
 
 /** Roles a token can carry. A socket gets exactly one. */
+/**
+ * How long a satellite's own hub token lasts. The hub keeps no revocation state,
+ * so this is also the window in which a revoked satellite can still rejoin its
+ * room. The satellite refreshes ahead of expiry (an API call that does check
+ * revocation), so a live one never notices a short lifetime.
+ */
+export const SATELLITE_TOKEN_TTL_SECONDS = 30 * 60;
+
 export const ROLE = Object.freeze({ SATELLITE: 'satellite', VIEWER: 'viewer' });
 
 const b64url = (buf) => Buffer.from(buf).toString('base64url');

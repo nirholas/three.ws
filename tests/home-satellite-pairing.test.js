@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import { generateCode, normalizeCode, CODE_TTL_MINUTES } from '../api/_lib/home/satellites.js';
 import { saveIdentity } from '../services/home-satellite/src/pairing.js';
-import { newSecret, verifyToken, ROLE } from '../services/home-satellite/src/token.js';
+import { newSecret, verifyToken, ROLE, SATELLITE_TOKEN_TTL_SECONDS } from '../services/home-satellite/src/token.js';
 import { PcmDownsampler, floatTo16kPcm } from '../src/voice/mic-capture.js';
 
 describe('pairing codes', () => {
@@ -182,5 +182,18 @@ describe('the token role', () => {
 		} finally {
 			await rm(dir, { recursive: true, force: true });
 		}
+	});
+});
+
+describe('satellite hub token lifetime', () => {
+	// The hub holds no revocation list, so a retired satellite keeps its room slot
+	// until its token expires. The lifetime is the revocation window: minutes, not a day.
+	it('is short enough that revoking a satellite takes effect within the hour', () => {
+		expect(SATELLITE_TOKEN_TTL_SECONDS).toBeLessThanOrEqual(30 * 60);
+	});
+
+	it('is long enough for the satellite to refresh ahead of expiry', () => {
+		// server.js refreshes HUB_TOKEN_LEAD_SECONDS (600) before exp, floor 60s.
+		expect(SATELLITE_TOKEN_TTL_SECONDS).toBeGreaterThan(600 + 60);
 	});
 });

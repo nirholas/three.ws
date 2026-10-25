@@ -1,7 +1,7 @@
 // The Crawl worker's network fence (workers/agent-crawler/guard.js): every
 // address a crawled page reaches is checked here before the browser connects.
-import { describe, expect, it } from 'vitest';
-import { guardHost, isBlockedAddress } from '../workers/agent-crawler/guard.js';
+import { afterEach, describe, expect, it } from 'vitest';
+import { guardHost, guardedFetch, isBlockedAddress } from '../workers/agent-crawler/guard.js';
 
 describe('isBlockedAddress', () => {
 	it.each([
@@ -25,5 +25,45 @@ describe('guardHost', () => {
 
 	it('allows a public literal', async () => {
 		expect(await guardHost('8.8.8.8')).toBe(true);
+	});
+});
+
+describe('guardedFetch redirects', () => {
+	const realFetch = globalThis.fetch;
+	afterEach(() => {
+		globalThis.fetch = realFetch;
+	});
+
+	it('refuses a redirect hop that lands on a private or metadata address', async () => {
+		const seen = [];
+		globalThis.fetch = async (u) => {
+			seen.push(String(u));
+			return new Response(null, { status: 302, headers: { location: 'http://169.254.169.254/latest/meta-data/' } });
+		};
+		await expect(guardedFetch('https://8.8.8.8/robots.txt')).rejects.toThrow(/refused private host/);
+		expect(seen).toEqual(['https://8.8.8.8/robots.txt']);
+	});
+
+	it('follows a redirect between public hosts', async () => {
+		const seen = [];
+		globalThis.fetch = async (u) => {
+			seen.push(String(u));
+			return seen.length === 1
+				? new Response(null, { status: 301, headers: { location: 'https://1.1.1.1/robots.txt' } })
+				: new Response('User-agent: *', { status: 200 });
+		};
+		const res = await guardedFetch('https://8.8.8.8/robots.txt');
+		expect(await res.text()).toBe('User-agent: *');
+		expect(seen).toEqual(['https://8.8.8.8/robots.txt', 'https://1.1.1.1/robots.txt']);
+	});
+
+	it('gives up after a bounded number of hops', async () => {
+		globalThis.fetch = async () => new Response(null, { status: 302, headers: { location: 'https://8.8.8.8/loop' } });
+		await expect(guardedFetch('https://8.8.8.8/loop')).rejects.toThrow(/too many redirects/);
+	});
+
+	it('refuses a non-http scheme in a redirect', async () => {
+		globalThis.fetch = async () => new Response(null, { status: 302, headers: { location: 'file:///etc/passwd' } });
+		await expect(guardedFetch('https://8.8.8.8/x')).rejects.toThrow();
 	});
 });

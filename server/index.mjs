@@ -44,6 +44,7 @@ import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
+import { setBounded, touchBounded } from './bounded-cache.mjs';
 import { runWithRequestContext } from '../api/_lib/request-context.js';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
@@ -155,6 +156,9 @@ async function proxyExternal(req, res, dest) {
 
 /** @type {Map<string, {file: string, params: Record<string, string>} | null>} */
 const routeCache = new Map();
+// Keyed by request path, misses included, so it is capped (LRU) rather than
+// letting unique junk paths grow it for the life of the instance.
+const ROUTE_CACHE_MAX = 5000;
 /** @type {Map<string, Promise<any>>} */
 const moduleCache = new Map();
 
@@ -183,12 +187,12 @@ async function dispatchApi(req, res, pathname, extraQuery) {
 		return false;
 
 	const cacheKey = segments.join('/');
-	let route = routeCache.get(cacheKey);
+	let route = touchBounded(routeCache, cacheKey);
 	if (route === undefined) {
 		route = resolveApi(API_ROOT, segments, {});
 		// Defense in depth: never route to a file that resolved outside API_ROOT.
 		if (route && !route.file.startsWith(API_ROOT + path.sep)) route = null;
-		routeCache.set(cacheKey, route);
+		setBounded(routeCache, cacheKey, route, ROUTE_CACHE_MAX);
 	}
 	if (!route) return false;
 

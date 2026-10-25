@@ -169,3 +169,30 @@ test('a real 402 challenge drives the modal to its price in a browser', async (t
 		await new Promise((resolve) => server.close(resolve));
 	}
 });
+
+// The X-PAYMENT-RESPONSE header is merchant-controlled. Its `transaction` field
+// reaches the receipt's innerHTML, so it must be validated as a transaction id
+// and escaped; a quote in it must never be able to break out of the href.
+test('the receipt tx row refuses and escapes a hostile transaction string', async () => {
+	const { receiptTxRowHtml, isTxId } = await import('../src/index.js');
+	const evil = 'x" onmouseover="alert(1)" data-x="';
+	assert.equal(isTxId(evil), false);
+	const explorer = `https://solscan.io/tx/${evil}`;
+	const html = receiptTxRowHtml(evil, explorer);
+	assert.ok(!html.includes('onmouseover="'), 'attribute breakout must not survive');
+	assert.ok(!html.includes('<a '), 'no link for an invalid transaction id');
+	assert.ok(!html.includes('"alert'), html);
+	const tag = receiptTxRowHtml('<img src=x onerror=alert(1)>', null);
+	assert.ok(!tag.includes('<img'), 'markup in the id must be escaped');
+});
+
+test('the receipt tx row links a well-formed Solana signature and EVM hash', async () => {
+	const { receiptTxRowHtml, isTxId } = await import('../src/index.js');
+	const sig = '5'.repeat(88);
+	const evmHash = `0x${'ab'.repeat(32)}`;
+	assert.ok(isTxId(sig));
+	assert.ok(isTxId(evmHash));
+	assert.match(receiptTxRowHtml(sig, `https://solscan.io/tx/${sig}`), /<a href="https:\/\/solscan\.io\/tx\/5{88}"/);
+	assert.match(receiptTxRowHtml(evmHash, `https://basescan.org/tx/${evmHash}`), /<a href="https:\/\/basescan\.org\/tx\/0x/);
+	assert.equal(receiptTxRowHtml('', null), '');
+});

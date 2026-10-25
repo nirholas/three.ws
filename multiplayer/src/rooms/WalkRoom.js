@@ -586,13 +586,14 @@ export class WalkRoom extends Room {
 		// instead of waiting on an HTTP round-trip. Non-blocking and fail-open.
 		warmEventDrop();
 
-		// The first client to land in this coin's instance seeds its identity.
+		// A coin world's identity (name, symbol, image) comes from the coin's own
+		// record, fetched in _resolveCoinCreator, never from the first client to
+		// land here: join options are unsigned, so trusting them would let that
+		// client mislabel a real mint's world for everyone in the room.
 		this.state.coin = cleanCoin(options?.coin);
-		this.state.coinName = clean(options?.coinName, 48);
-		this.state.coinSymbol = clean(options?.coinSymbol, 16);
-		this.state.coinImage = cleanAvatarUrl(options?.coinImage) || (
-			typeof options?.coinImage === 'string' && options.coinImage.startsWith('http')
-				? options.coinImage.slice(0, 1024) : '');
+		this.state.coinName = '';
+		this.state.coinSymbol = '';
+		this.state.coinImage = '';
 		// Tier identity. The Holders world records the USD floor it gated on (from
 		// the joining pass) so the client HUD can state the requirement; the General
 		// world leaves both blank/zero.
@@ -3253,6 +3254,7 @@ export class WalkRoom extends Room {
 				if (!res.ok) return;
 				body = await res.json();
 			} finally { clearTimeout(timer); }
+			this._applyCoinIdentity(body);
 			const creator = typeof body?.creator === 'string' ? body.creator.trim() : '';
 			if (!MINT_RE.test(creator)) return; // a creator is a base58 wallet, same shape as a mint
 			this.coinCreator = creator;
@@ -3260,6 +3262,18 @@ export class WalkRoom extends Room {
 		} catch (err) {
 			console.warn(`[walk_world ${this.roomId}] creator lookup failed:`, err?.message);
 		}
+	}
+
+	// Stamp the room's coin identity from the coin record (same field fallbacks the
+	// in-world client reads from the pump.fun body). Text is control-stripped and
+	// length-capped; the image must be an http(s) URL.
+	_applyCoinIdentity(coin) {
+		this.state.coinName = clean(coin?.name, 48);
+		this.state.coinSymbol = clean(coin?.symbol, 16);
+		const image = coin?.image_uri || coin?.image || coin?.imageUri;
+		this.state.coinImage =
+			cleanAvatarUrl(image) ||
+			(typeof image === 'string' && /^https?:\/\//.test(image) ? image.slice(0, 1024) : '');
 	}
 
 	_editOk(sessionId) {

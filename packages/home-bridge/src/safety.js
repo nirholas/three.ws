@@ -101,11 +101,84 @@ export function hasSelectorTargets(data) {
 	return SELECTOR_KEYS.some((k) => hasValue(data?.[k]));
 }
 
-/** Every entity id named in service data: a string, a comma list, or an array. */
+/**
+ * Every entity id named in service data: a string, a comma list, or an array.
+ *
+ * Lowercased and trimmed, because Home Assistant's own validator lowercases ids
+ * (and accepts "ALL" for "all"): the gate must read the id the way the house
+ * will, or a mixed-case spelling walks past every lookup keyed on the real one.
+ */
 export function entityIdsOfData(data) {
 	const raw = data?.entity_id;
 	const list = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(',') : [];
-	return list.filter((v) => typeof v === 'string').map((v) => v.trim()).filter(Boolean);
+	return list.filter((v) => typeof v === 'string').map((v) => v.trim().toLowerCase()).filter(Boolean);
+}
+
+/** Entity ids a scene.apply / scene.create call would set, from `data.entities`. */
+export function sceneEntityIdsOfData(data) {
+	const raw = data?.entities;
+	const keys = Array.isArray(raw) ? raw : raw && typeof raw === 'object' ? Object.keys(raw) : [];
+	return keys.filter((v) => typeof v === 'string').map((v) => v.trim().toLowerCase()).filter(Boolean);
+}
+
+/**
+ * The service data exactly as the gate read it: entity_id lowercased, trimmed
+ * and split into an array. This is what must be forwarded, so the house acts on
+ * the ids that were classified and not on a different spelling of them.
+ */
+export function normalizeServiceData(data) {
+	if (!data || typeof data !== 'object' || data.entity_id === undefined) return data ?? {};
+	const raw = data.entity_id;
+	if (typeof raw !== 'string' && !Array.isArray(raw)) return data;
+	return { ...data, entity_id: entityIdsOfData(data) };
+}
+
+const NOT_GUARDED = Object.freeze({ guarded: false, risk: null, reason: '' });
+
+/** Would running something that touches this entity reach a lock, valve, alarm or building opening? */
+function reachesGuardedEntity(entityId, states) {
+	const domain = String(entityId).split('.')[0];
+	if (domain === 'lock' || domain === 'valve' || domain === 'alarm_control_panel') return true;
+	if (domain === 'cover') {
+		const state = states[entityId];
+		// No state record means we cannot see its device_class: fail closed.
+		return !state || GUARDED_COVER_CLASSES.has(String(state.attributes?.device_class || '').toLowerCase());
+	}
+	return false;
+}
+
+/** Services on scene/script/automation that run owner-authored content we cannot read. */
+function macroVerdict({ domain, service, ids, states, data }) {
+	const reason = (label) => `Running ${label} can unlock, open or disarm things it does not name.`;
+	const guard = (entityIds, label) => ({
+		guarded: true,
+		risk: 'physical',
+		reason: reason(label),
+		entityIds,
+		unresolved: false,
+	});
+	if (domain === 'scene') {
+		if (service === 'apply' || service === 'create') {
+			const hit = sceneEntityIdsOfData(data).filter((id) => reachesGuardedEntity(id, states));
+			return hit.length ? guard([], `a scene that sets ${hit.join(', ')}`) : null;
+		}
+		if (service !== 'turn_on') return null;
+		const hit = ids.filter((id) => {
+			const members = states[id]?.attributes?.entity_id;
+			if (!states[id]) return true;
+			return (Array.isArray(members) ? members : []).some((m) => typeof m === 'string' && reachesGuardedEntity(m.toLowerCase(), states));
+		});
+		return hit.length ? guard(hit, hit.join(', ')) : null;
+	}
+	if (domain === 'script') {
+		if (service === 'turn_off' || service === 'reload') return null;
+		const named = service === 'turn_on' || service === 'toggle' ? ids : [`script.${service}`];
+		return named.length ? guard(named, named.join(', ')) : guard([], 'a script');
+	}
+	if (domain === 'automation' && service === 'trigger') {
+		return ids.length ? guard(ids, ids.join(', ')) : guard([], 'an automation');
+	}
+	return null;
 }
 
 /**
@@ -113,33 +186,44 @@ export function entityIdsOfData(data) {
  *
  * Home Assistant expands entity lists, "all", and area/device/label/floor
  * selectors itself, so the gate must look at every target it can see and treat
- * a selector it cannot resolve as the riskiest thing it could expand to.
+ * a selector it cannot resolve as the riskiest thing it could expand to. A
+ * selector is judged even when guarded entities are also named: a standing
+ * allowance for one door must not stretch to every lock in the area.
  *
  * @returns {{ guarded: boolean, risk: ('security'|'physical'|null), reason: string, entityIds: string[], unresolved: boolean }}
  *   entityIds are the guarded entities that need a standing allowance;
  *   unresolved means a selector hides targets, so no allowance can cover it.
  */
 export function classifyCallTargets({ domain, service, data = {}, states = {} } = {}) {
+	const d = String(domain || '').trim().toLowerCase();
+	const s = String(service || '').trim().toLowerCase();
 	const ids = entityIdsOfData(data);
+
+	const macro = macroVerdict({ domain: d, service: s, ids, states, data });
+	if (macro) return macro;
+
 	let first = null;
 	const guardedIds = [];
 	for (const entityId of ids) {
-		const v = classifyCall({ domain, service, entityId, attributes: states[entityId]?.attributes });
+		if (entityId === 'all' || entityId === 'none') continue;
+		const known = states[entityId];
+		// A cover we have no state for has no visible device_class. Opening it is
+		// judged as the worst thing it could be rather than waved through.
+		const attributes = known ? known.attributes : d === 'cover' ? { device_class: 'garage' } : undefined;
+		const v = classifyCall({ domain: d, service: s, entityId, attributes });
 		if (v.guarded) {
 			guardedIds.push(entityId);
 			first ??= v;
 		}
 	}
-	if (first) return { ...first, entityIds: guardedIds, unresolved: false };
 
 	const selectors = hasSelectorTargets(data) || ids.includes('all');
-	if (selectors) {
-		const worst = ['lock', 'valve', 'alarm_control_panel', 'cover'].includes(String(domain).toLowerCase())
-			? classifyCall({ domain, service, entityId: undefined, attributes: { device_class: 'garage' } })
-			: { guarded: false, risk: null, reason: '' };
-		if (worst.guarded) return { ...worst, entityIds: [], unresolved: true };
+	if (selectors && ['lock', 'valve', 'alarm_control_panel', 'cover'].includes(d)) {
+		const worst = classifyCall({ domain: d, service: s, entityId: undefined, attributes: { device_class: 'garage' } });
+		if (worst.guarded) return { ...worst, entityIds: guardedIds, unresolved: true };
 	}
-	return { guarded: false, risk: null, reason: '', entityIds: [], unresolved: false };
+	if (first) return { ...first, entityIds: guardedIds, unresolved: false };
+	return { ...NOT_GUARDED, entityIds: [], unresolved: false };
 }
 
 /**

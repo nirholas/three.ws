@@ -9,10 +9,11 @@ import {
 	subscribeEntities,
 } from 'home-assistant-js-websocket';
 
+import { isDeniedService } from './denylist.js';
 import { ERR, HomeBridgeError } from './errors.js';
 import { resolveIntent } from './intents.js';
 import { buildHomeGraph, domainOf } from './rooms.js';
-import { classifyCallTargets, createAllowList } from './safety.js';
+import { classifyCallTargets, createAllowList, normalizeServiceData } from './safety.js';
 import { normalizeBaseUrl } from './url.js';
 
 /**
@@ -379,10 +380,20 @@ export class HomeBridge {
 	 */
 	async call(domain, service, data = {}, options = {}) {
 		this.#assertConnected();
+		domain = String(domain || '').trim().toLowerCase();
+		service = String(service || '').trim().toLowerCase();
+		// Host administration is refused here, for every transport and caller, and
+		// a confirmation does not lift it.
+		if (isDeniedService(domain, service)) {
+			throw new HomeBridgeError(ERR.SERVICE_DENIED, `${domain}.${service} administers the Home Assistant install and is not available.`);
+		}
+		// Classify and forward the SAME data: ids as the house will read them.
+		data = normalizeServiceData(data);
 		const verdict = classifyCallTargets({ domain, service, data, states: this.#states });
 		const entityId = verdict.entityIds[0] ?? firstEntityId(data);
 
-		const allowed = !verdict.unresolved && verdict.entityIds.every((id) => this.allowList.has(id));
+		// An empty list is nothing to allow-list, not everything allowed.
+		const allowed = !verdict.unresolved && verdict.entityIds.length > 0 && verdict.entityIds.every((id) => this.allowList.has(id));
 		if (verdict.guarded && !options.confirmed && !allowed) {
 			const err = new HomeBridgeError(ERR.NEEDS_CONFIRMATION, verdict.reason);
 			err.pending = { domain, service, data, risk: verdict.risk, entityId };

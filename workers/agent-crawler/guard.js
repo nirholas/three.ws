@@ -55,13 +55,26 @@ export async function guardHost(hostname) {
 }
 
 // fetch() for the crawler's own side requests (robots.txt, search reseeds),
-// with the same host fence and a hard timeout.
+// with the same host fence and a hard timeout. Redirects are followed by hand so
+// every hop's host passes guardHost before we connect to it; following them
+// natively would only have checked the first URL.
+const MAX_REDIRECTS = 5;
+
 export async function guardedFetch(url, { timeoutMs = 8000, headers = {} } = {}) {
-	const u = new URL(url);
-	if (!(await guardHost(u.hostname))) throw new Error(`refused private host ${u.hostname}`);
-	return fetch(u, {
-		headers: { 'user-agent': USER_AGENT, accept: '*/*', ...headers },
-		redirect: 'follow',
-		signal: AbortSignal.timeout(timeoutMs),
-	});
+	const signal = AbortSignal.timeout(timeoutMs);
+	let u = new URL(url);
+	for (let hops = 0; ; hops++) {
+		if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error(`refused scheme ${u.protocol}`);
+		if (!(await guardHost(u.hostname))) throw new Error(`refused private host ${u.hostname}`);
+		const res = await fetch(u, {
+			headers: { 'user-agent': USER_AGENT, accept: '*/*', ...headers },
+			redirect: 'manual',
+			signal,
+		});
+		const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+		if (!location) return res;
+		await res.body?.cancel().catch(() => {});
+		if (hops >= MAX_REDIRECTS) throw new Error('too many redirects');
+		u = new URL(location, u);
+	}
 }

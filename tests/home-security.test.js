@@ -1501,3 +1501,28 @@ function haSocket() {
 		ws.addEventListener('error', reject);
 	});
 }
+
+describe('service denylist is shared between the relay and the direct path', () => {
+	it('the bridge and the relay protocol deny exactly the same services', async () => {
+		const bridgeLists = await import('../packages/home-bridge/src/denylist.js');
+		const relay = await import('../services/home-relay/src/protocol.js');
+		expect([...bridgeLists.DENIED_SERVICE_DOMAINS]).toEqual([...relay.DENIED_SERVICE_DOMAINS]);
+		expect([...bridgeLists.DENIED_SERVICES]).toEqual([...relay.DENIED_SERVICES]);
+		expect(bridgeLists.isDeniedService('Shell_Command', 'x')).toBe(true);
+		expect(bridgeLists.isDeniedService('homeassistant', 'RESTART')).toBe(true);
+		expect(bridgeLists.isDeniedService('light', 'turn_on')).toBe(false);
+	});
+});
+
+describe('scoped members may only make target-based calls on named entities', () => {
+	it('refuses macro, admin and unknown domains and calls with no entity target', async () => {
+		const { scopedCallRefusal } = await import('../api/_lib/home/members.js');
+		expect(scopedCallRefusal('scene', ['lock.front_door'])).toBeTruthy();
+		for (const domain of ['script', 'automation', 'homeassistant', 'notify', 'rest_command', 'made_up']) {
+			expect(scopedCallRefusal(domain, ['light.kitchen'])).toBeTruthy();
+		}
+		expect(scopedCallRefusal('light', [])).toBeTruthy();
+		expect(scopedCallRefusal('light', ['light.kitchen'])).toBeNull();
+		expect(scopedCallRefusal('lock', ['lock.front_door'])).toBeNull();
+	});
+});

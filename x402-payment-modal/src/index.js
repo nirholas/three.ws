@@ -248,6 +248,28 @@ function explorerUrl(net, tx) {
 	return meta ? `${meta.explorer}${tx}` : null;
 }
 
+// ─────────────────────────────────────────────── receipt tx row ──────────
+// The settlement response (X-PAYMENT-RESPONSE) is supplied by the merchant, so
+// the transaction id is untrusted: it is validated against the two id shapes the
+// modal can pay on and HTML-escaped before it goes anywhere near innerHTML.
+// Solana signature (base58, 64 bytes encodes to 85-90 chars) or EVM tx hash.
+const SOLANA_SIG = /^[1-9A-HJ-NP-Za-km-z]{64,100}$/;
+const EVM_HASH = /^0x[0-9a-fA-F]{64}$/;
+
+export function isTxId(tx) {
+	return typeof tx === 'string' && (SOLANA_SIG.test(tx) || EVM_HASH.test(tx));
+}
+
+export function receiptTxRowHtml(transaction, explorer) {
+	if (typeof transaction !== 'string' || !transaction) return '';
+	const short = transaction.length > 14 ? `${transaction.slice(0, 8)}…${transaction.slice(-6)}` : transaction;
+	const linkable = isTxId(transaction) && typeof explorer === 'string' && /^https:\/\//.test(explorer);
+	const value = linkable
+		? `<a href="${escapeHtml(explorer)}" target="_blank" rel="noopener">${escapeHtml(short)} ↗</a>`
+		: escapeHtml(short);
+	return `<div class="x402-receipt-row"><span class="x402-k">tx</span><span class="x402-v">${value}</span></div>`;
+}
+
 function formatAmount(rawAtomics, decimals = 6) {
 	const n = Number(rawAtomics) / 10 ** decimals;
 	if (n < 0.01) return n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
@@ -1391,8 +1413,7 @@ class CheckoutModal {
 				</div>
 			`;
 		} else {
-			const explorer = explorerUrl(payment?.network, payment?.transaction);
-			const txShort = payment?.transaction ? `${payment.transaction.slice(0, 8)}…${payment.transaction.slice(-6)}` : '—';
+			const explorer = isTxId(payment?.transaction) ? explorerUrl(payment?.network, payment.transaction) : null;
 			receiptHtml = `
 				<div class="x402-receipt">
 					<div class="x402-receipt-check">${ICONS.check}</div>
@@ -1405,13 +1426,7 @@ class CheckoutModal {
 						<span class="x402-k">payer</span>
 						<span class="x402-v">${escapeHtml(payment?.payer ? `${payment.payer.slice(0, 8)}…${payment.payer.slice(-6)}` : '—')}</span>
 					</div>
-					${
-						payment?.transaction
-							? `<div class="x402-receipt-row"><span class="x402-k">tx</span><span class="x402-v">${
-									explorer ? `<a href="${explorer}" target="_blank" rel="noopener">${txShort} ↗</a>` : txShort
-								}</span></div>`
-							: ''
-					}
+					${receiptTxRowHtml(payment?.transaction, explorer)}
 				</div>
 			`;
 		}

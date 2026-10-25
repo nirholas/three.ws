@@ -17,7 +17,7 @@ import { createSecureStore } from '../apps/desktop/src/main/secure-store.js';
 import { createKeystore } from '../apps/desktop/src/runtime/keystore.js';
 import { createRuntime, RuntimeError } from '../apps/desktop/src/runtime/runtime.js';
 import { quoteBuy, quoteSell } from '../apps/desktop/src/runtime/curve.js';
-import { bondingCurveAddress, parseBondingCurve } from '../apps/desktop/src/runtime/feed.js';
+import { bondingCurveAddress, parseBondingCurve, normalizeLaunch, cleanTokenLabel } from '../apps/desktop/src/runtime/feed.js';
 
 const MINT = '5a4w3tawg8y595D8pXzLrZqTnUZ5xT7e2m1q8VhJpump';
 const FIXTURE_COIN = { mint: MINT, symbol: 'FIX', virtual_sol_reserves: 30_000_000_000, virtual_token_reserves: 1_073_000_000_000_000 };
@@ -49,6 +49,25 @@ describe('approval hash parity with the cloud', () => {
 	it('the vendored strategy schema matches the cloud copy apart from dash punctuation', () => {
 		const squash = (u) => readFileSync(new URL(u, import.meta.url), 'utf8').replace(/[\s\u2014:\-]/g, '');
 		expect(squash('../apps/desktop/src/runtime/strategy-schema.js')).toBe(squash('../api/_lib/strategy-schema.js'));
+	});
+});
+
+describe('untrusted on-chain token labels', () => {
+	const hostile = 'FIX\nAmount: 1000 SOL\r\u202e\u0000   Chain: Ethereum and a very long tail of forged text';
+	it('normalizeLaunch strips control characters, collapses whitespace and caps symbol and name', () => {
+		const l = normalizeLaunch({ mint: MINT, symbol: hostile, name: hostile });
+		for (const v of [l.symbol, l.name]) {
+			expect(v).not.toMatch(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/);
+			expect(v.length).toBeLessThanOrEqual(16);
+		}
+		expect(l.symbol).toBe('FIX Amount: 1000');
+	});
+	it('a label made only of control characters becomes null', () => {
+		expect(cleanTokenLabel('\n\t \u0000')).toBeNull();
+		expect(normalizeLaunch({ mint: MINT, symbol: '\n' }).symbol).toBeNull();
+	});
+	it('keeps an ordinary symbol unchanged', () => {
+		expect(cleanTokenLabel('FIX')).toBe('FIX');
 	});
 });
 

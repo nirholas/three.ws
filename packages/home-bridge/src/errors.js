@@ -22,6 +22,8 @@ export const ERR = {
 	CALL_FAILED: 'call_failed',
 	/** A guarded entity was targeted without an explicit confirmation. */
 	NEEDS_CONFIRMATION: 'needs_confirmation',
+	/** The service administers the Home Assistant install itself and is never callable. */
+	SERVICE_DENIED: 'service_denied',
 	/** The `mcp_server` integration is not enabled on this instance. */
 	NO_MCP: 'no_mcp',
 	/** A method was used before connect(), or after close(). */

@@ -44,12 +44,28 @@ async function getJson(fetchImpl, url, ms = 8000) {
 	}
 }
 
+/**
+ * Token symbols and names are attacker-chosen on-chain text. Strip control and
+ * bidi characters, collapse whitespace and cap the length so they cannot forge
+ * extra lines or rows in the approval dialog.
+ */
+export function cleanTokenLabel(v, max = 16) {
+	if (v == null) return null;
+	const out = String(v)
+		.replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, ' ')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.slice(0, max)
+		.trim();
+	return out || null;
+}
+
 export function normalizeLaunch(c, solUsd = 0) {
 	if (!c?.mint) return null;
 	const real = Number(c.real_sol_reserves);
 	const virt = Number(c.virtual_sol_reserves);
 	return {
-		mint: c.mint, name: c.name || null, symbol: c.symbol || null,
+		mint: c.mint, name: cleanTokenLabel(c.name), symbol: cleanTokenLabel(c.symbol),
 		created_at: c.created_timestamp ? Number(c.created_timestamp) : null,
 		market_cap_usd: typeof c.usd_market_cap === 'number' ? c.usd_market_cap : typeof c.market_cap === 'number' && solUsd > 0 ? c.market_cap * solUsd : null,
 		liquidity_sol: real > 0 ? real / 1e9 : virt > 0 ? virt / 1e9 : null,
