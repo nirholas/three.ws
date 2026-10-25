@@ -1972,3 +1972,7 @@ Migration `20261024193900_fix_account_link_codes_collision.sql` was applied to p
 ## 2026-10-25 order 457 closed (callouts LKG env var collision)
 
 `api/_lib/pump-callouts.js` now reads its own `PUMP_CALLOUTS_LKG_TTL_S` (default 1800) instead of sharing `PUMP_BONDING_LKG_TTL_S` with `pump-bonding.js`. Two new cases in `tests/social-sentiment-endpoints.test.js` prove the knobs are independent (both failed before the fix).
+
+## 2026-10-25 order 451 closed (nvidia expiry resubmit durability)
+
+Diagnostic test passed unmodified, so branch A: the same-lane resubmit logic is correct and the defect was durability and observability. `api/cron/forge-finalize.js` now writes an `nvcf:resub-inflight:` marker before the NVCF submission (defers a duplicate paid submit while fresh) and routes a failed resubmit through `sendOpsAlert`. Three cases added to `tests/forge-finalize.test.js` (fix commit d269cc4ef). The live lost_task backlog drain is pending a deploy.
