@@ -1447,3 +1447,7 @@ Step 0: registry returns 80 entries under io.github.nirholas, 55 with a local ma
 ## 2026-10-25: order 539 (integrate 40), re-checked, still partial
 
 Code was already shipped (`api/_lib/coin/holder-signals.js`, `api/pump/token-stats.js`, oracle features in `api/_lib/oracle/fit.js` and `conviction.js`, Launch tx and Gini cells in `src/launch-detail.js`, changelog entry). `tests/coin-holder-signals.test.js` plus `tests/pump-token-stats.test.js` pass (24 tests). A live `readLaunchVersion` call for the $THREE mint returned `is_v1: true`. Remaining: the `curl` against `/api/pump/token-stats` and the browser check of the Launch detail stats both need a dev server, which this session was not permitted to start. Order file left in place.
+
+## 2026-10-25: order 544 (integrate 45, chains turnover), re-checked, still partial
+
+Code shipped in bb7445ef2 and the changelog entry is in `data/changelog.json`. `tests/defi-chains.test.js` 5/5 pass. Production `/api/defi/chains` already returns `dex_volume_24h` and `turnover` (Ethereum 0.0187). Remaining: the three-width browser check of the Turnover column (375, 768, 1280) needs a dev server, which this session was not permitted to start. Order file left in place.
