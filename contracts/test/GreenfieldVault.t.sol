@@ -686,4 +686,70 @@ contract GreenfieldVaultTest is Test {
         assertFalse(attacker.reentryOk());
         assertEq(bytes4(attacker.reentryReturnData()), ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
     }
+
+    // ── resource-bound listings ──────────────────────────────────────────
+
+    /// protobuf `greenfield.permission.Policy` for (principal, object resource id),
+    /// byte-for-byte what api/_lib/bnb/vault-policy-data.js emits for a lowercase buyer.
+    function _expectedPolicy(address who, string memory resourceId) internal pure returns (bytes memory) {
+        bytes memory hexChars = "0123456789abcdef";
+        bytes memory addr = new bytes(42);
+        addr[0] = "0";
+        addr[1] = "x";
+        uint160 v = uint160(who);
+        for (uint256 i = 0; i < 20; i++) {
+            uint8 b = uint8(v >> (8 * (19 - i)));
+            addr[2 + 2 * i] = hexChars[b >> 4];
+            addr[3 + 2 * i] = hexChars[b & 0x0f];
+        }
+        return abi.encodePacked(
+            hex"0a0130122e0801122a", addr, hex"180222", uint8(bytes(resourceId).length), resourceId, hex"2a050801120106"
+        );
+    }
+
+    function _listBound(address _seller, bytes32 objectId, string memory resourceId) internal {
+        _grantRole(_seller);
+        vm.prank(_seller);
+        vault.listBound(objectId, PRICE, _seller, resourceId);
+    }
+
+    function testBoundListingAcceptsOnlyThePolicyForItsResourceAndTheBuyer() public {
+        _listBound(seller, OBJECT_ID, "12345");
+        vm.prank(buyer);
+        uint256 saleId = vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, _expectedPolicy(buyer, "12345"));
+        assertEq(saleId, 1);
+    }
+
+    function testBoundListingRejectsPolicyForAnotherResource() public {
+        _listBound(seller, OBJECT_ID, "12345");
+        bytes memory other = _expectedPolicy(buyer, "99999");
+        vm.prank(buyer);
+        vm.expectRevert(GreenfieldVault.PolicyDataMismatch.selector);
+        vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, other);
+    }
+
+    function testBoundListingRejectsPolicyNamingAnotherPrincipal() public {
+        _listBound(seller, OBJECT_ID, "12345");
+        bytes memory forOther = _expectedPolicy(buyer2, "12345");
+        vm.prank(buyer);
+        vm.expectRevert(GreenfieldVault.PolicyDataMismatch.selector);
+        vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, forOther);
+    }
+
+    function testListBoundRejectsEmptyOrOversizedResourceId() public {
+        _grantRole(seller);
+        vm.startPrank(seller);
+        vm.expectRevert(GreenfieldVault.BadResourceId.selector);
+        vault.listBound(OBJECT_ID, PRICE, seller, "");
+        vm.expectRevert(GreenfieldVault.BadResourceId.selector);
+        vault.listBound(OBJECT_ID, PRICE, seller, "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
+        vm.stopPrank();
+    }
+
+    function testPlainRelistClearsAStaleResourceBinding() public {
+        _listBound(seller, OBJECT_ID, "12345");
+        vm.prank(seller);
+        vault.list(OBJECT_ID, PRICE, seller);
+        assertEq(bytes(vault.listingResourceId(OBJECT_ID)).length, 0);
+    }
 }

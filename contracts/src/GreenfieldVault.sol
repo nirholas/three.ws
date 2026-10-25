@@ -104,6 +104,9 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
     mapping(bytes32 => mapping(address => uint256)) public saleIdOf;
     /// @dev Pull-payment balances: sellers on a confirmed grant, buyers on a failed one.
     mapping(address => uint256) public pendingWithdrawals;
+    /// @dev objectId => the Greenfield resource id (decimal string) a bound
+    ///      listing grants access to. Empty for a plain `list()` listing.
+    mapping(bytes32 => string) public listingResourceId;
     uint256 public nextSaleId = 1;
 
     /*----------------- events -----------------*/
@@ -135,6 +138,8 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
     error BadChannel();
     error NothingToWithdraw();
     error PolicyRequestRejected();
+    error BadResourceId();
+    error PolicyDataMismatch();
 
     constructor(address _permissionHub, address _crossChain, address _objectAccessControl) {
         if (_permissionHub == address(0) || _crossChain == address(0) || _objectAccessControl == address(0)) {
@@ -160,6 +165,26 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
      *      actually encodes the Greenfield-side resource/principal/statement.
      */
     function list(bytes32 objectId, uint256 price, address seller) external {
+        _list(objectId, price, seller);
+        delete listingResourceId[objectId];
+    }
+
+    /**
+     * @notice `list()` plus a binding to the Greenfield resource this listing
+     *         sells. `buy()` then accepts only the exact `Policy` payload that
+     *         grants `msg.sender` read access to `resourceId`, instead of
+     *         forwarding caller-chosen bytes to the PermissionHub.
+     * @param resourceId The object's Greenfield resource id as a decimal string
+     *        (1 to 78 ASCII bytes), as returned by the object's on-chain metadata.
+     */
+    function listBound(bytes32 objectId, uint256 price, address seller, string calldata resourceId) external {
+        uint256 len = bytes(resourceId).length;
+        if (len == 0 || len > 78) revert BadResourceId();
+        _list(objectId, price, seller);
+        listingResourceId[objectId] = resourceId;
+    }
+
+    function _list(bytes32 objectId, uint256 price, address seller) internal {
         if (objectId == bytes32(0)) revert BadObjectId();
         if (price == 0) revert BadPrice();
         if (seller == address(0)) revert ZeroAddress();
@@ -205,6 +230,12 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
         Listing storage listing = listings[objectId];
         if (!listing.active) revert NotListed();
         if (policyData.length == 0) revert EmptyPolicyData();
+        string storage boundResource = listingResourceId[objectId];
+        if (bytes(boundResource).length != 0) {
+            if (keccak256(policyData) != keccak256(_expectedPolicy(msg.sender, boundResource))) {
+                revert PolicyDataMismatch();
+            }
+        }
         if (saleIdOf[objectId][msg.sender] != 0) revert AlreadyPurchased();
         if (!objectAccessControl.hasRole(ROLE_CREATE, listing.seller, address(this))) {
             revert NotAuthorizedByObjectOwner();
@@ -340,6 +371,27 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
     }
 
     /*----------------- views -----------------*/
+
+    /// @dev Canonical protobuf `greenfield.permission.Policy` granting `who`
+    ///      ACTION_GET_OBJECT on object resource `resourceId`, matching
+    ///      api/_lib/bnb/vault-policy-data.js with a lowercase 0x principal:
+    ///      id "0", principal{GNFD_ACCOUNT, value}, resource type OBJECT,
+    ///      resource id, one ALLOW statement with action GET_OBJECT.
+    function _expectedPolicy(address who, string memory resourceId) internal pure returns (bytes memory) {
+        bytes16 hexChars = "0123456789abcdef";
+        bytes memory addr = new bytes(42);
+        addr[0] = "0";
+        addr[1] = "x";
+        uint160 v = uint160(who);
+        for (uint256 i = 0; i < 20; i++) {
+            uint8 b = uint8(v >> (8 * (19 - i)));
+            addr[2 + 2 * i] = hexChars[b >> 4];
+            addr[3 + 2 * i] = hexChars[b & 0x0f];
+        }
+        return abi.encodePacked(
+            hex"0a0130122e0801122a", addr, hex"180222", uint8(bytes(resourceId).length), resourceId, hex"2a050801120106"
+        );
+    }
 
     /// @notice Live quote of the BNB a caller must add to `price` for `buy()`,
     ///         or send outright for `revoke()`. Never hardcoded — always the
