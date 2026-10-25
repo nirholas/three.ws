@@ -50,17 +50,22 @@ async function readManifest({ key, field }) {
 	try {
 		const buf = await getPublicObjectBuffer(key);
 		const parsed = JSON.parse(buf.toString('utf8'));
-		return { rows: asArray(parsed, field), generatedAt: parsed?.generated_at || null };
+		return {
+			rows: asArray(parsed, field),
+			generatedAt: parsed?.generated_at || null,
+			degraded: false,
+		};
 	} catch (err) {
 		// A manifest that was never published is the expected steady state for the
-		// generated catalog, so it degrades to empty. Anything else is logged and
-		// also degrades: a catalog missing one kind is far more useful to the
-		// caller than a hard failure that hides the other two.
+		// generated catalog, so it degrades to empty and is NOT flagged. Anything
+		// else is logged, still degrades to empty (a catalog missing one kind is
+		// far more useful than a hard failure that hides the other two), and is
+		// signalled with `degraded: true` so callers can tell "nothing published"
+		// from "storage is down" and refuse to cache the partial answer.
 		const code = err?.$metadata?.httpStatusCode;
-		if (err?.name !== 'NoSuchKey' && code !== 404) {
-			console.error('[asset-catalog]', key, err?.message || err);
-		}
-		return { rows: [], generatedAt: null };
+		const degraded = err?.name !== 'NoSuchKey' && code !== 404;
+		if (degraded) console.error('[asset-catalog]', key, err?.message || err);
+		return { rows: [], generatedAt: null, degraded };
 	}
 }
 
@@ -167,7 +172,9 @@ export async function getCatalog({ force = false } = {}) {
 	if (INFLIGHT) return INFLIGHT;
 	INFLIGHT = loadCatalog()
 		.then((value) => {
-			CACHE = { at: Date.now(), value };
+			// A degraded load is served once but never memoized, so the next call
+			// retries storage instead of repeating a partial catalog for the TTL.
+			if (!value.degraded) CACHE = { at: Date.now(), value };
 			return value;
 		})
 		.finally(() => {

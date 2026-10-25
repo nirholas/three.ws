@@ -1964,3 +1964,7 @@ Left: nothing for this order's own scope. `prompts/finish/442-auto-bonding-lkg-t
 ## 2026-10-25 order 433 closed (account_link_codes collision)
 
 Migration `20261024193900_fix_account_link_codes_collision.sql` was applied to production and deployed (`1ad300d5b`). Verified live: `account_link_codes` has the device-linking columns (status, device_kind, claim_secret_hash, ...), `account_link_codes_agents_v1_legacy` exists with 0 preserved rows, `db:status` reports all applied, and `tests/account-link.test.js` plus `tests/account-link-codes-schema.test.js` pass 36/36. Owner-actions row 72 removed. Order file deleted in the closing commit.
+
+## 2026-10-25 order 447 closed (catalog R2 outage silent zero)
+
+`/api/catalog` and the MCP catalog tools now report `degraded: true` when a manifest read fails for anything other than NoSuchKey/404, answer `Cache-Control: no-store` in that case, and never memoize a degraded load (the next call retries storage). Tests and `api/catalog.js` landed in `279c955ce`; the `api/_lib/asset-catalog.js` read-path and memo fix in the closing commit. Red run before the fix: 3 new endpoint tests failed (no `degraded` field, unconditional `s-maxage=300`). Verified: `tests/api/catalog-endpoint.test.js` plus `tests/api/mcp-asset-catalog.test.js` pass 39/39 and `check:rules` is clean. `getCatalogItem` needs no signal: a degraded catalog makes an id a 404, which is correct. Follow-up idea: a body-level flag on `/api/objects/library` and `/api/avatars/library` for symmetry. Order file deleted in the closing commit.
