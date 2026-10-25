@@ -2552,7 +2552,13 @@ export function clientIp(req) {
 		if (hops.length) {
 			// Clamp: a shorter-than-expected chain (direct hit, or a stripped header)
 			// must degrade to the leftmost real entry, never to a negative index.
-			const ip = hops[Math.max(0, hops.length - 1 - TRUSTED_PROXY_HOPS)];
+			// The *.run.app URL bypasses the load balancer: Cloud Run appends only the
+			// real client, so no trailing hop may be skipped there. The Host header on
+			// that URL is fixed by Google's routing; a caller who sends it through the
+			// LB only collapses their own key onto the LB address.
+			const host = String(req.headers?.host ?? '').split(':')[0].toLowerCase();
+			const skip = host.endsWith('.run.app') ? 0 : TRUSTED_PROXY_HOPS;
+			const ip = hops[Math.max(0, hops.length - 1 - skip)];
 			if (ip) return ip;
 		}
 	}

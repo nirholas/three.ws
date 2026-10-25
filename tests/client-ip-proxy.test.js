@@ -114,3 +114,25 @@ describe('clientIp without any proxy header', () => {
 		expect(clientIp(req({ 'x-vercel-forwarded-for': SPOOF, 'x-forwarded-for': `${REAL_CLIENT}, ${LB}` }))).toBe(REAL_CLIENT);
 	});
 });
+
+describe('clientIp on the direct Cloud Run URL (no load balancer)', () => {
+	const RUN_HOST = 'three-ws-api-lp642k3kpa-uc.a.run.app';
+
+	it('uses the entry Cloud Run appended, not a caller-forged one', async () => {
+		const clientIp = await loadWithHops(undefined);
+		const forged = `${SPOOF}, ${REAL_CLIENT}`;
+		expect(clientIp(req({ host: RUN_HOST, 'x-forwarded-for': forged }))).toBe(REAL_CLIENT);
+	});
+
+	it('a rotating forged header cannot mint fresh buckets on the run.app host', async () => {
+		const clientIp = await loadWithHops(undefined);
+		const a = clientIp(req({ host: RUN_HOST, 'x-forwarded-for': `1.1.1.1, ${REAL_CLIENT}` }));
+		const b = clientIp(req({ host: RUN_HOST, 'x-forwarded-for': `2.2.2.2, ${REAL_CLIENT}` }));
+		expect(a).toBe(b);
+	});
+
+	it('the load-balanced host still skips the balancer hop', async () => {
+		const clientIp = await loadWithHops(undefined);
+		expect(clientIp(req({ host: 'three.ws', 'x-forwarded-for': `${SPOOF}, ${REAL_CLIENT}, ${LB}` }))).toBe(REAL_CLIENT);
+	});
+});
