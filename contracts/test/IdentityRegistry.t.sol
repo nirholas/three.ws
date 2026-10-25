@@ -301,6 +301,57 @@ contract IdentityRegistryTest is Test {
         assertEq(reg.getAgentWallet(id), bob, "ID-4: the fallback follows the current owner");
     }
 
+    // ── ID-9: a transfer revokes the seller's spend rights and wallet binding ─
+
+    function testTransferRevokesSellerSpendAllowance() public {
+        vm.prank(alice);
+        uint256 id = reg.register("ipfs://x");
+        vm.prank(alice);
+        reg.setSpendAllowance(id, spender, 5 ether);
+
+        vm.prank(alice);
+        reg.transferFrom(alice, bob, id);
+
+        vm.prank(bob);
+        reg.deposit{value: 3 ether}(id);
+
+        assertEq(reg.spendAllowance(id, spender), 0, "allowance does not survive the sale");
+        vm.prank(spender);
+        vm.expectRevert(bytes("allowance exceeded"));
+        reg.spend(id, payable(spender), 1 ether, "seller drain");
+        assertEq(reg.agentBalance(id), 3 ether);
+    }
+
+    function testNewOwnerCanGrantAllowanceAfterTransfer() public {
+        vm.prank(alice);
+        uint256 id = reg.register("ipfs://x");
+        vm.prank(alice);
+        reg.transferFrom(alice, bob, id);
+        vm.prank(bob);
+        reg.deposit{value: 2 ether}(id);
+        vm.prank(bob);
+        reg.setSpendAllowance(id, spender, 1 ether);
+
+        vm.prank(spender);
+        reg.spend(id, payable(carol), 1 ether, "ok");
+        assertEq(reg.agentBalance(id), 1 ether);
+    }
+
+    function testTransferClearsDelegatedWallet() public {
+        vm.prank(alice);
+        uint256 id = reg.register("ipfs://x");
+        address delegate = address(0xDE1E6A7E);
+        uint256 deadline = block.timestamp + 1 hours;
+        bytes memory sig = _signSetWallet(alicePk, alice, id, delegate, deadline);
+        reg.setAgentWallet(id, delegate, deadline, sig);
+        assertEq(reg.getAgentWallet(id), delegate);
+
+        vm.prank(alice);
+        reg.transferFrom(alice, bob, id);
+
+        assertEq(reg.getAgentWallet(id), bob, "the previous owner's delegate no longer represents the agent");
+    }
+
     // ── ID-5: ETH only enters through deposit ────────────────────────────────
 
     function testBareEthTransferReverts() public {

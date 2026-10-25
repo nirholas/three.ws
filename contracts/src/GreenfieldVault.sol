@@ -37,11 +37,16 @@ import {IApplication} from "./greenfield/IApplication.sol";
  *         guard so the buyer could be resold access later. Grants are
  *         otherwise permanent — there is no expiry.
  *
+ *         Escrow: the listed price stays in the vault from `buy()` until
+ *         Greenfield's ack settles. A confirmed grant credits the seller; a
+ *         failed one credits the buyer, so a seller who revokes the vault's
+ *         role after listing can never keep the price of an undelivered grant.
+ *
  *         Payment: native BNB. `buy()`/`revoke()` require enough `msg.value`
  *         to cover both the listed price (buy only) and Greenfield's real
  *         cross-chain relay fee (`ICrossChain.getRelayFees()`, queried live —
  *         never hardcoded); any excess is refunded to the caller in the same
- *         transaction. Sale proceeds use a pull-payment pattern
+ *         transaction. Sale proceeds and refunds use a pull-payment pattern
  *         (`pendingWithdrawals` + `withdraw()`) so a misbehaving seller
  *         receive() can never block a buyer's purchase.
  */
@@ -71,7 +76,7 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
     /*----------------- types -----------------*/
     struct Listing {
         address seller;
-        uint256 price; // wei, exact amount credited to the seller per sale
+        uint256 price; // wei, escrowed at buy() and credited to the seller on a confirmed grant
         bool active;
     }
 
@@ -97,7 +102,7 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
     /// @dev objectId => buyer => saleId. 0 means "no open purchase" — cleared
     ///      on Failed/Revoked so the pair can transact again.
     mapping(bytes32 => mapping(address => uint256)) public saleIdOf;
-    /// @dev Pull-payment balances credited to sellers on each sale.
+    /// @dev Pull-payment balances: sellers on a confirmed grant, buyers on a failed one.
     mapping(address => uint256) public pendingWithdrawals;
     uint256 public nextSaleId = 1;
 
@@ -201,6 +206,9 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
         if (!listing.active) revert NotListed();
         if (policyData.length == 0) revert EmptyPolicyData();
         if (saleIdOf[objectId][msg.sender] != 0) revert AlreadyPurchased();
+        if (!objectAccessControl.hasRole(ROLE_CREATE, listing.seller, address(this))) {
+            revert NotAuthorizedByObjectOwner();
+        }
 
         (uint256 relayFee, uint256 minAckRelayFee) = crossChain.getRelayFees();
         uint256 requiredFee = relayFee + minAckRelayFee;
@@ -217,7 +225,6 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
             status: SaleStatus.Pending
         });
         saleIdOf[objectId][msg.sender] = saleId;
-        pendingWithdrawals[listing.seller] += listing.price;
 
         IPermissionHub.ExtraData memory extraData = IPermissionHub.ExtraData({
             appAddress: address(this),
@@ -261,13 +268,19 @@ contract GreenfieldVault is ReentrancyGuard, IApplication {
         uint256 saleId = abi.decode(callbackData, (uint256));
         Sale storage sale = sales[saleId];
         if (sale.buyer == address(0)) revert UnknownSale();
+        if (sale.status != SaleStatus.Pending) return; // each sale settles exactly once
 
         if (status == STATUS_SUCCESS) {
             sale.policyId = resourceId;
             sale.status = SaleStatus.Granted;
+            // The price was escrowed by buy(); the seller earns it only now that
+            // Greenfield confirmed the buyer's read grant.
+            pendingWithdrawals[sale.seller] += sale.price;
             emit PolicyGranted(sale.objectId, sale.buyer, saleId, resourceId);
         } else {
             sale.status = SaleStatus.Failed;
+            // No grant was minted, so the escrowed price goes back to the buyer.
+            pendingWithdrawals[sale.buyer] += sale.price;
             saleIdOf[sale.objectId][sale.buyer] = 0; // let the buyer retry
             emit PolicyGrantFailed(sale.objectId, sale.buyer, saleId, status);
         }

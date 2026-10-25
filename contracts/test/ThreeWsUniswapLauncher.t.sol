@@ -85,12 +85,18 @@ contract ThreeWsUniswapLauncherTest is Test {
         });
     }
 
-    /// Bump the launcher nonce until the next token address sorts on the requested side of WETH.
-    function _forceOrdering(ThreeWsUniswapLauncher l, bool tokenIsToken0) internal returns (address predicted) {
+    /// Vary the deadline until the token address this launch will get sorts on the requested side of
+    /// WETH. The address is a CREATE2 function of (sender, every launch parameter), so the deadline
+    /// is the free knob.
+    function _fitOrdering(ThreeWsUniswapLauncher l, ThreeWsUniswapLauncher.LaunchParams memory p, bool tokenIsToken0)
+        internal
+        view
+        returns (address predicted)
+    {
         for (uint256 i; i < 64; i++) {
-            predicted = vm.computeCreateAddress(address(l), vm.getNonce(address(l)));
+            predicted = l.predictTokenAddress(address(this), p);
             if ((predicted < WETH) == tokenIsToken0) return predicted;
-            vm.setNonce(address(l), uint64(vm.getNonce(address(l)) + 1));
+            p.deadline += 1;
         }
         revert("ordering not found");
     }
@@ -99,7 +105,7 @@ contract ThreeWsUniswapLauncherTest is Test {
         internal
         returns (address token, address pool, uint256 tokenId)
     {
-        address predicted = _forceOrdering(l, tokenIsToken0);
+        address predicted = _fitOrdering(l, p, tokenIsToken0);
         (token, pool, tokenId) = l.launch{value: l.launchFeeWei()}(p);
         assertEq(token, predicted, "token address prediction");
     }
@@ -177,7 +183,7 @@ contract ThreeWsUniswapLauncherTest is Test {
 
     function test_mode0_emitsLaunched() public {
         ThreeWsUniswapLauncher.LaunchParams memory p = _params(0, 3000);
-        address token = _forceOrdering(plain, true);
+        address token = _fitOrdering(plain, p, true);
         vm.recordLogs();
         plain.launch(p);
         Vm.Log[] memory logs = vm.getRecordedLogs();
@@ -405,26 +411,53 @@ contract ThreeWsUniswapLauncherTest is Test {
 
     // ---------------------------------------------------------------- front-run
 
-    /// The token address is the launcher's next CREATE address, so an attacker can pre-create and
-    /// initialise the pool at a hostile price before the launch lands. The launch must revert.
-    function test_poolPriceMoved_whenPoolFrontRun() public {
+    /// The token address is a CREATE2 function of the sender and every launch parameter, not of the
+    /// launcher nonce. An attacker who poisons the pool of the address the old CREATE scheme would
+    /// have produced gains nothing, and the launch still succeeds.
+    function test_launchIgnoresPoolsPoisonedAtNonceAddress() public {
         for (uint256 i; i < 2; i++) {
             bool tokenIsToken0 = i == 0;
-            address token = _forceOrdering(plain, tokenIsToken0);
-            (address t0, address t1) = tokenIsToken0 ? (token, WETH) : (WETH, token);
-            uint160 hostile = TickMath.getSqrtRatioAtTick(tokenIsToken0 ? int24(-100000) : int24(100000));
-            vm.prank(makeAddr("attacker"));
-            INonfungiblePositionManager(PM).createAndInitializePoolIfNecessary(t0, t1, 10000, hostile);
-
             ThreeWsUniswapLauncher.LaunchParams memory p = _params(0, 10000);
-            vm.expectRevert(ThreeWsUniswapLauncher.PoolPriceMoved.selector);
-            plain.launch(p);
+            address predicted = _fitOrdering(plain, p, tokenIsToken0);
+            address nonceAddress = vm.computeCreateAddress(address(plain), vm.getNonce(address(plain)));
+            assertTrue(nonceAddress != predicted, "token address is not the nonce address");
 
-            // A different fee tier is unaffected by the poisoned tier.
-            p.fee = 3000;
+            (address t0, address t1) = nonceAddress < WETH ? (nonceAddress, WETH) : (WETH, nonceAddress);
+            uint160 hostile = TickMath.getSqrtRatioAtTick(nonceAddress < WETH ? int24(-100000) : int24(100000));
+            for (uint256 f; f < 3; f++) {
+                uint24 fee = f == 0 ? 500 : f == 1 ? 3000 : 10000;
+                vm.prank(makeAddr("attacker"));
+                INonfungiblePositionManager(PM).createAndInitializePoolIfNecessary(t0, t1, fee, hostile);
+            }
+
             (address deployed,,) = plain.launch(p);
-            assertEq(deployed, token);
+            assertEq(deployed, predicted, "CREATE2 address matches the prediction");
         }
+    }
+
+    function test_predictTokenAddressCommitsToSenderAndParams() public view {
+        ThreeWsUniswapLauncher.LaunchParams memory p = _params(0, 10000);
+        address base = plain.predictTokenAddress(address(this), p);
+        assertTrue(base != plain.predictTokenAddress(stranger, p), "sender is committed");
+        p.deadline += 1;
+        assertTrue(base != plain.predictTokenAddress(address(this), p), "params are committed");
+    }
+
+    /// Backstop: if a pool does exist at the exact token address at a hostile price, the launch still
+    /// reverts instead of seeding liquidity at the wrong price, and a changed parameter escapes it.
+    function test_poolPriceMoved_whenPoolFrontRun() public {
+        ThreeWsUniswapLauncher.LaunchParams memory p = _params(0, 10000);
+        address token = _fitOrdering(plain, p, true);
+        uint160 hostile = TickMath.getSqrtRatioAtTick(int24(-100000));
+        vm.prank(makeAddr("attacker"));
+        INonfungiblePositionManager(PM).createAndInitializePoolIfNecessary(token, WETH, 10000, hostile);
+
+        vm.expectRevert(ThreeWsUniswapLauncher.PoolPriceMoved.selector);
+        plain.launch(p);
+
+        p.deadline += 1;
+        (address deployed,,) = plain.launch(p);
+        assertTrue(deployed != token, "a changed parameter yields a fresh address");
     }
 
     // ---------------------------------------------------------------- NFT custody
@@ -446,14 +479,16 @@ contract ThreeWsUniswapLauncherTest is Test {
     // ---------------------------------------------------------------- gas
 
     function test_gas_mode0_and_mode1() public {
-        _forceOrdering(plain, true);
+        ThreeWsUniswapLauncher.LaunchParams memory p0 = _params(0, 10000);
+        _fitOrdering(plain, p0, true);
         uint256 g = gasleft();
-        plain.launch(_params(0, 10000));
+        plain.launch(p0);
         emit log_named_uint("gas launch mode0", g - gasleft());
 
-        _forceOrdering(plain, true);
+        ThreeWsUniswapLauncher.LaunchParams memory p1 = _params(1, 10000);
+        _fitOrdering(plain, p1, true);
         g = gasleft();
-        plain.launch(_params(1, 10000));
+        plain.launch(p1);
         emit log_named_uint("gas launch mode1", g - gasleft());
     }
 }

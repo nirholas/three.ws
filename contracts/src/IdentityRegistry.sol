@@ -34,7 +34,12 @@ contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
     mapping(address => uint256) public nonces;
 
     // Max spend per on-chain agent ID per authorized spender (set by agent NFT owner)
-    mapping(uint256 => mapping(address => uint256)) public spendAllowance;
+    // Keyed by an ownership epoch so every grant made by a previous owner is void
+    // once the agent NFT changes hands; read it through spendAllowance().
+    mapping(uint256 => mapping(uint256 => mapping(address => uint256))) private _spendAllowance;
+
+    // Bumped on every ownership change of an agent NFT.
+    mapping(uint256 => uint256) private _ownerEpoch;
 
     // Per-agent deposited ETH balance held by this contract. The sum of all
     // agentBalance entries equals the contract's spendable ETH; spend() may only
@@ -90,6 +95,30 @@ contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
     // ---------------------------------------------------------------------
 
     constructor() ERC721("ERC-8004 Agent", "AGENT") EIP712("ERC8004-IdentityRegistry", "1") {}
+
+    // ---------------------------------------------------------------------
+    // Ownership changes
+    // ---------------------------------------------------------------------
+
+    /// @dev A transfer must not carry the previous owner's delegations to the new
+    ///      owner: spend allowances are voided by advancing the agent's epoch and
+    ///      the delegated wallet binding is cleared.
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        override
+        returns (address from)
+    {
+        from = super._update(to, tokenId, auth);
+        if (from != address(0) && from != to) {
+            unchecked {
+                _ownerEpoch[tokenId]++;
+            }
+            if (_agentWallet[tokenId] != address(0)) {
+                delete _agentWallet[tokenId];
+                emit WalletUnset(tokenId);
+            }
+        }
+    }
 
     // ---------------------------------------------------------------------
     // Registration
@@ -257,8 +286,13 @@ contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
         external
     {
         if (ownerOf(agentId) != msg.sender) revert NotAgentOwner();
-        spendAllowance[agentId][spender] = maxWei;
+        _spendAllowance[agentId][_ownerEpoch[agentId]][spender] = maxWei;
         emit SpendAllowanceSet(agentId, spender, maxWei);
+    }
+
+    /// @notice Remaining spend allowance of `spender` for the agent's current owner.
+    function spendAllowance(uint256 agentId, address spender) public view returns (uint256) {
+        return _spendAllowance[agentId][_ownerEpoch[agentId]][spender];
     }
 
     /// @notice Spend ETH held by this contract on behalf of an agent.
@@ -271,10 +305,11 @@ contract IdentityRegistry is ERC721Enumerable, EIP712, ReentrancyGuard {
         uint256 amountWei,
         string calldata memo
     ) external nonReentrant {
-        require(spendAllowance[agentId][msg.sender] >= amountWei, "allowance exceeded");
+        uint256 epoch = _ownerEpoch[agentId];
+        require(_spendAllowance[agentId][epoch][msg.sender] >= amountWei, "allowance exceeded");
         if (recipient == address(0)) revert ZeroRecipient();
         if (agentBalance[agentId] < amountWei) revert InsufficientAgentBalance();
-        spendAllowance[agentId][msg.sender] -= amountWei;
+        _spendAllowance[agentId][epoch][msg.sender] -= amountWei;
         agentBalance[agentId] -= amountWei;
         (bool ok, ) = recipient.call{value: amountWei}("");
         if (!ok) revert EthTransferFailed();

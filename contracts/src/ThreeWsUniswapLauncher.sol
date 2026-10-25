@@ -274,7 +274,7 @@ contract ThreeWsUniswapLauncher is IERC721Receiver, ReentrancyGuard {
         int24 spacing = _validate(p);
         if (msg.value != launchFeeWei) revert WrongLaunchFee();
 
-        token = address(new FixedSupplyToken(p.name, p.symbol, SUPPLY_WHOLE, address(this)));
+        token = address(new FixedSupplyToken{salt: _salt(msg.sender, p)}(p.name, p.symbol, SUPPLY_WHOLE, address(this)));
         _launching = true;
         (pool, tokenId) = _seed(token, p, spacing);
         _launching = false;
@@ -289,6 +289,24 @@ contract ThreeWsUniswapLauncher is IERC721Receiver, ReentrancyGuard {
         }
 
         _register(token, pool, tokenId, p);
+    }
+
+    /// @notice Address the token of `launch(p)` will get when `launcher` sends it.
+    /// @dev The token is deployed with CREATE2 and a salt that commits to the sender and every launch
+    ///      parameter, so its address is not a function of the launcher's nonce. Nobody can pre-create
+    ///      and poison the WETH pool of a token address before the launch parameters are known; changing
+    ///      any parameter (for example the deadline) yields a fresh address.
+    /// @param launcher The account that will call `launch`.
+    /// @param p Launch parameters exactly as they will be submitted.
+    function predictTokenAddress(address launcher, LaunchParams calldata p) external view returns (address) {
+        bytes32 initCodeHash = keccak256(
+            abi.encodePacked(
+                type(FixedSupplyToken).creationCode, abi.encode(p.name, p.symbol, SUPPLY_WHOLE, address(this))
+            )
+        );
+        return address(
+            uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), address(this), _salt(launcher, p), initCodeHash))))
+        );
     }
 
     /// @notice Collect accrued trading fees of a locked position and distribute them. Callable by anyone.
@@ -394,6 +412,10 @@ contract ThreeWsUniswapLauncher is IERC721Receiver, ReentrancyGuard {
             p.metadataHash,
             p.metadataURI
         );
+    }
+
+    function _salt(address sender, LaunchParams calldata p) private pure returns (bytes32) {
+        return keccak256(abi.encode(sender, p));
     }
 
     function _validate(LaunchParams calldata p) private view returns (int24 spacing) {

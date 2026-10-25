@@ -199,7 +199,7 @@ contract GreenfieldVaultTest is Test {
         uint256 saleId = vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, POLICY_DATA);
 
         assertEq(saleId, 1);
-        assertEq(vault.pendingWithdrawals(seller), PRICE);
+        assertEq(vault.pendingWithdrawals(seller), 0);
         assertEq(vault.saleIdOf(OBJECT_ID, buyer), 1);
 
         (
@@ -298,6 +298,8 @@ contract GreenfieldVaultTest is Test {
         uint256 saleId1 = _buy(buyer, OBJECT_ID);
         uint256 saleId2 = _buy(buyer2, OBJECT_ID);
         assertTrue(saleId1 != saleId2);
+        permissionHub.settleCreatePolicy(saleId1, STATUS_SUCCESS);
+        permissionHub.settleCreatePolicy(saleId2, STATUS_SUCCESS);
         assertEq(vault.pendingWithdrawals(seller), PRICE * 2);
     }
 
@@ -316,6 +318,65 @@ contract GreenfieldVaultTest is Test {
         // Buyer can now retry.
         uint256 saleId2 = _buy(buyer, OBJECT_ID);
         assertTrue(saleId2 != saleId);
+    }
+
+    // ── GV-10: proceeds are escrowed until Greenfield confirms the grant ────
+
+    function testSellerNotCreditedUntilGrantSettles() public {
+        _list(seller, OBJECT_ID, PRICE);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        assertEq(vault.pendingWithdrawals(seller), 0, "no credit while the ack is pending");
+
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
+        assertEq(vault.pendingWithdrawals(seller), PRICE, "credited on confirmed grant");
+    }
+
+    function testGrantFailureRefundsBuyerAndNeverPaysSeller() public {
+        _list(seller, OBJECT_ID, PRICE);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+
+        // The seller revokes the role the vault needs before Greenfield acks.
+        bytes32 role = vault.ROLE_CREATE();
+        vm.prank(seller);
+        accessControl.revokeRole(role, address(vault));
+        permissionHub.settleCreatePolicy(saleId, STATUS_FAILED);
+
+        assertEq(vault.pendingWithdrawals(seller), 0, "seller earns nothing from a failed grant");
+        assertEq(vault.pendingWithdrawals(buyer), PRICE, "buyer's price is refundable");
+
+        vm.prank(seller);
+        vm.expectRevert(GreenfieldVault.NothingToWithdraw.selector);
+        vault.withdraw();
+
+        uint256 before = buyer.balance;
+        vm.prank(buyer);
+        vault.withdraw();
+        assertEq(buyer.balance, before + PRICE);
+    }
+
+    function testRepeatedSettlementDoesNotDoubleCredit() public {
+        _list(seller, OBJECT_ID, PRICE);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
+
+        vm.prank(address(permissionHub));
+        vault.greenfieldCall(STATUS_FAILED, 0x07, 2, 1, abi.encode(saleId));
+        vm.prank(address(permissionHub));
+        vault.greenfieldCall(STATUS_SUCCESS, 0x07, 2, 1, abi.encode(saleId));
+
+        assertEq(vault.pendingWithdrawals(seller), PRICE);
+        assertEq(vault.pendingWithdrawals(buyer), 0);
+    }
+
+    function testBuyRevertsWhenSellerRevokedRoleAfterListing() public {
+        _list(seller, OBJECT_ID, PRICE);
+        bytes32 role = vault.ROLE_CREATE();
+        vm.prank(seller);
+        accessControl.revokeRole(role, address(vault));
+
+        vm.prank(buyer);
+        vm.expectRevert(GreenfieldVault.NotAuthorizedByObjectOwner.selector);
+        vault.buy{value: TOTAL_REQUIRED}(OBJECT_ID, POLICY_DATA);
     }
 
     // ── GV-6: greenfieldCall access control ────────────────────────────────
@@ -372,6 +433,7 @@ contract GreenfieldVaultTest is Test {
         permissionHub.setRejectOnCreate(false);
         uint256 saleId = _buy(buyer, OBJECT_ID);
         assertEq(vault.saleIdOf(OBJECT_ID, buyer), saleId);
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
         assertEq(vault.pendingWithdrawals(seller), PRICE);
     }
 
@@ -465,7 +527,8 @@ contract GreenfieldVaultTest is Test {
 
     function testWithdrawHappyPath() public {
         _list(seller, OBJECT_ID, PRICE);
-        _buy(buyer, OBJECT_ID);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
 
         uint256 before = seller.balance;
         vm.prank(seller);
@@ -493,7 +556,8 @@ contract GreenfieldVaultTest is Test {
         accessControl.grantRole(role, address(vault), 0);
         badSeller.doList(vault, OBJECT_ID, PRICE);
 
-        _buy(buyer, OBJECT_ID);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
         assertEq(vault.pendingWithdrawals(address(badSeller)), PRICE);
 
         vm.expectRevert(GreenfieldVault.TransferFailed.selector);
@@ -545,9 +609,11 @@ contract GreenfieldVaultTest is Test {
         _list(seller, OBJECT_ID, PRICE);
         _list(seller, OBJECT_ID_2, 2 ether);
 
-        _buy(buyer, OBJECT_ID);
+        uint256 s1 = _buy(buyer, OBJECT_ID);
         vm.prank(buyer2);
-        vault.buy{value: 2 ether + TOTAL_FEE}(OBJECT_ID_2, POLICY_DATA);
+        uint256 s2 = vault.buy{value: 2 ether + TOTAL_FEE}(OBJECT_ID_2, POLICY_DATA);
+        permissionHub.settleCreatePolicy(s1, STATUS_SUCCESS);
+        permissionHub.settleCreatePolicy(s2, STATUS_SUCCESS);
 
         assertEq(vault.pendingWithdrawals(seller), 3 ether);
         assertGe(address(vault).balance, vault.pendingWithdrawals(seller), "GV-5: held ETH must cover every credit");
@@ -608,7 +674,8 @@ contract GreenfieldVaultTest is Test {
         accessControl.grantRole(role, address(vault), 0);
         attacker.doList(OBJECT_ID, PRICE);
 
-        _buy(buyer, OBJECT_ID);
+        uint256 saleId = _buy(buyer, OBJECT_ID);
+        permissionHub.settleCreatePolicy(saleId, STATUS_SUCCESS);
         assertEq(vault.pendingWithdrawals(address(attacker)), PRICE);
 
         attacker.arm(abi.encodeWithSelector(GreenfieldVault.withdraw.selector), 0);
