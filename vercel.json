@@ -5737,7 +5737,7 @@
 		},
 		{
 			"src": "/settings/(.*)",
-			"dest": "/settings/$1"
+			"dest": "/settings/index.html"
 		},
 		{
 			"src": "/api/llm/anthropic",
