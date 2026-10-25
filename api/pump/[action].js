@@ -137,7 +137,7 @@ import { makeRuntime } from '../_lib/skill-runtime.js';
 import { loadWallet } from '../_lib/solana-wallet.js';
 import { requireRealFundsAgreement, currentSignatureFor } from '../_lib/real-funds-agreement.js';
 import {
-	checkBuyAllowed,
+	createStrategySpendGuard,
 	reserveSpend,
 	finalizeSpend,
 	releaseSpend,
@@ -3842,10 +3842,15 @@ async function handleStrategyRun(req, res) {
 		aborted = true;
 	});
 
+	const spendGuard =
+		mode === 'live' ? createStrategySpendGuard({ agentId: body.agentId, meta: agentMeta }) : null;
 	const rt = makeRuntime({
 		wallet,
 		agentId: mode === 'live' ? body.agentId : undefined,
 		signerAddress: walletAddress,
+		// Live buys are recorded by the spend reservation (finalizeSpend), so the
+		// runtime must not persist a second pumpfun.buy row for the same trade.
+		shouldPersist: (skillName, tag) => !(spendGuard && skillName === 'pump-fun-trade' && tag === 'pump-fun-trade:buy'),
 		configOverrides: {
 			'pump-fun-trade': { rpc: RPC[network] },
 			'solana-wallet': { rpc: RPC[network] },
@@ -3863,18 +3868,8 @@ async function handleStrategyRun(req, res) {
 		wallet,
 	};
 
-	const policyGuard =
-		mode === 'live'
-			? async ({ mint, amountSol }) => {
-					const block = await checkBuyAllowed({
-						agentId: body.agentId,
-						meta: agentMeta,
-						mint,
-						solAmount: amountSol,
-					});
-					return block ? { code: block.code, msg: block.msg } : null;
-				}
-			: null;
+	const policyGuard = spendGuard ? spendGuard.guard : null;
+	const policySettle = spendGuard ? spendGuard.settle : null;
 
 	const abortController = new AbortController();
 	req.on('close', () => abortController.abort());
@@ -3889,6 +3884,7 @@ async function handleStrategyRun(req, res) {
 					if (!aborted) send('log', entry);
 				},
 				policyGuard,
+				policySettle,
 				abortSignal: abortController.signal,
 			},
 			ctx,

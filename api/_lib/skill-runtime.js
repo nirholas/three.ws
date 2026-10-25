@@ -109,11 +109,12 @@ async function serverFetch(input, init) {
  * @param {(event: object) => void} [opts.onEvent] - notified on every memory.note call
  * @param {object} [opts.fetch] - fetch impl (defaults to serverFetch: in-process for /api/pump-fun-mcp, APP_ORIGIN for other relative paths)
  * @param {string} [opts.agentId] - if set, every memory.note is persisted to agent_actions
+ * @param {(skillName: string, tag: string) => boolean} [opts.shouldPersist] - return false to skip persisting a note (caller records it itself)
  * @param {string} [opts.signerAddress] - persisted with each agent_actions row when agentId is set
  * @param {Record<string, { skill_id: string, author_id: string }>} [opts.skillMeta] - DB-sourced royalty metadata keyed by skill name
  */
 export function makeRuntime(opts = {}) {
-	const { configOverrides = {}, wallet, onEvent, fetch = serverFetch, agentId, signerAddress, skillMeta = {} } = opts;
+	const { configOverrides = {}, wallet, onEvent, fetch = serverFetch, agentId, signerAddress, skillMeta = {}, shouldPersist = null } = opts;
 	let _sql;
 	// Map skill-internal tags to canonical action types so existing
 	// aggregations (spend-policy, portfolio cost-basis) keep working.
@@ -129,6 +130,7 @@ export function makeRuntime(opts = {}) {
 
 	async function persistAction(skillName, tag, value) {
 		if (!agentId) return;
+		if (shouldPersist && !shouldPersist(skillName, tag)) return;
 		try {
 			if (!_sql) _sql = (await import('./db.js')).sql;
 			await _sql`

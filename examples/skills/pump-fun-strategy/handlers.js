@@ -154,6 +154,7 @@ export async function runStrategy(args, ctx) {
 	const onLog = typeof args.onLog === 'function' ? args.onLog : () => {};
 	// Optional async guard: returns null to allow, or { code, msg } to block.
 	const policyGuard = typeof args.policyGuard === 'function' ? args.policyGuard : null;
+	const policySettle = typeof args.policySettle === 'function' ? args.policySettle : null;
 	// Optional abort signal: when set, the loop terminates at the next safe point.
 	const abortSignal = args.abortSignal ?? null;
 
@@ -218,6 +219,7 @@ export async function runStrategy(args, ctx) {
 				}
 				try {
 					const buy = await maybeBuy(ctx, simulate, mint, perTrade);
+					if (policySettle && !simulate) await policySettle({ mint, ok: true, sig: buy.sig });
 					spent += perTrade;
 					positions.set(mint, {
 						amountTokens: buy.amountTokens ?? 0,
@@ -227,6 +229,7 @@ export async function runStrategy(args, ctx) {
 					emit({ mint, action: 'enter', sig: buy.sig, spent, entryPriceSol: snap.curve?.priceSol ?? 0 });
 					if (spent + perTrade > cap) break;
 				} catch (e) {
+					if (policySettle && !simulate) await policySettle({ mint, ok: false }).catch(() => {});
 					emit({ mint, action: 'enter-error', error: e.message });
 				}
 			}

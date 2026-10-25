@@ -169,3 +169,34 @@ export async function releaseSpend(reservationId) {
 		DELETE FROM agent_actions WHERE id = ${reservationId}
 	`.catch((e) => console.error('[spend-policy] release failed', e));
 }
+
+// Per-run spend guard for strategy-run live buys. `guard` reserves the buy
+// atomically (reserveSpend) before the trade; `settle` finalizes the reservation
+// with the signature when the buy lands, or releases it when it fails. The
+// reserved row is the buy's agent_actions record, so the runtime must not
+// persist a second pumpfun.buy row for the same trade.
+export function createStrategySpendGuard({ agentId, meta }) {
+	const open = new Map();
+	return {
+		async guard({ mint, amountSol }) {
+			const r = await reserveSpend({
+				agentId,
+				meta,
+				mint,
+				solAmount: amountSol,
+				type: 'pumpfun.buy',
+				payload: { source: 'strategy_run', amountSol: Number(amountSol) || 0 },
+			});
+			if (!r.ok) return { code: r.code, msg: r.msg };
+			open.set(mint, r.reservationId);
+			return null;
+		},
+		async settle({ mint, ok, sig }) {
+			const id = open.get(mint);
+			if (!id) return;
+			open.delete(mint);
+			if (ok) await finalizeSpend(id, { mint, sig: sig ?? null });
+			else await releaseSpend(id);
+		},
+	};
+}
