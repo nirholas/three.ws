@@ -46,6 +46,40 @@ function isModelUnavailable(status, body) {
 	);
 }
 
+// Standard chat-completion fields the built-in chat client may send. Anything
+// else, such as model fallback lists, plugins, provider routing or transforms,
+// would let an anonymous caller steer the platform key to paid models or paid
+// features despite the :free gate on `model`.
+const UPSTREAM_BODY_FIELDS = [
+	'messages',
+	'stream',
+	'stream_options',
+	'temperature',
+	'top_p',
+	'top_k',
+	'frequency_penalty',
+	'presence_penalty',
+	'repetition_penalty',
+	'seed',
+	'stop',
+	'tools',
+	'tool_choice',
+	'parallel_tool_calls',
+	'response_format',
+	'reasoning',
+];
+const MAX_OUTPUT_TOKENS = 16_384;
+
+function buildUpstreamBody(body, model) {
+	const out = {};
+	for (const k of UPSTREAM_BODY_FIELDS) if (body[k] !== undefined) out[k] = body[k];
+	for (const k of ['max_tokens', 'max_completion_tokens']) {
+		const n = Number(body[k]);
+		if (Number.isFinite(n) && n > 0) out[k] = Math.min(Math.floor(n), MAX_OUTPUT_TOKENS);
+	}
+	return { ...out, model };
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
@@ -125,7 +159,7 @@ export default wrap(async (req, res) => {
 						'Content-Type': 'application/json',
 						...OPENROUTER_ATTRIBUTION_HEADERS,
 					},
-					body: JSON.stringify({ ...body, model: activeModel }),
+					body: JSON.stringify(buildUpstreamBody(body, activeModel)),
 					signal: headersCtrl.signal,
 				});
 			} catch (err) {
