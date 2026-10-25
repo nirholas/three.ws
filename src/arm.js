@@ -4,6 +4,7 @@
 
 import { ensureRiskAck } from './shared/risk-ack.js';
 import { proxiedImageURL } from './ipfs.js';
+import { loadTelegramChat, telegramLoginUrl, TELEGRAM_LINK_URL } from './oracle-telegram.js';
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);
@@ -28,6 +29,37 @@ function ago(ts) {
 
 const state = { agents: [], agentId: null, watch: null, minScore: 72, wallet: null, feed: [], feedAt: null, feedError: false, edge: null };
 let feedTimer = null;
+let tgChat = { status: 'loading' };
+
+// The alert chat is the Telegram identity the user linked: the API refuses any
+// other chat id, so the panel shows it read-only instead of offering a free-text box.
+async function refreshTelegram() {
+	tgChat = { status: 'loading' };
+	renderTelegram();
+	tgChat = await loadTelegramChat(api);
+	renderTelegram();
+}
+
+function renderTelegram() {
+	const linked = tgChat.status === 'linked';
+	const input = $('#tgInput');
+	input.value = linked ? tgChat.chatId : '';
+	input.hidden = !linked;
+	$('#tgTest').disabled = !linked;
+	$('#tgTest').hidden = !linked;
+	const box = $('#tgState');
+	if (linked) { box.innerHTML = ''; return; }
+	if (tgChat.status === 'loading') {
+		box.innerHTML = '<div class="tg-body">Checking your Telegram link\u2026</div>';
+	} else if (tgChat.status === 'signed_out') {
+		box.innerHTML = `<div class="tg-body">Sign in to receive alerts on Telegram.</div><a class="btn sm" href="${esc(telegramLoginUrl(location.pathname + location.search))}">Sign in</a>`;
+	} else if (tgChat.status === 'unlinked') {
+		box.innerHTML = `<div class="tg-body">Link your Telegram account so alerts go only to a chat you control.</div><a class="btn sm" href="${TELEGRAM_LINK_URL}">Link Telegram</a>`;
+	} else {
+		box.innerHTML = `<div class="tg-body tg-err" role="alert">${esc(tgChat.message)}</div><button class="btn sm" type="button" id="tgRetry">Retry</button>`;
+		$('#tgRetry').addEventListener('click', refreshTelegram);
+	}
+}
 
 async function api(path, opts = {}) {
 	const ctrl = new AbortController();
@@ -178,7 +210,7 @@ function wireStaticControls() {
 
 	$('#saveBtn').addEventListener('click', saveWatch);
 	$('#tgTest').addEventListener('click', sendTelegramTest);
-	$('#tgInput').addEventListener('input', markDirty);
+	refreshTelegram();
 }
 
 function wireSwitch(sel, cb) {
@@ -482,7 +514,6 @@ async function loadWatch(agentId) {
 
 	const cats = new Set(w?.categories || []);
 	$$('#catChips .cchip').forEach((b) => b.classList.toggle('on', cats.has(b.dataset.cat)));
-	$('#tgInput').value = w?.telegram_chat_id || '';
 
 	renderScaleSub();
 	renderRisk();
@@ -514,7 +545,7 @@ async function saveWatch() {
 		max_open: Number($('#fOpen').value) || 5,
 		require_smart_money: isOn('#smartToggle'),
 		size_scaling: isOn('#scaleToggle'),
-		telegram_chat_id: ($('#tgInput').value || '').trim() || null,
+		telegram_chat_id: tgChat.status === 'linked' ? tgChat.chatId : null,
 	};
 	const { ok, data } = await api('/api/oracle/watch', {
 		method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
@@ -547,12 +578,12 @@ async function saveWatch() {
 }
 
 async function sendTelegramTest() {
-	const chatId = ($('#tgInput').value || '').trim();
+	const chatId = tgChat.status === 'linked' ? tgChat.chatId : '';
 	const note = $('#tgNote');
 	note.style.display = 'block';
 	if (!chatId) {
 		note.className = 'tg-note warn';
-		note.textContent = 'Enter your Telegram chat ID or @channel first.';
+		note.textContent = 'Link Telegram to your account first.';
 		return;
 	}
 	const btn = $('#tgTest');

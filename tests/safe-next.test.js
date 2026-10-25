@@ -118,3 +118,13 @@ describe('inline copies stay in sync with src/safe-next.js', () => {
 		}
 	}
 });
+
+describe('safeNext with nested query strings (extension sign-in round trip)', () => {
+	it('keeps the extension state inside next, encoded or not', () => {
+		const encoded = '/extension/auth-callback?state=ab12%3D%26cd';
+		expect(safeNext(encoded)).toBe(encoded);
+		const nested = `/login?next=${encodeURIComponent('/extension/auth-callback?state=xyz')}`;
+		expect(safeNext(nested)).toBe(nested);
+		expect(new URL(safeNext(encoded), 'https://three.ws').searchParams.get('state')).toBe('ab12=&cd');
+	});
+});

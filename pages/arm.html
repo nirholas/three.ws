@@ -125,6 +125,9 @@
 		/* telegram */
 		.tg-row { display: flex; gap: 6px; align-items: center; }
 		.tg-row input { flex: 1; min-width: 0; font-size: 12px; }
+		.tg-state { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .tg-state:empty { display: none; }
+		.tg-body { font-size: 12px; line-height: 1.45; flex: 1 1 200px; } .tg-err { color: var(--amber); }
+		.tg-state a.btn { text-decoration: none; } .tg-row button[hidden], .tg-row input[hidden] { display: none; }
 		.tg-note { display: none; margin-top: 7px; font-size: 11.5px; line-height: 1.4; }
 		.tg-note.ok { color: var(--up); } .tg-note.warn { color: var(--amber); }
 		.opt { font: 600 10px/1 var(--mono); padding: 2px 7px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--muted); border: 1px solid var(--line); text-transform: uppercase; letter-spacing: .05em; }
@@ -366,13 +369,14 @@
 					<h3 data-i18n-html="arm.3_alerts_optional"><span class="stepno">3</span> Alerts <span class="opt">optional</span></h3>
 					<p class="sub" data-i18n="arm.get_a_personal_telegram_ping_whenever_a">Get a personal Telegram ping whenever a coin crosses your threshold — armed or not.</p>
 					<div class="field">
-						<label for="tgInput" data-i18n="arm.telegram_chat_id_or_channel">Telegram chat ID or @channel</label>
+						<label for="tgInput">Telegram chat</label>
+						<div id="tgState" class="tg-state" aria-live="polite"></div>
 						<div class="tg-row">
-							<input id="tgInput" type="text" placeholder="Your chat ID or @channel" autocomplete="off">
+							<input id="tgInput" type="text" readonly hidden aria-label="Linked Telegram chat" autocomplete="off">
 							<button id="tgTest" class="btn sm" type="button" data-i18n="arm.send_test">Send test</button>
 						</div>
 						<div class="tg-note" id="tgNote" role="status" aria-live="polite"></div>
-						<div class="field-hint">Chat <a href="https://t.me/three_ws_bot" target="_blank" rel="noopener" data-i18n="arm.three_ws_bot">@three_ws_bot</a> and send <code>/start</code> to get your chat ID.</div>
+						<div class="field-hint">Alerts go to the Telegram account linked to your three.ws account. Chat <a href="https://t.me/three_ws_bot" target="_blank" rel="noopener" data-i18n="arm.three_ws_bot">@three_ws_bot</a> and send <code>/start</code> to link it.</div>
 					</div>
 				</div>
 			</div>

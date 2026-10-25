@@ -233,6 +233,13 @@
 		.fp-label { font: 600 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--faint); display: block; margin-bottom: 5px; }
 		.fp-chat { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); padding: 8px 10px; font: 600 13px/1 var(--mono); outline: none; }
 		.fp-chat:focus { border-color: var(--cyan); }
+		.fp-tg-body { font-size: 12px; line-height: 1.45; color: var(--ink); margin-bottom: 7px; }
+		.fp-tg-body code { font: 600 12px/1 var(--mono); color: var(--cyan); }
+		.fp-tg-ok { color: var(--up); font-weight: 600; }
+		.fp-tg-err { color: var(--amber); }
+		.fp-tg-action { display: inline-block; background: rgba(255,255,255,0.06); border: 1px solid var(--line); border-radius: 7px; color: var(--ink); padding: 6px 12px; font: 600 12px/1.2 var(--mono); text-decoration: none; cursor: pointer; }
+		.fp-tg-action:hover { border-color: var(--cyan); } .fp-tg-action:active { background: rgba(255,255,255,0.1); } .fp-tg-action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+		.fp-sub:disabled, .fp-unsub:disabled { opacity: .45; cursor: not-allowed; }
 		.fp-score-field { display: flex; flex-direction: column; }
 		.fp-score { width: 100%; accent-color: var(--cyan); }
 		.fp-score-val { color: var(--cyan); }

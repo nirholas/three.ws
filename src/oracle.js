@@ -12,6 +12,7 @@
 import { proxiedImageURL } from './ipfs.js';
 import { gmgnTokenUrl } from './shared/trading-terminals.js';
 import { shortAddress as shortAddr } from './shared/address.js';
+import { loadTelegramChat, telegramLoginUrl, telegramActionError, TELEGRAM_LINK_URL } from './oracle-telegram.js';
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);
@@ -1272,7 +1273,7 @@ function bindFollowHandlers(wrap) {
 		const opening = panel.hidden;
 		panel.hidden = !opening;
 		btn.setAttribute('aria-expanded', String(opening));
-		if (opening) panel.querySelector('.fp-chat')?.focus();
+		if (opening) panel.querySelector('.fp-chat, .fp-tg-action, .fp-sub:not([disabled])')?.focus();
 	});
 
 	wrap.addEventListener('input', (e) => {
@@ -1288,13 +1289,12 @@ function bindFollowHandlers(wrap) {
 		e.preventDefault();
 		const entry = form.closest('.al-entry');
 		const agentId = entry?.dataset.agentId;
-		const chatId = form.querySelector('.fp-chat')?.value.trim();
+		const chatId = form.dataset.chat || '';
 		const minScore = Number(form.querySelector('.fp-score')?.value) || 54;
 		const msg = form.querySelector('.fp-msg');
-		if (!chatId) { showFpMsg(msg, 'Enter your Telegram chat ID or @handle', 'err'); return; }
-		localStorage.setItem('oracle_follow_chat', chatId);
+		if (!chatId) { showFpMsg(msg, 'Link Telegram to your account first', 'err'); return; }
 		showFpMsg(msg, 'Subscribing…', '');
-		const { ok, data } = await api('/api/oracle/follow', {
+		const { ok, status, data } = await api('/api/oracle/follow', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ agent_id: agentId, chat_id: chatId, min_score: minScore }),
@@ -1302,7 +1302,7 @@ function bindFollowHandlers(wrap) {
 		if (ok) {
 			showFpMsg(msg, data?.action === 'updated' ? 'Updated ✓' : 'Subscribed ✓', 'ok');
 		} else {
-			showFpMsg(msg, data?.message || 'Failed', 'err');
+			showFpMsg(msg, telegramActionError({ status, data }, 'Could not subscribe. Try again.'), 'err');
 		}
 	});
 
@@ -1312,16 +1312,16 @@ function bindFollowHandlers(wrap) {
 		const form = btn.closest('.follow-form');
 		const entry = form?.closest('.al-entry');
 		const agentId = entry?.dataset.agentId;
-		const chatId = form?.querySelector('.fp-chat')?.value.trim();
+		const chatId = form?.dataset.chat || '';
 		const msg = form?.querySelector('.fp-msg');
-		if (!chatId) { showFpMsg(msg, 'Enter your chat ID first', 'err'); return; }
+		if (!chatId) { showFpMsg(msg, 'Link Telegram to your account first', 'err'); return; }
 		showFpMsg(msg, 'Unsubscribing…', '');
-		const { ok } = await api('/api/oracle/follow', {
+		const { ok, status, data: unsubData } = await api('/api/oracle/follow', {
 			method: 'DELETE',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ agent_id: agentId, chat_id: chatId }),
 		});
-		showFpMsg(msg, ok ? 'Unsubscribed' : 'Failed', ok ? 'ok' : 'err');
+		showFpMsg(msg, ok ? 'Unsubscribed' : telegramActionError({ status, data: unsubData }, 'Could not unsubscribe. Try again.'), ok ? 'ok' : 'err');
 	});
 }
 
@@ -1331,30 +1331,50 @@ function showFpMsg(el, text, cls) {
 	el.className = `fp-msg${cls ? ` fp-msg-${cls}` : ''}`;
 }
 
+function renderFollowTelegram(panel, st, retry) {
+	const form = panel.querySelector('.follow-form');
+	const box = panel.querySelector('.fp-tg');
+	if (!form || !box) return;
+	const linked = st.status === 'linked';
+	form.dataset.chat = linked ? st.chatId : '';
+	panel.querySelectorAll('.fp-sub, .fp-unsub').forEach((b) => { b.disabled = !linked; });
+	box.dataset.state = st.status;
+	const label = '<span class="fp-label">Telegram</span>';
+	if (linked) {
+		box.innerHTML = `${label}<div class="fp-tg-body"><span class="fp-tg-ok">Linked</span> <code>${esc(st.chatId)}</code></div>`;
+	} else if (st.status === 'signed_out') {
+		box.innerHTML = `${label}<div class="fp-tg-body">Sign in to get this agent's signals on Telegram.</div>
+			<a class="fp-tg-action" href="${esc(telegramLoginUrl(location.pathname + location.search))}">Sign in</a>`;
+	} else if (st.status === 'unlinked') {
+		box.innerHTML = `${label}<div class="fp-tg-body">Link your Telegram account so alerts go only to a chat you control.</div>
+			<a class="fp-tg-action" href="${TELEGRAM_LINK_URL}">Link Telegram</a>`;
+	} else {
+		box.innerHTML = `${label}<div class="fp-tg-body fp-tg-err" role="alert">${esc(st.message)}</div>
+			<button type="button" class="fp-tg-action fp-tg-retry">Retry</button>`;
+		box.querySelector('.fp-tg-retry').addEventListener('click', retry);
+	}
+}
+
 async function initFollowPanel(agentId, panel) {
 	if (!agentId) return;
-	const chatInput = panel.querySelector('.fp-chat');
-	const savedChat = localStorage.getItem('oracle_follow_chat') || '';
-	if (chatInput && savedChat) {
-		chatInput.value = savedChat;
-		// Also cache for next open
-		chatInput.addEventListener('change', () => {
-			if (chatInput.value.trim()) localStorage.setItem('oracle_follow_chat', chatInput.value.trim());
-		});
-	}
-	if (!savedChat) return;
-	const { ok, data } = await api(
-		`/api/oracle/follow?agent_id=${encodeURIComponent(agentId)}&chat_id=${encodeURIComponent(savedChat)}&network=${NETWORK}`
-	);
-	if (!ok || !data?.following) return;
-	const msg = panel.querySelector('.fp-msg');
-	if (msg) showFpMsg(msg, 'Already following', 'ok');
-	if (data.min_score != null) {
-		const slider = panel.querySelector('.fp-score');
-		const val    = panel.querySelector('.fp-score-val');
-		if (slider) slider.value = String(data.min_score);
-		if (val)    val.textContent = String(data.min_score);
-	}
+	const resolve = async () => {
+		const st = await loadTelegramChat(api);
+		renderFollowTelegram(panel, st, resolve);
+		if (st.status !== 'linked') return;
+		const { ok, data } = await api(
+			`/api/oracle/follow?agent_id=${encodeURIComponent(agentId)}&chat_id=${encodeURIComponent(st.chatId)}&network=${NETWORK}`
+		);
+		if (!ok || !data?.following) return;
+		const msg = panel.querySelector('.fp-msg');
+		if (msg) showFpMsg(msg, 'Already following', 'ok');
+		if (data.min_score != null) {
+			const slider = panel.querySelector('.fp-score');
+			const val    = panel.querySelector('.fp-score-val');
+			if (slider) slider.value = String(data.min_score);
+			if (val)    val.textContent = String(data.min_score);
+		}
+	};
+	await resolve();
 }
 
 function agentLeadRow(a, i) {
@@ -1386,17 +1406,17 @@ function agentLeadRow(a, i) {
 		</div>
 		<div class="follow-panel" hidden>
 			<form class="follow-form" autocomplete="off">
-				<div class="fp-field">
-					<label class="fp-label">Telegram chat ID or @handle</label>
-					<input type="text" class="fp-chat" placeholder="@handle or -100…" spellcheck="false" />
+				<div class="fp-field fp-tg" data-state="loading" aria-live="polite">
+					<span class="fp-label">Telegram</span>
+					<div class="fp-tg-body">Checking your Telegram link…</div>
 				</div>
 				<div class="fp-field fp-score-field">
 					<label class="fp-label">Min conviction score: <b class="fp-score-val">54</b></label>
 					<input type="range" class="fp-score" min="36" max="100" value="54" step="1" />
 				</div>
 				<div class="fp-actions">
-					<button type="submit" class="fp-sub">Subscribe</button>
-					<button type="button" class="fp-unsub">Unsubscribe</button>
+					<button type="submit" class="fp-sub" disabled>Subscribe</button>
+					<button type="button" class="fp-unsub" disabled>Unsubscribe</button>
 					<span class="fp-msg"></span>
 				</div>
 			</form>
