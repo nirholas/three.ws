@@ -27,6 +27,38 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '127.0.0.1',
 }));
 
+// api/_lib/pump-callouts.js now reads/writes through api/_lib/cache.js's
+// cacheWrapLastGood (last-known-good tier). Fake it with a plain Map so this
+// suite's cache state is deterministic and isolated from the real module:
+// same pattern as tests/pump-bonding.test.js.
+const cache = new Map();
+vi.mock('../api/_lib/cache.js', () => ({
+	cacheGet: async (k) => (cache.has(k) ? cache.get(k) : null),
+	cacheSet: async (k, v) => { cache.set(k, v); },
+	cacheWrapLastGood: async (key, ttlSeconds, fn, opts = {}) => {
+		const { staleTtlSeconds = 24 * 3600, withMeta = false } = opts;
+		const lkgKey = `${key}:lkg`;
+		const hit = cache.has(key) ? cache.get(key) : null;
+		if (hit !== null && hit !== undefined) return withMeta ? { value: hit, stale: false } : hit;
+		try {
+			const value = await fn();
+			if (value !== null && value !== undefined) {
+				cache.set(key, value);
+				cache.set(lkgKey, value);
+			}
+			return withMeta ? { value, stale: false } : value;
+		} catch (err) {
+			const lkg = cache.has(lkgKey) ? cache.get(lkgKey) : null;
+			if (lkg === null || lkg === undefined) throw err;
+			return withMeta ? { value: lkg, stale: true } : lkg;
+		}
+	},
+}));
+
+beforeEach(() => {
+	cache.clear();
+});
+
 const { default: sentimentHandler } = await import('../api/social/sentiment.js');
 const { default: pulseHandler, calloutsToPosts } = await import('../api/social/sentiment-pulse.js');
 
@@ -233,5 +265,42 @@ describe('POST /api/social/sentiment-pulse', () => {
 		});
 		expect(res.statusCode).toBe(400);
 		expect(res.json().error).toBe('validation_error');
+	});
+
+	it('serves last-known-good callouts when pump.fun fails and a cached copy exists', async () => {
+		const LKG_MINT = 'ATVbubW5hCMW4EcVvM1jyQTfihw7yKqTJTLxkwRqpump';
+
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+			upstream(200, {
+				callouts: [
+					callout({ calloutId: 'a', thesis: 'moon soon, bullish' }),
+					callout({ calloutId: 'b', createdAt: 1_777_000_000_000, thesis: 'rug pull scam' }),
+				],
+			}),
+		);
+		const first = await call(pulseHandler, '/api/social/sentiment-pulse', {
+			token: LKG_MINT,
+			limit: 50,
+		});
+		expect(first.statusCode).toBe(200);
+		expect(first.json().sources.pumpfunStatus).toBe('ok');
+
+		// Simulate the live tier's short TTL having lapsed (the mock cache
+		// ignores TTLs, same as tests/pump-bonding.test.js's mock, so a
+		// real-time wait would never expire it): drop only the live-tier
+		// entry and keep the LKG mirror the first call also wrote, exactly
+		// the state a real request would see minutes later.
+		cache.delete(`pump:callouts:${LKG_MINT}:50`);
+
+		vi.spyOn(globalThis, 'fetch').mockResolvedValue(upstream(403, null));
+		const second = await call(pulseHandler, '/api/social/sentiment-pulse', {
+			token: LKG_MINT,
+			limit: 50,
+		});
+		expect(second.statusCode).toBe(200);
+		const out = second.json();
+		expect(out.overall.count).toBe(2);
+		expect(out.sources.pumpfunStatus).toBe('stale');
+		expect(out.sources.pumpfunCount).toBe(2);
 	});
 });

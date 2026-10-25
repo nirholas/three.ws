@@ -16,8 +16,12 @@
 // (identified user-agent, bounded timeout, one retry on a rate limit or 5xx).
 //
 // This is the unauthenticated, no-key endpoint behind the paid
-// `sentiment_pulse` MCP tool. It does no caching of its own (callers should
-// hit /api/social/sentiment if they already have the texts).
+// `sentiment_pulse` MCP tool. The pump.fun read itself is cached with a
+// last-known-good tier (api/_lib/pump-callouts.js, via cacheWrapLastGood):
+// a prior successful fetch for the same mint+limit survives a Cloudflare
+// block and is served stale (`sources.pumpfunStatus: 'stale'`) rather than
+// erroring. Callers who already have the texts should still hit
+// /api/social/sentiment instead.
 //
 // Body:
 //   {
@@ -38,7 +42,10 @@
 //   }
 //
 // A pump.fun outage with no caller-supplied texts answers 502
-// `upstream_unavailable`, never a fabricated neutral score. A coin that is
+// `upstream_unavailable`, never a fabricated neutral score, UNLESS a
+// last-known-good copy of that mint+limit survives, in which case the stale
+// copy is served (sources.pumpfunStatus: 'stale') and only a true double
+// miss (upstream down AND no cached copy yet) still 502s. A coin that is
 // simply quiet (upstream fine, zero callouts) still answers 200 with
 // `count: 0`, because an empty feed is data, not an outage.
 
@@ -108,7 +115,7 @@ export default wrap(async (req, res) => {
 		breakdown,
 		sources: {
 			pumpfun: pumpfun.error ? null : pumpfun.url,
-			pumpfunStatus: pumpfun.error ? 'unavailable' : 'ok',
+			pumpfunStatus: pumpfun.error ? 'unavailable' : pumpfun.stale ? 'stale' : 'ok',
 			pumpfunCount: pumpfunPosts.length,
 			extraCount: extraPosts.length,
 		},
