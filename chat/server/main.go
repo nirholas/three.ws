@@ -18,24 +18,42 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/nirholas/server/guard"
 	"github.com/nirholas/server/toolfns"
 )
 
 var (
-	password  = flag.String("password", "", "Password for basic auth.")
+	password  = flag.String("password", "", "Password for auth. A random token is generated and printed when omitted.")
+	port      = flag.Int("port", 8081, "Port to listen on (loopback only).")
+	origins   = flag.String("origins", "", "Comma-separated extra web origins allowed by CORS (localhost and three.ws are always allowed).")
 	filesPath = flag.String("files", ".", "Path to the directory we're working with")
 )
 
 func main() {
 	flag.Parse()
 
+	if *password == "" {
+		token, err := guard.NewToken()
+		if err != nil {
+			log.Fatal(err)
+		}
+		*password = token
+		fmt.Println("No -password given. Generated token (enter it as the password in Settings):", token)
+	}
+	allowedOrigins := append([]string{}, guard.DefaultOrigins...)
+	for _, o := range strings.Split(*origins, ",") {
+		if o = strings.TrimSpace(o); o != "" {
+			allowedOrigins = append(allowedOrigins, o)
+		}
+	}
+
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders: []string{"*"},
+		AllowOriginFunc: func(_ *http.Request, origin string) bool { return guard.OriginAllowed(allowedOrigins, origin) },
+		AllowedMethods:  []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:  []string{"Authorization", "Content-Type"},
 	}))
-	r.Use(authMiddleware)
+	r.Use(guard.Auth(*password))
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
@@ -49,8 +67,9 @@ func main() {
 	r.Get("/read_file", ReadFile)
 	r.Post("/api/tts/google", TTSHandler)
 
-	fmt.Println("Tool server running at http://localhost:8081")
-	httpServer := &http.Server{Addr: ":8081", Handler: r}
+	addr := guard.LoopbackAddr(*port)
+	fmt.Println("Tool server running at http://" + addr)
+	httpServer := &http.Server{Addr: addr, Handler: r}
 	go func() {
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
@@ -109,16 +128,6 @@ func TTSHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(audio)
 }
 
-func authMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if *password != "" && r.Header.Get("Authorization") != ("Basic "+*password) {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -151,7 +160,7 @@ func (tr *ToolHandler) InvokeTool(w http.ResponseWriter, r *http.Request) {
 		Name   string         `json:"name"`
 		Args   map[string]any `json:"arguments"`
 	}
-	if err := json.NewDecoder(io.TeeReader(r.Body, os.Stdout)).Decode(&call); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&call); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": err.Error()})
 		return
 	}

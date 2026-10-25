@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/nirholas/server/guard"
 )
 
 // FileInfo represents information about a file or directory
@@ -79,10 +81,20 @@ func ListDirectory(w http.ResponseWriter, r *http.Request) {
 }
 
 func ReadFile(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Query().Get("path")
+	root, err := filepath.Abs(*filesPath)
+	if err != nil {
+		http.Error(w, "Failed to resolve served directory", http.StatusInternalServerError)
+		return
+	}
+	path, err := guard.Confine(root, r.URL.Query().Get("path"))
+	if err != nil {
+		http.Error(w, "Forbidden: "+err.Error(), http.StatusForbidden)
+		return
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		http.Error(w, "Failed to read file: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write(data)

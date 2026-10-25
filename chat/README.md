@@ -15,6 +15,15 @@ description, click Sync in the UI). The three.ws copy has diverged heavily: plat
 auth, wallets, forge tools, and the inline 3D viewer are all three.ws additions.
 This directory is covered by [LICENSE](LICENSE) (proprietary, copyright 2026 nirholas).
 
+### Running the tool server safely
+
+The tool server can run shell commands and edit files, so it is locked down by default:
+it listens on `127.0.0.1` only (`-port`, default 8081), requires the password on every
+request (`-password`; when omitted a random token is generated and printed at startup),
+allows browser calls only from `https://three.ws`, `localhost` and `127.0.0.1` (add more
+with `-origins https://example.com`), and `/read_file` only serves files inside `-files`.
+Enter the password or printed token in Settings, remote server, password.
+
 ## What it does
 
 - **Models**: a Built-in free lane (server-selected `:free` models via `POST /api/chat/proxy`,
