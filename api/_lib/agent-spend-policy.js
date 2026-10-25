@@ -75,7 +75,7 @@ export async function checkBuyAllowed({ agentId, meta, mint, solAmount }) {
 	if (blocked) return blocked;
 
 	const [{ spent_24h } = { spent_24h: 0 }] = await sql`
-		SELECT COALESCE(SUM((payload->>'solAmount')::numeric), 0) AS spent_24h
+		SELECT COALESCE(SUM(COALESCE((payload->>'solAmount')::numeric, (payload->>'amountSol')::numeric)), 0) AS spent_24h
 		FROM agent_actions
 		WHERE agent_id = ${agentId}
 			AND type = ANY(${SOL_OUTFLOW_TYPES})
@@ -126,7 +126,7 @@ export async function reserveSpend({ agentId, meta, mint, solAmount, type, paylo
 	// spend stays within the cap, so the check and the reservation are atomic.
 	const rows = await runLocked([agentId], sql`
 		WITH spent AS (
-			SELECT COALESCE(SUM((payload->>'solAmount')::numeric), 0) AS s
+			SELECT COALESCE(SUM(COALESCE((payload->>'solAmount')::numeric, (payload->>'amountSol')::numeric)), 0) AS s
 			FROM agent_actions
 			WHERE agent_id = ${agentId}
 				AND type = ANY(${SOL_OUTFLOW_TYPES})
