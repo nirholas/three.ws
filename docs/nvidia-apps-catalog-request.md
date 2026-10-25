@@ -14,6 +14,13 @@ The Inception portal has no "publish to the catalog" control. A product record m
   periodic catalog review, restored access to the co-branded asset benefit, supplied the
   technical-resource routes, and confirmed that the GTC Startup Pavilion is invite-only.
   The old 2026-09-25 no-response follow-up is cancelled.
+- **Reply sent:** 2026-10-25, in the same thread. It confirmed the portal product record was
+  updated to NVIDIA's stated criteria (saved 2026-10-25, see
+  [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md)) and re-asked the three
+  items NVIDIA left unanswered: a contact route for the ACE / Audio2Face-3D team, the
+  Inception Startup Showcase route and format, and the timing for the next GTC Startup
+  Pavilion conversation plus which other events carry startup slots. No further email is due
+  until NVIDIA answers.
 
 ## What the reply changed
 

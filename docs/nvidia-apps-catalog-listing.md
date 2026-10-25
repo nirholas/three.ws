@@ -6,7 +6,24 @@ Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview)
 
 ---
 
-## Status: the current portal record still needs its listing edit (2026-10-17)
+## Status: product record saved in the portal (2026-10-25), awaiting NVIDIA review
+
+On 2026-10-25 the owner saved the product record in Portal > Profile > Products exactly as
+specified in section 1 below. The portal confirmed `three.ws 3D AI Studio saved.` and the
+pasted form showed: name, `https://three.ws/forge`, Application, Shipping, GPU Accelerated,
+the 447-character description, the 820-character technical details, technologies used
+(cuBLAS, CUDA Python, CUDA Toolkit, cuDNN, Kaolin, Riva, Audio2Face), technologies
+considered (TensorRT, Triton Inference Server, Omniverse Kit), logo
+`three-ws-mark.png`, and brand color `0B0D0C`. The form did not offer NIM, nvdiffrast, L4,
+or RTX PRO 6000 as selectable technologies, so those are carried by the technical details
+text. The "Do not share" checkbox state was not visible in the pasted form; verify it is
+unchecked. The company workloads and industries page was confirmed without changes, so the
+company-profile alignment in section 2 is still open.
+
+The only remaining step is NVIDIA's periodic review. Check the public catalog monthly. The
+history below records the state before this save.
+
+### State before the 2026-10-25 save (2026-10-17 snapshot)
 
 The authenticated portal snapshot supplied on 2026-10-17 still shows the product row as
 `three.ws | Shipping | GPU Accelerated`, but the public catalog does not list three.ws. The
@@ -118,14 +135,14 @@ Every item NVIDIA named in its reply has one unambiguous value or source:
 
 | NVIDIA requirement | Value / source | State |
 |---|---|---|
-| Runtime NVIDIA technology | Riva, Audio2Face-3D, NIM/NVCF, CUDA libraries, Kaolin/nvdiffrast, NVIDIA L4 and RTX PRO 6000 | Shipping code and live demos; portal selections still need correction |
-| Development Stage | **Shipping** | Already shown on the product row; verify it remains saved |
-| Technologies currently used | Use the corrected list above | Owner saves in portal |
-| Technologies being considered | TensorRT, Triton Inference Server, Omniverse Kit | Owner saves in portal |
-| Product Description | Paste-ready block above | Ready |
-| Technical Details | Paste-ready block above | Ready |
-| Product logo | `public/brand/three-ws-mark.png` (898×1024 RGBA PNG) | Ready |
-| Brand color | `#0B0D0C` (the canonical dark wordmark color) | Ready |
+| Runtime NVIDIA technology | Riva, Audio2Face-3D, NIM/NVCF, CUDA libraries, Kaolin/nvdiffrast, NVIDIA L4 and RTX PRO 6000 | Shipping code and live demos; portal selections corrected 2026-10-25 |
+| Development Stage | **Shipping** | Saved 2026-10-25 |
+| Technologies currently used | Use the corrected list above | Saved 2026-10-25 |
+| Technologies being considered | TensorRT, Triton Inference Server, Omniverse Kit | Saved 2026-10-25 |
+| Product Description | Paste-ready block above | Saved 2026-10-25 |
+| Technical Details | Paste-ready block above | Saved 2026-10-25 |
+| Product logo | `public/brand/three-ws-mark.png` (898×1024 RGBA PNG) | Saved 2026-10-25 |
+| Brand color | `#0B0D0C` (the canonical dark wordmark color) | Saved 2026-10-25 |
 
 ### 2. Align the company profile
 
@@ -165,7 +182,9 @@ investor fields unless the underlying facts have changed.
 The portal has no "publish to catalog" button. The request in
 [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) was sent on **2026-09-04**,
 and NVIDIA replied on **2026-09-14**: qualifying, complete Shipping records are reviewed
-periodically. There is no further catalog email to send unless NVIDIA requests information.
+periodically. On **2026-10-25** a reply was sent in the same thread confirming the saved record
+and re-asking the unanswered Showcase, ACE, and Pavilion items. There is no further catalog
+email to send unless NVIDIA requests information.
 
 ---
 
