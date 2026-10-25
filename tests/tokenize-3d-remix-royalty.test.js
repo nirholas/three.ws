@@ -106,3 +106,34 @@ describe('settleTokenizeRemixRoyalty', () => {
 		expect(result.royalty_bps).toBeLessThan(9999);
 	});
 });
+
+describe('settleOrDeferRemixRoyalty', () => {
+	it('pays nothing until the registered post-settlement work runs', async () => {
+		const { settleOrDeferRemixRoyalty } = await import('../api/_lib/tokenize-3d.js');
+		const updates = [];
+		const sql = async (strings, ...values) => {
+			const text = strings.join('?');
+			if (text.includes('update tokenized_3d_assets')) updates.push(values);
+			return [{ mint: PARENT_MINT, royalty_bps: 1000, royalty_recipient: CREATOR_WALLET }];
+		};
+		const queued = [];
+		const pending = await settleOrDeferRemixRoyalty({
+			sql, rowId: 'row-1', parentMint: PARENT_MINT, network: 'devnet', feeAtomics: MINT_FEE_ATOMICS,
+			defer: (run) => queued.push(run),
+		});
+		expect(pending).toMatchObject({ paid: false, reason: 'pending_payment_settlement' });
+		expect(queued).toHaveLength(1);
+		expect(updates).toHaveLength(0);
+		await queued[0]();
+		expect(updates).toHaveLength(1);
+		expect(JSON.parse(updates[0][0]).reason).toBe('devnet_not_settled');
+	});
+
+	it('settles immediately when there is nothing to wait for', async () => {
+		const { settleOrDeferRemixRoyalty } = await import('../api/_lib/tokenize-3d.js');
+		const out = await settleOrDeferRemixRoyalty({
+			sql: fakeSqlReturning(null), rowId: 'row-2', parentMint: PARENT_MINT, network: 'devnet', feeAtomics: 0n,
+		});
+		expect(out.reason).toBe('devnet_not_settled');
+	});
+});
