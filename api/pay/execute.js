@@ -323,7 +323,9 @@ async function settlePayment({
 	const durationMs = Date.now() - t0;
 
 	if (paid.status === 402) {
-		await rollbackReservation(sessionRecord.id, amountAtomics, { railReservationId }).catch(() => {});
+		// The signed transfer was already handed to the host. A host that is also
+		// the fee payer can co-sign and broadcast it, then answer 402, so a 402
+		// is not proof nothing landed: the reservation stays spent.
 		await recordExecution({
 			sessionId: sessionRecord.id, userId: sessionRecord.user_id, endpointUrl: targetUrl, method,
 			amountAtomics, network: accept.network, txHash: null, payerAddress: payer, payeeAddress: accept.payTo,
@@ -332,7 +334,7 @@ async function settlePayment({
 		}).catch(() => {});
 		return {
 			ok: false, status: 402, code: 'payment_rejected',
-			message: 'Service rejected the payment before settlement. Budget has been restored.',
+			message: 'Service answered 402 after the signed payment was submitted. The budget stays reserved because the transfer may still land.',
 			detail: typeof paidJson === 'object' ? paidJson : null,
 		};
 	}

@@ -1286,7 +1286,7 @@ class CheckoutModal {
 		const decimals = accept.extra?.decimals ?? 6;
 		const amount = formatAmount(accept.amount, decimals);
 		const sym = assetSymbol(accept);
-		this.priceEl.innerHTML = `${amount}<span class="x402-currency"> ${sym}</span>`;
+		this.priceEl.innerHTML = `${amount}<span class="x402-currency"> ${escapeHtml(sym)}</span>`;
 		this.networkEl.textContent = networkLabel(accept.network, accept);
 	}
 
@@ -1387,7 +1387,7 @@ class CheckoutModal {
 				<button class="x402-wallet-btn" data-wallet="phantom" ${phantomDetected ? '' : 'disabled'}>
 					<div class="x402-wallet-icon x402-phantom">${solanaProvider?.isThreeWs ? '3' : 'P'}</div>
 					<span class="x402-wallet-name">${phantomDetected ? solanaWalletLabel(solanaProvider) : 'No Solana wallet detected'}</span>
-					<span class="x402-wallet-meta">${networkLabel(solanaAccept.network, solanaAccept)}</span>
+					<span class="x402-wallet-meta">${escapeHtml(networkLabel(solanaAccept.network, solanaAccept))}</span>
 				</button>
 			`);
 		}
@@ -1423,7 +1423,7 @@ class CheckoutModal {
 				<button class="x402-wallet-btn" data-wallet="evm" ${evmDetected ? '' : 'disabled'}>
 					<div class="x402-wallet-icon x402-metamask">M</div>
 					<span class="x402-wallet-name">${evmDetected ? 'Browser wallet' : 'No EVM wallet detected'}</span>
-					<span class="x402-wallet-meta">${networkLabel(evmAccept.network, evmAccept)}</span>
+					<span class="x402-wallet-meta">${escapeHtml(networkLabel(evmAccept.network, evmAccept))}</span>
 				</button>
 			`);
 		}
@@ -1650,7 +1650,7 @@ class CheckoutModal {
 					${
 						payment?.transaction
 							? `<div class="x402-receipt-row"><span class="x402-k">tx</span><span class="x402-v">${
-									explorer ? `<a href="${explorer}" target="_blank" rel="noopener">${txShort} ↗</a>` : txShort
+									explorer ? `<a href="${escapeHtml(explorer)}" target="_blank" rel="noopener">${escapeHtml(txShort)} ↗</a>` : escapeHtml(txShort)
 								}</span></div>`
 							: ''
 					}

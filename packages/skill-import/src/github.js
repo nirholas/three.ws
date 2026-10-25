@@ -62,6 +62,11 @@ export async function discoverGithubSource(input, { fetchUrl, githubToken } = {}
 		throw new GithubDiscoveryError(`GitHub repo lookup failed: ${repoRes.status} ${owner}/${repo}`);
 	}
 	const repoInfo = await repoRes.json();
+	// The platform token can read private repos, and the imported bundle is
+	// served without a session, so only public repos may be imported.
+	if (repoInfo.private !== false) {
+		throw new GithubDiscoveryError(`${owner}/${repo} is not a public repository`);
+	}
 	const branch = repoInfo.default_branch || 'main';
 
 	for (const candidate of SPEC_CANDIDATES) {
