@@ -16,7 +16,7 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from '../db.js';
 import { databaseConfigured } from '../env.js';
-import { objectStorageConfigured, putObject, publicUrl } from '../r2.js';
+import { objectStorageConfigured, putObject, cdnUrl, normalizeStoredUrl } from '../r2.js';
 import { recordDailyActivity, maybeAwardFirstCreation } from '../streaks.js';
 
 export function cadStoreEnabled() {
@@ -94,7 +94,7 @@ export async function uploadArtifacts(prefix, artifacts) {
 				contentType: type,
 				metadata: { source: 'cad-forge' },
 			});
-			urls[key] = publicUrl(objectKey);
+			urls[key] = cdnUrl(objectKey);
 		}),
 	);
 	return urls;
@@ -102,6 +102,15 @@ export async function uploadArtifacts(prefix, artifacts) {
 
 export function newDesignId() {
 	return randomUUID();
+}
+
+function normalizeFiles(files) {
+	if (!files || typeof files !== 'object') return files;
+	const out = {};
+	for (const [key, url] of Object.entries(files)) {
+		out[key] = typeof url === 'string' ? (normalizeStoredUrl(url) ?? url) : url;
+	}
+	return out;
 }
 
 function toDesign(row) {
@@ -115,7 +124,7 @@ function toDesign(row) {
 		code: row.code,
 		params: Array.isArray(row.params) ? row.params : [],
 		metrics: row.metrics,
-		files: row.files,
+		files: normalizeFiles(row.files),
 		adjustments: Array.isArray(row.adjustments) ? row.adjustments : [],
 		model: row.model || null,
 		views: Number(row.views) || 0,
@@ -180,7 +189,7 @@ export async function getLineage(id) {
 			order by created_at asc
 			limit 40
 		`;
-		const card = (r) => ({ id: r.id, title: r.title, prompt: r.prompt, thumb: r.thumb || null });
+		const card = (r) => ({ id: r.id, title: r.title, prompt: r.prompt, thumb: r.thumb ? (normalizeStoredUrl(r.thumb) ?? r.thumb) : null });
 		return {
 			parent: rows.filter((r) => r.rel === 'parent').map(card)[0] || null,
 			children: rows.filter((r) => r.rel === 'child').map(card),
@@ -220,7 +229,7 @@ export async function listDesigns({ limit = 24, q } = {}) {
 			title: r.title,
 			summary: r.summary || null,
 			prompt: r.prompt,
-			thumb: r.thumb || null,
+			thumb: r.thumb ? (normalizeStoredUrl(r.thumb) ?? r.thumb) : null,
 			sizeMm: Array.isArray(r.size_mm) ? r.size_mm : null,
 			views: Number(r.views) || 0,
 			createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,

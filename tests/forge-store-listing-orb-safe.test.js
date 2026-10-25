@@ -47,7 +47,7 @@ vi.mock('../api/_lib/r2.js', async (importOriginal) => {
 
 const {
 	listCreations, listCreationsByUser, listShowcase, listRecentCreations, listRemixable, listMostRemixed,
-	getPublicCreation, listRelated,
+	getPublicCreation, listRelated, getLineage,
 } = await import('../api/_lib/forge-store.js');
 const { publicUrl, cdnUrl } = await import('../api/_lib/r2.js');
 
@@ -150,6 +150,18 @@ describe('forge-store listing reads normalize legacy raw-domain URLs', () => {
 		const row = await getPublicCreation({ id: 'c7' });
 		expect(row.glb_url).toBe(cdnUrl('forge/client-1/legacy.glb'));
 		expect(row.web_glb_url).toBe(cdnUrl('forge/client-1/legacy.glb'));
+		expect(row.preview_image_url).toBe(cdnUrl('forge/thumb/legacy.png'));
+		expect(row.glb_url).not.toMatch(/r2\.dev/);
+	});
+
+	it('getLineage: glb_url, preview_image_url', async () => {
+		rows = [{
+			id: 'c9', parent_creation_id: null, prompt: 'x', refine_instruction: null,
+			lineage_index: 0, glb_url: LEGACY_GLB, preview_image_url: LEGACY_PREVIEW,
+			status: 'done', backend: 'trellis', created_at: new Date().toISOString(),
+		}];
+		const [row] = await getLineage({ rootCreationId: 'c9', clientKey: null });
+		expect(row.glb_url).toBe(cdnUrl('forge/client-1/legacy.glb'));
 		expect(row.preview_image_url).toBe(cdnUrl('forge/thumb/legacy.png'));
 		expect(row.glb_url).not.toMatch(/r2\.dev/);
 	});
