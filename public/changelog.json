@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-10-25T01:58:36.680Z",
+	"generated_at": "2026-10-25T02:17:38.533Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon",
+			"summary": "Six image spots on /gallery and /marketplace (the avatar grid thumbnail, the equip-avatar picker row, the live-sale ticker avatar, the animation marketplace listing card, the animation buy-modal preview, and a tool-detail icon) rendered a plain <img> with no fallback, so a 502 or missing thumbnail left the browser's default broken-image glyph on two of the highest-traffic pages in the product. All six now carry the same data-fallback attribute the site already uses elsewhere: card-style thumbnails swap to the existing placeholder box, small avatar icons just disappear instead. A seventh untagged image turned up in the gallery's forge-card renderer while verifying the other six and got the same fix.",
+			"link": "/gallery",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-25",
 			"type": "update",

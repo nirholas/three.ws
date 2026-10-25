@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-10-25:Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon</guid>
+			<pubDate>Sun, 25 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Six image spots on /gallery and /marketplace (the avatar grid thumbnail, the equip-avatar picker row, the live-sale ticker avatar, the animation marketplace listing card, the animation buy-modal preview, and a tool-detail icon) rendered a plain &lt;img&gt; with no fallback, so a 502 or missing thumbnail left the browser's default broken-image glyph on two of the highest-traffic pages in the product. All six now carry the same data-fallback attribute the site already uses elsewhere: card-style thumbnails swap to the existing placeholder box, small avatar icons just disappear instead. A seventh untagged image turned up in the gallery's forge-card renderer while verifying the other six and got the same fix.</description>
+		</item>
+		<item>
 			<title>GET /api/pump-bounties and its stats/detail routes serve last-known-good data instead of a 502</title>
 			<link>https://three.ws/bounties</link>
 			<guid isPermaLink="false">2026-10-25:GET /api/pump-bounties and its stats/detail routes serve last-known-good data instead of a 502</guid>

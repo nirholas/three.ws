@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-25",
+			"title": "Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon",
+			"summary": "Six image spots on /gallery and /marketplace (the avatar grid thumbnail, the equip-avatar picker row, the live-sale ticker avatar, the animation marketplace listing card, the animation buy-modal preview, and a tool-detail icon) rendered a plain <img> with no fallback, so a 502 or missing thumbnail left the browser's default broken-image glyph on two of the highest-traffic pages in the product. All six now carry the same data-fallback attribute the site already uses elsewhere: card-style thumbnails swap to the existing placeholder box, small avatar icons just disappear instead. A seventh untagged image turned up in the gallery's forge-card renderer while verifying the other six and got the same fix.",
+			"tags": [
+				"fix"
+			],
+			"link": "/gallery"
+		},
+		{
+			"date": "2026-10-25",
 			"title": "GET /api/pump-bounties and its stats/detail routes serve last-known-good data instead of a 502",
 			"summary": "pump.fun's Cloudflare anti-bot challenge has been rejecting livestream-api.pump.fun's bounty API for hours at a time, which left the bounty list, the aggregate stats, and individual bounty detail pages 502ing for every visitor even though the board itself had not changed. All three routes now go through the same last-known-good cache tier already proven on /api/portal and /api/crypto/bonding: a fresh answer is mirrored into a 24-hour backup, and that backup answers (flagged with an x-pump-stale header) instead of a 502 once the live fetch fails. A true miss, with nothing cached at all, still returns the original pump.fun error unchanged.",
 			"tags": [

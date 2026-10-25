@@ -986,7 +986,7 @@ function pulseItemHTML(sale) {
 	const amount = pulseAmountLabel(sale.amountAtomic, sale.currencyMint);
 	const when = liveTime(sale.confirmedAt);
 	const avatar = sale.agentImage
-		? `<img class="market-pulse-av" src="${escapeHtml(sale.agentImage)}" alt="" loading="lazy" decoding="async" />`
+		? `<img class="market-pulse-av" src="${escapeHtml(sale.agentImage)}" alt="" loading="lazy" decoding="async" data-fallback="hide" />`
 		: `<span class="market-pulse-av" aria-hidden="true">${escapeHtml(initial(sale.agentName))}</span>`;
 	const verb = sale.trial ? 'started a trial of' : 'unlocked';
 	const amtClass = sale.trial ? 'market-pulse-amt is-trial' : 'market-pulse-amt';
@@ -3810,7 +3810,7 @@ function renderCreatorListings() {
 		const dur = it.duration ? `${it.duration.toFixed(it.duration % 1 ? 1 : 0)}s` : '';
 		const typeLabel = it.loop !== false ? 'Loop' : 'Action';
 		const thumb = it.thumbnail_url
-			? `<img class="anim-listing-thumb" src="${escapeHtml(it.thumbnail_url)}" alt="" loading="lazy" />`
+			? `<img class="anim-listing-thumb" src="${escapeHtml(it.thumbnail_url)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="card-img-fallback" />`
 			: `<div class="anim-listing-thumb anim-listing-thumb-empty">🎬</div>`;
 		return `<article class="anim-listing-card" data-listing-id="${escapeHtml(it.id)}" tabindex="0" role="button" aria-label="${escapeHtml(it.name)} — ${priceLabel}">
 			<div class="anim-listing-media">
@@ -3964,7 +3964,7 @@ async function openAnimationPurchase(id) {
 			<button class="anim-buy-close" type="button" aria-label="Close">✕</button>
 			<div class="anim-buy-media">
 				${item.thumbnail_url
-					? `<img loading="lazy" decoding="async" src="${escapeHtml(item.thumbnail_url)}" alt="" />`
+					? `<img loading="lazy" decoding="async" src="${escapeHtml(item.thumbnail_url)}" alt="" data-fallback="element" data-fallback-class="card-img-fallback" />`
 					: `<div class="anim-buy-media-empty">🎬</div>`}
 				<span class="anim-listing-price ${item.free ? 'free' : 'paid'}">${escapeHtml(priceLabel)}</span>
 			</div>
@@ -8701,7 +8701,7 @@ function renderToolDetail(p) {
 	if (iconEl) {
 		const isUrl = avatarUrl && /^(https?:\/\/|\/)/.test(avatarUrl);
 		if (isUrl) {
-			iconEl.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="" loading="lazy" />`;
+			iconEl.innerHTML = `<img src="${escapeHtml(avatarUrl)}" alt="" loading="lazy" data-fallback="hide" />`;
 		} else {
 			iconEl.textContent = avatarUrl || (title || '?')[0].toUpperCase();
 		}

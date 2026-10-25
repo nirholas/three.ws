@@ -505,7 +505,7 @@ function renderCard(a) {
 				exposure="1"
 				poster="${escapeAttr(thumbSrc)}"
 			></model-viewer>`
-		: `<img src="${escapeAttr(thumbSrc)}" alt="${escapeAttr(altText)}" loading="lazy" decoding="async" />`;
+		: `<img src="${escapeAttr(thumbSrc)}" alt="${escapeAttr(altText)}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="card-img-fallback" />`;
 
 	const tagChips = (a.tags || [])
 		.slice(0, 3)
@@ -656,7 +656,7 @@ async function openEquipModal({ accessoryId, glbUrl, name, thumb }) {
 			row.href = editUrl;
 			row.className = 'equip-avatar-row';
 			row.innerHTML = `
-				<img class="equip-avatar-thumb" src="${escapeAttr(thumbSrc)}" alt="" loading="lazy" decoding="async" />
+				<img class="equip-avatar-thumb" src="${escapeAttr(thumbSrc)}" alt="" loading="lazy" decoding="async" data-fallback="hide" />
 				<span class="equip-avatar-name">${escapeHtml(av.name || 'Untitled')}</span>
 				<span class="equip-avatar-cta">Equip →</span>
 			`;
@@ -860,6 +860,8 @@ function renderForgeCard(c) {
 		img.alt = '';
 		img.loading = 'lazy';
 		img.decoding = 'async';
+		img.dataset.fallback = 'element';
+		img.dataset.fallbackClass = 'card-img-fallback';
 		thumb.appendChild(img);
 	} else {
 		// Gradient placeholder — deterministic color, centered cube icon
