@@ -61,7 +61,7 @@
     "bs58": "^6.0.0"
   },
   "peerDependencies": {
-    "zod": "^3.0.0"
+    "zod": "^4.6.7"
   },
   "peerDependenciesMeta": {
     "zod": {
@@ -76,7 +76,7 @@
     "ts-jest": "^29.4.9",
     "tsup": "^8.3.5",
     "typescript": "^5.7.3",
-    "zod": "^3.0.0"
+    "zod": "^4.6.7"
   },
   "publishConfig": {
     "access": "public"
