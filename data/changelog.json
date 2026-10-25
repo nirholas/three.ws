@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-25",
+			"title": "Image-to-3D Forge instances recycle before a VRAM leak crashes a job",
+			"summary": "The trellis lane's GPU worker already restarted itself between jobs once host memory ratcheted up, but had no equivalent check for GPU memory: a rasterizer dependency allocates outside torch's own memory pool, so an instance's usable VRAM only ever shrank, and the instance's own health check kept passing right up until a job crashed or Cloud Run killed it mid-generation. The worker now also tracks GPU memory after every job and restarts cleanly between jobs once it has ratcheted far enough, the same way the existing memory guard already does, so Forge image-to-3D jobs on this lane fail or stall less often.",
+			"tags": [
+				"fix"
+			],
+			"link": "/image-to-3d"
+		},
+		{
 			"date": "2026-10-24",
 			"title": "GET /api/pump/coin degrades to on-chain data plus first-party metadata instead of a bare 502",
 			"summary": "pump.fun's frontend API has stayed Cloudflare-blocked long enough to exhaust /api/pump/coin's 24-hour last-known-good cache for some mints, including $THREE's own, leaving a hard 502 with no partial data. The endpoint now adds a third tier: numeric and curve fields come from the same on-chain bonding-curve reader already live behind /api/pump/curve, and identity fields (name, symbol, creator) come from pump_agent_mints for any mint three.ws itself tracks. Responses on this tier carry an x-pump-degraded: onchain header; a true triple-miss (no cache, no on-chain data, no registry row) still returns an honest 502 naming pump.fun.",

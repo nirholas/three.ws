@@ -15,11 +15,14 @@ from pathlib import Path
 from instance_health import (
     HEARTBEAT_SECS,
     ORPHAN_AFTER_SECS,
+    VRAM_RECYCLE_FRACTION,
+    VRAM_RECYCLE_MIN_GROWTH,
     MemorySample,
     read_memory,
     should_recycle,
     task_is_orphaned,
     trim_heap,
+    vram_sample,
 )
 
 GIB = 1024 ** 3
@@ -103,6 +106,61 @@ def test_high_baseline_alone_never_recycles():
 def test_unknown_memory_never_recycles():
     assert not should_recycle(None, _at(0.40))
     assert not should_recycle(_at(0.95), None)
+
+
+# ---------------------------------------------------------------- vram_sample
+
+
+def test_vram_sample_shapes_mem_get_info_into_used_and_limit():
+    # torch.cuda.mem_get_info() returns (free_bytes, total_bytes).
+    sample = vram_sample(free_bytes=12 * GIB, total_bytes=24 * GIB)
+    assert sample == MemorySample(12 * GIB, 24 * GIB, "cuda")
+    assert abs(sample.fraction - 0.5) < 1e-9
+
+
+def test_vram_sample_with_no_device_is_unknown_not_an_error():
+    assert vram_sample(free_bytes=0, total_bytes=0) is None
+
+
+# ------------------------------------------------------------- should_recycle (VRAM)
+
+
+def _vram_at(fraction: float, total_bytes: int = 24 * GIB) -> MemorySample:
+    free = int((1 - fraction) * total_bytes)
+    return vram_sample(free_bytes=free, total_bytes=total_bytes)
+
+
+def test_recycles_a_ratcheted_vram_instance():
+    assert should_recycle(
+        _vram_at(0.95), _vram_at(0.70), VRAM_RECYCLE_FRACTION, VRAM_RECYCLE_MIN_GROWTH
+    )
+
+
+def test_leaves_a_healthy_vram_instance_alone():
+    assert not should_recycle(
+        _vram_at(0.80), _vram_at(0.70), VRAM_RECYCLE_FRACTION, VRAM_RECYCLE_MIN_GROWTH
+    )
+
+
+def test_high_vram_baseline_alone_never_recycles():
+    # A model that is simply large must not restart the instance after every
+    # single job just because its baseline already reads near the ceiling.
+    assert not should_recycle(
+        _vram_at(0.92), _vram_at(0.90), VRAM_RECYCLE_FRACTION, VRAM_RECYCLE_MIN_GROWTH
+    )
+
+
+def test_unknown_vram_never_recycles():
+    assert not should_recycle(None, _vram_at(0.40), VRAM_RECYCLE_FRACTION, VRAM_RECYCLE_MIN_GROWTH)
+    assert not should_recycle(_vram_at(0.95), None, VRAM_RECYCLE_FRACTION, VRAM_RECYCLE_MIN_GROWTH)
+
+
+def test_vram_threshold_is_tighter_than_host_memory():
+    # A VRAM OOM crashes the job outright with no graceful degradation, unlike
+    # host RAM pressure, so the ceiling this guard fires at is tighter.
+    from instance_health import RECYCLE_FRACTION
+
+    assert VRAM_RECYCLE_FRACTION > RECYCLE_FRACTION
 
 
 # ---------------------------------------------------------------- task_is_orphaned

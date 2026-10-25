@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-24T23:45:10.921Z",
+	"generated_at": "2026-10-25T01:03:00.076Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4192,
+	"total": 4193,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-25",
+			"type": "update",
+			"title": "Image-to-3D Forge instances recycle before a VRAM leak crashes a job",
+			"summary": "The trellis lane's GPU worker already restarted itself between jobs once host memory ratcheted up, but had no equivalent check for GPU memory: a rasterizer dependency allocates outside torch's own memory pool, so an instance's usable VRAM only ever shrank, and the instance's own health check kept passing right up until a job crashed or Cloud Run killed it mid-generation. The worker now also tracks GPU memory after every job and restarts cleanly between jobs once it has ratcheted far enough, the same way the existing memory guard already does, so Forge image-to-3D jobs on this lane fail or stall less often.",
+			"link": "/image-to-3d",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-24",
 			"type": "launch",
@@ -1551,17 +1561,6 @@
 			"tags": [
 				"feature",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-12",
-			"type": "update",
-			"title": "Companion presence: sustained mood, emoji-driven expression, an LLM gesture tool, active-listening nods, and real multi-language lip-sync",
-			"summary": "Agent avatars carry more of what makes a companion feel present. setMood(valence, arousal) sets a sustained resting bias (a soft smile or a worried brow that drifts in over about a second) on top of the existing per-utterance emotion blend, and a reply that is nothing but emoji (no English sentiment words at all) now drives a real expression change instead of staying neutral, because the built-in sentiment scorer reads emoji as direct valence/arousal signal. The LLM brain gets a general-purpose `gesture` tool covering all 19 body-language slots (nod, shake, shrug, bow, point, think, and the rest), so it can react physically mid-turn instead of only through a skill or an emotion threshold. While a real VAD/STT signal says the user is talking, the avatar nods on a fixed cadence to show it is listening, and stops the moment they stop. ElevenLabs text-to-speech now drives lip-sync from the provider's real per-character timestamps (any language the voice speaks), falling back to the energy-based analyser only if that call fails, so mouth shapes track what is actually being said instead of approximating it from amplitude alone.",
-			"link": "/docs/agent-system",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]

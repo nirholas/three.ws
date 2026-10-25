@@ -26,6 +26,10 @@ The fixes are split by what they guard against:
                        logs its footprint and the recycle guard has a number.
   should_recycle()     decides when an instance has ratcheted far enough that
                        it should restart BETWEEN jobs rather than die inside one.
+  vram_sample()        shapes a torch.cuda.mem_get_info() reading into the same
+                       shape, so should_recycle() also catches a VRAM leak that
+                       host memory can never see (main.py owns the torch call;
+                       see its own mem_get_info() comment, 2026-10-24).
   task_is_orphaned()   lets a heartbeat-refreshed record expire in minutes, not
                        half an hour, once its runner is gone.
 """
@@ -52,6 +56,15 @@ RECYCLE_FRACTION = float(os.environ.get("MEMORY_RECYCLE_FRACTION", "0.80"))
 # growth floor is what stops a mismeasured or simply large baseline from turning
 # into a restart after every single job.
 RECYCLE_MIN_GROWTH = float(os.environ.get("MEMORY_RECYCLE_MIN_GROWTH", "0.15"))
+
+# Same two-condition recycle rule, applied to GPU memory instead of host RAM.
+# Tighter than the host-RAM pair because a VRAM OOM has no graceful fallback (it
+# crashes the job outright), whereas host RAM pressure degrades first. See
+# vram_sample() below: nvdiffrast's rasterizer allocates through its own
+# cudaMalloc outside torch's caching allocator, so empty_cache() cannot reach
+# it and an instance's usable VRAM only ever ratchets down.
+VRAM_RECYCLE_FRACTION = float(os.environ.get("VRAM_RECYCLE_FRACTION", "0.90"))
+VRAM_RECYCLE_MIN_GROWTH = float(os.environ.get("VRAM_RECYCLE_MIN_GROWTH", "0.10"))
 
 _CGROUP_V2 = "/sys/fs/cgroup"
 _CGROUP_V1 = "/sys/fs/cgroup/memory"
@@ -156,6 +169,20 @@ def read_memory(
         if sample is not None and sample.limit_bytes > 0:
             return sample
     return None
+
+
+def vram_sample(free_bytes: int, total_bytes: int) -> Optional[MemorySample]:
+    """Shape a torch.cuda.mem_get_info() (free, total) pair into a MemorySample.
+
+    This module stays pure stdlib (no torch import), so the caller owns the
+    `torch.cuda.is_available()` guard and the `mem_get_info()` call itself and
+    passes in the two numbers it already has. Reuses MemorySample's shape
+    (used_bytes, limit_bytes, source) rather than a divergent VRAM type, so
+    should_recycle() applies unchanged.
+    """
+    if not total_bytes:
+        return None
+    return MemorySample(total_bytes - free_bytes, total_bytes, "cuda")
 
 
 def should_recycle(

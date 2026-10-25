@@ -110,11 +110,14 @@ from worker_security import (
 from storage_backend import LocalStorage
 from instance_health import (
     HEARTBEAT_SECS,
+    VRAM_RECYCLE_FRACTION,
+    VRAM_RECYCLE_MIN_GROWTH,
     MemorySample,
     read_memory,
     should_recycle,
     task_is_orphaned,
     trim_heap,
+    vram_sample,
 )
 
 logging.basicConfig(
@@ -190,6 +193,8 @@ _live_tasks: set[str] = set()
 # Memory held right after the model finished loading: the reference the recycle
 # guard measures growth against (see instance_health.should_recycle).
 _memory_baseline: Optional[MemorySample] = None
+# Same, for GPU memory. None on a CPU-only host, or if the device read fails.
+_vram_baseline: Optional[MemorySample] = None
 # Set once this instance has decided to restart between jobs; /infer then refuses
 # new work with a 503 so the caller fails over instead of queueing behind it.
 _draining = False
@@ -278,8 +283,21 @@ def _pin_dinov2_to_local_checkout() -> bool:
     return True
 
 
+def _read_vram() -> Optional[MemorySample]:
+    """Current GPU memory held by this instance, or None off a CPU-only host.
+
+    The only place this module calls torch.cuda.mem_get_info(); every caller
+    (load-time baseline, post-job recycle check) goes through here so the
+    is_available() guard lives in exactly one spot.
+    """
+    if not torch.cuda.is_available():
+        return None
+    free_bytes, total_bytes = torch.cuda.mem_get_info()
+    return vram_sample(free_bytes, total_bytes)
+
+
 def _load_pipeline():
-    global _pipeline, _memory_baseline
+    global _pipeline, _memory_baseline, _vram_baseline
     from trellis.pipelines import TrellisImageTo3DPipeline
 
     weights_path = _stage_weights_local() or WEIGHTS_DIR
@@ -294,6 +312,9 @@ def _load_pipeline():
     _memory_baseline = read_memory()
     if _memory_baseline is not None:
         log.info("memory after load: %s", _memory_baseline.describe())
+    _vram_baseline = _read_vram()
+    if _vram_baseline is not None:
+        log.info("vram after load: %s", _vram_baseline.describe())
 
 
 def _release_staged_weights() -> None:
@@ -639,13 +660,21 @@ async def _run_inference(task_id: str, *args, **kwargs) -> None:
 
 
 def _recycle_if_bloated(task_id: str) -> None:
-    """Restart an idle instance whose memory has ratcheted toward its ceiling.
+    """Restart an idle instance whose memory or VRAM has ratcheted toward its ceiling.
 
     Even with the heap trimmed after every job, the native libraries in the
     postprocess (xatlas, nvdiffrast, open3d) keep some of what they allocate,
     and this instance can only ever have 32 GiB. Letting it run until a job
     tips it over is what used to happen: the OOM kill took that job and the one
     queued behind it. Restarting while idle costs one model load instead.
+
+    The same is true of GPU memory, and independently of host RAM:
+    nvdiffrast's rasterizer allocates through its own cudaMalloc outside
+    torch's caching allocator (see _release_gpu_memory's comment), so VRAM
+    only ever ratchets down even though host RAM can look perfectly healthy.
+    Left unchecked, the instance's own /health liveness probe eventually
+    times out mid-inference and Cloud Run kills it, instead of a clean
+    restart between jobs.
 
     Once it decides, the instance drains: /infer refuses new work with a 503 so
     the caller fails over, jobs already queued here still run, and the restart
@@ -658,14 +687,25 @@ def _recycle_if_bloated(task_id: str) -> None:
     sample = read_memory()
     if sample is not None:
         log.info("[%s] memory after job: %s", task_id, sample.describe())
+    vram = _read_vram()
+    if vram is not None:
+        log.info("[%s] vram after job: %s", task_id, vram.describe())
     if not _draining:
-        if not should_recycle(sample, _memory_baseline):
+        ram_bloated = should_recycle(sample, _memory_baseline)
+        vram_bloated = should_recycle(
+            vram, _vram_baseline, VRAM_RECYCLE_FRACTION, VRAM_RECYCLE_MIN_GROWTH
+        )
+        if not (ram_bloated or vram_bloated):
             return
         _draining = True
         log.warning(
-            "recycling instance: memory %s, up from %s after load; draining %d queued job(s) first",
-            sample.describe(),
+            "recycling instance (%s bloated): memory %s, up from %s after load; "
+            "vram %s, up from %s after load; draining %d queued job(s) first",
+            "ram" if ram_bloated else "vram",
+            sample.describe() if sample else "unknown",
             _memory_baseline.describe() if _memory_baseline else "unknown",
+            vram.describe() if vram else "unknown",
+            _vram_baseline.describe() if _vram_baseline else "unknown",
             len(_live_tasks),
         )
     if _live_tasks or _restart_signalled:
