@@ -47,9 +47,7 @@ function msg(type, data = {}) {
 }
 
 function openLogin() {
-	chrome.tabs.create({
-		url: `${THREEWS}/login?next=${encodeURIComponent('/extension/auth-callback')}`,
-	});
+	chrome.runtime.sendMessage({ type: 'begin-signin' }).catch(() => {});
 }
 
 function thumbUrl(av) {

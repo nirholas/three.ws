@@ -95,6 +95,13 @@
 			// background worker is reading it from this very URL — just confirm
 			// success and stop. (Prevents a re-mint/redirect loop.)
 			var params = new URLSearchParams(location.search);
+			var state = params.get('state') || '';
+			// Keep the extension's one-time state across a sign-in round trip.
+			var loginNext = encodeURIComponent('/extension/auth-callback' +
+				(state ? '?state=' + encodeURIComponent(state) : ''));
+			Array.prototype.forEach.call(document.querySelectorAll('a[href^="/login"]'), function (a) {
+				a.setAttribute('href', '/login?next=' + loginNext);
+			});
 			if (params.get('token')) {
 				show('success');
 				// Best-effort auto-close once the background worker has captured it.
@@ -119,7 +126,8 @@
 					if (!data || !data.token) throw new Error('No token returned');
 					// Hand the token to the extension's background worker by putting
 					// it in the URL it is watching, then re-render as success.
-					location.replace('/extension/auth-callback?token=' + encodeURIComponent(data.token));
+					location.replace('/extension/auth-callback?token=' + encodeURIComponent(data.token) +
+						'&state=' + encodeURIComponent(state));
 				} catch (e) {
 					$('error-msg').textContent = (e && e.message)
 						? ('Something went wrong: ' + e.message)

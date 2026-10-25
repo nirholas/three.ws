@@ -9,6 +9,7 @@
 //   • Enforce the site allow/blocklist before an avatar is ever mounted.
 
 const THREEWS_ORIGIN = 'https://three.ws';
+const AUTH_STATE_KEY = 'auth_pending_state';
 
 // Defaults are written on install and used as the merge base everywhere the UI
 // reads settings, so a missing key never produces `undefined` downstream.
@@ -89,6 +90,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 						getSettings(),
 					]);
 					sendResponse({ session: local.threews_session || null, settings });
+					break;
+				}
+
+				case 'begin-signin': {
+					const bytes = crypto.getRandomValues(new Uint8Array(24));
+					const state = btoa(String.fromCharCode(...bytes))
+						.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+					await chrome.storage.session.set({ [AUTH_STATE_KEY]: state });
+					const next = `/extension/auth-callback?state=${state}`;
+					await chrome.tabs.create({
+						url: `${THREEWS_ORIGIN}/login?next=${encodeURIComponent(next)}`,
+					});
+					sendResponse({ ok: true });
 					break;
 				}
 
@@ -215,7 +229,8 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 // ── Auth callback capture ─────────────────────────────────────────────────────
-// The popup opens three.ws/login?next=/extension/auth-callback. After a
+// The popup asks us to 'begin-signin', which opens three.ws/login with
+// next=/extension/auth-callback?state=<one-time nonce>. After a
 // successful sign-in the site lands on /extension/auth-callback, which mints a
 // Bearer token (POST /api/auth/extension-token) and redirects to
 // /extension/auth-callback?token=<token>. We read the token out of that tab's
@@ -226,16 +241,25 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 	if (!tab.url.startsWith(THREEWS_ORIGIN + '/extension/auth-callback')) return;
 
 	let token = null;
+	let state = null;
 	try {
 		const u = new URL(tab.url);
 		token = u.searchParams.get('token') || u.hash.replace(/^#token=/, '') || null;
+		state = u.searchParams.get('state');
 	} catch {
 		token = null;
 	}
-	if (!token) return;
+	if (!token || !state) return;
 
-	chrome.storage.local.set({ threews_session: token }).then(() => {
+	// Accept the token only for a sign-in this extension started: the state must
+	// match the one-time value minted by 'begin-signin', and it is consumed here
+	// so a replayed or attacker-supplied callback URL cannot swap the session.
+	chrome.storage.session.get(AUTH_STATE_KEY).then(async (stored) => {
+		const expected = stored[AUTH_STATE_KEY];
+		if (!expected || expected !== state) return;
+		await chrome.storage.session.remove(AUTH_STATE_KEY);
+		await chrome.storage.local.set({ threews_session: token });
 		chrome.runtime.sendMessage({ type: 'session-updated', token }).catch(() => {});
 		chrome.tabs.remove(tabId).catch(() => {});
-	});
+	}).catch(() => {});
 });

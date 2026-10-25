@@ -44,9 +44,7 @@ async function apiFetch(path) {
 }
 
 function openLogin() {
-	chrome.tabs.create({
-		url: `${THREEWS}/login?next=${encodeURIComponent('/extension/auth-callback')}`,
-	});
+	chrome.runtime.sendMessage({ type: 'begin-signin' }).catch(() => {});
 }
 
 // ── Toast ──────────────────────────────────────────────────────────────────────
