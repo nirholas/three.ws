@@ -58,7 +58,7 @@
 		"zod": "^4.6.7",
 		"nanoid@^2": "^3.3.20",
 		"uuid@^10": "^11.1.1",
-		"fast-xml-parser@^4": "^5.11.2",
+		"fast-xml-parser": "^5.11.2",
 		"decode-uri-component": "^0.5.1"
 	},
 	"engines": {
@@ -599,7 +599,6 @@
 		"rescan:skills": "node --env-file=.env.local scripts/rescan-marketplace-skills.mjs"
 	},
 	"dependencies": {
-		"8004-solana": "^0.8.5",
 		"@0xsplits/splits-sdk": "^6.6.0",
 		"@ai-sdk/anthropic": "^4.0.53",
 		"@ai-sdk/openai": "^4.0.96",
@@ -681,7 +680,7 @@
 		"@three-ws/skill-import": "*",
 		"@three-ws/solana-agent": "file:solana-agent-sdk",
 		"@upstash/qstash": "^2.12.0",
-		"@upstash/ratelimit": "^2.2.0",
+		"@upstash/ratelimit": "2.0.8",
 		"@upstash/redis": "^1.39.0",
 		"@vercel/og": "^0.11.1",
 		"@wallet-standard/app": "^1.1.1",
@@ -693,6 +692,7 @@
 		"@x402/mcp": "^2.14.0",
 		"@x402/svm": "^2.28.0",
 		"@zauthx402/sdk": "^0.1.14",
+		"8004-solana": "^0.8.5",
 		"acorn": "^8.19.0",
 		"agent0-sdk": "^1.5.3",
 		"ai": "^7.0.101",
