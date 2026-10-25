@@ -5,7 +5,11 @@
 // mainnet transactions and logs, with the transaction signatures kept so any
 // claim below can be re-checked against the chain itself.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+const sqlMock = vi.fn();
+vi.mock('../api/_lib/db.js', () => ({ sql: (...a) => sqlMock(...a) }));
+
 import {
 	agentTokenMintOf,
 	classifyAgentTx,
@@ -43,6 +47,7 @@ import {
 	isPrunedHistoryRejection,
 	catchUpCandidates,
 	rank,
+	erc8004CrawlChain,
 } from '../api/cron/[name].js';
 import { splitCapabilities } from '../api/explore-item.js';
 import { decodeReputationLog } from '../api/_lib/erc8004-reputation-events.js';
@@ -512,6 +517,88 @@ describe('isRangeRejection', () => {
 		expect(
 			isRangeRejection('RPC -32602: query exceeds max results 20000, retry with the range 52932450-52933133'),
 		).toBe(true);
+	});
+});
+
+describe('erc8004CrawlChain: shrink loop has a time bound', () => {
+	// A hand-cranked clock, not a timer, matching the pattern in drainWithBudget's
+	// tests below: the budget case has to be exact and must not race on a loaded
+	// machine. Every eth_getLogs call is range-rejected (Base's verbatim -32602
+	// wording, measured on erc8004_crawl_cursor.last_error on 2026-10-22), so the
+	// loop keeps halving chunkSize forever unless something stops it on time.
+	const clockFrom = (ticks) => {
+		let i = 0;
+		return () => ticks[Math.min(i++, ticks.length - 1)];
+	};
+
+	const BASE_CHAIN = {
+		id: 8453,
+		name: 'Base',
+		registry: '0x1111111111111111111111111111111111111111',
+		testnet: false,
+		rpcUrls: ['http://fake-base-rpc.test'],
+		blockChunk: 8000,
+	};
+
+	// Stored cursor is 1,000 blocks behind head, chunk_size at the configured
+	// max: the same shape as Base's live frozen row from task 1.
+	const STORED_LAST_BLOCK = 52932449;
+	const LATEST_BLOCK = 52933449;
+
+	function mockSqlAndFetch() {
+		const sqlCalls = [];
+		sqlMock.mockReset();
+		sqlMock.mockImplementation((strings, ...values) => {
+			const text = strings.join('?');
+			sqlCalls.push({ text, values });
+			if (text.includes('SELECT last_block')) {
+				return Promise.resolve([{ last_block: STORED_LAST_BLOCK, chunk_size: 8000 }]);
+			}
+			return Promise.resolve([]);
+		});
+
+		const fetchCalls = [];
+		const origFetch = global.fetch;
+		global.fetch = vi.fn(async (_url, opts) => {
+			const body = JSON.parse(opts.body);
+			fetchCalls.push(body.method);
+			if (body.method === 'eth_blockNumber') {
+				return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: '0x' + LATEST_BLOCK.toString(16) }));
+			}
+			if (body.method === 'eth_getLogs') {
+				// Verbatim from erc8004_crawl_cursor.last_error on chain 8453, 2026-10-22.
+				return new Response(
+					JSON.stringify({
+						jsonrpc: '2.0',
+						id: 1,
+						error: { code: -32602, message: 'query exceeds max results 20000, retry with the range 52932450-52933133' },
+					}),
+				);
+			}
+			throw new Error('unexpected RPC method in test: ' + body.method);
+		});
+
+		return { sqlCalls, fetchCalls, restoreFetch: () => { global.fetch = origFetch; } };
+	}
+
+	it('checkpoints within the budget instead of running unbounded to the floor', async () => {
+		// Clock: 0 at loopStart, 0 on the first two per-iteration checks (so two
+		// shrink attempts run: 8000 -> 4000 -> 2000), then past the 60s budget on
+		// the third check, before a ninth attempt or any further halving happens.
+		const { sqlCalls, fetchCalls, restoreFetch } = mockSqlAndFetch();
+		try {
+			const result = await erc8004CrawlChain(BASE_CHAIN, { now: clockFrom([0, 0, 0, 70_000]) });
+			expect(fetchCalls.filter((m) => m === 'eth_getLogs').length).toBe(2);
+			expect(result.loopBudgetExceeded).toBe(true);
+			expect(result.chunkSize).toBe(2000);
+			expect(result.lastBlock).toBe(STORED_LAST_BLOCK);
+			expect(result.blocksBehind).toBe(LATEST_BLOCK - (STORED_LAST_BLOCK + 1) + 1);
+			expect(sqlCalls).toHaveLength(2); // cursor SELECT, then the budget-exceeded write
+			expect(sqlCalls.at(-1).values).toContain(2000);
+			expect(sqlCalls.at(-1).values.some((v) => String(v).includes('shrink loop exceeded'))).toBe(true);
+		} finally {
+			restoreFetch();
+		}
 	});
 });
 

@@ -464,6 +464,15 @@ const ERC8004_BLOCKTIME_CONCURRENCY = 8;
 // moment a provider says no, so no chain needs its limit hardcoded here.
 const ERC8004_MAX_BLOCK_CHUNK = 8_000;
 const ERC8004_MIN_BLOCK_CHUNK = 100;
+// Ceiling on how long erc8004CrawlChain's shrink-retry loop may run for ONE
+// chain before it must checkpoint. Comfortably under CRAWL_BUDGET_MS (240s) so
+// a single stuck chain can never consume the whole tick, and short enough that
+// an external request timeout around this cron cannot kill the process before
+// a write happens. Measured 2026-10-25: Base's cursor sat frozen for 2+ days
+// because this loop had no time bound at all, only the backoffChunkSize fixed
+// point at the floor, which a slow or rejecting lane could take minutes to
+// reach, with nothing written until it did.
+const ERC8004_CHAIN_BUDGET_MS = 60_000;
 // Range rejections name the range rather than a stable error code, and every
 // provider words it differently.
 //
@@ -552,7 +561,7 @@ function clampChunk(n, floor) {
 	return Math.max(floor, Math.min(ERC8004_MAX_BLOCK_CHUNK, Math.trunc(n)));
 }
 
-async function erc8004CrawlChain(chain) {
+export async function erc8004CrawlChain(chain, { now = Date.now } = {}) {
 	const [cursor] = await sql`
 		SELECT last_block, chunk_size FROM erc8004_crawl_cursor WHERE chain_id = ${chain.id}
 	`;
@@ -589,7 +598,35 @@ async function erc8004CrawlChain(chain) {
 	// scanned=0 across four consecutive ticks while their backlogs grew.
 	let narrowedFrom = null;
 	let prunedSkip = null;
+	const loopStart = now();
 	for (;;) {
+		if (now() - loopStart > ERC8004_CHAIN_BUDGET_MS) {
+			// The shrink loop has run long enough that something downstream (a slow
+			// or rate-limited lane, a dense block range needing many halvings) is
+			// costing more wall-clock time than this chain may safely hold the tick
+			// hostage for. Persist whatever progress exists so the NEXT tick resumes
+			// from here instead of silently retrying the exact same blocks forever.
+			await sql`
+				INSERT INTO erc8004_crawl_cursor (chain_id, last_block, updated_at, head_block, blocks_behind, chunk_size, last_error)
+				VALUES (${chain.id}, ${Math.max(0, fromBlock - 1)}, now(), ${latestBlock},
+				        ${Math.max(0, latestBlock - fromBlock + 1)}, ${chunkSize}, ${'shrink loop exceeded ' + ERC8004_CHAIN_BUDGET_MS + 'ms budget at chunk ' + chunkSize})
+				ON CONFLICT (chain_id) DO UPDATE SET
+					updated_at    = now(),
+					head_block    = excluded.head_block,
+					blocks_behind = excluded.blocks_behind,
+					chunk_size    = excluded.chunk_size,
+					last_error    = excluded.last_error
+			`;
+			return {
+				inserted: 0,
+				scanned: 0,
+				lastBlock: fromBlock - 1,
+				fromBlock,
+				blocksBehind: Math.max(0, latestBlock - fromBlock + 1),
+				chunkSize,
+				loopBudgetExceeded: true,
+			};
+		}
 		toBlock = Math.min(fromBlock + chunkSize - 1, latestBlock);
 		const range = {
 			fromBlock: '0x' + fromBlock.toString(16),
