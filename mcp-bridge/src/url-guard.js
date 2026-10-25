@@ -18,6 +18,9 @@
 // No external dependency: the CIDR checks parse octets / IPv6 hextets directly.
 
 import { promises as dns } from 'node:dns';
+import dnsCb from 'node:dns';
+import http from 'node:http';
+import https from 'node:https';
 import net from 'node:net';
 
 const DEFAULT_MAX_PRICE_ATOMIC = 100_000n; // $0.10 USDC
@@ -264,4 +267,37 @@ export async function assertPayableUrl(rawUrl) {
 
 function stripBrackets(host) {
 	return host.startsWith('[') && host.endsWith(']') ? host.slice(1, -1) : host;
+}
+
+/**
+ * dns.lookup replacement for http(s) agents. assertPayableUrl resolves once to
+ * validate, but the HTTP client resolves again at connect time, so a rebinding
+ * DNS server could answer public first and an internal address second. This
+ * lookup re-checks every address at the moment the socket is opened, and the
+ * connection is made to the very address that passed the check.
+ */
+export function guardedLookup(hostname, options, callback) {
+	const opts = typeof options === 'function' ? {} : options || {};
+	const cb = typeof options === 'function' ? options : callback;
+	dnsCb.lookup(hostname, { ...opts, all: true }, (err, records) => {
+		if (err) return cb(err);
+		const bad = (records || []).find(({ address }) => isBlockedAddress(address));
+		if (!records || records.length === 0 || bad) {
+			const e = new Error(
+				`refused: "${hostname}" resolves to a private/blocked address${bad ? ` (${bad.address})` : ''}`,
+			);
+			e.code = 'ESSRF_BLOCKED';
+			return cb(e);
+		}
+		if (opts.all) return cb(null, records);
+		return cb(null, records[0].address, records[0].family);
+	});
+}
+
+// Agents whose connect-time DNS resolution is subject to the same range check.
+export function createGuardedAgents() {
+	return {
+		httpAgent: new http.Agent({ lookup: guardedLookup }),
+		httpsAgent: new https.Agent({ lookup: guardedLookup }),
+	};
 }

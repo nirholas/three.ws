@@ -29,6 +29,7 @@
 // amount per channel under `~/.x402-mcp-bridge/channels/client/`. Restart-safe.
 
 import axios from 'axios';
+import { createGuardedAgents } from './url-guard.js';
 import { x402Client, x402HTTPClient } from '@x402/core/client';
 import { wrapAxiosWithPayment } from '@x402/axios';
 import { ExactEvmScheme } from '@x402/evm/exact/client';
@@ -192,6 +193,8 @@ export async function buildBuyerAxios() {
 			// (169.254.169.254, localhost, RFC1918) that bypasses that check. With
 			// maxRedirects:0 a 3xx surfaces as an error instead of being chased.
 			maxRedirects: 0,
+			// SSRF: re-validate DNS answers at connect time (rebinding TOCTOU).
+			...createGuardedAgents(),
 		}),
 		client,
 	);

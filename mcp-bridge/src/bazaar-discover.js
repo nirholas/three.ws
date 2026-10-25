@@ -21,7 +21,7 @@
 
 import axios from 'axios';
 
-import { assertPayableUrl, maxPriceAtomic } from './url-guard.js';
+import { assertPayableUrl, createGuardedAgents, maxPriceAtomic } from './url-guard.js';
 
 const DEFAULT_LIMIT = 20;
 const DEFAULT_BAZAAR_URL = 'https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources';
@@ -125,6 +125,7 @@ export async function fetchBazaarResources({ url = bazaarUrl(), limit = discover
 		timeout: 15_000,
 		validateStatus: (s) => s >= 200 && s < 300,
 		maxRedirects: 0,
+		...createGuardedAgents(),
 	});
 	const items = Array.isArray(res.data?.items) ? res.data.items : [];
 	return items;
