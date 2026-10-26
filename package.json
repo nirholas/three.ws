@@ -673,7 +673,7 @@
 		"@solana/wallet-standard-features": "^1.5.0",
 		"@solana/web3.js": "^1.99.0",
 		"@sparkjsdev/spark": "^2.3.1",
-		"@sparticuz/chromium-min": "^148.0.0",
+		"@sparticuz/chromium-min": "^153.0.0",
 		"@tetsuo-ai/protocol": "^0.2.0",
 		"@tetsuo-ai/sdk": "^1.4.0",
 		"@three-ws/companion": "*",
