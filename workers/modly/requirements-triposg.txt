@@ -23,7 +23,7 @@ trimesh==4.5.3
 pymeshlab==2023.12.post2
 scikit-image==0.24.0
 opencv-python-headless==4.10.0.84
-rembg==2.0.59
+rembg==2.0.82
 onnxruntime-gpu==1.20.0
 # diso builds with --no-build-isolation, so its build-time imports and the
 # CMake it drives live here.
