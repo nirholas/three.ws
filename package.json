@@ -683,7 +683,7 @@
 		"@upstash/qstash": "^2.12.0",
 		"@upstash/ratelimit": "2.0.8",
 		"@upstash/redis": "^1.39.0",
-		"@vercel/og": "^0.11.1",
+		"@vercel/og": "^1.0.3",
 		"@wallet-standard/app": "^1.1.1",
 		"@walletconnect/ethereum-provider": "^2.24.0",
 		"@x402/axios": "^2.26.0",
