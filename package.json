@@ -783,7 +783,7 @@
 		"adaptive-expressions": "^4.23.3",
 		"adaptivecards-templating": "^2.3.1",
 		"cspell-lib": "^10.4.0",
-		"dotenv": "^17.4.2",
+		"dotenv": "^18.0.9",
 		"es-module-lexer": "^3.0.2",
 		"fbx2gltf": "^0.9.7-p1",
 		"ffmpeg-static": "^5.3.0",
