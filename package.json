@@ -743,7 +743,7 @@
 		"multiformats": "^14.0.5",
 		"nanoid": "^6.0.2",
 		"nipplejs": "^1.0.4",
-		"node-html-parser": "^7.1.0",
+		"node-html-parser": "^9.0.5",
 		"node-ical": "^0.27.3",
 		"onnxruntime-web": "^1.30.0",
 		"p-limit": "^7.3.2",
