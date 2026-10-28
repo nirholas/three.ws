@@ -699,7 +699,7 @@
 		"ai": "^7.0.101",
 		"ajv": "^8.20.0",
 		"ajv-formats": "^3.0.1",
-		"altcha-lib": "^2.2.0",
+		"altcha-lib": "^2.8.0",
 		"axios": "^1.20.0",
 		"bcryptjs": "^3.0.3",
 		"bignumber.js": "^11.1.5",
