@@ -647,7 +647,7 @@
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@neondatabase/serverless": "^1.1.0",
 		"@neynar/nodejs-sdk": "^3.177.0",
-		"@nirholas/pump-sdk": "^1.0.0",
+		"@nirholas/pump-sdk": "^3.0.0",
 		"@noble/curves": "^2.2.0",
 		"@noble/hashes": "^1.8.0",
 		"@node-saml/node-saml": "^5.1.0",

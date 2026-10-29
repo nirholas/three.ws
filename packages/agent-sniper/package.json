@@ -58,7 +58,7 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@nirholas/pump-sdk": "^1.30.0",
+		"@nirholas/pump-sdk": "^3.0.0",
 		"@pump-fun/pump-sdk": "^4.2.0",
 		"@pump-fun/pump-swap-sdk": "^2.2.0",
 		"@solana/spl-token": "^0.4.14",
