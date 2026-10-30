@@ -79,18 +79,18 @@
     }
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/ws": "^8.18.0",
-    "better-sqlite3": "^12.0.0",
+    "better-sqlite3": "^13.0.3",
     "hoodchain": "file:../robinhood-chain-sdk",
     "react": "^19.0.0",
-    "tsup": "^8.5.0",
+    "tsup": "^9.0.0",
     "typedoc": "^0.28.0",
-    "typescript": "^5.9.0",
+    "typescript": "^6.0.3",
     "viem": "^2.55.0",
-    "vitest": "^4.1.12",
+    "vitest": "^5.0.5",
     "ws": "^8.18.0"
   }
 }

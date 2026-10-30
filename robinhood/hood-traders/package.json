@@ -24,7 +24,7 @@
   },
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -58,18 +58,18 @@
     "capture-session": "node scripts/capture-session.mjs"
   },
   "dependencies": {
-    "better-sqlite3": "^11.8.0",
+    "better-sqlite3": "^13.0.3",
     "hoodchain": "^0.1.1",
     "viem": "^2.55.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.0.0",
     "@types/ws": "^8.18.0",
-    "tsup": "^8.5.0",
+    "tsup": "^9.0.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.9.0",
-    "vitest": "^4.1.12"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
   }
 }

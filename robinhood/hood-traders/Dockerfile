@@ -6,7 +6,7 @@
 #   docker build -t hood-traders .
 #   docker compose up --build
 
-FROM node:20-slim AS build
+FROM node:22-slim AS build
 WORKDIR /app
 
 # better-sqlite3 needs a C++ toolchain to compile its native addon.
@@ -19,7 +19,7 @@ COPY tsconfig.json tsup.config.ts ./
 COPY src ./src
 RUN npm run build
 
-FROM node:20-slim AS runtime
+FROM node:22-slim AS runtime
 ENV NODE_ENV=production
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \

@@ -5,7 +5,7 @@
   "description": "Status page for Robinhood Chain (chain ID 4663): probe worker + static front end. Live RPC, sequencer feed, block production, gas, Chainlink feed freshness, settlement lag, Blockscout availability, 90-day uptime history and incident timeline.",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "start": "node worker/src/index.js",
@@ -16,10 +16,10 @@
   "author": "nirholas (https://x.com/nichxbt)",
   "license": "Apache-2.0",
   "dependencies": {
-    "better-sqlite3": "^12.2.0",
+    "better-sqlite3": "^13.0.3",
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "vitest": "^4.1.12"
+    "vitest": "^5.0.5"
   }
 }
