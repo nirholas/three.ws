@@ -6,7 +6,10 @@
 //   2. Generate a Solana Pay reference key.
 //   3. Build + sign + send a transferChecked instruction with the reference
 //      key appended (the on-chain pattern @solana/pay's findReference uses).
-//   4. Locate the tx via findReference, then validate via validateTransfer.
+//   4. Locate the tx via findReference, then validate via validateTransfer,
+//      both through the production adapter (api/_lib/solana/solana-pay-verify.js)
+//      on the platform's devnet lanes (SOLANA_RPC_URL_DEVNET, then the public
+//      devnet endpoint).
 //
 // Skipped by default — devnet airdrops are flaky and rate-limited. Enable:
 //   SKILL_PURCHASE_DEVNET_SMOKE=1 npx vitest run tests/api/skill-purchase.smoke.test.js
@@ -29,8 +32,8 @@ import {
 	getAssociatedTokenAddressSync,
 	getMint,
 } from '@solana/spl-token';
-import { findReference, validateTransfer } from '@solana/pay';
 import BigNumber from 'bignumber.js';
+import { findReference, validateTransfer } from '../../api/_lib/solana/solana-pay-verify.js';
 
 const ENABLED = process.env.SKILL_PURCHASE_DEVNET_SMOKE === '1';
 const DEVNET_RPC = process.env.SOLANA_DEVNET_RPC || 'https://api.devnet.solana.com';
@@ -106,11 +109,10 @@ describeIf('skill-purchase on-chain primitives (devnet)', () => {
 				'confirmed',
 			);
 
-			const located = await findReference(connection, reference, { finality: 'confirmed' });
+			const located = await findReference(reference, { network: 'devnet' });
 			expect(located.signature).toBe(txSig);
 
 			await validateTransfer(
-				connection,
 				txSig,
 				{
 					recipient: seller.publicKey,
@@ -118,7 +120,7 @@ describeIf('skill-purchase on-chain primitives (devnet)', () => {
 					splToken: mint,
 					reference,
 				},
-				{ commitment: 'confirmed' },
+				{ network: 'devnet' },
 			);
 		} catch (e) {
 			if (/insufficient|not enough|account.*not found/i.test(e.message)) {

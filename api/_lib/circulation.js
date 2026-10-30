@@ -1353,7 +1353,7 @@ async function actionBuyAsset(ctx) {
 	await ensureThree(ctx, buyer, amountAtomic);
 
 	const { Keypair, PublicKey } = await import('@solana/web3.js');
-	const { findReference, validateTransfer } = await import('@solana/pay');
+	const { findReference, validateTransfer } = await import('./solana/solana-pay-verify.js');
 	const BigNumber = (await import('bignumber.js')).default;
 
 	const referenceKp = Keypair.generate();
@@ -1380,11 +1380,11 @@ async function actionBuyAsset(ctx) {
 
 	const expected = new BigNumber(String(amountAtomic)).dividedBy(new BigNumber(10).pow(THREE_DECIMALS));
 	try {
-		await findReference(conn, referenceKp.publicKey, { finality: 'confirmed' });
+		await findReference(referenceKp.publicKey, { network });
 		await validateTransfer(
-			conn, txSig,
+			txSig,
 			{ recipient: new PublicKey(payout), amount: expected, splToken: new PublicKey(THREE_MINT()), reference: referenceKp.publicKey },
-			{ commitment: 'confirmed' },
+			{ network },
 		);
 	} catch (e) {
 		throw new Skip(`asset transfer not validated: ${e?.message?.slice(0, 160)}`);

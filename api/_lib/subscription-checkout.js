@@ -16,11 +16,11 @@
 // subscription context.
 
 import { PublicKey } from '@solana/web3.js';
-import { findReference, validateTransfer } from '@solana/pay';
 import BigNumber from 'bignumber.js';
 
 import { sql } from './db.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
+import { findReference, validateTransfer } from './solana/solana-pay-verify.js';
 import { insertNotification } from './notify.js';
 import { resolvePayoutAddress } from './purchase-confirm.js';
 import {
@@ -120,9 +120,7 @@ export async function verifySubscriptionPayment(checkout, txSignature = null) {
 	let signature = txSignature;
 	if (!signature) {
 		try {
-			const info = await rpc().withFallback((conn) =>
-				findReference(conn, refKey, { finality: 'confirmed' }),
-			);
+			const info = await findReference(refKey);
 			signature = info.signature;
 		} catch (e) {
 			if (/FindReferenceError|not found/i.test(e?.message || '')) return { status: 'pending' };
@@ -131,14 +129,12 @@ export async function verifySubscriptionPayment(checkout, txSignature = null) {
 	}
 
 	const validateLeg = (who, amountAtomics) =>
-		rpc().withFallback((conn) =>
-			validateTransfer(
-				conn,
-				signature,
-				{ recipient: who, amount: amountAtomics.dividedBy(pow), splToken, reference: refKey },
-				{ commitment: 'confirmed' },
-			),
-		);
+		validateTransfer(signature, {
+			recipient: who,
+			amount: amountAtomics.dividedBy(pow),
+			splToken,
+			reference: refKey,
+		});
 
 	// Attempt the quoted split first, then the full-amount fallback.
 	const attempts = [];

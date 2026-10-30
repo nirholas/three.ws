@@ -17,11 +17,11 @@
 
 import crypto from 'node:crypto';
 import { PublicKey } from '@solana/web3.js';
-import { findReference, validateTransfer } from '@solana/pay';
 import BigNumber from 'bignumber.js';
 
 import { sql } from './db.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
+import { findReference, validateTransfer } from './solana/solana-pay-verify.js';
 import { insertNotification, emailAllowedForType } from './notify.js';
 import { verifyEvmUsdcPayment, evmChainId } from './evm-payment-verify.js';
 import { sendPurchaseReceiptEmail, sendSaleNotificationEmail } from './email.js';
@@ -276,9 +276,7 @@ async function confirmSolanaSkill(pur, payoutAddress, split = null) {
 	// 1. Find the on-chain tx via reference.
 	let signatureInfo;
 	try {
-		signatureInfo = await rpc().withFallback((conn) =>
-			findReference(conn, refKey, { finality: 'confirmed' }),
-		);
+		signatureInfo = await findReference(refKey);
 	} catch (e) {
 		if (/FindReferenceError|not found/i.test(e?.message || '')) {
 			return { status: 'pending' };
@@ -294,14 +292,12 @@ async function confirmSolanaSkill(pur, payoutAddress, split = null) {
 	// accept a single full-amount transfer to the seller (no platform fee taken on
 	// that path): a buyer who paid the full price is never blocked.
 	const validateLeg = (who, amountAtomics) =>
-		rpc().withFallback((conn) =>
-			validateTransfer(
-				conn,
-				txSignature,
-				{ recipient: who, amount: amountAtomics.dividedBy(pow), splToken, reference: refKey },
-				{ commitment: 'confirmed' },
-			),
-		);
+		validateTransfer(txSignature, {
+			recipient: who,
+			amount: amountAtomics.dividedBy(pow),
+			splToken,
+			reference: refKey,
+		});
 
 	const attempts = [];
 	if (feeAtomics.gt(0) && feeWallet) {
@@ -736,9 +732,7 @@ async function verifyBundleSolana(b, payoutAddress) {
 
 	let signatureInfo;
 	try {
-		signatureInfo = await rpc().withFallback((conn) =>
-			findReference(conn, refKey, { finality: 'confirmed' }),
-		);
+		signatureInfo = await findReference(refKey);
 	} catch (e) {
 		if (/FindReferenceError|not found/i.test(e?.message || '')) return { status: 'pending' };
 		throw e;
@@ -746,14 +740,12 @@ async function verifyBundleSolana(b, payoutAddress) {
 	const txSignature = signatureInfo.signature;
 
 	const validateLeg = (who, amountAtomics) =>
-		rpc().withFallback((conn) =>
-			validateTransfer(
-				conn,
-				txSignature,
-				{ recipient: who, amount: amountAtomics.dividedBy(pow), splToken, reference: refKey },
-				{ commitment: 'confirmed' },
-			),
-		);
+		validateTransfer(txSignature, {
+			recipient: who,
+			amount: amountAtomics.dividedBy(pow),
+			splToken,
+			reference: refKey,
+		});
 
 	const attempts = [];
 	if (feeAtomics.gt(0) && b.feeWallet)

@@ -3,7 +3,7 @@
 // Two guarantees, both about a buyer's money:
 //
 //   1. Confirm scales the atomic price by the MINT's decimals, not a hardcoded 6.
-//      @solana/pay's validateTransfer compares a UI amount, so an asset priced in
+//      Solana Pay's validateTransfer compares a UI amount, so an asset priced in
 //      a 9-decimal mint used to be compared against a figure 1000x too large: the
 //      buyer paid exactly right, the check failed, and the purchase was filed as
 //      'tipped' instead of granting the asset. The decimals are stamped onto the
@@ -61,18 +61,16 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 
 vi.mock('../../api/_lib/notify.js', () => ({ insertNotification: vi.fn(async () => {}) }));
 
-// The RPC fallback ring hands the callback a connection; there is no real node
-// here, so hand it an empty object and let the @solana/pay stubs answer.
-vi.mock('../../api/_lib/solana/rpc-fallback.js', () => ({
-	rpcFallbackFromEnv: () => ({ withFallback: (fn) => fn({}) }),
-}));
 vi.mock('../../api/_lib/solana/connection.js', () => ({ solanaConnection: () => ({}) }));
 vi.mock('../../api/_lib/solana/gasless-tx.js', () => ({ buildGaslessPurchaseTx: async () => null }));
 
+// There is no real node here. The Solana Pay verification itself runs against
+// real transaction bytes in tests/solana-pay-verify.test.js; this suite only
+// checks what the handler asks it to verify.
 const validateTransferArgs = [];
-vi.mock('@solana/pay', () => ({
+vi.mock('../../api/_lib/solana/solana-pay-verify.js', () => ({
 	findReference: vi.fn(async () => ({ signature: 'SettlementSignature111' })),
-	validateTransfer: vi.fn(async (_conn, _sig, opts) => {
+	validateTransfer: vi.fn(async (_sig, opts) => {
 		validateTransferArgs.push(opts);
 		return {};
 	}),

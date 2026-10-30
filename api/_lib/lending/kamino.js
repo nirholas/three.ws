@@ -21,7 +21,7 @@
 
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { LendingError } from './errors.js';
-import { lendingRpc } from './rpc.js';
+import { solanaKitRpc } from '../solana/kit-rpc.js';
 
 export const VENUE_ID = 'kamino';
 export const VENUE_NAME = 'Kamino Lend';
@@ -56,7 +56,7 @@ async function freshMarket(maxAgeMs) {
 	marketCache.inflight = (async () => {
 		const sdk = await loadSdk();
 		const { address } = await import('@solana/kit');
-		const rpc = lendingRpc('mainnet');
+		const rpc = solanaKitRpc('mainnet');
 		let market;
 		try {
 			if (marketCache.market) {
@@ -80,7 +80,7 @@ async function freshMarket(maxAgeMs) {
 
 async function ledgerInstant() {
 	const sdk = await loadSdk();
-	return sdk.getCurrentLedgerInstant(lendingRpc('mainnet'));
+	return sdk.getCurrentLedgerInstant(solanaKitRpc('mainnet'));
 }
 
 function dec(v) {
@@ -250,7 +250,7 @@ function toLegacyInstruction(ix) {
 
 async function scopeRefreshConfig() {
 	const { Scope } = await import('@kamino-finance/scope-sdk');
-	const scope = new Scope('mainnet-beta', lendingRpc('mainnet'));
+	const scope = new Scope('mainnet-beta', solanaKitRpc('mainnet'));
 	return { scope, scopeConfigurations: await scope.getAllConfigurations() };
 }
 

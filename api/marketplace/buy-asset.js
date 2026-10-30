@@ -23,7 +23,6 @@
  */
 
 import { Keypair, PublicKey } from '@solana/web3.js';
-import { findReference, validateTransfer } from '@solana/pay';
 import BigNumber from 'bignumber.js';
 import crypto from 'node:crypto';
 
@@ -34,7 +33,7 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
-import { rpcFallbackFromEnv } from '../_lib/solana/rpc-fallback.js';
+import { findReference, validateTransfer } from '../_lib/solana/solana-pay-verify.js';
 import { isUuid } from '../_lib/validate.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { buildGaslessPurchaseTx } from '../_lib/solana/gasless-tx.js';
@@ -53,12 +52,6 @@ import {
 const REFERENCE_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const ITEM_TYPES = ['avatar', 'agent', 'plugin'];
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-
-let _rpc;
-function rpc() {
-	if (!_rpc) _rpc = rpcFallbackFromEnv({ network: 'mainnet' });
-	return _rpc;
-}
 
 export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
@@ -413,19 +406,12 @@ async function payAsAgent({ res, auth, agent, row, decimals, payoutAddress, item
 	// carries the Solana Pay reference, so this is the same validation the browser
 	// path runs — a short or misdirected transfer becomes 'tipped', never a grant.
 	try {
-		await rpc().withFallback((conn) =>
-			validateTransfer(
-				conn,
-				txSignature,
-				{
-					recipient: new PublicKey(payoutAddress),
-					amount: new BigNumber(row.amount).dividedBy(new BigNumber(10).pow(decimals)),
-					splToken: new PublicKey(row.currency_mint),
-					reference: new PublicKey(row.reference),
-				},
-				{ commitment: 'confirmed' },
-			),
-		);
+		await validateTransfer(txSignature, {
+			recipient: new PublicKey(payoutAddress),
+			amount: new BigNumber(row.amount).dividedBy(new BigNumber(10).pow(decimals)),
+			splToken: new PublicKey(row.currency_mint),
+			reference: new PublicKey(row.reference),
+		});
 	} catch (e) {
 		const [pur] = await sql`
 			SELECT id, seller_user_id FROM asset_purchases WHERE reference = ${row.reference}
@@ -523,9 +509,7 @@ async function handleConfirm(req, res, reference) {
 
 	let signatureInfo;
 	try {
-		signatureInfo = await rpc().withFallback((conn) =>
-			findReference(conn, refKey, { finality: 'confirmed' }),
-		);
+		signatureInfo = await findReference(refKey);
 	} catch (e) {
 		if (/FindReferenceError|not found/i.test(e?.message || '')) {
 			return json(res, 200, { data: { status: 'pending' } });
@@ -535,14 +519,7 @@ async function handleConfirm(req, res, reference) {
 	const txSignature = signatureInfo.signature;
 
 	try {
-		await rpc().withFallback((conn) =>
-			validateTransfer(
-				conn,
-				txSignature,
-				{ recipient, amount: expectedAmount, splToken, reference: refKey },
-				{ commitment: 'confirmed' },
-			),
-		);
+		await validateTransfer(txSignature, { recipient, amount: expectedAmount, splToken, reference: refKey });
 	} catch (e) {
 		await sql`
 			UPDATE asset_purchases

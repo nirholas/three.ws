@@ -22,7 +22,6 @@
 // and leaving a paid order sitting in `paid` would mean a job nobody picked up.
 
 import { PublicKey } from '@solana/web3.js';
-import { findReference, validateTransfer } from '@solana/pay';
 import BigNumber from 'bignumber.js';
 
 import { cors, error, json, method, rateLimited, wrap } from '../../../_lib/http.js';
@@ -30,18 +29,12 @@ import { clientIp, limits } from '../../../_lib/rate-limit.js';
 import { getSessionUser } from '../../../_lib/auth.js';
 import { requireCsrf } from '../../../_lib/csrf.js';
 import { env } from '../../../_lib/env.js';
-import { rpcFallbackFromEnv } from '../../../_lib/solana/rpc-fallback.js';
+import { findReference, validateTransfer } from '../../../_lib/solana/solana-pay-verify.js';
 import { PrintStoreError, getOrderWithEvents, transition } from '../../../_lib/print-store.js';
 import { publicOrder } from '../[id].js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const USDC_DECIMALS = 6;
-
-let _rpc;
-function rpc() {
-	if (!_rpc) _rpc = rpcFallbackFromEnv({ network: 'mainnet' });
-	return _rpc;
-}
 
 /** True when findReference simply has not seen the payment yet. */
 function isNotFound(err) {
@@ -96,7 +89,7 @@ export default wrap(async (req, res) => {
 
 	let signatureInfo;
 	try {
-		signatureInfo = await rpc().withFallback((conn) => findReference(conn, referenceKey, { finality: 'confirmed' }));
+		signatureInfo = await findReference(referenceKey);
 	} catch (err) {
 		if (isNotFound(err)) {
 			return json(
@@ -113,19 +106,12 @@ export default wrap(async (req, res) => {
 	const expected = new BigNumber(String(order.price_usdc)).decimalPlaces(USDC_DECIMALS);
 
 	try {
-		await rpc().withFallback((conn) =>
-			validateTransfer(
-				conn,
-				signature,
-				{
-					recipient: new PublicKey(payTo),
-					amount: expected,
-					splToken: new PublicKey(mint),
-					reference: referenceKey,
-				},
-				{ commitment: 'confirmed' },
-			),
-		);
+		await validateTransfer(signature, {
+			recipient: new PublicKey(payTo),
+			amount: expected,
+			splToken: new PublicKey(mint),
+			reference: referenceKey,
+		});
 	} catch (err) {
 		// A transaction that carries our reference but does not satisfy the
 		// transfer is a real problem the buyer needs to see, with the signature so
