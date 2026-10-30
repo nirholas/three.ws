@@ -28,6 +28,7 @@ import { sendPurchaseReceiptEmail, sendSaleNotificationEmail } from './email.js'
 import { creditReferralCommission } from './referrals.js';
 import { resolveListingSplit, recordSplitDistribution } from './splits.js';
 import { recordOnchainLicenseForPurchase } from './skill-license-issue.js';
+import { resolveReceiptKey } from './receipt-key.js';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
 
@@ -90,18 +91,6 @@ function rpc() {
 	return _rpc;
 }
 
-// HMAC key for receipts. Falls back to a derived value off SESSION_SECRET if
-// PURCHASE_RECEIPT_KEY isn't set, so receipts still work in dev.
-function receiptKey() {
-	return (
-		process.env.PURCHASE_RECEIPT_KEY ||
-		crypto
-			.createHash('sha256')
-			.update((process.env.SESSION_SECRET || 'dev') + ':receipts')
-			.digest('hex')
-	);
-}
-
 // Default referral commission: 5%. Set REFERRAL_COMMISSION_BPS in env to tune.
 function referralBps() {
 	const v = parseInt(process.env.REFERRAL_COMMISSION_BPS || '500', 10);
@@ -146,7 +135,7 @@ export async function resolvePayoutAddress(agentId, chain) {
 // Sign a receipt body. The signature covers the canonical JSON (sorted keys).
 function signReceipt(body) {
 	const canonical = JSON.stringify(body, Object.keys(body).sort());
-	return crypto.createHmac('sha256', receiptKey()).update(canonical).digest('hex');
+	return crypto.createHmac('sha256', resolveReceiptKey()).update(canonical).digest('hex');
 }
 
 async function emitReceipt(purchase, txSignature, payoutAddress, kind) {

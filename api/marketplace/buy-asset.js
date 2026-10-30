@@ -41,6 +41,7 @@ import { buildGaslessPurchaseTx } from '../_lib/solana/gasless-tx.js';
 import { insertNotification } from '../_lib/notify.js';
 import { normalizeReferralCode } from '../_lib/referrals.js';
 import { verifyEvmUsdcPayment, evmChainId } from '../_lib/evm-payment-verify.js';
+import { resolveReceiptKey } from '../_lib/receipt-key.js';
 import {
 	loadBuyerAgentKeypair,
 	sendAgentPurchaseTransfer,
@@ -57,13 +58,6 @@ let _rpc;
 function rpc() {
 	if (!_rpc) _rpc = rpcFallbackFromEnv({ network: 'mainnet' });
 	return _rpc;
-}
-
-function receiptKey() {
-	return (
-		process.env.PURCHASE_RECEIPT_KEY ||
-		crypto.createHash('sha256').update((process.env.SESSION_SECRET || 'dev') + ':receipts').digest('hex')
-	);
 }
 
 export default wrap(async (req, res) => {
@@ -602,7 +596,7 @@ async function finalizeAssetConfirm(res, pur, txSignature, extra = null) {
 			issued_at: new Date().toISOString(),
 		};
 		const canonical = JSON.stringify(body, Object.keys(body).sort());
-		const sig = crypto.createHmac('sha256', receiptKey()).update(canonical).digest('hex');
+		const sig = crypto.createHmac('sha256', resolveReceiptKey()).update(canonical).digest('hex');
 		await sql`
 			INSERT INTO asset_purchase_receipts (purchase_id, receipt_json, signature)
 			VALUES (${pur.id}, ${JSON.stringify(body)}::jsonb, ${sig})
