@@ -460,6 +460,7 @@
 		<div class="press-row">
 			<a class="press-logo" href="https://registry.modelcontextprotocol.io/?q=threews" target="_blank" rel="noopener" data-i18n-html="home.anthropic"><span class="ico" style="--logo:url(/featured-logos/anthropic.svg)"></span><span class="lbl">Anthropic</span></a>
 			<a class="press-logo" href="/news/mcp-servers-x402-bazaar-coinbase" data-i18n-html="home.coinbase"><span class="ico" style="--logo:url(/featured-logos/coinbase.svg)"></span><span class="lbl">Coinbase</span></a>
+			<a class="press-logo" href="/news/microsoft-partnership-marketplace" data-i18n-html="home.microsoft"><span class="ico" style="--logo:url(/featured-logos/microsoft.svg)"></span><span class="lbl">Microsoft</span></a>
 			<a class="press-logo" href="/news/ibm-collaboration-showcase" data-i18n-html="home.ibm"><span class="lbl">IBM</span></a>
 			<a class="press-logo" href="/news/aws-marketplace-live-may29" data-i18n-html="home.aws"><span class="lbl">AWS</span></a>
 			<a class="press-logo" href="/news/2059675892981633179" data-i18n-html="home.google_cloud"><span class="ico" style="--logo:url(/featured-logos/googlecloud.svg)"></span><span class="lbl">Google Cloud</span></a>
@@ -3485,7 +3486,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	<div class="wrap-1280">
 		<nav class="foot-cols" aria-label="Footer">
 			<div class="foot-col">
-				<h3 class="foot-col-h">Product</h3>
+				<h3 class="foot-col-h" data-i18n="home.product">Product</h3>
 				<a href="/create" data-i18n="home.build_an_agent">Build an agent</a>
 				<a href="/forge" data-i18n="home.text_to_3d">Text to 3D</a>
 				<a href="/image-to-3d" data-i18n="home.image_to_3d">Image to 3D</a>
@@ -3495,7 +3496,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				<a href="/dashboard" data-i18n="home.console">Console</a>
 			</div>
 			<div class="foot-col">
-				<h3 class="foot-col-h">Explore</h3>
+				<h3 class="foot-col-h" data-i18n="home.explore">Explore</h3>
 				<a href="/agents" data-i18n="home.agents_index">Agents Index</a>
 				<a href="/reputation" data-i18n="home.reputation">Reputation</a>
 				<a href="/characters" data-i18n="home.characters">Characters</a>
@@ -3503,7 +3504,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				<a href="/bazaar" data-i18n="home.marketplace_3">Marketplace</a>
 			</div>
 			<div class="foot-col">
-				<h3 class="foot-col-h">Developers</h3>
+				<h3 class="foot-col-h" data-i18n="home.developers">Developers</h3>
 				<a href="/docs" data-i18n="home.docs_2">Docs</a>
 				<a href="/avatar-sdk" data-i18n="home.avatar_sdk">Avatar SDK</a>
 				<a href="/dashboard/api" data-i18n="home.api">API</a>
@@ -3511,13 +3512,13 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				<a href="/sitemap" data-i18n="home.sitemap">Sitemap</a>
 			</div>
 			<div class="foot-col">
-				<h3 class="foot-col-h">Integrations</h3>
+				<h3 class="foot-col-h" data-i18n="home.integrations">Integrations</h3>
 				<a href="/galaxy" data-i18n="home.agent_galaxy">Agent Galaxy</a>
 				<a href="/x402" data-i18n="home.trust_layer">Trust Layer</a>
 				<a href="/aws" data-i18n="home.aws_marketplace">AWS Marketplace</a>
 			</div>
 			<div class="foot-col">
-				<h3 class="foot-col-h">Company</h3>
+				<h3 class="foot-col-h" data-i18n="home.company">Company</h3>
 				<a href="/blog" data-i18n="home.blog">Blog</a>
 				<a href="/community" data-i18n="home.community_2">Community</a>
 				<a href="/support" data-i18n="home.support">Support</a>
@@ -3527,7 +3528,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				<a href="mailto:support@three.ws" data-i18n="home.contact">Contact</a>
 			</div>
 			<div class="foot-col">
-				<h3 class="foot-col-h">Legal</h3>
+				<h3 class="foot-col-h" data-i18n="home.legal">Legal</h3>
 				<a href="/legal/privacy" data-i18n="home.privacy">Privacy</a>
 				<a href="/legal/tos" data-i18n="home.terms">Terms</a>
 			</div>
@@ -3931,7 +3932,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 	<!-- Classic view -> desktop. The choice is remembered (tws:view) and honoured by the "/" route. -->
-	<a id="to-desktop" href="/?view=desktop" aria-label="Switch to the three.ws desktop">
+	<a id="to-desktop" href="/?view=desktop" aria-label="Switch to the three.ws desktop" data-i18n-attr="aria-label:home.switch_to_the_three_ws_deskt_arialabel">
 		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
 		Try the desktop
 	</a>

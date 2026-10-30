@@ -41,12 +41,31 @@
 		},
 		{
 			"id": "azure-marketplace",
-			"name": "Microsoft Azure Marketplace",
+			"name": "Microsoft Marketplace",
 			"category": "cloud",
-			"status": "not_listed",
-			"url": null,
-			"evidence": "On roadmap; no listing exists",
-			"checked": "2026-09-16"
+			"status": "live",
+			"url": "https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview",
+			"evidence": "Owner-confirmed publisher profile, announced with the Microsoft partnership (CoinMarketCap coverage 2026-10). The marketplace answers automated fetches with HTTP 403, so this entry is re-checked by hand in a browser",
+			"checked": "2026-10-30",
+			"manual": true
+		},
+		{
+			"id": "coinmarketcap-microsoft-partnership",
+			"name": "CoinMarketCap: three.ws and Microsoft Announce Partnership",
+			"category": "press",
+			"status": "live",
+			"url": "https://coinmarketcap.com/community/articles/6ae3dfb3543b1b2fccd5fcf1/",
+			"evidence": "Community article page renders the three.ws and Microsoft partnership headline",
+			"checked": "2026-10-30"
+		},
+		{
+			"id": "coinmarketcap-microsoft-marketplace",
+			"name": "CoinMarketCap: three.ws Live on Microsoft Marketplace",
+			"category": "press",
+			"status": "live",
+			"url": "https://coinmarketcap.com/community/articles/6ae275a5e7c4846f5d1cca15/",
+			"evidence": "Community article page renders the Microsoft Marketplace launch headline and three.ws section outline",
+			"checked": "2026-10-30"
 		},
 		{
 			"id": "quicknode-startup",

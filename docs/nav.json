@@ -1150,6 +1150,10 @@
 					"path": "sketchfab"
 				},
 				{
+					"label": "Microsoft partnership and Marketplace",
+					"path": "microsoft"
+				},
+				{
 					"label": "NVIDIA Inception",
 					"path": "nvidia-inception"
 				},

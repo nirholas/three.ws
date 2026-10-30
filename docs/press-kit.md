@@ -105,7 +105,7 @@ Approved descriptions at four lengths. Copy them verbatim; they are written to b
 >
 > Agents on three.ws are economic actors. Each one can hold an on-chain identity on Solana, the platform's home chain, carry a wallet and a human-readable name, and pay or get paid by other agents per API call over x402, the HTTP 402 payment standard. The platform coin, $THREE, lives on Solana.
 >
-> Distribution is the point. A finished agent ships as the `<agent-3d>` web component that drops into any page, and every generation and animation tool is reachable by AI assistants over MCP. three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT eleven keyless tools that generate, rig, animate, inspect, and place 3D models in AR, rendered inline in the conversation. It is also a member of NVIDIA Inception.
+> Distribution is the point. A finished agent ships as the `<agent-3d>` web component that drops into any page, and every generation and animation tool is reachable by AI assistants over MCP. three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT eleven keyless tools that generate, rig, animate, inspect, and place 3D models in AR, rendered inline in the conversation. It is a Microsoft partner listed on Microsoft Marketplace, and a member of NVIDIA Inception.
 >
 > The viewer, the agent runtime, and the web component are open source at github.com/nirholas/three.ws, and every release ships to the public changelog at three.ws/changelog. The goal is simple: as the internet gains an agent-native, three-dimensional layer, three.ws is the infrastructure it runs on.
 
@@ -124,7 +124,7 @@ Checkable claims only. Anything not listed here or on the page, ask before print
 | **Assistant surface** | MCP servers, plus a keyless 3D Studio connector and Actions for ChatGPT. |
 | **Open standards** | Spatial MCP, the CC0 response shape for 3D tool results, so any client can render them. |
 | **Open source** | The viewer, the runtime, and the `<agent-3d>` web component, at `github.com/nirholas/three.ws`. |
-| **Programmes** | OpenAI Select Partner in the OpenAI Partner Network. Member of NVIDIA Inception. Full list at `three.ws/partners`. |
+| **Programmes** | OpenAI Select Partner in the OpenAI Partner Network. Microsoft partner, live on Microsoft Marketplace. Member of NVIDIA Inception. Full list at `three.ws/partners`. |
 | **Shipping log** | Every release is public at `three.ws/changelog`, with RSS and JSON feeds. |
 
 The platform coin named in the "Home chain" row is **$THREE**, on Solana. Email if you need its contract address confirmed before print.

@@ -74,6 +74,7 @@ No action required. Listed so nobody re-pitches something we already have.
 | NVIDIA Inception | 2026-07 | [nvidia-inception.md](../nvidia-inception.md) |
 | Google Cloud for Web3 Startups | member | [gcp-credits-plan.md](../ops/gcp-credits-plan.md) |
 | QuickNode Startup Program | 2026-07 | [listings.md](../listings.md) |
+| Microsoft partnership and Microsoft Marketplace | live; partnership announced and publisher profile live 2026-10 (the marketplace returns 403 to scripts, so check it in a browser) | [microsoft.md](../microsoft.md) |
 | Alibaba Cloud Marketplace | live; product page, storefront, and blog feature all render three.ws (checked 2026-09-16) | [listings.md](../listings.md) |
 | BNB Chain Dappbay | live | [listings.md](../listings.md) |
 | Hugging Face org account | live; one Space, one model, two articles, latest article 2026-08-29 (checked 2026-09-16) | [huggingface.md](../huggingface.md) |
@@ -162,7 +163,6 @@ Real opportunities with no owner and no motion. Each needs a decision before it 
 | Opportunity | Why it is plausible | What it needs first |
 |---|---|---|
 | Google Cloud Marketplace | Production already runs entirely on Google Cloud Run and Vertex AI. The technical story is finished before the conversation starts | A decision to pursue co-listing and joint GTM |
-| Microsoft Azure Marketplace | Third leg of the enterprise procurement story after AWS and Alibaba. Checked 2026-10-08: [Microsoft for Startups](https://www.microsoft.com/en-us/startups) is still open (up to USD 150,000 in Azure credits plus customer-network access) and is the entry route | Sequencing decision. Do not start before the AWS listing exists |
 | LobeHub chat plugin index | `public/.well-known/lobehub-plugin.json` (identifier `3d-agent`) is shipped, dated 2026-04-17. Checked 2026-10-08: the [plugin index](https://chat-plugins.lobehub.com/index.json) still holds 40 plugins and none is three.ws. Our MCP servers are already listed separately | A decision: submit the plugin to the LobeHub plugin index, or retire the manifest in favour of the MCP listings that already exist |
 | PostHog for Startups | PostHog is the production analytics stack (`src/analytics.js`). Checked 2026-10-08: still open, USD 50,000 in credits for 12 months plus a startup spotlight | Apply from the production org; confirm the age and funding rules on the form |
 | OpenAI Codex for Open Source | A new program inside an existing partner: six months of ChatGPT Pro with Codex and up to USD 25,000 in API credits for maintainers of widely used public projects. Checked 2026-10-08: open, reviewed on a rolling basis | Submit the maintainer application |

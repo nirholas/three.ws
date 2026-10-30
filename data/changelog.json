@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-30",
+			"title": "three.ws partners with Microsoft and is live on Microsoft Marketplace",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, so enterprise teams can find and procure open-source 3D AI agents through the storefront they already buy from. Microsoft now appears on /partners, /partners/benefits, the home page press strip, the press kit, the timeline and the listings registry, with a full write-up in the docs.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/blog/three-ws-microsoft-partnership"
+		},
+		{
 			"date": "2026-10-25",
 			"title": "Chat pairing and X connect returns land on a working Connections page",
 			"summary": "The /settings/connections link that the Telegram and Discord bots, the notification settings and the X connect flow all send people to returned a 404. Every /settings subpath now serves the settings app, and a new Connections tab lists paired chats, toggles notifications, picks the default agent, unpairs, issues a pairing code and redeems the code a bot prints.",

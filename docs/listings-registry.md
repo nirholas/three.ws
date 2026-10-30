@@ -4,7 +4,7 @@
 
 Every place three.ws is listed, submitted to, or known to be absent from. This is the master index; the prose record with announcements and context is [listings.md](./listings.md), and the action list for stuck items is [partners/opportunities.md](./partners/opportunities.md).
 
-**121 tracked surfaces.** 46 live, 17 pr open, 2 submitted, pending, 4 ready to submit, 14 not listed, 22 declined or closed, 16 unverified.
+**123 tracked surfaces.** 49 live, 17 pr open, 2 submitted, pending, 4 ready to submit, 13 not listed, 22 declined or closed, 16 unverified.
 
 Maintain it:
 
@@ -150,9 +150,9 @@ A `live` entry is only ever set after the page was fetched and rendered three.ws
 | Surface | Status | Evidence | Next | Checked |
 |---|---|---|---|---|
 | [Alibaba Cloud International Marketplace](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) | Live | Product listing and storefront render three.ws |  | 2026-09-16 |
+| [Microsoft Marketplace](https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview) | Live | Owner-confirmed publisher profile, announced with the Microsoft partnership (CoinMarketCap coverage 2026-10). The marketplace answers automated fetches with HTTP 403, so this entry is re-checked by hand in a browser |  | 2026-10-30 |
 | [AWS Marketplace](https://aws.amazon.com/marketplace) | Ready to submit | SaaS integration built and conformant; product not yet created in the Management Portal, public search returns no three.ws product | Create the product in the AWS Marketplace Management Portal (docs/aws-marketplace-listing-kit.md) | 2026-09-16 |
 | Google Cloud Marketplace | Not listed | Open to partnership; no listing exists | Start the Partner Advantage application | 2026-09-16 |
-| Microsoft Azure Marketplace | Not listed | On roadmap; no listing exists |  | 2026-09-16 |
 
 ## Startup and credit programs
 
@@ -174,6 +174,8 @@ A `live` entry is only ever set after the page was fetched and rendered three.ws
 |---|---|---|---|---|
 | [Alibaba Cloud Marketplace blog feature](https://marketplace.alibabacloud.com/doc/blog/detail/mplace-sgcmfw00036800.html) | Live | Editorial feature introducing three.ws |  | 2026-10-11 |
 | [Audible podcast three.ws](https://www.audible.co.uk/podcast/threews/B0GZX1SFZM) | Live | Podcast page about three.ws |  | 2026-10-11 |
+| [CoinMarketCap: three.ws and Microsoft Announce Partnership](https://coinmarketcap.com/community/articles/6ae3dfb3543b1b2fccd5fcf1/) | Live | Community article page renders the three.ws and Microsoft partnership headline |  | 2026-10-30 |
+| [CoinMarketCap: three.ws Live on Microsoft Marketplace](https://coinmarketcap.com/community/articles/6ae275a5e7c4846f5d1cca15/) | Live | Community article page renders the Microsoft Marketplace launch headline and three.ws section outline |  | 2026-10-30 |
 | [HackerNoon](https://hackernoon.com/u/three-ws) | Live | Author page live; no stories published yet (2026-09-16) | Submit queued drafts for editorial review | 2026-10-11 |
 | [HackerNoon Proof of Usefulness](https://hackernoon.com/threews-earns-a-781-proof-of-usefulness-score-by-building-embeddable-3d-ai-agents) | Live | Profile of three.ws, score 781 |  | 2026-10-11 |
 | [HTX news](https://www.htx.com/news/after-being-noticed-by-ibm-the-token-of-threews-surged-50-ti-kKbmBNdm/) | Live | Article on three.ws token after IBM |  | 2026-10-11 |

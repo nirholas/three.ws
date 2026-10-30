@@ -398,7 +398,7 @@ The pump.fun article title ("Three Builds With Tech Giants") is earned. From `do
 - **Alibaba Cloud International Marketplace**: live, with a product listing, storefront, and an editorial blog feature
 - **AWS Marketplace**: integration built, deployed, and conformant with the Concurrent Agreements rules AWS made mandatory 2026-06-01; the product listing itself is not yet created in the management portal
 - **Google Cloud Marketplace**: open to partnership; production already runs on Cloud Run, and three.ws is a Google Cloud for Web3 Startups member with a grant of up to $200k in credits over two years
-- **Azure Marketplace**: roadmap only
+- **Microsoft Marketplace**: live (2026-10), alongside the partnership three.ws and Microsoft announced the same month
 
 **Infrastructure and credits:** Quicknode Startup Program (accepted 2026-07), Google Cloud for Web3 Startups, NVIDIA Inception.
 

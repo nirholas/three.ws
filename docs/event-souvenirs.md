@@ -28,6 +28,13 @@ UTC. The lesson from the first event is now a pre-flight step (see
 [Verifying it](#verifying-it)): the multiplayer service must be running a build
 that contains the grant before the window opens.
 
+The third is the **Meetup Orbit Crown**: a thin gold circlet that rests on the
+head, with three pearls held on short stems around a fine gold orbit ring above
+it, one for each of the three in three.ws. It is the souvenir for the `$THREE`
+Community Meetup #3 on 2026-11-06, 16:00 to 17:00 UTC, hosted with the Three.ws
+User Group on IBM Community. It is headwear, so it takes the laurel's slot
+rather than sitting beside it, and it can be worn together with the Star Shades.
+
 ---
 
 ## For players

@@ -5156,6 +5156,14 @@
 					"changefreq": "weekly"
 				},
 				{
+					"path": "/docs/microsoft",
+					"title": "Docs · three.ws and Microsoft",
+					"description": "The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-10-30"
+				},
+				{
 					"path": "/docs/nvidia-inception",
 					"title": "Docs · NVIDIA Inception membership",
 					"description": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
@@ -7428,6 +7436,15 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-07-18"
+				},
+				{
+					"path": "/blog/three-ws-microsoft-partnership",
+					"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
+					"description": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-10-30",
+					"added": "2026-10-30"
 				},
 				{
 					"path": "/blog/three-ws-quicknode-startup-program",

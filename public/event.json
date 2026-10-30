@@ -1,9 +1,20 @@
 {
-	"id": null,
-	"name": null,
-	"tagline": null,
-	"startsAt": null,
-	"endsAt": null,
-	"link": null,
-	"note": "No event is scheduled. This file stays in place between events so /event.json answers 200 with an explicit no-event state instead of putting a 404 in every visitor console. Schedule the next event with: npm run event:schedule -- --start <ISO> --duration <minutes> --apply"
+	"id": "three-community-meetup-3",
+	"name": "$THREE Community Meetup #3",
+	"tagline": "The Three.ws User Group on IBM Community, meeting inside the world.",
+	"startsAt": "2026-11-06T16:00:00Z",
+	"endsAt": "2026-11-06T17:00:00Z",
+	"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
+	"linkLabel": "Join the meetup",
+	"souvenir": { "cosmeticId": "orbit-crown-meetup-3" },
+	"agenda": [
+		{ "atMin": 0, "title": "Doors open in the plaza", "detail": "Welcome from IBM Community and the team", "icon": "👋" },
+		{ "atMin": 6, "title": "Live build: one sentence to a rigged agent", "detail": "Then we wear it", "icon": "🧍" },
+		{ "atMin": 14, "title": "Video to motion", "detail": "A phone clip becomes an animation", "icon": "🎬" },
+		{ "atMin": 20, "title": "Forge into the world", "detail": "Type /forge in chat", "icon": "🔨" },
+		{ "atMin": 27, "title": "An agent pays for a tool", "detail": "At the Agent Exchange", "icon": "🧾" },
+		{ "atMin": 33, "title": "Community showcase", "detail": "Members show what they brought", "icon": "🎤" },
+		{ "atMin": 43, "title": "Open Q&A and what ships next", "detail": "Ask anything", "icon": "💬" },
+		{ "atMin": 55, "title": "Group photo", "detail": "Gather at the totem", "icon": "📸" }
+	]
 }
