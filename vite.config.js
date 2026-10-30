@@ -4190,6 +4190,48 @@ function minifyLibWhitespace() {
 	};
 }
 
+// three's DRACOLoader and KTX2Loader compute default decoder URLs at module
+// scope with `new URL('../libs/{draco,basis}/<file>', import.meta.url)`. Vite's
+// library mode inlines every asset referenced that way as a base64 data: URL,
+// which baked about 2.8MB of decoders (Draco wasm/js twice over, Basis wasm/js)
+// into agent-3d.js, although every loader in src/ sets an explicit
+// setDecoderPath/setTranscoderPath (src/viewer/internal.js). This rewrites the
+// defaults to the copies scripts/copy-three-decoders.mjs hosts under
+// public/three/, resolved against the module the same way internal.js resolves
+// LOCAL_THREE_PATH, so the embed stays correct on a third-party page. The
+// rewritten expression is not a literal `new URL(string, import.meta.url)`, so
+// Vite leaves it to runtime. A three upgrade that changes these lines fails the
+// build here instead of silently re-inlining the decoders.
+const THREE_DECODER_LOADERS = {
+	'/three/examples/jsm/loaders/DRACOLoader.js': 5,
+	'/three/examples/jsm/loaders/KTX2Loader.js': 2,
+};
+function hostedThreeDecoders() {
+	const pattern = /new URL\(\s*'\.\.\/libs\/((?:draco|basis)\/[\w./-]+)'\s*,\s*import\.meta\.url\s*\)/g;
+	return {
+		name: 'threews-lib-hosted-three-decoders',
+		enforce: 'pre',
+		apply: 'build',
+		transform(code, id) {
+			const file = id.split('?')[0].replace(/\\/g, '/');
+			const loader = Object.keys(THREE_DECODER_LOADERS).find((suffix) => file.endsWith(suffix));
+			if (!loader) return null;
+			let count = 0;
+			const out = code.replace(pattern, (_m, rel) => {
+				count += 1;
+				return `new URL('../../three/' + '${rel}', import.meta.url)`;
+			});
+			if (count !== THREE_DECODER_LOADERS[loader]) {
+				throw new Error(
+					`hostedThreeDecoders: expected ${THREE_DECODER_LOADERS[loader]} default decoder URLs in ${loader}, found ${count}. ` +
+						'three changed how it resolves its decoders; update the pattern so the lib build does not inline them.',
+				);
+			}
+			return { code: out, map: null };
+		},
+	};
+}
+
 // Library build — the web component + public API, for CDN drop-in:
 //   <script type="module" src="https://cdn.example.com/agent-3d.js"></script>
 //
@@ -4197,7 +4239,7 @@ function minifyLibWhitespace() {
 // zero-install embed). Size will be ~600-900KB gzipped; split via dynamic
 // imports in a later pass.
 const libConfig = {
-	plugins: [minifyLibWhitespace()],
+	plugins: [hostedThreeDecoders(), minifyLibWhitespace()],
 	resolve: {
 		dedupe: ['three'],
 	},
