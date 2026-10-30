@@ -53,6 +53,11 @@ export function parseSiwsMessage(msg) {
 		}
 	}
 	if (!out.uri || !out.nonce || !out.version) return null;
+	// Callers compare Date.parse(field) with now; NaN compares false both ways, so
+	// an unparseable Expiration Time would read as "never expires". Reject it here.
+	for (const key of ['issuedAt', 'expirationTime', 'notBefore']) {
+		if (out[key] !== undefined && !Number.isFinite(Date.parse(out[key]))) return null;
+	}
 	return out;
 }
 
