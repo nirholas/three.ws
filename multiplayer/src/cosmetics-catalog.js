@@ -55,6 +55,7 @@ export const COSMETICS = [
 	{ id: 'hat-baseball', name: 'Ball cap', slot: 'headwear', rarity: 'common', tier: 'free', price: 0, visual: { prop: '/accessories/hat-baseball.glb', anchor: 'head' }, thumb: '/accessories/thumbs/hat-baseball.png' },
 	{ id: 'hat-cowboy', name: 'Stetson', slot: 'headwear', rarity: 'rare', tier: 'premium', price: 400, visual: { prop: '/accessories/hat-cowboy.glb', anchor: 'head' }, thumb: '/accessories/thumbs/hat-cowboy.png' },
 	{ id: 'laurel-meetup', name: 'Meetup Laurel', slot: 'headwear', rarity: 'legendary', tier: 'event', price: 0, visual: { prop: '/accessories/laurel-meetup.glb', anchor: 'head' }, thumb: '/accessories/thumbs/laurel-meetup.png' },
+	{ id: 'orbit-crown-meetup-3', name: 'Meetup Orbit Crown', slot: 'headwear', rarity: 'legendary', tier: 'event', price: 0, visual: { prop: '/accessories/orbit-crown-meetup-3.glb', anchor: 'head' }, thumb: '/accessories/thumbs/orbit-crown-meetup-3.png' },
 
 	// ── Eyewear (prop, anchored at the eye line) ──────────────────────────────
 	{ id: 'eye-none', name: 'None', slot: 'eyewear', rarity: 'common', tier: 'free', price: 0, visual: null },

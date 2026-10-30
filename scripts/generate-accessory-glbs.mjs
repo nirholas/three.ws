@@ -8,7 +8,7 @@
 //   earrings-hoops.glb, earrings-studs.glb
 // The rest are the /play wardrobe's event souvenirs (multiplayer/src/
 // cosmetics-catalog.js, tier 'event'), which are granted, never sold:
-//   laurel-meetup.glb, star-shades-meetup-2.glb
+//   laurel-meetup.glb, star-shades-meetup-2.glb, orbit-crown-meetup-3.glb
 //
 // Each is a real glTF 2.0 binary with positions, normals, UVs, indices, and a
 // PBR material, small enough to commit to the repo, large enough to be visibly
@@ -592,6 +592,15 @@ const ACCESSORIES = {
 		rootName: 'StarShadesMeetup2',
 		parts: starShadesParts(),
 	},
+
+	// The third meetup's souvenir: a gold circlet with three pearls riding a thin
+	// orbit ring above it, each held on its own stem (three, for three.ws).
+	// Headwear like the laurel, but open sky where the laurel is dense leaves, so
+	// the two never read as the same item. Same grant rules as both before it.
+	'orbit-crown-meetup-3.glb': {
+		rootName: 'OrbitCrownMeetup3',
+		parts: orbitCrownParts(),
+	},
 };
 
 // Build the laurel's three primitives: the circlet band, the merged leaf ring,
@@ -680,6 +689,57 @@ function starShadesParts() {
 			translate: [-0.008, EYE_Y + 0.012, FRAME_Z],
 			rotation: [0, 0, -0.707, 0.707], // lie horizontally along X
 		},
+	];
+}
+
+// Build the orbit crown's four primitives: the circlet band, the merged stems,
+// the orbit ring, and the three pearls.
+function orbitCrownParts() {
+	const BAND_R = 0.104;   // the laurel's band, which is proven to rest on the crown
+	const BAND_Y = 0.085;
+	// The orbit ring is the widest thing on the prop, and mountProp() normalises
+	// that span to 0.34 m. Keeping the band at ~0.62 of it lands the circlet on
+	// the skull the same way the laurel's leaf tips do, instead of floating wide.
+	const ORBIT_R = 0.155;
+	const ORBIT_Y = BAND_Y + 0.06;
+	const PEARL_R = 0.012;
+	const GOLD = [0.9, 0.74, 0.26];
+
+	const flat = quatAxis('x', -Math.PI / 2); // torus is authored in XY; lay it in XZ
+	const band = transformGeom(
+		torus({ r1: BAND_R, r2: 0.0048, segments: 48, tubeSegments: 8 }),
+		{ rotation: flat, translate: [0, BAND_Y, 0] },
+	);
+	const orbit = transformGeom(
+		torus({ r1: ORBIT_R, r2: 0.0024, segments: 64, tubeSegments: 6 }),
+		{ rotation: flat, translate: [0, ORBIT_Y, 0] },
+	);
+
+	// Stems lean outward from the band to the orbit, one pearl at the front (+Z)
+	// and the other two at 120 degree steps around it.
+	const reach = ORBIT_R - BAND_R;
+	const rise = ORBIT_Y - BAND_Y;
+	const lean = Math.atan2(reach, rise);
+	const stemBase = cylinder({ r: 0.0032, y0: 0, y1: Math.hypot(reach, rise), segments: 8 });
+	const pearlBase = sphere({ r: PEARL_R, segments: 14, rings: 10 });
+	const stems = [];
+	const pearls = [];
+	for (let i = 0; i < 3; i++) {
+		const theta = (i * Math.PI * 2) / 3;
+		const sin = Math.sin(theta);
+		const cos = Math.cos(theta);
+		stems.push(transformGeom(stemBase, {
+			rotation: quatMul(quatAxis('y', theta), quatAxis('x', lean)),
+			translate: [BAND_R * sin, BAND_Y, BAND_R * cos],
+		}));
+		pearls.push(transformGeom(pearlBase, { translate: [ORBIT_R * sin, ORBIT_Y, ORBIT_R * cos] }));
+	}
+
+	return [
+		{ name: 'circlet', geom: band, color: GOLD, metallic: 0.88, roughness: 0.24 },
+		{ name: 'stems', geom: mergeGeoms(stems), color: GOLD, metallic: 0.88, roughness: 0.24 },
+		{ name: 'orbit', geom: orbit, color: [0.97, 0.88, 0.6], metallic: 0.9, roughness: 0.18 },
+		{ name: 'pearls', geom: mergeGeoms(pearls), color: [0.95, 0.95, 0.97], metallic: 0.2, roughness: 0.12 },
 	];
 }
 
