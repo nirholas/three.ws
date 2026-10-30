@@ -810,6 +810,10 @@ export function wrap(handler) {
 // what a cron gets for free when it declares none of its own.
 export const DEFAULT_CRON_MAX_DURATION_MS = 120_000;
 
+/**
+ * @param {Function} handler
+ * @param {{ requireWriteCapacity?: boolean, maxDurationMs?: number }} [opts]
+ */
 export function wrapCron(handler, { requireWriteCapacity = false, maxDurationMs } = {}) {
 	const budgetMs = maxDurationMs ?? DEFAULT_CRON_MAX_DURATION_MS;
 	return wrap(async (req, res, ...rest) => {

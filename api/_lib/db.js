@@ -358,7 +358,7 @@ function transaction(queriesOrFn, opts) {
 	return client.transaction(batch, opts);
 }
 
-export const sql = /** @type {ReturnType<typeof import('@neondatabase/serverless').neon>} */ (new Proxy(function () {}, {
+export const sql = /** @type {import('@neondatabase/serverless').NeonQueryFunction<false, false>} */ (new Proxy(function () {}, {
 	apply(_t, _this, args) {
 		// A string first argument is the function form `sql(queryText, params, opts)`;
 		// anything else is a tagged-template call where the first arg is the strings

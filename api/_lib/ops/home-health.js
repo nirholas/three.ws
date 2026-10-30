@@ -360,6 +360,7 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
  */
 function safeStats() {
 	try {
+		/** @type {ReturnType<typeof runtimeStats> & { capacity?: number }} */
 		const s = runtimeStats();
 		return {
 			open: s.open ?? 0,

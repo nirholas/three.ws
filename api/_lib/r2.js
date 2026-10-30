@@ -33,14 +33,14 @@ function getR2() {
 	}
 	return _r2;
 }
-export const r2 = new Proxy(
+export const r2 = /** @type {S3Client} */ (new Proxy(
 	{},
 	{
 		get(_t, prop) {
 			return getR2()[prop];
 		},
 	},
-);
+));
 
 // True only when every var the read/write helpers below dereference is present:
 // the client needs the endpoint plus credentials, putObject/presignGet need the

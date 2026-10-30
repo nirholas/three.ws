@@ -93,8 +93,8 @@ export function walletTradeState(balanceSol, perTradeSol, minTradeLamports = DEF
  * close that gap by itself, which is the difference between "it will heal in
  * five minutes" and "a human has to move money".
  *
- * @param {object} p
- * @param {Array<{agentId?: string, address?: string, balanceSol?: number|null, perTradeSol?: number}>} p.wallets
+ * @param {object} [p]
+ * @param {Array<{agentId?: string, address?: string, balanceSol?: number|null, perTradeSol?: number}>} [p.wallets]
  * @param {number|null} [p.masterSol] funding master balance, null when unread/unconfigured
  * @param {bigint} [p.minTradeLamports]
  * @returns {{

@@ -56,6 +56,8 @@ export class UpstreamError extends Error {
 		this.url = info.url;
 		this.body = info.body;
 		this.retryAfterMs = info.retryAfterMs ?? null;
+		/** Set when the upstream's Retry-After is longer than the caller will wait. */
+		this.tooLongToWait = false;
 		if (info.cause !== undefined) this.cause = info.cause;
 	}
 }
@@ -197,6 +199,7 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 	};
 
 	if (!name) return run().then(noteOk, noteFail);
+	/** @type {unknown} */
 	let failure;
 	const value = await withBreaker(name, run, {
 		threshold: breakerThreshold,
@@ -356,7 +359,7 @@ export async function lastGood(key, load, opts = {}) {
 export async function lastGoodValue(key, load, opts = {}) {
 	return (await lastGood(key, load, {
 		...opts,
-		onFallback: (err, ageMs) => console.warn(`[upstream] ${key}: serving last good value (${Math.round(ageMs / 60_000)}m old) after ${err?.message || err}`),
+		onFallback: (/** @type {any} */ err, ageMs) => console.warn(`[upstream] ${key}: serving last good value (${Math.round(ageMs / 60_000)}m old) after ${err?.message || err}`),
 	})).value;
 }
 

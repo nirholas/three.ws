@@ -363,7 +363,7 @@ export function createHomeRuntime(deps = {}) {
 
 	/**
 	 * The health probe's view of this instance. Shaped for order 13.
-	 * @returns {{ open: number, subscribers: number, pooledCap: number, breakersOpen: number, byStatus: Record<string, number> }}
+	 * @returns {{ open: number, subscribers: number, pooledCap: number, pooledCapNote: string|null, breakersOpen: number, byStatus: Record<string, number>, admission: ReturnType<ReturnType<typeof createAdmissionController>['snapshot']> }}
 	 */
 	function stats() {
 		const byStatus = {};

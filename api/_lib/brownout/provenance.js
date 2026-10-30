@@ -58,7 +58,7 @@ export function worstTier(a, b) {
 }
 
 /** @typedef {{ name: string, outcome: Outcome, ms: number, tier: Tier, detail?: string }} SourceRecord */
-/** @typedef {{ sources: SourceRecord[], startedAt: number }} Ledger */
+/** @typedef {{ sources: SourceRecord[], startedAt: number, truncated?: number }} Ledger */
 
 /** @type {AsyncLocalStorage<Ledger>} */
 const storage = new AsyncLocalStorage();
@@ -122,6 +122,7 @@ export function recordSource(rec) {
 export function provenanceSummary() {
 	const ledger = storage.getStore();
 	if (!ledger || (!ledger.sources.length && !ledger.truncated)) return null;
+	/** @type {Tier} */
 	let tier = 'live';
 	let ok = 0;
 	let failed = 0;

@@ -182,7 +182,7 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 		// paragraph below is shared because the fix is identical; only the sentence
 		// naming the mechanism and the place to look differs.
 		const withdrawn = noSolanaAccept > 0;
-		const mechanism = /** @type {const} */ (withdrawn ? 'accept_withdrawn' : 'settle_refused');
+		const mechanism = /** @type {'accept_withdrawn'|'settle_refused'} */ (withdrawn ? 'accept_withdrawn' : 'settle_refused');
 		const opening = withdrawn
 			? 'The Solana accept is being WITHDRAWN, not rejected: ' +
 				`${noSolanaAccept} no_solana_accept + ${floorSignals} floor refusal(s) against ${faults} rail faults. ` +
@@ -314,7 +314,8 @@ function gateBypassVerdict(verdict, { gateBypass, settled, minAttempts }) {
  *   faults: number, attempts: number, rate: number|null,
  *   faultClasses: Array<{ reason: string, n: number }>, detail: string,
  *   mechanism?: 'accept_withdrawn'|'settle_refused'|'paced'|'gate_bypass'|'rail', hint?: string,
- *   gateBypass?: number }}
+ *   cause?: 'sponsor_floor'|'fee_governor'|'rail', noSolanaAccept?: number,
+ *   floorSignals?: number, governorSkips?: number, gateBypass?: number }}
  */
 export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, facilitatorRejects } = {}) {
 	let settled = 0;

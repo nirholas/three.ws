@@ -94,7 +94,7 @@ async function probeOnce() {
 
 /**
  * @param {() => Promise<void>} probe
- * @returns {Promise<{ ok: true, latencyMs: number } | { ok: false, latencyMs: number, error: unknown }>}
+ * @returns {Promise<{ ok: boolean, latencyMs: number, error?: unknown }>}
  */
 async function timeProbe(probe) {
 	const started = Date.now();
