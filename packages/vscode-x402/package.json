@@ -187,10 +187,10 @@
 		"vscode:prepublish": "node build.mjs --production"
 	},
 	"dependencies": {
-		"@solana/kit": "5.5.1",
-		"@x402/core": "2.14.0",
-		"@x402/fetch": "2.14.0",
-		"@x402/svm": "2.14.0",
+		"@solana/kit": "^8.6.0",
+		"@x402/core": "^2.29.0",
+		"@x402/fetch": "^2.29.0",
+		"@x402/svm": "^2.29.0",
 		"bs58": "^6.0.0"
 	},
 	"devDependencies": {
