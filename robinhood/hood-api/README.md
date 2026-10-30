@@ -129,7 +129,7 @@ background calls (upstreams start on the first subscriber, stop when the last di
 ## Architecture
 
 - **Runtime:** Node 20+, [Hono](https://hono.dev) + [`@hono/zod-openapi`](https://github.com/honojs/middleware/tree/main/packages/zod-openapi)
-  for typed routes and a generated OpenAPI 3.1 doc, [`@hono/node-ws`](https://github.com/honojs/node-ws)
+  for typed routes and a generated OpenAPI 3.1 doc, [`@hono/node-server`](https://github.com/honojs/node-server) (`upgradeWebSocket`)
   for the firehose WebSocket.
 - **Chain reads:** [`hoodchain`](https://github.com/nirholas/robinhood-chain-sdk) (the
   Wave-1 SDK) — Chainlink quotes, Uniswap v3 DEX quotes/pools, the Stock Token registry,

@@ -39,10 +39,9 @@
     "test:x402": "vitest run test/x402.test.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.19.14",
-    "@hono/node-ws": "^1.3.1",
+    "@hono/node-server": "^2.1.5",
     "@hono/zod-openapi": "^1.4.0",
-    "dotenv": "^17.4.0",
+    "dotenv": "^18.0.9",
     "hono": "^4.13.13",
     "hoodchain": "^0.1.1",
     "viem": "^2.55.0",
@@ -52,9 +51,10 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.2",
     "tsx": "^4.19.0",
-    "typescript": "^5.9.0",
-    "vitest": "^4.1.12",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5",
     "x402": "^1.2.0",
     "x402-fetch": "^1.2.0"
   },
