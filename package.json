@@ -714,7 +714,7 @@
 		"d3-force-3d": "^3.0.6",
 		"dat.gui": "^0.7.9",
 		"delaunator": "^5.1.0",
-		"diff": "^5.2.2",
+		"diff": "^9.0.0",
 		"dompurify": "^3.4.17",
 		"draco3dgltf": "^1.5.7",
 		"esbuild": "^0.28.2",
