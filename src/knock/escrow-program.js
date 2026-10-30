@@ -17,7 +17,7 @@
 // bundle for the visitors who only ever read a door.
 
 import { PublicKey, TransactionInstruction, SystemProgram, SYSVAR_RENT_PUBKEY } from '@solana/web3.js';
-import { sha256 as nobleSha256 } from '@noble/hashes/sha256';
+import { sha256 as nobleSha256 } from '@noble/hashes/sha2.js';
 import {
 	getAssociatedTokenAddressSync,
 	createAssociatedTokenAccountIdempotentInstruction,

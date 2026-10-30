@@ -18,9 +18,9 @@
 
 import bs58 from 'bs58';
 import { ed25519 } from '@noble/curves/ed25519.js';
-import { hkdf } from '@noble/hashes/hkdf';
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { hkdf } from '@noble/hashes/hkdf.js';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
 import { env } from './env.js';
 import { decryptSecret, isEncryptedSecret } from './secret-box.js';

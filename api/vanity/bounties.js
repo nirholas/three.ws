@@ -94,7 +94,7 @@ import {
 } from '../_lib/vanity-bounty-store.js';
 import { payWinner, refundRequester, payoutConfigured } from '../_lib/vanity-bounty-payout.js';
 import { randomSeed } from '../../src/solana/vanity/verifiable-grind.js';
-import { bytesToHex } from '@noble/hashes/utils';
+import { bytesToHex } from '@noble/hashes/utils.js';
 import bs58 from 'bs58';
 
 const ROUTE = '/api/vanity/bounties';

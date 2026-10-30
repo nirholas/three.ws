@@ -13,10 +13,10 @@
 
 import bs58 from "bs58";
 import { ed25519 } from "@noble/curves/ed25519.js";
-import { sha256 } from "@noble/hashes/sha256";
-import { hmac } from "@noble/hashes/hmac";
-import { hkdf } from "@noble/hashes/hkdf";
-import { bytesToHex, hexToBytes, concatBytes } from "@noble/hashes/utils";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { hmac } from "@noble/hashes/hmac.js";
+import { hkdf } from "@noble/hashes/hkdf.js";
+import { bytesToHex, hexToBytes, concatBytes } from "@noble/hashes/utils.js";
 
 export const VANITY_PROTOCOL_VERSION = "three-vanity/v1";
 

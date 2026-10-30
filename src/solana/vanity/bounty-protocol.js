@@ -40,8 +40,8 @@
  * in tests/vanity-bounty-protocol.test.js.
  */
 
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex, utf8ToBytes, concatBytes } from '@noble/hashes/utils';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, utf8ToBytes, concatBytes } from '@noble/hashes/utils.js';
 
 import { validatePattern, expectedAttempts, effectiveLength } from './validation.js';
 import { SEALED_ENVELOPE_SCHEME } from './sealed-envelope.js';

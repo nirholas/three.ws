@@ -46,8 +46,8 @@
  *     in the store (open→claimed), idempotent on the claim token.
  */
 
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 
 export const DROP_PROTOCOL_VERSION = 'three-drop/v1';
 

@@ -109,7 +109,7 @@ import {
 	atomicsToAmount,
 } from '../_lib/sealed-drop-funding.js';
 import { encryptSecret, decryptSecret } from '../_lib/secret-box.js';
-import { randomBytes as nobleRandomBytes, bytesToHex } from '@noble/hashes/utils';
+import { randomBytes as nobleRandomBytes, bytesToHex } from '@noble/hashes/utils.js';
 import bs58 from 'bs58';
 import { Keypair } from '@solana/web3.js';
 

@@ -19,7 +19,7 @@
 // raw {round, randomness, signature} into coin_draws so a third party can
 // audit after the fact even if we didn't verify in-process.
 
-import { sha256 } from '@noble/hashes/sha256';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { fetchUpstream } from '../upstream-fetch.js';
 
 export const QUICKNET_CHAIN_HASH = '52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971';

@@ -40,7 +40,7 @@
  * Pure + isomorphic: @noble hashing + the split-key primitives only.
  */
 
-import { sha256 } from '@noble/hashes/sha256.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { hmac } from '@noble/hashes/hmac.js';
 import { bytesToHex, utf8ToBytes, concatBytes } from '@noble/hashes/utils.js';
 import bs58 from 'bs58';

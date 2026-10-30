@@ -14,7 +14,7 @@
 // No live network: global.fetch is stubbed per case.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { sha256 } from '@noble/hashes/sha256';
+import { sha256 } from '@noble/hashes/sha2.js';
 
 vi.mock('../api/_lib/cache.js', async (importOriginal) => {
 	const real = await importOriginal();

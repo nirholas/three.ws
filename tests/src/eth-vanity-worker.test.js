@@ -16,7 +16,7 @@
  */
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { webcrypto } from 'node:crypto';
-import { keccak_256 } from '@noble/hashes/sha3';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 
 beforeAll(() => {
 	globalThis.crypto ??= webcrypto;

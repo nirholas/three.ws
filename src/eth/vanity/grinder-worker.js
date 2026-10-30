@@ -16,7 +16,7 @@
  * ~2 permutations (case-sensitive).
  */
 
-import { keccak_256 } from '@noble/hashes/sha3';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 
 const PROGRESS_INTERVAL = 5000;
 const HEX_CHARS = '0123456789abcdef';

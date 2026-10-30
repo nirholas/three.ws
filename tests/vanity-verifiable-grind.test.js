@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import bs58 from 'bs58';
 import { ed25519 } from '@noble/curves/ed25519.js';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
 import {
 	PROTOCOL_VERSION,

@@ -8,7 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import bs58 from 'bs58';
-import { bytesToHex } from '@noble/hashes/utils';
+import { bytesToHex } from '@noble/hashes/utils.js';
 
 import {
 	PROTOCOL_VERSION,

@@ -33,7 +33,7 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { cors, json, method, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { keccak_256 } from '@noble/hashes/sha3';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 import { fetchAnyJson } from '../_lib/upstream-fetch.js';
 import { evmRpcEndpoints } from '../_lib/evm/rpc.js';
 import { CHAIN_BY_ID } from '../_lib/erc8004-chains.js';

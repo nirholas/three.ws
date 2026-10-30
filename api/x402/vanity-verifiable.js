@@ -73,7 +73,7 @@ import {
 } from '../../src/solana/vanity/verifiable-grind.js';
 import { getServiceIdentity } from '../_lib/vanity-service-key.js';
 import bs58 from 'bs58';
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
+import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 
 const ROUTE = '/api/x402/vanity-verifiable';
 const REQUIRED_SCOPE = 'x402:bypass';

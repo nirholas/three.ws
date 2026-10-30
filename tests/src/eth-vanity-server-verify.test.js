@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { __test__ } from '../../api/agents/eth-vanity.js';
-import { keccak_256 } from '@noble/hashes/sha3';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 import { getCreate2Address } from 'ethers';
 
 const { _verifyCreate2 } = __test__;

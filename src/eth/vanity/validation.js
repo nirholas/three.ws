@@ -20,7 +20,7 @@
  * Wallet, CreateX, the Arachnid deterministic-deployment-proxy, etc.
  */
 
-import { keccak_256 } from '@noble/hashes/sha3';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 
 const HEX_ANY  = /^[0-9a-fA-F]+$/;
 const HEX_LOW  = /^[0-9a-f]+$/;

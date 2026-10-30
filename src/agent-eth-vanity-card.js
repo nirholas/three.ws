@@ -21,7 +21,7 @@
  *  - server-side bytecode verification on the deployed callback
  */
 
-import { keccak_256 } from '@noble/hashes/sha3';
+import { keccak_256 } from '@noble/hashes/sha3.js';
 import { apiFetch } from './api.js';
 import { grindCreate2Vanity } from './eth/vanity/grinder.js';
 import {
