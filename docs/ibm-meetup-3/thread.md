@@ -80,7 +80,7 @@ And it is not just our venue. **Every Solana token already has a world**, derive
 
 ### 4\. The developer platform
 
--   **93 published npm packages under `@three-ws`, 41 of them MCP servers:** 3D generation, avatars, scenes, spatial responses, market intel, payments and more, usable from Claude, Cursor, or any MCP-capable client.
+-   **131 published npm packages under `@three-ws`, 48 of them MCP servers:** 3D generation, avatars, scenes, spatial responses, market intel, payments and more, usable from Claude, Cursor, or any MCP-capable client.
 -   Two are IBM-specific and belong in this community's toolbox: `@three-ws/ibm-watsonx-mcp` (watsonx.ai chat, generation, embeddings, tokenization and forecasting, on your own IBM Cloud account and credentials) and `@three-ws/ibm-x402-mcp` (IBM Granite tools exposed over MCP with per-call x402 billing). Both are community-built and open source; IBM does not operate them.
 -   Docs with runnable samples, a cookbook, an examples gallery, and machine-readable surfaces (`openapi.json`, `llms.txt`, `.well-known/mcp.json`).
 
