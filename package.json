@@ -717,7 +717,7 @@
 		"diff": "^5.2.2",
 		"dompurify": "^3.4.17",
 		"draco3dgltf": "^1.5.7",
-		"esbuild": "^0.28.1",
+		"esbuild": "^0.28.2",
 		"ethers": "^6.16.0",
 		"exceljs": "^4.4.0",
 		"express": "^5.2.1",

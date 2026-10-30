@@ -58,6 +58,6 @@
 	},
 	"devDependencies": {
 		"@modelcontextprotocol/ext-apps": "^2.0.0",
-		"esbuild": "^0.28.0"
+		"esbuild": "^0.28.2"
 	}
 }

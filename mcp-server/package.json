@@ -78,7 +78,7 @@
 	},
 	"devDependencies": {
 		"@modelcontextprotocol/ext-apps": "^2.0.0",
-		"esbuild": "^0.28.0"
+		"esbuild": "^0.28.2"
 	},
 	"bugs": {
 		"url": "https://github.com/nirholas/three.ws/issues"
