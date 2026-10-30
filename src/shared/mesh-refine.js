@@ -182,15 +182,17 @@ export function subdivideGeometry(geometry, { iterations = 1 } = {}) {
 /**
  * Decimate via quadric error metric (SimplifyModifier). `keep` is the fraction
  * of vertices to retain (0..1). UVs/normals/colors are carried through.
+ * Async because SimplifyModifier runs meshoptimizer's WASM simplifier since
+ * three 0.187 and resolves once that module is ready.
  */
-export function decimateGeometry(geometry, { keep = 0.5 } = {}) {
+export async function decimateGeometry(geometry, { keep = 0.5 } = {}) {
 	const pos = geometry.getAttribute('position');
 	if (!pos) return geometry;
 	const ratio = clamp(keep, 0.05, 0.95);
 	const remove = Math.floor(pos.count * (1 - ratio));
 	if (remove <= 0) return geometry;
 	try {
-		return new SimplifyModifier().modify(geometry, remove);
+		return await new SimplifyModifier().modify(geometry, remove);
 	} catch {
 		// Degenerate topology can trip the simplifier; the un-decimated geometry
 		// is always a valid result, just denser than requested.
@@ -205,11 +207,11 @@ export function decimateGeometry(geometry, { keep = 0.5 } = {}) {
  * normals last. `spec` keys: { weld, decimate, subdivide, smooth, lambda,
  * normals }.
  */
-export function refineGeometry(geometry, spec = {}) {
+export async function refineGeometry(geometry, spec = {}) {
 	let geo = geometry;
 	const groups = hasMaterialGroups(geo);
 	if (spec.weld !== false) geo = weldGeometry(geo, spec.weldTolerance ?? 1e-4);
-	if (!groups && spec.decimate) geo = decimateGeometry(geo, { keep: spec.decimate });
+	if (!groups && spec.decimate) geo = await decimateGeometry(geo, { keep: spec.decimate });
 	if (!groups && spec.subdivide) geo = subdivideGeometry(geo, { iterations: spec.subdivide });
 	if (spec.smooth) geo = laplacianSmooth(geo, { iterations: spec.smooth, lambda: spec.lambda });
 	if (spec.normals !== false) recomputeSmoothNormals(geo);
@@ -221,17 +223,19 @@ export function refineGeometry(geometry, spec = {}) {
  * for its refined version. Returns { before, after } stat totals so the caller
  * can show the user exactly what changed.
  */
-export function refineScene(root, spec = {}) {
+export async function refineScene(root, spec = {}) {
 	const before = sceneStats(root);
+	const meshes = [];
 	root.traverse((obj) => {
-		if (obj.isMesh && obj.geometry?.getAttribute?.('position')) {
-			const refined = refineGeometry(obj.geometry, spec);
-			if (refined !== obj.geometry) {
-				obj.geometry.dispose?.();
-				obj.geometry = refined;
-			}
-		}
+		if (obj.isMesh && obj.geometry?.getAttribute?.('position')) meshes.push(obj);
 	});
+	for (const obj of meshes) {
+		const refined = await refineGeometry(obj.geometry, spec);
+		if (refined !== obj.geometry) {
+			obj.geometry.dispose?.();
+			obj.geometry = refined;
+		}
+	}
 	return { before, after: sceneStats(root) };
 }
 

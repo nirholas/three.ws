@@ -154,7 +154,7 @@ if (resultPanel && viewer) {
 			if (token !== runToken) return;
 
 			await nextFrame();
-			const { before, after } = refineScene(gltf.scene, spec);
+			const { before, after } = await refineScene(gltf.scene, spec);
 
 			const glb = await exportGlb(gltf.scene);
 			if (token !== runToken) return;

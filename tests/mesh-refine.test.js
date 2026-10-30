@@ -94,17 +94,17 @@ describe('laplacianSmooth', () => {
 });
 
 describe('decimateGeometry', () => {
-	it('reduces vertex count toward the kept fraction', () => {
+	it('reduces vertex count toward the kept fraction', async () => {
 		const dense = new PlaneGeometry(2, 2, 16, 16);
 		const before = geometryStats(dense).vertices;
-		const out = decimateGeometry(dense, { keep: 0.4 });
+		const out = await decimateGeometry(dense, { keep: 0.4 });
 		expect(geometryStats(out).vertices).toBeLessThan(before);
 	});
 
-	it('clamps keep below 1 so it retains nearly all vertices at the top of the range', () => {
+	it('clamps keep below 1 so it retains nearly all vertices at the top of the range', async () => {
 		const g = new PlaneGeometry(2, 2, 4, 4);
 		const before = geometryStats(g).vertices;
-		const out = geometryStats(decimateGeometry(g, { keep: 0.99 })).vertices;
+		const out = geometryStats(await decimateGeometry(g, { keep: 0.99 })).vertices;
 		expect(out).toBeLessThanOrEqual(before);
 		expect(out).toBeGreaterThanOrEqual(Math.floor(before * 0.9));
 	});
@@ -120,38 +120,38 @@ describe('subdivideGeometry', () => {
 });
 
 describe('refineGeometry pipeline', () => {
-	it('Clean preset welds and adds smooth normals without changing density', () => {
+	it('Clean preset welds and adds smooth normals without changing density', async () => {
 		const spec = specForPreset('clean');
-		const out = refineGeometry(duplicatedQuad(), spec);
+		const out = await refineGeometry(duplicatedQuad(), spec);
 		expect(out.getAttribute('position').count).toBe(4); // welded
 		expect(out.getAttribute('normal')).not.toBeNull();
 		expect(geometryStats(out).triangles).toBe(2); // unchanged
 	});
 
-	it('Game-ready preset reduces triangles', () => {
+	it('Game-ready preset reduces triangles', async () => {
 		const dense = new PlaneGeometry(2, 2, 16, 16);
 		const before = geometryStats(dense).triangles;
 		const spec = specForPreset('gameready', 30); // keep 30%
-		const out = refineGeometry(dense, spec);
+		const out = await refineGeometry(dense, spec);
 		expect(geometryStats(out).triangles).toBeLessThan(before);
 	});
 
-	it('skips density transforms on multi-material (grouped) geometry', () => {
+	it('skips density transforms on multi-material (grouped) geometry', async () => {
 		const g = new PlaneGeometry(2, 2, 8, 8);
 		g.addGroup(0, 96, 0);
 		g.addGroup(96, g.getIndex().count - 96, 1);
 		const before = geometryStats(g).triangles;
-		const out = refineGeometry(g, specForPreset('gameready', 30));
+		const out = await refineGeometry(g, specForPreset('gameready', 30));
 		// Grouped → decimate skipped, triangle count preserved.
 		expect(geometryStats(out).triangles).toBe(before);
 	});
 });
 
 describe('refineScene', () => {
-	it('refines every mesh and reports before/after totals', () => {
+	it('refines every mesh and reports before/after totals', async () => {
 		const root = new Group();
 		root.add(new Mesh(duplicatedQuad()));
-		const { before, after } = refineScene(root, specForPreset('clean'));
+		const { before, after } = await refineScene(root, specForPreset('clean'));
 		expect(before.vertices).toBe(6);
 		expect(after.vertices).toBe(4); // welded
 	});
