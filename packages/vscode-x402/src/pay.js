@@ -9,7 +9,7 @@ import { withX402, privateKeyToWallet } from '../../x402-fetch/src/index.js';
 import { amountToUsd } from '../../x402-fetch/src/parse-challenge.js';
 import { getKey, setKey, getSolanaKey, setSolanaKey } from './wallet.js';
 import { inspectEndpoint, railOf } from './inspect.js';
-import { buildSolanaPayingFetch, solanaAddressFromSecret, tokenLabel, isThreeAccept, isUsdcAccept } from './solana.js';
+import { buildSolanaPayingFetch, solanaAddressFromSecret, tokenAmountOf, tokenLabel, isThreeAccept, isUsdcAccept } from './solana.js';
 
 function config() {
 	const c = vscode.workspace.getConfiguration('threewsX402');
@@ -114,8 +114,8 @@ export async function payAndCall(context, req) {
 	const chosen = probe.chosen;
 	const rail = probe.rail;
 	const token = tokenLabel(chosen);
-	const tokenAmount = amountToUsd(chosen);
-	const amountUsd = isUsdcAccept(chosen) ? tokenAmount : null;
+	const amountUsd = isUsdcAccept(chosen) ? amountToUsd(chosen) : null;
+	const tokenAmount = amountUsd ?? tokenAmountOf(chosen);
 	const paymentLabel = amountUsd != null ? `$${amountUsd.toFixed(6)} ${token}` : `${tokenAmount.toFixed(6)} ${token}`;
 	const netLabel = networkLabel(chosen, rail);
 

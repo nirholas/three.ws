@@ -49,6 +49,19 @@ export function tokenLabel(a) {
 	return n || 'token';
 }
 
+/**
+ * Human-readable amount of a non-USDC requirement in whole tokens, from the
+ * atomic `amount` and the declared `extra.decimals` (6 when undeclared).
+ * Display only: spend caps use `amountToUsd`, which prices anything off the
+ * pinned USDC assets as Infinity.
+ */
+export function tokenAmountOf(a) {
+	const atomic = Number(a?.amount);
+	const declared = Number(a?.extra?.decimals);
+	const decimals = Number.isInteger(declared) && declared >= 0 && declared <= 18 ? declared : 6;
+	return Number.isFinite(atomic) && atomic >= 0 ? atomic / 10 ** decimals : Infinity;
+}
+
 /** Narrow accepts to a preferred token; fail-open so a payment still settles. */
 function filterAcceptsByToken(accepts, token) {
 	if (!Array.isArray(accepts) || !token || token === 'auto') return Array.isArray(accepts) ? accepts : [];

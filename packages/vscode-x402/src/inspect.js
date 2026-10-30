@@ -5,7 +5,7 @@
 // (paste a URL) or from a bazaar item.
 
 import { parseChallenge, amountToUsd, isEip3009Accept } from '../../x402-fetch/src/parse-challenge.js';
-import { isSolanaExactAccept, isThreeAccept, isUsdcAccept, tokenLabel } from './solana.js';
+import { isSolanaExactAccept, isThreeAccept, isUsdcAccept, tokenAmountOf, tokenLabel } from './solana.js';
 
 const NETWORK_BASE = 'eip155:8453';
 
@@ -102,7 +102,7 @@ export function summarize(result) {
 	}
 	const lines = ['Status: 402 Payment Required', ''];
 	result.accepts.forEach((a, i) => {
-		const amount = amountToUsd(a);
+		const amount = isUsdcAccept(a) ? amountToUsd(a) : tokenAmountOf(a);
 		const rail = railOf(a);
 		const railTag = rail ? ` [${rail}]` : '';
 		const mark = a === result.chosen ? ' ← payable by this wallet' : '';
