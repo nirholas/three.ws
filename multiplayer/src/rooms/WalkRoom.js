@@ -259,6 +259,10 @@ const TAG_IMMUNITY_MS = 2000;
 const TAG_MIN_PLAYERS = 2;
 const TAG_LB_INTERVAL_MS = 8000;
 
+// How often a room grants the live event souvenir to players already seated.
+// Someone standing in the plaza when the window opens gets it within this long.
+const EVENT_SOUVENIR_SWEEP_MS = 15_000;
+
 // King of the Totem mini-game (R07). Server-authoritative area control: the SOLE
 // occupant of the king-zone at the totem base earns points each tick; two or more
 // inside is "contested" and nobody scores. Rounds run on a fixed timer with a
@@ -818,6 +822,15 @@ export class WalkRoom extends Room {
 		this.clock.setInterval(() => {
 			if (this._itPlayer()) this._broadcastTagState();
 		}, TAG_LB_INTERVAL_MS);
+
+		// Event souvenir for players already in the world when an event window
+		// opens (early doors). Reads the cached config, so a world with no live
+		// event pays one timestamp comparison per tick.
+		this.clock.setInterval(() => {
+			this._sweepEventSouvenirs().catch((err) => {
+				console.warn(`[walk_world ${this.roomId}] souvenir sweep failed:`, err?.message);
+			});
+		}, EVENT_SOUVENIR_SWEEP_MS);
 
 		// Dance floor beat, every 4 s, aligned across all clients in the room so
 		// avatars standing on the disco pad start the same crossfade at the same
@@ -2065,19 +2078,44 @@ export class WalkRoom extends Room {
 	// Fail-open on every axis: no config, an unreachable config, a closed window,
 	// or the wrong world all mean "grant nothing" and never delay the join.
 	async _grantEventSouvenir(client, profile) {
+		const drop = await this._claimableEventDrop();
+		if (drop) this._grantDrop(client, profile, drop, { sendProfile: false });
+	}
+
+	// The live drop if one is claimable in THIS world right now, else null.
+	async _claimableEventDrop() {
 		let drop;
 		try {
 			drop = await currentEventDrop();
 		} catch (err) {
 			console.warn('[walk_world] event drop config read failed:', err?.message);
-			return;
+			return null;
 		}
-		if (!dropClaimable(drop, this.state.coin, Date.now())) return;
+		return dropClaimable(drop, this.state.coin, Date.now()) ? drop : null;
+	}
+
+	// The grant on join only covers people who arrive during the window. Meetups
+	// open early doors, so the first crowd is already standing in the plaza when
+	// the window opens; this sweep, run on the room clock, grants everyone seated
+	// with a loaded profile. Same idempotent grant, so a player the join path
+	// already covered is a no-op here.
+	async _sweepEventSouvenirs() {
+		const drop = await this._claimableEventDrop();
+		if (!drop) return;
+		for (const client of this.clients) {
+			const profile = this.econ.get(client.sessionId);
+			if (!profile) continue; // still joining: onJoin's own grant covers them
+			this._grantDrop(client, profile, drop, { sendProfile: true });
+		}
+	}
+
+	_grantDrop(client, profile, drop, { sendProfile }) {
 		if (!grantCosmetic(profile, drop.cosmeticId)) return; // already theirs
 
-		// No _sendProfile here: onJoin sends the authoritative snapshot a few lines
-		// later, once the loadout has been applied, and the wardrobe reads the new
-		// item from that one. A second echo would only re-render it for nothing.
+		// On join, onJoin sends the authoritative snapshot a few lines later, once
+		// the loadout has been applied, and the wardrobe reads the new item from
+		// that one. Mid-session nothing else will, so the sweep sends it here.
+		if (sendProfile) this._sendProfile(client);
 		this._persistEcon(client.sessionId);
 		client.send('souvenir', {
 			id: drop.cosmeticId,
