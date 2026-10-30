@@ -40,7 +40,9 @@ rather than sitting beside it, and it can be worn together with the Star Shades.
 ## For players
 
 1. Open the event world while the event is live. The countdown chip and the
-   lobby banner both link straight to it.
+   lobby banner both link straight to it. Already in the world when the event
+   starts (early doors)? You do not need to rejoin: the souvenir reaches you
+   within about 15 seconds of the window opening.
 2. A card slides in over the corner of the HUD the moment the souvenir lands:
    what you got, why, and a **Wear it** button. It is not a modal, so it never
    interrupts what you were doing, and it retires itself after a few seconds
@@ -133,7 +135,7 @@ doing the wrong thing.
 ```
 public/event.json  ──HTTP──▶  multiplayer/src/event-drop.js   (window + world + item)
                                         │
-                              WalkRoom.onJoin
+                WalkRoom.onJoin  +  souvenir sweep every 15 s
                                         │  dropClaimable(drop, world, now)?
                                         ▼
                               grantCosmetic(profile, id)      (idempotent)
@@ -261,6 +263,7 @@ machine prefer the two above, which cover the same ground between them.
 | --- | --- |
 | Window, world and item resolution | [multiplayer/src/event-drop.js](../multiplayer/src/event-drop.js) |
 | Join-time grant | `_grantEventSouvenir` in [multiplayer/src/rooms/WalkRoom.js](../multiplayer/src/rooms/WalkRoom.js) |
+| Grant to players already seated when the window opens | `_sweepEventSouvenirs` (every `EVENT_SOUVENIR_SWEEP_MS`, 15 s) in [multiplayer/src/rooms/WalkRoom.js](../multiplayer/src/rooms/WalkRoom.js), pinned by [tests/walkroom-event-souvenir-sweep.test.js](../tests/walkroom-event-souvenir-sweep.test.js) |
 | The `event` tier + catalog entry | [multiplayer/src/cosmetics-catalog.js](../multiplayer/src/cosmetics-catalog.js) |
 | Unlock + persistence | `grantCosmetic` / `restoreProfile` in [multiplayer/src/economy.js](../multiplayer/src/economy.js) |
 | The drop card | [src/game/event-souvenir.js](../src/game/event-souvenir.js) |

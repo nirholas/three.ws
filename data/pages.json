@@ -7438,6 +7438,15 @@
 					"lastmod": "2026-07-18"
 				},
 				{
+					"path": "/blog/ibm-user-group-meetup-3",
+					"title": "The Three.ws User Group Meets Inside the World Again on November 6",
+					"description": "Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser, with a souvenir granted only during the hour.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-10-30",
+					"added": "2026-10-30"
+				},
+				{
 					"path": "/blog/three-ws-microsoft-partnership",
 					"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
 					"description": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",

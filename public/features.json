@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-30T19:05:05.630Z",
+	"generated_at": "2026-10-30T19:24:46.508Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -11444,6 +11444,18 @@
 					"title": "Inside the Forge: How a Prompt Becomes a 3D Model",
 					"description": "What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/blog/ibm-user-group-meetup-3",
+					"title": "The Three.ws User Group Meets Inside the World Again on November 6",
+					"description": "Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser, with a souvenir granted only during the hour.",
+					"added": "2026-10-30",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

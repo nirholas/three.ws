@@ -8,6 +8,7 @@ emails, or creates anything by itself.
 
 | Event | Kit | Campaign | Date | State |
 |---|---|---|---|---|
+| Community Meetup #3: Back in the World, hosted with IBM Community | [docs/ibm-meetup-3/](../../../docs/ibm-meetup-3/README.md) | `MKT-2026-11-IBM-MEETUP-3` | Friday, November 6, 2026, 16:00 to 17:00 UTC | Kit ready; event config committed; awaiting both deploys, the IBM listing, and the X posts |
 | IBM Community event two: Give an Agent a Body, Live | [ibm-event-two.md](./ibm-event-two.md) | `MKT-2026-09-IBM-EVENT` | Three October Thursdays offered; October 15 recommended | Kit ready; awaiting date, IBM speaker, and the two emails |
 | Three World Session, November: An Agent Pays for Its Own Tool | [three-world-session.md](./three-world-session.md) (Part 2) | `MKT-2026-11-IBM-WORLD-2` | Tuesday, November 24, 2026 (November 17 as the fallback) | Kit ready; follows event two |
 | GitHub Open Source Friday | [open-source-friday-menu.md](./open-source-friday-menu.md) and the [stream plan](../../../docs/open-source-friday-plan.md) | `MKT-2026-09-OSF` | Any bookable Friday from October 2, 2026 | Approved; booking reply and seven issue bodies ready |

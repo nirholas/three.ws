@@ -5759,6 +5759,12 @@ URL: https://three.ws/blog/inside-the-forge
 
 What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.
 
+### The Three.ws User Group Meets Inside the World Again on November 6
+
+URL: https://three.ws/blog/ibm-user-group-meetup-3
+
+Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser, with a souvenir granted only during the hour.
+
 ### three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace
 
 URL: https://three.ws/blog/three-ws-microsoft-partnership

@@ -2,6 +2,23 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 80. Last merged from data/archives/trythreews_tweets_2026-06-03.json on 2026-06-05 (102 total items, merged June 2026 posts).",
   "items": [
     {
+      "id": "ibm-user-group-meetup-3",
+      "slug": "ibm-user-group-meetup-3",
+      "title": "The Three.ws User Group Meets Inside the World Again on November 6",
+      "date": "2026-10-30T18:00:00.000Z",
+      "author": "three.ws",
+      "link": "https://three.ws/blog/ibm-user-group-meetup-3",
+      "summary": "Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser.",
+      "body_html": "<p><strong>The Three.ws User Group on IBM Community meets inside three.ws again on Friday, November 6, 2026, 8:00 to 9:00 AM Pacific (16:00 to 17:00 UTC), hosted with IBM Community.</strong> The venue is the $THREE home town at <a href=\"https://three.ws/play\" rel=\"noopener\">three.ws/play</a>; the countdown and add-to-calendar are on <a href=\"https://three.ws/event\" rel=\"noopener\">three.ws/event</a>. Free, browser only, no install.</p>\n<ul>\n<li>A live build: one sentence becomes a rigged, animated agent.</li>\n<li>Video to Motion: a phone clip becomes an animation.</li>\n<li>/forge in chat drops a generated object into the world.</li>\n<li>An agent pays for a tool and leaves a public receipt.</li>\n<li>Community showcase, open Q&amp;A, and a group photo with fireworks.</li>\n</ul>\n<p>Everyone in the world during the hour receives the Meetup Orbit Crown, a wearable granted only during this session. Full post: <a href=\"https://three.ws/blog/ibm-user-group-meetup-3\" rel=\"noopener\">three.ws/blog</a></p>",
+      "tags": [
+        "community",
+        "ibm-community",
+        "meetup",
+        "event",
+        "three-ws-play"
+      ]
+    },
+    {
       "id": "microsoft-partnership-marketplace",
       "slug": "microsoft-partnership-marketplace",
       "title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",

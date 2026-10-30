@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-30T19:05:05.678Z",
+	"generated_at": "2026-10-30T19:24:46.558Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4210,
+	"total": 4213,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -22,11 +22,41 @@
 		{
 			"date": "2026-10-30",
 			"type": "launch",
+			"title": "The Three.ws User Group Meets Inside the World Again on November 6",
+			"summary": "Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser, with a souvenir granted only during the hour.",
+			"link": "/blog/ibm-user-group-meetup-3",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "launch",
 			"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
 			"summary": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",
 			"link": "/blog/three-ws-microsoft-partnership",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "update",
+			"title": "Community Meetup #3 is set for November 6 inside /play, hosted with IBM Community",
+			"summary": "The Three.ws User Group on IBM Community meets inside the $THREE home town again on Friday, November 6, 8 to 9 AM Pacific (16:00 to 17:00 UTC). /event carries the countdown and add-to-calendar, the world runs the agenda itself (a live agent build, Video to Motion, /forge, an agent paying for a tool, a community showcase, Q&A and a group photo with fireworks), and everyone in the world during the hour receives the Meetup Orbit Crown, a headwear souvenir granted only during that session.",
+			"link": "/blog/ibm-user-group-meetup-3",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "update",
+			"title": "Event souvenirs now reach players who were already in the world when the event starts",
+			"summary": "A live event's souvenir used to be granted only when a player joined the event world, so anyone who came early for doors and was already standing in the plaza at the start time never received it unless they rejoined. Each world now checks its seated players every 15 seconds while an event is live and grants the souvenir to anyone who does not have it yet, with the same one-time card and the wardrobe updated in place.",
+			"link": "/event",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1520,38 +1550,6 @@
 			"link": "/apps/shopify",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "launch",
-			"title": "Video to Motion: Turn Any Video into an Animation File",
-			"summary": "Upload a video of a person and download the motion as a GLB, BVH, or FBX animation file. Preview it on a default avatar or your own rig, trim it, and save it to your animation library.",
-			"link": "/video-to-motion",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "A Discord Activity brings a shared Forge room into any voice channel",
-			"summary": "Open the new Activity from a Discord voice channel and everyone in the call shares one Forge room: one prompt, one in-progress generation, one finished model with a shared vote count, and an agent that reacts in text to what just happened. Auth maps a verified Discord identity (re-checked against Discord's own /users/@me, never trusted from the client) to a room-scoped session; generation and voting reuse the real /api/forge pipeline and forge_votes table rather than a separate throwaway pipeline. No coin, wallet, or purchase path. Docs: /docs/discord-activity. Submission packet for Developer Portal setup and Discovery copy: marketing/growth/submissions/discord-activity.md.",
-			"link": "/docs/discord-activity",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "A Shopify app turns product photos into 3D product media",
-			"summary": "A new embedded Shopify app, built end to end but not yet installable (Partner account, env vars, and App Store submission are owner actions): pick a product photo in the admin, generate a real GLB through three.ws's own /api/forge pipeline, preview it in-page, and attach it with productCreateMedia so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone from the one upload (Shopify derives the USDZ automatically). Bulk mode generates across a whole catalog with real per-item status. Billing runs through Shopify's own usage-based Billing API, priced from Forge's own per-call cost, in test mode until the app has Public distribution. The three mandatory privacy webhooks plus app/uninstalled are HMAC-verified and delivery-deduplicated. Docs: /docs/shopify-app. Submission packet for Partner Dashboard setup and App Store listing copy: marketing/growth/submissions/shopify-app.md.",
-			"link": "/docs/shopify-app",
-			"tags": [
-				"feature",
-				"docs"
 			]
 		}
 	]

@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-10-30",
+			"title": "Community Meetup #3 is set for November 6 inside /play, hosted with IBM Community",
+			"summary": "The Three.ws User Group on IBM Community meets inside the $THREE home town again on Friday, November 6, 8 to 9 AM Pacific (16:00 to 17:00 UTC). /event carries the countdown and add-to-calendar, the world runs the agenda itself (a live agent build, Video to Motion, /forge, an agent paying for a tool, a community showcase, Q&A and a group photo with fireworks), and everyone in the world during the hour receives the Meetup Orbit Crown, a headwear souvenir granted only during that session.",
+			"tags": [
+				"feature"
+			],
+			"link": "/blog/ibm-user-group-meetup-3"
+		},
+		{
+			"date": "2026-10-30",
+			"title": "Event souvenirs now reach players who were already in the world when the event starts",
+			"summary": "A live event's souvenir used to be granted only when a player joined the event world, so anyone who came early for doors and was already standing in the plaza at the start time never received it unless they rejoined. Each world now checks its seated players every 15 seconds while an event is live and grants the souvenir to anyone who does not have it yet, with the same one-time card and the wardrobe updated in place.",
+			"tags": [
+				"fix"
+			],
+			"link": "/event"
+		},
+		{
+			"date": "2026-10-30",
 			"title": "three.ws partners with Microsoft and is live on Microsoft Marketplace",
 			"summary": "three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, so enterprise teams can find and procure open-source 3D AI agents through the storefront they already buy from. Microsoft now appears on /partners, /partners/benefits, the home page press strip, the press kit, the timeline and the listings registry, with a full write-up in the docs.",
 			"tags": [
