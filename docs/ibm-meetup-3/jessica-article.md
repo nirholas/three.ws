@@ -4,9 +4,9 @@ _By Jessica Swanson. The event listing is on this group's Events tab; the full v
 
 _Header image for the post: [../media/meetup-3-ibm-listing-banner.png](../media/meetup-3-ibm-listing-banner.png) (2400x1200 PNG, three.ws branding only). If IBM Community prefers a co-branded header, IBM's team supplies it with IBM's own mark. Do not paste this note into the published post._
 
-In August this group did something most developer communities have not tried: it held a meetup somewhere other than a video call. We gathered inside three.ws itself, as avatars in a browser-based 3D world, and the questions afterward were the same two every time: when is the next one, and can I bring my own demo? The answer to both is this Friday.
+In August this group did something most developer communities have not tried: it held a meetup somewhere other than a video call. We gathered inside three.ws itself, as avatars in a browser-based 3D world, and the questions afterward were the same two every time: when do we meet in the world again, and can I bring my own demo? The group has met once since, online, for a live build of an embedded 3D agent in thirty minutes. This Friday answers both questions: we are back in the world, and the showcase segment is yours.
 
-**The Three.ws User Group's next in-world meetup is on Friday, November 6, and IBM Community is sponsoring it.** It is still free, still in the browser, and still in the flagship world at [three.ws/play](https://three.ws/play). What is different is the agenda: almost every segment is something the platform did not have the last time we met.
+**The Three.ws User Group's third meetup, and its second inside the world, is on Friday, November 6, and IBM Community is sponsoring it.** It is still free, still in the browser, and still in the flagship world at [three.ws/play](https://three.ws/play). What is different is the agenda: almost every segment is something the platform did not have the last time we met in the world.
 
 ## The details
 

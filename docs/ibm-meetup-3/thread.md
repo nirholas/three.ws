@@ -1,6 +1,6 @@
 # Back Inside the World Next Friday: Community Meetup on the $THREE Server, Sponsored by IBM Community
 
-_Posted by the three.ws team. In August this group held its first meetup inside three.ws instead of on a video call. Next Friday, November 6, we do it again, with IBM Community sponsoring the session. This post covers how to join, the run of show, what has changed in the venue since August, and (for those who want the long read) the platform and technology behind it._
+_Posted by the three.ws team. In August this group held its first meetup inside three.ws instead of on a video call, and since then it has met once online, for a live build of an embedded 3D agent in thirty minutes. Next Friday, November 6, the third meetup goes back into the world, with IBM Community sponsoring the session. This post covers how to join, the run of show, what has changed in the venue since August, and (for those who want the long read) the platform and technology behind it._
 
 ## The event
 
