@@ -37,7 +37,7 @@ export interface BridgeReadyPayload {
 
 export interface BridgeOptions {
 	agentId: string;
-	iframeRef: React.RefObject<HTMLIFrameElement>;
+	iframeRef: React.RefObject<HTMLIFrameElement | null>;
 	allowedOrigin?: string;
 	onReady?: (payload: BridgeReadyPayload) => void;
 	onResize?: (height: number) => void;
@@ -59,7 +59,7 @@ type PendingEntry = {
 
 export class AgentBridge {
 	private readonly agentId: string;
-	private readonly iframeRef: React.RefObject<HTMLIFrameElement>;
+	private readonly iframeRef: React.RefObject<HTMLIFrameElement | null>;
 	private readonly allowedOrigin: string | null;
 	private readonly onReady?: (payload: BridgeReadyPayload) => void;
 	private readonly onResize?: (height: number) => void;
