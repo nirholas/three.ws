@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -59,6 +59,22 @@ describe('ARTIFACTS', () => {
 		// node_modules cannot be rebuilt from inside a deploy prep step without
 		// re-resolving the lockfile, so its absence must stop the run instead.
 		expect(ARTIFACTS.find((a) => a.rel === 'node_modules').build).toBe(null);
+	});
+
+	it('stages every nested workspace dependency tree the root lockfile records', () => {
+		// A workspace whose deps conflict with the root's gets its own
+		// node_modules (packages/skill-import holds js-yaml 5 under a root
+		// js-yaml 3). Left out of the worktree, Node resolves the hoisted copy
+		// instead, and check:api-imports dies on "does not provide an export
+		// named 'load'" for a commit that is fine (2026-10-30).
+		const lock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'));
+		const nested = new Set();
+		for (const key of Object.keys(lock.packages)) {
+			if (!key || key.startsWith('node_modules/') || !key.includes('/node_modules/')) continue;
+			nested.add(`${key.split('/node_modules/')[0]}/node_modules`);
+		}
+		const staged = new Set(ARTIFACTS.map((a) => a.rel));
+		expect([...nested].filter((rel) => !staged.has(rel)).sort()).toEqual([]);
 	});
 });
 

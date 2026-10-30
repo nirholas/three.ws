@@ -36,7 +36,7 @@
 // it reclaimable, so a tree holding uncommitted work is never destroyed.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, statSync, copyFileSync } from 'node:fs';
+import { existsSync, statSync, copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -146,6 +146,33 @@ export const ARTIFACTS = [
 		why: 'the glb-diff and model-diff suites, whose fixtures are gitignored',
 	},
 ];
+
+/**
+ * Every workspace dependency tree npm nests instead of hoisting, read from the
+ * root lockfile so a new workspace can never drift out of this list. npm nests
+ * a dep when the workspace's range conflicts with the root's, so without its
+ * own copy staged Node resolves the hoisted one: packages/skill-import wants
+ * js-yaml 5, finds the root's js-yaml 3, and check:api-imports died on "does
+ * not provide an export named 'load'" for a commit that was fine (2026-10-30).
+ *
+ * @param {{packages: Record<string, unknown>}} lock parsed package-lock.json
+ * @returns {string[]} worktree-relative node_modules paths
+ */
+export function nestedWorkspaceTrees(lock) {
+	const trees = new Set();
+	for (const key of Object.keys(lock.packages)) {
+		if (!key || key.startsWith('node_modules/') || !key.includes('/node_modules/')) continue;
+		trees.add(`${key.split('/node_modules/')[0]}/node_modules`);
+	}
+	return [...trees].sort();
+}
+
+for (const rel of nestedWorkspaceTrees(JSON.parse(readFileSync(path.join(ROOT, 'package-lock.json'), 'utf8')))) {
+	if (ARTIFACTS.some((a) => a.rel === rel)) continue;
+	// Optional because a source tree that never installed the workspace has
+	// nothing to stage; check:api-imports names the module if that matters.
+	ARTIFACTS.push({ rel, build: null, optional: true, why: `${rel.split('/node_modules')[0]}'s own pinned dependencies` });
+}
 
 /**
  * How to hardlink one artifact into the staged tree.
