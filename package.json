@@ -737,7 +737,7 @@
 		"lru-cache": "^11.5.3",
 		"mammoth": "^1.12.0",
 		"manifold-3d": "^3.5.4",
-		"marked": "^18.1.1",
+		"marked": "^18.1.2",
 		"meshoptimizer": "^1.2.0",
 		"mppx": "^0.15.0",
 		"multiformats": "^14.0.5",
