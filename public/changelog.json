@@ -1,11 +1,42 @@
 {
-	"generated_at": "2026-10-25T12:02:47.671Z",
+	"generated_at": "2026-10-30T19:05:05.649Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-10-30",
+			"type": "launch",
+			"title": "Docs · three.ws and Microsoft",
+			"summary": "The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.",
+			"link": "/docs/microsoft",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "launch",
+			"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",
+			"link": "/blog/three-ws-microsoft-partnership",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "update",
+			"title": "three.ws partners with Microsoft and is live on Microsoft Marketplace",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, so enterprise teams can find and procure open-source 3D AI agents through the storefront they already buy from. Microsoft now appears on /partners, /partners/benefits, the home page press strip, the press kit, the timeline and the listings registry, with a full write-up in the docs.",
+			"link": "/blog/three-ws-microsoft-partnership",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-10-25",
 			"type": "update",

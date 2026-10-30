@@ -7,6 +7,30 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · three.ws and Microsoft</title>
+			<link>https://three.ws/docs/microsoft</link>
+			<guid isPermaLink="false">2026-10-30:Docs · three.ws and Microsoft</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.</description>
+		</item>
+		<item>
+			<title>three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace</title>
+			<link>https://three.ws/blog/three-ws-microsoft-partnership</link>
+			<guid isPermaLink="false">2026-10-30:three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.</description>
+		</item>
+		<item>
+			<title>three.ws partners with Microsoft and is live on Microsoft Marketplace</title>
+			<link>https://three.ws/blog/three-ws-microsoft-partnership</link>
+			<guid isPermaLink="false">2026-10-30:three.ws partners with Microsoft and is live on Microsoft Marketplace</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, so enterprise teams can find and procure open-source 3D AI agents through the storefront they already buy from. Microsoft now appears on /partners, /partners/benefits, the home page press strip, the press kit, the timeline and the listings registry, with a full write-up in the docs.</description>
+		</item>
+		<item>
 			<title>Allowance pulls now require the signed real-funds agreement</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-25:Allowance pulls now require the signed real-funds agreement</guid>

@@ -3943,6 +3943,12 @@ URL: https://three.ws/aws
 
 three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
 
+### Docs · three.ws and Microsoft
+
+URL: https://three.ws/docs/microsoft
+
+The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.
+
 ### Docs · NVIDIA Inception membership
 
 URL: https://three.ws/docs/nvidia-inception
@@ -5753,6 +5759,12 @@ URL: https://three.ws/blog/inside-the-forge
 
 What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.
 
+### three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace
+
+URL: https://three.ws/blog/three-ws-microsoft-partnership
+
+three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.
+
 ### three.ws Joins the Quicknode Startup Program
 
 URL: https://three.ws/blog/three-ws-quicknode-startup-program
@@ -6136,6 +6148,12 @@ SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and 
 ## News
 
 Product launches, integrations, and announcements from three.ws.
+
+### three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace
+
+URL: https://three.ws/news/microsoft-partnership-marketplace
+
+three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace: open-source 3D AI agents with a body, voice, memory, skills and an on-chain identity, procurable through the storefront Microsoft customers already use.
 
 ### Inside three.ws: our second Hugging Face article, and the whole stack in one piece
 

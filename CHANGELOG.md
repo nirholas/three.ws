@@ -4,6 +4,12 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-10-30
+
+- **Docs · three.ws and Microsoft** (`/docs/microsoft`): The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.
+- **three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace** (`/blog/three-ws-microsoft-partnership`): three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.
+- **three.ws partners with Microsoft and is live on Microsoft Marketplace**: three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, so enterprise teams can find and procure open-source 3D AI agents through the storefront they already buy from. Microsoft now appears on /partners, /partners/benefits, the home page press strip, the press kit, the timeline and the listings registry, with a full write-up in the docs. (`/blog/three-ws-microsoft-partnership`) `[feature, docs]`
+
 ## 2026-10-25
 
 - **Allowance pulls now require the signed real-funds agreement**: Pulling funds through an owner-funded on-chain allowance now checks the signed real-funds agreements before the agent key is used, matching every other custodial signing path. Unsigned accounts get the standard agreement-required refusal and nothing is sent. `[fix]`

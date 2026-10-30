@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-25T12:02:47.648Z",
+	"generated_at": "2026-10-30T19:05:05.630Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7821,6 +7821,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/microsoft",
+					"title": "Docs · three.ws and Microsoft",
+					"description": "The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.",
+					"added": "2026-10-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/nvidia-inception",
 					"title": "Docs · NVIDIA Inception membership",
 					"description": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
@@ -11440,6 +11452,18 @@
 					"job": null
 				},
 				{
+					"path": "/blog/three-ws-microsoft-partnership",
+					"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
+					"description": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",
+					"added": "2026-10-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/blog/three-ws-quicknode-startup-program",
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
@@ -12168,6 +12192,18 @@
 			"title": "News",
 			"description": "Product launches, integrations, and announcements from three.ws.",
 			"pages": [
+				{
+					"path": "/news/microsoft-partnership-marketplace",
+					"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
+					"description": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace: open-source 3D AI agents with a body, voice, memory, skills and an on-chain identity, procurable through the storefront Microsoft customers already use.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
 				{
 					"path": "/news/huggingface-building-3d-ai-agents",
 					"title": "Inside three.ws: our second Hugging Face article, and the whole stack in one piece",

@@ -1,14 +1,45 @@
 {
-	"generated_at": "2026-10-25T12:02:47.812Z",
+	"generated_at": "2026-10-30T19:05:05.678Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4207,
+	"total": 4210,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-30",
+			"type": "launch",
+			"title": "Docs · three.ws and Microsoft",
+			"summary": "The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.",
+			"link": "/docs/microsoft",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "launch",
+			"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",
+			"link": "/blog/three-ws-microsoft-partnership",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "update",
+			"title": "three.ws partners with Microsoft and is live on Microsoft Marketplace",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, so enterprise teams can find and procure open-source 3D AI agents through the storefront they already buy from. Microsoft now appears on /partners, /partners/benefits, the home page press strip, the press kit, the timeline and the listings registry, with a full write-up in the docs.",
+			"link": "/blog/three-ws-microsoft-partnership",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
 		{
 			"date": "2026-10-25",
 			"type": "update",
@@ -1518,39 +1549,6 @@
 			"title": "A Shopify app turns product photos into 3D product media",
 			"summary": "A new embedded Shopify app, built end to end but not yet installable (Partner account, env vars, and App Store submission are owner actions): pick a product photo in the admin, generate a real GLB through three.ws's own /api/forge pipeline, preview it in-page, and attach it with productCreateMedia so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone from the one upload (Shopify derives the USDZ automatically). Bulk mode generates across a whole catalog with real per-item status. Billing runs through Shopify's own usage-based Billing API, priced from Forge's own per-call cost, in test mode until the app has Public distribution. The three mandatory privacy webhooks plus app/uninstalled are HMAC-verified and delivery-deduplicated. Docs: /docs/shopify-app. Submission packet for Partner Dashboard setup and App Store listing copy: marketing/growth/submissions/shopify-app.md.",
 			"link": "/docs/shopify-app",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "A three.ws avatar now lipsyncs to any LiveKit Agents or Pipecat voice pipeline",
-			"summary": "Two new packages, livekit-plugins-threews and pipecat-threews, republish a running voice agent's TTS and user-turn frames as the same transcript/gesture/speech_started/speech_ended message shape over the room's data channel, which <agent-3d voice=\"livekit\"> already renders client-side: no server-side video rendering, no change to the browser code at all. The LiveKit package is an AvatarSession plugin dropped into an AgentSession; the Pipecat package is a FrameProcessor placed after the TTS service. Each ships a runnable local example against a real open-source livekit-server with a real local TTS, verified end to end with real browser automation driving the actual avatar lipsync and gesture cues off a live bot in both frameworks. Docs: /docs/voice-framework-integrations.",
-			"link": "/docs/voice-framework-integrations",
-			"tags": [
-				"feature",
-				"sdk",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "Avatar downloads fail over when object storage is not entitled",
-			"summary": "When the Cloudflare R2 account stopped serving objects, avatar model downloads answered a bare error instead of trying the bucket public domain. That fault is now recognised as a storage outage, so the failover runs.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "update",
-			"title": "Embed a live 3D agent in WordPress, Framer, or Webflow",
-			"summary": "Three native embeds for <agent-3d>, one per site builder's own extension point instead of a generic iframe: a WordPress Gutenberg block and [three_ws_agent] shortcode (server-rendered so the editor preview always matches the front end), a Framer code component with property controls, and a Webflow Code Component, all exposing On-chain URI, Agent ID, Model URL, Background, Framing, Poster and Autoplay. A shared build step pins all three to the same version and SRI hash from the agent-3d release ledger, so they can never drift apart. The WordPress plugin passed the official Plugin Check tool against a real local WordPress install with no errors; Framer and Webflow were each verified in a real-React test harness that boots a live WebGL canvas against the production CDN release, and the Webflow component additionally compiles through the real Webflow CLI. WordPress.org, Framer Marketplace, and Webflow Apps submissions are owner actions. Docs: /docs/wordpress-embed, /docs/embedding.",
-			"link": "/docs/wordpress-embed",
 			"tags": [
 				"feature",
 				"docs"
