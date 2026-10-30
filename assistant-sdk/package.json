@@ -56,7 +56,7 @@
 	},
 	"devDependencies": {
 		"esbuild": "^0.28.1",
-		"jsdom": "^27.3.0"
+		"jsdom": "^30.1.3"
 	},
 	"engines": {
 		"node": ">=18"
