@@ -156,7 +156,7 @@
 				<div
 					class="{toolresponse
 						? 'border-b-0'
-						: 'rounded-b-lg'} flex flex-col whitespace-pre-wrap border border-t-0 border-slate-200 bg-white px-4 py-3 font-mono text-sm text-slate-800 [overflow-wrap:anywhere]"
+						: 'rounded-b-lg'} flex flex-col whitespace-pre-wrap border border-t-0 border-slate-200 bg-white px-4 py-3 font-mono text-sm text-slate-800 wrap-anywhere"
 				>
 					{#if typeof toolcall.arguments === 'object'}
 						{#if Object.keys(toolcall.arguments).length === 1}
@@ -177,7 +177,7 @@
 							>Result:</span
 						>
 						<div
-							class="flex flex-col whitespace-pre-wrap rounded-[inherit] bg-white px-4 py-3 font-mono text-sm text-slate-800 [overflow-wrap:anywhere]"
+							class="flex flex-col whitespace-pre-wrap rounded-[inherit] bg-white px-4 py-3 font-mono text-sm text-slate-800 wrap-anywhere"
 						>
 							{#if !toolresponse.content}
 								<span class="italic">blank</span>
@@ -242,7 +242,7 @@
 								href={displayedContent.explorerUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								class="ml-auto whitespace-nowrap rounded border border-slate-200 px-2 py-0.5 font-sans text-[10px] text-slate-600 transition-colors hover:bg-slate-50"
+								class="ml-auto whitespace-nowrap rounded-sm border border-slate-200 px-2 py-0.5 font-sans text-[10px] text-slate-600 transition-colors hover:bg-slate-50"
 							>
 								View on Explorer ↗
 							</a>

@@ -66,7 +66,7 @@
 			<textarea
 				bind:value={draft.system_prompt}
 				rows="5"
-				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 resize-y outline-none focus:border-indigo-400"
+				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 resize-y outline-hidden focus:border-indigo-400"
 				placeholder="You are a helpful assistant..."
 			></textarea>
 		</label>
@@ -76,7 +76,7 @@
 			<textarea
 				bind:value={draft.greeting}
 				rows="2"
-				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 resize-y outline-none focus:border-indigo-400"
+				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 resize-y outline-hidden focus:border-indigo-400"
 				placeholder="Hello! How can I help you today?"
 			></textarea>
 		</label>
@@ -102,7 +102,7 @@
 				type="number"
 				min="0"
 				bind:value={draft.maxTokens}
-				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 outline-none focus:border-indigo-400 w-32"
+				class="rounded-lg border border-slate-200 px-3 py-2 text-[13px] text-slate-800 outline-hidden focus:border-indigo-400 w-32"
 			/>
 		</label>
 

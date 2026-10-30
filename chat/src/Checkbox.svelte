@@ -24,7 +24,7 @@
 	onclick={onclick}
 	class="{className} {checked
 		? 'border-slate-800 bg-slate-800'
-		: 'bg-white'} relative flex h-4 w-4 shrink-0 items-center justify-center rounded border border-slate-300 transition-colors focus:outline-none focus:ring-0"
+		: 'bg-white'} relative flex h-4 w-4 shrink-0 items-center justify-center rounded border border-slate-300 transition-colors focus:outline-hidden focus:ring-0"
 >
 	{#if checked}
 		<Icon icon={feCheck} class="h-2.5 w-2.5 shrink-0 text-white" strokeWidth={3} />

@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import fs from 'fs';
 
-const ROOT_PUBLIC = path.resolve(__dirname, '../public');
-const DIST_LIB = path.resolve(__dirname, '../dist-lib');
+const ROOT_PUBLIC = path.resolve(import.meta.dirname, '../public');
+const DIST_LIB = path.resolve(import.meta.dirname, '../dist-lib');
 
 function serveDevAssets() {
 	return {
@@ -63,7 +64,7 @@ export default defineConfig(function () {
 			fs: {
 				// The chat app reuses shared wallet modules that live in the main
 				// repo's src/ (one repo, one wallet truth), so allow Vite to serve them.
-				allow: [path.resolve(__dirname, '..')],
+				allow: [path.resolve(import.meta.dirname, '..')],
 			},
 			proxy: {
 				// Vercel serverless functions live under /api/* in production but
@@ -80,15 +81,16 @@ export default defineConfig(function () {
 		},
 		plugins: [
 			serveDevAssets(),
+			tailwindcss(),
 			svelte(),
 		],
 		resolve: {
 			dedupe: ['three'],
 			alias: {
-				'$src': path.resolve(__dirname, './src'),
+				'$src': path.resolve(import.meta.dirname, './src'),
 				// Shared wallet layer lives in the main app's src/shared (single source
 				// of truth for the agent wallet everywhere its avatar appears).
-				'$shared': path.resolve(__dirname, '../src/shared'),
+				'$shared': path.resolve(import.meta.dirname, '../src/shared'),
 			}
 		},
 		define: {

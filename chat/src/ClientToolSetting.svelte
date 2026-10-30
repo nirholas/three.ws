@@ -99,7 +99,7 @@
 			<input
 				type="text"
 				bind:value={toolDefinition.name}
-				class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+				class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 			/></label
 		>
 
@@ -108,7 +108,7 @@
 			<textarea
 				bind:value={toolDefinition.description}
 				rows={3}
-				class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+				class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 			></textarea></label
 		>
 
@@ -121,14 +121,14 @@
 						<input
 							type="text"
 							bind:value={argument.name}
-							class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+							class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 						/></label
 					>
 					<label class="flex w-[180px] shrink-0 flex-col text-[10px] uppercase tracking-wide">
 						<span class="mb-2 ml-[3px]">Type:</span>
 						<select
 							bind:value={argument.type}
-							class="appearance-none rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+							class="appearance-none rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 						>
 							<option value="string">String</option>
 							<option value="number">Number</option>
@@ -141,7 +141,7 @@
 						<input
 							type="text"
 							bind:value={argument.description}
-							class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+							class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 						/></label
 					>
 					<Button
@@ -176,7 +176,7 @@
 			<textarea
 				bind:value={toolDefinition.body}
 				rows={6}
-				class="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+				class="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 				onkeydown={(event) => {
 					if (event.key == 'Tab') {
 						event.preventDefault();
@@ -204,13 +204,13 @@
 				console.error(error);
 			}
 		}}
-		class="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+		class="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 		rows={14}
 	></textarea>
 {/if}
 
 <Button
-	class="ml-auto mt-5 !px-6"
+	class="ml-auto mt-5 px-6!"
 	onclick={() => {
 		onsave?.(convertFunctionFormat(toolDefinition));
 	}}

@@ -20,7 +20,7 @@
 	}
 </script>
 
-<header class="sticky top-0 z-40 border-b border-rule bg-paper/95 backdrop-blur supports-[backdrop-filter]:bg-paper/80">
+<header class="sticky top-0 z-40 border-b border-rule bg-paper/95 backdrop-blur-sm supports-backdrop-filter:bg-paper/80">
 	<div class="mx-auto flex h-14 max-w-[1240px] items-center justify-between px-4 sm:px-6">
 
 		<!-- LEFT: brand breadcrumb: three.ws (home) / Chat -->

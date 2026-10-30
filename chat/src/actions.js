@@ -1,6 +1,6 @@
 const flashClasses = {
-	success: '!bg-green-200 !border-green-300',
-	error: '!bg-red-100 !border-red-300',
+	success: 'bg-green-200! border-green-300!',
+	error: 'bg-red-100! border-red-300!',
 };
 
 export function focusOnMount(node) {

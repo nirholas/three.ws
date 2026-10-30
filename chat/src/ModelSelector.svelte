@@ -92,7 +92,7 @@
 	</div>
 	{#if open}
 		<div
-			class="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-10 flex w-[max-content] -translate-x-1/2 rounded-lg"
+			class="pointer-events-none absolute left-1/2 top-[calc(100%+6px)] z-10 flex w-max -translate-x-1/2 rounded-lg"
 		>
 			<div
 				transition:scale={{ opacity: 0, start: 0.98, duration: 100, easing: cubicIn }}
@@ -102,7 +102,7 @@
 					bind:this={inputEl}
 					type="text"
 					placeholder="Search models..."
-					class="w-full appearance-none rounded-t-lg border-0 border-b border-slate-300 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-700 focus:outline-none focus:ring-0"
+					class="w-full appearance-none rounded-t-lg border-0 border-b border-slate-300 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-700 focus:outline-hidden focus:ring-0"
 					bind:value={query}
 					onkeydown={(event) => {
 						if (event.key === 'Enter') {
@@ -129,7 +129,7 @@
 									<Icon icon={feImage} class="mt-px h-3 w-3 text-slate-800" />
 								{/if}
 								{#if model.provider === 'Built-in'}
-									<span class="rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-green-50 text-green-700">Free</span>
+									<span class="rounded-sm px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-green-50 text-green-700">Free</span>
 								{/if}
 
 								<Checkbox

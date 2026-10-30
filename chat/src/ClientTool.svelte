@@ -11,7 +11,7 @@
 	<code class="text-xs leading-relaxed mr-3">{definition.name}({'{ '}{definition.arguments.map(arg => `${arg.name}: ${arg.type}`).join(', ')}{' }'})</code>
 
 	<Button
-		class="ml-auto w-7 h-7 !p-0 justify-center shrink-0"
+		class="ml-auto w-7 h-7 p-0! justify-center shrink-0"
 		onclick={() => {
 			onedit?.();
 		}}
@@ -19,7 +19,7 @@
 		<Icon icon={feEdit2} class="text-slate-700 w-3 h-3" />
 	</Button>
 	<Button
-		class="ml-2 w-7 h-7 !p-0 justify-center shrink-0"
+		class="ml-2 w-7 h-7 p-0! justify-center shrink-0"
 		onclick={() => {
 			ondelete?.();
 		}}

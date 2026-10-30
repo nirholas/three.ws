@@ -41,7 +41,7 @@
 	<div
 		transition:fade={{ duration: 200, easing: cubicIn }}
 		aria-hidden="true"
-		class="fixed inset-0 z-[101] h-screen w-screen bg-black opacity-[0.1]"
+		class="fixed inset-0 z-101 h-screen w-screen bg-black opacity-[0.1]"
 		onclick={() => {
 			open = false;
 			onclose?.();
@@ -50,7 +50,7 @@
 	<div
 		role="dialog"
 		transition:scale={{ opacity: 0, start: 0.98, duration: 150, easing: cubicIn }}
-		class="{className} fixed left-1/2 top-1/2 z-[101] max-h-[95vh] w-[95%] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border bg-white px-5 py-6 shadow-2xl scrollbar-ultraslim md:w-[700px]"
+		class="{className} fixed left-1/2 top-1/2 z-101 max-h-[95vh] w-[95%] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border bg-white px-5 py-6 shadow-2xl scrollbar-ultraslim md:w-[700px]"
 	>
 		<button
 			onclick={() => {

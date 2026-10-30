@@ -50,7 +50,7 @@
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     {#each samplePrompts as prompt}
       <button
-        class="bg-white border border-rule rounded-xl p-4 text-left h-[112px] flex flex-col justify-between hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        class="bg-white border border-rule rounded-xl p-4 text-left h-[112px] flex flex-col justify-between hover:bg-paper transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ink"
         onclick={() => selectPrompt(prompt)}
       >
         <span class="text-sm text-ink line-clamp-2">{prompt}</span>
@@ -63,7 +63,7 @@
     <h2 class="text-sm font-semibold text-ink">Choose a template</h2>
     <div class="relative">
       <button
-        class="bg-white border border-rule rounded-full h-9 px-3 text-sm flex items-center gap-2 hover:bg-paper transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        class="bg-white border border-rule rounded-full h-9 px-3 text-sm flex items-center gap-2 hover:bg-paper transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ink"
         aria-expanded={slideCountOpen}
         aria-label="Slide count: {selectedSlideCount}"
         onclick={() => (slideCountOpen = !slideCountOpen)}
@@ -91,7 +91,7 @@
   <div class="grid grid-cols-2 gap-4 pb-8 md:grid-cols-4">
     {#each templates as template}
       <button
-        class="aspect-[4/3] bg-paper-deep rounded-xl flex flex-col items-center justify-center gap-1.5 px-2 text-center hover:bg-white hover:border hover:border-rule transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+        class="aspect-4/3 bg-paper-deep rounded-xl flex flex-col items-center justify-center gap-1.5 px-2 text-center hover:bg-white hover:border hover:border-rule transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ink"
         onclick={() => selectTemplate(template)}
       >
         <span class="text-sm text-ink font-serif">{template.name}</span>

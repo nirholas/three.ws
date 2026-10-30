@@ -58,7 +58,7 @@
 <div
 	transition:fade={{ duration: 200, easing: cubicIn }}
 	aria-hidden="true"
-	class="fixed inset-0 z-[200] bg-black/60"
+	class="fixed inset-0 z-200 bg-black/60"
 ></div>
 
 <div
@@ -66,7 +66,7 @@
 	aria-modal="true"
 	aria-label="Approve Transaction"
 	transition:scale={{ opacity: 0, start: 0.97, duration: 150, easing: cubicIn }}
-	class="fixed left-1/2 top-1/2 z-[201] w-[95%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
+	class="fixed left-1/2 top-1/2 z-201 w-[95%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
 >
 	<h2 class="mb-1 text-lg font-semibold text-white">Approve Transaction</h2>
 	<span class="mb-5 inline-block rounded-full bg-slate-700 px-2.5 py-0.5 text-xs font-medium text-slate-300">
@@ -110,7 +110,7 @@
 	<div class="flex gap-3">
 		<Button
 			variant="outline"
-			class="flex-1 !justify-center !border-slate-600 !bg-transparent !text-slate-300 hover:!border-slate-400 disabled:opacity-50"
+			class="flex-1 justify-center! border-slate-600! bg-transparent! text-slate-300! hover:border-slate-400! disabled:opacity-50"
 			disabled={pending}
 			onclick={reject}
 		>
@@ -118,7 +118,7 @@
 		</Button>
 		<Button
 			variant="dark"
-			class="flex-1 !justify-center !bg-indigo-600 hover:!bg-indigo-500 disabled:opacity-50"
+			class="flex-1 justify-center! bg-indigo-600! hover:bg-indigo-500! disabled:opacity-50"
 			disabled={pending}
 			onclick={approve}
 		>

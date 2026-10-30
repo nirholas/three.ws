@@ -23,18 +23,18 @@
 </script>
 
 {#if $talkingHeadAvatarUrl}
-	<span class="{size} {rounded || 'rounded-sm'} overflow-hidden inline-block shrink-0">
+	<span class="{size} {rounded || 'rounded-xs'} overflow-hidden inline-block shrink-0">
 		<AvatarIcon avatarUrl={$talkingHeadAvatarUrl} {live} />
 	</span>
 {:else if model && model.provider}
 	{#if model.provider === 'OpenAI' || model.id.startsWith('openai')}
-		<img src="{base}logos/openai.ico" loading="lazy" aria-hidden="true" class="{size} {rounded || 'rounded-sm'}" alt="" />
+		<img src="{base}logos/openai.ico" loading="lazy" aria-hidden="true" class="{size} {rounded || 'rounded-xs'}" alt="" />
 	{:else if model.provider === 'Anthropic' || model.id.startsWith('anthropic')}
 		<img
 			src="{base}logos/anthropic.jpeg"
 			loading="lazy"
 			aria-hidden="true"
-			class="{size} {rounded || 'rounded-sm'}"
+			class="{size} {rounded || 'rounded-xs'}"
 			alt=""
 		/>
 	{:else if model.id.startsWith('meta-llama')}
@@ -44,7 +44,7 @@
 	{:else if model.id.startsWith('cohere')}
 		<img src="{base}logos/cohere.png" loading="lazy" aria-hidden="true" class={size} alt="" />
 	{:else if model.provider === 'Groq'}
-		<img src="{base}logos/groq.png" loading="lazy" aria-hidden="true" class="{size} {rounded || 'rounded-sm'}" alt="" />
+		<img src="{base}logos/groq.png" loading="lazy" aria-hidden="true" class="{size} {rounded || 'rounded-xs'}" alt="" />
 	{:else if model.id.startsWith('nous')}
 		<img src="{base}logos/nous.png" loading="lazy" aria-hidden="true" class={size} alt="" />
 	{:else if model.id.startsWith('google')}
@@ -54,7 +54,7 @@
 			src="{base}logos/perplexity.svg"
 			loading="lazy"
 			aria-hidden="true"
-			class="{size} {rounded || 'rounded-sm'}"
+			class="{size} {rounded || 'rounded-xs'}"
 			alt=""
 		/>
 	{:else if model.id.startsWith('deepseek')}

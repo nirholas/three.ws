@@ -6,8 +6,8 @@
 	import { complete, generateImage } from './convo.js';
 	import KnobsSidebar from './KnobsSidebar.svelte';
 	import Button from './Button.svelte';
-	// Same module instance the Markdown renderer lexes with, so the katex extension applies.
-	import { marked } from './svelte-marked/markdown/marked.esm.js';
+	// Same marked module instance the Markdown renderer lexes with, so the katex extension applies.
+	import { marked } from 'marked';
 	import markedKatex from './marked-katex-extension';
 
 	import { persisted } from './localstorage.js';
@@ -2346,7 +2346,7 @@
 	<video
 		transition:fade={{ duration: 1000 }}
 		src="{import.meta.env.BASE_URL}peace.mp4"
-		class="fixed left-0 top-0 z-[1000] h-screen w-screen object-cover"
+		class="fixed left-0 top-0 z-1000 h-screen w-screen object-cover"
 		autoplay
 		loop
 		bind:this={video}
@@ -2370,12 +2370,12 @@
   </div>
 {:else if $route === 'signin' || $route === 'signup'}
   <div class="min-h-dvh bg-paper">
-    <div class="sticky top-0 z-[110]"><TopNav /></div>
+    <div class="sticky top-0 z-110"><TopNav /></div>
     <AuthPage kind={$route} />
   </div>
 {:else}
 <main class="flex h-dvh w-screen flex-col">
-	<div class="sticky top-0 z-[110]">
+	<div class="sticky top-0 z-110">
 		<TopNav />
 	</div>
 	<div class="flex h-12 items-center gap-1 px-2 py-1 md:hidden">
@@ -2408,7 +2408,7 @@
 				}
 				saveConversation(convo);
 			}}
-			class="!absolute left-1/2 z-[99] -translate-x-1/2"
+			class="absolute! left-1/2 z-99 -translate-x-1/2"
 		/>
 
 		<button
@@ -2463,7 +2463,7 @@
 			data-sidebar="history"
 			class="{historyOpen
 				? ''
-				: '-translate-x-full'} fixed top-0 z-[100] flex h-full w-[260px] flex-col border-r border-rule bg-paper pl-3 pt-4 transition-transform duration-500 ease-in-out md:static md:translate-x-0"
+				: '-translate-x-full'} fixed top-0 z-100 flex h-full w-[260px] flex-col border-r border-rule bg-paper pl-3 pt-4 transition-transform duration-500 ease-in-out md:static md:translate-x-0"
 		>
 			<div class="mb-1 pr-3">
 				<button
@@ -2478,7 +2478,7 @@
 				type="search"
 				placeholder="Search conversations..."
 				bind:value={searchQuery}
-				class="mx-2 my-2 w-[calc(100%-16px)] rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+				class="mx-2 my-2 w-[calc(100%-16px)] rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm outline-hidden focus:border-indigo-400"
 			/>
 			<ol
 				class="flex list-none flex-col overflow-y-auto pb-3 pr-3 pt-1 scrollbar-invisible scrollbar-slim hover:scrollbar-white"
@@ -2546,7 +2546,7 @@
 										convos = convos;
 										deleteConversation(historyConvo);
 									}}
-									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
+									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-linear-to-l {$convoId ===
 									historyConvo.id
 										? 'from-paper-deep'
 										: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
@@ -2558,7 +2558,7 @@
 					{/if}
 				{:else}
 					{#each historyBuckets as { relativeDate, convos: historyConvos } (relativeDate)}
-						<li class="mb-1 ml-3 text-[11px] font-medium text-ink-soft [&:not(:first-child)]:mt-5">
+						<li class="mb-1 ml-3 text-[11px] font-medium text-ink-soft not-first:mt-5">
 							{relativeDate}
 						</li>
 						{#each historyConvos as historyConvo (historyConvo.id)}
@@ -2566,7 +2566,7 @@
 								{#if editingTitleId === historyConvo.id}
 									<div class="{$convoId === historyConvo.id ? 'bg-paper-deep' : ''} flex h-9 w-full items-center rounded-md px-3">
 										<input
-											class="w-full bg-transparent text-sm text-ink outline-none"
+											class="w-full bg-transparent text-sm text-ink outline-hidden"
 											bind:value={historyConvo.title}
 											onblur={() => { saveConversation(historyConvo); convos = { ...convos }; editingTitleId = null; }}
 											onkeydown={(e) => e.key === 'Enter' && e.target.blur()}
@@ -2624,7 +2624,7 @@
 										convos = convos;
 										deleteConversation(historyConvo);
 									}}
-									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-gradient-to-l {$convoId ===
+									class="z-1 absolute right-0 top-0 flex h-full w-12 rounded-br-md rounded-tr-md bg-linear-to-l {$convoId ===
 									historyConvo.id
 										? 'from-paper-deep'
 										: 'from-paper group-hover:from-paper-deep'} from-65% to-transparent pr-3 transition-opacity sm:from-paper-deep sm:opacity-0 sm:group-hover:opacity-100"
@@ -2668,7 +2668,7 @@
 						}
 						saveConversation(convo);
 					}}
-					class="!absolute left-1/2 z-[99] -translate-x-1/2"
+					class="absolute! left-1/2 z-99 -translate-x-1/2"
 				/>
 
 				<button
@@ -2795,7 +2795,7 @@
 							}}
 						>
 							<ul
-							class="max-w-[760px] mx-auto w-full px-6 !list-none flex flex-col relative {splitView ? 'rounded-br-lg border-r' : ''}"
+							class="max-w-[760px] mx-auto w-full px-6 list-none! flex flex-col relative {splitView ? 'rounded-br-lg border-r' : ''}"
 						>
 								{#each convo.messages as message, i (message.id)}
 									<Message
@@ -2828,7 +2828,7 @@
 							</ul>
 						</div>
 
-						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-[98] bg-gradient-to-t from-paper to-transparent"></div>
+						<div class="pointer-events-none absolute bottom-[72px] inset-x-0 h-8 z-98 bg-linear-to-t from-paper to-transparent"></div>
 						{#if $toolSchema.length > 0 || effectiveAgentId}
 							<div class="flex flex-wrap gap-1.5 px-4 pt-2 pb-0">
 								{#each $toolSchema as group}
@@ -2891,7 +2891,7 @@
 								{choiceHandler}
 								{question}
 								{choices}
-								class="!rounded-xl"
+								class="rounded-xl!"
 								onclose={() => {
 									activeToolcall = null;
 								}}
@@ -2928,7 +2928,7 @@
 	<Modal
 		bind:open={toolcallModalOpen}
 		trigger="toolcall"
-		class="!p-0"
+		class="p-0!"
 		buttonClass="hidden"
 		onclose={() => {
 			activeToolcall = null;
@@ -2944,7 +2944,7 @@
 			{choiceHandler}
 			{question}
 			{choices}
-			class="!rounded-xl"
+			class="rounded-xl!"
 			onclose={() => {
 				toolcallModalOpen = false;
 				activeToolcall = null;
@@ -2965,13 +2965,13 @@
 {/if}
 
 {#if installToastMsg}
-	<div transition:fade={{ duration: 200 }} class="fixed bottom-16 left-1/2 z-[200] -translate-x-1/2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800 shadow-md">
+	<div transition:fade={{ duration: 200 }} class="fixed bottom-16 left-1/2 z-200 -translate-x-1/2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm text-green-800 shadow-md">
 		{installToastMsg}
 	</div>
 {/if}
 
 {#if gateState}
-	<div transition:fade={{ duration: 150 }} class="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+	<div transition:fade={{ duration: 150 }} class="fixed inset-0 z-300 flex items-center justify-center bg-black/60 backdrop-blur-xs">
 		<div class="mx-4 w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl">
 			<div class="mb-2 text-2xl font-bold text-slate-900">🔒 Token-Gated Scene</div>
 			<p class="mb-6 text-sm text-slate-600">This 3D scene requires wallet ownership verification to access. Connect your wallet and prove you hold the required token.</p>

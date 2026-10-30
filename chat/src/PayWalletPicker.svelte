@@ -178,7 +178,7 @@
 	<button
 		bind:this={buttonEl}
 		onclick={() => (open = !open)}
-		class="flex h-9 items-center gap-2 rounded-full border border-rule bg-white px-3 text-[12px] font-medium text-ink shadow-sm transition-colors hover:bg-paper-deep"
+		class="flex h-9 items-center gap-2 rounded-full border border-rule bg-white px-3 text-[12px] font-medium text-ink shadow-xs transition-colors hover:bg-paper-deep"
 		title="Wallet that pays for x402 paid-tool calls"
 	>
 		<span class="flex h-2 w-2 rounded-full {dotClass}"></span>
@@ -189,7 +189,7 @@
 	{#if open}
 		<div
 			bind:this={popoverEl}
-			class="absolute right-0 top-full z-[120] mt-2 w-[300px] rounded-xl border border-rule bg-white p-3 shadow-pop"
+			class="absolute right-0 top-full z-120 mt-2 w-[300px] rounded-xl border border-rule bg-white p-3 shadow-pop"
 		>
 			<div class="mb-2 text-[11px] uppercase tracking-wider text-ink-soft">x402 pay-per-call wallet</div>
 
@@ -199,7 +199,7 @@
 					: 'border-rule hover:bg-paper-deep'}"
 				onclick={selectShared}
 			>
-				<div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500 to-cyan-400 text-[10px] font-bold text-white">3</div>
+				<div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-indigo-500 to-cyan-400 text-[10px] font-bold text-white">3</div>
 				<div class="min-w-0 flex-1">
 					<div class="text-[13px] font-medium text-ink">three.ws demo wallet</div>
 					<div class="font-mono text-[11px] text-ink-soft">
@@ -245,7 +245,7 @@
 							disabled={!a.solana_address}
 							title={a.solana_address ? `Pay from ${a.name}` : 'This agent has no Solana wallet yet'}
 						>
-							<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-500 to-cyan-400 text-[10px] font-bold text-white">
+							<div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-linear-to-br from-violet-500 to-cyan-400 text-[10px] font-bold text-white">
 								{a.name?.[0] || '?'}
 							</div>
 							<div class="min-w-0 flex-1">

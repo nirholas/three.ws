@@ -242,7 +242,7 @@
 		bind:value={query}
 		oninput={onInput}
 		placeholder={$t('searchAgents')}
-		class="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+		class="w-full rounded-lg border border-gray-200 px-3 py-2 text-[13px] outline-hidden focus:border-indigo-400"
 		use:focusOnMount
 	/>
 
@@ -263,7 +263,7 @@
 		>{$t('createAgent')}</a>
 	</div>
 
-	<div class="max-h-[28rem] overflow-y-auto pr-0.5 flex flex-col gap-3">
+	<div class="max-h-112 overflow-y-auto pr-0.5 flex flex-col gap-3">
 		<!-- My Agents -->
 		<div>
 			<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5">{$t('myAgents')}</p>
@@ -308,7 +308,7 @@
 				<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{$t('marketplace')}</p>
 				<div class="flex items-center gap-1.5">
 					<select
-						class="rounded border border-gray-200 px-1.5 py-0.5 text-[11px] text-slate-600 outline-none"
+						class="rounded-sm border border-gray-200 px-1.5 py-0.5 text-[11px] text-slate-600 outline-hidden"
 						bind:value={marketSort}
 						onchange={() => searchMarket(query, true)}
 					>

@@ -747,11 +747,11 @@
 						placeholder="Search skills..."
 						bind:value={searchQuery}
 						oninput={handleSearchInput}
-						class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+						class="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 					/>
 					<select
 						onchange={handleSortChange}
-						class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[12px] text-slate-600 outline-none focus:border-indigo-400"
+						class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[12px] text-slate-600 outline-hidden focus:border-indigo-400"
 					>
 						<option value="popular">Popular</option>
 						<option value="new">Newest</option>
@@ -945,16 +945,16 @@
 								>
 									{#if detailLoading}
 										<div class="flex animate-pulse flex-col gap-2">
-											<div class="h-3 w-3/4 rounded bg-slate-200"></div>
-											<div class="h-3 w-1/2 rounded bg-slate-200"></div>
-											<div class="h-3 w-2/3 rounded bg-slate-200"></div>
-											<div class="mt-1 h-16 rounded bg-slate-200"></div>
+											<div class="h-3 w-3/4 rounded-sm bg-slate-200"></div>
+											<div class="h-3 w-1/2 rounded-sm bg-slate-200"></div>
+											<div class="h-3 w-2/3 rounded-sm bg-slate-200"></div>
+											<div class="mt-1 h-16 rounded-sm bg-slate-200"></div>
 										</div>
 									{:else if detail}
 										<div class="flex flex-col gap-4 md:flex-row">
 
 											<!-- Left column (60%) -->
-											<div class="flex flex-col gap-2 md:flex-[6]">
+											<div class="flex flex-col gap-2 md:flex-6">
 												<p class="text-[13px] leading-relaxed text-slate-700">{detail.description || ''}</p>
 												{#if detail.tags?.length}
 													<div class="flex flex-wrap gap-1">
@@ -976,7 +976,7 @@
 											</div>
 
 											<!-- Right column (40%) -->
-											<div class="flex flex-col gap-3 md:flex-[4]">
+											<div class="flex flex-col gap-3 md:flex-4">
 
 												<!-- Star rating -->
 												<div>
@@ -1040,7 +1040,7 @@
 														<div>
 															<p class="mb-1 text-[11px] font-medium text-slate-600">Schema preview</p>
 															<pre
-																class="overflow-x-auto whitespace-pre-wrap break-words rounded border border-slate-100 bg-slate-50 p-2 text-[11px] leading-relaxed"
+																class="overflow-x-auto whitespace-pre-wrap wrap-break-word rounded-sm border border-slate-100 bg-slate-50 p-2 text-[11px] leading-relaxed"
 															><code>{preview.name}
 {preview.description}{preview.params.length
 																	? `\nparams: ${preview.params.join(', ')}`
@@ -1056,8 +1056,8 @@
 
 										<!-- Markdown content (knowledge skills) -->
 										{#if isContentSkill(detail) && typeof detail.content === 'string' && detail.content.length > 0}
-											<div class="mt-4 max-h-[420px] overflow-y-auto rounded border border-slate-100 bg-slate-50/50 p-3">
-												<div class="markdown prose prose-sm prose-slate prose-invert max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:rounded-md prose-pre:border prose-pre:border-slate-200 prose-pre:bg-white">
+											<div class="mt-4 max-h-[420px] overflow-y-auto rounded-sm border border-slate-100 bg-slate-50/50 p-3">
+												<div class="markdown prose prose-sm prose-slate prose-invert max-w-none wrap-break-word prose-pre:whitespace-pre-wrap prose-pre:rounded-md prose-pre:border prose-pre:border-slate-200 prose-pre:bg-white">
 													<Markdown source={detail.content} />
 												</div>
 											</div>
@@ -1120,7 +1120,7 @@
 					type="text"
 					placeholder="Search plugins..."
 					bind:value={libraryQuery}
-					class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+					class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>
 			</div>
 
@@ -1218,7 +1218,7 @@
 					bind:value={publishForm.name}
 					oninput={(e) => { handleNameInput(e); publishError = null; }}
 					placeholder="My Skill"
-					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>
 			</div>
 
@@ -1230,7 +1230,7 @@
 					bind:value={publishForm.slug}
 					oninput={() => (publishError = null)}
 					placeholder="my-skill"
-					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+					class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				/>
 				{#if publishForm.slug}
 					<p class="text-[11px] text-slate-400">Preview: /skills/{publishForm.slug}</p>
@@ -1245,7 +1245,7 @@
 					oninput={() => (publishError = null)}
 					placeholder="Describe what this skill does..."
 					rows="3"
-					class="resize-none rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+					class="resize-none rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				></textarea>
 			</div>
 
@@ -1258,7 +1258,7 @@
 						list="skill-categories"
 						bind:value={publishForm.category}
 						placeholder="e.g. Search"
-						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 					/>
 					<datalist id="skill-categories">
 						{#each categories as cat (cat.slug)}
@@ -1275,7 +1275,7 @@
 						bind:value={publishForm.tags}
 						oninput={() => (publishError = null)}
 						placeholder="search, web, api"
-						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 					/>
 				</div>
 			</div>
@@ -1298,7 +1298,7 @@
 					oninput={() => (publishError = null)}
 					rows="10"
 					spellcheck="false"
-					class="resize-y rounded-lg border border-slate-200 px-3 py-1.5 font-mono text-[12px] text-slate-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
+					class="resize-y rounded-lg border border-slate-200 px-3 py-1.5 font-mono text-[12px] text-slate-700 outline-hidden focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200"
 				></textarea>
 				<div class="flex items-center gap-x-2">
 					<button
@@ -1327,7 +1327,7 @@
 						max="10"
 						step="0.0001"
 						bind:value={publishForm.pricePerCallUsd}
-						class="w-28 rounded-md border border-slate-200 px-2 py-1 text-[13px] outline-none focus:border-indigo-400"
+						class="w-28 rounded-md border border-slate-200 px-2 py-1 text-[13px] outline-hidden focus:border-indigo-400"
 						placeholder="0.0000"
 					/>
 					<span class="text-[11px] text-slate-400">Leave 0 for free</span>

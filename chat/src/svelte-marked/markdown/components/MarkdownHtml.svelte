@@ -19,7 +19,7 @@
 {#if xml.element === 'artifact' && message?.role === 'assistant'}
 	<ArtifactButton {xml} />
 {:else}
-	<span class="{token.block ? 'block' : 'inline'} whitespace-pre-wrap [overflow-wrap:anywhere]"
+	<span class="{token.block ? 'block' : 'inline'} whitespace-pre-wrap wrap-anywhere"
 		>{token.text}</span
 	>
 {/if}

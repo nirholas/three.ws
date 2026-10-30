@@ -84,7 +84,7 @@
 {#if $currentUser}
 <div class="relative" bind:this={el}>
 	<button
-		class="relative rounded p-2 text-ink hover:bg-paper-deep"
+		class="relative rounded-sm p-2 text-ink hover:bg-paper-deep"
 		aria-label="Notifications"
 		onclick={toggle}
 	>

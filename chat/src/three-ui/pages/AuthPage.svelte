@@ -101,18 +101,18 @@
       {#if kind === 'signup'}
         <label class="block">
           <span class="text-xs font-medium text-ink-soft mb-1.5 block">Name</span>
-          <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-none focus:border-ink"
+          <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-hidden focus:border-ink"
                  type="text" bind:value={name} required>
         </label>
       {/if}
       <label class="block">
         <span class="text-xs font-medium text-ink-soft mb-1.5 block">Email</span>
-        <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-none focus:border-ink"
+        <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-hidden focus:border-ink"
                type="email" bind:value={email} required autocomplete="email">
       </label>
       <label class="block">
         <span class="text-xs font-medium text-ink-soft mb-1.5 block">Password</span>
-        <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-none focus:border-ink"
+        <input class="w-full h-11 px-4 rounded-xl border border-rule bg-white focus:outline-hidden focus:border-ink"
                type="password" bind:value={password} required minlength="8"
                autocomplete={kind === 'signup' ? 'new-password' : 'current-password'}>
       </label>

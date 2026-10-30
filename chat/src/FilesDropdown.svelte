@@ -146,7 +146,7 @@
 {#if open && tree}
 	<div
 		id="files-dropdown"
-		class="absolute bottom-10 left-0 z-10 flex w-[max-content] rounded-[10px]"
+		class="absolute bottom-10 left-0 z-10 flex w-max rounded-[10px]"
 	>
 		<div
 			transition:scale={{ opacity: 0, start: 0.98, duration: 100, easing: cubicIn }}
@@ -173,7 +173,7 @@
 						}
 					}}
 					placeholder="Search for files"
-					class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+					class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 				/>
 			</div>
 			<ul class="max-h-[300px] overflow-y-auto pb-1.5 scrollbar-ultraslim">

@@ -30,7 +30,7 @@
 {#if open}
 	{@const min = convo.models[0].reasoningEffortRange[0]}
 	{@const max = convo.models[0].reasoningEffortRange[1]}
-	<div class="absolute bottom-10 left-0 z-10 flex w-[max-content] translate-x-1/2">
+	<div class="absolute bottom-10 left-0 z-10 flex w-max translate-x-1/2">
 		<div
 			transition:scale={{ opacity: 0, start: 0.98, duration: 100, easing: cubicIn }}
 			class="flex h-auto w-auto min-w-[250px] flex-col self-start overflow-y-auto rounded-xl border border-slate-300 bg-white px-3 py-2"

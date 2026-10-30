@@ -22,7 +22,7 @@ import {
 	MarkdownBlockKatex,
 } from './components';
 
-import { Lexer } from './marked.esm.js';
+import { Lexer } from 'marked';
 import Slugger from 'github-slugger';
 import type { SvelteComponent } from 'svelte';
 

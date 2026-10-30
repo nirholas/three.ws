@@ -310,7 +310,7 @@
 								type="password"
 								bind:value={draftKeys[key]}
 								{placeholder}
-								class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+								class="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 							/>
 							<button
 								class="shrink-0 rounded-lg border px-3 py-2 text-[12px] font-medium transition-colors
@@ -338,7 +338,7 @@
 				<div class="flex flex-col gap-2">
 					<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Language</p>
 					<select bind:value={$locale}
-						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400">
+						class="rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400">
 						<option value="en">English</option>
 						<option value="zh-CN">中文</option>
 					</select>
@@ -349,7 +349,7 @@
 					<textarea
 						bind:value={$params.customInstructions}
 						rows={10}
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition-colors scrollbar-slim focus:border-slate-400 focus:outline-none"
+						class="rounded-lg border border-slate-300 px-3 py-2 text-sm transition-colors scrollbar-slim focus:border-slate-400 focus:outline-hidden"
 					></textarea></label
 				>
 			{:else if activeTab === 'remote-server'}
@@ -380,7 +380,7 @@
 						type="text"
 						bind:value={$remoteServer.address}
 						placeholder="Enter server address"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 					/></label
 				>
 
@@ -396,7 +396,7 @@
 						type="text"
 						bind:value={$remoteServer.password}
 						placeholder="Enter tool server passphrase"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 					/></label
 				>
 
@@ -413,7 +413,7 @@
 						bind:value={$syncServer.address}
 						onchange={resetSyncCircuit}
 						placeholder="https://your-sync-server.example.com"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 					/></label
 				>
 
@@ -429,7 +429,7 @@
 						type="text"
 						bind:value={$syncServer.token}
 						placeholder="Enter sync token"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 					/></label
 				>
 
@@ -445,7 +445,7 @@
 						type="text"
 						bind:value={$syncServer.password}
 						placeholder="Enter encryption password"
-						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+						class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 					/></label
 				>
 
@@ -478,7 +478,7 @@
 					<textarea
 						rows={4}
 						readonly
-						class="mt-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors scrollbar-ultraslim placeholder:text-gray-500 focus:border-slate-400 focus:outline-none"
+						class="mt-2 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 transition-colors scrollbar-ultraslim placeholder:text-gray-500 focus:border-slate-400 focus:outline-hidden"
 						value={JSON.stringify($toolSchema, null, 2)}
 					></textarea>
 					<div class="mt-3 flex flex-col gap-3 text-sm sm:flex-row">
@@ -600,7 +600,7 @@
 					<label class="inline-flex cursor-pointer items-center">
 						<input type="checkbox" bind:checked={$config.explicitToolView} class="peer sr-only" />
 						<div
-							class="peer relative h-5 w-[37px] rounded-full bg-gray-300 after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none rtl:peer-checked:after:-translate-x-full"
+							class="peer relative h-5 w-[37px] rounded-full bg-gray-300 after:absolute after:inset-s-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-900 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-hidden peer-checked:rtl:after:-translate-x-full"
 						></div>
 						<span class="ms-3 text-sm text-slate-700">Use explicit view for tool calls</span>
 					</label>
@@ -629,7 +629,7 @@
 								<input
 									type="password"
 									bind:value={adminKey}
-									class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+									class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-hidden focus:border-indigo-400"
 									placeholder="••••••••"
 								/>
 								<button
@@ -645,7 +645,7 @@
 								type="text"
 								bind:value={brandDraft.name}
 								maxlength="100"
-								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-hidden focus:border-indigo-400"
 							/>
 						</label>
 						<label class="flex flex-col text-[10px] uppercase tracking-wide">
@@ -654,7 +654,7 @@
 								type="text"
 								bind:value={brandDraft.tagline}
 								maxlength="200"
-								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-hidden focus:border-indigo-400"
 							/>
 						</label>
 						<label class="flex flex-col text-[10px] uppercase tracking-wide">
@@ -662,7 +662,7 @@
 							<input
 								type="url"
 								bind:value={brandDraft.logo_url}
-								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-hidden focus:border-indigo-400"
 								placeholder="https://..."
 							/>
 						</label>
@@ -670,7 +670,7 @@
 							<span class="mb-2 ml-[3px]">Default model</span>
 							<select
 								bind:value={brandDraft.default_model}
-								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-hidden focus:border-indigo-400"
 							>
 								{#each BUILTIN_MODELS as m}
 									<option value={m.id}>{m.name}</option>
@@ -682,14 +682,14 @@
 							<input
 								type="text"
 								bind:value={brandDraft.agent_id}
-								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-indigo-400"
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-hidden focus:border-indigo-400"
 								placeholder="e.g. agent-abc123 (leave blank to hide)"
 							/>
 						</label>
 						<label class="flex flex-col text-[10px] uppercase tracking-wide">
 							<span class="mb-2 ml-[3px]">Accent color</span>
 							<div class="flex items-center gap-3">
-								<input type="color" bind:value={brandDraft.accent_color} class="h-9 w-10 cursor-pointer rounded border border-gray-200 p-0.5" />
+								<input type="color" bind:value={brandDraft.accent_color} class="h-9 w-10 cursor-pointer rounded-sm border border-gray-200 p-0.5" />
 								<span class="font-mono text-[12px] text-slate-500">{brandDraft.accent_color}</span>
 							</div>
 						</label>
@@ -698,7 +698,7 @@
 							<textarea
 								bind:value={brandDraft.system_prompt}
 								rows="8"
-								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] leading-relaxed outline-none focus:border-indigo-400 resize-y"
+								class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] leading-relaxed outline-hidden focus:border-indigo-400 resize-y"
 								placeholder="Default AI persona and instructions for all users…"
 							></textarea>
 							<span class="mt-1 ml-[3px] text-[10px] text-slate-400 normal-case">Users can override this with their own Custom instructions in settings.</span>
@@ -740,7 +740,7 @@
 									<span class="mb-1">Voice</span>
 									<select
 										bind:value={$ttsVoiceURI}
-										class="rounded-md border border-slate-200 px-2 py-1.5 text-[13px] text-slate-700 outline-none focus:border-indigo-400"
+										class="rounded-md border border-slate-200 px-2 py-1.5 text-[13px] text-slate-700 outline-hidden focus:border-indigo-400"
 									>
 										<option value="">Browser default</option>
 										{#each voices as v (v.voiceURI)}
@@ -751,7 +751,7 @@
 								<button
 									type="button"
 									onclick={previewVoice}
-									class="rounded-md border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+									class="rounded-md border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 focus:outline-hidden focus:ring-2 focus:ring-indigo-300"
 								>Preview</button>
 							</div>
 							{#if voices.length === 0}
@@ -836,7 +836,7 @@
 							type="url"
 							placeholder="https://three.ws/api/avatars/<id> or any .glb URL"
 							bind:value={$talkingHeadAvatarUrl}
-							class="rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-indigo-400"
+							class="rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-hidden focus:border-indigo-400"
 						/>
 						<p class="text-xs text-slate-400">
 							Pick from above, or <a href="/create" class="underline">create your own avatar</a>.
@@ -849,7 +849,7 @@
 	</div>
 </Modal>
 
-<Modal bind:open={addClientToolOpen} class="!px-8 transition-[all] md:!w-[800px]">
+<Modal bind:open={addClientToolOpen} class="px-8! transition-all md:w-[800px]!">
 	<ClientToolSetting
 		bind:load={loadClientTool}
 		onsave={(detail) => {

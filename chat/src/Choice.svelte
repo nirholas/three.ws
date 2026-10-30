@@ -35,7 +35,7 @@
 				disabled={chose !== null && chose !== i}
 				class="{chose === i
 					? 'ring-2 ring-slate-800 ring-offset-1'
-					: ''} w-full !justify-center px-6 disabled:opacity-75 disabled:hover:bg-slate-800"
+					: ''} w-full justify-center! px-6 disabled:opacity-75 disabled:hover:bg-slate-800"
 				onclick={() => {
 					choiceHandler(choice);
 					chose = i;

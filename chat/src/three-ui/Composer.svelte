@@ -338,11 +338,11 @@
 	}}
 />
 
-<div class="input-floating absolute bottom-4 left-1/2 z-[99] w-full -translate-x-1/2 px-6">
+<div class="input-floating absolute bottom-4 left-1/2 z-99 w-full -translate-x-1/2 px-6">
 	<div class="mx-auto flex w-full max-w-[760px] flex-col">
 		<!-- Composer card -->
 		<div
-			class="bg-white border border-rule rounded-[20px] shadow-composer pt-5 px-5 pb-3"
+			class="bg-white border border-rule rounded-composer shadow-composer pt-5 px-5 pb-3"
 			style="min-height:140px"
 		>
 			<!-- Textarea -->
@@ -351,7 +351,7 @@
 				bind:value={content}
 				{placeholder}
 				rows={1}
-				class="w-full resize-none bg-transparent border-0 p-0 outline-none ring-0 focus:outline-none focus:ring-0 text-base text-ink placeholder-ink-faint font-sans overflow-y-auto scrollbar-ultraslim"
+				class="w-full resize-none bg-transparent border-0 p-0 outline-hidden ring-0 focus:outline-hidden focus:ring-0 text-base text-ink placeholder-ink-faint font-sans overflow-y-auto scrollbar-ultraslim"
 				style="max-height:320px;"
 				onpaste={handlePaste}
 				onkeydown={(event) => {
@@ -471,11 +471,11 @@
 					<div class="relative min-w-0">
 						<div
 							bind:this={leftFadeEl}
-							class="pointer-events-none absolute left-0 top-0 z-10 h-full w-4 bg-gradient-to-r from-white to-transparent opacity-0 transition-opacity"
+							class="pointer-events-none absolute left-0 top-0 z-10 h-full w-4 bg-linear-to-r from-white to-transparent opacity-0 transition-opacity"
 						></div>
 						<div
 							bind:this={rightFadeEl}
-							class="pointer-events-none absolute right-0 top-0 z-10 h-full w-4 bg-gradient-to-l from-white to-transparent opacity-0 transition-opacity"
+							class="pointer-events-none absolute right-0 top-0 z-10 h-full w-4 bg-linear-to-l from-white to-transparent opacity-0 transition-opacity"
 						></div>
 						<div
 							bind:this={containerEl}

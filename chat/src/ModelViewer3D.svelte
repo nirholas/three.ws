@@ -319,7 +319,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div
 	bind:this={container}
-	class="relative w-full overflow-hidden rounded-lg border border-slate-200 bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+	class="relative w-full overflow-hidden rounded-lg border border-slate-200 bg-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 	style="min-height: {height}px"
 	data-mv3d={loadState}
 	tabindex="0"
@@ -335,7 +335,7 @@
 				href={forgeUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+				class="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 			>
 				Retry in the Forge ↗
 			</a>
@@ -377,7 +377,7 @@
 			<span class="text-xs text-slate-500">The 3D view was paused to free graphics memory.</span>
 			<button
 				onclick={reload}
-				class="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+				class="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs text-slate-600 transition-colors hover:bg-slate-50 focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 			>
 				Reload 3D view
 			</button>
@@ -392,7 +392,7 @@
 
 	{#if loadState === 'ready'}
 		{#if prompt || content?.status_note}
-			<div class="pointer-events-none absolute left-3 top-2.5 max-w-[70%] rounded-lg bg-white/80 px-2.5 py-1.5 backdrop-blur-sm">
+			<div class="pointer-events-none absolute left-3 top-2.5 max-w-[70%] rounded-lg bg-white/80 px-2.5 py-1.5 backdrop-blur-xs">
 				{#if prompt}
 					<div class="truncate text-xs font-medium text-slate-700">{prompt}</div>
 				{/if}
@@ -405,7 +405,7 @@
 			<a
 				href={glbUrl}
 				download="model.glb"
-				class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+				class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-xs transition-colors hover:bg-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 			>
 				Download GLB
 			</a>
@@ -413,7 +413,7 @@
 				href={viewerUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+				class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-xs transition-colors hover:bg-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 			>
 				Viewer ↗
 			</a>
@@ -421,7 +421,7 @@
 				href={arUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+				class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-xs transition-colors hover:bg-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 			>
 				View in AR ↗
 			</a>
@@ -430,14 +430,14 @@
 					href={content.saved_url}
 					target="_blank"
 					rel="noopener noreferrer"
-					class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+					class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-xs transition-colors hover:bg-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 				>
 					In your library ↗
 				</a>
 			{/if}
 			<button
 				onclick={recenter}
-				class="ml-auto rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+				class="ml-auto rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] text-slate-600 backdrop-blur-xs transition-colors hover:bg-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400"
 				aria-label="Recenter the camera"
 			>
 				Recenter
@@ -445,7 +445,7 @@
 			{#if hasSkeleton}
 				<button
 					onclick={toggleSkeleton}
-					class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] backdrop-blur-sm transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400 {skeletonVisible
+					class="rounded-full border border-slate-200 bg-white/85 px-2.5 py-1 text-[11px] backdrop-blur-xs transition-colors hover:bg-white focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-slate-400 {skeletonVisible
 						? 'bg-slate-700 text-white hover:bg-slate-600'
 						: 'text-slate-600'}"
 					aria-pressed={skeletonVisible}

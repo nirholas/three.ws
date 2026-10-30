@@ -73,7 +73,7 @@
   <div class="flex items-center justify-between">
     <h3 class="text-sm font-semibold text-ink">What would you like to build?</h3>
     <button
-      class="inline-flex items-center gap-1.5 text-sm text-ink hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ink rounded"
+      class="inline-flex items-center gap-1.5 text-sm text-ink hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ink rounded-sm"
       aria-expanded={referenceOpen}
       onclick={() => (referenceOpen = !referenceOpen)}
     >
@@ -88,7 +88,7 @@
         bind:value={referenceUrl}
         placeholder="https://a-site-you-like.com"
         aria-label="Website to use as a visual reference"
-        class="h-9 flex-1 rounded-full border border-rule bg-white px-4 text-sm text-ink placeholder-ink-faint focus:border-ink focus:outline-none"
+        class="h-9 flex-1 rounded-full border border-rule bg-white px-4 text-sm text-ink placeholder-ink-faint focus:border-ink focus:outline-hidden"
       />
       <button
         type="submit"

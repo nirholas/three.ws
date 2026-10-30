@@ -19,7 +19,7 @@
 		model_url = null,
 		alt = '',
 		size = 128,
-		class_name = 'h-16 w-full rounded object-cover',
+		class_name = 'h-16 w-full rounded-sm object-cover',
 		bg_color = '#e8e8e8',
 	} = $props();
 

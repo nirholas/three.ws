@@ -324,7 +324,7 @@
 		{#if i === 0 && message.role !== 'system'}
 			<Button
 				variant="outline"
-				class="absolute left-1/2 top-0 z-[98] -translate-x-1/2 border-dashed text-xs opacity-0 transition-[border-color,opacity] group-hover:opacity-100"
+				class="absolute left-1/2 top-0 z-98 -translate-x-1/2 border-dashed text-xs opacity-0 transition-[border-color,opacity] group-hover:opacity-100"
 				onclick={insertSystemPrompt}
 			>
 				<Icon icon={feTerminal} class="mr-2 h-3 w-3 text-slate-600" />
@@ -333,7 +333,7 @@
 		{:else if i === 1 && convo.messages[i - 1].role === 'system' && convo.messages[i - 1].customInstructions && !convo.messages[i - 1].showCustomInstructions}
 			<Button
 				variant="outline"
-				class="absolute left-1/2 top-0 z-[98] -translate-x-1/2 text-xs opacity-0 transition-opacity group-hover:opacity-100"
+				class="absolute left-1/2 top-0 z-98 -translate-x-1/2 text-xs opacity-0 transition-opacity group-hover:opacity-100"
 				onclick={() => {
 					convo.messages[i - 1].showCustomInstructions = true;
 					saveMessage(convo.messages[i - 1]);
@@ -433,7 +433,7 @@
 			{#if message.editing}
 				<textarea
 					bind:this={textareaEls[i]}
-					class="w-full resize-none border-none bg-transparent p-0 leading-[28px] text-slate-800 outline-none focus:ring-0"
+					class="w-full resize-none border-none bg-transparent p-0 leading-[28px] text-slate-800 outline-hidden focus:ring-0"
 					rows={1}
 					bind:value={message.pendingContent}
 					onkeydown={(event) => {
@@ -476,7 +476,7 @@
 									<MessageContent {message} />
 
 									{#if toolcallsOnLine?.length > 0}
-										<div class="-mb-1 flex flex-wrap gap-3 [&:first-child]:mt-1">
+										<div class="-mb-1 flex flex-wrap gap-3 first:mt-1">
 											{#each toolcallsOnLine as toolcall, ti}
 												{@const toolresponse = convo.messages.find(
 													(msg) => msg.toolcallId === toolcall.id
@@ -576,7 +576,7 @@
 					{/each}
 
 					{#if !$config.explicitToolView && message.toolcalls?.length > 0}
-						<div class="-mb-1 flex flex-wrap gap-3 [&:first-child]:mt-1">
+						<div class="-mb-1 flex flex-wrap gap-3 first:mt-1">
 							{#each message.toolcalls as toolcall, ti}
 								{@const toolresponse = convo.messages.find((msg) => msg.toolcallId === toolcall.id)}
 								<ToolcallButton
