@@ -71,12 +71,12 @@
     "viem": "^2.55.0"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "express": "^4.21.2",
-    "tsup": "^8.3.5",
+    "@types/express": "^5.0.6",
+    "express": "^5.3.0",
+    "tsup": "^9.0.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2",
+    "typescript": "^6.0.3",
     "viem": "^2.55.0",
-    "vitest": "^4.1.12"
+    "vitest": "^5.0.5"
   }
 }
