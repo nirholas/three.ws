@@ -6,6 +6,7 @@ The Three.ws User Group on IBM Community meets inside the `$THREE` home town at 
 |---|---|
 | When | Friday, November 6, 2026, 8:00 to 9:00 AM PT, 16:00 to 17:00 UTC. Early doors 7:45 AM PT. |
 | Your time | 11 AM New York, 4 PM London, 5 PM Berlin, 9:30 PM Mumbai, midnight Singapore and Hong Kong (into Saturday), 1 AM Saturday Tokyo. US daylight saving ends November 1, so Europe and Asia land an hour later than in August. |
+| IBM listing | Live since October 30: [Community Meetup #3 on IBM Community](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=40070ea4-ea38-4513-8fac-01a18e7e6a7b&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016) |
 | Event config | [public/event.json](../../public/event.json): `three-community-meetup-3`, eight agenda beats, souvenir `orbit-crown-meetup-3` |
 | Campaign | `MKT-2026-11-IBM-MEETUP-3` in [campaigns.csv](../../marketing/growth/campaigns.csv) |
 
@@ -33,9 +34,9 @@ The Three.ws User Group on IBM Community meets inside the `$THREE` home town at 
    - Regenerate the standalone lock with the image's own npm, outside the workspace: copy both files to an empty directory, run `docker run --rm -u $(id -u):$(id -g) -e HOME=/tmp -v "$PWD":/app -w /app node:22-slim npm install --package-lock-only --ignore-scripts` there, and copy the lock back. Only the Colyseus set and `@upstash/redis` change version (plus three Babel patches); the rest of the diff is peer dependencies the lock had been missing since before Oct 22.
    - Prove it with `docker build -t three-ws-multiplayer:check multiplayer`, then deploy. The same change also clears the root `nanoid` override problem in the known issue below, because that override pins the nanoid Colyseus 0.16 uses.
    - Add a Dependabot `ignore` for `@colyseus/*` above 0.16 and `@colyseus/schema` above 3 until server and client move together.
-3. **Create the IBM Community event** (Jessica) from [event-form.md](./event-form.md): Fri Nov 6, 08:00 to 09:00 AM Pacific, description from [event-listing.html](./event-listing.html).
-4. **Send Jessica** the article and the thread (the `.html` twins paste cleanly). Ask her to link the event once it exists.
-5. **Post on X** from [x-posts.md](./x-posts.md): the T-7 post today with the banner, reply 3 once the listing URL exists, the T-1 post on Thursday, the live post at doors.
+3. **Done, October 30:** IBM Community event created (Jessica) from [event-form.md](./event-form.md): Fri Nov 6, 08:00 to 09:00 AM Pacific, description from [event-listing.html](./event-listing.html).
+4. **Send Jessica** the article and the thread (the `.html` twins paste cleanly). Both already link the live event listing.
+5. **Post on X** from [x-posts.md](./x-posts.md): the T-7 post today with the banner, reply 3 (the listing is live, so it can go with the others), the T-1 post on Thursday, the live post at doors.
 6. **Agenda beat at 8:27 (an agent pays for a tool).** It settles a real micropayment on Solana. Approve the number of rounds before the session; nothing on stream spends without that.
 7. **After the event** (Nov 7): `npm run event:schedule -- --clear --apply`, then deploy, so `/event` returns to its no-event state before the Nov 24 session (`MKT-2026-11-IBM-WORLD-2`, [three-world-session.md](../../marketing/growth/events/three-world-session.md)) is staged. Write the recap from captured numbers only.
 

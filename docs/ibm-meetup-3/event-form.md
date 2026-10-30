@@ -62,4 +62,4 @@ Then press **Save and Continue**.
 
 ## After saving
 
-Send the event link to the three.ws team. It goes into the thread, the article and the X reply that points at the listing.
+Done: the event went live on October 30 at https://community.ibm.com/community/user/events/event-description?CalendarEventKey=40070ea4-ea38-4513-8fac-01a18e7e6a7b&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016. It is linked from the thread, the article, the blog post and X reply 3.

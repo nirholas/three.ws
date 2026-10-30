@@ -32,10 +32,10 @@ The run of show: a sentence becomes a rigged agent, a phone clip becomes motion,
 
 ### Reply 3 (IBM Community listing, after Jessica publishes)
 
-Post this only once the listing is live, with the event URL IBM Community assigns pasted in place of the group link. Until then the group link below is correct and live.
+The listing went live on October 30; the URL below is the event itself.
 
 ```
-The event lives in the Three.ws User Group on IBM Community, with the announcement and the full technical write-up: https://community.ibm.com/community/user/usergroup?CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016
+The event lives in the Three.ws User Group on IBM Community, with the announcement and the full technical write-up: https://community.ibm.com/community/user/events/event-description?CalendarEventKey=40070ea4-ea38-4513-8fac-01a18e7e6a7b&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016
 ```
 
 ## T-1: reminder (Thursday, November 5)

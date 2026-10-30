@@ -1,6 +1,6 @@
 # The Three.ws User Group Meets Inside the World Again, With IBM as Sponsor
 
-_By Jessica Swanson. The event listing is on this group's Events tab; the full venue guide is in the meetup discussion thread pinned on the group home page._
+_By Jessica Swanson. The [event listing](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=40070ea4-ea38-4513-8fac-01a18e7e6a7b&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016) is on this group's Events tab; the full venue guide is in the meetup discussion thread pinned on the group home page._
 
 _Header image for the post: [../media/meetup-3-ibm-listing-banner.png](../media/meetup-3-ibm-listing-banner.png) (2400x1200 PNG, three.ws branding only). If IBM Community prefers a co-branded header, IBM's team supplies it with IBM's own mark. Do not paste this note into the published post._
 

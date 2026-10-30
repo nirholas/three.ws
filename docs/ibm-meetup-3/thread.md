@@ -52,7 +52,7 @@ three.ws/play is Coin Communities: a persistent multiplayer 3D world that runs e
 -   **Every world is a shareable link.** A community's world is `three.ws/play?coin=<mint>`. Post the link anywhere and everyone who clicks it lands in the same world, together. Links unfurl as a live preview of the world on platforms that read oEmbed.
 -   **Worlds are persistent.** There is a collaborative, block-building layer saved server-side per world. What a community builds is still there tomorrow.
 
-And it is not just our venue. **Every Solana token already has a world**, derived from its mint address. Any community that wants to hold its own meetup can do exactly what we are doing next Friday: take its mint, share the link, show up. Creators can optionally token-gate their world's Holders tier, verified server-side against real on-chain balances, while the general tier stays open. The event listing in this group's Events tab carries the full guide, including the URL parameters and APIs behind it.
+And it is not just our venue. **Every Solana token already has a world**, derived from its mint address. Any community that wants to hold its own meetup can do exactly what we are doing next Friday: take its mint, share the link, show up. Creators can optionally token-gate their world's Holders tier, verified server-side against real on-chain balances, while the general tier stays open. The [event listing](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=40070ea4-ea38-4513-8fac-01a18e7e6a7b&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016) carries the full guide, including the URL parameters and APIs behind it.
 
 ## The platform behind the venue
 
@@ -101,12 +101,13 @@ And it is not just our venue. **Every Solana token already has a world**, derive
 
 ## See you next Friday
 
-**Friday, November 6, 8 AM PT / 11 AM ET (4 PM London, 5 PM Berlin), on the $THREE server at [three.ws/play](https://three.ws/play).** Show up as an avatar, watch the live builds, demo what you have made, and ask us anything. Details on this group's Events tab; a countdown and calendar file at [three.ws/event](https://three.ws/event).
+**Friday, November 6, 8 AM PT / 11 AM ET (4 PM London, 5 PM Berlin), on the $THREE server at [three.ws/play](https://three.ws/play).** Show up as an avatar, watch the live builds, demo what you have made, and ask us anything. Details and RSVP on the [event listing](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=40070ea4-ea38-4513-8fac-01a18e7e6a7b&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016); a countdown and calendar file at [three.ws/event](https://three.ws/event).
 
 Thank you to IBM Community for sponsoring the session. three.ws is an IBM Business Partner; IBM does not endorse three.ws, and three.ws is not an IBM product.
 
 ## Links
 
+-   The event listing on IBM Community: [Community Meetup #3](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=40070ea4-ea38-4513-8fac-01a18e7e6a7b&CommunityKey=e71510cc-d953-408f-9a1c-019f5c0a7016)
 -   The venue: [three.ws/play](https://three.ws/play) · countdown: [three.ws/event](https://three.ws/event)
 -   Free text-to-3D: [three.ws/create](https://three.ws/create)
 -   Video to Motion: [three.ws/video-to-motion](https://three.ws/video-to-motion)
