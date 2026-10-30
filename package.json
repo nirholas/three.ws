@@ -650,7 +650,7 @@
 		"@nirholas/pump-sdk": "^3.0.0",
 		"@noble/curves": "^2.2.0",
 		"@noble/hashes": "^1.8.0",
-		"@node-saml/node-saml": "^5.1.0",
+		"@node-saml/node-saml": "^5.2.0",
 		"@octokit/rest": "^22.0.1",
 		"@okxweb3/app-x402-core": "^0.2.2",
 		"@pixiv/three-vrm": "^3.5.5",
