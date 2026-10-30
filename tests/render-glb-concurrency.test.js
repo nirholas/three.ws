@@ -26,6 +26,8 @@ function makeFakeBrowser({ pageDelayMs = 25, failures = [] } = {}) {
 			const failure = failures.shift() || null;
 			return {
 				async setViewport() {},
+				async setRequestInterception() {},
+				on() {},
 				async setContent() {},
 				async waitForFunction() {
 					await new Promise((r) => setTimeout(r, pageDelayMs));
@@ -90,6 +92,8 @@ describe('renderGlbToPng — infra-error retry', () => {
 			state.pagesCreated += 1;
 			return {
 				async setViewport() {},
+				async setRequestInterception() {},
+				on() {},
 				async setContent() {},
 				async waitForFunction() {},
 				async evaluate() {
