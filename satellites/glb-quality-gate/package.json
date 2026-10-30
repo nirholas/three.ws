@@ -18,7 +18,7 @@
 	"devDependencies": {
 		"@gltf-transform/core": "^4.4.0",
 		"@gltf-transform/extensions": "^4.5.0",
-		"@vercel/ncc": "^0.38.3"
+		"@vercel/ncc": "^0.45.0"
 	},
 	"engines": {
 		"node": ">=20"
