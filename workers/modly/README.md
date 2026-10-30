@@ -190,7 +190,7 @@ them; `trellis2` stays the default image-to-3D lane either way.
 | Hunyuan3D 2 Mini weights | `tencent/Hunyuan3D-2mini` at `f90a0f7df7d5e6f71109cf333f6a95a0ae3194a6` (turbo DiT and VAE only, about 4.2 GB) |
 | torch | 2.6.0 + cu124, torchvision 0.21.0 |
 | Node | v20.18.1, sha256 checked |
-| meshoptimizer runtime | `meshopt/package-lock.json` (`@gltf-transform/*` 4.5.1, `meshoptimizer` 0.22.0) |
+| meshoptimizer runtime | `meshopt/package-lock.json` (`@gltf-transform/*` 4.5.1, `meshoptimizer` 1.3.0) |
 | rembg u2net.onnx | sha256 `8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491` |
 | gltfpack | v1.2, sha256 checked |
 
