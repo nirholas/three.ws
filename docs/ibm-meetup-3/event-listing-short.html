@@ -1,0 +1,291 @@
+<div class="twx-event-doc">
+
+<h1>three.ws Community Meetup: Back in the World, Hosted with IBM Community</h1>
+
+<p><strong>The short version:</strong> the Three.ws User Group meets inside the world again, and again it is not a video call or a webinar. This time IBM is sponsoring the session and co-promoting it. You will open <a href="https://three.ws/play">three.ws/play</a> in your browser, appear as a 3D avatar in the $THREE home town, and walk around a live world with everyone else who showed up. Talk to people by walking up to them (spatial voice chat), use text chat, watch live builds happen in the world around you, show what you have made, and ask the team anything. Everyone who is in the world during the hour also walks away with a free commemorative wearable that is never handed out again.</p>
+
+<table>
+  <tbody>
+    <tr><td><strong>When</strong></td><td>Friday, November 6, 2026, 8:00 AM to 9:00 AM Pacific Time (11:00 AM to 12:00 PM Eastern, 16:00 to 17:00 UTC)</td></tr>
+    <tr><td><strong>Your time</strong></td><td>8 AM San Francisco · 11 AM New York · 4 PM London · 5 PM Berlin · 9:30 PM Mumbai · midnight Singapore/Hong Kong (into Saturday) · 1 AM Saturday Tokyo</td></tr>
+    <tr><td><strong>Where</strong></td><td><a href="https://three.ws/play">three.ws/play</a> (the $THREE server, pinned at the top of the world list). Countdown and add-to-calendar at <a href="https://three.ws/event">three.ws/event</a>.</td></tr>
+    <tr><td><strong>Cost</strong></td><td>Free</td></tr>
+    <tr><td><strong>What you need</strong></td><td>A modern browser. No download, no install, no account required.</td></tr>
+    <tr><td><strong>New to 3D worlds?</strong></td><td>Come 15 minutes early. The three.ws team is at the spawn point from 7:45 AM PT and will walk you through the controls.</td></tr>
+    <tr><td><strong>Keep something</strong></td><td>The Meetup Orbit Crown, a free headwear souvenir granted to everyone in the world during the hour, kept forever and never granted again.</td></tr>
+  </tbody>
+</table>
+
+<h2>How to join, in three steps</h2>
+
+<ol>
+  <li><strong>Open <a href="https://three.ws/play">three.ws/play</a></strong> at the event time. The $THREE world (the official three.ws home town) is pinned at the top of the lobby. Click it and you are in. Or open <a href="https://three.ws/event">three.ws/event</a>, which counts down to the start and has one button straight into the world.</li>
+  <li><strong>Pick an avatar.</strong> You get one automatically as a guest, but the better move is to build your own custom 3D AI agent beforehand at <a href="https://three.ws/create">three.ws/create</a>: type a text prompt or upload a selfie and you get a rigged, animation-ready 3D avatar in about a minute. It follows you into the world. Press V in the world to switch avatars any time.</li>
+  <li><strong>Walk up to people and talk.</strong> Voice chat is spatial: you hear the people near you, from the direction they are standing, and they fade out as you walk away. Exactly like a real room. Text chat works too if you prefer to stay muted.</li>
+</ol>
+
+<p>That is genuinely all of it. The rest of this page covers the agenda, what is new since the group last met, what three.ws/play actually is, why any community (not just this one) can hold its meetups there, and how the whole thing works under the hood, all the way down to the APIs.</p>
+
+<hr />
+
+<h2>The agenda</h2>
+
+<p>The world itself runs the schedule: a countdown chip appears in the home town 24 hours out, glows gold for the final 30 minutes, and each segment announces itself with a banner when it starts. Tap the chip in the world to see the agenda in your own timezone.</p>
+
+<table>
+  <thead>
+    <tr><th>Time (PT)</th><th>Segment</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>7:45 AM</td><td><strong>Early doors.</strong> The team is at the spawn point teaching the controls: move, talk, emote, change avatar.</td></tr>
+    <tr><td>8:00 AM</td><td><strong>Doors open in the plaza.</strong> Welcome from IBM Community and the three.ws team.</td></tr>
+    <tr><td>8:06 AM</td><td><strong>Live build: one sentence to a rigged 3D agent.</strong> A text prompt becomes a rigged, animated avatar in about a minute, and then we wear it in the world.</td></tr>
+    <tr><td>8:14 AM</td><td><strong>Video to motion.</strong> A short phone clip becomes an animation you can download as GLB, BVH or FBX and put on any humanoid avatar.</td></tr>
+    <tr><td>8:20 AM</td><td><strong>Forge into the world.</strong> Type <code>/forge</code> and a sentence in chat, and a generated 3D object lands in the world for everyone standing there.</td></tr>
+    <tr><td>8:27 AM</td><td><strong>An agent pays for a tool.</strong> At the Agent Exchange, an AI agent hits an HTTP 402, settles a micropayment, gets its answer, and leaves a receipt anyone can open.</td></tr>
+    <tr><td>8:33 AM</td><td><strong>Community showcase.</strong> Members show the avatars, embeds, MCP integrations and agents they brought.</td></tr>
+    <tr><td>8:43 AM</td><td><strong>Open Q&amp;A and what ships next.</strong> Architecture, roadmap, how specific features work. The skeptical questions are the most useful ones.</td></tr>
+    <tr><td>8:55 AM</td><td><strong>Group photo at the totem,</strong> stamped with the event name by the world's photo mode. Fireworks close the hour.</td></tr>
+  </tbody>
+</table>
+
+<h2>New since the group's first meetup in August</h2>
+
+<p>The group first met in the world on August 7, then met online for the live build "Text prompt to embedded 3D agent in 30 minutes". This is its third meetup and its second in the world. Here is what shipped in and around the venue since then. Every item is live.</p>
+
+<ul>
+  <li><strong>Live events are part of the world.</strong> A countdown in the plaza, an agenda that knows what is on now and what is next, a banner as each segment starts, and a synchronized fireworks finale that every attendee sees at the same moment without a single network packet (the show is computed from a shared clock, the same way the world's sun is).</li>
+  <li><strong>Event souvenirs.</strong> Be in the world during an event and you are granted a free wearable that is never sold and never granted again. This meetup's is the Meetup Orbit Crown: a thin gold circlet with three pearls on a fine orbit ring, one for each of the three in three.ws.</li>
+  <li><strong><a href="https://three.ws/video-to-motion">Video to Motion</a>.</strong> Upload any short video and download its motion as GLB, BVH or FBX, ready for any humanoid avatar. We run it live during the hour.</li>
+  <li><strong>A better world to stand in.</strong> Phones get a world sized for them, photo mode hands you the photo, there is a car in every coin world you can drive on every road, the lobby tells you which worlds people are actually standing in, and Coin Wars is a door in your world instead of a separate game. <a href="https://three.ws/play/ufo">Flappin UFO</a> is back with a verified leaderboard, and <a href="https://three.ws/play/arena">the Arena</a> board shows each agent's winning streak.</li>
+  <li><strong>The campus is a real place, and The Grid is new.</strong> <a href="https://three.ws/?world=1">The campus</a> has daylight, walk-in buildings and real agents: a greeter meets you at the gate and every agent you walk up to talks back. <a href="https://three.ws/?world=grid">The Grid</a> is a neon room where every three.ws app is a live surface you can walk up to.</li>
+  <li><strong>Your avatar, in more places.</strong> One-paste <a href="https://three.ws/docs/site-builder-embeds">embeds for WordPress, Framer and Webflow</a>, a <a href="https://three.ws/docs/discord-activity">Discord Activity</a> that brings a shared Forge room into any voice channel, and a three.ws avatar that lipsyncs in real time to <a href="https://three.ws/docs/voice-framework-integrations">LiveKit Agents and Pipecat</a> voice pipelines. VRM avatars in the viewer keep their spring bones and expressions.</li>
+  <li><strong>Provenance by default.</strong> Every generated and purchased model now ships with a signed provenance credential, free.</li>
+  <li><strong>Agents that do business with each other.</strong> Agent-to-agent hires carry a signed fulfillment record that feeds reputation and pricing, agents can carry an owner-signed spend cap that verifies offline, and a complete REST API for agents ships with signed webhooks. See <a href="https://three.ws/commerce">three.ws/commerce</a>.</li>
+</ul>
+
+<hr />
+
+<h2>What is three.ws/play?</h2>
+
+<p>three.ws/play is <strong>Coin Communities</strong>: a persistent, multiplayer 3D world that runs entirely in the browser. Think of it as an isometric MMO where the "servers" are token communities. Every world is a real place: it has terrain, buildings, NPCs, a day-night cycle, an economy, and most importantly, the other people who are there with you right now.</p>
+
+<p>Three properties make it different from every "metaverse meeting" product you have seen:</p>
+
+<ul>
+  <li><strong>Zero friction.</strong> It is a URL. There is no client to download, no launcher, no account wall, no GPU requirement beyond a normal laptop. If you can open a web page, you can attend.</li>
+  <li><strong>Every world is a shareable link.</strong> A community's world is <code>three.ws/play?coin=&lt;mint&gt;</code>. Post that link anywhere (X, Telegram, Discord, a blog) and anyone who clicks it lands directly in that community's world, standing next to whoever else clicked it.</li>
+  <li><strong>The worlds are persistent and owned by their communities.</strong> What a community builds in its world (literally, block by block, see the building section below) is saved server-side and is still there tomorrow, next week, and for the next person who drops in.</li>
+</ul>
+
+<h2>Every community can host meetups here. Yes, every one.</h2>
+
+<p>This is the part most people miss on the first pass, so it gets its own section.</p>
+
+<p><strong>Every Solana token already has a world on three.ws/play.</strong> Not "can request one". Not "can apply". Has one, right now, on demand. The world is derived from the coin's mint address, so the moment a community wants to gather in 3D, its venue already exists:</p>
+
+<pre>https://three.ws/play?coin=&lt;your coin's mint address&gt;</pre>
+
+<p>That single URL is a complete, working meetup venue for any Solana token community, of any size, at any stage. A coin that launched five minutes ago has one. Here is what hosting a meetup for <em>your</em> community looks like, start to finish:</p>
+
+<ol>
+  <li><strong>Get your link.</strong> Take your coin's mint address and put it in the URL above. Optionally add <code>&amp;name=</code>, <code>&amp;symbol=</code> and <code>&amp;image=</code> so the entry card renders your branding even before the feed catches up.</li>
+  <li><strong>Post it.</strong> Drop the link in your Telegram, your X community, your Discord. On platforms that resolve oEmbed (WordPress, Ghost, Discord, dev.to, Notion), the link unfurls as an interactive preview of the world, because three.ws ships an oEmbed provider for world links.</li>
+  <li><strong>Show up.</strong> Everyone who clicks lands in the same world, in the same room, as avatars. Proximity voice, text chat, and everything else described below works immediately.</li>
+  <li><strong>Optionally, gate it.</strong> If you are the coin's creator, you can token-gate your world's Holders tier: require attendees to hold at least X of your coin to enter. The threshold is yours to set, verification happens server-side against real on-chain balances, and the general tier stays open for everyone else. Meetups for holders, town square for the curious.</li>
+</ol>
+
+<p>No booking, no whitelist, no contact form, no fee. The venue layer of the internet's token communities is already deployed, and it is a URL scheme.</p>
+
+<p>Active worlds surface automatically: the /play lobby lists the most active communities first, refreshed live from real market and community data, with the $THREE home town pinned at the top as the platform's flagship world. That pinned world is where this meetup happens.</p>
+
+<h2>What is actually in a world?</h2>
+
+<p>These are not empty rooms with floating nametags. Every world ships with the full feature set:</p>
+
+<h3>Avatars that are actually yours</h3>
+<p>Your three.ws avatar follows you in. Generate one from a text prompt ("a knight in obsidian armor"), from a selfie, or bring your own model: the platform rigs humanoid GLBs automatically and supports VRM avatars, with bone-name mapping for Mixamo, Avaturn, VRM/VRoid, Daz, MakeHuman and more, so any humanoid rig walks, runs and emotes with the full animation library. Guests who create nothing still get a real avatar, instantly, and you can swap avatars from inside the world.</p>
+
+<h3>Spatial voice chat</h3>
+<p>Walk up to someone and you hear them. Their voice comes from the direction they are standing and fades with distance, so groups form naturally, exactly like a hallway at a conference: three conversations can happen twenty meters apart without talking over each other. Voice is peer-to-peer WebRTC; the game server only relays the handshake and never carries audio.</p>
+
+<h3>Collaborative building</h3>
+<p>Every world has a Minecraft-style voxel layer. Players place and break blocks on a shared grid, the server validates and persists every edit per coin, and the result is there for everyone, forever. Communities decorate their own towns. For a meetup, that means your community can literally build the stage before the event.</p>
+
+<h3>Live events and souvenirs</h3>
+<p>A world can host a scheduled event: a countdown visible from anywhere in the plaza, an agenda that knows what is on now and what is next, a banner as each segment starts, and a synchronized fireworks show. Attendees can be granted a commemorative wearable during the window, kept forever, never sold, and never granted again after the event ends. Everything is driven by one public config file, served at <a href="https://three.ws/event.json">three.ws/event.json</a>.</p>
+
+<h3>A real in-game economy</h3>
+<p>The world runs a working economy with two deliberately separated currencies: <strong>Cash</strong>, a server-side game resource earned by gathering, fishing, combat and selling to vendor NPCs (and never cashable out), and <strong>$THREE</strong>, the platform's coin on Solana, which buys premium cosmetics and never comes from gameplay. You cannot farm the game for money and you cannot buy your way past the gameplay. There are general stores, a bank, a jobs board with daily-rotating quests, crew heists, mounts and vehicles, cosmetics with a wardrobe system, and a spin wheel. The full economy reference, rendered live from the running server's own tables, is at <a href="https://three.ws/play/economy">three.ws/play/economy</a>.</p>
+
+<h3>Live market data, inside the world</h3>
+<p>Coin worlds are dressed with their coin's live data: in-world chart screens, an intel kiosk, and ambient systems that react to market activity. The world is not a themed skin; it is connected to the thing the community actually cares about.</p>
+
+<h3>The details that make it feel alive</h3>
+<p>Day-night cycles, distinct biomes per world (the $THREE home town has a fixed signature look: Dust Gulch, an old-west frontier town), NPCs, physics, water, a drivable car, friends lists, photo mode, and an ambient crowd so a quiet world never feels dead.</p>
+
+<h2>How it works: the technology</h2>
+
+<p>For the engineers in the room (this is an engineering community, after all), here is the actual architecture. None of this is hand-waving; all of it is running in production today.</p>
+
+<h3>Client</h3>
+<ul>
+  <li><strong>Three.js + WebGL</strong>, vanilla JavaScript modules, built with Vite. No framework tax, no multi-megabyte runtime.</li>
+  <li><strong>Rapier physics</strong> compiled to WebAssembly for movement and collisions, loaded off the critical path so the world paints before the physics engine arrives.</li>
+  <li><strong>Instanced rendering</strong> for the voxel layer: one instanced mesh per block type, so a community build of thousands of blocks stays a handful of draw calls.</li>
+  <li><strong>Meshopt-compressed GLB avatars</strong> with automatic skeleton canonicalization and animation retargeting, so any humanoid rig animates correctly.</li>
+</ul>
+
+<h3>Multiplayer server</h3>
+<ul>
+  <li>An <strong>authoritative Colyseus server</strong> (Node.js) running on Google Cloud Run. The browser client connects over a WebSocket.</li>
+  <li><strong>One room definition, filtered by coin and tier.</strong> Every player passes their world's mint address on join, and the matchmaker only groups players who entered the same coin's community (and the same access tier). That is how every coin gets its own isolated world on the same infrastructure with zero provisioning.</li>
+  <li><strong>100 players per room instance</strong>, so a full meetup crowd stands in one room. Past the cap, the matchmaker spins up another instance of the same world automatically. The cap is a per-deploy setting, clamped server-side.</li>
+  <li><strong>State sync at 15 Hz with binary delta encoding.</strong> Each player is a small schema; only fields that changed since the last patch go over the wire, roughly 28 bytes per moving player per update. A completely full 100-player room costs each client about 40 KB/s down. This is why it runs fine on a phone connection.</li>
+  <li><strong>Server-side validation on every message.</strong> Movement is clamped to a physical max step (teleport hacks are rejected), positions are bounded to the world, message rates are limited per client and per message type, and every field is type-checked against an allow-list. The client is never trusted.</li>
+  <li><strong>Per-coin persistence.</strong> World edits (the voxel builds) and player profiles are persisted server-side, keyed by mint, so worlds survive restarts and redeploys.</li>
+  <li><strong>Event grants are server-side.</strong> The game server reads the same event config the page does, and grants a souvenir once per account, only inside the window, only in the event's world.</li>
+</ul>
+
+<h3>Voice</h3>
+<ul>
+  <li><strong>Proximity-gated WebRTC mesh.</strong> A peer connection opens only when another player comes within earshot and tears down (with hysteresis) when they leave, so the mesh stays small no matter how full the room is.</li>
+  <li><strong>True spatial audio.</strong> Each remote voice runs through a Web Audio PannerNode positioned at that player's world coordinates, with the listener pinned to your avatar and oriented by your camera. Distance attenuation is linear to silence.</li>
+  <li>The Colyseus room relays only the SDP/ICE signaling. Audio never touches the game server.</li>
+</ul>
+
+<h3>Identity and gating</h3>
+<ul>
+  <li><strong>Guests are first-class.</strong> A persistent guest identity is minted locally, so you can attend with zero sign-up.</li>
+  <li><strong>Wallet sign-in</strong> uses a signed nonce challenge; the verified wallet becomes your account across every world, and a session lasts 30 days.</li>
+  <li><strong>Holder passes are minted server-side.</strong> To enter a gated Holders world, the server reads your linked wallet's actual on-chain balance of that exact mint, prices it, and signs a short-lived pass the game server verifies on join. The browser never asserts what you hold, so passes cannot be forged for someone else's address.</li>
+  <li><strong>Creator-controlled gates.</strong> A coin's on-chain creator (verified server-side against the launch record, never self-asserted) can set the holding threshold for their world's Holders tier, or clear it back to the platform default.</li>
+</ul>
+
+<h2>The API surface</h2>
+
+<p>Everything the /play client uses is a real, public HTTP API you can build on. The interesting ones for community builders:</p>
+
+<table>
+  <thead>
+    <tr><th>Endpoint</th><th>What it does</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>GET /api/community/worlds</code></td><td>The live world lobby as JSON: the most active coin communities, each with token, symbol, name, art and activity stats. This is the same feed the /play lobby renders.</td></tr>
+    <tr><td><code>GET /api/community/world-gate?token=&lt;mint&gt;</code></td><td>Read a world's entry gate: whether the Holders tier is token-gated and at what threshold. POST (creator only, verified server-side) sets it.</td></tr>
+    <tr><td><code>POST /api/community/holder-pass?token=&lt;mint&gt;</code></td><td>Mints a signed holder pass for the authenticated user after checking real on-chain balances. This is how gated entry works.</td></tr>
+    <tr><td><code>GET /event.json</code></td><td>The live event config: name, window, agenda and souvenir. The /event page, the lobby banner, the in-world countdown and the server-side souvenir grant all read this one file, so they can never disagree about when the event is.</td></tr>
+    <tr><td><code>GET /api/play-oembed?url=&lt;world url&gt;</code></td><td>oEmbed provider: makes a world link unfurl as an interactive embed on WordPress, Ghost, Discord, dev.to, Notion and any embed.ly/iframely-backed editor.</td></tr>
+    <tr><td><code>GET /api/coin/trending</code>, <code>/api/coin/&lt;mint&gt;/...</code>, <code>/api/coin/ohlc</code> and friends</td><td>The live market data layer the worlds are dressed with: trending, detail, OHLC candles, markets, news, fear/greed and more.</td></tr>
+    <tr><td><code>GET /play/economy</code></td><td>Not an API, but the live, self-documenting economy reference: every price, vendor table and gate, rendered from the running server's own data.</td></tr>
+  </tbody>
+</table>
+
+<p>And the URL parameters that make worlds composable:</p>
+
+<table>
+  <thead>
+    <tr><th>Parameter</th><th>Effect</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>?coin=&lt;mint&gt;</code></td><td>Deep-link straight into that coin's world, skipping the lobby.</td></tr>
+    <tr><td><code>&amp;name= &amp;symbol= &amp;image=</code></td><td>Pre-seed the world card's branding for coins the feed has not indexed yet.</td></tr>
+    <tr><td><code>&amp;tier=holders</code></td><td>Enter the token-gated Holders world instead of the open general tier.</td></tr>
+    <tr><td><code>&amp;avatar=&lt;glb-url-or-id&gt;</code></td><td>Arrive wearing a specific avatar for this session (used by "See in 3D" links across the platform).</td></tr>
+    <tr><td><code>&amp;bg=transparent</code></td><td>Composite the world onto the host page instead of a black box, for embedding /play inside another site.</td></tr>
+  </tbody>
+</table>
+
+<p>Beyond the world itself, the platform's wider surface applies to everything you meet inside it: avatars generated at three.ws are downloadable GLBs you can use anywhere, and the <code>&lt;agent-3d&gt;</code> web component embeds any three.ws avatar, live and animated, in any website with one script tag. Your community's meetup avatar can be your website's mascot the same afternoon.</p>
+
+<hr />
+
+<h2>Beyond the venue: everything three.ws offers</h2>
+
+<p>The meetup is one hour inside one surface of a much larger platform. If Friday is your first contact with three.ws, this section is the complete map: what the three.ws team has built and runs live today, what is being built, who they partner with, and where every single page lives. Bookmark it; it is the long answer to "so what is three.ws, actually?"</p>
+
+<h3>Create: free AI 3D generation, no account required</h3>
+
+<p>three.ws is a <strong>free AI 3D model generator</strong>: describe anything in plain language at <a href="https://three.ws/create">three.ws/create</a> and get a downloadable, textured GLB in about a minute. No key, no account, no 3D software. The same pipeline covers <a href="https://three.ws/image-to-3d">image to 3D</a> (a photo or sketch becomes a model), <a href="https://three.ws/create/selfie">selfie to 3D avatar</a> (one photo becomes a rigged, animation-ready character), and <a href="https://three.ws/create/prompt">prompt to avatar</a>. Around it sits a full production suite: <a href="https://three.ws/forge-max">Forge Max</a> and <a href="https://three.ws/forge-studio">Forge Studio</a> for higher-fidelity generation, <a href="https://three.ws/restyle">Restyle Studio</a> for PBR materials and AI restyling, <a href="https://three.ws/scene">Scene Studio</a> and <a href="https://three.ws/compose">Compose</a> for scene assembly, <a href="https://three.ws/diorama">Diorama</a> for text-to-world generation, <a href="https://three.ws/ar/studio">AR Studio</a> for viewing creations in your actual room, <a href="https://three.ws/mocap-studio">Mocap Studio</a> and <a href="https://three.ws/video-to-motion">Video to Motion</a> for turning video into animation, <a href="https://three.ws/capture">Capture</a> and <a href="https://three.ws/splat">Splat</a> for photo-based reconstruction, <a href="https://three.ws/voice">Voice</a> and <a href="https://three.ws/lipsync">Lipsync</a> for talking avatars, and <a href="https://three.ws/daily">Daily Forge</a>, a daily creation challenge with streaks. Every generated and purchased model ships with a signed provenance credential.</p>
+
+<h3>Animate: universal rigging, no rig allowlist</h3>
+
+<p>Any humanoid model animates on three.ws. The platform auto-rigs generated characters, and a skeleton canonicalizer maps Mixamo, Avaturn, VRM/VRoid, Daz, MakeHuman, Unreal and other bone conventions onto one canonical skeleton, so the shared library of <strong>2,800+ animations</strong> (<a href="https://three.ws/animations">animations</a>, <a href="https://three.ws/gestures">gestures</a>, <a href="https://three.ws/choreograph">choreograph</a>) retargets onto anything humanoid, legs included. VRM avatars keep their spring bones and expressions. The <a href="https://three.ws/rig-doctor">Rig Doctor</a> tells you in seconds whether a model will animate and why. There is a full <a href="https://three.ws/character-library">character library</a>, a <a href="https://three.ws/pose">pose studio</a>, a <a href="https://three.ws/wardrobe">wardrobe system</a>, and <a href="https://three.ws/sign-language">sign-language animation</a> support.</p>
+
+<h3>Embed and distribute: your agent, everywhere</h3>
+
+<p>Everything you create is built to leave the platform. The <code>&lt;agent-3d&gt;</code> web component embeds a live, animated, <strong>embeddable 3D agent</strong> in any website with one script tag, with animations, moods and speech drivable from page code, and one-paste embeds for WordPress, Framer and Webflow. A family of npm products extends it: a page-walking companion (<a href="https://three.ws/walk">walk</a>), a talking page guide, a guided-tour engine, an embeddable <a href="https://three.ws/concierge">concierge</a>, and an assistant widget. A three.ws avatar can be the face of a LiveKit Agents or Pipecat voice pipeline, lipsyncing in real time. World and creation links unfurl as interactive 3D embeds via oEmbed on WordPress, Ghost, Discord, dev.to and Notion, and a Discord Activity brings a shared Forge room into any voice channel. Mobile gets AR-ready "view in your space" exports. The <a href="https://three.ws/embed-doctor">Embed Doctor</a> debugs any embed in place.</p>
+
+<h3>Worlds and community</h3>
+
+<p><a href="https://three.ws/play">three.ws/play</a> (this event's venue, covered in depth above) is the multiplayer world layer. Around it: <a href="https://three.ws/agora">Agora</a>, <a href="https://three.ws/crews">crews</a>, the <a href="https://three.ws/community">community hub</a>, a <a href="https://three.ws/marketplace">marketplace</a> with <a href="https://three.ws/marketplace/analytics">analytics</a>, and the public creation surfaces: <a href="https://three.ws/discover">discover</a>, <a href="https://three.ws/gallery">gallery</a>, <a href="https://three.ws/showcase">showcase</a>, <a href="https://three.ws/forged">forged</a>, and <a href="https://three.ws/collection">collections</a>.</p>
+
+<h3>The agent economy: x402 agent payments on Solana</h3>
+
+<p>three.ws runs a production <strong>x402 pay-per-call economy</strong>: APIs charge per request in a dollar stablecoin, settled on-chain on Solana. An agent hits a 402 Payment Required, pays, retries, and gets its answer, with no API keys and no subscriptions. Live today: a paid market-data API, a fabric of 1,000,000+ individually priced data endpoints, a unified service catalog at <a href="https://three.ws/x402">x402</a> with a <a href="https://three.ws/x402/studio">studio</a> for making your own endpoints payable, buyer-side <a href="https://three.ws/receipts">purchase receipts</a>, on-chain <a href="https://three.ws/agent-identities">agent identities</a>, agent <a href="https://three.ws/reputation">reputation</a>, agent wallets with owner-signed spend caps, a <a href="https://three.ws/monitor">fleet monitor</a>, a live wall of <a href="https://three.ws/agents-live">agent activity</a>, an <a href="https://three.ws/agent-exchange">agent exchange</a>, agent-to-agent <a href="https://three.ws/commerce">commerce</a> with invoices and signed fulfillment records, and a <a href="https://three.ws/labor-market">labor market</a> where agents hire agents. The platform's coin is <a href="https://three.ws/three">$THREE</a> on Solana; coins launched through the platform appear in the <a href="https://three.ws/launches">launch directory</a>.</p>
+
+<h3>Market data and crypto tools</h3>
+
+<p>A full live market-data surface backs the worlds and the agents: the <a href="https://three.ws/crypto">crypto hub</a>, <a href="https://three.ws/coins">prices</a>, a <a href="https://three.ws/heatmap">heatmap</a>, a <a href="https://three.ws/screener">screener</a>, <a href="https://three.ws/fear-greed">fear and greed</a>, a <a href="https://three.ws/converter">converter</a>, <a href="https://three.ws/defi">DeFi</a>, <a href="https://three.ws/stablecoins">stablecoins</a>, <a href="https://three.ws/markets/news">market news</a>, <a href="https://three.ws/coin-intel">coin intel</a>, and a <strong>free crypto data API</strong> (<a href="https://three.ws/crypto-api">crypto-api</a>) alongside the free <a href="https://three.ws/3d">3D API</a>.</p>
+
+<h3>For developers</h3>
+
+<p>The developer platform is the connective tissue: <a href="https://three.ws/docs">docs</a> with a <a href="https://three.ws/docs/quick-start">quick start</a> and <a href="https://three.ws/docs/start-here">start here</a> path, runnable samples, a cookbook, an examples gallery, and a complete REST API for agents with signed webhooks. Around <strong>40 MCP servers</strong> are published under the <code>@three-ws</code> scope on npm, with the core servers listed on the official Anthropic MCP Registry: 3D generation, avatars, scenes, spatial responses, market intel, payments and more, usable from Claude, Cursor, or any MCP-capable client. Two are IBM-specific and belong in this community's toolbox: <code>@three-ws/ibm-watsonx-mcp</code> (watsonx.ai chat, generation, embeddings, tokenization and forecasting, running on your own IBM Cloud account and credentials) and <code>@three-ws/ibm-x402-mcp</code> (IBM Granite tools exposed over MCP with per-call x402 billing). Both are community-built and open source; IBM does not operate them. <strong>90+ npm packages</strong> ship overall: the avatar SDK and CLI, GLB tools, animation retargeting, mocap, voice, sign-language recognition, the Solana agent SDK, and payment SDKs. Machine-readable surfaces cover the rest: <a href="https://three.ws/openapi.json">openapi.json</a>, <a href="https://three.ws/llms.txt">llms.txt</a>, <a href="https://three.ws/sitemap.xml">sitemap.xml</a>, and <a href="https://three.ws/.well-known/mcp.json">.well-known/mcp.json</a>.</p>
+
+<h3>Partnerships and programs</h3>
+
+<p>three.ws is an <strong>IBM Business Partner</strong>, and three.ws agents can run on IBM Granite foundation models served through IBM watsonx.ai, which is what this user group is built around (<a href="https://three.ws/ibm/hello">ibm/hello</a> is our page about working with IBM, and <a href="https://three.ws/ibm/x402-demo">ibm/x402-demo</a> walks through pay-per-use Granite). The platform is also an <strong>OpenAI Select Partner</strong> (<a href="https://three.ws/openai">openai</a>), an <strong>NVIDIA Inception</strong> member (<a href="https://three.ws/nvidia">nvidia</a>), runs on <strong>Google Cloud</strong> under its startup partnership, is an <strong>AWS Partner</strong> with an AWS Marketplace listing, is listed on <strong>Alibaba Cloud Marketplace</strong>, participates in the <strong>QuickNode Startup Program</strong>, has a content partnership with <strong>HackerNoon</strong>, and is listed on the <strong>Anthropic MCP Registry</strong>. Each of these has a write-up on the <a href="https://three.ws/blog">blog</a>; the full roster lives at <a href="https://three.ws/partners">partners</a> and <a href="https://three.ws/press">press</a>. three.ws is an IBM Business Partner; IBM does not endorse three.ws, and three.ws is not an IBM product.</p>
+
+<h3>If you found us by searching</h3>
+
+<p>The queries this platform actually answers, so you know you are in the right place: <em>free AI 3D model generator, text to 3D free no account, generate 3D model from text, image to 3D converter, selfie to 3D avatar, rigged animation-ready avatar from text, video to motion capture, embeddable 3D agent for a website, 3D AI agent, talking avatar with lip sync, browser-based multiplayer 3D world, virtual meetup venue in the browser, build an MCP server with paid tools, monetize an MCP server, x402 agent payments on Solana, embed a watsonx Granite agent in a web page, free crypto data API</em>. Every one of those maps to a live page linked on this event listing.</p>
+
+<h2>Where this is going</h2>
+
+<p>Directional, not dated. At the first meetup this list said "next: event tooling". That shipped, and it is what runs this hour: the countdown, the in-world agenda, the fireworks and the souvenir. Here is the shape of the work from here:</p>
+
+<ul>
+  <li><strong>Now:</strong> making a first visit effortless on every device. A phone gets a world sized for it, onboarding gets a first-time visitor walking and talking in under a minute, and the world tells you who is actually there before you walk in.</li>
+  <li><strong>Next:</strong> events any community can run without us. The same event layer this meetup uses, opened up so a community schedules its own session, its own agenda and its own commemorative wearable in its own world, plus richer creator controls over world dressing and gates.</li>
+  <li><strong>Then:</strong> scale-out. The room architecture already shards horizontally; cluster-aware matchmaking across machines is a config-level change on the current stack, planned for when sustained concurrency demands it. The goal is boring: any community, any size, any time, one URL.</li>
+</ul>
+
+<p>If you want to influence this list, that is what the meetup's open Q&amp;A is for. Come tell the three.ws team what your community needs to run its events here.</p>
+
+<h2>FAQ</h2>
+
+<p><strong>Do I need a crypto wallet to attend?</strong><br />No. The $THREE home town's general tier is open, and guests get a full avatar, full voice and chat, and the event souvenir. A wallet only matters for holder-gated tiers and for buying cosmetics.</p>
+
+<p><strong>Do I need to install anything?</strong><br />No. It is a web page. Chrome, Edge, Firefox and Safari on a normal laptop all work, and phones get a lighter world built for them. Voice asks for microphone permission like any web call.</p>
+
+<p><strong>I have never used a 3D world. Will I be lost?</strong><br />You will be walking within 30 seconds: click to move or use WASD, walk up to people to hear them. Join 15 minutes early and we will help you personally.</p>
+
+<p><strong>How do I get the souvenir?</strong><br />Be in the $THREE home town at any point between 8:00 and 9:00 AM PT. The Meetup Orbit Crown is granted automatically: a card slides in with a Wear it button, and the crown waits in My Fits if you dismiss the card. Sign in with a wallet if you want it to follow you across devices; guests keep it on the browser they attended from.</p>
+
+<p><strong>I came to an earlier meetup. Is this the same session?</strong><br />Same venue, new content. The world now runs the agenda itself, Video to Motion and the souvenir are new since August, and the showcase is whatever you bring.</p>
+
+<p><strong>Can my community really use this for our own events, today?</strong><br />Yes. Your world already exists at <code>three.ws/play?coin=&lt;your mint&gt;</code>. Post the link and you have a venue. Nothing to request, nothing to pay.</p>
+
+<p><strong>Is this financial advice / do I need to buy anything?</strong><br />No and no. The event is free and the platform is free to use. $THREE is the platform's coin and gates some cosmetic extras; attendance requires holding nothing.</p>
+
+<h2>All the links</h2>
+
+<ul>
+  <li>The venue: <a href="https://three.ws/play">three.ws/play</a> · countdown and calendar: <a href="https://three.ws/event">three.ws/event</a></li>
+  <li>Make your own 3D AI agent first: <a href="https://three.ws/create">three.ws/create</a> · turn a video into motion: <a href="https://three.ws/video-to-motion">three.ws/video-to-motion</a></li>
+  <li>Live economy reference: <a href="https://three.ws/play/economy">three.ws/play/economy</a></li>
+  <li>Platform: <a href="https://three.ws">three.ws</a> · <a href="https://three.ws/what-is">what is three.ws</a> · <a href="https://three.ws/tour">the tour</a> · <a href="https://three.ws/timeline">timeline</a> · <a href="https://three.ws/pricing">pricing</a></li>
+  <li>Documentation: <a href="https://three.ws/docs">three.ws/docs</a> · <a href="https://three.ws/docs/quick-start">quick start</a></li>
+  <li>Blog: <a href="https://three.ws/blog">three.ws/blog</a> · this meetup's announcement: <a href="https://three.ws/blog/ibm-user-group-meetup-3">three.ws/blog/ibm-user-group-meetup-3</a> · Changelog: <a href="https://three.ws/changelog">three.ws/changelog</a></li>
+  <li>The first meetup, recapped: <a href="https://three.ws/blog/ibm-user-group-first-in-world-meetup-recap">three.ws/blog/ibm-user-group-first-in-world-meetup-recap</a></li>
+  <li>Partners and press: <a href="https://three.ws/partners">partners</a> · <a href="https://three.ws/press">press</a> · <a href="https://three.ws/openai">OpenAI</a> · <a href="https://three.ws/nvidia">NVIDIA</a> · <a href="https://three.ws/ibm/hello">IBM</a></li>
+  <li>Open source: <a href="https://github.com/nirholas/three.ws">github.com/nirholas/three.ws</a> · npm: <a href="https://www.npmjs.com/org/three-ws">@three-ws</a></li>
+  <li>Machine-readable: <a href="https://three.ws/openapi.json">openapi.json</a> · <a href="https://three.ws/llms.txt">llms.txt</a> · <a href="https://three.ws/sitemap.xml">sitemap.xml</a> · <a href="https://three.ws/.well-known/mcp.json">mcp.json</a> · <a href="https://three.ws/event.json">event.json</a></li>
+  <li>three.ws on X: <a href="https://x.com/trythreews">@trythreews</a></li>
+</ul>
+
+<p><em>three.ws is an IBM Business Partner. IBM does not endorse three.ws, and three.ws is not an IBM product. Thank you to IBM Community for hosting and sponsoring this session.</em></p>
+
+<p><em>See you in the town square. Look for the water tower.</em></p>
+
+</div>

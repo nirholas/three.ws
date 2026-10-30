@@ -13,7 +13,8 @@ The Three.ws User Group on IBM Community meets inside the `$THREE` home town at 
 
 | File | Who uses it | What it is |
 |---|---|---|
-| [event-listing.html](./event-listing.html) | Owner, IBM Community event form | The August listing duplicated and updated. The two comments at the top hold the form fields (title, time, image, contact) and the Login Instructions; paste the rest into the description editor in HTML mode. |
+| [event-form.md](./event-form.md) | Jessica, IBM Community "Add Event" form | Every form field in the order the form shows it: title, type, time zone, contact, invitations, image and joining instructions. |
+| [event-listing.html](./event-listing.html), [event-listing-short.html](./event-listing-short.html) | Jessica, the form's Description field | The August listing duplicated and updated, pasted in HTML mode. The short version drops the page-by-page site index in case the editor rejects the full one for length. |
 | [jessica-article.md](./jessica-article.md), [jessica-article.html](./jessica-article.html) | Jessica | The blog post she publishes in the group, in her voice. The HTML twin pastes straight into the IBM Community editor; the comment at its top is the header-image note, not post content. |
 | [thread.md](./thread.md), [thread.html](./thread.html) | Jessica or the team account | The pinned discussion thread: event table, join steps, run of show, what changed since August, the venue and platform for newcomers, the stack, what is next. |
 | [x-posts.md](./x-posts.md) | Owner, @trythreews | T-7 main post with three replies, a T-1 reminder, the live post and recap guidance. Every post was dry-run through `scripts/post-tweet.mjs`. |
@@ -31,7 +32,7 @@ The Three.ws User Group on IBM Community meets inside the `$THREE` home town at 
    - Regenerate the standalone lock with the image's own npm, outside the workspace: copy both files to an empty directory, run `docker run --rm -u $(id -u):$(id -g) -e HOME=/tmp -v "$PWD":/app -w /app node:22-slim npm install --package-lock-only --ignore-scripts` there, and copy the lock back. Only the Colyseus set and `@upstash/redis` change version (plus three Babel patches); the rest of the diff is peer dependencies the lock had been missing since before Oct 22.
    - Prove it with `docker build -t three-ws-multiplayer:check multiplayer`, then deploy. The same change also clears the root `nanoid` override problem in the known issue below, because that override pins the nanoid Colyseus 0.16 uses.
    - Add a Dependabot `ignore` for `@colyseus/*` above 0.16 and `@colyseus/schema` above 3 until server and client move together.
-3. **Create the IBM Community event** from [event-listing.html](./event-listing.html): Fri Nov 6, 08:00 to 09:00 AM PT, banner `docs/media/meetup-3-ibm-listing-banner.png`.
+3. **Create the IBM Community event** (Jessica) from [event-form.md](./event-form.md): Fri Nov 6, 08:00 to 09:00 AM Pacific, description from [event-listing.html](./event-listing.html).
 4. **Send Jessica** the article and the thread (the `.html` twins paste cleanly). Ask her to link the event once it exists.
 5. **Post on X** from [x-posts.md](./x-posts.md): the T-7 post today with the banner, reply 3 once the listing URL exists, the T-1 post on Thursday, the live post at doors.
 6. **Agenda beat at 8:27 (an agent pays for a tool).** It settles a real micropayment on Solana. Approve the number of rounds before the session; nothing on stream spends without that.
