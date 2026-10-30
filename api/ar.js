@@ -30,6 +30,7 @@
 
 import { cors, method, wrap } from './_lib/http.js';
 import { planArLaunch } from './_lib/ar-launch.js';
+import { scriptJson } from './_lib/safe-text.js';
 
 function esc(s) {
 	return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -79,7 +80,7 @@ function interstitialPage({ target, asset, title, irlUrl, origin, pageUrl }) {
 <meta name="twitter:image" content="${esc(ogImage)}"/>
 <style>:root{color-scheme:dark}body{margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;
 font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(130% 130% at 50% 0%,#14161c,#08090c);color:#9aa3b2;font-size:13px}</style>
-<script>location.replace(${JSON.stringify(target)});</script>
+<script>location.replace(${scriptJson(target)});</script>
 </head><body>Opening AR…</body></html>`;
 }
 

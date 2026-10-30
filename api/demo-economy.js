@@ -15,6 +15,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.j
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { Bazaar } from './_lib/x402/bazaar-client.js';
 import { fetchUpstreamJson, lastGood } from './_lib/upstream-fetch.js';
+import { redactUrlSecrets } from './_lib/scrub-secrets.js';
 
 // ── Wallet imports (lazy, only when live mode is active) ─────────────────────
 async function walletDeps() {
@@ -360,7 +361,7 @@ export default wrap(async (req, res) => {
 			payment: payment.signature,
 		});
 	} catch (err) {
-		sseWrite(res, 'error', { message: err.message });
+		sseWrite(res, 'error', { message: redactUrlSecrets(err.message) });
 	} finally {
 		res.end();
 	}

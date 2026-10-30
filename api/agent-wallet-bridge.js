@@ -28,6 +28,7 @@ import { createSolanaSigner } from './_lib/x402/a2a-client.js';
 import { enforceCap, commit, rollbackReservation } from './_lib/x402-spending-cap.js';
 import { env } from './_lib/env.js';
 import { fetchUpstream } from './_lib/upstream-fetch.js';
+import { redactUrlSecrets } from './_lib/scrub-secrets.js';
 
 const SOLANA_RPC_URL = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const USDC_MINT_SOLANA = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -437,7 +438,7 @@ export default wrap(async (req, res) => {
 		const signer = await agentSigner();
 		await executePayment({ endpoint, method: payMethod, body: parsed.body, payerAddress: signer.address, emit });
 	} catch (err) {
-		emit({ stage: 'error', failedStage: lastStage, message: err.message });
+		emit({ stage: 'error', failedStage: lastStage, message: redactUrlSecrets(err.message) });
 	}
 	res.end();
 });
