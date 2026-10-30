@@ -42,3 +42,12 @@ updates:
       - dependency-name: "@colyseus/schema"
         versions:
           - ">=4.0.0"
+      # @vercel/og 1.x (through 1.0.3, the latest as of 2026-10-30) bundles an
+      # Emscripten harfbuzz build that calls require("fs") and reads __dirname
+      # at import time, so its Node entry cannot load in an ESM server at all.
+      # The 1.0.3 bump took every /api/*-og image to a 500 in production.
+      # tests/page-og-carbon.test.js renders through the real package and fails
+      # on a broken release; re-test there before lifting this.
+      - dependency-name: "@vercel/og"
+        versions:
+          - ">=1.0.0"
