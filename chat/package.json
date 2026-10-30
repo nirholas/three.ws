@@ -24,7 +24,7 @@
 		"vite": "^7.3.7"
 	},
 	"dependencies": {
-		"@noble/hashes": "^1.8.0",
+		"@noble/hashes": "^2.4.0",
 		"github-slugger": "^2.0.0",
 		"katex": "^0.18.10",
 		"marked": "^15.0.7",
