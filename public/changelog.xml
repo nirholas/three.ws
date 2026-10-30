@@ -47,6 +47,22 @@
 			<description>A live event's souvenir used to be granted only when a player joined the event world, so anyone who came early for doors and was already standing in the plaza at the start time never received it unless they rejoined. Each world now checks its seated players every 15 seconds while an event is live and grants the souvenir to anyone who does not have it yet, with the same one-time card and the wardrobe updated in place.</description>
 		</item>
 		<item>
+			<title>Skill import reads YAML specs again, and payment checks run on the current Solana Pay</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-30:Skill import reads YAML specs again, and payment checks run on the current Solana Pay</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Importing a skill from a YAML OpenAPI spec failed with &quot;not valid YAML&quot; for every document, and the API routes that share the importer stopped loading after a parser upgrade. Both work again, with a test that parses a real YAML spec. Marketplace, skill, subscription, bundle and print-order payments are now verified with Solana Pay 1.x through one adapter, tested against real transaction bytes for split purchases, short payments, wrong references, wrong recipients and memos. The rest of the dependency tree is on current releases, and the few held back are documented with the reason.</description>
+		</item>
+		<item>
+			<title>The built-in chat keeps answering when the shared free model quota runs out</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-10-30:The built-in chat keeps answering when the shared free model quota runs out</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the free OpenRouter quota is exhausted, the chat now falls back to Vertex Gemini on the platform's own capacity instead of showing &quot;the built-in model is rate-limited&quot;. Tools and streaming work the same on either lane.</description>
+		</item>
+		<item>
 			<title>three.ws partners with Microsoft and is live on Microsoft Marketplace</title>
 			<link>https://three.ws/blog/three-ws-microsoft-partnership</link>
 			<guid isPermaLink="false">2026-10-30:three.ws partners with Microsoft and is live on Microsoft Marketplace</guid>
