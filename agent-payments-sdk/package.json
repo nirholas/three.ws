@@ -75,7 +75,7 @@
     "ethers": "^6.16.0",
     "livepeer": "3.5.0",
     "short-uuid": "6.0.3",
-    "viem": "^2.0.0"
+    "viem": "^2.57.12"
   },
   "peerDependencies": {
     "zod": "^3.0.0"
