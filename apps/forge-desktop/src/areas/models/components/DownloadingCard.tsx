@@ -5,7 +5,7 @@ interface Props {
   percent: number
 }
 
-export function DownloadingCard({ modelId, percent }: Props): JSX.Element {
+export function DownloadingCard({ modelId, percent }: Props): React.JSX.Element {
   return (
     <div className="flex items-center gap-4 px-4 py-3 rounded-xl bg-zinc-900/60 border border-zinc-800">
       <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">

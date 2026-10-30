@@ -2,7 +2,7 @@ import type { SseEvent } from '@shared/services/llmDownloads'
 import { formatBytes } from '@shared/utils/format'
 
 /** Progress of an SSE-driven download or install (engine, GGUF models). */
-export function SseProgressBar({ event }: { event: SseEvent }): JSX.Element {
+export function SseProgressBar({ event }: { event: SseEvent }): React.JSX.Element {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between text-[10px] text-zinc-500">

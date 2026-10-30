@@ -1,6 +1,6 @@
 import React from 'react'
 
-export function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }): JSX.Element {
+export function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <div>
       <div className="mb-7">
@@ -18,7 +18,7 @@ export function Card({ title, description, aside, children }: {
   /** Rendered at the right of the header (status badge, …). */
   aside?: React.ReactNode
   children: React.ReactNode
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <div className="rounded-xl bg-surface-300 border border-zinc-800 overflow-hidden">
       {(title || description || aside) && (
@@ -37,7 +37,7 @@ export function Card({ title, description, aside, children }: {
   )
 }
 
-export function Row({ label, description, children }: { label: string; description?: string; children: React.ReactNode }): JSX.Element {
+export function Row({ label, description, children }: { label: string; description?: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3">
       <div className="min-w-0">
@@ -54,7 +54,7 @@ export function PathRow({ label, description, value, onBrowse }: {
   description?: string
   value: string
   onBrowse?: () => void
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <div className="px-4 py-3">
       <div className="flex items-center justify-between mb-2">
@@ -81,7 +81,7 @@ export function PathRow({ label, description, value, onBrowse }: {
   )
 }
 
-export function InfoRow({ label, value }: { label: string; value: string }): JSX.Element {
+export function InfoRow({ label, value }: { label: string; value: string }): React.JSX.Element {
   return (
     <div className="flex items-center justify-between px-4 py-3">
       <p className="text-xs font-medium text-zinc-300">{label}</p>
@@ -90,13 +90,13 @@ export function InfoRow({ label, value }: { label: string; value: string }): JSX
   )
 }
 
-export function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }): JSX.Element {
+export function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }): React.JSX.Element {
   return (
     <button
       onClick={() => onChange(!value)}
       className={`relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0 ${value ? 'bg-accent' : 'bg-zinc-700'}`}
     >
-      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${value ? 'translate-x-4' : 'translate-x-0'}`} />
+      <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-xs transition-transform duration-200 ${value ? 'translate-x-4' : 'translate-x-0'}`} />
     </button>
   )
 }
@@ -105,12 +105,12 @@ export function Select({ value, onChange, options }: {
   value: string
   onChange: (v: string) => void
   options: { value: string; label: string }[]
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-accent/50 cursor-pointer"
+      className="bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-hidden focus:border-accent/50 cursor-pointer"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>{o.label}</option>
@@ -124,7 +124,7 @@ export function SegmentedControl<T extends string>({ value, onChange, options, a
   onChange: (v: T) => void
   options: { value: T; label: string }[]
   ariaLabel?: string
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <div role="group" aria-label={ariaLabel} className="inline-flex p-0.5 rounded-lg bg-zinc-800 border border-zinc-700">
       {options.map((o) => {
@@ -149,7 +149,7 @@ export function SegmentedControl<T extends string>({ value, onChange, options, a
   )
 }
 
-export function LinkButton({ label, href }: { label: string; href?: string }): JSX.Element {
+export function LinkButton({ label, href }: { label: string; href?: string }): React.JSX.Element {
   const handleClick = (): void => {
     if (href) window.open(href, '_blank')
   }

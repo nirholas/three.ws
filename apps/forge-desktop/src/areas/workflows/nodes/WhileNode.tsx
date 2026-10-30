@@ -22,8 +22,8 @@ export default function WhileNode({ id, data, selected }: { id: string; data: WF
       style={{ width: '100%', height: '100%' }}
       className={`relative rounded-xl border-2 border-dashed flex flex-col
         ${isPaused || isRunning ? 'border-amber-500 bg-amber-500/[0.07]'
-        : selected ? 'border-amber-500/70 bg-amber-500/[0.04]'
-        : 'border-amber-500/40 bg-amber-500/[0.03]'}`}
+        : selected ? 'border-amber-500/70 bg-amber-500/4'
+        : 'border-amber-500/40 bg-amber-500/3'}`}
     >
       <NodeResizer
         minWidth={260} minHeight={140}
@@ -51,11 +51,11 @@ export default function WhileNode({ id, data, selected }: { id: string; data: WF
             disabled={locked}
             onChange={(e) => updateNodeData(id, { iterations: Math.max(0, Number(e.target.value) || 0) })}
             onPointerDown={(e) => e.stopPropagation()}
-            className={`nodrag w-11 px-1 py-0.5 bg-zinc-900/80 border border-amber-500/30 rounded text-amber-200 text-center outline-none focus:border-amber-500 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`nodrag w-11 px-1 py-0.5 bg-zinc-900/80 border border-amber-500/30 rounded-sm text-amber-200 text-center outline-hidden focus:border-amber-500 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           <span>×</span>
           {progress && (
-            <span className="ml-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 tabular-nums">
+            <span className="ml-1 px-1.5 py-0.5 rounded-sm bg-amber-500/20 text-amber-200 tabular-nums">
               {progress.total != null ? `${progress.current}/${progress.total}` : progress.current}
             </span>
           )}
@@ -68,14 +68,14 @@ export default function WhileNode({ id, data, selected }: { id: string; data: WF
           <div className="nodrag flex items-center gap-1">
             <button
               onClick={continueWhile}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 transition-colors text-[9px] font-medium"
+              className="flex items-center gap-1 px-2 py-1 rounded-sm bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 transition-colors text-[9px] font-medium"
             >
               <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Continue
             </button>
             <button
               onClick={retryWhile}
-              className="flex items-center gap-1 px-2 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors text-[9px] font-medium"
+              className="flex items-center gap-1 px-2 py-1 rounded-sm bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors text-[9px] font-medium"
             >
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="23 4 23 10 17 10"/>
@@ -89,7 +89,7 @@ export default function WhileNode({ id, data, selected }: { id: string; data: WF
         {/* Delete */}
         <button
           onClick={() => deleteElements({ nodes: [{ id }] })}
-          className="nodrag p-0.5 rounded text-amber-500/50 hover:text-red-400 transition-colors shrink-0"
+          className="nodrag p-0.5 rounded-sm text-amber-500/50 hover:text-red-400 transition-colors shrink-0"
         >
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>

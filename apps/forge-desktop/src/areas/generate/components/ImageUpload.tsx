@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useAppStore } from '@shared/stores/appStore'
 import { useGeneration } from '@shared/hooks/useGeneration'
 
-export default function ImageUpload(): JSX.Element {
+export default function ImageUpload(): React.JSX.Element {
   const { currentJob } = useGeneration()
   const { setSelectedImagePath, selectedImagePreviewUrl, setSelectedImagePreviewUrl, setSelectedImageData } = useAppStore()
   const [isDragging, setIsDragging] = useState(false)

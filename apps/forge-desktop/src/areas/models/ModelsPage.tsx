@@ -28,7 +28,7 @@ const SORTS: { id: SortId; label: string }[] = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function ModelsPage(): JSX.Element {
+export default function ModelsPage(): React.JSX.Element {
   // Extensions store
   const modelExtensions   = useExtensionsStore((s) => s.modelExtensions)
   const processExtensions = useExtensionsStore((s) => s.processExtensions)
@@ -404,7 +404,7 @@ export default function ModelsPage(): JSX.Element {
               setGhErr(null)
               clearInstall()
             }}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[9px] text-xs font-medium border border-zinc-700/60 bg-white/[0.025] text-zinc-200 hover:bg-white/[0.06] hover:border-zinc-600 transition-colors whitespace-nowrap"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[9px] text-xs font-medium border border-zinc-700/60 bg-white/2.5 text-zinc-200 hover:bg-white/6 hover:border-zinc-600 transition-colors whitespace-nowrap"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="opacity-85">
               <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.085 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.997.108-.776.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.38 1.235-3.22-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.3 1.23A11.51 11.51 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .322.216.694.825.576C20.565 21.796 24 17.298 24 12c0-6.63-5.37-12-12-12z"/>
@@ -415,7 +415,7 @@ export default function ModelsPage(): JSX.Element {
             onClick={handleLocalInstall}
             disabled={isInstalling}
             title="Link a local extension folder"
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[9px] text-xs font-medium border border-zinc-700/60 bg-white/[0.025] text-zinc-200 hover:bg-white/[0.06] hover:border-zinc-600 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[9px] text-xs font-medium border border-zinc-700/60 bg-white/2.5 text-zinc-200 hover:bg-white/6 hover:border-zinc-600 transition-colors whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" className="opacity-85">
               <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
@@ -438,7 +438,7 @@ export default function ModelsPage(): JSX.Element {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search extensions, authors…"
-            className="flex-1 bg-transparent text-[13px] text-zinc-200 placeholder-zinc-600 focus:outline-none"
+            className="flex-1 bg-transparent text-[13px] text-zinc-200 placeholder-zinc-600 focus:outline-hidden"
           />
           {search ? (
             <button onClick={() => setSearch('')} className="text-zinc-600 hover:text-zinc-400 transition-colors">
@@ -458,7 +458,7 @@ export default function ModelsPage(): JSX.Element {
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[7px] text-xs font-medium transition-colors ${
-                filter === f.id ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-200'
+                filter === f.id ? 'bg-zinc-800 text-zinc-100 shadow-xs' : 'text-zinc-500 hover:text-zinc-200'
               }`}
             >
               {f.label}
@@ -531,7 +531,7 @@ export default function ModelsPage(): JSX.Element {
                 placeholder="https://github.com/owner/repo"
                 autoFocus
                 disabled={isInstalling}
-                className="flex-1 px-3 py-2 text-xs rounded-lg bg-zinc-800 border border-zinc-700/60 text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors disabled:opacity-50"
+                className="flex-1 px-3 py-2 text-xs rounded-lg bg-zinc-800 border border-zinc-700/60 text-zinc-200 placeholder:text-zinc-600 focus:outline-hidden focus:border-zinc-500 transition-colors disabled:opacity-50"
               />
               <button
                 onClick={handleGHInstall}
@@ -573,7 +573,7 @@ export default function ModelsPage(): JSX.Element {
                 </div>
                 {/* Indeterminate progress bar */}
                 <div className="h-0.5 rounded-full bg-zinc-700 overflow-hidden">
-                  <div className="h-full w-1/3 rounded-full bg-accent animate-[slide_1.5s_ease-in-out_infinite]" />
+                  <div className="h-full w-1/3 rounded-full bg-accent animate-slide" />
                 </div>
               </div>
             )}
@@ -709,10 +709,10 @@ export default function ModelsPage(): JSX.Element {
 
         return createPortal(
           <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center"
+            className="fixed inset-0 z-9999 flex items-center justify-center"
             onMouseDown={(e) => { if (e.target === e.currentTarget) { setUninstallTarget(null); setModelsToDelete(new Set()); setUninstallError(null) } }}
           >
-            <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-sm animate-fade-in" />
+            <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-xs animate-fade-in" />
             <div className="relative w-96 rounded-2xl bg-zinc-900 border border-accent/20 shadow-2xl shadow-accent/5 overflow-hidden animate-slide-up-center">
               <div className="px-5 py-5 flex flex-col gap-4">
                 <div className="flex items-start gap-3">
@@ -752,7 +752,7 @@ export default function ModelsPage(): JSX.Element {
                             return next
                           })
                         }}
-                        className="accent-accent w-3.5 h-3.5 rounded"
+                        className="accent-accent w-3.5 h-3.5 rounded-sm"
                       />
                       <span className="text-xs text-zinc-200">All shared and node-specific weights</span>
                     </label>
@@ -781,7 +781,7 @@ export default function ModelsPage(): JSX.Element {
                                 return next
                               })
                             }}
-                            className="accent-accent w-3.5 h-3.5 rounded"
+                            className="accent-accent w-3.5 h-3.5 rounded-sm"
                           />
                           <span className="text-xs text-zinc-200">{formatModelName(id)}</span>
                         </label>
@@ -795,7 +795,7 @@ export default function ModelsPage(): JSX.Element {
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-400 shrink-0 mt-0.5">
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    <p className="text-[11px] text-red-400 break-words">{uninstallError}</p>
+                    <p className="text-[11px] text-red-400 wrap-break-word">{uninstallError}</p>
                   </div>
                 )}
 

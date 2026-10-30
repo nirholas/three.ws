@@ -20,7 +20,7 @@ function Block({ label, description, hint, action, children }: {
   hint?: string
   action?: React.ReactNode
   children?: React.ReactNode
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <div className="px-4 py-3 flex flex-col gap-2">
       {(label || action) && (
@@ -38,7 +38,7 @@ function Block({ label, description, hint, action, children }: {
   )
 }
 
-function Badge({ tone, children }: { tone: 'accent' | 'warn' | 'muted'; children: React.ReactNode }): JSX.Element {
+function Badge({ tone, children }: { tone: 'accent' | 'warn' | 'muted'; children: React.ReactNode }): React.JSX.Element {
   const cls = tone === 'accent'
     ? 'bg-accent/15 text-accent-light border-accent/30'
     : tone === 'warn'
@@ -53,7 +53,7 @@ function Badge({ tone, children }: { tone: 'accent' | 'warn' | 'muted'; children
   )
 }
 
-function CopyButton({ text }: { text: string }): JSX.Element {
+function CopyButton({ text }: { text: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false)
   useEffect(() => {
     if (!copied) return
@@ -74,7 +74,7 @@ function CopyButton({ text }: { text: string }): JSX.Element {
   )
 }
 
-function StepTitle({ n, children }: { n: number; children: React.ReactNode }): JSX.Element {
+function StepTitle({ n, children }: { n: number; children: React.ReactNode }): React.JSX.Element {
   return (
     <p className="text-xs font-medium text-zinc-300">
       <span className="mr-2 text-accent-light">{n}</span>{children}
@@ -82,7 +82,7 @@ function StepTitle({ n, children }: { n: number; children: React.ReactNode }): J
   )
 }
 
-const inputCls = 'w-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-accent/50'
+const inputCls = 'w-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-lg px-3 py-2 focus:outline-hidden focus:border-accent/50'
 const secondaryBtnCls = 'px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50'
 const primaryBtnCls = 'px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-medium transition-colors'
 
@@ -119,7 +119,7 @@ const THINKING_OPTIONS: { value: ThinkingMode; label: string; desc: string }[] =
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function AgentSection(): JSX.Element {
+export function AgentSection(): React.JSX.Element {
   const {
     provider, localModel, external, defaultThinking,
     setProvider, setExternal, setDefaultThinking,

@@ -16,9 +16,9 @@ function MoveFolderModal({ title, currentDir, items, itemLabel, moveLabel, moveD
   onCancel: () => void
   onMove: () => void
   onDelete: () => void
-}): JSX.Element {
+}): React.JSX.Element {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs">
       <div className="w-[440px] rounded-2xl border border-zinc-700/60 bg-zinc-900 shadow-2xl overflow-hidden">
 
         <div className="px-6 pt-5 pb-4">
@@ -71,7 +71,7 @@ function MoveFolderModal({ title, currentDir, items, itemLabel, moveLabel, moveD
 
 // ─── StorageSection ───────────────────────────────────────────────────────────
 
-export function StorageSection(): JSX.Element {
+export function StorageSection(): React.JSX.Element {
   const [modelsDir,     setModelsDir]     = useState('')
   const [workspaceDir,  setWorkspaceDir]  = useState('')
   const [workflowsDir,  setWorkflowsDir]  = useState('')

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useAppStore } from '@shared/stores/appStore'
 
-export function Toast(): JSX.Element | null {
+export function Toast(): React.JSX.Element | null {
   const { toast, hideToast } = useAppStore()
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export function Toast(): JSX.Element | null {
 
   return (
     <div className="fixed right-4 bottom-4 z-50 pointer-events-none">
-      <div className="pointer-events-auto max-w-sm rounded-xl border border-amber-500/30 bg-zinc-900/96 shadow-2xl backdrop-blur-sm">
+      <div className="pointer-events-auto max-w-sm rounded-xl border border-amber-500/30 bg-zinc-900/96 shadow-2xl backdrop-blur-xs">
         <div className="flex items-start gap-3 px-4 py-3">
           <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/12">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-300">

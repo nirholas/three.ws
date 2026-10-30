@@ -6,7 +6,7 @@ function fmtGB(bytes: number): string {
   return (bytes / GB).toFixed(1)
 }
 
-export default function MemoryIndicator(): JSX.Element | null {
+export default function MemoryIndicator(): React.JSX.Element | null {
   const [mem, setMem] = useState<{ total: number; used: number; available: number } | null>(null)
 
   useEffect(() => {

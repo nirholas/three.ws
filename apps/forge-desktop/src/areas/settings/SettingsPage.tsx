@@ -10,7 +10,7 @@ import { ThreeWsSection } from './components/ThreeWsSection'
 
 type Section = 'application' | 'threews' | 'storage' | 'integrations' | 'accessibility' | 'agent' | 'logs' | 'about'
 
-const SECTIONS: { id: Section; label: string; icon: JSX.Element }[] = [
+const SECTIONS: { id: Section; label: string; icon: React.JSX.Element }[] = [
   {
     id: 'application',
     label: 'Application',
@@ -103,7 +103,7 @@ const SECTIONS: { id: Section; label: string; icon: JSX.Element }[] = [
 
 // ─── Page shell ───────────────────────────────────────────────────────────────
 
-export default function SettingsPage(): JSX.Element {
+export default function SettingsPage(): React.JSX.Element {
   const [section, setSection] = useState<Section>('application')
 
   return (

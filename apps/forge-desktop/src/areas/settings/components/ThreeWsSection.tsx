@@ -21,7 +21,7 @@ function formatRemaining(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-function WaitingForApproval(): JSX.Element | null {
+function WaitingForApproval(): React.JSX.Element | null {
   const link = useThreeWsStore((s) => s.link)
   const cancelLink = useThreeWsStore((s) => s.cancelLink)
   const startedAt = link.status === 'waiting' ? link.startedAt : Date.now()
@@ -45,14 +45,14 @@ function WaitingForApproval(): JSX.Element | null {
         <button
           type="button"
           onClick={() => window.electron.threews.open(link.link.verificationUrl)}
-          className="text-accent-light hover:underline focus:outline-none focus-visible:underline"
+          className="text-accent-light hover:underline focus:outline-hidden focus-visible:underline"
         >
           Open the page again
         </button>
         <button
           type="button"
           onClick={() => void cancelLink()}
-          className="text-zinc-500 hover:text-zinc-300 focus:outline-none focus-visible:text-zinc-300"
+          className="text-zinc-500 hover:text-zinc-300 focus:outline-hidden focus-visible:text-zinc-300"
         >
           Cancel
         </button>
@@ -61,7 +61,7 @@ function WaitingForApproval(): JSX.Element | null {
   )
 }
 
-function SignedOut(): JSX.Element {
+function SignedOut(): React.JSX.Element {
   const link = useThreeWsStore((s) => s.link)
   const loading = useThreeWsStore((s) => s.loading)
   const startLink = useThreeWsStore((s) => s.startLink)
@@ -88,7 +88,7 @@ function SignedOut(): JSX.Element {
               type="button"
               onClick={() => void startLink()}
               disabled={link.status === 'starting'}
-              className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-light"
+              className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors disabled:opacity-60 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-light"
             >
               {link.status === 'starting' ? 'Opening three.ws…' : 'Sign in to three.ws'}
             </button>
@@ -123,7 +123,7 @@ function SignedOut(): JSX.Element {
                 placeholder="sk_live_…"
                 spellCheck={false}
                 aria-label="three.ws API key"
-                className="w-52 px-3 py-1.5 pr-8 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+                className="w-52 px-3 py-1.5 pr-8 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-hidden focus:border-zinc-500 transition-colors"
               />
               <button
                 type="button"
@@ -142,7 +142,7 @@ function SignedOut(): JSX.Element {
               type="button"
               onClick={() => void submitKey()}
               disabled={loading || !key.trim()}
-              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent/15 hover:bg-accent/25 text-accent-light transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-light"
+              className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent/15 hover:bg-accent/25 text-accent-light transition-colors disabled:opacity-50 focus:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-light"
             >
               {loading ? 'Checking…' : 'Connect'}
             </button>
@@ -153,7 +153,7 @@ function SignedOut(): JSX.Element {
   )
 }
 
-function SignedIn(): JSX.Element {
+function SignedIn(): React.JSX.Element {
   const account = useThreeWsStore((s) => s.account)
   const signOut = useThreeWsStore((s) => s.signOut)
   const [confirming, setConfirming] = useState(false)
@@ -186,7 +186,7 @@ function SignedIn(): JSX.Element {
           <Row label="Permissions">
             <div className="flex flex-wrap justify-end gap-1 max-w-xs">
               {scopes.map((s) => (
-                <span key={s} className="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono text-zinc-400">{s}</span>
+                <span key={s} className="px-1.5 py-0.5 rounded-sm bg-zinc-800 text-[10px] font-mono text-zinc-400">{s}</span>
               ))}
             </div>
           </Row>
@@ -195,7 +195,7 @@ function SignedIn(): JSX.Element {
           <button
             type="button"
             onClick={() => window.electron.threews.open('/dashboard')}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-light"
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors focus:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-light"
           >
             Open dashboard
           </button>
@@ -203,7 +203,7 @@ function SignedIn(): JSX.Element {
             <button
               type="button"
               onClick={() => window.electron.threews.open(`/u/${encodeURIComponent(account.username ?? '')}`)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-light"
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 transition-colors focus:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-light"
             >
               View profile
             </button>
@@ -231,7 +231,7 @@ function SignedIn(): JSX.Element {
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="px-3 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-red-400 transition-colors focus:outline-none focus-visible:text-red-400"
+              className="px-3 py-1.5 rounded-lg text-xs text-zinc-400 hover:text-red-400 transition-colors focus:outline-hidden focus-visible:text-red-400"
             >
               Sign out
             </button>
@@ -242,7 +242,7 @@ function SignedIn(): JSX.Element {
   )
 }
 
-export function ThreeWsSection(): JSX.Element {
+export function ThreeWsSection(): React.JSX.Element {
   const account = useThreeWsStore((s) => s.account)
   const loading = useThreeWsStore((s) => s.loading)
   const error = useThreeWsStore((s) => s.error)

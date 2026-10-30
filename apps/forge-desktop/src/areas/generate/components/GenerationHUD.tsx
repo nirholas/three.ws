@@ -42,7 +42,7 @@ function parseProgressFromStderr(chunk: string): string | null {
   return null
 }
 
-export default function GenerationHUD(): JSX.Element | null {
+export default function GenerationHUD(): React.JSX.Element | null {
   const { currentJob, reset } = useGeneration()
   const [elapsed, setElapsed] = useState(0)
   const [tqdmLog, setTqdmLog] = useState<string | null>(null)
@@ -136,7 +136,7 @@ export default function GenerationHUD(): JSX.Element | null {
               </div>
               <span className="text-sm font-medium text-zinc-200">Generation failed</span>
             </div>
-            <pre className="text-xs text-red-400 bg-red-950/40 border border-red-900/40 rounded-lg px-3 py-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words select-text font-mono leading-relaxed">
+            <pre className="text-xs text-red-400 bg-red-950/40 border border-red-900/40 rounded-lg px-3 py-2 max-h-48 overflow-y-auto whitespace-pre-wrap wrap-break-word select-text font-mono leading-relaxed">
               {error}
             </pre>
             <div className="flex gap-2">

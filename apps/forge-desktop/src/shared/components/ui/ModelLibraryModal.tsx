@@ -44,7 +44,7 @@ function Tag({ tone, colors, icon, title, children }: {
   icon?: React.ReactNode
   title?: string
   children: React.ReactNode
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <span title={title} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] font-medium ${colors ?? TONES[tone ?? 'muted']}`}>
       {icon}
@@ -67,7 +67,7 @@ const ghostBtnCls   = 'px-3.5 py-1.5 rounded-lg border border-zinc-700 text-zinc
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Element {
+export function ModelLibraryModal({ onClose }: { onClose: () => void }): React.JSX.Element {
   const apiUrl     = useAppStore((s) => s.apiUrl)
   const localModel = useAgentStore((s) => s.localModel)
   const setLocalModel = useAgentStore((s) => s.setLocalModel)
@@ -211,7 +211,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
   const suggested = models.filter((m) => !m.downloaded && matches(m))
   const filtering = filter !== 'all' || q !== ''
 
-  function renderCard(m: LlmModel): JSX.Element {
+  function renderCard(m: LlmModel): React.JSX.Element {
     const dl     = downloads[m.id]
     const tags   = m.tags ?? []
     const inUse  = m.downloaded && localModel === m.id
@@ -232,7 +232,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
         }`}
       >
         <div className="flex items-start justify-between gap-3">
-          <p className="text-[13px] font-semibold text-zinc-100 leading-snug break-words">{m.name}</p>
+          <p className="text-[13px] font-semibold text-zinc-100 leading-snug wrap-break-word">{m.name}</p>
           {inUse && (
             <Tag tone="accent" icon={<span className="w-1.5 h-1.5 rounded-full bg-accent-light" />}>In use</Tag>
           )}
@@ -290,7 +290,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
               ) : (
                 <button onClick={() => void pauseDownload(m.id)} className={ghostBtnCls}>Pause</button>
               )}
-              <button onClick={() => void cancelDownload(m.id)} className={`${ghostBtnCls} hover:!text-red-400`}>Cancel</button>
+              <button onClick={() => void cancelDownload(m.id)} className={`${ghostBtnCls} hover:text-red-400!`}>Cancel</button>
             </>
           ) : (
             <button onClick={() => startDownload(m.id)} className={outlineBtnCls}>
@@ -307,10 +307,10 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="fixed inset-0 z-9999 flex items-center justify-center"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-sm animate-fade-in" />
+      <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-xs animate-fade-in" />
 
       <div
         ref={dialogRef}
@@ -318,7 +318,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
         aria-modal="true"
         aria-label="Models"
         tabIndex={-1}
-        className="relative w-[1000px] max-w-[94vw] max-h-[88vh] rounded-2xl bg-zinc-900 border border-zinc-700/60 shadow-[0_30px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up-center flex flex-col focus:outline-none"
+        className="relative w-[1000px] max-w-[94vw] max-h-[88vh] rounded-2xl bg-zinc-900 border border-zinc-700/60 shadow-[0_30px_60px_rgba(0,0,0,0.5)] overflow-hidden animate-slide-up-center flex flex-col focus:outline-hidden"
       >
 
         {/* Header */}
@@ -364,7 +364,7 @@ export function ModelLibraryModal({ onClose }: { onClose: () => void }): JSX.Ele
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search models"
-                className="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-lg pl-8 pr-3 py-2 placeholder:text-zinc-500 focus:outline-none focus:border-accent/50"
+                className="w-full bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-lg pl-8 pr-3 py-2 placeholder:text-zinc-500 focus:outline-hidden focus:border-accent/50"
               />
             </div>
             <SegmentedControl value={filter} onChange={setFilter} options={filterOptions} ariaLabel="Filter models" />

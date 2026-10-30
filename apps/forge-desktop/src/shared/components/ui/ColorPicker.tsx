@@ -6,7 +6,7 @@ interface ColorPickerProps {
   size?: 'sm' | 'md'
 }
 
-export function ColorPicker({ value, onChange, size = 'sm' }: ColorPickerProps): JSX.Element {
+export function ColorPicker({ value, onChange, size = 'sm' }: ColorPickerProps): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const dim = size === 'sm' ? 'w-5 h-5' : 'w-6 h-6'
@@ -15,7 +15,7 @@ export function ColorPicker({ value, onChange, size = 'sm' }: ColorPickerProps):
     <button
       type="button"
       onClick={() => inputRef.current?.click()}
-      className={`${dim} rounded border border-zinc-600 hover:border-zinc-400 transition-colors shrink-0 relative overflow-hidden`}
+      className={`${dim} rounded-sm border border-zinc-600 hover:border-zinc-400 transition-colors shrink-0 relative overflow-hidden`}
       style={{ backgroundColor: value }}
       title={value}
     >

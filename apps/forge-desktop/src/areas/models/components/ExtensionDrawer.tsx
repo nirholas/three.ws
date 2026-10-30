@@ -40,7 +40,7 @@ export function ExtensionDrawer({
   ext, installedIds, localDataIds, downloading, sharedGroups, loadError, disabled,
   onInstall, onInstallAll, onPauseDownload, onCancelDownload,
   onUninstallNode, onDeleteSharedGroup, onDeleteWeightVariant, onUninstall, onRepaired, onSynced, onClose,
-}: Props): JSX.Element {
+}: Props): React.JSX.Element {
   const navigate = useNavStore((s) => s.navigate)
   const installedWeightVariants = useExtensionsStore((s) => s.installedWeightVariants)
   const [repairing,   setRepairing]   = useState(false)

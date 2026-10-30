@@ -17,7 +17,7 @@ function formatSession(id: string): string {
   }
 }
 
-export function LogsSection(): JSX.Element {
+export function LogsSection(): React.JSX.Element {
   const [sessions, setSessions] = useState<string[]>([])
   const [activeSession, setActiveSession] = useState<string | null>(null) // null = current
   const [activeFile, setActiveFile] = useState('errors.log')
@@ -75,7 +75,7 @@ export function LogsSection(): JSX.Element {
         <select
           value={activeSession ?? 'current'}
           onChange={(e) => handleSessionChange(e.target.value)}
-          className="flex-1 bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 text-xs rounded-lg px-3 py-2 outline-none focus:border-zinc-600"
+          className="flex-1 bg-zinc-800/80 border border-zinc-700/60 text-zinc-200 text-xs rounded-lg px-3 py-2 outline-hidden focus:border-zinc-600"
         >
           <option value="current">Current session</option>
           {sessions.map((s) => (
@@ -127,7 +127,7 @@ export function LogsSection(): JSX.Element {
       {loading ? (
         <div className="flex items-center justify-center h-48 text-zinc-600 text-xs">Loading…</div>
       ) : content ? (
-        <pre className="text-[11px] font-mono text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 max-h-[480px] overflow-y-auto whitespace-pre-wrap break-words select-text leading-relaxed">
+        <pre className="text-[11px] font-mono text-zinc-400 bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 max-h-[480px] overflow-y-auto whitespace-pre-wrap wrap-break-word select-text leading-relaxed">
           {content}
         </pre>
       ) : (

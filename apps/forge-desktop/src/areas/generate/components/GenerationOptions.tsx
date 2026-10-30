@@ -27,7 +27,7 @@ interface ParamSchema {
 
 // ─── Dynamic parameter renderers ───────────────────────────────────────────────
 
-function ShuffleIcon(): JSX.Element {
+function ShuffleIcon(): React.JSX.Element {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="17 1 21 5 17 9" />
@@ -38,7 +38,7 @@ function ShuffleIcon(): JSX.Element {
   )
 }
 
-function SelectParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): JSX.Element {
+function SelectParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): React.JSX.Element {
   return (
     <div className="flex flex-col gap-1.5">
       <FieldLabel label={schema.label} tooltip={schema.tooltip} />
@@ -61,7 +61,7 @@ function SelectParam({ schema, value, onChange }: { schema: ParamSchema; value: 
   )
 }
 
-function FloatParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): JSX.Element {
+function FloatParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): React.JSX.Element {
   const step = schema.step ?? 0.1
   return (
     <div className="flex flex-col gap-1.5">
@@ -109,7 +109,7 @@ function IntInput({ value, onChange, placeholder, className }: { value: number; 
   )
 }
 
-function IntParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): JSX.Element {
+function IntParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): React.JSX.Element {
   const isSeed = schema.id === 'seed'
   return (
     <div className="flex flex-col gap-1.5">
@@ -119,7 +119,7 @@ function IntParam({ schema, value, onChange }: { schema: ParamSchema; value: any
           value={value}
           onChange={onChange}
           placeholder={isSeed ? '-1 = random' : undefined}
-          className="w-full px-3 py-1.5 text-xs rounded-lg bg-zinc-900 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:border-zinc-500"
+          className="w-full px-3 py-1.5 text-xs rounded-lg bg-zinc-900 border border-zinc-700/60 text-zinc-200 focus:outline-hidden focus:border-zinc-500"
         />
         {isSeed && (
           <button
@@ -135,7 +135,7 @@ function IntParam({ schema, value, onChange }: { schema: ParamSchema; value: any
   )
 }
 
-function DynamicParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): JSX.Element | null {
+function DynamicParam({ schema, value, onChange }: { schema: ParamSchema; value: any; onChange: (v: any) => void }): React.JSX.Element | null {
   switch (schema.type) {
     case 'select': return <SelectParam schema={schema} value={value} onChange={onChange} />
     case 'float':  return <FloatParam  schema={schema} value={value} onChange={onChange} />
@@ -146,7 +146,7 @@ function DynamicParam({ schema, value, onChange }: { schema: ParamSchema; value:
 
 // ─── Custom model dropdown ────────────────────────────────────────────────────
 
-function ModelIcon(): JSX.Element {
+function ModelIcon(): React.JSX.Element {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -156,7 +156,7 @@ function ModelIcon(): JSX.Element {
   )
 }
 
-function CheckIcon(): JSX.Element {
+function CheckIcon(): React.JSX.Element {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />
@@ -164,7 +164,7 @@ function CheckIcon(): JSX.Element {
   )
 }
 
-function ChevronIcon({ open }: { open: boolean }): JSX.Element {
+function ChevronIcon({ open }: { open: boolean }): React.JSX.Element {
   return (
     <svg
       width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -182,7 +182,7 @@ interface ModelSelectProps {
   onChange: (id: string) => void
 }
 
-function ModelSelect({ models, value, onChange }: ModelSelectProps): JSX.Element {
+function ModelSelect({ models, value, onChange }: ModelSelectProps): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -279,7 +279,7 @@ function ModelSelect({ models, value, onChange }: ModelSelectProps): JSX.Element
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function GenerationOptions(): JSX.Element {
+export default function GenerationOptions(): React.JSX.Element {
   const { generationOptions, setGenerationOptions, currentJob, apiUrl } = useAppStore()
   const [models, setModels] = useState<CatalogModel[]>([])
   const [textureResolutionRaw, setTextureResolutionRaw] = useState(
@@ -433,7 +433,7 @@ export default function GenerationOptions(): JSX.Element {
                 setGenerationOptions({ enableTexture: false })
               }
             }}
-            className={`ml-2 w-9 h-5 rounded-full transition-colors relative flex-shrink-0 ${
+            className={`ml-2 w-9 h-5 rounded-full transition-colors relative shrink-0 ${
               generationOptions.enableTexture ? 'bg-accent' : 'bg-zinc-700'
             }`}
           >
@@ -474,9 +474,9 @@ export default function GenerationOptions(): JSX.Element {
                   setTextureResolutionRaw(String(clamped))
                   setGenerationOptions({ textureResolution: clamped })
                 }}
-                className="w-full px-3 py-1.5 text-xs rounded-lg bg-zinc-900 border border-zinc-700/60 text-zinc-200 focus:outline-none focus:border-zinc-500 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full px-3 py-1.5 text-xs rounded-lg bg-zinc-900 border border-zinc-700/60 text-zinc-200 focus:outline-hidden focus:border-zinc-500 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
-              <span className="text-xs text-zinc-600 flex-shrink-0">px</span>
+              <span className="text-xs text-zinc-600 shrink-0">px</span>
             </div>
           </div>
       </div>

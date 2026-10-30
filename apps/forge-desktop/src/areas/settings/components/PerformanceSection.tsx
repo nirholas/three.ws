@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Section, Card, Row, Select, Toggle } from '@shared/ui'
 
-export function PerformanceSection(): JSX.Element {
+export function PerformanceSection(): React.JSX.Element {
   const [gpu,     setGpu]     = useState('auto')
   const [vram,    setVram]    = useState('8')
   const [workers, setWorkers] = useState('1')

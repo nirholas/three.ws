@@ -3,7 +3,7 @@ import { useAppStore, SetupProgress } from '@shared/stores/appStore'
 
 // ─── Logo (shared) ──────────────────────────────────────────────────────────
 
-function ForgeLogo(): JSX.Element {
+function ForgeLogo(): React.JSX.Element {
   return (
     <div className="mb-8">
       <svg width="64" height="64" viewBox="0 0 609 609" xmlns="http://www.w3.org/2000/svg">
@@ -24,7 +24,7 @@ function ForgeLogo(): JSX.Element {
   )
 }
 
-function AppHeader(): JSX.Element {
+function AppHeader(): React.JSX.Element {
   return (
     <>
       <ForgeLogo />
@@ -36,7 +36,7 @@ function AppHeader(): JSX.Element {
 
 // ─── Panels ─────────────────────────────────────────────────────────────────
 
-function CheckingPanel(): JSX.Element {
+function CheckingPanel(): React.JSX.Element {
   return (
     <div className="w-80 bg-surface-300 rounded-xl p-6">
       <p className="text-sm font-medium text-zinc-100">Checking environment…</p>
@@ -57,7 +57,7 @@ function ChoosePathPanel({
   platform: string
   arch: string
   onConfirm: (path: string) => void
-}): JSX.Element {
+}): React.JSX.Element {
   const [selectedPath, setSelectedPath] = useState(defaultPath || '')
 
   // Sync if defaultPath arrives after mount (async IPC)
@@ -117,7 +117,7 @@ function stepIndex(step: string): number {
   return STEPS.findIndex((s) => s.key === step)
 }
 
-function InstallingPanel({ progress }: { progress: SetupProgress | null }): JSX.Element {
+function InstallingPanel({ progress }: { progress: SetupProgress | null }): React.JSX.Element {
   const currentIdx = progress ? stepIndex(progress.step) : -1
   const percent = progress?.percent ?? 0
 
@@ -165,7 +165,7 @@ function InstallingPanel({ progress }: { progress: SetupProgress | null }): JSX.
   )
 }
 
-function StartingPanel(): JSX.Element {
+function StartingPanel(): React.JSX.Element {
   return (
     <div className="w-80 bg-surface-300 rounded-xl p-6">
       <p className="text-sm font-medium text-zinc-100">Starting backend…</p>
@@ -177,7 +177,7 @@ function StartingPanel(): JSX.Element {
   )
 }
 
-function ApplyingUpdatePanel({ version }: { version: string }): JSX.Element {
+function ApplyingUpdatePanel({ version }: { version: string }): React.JSX.Element {
   return (
     <div className="w-80 bg-surface-300 rounded-xl p-6">
       <div className="flex items-center gap-3 mb-4">
@@ -199,7 +199,7 @@ function ApplyingUpdatePanel({ version }: { version: string }): JSX.Element {
   )
 }
 
-function ErrorPanel({ message }: { message: string | null }): JSX.Element {
+function ErrorPanel({ message }: { message: string | null }): React.JSX.Element {
   const lines = (message ?? 'Check the console for details').split('\n')
   const isAntivirusHint = message?.includes('antivirus') ?? false
 
@@ -235,7 +235,7 @@ function ErrorPanel({ message }: { message: string | null }): JSX.Element {
 
 // ─── Main component ─────────────────────────────────────────────────────────
 
-export default function FirstRunSetup(): JSX.Element {
+export default function FirstRunSetup(): React.JSX.Element {
   const { setupStatus, setupProgress, setupError, saveDataDir, defaultDataDir, backendStatus, backendError, platform, arch } =
     useAppStore()
   const [applyingVersion, setApplyingVersion] = useState<string | null>(null)
@@ -298,7 +298,7 @@ export default function FirstRunSetup(): JSX.Element {
           <div className="flex items-center gap-1 no-drag">
             <button
               onClick={() => window.electron.window.minimize()}
-              className="w-7 h-7 flex items-center justify-center rounded hover:bg-zinc-700 text-zinc-500 hover:text-zinc-100 transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-sm hover:bg-zinc-700 text-zinc-500 hover:text-zinc-100 transition-colors"
               aria-label="Minimize"
             >
               <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor">
@@ -307,7 +307,7 @@ export default function FirstRunSetup(): JSX.Element {
             </button>
             <button
               onClick={() => window.electron.window.close()}
-              className="w-7 h-7 flex items-center justify-center rounded hover:bg-red-600 text-zinc-500 hover:text-white transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-sm hover:bg-red-600 text-zinc-500 hover:text-white transition-colors"
               aria-label="Close"
             >
               <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.2">

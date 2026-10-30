@@ -47,7 +47,7 @@ export default function TextNode({ id, data, selected }: { id: string; data: WFN
       }
       subheader={
         <div ref={ioRowRef} className="flex items-center justify-end px-3 py-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-amber-500/30 bg-amber-500/10 text-amber-400">text</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-amber-500/30 bg-amber-500/10 text-amber-400">text</span>
         </div>
       }
       handles={
@@ -62,7 +62,7 @@ export default function TextNode({ id, data, selected }: { id: string; data: WFN
           onChange={(e) => updateNodeData(id, { params: { ...data.params, text: e.target.value } })}
           placeholder="Enter text…"
           rows={1}
-          className="nodrag w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-2 text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500/40 resize-none leading-relaxed overflow-hidden"
+          className="nodrag w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-2 text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-hidden focus:border-amber-500/40 resize-none leading-relaxed overflow-hidden"
         />
       </div>
     </BaseNode>

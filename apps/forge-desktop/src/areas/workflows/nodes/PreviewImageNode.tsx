@@ -33,7 +33,7 @@ export default function PreviewImageNode({ id, selected }: { id: string; selecte
       }
       subheader={
         <div className="flex items-center gap-1.5 px-3 py-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
           <span className="text-[9px] text-zinc-600">→ preview</span>
         </div>
       }
@@ -48,7 +48,7 @@ export default function PreviewImageNode({ id, selected }: { id: string; selecte
       <div className="px-2 pb-2 pt-1">
         {imageUrl ? (
           <div
-            className="nodrag grid gap-0.5 rounded overflow-hidden"
+            className="nodrag grid gap-0.5 rounded-sm overflow-hidden"
             style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}
           >
             {[0, 1, 2, 3, 4, 5].map((i) => (

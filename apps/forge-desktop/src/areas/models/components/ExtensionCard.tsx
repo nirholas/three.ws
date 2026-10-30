@@ -30,7 +30,7 @@ interface Props {
 export function ExtensionCard({
   ext, installedIds, downloading, loadError, disabled,
   onInstall, onInstallAll, onPauseDownload, onCancelDownload, onOpen,
-}: Props): JSX.Element {
+}: Props): React.JSX.Element {
   const isModel = ext.type === 'model'
   const isLocal = typeof ext.source === 'string' && ext.source.startsWith('local://')
   const { total, done, installing, hasAvailable } = extInstallSummary(ext, installedIds, downloading)
@@ -46,7 +46,7 @@ export function ExtensionCard({
     }
   }
 
-  let status: JSX.Element
+  let status: React.JSX.Element
   if (loadError) {
     status = <StatusBadge tone="amber">Load error</StatusBadge>
   } else if (installing) {
@@ -66,7 +66,7 @@ export function ExtensionCard({
       onClick={handleOpen}
       onKeyDown={handleKey}
       aria-label={`${ext.name}, open details`}
-      className="relative flex flex-col min-h-[218px] p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 overflow-hidden cursor-pointer transition-all duration-150 hover:bg-zinc-900 hover:border-zinc-700 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(0,0,0,0.7)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+      className="relative flex flex-col min-h-[218px] p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 overflow-hidden cursor-pointer transition-all duration-150 hover:bg-zinc-900 hover:border-zinc-700 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(0,0,0,0.7)] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-accent"
     >
       {/* Header */}
       <div className="flex items-start gap-3">
@@ -102,7 +102,7 @@ export function ExtensionCard({
       </div>
 
       {/* Description */}
-      <p className="mt-3 text-xs leading-5 text-zinc-500 line-clamp-2 min-h-[2.5rem]">
+      <p className="mt-3 text-xs leading-5 text-zinc-500 line-clamp-2 min-h-10">
         {ext.description?.trim() || '-'}
       </p>
 
@@ -122,7 +122,7 @@ export function ExtensionCard({
             return (
               <div
                 key={node.id}
-                className="flex items-center justify-between gap-2.5 px-2.5 py-1.5 rounded-lg bg-white/[0.02] border border-zinc-800"
+                className="flex items-center justify-between gap-2.5 px-2.5 py-1.5 rounded-lg bg-white/2 border border-zinc-800"
               >
                 <div className="flex flex-col gap-1 min-w-0 items-start">
                   <span className="text-xs font-medium text-zinc-200 truncate max-w-full">

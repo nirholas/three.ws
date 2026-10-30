@@ -63,11 +63,11 @@ export default function ForEachNode({ id, data, selected }: { id: string; data: 
       subheader={
         <div ref={ioRowRef} className="flex items-center justify-end px-3 py-2">
           {progress && (
-            <span className="mr-auto px-1.5 py-0.5 rounded bg-zinc-700/60 text-zinc-300 tabular-nums text-[9px]">
+            <span className="mr-auto px-1.5 py-0.5 rounded-sm bg-zinc-700/60 text-zinc-300 tabular-nums text-[9px]">
               {progress.total != null ? `${progress.current}/${progress.total}` : progress.current}
             </span>
           )}
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border"
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border"
             style={{ borderColor: `${variant.color}55`, background: `${variant.color}18`, color: variant.color }}>
             {mode}
           </span>
@@ -84,7 +84,7 @@ export default function ForEachNode({ id, data, selected }: { id: string; data: 
           value={mode}
           disabled={locked}
           onChange={(e) => updateNodeData(id, { params: { ...data.params, mode: e.target.value as Mode, dir: undefined } })}
-          className={`nodrag w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-2 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-600 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`nodrag w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-2 text-[11px] text-zinc-200 focus:outline-hidden focus:border-zinc-600 ${locked ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           <option value="image">Image</option>
           <option value="text">Text</option>
@@ -107,7 +107,7 @@ export default function ForEachNode({ id, data, selected }: { id: string; data: 
         {isLooping && (
           <button
             onClick={pauseWhile}
-            className="nodrag flex items-center justify-center gap-1 px-2 py-1 rounded bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors text-[10px] font-medium"
+            className="nodrag flex items-center justify-center gap-1 px-2 py-1 rounded-sm bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition-colors text-[10px] font-medium"
           >
             <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
             Pause
@@ -117,14 +117,14 @@ export default function ForEachNode({ id, data, selected }: { id: string; data: 
           <div className="nodrag flex items-center gap-1.5">
             <button
               onClick={continueWhile}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 transition-colors text-[10px] font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-sm bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 transition-colors text-[10px] font-medium"
             >
               <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Continue
             </button>
             <button
               onClick={retryWhile}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded bg-sky-500/20 border border-sky-500/40 text-sky-300 hover:bg-sky-500/30 transition-colors text-[10px] font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1 rounded-sm bg-sky-500/20 border border-sky-500/40 text-sky-300 hover:bg-sky-500/30 transition-colors text-[10px] font-medium"
             >
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>

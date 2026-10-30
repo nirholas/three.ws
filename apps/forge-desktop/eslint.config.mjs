@@ -41,7 +41,7 @@ export default tseslint.config(
   },
   // CommonJS files (Node, require/module)
   {
-    files: ['scripts/**/*.{js,cjs}', 'tailwind.config.js', 'postcss.config.js', '**/*.cjs'],
+    files: ['scripts/**/*.{js,cjs}', 'postcss.config.js', '**/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: { ...globals.node }

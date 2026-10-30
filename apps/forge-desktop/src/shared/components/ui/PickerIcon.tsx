@@ -4,7 +4,7 @@ import type { PickerIntent } from '@shared/types/electron.d'
  * Glyph for a param's browse button, matching the dialog it opens so the button
  * advertises what it does (folder = the historical default).
  */
-export function PickerIcon({ intent, size = 11 }: { intent: PickerIntent; size?: number }): JSX.Element {
+export function PickerIcon({ intent, size = 11 }: { intent: PickerIntent; size?: number }): React.JSX.Element {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }
 
   if (intent === 'image') {

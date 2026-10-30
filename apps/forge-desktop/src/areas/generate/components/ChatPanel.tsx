@@ -40,7 +40,7 @@ const COLLAPSE_AFTER = 4
 
 // ─── Prose renderer, basic markdown-like ────────────────────────────────────
 
-function ProseMessage({ content }: { content: string }): JSX.Element {
+function ProseMessage({ content }: { content: string }): React.JSX.Element {
   const blocks = content.split(/\n\n+/)
   return (
     <div className="flex flex-col gap-2.5 text-[12.5px] leading-relaxed text-zinc-200">
@@ -83,7 +83,7 @@ const TOOL_LABELS: Record<string, string> = {
   create_workflow:      'Created workflow',
 }
 
-function ActionsCard({ actions, onUndo }: { actions: ActionDone[]; onUndo?: () => void }): JSX.Element {
+function ActionsCard({ actions, onUndo }: { actions: ActionDone[]; onUndo?: () => void }): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
   const meshActions = actions.filter((a) => a.payload?.type === 'mesh_update')
   const canUndo = meshActions.length > 0 && !!onUndo
@@ -144,7 +144,7 @@ function ActionsCard({ actions, onUndo }: { actions: ActionDone[]; onUndo?: () =
 
 // ─── Feedback row ─────────────────────────────────────────────────────────────
 
-function FeedbackRow({ content }: { content: string }): JSX.Element {
+function FeedbackRow({ content }: { content: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
@@ -188,7 +188,7 @@ function FeedbackRow({ content }: { content: string }): JSX.Element {
 
 // ─── Thinking block ───────────────────────────────────────────────────────────
 
-function ThinkingBlock({ content }: { content: string }): JSX.Element {
+function ThinkingBlock({ content }: { content: string }): React.JSX.Element {
   const [open, setOpen] = useState(false)
   return (
     <div className="text-[11px]">
@@ -218,7 +218,7 @@ function ThinkingBlock({ content }: { content: string }): JSX.Element {
 
 // ─── Workflow progress card ────────────────────────────────────────────────────
 
-function WorkflowProgressCard({ name }: { name: string }): JSX.Element {
+function WorkflowProgressCard({ name }: { name: string }): React.JSX.Element {
   const runState = useWorkflowRunStore((s) => s.runState)
   const pct = runState.blockProgress
   return (
@@ -242,7 +242,7 @@ function WorkflowProgressCard({ name }: { name: string }): JSX.Element {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export default function ChatPanel(): JSX.Element {
+export default function ChatPanel(): React.JSX.Element {
   const { provider, localModel, external, defaultThinking } = useAgentStore()
   const { models: llmModels } = useLlmModels()
   const isLocal        = provider === 'local'
@@ -622,7 +622,7 @@ export default function ChatPanel(): JSX.Element {
             placeholder="Ask three.ws Forge…"
             rows={1}
             spellCheck={false}
-            className="w-full bg-transparent text-[12.5px] text-zinc-200 placeholder-zinc-600 focus:outline-none resize-none leading-relaxed overflow-hidden"
+            className="w-full bg-transparent text-[12.5px] text-zinc-200 placeholder-zinc-600 focus:outline-hidden resize-none leading-relaxed overflow-hidden"
           />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

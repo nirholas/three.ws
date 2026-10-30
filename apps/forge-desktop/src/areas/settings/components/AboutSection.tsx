@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Section, Card, Row, LinkButton } from '@shared/ui'
 
-export function AboutSection(): JSX.Element {
+export function AboutSection(): React.JSX.Element {
   const [version, setVersion] = useState<string>('')
 
   useEffect(() => {

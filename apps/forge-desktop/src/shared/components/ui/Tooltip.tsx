@@ -6,7 +6,7 @@ interface TooltipProps {
   children: React.ReactNode
 }
 
-export function Tooltip({ content, children }: TooltipProps): JSX.Element {
+export function Tooltip({ content, children }: TooltipProps): React.JSX.Element {
   const [visible, setVisible] = useState(false)
   const [coords, setCoords] = useState({ x: 0, y: 0 })
   const triggerRef = useRef<HTMLSpanElement>(null)
@@ -35,7 +35,7 @@ export function Tooltip({ content, children }: TooltipProps): JSX.Element {
       {visible &&
         createPortal(
           <div
-            className="fixed z-[9999] pointer-events-none"
+            className="fixed z-9999 pointer-events-none"
             style={{ left: coords.x, top: coords.y, transform: 'translateY(-50%)' }}
           >
             <div className="relative max-w-[220px] px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-700/80 shadow-xl">

@@ -1,7 +1,7 @@
 import { useAppStore } from '@shared/stores/appStore'
 import { Section, Card, Row, Toggle } from '@shared/ui'
 
-export function ApplicationSection(): JSX.Element {
+export function ApplicationSection(): React.JSX.Element {
   const { showRamIndicator, setShowRamIndicator } = useAppStore()
 
   return (

@@ -2,7 +2,7 @@ import TopBar from './TopBar'
 import Sidebar from './Sidebar'
 import Router from '@shared/router/Router'
 
-export default function MainLayout(): JSX.Element {
+export default function MainLayout(): React.JSX.Element {
 
   return (
     <div className="flex flex-col h-full bg-surface-500">

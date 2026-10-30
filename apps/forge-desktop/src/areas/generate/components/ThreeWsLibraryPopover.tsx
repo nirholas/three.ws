@@ -14,7 +14,7 @@ function formatBytes(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function Thumb({ object }: { object: LibraryObject }): JSX.Element {
+function Thumb({ object }: { object: LibraryObject }): React.JSX.Element {
   const [failed, setFailed] = useState(false)
   if (!object.thumb || failed) {
     return (
@@ -36,7 +36,7 @@ export default function ThreeWsLibraryPopover({
   /** Imports the downloaded .glb into the viewer; rejects with a readable error. */
   onImport: (filePath: string, object: LibraryObject) => Promise<void>
   onClose: () => void
-}): JSX.Element {
+}): React.JSX.Element {
   const [query, setQuery] = useState('')
   const [objects, setObjects] = useState<LibraryObject[]>([])
   const [total, setTotal] = useState(0)
@@ -136,7 +136,7 @@ export default function ThreeWsLibraryPopover({
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search chairs, trees, cars…"
           aria-label="Search the library"
-          className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+          className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-hidden focus:border-zinc-500 transition-colors"
         />
       </div>
 
@@ -172,7 +172,7 @@ export default function ThreeWsLibraryPopover({
                     onClick={() => void pick(o)}
                     disabled={!!importingUrl}
                     title={`${o.label}${o.bytes ? `, ${formatBytes(o.bytes)}` : ''}\n${o.license}${o.source ? `, ${o.source}` : ''}`}
-                    className="group relative flex flex-col rounded-lg bg-zinc-800/60 border border-zinc-700/40 overflow-hidden text-left transition-colors hover:border-accent/60 hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-light disabled:cursor-wait"
+                    className="group relative flex flex-col rounded-lg bg-zinc-800/60 border border-zinc-700/40 overflow-hidden text-left transition-colors hover:border-accent/60 hover:bg-zinc-800 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-light disabled:cursor-wait"
                   >
                     <div className={`aspect-square bg-zinc-900/60 transition-opacity ${importingUrl && !busy ? 'opacity-40' : ''}`}>
                       <Thumb object={o} />

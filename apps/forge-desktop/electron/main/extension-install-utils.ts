@@ -194,6 +194,7 @@ export function validateExistingExtensionReplacement(
     throw new Error(
       'Cannot safely replace the existing extension because its manifest.json '
       + `or referenced runtime files are invalid. Uninstall it first. ${String(error)}`,
+      { cause: error },
     )
   }
 

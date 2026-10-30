@@ -1,7 +1,7 @@
 import { useAppStore } from '@shared/stores/appStore'
 import { Section, Card, Row, Toggle, SegmentedControl } from '@shared/ui'
 
-export function AccessibilitySection(): JSX.Element {
+export function AccessibilitySection(): React.JSX.Element {
   const { useAtkinsonFont, setUseAtkinsonFont, uiScale, setUiScale } = useAppStore()
 
   return (

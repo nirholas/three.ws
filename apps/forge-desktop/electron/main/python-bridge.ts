@@ -181,7 +181,7 @@ export class PythonBridge {
     }
 
     for (let attempt = 0; attempt < 3; attempt++) {
-      let output = ''
+      let output: string
       try {
         output = execSync(`netstat -ano | findstr ":${API_PORT} "`, { encoding: 'utf8', shell: true }) as string
       } catch { break }

@@ -79,7 +79,7 @@ export default function LoadSceneNode({ id, data, selected }: { id: string; data
       }
       subheader={
         <div ref={ioRowRef} className="flex items-center justify-end px-3 py-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-pink-500/30 bg-pink-500/10 text-pink-400">scene</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-pink-500/30 bg-pink-500/10 text-pink-400">scene</span>
         </div>
       }
       handles={
@@ -96,7 +96,7 @@ export default function LoadSceneNode({ id, data, selected }: { id: string; data
           value={scenePath}
           placeholder="Scenes/castle or Scenes/castle/scene-manifest.json"
           onChange={(event) => updateNodeData(id, { params: invalidateValidatedScenePath(data.params, event.target.value) })}
-          className="nodrag w-full rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-2 text-[10px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-pink-500/40"
+          className="nodrag w-full rounded-lg border border-zinc-700 bg-zinc-800 px-2.5 py-2 text-[10px] text-zinc-200 placeholder-zinc-600 focus:outline-hidden focus:border-pink-500/40"
         />
         <div className="flex gap-2">
           <button onClick={browseDirectory} className="nodrag flex-1 rounded-lg border border-zinc-700 px-2 py-1.5 text-[10px] text-zinc-300 hover:border-pink-500/40 hover:bg-pink-500/5 transition-colors">

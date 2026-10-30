@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Section, Card, Row } from '@shared/ui'
 
-export function IntegrationsSection(): JSX.Element {
+export function IntegrationsSection(): React.JSX.Element {
   const [token,    setToken]    = useState('')
   const [visible,  setVisible]  = useState(false)
   const [status,   setStatus]   = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -54,7 +54,7 @@ export function IntegrationsSection(): JSX.Element {
                   onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                   placeholder="hf_…"
                   spellCheck={false}
-                  className="w-full px-3 py-1.5 pr-8 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+                  className="w-full px-3 py-1.5 pr-8 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-hidden focus:border-zinc-500 transition-colors"
                 />
                 <button
                   type="button"

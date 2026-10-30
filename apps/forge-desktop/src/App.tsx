@@ -8,7 +8,7 @@ import { Toast } from '@shared/components/ui/Toast'
 
 const UI_SCALE_FACTORS: Record<UiScale, number> = { small: 0.875, medium: 1, large: 1.25, 'very-large': 1.5 }
 
-export default function App(): JSX.Element {
+export default function App(): React.JSX.Element {
   const { checkSetup, setupStatus, initApp, backendStatus, showError, useAtkinsonFont, uiScale } = useAppStore()
   const [updateVersion, setUpdateVersion] = useState<string | null>(null)
   const [currentVersion, setCurrentVersion] = useState<string>('')

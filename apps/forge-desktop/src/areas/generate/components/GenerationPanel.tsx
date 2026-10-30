@@ -7,7 +7,7 @@ function formatElapsed(seconds: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-export default function GenerationPanel(): JSX.Element {
+export default function GenerationPanel(): React.JSX.Element {
   const { currentJob, reset } = useGeneration()
   const [elapsed, setElapsed] = useState(0)
   const startRef = useRef<number | null>(null)
@@ -78,7 +78,7 @@ export default function GenerationPanel(): JSX.Element {
       {/* Error */}
       {jobStatus === 'error' && (
         <div className="p-3 bg-red-900/30 border border-red-800 rounded-lg">
-          <p className="text-xs text-red-400 whitespace-pre-wrap break-words">{error}</p>
+          <p className="text-xs text-red-400 whitespace-pre-wrap wrap-break-word">{error}</p>
         </div>
       )}
 
@@ -89,7 +89,7 @@ export default function GenerationPanel(): JSX.Element {
             <select
               value={exportFormat}
               onChange={(e) => setExportFormat(e.target.value)}
-              className="px-2 py-2 rounded-lg bg-zinc-800 border border-zinc-700/50 text-zinc-300 text-xs font-medium focus:outline-none focus:border-zinc-500 transition-colors cursor-pointer"
+              className="px-2 py-2 rounded-lg bg-zinc-800 border border-zinc-700/50 text-zinc-300 text-xs font-medium focus:outline-hidden focus:border-zinc-500 transition-colors cursor-pointer"
             >
               {['glb', 'stl', 'obj', 'ply'].map((f) => (
                 <option key={f} value={f}>{f.toUpperCase()}</option>

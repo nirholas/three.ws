@@ -45,7 +45,7 @@ function AxisBubble({
   axis: (typeof GIZMO_AXES)[number]
   texture: THREE.CanvasTexture
   onAxisClick: (axis: Axis) => void
-}): JSX.Element {
+}): React.JSX.Element {
   const [hovered, setHovered] = useState(false)
   return (
     <sprite
@@ -66,7 +66,7 @@ function GizmoContent({
 }: {
   getQuaternion: () => THREE.Quaternion | undefined
   onAxisClick: (axis: Axis) => void
-}): JSX.Element {
+}): React.JSX.Element {
   const groupRef = useRef<THREE.Group>(null)
   const textures = useMemo(() => GIZMO_AXES.map((a) => makeAxisLabelTexture(a.letter, a.color)), [])
   useEffect(() => () => { textures.forEach((t) => t.dispose()) }, [textures])
@@ -101,7 +101,7 @@ function SplatGizmo({
 }: {
   getQuaternion: () => THREE.Quaternion | undefined
   onAxisClick: (axis: Axis) => void
-}): JSX.Element {
+}): React.JSX.Element {
   // Orthographic camera mirrors drei's GizmoHelper so the splat gizmo matches
   // the mesh (GLB) gizmo's size and look exactly.
   return (
@@ -168,7 +168,7 @@ function frameSplatToView(viewer: any, grid: THREE.GridHelper): void {
 // ---------------------------------------------------------------------------
 
 const SplatViewer = forwardRef<SplatViewerHandle, { url: string; autoRotate: boolean }>(
-  function SplatViewer({ url, autoRotate }, ref): JSX.Element {
+  function SplatViewer({ url, autoRotate }, ref): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const viewerRef = useRef<any>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -294,7 +294,7 @@ const SplatViewer = forwardRef<SplatViewerHandle, { url: string; autoRotate: boo
           ) : (
             <>
               <p className="text-sm text-red-400">Splat failed to load</p>
-              {message && <p className="text-xs text-zinc-500 max-w-md text-center px-4 break-words">{message}</p>}
+              {message && <p className="text-xs text-zinc-500 max-w-md text-center px-4 wrap-break-word">{message}</p>}
             </>
           )}
         </div>

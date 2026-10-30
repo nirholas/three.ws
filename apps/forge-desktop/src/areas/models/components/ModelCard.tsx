@@ -8,7 +8,7 @@ interface Props {
   disabled?:  boolean
 }
 
-export function ModelCard({ model, onDelete, onGenerate, disabled }: Props): JSX.Element {
+export function ModelCard({ model, onDelete, onGenerate, disabled }: Props): React.JSX.Element {
   return (
     <div className="relative flex flex-col gap-2 px-3.5 py-4 rounded-2xl border transition-all min-h-[110px] bg-zinc-900/60 border-zinc-800 hover:border-zinc-700">
       {/* Open in explorer */}

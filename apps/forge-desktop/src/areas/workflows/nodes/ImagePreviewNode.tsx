@@ -83,9 +83,9 @@ export default function ImagePreviewNode({ id, selected }: { id: string; selecte
       }
       subheader={
         <div ref={ioRowRef} className="flex items-center justify-between px-3 py-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
           <span className="text-[9px] text-zinc-600">&rarr;</span>
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
         </div>
       }
       handles={
@@ -105,7 +105,7 @@ export default function ImagePreviewNode({ id, selected }: { id: string; selecte
     >
       <div className="px-2 pb-2 pt-1 flex-1 min-h-0">
         {dataUrl ? (
-          <img src={dataUrl} alt="preview" className="nodrag w-full h-full object-contain rounded" />
+          <img src={dataUrl} alt="preview" className="nodrag w-full h-full object-contain rounded-sm" />
         ) : (
           <p className="py-3 text-center text-[10px] text-zinc-600 italic">
             Connect an image and run to preview.

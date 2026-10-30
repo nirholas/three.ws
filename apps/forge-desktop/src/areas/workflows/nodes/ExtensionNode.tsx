@@ -34,7 +34,7 @@ const TAG_CLS: Record<string, string> = {
 // nodrag, without it, React Flow starts dragging the node on mousedown inside
 // these fields, so click-drag text selection (or opening a <select>) moves the
 // node instead.
-const inputCls = 'nodrag w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-accent/60'
+const inputCls = 'nodrag w-full bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1 text-[11px] text-zinc-200 focus:outline-hidden focus:border-accent/60'
 
 /** Dropdown of the files inside the folder held by another param (dir_from). */
 function FileSelectControl({ param, value, dirValue, onChange }: {
@@ -98,7 +98,7 @@ function ParamControl({ param, value, onChange, resolvedParams }: {
           }}
           title={PICKER_LABELS[intent]}
           aria-label={PICKER_LABELS[intent]}
-          className="nodrag shrink-0 flex items-center justify-center w-6 h-6 rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="nodrag shrink-0 flex items-center justify-center w-6 h-6 rounded-sm bg-zinc-700 hover:bg-zinc-600 text-zinc-400 hover:text-zinc-200 transition-colors"
         >
           <PickerIcon intent={intent} />
         </button>
@@ -169,7 +169,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
     <div className="flex flex-col divide-y divide-zinc-800/40">
       {inputs.map((inputType, i) => (
         <div key={i} ref={(el) => { if (el) handleRefs.current[i] = el }} className="flex items-center justify-between px-3 py-2">
-          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${TAG_CLS[inputType] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border ${TAG_CLS[inputType] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
             {ext?.inputLabels?.[i] ?? inputType}
           </span>
           {i === 0 && !isTerminal && (
@@ -177,7 +177,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-600 shrink-0">
                 <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
               </svg>
-              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${TAG_CLS[ext?.output ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border ${TAG_CLS[ext?.output ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
                 {ext?.output ?? '-'}
               </span>
             </>
@@ -188,7 +188,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
   ) : (
     // Single-input layout (existing behavior)
     <div ref={(el) => { if (el) handleRefs.current[0] = el }} className="flex items-center justify-between px-3 py-2">
-      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${TAG_CLS[ext?.input ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border ${TAG_CLS[ext?.input ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
         {ext?.input ?? '-'}
       </span>
       {!isTerminal && (
@@ -196,7 +196,7 @@ export default function ExtensionNode({ id, data, selected }: { id: string; data
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-600 shrink-0">
             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
           </svg>
-          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${TAG_CLS[ext?.output ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border ${TAG_CLS[ext?.output ?? ''] ?? 'border-zinc-700 bg-zinc-800 text-zinc-400'}`}>
             {ext?.output ?? '-'}
           </span>
         </>

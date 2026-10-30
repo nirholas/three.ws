@@ -18,14 +18,14 @@ export function ConfirmModal({
   variant = 'default',
   onConfirm,
   onCancel,
-}: ConfirmModalProps): JSX.Element {
+}: ConfirmModalProps): React.JSX.Element {
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="fixed inset-0 z-9999 flex items-center justify-center"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel() }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-sm animate-fade-in" />
+      <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-xs animate-fade-in" />
 
       {/* Modal */}
       <div className="relative w-80 rounded-2xl bg-zinc-900 border border-accent/20 shadow-2xl shadow-accent/5 overflow-hidden animate-slide-up-center">

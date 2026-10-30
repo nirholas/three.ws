@@ -415,6 +415,7 @@ export async function runExtensionRepairTransaction(
         `Runtime registration failed, and three.ws Forge could not preserve quarantine `
         + `during ${quarantined.stage}: ${String(quarantined.error)}. `
         + `Original failure: ${String(registrationError)}`,
+        { cause: registrationError },
       )
     }
     try {
@@ -424,6 +425,7 @@ export async function runExtensionRepairTransaction(
         `Runtime registration failed, and three.ws Forge preserved filesystem quarantine but `
         + `could not evict partially registered runtime state: `
         + `${String(runtimeQuarantineError)}. Original failure: ${String(registrationError)}`,
+        { cause: runtimeQuarantineError },
       )
     }
     throw registrationError
@@ -483,6 +485,7 @@ export async function runExtensionRegistrationValidationTransaction(
         `Runtime registration failed, and three.ws Forge could not preserve quarantine `
         + `during ${quarantined.stage}: ${String(quarantined.error)}. `
         + `Original failure: ${String(registrationError)}`,
+        { cause: registrationError },
       )
     }
     try {
@@ -492,6 +495,7 @@ export async function runExtensionRegistrationValidationTransaction(
         `Runtime registration failed, and three.ws Forge preserved filesystem quarantine but `
         + `could not evict partially registered runtime state: `
         + `${String(runtimeQuarantineError)}. Original failure: ${String(registrationError)}`,
+        { cause: runtimeQuarantineError },
       )
     }
     throw registrationError

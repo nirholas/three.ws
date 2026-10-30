@@ -60,7 +60,7 @@ function topoSortNodes(nodes: Workflow['nodes'], edges: Workflow['edges']): WFNo
 
 // ─── Param field ──────────────────────────────────────────────────────────────
 
-const inputCls = 'w-full bg-zinc-800 border border-zinc-700/80 rounded-md px-2 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-accent/60'
+const inputCls = 'w-full bg-zinc-800 border border-zinc-700/80 rounded-md px-2 py-1 text-[11px] text-zinc-200 focus:outline-hidden focus:border-accent/60'
 
 function ParamField({ param, value, onChange }: {
   param:    ParamSchema
@@ -86,7 +86,7 @@ function ParamField({ param, value, onChange }: {
           const p = await openParamPicker(param, window.electron.fs)
           if (p) onChange(p)
         }} title={PICKER_LABELS[intent]} aria-label={PICKER_LABELS[intent]}
-          className="shrink-0 flex items-center justify-center w-6 h-6 rounded bg-zinc-700 hover:bg-zinc-600 text-zinc-400 hover:text-zinc-200 transition-colors">
+          className="shrink-0 flex items-center justify-center w-6 h-6 rounded-sm bg-zinc-700 hover:bg-zinc-600 text-zinc-400 hover:text-zinc-200 transition-colors">
           <PickerIcon intent={intent} />
         </button>
       </div>
@@ -254,7 +254,7 @@ function MeshParamRow({ nodeId, nodes, onPatch }: { nodeId: string; nodes: FlowN
       {/* Toggle: use current model */}
       <button onClick={toggleSource} className="flex items-center gap-2 w-full text-left">
         <div className={`w-7 h-4 rounded-full relative shrink-0 transition-colors ${source === 'current' ? 'bg-violet-500' : 'bg-zinc-700'}`}>
-          <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${source === 'current' ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+          <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${source === 'current' ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
         </div>
         <span className="text-[10px] text-zinc-400">Use current model</span>
       </button>
@@ -304,7 +304,7 @@ function TextParamRow({ nodeId, nodes, onPatch }: { nodeId: string; nodes: FlowN
         value={text}
         onChange={(e) => onPatch(nodeId, { params: { ...(data?.params ?? {}), text: e.target.value } })}
         placeholder="Enter text…" rows={3}
-        className="w-full bg-zinc-800 border border-zinc-700/80 rounded-md px-2.5 py-2 text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-amber-500/40 resize-none leading-relaxed"
+        className="w-full bg-zinc-800 border border-zinc-700/80 rounded-md px-2.5 py-2 text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-hidden focus:border-amber-500/40 resize-none leading-relaxed"
       />
     </div>
   )
@@ -383,12 +383,12 @@ function ExtensionParamRow({ nodeId, ext, nodes, onPatch }: { nodeId: string; ex
         <button onClick={() => onPatch(nodeId, { enabled: !enabled })}
           className="relative shrink-0" style={{ width: 26, height: 15 }}>
           <span className={`absolute inset-0 rounded-full transition-colors ${enabled ? 'bg-accent/70' : 'bg-zinc-700'}`} />
-          <span className={`absolute top-[1.5px] w-3 h-3 rounded-full bg-white shadow transition-all ${enabled ? 'left-[11px]' : 'left-[1.5px]'}`} />
+          <span className={`absolute top-[1.5px] w-3 h-3 rounded-full bg-white shadow-sm transition-all ${enabled ? 'left-[11px]' : 'left-[1.5px]'}`} />
         </button>
 
         {ext.params.length > 0 && (
           <button onClick={() => setExpanded((v) => !v)}
-            className="p-0.5 rounded text-zinc-600 hover:text-zinc-400 transition-colors">
+            className="p-0.5 rounded-sm text-zinc-600 hover:text-zinc-400 transition-colors">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
               className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>
               <polyline points="6 9 12 15 18 9"/>
@@ -612,7 +612,7 @@ function EmbeddedCanvas({ workflow, allExtensions }: {
 
 // ─── Mode toggle ──────────────────────────────────────────────────────────────
 
-function ModeToggle({ mode, onChange }: { mode: PanelMode; onChange: (m: PanelMode) => void }): JSX.Element {
+function ModeToggle({ mode, onChange }: { mode: PanelMode; onChange: (m: PanelMode) => void }): React.JSX.Element {
   return (
     <div className="shrink-0 px-3 pt-3 pb-2.5">
       <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
@@ -622,7 +622,7 @@ function ModeToggle({ mode, onChange }: { mode: PanelMode; onChange: (m: PanelMo
             onClick={() => onChange(m)}
             className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors capitalize ${
               mode === m
-                ? 'bg-zinc-700 text-zinc-100 shadow-sm'
+                ? 'bg-zinc-700 text-zinc-100 shadow-xs'
                 : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >

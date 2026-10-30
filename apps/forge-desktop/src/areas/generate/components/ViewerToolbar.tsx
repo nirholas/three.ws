@@ -74,9 +74,9 @@ export function ViewerToolbar({
   onAutoRotate,
   onScreenshot,
   showViewModes = true,
-}: ViewerToolbarProps): JSX.Element {
+}: ViewerToolbarProps): React.JSX.Element {
   return (
-    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1 bg-zinc-900/70 border border-zinc-700/50 backdrop-blur-sm rounded-xl p-1.5">
+    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1 bg-zinc-900/70 border border-zinc-700/50 backdrop-blur-xs rounded-xl p-1.5">
       {showViewModes && MODES.map(({ mode, icon, label }) => (
         <ToolbarButton
           key={mode}
@@ -122,7 +122,7 @@ interface ToolbarButtonProps {
   children: React.ReactNode
 }
 
-function ToolbarButton({ active, label, onClick, children }: ToolbarButtonProps): JSX.Element {
+function ToolbarButton({ active, label, onClick, children }: ToolbarButtonProps): React.JSX.Element {
   return (
     <button
       title={label}

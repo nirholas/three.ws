@@ -6,7 +6,7 @@ interface FieldLabelProps {
   children?: React.ReactNode
 }
 
-export function FieldLabel({ label, tooltip, children }: FieldLabelProps): JSX.Element {
+export function FieldLabel({ label, tooltip, children }: FieldLabelProps): React.JSX.Element {
   return (
     <div className="flex items-center w-full">
       <span className="text-sm text-zinc-300">{label}</span>

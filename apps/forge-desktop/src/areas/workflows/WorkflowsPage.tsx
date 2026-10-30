@@ -73,7 +73,7 @@ const IO_STYLES: Record<'image' | 'text' | 'mesh' | 'audio' | 'scene', string> =
 
 function IoBadge({ type }: { type: 'image' | 'text' | 'mesh' | 'audio' | 'scene' }) {
   return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border ${IO_STYLES[type]}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border ${IO_STYLES[type]}`}>
       {type}
     </span>
   )
@@ -214,7 +214,7 @@ function ExtensionsPanel({ allExtensions, open }: { allExtensions: WorkflowExten
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search…"
-                className="flex-1 bg-transparent text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none min-w-0"
+                className="flex-1 bg-transparent text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-hidden min-w-0"
               />
               {search && (
                 <button onClick={() => setSearch('')} className="text-zinc-600 hover:text-zinc-400 transition-colors">
@@ -472,9 +472,9 @@ function NodePalette({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKey}
             placeholder="Search nodes and extensions…"
-            className="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-600 focus:outline-hidden"
           />
-          <kbd className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-700">Esc</kbd>
+          <kbd className="text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded-sm border border-zinc-700">Esc</kbd>
         </div>
 
         {/* Groups */}
@@ -566,7 +566,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
   }, [onClose])
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm"
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-zinc-950/70 backdrop-blur-xs"
       onMouseDown={onClose}
     >
       <div
@@ -617,7 +617,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
             <div className="flex flex-col gap-2">
 
               <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/40">
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400 shrink-0 mt-0.5">image</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400 shrink-0 mt-0.5">image</span>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Image</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Source node. Pick a local image file, it becomes the input of the first processing node.</p>
@@ -625,7 +625,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/40">
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-amber-500/30 bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">text</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-amber-500/30 bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">text</span>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Text</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Source node. Pass a text prompt to extensions that accept text input.</p>
@@ -633,7 +633,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/40">
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 shrink-0 mt-0.5">mesh</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 shrink-0 mt-0.5">mesh</span>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Load 3D Mesh</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Source node. Load a .glb, .obj, .stl, .ply or .splat file from disk, or use the model currently loaded in the 3D viewer.</p>
@@ -642,9 +642,9 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 
               <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/40">
                 <div className="flex gap-1 shrink-0 mt-0.5">
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
                   <span className="text-zinc-600 text-[9px] flex items-center">→</span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
                 </div>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Model extension <span className="text-[10px] font-normal text-zinc-500">(AI generator)</span></p>
@@ -654,9 +654,9 @@ function HelpModal({ onClose }: { onClose: () => void }) {
 
               <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/40">
                 <div className="flex gap-1 shrink-0 mt-0.5">
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
                   <span className="text-zinc-600 text-[9px] flex items-center">→</span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
                 </div>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Process extension <span className="text-[10px] font-normal text-zinc-500">(mesh processor)</span></p>
@@ -665,7 +665,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="flex items-start gap-3 p-3 rounded-xl bg-zinc-800/50 border border-zinc-700/40">
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 shrink-0 mt-0.5">scene</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400 shrink-0 mt-0.5">scene</span>
                 <div>
                   <p className="text-[11px] font-medium text-zinc-200">Add to Scene</p>
                   <p className="text-[11px] text-zinc-500 mt-0.5 leading-relaxed">Terminal node. Receives the final mesh and loads it directly into the 3D viewer when the workflow completes.</p>
@@ -687,7 +687,7 @@ function HelpModal({ onClose }: { onClose: () => void }) {
                 ['Run', 'Saves & executes the workflow, result goes to the 3D scene'],
               ].map(([key, desc]) => (
                 <li key={key} className="flex items-start gap-2 text-[11px] text-zinc-400">
-                  <span className="px-1.5 py-px rounded bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium text-[10px] shrink-0 mt-px">{key}</span>
+                  <span className="px-1.5 py-px rounded-sm bg-zinc-800 border border-zinc-700 text-zinc-300 font-medium text-[10px] shrink-0 mt-px">{key}</span>
                   <span>{desc}</span>
                 </li>
               ))}
@@ -1335,7 +1335,7 @@ function WorkflowCanvasInner({
           className="absolute top-3 right-3 z-10 p-2 rounded-lg
                      bg-zinc-800/90 border border-zinc-700 shadow-md
                      text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 hover:border-zinc-600
-                     transition-colors backdrop-blur-sm"
+                     transition-colors backdrop-blur-xs"
         >
           <PanelToggleIcon open={panelOpen} />
         </button>
@@ -1386,7 +1386,7 @@ const MINI_NODE_TINTS: Record<string, { fill: string; stroke: string }> = {
 }
 const MINI_NODE_DEFAULT_TINT = { fill: 'rgba(113,113,122,0.25)', stroke: '#71717a' }
 
-function WorkflowMiniPreview({ wf }: { wf: Workflow }): JSX.Element {
+function WorkflowMiniPreview({ wf }: { wf: Workflow }): React.JSX.Element {
   const VIEW_W = 200
   const VIEW_H = 88
   const PAD = 12
@@ -1484,7 +1484,7 @@ function WorkflowMiniPreview({ wf }: { wf: Workflow }): JSX.Element {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function WorkflowsPage(): JSX.Element {
+export default function WorkflowsPage(): React.JSX.Element {
   const { workflows, loading, activeId, openIds, folders, folderColors, bookmarkedFolders, load, save, remove, importFile, exportFile, setActive, openWorkflow, closeWorkflow, moveOpenTab, addFolder, removeFolder, setFolderColor, toggleFolderBookmark } = useWorkflowsStore()
   const { modelExtensions, processExtensions, loadExtensions } = useExtensionsStore()
 
@@ -1601,9 +1601,9 @@ export default function WorkflowsPage(): JSX.Element {
     setRenameTarget(null)
   }
 
-  function renderWorkflowCard(wf: Workflow): JSX.Element {
+  function renderWorkflowCard(wf: Workflow): React.JSX.Element {
     const isOpen = openIds.includes(wf.id)
-    const cardActionCls = 'flex items-center justify-center w-5 h-5 rounded-md bg-zinc-900/70 backdrop-blur-sm text-zinc-500 opacity-0 group-hover:opacity-100 transition-all hover:scale-110'
+    const cardActionCls = 'flex items-center justify-center w-5 h-5 rounded-md bg-zinc-900/70 backdrop-blur-xs text-zinc-500 opacity-0 group-hover:opacity-100 transition-all hover:scale-110'
     return (
       <div
         key={wf.id}
@@ -1628,7 +1628,7 @@ export default function WorkflowsPage(): JSX.Element {
             <button
               onClick={(e) => { e.stopPropagation(); handleToggleBookmark(wf.id) }}
               title={wf.bookmarked ? 'Remove bookmark' : 'Bookmark'}
-              className={`flex items-center justify-center w-5 h-5 rounded-md bg-zinc-900/70 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all hover:scale-110
+              className={`flex items-center justify-center w-5 h-5 rounded-md bg-zinc-900/70 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-all hover:scale-110
                 ${wf.bookmarked ? 'text-amber-400 drop-shadow-[0_0_5px_rgba(251,191,36,0.55)]' : 'text-zinc-500 hover:text-amber-300'}`}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill={wf.bookmarked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round">
@@ -1673,7 +1673,7 @@ export default function WorkflowsPage(): JSX.Element {
     )
   }
 
-  function renderFolder(folder: string): JSX.Element {
+  function renderFolder(folder: string): React.JSX.Element {
     const inFolder  = workflows.filter((w) => w.folder === folder).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     const collapsed = collapsedFolders.has(folder)
     return (
@@ -1719,14 +1719,14 @@ export default function WorkflowsPage(): JSX.Element {
           <button
             onClick={(e) => { e.stopPropagation(); setColorPickerFolder((cur) => (cur === folder ? null : folder)) }}
             title="Folder color"
-            className="shrink-0 flex items-center justify-center w-5 h-5 rounded opacity-0 group-hover:opacity-100 hover:bg-zinc-800 transition-all"
+            className="shrink-0 flex items-center justify-center w-5 h-5 rounded-sm opacity-0 group-hover:opacity-100 hover:bg-zinc-800 transition-all"
           >
             <span className="w-2.5 h-2.5 rounded-full border border-zinc-600" style={{ background: folderColors[folder] ?? 'transparent' }} />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder) }}
             title="Delete folder (workflows move to root)"
-            className="shrink-0 flex items-center justify-center w-5 h-5 rounded text-zinc-700 opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-950/30 transition-all"
+            className="shrink-0 flex items-center justify-center w-5 h-5 rounded-sm text-zinc-700 opacity-0 group-hover:opacity-100 hover:text-red-400 hover:bg-red-950/30 transition-all"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="3 6 5 6 21 6"/>
@@ -1841,7 +1841,7 @@ export default function WorkflowsPage(): JSX.Element {
                   : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/20 border-transparent'
                 }`}
             >
-              {dragOverTab === wf.id && <span className="absolute left-0 top-1 bottom-1 w-0.5 bg-accent rounded" />}
+              {dragOverTab === wf.id && <span className="absolute left-0 top-1 bottom-1 w-0.5 bg-accent rounded-sm" />}
               {/* Folder color dot; doubles as the running indicator (pulses) */}
               {(workflowColor(wf) || runningWorkflowId === wf.id) && (
                 <span
@@ -1854,7 +1854,7 @@ export default function WorkflowsPage(): JSX.Element {
               <button
                 onClick={(e) => { e.stopPropagation(); handleCloseTab(wf.id) }}
                 title="Close tab"
-                className="shrink-0 flex items-center justify-center w-5 h-5 rounded text-zinc-600 hover:text-zinc-300 hover:bg-zinc-700/60 transition-colors"
+                className="shrink-0 flex items-center justify-center w-5 h-5 rounded-sm text-zinc-600 hover:text-zinc-300 hover:bg-zinc-700/60 transition-colors"
               >
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -1934,7 +1934,7 @@ export default function WorkflowsPage(): JSX.Element {
       {/* Rename popup (above the Open popup, which can trigger it) */}
       {renameTarget && createPortal(
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm"
+          className="fixed inset-0 z-10000 flex items-center justify-center bg-zinc-950/70 backdrop-blur-xs"
           onMouseDown={() => setRenameTarget(null)}
         >
           <div
@@ -1949,7 +1949,7 @@ export default function WorkflowsPage(): JSX.Element {
               onFocus={(e) => e.currentTarget.select()}
               onKeyDown={(e) => { if (e.key === 'Enter') handleRename() }}
               placeholder="Workflow name…"
-              className="w-full bg-zinc-800 border border-zinc-700/80 rounded-md px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-accent/60"
+              className="w-full bg-zinc-800 border border-zinc-700/80 rounded-md px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-hidden focus:border-accent/60"
             />
             <div className="flex justify-end gap-2 mt-4">
               <button
@@ -1974,7 +1974,7 @@ export default function WorkflowsPage(): JSX.Element {
       {/* Delete confirmation popup (topmost, reachable from the Open popup) */}
       {deleteTarget && createPortal(
         <div
-          className="fixed inset-0 z-[10001] flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm"
+          className="fixed inset-0 z-10001 flex items-center justify-center bg-zinc-950/70 backdrop-blur-xs"
           onMouseDown={() => setDeleteTarget(null)}
         >
           <div
@@ -2007,7 +2007,7 @@ export default function WorkflowsPage(): JSX.Element {
       {/* Open workflow popup */}
       {openListVisible && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-zinc-950/70 backdrop-blur-sm"
+          className="fixed inset-0 z-9999 flex items-center justify-center bg-zinc-950/70 backdrop-blur-xs"
           onMouseDown={() => setOpenListVisible(false)}
         >
           <div
@@ -2020,7 +2020,7 @@ export default function WorkflowsPage(): JSX.Element {
                 <button
                   onClick={() => setNewFolderName('')}
                   title="New folder"
-                  className="flex items-center justify-center w-6 h-6 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                  className="flex items-center justify-center w-6 h-6 rounded-sm text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -2029,7 +2029,7 @@ export default function WorkflowsPage(): JSX.Element {
                 </button>
                 <button
                   onClick={() => setOpenListVisible(false)}
-                  className="flex items-center justify-center w-6 h-6 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                  className="flex items-center justify-center w-6 h-6 rounded-sm text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
                 >
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -2049,7 +2049,7 @@ export default function WorkflowsPage(): JSX.Element {
                   value={openSearch}
                   onChange={(e) => setOpenSearch(e.target.value)}
                   placeholder="Search workflows…"
-                  className="flex-1 min-w-0 bg-transparent text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none"
+                  className="flex-1 min-w-0 bg-transparent text-xs text-zinc-200 placeholder-zinc-600 focus:outline-hidden"
                 />
                 {openSearch && (
                   <button onClick={() => setOpenSearch('')} className="shrink-0 text-zinc-600 hover:text-zinc-300 transition-colors">
@@ -2074,7 +2074,7 @@ export default function WorkflowsPage(): JSX.Element {
                   onKeyDown={(e) => { if (e.key === 'Enter') handleCreateFolder() }}
                   onBlur={() => setNewFolderName(null)}
                   placeholder="Folder name… (Enter to create)"
-                  className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700/80 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-accent/60"
+                  className="flex-1 min-w-0 bg-zinc-800 border border-zinc-700/80 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-hidden focus:border-accent/60"
                 />
               </div>
             )}

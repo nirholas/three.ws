@@ -13,7 +13,7 @@ const VISIBILITY_HINT: Record<AvatarVisibility, string> = {
   public:   'Listed on your profile and in search.',
 }
 
-function SignInPrompt(): JSX.Element {
+function SignInPrompt(): React.JSX.Element {
   const link = useThreeWsStore((s) => s.link)
   const startLink = useThreeWsStore((s) => s.startLink)
   const cancelLink = useThreeWsStore((s) => s.cancelLink)
@@ -46,7 +46,7 @@ function SignInPrompt(): JSX.Element {
         type="button"
         onClick={() => void startLink()}
         disabled={link.status === 'starting'}
-        className="self-start px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-light"
+        className="self-start px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors disabled:opacity-60 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-light"
       >
         {link.status === 'starting' ? 'Opening three.ws…' : 'Sign in to three.ws'}
       </button>
@@ -54,7 +54,7 @@ function SignInPrompt(): JSX.Element {
   )
 }
 
-function Published({ result, onAnother }: { result: PublishResult; onAnother: () => void }): JSX.Element {
+function Published({ result, onAnother }: { result: PublishResult; onAnother: () => void }): React.JSX.Element {
   const [copied, setCopied] = useState(false)
 
   async function copy(): Promise<void> {
@@ -84,7 +84,7 @@ function Published({ result, onAnother }: { result: PublishResult; onAnother: ()
         <button
           type="button"
           onClick={() => window.electron.threews.open(result.url)}
-          className="px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-light"
+          className="px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-light"
         >
           Open on three.ws
         </button>
@@ -96,7 +96,7 @@ function Published({ result, onAnother }: { result: PublishResult; onAnother: ()
   )
 }
 
-export default function PublishPopover({ outputUrl, onClose }: { outputUrl: string; onClose: () => void }): JSX.Element {
+export default function PublishPopover({ outputUrl, onClose }: { outputUrl: string; onClose: () => void }): React.JSX.Element {
   const account = useThreeWsStore((s) => s.account)
   const accountError = useThreeWsStore((s) => s.error)
   const refresh = useThreeWsStore((s) => s.refresh)
@@ -160,7 +160,7 @@ export default function PublishPopover({ outputUrl, onClose }: { outputUrl: stri
           </div>
         ) : (
           <div className="flex flex-col gap-2" aria-busy="true">
-            <div className="h-3 w-3/4 rounded bg-zinc-800 animate-pulse" />
+            <div className="h-3 w-3/4 rounded-sm bg-zinc-800 animate-pulse" />
             <div className="h-7 w-32 rounded-lg bg-zinc-800 animate-pulse" />
           </div>
         )
@@ -181,7 +181,7 @@ export default function PublishPopover({ outputUrl, onClose }: { outputUrl: stri
               onChange={(e) => setName(e.target.value)}
               maxLength={100}
               required
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 focus:outline-none focus:border-zinc-500 transition-colors"
+              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 focus:outline-hidden focus:border-zinc-500 transition-colors"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -192,7 +192,7 @@ export default function PublishPopover({ outputUrl, onClose }: { outputUrl: stri
               maxLength={500}
               rows={2}
               placeholder="Optional"
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 placeholder:text-zinc-600 resize-none focus:outline-none focus:border-zinc-500 transition-colors"
+              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 placeholder:text-zinc-600 resize-none focus:outline-hidden focus:border-zinc-500 transition-colors"
             />
           </label>
           <label className="flex flex-col gap-1">
@@ -201,7 +201,7 @@ export default function PublishPopover({ outputUrl, onClose }: { outputUrl: stri
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="chair, furniture"
-              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-zinc-500 transition-colors"
+              className="px-2.5 py-1.5 rounded-lg bg-zinc-800 border border-zinc-700/60 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-hidden focus:border-zinc-500 transition-colors"
             />
           </label>
           <fieldset className="flex flex-col gap-1">
@@ -213,7 +213,7 @@ export default function PublishPopover({ outputUrl, onClose }: { outputUrl: stri
                   type="button"
                   aria-pressed={visibility === v}
                   onClick={() => setVisibility(v)}
-                  className={`py-1 rounded-md text-[11px] capitalize transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-accent-light ${
+                  className={`py-1 rounded-md text-[11px] capitalize transition-colors focus:outline-hidden focus-visible:ring-1 focus-visible:ring-accent-light ${
                     visibility === v ? 'bg-zinc-600 text-zinc-100' : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
@@ -230,7 +230,7 @@ export default function PublishPopover({ outputUrl, onClose }: { outputUrl: stri
             <button
               type="submit"
               disabled={publishing || !name.trim()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-light"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold transition-colors disabled:opacity-60 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent-light"
             >
               {publishing && (
                 <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

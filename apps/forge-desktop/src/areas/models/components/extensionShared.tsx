@@ -69,7 +69,7 @@ export function formatBytes(bytes?: number): string {
 
 // ─── Small visual bits ────────────────────────────────────────────────────────
 
-export function TypePill({ type }: { type: 'model' | 'process' }): JSX.Element {
+export function TypePill({ type }: { type: 'model' | 'process' }): React.JSX.Element {
   return type === 'process' ? (
     <span className="shrink-0 px-1.5 py-0.5 rounded-[5px] text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 ring-1 ring-inset ring-emerald-500/25">
       Process
@@ -81,7 +81,7 @@ export function TypePill({ type }: { type: 'model' | 'process' }): JSX.Element {
   )
 }
 
-export function IOBadge({ node }: { node: ExtensionNode }): JSX.Element {
+export function IOBadge({ node }: { node: ExtensionNode }): React.JSX.Element {
   const inputs = node.inputs?.length ? node.inputs : [node.input]
   return (
     <span className="flex items-center gap-1 font-mono text-[10px] text-zinc-600 shrink-0">
@@ -108,7 +108,7 @@ const TEXT_TONES = {
   violet: 'text-accent-light',
 } as const
 
-export function StatusBadge({ tone, children }: { tone: keyof typeof LED_TONES; children: React.ReactNode }): JSX.Element {
+export function StatusBadge({ tone, children }: { tone: keyof typeof LED_TONES; children: React.ReactNode }): React.JSX.Element {
   return (
     <span className={`inline-flex items-center gap-2 text-[11.5px] font-medium ${TEXT_TONES[tone]}`}>
       <span className={`w-[7px] h-[7px] rounded-full ${LED_TONES[tone]}`} />
@@ -158,7 +158,7 @@ interface NodeControlProps {
   onCancel: () => void
 }
 
-export function NodeInstallControl({ state, disabled, onInstall, onPause, onResume, onCancel }: NodeControlProps): JSX.Element | null {
+export function NodeInstallControl({ state, disabled, onInstall, onPause, onResume, onCancel }: NodeControlProps): React.JSX.Element | null {
   if (state.kind === 'ready') return null
 
   if (state.kind === 'installed') {
@@ -178,7 +178,7 @@ export function NodeInstallControl({ state, disabled, onInstall, onPause, onResu
         <span className="flex flex-col items-end gap-1">
           <span className="block w-[84px] h-1 rounded-full bg-zinc-800 overflow-hidden">
             <span
-              className={`block h-full rounded-full transition-all duration-300 ${paused ? 'bg-zinc-500' : 'bg-gradient-to-r from-accent to-accent-light'}`}
+              className={`block h-full rounded-full transition-all duration-300 ${paused ? 'bg-zinc-500' : 'bg-linear-to-r from-accent to-accent-light'}`}
               style={{ width: `${dl.percent}%` }}
             />
           </span>

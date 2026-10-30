@@ -1314,6 +1314,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
     } catch (err) {
       throw new Error(
         `Could not validate runtime registration for extension "${extensionId}": ${String(err)}`,
+        { cause: err },
       )
     }
     validateExtensionReloadPayload(payload, extensionId, expectedIds)
@@ -1338,6 +1339,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
       throw new Error(
         `Could not quarantine runtime registration for extension "${extensionId}": `
         + `${String(err)}`,
+        { cause: err },
       )
     }
     validateExtensionQuarantinePayload(payload, extensionId, forbiddenIds)
@@ -1384,6 +1386,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
         `Extension update failed and the previous version was restored on disk, `
         + `but three.ws Forge could not reload it: ${String(reloadError)}. `
         + `Original failure: ${String(originalFailure)}`,
+        { cause: reloadError },
       )
     }
 
@@ -1598,6 +1601,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
           throw new Error(
             `Cannot safely replace extension "${extensionId}" because its existing `
             + `manifest.json is missing or unreadable. Uninstall it first. ${String(error)}`,
+            { cause: error },
           )
         }
         validateExistingExtensionReplacement(
@@ -1749,6 +1753,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
               `Extension setup failed, and three.ws Forge could not restore the previous version `
               + `during ${restored.stage}: ${String(restored.error)}. `
               + `Restart three.ws Forge to retry recovery. Original failure: ${String(setupErr)}`,
+              { cause: setupErr },
             )
           }
           const cleared = await clearExtensionRegistrationTransaction(
@@ -1760,6 +1765,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
             throw new Error(
               `Extension setup failed and the previous version was restored, but three.ws Forge `
               + `could not clear recovery state during ${cleared.stage}: ${String(cleared.error)}.`,
+              { cause: setupErr },
             )
           }
         } else {
@@ -1774,6 +1780,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
               throw new Error(
                 `Extension setup failed and its incomplete folder was removed, but three.ws Forge `
                 + `could not clear recovery state during ${cleared.stage}: ${String(cleared.error)}.`,
+                { cause: setupErr },
               )
             }
           }
@@ -1819,6 +1826,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
               `Runtime registration failed, and three.ws Forge could not quarantine the extension `
               + `during ${quarantined.stage}: ${String(quarantined.error)}. `
               + `Restart three.ws Forge to retry recovery. Original failure: ${String(registrationError)}`,
+              { cause: registrationError },
             )
           }
           if (!isProcess) {
@@ -1830,6 +1838,7 @@ export function setupIpcHandlers(pythonBridge: PythonBridge, getWindow: WindowGe
                 + `but three.ws Forge could not evict partially registered model state: `
                 + `${String(runtimeQuarantineError)}. `
                 + `Original failure: ${String(registrationError)}`,
+                { cause: runtimeQuarantineError },
               )
             }
           }

@@ -173,7 +173,7 @@ function DecimatePopover({
           onChange={(e) => setInputValue(e.target.value)}
           min={100}
           step={500}
-          className="bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 w-full focus:outline-none focus:border-violet-500 transition-colors"
+          className="bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 w-full focus:outline-hidden focus:border-violet-500 transition-colors"
         />
         {reduction !== null && (
           <p className="text-[10px] text-zinc-500">
@@ -304,7 +304,7 @@ function LightPopover({
           {pointLights.length < MAX_POINT_LIGHTS && (
             <button
               onClick={() => onPointLightsChange([...pointLights, createPointLight()])}
-              className="flex items-center gap-1 py-0.5 px-1.5 rounded text-[10px] text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+              className="flex items-center gap-1 py-0.5 px-1.5 rounded-sm text-[10px] text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
             >
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -340,7 +340,7 @@ function LightPopover({
                   e.stopPropagation()
                   onPointLightsChange(pointLights.filter((p) => p.id !== pl.id))
                 }}
-                className="p-0.5 rounded text-zinc-600 hover:text-red-400 transition-colors"
+                className="p-0.5 rounded-sm text-zinc-600 hover:text-red-400 transition-colors"
               >
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -395,7 +395,7 @@ function SmoothPopover({
           min={1}
           max={20}
           step={1}
-          className="bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 w-full focus:outline-none focus:border-violet-500 transition-colors"
+          className="bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 w-full focus:outline-hidden focus:border-violet-500 transition-colors"
         />
         <p className="text-[10px] text-zinc-600">More iterations = smoother, but loses detail</p>
       </div>
@@ -546,7 +546,7 @@ function AssetLibraryPopover({
             value={searchQuery}
             onChange={(event) => onSearchQueryChange(event.target.value)}
             placeholder="Search by name, path, scope, or capability"
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+            className="bg-zinc-800 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 w-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-400"
           />
         </div>
         <div className="flex w-24 shrink-0 flex-col gap-1.5">
@@ -555,7 +555,7 @@ function AssetLibraryPopover({
             id="asset-library-sort"
             value={sortMode}
             onChange={(event) => onSortModeChange(event.target.value as AssetLibrarySortMode)}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+            className="bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-xs text-zinc-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-400"
           >
             {ASSET_LIBRARY_SORT_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
@@ -582,7 +582,7 @@ function AssetLibraryPopover({
                   aria-expanded={scopeExpanded}
                   aria-controls={scopeRegionId}
                   onClick={() => onToggleSection(scopeGroup.sectionKey)}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-400"
                 >
                   <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-300">{scopeGroup.sourceScopeLabel}</span>
                   <span className="text-[10px] text-zinc-500">{scopeExpanded ? 'Hide' : 'Show'}</span>
@@ -599,7 +599,7 @@ function AssetLibraryPopover({
                             aria-expanded={capabilityExpanded}
                             aria-controls={capabilityRegionId}
                             onClick={() => onToggleSection(group.sectionKey)}
-                            className="flex w-full items-center justify-between gap-2 px-4 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                            className="flex w-full items-center justify-between gap-2 px-4 py-2 text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-400"
                           >
                             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">{group.capabilityLabel}</span>
                             <span className="text-[10px] text-zinc-500">{capabilityExpanded ? 'Hide' : 'Show'}</span>
@@ -616,7 +616,7 @@ function AssetLibraryPopover({
                                     aria-pressed={selected}
                                     aria-label={`Select library asset ${entry.displayName}`}
                                     onClick={() => onSelectEntry(entry.id)}
-                                    className={`w-full text-left px-4 py-2 border-t border-zinc-800 first:border-t-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400
+                                    className={`w-full text-left px-4 py-2 border-t border-zinc-800 first:border-t-0 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-violet-400
                                       ${selected ? 'bg-violet-500/10 text-zinc-100' : 'text-zinc-300 hover:bg-zinc-800/80'}`}
                                   >
                                     <div className="flex items-center justify-between gap-2">
@@ -662,7 +662,7 @@ function AssetLibraryPopover({
 // GeneratePage
 // ---------------------------------------------------------------------------
 
-export default function GeneratePage(): JSX.Element {
+export default function GeneratePage(): React.JSX.Element {
   const [unloadStatus, setUnloadStatus] = useState<'idle' | 'done'>('idle')
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH)
   const [openPanel, setOpenPanel] = useState<GenerateOpenPanel>(null)

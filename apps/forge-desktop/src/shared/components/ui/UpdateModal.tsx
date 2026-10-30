@@ -7,23 +7,23 @@ interface UpdateModalProps {
   onDismiss: () => void
 }
 
-export function UpdateModal({ currentVersion, latestVersion, onDismiss }: UpdateModalProps): JSX.Element {
+export function UpdateModal({ currentVersion, latestVersion, onDismiss }: UpdateModalProps): React.JSX.Element {
   const handleDownload = (): void => {
     window.open('https://three.ws/forge-desktop', '_blank')
   }
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      className="fixed inset-0 z-9999 flex items-center justify-center"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onDismiss() }}
     >
-      <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-sm animate-fade-in" />
+      <div className="absolute inset-0 bg-zinc-950/70 backdrop-blur-xs animate-fade-in" />
 
       <div className="relative w-[440px] rounded-2xl bg-zinc-900 border border-accent/20 shadow-2xl shadow-accent/10 overflow-hidden animate-slide-up-center">
 
         {/* Header band */}
         <div className="relative px-6 pt-6 pb-5 border-b border-zinc-800">
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-br from-accent/10 via-transparent to-transparent pointer-events-none" />
 
           <div className="relative flex items-center gap-4">
             <img src={logo} alt="three.ws Forge" className="w-12 h-12 rounded-xl shrink-0" />

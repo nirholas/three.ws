@@ -171,7 +171,7 @@ class ModelErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
   }
 }
 
-function ModelLoadError(): JSX.Element {
+function ModelLoadError(): React.JSX.Element {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-600 pointer-events-none">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -198,18 +198,18 @@ interface MeshModelProps {
   onObject: (obj: THREE.Object3D | null) => void
 }
 
-function MeshModel({ url, jobId, viewMode, selected, onStats, onSelect, onObject }: MeshModelProps): JSX.Element {
+function MeshModel({ url, jobId, viewMode, selected, onStats, onSelect, onObject }: MeshModelProps): React.JSX.Element {
   const extension = url.split('?')[0]?.split('.').pop()?.toLowerCase()
   const common = { url, jobId, viewMode, selected, onStats, onSelect, onObject }
   return extension === 'obj' ? <ObjMeshModel {...common} /> : <GltfMeshModel {...common} />
 }
 
-function GltfMeshModel(props: MeshModelProps): JSX.Element {
+function GltfMeshModel(props: MeshModelProps): React.JSX.Element {
   const { scene } = useGLTF(props.url)
   return <SceneMeshModel {...props} scene={scene} loaderType="gltf" />
 }
 
-function ObjMeshModel(props: MeshModelProps): JSX.Element {
+function ObjMeshModel(props: MeshModelProps): React.JSX.Element {
   const scene = useLoader(OBJLoader, props.url)
   return <SceneMeshModel {...props} scene={scene} loaderType="obj" />
 }
@@ -226,7 +226,7 @@ function SceneMeshModel({
 }: MeshModelProps & {
   scene: THREE.Group | THREE.Scene
   loaderType: 'gltf' | 'obj'
-}): JSX.Element {
+}): React.JSX.Element {
   const captured = useRef(false)
   const edgeHelpers = useRef<THREE.LineSegments[]>([])
 
@@ -557,7 +557,7 @@ function hoverHandlers<T extends string>(
   }
 }
 
-function GizmoArrow({ color, active }: { color: string; active: boolean }): JSX.Element {
+function GizmoArrow({ color, active }: { color: string; active: boolean }): React.JSX.Element {
   const tint = active ? lightenColor(color) : color
   return (
     <group>
@@ -580,7 +580,7 @@ function GizmoArrow({ color, active }: { color: string; active: boolean }): JSX.
   )
 }
 
-function GizmoScaleArm({ color, active }: { color: string; active: boolean }): JSX.Element {
+function GizmoScaleArm({ color, active }: { color: string; active: boolean }): React.JSX.Element {
   const tint = active ? lightenColor(color) : color
   return (
     <group>
@@ -604,7 +604,7 @@ function GizmoScaleArm({ color, active }: { color: string; active: boolean }): J
   )
 }
 
-function GizmoRing({ color, active }: { color: string; active: boolean }): JSX.Element {
+function GizmoRing({ color, active }: { color: string; active: boolean }): React.JSX.Element {
   const tint = active ? lightenColor(color) : color
   return (
     <group>
@@ -621,7 +621,7 @@ function GizmoRing({ color, active }: { color: string; active: boolean }): JSX.E
   )
 }
 
-function GizmoPlane({ color, active }: { color: string; active: boolean }): JSX.Element {
+function GizmoPlane({ color, active }: { color: string; active: boolean }): React.JSX.Element {
   return (
     <mesh renderOrder={998}>
       <planeGeometry args={[0.26, 0.26]} />
@@ -638,7 +638,7 @@ function GizmoPlane({ color, active }: { color: string; active: boolean }): JSX.
   )
 }
 
-function TranslateGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D; onDragStart?: () => void; onDragEnd?: () => void }): JSX.Element {
+function TranslateGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D; onDragStart?: () => void; onDragEnd?: () => void }): React.JSX.Element {
   const { camera, groupRef, pointerRay, start } = useGizmoBase(object)
   const [hovered, setHovered] = useState<TranslateHandleId | null>(null)
   const [activeId, setActiveId] = useState<TranslateHandleId | null>(null)
@@ -711,7 +711,7 @@ function TranslateGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Obje
   )
 }
 
-function RotateGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D; onDragStart?: () => void; onDragEnd?: () => void }): JSX.Element {
+function RotateGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D; onDragStart?: () => void; onDragEnd?: () => void }): React.JSX.Element {
   const { groupRef, pointerRay, start } = useGizmoBase(object)
   const [hovered, setHovered] = useState<GizmoAxis | null>(null)
   const [activeId, setActiveId] = useState<GizmoAxis | null>(null)
@@ -760,7 +760,7 @@ function RotateGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3
   )
 }
 
-function ScaleGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D; onDragStart?: () => void; onDragEnd?: () => void }): JSX.Element {
+function ScaleGizmo({ object, onDragStart, onDragEnd }: { object: THREE.Object3D; onDragStart?: () => void; onDragEnd?: () => void }): React.JSX.Element {
   const { camera, groupRef, pointerRay, start } = useGizmoBase(object)
   const [hovered, setHovered] = useState<ScaleHandleId | null>(null)
   const [activeId, setActiveId] = useState<ScaleHandleId | null>(null)
@@ -895,7 +895,7 @@ function PointLightMarker({
 // EmptyState
 // ---------------------------------------------------------------------------
 
-function EmptyState(): JSX.Element {
+function EmptyState(): React.JSX.Element {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-700 pointer-events-none">
       <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.75">
@@ -928,7 +928,7 @@ export default function Viewer3D({
   selectedPointLightId?: string | null
   onSelectPointLight?: (id: string | null) => void
   onPointLightsChange?: (lights: PointLight[]) => void
-}): JSX.Element {
+}): React.JSX.Element {
   const { currentJob } = useGeneration()
   const apiUrl = useAppStore((s) => s.apiUrl)
 

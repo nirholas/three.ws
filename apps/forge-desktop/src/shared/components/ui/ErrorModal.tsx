@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '@shared/stores/appStore'
 
-export function ErrorModal(): JSX.Element | null {
+export function ErrorModal(): React.JSX.Element | null {
   const { errorModal, hideError } = useAppStore()
   const [copied, setCopied] = useState(false)
 
@@ -15,7 +15,7 @@ export function ErrorModal(): JSX.Element | null {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs">
       <div className="w-full max-w-lg mx-4 bg-surface-300 border border-zinc-700/60 rounded-xl shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-700/50">
@@ -31,7 +31,7 @@ export function ErrorModal(): JSX.Element | null {
 
         {/* Error message, selectable */}
         <div className="px-5 py-4">
-          <pre className="text-xs text-red-400 bg-red-950/30 border border-red-900/30 rounded-lg px-4 py-3 max-h-60 overflow-y-auto whitespace-pre-wrap break-words select-text font-mono leading-relaxed">
+          <pre className="text-xs text-red-400 bg-red-950/30 border border-red-900/30 rounded-lg px-4 py-3 max-h-60 overflow-y-auto whitespace-pre-wrap wrap-break-word select-text font-mono leading-relaxed">
             {errorModal}
           </pre>
         </div>

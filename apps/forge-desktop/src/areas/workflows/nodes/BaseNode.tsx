@@ -61,7 +61,7 @@ export default function BaseNode({
     <div
       ref={rootRef}
       style={autoHeight ? { width: '100%' } : { width: '100%', height: '100%' }}
-      className={`relative rounded-xl border bg-zinc-900/95 backdrop-blur-sm shadow-xl transition-all flex flex-col
+      className={`relative rounded-xl border bg-zinc-900/95 backdrop-blur-xs shadow-xl transition-all flex flex-col
         ${running    ? 'border-accent shadow-[0_0_16px_rgba(99,102,241,0.35)] animate-pulse'
         : selected   ? 'border-accent/70'
         : isDisabled ? 'border-zinc-800 opacity-50'
@@ -91,7 +91,7 @@ export default function BaseNode({
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-semibold text-zinc-200 leading-tight truncate">{title}</p>
           {badge && (
-            <span className="inline-block mt-0.5 text-[8px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-zinc-700/70 text-zinc-400 border border-zinc-600/50">
+            <span className="inline-block mt-0.5 text-[8px] uppercase tracking-wide px-1.5 py-0.5 rounded-sm bg-zinc-700/70 text-zinc-400 border border-zinc-600/50">
               {badge}
             </span>
           )}
@@ -102,7 +102,7 @@ export default function BaseNode({
           <button
             onClick={() => updateNodeData(id, { showInGenerate: !showInGenerate })}
             title={showInGenerate ? 'Visible in Generate' : 'Hidden from Generate'}
-            className="nodrag p-0.5 rounded transition-colors shrink-0 mt-0.5"
+            className="nodrag p-0.5 rounded-sm transition-colors shrink-0 mt-0.5"
           >
             {showInGenerate ? (
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
@@ -127,7 +127,7 @@ export default function BaseNode({
             style={{ width: 26, height: 15 }}
           >
             <span className={`absolute inset-0 rounded-full transition-colors ${enabled ? 'bg-accent/70' : 'bg-zinc-700'}`} />
-            <span className={`absolute top-[1.5px] w-3 h-3 rounded-full bg-white shadow transition-all ${enabled ? 'left-[11px]' : 'left-[1.5px]'}`} />
+            <span className={`absolute top-[1.5px] w-3 h-3 rounded-full bg-white shadow-sm transition-all ${enabled ? 'left-[11px]' : 'left-[1.5px]'}`} />
           </button>
         )}
 
@@ -135,7 +135,7 @@ export default function BaseNode({
         {collapsible && (
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="nodrag p-0.5 rounded text-zinc-600 hover:text-zinc-400 transition-colors shrink-0 mt-0.5"
+            className="nodrag p-0.5 rounded-sm text-zinc-600 hover:text-zinc-400 transition-colors shrink-0 mt-0.5"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
               className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>
@@ -148,7 +148,7 @@ export default function BaseNode({
         {deletable && (
           <button
             onClick={() => deleteElements({ nodes: [{ id }] })}
-            className="nodrag p-0.5 rounded text-zinc-700 hover:text-red-400 transition-colors shrink-0 mt-0.5"
+            className="nodrag p-0.5 rounded-sm text-zinc-700 hover:text-red-400 transition-colors shrink-0 mt-0.5"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="18" y1="6" x2="6" y2="18"/>

@@ -46,7 +46,7 @@ export default function Load3DMeshNode({ id, data, selected }: { id: string; dat
       }
       subheader={
         <div ref={ioRowRef} className="flex items-center justify-end px-3 py-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-violet-500/30 bg-violet-500/10 text-violet-400">mesh</span>
         </div>
       }
       handles={
@@ -61,7 +61,7 @@ export default function Load3DMeshNode({ id, data, selected }: { id: string; dat
           className="nodrag flex items-center gap-2 w-full text-left"
         >
           <div className={`w-7 h-4 rounded-full relative transition-colors ${source === 'current' ? 'bg-violet-500' : 'bg-zinc-700'}`}>
-            <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${source === 'current' ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+            <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform ${source === 'current' ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
           </div>
           <span className="text-[10px] text-zinc-400">Use current model</span>
         </button>

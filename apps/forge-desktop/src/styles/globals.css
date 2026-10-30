@@ -1,24 +1,97 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap')
+layer(base);
 
-@font-face {
-  font-family: 'Atkinson Hyperlegible';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../assets/fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Regular.woff2') format('woff2');
+@import 'tailwindcss';
+
+@theme {
+  --color-surface-50: #e8e8e8;
+  --color-surface-100: #d4d4d4;
+  --color-surface-200: #262626;
+  --color-surface-300: #1f1f1f;
+  --color-surface-400: #1a1a1a;
+  --color-surface-500: #0a0a0a;
+
+  --color-accent: #8b5cf6;
+  --color-accent-light: #c4b5fd;
+  --color-accent-dark: #6d28d9;
+
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-display: Space Grotesk, Inter, system-ui, sans-serif;
+  --font-mono: JetBrains Mono, monospace;
+
+  --animate-slide: slide 1.5s ease-in-out infinite;
+
+  @keyframes slide {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
 }
 
-@font-face {
-  font-family: 'Atkinson Hyperlegible';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../assets/fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.woff2') format('woff2');
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@utility drag-region {
+  -webkit-app-region: drag;
+}
+
+@utility no-drag {
+  -webkit-app-region: no-drag;
+}
+
+@utility animate-slide-up {
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@utility animate-slide-up-center {
+  animation: slideUpCenter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-drawer-in {
+  animation: drawerIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@layer base {
+  @font-face {
+    font-family: 'Atkinson Hyperlegible';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../assets/fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Regular.woff2')
+      format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Atkinson Hyperlegible';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../assets/fonts/atkinson-hyperlegible/AtkinsonHyperlegible-Bold.woff2')
+      format('woff2');
+  }
+}
 
 @layer base {
   :root {
@@ -57,27 +130,6 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: #4a4a4a;
-  }
-}
-
-@layer utilities {
-  .drag-region {
-    -webkit-app-region: drag;
-  }
-  .no-drag {
-    -webkit-app-region: no-drag;
-  }
-  .animate-slide-up {
-    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .animate-fade-in {
-    animation: fadeIn 0.2s ease-out forwards;
-  }
-  .animate-slide-up-center {
-    animation: slideUpCenter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .animate-drawer-in {
-    animation: drawerIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
 }
 

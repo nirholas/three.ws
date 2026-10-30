@@ -1,6 +1,6 @@
 import { useNavStore, type Page } from '@shared/stores/navStore'
 
-const NAV_ITEMS: { id: Page; label: string; icon: JSX.Element }[] = [
+const NAV_ITEMS: { id: Page; label: string; icon: React.JSX.Element }[] = [
   {
     id: 'generate',
     label: 'Generate',
@@ -46,7 +46,7 @@ const NAV_ITEMS: { id: Page; label: string; icon: JSX.Element }[] = [
   }
 ]
 
-export default function Sidebar(): JSX.Element {
+export default function Sidebar(): React.JSX.Element {
   const { currentPage, navigate } = useNavStore()
 
   return (

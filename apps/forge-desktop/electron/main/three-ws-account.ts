@@ -115,7 +115,7 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     throw new ThreeWsError(`Could not reach ${THREE_WS_ORIGIN}: ${err instanceof Error ? err.message : String(err)}`, 'unreachable')
   }
   const text = await res.text()
-  let parsed: Record<string, unknown> = {}
+  let parsed: Record<string, unknown>
   try { parsed = text ? JSON.parse(text) : {} } catch { parsed = { error_description: text.slice(0, 300) } }
   if (!res.ok) {
     const message = String(parsed.error_description || parsed.message || parsed.error || `HTTP ${res.status}`)

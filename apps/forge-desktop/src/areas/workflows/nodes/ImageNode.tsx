@@ -45,7 +45,7 @@ export default function ImageNode({ id, data, selected }: { id: string; data: WF
       }
       subheader={
         <div ref={ioRowRef} className="flex items-center justify-end px-3 py-2">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-medium border border-sky-500/30 bg-sky-500/10 text-sky-400">image</span>
         </div>
       }
       handles={

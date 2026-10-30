@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '@shared/stores/appStore'
 import MemoryIndicator from './MemoryIndicator'
 
-export default function TopBar(): JSX.Element {
+export default function TopBar(): React.JSX.Element {
   const { patchUpdateReady, platform, showRamIndicator } = useAppStore()
   const isMac = platform === 'darwin'
 
@@ -63,7 +63,7 @@ export default function TopBar(): JSX.Element {
         <div className="flex items-center gap-1 no-drag">
           <button
             onClick={handleMinimize}
-            className="w-8 h-8 flex items-center justify-center rounded hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 transition-colors"
             aria-label="Minimize"
           >
             <svg width="10" height="1" viewBox="0 0 10 1" fill="currentColor">
@@ -72,7 +72,7 @@ export default function TopBar(): JSX.Element {
           </button>
           <button
             onClick={handleMaximize}
-            className="w-8 h-8 flex items-center justify-center rounded hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-zinc-700 text-zinc-400 hover:text-zinc-100 transition-colors"
             aria-label={isMaximized ? 'Restore' : 'Maximize'}
           >
             {isMaximized ? (
@@ -88,7 +88,7 @@ export default function TopBar(): JSX.Element {
           </button>
           <button
             onClick={handleClose}
-            className="w-8 h-8 flex items-center justify-center rounded hover:bg-red-600 text-zinc-400 hover:text-white transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-sm hover:bg-red-600 text-zinc-400 hover:text-white transition-colors"
             aria-label="Close"
           >
             <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.2">
