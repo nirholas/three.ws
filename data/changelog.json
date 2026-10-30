@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-10-30",
+			"title": "Link preview cards render again, Game-ready refine works, and the embed script is a third smaller",
+			"summary": "Since October 27 every three.ws link preview image (pages, agents, leaderboards) failed to render after an image library update that cannot load on our servers. Previews are back on the last working release, with the broken one blocked from returning. The Game-ready preset in Forge refine now reduces triangle count again instead of failing. The agent-3d embed script drops from 6.9 MB to 4.3 MB by loading 3D decoders only when a model needs them. Webhooks, payment probes and paid API relays that route through the network safety guard no longer fail with \"fetch failed\". The chat app, Forge desktop and the Robinhood Chain, SDK and example projects now run on current releases of their frameworks and build tools.",
+			"tags": [
+				"fix",
+				"improvement",
+				"infra"
+			],
+			"link": "/changelog"
+		},
+		{
+			"date": "2026-10-30",
 			"title": "Skill import reads YAML specs again, and payment checks run on the current Solana Pay",
 			"summary": "Importing a skill from a YAML OpenAPI spec failed with \"not valid YAML\" for every document, and the API routes that share the importer stopped loading after a parser upgrade. Both work again, with a test that parses a real YAML spec. Marketplace, skill, subscription, bundle and print-order payments are now verified with Solana Pay 1.x through one adapter, tested against real transaction bytes for split purchases, short payments, wrong references, wrong recipients and memos. The rest of the dependency tree is on current releases, and the few held back are documented with the reason.",
 			"tags": [
