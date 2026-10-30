@@ -12,6 +12,7 @@
 import { proxiedImageURL } from './ipfs.js';
 import { gmgnTokenUrl } from './shared/trading-terminals.js';
 import { shortAddress as shortAddr } from './shared/address.js';
+import { safeUrl } from './safe-url.js';
 import { loadTelegramChat, telegramLoginUrl, telegramActionError, TELEGRAM_LINK_URL } from './oracle-telegram.js';
 
 const NETWORK = 'mainnet';
@@ -2373,9 +2374,9 @@ function renderMarket(m) {
 		lk.dexscreener ? `<a class="dr-act" href="${esc(lk.dexscreener)}" target="_blank" rel="noopener">DexScreener ↗</a>` : '',
 		lk.geckoterminal ? `<a class="dr-act" href="${esc(lk.geckoterminal)}" target="_blank" rel="noopener">GeckoTerminal ↗</a>` : '',
 		lk.birdeye ? `<a class="dr-act" href="${esc(lk.birdeye)}" target="_blank" rel="noopener">Birdeye ↗</a>` : '',
-		lk.website ? `<a class="dr-act" href="${esc(lk.website)}" target="_blank" rel="noopener">Website ↗</a>` : '',
-		lk.twitter ? `<a class="dr-act" href="${esc(lk.twitter)}" target="_blank" rel="noopener">X ↗</a>` : '',
-		lk.telegram ? `<a class="dr-act" href="${esc(lk.telegram)}" target="_blank" rel="noopener">Telegram ↗</a>` : '',
+		lk.website ? `<a class="dr-act" href="${esc(safeUrl(lk.website))}" target="_blank" rel="noopener">Website ↗</a>` : '',
+		lk.twitter ? `<a class="dr-act" href="${esc(safeUrl(lk.twitter))}" target="_blank" rel="noopener">X ↗</a>` : '',
+		lk.telegram ? `<a class="dr-act" href="${esc(safeUrl(lk.telegram))}" target="_blank" rel="noopener">Telegram ↗</a>` : '',
 	].filter(Boolean).join('');
 
 	const srcNote = Array.isArray(m.sources) && m.sources.length

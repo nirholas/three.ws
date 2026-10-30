@@ -1,4 +1,5 @@
 import { mountShell } from '../shell.js';
+import { safeUrl } from '../../safe-url.js';
 import { requireUser, get, post, esc, relTime, ApiError } from '../api.js';
 import { createChart, AreaSeries, LineSeries } from 'lightweight-charts';
 import { errorStateHTML, ensureStateKitStyles } from '../../shared/state-kit.js';
@@ -1026,7 +1027,7 @@ function renderDrawerContent(host, data, token = null) {
 			</form>` : ''}
 
 			${market.description ? `<div class="pf-drawer-desc">${esc(market.description)}</div>` : ''}
-			${market.homepage ? `<a href="${esc(market.homepage)}" target="_blank" rel="noopener" class="pf-link" style="display:inline-block;margin-top:8px">Project website ↗</a>` : ''}
+			${market.homepage ? `<a href="${esc(safeUrl(market.homepage))}" target="_blank" rel="noopener" class="pf-link" style="display:inline-block;margin-top:8px">Project website ↗</a>` : ''}
 		</div>
 	`;
 

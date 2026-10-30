@@ -9,6 +9,7 @@
 import { createChart, CandlestickSeries, HistogramSeries, CrosshairMode } from 'lightweight-charts';
 import { ago, amount, classChip, coinLogo, esc, explainLoad, getJson, pct, short, usd } from './common.js';
 import { mountTicket } from './trade.js';
+import { safeUrl } from '../safe-url.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const ADDR_RE = /^\/markets\/robinhood\/paired\/(0x[0-9a-fA-F]{40})\/?$/;
@@ -49,9 +50,9 @@ function renderHead(c) {
 	$('#pc-crumb').textContent = `$${c.symbol}`;
 	const d = c.descriptor;
 	const links = [
-		d?.links?.website && `<a class="pc-btn" href="${esc(d.links.website)}" target="_blank" rel="noopener noreferrer">Website ↗</a>`,
-		d?.links?.twitter && `<a class="pc-btn" href="${esc(d.links.twitter)}" target="_blank" rel="noopener noreferrer">X ↗</a>`,
-		d?.links?.telegram && `<a class="pc-btn" href="${esc(d.links.telegram)}" target="_blank" rel="noopener noreferrer">Telegram ↗</a>`,
+		d?.links?.website && `<a class="pc-btn" href="${esc(safeUrl(d.links.website))}" target="_blank" rel="noopener noreferrer">Website ↗</a>`,
+		d?.links?.twitter && `<a class="pc-btn" href="${esc(safeUrl(d.links.twitter))}" target="_blank" rel="noopener noreferrer">X ↗</a>`,
+		d?.links?.telegram && `<a class="pc-btn" href="${esc(safeUrl(d.links.telegram))}" target="_blank" rel="noopener noreferrer">Telegram ↗</a>`,
 		`<a class="pc-btn" href="${EXPLORER}/token/${esc(c.address)}" target="_blank" rel="noopener noreferrer">Explorer ↗</a>`,
 	].filter(Boolean);
 	const by = c.agent

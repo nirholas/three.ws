@@ -17,6 +17,7 @@ import { applyReaction, createReactionDispatcher, mountReactionToast } from './p
 import { WORD_BLACKLIST } from '../profanity.js';
 import { terminalLinks, referralOffers } from '../shared/trading-terminals.js';
 import { shortAddress } from '../shared/address.js';
+import { safeUrl } from '../safe-url.js';
 
 const FEED_PATH = '/api/agents/pumpfun-feed';
 const TIER_BADGE = { mega: '🔥🔥', influencer: '🔥', notable: '⭐' };
@@ -484,8 +485,8 @@ function renderGraduation(ev) {
 
 	const socials = [
 		ev.twitter ? `<a href="${attrEsc(twitterHref(ev.twitter))}" target="_blank" rel="noopener" style="color:#cbd5e1">𝕏</a>` : '',
-		ev.telegram ? `<a href="${attrEsc(ev.telegram)}" target="_blank" rel="noopener" style="color:#cbd5e1">TG</a>` : '',
-		ev.website ? `<a href="${attrEsc(ev.website)}" target="_blank" rel="noopener" style="color:#cbd5e1">🌐</a>` : '',
+		ev.telegram ? `<a href="${attrEsc(safeUrl(ev.telegram))}" target="_blank" rel="noopener" style="color:#cbd5e1">TG</a>` : '',
+		ev.website ? `<a href="${attrEsc(safeUrl(ev.website))}" target="_blank" rel="noopener" style="color:#cbd5e1">🌐</a>` : '',
 	].filter(Boolean).join(' ');
 
 	const chartLinks = mint

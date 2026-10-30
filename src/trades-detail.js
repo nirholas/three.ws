@@ -29,6 +29,7 @@ import { mountBubblemap } from './trades-bubblemap.js';
 import { mountTradeTape } from './trades-tape.js';
 import { escapeHtml, compact, shortAddr, relTime, identicon } from './trader-format.js';
 import { forkButton } from './fork-trade.js';
+import { safeUrl } from './safe-url.js';
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -117,9 +118,9 @@ function section(id, title, bodyHtml, { right = '' } = {}) {
 // ── socials / links ───────────────────────────────────────────────────────────
 function socialLinks(socials = {}) {
 	const out = [];
-	if (socials.twitter) out.push(`<a href="${escapeHtml(socials.twitter)}" target="_blank" rel="noopener" class="dd-soc" title="X / Twitter">𝕏</a>`);
-	if (socials.telegram) out.push(`<a href="${escapeHtml(socials.telegram)}" target="_blank" rel="noopener" class="dd-soc" title="Telegram">✈</a>`);
-	if (socials.website) out.push(`<a href="${escapeHtml(socials.website)}" target="_blank" rel="noopener" class="dd-soc" title="Website">🌐</a>`);
+	if (socials.twitter) out.push(`<a href="${escapeHtml(safeUrl(socials.twitter))}" target="_blank" rel="noopener" class="dd-soc" title="X / Twitter">𝕏</a>`);
+	if (socials.telegram) out.push(`<a href="${escapeHtml(safeUrl(socials.telegram))}" target="_blank" rel="noopener" class="dd-soc" title="Telegram">✈</a>`);
+	if (socials.website) out.push(`<a href="${escapeHtml(safeUrl(socials.website))}" target="_blank" rel="noopener" class="dd-soc" title="Website">🌐</a>`);
 	return out.join('');
 }
 
