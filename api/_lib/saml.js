@@ -19,6 +19,7 @@ import { env } from './env.js';
 import { sql } from './db.js';
 import { hmacSha256, constantTimeEquals, sha256 } from './crypto.js';
 import { fetchUpstream } from './upstream-fetch.js';
+import { safeNext } from '../../src/safe-next.js';
 
 // Request IDs are valid for one login round-trip; an hour is generous slack for
 // a user who lands on the IdP, authenticates, and is redirected back. Must match
@@ -276,8 +277,9 @@ export async function verifyRelayState(state) {
 // Only allow same-origin relative redirects so RelayState can't be used as an
 // open-redirect vector. Rejects protocol-relative ("//evil.com") and absolute URLs.
 export function safeNextPath(next, fallback = '/dashboard') {
-	if (typeof next !== 'string' || !next.startsWith('/') || next.startsWith('//')) return fallback;
-	return next;
+	// Delegates to the canonical guard, which also rejects backslashes
+	// ('/\evil.com' normalizes to '//evil.com') and control characters.
+	return safeNext(next, fallback);
 }
 
 // ── Identity extraction from a validated assertion ──────────────────────────
