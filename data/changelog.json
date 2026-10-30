@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-30",
+			"title": "The built-in chat keeps answering when the shared free model quota runs out",
+			"summary": "When the free OpenRouter quota is exhausted, the chat now falls back to Vertex Gemini on the platform's own capacity instead of showing \"the built-in model is rate-limited\". Tools and streaming work the same on either lane.",
+			"tags": [
+				"fix"
+			],
+			"link": "/chat"
+		},
+		{
+			"date": "2026-10-30",
 			"title": "Community Meetup #3 is set for November 6 inside /play, hosted with IBM Community",
 			"summary": "The Three.ws User Group on IBM Community meets inside the $THREE home town again on Friday, November 6, 8 to 9 AM Pacific (16:00 to 17:00 UTC). /event carries the countdown and add-to-calendar, the world runs the agenda itself (a live agent build, Video to Motion, /forge, an agent paying for a tool, a community showcase, Q&A and a group photo with fireworks), and everyone in the world during the hour receives the Meetup Orbit Crown, a headwear souvenir granted only during that session.",
 			"tags": [

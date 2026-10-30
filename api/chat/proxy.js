@@ -4,6 +4,13 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isFreeModelId, isLiveFreeModel, pickDefaultFreeModel } from '../_lib/openrouter-free.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.js';
 import { AGENT_MODEL_ID, runAgentCompletion } from '../agent/run.js';
+import {
+	vertexGeminiAvailable,
+	vertexGeminiBudget,
+	vertexGeminiChatUrl,
+	vertexGeminiHeaders,
+	vertexGeminiModel,
+} from '../_lib/vertex-gemini.js';
 
 const UPGRADE_URL = `${env.APP_ORIGIN}/pricing`;
 
@@ -78,6 +85,58 @@ function buildUpstreamBody(body, model) {
 		if (Number.isFinite(n) && n > 0) out[k] = Math.min(Math.floor(n), MAX_OUTPUT_TOKENS);
 	}
 	return { ...out, model };
+}
+
+// Fields Vertex's OpenAI-compatible surface accepts. top_k, repetition_penalty
+// and `reasoning` are OpenRouter extensions that Vertex would reject.
+const VERTEX_BODY_FIELDS = [
+	'messages',
+	'stream',
+	'stream_options',
+	'temperature',
+	'top_p',
+	'stop',
+	'tools',
+	'tool_choice',
+	'response_format',
+	'seed',
+	'frequency_penalty',
+	'presence_penalty',
+];
+
+/**
+ * The shared OpenRouter free tier is capped per day across every visitor, so a
+ * 429 there says nothing about the platform's own capacity. Vertex Gemini runs
+ * on the platform's GCP credits, keeps the client's tools and stream format,
+ * and is the lane the agent loop already ends on. Returns the upstream
+ * Response to relay, or null when Vertex is unconfigured or also failing, in
+ * which case the caller answers the original 429.
+ */
+async function vertexFallback(body) {
+	if (!vertexGeminiAvailable()) return null;
+	const ctrl = new AbortController();
+	const timer = setTimeout(() => ctrl.abort(), UPSTREAM_HEADERS_TIMEOUT_MS);
+	try {
+		const out = {};
+		for (const k of VERTEX_BODY_FIELDS) if (body[k] !== undefined) out[k] = body[k];
+		const asked = Number(body.max_tokens ?? body.max_completion_tokens);
+		const visible = Number.isFinite(asked) && asked > 0 ? Math.min(Math.floor(asked), MAX_OUTPUT_TOKENS) : undefined;
+		const r = await fetch(vertexGeminiChatUrl(), {
+			method: 'POST',
+			headers: await vertexGeminiHeaders(),
+			body: JSON.stringify({ ...out, model: vertexGeminiModel(), ...vertexGeminiBudget(visible) }),
+			signal: ctrl.signal,
+		});
+		if (r.ok && r.body) return r;
+		console.error('[chat-proxy] vertex fallback answered', r.status);
+		await r.body?.cancel?.().catch?.(() => {});
+		return null;
+	} catch (err) {
+		console.error('[chat-proxy] vertex fallback failed:', err?.message);
+		return null;
+	} finally {
+		clearTimeout(timer);
+	}
 }
 
 export default wrap(async (req, res) => {
@@ -215,6 +274,14 @@ export default wrap(async (req, res) => {
 			reason,
 			upgradeUrl: UPGRADE_URL,
 		});
+	}
+
+	if (upstream.status === 429) {
+		const alt = await vertexFallback(body);
+		if (alt) {
+			upstream = alt;
+			res.setHeader('x-chat-lane', 'vertex-gemini');
+		}
 	}
 
 	if (upstream.status === 429) {
