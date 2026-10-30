@@ -50,7 +50,7 @@
     "@clack/prompts": "^1.8.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@napi-rs/keyring": "^2.1.2",
-    "@solana-program/compute-budget": "^0.18.1",
+    "@solana-program/compute-budget": "^0.20.0",
     "@solana-program/system": "^0.16.0",
     "@solana-program/token": "^0.18.0",
     "@solana/kit": "^8.5.0",
