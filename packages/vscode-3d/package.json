@@ -397,7 +397,7 @@
 		"@gltf-transform/functions": "^4.5.0",
 		"gifenc": "^1.0.3",
 		"meshoptimizer": "^1.1.1",
-		"three": "^0.184.0"
+		"three": "^0.187.0"
 	},
 	"devDependencies": {
 		"@types/vscode": "^1.85.0",
