@@ -56,8 +56,6 @@
 		"uuid@^8": "^11.1.1",
 		"yaml@^1": "^1.10.3",
 		"zod": "^4.6.7",
-		"@colyseus/core": { "nanoid": "2.1.11" },
-		"@colyseus/core": { "nanoid": "2.1.11" },
 		"uuid@^10": "^11.1.1",
 		"fast-xml-parser": "^5.11.2",
 		"decode-uri-component": "^0.5.1"
@@ -616,6 +614,7 @@
 		"@coin-communities/sdk": "^2.0.0",
 		"@coinbase/cdp-sdk": "^1.50.0",
 		"@coinbase/x402": "^2.1.0",
+		"@colyseus/schema": "3.0.76",
 		"@coral-xyz/anchor": "^0.32.1",
 		"@dimforge/rapier3d-compat": "^0.21.0",
 		"@discord/embedded-app-sdk": "^2.5.0",

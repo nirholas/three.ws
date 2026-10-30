@@ -41,6 +41,19 @@ describe('multiplayer Colyseus pin', () => {
 		if (clientSchema) expect(semver.satisfies(schema, clientSchema)).toBe(true);
 	});
 
+	it('resolves @colyseus/schema for the browser bundle to the version colyseus.js decodes with', () => {
+		// packages/ar-studio/src/studio/schemas.js is bundled into the app. It
+		// used to resolve through a schema 5 that the 0.18 server hoisted; with
+		// nothing at the root, vite substitutes an empty optional-peer stub and
+		// the build dies on "Schema is not exported" (2026-10-30).
+		const pinned = root.dependencies?.['@colyseus/schema'];
+		expect(pinned, 'root package.json must declare @colyseus/schema').toBeTruthy();
+		const nested = JSON.parse(readFileSync(new URL('../node_modules/colyseus.js/package.json', import.meta.url), 'utf8'));
+		expect(semver.satisfies(semver.minVersion(pinned), nested.dependencies['@colyseus/schema'])).toBe(true);
+		const resolved = JSON.parse(readFileSync(new URL('../node_modules/@colyseus/schema/package.json', import.meta.url), 'utf8'));
+		expect(semver.satisfies(resolved.version, pinned)).toBe(true);
+	});
+
 	it('has a standalone lock that satisfies package.json, so npm ci succeeds in the image', () => {
 		const unsatisfied = Object.entries(serverDeps)
 			.filter(([name, range]) => {
