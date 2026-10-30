@@ -28,7 +28,7 @@ vi.mock('../../api/_lib/ssrf.js', async (importOriginal) => {
 });
 
 const { fetchModel, FetchModelError } = await import('../../api/_lib/fetch-model.js');
-const { disposeAgent } = await import('../../api/_lib/ssrf.js');
+const { disposeAgent, pinnedFetch } = await import('../../api/_lib/ssrf.js');
 
 let server;
 let base;
@@ -86,7 +86,7 @@ describe('fetchModel releases its connection on early exits', () => {
 describe('disposeAgent', () => {
 	it('resolves while a response body is still open', async () => {
 		const agent = new Agent();
-		const res = await fetch(`${base}/forbidden`, { dispatcher: agent });
+		const res = await pinnedFetch(`${base}/forbidden`, { dispatcher: agent });
 		expect(res.status).toBe(403);
 		const started = Date.now();
 		await disposeAgent(agent);

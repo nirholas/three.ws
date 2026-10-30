@@ -8,7 +8,7 @@
 // nothing. Keeping the transport in one place means a hardening fix to one path
 // cannot leave the other exposed.
 
-import { validatePublicUrl, resolvePublicHost, pinnedAgent, disposeAgent, SsrfError } from '../ssrf.js';
+import { validatePublicUrl, resolvePublicHost, pinnedAgent, pinnedFetch, disposeAgent, SsrfError } from '../ssrf.js';
 
 /** Canonical USDC mint on Solana mainnet. */
 export const USDC_SOLANA_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -60,7 +60,7 @@ export async function guardedFetch(rawUrl, {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), timeoutMs);
 	try {
-		const res = await fetch(url, {
+		const res = await pinnedFetch(url, {
 			method,
 			redirect: 'manual',
 			signal: controller.signal,

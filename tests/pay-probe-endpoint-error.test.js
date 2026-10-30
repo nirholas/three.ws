@@ -28,6 +28,8 @@ vi.mock('../api/_lib/ssrf.js', async (importOriginal) => {
 		...actual,
 		resolvePublicHost: async () => ['203.0.113.10'],
 		pinnedAgent: () => ({ destroy: async () => {} }),
+		// The pinned request goes out through pinnedFetch; route it to the global the test stubs.
+		pinnedFetch: (...args) => globalThis.fetch(...args),
 	};
 });
 

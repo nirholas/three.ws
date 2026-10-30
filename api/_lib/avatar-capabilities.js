@@ -24,7 +24,7 @@
 // and wonder why nothing changed.
 
 import { getObjectRange } from './r2.js';
-import { disposeAgent, resolvePublicHost, pinnedAgent, validatePublicUrl } from './ssrf.js';
+import { disposeAgent, resolvePublicHost, pinnedAgent, pinnedFetch, validatePublicUrl } from './ssrf.js';
 import { inspectGlb, glbJsonChunkEnd } from './glb-inspect.js';
 import { conformanceFromNames, ARKIT_52 } from '../../src/runtime/arkit52.js';
 import { canonicalizeBoneName, CANONICAL_BONES } from '../../src/glb-canonicalize.js';
@@ -91,7 +91,7 @@ async function readUntrustedGlbPrefix(rawUrl, length) {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), EXTERNAL_TIMEOUT_MS);
 	try {
-		const r = await fetch(url, {
+		const r = await pinnedFetch(url, {
 			redirect: 'error',
 			signal: controller.signal,
 			dispatcher: agent,

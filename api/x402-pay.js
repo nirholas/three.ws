@@ -52,7 +52,7 @@ import { assertBearerMaySpend } from './_lib/spend-scope.js';
 import { recoverSolanaAgentKeypair } from './_lib/agent-wallet.js';
 import { requireRealFundsAgreement } from './_lib/real-funds-agreement.js';
 import { SpendLimitError, reserveSpendUsd, updateCustodyEvent, releaseSpendReservation } from './_lib/agent-trade-guards.js';
-import { validatePublicUrl, resolvePublicHost, pinnedAgent, disposeAgent, SsrfError } from './_lib/ssrf.js';
+import { validatePublicUrl, resolvePublicHost, pinnedAgent, pinnedFetch, disposeAgent, SsrfError } from './_lib/ssrf.js';
 import { BUILDER_CODE } from './_lib/x402-builder-code.js';
 
 const log = logger('x402-pay');
@@ -431,7 +431,7 @@ async function guardedFetch(rawUrl, { method = 'GET', headers = {}, body } = {})
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), EXTERNAL_FETCH_TIMEOUT_MS);
 	try {
-		const res = await fetch(url, {
+		const res = await pinnedFetch(url, {
 			method,
 			redirect: 'manual',
 			signal: controller.signal,

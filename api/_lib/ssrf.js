@@ -13,7 +13,7 @@
 //   4. Redirects followed manually, re-validating the target host each hop.
 
 import { lookup } from 'node:dns/promises';
-import { Agent } from 'undici';
+import { Agent, fetch as undiciFetch } from 'undici';
 import { isPrivateIPv4, isPrivateIPv6 } from './ip-classify.js';
 import { readTextCapped } from './read-capped.js';
 
@@ -100,6 +100,17 @@ export function pinnedAgent(expectedHost, addrs) {
 	});
 }
 
+// The fetch to send a pinnedAgent through. A dispatcher can only be driven by
+// the fetch from the undici it was built with: Node's global fetch and
+// WebSocket are the undici bundled with the runtime (7.x on Node 24), and they
+// reject an Agent from our undici 8 dependency with UND_ERR_INVALID_ARG
+// "invalid onRequestStart method", so a guarded request through the global
+// failed every time with "fetch failed". Any request that carries
+// `dispatcher: pinnedAgent(...)` goes through this instead.
+export function pinnedFetch(input, init) {
+	return undiciFetch(input, init);
+}
+
 // Release a single-use pinned agent. Always destroy(), never close(): close()
 // waits for every in-flight request on the agent to finish, and a response whose
 // body was never read (a non-2xx we throw on, an oversized content-length, a
@@ -153,7 +164,7 @@ export async function safeFetchJson(
 			await disposeAgent(agent);
 			agent = pinnedAgent(currentUrl.hostname, addrs);
 
-			const res = await fetch(currentUrl, {
+			const res = await pinnedFetch(currentUrl, {
 				method,
 				redirect: 'manual',
 				signal: controller.signal,

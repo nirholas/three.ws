@@ -7,7 +7,13 @@ import { Keypair } from '@solana/web3.js';
 
 vi.mock('../api/_lib/ssrf.js', async (importOriginal) => {
 	const actual = await importOriginal();
-	return { ...actual, resolvePublicHost: async () => ['203.0.113.10'], pinnedAgent: () => ({ destroy: async () => {} }) };
+	// The pinned request goes out through pinnedFetch; route it to the global the test stubs.
+	return {
+		...actual,
+		resolvePublicHost: async () => ['203.0.113.10'],
+		pinnedAgent: () => ({ destroy: async () => {} }),
+		pinnedFetch: (...args) => globalThis.fetch(...args),
+	};
 });
 
 vi.mock('../api/_lib/pay/spend-governor.js', async (importOriginal) => {

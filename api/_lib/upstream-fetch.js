@@ -38,6 +38,7 @@ import { createCache } from './mem-cache.js';
 import { recordSource } from './brownout/provenance.js';
 import { applyFault, faultFor } from './brownout/chaos.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
+import { pinnedFetch } from './ssrf.js';
 
 export const DEFAULT_TIMEOUT_MS = 8_000;
 const DEFAULT_ATTEMPTS = 3;
@@ -111,7 +112,7 @@ function composeSignal(callerSignal, timeoutMs) {
  * caller has to remember to check `res.ok`.
  *
  * @param {string} url
- * @param {RequestInit} [init]
+ * @param {RequestInit & { dispatcher?: import('undici').Dispatcher }} [init]
  * @param {UpstreamOptions} [opts]
  * @returns {Promise<Response>}
  */
@@ -142,7 +143,11 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 				const injected = await applyFault(fault, shown);
 				if (injected) res = injected;
 			}
-			if (!res) res = await fetch(url, { ...init, signal: composeSignal(init.signal, timeoutMs) });
+			// A caller-pinned dispatcher (alert delivery) only works through undici's
+			// own fetch; see pinnedFetch in ssrf.js.
+			// undici's Response is the same WHATWG Response the global returns.
+			const send = /** @type {typeof fetch} */ (init.dispatcher ? pinnedFetch : fetch);
+			if (!res) res = await send(url, { ...init, signal: composeSignal(init.signal, timeoutMs) });
 		} catch (err) {
 			if (init.signal?.aborted) throw err;
 			const e = new UpstreamError(`${shown}: ${err?.name === 'TimeoutError' ? `timed out after ${timeoutMs}ms` : err?.message || 'network error'}`, { url: shown, cause: err });

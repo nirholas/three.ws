@@ -6,6 +6,13 @@ vi.mock('node:dns/promises', () => ({
 	lookup: vi.fn(async () => [{ address: '93.184.216.34', family: 4 }]),
 }));
 
+// safeFetchJson sends through undici's own fetch (pinnedFetch); route it to the
+// global each case stubs with its response.
+vi.mock('undici', async (importOriginal) => ({
+	...(await importOriginal()),
+	fetch: (...args) => globalThis.fetch(...args),
+}));
+
 const { safeFetchJson } = await import('../api/_lib/ssrf.js');
 
 const realFetch = globalThis.fetch;

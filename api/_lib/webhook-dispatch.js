@@ -31,7 +31,7 @@ import { sql } from './db.js';
 import { createHmac, randomBytes } from 'node:crypto';
 import { randomToken, hmacSha256 } from './crypto.js';
 import { readTextCapped } from './read-capped.js';
-import { validatePublicUrl, resolvePublicHost, pinnedAgent, disposeAgent, SsrfError } from './ssrf.js';
+import { validatePublicUrl, resolvePublicHost, pinnedAgent, pinnedFetch, disposeAgent, SsrfError } from './ssrf.js';
 
 const DELIVERY_TIMEOUT_MS = 10_000;
 const LEASE_SECONDS = 30;
@@ -447,7 +447,9 @@ export async function deliver(url, secret, eventId, body) {
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
 	try {
-		const res = await fetch(target, {
+		// A pinned agent needs undici's own fetch (see pinnedFetch); the unpinned
+		// local-testing path keeps the global.
+		const res = await (agent ? pinnedFetch : fetch)(target, {
 			method: 'POST',
 			redirect: 'manual',
 			...(agent ? { dispatcher: agent } : {}),

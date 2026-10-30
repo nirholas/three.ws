@@ -26,9 +26,9 @@
 // there is one function to call and no room to compose them wrongly.
 
 import { ERR_CANNOT_CONNECT, ERR_INVALID_AUTH, normalizeBaseUrl } from '@three-ws/home-bridge';
-import { Agent } from 'undici';
+import { Agent, WebSocket as UndiciWebSocket } from 'undici';
 
-import { isPrivateAddress, pinnedAgent, resolvePublicHost, SsrfError } from './ssrf.js';
+import { isPrivateAddress, pinnedAgent, pinnedFetch, resolvePublicHost, SsrfError } from './ssrf.js';
 
 /**
  * Refusal to dial a home. `code` is stable and safe to branch on; `message` is
@@ -195,8 +195,10 @@ function localPinnedAgent(expectedHost, addresses) {
 /**
  * A pinned WebSocket to the home's state channel.
  *
- * Node's global WebSocket is undici's, and it honours a `dispatcher`, so the
- * same pin that protects our HTTP calls protects the socket. Verified against a
+ * undici's WebSocket honours a `dispatcher`, so the same pin that protects our
+ * HTTP calls protects the socket. It is undici's own WebSocket rather than
+ * Node's global: the global is the runtime's bundled undici, which rejects an
+ * Agent from our undici dependency (see pinnedFetch in ssrf.js). Verified against a
  * live Home Assistant: the pinned lookup is consulted for the socket handshake.
  * This matters more than the HTTP path does, because the socket is the channel
  * that stays open for the life of the connection.
@@ -213,7 +215,7 @@ export function pinnedHomeSocket(pin, wsUrl, protocols = []) {
 	if (target.hostname !== pin.host) {
 		throw new HomeUrlError('host_pin_mismatch', 'Refusing to open a socket to a host we did not validate.');
 	}
-	return new WebSocket(wsUrl, { protocols, dispatcher: homeDispatcher(pin) });
+	return new UndiciWebSocket(wsUrl, { protocols, dispatcher: homeDispatcher(pin) });
 }
 
 /**
@@ -229,7 +231,7 @@ export function pinnedHomeSocket(pin, wsUrl, protocols = []) {
  * @param {object} [init] fetch init, plus `timeoutMs` and `maxRedirects`
  */
 export async function homeFetch(pin, url, init = {}) {
-	const { timeoutMs = DIAL_TIMEOUT_MS, maxRedirects = 2, fetchImpl = fetch, ...rest } = init;
+	const { timeoutMs = DIAL_TIMEOUT_MS, maxRedirects = 2, fetchImpl = pinnedFetch, ...rest } = init;
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(), timeoutMs);
 	let current = new URL(url);
@@ -365,7 +367,7 @@ export function homeSocketFactory(expectedHost, dispatcherFor) {
 		}
 
 		const connect = (triesLeft, resolve, reject) => {
-			const socket = new WebSocket(url, { dispatcher: dispatcherFor() });
+			const socket = new UndiciWebSocket(url, { dispatcher: dispatcherFor() });
 			let invalidAuth = false;
 
 			const onClose = () => {

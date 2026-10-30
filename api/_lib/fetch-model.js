@@ -9,7 +9,7 @@
 // proxy. This fetcher adds the model-specific concerns on top: a byte size cap
 // and a total request/streaming timeout.
 
-import { SsrfError, disposeAgent, pinnedAgent, resolvePublicHost, validatePublicUrl } from './ssrf.js';
+import { SsrfError, disposeAgent, pinnedAgent, pinnedFetch, resolvePublicHost, validatePublicUrl } from './ssrf.js';
 
 const DEFAULT_MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 const DEFAULT_TIMEOUT_MS = 20_000;
@@ -76,7 +76,7 @@ export async function fetchModel(rawUrl, opts = {}) {
 			await disposeAgent(agent);
 			agent = pinnedAgent(currentUrl.hostname, addrs);
 
-			const res = await fetch(currentUrl, {
+			const res = await pinnedFetch(currentUrl, {
 				method: 'GET',
 				redirect: 'manual',
 				signal: controller.signal,
