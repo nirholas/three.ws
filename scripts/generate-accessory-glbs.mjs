@@ -702,16 +702,16 @@ function orbitCrownParts() {
 	// the skull the same way the laurel's leaf tips do, instead of floating wide.
 	const ORBIT_R = 0.155;
 	const ORBIT_Y = BAND_Y + 0.06;
-	const PEARL_R = 0.012;
+	const PEARL_R = 0.02;
 	const GOLD = [0.9, 0.74, 0.26];
 
 	const flat = quatAxis('x', -Math.PI / 2); // torus is authored in XY; lay it in XZ
 	const band = transformGeom(
-		torus({ r1: BAND_R, r2: 0.0048, segments: 48, tubeSegments: 8 }),
+		torus({ r1: BAND_R, r2: 0.0085, segments: 56, tubeSegments: 10 }),
 		{ rotation: flat, translate: [0, BAND_Y, 0] },
 	);
 	const orbit = transformGeom(
-		torus({ r1: ORBIT_R, r2: 0.0024, segments: 64, tubeSegments: 6 }),
+		torus({ r1: ORBIT_R, r2: 0.0048, segments: 72, tubeSegments: 8 }),
 		{ rotation: flat, translate: [0, ORBIT_Y, 0] },
 	);
 
@@ -720,7 +720,7 @@ function orbitCrownParts() {
 	const reach = ORBIT_R - BAND_R;
 	const rise = ORBIT_Y - BAND_Y;
 	const lean = Math.atan2(reach, rise);
-	const stemBase = cylinder({ r: 0.0032, y0: 0, y1: Math.hypot(reach, rise), segments: 8 });
+	const stemBase = cylinder({ r: 0.0048, y0: 0, y1: Math.hypot(reach, rise), segments: 8 });
 	const pearlBase = sphere({ r: PEARL_R, segments: 14, rings: 10 });
 	const stems = [];
 	const pearls = [];
@@ -739,7 +739,7 @@ function orbitCrownParts() {
 		{ name: 'circlet', geom: band, color: GOLD, metallic: 0.88, roughness: 0.24 },
 		{ name: 'stems', geom: mergeGeoms(stems), color: GOLD, metallic: 0.88, roughness: 0.24 },
 		{ name: 'orbit', geom: orbit, color: [0.97, 0.88, 0.6], metallic: 0.9, roughness: 0.18 },
-		{ name: 'pearls', geom: mergeGeoms(pearls), color: [0.95, 0.95, 0.97], metallic: 0.2, roughness: 0.12 },
+		{ name: 'pearls', geom: mergeGeoms(pearls), color: [1, 0.98, 0.94], metallic: 0.05, roughness: 0.22 },
 	];
 }
 
