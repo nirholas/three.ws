@@ -63,9 +63,9 @@
     "@types/node": "^24.0.0",
     "gzip-size": "^7.0.0",
     "hoodchain": "file:../robinhood-chain-sdk",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.0",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
     "viem": "^2.55.0",
-    "vitest": "^4.1.12"
+    "vitest": "^5.0.5"
   }
 }
