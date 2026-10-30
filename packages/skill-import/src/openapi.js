@@ -5,7 +5,7 @@
 // readme.com) and is already a dependency of this package for exactly that
 // reason.
 
-import yaml from 'js-yaml';
+import { load as loadYaml } from 'js-yaml';
 import { convertObj } from 'swagger2openapi';
 
 export class OpenApiParseError extends Error {}
@@ -22,7 +22,7 @@ function parseText(text) {
 		}
 	}
 	try {
-		return yaml.load(trimmed);
+		return loadYaml(trimmed);
 	} catch (err) {
 		throw new OpenApiParseError(`not valid YAML: ${err.message}`);
 	}
