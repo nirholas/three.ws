@@ -9,6 +9,7 @@
     "emitDecoratorMetadata": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "types": ["node"],
     "outDir": "dist"
   },
   "include": ["bin/**/*.ts", "lib/**/*.ts"],
