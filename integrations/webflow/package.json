@@ -13,17 +13,18 @@
 		"typecheck": "tsc --noEmit -p tsconfig.json"
 	},
 	"devDependencies": {
-		"@types/react": "^18.2.0",
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
 		"@webflow/data-types": "^2.7.0",
 		"@webflow/react": "^2.7.0",
 		"@webflow/webflow-cli": "2.12.0",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
-		"typescript": "^5.4.0"
+		"react": "^19.3.1",
+		"react-dom": "^19.3.1",
+		"typescript": "^6.0.3"
 	},
 	"peerDependencies": {
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0"
+		"react": "^18.2.0 || ^19.0.0",
+		"react-dom": "^18.2.0 || ^19.0.0"
 	},
 	"overrides": {
 		"form-data@^4": "^4.0.6",

@@ -7,7 +7,9 @@
 import { useEffect, useRef } from 'react';
 import { AGENT3D_JS_INTEGRITY, AGENT3D_JS_URL } from './pinned-release';
 
-declare global {
+// React 19 types dropped the global JSX namespace; the react-jsx runtime reads
+// React.JSX on both 18.2.6+ and 19, so augment it there.
+declare module 'react' {
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace JSX {
 		interface IntrinsicElements {
