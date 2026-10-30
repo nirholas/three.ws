@@ -52,9 +52,8 @@ let currentHeadings = []
 function makeRenderer() {
   const renderer = new marked.Renderer()
 
-  renderer.code = function (codeOrToken, infostring) {
-    const code = typeof codeOrToken === 'object' ? codeOrToken.text : codeOrToken
-    const rawLang = (typeof codeOrToken === 'object' ? codeOrToken.lang : infostring) || ''
+  renderer.code = function ({ text: code, lang: infoString }) {
+    const rawLang = infoString || ''
     const lang = (rawLang.split(/\s+/)[0] || '').toLowerCase()
     const canonical = LANG_ALIAS[lang] ?? (HLJS_LANGS.has(lang) ? lang : 'plaintext')
     let highlighted
@@ -73,30 +72,15 @@ function makeRenderer() {
     )
   }
 
-  renderer.heading = function (textOrToken, levelArg) {
-    let text, level
-    if (typeof textOrToken === 'object') {
-      level = textOrToken.depth
-      text = this.parser.parseInline(textOrToken.tokens)
-    } else {
-      text = textOrToken
-      level = levelArg
-    }
+  renderer.heading = function ({ tokens, depth: level }) {
+    const text = this.parser.parseInline(tokens)
     const id = slugifyHeading(text)
     if (level === 2 || level === 3) currentHeadings.push({ level, text: stripTags(text), id })
     return `<h${level} id="${id}"><a class="anchor" href="#${id}" aria-label="Link to this section">#</a>${text}</h${level}>`
   }
 
-  renderer.link = function (hrefOrToken, title, text) {
-    let href, tokenText
-    if (typeof hrefOrToken === 'object') {
-      href = hrefOrToken.href
-      title = hrefOrToken.title
-      tokenText = this.parser.parseInline(hrefOrToken.tokens)
-    } else {
-      href = hrefOrToken
-      tokenText = text
-    }
+  renderer.link = function ({ href, title, tokens }) {
+    const tokenText = this.parser.parseInline(tokens)
     const external = /^https?:\/\//.test(href) && !href.includes('nirholas.github.io')
     const attrs = external ? ' target="_blank" rel="noopener noreferrer"' : ''
     const t = title ? ` title="${title}"` : ''
