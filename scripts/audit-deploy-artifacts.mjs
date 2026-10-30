@@ -136,6 +136,7 @@ const KNOWN_UNUSED_PEERS = new Set([
 	'@types/react-transition-group|@types/react', // types-only
 	'arweave-stream-tx|arweave', // arweave upload path unused
 	'colyseus|@colyseus/uwebsockets-transport', // we use the default WS transport
+	'@colyseus/core|@pm2/io', // build/Stats.mjs dynamic-imports it inside .catch(() => {}) for PM2 metrics only; Cloud Run never runs PM2
 	'livekit-client|@types/dom-mediacapture-record', // types-only
 	'react-native-webrtc|react-native', // web build never hits RN paths
 	'three-gpu-pathtracer|xatlas-web', // UVUnwrapper-only; we import WebGLPathTracer from the index, which never re-exports UVUnwrapper
