@@ -35,8 +35,8 @@
   },
   "homepage": "https://three.ws",
   "devDependencies": {
-    "tsup": "^8.0.2",
-    "typescript": "^5.4.5",
-    "vitest": "^4.1.12"
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
   }
 }
