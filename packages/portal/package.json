@@ -50,7 +50,7 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"zod": "^3.23.8"
+		"zod": "^4.6.7"
 	},
 	"scripts": {
 		"test": "vitest run --root ../.. tests/portal-layout.test.js"

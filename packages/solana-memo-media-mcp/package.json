@@ -17,5 +17,5 @@
 	"exports": { ".": "./src/index.js", "./src/lib/media.js": "./src/lib/media.js", "./src/lib/memos.js": "./src/lib/memos.js" },
 	"engines": { "node": ">=20" },
 	"scripts": { "start": "node src/index.js", "test": "node --test \"test/**/*.test.mjs\"", "inspect": "npx -y @modelcontextprotocol/inspector node src/index.js" },
-	"dependencies": { "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^3.23.8" }
+	"dependencies": { "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^4.6.7" }
 }

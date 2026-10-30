@@ -54,11 +54,11 @@
     "url": "https://github.com/nirholas/three.ws/issues"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19"
   },
   "dependencies": {
     "@noble/curves": "^2.2.0",
-    "@noble/hashes": "^1.8.0",
+    "@noble/hashes": "^2.4.0",
     "bs58": "^6.0.0"
   },
   "publishConfig": {

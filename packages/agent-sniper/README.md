@@ -66,7 +66,7 @@ npm i better-sqlite3   # durable Store (src/adapters/store/sqlite.js)
 npm i express          # the x402 HTTP API face
 ```
 
-Requires Node >= 20.
+Requires Node >= 22.
 
 ---
 

@@ -123,11 +123,6 @@ function findSymlinksOnDisk(root) {
 // after verifying the code paths that need it are never reached, add it here
 // with a justification.
 const KNOWN_UNUSED_PEERS = new Set([
-	'@solana/pay|@solana-program/memo', // memo ix builder — we never attach memos via @solana/pay
-	'@solana/pay|@solana-program/token-2022', // token-2022 transfers unused (legacy SPL only)
-	'@solana/pay|@solana/kit-plugin-instruction-plan', // kit plugin paths unused
-	'@solana/pay|@solana/kit-plugin-payer', // kit plugin paths unused
-	'@solana/pay|@solana/kit-plugin-rpc', // kit plugin paths unused
 	'@hey-api/client-fetch|@hey-api/openapi-ts', // codegen CLI, build-time only
 	'@lit/react|@types/react', // types-only
 	'@recast-navigation/three|@types/three', // types-only
