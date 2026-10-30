@@ -52,7 +52,7 @@ A minimal buyer, using any x402/b402 client. The flow is the standard 402 dance:
 
 ```js
 import { privateKeyToAccount } from 'viem/accounts';
-import { buildEip3009Payment, encodeXPayment } from '@bnb-chain/mpp/b402';
+import { buildEip3009Payment, encodeXPayment } from '@bnb-chain/b402';
 
 const account = privateKeyToAccount(process.env.BNB_TESTNET_DEPLOYER_KEY);
 const url = 'https://three.ws/api/x402/three-intel';

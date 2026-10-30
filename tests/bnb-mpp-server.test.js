@@ -11,7 +11,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { getAddress } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
-import { buildEip3009Payment, encodeXPayment } from '@bnb-chain/mpp/b402';
+import { buildEip3009Payment, encodeXPayment } from '@bnb-chain/b402';
 import {
 	mppRequirements,
 	mppChallenge,

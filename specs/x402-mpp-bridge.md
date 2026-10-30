@@ -103,5 +103,5 @@ but the merchant MUST reconcile on-chain rather than assume the payment is absen
   `mppSettle`, `looksLikeMppPayment`, replay guard.
 - `api/_lib/bnb/mpp-buyer.js` — `mppFetch`, `selectRequirement`, cap enforcement.
 - `api/x402/three-intel.js` — the reference dual-protocol endpoint.
-- `@bnb-chain/mpp/b402` — the shared x402 v2 primitives (`buildEip3009Payment`,
+- `@bnb-chain/b402`: the shared x402 v2 primitives (`buildEip3009Payment`,
   `decodeXPayment`, `recoverEip3009Payer`, `B402Client`).

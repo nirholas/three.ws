@@ -2,7 +2,7 @@
  * MPP (BNB Machine Payments Protocol) server adapter — accept BNB-ecosystem
  * payments on a paid endpoint, ADDITIVELY alongside our existing x402 stack.
  *
- * `@bnb-chain/mpp`'s b402 layer IS x402 v2 (CDP wire-shape compatible): the same
+ * The b402 layer (`@bnb-chain/b402`) IS x402 v2 (CDP wire-shape compatible): the same
  * `X-PAYMENT` / `X-PAYMENT-RESPONSE` headers and EIP-3009 credential our Base
  * x402 path already uses. So "speaking MPP" here means advertising an extra
  * `accepts[]` entry for BNB Chain (`eip155:56`/`97`) and, when a buyer pays on a
@@ -23,7 +23,7 @@ import {
 	recoverEip3009Payer,
 	encodeXPaymentResponse,
 	chainIdFromNetwork,
-} from '@bnb-chain/mpp/b402/server';
+} from '@bnb-chain/b402/server';
 import { getRedis } from '../redis.js';
 
 /** CAIP-2 networks this adapter accepts (BNB Chain only; Solana/Base stay on x402). */
@@ -63,7 +63,7 @@ export function mppEnabled() {
  * it can accept.
  *
  * @param {{ route:string, priceAtomics:string|number, network?:string, description?:string, supported?:object }} routeMeta
- * @returns {Promise<import('@bnb-chain/mpp/b402').PaymentRequirements>}
+ * @returns {Promise<import('@bnb-chain/b402').PaymentRequirements>}
  */
 export async function mppRequirements(routeMeta) {
 	const network = routeMeta.network || cfg('MPP_NETWORK', MPP_NETWORKS.bscTestnet);
@@ -170,8 +170,8 @@ async function reserveNonce(key) {
  * Never throws for a normal "no/invalid payment" — returns a typed result.
  *
  * @param {{ headers: Record<string,string|undefined> | Headers }} req
- * @param {import('@bnb-chain/mpp/b402').PaymentRequirements} requirements OUR pinned requirements
- * @param {{ client?: import('@bnb-chain/mpp/b402/server').B402Client, skipReplay?: boolean }} [opts]
+ * @param {import('@bnb-chain/b402').PaymentRequirements} requirements OUR pinned requirements
+ * @param {{ client?: import('@bnb-chain/b402/server').B402Client, skipReplay?: boolean }} [opts]
  * @returns {Promise<
  *   { ok:true, payload:object, payer:string, client:object|null, settleable:boolean } |
  *   { ok:false, code:string, status:number, reason:string }
@@ -244,7 +244,7 @@ export async function mppVerify(req, requirements, opts = {}) {
  * fabricates a receipt.
  *
  * @param {object} payload the verified PaymentPayload from mppVerify
- * @param {import('@bnb-chain/mpp/b402').PaymentRequirements} requirements
+ * @param {import('@bnb-chain/b402').PaymentRequirements} requirements
  * @param {{ client?: object|null }} [opts]
  * @returns {Promise<{ ok:true, settlement:object, paymentResponseHeader:string } | { ok:false, code:string, status:number, reason:string }>}
  */

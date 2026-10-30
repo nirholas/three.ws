@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import { getAddress } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
-import { encodeXPaymentResponse } from '@bnb-chain/mpp/b402/server';
+import { encodeXPaymentResponse } from '@bnb-chain/b402/server';
 import { mppFetch, MppBuyerError, MPP_BUYER_NETWORKS } from '../api/_lib/bnb/mpp-buyer.js';
 
 const account = privateKeyToAccount(generatePrivateKey());

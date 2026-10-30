@@ -18,13 +18,6 @@ updates:
       - dependencies
       - pump.fun
     ignore:
-      # 0.7.0 removed the './b402' and './b402/server' exports that
-      # api/_lib/bnb/mpp-server.js and mpp-buyer.js import (the b402 layer moved
-      # to @bnb-chain/b402 and @bnb-chain/mpp-b402). Merging that bump 500ed the
-      # BSC rail on import (2026-09-18). Lift this once the adapters are ported.
-      - dependency-name: "@bnb-chain/mpp"
-        versions:
-          - ">=0.3.0"
       # The multiplayer server must speak the wire protocol of the colyseus.js
       # client the web app ships (0.16, schema 3 decoding). A 0.18 server built
       # an image that dropped every player on join, and the bump skipped

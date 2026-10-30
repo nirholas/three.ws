@@ -6,7 +6,7 @@
  *
  * b402 is x402 v2, so the 402 → sign EIP-3009 → retry-with-`X-PAYMENT` dance is
  * the same one our Base x402 buyer runs — this module just targets BNB networks
- * (`eip155:56` / `eip155:97`) and signs with `@bnb-chain/mpp`'s
+ * (`eip155:56` / `eip155:97`) and signs with `@bnb-chain/b402`'s
  * `buildEip3009Payment`. A HARD `maxSpend` cap is enforced BEFORE any signature:
  * an endpoint quoting above the cap is refused with zero payment attempted.
  *
@@ -22,7 +22,7 @@
  *   if (res.ok) console.log(res.result, res.settlement);
  */
 
-import { buildEip3009Payment, encodeXPayment, decodeXPaymentResponse } from '@bnb-chain/mpp/b402';
+import { buildEip3009Payment, encodeXPayment, decodeXPaymentResponse } from '@bnb-chain/b402';
 
 /** CAIP-2 networks this buyer will pay on. */
 export const MPP_BUYER_NETWORKS = ['eip155:56', 'eip155:97'];
