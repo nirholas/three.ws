@@ -25,3 +25,27 @@ updates:
       - dependency-name: "@bnb-chain/mpp"
         versions:
           - ">=0.3.0"
+      # The multiplayer server must speak the wire protocol of the colyseus.js
+      # client the web app ships (0.16, schema 3 decoding). A 0.18 server built
+      # an image that dropped every player on join, and the bump skipped
+      # multiplayer/package-lock.json, so the image stopped building at all
+      # (2026-10-30). Move server and client together, by hand, never here.
+      # tests/multiplayer-colyseus-pin.test.js holds the pair in step.
+      - dependency-name: "@colyseus/core"
+        versions:
+          - ">=0.17.0"
+      - dependency-name: "@colyseus/monitor"
+        versions:
+          - ">=0.17.0"
+      - dependency-name: "@colyseus/ws-transport"
+        versions:
+          - ">=0.17.0"
+      - dependency-name: "@colyseus/redis-driver"
+        versions:
+          - ">=0.17.0"
+      - dependency-name: "@colyseus/redis-presence"
+        versions:
+          - ">=0.17.0"
+      - dependency-name: "@colyseus/schema"
+        versions:
+          - ">=4.0.0"
