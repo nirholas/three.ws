@@ -19,6 +19,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'node:stream';
 
+// Confirm signs a purchase receipt, and api/_lib/receipt-key.js refuses to sign
+// without a real key, so the suite supplies one the way production does.
+process.env.PURCHASE_RECEIPT_KEY ||= 'test-purchase-receipt-key-0123456789abcdef';
+
 // ── Mock layer ──────────────────────────────────────────────────────────────
 
 const authState = { session: { id: 'aaaa0000-0000-0000-0000-000000000001' } };
