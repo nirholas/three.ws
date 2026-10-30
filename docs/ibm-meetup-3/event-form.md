@@ -48,7 +48,7 @@ Then press **Save and Continue**.
 
 ## If the next screen asks for these
 
-**Event image:** [meetup-3-ibm-listing-banner.png](../media/meetup-3-ibm-listing-banner.png) (2400x1200, three.ws branding only). If IBM prefers a co-branded image, IBM's team supplies it with IBM's own mark.
+**Event image:** [meetup-3-ibm-community-banner.png](../media/meetup-3-ibm-community-banner.png) (2400x1200). It is the August listing's banner with the new title and date: same blue field, same chrome cube, and the same IBM logo and three.ws lockup, taken unchanged from the August image rather than redrawn. Use it on the IBM Community listing only. If IBM wants a different image, [meetup-3-ibm-listing-banner.png](../media/meetup-3-ibm-listing-banner.png) is the same size with three.ws branding only.
 
 **Location:** Online, at `https://three.ws/play`.
 
