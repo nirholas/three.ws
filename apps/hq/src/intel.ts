@@ -7,10 +7,6 @@
  * No 3D globe, no deck.gl, no MapLibre - purely panel-based.
  */
 
-import { inject } from '@vercel/analytics';
-
-inject();
-
 // ── Scoped styles (defined first so they're available at boot) ───────
 const INTEL_STYLES = `
   :host {

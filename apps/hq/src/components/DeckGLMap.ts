@@ -477,7 +477,7 @@ export class DeckGLMap {
         fatalities: Number.isFinite(p.fatalities) ? Number(p.fatalities) : 0,
       },
     }));
-    this.protestSC = new Supercluster({
+    this.protestSC = new Supercluster<Record<string, unknown>, Record<string, unknown>>({
       radius: 60,
       maxZoom: 14,
       map: (props: Record<string, unknown>) => ({
@@ -513,7 +513,7 @@ export class DeckGLMap {
         type: h.type,
       },
     }));
-    this.techHQSC = new Supercluster({
+    this.techHQSC = new Supercluster<Record<string, unknown>, Record<string, unknown>>({
       radius: 50,
       maxZoom: 14,
       map: (props: Record<string, unknown>) => ({
@@ -547,7 +547,7 @@ export class DeckGLMap {
         daysUntil: e.daysUntil,
       },
     }));
-    this.techEventSC = new Supercluster({
+    this.techEventSC = new Supercluster<Record<string, unknown>, Record<string, unknown>>({
       radius: 50,
       maxZoom: 14,
       map: (props: Record<string, unknown>) => {
@@ -587,7 +587,7 @@ export class DeckGLMap {
         status: dc.status,
       },
     }));
-    this.datacenterSC = new Supercluster({
+    this.datacenterSC = new Supercluster<Record<string, unknown>, Record<string, unknown>>({
       radius: 70,
       maxZoom: 14,
       map: (props: Record<string, unknown>) => ({

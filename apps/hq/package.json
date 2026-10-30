@@ -43,13 +43,12 @@
     "@tauri-apps/cli": "^2.10.0",
     "@types/d3": "^7.4.3",
     "@types/maplibre-gl": "^1.13.2",
-    "@types/supercluster": "^7.1.3",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
-    "markdownlint-cli2": "^0.23.3",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.7",
-    "vite-plugin-pwa": "^1.2.0",
+    "markdownlint-cli2": "^0.24.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0",
     "ws": "^8.19.0"
   },
   "dependencies": {
@@ -60,14 +59,13 @@
     "@deck.gl/mapbox": "^9.2.6",
     "@huggingface/transformers": "^4.3.1",
     "@upstash/redis": "^1.36.1",
-    "@vercel/analytics": "^1.6.1",
     "d3": "^7.9.0",
     "deck.gl": "^9.2.6",
     "maplibre-gl": "^6.4.1",
     "onnxruntime-web": "^1.23.2",
-    "supercluster": "^8.0.1",
+    "supercluster": "^9.1.0",
     "topojson-client": "^3.1.0",
-    "youtubei.js": "^16.0.1"
+    "youtubei.js": "^18.3.0"
   },
   "overrides": {
     "fflate@~0.7": "~0.7.5",

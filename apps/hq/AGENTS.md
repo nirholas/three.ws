@@ -19,7 +19,6 @@ HQ is a real-time DeFi and crypto market intelligence dashboard for [three.ws](h
 - **Desktop**: Tauri v2 (macOS/Windows native app)
 - **API**: Vercel Serverless Functions (JavaScript, deployed on Vercel)
 - **Caching**: Upstash Redis (edge caching for API routes)
-- **Analytics**: @vercel/analytics
 - **Testing**: Playwright (E2E + visual regression), Node test runner (unit)
 - **Package Manager**: npm
 
