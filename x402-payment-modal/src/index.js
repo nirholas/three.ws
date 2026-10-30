@@ -73,22 +73,24 @@ const CONFIG = {
 	// at a self-hosted mirror to satisfy a strict Content-Security-Policy — your URL
 	// is always tried first.
 	esm: {
-		solanaWeb3: 'https://esm.sh/@solana/web3.js@1.95.3?bundle',
-		nobleHashesSha3: 'https://esm.sh/@noble/hashes@1.4.0/sha3?bundle',
+		solanaWeb3: 'https://esm.sh/@solana/web3.js@1.99.0?bundle',
+		nobleHashesSha3: 'https://esm.sh/@noble/hashes@2.4.0/sha3.js',
 	},
 };
 
 // Independent CDN fallbacks tried (in order, after the configured primary) if the
 // primary is slow or down. Three uncorrelated providers ≈ no single point of
 // failure for the dynamic crypto-helper import that the Solana path depends on.
+// Skypack no longer builds new releases, so its web3.js entry stays on the last
+// version it serves (1.95.3, API-compatible for the calls made here).
 const ESM_FALLBACKS = {
 	solanaWeb3: [
-		'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/+esm',
+		'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.99.0/+esm',
 		'https://cdn.skypack.dev/@solana/web3.js@1.95.3',
 	],
 	nobleHashesSha3: [
-		'https://cdn.jsdelivr.net/npm/@noble/hashes@1.4.0/sha3/+esm',
-		'https://cdn.skypack.dev/@noble/hashes@1.4.0/sha3',
+		'https://cdn.jsdelivr.net/npm/@noble/hashes@2.4.0/sha3.js/+esm',
+		'https://unpkg.com/@noble/hashes@2.4.0/sha3.js',
 	],
 };
 const ESM_IMPORT_TIMEOUT_MS = 12_000;
@@ -512,7 +514,7 @@ function base58encode(bytes) {
 let _evmChecksum = null;
 async function loadEvmChecksum() {
 	if (_evmChecksum) return _evmChecksum;
-	const sha3 = await importWithFallback(CONFIG.esm.nobleHashesSha3, ESM_FALLBACKS.nobleHashesSha3, '@noble/hashes/sha3');
+	const sha3 = await importWithFallback(CONFIG.esm.nobleHashesSha3, ESM_FALLBACKS.nobleHashesSha3, '@noble/hashes/sha3.js');
 	const keccak = sha3.keccak_256;
 	_evmChecksum = (addr) => {
 		const a = String(addr).toLowerCase().replace(/^0x/, '');

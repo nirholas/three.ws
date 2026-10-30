@@ -229,8 +229,8 @@ configure({
   builderCode: { wallet: 'acme', service: 'acme_checkout' },
 
   // Override the on-demand CDN modules (e.g. to self-host under a strict CSP).
-  solanaWeb3Url: 'https://esm.sh/@solana/web3.js@1.95.3?bundle',
-  nobleHashesUrl: 'https://esm.sh/@noble/hashes@1.4.0/sha3?bundle',
+  solanaWeb3Url: 'https://esm.sh/@solana/web3.js@1.99.0?bundle',
+  nobleHashesUrl: 'https://esm.sh/@noble/hashes@2.4.0/sha3.js',
 });
 ```
 

@@ -24,8 +24,8 @@ getConfig(); // → fully-resolved snapshot
 | `apiOrigin` | `string \| null` | `null` → script origin | Origin of the Solana `prepare`/`encode` helper. `''` = same-origin. Ignored by the EVM path. |
 | `brand` | `{ label?, href? }` | `Powered by three.ws` → `https://three.ws` | Footer attribution. Merge-updated (set only `label` and `href` survives). |
 | `builderCode` | `{ wallet?, service? } \| null` | `{ wallet: '3d_agent', service: '3d_agent_modal' }` | ERC-8021 self-attribution echoed when the `402` declares a builder code. `null` disables the echo. Codes must match `^[a-z0-9_]{1,32}$`. |
-| `solanaWeb3Url` | `string` | `esm.sh/@solana/web3.js@1.95.3` | CDN module dynamic-imported on the Solana path. Repoint to self-host under a strict CSP. |
-| `nobleHashesUrl` | `string` | `esm.sh/@noble/hashes@1.4.0/sha3` | CDN keccak module, used only for EVM SIWX sign-in. |
+| `solanaWeb3Url` | `string` | `esm.sh/@solana/web3.js@1.99.0` | CDN module dynamic-imported on the Solana path. Repoint to self-host under a strict CSP. |
+| `nobleHashesUrl` | `string` | `esm.sh/@noble/hashes@2.4.0/sha3.js` | CDN keccak module, used only for EVM SIWX sign-in. |
 
 `configure()` merges: `configure({ brand: { label: 'X' } })` keeps the existing
 `href`. Pass `apiOrigin: null` to reset to script-origin resolution; pass

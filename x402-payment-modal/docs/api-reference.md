@@ -96,8 +96,8 @@ configure({
   footerNote: 'Secured by x402',
   builderCode: { wallet: 'examplewallet', service: 'example_api' },
   esm: {
-    solanaWeb3: 'https://esm.sh/@solana/web3.js@1.95.0',
-    nobleHashesSha3: 'https://esm.sh/@noble/hashes@1/sha3',
+    solanaWeb3: 'https://esm.sh/@solana/web3.js@1.99.0',
+    nobleHashesSha3: 'https://esm.sh/@noble/hashes@2.4.0/sha3.js',
   },
 });
 ```

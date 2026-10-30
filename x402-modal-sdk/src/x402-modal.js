@@ -62,8 +62,8 @@ const DEFAULTS = {
 	builderCode: { wallet: '3d_agent', service: '3d_agent_modal' },
 	// CDN modules dynamic-imported on demand. Override to self-host / satisfy a
 	// strict Content-Security-Policy.
-	solanaWeb3Url: 'https://esm.sh/@solana/web3.js@1.95.3?bundle',
-	nobleHashesUrl: 'https://esm.sh/@noble/hashes@1.4.0/sha3?bundle',
+	solanaWeb3Url: 'https://esm.sh/@solana/web3.js@1.99.0?bundle',
+	nobleHashesUrl: 'https://esm.sh/@noble/hashes@2.4.0/sha3.js',
 };
 
 const config = {
