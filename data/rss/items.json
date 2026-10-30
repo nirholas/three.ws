@@ -2,6 +2,24 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 80. Last merged from data/archives/trythreews_tweets_2026-06-03.json on 2026-06-05 (102 total items, merged June 2026 posts).",
   "items": [
     {
+      "id": "microsoft-partnership-marketplace",
+      "slug": "microsoft-partnership-marketplace",
+      "title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
+      "date": "2026-10-30T12:00:00.000Z",
+      "author": "three.ws",
+      "link": "https://three.ws/blog/three-ws-microsoft-partnership",
+      "summary": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace: open-source 3D AI agents with a body, voice, memory, skills and an on-chain identity, procurable through the storefront Microsoft customers already use.",
+      "body_html": "<p><strong>three.ws and Microsoft have announced a partnership, and three.ws is now live on <a href=\"https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview\" rel=\"noopener\">Microsoft Marketplace</a>.</strong> Open-source 3D AI agents (a body, a voice, memory, skills, a wallet and an on-chain identity) can now be found and procured through the storefront Microsoft customers already use for cloud software, AI apps and agents.</p>\n<h2>What buyers get</h2>\n<p>The same platform that runs at <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a>: text, photo or sketch to a rigged and animated 3D model; an agent runtime with voice, emotion, memory, skills and lip-synced talk mode; the <code>&lt;agent-3d&gt;</code> web component that ships a finished agent into any page; MCP servers, SDKs and plugins for every AI client; and an agent economy on Solana with x402 pay-per-call, on-chain identity and reputation.</p>\n<h2>Already built on Microsoft technology</h2>\n<p>TRELLIS.2 from Microsoft Research is the default image-to-3D lane on the three.ws GPU fleet, ONNX Runtime Web runs models in the browser, Adaptive Cards render the Glance agent cards, and TypeScript and Playwright sit under every SDK and browser test.</p>\n<h2>Coverage</h2>\n<ul>\n<li><a href=\"https://coinmarketcap.com/community/articles/6ae3dfb3543b1b2fccd5fcf1/\" rel=\"noopener\">three.ws and Microsoft Announce Partnership</a> (CoinMarketCap)</li>\n<li><a href=\"https://coinmarketcap.com/community/articles/6ae275a5e7c4846f5d1cca15/\" rel=\"noopener\">three.ws Live on Microsoft Marketplace, Bringing Open-Source 3D AI Agents to Enterprise</a> (CoinMarketCap)</li>\n</ul>\n<p>Full announcement: <a href=\"https://three.ws/blog/three-ws-microsoft-partnership\" rel=\"noopener\">three.ws/blog/three-ws-microsoft-partnership</a>. Every partner and programme: <a href=\"https://three.ws/partners\" rel=\"noopener\">three.ws/partners</a>.</p>",
+      "tags": [
+        "partnership",
+        "microsoft",
+        "microsoft-marketplace",
+        "listing",
+        "enterprise",
+        "agent-3d"
+      ]
+    },
+    {
       "id": "huggingface-building-3d-ai-agents",
       "slug": "huggingface-building-3d-ai-agents",
       "title": "Inside three.ws: our second Hugging Face article, and the whole stack in one piece",

@@ -6,7 +6,7 @@ Source: [pages/partner-benefits.html](../pages/partner-benefits.html), route `/p
 
 ## What it covers
 
-One card per programme, in the same order as `/partners`: OpenAI (Select Partner), NVIDIA (Inception), IBM (Business Partner), Google Cloud (Web3 Startups), AWS (Partner), Alibaba Cloud (Marketplace), Quicknode (Startup Program), HackerNoon (Media). Each card has a designation chip, one factual lead sentence, three "what it brings you" points, and links to the deeper docs.
+One card per programme, in the same order as `/partners`: OpenAI (Select Partner), NVIDIA (Inception), IBM (Business Partner), Microsoft (Marketplace), Google Cloud (Web3 Startups), AWS (Partner), Alibaba Cloud (Marketplace), Quicknode (Startup Program), HackerNoon (Media). Each card has a designation chip, one factual lead sentence, three "what it brings you" points, and links to the deeper docs.
 
 ## Editing rules
 

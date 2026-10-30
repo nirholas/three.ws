@@ -4,16 +4,17 @@
 
 Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquiries go to **partners@three.ws** (the page's "Become a partner" call to action). Press and brand requests go to **partnerships@three.ws**, covered in [Press kit](./press-kit.md).
 
-**Read the status labels literally.** Each card carries a one-word tier chip that is a category, not a rank: Select Partner, Strategic, Cloud, Inception, Media, Infrastructure. Nothing on the page grants an endorsement, and several of the docs below carry explicit "this is not an endorsement" language that must survive any rewrite.
+**Read the status labels literally.** Each card carries a one-word tier chip that is a category, not a rank: Select Partner, Strategic, Marketplace, Cloud, Inception, Media, Infrastructure. Nothing on the page grants an endorsement, and several of the docs below carry explicit "this is not an endorsement" language that must survive any rewrite.
 
 ---
 
-## The eight cards, in page order
+## The nine cards, in page order
 
 | Partner | Chip on the card | Card links to | Deeper docs |
 |---|---|---|---|
 | OpenAI | Select Partner | `/openai` | [MCP 3D Studio (free)](./mcp-studio.md), [3D Studio (paid)](./mcp-3d-studio.md), [Custom GPT config](./chatgpt-3d-studio-gpt.md), [AR in ChatGPT](./chatgpt-ar.md), [Spatial MCP](./spatial-mcp.md) |
 | IBM | Strategic | `/blog/three-ws-ibm-business-partner` | [IBM watsonx and Granite](./ibm.md), [IBM Granite x402 MCP](./ibm-x402-mcp.md), [IBM visibility map](./ibm-visibility-map.md) |
+| Microsoft | Marketplace | `/blog/three-ws-microsoft-partnership` | [three.ws and Microsoft](./microsoft.md), [Listings and distribution](./listings.md) |
 | Amazon Web Services | Cloud | `/aws` | [AWS Marketplace](./aws-marketplace.md), [listing kit](./aws-marketplace-listing-kit.md), [partner spotlight](./aws-partner-spotlight.md) |
 | Google Cloud | Cloud | `/blog/three-ws-google-cloud-partnership` | [Production runbook](./ops/gcp-production.md), [credits plan](./ops/gcp-credits-plan.md), [model workers](./ops/gcp-model-workers.md) |
 | Alibaba Cloud | Cloud | `/blog/three-ws-alibaba-cloud-partnership` | [Listings and distribution](./listings.md), [the model router](./brain.md) |
@@ -21,7 +22,7 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 | HackerNoon | Media | `/blog/three-ws-hackernoon-partnership` | [Syndication](./syndication.md), [Listings and distribution](./listings.md) |
 | Quicknode | Infrastructure | `/blog/three-ws-quicknode-startup-program` | [Solana integration](./solana.md), [Listings and distribution](./listings.md) |
 
-The page's stat bar reads 8 partners, 22 chains, and an infinity glyph for scale. It is a `<dl>` and is read out to screen readers like any other content, so the two numbers have to stay true: the partner count is reconciled against the number of cards in the DOM on load, and 22 is the number of chains in `REGISTRY_DEPLOYMENTS` in [`src/erc8004/abi.js`](../src/erc8004/abi.js). The infinity glyph is framing, not a metric; it is announced as "Unbounded".
+The page's stat bar reads 9 partners, 22 chains, and an infinity glyph for scale. It is a `<dl>` and is read out to screen readers like any other content, so the two numbers have to stay true: the partner count is reconciled against the number of cards in the DOM on load, and 22 is the number of chains in `REGISTRY_DEPLOYMENTS` in [`src/erc8004/abi.js`](../src/erc8004/abi.js). The infinity glyph is framing, not a metric; it is announced as "Unbounded".
 
 ---
 
@@ -52,6 +53,19 @@ The page's stat bar reads 8 partners, 22 chains, and an infinity glyph for scale
 **The caveat that must not be dropped.** [`docs/ibm.md`](./ibm.md) states it plainly: three.ws is an IBM Business Partner, but the public showcase is not the partnership. The `/api/ibm/*` tools are an independent set of developer tools built on IBM's publicly available Granite models. They are not official IBM partnership deliverables, not IBM products, and not endorsed by IBM. The formal partnership work is being built on the IBM platform and is not yet public. Never present the public demos as that work.
 
 Live product surfaces: `three.ws/ibm/hello` (the partnership page) and `three.ws/ibm/x402-demo` (the x402 live demo).
+
+---
+
+## Microsoft
+
+**What the page claims.** three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace. Microsoft customers can find and procure open-source 3D AI agents through the storefront they already use, and TRELLIS.2 from Microsoft Research already powers the default image-to-3D lane. Card tags: Marketplace, TRELLIS.2, ONNX Runtime, Enterprise.
+
+**What the integration is.** Two things, kept apart the same way the NVIDIA section keeps membership and the hosted lane apart:
+
+- **The partnership and the listing.** Announced in October 2026 and covered by two CoinMarketCap articles. The three.ws publisher profile is live on [Microsoft Marketplace](https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview), the storefront that unified Azure Marketplace and Microsoft AppSource.
+- **Microsoft open source already in the stack.** TRELLIS.2 (the default image-to-3D lane on the GPU fleet), ONNX Runtime Web (on-device speech-to-text and wake-word detection), Adaptive Cards (the Glance agent cards), TypeScript and Playwright. These are dependencies used under their own licenses, not partnership deliverables.
+
+The full record, coverage links, and what is still in flight (the Copilot MCP certification package) are in [three.ws and Microsoft](./microsoft.md).
 
 ---
 
@@ -127,8 +141,8 @@ Do not resolve that spread by picking the strongest claim. If you need one sente
 
 Worth stating, because partner claims drift upward when nobody writes the boundary down:
 
-- **No Intel, Microsoft, or Oracle programme appears on `/partners`.** [`docs/listings.md`](./listings.md) records Microsoft Azure Marketplace as **on roadmap**. Third-party model or component names that appear in the stack (for example the image-to-3D backends listed in [3D Studio MCP](./mcp-3d-studio.md)) are technical dependencies, not partnerships.
-- **No tier is claimed beyond the chips on the cards.** "Strategic", "Cloud", "Media", and "Infrastructure" are groupings three.ws chose for its own page. Only two named programme statuses come from the partner: OpenAI Select Partner, and NVIDIA Inception member.
+- **No Intel or Oracle programme appears on `/partners`.** Microsoft does, since the October 2026 partnership and Marketplace listing; see [three.ws and Microsoft](./microsoft.md). Third-party model or component names that appear in the stack (for example the image-to-3D backends listed in [3D Studio MCP](./mcp-3d-studio.md)) are technical dependencies, not partnerships.
+- **No tier is claimed beyond the chips on the cards.** "Strategic", "Cloud", "Media", and "Infrastructure" are groupings three.ws chose for its own page. Only two named programme statuses come from the partner: OpenAI Select Partner, and NVIDIA Inception member. The Microsoft card's "Marketplace" chip names the listing, not a Microsoft partner tier; do not attach a Microsoft programme name to it until the owner confirms one.
 - **No endorsement is claimed anywhere.** OpenAI, IBM, and NVIDIA all carry explicit independence language in their docs. Reproduce it.
 
 ---
