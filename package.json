@@ -682,7 +682,7 @@
 		"@three-ws/solana-agent": "file:solana-agent-sdk",
 		"@upstash/qstash": "^2.12.0",
 		"@upstash/ratelimit": "2.2.0",
-		"@upstash/redis": "^1.39.0",
+		"@upstash/redis": "^1.40.0",
 		"@vercel/og": "^1.0.3",
 		"@wallet-standard/app": "^1.1.1",
 		"@walletconnect/ethereum-provider": "^2.24.0",
