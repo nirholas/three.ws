@@ -93,6 +93,28 @@ export const KEEPWARM_LANES = [
 		reason: 'us-central1 L4 grant is shared with the default image lanes; an opt-in lane does not earn a warm floor by default',
 	},
 	{
+		id: 'anigen',
+		urlEnv: 'MODEL_ANIGEN_URL',
+		region: 'us-central1',
+		accelerator: 'nvidia-l4',
+		safeByDefault: false,
+		// Opt-in pre-rigged lane (workers/model-anigen, BACKENDS.anigen
+		// .coldStartSeconds): never a default or failover target, so a warm floor
+		// is a quota decision and the shared us-central1 L4 grant goes to the
+		// default lanes first.
+		reason: 'us-central1 L4 grant is shared with the default image lanes; an opt-in lane does not earn a warm floor by default',
+	},
+	{
+		id: 'partcrafter',
+		urlEnv: 'MODEL_PARTCRAFTER_URL',
+		region: 'us-central1',
+		accelerator: 'nvidia-l4',
+		safeByDefault: false,
+		// Opt-in part-separated lane (workers/model-partcrafter): same reasoning as
+		// anigen and pixal3d, it is never routed to unless the caller asks for it.
+		reason: 'us-central1 L4 grant is shared with the default image lanes; an opt-in lane does not earn a warm floor by default',
+	},
+	{
 		id: 'hunyuan3d',
 		urlEnv: 'GCP_HUNYUAN3D_URL',
 		region: 'us-central1',
