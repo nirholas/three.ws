@@ -81,6 +81,7 @@ export const COSMETICS = [
 	{ id: 'aura-cyan', name: 'Cyan pulse', slot: 'aura', rarity: 'epic', tier: 'premium', price: 600, visual: { aura: '#00e5ff' }, swatch: '#00e5ff' },
 	{ id: 'aura-magenta', name: 'Magenta pulse', slot: 'aura', rarity: 'epic', tier: 'premium', price: 600, visual: { aura: '#ff2d95' }, swatch: '#ff2d95' },
 	{ id: 'aura-witchlight-halloween-2026', name: 'Witchlight', slot: 'aura', rarity: 'legendary', tier: 'event', price: 0, visual: { aura: '#ff7a1a' }, swatch: '#ff7a1a' },
+	{ id: 'aura-spotlight-dance-champ', name: 'Champion Spotlight', slot: 'aura', rarity: 'legendary', tier: 'event', price: 0, visual: { aura: '#ffe27a' }, swatch: '#ffe27a' },
 ];
 
 export const COSMETICS_BY_ID = new Map(COSMETICS.map((c) => [c.id, c]));

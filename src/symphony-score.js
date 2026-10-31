@@ -35,6 +35,7 @@ const TYPE_TO_CATEGORY = {
 	'level-up': 'arp',
 	'world-join': 'arp',
 	'mission-complete': 'arp',
+	'dance-off': 'jackpot',
 	'agora-task-posted': 'arp',
 	'agora-hired': 'arp',
 	'agora-task-claimed': 'arp',
@@ -285,6 +286,8 @@ export function describeEvent(evt) {
 			return { icon: '△', title: `${actor} joined ${e.coinName || e.coin || 'a world'}`, detail: '', href };
 		case 'mission-complete':
 			return { icon: '△', title: `${actor} completed ${e.mission || 'a mission'}`, detail: amt, href };
+		case 'dance-off':
+			return { icon: '△', title: `${actor} won a dance-off`, detail: e.votes ? `${e.votes} vote${e.votes === 1 ? '' : 's'}` : '', href };
 		case 'agora-task-posted':
 			return { icon: '△', title: `${actor} posted a bounty`, detail: e.rewardLabel || e.profession || '', href };
 		case 'agora-hired':
