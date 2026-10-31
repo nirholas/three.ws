@@ -7,14 +7,16 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { loadSkillFacts, renderGrokSkill } from '../scripts/build-skills-pack.mjs';
+import { renderGrokSkill } from '../scripts/build-skills-pack.mjs';
+import { skillFacts } from '../scripts/lib/skill-md-facts.mjs';
 import { TOOL_NAMES } from '../api/_mcp-studio/tools.js';
 import { toolsFor } from '../api/_mcp-studio/dispatch.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const rendered = read('public/grok-skill.md');
-const facts = loadSkillFacts();
+const facts = await skillFacts();
+const { values } = facts;
 
 const vercel = JSON.parse(read('vercel.json'));
 const isCatchAll = (src) => src === '/(.*)' || src.startsWith('/(.*\\.');
@@ -51,7 +53,7 @@ function siteUrls(text) {
 
 describe('public/grok-skill.md', () => {
 	it('is the committed render of data/grok-skill-md.template.md', () => {
-		expect(rendered).toBe(renderGrokSkill(read('data/grok-skill-md.template.md')));
+		expect(rendered).toBe(renderGrokSkill(read('data/grok-skill-md.template.md'), facts));
 	});
 
 	it('has frontmatter a skill loader can route on', () => {
@@ -64,7 +66,7 @@ describe('public/grok-skill.md', () => {
 	});
 
 	it('leaves no unfilled marker', () => {
-		expect(rendered).not.toMatch(/\{\{[A-Z_]+\}\}/);
+		expect(rendered).not.toMatch(/\{\{[A-Za-z0-9_:-]+\}\}/);
 	});
 
 	it('points only at three.ws URLs that resolve to a route the server knows', () => {
@@ -88,17 +90,18 @@ describe('public/grok-skill.md', () => {
 
 	it('quotes the generation limits and call budget the handler enforces', () => {
 		const handler = read('api/_mcp-studio/handler.js');
-		expect(handler).toContain(`${facts.BURST_LIMIT} generations per minute`);
-		expect(handler).toContain(`${facts.HOURLY_LIMIT} generations per hour`);
+		expect(handler).toContain('generations per ${per}');
 		const dispatch = read('api/_mcp-studio/dispatch.js');
-		expect(dispatch).toContain(`GROK_CALL_BUDGET_MS = ${facts.CALL_BUDGET_SECONDS}_000`);
-		expect(rendered).toContain(`${facts.BURST_LIMIT} generations per minute`);
-		expect(rendered).toContain(`${facts.HOURLY_LIMIT} per hour`);
+		expect(dispatch).toContain(`GROK_CALL_BUDGET_MS = ${values.GROK_CALL_BUDGET_SECONDS}_000`);
+		expect(rendered).toContain(`${values.FREE_GEN_PER_MINUTE} generations a minute`);
+		expect(rendered).toContain(`${values.FREE_GEN_PER_HOUR} an hour`);
+		expect(rendered).toContain(`within ${values.GROK_CALL_BUDGET_SECONDS} seconds`);
 	});
 
 	it('never lists a wallet, payment or launch tool', () => {
 		expect(rendered).not.toMatch(/`(?:send_|swap_|pay_|launch_|transfer_)[a-z_]*`/);
-		expect(rendered).toMatch(/Money needs the user's yes/);
+		expect(rendered).toMatch(/This connector never spends/);
+		expect(rendered).toContain(values.SPEND_URL);
 	});
 });
 
@@ -106,9 +109,12 @@ describe('shared facts', () => {
 	it('are used by both entry-point templates', () => {
 		const base = read('data/skill-md.template.md');
 		const grok = read('data/grok-skill-md.template.md');
-		for (const name of ['STUDIO_URL']) expect(base).toContain(`{{${name}}}`);
-		for (const name of ['GROK_URL', 'GROK_OAUTH_URL', 'BURST_LIMIT', 'HOURLY_LIMIT', 'CALL_BUDGET_SECONDS']) {
-			expect(grok).toContain(`{{${name}}}`);
+		for (const name of ['FREE_MCP', 'MCP_DIRECTORY', 'THREE_MINT']) {
+			expect(base, name).toContain(`{{${name}}}`);
+			expect(grok, name).toContain(`{{${name}}}`);
+		}
+		for (const name of ['GROK_MCP', 'GROK_MCP_SIGN_IN', 'FREE_GEN_PER_MINUTE', 'FREE_GEN_PER_HOUR', 'GROK_CALL_BUDGET_SECONDS']) {
+			expect(grok, name).toContain(`{{${name}}}`);
 		}
 	});
 });

@@ -86,14 +86,14 @@ describe('public/grok-skill.md', () => {
 		expect(description.length).toBeLessThanOrEqual(1024);
 	});
 
-	it('names the Grok connector and runs its HTTP examples against the free server', async () => {
+	it('names the Grok connector and runs its HTTP examples against the Grok server', async () => {
 		const { values } = await skillFacts();
 		expect(grokSkill).toContain(`Add a custom MCP server called three-ws-grok at ${values.GROK_MCP}`);
 		const examples = [...grokSkill.matchAll(/```bash\n([\s\S]*?)```/g)].map((m) => m[1]);
 		expect(examples.length).toBeGreaterThanOrEqual(4);
 		for (const example of examples) {
 			expect(example).toContain(`curl -s`);
-			expect(example).toContain(values.FREE_MCP);
+			expect(example).toContain(values.GROK_MCP);
 			const body = JSON.parse(example.match(/-d '(\{.*\})'/)[1]);
 			expect(body.jsonrpc).toBe('2.0');
 		}

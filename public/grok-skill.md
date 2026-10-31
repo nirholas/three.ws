@@ -17,12 +17,12 @@ three.ws is a free 3D studio and agent platform for Grok. From one sentence or o
 Tell Grok Bot, in chat:
 
 ```
-Add a custom MCP server called three-ws at https://three.ws/api/mcp-grok
+Add a custom MCP server called three-ws-grok at https://three.ws/api/mcp-grok
 ```
 
-Say "custom MCP server" so it does not look for a marketplace plugin instead. Leave authentication off. Grok Bot shows the name and URL and asks you to confirm. Transport is Streamable HTTP, so no sign-in card appears. Once added, ask for 3D in any task, or attach the server with `@three-ws`.
+Say "custom MCP server" so it does not look for a marketplace plugin instead. Leave authentication off. Grok Bot shows the name and URL and asks you to confirm. Transport is Streamable HTTP, so no sign-in card appears. Once added, ask for 3D in any task, or attach the server with `@three-ws-grok`.
 
-On a paid Grok plan, a custom connector in **Connectors** takes the same URL with authentication off. The URL must be public HTTPS: Grok Bot connects from xAI's cloud, so `localhost` never works. In the xAI Responses API, pass it as a remote MCP tool: `{"type": "mcp", "server_url": "https://three.ws/api/mcp-grok", "server_label": "three-ws"}`. Reference: https://three.ws/docs/grok and the landing page https://three.ws/grok.
+On a paid Grok plan, a custom connector in **Connectors** takes the same URL with authentication off. The URL must be public HTTPS: Grok Bot connects from xAI's cloud, so `localhost` never works. In the xAI Responses API, pass it as a remote MCP tool: `{"type": "mcp", "server_url": "https://three.ws/api/mcp-grok", "server_label": "three-ws-grok"}`. Reference: https://three.ws/docs/grok and the landing page https://three.ws/grok.
 
 To let Grok also manage the user's own three.ws agents, memory, skills and avatar library, use `https://three.ws/api/mcp-grok?auth=oauth` instead. It starts a standard OAuth 2.1 sign-in; there is no key to copy. An API key created at https://three.ws/dashboard/api with the "AI agent" preset works as a bearer token on the same URL. Neither ever exposes a wallet or payment tool.
 
@@ -48,7 +48,7 @@ What the connector does:
 
 ## No connector? Call it over plain HTTPS
 
-The same server answers JSON-RPC over `POST` with no authentication. Use this when the connector is not added, or from the terminal on Grok Bot's machine. Every command below is runnable as written.
+The same server answers JSON-RPC over `POST` with no authentication. The same free tools are also on the general 3D Studio server at https://three.ws/api/mcp-studio, which has no Grok call budget. Use this when the connector is not added, or from the terminal on Grok Bot's machine. Every command below is runnable as written.
 
 Open a session. The reply carries an `Mcp-Session-Id` header; send it back on every later call so the free quota is counted for this session and not for the shared network address:
 
