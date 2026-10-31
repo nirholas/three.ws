@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
+  <title>Haunted hill: three.ws Halloween Weekend 2026 wallpaper</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#07030f"/>
+      <stop offset="0.45" stop-color="#1f0c33"/>
+      <stop offset="0.78" stop-color="#4a1a3a"/>
+      <stop offset="1" stop-color="#8a3414"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe7b0" stop-opacity="0.55"/>
+      <stop offset="0.35" stop-color="#ffb862" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ff8a2a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="moon" cx="0.42" cy="0.4" r="0.62">
+      <stop offset="0" stop-color="#fff6dc"/>
+      <stop offset="0.7" stop-color="#ffe0a3"/>
+      <stop offset="1" stop-color="#f2b866"/>
+    </radialGradient>
+    <radialGradient id="lantern" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0" stop-color="#ff9a2e"/>
+      <stop offset="1" stop-color="#c2410c"/>
+    </radialGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+    <filter id="fog" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <g id="bat">
+      <path d="M0 0 C-6 -8 -16 -10 -26 -4 C-20 -4 -18 0 -20 4 C-14 1 -9 2 -6 6 C-4 2 -2 1 0 2 C2 1 4 2 6 6 C9 2 14 1 20 4 C18 0 20 -4 26 -4 C16 -10 6 -8 0 0 Z"/>
+    </g>
+    <g id="grave">
+      <path d="M-22 0 V-46 A22 22 0 0 1 22 -46 V0 Z"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+
+  <!-- stars -->
+  <g fill="#fff4dc">
+    <circle cx="90" cy="70" r="1.6" opacity="0.8"/><circle cx="240" cy="140" r="1.2" opacity="0.6"/>
+    <circle cx="380" cy="60" r="1.8" opacity="0.9"/><circle cx="520" cy="180" r="1.1" opacity="0.5"/>
+    <circle cx="660" cy="90" r="1.5" opacity="0.7"/><circle cx="790" cy="40" r="1.2" opacity="0.6"/>
+    <circle cx="880" cy="160" r="1.7" opacity="0.8"/><circle cx="960" cy="70" r="1.1" opacity="0.5"/>
+    <circle cx="1460" cy="90" r="1.6" opacity="0.8"/><circle cx="1540" cy="220" r="1.2" opacity="0.6"/>
+    <circle cx="1390" cy="40" r="1.1" opacity="0.5"/><circle cx="160" cy="260" r="1.3" opacity="0.5"/>
+    <circle cx="720" cy="250" r="1" opacity="0.4"/><circle cx="1010" cy="230" r="1.3" opacity="0.5"/>
+  </g>
+
+  <!-- moon -->
+  <circle cx="1150" cy="270" r="330" fill="url(#moonGlow)"/>
+  <circle cx="1150" cy="270" r="128" fill="url(#moon)"/>
+  <g fill="#e9b46a" opacity="0.35">
+    <circle cx="1108" cy="236" r="22"/><circle cx="1188" cy="300" r="15"/>
+    <circle cx="1170" cy="214" r="9"/><circle cx="1120" cy="318" r="11"/>
+  </g>
+
+  <!-- bats crossing the moon -->
+  <g fill="#0a0612">
+    <use href="#bat" transform="translate(1060 220) scale(1.5)"/>
+    <use href="#bat" transform="translate(1235 330) scale(1.1) rotate(-8)"/>
+    <use href="#bat" transform="translate(1310 185) scale(0.8) rotate(10)"/>
+    <use href="#bat" transform="translate(940 300) scale(0.65)"/>
+    <use href="#bat" transform="translate(1400 280) scale(0.55) rotate(-12)"/>
+  </g>
+
+  <!-- distant hills -->
+  <path d="M0 720 C180 640 360 660 520 690 C700 720 860 650 1040 660 C1240 672 1400 620 1600 650 V1000 H0 Z" fill="#1c0d2a"/>
+
+  <!-- fog band behind the hill -->
+  <g filter="url(#fog)" fill="#b48ad6" opacity="0.22">
+    <ellipse cx="300" cy="740" rx="420" ry="40"/>
+    <ellipse cx="1000" cy="720" rx="480" ry="36"/>
+    <ellipse cx="1500" cy="745" rx="300" ry="30"/>
+  </g>
+
+  <!-- haunted house on the near hill -->
+  <path d="M0 800 C140 690 330 640 520 660 C640 672 720 720 780 800 V1000 H0 Z" fill="#100818"/>
+  <g fill="#0b0612">
+    <rect x="250" y="520" width="210" height="160"/>
+    <polygon points="236,524 355,430 474,524"/>
+    <rect x="430" y="440" width="62" height="240"/>
+    <polygon points="420,444 461,342 502,444"/>
+    <rect x="212" y="572" width="44" height="108"/>
+    <polygon points="204,576 234,520 264,576"/>
+    <rect x="296" y="452" width="20" height="56"/>
+    <rect x="456" y="320" width="4" height="26"/>
+  </g>
+  <!-- lit windows -->
+  <g fill="#ffb347">
+    <rect x="280" y="566" width="26" height="34" opacity="0.92"/>
+    <rect x="340" y="566" width="26" height="34" opacity="0.35"/>
+    <rect x="400" y="566" width="22" height="34" opacity="0.85"/>
+    <rect x="450" y="480" width="22" height="30" opacity="0.95"/>
+    <rect x="450" y="560" width="22" height="30" opacity="0.4"/>
+    <rect x="224" y="600" width="18" height="24" opacity="0.7"/>
+    <path d="M340 680 V640 A15 15 0 0 1 370 640 V680 Z" opacity="0.6"/>
+  </g>
+  <g fill="#ffa53a" filter="url(#soft)" opacity="0.5">
+    <rect x="276" y="562" width="34" height="42"/><rect x="446" y="476" width="30" height="38"/>
+    <rect x="396" y="562" width="30" height="42"/>
+  </g>
+
+  <!-- bare tree -->
+  <g fill="none" stroke="#08040c" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1360 860 C1356 780 1366 700 1350 620 C1340 570 1350 520 1372 480" stroke-width="30"/>
+    <path d="M1354 650 C1310 610 1270 600 1220 560" stroke-width="16"/>
+    <path d="M1250 584 C1230 548 1236 520 1220 490" stroke-width="8"/>
+    <path d="M1220 560 C1190 552 1170 534 1148 520" stroke-width="7"/>
+    <path d="M1362 600 C1400 560 1450 552 1490 520" stroke-width="14"/>
+    <path d="M1452 548 C1470 516 1468 490 1488 460" stroke-width="7"/>
+    <path d="M1490 520 C1520 512 1540 498 1562 470" stroke-width="6"/>
+    <path d="M1372 480 C1366 440 1380 410 1374 370" stroke-width="12"/>
+    <path d="M1376 420 C1404 396 1424 372 1452 360" stroke-width="6"/>
+    <path d="M1372 440 C1344 414 1330 390 1302 376" stroke-width="6"/>
+    <path d="M1350 700 C1320 690 1300 676 1284 660" stroke-width="7"/>
+  </g>
+
+  <!-- foreground ground -->
+  <path d="M0 880 C220 840 480 830 760 850 C1040 870 1300 840 1600 860 V1000 H0 Z" fill="#06030a"/>
+
+  <!-- graves and a crooked fence -->
+  <g fill="#0d0814">
+    <use href="#grave" transform="translate(640 872) rotate(-6)"/>
+    <use href="#grave" transform="translate(720 868) scale(0.8) rotate(4)"/>
+    <use href="#grave" transform="translate(1180 868) scale(0.9) rotate(-3)"/>
+    <path d="M840 860 h10 v-56 h-10 Z M820 828 h52 v8 h-52 Z" transform="rotate(5 845 860)"/>
+  </g>
+  <g fill="#06030a" stroke="#06030a" stroke-width="5" stroke-linecap="round">
+    <path d="M40 880 V840 M80 876 V832 M120 874 V836 M160 872 V830 M200 872 V838" fill="none"/>
+    <path d="M30 852 L210 846 M30 866 L210 860" fill="none"/>
+  </g>
+
+  <!-- jack-o'-lanterns -->
+  <g>
+    <ellipse cx="980" cy="900" rx="40" ry="32" fill="url(#lantern)"/>
+    <path d="M977 870 q4 -14 12 -16" stroke="#3a2a10" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <g fill="#ffe08a">
+      <polygon points="962,892 974,892 968,880"/><polygon points="986,892 998,892 992,880"/>
+      <path d="M958 904 q22 18 44 0 l-6 2 -4 -4 -5 5 -7 -5 -5 5 -5 -4 Z"/>
+    </g>
+    <ellipse cx="980" cy="900" rx="70" ry="50" fill="#ff8a2a" opacity="0.18" filter="url(#soft)"/>
+
+    <ellipse cx="1068" cy="912" rx="26" ry="21" fill="url(#lantern)"/>
+    <path d="M1067 892 q3 -9 8 -11" stroke="#3a2a10" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <g fill="#ffe08a">
+      <polygon points="1058,908 1065,908 1061,900"/><polygon points="1072,908 1079,908 1075,900"/>
+      <path d="M1055 916 q13 10 26 0 l-4 1 -3 -3 -3 3 -3 -3 -3 3 Z"/>
+    </g>
+  </g>
+
+  <!-- low fog across the foreground -->
+  <g filter="url(#fog)" fill="#c9a6e8" opacity="0.16">
+    <ellipse cx="400" cy="930" rx="520" ry="46"/>
+    <ellipse cx="1200" cy="950" rx="560" ry="50"/>
+  </g>
+</svg>

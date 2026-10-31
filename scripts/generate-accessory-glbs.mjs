@@ -783,8 +783,8 @@ function pumpkinCapParts() {
 	const SQUASH = 0.74;     // pumpkins are wider than tall
 	const LOBES = 8;         // |cos(4θ)| gives eight lobes with crisp grooves between them
 	const PHI_MAX = Math.PI * 0.6; // a little past the equator, so the rim tucks in
-	const ORANGE = [0.93, 0.42, 0.08];
-	const GLOW = [1.0, 0.74, 0.22];
+	const ORANGE = [0.8, 0.2, 0.015];  // linear; reads as a deep pumpkin orange in sRGB
+	const GLOW = [1.0, 0.55, 0.06];
 
 	// Surface point at azimuth θ (θ = π/2 faces +Z, the wearer's front, which is a
 	// lobe crest) and polar angle φ (0 = top). The top dips into a dimple where
@@ -843,20 +843,47 @@ function pumpkinCapParts() {
 		slab(-0.04, 0.04, 0.005).map(([u, v]) => [u, v - 0.012]),
 	];
 	const face = { positions: [], uvs: [], indices: [] };
-	for (const poly of [eye(-0.038), eye(0.038), nose, ...mouth]) {
-		const outer = poly.map(([u, v]) => surface(...toAngles(u, v), 0.006));
-		const inner = poly.map(([u, v]) => surface(...toAngles(u, v), -0.01));
-		const base = face.positions.length / 3;
-		const n = poly.length;
-		for (const p of [...outer, ...inner]) face.positions.push(...p);
-		for (let k = 0; k < 2 * n; k++) face.uvs.push((k % n) / n, k < n ? 1 : 0);
-		for (let k = 1; k < n - 1; k++) {
-			face.indices.push(base, base + k, base + k + 1);              // outer cap
-			face.indices.push(base + n, base + n + k + 1, base + n + k);  // inner cap
+	const SUB = 6; // cap subdivisions, so a cut follows the shell's curve instead of chording into it
+	const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+	const pushVert = (uv, grow) => {
+		face.positions.push(...surface(...toAngles(uv[0], uv[1]), grow));
+		face.uvs.push(0.5 + uv[0] * 5, 0.5 + uv[1] * 5);
+		return face.positions.length / 3 - 1;
+	};
+	// A fan triangle (c, p, q) split into SUB² triangles, each vertex laid on the
+	// displaced surface at `grow`. `flip` reverses winding for the inner cap.
+	const capFan = (c, p, q, grow, flip) => {
+		const row = [];
+		for (let i = 0; i <= SUB; i++) {
+			const a = lerp2(c, p, i / SUB), b = lerp2(c, q, i / SUB);
+			const r = [];
+			for (let j = 0; j <= i; j++) r.push(pushVert(i ? lerp2(a, b, j / i) : c, grow));
+			row.push(r);
 		}
+		const tri = (x, y, z) => face.indices.push(...(flip ? [x, z, y] : [x, y, z]));
+		for (let i = 0; i < SUB; i++) {
+			for (let j = 0; j <= i; j++) {
+				tri(row[i][j], row[i + 1][j], row[i + 1][j + 1]);
+				if (j < i) tri(row[i][j], row[i + 1][j + 1], row[i][j + 1]);
+			}
+		}
+	};
+	const OUT = 0.03, IN = -0.08; // proud of the shell / sunk into it, as a fraction of R
+	for (const poly of [eye(-0.038), eye(0.038), nose, ...mouth]) {
+		const n = poly.length;
+		const c = poly.reduce((m, [u, v]) => [m[0] + u / n, m[1] + v / n], [0, 0]);
 		for (let k = 0; k < n; k++) {
-			const k2 = (k + 1) % n;
-			face.indices.push(base + k, base + n + k, base + k2, base + k2, base + n + k, base + n + k2);
+			capFan(c, poly[k], poly[(k + 1) % n], OUT, false);
+			capFan(c, poly[k], poly[(k + 1) % n], IN, true);
+		}
+		// Walls: each edge subdivided too, joining the outer and inner rims.
+		for (let k = 0; k < n; k++) {
+			const p = poly[k], q = poly[(k + 1) % n];
+			for (let t = 0; t < SUB; t++) {
+				const a = lerp2(p, q, t / SUB), b = lerp2(p, q, (t + 1) / SUB);
+				const ao = pushVert(a, OUT), ai = pushVert(a, IN), bo = pushVert(b, OUT), bi = pushVert(b, IN);
+				face.indices.push(ao, ai, bo, bo, ai, bi);
+			}
 		}
 	}
 	face.normals = computeNormals(face.positions, face.indices);
@@ -881,7 +908,7 @@ function pumpkinCapParts() {
 
 	return [
 		{ name: 'shell', geom: shell, color: ORANGE, metallic: 0.02, roughness: 0.58 },
-		{ name: 'carving', geom: face, color: GLOW, emissive: [1.0, 0.62, 0.12], metallic: 0, roughness: 0.4 },
+		{ name: 'carving', geom: face, color: GLOW, emissive: [1.0, 0.5, 0.05], metallic: 0, roughness: 0.4 },
 		{ name: 'stem', geom: stem, color: [0.34, 0.27, 0.12], metallic: 0, roughness: 0.85 },
 		{ name: 'vine', geom: vine, color: [0.24, 0.44, 0.14], metallic: 0, roughness: 0.7 },
 		{ name: 'leaf', geom: leaf, color: [0.2, 0.5, 0.16], metallic: 0, roughness: 0.62 },
