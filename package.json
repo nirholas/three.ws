@@ -633,7 +633,7 @@
 		"@jup-ag/api": "^6.0.48",
 		"@kamino-finance/farms-sdk": "^5.0.0",
 		"@kamino-finance/klend-sdk": "^13.0.6",
-		"@kamino-finance/scope-sdk": "^10.2.6",
+		"@kamino-finance/scope-sdk": "^14.0.0",
 		"@kninnug/constrainautor": "^4.1.0",
 		"@leeoniya/ufuzzy": "^1.0.19",
 		"@mediapipe/tasks-vision": "^1.1.1",
