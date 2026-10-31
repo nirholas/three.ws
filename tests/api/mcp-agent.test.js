@@ -150,7 +150,7 @@ describe('threews-agent MCP', () => {
 	});
 
 	it('lists pay_and_call with its confirm flag and quote argument once the connection turns it on', async () => {
-		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, USER, { ...PAY_ON });
+		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, USER, reqWith(PAY_ON));
 		const pay = r.result.tools.find((t) => t.name === 'pay_and_call');
 		expect(pay).toBeDefined();
 		expect(Object.keys(pay.inputSchema.properties)).toEqual(
@@ -160,7 +160,7 @@ describe('threews-agent MCP', () => {
 	});
 
 	it('refuses pay_and_call on a connection that has not turned it on, before any payment call', async () => {
-		const r = await call('pay_and_call', { resource_url: 'https://paid.test/x' });
+		const r = await call('pay_and_call', { resource_url: 'https://paid.test/x' }, USER, 'default');
 		expect(r.result.isError).toBe(true);
 		expect(r.result.structuredContent).toMatchObject({ reason: 'tool_disabled', group: 'x402', tier: 'financial' });
 		expect(payer.payExternalX402).not.toHaveBeenCalled();
