@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti",
+			"summary": "The classic homepage and /halloween now run halloween.js, a tiny MIT-licensed library, for corner cobwebs, blinking eyes in the dark, a witch crossing the sky, a spider that drops and climbs back up, and a rising tombstone. Claiming your four gifts now sets off an orange and violet confetti burst from canvas-confetti. Both load only during the weekend, respect reduced motion, and switch off with the Halloween look toggle in Settings, Personalization, Season.",
+			"tags": [
+				"feature"
+			],
+			"link": "/halloween"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Halloween Weekend on three.ws: a haunted desktop, a spooky classic homepage and four free gifts at /halloween",
 			"summary": "Through Sunday night the desktop boots and locks on a moonlit night palette with Creepster headings, then opens on a haunted hill wallpaper with drifting fog, bats and a pumpkin accent, plus a Halloween Gifts app. The classic homepage gets a ribbon, bats and embers over the hero, Halloween prompt ideas and a Trick or treat chip that sends a flock of bats out of the avatar. The new /halloween page counts down to the close and claims all four gifts in one press: the Pumpkin Cap and Witchlight Aura for /play, a Halloween 2026 profile badge, and the Haunted wallpaper, which claimers keep in desktop Settings after the weekend. Gifts are free, only claimable this weekend, and yours forever. Prefer your usual look? Turn it off in Settings, Personalization, Season. Claims now reach their own endpoint, so they no longer collide with the 3D drops service.",
 			"tags": [

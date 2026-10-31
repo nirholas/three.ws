@@ -109,6 +109,26 @@ While the drop is live, three surfaces dress themselves for it.
 - **`/play`**: a moonlit vignette and the lobby claim card, from
   [src/game/halloween.js](../src/game/halloween.js).
 
+### Open-source effects
+
+Two packages add to the look, both loaded on demand from
+[src/shared/halloween-fx.js](../src/shared/halloween-fx.js) so they cost nothing
+outside the weekend:
+
+- **[halloween.js](https://halloween.js.org/)** (MIT, zero dependencies) adds
+  corner cobwebs, blinking eyes, a flying witch, a dropping spider and a rising
+  tombstone to the classic homepage and `/halloween`. `startHalloweenPageFx`
+  imports it, sets `data-halloween-start` and `data-halloween-end` from the drop
+  window, and adds the control classes to `<body>`. It only runs while the drop
+  is live, never inside a desktop window, and never after the Halloween look is
+  turned off. The library also respects `prefers-reduced-motion` live.
+- **[canvas-confetti](https://github.com/catdad/canvas-confetti)** (ISC) fires an
+  orange and violet burst when a claim lands, from the shared claim card and the
+  `/halloween` page (`celebrateWithConfetti`). It is skipped under reduced
+  motion.
+
+Tests: [tests/halloween-fx.test.js](../tests/halloween-fx.test.js).
+
 ### Turning the look off
 
 Turning the look off is per browser and shared by every surface. It is the

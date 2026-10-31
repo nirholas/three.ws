@@ -8,6 +8,7 @@
 // whether it lands.
 
 import { HALLOWEEN_2026, formatCountdown, markClaimedLocally } from '../shared/seasonal-drops.js';
+import { celebrateWithConfetti, startHalloweenPageFx } from '../shared/halloween-fx.js';
 
 const API = `/api/seasonal/${HALLOWEEN_2026.id}`;
 const $ = (id) => document.getElementById(id);
@@ -235,6 +236,7 @@ async function claim() {
 function celebrate() {
 	if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 	const host = $('hw-claim');
+	celebrateWithConfetti(host);
 	const glyphs = ['🎃', '🦇', '👻', '🍬', '🦇', '🎃'];
 	for (let i = 0; i < 18; i++) {
 		const p = document.createElement('span');
@@ -254,4 +256,6 @@ document.addEventListener('visibilitychange', () => {
 	if (document.visibilityState === 'visible' && drop) tick();
 });
 
+// The desktop already carries its own Halloween look, so a framed window skips the page effects.
+if (!framed) startHalloweenPageFx();
 load();

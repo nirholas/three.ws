@@ -2,6 +2,9 @@
 // while it is useful: a live or upcoming drop, or a drop this account already
 // claimed. Once a drop closes unclaimed the section stays hidden.
 import { mountGiftClaim } from './shared/gift-claim.js';
+import { startHalloweenPageFx } from './shared/halloween-fx.js';
+
+startHalloweenPageFx();
 
 const section = document.getElementById('home-gifts');
 if (section) {

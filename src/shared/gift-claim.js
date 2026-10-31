@@ -12,6 +12,7 @@
 
 import { apiFetch } from '../api.js';
 import { formatCountdown, markClaimedLocally } from './seasonal-drops.js';
+import { celebrateWithConfetti } from './halloween-fx.js';
 
 export const DEFAULT_DROP_ID = 'halloween-2026';
 
@@ -199,7 +200,10 @@ export function mountGiftClaim(root, { dropId = DEFAULT_DROP_ID, onClaimed, onSt
 			}
 			markClaimedLocally(data.claim?.claimedAt);
 			render(data, { justClaimed: !!data.claim?.newlyClaimed });
-			if (data.claim?.newlyClaimed) onClaimed?.(data);
+			if (data.claim?.newlyClaimed) {
+				celebrateWithConfetti(root.querySelector('.twx-gift'));
+				onClaimed?.(data);
+			}
 		} catch (err) {
 			btn.disabled = false;
 			btn.textContent = 'Try again';
