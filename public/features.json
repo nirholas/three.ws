@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T19:48:31.512Z",
+	"generated_at": "2026-10-31T19:53:29.526Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5634,6 +5634,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/pumpkin-carving",
+					"title": "How pumpkin carving works",
+					"description": "The /pumpkin carver: a hollow ribbed 3D shell, real boolean cuts with three-bvh-csg, the knife, undo, saved cuts, and PNG and GLB export.",
+					"added": "2026-10-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{

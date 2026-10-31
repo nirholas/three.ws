@@ -2851,6 +2851,12 @@ URL: https://three.ws/docs/drops
 
 How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.
 
+### How pumpkin carving works
+
+URL: https://three.ws/docs/pumpkin-carving
+
+The /pumpkin carver: a hollow ribbed 3D shell, real boolean cuts with three-bvh-csg, the knife, undo, saved cuts, and PNG and GLB export.
+
 ### How seasonal drops work
 
 URL: https://three.ws/docs/seasonal-drops
