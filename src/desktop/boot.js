@@ -44,6 +44,7 @@ export function createBootScreen({ host = document.body, reducedMotion = false }
 				<div class="os-lock-actions">
 					<button type="button" class="os-lock-enter"></button>
 					<button type="button" class="os-lock-skip"></button>
+					<button type="button" class="os-lock-classic">Classic site</button>
 				</div>
 				<p class="os-lock-hint"></p>
 			</div>
@@ -95,7 +96,7 @@ export function createBootScreen({ host = document.body, reducedMotion = false }
 	}
 
 	/**
-	 * Switch to the lock screen and resolve with 'world' | 'desktop' on the
+	 * Switch to the lock screen and resolve with 'world' | 'desktop' | 'classic' on the
 	 * visitor's gesture.
 	 * @param {{ name?: string, returning?: boolean, mode: 'world'|'desktop', snap: object, labels: object, chips?: Array<{label:string,value:string}>, clock24?: boolean, hue?: number, initials?: string }} o
 	 */
@@ -110,13 +111,14 @@ export function createBootScreen({ host = document.body, reducedMotion = false }
 		av.style.setProperty('--hue', String(o.hue ?? 262));
 		const enter = lock.querySelector('.os-lock-enter');
 		const skip = lock.querySelector('.os-lock-skip');
+		const classic = lock.querySelector('.os-lock-classic');
 		const hint = lock.querySelector('.os-lock-hint');
 		if (o.mode === 'world') {
 			enter.textContent = 'Walk in';
 			skip.textContent = 'Straight to the desktop';
 			hint.textContent = 'You arrive as your avatar. Walk to your desk and sit down to open the desktop, or explore the exchange, the launchpad and the mine first.';
 		} else {
-			enter.textContent = 'Enter';
+			enter.textContent = 'Continue';
 			skip.textContent = 'Walk in as your avatar';
 			hint.textContent = 'Press any key or click to continue.';
 		}
@@ -144,9 +146,11 @@ export function createBootScreen({ host = document.body, reducedMotion = false }
 			const alternate = o.mode === 'world' ? 'desktop' : 'world';
 			enter.addEventListener('click', () => finish(primary));
 			skip.addEventListener('click', () => finish(alternate));
+			classic.addEventListener('click', () => finish('classic'));
 			function onKey(e) {
 				if (e.key === 'Tab' || e.altKey || e.metaKey || e.ctrlKey) return;
 				if (e.target === skip && (e.key === 'Enter' || e.key === ' ')) return finish(alternate);
+				if (e.target === classic && (e.key === 'Enter' || e.key === ' ')) return finish('classic');
 				e.preventDefault();
 				finish(primary);
 			}

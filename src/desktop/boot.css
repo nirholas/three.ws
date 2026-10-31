@@ -290,7 +290,8 @@
 	justify-content: center;
 }
 .os-lock-enter,
-.os-lock-skip {
+.os-lock-skip,
+.os-lock-classic {
 	padding: 12px 22px;
 	border-radius: 999px;
 	font-weight: 600;
@@ -309,14 +310,17 @@
 .os-lock-enter:active {
 	transform: translateY(0) scale(0.98);
 }
-.os-lock-skip {
+.os-lock-skip,
+.os-lock-classic {
 	border: 1px solid rgba(255, 255, 255, 0.14);
 	color: rgba(255, 255, 255, 0.85);
 }
-.os-lock-skip:hover {
+.os-lock-skip:hover,
+.os-lock-classic:hover {
 	background: rgba(255, 255, 255, 0.07);
 }
-.os-lock-skip:active {
+.os-lock-skip:active,
+.os-lock-classic:active {
 	transform: scale(0.98);
 }
 .os-lock-hint {

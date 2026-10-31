@@ -181,6 +181,11 @@ async function main() {
 			hue: shell.prefs.avatarHue,
 			initials: initialsOf(name),
 		});
+		if (choice === 'classic') {
+			shell.store.set(shell.KEY.view, 'classic');
+			location.assign('/classic');
+			return;
+		}
 		if (shell.prefs.sound) playChime();
 		if (choice === 'world' && !webgl) {
 			choice = 'desktop';

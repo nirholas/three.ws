@@ -7,7 +7,7 @@ The web desktop served at `/` (page: `pages/desktop.html`). See
 | --- | --- |
 | `main.js` | Entry: runs the boot checks, shows the lock screen, then walks the visitor in as an avatar or lands them on the desktop; deep links |
 | `boot-logic.js` | Pure boot rules: concurrent boot steps with timings, entry mode (`?world=1`, `?world=0`, `?view=desktop`, deep links, WebGL, the Arrival preference), greeting, summary, GPU name (unit tested) |
-| `boot.js`, `boot.css` | The boot screen (live log of real checks) and the lock screen (greeting, $THREE, gems and account chips, Walk in / Desktop), plus the synthesised startup chime |
+| `boot.js`, `boot.css` | The boot screen (live log of real checks) and the lock screen (greeting, $THREE, gems and account chips, Walk in / Desktop / Classic site), plus the synthesised startup chime |
 | `shell.js` | Taskbar (peek cards, Aqua dock magnification and menu bar), Start, desktop files and menus, widgets and assistant wiring, native apps, the World button and the Arrival settings |
 | `chrome/` | OS chrome: tray status pill, quick settings, notification centre and calendar, toasts, lock screen, power menu, Run and About dialogs, the bubbles wallpaper and the Fluent island taskbar; pure rules in `chrome/logic.js` (unit tested) |
 | `icon-layer.js` | Desktop icon grid: selection, rubber band, drag, keyboard, per-item menus, rename and delete hooks |
