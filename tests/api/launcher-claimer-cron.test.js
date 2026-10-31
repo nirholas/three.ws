@@ -24,7 +24,11 @@ vi.mock('../../api/_lib/db.js', () => ({
 	isStoragePressured: async () => ({ pressured: false }),
 }));
 vi.mock('../../api/_lib/auth.js', () => ({ createSession, revokeSessionToken }));
-vi.mock('../../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'https://three.ws' } }));
+// THREE_TOKEN_* are read at import time by api/_lib/token/config.js, which the
+// claimer now reaches transitively (ATOMICS_PER_TOKEN = 10n ** BigInt(decimals)).
+vi.mock('../../api/_lib/env.js', () => ({
+	env: { APP_ORIGIN: 'https://three.ws', THREE_TOKEN_MINT: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', THREE_TOKEN_DECIMALS: 6 },
+}));
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: vi.fn() }));
 vi.mock('../../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn() }));
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => false, drain: vi.fn() }));
