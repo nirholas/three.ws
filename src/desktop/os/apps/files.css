@@ -85,6 +85,8 @@
 }
 .napp-files .fx-crumb[aria-current] {
 	font-weight: 600;
+	/* The folder you are in reads whole; parent crumbs shrink first. */
+	flex: none;
 }
 .napp-files .fx-chev {
 	color: var(--text2);
@@ -157,6 +159,38 @@
 }
 @container (max-width: 1000px) {
 	.napp-files .fx-cb.sec span {
+		display: none;
+	}
+}
+/* Phone-width windows: the address bar gets the room (the search box shrinks to
+   a compact field), every command goes icon-only, item commands that do not
+   apply to the current selection step aside, and a long command set wraps to a
+   second row instead of scrolling sideways out of sight. */
+@container (max-width: 560px) {
+	.napp-files .fx-top {
+		gap: 6px;
+		padding-inline: 6px;
+	}
+	.napp-files .fx-search {
+		width: auto;
+		flex: 0 1 112px;
+		min-width: 0;
+	}
+	.napp-files .fx-cmd {
+		flex-wrap: wrap;
+		row-gap: 4px;
+		padding-inline: 6px;
+	}
+	.napp-files .fx-cb {
+		padding: 0 7px;
+	}
+	.napp-files .fx-cb span {
+		display: none;
+	}
+	.napp-files .fx-cb.sec:disabled {
+		display: none;
+	}
+	.napp-files .fx-sep {
 		display: none;
 	}
 }

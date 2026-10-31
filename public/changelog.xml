@@ -71,6 +71,14 @@
 			<description>Kenney's Graveyard Kit (CC0, free for any use) is now in the object library: crypts, gravestones, fences, lampposts, pumpkins, trees and five animated characters (a zombie, skeleton, vampire, ghost and graveyard keeper), each one a single self-contained GLB. The new /haunted page puts them together as a moonlit 3D yard you can orbit, light, photograph and populate with wandering monsters.</description>
 		</item>
 		<item>
+			<title>A venue screen for /play: an invisible camera that directs itself</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-10-31:A venue screen for /play: an invisible camera that directs itself</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Open /play with director=1 on a projector or as an OBS source and the world watches itself. The screen joins as a spectator that has no avatar, is invisible to every player and is not counted in the online total, then cuts every 15 to 30 seconds between the busiest places in the plaza (the totem, the screens, the dance floor, any crowd) without ever clipping a building. A broadcast overlay shows the event name with LIVE or a countdown, the running agenda item, the world and the live headcount, and a QR to join, with no player HUD. At the group photo it holds the totem and the crowd through the countdown and the flash. It reconnects forever under a quiet pill, keeps the screen awake, hides the cursor, and reloads itself if graphics are lost. Built for the Meetup #3 livestream.</description>
+		</item>
+		<item>
 			<title>Carve a 3D pumpkin at /pumpkin</title>
 			<link>https://three.ws/pumpkin</link>
 			<guid isPermaLink="false">2026-10-31:Carve a 3D pumpkin at /pumpkin</guid>
@@ -109,6 +117,14 @@
 			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
 			<category>desktop</category>
 			<description>With your system set to reduce motion, a new window on the web desktop now appears at its full size in place. Before, its first frame still flashed in at 94% scale and slightly low before snapping to size. Closing already skipped its animation; opening now matches. The desktop also has a browser test suite that boots it, opens every built-in app, exercises window controls, saves a file and checks accessibility in dark and light mode.</description>
+		</item>
+		<item>
+			<title>File Explorer fits a phone screen</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-31:File Explorer fits a phone screen</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>On a phone the desktop's File Explorer squeezed its address bar down to a single letter and pushed the view buttons off the edge of a toolbar that could only be scrolled sideways. The address bar now gets the room and always shows the folder you are in, the commands go icon-only, item commands that do not apply to your selection step aside, and the toolbar wraps instead of hiding anything.</description>
 		</item>
 		<item>
 			<title>Game-Ready export gets an Artist mesh option for cleaner low-poly</title>

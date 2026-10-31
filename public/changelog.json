@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T23:42:02.986Z",
+	"generated_at": "2026-10-31T23:50:00.639Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -89,6 +89,16 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "A venue screen for /play: an invisible camera that directs itself",
+			"summary": "Open /play with director=1 on a projector or as an OBS source and the world watches itself. The screen joins as a spectator that has no avatar, is invisible to every player and is not counted in the online total, then cuts every 15 to 30 seconds between the busiest places in the plaza (the totem, the screens, the dance floor, any crowd) without ever clipping a building. A broadcast overlay shows the event name with LIVE or a countdown, the running agenda item, the world and the live headcount, and a QR to join, with no player HUD. At the group photo it holds the totem and the crowd through the countdown and the flash. It reconnects forever under a quiet pill, keeps the screen awake, hides the cursor, and reloads itself if graphics are lost. Built for the Meetup #3 livestream.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "Carve a 3D pumpkin at /pumpkin",
 			"summary": "A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.",
 			"link": "/pumpkin",
@@ -133,6 +143,17 @@
 			"type": "update",
 			"title": "Desktop windows open without a zoom when reduced motion is on",
 			"summary": "With your system set to reduce motion, a new window on the web desktop now appears at its full size in place. Before, its first frame still flashed in at 94% scale and slightly low before snapping to size. Closing already skipped its animation; opening now matches. The desktop also has a browser test suite that boots it, opens every built-in app, exercises window controls, saves a file and checks accessibility in dark and light mode.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "File Explorer fits a phone screen",
+			"summary": "On a phone the desktop's File Explorer squeezed its address bar down to a single letter and pushed the view buttons off the edge of a toolbar that could only be scrolled sideways. The address bar now gets the room and always shows the folder you are in, the commands go icon-only, item commands that do not apply to your selection step aside, and the toolbar wraps instead of hiding anything.",
 			"link": "/?view=desktop",
 			"tags": [
 				"desktop",

@@ -22,7 +22,8 @@
  *   - Widgets behave: the Weather picker leaves focus alone on boot and keeps
  *     what was typed across a refresh; list widgets fill their cards with
  *     whole rows. Notification cards keep a small app icon.
- *   - On 360, 390 and 430px phones the taskbar fits and Start stays tappable.
+ *   - On 360, 390 and 430px phones the taskbar fits and Start stays tappable,
+ *     and File Explorer keeps its address and every command on screen.
  *   - The resting desktop clears WCAG 2.1 AA (axe) in both dark and light mode.
  *
  * Nothing is stubbed. Boot's market and account probes hit the real endpoints
@@ -443,4 +444,35 @@ test.describe('web desktop', () => {
 			await expect(page.getByRole('dialog', { name: 'Start' })).toBeVisible();
 		});
 	}
+	test('on a 390px phone File Explorer shows its address and every command without sideways scrolling', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 800 });
+		await openDesktop(page);
+		await page.keyboard.press('Control+Alt+E');
+		const win = page.locator('.win[data-app="files"]');
+		await expect(win.locator('.fx-scroll [role="option"]').first()).toBeVisible({ timeout: SLOW });
+		const fits = () =>
+			win.evaluate((w) => {
+				const addr = w.querySelector('.fx-addr').getBoundingClientRect();
+				const search = w.querySelector('.fx-search').getBoundingClientRect();
+				const crumb = w.querySelector('.fx-crumb[aria-current]');
+				const cmd = w.querySelector('.fx-cmd');
+				const views = w.querySelector('.fx-views').getBoundingClientRect();
+				return {
+					addrWider: addr.width >= search.width,
+					crumbWhole: crumb.scrollWidth <= crumb.clientWidth && crumb.getBoundingClientRect().right <= addr.right + 0.5,
+					cmdNoScroll: cmd.scrollWidth <= cmd.clientWidth + 1,
+					viewsInside: views.right <= cmd.getBoundingClientRect().right + 0.5,
+				};
+			});
+		expect(await fits(), 'nothing selected').toEqual({ addrWider: true, crumbWhole: true, cmdNoScroll: true, viewsInside: true });
+		// A selection turns on the item commands; they must still fit.
+		await win.locator('.fx-scroll [role="option"]').first().click();
+		await expect(win.locator('.fx-cb[data-act="copy"]')).toBeEnabled();
+		await expect(win.locator('.fx-cb[data-act="copy"]')).toBeVisible();
+		expect(await fits(), 'one folder selected').toEqual({ addrWider: true, crumbWhole: true, cmdNoScroll: true, viewsInside: true });
+		// Inside a folder the parent crumb gives way so the current folder reads whole.
+		await win.locator('.fx-scroll [role="option"]', { hasText: 'Documents' }).dblclick();
+		await expect(win.locator('.fx-crumb[aria-current]')).toHaveText('Documents');
+		expect(await fits(), 'inside Documents').toEqual({ addrWider: true, crumbWhole: true, cmdNoScroll: true, viewsInside: true });
+	});
 });

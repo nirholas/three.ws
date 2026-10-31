@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "File Explorer fits a phone screen",
+			"summary": "On a phone the desktop's File Explorer squeezed its address bar down to a single letter and pushed the view buttons off the edge of a toolbar that could only be scrolled sideways. The address bar now gets the room and always shows the folder you are in, the commands go icon-only, item commands that do not apply to your selection step aside, and the toolbar wraps instead of hiding anything.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "A venue screen for /play: an invisible camera that directs itself",
 			"summary": "Open /play with director=1 on a projector or as an OBS source and the world watches itself. The screen joins as a spectator that has no avatar, is invisible to every player and is not counted in the online total, then cuts every 15 to 30 seconds between the busiest places in the plaza (the totem, the screens, the dance floor, any crowd) without ever clipping a building. A broadcast overlay shows the event name with LIVE or a countdown, the running agenda item, the world and the live headcount, and a QR to join, with no player HUD. At the group photo it holds the totem and the crowd through the countdown and the flash. It reconnects forever under a quiet pill, keeps the screen awake, hides the cursor, and reloads itself if graphics are lost. Built for the Meetup #3 livestream.",
 			"tags": [
