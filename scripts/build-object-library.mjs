@@ -21,6 +21,7 @@ const DRY = process.argv.includes('--dry-run');
 const SOURCES = [
 	{ catalog: join(ROOT, 'public', 'objects', 'polyhaven', 'catalog.json'), key: 'models' },
 	{ catalog: join(ROOT, 'public', 'objects', 'simready', 'catalog.json'), key: 'models' },
+	{ catalog: join(ROOT, 'public', 'objects', 'kenney-graveyard', 'catalog.json'), key: 'models' },
 ];
 
 // The set of thumbnails that actually rendered (render-glb-thumbnails.mjs), so a

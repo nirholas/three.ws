@@ -1,0 +1,3021 @@
+{
+  "source": {
+    "name": "Kenney Graveyard Kit",
+    "version": "5.0",
+    "url": "https://kenney.nl/assets/graveyard-kit",
+    "license": "CC0 1.0 Universal",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "license": "CC0",
+  "models": {
+    "altar-stone": {
+      "slug": "altar-stone",
+      "name": "Altar Stone",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "altar",
+        "stone"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/altar-stone.glb",
+      "glb_bytes": 27876,
+      "triangles": 166,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.0396,
+        0.4876,
+        0.6532
+      ]
+    },
+    "altar-wood": {
+      "slug": "altar-wood",
+      "name": "Altar Wood",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "altar",
+        "wood"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/altar-wood.glb",
+      "glb_bytes": 39080,
+      "triangles": 306,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.0451,
+        0.5376,
+        0.6587
+      ]
+    },
+    "bench-damaged": {
+      "slug": "bench-damaged",
+      "name": "Bench Damaged",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "bench",
+        "damaged"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/bench-damaged.glb",
+      "glb_bytes": 34100,
+      "triangles": 240,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.9084,
+        0.5184,
+        0.4551
+      ]
+    },
+    "bench": {
+      "slug": "bench",
+      "name": "Bench",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "bench"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/bench.glb",
+      "glb_bytes": 26664,
+      "triangles": 160,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.8072,
+        0.526,
+        0.4551
+      ]
+    },
+    "border-pillar": {
+      "slug": "border-pillar",
+      "name": "Border Pillar",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "border",
+        "pillar"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/border-pillar.glb",
+      "glb_bytes": 22008,
+      "triangles": 104,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.2215,
+        0.76,
+        0.2215
+      ]
+    },
+    "brick-wall-curve-small": {
+      "slug": "brick-wall-curve-small",
+      "name": "Brick Wall Curve Small",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "brick",
+        "wall",
+        "curve",
+        "small"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/brick-wall-curve-small.glb",
+      "glb_bytes": 61436,
+      "triangles": 524,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.725,
+        1
+      ]
+    },
+    "brick-wall-curve": {
+      "slug": "brick-wall-curve",
+      "name": "Brick Wall Curve",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "brick",
+        "wall",
+        "curve"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/brick-wall-curve.glb",
+      "glb_bytes": 45332,
+      "triangles": 348,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.725,
+        1
+      ]
+    },
+    "brick-wall-end": {
+      "slug": "brick-wall-end",
+      "name": "Brick Wall End",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "brick",
+        "wall",
+        "end"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/brick-wall-end.glb",
+      "glb_bytes": 41696,
+      "triangles": 316,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.85,
+        0.45
+      ]
+    },
+    "brick-wall": {
+      "slug": "brick-wall",
+      "name": "Brick Wall",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "brick",
+        "wall"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/brick-wall.glb",
+      "glb_bytes": 30188,
+      "triangles": 192,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.725,
+        0.3
+      ]
+    },
+    "candle-multiple": {
+      "slug": "candle-multiple",
+      "name": "Candle Multiple",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "candle",
+        "multiple"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/candle-multiple.glb",
+      "glb_bytes": 27864,
+      "triangles": 162,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.2552,
+        0.2002,
+        0.2667
+      ]
+    },
+    "candle": {
+      "slug": "candle",
+      "name": "Candle",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "candle"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/candle.glb",
+      "glb_bytes": 17428,
+      "triangles": 54,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.1361,
+        0.2002,
+        0.1361
+      ]
+    },
+    "character-ghost": {
+      "slug": "character-ghost",
+      "name": "Character Ghost",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "characters"
+      ],
+      "tags": [
+        "halloween",
+        "characters",
+        "character",
+        "ghost"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/character-ghost.glb",
+      "glb_bytes": 103152,
+      "triangles": 413,
+      "meshes": 3,
+      "materials": 1,
+      "size_m": [
+        0.7881,
+        0.6622,
+        0.4882
+      ],
+      "animations": [
+        "static",
+        "idle",
+        "walk",
+        "sprint",
+        "jump",
+        "fall",
+        "crouch",
+        "sit",
+        "drive",
+        "die",
+        "pick-up",
+        "emote-yes",
+        "emote-no",
+        "holding-right",
+        "holding-left",
+        "holding-both",
+        "holding-right-shoot",
+        "holding-left-shoot",
+        "holding-both-shoot",
+        "attack-melee-right",
+        "attack-melee-left",
+        "attack-kick-right",
+        "attack-kick-left",
+        "interact-right",
+        "interact-left",
+        "wheelchair-sit",
+        "wheelchair-look-left",
+        "wheelchair-look-right",
+        "wheelchair-move-forward",
+        "wheelchair-move-back",
+        "wheelchair-move-left",
+        "wheelchair-move-right"
+      ]
+    },
+    "character-keeper": {
+      "slug": "character-keeper",
+      "name": "Character Keeper",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "characters"
+      ],
+      "tags": [
+        "halloween",
+        "characters",
+        "character",
+        "keeper"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/character-keeper.glb",
+      "glb_bytes": 221376,
+      "triangles": 1141,
+      "meshes": 6,
+      "materials": 1,
+      "size_m": [
+        0.8114,
+        0.8625,
+        0.5371
+      ],
+      "animations": [
+        "static",
+        "idle",
+        "walk",
+        "sprint",
+        "jump",
+        "fall",
+        "crouch",
+        "sit",
+        "drive",
+        "die",
+        "pick-up",
+        "emote-yes",
+        "emote-no",
+        "holding-right",
+        "holding-left",
+        "holding-both",
+        "holding-right-shoot",
+        "holding-left-shoot",
+        "holding-both-shoot",
+        "attack-melee-right",
+        "attack-melee-left",
+        "attack-kick-right",
+        "attack-kick-left",
+        "interact-right",
+        "interact-left",
+        "wheelchair-sit",
+        "wheelchair-look-left",
+        "wheelchair-look-right",
+        "wheelchair-move-forward",
+        "wheelchair-move-back",
+        "wheelchair-move-left",
+        "wheelchair-move-right"
+      ]
+    },
+    "character-skeleton": {
+      "slug": "character-skeleton",
+      "name": "Character Skeleton",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "characters"
+      ],
+      "tags": [
+        "halloween",
+        "characters",
+        "character",
+        "skeleton"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/character-skeleton.glb",
+      "glb_bytes": 174208,
+      "triangles": 658,
+      "meshes": 6,
+      "materials": 1,
+      "size_m": [
+        0.7608,
+        0.7001,
+        0.3159
+      ],
+      "animations": [
+        "static",
+        "idle",
+        "walk",
+        "sprint",
+        "jump",
+        "fall",
+        "crouch",
+        "sit",
+        "drive",
+        "die",
+        "pick-up",
+        "emote-yes",
+        "emote-no",
+        "holding-right",
+        "holding-left",
+        "holding-both",
+        "holding-right-shoot",
+        "holding-left-shoot",
+        "holding-both-shoot",
+        "attack-melee-right",
+        "attack-melee-left",
+        "attack-kick-right",
+        "attack-kick-left",
+        "interact-right",
+        "interact-left",
+        "wheelchair-sit",
+        "wheelchair-look-left",
+        "wheelchair-look-right",
+        "wheelchair-move-forward",
+        "wheelchair-move-back",
+        "wheelchair-move-left",
+        "wheelchair-move-right"
+      ]
+    },
+    "character-vampire": {
+      "slug": "character-vampire",
+      "name": "Character Vampire",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "characters"
+      ],
+      "tags": [
+        "halloween",
+        "characters",
+        "character",
+        "vampire"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/character-vampire.glb",
+      "glb_bytes": 219200,
+      "triangles": 1100,
+      "meshes": 6,
+      "materials": 1,
+      "size_m": [
+        0.8114,
+        0.7805,
+        0.4546
+      ],
+      "animations": [
+        "static",
+        "idle",
+        "walk",
+        "sprint",
+        "jump",
+        "fall",
+        "crouch",
+        "sit",
+        "drive",
+        "die",
+        "pick-up",
+        "emote-yes",
+        "emote-no",
+        "holding-right",
+        "holding-left",
+        "holding-both",
+        "holding-right-shoot",
+        "holding-left-shoot",
+        "holding-both-shoot",
+        "attack-melee-right",
+        "attack-melee-left",
+        "attack-kick-right",
+        "attack-kick-left",
+        "interact-right",
+        "interact-left",
+        "wheelchair-sit",
+        "wheelchair-look-left",
+        "wheelchair-look-right",
+        "wheelchair-move-forward",
+        "wheelchair-move-back",
+        "wheelchair-move-left",
+        "wheelchair-move-right"
+      ]
+    },
+    "character-zombie": {
+      "slug": "character-zombie",
+      "name": "Character Zombie",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "characters"
+      ],
+      "tags": [
+        "halloween",
+        "characters",
+        "character",
+        "zombie"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/character-zombie.glb",
+      "glb_bytes": 216612,
+      "triangles": 1078,
+      "meshes": 6,
+      "materials": 1,
+      "size_m": [
+        0.8114,
+        0.8251,
+        0.3455
+      ],
+      "animations": [
+        "static",
+        "idle",
+        "walk",
+        "sprint",
+        "jump",
+        "fall",
+        "crouch",
+        "sit",
+        "drive",
+        "die",
+        "pick-up",
+        "emote-yes",
+        "emote-no",
+        "holding-right",
+        "holding-left",
+        "holding-both",
+        "holding-right-shoot",
+        "holding-left-shoot",
+        "holding-both-shoot",
+        "attack-melee-right",
+        "attack-melee-left",
+        "attack-kick-right",
+        "attack-kick-left",
+        "interact-right",
+        "interact-left",
+        "wheelchair-sit",
+        "wheelchair-look-left",
+        "wheelchair-look-right",
+        "wheelchair-move-forward",
+        "wheelchair-move-back",
+        "wheelchair-move-left",
+        "wheelchair-move-right"
+      ]
+    },
+    "coffin-old": {
+      "slug": "coffin-old",
+      "name": "Coffin Old",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "coffin",
+        "old"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/coffin-old.glb",
+      "glb_bytes": 30664,
+      "triangles": 216,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.5738,
+        0.2,
+        0.8378
+      ]
+    },
+    "coffin": {
+      "slug": "coffin",
+      "name": "Coffin",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "coffin"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/coffin.glb",
+      "glb_bytes": 34936,
+      "triangles": 256,
+      "meshes": 2,
+      "materials": 1,
+      "size_m": [
+        0.5738,
+        0.325,
+        0.8378
+      ]
+    },
+    "column-large": {
+      "slug": "column-large",
+      "name": "Column Large",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "column",
+        "large"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/column-large.glb",
+      "glb_bytes": 48256,
+      "triangles": 394,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.39,
+        1.13,
+        0.39
+      ]
+    },
+    "cross-column": {
+      "slug": "cross-column",
+      "name": "Cross Column",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "cross",
+        "column"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/cross-column.glb",
+      "glb_bytes": 31536,
+      "triangles": 200,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.45,
+        1.447,
+        0.45
+      ]
+    },
+    "cross-wood": {
+      "slug": "cross-wood",
+      "name": "Cross Wood",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "cross",
+        "wood"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/cross-wood.glb",
+      "glb_bytes": 23796,
+      "triangles": 126,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.43,
+        1.0448,
+        0.43
+      ]
+    },
+    "cross": {
+      "slug": "cross",
+      "name": "Cross",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "cross"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/cross.glb",
+      "glb_bytes": 26248,
+      "triangles": 158,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.6691,
+        1.0496,
+        0.25
+      ]
+    },
+    "crypt-a": {
+      "slug": "crypt-a",
+      "name": "Crypt A",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-a.glb",
+      "glb_bytes": 21616,
+      "triangles": 108,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.62,
+        0.5224,
+        1.116
+      ]
+    },
+    "crypt-b": {
+      "slug": "crypt-b",
+      "name": "Crypt B",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-b.glb",
+      "glb_bytes": 22804,
+      "triangles": 118,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.62,
+        0.5224,
+        1.116
+      ]
+    },
+    "crypt-door": {
+      "slug": "crypt-door",
+      "name": "Crypt Door",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt",
+        "door"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-door.glb",
+      "glb_bytes": 26428,
+      "triangles": 136,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.33,
+        0.7378,
+        0.125
+      ],
+      "animations": [
+        "open",
+        "close",
+        "open-and-close"
+      ]
+    },
+    "crypt-large-door": {
+      "slug": "crypt-large-door",
+      "name": "Crypt Large Door",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt",
+        "large",
+        "door"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-large-door.glb",
+      "glb_bytes": 32004,
+      "triangles": 200,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.63,
+        0.7391,
+        0.135
+      ],
+      "animations": [
+        "open",
+        "close",
+        "open-and-close"
+      ]
+    },
+    "crypt-large-roof": {
+      "slug": "crypt-large-roof",
+      "name": "Crypt Large Roof",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt",
+        "large",
+        "roof"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-large-roof.glb",
+      "glb_bytes": 46320,
+      "triangles": 406,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.9768,
+        0.7592,
+        2.438
+      ]
+    },
+    "crypt-large": {
+      "slug": "crypt-large",
+      "name": "Crypt Large",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt",
+        "large"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-large.glb",
+      "glb_bytes": 65564,
+      "triangles": 626,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.85,
+        1,
+        2.4002
+      ]
+    },
+    "crypt-small-roof": {
+      "slug": "crypt-small-roof",
+      "name": "Crypt Small Roof",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt",
+        "small",
+        "roof"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-small-roof.glb",
+      "glb_bytes": 38000,
+      "triangles": 275,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.5016,
+        0.74,
+        1.438
+      ]
+    },
+    "crypt-small": {
+      "slug": "crypt-small",
+      "name": "Crypt Small",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt",
+        "small"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt-small.glb",
+      "glb_bytes": 47584,
+      "triangles": 414,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.35,
+        1,
+        1.4002
+      ]
+    },
+    "crypt": {
+      "slug": "crypt",
+      "name": "Crypt",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "architecture"
+      ],
+      "tags": [
+        "halloween",
+        "architecture",
+        "crypt"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/crypt.glb",
+      "glb_bytes": 35760,
+      "triangles": 252,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.72,
+        0.7316,
+        1.116
+      ]
+    },
+    "debris-wood": {
+      "slug": "debris-wood",
+      "name": "Debris Wood",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "debris",
+        "wood"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/debris-wood.glb",
+      "glb_bytes": 21440,
+      "triangles": 108,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.4585,
+        0.1,
+        0.5042
+      ]
+    },
+    "debris": {
+      "slug": "debris",
+      "name": "Debris",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "debris"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/debris.glb",
+      "glb_bytes": 35788,
+      "triangles": 240,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.5362,
+        0.16,
+        0.5473
+      ]
+    },
+    "detail-bowl": {
+      "slug": "detail-bowl",
+      "name": "Detail Bowl",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "detail",
+        "bowl"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/detail-bowl.glb",
+      "glb_bytes": 28088,
+      "triangles": 176,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.2009,
+        0.13,
+        0.2009
+      ]
+    },
+    "detail-chalice": {
+      "slug": "detail-chalice",
+      "name": "Detail Chalice",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "detail",
+        "chalice"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/detail-chalice.glb",
+      "glb_bytes": 24416,
+      "triangles": 136,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.1642,
+        0.249,
+        0.1642
+      ]
+    },
+    "detail-plate": {
+      "slug": "detail-plate",
+      "name": "Detail Plate",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "detail",
+        "plate"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/detail-plate.glb",
+      "glb_bytes": 22048,
+      "triangles": 116,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.2715,
+        0.0489,
+        0.2715
+      ]
+    },
+    "fence-damaged": {
+      "slug": "fence-damaged",
+      "name": "Fence Damaged",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "fence",
+        "damaged"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/fence-damaged.glb",
+      "glb_bytes": 40868,
+      "triangles": 320,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.6201,
+        0.3121
+      ]
+    },
+    "fence-gate": {
+      "slug": "fence-gate",
+      "name": "Fence Gate",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "fence",
+        "gate"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/fence-gate.glb",
+      "glb_bytes": 39560,
+      "triangles": 296,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.6201,
+        0.204
+      ]
+    },
+    "fence": {
+      "slug": "fence",
+      "name": "Fence",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "fence"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/fence.glb",
+      "glb_bytes": 50732,
+      "triangles": 432,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.6201,
+        0.184
+      ]
+    },
+    "fire-basket": {
+      "slug": "fire-basket",
+      "name": "Fire Basket",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "fire",
+        "basket"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/fire-basket.glb",
+      "glb_bytes": 29396,
+      "triangles": 196,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.4166,
+        0.1678,
+        0.4166
+      ]
+    },
+    "grave-border": {
+      "slug": "grave-border",
+      "name": "Grave Border",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "grave",
+        "border"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/grave-border.glb",
+      "glb_bytes": 67924,
+      "triangles": 600,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.7617,
+        0.1117,
+        1.3886
+      ]
+    },
+    "grave": {
+      "slug": "grave",
+      "name": "Grave",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "grave"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/grave.glb",
+      "glb_bytes": 35688,
+      "triangles": 256,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.7238,
+        0.114,
+        1.2409
+      ]
+    },
+    "gravestone-bevel": {
+      "slug": "gravestone-bevel",
+      "name": "Gravestone Bevel",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "bevel"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-bevel.glb",
+      "glb_bytes": 26568,
+      "triangles": 174,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.45,
+        0.5293,
+        0.25
+      ]
+    },
+    "gravestone-broken": {
+      "slug": "gravestone-broken",
+      "name": "Gravestone Broken",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "broken"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-broken.glb",
+      "glb_bytes": 23640,
+      "triangles": 134,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.509,
+        0.3411,
+        0.3915
+      ]
+    },
+    "gravestone-cross-large": {
+      "slug": "gravestone-cross-large",
+      "name": "Gravestone Cross Large",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "cross",
+        "large"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-cross-large.glb",
+      "glb_bytes": 28924,
+      "triangles": 192,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.45,
+        0.9383,
+        0.33
+      ]
+    },
+    "gravestone-cross": {
+      "slug": "gravestone-cross",
+      "name": "Gravestone Cross",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "cross"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-cross.glb",
+      "glb_bytes": 31300,
+      "triangles": 222,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.45,
+        0.915,
+        0.33
+      ]
+    },
+    "gravestone-debris": {
+      "slug": "gravestone-debris",
+      "name": "Gravestone Debris",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "debris"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-debris.glb",
+      "glb_bytes": 22656,
+      "triangles": 122,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.4952,
+        0.2667,
+        0.6419
+      ]
+    },
+    "gravestone-decorative": {
+      "slug": "gravestone-decorative",
+      "name": "Gravestone Decorative",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "decorative"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-decorative.glb",
+      "glb_bytes": 20724,
+      "triangles": 92,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.5101,
+        0.5942,
+        0.25
+      ]
+    },
+    "gravestone-roof": {
+      "slug": "gravestone-roof",
+      "name": "Gravestone Roof",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "roof"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-roof.glb",
+      "glb_bytes": 27028,
+      "triangles": 172,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.4864,
+        0.6076,
+        0.25
+      ]
+    },
+    "gravestone-round": {
+      "slug": "gravestone-round",
+      "name": "Gravestone Round",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "round"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-round.glb",
+      "glb_bytes": 27552,
+      "triangles": 178,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.45,
+        0.575,
+        0.25
+      ]
+    },
+    "gravestone-wide": {
+      "slug": "gravestone-wide",
+      "name": "Gravestone Wide",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "gravestone",
+        "wide"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/gravestone-wide.glb",
+      "glb_bytes": 33768,
+      "triangles": 266,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.85,
+        0.5704,
+        0.3
+      ]
+    },
+    "hay-bale-bundled": {
+      "slug": "hay-bale-bundled",
+      "name": "Hay Bale Bundled",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "hay",
+        "bale",
+        "bundled"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/hay-bale-bundled.glb",
+      "glb_bytes": 45804,
+      "triangles": 364,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.6066,
+        0.3798,
+        0.4312
+      ]
+    },
+    "hay-bale": {
+      "slug": "hay-bale",
+      "name": "Hay Bale",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "hay",
+        "bale"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/hay-bale.glb",
+      "glb_bytes": 28544,
+      "triangles": 180,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.6066,
+        0.3541,
+        0.4019
+      ]
+    },
+    "iron-fence-bar": {
+      "slug": "iron-fence-bar",
+      "name": "Iron Fence Bar",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence",
+        "bar"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence-bar.glb",
+      "glb_bytes": 20812,
+      "triangles": 88,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.1194,
+        0.6689,
+        0.1034
+      ]
+    },
+    "iron-fence-border-column": {
+      "slug": "iron-fence-border-column",
+      "name": "Iron Fence Border Column",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence",
+        "border",
+        "column"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence-border-column.glb",
+      "glb_bytes": 51464,
+      "triangles": 400,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.8789,
+        0.2215
+      ]
+    },
+    "iron-fence-border-curve": {
+      "slug": "iron-fence-border-curve",
+      "name": "Iron Fence Border Curve",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence",
+        "border",
+        "curve"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence-border-curve.glb",
+      "glb_bytes": 65876,
+      "triangles": 576,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.9,
+        0.8789,
+        0.9
+      ]
+    },
+    "iron-fence-border-gate": {
+      "slug": "iron-fence-border-gate",
+      "name": "Iron Fence Border Gate",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence",
+        "border",
+        "gate"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence-border-gate.glb",
+      "glb_bytes": 37056,
+      "triangles": 256,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.76,
+        0.2215
+      ]
+    },
+    "iron-fence-border": {
+      "slug": "iron-fence-border",
+      "name": "Iron Fence Border",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence",
+        "border"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence-border.glb",
+      "glb_bytes": 49864,
+      "triangles": 380,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.8789,
+        0.15
+      ]
+    },
+    "iron-fence-curve": {
+      "slug": "iron-fence-curve",
+      "name": "Iron Fence Curve",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence",
+        "curve"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence-curve.glb",
+      "glb_bytes": 56800,
+      "triangles": 472,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.88,
+        0.8789,
+        0.88
+      ]
+    },
+    "iron-fence-damaged": {
+      "slug": "iron-fence-damaged",
+      "name": "Iron Fence Damaged",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence",
+        "damaged"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence-damaged.glb",
+      "glb_bytes": 45608,
+      "triangles": 336,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.8804,
+        0.3248
+      ]
+    },
+    "iron-fence": {
+      "slug": "iron-fence",
+      "name": "Iron Fence",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "iron",
+        "fence"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/iron-fence.glb",
+      "glb_bytes": 49260,
+      "triangles": 376,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.8789,
+        0.11
+      ]
+    },
+    "lantern-candle": {
+      "slug": "lantern-candle",
+      "name": "Lantern Candle",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "lantern",
+        "candle"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/lantern-candle.glb",
+      "glb_bytes": 32840,
+      "triangles": 224,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.24,
+        0.3877,
+        0.24
+      ]
+    },
+    "lantern-glass": {
+      "slug": "lantern-glass",
+      "name": "Lantern Glass",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "lantern",
+        "glass"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/lantern-glass.glb",
+      "glb_bytes": 29348,
+      "triangles": 186,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.24,
+        0.3877,
+        0.24
+      ]
+    },
+    "lightpost-all": {
+      "slug": "lightpost-all",
+      "name": "Lightpost All",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "lightpost",
+        "all"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/lightpost-all.glb",
+      "glb_bytes": 104408,
+      "triangles": 1012,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.7266,
+        1.2666,
+        0.7266
+      ]
+    },
+    "lightpost-double": {
+      "slug": "lightpost-double",
+      "name": "Lightpost Double",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "lightpost",
+        "double"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/lightpost-double.glb",
+      "glb_bytes": 64908,
+      "triangles": 572,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.2088,
+        1.2666,
+        0.7266
+      ]
+    },
+    "lightpost-single": {
+      "slug": "lightpost-single",
+      "name": "Lightpost Single",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "lighting"
+      ],
+      "tags": [
+        "halloween",
+        "lighting",
+        "lightpost",
+        "single"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/lightpost-single.glb",
+      "glb_bytes": 45156,
+      "triangles": 352,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.2088,
+        1.2666,
+        0.4649
+      ]
+    },
+    "pillar-large": {
+      "slug": "pillar-large",
+      "name": "Pillar Large",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "pillar",
+        "large"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pillar-large.glb",
+      "glb_bytes": 27792,
+      "triangles": 152,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.2215,
+        1.1253,
+        0.2215
+      ]
+    },
+    "pillar-obelisk": {
+      "slug": "pillar-obelisk",
+      "name": "Pillar Obelisk",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "pillar",
+        "obelisk"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pillar-obelisk.glb",
+      "glb_bytes": 19244,
+      "triangles": 76,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.35,
+        1.012,
+        0.35
+      ]
+    },
+    "pillar-small": {
+      "slug": "pillar-small",
+      "name": "Pillar Small",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "pillar",
+        "small"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pillar-small.glb",
+      "glb_bytes": 21404,
+      "triangles": 96,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.1815,
+        0.7564,
+        0.1815
+      ]
+    },
+    "pillar-square": {
+      "slug": "pillar-square",
+      "name": "Pillar Square",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "pillar",
+        "square"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pillar-square.glb",
+      "glb_bytes": 29108,
+      "triangles": 178,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.35,
+        1.15,
+        0.35
+      ]
+    },
+    "pine-crooked": {
+      "slug": "pine-crooked",
+      "name": "Pine Crooked",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "pine",
+        "crooked"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pine-crooked.glb",
+      "glb_bytes": 46576,
+      "triangles": 336,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.178,
+        2.1081,
+        1.3346
+      ]
+    },
+    "pine-fall-crooked": {
+      "slug": "pine-fall-crooked",
+      "name": "Pine Fall Crooked",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "pine",
+        "fall",
+        "crooked"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pine-fall-crooked.glb",
+      "glb_bytes": 46592,
+      "triangles": 336,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.178,
+        2.1081,
+        1.3346
+      ]
+    },
+    "pine-fall": {
+      "slug": "pine-fall",
+      "name": "Pine Fall",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "pine",
+        "fall"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pine-fall.glb",
+      "glb_bytes": 46568,
+      "triangles": 336,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.178,
+        2.3025,
+        1.3346
+      ]
+    },
+    "pine": {
+      "slug": "pine",
+      "name": "Pine",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "pine"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pine.glb",
+      "glb_bytes": 46552,
+      "triangles": 336,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.178,
+        2.3025,
+        1.3346
+      ]
+    },
+    "pumpkin-carved": {
+      "slug": "pumpkin-carved",
+      "name": "Pumpkin Carved",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "pumpkins"
+      ],
+      "tags": [
+        "halloween",
+        "pumpkins",
+        "pumpkin",
+        "carved"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pumpkin-carved.glb",
+      "glb_bytes": 56880,
+      "triangles": 486,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.3775,
+        0.3211,
+        0.3775
+      ]
+    },
+    "pumpkin-tall-carved": {
+      "slug": "pumpkin-tall-carved",
+      "name": "Pumpkin Tall Carved",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "pumpkins"
+      ],
+      "tags": [
+        "halloween",
+        "pumpkins",
+        "pumpkin",
+        "tall",
+        "carved"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pumpkin-tall-carved.glb",
+      "glb_bytes": 54912,
+      "triangles": 460,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.3255,
+        0.3597,
+        0.3255
+      ]
+    },
+    "pumpkin-tall": {
+      "slug": "pumpkin-tall",
+      "name": "Pumpkin Tall",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "pumpkins"
+      ],
+      "tags": [
+        "halloween",
+        "pumpkins",
+        "pumpkin",
+        "tall"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pumpkin-tall.glb",
+      "glb_bytes": 46056,
+      "triangles": 348,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.3255,
+        0.3597,
+        0.3255
+      ]
+    },
+    "pumpkin": {
+      "slug": "pumpkin",
+      "name": "Pumpkin",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "pumpkins"
+      ],
+      "tags": [
+        "halloween",
+        "pumpkins",
+        "pumpkin"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/pumpkin.glb",
+      "glb_bytes": 46044,
+      "triangles": 348,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.3775,
+        0.3211,
+        0.3775
+      ]
+    },
+    "road": {
+      "slug": "road",
+      "name": "Road",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "road"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/road.glb",
+      "glb_bytes": 39668,
+      "triangles": 308,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.7971,
+        0.0783,
+        0.7898
+      ]
+    },
+    "rocks-tall": {
+      "slug": "rocks-tall",
+      "name": "Rocks Tall",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "rocks",
+        "tall"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/rocks-tall.glb",
+      "glb_bytes": 47508,
+      "triangles": 364,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.0331,
+        0.5876,
+        1.0201
+      ]
+    },
+    "rocks": {
+      "slug": "rocks",
+      "name": "Rocks",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "rocks"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/rocks.glb",
+      "glb_bytes": 47472,
+      "triangles": 364,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1.0759,
+        0.3775,
+        0.9644
+      ]
+    },
+    "shovel-dirt": {
+      "slug": "shovel-dirt",
+      "name": "Shovel Dirt",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "shovel",
+        "dirt"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/shovel-dirt.glb",
+      "glb_bytes": 36712,
+      "triangles": 280,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.6224,
+        0.6608,
+        0.5242
+      ]
+    },
+    "shovel": {
+      "slug": "shovel",
+      "name": "Shovel",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "props"
+      ],
+      "tags": [
+        "halloween",
+        "props",
+        "shovel"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/shovel.glb",
+      "glb_bytes": 24524,
+      "triangles": 148,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.192,
+        0.6122,
+        0.0954
+      ]
+    },
+    "stone-wall-column": {
+      "slug": "stone-wall-column",
+      "name": "Stone Wall Column",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "stone",
+        "wall",
+        "column"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/stone-wall-column.glb",
+      "glb_bytes": 24492,
+      "triangles": 138,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.85,
+        0.35
+      ]
+    },
+    "stone-wall-curve": {
+      "slug": "stone-wall-curve",
+      "name": "Stone Wall Curve",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "stone",
+        "wall",
+        "curve"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/stone-wall-curve.glb",
+      "glb_bytes": 38220,
+      "triangles": 266,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.725,
+        1
+      ]
+    },
+    "stone-wall-damaged": {
+      "slug": "stone-wall-damaged",
+      "name": "Stone Wall Damaged",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "stone",
+        "wall",
+        "damaged"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/stone-wall-damaged.glb",
+      "glb_bytes": 24884,
+      "triangles": 144,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.725,
+        0.2
+      ]
+    },
+    "stone-wall": {
+      "slug": "stone-wall",
+      "name": "Stone Wall",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "walls-and-fences"
+      ],
+      "tags": [
+        "halloween",
+        "walls-and-fences",
+        "stone",
+        "wall"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/stone-wall.glb",
+      "glb_bytes": 17696,
+      "triangles": 60,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        1,
+        0.725,
+        0.2
+      ]
+    },
+    "trunk-long": {
+      "slug": "trunk-long",
+      "name": "Trunk Long",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "trunk",
+        "long"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/trunk-long.glb",
+      "glb_bytes": 41544,
+      "triangles": 312,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.5393,
+        1,
+        0.5409
+      ]
+    },
+    "trunk": {
+      "slug": "trunk",
+      "name": "Trunk",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "nature"
+      ],
+      "tags": [
+        "halloween",
+        "nature",
+        "trunk"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/trunk.glb",
+      "glb_bytes": 37816,
+      "triangles": 274,
+      "meshes": 1,
+      "materials": 1,
+      "size_m": [
+        0.5393,
+        0.45,
+        0.5542
+      ]
+    },
+    "urn-round": {
+      "slug": "urn-round",
+      "name": "Urn Round",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "urn",
+        "round"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/urn-round.glb",
+      "glb_bytes": 34016,
+      "triangles": 230,
+      "meshes": 2,
+      "materials": 1,
+      "size_m": [
+        0.2644,
+        0.384,
+        0.2644
+      ]
+    },
+    "urn-square": {
+      "slug": "urn-square",
+      "name": "Urn Square",
+      "status": "done",
+      "source": "kenney-graveyard",
+      "license": "CC0",
+      "authors": [
+        "Kenney"
+      ],
+      "attribution": "Graveyard Kit 5.0 by Kenney (kenney.nl), CC0, https://kenney.nl/assets/graveyard-kit",
+      "categories": [
+        "halloween",
+        "graves"
+      ],
+      "tags": [
+        "halloween",
+        "graves",
+        "urn",
+        "square"
+      ],
+      "glb_file": "objects/kenney-graveyard/glb/urn-square.glb",
+      "glb_bytes": 32772,
+      "triangles": 218,
+      "meshes": 2,
+      "materials": 1,
+      "size_m": [
+        0.2644,
+        0.384,
+        0.2644
+      ]
+    }
+  }
+}
