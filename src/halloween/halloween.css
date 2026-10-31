@@ -1,0 +1,515 @@
+/* /halloween: Halloween Weekend 2026 gift claim. A night scene in both site
+   themes (it is a Halloween night), so its palette is fixed rather than
+   following data-theme. */
+
+.hw-body {
+	--hw-ink: #f6ecff;
+	--hw-dim: rgba(246, 236, 255, 0.66);
+	--hw-faint: rgba(246, 236, 255, 0.42);
+	--hw-orange: #ff7a1a;
+	--hw-orange-hi: #ff9a3c;
+	--hw-violet: #c9a6e8;
+	--hw-card: rgba(28, 12, 42, 0.62);
+	--hw-line: rgba(201, 166, 232, 0.18);
+	--hw-line-hi: rgba(255, 154, 60, 0.45);
+	--hw-display: 'Creepster', 'Space Grotesk', system-ui, sans-serif;
+	margin: 0;
+	min-height: 100vh;
+	color: var(--hw-ink);
+	background: #0b0414;
+	font: 15px/1.6 'Inter', system-ui, sans-serif;
+	color-scheme: dark;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* ---------- backdrop ---------- */
+.hw-sky {
+	position: fixed;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	background:
+		radial-gradient(60% 50% at 50% 115%, rgba(255, 106, 26, 0.32), transparent 70%),
+		linear-gradient(180deg, #07030f 0%, #1a0a2c 45%, #3a1636 80%, #5a2214 100%);
+}
+.hw-moon {
+	position: absolute;
+	top: 9vh;
+	right: max(6vw, 24px);
+	width: clamp(110px, 16vw, 210px);
+	aspect-ratio: 1;
+	border-radius: 50%;
+	background: radial-gradient(circle at 40% 38%, #fff6dc, #ffe0a3 65%, #f2b866);
+	box-shadow: 0 0 80px 30px rgba(255, 200, 120, 0.22), 0 0 200px 80px rgba(255, 138, 42, 0.12);
+	opacity: 0.9;
+}
+.hw-hill {
+	position: absolute;
+	inset: auto 0 0 0;
+	height: 34vh;
+	background: url('/wallpapers/haunted.svg') center bottom / cover no-repeat;
+	-webkit-mask-image: linear-gradient(180deg, transparent, #000 45%);
+	mask-image: linear-gradient(180deg, transparent, #000 45%);
+	opacity: 0.55;
+}
+
+/* ---------- layout ---------- */
+.hw-body > header,
+.hw-shell,
+.hw-body #footer-container {
+	position: relative;
+	z-index: 1;
+}
+.hw-shell {
+	width: min(100% - 32px, 1080px);
+	margin: 0 auto;
+	padding: clamp(28px, 7vh, 72px) 0 80px;
+}
+
+/* ---------- hero ---------- */
+.hw-hero {
+	text-align: center;
+	max-width: 720px;
+	margin: 0 auto;
+}
+.hw-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin: 0 0 10px;
+	padding: 6px 14px;
+	border: 1px solid var(--hw-line);
+	border-radius: 999px;
+	background: rgba(20, 8, 30, 0.6);
+	color: var(--hw-violet);
+	font-size: 13px;
+	letter-spacing: 0.04em;
+}
+.hw-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--hw-orange);
+	box-shadow: 0 0 10px var(--hw-orange);
+	animation: hw-flicker 2.4s ease-in-out infinite;
+}
+@keyframes hw-flicker {
+	0%, 100% { opacity: 1; }
+	45% { opacity: 0.55; }
+	50% { opacity: 0.9; }
+	55% { opacity: 0.6; }
+}
+.hw-title {
+	margin: 6px 0 12px;
+	font-family: var(--hw-display);
+	font-weight: 400;
+	font-size: clamp(56px, 11vw, 116px);
+	line-height: 0.95;
+	letter-spacing: 0.02em;
+	color: var(--hw-orange-hi);
+	text-shadow: 0 0 40px rgba(255, 122, 26, 0.45), 0 4px 0 #3a0d00;
+}
+.hw-title em {
+	font-style: normal;
+	color: var(--hw-violet);
+	text-shadow: 0 0 40px rgba(201, 166, 232, 0.4), 0 4px 0 #1c0a2c;
+}
+.hw-sub {
+	margin: 0 auto;
+	max-width: 600px;
+	color: var(--hw-dim);
+	font-size: 17px;
+}
+.hw-sub a,
+.hw-claim-p a {
+	color: var(--hw-orange-hi);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.hw-sub a:hover,
+.hw-claim-p a:hover {
+	color: #ffc07a;
+}
+.hw-clock {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	margin-top: 26px;
+	padding: 12px 26px;
+	border: 1px solid var(--hw-line-hi);
+	border-radius: 16px;
+	background: rgba(30, 10, 20, 0.6);
+	box-shadow: 0 0 40px rgba(255, 122, 26, 0.12) inset;
+}
+.hw-clock-label {
+	color: var(--hw-faint);
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+}
+.hw-clock-value {
+	min-width: 10ch;
+	font: 600 26px/1.2 'JetBrains Mono', ui-monospace, monospace;
+	font-variant-numeric: tabular-nums;
+	color: var(--hw-orange-hi);
+}
+.hw-clock[data-phase='ended'] {
+	border-color: var(--hw-line);
+}
+.hw-clock[data-phase='ended'] .hw-clock-value {
+	color: var(--hw-dim);
+	font-size: 18px;
+}
+
+/* ---------- claim panel ---------- */
+.hw-claim {
+	position: relative;
+	margin: 40px auto 0;
+	max-width: 860px;
+	padding: 24px 28px;
+	border: 1px solid var(--hw-line-hi);
+	border-radius: 22px;
+	background: linear-gradient(135deg, rgba(60, 20, 30, 0.7), rgba(28, 12, 42, 0.7));
+	box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 0 60px rgba(255, 122, 26, 0.08);
+	backdrop-filter: blur(14px);
+}
+.hw-claim[data-state='claimed'] {
+	border-color: rgba(134, 239, 172, 0.4);
+	background: linear-gradient(135deg, rgba(24, 40, 28, 0.7), rgba(28, 12, 42, 0.7));
+}
+.hw-claim[data-state='ended'],
+.hw-claim[data-state='error'] {
+	border-color: var(--hw-line);
+}
+.hw-claim-body {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 18px 28px;
+}
+.hw-claim-text {
+	flex: 1 1 320px;
+}
+.hw-claim-h {
+	margin: 0 0 4px;
+	font-family: var(--hw-display);
+	font-weight: 400;
+	font-size: 32px;
+	letter-spacing: 0.03em;
+	color: var(--hw-orange-hi);
+}
+.hw-claim[data-state='claimed'] .hw-claim-h {
+	color: #a7f3c0;
+}
+.hw-claim[data-state='error'] .hw-claim-h {
+	color: #ffb4b4;
+}
+.hw-claim-p {
+	margin: 0;
+	color: var(--hw-dim);
+}
+.hw-warn {
+	color: #ffd28a;
+}
+.hw-claim-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+.hw-claim-skel {
+	display: grid;
+	gap: 10px;
+}
+.hw-claim-skel span {
+	display: block;
+	height: 22px;
+	border-radius: 8px;
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05)) 0 0 / 200% 100%;
+	animation: hw-shimmer 1.4s linear infinite;
+}
+.hw-claim-skel span:first-child {
+	width: 40%;
+	height: 30px;
+}
+.hw-claim-skel span:last-child {
+	width: 75%;
+}
+@keyframes hw-shimmer {
+	to { background-position: -200% 0; }
+}
+
+/* ---------- buttons ---------- */
+.hw-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 22px;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	background: var(--hw-orange);
+	color: #1a0700;
+	font: 600 15px/1.2 'Inter', system-ui, sans-serif;
+	text-decoration: none;
+	cursor: pointer;
+	transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.hw-btn:hover {
+	background: var(--hw-orange-hi);
+	transform: translateY(-1px);
+	box-shadow: 0 10px 30px rgba(255, 122, 26, 0.35);
+}
+.hw-btn:active {
+	transform: translateY(0) scale(0.98);
+	background: #e8650c;
+}
+.hw-btn:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px #0b0414, 0 0 0 6px var(--hw-orange-hi);
+}
+.hw-btn--ghost {
+	background: transparent;
+	border-color: var(--hw-line-hi);
+	color: var(--hw-ink);
+}
+.hw-btn--ghost:hover {
+	background: rgba(255, 122, 26, 0.12);
+	box-shadow: none;
+}
+.hw-btn--ghost:active {
+	background: rgba(255, 122, 26, 0.2);
+}
+.hw-btn--claim {
+	padding: 15px 28px;
+	font-size: 16px;
+	box-shadow: 0 0 0 0 rgba(255, 122, 26, 0.5);
+	animation: hw-pulse 2.2s ease-out infinite;
+}
+@keyframes hw-pulse {
+	0% { box-shadow: 0 0 0 0 rgba(255, 122, 26, 0.5); }
+	70% { box-shadow: 0 0 0 16px rgba(255, 122, 26, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(255, 122, 26, 0); }
+}
+.hw-btn:disabled {
+	cursor: progress;
+	opacity: 0.8;
+	transform: none;
+	animation: none;
+}
+.hw-btn.is-busy::before {
+	content: '';
+	width: 14px;
+	height: 14px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	animation: hw-spin 0.8s linear infinite;
+}
+@keyframes hw-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* celebration burst */
+.hw-pop {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	font-size: 26px;
+	pointer-events: none;
+	animation: hw-pop 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes hw-pop {
+	0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+	15% { opacity: 1; }
+	100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.1) rotate(20deg); opacity: 0; }
+}
+
+/* ---------- gifts ---------- */
+.hw-gifts,
+.hw-fine {
+	margin-top: 56px;
+}
+.hw-section-h {
+	margin: 0 0 18px;
+	font-family: var(--hw-display);
+	font-weight: 400;
+	font-size: 34px;
+	letter-spacing: 0.03em;
+	color: var(--hw-violet);
+	text-align: center;
+}
+.hw-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 16px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.hw-gift {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid var(--hw-line);
+	border-radius: 18px;
+	background: var(--hw-card);
+	transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.hw-gift:hover {
+	transform: translateY(-3px);
+	border-color: var(--hw-line-hi);
+	box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35), 0 0 30px rgba(255, 122, 26, 0.12);
+}
+.hw-gift.is-owned {
+	border-color: rgba(134, 239, 172, 0.35);
+}
+.hw-gift--skel {
+	min-height: 320px;
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)) 0 0 / 200% 100%;
+	animation: hw-shimmer 1.4s linear infinite;
+}
+.hw-media {
+	display: grid;
+	place-items: center;
+	height: 190px;
+	background: radial-gradient(70% 70% at 50% 60%, rgba(255, 122, 26, 0.14), transparent 70%), rgba(10, 4, 18, 0.5);
+}
+.hw-media--model {
+	width: 100%;
+	--poster-color: transparent;
+	background-color: transparent;
+}
+.hw-media--aura i,
+.hw-media--aura b {
+	grid-area: 1 / 1;
+	border-radius: 50%;
+}
+.hw-media--aura i {
+	width: 120px;
+	height: 120px;
+	background: radial-gradient(circle, color-mix(in srgb, var(--sw) 70%, transparent), transparent 70%);
+	animation: hw-breathe 3.2s ease-in-out infinite;
+}
+.hw-media--aura b {
+	width: 54px;
+	height: 54px;
+	background: radial-gradient(circle at 40% 35%, #ffe0b8, var(--sw) 60%, #8a2e00);
+	box-shadow: 0 0 30px var(--sw);
+}
+@keyframes hw-breathe {
+	0%, 100% { transform: scale(0.85); opacity: 0.7; }
+	50% { transform: scale(1.15); opacity: 1; }
+}
+.hw-medal {
+	display: grid;
+	place-items: center;
+	width: 104px;
+	height: 104px;
+	border-radius: 50%;
+	background: conic-gradient(from 210deg, #ffb057, #ff7a1a, #a63d00, #ffb057);
+	box-shadow: 0 0 0 6px rgba(255, 154, 60, 0.18), 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+.hw-medal span {
+	display: grid;
+	place-items: center;
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	background: #1c0a2c;
+	font-size: 42px;
+}
+.hw-media--wall {
+	background: url('/wallpapers/haunted.svg') center bottom / cover no-repeat;
+}
+.hw-gift-text {
+	padding: 16px 18px 20px;
+}
+.hw-gift-kind {
+	color: var(--hw-orange-hi);
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+.hw-gift h3 {
+	margin: 4px 0 6px;
+	font: 600 19px/1.25 'Space Grotesk', system-ui, sans-serif;
+}
+.hw-gift p {
+	margin: 0;
+	color: var(--hw-dim);
+	font-size: 14px;
+}
+.hw-owned {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px 4px 8px;
+	border-radius: 999px;
+	background: rgba(22, 60, 36, 0.85);
+	color: #a7f3c0;
+	font-size: 12px;
+	font-weight: 600;
+}
+.hw-owned svg {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+/* ---------- how it works ---------- */
+.hw-steps {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 14px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.hw-steps li {
+	padding: 18px 20px;
+	border: 1px solid var(--hw-line);
+	border-radius: 16px;
+	background: rgba(20, 8, 30, 0.55);
+	color: var(--hw-dim);
+	font-size: 14px;
+}
+.hw-steps b {
+	display: block;
+	margin-bottom: 4px;
+	color: var(--hw-ink);
+	font-size: 15px;
+}
+
+@media (max-width: 560px) {
+	.hw-claim {
+		padding: 20px;
+	}
+	.hw-claim-actions,
+	.hw-claim-actions .hw-btn {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hw-dot,
+	.hw-btn--claim,
+	.hw-media--aura i,
+	.hw-claim-skel span,
+	.hw-gift--skel {
+		animation: none;
+	}
+	.hw-gift:hover,
+	.hw-btn:hover {
+		transform: none;
+	}
+}

@@ -1308,6 +1308,10 @@
 			"dest": "/atomic.html"
 		},
 		{
+			"src": "/halloween/?",
+			"dest": "/halloween.html"
+		},
+		{
 			"src": "/airdrops/?",
 			"dest": "/airdrops.html"
 		},
