@@ -186,6 +186,7 @@ vi.mock('../../api/_lib/zauth.js', () => ({
 
 vi.mock('../../api/_lib/r2.js', () => ({
 	publicUrl: vi.fn((key) => `https://r2.example/${key}`),
+	isStorageInfrastructureError: () => false,
 }));
 
 // Import the handlers under test AFTER mocks are wired.
