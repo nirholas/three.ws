@@ -88,6 +88,10 @@ export const PHOTO_GATHER_MS = 60 * 1000;
 export const PHOTO_COUNTDOWN_MS = 10 * 1000;
 export const PHOTO_POSE_MS = 3000;          // avatars strike the pose this long before the shutter
 export const PHOTO_SHUTTER_GRACE_MS = 2000;
+// How late the first frame after the instant may land and still take the shot
+// for a client that watched the countdown. Covers a stalled frame (a GLB load,
+// a GC pause, a throttled laptop) without photographing a moment long gone.
+export const PHOTO_LATE_MS = 15 * 1000;
 
 // Where the shared shutter stands at `now`. Every client derives the same answer
 // from the same config and wall clock, so the whole plaza counts down and fires

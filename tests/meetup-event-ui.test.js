@@ -334,6 +334,45 @@ describe('group photo', () => {
 		m.destroy();
 	});
 
+	it('still fires for a client that watched the countdown but stalled through the instant', () => {
+		// A GLB load, a GC pause or a throttled laptop can hold the next frame for
+		// seconds. The player was watching the countdown, so the shot still lands
+		// on the first frame back instead of being silently skipped.
+		const cc = fakeCc();
+		const m = mount(cc, PHOTO_EVENT);
+		step(m, SHUTTER - 2500);
+		expect(cc._emote).toHaveBeenCalledTimes(1);
+		step(m, SHUTTER + 6000);
+		expect(cc._openPhotoMode).toHaveBeenCalledTimes(1);
+		expect(document.getElementById('cc-meetup-shutter')).toBeNull();
+		step(m, SHUTTER + 7000, 3);
+		expect(cc._openPhotoMode).toHaveBeenCalledTimes(1);
+		m.destroy();
+	});
+
+	it('takes no photo when the tab was hidden during the countdown', () => {
+		const cc = fakeCc();
+		const m = mount(cc, PHOTO_EVENT);
+		step(m, SHUTTER - 5000);
+		const hidden = vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+		document.dispatchEvent(new Event('visibilitychange'));
+		hidden.mockReturnValue(false);
+		document.dispatchEvent(new Event('visibilitychange'));
+		step(m, SHUTTER + 1500);
+		expect(cc._openPhotoMode).not.toHaveBeenCalled();
+		hidden.mockRestore();
+		m.destroy();
+	});
+
+	it('takes no photo for a client that only arrives after the instant', () => {
+		const cc = fakeCc();
+		const m = mount(cc, PHOTO_EVENT);
+		step(m, SHUTTER + 500);
+		expect(cc._openPhotoMode).not.toHaveBeenCalled();
+		expect(cc._emote).not.toHaveBeenCalled();
+		m.destroy();
+	});
+
 	it('runs nothing when the event has no group photo', () => {
 		const cc = fakeCc();
 		const m = mount(cc);

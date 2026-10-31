@@ -37,7 +37,7 @@ import { isHomeTown } from './home-town.js';
 import { getPowerSaver } from '../shared/frame-governor.js';
 import {
 	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride, groupPhotoState,
-	PHASE, BUCKET_MS, PHOTO_STAGE, PHOTO_POSE_MS,
+	PHASE, BUCKET_MS, PHOTO_STAGE, PHOTO_POSE_MS, PHOTO_LATE_MS,
 } from './meetup-schedule.js';
 
 const CONFIG_URL = '/event.json';
@@ -114,7 +114,9 @@ export class MeetupEvent {
 		this._here = null;         // measured headcount in this world, null until read
 		this._popTimer = 0;
 		this.shutterOverlay = null;
-		this._photo = { gathered: false, posed: false, volleyed: false, shot: false };
+		// armed: this client watched the countdown with the tab in view, so it is
+		// owed the shot even if its next frame lands late.
+		this._photo = { gathered: false, posed: false, volleyed: false, armed: false, shot: false };
 		this._raf = 0;
 		this._loop = this._loop.bind(this);
 		this._raf = requestAnimationFrame(this._loop);
@@ -122,6 +124,9 @@ export class MeetupEvent {
 			if (e.key === 'Escape' && this.panel?.classList.contains('cc-meetup-panel--open')) this._closePanel();
 		};
 		window.addEventListener('keydown', this._onKey);
+		// Leaving the tab mid-countdown means missing the shared moment.
+		this._onVisibility = () => { if (document.hidden) this._photo.armed = false; };
+		document.addEventListener('visibilitychange', this._onVisibility);
 	}
 
 	// ------------------------------------------------------------------ loop
@@ -203,6 +208,7 @@ export class MeetupEvent {
 	destroy() {
 		cancelAnimationFrame(this._raf);
 		window.removeEventListener('keydown', this._onKey);
+		document.removeEventListener('visibilitychange', this._onVisibility);
 		this._unmount();
 	}
 
@@ -414,17 +420,20 @@ export class MeetupEvent {
 	// clock (groupPhotoState), so a thousand clients count down and fire together
 	// with no packet; the only network traffic is each avatar's emote, which goes
 	// out over the normal emote channel so neighbours see the crowd pose. Each
-	// step fires at most once per client. A tab that was hidden through the
-	// instant comes back to DONE and fires nothing: a photo of a moment the
+	// step fires at most once per client. Only a client that watched the
+	// countdown with the tab in view takes the shot: one that was away, or only
+	// arrived after the instant, fires nothing, because a photo of a moment the
 	// player missed is not the shared moment.
 	_tickGroupPhoto() {
-		const gp = groupPhotoState(this.ev, Date.now());
+		const now = Date.now();
+		const gp = groupPhotoState(this.ev, now);
 		const p = this._photo;
 		if (gp.stage === PHOTO_STAGE.GATHER && !p.gathered) {
 			p.gathered = true;
 			this._moment('📸', 'Group photo in 1 minute', 'Gather at the totem. Everyone’s shutter fires together');
 		}
 		if (gp.stage === PHOTO_STAGE.COUNTDOWN) {
+			if (!document.hidden && !p.shot) p.armed = true;
 			this._showShutterCountdown(gp.msToShutter);
 			if (gp.msToShutter <= PHOTO_POSE_MS && !p.posed) {
 				p.posed = true;
@@ -439,11 +448,14 @@ export class MeetupEvent {
 			this.shutterOverlay.remove();
 			this.shutterOverlay = null;
 		}
-		if (gp.stage === PHOTO_STAGE.SHUTTER && !p.shot) {
+		// The first frame at or past the instant decides, once. It fires for a
+		// client that watched the countdown, even when a stalled frame lands it a
+		// few seconds late, and never for one that was away or only just arrived.
+		const late = now - gp.shutterAt;
+		if (gp.stage !== PHOTO_STAGE.NONE && late >= 0 && !p.shot) {
 			p.shot = true;
-			if (!document.hidden) this._capturePhoto();
+			if (p.armed && !document.hidden && late <= PHOTO_LATE_MS) this._capturePhoto();
 		}
-		if (gp.stage === PHOTO_STAGE.DONE) p.shot = true;
 	}
 
 	_showShutterCountdown(msToShutter) {
