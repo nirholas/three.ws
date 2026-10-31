@@ -21,15 +21,6 @@
 		},
 		{
 			"date": "2026-10-31",
-			"title": "Carve a real 3D pumpkin at /pumpkin",
-			"summary": "Cut a hollow, ribbed 3D pumpkin in your browser with true boolean cuts, six stamp shapes and a freehand knife. A flickering candle shines through your design, you can undo any cut, and you can export the result as a PNG or a GLB. It is linked from the Halloween page.",
-			"tags": [
-				"feature"
-			],
-			"link": "/pumpkin"
-		},
-		{
-			"date": "2026-10-31",
 			"title": "Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti",
 			"summary": "The classic homepage and /halloween now run halloween.js, a tiny MIT-licensed library, for corner cobwebs, blinking eyes in the dark, a witch crossing the sky, a spider that drops and climbs back up, and a rising tombstone. Claiming your four gifts now sets off an orange and violet confetti burst from canvas-confetti. Both load only during the weekend, respect reduced motion, and switch off with the Halloween look toggle in Settings, Personalization, Season.",
 			"tags": [
