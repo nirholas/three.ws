@@ -90,6 +90,7 @@ import { eventLiveNow, eventWindow, refreshEventWindow } from '../event-window.j
 import { reportEventRun, fetchEventBoard } from '../event-score.js';
 import { hydratePlayer, loadPlayer, savePlayer, flushPlayer } from '../playerStore.js';
 import { publishFeedEvent } from '../feed.js';
+import { wantsSpectator, isSpectator, seatSpectator, guardSpectatorMessages, publishSpectatorCount } from '../spectator.js';
 import { reportQuestComplete } from '../quest-notify.js';
 
 // Platform entry gate (wallet-first sign-in + game-token balance). When a game
@@ -445,6 +446,11 @@ export class WalkRoom extends Room {
 	// TypeError on join. The instance form receives the real client at WS join
 	// time and its return value is stored as client.auth.
 	onAuth(client, options) {
+		// Director / projector view: a watch-only seat, capped per room. Seated here
+		// so the flag is server-decided before onJoin ever runs.
+		if (wantsSpectator(options)) {
+			client.userData = { ...(client.userData || {}), ...seatSpectator(this.clients, undefined, options?.prevSession) };
+		}
 		// Platform token gate (orthogonal to the per-coin holder tier below). When a
 		// game token is pinned, no client reaches any world, General or Holders,
 		// without a play pass proving a signed-in wallet holds ≥ the floor. Throw
@@ -585,6 +591,9 @@ export class WalkRoom extends Room {
 		// ignored, never close the session (Colyseus's default 4002 kill looked
 		// like "session expired" to pre-fix clients). See room-compat.js.
 		installUnknownMessageGuard(this, 'walk_world');
+		// Spectator seats (director mode) can watch but never act: every handler
+		// registered below ignores them.
+		guardSpectatorMessages(this);
 		// Pull the live event config now, off the join path, so the first player
 		// through the door during a meetup gets their souvenir from a warm cache
 		// instead of waiting on an HTTP round-trip. Non-blocking and fail-open.
@@ -850,6 +859,13 @@ export class WalkRoom extends Room {
 	}
 
 	async onJoin(client, options) {
+		// A spectator gets no Player, no economy profile and no minigame seat, so
+		// no peer is ever sent anything for it and it is never in the online count.
+		if (isSpectator(client)) {
+			publishSpectatorCount(this);
+			console.log(`[walk_world ${this.roomId}] +spectator ${client.sessionId}`);
+			return;
+		}
 		// A hate-slur display name never reaches a nameplate: fall back to the
 		// guest handle, same narrow whole-word gate the platform uses on indexed
 		// third-party names (see display-name-safety.js).
@@ -1051,6 +1067,11 @@ export class WalkRoom extends Room {
 	}
 
 	onLeave(client) {
+		if (isSpectator(client)) {
+			publishSpectatorCount(this, client);
+			console.log(`[walk_world ${this.roomId}] -spectator ${client.sessionId}`);
+			return;
+		}
 		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
 		// Tag mini-game (R08): capture wasIt BEFORE state.players.delete below, so
 		// we know if someone needs reassigning. Cleanup runs after the delete.

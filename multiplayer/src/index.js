@@ -201,7 +201,9 @@ app.get('/population', async (req, res) => {
 		for (const room of listings || []) {
 			if (coin && room?.coin !== coin) continue;
 			rooms += 1;
-			const here = Number(room?.clients) || 0;
+			// Director/projector seats are watchers, not people in the world: the room
+			// publishes how many it holds (spectator.js) and they are left out here.
+			const here = Math.max(0, (Number(room?.clients) || 0) - (Number(room?.metadata?.spectators) || 0));
 			players += here;
 			// A coin's General and Holders worlds are separate room instances of the
 			// same mint (filterBy(['coin','tier'])), so both fold into one count: the
