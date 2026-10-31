@@ -32,6 +32,8 @@ function fakeBrowser() {
 		on() {},
 		async newPage() {
 			return {
+				async setRequestInterception() {},
+				on() {},
 				async setViewport() {},
 				async setContent() {},
 				async waitForFunction() {},
