@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Desktop list widgets fill their cards",
+			"summary": "The Pulse, Launches and Agents widgets on the web desktop showed a fixed number of rows and left an empty band at the bottom of the card. They now show as many whole rows as the card has room for, at any widget size or text scale, and never a row cut in half.",
+			"tags": [
+				"desktop",
+				"improvement"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "The desktop no longer drops your keyboard into the Weather widget",
 			"summary": "Before you picked a weather city, opening the web desktop put keyboard focus in the Weather widget's city search, so typing and keyboard shortcuts started inside a widget. Focus now stays with the desktop until you click the search or choose Change city. A half-typed city also survives the widget's background refresh instead of being cleared.",
 			"tags": [

@@ -318,6 +318,25 @@ test.describe('web desktop', () => {
 			await expect(page.getByRole('searchbox', { name: 'Search a city' })).toHaveValue('Lis');
 		});
 	});
+	test('the Pulse widget fills its card with whole rows: none cut off, no empty band below', async ({ page }) => {
+		await openDesktop(page);
+		const card = page.locator('.wgx.t-pulse');
+		await expect(card.locator('.wgx-list li').first()).toBeVisible({ timeout: SLOW });
+		// How many events the live feed holds, read through the page's own feed module.
+		const available = await page.evaluate(() =>
+			import('/src/desktop/widgets/data.js').then((m) => new Promise((r) => { const off = m.subscribe('pulse', (s) => { if (s.data) { r(s.data.length); queueMicrotask(() => off()); } }); })),
+		);
+		const m = await card.evaluate((c) => {
+			const body = c.querySelector('.wgx-body');
+			const b = body.getBoundingClientRect();
+			const inner = b.bottom - parseFloat(getComputedStyle(body).paddingBottom);
+			const shown = [...body.querySelectorAll('.wgx-list li')].filter((li) => !li.hidden && li.getBoundingClientRect().height > 0);
+			const last = shown.at(-1).getBoundingClientRect();
+			return { shown: shown.length, lastBottom: last.bottom, rowH: last.height, inner };
+		});
+		expect(m.lastBottom, 'the last visible row is whole').toBeLessThanOrEqual(m.inner + 0.5);
+		if (m.shown < available) expect(m.inner - m.lastBottom, 'no room left for another row').toBeLessThan(m.rowH);
+	});
 	test('a notification card shows its app icon as a small square, not stretched across the header', async ({ page }) => {
 		await page.addInitScript(() => {
 			localStorage.setItem('twx_season_off:halloween-2026', '1');

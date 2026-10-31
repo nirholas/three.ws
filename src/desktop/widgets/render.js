@@ -24,9 +24,30 @@ function failed(body, msg, key) {
 	body.querySelector('button').addEventListener('click', () => refresh(key));
 }
 /** Subscribe `paint(data)` to a feed with the skeleton, error and stale states handled. */
+/**
+ * Show as many whole rows of the card's list as fit, so a list fills its card
+ * at any size or text scale without a half-cut last row. The renderers hand
+ * over a few spare rows; this hides the ones below the card's inner edge.
+ */
+function fitRows(body) {
+	const list = body.querySelector('.wgx-list');
+	if (!list || !body.isConnected) return;
+	const rows = [...list.children];
+	for (const li of rows) li.hidden = false;
+	const edge = body.getBoundingClientRect().bottom - parseFloat(getComputedStyle(body).paddingBottom);
+	let cut = false;
+	rows.forEach((li, i) => {
+		cut ||= i > 0 && li.getBoundingClientRect().bottom > edge + 0.5;
+		li.hidden = cut;
+	});
+}
+
 function bind(body, key, paint, rows) {
 	let painted = false;
-	return subscribe(key, (s) => {
+	const fit = () => fitRows(body);
+	const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(fit) : null;
+	ro?.observe(body);
+	const off = subscribe(key, (s) => {
 		if (s.data === undefined) {
 			if (s.error) failed(body, s.error, key);
 			else if (!painted) skeleton(body, rows);
@@ -34,10 +55,17 @@ function bind(body, key, paint, rows) {
 		}
 		body.removeAttribute('aria-busy');
 		paint(s.data);
+		fit();
 		painted = true;
 		body.closest('.wgx')?.classList.toggle('stale', !!s.error);
 	});
+	return () => {
+		off();
+		ro?.disconnect();
+	};
 }
+/** Rows handed to fitRows: a large card shows what fits, up to this many. */
+const LIST_MAX = 8;
 const initial = (name) => esc(String(name || '?').trim().slice(0, 1).toUpperCase() || '?');
 const thumb = (url, name, cls = 'wgx-av') =>
 	url ? `<img class="${cls}" src="${esc(url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph="${initial(name)}">` : `<i class="${cls} ph">${initial(name)}</i>`;
@@ -352,7 +380,7 @@ function agents(body, w, api) {
 			body.querySelector('button').addEventListener('click', () => api.launchId('create'));
 			return;
 		}
-		const n = w.size === 'l' ? 6 : 4;
+		const n = w.size === 'l' ? LIST_MAX : 4;
 		const items = list.slice(0, n);
 		body.innerHTML =
 			w.size === 'l'
@@ -373,7 +401,7 @@ function pulse(body, w) {
 				body.innerHTML = '<div class="wgx-empty"><span>No agent wallet moves yet. They appear here the moment one lands.</span></div>';
 				return;
 			}
-			const items = events.slice(0, w.size === 'l' ? 5 : 2);
+			const items = events.slice(0, w.size === 'l' ? LIST_MAX : 2);
 			body.innerHTML = `<ul class="wgx-list">${items
 				.map(
 					(e) =>
@@ -397,7 +425,7 @@ function launches(body, w, api) {
 				body.querySelector('button').addEventListener('click', () => api.launchId('launcher'));
 				return;
 			}
-			const items = list.slice(0, w.size === 'l' ? 5 : 2);
+			const items = list.slice(0, w.size === 'l' ? LIST_MAX : 2);
 			body.innerHTML = `<ul class="wgx-list">${items
 				.map(
 					(l, i) =>

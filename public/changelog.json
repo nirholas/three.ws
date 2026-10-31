@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T23:37:26.602Z",
+	"generated_at": "2026-10-31T23:42:02.986Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -104,6 +104,17 @@
 			"link": "/chat",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Desktop list widgets fill their cards",
+			"summary": "The Pulse, Launches and Agents widgets on the web desktop showed a fixed number of rows and left an empty band at the bottom of the card. They now show as many whole rows as the card has room for, at any widget size or text scale, and never a row cut in half.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"improvement"
 			]
 		},
 		{
