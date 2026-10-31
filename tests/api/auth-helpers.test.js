@@ -186,10 +186,9 @@ describe('verifyCsrfToken', () => {
 		expect(await verifyCsrfToken(req, 'some-csrf-token')).toBe(false);
 	});
 
-	it('accepts the legacy "sid" cookie name', async () => {
+	it('ignores the unprefixed legacy "sid" cookie (a sibling subdomain can plant it)', async () => {
 		const req = { headers: { cookie: 'sid=legacy-session-token' } };
-		const csrf = await csrfTokenFor(req);
-		expect(typeof csrf).toBe('string');
-		expect(await verifyCsrfToken(req, csrf)).toBe(true);
+		expect(await csrfTokenFor(req)).toBeNull();
+		expect(await verifyCsrfToken(req, 'any-submitted-token')).toBe(false);
 	});
 });
