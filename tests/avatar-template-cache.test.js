@@ -65,6 +65,8 @@ vi.mock('three/addons/loaders/DRACOLoader.js', () => ({
 }));
 vi.mock('../src/viewer/internal.js', () => ({ getMeshoptDecoder: async () => null }));
 vi.mock('../src/game/vrm-loader.js', () => ({
+	// vrm-boot.js (imported by avatar-rig.js) registers the real plugin factory.
+	setVrmPluginFactory: () => {},
 	installVrmPlugin: () => false,
 	prepareVrmModel: () => ({ vrm: false }),
 }));
