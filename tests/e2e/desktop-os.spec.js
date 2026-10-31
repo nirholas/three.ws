@@ -298,4 +298,34 @@ test.describe('web desktop', () => {
 			expect(report).toEqual([]);
 		});
 	}
+	for (const width of [360, 390, 430]) {
+		test(`on a ${width}px phone the Start button is visible, tappable and opens Start`, async ({ page }) => {
+			await page.setViewportSize({ width, height: 800 });
+			await openDesktop(page);
+			const start = page.locator('button[aria-label="Start"]').first();
+			const box = await start.boundingBox();
+			expect(box.width, 'Start keeps its full size').toBeGreaterThanOrEqual(36);
+			// Nothing in the tray may sit on top of it.
+			const onTop = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('button[aria-label="Start"]'), {
+				x: box.x + box.width / 2,
+				y: box.y + box.height / 2,
+			});
+			expect(onTop, 'Start is the element under its own centre').toBe(true);
+			// The tray fits the bar: no item spills past the right edge.
+			const overflow = await page.evaluate(() => {
+				const bar = document.querySelector('.os-task').getBoundingClientRect();
+				return [...document.querySelectorAll('.os-task-right *')].some((el) => {
+					const r = el.getBoundingClientRect();
+					return r.width > 0 && (r.right > bar.right + 0.5 || r.left < 0);
+				});
+			});
+			expect(overflow, 'tray stays inside the bar').toBe(false);
+			// The time reads on one line.
+			const t = page.locator('.os-clock .ck-t b');
+			const lh = await t.evaluate((el) => parseFloat(getComputedStyle(el).lineHeight) || 16);
+			expect((await t.boundingBox()).height).toBeLessThan(lh * 1.5);
+			await start.click();
+			await expect(page.getByRole('dialog', { name: 'Start' })).toBeVisible();
+		});
+	}
 });

@@ -876,7 +876,8 @@
 	box-shadow: var(--c-bevel-in);
 	background: none;
 }
-.os[data-style='classic'] .os-tb.hide-sm {
+/* Space after the taskbar search button, not after the tray buttons that also hide on phones. */
+.os[data-style='classic'] .os-task-mid .os-tb.hide-sm {
 	margin-right: 6px;
 }
 .os[data-style='classic'] .os-tb.run.open {

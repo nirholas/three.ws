@@ -601,7 +601,8 @@ export async function createShell(root, opts = {}) {
 
 	// tray
 	const tray = h('div', 'os-tray');
-	const btnTheme = h('button', 'os-tb', '');
+	// Hidden on phones, where the bar has no room for it: Quick settings carries the same Dark mode switch.
+	const btnTheme = h('button', 'os-tb hide-sm', '');
 	btnTheme.type = 'button';
 	const btnWorld = h('button', 'os-tb', icon('world', 20));
 	btnWorld.type = 'button';

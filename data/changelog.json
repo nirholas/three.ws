@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "The web desktop's Start button works on phones",
+			"summary": "On phones 390px wide or narrower, the taskbar tray slid over the Start button and left it too small to tap. Start now keeps its full size, the clock shows the time on one line, and the theme switch moves into Quick settings so everything fits from 360px up. A browser test checks the taskbar at three phone widths.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Rate limits hold steady again instead of falling back to the slower path",
 			"summary": "A routine dependency update brought back a rate-limiter release whose Redis scripts our production Redis rejects, so every limit quietly ran on the slower database fallback. The limiter is pinned back to the compatible release, with a test that fails on any version carrying the incompatible scripts and an update rule that stops it drifting again.",
 			"tags": [

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T23:28:28.849Z",
+	"generated_at": "2026-10-31T23:30:45.286Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -208,6 +208,17 @@
 			"tags": [
 				"desktop",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "The web desktop's Start button works on phones",
+			"summary": "On phones 390px wide or narrower, the taskbar tray slid over the Start button and left it too small to tap. Start now keeps its full size, the clock shows the time on one line, and the theme switch moves into Quick settings so everything fits from 360px up. A browser test checks the taskbar at three phone widths.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
 			]
 		},
 		{

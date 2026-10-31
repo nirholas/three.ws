@@ -167,6 +167,14 @@
 			<description>The desktop now opens on the Aqua shell over a new Horizon wallpaper: a near-black field with a slowly drifting grid that runs toward a horizon line lit in your accent colour. App icons are glowing glyphs on dark glass tiles, the dock and widgets are deep glass with a lit edge, the app in front is marked by an accent bar, and the focused window gets a faint accent glow. This PC and Recycle Bin are now Computer and Trash (the old names still work in the File Explorer address bar). The Weather widget's city picker is redesigned with a clear header, a one-click Use my location button, and room for more search results. The File Explorer no longer draws a ring around its whole file list when it opens.</description>
 		</item>
 		<item>
+			<title>The web desktop's Start button works on phones</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-31:The web desktop's Start button works on phones</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>On phones 390px wide or narrower, the taskbar tray slid over the Start button and left it too small to tap. Start now keeps its full size, the clock shows the time on one line, and the theme switch moves into Quick settings so everything fits from 360px up. A browser test checks the taskbar at three phone widths.</description>
+		</item>
+		<item>
 			<title>Docs · three.ws and Microsoft</title>
 			<link>https://three.ws/docs/microsoft</link>
 			<guid isPermaLink="false">2026-10-30:Docs · three.ws and Microsoft</guid>

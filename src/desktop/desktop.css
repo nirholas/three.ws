@@ -1171,8 +1171,9 @@ html[data-season='halloween'] .os-lock-enter:focus-visible {
 
 /* ---------- Small screens ---------- */
 @media (max-width: 720px) {
+	/* The middle column holds Start: it never gives up Start's width to the tray. */
 	.os-task {
-		grid-template-columns: auto 1fr auto;
+		grid-template-columns: auto minmax(42px, 1fr) auto;
 	}
 	.os-task-mid {
 		overflow-x: auto;
@@ -1185,8 +1186,20 @@ html[data-season='halloween'] .os-lock-enter:focus-visible {
 		display: grid;
 	}
 	.os-chip span,
-	.os-tb.hide-sm {
+	.os-tb.hide-sm,
+	.os-showdesk.hide-sm {
 		display: none;
+	}
+	.os-tb.start {
+		flex: none;
+	}
+	/* Time only, on one line; the date is in the tooltip and the calendar. */
+	.os .os-clock {
+		padding: 0 6px;
+		gap: 6px;
+	}
+	.os .ck-t b {
+		white-space: nowrap;
 	}
 	.sm-grid {
 		grid-template-columns: repeat(4, 1fr);
@@ -1203,6 +1216,19 @@ html[data-season='halloween'] .os-lock-enter:focus-visible {
 	}
 	.os-icons {
 		grid-auto-columns: 78px;
+	}
+}
+/* The narrowest phones (360 to 400px): tighter buttons so Start, the tray and the clock all fit. */
+@media (max-width: 400px) {
+	.os-task {
+		padding: 0 4px;
+	}
+	.os-task-left,
+	.os-tray {
+		gap: 0;
+	}
+	.os-tb {
+		width: 38px;
 	}
 }
 @media (prefers-reduced-motion: reduce) {
