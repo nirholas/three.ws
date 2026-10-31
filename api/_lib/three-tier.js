@@ -51,7 +51,7 @@ export const TIERS = Object.freeze([
 		discountBps: 500, // 5% off compute
 		rateMultiplier: 2,
 		perks: Object.freeze(['5% off all $THREE compute', '2× free generation quota', 'Bronze profile badge']),
-		planned: Object.freeze([]),
+		planned: Object.freeze(['Keep the original file of a Forge generation']),
 	}),
 	Object.freeze({
 		level: 2,
