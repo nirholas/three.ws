@@ -63,10 +63,10 @@ function botMention(over = {}) {
 
 const okReply = (prompt) => ({
 	kind: 'success',
-	link: `${BASE}/viewer?src=${encodeURIComponent('https://cdn.three.ws/g/abc.glb')}`,
-	glbUrl: 'https://cdn.three.ws/g/abc.glb',
+	link: `${BASE}/viewer?src=${encodeURIComponent('https://three.ws/cdn/g/abc.glb')}`,
+	glbUrl: 'https://three.ws/cdn/g/abc.glb',
 	creationId: null,
-	text: onBehalf.composeBotReply('success', { base: BASE, prompt, viewerLink: `${BASE}/viewer?src=x`, glbUrl: 'https://cdn.three.ws/g/abc.glb' }),
+	text: onBehalf.composeBotReply('success', { base: BASE, prompt, viewerLink: `${BASE}/viewer?src=x`, glbUrl: 'https://three.ws/cdn/g/abc.glb' }),
 });
 
 function harness({ lookup = vi.fn(async () => null), request = vi.fn() } = {}) {
@@ -125,7 +125,7 @@ describe('on-behalf-of mapping', () => {
 		expect(lines).toHaveLength(4);
 		expect(lines[0]).toMatch(/^Made your 3D model "a bronze lighthouse"\.$/);
 		expect(lines[1]).toMatch(/^Viewer: https:\/\/three\.ws\/viewer\?src=/);
-		expect(lines[2]).toBe('GLB: https://cdn.three.ws/g/abc.glb');
+		expect(lines[2]).toBe('GLB: https://three.ws/cdn/g/abc.glb');
 		expect(lines[3]).toBe('Add three.ws to Grok Bot as an MCP connector: https://three.ws/api/mcp-grok');
 		expect(weightedLength(row.reply_text)).toBeLessThanOrEqual(280);
 	});
@@ -243,16 +243,16 @@ describe('the bot loop cap', () => {
 describe('reply composer and generation', () => {
 	it('fits the post budget for a long prompt and carries no dashes or handles', () => {
 		const long = 'a very detailed ornate victorian greenhouse with climbing roses and brass fittings everywhere';
-		const text = onBehalf.composeBotReply('success', { base: BASE, prompt: long, viewerLink: `${BASE}/viewer?src=${encodeURIComponent('https://cdn.three.ws/g/' + 'x'.repeat(80) + '.glb')}`, glbUrl: 'https://cdn.three.ws/g/' + 'x'.repeat(80) + '.glb' });
+		const text = onBehalf.composeBotReply('success', { base: BASE, prompt: long, viewerLink: `${BASE}/viewer?src=${encodeURIComponent('https://three.ws/cdn/g/' + 'x'.repeat(80) + '.glb')}`, glbUrl: 'https://three.ws/cdn/g/' + 'x'.repeat(80) + '.glb' });
 		expect(weightedLength(text)).toBeLessThanOrEqual(280);
 		expect(text).not.toMatch(/[\u2013\u2014@]/);
 		expect(text.split('\n').at(-1)).toBe('Add three.ws to Grok Bot as an MCP connector: https://three.ws/api/mcp-grok');
 	});
 
 	it('generateMake: success returns viewer and GLB links; timeout and failure return a prefilled forge link', async () => {
-		const done = await onBehalf.generateMake({ prompt: 'a fox', base: BASE, deps: { startForge: async () => ({ job_id: 'j1', status: 'queued' }), pollJob: async () => ({ glb_url: 'https://cdn.three.ws/g/f.glb', creation_id: 'c1' }) } });
-		expect(done).toMatchObject({ kind: 'success', glbUrl: 'https://cdn.three.ws/g/f.glb', creationId: 'c1' });
-		expect(done.text).toContain('GLB: https://cdn.three.ws/g/f.glb');
+		const done = await onBehalf.generateMake({ prompt: 'a fox', base: BASE, deps: { startForge: async () => ({ job_id: 'j1', status: 'queued' }), pollJob: async () => ({ glb_url: 'https://three.ws/cdn/g/f.glb', creation_id: 'c1' }) } });
+		expect(done).toMatchObject({ kind: 'success', glbUrl: 'https://three.ws/cdn/g/f.glb', creationId: 'c1' });
+		expect(done.text).toContain('GLB: https://three.ws/cdn/g/f.glb');
 
 		const timeout = await onBehalf.generateMake({ prompt: 'a fox', base: BASE, deps: { startForge: async () => ({ job_id: 'j1' }), pollJob: async () => ({ _timedOut: true }) } });
 		expect(timeout).toMatchObject({ kind: 'failure', reason: 'make_timeout' });

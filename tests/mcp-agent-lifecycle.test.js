@@ -131,7 +131,7 @@ vi.mock('../api/_lib/wallet-intents.js', async (importOriginal) => ({
 vi.mock('../api/_lib/r2.js', async (importOriginal) => ({
 	...(await importOriginal()),
 	putObject: vi.fn(async () => ({})),
-	publicUrl: (key) => `https://cdn.three.ws/${key}`,
+	publicUrl: (key) => `https://three.ws/cdn/${key}`,
 }));
 
 vi.mock('../api/_lib/avatars.js', async (importOriginal) => ({
@@ -139,7 +139,7 @@ vi.mock('../api/_lib/avatars.js', async (importOriginal) => ({
 	createAvatar: vi.fn(async ({ storageKey, input }) => ({
 		id: 'a7a7a7a7-0000-4000-8000-000000000001',
 		storage_key: storageKey,
-		model_url: `https://cdn.three.ws/${storageKey}`,
+		model_url: `https://three.ws/cdn/${storageKey}`,
 		visibility: input.visibility,
 	})),
 	defaultAvatarVisibilityFor: vi.fn(async () => 'unlisted'),
@@ -416,7 +416,7 @@ describe('upload_agent_avatar', () => {
 	it('sets an image as the portrait', async () => {
 		const res = await call('upload_agent_avatar', { agent_id: AGENT, data: PNG.toString('base64') });
 		expect(out(res)).toMatchObject({ status: 'attached', kind: 'image' });
-		expect(db.agents.get(AGENT).profile_image_url).toMatch(new RegExp(`^https://cdn\\.three\\.ws/u/${USER}/agent-images/${AGENT}/.+\\.png$`));
+		expect(db.agents.get(AGENT).profile_image_url).toMatch(new RegExp(`^https://three\\.ws/cdn/u/${USER}/agent-images/${AGENT}/.+\\.png$`));
 	});
 
 	it('refuses an unknown file type and a call with both url and data', async () => {

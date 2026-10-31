@@ -15,7 +15,7 @@ describe('isSafeQueryModelUrl', () => {
 		['https://evilr2.dev/a.glb', false],
 		['http://three.ws/a.glb', false],
 		['https://three.ws/x.glb', true],
-		['https://cdn.three.ws/x.glb', true],
+		['https://assets.three.ws/x.glb', true],
 		['https://storage.googleapis.com/b/a.glb', true],
 	])('%s -> %s', (url, expected) => expect(isSafeQueryModelUrl(url)).toBe(expected));
 
