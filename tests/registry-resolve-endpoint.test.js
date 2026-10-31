@@ -38,6 +38,10 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 }));
 
 const { default: handler } = await import('../api/registry/resolve.js');
+const { env } = await import('../api/_lib/env.js');
+// Published media goes through the same-origin /cdn/ proxy, never the raw
+// bucket domain (Chrome's Opaque Response Blocking refuses r2.dev loads).
+const CDN = `${env.APP_ORIGIN}/cdn`;
 
 const AVATAR_ID = '11111111-2222-4333-8444-555555555555';
 
@@ -143,15 +147,15 @@ describe('avatar visibility gates the media', () => {
 		const body = res.json();
 		expect(res.statusCode).toBe(200);
 		expect(body.state).toBe('public');
-		expect(body.modelUrl).toBe(`https://cdn.test/u/owner/${AVATAR_ID}.glb`);
-		expect(body.imageUrl).toBe(`https://cdn.test/thumb/${AVATAR_ID}.png`);
+		expect(body.modelUrl).toBe(`${CDN}/u/owner/${AVATAR_ID}.glb`);
+		expect(body.imageUrl).toBe(`${CDN}/thumb/${AVATAR_ID}.png`);
 	});
 
 	it('publishes both for an unlisted avatar', async () => {
 		sqlMock.mockResolvedValueOnce([]).mockResolvedValueOnce([avatarRow('unlisted')]);
 		const body = (await call(AVATAR_ID)).json();
-		expect(body.modelUrl).toBe(`https://cdn.test/u/owner/${AVATAR_ID}.glb`);
-		expect(body.imageUrl).toBe(`https://cdn.test/thumb/${AVATAR_ID}.png`);
+		expect(body.modelUrl).toBe(`${CDN}/u/owner/${AVATAR_ID}.glb`);
+		expect(body.imageUrl).toBe(`${CDN}/thumb/${AVATAR_ID}.png`);
 	});
 
 	it('leaks neither the model nor the thumbnail of a private avatar', async () => {
@@ -172,6 +176,6 @@ describe('avatar visibility gates the media', () => {
 		sqlMock.mockResolvedValueOnce([]).mockResolvedValueOnce([row]);
 		const body = (await call(AVATAR_ID)).json();
 		expect(body.imageUrl).toBeNull();
-		expect(body.modelUrl).toBe(`https://cdn.test/u/owner/${AVATAR_ID}.glb`);
+		expect(body.modelUrl).toBe(`${CDN}/u/owner/${AVATAR_ID}.glb`);
 	});
 });
