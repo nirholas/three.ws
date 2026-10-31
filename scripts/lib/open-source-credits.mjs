@@ -423,6 +423,15 @@ export const ASSET_SOURCES = [
 		powers: 'Every prop in the /objects library and the curated HDRI environment set, fetched by scripts/fetch-polyhaven-objects.mjs.',
 	},
 	{
+		id: 'asset:kenney-graveyard',
+		name: 'Kenney Graveyard Kit',
+		license: 'CC0 1.0',
+		repo: 'https://kenney.nl/assets/graveyard-kit',
+		funding: 'https://kenney.nl/support',
+		area: 'assets',
+		powers: 'The 91 Halloween models in the /objects library and the whole /haunted graveyard, ingested by scripts/ingest-kenney-graveyard.mjs.',
+	},
+	{
 		id: 'asset:mixamo',
 		name: 'Mixamo',
 		license: 'Adobe Mixamo Terms of Use (commercial use permitted, redistribution of raw clips not permitted)',

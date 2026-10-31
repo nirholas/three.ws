@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Haunted Graveyard · three.ws</title>
+		<meta name="description" content="Walk a moonlit 3D graveyard in your browser: a crypt, fenced yard, flickering lamps and pumpkins, and a zombie, skeleton, vampire, ghost and keeper that you can click, follow and make dance. Built from Kenney's CC0 Graveyard Kit." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/haunted" />
+		<meta property="og:title" content="Haunted Graveyard · three.ws" />
+		<meta property="og:description" content="A moonlit 3D graveyard with five animated monsters, built from a CC0 kit. Walk around it, light it, photograph it." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Haunted+Graveyard&amp;d=A+moonlit+3D+graveyard+with+five+animated+monsters%2C+built+from+a+CC0+kit.&amp;p=%2Fhaunted" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Haunted Graveyard · three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Haunted Graveyard · three.ws" />
+		<meta name="twitter:description" content="A moonlit 3D graveyard with five animated monsters, built from a CC0 kit." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Haunted+Graveyard&amp;d=A+moonlit+3D+graveyard+with+five+animated+monsters%2C+built+from+a+CC0+kit.&amp;p=%2Fhaunted" />
+		<meta name="theme-color" content="#0b0716" />
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<link rel="canonical" href="https://three.ws/haunted" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/fonts/creepster.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/haunted/haunted.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script type="application/ld+json">
+			{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"three.ws Haunted Graveyard","url":"https://three.ws/haunted","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Haunted Graveyard","item":"https://three.ws/haunted"}]}]}
+		</script>
+	</head>
+	<body class="hn-body">
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="hn-shell">
+			<div class="hn-stage" id="hn-stage">
+				<canvas id="hn-canvas" class="hn-canvas" tabindex="0" aria-label="A moonlit 3D graveyard. Drag to look around, scroll to zoom, click a monster to make it react."></canvas>
+
+				<div class="hn-loading" id="hn-loading" role="status">
+					<h2 class="hn-loading-title">Raising the graveyard</h2>
+					<div class="hn-track" aria-hidden="true"><span class="hn-bar" id="hn-bar"></span></div>
+					<p id="hn-loading-text">Fetching models</p>
+				</div>
+
+				<div class="hn-error" id="hn-error" hidden role="alert">
+					<h2>The graveyard would not rise</h2>
+					<p id="hn-error-text">Something went wrong while loading.</p>
+					<button type="button" class="hn-btn hn-btn--primary" id="hn-error-retry">Try again</button>
+				</div>
+
+				<p class="hn-help">Drag to look around, scroll to zoom. Click a monster and it reacts.</p>
+			</div>
+
+			<aside class="hn-panel" aria-label="Graveyard controls">
+				<h1 class="hn-title">The <em>haunted</em> yard</h1>
+				<p class="hn-lede">A fenced graveyard, a crypt and five monsters, all real 3D models you can walk around.</p>
+
+				<fieldset class="hn-group">
+					<legend class="hn-h">Monsters</legend>
+					<div class="hn-row" id="hn-chars" role="radiogroup" aria-label="Choose a monster"></div>
+					<label class="hn-field" for="hn-anim"><span>Animation for <strong id="hn-selected">The Keeper</strong></span></label>
+					<select class="hn-select" id="hn-anim" aria-label="Animation"></select>
+					<button type="button" class="hn-btn" id="hn-resume">Back to wandering</button>
+				</fieldset>
+
+				<section class="hn-group" aria-labelledby="hn-scene-h">
+					<h2 class="hn-h" id="hn-scene-h">Scene</h2>
+					<div class="hn-row">
+						<button type="button" class="hn-btn" id="hn-lights" aria-pressed="true">Lights on</button>
+						<button type="button" class="hn-btn" id="hn-wander" aria-pressed="true">Wandering</button>
+					</div>
+					<label class="hn-field" for="hn-fog"><span>Fog</span><output id="hn-fog-out">0.055</output></label>
+					<input class="hn-range" id="hn-fog" type="range" min="0.01" max="0.12" step="0.005" value="0.055" />
+					<label class="hn-field" for="hn-moon"><span>Moonlight</span><output id="hn-moon-out">1.35</output></label>
+					<input class="hn-range" id="hn-moon" type="range" min="0.2" max="3" step="0.05" value="1.35" />
+				</section>
+
+				<section class="hn-group" aria-labelledby="hn-file-h">
+					<h2 class="hn-h" id="hn-file-h">Keep it</h2>
+					<button type="button" class="hn-btn hn-btn--primary" id="hn-png">Save picture</button>
+				</section>
+
+				<details class="hn-keys">
+					<summary>Keyboard</summary>
+					<ul>
+						<li><kbd>1</kbd> to <kbd>5</kbd> fly to a monster</li>
+						<li><kbd>L</kbd> lights on or off</li>
+						<li><kbd>W</kbd> wandering on or off</li>
+					</ul>
+				</details>
+
+				<p class="hn-credit">All 91 models are <a href="https://kenney.nl/assets/graveyard-kit" target="_blank" rel="noopener">Kenney's Graveyard Kit</a> (CC0, free for any use) and are in the <a href="/objects">object library</a>. Carve your own at <a href="/pumpkin">/pumpkin</a>, or claim the <a href="/halloween">weekend gifts</a>.</p>
+			</aside>
+		</main>
+
+		<script type="module" src="/src/haunted/page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

@@ -1,0 +1,105 @@
+/* /haunted: a 3D graveyard built from Kenney's CC0 Graveyard Kit. A night scene
+   in both site themes, so the palette is fixed rather than following data-theme. */
+
+.hn-body {
+	--hn-ink: #f6ecff;
+	--hn-dim: rgba(246, 236, 255, 0.7);
+	--hn-faint: rgba(246, 236, 255, 0.46);
+	--hn-orange: #ff7a1a;
+	--hn-orange-hi: #ff9a3c;
+	--hn-card: rgba(24, 12, 38, 0.8);
+	--hn-line: rgba(201, 166, 232, 0.2);
+	--hn-line-hi: rgba(255, 154, 60, 0.55);
+	--hn-display: 'Creepster', 'Space Grotesk', system-ui, sans-serif;
+	margin: 0;
+	min-height: 100vh;
+	color: var(--hn-ink);
+	background: #0b0414;
+	font: 15px/1.5 'Inter', system-ui, sans-serif;
+	color-scheme: dark;
+	-webkit-font-smoothing: antialiased;
+}
+
+.hn-shell {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 340px;
+	gap: 16px;
+	max-width: 1240px;
+	margin: 0 auto;
+	padding: 88px 16px 40px;
+}
+@media (max-width: 900px) {
+	.hn-shell { grid-template-columns: minmax(0, 1fr); }
+}
+
+.hn-stage {
+	position: relative;
+	min-height: 420px;
+	height: calc(100vh - 150px);
+	max-height: 780px;
+	border: 1px solid var(--hn-line);
+	border-radius: 18px;
+	overflow: hidden;
+	background: linear-gradient(180deg, #07030f 0%, #1a0a2c 100%);
+	touch-action: none;
+}
+.hn-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; outline: none; cursor: grab; }
+.hn-canvas:active { cursor: grabbing; }
+.hn-canvas:focus-visible { outline: 2px solid var(--hn-orange-hi); outline-offset: -4px; }
+
+.hn-help {
+	position: absolute; left: 14px; right: 14px; bottom: 12px; margin: 0; font-size: 13px;
+	color: var(--hn-dim); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85); pointer-events: none;
+}
+
+.hn-loading, .hn-error {
+	position: absolute; inset: 0; z-index: 2; display: grid; place-content: center; justify-items: center;
+	gap: 14px; padding: 24px; text-align: center; background: rgba(8, 3, 16, 0.86);
+}
+.hn-loading[hidden], .hn-error[hidden] { display: none; }
+.hn-loading-title { font-family: var(--hn-display); font-size: 34px; letter-spacing: 0.04em; color: var(--hn-orange); margin: 0; }
+.hn-track { width: min(320px, 70vw); height: 8px; border-radius: 99px; background: rgba(246, 236, 255, 0.12); overflow: hidden; }
+.hn-bar { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--hn-orange), var(--hn-orange-hi)); transition: width 0.15s ease; }
+.hn-loading p, .hn-error p { margin: 0; color: var(--hn-dim); max-width: 38ch; }
+.hn-error h2 { margin: 0; font-size: 20px; }
+
+.hn-panel {
+	display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--hn-line);
+	border-radius: 18px; background: var(--hn-card); backdrop-filter: blur(10px); align-self: start;
+}
+.hn-title { margin: 0; font-family: var(--hn-display); font-weight: 400; font-size: 36px; letter-spacing: 0.04em; line-height: 1.05; }
+.hn-title em { color: var(--hn-orange); font-style: normal; }
+.hn-lede { margin: -6px 0 0; color: var(--hn-dim); font-size: 14px; }
+.hn-group { display: flex; flex-direction: column; gap: 8px; border: 0; margin: 0; padding: 0; }
+.hn-h { margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--hn-faint); font-weight: 600; }
+.hn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.hn-chip, .hn-btn {
+	appearance: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; color: var(--hn-ink);
+	padding: 8px 12px; border-radius: 10px; border: 1px solid var(--hn-line); background: rgba(246, 236, 255, 0.06);
+	transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+.hn-chip:hover, .hn-btn:hover { background: rgba(255, 154, 60, 0.14); border-color: var(--hn-line-hi); }
+.hn-chip:active, .hn-btn:active { transform: scale(0.97); }
+.hn-chip:focus-visible, .hn-btn:focus-visible, .hn-select:focus-visible, .hn-range:focus-visible { outline: 2px solid var(--hn-orange-hi); outline-offset: 2px; }
+.hn-chip[aria-checked='true'], .hn-btn[aria-pressed='true'] { background: rgba(255, 122, 26, 0.22); border-color: var(--hn-orange); }
+.hn-btn--primary { background: var(--hn-orange); border-color: var(--hn-orange); color: #1a0b00; }
+.hn-btn--primary:hover { background: var(--hn-orange-hi); }
+
+.hn-select {
+	font: inherit; font-size: 14px; color: var(--hn-ink); padding: 8px 10px; border-radius: 10px;
+	border: 1px solid var(--hn-line); background: rgba(12, 5, 22, 0.9); text-transform: capitalize;
+}
+.hn-field { display: flex; justify-content: space-between; font-size: 13px; color: var(--hn-dim); }
+.hn-range { width: 100%; accent-color: var(--hn-orange); }
+.hn-note { margin: 0; font-size: 12px; color: var(--hn-faint); }
+.hn-note a, .hn-credit a { color: var(--hn-orange-hi); }
+.hn-credit { margin: 0; font-size: 12.5px; color: var(--hn-dim); }
+.hn-keys { font-size: 13px; color: var(--hn-dim); }
+.hn-keys summary { cursor: pointer; }
+.hn-keys ul { margin: 8px 0 0; padding-left: 18px; }
+.hn-keys kbd { font: inherit; font-size: 12px; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--hn-line); background: rgba(246, 236, 255, 0.08); }
+
+@media (prefers-reduced-motion: reduce) {
+	.hn-bar, .hn-chip, .hn-btn { transition: none; }
+}

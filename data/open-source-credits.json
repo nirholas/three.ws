@@ -42,6 +42,17 @@
 			"powers": "The Avaturn avatar creator embedded in the Avatar Creator flow."
 		},
 		{
+			"id": "asset:kenney-graveyard",
+			"kind": "asset",
+			"name": "Kenney Graveyard Kit",
+			"area": "assets",
+			"license": "CC0 1.0",
+			"repo": "https://kenney.nl/assets/graveyard-kit",
+			"funding": "https://kenney.nl/support",
+			"version": null,
+			"powers": "The 91 Halloween models in the /objects library and the whole /haunted graveyard, ingested by scripts/ingest-kenney-graveyard.mjs."
+		},
+		{
 			"id": "asset:polyhaven",
 			"kind": "asset",
 			"name": "Poly Haven",
@@ -473,7 +484,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.103",
+			"version": "4.0.104",
 			"powers": null
 		},
 		{
@@ -495,7 +506,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1157.0",
+			"version": "3.1159.0",
 			"powers": null
 		},
 		{
@@ -506,7 +517,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1157.0",
+			"version": "3.1159.0",
 			"powers": null
 		},
 		{
@@ -517,7 +528,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1157.0",
+			"version": "3.1159.0",
 			"powers": null
 		},
 		{
@@ -715,7 +726,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/huggingface/transformers.js",
 			"funding": null,
-			"version": "4.3.1",
+			"version": "4.3.2",
 			"powers": "In-browser transformer model inference for client-side AI features."
 		},
 		{
@@ -770,7 +781,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/Kamino-Finance/klend-sdk",
 			"funding": null,
-			"version": "13.0.5",
+			"version": "13.0.6",
 			"powers": null
 		},
 		{
@@ -781,7 +792,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/Kamino-Finance/scope-sdk",
 			"funding": null,
-			"version": "10.2.6",
+			"version": "14.0.0",
 			"powers": null
 		},
 		{
@@ -1307,9 +1318,9 @@
 			"name": "@vercel/og",
 			"area": "infrastructure",
 			"license": "MPL-2.0",
-			"repo": "https://github.com/vercel/og",
+			"repo": null,
 			"funding": null,
-			"version": "1.0.3",
+			"version": "0.11.1",
 			"powers": null
 		},
 		{
@@ -1485,7 +1496,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "7.0.154",
+			"version": "7.0.156",
 			"powers": "The Vercel AI SDK powering agent chat streaming and tool calls."
 		},
 		{
@@ -1585,6 +1596,17 @@
 			"repo": "https://github.com/cryptocoinjs/bs58",
 			"funding": null,
 			"version": "6.0.0",
+			"powers": null
+		},
+		{
+			"id": "npm:canvas-confetti",
+			"kind": "npm",
+			"name": "canvas-confetti",
+			"area": "infrastructure",
+			"license": "ISC",
+			"repo": "https://github.com/catdad/canvas-confetti",
+			"funding": "https://www.paypal.me/kirilvatev",
+			"version": "1.9.4",
 			"powers": null
 		},
 		{
@@ -1797,6 +1819,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:halloween.js",
+			"kind": "npm",
+			"name": "halloween.js",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/rogulia/halloween.js",
+			"funding": null,
+			"version": "1.0.3",
+			"powers": null
+		},
+		{
 			"id": "npm:helius-sdk",
 			"kind": "npm",
 			"name": "helius-sdk",
@@ -1984,6 +2017,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:n8ao",
+			"kind": "npm",
+			"name": "n8ao",
+			"area": "infrastructure",
+			"license": "ISC",
+			"repo": "https://github.com/N8python/n8ao",
+			"funding": null,
+			"version": "2.0.1",
+			"powers": null
+		},
+		{
 			"id": "npm:nanoid",
 			"kind": "npm",
 			"name": "nanoid",
@@ -2134,7 +2178,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/resend/resend-node",
 			"funding": null,
-			"version": "6.34.1",
+			"version": "6.35.0",
 			"powers": null
 		},
 		{
@@ -2200,7 +2244,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/plhery/node-twitter-api-v2",
 			"funding": null,
-			"version": "1.29.1",
+			"version": "1.31.0",
 			"powers": null
 		},
 		{
@@ -2694,6 +2738,17 @@
 			"funding": null,
 			"version": "0.187.0",
 			"powers": "The 3D engine behind every viewer: the Forge stage, AR Studio, the agent embeds, and the Entity Studio."
+		},
+		{
+			"id": "npm:three-bvh-csg",
+			"kind": "npm",
+			"name": "three-bvh-csg",
+			"area": "rendering",
+			"license": "MIT",
+			"repo": "https://github.com/gkjohnson/three-bvh-csg",
+			"funding": null,
+			"version": "0.0.18",
+			"powers": null
 		},
 		{
 			"id": "npm:three-gpu-pathtracer",

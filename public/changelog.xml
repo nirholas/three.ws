@@ -15,6 +15,14 @@
 			<description>Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.</description>
 		</item>
 		<item>
+			<title>Haunted Graveyard</title>
+			<link>https://three.ws/haunted</link>
+			<guid isPermaLink="false">2026-10-31:Haunted Graveyard</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Walk a moonlit 3D graveyard in your browser: a crypt, fenced yard, flickering lamps and pumpkins, and a zombie, skeleton, vampire, ghost and keeper you can click, follow and make dance. Built from Kenney's CC0 Graveyard Kit.</description>
+		</item>
+		<item>
 			<title>How pumpkin carving works</title>
 			<link>https://three.ws/docs/pumpkin-carving</link>
 			<guid isPermaLink="false">2026-10-31:How pumpkin carving works</guid>
@@ -31,6 +39,14 @@
 			<description>Free, time-boxed gifts on three.ws: one claim during the window grants a profile badge, /play wearables and a desktop wallpaper you keep forever. The window, the /api/seasonal endpoint, the seasonal look and its opt-out, and how to add the next drop.</description>
 		</item>
 		<item>
+			<title>How the haunted graveyard works</title>
+			<link>https://three.ws/docs/haunted-graveyard</link>
+			<guid isPermaLink="false">2026-10-31:How the haunted graveyard works</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The /haunted page: Kenney's CC0 Graveyard Kit ingested into the object library, the deterministic yard layout, the five animated characters, and how to publish the models to the CDN.</description>
+		</item>
+		<item>
 			<title>Pumpkin Carving</title>
 			<link>https://three.ws/pumpkin</link>
 			<guid isPermaLink="false">2026-10-31:Pumpkin Carving</guid>
@@ -39,12 +55,36 @@
 			<description>Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.</description>
 		</item>
 		<item>
+			<title>/play gets contact shadows and glow on capable devices</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-10-31:/play gets contact shadows and glow on capable devices</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>On high-quality devices, /play now renders with ambient occlusion (props and avatars ground into the world), a soft bloom on bright and emissive things like the Witchlight aura, and filmic tone mapping. It switches itself off in power-saver mode and on lower quality tiers, and falls back to the plain renderer if the GPU cannot run it.</description>
+		</item>
+		<item>
+			<title>91 free Halloween 3D models join the object library, and you can walk them in a haunted graveyard</title>
+			<link>https://three.ws/haunted</link>
+			<guid isPermaLink="false">2026-10-31:91 free Halloween 3D models join the object library, and you can walk them in a haunted graveyard</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Kenney's Graveyard Kit (CC0, free for any use) is now in the object library: crypts, gravestones, fences, lampposts, pumpkins, trees and five animated characters (a zombie, skeleton, vampire, ghost and graveyard keeper), each one a single self-contained GLB. The new /haunted page puts them together as a moonlit 3D yard you can orbit, light, photograph and populate with wandering monsters.</description>
+		</item>
+		<item>
 			<title>Carve a 3D pumpkin at /pumpkin</title>
 			<link>https://three.ws/pumpkin</link>
 			<guid isPermaLink="false">2026-10-31:Carve a 3D pumpkin at /pumpkin</guid>
 			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.</description>
+		</item>
+		<item>
+			<title>Chat keeps answering when the free model quota runs out</title>
+			<link>https://three.ws/chat</link>
+			<guid isPermaLink="false">2026-10-31:Chat keeps answering when the free model quota runs out</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When the shared free model hit its daily limit, the chat showed 'The built-in model is rate-limited' and stopped. It now hands the message to the platform's own model chain instead, so a reply still arrives. The rate-limit notice only appears if every lane is busy.</description>
 		</item>
 		<item>
 			<title>Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti</title>

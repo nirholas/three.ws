@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "91 free Halloween 3D models join the object library, and you can walk them in a haunted graveyard",
+			"summary": "Kenney's Graveyard Kit (CC0, free for any use) is now in the object library: crypts, gravestones, fences, lampposts, pumpkins, trees and five animated characters (a zombie, skeleton, vampire, ghost and graveyard keeper), each one a single self-contained GLB. The new /haunted page puts them together as a moonlit 3D yard you can orbit, light, photograph and populate with wandering monsters.",
+			"tags": [
+				"feature"
+			],
+			"link": "/haunted"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "/play gets contact shadows and glow on capable devices",
 			"summary": "On high-quality devices, /play now renders with ambient occlusion (props and avatars ground into the world), a soft bloom on bright and emissive things like the Witchlight aura, and filmic tone mapping. It switches itself off in power-saver mode and on lower quality tiers, and falls back to the plain renderer if the GPU cannot run it.",
 			"tags": [

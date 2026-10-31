@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-31T22:27:41.661Z",
+	"generated_at": "2026-10-31T22:35:52.060Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4227,
+	"total": 4232,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Halloween Weekend Gifts",
 			"summary": "Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.",
 			"link": "/halloween",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "launch",
+			"title": "Haunted Graveyard",
+			"summary": "Walk a moonlit 3D graveyard in your browser: a crypt, fenced yard, flickering lamps and pumpkins, and a zombie, skeleton, vampire, ghost and keeper you can click, follow and make dance. Built from Kenney's CC0 Graveyard Kit.",
+			"link": "/haunted",
 			"tags": [
 				"launch"
 			]
@@ -42,6 +52,16 @@
 		{
 			"date": "2026-10-31",
 			"type": "launch",
+			"title": "How the haunted graveyard works",
+			"summary": "The /haunted page: Kenney's CC0 Graveyard Kit ingested into the object library, the deterministic yard layout, the five animated characters, and how to publish the models to the CDN.",
+			"link": "/docs/haunted-graveyard",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "launch",
 			"title": "Pumpkin Carving",
 			"summary": "Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.",
 			"link": "/pumpkin",
@@ -52,9 +72,39 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "/play gets contact shadows and glow on capable devices",
+			"summary": "On high-quality devices, /play now renders with ambient occlusion (props and avatars ground into the world), a soft bloom on bright and emissive things like the Witchlight aura, and filmic tone mapping. It switches itself off in power-saver mode and on lower quality tiers, and falls back to the plain renderer if the GPU cannot run it.",
+			"link": "/play",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "91 free Halloween 3D models join the object library, and you can walk them in a haunted graveyard",
+			"summary": "Kenney's Graveyard Kit (CC0, free for any use) is now in the object library: crypts, gravestones, fences, lampposts, pumpkins, trees and five animated characters (a zombie, skeleton, vampire, ghost and graveyard keeper), each one a single self-contained GLB. The new /haunted page puts them together as a moonlit 3D yard you can orbit, light, photograph and populate with wandering monsters.",
+			"link": "/haunted",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "Carve a 3D pumpkin at /pumpkin",
 			"summary": "A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.",
 			"link": "/pumpkin",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Chat keeps answering when the free model quota runs out",
+			"summary": "When the shared free model hit its daily limit, the chat showed 'The built-in model is rate-limited' and stopped. It now hands the message to the platform's own model chain instead, so a reply still arrives. The rate-limit notice only appears if every lane is busy.",
+			"link": "/chat",
 			"tags": [
 				"feature"
 			]
@@ -1497,60 +1547,6 @@
 			"link": "/launches",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "GitHub fee-claim channel now attributes withdrawals to a coin, or says plainly it cannot",
-			"summary": "A GitHub identity withdrawing pump.fun fees through the claim_social_fee_pda instruction only proves payment to that identity, not which coin paid it: one GitHub fee account can be a shareholder on more than one coin, and its address can be pasted into a copycat coin's metadata. The claims feed and its Telegram channel now classify every such withdrawal with on-chain evidence: a same-transaction distribution to the exact account, or a 90%-dominant distribution history since the previous claim, then a repository-owner or creator-wallet match, down to an honest unresolved or unverified label when nothing proves a coin. A new-GitHub-account-plus-copycat-coin pattern holds the claim for review instead of posting it with a celebratory card.",
-			"link": null,
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "GitHub fee-claim feed now reads from a real-time listener, not just an on-demand RPC scan",
-			"summary": "The claims feed's GitHub-attribution path used to walk Solana RPC history fresh on every request, the same cost every time, with nothing persisted in between. services/pump-claims is a standalone process that subscribes to PumpFees program logs directly, decodes and attributes each claim as it happens, and writes it to a new pump_fee_claims table with a watchdog that resubscribes on a stalled connection and gap-fills whatever a drop missed. The claims route now reads that table first and only falls back to the RPC scan when the table has nothing for the requested window, so PUMPFUN_BOT_URL is no longer required for GitHub claims specifically (ordinary wallet claims still use it).",
-			"link": null,
-			"tags": [
-				"feature",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "MCP clients can now prepare a pump.fun launch for you to sign",
-			"summary": "The hosted MCP server gained pumpfun_prepare_launch: an assistant (Claude Desktop, Cursor, or any MCP client) that has agreed a coin name, ticker, description and image with you can call this tool to validate every field the same way the /launch page does, fetch and type/size-check the image through the SSRF-hardened fetcher, and hand back a pre-filled /launch URL plus a plain-English summary. The tool never signs or launches anything; it is marked read-only and non-destructive, and its response always carries requires_human_signature: true. Opening the returned link on /launch now shows a 'prepared from your assistant' banner so you know exactly which fields came from the conversation before you review and sign.",
-			"link": "/launch",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "Robinhood Chain feed worker now runs the published SDK, not a stale local snapshot",
-			"summary": "workers/robinhood-feed depended on robinhood/robinhood-chain-sdk through a file: link, a reference copy that drifts from the standalone robinhood-chain-sdk repo it mirrors. The worker now installs hoodchain from npm like any other dependency, so it always runs the released SDK. Also fixed: seven pointer READMEs staged for duplicate or superseded standalone repos (three-ui, crypto-market-data, crypto-market-data-ts, crypto-data-aggregator, memescope-monday-directory, and one of each duplicate Robinhood Chain repo pair), ready for the owner to push and archive.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "Standalone GitHub mirrors now stage instead of force-pushing",
-			"summary": "scripts/sync-standalone-repos.mjs force-pushed straight to main on every run, which could silently create duplicate repos for the eleven mirrors already renamed on GitHub and bypassed the owner's push-approval rule. data/standalone-mirrors.json is now the single source of truth for which monorepo directory maps to which public repo, read by every exporter (sync, growth satellites, the awesome list, the skill-repo builder) instead of each keeping its own list. The sync script only stages a snapshot under dist/standalone-mirrors/, fixes any stale pre-Apache-2.0 README or LICENSE footer, and prints the push command for the owner; npm run sync:repos:check compares what is staged against each mirror's live tree and reports drift without writing anything.",
-			"link": "/docs/contributing",
-			"tags": [
-				"infra",
-				"docs"
 			]
 		}
 	]
