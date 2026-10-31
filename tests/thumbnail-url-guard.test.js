@@ -24,8 +24,9 @@ describe('thumbnailUrl() behaviour', () => {
 	let thumbnailUrl;
 	beforeAll(async () => {
 		// r2.js reads S3_* lazily (the client is built on first use), so importing it
-		// without credentials is safe; publicUrl() only needs S3_PUBLIC_DOMAIN.
-		process.env.S3_PUBLIC_DOMAIN ||= 'https://cdn.test';
+		// without credentials is safe. thumbnailUrl() serves through the same-origin
+		// /cdn/ proxy, so it resolves against the app origin, not the bucket domain.
+		process.env.PUBLIC_APP_ORIGIN = 'https://app.test';
 		({ thumbnailUrl } = await import('../api/_lib/r2.js'));
 	});
 
@@ -40,13 +41,13 @@ describe('thumbnailUrl() behaviour', () => {
 		expect(thumbnailUrl('http://three.ws/avatars/selfie-girl_OG.PNG')).toBeNull();
 	});
 
-	it('resolves a relative bucket key against the CDN', () => {
-		expect(thumbnailUrl('thumb/abc.png')).toBe('https://cdn.test/thumb/abc.png');
-		expect(thumbnailUrl('forge/deadbeef/x-poster.webp')).toBe('https://cdn.test/forge/deadbeef/x-poster.webp');
+	it('resolves a relative bucket key through the /cdn/ proxy', () => {
+		expect(thumbnailUrl('thumb/abc.png')).toBe('https://app.test/cdn/thumb/abc.png');
+		expect(thumbnailUrl('forge/deadbeef/x-poster.webp')).toBe('https://app.test/cdn/forge/deadbeef/x-poster.webp');
 	});
 
 	it('percent-encodes each path segment, like publicUrl', () => {
-		expect(thumbnailUrl('u/1/my thumb.png')).toBe('https://cdn.test/u/1/my%20thumb.png');
+		expect(thumbnailUrl('u/1/my thumb.png')).toBe('https://app.test/cdn/u/1/my%20thumb.png');
 	});
 });
 

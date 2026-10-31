@@ -367,12 +367,21 @@ describe('og/agent', () => {
 			expect(avatarImageUrl(null)).toBeNull();
 		});
 
-		// Failure path: the bucket domain is unset. env.S3_PUBLIC_DOMAIN throws on a
-		// missing var, and that must cost the portrait, never the whole card.
-		it('degrades to the gradient portrait when the bucket domain is unconfigured', () => {
+		// The portrait is served through the same-origin /cdn/ proxy, which needs
+		// no bucket domain (a5a651f67). An unset S3_PUBLIC_DOMAIN must therefore
+		// neither throw nor cost the card its portrait.
+		it('still resolves the portrait through /cdn/ when the bucket domain is unconfigured', () => {
 			delete process.env.S3_PUBLIC_DOMAIN;
 			expect(() => avatarImageUrl({ visibility: 'public', thumbnail_key: KEY })).not.toThrow();
-			expect(avatarImageUrl({ visibility: 'public', thumbnail_key: KEY })).toBeNull();
+			expect(avatarImageUrl({ visibility: 'public', thumbnail_key: KEY }))
+				.toBe('https://three.ws/cdn/u/42/thumbs/nova%20card.png');
+		});
+
+		// A key the helper refuses (the legacy poisoned *_og.png) still degrades
+		// to the gradient portrait rather than a dead image URL.
+		it('degrades to the gradient portrait for a poisoned legacy thumbnail key', () => {
+			expect(avatarImageUrl({ visibility: 'public', thumbnail_key: 'https://three.ws/avatars/nova_og.png' }))
+				.toBeNull();
 		});
 
 		it('pins a hostile remote content-type to a known image type', () => {
