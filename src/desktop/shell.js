@@ -5,6 +5,8 @@
 import { ALL_APPS, APPS, CUSTOM_WALL, WALLPAPERS, appById } from './apps.js';
 import { icon } from './icons.js';
 import { createIconLayer } from './icon-layer.js';
+import { applySeasonAttr, canUseHaunted, mountSeason, pickWall, seasonState, HAUNTED_WALL } from './seasonal.js';
+import { setSeasonalLookEnabled } from '../shared/seasonal-drops.js';
 import { createWM } from './wm.js';
 import { createChrome } from './chrome/index.js';
 import { formatClock, relTime } from './chrome/logic.js';
@@ -261,7 +263,14 @@ export async function createShell(root, opts = {}) {
 		}
 		wall.style.backgroundImage = '';
 		delete wall.dataset.custom;
-		root.dataset.wall = prefs.wall;
+		// A live season paints over the saved choice without rewriting it.
+		root.dataset.wall = pickWall(prefs.wall, { ...seasonState(), customId: CUSTOM_WALL, fallback: DEFAULT_PREFS.wall });
+	}
+	// Turn the seasonal look on or off for this browser and repaint.
+	function applySeason(on) {
+		setSeasonalLookEnabled(on);
+		root.dataset.season = applySeasonAttr() ? 'halloween' : '';
+		applyWall();
 	}
 	function applyStyle() {
 		const { menuH, dockH } = bars();
@@ -1246,6 +1255,7 @@ export async function createShell(root, opts = {}) {
 		['thispc', 'recycle'].forEach((id) => deskIcons.add(id));
 		store.set(KEY.iconsV2, '1');
 	}
+	mountSeason({ root, wall, store, notify, toast, deskIcons, onClaimChange: applyWall });
 	syncDesk();
 	icons.addEventListener('pointerdown', (e) => {
 		if (e.target === icons) closePops();
@@ -1337,6 +1347,7 @@ export async function createShell(root, opts = {}) {
 
 	// ---------- native apps ----------
 	const WALL_PREVIEW = {
+		[HAUNTED_WALL]: "url('/wallpapers/haunted.svg') center bottom/cover,#1f0c33",
 		horizon: 'linear-gradient(180deg,transparent 63%,#c4b5fd 64%,transparent 65%),radial-gradient(60% 30% at 50% 64%,#8b5cf677,transparent 70%),linear-gradient(180deg,#04050a,#080a12 64%,#05060b)',
 		bubbles: 'radial-gradient(circle 22px at 30% 35%,#c7b8ff99,transparent),radial-gradient(circle 30px at 70% 70%,#a6e9ff88,transparent),linear-gradient(140deg,#0c1238,#241052 50%,#071a3c)',
 		three: 'radial-gradient(70% 60% at 50% 110%,#8b5cf6aa,transparent 70%),#050505',
@@ -1545,6 +1556,21 @@ export async function createShell(root, opts = {}) {
 			pane.append(styles);
 			pane.append(h('h3', '', 'Theme'));
 			pane.append(seg([['dark', 'Dark'], ['light', 'Light'], ['auto', 'Match system']], prefs.mode, (v) => setPrefs({ mode: v })));
+			const season = seasonState();
+			let seasonToggle = null;
+			// Picking an accent or a different wallpaper is an explicit choice: the
+			// seasonal look steps aside for it instead of painting over it.
+			const leaveSeason = () => {
+				if (!season.live || !seasonState().lookOn) return;
+				applySeason(false);
+				seasonToggle?.setAttribute('aria-checked', 'false');
+				toast('Halloween look off. Turn it back on under Season.');
+			};
+			if (season.live) {
+				pane.append(h('h3', '', 'Season'));
+				seasonToggle = toggle(season.lookOn, (on) => applySeason(on), 'Halloween look');
+				pane.append(setRow('Halloween look', 'Haunted wallpaper, pumpkin accent and spooky headings until Sunday night.', seasonToggle));
+			}
 			pane.append(h('h3', '', 'Accent colour'));
 			const sw = h('div', 'swatches');
 			ACCENTS.forEach((c) => {
@@ -1554,6 +1580,7 @@ export async function createShell(root, opts = {}) {
 				b.setAttribute('aria-label', `Accent ${c}`);
 				b.setAttribute('aria-pressed', String(prefs.accent === c));
 				b.addEventListener('click', () => {
+					leaveSeason();
 					setPrefs({ accent: c });
 					sw.querySelectorAll('.swatch').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
 				});
@@ -1562,13 +1589,18 @@ export async function createShell(root, opts = {}) {
 			pane.append(sw);
 			pane.append(h('h3', '', 'Wallpaper'));
 			const grid = h('div', 'walls');
-			const opts = [...WALLPAPERS.map((w) => ({ id: w.id, label: w.label, bg: WALL_PREVIEW[w.id] }))];
+			const opts = WALLPAPERS.filter((w) => !w.seasonal || canUseHaunted(season)).map((w) => ({
+				id: w.id,
+				label: w.seasonal && !season.claimed ? `${w.label} (claim to keep)` : w.label,
+				bg: WALL_PREVIEW[w.id],
+			}));
 			opts.forEach((w) => {
 				const b = h('button', 'wall-opt', `<i style="background:${w.bg}"></i><span>${w.label}</span>`);
 				b.type = 'button';
 				b.dataset.wall = w.id;
 				b.setAttribute('aria-pressed', String(prefs.wall === w.id));
 				b.addEventListener('click', () => {
+					if (w.id !== HAUNTED_WALL) leaveSeason();
 					setPrefs({ wall: w.id });
 					grid.querySelectorAll('.wall-opt').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
 				});
@@ -1587,6 +1619,7 @@ export async function createShell(root, opts = {}) {
 				try {
 					const blob = await shrinkImage(f);
 					await idb.set(CUSTOM_WALL, blob);
+					leaveSeason();
 					setPrefs({ wall: CUSTOM_WALL });
 					grid.querySelectorAll('.wall-opt').forEach((o) => o.setAttribute('aria-pressed', String(o === custom)));
 					toast('Wallpaper set.');

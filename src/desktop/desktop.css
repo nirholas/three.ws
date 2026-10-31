@@ -169,6 +169,127 @@ body {
 	background: linear-gradient(160deg, #e2e5ea, #b9bec7);
 }
 
+/* ---------- Halloween Weekend 2026 (src/desktop/seasonal.js) ----------
+ * Live only inside the drop window. The haunted wallpaper stays selectable for
+ * accounts that claimed the gifts; the season attribute themes the rest. */
+.os[data-wall='haunted'] .os-wall {
+	overflow: hidden;
+	background: url('/wallpapers/haunted.svg') center bottom / cover no-repeat, #1f0c33;
+}
+.os[data-wall='haunted'] .os-wall::after {
+	content: '';
+	position: absolute;
+	inset: auto -20% 0 -20%;
+	height: 30%;
+	pointer-events: none;
+	background:
+		radial-gradient(40% 60% at 25% 100%, rgba(214, 200, 255, 0.16), transparent 70%),
+		radial-gradient(45% 55% at 75% 100%, rgba(255, 180, 120, 0.12), transparent 70%);
+	animation: os-fog 26s ease-in-out infinite alternate;
+}
+@keyframes os-fog {
+	to { transform: translateX(8%); }
+}
+.os-bats {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+.os:not([data-season='halloween']) .os-bats {
+	display: none;
+}
+.os-bats i {
+	position: absolute;
+	left: -60px;
+	width: 44px;
+	color: #120717;
+	animation: os-bat 19s linear infinite;
+}
+.os-bats i:nth-child(1) { top: 14%; }
+.os-bats i:nth-child(2) { top: 22%; width: 30px; animation-duration: 25s; animation-delay: -9s; }
+.os-bats i:nth-child(3) { top: 9%; width: 26px; animation-duration: 31s; animation-delay: -17s; }
+.os-bats i:nth-child(4) { top: 30%; width: 36px; animation-duration: 22s; animation-delay: -4s; }
+.os-bats svg {
+	display: block;
+	width: 100%;
+	fill: currentColor;
+	animation: os-flap 0.32s ease-in-out infinite alternate;
+	transform-origin: 50% 40%;
+}
+@keyframes os-bat {
+	0% { transform: translate(0, 0); }
+	25% { transform: translate(28vw, -3vh); }
+	50% { transform: translate(55vw, 2vh); }
+	75% { transform: translate(82vw, -4vh); }
+	100% { transform: translate(calc(100vw + 120px), 1vh); }
+}
+@keyframes os-flap {
+	to { transform: scaleY(0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.os[data-wall='haunted'] .os-wall::after,
+	.os-bats {
+		animation: none;
+		display: none;
+	}
+}
+/* applyPrefs() writes --accent inline, so the season needs !important to win. */
+.os[data-season='halloween'] {
+	--accent: #ff7a1a !important;
+	--theme-2: #ff7a1a !important;
+}
+.os[data-season='halloween'] .set-pane h2,
+.os[data-season='halloween'] .sm-h > :first-child {
+	font-family: 'Creepster', 'Space Grotesk', system-ui, sans-serif;
+	font-weight: 400;
+	letter-spacing: 0.04em;
+	color: #ff9a3c;
+}
+.os[data-season='halloween'] .set-pane h2 {
+	font-size: 30px;
+}
+/* Boot and lock screens paint before the shell mounts, so they key off <html>. */
+html[data-season='halloween'] .os-boot {
+	background: url('/wallpapers/haunted.svg') center bottom / cover no-repeat, #12071d;
+}
+html[data-season='halloween'] .os-boot::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(8, 3, 14, 0.78), rgba(8, 3, 14, 0.35) 55%, rgba(8, 3, 14, 0.7));
+	pointer-events: none;
+}
+html[data-season='halloween'] .os-boot-h,
+html[data-season='halloween'] .os-lock-clock,
+html[data-season='halloween'] .os-lock-greet {
+	font-family: 'Creepster', 'Space Grotesk', system-ui, sans-serif;
+	font-weight: 400;
+	letter-spacing: 0.04em;
+	color: #ffb057;
+	text-shadow: 0 0 28px rgba(255, 122, 26, 0.55);
+}
+html[data-season='halloween'] .os-lock-card {
+	border-color: rgba(255, 154, 60, 0.35);
+	background: rgba(28, 10, 30, 0.62);
+}
+html[data-season='halloween'] .os-lock-enter {
+	background: #ff7a1a;
+	border-color: #ff7a1a;
+	color: #1a0700;
+}
+html[data-season='halloween'] .os-lock-enter:hover {
+	background: #ff9a3c;
+	border-color: #ff9a3c;
+}
+html[data-season='halloween'] .os-lock-enter:active {
+	background: #e8650c;
+}
+html[data-season='halloween'] .os-lock-enter:focus-visible {
+	outline: 2px solid #ffb057;
+	outline-offset: 3px;
+}
+
 /* ---------- Desktop icons ---------- */
 .os-icons {
 	position: absolute;
