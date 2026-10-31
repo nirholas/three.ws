@@ -74,7 +74,7 @@ describe('MCP tool surface', () => {
 	// assertion below, and asserted to advertise their free-ness instead.
 	// (crypto_news_archive is freemium: its description quotes the over-quota
 	// $ price, so it stays under the paid assertion.)
-	const FREE_TOOLS = new Set(['forge_free', 'crypto_news', 'crypto_news_digest']);
+	const FREE_TOOLS = new Set(['forge_free', 'crypto_news', 'crypto_news_digest', 'news_resolve']);
 
 	it('builds every tool descriptor with a complete, unique contract', async () => {
 		const tools = await buildTools();
@@ -157,6 +157,12 @@ describe('MCP tool surface', () => {
 		for (const [name, a] of Object.entries(byName)) {
 			if (name === 'get_pose_seed' || name === 'vanity_grinder') continue;
 			expect(a.openWorldHint, `${name}.openWorldHint`).toBe(true);
+			// news_resolve resolves one fixed article URL to a bounded excerpt
+			// (see tests/mcp-crypto-news.test.js), so it is deliberately idempotent.
+			if (name === 'news_resolve') {
+				expect(a.idempotentHint, `${name}.idempotentHint`).toBe(true);
+				continue;
+			}
 			// Live feeds / fresh artifacts — never claim idempotence.
 			expect(a.idempotentHint, `${name}.idempotentHint`).toBe(false);
 		}
