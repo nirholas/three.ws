@@ -247,7 +247,7 @@ describe('proof as evidence', () => {
 
 describe('queue validation of a filmed item', () => {
 	it('passes an item whose proof covers it', () => {
-		expect(validateItem(item(), sandbox())).toEqual([]);
+		expect(validateItem(item(), sandbox(), { now: NOW })).toEqual([]);
 	});
 
 	it('requires the scenario to be the item probe', () => {
@@ -289,12 +289,12 @@ describe('post length', () => {
 	it('holds a long head to the standard wall unless the queue lifts it', () => {
 		const post = item({ posts: [{ text: long, media: item().posts[0].media }] });
 		expect(validateItem(post, sandbox(proof(), { maximumLength: 280 })).join('\n')).toMatch(/maximum is 280/);
-		expect(validateItem(post, sandbox(proof(), { maximumLength: 1000 }))).toEqual([]);
+		expect(validateItem(post, sandbox(proof(), { maximumLength: 1000 }), { now: NOW })).toEqual([]);
 	});
 
 	it('reads the wall from the queue at root when a caller holds only the item', () => {
 		const post = item({ posts: [{ text: long, media: item().posts[0].media }] });
-		expect(validateItem(post, sandbox(proof(), { maximumLength: 1000 }), { quality: { maximumLength: 300 } }).join('\n')).toMatch(/maximum is 300/);
+		expect(validateItem(post, sandbox(proof(), { maximumLength: 1000 }), { quality: { maximumLength: 300 }, now: NOW }).join('\n')).toMatch(/maximum is 300/);
 	});
 });
 

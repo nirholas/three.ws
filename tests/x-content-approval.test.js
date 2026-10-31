@@ -160,7 +160,7 @@ describe('a story covers backlog surfaces', () => {
 	});
 
 	it('refuses a covers list that is not a list of keys', () => {
-		expect(validateItem(item({ covers: ['/wardrobe', 'workers/garment-forge'] }), sandbox())).toEqual([]);
+		expect(validateItem(item({ covers: ['/wardrobe', 'workers/garment-forge'] }), sandbox(), { now: NOW })).toEqual([]);
 		expect(validateItem(item({ covers: '/wardrobe' }), sandbox()).join('\n')).toMatch(/covers must list backlog keys/);
 		expect(validateItem(item({ covers: [42] }), sandbox()).join('\n')).toMatch(/covers must list backlog keys/);
 	});
