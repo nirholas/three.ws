@@ -1737,25 +1737,10 @@ On `mcp`:
 
 1. `read_resource` on `three://launches`: what this account launched before; flag a repeated name or symbol.
 2. `pumpfun_recent_graduations`: what recently graduated launches have in common.
-3. `read_resource` on `three://agents/{agentId}/wallet`: enough SOL for the launch fee?
-4. Show the name, symbol, description, image, launching wallet and cost, and wait for a yes.
-5. `pumpfun_prepare_launch` with the agreed `name`, `symbol`, `description`, `image_url`, and optionally `initial_buy_sol` and `agent_id`. It validates every field the same way the launch page does, fetches and type/size-checks the image, and returns a pre-filled `/launch` URL plus a plain-English summary. It never launches anything itself: `requires_human_signature` is always `true` in the response.
-
-   ```json
-   {
-     "name": "pumpfun_prepare_launch",
-     "arguments": {
-       "name": "Agent Nova",
-       "symbol": "NOVA",
-       "description": "A trading agent with a coin.",
-       "image_url": "https://cdn.example.com/nova.png",
-       "initial_buy_sol": 0.5,
-       "agent_id": "agent-123"
-     }
-   }
-   ```
-
-6. **Spends money.** The user opens the `launch_url` from the response, reviews every pre-filled field on [/launch](https://three.ws/launch) (shown there under an "prepared from your assistant" banner), and signs the transaction in their own wallet. Then `read_resource` on `three://launches` to confirm it landed.
+3. `launch_lanes`: the Solana launch lanes first, with every fee, who pays it, the creator share and what happens at graduation.
+4. `read_resource` on `three://agents/{agentId}/wallet`: enough SOL for the launch fee?
+5. Show the name, symbol, description, image, launching wallet and cost, and wait for a yes.
+6. **Spends money.** Solana launches are signed in the browser, not from MCP. The user opens [/launch](https://three.ws/launch), reviews every field and signs the transaction in their own wallet. Then `read_resource` on `three://launches` to confirm it landed and report the mint and its page.
 
 ### Hire an agent for a task (`hire-agent`)
 
@@ -1890,23 +1875,41 @@ On `mcp`:
 
 ### Trade perpetuals (`perps`)
 
-Goal: research a perpetual futures setup before any position.
+Goal: research a perpetual futures setup, then preview and place an order only after a confirmed preview.
 
 On `mcp`:
 
 1. `read_resource` on `three://agents/{agentId}/wallet`: collateral and limits.
 2. `crypto_data` for spot price and recent volatility, and `token_snapshot` for Solana tokens.
-3. Summarize the setup, the liquidation risk at 2x and 5x, and what would invalidate it. Perpetuals are not enabled on MCP yet, so no position opens here; once they ship, the prompt adds a previewed, confirmed order.
+3. Summarize the setup, the liquidation risk at 2x and 5x, and what would invalidate it. Orders are previewed and placed on `mcp-agent`, so no position opens here.
+
+On `mcp-agent` (pays from the agent wallet):
+
+1. `perps_account`: the mode (paper or live), equity, open positions, and the leverage and per-position margin caps.
+2. `perps_markets` and `perps_market_data` for the chosen market: mark price, funding and depth.
+3. If there is no free collateral, `perps_action_preview` with action "deposit" shows from, to, amount, asset and chain.
+4. **Spends money.** `perps_collateral_deposit` with `confirm_trade: true` moves exactly the previewed amount, only after the user says yes.
+5. `perps_order_preview` with the side, size or margin and leverage: size, entry, margin, account leverage, fees, liquidation price and every check.
+6. **Spends money.** `perps_order_execute` with `confirm_trade: true` and a fresh idempotency key places exactly that preview, only after the user says yes. If the quote moved it refuses, and the agent previews and asks again.
+7. Offer a take-profit and a stop-loss through the same preview and confirm steps, and show the position with `perps_positions`.
+8. **Spends money.** If the user says stop, preview action "flatten", then `perps_flatten` with `confirm_trade: true` closes everything and halts, only after a yes.
 
 ### Prediction markets (`predictions`)
 
-Goal: research a prediction-market question and estimate a probability.
+Goal: find a prediction market, price a position with a preview and take it with confirmation, settled in USDC on Solana.
 
 On `mcp`:
 
-1. `read_resource` on `three://agents/{agentId}/wallet`: balance and limits.
-2. `crypto_data` for the prices and data behind the question, then a probability estimate with reasoning.
-3. No position is placed here; once prediction-market tools ship, the prompt adds a priced, confirmed position.
+1. `crypto_data` for the prices and data behind the question, then a probability estimate with reasoning. Positions are taken on `mcp-agent`, so none is placed here.
+
+On `mcp-agent` (pays from the agent wallet):
+
+1. `read_resource` on `three://agents/{agentId}/wallet`: the USDC balance and limits.
+2. `predictions_events` with the topic: matching markets with implied probabilities, volume and close time.
+3. `predictions_event` for the event the user picks: the resolution rules and recent price history.
+4. `predictions_open_preview` with the market, side and stake: the outcome, average price, contracts, fees, payout and maximum loss.
+5. **Spends money.** `predictions_open` with `confirm_trade: true` places exactly that preview, only after the user says yes, and reports the transaction signature.
+6. Offer `predictions_watch` so the user hears when the probability crosses a level they set.
 
 ### Embed an agent on a website (`embed-avatar`)
 
