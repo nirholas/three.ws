@@ -52,6 +52,7 @@ if (resultPanel && viewer && triggerBtn) {
 
 	const TOPO_HINTS = {
 		quad: 'Field-aligned QuadriFlow retopology — clean quad-dominant edge loops that deform well for rigging & animation.',
+		artist: 'Artist-style low-poly from a generative retopology model (LATO.2): even triangles that follow the form, capped at about 10k faces. Checked for holes; a QuadriFlow mesh is delivered instead if the check fails.',
 		tri: 'Silhouette-preserving low-poly. UVs are re-unwrapped and the original texture re-baked onto the new mesh for real-time engines.',
 	};
 
@@ -138,6 +139,7 @@ if (resultPanel && viewer && triggerBtn) {
 			<div class="gr-seg gr-topo" role="group" aria-label="Topology">
 				<button type="button" data-topo="quad" aria-pressed="true">Quad retopo</button>
 				<button type="button" data-topo="tri" aria-pressed="false">Tri low-poly</button>
+				<button type="button" data-topo="artist" aria-pressed="false">Artist mesh</button>
 			</div>
 			<p class="gr-topo-hint"></p>
 		</div>
@@ -365,7 +367,7 @@ if (resultPanel && viewer && triggerBtn) {
 
 	function renderDelta(data) {
 		const after = data.face_count;
-		const unit = state.topology === 'quad' ? (data.quad_ratio > 0 ? 'quads' : 'faces') : 'tris';
+		const unit = state.topology === 'quad' || (state.topology === 'artist' && Object.values(data.engines || {}).includes('quadriflow_fallback')) ? (data.quad_ratio > 0 ? 'quads' : 'faces') : 'tris';
 		const parts = [];
 		if (Number.isFinite(state.sourceFaces)) {
 			parts.push(`<span class="gr-from">${state.sourceFaces.toLocaleString()} tris</span><span class="gr-arrow">→</span>`);
@@ -379,6 +381,12 @@ if (resultPanel && viewer && triggerBtn) {
 			parts.push(`<span class="gr-tag">${Math.round(data.quad_ratio * 100)}% quad-dominant</span>`);
 		}
 		if (data.textured === true) parts.push('<span class="gr-tag">texture re-baked ✓</span>');
+		const engineValues = data.engines ? Object.values(data.engines) : [];
+		if (engineValues.includes('quadriflow_fallback')) {
+			parts.push('<span class="gr-tag">artist mesh failed its hole check, QuadriFlow delivered</span>');
+		} else if (engineValues.includes('artist')) {
+			parts.push('<span class="gr-tag">artist mesh, hole-free ✓</span>');
+		}
 		deltaEl.innerHTML = parts.join(' ');
 		deltaEl.classList.add('is-shown');
 	}

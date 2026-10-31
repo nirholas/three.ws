@@ -27,10 +27,11 @@ const status = vi.fn(async (extJobId) => ({
 	textured: true,
 }));
 let supportsRemesh = true;
+let supportsLato = false;
 
 vi.mock('../../api/_providers/gcp.js', () => ({
 	createRegenProvider: () => ({
-		supportsMode: (m) => m === 'remesh' && supportsRemesh,
+		supportsMode: (m) => (m === 'remesh' && supportsRemesh) || (m === 'lato2' && supportsLato),
 		submit,
 		status,
 	}),
@@ -39,7 +40,8 @@ vi.mock('../../api/_providers/gcp.js', () => ({
 // Stub R2 so the mirror writes to memory instead of a real bucket.
 const putObject = vi.fn(async () => {});
 const publicUrl = vi.fn((key) => `https://three.ws/cdn/${key}`);
-vi.mock('../../api/_lib/r2.js', () => ({
+vi.mock('../../api/_lib/r2.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	putObject,
 	publicUrl,
 }));
@@ -93,6 +95,7 @@ beforeEach(() => {
 	redeemForgePurchase.mockClear();
 	releaseForgePurchase.mockClear();
 	supportsRemesh = true;
+	supportsLato = false;
 	globalThis.fetch = vi.fn(async () => ({
 		ok: true,
 		arrayBuffer: async () => new Uint8Array([0x67, 0x6c, 0x54, 0x46]).buffer,
@@ -393,3 +396,95 @@ describe('POST /api/forge-gameready payment-error boundary', () => {
 });
 
 globalThis.fetch = realFetch;
+
+describe('artist topology (LATO.2 with a QuadriFlow failover)', () => {
+	const modeId = (req) => `${req.mode}-${req.params.output_format}-${'y'.repeat(20)}`;
+	const poll = async (jobId) => {
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', url: `/api/forge-gameready?job=${encodeURIComponent(jobId)}` }), res);
+		return JSON.parse(res.body);
+	};
+	const start = async (body) => {
+		const res = makeRes();
+		await handler(makeReq({ body: { mesh_url: MESH, topology: 'artist', ...body } }), res);
+		return JSON.parse(res.body);
+	};
+
+	beforeEach(() => {
+		supportsLato = true;
+		submit.mockImplementation(async (req) => ({ extJobId: modeId(req), eta: req.mode === 'lato2' ? 60 : 30 }));
+	});
+
+	it('starts the artist job and a QuadriFlow job beside it', async () => {
+		const body = await start({ poly_budget: 6000, formats: ['glb'] });
+		const modes = submit.mock.calls.map((c) => c[0].mode).sort();
+		expect(modes).toEqual(['lato2', 'remesh']);
+		const lato = submit.mock.calls.map((c) => c[0]).find((c) => c.mode === 'lato2');
+		expect(lato.params.target_faces).toBe(6000);
+		expect(body.eta_seconds).toBe(60);
+	});
+
+	it('caps the artist budget at what the model can emit', async () => {
+		await start({ poly_budget: 80000, formats: ['glb'] });
+		const lato = submit.mock.calls.map((c) => c[0]).find((c) => c.mode === 'lato2');
+		expect(lato.params.target_faces).toBe(10000);
+	});
+
+	it('serves the artist mesh once it lands', async () => {
+		const { job_id } = await start({ formats: ['glb'] });
+		status.mockImplementation(async (id) => ({
+			status: 'done', resultGlbUrl: `https://storage.googleapis.com/b/${id}.glb`, faceCount: 3900, textured: true,
+		}));
+		const body = await poll(job_id);
+		expect(body.status).toBe('done');
+		expect(body.engines).toEqual({ glb: 'artist' });
+		expect(String(globalThis.fetch.mock.calls[0][0])).toContain('lato2-glb');
+	});
+
+	it('serves the QuadriFlow mesh when the artist mesh fails its gate', async () => {
+		const { job_id } = await start({ formats: ['glb'] });
+		status.mockImplementation(async (id) => id.startsWith('lato2')
+			? { status: 'failed', error: 'holes', errorKind: 'quality' }
+			: { status: 'done', resultGlbUrl: `https://storage.googleapis.com/b/${id}.glb`, faceCount: 5000, quadRatio: 0.9 });
+		const body = await poll(job_id);
+		expect(body.status).toBe('done');
+		expect(body.engines).toEqual({ glb: 'quadriflow_fallback' });
+		expect(String(globalThis.fetch.mock.calls[0][0])).toContain('remesh-glb');
+	});
+
+	it('keeps waiting on the artist job while QuadriFlow is already done', async () => {
+		const { job_id } = await start({ formats: ['glb'] });
+		status.mockImplementation(async (id) => id.startsWith('lato2')
+			? { status: 'running' }
+			: { status: 'done', resultGlbUrl: `https://storage.googleapis.com/b/${id}.glb`, faceCount: 5000 });
+		expect((await poll(job_id)).status).toBe('running');
+	});
+
+	it('fails only when the artist job and its failover both fail', async () => {
+		const { job_id } = await start({ formats: ['glb'] });
+		status.mockImplementation(async () => ({ status: 'failed', error: 'boom' }));
+		const body = await poll(job_id);
+		expect(body.status).toBe('failed');
+		expect(body.error).toMatch(/boom/);
+	});
+
+	it('degrades to plain QuadriFlow when the artist worker is not configured', async () => {
+		supportsLato = false;
+		await start({ formats: ['glb'] });
+		expect(submit.mock.calls.map((c) => c[0].mode)).toEqual(['remesh']);
+	});
+
+	it('degrades to plain QuadriFlow when the artist submit throws', async () => {
+		submit.mockImplementation(async (req) => {
+			if (req.mode === 'lato2') throw new Error('worker down');
+			return { extJobId: modeId(req), eta: 30 };
+		});
+		const body = await start({ formats: ['glb'] });
+		expect(body.status).toBe('queued');
+	});
+
+	it('keeps a rig-preserving FBX on the source topology', async () => {
+		await start({ formats: ['fbx'], preserve_rig: true });
+		expect(submit.mock.calls.map((c) => c[0].mode)).toEqual(['remesh']);
+	});
+});

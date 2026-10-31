@@ -38,6 +38,11 @@
 //                  like the photo. Needs a 32 GB+ GPU. Standard /infer +
 //                  /tasks/:id shape.
 //   remesh       → GCP_REMESH_URL           (workers/remesh)
+//   lato2        → MODEL_LATO2_URL          (workers/model-lato2, MIT)
+//                  Artist-style low-poly retopology: POST /retopo + /tasks/:id.
+//                  A generative sampler, so a result can be rejected by its own
+//                  topology gate (errorKind 'quality'); callers keep a QuadriFlow
+//                  `remesh` job as the failover.
 //   stylize      → GCP_STYLIZE_URL          (workers/stylize)
 //   retex        → GCP_TEXTURE_URL          (workers/texture)
 //   rembg        → GCP_REMBG_URL            (workers/rembg)
@@ -94,6 +99,8 @@ function serviceUrlForMode(mode) {
 			return readEnv('GCP_RECONSTRUCTION_URL');
 		case 'remesh':
 			return readEnv('GCP_REMESH_URL');
+		case 'lato2':
+			return readEnv('MODEL_LATO2_URL');
 		case 'stylize':
 			return readEnv('GCP_STYLIZE_URL');
 		case 'retex':
@@ -404,6 +411,18 @@ function buildWorkerRequest(request) {
 		};
 	}
 
+	if (mode === 'lato2') {
+		return {
+			path: '/retopo',
+			resultKey: 'result_url',
+			body: {
+				mesh: sourceUrl,
+				target_faces: params?.target_faces || 4000,
+				output_format: params?.output_format || 'glb',
+			},
+		};
+	}
+
 	if (mode === 'stylize') {
 		return {
 			path: '/process',
@@ -666,6 +685,8 @@ const MODE_ETA = {
 	// TRELLIS's single pass.
 	hunyuan: 300,
 	remesh: 30,
+	// Checkpoint load plus up to three seeded draws on the L4, cold start extra.
+	lato2: 60,
 	stylize: 25,
 	retex: 180,
 	retex_region: 60,
@@ -894,6 +915,12 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					if (data.texture_url) result.textureUrl = data.texture_url;
 					if (data.mode) result.mode = data.mode;
 				}
+				if (mode === 'lato2') {
+					if (typeof data.face_count === 'number') result.faceCount = data.face_count;
+					if (typeof data.textured === 'boolean') result.textured = data.textured;
+					if (typeof data.watertight === 'boolean') result.watertight = data.watertight;
+					result.quadRatio = 0;
+				}
 				// The stylize worker reports the rebuilt mesh's face count and the
 				// forge's stylize panel renders it beside the result, so it has to
 				// survive the hop: without this it arrived as null every time.
@@ -923,7 +950,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 				// id). Surface the taxonomy so the status endpoint can relay
 				// actionable capture errors instead of masking every failure
 				// into the generic retry message.
-				if (data.error_kind === 'input' || data.error_kind === 'internal') {
+				if (data.error_kind === 'input' || data.error_kind === 'internal' || data.error_kind === 'quality') {
 					result.errorKind = data.error_kind;
 				}
 			}

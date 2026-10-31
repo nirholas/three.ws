@@ -306,6 +306,7 @@ const PROBES = {
 // unchanged, including the load_error and readiness branches.
 const EDITING_WORKERS = [
 	{ id: 'remesh', env: 'GCP_REMESH_URL', label: 'Remesh / retopology' },
+	{ id: 'lato2', env: 'MODEL_LATO2_URL', label: 'Artist-mesh retopology' },
 	{ id: 'stylize', env: 'GCP_STYLIZE_URL', label: 'Stylize' },
 	{ id: 'segment', env: 'GCP_SEGMENT_URL', label: 'Segment' },
 	{ id: 'rembg', env: 'GCP_REMBG_URL', label: 'Background removal' },

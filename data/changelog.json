@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Game-Ready export gets an Artist mesh option for cleaner low-poly",
+			"summary": "The Game-Ready panel has a new Artist mesh topology: a generative retopology model (LATO.2, MIT) that builds an even low-poly mesh of up to about 10,000 faces. Every result is checked for holes and drift from your model, and if the check fails you automatically get the QuadriFlow mesh instead, so an export never ships torn.",
+			"tags": [
+				"feature"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "91 free Halloween 3D models join the object library, and you can walk them in a haunted graveyard",
 			"summary": "Kenney's Graveyard Kit (CC0, free for any use) is now in the object library: crypts, gravestones, fences, lampposts, pumpkins, trees and five animated characters (a zombie, skeleton, vampire, ghost and graveyard keeper), each one a single self-contained GLB. The new /haunted page puts them together as a moonlit 3D yard you can orbit, light, photograph and populate with wandering monsters.",
 			"tags": [

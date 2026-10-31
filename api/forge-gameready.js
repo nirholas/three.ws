@@ -6,7 +6,7 @@
  *
  *   POST /api/forge-gameready {
  *     mesh_url: string,
- *     topology?: "quad"|"tri",        // quad → QuadriFlow retopo; tri → smart low-poly
+ *     topology?: "quad"|"tri"|"artist",  // quad → QuadriFlow retopo; tri → smart low-poly; artist → LATO.2 artist mesh (QuadriFlow failover)
  *     poly_budget?: number,           // 1000–500000 target faces
  *     texture_size?: 1024|2048,
  *     formats?: ("glb"|"fbx")[],      // default ["glb","fbx"]
@@ -56,7 +56,7 @@ const PAYMENT_ERROR_CODES = new Set([
 // The composite job id is a base64url JSON envelope packing one upstream task per
 // requested format, so it is far longer than a raw worker task id.
 const JOB_ID_RE = /^[A-Za-z0-9_-]{24,16000}$/;
-const VALID_TOPOLOGIES = new Set(['quad', 'tri']);
+const VALID_TOPOLOGIES = new Set(['quad', 'tri', 'artist']);
 const VALID_FORMATS = new Set(['glb', 'fbx']);
 const VALID_TEXTURE_SIZES = new Set([1024, 2048]);
 const POLY_MIN = 1_000;
@@ -65,7 +65,17 @@ const POLY_MAX = 500_000;
 // quad → field-aligned QuadriFlow retopology; tri → silhouette-preserving
 // quadric low-poly with UV re-unwrap + texture re-bake. Both are real worker
 // pipelines (workers/remesh); neither is faked here.
-const TOPOLOGY_TO_MODE = { quad: 'quad', tri: 'lowpoly' };
+// artist → LATO.2 artist-style low-poly (workers/model-lato2). It is a generative
+// model that can tear its own topology, so every artist GLB job is paired with a
+// QuadriFlow job (the `quad` mode) started alongside it: the poll serves the
+// artist mesh when it passes its watertight gate and the QuadriFlow mesh when it
+// does not, with no second dispatch and no client cooperation.
+const TOPOLOGY_TO_MODE = { quad: 'quad', tri: 'lowpoly', artist: 'quad' };
+// LATO.2 emits 200 to 5000 vertices (about 400 to 10000 triangles).
+const ARTIST_FACE_MAX = 10_000;
+// Past this the QuadriFlow job beside an artist job is served instead of waiting
+// on a cold or stuck GPU worker.
+const ARTIST_WAIT_MS = 6 * 60 * 1000;
 
 const CONTENT_TYPE = {
 	glb: 'model/gltf-binary',
@@ -202,6 +212,7 @@ async function startJob(req, res) {
 	} catch {
 		return unconfigured(res);
 	}
+	const useArtist = topology === 'artist' && provider.supportsMode('lato2');
 
 	// Claim the settled $THREE payment now — immediately before dispatch — so any
 	// failure above (validation, unconfigured worker) left it reusable. The atomic
@@ -223,23 +234,40 @@ async function startJob(req, res) {
 	}
 
 	const sub = {};
+	const altSub = {};
 	let maxEta = 0;
 	try {
 		// Fan out one worker task per format. The worker emits a single format per
 		// task, so both the GLB and FBX are produced concurrently upstream.
 		const submissions = await Promise.all(
 			formats.map(async (format) => {
-				const job = await provider.submit({
-					mode: 'remesh',
-					sourceUrl: meshUrl,
-					params: workerParamsForFormat(format, { mode, polyBudget, textureSize, preserveRig }),
-				});
-				return { format, job };
+				const params = workerParamsForFormat(format, { mode, polyBudget, textureSize, preserveRig });
+				// The rig-preserving FBX path keeps the source topology, so only
+				// retopologized geometry formats take the artist lane.
+				const artistLane = useArtist && !(format === 'fbx' && preserveRig);
+				const fallback = await provider.submit({ mode: 'remesh', sourceUrl: meshUrl, params });
+				if (!artistLane) return { format, job: fallback };
+				try {
+					const artist = await provider.submit({
+						mode: 'lato2',
+						sourceUrl: meshUrl,
+						params: {
+							target_faces: Math.min(polyBudget, ARTIST_FACE_MAX),
+							output_format: format === 'fbx' ? 'glb' : format,
+						},
+					});
+					return { format, job: artist, alt: fallback };
+				} catch {
+					// The artist worker is down or unconfigured: the QuadriFlow job
+					// already running is the export.
+					return { format, job: fallback };
+				}
 			}),
 		);
-		for (const { format, job } of submissions) {
+		for (const { format, job, alt } of submissions) {
 			sub[format] = job.extJobId;
-			maxEta = Math.max(maxEta, Number(job.eta) || 0);
+			if (alt) altSub[format] = alt.extJobId;
+			maxEta = Math.max(maxEta, Number(job.eta) || 0, Number(alt?.eta) || 0);
 		}
 	} catch (err) {
 		// Dispatch failed before any artifact was produced — release the claim so the
@@ -258,6 +286,8 @@ async function startJob(req, res) {
 		topology,
 		budget: polyBudget,
 		preserveRig,
+		alt: altSub,
+		t: Date.now(),
 		// 12 hex of the source URL → a stable, collision-resistant R2 namespace so
 		// re-runs overwrite rather than orphan, without leaking the full URL.
 		h: createHash('sha256').update(meshUrl).digest('hex').slice(0, 12),
@@ -324,8 +354,28 @@ async function pollJob(req, res, jobId) {
 	}
 
 	const formats = Object.keys(job.sub);
+	const alt = job.alt && typeof job.alt === 'object' ? job.alt : {};
+	const artistExpired = Number.isFinite(job.t) && Date.now() - job.t > ARTIST_WAIT_MS;
+	const engines = {};
 	const results = await Promise.all(
-		formats.map(async (format) => ({ format, result: await provider.status(job.sub[format]) })),
+		formats.map(async (format) => {
+			const primary = await provider.status(job.sub[format]);
+			if (!alt[format]) return { format, result: primary };
+			// Artist lane: serve the LATO.2 mesh once it lands. If it was rejected by
+			// its own gate (or crashed), or is still not back after ARTIST_WAIT_MS,
+			// serve the QuadriFlow job that has been running beside it.
+			if (primary.status === 'done' && primary.resultGlbUrl) {
+				engines[format] = 'artist';
+				return { format, result: primary };
+			}
+			const fallback = await provider.status(alt[format]);
+			const primaryDead = primary.status === 'failed';
+			if (primaryDead || (artistExpired && fallback.status === 'done')) {
+				engines[format] = 'quadriflow_fallback';
+				return { format, result: fallback };
+			}
+			return { format, result: primary };
+		}),
 	);
 
 	// Aggregate the sub-task statuses: any failure fails the whole export; the
@@ -380,6 +430,9 @@ async function pollJob(req, res, jobId) {
 		poly_budget: job.budget,
 		preserve_rig: Boolean(job.preserveRig),
 		outputs,
+		// Which engine produced each format, so the UI can say when the artist
+		// mesh was replaced by the QuadriFlow failover.
+		engines: Object.keys(engines).length ? engines : undefined,
 		face_count: faceCount,
 		quad_ratio: quadRatio,
 		textured,

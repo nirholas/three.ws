@@ -96,6 +96,7 @@ faked.
 | `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `model-rig` (the env name predates the engine swap that retired the old `unirig` service). Required for rigging: it is the only `rerig` backend, so without it the provider reports the mode unsupported rather than submitting anywhere. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
 | `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager; `model-rig`'s `API_KEY` references the same secret). |
 | `GCP_REMESH_URL`        | Game-Ready export      | `model`/`remesh` worker (post-gen). |
+| `MODEL_LATO2_URL`       | Game-Ready "Artist mesh" | Cloud Run URL of `model-lato2` (LATO.2, MIT). Optional: unset means the Artist mesh topology quietly delivers QuadriFlow output. Deploy: run `workers/model-lato2/stage_weights.sh`, then `gcloud builds submit --config workers/model-lato2/cloudbuild.yaml`. |
 | `FORGE_PREFER_FREE`     | routing (optional)     | Defaults on. Set `false` only to restore the paid-default ordering once the paid account is funded. |
 
 The URL each worker registers on the `three-ws-api` Cloud Run service env is

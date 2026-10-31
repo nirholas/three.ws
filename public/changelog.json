@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T22:35:51.863Z",
+	"generated_at": "2026-10-31T22:39:52.493Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -102,6 +102,16 @@
 			"title": "Chat keeps answering when the free model quota runs out",
 			"summary": "When the shared free model hit its daily limit, the chat showed 'The built-in model is rate-limited' and stopped. It now hands the message to the platform's own model chain instead, so a reply still arrives. The rate-limit notice only appears if every lane is busy.",
 			"link": "/chat",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Game-Ready export gets an Artist mesh option for cleaner low-poly",
+			"summary": "The Game-Ready panel has a new Artist mesh topology: a generative retopology model (LATO.2, MIT) that builds an even low-poly mesh of up to about 10,000 faces. Every result is checked for holes and drift from your model, and if the check fails you automatically get the QuadriFlow mesh instead, so an export never ships torn.",
+			"link": "/forge",
 			"tags": [
 				"feature"
 			]
