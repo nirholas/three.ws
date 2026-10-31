@@ -11,7 +11,8 @@ describe('memo inscription reader copies', () => {
 	});
 
 	it('the /onchain page renders only sniffed rasters as images and never injects markup', () => {
-		const page = readFileSync('public/onchain/index.html', 'utf8');
+		expect(readFileSync('public/onchain/index.html', 'utf8')).toContain('src="/onchain/viewer.js"');
+		const page = readFileSync('public/onchain/viewer.js', 'utf8');
 		expect(page).toContain("from '/onchain/inscriptions.js'");
 		expect(page).toContain("view.kind === 'image'");
 		const renderer = page.slice(page.indexOf('function renderInscription'), page.indexOf('async function lookup'));
