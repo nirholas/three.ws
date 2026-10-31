@@ -29,7 +29,7 @@ export const POSTER_SIZE = 1024;
 // tests/mcp-studio-asset-links.test.js holds the two equal). A catalog item known
 // to be bigger gets its published PNG thumbnail as the poster instead of a render
 // link that would answer 413.
-export const RENDER_MAX_GLB_BYTES = 10 * 1024 * 1024;
+export const RENDER_MAX_GLB_BYTES = 25 * 1024 * 1024;
 
 // Kinds that are a body rather than a prop. These embed as <agent-3d> (the
 // element that animates, talks and wears a persona); everything else embeds as

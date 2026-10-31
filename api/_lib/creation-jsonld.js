@@ -48,7 +48,7 @@ export function renderPosterUrl(origin, glbUrl, { width = POSTER_WIDTH, height =
 
 // GET /api/render/glb refuses a model above this size (MAX_GLB_BYTES there),
 // and a refused render is a broken image in a card. Keep the two in step.
-export const RENDER_MAX_GLB_BYTES = 10 * 1024 * 1024;
+export const RENDER_MAX_GLB_BYTES = 25 * 1024 * 1024;
 
 /**
  * The first GLB the renderer will accept, from candidates in preference order
