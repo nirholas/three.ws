@@ -293,6 +293,15 @@ export class VoxelWorld {
 		}
 	}
 
+	/**
+	 * Drop every block `has(key)` does not vouch for. A venue screen that kept its
+	 * last frame across a reconnect uses this once the room's fresh snapshot lands,
+	 * so blocks removed while it was offline disappear without a blank-world flash.
+	 */
+	retainOnly(has) {
+		for (const key of [...this.index.keys()]) if (!has(key)) this._removeKey(key);
+	}
+
 	clear() {
 		for (const b of this.batches) { while (b.keys.length) b.removeAt(b.keys.length - 1); }
 		this.index.clear();

@@ -737,7 +737,7 @@ export class CoinCommunities {
 		// that visitor already made their choice (a shared world link) and "Drop in
 		// now" would silently redirect them to the $THREE home town instead of the
 		// world they clicked into, on top of it already loading behind the modal.
-		if (!new URLSearchParams(location.search).get('coin')) {
+		if (!new URLSearchParams(location.search).get('coin') && new URLSearchParams(location.search).get('director') !== '1') {
 			showPlayIntro({ onDropIn: () => this._dropIn() });
 		}
 
@@ -759,6 +759,21 @@ export class CoinCommunities {
 		// `?avatar=<glb|id>` rides along (used by "See in 3D" links) and is shown
 		// for this session only, never persisted over the player's saved avatar.
 		const p = new URLSearchParams(location.search);
+		// Venue projector view (/play?director=1): a watch-only seat with an
+		// auto-director camera and a broadcast overlay (director-mode.js). Loaded on
+		// demand so a normal visit never downloads it; enter() waits on it so the
+		// net layer is created as a spectator from its very first connect.
+		const wantsDirector = p.get('director') === '1';
+		this._director = null;
+		this._directorReady = wantsDirector
+			? import('./director-mode.js')
+				.then(({ DirectorMode }) => { this._director = new DirectorMode(this); })
+				.catch((err) => {
+					log.error('[coincommunities] director mode failed to load, retrying:', err);
+					setTimeout(() => location.reload(), 5000);
+					return new Promise(() => {});
+				})
+			: null;
 		this._urlAvatar = (p.get('avatar') || '').trim();
 		// Capture ?ui= before enter() canonicalises the URL (the share-link
 		// rewrite drops unknown params); _restoreZen() reads it at world entry,
@@ -775,7 +790,7 @@ export class CoinCommunities {
 		// paints is what every peer will see. Without the clamp a 10 KB `name=`
 		// tears the HUD apart locally and is silently truncated for everyone else.
 		const mint = clampParam(p.get('coin'), 64);
-		if (mint && !isPlausibleMint(mint)) {
+		if (mint && !isPlausibleMint(mint) && !wantsDirector) {
 			// A malformed mint means the link is broken, not that the world is empty.
 			// Say so and leave them in the lobby, where every real world is one tap
 			// away, instead of building a convincing world nobody else can join.
@@ -783,9 +798,15 @@ export class CoinCommunities {
 			// so it stays below warn level.
 			log.info('[coincommunities] ignoring a malformed ?coin= mint:', mint);
 			this.ui.toast('That world link looks broken, so we left you in the lobby. Pick a community below.', 'warn');
-		} else if (mint) {
-			const tier = p.get('tier') === 'holders' ? 'holders' : 'general';
-			this.enter({
+		} else if (mint || wantsDirector) {
+			// A projector has nobody to pick a world or pass a holder gate, so it
+			// always watches the general room, and falls back to the $THREE home town
+			// when the link names no (valid) coin.
+			const tier = p.get('tier') === 'holders' && !wantsDirector ? 'holders' : 'general';
+			const homeFallback = wantsDirector && !(mint && isPlausibleMint(mint));
+			(this._directorReady || Promise.resolve()).then(() => this.enter(homeFallback ? {
+				mint: HOME_TOWN.mint, name: HOME_TOWN.name, symbol: HOME_TOWN.symbol, image: '',
+			} : {
 				mint,
 				name: clampParam(p.get('name'), 48),
 				symbol: clampParam(p.get('symbol'), 16),
@@ -796,7 +817,7 @@ export class CoinCommunities {
 				// raw gateway URL, and without a width the world downloads the
 				// creator's full-size upload to texture a totem.
 				image: proxiedImageURL(p.get('image') || '', mint, { width: COIN_ART_WIDTH }),
-			}, { tier })
+			}, { tier }))
 				.catch((err) => this._onEnterFailed(err));
 		}
 	}
@@ -1469,6 +1490,7 @@ export class CoinCommunities {
 			// Keep ?ui= on the canonical URL so a shared zen link stays a zen link
 			// when copied back out of the address bar (or refreshed).
 			if (this._urlUi) q.set('ui', this._urlUi);
+			this._director?.decorateUrl(q);
 			history.replaceState(null, '', location.pathname + '?' + q.toString());
 		} catch { /* non-fatal */ }
 		await loadManifest();
@@ -1601,6 +1623,7 @@ export class CoinCommunities {
 			name, avatar: netAvatar,
 			coin: { mint: coin.mint, name: coin.name, symbol: coin.symbol, image: coin.image },
 			tier: tier === 'holders' ? 'holders' : '',
+			spectator: !!this._director,
 			holderPass, holderMinUsd,
 			// Platform token gate: the verified wallet + signed pass from sign-in. The
 			// server binds the wallet (inside the pass) as the account id; harmless
@@ -1666,12 +1689,14 @@ export class CoinCommunities {
 			// Retries exhausted: this is a single-player world now, so the peers
 			// frozen mid-stride are a lie. Clear them rather than leave a crowd of
 			// statues nobody can talk to. A manual retry re-streams the real roster.
-			if (status === 'failed') { this._markRemotesStale(); this._pruneStaleRemotes(); }
+			// A venue screen keeps its last frame over a drop (the crowd and the build
+			// stay on screen under a quiet pill) and reconciles when the room re-syncs.
+			if (status === 'failed' && !this._director) { this._markRemotesStale(); this._pruneStaleRemotes(); }
 			if (status === 'online') this._failedNotified = false;
 			// Every (re)connect re-streams the server's authoritative build, so wipe
 			// the local layer first. On a manual retry out of single-player this also
 			// hands authority back: the solo build gives way to the shared world's.
-			if (status === 'connecting') { this.voxels?.clear(); this._undoStack = []; this._syncBudget(); this._resetBuildPerms(); this._markRemotesStale(); }
+			if (status === 'connecting') { if (!this._director) this.voxels?.clear(); this._undoStack = []; this._syncBudget(); this._resetBuildPerms(); this._markRemotesStale(); }
 			// Building is available with a live server (synced + persisted for
 			// everyone) and in solo single-player mode (local-only) once multiplayer
 			// has been given up. The connecting window is the only time it's off, so
@@ -2388,7 +2413,9 @@ export class CoinCommunities {
 	}
 
 	_updateOnline() {
-		const n = (this.remotes.size + (this.net?.status === 'online' ? 1 : 0)) || 1;
+		// A spectator is not a player: it adds nothing to the count, and an empty
+		// world honestly reads 0.
+		const n = this._director ? this.remotes.size : (this.remotes.size + (this.net?.status === 'online' ? 1 : 0)) || 1;
 		this._online = n;
 		this.ui.setOnline(n);
 		this._drawScreen(); // keep the jumbotron's LIVE count in sync
@@ -4343,6 +4370,7 @@ export class CoinCommunities {
 	// gets persisted by the authority) instead of stranding in a local doc.
 	_onRoomSynced() {
 		this._roomSynced = true;
+		this._director?.onRoomSynced();
 		// The roster in this snapshot is now the truth: retire anyone the server
 		// didn't re-announce (they left while we were disconnected).
 		this._pruneStaleRemotes();
@@ -5078,6 +5106,7 @@ export class CoinCommunities {
 	// _bindInput. 'follow' reproduces the original fixed orbit exactly, so the
 	// default view is unchanged; the other three are new.
 	_updateCamera(dt) {
+		if (this._director?.drive(dt)) return;
 		this._camTarget = this._camTarget || new Vector3();
 		// Track the avatar on the ground plane only in follow/cinematic/topdown,
 		// ignore jump height so those cameras stay planted while the character
@@ -5098,6 +5127,7 @@ export class CoinCommunities {
 	}
 
 	_updateLabels() {
+		if (this._director) return; // the broadcast frame carries no nameplates
 		const w = this.renderer.domElement.clientWidth, h = this.renderer.domElement.clientHeight;
 		// One scratch vector for the whole sweep, and one style write per node only
 		// when the value actually changed. This runs every frame for every peer, so

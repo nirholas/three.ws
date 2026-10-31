@@ -158,6 +158,18 @@ describe('VoxelWorld', () => {
 		w.dispose();
 	});
 
+	it('retainOnly() drops exactly the blocks the room no longer vouches for', () => {
+		const w = new VoxelWorld(fakeScene());
+		for (let i = 0; i < 12; i++) w.setBlock(i, 0, 0, i % BLOCK_TYPE_COUNT);
+		const keep = new Set(['1,0,0', '4,0,0', '9,0,0']);
+		w.retainOnly((key) => keep.has(key));
+		expect(w.count).toBe(3);
+		expect(w.hasBlock('4,0,0')).toBe(true);
+		expect(w.hasBlock('5,0,0')).toBe(false);
+		assertConsistent(w);
+		w.dispose();
+	});
+
 	it('ignores out-of-palette types defensively', () => {
 		const w = new VoxelWorld(fakeScene());
 		w.setBlock(0, 0, 0, -1);

@@ -1,0 +1,153 @@
+/* Venue projector view (/play?director=1). See director-mode.js.
+   Everything on the page except the world canvas, the broadcast overlay and the
+   meetup layer's two big moments (banner, shutter countdown) is hidden, so no
+   player HUD, chat, toast or sign-in card can reach a wall display. It is an
+   allowlist on purpose: a HUD added to /play next month stays out of the
+   broadcast without anyone remembering to hide it. */
+
+body.cc-director > *:not(#kx-canvas):not(#cc-director):not(#cc-meetup-banner):not(#cc-meetup-shutter):not(script):not(style):not(link) {
+	display: none !important;
+}
+body.cc-director { background: #05060a; overflow: hidden; }
+body.cc-director #kx-canvas { pointer-events: none; }
+body.cc-director:not(.cc-director-idle) { cursor: default; }
+body.cc-director.cc-director-idle,
+body.cc-director.cc-director-idle * { cursor: none !important; }
+
+/* The meetup moments, restyled for a projector: bigger, and clear of the
+   overlay's top and bottom bars. */
+body.cc-director #cc-meetup-banner { top: 30%; padding: 1.4vw 3.2vw; max-width: 70vw; border-radius: 1.2vw; }
+body.cc-director .cc-meetup-banner-ico { font-size: 4.2vw; }
+body.cc-director .cc-meetup-banner-title { font-size: 2.6vw; margin-top: 0.5vw; }
+body.cc-director .cc-meetup-banner-sub { font-size: 1.6vw; margin-top: 0.4vw; }
+body.cc-director #cc-meetup-shutter { top: 26%; }
+body.cc-director .cc-meetup-shutter-num { font-size: 18vw; }
+body.cc-director .cc-meetup-shutter-cap { font-size: 2vw; padding: 0.5vw 1.8vw; margin-top: 1vw; }
+
+.dir {
+	--dir-ink: #f7f5ef;
+	--dir-dim: rgba(247, 245, 239, 0.72);
+	--dir-gold: #ffce5c;
+	--dir-red: #ff4d5e;
+	--dir-green: #46e08a;
+	--dir-panel: rgba(8, 9, 14, 0.62);
+	--dir-edge: rgba(255, 255, 255, 0.16);
+	position: fixed; inset: 0; z-index: 150; pointer-events: none; user-select: none;
+	color: var(--dir-ink);
+	font: 600 clamp(14px, 1.15vw, 48px) / 1.25 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	letter-spacing: 0.005em;
+	text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
+}
+.dir [hidden] { display: none !important; }
+
+/* Legibility over any scene, day or night: soft scrims behind the two bars. */
+.dir::before, .dir::after {
+	content: ""; position: absolute; left: 0; right: 0; pointer-events: none;
+}
+.dir::before { top: 0; height: 30%; background: linear-gradient(to bottom, rgba(3, 4, 8, 0.72), rgba(3, 4, 8, 0)); }
+.dir::after { bottom: 0; height: 30%; background: linear-gradient(to top, rgba(3, 4, 8, 0.78), rgba(3, 4, 8, 0)); }
+
+.dir-top, .dir-bottom {
+	position: absolute; left: 0; right: 0; z-index: 1;
+	display: flex; justify-content: space-between; gap: 3em; align-items: flex-start;
+	padding-inline: max(2.2em, 3vw);
+}
+.dir-top { top: 0; padding-top: max(1.6em, 2.4vh); }
+.dir-bottom { bottom: 0; align-items: flex-end; padding-bottom: max(1.8em, 3vh); }
+
+.dir-event { min-width: 0; max-width: 62%; }
+.dir-badge-row { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; }
+.dir-badge {
+	display: inline-flex; align-items: center; gap: 0.55em;
+	padding: 0.35em 0.95em; border-radius: 999px;
+	background: var(--dir-panel); border: 1px solid var(--dir-edge);
+	font-size: 1.05em; font-weight: 800; letter-spacing: 0.14em;
+	backdrop-filter: blur(6px);
+}
+.dir-badge--live { background: rgba(255, 77, 94, 0.9); border-color: rgba(255, 255, 255, 0.4); color: #fff; }
+.dir-dot { width: 0.6em; height: 0.6em; border-radius: 50%; background: currentColor; display: none; }
+.dir-badge--live .dir-dot { display: inline-block; animation: dir-pulse 1.6s ease-in-out infinite; }
+.dir-clock {
+	font-size: 1.9em; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--dir-gold);
+	letter-spacing: 0.01em;
+}
+.dir-title {
+	margin: 0.25em 0 0; font-size: 3.1em; line-height: 1.05; font-weight: 900; letter-spacing: -0.01em;
+	text-wrap: balance; overflow-wrap: anywhere;
+}
+.dir-tagline { margin: 0.45em 0 0; font-size: 1.25em; font-weight: 600; color: var(--dir-dim); max-width: 34em; text-wrap: balance; }
+
+.dir-qr {
+	flex: none; text-align: center; padding: 0.7em 0.7em 0.55em;
+	background: rgba(255, 255, 255, 0.97); color: #0b0714; border-radius: 1em;
+	box-shadow: 0 0.6em 2.4em rgba(0, 0, 0, 0.45); text-shadow: none;
+}
+.dir-qr-img { display: block; width: 8.6em; height: 8.6em; image-rendering: pixelated; }
+.dir-qr-cap { margin-top: 0.35em; font-size: 1.05em; font-weight: 900; letter-spacing: 0.04em; }
+.dir-qr-url { font-size: 0.85em; font-weight: 700; opacity: 0.7; }
+
+.dir-world { min-width: 0; }
+.dir-world-name { font-size: 2.6em; font-weight: 900; line-height: 1.05; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.dir-world-symbol { font-size: 1.5em; font-weight: 800; color: var(--dir-gold); letter-spacing: 0.08em; margin-top: 0.1em; }
+.dir-online {
+	display: inline-flex; align-items: center; gap: 0.55em; margin-top: 0.7em;
+	padding: 0.4em 1em; border-radius: 999px; font-size: 1.35em; font-weight: 800;
+	background: var(--dir-panel); border: 1px solid var(--dir-edge); font-variant-numeric: tabular-nums;
+	backdrop-filter: blur(6px);
+}
+.dir-online-dot { width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--dir-green); box-shadow: 0 0 0.9em var(--dir-green); }
+
+.dir-seg { text-align: right; max-width: 46%; }
+.dir-seg-now { font-size: 2em; font-weight: 900; line-height: 1.1; text-wrap: balance; }
+.dir-seg-detail { margin-top: 0.3em; font-size: 1.2em; color: var(--dir-dim); text-wrap: balance; }
+.dir-seg-next { margin-top: 0.6em; font-size: 1.15em; color: var(--dir-gold); font-weight: 800; }
+
+.dir-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.4em; z-index: 2; background: rgba(255, 255, 255, 0.14); }
+.dir-progress-bar { height: 100%; transform-origin: left center; background: var(--dir-gold); transition: transform 1s linear; }
+
+/* Group photo: the caption sits under the top bar. The big countdown number is
+   the meetup layer's own shutter overlay when it is mounted (the home world), so
+   this one steps aside rather than doubling it. */
+.dir-photo { position: absolute; left: 50%; top: 20%; transform: translateX(-50%); text-align: center; z-index: 2; }
+.dir-photo-num {
+	font-size: 12em; font-weight: 900; line-height: 1; color: var(--dir-gold); font-variant-numeric: tabular-nums;
+	text-shadow: 0 0 0.3em rgba(255, 206, 92, 0.65), 0 0.03em 0.15em rgba(0, 0, 0, 0.6);
+}
+.dir-photo-cap {
+	display: inline-block; margin-top: 0.4em; padding: 0.45em 1.4em; border-radius: 999px;
+	font-size: 1.7em; font-weight: 800;
+	background: rgba(18, 14, 4, 0.82); border: 1px solid rgba(255, 206, 92, 0.55);
+}
+body:has(#cc-meetup-shutter) .dir-photo-num { display: none; }
+body:has(#cc-meetup-shutter) .dir-photo-cap { display: none; }
+
+/* Reconnecting: a quiet pill, bottom centre, over the last frame. No card. */
+.dir-pill {
+	position: absolute; left: 50%; bottom: 1.4em; transform: translateX(-50%); z-index: 3;
+	padding: 0.4em 1.1em; border-radius: 999px; font-size: 1em; font-weight: 700; letter-spacing: 0.04em;
+	background: rgba(8, 9, 14, 0.7); border: 1px solid var(--dir-edge); color: var(--dir-dim);
+	animation: dir-breathe 2.4s ease-in-out infinite;
+}
+
+.dir-flash { position: absolute; inset: 0; z-index: 4; background: #fff; opacity: 0; }
+.dir-flash--go { animation: dir-flash 900ms ease-out both; }
+
+@keyframes dir-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.8); } }
+@keyframes dir-breathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes dir-flash { 0% { opacity: 0.92; } 100% { opacity: 0; } }
+
+@media (max-width: 760px) {
+	.dir-top, .dir-bottom { flex-direction: column; align-items: flex-start; gap: 1em; }
+	.dir-event { max-width: 100%; }
+	.dir-qr { display: none; }
+	.dir-seg { text-align: left; max-width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dir-badge--live .dir-dot, .dir-pill { animation: none; }
+	.dir-progress-bar { transition: none; }
+	.dir-flash { display: none; }
+}
+body.cc-director-calm .dir-badge--live .dir-dot,
+body.cc-director-calm .dir-pill { animation: none; }
+body.cc-director-calm .dir-flash { display: none; }

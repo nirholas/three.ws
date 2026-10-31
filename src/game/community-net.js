@@ -36,6 +36,10 @@ const RECONNECT_MAX_MS = 60_000;
 // in single-player mid-session. Fourteen rides out ~11 minutes (the tail retries
 // only once a minute) before parking on 'offline' with the manual retry().
 const MAX_RECONNECT_ATTEMPTS = 14;
+// A spectator (the venue projector view) has nobody to press a retry button, so it
+// never stops retrying, and it caps the wait lower so a screen comes back within
+// seconds of the network returning.
+const SPECTATOR_RECONNECT_MAX_MS = 15_000;
 const SEND_HZ = 15;
 const SEND_INTERVAL_MS = 1000 / SEND_HZ;
 const POSITION_EPSILON = 0.01;
@@ -56,6 +60,8 @@ export class CommunityNet {
 	 * @param {string} [opts.playPass] signed wallet+token pass for the platform gate
 	 * @param {string} [opts.account]  verified wallet address bound as the account id
 	 * @param {string} [opts.url]    server override
+	 * @param {boolean} [opts.spectator] watch-only seat (director view): no avatar on the
+	 *   server, sends nothing, reconnects forever
 	 */
 	constructor(opts = {}) {
 		this.name = opts.name || 'guest';
@@ -77,6 +83,7 @@ export class CommunityNet {
 		// Stable economy persistence key (wallet when signed in, else a guest id).
 		this.pid = persistedPid(this.account);
 		this.url = opts.url || defaultServerUrl();
+		this.spectator = opts.spectator === true;
 
 		this.client = null;
 		this.room = null;
@@ -217,7 +224,7 @@ export class CommunityNet {
 	// the flag lives on the schema, so reading it any earlier finds `undefined` and
 	// silently disables the handshake it is supposed to enable.
 	_announceReady() {
-		if (this._destroyed || this._readySent) return;
+		if (this._destroyed || this._readySent || this.spectator) return;
 		if (!this.room?.state?.acceptsReady) return;
 		this._readySent = true;
 		try { this.room.send('ready'); } catch { /* socket already gone */ }
@@ -296,6 +303,9 @@ export class CommunityNet {
 				// until its ping retries expire. The server retires that exact session,
 				// and only when the persistent player key above matches ours too.
 				...(this.sessionId ? { prevSession: this.sessionId } : {}),
+				// Server-honored watch-only seat (WalkRoom onAuth/onJoin): no Player is
+				// created, so no peer ever receives an avatar for this socket.
+				...(this.spectator ? { spectator: true } : {}),
 				// Signed guest token (server-minted, HMAC-sealed guest id). This, not
 				// the raw pid, is what proves a guest owns their saved progression.
 				...(this._guestToken() ? { guestToken: this._guestToken() } : {}),
@@ -523,7 +533,7 @@ export class CommunityNet {
 				// connection fault: reconnect with backoff.
 				if (/play_pass/i.test(reason || '')) { this._setStatus('denied', 'play_pass_required'); this._emit('denied', 'play_pass_required'); return; }
 				if (code === 4002) log.warn('[community-net] server closed with error:', reason || '(no reason)');
-				if (!this._destroyed && code !== 1000) this._scheduleReconnect();
+				if (!this._destroyed && (code !== 1000 || this.spectator)) this._scheduleReconnect();
 			});
 			this.room.onError((code, message) => log.warn('[community-net] room.onError', code, message));
 
@@ -583,12 +593,12 @@ export class CommunityNet {
 	// the UI can offer manual reconnect via retry().
 	_scheduleReconnect() {
 		if (this._reconnectTimer || this._destroyed) return;
-		if (this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+		if (!this.spectator && this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
 			this._setStatus('offline', 'multiplayer unreachable, single-player only');
 			return;
 		}
 		const attempt = this._reconnectAttempts++;
-		const backoff = Math.min(RECONNECT_BASE_MS * 2 ** attempt, RECONNECT_MAX_MS);
+		const backoff = Math.min(RECONNECT_BASE_MS * 2 ** Math.min(attempt, 10), this.spectator ? SPECTATOR_RECONNECT_MAX_MS : RECONNECT_MAX_MS);
 		const delay = backoff + Math.random() * 1000;
 		this._reconnectTimer = setTimeout(() => {
 			this._reconnectTimer = null;
@@ -603,6 +613,7 @@ export class CommunityNet {
 	// Returns true when the message reached an open socket; dropped messages are
 	// fine, every send here is a live-state signal the reconnect resyncs anyway.
 	_send(type, payload) {
+		if (this.spectator) return false; // a spectator speaks to nobody
 		const room = this.room;
 		if (!room || room.connection?.isOpen !== true) return false;
 		try { room.send(type, payload); } catch { return false; }
