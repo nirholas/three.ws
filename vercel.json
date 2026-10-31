@@ -1312,6 +1312,10 @@
 			"dest": "/halloween.html"
 		},
 		{
+			"src": "/pumpkin/?",
+			"dest": "/pumpkin.html"
+		},
+		{
 			"src": "/airdrops/?",
 			"dest": "/airdrops.html"
 		},

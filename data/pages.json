@@ -2025,6 +2025,14 @@
 					"added": "2026-10-31"
 				},
 				{
+					"path": "/pumpkin",
+					"title": "Pumpkin Carving",
+					"description": "Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-10-31"
+				},
+				{
 					"path": "/airdrops",
 					"title": "Airdrop Checker",
 					"description": "Check any Solana or Ethereum wallet against tracked airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what is missing with next steps, and the manual protocol actions a scan cannot see. Free, keyless, deep-linkable.",

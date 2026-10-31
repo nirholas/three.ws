@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Pumpkin Carving · three.ws</title>
+		<meta name="description" content="Carve a real 3D pumpkin in your browser. Real boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/pumpkin" />
+		<meta property="og:title" content="Pumpkin Carving · three.ws" />
+		<meta property="og:description" content="Carve a 3D pumpkin, light the candle, save a picture or download it as a GLB." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Pumpkin+Carving&amp;d=Carve+a+3D+pumpkin%2C+light+the+candle%2C+save+a+picture+or+download+it+as+a+GLB.&amp;p=%2Fpumpkin" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Pumpkin Carving · three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Pumpkin Carving · three.ws" />
+		<meta name="twitter:description" content="Carve a 3D pumpkin, light the candle, save a picture or download it as a GLB." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Pumpkin+Carving&amp;d=Carve+a+3D+pumpkin%2C+light+the+candle%2C+save+a+picture+or+download+it+as+a+GLB.&amp;p=%2Fpumpkin" />
+		<meta name="theme-color" content="#12071d" />
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<link rel="canonical" href="https://three.ws/pumpkin" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/fonts/creepster.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/pumpkin/pumpkin.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script type="application/ld+json">
+			{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"three.ws Pumpkin Carving","url":"https://three.ws/pumpkin","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Pumpkin Carving","item":"https://three.ws/pumpkin"}]}]}
+		</script>
+	</head>
+	<body class="pk-body">
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="pk-shell">
+			<div class="pk-stage" id="pk-stage">
+				<canvas id="pk-canvas" class="pk-canvas" aria-label="3D pumpkin. Click or drag on it to carve."></canvas>
+
+				<div class="pk-loading" id="pk-loading" role="status">
+					<div class="pk-loading-pumpkin" aria-hidden="true"></div>
+					<p id="pk-loading-text">Growing your pumpkin</p>
+				</div>
+
+				<div class="pk-error" id="pk-error" hidden role="alert">
+					<h2>Your browser could not start the 3D scene</h2>
+					<p id="pk-error-text">WebGL is required to carve.</p>
+					<button type="button" class="pk-btn pk-btn--primary" id="pk-error-retry">Try again</button>
+				</div>
+
+				<div class="pk-busy" id="pk-busy" hidden aria-live="polite"><span class="pk-spin" aria-hidden="true"></span><span id="pk-busy-text">Carving</span></div>
+
+				<p class="pk-help" id="pk-help">Click the pumpkin to stamp a shape. Drag on the background to turn it.</p>
+			</div>
+
+			<aside class="pk-panel" aria-label="Carving tools">
+				<h1 class="pk-title">Carve a <em>pumpkin</em></h1>
+
+				<section class="pk-group" aria-labelledby="pk-tools-h">
+					<h2 class="pk-h" id="pk-tools-h">Tool</h2>
+					<div class="pk-tools" id="pk-tools" role="radiogroup" aria-label="Carving tool"></div>
+				</section>
+
+				<section class="pk-group" aria-labelledby="pk-size-h">
+					<h2 class="pk-h" id="pk-size-h">Shape</h2>
+					<label class="pk-field" for="pk-size"><span>Size</span><output id="pk-size-out">0.40</output></label>
+					<input class="pk-range" id="pk-size" type="range" min="0.1" max="0.9" step="0.01" value="0.4" />
+					<label class="pk-field" for="pk-roll"><span>Rotation</span><output id="pk-roll-out">0&deg;</output></label>
+					<input class="pk-range" id="pk-roll" type="range" min="-180" max="180" step="5" value="0" />
+				</section>
+
+				<section class="pk-group" aria-labelledby="pk-scene-h">
+					<h2 class="pk-h" id="pk-scene-h">Scene</h2>
+					<button type="button" class="pk-btn pk-btn--wide" id="pk-candle" aria-pressed="false">Light the candle</button>
+				</section>
+
+				<section class="pk-group" aria-labelledby="pk-file-h">
+					<h2 class="pk-h" id="pk-file-h">Your pumpkin</h2>
+					<div class="pk-row">
+						<button type="button" class="pk-btn" id="pk-undo" disabled>Undo</button>
+						<button type="button" class="pk-btn" id="pk-reset" disabled>Start over</button>
+					</div>
+					<div class="pk-row">
+						<button type="button" class="pk-btn pk-btn--primary" id="pk-png">Save picture</button>
+						<button type="button" class="pk-btn" id="pk-glb">Download GLB</button>
+					</div>
+					<p class="pk-stats" id="pk-stats" aria-live="off">No cuts yet</p>
+				</section>
+
+				<details class="pk-keys">
+					<summary>Keyboard</summary>
+					<ul>
+						<li><kbd>1</kbd> to <kbd>8</kbd> pick a tool</li>
+						<li><kbd>Q</kbd> <kbd>E</kbd> rotate the shape</li>
+						<li><kbd>[</kbd> <kbd>]</kbd> change the size</li>
+						<li><kbd>C</kbd> light or snuff the candle</li>
+						<li><kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</li>
+					</ul>
+				</details>
+
+				<p class="pk-credit">Cuts are real boolean geometry from <a href="https://github.com/gkjohnson/three-bvh-csg" target="_blank" rel="noopener">three-bvh-csg</a>. Looking for more Halloween? See the <a href="/halloween">weekend gifts</a>.</p>
+			</aside>
+		</main>
+
+		<script type="module" src="/src/pumpkin/page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>
