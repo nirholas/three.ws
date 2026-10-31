@@ -121,7 +121,8 @@ export function encodeSocialFeePdaClaimed(fields) {
  *   user:string, creator:string, timestamp?:number, virtualTokenReserves:bigint|number,
  *   virtualSolReserves:bigint|number, realTokenReserves:bigint|number,
  *   tokenTotalSupply:bigint|number, tokenProgram:string, isMayhemMode?:boolean,
- *   isCashbackEnabled?:boolean}} fields
+ *   isCashbackEnabled?:boolean, quoteMint?:string, virtualQuoteReserves?:bigint|number,
+ *   creatorFeeBps?:bigint|number, isHolderReward?:boolean, depth?:number}} fields
  */
 export function encodeCreateEvent(fields) {
 	const w = new BorshWriter();
@@ -139,7 +140,12 @@ export function encodeCreateEvent(fields) {
 		.u64(fields.tokenTotalSupply)
 		.pubkey(fields.tokenProgram)
 		.bool(fields.isMayhemMode ?? false)
-		.bool(fields.isCashbackEnabled ?? false);
+		.bool(fields.isCashbackEnabled ?? false)
+		.pubkey(fields.quoteMint ?? '11111111111111111111111111111111')
+		.u64(fields.virtualQuoteReserves ?? 0)
+		.u64(fields.creatorFeeBps ?? 0)
+		.bool(fields.isHolderReward ?? false)
+		.u8(fields.depth ?? 0);
 	return Buffer.concat([discriminatorBuffer(CREATE_EVENT_DISC), w.bytes()]);
 }
 
