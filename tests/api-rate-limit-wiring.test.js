@@ -54,8 +54,8 @@ describe('rate-limit wiring across api/**', () => {
 		const unknown = [];
 		for (const [name, src] of FILES) {
 			if (!/import\s*\{[^}]*\blimits\b(?!\s+as)[^}]*\}\s*from\s*'[^']*rate-limit\.js'/.test(src)) continue;
-			// A property read like `out.limits.enabled` is some other object's field, not the module.
-			for (const m of src.matchAll(/(?<![.\w$])limits\.([A-Za-z0-9_]+)/g)) {
+			// A property read like `out.limits.enabled` is some other object's field, and a file name like `anon-upload-limits.js` is a path, not the module.
+			for (const m of src.matchAll(/(?<![.\w$/-])limits\.([A-Za-z0-9_]+)/g)) {
 				if (!known.has(m[1])) unknown.push(`${name}: limits.${m[1]}`);
 			}
 		}
