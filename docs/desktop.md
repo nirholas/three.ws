@@ -267,8 +267,10 @@ repeatable gate for the OS itself: boot to the lock screen and in, every
 native app opening from Start search and mounting its own UI, window chrome
 (maximize, restore, minimize to the taskbar, close), the calculator and
 terminal doing real work, a Notepad file that File Explorer lists after a
-reload, a wallpaper change that persists, and an axe WCAG 2.1 AA scan in dark
-and light (`E2E_PORT=3107 npx playwright test tests/e2e/desktop-os.spec.js
+reload, a wallpaper change that persists, the system shortcuts (Run, Start,
+Alt+Tab, Alt+W, show desktop, lock) without a mouse, widgets that keep focus off
+themselves and fill their cards, notification cards, the taskbar at 360, 390 and
+430px phone widths, and an axe WCAG 2.1 AA scan in dark and light (`E2E_PORT=3107 npx playwright test tests/e2e/desktop-os.spec.js
 --retries=0`). Unit tests: `npx vitest run tests/desktop-boot.test.js
 tests/world-places.test.js tests/world-cast.test.js tests/world-ticker.test.js
 tests/desktop-layout.test.js tests/desktop-page.test.js`.

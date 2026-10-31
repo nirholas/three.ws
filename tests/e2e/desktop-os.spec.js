@@ -17,6 +17,12 @@
  *     command against the file system, Notepad saves a file that File Explorer
  *     then lists, and both survive a reload (IndexedDB, not memory).
  *   - Settings changes the wallpaper and the choice persists.
+ *   - The system shortcuts work from the keyboard alone: Run, Start, Alt+Tab,
+ *     Alt+W, show desktop, lock and sign back in.
+ *   - Widgets behave: the Weather picker leaves focus alone on boot and keeps
+ *     what was typed across a refresh; list widgets fill their cards with
+ *     whole rows. Notification cards keep a small app icon.
+ *   - On 360, 390 and 430px phones the taskbar fits and Start stays tappable.
  *   - The resting desktop clears WCAG 2.1 AA (axe) in both dark and light mode.
  *
  * Nothing is stubbed. Boot's market and account probes hit the real endpoints
@@ -203,6 +209,61 @@ test.describe('web desktop', () => {
 
 		await w.getByRole('button', { name: 'Close window' }).click();
 		await expect(w).toHaveCount(0);
+	});
+
+	test('keyboard: Run, Start, Alt+Tab, Alt+W, show desktop and lock all work without a mouse', async ({ page }) => {
+		await openDesktop(page);
+
+		// Ctrl+Alt+R: the Run box opens apps by name.
+		await page.keyboard.press('Control+Alt+r');
+		const run = page.getByRole('dialog', { name: 'Run' });
+		await expect(run).toBeVisible();
+		const field = run.getByRole('combobox', { name: 'Open' });
+		await expect(field).toBeFocused();
+		await field.fill('notepad');
+		await field.press('Enter');
+		await expect(run).toHaveCount(0);
+		await expect(win(page, 'notepad')).toBeVisible({ timeout: SLOW });
+
+		// Ctrl+K: Start opens on its search; Escape closes it.
+		await page.keyboard.press('Control+k');
+		const start = page.getByRole('dialog', { name: 'Start' });
+		await expect(start.getByRole('searchbox')).toBeFocused();
+		await page.keyboard.press('Escape');
+		await expect(start).toHaveCount(0);
+
+		// Escape after opening Start from its button hands focus back to the button.
+		const startBtn = page.locator('button[aria-label="Start"]').first();
+		await startBtn.click();
+		await expect(start).toBeVisible();
+		await page.keyboard.press('Escape');
+		await expect(startBtn).toBeFocused();
+
+		// Alt+Tab moves focus to the other window; Alt+W closes the focused one.
+		await page.keyboard.press('Control+Alt+e');
+		await expect(win(page, 'files')).toHaveClass(/is-focused/, { timeout: SLOW });
+		await page.keyboard.press('Alt+Tab');
+		await expect(win(page, 'notepad')).toHaveClass(/is-focused/);
+		await page.keyboard.press('Alt+w');
+		await expect(win(page, 'notepad')).toHaveCount(0);
+		await expect(win(page, 'files')).toHaveClass(/is-focused/);
+
+		// Ctrl+Alt+D hides every window, and again brings them back.
+		await page.keyboard.press('Control+Alt+d');
+		await expect(win(page, 'files')).toBeHidden();
+		await page.keyboard.press('Control+Alt+d');
+		await expect(win(page, 'files')).toBeVisible();
+
+		// Ctrl+Alt+L locks; any key shows the sign-in, and Sign in returns to the desktop with the window intact.
+		await page.keyboard.press('Control+Alt+l');
+		const lock = page.getByRole('dialog', { name: 'Locked' });
+		await expect(lock).toBeVisible();
+		await page.keyboard.press('Space');
+		const signIn = lock.getByRole('button', { name: 'Sign in' });
+		await expect(signIn).toBeFocused();
+		await page.keyboard.press('Enter');
+		await expect(lock).toHaveCount(0);
+		await expect(win(page, 'files')).toBeVisible();
 	});
 
 	test('calculator evaluates and the terminal runs commands against the file system', async ({ page }) => {
