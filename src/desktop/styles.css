@@ -1065,6 +1065,15 @@ html:not([data-theme='light']) .os[data-style='aqua'] {
 [data-theme='light'] .os[data-style='aqua'] .app-tile .ico {
 	filter: none;
 }
+[data-theme='light'] .os[data-style='aqua'] .os-icon:hover .app-tile,
+[data-theme='light'] .os[data-style='aqua'] .os-icon:focus-visible .app-tile,
+[data-theme='light'] .os[data-style='aqua'] .os-tb:hover .app-tile {
+	color: hsl(var(--hue) 80% 36%);
+	box-shadow:
+		inset 0 0 0 1px hsl(var(--hue) 70% 45% / 0.45),
+		0 0 16px -4px hsl(var(--hue) 85% 55% / 0.4),
+		0 4px 12px -6px #1a1f3a55;
+}
 
 /* Desktop icons: quiet labels, a soft accent selection */
 .os[data-style='aqua'] .os-icon {
@@ -1075,6 +1084,14 @@ html:not([data-theme='light']) .os[data-style='aqua'] {
 }
 .os[data-style='aqua'] .os-icons .os-icon:hover {
 	background: #ffffff0a;
+}
+/* The pale light-mode wallpapers need dark ink under the icons. */
+[data-theme='light'] .os:is([data-wall='horizon'], [data-wall='graphite']) .os-icon {
+	color: #161a2b;
+	text-shadow: 0 0 4px #ffffffc0;
+}
+[data-theme='light'] .os[data-style='aqua'] .os-icons .os-icon:hover {
+	background: #161a2b0d;
 }
 .os[data-style='aqua'] .os-icons .os-icon.is-sel {
 	background: color-mix(in srgb, var(--accent) 18%, transparent);

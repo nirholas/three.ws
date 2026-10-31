@@ -145,11 +145,14 @@ function weatherArt(kind, size = 64) {
 
 function placePicker(body, onDone) {
 	body.innerHTML =
-		`<div class="wgx-place"><p>Weather for any city, live from Open-Meteo.</p>` +
-		`<div class="wgx-place-row"><input type="search" placeholder="Search a city" aria-label="Search a city" autocomplete="off"><button type="button" class="wgx-btn icon" title="Use my location" aria-label="Use my location">${icon('compass', 16)}</button></div>` +
-		`<ul role="listbox" aria-label="Cities"></ul><small class="wgx-mute" aria-live="polite"></small></div>`;
+		`<div class="wgx-place"><div class="wgx-place-head">${weatherArt('partly', 34)}<div><b>Choose a city</b><p>Live forecasts from Open-Meteo.</p></div></div>` +
+		`<div class="wgx-place-row"><input type="search" placeholder="Search a city" aria-label="Search a city" autocomplete="off"></div>` +
+		`<ul role="listbox" aria-label="Cities"></ul>` +
+		`<button type="button" class="wgx-place-here">${icon('compass', 16)}<span>Use my location</span></button>` +
+		`<small class="wgx-mute" aria-live="polite"></small></div>`;
 	const input = body.querySelector('input');
 	const list = body.querySelector('ul');
+	const here = body.querySelector('.wgx-place-here');
 	const note = body.querySelector('small');
 	let t = 0;
 	let seq = 0;
@@ -161,6 +164,7 @@ function placePicker(body, onDone) {
 				const hits = await searchPlaces(input.value);
 				if (my !== seq) return;
 				note.textContent = input.value.trim().length > 1 && !hits.length ? 'No city by that name.' : '';
+				here.hidden = hits.length > 0;
 				list.replaceChildren(
 					...hits.map((p) => {
 						const li = document.createElement('li');
@@ -177,7 +181,7 @@ function placePicker(body, onDone) {
 			}
 		}, 250);
 	});
-	body.querySelector('.wgx-place-row button').addEventListener('click', async () => {
+	here.addEventListener('click', async () => {
 		note.textContent = 'Finding you...';
 		try {
 			setPlace(await locate());

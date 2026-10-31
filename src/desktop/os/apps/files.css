@@ -354,7 +354,9 @@
 	outline: 0;
 	padding: 6px;
 }
-.napp-files .fx-scroll:focus-visible {
+/* The current item carries the keyboard cue (below), so the pane itself only
+ * rings when it is empty and has no item to mark. */
+.napp-files .fx-scroll:focus-visible:not(:has(.fx-item)) {
 	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 .napp-files .fx-item {

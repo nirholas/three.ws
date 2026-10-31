@@ -491,9 +491,59 @@
 	align-content: start;
 	font-size: 12.5px;
 }
+.wgx-place-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+.wgx-place-head .wgx-wart {
+	flex: none;
+}
+.wgx-place ul:empty,
+.wgx-place small:empty,
+.wgx-place-here[hidden],
+.sz-s .wgx-place p {
+	display: none;
+}
+.wgx-place-head b {
+	display: block;
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
 .wgx-place p {
-	margin: 0;
+	margin: 2px 0 0;
 	color: var(--text2);
+}
+.wgx-place-here {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 32px;
+	padding: 0 12px;
+	border: 1px dashed var(--wgx-line);
+	border-radius: 10px;
+	background: none;
+	color: var(--text);
+	font: inherit;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+.wgx-place-here .ico {
+	color: var(--accent);
+}
+.wgx-place-here:hover {
+	background: var(--wgx-soft);
+	border-style: solid;
+}
+.wgx-place-here:active {
+	transform: translateY(1px);
+}
+.wgx-place-here:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
 }
 .wgx-place-row {
 	display: flex;

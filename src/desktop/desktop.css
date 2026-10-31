@@ -102,7 +102,7 @@ body {
  * viewer, lit by a horizon line in the accent colour. The grid and the line
  * are pseudo-elements so the work area paints only two composited layers. */
 .os[data-wall='horizon'] .os-wall {
-	--hz: 64%;
+	--hz: 68%;
 	overflow: hidden;
 	background:
 		radial-gradient(46% 22% at 50% var(--hz), color-mix(in srgb, var(--accent) 34%, transparent), transparent 72%),
