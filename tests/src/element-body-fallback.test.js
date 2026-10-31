@@ -103,7 +103,9 @@ describe('<agent-3d> body-load fallback', () => {
 		el.addEventListener('agent:body-fallback', (e) => events.push({ type: 'fallback', detail: e.detail }));
 
 		document.body.appendChild(el);
-		await new Promise((r) => setTimeout(r, 100));
+		// Wait on the outcome, not a fixed sleep: on a loaded machine the boot
+		// after the fallback can outlast any guess at a duration.
+		await vi.waitFor(() => expect(events.some((e) => e === 'ready' || e === 'error')).toBe(true), { timeout: 10_000 });
 
 		expect(events).toContainEqual({
 			type: 'fallback',
@@ -127,7 +129,7 @@ describe('<agent-3d> body-load fallback', () => {
 		el.addEventListener('agent:body-fallback', () => events.push('fallback'));
 
 		document.body.appendChild(el);
-		await new Promise((r) => setTimeout(r, 100));
+		await vi.waitFor(() => expect(events.some((e) => e === 'ready' || e?.type === 'error')).toBe(true), { timeout: 10_000 });
 
 		expect(events).not.toContain('ready');
 		expect(events).not.toContain('fallback');
