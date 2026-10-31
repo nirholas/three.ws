@@ -756,7 +756,7 @@ export const limits = {
 	// allowance more; per-instance is also exactly what this endpoint's previous
 	// hand-rolled in-memory bucket gave, so it is not a regression.
 	czClaimIp: (ip) => getLimiter('cz:claim:ip', { limit: 10, window: '1 h', local: true }).limit(ip),
-	// Seasonal drop claims (api/drops/[id].js). A claim is idempotent, so this
+	// Seasonal drop claims (api/seasonal/[id].js). A claim is idempotent, so this
 	// only bounds a script hammering the endpoint, never a real double-click.
 	dropClaimUser: (userId) => getLimiter('drop:claim:user', { limit: 20, window: '10 m', local: true }).limit(userId),
 	// CAPTCHA-verified login bucket. When a user solves the Altcha proof-of-work

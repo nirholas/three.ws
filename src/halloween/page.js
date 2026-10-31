@@ -1,15 +1,15 @@
 // /halloween: the Halloween Weekend 2026 gift claim.
 //
-// Everything shown comes from GET /api/drops/halloween-2026 (the gifts, the
+// Everything shown comes from GET /api/seasonal/halloween-2026 (the gifts, the
 // window, the server clock, and this viewer's claim). The countdown runs on the
 // server's clock (offset by the measured skew), and the page re-reads the drop
 // when a phase boundary passes, so it flips from "closes in" to "closed" by
-// itself. The claim is POST /api/drops/halloween-2026; the server alone decides
+// itself. The claim is POST /api/seasonal/halloween-2026; the server alone decides
 // whether it lands.
 
 import { HALLOWEEN_2026, formatCountdown, markClaimedLocally } from '../shared/seasonal-drops.js';
 
-const API = `/api/drops/${HALLOWEEN_2026.id}`;
+const API = `/api/seasonal/${HALLOWEEN_2026.id}`;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const framed = window.top !== window; // opened as a window inside the desktop

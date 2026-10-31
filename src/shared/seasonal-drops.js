@@ -17,7 +17,7 @@ export const HALLOWEEN_2026 = Object.freeze({
 // localStorage flag set when this browser's account claims the drop, so the
 // desktop can offer the kept wallpaper without an auth round trip at boot. It is
 // a convenience only: the badge row on the server is the real record, and the
-// desktop re-checks /api/drops/:id when the flag is missing.
+// desktop re-checks /api/seasonal/:id when the flag is missing.
 export const CLAIMED_FLAG = 'twx_drop_claimed:halloween-2026';
 // Opt-out for the seasonal look ("Halloween look" toggle in desktop Settings).
 export const LOOK_OFF_FLAG = 'twx_season_off:halloween-2026';

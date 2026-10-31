@@ -42,7 +42,7 @@ export const SLOT_LABELS = {
 // before, during, or after. Like premium, it must be owned to be worn.
 //
 // Event-tier items also arrive from seasonal drops: a signed-in account that
-// claims a drop on the website (api/drops/[id].js, e.g. the Halloween Weekend
+// claims a drop on the website (api/seasonal/[id].js, e.g. the Halloween Weekend
 // 2026 gifts) gets them written to its grant ledger, which WalkRoom folds in
 // (economy.js mergeGrantedFromLedger, event tier only). Same rule: free, kept
 // forever, never sold, never granted again once the drop's window closes.

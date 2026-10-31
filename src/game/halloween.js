@@ -2,7 +2,7 @@
 // a moonlit orange vignette over the world.
 //
 // Self-attaching, like event-countdown.js: no edits to coincommunities.js. The
-// drop (gifts, window, per-viewer claim state) comes from GET /api/drops/:id,
+// drop (gifts, window, per-viewer claim state) comes from GET /api/seasonal/:id,
 // which is the authority; src/shared/seasonal-drops.js only supplies the window
 // so the look can switch on before the first network round trip. Claiming POSTs
 // the same endpoint the site uses. The wearables land in the account's grant
@@ -15,7 +15,7 @@
 
 import { HALLOWEEN_2026, dropPhase, formatCountdown, isHalloweenLive, seasonalLookEnabled, setSeasonalLookEnabled, markClaimedLocally } from '../shared/seasonal-drops.js';
 
-const DROP_URL = `/api/drops/${HALLOWEEN_2026.id}`;
+const DROP_URL = `/api/seasonal/${HALLOWEEN_2026.id}`;
 
 function el(tag, attrs = {}, children = []) {
 	const n = document.createElement(tag);

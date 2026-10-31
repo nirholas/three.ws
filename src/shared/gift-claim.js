@@ -2,7 +2,7 @@
 //
 // One component, mounted wherever a player might look for their gifts: the
 // account Settings page, the classic homepage and /play. It talks only to
-// GET/POST /api/drops/:id (api/drops/[id].js), which is the authority on the
+// GET/POST /api/seasonal/:id (api/seasonal/[id].js), which is the authority on the
 // window and on what a claim grants; nothing here decides eligibility.
 //
 // States, all designed: loading skeleton, load error with retry, upcoming
@@ -191,7 +191,7 @@ export function mountGiftClaim(root, { dropId = DEFAULT_DROP_ID, onClaimed, onSt
 		btn.disabled = true;
 		btn.textContent = 'Claiming...';
 		try {
-			const res = await apiFetch(`/api/drops/${encodeURIComponent(dropId)}`, { method: 'POST' });
+			const res = await apiFetch(`/api/seasonal/${encodeURIComponent(dropId)}`, { method: 'POST' });
 			const data = await res.json().catch(() => null);
 			if (!res.ok) {
 				const cur = await fetchDrop().catch(() => null);
@@ -208,7 +208,7 @@ export function mountGiftClaim(root, { dropId = DEFAULT_DROP_ID, onClaimed, onSt
 	}
 
 	async function fetchDrop() {
-		const res = await fetch(`/api/drops/${encodeURIComponent(dropId)}`, { credentials: 'include', headers: { accept: 'application/json' } });
+		const res = await fetch(`/api/seasonal/${encodeURIComponent(dropId)}`, { credentials: 'include', headers: { accept: 'application/json' } });
 		if (!res.ok) throw new Error(`The gifts service answered ${res.status}.`);
 		return res.json();
 	}

@@ -152,7 +152,7 @@ async function syncClaim(store) {
 	const day = new Date().toISOString().slice(0, 10);
 	if (store.get(SYNC_CHECKED) === day) return false;
 	try {
-		const res = await fetch(`/api/drops/${HALLOWEEN_2026.id}`, { credentials: 'include' });
+		const res = await fetch(`/api/seasonal/${HALLOWEEN_2026.id}`, { credentials: 'include' });
 		if (!res.ok) return false;
 		const body = await res.json();
 		if (body?.claim?.signedIn) store.set(SYNC_CHECKED, day);

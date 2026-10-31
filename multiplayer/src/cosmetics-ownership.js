@@ -76,7 +76,7 @@ export async function readOwnedCosmetics(account) {
 }
 
 // The cosmetic ids granted to a signed-in site account by a seasonal-drop claim
-// (api/drops/[id].js). Keyed by the account uid from the verified presence
+// (api/seasonal/[id].js). Keyed by the account uid from the verified presence
 // ticket, never by a client-asserted id. Same fail-open contract as the
 // purchase read above: any error reads as "no gifts this session".
 export async function readGrantedCosmetics(accountUid) {

@@ -1,5 +1,5 @@
-// GET  /api/drops/:id  the drop, its gifts and live phase; plus `claim` for a signed-in viewer.
-// POST /api/drops/:id  claim it (session cookie, same-site only). Idempotent.
+// GET  /api/seasonal/:id  the drop, its gifts and live phase; plus `claim` for a signed-in viewer.
+// POST /api/seasonal/:id  claim it (session cookie, same-site only). Idempotent.
 //
 // Rules live in api/_lib/seasonal-drops.js; this file is only the HTTP boundary.
 
