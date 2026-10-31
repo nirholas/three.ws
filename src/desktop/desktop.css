@@ -98,6 +98,70 @@ body {
 		radial-gradient(70% 60% at 100% 100%, rgba(139, 92, 246, 0.09), transparent 65%),
 		linear-gradient(180deg, #1e2024, #0e0f12);
 }
+/* Horizon: deep space over a perspective floor grid that drifts toward the
+ * viewer, lit by a horizon line in the accent colour. The grid and the line
+ * are pseudo-elements so the work area paints only two composited layers. */
+.os[data-wall='horizon'] .os-wall {
+	--hz: 64%;
+	overflow: hidden;
+	background:
+		radial-gradient(46% 22% at 50% var(--hz), color-mix(in srgb, var(--accent) 34%, transparent), transparent 72%),
+		radial-gradient(90% 60% at 50% -10%, color-mix(in srgb, #38bdf8 9%, transparent), transparent 70%),
+		linear-gradient(180deg, #04050a 0%, #080a12 var(--hz), #05060b 100%);
+}
+.os[data-wall='horizon'] .os-wall::before {
+	content: '';
+	position: absolute;
+	left: -60%;
+	right: -60%;
+	top: var(--hz);
+	height: 120%;
+	background-image:
+		linear-gradient(color-mix(in srgb, var(--accent) 26%, transparent) 1px, transparent 1px),
+		linear-gradient(90deg, color-mix(in srgb, var(--accent) 26%, transparent) 1px, transparent 1px);
+	background-size: 72px 72px;
+	transform-origin: 50% 0;
+	transform: perspective(520px) rotateX(64deg);
+	-webkit-mask-image: linear-gradient(180deg, transparent, #000 18%, #000 46%, transparent 78%);
+	mask-image: linear-gradient(180deg, transparent, #000 18%, #000 46%, transparent 78%);
+	animation: os-horizon-drift 9s linear infinite;
+	pointer-events: none;
+}
+.os[data-wall='horizon'] .os-wall::after {
+	content: '';
+	position: absolute;
+	left: 8%;
+	right: 8%;
+	top: var(--hz);
+	height: 1px;
+	background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 70%, #fff), transparent);
+	box-shadow: 0 0 24px 2px color-mix(in srgb, var(--accent) 55%, transparent);
+	pointer-events: none;
+}
+@keyframes os-horizon-drift {
+	to {
+		transform: perspective(520px) rotateX(64deg) translateY(72px);
+	}
+}
+[data-theme='light'] .os[data-wall='horizon'] .os-wall {
+	background:
+		radial-gradient(46% 22% at 50% var(--hz), color-mix(in srgb, var(--accent) 22%, transparent), transparent 72%),
+		linear-gradient(180deg, #f4f6fb 0%, #e9ecf5 var(--hz), #f2f4f9 100%);
+}
+[data-theme='light'] .os[data-wall='horizon'] .os-wall::before {
+	background-image:
+		linear-gradient(color-mix(in srgb, var(--accent) 22%, transparent) 1px, transparent 1px),
+		linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent) 1px, transparent 1px);
+}
+.os-wall[data-custom]::before,
+.os-wall[data-custom]::after {
+	display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.os[data-wall='horizon'] .os-wall::before {
+		animation: none;
+	}
+}
 [data-theme='light'] .os[data-wall='midnight'] .os-wall {
 	background: radial-gradient(70% 60% at 50% 0%, #b8c8ff, transparent 70%), #e8ecfa;
 }

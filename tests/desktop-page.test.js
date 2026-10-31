@@ -13,7 +13,8 @@ describe('desktop page', () => {
 	const html = read('pages/desktop.html');
 
 	it('lists every windowed app as a crawlable link', () => {
-		for (const app of APPS) expect(html, app.title).toContain(`href="${app.href}"`);
+		// Seasonal apps (src/desktop/seasonal.js) exist for one weekend; a static link would outlive them.
+		for (const app of APPS.filter((a) => !a.seasonal)) expect(html, app.title).toContain(`href="${app.href}"`);
 		expect(html).toContain('href="/classic"');
 		expect(html).toContain('href="/?world=1"');
 	});

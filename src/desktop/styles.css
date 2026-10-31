@@ -595,17 +595,11 @@
 	.os[data-style='aqua'] .win.is-max {
 		border-radius: 0;
 	}
-	/* A neutral graphite titlebar: no Mica tint, so windows read as clean
-	 * dark panels whatever the wallpaper or accent. */
-	.os[data-style='aqua'] .win.is-focused .win-bar {
-		background: linear-gradient(180deg, #2f3136, #26282c);
-	}
+	/* No Mica tint on the titlebar: the Aqua surfaces section below paints a
+	 * neutral one, so windows read the same whatever the wallpaper. */
 	.os[data-style='aqua'] .win.is-focused .win-bar::before {
 		background: none;
 		backdrop-filter: none;
-	}
-	[data-theme='light'] .os[data-style='aqua'] .win.is-focused .win-bar {
-		background: linear-gradient(180deg, #f1f2f4, #e3e5e8);
 	}
 	/* order: -1 also moves the controls under the bar's Mica layer in paint
 	 * order, so they and the title sit on their own layer above it. */
@@ -1009,6 +1003,189 @@
 .os[data-style='classic'] .pk-x:hover {
 	background: var(--c-face);
 	color: #000;
+}
+
+/* =================================================================
+ * Aqua surfaces: the default shell's look. Cool neutral glass with
+ * hairline edges, glyph tiles that glow in their app's hue instead of
+ * glossy candy squares, and an accent-lit dock. Dark is the canonical
+ * palette; light keeps the same geometry on frosted white.
+ * ================================================================= */
+html:not([data-theme='light']) .os[data-style='aqua'] {
+	--card: #16171c;
+	--hover: #1f2026;
+	--hover-b: #26272e;
+	--hover-half: #1f202680;
+	--bd: #25262d;
+	--hr: #ffffff14;
+	--unfoc: #111216;
+	--bg70: #0b0c10b8;
+	--msg: #23242b;
+	--glass-border-col: #ffffff1f;
+	--text2: #9a9ca8;
+}
+
+/* Glyph tiles */
+.os[data-style='aqua'] .app-tile {
+	color: hsl(var(--hue) 92% 76%);
+	background:
+		radial-gradient(90% 60% at 50% 120%, hsl(var(--hue) 90% 55% / 0.32), transparent 70%),
+		linear-gradient(180deg, #ffffff12, #ffffff05),
+		#0d0e13;
+	box-shadow:
+		inset 0 0 0 1px hsl(var(--hue) 80% 70% / 0.22),
+		inset 0 1px 0 #ffffff1a,
+		0 6px 16px -6px #000c;
+	transition:
+		box-shadow var(--duration-fast),
+		color var(--duration-fast);
+}
+.os[data-style='aqua'] .app-tile .ico {
+	filter: drop-shadow(0 0 6px hsl(var(--hue) 95% 62% / 0.55));
+}
+.os[data-style='aqua'] .os-icon:hover .app-tile,
+.os[data-style='aqua'] .os-icon:focus-visible .app-tile,
+.os[data-style='aqua'] .os-tb:hover .app-tile {
+	color: hsl(var(--hue) 100% 84%);
+	box-shadow:
+		inset 0 0 0 1px hsl(var(--hue) 85% 72% / 0.5),
+		inset 0 1px 0 #ffffff26,
+		0 0 18px -2px hsl(var(--hue) 90% 60% / 0.45),
+		0 6px 16px -6px #000c;
+}
+[data-theme='light'] .os[data-style='aqua'] .app-tile {
+	color: hsl(var(--hue) 72% 42%);
+	background:
+		radial-gradient(90% 60% at 50% 120%, hsl(var(--hue) 90% 60% / 0.2), transparent 70%),
+		linear-gradient(180deg, #fff, #f1f3f8);
+	box-shadow:
+		inset 0 0 0 1px hsl(var(--hue) 60% 45% / 0.2),
+		0 4px 12px -6px #1a1f3a55;
+}
+[data-theme='light'] .os[data-style='aqua'] .app-tile .ico {
+	filter: none;
+}
+
+/* Desktop icons: quiet labels, a soft accent selection */
+.os[data-style='aqua'] .os-icon {
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0.01em;
+	border-radius: 10px;
+}
+.os[data-style='aqua'] .os-icons .os-icon:hover {
+	background: #ffffff0a;
+}
+.os[data-style='aqua'] .os-icons .os-icon.is-sel {
+	background: color-mix(in srgb, var(--accent) 18%, transparent);
+	border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+@media (min-width: 721px) {
+	/* Menu bar: thin glass, tabular clock */
+	.os[data-style='aqua'] .os-task-right {
+		background: color-mix(in srgb, var(--bg70) 80%, transparent);
+		backdrop-filter: blur(24px) saturate(1.6);
+		border-bottom-color: #ffffff10;
+		box-shadow: 0 1px 0 #00000066;
+	}
+	.os[data-style='aqua'] .os-clock {
+		font-variant-numeric: tabular-nums;
+		letter-spacing: 0.02em;
+	}
+	.os[data-style='aqua'] .os-menu-app {
+		font-weight: 600;
+		letter-spacing: 0.01em;
+	}
+
+	/* Dock: deep glass with a lit top edge and an accent running light */
+	.os[data-style='aqua'] .os-task-mid {
+		gap: 8px;
+		padding: 7px 10px;
+		border-radius: 22px;
+		background: linear-gradient(180deg, #ffffff0d, #ffffff03), color-mix(in srgb, #07080c 62%, transparent);
+		backdrop-filter: blur(30px) saturate(1.7);
+		border-color: #ffffff17;
+		box-shadow:
+			inset 0 1px 0 #ffffff1f,
+			0 0 0 1px #0008,
+			0 18px 50px -12px #000d;
+	}
+	.os[data-style='aqua'] .os-task-mid .os-tb.start,
+	.os[data-style='aqua'] .os-task-mid .os-tb.hide-sm {
+		background: linear-gradient(180deg, #ffffff12, #ffffff05), #0d0e13;
+		box-shadow:
+			inset 0 0 0 1px #ffffff17,
+			inset 0 1px 0 #ffffff1a;
+	}
+	.os[data-style='aqua'] .os-tb.run::after {
+		width: 14px;
+		height: 3px;
+		margin-left: -7px;
+		bottom: -6px;
+		border-radius: 2px;
+		background: var(--accent);
+		box-shadow: 0 0 8px var(--accent);
+	}
+	[data-theme='light'] .os[data-style='aqua'] .os-task-mid {
+		background: linear-gradient(180deg, #ffffffcc, #ffffff99);
+		border-color: #0000001a;
+		box-shadow:
+			inset 0 1px 0 #fff,
+			0 18px 40px -16px #1a1f3a66;
+	}
+	[data-theme='light'] .os[data-style='aqua'] .os-task-mid .os-tb.start,
+	[data-theme='light'] .os[data-style='aqua'] .os-task-mid .os-tb.hide-sm {
+		background: #fff;
+		box-shadow: inset 0 0 0 1px #0000001a;
+	}
+
+	/* Windows: hairline edge, deep soft shadow, glass titlebar */
+	.os[data-style='aqua'] .win {
+		border-color: #ffffff12;
+		box-shadow:
+			0 0 0 1px #000a,
+			0 24px 60px -20px #000c;
+	}
+	.os[data-style='aqua'] .win.is-focused {
+		border-color: #ffffff21;
+		box-shadow:
+			0 0 0 1px #000a,
+			0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) inset,
+			0 40px 90px -24px #000e,
+			0 0 60px -30px color-mix(in srgb, var(--accent) 60%, transparent);
+	}
+	.os[data-style='aqua'] .win.is-max {
+		box-shadow: none;
+	}
+	.os[data-style='aqua'] .win-bar {
+		border-bottom-color: #ffffff0d;
+	}
+	.os[data-style='aqua'] .win.is-focused .win-bar {
+		background: linear-gradient(180deg, #1c1d23, #16171c);
+	}
+	.os[data-style='aqua'] .win-name {
+		font-weight: 600;
+		letter-spacing: 0.01em;
+	}
+	.os[data-style='aqua'] .win:not(.is-focused) .win-name {
+		color: var(--text2);
+	}
+	[data-theme='light'] .os[data-style='aqua'] .win {
+		border-color: #00000014;
+		box-shadow: 0 24px 60px -24px #1a1f3a66;
+	}
+	[data-theme='light'] .os[data-style='aqua'] .win.is-focused .win-bar {
+		background: linear-gradient(180deg, #f6f7fa, #eceef3);
+	}
+}
+
+/* Widgets: the same cool glass */
+html:not([data-theme='light']) .os[data-style='aqua'] {
+	--wgx-radius: 18px;
+	--wgx-glass: color-mix(in srgb, #0d0e13 70%, transparent);
+	--wgx-line: #ffffff14;
+	--wgx-shadow: inset 0 1px 0 #ffffff12, 0 18px 40px -18px #000d;
 }
 
 @media (prefers-reduced-motion: reduce) {

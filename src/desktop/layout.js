@@ -280,7 +280,7 @@ export const STYLES = {
 };
 export const PREFS_VERSION = 1;
 export const DEFAULT_PREFS = {
-	wall: 'graphite',
+	wall: 'horizon',
 	accent: ACCENTS[0],
 	mode: 'dark',
 	iconSize: 'medium',

@@ -49,6 +49,7 @@ export const HALLOWEEN_2026 = Object.freeze({
 			name: 'Pumpkin Cap',
 			detail: 'A carved jack-o\'-lantern cap with a curled vine. Headwear, wearable in every /play world.',
 			thumb: '/accessories/thumbs/pumpkin-cap-halloween-2026.png',
+			model: '/accessories/pumpkin-cap-halloween-2026.glb',
 		}),
 		Object.freeze({
 			kind: 'cosmetic',

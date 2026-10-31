@@ -1337,6 +1337,7 @@ export async function createShell(root, opts = {}) {
 
 	// ---------- native apps ----------
 	const WALL_PREVIEW = {
+		horizon: 'linear-gradient(180deg,transparent 63%,#c4b5fd 64%,transparent 65%),radial-gradient(60% 30% at 50% 64%,#8b5cf677,transparent 70%),linear-gradient(180deg,#04050a,#080a12 64%,#05060b)',
 		bubbles: 'radial-gradient(circle 22px at 30% 35%,#c7b8ff99,transparent),radial-gradient(circle 30px at 70% 70%,#a6e9ff88,transparent),linear-gradient(140deg,#0c1238,#241052 50%,#071a3c)',
 		three: 'radial-gradient(70% 60% at 50% 110%,#8b5cf6aa,transparent 70%),#050505',
 		aurora: 'linear-gradient(215deg,#7a3fa8,#1f6fbf)',
