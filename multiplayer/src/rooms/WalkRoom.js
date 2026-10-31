@@ -72,6 +72,7 @@ import {
 } from '../world-features.js';
 import { registerActivityHandlers, ACTIVITY_COOLDOWN_MS } from '../activities.js';
 import { registerSpinHandlers } from '../spin-wheel.js';
+import { registerPaHandlers, paSyncJoiner, paOnLeave, paOnDispose } from '../world-pa.js';
 import {
 	selectTarget, rollDamage, applyDamage, addHeat, decayHeat, heatStars,
 } from '../combat.js';
@@ -644,6 +645,7 @@ export class WalkRoom extends Room {
 		this.onMessage('ready', (client) => {
 			this._readyClients.add(client.sessionId);
 			this._flushJoinSnapshot(client, { force: true });
+			paSyncJoiner(this, client).catch(() => {});
 		});
 		this.onMessage('move', (client, payload) => this._handleMove(client, payload));
 		this.onMessage('rename', (client, payload) => this._handleRename(client, payload));
@@ -662,6 +664,7 @@ export class WalkRoom extends Room {
 		this.onMessage('fish', (client) => this._handleFish(client));
 		registerActivityHandlers(this); // W06 gather/craft: chop, mine, cook
 		registerSpinHandlers(this); // W09 Wheel of Fortune: spinInfo, spinFree, spinPaidPrep, spinPaidSettle
+		registerPaHandlers(this); // presenter PA: pa:start, pa:chunk, pa:caption, pa:stop, relayed coin-wide
 		registerCombatHandlers(this); // W07 combat: attack, loot
 		this.onMessage('equip', (client, payload) => this._handleEquip(client, payload));
 		this.onMessage('consume', (client, payload) => this._handleConsume(client, payload));
@@ -1052,6 +1055,7 @@ export class WalkRoom extends Room {
 
 	onLeave(client) {
 		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
+		paOnLeave(this, client);
 		// Tag mini-game (R08): capture wasIt BEFORE state.players.delete below, so
 		// we know if someone needs reassigning. Cleanup runs after the delete.
 		const _tagWasIt = this.state.players.get(client.sessionId)?.it ?? false;
@@ -1120,6 +1124,7 @@ export class WalkRoom extends Room {
 
 	async onDispose() {
 		unregisterWalkRoom(this);
+		paOnDispose(this);
 		// Persist the final build so the community's creation survives the room
 		// being torn down when the last player leaves. Awaited (Colyseus waits on
 		// the returned promise) so the Redis write lands before the room is gone,

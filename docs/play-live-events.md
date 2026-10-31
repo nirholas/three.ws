@@ -145,6 +145,76 @@ polled every 20 s and skipped while the tab is hidden. When the multiplayer
 server does not answer, the count is simply left off; it never shows an
 invented number.
 
+## The presenter PA
+
+Proximity voice is a peer mesh capped at eight people. That suits a
+conversation but cannot carry a keynote to a plaza of two hundred. The PA
+works the other way: one host speaks, and every player in the coin's world
+hears it. That covers the General and Holders worlds and every room shard
+past the 100-player cap.
+
+**Going live.**
+
+1. Type `/host` in chat to open the presenter panel.
+2. Press **Go live**. The world server decides who may take the mic:
+   - the coin's on-chain creator, with a verified wallet;
+   - any wallet listed in `PA_HOST_WALLETS` on the multiplayer service;
+   - anyone who pastes the `PA_HOST_KEY` secret into the panel. This is the
+     guest-presenter path for a host from a partner community, who has no
+     wallet tied to the coin.
+
+The key stays in the tab's session storage and is never broadcast. The panel
+shows an on-air timer and an **End broadcast** button. Captions are on by
+default where the browser has a speech recognizer (Chrome, Edge). Keep the
+tab open while you talk.
+
+**One mic at a time.**
+- A per-coin lock in presence holds the mic. Its 20 s TTL is refreshed while
+  audio flows, so a presenter whose browser crashes frees the mic on their own.
+- A second host is told who is on the mic and gets **Take over the mic**,
+  which ends the first broadcast and tells that presenter why.
+
+**What listeners get.**
+- A gold LIVE bar under the meetup chip names the speaker and their role.
+- The bar has animated level meters, Mute, and a volume slider. Volume and
+  mute are remembered.
+- Captions show inside the bar.
+- If the browser blocked autoplay, a **Tap to listen** button appears.
+- A browser without WebCodecs audio sees a plain notice and still gets the
+  captions.
+
+**Wire format.**
+- The host's browser encodes the mic to Opus with WebCodecs: 48 kHz mono,
+  32 kbps, in 20 ms frames.
+- It sends batches of about 100 ms as `pa:chunk`.
+- The room validates each batch: speaker only, at most 16 frames, 1.5 KB per
+  frame, 30 messages per second.
+- The room publishes the batch on presence topic `pa:<mint>`. Every walk room
+  for that coin subscribes and relays it to its own clients. The presenter's
+  own socket is skipped.
+- Listeners decode into a 250 ms jitter buffer and drop audio once they fall
+  more than 1.2 s behind live, so delay never builds up across a long talk.
+
+**Scaling.** Without `REDIS_URI` (single instance) the fan-out uses local
+presence. With Redis it crosses instances unchanged, because frames travel as
+base64.
+
+Code:
+- server [multiplayer/src/world-pa.js](../multiplayer/src/world-pa.js)
+- browser [src/game/world-pa.js](../src/game/world-pa.js)
+- pure core [src/game/world-pa-core.js](../src/game/world-pa-core.js)
+
+Tests:
+- [tests/world-pa.test.js](../tests/world-pa.test.js)
+- [tests/world-pa-core.test.js](../tests/world-pa-core.test.js)
+
+Set the guest key on the multiplayer service before the event (config only):
+
+```bash
+gcloud run services update <multiplayer-service> --region us-central1 \
+  --update-env-vars PA_HOST_KEY=<long random secret>
+```
+
 ## Previewing without waiting
 
 Add `?meetup=now` to the `/play` URL to shift the configured event to start

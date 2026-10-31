@@ -3138,6 +3138,13 @@ export class CommunityUI {
 			this.addChat({ name: 'Forge', text: 'Say what to forge, e.g. /forge a glowing campfire', mine: true });
 			return;
 		}
+		// `/host` opens the presenter PA panel (src/game/world-pa.js). Local only:
+		// the server decides who may actually take the mic.
+		if (/^\/host\s*$/i.test(text)) {
+			this.chatInput.value = '';
+			window.dispatchEvent(new CustomEvent('cc:pa-host'));
+			return;
+		}
 		const forge = text.match(/^\/forge\s+(.+)/i);
 		if (forge) {
 			this.chatInput.value = '';

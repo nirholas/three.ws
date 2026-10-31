@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Live presenter PA in /play: one host speaks to the whole coin world",
+			"summary": "A meetup host can now speak live to every player in a coin world, across every shard and both the General and Holders worlds. Type /host in chat to open the presenter panel. The coin creator, a listed host wallet, or anyone with the event host key can go live. Listeners see a LIVE bar with the speaker, a level meter, mute and volume, plus optional live captions. Only one person holds the mic at a time, and the host can take it over.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Glowing jack-o'-lanterns in /play, and a crowd that walks around each other",
 			"summary": "During Halloween Weekend, /play worlds are dotted with carved, glowing jack-o'-lanterns (drawn as a few instanced batches, so they stay cheap). The ambient crowd now uses steering behaviours: wanderers arrive smoothly at their destination and keep a body's width from each other instead of walking through one another.",
 			"tags": [

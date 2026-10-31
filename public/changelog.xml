@@ -95,6 +95,14 @@
 			<description>The Game-Ready panel has a new Artist mesh topology: a generative retopology model (LATO.2, MIT) that builds an even low-poly mesh of up to about 10,000 faces. Every result is checked for holes and drift from your model, and if the check fails you automatically get the QuadriFlow mesh instead, so an export never ships torn.</description>
 		</item>
 		<item>
+			<title>Glowing jack-o'-lanterns in /play, and a crowd that walks around each other</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-10-31:Glowing jack-o'-lanterns in /play, and a crowd that walks around each other</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>During Halloween Weekend, /play worlds are dotted with carved, glowing jack-o'-lanterns (drawn as a few instanced batches, so they stay cheap). The ambient crowd now uses steering behaviours: wanderers arrive smoothly at their destination and keep a body's width from each other instead of walking through one another.</description>
+		</item>
+		<item>
 			<title>Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti</title>
 			<link>https://three.ws/halloween</link>
 			<guid isPermaLink="false">2026-10-31:Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti</guid>
@@ -117,6 +125,14 @@
 			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Through Sunday night the desktop boots and locks on a moonlit night palette with Creepster headings, then opens on a haunted hill wallpaper with drifting fog, bats and a pumpkin accent, plus a Halloween Gifts app. The classic homepage gets a ribbon, bats and embers over the hero, Halloween prompt ideas and a Trick or treat chip that sends a flock of bats out of the avatar. The new /halloween page counts down to the close and claims all four gifts in one press: the Pumpkin Cap and Witchlight Aura for /play, a Halloween 2026 profile badge, and the Haunted wallpaper, which claimers keep in desktop Settings after the weekend. Gifts are free, only claimable this weekend, and yours forever. Prefer your usual look? Turn it off in Settings, Personalization, Season. Claims now reach their own endpoint, so they no longer collide with the 3D drops service.</description>
+		</item>
+		<item>
+			<title>Live presenter PA in /play: one host speaks to the whole coin world</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-10-31:Live presenter PA in /play: one host speaks to the whole coin world</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A meetup host can now speak live to every player in a coin world, across every shard and both the General and Holders worlds. Type /host in chat to open the presenter panel. The coin creator, a listed host wallet, or anyone with the event host key can go live. Listeners see a LIVE bar with the speaker, a level meter, mute and volume, plus optional live captions. Only one person holds the mic at a time, and the host can take it over.</description>
 		</item>
 		<item>
 			<title>One shared group photo for everyone in the meetup world, and a live headcount</title>

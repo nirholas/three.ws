@@ -66,6 +66,8 @@ Everything is optional except `HOLDER_PASS_SECRET` in production, which the proc
 | `PLAY_GATE_MINT` (or `THREE_MINT`) | unset | Require wallet sign-in plus a token balance to enter `walk_world` / `clash_arena`. Unset leaves the worlds open, and the boot log says which |
 | `PLAY_GATE_MIN` | `1` | Minimum token balance the gate demands |
 | `HOLDER_MIN_USD` | `8` | USD floor a holders-only world displays, used only when the signed pass does not carry one (the client's unsigned option is never trusted) |
+| `PA_HOST_KEY` | unset | Shared secret a guest presenter pastes into the `/host` panel to take the presenter PA mic in any world (see [docs/play-live-events.md](../docs/play-live-events.md#the-presenter-pa)). Ignored when shorter than 12 characters; unset leaves the PA to coin creators and `PA_HOST_WALLETS` |
+| `PA_HOST_WALLETS` | unset | Comma- or space-separated wallets that may take the presenter PA mic in every coin world, for staff who run events in coins they did not create |
 | `GAME_TOKEN_MINT` | the `$THREE` mint | Mint that prices in-world premium purchases |
 | `GAME_TOKEN_DECIMALS` | `6` | Decimals for that mint |
 | `GAME_TOKEN_TREASURY` (or `PAYMENT_RECIPIENT_SOLANA`) | unset | Treasury wallet; without it token-priced listings stay disabled rather than silently taking payment |

@@ -99,6 +99,7 @@ export class CommunityNet {
 			denied: new Set(),  // (reason), server refused the join (e.g. holder gate); no retry
 			voiceSignal: new Set(), // ({from, data}), relayed WebRTC SDP/ICE from a peer
 			ping: new Set(),   // (ms), smoothed round-trip latency to the server
+			pa: new Set(),     // ({type:'start'|'chunk'|'caption'|'stop'|'state', ...}), presenter PA broadcast (src/game/world-pa.js)
 			blockAdd: new Set(),    // (key, type), a voxel appeared (placed or restored)
 			blockChange: new Set(), // (key, type), a voxel was repainted
 			blockRemove: new Set(), // (key), a voxel was broken
@@ -388,6 +389,12 @@ export class CommunityNet {
 			this.room.onMessage('obj:reject', (msg) => this._emit('objectReject', msg || {}));
 			// Broadcast reactions (R04): floating emoji that rise above the sender's avatar.
 			this.room.onMessage('reaction', (msg) => this._emit('reaction', msg || {}));
+			// Presenter PA: the host's Opus stream and captions, relayed coin-wide by the
+			// server, plus `pa:state` replies to our own start/stop requests. One event,
+			// tagged by type, so src/game/world-pa.js owns the whole protocol.
+			for (const t of ['start', 'chunk', 'caption', 'stop', 'state']) {
+				this.room.onMessage(`pa:${t}`, (msg) => this._emit('pa', { ...(msg || {}), type: t }));
+			}
 			this.room.onMessage('tag', (msg) => this._emit('tag', msg || {})); // R08 tag mini-game
 			// Dance floor (R06): the room broadcasts a beat every 4s so every client
 			// pulses the disco pad and crossfades standing dancers to the same clip in
@@ -607,6 +614,13 @@ export class CommunityNet {
 		if (!room || room.connection?.isOpen !== true) return false;
 		try { room.send(type, payload); } catch { return false; }
 		return true;
+	}
+
+	// Presenter PA requests (pa:start / pa:chunk / pa:caption / pa:stop). The
+	// server authorizes every one; this only keeps other message types out.
+	sendPa(type, payload) {
+		if (!/^pa:(start|chunk|caption|stop)$/.test(type)) return false;
+		return this._send(type, payload);
 	}
 
 	sendMove(state) {

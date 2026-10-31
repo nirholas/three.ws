@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T22:39:52.493Z",
+	"generated_at": "2026-10-31T23:03:59.673Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -119,6 +119,16 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "Glowing jack-o'-lanterns in /play, and a crowd that walks around each other",
+			"summary": "During Halloween Weekend, /play worlds are dotted with carved, glowing jack-o'-lanterns (drawn as a few instanced batches, so they stay cheap). The ambient crowd now uses steering behaviours: wanderers arrive smoothly at their destination and keep a body's width from each other instead of walking through one another.",
+			"link": "/play",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti",
 			"summary": "The classic homepage and /halloween now run halloween.js, a tiny MIT-licensed library, for corner cobwebs, blinking eyes in the dark, a witch crossing the sky, a spider that drops and climbs back up, and a rising tombstone. Claiming your four gifts now sets off an orange and violet confetti burst from canvas-confetti. Both load only during the weekend, respect reduced motion, and switch off with the Halloween look toggle in Settings, Personalization, Season.",
 			"link": "/halloween",
@@ -145,6 +155,16 @@
 			"tags": [
 				"feature",
 				"desktop"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Live presenter PA in /play: one host speaks to the whole coin world",
+			"summary": "A meetup host can now speak live to every player in a coin world, across every shard and both the General and Holders worlds. Type /host in chat to open the presenter panel. The coin creator, a listed host wallet, or anyone with the event host key can go live. Listeners see a LIVE bar with the speaker, a level meter, mute and volume, plus optional live captions. Only one person holds the mic at a time, and the host can take it over.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{

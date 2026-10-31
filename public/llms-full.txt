@@ -1477,6 +1477,18 @@ URL: https://three.ws/pumpkin
 
 Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.
 
+### Haunted Graveyard
+
+URL: https://three.ws/haunted
+
+Walk a moonlit 3D graveyard in your browser: a crypt, fenced yard, flickering lamps and pumpkins, and a zombie, skeleton, vampire, ghost and keeper you can click, follow and make dance. Built from Kenney's CC0 Graveyard Kit.
+
+### How the haunted graveyard works
+
+URL: https://three.ws/docs/haunted-graveyard
+
+The /haunted page: Kenney's CC0 Graveyard Kit ingested into the object library, the deterministic yard layout, the five animated characters, and how to publish the models to the CDN.
+
 ### Airdrop Checker
 
 URL: https://three.ws/airdrops

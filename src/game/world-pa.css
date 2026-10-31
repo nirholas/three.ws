@@ -1,0 +1,123 @@
+/* ── Presenter PA (live bar for listeners, panel for the host) ──────────────
+   Shares the coincommunities tokens. Gold (#ffce5c) is the established live
+   event accent (see meetup-event.css), so "someone is on the mic" reads as part
+   of the same event moment as the meetup chip directly above it. */
+
+#cc-pa-bar {
+	position: fixed;
+	top: calc(62px + env(safe-area-inset-top, 0px));
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 41;
+	width: max-content;
+	max-width: calc(100vw - 24px);
+	background: var(--cc-panel);
+	border: 1px solid rgba(255, 206, 92, 0.55);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow), 0 0 22px rgba(255, 206, 92, 0.18);
+	backdrop-filter: blur(8px);
+	color: var(--cc-text);
+	padding: 7px 10px;
+	animation: cc-fade 0.25s ease;
+}
+.cc-pa-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.cc-pa-live {
+	font-size: 10px; font-weight: 900; letter-spacing: 0.14em;
+	color: #1a1404; background: #ffce5c; border-radius: 2px; padding: 2px 6px;
+	animation: cc-pa-pulse 1.6s ease-in-out infinite;
+}
+@keyframes cc-pa-pulse { 50% { box-shadow: 0 0 12px rgba(255, 206, 92, 0.75); } }
+.cc-pa-bars { display: inline-flex; align-items: center; gap: 2px; height: 16px; }
+.cc-pa-bars i {
+	display: block; width: 3px; height: 16px; border-radius: 2px; background: #ffce5c;
+	transform: scaleY(0.18); transform-origin: center; transition: transform 80ms linear;
+}
+.cc-pa-who { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.cc-pa-onmic { font-size: 11px; color: var(--cc-dim); white-space: nowrap; }
+.cc-pa-name {
+	font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 34vw;
+}
+.cc-pa-role { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #ffce5c; white-space: nowrap; }
+.cc-pa-controls { display: flex; align-items: center; gap: 6px; }
+.cc-pa-notice { font-size: 11px; color: var(--cc-dim); max-width: 220px; }
+.cc-pa-vol { width: 84px; accent-color: #ffce5c; cursor: pointer; }
+.cc-pa-vol:focus-visible { outline: 2px solid #ffce5c; outline-offset: 2px; }
+
+.cc-pa-btn {
+	font: inherit; font-size: 12px; font-weight: 700;
+	color: var(--cc-text); background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
+	padding: 5px 10px; cursor: pointer; white-space: nowrap;
+	transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease;
+}
+.cc-pa-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
+.cc-pa-btn:active:not(:disabled) { transform: scale(0.97); }
+.cc-pa-btn:focus-visible { outline: 2px solid #ffce5c; outline-offset: 2px; }
+.cc-pa-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cc-pa-tap { background: #ffce5c; color: #1a1404; border-color: #ffce5c; }
+.cc-pa-tap:hover:not(:disabled) { background: #ffd877; border-color: #ffd877; }
+
+.cc-pa-caption {
+	margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--cc-edge-soft);
+	font-size: 14px; line-height: 1.35; font-weight: 600; text-align: center;
+	max-width: min(560px, calc(100vw - 48px)); margin-inline: auto;
+}
+.cc-pa-caption--interim { color: var(--cc-dim); font-style: italic; }
+
+/* Presenter panel */
+#cc-pa-panel {
+	position: fixed;
+	right: calc(16px + env(safe-area-inset-right, 0px));
+	bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+	z-index: 60;
+	width: min(340px, calc(100vw - 32px));
+	background: var(--cc-panel-solid);
+	border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius);
+	box-shadow: var(--cc-shadow);
+	color: var(--cc-text);
+	padding: 14px 16px 16px;
+	animation: cc-fade 0.2s ease;
+}
+.cc-pa-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cc-pa-head h2 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: 0.01em; }
+.cc-pa-x {
+	font: inherit; font-size: 20px; line-height: 1; width: 30px; height: 30px;
+	color: var(--cc-dim); background: transparent; border: 1px solid transparent; border-radius: var(--cc-radius-sm); cursor: pointer;
+}
+.cc-pa-x:hover { color: var(--cc-text); border-color: var(--cc-edge); }
+.cc-pa-x:active { transform: scale(0.95); }
+.cc-pa-x:focus-visible { outline: 2px solid #ffce5c; outline-offset: 1px; }
+.cc-pa-lede { margin: 6px 0 12px; font-size: 12.5px; line-height: 1.45; color: var(--cc-dim); }
+.cc-pa-onair { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cc-pa-time { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.cc-pa-key {
+	width: 100%; box-sizing: border-box; font: inherit; font-size: 13px;
+	color: var(--cc-text); background: rgba(255, 255, 255, 0.05);
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); padding: 8px 10px;
+}
+.cc-pa-key:hover { border-color: rgba(255, 255, 255, 0.25); }
+.cc-pa-key:focus-visible { outline: 2px solid #ffce5c; outline-offset: 1px; border-color: transparent; }
+.cc-pa-check { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; color: var(--cc-text); cursor: pointer; }
+.cc-pa-check input { accent-color: #ffce5c; width: 15px; height: 15px; }
+.cc-pa-check input:focus-visible { outline: 2px solid #ffce5c; outline-offset: 2px; }
+.cc-pa-msg { min-height: 1em; margin: 10px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--cc-text); }
+.cc-pa-msg:empty { display: none; }
+.cc-pa-msg--err { color: #ffb4a8; }
+.cc-pa-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.cc-pa-go { background: #ffce5c; color: #1a1404; border-color: #ffce5c; flex: 1; padding: 8px 12px; font-size: 13px; }
+.cc-pa-go:hover:not(:disabled) { background: #ffd877; border-color: #ffd877; }
+.cc-pa-take { flex: 1; }
+.cc-pa-end { flex: 1; border-color: rgba(255, 180, 168, 0.45); color: #ffb4a8; padding: 8px 12px; font-size: 13px; }
+.cc-pa-end:hover:not(:disabled) { background: rgba(255, 120, 100, 0.12); border-color: #ffb4a8; }
+
+@media (max-width: 560px) {
+	#cc-pa-bar { top: calc(58px + env(safe-area-inset-top, 0px)); padding: 6px 8px; }
+	.cc-pa-onmic { display: none; }
+	.cc-pa-vol { width: 64px; }
+	#cc-pa-panel { right: 16px; left: 16px; width: auto; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.cc-pa-live { animation: none; }
+	.cc-pa-bars i { transition: none; }
+}

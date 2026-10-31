@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T22:27:41.085Z",
+	"generated_at": "2026-10-31T23:03:59.613Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2950,6 +2950,30 @@
 					"showcase": false,
 					"priority": 0.7,
 					"job": "trade"
+				},
+				{
+					"path": "/haunted",
+					"title": "Haunted Graveyard",
+					"description": "Walk a moonlit 3D graveyard in your browser: a crypt, fenced yard, flickering lamps and pumpkins, and a zombie, skeleton, vampire, ghost and keeper you can click, follow and make dance. Built from Kenney's CC0 Graveyard Kit.",
+					"added": "2026-10-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "trade"
+				},
+				{
+					"path": "/docs/haunted-graveyard",
+					"title": "How the haunted graveyard works",
+					"description": "The /haunted page: Kenney's CC0 Graveyard Kit ingested into the object library, the deterministic yard layout, the five animated characters, and how to publish the models to the CDN.",
+					"added": "2026-10-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": "dev"
 				},
 				{
 					"path": "/airdrops",
