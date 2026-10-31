@@ -87,6 +87,14 @@
 			<description>When the shared free model hit its daily limit, the chat showed 'The built-in model is rate-limited' and stopped. It now hands the message to the platform's own model chain instead, so a reply still arrives. The rate-limit notice only appears if every lane is busy.</description>
 		</item>
 		<item>
+			<title>Desktop windows open without a zoom when reduced motion is on</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-31:Desktop windows open without a zoom when reduced motion is on</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>With your system set to reduce motion, a new window on the web desktop now appears at its full size in place. Before, its first frame still flashed in at 94% scale and slightly low before snapping to size. Closing already skipped its animation; opening now matches. The desktop also has a browser test suite that boots it, opens every built-in app, exercises window controls, saves a file and checks accessibility in dark and light mode.</description>
+		</item>
+		<item>
 			<title>Game-Ready export gets an Artist mesh option for cleaner low-poly</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-10-31:Game-Ready export gets an Artist mesh option for cleaner low-poly</guid>

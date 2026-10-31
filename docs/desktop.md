@@ -261,7 +261,15 @@ agents need `S3_PUBLIC_DOMAIN` set so `avatar_model_url` is populated, and
 anonymous chat needs one of `GROQ_API_KEY`, `OPENROUTER_API_KEY` or
 `NVIDIA_API_KEY`; without a key the panel shows the sign-in note instead of a
 reply. `node scripts/desktop-smoke.mjs http://localhost:3000` is the shorter
-desktop-only drive. Unit tests: `npx vitest run tests/desktop-boot.test.js
+desktop-only drive. The Playwright spec
+[`tests/e2e/desktop-os.spec.js`](../tests/e2e/desktop-os.spec.js) is the
+repeatable gate for the OS itself: boot to the lock screen and in, every
+native app opening from Start search and mounting its own UI, window chrome
+(maximize, restore, minimize to the taskbar, close), the calculator and
+terminal doing real work, a Notepad file that File Explorer lists after a
+reload, a wallpaper change that persists, and an axe WCAG 2.1 AA scan in dark
+and light (`E2E_PORT=3107 npx playwright test tests/e2e/desktop-os.spec.js
+--retries=0`). Unit tests: `npx vitest run tests/desktop-boot.test.js
 tests/world-places.test.js tests/world-cast.test.js tests/world-ticker.test.js
 tests/desktop-layout.test.js tests/desktop-page.test.js`.
 

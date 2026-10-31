@@ -686,7 +686,10 @@ export function createWM({ layer, getMetrics, renderNative, onChange, notify, ge
 			w.el.classList.add('is-min');
 			w.el.inert = true;
 		}
-		if (!opts.quiet) {
+		// Reduced motion skips the zoom-in outright, as close() skips its zoom-out:
+		// even shortened to 0.01ms by CSS, the keyframe's first frame still paints
+		// the window at 94% scale, 10px low.
+		if (!opts.quiet && !reducedMotion()) {
 			// Drop the class once the opening plays, or it replays on every restore from minimize.
 			w.el.classList.add('is-opening');
 			w.el.addEventListener('animationend', function done(e) {

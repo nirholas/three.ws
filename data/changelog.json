@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Desktop windows open without a zoom when reduced motion is on",
+			"summary": "With your system set to reduce motion, a new window on the web desktop now appears at its full size in place. Before, its first frame still flashed in at 94% scale and slightly low before snapping to size. Closing already skipped its animation; opening now matches. The desktop also has a browser test suite that boots it, opens every built-in app, exercises window controls, saves a file and checks accessibility in dark and light mode.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Live presenter PA in /play: one host speaks to the whole coin world",
 			"summary": "A meetup host can now speak live to every player in a coin world, across every shard and both the General and Holders worlds. Type /host in chat to open the presenter panel. The coin creator, a listed host wallet, or anyone with the event host key can go live. Listeners see a LIVE bar with the speaker, a level meter, mute and volume, plus optional live captions. Only one person holds the mic at a time, and the host can take it over.",
 			"tags": [
