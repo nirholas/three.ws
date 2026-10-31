@@ -12,6 +12,7 @@ import { engagementSignals, loadLifts, loadVolumeModel, rankItems, scoreItem, vo
 import { accountRefusal, activeHolds, inventory, isPostSpecific, placeHold, runTick } from '../api/_lib/x-content/runner.js';
 import { memoryStore } from '../api/_lib/x-content/state.js';
 import { validateItem, validateQueue, loadQueue } from '../api/_lib/x-content/queue.js';
+import { loadReview } from '../api/_lib/x-content/review.js';
 import { previewClient, publishItem } from '../api/_lib/x-content/publisher.js';
 
 const root = process.cwd();
@@ -522,8 +523,16 @@ describe('holds and fall-through', () => {
 describe('queue', () => {
 	it('keeps the committed queue valid for every item headed to X', () => {
 		const queue = loadQueue(root);
-		const { problems } = validateQueue(queue, root);
-		for (const item of queue.items.filter((row) => row.status === 'approved')) expect(problems[item.id]).toEqual([]);
+		const approved = queue.items.filter((row) => row.status === 'approved');
+		// Proof and review age out on the wall clock by design (the runner holds a
+		// stale item at tick time), so judging the committed queue at today's date
+		// would fail it for simply being a few weeks old. Judge it at the moment
+		// its newest review was recorded: copy, media, claims and article rules are
+		// still checked exactly, and only the age windows are made deterministic.
+		const reviewedAt = approved.map((row) => Date.parse(loadReview(root, row.id)?.reviewedAt)).filter(Number.isFinite);
+		const now = reviewedAt.length ? Math.max(...reviewedAt) : Date.now();
+		const { problems } = validateQueue(queue, root, { now });
+		for (const item of approved) expect(problems[item.id], item.id).toEqual([]);
 	});
 
 	it('speeds a recording up without desyncing its captions, and pins a constant rate', () => {

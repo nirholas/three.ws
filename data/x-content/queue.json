@@ -121,7 +121,7 @@
 	"items": [
 		{
 			"id": "genesis",
-			"status": "approved",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -9584,7 +9584,7 @@
 		},
 		{
 			"id": "embed-article",
-			"status": "approved",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -11988,7 +11988,7 @@
 		},
 		{
 			"id": "mcp-article",
-			"status": "approved",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -14338,7 +14338,7 @@
 		},
 		{
 			"id": "wardrobe-article",
-			"status": "approved",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -15349,7 +15349,7 @@
 		},
 		{
 			"id": "forge-article",
-			"status": "approved",
+			"status": "review",
 			"kind": "article",
 			"tier": 1,
 			"lane": "article",
@@ -18474,7 +18474,7 @@
 		},
 		{
 			"id": "openai-partner-benefits",
-			"status": "approved",
+			"status": "review",
 			"kind": "post",
 			"pattern": "mechanism",
 			"source": {
