@@ -437,7 +437,7 @@ export class MeetupEvent {
 			this._showShutterCountdown(gp.msToShutter);
 			if (gp.msToShutter <= PHOTO_POSE_MS && !p.posed) {
 				p.posed = true;
-				try { this.cc._emote?.(gp.emote); } catch { /* the pose is a flourish, never a blocker */ }
+				try { if (!this.cc._director) this.cc._emote?.(gp.emote); } catch { /* the pose is a flourish, never a blocker */ }
 			}
 			if (gp.msToShutter <= PHOTO_POSE_MS && !p.volleyed) {
 				// Shells launched now are bursting overhead when the shutter fires.
@@ -552,6 +552,7 @@ export class MeetupEvent {
 	// event-specific to pass and nothing to keep in sync. Closing the agenda first
 	// keeps the drawer out from behind the preview.
 	_capturePhoto() {
+		if (this.cc._director) return; // the venue screen is a camera on the room, not a guest in the photo
 		this._closePanel();
 		this.cc._openPhotoMode?.();
 	}

@@ -34,6 +34,16 @@ The Three.ws User Group on IBM Community meets inside the `$THREE` home town at 
 6. **Agenda beat at 8:27 (an agent pays for a tool).** It settles a real micropayment on Solana. Approve the number of rounds before the session; nothing on stream spends without that.
 7. **After the event** (Nov 7): `npm run event:schedule -- --clear --apply`, then deploy, so `/event` returns to its no-event state before the Nov 24 session (`MKT-2026-11-IBM-WORLD-2`, [three-world-session.md](../../marketing/growth/events/three-world-session.md)) is staged. Write the recap from captured numbers only.
 
+## Big screen and stream capture
+
+For the livestream, point OBS (Browser Source, 1920x1080, "Shutdown source when not visible" off) or a projector browser at the director view:
+
+```
+https://three.ws/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three&director=1
+```
+
+It joins as an invisible, uncounted spectator and cuts between the plaza's busy corners every 15 to 30 seconds, with a broadcast overlay (event name, LIVE or countdown, agenda, online count, invite QR) and no player HUD. At minute 58 it holds the totem and the crowd through the group photo countdown, the white flash and the shutter. It reconnects on its own after a network drop and reloads itself out of a lost graphics context. Press `F` for fullscreen. Rehearse it before the day with `&meetup=<ISO>` set to a start that puts you at minute 57. If the platform wallet gate is pinned the screen needs a signed-in profile: details in [play-director-mode.md](../play-director-mode.md).
+
 ## Judgment calls
 
 - **One hour, not nine.** August's description said 8 to 9 AM but the form said 8 AM to 5 PM, and the world stayed open all day. This listing is one programmed hour, so the form and the description both say 9:00 AM. The world stays open afterwards anyway.
