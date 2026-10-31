@@ -51,3 +51,12 @@ updates:
       - dependency-name: "@vercel/og"
         versions:
           - ">=1.0.0"
+      # @upstash/ratelimit >= 2.1.0 prefixes its Lua scripts with
+      # `#!lua flags=allow-key-locking`, an Upstash-hosted-only flag. Production
+      # Redis sits behind a self-hosted SRH proxy that rejects it, which opens
+      # the limiter circuit and pushes every bucket onto the Postgres fallback.
+      # The 2026-10-29 bump to 2.2.0 reintroduced exactly that.
+      # tests/ratelimit-lua-shebang.test.js fails on any release carrying it.
+      - dependency-name: "@upstash/ratelimit"
+        versions:
+          - ">=2.1.0"

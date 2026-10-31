@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Rate limits hold steady again instead of falling back to the slower path",
+			"summary": "A routine dependency update brought back a rate-limiter release whose Redis scripts our production Redis rejects, so every limit quietly ran on the slower database fallback. The limiter is pinned back to the compatible release, with a test that fails on any version carrying the incompatible scripts and an update rule that stops it drifting again.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Desktop windows open without a zoom when reduced motion is on",
 			"summary": "With your system set to reduce motion, a new window on the web desktop now appears at its full size in place. Before, its first frame still flashed in at 94% scale and slightly low before snapping to size. Closing already skipped its animation; opening now matches. The desktop also has a browser test suite that boots it, opens every built-in app, exercises window controls, saves a file and checks accessibility in dark and light mode.",
 			"tags": [

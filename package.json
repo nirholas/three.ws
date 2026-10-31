@@ -690,7 +690,7 @@
 		"@three-ws/solana-agent": "file:solana-agent-sdk",
 		"@three.ez/instanced-mesh": "^0.3.16",
 		"@upstash/qstash": "^2.12.0",
-		"@upstash/ratelimit": "2.2.0",
+		"@upstash/ratelimit": "2.0.8",
 		"@upstash/redis": "^1.40.0",
 		"@vercel/og": "0.11.1",
 		"@wallet-standard/app": "^1.1.1",

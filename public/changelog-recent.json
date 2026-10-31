@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-31T23:03:59.754Z",
+	"generated_at": "2026-10-31T23:28:28.955Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4235,
+	"total": 4237,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -112,6 +112,17 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "Desktop windows open without a zoom when reduced motion is on",
+			"summary": "With your system set to reduce motion, a new window on the web desktop now appears at its full size in place. Before, its first frame still flashed in at 94% scale and slightly low before snapping to size. Closing already skipped its animation; opening now matches. The desktop also has a browser test suite that boots it, opens every built-in app, exercises window controls, saves a file and checks accessibility in dark and light mode.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "Game-Ready export gets an Artist mesh option for cleaner low-poly",
 			"summary": "The Game-Ready panel has a new Artist mesh topology: a generative retopology model (LATO.2, MIT) that builds an even low-poly mesh of up to about 10,000 faces. Every result is checked for holes and drift from your model, and if the check fails you automatically get the QuadriFlow mesh instead, so an export never ships torn.",
 			"link": "/forge",
@@ -178,6 +189,17 @@
 			"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Rate limits hold steady again instead of falling back to the slower path",
+			"summary": "A routine dependency update brought back a rate-limiter release whose Redis scripts our production Redis rejects, so every limit quietly ran on the slower database fallback. The limiter is pinned back to the compatible release, with a test that fails on any version carrying the incompatible scripts and an update rule that stops it drifting again.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1526,26 +1548,6 @@
 			"tags": [
 				"feature",
 				"security"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "Atomic is now a six-tab Transaction V1 lab, not just an inspector",
-			"summary": "/atomic grew five tabs beyond the Inspector, each reachable by click, arrow-key/Home/End tab navigation, or a deep link (?tab=mask, ?tab=sponsor, ?tab=planner, ?tab=diff, ?tab=wallet). The config mask decoder reads a V1 transaction's real TransactionConfigMask u32 and its fixed-width ConfigValues byte by byte, flagging a half-set priority-fee pair or a reserved bit SIMD-0385 has not assigned yet. The sponsor cap view shows a paymaster exactly what it is agreeing to pay, reading V1's inline config instead of a Compute Budget instruction scan that sees nothing on a V1 transaction. The size and budget planner compiles a pasted instruction set with @solana/kit to an exact byte count against legacy, V0, or V1's ceiling, including an exact lamport total for a chosen priority fee. The legacy/V0/V1 diff compiles the same instructions three ways and reports the real byte deltas, honestly, including the case where V1's inline config makes it larger than legacy. The wallet V1 capability check connects the browser's injected wallet and reports the same verdict the rest of three.ws would get from findV1WalletStandardSigner before ever requesting a real V1 signature. Nothing here is estimated: every number comes from compiling and decoding real transactions, and nothing is ever signed, simulated, or broadcast.",
-			"link": "/atomic",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "Atomic now replays a pump.fun transaction step by step",
-			"summary": "Atomic (/atomic) decodes every Pump, PumpSwap, and PumpFees event in a transaction's logs, oldest first, and renders it as a Replay panel: a bonding-curve-position bar, a human-readable description of each step (create, buy/sell, graduation, creator-fee collection and distribution, GitHub social-fee claims, and post-graduation PumpSwap swaps), and the SOL/token amounts that moved. An event the installed SDK does not recognize still renders, labeled unrecognized, instead of silently disappearing. For a create transaction, the panel also pages through the earliest trades on that mint since launch, walking Solana's signature history backward in bounded pages since RPC has no forward cursor.",
-			"link": null,
-			"tags": [
-				"feature"
 			]
 		}
 	]
