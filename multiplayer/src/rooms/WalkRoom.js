@@ -32,6 +32,7 @@ import { blockStore } from '../block-store.js';
 import { worldPersistence } from '../persistence.js';
 import { verifyHolderPass } from '../holder-pass.js';
 import { socialHub } from '../social-hub.js';
+import { partyService } from '../party-service.js';
 import { verifyPresenceTicket } from '../presence-token.js';
 import { verifyPlayPass } from '../play-pass.js';
 import { containsHateSlur } from '../display-name-safety.js';
@@ -649,6 +650,7 @@ export class WalkRoom extends Room {
 		this.onMessage('rename', (client, payload) => this._handleRename(client, payload));
 		this.onMessage('emote', (client, payload) => this._handleEmote(client, payload));
 		this.onMessage('chat', (client, payload) => this._handleChat(client, payload));
+		this.onMessage('party', (client, payload) => partyService.handle(this, client, payload));
 		this.onMessage('avatar', (client, payload) => this._handleAvatar(client, payload));
 		this.onMessage('play-pass', (client, payload) => this._handlePlayPassRefresh(client, payload));
 		this.onMessage('place', (client, payload) => this._handlePlace(client, payload));
@@ -1021,6 +1023,7 @@ export class WalkRoom extends Room {
 		// still inside its own join await with no handlers attached, so Colyseus
 		// dropped the lot and warned on their console.
 		this._scheduleJoinSnapshot(client);
+		partyService.attach(client, this, WORLD_BOUND_M);
 	}
 
 	// Retire the reconnecting client's OWN previous session.
@@ -1052,6 +1055,7 @@ export class WalkRoom extends Room {
 
 	onLeave(client) {
 		if (client.userData?.accountUid) socialHub.unregister(client.userData.accountUid, client);
+		partyService.detach(client);
 		// Tag mini-game (R08): capture wasIt BEFORE state.players.delete below, so
 		// we know if someone needs reassigning. Cleanup runs after the delete.
 		const _tagWasIt = this.state.players.get(client.sessionId)?.it ?? false;
