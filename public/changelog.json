@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T23:33:04.933Z",
+	"generated_at": "2026-10-31T23:37:26.602Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -208,6 +208,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "The desktop no longer drops your keyboard into the Weather widget",
+			"summary": "Before you picked a weather city, opening the web desktop put keyboard focus in the Weather widget's city search, so typing and keyboard shortcuts started inside a widget. Focus now stays with the desktop until you click the search or choose Change city. A half-typed city also survives the widget's background refresh instead of being cleared.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
 			]
 		},
 		{

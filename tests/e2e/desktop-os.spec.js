@@ -298,6 +298,26 @@ test.describe('web desktop', () => {
 			expect(report).toEqual([]);
 		});
 	}
+	test.describe('with no weather city chosen', () => {
+		// UTC names no city, so the Weather widget opens on its "Choose a city" picker.
+		test.use({ timezoneId: 'UTC' });
+
+		test('the Weather picker neither takes focus on boot nor loses what the visitor typed on a refresh', async ({ page }) => {
+			await openDesktop(page);
+			const city = page.getByRole('searchbox', { name: 'Search a city' });
+			await expect(city).toBeVisible({ timeout: SLOW });
+			// Give any deferred focus call time to run before checking where focus sits.
+			await page.waitForTimeout(500);
+			const focusedInWidget = await page.evaluate(() => !!document.activeElement?.closest('.wgx'));
+			expect(focusedInWidget, 'boot leaves keyboard focus out of the widgets').toBe(false);
+
+			await city.fill('Lis');
+			// The weather feed refetches on its own cadence; force one through the page's own module.
+			await page.evaluate(() => import('/src/desktop/widgets/data.js').then((m) => m.refresh('weather')));
+			await page.waitForTimeout(300);
+			await expect(page.getByRole('searchbox', { name: 'Search a city' })).toHaveValue('Lis');
+		});
+	});
 	test('a notification card shows its app icon as a small square, not stretched across the header', async ({ page }) => {
 		await page.addInitScript(() => {
 			localStorage.setItem('twx_season_off:halloween-2026', '1');

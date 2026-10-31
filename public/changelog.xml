@@ -167,6 +167,14 @@
 			<description>A routine dependency update brought back a rate-limiter release whose Redis scripts our production Redis rejects, so every limit quietly ran on the slower database fallback. The limiter is pinned back to the compatible release, with a test that fails on any version carrying the incompatible scripts and an update rule that stops it drifting again.</description>
 		</item>
 		<item>
+			<title>The desktop no longer drops your keyboard into the Weather widget</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-31:The desktop no longer drops your keyboard into the Weather widget</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>Before you picked a weather city, opening the web desktop put keyboard focus in the Weather widget's city search, so typing and keyboard shortcuts started inside a widget. Focus now stays with the desktop until you click the search or choose Change city. A half-typed city also survives the widget's background refresh instead of being cleared.</description>
+		</item>
+		<item>
 			<title>The web desktop looks like a clean, futuristic dark OS</title>
 			<link>https://three.ws/?view=desktop</link>
 			<guid isPermaLink="false">2026-10-31:The web desktop looks like a clean, futuristic dark OS</guid>

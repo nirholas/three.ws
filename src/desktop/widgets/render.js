@@ -143,7 +143,11 @@ function weatherArt(kind, size = 64) {
 	return `<svg class="wgx-wart" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true">${defs}${body}</svg>`;
 }
 
-function placePicker(body, onDone) {
+/**
+ * The city picker. `focus` is for when the visitor asked for it (Change city);
+ * the picker a fresh desktop shows on its own leaves focus where it is.
+ */
+function placePicker(body, onDone, { focus = false } = {}) {
 	body.innerHTML =
 		`<div class="wgx-place"><div class="wgx-place-head">${weatherArt('partly', 34)}<div><b>Choose a city</b><p>Live forecasts from Open-Meteo.</p></div></div>` +
 		`<div class="wgx-place-row"><input type="search" placeholder="Search a city" aria-label="Search a city" autocomplete="off"></div>` +
@@ -191,7 +195,7 @@ function placePicker(body, onDone) {
 			note.textContent = e.message;
 		}
 	});
-	setTimeout(() => input.focus({ preventScroll: true }), 30);
+	if (focus) input.focus({ preventScroll: true });
 }
 
 function weather(body, w, api) {
@@ -203,6 +207,8 @@ function weather(body, w, api) {
 		if (picking) return;
 		if (!d.place || !d.current) {
 			card()?.removeAttribute('data-sky');
+			// Still no city: keep the picker already on screen and whatever is typed in it.
+			if (body.querySelector('.wgx-place')) return;
 			return placePicker(body, () => (picking = false));
 		}
 		const c = d.current;
@@ -235,9 +241,13 @@ function weather(body, w, api) {
 			e.stopPropagation();
 			picking = true;
 			card()?.removeAttribute('data-sky');
-			placePicker(body, () => {
-				picking = false;
-			});
+			placePicker(
+				body,
+				() => {
+					picking = false;
+				},
+				{ focus: true },
+			);
 			const back = document.createElement('button');
 			back.type = 'button';
 			back.className = 'wgx-btn ghost wgx-place-cancel';

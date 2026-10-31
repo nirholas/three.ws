@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "The desktop no longer drops your keyboard into the Weather widget",
+			"summary": "Before you picked a weather city, opening the web desktop put keyboard focus in the Weather widget's city search, so typing and keyboard shortcuts started inside a widget. Focus now stays with the desktop until you click the search or choose Change city. A half-typed city also survives the widget's background refresh instead of being cleared.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Desktop notifications show a small app icon again",
 			"summary": "On the web desktop, a notification's app icon stretched into a wide empty bar across the card header, both in the pop-up and in the notification centre. It is a small square beside the app name again, and a browser test keeps it that way.",
 			"tags": [
