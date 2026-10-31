@@ -41,13 +41,18 @@ export class MarketReactor {
 	 * @param {THREE.Object3D} [o.totem] the spinning coin group — gets a heat boost
 	 * @param {[number,number,number]} [o.totemPos] world origin of the totem for FX
 	 * @param {(trade:object)=>void} [o.onWhale] called when a whale trade lands
+	 * @param {(trade:object)=>boolean} [o.isWhale] decides what counts as a whale.
+	 *   Defaults to the fixed WHALE_USD bar; /play passes the per-coin hype
+	 *   director (hype-threshold.js) so the bar tracks this coin's own trade sizes
+	 *   and a cooldown keeps it from strobing.
 	 */
-	constructor({ scene, env, totem = null, totemPos = [0, 0, -12], onWhale = null }) {
+	constructor({ scene, env, totem = null, totemPos = [0, 0, -12], onWhale = null, isWhale = null }) {
 		this.scene = scene;
 		this.env = env;
 		this.totem = totem;
 		this.origin = totemPos;
 		this.onWhale = onWhale;
+		this.isWhale = isWhale || ((tr) => (Number(tr.usd) || 0) >= WHALE_USD);
 
 		this.fx = new Group();
 		scene.add(this.fx);
@@ -84,7 +89,7 @@ export class MarketReactor {
 			this.env?.flashRing?.(color, 0.18 + weight * 0.7);
 			this._heat = Math.min(1, this._heat + 0.05 + weight * 0.4);
 
-			if (usd >= WHALE_USD) {
+			if (this.isWhale(tr)) {
 				this._spawnWhale(buy);
 				try { this.onWhale?.(tr); } catch { /* toast is non-critical */ }
 			} else {

@@ -152,6 +152,7 @@ export function handleSpinFree(room, client) {
 	client.send('spinResult', {
 		mode: 'free', index, label: seg.label, got, lost, refunded, nextFreeSpinAt: profile.nextFreeSpinAt,
 	});
+	room._announce?.(client, 'wheel', seg.label);
 	room._questEvent?.(client, profile, { type: 'spin' });
 	room._persistEcon(client.sessionId);
 }
@@ -227,6 +228,7 @@ export async function handleSpinPaidSettle(room, client, payload) {
 	const { got, lost, refunded } = grantSegment(profile, seg);
 	room._sendInv(client, profile);
 	client.send('spinResult', { mode: 'paid', index, label: seg.label, got, lost, refunded });
+	room._announce?.(client, 'wheel', seg.label);
 	room._questEvent?.(client, profile, { type: 'spin' });
 	room._persistEcon(client.sessionId);
 }

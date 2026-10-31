@@ -2392,6 +2392,16 @@ export class WalkRoom extends Room {
 	// that transaction from RPC before granting anything, never trusting a
 	// client "it worked" claim.
 
+	// Tell the whole room something worth a ticker row just happened to one
+	// player (a wheel win, a boutique unlock). The payload carries only the
+	// session id and a server-authored label: clients resolve the name from the
+	// nameplate they already render, so no player text rides this message.
+	_announce(client, kind, label) {
+		const text = clean(label, 48);
+		if (!text) return;
+		this.broadcast('activity', { kind, id: client.sessionId, label: text });
+	}
+
 	// The boutique catalog (priced in $THREE) + this account's owned ids.
 	_sendBoutique(client) {
 		const profile = this.econ.get(client.sessionId);
@@ -2496,6 +2506,7 @@ export class WalkRoom extends Room {
 			return;
 		}
 		this._sendProfile(client);
+		this._announce(client, 'cosmetic', getCosmetic(cosmeticId)?.name || 'a premium cosmetic');
 		client.send('notice', { kind: 'boutique', ok: true, text: `Unlocked ${getCosmetic(cosmeticId)?.name || 'the item'}, check your wardrobe.` });
 		this._persistEcon(client.sessionId);
 	}

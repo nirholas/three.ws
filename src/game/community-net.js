@@ -122,6 +122,7 @@ export class CommunityNet {
 			spinInfo: new Set(),    // ({segments, now, nextFreeSpinAt, avgLevel, minLevel, eligible, atWheel, paidAvailable, symbol, costUsd})
 			spinPrep: new Set(),    // ({tx, tokenAmount, symbol, costUsd, quote}), unsigned paid-spin tx to sign
 			spinResult: new Set(),  // ({mode, index, label, got, lost, refunded, nextFreeSpinAt?}), the server's roll
+			activity: new Set(),    // ({kind:'wheel'|'cosmetic', id, label}), a room-wide ticker event about one player (id = session id)
 			spinDenied: new Set(),  // ({reason, ...}), a spin request refused
 			quests: new Set(),      // ({offers, active, day, eventLive}), jobs board + active runs (W05)
 			questComplete: new Set(), // ({id, title, reward, kind, coop, event}), a mission/heist finished
@@ -372,6 +373,7 @@ export class CommunityNet {
 			this.room.onMessage('spinPrep', (msg) => this._emit('spinPrep', msg || {}));
 			this.room.onMessage('spinResult', (msg) => this._emit('spinResult', msg || {}));
 			this.room.onMessage('spinDenied', (msg) => this._emit('spinDenied', msg || {}));
+			this.room.onMessage('activity', (msg) => this._emit('activity', msg || {}));
 			// Quests, jobs & heists (W05): the board + active runs and completion events.
 			this.room.onMessage('quests', (msg) => this._emit('quests', msg || {}));
 			this.room.onMessage('questComplete', (msg) => this._emit('questComplete', msg || {}));

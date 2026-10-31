@@ -45,6 +45,7 @@ function makeRoom({ profile, x = WHEEL[0].x, z = WHEEL[0].z } = {}) {
 		_sendInv: vi.fn(),
 		_questEvent: vi.fn(),
 		_persistEcon: vi.fn(),
+		_announce: vi.fn(),
 	};
 	const client = { sessionId: 's1', send: (type, msg) => sent.push({ type, msg }) };
 	return { room, client, sent };
@@ -164,6 +165,15 @@ describe('handleSpinFree — gates, in priority order', () => {
 		expect(profile.nextFreeSpinAt).toBeGreaterThanOrEqual(before + FREE_SPIN_COOLDOWN_MS);
 		expect(room._sendInv).toHaveBeenCalledWith(client, profile);
 		expect(room._persistEcon).toHaveBeenCalledWith('s1');
+	});
+	it('announces the win to the room with the server-side segment label, only on a real spin', () => {
+		const { room, client, sent } = makeRoom();
+		handleSpinFree(room, client);
+		expect(room._announce).toHaveBeenCalledTimes(1);
+		expect(room._announce).toHaveBeenCalledWith(client, 'wheel', sent[0].msg.label);
+		handleSpinFree(room, client);
+		expect(sent[1].type).toBe('spinDenied');
+		expect(room._announce).toHaveBeenCalledTimes(1);
 	});
 	it('a second free spin immediately after denies on cooldown (no double-grant)', () => {
 		const profile = eligibleProfile();
