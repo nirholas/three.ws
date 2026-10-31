@@ -418,7 +418,11 @@
 	height: 80px;
 	border-radius: 50%;
 	background: #1c0a2c;
-	font-size: 42px;
+}
+.hw-medal-art {
+	width: 54px;
+	height: 54px;
+	filter: drop-shadow(0 0 10px rgba(255, 170, 70, 0.45));
 }
 .hw-media--wall {
 	background: url('/wallpapers/haunted.svg') center bottom / cover no-repeat;

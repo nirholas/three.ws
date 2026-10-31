@@ -83,6 +83,10 @@ function tick() {
 
 // ---------- gifts ----------
 
+// The badge medal is drawn, not an emoji, so it looks the same on systems
+// without a colour emoji font.
+const MEDAL_PUMPKIN = `<svg class="hw-medal-art" viewBox="0 0 64 64"><path d="M33 13c1-4 4-7 8-8" fill="none" stroke="#5f8f3a" stroke-width="4" stroke-linecap="round"/><ellipse cx="22" cy="37" rx="15" ry="19" fill="#e5650f"/><ellipse cx="42" cy="37" rx="15" ry="19" fill="#e5650f"/><ellipse cx="32" cy="37" rx="13" ry="21" fill="#ff8a2a"/><path d="M19 32l6-6 6 6zM33 32l6-6 6 6z" fill="#ffd27a"/><path d="M17 42c4 7 26 7 30 0l-4 1-2 3-3-3-4 3-4-3-3 3-3-3z" fill="#ffd27a"/></svg>`;
+
 function giftMedia(g) {
 	if (g.kind === 'cosmetic' && g.model) {
 		return `<model-viewer class="hw-media hw-media--model" src="${esc(g.model)}" poster="${esc(g.thumb || '')}" alt="${esc(g.name)}, a 3D model" camera-controls auto-rotate auto-rotate-delay="0" rotation-per-second="24deg" disable-zoom interaction-prompt="none" shadow-intensity="0.6" exposure="1.05" camera-orbit="20deg 70deg auto" loading="lazy"></model-viewer>`;
@@ -91,7 +95,7 @@ function giftMedia(g) {
 		return `<div class="hw-media hw-media--aura" style="--sw:${esc(g.swatch)}" aria-hidden="true"><i></i><b></b></div>`;
 	}
 	if (g.kind === 'badge') {
-		return `<div class="hw-media hw-media--badge" aria-hidden="true"><span class="hw-medal"><span>${esc(g.icon || '')}</span></span></div>`;
+		return `<div class="hw-media hw-media--badge" aria-hidden="true"><span class="hw-medal"><span>${MEDAL_PUMPKIN}</span></span></div>`;
 	}
 	if (g.kind === 'wallpaper') {
 		return `<div class="hw-media hw-media--wall" aria-hidden="true"></div>`;
