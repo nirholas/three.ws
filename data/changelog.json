@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "One shared group photo for everyone in the meetup world, and a live headcount",
+			"summary": "Meetups in /play can now end with a group photo the whole plaza takes together. A minute before, a banner calls everyone to the totem; ten seconds out a big countdown appears; three seconds out every avatar strikes the same cheering pose while fireworks launch overhead; then every player's camera fires at the same instant and the shot, stamped with the event name, is ready to download or copy. If your game stutters right at the moment you still get the photo, and nobody who missed the countdown gets one. The event chip and agenda now also show how many people are in the world right now, read from the live server and left off rather than guessed when it does not answer. Meetup #3 on November 6 takes its photo at 8:58 AM Pacific.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Carve a 3D pumpkin at /pumpkin",
 			"summary": "A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.",
 			"tags": [

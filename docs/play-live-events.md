@@ -50,6 +50,7 @@ from the shape below:
   "link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
   "linkLabel": "Join the $THREE world",
   "souvenir": { "cosmeticId": "laurel-meetup" },
+  "groupPhoto": { "atMin": 58, "emote": "av-cheering" },
   "agenda": [
     { "atMin": 0,   "title": "Doors open in the plaza", "detail": "Say hi in chat", "icon": "👋" },
     { "atMin": 20,  "title": "King of the Totem showdown", "detail": "Hold the gold ring", "icon": "👑" },
@@ -66,6 +67,8 @@ from the shape below:
 | `agenda[].atMin` | Minutes after `startsAt`. Order does not matter; segments are sorted. Invalid or untitled entries are dropped rather than breaking the event. |
 | `agenda[].icon` | One emoji. Used on the segment row and its moment banner. |
 | `souvenir.cosmeticId` | Optional. A free commemorative wearable granted once to everyone who joins the world named by `link` while the event is live, kept forever, never granted again after `endsAt`. Must be a `tier: 'event'` cosmetic; anything else grants nothing. See [Event souvenirs](event-souvenirs.md). |
+| `groupPhoto.atMin` | Optional. Minutes after `startsAt` when the shared shutter fires. Must fall inside the event window, or there is no group photo. See [The group photo](#the-group-photo). |
+| `groupPhoto.emote` | Optional. The clip every avatar plays for the shot (lowercase, digits and hyphens). Defaults to `av-cheering`. Pick a clip that runs longer than three seconds: the pose starts three seconds before the shutter and must still be playing when it fires on every neighbour's screen. |
 
 `id`, `agenda`, and `tagline` are optional: an event with none of them still runs
 its countdown, its go-live moment, and its fireworks.
@@ -113,11 +116,42 @@ a live `$THREE` pulse row (price, 24 h change, market cap from
 commemorative photo action, and a Buy `$THREE` button that opens `/play`'s
 existing on-chain trade widget. `Escape` closes it.
 
+## The group photo
+
+When `groupPhoto` is set, the whole plaza takes one photo at the same instant,
+derived from the wall clock with no packet, the same way the fireworks sync
+([`groupPhotoState()`](../src/game/meetup-schedule.js)):
+
+| When | What happens |
+|---|---|
+| 60 s before | Gold banner: "Group photo in 1 minute. Gather at the totem." |
+| 10 s before | A large 10..1 countdown overlay; the agenda drawer closes so it is not in the shot |
+| 3 s before | Every avatar plays the configured emote (sent over the normal emote channel, so neighbours see the pose) and a firework volley launches to burst overhead at the shutter |
+| 0 s | Each client opens photo mode on its own view; the shot is stamped with the event name and offered for download or copy |
+
+The shot is owed only to a client that watched the countdown with the tab in
+view. A frame that stalls through the instant (a model loading, a GC pause, a
+throttled laptop) still takes the photo on its first frame back, up to 15 s
+late. A tab hidden during the countdown, or a player who arrives after the
+instant, takes no photo: a picture of a moment the player missed is not the
+shared moment.
+
+## The live headcount
+
+While the event is mounted, the chip and the agenda drawer show how many
+players are in the world right now ("LIVE · 1,204 here"). The number comes
+from `/api/play/population?coin=<mint>`, the matchmaker's real room count,
+polled every 20 s and skipped while the tab is hidden. When the multiplayer
+server does not answer, the count is simply left off; it never shows an
+invented number.
+
 ## Previewing without waiting
 
 Add `?meetup=now` to the `/play` URL to shift the configured event to start
 twenty seconds from load, keeping its duration and agenda. `?meetup=<ISO>`
-shifts it to a specific instant instead. This runs through
+shifts it to a specific instant instead. The group photo moves with it, so
+`?meetup=<now minus 57 minutes>` previews the gather banner, countdown, pose
+and shutter within about two minutes. This runs through
 `applyPreviewOverride()`, which every surface that reads the event shares, so a
 preview never drifts from the real thing.
 
