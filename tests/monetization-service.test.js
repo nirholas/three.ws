@@ -746,10 +746,13 @@ describe('wallet endpoint (payout addresses)', () => {
 		authState.session = session;
 
 		sqlState.queue.push([{ id: agent.id, user_id: agent.user_id }]); // ownership
-		// The cooldown policy looks for a live wallet on each rail first: none,
-		// so both addresses are first wallets and go live at once with no step-up.
-		sqlState.queue.push([]); // no current solana payout wallet
-		sqlState.queue.push([]); // no current evm payout wallet
+		// The cooldown policy looks for a live wallet on each rail, first scoped
+		// to this agent and then account-wide: none, so both addresses are first
+		// wallets and go live at once with no step-up.
+		sqlState.queue.push([]); // no agent-scoped solana payout wallet
+		sqlState.queue.push([]); // no account-wide solana payout wallet
+		sqlState.queue.push([]); // no agent-scoped evm payout wallet
+		sqlState.queue.push([]); // no account-wide evm payout wallet
 		sqlState.queue.push([]); // clear solana default
 		sqlState.queue.push([{ id: 'w-sol', agent_id: agent.id, address: SOL_ADDRESS, chain: 'solana', is_default: true, preferred_network: 'solana' }]);
 		sqlState.queue.push([]); // clear base default
