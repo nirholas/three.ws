@@ -92,7 +92,15 @@ const FIXTURES = {
 // upstream call answers with.
 const CASES = [
 	{ file: 'protocols', build: (m) => m.buildProtocols(), payload: FIXTURES.protocols },
-	{ file: 'chains', build: (m) => m.buildChains(), payload: FIXTURES.chains },
+	// The chains board also folds in the DEX-volume feed (turnover column), so a
+	// cold load reads two distinct upstreams, each of which must still be fetched
+	// exactly once however many callers pile on.
+	{
+		file: 'chains',
+		build: (m) => m.buildChains(),
+		payload: (url) => (url.includes('/v2/chains') ? FIXTURES.chains : FIXTURES.dexs),
+		upstreams: 2,
+	},
 	{ file: 'dex-volumes', build: (m) => m.buildDexVolumes(), payload: FIXTURES.dexs },
 	{ file: 'fees', build: (m) => m.buildFees('fees'), payload: FIXTURES.fees },
 	{ file: 'stablecoins', build: (m) => m.buildStablecoins(), payload: FIXTURES.stablecoins },
@@ -111,31 +119,35 @@ async function coldImport(name) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('api/defi builders de-duplicate concurrent cold loads', () => {
-	for (const { file, build, payload } of CASES) {
+	for (const { file, build, payload: rawPayload, upstreams = 1 } of CASES) {
+		const answer = (input) => reply(typeof rawPayload === 'function' ? rawPayload(String(input)) : rawPayload);
 		it(`${file}: 10 concurrent cold calls issue one upstream fetch`, async () => {
-			const fetchMock = vi.fn(async () => reply(payload));
+			const fetchMock = vi.fn(async (input) => answer(input));
 			vi.stubGlobal('fetch', fetchMock);
 
 			const mod = await coldImport(file);
 			const results = await Promise.all(Array.from({ length: 10 }, () => build(mod)));
 
-			expect(fetchMock).toHaveBeenCalledTimes(1);
+			expect(fetchMock).toHaveBeenCalledTimes(upstreams);
+			// No upstream is fetched twice: the burst shares each feed's one call.
+			const urls = fetchMock.mock.calls.map(([u]) => String(u));
+			expect(new Set(urls).size).toBe(urls.length);
 			// Every caller gets the same resolved value, not a partial or a copy
 			// built from a second round trip.
 			for (const r of results) expect(r).toEqual(results[0]);
 		});
 
 		it(`${file}: a warm cache issues no further fetches`, async () => {
-			const fetchMock = vi.fn(async () => reply(payload));
+			const fetchMock = vi.fn(async (input) => answer(input));
 			vi.stubGlobal('fetch', fetchMock);
 
 			const mod = await coldImport(file);
 			await build(mod);
-			expect(fetchMock).toHaveBeenCalledTimes(1);
+			expect(fetchMock).toHaveBeenCalledTimes(upstreams);
 
 			await build(mod);
 			await build(mod);
-			expect(fetchMock).toHaveBeenCalledTimes(1);
+			expect(fetchMock).toHaveBeenCalledTimes(upstreams);
 		});
 
 		it(`${file}: a failed load is not cached and the next call retries`, async () => {
@@ -145,7 +157,7 @@ describe('api/defi builders de-duplicate concurrent cold loads', () => {
 			// never reach the caller as an error. What must still hold is that the
 			// failure itself is never cached.
 			let down = true;
-			const fetchMock = vi.fn(async () => (down ? reply({ error: 'upstream down' }, 503) : reply(payload)));
+			const fetchMock = vi.fn(async (input) => (down ? reply({ error: 'upstream down' }, 503) : answer(input)));
 			vi.stubGlobal('fetch', fetchMock);
 
 			const mod = await coldImport(file);
