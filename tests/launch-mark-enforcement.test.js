@@ -381,6 +381,10 @@ describe('POST /api/pump/launch-agent — brand-mark enforcement', () => {
 		sqlState.queue = [
 			[{ id: 'agent-1', name: 'Foo' }],  // resolveLaunchAgentId
 			[],                                  // conflict check (empty = no existing mint)
+			[],                                  // enforceSpendLimit: agent_custody_events history
+			[{ c1: 0, c10: 0 }],                // anomaly velocity: spends in the last 1 and 10 minutes
+			[],                                  // enforceSpendLimit: stamp the spend marker on agent meta
+			[{ id: 'reservation-1' }],           // reserveSpend: INSERT...SELECT within the daily SOL cap
 			// insert pump_agent_mints → returning the registered row
 			[{ id: 'row-1', mint: '3wsGroundMint1111111111111111111111', network: 'devnet', buyback_bps: 0, created_at: '2026-01-01T00:00:00Z' }],
 			// agent_actions insert has .catch → empty queue returns [] safely
