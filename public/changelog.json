@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-30T22:11:11.091Z",
+	"generated_at": "2026-10-30T23:03:25.397Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -39,6 +39,16 @@
 		{
 			"date": "2026-10-30",
 			"type": "update",
+			"title": "Choose the classic site or continue from the first screen",
+			"summary": "The welcome screen on three.ws now offers Continue, Walk in as your avatar, or Classic site. Picking Classic takes you to the original website and remembers the choice.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "update",
 			"title": "Community Meetup #3 is set for November 6 inside /play, hosted with IBM Community",
 			"summary": "The Three.ws User Group on IBM Community meets inside the $THREE home town again on Friday, November 6, 8 to 9 AM Pacific (16:00 to 17:00 UTC). /event carries the countdown and add-to-calendar, the world runs the agenda itself (a live agent build, Video to Motion, /forge, an agent paying for a tool, a community showcase, Q&A and a group photo with fireworks), and everyone in the world during the hour receives the Meetup Orbit Crown, a headwear souvenir granted only during that session.",
 			"link": "/blog/ibm-user-group-meetup-3",
@@ -54,6 +64,18 @@
 			"link": "/event",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-10-30",
+			"type": "update",
+			"title": "Link preview cards render again, Game-ready refine works, and the embed script is a third smaller",
+			"summary": "Since October 27 every three.ws link preview image (pages, agents, leaderboards) failed to render after an image library update that cannot load on our servers. Previews are back on the last working release, with the broken one blocked from returning. The Game-ready preset in Forge refine now reduces triangle count again instead of failing. The agent-3d embed script drops from 6.9 MB to 4.3 MB by loading 3D decoders only when a model needs them. Webhooks, payment probes and paid API relays that route through the network safety guard no longer fail with \"fetch failed\". The chat app, Forge desktop and the Robinhood Chain, SDK and example projects now run on current releases of their frameworks and build tools.",
+			"link": "/changelog",
+			"tags": [
+				"fix",
+				"improvement",
+				"infra"
 			]
 		},
 		{

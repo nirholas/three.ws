@@ -31,6 +31,14 @@
 			<description>three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.</description>
 		</item>
 		<item>
+			<title>Choose the classic site or continue from the first screen</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-30:Choose the classic site or continue from the first screen</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The welcome screen on three.ws now offers Continue, Walk in as your avatar, or Classic site. Picking Classic takes you to the original website and remembers the choice.</description>
+		</item>
+		<item>
 			<title>Community Meetup #3 is set for November 6 inside /play, hosted with IBM Community</title>
 			<link>https://three.ws/blog/ibm-user-group-meetup-3</link>
 			<guid isPermaLink="false">2026-10-30:Community Meetup #3 is set for November 6 inside /play, hosted with IBM Community</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A live event's souvenir used to be granted only when a player joined the event world, so anyone who came early for doors and was already standing in the plaza at the start time never received it unless they rejoined. Each world now checks its seated players every 15 seconds while an event is live and grants the souvenir to anyone who does not have it yet, with the same one-time card and the wardrobe updated in place.</description>
+		</item>
+		<item>
+			<title>Link preview cards render again, Game-ready refine works, and the embed script is a third smaller</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-10-30:Link preview cards render again, Game-ready refine works, and the embed script is a third smaller</guid>
+			<pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Since October 27 every three.ws link preview image (pages, agents, leaderboards) failed to render after an image library update that cannot load on our servers. Previews are back on the last working release, with the broken one blocked from returning. The Game-ready preset in Forge refine now reduces triangle count again instead of failing. The agent-3d embed script drops from 6.9 MB to 4.3 MB by loading 3D decoders only when a model needs them. Webhooks, payment probes and paid API relays that route through the network safety guard no longer fail with &quot;fetch failed&quot;. The chat app, Forge desktop and the Robinhood Chain, SDK and example projects now run on current releases of their frameworks and build tools.</description>
 		</item>
 		<item>
 			<title>Skill import reads YAML specs again, and payment checks run on the current Solana Pay</title>

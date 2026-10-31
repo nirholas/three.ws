@@ -14,6 +14,14 @@
 		},
 		{
 			"date": "2026-10-30",
+			"title": "Choose the classic site or continue from the first screen",
+			"summary": "The welcome screen on three.ws now offers Continue, Walk in as your avatar, or Classic site. Picking Classic takes you to the original website and remembers the choice.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-30",
 			"title": "Skill import reads YAML specs again, and payment checks run on the current Solana Pay",
 			"summary": "Importing a skill from a YAML OpenAPI spec failed with \"not valid YAML\" for every document, and the API routes that share the importer stopped loading after a parser upgrade. Both work again, with a test that parses a real YAML spec. Marketplace, skill, subscription, bundle and print-order payments are now verified with Solana Pay 1.x through one adapter, tested against real transaction bytes for split purchases, short payments, wrong references, wrong recipients and memos. The rest of the dependency tree is on current releases, and the few held back are documented with the reason.",
 			"tags": [
