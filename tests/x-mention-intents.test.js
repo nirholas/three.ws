@@ -320,9 +320,17 @@ describe('purity', () => {
 		expect(src).not.toMatch(IO_PATTERN);
 	});
 
-	it('the one module it imports performs no I/O and imports nothing', () => {
+	it('the one module it imports performs no I/O and imports only the pure address formatter', () => {
 		const src = read('src/launch/launch-model.js');
-		expect(importsOf(src)).toEqual([]);
+		expect(importsOf(src)).toEqual(['../shared/address.js']);
 		expect(src).not.toMatch(/\bfetch\s*\(|\bprocess\.|\brequire\s*\(|\bdocument\.|\bwindow\.|\blocalStorage\b/);
+	});
+
+	it('the address formatter imports nothing, does no I/O, and touches the DOM only inside addressElement', () => {
+		const src = read('src/shared/address.js');
+		expect(importsOf(src)).toEqual([]);
+		expect(src).not.toMatch(/\bfetch\s*\(|\bprocess\.|\brequire\s*\(|\bwindow\.|\blocalStorage\b/);
+		const outsideElement = src.replace(/export function addressElement[\s\S]*$/, '');
+		expect(outsideElement).not.toMatch(/\bdocument\b/);
 	});
 });
