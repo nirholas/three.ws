@@ -1,0 +1,452 @@
+{
+	"id": "microsoft",
+	"name": "Microsoft",
+	"order": 3,
+	"designation": "live on Microsoft Marketplace",
+	"designationEvidence": [
+		{
+			"type": "page",
+			"url": "https://three.ws/partners",
+			"contains": "three.ws is live on Microsoft Marketplace"
+		},
+		{
+			"type": "page",
+			"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+			"contains": "three.ws is now live on Microsoft Marketplace"
+		}
+	],
+	"page": "https://three.ws/blog/three-ws-microsoft-partnership",
+	"handle": "Microsoft",
+	"mark": null,
+	"forbidden": [
+		"endorsed by Microsoft",
+		"Microsoft endorses",
+		"Microsoft-endorsed",
+		"certified by Microsoft",
+		"Microsoft-certified",
+		"Microsoft certified",
+		"Microsoft recommends",
+		"Microsoft-recommended",
+		"official Microsoft partner",
+		"Microsoft Gold Partner",
+		"Gold Partner",
+		"Solutions Partner",
+		"Microsoft Solutions Partner",
+		"Microsoft Partner of the Year",
+		"Azure IP co-sell",
+		"co-sell",
+		"co-sell ready",
+		"joint customers",
+		"strategic partnership with Microsoft",
+		"Microsoft-backed",
+		"backed by Microsoft",
+		"Microsoft invests",
+		"Microsoft investment",
+		"acquired by Microsoft",
+		"runs on Azure",
+		"hosted on Azure",
+		"powered by Azure",
+		"Azure-hosted",
+		"Azure infrastructure",
+		"Azure credits",
+		"Azure consumption commitment",
+		"MACC",
+		"billed through Azure",
+		"Azure invoice",
+		"Azure bill",
+		"transactable offer",
+		"certified for Copilot",
+		"Copilot certified",
+		"built into Copilot",
+		"available in Copilot",
+		"inside Microsoft 365",
+		"Microsoft Teams app"
+	],
+	"guidance": "three.ws and Microsoft have announced a partnership, and three.ws is live on Microsoft Marketplace with a publisher profile. Say exactly that and nothing grander: no named Microsoft partner tier, designation, co-sell status, certification or endorsement, because none has been confirmed. Microsoft Marketplace is where Azure Marketplace and Microsoft AppSource now live together; the listing is a new way for enterprise teams to find three.ws, and nothing about the product forks for that channel. Microsoft open source (TRELLIS.2 from Microsoft Research, ONNX Runtime Web, Adaptive Cards) already runs in the stack: present those as dependencies three.ws uses under their own licenses, never as something Microsoft built for or runs for three.ws. Production runs on Google Cloud and Solana is the home chain, so never say three.ws runs on or is hosted on Azure, and never imply Microsoft endorses $THREE or any trading surface.",
+	"docs": [
+		"docs/microsoft.md",
+		"docs/partners.md",
+		"docs/partner-benefits.md",
+		"docs/listings.md"
+	],
+	"features": [
+		{
+			"id": "marketplace-listing",
+			"title": "three.ws is live on Microsoft Marketplace",
+			"surface": "https://three.ws/blog/three-ws-microsoft-partnership",
+			"covers": [
+				"/blog/three-ws-microsoft-partnership",
+				"/news/microsoft-partnership-marketplace",
+				"/partners"
+			],
+			"lane": "community",
+			"summary": "three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, the single storefront where Azure Marketplace and Microsoft AppSource now live together. An enterprise team can find three.ws inside a procurement flow it already trusts. Nothing about the product forks for the channel: the platform that runs at three.ws, 3D creation, an agent runtime with a body, the agent-3d web component, MCP tools and the Solana agent economy, is what a Microsoft customer gets. Solana remains the home chain; the listing is a new way in, not a new center of gravity.",
+			"docs": [
+				"docs/microsoft.md",
+				"docs/listings.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/blog/three-ws-microsoft-partnership",
+						"settle": 4000
+					},
+					{
+						"expect": "three.ws is now live on Microsoft Marketplace"
+					},
+					{
+						"hold": 2600,
+						"caption": "three.ws is live on Microsoft Marketplace"
+					},
+					{
+						"scroll": "What Microsoft Marketplace changes for buyers",
+						"ms": 1200,
+						"caption": "Found inside the storefront enterprises already use"
+					},
+					{
+						"expect": "Azure Marketplace and Microsoft AppSource now live together"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"scroll": "Nothing about the product forks for this channel",
+						"ms": 1200,
+						"caption": "The same platform that runs at three.ws"
+					},
+					{
+						"expect": "One tag to ship it"
+					},
+					{
+						"hold": 3500
+					},
+					{
+						"scroll": "Solana remains the home chain",
+						"ms": 1200,
+						"caption": "Solana stays the home chain"
+					},
+					{
+						"expect": "a new way in, not a new center of gravity"
+					},
+					{
+						"hold": 4000
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "three.ws and Microsoft have announced a partnership",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "three.ws and Microsoft have announced a partnership"
+						}
+					]
+				},
+				{
+					"says": "Microsoft Marketplace is the single storefront where Azure Marketplace and Microsoft AppSource now live together",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "Microsoft Marketplace is the single storefront where Azure Marketplace and Microsoft AppSource now live together"
+						}
+					]
+				},
+				{
+					"says": "nothing about the product forks for this channel",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "Nothing about the product forks for this channel"
+						}
+					]
+				},
+				{
+					"says": "the agent-3d web component drops a finished agent into any page, intranet or app",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "web component drops a finished agent into any page, intranet or app"
+						}
+					]
+				},
+				{
+					"says": "MCP servers, SDKs and plugins expose generation, rigging and animation to any AI client",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "MCP servers, SDKs and plugins expose generation, rigging and animation to any AI client"
+						}
+					]
+				},
+				{
+					"says": "Solana remains the home chain, and the listing is a new way in, not a new center of gravity",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "Solana remains the home chain"
+						},
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "a new way in, not a new center of gravity"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Microsoft announcement answers",
+					"url": "https://three.ws/blog/three-ws-microsoft-partnership"
+				}
+			]
+		},
+		{
+			"id": "microsoft-open-source-stack",
+			"title": "Microsoft open source already running in three.ws",
+			"surface": "https://three.ws/docs/microsoft",
+			"covers": [
+				"/docs/microsoft",
+				"workers/model-trellis2/",
+				"src/voice/wake-word.js",
+				"api/_lib/glance-adaptive.js"
+			],
+			"lane": "developer",
+			"summary": "Microsoft open source was in the three.ws stack before the partnership. TRELLIS.2 from Microsoft Research is the default image-to-3D lane, trellis2, on the self-hosted GPU fleet. ONNX Runtime Web runs speech-to-text and wake-word detection in the visitor's browser, so audio never leaves the machine. Adaptive Cards render the Glance agent cards for home screens and chat, TypeScript types every published SDK and Playwright drives the browser tests. The docs page names the file behind each one, and all of them are dependencies used under their own licenses.",
+			"docs": [
+				"docs/microsoft.md",
+				"docs/how-forge-works.md",
+				"docs/glance.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/docs/microsoft",
+						"settle": 4000
+					},
+					{
+						"expect": "three.ws is live on"
+					},
+					{
+						"hold": 2400,
+						"caption": "Microsoft open source, already in the stack"
+					},
+					{
+						"scroll": "Already built on Microsoft technology",
+						"ms": 1400,
+						"caption": "TRELLIS.2 is the default image-to-3D lane"
+					},
+					{
+						"expect": "The default image-to-3D lane"
+					},
+					{
+						"hold": 3500
+					},
+					{
+						"scroll": "so audio never leaves the machine",
+						"ms": 1200,
+						"caption": "Speech-to-text runs in your browser"
+					},
+					{
+						"expect": "so audio never leaves the machine"
+					},
+					{
+						"hold": 3000
+					},
+					{
+						"scroll": "Adaptive Cards",
+						"ms": 1000,
+						"caption": "Adaptive Cards render the Glance cards"
+					},
+					{
+						"hold": 4000
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "TRELLIS.2 from Microsoft Research is the default image-to-3D lane on the self-hosted GPU fleet",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/microsoft",
+							"contains": "The default image-to-3D lane"
+						},
+						{
+							"type": "file",
+							"path": "workers/model-trellis2/README.md",
+							"contains": "https://github.com/microsoft/TRELLIS.2"
+						}
+					]
+				},
+				{
+					"says": "ONNX Runtime Web runs speech-to-text and wake-word detection in the visitor's browser, so audio never leaves the machine",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/microsoft",
+							"contains": "so audio never leaves the machine"
+						},
+						{
+							"type": "file",
+							"path": "src/voice/wake-word.js",
+							"contains": "import('onnxruntime-web/wasm')"
+						}
+					]
+				},
+				{
+					"says": "Adaptive Cards render the Glance agent cards for home screens and chat",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/microsoft",
+							"contains": "agent cards for home screens and chat"
+						}
+					]
+				},
+				{
+					"says": "Microsoft open source was in the three.ws stack before the partnership",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/docs/microsoft",
+							"contains": "Microsoft open source was in the three.ws stack before the partnership"
+						}
+					]
+				},
+				{
+					"says": "TypeScript types every published SDK and Playwright drives the browser tests",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/blog/three-ws-microsoft-partnership",
+							"contains": "TypeScript types every SDK we publish, and Playwright drives our browser tests"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Microsoft docs page answers",
+					"url": "https://three.ws/docs/microsoft"
+				}
+			]
+		},
+		{
+			"id": "partner-benefits",
+			"title": "What the Microsoft partnership brings builders",
+			"surface": "https://three.ws/partners/benefits",
+			"covers": [
+				"/partners/benefits"
+			],
+			"lane": "community",
+			"summary": "The partner benefits page spells out what the Microsoft partnership brings someone building on three.ws. Enterprise teams can find three.ws, its offers and a contact path inside the Microsoft Marketplace storefront they already buy from. TRELLIS.2 from Microsoft Research is the default image-to-3D lane behind the forge, so a single photo becomes a textured 3D asset. On-device speech-to-text and wake-word detection run through ONNX Runtime Web in the browser, so a visitor's audio never leaves their machine.",
+			"docs": [
+				"docs/partner-benefits.md",
+				"docs/microsoft.md"
+			],
+			"scenario": {
+				"format": "square",
+				"steps": [
+					{
+						"goto": "https://three.ws/partners/benefits#microsoft",
+						"settle": 4000
+					},
+					{
+						"expect": "three.ws is listed on Microsoft Marketplace"
+					},
+					{
+						"hold": 2600,
+						"caption": "What the partnership brings builders"
+					},
+					{
+						"scroll": "inside the Microsoft Marketplace storefront they already buy from",
+						"ms": 1000,
+						"caption": "Enterprise teams find three.ws where they already buy"
+					},
+					{
+						"hold": 3200
+					},
+					{
+						"scroll": "behind the forge",
+						"ms": 1000,
+						"caption": "TRELLIS.2 turns one photo into 3D"
+					},
+					{
+						"hold": 3200
+					},
+					{
+						"scroll": "so the audio never leaves your machine",
+						"ms": 1000,
+						"caption": "Voice runs on your device"
+					},
+					{
+						"expect": "so the audio never leaves your machine"
+					},
+					{
+						"hold": 4000
+					}
+				]
+			},
+			"facts": [
+				{
+					"says": "enterprise teams can find three.ws, its offers and a contact path inside the Microsoft Marketplace storefront they already buy from",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners/benefits",
+							"contains": "Enterprise teams can find three.ws, its offers and a contact path inside the Microsoft Marketplace storefront they already buy from"
+						}
+					]
+				},
+				{
+					"says": "TRELLIS.2 from Microsoft Research is the default image-to-3D lane on the self-hosted GPU fleet behind the forge",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners/benefits",
+							"contains": "TRELLIS.2 from Microsoft Research is the default image-to-3D lane on the self-hosted GPU fleet behind the forge"
+						}
+					]
+				},
+				{
+					"says": "on-device speech-to-text and wake-word detection run in your browser through ONNX Runtime Web, so the audio never leaves your machine",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners/benefits",
+							"contains": "run in your browser through ONNX Runtime Web, so the audio never leaves your machine"
+						}
+					]
+				},
+				{
+					"says": "three.ws and Microsoft announced a partnership in October 2026",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners/benefits",
+							"contains": "three.ws and Microsoft announced a partnership in October 2026"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the partner benefits page answers",
+					"url": "https://three.ws/partners/benefits"
+				}
+			]
+		}
+	]
+}

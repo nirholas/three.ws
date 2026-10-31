@@ -1,7 +1,7 @@
 {
 	"id": "aws",
 	"name": "Amazon Web Services",
-	"order": 3,
+	"order": 4,
 	"designation": "AWS Partner",
 	"designationEvidence": [
 		{
