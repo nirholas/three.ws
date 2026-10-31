@@ -628,7 +628,7 @@
 		"@gltf-transform/functions": "^4.5.0",
 		"@grpc/grpc-js": "^1.14.6",
 		"@grpc/proto-loader": "^0.8.1",
-		"@huggingface/transformers": "^4.3.1",
+		"@huggingface/transformers": "^4.3.2",
 		"@jaames/iro": "^5.5.2",
 		"@jup-ag/api": "^6.0.48",
 		"@kamino-finance/farms-sdk": "^5.0.0",
