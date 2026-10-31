@@ -1568,7 +1568,7 @@ export const RING_CATALOG = [
 		network: 'solana',
 		autobuy: false,
 		weight: 0,
-		businessEffect: 'Moves the calling account to a paid developer plan for the quoted USDC and returns a scoped API key that can never spend.',
+		businessEffect: 'Moves the calling account to a paid developer plan for the quoted price and returns a scoped API key that can never spend.',
 		note: 'autobuy:false - a settled call changes a real account\'s plan and mints an API key. It needs a bearer token with agents:write and a ?plan= choice, and the price is that account\'s own quote, so a ring call without both is refused before settlement.',
 	},
 	{
@@ -1585,7 +1585,7 @@ export const RING_CATALOG = [
 		network: null,
 		autobuy: false,
 		weight: 0,
-		businessEffect: 'Buys one call of a marketplace skill over x402, MPP, A2A or AP2; settles USDC to the skill author and the platform split and records the invocation receipt.',
+		businessEffect: 'Buys one call of a marketplace skill over x402, MPP, A2A or AP2; settles the payment to the skill author and the platform split and records the invocation receipt.',
 		note: 'autobuy:false - the route is /api/skills/<id>/invoke for a specific live listing, priced and paid out per skill to a third-party author wallet, so there is no fixed URL a loop can call. Verify once against a known public priced skill.',
 	},
 ];

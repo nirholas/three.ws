@@ -1896,7 +1896,7 @@ On `mcp-agent` (pays from the agent wallet):
 
 ### Prediction markets (`predictions`)
 
-Goal: find a prediction market, price a position with a preview and take it with confirmation, settled in USDC on Solana.
+Goal: find a prediction market, price a position with a preview and take it with confirmation, settled on Solana.
 
 On `mcp`:
 
@@ -1904,7 +1904,7 @@ On `mcp`:
 
 On `mcp-agent` (pays from the agent wallet):
 
-1. `read_resource` on `three://agents/{agentId}/wallet`: the USDC balance and limits.
+1. `read_resource` on `three://agents/{agentId}/wallet`: the balance and limits.
 2. `predictions_events` with the topic: matching markets with implied probabilities, volume and close time.
 3. `predictions_event` for the event the user picks: the resolution rules and recent price history.
 4. `predictions_open_preview` with the market, side and stake: the outcome, average price, contracts, fees, payout and maximum loss.
