@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
-	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride,
+	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride, groupPhotoState,
 	PHASE, SOON_MS, PRESHOW_MS, AFTERGLOW_MS, BUCKET_MS,
+	PHOTO_STAGE, PHOTO_GATHER_MS, PHOTO_COUNTDOWN_MS, PHOTO_SHUTTER_GRACE_MS,
 } from '../src/game/meetup-schedule.js';
 
 const START = Date.parse('2026-08-07T17:00:00Z');
@@ -161,5 +162,40 @@ describe('fireworkPlan', () => {
 			expect(l.atMs).toBeLessThan(9 * BUCKET_MS);
 			expect(l.apex).toBeGreaterThan(10);
 		}
+	});
+});
+
+describe('groupPhotoState', () => {
+	const ev = parseEvent({ ...DOC, groupPhoto: { atMin: 58, emote: 'av-celebrating' } });
+	const SHUTTER = START + 58 * 60_000;
+
+	it('parses the shutter relative to the start, with its emote', () => {
+		expect(ev.groupPhoto).toEqual({ atMin: 58, emote: 'av-celebrating' });
+		expect(groupPhotoState(ev, SHUTTER - 5000).shutterAt).toBe(SHUTTER);
+	});
+
+	it('walks gather, countdown, shutter, done around the one shared instant', () => {
+		expect(groupPhotoState(ev, SHUTTER - PHOTO_GATHER_MS - 1).stage).toBe(PHOTO_STAGE.NONE);
+		expect(groupPhotoState(ev, SHUTTER - PHOTO_GATHER_MS + 1).stage).toBe(PHOTO_STAGE.GATHER);
+		expect(groupPhotoState(ev, SHUTTER - PHOTO_COUNTDOWN_MS + 1).stage).toBe(PHOTO_STAGE.COUNTDOWN);
+		expect(groupPhotoState(ev, SHUTTER).stage).toBe(PHOTO_STAGE.SHUTTER);
+		expect(groupPhotoState(ev, SHUTTER + PHOTO_SHUTTER_GRACE_MS - 1).stage).toBe(PHOTO_STAGE.SHUTTER);
+		expect(groupPhotoState(ev, SHUTTER + PHOTO_SHUTTER_GRACE_MS).stage).toBe(PHOTO_STAGE.DONE);
+		expect(groupPhotoState(ev, SHUTTER - 4200).msToShutter).toBe(4200);
+	});
+
+	it('moves with the ?meetup= preview shift', () => {
+		const now = Date.parse('2030-01-01T00:00:00Z');
+		const shifted = applyPreviewOverride(ev, '?meetup=now', now);
+		expect(groupPhotoState(shifted, now + 20_000 + 58 * 60_000).stage).toBe(PHOTO_STAGE.SHUTTER);
+	});
+
+	it('defaults the emote and rejects a shutter outside the live window or a bad emote name', () => {
+		expect(parseEvent({ ...DOC, groupPhoto: { atMin: 10 } }).groupPhoto.emote).toBe('av-cheering');
+		expect(parseEvent({ ...DOC, groupPhoto: { atMin: 10, emote: '<img>' } }).groupPhoto.emote).toBe('av-cheering');
+		expect(parseEvent({ ...DOC, groupPhoto: { atMin: 120 } }).groupPhoto).toBeNull();
+		expect(parseEvent({ ...DOC, groupPhoto: { atMin: -1 } }).groupPhoto).toBeNull();
+		expect(parseEvent(DOC).groupPhoto).toBeNull();
+		expect(groupPhotoState(parseEvent(DOC), START).stage).toBe(PHOTO_STAGE.NONE);
 	});
 });

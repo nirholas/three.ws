@@ -57,6 +57,29 @@
 .cc-meetup-banner-title { font-size: 21px; font-weight: 900; letter-spacing: 0.01em; margin-top: 6px; }
 .cc-meetup-banner-sub { font-size: 13.5px; font-weight: 600; color: #ffce5c; margin-top: 4px; }
 
+/* Group photo countdown: the whole plaza sees the same 10..1. Never takes the
+   pointer, so players can still turn to face the crowd while it runs. */
+#cc-meetup-shutter {
+	position: fixed; top: 18%; left: 50%; transform: translateX(-50%);
+	z-index: 210; pointer-events: none; text-align: center; color: #fff;
+}
+.cc-meetup-shutter-num {
+	font-size: clamp(72px, 16vw, 148px); font-weight: 900; line-height: 1;
+	font-variant-numeric: tabular-nums; color: #ffce5c;
+	text-shadow: 0 0 36px rgba(255, 206, 92, 0.65), 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+.cc-meetup-shutter-num--tick { animation: cc-meetup-shutter-pop 900ms var(--ease-standard) both; }
+@keyframes cc-meetup-shutter-pop {
+	0% { transform: scale(1.35); opacity: 0.3; }
+	30% { transform: scale(1); opacity: 1; }
+	100% { transform: scale(0.94); opacity: 0.85; }
+}
+.cc-meetup-shutter-cap {
+	margin-top: 8px; display: inline-block; padding: 6px 16px; border-radius: 999px;
+	font-size: 15px; font-weight: 800; letter-spacing: 0.02em;
+	background: rgba(18, 14, 4, 0.82); border: 1px solid rgba(255, 206, 92, 0.55);
+}
+
 /* Right-docked agenda drawer. */
 #cc-meetup-panel {
 	position: fixed; top: 0; right: 0; bottom: 0; z-index: 120;
@@ -154,4 +177,5 @@ body.is-zen #cc-meetup-banner { display: none; }
 @media (prefers-reduced-motion: reduce) {
 	.cc-meetup-when .cc-meetup-live-dot { animation: none; }
 	#cc-meetup-panel { transition: none; }
+	.cc-meetup-shutter-num--tick { animation: none; }
 }

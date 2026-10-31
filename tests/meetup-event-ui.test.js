@@ -12,7 +12,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MeetupEvent } from '../src/game/meetup-event.js';
-import { parseEvent, PRESHOW_MS, SOON_MS } from '../src/game/meetup-schedule.js';
+import { parseEvent, PRESHOW_MS, SOON_MS, PHOTO_GATHER_MS } from '../src/game/meetup-schedule.js';
 
 // Mirrors MAX_LIVE_BURSTS in src/game/meetup-event.js: the ceiling a single
 // frame may ever launch, which is what the backlog clamp has to respect.
@@ -52,6 +52,8 @@ function fakeCc({ mint = HOME, phase = 'world' } = {}) {
 		ui: { toast: vi.fn() },
 		env: { flashRing: vi.fn() },
 		_openBuy: vi.fn(),
+		_emote: vi.fn(),
+		_openPhotoMode: vi.fn(),
 	};
 }
 
@@ -278,6 +280,97 @@ describe('fireworks', () => {
 		step(m, START + 68_000 + 10 * 60_000); // ten minutes of missed frames
 		const burst = m.fireworks.launches.length - beforeGap;
 		expect(burst).toBeLessThanOrEqual(MAX_LIVE_BURSTS);
+		m.destroy();
+	});
+});
+
+describe('group photo', () => {
+	const PHOTO_EVENT = parseEvent({
+		id: 'three-meetup-photo',
+		name: 'Meetup with a group photo',
+		startsAt: '2026-08-07T17:00:00Z',
+		endsAt: '2026-08-07T18:00:00Z',
+		agenda: [{ atMin: 0, title: 'Doors open' }],
+		groupPhoto: { atMin: 58, emote: 'av-celebrating' },
+	});
+	const SHUTTER = START + 58 * 60_000;
+
+	it('warns a minute out, counts down, poses, then fires the photo once', () => {
+		const cc = fakeCc();
+		const m = mount(cc, PHOTO_EVENT);
+		step(m, SHUTTER - PHOTO_GATHER_MS - 5000);
+		expect(document.getElementById('cc-meetup-banner')).toBeNull();
+
+		step(m, SHUTTER - PHOTO_GATHER_MS + 1000);
+		expect(document.getElementById('cc-meetup-banner').textContent).toContain('Group photo in 1 minute');
+
+		step(m, SHUTTER - 7200);
+		const overlay = document.getElementById('cc-meetup-shutter');
+		expect(overlay.querySelector('.cc-meetup-shutter-num').textContent).toBe('8');
+		expect(cc._emote).not.toHaveBeenCalled();
+
+		step(m, SHUTTER - 2500);
+		expect(overlay.querySelector('.cc-meetup-shutter-num').textContent).toBe('3');
+		expect(cc._emote).toHaveBeenCalledWith('av-celebrating');
+		step(m, SHUTTER - 1500);
+		expect(cc._emote).toHaveBeenCalledTimes(1);
+		expect(cc._openPhotoMode).not.toHaveBeenCalled();
+
+		step(m, SHUTTER + 100);
+		expect(document.getElementById('cc-meetup-shutter')).toBeNull();
+		expect(cc._openPhotoMode).toHaveBeenCalledTimes(1);
+		step(m, SHUTTER + 900, 3);
+		expect(cc._openPhotoMode).toHaveBeenCalledTimes(1);
+		m.destroy();
+	});
+
+	it('takes no photo for a tab that was away through the shared instant', () => {
+		const cc = fakeCc();
+		const m = mount(cc, PHOTO_EVENT);
+		step(m, SHUTTER - 5000);
+		step(m, SHUTTER + 60_000);
+		expect(cc._openPhotoMode).not.toHaveBeenCalled();
+		expect(document.getElementById('cc-meetup-shutter')).toBeNull();
+		m.destroy();
+	});
+
+	it('runs nothing when the event has no group photo', () => {
+		const cc = fakeCc();
+		const m = mount(cc);
+		step(m, START + 58 * 60_000 - 3000);
+		step(m, START + 58 * 60_000 + 100);
+		expect(document.getElementById('cc-meetup-shutter')).toBeNull();
+		expect(cc._openPhotoMode).not.toHaveBeenCalled();
+		m.destroy();
+	});
+});
+
+describe('live headcount', () => {
+	it('shows the measured count for this world and hides it until one arrives', async () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+			ok: true, json: async () => ({ ok: true, coin: HOME, players: 1204 }),
+		});
+		const m = mount();
+		step(m, START + 60_000);
+		expect(document.getElementById('cc-meetup-chip').textContent).not.toContain('here');
+		expect(fetchSpy.mock.calls[0][0]).toBe(`/api/play/population?coin=${HOME}`);
+		await vi.waitFor(() => expect(m._here).toBe(1204));
+		step(m, START + 61_000);
+		expect(document.getElementById('cc-meetup-chip').textContent).toContain(`${(1204).toLocaleString()} here`);
+		m.destroy();
+	});
+
+	it('keeps the number hidden when the multiplayer server does not answer', async () => {
+		const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+			ok: true, json: async () => ({ ok: false, reason: 'unavailable' }),
+		});
+		const m = mount();
+		step(m, START + 60_000);
+		await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+		await Promise.resolve();
+		step(m, START + 61_000);
+		expect(m._here).toBeNull();
+		expect(document.getElementById('cc-meetup-chip').textContent).not.toContain('here');
 		m.destroy();
 	});
 });

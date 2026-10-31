@@ -16,6 +16,13 @@
 //      the event title and date, and shares/downloads it.
 //   5. A live $THREE pulse row (price, 24h, market cap) off /api/three-signal,
 //      plus a one-tap Buy $THREE into the app's existing trade widget.
+//   6. A synchronized group photo when the config sets `groupPhoto`: a
+//      one-minute warning, a full-screen 10..1 every client runs off the same
+//      wall clock, every avatar striking the configured emote three seconds
+//      out (sent over the normal emote channel, so the crowd sees it), and the
+//      commemorative photo firing on its own at the shared instant.
+//   7. A live headcount ("N here") off /api/play/population for this world, a
+//      measured number from the multiplayer matchmaker, never an invented one.
 //
 // Config comes from /event.json, the SAME file event-countdown.js reads, so the
 // lobby banner, the wayfinding pill, and this layer can never disagree about
@@ -29,11 +36,14 @@ import './meetup-event.css';
 import { isHomeTown } from './home-town.js';
 import { getPowerSaver } from '../shared/frame-governor.js';
 import {
-	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride, PHASE, BUCKET_MS,
+	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride, groupPhotoState,
+	PHASE, BUCKET_MS, PHOTO_STAGE, PHOTO_POSE_MS,
 } from './meetup-schedule.js';
 
 const CONFIG_URL = '/event.json';
 const SIGNAL_URL = '/api/three-signal';
+const POPULATION_URL = '/api/play/population';
+const POPULATION_POLL_MS = 20_000;
 const REFRESH_MS = 500;           // DOM refresh cadence
 const FINALE_MS = 15 * 60 * 1000; // the closing barrage window
 const RING_RADIUS = 38;           // fireworks launch ring around the plaza
@@ -101,6 +111,10 @@ export class MeetupEvent {
 		this._lastFrame = performance.now();
 		this._signal = null;
 		this._signalTimer = 0;
+		this._here = null;         // measured headcount in this world, null until read
+		this._popTimer = 0;
+		this.shutterOverlay = null;
+		this._photo = { gathered: false, posed: false, volleyed: false, shot: false };
 		this._raf = 0;
 		this._loop = this._loop.bind(this);
 		this._raf = requestAnimationFrame(this._loop);
@@ -130,6 +144,7 @@ export class MeetupEvent {
 
 		if (!this.mounted) this._mount(state);
 		this._tickMoments(state);
+		this._tickGroupPhoto();
 		this._tickFireworks(dt, state);
 
 		this._acc += dt * 1000;
@@ -157,6 +172,8 @@ export class MeetupEvent {
 		]);
 		document.body.appendChild(this.chip);
 		this._refreshChip(state);
+		this._refreshPopulation();
+		this._popTimer = setInterval(() => this._refreshPopulation(), POPULATION_POLL_MS);
 		// Seed transition tracking so joining mid-event never replays the go-live
 		// moment or the current segment's banner.
 		if (this._prevPhase == null) {
@@ -173,10 +190,14 @@ export class MeetupEvent {
 		this._closePanel(true);
 		this.panel?.remove(); this.panel = null;
 		this.fireworks?.dispose(); this.fireworks = null;
+		this.shutterOverlay?.remove(); this.shutterOverlay = null;
 		this._queue = [];
 		this._lastShowMs = 0;
 		clearInterval(this._signalTimer);
 		this._signalTimer = 0;
+		clearInterval(this._popTimer);
+		this._popTimer = 0;
+		this._here = null;
 	}
 
 	destroy() {
@@ -198,12 +219,36 @@ export class MeetupEvent {
 		if (state.phase === PHASE.LIVE) {
 			const nxt = state.next ? ` · next: ${state.next.icon || ''} ${formatCountdown(state.msToNext)}` : '';
 			this._chipWhen.innerHTML = '';
-			this._chipWhen.append(el('span', { class: 'cc-meetup-live-dot', 'aria-hidden': 'true' }), `LIVE${nxt}`);
+			this._chipWhen.append(el('span', { class: 'cc-meetup-live-dot', 'aria-hidden': 'true' }), `LIVE${this._hereLabel(' · ')}${nxt}`);
 		} else if (state.phase === PHASE.AFTERGLOW) {
 			this._chipWhen.textContent = 'That was the meetup. Grab a photo';
 		} else {
-			this._chipWhen.textContent = `Starts in ${formatCountdown(state.msToStart)}`;
+			this._chipWhen.textContent = `Starts in ${formatCountdown(state.msToStart)}${this._hereLabel(' · ')}`;
 		}
+	}
+
+	// "1,204 here", or nothing until a real read arrives. Zero reads as nothing
+	// too: the player is standing in the world, so a zero is a lagging count.
+	_hereLabel(sep = '') {
+		return this._here > 0 ? `${sep}${this._here.toLocaleString()} here` : '';
+	}
+
+	async _refreshPopulation() {
+		if (document.hidden) return;
+		const mint = this.cc.coin?.mint;
+		if (!mint) return;
+		try {
+			const res = await fetch(`${POPULATION_URL}?coin=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
+			if (!res.ok) return;
+			const body = await res.json();
+			// ok:false means the multiplayer server did not answer: keep the last
+			// measured number rather than painting a guess.
+			if (body?.ok !== true || !this.mounted) return;
+			const n = Math.floor(Number(body.players));
+			if (!Number.isFinite(n) || n < 0) return;
+			this._here = n;
+			this._refreshChip(eventState(this.ev, Date.now()));
+		} catch { /* the count stays at its last measured value, or hidden */ }
 	}
 
 	// ------------------------------------------------------------------ panel
@@ -268,7 +313,7 @@ export class MeetupEvent {
 	_refreshPanel(state) {
 		if (!this.panel) return;
 		if (state.phase === PHASE.LIVE) {
-			this._panelWhen.textContent = `LIVE · ends in ${formatCountdown(state.msToEnd)}`;
+			this._panelWhen.textContent = `LIVE${this._hereLabel(' · ')} · ends in ${formatCountdown(state.msToEnd)}`;
 		} else if (state.phase === PHASE.AFTERGLOW) {
 			this._panelWhen.textContent = 'Just wrapped. Thanks for coming';
 		} else {
@@ -362,6 +407,62 @@ export class MeetupEvent {
 		this.banner.classList.add('cc-meetup-banner--show');
 		clearTimeout(this._bannerTimer);
 		this._bannerTimer = setTimeout(() => this.banner?.classList.remove('cc-meetup-banner--show'), 4500);
+	}
+
+	// ------------------------------------------------------------ group photo
+	// One shared shutter for the whole plaza. Every step is derived from the wall
+	// clock (groupPhotoState), so a thousand clients count down and fire together
+	// with no packet; the only network traffic is each avatar's emote, which goes
+	// out over the normal emote channel so neighbours see the crowd pose. Each
+	// step fires at most once per client. A tab that was hidden through the
+	// instant comes back to DONE and fires nothing: a photo of a moment the
+	// player missed is not the shared moment.
+	_tickGroupPhoto() {
+		const gp = groupPhotoState(this.ev, Date.now());
+		const p = this._photo;
+		if (gp.stage === PHOTO_STAGE.GATHER && !p.gathered) {
+			p.gathered = true;
+			this._moment('📸', 'Group photo in 1 minute', 'Gather at the totem. Everyone’s shutter fires together');
+		}
+		if (gp.stage === PHOTO_STAGE.COUNTDOWN) {
+			this._showShutterCountdown(gp.msToShutter);
+			if (gp.msToShutter <= PHOTO_POSE_MS && !p.posed) {
+				p.posed = true;
+				try { this.cc._emote?.(gp.emote); } catch { /* the pose is a flourish, never a blocker */ }
+			}
+			if (gp.msToShutter <= PHOTO_POSE_MS && !p.volleyed) {
+				// Shells launched now are bursting overhead when the shutter fires.
+				p.volleyed = true;
+				this._volley(8, 1200);
+			}
+		} else if (this.shutterOverlay) {
+			this.shutterOverlay.remove();
+			this.shutterOverlay = null;
+		}
+		if (gp.stage === PHOTO_STAGE.SHUTTER && !p.shot) {
+			p.shot = true;
+			if (!document.hidden) this._capturePhoto();
+		}
+		if (gp.stage === PHOTO_STAGE.DONE) p.shot = true;
+	}
+
+	_showShutterCountdown(msToShutter) {
+		if (!this.shutterOverlay) {
+			this._closePanel(true);
+			this.shutterOverlay = el('div', { id: 'cc-meetup-shutter', role: 'status', 'aria-live': 'polite' }, [
+				this._shutterNum = el('div', { class: 'cc-meetup-shutter-num' }),
+				el('div', { class: 'cc-meetup-shutter-cap', text: 'Group photo. Face the crowd!' }),
+			]);
+			document.body.appendChild(this.shutterOverlay);
+		}
+		const n = String(Math.max(1, Math.ceil(msToShutter / 1000)));
+		if (this._shutterNum.textContent !== n) {
+			this._shutterNum.textContent = n;
+			// Restart the pop animation on each new digit.
+			this._shutterNum.classList.remove('cc-meetup-shutter-num--tick');
+			void this._shutterNum.offsetWidth;
+			this._shutterNum.classList.add('cc-meetup-shutter-num--tick');
+		}
 	}
 
 	// --------------------------------------------------------------- fireworks

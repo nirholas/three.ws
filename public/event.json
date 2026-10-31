@@ -7,6 +7,7 @@
 	"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
 	"linkLabel": "Join the meetup",
 	"souvenir": { "cosmeticId": "orbit-crown-meetup-3" },
+	"groupPhoto": { "atMin": 58, "emote": "av-cheering" },
 	"agenda": [
 		{ "atMin": 0, "title": "Doors open in the plaza", "detail": "Welcome from IBM Community and the team", "icon": "👋" },
 		{ "atMin": 6, "title": "Live build: one sentence to a rigged agent", "detail": "Then we wear it", "icon": "🧍" },
@@ -15,6 +16,6 @@
 		{ "atMin": 27, "title": "An agent pays for a tool", "detail": "At the Agent Exchange", "icon": "🧾" },
 		{ "atMin": 33, "title": "Community showcase", "detail": "Members show what they brought", "icon": "🎤" },
 		{ "atMin": 43, "title": "Open Q&A and what ships next", "detail": "Ask anything", "icon": "💬" },
-		{ "atMin": 55, "title": "Group photo", "detail": "Gather at the totem", "icon": "📸" }
+		{ "atMin": 55, "title": "Group photo", "detail": "Gather at the totem. One shared shutter at the 58th minute", "icon": "📸" }
 	]
 }

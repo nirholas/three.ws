@@ -51,7 +51,60 @@ export function parseEvent(doc) {
 		startsAt,
 		endsAt,
 		agenda,
+		groupPhoto: parseGroupPhoto(doc.groupPhoto, endsAt - startsAt),
 	};
+}
+
+// The synchronized group photo: `"groupPhoto": { "atMin": 58, "emote": "wave" }`
+// in /event.json. Kept relative to the start (like agenda beats) so the
+// ?meetup= preview shift moves it with the rest of the schedule. A shutter
+// outside the live window, or a missing block, means no group photo.
+// The pose has to still be playing when the shutter fires, on this client and on
+// every neighbour that receives it a network hop later. av-cheering runs 6.8 s,
+// comfortably past the PHOTO_POSE_MS lead; a short clip such as wave (1 s) or
+// celebrate (1.9 s) is back to idle before the photo is taken.
+const DEFAULT_PHOTO_EMOTE = 'av-cheering';
+
+function parseGroupPhoto(raw, durationMs) {
+	if (!raw || typeof raw !== 'object') return null;
+	const atMin = Number(raw.atMin);
+	if (!Number.isFinite(atMin) || atMin < 0 || atMin * 60000 >= durationMs) return null;
+	const emote = typeof raw.emote === 'string' && /^[a-z0-9-]{1,40}$/.test(raw.emote) ? raw.emote : DEFAULT_PHOTO_EMOTE;
+	return { atMin, emote };
+}
+
+// Group photo stages, in order. GATHER is the one-minute warning, COUNTDOWN the
+// on-screen 10..1, SHUTTER a short grace after the instant so a frame that
+// lands a little late still fires, DONE everything after.
+export const PHOTO_STAGE = {
+	NONE: 'none',
+	GATHER: 'gather',
+	COUNTDOWN: 'countdown',
+	SHUTTER: 'shutter',
+	DONE: 'done',
+};
+
+export const PHOTO_GATHER_MS = 60 * 1000;
+export const PHOTO_COUNTDOWN_MS = 10 * 1000;
+export const PHOTO_POSE_MS = 3000;          // avatars strike the pose this long before the shutter
+export const PHOTO_SHUTTER_GRACE_MS = 2000;
+
+// Where the shared shutter stands at `now`. Every client derives the same answer
+// from the same config and wall clock, so the whole plaza counts down and fires
+// together without a packet, the same trick fireworkPlan uses.
+export function groupPhotoState(event, now) {
+	const gp = event?.groupPhoto;
+	if (!gp) return { stage: PHOTO_STAGE.NONE, shutterAt: 0, msToShutter: 0, emote: null };
+	const t = Number(now) || 0;
+	const shutterAt = event.startsAt + gp.atMin * 60000;
+	const msToShutter = shutterAt - t;
+	let stage;
+	if (msToShutter > PHOTO_GATHER_MS) stage = PHOTO_STAGE.NONE;
+	else if (msToShutter > PHOTO_COUNTDOWN_MS) stage = PHOTO_STAGE.GATHER;
+	else if (msToShutter > 0) stage = PHOTO_STAGE.COUNTDOWN;
+	else if (msToShutter > -PHOTO_SHUTTER_GRACE_MS) stage = PHOTO_STAGE.SHUTTER;
+	else stage = PHOTO_STAGE.DONE;
+	return { stage, shutterAt, msToShutter: Math.max(0, msToShutter), emote: gp.emote };
 }
 
 // The full derived state for a moment in time. Everything the UI needs in one
