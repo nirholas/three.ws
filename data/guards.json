@@ -1101,6 +1101,127 @@
 			}
 		},
 		{
+			"id": "check-cron-budget-wiring",
+			"script": "scripts/check-cron-budget-wiring.mjs",
+			"npm": "check:cron-budget-wiring",
+			"title": "Cron time budget wiring",
+			"protects": "Every cron that vercel.json grants more than the 120s default exports that budget and passes it into wrapCron.",
+			"why": "A budget declared in vercel.json is not a budget the handler receives. Two crons declared 300s without passing maxDurationMs, so wrapCron fell back to 120s and answered 503 cron_timeout on every long run, found by hand from a log signature. Ten more unwired handlers turned up in the follow-up sweep.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A 300s cron that exports its budget but never passes it into wrapCron.",
+				"violation": {
+					"write": {
+						"api/cron/x402-ring-leak-scan.js": "export const maxDuration = 300;\nexport default async function handler() {}\n"
+					}
+				},
+				"expect": "never passes"
+			}
+		},
+		{
+			"id": "check-cli-scripts",
+			"script": "scripts/sign-cli-scripts.mjs",
+			"npm": "check:cli-scripts",
+			"title": "Hosted CLI script signatures",
+			"protects": "Every public/cli/*.sh has a checksum and a valid ed25519 signature that match its exact bytes.",
+			"why": "Users pipe these scripts straight into a shell. An edit that skips re-signing leaves a checksum or signature that no longer matches, so verification fails for every user, or worse, nobody verifies.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "An installer script edited without re-signing it.",
+				"violation": {
+					"write": {
+						"public/cli/install.sh": "#!/bin/sh\necho guard-proof tampered installer\n"
+					}
+				},
+				"expect": "does not match the file"
+			}
+		},
+		{
+			"id": "test:mcp-surface",
+			"script": "tests/mcp-tool-quality.test.js",
+			"npm": "test:mcp-surface",
+			"title": "MCP tool annotations and prompt references",
+			"protects": "Every tool on every MCP server sets all four hint booleans and carries a when-to-use sentence, and prompts only reference tools that exist.",
+			"why": "The MCP spec defaults an omitted destructiveHint or openWorldHint to true, so a missing hint is a claim nobody made. Agents pick tools from descriptions alone.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "live",
+				"reason": "The suite enumerates every hosted and stdio MCP server in process and asserts over the combined wire payload. The proof harness can only write or JSON-edit files, and the tool descriptions are inline source in many modules, so no single fixture reliably trips it. The vitest files are themselves the check."
+			}
+		},
+		{
+			"id": "check:skills-spec",
+			"script": "scripts/validate-agent-skills.mjs",
+			"npm": "check:skills-spec",
+			"title": "Agent Skills specification",
+			"protects": "Every three.ws-authored skill under .agents/skills has a SKILL.md whose frontmatter name equals its folder and passes the agentskills.io field rules.",
+			"why": "A skill whose name disagrees with its folder, or that carries a typo'd field, is rejected or silently ignored by third-party registries that load it.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A skill whose frontmatter name does not match its folder.",
+				"violation": {
+					"write": {
+						".agents/skills/guard-proof-skill/SKILL.md": "---\nname: some-other-name\ndescription: Guard proof fixture.\n---\n\n# Fixture\n"
+					}
+				},
+				"expect": "does not match folder"
+			}
+		},
+		{
+			"id": "check:well-known-skills",
+			"script": "scripts/build-well-known-skills-index.mjs",
+			"npm": "check:well-known-skills",
+			"title": "Well-known skills index",
+			"protects": "The published /.well-known/agent-skills index and its SKILL.md copies equal what the generator produces from .agents/skills.",
+			"why": "Third-party agent-skills registries read this index. A skill edited without regenerating leaves the discovery copy stale, so they install the old version.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The published index drifting from the generator output.",
+				"violation": {
+					"write": {
+						"public/.well-known/agent-skills/index.json": "{}\n"
+					}
+				},
+				"expect": "index.json is out of date"
+			}
+		},
+		{
+			"id": "check:postman-collection",
+			"script": "scripts/build-postman-collection.mjs",
+			"npm": "check:postman-collection",
+			"title": "Postman collection sync",
+			"protects": "The checked-in Postman collection is byte-identical to what the OpenAPI spec generates.",
+			"why": "The collection is the first thing API consumers import. An OpenAPI edit without a regenerate ships requests that no longer match the API.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "The collection drifting from the OpenAPI spec.",
+				"violation": {
+					"write": {
+						"public/.well-known/postman-collection.json": "{}\n"
+					}
+				},
+				"expect": "is out of date"
+			}
+		},
+		{
 			"id": "check-deps",
 			"script": "scripts/check-deps.mjs",
 			"npm": "audit:deps",
