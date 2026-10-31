@@ -595,6 +595,18 @@
 	.os[data-style='aqua'] .win.is-max {
 		border-radius: 0;
 	}
+	/* A neutral graphite titlebar: no Mica tint, so windows read as clean
+	 * dark panels whatever the wallpaper or accent. */
+	.os[data-style='aqua'] .win.is-focused .win-bar {
+		background: linear-gradient(180deg, #2f3136, #26282c);
+	}
+	.os[data-style='aqua'] .win.is-focused .win-bar::before {
+		background: none;
+		backdrop-filter: none;
+	}
+	[data-theme='light'] .os[data-style='aqua'] .win.is-focused .win-bar {
+		background: linear-gradient(180deg, #f1f2f4, #e3e5e8);
+	}
 	/* order: -1 also moves the controls under the bar's Mica layer in paint
 	 * order, so they and the title sit on their own layer above it. */
 	.os[data-style='aqua'] .win-ctl {

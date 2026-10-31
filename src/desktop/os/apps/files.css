@@ -355,7 +355,7 @@
 	padding: 6px;
 }
 .napp-files .fx-scroll:focus-visible {
-	box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 .napp-files .fx-item {
 	position: relative;

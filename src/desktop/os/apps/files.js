@@ -49,35 +49,35 @@ export function sortNodes(nodes, { key = 'name', dir = 'asc' } = {}) {
 	});
 }
 
-/** Display name for a location: Home, This PC, Recycle Bin or the folder name. */
+/** Display name for a location: Home, Computer, Trash or the folder name. */
 export function locationName(loc) {
 	if (loc === HOME) return 'Home';
-	if (loc === '/') return 'This PC';
-	if (loc === fs.TRASH) return 'Recycle Bin';
-	return fs.nameOf(loc) || 'This PC';
+	if (loc === '/') return 'Computer';
+	if (loc === fs.TRASH) return 'Trash';
+	return fs.nameOf(loc) || 'Computer';
 }
 
 /** Breadcrumb trail for the address bar: [{ name, path }]. */
 export function buildCrumbs(loc) {
 	if (loc === HOME) return [{ name: 'Home', path: HOME }];
-	const out = [{ name: 'This PC', path: '/' }];
+	const out = [{ name: 'Computer', path: '/' }];
 	const p = fs.normalize(loc);
 	if (p === '/') return out;
 	let acc = '';
 	for (const seg of p.split('/').filter(Boolean)) {
 		acc += `/${seg}`;
-		out.push({ name: acc === fs.TRASH ? 'Recycle Bin' : seg, path: acc });
+		out.push({ name: acc === fs.TRASH ? 'Trash' : seg, path: acc });
 	}
 	return out;
 }
 
-/** Turn text typed in the address bar into a location ("home", "This PC\\Documents", "/Pictures/a"). */
+/** Turn text typed in the address bar into a location ("home", "Computer\\Documents", "/Pictures/a"). */
 export function parseAddress(input) {
 	let s = String(input ?? '').trim().replace(/\\/g, '/');
-	if (!s || /^this pc\/?$/i.test(s)) return '/';
+	if (!s || /^(computer|this pc)\/?$/i.test(s)) return '/';
 	if (/^home\/?$/i.test(s)) return HOME;
-	if (/^recycle bin\/?$/i.test(s)) return fs.TRASH;
-	s = s.replace(/^this pc\//i, '/').replace(/^recycle bin(?=\/|$)/i, fs.TRASH);
+	if (/^(trash|recycle bin)\/?$/i.test(s)) return fs.TRASH;
+	s = s.replace(/^(computer|this pc)\//i, '/').replace(/^(trash|recycle bin)(?=\/|$)/i, fs.TRASH);
 	return fs.normalize(s);
 }
 
@@ -369,7 +369,7 @@ export function mount(host, ctx) {
 
 	function emptyHtml() {
 		if (st.searching) return `<div class="fx-empty">${icon('search', 40)}<h3>No results for &ldquo;${esc(st.query.trim())}&rdquo;</h3><p>Nothing in ${esc(locationName(st.loc))} matches that name. Check the spelling or try a shorter word.</p></div>`;
-		if (trashRoot()) return `<div class="fx-empty">${icon('trash', 40)}<h3>The Recycle Bin is empty</h3><p>Files and folders you delete show up here until you empty it.</p></div>`;
+		if (trashRoot()) return `<div class="fx-empty">${icon('trash', 40)}<h3>The Trash is empty</h3><p>Files and folders you delete show up here until you empty it.</p></div>`;
 		if (canWrite()) return `<div class="fx-empty">${icon('folder', 40)}<h3>This folder is empty</h3><p>Drop files here or use New.</p><div class="fx-empty-act"><button class="fx-pill" data-act="newfolder">New folder</button><button class="fx-pill" data-act="upload">Upload files</button></div></div>`;
 		return `<div class="fx-empty">${icon('folder', 40)}<h3>Nothing here yet</h3><p>Open a folder such as Documents, then drop files here or use New.</p></div>`;
 	}
@@ -406,7 +406,7 @@ export function mount(host, ctx) {
 		const viewBtn = (v, ic, label) => `<button class="fx-vb ${st.view === v ? 'on' : ''}" data-view="${v}" title="${label}" aria-label="${label}" aria-pressed="${st.view === v}">${icon(ic, 16)}</button>`;
 		let left;
 		if (trashRoot()) {
-			left = `${b('restore', 'fx-restore', 'Restore', { dis: !sel.length, title: 'Restore the selected items' })}${b('purge', 'trash', 'Delete permanently', { dis: !sel.length })}${b('empty', 'trash', 'Empty Recycle Bin', { dis: !st.nodes.length })}`;
+			left = `${b('restore', 'fx-restore', 'Restore', { dis: !sel.length, title: 'Restore the selected items' })}${b('purge', 'trash', 'Delete permanently', { dis: !sel.length })}${b('empty', 'trash', 'Empty Trash', { dis: !st.nodes.length })}`;
 		} else {
 			left = `${b('newfolder', 'fx-newfolder', 'New folder', { dis: !w, title: w ? 'New folder' : 'Open a folder to create items in it' })}${b('newfile', 'fx-newfile', 'New text document', { dis: !w })}${b('upload', 'upload', 'Upload', { title: `Upload files to ${locationName(uploadDir())}` })}${sep}${b('cut', 'fx-cut', 'Cut', { dis: !sel.length || inTrash(), cls: 'sec' })}${b('copy', 'fx-copy', 'Copy', { dis: !sel.length, cls: 'sec' })}${b('paste', 'fx-paste', 'Paste', { dis: !w || !clip, cls: 'sec' })}${b('rename', 'edit', 'Rename', { dis: !one || inTrash(), cls: 'sec' })}${b('delete', 'trash', 'Delete', { dis: !sel.length, cls: 'sec' })}${b('download', 'download', 'Download', { dis: !files.length, cls: 'sec' })}`;
 		}
@@ -436,10 +436,10 @@ export function mount(host, ctx) {
 			<div class="fx-nh">Quick access</div>
 			${fs.DIRS.map((d) => link(`/${d}`, DIR_ICON[d] || 'folder', d)).join('')}
 			<div class="fx-nh">Devices</div>
-			${link('/', 'pc', 'This PC')}
+			${link('/', 'pc', 'Computer')}
 			${storageHtml(false)}
 			<div class="fx-nh">Bin</div>
-			<button class="fx-nv${trashRoot() ? ' on' : ''}" data-go="${fs.TRASH}" data-drop="${fs.TRASH}">${icon('trash', 16)}<span>Recycle Bin</span>${st.trashCount ? `<em class="fx-count">${st.trashCount}</em>` : ''}</button>`;
+			<button class="fx-nv${trashRoot() ? ' on' : ''}" data-go="${fs.TRASH}" data-drop="${fs.TRASH}">${icon('trash', 16)}<span>Trash</span>${st.trashCount ? `<em class="fx-count">${st.trashCount}</em>` : ''}</button>`;
 	}
 
 	function renderAll() {
@@ -751,7 +751,7 @@ export function mount(host, ctx) {
 		await load();
 		const next = st.shown[Math.min(idx, st.shown.length - 1)];
 		if (next) select([next.path], { anchor: next.path });
-		if (n) ctx.toast(perm ? `Deleted ${n} ${n === 1 ? 'item' : 'items'} permanently` : `Moved ${n} ${n === 1 ? 'item' : 'items'} to the Recycle Bin`);
+		if (n) ctx.toast(perm ? `Deleted ${n} ${n === 1 ? 'item' : 'items'} permanently` : `Moved ${n} ${n === 1 ? 'item' : 'items'} to the Trash`);
 	}
 
 	async function restoreSel() {
@@ -773,10 +773,10 @@ export function mount(host, ctx) {
 	async function emptyBin() {
 		const count = st.nodes.length;
 		if (!count) return;
-		if (!(await ask({ title: 'Empty the Recycle Bin?', message: `${count} ${count === 1 ? 'item' : 'items'} will be permanently deleted. This can't be undone.`, ok: 'Empty Recycle Bin', danger: true }))) return;
+		if (!(await ask({ title: 'Empty the Trash?', message: `${count} ${count === 1 ? 'item' : 'items'} will be permanently deleted. This can't be undone.`, ok: 'Empty Trash', danger: true }))) return;
 		try {
 			await fs.emptyTrash();
-			ctx.toast('Recycle Bin emptied');
+			ctx.toast('Trash emptied');
 		} catch (e) {
 			err(e);
 		}
@@ -901,7 +901,7 @@ export function mount(host, ctx) {
 		const w = canWrite();
 		if (trashRoot()) {
 			return showMenu(x, y, [
-				{ label: 'Empty Recycle Bin', icon: 'trash', disabled: !st.nodes.length, run: emptyBin },
+				{ label: 'Empty Trash', icon: 'trash', disabled: !st.nodes.length, run: emptyBin },
 				'-',
 				{ label: 'Refresh', icon: 'reload', kbd: 'F5', run: () => load({ keepSel: true }) },
 			]);
@@ -1049,7 +1049,7 @@ export function mount(host, ctx) {
 					const ok = target === HOME || target === '/' || (await fs.stat(target))?.type === 'dir';
 					if (!ok) {
 						input.classList.add('bad');
-						input.title = `"${input.value}" is not a folder on this PC.`;
+						input.title = `"${input.value}" is not a folder on this computer.`;
 						ctx.toast(`Can't find a folder at "${input.value}"`);
 						return;
 					}

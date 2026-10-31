@@ -380,7 +380,7 @@ export function mount(host, ctx) {
 		} catch (e) {
 			return err(e);
 		}
-		ctx.toast(`Moved ${fs.nameOf(path)} to the Recycle Bin`);
+		ctx.toast(`Moved ${fs.nameOf(path)} to the Trash`);
 		const rest = v.siblings.filter((n) => n.path !== path);
 		if (!rest.length) return showGallery();
 		openImage(rest[Math.min(i, rest.length - 1)].path);

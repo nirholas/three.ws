@@ -438,7 +438,7 @@ export function mount(host, ctx) {
 			const crumbs = () => {
 				let acc = '';
 				const segs = loc === '/' ? [] : loc.split('/').filter(Boolean);
-				pathEl.innerHTML = `<button data-go="/">This PC</button>${segs.map((s) => `<span>/</span><button data-go="${esc((acc += `/${s}`))}">${esc(s)}</button>`).join('')}`;
+				pathEl.innerHTML = `<button data-go="/">Computer</button>${segs.map((s) => `<span>/</span><button data-go="${esc((acc += `/${s}`))}">${esc(s)}</button>`).join('')}`;
 			};
 			const show = async (to) => {
 				try {

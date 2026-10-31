@@ -387,8 +387,8 @@ describe('preferences and session export', () => {
 	it('accepts only known desktop styles', () => {
 		expect(sanitizePrefs({ style: 'aqua' }, walls).style).toBe('aqua');
 		expect(sanitizePrefs({ style: 'classic' }, walls).style).toBe('classic');
-		expect(sanitizePrefs({ style: 'toString' }, walls).style).toBe('fluent');
-		expect(sanitizePrefs({ style: 'vista' }, walls).style).toBe('fluent');
+		expect(sanitizePrefs({ style: 'toString' }, walls).style).toBe(DEFAULT_PREFS.style);
+		expect(sanitizePrefs({ style: 'vista' }, walls).style).toBe(DEFAULT_PREFS.style);
 	});
 	it('clamps the quick settings and keeps the switches boolean', () => {
 		const p = sanitizePrefs({ brightness: 5, volume: 140, nightLight: 'yes', dnd: true, saver: 1 }, walls);

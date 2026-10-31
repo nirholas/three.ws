@@ -32,8 +32,8 @@ describe('files: formatting', () => {
 		expect(typeLabel(f('pic.png'))).toBe('PNG file');
 		expect(typeLabel(f('README'))).toBe('File');
 		expect(locationName('@home')).toBe('Home');
-		expect(locationName('/')).toBe('This PC');
-		expect(locationName('/Trash')).toBe('Recycle Bin');
+		expect(locationName('/')).toBe('Computer');
+		expect(locationName('/Trash')).toBe('Trash');
 		expect(locationName('/Documents/Notes')).toBe('Notes');
 	});
 	it('picks icons', () => {
@@ -72,18 +72,20 @@ describe('files: sorting and filtering', () => {
 describe('files: navigation', () => {
 	it('builds breadcrumbs', () => {
 		expect(buildCrumbs('@home')).toEqual([{ name: 'Home', path: '@home' }]);
-		expect(buildCrumbs('/')).toEqual([{ name: 'This PC', path: '/' }]);
+		expect(buildCrumbs('/')).toEqual([{ name: 'Computer', path: '/' }]);
 		expect(buildCrumbs('/Documents/a b')).toEqual([
-			{ name: 'This PC', path: '/' }, { name: 'Documents', path: '/Documents' }, { name: 'a b', path: '/Documents/a b' },
+			{ name: 'Computer', path: '/' }, { name: 'Documents', path: '/Documents' }, { name: 'a b', path: '/Documents/a b' },
 		]);
-		expect(buildCrumbs('/Trash')[1]).toEqual({ name: 'Recycle Bin', path: '/Trash' });
+		expect(buildCrumbs('/Trash')[1]).toEqual({ name: 'Trash', path: '/Trash' });
 	});
 	it('parses typed addresses', () => {
 		expect(parseAddress('')).toBe('/');
+		expect(parseAddress('Computer')).toBe('/');
 		expect(parseAddress('This PC')).toBe('/');
-		expect(parseAddress('home')).toBe('@home');
 		expect(parseAddress('Recycle Bin')).toBe('/Trash');
-		expect(parseAddress('This PC\\Documents\\x')).toBe('/Documents/x');
+		expect(parseAddress('home')).toBe('@home');
+		expect(parseAddress('Trash')).toBe('/Trash');
+		expect(parseAddress('Computer\\Documents\\x')).toBe('/Documents/x');
 		expect(parseAddress('/Pictures/../Music/')).toBe('/Music');
 		expect(parseAddress('Documents')).toBe('/Documents');
 	});

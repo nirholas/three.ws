@@ -137,10 +137,10 @@ const tile = (app, size = 'sm', glyph = 18) =>
 	`<span class="app-tile ${size}" style="--hue:${app.hue}">${icon(app.icon, glyph)}</span>`;
 
 const DESK_PREFIX = 'fs:/Desktop/';
-/** Desktop shortcuts into the file system, like a real computer's This PC and Recycle Bin. */
+/** Desktop shortcuts into the file system, like a real computer's Computer and Trash. */
 const SYSTEM_ICONS = {
-	thispc: { id: 'thispc', title: 'This PC', hue: 210, icon: 'pc', desc: 'Your folders, files and storage', fsPath: '/', fsType: 'dir' },
-	recycle: { id: 'recycle', title: 'Recycle Bin', hue: 195, icon: 'trash', desc: 'Deleted files, ready to restore or empty', fsPath: fs.TRASH, fsType: 'dir' },
+	thispc: { id: 'thispc', title: 'Computer', hue: 210, icon: 'pc', desc: 'Your folders, files and storage', fsPath: '/', fsType: 'dir' },
+	recycle: { id: 'recycle', title: 'Trash', hue: 195, icon: 'trash', desc: 'Deleted files, ready to restore or empty', fsPath: fs.TRASH, fsType: 'dir' },
 };
 const FILE_LOOK = {
 	dir: { icon: 'folder', hue: 44 },
@@ -1103,14 +1103,14 @@ export async function createShell(root, opts = {}) {
 			}
 		});
 	}
-	/** Send desktop files to the Recycle Bin. Returns true when every id was a file (handled). */
+	/** Send desktop files to the Trash. Returns true when every id was a file (handled). */
 	function trashFiles(ids) {
 		const files = ids.filter((id) => id.startsWith(DESK_PREFIX));
 		if (!files.length) return false;
 		Promise.all(files.map((id) => fs.remove(id.slice(3))))
 			.then(() => {
 				deskIcons.remove(files);
-				toast(files.length > 1 ? `${files.length} items moved to the Recycle Bin` : `${resolveApp(files[0])?.title || 'Item'} moved to the Recycle Bin`);
+				toast(files.length > 1 ? `${files.length} items moved to the Trash` : `${resolveApp(files[0])?.title || 'Item'} moved to the Trash`);
 			})
 			.catch((e) => notify({ title: 'Could not delete', body: e?.message || String(e), app: 'files' }));
 		const rest = ids.filter((id) => !id.startsWith(DESK_PREFIX));
@@ -1219,7 +1219,7 @@ export async function createShell(root, opts = {}) {
 			if (sys?.id === 'recycle')
 				return [
 					['Open', 'external', open],
-					['Empty Recycle Bin', 'trash', () => fs.emptyTrash().then(() => toast('Recycle Bin emptied'))],
+					['Empty Trash', 'trash', () => fs.emptyTrash().then(() => toast('Trash emptied'))],
 					'-',
 					['Remove from desktop', 'close', () => deskIcons.remove(ids)],
 				];
@@ -1241,7 +1241,7 @@ export async function createShell(root, opts = {}) {
 	icons.setAttribute('aria-label', 'Desktop');
 	icons.setAttribute('aria-multiselectable', 'true');
 	deskIcons.init((app) => tile(app, '', 24));
-	// People who set up their desktop before This PC and the Recycle Bin existed get them once.
+	// People who set up their desktop before Computer and the Trash existed get them once.
 	if (!store.get(KEY.iconsV2)) {
 		['thispc', 'recycle'].forEach((id) => deskIcons.add(id));
 		store.set(KEY.iconsV2, '1');

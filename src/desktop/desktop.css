@@ -93,7 +93,10 @@ body {
 		radial-gradient(50% 50% at 10% 10%, #7a1f4a88, transparent 70%), #160a0d;
 }
 .os[data-wall='graphite'] .os-wall {
-	background: linear-gradient(160deg, #2a2d33, #0d0e11);
+	background:
+		radial-gradient(90% 70% at 18% 0%, rgba(255, 255, 255, 0.07), transparent 60%),
+		radial-gradient(70% 60% at 100% 100%, rgba(139, 92, 246, 0.09), transparent 65%),
+		linear-gradient(180deg, #1e2024, #0e0f12);
 }
 [data-theme='light'] .os[data-wall='midnight'] .os-wall {
 	background: radial-gradient(70% 60% at 50% 0%, #b8c8ff, transparent 70%), #e8ecfa;

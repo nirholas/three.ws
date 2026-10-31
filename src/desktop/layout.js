@@ -267,9 +267,9 @@ export const ACCENTS = ['#8b5cf6', '#3b91d8', '#ad6eca', '#e5484d', '#f08a24', '
 export const START_MODES = ['world', 'desktop'];
 export const MODES = ['dark', 'light', 'auto'];
 /**
- * Desktop styles, each a whole shell skin: Fluent is the Windows 11
- * Mica shell, Aqua puts a menu bar on top and a magnifying dock at the bottom
- * with traffic-light window controls, Classic is bevelled 9x chrome with a
+ * Desktop styles, each a whole shell skin: Aqua (the default) puts a menu bar on top and a magnifying dock at the bottom
+ * with traffic-light window controls, Fluent is the Windows 11
+ * Mica shell, Classic is bevelled 9x chrome with a
  * labelled taskbar. `menuH` and `dockH` are the bars the work area avoids.
  */
 export const STYLES = {
@@ -280,7 +280,7 @@ export const STYLES = {
 };
 export const PREFS_VERSION = 1;
 export const DEFAULT_PREFS = {
-	wall: 'bubbles',
+	wall: 'graphite',
 	accent: ACCENTS[0],
 	mode: 'dark',
 	iconSize: 'medium',
@@ -290,7 +290,7 @@ export const DEFAULT_PREFS = {
 	avatarHue: 262,
 	startIn: 'world',
 	sound: true,
-	style: 'fluent',
+	style: 'aqua',
 	brightness: 100,
 	volume: 70,
 	nightLight: false,
