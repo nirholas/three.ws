@@ -22,6 +22,7 @@ vi.mock('../api/_lib/db.js', () => {
 const make = await import('../api/_lib/x-mention-make.js');
 const store = await import('../api/_lib/x-mention-store.js');
 const { weightedLength } = await import('../api/_lib/x-text-weight.js');
+const { RENDER_MAX_GLB_BYTES } = await import('../api/_mcp-studio/asset-links.js');
 
 const MIG = new URL('../api/_lib/migrations/', import.meta.url);
 const read = (f) => readFileSync(new URL(f, MIG), 'utf8');
@@ -109,7 +110,8 @@ describe('success path', () => {
 
 	it('uses the reference image as media when the model is too large to render', async () => {
 		const ev = await mentionRow();
-		const big = { ...doneJob, size_bytes: 12 * 1024 * 1024, preview_image_url: 'https://cdn.three.test/forge/dragon.png' };
+		// One byte past what /api/render/glb accepts, wherever that cap sits.
+		const big = { ...doneJob, size_bytes: RENDER_MAX_GLB_BYTES + 1, preview_image_url: 'https://cdn.three.test/forge/dragon.png' };
 		const res = await make.handleMake(ev, { ...noDirector, startForge: async () => big });
 		expect(res.mediaUrl).toBe('https://cdn.three.test/forge/dragon.png');
 	});
