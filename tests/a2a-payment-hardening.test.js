@@ -72,6 +72,7 @@ describe('per-counterparty daily ceiling', () => {
 			enforceSpendLimit({
 				agentId: 'agent-1',
 				limits: normalizeSpendLimits({ per_counterparty_daily_usd: 10 }),
+				meta: {},
 				policyRules: null,
 				category: 'x402',
 				usdValue: 4,
@@ -85,6 +86,7 @@ describe('per-counterparty daily ceiling', () => {
 		const err = await enforceSpendLimit({
 			agentId: 'agent-1',
 			limits: normalizeSpendLimits({ per_counterparty_daily_usd: 10 }),
+			meta: {},
 			policyRules: null,
 			category: 'x402',
 			usdValue: 1,
@@ -104,6 +106,7 @@ describe('per-counterparty daily ceiling', () => {
 			enforceSpendLimit({
 				agentId: 'agent-1',
 				limits: normalizeSpendLimits({ per_counterparty_daily_usd: 10 }),
+				meta: {},
 				policyRules: null,
 				category: 'x402',
 				usdValue: 4,
@@ -117,6 +120,7 @@ describe('per-counterparty daily ceiling', () => {
 			enforceSpendLimit({
 				agentId: 'agent-1',
 				limits: normalizeSpendLimits({}),
+				meta: {},
 				policyRules: null,
 				category: 'x402',
 				usdValue: 1000,
@@ -132,6 +136,7 @@ describe('per-counterparty daily ceiling', () => {
 			enforceSpendLimit({
 				agentId: 'agent-1',
 				limits: normalizeSpendLimits({ per_counterparty_daily_usd: 1 }),
+				meta: {},
 				policyRules: null,
 				category: 'x402',
 				usdValue: 500,
@@ -175,12 +180,15 @@ describe('spend policy resolution', () => {
 		).rejects.toMatchObject({ code: 'agent_not_found' });
 	});
 
-	it('does not re-read the row when the caller already resolved the limits', async () => {
-		// The safety net must not cost every well-behaved call site an extra query.
+	it('does not re-read the row when the caller already resolved its limits and meta', async () => {
+		// The safety net must not cost every well-behaved call site an extra query. A
+		// caller that resolved limits but not meta still gets the row read, because the
+		// capped-burner tier is keyed off meta and must never be skipped.
 		await expect(
 			enforceSpendLimit({
 				agentId: 'agent-1',
 				limits: normalizeSpendLimits({ per_tx_usd: 10 }),
+				meta: {},
 				policyRules: null,
 				category: 'x402',
 				usdValue: 1,
@@ -188,6 +196,19 @@ describe('spend policy resolution', () => {
 			}),
 		).resolves.toMatchObject({ ok: true });
 		expect(sqlState.calls.some((c) => /FROM agent_identities/.test(c.query))).toBe(false);
+	});
+
+	it('still reads the row for the burner tier when only limits were resolved', async () => {
+		sqlState.queue.push(AGENT_ROW({ burner_policy: { enabled: true, perTxMaxUsd: 0.5 } }));
+		await enforceSpendLimit({
+			agentId: 'agent-1',
+			limits: normalizeSpendLimits({}),
+			policyRules: null,
+			category: 'x402',
+			usdValue: 1,
+			destination: PEER_A,
+		}).catch(() => {});
+		expect(sqlState.calls.some((c) => /FROM agent_identities/.test(c.query))).toBe(true);
 	});
 
 	it('honors an explicitly empty meta as an explicitly empty policy', async () => {
