@@ -598,5 +598,55 @@
 		"pattern": "the Ready Player Me, Avaturn, and MetaHuman spellings",
 		"file": "docs/nvidia-forum-browser-digital-human.md",
 		"reason": "Names a supported blendshape naming convention, not a partner or product. src/voice/arkit-blendshapes.js canonicalizes these morph-name spellings onto the ARKit set; same category as the skeleton-convention entries."
+	},
+	{
+		"pattern": "a canonicalizer maps Mixamo, Avaturn, VRM/VRoid",
+		"file": "docs/ibm-meetup-3/thread.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set and the universal-animation rule requires documenting the conventions we accept, so it is a technical identifier like the existing rig-convention entries."
+	},
+	{
+		"pattern": "(Mixamo, Avaturn, Unreal, VRM/VRoid, VRM 1.0",
+		"file": "docs/ops/worker-and-avatar-rules.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set and the universal-animation rule requires documenting the conventions we accept, so it is a technical identifier like the existing rig-convention entries."
+	},
+	{
+		"pattern": "Bone names from Mixamo, Avaturn, Unreal",
+		"file": "docs/orphaned-avatar-campaign.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set and the universal-animation rule requires documenting the conventions we accept, so it is a technical identifier like the existing rig-convention entries."
+	},
+	{
+		"pattern": "so Mixamo, Avaturn,",
+		"file": "docs/video-to-motion.md",
+		"reason": "Names a supported skeleton naming convention, not a partner or product. src/glb-canonicalize.js maps this rig format onto the canonical set and the universal-animation rule requires documenting the conventions we accept, so it is a technical identifier like the existing rig-convention entries."
+	},
+	{
+		"pattern": "CharacterStudio's `CH_`",
+		"file": "docs/aws-builder-center-universal-retargeting.md",
+		"reason": "Names a vendor bone-name prefix that src/glb-canonicalize.js strips, as a technical identifier in a list of accepted rig prefixes, not product copy."
+	},
+	{
+		"pattern": "existing Avaturn client",
+		"file": "docs/ops/image-selfie-3d-review-2026-10-09.md",
+		"reason": "Internal vendor evaluation and market analysis. It names third-party avatar providers because the comparison is the content; it is not user-facing product copy."
+	},
+	{
+		"pattern": "Ready Player Me's public API shut down",
+		"file": "docs/ops/image-selfie-3d-review-2026-10-09.md",
+		"reason": "Internal vendor evaluation and market analysis. It names third-party avatar providers because the comparison is the content; it is not user-facing product copy."
+	},
+	{
+		"pattern": "| Avaturn |",
+		"file": "docs/partners/outreach-plan.md",
+		"reason": "Partner outreach plan row. Naming the prospect is the content of the plan; internal planning, not product copy."
+	},
+	{
+		"pattern": "Ready Player Me",
+		"file": "docs/partners/prospects.md",
+		"reason": "Partner prospect analysis. Naming the shut-down provider whose users are the opportunity is the content; internal planning, not product copy."
+	},
+	{
+		"pattern": "Ready Player Me / Avaturn GLBs",
+		"file": "docs/research/oss-landscape-2026-10-notes/avatars-voice.md",
+		"reason": "Cited research note quoting the third-party project's asset terms; internal research, not product copy."
 	}
 ]
