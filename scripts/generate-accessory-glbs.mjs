@@ -9,6 +9,8 @@
 // The rest are the /play wardrobe's event souvenirs (multiplayer/src/
 // cosmetics-catalog.js, tier 'event'), which are granted, never sold:
 //   laurel-meetup.glb, star-shades-meetup-2.glb, orbit-crown-meetup-3.glb
+// and the seasonal-drop gifts (api/_lib/seasonal-drops.js), claimed, never sold:
+//   pumpkin-cap-halloween-2026.glb
 //
 // Each is a real glTF 2.0 binary with positions, normals, UVs, indices, and a
 // PBR material, small enough to commit to the repo, large enough to be visibly
@@ -388,6 +390,9 @@ async function writeGLB(filePath, parts, { rootName }) {
 			.setMetallicFactor(part.metallic ?? 0.05)
 			.setRoughnessFactor(part.roughness ?? 0.7)
 			.setDoubleSided(true);
+		// Self-lit parts (the pumpkin cap's candle-lit carving) glow without a
+		// light. Only set when asked so every other accessory's bytes are unchanged.
+		if (part.emissive) material.setEmissiveFactor(part.emissive);
 
 		const prim = doc
 			.createPrimitive()
@@ -601,6 +606,15 @@ const ACCESSORIES = {
 		rootName: 'OrbitCrownMeetup3',
 		parts: orbitCrownParts(),
 	},
+
+	// The Halloween Weekend 2026 gift: a squat, ribbed jack-o'-lantern worn as a
+	// cap, its carved face lit from inside (emissive, so it glows at night with
+	// no light rig), with a stem, a curled vine and one leaf on top. Granted by a
+	// seasonal-drop claim on the website, never sold.
+	'pumpkin-cap-halloween-2026.glb': {
+		rootName: 'PumpkinCapHalloween2026',
+		parts: pumpkinCapParts(),
+	},
 };
 
 // Build the laurel's three primitives: the circlet band, the merged leaf ring,
@@ -740,6 +754,137 @@ function orbitCrownParts() {
 		{ name: 'stems', geom: mergeGeoms(stems), color: GOLD, metallic: 0.88, roughness: 0.24 },
 		{ name: 'orbit', geom: orbit, color: [0.97, 0.88, 0.6], metallic: 0.9, roughness: 0.18 },
 		{ name: 'pearls', geom: mergeGeoms(pearls), color: [1, 0.98, 0.94], metallic: 0.05, roughness: 0.22 },
+	];
+}
+
+// Per-vertex normals from triangle faces (area-weighted), for meshes whose
+// surface is displaced procedurally and so has no closed-form normal.
+function computeNormals(positions, indices) {
+	const n = new Float64Array(positions.length);
+	for (let i = 0; i < indices.length; i += 3) {
+		const [a, b, c] = [indices[i] * 3, indices[i + 1] * 3, indices[i + 2] * 3];
+		const ux = positions[b] - positions[a], uy = positions[b + 1] - positions[a + 1], uz = positions[b + 2] - positions[a + 2];
+		const vx = positions[c] - positions[a], vy = positions[c + 1] - positions[a + 1], vz = positions[c + 2] - positions[a + 2];
+		const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+		for (const k of [a, b, c]) { n[k] += nx; n[k + 1] += ny; n[k + 2] += nz; }
+	}
+	const out = [];
+	for (let i = 0; i < n.length; i += 3) {
+		const len = Math.hypot(n[i], n[i + 1], n[i + 2]) || 1;
+		out.push(n[i] / len, n[i + 1] / len, n[i + 2] / len);
+	}
+	return out;
+}
+
+// Build the pumpkin cap's five primitives: the ribbed shell, the glowing carved
+// face, the stem, the curled vine and the leaf.
+function pumpkinCapParts() {
+	const R = 0.12;          // shell radius before ribbing; the client re-fits width anyway
+	const SQUASH = 0.74;     // pumpkins are wider than tall
+	const LOBES = 8;         // |cos(4θ)| gives eight lobes with crisp grooves between them
+	const PHI_MAX = Math.PI * 0.6; // a little past the equator, so the rim tucks in
+	const ORANGE = [0.93, 0.42, 0.08];
+	const GLOW = [1.0, 0.74, 0.22];
+
+	// Surface point at azimuth θ (θ = π/2 faces +Z, the wearer's front, which is a
+	// lobe crest) and polar angle φ (0 = top). The top dips into a dimple where
+	// the stem sits, and the rim is shifted so the shell's lowest point is y = 0.
+	const rimY = Math.cos(PHI_MAX) * R * SQUASH;
+	const surface = (theta, phi, grow = 0) => {
+		const rib = 0.92 + 0.08 * Math.abs(Math.cos((LOBES / 2) * theta));
+		const r = R * rib * (1 + grow);
+		const dimple = 0.018 * Math.exp(-((phi / 0.22) ** 2));
+		return [
+			r * Math.sin(phi) * Math.cos(theta),
+			r * Math.cos(phi) * SQUASH - dimple - rimY,
+			r * Math.sin(phi) * Math.sin(theta),
+		];
+	};
+
+	// Shell: a polar grid over the displaced surface.
+	const SEG = 96, RINGS = 28;
+	const shell = { positions: [], uvs: [], indices: [] };
+	for (let i = 0; i <= RINGS; i++) {
+		const phi = (i / RINGS) * PHI_MAX;
+		for (let j = 0; j <= SEG; j++) {
+			shell.positions.push(...surface((j / SEG) * Math.PI * 2, phi));
+			shell.uvs.push(j / SEG, 1 - i / RINGS);
+		}
+	}
+	for (let i = 0; i < RINGS; i++) {
+		for (let j = 0; j < SEG; j++) {
+			const a = i * (SEG + 1) + j, b = a + SEG + 1;
+			shell.indices.push(a, b, a + 1, b, b + 1, a + 1);
+		}
+	}
+	shell.normals = computeNormals(shell.positions, shell.indices);
+
+	// Carved face. Each shape is a convex polygon in face space (u across, v up,
+	// in metres on the shell), wrapped onto the surface and extruded through it so
+	// the glow reads as light coming out of a cut, not a sticker on top.
+	const FACE_PHI = Math.PI * 0.36; // eye line, just above the shell's widest band
+	const toAngles = (u, v) => [Math.PI / 2 - u / R, FACE_PHI - v / R];
+	const eye = (cx) => [[cx - 0.022, -0.012], [cx + 0.022, -0.012], [cx, 0.02]];
+	const nose = [[-0.009, -0.032], [0.009, -0.032], [0, -0.018]];
+	// A wide grin with two square teeth: five convex slabs following a smile arc,
+	// with gaps where the teeth stay uncut.
+	const mouthY = (u) => -0.058 + 0.006 * Math.cos((u / 0.05) * (Math.PI / 2));
+	const slab = (u0, u1, h) => [
+		[u0, mouthY(u0) - h * 0.45], [u1, mouthY(u1) - h * 0.45],
+		[u1, mouthY(u1) + h * 0.55], [u0, mouthY(u0) + h * 0.55],
+	];
+	const mouth = [
+		[[-0.056, mouthY(-0.056) + 0.012], [-0.04, mouthY(-0.04) - 0.006], [-0.04, mouthY(-0.04) + 0.01]],
+		slab(-0.04, -0.022, 0.018),
+		slab(-0.014, 0.014, 0.02),
+		slab(0.022, 0.04, 0.018),
+		[[0.04, mouthY(0.04) - 0.006], [0.056, mouthY(0.056) + 0.012], [0.04, mouthY(0.04) + 0.01]],
+		// the uncut teeth sit in the gaps; a thin lip below joins the grin
+		slab(-0.04, 0.04, 0.005).map(([u, v]) => [u, v - 0.012]),
+	];
+	const face = { positions: [], uvs: [], indices: [] };
+	for (const poly of [eye(-0.038), eye(0.038), nose, ...mouth]) {
+		const outer = poly.map(([u, v]) => surface(...toAngles(u, v), 0.006));
+		const inner = poly.map(([u, v]) => surface(...toAngles(u, v), -0.01));
+		const base = face.positions.length / 3;
+		const n = poly.length;
+		for (const p of [...outer, ...inner]) face.positions.push(...p);
+		for (let k = 0; k < 2 * n; k++) face.uvs.push((k % n) / n, k < n ? 1 : 0);
+		for (let k = 1; k < n - 1; k++) {
+			face.indices.push(base, base + k, base + k + 1);              // outer cap
+			face.indices.push(base + n, base + n + k + 1, base + n + k);  // inner cap
+		}
+		for (let k = 0; k < n; k++) {
+			const k2 = (k + 1) % n;
+			face.indices.push(base + k, base + n + k, base + k2, base + k2, base + n + k, base + n + k2);
+		}
+	}
+	face.normals = computeNormals(face.positions, face.indices);
+
+	// Stem: a short, slightly leaning cylinder planted in the dimple.
+	const topY = surface(0, 0)[1];
+	const stem = transformGeom(cylinder({ r: 0.011, y0: 0, y1: 0.042, segments: 10 }), {
+		rotation: quatMul(quatAxis('z', -0.22), quatAxis('x', 0.1)),
+		translate: [0, topY - 0.006, 0],
+	});
+	// Vine: a thin ring tipped up beside the stem, reading as a curl.
+	const vine = transformGeom(torus({ r1: 0.018, r2: 0.0028, segments: 28, tubeSegments: 6 }), {
+		rotation: quatMul(quatAxis('y', 0.7), quatAxis('x', -0.5)),
+		translate: [-0.024, topY + 0.012, 0.008],
+	});
+	// Leaf: a flattened sphere lying on the shoulder of the shell.
+	const leaf = transformGeom(sphere({ r: 1, segments: 14, rings: 8 }), {
+		scale: [0.03, 0.0035, 0.017],
+		rotation: quatMul(quatAxis('y', -0.6), quatAxis('z', 0.32)),
+		translate: [0.03, topY - 0.004, -0.012],
+	});
+
+	return [
+		{ name: 'shell', geom: shell, color: ORANGE, metallic: 0.02, roughness: 0.58 },
+		{ name: 'carving', geom: face, color: GLOW, emissive: [1.0, 0.62, 0.12], metallic: 0, roughness: 0.4 },
+		{ name: 'stem', geom: stem, color: [0.34, 0.27, 0.12], metallic: 0, roughness: 0.85 },
+		{ name: 'vine', geom: vine, color: [0.24, 0.44, 0.14], metallic: 0, roughness: 0.7 },
+		{ name: 'leaf', geom: leaf, color: [0.2, 0.5, 0.16], metallic: 0, roughness: 0.62 },
 	];
 }
 

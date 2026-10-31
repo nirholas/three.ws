@@ -41,6 +41,7 @@ export const BADGES = Object.freeze({
 	EM_STREAK_5: 'em_streak_5',
 	EM_SEASON_TOP10: 'em_season_top10',
 	EM_SEASON_CHAMPION: 'em_season_champion',
+	HALLOWEEN_2026: 'halloween_2026',
 	TOP10: (metric) => `top10_${metric}`,
 });
 
@@ -134,6 +135,11 @@ export const BADGE_META = {
 		label: 'Season Champion',
 		description: 'Finished an Event Market season as the number one forecaster.',
 		icon: '👑',
+	},
+	halloween_2026: {
+		label: 'Halloween 2026',
+		description: 'Claimed the Halloween Weekend 2026 gifts. Only given out October 31 to November 1, 2026.',
+		icon: '🎃',
 	},
 };
 

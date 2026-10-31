@@ -22,6 +22,10 @@ const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || '';
 
 // Lockstep with api/_lib/cosmetics-ownership.js — the SET the x402 handler writes.
 const OWNED_PREFIX = 'cosmetics:owned:';
+// Lockstep with api/_lib/seasonal-drops.js: the SET a seasonal-drop claim on the
+// website writes. Gifts, never purchases: kept apart from OWNED_PREFIX so the
+// premium-only purchase merge can stay premium-only.
+const GRANTED_PREFIX = 'cosmetics:granted:';
 
 let _redis = null;
 let _redisReady = null;
@@ -67,6 +71,24 @@ export async function readOwnedCosmetics(account) {
 		return Array.isArray(members) ? members : [];
 	} catch (err) {
 		console.warn('[cosmetics-ownership] read failed:', err?.message);
+		return [];
+	}
+}
+
+// The cosmetic ids granted to a signed-in site account by a seasonal-drop claim
+// (api/drops/[id].js). Keyed by the account uid from the verified presence
+// ticket, never by a client-asserted id. Same fail-open contract as the
+// purchase read above: any error reads as "no gifts this session".
+export async function readGrantedCosmetics(accountUid) {
+	const uid = normalizeAccountId(accountUid);
+	if (!uid) return [];
+	if (_redisReady) { try { await _redisReady; } catch { /* fell back to memory */ } }
+	if (!_redis) return [];
+	try {
+		const members = await _redis.smembers(`${GRANTED_PREFIX}u:${uid}`);
+		return Array.isArray(members) ? members : [];
+	} catch (err) {
+		console.warn('[cosmetics-ownership] granted read failed:', err?.message);
 		return [];
 	}
 }

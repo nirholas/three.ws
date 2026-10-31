@@ -40,6 +40,12 @@ export const SLOT_LABELS = {
 // never appears in the boutique (shop.js filters on tier 'premium' AND price>0),
 // which is what keeps "you had to be there" honest: there is no purchase path,
 // before, during, or after. Like premium, it must be owned to be worn.
+//
+// Event-tier items also arrive from seasonal drops: a signed-in account that
+// claims a drop on the website (api/drops/[id].js, e.g. the Halloween Weekend
+// 2026 gifts) gets them written to its grant ledger, which WalkRoom folds in
+// (economy.js mergeGrantedFromLedger, event tier only). Same rule: free, kept
+// forever, never sold, never granted again once the drop's window closes.
 export const COSMETICS = [
 	// ── Body color (dye) ──────────────────────────────────────────────────────
 	{ id: 'dye-none', name: 'Natural', slot: 'dye', rarity: 'common', tier: 'free', price: 0, visual: null, swatch: '#d8d8e0' },
@@ -56,6 +62,7 @@ export const COSMETICS = [
 	{ id: 'hat-cowboy', name: 'Stetson', slot: 'headwear', rarity: 'rare', tier: 'premium', price: 400, visual: { prop: '/accessories/hat-cowboy.glb', anchor: 'head' }, thumb: '/accessories/thumbs/hat-cowboy.png' },
 	{ id: 'laurel-meetup', name: 'Meetup Laurel', slot: 'headwear', rarity: 'legendary', tier: 'event', price: 0, visual: { prop: '/accessories/laurel-meetup.glb', anchor: 'head' }, thumb: '/accessories/thumbs/laurel-meetup.png' },
 	{ id: 'orbit-crown-meetup-3', name: 'Meetup Orbit Crown', slot: 'headwear', rarity: 'legendary', tier: 'event', price: 0, visual: { prop: '/accessories/orbit-crown-meetup-3.glb', anchor: 'head' }, thumb: '/accessories/thumbs/orbit-crown-meetup-3.png' },
+	{ id: 'pumpkin-cap-halloween-2026', name: 'Pumpkin Cap', slot: 'headwear', rarity: 'legendary', tier: 'event', price: 0, visual: { prop: '/accessories/pumpkin-cap-halloween-2026.glb', anchor: 'head' }, thumb: '/accessories/thumbs/pumpkin-cap-halloween-2026.png' },
 
 	// ── Eyewear (prop, anchored at the eye line) ──────────────────────────────
 	{ id: 'eye-none', name: 'None', slot: 'eyewear', rarity: 'common', tier: 'free', price: 0, visual: null },
@@ -73,6 +80,7 @@ export const COSMETICS = [
 	{ id: 'aura-gold', name: 'Golden halo', slot: 'aura', rarity: 'epic', tier: 'premium', price: 600, visual: { aura: '#e6b422' }, swatch: '#e6b422' },
 	{ id: 'aura-cyan', name: 'Cyan pulse', slot: 'aura', rarity: 'epic', tier: 'premium', price: 600, visual: { aura: '#00e5ff' }, swatch: '#00e5ff' },
 	{ id: 'aura-magenta', name: 'Magenta pulse', slot: 'aura', rarity: 'epic', tier: 'premium', price: 600, visual: { aura: '#ff2d95' }, swatch: '#ff2d95' },
+	{ id: 'aura-witchlight-halloween-2026', name: 'Witchlight', slot: 'aura', rarity: 'legendary', tier: 'event', price: 0, visual: { aura: '#ff7a1a' }, swatch: '#ff7a1a' },
 ];
 
 export const COSMETICS_BY_ID = new Map(COSMETICS.map((c) => [c.id, c]));

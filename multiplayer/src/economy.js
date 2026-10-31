@@ -141,6 +141,21 @@ export function mergeOwnedFromLedger(profile, ledgerIds) {
 	return granted;
 }
 
+// Bridge the seasonal-drop grant ledger (`cosmetics:granted:u:<uid>`, written by
+// a claim on the website) into a profile's unlocked set. The mirror image of
+// mergeOwnedFromLedger: EVENT-tier only, because that ledger records gifts and
+// a gift must never be able to unlock a boutique item. Idempotent; returns the
+// count newly unlocked.
+export function mergeGrantedFromLedger(profile, grantedIds) {
+	if (!Array.isArray(grantedIds) || !grantedIds.length) return 0;
+	let granted = 0;
+	for (const id of grantedIds) {
+		if (getCosmetic(id)?.tier !== 'event') continue;
+		if (grantCosmetic(profile, id)) granted++;
+	}
+	return granted;
+}
+
 // Equip `id` into its slot if the profile is allowed to wear it. Returns the new
 // equipped map on success, or null when the id is unknown or unowned (the server
 // then rejects the equip). Mutates profile.cosmetics.equipped.

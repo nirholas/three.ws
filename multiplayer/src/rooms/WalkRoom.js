@@ -44,7 +44,7 @@ import {
 	addItem, hasRoomFor, resolveSlot, grantXp, consumeSlot,
 	countItem, removeItem,
 	dropCarried, reviveProfile, creditGold, bankTransfer, grantCosmetic,
-	equipCosmetic, ownedCosmeticSet, mergeOwnedFromLedger,
+	equipCosmetic, ownedCosmeticSet, mergeOwnedFromLedger, mergeGrantedFromLedger,
 	HOTBAR_SIZE,
 } from '../economy.js';
 import {
@@ -57,7 +57,7 @@ import {
 import {
 	buildTokenPurchase, verifyTokenPurchase, isWalletAddress, tokenConfigured, TOKEN_DECIMALS,
 } from '../game-token.js';
-import { readOwnedCosmetics } from '../cosmetics-ownership.js';
+import { readOwnedCosmetics, readGrantedCosmetics } from '../cosmetics-ownership.js';
 import { currentEventDrop, dropClaimable, warmEventDrop } from '../event-drop.js';
 import {
 	itemLabel, fishCatchChance, fishDoubleChance,
@@ -946,7 +946,14 @@ export class WalkRoom extends Room {
 		// fail-open (own nothing extra) and never block the join. Persist only when a
 		// new unlock actually landed so a returning player keeps it across restarts.
 		try {
-			const newlyOwned = mergeOwnedFromLedger(profile, await readOwnedCosmetics(playerId));
+			// Seasonal-drop gifts claimed on the website ride the signed-in account
+			// (verified presence uid), not the wallet or guest persistence key.
+			const accountUid = client.userData?.accountUid;
+			const [owned, granted] = await Promise.all([
+				readOwnedCosmetics(playerId),
+				accountUid ? readGrantedCosmetics(accountUid) : [],
+			]);
+			const newlyOwned = mergeOwnedFromLedger(profile, owned) + mergeGrantedFromLedger(profile, granted);
 			if (newlyOwned > 0) this._persistEcon(client.sessionId);
 		} catch (err) {
 			console.warn(`[walk_world] cosmetics ledger seed failed for ${playerId}:`, err?.message);
@@ -2175,6 +2182,20 @@ export class WalkRoom extends Room {
 				}
 			} catch (err) {
 				console.warn('[walk_world] cosmetics ledger recheck failed:', err?.message);
+			}
+		}
+		// Same for a seasonal gift claimed on the website while this session was
+		// already in-world: re-read the grant ledger once so it equips without a
+		// rejoin.
+		const accountUid = client.userData?.accountUid;
+		if (!equipped && accountUid && getCosmetic(id)?.tier === 'event') {
+			try {
+				if (mergeGrantedFromLedger(profile, await readGrantedCosmetics(accountUid)) > 0) {
+					if (!this.econ.has(client.sessionId)) return;
+					equipped = equipCosmetic(profile, id);
+				}
+			} catch (err) {
+				console.warn('[walk_world] cosmetics grant recheck failed:', err?.message);
 			}
 		}
 		if (!equipped) {
