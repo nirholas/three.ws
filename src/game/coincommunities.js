@@ -94,6 +94,7 @@ import { openAvatarInspector, isAvatarInspectorOpen, closeAvatarInspector } from
 import { createAgentDesk } from './agent-desk.js';
 import { VehicleManager } from './vehicles.js';
 import { CombatSystem } from './combat-system.js';
+import { DanceOffClient } from './dance-off.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked, exactly the `?bg=transparent` embed case (e.g. the IBM
@@ -647,7 +648,7 @@ export class CoinCommunities {
 			onLeave: () => this.leave(),
 			onChat: (t) => this._sendChat(t),
 			onEmote: (n) => this._emote(n),
-			onReaction: (emoji) => this.net?.sendReaction(emoji),
+			onReaction: (emoji) => this.net?.sendReaction(emoji, this._danceOff?.aim()),
 			onSearch: (q) => this._searchCoins(q),
 			onRetry: () => this.net?.retry(),
 			// Resolve the picked value (avatar id, gallery pick, URL) to a loadable,
@@ -1115,6 +1116,7 @@ export class CoinCommunities {
 			for (const desk of this._agentDesks) desk.update(dt, this.localPos);
 		}
 		this._tickDanceFloor(dt);
+		this._danceOff?.tick(dt);
 	}
 
 	// Compile the shader programs for everything currently in the scene, off the
@@ -1279,6 +1281,7 @@ export class CoinCommunities {
 				imgTex.anisotropy = screenAnisotropy();
 				const art = new Mesh(new PlaneGeometry(8.4, 8.4), screenMaterial(imgTex));
 				art.position.set(-6.7, 11, 0.04); g.add(art);
+				art.visible = !this._screenArtHidden;
 				this._screenArt = art;
 			});
 		}
@@ -1380,6 +1383,7 @@ export class CoinCommunities {
 		const label = n === 1 ? '1 in this community' : `${n} in this community`;
 		x.fillText(label, colX + 150, baseY);
 
+		this._danceOff?.paintScreen(x); // a dance-off champion takes over the whole screen
 		this._screenTex.needsUpdate = true;
 	}
 
@@ -1747,6 +1751,8 @@ export class CoinCommunities {
 		// Durability flag for this world's build, drives the HUD "Saved" badge.
 		this.net.on('persistent', (durable) => { if (this.net?.status === 'online') this.buildHud.setPersistent(durable); });
 		this.net.on('floorBeat', (msg) => this._onFloorBeat(msg));
+		this._danceOff = new DanceOffClient(this._danceOffHost());
+		this.net.on('danceOff', (msg) => this._danceOff?.handle(msg));
 
 		// Game systems (economy + activities). The server streams this player's own
 		// pack/purse/skills here; PlaySystems renders the HUD, ponds, and cast visual,
@@ -2368,6 +2374,7 @@ export class CoinCommunities {
 		this._localIsIt = false;
 		this.ui.hideTagHud();
 		// King of the Totem (R07): tear down the zone + crown marker and hide the HUD.
+		if (this._danceOff) { this._danceOff.dispose(); this._danceOff = null; }
 		this._disposeKingZone();
 		this.ui.hideKingHud();
 		if (this.localRig) { releaseAvatar(this.localRig); this.scene.remove(this.localRig); this.localRig = null; }
@@ -2569,7 +2576,7 @@ export class CoinCommunities {
 		else { this.remotes.get(m.id)?.say(m.text); this._bumpTabUnread(); }
 	}
 	_sendChat(text) { this.net?.sendChat(text); }
-	_emote(name) { this.net?.sendEmote(name); playEmoteClip(this.localAnim, name, this.motion); }
+	_emote(name) { this._danceOff?.noteEmote(name); this.net?.sendEmote(name); playEmoteClip(this.localAnim, name, this.motion); }
 
 	// ── Tag mini-game (R08) ─────────────────────────────────────────────────────
 
@@ -3395,6 +3402,7 @@ export class CoinCommunities {
 		if (onFloor === this._onFloor) return;
 		this._onFloor = onFloor;
 		this.ui.setOnFloor(onFloor);
+		this._danceOff?.refresh();
 		if (!onFloor && this._wantsDance) {
 			this._wantsDance = false;
 			this.ui.setDancing(false);
@@ -3405,8 +3413,10 @@ export class CoinCommunities {
 	// Dance, crossfade to this beat's clip in lockstep with all other clients.
 	_onFloorBeat(msg) {
 		this._beatT = 0;
-		if (!this._onFloor || !this._wantsDance) return;
-		const clip = msg?.clip || 'av-dance-shuffle';
+		// Dance-off contestants dance the beat without pressing Dance, and keep the
+		// move they picked on the emote wheel.
+		if (!this._onFloor || !(this._wantsDance || this._danceOff?.isContestant())) return;
+		const clip = this._danceOff?.clipFor(msg?.clip || 'av-dance-shuffle') || msg?.clip || 'av-dance-shuffle';
 		this._danceClip = clip;
 		// Local avatar: start the clip now, aligned to the server beat.
 		playEmoteClip(this.localAnim, clip, this.motion);
@@ -3544,6 +3554,37 @@ export class CoinCommunities {
 			if (isMe && (!wp || wp.pos !== this.localPos)) this._spawnConfetti(this.localPos, this.localHeight || 1.7);
 			this.ui.showKingWinner(msg.winner, isMe);
 		}
+	}
+
+	// What the dance-off client needs from the world (see dance-off.js).
+	_danceOffHost() {
+		return {
+			world: this.world,
+			scene: this.scene,
+			renderer: this.renderer,
+			floor: { x: this._danceFloorPos.x, z: this._danceFloorPos.z, r: this._floorRadius },
+			localId: () => this.net?.sessionId || '',
+			isOnFloor: () => !!this._onFloor,
+			playerInfo: (id) => {
+				const kp = this._kingPlayerPos(id);
+				if (!kp) return null;
+				const rig = id === this.net?.sessionId ? this.localRig : this.remotes.get(id)?.rig;
+				return { pos: kp.pos, height: kp.height, rig };
+			},
+			project: (pos, height) => {
+				if (!this.camera) return null;
+				const v = new Vector3(pos.x, pos.y + height * 0.6, pos.z).project(this.camera);
+				return { nx: v.x, ny: v.y, visible: v.z > -1 && v.z < 1 };
+			},
+			confetti: (pos, height) => this._spawnConfetti(pos, height),
+			sendStart: () => this.net?.sendDanceStart(),
+			toast: (msg, kind) => this.ui.toast(msg, kind),
+			redrawScreen: () => this._drawScreen(),
+			hideScreenArt: (hidden) => {
+				this._screenArtHidden = !!hidden;
+				if (this._screenArt) this._screenArt.visible = !hidden;
+			},
+		};
 	}
 
 	_disposeKingZone() {
