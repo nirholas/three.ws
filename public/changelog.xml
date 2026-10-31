@@ -23,6 +23,22 @@
 			<description>Free, time-boxed gifts on three.ws: one claim during the window grants a profile badge, /play wearables and a desktop wallpaper you keep forever. The window, the /api/seasonal endpoint, the seasonal look and its opt-out, and how to add the next drop.</description>
 		</item>
 		<item>
+			<title>Pumpkin Carving</title>
+			<link>https://three.ws/pumpkin</link>
+			<guid isPermaLink="false">2026-10-31:Pumpkin Carving</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.</description>
+		</item>
+		<item>
+			<title>Carve a real 3D pumpkin at /pumpkin</title>
+			<link>https://three.ws/pumpkin</link>
+			<guid isPermaLink="false">2026-10-31:Carve a real 3D pumpkin at /pumpkin</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Cut a hollow, ribbed 3D pumpkin in your browser with true boolean cuts, six stamp shapes and a freehand knife. A flickering candle shines through your design, you can undo any cut, and you can export the result as a PNG or a GLB. It is linked from the Halloween page.</description>
+		</item>
+		<item>
 			<title>Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti</title>
 			<link>https://three.ws/halloween</link>
 			<guid isPermaLink="false">2026-10-31:Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti</guid>

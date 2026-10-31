@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T19:44:21.666Z",
+	"generated_at": "2026-10-31T19:48:31.551Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -24,6 +24,26 @@
 			"link": "/docs/seasonal-drops",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "launch",
+			"title": "Pumpkin Carving",
+			"summary": "Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.",
+			"link": "/pumpkin",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Carve a real 3D pumpkin at /pumpkin",
+			"summary": "Cut a hollow, ribbed 3D pumpkin in your browser with true boolean cuts, six stamp shapes and a freehand knife. A flickering candle shines through your design, you can undo any cut, and you can export the result as a PNG or a GLB. It is linked from the Halloween page.",
+			"link": "/pumpkin",
+			"tags": [
+				"feature"
 			]
 		},
 		{

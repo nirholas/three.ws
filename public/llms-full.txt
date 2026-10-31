@@ -1471,6 +1471,12 @@ URL: https://three.ws/halloween
 
 Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.
 
+### Pumpkin Carving
+
+URL: https://three.ws/pumpkin
+
+Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.
+
 ### Airdrop Checker
 
 URL: https://three.ws/airdrops
