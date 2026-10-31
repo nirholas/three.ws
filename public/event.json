@@ -16,6 +16,7 @@
 		{ "atMin": 27, "title": "An agent pays for a tool", "detail": "At the Agent Exchange", "icon": "🧾" },
 		{ "atMin": 33, "title": "Community showcase", "detail": "Members show what they brought", "icon": "🎤" },
 		{ "atMin": 43, "title": "Open Q&A and what ships next", "detail": "Ask anything", "icon": "💬" },
+		{ "atMin": 49, "title": "Dance-off on the floor", "detail": "Step onto the dance floor, then vote with a reaction. Rounds run all event", "icon": "🕺" },
 		{ "atMin": 55, "title": "Group photo", "detail": "Gather at the totem. One shared shutter at the 58th minute", "icon": "📸" }
 	]
 }
