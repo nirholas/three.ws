@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Halloween Weekend gifts are claimable on /play</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-10-31:Halloween Weekend gifts are claimable on /play</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The /play lobby now shows the Halloween Weekend 2026 drop with a live countdown, the gift list and a one-click claim for the Pumpkin Cap and Witchlight Aura. A pill follows you into the world until you claim, and a moonlit vignette dresses /play for the weekend (toggle it off with the Halloween look button).</description>
+		</item>
+		<item>
 			<title>Docs · three.ws and Microsoft</title>
 			<link>https://three.ws/docs/microsoft</link>
 			<guid isPermaLink="false">2026-10-30:Docs · three.ws and Microsoft</guid>

@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-10-31
+
+- **Halloween Weekend gifts are claimable on /play**: The /play lobby now shows the Halloween Weekend 2026 drop with a live countdown, the gift list and a one-click claim for the Pumpkin Cap and Witchlight Aura. A pill follows you into the world until you claim, and a moonlit vignette dresses /play for the weekend (toggle it off with the Halloween look button). (`/play`) `[feature]`
+
 ## 2026-10-30
 
 - **Docs · three.ws and Microsoft** (`/docs/microsoft`): The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.

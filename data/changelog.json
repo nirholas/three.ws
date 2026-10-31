@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-10-31",
+			"title": "Halloween Weekend gifts are claimable on /play",
+			"summary": "The /play lobby now shows the Halloween Weekend 2026 drop with a live countdown, the gift list and a one-click claim for the Pumpkin Cap and Witchlight Aura. A pill follows you into the world until you claim, and a moonlit vignette dresses /play for the weekend (toggle it off with the Halloween look button).",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
 			"date": "2026-10-30",
 			"title": "Link preview cards render again, Game-ready refine works, and the embed script is a third smaller",
 			"summary": "Since October 27 every three.ws link preview image (pages, agents, leaderboards) failed to render after an image library update that cannot load on our servers. Previews are back on the last working release, with the broken one blocked from returning. The Game-ready preset in Forge refine now reduces triangle count again instead of failing. The agent-3d embed script drops from 6.9 MB to 4.3 MB by loading 3D decoders only when a model needs them. Webhooks, payment probes and paid API relays that route through the network safety guard no longer fail with \"fetch failed\". The chat app, Forge desktop and the Robinhood Chain, SDK and example projects now run on current releases of their frameworks and build tools.",

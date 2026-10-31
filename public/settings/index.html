@@ -458,6 +458,7 @@
 				<a href="#privacy" data-tab="privacy" data-i18n="settings_index.privacy">Privacy</a>
 				<a href="#sessions" data-tab="sessions" data-i18n="settings_index.sessions">Sessions</a>
 				<a href="#connections" data-tab="connections">Connections</a>
+				<a href="#gifts" data-tab="gifts">Gifts</a>
 				<div class="aside-section">Workspace</div>
 				<a href="/dashboard#keys" data-i18n="settings_index.api_keys">API Keys ↗</a>
 				<a href="/dashboard#mcp" data-i18n="settings_index.mcp">MCP ↗</a>
@@ -726,6 +727,12 @@
 				</div>
 
 				<!-- ── Danger ────────────────────────────────────────────── -->
+				<div class="page" id="tab-gifts">
+					<h2>Gifts</h2>
+					<p class="sub">Seasonal gifts are free for every account and kept forever. Claim them here, then wear them in /play.</p>
+					<div id="gifts-mount"></div>
+				</div>
+
 				<div class="page" id="tab-danger">
 					<h2 data-i18n="settings_index.danger_zone_2">Danger Zone</h2>
 					<p class="sub" data-i18n="settings_index.irreversible_actions_proceed_with_care">Irreversible actions — proceed with care</p>
@@ -1901,6 +1908,14 @@
 				return _urlP.get('tab') || hash || 'profile';
 			}
 
+			// ── Gifts ─────────────────────────────────────────────────────
+			let giftCard = null;
+			async function loadGifts() {
+				if (giftCard) return giftCard.refresh();
+				const { mountGiftClaim } = await import('/src/shared/gift-claim.js');
+				giftCard = mountGiftClaim(document.getElementById('gifts-mount'));
+			}
+
 			// ── Tab routing ───────────────────────────────────────────────
 			function navigate(tab) {
 				document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1913,6 +1928,7 @@
 				if (tab === 'sessions') loadSessions();
 				if (tab === 'connected-accounts') loadConnectedAccounts();
 				if (tab === 'connections') loadConnections();
+				if (tab === 'gifts') loadGifts();
 			}
 
 			document.querySelectorAll('aside a[data-tab]').forEach(a => {

@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-30T23:03:25.438Z",
+	"generated_at": "2026-10-31T19:11:41.338Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4217,
+	"total": 4218,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Halloween Weekend gifts are claimable on /play",
+			"summary": "The /play lobby now shows the Halloween Weekend 2026 drop with a live countdown, the gift list and a one-click claim for the Pumpkin Cap and Witchlight Aura. A pill follows you into the world until you claim, and a moonlit vignette dresses /play for the weekend (toggle it off with the Halloween look button).",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-10-30",
 			"type": "launch",
@@ -1541,16 +1551,6 @@
 			"title": "Docs: Shopify app (Photo to 3D product media)",
 			"summary": "How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.",
 			"link": "/docs/shopify-app",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "launch",
-			"title": "Docs: WordPress embed (three.ws Agent plugin)",
-			"summary": "How the three.ws Agent WordPress plugin works: the Gutenberg block and [three_ws_agent] shortcode, the SRI-pinned release, and the real Plugin Check verification run.",
-			"link": "/docs/wordpress-embed",
 			"tags": [
 				"launch"
 			]
