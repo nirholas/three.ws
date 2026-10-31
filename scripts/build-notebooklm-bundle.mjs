@@ -101,16 +101,50 @@ const rest = tracked.filter(isMd).filter((p) => !seen.has(p)).map((p) => {
 for (const x of rest) add(x.p, x.t, 'Documentation');
 
 const date = new Date().toISOString().slice(0, 10);
-const toc = sections.map((s) => `- ${s.path} (${s.label})`).join('\n');
-const out = [
-	prompt,
-	`\n\n---\n\n# Source index\n\nGenerated ${date}. ${sections.length} documents, about ${total.toLocaleString('en-US')} words. Each document below starts with a "## FILE:" heading naming its path in the repository.\n\n${toc}\n`,
-	...sections.map((s) => `\n\n---\n\n## FILE: ${s.path}\n\n${s.text.trim()}\n`),
-].join('');
+const clean = (s) => s.replace(/\s?[\u2014\u2013]\s?/g, ' - ');
+const outFiles = [];
+const write = (name, s) => { writeFileSync(resolve(ROOT, name), s); outFiles.push(name); return words(s); };
 
-const clean = out.replace(/\s?[\u2014\u2013]\s?/g, ' - ');
-writeFileSync(resolve(ROOT, OUT_MD), clean);
+// Part 1: prompt + priority material.
+const toc = sections.map((s) => `- ${s.path} (${s.label})`).join('\n');
+const n1 = write(OUT_MD, clean([
+	prompt,
+	`\n\n---\n\n# Source index (part 1)\n\nGenerated ${date}. ${sections.length} documents, about ${total.toLocaleString('en-US')} words. Each document starts with a "## FILE:" heading naming its path in the repository. Further parts hold the rest of the repository's Markdown in full.\n\n${toc}\n`,
+	...sections.map((s) => `\n\n---\n\n## FILE: ${s.path}\n\n${s.text.trim()}\n`),
+].join('')));
+
+// Overflow parts: every remaining tracked .md file in full (tails of truncated files), vendored last.
+const consumed = new Map(sections.map((s) => [s.path, s.text.endsWith('in the repository.]\n') ? s.n : -1]));
+const chunks = [];
+const order = (p) => (p.startsWith('third_party/') ? 3 : /^(docs|marketing|specs)\//.test(p) ? 0 : /^(packages|agents|public|hubs|api|src)\//.test(p) ? 1 : 2);
+const pool = tracked.filter((p) => p.endsWith('.md') && !/^docs\/ALL\.md$|(^|\/)node_modules\//.test(p) && !p.startsWith('three-ws-notebooklm'))
+	.sort((a, b) => order(a) - order(b) || a.localeCompare(b));
+for (const p of pool) {
+	const raw = read(p);
+	let toks = raw.match(/\S+\s*/g) || [];
+	const done = seen.has(p) ? consumed.get(p) : 0;
+	if (done === -1 || (seen.has(p) && p !== 'README.md' && p !== 'CHANGELOG.md' && done !== 0 && !consumed.has(p))) continue;
+	if (seen.has(p) && done <= 0) continue;
+	let label = p;
+	if (done > 0) { toks = toks.slice(done); label = `${p} (continued)`; }
+	if (p === 'CHANGELOG.md' && seen.has(p)) { toks = (raw.slice(raw.indexOf('\n## ')).match(/\S+\s*/g) || []).slice(CHANGELOG_WORDS); label = `${p} (older entries)`; }
+	if (toks.length < 30) continue;
+	for (let i = 0; i < toks.length; i += 60_000) {
+		chunks.push({ label: i ? `${label} (part ${i / 60_000 + 1})` : label, text: toks.slice(i, i + 60_000).join(''), n: Math.min(60_000, toks.length - i) });
+	}
+}
+const PART_BUDGET = 480_000;
+let part = 2, cur = [], curN = 0;
+const flush = () => {
+	if (!cur.length) return;
+	const name = `three-ws-notebooklm-part-${String(part++).padStart(2, '0')}.md`;
+	write(name, clean(`# three.ws combined documentation, ${name.replace('.md', '')}\n\nGenerated ${date}. Continuation of the main file. Each document starts with a "## FILE:" heading naming its path in the repository.\n\n` + cur.map((c) => `\n\n---\n\n## FILE: ${c.label}\n\n${c.text.trim()}\n`).join('')));
+	cur = []; curN = 0;
+};
+for (const c of chunks) { if (curN + c.n > PART_BUDGET) flush(); cur.push(c); curN += c.n; }
+flush();
+
 if (existsSync(resolve(ROOT, OUT_ZIP))) rmSync(resolve(ROOT, OUT_ZIP));
-execFileSync('zip', ['-9', '-q', OUT_ZIP, OUT_MD], { cwd: ROOT });
-console.log(`${OUT_MD}: ${sections.length} documents, ${words(clean).toLocaleString('en-US')} words, ${(clean.length / 1e6).toFixed(1)} MB`);
+execFileSync('zip', ['-9', '-q', OUT_ZIP, ...outFiles], { cwd: ROOT });
+console.log(`${outFiles.length} files, main file ${n1.toLocaleString('en-US')} words, ${chunks.length} overflow chunks`);
 console.log(`${OUT_ZIP} written to repo root`);
