@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Glowing jack-o'-lanterns in /play, and a crowd that walks around each other",
+			"summary": "During Halloween Weekend, /play worlds are dotted with carved, glowing jack-o'-lanterns (drawn as a few instanced batches, so they stay cheap). The ambient crowd now uses steering behaviours: wanderers arrive smoothly at their destination and keep a body's width from each other instead of walking through one another.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "Game-Ready export gets an Artist mesh option for cleaner low-poly",
 			"summary": "The Game-Ready panel has a new Artist mesh topology: a generative retopology model (LATO.2, MIT) that builds an even low-poly mesh of up to about 10,000 faces. Every result is checked for holes and drift from your model, and if the check fails you automatically get the QuadriFlow mesh instead, so an export never ships torn.",
 			"tags": [

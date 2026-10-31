@@ -12,6 +12,7 @@
 // rest of the scene is under active development.
 
 import { Group, Vector3 } from 'three';
+import { EntityManager, Vehicle, ArriveBehavior, SeparationBehavior, Vector3 as YukaVector3 } from 'yuka';
 import { AnimationManager } from '../animation-manager.js';
 import { detectProfile } from '../club-perf.js';
 // The crowd wears the same models the players do, so it loads them through the
@@ -134,6 +135,13 @@ async function playEmote(anim, motion) {
 	} catch { /* clip missing — ignore */ }
 }
 
+// Steering for the whole crowd (Yuka, MIT). Each wanderer is a Vehicle that
+// arrives at its destination while keeping a body's width from its neighbours,
+// so the crowd flows around itself instead of walking through each other on
+// straight lines. One manager, stepped once per frame by AmbientCrowd.update().
+const steering = new EntityManager();
+const SEPARATION_RADIUS = 1.6;
+
 class Wanderer {
 	constructor(scene, name, avatarPick, onInspect) {
 		// A wanderer wearing a named gallery avatar IS that citizen: it carries the
@@ -152,6 +160,21 @@ class Wanderer {
 		this.yaw = Math.random() * Math.PI * 2; this.rig.rotation.y = this.yaw;
 		scene.add(this.rig);
 		this.scene = scene;
+
+		this.arriveTarget = new YukaVector3();
+		this.vehicle = new Vehicle();
+		this.vehicle.maxSpeed = AMBIENT_SPEED;
+		this.vehicle.maxForce = 6;
+		this.vehicle.mass = 1;
+		this.vehicle.boundingRadius = 0.45;
+		this.vehicle.neighborhoodRadius = SEPARATION_RADIUS;
+		this.vehicle.updateNeighborhood = true;
+		this.vehicle.position.set(this.rig.position.x, 0, this.rig.position.z);
+		this.arrive = new ArriveBehavior(this.arriveTarget, 3, 0.4);
+		this.arrive.active = false;
+		this.vehicle.steering.add(this.arrive);
+		this.vehicle.steering.add(new SeparationBehavior());
+		steering.add(this.vehicle);
 
 		this.label = document.createElement('div');
 		this.label.className = 'cc-label';
@@ -198,6 +221,13 @@ class Wanderer {
 		onChat?.(this.name, text);
 	}
 	update(dt, onChat, player) {
+		// A wanderer that is not walking stays put: pin its vehicle to the rig so it
+		// still counts as a neighbour for the others without drifting off.
+		if (!this._dest || this.held) {
+			this.arrive.active = false;
+			this.vehicle.position.set(this.rig.position.x, 0, this.rig.position.z);
+			this.vehicle.velocity.set(0, 0, 0);
+		}
 		// Held for a conversation: stand still, face whoever stopped to talk, and
 		// keep quiet (the chat panel drives the speech bubble now).
 		if (this.held) {
@@ -224,17 +254,23 @@ class Wanderer {
 			if (this._wait <= 0) {
 				const a = Math.random() * Math.PI * 2, r = Math.random() * (WORLD_RADIUS * 0.8);
 				this._dest = new Vector3(Math.cos(a) * r, 0, Math.sin(a) * r);
+				this.arriveTarget.set(this._dest.x, 0, this._dest.z);
+				this.vehicle.position.set(this.rig.position.x, 0, this.rig.position.z);
+				this.arrive.active = true;
 				this._setMotion('walk');
 			}
 		} else {
+			// Steering ran for the whole crowd already this frame (AmbientCrowd.update);
+			// the vehicle's position is where Yuka moved this wanderer to.
 			const p = this.rig.position;
 			const dx = this._dest.x - p.x, dz = this._dest.z - p.z;
-			const dist = Math.hypot(dx, dz);
-			if (dist < 0.45) { this._dest = null; this._wait = 1.5 + Math.random() * 4.5; this._setMotion('idle'); }
-			else {
-				const step = Math.min(dist, AMBIENT_SPEED * dt);
-				p.x += (dx / dist) * step; p.z += (dz / dist) * step;
-				const tYaw = Math.atan2(dx, dz);
+			if (Math.hypot(dx, dz) < 0.45) {
+				this._dest = null; this._wait = 1.5 + Math.random() * 4.5; this._setMotion('idle');
+				this.arrive.active = false; this.vehicle.velocity.set(0, 0, 0);
+			} else {
+				p.x = this.vehicle.position.x; p.z = this.vehicle.position.z;
+				const vx = this.vehicle.velocity.x, vz = this.vehicle.velocity.z;
+				const tYaw = Math.hypot(vx, vz) > 0.05 ? Math.atan2(vx, vz) : Math.atan2(dx, dz);
 				let d = tYaw - this.yaw;
 				while (d > Math.PI) d -= Math.PI * 2;
 				while (d < -Math.PI) d += Math.PI * 2;
@@ -246,6 +282,7 @@ class Wanderer {
 	}
 	dispose() {
 		this._disposed = true;
+		steering.remove(this.vehicle);
 		this.scene.remove(this.rig);
 		// Dereference the shared model template and free this clone's own
 		// materials (and any capsule stand-in) before dropping the rig; a bare
@@ -329,6 +366,8 @@ class AmbientCrowd {
 			node.style.display = '';
 			node.style.transform = `translate(-50%, -100%) translate(${(v.x * 0.5 + 0.5) * W}px, ${(-v.y * 0.5 + 0.5) * H}px)`;
 		};
+		// Clamp so a backgrounded tab's huge dt can't fling the crowd across the plaza.
+		steering.update(Math.min(dt, 0.1));
 		for (const w of this.list) {
 			w.update(dt, this._onChat, this.cc.localPos);
 			place(w.label, w.rig.position, w.height + 0.2);
