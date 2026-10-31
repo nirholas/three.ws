@@ -75,8 +75,16 @@ beforeEach(() => {
 });
 
 describe('submitOrder routes by declared capability', () => {
-	it('hands the job to the manual lane when no partner is configured', async () => {
-		const result = await submitOrder({ order: ORDER, actor: 'operator', actorId: 'admin-1' });
+	// craftcloud is always configured and listed first (adapters/index.js), so an
+	// unpinned order routes to it. The default route is asserted here; the
+	// manual-lane behaviour below pins the lane the way an operator does.
+	it('routes an unpinned order to the first configured lane that can run it', async () => {
+		const { routeOrder } = await import('../api/_lib/print/adapters/index.js');
+		expect(routeOrder(ORDER).adapter.key).toBe('craftcloud');
+	});
+
+	it('hands the job to the manual lane when an operator pins it', async () => {
+		const result = await submitOrder({ order: ORDER, adapterKey: 'manual', actor: 'operator', actorId: 'admin-1' });
 		expect(result.adapter).toBe('manual');
 		expect(result.providerOrderId).toBe(ORDER.id);
 		expect(transition).toHaveBeenCalledWith(expect.objectContaining({
@@ -88,13 +96,13 @@ describe('submitOrder routes by declared capability', () => {
 	});
 
 	it('pages the operator channel with the job, not the address', async () => {
-		await submitOrder({ order: ORDER });
+		await submitOrder({ order: ORDER, adapterKey: 'manual' });
 		expect(notifyOperators).toHaveBeenCalledTimes(1);
 		expect(notifyOperators.mock.calls[0][0].title).toMatch(/New print job/);
 	});
 
 	it('records the prepared formats so the operator knows what to send the bureau', async () => {
-		await submitOrder({ order: ORDER });
+		await submitOrder({ order: ORDER, adapterKey: 'manual' });
 		expect(patchProviderDetails).toHaveBeenCalledWith(
 			ORDER.id,
 			expect.objectContaining({ provider_state: expect.objectContaining({ formats: ['stl', '3mf'] }) }),
