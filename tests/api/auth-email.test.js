@@ -30,9 +30,11 @@ const rlState = { success: true };
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		authIp: vi.fn(async () => ({ success: rlState.success })),
+		authAccount: vi.fn(async () => ({ success: true })),
 		registerIp: vi.fn(async () => ({ success: rlState.success })),
 	},
 	clientIp: () => '127.0.0.1',
+	ipRateKey: (ip) => ip,
 }));
 
 const authMock = {
