@@ -1465,6 +1465,12 @@ URL: https://three.ws/onchain
 
 Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.
 
+### Halloween Weekend Gifts
+
+URL: https://three.ws/halloween
+
+Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.
+
 ### Airdrop Checker
 
 URL: https://three.ws/airdrops

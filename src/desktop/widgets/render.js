@@ -165,6 +165,7 @@ function placePicker(body, onDone) {
 				if (my !== seq) return;
 				note.textContent = input.value.trim().length > 1 && !hits.length ? 'No city by that name.' : '';
 				here.hidden = hits.length > 0;
+				body.firstChild.classList.toggle('has-hits', hits.length > 0);
 				list.replaceChildren(
 					...hits.map((p) => {
 						const li = document.createElement('li');

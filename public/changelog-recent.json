@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-10-31T19:15:52.194Z",
+	"generated_at": "2026-10-31T19:26:01.178Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4218,
+	"total": 4220,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-10-31",
+			"type": "launch",
+			"title": "Halloween Weekend Gifts",
+			"summary": "Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.",
+			"link": "/halloween",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-10-31",
 			"type": "update",
@@ -17,6 +27,17 @@
 			"link": "/play",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "The web desktop looks like a clean, futuristic dark OS",
+			"summary": "The desktop now opens on the Aqua shell over a new Horizon wallpaper: a near-black field with a slowly drifting grid that runs toward a horizon line lit in your accent colour. App icons are glowing glyphs on dark glass tiles, the dock and widgets are deep glass with a lit edge, the app in front is marked by an accent bar, and the focused window gets a faint accent glow. This PC and Recycle Bin are now Computer and Trash (the old names still work in the File Explorer address bar). The Weather widget's city picker is redesigned with a clear header, a one-click Use my location button, and room for more search results. The File Explorer no longer draws a ring around its whole file list when it opens.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"improvement"
 			]
 		},
 		{
@@ -1531,26 +1552,6 @@
 			"title": "Docs: Discord Activity (Forge Room)",
 			"summary": "How the three.ws Discord Activity works: the OAuth2 auth flow, Discord's /.proxy/ URL mapping and CSP, the shared event-sourced room state, and why it ships with no purchases.",
 			"link": "/docs/discord-activity",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "launch",
-			"title": "Docs: LiveKit and Pipecat avatar integrations",
-			"summary": "How to drive a three.ws <agent-3d> avatar's lipsync and gestures from a LiveKit Agents or Pipecat voice pipeline, with the livekit-plugins-threews and pipecat-threews packages, runnable local examples, and the data-channel message contract both share.",
-			"link": "/docs/voice-framework-integrations",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "launch",
-			"title": "Docs: Shopify app (Photo to 3D product media)",
-			"summary": "How the three.ws Shopify app works: OAuth and embedded session tokens, the photo-to-GLB-to-productCreateMedia pipeline, usage-based Billing API integration, and the mandatory privacy webhooks.",
-			"link": "/docs/shopify-app",
 			"tags": [
 				"launch"
 			]

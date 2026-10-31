@@ -502,6 +502,7 @@
 .wgx-place ul:empty,
 .wgx-place small:empty,
 .wgx-place-here[hidden],
+.wgx-place.has-hits .wgx-place-head,
 .sz-s .wgx-place p {
 	display: none;
 }
@@ -561,8 +562,9 @@
 	font: inherit;
 }
 .wgx-place input:focus {
-	outline: 2px solid var(--accent);
-	outline-offset: 0;
+	outline: 0;
+	border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 .wgx-place ul {
 	list-style: none;

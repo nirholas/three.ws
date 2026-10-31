@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T19:15:52.144Z",
+	"generated_at": "2026-10-31T19:26:01.072Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2926,6 +2926,18 @@
 					"showcase": false,
 					"priority": 0.7,
 					"job": "onchain"
+				},
+				{
+					"path": "/halloween",
+					"title": "Halloween Weekend Gifts",
+					"description": "Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.",
+					"added": "2026-10-31",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "trade"
 				},
 				{
 					"path": "/airdrops",

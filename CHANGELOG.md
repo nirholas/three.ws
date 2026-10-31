@@ -6,7 +6,9 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-10-31
 
+- **Halloween Weekend Gifts** (`/halloween`): Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.
 - **Halloween Weekend gifts are claimable on /play**: The /play lobby now shows the Halloween Weekend 2026 drop with a live countdown, the gift list and a one-click claim for the Pumpkin Cap and Witchlight Aura. A pill follows you into the world until you claim, and a moonlit vignette dresses /play for the weekend (toggle it off with the Halloween look button). (`/play`) `[feature]`
+- **The web desktop looks like a clean, futuristic dark OS**: The desktop now opens on the Aqua shell over a new Horizon wallpaper: a near-black field with a slowly drifting grid that runs toward a horizon line lit in your accent colour. App icons are glowing glyphs on dark glass tiles, the dock and widgets are deep glass with a lit edge, the app in front is marked by an accent bar, and the focused window gets a faint accent glow. This PC and Recycle Bin are now Computer and Trash (the old names still work in the File Explorer address bar). The Weather widget's city picker is redesigned with a clear header, a one-click Use my location button, and room for more search results. The File Explorer no longer draws a ring around its whole file list when it opens. (`/?view=desktop`) `[desktop, improvement]`
 
 ## 2026-10-30
 
