@@ -64,6 +64,7 @@ import { getPresenceTicket, friendsClient } from '../friends.js';
 import { getMe } from '../account.js';
 import { showPlayIntro, makeIntroReopener } from './play-intro.js';
 import { applyLoadout } from './cosmetics-loadout.js';
+import { PlayPostFx } from './post-fx.js';
 import { serializeLoadout, getCosmetic } from '../../multiplayer/src/cosmetics-catalog.js';
 import { AccessoryManager } from '../agent-accessories.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
@@ -1061,11 +1062,21 @@ export class CoinCommunities {
 		if (this._powerSaver) {
 			r.setPixelRatio(1);
 			r.shadowMap.enabled = false;
+			this._postFx?.setEnabled(false);
 			return;
 		}
 		const dprCap = this._perfTier === 'high' ? 2 : this._perfTier === 'medium' ? 1.5 : 1;
 		r.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap));
 		r.shadowMap.enabled = this._perfTier !== 'low';
+		this._syncPostFx();
+	}
+
+	// AO + bloom only on the high tier, with power saver off and a visible backdrop.
+	// Built lazily the first time it is wanted; every other state renders plainly.
+	_syncPostFx() {
+		const want = this._perfTier === 'high' && !this._powerSaver && !this._transparentBg && !!this.scene && !!this.camera;
+		if (want && !this._postFx) this._postFx = new PlayPostFx(this.renderer, this.scene, this.camera);
+		this._postFx?.setEnabled(want);
 	}
 
 	_initScene() {
@@ -1086,6 +1097,7 @@ export class CoinCommunities {
 		// Initial FOV matches the follow mode's (camera-modes.js) so the first
 		// rendered frame doesn't pop before _updateCamera applies the mode.
 		this.camera = new PerspectiveCamera(CAMERA_MODE_FOV.follow, window.innerWidth / window.innerHeight, 0.1, 9000);
+		this._syncPostFx();
 
 		// Transparent embed (`?bg=transparent`): the environment skips the sky
 		// backdrop so the host page shows through; ground, ring, and avatars render.
@@ -4933,7 +4945,9 @@ export class CoinCommunities {
 		// world's programs; drawing here would force the synchronous compile it is
 		// there to prevent. Everything above still ticks, so no simulation time is
 		// lost, and the suspension is capped at WARM_TIMEOUT_MS.
-		if (!this._contextLost && !this._warming) this.renderer.render(this.scene, this.camera);
+		if (!this._contextLost && !this._warming) {
+			if (!this._postFx?.render(dt)) this.renderer.render(this.scene, this.camera);
+		}
 	}
 
 	// Kick the avatar into the air. Ignored while already airborne so a held key
@@ -5146,6 +5160,7 @@ export class CoinCommunities {
 		this.camera.aspect = w / h;
 		this.camera.updateProjectionMatrix();
 		this.renderer.setSize(w, h);
+		this._postFx?.resize(w, h);
 		// Re-apply the pixel ratio: setSize keeps the renderer's current ratio,
 		// but devicePixelRatio may have changed (display move / zoom). _applyPerfTier
 		// reads the live devicePixelRatio and re-clamps it to the active tier.

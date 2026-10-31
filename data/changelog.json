@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "/play gets contact shadows and glow on capable devices",
+			"summary": "On high-quality devices, /play now renders with ambient occlusion (props and avatars ground into the world), a soft bloom on bright and emissive things like the Witchlight aura, and filmic tone mapping. It switches itself off in power-saver mode and on lower quality tiers, and falls back to the plain renderer if the GPU cannot run it.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-10-31",
+			"title": "Chat keeps answering when the free model quota runs out",
+			"summary": "When the shared free model hit its daily limit, the chat showed 'The built-in model is rate-limited' and stopped. It now hands the message to the platform's own model chain instead, so a reply still arrives. The rate-limit notice only appears if every lane is busy.",
+			"link": "/chat",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
 			"title": "One shared group photo for everyone in the meetup world, and a live headcount",
 			"summary": "Meetups in /play can now end with a group photo the whole plaza takes together. A minute before, a banner calls everyone to the totem; ten seconds out a big countdown appears; three seconds out every avatar strikes the same cheering pose while fireworks launch overhead; then every player's camera fires at the same instant and the shot, stamped with the event name, is ready to download or copy. If your game stutters right at the moment you still get the photo, and nobody who missed the countdown gets one. The event chip and agenda now also show how many people are in the world right now, read from the live server and left off rather than guessed when it does not answer. Meetup #3 on November 6 takes its photo at 8:58 AM Pacific.",
 			"tags": [

@@ -749,6 +749,7 @@
 		"meshoptimizer": "^1.2.0",
 		"mppx": "^0.17.0",
 		"multiformats": "^14.0.5",
+		"n8ao": "^2.0.1",
 		"nanoid": "^6.0.2",
 		"nipplejs": "^1.0.4",
 		"node-html-parser": "^9.0.5",
