@@ -13,7 +13,18 @@
  * and without a DB (simulateTrade / strategyHash / decideExit are all pure).
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// The header promises no model: pin that, so a developer or CI box with LLM
+// credentials in its environment does not turn these into live, nondeterministic
+// model calls whose wording differs from the deterministic parser's.
+vi.mock('../api/_lib/llm.js', () => ({
+	llmConfigured: () => false,
+	llmComplete: vi.fn(async () => {
+		throw new Error('llmComplete must not run in the deterministic compiler tests');
+	}),
+}));
+
 import { compileStrategyFromText } from '../api/_lib/strategy-compiler.js';
 import { simulateTrade, strategyHash } from '../api/_lib/strategy-backtest.js';
 import { decideExit } from '../workers/agent-sniper/exit-logic.js';
