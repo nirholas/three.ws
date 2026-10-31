@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-31T19:48:31.608Z",
+	"generated_at": "2026-10-31T19:49:32.265Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4225,
+	"total": 4227,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Halloween Weekend Gifts",
 			"summary": "Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.",
 			"link": "/halloween",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "launch",
+			"title": "How pumpkin carving works",
+			"summary": "The /pumpkin carver: a hollow ribbed 3D shell, real boolean cuts with three-bvh-csg, the knife, undo, saved cuts, and PNG and GLB export.",
+			"link": "/docs/pumpkin-carving",
 			"tags": [
 				"launch"
 			]
@@ -37,6 +47,16 @@
 			"link": "/pumpkin",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Carve a 3D pumpkin at /pumpkin",
+			"summary": "A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.",
+			"link": "/pumpkin",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1531,27 +1551,6 @@
 			"tags": [
 				"infra",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "The native $THREE launchpad now taxes snipers, not just steady trading",
-			"summary": "Every pool on the native launchpad lane used to open at the same flat 1% trading fee a coin keeps forever, which is exactly what a sniper bot wants: the same price whether it buys in the pool's first block or an hour later. New pools now open at a 50% fee that decays exponentially down to the normal 1% over the first 100 slots (about 40 seconds), so a bot buying in the first block pays close to half its $THREE in fees while an organic buyer a minute later pays the standard rate. The coin creator's own bundled first buy stays exempt, since that is the creator funding their own launch, not a snipe. The schedule runs entirely on Meteora's own Dynamic Bonding Curve fee scheduler, no new contract.",
-			"link": "/docs/native-launchpad",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "The pre-push guard now catches a leaked Solana secret key, and withdrawals warn before a sweeper bot drains them",
-			"summary": "scripts/check-secrets.mjs, the hook that blocks a push carrying a credential, now decodes every 86-90 character base58 run in added content and flags it only when the first 32 bytes derive the embedded public key in the last 32 bytes via Ed25519, catching a real Solana keypair secret while leaving the repo's thousands of genuine 64-byte transaction signatures untouched. Separately, the agent wallet's Withdraw tab now reads a destination's recent on-chain history before you send: a wallet that repeatedly drains to near-zero within seconds of receiving funds, the sweeper-bot fingerprint, surfaces a blocking warning on the confirm screen and again server-side if you retry, so a sweeper bot can't just wait for the preview to go stale.",
-			"link": "/docs/agent-abilities",
-			"tags": [
-				"security"
 			]
 		}
 	]

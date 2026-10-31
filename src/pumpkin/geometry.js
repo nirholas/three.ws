@@ -232,6 +232,13 @@ export function bakeGeometry(brush) {
 		if (!a) continue;
 		out.setAttribute(name, new Float32BufferAttribute(a.array.slice(0, verts * 3), 3));
 	}
+	out.getAttribute('normal')?.array.forEach((_, i, arr) => {
+		if (i % 3) return;
+		const len = Math.hypot(arr[i], arr[i + 1], arr[i + 2]) || 1;
+		arr[i] /= len;
+		arr[i + 1] /= len;
+		arr[i + 2] /= len;
+	});
 	if (src.index) out.setIndex(Array.from(src.index.array.slice(0, drawn)));
 	for (const grp of src.groups) {
 		if (grp.start >= drawn) continue;

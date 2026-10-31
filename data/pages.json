@@ -3859,6 +3859,14 @@
 					"added": "2026-09-01"
 				},
 				{
+					"path": "/docs/pumpkin-carving",
+					"title": "How pumpkin carving works",
+					"description": "The /pumpkin carver: a hollow ribbed 3D shell, real boolean cuts with three-bvh-csg, the knife, undo, saved cuts, and PNG and GLB export.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-31"
+				},
+				{
 					"path": "/docs/seasonal-drops",
 					"title": "How seasonal drops work",
 					"description": "Free, time-boxed gifts on three.ws: one claim during the window grants a profile badge, /play wearables and a desktop wallpaper you keep forever. The window, the /api/seasonal endpoint, the seasonal look and its opt-out, and how to add the next drop.",

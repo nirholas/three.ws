@@ -15,6 +15,14 @@
 			<description>Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.</description>
 		</item>
 		<item>
+			<title>How pumpkin carving works</title>
+			<link>https://three.ws/docs/pumpkin-carving</link>
+			<guid isPermaLink="false">2026-10-31:How pumpkin carving works</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The /pumpkin carver: a hollow ribbed 3D shell, real boolean cuts with three-bvh-csg, the knife, undo, saved cuts, and PNG and GLB export.</description>
+		</item>
+		<item>
 			<title>How seasonal drops work</title>
 			<link>https://three.ws/docs/seasonal-drops</link>
 			<guid isPermaLink="false">2026-10-31:How seasonal drops work</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.</description>
+		</item>
+		<item>
+			<title>Carve a 3D pumpkin at /pumpkin</title>
+			<link>https://three.ws/pumpkin</link>
+			<guid isPermaLink="false">2026-10-31:Carve a 3D pumpkin at /pumpkin</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.</description>
 		</item>
 		<item>
 			<title>Carve a real 3D pumpkin at /pumpkin</title>
