@@ -298,6 +298,21 @@ test.describe('web desktop', () => {
 			expect(report).toEqual([]);
 		});
 	}
+	test('a notification card shows its app icon as a small square, not stretched across the header', async ({ page }) => {
+		await page.addInitScript(() => {
+			localStorage.setItem('twx_season_off:halloween-2026', '1');
+			const note = { id: 'e2e-timer', title: 'Timer finished', body: 'Tea', app: 'clock', at: Date.now() };
+			localStorage.setItem('tws:notifications', JSON.stringify([note]));
+		});
+		await openDesktop(page);
+		await page.locator('.os-clock').click();
+		const card = page.getByRole('dialog', { name: 'Notifications and calendar' }).locator('.nc-card', { hasText: 'Timer finished' });
+		await expect(card).toBeVisible();
+		const tile = await card.locator('.nt-head .app-tile').boundingBox();
+		expect(Math.round(tile.width)).toBe(Math.round(tile.height));
+		expect(tile.width).toBeLessThanOrEqual(20);
+		await expect(card.locator('.nt-head span:not(.app-tile)').first()).toHaveText('Clock');
+	});
 	for (const width of [360, 390, 430]) {
 		test(`on a ${width}px phone the Start button is visible, tappable and opens Start`, async ({ page }) => {
 			await page.setViewportSize({ width, height: 800 });

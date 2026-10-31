@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Desktop notifications show a small app icon again",
+			"summary": "On the web desktop, a notification's app icon stretched into a wide empty bar across the card header, both in the pop-up and in the notification centre. It is a small square beside the app name again, and a browser test keeps it that way.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "The web desktop's Start button works on phones",
 			"summary": "On phones 390px wide or narrower, the taskbar tray slid over the Start button and left it too small to tap. Start now keeps its full size, the clock shows the time on one line, and the theme switch moves into Quick settings so everything fits from 360px up. A browser test checks the taskbar at three phone widths.",
 			"tags": [

@@ -731,7 +731,8 @@
 	font-size: 11px;
 	color: var(--text2);
 }
-.nt-head span {
+/* The app name takes the spare width; the app icon (also a span) keeps its size. */
+.nt-head span:not(.app-tile) {
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
@@ -739,6 +740,7 @@
 	white-space: nowrap;
 }
 .nt-head .app-tile.xs {
+	flex: none;
 	width: 18px;
 	height: 18px;
 	border-radius: 5px;
