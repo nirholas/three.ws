@@ -13,6 +13,7 @@
 // nothing. Someone who claimed keeps a quiet "worn forever" note in the lobby
 // after the weekend, since their gifts stay equippable.
 
+import { celebrateWithConfetti, startHalloweenPageFx } from '../shared/halloween-fx.js';
 import { HALLOWEEN_2026, dropPhase, formatCountdown, isHalloweenLive, seasonalLookEnabled, setSeasonalLookEnabled, markClaimedLocally } from '../shared/seasonal-drops.js';
 
 const DROP_URL = `/api/seasonal/${HALLOWEEN_2026.id}`;
@@ -58,6 +59,7 @@ const STYLE = `
 .hw-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .hw-btn[disabled] { opacity: 0.6; cursor: progress; }
 .hw-btn--ghost { background: transparent; color: var(--hw-ember); border: 1px solid rgba(255,179,107,0.45); }
+.hw-links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .hw-msg { margin-top: 10px; font-size: 12.5px; color: var(--hw-ember); }
 .hw-msg[data-kind="error"] { color: #ff9b8a; }
 .hw-pill {
@@ -136,6 +138,10 @@ class HalloweenPlay {
 				this.action,
 			]),
 			this._giftRow(),
+			el('div', { class: 'hw-links' }, [
+				el('a', { class: 'hw-btn hw-btn--ghost', href: '/pumpkin', text: 'Carve a pumpkin' }),
+				el('a', { class: 'hw-btn hw-btn--ghost', href: '/halloween', text: 'All gifts' }),
+			]),
 			this.msg,
 		]);
 		const head = inner.querySelector('.cc-lobby-head');
@@ -208,6 +214,7 @@ class HalloweenPlay {
 				? 'Claimed. Open My Cosmetics in a world to wear your Pumpkin Cap and Witchlight Aura (rejoin if you are already in one).'
 				: 'Claimed. Your wearables are still syncing: reload in a minute and they will appear in My Cosmetics.');
 			this._renderAction();
+			if (body.claim?.newlyClaimed) celebrateWithConfetti({ x: 0.5, y: 0.35 });
 		} catch (err) {
 			this._say(err.message || 'Could not claim right now. Check your connection and try again.', 'error');
 			if (this.claimBtn) { this.claimBtn.disabled = false; this.claimBtn.textContent = 'Claim gifts'; }
@@ -225,6 +232,7 @@ class HalloweenPlay {
 			this.vignette.remove(); this.vignette = null;
 		}
 		document.documentElement.toggleAttribute('data-halloween', on);
+		if (on) startHalloweenPageFx();
 		if (!this.lookBtn && isHalloweenLive()) {
 			this.lookBtn = el('button', {
 				type: 'button', class: 'hw-btn hw-btn--ghost hw-look', 'aria-pressed': String(seasonalLookEnabled()),
