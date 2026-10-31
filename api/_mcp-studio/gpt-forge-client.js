@@ -22,8 +22,9 @@ import { TICKET_HEADER, newTicket, ticketHandle } from '../_lib/forge-submit-tic
 // The rewrite guard and fallback-reason tail are shared with forge-client.js so
 // the two clients cannot drift apart again (this copy once had its own,
 // reason-less duplicate of isUsableDirectorRewrite).
-import { isUsableDirectorRewrite, finishDirectorReply } from './forge-client.js';
-export { isUsableDirectorRewrite };
+import { isUsableDirectorRewrite, directorRewriteProblem, finishDirectorReply } from './forge-client.js';
+// Re-exported so the clone stays a superset of forge-client's public API.
+export { isUsableDirectorRewrite, directorRewriteProblem, finishDirectorReply };
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_POLL_MS = 3_000;
