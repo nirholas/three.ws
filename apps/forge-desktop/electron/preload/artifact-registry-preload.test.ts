@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { createElectronApi } from './electron-api.ts'
+import { createElectronApi } from './electron-api'
 
 test('preload exposes scoped workspace library list/read/open methods', async () => {
   const calls: Array<{ channel: string, payload?: unknown }> = []

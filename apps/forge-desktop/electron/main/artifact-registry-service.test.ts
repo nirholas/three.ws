@@ -11,7 +11,7 @@ import {
   openWorkspaceAssetLibraryEntry,
   readWorkspaceAssetLibraryEntry,
   registerWorkspaceAssetLibraryIpcHandlers,
-} from './artifact-registry-service.ts'
+} from './artifact-registry-service'
 
 async function withWorkspace(run: (workspaceDir: string) => Promise<void>) {
   const workspaceDir = await mkdtemp(path.join(tmpdir(), 'forge-library-'))

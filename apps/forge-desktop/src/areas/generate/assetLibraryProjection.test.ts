@@ -6,8 +6,8 @@ import {
   groupAssetLibraryEntries,
   projectAssetLibraryEntry,
   resolveAssetLibraryOpenTarget,
-} from './assetLibraryProjection.ts'
-import type { AssetLibraryEntry } from '../../shared/types/assetLibrary.ts'
+} from './assetLibraryProjection'
+import type { AssetLibraryEntry } from '../../shared/types/assetLibrary'
 
 const glbEntry: AssetLibraryEntry = {
   id: 'library:Workflows/checkpoints/hero.glb',

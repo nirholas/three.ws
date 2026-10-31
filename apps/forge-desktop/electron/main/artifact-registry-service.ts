@@ -1,3 +1,4 @@
+import type { Dirent } from 'node:fs'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { basename, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 
@@ -255,7 +256,7 @@ async function collectFiles(workspaceDir: string, rootName: typeof ALLOWED_ROOTS
   const files: string[] = []
 
   async function walk(dir: string): Promise<void> {
-    let entries: Awaited<ReturnType<typeof readdir>>
+    let entries: Dirent[]
     try {
       entries = await readdir(dir, { withFileTypes: true })
     } catch {

@@ -6,7 +6,7 @@ import {
   buildOrcaSlicerDeepLink,
   canOpenInOrcaSlicer,
   encodeWorkspacePathToken,
-} from './orcaSlicerLink.ts'
+} from './orcaSlicerLink'
 
 test('builds an orcaslicer://open deeplink whose file= is a percent-encoded, query-less URL ending in model.stl', () => {
   const link = buildOrcaSlicerDeepLink('http://localhost:8765', '/workspace/Workflows/checkpoints/hero.glb')

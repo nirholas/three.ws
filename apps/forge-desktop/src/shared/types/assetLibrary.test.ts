@@ -7,14 +7,14 @@ import {
   ASSET_LIBRARY_MANIFEST_CAPABILITIES,
   ASSET_LIBRARY_PREVIEW_KINDS,
   ASSET_LIBRARY_SOURCE_SCOPES,
-} from './assetLibrary.ts'
+} from './assetLibrary'
 import type {
   AssetLibraryEntry,
   AssetLibraryListResult,
   AssetLibraryOpenRequest,
   AssetLibraryReadResult,
   AssetLibrarySourceLink,
-} from './assetLibrary.ts'
+} from './assetLibrary'
 
 test('declares capability-first asset taxonomy without extension categories', () => {
   assert.deepEqual(ASSET_CAPABILITIES, [

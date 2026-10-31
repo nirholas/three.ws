@@ -12,9 +12,9 @@ import {
   toggleAssetLibrarySectionKey,
   type AssetLibrarySortMode,
   type GenerateOpenPanel,
-} from './assetLibraryUi.ts'
-import { projectAssetLibraryEntry, resolveAssetLibraryOpenTarget, type ProjectedAssetLibraryEntry } from './assetLibraryProjection.ts'
-import type { AssetLibraryEntry } from '../../shared/types/assetLibrary.ts'
+} from './assetLibraryUi'
+import { projectAssetLibraryEntry, resolveAssetLibraryOpenTarget, type ProjectedAssetLibraryEntry } from './assetLibraryProjection'
+import type { AssetLibraryEntry } from '../../shared/types/assetLibrary'
 
 function entry(overrides: Partial<AssetLibraryEntry> = {}): ProjectedAssetLibraryEntry {
   const base: AssetLibraryEntry = {
@@ -91,6 +91,7 @@ test('opens only safe glb and gltf entries through existing Generate job and his
   if (target.kind !== 'self') throw new Error('expected self target')
 
   const selection = createAssetLibraryOpenJob(glb, target, 1718546400000)
+  assert.ok(selection, 'expected an open job for a workspace .glb')
   assert.equal(selection.historyUrl, '/workspace/Workflows/run/hero.glb')
   assert.equal(selection.job.status, 'done')
   assert.equal(selection.job.outputUrl, '/workspace/Workflows/run/hero.glb')
