@@ -2435,6 +2435,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:yuka",
+			"kind": "npm",
+			"name": "yuka",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/Mugen87/yuka",
+			"funding": null,
+			"version": "0.7.8",
+			"powers": null
+		},
+		{
 			"id": "npm:zod",
 			"kind": "npm",
 			"name": "zod",
@@ -2693,6 +2704,17 @@
 			"repo": "https://github.com/nirholas/three.ws",
 			"funding": null,
 			"version": "0.2.2",
+			"powers": null
+		},
+		{
+			"id": "npm:@three.ez/instanced-mesh",
+			"kind": "npm",
+			"name": "@three.ez/instanced-mesh",
+			"area": "rendering",
+			"license": "MIT",
+			"repo": "https://github.com/three-ez/instanced-mesh",
+			"funding": null,
+			"version": "0.3.16",
 			"powers": null
 		},
 		{
