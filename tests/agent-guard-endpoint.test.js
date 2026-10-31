@@ -473,11 +473,15 @@ describe('POST /api/agent/guard - on-chain allowance ceiling', () => {
 	});
 
 	it('reports a blind spot instead of failing when the chain is unreadable', async () => {
-		checkAgentAllowanceSpend.mockImplementation(async () => { throw new Error('rpc down'); });
+		// Once, not a standing implementation: vitest 5 reports an error thrown by a
+		// persistent mockImplementation as a test failure even when the handler
+		// catches it. The handler calls the check exactly once per pull.
+		checkAgentAllowanceSpend.mockImplementationOnce(async () => { throw new Error('rpc down'); });
 		const res = mkRes();
 		await guardHandler(mkReq({ body: pull('1') }), res);
 		expect(res.statusCode).toBe(200);
 		expect(JSON.stringify(parse(res).verdicts[0].verdict.blindSpots)).toContain('onchain allowance unreadable');
+		expect(checkAgentAllowanceSpend).toHaveBeenCalledTimes(1);
 	});
 
 	it('never consults the allowance for other tools', async () => {
