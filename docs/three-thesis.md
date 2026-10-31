@@ -406,7 +406,7 @@ The pump.fun article title ("Three Builds With Tech Giants") is earned. From `do
 
 **Media:** IBM Community blog, HackerNoon (auto-imported from the three.ws announcements RSS), Alibaba Cloud Marketplace Blog, pump.fun coin-page article.
 
-**Partner cards on `/partners` (eight):** OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon, Quicknode. The partner doc itself draws the boundary: no endorsement is claimed anywhere, and only the two program statuses above come from the partner side.
+**Partner cards on `/partners` (nine):** OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon, Quicknode. The partner doc itself draws the boundary: no endorsement is claimed anywhere, and only the two program statuses above come from the partner side.
 
 **OKX:** three.ws is agent #2632 "three.ws 3D Studio" on OKX.AI with A2MCP endpoints. The listing was rejected in review on 2026-07-04 for not yet matching the OKX Agent Payments Protocol standard; resubmission is pending. The endpoints are reachable directly meanwhile.
 

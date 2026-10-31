@@ -67,7 +67,7 @@ Of the 174 posts: roughly 40 are product/feature announcements, the rest are par
 | 2026-08-01 | Sign language: fingerspelling avatars, webcam sign reading, /api/sign, sign_text MCP tool | [post](https://x.com/trythreews/status/2083675644463038810) |
 | 2026-08-07 | Live meetup inside the $THREE world: spatial voice, 3,145 peak concurrent avatars | [post](https://x.com/trythreews/status/2085742637529870405) |
 
-Partnership and distribution posts (not feature announcements): Google Cloud, Alibaba Cloud, IBM (Business Partner, user group, live builds), AWS (Partner Network + Marketplace), W3C membership, .sol naming, MCP Registry and directory listings, x402 Bazaar verified provider, MetaMask Agent Wallet early access, security partner, NVIDIA Inception, OpenAI Partner Network, Hugging Face, hackathons, Product Hunt, the podcast, press features, exchange/token listings, and community meetups.
+Partnership and distribution posts (not feature announcements): Google Cloud, Alibaba Cloud, IBM (Business Partner, user group, live builds), AWS (Partner Network + Marketplace), Microsoft (partnership + Microsoft Marketplace listing), W3C membership, .sol naming, MCP Registry and directory listings, x402 Bazaar verified provider, MetaMask Agent Wallet early access, security partner, NVIDIA Inception, OpenAI Partner Network, Hugging Face, hackathons, Product Hunt, the podcast, press features, exchange/token listings, and community meetups.
 
 ## Full inventory: product pages
 
