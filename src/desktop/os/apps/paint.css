@@ -31,8 +31,11 @@
 .napp-paint .pt-ov { pointer-events: none; image-rendering: auto; }
 .napp-paint .pt-text { position: absolute; min-width: 80px; background: transparent; border: 1px dashed var(--accent); padding: 0; margin: 0; resize: none; overflow: hidden; line-height: 1.2; outline: none; }
 .napp-paint .pt-status { display: flex; align-items: center; gap: 16px; padding: 4px 10px; border-top: 1px solid var(--bd); font-size: 0.76rem; color: var(--text2); font-variant-numeric: tabular-nums; }
-.napp-paint .pt-status .pos { min-width: 90px; }
-.napp-paint .pt-status .msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Size and zoom never shrink or wrap; the pointer position and the message give way first. */
+.napp-paint .pt-status > span { white-space: nowrap; }
+.napp-paint .pt-status .pos { flex: 0 1 auto; min-width: 0; width: 90px; overflow: hidden; text-overflow: ellipsis; }
+.napp-paint .pt-status .dim, .napp-paint .pt-zoom { flex: none; }
+.napp-paint .pt-status .msg { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .napp-paint .pt-status .grow { flex: 1; }
 .napp-paint .pt-zoom { display: inline-flex; align-items: center; gap: 4px; }
 .napp-paint .pt-zoom input { width: 110px; accent-color: var(--accent); }
@@ -55,7 +58,7 @@
 .napp-paint .pt-btn { border: 1px solid var(--bd); background: var(--hover); color: var(--text); border-radius: 6px; padding: 7px 16px; font: inherit; cursor: pointer; }
 .napp-paint .pt-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .napp-paint .pt-btn:hover { filter: brightness(1.1); }
-@media (max-width: 640px) { .napp-paint .pt-ab span { display: none; } .napp-paint .pt-swatches { grid-template-columns: repeat(10, 22px); } .napp-paint .pt-sw { width: 22px; height: 22px; } }
+@media (max-width: 640px) { .napp-paint .pt-status { gap: 10px; } .napp-paint .pt-zoom input { width: 64px; } .napp-paint .pt-zoom .z { min-width: 34px; } .napp-paint .pt-ab span { display: none; } .napp-paint .pt-swatches { grid-template-columns: repeat(10, 22px); } .napp-paint .pt-sw { width: 22px; height: 22px; } }
 
 /* Hover feedback for the controls above that set cursor: pointer. */
 .napp-paint .pt-color:hover { border-color: var(--text2); }

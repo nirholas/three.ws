@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T23:50:00.639Z",
+	"generated_at": "2026-10-31T23:55:01.962Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -229,6 +229,17 @@
 			"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Paint's zoom controls stay on screen on a phone",
+			"summary": "On a phone the desktop Paint app wrapped the canvas size onto four lines and pushed the zoom-in button and the zoom percentage off the edge of the window. The status bar now stays on one line with every zoom control in reach, and the pointer position shortens first when room runs out.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
 			]
 		},
 		{

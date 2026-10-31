@@ -23,7 +23,8 @@
  *     what was typed across a refresh; list widgets fill their cards with
  *     whole rows. Notification cards keep a small app icon.
  *   - On 360, 390 and 430px phones the taskbar fits and Start stays tappable,
- *     and File Explorer keeps its address and every command on screen.
+ *     File Explorer keeps its address and every command on screen, and
+ *     Paint's status bar keeps its zoom controls in reach.
  *   - The resting desktop clears WCAG 2.1 AA (axe) in both dark and light mode.
  *
  * Nothing is stubbed. Boot's market and account probes hit the real endpoints
@@ -474,5 +475,23 @@ test.describe('web desktop', () => {
 		await win.locator('.fx-scroll [role="option"]', { hasText: 'Documents' }).dblclick();
 		await expect(win.locator('.fx-crumb[aria-current]')).toHaveText('Documents');
 		expect(await fits(), 'inside Documents').toEqual({ addrWider: true, crumbWhole: true, cmdNoScroll: true, viewsInside: true });
+	});
+	test('on a 390px phone Paint keeps its status bar on one line with every zoom control on screen', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 800 });
+		await openDesktop(page);
+		await launchFromStart(page, 'Paint');
+		const w = win(page, 'paint');
+		await expect(w.locator('.pt-zoom .z')).toHaveText(/^\d+%$/, { timeout: SLOW });
+		const status = await w.evaluate((el) => {
+			const bar = el.querySelector('.pt-status');
+			const box = bar.getBoundingClientRect();
+			const lines = (n) => Math.round(n.getBoundingClientRect().height / (parseFloat(getComputedStyle(n).lineHeight) || 16));
+			const off = [...bar.querySelectorAll('button, input, .z, .dim')].filter((n) => {
+				const r = n.getBoundingClientRect();
+				return r.right > box.right + 0.5 || r.left < box.left - 0.5;
+			});
+			return { sizeLines: lines(bar.querySelector('.dim')), offscreen: off.map((n) => n.getAttribute('aria-label') || n.className) };
+		});
+		expect(status).toEqual({ sizeLines: 1, offscreen: [] });
 	});
 });

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-10-31",
+			"title": "Paint's zoom controls stay on screen on a phone",
+			"summary": "On a phone the desktop Paint app wrapped the canvas size onto four lines and pushed the zoom-in button and the zoom percentage off the edge of the window. The status bar now stays on one line with every zoom control in reach, and the pointer position shortens first when room runs out.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-10-31",
 			"title": "File Explorer fits a phone screen",
 			"summary": "On a phone the desktop's File Explorer squeezed its address bar down to a single letter and pushed the view buttons off the edge of a toolbar that could only be scrolled sideways. The address bar now gets the room and always shows the folder you are in, the commands go icon-only, item commands that do not apply to your selection step aside, and the toolbar wraps instead of hiding anything.",
 			"tags": [

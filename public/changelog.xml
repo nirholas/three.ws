@@ -183,6 +183,14 @@
 			<description>Meetups in /play can now end with a group photo the whole plaza takes together. A minute before, a banner calls everyone to the totem; ten seconds out a big countdown appears; three seconds out every avatar strikes the same cheering pose while fireworks launch overhead; then every player's camera fires at the same instant and the shot, stamped with the event name, is ready to download or copy. If your game stutters right at the moment you still get the photo, and nobody who missed the countdown gets one. The event chip and agenda now also show how many people are in the world right now, read from the live server and left off rather than guessed when it does not answer. Meetup #3 on November 6 takes its photo at 8:58 AM Pacific.</description>
 		</item>
 		<item>
+			<title>Paint's zoom controls stay on screen on a phone</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-10-31:Paint's zoom controls stay on screen on a phone</guid>
+			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>On a phone the desktop Paint app wrapped the canvas size onto four lines and pushed the zoom-in button and the zoom percentage off the edge of the window. The status bar now stays on one line with every zoom control in reach, and the pointer position shortens first when room runs out.</description>
+		</item>
+		<item>
 			<title>Rate limits hold steady again instead of falling back to the slower path</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-10-31:Rate limits hold steady again instead of falling back to the slower path</guid>
