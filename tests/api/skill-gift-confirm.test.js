@@ -63,6 +63,7 @@ const grantInsert = () => calls.find((c) => /insert\s+into\s+skill_access_grants
 const notifyTypes = () => notify.mock.calls.map((c) => `${c[0]}:${c[1]}`);
 
 beforeEach(() => {
+	process.env.PURCHASE_RECEIPT_KEY = 'test-receipt-key-not-a-secret';
 	calls = [];
 	notify.mockClear();
 });

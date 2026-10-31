@@ -73,6 +73,7 @@ function grantInsert() {
 }
 
 beforeEach(() => {
+	process.env.PURCHASE_RECEIPT_KEY = 'test-receipt-key-not-a-secret';
 	calls = [];
 	notify.mockClear();
 	grantState.kind = 'permanent';
