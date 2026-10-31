@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-31T19:53:29.624Z",
+	"generated_at": "2026-10-31T22:27:41.661Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4228,
+	"total": 4227,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -54,16 +54,6 @@
 			"type": "update",
 			"title": "Carve a 3D pumpkin at /pumpkin",
 			"summary": "A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.",
-			"link": "/pumpkin",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Carve a real 3D pumpkin at /pumpkin",
-			"summary": "Cut a hollow, ribbed 3D pumpkin in your browser with true boolean cuts, six stamp shapes and a freehand knife. A flickering candle shines through your design, you can undo any cut, and you can export the result as a PNG or a GLB. It is linked from the Halloween page.",
 			"link": "/pumpkin",
 			"tags": [
 				"feature"
@@ -1550,6 +1540,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-10-14",
+			"type": "update",
+			"title": "Standalone GitHub mirrors now stage instead of force-pushing",
+			"summary": "scripts/sync-standalone-repos.mjs force-pushed straight to main on every run, which could silently create duplicate repos for the eleven mirrors already renamed on GitHub and bypassed the owner's push-approval rule. data/standalone-mirrors.json is now the single source of truth for which monorepo directory maps to which public repo, read by every exporter (sync, growth satellites, the awesome list, the skill-repo builder) instead of each keeping its own list. The sync script only stages a snapshot under dist/standalone-mirrors/, fixes any stale pre-Apache-2.0 README or LICENSE footer, and prints the push command for the owner; npm run sync:repos:check compares what is staged against each mirror's live tree and reports drift without writing anything.",
+			"link": "/docs/contributing",
+			"tags": [
+				"infra",
+				"docs"
 			]
 		}
 	]

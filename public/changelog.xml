@@ -47,14 +47,6 @@
 			<description>A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.</description>
 		</item>
 		<item>
-			<title>Carve a real 3D pumpkin at /pumpkin</title>
-			<link>https://three.ws/pumpkin</link>
-			<guid isPermaLink="false">2026-10-31:Carve a real 3D pumpkin at /pumpkin</guid>
-			<pubDate>Sat, 31 Oct 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>Cut a hollow, ribbed 3D pumpkin in your browser with true boolean cuts, six stamp shapes and a freehand knife. A flickering candle shines through your design, you can undo any cut, and you can export the result as a PNG or a GLB. It is linked from the Halloween page.</description>
-		</item>
-		<item>
 			<title>Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti</title>
 			<link>https://three.ws/halloween</link>
 			<guid isPermaLink="false">2026-10-31:Halloween Weekend gets open-source spooky effects: cobwebs, a flying witch, a dropping spider and claim confetti</guid>
