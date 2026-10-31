@@ -291,3 +291,21 @@ page.
    `gcloud auth login --no-launch-browser`. Verify with a real call
    (`gcloud run services describe three-ws-api --region us-central1`), never with
    `gcloud auth list`, which reports an expired account as ACTIVE.
+
+## Removing a signature from the wall
+
+The signature wall (`docs/signature-wall.md`) filters slurs and links on the way in,
+but a human can still sign something that should come down. Removal is owner-only
+(Bearer `CRON_SECRET`) and by signature id. Find the id in the wall's public read
+(`curl "https://three.ws/api/play/signature-wall?limit=50"`, each record has `id`
+and `no`) or in a share link (`/api/play/signature-wall-og?id=<id>`).
+
+```bash
+curl -X DELETE -H "Authorization: Bearer $CRON_SECRET" \
+  "https://three.ws/api/play/signature-wall?id=<id>"
+```
+
+Returns `{ "ok": true, "removed": "<id>", "total": N }`, or 404 for an unknown id.
+Players in the world drop the tile at their next full reload (within 5 minutes). The
+signer's one-signature claim is kept on purpose, so removal cannot be used to
+re-sign the same thing.

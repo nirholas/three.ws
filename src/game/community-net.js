@@ -157,6 +157,7 @@ export class CommunityNet {
 			// point the room's own copies are in the scene and ours are duplicates.
 			synced: new Set(),      // () : first full state patch applied
 			reaction: new Set(),    // ({id, emoji}), a player sent a floating reaction
+			sigwall: new Set(),     // ({at}), someone signed the signature wall: re-read the public API
 			tag: new Set(),         // ({event, itId, leaderboard}), tag mini-game state (R08)
 			floorBeat: new Set(),   // ({clip}), disco-pad beat tick (R06): pulses the floor + aligns standing dancers
 			king: new Set(),        // ({event, phase, endsAt, scores, kingId, winner, zone}), King of the Totem state (R07)
@@ -388,6 +389,7 @@ export class CommunityNet {
 			this.room.onMessage('obj:reject', (msg) => this._emit('objectReject', msg || {}));
 			// Broadcast reactions (R04): floating emoji that rise above the sender's avatar.
 			this.room.onMessage('reaction', (msg) => this._emit('reaction', msg || {}));
+			this.room.onMessage('sigwall', (msg) => this._emit('sigwall', msg || {}));
 			this.room.onMessage('tag', (msg) => this._emit('tag', msg || {})); // R08 tag mini-game
 			// Dance floor (R06): the room broadcasts a beat every 4s so every client
 			// pulses the disco pad and crossfades standing dancers to the same clip in
@@ -628,6 +630,7 @@ export class CommunityNet {
 
 	sendEmote(name) { this._send('emote', { name }); }
 	sendReaction(emoji) { this._send('reaction', { emoji }); }
+	sendSigwallPing() { this._send('sigwall-ping', {}); }
 	sendChat(text) { this._send('chat', { text }); }
 	// Place/break a voxel at an integer grid cell. Server-authoritative: these only
 	// request the edit; the block is added/removed locally when the server patches

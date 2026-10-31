@@ -1,0 +1,104 @@
+/* Signature wall: walk-up prompt and sign panel (src/game/signature-wall.js). */
+
+.ps-action.sw-action {
+	bottom: 340px;
+	transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.ps-action.sw-action:hover { transform: translateY(-2px); }
+.ps-action.sw-action:active { transform: translateY(0) scale(0.98); }
+.ps-action.sw-action:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }
+@media (max-width: 560px) {
+	.ps-action.sw-action { bottom: 416px; }
+}
+
+.sw-root {
+	position: fixed;
+	inset: 0;
+	z-index: 400;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px;
+	opacity: 0;
+	transition: opacity 0.18s ease;
+}
+.sw-root.is-open { opacity: 1; }
+.sw-scrim { position: absolute; inset: 0; background: rgba(6, 7, 10, 0.62); backdrop-filter: blur(3px); }
+
+.sw-card {
+	position: relative;
+	width: min(440px, 100%);
+	max-height: 100%;
+	overflow: auto;
+	padding: 22px 22px 18px;
+	border-radius: 16px;
+	background: #14161b;
+	color: #f2f3f5;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+	font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif;
+	transform: translateY(8px) scale(0.98);
+	transition: transform 0.18s ease;
+}
+.sw-root.is-open .sw-card { transform: none; }
+.sw-card:focus { outline: none; }
+
+.sw-title { margin: 0 0 4px; font-size: 20px; font-weight: 800; letter-spacing: 0.01em; }
+.sw-sub { margin: 0 0 14px; color: #a9aeb8; }
+.sw-form { display: flex; flex-direction: column; gap: 6px; }
+.sw-row { display: flex; align-items: baseline; justify-content: space-between; }
+.sw-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #c3c7d0; }
+.sw-count { font-size: 12px; color: #8b909b; font-variant-numeric: tabular-nums; }
+
+.sw-input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px 12px;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	background: #0d0e12;
+	color: inherit;
+	font: inherit;
+	resize: none;
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.sw-input:hover { border-color: rgba(255, 255, 255, 0.34); }
+.sw-input:focus-visible { outline: none; border-color: #ffe14d; box-shadow: 0 0 0 3px rgba(255, 225, 77, 0.25); }
+.sw-link { margin: 4px 0 10px; font-size: 12px; color: #a9aeb8; }
+
+.sw-status {
+	margin: 6px 0 0;
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: rgba(255, 90, 90, 0.14);
+	border: 1px solid rgba(255, 90, 90, 0.4);
+	color: #ffc4c4;
+}
+.sw-nudge { margin: 8px 0 0; font-size: 12.5px; color: #98a0ad; }
+
+.sw-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+.sw-btn {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	padding: 9px 16px;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	background: #1f222a;
+	color: #f2f3f5;
+	font: inherit;
+	font-weight: 700;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+}
+.sw-btn:hover { background: #2a2e38; border-color: rgba(255, 255, 255, 0.36); }
+.sw-btn:active { transform: scale(0.97); }
+.sw-btn:focus-visible { outline: 3px solid #ffe14d; outline-offset: 2px; }
+.sw-btn:disabled { opacity: 0.6; cursor: progress; }
+.sw-primary { background: #ffe14d; border-color: #ffe14d; color: #16181d; }
+.sw-primary:hover { background: #ffeb7a; border-color: #ffeb7a; }
+
+@media (prefers-reduced-motion: reduce) {
+	.sw-root, .sw-card, .sw-btn, .sw-input, .ps-action.sw-action { transition: none; }
+}
