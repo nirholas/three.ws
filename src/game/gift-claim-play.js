@@ -63,7 +63,8 @@ function attach() {
 		hideWhenClosed: true,
 		onState: (drop) => {
 			const claimed = !!drop?.claim?.claimed;
-			pill.hidden = !drop || (drop.phase === 'ended' && !claimed);
+			// A failed load keeps the pill so the dialog can offer "Try again".
+			pill.hidden = !!drop && drop.phase === 'ended' && !claimed;
 			pill.dataset.unclaimed = String(!claimed && drop?.phase === 'live');
 			pill.textContent = claimed ? 'My gifts' : 'Gifts';
 		},
