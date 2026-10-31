@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-10-31T19:26:01.178Z",
+	"generated_at": "2026-10-31T19:31:50.951Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4220,
+	"total": 4222,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -21,12 +21,33 @@
 		},
 		{
 			"date": "2026-10-31",
+			"type": "launch",
+			"title": "How seasonal drops work",
+			"summary": "Free, time-boxed gifts on three.ws: one claim during the window grants a profile badge, /play wearables and a desktop wallpaper you keep forever. The window, the /api/seasonal endpoint, the seasonal look and its opt-out, and how to add the next drop.",
+			"link": "/docs/seasonal-drops",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-10-31",
 			"type": "update",
 			"title": "Halloween Weekend gifts are claimable on /play",
 			"summary": "The /play lobby now shows the Halloween Weekend 2026 drop with a live countdown, the gift list and a one-click claim for the Pumpkin Cap and Witchlight Aura. A pill follows you into the world until you claim, and a moonlit vignette dresses /play for the weekend (toggle it off with the Halloween look button).",
 			"link": "/play",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Halloween Weekend on three.ws: a haunted desktop, a spooky classic homepage and four free gifts at /halloween",
+			"summary": "Through Sunday night the desktop boots and locks on a moonlit night palette with Creepster headings, then opens on a haunted hill wallpaper with drifting fog, bats and a pumpkin accent, plus a Halloween Gifts app. The classic homepage gets a ribbon, bats and embers over the hero, Halloween prompt ideas and a Trick or treat chip that sends a flock of bats out of the avatar. The new /halloween page counts down to the close and claims all four gifts in one press: the Pumpkin Cap and Witchlight Aura for /play, a Halloween 2026 profile badge, and the Haunted wallpaper, which claimers keep in desktop Settings after the weekend. Gifts are free, only claimable this weekend, and yours forever. Prefer your usual look? Turn it off in Settings, Personalization, Season. Claims now reach their own endpoint, so they no longer collide with the 3D drops service.",
+			"link": "/halloween",
+			"tags": [
+				"feature",
+				"desktop"
 			]
 		},
 		{
@@ -1532,26 +1553,6 @@
 			"title": "Docs · Staked Event Markets",
 			"summary": "Decision record for staked Event Markets on Solana: the parimutuel model, fee and buyback split, limits, void and refund rules, and the jurisdiction and age questions that stay with the owner.",
 			"link": "/docs/event-markets-staking",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "launch",
-			"title": "Docs · three.ws with Google ADK",
-			"summary": "Connect a Google Agent Development Kit agent to the free three.ws 3D studio over MCPToolset: discover the tool catalog, forge and rig models, and run a full LlmAgent conversation. No account, payment or API key for the studio tools.",
-			"link": "/docs/google-adk",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-13",
-			"type": "launch",
-			"title": "Docs: Discord Activity (Forge Room)",
-			"summary": "How the three.ws Discord Activity works: the OAuth2 auth flow, Discord's /.proxy/ URL mapping and CSP, the shared event-sourced room state, and why it ships with no purchases.",
-			"link": "/docs/discord-activity",
 			"tags": [
 				"launch"
 			]

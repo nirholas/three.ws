@@ -3851,6 +3851,14 @@
 					"added": "2026-09-01"
 				},
 				{
+					"path": "/docs/seasonal-drops",
+					"title": "How seasonal drops work",
+					"description": "Free, time-boxed gifts on three.ws: one claim during the window grants a profile badge, /play wearables and a desktop wallpaper you keep forever. The window, the /api/seasonal endpoint, the seasonal look and its opt-out, and how to add the next drop.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-10-31"
+				},
+				{
 					"path": "/docs/forge",
 					"title": "Docs · Forge (text & image to 3D)",
 					"description": "How the Forge turns a text prompt, photos, or a sketch into a downloadable textured 3D model (GLB): the free-first engine grid with live health status, input modes, output formats, job resume, and background generation.",

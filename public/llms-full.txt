@@ -2845,6 +2845,12 @@ URL: https://three.ws/docs/drops
 
 How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.
 
+### How seasonal drops work
+
+URL: https://three.ws/docs/seasonal-drops
+
+Free, time-boxed gifts on three.ws: one claim during the window grants a profile badge, /play wearables and a desktop wallpaper you keep forever. The window, the /api/seasonal endpoint, the seasonal look and its opt-out, and how to add the next drop.
+
 ### Docs · Forge (text & image to 3D)
 
 URL: https://three.ws/docs/forge
