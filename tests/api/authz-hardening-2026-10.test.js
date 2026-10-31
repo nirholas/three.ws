@@ -227,7 +227,10 @@ describe('source-pinned authorization fixes', () => {
 		const code = src('api/auth/[action].js');
 		const fn = code.slice(code.indexOf('async function handleResetPassword'), code.indexOf('// ── verify-email'));
 		expect(fn).toMatch(/update password_resets r set consumed_at = now\(\)[\s\S]*returning r\.id, r\.user_id/);
-		expect(fn).toMatch(/update oauth_refresh_tokens set revoked_at = now\(\) where user_id = \$\{userId\}/);
+		expect(fn).toMatch(/revokeAccountCredentials\(\{ userId \}\)/);
+		const helper = src('api/_lib/auth.js');
+		expect(helper).toMatch(/update oauth_refresh_tokens set revoked_at = now\(\) where user_id = \$\{userId\}/);
+		expect(helper).toMatch(/update api_keys set revoked_at = now\(\) where user_id = \$\{userId\}/);
 	});
 
 	it('the model-verified validation reads only platform-signed memos', () => {
