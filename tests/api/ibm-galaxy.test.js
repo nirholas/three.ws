@@ -64,6 +64,7 @@ vi.mock('../../api/_lib/db.js', () => ({
 }));
 
 vi.mock('../../api/_lib/r2.js', () => ({
+	isStorageInfrastructureError: () => false,
 	publicUrl: (k) => `https://cdn.test/${k}`,
 	thumbnailUrl: (k) => `https://cdn.test/${k}`,
 }));
