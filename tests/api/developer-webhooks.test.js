@@ -40,12 +40,22 @@ vi.mock('../../api/_lib/ssrf.js', () => ({
 }));
 
 const { EVENT_TYPES } = await import('../../api/_lib/webhook-dispatch.js');
+const { resetDevSubscriptionCache } = await import('../../api/_lib/dev-plans/subscription.js');
 const { default: listHandler } = await import('../../api/developer/webhooks.js');
 const { default: detailHandler } = await import('../../api/developer/webhooks/[id].js');
 
 const OWNER = { id: '11111111-1111-4111-8111-111111111111' };
 const WEBHOOK_ID = '22222222-2222-4222-8222-222222222222';
 const BAD_ID = 'not-a-uuid';
+
+// A dev_plan_subscriptions row mid-period, the second query POST makes (the cap
+// is read from the account's plan).
+const subRow = (planId = 'free') => ({
+	user_id: OWNER.id,
+	plan_id: planId,
+	period_start: new Date(Date.now() - 86_400_000).toISOString(),
+	period_end: new Date(Date.now() + 86_400_000).toISOString(),
+});
 
 const webhookRow = {
 	id: WEBHOOK_ID,
@@ -58,6 +68,7 @@ const webhookRow = {
 };
 
 beforeEach(() => {
+	resetDevSubscriptionCache();
 	authState.session = OWNER;
 	sqlState.calls = [];
 	sqlState.responses = [];
@@ -108,7 +119,7 @@ describe('POST /api/developer/webhooks event validation', () => {
 	});
 
 	it('treats an omitted list as every event type, per the documented contract', async () => {
-		sqlState.responses = [[{ count: 0 }], [webhookRow]];
+		sqlState.responses = [[{ count: 0 }], [subRow()], [webhookRow]];
 
 		const { status } = await invoke(listHandler, {
 			method: 'POST',
@@ -122,7 +133,7 @@ describe('POST /api/developer/webhooks event validation', () => {
 	});
 
 	it('treats an explicitly empty list the same way, never storing a webhook subscribed to nothing', async () => {
-		sqlState.responses = [[{ count: 0 }], [webhookRow]];
+		sqlState.responses = [[{ count: 0 }], [subRow()], [webhookRow]];
 
 		const { status } = await invoke(listHandler, {
 			method: 'POST',
@@ -150,6 +161,7 @@ describe('POST /api/developer/webhooks event validation', () => {
 	it('creates the webhook with deduped events and returns the secret once', async () => {
 		sqlState.responses = [
 			[{ count: 0 }],
+			[subRow()],
 			[{ ...webhookRow, events: ['agent.created', 'agent.updated'] }],
 		];
 
@@ -170,7 +182,8 @@ describe('POST /api/developer/webhooks event validation', () => {
 	});
 
 	it('enforces the per-user webhook cap', async () => {
-		sqlState.responses = [[{ count: 10 }]];
+		// The cap is the plan's: Free allows 2 webhooks (api/_lib/dev-plans/config.js).
+		sqlState.responses = [[{ count: 2 }], [subRow('free')]];
 
 		const { status, body } = await invoke(listHandler, {
 			method: 'POST',
@@ -180,6 +193,9 @@ describe('POST /api/developer/webhooks event validation', () => {
 
 		expect(status).toBe(409);
 		expect(body.error).toBe('limit_reached');
+		expect(body.plan).toBe('free');
+		expect(body.limit).toBe(2);
+		expect(sqlState.calls.some((c) => c.query.includes('insert into developer_webhooks'))).toBe(false);
 	});
 });
 
