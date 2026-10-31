@@ -84,13 +84,17 @@ describe('renderKeysTable', () => {
 		expect(row.textContent).toContain('<img src=x onerror=alert(1)>');
 	});
 
-	it('shows a connector key as an AI agent key that cannot spend, not as a bare marker chip', () => {
-		const key = { ...base, scope: 'avatars:read agents:write connector' };
+	it('badges a connector key as an AI agent key by its preset, not by a marker scope chip', () => {
+		const key = { ...base, preset: 'connector', scope: 'read generate agents:write' };
 		const row = rowFor(key);
+		const badge = row.querySelector('td .dn-tag.success');
+		expect(badge.textContent).toBe('AI agent');
+		expect(badge.getAttribute('title')).toContain('can never spend');
 		const chips = [...row.querySelectorAll('.dn-chip-row .dn-tag')].map((el) => el.textContent);
-		expect(chips).toEqual(['AI agent · cannot spend', 'avatars:read', 'agents:write']);
+		expect(chips).toEqual(['read', 'generate', 'agents:write']);
 		expect(isConnectorKey(key)).toBe(true);
 		expect(isConnectorKey(base)).toBe(false);
+		expect(rowFor(base).textContent).not.toContain('AI agent');
 	});
 
 	it('renders one chip per granted scope', () => {

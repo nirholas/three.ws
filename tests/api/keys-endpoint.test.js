@@ -229,21 +229,20 @@ describe('POST /api/keys', () => {
 			body: { name: 'Grok Bot', preset: 'connector' },
 		});
 		expect(status).toBe(201);
-		expect(sqlState.calls[0].values).toContain('avatars:read avatars:write agents:read agents:write memory:read memory:write connector');
+		expect(sqlState.calls[0].values).toContain('read generate agents:write');
+		expect(sqlState.calls[0].values).toContain('connector');
 		const audit = auditState.entries.find((e) => e.action === 'create_api_key');
-		expect(audit.meta.via).toBe('dashboard:connector');
+		expect(audit.meta.preset).toBe('connector');
 	});
 
-	it('ignores a scope sent alongside the preset, so a connector key cannot be asked into spending', async () => {
-		sqlState.queue.push([{ id: KEY_ID, name: 'sneaky', prefix: 'sk_live_abcd', scope: '', expires_at: null, created_at: '2026-10-08T01:04:36.801Z' }]);
-		await invoke(keysHandler, {
+	it('refuses a spend scope sent alongside the preset and stores nothing', async () => {
+		const { status } = await invoke(keysHandler, {
 			method: 'POST',
 			url: '/api/keys',
 			body: { name: 'sneaky', preset: 'connector', scope: 'wallet:write services:write' },
 		});
-		const stored = sqlState.calls[0].values.find((v) => typeof v === 'string' && v.includes('connector'));
-		expect(stored).not.toContain('wallet:write');
-		expect(stored).not.toContain('services:write');
+		expect(status).toBe(400);
+		expect(sqlState.calls).toHaveLength(0);
 	});
 
 	it('refuses the connector marker as a raw scope and an unknown preset', async () => {
