@@ -90,6 +90,7 @@ import { clearStoredPass, refreshPlayPass, loadStoredPass, storePass } from './p
 import { PlaySystems } from './play-systems.js';
 import { PlayActivities } from './play-activities.js';
 import { WheelStation } from './wheel-station.js';
+import { SignatureWall } from './signature-wall.js';
 import { WarPortal } from './war-portal.js';
 import { PlayOnboard } from './play-onboard.js';
 import { log } from '../shared/log.js';
@@ -1842,6 +1843,15 @@ export class CoinCommunities {
 			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
 			net: this.net,
 		});
+		// The signature wall near spawn: a persistent graffiti wall every visitor can sign.
+		this.signatureWall = new SignatureWall({
+			scene: this.scene,
+			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
+			net: this.net,
+			getName: () => this.net?.name || lsGet('cc-name') || '',
+			getPlayPass: () => this.playPass,
+			ui: this.ui,
+		});
 		// F18: the War Portal, the door from this world into Coin Wars. Shows this
 		// community's real league standing off /api/wars, queues it for a battle,
 		// and hands the player to the arena at /play/war with a return link back
@@ -2356,6 +2366,7 @@ export class CoinCommunities {
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
 		if (this.wheelStation) { this.wheelStation.dispose(); this.wheelStation = null; }
+		if (this.signatureWall) { this.signatureWall.dispose(); this.signatureWall = null; }
 		if (this.warPortal) { this.warPortal.dispose(); this.warPortal = null; }
 		this._disposeFriends();
 		this._disposeAvatarPanel();
@@ -3773,7 +3784,7 @@ export class CoinCommunities {
 					// in range, try the Intel Kiosk, then fall through to the Agent
 					// Exchange.
 					if (!this.worldLife?.interact() && !this.intelKiosk?.interact() && !this.combat?.interact()
-						&& !this.wheelStation?.interact() && !this.warPortal?.interact()) this.agentCommerce?.interact();
+						&& !this.wheelStation?.interact() && !this.signatureWall?.interact() && !this.warPortal?.interact()) this.agentCommerce?.interact();
 					return;
 				}
 				// F is contextual: enter/exit a nearby vehicle takes priority (the
@@ -4978,6 +4989,7 @@ export class CoinCommunities {
 			this.playSystems?.tick(dt);
 			this.playActivities?.tick(dt);
 			this.wheelStation?.tick(dt);
+			this.signatureWall?.tick(dt);
 			this.warPortal?.tick(dt);
 			this.agentCommerce?.tick(dt);
 			this.intelKiosk?.tick(dt);

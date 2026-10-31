@@ -724,6 +724,10 @@ export class WalkRoom extends Room {
 		// Broadcast reactions (R04): a client sends an emoji; the server rate-limits
 		// and rebroadcasts to all clients in the room (including the sender).
 		this.onMessage('reaction', (client, payload) => this._handleReaction(client, payload));
+		// Signature wall (docs/signature-wall.md): a signer tells the room a new name
+		// landed. The ping carries no content; every client re-reads the public API.
+		this.onMessage('sigwall-ping', (client) => this._handleSigwallPing(client));
+		this._sigwallPings = new Map(); // sessionId -> last ping ms
 		this._emoteCooldowns = new Map();
 		this._reactionCooldowns = new Map();
 		this._editCounters = new Map(); // sessionId → { windowStart, count }
@@ -1134,6 +1138,7 @@ export class WalkRoom extends Room {
 		this._batchCounters?.delete(client.sessionId);
 		this._emoteCooldowns?.delete(client.sessionId);
 		this._reactionCooldowns?.delete(client.sessionId);
+		this._sigwallPings?.delete(client.sessionId);
 		this._voiceCounters?.delete(client.sessionId);
 		this._objCounters?.delete(client.sessionId);
 		this._actionCounters.delete(client.sessionId);
@@ -1899,6 +1904,14 @@ export class WalkRoom extends Room {
 		this._emoteCooldowns.set(client.sessionId, now);
 		player.emote = name;
 		player.emoteTs = now;
+	}
+
+	_handleSigwallPing(client) {
+		if (!this.state.players.get(client.sessionId)) return;
+		const now = Date.now();
+		if (now - (this._sigwallPings.get(client.sessionId) || 0) < 3000) return;
+		this._sigwallPings.set(client.sessionId, now);
+		this.broadcast('sigwall', { at: now });
 	}
 
 	_handleReaction(client, payload) {

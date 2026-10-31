@@ -1624,6 +1624,11 @@ export const limits = {
 	// a screenshot in Redis, so cap the burst per IP to keep that bounded; reads use
 	// the generic publicIp bucket.
 	buildPublishIp: (ip) => getLimiter('build:publish:ip', { limit: 10, window: '10 m' }).limit(ip),
+	// /play signature wall writes (POST /api/play/signature-wall). One signature per
+	// wallet or session is enforced by the store; this bounds how fast one IP can
+	// probe the validator or burn session ids. Several players may share an event
+	// NAT, so the ceiling is generous for people and tight for a script.
+	sigwallSignIp: (ip) => getLimiter('sigwall:sign:ip', { limit: 20, window: '10 m' }).limit(ip),
 	// /play sign-in nonce (GET /api/play/nonce). Hit on every /play page load — and
 	// again on each sign-in attempt — to read the gate config + mint a self-verifying
 	// HMAC nonce. It has NO side effects and NO cost (no RPC, no DB), so it must NOT
