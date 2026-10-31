@@ -4,7 +4,8 @@
  * Outside its active window the script is a no-op, so it can stay wired
  * year-round and retire itself automatically.
  *
- * Currently: Independence Day (July 1–5, viewer's local time).
+ * Currently: Halloween Weekend 2026 (Oct 30 10:00 UTC to Nov 2 12:00 UTC, the
+ * second IIFE below) and Independence Day (July 1-5, viewer's local time).
  *  - a soft red/white/blue ribbon glow across the very top of the viewport
  *  - real launch-and-burst fireworks on a lightweight canvas confined to the
  *    page's `.hero`. Rockets rise, then explode in a strictly red/white/blue
@@ -498,4 +499,243 @@
 	window.addEventListener('pageshow', updateRunning);
 
 	updateRunning();
+})();
+
+/* Halloween Weekend 2026: the classic homepage's seasonal look.
+ *
+ * Window mirrored from src/shared/seasonal-drops.js and api/_lib/seasonal-drops.js
+ * (tests/seasonal-drops.test.js pins all three together). It honors the same
+ * "Halloween look" opt-out the desktop Settings toggle writes.
+ *  - Creepster on the hero and section headings, an orange/violet top ribbon;
+ *  - a canvas in `.hero` with bats crossing the sky and embers drifting up;
+ *  - a "🎃 Trick or treat" chip: the avatar plays Thriller (via home.html's own
+ *    delegated chip handler) while a flock of bats bursts from the stage;
+ *  - Halloween example prompts in the Forge "Try" row.
+ * Reduced motion keeps the static theme and a single still frame; explicit
+ * clicks still animate. The loop parks while the tab is hidden or the hero is
+ * scrolled out of view.
+ */
+(() => {
+	const STARTS = Date.parse('2026-10-30T10:00:00Z');
+	const ENDS = Date.parse('2026-11-02T12:00:00Z');
+	const now = Date.now();
+	if (now < STARTS || now >= ENDS) return;
+	try {
+		if (localStorage.getItem('twx_season_off:halloween-2026') != null) return;
+	} catch (_) { /* storage blocked: show the look */ }
+	if (document.getElementById('halloween-ribbon')) return;
+
+	document.documentElement.dataset.season = 'halloween';
+	const font = document.createElement('link');
+	font.rel = 'stylesheet';
+	font.href = '/fonts/creepster.css';
+	document.head.appendChild(font);
+
+	const reducedMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+	let reduced = reducedMq.matches;
+
+	const style = document.createElement('style');
+	style.textContent = `
+		:root { --hw-o: #ff8a2a; --hw-v: #b48ae0; --hw-bat: #0d0614; }
+		:root[data-theme='light'] { --hw-o: #d4560a; --hw-v: #6a3fa0; --hw-bat: #2a1238; }
+		#halloween-ribbon {
+			position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 120; pointer-events: none;
+			background: linear-gradient(90deg, transparent, var(--hw-o) 22%, var(--hw-v) 50%, var(--hw-o) 78%, transparent);
+			opacity: .7;
+		}
+		#halloween-ribbon::after {
+			content: ''; position: absolute; inset: -14px 0 auto 0; height: 40px;
+			background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--hw-o) 45%, transparent) 30%,
+				color-mix(in srgb, var(--hw-v) 45%, transparent) 70%, transparent);
+			filter: blur(10px); opacity: .5;
+		}
+		html[data-season='halloween'] .hero-h,
+		html[data-season='halloween'] .block-h {
+			font-family: 'Creepster', 'Space Grotesk', system-ui, sans-serif;
+			font-weight: 400; letter-spacing: .035em;
+		}
+		html[data-season='halloween'] .hero-h { text-shadow: 0 0 34px color-mix(in srgb, var(--hw-o) 40%, transparent); }
+		html[data-season='halloween'] .hero-h em,
+		html[data-season='halloween'] .block-h em { color: var(--hw-o); font-style: normal; }
+		.halloween-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+		.halloween-sky canvas { width: 100%; height: 100%; display: block; }
+		.hero-chip--halloween { border-color: color-mix(in srgb, var(--hw-o) 60%, transparent); }
+		.hero-chip--halloween:hover, .hero-chip--halloween:focus-visible { border-color: var(--hw-o); color: var(--hw-o); }
+		.hero-chip--halloween:active { transform: scale(.97); }
+	`;
+	document.head.appendChild(style);
+
+	const ribbon = document.createElement('div');
+	ribbon.id = 'halloween-ribbon';
+	ribbon.setAttribute('aria-hidden', 'true');
+	document.body.appendChild(ribbon);
+
+	// Halloween prompts for the Forge "Try" row (home-forge.js reads data-prompt).
+	const TRIES = [
+		['a carved jack-o\'-lantern, glowing from inside', 'jack-o\'-lantern'],
+		['a pointed witch hat, worn purple velvet', 'witch hat'],
+		['a rusty haunted iron lantern, cobwebs', 'haunted lantern'],
+	];
+	document.querySelectorAll('.hero-try').forEach((b, i) => {
+		if (!TRIES[i]) return;
+		b.removeAttribute('data-i18n'); // keep the translator from restoring the year-round prompt
+		b.dataset.prompt = TRIES[i][0];
+		b.textContent = TRIES[i][1];
+	});
+
+	const hero = document.querySelector('.hero');
+	if (!hero) return;
+	if (getComputedStyle(hero).position === 'static') hero.style.position = 'relative';
+	const layer = document.createElement('div');
+	layer.className = 'halloween-sky';
+	layer.setAttribute('aria-hidden', 'true');
+	const canvas = document.createElement('canvas');
+	layer.appendChild(canvas);
+	hero.prepend(layer);
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return;
+
+	let W = 0, H = 0, dpr = 1;
+	let batInk = '#0d0614', orange = '#ff8a2a';
+	function readColors() {
+		const cs = getComputedStyle(document.documentElement);
+		batInk = cs.getPropertyValue('--hw-bat').trim() || batInk;
+		orange = cs.getPropertyValue('--hw-o').trim() || orange;
+	}
+	function resize() {
+		const r = hero.getBoundingClientRect();
+		dpr = Math.min(window.devicePixelRatio || 1, 2);
+		W = Math.max(1, r.width); H = Math.max(1, r.height);
+		canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		if (!running) draw(0);
+	}
+
+	const rand = (a, b) => a + Math.random() * (b - a);
+	const bats = [];
+	const embers = [];
+	function spawnBat(x, y, burst) {
+		const dir = burst ? (Math.random() < .5 ? -1 : 1) : 1;
+		bats.push({
+			x: x ?? -40, y: y ?? rand(.06, .42) * H,
+			vx: burst ? dir * rand(2.2, 4.4) : rand(.7, 1.5), vy: burst ? rand(-2.6, -.6) : 0,
+			size: burst ? rand(8, 15) : rand(9, 18), phase: rand(0, 6.28), flap: rand(.22, .32),
+			wob: rand(.6, 1.4), life: burst ? 150 : Infinity,
+		});
+	}
+	function spawnEmber() {
+		embers.push({ x: rand(0, W), y: H + 6, vy: rand(.25, .7), drift: rand(-.25, .25), r: rand(.8, 2.1), a: rand(.35, .9), t: rand(0, 6.28) });
+	}
+
+	function drawBat(b) {
+		const flap = Math.sin(b.phase) * .9;
+		const s = b.size;
+		ctx.save();
+		ctx.translate(b.x, b.y);
+		if (b.vx < 0) ctx.scale(-1, 1);
+		ctx.fillStyle = batInk;
+		ctx.beginPath();
+		ctx.moveTo(0, 0);
+		ctx.quadraticCurveTo(-s * .45, -s * (.25 + flap * .5), -s, -s * flap * .6);
+		ctx.quadraticCurveTo(-s * .7, s * .05, -s * .55, s * .22);
+		ctx.quadraticCurveTo(-s * .3, s * .08, 0, s * .2);
+		ctx.quadraticCurveTo(s * .3, s * .08, s * .55, s * .22);
+		ctx.quadraticCurveTo(s * .7, s * .05, s, -s * flap * .6);
+		ctx.quadraticCurveTo(s * .45, -s * (.25 + flap * .5), 0, 0);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.arc(0, -s * .02, s * .14, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.restore();
+	}
+
+	function draw(dt) {
+		ctx.clearRect(0, 0, W, H);
+		for (let i = embers.length - 1; i >= 0; i--) {
+			const e = embers[i];
+			e.t += .04 * dt; e.y -= e.vy * dt; e.x += (e.drift + Math.sin(e.t) * .2) * dt;
+			const a = e.a * Math.min(1, e.y / (H * .5));
+			if (e.y < -6 || a <= 0) { embers.splice(i, 1); continue; }
+			ctx.globalAlpha = a;
+			ctx.fillStyle = orange;
+			ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+		}
+		ctx.globalAlpha = 1;
+		for (let i = bats.length - 1; i >= 0; i--) {
+			const b = bats[i];
+			b.phase += b.flap * 1.4 * dt;
+			b.x += b.vx * dt;
+			b.vy *= .985;
+			b.y += (b.vy + Math.sin(b.phase * .18) * .35 * b.wob) * dt;
+			b.life -= dt;
+			if (b.x > W + 60 || b.x < -60 || b.y < -40 || b.life <= 0) { bats.splice(i, 1); continue; }
+			drawBat(b);
+		}
+	}
+
+	let raf = 0, running = false, last = 0, visible = true, inView = true, sinceBat = 0;
+	function frame(t) {
+		if (!running) return;
+		raf = requestAnimationFrame(frame);
+		const dt = last ? Math.min(3, (t - last) / 16.67) : 1;
+		last = t;
+		if (!reduced) {
+			sinceBat += dt;
+			if (sinceBat > 170 && bats.filter((b) => b.life === Infinity).length < 4) { spawnBat(); sinceBat = rand(-80, 40); }
+			if (embers.length < 26 && Math.random() < .08 * dt) spawnEmber();
+		}
+		draw(dt);
+		if (reduced && !bats.length && !embers.length) stop();
+	}
+	function start() {
+		if (running || !visible || !inView) return;
+		if (reduced && !bats.length) return;
+		running = true; last = 0;
+		raf = requestAnimationFrame(frame);
+	}
+	function stop() { running = false; cancelAnimationFrame(raf); }
+
+	// A flock from the avatar stage; explicit, so it plays under reduced motion too.
+	function flock() {
+		const stage = document.getElementById('hero-stage');
+		const hr = hero.getBoundingClientRect();
+		const sr = stage ? stage.getBoundingClientRect() : hr;
+		const cx = sr.left - hr.left + sr.width / 2;
+		const cy = sr.top - hr.top + sr.height * .35;
+		for (let i = 0; i < 14; i++) spawnBat(cx + rand(-30, 30), cy + rand(-20, 20), true);
+		start();
+	}
+
+	const chipRow = document.getElementById('hero-chips');
+	if (chipRow) {
+		const chip = document.createElement('button');
+		chip.type = 'button';
+		chip.className = 'hero-chip hero-chip--halloween';
+		chip.dataset.anim = 'thriller';
+		chip.setAttribute('aria-label', 'Trick or treat: the avatar dances Thriller and a flock of bats takes off');
+		chip.textContent = '🎃 Trick or treat';
+		chip.addEventListener('click', flock);
+		chipRow.prepend(chip);
+	}
+
+	readColors();
+	resize();
+	if (!reduced) for (let i = 0; i < 3; i++) spawnBat(rand(0, W), undefined, false);
+	if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
+	if (window.IntersectionObserver) {
+		new IntersectionObserver((es) => {
+			inView = es[0]?.isIntersecting ?? true;
+			inView ? start() : stop();
+		}).observe(hero);
+	}
+	document.addEventListener('visibilitychange', () => {
+		visible = document.visibilityState !== 'hidden';
+		visible ? start() : stop();
+	});
+	new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+	reducedMq.addEventListener?.('change', (e) => {
+		reduced = e.matches;
+		if (!reduced) start();
+	});
+	start();
 })();
