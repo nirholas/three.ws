@@ -297,35 +297,44 @@ export async function run(ctx = {}) {
 	}
 
 	// ── 4. Mint + fund ─────────────────────────────────────────────────────────
-	const wallets = [];
+	const minted = [];
 	for (const job of fit.kept) {
 		try {
-			wallets.push(await mintWallet({ sql, job, mint, runId }));
+			minted.push(await mintWallet({ sql, job, mint, runId }));
 		} catch (err) {
 			log.warn('fresh_mint_failed', { message: err?.message });
 		}
 	}
-	if (wallets.length === 0) return { ok: false, skipped: true, reason: 'mint_failed', reclaim, tick_seq: tickSeq };
+	if (minted.length === 0) return { ok: false, skipped: true, reason: 'mint_failed', reclaim, tick_seq: tickSeq };
 
 	const fund = await fundWallets({
 		conn, solFunder: funders.solFunder, treasury: funders.treasury, mint, decimals,
-		targets: wallets.map((w) => ({ pubkey: w.keypair.publicKey, ata: new PublicKey(w.ata), solLamports: solPerWallet, usdcAtomic: BigInt(w.job.priceAtomic) })),
+		targets: minted.map((w) => ({ pubkey: w.keypair.publicKey, ata: new PublicKey(w.ata), solLamports: solPerWallet, usdcAtomic: BigInt(w.job.priceAtomic) })),
 		confirmMs: Math.min(30_000, Math.max(8_000, timeLeft() - 25_000)),
 	});
-	if (!fund.ok) {
-		// A funding tx that did not confirm in time may still land. The rows stay
-		// reclaimable: after the window the reclaim pass reads their balances and
-		// sweeps whatever arrived, so a late landing never strands funds.
-		await markFundFailed(sql, wallets.map((w) => w.id), `fund_failed:${fund.err}`);
-		log.warn('fresh_fund_failed', { wallets: wallets.length, err: fund.err, signature: fund.signature });
-		return { ok: false, reason: 'fund_failed', error: fund.err, signature: fund.signature, reclaim, tick_seq: tickSeq };
+	// Each funding transaction stands alone: the wallets whose group landed go on
+	// to pay, the others are marked failed. A funding tx that did not confirm in
+	// time may still land; those rows stay reclaimable, so after the window the
+	// reclaim pass reads their balances and sweeps whatever arrived.
+	const wallets = [];
+	for (const g of fund.groups) {
+		const members = g.indices.map((i) => minted[i]);
+		if (!g.ok) {
+			await markFundFailed(sql, members.map((w) => w.id), `fund_failed:${g.err}`);
+			log.warn('fresh_fund_failed', { wallets: members.length, err: g.err, signature: g.signature });
+			continue;
+		}
+		await markFunded(sql, members.map((w) => w.id), {
+			fundSig: g.signature, solLamports: solPerWallet,
+			usdcAtomicById: new Map(members.map((w) => [w.id, w.job.priceAtomic])),
+		});
+		for (const w of members) {
+			await recordLedger(sql, { kind: 'fund', from: treasuryB58, to: w.pubkey, amountAtomic: w.job.priceAtomic, txSig: g.signature, runId });
+		}
+		wallets.push(...members);
 	}
-	await markFunded(sql, wallets.map((w) => w.id), {
-		fundSig: fund.signature, solLamports: solPerWallet,
-		usdcAtomicById: new Map(wallets.map((w) => [w.id, w.job.priceAtomic])),
-	});
-	for (const w of wallets) {
-		await recordLedger(sql, { kind: 'fund', from: treasuryB58, to: w.pubkey, amountAtomic: w.job.priceAtomic, txSig: fund.signature, runId });
+	if (wallets.length === 0) {
+		return { ok: false, reason: 'fund_failed', error: fund.err, signature: fund.signature, reclaim, tick_seq: tickSeq };
 	}
 
 	// ── 5. Pay: every fresh wallet buys its job, in parallel ───────────────────

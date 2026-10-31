@@ -23,12 +23,11 @@ import {
 import { env } from '../../env.js';
 import { blockhashKey, getRecentBlockhashInfo, readAccountInfoOrNull } from '../../solana/read-guards.js';
 import { tokenAmountFromAccountData } from '../pipelines/ring-pool-fund.js';
-import { ATA_RENT_LAMPORTS, BASE_FEE_LAMPORTS, RENT_EXEMPT_FALLBACK_LAMPORTS, sweepAmountLamports } from './plan.js';
+import { ATA_RENT_LAMPORTS, BASE_FEE_LAMPORTS, RENT_EXEMPT_FALLBACK_LAMPORTS, chunkForFunding, fundComputeUnits, sweepAmountLamports } from './plan.js';
 
-// Compute-unit ceiling for the funding tx (a handful of transfers + ATA creates)
-// and the sweep (one transfer, one close, one system transfer). Generous but far
-// below the 1.4M default, so a tiny priority price stays a tiny fee.
-const FUND_CU_LIMIT = 200_000;
+// Compute-unit ceiling for the sweep (one transfer, one close, one system
+// transfer); the funding tx's limit scales with its wallet count (fundComputeUnits).
+// Both stay far below the 1.4M default, so a tiny priority price stays a tiny fee.
 const SWEEP_CU_LIMIT = 60_000;
 // Lowest nonzero priority the funding tx pays so it lands promptly under load.
 const FUND_PRIORITY_MICROLAMPORTS = 5;
@@ -94,30 +93,48 @@ export async function readUsdc(conn, ata) {
 }
 
 /**
- * Fund every wallet in `targets` in ONE transaction: SOL from the funder, the
- * wallet's USDC ATA created (rent paid by the funder), and the job's USDC moved
- * from the treasury. Both funders sign; the treasury only as token authority.
+ * Fund every wallet in `targets`: SOL from the funder, the wallet's USDC ATA
+ * created (rent paid by the funder), and the job's USDC moved from the treasury.
+ * Targets are packed up to FUND_MAX_WALLETS_PER_TX per transaction and the
+ * transactions are sent in parallel, so a bigger tick costs the same wall clock.
+ * Both funders sign; the treasury only as token authority.
+ *
+ * Returns { ok, signature, err, groups }. `groups` has one entry per transaction
+ * ({ indices, ok, signature, err }) so a caller can keep the wallets whose group
+ * landed when another group did not; `ok`/`signature`/`err` summarize the first
+ * group for single-transaction callers.
  * @param {{ conn, solFunder, treasury, mint, decimals, targets: Array<{ pubkey: PublicKey, ata: PublicKey, solLamports: number, usdcAtomic: bigint }> }} p
  */
 export async function fundWallets({ conn, solFunder, treasury, mint, decimals, targets, confirmMs }) {
 	const treasuryAta = usdcAtaOf(treasury.publicKey, mint);
-	const ixs = [
-		ComputeBudgetProgram.setComputeUnitLimit({ units: FUND_CU_LIMIT }),
-		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: FUND_PRIORITY_MICROLAMPORTS }),
-	];
-	for (const t of targets) {
-		ixs.push(SystemProgram.transfer({ fromPubkey: solFunder.publicKey, toPubkey: t.pubkey, lamports: t.solLamports }));
-		ixs.push(createAssociatedTokenAccountIdempotentInstruction(
-			solFunder.publicKey, t.ata, t.pubkey, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-		));
-		if (t.usdcAtomic > 0n) {
-			ixs.push(createTransferCheckedInstruction(
-				treasuryAta, mint, t.ata, treasury.publicKey, t.usdcAtomic, decimals, [], TOKEN_PROGRAM_ID,
-			));
-		}
-	}
 	const signers = solFunder.publicKey.equals(treasury.publicKey) ? [solFunder] : [solFunder, treasury];
-	return sendIxs(conn, solFunder, signers, ixs, { confirmMs });
+	const indexed = targets.map((t, index) => ({ t, index }));
+	const groups = await Promise.all(chunkForFunding(indexed).map(async (chunk) => {
+		const ixs = [
+			ComputeBudgetProgram.setComputeUnitLimit({ units: fundComputeUnits(chunk.length) }),
+			ComputeBudgetProgram.setComputeUnitPrice({ microLamports: FUND_PRIORITY_MICROLAMPORTS }),
+		];
+		for (const { t } of chunk) {
+			ixs.push(SystemProgram.transfer({ fromPubkey: solFunder.publicKey, toPubkey: t.pubkey, lamports: t.solLamports }));
+			ixs.push(createAssociatedTokenAccountIdempotentInstruction(
+				solFunder.publicKey, t.ata, t.pubkey, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+			));
+			if (t.usdcAtomic > 0n) {
+				ixs.push(createTransferCheckedInstruction(
+					treasuryAta, mint, t.ata, treasury.publicKey, t.usdcAtomic, decimals, [], TOKEN_PROGRAM_ID,
+				));
+			}
+		}
+		let sent;
+		try {
+			sent = await sendIxs(conn, solFunder, signers, ixs, { confirmMs });
+		} catch (err) {
+			sent = { ok: false, signature: null, err: err?.message || 'send_failed' };
+		}
+		return { indices: chunk.map((c) => c.index), ...sent };
+	}));
+	const first = groups[0] || { ok: false, signature: null, err: 'no_targets' };
+	return { ok: groups.length > 0 && groups.every((g) => g.ok), signature: first.signature, err: first.err, groups };
 }
 
 /**

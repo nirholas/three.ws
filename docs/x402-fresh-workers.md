@@ -39,7 +39,11 @@ mint ──▶ fund ──▶ pay ──▶ sweep + close
    ring payer pool), stored in `x402_fresh_wallets` as `minted`. The row also
    carries the wallet's USDC associated token account (ATA) address so nothing
    downstream has to derive it.
-2. **Fund.** One transaction per tick funds every wallet the tick minted:
+2. **Fund.** Wallets the tick minted are funded in transactions of at most six
+   wallets each (`FUND_MAX_WALLETS_PER_TX`, sent in parallel, compute units scaled
+   per transaction), so raising `X402_FRESH_WORKERS_PER_TICK` does not need a
+   bigger packet. A group that does not confirm only fails its own wallets; the
+   others go on to pay. Each transaction funds its wallets:
    a system transfer of `rent-exempt minimum + worst-case pay fee + sweep fee`
    lamports from the SOL funder (`X402_FEE_PAYER_SECRET_BASE58`, the sponsor
    and economy master), an idempotent ATA create paid by the funder, and a

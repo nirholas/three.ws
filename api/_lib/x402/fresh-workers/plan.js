@@ -127,6 +127,27 @@ export function fundingRequirement({ jobs, priceOf, solPerWalletLamports, ataRen
 	return { wallets: n, solLamports, usdcAtomic };
 }
 
+// One funding transaction carries three instructions per wallet (SOL transfer,
+// idempotent ATA create, USDC transfer). Six wallets is ~960 of the 1,232 packet
+// bytes and ~240k compute units, so a bigger tick is split into parallel
+// funding transactions instead of one that cannot serialize.
+export const FUND_MAX_WALLETS_PER_TX = 6;
+const FUND_CU_BASE = 10_000;
+const FUND_CU_PER_WALLET = 40_000;
+
+/** Split `items` into consecutive groups of at most `max`, preserving order. */
+export function chunkForFunding(items, max = FUND_MAX_WALLETS_PER_TX) {
+	const size = Math.max(1, Math.floor(max));
+	const out = [];
+	for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+	return out;
+}
+
+/** Compute-unit limit for a funding tx of `wallets` wallets: scales so the ATA creates always fit. */
+export function fundComputeUnits(wallets) {
+	return Math.min(1_400_000, FUND_CU_BASE + FUND_CU_PER_WALLET * Math.max(1, Math.floor(wallets)));
+}
+
 /**
  * Can the SOL funder cover `needLamports` while keeping `floorLamports` (the
  * facilitator's sponsor floor) untouched? Below the floor every sponsored

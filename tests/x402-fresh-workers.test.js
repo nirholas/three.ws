@@ -23,6 +23,7 @@ import { dirname, join } from 'node:path';
 import {
 	freshWorkersConfig, walletSolLamports, planTickJobs, fitJobsToBudget, fundingRequirement,
 	funderHeadroom, sweepAmountLamports, classifyReclaim, trimPayload,
+	chunkForFunding, fundComputeUnits, FUND_MAX_WALLETS_PER_TX,
 	RENT_EXEMPT_FALLBACK_LAMPORTS, ATA_RENT_LAMPORTS, BASE_FEE_LAMPORTS,
 } from '../api/_lib/x402/fresh-workers/plan.js';
 import { DATA_JOBS, DATA_JOB_SLUGS, resolveDataJob, resolveForgeJob, resolveJob } from '../api/_lib/x402/fresh-workers/jobs.js';
@@ -108,6 +109,22 @@ describe('funding math', () => {
 	it('the sweep sends everything but the base fee, ending at zero', () => {
 		expect(sweepAmountLamports({ balanceLamports: 900_880 })).toBe(895_880);
 		expect(sweepAmountLamports({ balanceLamports: 4_000 })).toBe(0);
+	});
+});
+
+describe('funding batches', () => {
+	it('splits a tick into funding transactions of at most the packet-safe wallet count, in order', () => {
+		const ids = Array.from({ length: 13 }, (_, i) => i);
+		const chunks = chunkForFunding(ids);
+		expect(chunks.map((c) => c.length)).toEqual([FUND_MAX_WALLETS_PER_TX, FUND_MAX_WALLETS_PER_TX, 1]);
+		expect(chunks.flat()).toEqual(ids);
+		expect(chunkForFunding([])).toEqual([]);
+		expect(chunkForFunding([1, 2, 3], 0)).toEqual([[1], [2], [3]]);
+	});
+	it('scales the compute-unit limit so every ATA create fits, capped at the runtime maximum', () => {
+		expect(fundComputeUnits(3)).toBeGreaterThanOrEqual(3 * 35_000);
+		expect(fundComputeUnits(FUND_MAX_WALLETS_PER_TX)).toBeGreaterThanOrEqual(FUND_MAX_WALLETS_PER_TX * 35_000);
+		expect(fundComputeUnits(1000)).toBe(1_400_000);
 	});
 });
 
