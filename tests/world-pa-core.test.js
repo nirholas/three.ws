@@ -2,7 +2,7 @@
 // 48 kHz, exact 20 ms framing, and the listener's playout clock.
 import { describe, it, expect } from 'vitest';
 import {
-	LinearResampler, FrameAccumulator, PlayoutClock, paSupport, speakerLabel, formatElapsed, paErrorText,
+	LinearResampler, FrameAccumulator, PlayoutClock, paSupport, speakerLabel, formatElapsed, paErrorText, adoptStream,
 	PA_FRAME_SAMPLES, PA_JITTER_S,
 } from '../src/game/world-pa-core.js';
 
@@ -99,5 +99,27 @@ describe('support, labels and copy', () => {
 	it('names the current speaker when the mic is busy', () => {
 		expect(paErrorText('busy', 'Jessica')).toMatch(/^Jessica is on the mic/);
 		expect(paErrorText('something-new')).toMatch(/Try again/);
+	});
+});
+
+describe('adoptStream', () => {
+	it('keeps the stream already playing', () => {
+		const live = { id: 'a', name: 'Jessica', role: 'guest-host' };
+		expect(adoptStream(live, { id: 'a', name: 'X' }, new Set())).toBe(live);
+	});
+
+	it('adopts a stream it never saw start (late joiner, projector, reconnect)', () => {
+		expect(adoptStream(null, { id: 'b', name: 'Jessica', role: 'guest-host' }, new Set()))
+			.toEqual({ id: 'b', name: 'Jessica', role: 'guest-host' });
+		expect(adoptStream(null, { id: 'c' }, new Set())).toEqual({ id: 'c', name: 'Host', role: 'host' });
+	});
+
+	it('never revives a stream that already ended from a straggling packet', () => {
+		expect(adoptStream(null, { id: 'old', name: 'Jessica' }, new Set(['old']))).toBeNull();
+	});
+
+	it('ignores packets with no stream id', () => {
+		expect(adoptStream(null, { name: 'x' }, new Set())).toBeNull();
+		expect(adoptStream(null, { id: '' }, new Set())).toBeNull();
 	});
 });

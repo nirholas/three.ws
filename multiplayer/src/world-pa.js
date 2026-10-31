@@ -184,15 +184,21 @@ export function relayToRoom(room, msg) {
 				room._pa.live = { id: msg.id, name: msg.name || 'Host', role: msg.role || 'host', at: Date.now() };
 				room.broadcast('pa:start', { id: msg.id, name: room._pa.live.name, role: room._pa.live.role });
 			}
+			// Every packet names the speaker, so a client that never saw pa:start (a
+			// projector seat, a late joiner, a reconnect) can still show who is talking.
 			room.broadcast(
 				'pa:chunk',
-				{ id: msg.id, s: msg.s, f: msg.f.map((b) => Buffer.from(String(b), 'base64')) },
+				{ id: msg.id, name: room._pa.live.name, role: room._pa.live.role, s: msg.s, f: msg.f.map((b) => Buffer.from(String(b), 'base64')) },
 				except ? { except } : undefined,
 			);
 			break;
-		case 'caption':
-			room.broadcast('pa:caption', { id: msg.id, text: msg.text, final: !!msg.final });
+		case 'caption': {
+			const live = room._pa.live?.id === msg.id ? room._pa.live : null;
+			room.broadcast('pa:caption', {
+				id: msg.id, name: live?.name || msg.name || 'Host', role: live?.role || msg.role || 'host', text: msg.text, final: !!msg.final,
+			});
 			break;
+		}
 		case 'stop':
 			displaceLocalSpeaker(room, null, msg.id);
 			if (room._pa.live?.id === msg.id) room._pa.live = null;
@@ -271,7 +277,7 @@ function handleCaption(room, client, payload) {
 	if (!sp.rate.allow(Date.now())) return;
 	const text = cleanCaption(payload?.text);
 	if (!text) return;
-	publish(room, { k: 'caption', id: sp.id, room: room.roomId, sid: sp.sid, text, final: !!payload?.final });
+	publish(room, { k: 'caption', id: sp.id, room: room.roomId, sid: sp.sid, name: sp.name, role: sp.role, text, final: !!payload?.final });
 }
 
 async function stopSpeaking(room, sid) {

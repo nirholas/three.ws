@@ -136,6 +136,17 @@ describe('PA relay across rooms for one coin', () => {
 		expect(types(host)).not.toContain('pa:chunk');
 	});
 
+	it('tags every chunk and caption with the speaker, so a screen that missed the start can show who is talking', async () => {
+		await general.dispatch(host, 'pa:start', {});
+		await flush();
+		// A projector seat joins mid-talk and never saw pa:start.
+		const screen = join(holders, 'screen');
+		await general.dispatch(host, 'pa:chunk', { s: 3, f: [new Uint8Array([4])] });
+		await general.dispatch(host, 'pa:caption', { text: 'welcome', final: true });
+		expect(screen.inbox.find((m) => m.type === 'pa:chunk').msg).toMatchObject({ s: 3, name: 'Nich', role: 'creator' });
+		expect(screen.inbox.find((m) => m.type === 'pa:caption').msg).toMatchObject({ text: 'welcome', name: 'Nich', role: 'creator' });
+	});
+
 	it('ignores chunks and captions from anyone but the live speaker', async () => {
 		await general.dispatch(host, 'pa:start', {});
 		await general.dispatch(fan, 'pa:chunk', { s: 0, f: [new Uint8Array([1])] });

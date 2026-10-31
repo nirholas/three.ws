@@ -1,11 +1,12 @@
 /* Venue projector view (/play?director=1). See director-mode.js.
    Everything on the page except the world canvas, the broadcast overlay and the
-   meetup layer's two big moments (banner, shutter countdown) is hidden, so no
+   meetup layer's two big moments (banner, shutter countdown), plus the presenter
+   PA bar as a lower third (who is on the mic, live captions), is hidden, so no
    player HUD, chat, toast or sign-in card can reach a wall display. It is an
    allowlist on purpose: a HUD added to /play next month stays out of the
    broadcast without anyone remembering to hide it. */
 
-body.cc-director > *:not(#kx-canvas):not(#cc-director):not(#cc-meetup-banner):not(#cc-meetup-shutter):not(script):not(style):not(link) {
+body.cc-director > *:not(#kx-canvas):not(#cc-director):not(#cc-meetup-banner):not(#cc-meetup-shutter):not(#cc-pa-bar):not(script):not(style):not(link) {
 	display: none !important;
 }
 body.cc-director { background: #05060a; overflow: hidden; }
@@ -21,6 +22,24 @@ body.cc-director .cc-meetup-banner-ico { font-size: 4.2vw; }
 body.cc-director .cc-meetup-banner-title { font-size: 2.6vw; margin-top: 0.5vw; }
 body.cc-director .cc-meetup-banner-sub { font-size: 1.6vw; margin-top: 0.4vw; }
 body.cc-director #cc-meetup-shutter { top: 26%; }
+
+/* Presenter PA as a broadcast lower third: speaker, level and captions at
+   projector scale, above the bottom overlay bar. Nobody stands at a wall screen
+   to work a slider, so mute and volume go; Tap to listen stays for the one time
+   an operator has to unlock audio on a browser that blocked autoplay. */
+body.cc-director #cc-pa-bar {
+	top: auto; bottom: 17vh; z-index: 160;
+	padding: 0.8vw 1.6vw; max-width: 72vw; border-radius: 0.9vw;
+	font-size: clamp(14px, 1.15vw, 48px);
+}
+body.cc-director .cc-pa-live { font-size: 0.9em; padding: 0.2em 0.6em; }
+body.cc-director .cc-pa-onmic { font-size: 1em; }
+body.cc-director .cc-pa-name { font-size: 1.6em; max-width: 40vw; }
+body.cc-director .cc-pa-role { font-size: 0.9em; }
+body.cc-director .cc-pa-bars { height: 1.4em; gap: 0.2em; }
+body.cc-director .cc-pa-bars i { width: 0.28em; height: 1.4em; }
+body.cc-director .cc-pa-mute, body.cc-director .cc-pa-vol { display: none; }
+body.cc-director .cc-pa-caption { font-size: 2.1em; line-height: 1.3; max-width: 66vw; margin-top: 0.4em; padding-top: 0.4em; }
 body.cc-director .cc-meetup-shutter-num { font-size: 18vw; }
 body.cc-director .cc-meetup-shutter-cap { font-size: 2vw; padding: 0.5vw 1.8vw; margin-top: 1vw; }
 

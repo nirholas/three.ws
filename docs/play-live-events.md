@@ -179,6 +179,9 @@ tab open while you talk.
 - The bar has animated level meters, Mute, and a volume slider. Volume and
   mute are remembered.
 - Captions show inside the bar.
+- A player who arrives or reconnects mid-talk (and the venue projector seat) picks
+  the broadcast up from the next packet: every `pa:chunk` and `pa:caption` names
+  the speaker, so no missed `pa:start` leaves anyone in silence.
 - If the browser blocked autoplay, a **Tap to listen** button appears.
 - A browser without WebCodecs audio sees a plain notice and still gets the
   captions.

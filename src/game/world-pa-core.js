@@ -141,3 +141,15 @@ export function paErrorText(reason, speaker = '') {
 			return 'Could not start the broadcast. Try again.';
 	}
 }
+
+// Which stream a chunk or caption belongs to. The current stream keeps playing;
+// a packet for a stream this client never saw start (a projector seat, a late
+// joiner, a reconnect) is adopted, since the server names the speaker on every
+// packet. A stream that already ended is never revived by a straggler.
+export function adoptStream(live, msg, ended) {
+	const id = typeof msg?.id === 'string' ? msg.id : '';
+	if (!id) return null;
+	if (live?.id === id) return live;
+	if (ended.has(id)) return null;
+	return { id, name: msg.name || 'Host', role: msg.role || 'host' };
+}

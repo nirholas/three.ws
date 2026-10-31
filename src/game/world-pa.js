@@ -16,7 +16,7 @@ import './world-pa.css';
 import { MicCapture } from '../voice/mic-capture.js';
 import {
 	PA_SAMPLE_RATE, PA_FRAME_SAMPLES, PA_FRAME_US, PA_BITRATE, PA_BATCH_FRAMES, PA_STALE_MS,
-	LinearResampler, FrameAccumulator, PlayoutClock, speakerLabel, paSupport, formatElapsed, paErrorText,
+	LinearResampler, FrameAccumulator, PlayoutClock, speakerLabel, paSupport, formatElapsed, paErrorText, adoptStream,
 } from './world-pa-core.js';
 
 const VOL_KEY = 'cc-pa-volume';
@@ -382,12 +382,14 @@ export class WorldPa {
 		this.room = null;
 		this.off = null;
 		this.live = null;     // { id, name, role } of the stream on air
+		this.ended = new Set(); // stream ids already over, so a straggling packet never revives one
 		this.lastPacketAt = 0;
 		this.captionTimer = 0;
 		this._buildBar();
 		this._buildPanel();
 		this._raf = 0;
 		this._poll = setInterval(() => this._follow(), 500);
+		this._follow();
 		window.addEventListener('cc:pa-host', () => this.openPanel());
 		// Browsers start audio only after a gesture; the first one anywhere unlocks it.
 		const unlock = () => { this.listener.resume(); this._renderBar(); };
@@ -423,6 +425,8 @@ export class WorldPa {
 				this.presenter.onState(msg);
 				break;
 			case 'start':
+				if (this.live && this.live.id !== msg.id) this._retire(this.live.id);
+				this.ended.delete(msg.id);
 				this.live = { id: msg.id, name: msg.name || 'Host', role: msg.role || 'host' };
 				this.lastPacketAt = performance.now();
 				if (this.support.listen && msg.id !== this.presenter.id) this.listener.begin(msg.id);
@@ -430,16 +434,14 @@ export class WorldPa {
 				this._renderBar();
 				break;
 			case 'chunk':
-				if (!this.live || msg.id !== this.live.id) return;
-				this.lastPacketAt = performance.now();
-				if (this.support.listen && Array.isArray(msg.f)) {
+				if (!this._adopt(msg)) return;
+				if (this.support.listen && Array.isArray(msg.f) && msg.id !== this.presenter.id) {
 					this.listener.begin(msg.id);
 					this.listener.chunk(msg.f);
 				}
 				break;
 			case 'caption':
-				if (!this.live || msg.id !== this.live.id) return;
-				this.lastPacketAt = performance.now();
+				if (!this._adopt(msg)) return;
 				this._showCaption(String(msg.text || ''), !!msg.final);
 				break;
 			case 'stop':
@@ -450,7 +452,28 @@ export class WorldPa {
 		}
 	}
 
+	// A chunk or caption for a stream this client never saw start (the projector
+	// seat, a late joiner, a reconnect mid-talk) starts the bar from the packet.
+	_adopt(msg) {
+		const live = adoptStream(this.live, msg, this.ended);
+		if (!live) return false;
+		this.lastPacketAt = performance.now();
+		if (live !== this.live) {
+			// Newest stream wins: the one it replaces (a takeover) is over for good.
+			if (this.live) this._retire(this.live.id);
+			this.live = live;
+			this._renderBar();
+		}
+		return true;
+	}
+
+	_retire(id) {
+		this.ended.add(id);
+		if (this.ended.size > 32) this.ended.delete(this.ended.values().next().value);
+	}
+
 	_endStream() {
+		if (this.live) this._retire(this.live.id);
 		this.live = null;
 		this.listener.end();
 		this._showCaption('', false);
@@ -595,6 +618,9 @@ export class WorldPa {
 		this._panelMessage('');
 		this._renderPanel(true);
 		this.presenter.captions = this.capToggle.checked;
+		// Resolve the app's current connection now rather than trusting the last
+		// poll, so a Go live pressed right after (re)connecting still reaches it.
+		this._follow();
 		const reply = await this.presenter.goLive(this.net, { key, force });
 		this._renderPanel(false);
 		if (reply?.ok) {
