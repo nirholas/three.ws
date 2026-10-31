@@ -24,6 +24,7 @@ const ENV_VARS = [
 	'GCP_TEXT2MOTION_URL',
 	'GCP_UNIRIG_URL',
 	'GCP_TEXTURE_URL',
+	'MODEL_LATO2_URL',
 	'UPSTASH_REDIS_REST_URL',
 	'UPSTASH_REDIS_REST_TOKEN',
 	'three_KV_REST_API_URL',
@@ -426,7 +427,7 @@ describe('forge-health: editing lanes', () => {
 	// production (GCP_TEXTURE_URL unset, 501 to every caller) while health said
 	// the forge was fine. Coverage is derived from the payload so a newly added
 	// tool worker cannot be silently missing.
-	const LANES = ['remesh', 'stylize', 'segment', 'rembg', 'text2motion', 'rig', 'texture'];
+	const LANES = ['remesh', 'stylize', 'segment', 'rembg', 'text2motion', 'rig', 'texture', 'lato2'];
 
 	it('reports every editing lane, unconfigured when its URL is unset', async () => {
 		mockUpstreams([]);
