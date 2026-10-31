@@ -133,6 +133,18 @@ function withMobileCss(html) {
 	return html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n\t\t${tag}`);
 }
 
+function hasEasterEggs(html) {
+	return /["']\/easter-eggs\.js["']/.test(html);
+}
+
+// Site-wide easter eggs (public/easter-eggs.js): deferred, self-contained, and a
+// no-op in iframes. Goes before </body>; a document without one is left alone.
+function withEasterEggs(html) {
+	if (hasEasterEggs(html)) return html;
+	if (!/<\/body>/i.test(html)) return html;
+	return html.replace(/<\/body>/i, '<script src="/easter-eggs.js" defer></script>\n</body>');
+}
+
 const LEGACY_RUNTIME_POLYFILL =
 	'if(!Object.hasOwn){Object.defineProperty(Object,"hasOwn",{value:function(o,k){' +
 	'if(o==null)throw new TypeError("Cannot convert undefined or null to object");' +
@@ -3167,7 +3179,7 @@ const appConfig = {
 					if (MOBILE_ERGONOMICS_EXCLUDED.has(filename)) return html;
 					// The link is injected as a tag rather than spliced in, so Vite
 					// places it with the rest of this page's head injections.
-					const out = withViewportFitCover(html);
+					const out = withEasterEggs(withViewportFitCover(html));
 					const tags = hasMobileCss(out)
 						? []
 						: [
@@ -3208,6 +3220,7 @@ const appConfig = {
 							const html = readFileSync(full, 'utf8');
 							let next = withViewportFitCover(html);
 							next = withMobileCss(next);
+							next = withEasterEggs(next);
 							if (next !== html) {
 								writeFileSync(full, next);
 								patched++;
