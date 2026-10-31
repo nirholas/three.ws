@@ -20,22 +20,17 @@ import {
 } from 'three';
 import { makeScreenCanvas, makeScreenTexture, screenMaterial } from './screen-texture.js';
 import { shortAddress } from '../shared/address.js';
+import { fetchTradeTape } from './trade-feed.js';
 
-// An EVM 0x-address identifies a Robinhood Chain coin, routed
-// to the robinhood-feed-backed endpoint; everything else is a pump.fun Solana
-// mint. Both endpoints share the identical { trades: [...] } contract, so no
-// other code in this file needs to know which chain a world is on.
-const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
-const TRADES_URL = (mint, limit = 100) => {
-	const base = EVM_ADDR_RE.test(mint) ? '/api/robinhood/coin-trades' : '/api/pump/coin-trades';
-	return `${base}?mint=${encodeURIComponent(mint)}&limit=${limit}`;
-};
+// The tape source (pump.fun coin-trades, the Robinhood feed for 0x coins, and the
+// graduated-pool fallback) lives in trade-feed.js.
 const POLL_MS = 5000;
 const REDRAW_MS = 100;          // ~10fps: enough for a smooth ticker, cheap on the GPU
 const MAX_POINTS = 220;         // rolling price history kept across the session
 // Consecutive failed polls before the badge stops claiming the tape is live.
 const STALE_AFTER_MISSES = 3;
 const CW = 1280, CH = 720;      // 16:9 logical layout grid for the draw code
+const HYPE_FLASH_MS = 5000;     // how long a hype moment holds the jumbotron band
 const SS = 1.5;                 // supersample: 1920x1080 backing store, crisp text
 
 // Restrained palette — the /play client is monochrome, but a trading terminal
@@ -184,6 +179,8 @@ export function createChartScreen(scene, coin, opts = {}) {
 	let misses = 0;
 	let pollTimer = null;
 	let destroyed = false;
+	let hypeLabel = '';       // jumbotron flash text while a hype moment is live
+	let hypeUntil = 0;
 	let acc = 0;              // redraw accumulator
 	let t = 0;                // elapsed seconds (ticker scroll + pulse)
 
@@ -221,6 +218,14 @@ export function createChartScreen(scene, coin, opts = {}) {
 		// the feed already holds, not live activity — emitting it would set off
 		// fireworks for a 100-trade history dump the instant a player walks in, so we
 		// swallow that initial burst and only react to trades that land while here.
+		// Every freshly-seen trade, backlog included, flagged `live` once the first
+		// poll is past. Lets a consumer learn what a normal trade looks like for this
+		// coin (the backlog) without ever reacting to it. Runs before onTrades so a
+		// decision made here is in place when the reactor ingests the same batch.
+		if (opts.onTape) {
+			const batch = fresh.slice().sort((x, y) => y.ts - x.ts);
+			try { opts.onTape(batch, { live: !firstFill, status }); } catch { /* ticker is non-critical */ }
+		}
 		if (opts.onTrades && !firstFill) {
 			const batch = fresh.slice().sort((a, b) => b.ts - a.ts);
 			try { opts.onTrades(batch, metrics()); } catch { /* reactor is non-critical */ }
@@ -229,10 +234,7 @@ export function createChartScreen(scene, coin, opts = {}) {
 
 	async function fetchTrades() {
 		try {
-			const r = await fetch(TRADES_URL(coin.mint), { headers: { accept: 'application/json' } });
-			if (!r.ok) throw new Error('HTTP ' + r.status);
-			const data = await r.json();
-			const trades = Array.isArray(data?.trades) ? data.trades : [];
+			const trades = await fetchTradeTape(coin.mint);
 			ingest(trades);
 			// After the first successful poll, everything it carried is treated as
 			// backlog; from here on, trades are live and drive the world. Cleared
@@ -527,6 +529,29 @@ export function createChartScreen(scene, coin, opts = {}) {
 		}
 		ctx.restore();
 
+		// Hype flash: a full-width gold band across the screen for a few seconds,
+		// pulsing at the screen's own redraw rate. Only drawn while a moment is live.
+		if (hypeLabel && Date.now() < hypeUntil) {
+			const k = (hypeUntil - Date.now()) / HYPE_FLASH_MS;
+			const pulse = 0.5 + 0.5 * Math.sin(t * 9);
+			ctx.save();
+			ctx.globalAlpha = Math.min(1, k * 2.2) * (0.78 + pulse * 0.22);
+			const bandY = 108, bandH = 92;
+			const g = ctx.createLinearGradient(0, bandY, CW, bandY);
+			g.addColorStop(0, 'rgba(255,206,92,0)');
+			g.addColorStop(0.18, 'rgba(255,206,92,0.92)');
+			g.addColorStop(0.82, 'rgba(255,206,92,0.92)');
+			g.addColorStop(1, 'rgba(255,206,92,0)');
+			ctx.fillStyle = g; ctx.fillRect(0, bandY, CW, bandH);
+			ctx.fillStyle = '#0a0a0c';
+			ctx.font = '800 44px Inter, system-ui, sans-serif';
+			ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+			ctx.fillText(hypeLabel, CW / 2, bandY + bandH / 2 + 2, CW - 220);
+			ctx.restore();
+		} else if (hypeLabel) {
+			hypeLabel = '';
+		}
+
 		tex.needsUpdate = true;
 	}
 
@@ -539,6 +564,16 @@ export function createChartScreen(scene, coin, opts = {}) {
 		mesh: panel,
 		mint: coin.mint,
 		getMetrics: metrics,
+		getStatus: () => status,
+		// Flash a banner across the screen for a hype moment. `label` is drawn with
+		// fillText, so untrusted text can never become markup.
+		hype(label, ms = HYPE_FLASH_MS) {
+			hypeLabel = String(label || '').slice(0, 60);
+			hypeUntil = Date.now() + Math.min(ms, HYPE_FLASH_MS);
+		},
+		// Dev-only: push one raw trade (the /api/*/coin-trades shape) through the
+		// exact ingest path a polled trade takes. Stripped from production builds.
+		...(import.meta.env.DEV ? { debugIngest: (raw) => ingest([raw]) } : {}),
 		update(dt) {
 			if (destroyed) return;
 			t += dt;

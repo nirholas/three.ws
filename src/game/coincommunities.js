@@ -40,6 +40,8 @@ import { createChartScreen } from './chart-screen.js';
 import { makeScreenCanvas, makeScreenTexture, screenMaterial, screenAnisotropy } from './screen-texture.js';
 import { mountOracleRibbon } from './oracle-ribbon.js';
 import { MarketReactor } from './market-reactor.js';
+import { ActivityTicker } from './activity-ticker.js';
+import { createActivityHub } from './activity-feeds.js';
 import {
 	VoxelWorld, createBuildHud, parseKey, keyOf, MAX_BLOCKS, BLOCK,
 	COMPOSITE_PIECES, compositeCells,
@@ -1562,12 +1564,25 @@ export class CoinCommunities {
 		// ripple green and kick the boundary ring, sells ripple red, volume spins
 		// the totem, the rolling % drives the weather, and whales detonate a beam
 		// of light with a shower of coins. It's fed by the chart screen's onTrades.
+		// The activity ticker + hype director (docs/play-activity-ticker.md). The
+		// director learns this coin's normal buy size from the tape and decides
+		// which single large buy earns a world moment; the reactor below asks it
+		// instead of using a fixed dollar bar.
+		this._disposeActivity();
+		this._activityTicker = new ActivityTicker();
+		this._activity = createActivityHub({
+			ticker: this._activityTicker,
+			coin,
+			flash: (label) => this._chartScreen?.hype(label),
+		});
 		this._reactor = new MarketReactor({
 			scene: this.scene,
 			env: this.env,
 			totem: this._coinSpin,
 			totemPos: [0, 0, -12],
+			isWhale: (tr) => this._activity?.isWhale(tr) === true,
 			onWhale: (tr) => {
+				this._activity?.celebrate(tr);
 				const usd = formatUsd(tr.usd);
 				const who = tr.isBuy ? 'bought' : 'sold';
 				this.ui.toast(`🐋 Whale ${who}${usd ? ' ' + usd : ''} of ${coin.symbol ? '$' + coin.symbol : coin.name || 'this coin'}`, 'info');
@@ -1580,8 +1595,20 @@ export class CoinCommunities {
 		// freshly-landed trades feed the reactor so the world reacts to the tape.
 		this._chartScreen = createChartScreen(this.scene, coin, {
 			position: [0, 0, -30], width: 18,
+			onTape: (trades, ctx) => this._activity?.onTape(trades, ctx),
 			onTrades: (trades, metrics) => this._reactor?.ingestTrades(trades, metrics),
 		});
+		// Dev-only: push one trade through the real ingest path to exercise a hype
+		// moment, e.g. __ccInjectTrade(5000) in the console. Not shipped to production.
+		if (import.meta.env.DEV) {
+			window.__ccInjectTrade = (usd = 5000, isBuy = true) => this._chartScreen?.debugIngest?.({
+				tx: `dev-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+				timestamp: new Date().toISOString(),
+				is_buy: isBuy, sol_amount: usd / 150, usd_amount: usd,
+				user: 'DevInjected1111111111111111111111111111111111',
+			});
+			window.__ccActivity = () => ({ hub: this._activity, ticker: this._activityTicker });
+		}
 		// The /ibm/oracle 3D forecast line, the live $THREE price history + IBM
 		// Granite TimeSeries forecast, rendered as a glowing ribbon standing in the
 		// world (no backdrop, just the line) that players can walk around.
@@ -1756,6 +1783,8 @@ export class CoinCommunities {
 			this.leave();
 		});
 		this.net.on('add', (p, id) => this._onAdd(p, id));
+		this._activity?.bindNet(this.net);
+		this._activityTicker?.show();
 		this.net.on('change', (p, id) => this._onChange(p, id));
 		this.net.on('remove', (id) => this._onRemove(id));
 		this.net.on('chat', (m) => this._onChat(m));
@@ -2371,6 +2400,7 @@ export class CoinCommunities {
 		this._danceFloorPos = null; this._onFloor = false; this._wantsDance = false;
 		this.ui.setOnFloor(false);
 		if (this._reactor) { this._reactor.dispose(); this._reactor = null; }
+		this._disposeActivity();
 		// Land any debounced world-store write before the objects it describes are
 		// disposed (P3.1): leaving a world must not lose the last placement.
 		this._closeWorldStore();
@@ -2601,6 +2631,14 @@ export class CoinCommunities {
 		if (r) { r.dispose(); this.remotes.delete(id); this._updateOnline(); }
 		this.voice?.removePeer(id);
 	}
+	_disposeActivity() {
+		if (!this._activity) return;
+		this._activity.dispose();
+		this._activityTicker?.dispose();
+		this._activityTicker = null;
+		this._activity = null;
+		if (import.meta.env.DEV) { delete window.__ccInjectTrade; delete window.__ccActivity; }
+	}
 	_onChat(m) {
 		const mine = m.id === this.net.sessionId;
 		this.ui.addChat({ name: m.name, text: m.text, mine });
@@ -2793,7 +2831,7 @@ export class CoinCommunities {
 				// buyer immediately sees their new look AND it persists across worlds
 				// (R23 durable equip: server validates, writes to account, echoes a
 				// fresh profile which re-renders the wardrobe and local avatar).
-				onPurchased: (item) => { this._equipCosmeticDurable(item.id); },
+				onPurchased: (item) => { this._equipCosmeticDurable(item.id); this._activity?.noteLocalPurchase(item.name); },
 			});
 		}
 		// The shop is built once and reused across worlds, so refresh the coin tie
