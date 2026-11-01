@@ -6,6 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Readable } from 'node:stream';
+import { runAgentCompletion } from '../../api/agent/run.js';
 
 vi.mock('../../api/_lib/env.js', () => ({
 	env: { APP_ORIGIN: 'http://localhost:3000', OPENROUTER_API_KEY: 'sk-or-test', OPENROUTER_FALLBACK_KEYS: [] },
@@ -94,6 +95,7 @@ const request = { model: 'google/gemma-4-31b-it:free', stream: true, max_tokens:
 
 beforeEach(() => {
 	fetchMock.mockReset();
+	runAgentCompletion.mockReset();
 	vertex.available = true;
 });
 
@@ -140,5 +142,21 @@ describe('POST /api/chat/proxy: Vertex fallback when the free lane is rate-limit
 		await handler(makeReq(request), res);
 		expect(res.statusCode).toBe(429);
 		expect(JSON.parse(res.body).error).toBe('rate_limited');
+	});
+
+	it('hands the request to the agent loop provider chain when Vertex fails too', async () => {
+		fetchMock.mockImplementation(async (url) =>
+			String(url).includes('openrouter.ai') ? quota429() : new Response('boom', { status: 500 }),
+		);
+		runAgentCompletion.mockImplementation(async (_req, res) => {
+			res.statusCode = 200;
+			res.end('{"choices":[{"message":{"content":"from the loop"}}]}');
+		});
+		const res = makeRes();
+		await handler(makeReq(request), res);
+		expect(runAgentCompletion).toHaveBeenCalledTimes(1);
+		expect(runAgentCompletion.mock.calls[0][3]).toMatchObject({ rateLimited: true });
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('from the loop');
 	});
 });

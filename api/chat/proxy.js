@@ -284,6 +284,14 @@ export default wrap(async (req, res) => {
 		}
 	}
 
+	// Last rung before surfacing the quota error: the agent loop's own provider
+	// chain (Groq, Vertex, ...) answers in the same wire format. It takes over
+	// only when it actually wrote a response; otherwise the 429 below stands.
+	if (upstream.status === 429) {
+		await runAgentCompletion(req, res, { ...body, model: AGENT_MODEL_ID }, { rateLimited: true });
+		if (res.headersSent || res.writableEnded) return;
+	}
+
 	if (upstream.status === 429) {
 		const retryAfter =
 			upstream.headers.get('retry-after') ||
