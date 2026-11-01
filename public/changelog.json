@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-01T00:08:01.265Z",
+	"generated_at": "2026-11-01T00:10:20.795Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Dance-off rounds in /play",
 			"summary": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
 			"link": "/docs/dance-off",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "launch",
+			"title": "Docs · Parties in /play",
+			"summary": "How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.",
+			"link": "/docs/play-parties",
 			"tags": [
 				"launch"
 			]
@@ -86,6 +96,16 @@
 			"tags": [
 				"desktop",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Parties in /play: team up with up to 8 players",
+			"summary": "Invite anyone from their inspect panel or your friends list and stay together across the world. Party members get a sky-blue nameplate accent, minimap blips, screen-edge chips for members out of range, a private party chat (or /p from any scope), and a Go to button that drops you safely beside a member, or hands you off to their coin's world with the party intact.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{

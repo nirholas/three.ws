@@ -2737,6 +2737,12 @@ URL: https://three.ws/docs/dance-off
 
 How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.
 
+### Docs · Parties in /play
+
+URL: https://three.ws/docs/play-parties
+
+How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.
+
 ### Docs · The /play activity ticker and hype moments
 
 URL: https://three.ws/docs/play-activity-ticker

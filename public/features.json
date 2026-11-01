@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-01T00:08:01.197Z",
+	"generated_at": "2026-11-01T00:10:20.740Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5400,6 +5400,18 @@
 					"path": "/docs/dance-off",
 					"title": "Docs · Dance-off rounds in /play",
 					"description": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
+					"added": "2026-11-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/play-parties",
+					"title": "Docs · Parties in /play",
+					"description": "How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.",
 					"added": "2026-11-01",
 					"auth": null,
 					"indexable": true,

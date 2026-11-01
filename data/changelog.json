@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-01",
+			"title": "Parties in /play: team up with up to 8 players",
+			"summary": "Invite anyone from their inspect panel or your friends list and stay together across the world. Party members get a sky-blue nameplate accent, minimap blips, screen-edge chips for members out of range, a private party chat (or /p from any scope), and a Go to button that drops you safely beside a member, or hands you off to their coin's world with the party intact.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-01",
 			"title": "Dance-off rounds on the /play dance floor",
 			"summary": "Dancers on the floor now compete in timed rounds judged by the crowd's reactions, one counted vote per person per round. The winner gets a spotlight, confetti, a jumbotron feature with their name and avatar, and a free Spotlight Champion aura. Rounds run every few minutes during the meetup and can be started by anyone on the floor.",
 			"tags": [

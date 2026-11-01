@@ -15,6 +15,14 @@
 			<description>How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.</description>
 		</item>
 		<item>
+			<title>Docs · Parties in /play</title>
+			<link>https://three.ws/docs/play-parties</link>
+			<guid isPermaLink="false">2026-11-01:Docs · Parties in /play</guid>
+			<pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.</description>
+		</item>
+		<item>
 			<title>Docs · The /play activity ticker and hype moments</title>
 			<link>https://three.ws/docs/play-activity-ticker</link>
 			<guid isPermaLink="false">2026-11-01:Docs · The /play activity ticker and hype moments</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
 			<category>desktop</category>
 			<description>Desktop widgets could only be rearranged by dragging. In edit mode (right-click the desktop, Edit widgets) you can now focus a widget and press an arrow key to move it one cell, hopping over any widget in the way. Screen readers hear where it landed, the new spot is saved like a drag, and a hint on the edit bar says how.</description>
+		</item>
+		<item>
+			<title>Parties in /play: team up with up to 8 players</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-01:Parties in /play: team up with up to 8 players</guid>
+			<pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Invite anyone from their inspect panel or your friends list and stay together across the world. Party members get a sky-blue nameplate accent, minimap blips, screen-edge chips for members out of range, a private party chat (or /p from any scope), and a Go to button that drops you safely beside a member, or hands you off to their coin's world with the party intact.</description>
 		</item>
 		<item>
 			<title>Sign the wall: a permanent $THREE signature wall in the /play world</title>

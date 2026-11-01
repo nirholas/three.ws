@@ -3703,6 +3703,14 @@
 					"added": "2026-11-01"
 				},
 				{
+					"path": "/docs/play-parties",
+					"title": "Docs · Parties in /play",
+					"description": "How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-01"
+				},
+				{
 					"path": "/docs/play-activity-ticker",
 					"title": "Docs · The /play activity ticker and hype moments",
 					"description": "What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.",

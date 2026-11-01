@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-01T00:08:01.335Z",
+	"generated_at": "2026-11-01T00:10:20.872Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4254,
+	"total": 4256,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Docs · Dance-off rounds in /play",
 			"summary": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
 			"link": "/docs/dance-off",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "launch",
+			"title": "Docs · Parties in /play",
+			"summary": "How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.",
+			"link": "/docs/play-parties",
 			"tags": [
 				"launch"
 			]
@@ -89,6 +99,16 @@
 			"tags": [
 				"desktop",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Parties in /play: team up with up to 8 players",
+			"summary": "Invite anyone from their inspect panel or your friends list and stay together across the world. Party members get a sky-blue nameplate accent, minimap blips, screen-edge chips for members out of range, a private party chat (or /p from any scope), and a Go to button that drops you safely beside a member, or hands you off to their coin's world with the party intact.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1524,27 +1544,6 @@
 			"title": "three-ws pay: settle x402 and MPP challenges from the terminal with a key you hold",
 			"summary": "The CLI can now pay a 402 itself. `three-ws pay <url>` reads an x402 v2, x402 v1 or MPP Solana challenge, prefers Solana, signs with a wallet kept in the OS keychain (or an encrypted file behind a passphrase), retries once and prints the body. `--dry-run` shows the payee, exact amount and network and signs nothing. A permissions file sets allowed origins, networks, assets and payees, per-call and per-day maximums and a confirm-above threshold, and a refused challenge exits with a stable code (10) and a reason string. `three-ws pay mcp` serves the same under the same permissions as a stdio MCP server with pay_quote and pay_fetch.",
 			"link": null,
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Trust grades for every MCP server",
-			"summary": "/mcp-tools now grades each of the 51 MCP servers from A to F on a 0-100 score built from facts the build checks: tools declared and described, safety annotations, an installable package or mounted endpoint, a registry manifest, a README, a license, tests, prompts, resources and the Glama claim. Hover or focus a grade for the full breakdown, and click the Trust column to sort. The rubric and weights are documented.",
-			"link": "/docs/mcp",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Turn a Solana program's Anchor IDL into an agent skill",
-			"summary": "POST /api/skills/import now accepts idl_url or program_id. Each account type becomes a read tool that decodes it by address, each instruction a preview tool that builds the unsigned instruction with a plain summary, and a destructive send tool that hands it to the wallet confirm flow. A risk panel flags token movement, SOL spend, account closure and authority changes. Nothing the skill generates can sign.",
-			"link": "/skills/import",
 			"tags": [
 				"feature",
 				"sdk"
