@@ -39,7 +39,7 @@
 	},
 	"dependencies": {
 		"@leeoniya/ufuzzy": "^1.0.19",
-		"home-assistant-js-websocket": "^9.6.0"
+		"home-assistant-js-websocket": "^9.8.0"
 	},
 	"peerDependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
