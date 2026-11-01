@@ -77,8 +77,9 @@ export class FriendsPanel {
 	// Accepts (and ignores) a legacy options bag: /walk still passes
 	// { walkMode: true }, which no longer changes behavior; the token scope is
 	// applied unconditionally in render().
-	constructor(container) {
+	constructor(container, { onInvite = null } = {}) {
 		this.root = container;
+		this.onInvite = onInvite; // (friend) => void, the in-world host's party invite
 		this.client = friendsClient();
 		ensureCss();
 		this.tab = 'friends'; // 'friends' | 'requests' | 'add'
@@ -279,6 +280,10 @@ export class FriendsPanel {
 			]),
 			el('div', { class: 'kg-fr-rowactions' }, [
 				el('button', { class: 'kg-fr-icon', type: 'button', title: 'Message', 'aria-label': `Message ${f.name}`, onclick: open }, '✉'),
+				this.onInvite && f.online ? el('button', {
+					class: 'kg-fr-icon', type: 'button', title: 'Invite to party', 'aria-label': `Invite ${f.name} to your party`,
+					onclick: () => this.onInvite(f),
+				}, '◆') : null,
 				el('button', {
 					class: 'kg-fr-icon', type: 'button', title: 'Mute', 'aria-label': `Mute ${f.name}`,
 					disabled: this._busy.has(f.id), onclick: () => this._run(f.id, () => this.client.mute(f.id)),
