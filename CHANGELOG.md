@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-01
+
+- **Task Manager reads cleanly on a phone**: On a phone the desktop Task Manager broke window sizes and the Memory heading across two lines. Every value and heading now stays on one line and only a long app name shortens. (`/?view=desktop`) `[desktop, fix]`
+
 ## 2026-10-31
 
 - **Halloween Weekend Gifts** (`/halloween`): Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.

@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Task Manager reads cleanly on a phone</title>
+			<link>https://three.ws/?view=desktop</link>
+			<guid isPermaLink="false">2026-11-01:Task Manager reads cleanly on a phone</guid>
+			<pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+			<category>desktop</category>
+			<description>On a phone the desktop Task Manager broke window sizes and the Memory heading across two lines. Every value and heading now stays on one line and only a long app name shortens.</description>
+		</item>
+		<item>
 			<title>Halloween Weekend Gifts</title>
 			<link>https://three.ws/halloween</link>
 			<guid isPermaLink="false">2026-10-31:Halloween Weekend Gifts</guid>

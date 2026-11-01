@@ -24,7 +24,8 @@
  *     whole rows. Notification cards keep a small app icon.
  *   - On 360, 390 and 430px phones the taskbar fits and Start stays tappable,
  *     File Explorer keeps its address and every command on screen, and
- *     Paint's status bar keeps its zoom controls in reach.
+ *     Paint's status bar keeps its zoom controls in reach, and Task Manager's
+ *     process table never wraps a value.
  *   - The resting desktop clears WCAG 2.1 AA (axe) in both dark and light mode.
  *
  * Nothing is stubbed. Boot's market and account probes hit the real endpoints
@@ -493,5 +494,18 @@ test.describe('web desktop', () => {
 			return { sizeLines: lines(bar.querySelector('.dim')), offscreen: off.map((n) => n.getAttribute('aria-label') || n.className) };
 		});
 		expect(status).toEqual({ sizeLines: 1, offscreen: [] });
+	});
+	test('on a 390px phone Task Manager keeps every process cell and header on one line', async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 800 });
+		await openDesktop(page);
+		await launchFromStart(page, 'Task Manager');
+		const w = win(page, 'taskmgr');
+		await expect(w.locator('.tmg-row').first()).toBeVisible({ timeout: SLOW });
+		const wrapped = await w.evaluate((el) =>
+			[...el.querySelectorAll('.tmg-tr > *')]
+				.filter((c) => c.getBoundingClientRect().height > (parseFloat(getComputedStyle(c).lineHeight) || 18) * 1.5 + 12)
+				.map((c) => c.textContent.trim()),
+		);
+		expect(wrapped).toEqual([]);
 	});
 });

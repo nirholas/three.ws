@@ -14,9 +14,11 @@
 .napp-taskmgr .tmg-btn:active:not(:disabled) { filter: brightness(0.9); }
 .napp-taskmgr .tmg-btn:disabled { opacity: 0.45; cursor: default; }
 .napp-taskmgr .tmg-table { border: 1px solid var(--bd); border-radius: 8px; overflow: hidden; }
-.napp-taskmgr .tmg-tr { display: grid; grid-template-columns: minmax(0, 2.4fr) 1fr 1fr 1.2fr; align-items: center; padding: 0 10px; min-height: 36px; gap: 8px; }
+/* Value columns never wrap (they size to their content); only the name gives way, with an ellipsis. */
+.napp-taskmgr .tmg-tr { display: grid; grid-template-columns: minmax(0, 2.4fr) minmax(max-content, 1fr) minmax(max-content, 1fr) minmax(max-content, 1.2fr); align-items: center; padding: 0 10px; min-height: 36px; gap: 8px; }
 .napp-taskmgr .tmg-th { background: var(--hover); min-height: 32px; color: var(--text2); }
-.napp-taskmgr .tmg-th button { text-align: left; padding: 6px 0; display: block; width: 100%; }
+.napp-taskmgr .tmg-th button { text-align: left; padding: 6px 0; display: block; width: 100%; white-space: nowrap; }
+.napp-taskmgr .tmg-row > .r { white-space: nowrap; }
 .napp-taskmgr .tmg-th button.r { text-align: right; }
 .napp-taskmgr .tmg-th button:hover { color: var(--text); }
 .napp-taskmgr .tmg-row { border-top: 1px solid var(--bd); cursor: default; }

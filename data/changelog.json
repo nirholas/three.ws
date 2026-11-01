@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-01",
+			"title": "Task Manager reads cleanly on a phone",
+			"summary": "On a phone the desktop Task Manager broke window sizes and the Memory heading across two lines. Every value and heading now stays on one line and only a long app name shortens.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
 			"date": "2026-10-31",
 			"title": "Paint's zoom controls stay on screen on a phone",
 			"summary": "On a phone the desktop Paint app wrapped the canvas size onto four lines and pushed the zoom-in button and the zoom percentage off the edge of the window. The status bar now stays on one line with every zoom control in reach, and the pointer position shortens first when room runs out.",
