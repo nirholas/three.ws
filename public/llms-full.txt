@@ -2731,6 +2731,12 @@ URL: https://three.ws/docs/signature-wall
 
 How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.
 
+### Docs · Dance-off rounds in /play
+
+URL: https://three.ws/docs/dance-off
+
+How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.
+
 ### Docs · The /play activity ticker and hype moments
 
 URL: https://three.ws/docs/play-activity-ticker

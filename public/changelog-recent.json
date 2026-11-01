@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-01T00:01:04.895Z",
+	"generated_at": "2026-11-01T00:08:01.335Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4250,
+	"total": 4254,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-01",
+			"type": "launch",
+			"title": "Docs · Dance-off rounds in /play",
+			"summary": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
+			"link": "/docs/dance-off",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-01",
 			"type": "launch",
@@ -47,6 +57,38 @@
 			"link": "/play",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Dance-off rounds on the /play dance floor",
+			"summary": "Dancers on the floor now compete in timed rounds judged by the crowd's reactions, one counted vote per person per round. The winner gets a spotlight, confetti, a jumbotron feature with their name and avatar, and a free Spotlight Champion aura. Rounds run every few minutes during the meetup and can be started by anyone on the floor.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Display settings opens the right page",
+			"summary": "Right-clicking the web desktop and choosing Display settings opened the same Personalization page as Personalize. It now opens Desktop and taskbar, where icon size, icon layout and the taskbar live.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Move desktop widgets with the keyboard",
+			"summary": "Desktop widgets could only be rearranged by dragging. In edit mode (right-click the desktop, Edit widgets) you can now focus a widget and press an arrow key to move it one cell, hopping over any widget in the way. Screen readers hear where it landed, the new spot is saved like a drag, and a hint on the edit bar says how.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"improvement"
 			]
 		},
 		{
@@ -1506,47 +1548,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Wallet and payment screens now work with a keyboard and a screen reader",
-			"summary": "Addresses read as short text on screen and as the full value in groups of four to a screen reader, from one shared formatter that replaced more than a hundred copies. The connect picker, payment modal, vault dialogs and add-funds sheet trap focus, make the page behind inert, close on Escape and return focus to the button that opened them. Payment steps now say completed, current or failed in text, not only by color, and low-contrast labels in the payment modal and the vaults page were fixed. /wallet, /agent-wallet, /claim-wallet and /vaults joined the accessibility gate.",
-			"link": "/wallet",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "x402 pay-for-what-you-use on Solana (upto)",
-			"summary": "A paid route can now advertise an upto offer beside its fixed price: the buyer authorizes a cap, the seller measures the work and settles only that amount, and the rest of the escrowed deposit returns to the buyer. A handler that fails settles nothing. The LLM proxy is the first route converted (5 atomics per token, capped at 5x the flat price). Agent payers refuse a cap above their per-call limit before signing, and the unused part of the cap is released from their budget. Existing exact clients are unaffected.",
-			"link": "/docs/x402-upto",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "launch",
-			"title": ".well-known/skill.md",
-			"summary": "SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and the Solana and Base payment rails it settles on, generated straight from the live OpenAPI catalog. For the Agent Skills connector file, see /skill.md instead.",
-			"link": "/.well-known/skill.md",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "launch",
-			"title": "Docs · Forge Workflows",
-			"summary": "How Forge Workflows chains Forge tools into one repeatable run: the visual node editor, the four starter templates (photo to 3D, text to rigged character, batch photos to library, photo to game asset), resuming from a failed node, and how it differs from Workbench.",
-			"link": "/docs/forge-workflows",
-			"tags": [
-				"launch"
 			]
 		}
 	]

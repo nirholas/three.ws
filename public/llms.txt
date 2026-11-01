@@ -103,6 +103,6 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 ## Optional
 
-- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (1057) with full descriptions, plus the full markdown of the curated docs.
+- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (1058) with full descriptions, plus the full markdown of the curated docs.
 - [Sitemap](https://three.ws/sitemap): The same index for people, with search.
 - [sitemap.xml](https://three.ws/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.

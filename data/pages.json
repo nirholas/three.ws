@@ -3695,6 +3695,14 @@
 					"added": "2026-11-01"
 				},
 				{
+					"path": "/docs/dance-off",
+					"title": "Docs · Dance-off rounds in /play",
+					"description": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-01"
+				},
+				{
 					"path": "/docs/play-activity-ticker",
 					"title": "Docs · The /play activity ticker and hype moments",
 					"description": "What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.",

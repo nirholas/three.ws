@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-01T00:01:04.784Z",
+	"generated_at": "2026-11-01T00:08:01.197Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5388,6 +5388,18 @@
 					"path": "/docs/signature-wall",
 					"title": "Docs · The $THREE signature wall",
 					"description": "How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.",
+					"added": "2026-11-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/dance-off",
+					"title": "Docs · Dance-off rounds in /play",
+					"description": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
 					"added": "2026-11-01",
 					"auth": null,
 					"indexable": true,

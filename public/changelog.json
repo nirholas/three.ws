@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-01T00:04:40.966Z",
+	"generated_at": "2026-11-01T00:08:01.265Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-01",
+			"type": "launch",
+			"title": "Docs · Dance-off rounds in /play",
+			"summary": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
+			"link": "/docs/dance-off",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-01",
 			"type": "launch",
@@ -41,6 +51,16 @@
 			"type": "update",
 			"title": "A live activity ticker and big-buy hype moments in /play",
 			"summary": "/play now has a small collapsible feed of joins, leaves, trades, wheel wins, cosmetic unlocks and your quest completions. When a genuinely large buy lands for the coin, measured against that coin's own recent trades, the world gets a gold hype moment, a jumbotron banner and an optional chime. The $THREE trade tape also keeps working when the primary trade feed is blocked, by falling back to the pool's trades.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Dance-off rounds on the /play dance floor",
+			"summary": "Dancers on the floor now compete in timed rounds judged by the crowd's reactions, one counted vote per person per round. The winner gets a spotlight, confetti, a jumbotron feature with their name and avatar, and a free Spotlight Champion aura. Rounds run every few minutes during the meetup and can be started by anyone on the floor.",
 			"link": "/play",
 			"tags": [
 				"feature"
