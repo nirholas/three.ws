@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-01",
+			"title": "Display settings opens the right page",
+			"summary": "Right-clicking the web desktop and choosing Display settings opened the same Personalization page as Personalize. It now opens Desktop and taskbar, where icon size, icon layout and the taskbar live.",
+			"tags": [
+				"desktop",
+				"fix"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-11-01",
 			"title": "Sign the wall: a permanent $THREE signature wall in the /play world",
 			"summary": "A graffiti wall near spawn where every visitor can sign once with a name and an 80-character line. New signatures appear live for everyone in the room with an ink splash, the wall stays readable from 10 to thousands of signatures by paging through them, and every signature has its own shareable card.",
 			"tags": [

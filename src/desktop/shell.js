@@ -1187,7 +1187,7 @@ export async function createShell(root, opts = {}) {
 			['Open Desktop folder', 'files', () => launchId('files', { arg: '/Desktop' })],
 			'-',
 			['Run...', 'search', () => chrome.runDialog(), null, 'Ctrl+Alt+R'],
-			['Display settings', 'desktop', () => launchId('settings', { section: 'personalize' })],
+			['Display settings', 'desktop', () => launchId('settings', { section: 'desktop' })],
 			['Personalize', 'paint', () => launchId('settings', { section: 'personalize' })],
 			['About three.ws OS', 'logo', () => chrome.aboutDialog()],
 			'-',

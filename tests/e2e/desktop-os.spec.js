@@ -16,16 +16,17 @@
  *   - The apps do real work: the calculator evaluates, the terminal runs a
  *     command against the file system, Notepad saves a file that File Explorer
  *     then lists, and both survive a reload (IndexedDB, not memory).
- *   - Settings changes the wallpaper and the choice persists.
+ *   - Settings changes the wallpaper and the choice persists. The desktop
+ *     menu's Display settings and Personalize open their own Settings pages.
  *   - The system shortcuts work from the keyboard alone: Run, Start, Alt+Tab,
  *     Alt+W, show desktop, lock and sign back in.
  *   - Widgets behave: the Weather picker leaves focus alone on boot and keeps
  *     what was typed across a refresh; list widgets fill their cards with
  *     whole rows. Notification cards keep a small app icon.
  *   - On 360, 390 and 430px phones the taskbar fits and Start stays tappable,
- *     File Explorer keeps its address and every command on screen, and
- *     Paint's status bar keeps its zoom controls in reach, and Task Manager's
- *     process table never wraps a value.
+ *     File Explorer keeps its address and every command on screen, Paint's
+ *     status bar keeps its zoom controls in reach, and Task Manager's process
+ *     table never wraps a value.
  *   - The resting desktop clears WCAG 2.1 AA (axe) in both dark and light mode.
  *
  * Nothing is stubbed. Boot's market and account probes hit the real endpoints
@@ -324,6 +325,22 @@ test.describe('web desktop', () => {
 
 		await reopenDesktop(page);
 		await findInFiles();
+	});
+
+	test('the desktop menu opens Display settings and Personalize on their own Settings pages', async ({ page }) => {
+		await openDesktop(page);
+		const vp = page.viewportSize();
+		for (const [item, heading] of [
+			['Display settings', 'Desktop and taskbar'],
+			['Personalize', 'Personalization'],
+		]) {
+			await page.mouse.click(vp.width * 0.45, vp.height * 0.6, { button: 'right' });
+			await page.getByRole('menu').getByRole('menuitem', { name: item, exact: true }).click();
+			const settings = win(page, 'settings');
+			await expect(settings.getByRole('heading', { level: 2 })).toHaveText(heading);
+			await page.keyboard.press('Alt+w');
+			await expect(settings).toHaveCount(0);
+		}
 	});
 
 	test('Settings changes the wallpaper and the choice survives a reload', async ({ page }) => {
