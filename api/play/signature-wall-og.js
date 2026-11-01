@@ -39,6 +39,16 @@ function shell(children) {
 	]);
 }
 
+// One line, cut with an ellipsis rather than mid-letter.
+const clip = { display: 'block', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '100%' };
+
+// The hero name on a single-signature card shrinks with its length so a full
+// 24-character name still fits the card on one line.
+function heroSize(name) {
+	const n = String(name || '').length;
+	return n <= 12 ? 110 : Math.max(60, Math.floor((110 * 12) / n));
+}
+
 function chip(sig, i, total) {
 	const st = styleFor(sig);
 	const r = rng(hashString(`${sig.id}:pos`));
@@ -51,8 +61,8 @@ function chip(sig, i, total) {
 		position: 'absolute', left, top, width: 260, flexDirection: 'column',
 		transform: `rotate(${(st.rot * 40).toFixed(1)}deg)`,
 	}, [
-		div({ fontSize: 40, fontWeight: 800, color: st.ink, lineHeight: 1.05, overflow: 'hidden', whiteSpace: 'nowrap' }, sig.name),
-		sig.line ? div({ fontSize: 20, color: st.ink2, marginTop: 2, overflow: 'hidden', whiteSpace: 'nowrap' }, sig.line) : div({}, ''),
+		div({ fontSize: 40, fontWeight: 800, color: st.ink, lineHeight: 1.05, ...clip }, sig.name),
+		sig.line ? div({ fontSize: 20, color: st.ink2, marginTop: 2, ...clip }, sig.line) : div({}, ''),
 	]);
 }
 
@@ -74,8 +84,8 @@ function signatureCard(sig, total) {
 	return shell([
 		div({ flexDirection: 'column', padding: '64px 72px 0' }, [
 			div({ fontSize: 26, fontWeight: 800, color: ACCENT, letterSpacing: '0.12em' }, `SIGNATURE NO. ${sig.no} OF ${total.toLocaleString('en-US')}`),
-			div({ fontSize: 110, fontWeight: 900, color: st.ink, marginTop: 36, lineHeight: 1.05, transform: `rotate(${(st.rot * 20).toFixed(1)}deg)` }, sig.name),
-			sig.line ? div({ fontSize: 44, color: st.ink2, marginTop: 28, lineHeight: 1.2 }, sig.line) : div({}, ''),
+			div({ fontSize: heroSize(sig.name), fontWeight: 900, color: st.ink, marginTop: 36, lineHeight: 1.05, maxWidth: WIDTH - 144, ...clip, transform: `rotate(${(st.rot * 20).toFixed(1)}deg)` }, sig.name),
+			sig.line ? div({ display: 'block', fontSize: 44, color: st.ink2, marginTop: 28, lineHeight: 1.2, maxWidth: WIDTH - 144, wordBreak: 'break-word', lineClamp: 3 }, sig.line) : div({}, ''),
 			div({ fontSize: 28, color: 'rgba(244,244,240,0.55)', marginTop: 40 }, 'Signed the $THREE wall at the community meetup.'),
 		]),
 	]);
