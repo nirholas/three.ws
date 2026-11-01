@@ -10,7 +10,7 @@
 .napp-paint .pt-ab:active:not(:disabled), .napp-paint .pt-tool:active, .napp-paint .pt-zb:active { transform: scale(0.95); }
 .napp-paint .pt-ab:disabled { opacity: 0.35; cursor: default; }
 .napp-paint .pt-ab.dirty { color: var(--accent); }
-.napp-paint .pt-tool.on { background: var(--accent); color: #fff; }
+.napp-paint .pt-tool.on { background: var(--accent-fill); color: #fff; }
 .napp-paint button:focus-visible, .napp-paint select:focus-visible, .napp-paint input:focus-visible, .napp-paint .pt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .napp-paint .pt-field { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text2); }
 .napp-paint .pt-field[hidden] { display: none; }
@@ -56,7 +56,7 @@
 .napp-paint .pt-warn[hidden] { display: none; }
 .napp-paint .pt-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .napp-paint .pt-btn { border: 1px solid var(--bd); background: var(--hover); color: var(--text); border-radius: 6px; padding: 7px 16px; font: inherit; cursor: pointer; }
-.napp-paint .pt-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.napp-paint .pt-btn.primary { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; font-weight: 600; }
 .napp-paint .pt-btn:hover { filter: brightness(1.1); }
 @media (max-width: 640px) { .napp-paint .pt-status { gap: 10px; } .napp-paint .pt-zoom input { width: 64px; } .napp-paint .pt-zoom .z { min-width: 34px; } .napp-paint .pt-ab span { display: none; } .napp-paint .pt-swatches { grid-template-columns: repeat(10, 22px); } .napp-paint .pt-sw { width: 22px; height: 22px; } }
 

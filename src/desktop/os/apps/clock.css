@@ -15,8 +15,8 @@
 .napp-clock .clk-btn:hover:not(:disabled) { background: var(--hover-b, var(--hover)); }
 .napp-clock .clk-btn:active:not(:disabled) { transform: scale(0.97); }
 .napp-clock .clk-btn:disabled { opacity: 0.4; cursor: default; }
-.napp-clock .clk-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-.napp-clock .clk-btn.primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.1); }
+.napp-clock .clk-btn.primary { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; font-weight: 600; }
+.napp-clock .clk-btn.primary:hover:not(:disabled) { background: var(--accent-fill-hover); }
 .napp-clock .clk-btn.round { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
 .napp-clock .clk-btn.big { min-width: 130px; justify-content: center; padding: 11px 22px; border-radius: 999px; font-size: 1rem; }
 .napp-clock .clk-x { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 6px; background: transparent; color: var(--text2); cursor: pointer; }
@@ -75,7 +75,7 @@
 .napp-clock .clk-form .days { display: flex; gap: 6px; margin-top: 6px; }
 .napp-clock .clk-day { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--bd); background: transparent; color: var(--text); font: inherit; cursor: pointer; }
 .napp-clock .clk-day:hover { background: var(--hover); }
-.napp-clock .clk-day.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.napp-clock .clk-day.on { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
 .napp-clock .clk-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .napp-clock .clk-actions.center { justify-content: center; }
 .napp-clock .clk-alist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }

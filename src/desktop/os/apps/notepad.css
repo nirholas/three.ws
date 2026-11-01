@@ -295,7 +295,7 @@
 	background: var(--hover-b, var(--hover));
 }
 .napp-notepad .np-pill.primary {
-	background: var(--accent);
+	background: var(--accent-fill);
 	border-color: transparent;
 	color: #fff;
 }

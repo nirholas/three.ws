@@ -37,8 +37,8 @@
 .napp-calculator .calc-key:hover:not(:disabled) { background: var(--hover-b, var(--hover)); }
 .napp-calculator .calc-key:active:not(:disabled) { transform: scale(0.97); filter: brightness(0.92); }
 .napp-calculator .calc-key:disabled { opacity: 0.35; cursor: default; }
-.napp-calculator .calc-key.eq { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
-.napp-calculator .calc-key.eq:hover { filter: brightness(1.1); background: var(--accent); }
+.napp-calculator .calc-key.eq { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; font-weight: 700; }
+.napp-calculator .calc-key.eq:hover { background: var(--accent-fill-hover); }
 .napp-calculator .calc-hist { position: absolute; z-index: 3; inset: 44px 0 0 auto; width: min(320px, 90%); background: var(--card); border-left: 1px solid var(--bd); box-shadow: var(--shadow-md); display: flex; flex-direction: column; animation: calc-slide 0.16s ease-out; }
 .napp-calculator .calc-hist[hidden] { display: none; }
 @keyframes calc-slide { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -62,11 +62,11 @@
 .napp-calculator .calc-widths { display: flex; gap: 4px; }
 .napp-calculator .calc-chip { flex: 1; border: 1px solid var(--bd); border-radius: 999px; background: transparent; color: var(--text2); padding: 3px 0; font: inherit; font-size: 0.8rem; cursor: pointer; }
 .napp-calculator .calc-chip:hover { background: var(--hover); }
-.napp-calculator .calc-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.napp-calculator .calc-chip.on { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
 .napp-calculator .calc-bits { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; }
 .napp-calculator .calc-bit { width: 17px; height: 22px; padding: 0; border: 0; border-radius: 3px; background: var(--hover); color: var(--text2); font: inherit; font-size: 0.72rem; cursor: pointer; }
 .napp-calculator .calc-bit.gap { margin-right: 5px; }
-.napp-calculator .calc-bit.on { background: var(--accent); color: #fff; }
+.napp-calculator .calc-bit.on { background: var(--accent-fill); color: #fff; }
 .napp-calculator .calc-bit:hover { filter: brightness(1.2); }
 .napp-calculator .calc-cvbox { display: flex; flex-direction: column; gap: 6px; padding: 8px; border: 1px solid var(--bd); border-radius: 8px; }
 .napp-calculator .calc-cvin { font-size: 1.7rem; font-weight: 600; background: transparent; border-color: transparent; padding: 2px 4px; text-align: right; font-variant-numeric: tabular-nums; }

@@ -30,6 +30,8 @@ export function typeLabel(node) {
 }
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+// Ids for the items of each open window, so aria-activedescendant can name the focused one.
+let fxSeq = 0;
 
 /**
  * Sort nodes without mutating the input. Folders always come first.
@@ -218,7 +220,8 @@ export function mount(host, ctx) {
 		<div class="fx-body">
 			<nav class="fx-side" aria-label="Navigation" data-role="side"></nav>
 			<main class="fx-main">
-				<div class="fx-scroll" tabindex="0" role="listbox" aria-multiselectable="true" aria-label="Files" data-role="scroll"></div>
+				<div class="fx-hdr" role="toolbar" aria-label="Sort by column" data-role="hdr" hidden></div>
+				<div class="fx-scroll" tabindex="0" aria-label="Files" data-role="scroll"></div>
 				<div class="fx-drop" data-role="dropmsg" hidden></div>
 			</main>
 		</div>
@@ -229,7 +232,8 @@ export function mount(host, ctx) {
 	const addr = $('addr');
 	const cmd = $('cmd');
 	const side = $('side');
-	const hdr = h('div', 'fx-hdr');
+	const hdr = $('hdr');
+	const idBase = `fx${(fxSeq += 1)}`;
 	const scroll = $('scroll');
 	const statusEl = $('status');
 	const fileInput = $('file');
@@ -344,9 +348,10 @@ export function mount(host, ctx) {
 		hdr.style.setProperty('--cols', extra ? 'minmax(160px,1fr) 150px 110px 80px minmax(120px,0.8fr)' : 'minmax(160px,1fr) 150px 110px 80px');
 		const col = (key, label, cls = '') => {
 			const on = st.sort.key === key;
-			return `<button class="fx-th ${cls}" data-sort="${key}" aria-sort="${on ? (st.sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}">${label}${on ? `<span class="fx-caret">${st.sort.dir === 'asc' ? '&#9650;' : '&#9660;'}</span>` : ''}</button>`;
+			const state = on ? `${label}, sorted ${st.sort.dir === 'asc' ? 'ascending' : 'descending'}` : `Sort by ${label}`;
+			return `<button class="fx-th ${cls}" data-sort="${key}" aria-pressed="${on}" aria-label="${state}" title="${state}">${label}${on ? `<span class="fx-caret" aria-hidden="true">${st.sort.dir === 'asc' ? '&#9650;' : '&#9660;'}</span>` : ''}</button>`;
 		};
-		hdr.innerHTML = `<span class="fx-th-pad"></span>${col('name', 'Name')}${col('date', 'Date modified')}${col('type', 'Type')}${col('size', 'Size', 'r')}${extra ? `<span class="fx-th">${extra}</span>` : ''}`;
+		hdr.innerHTML = `<span class="fx-th-pad"></span>${col('name', 'Name')}${col('date', 'Date modified', 'c-date')}${col('type', 'Type', 'c-type')}${col('size', 'Size', 'r c-size')}${extra ? `<span class="fx-th c-extra">${extra}</span>` : ''}`;
 	}
 
 	function storageHtml(big) {
@@ -357,14 +362,14 @@ export function mount(host, ctx) {
 		return `<div class="fx-meter ${big ? 'big' : ''}"><div class="fx-meter-bar"${u.quota ? '' : ' hidden'}><i style="width:${pct.toFixed(1)}%"></i></div><span>${esc(label)}</span>${big && u.quota ? `<span class="fx-meter-sub">${esc(`${u.files} ${u.files === 1 ? 'file' : 'files'}, ${formatSize(u.bytes)} stored by this desktop`)}</span>` : ''}</div>`;
 	}
 
-	function itemHtml(n) {
+	function itemHtml(n, i) {
 		const loc = n.path;
 		const extra = st.searching ? esc(fs.parentOf(loc)) : trashRoot() ? esc(n.trashedFrom ? fs.parentOf(n.trashedFrom) : '') : '';
 		const kind = n.type === 'dir' ? 'dir' : fs.kindOf(n.name);
 		const thumb = st.view === 'grid' && kind === 'image' ? ' data-thumb="1"' : '';
-		const meta = st.view === 'details' ? `<span class="fx-c">${fmtDate(n.mtime)}</span><span class="fx-c">${esc(typeLabel(n))}</span><span class="fx-c r">${n.type === 'dir' ? '' : formatSize(n.size)}</span>${detailCols() ? `<span class="fx-c" title="${extra}">${extra}</span>` : ''}` : '';
+		const meta = st.view === 'details' ? `<span class="fx-c c-date">${fmtDate(n.mtime)}</span><span class="fx-c c-type">${esc(typeLabel(n))}</span><span class="fx-c r c-size">${n.type === 'dir' ? '' : formatSize(n.size)}</span>${detailCols() ? `<span class="fx-c c-extra" title="${extra}">${extra}</span>` : ''}` : '';
 		const tip = `${n.name}\n${typeLabel(n)}${n.type === 'dir' ? '' : `\nSize: ${formatSize(n.size)}`}\nModified: ${fmtDate(n.mtime)}`;
-		return `<div class="fx-item k-${kind}${st.sel.has(loc) ? ' sel' : ''}${clip?.mode === 'cut' && clip.paths.includes(loc) ? ' cut' : ''}${st.cursor === loc ? ' cur' : ''}" role="option" aria-selected="${st.sel.has(loc)}" draggable="true" data-path="${esc(loc)}" data-type="${n.type}" title="${esc(tip)}"><span class="fx-ic"${thumb}>${icon(iconName(n), st.view === 'grid' ? 40 : 18)}</span><span class="fx-name">${esc(n.name)}</span>${meta}</div>`;
+		return `<div class="fx-item k-${kind}${st.sel.has(loc) ? ' sel' : ''}${clip?.mode === 'cut' && clip.paths.includes(loc) ? ' cut' : ''}${st.cursor === loc ? ' cur' : ''}" role="option" id="${idBase}-${i}" aria-selected="${st.sel.has(loc)}" draggable="true" data-path="${esc(loc)}" data-type="${n.type}" title="${esc(tip)}"><span class="fx-ic"${thumb}>${icon(iconName(n), st.view === 'grid' ? 40 : 18)}</span><span class="fx-name">${esc(n.name)}</span>${meta}</div>`;
 	}
 
 	function emptyHtml() {
@@ -374,10 +379,29 @@ export function mount(host, ctx) {
 		return `<div class="fx-empty">${icon('folder', 40)}<h3>Nothing here yet</h3><p>Open a folder such as Documents, then drop files here or use New.</p></div>`;
 	}
 
+	/* The pane is a listbox only while it lists files; the empty, error and loading
+	 * states hold buttons and text, which a listbox may not contain. */
+	function setListRole(on) {
+		if (on) {
+			scroll.setAttribute('role', 'listbox');
+			scroll.setAttribute('aria-multiselectable', 'true');
+		} else {
+			scroll.setAttribute('role', 'group');
+			scroll.removeAttribute('aria-multiselectable');
+			scroll.removeAttribute('aria-activedescendant');
+		}
+	}
+	function paintActive() {
+		const el = st.cursor ? els.get(st.cursor) : null;
+		if (el) scroll.setAttribute('aria-activedescendant', el.id);
+		else scroll.removeAttribute('aria-activedescendant');
+	}
+
 	function renderList() {
 		els.clear();
 		scroll.className = `fx-scroll v-${st.view}`;
 		scroll.removeAttribute('aria-busy');
+		setListRole(false);
 		if (st.loading && !st.shown.length && !st.error) {
 			scroll.innerHTML = skeleton();
 			return;
@@ -389,9 +413,11 @@ export function mount(host, ctx) {
 		const extra = detailCols();
 		scroll.style.setProperty('--cols', extra ? 'minmax(160px,1fr) 150px 110px 80px minmax(120px,0.8fr)' : 'minmax(160px,1fr) 150px 110px 80px');
 		const lead = st.loc === '/' ? `<div class="fx-pc">${icon('fx-drive', 34)}<div><b>Local storage</b>${storageHtml(true)}</div></div>` : '';
-		scroll.innerHTML = st.shown.length ? `${lead}<div class="fx-items">${st.shown.map(itemHtml).join('')}</div>` : `${lead}${emptyHtml()}`;
-		if (!hdr.hidden) scroll.prepend(hdr);
+		scroll.innerHTML = st.shown.length ? `${lead}<div class="fx-items" role="presentation">${st.shown.map(itemHtml).join('')}</div>` : `${lead}${emptyHtml()}`;
+		hdr.scrollLeft = scroll.scrollLeft;
 		for (const el of scroll.querySelectorAll('.fx-item')) els.set(el.dataset.path, el);
+		setListRole(st.shown.length > 0);
+		paintActive();
 		observeThumbs();
 	}
 
@@ -459,6 +485,7 @@ export function mount(host, ctx) {
 			el.classList.toggle('cut', clip?.mode === 'cut' && clip.paths.includes(p));
 			el.setAttribute('aria-selected', on);
 		}
+		paintActive();
 		renderCmd();
 		renderStatus();
 	}
@@ -969,6 +996,10 @@ export function mount(host, ctx) {
 			if (!e.ctrlKey && !e.shiftKey) select([], { cursor: null });
 		}
 	});
+	// The column header sits above the pane, outside the listbox, and follows its horizontal scroll.
+	scroll.addEventListener('scroll', () => {
+		if (hdr.scrollLeft !== scroll.scrollLeft) hdr.scrollLeft = scroll.scrollLeft;
+	}, { passive: true });
 	scroll.addEventListener('dblclick', (e) => {
 		const item = e.target.closest('.fx-item');
 		if (!item || e.target.closest('input')) return;

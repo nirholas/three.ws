@@ -720,6 +720,9 @@
 	--bg50: #c0c0c0;
 	--material-thick: #c0c0c0;
 	--accent: #000080;
+	/* Navy already clears 4.5:1 under white; restated here because this rule sets --accent below .os. */
+	--accent-fill: #000080;
+	--accent-fill-hover: #000080;
 	color: #000;
 	font-family: Tahoma, 'MS Sans Serif', 'Segoe UI', sans-serif;
 }

@@ -10,7 +10,7 @@
 .napp-taskmgr .r { text-align: right; justify-content: flex-end; }
 .napp-taskmgr .tmg-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .napp-taskmgr .tmg-btn { padding: 6px 14px; border-radius: 6px; background: var(--hover); border: 1px solid var(--bd); }
-.napp-taskmgr .tmg-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.napp-taskmgr .tmg-btn:hover:not(:disabled) { background: var(--accent-fill); color: #fff; border-color: var(--accent-fill); }
 .napp-taskmgr .tmg-btn:active:not(:disabled) { filter: brightness(0.9); }
 .napp-taskmgr .tmg-btn:disabled { opacity: 0.45; cursor: default; }
 .napp-taskmgr .tmg-table { border: 1px solid var(--bd); border-radius: 8px; overflow: hidden; }

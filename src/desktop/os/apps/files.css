@@ -221,7 +221,7 @@
 	background: var(--hover);
 }
 .napp-files .fx-vb.on {
-	background: var(--accent);
+	background: var(--accent-fill);
 	color: #fff;
 }
 
@@ -334,7 +334,8 @@
 	border-radius: 3px;
 }
 .napp-files .fx-meter-sub {
-	opacity: 0.8;
+	/* Set apart by size, not fading, so it keeps full text contrast. */
+	font-size: 11px;
 }
 
 /* main */
@@ -344,14 +345,16 @@
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
+	container: fxmain / inline-size;
 }
 .napp-files .fx-hdr {
+	/* Above the pane rather than in it (a listbox may only hold its items); the
+	 * matching gutter keeps the columns aligned with the rows below. */
 	display: grid;
 	grid-template-columns: 30px var(--cols);
-	position: sticky;
-	top: -6px;
-	z-index: 2;
-	margin: -6px -6px 4px;
+	flex: none;
+	overflow: hidden;
+	scrollbar-gutter: stable;
 	padding: 0 6px;
 	background: var(--card);
 	border-bottom: 1px solid var(--bd);
@@ -385,6 +388,7 @@
 	flex: 1;
 	min-height: 0;
 	overflow: auto;
+	scrollbar-gutter: stable;
 	outline: 0;
 	padding: 6px;
 }
@@ -496,6 +500,36 @@
 	text-align: right;
 }
 
+/* Details columns give way, least useful first, as the pane narrows; header and rows drop the same ones. */
+@container fxmain (max-width: 580px) {
+	.napp-files .fx-hdr,
+	.napp-files .v-details .fx-item {
+		grid-template-columns: 30px minmax(140px, 1fr) 150px 80px;
+	}
+	.napp-files .fx-main .c-type,
+	.napp-files .fx-main .c-extra {
+		display: none;
+	}
+}
+@container fxmain (max-width: 460px) {
+	.napp-files .fx-hdr,
+	.napp-files .v-details .fx-item {
+		grid-template-columns: 30px minmax(120px, 1fr) 150px;
+	}
+	.napp-files .fx-main .c-size {
+		display: none;
+	}
+}
+@container fxmain (max-width: 340px) {
+	.napp-files .fx-hdr,
+	.napp-files .v-details .fx-item {
+		grid-template-columns: 30px minmax(0, 1fr);
+	}
+	.napp-files .fx-main .c-date {
+		display: none;
+	}
+}
+
 /* large icons */
 .napp-files .v-grid .fx-items {
 	display: grid;
@@ -595,7 +629,7 @@
 	background: var(--hover-b, var(--hover));
 }
 .napp-files .fx-pill.primary {
-	background: var(--accent);
+	background: var(--accent-fill);
 	border-color: transparent;
 	color: #fff;
 }

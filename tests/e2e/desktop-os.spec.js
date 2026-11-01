@@ -28,7 +28,8 @@
  *     File Explorer keeps its address and every command on screen, Paint's
  *     status bar keeps its zoom controls in reach, and Task Manager's process
  *     table never wraps a value.
- *   - The resting desktop clears WCAG 2.1 AA (axe) in both dark and light mode.
+ *   - The resting desktop, the calendar, quick settings and File Explorer clear
+ *     WCAG 2.1 AA (axe) in both dark and light mode.
  *
  * Nothing is stubbed. Boot's market and account probes hit the real endpoints
  * through the dev server; when one is offline the lock screen says so, which is
@@ -402,6 +403,33 @@ test.describe('web desktop', () => {
 			const report = violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).slice(0, 5).join(', ')}`);
 			expect(report).toEqual([]);
 		});
+		test(`the calendar, quick settings and File Explorer have no WCAG 2.1 AA violations in ${mode} mode`, async ({ page }) => {
+			await page.addInitScript((m) => {
+				localStorage.setItem('tws:prefs', JSON.stringify({ startIn: 'desktop', mode: m }));
+				localStorage.setItem('twx_season_off:halloween-2026', '1');
+			}, mode);
+			await openDesktop(page);
+			await page.addStyleTag({
+				content: '*, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0s !important; transition-duration: 1ms !important; transition-delay: 0s !important; }',
+			});
+			const scan = async (surface) => {
+				await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+				const { violations } = await new AxeBuilder({ page }).include(surface).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+				return violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).slice(0, 5).join(', ')}`);
+			};
+			await page.locator('.os-clock').click();
+			await expect(page.getByRole('dialog', { name: 'Notifications and calendar' })).toBeVisible();
+			expect(await scan('[aria-label="Notifications and calendar"]'), 'notification centre').toEqual([]);
+			await page.keyboard.press('Escape');
+			await page.locator('button[aria-label^="Quick settings"]').first().click();
+			const qs = page.locator('.qs-tile').first();
+			await expect(qs).toBeVisible();
+			expect(await scan('.os-pop:has(.qs-tile)'), 'quick settings').toEqual([]);
+			await page.keyboard.press('Escape');
+			await page.keyboard.press('Control+Alt+E');
+			await expect(win(page, 'files').locator('.fx-item').first()).toBeVisible({ timeout: SLOW });
+			expect(await scan('.win[data-app="files"]'), 'File Explorer').toEqual([]);
+		});
 	}
 	test.describe('with no weather city chosen', () => {
 		// UTC names no city, so the Weather widget opens on its "Choose a city" picker.
@@ -518,6 +546,43 @@ test.describe('web desktop', () => {
 		await expect(win.locator('.fx-crumb[aria-current]')).toHaveText('Documents');
 		expect(await fits(), 'inside Documents').toEqual({ addrWider: true, crumbWhole: true, cmdNoScroll: true, viewsInside: true });
 	});
+	test('File Explorer details view drops columns as the window narrows instead of cutting them off', async ({ page }) => {
+		await openDesktop(page);
+		await page.keyboard.press('Control+Alt+E');
+		const fx = win(page, 'files');
+		await expect(fx.locator('.fx-scroll [role="option"]').first()).toBeVisible({ timeout: SLOW });
+		await fx.getByRole('button', { name: 'Details' }).click();
+		await expect(fx.getByRole('button', { name: /Name, sorted/ })).toBeVisible();
+		/** Every header cell and row cell still on screen is whole, and header and rows show the same columns, aligned. */
+		const layout = (width) =>
+			fx.evaluate((w, px) => {
+				w.style.width = `${px}px`;
+				const pane = w.querySelector('.fx-scroll').getBoundingClientRect();
+				const shown = (els) => [...els].filter((el) => el.getClientRects().length && el.getBoundingClientRect().width > 0);
+				const heads = shown(w.querySelectorAll('.fx-hdr > .fx-th'));
+				const cells = shown(w.querySelector('.fx-item').querySelectorAll('.fx-name, .fx-c'));
+				const cut = [...heads, ...cells].filter((el) => {
+					const r = el.getBoundingClientRect();
+					return r.right > pane.right + 0.5 || el.scrollWidth > el.clientWidth + 1 && el.classList.contains('fx-th');
+				});
+				return {
+					cut: cut.map((el) => el.textContent.trim() || el.className),
+					sameColumns: heads.length === cells.length,
+					aligned: heads.every((h, i) => cells[i] && Math.abs(h.getBoundingClientRect().left - cells[i].getBoundingClientRect().left) < 1.5),
+					columns: heads.length,
+				};
+			}, width);
+		const wide = await layout(900);
+		expect(wide).toEqual({ cut: [], sameColumns: true, aligned: true, columns: 4 });
+		const mid = await layout(560);
+		expect(mid.cut, 'no column cut off at 560px').toEqual([]);
+		expect(mid).toMatchObject({ sameColumns: true, aligned: true });
+		expect(mid.columns).toBeGreaterThanOrEqual(2);
+		const narrow = await layout(400);
+		expect(narrow.cut, 'no column cut off at 400px').toEqual([]);
+		expect(narrow).toMatchObject({ sameColumns: true, aligned: true });
+	});
+
 	test('on a 390px phone Paint keeps its status bar on one line with every zoom control on screen', async ({ page }) => {
 		await page.setViewportSize({ width: 390, height: 800 });
 		await openDesktop(page);

@@ -146,7 +146,7 @@
 	background: var(--hover-b, var(--hover));
 }
 .napp-photos .ph-pill.primary {
-	background: var(--accent);
+	background: var(--accent-fill);
 	border-color: transparent;
 	color: #fff;
 }
@@ -308,7 +308,7 @@
 	opacity: 1;
 }
 .napp-photos .ph-nav:hover {
-	background: var(--accent);
+	background: var(--accent-fill);
 	color: #fff;
 }
 .napp-photos .ph-strip {

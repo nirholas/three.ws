@@ -17,7 +17,7 @@
 .napp-media .md-import { position: absolute; left: 12px; top: 12px; display: flex; gap: 10px; align-items: center; padding: 6px 6px 6px 12px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; backdrop-filter: blur(8px); }
 .napp-media .md-import[hidden] { display: none; }
 .napp-media .md-btn { padding: 7px 14px; border-radius: 6px; background: var(--hover); border: 1px solid var(--bd); color: var(--text); }
-.napp-media .md-btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+.napp-media .md-btn.pri { background: var(--accent-fill); border-color: var(--accent-fill); color: #fff; }
 .napp-media .md-btn:hover { filter: brightness(1.12); }
 .napp-media .md-btn:active { filter: brightness(.9); }
 .napp-media .md-list { width: 250px; flex: none; border-left: 1px solid var(--bd); overflow-y: auto; background: var(--card); }
@@ -53,8 +53,8 @@
 .napp-media .md-ib:active { background: var(--hover-b, var(--hover)); transform: scale(.94); }
 .napp-media .md-ib.on { color: var(--accent); }
 .napp-media .md-ib[hidden] { display: none; }
-.napp-media .md-play { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; }
-.napp-media .md-play:hover { background: var(--accent); filter: brightness(1.12); }
+.napp-media .md-play { width: 42px; height: 42px; border-radius: 50%; background: var(--accent-fill); color: #fff; }
+.napp-media .md-play:hover { background: var(--accent-fill-hover); }
 .napp-media .md-one { position: absolute; right: 4px; bottom: 3px; font-size: 9px; font-style: normal; font-weight: 700; color: var(--accent); }
 .napp-media .md-vol { width: 80px; }
 .napp-media .md-speed { background: var(--hover); color: var(--text); border: 1px solid var(--bd); border-radius: 6px; padding: 4px 6px; font: inherit; }

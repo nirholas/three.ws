@@ -6,13 +6,13 @@
 .napp-weather .wx-sel, .napp-weather .wx-in { background: var(--hover); color: var(--text); border: 1px solid var(--bd); border-radius: 6px; padding: 6px 10px; font: inherit; font-size: 0.88rem; max-width: 240px; }
 .napp-weather .wx-btn, .napp-weather .wx-secondary { border: 1px solid var(--bd); background: transparent; color: var(--text); border-radius: 6px; padding: 6px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
 .napp-weather .wx-btn:hover, .napp-weather .wx-secondary:hover { background: var(--hover); }
-.napp-weather .wx-primary { border: 0; background: var(--accent); color: #fff; border-radius: 6px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
-.napp-weather .wx-primary:hover { filter: brightness(1.12); }
+.napp-weather .wx-primary { border: 0; background: var(--accent-fill); color: #fff; border-radius: 6px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+.napp-weather .wx-primary:hover { background: var(--accent-fill-hover); }
 .napp-weather .wx-primary:active, .napp-weather .wx-btn:active, .napp-weather .wx-secondary:active { transform: scale(0.97); }
 .napp-weather button:focus-visible, .napp-weather select:focus-visible, .napp-weather input:focus-visible, .napp-weather .wx-hours:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .napp-weather .wx-seg { display: inline-flex; background: var(--hover); border-radius: 999px; padding: 2px; }
 .napp-weather .wx-seg button { border: 0; background: transparent; color: var(--text2); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
-.napp-weather .wx-seg button.on { background: var(--accent); color: #fff; }
+.napp-weather .wx-seg button.on { background: var(--accent-fill); color: #fff; }
 .napp-weather .wx-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 20px; }
 .napp-weather .wx-body section { margin-top: 18px; }
 .napp-weather h2 { margin: 0; font-size: 1.15rem; }

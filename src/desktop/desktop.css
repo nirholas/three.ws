@@ -13,6 +13,9 @@ body {
 	--task-h: 48px;
 	--accent: var(--theme-2);
 	--accent-2: var(--theme-1);
+	/* Solid fills under white labels: the raw accents fall short of 4.5:1 under white, these shades clear it for every one. */
+	--accent-fill: color-mix(in srgb, var(--accent) 70%, #000);
+	--accent-fill-hover: color-mix(in srgb, var(--accent) 62%, #000);
 	position: fixed;
 	inset: 0;
 	overflow: hidden;
@@ -994,7 +997,7 @@ html[data-season='halloween'] .os-lock-enter:focus-visible {
 	opacity: 0.5;
 }
 .cal-grid b.today {
-	background: var(--accent);
+	background: var(--accent-fill);
 	color: #fff;
 	font-weight: 600;
 }
@@ -1413,8 +1416,8 @@ html[data-season='halloween'] .os-lock-enter:focus-visible {
 	background: var(--hover-b);
 }
 .seg button[aria-pressed='true'] {
-	background: var(--accent);
-	border-color: var(--accent);
+	background: var(--accent-fill);
+	border-color: var(--accent-fill);
 	color: #fff;
 }
 .set-switch {

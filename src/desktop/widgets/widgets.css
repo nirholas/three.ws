@@ -169,7 +169,7 @@
 	outline-offset: 2px;
 }
 .wgx-btn.primary {
-	background: var(--accent);
+	background: var(--accent-fill);
 	border-color: transparent;
 	color: #fff;
 }
@@ -734,7 +734,7 @@
 	font-size: 11px;
 }
 .wgx-cal-week .today {
-	background: var(--accent);
+	background: var(--accent-fill);
 	color: #fff;
 }
 .wgx-cal-week .today small {
@@ -789,7 +789,7 @@
 	opacity: 0.4;
 }
 .wgx-cal-grid b.today {
-	background: var(--accent);
+	background: var(--accent-fill);
 	color: #fff;
 	font-weight: 700;
 }

@@ -413,16 +413,23 @@ export function createChrome(sh) {
 				const d = new Date(start);
 				d.setDate(start.getDate() + i);
 				const cls = [d.getMonth() !== view.getMonth() ? 'mute' : '', d.toDateString() === today.toDateString() ? 'today' : ''].join(' ').trim();
-				cells.push(`<b class="${cls}"${cls.includes('today') ? ' aria-current="date"' : ''}>${d.getDate()}</b>`);
+				cells.push(`<b role="cell" class="${cls}"${cls.includes('today') ? ' aria-current="date"' : ''}>${d.getDate()}</b>`);
 			}
-			const dow = [...Array(7)].map((_, i) => `<i>${new Date(2024, 0, 7 + i).toLocaleDateString([], { weekday: 'narrow' })}</i>`).join('');
+			// A table of weeks: rows are display:contents so the 7-column CSS grid still lays the cells out.
+			const weeks = [...Array(6)].map((_, w) => `<div role="row">${cells.slice(w * 7, w * 7 + 7).join('')}</div>`).join('');
+			const dow = `<div role="row">${[...Array(7)]
+				.map((_, i) => {
+					const day = new Date(2024, 0, 7 + i);
+					return `<i role="columnheader" aria-label="${esc(day.toLocaleDateString([], { weekday: 'long' }))}">${esc(day.toLocaleDateString([], { weekday: 'narrow' }))}</i>`;
+				})
+				.join('')}</div>`;
 			cal.innerHTML =
 				`<div class="cal-today"><b>${esc(today.toLocaleDateString([], { weekday: 'long' }))}</b><span>${esc(today.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }))}</span></div>` +
 				`<div class="cal-head"><span>${esc(view.toLocaleDateString([], { month: 'long', year: 'numeric' }))}</span><span>` +
 				`<button type="button" data-d="0" aria-label="Back to this month">${icon('home', 13)}</button>` +
 				`<button type="button" data-d="-1" aria-label="Previous month">${icon('chevron', 14).replace('<svg', '<svg style="transform:rotate(180deg)"')}</button>` +
 				`<button type="button" data-d="1" aria-label="Next month">${icon('chevron', 14)}</button></span></div>` +
-				`<div class="cal-grid" role="grid">${dow}${cells.join('')}</div>`;
+				`<div class="cal-grid" role="table" aria-label="${esc(view.toLocaleDateString([], { month: 'long', year: 'numeric' }))}">${dow}${weeks}</div>`;
 			cal.querySelectorAll('[data-d]').forEach((b) =>
 				b.addEventListener('click', () => {
 					const d = Number(b.dataset.d);

@@ -248,7 +248,7 @@
 	font-size: 10px;
 	font-weight: 700;
 	color: #fff;
-	background: var(--accent);
+	background: var(--accent-fill);
 }
 .ck-dnd {
 	display: grid;
@@ -501,11 +501,11 @@
 }
 .qs-tile[aria-pressed='true'] {
 	color: #fff;
-	background: var(--accent);
+	background: var(--accent-fill);
 	border-color: transparent;
 }
 .qs-tile[aria-pressed='true']:hover {
-	filter: brightness(1.08);
+	background: var(--accent-fill-hover);
 }
 .qs-sliders {
 	display: flex;
@@ -696,7 +696,7 @@
 }
 .nc-dnd[aria-pressed='true'] {
 	color: #fff;
-	background: var(--accent);
+	background: var(--accent-fill);
 }
 .nc-list {
 	display: flex;
@@ -836,6 +836,9 @@
 	gap: 2px;
 	text-align: center;
 	font-size: 12px;
+}
+.nc-cal .cal-grid > [role='row'] {
+	display: contents;
 }
 .nc-cal .cal-grid i {
 	font-style: normal;

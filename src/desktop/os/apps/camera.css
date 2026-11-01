@@ -29,8 +29,8 @@
 .napp-camera .cam-msg p, .napp-camera .cam-msg ol { margin: 0; color: #b5b5bb; font-size: 0.9rem; line-height: 1.55; }
 .napp-camera .cam-msg ol { text-align: left; padding-left: 20px; }
 .napp-camera .cam-ico { color: #8a8a92; }
-.napp-camera .cam-btn { margin-top: 8px; border: 0; border-radius: 6px; background: var(--accent); color: #fff; padding: 9px 20px; font: inherit; font-weight: 600; cursor: pointer; }
-.napp-camera .cam-btn:hover { filter: brightness(1.12); }
+.napp-camera .cam-btn { margin-top: 8px; border: 0; border-radius: 6px; background: var(--accent-fill); color: #fff; padding: 9px 20px; font: inherit; font-weight: 600; cursor: pointer; }
+.napp-camera .cam-btn:hover { background: var(--accent-fill-hover); }
 .napp-camera .cam-btn:active { transform: scale(0.97); }
 .napp-camera .cam-spin { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #ffffff30; border-top-color: var(--accent); animation: cam-rot 0.8s linear infinite; }
 @keyframes cam-rot { to { transform: rotate(360deg); } }
@@ -38,7 +38,7 @@
 .napp-camera .cam-seg { display: inline-flex; gap: 2px; background: var(--hover); border-radius: 999px; padding: 3px; justify-self: start; }
 .napp-camera .cam-seg button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--text2); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.85rem; cursor: pointer; }
 .napp-camera .cam-seg button svg { width: 16px; height: 16px; }
-.napp-camera .cam-seg button.on { background: var(--accent); color: #fff; }
+.napp-camera .cam-seg button.on { background: var(--accent-fill); color: #fff; }
 .napp-camera .cam-seg button:disabled:not(.on) { opacity: 0.4; }
 .napp-camera .cam-shutter { width: 58px; height: 58px; border-radius: 50%; border: 3px solid var(--text); background: transparent; position: relative; cursor: pointer; padding: 0; transition: transform var(--duration-instant); }
 .napp-camera .cam-shutter::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--text); transition: all var(--duration-fast); }

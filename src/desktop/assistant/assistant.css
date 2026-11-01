@@ -273,7 +273,7 @@
 	align-self: flex-end;
 	padding: 8px 12px;
 	border-radius: 16px 16px 4px 16px;
-	background: var(--accent);
+	background: var(--accent-fill);
 	color: #fff;
 	white-space: pre-wrap;
 }
@@ -444,7 +444,7 @@
 	height: 34px;
 	border: 0;
 	border-radius: 11px;
-	background: var(--accent);
+	background: var(--accent-fill);
 	color: #fff;
 	cursor: pointer;
 	transition:
