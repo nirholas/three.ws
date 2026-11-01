@@ -2719,6 +2719,24 @@ URL: https://three.ws/docs/play-live-events
 
 How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.
 
+### Docs · The /play venue projector view
+
+URL: https://three.ws/docs/play-director-mode
+
+How /play?director=1 turns a browser into an unattended venue screen: an invisible spectator seat, an auto-director camera that cuts between occupied landmarks, a projector-scale broadcast overlay with the presenter PA lower third, and the resilience that keeps it running all event.
+
+### Docs · The $THREE signature wall
+
+URL: https://three.ws/docs/signature-wall
+
+How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.
+
+### Docs · The /play activity ticker and hype moments
+
+URL: https://three.ws/docs/play-activity-ticker
+
+What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.
+
 ### Docs · How /play stays safe, honest, and light
 
 URL: https://three.ws/docs/play-hardening

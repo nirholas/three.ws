@@ -6,6 +6,11 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-11-01
 
+- **Docs · The /play activity ticker and hype moments** (`/docs/play-activity-ticker`): What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.
+- **Docs · The /play venue projector view** (`/docs/play-director-mode`): How /play?director=1 turns a browser into an unattended venue screen: an invisible spectator seat, an auto-director camera that cuts between occupied landmarks, a projector-scale broadcast overlay with the presenter PA lower third, and the resilience that keeps it running all event.
+- **Docs · The $THREE signature wall** (`/docs/signature-wall`): How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.
+- **A live activity ticker and big-buy hype moments in /play**: /play now has a small collapsible feed of joins, leaves, trades, wheel wins, cosmetic unlocks and your quest completions. When a genuinely large buy lands for the coin, measured against that coin's own recent trades, the world gets a gold hype moment, a jumbotron banner and an optional chime. The $THREE trade tape also keeps working when the primary trade feed is blocked, by falling back to the pool's trades. (`/play`) `[feature]`
+- **Sign the wall: a permanent $THREE signature wall in the /play world**: A graffiti wall near spawn where every visitor can sign once with a name and an 80-character line. New signatures appear live for everyone in the room with an ink splash, the wall stays readable from 10 to thousands of signatures by paging through them, and every signature has its own shareable card. (`/play`) `[feature]`
 - **Task Manager reads cleanly on a phone**: On a phone the desktop Task Manager broke window sizes and the Memory heading across two lines. Every value and heading now stays on one line and only a long app name shortens. (`/?view=desktop`) `[desktop, fix]`
 
 ## 2026-10-31

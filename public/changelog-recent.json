@@ -1,14 +1,75 @@
 {
-	"generated_at": "2026-10-31T23:28:28.955Z",
+	"generated_at": "2026-11-01T00:01:04.895Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4237,
+	"total": 4250,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-01",
+			"type": "launch",
+			"title": "Docs · The /play activity ticker and hype moments",
+			"summary": "What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.",
+			"link": "/docs/play-activity-ticker",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "launch",
+			"title": "Docs · The /play venue projector view",
+			"summary": "How /play?director=1 turns a browser into an unattended venue screen: an invisible spectator seat, an auto-director camera that cuts between occupied landmarks, a projector-scale broadcast overlay with the presenter PA lower third, and the resilience that keeps it running all event.",
+			"link": "/docs/play-director-mode",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "launch",
+			"title": "Docs · The $THREE signature wall",
+			"summary": "How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.",
+			"link": "/docs/signature-wall",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "A live activity ticker and big-buy hype moments in /play",
+			"summary": "/play now has a small collapsible feed of joins, leaves, trades, wheel wins, cosmetic unlocks and your quest completions. When a genuinely large buy lands for the coin, measured against that coin's own recent trades, the world gets a gold hype moment, a jumbotron banner and an optional chime. The $THREE trade tape also keeps working when the primary trade feed is blocked, by falling back to the pool's trades.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Sign the wall: a permanent $THREE signature wall in the /play world",
+			"summary": "A graffiti wall near spawn where every visitor can sign once with a name and an 80-character line. New signatures appear live for everyone in the room with an ink splash, the wall stays readable from 10 to thousands of signatures by paging through them, and every signature has its own shareable card.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-01",
+			"type": "update",
+			"title": "Task Manager reads cleanly on a phone",
+			"summary": "On a phone the desktop Task Manager broke window sizes and the Memory heading across two lines. Every value and heading now stays on one line and only a long app name shortens.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-10-31",
 			"type": "launch",
@@ -92,6 +153,16 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "A venue screen for /play: an invisible camera that directs itself",
+			"summary": "Open /play with director=1 on a projector or as an OBS source and the world watches itself. The screen joins as a spectator that has no avatar, is invisible to every player and is not counted in the online total, then cuts every 15 to 30 seconds between the busiest places in the plaza (the totem, the screens, the dance floor, any crowd) without ever clipping a building. A broadcast overlay shows the event name with LIVE or a countdown, the running agenda item, the world and the live headcount, and a QR to join, with no player HUD. At the group photo it holds the totem and the crowd through the countdown and the flash. It reconnects forever under a quiet pill, keeps the screen awake, hides the cursor, and reloads itself if graphics are lost. Built for the Meetup #3 livestream.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "Carve a 3D pumpkin at /pumpkin",
 			"summary": "A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.",
 			"link": "/pumpkin",
@@ -112,8 +183,41 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "Desktop list widgets fill their cards",
+			"summary": "The Pulse, Launches and Agents widgets on the web desktop showed a fixed number of rows and left an empty band at the bottom of the card. They now show as many whole rows as the card has room for, at any widget size or text scale, and never a row cut in half.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "Desktop notifications show a small app icon again",
+			"summary": "On the web desktop, a notification's app icon stretched into a wide empty bar across the card header, both in the pop-up and in the notification centre. It is a small square beside the app name again, and a browser test keeps it that way.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "Desktop windows open without a zoom when reduced motion is on",
 			"summary": "With your system set to reduce motion, a new window on the web desktop now appears at its full size in place. Before, its first frame still flashed in at 94% scale and slightly low before snapping to size. Closing already skipped its animation; opening now matches. The desktop also has a browser test suite that boots it, opens every built-in app, exercises window controls, saves a file and checks accessibility in dark and light mode.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "File Explorer fits a phone screen",
+			"summary": "On a phone the desktop's File Explorer squeezed its address bar down to a single letter and pushed the view buttons off the edge of a toolbar that could only be scrolled sideways. The address bar now gets the room and always shows the folder you are in, the commands go icon-only, item commands that do not apply to your selection step aside, and the toolbar wraps instead of hiding anything.",
 			"link": "/?view=desktop",
 			"tags": [
 				"desktop",
@@ -194,6 +298,17 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "Paint's zoom controls stay on screen on a phone",
+			"summary": "On a phone the desktop Paint app wrapped the canvas size onto four lines and pushed the zoom-in button and the zoom percentage off the edge of the window. The status bar now stays on one line with every zoom control in reach, and the pointer position shortens first when room runs out.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "Rate limits hold steady again instead of falling back to the slower path",
 			"summary": "A routine dependency update brought back a rate-limiter release whose Redis scripts our production Redis rejects, so every limit quietly ran on the slower database fallback. The limiter is pinned back to the compatible release, with a test that fails on any version carrying the incompatible scripts and an update rule that stops it drifting again.",
 			"link": null,
@@ -205,12 +320,34 @@
 		{
 			"date": "2026-10-31",
 			"type": "update",
+			"title": "The desktop no longer drops your keyboard into the Weather widget",
+			"summary": "Before you picked a weather city, opening the web desktop put keyboard focus in the Weather widget's city search, so typing and keyboard shortcuts started inside a widget. Focus now stays with the desktop until you click the search or choose Change city. A half-typed city also survives the widget's background refresh instead of being cleared.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
 			"title": "The web desktop looks like a clean, futuristic dark OS",
 			"summary": "The desktop now opens on the Aqua shell over a new Horizon wallpaper: a near-black field with a slowly drifting grid that runs toward a horizon line lit in your accent colour. App icons are glowing glyphs on dark glass tiles, the dock and widgets are deep glass with a lit edge, the app in front is marked by an accent bar, and the focused window gets a faint accent glow. This PC and Recycle Bin are now Computer and Trash (the old names still work in the File Explorer address bar). The Weather widget's city picker is redesigned with a clear header, a one-click Use my location button, and room for more search results. The File Explorer no longer draws a ring around its whole file list when it opens.",
 			"link": "/?view=desktop",
 			"tags": [
 				"desktop",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-10-31",
+			"type": "update",
+			"title": "The web desktop's Start button works on phones",
+			"summary": "On phones 390px wide or narrower, the taskbar tray slid over the Start button and left it too small to tap. Start now keeps its full size, the clock shows the time on one line, and the theme switch moves into Quick settings so everything fits from 360px up. A browser test checks the taskbar at three phone widths.",
+			"link": "/?view=desktop",
+			"tags": [
+				"desktop",
+				"fix"
 			]
 		},
 		{
@@ -1410,144 +1547,6 @@
 			"link": "/docs/forge-workflows",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "launch",
-			"title": "Docs · Squad chat",
-			"summary": "How squad chat turns a plain-language request into a plan of role-tagged steps for a specialist team or a solo agent: who can see each squad, how the plan is checked against your own words before it runs, and when a step stops for your approval.",
-			"link": "/docs/team-chat",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "launch",
-			"title": "Docs · Standalone repositories",
-			"summary": "The generated catalog of every publishable package in this monorepo mirrored to its own standalone GitHub repository with its own install command and documentation site, so each one can be found, starred, installed and cited on its own.",
-			"link": "/docs/standalone-repos",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "update",
-			"title": "17 named commerce tools and a spending report land in the x402 MCP buyer, hosted and self-custodial",
-			"summary": "The self-custodial x402 buyer (@three-ws/x402-mcp, npx -y @three-ws/x402-mcp) and the hosted agent wallet (https://three.ws/api/mcp-agent) both gained 17 named tools, one per fixed three.ws x402 service: weather_forecast, weather_go_no_go, carbon_now, carbon_best_window, domain_rdap_check, domain_rdap_check_bulk, research_search, research_paper, research_bibliography, book_search, book_read, news_wire_search, news_wire_poll, transit_plan, transit_delays, places_search and places_detail. Each carries a fixed input schema and states its price in its description, so a model calls it correctly far more often than it composes the equivalent raw pay_and_call(url) call. On the hosted side every named tool has a matching <name>_quote read tool that prices it without paying, and the shared tool-policy runtime (@three-ws/mcp-policy) gates payment on that exact quote (one service's quote can never unlock a different service's payment). The stdio package also gained spending_report, which totals everything pay_and_call and the named tools have paid, by merchant and by day, from a local append-only ledger (X402_MCP_LEDGER_PATH).",
-			"link": "/docs/mcp",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "update",
-			"title": "A generated SKILL-MD 1.0 catalog of every paid HTTP route is now live at /.well-known/skill.md",
-			"summary": "Any agent can now load one markdown file, https://three.ws/.well-known/skill.md, and get a conformant SKILL-MD 1.0 document (the x402-skill-md format) listing every priced endpoint on three.ws: method, path, price, parameters, and the Solana and Base payment rails it settles on, plus a sample 402 challenge body. The document is generated straight from the same OpenAPI catalog /openapi.json serves (api/_lib/skill-md.js reads the shared buildOpenApiDoc() builder and the real buildExactRequirements() rail logic, so the catalog and the live 402 challenge can never drift apart), and is linked from /.well-known/x402.json and llms.txt. Validated in tests/skill-md.test.js against the real upstream x402-skill-md npm validator: zero errors other than the EVM rail finding (SM005), which is expected since this is a Solana-first platform and Base settles only when a facilitator is configured. Distinct from the pre-existing https://three.ws/skill.md (no .well-known), the Agent Skills connector file for installing three.ws MCP servers; both now cross-link to the other.",
-			"link": "/.well-known/skill.md",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "update",
-			"title": "A spend call above an agent's approval threshold now pauses for the owner instead of failing",
-			"summary": "The requires_approval verdict agent payment sessions and agent-to-agent hires can already produce now actually does something: both /api/pay/execute and /api/agents/a2a-hire create a request on the existing approval inbox the moment a call crosses the caller's approval_threshold_usd, answer with 202 and a poll link to /approvals/<id> instead of failing the call, and resume automatically the moment the owner taps Approve there, re-probing or re-running the exact same reserve-then-settle path the call would have taken inline, with no re-entry point for a double-spend. A denied request answers 403 on the next poll, an expired one answers 410, and retrying with the same idempotency key before the owner answers just re-polls instead of parking a second request. Nothing new to build on the approval page itself: it already renders any venue generically from the request's summary, amount, and risk notes, so the two new venues (payment_session_execute, a2a_hire) show up with the right Approve/Decline card for free. Covered by 21 new handler tests across create, approve, decline, expire, and the executor's own idempotent re-run.",
-			"link": "/approvals",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "update",
-			"title": "Agent-to-agent hires now carry a signed fulfillment record, and it feeds reputation and pricing",
-			"summary": "Every settled a2a-hire (api/agents/a2a-hire.js) now writes exactly one signed attestation row: {hire_id, payment_signature, outcome, evidence_hash, signed_by}, outcome one of delivered, failed, or disputed, signed off-chain with the same platform attestation key api/_lib/attest-event.js uses for on-chain provenance memos. A client-side timeout is recorded as disputed, never inferred as delivered, since x402's verify-then-settle means the provider may already have been paid server-side. The resulting recency-weighted fulfillment rate (30-day half-life, minimum 5 attestations before it counts) is now a real input to the free Financial reputation score on every agent's Trust tab: the Settlement reliability pillar's detail line reports the rate alongside its sample size, for example '90% hire fulfillment over 12 hires', or how many hires are attested so far if the minimum has not been met yet. Providers can also opt a service into an optional x402 pricing discount for well-reputed hirers (agent_paid_services.reputation_discount_enabled, off by default): the hiring agent's reputation tier mints a short-lived, slug-scoped, signature-verified voucher, never a caller-supplied claim, so the paywall always fails closed to full price on anything unsigned, expired, or mis-scoped.",
-			"link": "/agents",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "update",
-			"title": "Payment sessions gain blocked hosts, an approval threshold, and a per-rail daily cap, all with tamper-evident verdicts",
-			"summary": "Agent payment sessions get three new governance knobs, settable at creation and editable while a session is active: blocked_hosts (a denylist checked after the allowlist, so an explicit block always wins over a broad allow, even with no allowlist set), approval_threshold_usd (a call priced above this amount now gets a distinct requires_approval verdict instead of either settling or silently failing), and per_rail_daily_usd (a rolling 24h spend cap per settlement network, reserved atomically the same way the session budget already is, closing the race a naive sum-of-past-executions check would leave open). Every governance verdict, allow or reject, now carries a policy_digest (a sha256 hash of the exact policy it was judged against) and an HMAC signature over the verdict, digest, request, and timestamp, stored with the execution: editing a session's policy after the fact changes the digest and breaks the signature on every verdict that preceded the edit, so a verdict record can be trusted even after the policy it was judged against has since moved. The dry-run simulator at /api/pay/simulate now predicts all three new rules through the exact same shared policy module the real enforcer calls, so a simulated verdict and an enforced one can never disagree; that parity is pinned by a new test running both over identical scenarios. The payments page gained matching fields in both the session creation and edit modals, with inline validation and a collapsed 'Advanced spend policy' section so the common case (budget, expiry, host allowlist) stays uncluttered.",
-			"link": "/docs/payment-sessions",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "update",
-			"title": "Receipt Vault gains an Outbound tab: what your agents spent elsewhere, verified against the chain itself",
-			"summary": "The Receipt Vault at /receipts now has two tabs. Inbound is unchanged (what three.ws billed your wallet); the new Outbound tab answers the other question: what did your agents spend at OTHER x402 merchants while running on an Agent Payment Session. Each settled Solana execution is resolved against the settlement transaction's own token-balance change the first time anyone views it (payer, payee, mint, amount, fee, slot, time), independent of whatever the merchant's response claimed, then cached so later views are free; a 'verified' badge marks a row that matched the chain, 'pending' while resolution is still in flight, and 'unverified' if the lookup failed permanently. The tab is account-session gated (the same credential /payments uses, not a wallet signature, since Payment Sessions are account-scoped, not wallet-scoped), filters by network and merchant host, and exports to CSV alongside the existing JSON receipt downloads. New endpoint: GET /api/x402/outbound-receipts.",
-			"link": "/receipts",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-15",
-			"type": "update",
-			"title": "Turn any public OpenAPI spec or GitHub repo into a draft agent skill",
-			"summary": "New importer at /skills/import (From an API tab) and POST /api/skills/import: point at an OpenAPI/Swagger URL or a GitHub repo and every operation becomes a tools.json entry with a generated handlers.js function calling ctx.fetch, SKILL.md prose written from the spec's own descriptions, and Swagger 2.0 upgraded to OpenAPI 3 automatically. A README-only repo becomes a declarative skill instead, prose only, no tools. Every import lands as a disabled draft, owner-scoped and labelled untrusted: enabled only ever flips via the dedicated PATCH /api/skills/import/:id route, never at creation, and nothing is installed onto any agent automatically. Generated handlers fill auth from the skill's declared secrets, never a hardcoded credential. Also available from the CLI: three-ws skills import <url> and three-ws skills drafts. New package: @three-ws/skill-import.",
-			"link": "/skills/import",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "8 keyless live-data services join the x402 paid API: weather, grid carbon, domains, research, books, news, transit, places",
-			"summary": "three.ws's x402 surface grows 17 new routes, each needing no API key anywhere in the chain (not an upstream key, not a three.ws key), ported natively onto three.ws's own Solana facilitator so they settle, receipt, and discover exactly like every other paid endpoint: Weather Guard (24h forecast + severe alerts from Open-Meteo, NWS fallback), Carbon (UK grid carbon intensity + lowest-carbon scheduling window), Domains (live RDAP registration lookups, single and bulk), Research (paper search across arXiv/Crossref/Semantic Scholar, metadata, bibliographies), Books (OpenLibrary + Project Gutenberg search and full-text reads), News Wire (global news search and polling over GDELT DOC 2.0), Transit (MBTA GTFS trip planning and realtime delay snapshots), and Places (OpenStreetMap Overpass point-of-interest search and detail). Each service's discovery route runs a free daily per-IP quota before falling through to the x402 pay-per-call lane, fails closed to the paid rail rather than opening an unmetered proxy if the quota store is unreachable, and every upstream call sends an identifying User-Agent. No fixture or mocked fallback anywhere in the set: an upstream outage answers 502, and the one route whose source suite offers a fake-data fallback when unconfigured (Places Detail's review enrichment) ships without that fallback, returning only the real OpenStreetMap record. All 17 routes appear in GET /openapi.json and GET /.well-known/x402.json with Solana listed first in every payment challenge.",
-			"link": "/docs/x402-endpoints",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "A new wallet linkage score flags a coin's creator buying their own launch",
-			"summary": "GET /api/crypto/linkage cross-checks 2-10 Solana addresses for shared control: a 0-100 same-controller score per pair, combining six real on-chain signals by noisy-OR (shared fee payer, one address funding the other, both sharing a first funder, SPL token-account control, direct transfers, a shared funder sending similar amounts in a short window), every match backed by the signature or account that triggered it. It is keyless, free, and part of the public Crypto Data API, and now wired into two places that act on money: the Trade Safety Firewall warns when an early buyer scores as the same controller as a coin's creator (wash-trading dressed up as demand), and copy-trading refuses to size an order behind a leader whose own wallet links to the creator of the coin they are 'signaling', showing the follower exactly why. The same scorer ships as the wallet_linkage tool in the hosted intel MCP server for any AI agent to call directly.",
-			"link": "/crypto-api",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "A read-only drift report for every standalone GitHub mirror",
-			"summary": "npm run mirrors:drift compares each of the ~105 standalone mirrors in data/standalone-mirrors.json against its monorepo source at the last synced commit (GitHub API, with a README-timestamp fallback when rate-limited), flags any package whose GitHub copy has diverged, and writes the result to tasks/mirror-drift-<date>.json. It never pushes or mutates a mirror; it is the audit step that found the two fixes above.",
-			"link": "/docs/contributing",
-			"tags": [
-				"infra",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-14",
-			"type": "update",
-			"title": "Agents can now carry an owner-signed, offline-verifiable spend cap",
-			"summary": "A new Delegation tab in the agent wallet hub lets an owner sign a portable spend delegation with their own linked Solana wallet (a message, never a transaction): 'this agent may move at most CAP lamports per EPOCH, until NOT_AFTER.' The signed envelope is plain text and the verification math is a zero-dependency function any outside counterparty can run themselves (packages/agent-guards, spec in its README) to confirm the authorization without trusting three.ws's say-so. three.ws enforces the same cap server-side on every call through POST /api/agent/guard, measured from the agent wallet's REALIZED spend in the custody ledger rather than the agent's own claim, so an exact-output trade that ends up costing more than advertised still can't slip past the ceiling. A replayed nonce, an expired delegation, or a signature from the wrong wallet is rejected with a specific reason.",
-			"link": "/docs/agent-wallet-api",
-			"tags": [
-				"feature",
-				"security"
 			]
 		}
 	]

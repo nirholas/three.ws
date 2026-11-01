@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-10-31T23:03:59.613Z",
+	"generated_at": "2026-11-01T00:01:04.784Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5365,6 +5365,42 @@
 					"title": "Docs · Live events in the /play world",
 					"description": "How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.",
 					"added": "2026-08-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/play-director-mode",
+					"title": "Docs · The /play venue projector view",
+					"description": "How /play?director=1 turns a browser into an unattended venue screen: an invisible spectator seat, an auto-director camera that cuts between occupied landmarks, a projector-scale broadcast overlay with the presenter PA lower third, and the resilience that keeps it running all event.",
+					"added": "2026-11-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/signature-wall",
+					"title": "Docs · The $THREE signature wall",
+					"description": "How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.",
+					"added": "2026-11-01",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/play-activity-ticker",
+					"title": "Docs · The /play activity ticker and hype moments",
+					"description": "What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.",
+					"added": "2026-11-01",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
