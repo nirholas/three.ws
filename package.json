@@ -671,7 +671,7 @@
 		"@solana-program/token": "^0.18.0",
 		"@solana-program/token-2022": "^0.20.0",
 		"@solana/keys": "^8.6.0",
-		"@solana/kit": "^8.5.0",
+		"@solana/kit": "^8.6.0",
 		"@solana/kit-plugin-instruction-plan": "^0.23.0",
 		"@solana/kit-plugin-rpc": "^0.23.0",
 		"@solana/kit-plugin-signer": "^0.23.0",

@@ -53,7 +53,7 @@
     "@solana-program/compute-budget": "^0.20.0",
     "@solana-program/system": "^0.16.0",
     "@solana-program/token": "^0.18.0",
-    "@solana/kit": "^8.5.0",
+    "@solana/kit": "^8.6.0",
     "@x402/core": "^2.26.0",
     "@x402/svm": "^2.14.0",
     "jsonc-parser": "^3.3.0",
