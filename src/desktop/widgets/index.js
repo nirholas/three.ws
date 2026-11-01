@@ -7,7 +7,7 @@
 
 import './widgets.css';
 import { icon } from '../icons.js';
-import { CATALOG, DEFAULT_LAYOUT, SIZES, STEP, catalogItem, cellAt, firstFit, fits, gridFor, pixelBox, relTime, settle } from './logic.js';
+import { CATALOG, DEFAULT_LAYOUT, SIZES, STEP, catalogItem, cellAt, firstFit, fits, gridFor, nudge, pixelBox, relTime, settle } from './logic.js';
 import { renderWidget, handleBrokenImages, WIDGET_ICONS } from './render.js';
 import { refresh, subscribe } from './data.js';
 
@@ -228,10 +228,14 @@ export function mountDesktopWidgets(ctx) {
 	layer.setAttribute('aria-label', 'Desktop widgets');
 	const bar = document.createElement('div');
 	bar.className = 'wgx-editbar';
-	bar.innerHTML = `<button type="button" class="wgx-btn primary" data-add>${icon('plus', 15)}Add widget</button><button type="button" class="wgx-btn" data-done>${icon('check', 15)}Done</button>`;
+	bar.innerHTML = `<span class="wgx-hint">Drag a widget, or focus it and use the arrow keys</span><button type="button" class="wgx-btn primary" data-add>${icon('plus', 15)}Add widget</button><button type="button" class="wgx-btn" data-done>${icon('check', 15)}Done</button>`;
 	const ghost = document.createElement('div');
 	ghost.className = 'wgx-ghost';
-	layer.append(ghost, bar);
+	// Screen readers hear where a keyboard move landed (or why it could not).
+	const announce = document.createElement('div');
+	announce.className = 'wgx-live';
+	announce.setAttribute('aria-live', 'polite');
+	layer.append(ghost, bar, announce);
 	host.append(layer);
 
 	let stored = load(DESK_KEY, DEFAULT_LAYOUT);
@@ -294,6 +298,8 @@ export function mountDesktopWidgets(ctx) {
 				});
 				el.append(x);
 				drag(el, w.id);
+				keyMove(el, w.id);
+				if (layer.classList.contains('editing')) el.tabIndex = 0;
 				cards.set(w.id, el);
 				layer.insertBefore(el, ghost);
 			}
@@ -397,9 +403,37 @@ export function mountDesktopWidgets(ctx) {
 		head.addEventListener('click', (e) => el.classList.contains('was-dragged') && e.stopPropagation(), true);
 	}
 
+	// Keyboard alternative to dragging: with the card itself focused in edit
+	// mode, an arrow key moves it one cell (hopping over neighbours).
+	function keyMove(el, id) {
+		el.addEventListener('keydown', (e) => {
+			if (e.target !== el || !layer.classList.contains('editing') || e.altKey || e.ctrlKey || e.metaKey) return;
+			const w = laid.find((o) => o.id === id);
+			if (!w || !e.key.startsWith('Arrow')) return;
+			e.preventDefault();
+			const title = catalogItem(w.type).title;
+			const to = nudge(w, e.key, laid.filter((o) => !o.hidden), grid);
+			if (!to) {
+				announce.textContent = `${title} widget cannot move further that way.`;
+				return;
+			}
+			const s = stored.find((o) => o.id === id);
+			Object.assign(s, to);
+			persist();
+			render();
+			cards.get(id)?.focus({ preventScroll: true });
+			announce.textContent = `Moved ${title} widget to column ${grid.cols - to.col}, row ${to.row + 1}.`;
+		});
+	}
+
 	function setEdit(on) {
 		layer.classList.toggle('editing', on);
+		for (const el of cards.values()) {
+			if (on) el.tabIndex = 0;
+			else el.removeAttribute('tabindex');
+		}
 		if (on) bar.querySelector('[data-add]').focus({ preventScroll: true });
+		else announce.textContent = '';
 	}
 	bar.querySelector('[data-add]').addEventListener('click', () => gallery(ctx, add));
 	bar.querySelector('[data-done]').addEventListener('click', () => setEdit(false));

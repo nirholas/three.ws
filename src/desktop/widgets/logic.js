@@ -78,6 +78,26 @@ export function firstFit(widget, others, grid) {
 	return null;
 }
 
+const STEPS = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
+/**
+ * The cell an arrow key moves `widget` to: one step in that direction (columns
+ * count from the right, so Left is col + 1), hopping over any neighbour in the
+ * way to the next free cell. Null when the key is not an arrow or nothing beyond
+ * fits. `others` may include the widget itself.
+ */
+export function nudge(widget, key, others, grid) {
+	const step = STEPS[key];
+	if (!step) return null;
+	let { col, row } = widget;
+	for (;;) {
+		col += step[0];
+		row += step[1];
+		if (col < 0 || row < 0 || col >= grid.cols || row >= grid.rows) return null;
+		if (fits(widget, col, row, others, grid)) return { col, row };
+	}
+}
+
 /**
  * Validate a stored layout: drop unknown types and bad sizes, give every widget
  * an id, and re-place anything that no longer fits (a smaller window, a moved

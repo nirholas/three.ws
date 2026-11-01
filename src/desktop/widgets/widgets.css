@@ -1178,6 +1178,10 @@
 	outline: 2px dashed color-mix(in srgb, var(--accent) 60%, transparent);
 	outline-offset: 3px;
 }
+.wgx-desk.editing > .wgx:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
 .wgx-desk.editing .wgx-x {
 	display: grid;
 }
@@ -1211,6 +1215,29 @@
 	transform: translate(-50%, 0);
 	opacity: 1;
 	visibility: visible;
+}
+.wgx-hint {
+	align-self: center;
+	padding: 0 6px;
+	color: var(--text2);
+	font-size: 12.5px;
+	white-space: nowrap;
+}
+.wgx-desk.empty .wgx-hint {
+	display: none;
+}
+@media (max-width: 720px) {
+	.wgx-hint {
+		display: none;
+	}
+}
+.wgx-live {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 .wgx-desk.editing.empty .wgx-editbar::before {
 	content: 'Your desktop has no widgets.';

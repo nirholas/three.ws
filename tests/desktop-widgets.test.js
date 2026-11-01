@@ -16,6 +16,7 @@ import {
 	fmtPrice,
 	gridFor,
 	monthGrid,
+	nudge,
 	pixelBox,
 	relTime,
 	settle,
@@ -104,6 +105,23 @@ describe('widget grid', () => {
 		expect(laid[1].id).toMatch(/^[\w-]+$/);
 		expect(laid[1].data).toEqual({ text: 'hi' });
 		expect(settle('garbage', { cols: 2, rows: 2 })).toEqual([]);
+	});
+	it('nudges a widget one cell with the arrow keys, hopping over neighbours', () => {
+		const grid = { cols: 4, rows: 3 };
+		const me = { id: 'a', size: 's', col: 1, row: 1 };
+		// Columns count from the right edge, so Left is col + 1.
+		expect(nudge(me, 'ArrowLeft', [me], grid)).toEqual({ col: 2, row: 1 });
+		expect(nudge(me, 'ArrowRight', [me], grid)).toEqual({ col: 0, row: 1 });
+		expect(nudge(me, 'ArrowUp', [me], grid)).toEqual({ col: 1, row: 0 });
+		expect(nudge(me, 'ArrowDown', [me], grid)).toEqual({ col: 1, row: 2 });
+		// A neighbour in the way is jumped, not swapped or overlapped.
+		const wall = { id: 'w', size: 's', col: 2, row: 1 };
+		expect(nudge(me, 'ArrowLeft', [me, wall], grid)).toEqual({ col: 3, row: 1 });
+		// At the edge, or with only blocked cells beyond, it stays put.
+		expect(nudge({ ...me, col: 0 }, 'ArrowRight', [], grid)).toBeNull();
+		expect(nudge({ id: 'b', size: 'm', col: 2, row: 0 }, 'ArrowLeft', [], grid)).toBeNull();
+		expect(nudge(me, 'ArrowLeft', [me, wall, { id: 'v', size: 's', col: 3, row: 1 }], grid)).toBeNull();
+		expect(nudge(me, 'Enter', [me], grid)).toBeNull();
 	});
 	it('converts between cells and pixels', () => {
 		expect(pixelBox({ size: 'l', col: 1, row: 2 })).toEqual({ right: STEP, top: STEP * 2, width: UNIT * 2 + GAP, height: UNIT * 2 + GAP });

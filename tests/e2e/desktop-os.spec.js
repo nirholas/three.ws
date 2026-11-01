@@ -22,7 +22,8 @@
  *     Alt+W, show desktop, lock and sign back in.
  *   - Widgets behave: the Weather picker leaves focus alone on boot and keeps
  *     what was typed across a refresh; list widgets fill their cards with
- *     whole rows. Notification cards keep a small app icon.
+ *     whole rows; in edit mode a widget moves with the arrow keys. Notification
+ *     cards keep a small app icon.
  *   - On 360, 390 and 430px phones the taskbar fits and Start stays tappable,
  *     File Explorer keeps its address and every command on screen, Paint's
  *     status bar keeps its zoom controls in reach, and Task Manager's process
@@ -341,6 +342,29 @@ test.describe('web desktop', () => {
 			await page.keyboard.press('Alt+w');
 			await expect(settings).toHaveCount(0);
 		}
+	});
+
+	test('in widget edit mode a widget moves with the arrow keys and the layout persists', async ({ page }) => {
+		await openDesktop(page);
+		const vp = page.viewportSize();
+		await page.mouse.click(vp.width * 0.45, vp.height * 0.6, { button: 'right' });
+		await page.getByRole('menu').getByRole('menuitem', { name: 'Edit widgets', exact: true }).click();
+		const desk = page.locator('.wgx-desk');
+		await expect(desk).toHaveClass(/editing/);
+		const card = desk.locator('> .wgx').first();
+		const id = await card.getAttribute('data-id');
+		await expect(card).toHaveAttribute('tabindex', '0');
+		await card.focus();
+		const before = await card.boundingBox();
+		await page.keyboard.press('ArrowLeft');
+		await expect.poll(async () => (await card.boundingBox()).x).toBeLessThan(before.x - 50);
+		await expect(card).toBeFocused();
+		const saved = await page.evaluate((wid) => JSON.parse(localStorage.getItem('tws-widgets:desktop')).find((w) => w.id === wid), id);
+		expect(saved.col).toBeGreaterThan(0);
+		await expect(page.locator('.wgx-live')).toContainText('Moved');
+		await page.keyboard.press('Escape');
+		await expect(desk).not.toHaveClass(/editing/);
+		await expect(card).not.toHaveAttribute('tabindex', /.*/);
 	});
 
 	test('Settings changes the wallpaper and the choice survives a reload', async ({ page }) => {

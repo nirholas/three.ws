@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-01",
+			"title": "Move desktop widgets with the keyboard",
+			"summary": "Desktop widgets could only be rearranged by dragging. In edit mode (right-click the desktop, Edit widgets) you can now focus a widget and press an arrow key to move it one cell, hopping over any widget in the way. Screen readers hear where it landed, the new spot is saved like a drag, and a hint on the edit bar says how.",
+			"tags": [
+				"desktop",
+				"improvement"
+			],
+			"link": "/?view=desktop"
+		},
+		{
+			"date": "2026-11-01",
 			"title": "Display settings opens the right page",
 			"summary": "Right-clicking the web desktop and choosing Display settings opened the same Personalization page as Personalize. It now opens Desktop and taskbar, where icon size, icon layout and the taskbar live.",
 			"tags": [
