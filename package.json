@@ -790,7 +790,7 @@
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.13.0",
-		"@electric-sql/pglite": "^0.5.12",
+		"@electric-sql/pglite": "^0.5.13",
 		"@joplin/turndown-plugin-gfm": "^1.0.68",
 		"@playwright/test": "^1.63.0",
 		"@x402/fetch": "^2.14.0",
