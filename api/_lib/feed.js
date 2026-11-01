@@ -27,6 +27,7 @@
 //   world-join   → { coin, coinName }
 //   jackpot      → { reward, coin }
 //   mission-complete → { mission, gold, coop, coin }, /play job or heist finished
+//   dance-off    → { votes, contestants, coin }, a /play dance-off round was won; actor is the winning dancer
 //   war-result   → { winner, reason, a, b, matchKey, network }, a Coin Wars battle ended; actor is the winning community
 //   agora-registered    → { citizenId, agentPda, profession, narrative }, a citizen joined Agora (AgenC registerAgent)
 //   agora-task-posted   → { actor, taskPda, profession, rewardLabel, minReputation, cluster }, a bounty was escrowed on the board (createTask)
@@ -63,6 +64,7 @@ export const ALLOWED_TYPES = new Set([
 	'mission-complete',  // /play job or co-op heist finished; { mission, gold, coop, coin }
 	'member-join',  // a person signed in to three.ws; { handle } (actor = display name)
 	'agent-guard',  // an autonomous buy was REFUSED by a safety rule; { agentId, mint, reason, label }, trust made visible
+	'dance-off',    // a /play dance-off round was won; { votes, contestants, coin }, actor is the winning dancer
 	'war-result',   // a Coin Wars battle ended; { winner, reason, a:{mint,name,symbol,score}, b:{…}, matchKey, network }
 	// Agora, the living agent economy (workers/agora-citizens). Each is a real
 	// on-chain AgenC action projected onto the ticker; see docs/agora.md.

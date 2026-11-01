@@ -170,6 +170,7 @@ export class CommunityNet {
 			tag: new Set(),         // ({event, itId, leaderboard}), tag mini-game state (R08)
 			floorBeat: new Set(),   // ({clip}), disco-pad beat tick (R06): pulses the floor + aligns standing dancers
 			king: new Set(),        // ({event, phase, endsAt, scores, kingId, winner, zone}), King of the Totem state (R07)
+			danceOff: new Set(),    // ({kind:'state'|'ack'|'reward', ...}), dance-off round state, vote acks, champion reward
 			social: new Set(),      // ({type, ...}), friends events: live DM, request/accept (W09)
 		};
 		// Optional async presence-ticket supplier (W09). When provided, its resolved
@@ -420,6 +421,11 @@ export class CommunityNet {
 			//, the client only renders the HUD + zone. Colon-namespaced like floor:beat;
 			// normalized to a camelCase `king` event.
 			this.room.onMessage('game:king', (msg) => this._emit('king', msg || {}));
+			// Dance-off rounds on the disco pad: server-authoritative round state, the
+			// per-vote ack and the champion reward, all folded into one `danceOff` event.
+			this.room.onMessage('dance:state', (msg) => this._emit('danceOff', { ...(msg || {}), kind: 'state' }));
+			this.room.onMessage('dance:ack', (msg) => this._emit('danceOff', { ...(msg || {}), kind: 'ack' }));
+			this.room.onMessage('dance:reward', (msg) => this._emit('danceOff', { ...(msg || {}), kind: 'reward' }));
 
 			const $ = getStateCallbacks(this.room);
 			const $state = $(this.room.state);
@@ -656,7 +662,10 @@ export class CommunityNet {
 	}
 
 	sendEmote(name) { this._send('emote', { name }); }
-	sendReaction(emoji) { this._send('reaction', { emoji }); }
+	// `target` (a session id) aims the reaction at a dance-off contestant; the server
+	// counts at most one such vote per voter per round. Omitted, it is plain confetti.
+	sendReaction(emoji, target) { this._send('reaction', target ? { emoji, target } : { emoji }); }
+	sendDanceStart() { this._send('dance:start', {}); }
 	sendSigwallPing() { this._send('sigwall-ping', {}); }
 	sendChat(text) { this._send('chat', { text }); }
 	// Place/break a voxel at an integer grid cell. Server-authoritative: these only

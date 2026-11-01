@@ -92,6 +92,7 @@ import { reportEventRun, fetchEventBoard } from '../event-score.js';
 import { hydratePlayer, loadPlayer, savePlayer, flushPlayer } from '../playerStore.js';
 import { publishFeedEvent } from '../feed.js';
 import { wantsSpectator, isSpectator, seatSpectator, guardSpectatorMessages, publishSpectatorCount } from '../spectator.js';
+import { attachDanceOff } from '../dance-off-room.js';
 import { reportQuestComplete } from '../quest-notify.js';
 
 // Platform entry gate (wallet-first sign-in + game-token balance). When a game
@@ -863,6 +864,9 @@ export class WalkRoom extends Room {
 		// schedules the next one. One interval drives scoring, the countdown, and the
 		// idle→active→intermission transitions so the timing can never drift apart.
 		this.clock.setInterval(() => this._kingTick(), KING_TICK_MS);
+
+		// Dance-off rounds on the floor above (dance-off-room.js). Null when switched off.
+		this._danceOff = attachDanceOff(this);
 	}
 
 	async onJoin(client, options) {
@@ -1127,6 +1131,7 @@ export class WalkRoom extends Room {
 		// they were holding the zone. Their accumulated points are forfeited (a player
 		// who leaves can't win), and the next tick re-evaluates occupancy from scratch,
 		// so a departing king never freezes the crown. The round itself keeps running.
+		this._danceOff?.leave(client.sessionId);
 		this._king.scores.delete(client.sessionId);
 		if (this._king.kingId === client.sessionId) {
 			this._king.kingId = null;
@@ -1520,6 +1525,7 @@ export class WalkRoom extends Room {
 			this._sendQuests(client);
 			this._sendBuildPerms(client);
 			this._sendKingSync(client);
+			this._danceOff?.sync(client);
 		} catch { /* a client that vanished between the checks above and here */ }
 	}
 
@@ -1925,6 +1931,7 @@ export class WalkRoom extends Room {
 		if (now - last < 500) return;
 		this._reactionCooldowns.set(client.sessionId, now);
 		this.broadcast('reaction', { id: client.sessionId, emoji });
+		this._danceOff?.reaction(client, payload);
 	}
 
 	_handleChat(client, payload) {
