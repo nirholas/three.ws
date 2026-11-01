@@ -601,7 +601,7 @@
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.6.0",
-		"@ai-sdk/anthropic": "^4.0.89",
+		"@ai-sdk/anthropic": "^4.0.91",
 		"@ai-sdk/openai": "^4.0.104",
 		"@avaturn/sdk": "^1.1.4",
 		"@aws-sdk/client-marketplace-entitlement-service": "^3.1157.0",
