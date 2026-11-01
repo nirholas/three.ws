@@ -1,0 +1,138 @@
+/* Party UI for /play (src/game/party.js). Party accent is the same sky blue the
+   minimap blip uses (#7fd1ff), so a blip, a nameplate and a chat line read as one thing. */
+:root { --cc-party: #7fd1ff; --cc-party-dim: rgba(127, 209, 255, 0.16); }
+
+/* roster pill + panel */
+#cc-party {
+	position: fixed; left: calc(14px + var(--cc-safe-l, 0px)); top: calc(168px + var(--cc-safe-t, 0px)); z-index: 24;
+	display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: min(320px, 86vw);
+}
+.cc-party-pill {
+	display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+	background: var(--cc-panel); color: var(--cc-text); border: 1px solid var(--cc-party);
+	border-radius: var(--cc-radius); padding: 7px 11px; font: 700 11px/1 inherit; letter-spacing: 0.06em; text-transform: uppercase;
+	box-shadow: var(--cc-shadow); backdrop-filter: blur(12px);
+	transition: background var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease;
+}
+.cc-party-pill[hidden] { display: none; }
+.cc-party-pill:hover { background: rgba(127, 209, 255, 0.14); }
+.cc-party-pill:active { transform: scale(0.97); }
+.cc-party-pill:focus-visible, .cc-party-btn:focus-visible, .cc-party-x:focus-visible, .cc-party-chip:focus-visible, .cc-party-scope:focus-visible {
+	outline: 2px solid var(--cc-party); outline-offset: 2px;
+}
+.cc-party-pill-ico { color: var(--cc-party); font-size: 10px; }
+
+.cc-party-panel {
+	width: min(300px, 86vw); background: var(--cc-panel); border: 1px solid var(--cc-edge);
+	border-top: 2px solid var(--cc-party); border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
+	backdrop-filter: blur(12px); padding: 11px 12px 12px; animation: cc-party-in 140ms ease-out;
+}
+.cc-party-panel[hidden] { display: none; }
+@keyframes cc-party-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.cc-party-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 9px; }
+.cc-party-title { font-weight: 800; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--cc-text); }
+.cc-party-sub { font-size: 11px; color: var(--cc-faint); line-height: 1.4; margin-top: 2px; }
+.cc-party-x { background: none; border: none; color: var(--cc-faint); font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 6px; border-radius: var(--cc-radius-sm, 3px); }
+.cc-party-x:hover { color: var(--cc-text); background: rgba(255, 255, 255, 0.08); }
+.cc-party-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 40vh; overflow-y: auto; }
+.cc-party-row { display: flex; align-items: center; gap: 8px; padding: 6px 7px; border-radius: var(--cc-radius-sm, 3px); background: rgba(255, 255, 255, 0.04); min-height: 34px; }
+.cc-party-row.cc-me { background: var(--cc-party-dim); }
+.cc-party-row.cc-pending { opacity: 0.65; }
+.cc-party-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--cc-party); box-shadow: 0 0 6px var(--cc-party); }
+.cc-party-row.cc-elsewhere .cc-party-dot { background: transparent; border: 2px solid var(--cc-party); box-shadow: none; }
+.cc-party-row.cc-away .cc-party-dot, .cc-party-row.cc-pending .cc-party-dot { background: #8f8f96; box-shadow: none; }
+.cc-party-name { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; color: var(--cc-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-party-tag { flex: none; font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--cc-faint); border: 1px solid var(--cc-edge); border-radius: 2px; padding: 2px 4px; }
+.cc-party-tag.cc-lead { color: var(--cc-party); border-color: var(--cc-party); }
+.cc-party-foot { display: flex; gap: 8px; margin-top: 10px; }
+.cc-party-foot .cc-party-btn { flex: 1; }
+
+.cc-party-btn {
+	background: rgba(255, 255, 255, 0.08); color: var(--cc-text); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm, 3px);
+	padding: 6px 10px; font: 700 11px/1.1 inherit; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
+	transition: background var(--duration-fast, 120ms) ease, filter var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease;
+}
+.cc-party-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); }
+.cc-party-btn:active:not(:disabled) { transform: scale(0.97); }
+.cc-party-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cc-party-btn.cc-primary { background: var(--cc-party); border-color: var(--cc-party); color: #06141c; }
+.cc-party-btn.cc-primary:hover:not(:disabled) { background: #a3e0ff; }
+.cc-party-btn.cc-danger:hover:not(:disabled) { background: rgba(255, 107, 107, 0.2); border-color: rgba(255, 107, 107, 0.6); }
+.cc-party-row .cc-party-btn { padding: 4px 8px; font-size: 10px; }
+
+/* invite cards */
+#cc-party-invites {
+	position: fixed; left: 50%; top: calc(76px + var(--cc-safe-t, 0px)); transform: translateX(-50%); z-index: 60;
+	display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; width: min(380px, 92vw);
+}
+.cc-party-invite {
+	pointer-events: auto; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+	background: var(--cc-panel); border: 1px solid var(--cc-party); border-left-width: 4px; border-radius: var(--cc-radius);
+	padding: 10px 12px; box-shadow: var(--cc-shadow), 0 0 22px rgba(127, 209, 255, 0.25); backdrop-filter: blur(12px);
+	animation: cc-party-drop 200ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@keyframes cc-party-drop { from { opacity: 0; transform: translateY(-10px) scale(0.97); } to { opacity: 1; transform: none; } }
+.cc-party-invite-text { font-size: 13px; color: var(--cc-text); min-width: 0; overflow-wrap: anywhere; }
+.cc-party-invite-actions { display: flex; gap: 6px; flex: none; }
+
+/* nameplate accent */
+.cc-label.cc-party {
+	color: #06141c; background: var(--cc-party); border-radius: 2px; text-shadow: none;
+	box-shadow: 0 0 10px rgba(127, 209, 255, 0.55);
+}
+.cc-label.cc-party::before { content: "◆ "; font-size: 8px; vertical-align: 1px; }
+
+/* screen-edge direction chips */
+#cc-party-edge { position: fixed; inset: 0; z-index: 26; pointer-events: none; overflow: hidden; }
+.cc-party-chip {
+	position: absolute; left: 0; top: 0; pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+	background: rgba(8, 18, 26, 0.88); color: var(--cc-text); border: 1px solid var(--cc-party); border-radius: 999px;
+	padding: 4px 10px 4px 7px; font: 700 11px/1 inherit; white-space: nowrap; box-shadow: 0 0 12px rgba(127, 209, 255, 0.3);
+	max-width: 70vw;
+}
+.cc-party-chip:hover { background: rgba(127, 209, 255, 0.22); }
+.cc-party-chip-arrow { color: var(--cc-party); font-size: 12px; display: inline-block; transition: transform 90ms linear; }
+.cc-party-chip-name { overflow: hidden; text-overflow: ellipsis; max-width: 110px; letter-spacing: 0.03em; }
+.cc-party-chip-dist { color: var(--cc-party); font-variant-numeric: tabular-nums; }
+
+/* arrival flash */
+#cc-party-flash { position: fixed; inset: 0; z-index: 70; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 55%, rgba(127, 209, 255, 0.55), rgba(127, 209, 255, 0) 65%); }
+#cc-party-flash.cc-on { animation: cc-party-flash 650ms ease-out; }
+@keyframes cc-party-flash { 0% { opacity: 0.95; } 100% { opacity: 0; } }
+
+/* chat channel */
+.cc-party-scope {
+	flex: none; align-self: center; background: rgba(255, 255, 255, 0.08); color: var(--cc-faint); border: 1px solid var(--cc-edge);
+	border-radius: 2px; padding: 3px 6px; font: 700 10px/1 inherit; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer;
+	transition: background var(--duration-fast, 120ms) ease, color var(--duration-fast, 120ms) ease;
+}
+.cc-party-scope:hover { background: rgba(255, 255, 255, 0.16); color: var(--cc-text); }
+.cc-party-scope[aria-disabled="true"] { opacity: 0.5; }
+.cc-party-scope.cc-party-on { background: var(--cc-party); color: #06141c; border-color: var(--cc-party); }
+#cc-chat.cc-scope-party { border-color: var(--cc-party); box-shadow: var(--cc-shadow), 0 0 0 1px var(--cc-party-dim); }
+#cc-chat.cc-scope-party .cc-chat-input { border-color: var(--cc-party); }
+.cc-chat-msg.cc-party-msg { border-left: 2px solid var(--cc-party); padding-left: 7px; background: var(--cc-party-dim); }
+.cc-chat-msg.cc-party-msg .cc-chat-meta b { color: var(--cc-party); }
+.cc-chat-msg.cc-party-msg .cc-chat-meta b::after { content: " · party"; font-weight: 600; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
+
+/* cross-world handoff dialog */
+.cc-party-ho { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); animation: cc-party-in 140ms ease-out; }
+.cc-party-ho-card { width: min(380px, 100%); background: var(--cc-panel); border: 1px solid var(--cc-party); border-radius: var(--cc-radius); padding: 20px; text-align: center; box-shadow: var(--cc-shadow); }
+.cc-party-ho-art { display: grid; place-items: center; margin-bottom: 12px; }
+.cc-party-ho-img, .cc-party-ho-mono { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--cc-party); }
+.cc-party-ho-mono { display: grid; place-items: center; font-weight: 800; font-size: 26px; color: var(--cc-party); background: var(--cc-party-dim); }
+.cc-party-ho-title { margin: 0 0 4px; font-size: 16px; color: var(--cc-text); overflow-wrap: anywhere; }
+.cc-party-ho-world { margin: 0 0 10px; font-size: 13px; color: var(--cc-party); font-weight: 700; overflow-wrap: anywhere; }
+.cc-party-ho-note { margin: 0 0 10px; font-size: 12px; color: var(--cc-faint); line-height: 1.5; }
+.cc-party-ho-note.cc-warn { color: #e7cccc; }
+.cc-party-ho-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.cc-party-ho-actions .cc-party-btn { padding: 10px 12px; font-size: 12px; overflow-wrap: anywhere; }
+
+@media (max-width: 640px) {
+	#cc-party { top: calc(150px + var(--cc-safe-t, 0px)); }
+	.cc-party-chip-name { max-width: 70px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.cc-party-panel, .cc-party-invite, .cc-party-ho, #cc-party-flash.cc-on { animation: none; }
+	#cc-party-flash.cc-on { opacity: 0; }
+}

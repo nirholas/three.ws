@@ -3146,6 +3146,8 @@ export class CommunityUI {
 			this.h.onForgeProp?.({ prompt, fromChat: true });
 			return;
 		}
+		// Party channel (party.js) claims a message when the scope is Party or it starts with /p.
+		if (this.chatInterceptor?.(text)) { this.chatInput.value = ''; return; }
 		this.h.onChat(text);
 		this.chatInput.value = '';
 	}
@@ -3280,13 +3282,13 @@ export class CommunityUI {
 		this._toastTimer = setTimeout(() => this._toast.classList.remove('cc-on'), 4200);
 	}
 
-	addChat({ name, text, mine }) {
+	addChat({ name, text, mine, scope }) {
 		const now = new Date();
 		const stamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 		// Stick to bottom only if the user is already near it, so reading scrollback
 		// isn't yanked away when a new message lands.
 		const nearBottom = this.chatLog.scrollHeight - this.chatLog.scrollTop - this.chatLog.clientHeight < 60;
-		const row = el('div', { class: 'cc-chat-msg' + (mine ? ' cc-mine' : '') }, [
+		const row = el('div', { class: 'cc-chat-msg' + (mine ? ' cc-mine' : '') + (scope === 'party' ? ' cc-party-msg' : '') }, [
 			el('span', { class: 'cc-chat-meta' }, [
 				el('b', { text: name }),
 				el('time', { text: stamp }),

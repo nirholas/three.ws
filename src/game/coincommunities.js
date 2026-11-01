@@ -94,6 +94,7 @@ import { openAvatarInspector, isAvatarInspectorOpen, closeAvatarInspector } from
 import { createAgentDesk } from './agent-desk.js';
 import { VehicleManager } from './vehicles.js';
 import { CombatSystem } from './combat-system.js';
+import { PartyClient } from './party.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked, exactly the `?bg=transparent` embed case (e.g. the IBM
@@ -1822,6 +1823,8 @@ export class CoinCommunities {
 			if (m?.type === 'dm') this._bumpFriendsBadge();
 		});
 		this._initFriends();
+		// Parties (docs/play-parties.md): roster, invites, go-to, party chat channel.
+		this.party = new PartyClient(this);
 		// Job completion has no generic 'notice' twin (WalkRoom sends only
 		// 'questComplete'), toast it globally so a payout lands even when the
 		// Jobs Board panel isn't open, the same way every other reward does.
@@ -1860,6 +1863,7 @@ export class CoinCommunities {
 				getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z, yaw: this.localYaw, height: this.localHeight || 1.6 }),
 				net: this.net,
 				ui: this.ui,
+				blipSource: () => this.party?.blips() || [],
 			});
 		} catch (e) {
 			log.error('[coincommunities] CombatSystem failed to init; continuing without it:', e?.message);
@@ -2287,6 +2291,7 @@ export class CoinCommunities {
 		clearTimeout(this._announceTimer);
 		if (this.vehicles) { this.vehicles.dispose(); this.vehicles = null; }
 		if (this.combat) { this.combat.dispose(); this.combat = null; }
+		if (this.party) { this.party.dispose(); this.party = null; }
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
 		if (this.wheelStation) { this.wheelStation.dispose(); this.wheelStation = null; }
@@ -2432,6 +2437,7 @@ export class CoinCommunities {
 			// real profile with follow / message / creations.
 			username: rp.username,
 			avatarUrl: rp._avatarUrl,
+			actions: this.party?.inspectActions(id) || [],
 			facts: [
 				...this._worldFacts(),
 				...(rp.voice ? [{ label: 'Voice', value: 'in voice chat' }] : []),
@@ -2903,7 +2909,7 @@ export class CoinCommunities {
 			this._friendsLoading = false;
 			if (!this._friendsBodyEl) return; // world torn down mid-load
 			this._friendsBodyEl.textContent = '';
-			this._friends = new FriendsPanel(this._friendsBodyEl);
+			this._friends = new FriendsPanel(this._friendsBodyEl, { onInvite: (f) => this.party?.inviteFriend(f) });
 			if (this._friendsOpen) this._friends.mount();
 		}).catch((err) => {
 			this._friendsLoading = false;
@@ -4905,6 +4911,7 @@ export class CoinCommunities {
 			this.intelKiosk?.tick(dt);
 			if (this.worldLife) { this.worldLife.setRealPeers(this.remotes.size); this.worldLife.tick(dt); }
 			this.combat?.tick(dt);
+			this.party?.tick();
 			// Ordinary move sync is redundant (and would just get rejected by the
 			// server's walking-speed step clamp) while driving, VehicleManager
 			// streams the authoritative transform itself via sendVSync.

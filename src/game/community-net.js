@@ -161,6 +161,7 @@ export class CommunityNet {
 			floorBeat: new Set(),   // ({clip}), disco-pad beat tick (R06): pulses the floor + aligns standing dancers
 			king: new Set(),        // ({event, phase, endsAt, scores, kingId, winner, zone}), King of the Totem state (R07)
 			social: new Set(),      // ({type, ...}), friends events: live DM, request/accept (W09)
+			party: new Set(),       // ({type, ...}), party state/events/results/warp/fx (docs/play-parties.md)
 		};
 		// Optional async presence-ticket supplier (W09). When provided, its resolved
 		// token rides the join so this coin world publishes the player's account
@@ -342,6 +343,7 @@ export class CommunityNet {
 			// Friends (W09): live DM + request/accept events pushed by the social hub
 			// to whichever realm room the account is currently registered in.
 			this.room.onMessage('social', (msg) => this._emit('social', msg));
+			this.room.onMessage('party', (msg) => this._emit('party', msg || {}));
 			this.room.onMessage('voice-signal', (msg) => this._emit('voiceSignal', msg));
 			// The server replies here when it refuses one of our place/break edits
 			// (budget full, rate limited, …) so the HUD can explain the no-op.
@@ -629,6 +631,8 @@ export class CommunityNet {
 	sendEmote(name) { this._send('emote', { name }); }
 	sendReaction(emoji) { this._send('reaction', { emoji }); }
 	sendChat(text) { this._send('chat', { text }); }
+	// Party ops: invite | accept | decline | leave | goto | chat | state (see party-service.js).
+	sendParty(payload) { this._send('party', payload); }
 	// Place/break a voxel at an integer grid cell. Server-authoritative: these only
 	// request the edit; the block is added/removed locally when the server patches
 	// state.blocks (see the onAdd/onRemove wiring above).
