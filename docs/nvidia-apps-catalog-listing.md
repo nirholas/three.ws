@@ -23,6 +23,14 @@ company-profile alignment in section 2 is still open.
 The only remaining step is NVIDIA's periodic review. Check the public catalog monthly. The
 history below records the state before this save.
 
+**Catalog checks since the save:**
+
+- 2026-11-02: the Inception startup catalog search for `three` returns 4 items (Deepwave
+  Digital, BECKER 3D, Threedium, VUNO). three.ws is not listed yet. Every product link in the
+  record (`/forge`, `/nvidia`, `/demos/audio2face`, `/docs/nvidia-models`, `/docs/embedding`,
+  the L4/Blackwell blog post, `/legal/privacy`) answered 200. Company-profile alignment
+  (section 2) and the "Do not share" checkbox are still unconfirmed.
+
 ### State before the 2026-10-25 save (2026-10-17 snapshot)
 
 The authenticated portal snapshot supplied on 2026-10-17 still shows the product row as
