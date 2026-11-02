@@ -392,6 +392,7 @@ test.describe('web desktop', () => {
 			await page.addInitScript((m) => {
 				localStorage.setItem('tws:prefs', JSON.stringify({ startIn: 'desktop', mode: m }));
 				localStorage.setItem('twx_season_off:halloween-2026', '1');
+				localStorage.setItem('twx_season_off:autumn-2026', '1');
 			}, mode);
 			await openDesktop(page);
 			// Freeze in-between frames so axe scores resting colours, not a fade.
@@ -407,6 +408,7 @@ test.describe('web desktop', () => {
 			await page.addInitScript((m) => {
 				localStorage.setItem('tws:prefs', JSON.stringify({ startIn: 'desktop', mode: m }));
 				localStorage.setItem('twx_season_off:halloween-2026', '1');
+				localStorage.setItem('twx_season_off:autumn-2026', '1');
 			}, mode);
 			await openDesktop(page);
 			await page.addStyleTag({
@@ -473,6 +475,7 @@ test.describe('web desktop', () => {
 	test('a notification card shows its app icon as a small square, not stretched across the header', async ({ page }) => {
 		await page.addInitScript(() => {
 			localStorage.setItem('twx_season_off:halloween-2026', '1');
+			localStorage.setItem('twx_season_off:autumn-2026', '1');
 			const note = { id: 'e2e-timer', title: 'Timer finished', body: 'Tea', app: 'clock', at: Date.now() };
 			localStorage.setItem('tws:notifications', JSON.stringify([note]));
 		});

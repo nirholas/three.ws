@@ -14,6 +14,18 @@ export const HALLOWEEN_2026 = Object.freeze({
 	wallpaper: 'haunted',
 });
 
+// Autumn 2026: a look, not a drop (no gifts, nothing to claim, no server copy).
+// It picks up the instant Halloween ends and runs to the end of meteorological
+// autumn, so the site never sits between seasons. dropPhase() treats the end
+// as exclusive and the start as inclusive, so the two windows never overlap.
+export const AUTUMN_2026 = Object.freeze({
+	id: 'autumn-2026',
+	name: 'Autumn 2026',
+	startsAt: HALLOWEEN_2026.endsAt,
+	endsAt: '2026-12-01T12:00:00Z',
+	wallpaper: 'harvest',
+});
+
 // localStorage flag set when this browser's account claims the drop, so the
 // desktop can offer the kept wallpaper without an auth round trip at boot. It is
 // a convenience only: the badge row on the server is the real record, and the
@@ -21,6 +33,8 @@ export const HALLOWEEN_2026 = Object.freeze({
 export const CLAIMED_FLAG = 'twx_drop_claimed:halloween-2026';
 // Opt-out for the seasonal look ("Halloween look" toggle in desktop Settings).
 export const LOOK_OFF_FLAG = 'twx_season_off:halloween-2026';
+// Opt-out for the autumn look ("Autumn look" toggle in desktop Settings).
+export const AUTUMN_LOOK_OFF_FLAG = 'twx_season_off:autumn-2026';
 
 /** 'upcoming' | 'live' | 'ended' for `drop` at epoch-ms `now`. */
 export function dropPhase(drop, now = Date.now()) {
@@ -32,6 +46,11 @@ export function dropPhase(drop, now = Date.now()) {
 /** True while the Halloween weekend is on (the seasonal look's window). */
 export function isHalloweenLive(now = Date.now()) {
 	return dropPhase(HALLOWEEN_2026, now) === 'live';
+}
+
+/** True while the autumn look's window is open. */
+export function isAutumnLive(now = Date.now()) {
+	return dropPhase(AUTUMN_2026, now) === 'live';
 }
 
 /** Milliseconds as a short countdown: "1d 4h 12m", "4h 12m 9s", "9s". */
@@ -61,3 +80,5 @@ export const hasClaimedLocally = () => readFlag(CLAIMED_FLAG) != null;
 export const markClaimedLocally = (iso) => writeFlag(CLAIMED_FLAG, iso || new Date().toISOString());
 export const seasonalLookEnabled = () => readFlag(LOOK_OFF_FLAG) == null;
 export const setSeasonalLookEnabled = (on) => writeFlag(LOOK_OFF_FLAG, on ? null : '1');
+export const autumnLookEnabled = () => readFlag(AUTUMN_LOOK_OFF_FLAG) == null;
+export const setAutumnLookEnabled = (on) => writeFlag(AUTUMN_LOOK_OFF_FLAG, on ? null : '1');

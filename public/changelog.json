@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-01T00:18:23.442Z",
+	"generated_at": "2026-11-02T20:11:21.032Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-02",
+			"type": "update",
+			"title": "three.ws dresses for autumn",
+			"summary": "Halloween is over, so the site has changed into its fall colours through the end of November. The desktop has a new Harvest wallpaper of a valley at golden hour with leaves drifting down, an amber accent, and a matching lock screen. The classic homepage gets falling maple leaves, autumn prompt ideas for the Forge, and a Leaf pile button that makes the avatar jump into the leaves. Harvest stays in your wallpaper list for good, and you can switch the look off any time in Settings, Personalization.",
+			"link": "/",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-01",
 			"type": "launch",

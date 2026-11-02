@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice">
+  <title>Harvest valley: three.ws Autumn 2026 wallpaper</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1430"/>
+      <stop offset="0.32" stop-color="#4a2240"/>
+      <stop offset="0.56" stop-color="#9a3f2c"/>
+      <stop offset="0.7" stop-color="#e2803a"/>
+      <stop offset="0.8" stop-color="#f6bf6a"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff1c8" stop-opacity="0.75"/>
+      <stop offset="0.3" stop-color="#ffc977" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#ff8a3a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sun" cx="0.45" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#fffbe9"/>
+      <stop offset="0.7" stop-color="#ffe2a0"/>
+      <stop offset="1" stop-color="#ffc066"/>
+    </radialGradient>
+    <linearGradient id="farHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a24c3a"/>
+      <stop offset="1" stop-color="#6e2c2a"/>
+    </linearGradient>
+    <linearGradient id="midHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8e3a1a"/>
+      <stop offset="1" stop-color="#5a1f12"/>
+    </linearGradient>
+    <linearGradient id="field" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8692a"/>
+      <stop offset="1" stop-color="#6f3312"/>
+    </linearGradient>
+    <linearGradient id="nearHill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a1d0e"/>
+      <stop offset="1" stop-color="#1f0b05"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-200%" width="140%" height="500%">
+      <feGaussianBlur stdDeviation="3.5"/>
+    </filter>
+    <filter id="haze" x="-10%" y="-60%" width="120%" height="220%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <g id="tree">
+      <path d="M-3 0-2-40H2L3 0Z" fill="#2a1007"/>
+      <path d="M0-30-12-46M1-34 11-48" stroke="#2a1007" stroke-width="2.4" stroke-linecap="round"/>
+      <g fill="currentColor">
+        <circle cx="0" cy="-62" r="26"/>
+        <circle cx="-19" cy="-50" r="18"/>
+        <circle cx="19" cy="-52" r="20"/>
+        <circle cx="-9" cy="-78" r="17"/>
+        <circle cx="12" cy="-76" r="16"/>
+      </g>
+      <g fill="#fff3c4" fill-opacity="0.09">
+        <circle cx="16" cy="-70" r="11"/>
+        <circle cx="26" cy="-54" r="9"/>
+        <circle cx="4" cy="-84" r="8"/>
+      </g>
+      <g fill="#1a0602" fill-opacity="0.2">
+        <circle cx="-20" cy="-46" r="12"/>
+        <circle cx="-8" cy="-50" r="11"/>
+      </g>
+    </g>
+    <g id="pine">
+      <path d="M-2 0-1.5-14H1.5L2 0Z" fill="#240d06"/>
+      <path d="M0-74-14-36H-7L-18-14H18L7-36H14Z" fill="currentColor"/>
+    </g>
+    <path id="maple" d="M0-11 2-6 5-8 4.5-3 9-4.5 7 0 10 1.5 5 3.5 6 6 1 5 .6 10H-.6L-1 5-6 6-5 3.5-10 1.5-7 0-9-4.5-4.5-3-5-8-2-6Z"/>
+    <g id="bale">
+      <ellipse cx="0" cy="0" rx="22" ry="17" fill="#d9a548"/>
+      <ellipse cx="-14" cy="0" rx="9" ry="16" fill="#b9822e"/>
+      <path d="M-14-9a5 6 0 1 1 0 18M-14-4a2 3 0 1 1 0 8" fill="none" stroke="#8f5d1c" stroke-width="1.6"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+
+  <!-- Thin high clouds catching the last light -->
+  <g fill="#ffb27a" fill-opacity="0.26" filter="url(#soft)">
+    <ellipse cx="380" cy="260" rx="190" ry="10"/>
+    <ellipse cx="520" cy="290" rx="140" ry="7"/>
+    <ellipse cx="1240" cy="330" rx="220" ry="11"/>
+    <ellipse cx="1360" cy="362" rx="120" ry="6"/>
+    <ellipse cx="820" cy="210" rx="110" ry="6"/>
+  </g>
+
+  <!-- Low sun -->
+  <circle cx="1060" cy="640" r="300" fill="url(#sunGlow)"/>
+  <circle cx="1060" cy="640" r="66" fill="url(#sun)"/>
+
+  <!-- Geese heading south -->
+  <g fill="none" stroke="#2b1424" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M620 300q8-7 15 0q7-7 15 0"/>
+    <path d="M652 318q7-6 13 0q6-6 13 0"/>
+    <path d="M684 336q6-5 11 0q5-5 11 0"/>
+    <path d="M594 320q7-6 13 0q6-6 13 0"/>
+    <path d="M566 340q6-5 11 0q5-5 11 0"/>
+  </g>
+
+  <!-- Far hills with a hazy treeline -->
+  <path d="M0 660C190 618 380 626 560 646 760 668 900 616 1100 622 1300 628 1450 602 1600 610V1000H0Z" fill="url(#farHill)"/>
+  <g opacity="0.55">
+    <use href="#pine" transform="translate(96 652) scale(.55)" color="#6e2a24"/>
+    <use href="#tree" transform="translate(150 650) scale(.45)" color="#a8432c"/>
+    <use href="#tree" transform="translate(210 642) scale(.38)" color="#b4572e"/>
+    <use href="#pine" transform="translate(262 640) scale(.5)" color="#5e2622"/>
+    <use href="#tree" transform="translate(1250 628) scale(.42)" color="#b04a2c"/>
+    <use href="#tree" transform="translate(1300 624) scale(.36)" color="#c0642f"/>
+    <use href="#pine" transform="translate(1346 622) scale(.5)" color="#5e2622"/>
+    <use href="#tree" transform="translate(1400 616) scale(.4)" color="#a8432c"/>
+    <use href="#tree" transform="translate(1530 608) scale(.44)" color="#b4572e"/>
+  </g>
+
+  <!-- Valley haze -->
+  <ellipse cx="800" cy="690" rx="900" ry="46" fill="#ffcf8a" opacity="0.22" filter="url(#haze)"/>
+
+  <!-- Mid hills -->
+  <path d="M0 740C180 700 360 708 520 732 700 760 860 716 1040 720 1240 726 1420 696 1600 706V1000H0Z" fill="url(#midHill)"/>
+  <use href="#tree" transform="translate(70 732) scale(.82)" color="#c2410c"/>
+  <use href="#tree" transform="translate(140 722) scale(.7)" color="#e08a2c"/>
+  <use href="#pine" transform="translate(196 716) scale(.85)" color="#3d1a10"/>
+  <use href="#tree" transform="translate(248 712) scale(.76)" color="#b91c1c"/>
+  <use href="#tree" transform="translate(330 712) scale(.66)" color="#d97706"/>
+  <use href="#tree" transform="translate(1180 722) scale(.74)" color="#d0561c"/>
+  <use href="#tree" transform="translate(1250 716) scale(.62)" color="#eab045"/>
+  <use href="#pine" transform="translate(1304 712) scale(.8)" color="#3d1a10"/>
+  <use href="#tree" transform="translate(1366 706) scale(.8)" color="#b5321a"/>
+  <use href="#tree" transform="translate(1450 702) scale(.68)" color="#e08a2c"/>
+  <use href="#tree" transform="translate(1530 704) scale(.84)" color="#c2410c"/>
+
+  <!-- Harvested field with bales -->
+  <path d="M0 830C260 790 520 798 760 816 980 832 1220 796 1600 800V1000H0Z" fill="url(#field)"/>
+  <g stroke="#e3a050" stroke-opacity="0.22" stroke-width="2" fill="none">
+    <path d="M0 862C300 830 560 836 800 852S1300 832 1600 838"/>
+    <path d="M0 890C300 860 560 866 800 882S1300 862 1600 868"/>
+    <path d="M0 920C300 892 560 898 800 914S1300 894 1600 900"/>
+  </g>
+  <use href="#bale" transform="translate(612 846) scale(1.2)"/>
+  <use href="#bale" transform="translate(700 858) scale(1.4)"/>
+  <use href="#bale" transform="translate(950 838) scale(1)"/>
+
+  <!-- Foreground slope and the two big trees framing the view -->
+  <path d="M0 900C200 870 380 884 520 910 640 932 700 960 720 1000H0Z" fill="url(#nearHill)"/>
+  <path d="M1600 880C1440 870 1300 890 1200 920 1120 944 1080 972 1070 1000H1600Z" fill="url(#nearHill)"/>
+  <use href="#tree" transform="translate(150 930) scale(2.2)" color="#b5321a"/>
+  <use href="#tree" transform="translate(1470 924) scale(2.6)" color="#d9601e"/>
+
+  <!-- Fallen leaves -->
+  <g>
+    <use href="#maple" transform="translate(300 950) rotate(20) scale(1.2)" fill="#e8a33a"/>
+    <use href="#maple" transform="translate(380 970) rotate(-35) scale(1)" fill="#c94a1f"/>
+    <use href="#maple" transform="translate(460 940) rotate(70) scale(.9)" fill="#f0b44c"/>
+    <use href="#maple" transform="translate(240 980) rotate(-10) scale(1.1)" fill="#9c2f1a"/>
+    <use href="#maple" transform="translate(1160 966) rotate(40) scale(1.1)" fill="#e07b2a"/>
+    <use href="#maple" transform="translate(1250 946) rotate(-60) scale(.9)" fill="#f0b44c"/>
+    <use href="#maple" transform="translate(1330 978) rotate(15) scale(1.2)" fill="#b5361c"/>
+    <use href="#maple" transform="translate(560 984) rotate(-80) scale(.8)" fill="#d9622b"/>
+  </g>
+</svg>

@@ -4,8 +4,9 @@
  * Outside its active window the script is a no-op, so it can stay wired
  * year-round and retire itself automatically.
  *
- * Currently: Halloween Weekend 2026 (Oct 30 10:00 UTC to Nov 2 12:00 UTC, the
- * second IIFE below) and Independence Day (July 1-5, viewer's local time).
+ * Currently: Autumn 2026 (Nov 2 12:00 UTC to Dec 1 12:00 UTC, the last IIFE),
+ * Halloween Weekend 2026 (Oct 30 10:00 UTC to Nov 2 12:00 UTC, the second IIFE)
+ * and Independence Day (July 1-5, viewer's local time).
  *  - a soft red/white/blue ribbon glow across the very top of the viewport
  *  - real launch-and-burst fireworks on a lightweight canvas confined to the
  *    page's `.hero`. Rockets rise, then explode in a strictly red/white/blue
@@ -733,6 +734,211 @@
 		visible ? start() : stop();
 	});
 	new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+	reducedMq.addEventListener?.('change', (e) => {
+		reduced = e.matches;
+		if (!reduced) start();
+	});
+	start();
+})();
+
+/* Autumn 2026: the classic homepage's fall look, from the end of Halloween
+ * through November.
+ *
+ * Window mirrored from AUTUMN_2026 in src/shared/seasonal-drops.js
+ * (tests/seasonal-drops.test.js pins the two together). It honors the same
+ * "Autumn look" opt-out the desktop Settings toggle writes.
+ *  - an amber/rust top ribbon and warm accents on the hero and section headings;
+ *  - a canvas in `.hero` with maple leaves drifting down;
+ *  - a "🍂 Leaf pile" chip: the avatar jumps (via home.html's own delegated chip
+ *    handler) and throws a pile of leaves into the air;
+ *  - autumn example prompts in the Forge "Try" row.
+ * Reduced motion keeps the static theme; explicit clicks still animate. The loop
+ * parks while the tab is hidden, the hero is out of view, or the sky is empty.
+ */
+(() => {
+	const STARTS = Date.parse('2026-11-02T12:00:00Z');
+	const ENDS = Date.parse('2026-12-01T12:00:00Z');
+	const now = Date.now();
+	if (now < STARTS || now >= ENDS) return;
+	try {
+		if (localStorage.getItem('twx_season_off:autumn-2026') != null) return;
+	} catch (_) { /* storage blocked: show the look */ }
+	if (document.getElementById('autumn-ribbon')) return;
+
+	document.documentElement.dataset.season = 'autumn';
+
+	const reducedMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+	let reduced = reducedMq.matches;
+
+	const style = document.createElement('style');
+	style.textContent = `
+		:root { --au-a: #f0954a; --au-r: #d2452a; --au-g: #f2c25a; }
+		:root[data-theme='light'] { --au-a: #b8501a; --au-r: #a8321c; --au-g: #a8700f; }
+		#autumn-ribbon {
+			position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 120; pointer-events: none;
+			background: linear-gradient(90deg, transparent, var(--au-g) 18%, var(--au-a) 42%, var(--au-r) 62%, var(--au-a) 82%, transparent);
+			opacity: .75;
+		}
+		#autumn-ribbon::after {
+			content: ''; position: absolute; inset: -14px 0 auto 0; height: 40px;
+			background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--au-g) 40%, transparent) 25%,
+				color-mix(in srgb, var(--au-r) 40%, transparent) 70%, transparent);
+			filter: blur(10px); opacity: .5;
+		}
+		html[data-season='autumn'] .hero-h { text-shadow: 0 0 34px color-mix(in srgb, var(--au-a) 32%, transparent); }
+		html[data-season='autumn'] .hero-h em,
+		html[data-season='autumn'] .block-h em { color: var(--au-a); }
+		.autumn-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+		.autumn-sky canvas { width: 100%; height: 100%; display: block; }
+		.hero-chip--autumn { border-color: color-mix(in srgb, var(--au-a) 60%, transparent); }
+		.hero-chip--autumn:hover, .hero-chip--autumn:focus-visible { border-color: var(--au-a); color: var(--au-a); }
+		.hero-chip--autumn:active { transform: scale(.97); }
+	`;
+	document.head.appendChild(style);
+
+	const ribbon = document.createElement('div');
+	ribbon.id = 'autumn-ribbon';
+	ribbon.setAttribute('aria-hidden', 'true');
+	document.body.appendChild(ribbon);
+
+	// Autumn prompts for the Forge "Try" row (home-forge.js reads data-prompt).
+	const TRIES = [
+		['a woven harvest basket spilling tiny gourds and leaves', 'harvest basket'],
+		['a steaming mug of apple cider with a cinnamon stick', 'mug of cider'],
+		['a red maple leaf, veins catching low golden light', 'maple leaf'],
+	];
+	document.querySelectorAll('.hero-try').forEach((b, i) => {
+		if (!TRIES[i]) return;
+		b.removeAttribute('data-i18n'); // keep the translator from restoring the year-round prompt
+		b.dataset.prompt = TRIES[i][0];
+		b.textContent = TRIES[i][1];
+	});
+
+	const hero = document.querySelector('.hero');
+	if (!hero) return;
+	if (getComputedStyle(hero).position === 'static') hero.style.position = 'relative';
+	const layer = document.createElement('div');
+	layer.className = 'autumn-sky';
+	layer.setAttribute('aria-hidden', 'true');
+	const canvas = document.createElement('canvas');
+	layer.appendChild(canvas);
+	hero.prepend(layer);
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return;
+
+	const COLORS = ['#d9622b', '#e8a33a', '#b5361c', '#f0b44c', '#c94a1f', '#9c2f1a', '#e07b2a'];
+	// A maple leaf in a unit box, stem at the bottom (same outline as the desktop's).
+	const MAPLE = [[0, -11], [2, -6], [5, -8], [4.5, -3], [9, -4.5], [7, 0], [10, 1.5], [5, 3.5], [6, 6], [1, 5], [.6, 10],
+		[-.6, 10], [-1, 5], [-6, 6], [-5, 3.5], [-10, 1.5], [-7, 0], [-9, -4.5], [-4.5, -3], [-5, -8], [-2, -6]];
+
+	let W = 0, H = 0, dpr = 1;
+	function resize() {
+		const r = hero.getBoundingClientRect();
+		dpr = Math.min(window.devicePixelRatio || 1, 2);
+		W = Math.max(1, r.width); H = Math.max(1, r.height);
+		canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		if (!running) draw(0);
+	}
+
+	const rand = (a, b) => a + Math.random() * (b - a);
+	const leaves = [];
+	function spawnLeaf(x, y, burst) {
+		leaves.push({
+			x: x ?? rand(0, W), y: y ?? -16,
+			vx: burst ? rand(-3.2, 3.2) : rand(-.25, .25), vy: burst ? rand(-7.5, -3.5) : rand(.45, 1),
+			fall: rand(.6, 1.15), size: rand(.75, 1.5), rot: rand(0, 6.28), vr: rand(-.05, .05),
+			phase: rand(0, 6.28), sway: rand(.4, .9), color: COLORS[(Math.random() * COLORS.length) | 0],
+			burst: !!burst,
+		});
+	}
+
+	function drawLeaf(l) {
+		ctx.save();
+		ctx.translate(l.x, l.y);
+		ctx.rotate(l.rot);
+		ctx.scale(l.size * Math.max(.25, Math.abs(Math.cos(l.phase))), l.size);
+		ctx.fillStyle = l.color;
+		ctx.beginPath();
+		ctx.moveTo(MAPLE[0][0], MAPLE[0][1]);
+		for (let i = 1; i < MAPLE.length; i++) ctx.lineTo(MAPLE[i][0], MAPLE[i][1]);
+		ctx.closePath();
+		ctx.fill();
+		ctx.restore();
+	}
+
+	function draw(dt) {
+		ctx.clearRect(0, 0, W, H);
+		for (let i = leaves.length - 1; i >= 0; i--) {
+			const l = leaves[i];
+			l.phase += .03 * dt;
+			l.vy = Math.min(l.vy + .07 * dt, l.fall);
+			l.vx *= Math.pow(.985, dt);
+			l.x += (l.vx + Math.sin(l.phase) * l.sway) * dt;
+			l.y += l.vy * dt;
+			l.rot += (l.vr + Math.sin(l.phase) * .015) * dt;
+			if (l.y > H + 24 || l.x < -40 || l.x > W + 40) { leaves.splice(i, 1); continue; }
+			ctx.globalAlpha = l.burst ? 1 : .85;
+			drawLeaf(l);
+		}
+		ctx.globalAlpha = 1;
+	}
+
+	let raf = 0, running = false, last = 0, visible = true, inView = true;
+	const ambient = () => leaves.filter((l) => !l.burst).length;
+	function frame(t) {
+		if (!running) return;
+		raf = requestAnimationFrame(frame);
+		const dt = last ? Math.min(3, (t - last) / 16.67) : 1;
+		last = t;
+		if (!reduced && ambient() < 16 && Math.random() < .03 * dt) spawnLeaf();
+		draw(dt);
+		if (reduced && !leaves.length) stop();
+	}
+	function start() {
+		if (running || !visible || !inView) return;
+		if (reduced && !leaves.length) return;
+		running = true; last = 0;
+		raf = requestAnimationFrame(frame);
+	}
+	function stop() { running = false; cancelAnimationFrame(raf); }
+
+	// A pile thrown up from the avatar's feet; explicit, so it plays under reduced motion too.
+	function leafPile() {
+		const stage = document.getElementById('hero-stage');
+		const hr = hero.getBoundingClientRect();
+		const sr = stage ? stage.getBoundingClientRect() : hr;
+		const cx = sr.left - hr.left + sr.width / 2;
+		const cy = sr.top - hr.top + sr.height * .85;
+		for (let i = 0; i < 28; i++) spawnLeaf(cx + rand(-50, 50), cy + rand(-10, 10), true);
+		start();
+	}
+
+	const chipRow = document.getElementById('hero-chips');
+	if (chipRow) {
+		const chip = document.createElement('button');
+		chip.type = 'button';
+		chip.className = 'hero-chip hero-chip--autumn';
+		chip.dataset.anim = 'jump';
+		chip.setAttribute('aria-label', 'Leaf pile: the avatar jumps into a pile of autumn leaves');
+		chip.textContent = '🍂 Leaf pile';
+		chip.addEventListener('click', leafPile);
+		chipRow.prepend(chip);
+	}
+
+	resize();
+	if (!reduced) for (let i = 0; i < 8; i++) spawnLeaf(undefined, rand(0, H), false);
+	if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
+	if (window.IntersectionObserver) {
+		new IntersectionObserver((es) => {
+			inView = es[0]?.isIntersecting ?? true;
+			inView ? start() : stop();
+		}).observe(hero);
+	}
+	document.addEventListener('visibilitychange', () => {
+		visible = document.visibilityState !== 'hidden';
+		visible ? start() : stop();
+	});
 	reducedMq.addEventListener?.('change', (e) => {
 		reduced = e.matches;
 		if (!reduced) start();

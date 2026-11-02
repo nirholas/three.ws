@@ -293,6 +293,126 @@ html[data-season='halloween'] .os-lock-enter:focus-visible {
 	outline-offset: 3px;
 }
 
+/* ---------- Autumn 2026 (src/desktop/seasonal.js) ----------
+ * Starts when Halloween ends and runs through November. The harvest wallpaper
+ * is a regular built-in, so its rule is not season-gated. */
+.os[data-wall='harvest'] .os-wall {
+	overflow: hidden;
+	background: url('/wallpapers/harvest.svg') center bottom / cover no-repeat, #5a2414;
+}
+.os[data-wall='harvest'] .os-wall::after {
+	content: '';
+	position: absolute;
+	inset: auto -20% 0 -20%;
+	height: 34%;
+	pointer-events: none;
+	background:
+		radial-gradient(42% 55% at 30% 100%, rgba(255, 214, 160, 0.14), transparent 70%),
+		radial-gradient(40% 50% at 78% 100%, rgba(255, 170, 90, 0.12), transparent 70%);
+	animation: os-fog 30s ease-in-out infinite alternate;
+}
+.os-leaves {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+.os:not([data-season='autumn']) .os-leaves {
+	display: none;
+}
+.os-leaves i {
+	position: absolute;
+	top: -48px;
+	width: 22px;
+	color: #d9622b;
+	animation: os-leaf-fall 17s linear infinite;
+	will-change: transform;
+}
+.os-leaves svg {
+	display: block;
+	width: 100%;
+	fill: currentColor;
+	filter: drop-shadow(0 2px 2px rgba(40, 12, 4, 0.35));
+	animation: os-leaf-sway 3.2s ease-in-out infinite alternate;
+	transform-origin: 50% 20%;
+}
+.os-leaves i:nth-child(1) { left: 6%; }
+.os-leaves i:nth-child(2) { left: 17%; width: 16px; color: #e8a33a; animation-duration: 21s; animation-delay: -6s; }
+.os-leaves i:nth-child(3) { left: 29%; width: 26px; color: #b5361c; animation-duration: 19s; animation-delay: -13s; }
+.os-leaves i:nth-child(4) { left: 41%; width: 18px; color: #f0b44c; animation-duration: 24s; animation-delay: -3s; }
+.os-leaves i:nth-child(5) { left: 52%; color: #c94a1f; animation-duration: 18s; animation-delay: -10s; }
+.os-leaves i:nth-child(6) { left: 63%; width: 14px; color: #e07b2a; animation-duration: 26s; animation-delay: -17s; }
+.os-leaves i:nth-child(7) { left: 72%; width: 24px; color: #9c2f1a; animation-duration: 20s; animation-delay: -8s; }
+.os-leaves i:nth-child(8) { left: 81%; width: 18px; color: #e8a33a; animation-duration: 23s; animation-delay: -15s; }
+.os-leaves i:nth-child(9) { left: 90%; width: 20px; color: #d9622b; animation-duration: 18.5s; animation-delay: -1s; }
+.os-leaves i:nth-child(10) { left: 97%; width: 15px; color: #c2851f; animation-duration: 22s; animation-delay: -11s; }
+.os-leaves i:nth-child(even) svg { animation-duration: 2.6s; animation-direction: alternate-reverse; }
+@keyframes os-leaf-fall {
+	0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+	25% { transform: translate3d(-4vw, 26vh, 0) rotate(110deg); }
+	50% { transform: translate3d(2vw, 52vh, 0) rotate(200deg); }
+	75% { transform: translate3d(-3vw, 78vh, 0) rotate(300deg); }
+	100% { transform: translate3d(1vw, calc(100vh + 96px), 0) rotate(400deg); }
+}
+@keyframes os-leaf-sway {
+	from { transform: rotate(-28deg) scaleX(1); }
+	to { transform: rotate(24deg) scaleX(0.62); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.os[data-wall='harvest'] .os-wall::after,
+	.os-leaves {
+		animation: none;
+		display: none;
+	}
+}
+/* applyPrefs() writes --accent inline, so the season needs !important to win. */
+.os[data-season='autumn'] {
+	--accent: #e0782c !important;
+	--theme-2: #e0782c !important;
+}
+.os[data-season='autumn'] .set-pane h2,
+.os[data-season='autumn'] .sm-h > :first-child {
+	color: #f2a65a;
+	letter-spacing: -0.01em;
+}
+/* Boot and lock screens paint before the shell mounts, so they key off <html>. */
+html[data-season='autumn'] .os-boot {
+	background: url('/wallpapers/harvest.svg') center bottom / cover no-repeat, #3a160c;
+}
+html[data-season='autumn'] .os-boot::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, rgba(26, 10, 6, 0.74), rgba(26, 10, 6, 0.3) 55%, rgba(26, 10, 6, 0.7));
+	pointer-events: none;
+}
+html[data-season='autumn'] .os-boot-h,
+html[data-season='autumn'] .os-lock-clock,
+html[data-season='autumn'] .os-lock-greet {
+	color: #ffd29a;
+	text-shadow: 0 0 26px rgba(224, 120, 44, 0.5);
+}
+html[data-season='autumn'] .os-lock-card {
+	border-color: rgba(242, 166, 90, 0.35);
+	background: rgba(40, 16, 8, 0.6);
+}
+html[data-season='autumn'] .os-lock-enter {
+	background: #e0782c;
+	border-color: #e0782c;
+	color: #1f0a02;
+}
+html[data-season='autumn'] .os-lock-enter:hover {
+	background: #f0954a;
+	border-color: #f0954a;
+}
+html[data-season='autumn'] .os-lock-enter:active {
+	background: #c4621c;
+}
+html[data-season='autumn'] .os-lock-enter:focus-visible {
+	outline: 2px solid #ffd29a;
+	outline-offset: 3px;
+}
+
 /* ---------- Desktop icons ---------- */
 .os-icons {
 	position: absolute;

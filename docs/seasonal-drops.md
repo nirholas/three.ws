@@ -139,6 +139,36 @@ localStorage key `twx_season_off:halloween-2026`.
   look off; a toast says so and tells you where to turn it back on.
 - **On `/play`:** use the Halloween look button.
 
+## Autumn 2026: a look without a drop
+
+Not every season needs gifts. Autumn 2026 is a look only (nothing to claim, no
+server copy of the window). It starts the instant Halloween ends
+(`2026-11-02T12:00:00Z`) and runs to `2026-12-01T12:00:00Z`, defined as
+`AUTUMN_2026` in [src/shared/seasonal-drops.js](../src/shared/seasonal-drops.js).
+`dropPhase` treats a start as inclusive and an end as exclusive, so the two
+windows hand over without a gap or an overlap.
+
+- **Desktop (`/`)**: the season table in
+  [src/desktop/seasonal.js](../src/desktop/seasonal.js) gives each season its
+  window, wallpaper, display font, decorative layer and opt-out. Autumn paints
+  the Harvest wallpaper ([public/wallpapers/harvest.svg](../public/wallpapers/harvest.svg))
+  with drifting leaves, an amber accent, warm headings and an autumn boot and
+  lock screen, and posts one "Autumn has arrived" notification that opens
+  Settings. Harvest is also a regular wallpaper choice all year, so anyone can
+  keep it.
+- **Classic homepage (`/classic`)**: the last IIFE in
+  [public/seasonal.js](../public/seasonal.js) adds an amber ribbon, maple
+  leaves falling over the hero, autumn prompt suggestions, and a "Leaf pile"
+  chip that makes the avatar jump and throws a pile of leaves into the air.
+- **Turning it off:** Settings > Personalization > Season > Autumn look, or the
+  localStorage key `twx_season_off:autumn-2026`. It is separate from the
+  Halloween switch, so turning Halloween off never hid autumn.
+
+To add another look-only season, add its window to the shared module, add a row
+to `SEASONS` in `src/desktop/seasonal.js` (plus its CSS keyed on
+`[data-season='<id>']`), and pin it in
+[tests/seasonal-drops.test.js](../tests/seasonal-drops.test.js).
+
 ## Adding the next drop
 
 1. **Server.** In [api/_lib/seasonal-drops.js](../api/_lib/seasonal-drops.js),

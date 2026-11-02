@@ -4,7 +4,7 @@
  * white text when used raw, so solid fills that carry white labels paint with
  * --accent-fill, a shaded mix of the accent defined once on .os. These tests
  * hold both halves: the token clears 4.5:1 for every accent (and the Halloween
- * season's orange), and no desktop stylesheet pairs white text with a raw
+ * and Autumn season accents), and no desktop stylesheet pairs white text with a raw
  * var(--accent) background again.
  */
 
@@ -38,13 +38,13 @@ function fillMix(token) {
 	return Number(m[1]) / 100;
 }
 
-const SEASON_ORANGE = '#ff7a1a';
+const SEASON_ACCENTS = ['#ff7a1a', '#e0782c'];
 
 describe('accent fills under white text', () => {
-	it('--accent-fill and its hover clear 4.5:1 under white for every accent and the season orange', () => {
+	it('--accent-fill and its hover clear 4.5:1 under white for every accent and the season accents', () => {
 		for (const token of ['--accent-fill', '--accent-fill-hover']) {
 			const k = fillMix(token);
-			for (const accent of [...ACCENTS, SEASON_ORANGE]) {
+			for (const accent of [...ACCENTS, ...SEASON_ACCENTS]) {
 				const ratio = contrastOnWhite(hex(accent).map((v) => v * k));
 				expect(ratio, `${token} on ${accent}`).toBeGreaterThanOrEqual(4.5);
 			}

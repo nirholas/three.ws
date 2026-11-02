@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-02",
+			"title": "three.ws dresses for autumn",
+			"summary": "Halloween is over, so the site has changed into its fall colours through the end of November. The desktop has a new Harvest wallpaper of a valley at golden hour with leaves drifting down, an amber accent, and a matching lock screen. The classic homepage gets falling maple leaves, autumn prompt ideas for the Forge, and a Leaf pile button that makes the avatar jump into the leaves. Harvest stays in your wallpaper list for good, and you can switch the look off any time in Settings, Personalization.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/"
+		},
+		{
 			"date": "2026-11-01",
 			"title": "A card gacha machine in /play: pull real graded trading cards",
 			"summary": "A capsule vending machine now stands on the west plaza of every /play world. Walk up and press E to browse Collector Crypt's live machines with their odds, stock, recent winners and the cards still inside, then pull a professionally graded, vaulted card for USDC straight from your own Solana wallet. Before you sign, you see exactly what the payment does, checked against the real transaction. The machine cranks out a capsule and the card flips over in its rarity colour, with a link to verify the pull was fair. Keep the card, or sell it back within 72 hours.",

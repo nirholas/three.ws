@@ -4,7 +4,7 @@
 // destinations comes from public/nav-data.js at runtime (see catalog() in
 // shell.js), so the launcher can never drift from the site's own navigation.
 
-import { seasonalApps, HAUNTED_WALL } from './seasonal.js';
+import { seasonalApps, HARVEST_WALL, HAUNTED_WALL } from './seasonal.js';
 
 export const APPS = [
 	{
@@ -235,6 +235,9 @@ export const WALLPAPERS = [
 	{ id: 'solana', label: 'Solana' },
 	{ id: 'ember', label: 'Ember' },
 	{ id: 'graphite', label: 'Graphite' },
+	// Painted over the others during the Autumn 2026 look, and a regular choice
+	// all year so anyone who likes it can keep it.
+	{ id: HARVEST_WALL, label: 'Harvest' },
 	// The Halloween Weekend 2026 gift: open to everyone that weekend, kept by
 	// claimers afterwards (the Settings grid and pickWall() in seasonal.js gate it).
 	{ id: HAUNTED_WALL, label: 'Haunted', seasonal: true },

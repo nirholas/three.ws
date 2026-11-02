@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-02
+
+- **three.ws dresses for autumn**: Halloween is over, so the site has changed into its fall colours through the end of November. The desktop has a new Harvest wallpaper of a valley at golden hour with leaves drifting down, an amber accent, and a matching lock screen. The classic homepage gets falling maple leaves, autumn prompt ideas for the Forge, and a Leaf pile button that makes the avatar jump into the leaves. Harvest stays in your wallpaper list for good, and you can switch the look off any time in Settings, Personalization. (`/`) `[improvement]`
+
 ## 2026-11-01
 
 - **Docs · Dance-off rounds in /play** (`/docs/dance-off`): How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.

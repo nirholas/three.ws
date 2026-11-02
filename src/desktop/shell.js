@@ -5,8 +5,7 @@
 import { ALL_APPS, APPS, CUSTOM_WALL, WALLPAPERS, appById } from './apps.js';
 import { icon } from './icons.js';
 import { createIconLayer } from './icon-layer.js';
-import { applySeasonAttr, canUseHaunted, mountSeason, pickWall, seasonState, HAUNTED_WALL } from './seasonal.js';
-import { setSeasonalLookEnabled } from '../shared/seasonal-drops.js';
+import { applySeasonAttr, canUseHaunted, mountSeason, pickWall, seasonState, setSeasonLook, HARVEST_WALL, HAUNTED_WALL } from './seasonal.js';
 import { createWM } from './wm.js';
 import { createChrome } from './chrome/index.js';
 import { formatClock, relTime } from './chrome/logic.js';
@@ -268,8 +267,8 @@ export async function createShell(root, opts = {}) {
 	}
 	// Turn the seasonal look on or off for this browser and repaint.
 	function applySeason(on) {
-		setSeasonalLookEnabled(on);
-		root.dataset.season = applySeasonAttr() ? 'halloween' : '';
+		setSeasonLook(on);
+		root.dataset.season = applySeasonAttr();
 		applyWall();
 	}
 	function applyStyle() {
@@ -1349,6 +1348,7 @@ export async function createShell(root, opts = {}) {
 	// ---------- native apps ----------
 	const WALL_PREVIEW = {
 		[HAUNTED_WALL]: "url('/wallpapers/haunted.svg') center bottom/cover,#1f0c33",
+		[HARVEST_WALL]: "url('/wallpapers/harvest.svg') center bottom/cover,#5a2414",
 		horizon: 'linear-gradient(180deg,transparent 63%,#c4b5fd 64%,transparent 65%),radial-gradient(60% 30% at 50% 64%,#8b5cf677,transparent 70%),linear-gradient(180deg,#04050a,#080a12 64%,#05060b)',
 		bubbles: 'radial-gradient(circle 22px at 30% 35%,#c7b8ff99,transparent),radial-gradient(circle 30px at 70% 70%,#a6e9ff88,transparent),linear-gradient(140deg,#0c1238,#241052 50%,#071a3c)',
 		three: 'radial-gradient(70% 60% at 50% 110%,#8b5cf6aa,transparent 70%),#050505',
@@ -1562,15 +1562,16 @@ export async function createShell(root, opts = {}) {
 			// Picking an accent or a different wallpaper is an explicit choice: the
 			// seasonal look steps aside for it instead of painting over it.
 			const leaveSeason = () => {
-				if (!season.live || !seasonState().lookOn) return;
+				if (!season.season || !seasonState().lookOn) return;
 				applySeason(false);
 				seasonToggle?.setAttribute('aria-checked', 'false');
-				toast('Halloween look off. Turn it back on under Season.');
+				toast(`${season.season.label} off. Turn it back on under Season.`);
 			};
-			if (season.live) {
+			if (season.season) {
+				const { label, desc } = season.season;
 				pane.append(h('h3', '', 'Season'));
-				seasonToggle = toggle(season.lookOn, (on) => applySeason(on), 'Halloween look');
-				pane.append(setRow('Halloween look', 'Haunted wallpaper, pumpkin accent and spooky headings until Sunday night.', seasonToggle));
+				seasonToggle = toggle(season.lookOn, (on) => applySeason(on), label);
+				pane.append(setRow(label, desc, seasonToggle));
 			}
 			pane.append(h('h3', '', 'Accent colour'));
 			const sw = h('div', 'swatches');
@@ -1601,7 +1602,7 @@ export async function createShell(root, opts = {}) {
 				b.dataset.wall = w.id;
 				b.setAttribute('aria-pressed', String(prefs.wall === w.id));
 				b.addEventListener('click', () => {
-					if (w.id !== HAUNTED_WALL) leaveSeason();
+					if (w.id !== season.seasonWall) leaveSeason();
 					setPrefs({ wall: w.id });
 					grid.querySelectorAll('.wall-opt').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
 				});
