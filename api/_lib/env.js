@@ -1385,6 +1385,14 @@ export const env = {
 		return normalizeRpcUrl(opt('SOLANA_RPC_URL_DEVNET', '')) || 'https://api.devnet.solana.com';
 	},
 
+	// Collector Crypt gacha partner key (api/gacha/[action].js). Optional: the
+	// gacha API serves every play endpoint without one and tags packs with its
+	// default `cc-` memo prefix; with one, pulls from /play are attributed to
+	// three.ws as a partner. Server-side only, never sent to the browser.
+	get COLLECTORCRYPT_API_KEY() {
+		return opt('COLLECTORCRYPT_API_KEY', '');
+	},
+
 	// ── native launchpad (Meteora DBC lane) ──────────────────────────────
 	// Partner curve-config pubkeys, one per network — created once by
 	// scripts/native-launchpad-create-config.mjs. Unset → the native lane

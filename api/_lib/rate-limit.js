@@ -784,6 +784,13 @@ export const limits = {
 	// whole run through the simulation, a few ms of CPU. A person finishes a run
 	// every 30s at best; 30 per 10 min covers real play and bounds a script.
 	ufoRunIp: (ip) => getLimiter('play:ufo-run:ip', { limit: 30, window: '10 m' }).limit(ip),
+	// Gacha machine reads (api/gacha/[action].js: machines, winners, pool,
+	// status, open polling). The open screen polls about once a second for up
+	// to a minute per pull, so this is generous; it still bounds a scraper.
+	gachaReadIp: (ip) => getLimiter('gacha:read:ip', { limit: 240, window: '5 m', local: true }).limit(ip),
+	// Gacha writes (pull, submit, buyback): each builds or relays a real
+	// transaction upstream. A person pulls a few packs a minute at most.
+	gachaPlayIp: (ip) => getLimiter('gacha:play:ip', { limit: 40, window: '10 m' }).limit(ip),
 	// Copy Coach questions (api/copy/coach.js POST): anonymous, one LLM
 	// completion each. A first-timer asks a handful; 30 per 10 min is generous
 	// for a person and still bounds a script.

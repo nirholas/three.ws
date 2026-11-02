@@ -124,6 +124,18 @@ export const WHEEL_REACH = 3.0;
 export function nearestWheel(x, z) { return nearestNode(x, z, WHEEL, WHEEL_REACH); }
 export function wheelInRange(x, z) { return nodeInRange(x, z, WHEEL, WHEEL_REACH); }
 
+// The card gacha machine (src/game/gacha-station.js): a vending machine on the
+// west side of the plaza that pulls real graded trading cards from Collector
+// Crypt. Clear of the parked plaza car (-16,14, ~12m), the intel kiosk (~11m),
+// the spawn ring (~15m) and the west firepit (~19m). `yaw` turns the machine's
+// face toward the plaza centre so it reads from spawn.
+export const GACHA = [
+	{ id: 'gacha-plaza', x: -15, z: 2, r: 0.9, yaw: Math.atan2(15, -2) },
+];
+export const GACHA_REACH = 2.2;
+export function nearestGacha(x, z) { return nearestNode(x, z, GACHA, GACHA_REACH); }
+export function gachaInRange(x, z) { return nodeInRange(x, z, GACHA, GACHA_REACH); }
+
 // The cash counters: the general store's vendor stalls and the bank/ATM (W04).
 //
 // Mirrors of the 'vendor' and 'atm' spawns in src/game/world-zones.js, where the

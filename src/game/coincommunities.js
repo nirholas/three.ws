@@ -90,6 +90,7 @@ import { clearStoredPass, refreshPlayPass, loadStoredPass, storePass } from './p
 import { PlaySystems } from './play-systems.js';
 import { PlayActivities } from './play-activities.js';
 import { WheelStation } from './wheel-station.js';
+import { GachaStation, gachaCollider } from './gacha-station.js';
 import { SignatureWall } from './signature-wall.js';
 import { WarPortal } from './war-portal.js';
 import { PlayOnboard } from './play-onboard.js';
@@ -1553,6 +1554,8 @@ export class CoinCommunities {
 			// isn't part of the district grid, so give it its own collider, keeps
 			// both pedestrians and driven vehicles from passing through the landmark.
 			this._physics.addStaticCylinder({ position: { x: 0, y: 3, z: -12 }, radius: 1.6, halfHeight: 3.2 });
+			// The card gacha machine on the west plaza is solid too.
+			this._physics.addStaticBox(gachaCollider());
 			const spawn = { x: this.localPos.x, y: 0, z: this.localPos.z };
 			if (!this._character) this._character = this._physics.createCharacter({ position: spawn });
 			else this._character.setPosition(spawn);
@@ -1849,6 +1852,13 @@ export class CoinCommunities {
 			scene: this.scene,
 			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
 			net: this.net,
+		});
+		// The card gacha: a vending machine on the west plaza that pulls real,
+		// graded trading cards through Collector Crypt's gacha. Its pull modal
+		// (and the wallet signing it needs) lazy-loads on first interact.
+		this.gachaStation = new GachaStation({
+			scene: this.scene,
+			getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
 		});
 		// The signature wall near spawn: a persistent graffiti wall every visitor can sign.
 		this.signatureWall = new SignatureWall({
@@ -2377,6 +2387,7 @@ export class CoinCommunities {
 		if (this.playSystems) { this.playSystems.dispose(); this.playSystems = null; }
 		if (this.playActivities) { this.playActivities.dispose(); this.playActivities = null; }
 		if (this.wheelStation) { this.wheelStation.dispose(); this.wheelStation = null; }
+		if (this.gachaStation) { this.gachaStation.dispose(); this.gachaStation = null; }
 		if (this.signatureWall) { this.signatureWall.dispose(); this.signatureWall = null; }
 		if (this.warPortal) { this.warPortal.dispose(); this.warPortal = null; }
 		this._disposeFriends();
@@ -3831,7 +3842,7 @@ export class CoinCommunities {
 					// in range, try the Intel Kiosk, then fall through to the Agent
 					// Exchange.
 					if (!this.worldLife?.interact() && !this.intelKiosk?.interact() && !this.combat?.interact()
-						&& !this.wheelStation?.interact() && !this.signatureWall?.interact() && !this.warPortal?.interact()) this.agentCommerce?.interact();
+						&& !this.wheelStation?.interact() && !this.gachaStation?.interact() && !this.signatureWall?.interact() && !this.warPortal?.interact()) this.agentCommerce?.interact();
 					return;
 				}
 				// F is contextual: enter/exit a nearby vehicle takes priority (the
@@ -5036,6 +5047,7 @@ export class CoinCommunities {
 			this.playSystems?.tick(dt);
 			this.playActivities?.tick(dt);
 			this.wheelStation?.tick(dt);
+			this.gachaStation?.tick(dt);
 			this.signatureWall?.tick(dt);
 			this.warPortal?.tick(dt);
 			this.agentCommerce?.tick(dt);
