@@ -254,9 +254,14 @@ body {
 }
 /* Boot and lock screens paint before the shell mounts, so they key off <html>. */
 html[data-season='halloween'] .os-boot {
+	/* Beats the visitor's accent, which toLock() sets inline. */
+	--lock-accent: #ff7a1a !important;
+	--lock-ink: #ffb057;
+}
+html[data-season='halloween'] .os-boot-bg {
 	background: url('/wallpapers/haunted.svg') center bottom / cover no-repeat, #12071d;
 }
-html[data-season='halloween'] .os-boot::before {
+html[data-season='halloween'] .os-boot-bg::before {
 	content: '';
 	position: absolute;
 	inset: 0;
@@ -269,6 +274,10 @@ html[data-season='halloween'] .os-lock-greet {
 	font-family: 'Creepster', 'Space Grotesk', system-ui, sans-serif;
 	font-weight: 400;
 	letter-spacing: 0.04em;
+}
+/* The clock is gradient text tinted by --lock-ink, so it takes no colour or shadow here. */
+html[data-season='halloween'] .os-boot-h,
+html[data-season='halloween'] .os-lock-greet {
 	color: #ffb057;
 	text-shadow: 0 0 28px rgba(255, 122, 26, 0.55);
 }
@@ -377,9 +386,14 @@ html[data-season='halloween'] .os-lock-enter:focus-visible {
 }
 /* Boot and lock screens paint before the shell mounts, so they key off <html>. */
 html[data-season='autumn'] .os-boot {
+	/* Beats the visitor's accent, which toLock() sets inline. */
+	--lock-accent: #e0782c !important;
+	--lock-ink: #ffd29a;
+}
+html[data-season='autumn'] .os-boot-bg {
 	background: url('/wallpapers/harvest.svg') center bottom / cover no-repeat, #3a160c;
 }
-html[data-season='autumn'] .os-boot::before {
+html[data-season='autumn'] .os-boot-bg::before {
 	content: '';
 	position: absolute;
 	inset: 0;
@@ -387,7 +401,6 @@ html[data-season='autumn'] .os-boot::before {
 	pointer-events: none;
 }
 html[data-season='autumn'] .os-boot-h,
-html[data-season='autumn'] .os-lock-clock,
 html[data-season='autumn'] .os-lock-greet {
 	color: #ffd29a;
 	text-shadow: 0 0 26px rgba(224, 120, 44, 0.5);

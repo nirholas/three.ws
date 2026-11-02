@@ -12,12 +12,17 @@ import { APPS, ALL_APPS } from './apps.js';
 import { deepLinkApp, initialsOf, sanitizePrefs } from './layout.js';
 import { runBootSteps, entryMode, showBoot, gpuName } from './boot-logic.js';
 import { createBootScreen, playChime } from './boot.js';
+import { icon } from './icons.js';
+import { PLACES } from './world/places.js';
 import { isWebGLAvailable } from '../webgl-support.js';
 import { anonId } from './world/mine.js';
 
 const PREFS_KEY = 'tws:prefs';
 const AVATAR_GLB = '/avatars/default.glb';
 const CLIP_MANIFEST = '/animations/manifest.json';
+// A render of AVATAR_GLB: the lock screen shows the body the visitor walks in as.
+const AVATAR_PORTRAIT = '/avatars/default-poster.webp';
+const PLACE_GLYPH = { office: 'desktop', mine: 'gem' };
 
 const reducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
@@ -163,14 +168,25 @@ async function main() {
 	const market = stepValue(snap, 'market');
 	const gems = stepValue(snap, 'gems');
 	const chips = [];
-	if (market) chips.push({ label: '$THREE', value: `${fmtUsd(market.price)} ${fmtPct(market.change)}`.trim() });
+	if (market) {
+		const tone = !Number.isFinite(market.change) || market.change === 0 ? undefined : market.change > 0 ? 'up' : 'down';
+		chips.push({ label: '$THREE', value: `${fmtUsd(market.price)} ${fmtPct(market.change)}`.trim(), tone });
+	}
 	if (gems) chips.push({ label: 'Gems', value: gems.total ? `${gems.total} mined, ${gems.points} pts` : 'none yet, visit the mine' });
 	chips.push({ label: 'Account', value: account?.name ? account.name : 'Guest' });
 
 	let choice = mode;
+	let arriveAt = null;
 	if (boot) {
 		const labels = Object.fromEntries(steps.map((s) => [s.id, s.label]));
-		choice = await boot.toLock({
+		// Campus destinations the visitor can spawn at straight from the lock screen.
+		const places = webgl
+			? PLACES.map((p) => {
+					const app = p.app ? ALL_APPS.find((a) => a.id === p.app) : null;
+					return { id: p.id, title: p.title, sub: p.sub, hue: p.hue, glyph: icon(PLACE_GLYPH[p.id] || app?.icon || 'world', 18) };
+				})
+			: [];
+		const pick = await boot.toLock({
 			name,
 			returning: !!shell.store.get(shell.KEY.welcomed),
 			mode,
@@ -180,7 +196,12 @@ async function main() {
 			clock24: shell.prefs.clock24,
 			hue: shell.prefs.avatarHue,
 			initials: initialsOf(name),
+			portrait: webgl ? AVATAR_PORTRAIT : '',
+			accent: shell.prefs.accent,
+			places,
 		});
+		choice = pick.to;
+		arriveAt = pick.at || null;
 		if (choice === 'classic') {
 			shell.store.set(shell.KEY.view, 'classic');
 			location.assign('/classic');
@@ -243,7 +264,7 @@ async function main() {
 	if (wantsGrid) {
 		await boot?.dismiss();
 		await enterGrid();
-	} else if (choice === 'world' && world) await Promise.all([world.enter(), boot?.dismiss()]);
+	} else if (choice === 'world' && world) await Promise.all([world.enter({ at: arriveAt }), boot?.dismiss()]);
 	else {
 		if (boot) await boot.dismiss();
 		landOnDesktop();
