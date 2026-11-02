@@ -17,8 +17,12 @@ The platform never holds or moves player funds. Collector Crypt builds each tran
 
    Nothing is signed until you press **Sign and pull**.
 4. **Watch it vend.** The machine shakes and drops a capsule while the payment confirms. The screen then polls until the card is assigned to you. That usually takes a few seconds and can take up to a minute.
-5. **Reveal.** The card flips over with a glow in its tier's colour, and the slab inside the machine's display window shows it too. Links go to the card on Collector Crypt, the payment on the Solana explorer, and Collector Crypt's fairness verifier for that exact pack (`/verify-selection/<memo>`).
-6. **Keep it or sell it back.** For 72 hours a card can be sold back to Collector Crypt for USDC at the price it quotes. That is another confirmed, wallet-signed transaction. **Turbo mode** (the toggle before a pull) does that automatically: the card is sold back the moment it is assigned, and the USDC is sent straight to your wallet.
+5. **Reveal.** A 3D capsule appears on screen, spins faster and shakes harder while light gathers into it, then cracks open with a flash, a shockwave and a light pillar in the tier's colour. Rare and epic capsules keep their colour hidden until the last moment, and epic pulls get a second gold burst. The real graded slab spins out and settles face up. Drag it to turn it, press **Flip card** (or Enter, or double-click) to see its real back photo, and move the pointer over it to watch the holographic foil shift. **Skip** jumps straight to the settled card. The slab inside the machine's display window shows the card too. Links go to the card on Collector Crypt, the payment on the Solana explorer, and Collector Crypt's fairness verifier for that exact pack (`/verify-selection/<memo>`).
+6. **Keep it or sell it back.** For 72 hours a card can be sold back to Collector Crypt for USDC at the price it quotes. That is another confirmed, wallet-signed transaction, shown first as a table: the card you send, the USDC you receive, the recipient, the chain and the buyer. **Turbo mode** (the toggle before a pull) does that automatically: the card is sold back the moment it is assigned, and the USDC is sent straight to your wallet.
+
+7. **My cards.** The **My cards** button in the header lists every Collector Crypt card the connected wallet holds, read straight from Solana. That includes cards pulled anywhere, not only on three.ws. The top of the list shows the card count, the total insured value and how many cards can still be sold back. Cards with an open buyback offer come first and carry a **Sell** badge with the price. Open a card to inspect it on the same 3D stage, read its grade, set, year and insured value, and sell it back with the same confirmation table. When the 72 hour window has closed, the card links to Collector Crypt, where it can still be listed or the physical slab redeemed.
+
+If WebGL is unavailable, or the browser drops the GPU context, the stage falls back to a flat flip card with the same photos. Reduced-motion settings skip the capsule sequence and the idle motion.
 
 Closing the screen never cancels a pull in progress. The pull keeps running and a small pill in the corner reopens it. The pack memo is also saved in `localStorage` (`threews:gacha:pending`). If the tab closes after paying, reopening the machine resumes that pack instead of starting a new one.
 
@@ -34,7 +38,14 @@ A **pack payment** is only accepted when all of these hold:
 - The amount is exactly the machine's current price in atomic units.
 - There are no SOL transfers, approvals, authority changes or other token instructions.
 
-A **buyback** is only accepted when the only asset leaving the player is the one card (amount 1). Rent is capped, and approve, set-authority, burn and close-to-someone-else instructions are rejected.
+A **buyback** is only accepted when the only thing the player gives up is the one card. Only the programs a Collector Crypt sale uses may appear at all. Within them the player may sign for:
+
+- exactly one transfer of that card (a Metaplex Core `TransferV1` of the asset, a Token Metadata `Transfer` of the mint, or an SPL transfer of one unit out of the card's own token account);
+- closing an emptied account back to themselves, or the card's account to the documented rent destination;
+- at most one account's rent in SOL in total;
+- a capped priority fee when the player pays the network fee.
+
+A USDC or SOL transfer, any other NFT, a delegate approval, an authority change, a burn or an unknown program is refused. A key loaded from an address lookup table cannot be resolved by the check, so any rule that needs one fails closed. Legacy and v0 transactions are both decoded and signed correctly.
 
 Anything else returns `502 unverifiable_transaction` and the player is never asked to sign. The rejection is reported to the server error log with the machine code and memo.
 
@@ -53,6 +64,7 @@ The browser cannot call Collector Crypt's POST endpoints directly because they s
 | `POST /api/gacha/submit` `{player, signedTransaction}` | Relay the signed payment through Collector Crypt and our own Solana RPC at the same time. Either path landing is enough, and the same bytes only land once. |
 | `GET /api/gacha/status?memo=` | Whether the payment landed (`paid`) and whether the card was sent (`delivered`). |
 | `POST /api/gacha/open` `{memo}` | Reveal the card. `state` is `won`, `waiting` (poll again), `unpaid` or `expired`. Includes `verifyUrl`. |
+| `GET /api/gacha/cards?owner=&fresh=1` | Every Collector Crypt card the wallet holds: Metaplex Core assets in the card collection, plus older programmable NFTs whose metadata names the card collection as verified. Each card has front and back images, grade, set, year, category, insured value, standard and its buyback offer (checked for the first 60). Also returns `count`, `totalInsured`, `sellable`, `truncated` (more than 120 cards) and `partial` (one scan failed). Cached for 30 s per wallet; `fresh=1` skips the cache after a sale. Metadata JSON is only fetched from Collector Crypt's published hosts. |
 | `GET /api/gacha/buyback-quote?nft=` | The instant-buyback offer if it is still open: `{available, amountUsdc, expiresAt}`. |
 | `POST /api/gacha/buyback` `{player, nft}` | Build and verify the sell-back transaction. |
 | `POST /api/gacha/buyback-submit` `{player, nft, signedTransaction}` | Relay the signed sell-back. |
@@ -62,6 +74,7 @@ Errors use the standard `{error, error_description}` shape. Messages are written
 Rate limits are per IP:
 
 - **Reads** (`gacha:read:ip`): 240 per 5 minutes. This covers `machines`, `winners`, `pool`, `status`, `buyback-quote` and `open` polling.
+- **Wallet reads** (`gacha:wallet:ip`): 30 per 5 minutes, for `cards`, which scans the chain.
 - **Writes** (`gacha:play:ip`): 40 per 10 minutes. This covers `pull`, `submit`, `buyback` and `buyback-submit`.
 
 Try the read side from a terminal:
@@ -77,11 +90,13 @@ curl -s https://three.ws/api/gacha/machines | jq '.machines[0] | {code, name, ca
 ## Files
 
 - 3D machine, proximity prompt, crank and reveal animation: [src/game/gacha-station.js](../src/game/gacha-station.js).
-- Pull screen (lazy-loaded on first use): [src/game/gacha-ui.js](../src/game/gacha-ui.js) and [src/game/gacha-ui.css](../src/game/gacha-ui.css).
+- Pull screen and My cards (lazy-loaded on first use): [src/game/gacha-ui.js](../src/game/gacha-ui.js), [src/game/gacha-ui.css](../src/game/gacha-ui.css) and its DOM helper [src/game/gacha-dom.js](../src/game/gacha-dom.js).
+- 3D capsule reveal and card inspector (Three.js, bloom, holographic foil shader): [src/game/gacha-reveal3d.js](../src/game/gacha-reveal3d.js).
+- Wallet card scan: [api/_lib/gacha-wallet.js](../api/_lib/gacha-wallet.js).
 - Client API, rarity tiers and formatting: [src/game/gacha-client.js](../src/game/gacha-client.js).
 - Placement and reach (shared with the server): `GACHA` and `gachaInRange` in [multiplayer/src/world-features.js](../multiplayer/src/world-features.js).
 - Wiring (collider, E key, tick, dispose): [src/game/coincommunities.js](../src/game/coincommunities.js).
 - Server: [api/gacha/[action].js](../api/gacha/%5Baction%5D.js) and [api/_lib/collectorcrypt-gacha.js](../api/_lib/collectorcrypt-gacha.js).
-- Tests: [tests/gacha.test.js](../tests/gacha.test.js). These cover the transaction guards, the normalizers, the validators and the placement.
+- Tests: [tests/gacha.test.js](../tests/gacha.test.js) (transaction guards, normalizers, validators, placement), [tests/gacha-wallet.test.js](../tests/gacha-wallet.test.js) (wallet scan, verified-collection filter, metadata host allowlist) and [tests/gacha-dom.test.js](../tests/gacha-dom.test.js) (the DOM helper, including tier colour custom properties).
 
 Related: [How `/play` stays safe, honest, and light](./play-hardening.md) and [STRUCTURE.md](../STRUCTURE.md).

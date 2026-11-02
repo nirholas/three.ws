@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-01T00:18:23.368Z",
+	"generated_at": "2026-11-02T21:30:54.857Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5543,7 +5543,7 @@
 				{
 					"path": "/docs/play-gacha",
 					"title": "Docs · The card gacha machine in /play",
-					"description": "How to pull a real graded trading card from the capsule machine on the /play plaza, what the transaction checks prove before you sign, the 72-hour buyback, and the /api/gacha routes.",
+					"description": "How to pull a real graded trading card from the capsule machine on the /play plaza, the 3D reveal, viewing and selling the cards in your wallet, what the transaction checks prove before you sign, and the /api/gacha routes.",
 					"added": "2026-11-01",
 					"auth": null,
 					"indexable": true,

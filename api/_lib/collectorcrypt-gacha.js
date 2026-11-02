@@ -49,19 +49,57 @@ export const USDC_DECIMALS = 6;
 export const BUYBACK_WINDOW_HOURS = 72;
 export const PACK_OPEN_DEADLINE_HOURS = 2;
 
-const PROGRAM = Object.freeze({
+export const PROGRAM = Object.freeze({
 	system: '11111111111111111111111111111111',
 	computeBudget: 'ComputeBudget111111111111111111111111111111',
 	memo: 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr',
 	memoV1: 'Memo1UhkJRfHyvLMcVucJwxXeuD728EqVDDwQDxFMNo',
 	token: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA',
 	token2022: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb',
+	associatedToken: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
+	ed25519: 'Ed25519SigVerify111111111111111111111111111',
+	mplCore: 'CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d',
+	tokenMetadata: 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
+	tokenAuthRules: 'auth9SigNpDKz4sJJ1DfCTuZrZNSAgh9sFD3rboVmgg',
+	ccBuyback: 'CcBuyM7sDhedBGLZxivBvgZVdqzrQAG66KYHgnTTEpLF',
 });
 
+/**
+ * The Metaplex Core collection every Collector Crypt card belongs to (the
+ * asset's update authority), the same on mainnet and devnet. Read off live
+ * winners' asset accounts. Used to list the cards a wallet holds.
+ */
+export const CC_CARD_COLLECTION = 'CCryptUfeFSZ3Fgc9FLeKrhLVAP67FSqi1GuVoj9CRac';
+
 // Rent on a closed SPL token account is 2,039,280 lamports; the cc-buyback docs
-// quote 1,488,440 for the card account. Nothing in a buyback may pull more SOL
-// than one account's rent out of the player.
+// quote 1,488,440 for the card account. Across the whole buyback, nothing may
+// pull more SOL than one account's rent out of the player.
 const MAX_RENT_LAMPORTS = 2_100_000n;
+const ATA_RENT_LAMPORTS = 2_039_280n;
+// When the player pays the network fee (the documented plain-wallet buyback has
+// one signature, the seller's), the priority fee is capped at 0.005 SOL.
+const MAX_PRIORITY_FEE_LAMPORTS = 5_000_000n;
+
+// Every program a Collector Crypt sale is documented to touch. A program the
+// player signs for can spend the player's authority by CPI, so anything outside
+// this list is refused outright, signed or not.
+const BUYBACK_PROGRAMS = new Set([
+	PROGRAM.system, PROGRAM.computeBudget, PROGRAM.memo, PROGRAM.memoV1, PROGRAM.ed25519,
+	PROGRAM.token, PROGRAM.token2022, PROGRAM.associatedToken,
+	PROGRAM.mplCore, PROGRAM.tokenMetadata, PROGRAM.tokenAuthRules, PROGRAM.ccBuyback,
+]);
+
+/** The player's associated token account for `mint` under either token program. */
+function cardTokenAccounts(player, mint) {
+	try {
+		const owner = new PublicKey(player).toBuffer();
+		const m = new PublicKey(mint).toBuffer();
+		const ata = new PublicKey(PROGRAM.associatedToken);
+		return new Set([PROGRAM.token, PROGRAM.token2022].map((tp) => PublicKey.findProgramAddressSync([owner, new PublicKey(tp).toBuffer(), m], ata)[0].toBase58()));
+	} catch {
+		return new Set();
+	}
+}
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const PACK_CODE_RE = /^[a-z0-9_]{1,48}$/;
@@ -281,6 +319,13 @@ export function cardImage(nft) {
 	return httpsUrl(front.cc_cdn) || httpsUrl(nft?.content?.links?.image) || httpsUrl(front.cdn_uri) || httpsUrl(front.uri) || httpsUrl(nft?.image);
 }
 
+/** The back of the graded slab (the grader's label side), when published. */
+export function cardBackImage(nft) {
+	const files = Array.isArray(nft?.content?.files) ? nft.content.files : [];
+	const back = files[1] || {};
+	return httpsUrl(back.cc_cdn) || httpsUrl(back.cdn_uri) || httpsUrl(back.uri);
+}
+
 /**
  * Normalize any Collector Crypt card (a DAS asset from winners, the pool, or an
  * openPack award) to the shape every client surface renders.
@@ -292,7 +337,8 @@ export function normalizeCard(nft, extra = {}) {
 	const address = isSolanaAddress(nft.id) ? nft.id : isSolanaAddress(extra.address) ? extra.address : null;
 	const tierRaw = extra.tier ?? null;
 	const tier = typeof tierRaw === 'number' ? TIER_BY_CODE[tierRaw] || null : TIERS.includes(String(tierRaw).toLowerCase()) ? String(tierRaw).toLowerCase() : null;
-	const insured = num(extra.insuredValue) ?? num(attr(attrs, 'Insured Value'));
+	const insuredAttr = attr(attrs, 'Insured Value');
+	const insured = num(extra.insuredValue) ?? (insuredAttr ? num(insuredAttr) : null);
 	return {
 		address,
 		name: attr(attrs, 'Card Name') || str(md.json_name || md.name, 120),
@@ -303,6 +349,7 @@ export function normalizeCard(nft, extra = {}) {
 		grade: attr(attrs, 'The Grade'),
 		category: attr(attrs, 'Category'),
 		image: cardImage(nft),
+		back: cardBackImage(nft),
 		insuredValue: insured,
 		tier,
 	};
@@ -451,52 +498,121 @@ export function inspectPackTransaction(decoded, { player, net, expectedAtomic })
 }
 
 /**
- * Prove a buyback transaction only takes the card from the player. The player
- * may authorize: moving exactly one token (the card) out, closing the emptied
- * card account back to themselves or the documented rent destination, creating
- * accounts funded with at most one account's rent, and returning at most one
- * account's rent to the rent destination. Every other outflow the player could
- * sign for (a USDC or SOL transfer, a delegate approval, an authority change, a
- * burn) is refused. Program instructions from Metaplex and cc_buyback itself are
- * allowed through: they move the card and pay the player.
+ * Prove a buyback transaction only takes the card from the player.
+ *
+ * Only programs a Collector Crypt sale is documented to use may appear at all
+ * (BUYBACK_PROGRAMS). Within them the player may authorize exactly:
+ *   - one transfer of the card itself: an mpl-core TransferV1 of `nftAddress`
+ *     (how Collector Crypt cards move), a Token Metadata Transfer of that mint,
+ *     or an SPL transfer of one unit out of the card's own token account;
+ *   - closing an emptied account back to themselves, or the card's account to
+ *     the documented rent destination;
+ *   - at most one account's rent of SOL in total, across transfers to the rent
+ *     destination, accounts the player funds and token accounts the player pays
+ *     to create;
+ *   - a priority fee of at most MAX_PRIORITY_FEE_LAMPORTS when the player is the
+ *     fee payer.
+ * Every other thing the player could sign for (a USDC or SOL transfer, another
+ * NFT, a delegate approval, an authority change, a burn, an unknown program) is
+ * refused. A key the transaction loads from a lookup table cannot be resolved
+ * here, so any check that needs one fails closed.
  */
 export function inspectBuybackTransaction(decoded, { player, net, nftAddress }) {
 	const cfg = GACHA_NETWORKS[normalizeNetwork(net)];
 	if (!decoded.signers.includes(player)) throw new GachaTxRejected('buyback does not ask the player to sign');
+	if (!isSolanaAddress(nftAddress)) throw new GachaTxRejected('buyback has no card to check against');
+	const cardAccounts = cardTokenAccounts(player, nftAddress);
+	let solOut = 0n;
+	const spendSol = (lamports) => {
+		solOut += lamports;
+		if (solOut > MAX_RENT_LAMPORTS) throw new GachaTxRejected('buyback moves SOL out of the player wallet');
+	};
+	let cuLimit = null;
+	let cuPrice = 0n;
+	let nonBudgetIxs = 0;
+
 	for (const ix of decoded.instructions) {
+		if (!BUYBACK_PROGRAMS.has(ix.programId)) throw new GachaTxRejected(`unexpected program ${ix.programId}`);
 		const keyed = (i) => ix.keys[i]?.pubkey ?? null;
 		const playerSigns = ix.keys.some((k) => k.pubkey === player && k.isSigner);
+		if (ix.programId !== PROGRAM.computeBudget) nonBudgetIxs++;
+
+		if (ix.programId === PROGRAM.computeBudget) {
+			if (ix.data[0] === 2 && ix.data.length >= 5) cuLimit = BigInt(ix.data.readUInt32LE(1));
+			else if (ix.data[0] === 3) cuPrice = readU64(ix.data, 1) ?? 0n;
+			continue;
+		}
 		if (ix.programId === PROGRAM.system) {
 			const kind = ix.data.length >= 4 ? ix.data.readUInt32LE(0) : -1;
 			if (kind === 2 && keyed(0) === player) {
 				const lamports = readU64(ix.data, 4);
-				if (keyed(1) !== cfg.rentDestination || lamports == null || lamports > MAX_RENT_LAMPORTS) {
-					throw new GachaTxRejected('buyback moves SOL out of the player wallet');
-				}
+				if (keyed(1) !== cfg.rentDestination || lamports == null) throw new GachaTxRejected('buyback moves SOL out of the player wallet');
+				spendSol(lamports);
 			} else if (kind === 0 && keyed(0) === player) {
 				const lamports = readU64(ix.data, 4);
-				if (lamports == null || lamports > MAX_RENT_LAMPORTS) throw new GachaTxRejected('buyback funds an account from the player beyond rent');
-			} else if (playerSigns && kind !== 0 && kind !== 2) {
+				if (lamports == null) throw new GachaTxRejected('buyback funds an account from the player beyond rent');
+				spendSol(lamports);
+			} else if (playerSigns) {
 				throw new GachaTxRejected('buyback asks the player to sign a system change');
 			}
+			continue;
+		}
+		if (ix.programId === PROGRAM.associatedToken) {
+			// Create (empty data or 0) / CreateIdempotent (1); the payer is key 0.
+			const op = ix.data.length ? ix.data[0] : 0;
+			if (op !== 0 && op !== 1) {
+				if (playerSigns) throw new GachaTxRejected('buyback asks the player to sign a token change');
+				continue;
+			}
+			if (keyed(0) === player) spendSol(ATA_RENT_LAMPORTS);
+			continue;
+		}
+		if (ix.programId === PROGRAM.mplCore) {
+			if (!playerSigns) continue;
+			// TransferV1 (discriminator 14): asset, collection, payer, authority, new owner.
+			if (ix.data[0] !== 14) throw new GachaTxRejected('buyback asks the player to sign a Core change');
+			if (keyed(0) !== nftAddress) throw new GachaTxRejected('buyback moves an asset that is not the card');
+			continue;
+		}
+		if (ix.programId === PROGRAM.tokenMetadata) {
+			if (!playerSigns) continue;
+			// Transfer (discriminator 49): mint is account 4, payer account 10.
+			if (ix.data[0] !== 49) throw new GachaTxRejected('buyback asks the player to sign a metadata change');
+			if (keyed(4) !== nftAddress) throw new GachaTxRejected('buyback moves a token that is not the card');
+			if (keyed(10) === player) spendSol(ATA_RENT_LAMPORTS);
+			continue;
+		}
+		if (ix.programId === PROGRAM.ccBuyback) {
+			if (playerSigns && !ix.keys.some((k) => k.pubkey === nftAddress)) throw new GachaTxRejected('buyback program call does not name the card');
 			continue;
 		}
 		if (isTokenProgram(ix.programId)) {
 			const op = ix.data[0];
 			if (op === 3 && keyed(2) === player) {
 				if (readU64(ix.data, 1) !== 1n) throw new GachaTxRejected('buyback moves more than the card');
+				if (!cardAccounts.has(keyed(0))) throw new GachaTxRejected('buyback moves a token that is not the card');
 			} else if (op === 12 && keyed(3) === player) {
 				if (readU64(ix.data, 1) !== 1n) throw new GachaTxRejected('buyback moves more than the card');
-				if (nftAddress && keyed(1) && keyed(1) !== nftAddress) throw new GachaTxRejected('buyback moves a token that is not the card');
+				if (keyed(1) !== nftAddress) throw new GachaTxRejected('buyback moves a token that is not the card');
 			} else if (op === 9 && keyed(2) === player) {
 				const dest = keyed(1);
-				if (dest !== player && dest !== cfg.rentDestination) throw new GachaTxRejected('buyback sends closed-account rent elsewhere');
+				if (dest === cfg.rentDestination) {
+					if (!cardAccounts.has(keyed(0))) throw new GachaTxRejected('buyback closes an account that is not the card');
+				} else if (dest !== player) {
+					throw new GachaTxRejected('buyback sends closed-account rent elsewhere');
+				}
 			} else if (playerSigns && op !== 1 && op !== 18) {
 				// 1/18 = InitializeAccount variants (no authority moves). Approve,
 				// SetAuthority, Burn and friends by the player are never part of a sale.
 				throw new GachaTxRejected('buyback asks the player to sign a token change');
 			}
 		}
+		// Memo and the Ed25519 precompile carry no authority.
+	}
+
+	if (decoded.feePayer === player && cuPrice > 0n) {
+		const limit = cuLimit ?? BigInt(Math.min(1_400_000, 200_000 * Math.max(1, nonBudgetIxs)));
+		if ((cuPrice * limit) / 1_000_000n > MAX_PRIORITY_FEE_LAMPORTS) throw new GachaTxRejected('buyback priority fee is too high');
 	}
 	return { feePayer: decoded.feePayer, version: decoded.version };
 }

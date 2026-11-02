@@ -316,6 +316,93 @@ describe('inspectBuybackTransaction', () => {
 		const b64 = buybackV0([tokenIx(9, [key(acct()), key(new PublicKey(NET.rentDestination)), signerKey(acct())])]);
 		expect(() => inspect(b64)).toThrow(/player to sign/);
 	});
+
+	// Collector Crypt cards are Metaplex Core assets; the documented buyback is
+	// an mpl-core TransferV1 of the card followed by cc_buyback::authorize_and_pay.
+	const CORE = new PublicKey('CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d');
+	const CC_BUYBACK = new PublicKey('CcBuyM7sDhedBGLZxivBvgZVdqzrQAG66KYHgnTTEpLF');
+	const TOKEN_METADATA = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+	const ATA_PROGRAM = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+	const coreTransfer = (asset, authority = player) => new TransactionInstruction({
+		programId: CORE,
+		keys: [key(asset), key(new PublicKey('CCryptUfeFSZ3Fgc9FLeKrhLVAP67FSqi1GuVoj9CRac')), signerKey(authority), signerKey(authority), key(acct())],
+		data: Buffer.from([14, 0]),
+	});
+	const authorizeAndPay = () => new TransactionInstruction({
+		programId: CC_BUYBACK,
+		keys: [signerKey(player), key(nft), key(acct()), key(acct())],
+		data: Buffer.alloc(16, 3),
+	});
+	const ata = (owner, mint) => PublicKey.findProgramAddressSync([owner.toBuffer(), TOKEN.toBuffer(), mint.toBuffer()], ATA_PROGRAM)[0];
+	const playerPaysV0 = (instructions) => {
+		const msg = new TransactionMessage({ payerKey: player, recentBlockhash: BLOCKHASH, instructions }).compileToV0Message();
+		return Buffer.from(new VersionedTransaction(msg).serialize()).toString('base64');
+	};
+	const computePrice = (microLamports) => {
+		const data = Buffer.alloc(9);
+		data[0] = 3;
+		data.writeBigUInt64LE(BigInt(microLamports), 1);
+		return new TransactionInstruction({ programId: COMPUTE, keys: [], data });
+	};
+	const computeLimit = (units) => {
+		const data = Buffer.alloc(5);
+		data[0] = 2;
+		data.writeUInt32LE(units, 1);
+		return new TransactionInstruction({ programId: COMPUTE, keys: [], data });
+	};
+
+	it('accepts the documented Core buyback: transfer the card, then authorize_and_pay', () => {
+		const b64 = playerPaysV0([computeLimit(300_000), computePrice(50_000), coreTransfer(nft), authorizeAndPay()]);
+		expect(() => inspect(b64)).not.toThrow();
+	});
+	it('rejects a Core transfer of a different asset the player owns', () => {
+		const b64 = buybackV0([coreTransfer(acct()), authorizeAndPay()]);
+		expect(() => inspect(b64)).toThrow(/not the card/);
+	});
+	it('rejects any other Core instruction the player signs (burn, plugin approval)', () => {
+		const burn = new TransactionInstruction({ programId: CORE, keys: [key(nft), key(acct()), signerKey(player), signerKey(player)], data: Buffer.from([12, 0]) });
+		expect(() => inspect(buybackV0([burn]))).toThrow(/Core change/);
+	});
+	it('rejects an unchecked token transfer of one unit from an account that is not the card', () => {
+		// A second NFT the player holds also has amount 1; an unchecked Transfer
+		// names no mint, so only the source account can tell it apart.
+		const b64 = buybackV0([tokenIx(3, [key(acct()), key(acct()), signerKey(player)], 1)]);
+		expect(() => inspect(b64)).toThrow(/not the card/);
+	});
+	it('accepts an unchecked transfer of one unit out of the card account', () => {
+		const b64 = buybackV0([tokenIx(3, [key(ata(player, nft)), key(acct()), signerKey(player)], 1)]);
+		expect(() => inspect(b64)).not.toThrow();
+	});
+	it('rejects a checked transfer whose mint is hidden behind a lookup table', () => {
+		const decoded = {
+			version: 0, feePayer: NET.gachaWallet, signers: [NET.gachaWallet, player.toBase58()], signatures: [], usesLookupTables: true,
+			instructions: [{
+				programId: TOKEN.toBase58(),
+				keys: [{ pubkey: acct().toBase58(), isSigner: false }, { pubkey: null, isSigner: false }, { pubkey: acct().toBase58(), isSigner: false }, { pubkey: player.toBase58(), isSigner: true }],
+				data: Buffer.from([12, 1, 0, 0, 0, 0, 0, 0, 0, 0]),
+			}],
+		};
+		expect(() => inspectBuybackTransaction(decoded, { player: player.toBase58(), net: 'devnet', nftAddress: nft.toBase58() })).toThrow(/not the card/);
+	});
+	it('rejects a program that is not part of a Collector Crypt sale, even one the player signs for', () => {
+		// Any program the player signs for can spend the player's authority by CPI.
+		const rogue = new TransactionInstruction({ programId: acct(), keys: [signerKey(player), key(acct())], data: Buffer.from([1]) });
+		expect(() => inspect(buybackV0([coreTransfer(nft), rogue]))).toThrow(/unexpected program/);
+	});
+	it('rejects a Token Metadata transfer of a different mint', () => {
+		const keys = Array.from({ length: 13 }, () => key(acct()));
+		keys[9] = signerKey(player);
+		const ix = new TransactionInstruction({ programId: TOKEN_METADATA, keys, data: Buffer.from([49, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]) });
+		expect(() => inspect(buybackV0([ix]))).toThrow(/not the card/);
+	});
+	it('rejects several rent-sized SOL transfers that add up to a drain', () => {
+		const rent = () => SystemProgram.transfer({ fromPubkey: player, toPubkey: new PublicKey(NET.rentDestination), lamports: 2_000_000 });
+		expect(() => inspect(buybackV0([rent(), rent(), rent()]))).toThrow(/SOL out/);
+	});
+	it('rejects a priority fee that would drain a player who pays the network fee', () => {
+		const b64 = playerPaysV0([computeLimit(1_400_000), computePrice(500_000_000), coreTransfer(nft), authorizeAndPay()]);
+		expect(() => inspect(b64)).toThrow(/priority fee/);
+	});
 });
 
 describe('transactionId', () => {

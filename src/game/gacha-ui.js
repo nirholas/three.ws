@@ -14,6 +14,10 @@
 //   4. Relay, wait for the payment to land, open the pack, reveal the card.
 //   5. Optional instant buyback within 72 h, same verify-then-sign path.
 //
+// "My cards" lists every Collector Crypt card the connected wallet holds (read
+// on-chain by GET /api/gacha/cards), opens any of them in the 3D inspector and
+// sells it back while its instant-buyback window is open.
+//
 // A pending pack is remembered in localStorage so a closed tab or a dropped
 // connection never strands a paid pull: reopening the machine resumes it.
 
@@ -24,26 +28,21 @@ import { t } from './i18n-play.js';
 import {
 	gachaApi, gachaNet, cardImageUrl, TIERS, TIER_STYLE, usd, shortAddr, pickFeatured, COLLECTOR_CRYPT_CARD_URL,
 } from './gacha-client.js';
+import { createCardStage } from './gacha-reveal3d.js';
+import { el } from './gacha-dom.js';
+
+const COLLECTOR_CRYPT_MARKET_URL = 'https://collectorcrypt.com/marketplace';
+const WALLET_INSTALL = [
+	['Phantom', 'https://phantom.com/download'],
+	['Solflare', 'https://solflare.com/download'],
+	['Backpack', 'https://backpack.app/download'],
+];
 
 const PENDING_KEY = 'threews:gacha:pending';
 const PACK_TTL_MS = 2 * 60 * 60 * 1000;
 const PAY_WAIT_MS = 120_000;
 const OPEN_WAIT_MS = 150_000;
 const WINNERS_EVERY_MS = 15_000;
-
-function el(tag, props = {}, kids = []) {
-	const n = document.createElement(tag);
-	for (const [k, v] of Object.entries(props)) {
-		if (k === 'class') n.className = v;
-		else if (k === 'text') n.textContent = v;
-		else if (k === 'hidden') n.hidden = !!v;
-		else if (k === 'style' && typeof v === 'object') Object.assign(n.style, v);
-		else if (k.startsWith('on') && typeof v === 'function') n.addEventListener(k.slice(2), v);
-		else if (v != null && v !== false) n.setAttribute(k, v === true ? '' : v);
-	}
-	for (const kid of [].concat(kids)) if (kid != null && kid !== false) n.appendChild(typeof kid === 'string' ? document.createTextNode(kid) : kid);
-	return n;
-}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -98,6 +97,42 @@ function walletError(err) {
 	const msg = String(err?.message || err || '');
 	if (/reject|denied|cancel|declin|user/i.test(msg)) return 'Cancelled in your wallet. Nothing was charged.';
 	return msg || 'Your wallet could not sign the transaction.';
+}
+
+// Collector Crypt builds legacy transactions for some flows and v0 for others.
+// A v0 message sets the high bit of the byte right after the signature block;
+// a legacy message never does.
+async function decodeTx(b64) {
+	const { Transaction, VersionedTransaction } = await import('@solana/web3.js');
+	const bytes = b64ToBytes(b64);
+	const sigCount = bytes[0];
+	const versioned = (bytes[1 + sigCount * 64] & 0x80) !== 0;
+	return { tx: versioned ? VersionedTransaction.deserialize(bytes) : Transaction.from(bytes), versioned };
+}
+
+function serializeSigned(signed, versioned) {
+	return bytesToB64(versioned ? signed.serialize() : signed.serialize({ requireAllSignatures: false, verifySignatures: false }));
+}
+
+// Pointer-driven tilt and foil position for a card tile (CSS does the drawing).
+function bindTilt(node) {
+	if (prefersReducedMotion()) return;
+	node.addEventListener('pointermove', (e) => {
+		if (e.pointerType !== 'mouse') return;
+		const r = node.getBoundingClientRect();
+		const x = (e.clientX - r.left) / r.width;
+		const y = (e.clientY - r.top) / r.height;
+		node.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`);
+		node.style.setProperty('--my', `${(y * 100).toFixed(1)}%`);
+		node.style.setProperty('--rx', `${((0.5 - y) * 14).toFixed(2)}deg`);
+		node.style.setProperty('--ry', `${((x - 0.5) * 18).toFixed(2)}deg`);
+		node.classList.add('is-tilting');
+	});
+	node.addEventListener('pointerleave', () => {
+		node.classList.remove('is-tilting');
+		node.style.removeProperty('--rx');
+		node.style.removeProperty('--ry');
+	});
 }
 
 function readPending() {
@@ -161,6 +196,10 @@ class GachaUI {
 		this.overlay.addEventListener('click', (e) => { if (e.target === this.overlay) this.close(); });
 		this.backBtn = el('button', { class: 'ga-icon-btn ga-back', type: 'button', 'aria-label': 'Back', hidden: true, onclick: () => this._back() }, '←');
 		const closeBtn = el('button', { class: 'ga-icon-btn', type: 'button', 'aria-label': 'Close', onclick: () => this.close() }, '×');
+		this.cardsBtn = el('button', { class: 'ga-head-btn', type: 'button', onclick: () => this._renderMyCards() }, [
+			el('span', { class: 'ga-head-btn-icon', 'aria-hidden': 'true' }),
+			'My cards',
+		]);
 		const badge = this.net === 'devnet' ? el('span', { class: 'ga-net', title: 'Collector Crypt devnet machines, paid in devnet USDC' }, 'DEVNET') : null;
 		this.head = el('header', { class: 'ga-head' }, [
 			this.backBtn,
@@ -168,6 +207,7 @@ class GachaUI {
 				el('h2', { id: 'ga-title', class: 'ga-title' }, [title, badge]),
 				el('p', { class: 'ga-sub' }, 'Real graded cards, vaulted and minted on Solana by Collector Crypt'),
 			]),
+			this.cardsBtn,
 			closeBtn,
 		]);
 		this.body = el('div', { class: 'ga-body' });
@@ -184,7 +224,9 @@ class GachaUI {
 		this._release = openModal(this.card, { close: () => this.close(), initialFocus: this.card.querySelector('.ga-primary') || undefined });
 		this._headless = false;
 		if (this.view === 'detail') this._startWinners();
-		if (this.result && this.view !== 'reveal') this._renderReveal();
+		// Closing the panel releases the 3D stage, so a card view is rebuilt.
+		if (this.result && (this.view !== 'reveal' || !this._stage)) this._renderReveal();
+		else if (this.view === 'owned' && this._owned && !this._stage) this._renderOwnedCard(this._owned);
 	}
 
 	focus() {
@@ -197,6 +239,7 @@ class GachaUI {
 		this._release?.();
 		this._release = null;
 		this._stopWinners();
+		this._disposeStage();
 		this.overlay.remove();
 		const cb = this.onClose;
 		this.onClose = null;
@@ -236,9 +279,15 @@ class GachaUI {
 	}
 
 	_setView(view, nodes, { back = null } = {}) {
+		this._disposeStage();
 		this.view = view;
 		this._backTo = back;
 		this.backBtn.hidden = !back;
+		// A pull in flight owns the panel until its card lands.
+		this.cardsBtn.disabled = this.inFlight;
+		this.cardsBtn.classList.toggle('is-on', view === 'cards' || view === 'owned');
+		if (view === 'cards' || view === 'owned') this.cardsBtn.setAttribute('aria-current', 'page');
+		else this.cardsBtn.removeAttribute('aria-current');
 		this.body.replaceChildren(...[].concat(nodes).filter(Boolean));
 		this.body.scrollTop = 0;
 		if (view !== 'detail') this._stopWinners();
@@ -247,8 +296,85 @@ class GachaUI {
 	}
 
 	_back() {
-		if (this._backTo === 'machines') this._renderMachines();
-		else if (this._backTo === 'detail' && this.machine) this._renderDetail(this.machine);
+		if (this._backTo === 'machines') {
+			if (this.machines) this._renderMachines();
+			else this._loadMachines();
+		} else if (this._backTo === 'detail' && this.machine) this._renderDetail(this.machine);
+		else if (this._backTo === 'cards') {
+			if (this._cards && !this._cardsDirty) this._renderCardsGrid(this._cards);
+			else this._renderMyCards();
+		}
+	}
+
+	// ── 3D card stage ─────────────────────────────────────────────────────
+
+	_disposeStage() {
+		this._stage?.dispose();
+		this._stage = null;
+	}
+
+	/**
+	 * Mount the WebGL card stage in `host`, or the CSS flip card when WebGL is
+	 * unavailable or its context is lost. `onSettled` runs once, when the card
+	 * is face up and the details can show.
+	 */
+	_mountStage(host, card, { intro, onSettled, controls }) {
+		let done = false;
+		const settled = () => {
+			if (done) return;
+			done = true;
+			onSettled?.();
+		};
+		const fallback = () => {
+			host.classList.remove('ga-stage-3d');
+			host.replaceChildren(this._flipCard(card, { animate: intro }));
+			if (controls) controls.hidden = true;
+			settled();
+		};
+		const stage = createCardStage(host, {
+			card,
+			intro,
+			reduced: prefersReducedMotion(),
+			onSettled: () => {
+				if (controls) controls.hidden = false;
+				settled();
+			},
+			onLost: () => {
+				if (this._stage === stage) this._stage = null;
+				fallback();
+			},
+		});
+		if (!stage) { fallback(); return null; }
+		this._stage = stage;
+		return stage;
+	}
+
+	// The CSS flip card: the real back of the slab when Collector Crypt has a
+	// photo of it, otherwise a designed reverse.
+	_flipCard(c, { animate }) {
+		const tier = TIER_STYLE[c.tier] || TIER_STYLE.common;
+		const reduced = prefersReducedMotion() || !animate;
+		const back = c.back
+			? el('div', { class: 'ga-face ga-face-back ga-face-photo', 'aria-hidden': 'true' }, cardImg(c.back, { width: 480, alt: '', cls: 'ga-img ga-reveal-img' }))
+			: el('div', { class: 'ga-face ga-face-back', 'aria-hidden': 'true' }, [el('span', {}, 'GRADED'), el('span', {}, 'CARD')]);
+		const flip = el('div', { class: `ga-flip${reduced ? ' is-flipped' : ''}`, style: { '--ga-tier': tier.color, '--ga-glow': tier.glow } }, [
+			back,
+			el('div', { class: 'ga-face ga-face-front' }, cardImg(c.image, { width: 480, alt: c.title || c.name || 'Card', cls: 'ga-img ga-reveal-img' })),
+		]);
+		if (!reduced) requestAnimationFrame(() => requestAnimationFrame(() => flip.classList.add('is-flipped')));
+		return flip;
+	}
+
+	_stageControls() {
+		const controls = el('div', { class: 'ga-stage-controls', hidden: true }, [
+			el('button', { class: 'ga-btn ga-btn-sm', type: 'button', onclick: () => this._stage?.flip() }, 'Flip card'),
+			el('span', { class: 'ga-dim ga-small' }, window.matchMedia?.('(hover: hover)').matches ? 'Drag to turn it, hover to catch the foil' : 'Drag to turn it, tap to flip'),
+		]);
+		return controls;
+	}
+
+	_nftExplorerUrl(addr) {
+		return this.net === 'devnet' ? `https://explorer.solana.com/address/${addr}?cluster=devnet` : `https://solscan.io/token/${addr}`;
 	}
 
 	_errorBlock(message, retryLabel, retry) {
@@ -645,10 +771,9 @@ class GachaUI {
 		const wallet = detectSolanaWallet();
 		let signedB64;
 		try {
-			const { Transaction } = await import('@solana/web3.js');
-			const tx = Transaction.from(b64ToBytes(prep.transaction));
+			const { tx, versioned } = await decodeTx(prep.transaction);
 			const signed = await wallet.signTransaction(tx);
-			signedB64 = bytesToB64(signed.serialize({ requireAllSignatures: true, verifySignatures: false }));
+			signedB64 = serializeSigned(signed, versioned);
 		} catch (err) {
 			this.confirmBtn.disabled = false;
 			this.confirmBtn.textContent = 'Approve in wallet';
@@ -686,7 +811,7 @@ class GachaUI {
 		const sig = this.pull?.signature;
 		this._setView('progress', el('div', { class: 'ga-sheet ga-progress' }, [
 			el('div', { class: 'ga-capsule-anim', 'aria-hidden': 'true' }, [el('span', { class: 'ga-cap-top' }), el('span', { class: 'ga-cap-bot' })]),
-			el('ol', { class: 'ga-steps' }, steps.map(([k, label], i) => el('li', { class: i < idx ? 'is-done' : i === idx ? 'is-now' : '' }, [
+			el('ol', { class: 'ga-steps' }, steps.map(([, label], i) => el('li', { class: i < idx ? 'is-done' : i === idx ? 'is-now' : '' }, [
 				el('span', { class: 'ga-step-dot', 'aria-hidden': 'true' }), label, i === idx ? el('span', { class: 'ga-sr' }, ' (in progress)') : null,
 			]))),
 			sig ? el('a', { class: 'ga-link', href: solanaTxExplorerUrl(this.net, sig), target: '_blank', rel: 'noopener' }, 'View payment on the explorer ↗') : null,
@@ -797,12 +922,9 @@ class GachaUI {
 		if (!r) return;
 		const c = r.card || {};
 		const tier = TIER_STYLE[c.tier] || TIER_STYLE.common;
-		const reduced = prefersReducedMotion();
-		const flip = el('div', { class: `ga-flip${reduced ? ' is-flipped' : ''}`, style: { '--ga-tier': tier.color, '--ga-glow': tier.glow } }, [
-			el('div', { class: 'ga-face ga-face-back', 'aria-hidden': 'true' }, [el('span', {}, 'CARD'), el('span', {}, 'GACHA')]),
-			el('div', { class: 'ga-face ga-face-front' }, cardImg(c.image, { width: 480, alt: c.title || c.name || 'Your card', cls: 'ga-img ga-reveal-img' })),
-		]);
-		if (!reduced) requestAnimationFrame(() => requestAnimationFrame(() => flip.classList.add('is-flipped')));
+		// The capsule plays once per pull; reopening the panel shows the card.
+		const intro = !r.introPlayed && !prefersReducedMotion();
+		r.introPlayed = true;
 
 		const facts = [
 			c.grader || c.grade ? ['Grade', [c.grader, c.grade].filter(Boolean).join(' ')] : null,
@@ -814,81 +936,111 @@ class GachaUI {
 		].filter(Boolean);
 		const links = el('div', { class: 'ga-links' }, [
 			r.nftAddress ? el('a', { class: 'ga-link', href: COLLECTOR_CRYPT_CARD_URL(r.nftAddress), target: '_blank', rel: 'noopener' }, 'View on Collector Crypt ↗') : null,
-			r.nftAddress ? el('a', { class: 'ga-link', href: this.net === 'devnet' ? `https://explorer.solana.com/address/${r.nftAddress}?cluster=devnet` : `https://solscan.io/token/${r.nftAddress}`, target: '_blank', rel: 'noopener' }, 'NFT on explorer ↗') : null,
+			r.nftAddress ? el('a', { class: 'ga-link', href: this._nftExplorerUrl(r.nftAddress), target: '_blank', rel: 'noopener' }, 'NFT on explorer ↗') : null,
 			r.verifyUrl ? el('a', { class: 'ga-link', href: r.verifyUrl, target: '_blank', rel: 'noopener' }, 'Verify fairness ↗') : null,
 		]);
-		this.buybackBox = el('div', { class: 'ga-buyback' });
-		const info = el('div', { class: 'ga-reveal-info' }, [
+		const buybackBox = el('div', { class: 'ga-buyback' });
+		const info = el('div', { class: `ga-reveal-info${intro ? ' is-pending' : ''}` }, [
 			el('span', { class: 'ga-tier-pill', style: { '--ga-tier': tier.color } }, tier.label),
 			el('h3', { class: 'ga-h3 ga-reveal-name' }, c.name || 'Graded card'),
 			c.title && c.title !== c.name ? el('p', { class: 'ga-dim' }, c.title) : null,
 			el('dl', { class: 'ga-dl' }, facts.flatMap(([k, v]) => [el('dt', {}, k), el('dd', {}, v)])),
 			r.turboSold ? el('p', { class: 'ga-turbo-note' }, `Turbo mode sold this card back for ${r.turboPayout ? `${r.turboPayout} USDC` : 'USDC'}, sent to your wallet.`) : el('p', { class: 'ga-dim ga-small' }, 'The card NFT is in your wallet. The graded slab is insured in the Collector Crypt vault.'),
-			this.buybackBox,
+			buybackBox,
 			links,
 			el('div', { class: 'ga-actions' }, [
 				el('button', { class: 'ga-btn', type: 'button', onclick: () => { this.result = null; this._renderMachines(); } }, 'All machines'),
 				el('button', { class: 'ga-btn ga-primary', type: 'button', onclick: () => { const m = this.result?.machine || this.machine; this.result = null; if (m) this._renderDetail(m); else this._renderMachines(); } }, 'Pull again'),
 			]),
 		]);
-		this._setView('reveal', el('div', { class: 'ga-reveal' }, [el('div', { class: 'ga-stage', style: { '--ga-glow': tier.glow } }, flip), info]));
+		const stageBox = el('div', { class: `ga-stage ga-stage-3d is-${TIER_STYLE[c.tier] ? c.tier : 'common'}`, style: { '--ga-glow': tier.glow, '--ga-tier': tier.color } });
+		const controls = this._stageControls();
+		const skip = intro ? el('button', { class: 'ga-skip', type: 'button', onclick: () => this._stage?.skip() }, 'Skip') : null;
+		this._setView('reveal', el('div', { class: 'ga-reveal' }, [el('div', { class: 'ga-stage-col' }, [stageBox, controls]), info]));
 		this._say(`You pulled ${c.name || 'a graded card'}, ${tier.label}.`);
-		if (!r.turboSold && r.nftAddress && (r.machine?.instantBuyback ?? 1)) this._loadBuyback(r.nftAddress);
-	}
-
-	async _loadBuyback(nft) {
-		this.buybackBox.replaceChildren(el('div', { class: 'ga-skel ga-skel-line' }));
-		try {
-			const q = await gachaApi('buyback-quote', { query: { nft }, signal: this._ac.signal });
-			if (!q.available) { this.buybackBox.replaceChildren(); return; }
-			const until = q.expiresAt ? new Date(q.expiresAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : null;
-			const btn = el('button', { class: 'ga-btn ga-buyback-btn', type: 'button', onclick: () => this._confirmBuyback(nft, q) }, `Sell back for ${q.amountUsdc} USDC`);
-			this.buybackBox.replaceChildren(btn, el('span', { class: 'ga-dim ga-small' }, until ? `Instant buyback open until ${until}.` : 'Instant buyback is open for 72 hours after the pull.'));
-		} catch {
-			this.buybackBox.replaceChildren(el('span', { class: 'ga-dim ga-small' }, 'The buyback offer is unavailable right now. It stays open for 72 hours after the pull.'));
+		const settled = () => {
+			skip?.remove();
+			info.classList.remove('is-pending');
+			if (intro && !this._headless) requestAnimationFrame(() => info.querySelector('.ga-primary')?.focus({ preventScroll: true }));
+		};
+		const stage = this._mountStage(stageBox, c, { intro, onSettled: settled, controls });
+		if (stage && skip) {
+			stageBox.append(skip);
+			if (!this._headless) requestAnimationFrame(() => skip.focus({ preventScroll: true }));
+		}
+		if (!r.turboSold && r.nftAddress && (r.machine?.instantBuyback ?? 1)) {
+			this._loadBuyback({ box: buybackBox, nft: r.nftAddress, player: r.player || this.address, cardName: c.name });
 		}
 	}
 
-	async _confirmBuyback(nft, quote) {
-		const player = this.result?.player || this.address;
-		this.buybackBox.replaceChildren(el('span', { class: 'ga-dim' }, 'Preparing the buyback…'));
+	// ── instant buyback (reveal and My cards share this) ──────────────────
+
+	/**
+	 * @param {object} ctx
+	 * @param {HTMLElement} ctx.box      where the offer and confirm sheet render
+	 * @param {string} ctx.nft           the card's mint / asset address
+	 * @param {string} ctx.player        the wallet that holds it
+	 * @param {string} [ctx.cardName]
+	 * @param {() => Node[]} [ctx.unavailable]  what to show when no offer is open
+	 * @param {() => void} [ctx.onSold]
+	 */
+	async _loadBuyback(ctx) {
+		const { box, nft } = ctx;
+		box.replaceChildren(el('div', { class: 'ga-skel ga-skel-line ga-skel-btn' }));
+		try {
+			const q = await gachaApi('buyback-quote', { query: { nft }, signal: this._ac.signal });
+			if (!box.isConnected) return;
+			if (!q.available) { box.replaceChildren(...(ctx.unavailable?.() || [])); return; }
+			const until = q.expiresAt ? new Date(q.expiresAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : null;
+			const btn = el('button', { class: 'ga-btn ga-buyback-btn', type: 'button', onclick: () => this._confirmBuyback(ctx, q) }, `Sell back for ${q.amountUsdc} USDC`);
+			box.replaceChildren(btn, el('span', { class: 'ga-dim ga-small' }, until ? `Instant buyback open until ${until}.` : 'Instant buyback is open for 72 hours after the pull.'));
+		} catch (err) {
+			if (this._ac.signal.aborted || !box.isConnected) return;
+			box.replaceChildren(
+				el('span', { class: 'ga-dim ga-small' }, err.message || 'The buyback offer is unavailable right now.'),
+				el('button', { class: 'ga-btn ga-btn-sm', type: 'button', onclick: () => this._loadBuyback(ctx) }, 'Check again'),
+			);
+		}
+	}
+
+	async _confirmBuyback(ctx, quote) {
+		const { box, nft, player } = ctx;
+		box.replaceChildren(el('span', { class: 'ga-dim' }, 'Preparing the buyback…'));
 		let prep;
 		try {
 			prep = await gachaApi('buyback', { body: { player, nft }, signal: this._ac.signal });
 		} catch (err) {
-			this.buybackBox.replaceChildren(el('p', { class: 'ga-note is-warn' }, err.message), el('button', { class: 'ga-btn', type: 'button', onclick: () => this._loadBuyback(nft) }, 'Try again'));
+			box.replaceChildren(el('p', { class: 'ga-note is-warn' }, err.message), el('button', { class: 'ga-btn', type: 'button', onclick: () => this._loadBuyback(ctx) }, 'Try again'));
 			return;
 		}
+		const amount = prep.refundUsdc || quote.amountUsdc;
 		const go = el('button', { class: 'ga-btn ga-primary', type: 'button' }, 'Approve sale in wallet');
 		const note = el('p', { class: 'ga-note', role: 'status' });
-		go.addEventListener('click', () => this._signBuyback(prep, player, nft, go, note));
-		this.buybackBox.replaceChildren(el('div', { class: 'ga-sheet ga-sheet-inline' }, [
+		go.addEventListener('click', () => this._signBuyback(ctx, prep, amount, go, note));
+		box.replaceChildren(el('div', { class: 'ga-sheet ga-sheet-inline' }, [
 			el('table', { class: 'ga-table ga-confirm-table' }, el('tbody', {}, [
-				['You send', `${this.result?.card?.name || 'This card'} (NFT ${shortAddr(nft)})`],
-				['You receive', el('strong', { class: 'ga-pay' }, `${prep.refundUsdc || quote.amountUsdc} USDC`)],
+				['You send', `${ctx.cardName || 'This card'} (NFT ${shortAddr(nft)})`],
+				['You receive', el('strong', { class: 'ga-pay' }, `${amount} USDC`)],
+				['To', shortAddr(player)],
 				['Chain', this.net === 'devnet' ? 'Solana devnet' : 'Solana'],
 				['Buyer', 'Collector Crypt buyback program'],
 			].map(([k, v]) => el('tr', {}, [el('th', { scope: 'row' }, k), el('td', {}, v)])))),
-			el('div', { class: 'ga-actions' }, [el('button', { class: 'ga-btn', type: 'button', onclick: () => this._loadBuyback(nft) }, 'Keep the card'), go]),
+			el('p', { class: 'ga-dim ga-small' }, 'Selling is final: the card NFT and its vaulted slab go to Collector Crypt.'),
+			el('div', { class: 'ga-actions' }, [el('button', { class: 'ga-btn', type: 'button', onclick: () => this._loadBuyback(ctx) }, 'Keep the card'), go]),
 			note,
 		]));
 		go.focus();
 	}
 
-	async _signBuyback(prep, player, nft, btn, note) {
+	async _signBuyback(ctx, prep, amount, btn, note) {
+		const { box, nft, player } = ctx;
 		btn.disabled = true;
 		btn.textContent = 'Waiting for your wallet…';
 		let signedB64;
 		try {
-			const { Transaction, VersionedTransaction } = await import('@solana/web3.js');
-			const bytes = b64ToBytes(prep.transaction);
-			// Versioned (v0) messages set the high bit of the byte after the
-			// signature block; legacy messages never do.
-			const sigCount = bytes[0];
-			const versioned = (bytes[1 + sigCount * 64] & 0x80) !== 0;
-			const tx = versioned ? VersionedTransaction.deserialize(bytes) : Transaction.from(bytes);
+			const { tx, versioned } = await decodeTx(prep.transaction);
 			const signed = await detectSolanaWallet().signTransaction(tx);
-			signedB64 = bytesToB64(versioned ? signed.serialize() : signed.serialize({ requireAllSignatures: false, verifySignatures: false }));
+			signedB64 = serializeSigned(signed, versioned);
 		} catch (err) {
 			btn.disabled = false;
 			btn.textContent = 'Approve sale in wallet';
@@ -899,17 +1051,191 @@ class GachaUI {
 		btn.textContent = 'Selling…';
 		try {
 			const r = await gachaApi('buyback-submit', { body: { player, nft, signedTransaction: signedB64 }, signal: this._ac.signal });
-			this.buybackBox.replaceChildren(el('p', { class: 'ga-turbo-note' }, [
-				`Sold. ${prep.refundUsdc} USDC is on its way to your wallet. `,
+			this._cardsDirty = true;
+			(this._sold ||= new Set()).add(nft);
+			box.replaceChildren(el('p', { class: 'ga-turbo-note' }, [
+				`Sold. ${amount} USDC is on its way to your wallet. `,
 				r.signature ? el('a', { class: 'ga-link', href: solanaTxExplorerUrl(this.net, r.signature), target: '_blank', rel: 'noopener' }, 'View ↗') : null,
 			]));
-			this._say(`Card sold back for ${prep.refundUsdc} USDC.`);
+			this._say(`Card sold back for ${amount} USDC.`);
+			ctx.onSold?.();
 		} catch (err) {
 			btn.disabled = false;
 			btn.textContent = 'Approve sale in wallet';
 			note.textContent = err.message;
 			note.classList.add('is-warn');
 		}
+	}
+
+	// ── My cards ──────────────────────────────────────────────────────────
+
+	_cardsBack() {
+		return this.machine ? 'detail' : 'machines';
+	}
+
+	async _renderMyCards() {
+		if (this.inFlight) return;
+		this.result = null;
+		this._owned = null;
+		const back = this._cardsBack();
+		if (!detectSolanaWallet()) {
+			this._setView('cards', el('div', { class: 'ga-state' }, [
+				el('div', { class: 'ga-state-icon', 'aria-hidden': 'true' }, '◇'),
+				el('p', { class: 'ga-state-title' }, 'Connect a Solana wallet to see your cards'),
+				el('p', {}, 'Your cards live in your own wallet as NFTs. Install one of these, then reload this page.'),
+				el('div', { class: 'ga-actions' }, WALLET_INSTALL.map(([name, href]) => el('a', { class: 'ga-btn', href, target: '_blank', rel: 'noopener' }, name))),
+			]), { back });
+			return;
+		}
+		const req = {};
+		this._cardsReq = req;
+		this._setView('cards', [
+			el('div', { class: 'ga-cards-sum ga-skel-row', 'aria-hidden': 'true' }, Array.from({ length: 3 }, () => el('div', { class: 'ga-stat' }, [el('span', { class: 'ga-skel ga-skel-stat' }), el('span', { class: 'ga-skel ga-skel-line short' })]))),
+			el('div', { class: 'ga-own-grid', 'aria-busy': 'true', 'aria-label': 'Loading your cards' }, Array.from({ length: 8 }, () => el('div', { class: 'ga-own ga-own-skel' }, [
+				el('span', { class: 'ga-skel ga-skel-card' }), el('span', { class: 'ga-skel ga-skel-line' }), el('span', { class: 'ga-skel ga-skel-line short' }),
+			]))),
+		], { back });
+		this._say('Reading your cards from Solana');
+		const stale = () => this._cardsReq !== req || this.view !== 'cards';
+
+		let owner;
+		try {
+			owner = await this._refreshWallet(true);
+		} catch (err) {
+			if (stale()) return;
+			const msg = /reject|denied|cancel|declin|user/i.test(String(err?.message || '')) ? 'The wallet connection was cancelled.' : walletError(err);
+			this._setView('cards', this._errorBlock(msg, 'Connect wallet', () => this._renderMyCards()), { back });
+			return;
+		}
+		if (stale()) return;
+		if (!owner) {
+			this._setView('cards', this._errorBlock('Your wallet did not share an address. Unlock it and try again.', 'Connect wallet', () => this._renderMyCards()), { back });
+			return;
+		}
+
+		let data;
+		try {
+			data = await gachaApi('cards', { query: { owner, ...(this._cardsDirty ? { fresh: '1' } : {}) }, signal: this._ac.signal, timeoutMs: 60_000 });
+		} catch (err) {
+			if (this._ac.signal.aborted || stale()) return;
+			this._setView('cards', this._errorBlock(err.message || 'Your cards could not be read right now.', 'Try again', () => this._renderMyCards()), { back });
+			return;
+		}
+		if (stale()) return;
+		this._cardsDirty = false;
+		this._cards = data;
+		this._renderCardsGrid(data);
+	}
+
+	_renderCardsGrid(data) {
+		this._owned = null;
+		const back = this._cardsBack();
+		// A card sold this session can take a few seconds to leave the wallet
+		// on-chain; it never reappears in the list meanwhile.
+		const cards = (data.cards || []).filter((c) => !this._sold?.has(c.address));
+		const refresh = el('button', { class: 'ga-btn ga-btn-sm', type: 'button', onclick: () => { this._cardsDirty = true; this._renderMyCards(); } }, 'Refresh');
+		const walletRow = el('div', { class: 'ga-cards-wallet' }, [
+			el('span', { class: 'ga-dot ga-dot-on', 'aria-hidden': 'true' }),
+			el('a', { class: 'ga-mono', href: this.net === 'devnet' ? `https://explorer.solana.com/address/${data.owner}?cluster=devnet` : `https://solscan.io/account/${data.owner}`, target: '_blank', rel: 'noopener' }, shortAddr(data.owner)),
+			data.fetchedAt ? el('span', { class: 'ga-dim ga-small' }, `read ${timeAgo(data.fetchedAt)}`) : null,
+			refresh,
+		]);
+		const notices = [
+			data.partial ? el('p', { class: 'ga-note is-warn', role: 'status' }, 'Solana was busy, so some cards may be missing from this list. Refresh to read the wallet again.') : null,
+			data.truncated ? el('p', { class: 'ga-note', role: 'status' }, `This wallet holds more cards than fit here. Showing the first ${cards.length}; the rest are on Collector Crypt.`) : null,
+		];
+
+		if (!cards.length) {
+			this._setView('cards', [
+				walletRow,
+				...notices,
+				el('div', { class: 'ga-state' }, [
+					el('div', { class: 'ga-state-icon ga-state-gold', 'aria-hidden': 'true' }, '◎'),
+					el('p', { class: 'ga-state-title' }, 'No graded cards in this wallet yet'),
+					el('p', {}, 'Every card you pull here lands in this wallet as an NFT and shows up in this list, ready to inspect in 3D or sell back. Cards bought on Collector Crypt appear here too.'),
+					el('div', { class: 'ga-actions' }, [
+						el('a', { class: 'ga-btn', href: COLLECTOR_CRYPT_MARKET_URL, target: '_blank', rel: 'noopener' }, 'Browse the marketplace ↗'),
+						el('button', { class: 'ga-btn ga-primary', type: 'button', onclick: () => (this.machine ? this._renderDetail(this.machine) : this._back()) }, 'Pull your first card'),
+					]),
+				]),
+			], { back });
+			return;
+		}
+
+		const stat = (value, label) => el('div', { class: 'ga-stat' }, [el('span', { class: 'ga-stat-v' }, value), el('span', { class: 'ga-stat-l' }, label)]);
+		const insured = cards.reduce((s, c) => s + (c.insuredValue || 0), 0);
+		const sum = el('div', { class: 'ga-cards-sum' }, [
+			stat(String(cards.length), cards.length === 1 ? 'card' : 'cards'),
+			stat(insured ? usd(insured, { cents: false }) : 'Unlisted', 'insured value'),
+			stat(String(cards.filter((c) => c.buyback?.available).length), 'sellable now'),
+		]);
+		const grid = el('div', { class: 'ga-own-grid' }, cards.map((c) => this._ownedTile(c)));
+		this._setView('cards', [walletRow, sum, ...notices, grid], { back });
+	}
+
+	_ownedTile(c) {
+		const tier = TIER_STYLE[c.tier] || null;
+		const meta = [c.grader && c.grade ? `${c.grader} ${c.grade}` : null, c.insuredValue ? usd(c.insuredValue, { cents: false }) : null].filter(Boolean).join(' · ');
+		const sell = c.buyback?.available ? `Sell ${c.buyback.amountUsdc} USDC` : null;
+		const tile = el('button', {
+			class: 'ga-own',
+			type: 'button',
+			style: tier ? { '--ga-tier': tier.color } : {},
+			'aria-label': [c.name || 'Graded card', meta, sell ? `instant buyback ${c.buyback.amountUsdc} USDC` : null].filter(Boolean).join(', '),
+			onclick: () => this._renderOwnedCard(c),
+		}, [
+			el('span', { class: 'ga-own-art' }, [
+				cardImg(c.image, { width: 320, alt: '', cls: 'ga-img ga-own-img' }),
+				el('span', { class: 'ga-own-foil', 'aria-hidden': 'true' }),
+				el('span', { class: 'ga-own-glare', 'aria-hidden': 'true' }),
+			]),
+			sell ? el('span', { class: 'ga-sell-badge' }, sell) : null,
+			el('span', { class: 'ga-own-name' }, c.name || 'Graded card'),
+			meta ? el('span', { class: 'ga-dim ga-own-meta' }, meta) : null,
+		]);
+		bindTilt(tile);
+		return tile;
+	}
+
+	_renderOwnedCard(c) {
+		this._owned = c;
+		const tier = TIER_STYLE[c.tier] || null;
+		const facts = [
+			c.grader || c.grade ? ['Grade', [c.grader, c.grade].filter(Boolean).join(' ')] : null,
+			c.set ? ['Set', c.set] : null,
+			c.year ? ['Year', c.year] : null,
+			c.category ? ['Category', c.category] : null,
+			c.insuredValue ? ['Insured value', usd(c.insuredValue)] : null,
+			['Standard', c.standard === 'pnft' ? 'Programmable NFT' : 'Metaplex Core'],
+			['Mint', el('a', { class: 'ga-mono', href: this._nftExplorerUrl(c.address), target: '_blank', rel: 'noopener' }, shortAddr(c.address))],
+		].filter(Boolean);
+		const market = () => [
+			el('p', { class: 'ga-dim ga-small' }, 'The 72 hour instant buyback for this card has closed. You can still list it for sale, or redeem the physical slab, on Collector Crypt.'),
+			el('a', { class: 'ga-btn ga-btn-sm', href: COLLECTOR_CRYPT_CARD_URL(c.address), target: '_blank', rel: 'noopener' }, 'Sell or redeem on Collector Crypt ↗'),
+		];
+		const sellBox = el('div', { class: 'ga-buyback' });
+		const info = el('div', { class: 'ga-reveal-info' }, [
+			tier ? el('span', { class: 'ga-tier-pill', style: { '--ga-tier': tier.color } }, tier.label) : null,
+			el('h3', { class: 'ga-h3 ga-reveal-name' }, c.name || 'Graded card'),
+			c.title && c.title !== c.name ? el('p', { class: 'ga-dim' }, c.title) : null,
+			el('dl', { class: 'ga-dl' }, facts.flatMap(([k, v]) => [el('dt', {}, k), el('dd', {}, v)])),
+			el('h4', { class: 'ga-h4' }, 'Sell'),
+			sellBox,
+			el('div', { class: 'ga-links' }, [
+				el('a', { class: 'ga-link', href: COLLECTOR_CRYPT_CARD_URL(c.address), target: '_blank', rel: 'noopener' }, 'View on Collector Crypt ↗'),
+				el('a', { class: 'ga-link', href: this._nftExplorerUrl(c.address), target: '_blank', rel: 'noopener' }, 'NFT on explorer ↗'),
+			]),
+		]);
+		const stageBox = el('div', { class: `ga-stage ga-stage-3d is-${tier ? c.tier : 'owned'}`, style: { '--ga-glow': (tier || TIER_STYLE.uncommon).glow, '--ga-tier': (tier || TIER_STYLE.uncommon).color } });
+		const controls = this._stageControls();
+		this._setView('owned', el('div', { class: 'ga-reveal' }, [el('div', { class: 'ga-stage-col' }, [stageBox, controls]), info]), { back: 'cards' });
+		this._mountStage(stageBox, c, { intro: false, controls });
+
+		const onSold = () => {
+			sellBox.append(el('button', { class: 'ga-btn ga-btn-sm', type: 'button', onclick: () => this._renderMyCards() }, 'Back to my cards'));
+		};
+		if (c.buyback?.available === false) sellBox.replaceChildren(...market());
+		else this._loadBuyback({ box: sellBox, nft: c.address, player: this._cards?.owner || this.address, cardName: c.name, unavailable: market, onSold });
 	}
 
 	// ── resume a pack from an earlier session ─────────────────────────────

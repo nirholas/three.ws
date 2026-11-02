@@ -1,11 +1,32 @@
 {
-	"generated_at": "2026-11-02T20:11:21.032Z",
+	"generated_at": "2026-11-02T21:30:54.882Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-02",
+			"type": "update",
+			"title": "Card gacha: a 3D capsule reveal, My cards, and selling from your wallet",
+			"summary": "Pulling a card in /play now plays a full 3D reveal: the capsule spins and shakes as light gathers into it, then cracks open with a flash, a shockwave and a light pillar in the card's rarity colour, and the real graded slab spins out with a holographic foil that shifts as you turn it. Rare and epic pulls hide their colour until the last second. A new My cards button lists every Collector Crypt card in your wallet with its grade, insured value and real front and back photos, lets you inspect each one in 3D, and sells a card back for USDC while its 72 hour buyback is open, behind a confirmation table and a stricter transaction check that refuses anything but the one card leaving your wallet.",
+			"link": "/play",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-02",
+			"type": "update",
+			"title": "NVIDIA Inception badge on the homepage",
+			"summary": "The homepage now shows the NVIDIA Inception member badge in its footer and lists NVIDIA Inception in the partner strip, both linking to the NVIDIA page. Every other page already carries the badge through the shared footer.",
+			"link": "/nvidia",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-02",
 			"type": "update",
@@ -70,7 +91,7 @@
 			"date": "2026-11-01",
 			"type": "launch",
 			"title": "Docs · The card gacha machine in /play",
-			"summary": "How to pull a real graded trading card from the capsule machine on the /play plaza, what the transaction checks prove before you sign, the 72-hour buyback, and the /api/gacha routes.",
+			"summary": "How to pull a real graded trading card from the capsule machine on the /play plaza, the 3D reveal, viewing and selling the cards in your wallet, what the transaction checks prove before you sign, and the /api/gacha routes.",
 			"link": "/docs/play-gacha",
 			"tags": [
 				"launch"

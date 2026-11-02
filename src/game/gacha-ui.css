@@ -345,6 +345,118 @@ a.ga-pcard:active { transform: none; }
 .ga-buyback { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; margin-top: 8px; }
 .ga-buyback-btn { border-color: var(--ga-gold); color: var(--ga-gold); }
 .ga-buyback-btn:hover:not([disabled]) { background: rgba(255, 176, 32, 0.12); border-color: var(--ga-gold); }
+.ga-face-photo { background: #0c0c0e; }
+.ga-btn-sm { min-height: 32px; padding: 0 12px; font-size: 12.5px; }
+.ga-skel-btn { width: 180px; height: 40px; }
+
+/* ── 3D card stage (gacha-reveal3d.js) ───────────────────────────────── */
+
+.ga-stage-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ga-stage.ga-stage-3d {
+	position: relative; display: block; padding: 0; overflow: hidden;
+	aspect-ratio: 3 / 4; width: 100%;
+	background: #060608;
+	box-shadow: inset 0 0 0 1px var(--cc-edge), 0 0 50px -12px var(--ga-glow);
+}
+.ga-r3-canvas {
+	position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+	cursor: grab; touch-action: pan-y; outline: none;
+}
+.ga-r3-canvas:active { cursor: grabbing; }
+.ga-r3-canvas:focus-visible { box-shadow: inset 0 0 0 2px var(--cc-accent); }
+.ga-r3-flash {
+	position: absolute; inset: 0; pointer-events: none; opacity: 0;
+	background: radial-gradient(circle at 50% 50%, #fff 0%, var(--ga-tier, #fff) 35%, transparent 75%);
+	mix-blend-mode: screen;
+}
+.ga-r3-flash.is-on { animation: ga-r3-flash 0.6s ease-out; }
+@keyframes ga-r3-flash { 0% { opacity: 0.95; } 100% { opacity: 0; } }
+.ga-skip {
+	position: absolute; right: 10px; bottom: 10px; z-index: 1;
+	padding: 6px 12px; border-radius: 999px; cursor: pointer;
+	font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+	background: rgba(0, 0, 0, 0.55); color: var(--cc-text); border: 1px solid var(--cc-edge);
+	backdrop-filter: blur(4px); transition: border-color 0.15s, background 0.15s;
+}
+.ga-skip:hover { border-color: var(--cc-edge-hi); background: rgba(0, 0, 0, 0.75); }
+.ga-skip:active { transform: translateY(1px); }
+.ga-stage-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ga-stage-controls[hidden] { display: none; }
+
+.ga-reveal-info { transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0s; }
+.ga-reveal-info.is-pending { opacity: 0; transform: translateY(10px); visibility: hidden; transition: none; }
+
+/* ── header "My cards" ───────────────────────────────────────────────── */
+
+.ga-head-btn {
+	flex: none; display: inline-flex; align-items: center; gap: 7px;
+	height: 34px; padding: 0 12px; border-radius: var(--cc-radius-sm); cursor: pointer;
+	background: none; border: 1px solid var(--cc-edge); color: var(--cc-text);
+	font: inherit; font-size: 12.5px; font-weight: 700;
+	transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.ga-head-btn:hover:not([disabled]) { border-color: var(--cc-edge-hi); }
+.ga-head-btn:active:not([disabled]) { background: rgba(255, 255, 255, 0.08); }
+.ga-head-btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.ga-head-btn.is-on { background: var(--cc-text); color: var(--cc-ink); border-color: var(--cc-text); }
+.ga-head-btn-icon {
+	width: 11px; height: 14px; border-radius: 2px; border: 1.5px solid currentColor;
+	box-shadow: 3px -3px 0 -1.5px currentColor;
+}
+
+/* ── My cards ────────────────────────────────────────────────────────── */
+
+.ga-cards-wallet { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px; }
+.ga-cards-wallet .ga-dot { margin-right: 0; }
+.ga-cards-wallet .ga-btn { margin-left: auto; }
+.ga-cards-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.ga-stat {
+	display: flex; flex-direction: column; gap: 2px; padding: 10px 12px;
+	border-radius: var(--cc-radius); background: var(--cc-bg2); border: 1px solid var(--cc-edge);
+}
+.ga-stat-v { font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.ga-stat-l { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cc-dim); }
+.ga-skel-stat { width: 60%; height: 22px; }
+
+.ga-own-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.ga-own {
+	--mx: 50%; --my: 50%; --rx: 0deg; --ry: 0deg;
+	position: relative; display: flex; flex-direction: column; gap: 4px; min-width: 0; text-align: left;
+	padding: 8px; border-radius: var(--cc-radius); cursor: pointer;
+	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: inherit; font: inherit;
+	box-shadow: inset 0 -2px 0 var(--ga-tier, transparent);
+	transition: border-color 0.15s, box-shadow 0.2s, transform 0.15s;
+}
+.ga-own:hover { border-color: var(--ga-tier, var(--cc-edge-hi)); box-shadow: inset 0 -2px 0 var(--ga-tier, transparent), 0 12px 28px rgba(0, 0, 0, 0.55); }
+.ga-own:active { transform: scale(0.985); }
+.ga-own-skel { cursor: default; }
+.ga-own-art {
+	position: relative; display: block; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 4px;
+	background: radial-gradient(circle at 50% 40%, #1d1d21, #09090b 75%);
+	transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
+	transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ga-own.is-tilting .ga-own-art { transition: transform 0.06s linear; }
+.ga-own-img { width: 100%; height: 100%; object-fit: contain; }
+.ga-own-foil, .ga-own-glare { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s; }
+.ga-own-foil {
+	background:
+		repeating-linear-gradient(115deg, rgba(255, 0, 132, 0.5) 0%, rgba(252, 164, 0, 0.5) 7%, rgba(255, 255, 0, 0.45) 14%, rgba(0, 255, 138, 0.45) 21%, rgba(0, 207, 255, 0.5) 28%, rgba(204, 76, 250, 0.5) 35%, rgba(255, 0, 132, 0.5) 42%);
+	background-size: 300% 300%;
+	background-position: var(--mx) var(--my);
+	mix-blend-mode: color-dodge; filter: saturate(1.2) brightness(0.7);
+}
+.ga-own-glare { background: radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.45), transparent 50%); mix-blend-mode: overlay; }
+.ga-own:hover .ga-own-foil { opacity: 0.55; }
+.ga-own:hover .ga-own-glare { opacity: 1; }
+.ga-own:focus-visible .ga-own-foil { opacity: 0.4; }
+.ga-own-name { font-size: 12.5px; font-weight: 800; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ga-own-meta { font-size: 11.5px; }
+.ga-sell-badge {
+	position: absolute; top: 14px; right: 14px; z-index: 1;
+	padding: 2px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800;
+	background: var(--ga-gold); color: var(--cc-ink); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
 
 /* ── headless result pill ────────────────────────────────────────────── */
 
@@ -376,6 +488,7 @@ a.ga-pcard:active { transform: none; }
 	.ga-detail { grid-template-columns: 1fr; }
 	.ga-panel { position: static; order: -1; }
 	.ga-reveal { grid-template-columns: 1fr; }
+	.ga-stage-col { width: 100%; max-width: 380px; margin: 0 auto; }
 	.ga-winners { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 520px) {
@@ -384,9 +497,16 @@ a.ga-pcard:active { transform: none; }
 	.ga-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 	.ga-hero { grid-template-columns: 96px 1fr; }
 	.ga-table th, .ga-table td { padding: 6px 4px; }
+	.ga-own-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+	.ga-stat { padding: 8px; }
+	.ga-stat-v { font-size: 16px; }
+	.ga-stat-l { font-size: 10px; letter-spacing: 0.06em; }
+	.ga-head-btn { padding: 0 10px; }
+	.ga-sub { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-	.ga-overlay, .ga-card, .ga-pill, .ga-skel, .ga-capsule-anim, .ga-pill-dot, .ga-steps li.is-now .ga-step-dot { animation: none; }
-	.ga-flip { transition: none; }
-	.ga-tile, .ga-win, .ga-pcard, .ga-tile-art .ga-img { transition: none; }
+	.ga-overlay, .ga-card, .ga-pill, .ga-skel, .ga-capsule-anim, .ga-pill-dot, .ga-steps li.is-now .ga-step-dot, .ga-r3-flash.is-on { animation: none; }
+	.ga-flip, .ga-reveal-info { transition: none; }
+	.ga-tile, .ga-win, .ga-pcard, .ga-tile-art .ga-img, .ga-own, .ga-own-art { transition: none; }
+	.ga-own-art { transform: none; }
 }

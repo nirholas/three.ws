@@ -15,12 +15,15 @@
 //   GET  /api/gacha/status?memo=             has the payment landed, was the card sent
 //   POST /api/gacha/open    {memo}           reveal the card (poll while `waiting`)
 //   GET  /api/gacha/buyback-quote?nft=       the instant-buyback offer, if still open
+//   GET  /api/gacha/cards?owner=             every Collector Crypt card a wallet holds,
+//                                            with its live buyback offer (api/_lib/gacha-wallet.js)
 //   POST /api/gacha/buyback {player, nft}    build + verify the sell-back transaction
 //   POST /api/gacha/buyback-submit {player, nft, signedTransaction}  relay it
 
 import { cors, json, method, wrap, error, rateLimited, readJson, reportServerError } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
 import {
 	GACHA_NETWORKS,
 	GachaTxRejected,
@@ -43,10 +46,23 @@ import {
 	inspectBuybackTransaction,
 	transactionId,
 } from '../_lib/collectorcrypt-gacha.js';
+import {
+	MAX_WALLET_CARDS,
+	makeRpc,
+	findWalletCards,
+	fetchCardJson,
+	walletCardFromJson,
+	mapPool,
+} from '../_lib/gacha-wallet.js';
 
 export const maxDuration = 30;
 
 const RARITIES = new Set(['common', 'uncommon', 'rare', 'epic']);
+
+const PUBLIC_RPC = { mainnet: 'https://api.mainnet-beta.solana.com', devnet: 'https://api.devnet.solana.com' };
+const WALLET_CACHE_TTL_S = 30;
+const CARD_JSON_TTL_S = 60 * 60 * 24; // card metadata is fixed once minted
+const MAX_BUYBACK_CHECKS = 60;
 
 // Machines change slowly (stock counts are already up to 10 s stale upstream),
 // and every pull re-reads the price from here, so a short per-instance memo keeps
@@ -200,6 +216,88 @@ async function buybackQuote(req, res, net) {
 		amountUsdc: formatUsdc(atomic),
 		expiresAt: typeof up.body.buybackExpiresAt === 'string' ? up.body.buybackExpiresAt : null,
 	});
+}
+
+// The live instant-buyback offer for one card, or null when the upstream could
+// not say (an unknown offer is shown as unknown, never as "not sellable").
+async function quoteFor(net, nft) {
+	try {
+		const up = await gachaFetch(net, `/api/buyback/available?nft=${encodeURIComponent(nft)}`, { timeoutMs: 6_000 });
+		if (up.status !== 200) return null;
+		if (up.body?.available !== true) return { available: false };
+		const atomic = String(up.body.amount ?? '').replace(/\D/g, '');
+		return {
+			available: true,
+			amountAtomic: atomic,
+			amountUsdc: formatUsdc(atomic),
+			expiresAt: typeof up.body.buybackExpiresAt === 'string' ? up.body.buybackExpiresAt : null,
+		};
+	} catch {
+		return null;
+	}
+}
+
+async function cardJson(uri) {
+	const key = `gacha:cardjson:${uri}`;
+	const hit = await cacheGet(key).catch(() => null);
+	if (hit) return hit;
+	const body = await fetchCardJson(uri);
+	if (body) await cacheSet(key, { name: body.name, image: body.image, properties: { files: body.properties?.files }, attributes: body.attributes }, CARD_JSON_TTL_S).catch(() => {});
+	return body;
+}
+
+async function cards(req, res, net) {
+	const owner = String(req.query.owner || '');
+	if (!isSolanaAddress(owner)) return error(res, 400, 'bad_owner', 'owner must be a Solana wallet address');
+	const fresh = req.query.fresh === '1';
+	const key = `gacha:wallet:${net}:${owner}`;
+	if (!fresh) {
+		const hit = await cacheGet(key).catch(() => null);
+		if (hit) {
+			res.setHeader('cache-control', 'private, max-age=15');
+			return json(res, 200, hit);
+		}
+	}
+
+	const rpc = makeRpc([rpcUrl(net), PUBLIC_RPC[net]]);
+	let found;
+	try {
+		found = await findWalletCards(rpc, owner);
+	} catch (err) {
+		reportServerError(err, { code: 'gacha_wallet_scan_failed', status: 503, context: { net } });
+		return error(res, 503, 'rpc_unavailable', 'Solana is not answering right now, so your cards could not be read. Try again in a moment.');
+	}
+
+	const truncated = found.cards.length > MAX_WALLET_CARDS;
+	const onchain = found.cards.slice(0, MAX_WALLET_CARDS);
+	const rendered = await mapPool(onchain, 8, async (c) => walletCardFromJson(c, await cardJson(c.uri)));
+	const list = rendered.filter(Boolean);
+	const quotes = await mapPool(list.slice(0, MAX_BUYBACK_CHECKS), 6, (c) => quoteFor(net, c.address));
+	list.forEach((c, i) => {
+		c.buyback = i < quotes.length ? quotes[i] : null;
+	});
+	list.sort((a, b) => {
+		const sa = a.buyback?.available ? 1 : 0;
+		const sb = b.buyback?.available ? 1 : 0;
+		if (sa !== sb) return sb - sa;
+		return (b.insuredValue || 0) - (a.insuredValue || 0);
+	});
+
+	const payload = {
+		ok: true,
+		network: net,
+		owner,
+		cards: list,
+		count: list.length,
+		totalInsured: Math.round(list.reduce((sum, c) => sum + (c.insuredValue || 0), 0) * 100) / 100,
+		sellable: list.filter((c) => c.buyback?.available).length,
+		truncated,
+		partial: found.partial,
+		fetchedAt: new Date().toISOString(),
+	};
+	if (!found.partial) await cacheSet(key, payload, WALLET_CACHE_TTL_S).catch(() => {});
+	res.setHeader('cache-control', 'private, max-age=15');
+	return json(res, 200, payload);
 }
 
 // ── POST handlers ───────────────────────────────────────────────────────────
@@ -401,7 +499,7 @@ async function buybackSubmit(req, res, net, body) {
 
 // ── dispatch ────────────────────────────────────────────────────────────────
 
-const GET_ROUTES = { machines, winners, pool, status, 'buyback-quote': buybackQuote };
+const GET_ROUTES = { machines, winners, pool, status, cards, 'buyback-quote': buybackQuote };
 const POST_ROUTES = { pull, submit, open, buyback, 'buyback-submit': buybackSubmit };
 const READ_POSTS = new Set(['open']);
 
@@ -414,7 +512,12 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, [isGet ? 'GET' : 'POST'])) return;
 
 	const ip = clientIp(req);
-	const rl = isGet || READ_POSTS.has(action) ? await limits.gachaReadIp(ip) : await limits.gachaPlayIp(ip);
+	const rl =
+		action === 'cards'
+			? await limits.gachaWalletIp(ip)
+			: isGet || READ_POSTS.has(action)
+				? await limits.gachaReadIp(ip)
+				: await limits.gachaPlayIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
 	const net = normalizeNetwork(String(req.query?.net || ''));

@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Card gacha: a 3D capsule reveal, My cards, and selling from your wallet</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-02:Card gacha: a 3D capsule reveal, My cards, and selling from your wallet</guid>
+			<pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Pulling a card in /play now plays a full 3D reveal: the capsule spins and shakes as light gathers into it, then cracks open with a flash, a shockwave and a light pillar in the card's rarity colour, and the real graded slab spins out with a holographic foil that shifts as you turn it. Rare and epic pulls hide their colour until the last second. A new My cards button lists every Collector Crypt card in your wallet with its grade, insured value and real front and back photos, lets you inspect each one in 3D, and sells a card back for USDC while its 72 hour buyback is open, behind a confirmation table and a stricter transaction check that refuses anything but the one card leaving your wallet.</description>
+		</item>
+		<item>
+			<title>NVIDIA Inception badge on the homepage</title>
+			<link>https://three.ws/nvidia</link>
+			<guid isPermaLink="false">2026-11-02:NVIDIA Inception badge on the homepage</guid>
+			<pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The homepage now shows the NVIDIA Inception member badge in its footer and lists NVIDIA Inception in the partner strip, both linking to the NVIDIA page. Every other page already carries the badge through the shared footer.</description>
+		</item>
+		<item>
 			<title>three.ws dresses for autumn</title>
 			<link>https://three.ws/</link>
 			<guid isPermaLink="false">2026-11-02:three.ws dresses for autumn</guid>
@@ -60,7 +76,7 @@
 			<guid isPermaLink="false">2026-11-01:Docs · The card gacha machine in /play</guid>
 			<pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>How to pull a real graded trading card from the capsule machine on the /play plaza, what the transaction checks prove before you sign, the 72-hour buyback, and the /api/gacha routes.</description>
+			<description>How to pull a real graded trading card from the capsule machine on the /play plaza, the 3D reveal, viewing and selling the cards in your wallet, what the transaction checks prove before you sign, and the /api/gacha routes.</description>
 		</item>
 		<item>
 			<title>A card gacha machine in /play: pull real graded trading cards</title>

@@ -791,6 +791,10 @@ export const limits = {
 	// Gacha writes (pull, submit, buyback): each builds or relays a real
 	// transaction upstream. A person pulls a few packs a minute at most.
 	gachaPlayIp: (ip) => getLimiter('gacha:play:ip', { limit: 40, window: '10 m' }).limit(ip),
+	// Wallet card scans (GET /api/gacha/cards): one scan is two RPC reads, up to
+	// 120 metadata fetches and up to 60 buyback checks, so it gets its own
+	// budget. A player refreshes their collection a few times a session.
+	gachaWalletIp: (ip) => getLimiter('gacha:wallet:ip', { limit: 30, window: '5 m' }).limit(ip),
 	// Copy Coach questions (api/copy/coach.js POST): anonymous, one LLM
 	// completion each. A first-timer asks a handful; 30 per 10 min is generous
 	// for a person and still bounds a script.

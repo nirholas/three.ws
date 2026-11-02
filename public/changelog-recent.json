@@ -1,14 +1,35 @@
 {
-	"generated_at": "2026-11-02T20:11:21.099Z",
+	"generated_at": "2026-11-02T21:30:54.922Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4259,
+	"total": 4261,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-02",
+			"type": "update",
+			"title": "Card gacha: a 3D capsule reveal, My cards, and selling from your wallet",
+			"summary": "Pulling a card in /play now plays a full 3D reveal: the capsule spins and shakes as light gathers into it, then cracks open with a flash, a shockwave and a light pillar in the card's rarity colour, and the real graded slab spins out with a holographic foil that shifts as you turn it. Rare and epic pulls hide their colour until the last second. A new My cards button lists every Collector Crypt card in your wallet with its grade, insured value and real front and back photos, lets you inspect each one in 3D, and sells a card back for USDC while its 72 hour buyback is open, behind a confirmation table and a stricter transaction check that refuses anything but the one card leaving your wallet.",
+			"link": "/play",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-02",
+			"type": "update",
+			"title": "NVIDIA Inception badge on the homepage",
+			"summary": "The homepage now shows the NVIDIA Inception member badge in its footer and lists NVIDIA Inception in the partner strip, both linking to the NVIDIA page. Every other page already carries the badge through the shared footer.",
+			"link": "/nvidia",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-02",
 			"type": "update",
@@ -73,7 +94,7 @@
 			"date": "2026-11-01",
 			"type": "launch",
 			"title": "Docs · The card gacha machine in /play",
-			"summary": "How to pull a real graded trading card from the capsule machine on the /play plaza, what the transaction checks prove before you sign, the 72-hour buyback, and the /api/gacha routes.",
+			"summary": "How to pull a real graded trading card from the capsule machine on the /play plaza, the 3D reveal, viewing and selling the cards in your wallet, what the transaction checks prove before you sign, and the /api/gacha routes.",
 			"link": "/docs/play-gacha",
 			"tags": [
 				"launch"
@@ -1526,26 +1547,6 @@
 			"tags": [
 				"fix",
 				"security"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Robinhood Chain launches now show every venue, the deployer's track record and a dev-sold flag",
-			"summary": "The launches board stopped watching NOXA, which shut down in July, and now finds launches on every venue seen on chain. Each row names the launchpad, shows how many earlier tokens the deployer launched and how many it sold out of, and flags launches where the dev has already sold.",
-			"link": "/markets/robinhood",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "See whether our X posts move $THREE: a Posts view on the coin chart",
-			"summary": "The $THREE chart has a new Posts tab that plots every @trythreews post at the price it went out at, sized by engagement and coloured by the +4h return, each bubble linking to the post. Across 197 posts the median +1h and +4h return after a post was +1.6%, against -0.1% and -0.7% at arbitrary moments; the +24h median was -1.4% against -2.4%. The content pipeline now also records the +24h price return after each post and lets it nudge ranking, lightly, once enough posts carry one.",
-			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
-			"tags": [
-				"feature"
 			]
 		}
 	]
