@@ -1,10 +1,10 @@
 {
 	"id": "grok-bot-recipes",
 	"scenarioHash": "df788c9440a3ae4af6f74788d0359d7c92f2ba20af15625c28fedae360b7d740",
-	"ranAt": "2026-10-13T18:45:10.814Z",
+	"ranAt": "2026-11-02T23:30:04.472Z",
 	"target": {
-		"commit": "7d172d48e",
-		"revision": "three-ws-api-00499-fgc"
+		"commit": "3e0b6b405",
+		"revision": "three-ws-api-00509-m45"
 	},
 	"passed": false,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/tutorials/grok-bot-recipes",
 			"detail": "loaded https://three.ws/tutorials/grok-bot-recipes",
 			"ok": true,
-			"ms": 7450,
+			"ms": 9128,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 18334,
+			"ms": 15626,
 			"frames": 60
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "files",
 			"ok": false,
 			"detail": "the page shows nothing matching /None of the (\\d+) source files this page documents/",
-			"ms": 208,
+			"ms": 148,
 			"frames": 0
 		}
 	],

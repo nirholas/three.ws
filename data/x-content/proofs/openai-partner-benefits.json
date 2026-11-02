@@ -1,10 +1,10 @@
 {
 	"id": "openai-partner-benefits",
 	"scenarioHash": "d81ea83a0886d361cc8cd8508b4cf46c0815ed4d6238942ec9e86b12fed22b66",
-	"ranAt": "2026-10-13T06:31:48.500Z",
+	"ranAt": "2026-11-02T23:03:29.633Z",
 	"target": {
-		"commit": "771cfef01",
-		"revision": "three-ws-api-00497-2ss"
+		"commit": "3e0b6b405",
+		"revision": "three-ws-api-00509-m45"
 	},
 	"passed": true,
 	"steps": [
@@ -14,14 +14,14 @@
 			"target": "https://three.ws/openai",
 			"detail": "loaded https://three.ws/openai",
 			"ok": true,
-			"ms": 8024,
+			"ms": 9277,
 			"frames": 0
 		},
 		{
 			"index": 2,
 			"kind": "read",
 			"target": "tools",
-			"detail": "tools = \"15\"",
+			"detail": "tools = \"16\"",
 			"ok": true,
 			"ms": 3,
 			"frames": 0
@@ -32,7 +32,7 @@
 			"target": "2400",
 			"detail": "2400 ms",
 			"ok": true,
-			"ms": 11553,
+			"ms": 11993,
 			"frames": 72
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "Connect the server.",
 			"detail": "scrolled 1573 px",
 			"ok": true,
-			"ms": 5890,
+			"ms": 6135,
 			"frames": 42
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "2400",
 			"detail": "2400 ms",
 			"ok": true,
-			"ms": 7497,
+			"ms": 8548,
 			"frames": 72
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "The generation tools.",
 			"detail": "scrolled 748 px",
 			"ok": true,
-			"ms": 4998,
+			"ms": 5303,
 			"frames": 42
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "The generation tools.",
 			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 23,
+			"ms": 30,
 			"frames": 0
 		},
 		{
@@ -77,12 +77,12 @@
 			"target": "4200",
 			"detail": "4200 ms",
 			"ok": true,
-			"ms": 13632,
+			"ms": 14971,
 			"frames": 126
 		}
 	],
 	"facts": {
-		"tools": "15"
+		"tools": "16"
 	},
 	"saw": [
 		"The generation tools."
@@ -91,7 +91,7 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/openai-partner-benefits/reel.mp4",
-		"sha256": "c22ae6f6c6c64167f07f54b123ff47caee168d96407bd00bf0a2a1171dce27fb",
+		"sha256": "7d1a2a0ac0fe022e838c3201bae977395556ff5d28b750ee7ea002741a5dc416",
 		"frames": 354,
 		"motion": 0.445,
 		"durationSec": 11.8,

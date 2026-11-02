@@ -1,9 +1,11 @@
 {
 	"id": "genesis",
-	"contentHash": "c8b5d381127da2edbc07b2d0d8efcdf0a22c4552521f55e7f5610fe380618fd3",
-	"reviewedAt": "2026-10-13T18:10:59.630Z",
-	"passed": true,
-	"blockers": [],
+	"contentHash": "a6e2cc4581b8123201494d0ad156b0e7ec2255d70ac9bd21c6f709a745796fe5",
+	"reviewedAt": "2026-11-02T23:25:20.853Z",
+	"passed": false,
+	"blockers": [
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",; \"status\": \"PERMISSION_; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+	],
 	"texts": [
 		"Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
 		"Genesis needs a sign-in, because it writes the agent and its wallet to your account. Remix forks a public avatar into an agent you own.\n\nthree.ws/genesis"
@@ -130,40 +132,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "publish",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
-			"voice": 5,
-			"professionalism": 5,
-			"visual": 4
-		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "Reel frame at 8.4 s / 11.6 s",
-				"problem": "The remix grid shows two adjacent tiles both named \"Boss Vernington\" with blank thumbnails; it is real product output and does not contradict the copy, but duplicated blank cards read as a rough edge in an otherwise clean reel.",
-				"fix": "Optional: on the next capture, pick a moment where the avatar grid has finished loading; not a reason to hold this post."
-			}
-		],
-		"rewrite": {
-			"posts": [
-				"Agent Genesis turns a sentence or a selfie into a working 3D agent. The body is rigged before you see it, so it walks and emotes on arrival, and it comes with its own custodial Solana wallet, a custodial EVM wallet, a persona written from your description, and a voice you pick.\n\nText mode paints a full-body reference image, reconstructs it into a textured mesh on our own Hunyuan3D GPU worker, then auto-rigs it with a humanoid skeleton. A selfie takes the face pipeline instead.",
-				"Genesis needs a sign-in, because it writes the agent and its wallet to your account. Remix forks a public avatar into an agent you own.\n\nthree.ws/genesis"
-			],
-			"altText": []
-		},
-		"summary": "Every claim passes against the live page or docs, the reel's captions match the frames and the three modes the copy names, and the voice contract is kept. The only blemish is duplicated blank avatar tiles in the remix grid, a cosmetic point not worth holding the post for.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": []
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",\n    \"status\": \"PERMISSION_\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
 }

@@ -1,15 +1,11 @@
 {
 	"id": "catalog-api",
-	"contentHash": "2c8c5019f72f5aa0279cf3cd197c77a863b64271e31686cfd16ba5a92b8a19ff",
-	"reviewedAt": "2026-10-13T18:38:04.267Z",
+	"contentHash": "2b5f36644f6604022e6aacd82a0e2e49a91f1aa654c841571b6715998429a05e",
+	"reviewedAt": "2026-11-02T23:30:04.470Z",
 	"passed": false,
 	"blockers": [
 		"evidence:proof relaxed: no step of the run expected \"relaxed\"",
-		"probe:scenario the filmed scenario: step 10 (read license): the page shows nothing matching /\"license\":\\s*\"(CC0)\"/",
-		"probe:api https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2: total is 0; needs at least 3900",
-		"probe:api https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2: items.0.license is undefined",
-		"editor (accuracy): The live API probe against https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2 returned total 0 and items.0.license undefined, directly contradicting the headline number, even though the filmed run read 3961 and the reel frames show \\\"total\\\":3961 and \\\"license\\\":\\\"CC0\\\". A core numeric claim with a failing live verification cannot ship; the probe and the run disagree and this must be resolved before any number goes out.",
-		"editor verdict is revise"
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",; \"status\": \"PERMISSION_; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
 	],
 	"texts": [
 		"More than 3,900 free 3D assets now answer one GET on three.ws/docs/api-reference, served from Cloud Run on @GoogleCloud. Objects, characters and motion clips sit behind a single search with no authentication, no API key and no payment. Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.",
@@ -134,20 +130,20 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "step 10 (read license): the page shows nothing matching /\"license\":\\s*\"(CC0)\"/"
+				"ok": true,
+				"detail": "12 steps passed against the live product, every claimed fact still holds (total 3961, matched 10, license CC0)"
 			},
 			{
 				"kind": "probe:api",
 				"target": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
-				"ok": false,
-				"detail": "total is 0; needs at least 3900"
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "probe:api",
 				"target": "https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2",
-				"ok": false,
-				"detail": "items.0.license is undefined"
+				"ok": true,
+				"detail": "HTTP 200, expectations met"
 			},
 			{
 				"kind": "link",
@@ -163,63 +159,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "revise",
-		"scores": {
-			"accuracy": 2,
-			"clarity": 4,
-			"specificity": 4,
-			"voice": 5,
-			"professionalism": 5,
-			"visual": 4
-		},
-		"issues": [
-			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "More than 3,900 free 3D assets",
-				"problem": "The live API probe against https://three.ws/api/catalog?q=wooden+chair&kind=object&limit=2 returned total 0 and items.0.license undefined, directly contradicting the headline number, even though the filmed run read 3961 and the reel frames show \\\"total\\\":3961 and \\\"license\\\":\\\"CC0\\\". A core numeric claim with a failing live verification cannot ship; the probe and the run disagree and this must be resolved before any number goes out.",
-				"fix": "Re-run the proof and the probe against production and reconcile them. If the public endpoint reliably answers total 3961, the claim may stand with a fresh passing run; until then, publish without the number."
-			},
-			{
-				"severity": "major",
-				"area": "accuracy",
-				"quote": "when nothing matches all of them the search retries on any of them and marks the answer relaxed: true",
-				"problem": "The run never saw \\\"relaxed\\\" (proof check failed); only the docs page text supports this. The reel's live JSON at 14 s shows \\\"relaxed\\\":false, which does not contradict the copy (the query matched), but the mechanism description rests on docs text alone.",
-				"fix": "Keep the sentence, since the live docs page states it word for word, but have the proof scenario include a query that triggers a relaxed response so the claim is seen, not just quoted."
-			},
-			{
-				"severity": "minor",
-				"area": "clarity",
-				"quote": "served from Cloud Run on @GoogleCloud",
-				"problem": "A first-time reader may not connect the catalog API to Cloud Run; it reads as an appended credential rather than information about the feature.",
-				"fix": "The mention check passes and the tag is genuine, so it can stay; folding it into a shorter clause ('one open GET, served from Cloud Run on @GoogleCloud') makes it read as part of the mechanism."
-			}
-		],
-		"rewrite": {
-			"posts": [
-				"One GET on three.ws/docs/api-reference searches every free ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library. No authentication, no API key, no payment. Every word of the query must match; if nothing matches all of them the search retries on any of them and sets relaxed: true, so a phrase never dead-ends silently. Served from Cloud Run on @GoogleCloud.",
-				"Each hit carries a direct GLB URL, its license and its byte size. Pages run 1 to 50 results with next_offset for the next page, open CORS, cached at the edge for 5 minutes. The same join backs the free MCP catalog tools and the assets CLI, so all three surfaces answer identically."
-			],
-			"altText": [
-				""
-			]
-		},
-		"summary": "The headline 3,900-asset figure is contradicted by a live API probe that returned total 0, which blocks the number even though the filmed run read 3961. The rewrite drops the count and keeps only claims that passed against the live docs page; re-run the proof and probe, and if they agree on 3961 the number can return in the first line.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": [
-			"head: 2 links (three.ws/docs/api-reference, three.ws); one post links one surface, and X reads a bare three.ws as a link",
-			"claims: claim \"More than 3,900 free 3D assets\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"answer one GET\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Objects, characters and motion clips sit behind a single search\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"no authentication, no API key and no payment\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Every word of the query has to match; when nothing matches all of them the search retries on any of them and marks the answer relaxed: true, so a phrase never dead-ends silently.\" does not appear in the copy; claims must quote the post"
-		]
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",\n    \"status\": \"PERMISSION_\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
 }

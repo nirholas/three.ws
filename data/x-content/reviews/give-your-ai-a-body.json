@@ -1,9 +1,11 @@
 {
 	"id": "give-your-ai-a-body",
-	"contentHash": "8deac2ef0ac2c2d17ec7e1a49602c2aedb8eea0e0e21609bb294ab3388b8825f",
-	"reviewedAt": "2026-10-13T06:05:06.261Z",
-	"passed": true,
-	"blockers": [],
+	"contentHash": "f5e88c5987ef52cac4e178f648c30bc235b960a3df9eab0fbded1b52bb5ff256",
+	"reviewedAt": "2026-11-02T23:28:19.192Z",
+	"passed": false,
+	"blockers": [
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",; \"status\": \"PERMISSION_; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+	],
 	"texts": [
 		"Your AI has a brain. Give it a body. In the Forge, text or photos become a textured 3D model you can orbit, view in AR and download.\n\nPick the engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
 		"Quality has three tiers: Draft, Standard and High. High is a $THREE holder feature: hold to unlock, or pay per generation.\n\nOpen the Forge and try a prompt: three.ws/forge"
@@ -74,40 +76,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "publish",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 4,
-			"voice": 4,
-			"professionalism": 5,
-			"visual": 5
-		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "voice",
-				"quote": "Your AI has a brain. Give it a body.",
-				"problem": "The two-short-sentence drumbeat sits close to the banned 'one-word-sentence drumbeat' pattern and edges into copywriting rather than stating what the Forge does first; the mechanism lead ('text or photos become a textured 3D model...') is the stronger true statement and could open the post.",
-				"fix": "Optional: open directly on 'In the Forge, text or photos become a textured 3D model you can orbit, view in AR and download.' and drop the brain/body framing."
-			}
-		],
-		"rewrite": {
-			"posts": [
-				"Your AI has a brain. Give it a body. In the Forge, text or photos become a textured 3D model you can orbit, view in AR and download.\n\nPick the engine that builds it, and several are free to use. Below the prompt, a live feed shows what other people just forged, each one ready to open in the viewer or remix.",
-				"Quality has three tiers: Draft, Standard and High. High is a $THREE holder feature: hold to unlock, or pay per generation.\n\nOpen the Forge and try a prompt: three.ws/forge"
-			],
-			"altText": []
-		},
-		"summary": "Every claim is verified word for word against the live Forge page and the reel's frames (prompt input, free engines, photo mode, Fresh from the Forge feed) all match the copy and captions. The only note is a minor voice polish on the punchy opener; safe to ship as is.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": []
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",\n    \"status\": \"PERMISSION_\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
 }

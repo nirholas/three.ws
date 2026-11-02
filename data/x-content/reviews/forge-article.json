@@ -1,9 +1,11 @@
 {
 	"id": "forge-article",
-	"contentHash": "11b72f602fb1b193a27bbce5c5901878069df9bede6ac29ab62f15ffe18bf1f8",
-	"reviewedAt": "2026-10-13T18:18:24.084Z",
-	"passed": true,
-	"blockers": [],
+	"contentHash": "0909a8166ee8a860c8e9c38c049b22d87774576ddb024eb27c40d2b9f4a128bd",
+	"reviewedAt": "2026-11-02T23:27:23.090Z",
+	"passed": false,
+	"blockers": [
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",; \"status\": \"PERMISSION_; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+	],
 	"texts": [
 		"A picture became a textured 3D model in 2 minutes 17 seconds, and a signed receipt shows how",
 		"One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
@@ -625,97 +627,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "publish",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
-			"voice": 5,
-			"professionalism": 5,
-			"visual": 4
-		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "The delivered 3D model in the three.ws viewer on a dark background",
-				"problem": "The cover frame shows the bare model centered on a plain dark field with no viewer chrome: no toolbar, no Download GLB or Do more with this model buttons, and a small unexplained cursor-like artefact near the hands. Saying 'in the three.ws viewer' implies interface elements the image does not contain, and will read as a raw render, not a screenshot of the product surface.",
-				"fix": "Either recapture the cover inside the live viewer so the frame includes the surrounding UI (matching the alt text of the inline delivered-model.png), or change the cover alt text to: 'The delivered 3D model rebuilt from a single picture by the Forge: a noir detective in a long black coat, fedora and white gloves, seen from the side with his hands outstretched on a dark background'."
-			}
-		],
-		"rewrite": {
-			"posts": [
-				"One picture into the Forge, no account: 2 minutes 17 seconds later, a textured 3D model built on our own NVIDIA L4, plus a signed receipt for every stage. The write-up covers the engine ladder, the mid-job rescue and the free lane: three.ws/forge"
-			],
-			"altText": [
-				"The delivered AI-generated model rebuilt from one picture by the Forge: a noir detective in a long black coat, fedora and white gloves, seen from the side with his hands outstretched on a dark background"
-			]
-		},
-		"summary": "The article meets the house standard end to end: a verified 137,433 ms run on a verified NVIDIA L4 told plainly, 8+ sections with real code and tables, 4 inline images, exact partner designations, model credits, and a Try it close, and every claim passed verification. The only fix worth making is the cover alt text, which claims viewer UI the frame does not show; recapture in the viewer or adjust the description.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": [
-			"claims: claim \"137,433 ms\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"137,423 ms\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The mesh in our run was built on an NVIDIA L4\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a Draft or Standard model is free and needs no account\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The realism of the final mesh is set almost entirely by the realism of that one reference image\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"painted as one centered subject on a plain seamless background, under soft even light, with real-world materials\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A Gemini image model on Vertex AI leads, because it draws the most photoreal reference\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"no single provider's failure is ever the terminal error for the picture\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The default engine at every tier is TRELLIS on our own NVIDIA L4 worker\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It takes the first lane in its order that is healthy or whose state is unknown; if none is clean, it takes the first that is not confirmed down\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Hugging Face Spaces for photos, and NVIDIA's hosted TRELLIS for text, which keeps a text prompt answerable even when every one of our GPU workers is cold\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Engines that need your own API key run only when you pick them\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Standard, usually about a minute\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Its community licence does not cover the European Union, the United Kingdom or South Korea\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the router resolves the country on the server and keeps every Tencent lane out of those regions\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It runs on our own worker on an RTX PRO 6000 Blackwell\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"then paints colour, roughness and normal maps with a second, rather than a single baked colour map\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The poll handler marks the failed lane unhealthy for 90 seconds\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"recovers the original prompt and the stored reference picture from the job's record, resubmits them to the next lane, and binds the old job id to the new one\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"you keep watching the same progress bar\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"our own GPU workers first, then free external lanes, then the paid platform default, then the geometry-only TripoSG lane as the final rung\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A job gets its first lane plus up to three backups\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"TripoSG closes the chain because it returns an untextured mesh, so it runs only once every textured lane has failed or is marked down\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"90 seconds\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"4 seconds\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The response still names the way forward\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It lists the lanes that can serve a fresh retry\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Hugging Face Spaces block for the whole generation, and NVIDIA's hosted lane takes text only, so neither can pick up a job from a status poll\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a job that started from several photos continues from one of them, and says so by reporting how many views it used\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"held warm with one instance, because a cold start means loading 14 GiB of weights before any work begins\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Every worker speaks the same contract\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The Forge's health check reads the second field, so a worker that is up but still loading is reported degraded, not healthy\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Task state lives in object storage rather than in the instance\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"18 GiB staged plus 14 GiB loaded is a 32 GiB peak, and the RTX PRO 6000 tier's floor of 80 GiB clears it with room to spare\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Blackwell needs its GPU code built with NVIDIA's 12.8 toolkit\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The worker image compiles its extensions for both GPU generations, so which card runs it is a deploy flag rather than a rebuild\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"signed with an ed25519 key\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"/api/runs?stats=1&days=7\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"with no prompt, file or id in it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"published at CVPR 2025 and released under the MIT licence\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"released under the Tencent Hunyuan Non-Commercial licence\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"TripoSG, the geometry-only rung at the end of the rescue chain, comes from VAST AI Research under the MIT licence\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"returns only generated files\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"our worker runs the TRELLIS-image-large checkpoint\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"one Cloud Run service serves the site and every API handler\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"NVIDIA Inception\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a member of NVIDIA Inception\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a member of Google Cloud for Web3 Startups\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"an IBM Business Partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"an AWS Partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"listed on the Alibaba Cloud International Marketplace\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"accepted into the Quicknode Startup Program\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"partnered with HackerNoon\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Hunyuan3D 2.1\" does not appear in the copy; claims must quote the post"
-		]
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",\n    \"status\": \"PERMISSION_\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
 }

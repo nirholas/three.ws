@@ -1,10 +1,10 @@
 {
 	"id": "genesis",
 	"scenarioHash": "a9c5e90a7f2a1c3ef44967f1514c721ec32467f495b683ed5ef1bd3f57633b45",
-	"ranAt": "2026-10-13T06:33:23.647Z",
+	"ranAt": "2026-11-02T22:58:58.200Z",
 	"target": {
-		"commit": "771cfef01",
-		"revision": "three-ws-api-00497-2ss"
+		"commit": "4404f0fa8",
+		"revision": "three-ws-api-00508-2vp"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/genesis",
 			"detail": "loaded https://three.ws/genesis",
 			"ok": true,
-			"ms": 8805,
+			"ms": 8049,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "1800",
 			"detail": "1800 ms",
 			"ok": true,
-			"ms": 11716,
+			"ms": 8156,
 			"frames": 54
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "A cosmic oracle in flowing star-speckled robes",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 5303,
+			"ms": 3503,
 			"frames": 21
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "2400",
 			"detail": "2400 ms",
 			"ok": true,
-			"ms": 12073,
+			"ms": 10950,
 			"frames": 72
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "📸 Selfie",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 3995,
+			"ms": 3446,
 			"frames": 21
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "2400",
 			"detail": "2400 ms",
 			"ok": true,
-			"ms": 12545,
+			"ms": 10325,
 			"frames": 72
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "🧬 Remix",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 4734,
+			"ms": 3515,
 			"frames": 21
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "Fork a public avatar",
 			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 37,
+			"ms": 28,
 			"frames": 0
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "4200",
 			"detail": "4200 ms",
 			"ok": true,
-			"ms": 22694,
+			"ms": 21738,
 			"frames": 126
 		}
 	],
@@ -98,7 +98,7 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/genesis/reel.mp4",
-		"sha256": "f54dafe485cbc7e1d288c70659f5b4832d4966edb579e57b891d5c084c808988",
+		"sha256": "813626f78ef7e88843ae81e134ce728a6d3c6ff706bcd31dcb86f91429b800e4",
 		"frames": 387,
 		"motion": 0.308,
 		"durationSec": 12.9,

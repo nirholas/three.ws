@@ -183,6 +183,8 @@ three.ws builds alongside a group of cloud, AI, hardware, infrastructure and med
 
 **Amazon Web Services.** three.ws is an AWS Partner, enrolled in the AWS Partner Network Software Path, with an AWS Marketplace integration built and deployed. We publish engineering write-ups on the AWS Builder Center.
 
+**Microsoft.** three.ws is live on Microsoft Marketplace, so Microsoft customers can find and procure open-source 3D AI agents through the storefront they already use. TRELLIS.2 from Microsoft Research powers the default image-to-3D lane on the platform.
+
 **Alibaba Cloud.** three.ws is listed on the Alibaba Cloud International Marketplace, and Qwen models are lanes in the platform's model router.
 
 **Quicknode.** three.ws is accepted into the Quicknode Startup Program, and Quicknode's RPC endpoints are a rung in the Solana failover chain.

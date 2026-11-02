@@ -1,16 +1,20 @@
 {
 	"id": "grok-studio",
-	"contentHash": "bc509cfae05882de656e46cc700dcddd471d1421abea9456f855d91df7bb4768",
-	"reviewedAt": "2026-10-13T18:49:59.346Z",
-	"passed": true,
-	"blockers": [],
+	"contentHash": "c9376445cd9a74c604f6e2b84c14b58e86e0d15946758e3b182996b1fd6ea47f",
+	"reviewedAt": "2026-11-02T23:30:59.618Z",
+	"passed": false,
+	"blockers": [
+		"evidence:proof tools: the run read tools = \"16\"; the claim needs \"15\"",
+		"probe:api the free Grok server still lists the 15 tools the post counts: result.tools.length is 16",
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",; \"status\": \"PERMISSION_; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+	],
 	"texts": [
 		"Grok Bot can make 3D now. One sentence adds the free studio at three.ws/grok as a custom MCP server, with no account and no key, and from then on text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.\n\nGrok Bot runs on its own cloud computer, so a render that takes minutes on a cold GPU never hangs a task: every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job. Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.\n\nThe 15 tools behind it are read live from the server's tools/list. Every 3D generation lane runs on @nvidia silicon; we are a member of NVIDIA Inception.",
 		"Three jobs on the page name the tools Grok calls in order: an asset pack from the CC0 catalog, a model with a page-ready embed, and a talking persona that lip-syncs a greeting. Six tested recipes and a skill file you can upload to Grok Skills sit beside them."
 	],
 	"lint": [],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "One sentence adds the free studio",
@@ -72,8 +76,8 @@
 				"claim": "15 tools",
 				"kind": "evidence:proof",
 				"target": "tools",
-				"ok": true,
-				"detail": "the run read tools = \"15\""
+				"ok": false,
+				"detail": "the run read tools = \"16\"; the claim needs \"15\""
 			},
 			{
 				"claim": "read live from the server's tools/list",
@@ -149,13 +153,13 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "12 steps passed against the live product, every claimed fact still holds (tools 15)"
+				"detail": "12 steps passed against the live product, every claimed fact still holds (tools 16)"
 			},
 			{
 				"kind": "probe:api",
 				"target": "the free Grok server still lists the 15 tools the post counts",
-				"ok": true,
-				"detail": "HTTP 200, expectations met"
+				"ok": false,
+				"detail": "result.tools.length is 16"
 			},
 			{
 				"kind": "link",
@@ -171,34 +175,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "publish",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
-			"voice": 5,
-			"professionalism": 5,
-			"visual": 5
-		},
-		"issues": [],
-		"rewrite": {
-			"posts": [
-				"Grok Bot can make 3D now. One sentence adds the free studio at three.ws/grok as a custom MCP server, with no account and no key, and from then on text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.\n\nGrok Bot runs on its own cloud computer, so a render that takes minutes on a cold GPU never hangs a task: every call answers within 40 seconds with the model or a job id, and Grok collects it with check_job. Limits follow your MCP session, not xAI's IP address, so one busy user never spends yours.\n\nThe 15 tools behind it are read live from the server's tools/list. Every 3D generation lane runs on @nvidia silicon; we are a member of NVIDIA Inception.",
-				"Three jobs on the page name the tools Grok calls in order: an asset pack from the CC0 catalog, a model with a page-ready embed, and a talking persona that lip-syncs a greeting. Six tested recipes and a skill file you can upload to Grok Skills sit beside them."
-			],
-			"altText": [
-				"A reel of the three.ws/grok page on the live product: the one-sentence MCP setup for Grok Bot, models generated on the free studio, the 15-tool list read live from the server's tools/list, three jobs that each name the tools Grok calls in order, and the same connector URL shown for Grok Bot and the xAI API."
-			]
-		},
-		"summary": "Every claim is verified verbatim against the live /grok and /partners pages, the 15-tool count is proven by the run and a live API probe, and each reel caption matches the frame it sits under. Voice, tagging (NVIDIA only, as a verified account the feature runs on), and the single link all conform to the house contract; ship as is.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": []
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",\n    \"status\": \"PERMISSION_\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
 }

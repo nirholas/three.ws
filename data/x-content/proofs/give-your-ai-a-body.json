@@ -1,10 +1,10 @@
 {
 	"id": "give-your-ai-a-body",
 	"scenarioHash": "d1102f92c1fe935cc3f273e4d4c3f8deb8a754e8c73b7530309ec7503ce85017",
-	"ranAt": "2026-10-13T05:59:27.323Z",
+	"ranAt": "2026-11-02T23:00:32.187Z",
 	"target": {
-		"commit": "771cfef01",
-		"revision": "three-ws-api-00497-2ss"
+		"commit": "4404f0fa8",
+		"revision": "three-ws-api-00508-2vp"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/forge",
 			"detail": "loaded https://three.ws/forge",
 			"ok": true,
-			"ms": 9058,
+			"ms": 12242,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "1800",
 			"detail": "1800 ms",
 			"ok": true,
-			"ms": 12776,
+			"ms": 8535,
 			"frames": 54
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "Surprise me",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 5682,
+			"ms": 3784,
 			"frames": 21
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 13867,
+			"ms": 10229,
 			"frames": 66
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "NVIDIA FREE",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 4423,
+			"ms": 3705,
 			"frames": 21
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 17047,
+			"ms": 9462,
 			"frames": 60
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "From photos",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 7722,
+			"ms": 3685,
 			"frames": 21
 		},
 		{
@@ -77,25 +77,25 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 21910,
+			"ms": 11172,
 			"frames": 66
 		},
 		{
 			"index": 9,
 			"kind": "scroll",
 			"target": "Fresh from the Forge",
-			"detail": "scrolled 1943 px",
+			"detail": "scrolled 1969 px",
 			"ok": true,
-			"ms": 12360,
+			"ms": 6281,
 			"frames": 30
 		},
 		{
 			"index": 10,
 			"kind": "expect",
 			"target": "Fresh from the Forge",
-			"detail": "appeared after 0.1 s",
+			"detail": "appeared after 0.0 s",
 			"ok": true,
-			"ms": 101,
+			"ms": 38,
 			"frames": 0
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "4000",
 			"detail": "4000 ms",
 			"ok": true,
-			"ms": 38488,
+			"ms": 25431,
 			"frames": 120
 		}
 	],
@@ -116,9 +116,9 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/give-your-ai-a-body/reel.mp4",
-		"sha256": "74fa05fdc472c34b77802f384a39d6645115234daa2b8ede53f5ff632bbcd07d",
+		"sha256": "6dd5b8e9b805326bd6f7c2d1f0e010da2c07d3f612e92266a186490e0765813e",
 		"frames": 459,
-		"motion": 0.21,
+		"motion": 0.212,
 		"durationSec": 15.3,
 		"width": 1080,
 		"height": 1080,

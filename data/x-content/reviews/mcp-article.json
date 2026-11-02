@@ -1,16 +1,34 @@
 {
 	"id": "mcp-article",
-	"contentHash": "ab62c6389b8783bf2a68629d5f6ba73cb1c8aea9845a5037be2d869b37254ba7",
-	"reviewedAt": "2026-10-13T06:39:20.322Z",
-	"passed": true,
-	"blockers": [],
+	"contentHash": "d62db136b2b91f375dc6fa4c5ec69e4fd0ad496fba5ccece3d21bb900e5652cb",
+	"reviewedAt": "2026-11-02T23:25:31.436Z",
+	"passed": false,
+	"blockers": [
+		"evidence:file docs/mcp-studio.md: file does not contain \"`get_job` never\nstarts work and does not consume generation quota\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"reshaped so a client branches on `status` alone\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"**`idempotency_key`** is an optional argument on `forge_free`, `text_to_avatar`,\n`mesh_forge`, `rig_mesh`, `forge_avatar` and `refine_model`\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"within 24 hours gets the original\njob back instead of a new generation\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"A failure is never remembered\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"A different request under the same key** is refused\"",
+		"evidence:file docs/mcp-studio.md: file does not contain /`notifications/progress` event each time the job reports\\s+movement/",
+		"evidence:file docs/mcp-studio.md: file does not contain \"get the ordinary\nsingle JSON response, unchanged\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"are never\nthrottled by it\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"A capped call returns HTTP 429 with a JSON-RPC error\"",
+		"evidence:file docs/mcp-studio.md: file does not contain /free, anonymous, no\\s+account/",
+		"evidence:file docs/mcp-studio.md: file does not contain /gets its own burst and\\s+hourly budget/",
+		"evidence:file docs/mcp-studio.md: file does not contain \"Keep the URL private: whoever holds it spends that\ninstallation's budget.\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"**Burst:** 4 generations / minute / IP\"",
+		"evidence:file docs/mcp-studio.md: file does not contain \"**Hourly:** 30 generations / hour / IP\"",
+		"probe:api the free server still lists fifteen tools to a keyless client: result.tools.length is 16",
+		"the AI editor did not run: no model was reachable: Vertex 403: {; \"error\": {; \"code\": 403,; \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",; \"status\": \"PERMISSION_; openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr; openai 429: {; \"error\": {; \"message\": \"Your account is not active, please check your billing details on our website.\",; \"type\": \"billing_not_active\",; \"param\": null,; \"code\": \"billi; nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"};"
+	],
 	"texts": [
 		"Fifteen free 3D tools for Claude Code and any MCP client, one address, no account, no key needed",
 		"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up follows one real session against the server, frame by frame, then covers retries, progress and quotas: https://three.ws/docs/mcp-studio"
 	],
 	"lint": [],
 	"verification": {
-		"ok": true,
+		"ok": false,
 		"checks": [
 			{
 				"claim": "Fifteen free 3D tools",
@@ -254,8 +272,8 @@
 				"claim": "Neither collector counts against the generation quota",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"`get_job` never\nstarts work and does not consume generation quota\""
 			},
 			{
 				"claim": "Neither collector counts against the generation quota",
@@ -268,50 +286,50 @@
 				"claim": "a script can branch on a single status field",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"reshaped so a client branches on `status` alone\""
 			},
 			{
 				"claim": "Every generation tool accepts an optional idempotency_key",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"**`idempotency_key`** is an optional argument on `forge_free`, `text_to_avatar`,\n`mesh_forge`, `rig_mesh`, `forge_avatar` and `refine_model`\""
 			},
 			{
 				"claim": "within a day gets the original job back instead of a new generation",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"within 24 hours gets the original\njob back instead of a new generation\""
 			},
 			{
 				"claim": "A failure is never remembered",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"A failure is never remembered\""
 			},
 			{
 				"claim": "A different request under the same key is refused",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"A different request under the same key** is refused\""
 			},
 			{
 				"claim": "a notification each time the job moves",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain /`notifications/progress` event each time the job reports\\s+movement/"
 			},
 			{
 				"claim": "A client that sends no token gets the ordinary single JSON response, unchanged",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"get the ordinary\nsingle JSON response, unchanged\""
 			},
 			{
 				"claim": "look_at_model rides the generation quota",
@@ -324,36 +342,36 @@
 				"claim": "are never throttled by it",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"are never\nthrottled by it\""
 			},
 			{
 				"claim": "A capped call returns HTTP 429 with a JSON-RPC error",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"A capped call returns HTTP 429 with a JSON-RPC error\""
 			},
 			{
 				"claim": "which is free, anonymous and needs no account",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain /free, anonymous, no\\s+account/"
 			},
 			{
 				"claim": "its own burst and hourly budget",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain /gets its own burst and\\s+hourly budget/"
 			},
 			{
 				"claim": "Keep it private, because whoever holds the URL spends that installation's budget",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"Keep the URL private: whoever holds it spends that\ninstallation's budget.\""
 			},
 			{
 				"claim": "a protocol client that connects there is sent through sign-in first",
@@ -408,15 +426,15 @@
 				"claim": "four generations a minute and thirty an hour for each IP address",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"**Burst:** 4 generations / minute / IP\""
 			},
 			{
 				"claim": "four generations a minute and thirty an hour for each IP address",
 				"kind": "evidence:file",
 				"target": "docs/mcp-studio.md",
-				"ok": true,
-				"detail": "file supports the claim"
+				"ok": false,
+				"detail": "file does not contain \"**Hourly:** 30 generations / hour / IP\""
 			},
 			{
 				"claim": "twenty persona writes a minute",
@@ -547,8 +565,8 @@
 			{
 				"kind": "probe:api",
 				"target": "the free server still lists fifteen tools to a keyless client",
-				"ok": true,
-				"detail": "HTTP 200, expectations met"
+				"ok": false,
+				"detail": "result.tools.length is 16"
 			},
 			{
 				"kind": "probe:api",
@@ -624,116 +642,6 @@
 			}
 		]
 	},
-	"editor": {
-		"verdict": "publish",
-		"scores": {
-			"accuracy": 5,
-			"clarity": 5,
-			"specificity": 5,
-			"voice": 5,
-			"professionalism": 5,
-			"visual": 5
-		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "clarity",
-				"quote": "a search of the free asset catalog",
-				"problem": "The phrasing 'a search of' is slightly awkward next to the parallel verb phrases in the list; a reader skimming the first line parses it fine but it is the least smooth item in the enumeration.",
-				"fix": "Optionally change to 'search of a free asset catalog' or leave as is; not blocking."
-			},
-			{
-				"severity": "minor",
-				"area": "accuracy",
-				"quote": "The same four lines open the text content",
-				"problem": "This literal HTML/field wording is verified but opaque to a casual reader; the sentence works only because of surrounding context.",
-				"fix": "Could add '(viewer_url, glb_url, poster_png_url, embed_html)' inline, but the surrounding table already covers it, so this is polish only."
-			}
-		],
-		"rewrite": {
-			"posts": [
-				"Add one address to Claude Code or any MCP client and the assistant gets fifteen free 3D tools, with no account or key: text or an image to a textured model, rigged avatars, rigging, refinement, a search of the free asset catalog, a persistent agent body that speaks, and look_at_model, which renders a model so the assistant can check its own work. The write-up follows one real session against the server, frame by frame, then covers retries, progress and quotas: https://three.ws/docs/mcp-studio"
-			],
-			"altText": [
-				"An orange low-poly robot with a domed head and two round dark eyes, rendered on a dark background by the three.ws render endpoint; it is the model the look_at_model tool inspected in the session the article walks through, one of the fifteen free tools on the server"
-			]
-		},
-		"summary": "Every claim in the post and article verified against the docs, code, live partners page, and live API probes, and the head post keeps the same link and obeys the voice contract. The Article meets depth and shape (97-character title with the headline number, 8+ sections, one real run followed through every stage, partners with exact designations, code and tables well over limits, 4 inline images, Try it section), and the cover matches the copy with solid alt text. Ship as is.",
-		"model": "nvidia:moonshotai/kimi-k3",
-		"fallbacks": [
-			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
-			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
-			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
-		],
-		"rewriteFindings": [
-			"claims: claim \"fifteen free tools for 3D work\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"What the fifteen tools do\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"runs an MCP server that needs no account and no API key\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"connect with no credentials at all\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"captured against production\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the tools are there the next time a session starts\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"because the file is read when a session starts\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The server answers every request synchronously over POST\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"so there is no stream to hold open\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a ChatGPT-focused address with a reviewed subset of nine 3D tools and the model viewer\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a Grok address that answers every call within forty seconds\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"share one generation quota\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"serves all fifteen\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a few lines\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The handshake reported the server as three-ws-3d-studio-free, version 1.0.0\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Five of the fifteen are marked read-only\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the expressive robot from the platform's shared animation library\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"generate again with a prompt that names the specific fault\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"up to six angles, adding top and bottom, and frames from 128 up to 1024 pixels\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"four views at 512 pixels\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It works on any public GLB over https\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"every result that carries a model also carries four absolute links under fixed names\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"with the script pinned to version 4.4.0 and carrying a sha384 integrity attribute\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The same four lines open the text content\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the job keeps running on the server\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"so the assistant knows how long to wait rather than retrying blind\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"check_job returns the ordinary success envelope when the job is done\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Neither collector counts against the generation quota\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a script can branch on a single status field\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Every generation tool accepts an optional idempotency_key\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"within a day gets the original job back instead of a new generation\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A failure is never remembered\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A different request under the same key is refused\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a notification each time the job moves\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A client that sends no token gets the ordinary single JSON response, unchanged\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"look_at_model rides the generation quota\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"are never throttled by it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"A capped call returns HTTP 429 with a JSON-RPC error\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"which is free, anonymous and needs no account\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"its own burst and hourly budget\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Keep it private, because whoever holds the URL spends that installation's budget\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a protocol client that connects there is sent through sign-in first\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the catalog tools never count against it\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the server's own instructions tell the assistant to search it before generating anything\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The result also carries a Spatial MCP artifact\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"The studio server was built for the ChatGPT app directory\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"that worker shuts down when idle\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"the call degrades to standard rather than failing the conversation\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"four generations a minute and thirty an hour for each IP address\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"twenty persona writes a minute\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three hundred requests a minute\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is an OpenAI Select Partner in the OpenAI Partner Network\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"IBM is listed as a Strategic partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"3D agent identity integrates with IBM watsonx and IBM Granite\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"AWS is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is deployed on AWS infrastructure with Marketplace availability\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Google Cloud is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Google Cloud powers three.ws inference, storage, and real-time serving, and Vertex AI integration lets agents use Gemini models\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Alibaba Cloud is listed as a Cloud partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"It extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is a member of NVIDIA Inception, NVIDIA's program for startups building on accelerated computing\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Every 3D generation lane already runs on NVIDIA silicon\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"HackerNoon is listed as a Media partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a builder-focused publishing partnership of feature articles, tutorials, and developer guides for people shipping with AI\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Quicknode is listed as an Infrastructure partner\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"three.ws is a member of the Quicknode Startup Program with approved infrastructure credits\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"Quicknode's globally distributed RPC endpoints add capacity and redundancy to the chain access behind agent wallets\" does not appear in the copy; claims must quote the post"
-		]
-	},
-	"editorError": null
+	"editor": null,
+	"editorError": "no model was reachable:\n  Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"There are issues with your billing account, please resolve / pay your outstanding balance for project: projects/93741856042\",\n    \"status\": \"PERMISSION_\n  openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr\n  openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi\n  nvidia 410: {\"type\":\"about:blank\",\"title\":\"Gone\",\"status\":410,\"detail\":\"The model 'moonshotai/kimi-k3' has reached its end of life on 2026-10-15T08:00:00Z and is no longer available.\"}\n"
 }

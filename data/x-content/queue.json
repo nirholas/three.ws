@@ -155,7 +155,6 @@
 					"media": [
 						{
 							"path": "public/x-media/genesis/reel.mp4",
-							"alt": "A screen recording of the three.ws Agent Genesis page: a prompt example, a cosmic oracle in star-speckled robes, is chosen, then the Selfie mode and the Remix mode that forks a public avatar are opened in turn",
 							"probe": {
 								"durationSec": 12.9,
 								"width": 1080,
@@ -18352,6 +18351,14 @@
 					"media": [
 						{
 							"path": "public/x-media/give-your-ai-a-body/reel.mp4",
+							"probe": {
+								"durationSec": 15.3,
+								"width": 1080,
+								"height": 1080,
+								"fps": 30,
+								"videoCodec": "h264",
+								"pixFmt": "yuv420p"
+							},
 							"reel": true
 						}
 					]
@@ -18486,7 +18493,6 @@
 					"media": [
 						{
 							"path": "public/x-media/openai-partner-benefits/reel.mp4",
-							"alt": "A screen recording of the three.ws OpenAI page showing the 15-tool 3D Studio connector, scrolling down through the Connect the server steps to the generation tools",
 							"probe": {
 								"durationSec": 11.8,
 								"width": 1280,
@@ -23694,7 +23700,7 @@
 						{
 							"path": "public/x-media/voice-article/reel.mp4",
 							"probe": {
-								"durationSec": 22.43,
+								"durationSec": 17.43,
 								"width": 1280,
 								"height": 720,
 								"fps": 30,

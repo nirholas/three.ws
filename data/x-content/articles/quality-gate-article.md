@@ -198,6 +198,8 @@ three.ws builds alongside a group of cloud, AI, hardware, infrastructure and med
 
 **Amazon Web Services.** three.ws is deployed on AWS infrastructure with Marketplace availability.
 
+**Microsoft.** three.ws is live on Microsoft Marketplace, so Microsoft customers can find and procure open-source 3D AI agents through the storefront they already use. TRELLIS.2 from Microsoft Research powers the default image-to-3D lane on the platform.
+
 **Google Cloud.** Google Cloud powers three.ws inference, storage and real-time serving.
 
 **Alibaba Cloud.** Alibaba Cloud extends three.ws into APAC markets with Qwen model integration and regional MCP server deployment, with low-latency inference close to users in Asia.

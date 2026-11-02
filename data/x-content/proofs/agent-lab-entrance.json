@@ -1,10 +1,10 @@
 {
 	"id": "agent-lab-entrance",
 	"scenarioHash": "7ab832f04ddf50bde9e6effacff7992459e05e1ad90c14a35ec3d448401f064b",
-	"ranAt": "2026-10-13T18:27:26.405Z",
+	"ranAt": "2026-11-02T23:04:49.373Z",
 	"target": {
-		"commit": "771cfef01",
-		"revision": "three-ws-api-00497-2ss"
+		"commit": "3e0b6b405",
+		"revision": "three-ws-api-00509-m45"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/demos/agents/wrecking-ball.html",
 			"detail": "loaded https://three.ws/demos/agents/wrecking-ball.html",
 			"ok": true,
-			"ms": 9984,
+			"ms": 10589,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "Make an entrance",
 			"detail": "appeared after 0.1 s",
 			"ok": true,
-			"ms": 98,
+			"ms": 102,
 			"frames": 0
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "1600",
 			"detail": "1600 ms",
 			"ok": true,
-			"ms": 7221,
+			"ms": 8349,
 			"frames": 48
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "Swing again",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 3153,
+			"ms": 3823,
 			"frames": 21
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "3800",
 			"detail": "3800 ms",
 			"ok": true,
-			"ms": 17216,
+			"ms": 19731,
 			"frames": 114
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "Hit this one",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 3286,
+			"ms": 3818,
 			"frames": 21
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "4200",
 			"detail": "4200 ms",
 			"ok": true,
-			"ms": 18909,
+			"ms": 22125,
 			"frames": 126
 		}
 	],
@@ -80,7 +80,7 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/agent-lab-entrance/reel.mp4",
-		"sha256": "38434fb32e33fc652479fc34c570074298deb90de95dfe148fc383030598f2f5",
+		"sha256": "71f81f7f06b5dd7ea9c0b93f4651505f567f89582065de0bef2159f28a1a7108",
 		"frames": 330,
 		"motion": 1,
 		"durationSec": 11,

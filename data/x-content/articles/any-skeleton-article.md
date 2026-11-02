@@ -176,6 +176,8 @@ three.ws builds alongside eight partners across AI, cloud, hardware, infrastruct
 
 **Amazon Web Services.** The partners page lists Amazon Web Services under Cloud: three.ws is deployed on AWS infrastructure with Marketplace availability.
 
+**Microsoft.** three.ws is live on Microsoft Marketplace, so Microsoft customers can find and procure open-source 3D AI agents through the storefront they already use. TRELLIS.2 from Microsoft Research powers the default image-to-3D lane on the platform.
+
 **Google Cloud.** The partners page lists Google Cloud under Cloud: its Vertex AI integration lets agents leverage Gemini models alongside the three.ws identity layer.
 
 **Alibaba Cloud.** The partners page lists Alibaba Cloud under Cloud: it extends three.ws into APAC markets with Qwen model integration.

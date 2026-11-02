@@ -1,10 +1,10 @@
 {
 	"id": "studio-jobs",
 	"scenarioHash": "c9752c45628c6da52360e3cd4e308816ba00fc11d243bad2fe8b6e6130412d03",
-	"ranAt": "2026-10-13T19:07:49.668Z",
+	"ranAt": "2026-11-02T23:33:18.114Z",
 	"target": {
-		"commit": "7d172d48e",
-		"revision": "three-ws-api-00499-fgc"
+		"commit": "3e0b6b405",
+		"revision": "three-ws-api-00509-m45"
 	},
 	"passed": false,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
 			"detail": "loaded https://three.ws/docs/mcp-studio#long-jobs-and-safe-retries-get_job-idempotency_key-progress",
 			"ok": true,
-			"ms": 5887,
+			"ms": 6041,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 9577,
+			"ms": 11722,
 			"frames": 78
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "620",
 			"detail": "scrolled 620 px",
 			"ok": true,
-			"ms": 8068,
+			"ms": 9147,
 			"frames": 60
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 8819,
+			"ms": 9986,
 			"frames": 66
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "700",
 			"detail": "scrolled 700 px",
 			"ok": true,
-			"ms": 8841,
+			"ms": 9721,
 			"frames": 60
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 8862,
+			"ms": 10283,
 			"frames": 66
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "https://three.ws/docs/mcp-studio#any-mcp-client",
 			"detail": "loaded https://three.ws/docs/mcp-studio#any-mcp-client",
 			"ok": true,
-			"ms": 3039,
+			"ms": 3060,
 			"frames": 0
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "1200",
 			"detail": "1200 ms",
 			"ok": true,
-			"ms": 4097,
+			"ms": 4853,
 			"frames": 36
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "Send POST",
 			"ok": false,
 			"detail": "nothing visible matches \"Send POST\"",
-			"ms": 8312,
+			"ms": 10779,
 			"frames": 61
 		}
 	],
