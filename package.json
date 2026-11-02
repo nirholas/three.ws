@@ -716,7 +716,7 @@
 		"borsher": "^4.0.0",
 		"bs58": "^6.0.0",
 		"canvas-confetti": "^1.9.4",
-		"cborg": "^6.1.5",
+		"cborg": "^6.2.1",
 		"cockatiel": "^4.0.0",
 		"colyseus.js": "0.16.22",
 		"compression": "^1.8.2",
