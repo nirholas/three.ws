@@ -5,6 +5,7 @@
 // on to graduate or run, so the smart-money set grows from evidence.
 import { config } from '../lib/env.ts';
 import { logger } from '../lib/log.ts';
+import { solanaRpc } from '../lib/solana-rpc.ts';
 import { db, insertMany } from '../db/client.ts';
 import type { LaunchEvent } from '../sources/types.ts';
 import { PUMP_AMM_PROGRAM, PUMP_PROGRAM, decodeLogs, poolBaseMint, type PumpEvent } from './pump-decode.ts';
@@ -353,16 +354,8 @@ export class SolanaStream {
   private async resolvePool(pool: string): Promise<void> {
     this.poolResolving.add(pool);
     try {
-      const urls = config.solanaRpcHttp;
-      const url = urls[this.rpcIdx++ % urls.length]!;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getAccountInfo', params: [pool, { encoding: 'base64' }] }),
-        signal: AbortSignal.timeout(10_000),
-      });
-      const j: any = await res.json();
-      const b64 = j?.result?.value?.data?.[0];
+      const info = await solanaRpc<{ value: { data: [string, string] } | null }>(config.solanaRpcHttp, this.rpcIdx++, 'getAccountInfo', [pool, { encoding: 'base64' }]);
+      const b64 = info?.value?.data?.[0];
       const mint = b64 ? poolBaseMint(Buffer.from(b64, 'base64')) : null;
       if (mint) {
         this.poolMint.set(pool, mint);

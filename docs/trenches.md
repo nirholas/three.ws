@@ -18,8 +18,29 @@ PULSE_URL=http://localhost:8799 PORT=3018 node --env-file=.env.local server/inde
 DEV_API_PROXY=http://localhost:3018 npx vite --port 3055   # then open /trenches
 ```
 
-## Deploy (owner-gated)
+## Deploy
 
-Build [services/pulse/Dockerfile](../services/pulse/Dockerfile) and run it on Cloud Run with `min-instances=1` and CPU always allocated (the firehose is a long-lived WebSocket). Use a durable `DATABASE_URL` (Cloud SQL) because the embedded PGlite directory is ephemeral on Cloud Run, set `SOLANA_WS_URLS` to a dedicated endpoint for a steady firehose, then add `PULSE_URL` to `three-ws-api` with `--update-env-vars`.
+Pulse runs as the Cloud Run service `pulse` (us-central1, runtime SA `three-ws@`), live since 2026-11-02. `three-ws-api` reaches it through `PULSE_URL`.
+
+| Setting | Value | Why |
+|---|---|---|
+| Instances | min 1, max 1, CPU always allocated | The firehose is a long-lived WebSocket, and a second instance would double-write the archive |
+| `DATABASE_URL` | secret `pulse-database-url`: a dedicated `pulse` database on the main Neon endpoint | Durable archive. Pulse's `tokens`/`wallets`/`trades` tables must never share `neondb` with the app schema |
+| `SOLANA_RPC_URLS`, `SOLANA_WS_URLS` | secrets `pulse-solana-rpc-urls`, `pulse-solana-ws-urls`: public endpoints first, Helius last | HTTP calls fail over across the list (quota text, 429 and JSON-RPC errors included); the stream rotates on disconnect |
+| `PUBLIC_URL` | `https://three.ws/trenches` | Links in the newsletter |
+
+Redeploy after a change under `services/pulse` (production deploy, so owner-gated):
+
+```bash
+cd services/pulse
+gcloud builds submit --project aerial-vehicle-466722-p5 --region us-central1 \
+  --service-account=projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+  --default-buckets-behavior=regional-user-owned-bucket \
+  --tag us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/cloud-run-source-deploy/pulse:latest .
+gcloud run deploy pulse --project aerial-vehicle-466722-p5 --region us-central1 \
+  --image us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/cloud-run-source-deploy/pulse:latest
+```
+
+Health: `curl https://three.ws/api/trenches?view=health` (stream endpoint, trades in the last hour, last collection cycle). Known upstream limits: pump.fun's frontend API answers 403 (Cloudflare) to every non-browser client and Jupiter's lite API rate-limits shared IPs; the on-chain firehose, DexScreener, GeckoTerminal and the Robinhood Chain walker carry the page without them.
 
 Tests: [tests/trenches-api.test.js](../tests/trenches-api.test.js), plus the service suite (`cd services/pulse && npm test`), which includes the regression test for the embedded database starting on a fresh clone.
