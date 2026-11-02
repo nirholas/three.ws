@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A lock screen worth stopping at</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-11-02:A lock screen worth stopping at</guid>
+			<pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The desktop's lock screen now shows your own wallpaper behind it, like a real OS, instead of a flat black void. A portrait of the avatar you walk in as replaces the question-mark badge, a live status light shows whether every system came up, and the $THREE chip turns green or red with the day's move. New destination tiles let you skip the walk and arrive straight at your workstation, the Exchange, the Launchpad, the Mine, the Forge, the Gallery, the Agent Plaza or the Marketplace.</description>
+		</item>
+		<item>
 			<title>Card gacha: a 3D capsule reveal, My cards, and selling from your wallet</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-02:Card gacha: a 3D capsule reveal, My cards, and selling from your wallet</guid>
