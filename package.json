@@ -638,7 +638,7 @@
 		"@kamino-finance/scope-sdk": "^14.0.0",
 		"@kninnug/constrainautor": "^4.1.0",
 		"@leeoniya/ufuzzy": "^1.0.19",
-		"@mediapipe/tasks-vision": "^1.1.1",
+		"@mediapipe/tasks-vision": "^1.2.0",
 		"@metaplex-foundation/genesis": "^0.43.2",
 		"@metaplex-foundation/mpl-agent-registry": "^0.2.6",
 		"@metaplex-foundation/mpl-core": "^1.10.0",
