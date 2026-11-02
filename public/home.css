@@ -1193,6 +1193,16 @@
 
 		/* ── FOOTER ──────────────────────────────────────────────── */
 		footer { border-top: 1px solid var(--hairline); padding: 60px 0 52px; }
+		.foot-nvidia { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-top: 28px; }
+		.foot-nvidia-badge {
+			display: inline-flex; padding: 7px 11px; background: #fff; border-radius: 9px;
+			transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+		}
+		.foot-nvidia-badge:hover, .foot-nvidia-badge:focus-visible { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(118, 185, 0, 0.28); }
+		.foot-nvidia-badge:active { transform: none; }
+		.foot-nvidia-badge:focus-visible { outline: 2px solid var(--hairline-strong); outline-offset: 3px; }
+		.foot-nvidia-badge img { height: 28px; width: auto; display: block; }
+		.foot-nvidia-legal { margin: 0; flex: 1 1 280px; max-width: 520px; font-size: 11px; line-height: 1.5; color: var(--text-3); }
 		.foot-cols {
 			display: grid;
 			grid-template-columns: repeat(6, 1fr);
