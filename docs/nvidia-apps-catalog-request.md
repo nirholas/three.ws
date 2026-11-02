@@ -19,8 +19,10 @@ The Inception portal has no "publish to the catalog" control. A product record m
   [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md)) and re-asked the three
   items NVIDIA left unanswered: a contact route for the ACE / Audio2Face-3D team, the
   Inception Startup Showcase route and format, and the timing for the next GTC Startup
-  Pavilion conversation plus which other events carry startup slots. No further email is due
-  until NVIDIA answers.
+  Pavilion conversation plus which other events carry startup slots.
+- **Follow-up drafted:** 2026-11-02, at the owner's request, after the public catalog still
+  did not list three.ws. Text in [Follow-up, 2026-11-02](#follow-up-2026-11-02). Record the
+  send date here once it goes out.
 
 ## What the reply changed
 
@@ -263,6 +265,62 @@ browser-native Audio2Face-3D and Riva implementation?
 
 The live, no-install demo is https://three.ws/demos/audio2face and the complete
 runtime map is https://three.ws/docs/nvidia-models.
+
+Thank you,
+
+Nicholas
+three.ws
+https://three.ws
+```
+
+## Follow-up, 2026-11-02
+
+Reply in the existing `inceptionprogram@nvidia.com` thread from support@three.ws, so it
+keeps the subject `Re: three.ws (Inception member): catalog listing, Showcase, and
+co-marketing`. It does three things: asks NVIDIA to confirm the saved record has nothing
+missing and when it will next be reviewed, reports the two NVIDIA-relevant changes since the
+2026-10-25 note, and repeats the two open questions in one line each.
+
+Before sending, finish section 2 of
+[nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) (company description and
+taxonomy) and confirm the "Do not share" box is unchecked. The email asks NVIDIA whether the
+record is complete. A company profile that still says we are applying would invite "fix your
+profile" as the whole answer.
+
+Every link below answered 200 on 2026-11-02.
+
+```text
+Hello,
+
+A short follow-up on the catalog thread.
+
+Our product record, "three.ws 3D AI Studio", was saved on October 25 to the
+criteria you described: Development Stage Shipping, GPU Accelerated, runtime
+technologies (CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, Kaolin, Riva,
+Audio2Face) with TensorRT, Triton, and Omniverse Kit kept under Considering,
+plus Product Description, Technical Details, logo, and brand color.
+
+Could you confirm the record has everything the catalog review needs, or tell
+me what is missing? And is there an approximate date for the next review
+cycle? I want to make sure the record is not sitting incomplete in a way I
+cannot see from our side.
+
+Two NVIDIA-related updates since my last note:
+
+- All 2,575 NVIDIA SimReady assets are now converted from OpenUSD to web GLB
+  and searchable in our Object Library, each carrying the CC BY 4.0 NVIDIA
+  credit: https://three.ws/objects (pipeline: https://three.ws/docs/simready-assets)
+- The Inception member badge is now on every page of three.ws, including the
+  homepage, linking to our NVIDIA page: https://three.ws/nvidia
+
+The two questions from my October 25 note are still open, whenever someone
+has a moment:
+
+1. Is Inception Startup Showcase consideration driven by the product record,
+   or is there a separate nomination step?
+2. Who is the right ACE / digital-human contact for our browser-native
+   Audio2Face-3D and Riva implementation? Live, no install:
+   https://three.ws/demos/audio2face
 
 Thank you,
 
