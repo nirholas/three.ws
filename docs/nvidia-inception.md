@@ -33,6 +33,14 @@ be set to **Shipping**, distinguish technology currently used from technology on
 considered, include supporting Product Description and Technical Details, and carry a
 product logo and brand color.
 
+**Where we are.** three.ws filed its product record, **three.ws 3D AI Studio**, on
+2026-10-25: Shipping, GPU Accelerated, with the NVIDIA technology it runs in production (CUDA
+Toolkit, cuDNN, cuBLAS, CUDA Python, Kaolin, Riva, Audio2Face) listed separately from what is
+only under evaluation (TensorRT, Triton Inference Server, Omniverse Kit). On 2026-11-02 we
+followed up with the Inception team to confirm the record is complete and to ask when the
+next review runs. NVIDIA curates the catalog, so three.ws is not listed yet. The listing
+will be announced in the [changelog](https://three.ws/changelog) when it goes live.
+
 The GTC Startup Pavilion is separate and invite-only. NVIDIA identifies potential
 candidates from current member profiles, clear demos of NVIDIA acceleration, and ongoing
 work with NVIDIA contacts. A public GTC call for submissions, when open, is a separate

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-02",
+			"title": "three.ws is up for review in NVIDIA's startup app catalog",
+			"summary": "Our product record, three.ws 3D AI Studio, is filed with NVIDIA Inception for its catalog of apps from member startups. It lists the NVIDIA technology three.ws runs in production today (CUDA, cuDNN, Kaolin, Riva voice and Audio2Face facial animation) and keeps what we are only evaluating separate. On November 2 we followed up with the Inception team to confirm the record is complete and ask when the next review runs. NVIDIA curates the catalog, so we are not listed yet. We will post here the day we are.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/nvidia-inception"
+		},
+		{
+			"date": "2026-11-02",
 			"title": "Card gacha: a 3D capsule reveal, My cards, and selling from your wallet",
 			"summary": "Pulling a card in /play now plays a full 3D reveal: the capsule spins and shakes as light gathers into it, then cracks open with a flash, a shockwave and a light pillar in the card's rarity colour, and the real graded slab spins out with a holographic foil that shifts as you turn it. Rare and epic pulls hide their colour until the last second. A new My cards button lists every Collector Crypt card in your wallet with its grade, insured value and real front and back photos, lets you inspect each one in 3D, and sells a card back for USDC while its 72 hour buyback is open, behind a confirmation table and a stricter transaction check that refuses anything but the one card leaving your wallet.",
 			"tags": [

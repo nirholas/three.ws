@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-02T21:30:54.882Z",
+	"generated_at": "2026-11-02T22:20:49.187Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,16 @@
 			"link": "/",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-02",
+			"type": "update",
+			"title": "three.ws is up for review in NVIDIA's startup app catalog",
+			"summary": "Our product record, three.ws 3D AI Studio, is filed with NVIDIA Inception for its catalog of apps from member startups. It lists the NVIDIA technology three.ws runs in production today (CUDA, cuDNN, Kaolin, Riva voice and Audio2Face facial animation) and keeps what we are only evaluating separate. On November 2 we followed up with the Inception team to confirm the record is complete and ask when the next review runs. NVIDIA curates the catalog, so we are not listed yet. We will post here the day we are.",
+			"link": "/docs/nvidia-inception",
+			"tags": [
+				"docs"
 			]
 		},
 		{

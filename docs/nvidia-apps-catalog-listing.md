@@ -30,6 +30,10 @@ history below records the state before this save.
   record (`/forge`, `/nvidia`, `/demos/audio2face`, `/docs/nvidia-models`, `/docs/embedding`,
   the L4/Blackwell blog post, `/legal/privacy`) answered 200. Company-profile alignment
   (section 2) and the "Do not share" checkbox are still unconfirmed.
+- 2026-11-02: follow-up sent in the `inceptionprogram@nvidia.com` thread asking NVIDIA to
+  confirm the record is complete and when the next review cycle runs. Text and send record in
+  [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md#follow-up-2026-11-02).
+  Announced to the community in the changelog the same day.
 
 ### State before the 2026-10-25 save (2026-10-17 snapshot)
 
@@ -191,8 +195,9 @@ The portal has no "publish to catalog" button. The request in
 [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) was sent on **2026-09-04**,
 and NVIDIA replied on **2026-09-14**: qualifying, complete Shipping records are reviewed
 periodically. On **2026-10-25** a reply was sent in the same thread confirming the saved record
-and re-asking the unanswered Showcase, ACE, and Pavilion items. There is no further catalog
-email to send unless NVIDIA requests information.
+and re-asking the unanswered Showcase, ACE, and Pavilion items. On **2026-11-02** a follow-up
+asked NVIDIA to confirm the saved record is complete and when the next review runs. There is
+no further catalog email to send unless NVIDIA answers or requests information.
 
 ---
 

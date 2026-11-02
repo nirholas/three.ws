@@ -20,9 +20,12 @@ The Inception portal has no "publish to the catalog" control. A product record m
   items NVIDIA left unanswered: a contact route for the ACE / Audio2Face-3D team, the
   Inception Startup Showcase route and format, and the timing for the next GTC Startup
   Pavilion conversation plus which other events carry startup slots.
-- **Follow-up drafted:** 2026-11-02, at the owner's request, after the public catalog still
-  did not list three.ws. Text in [Follow-up, 2026-11-02](#follow-up-2026-11-02). Record the
-  send date here once it goes out.
+- **Follow-up sent:** 2026-11-02, in the same thread, after the public catalog still did not
+  list three.ws one week after the record was saved. Text in
+  [Follow-up, 2026-11-02](#follow-up-2026-11-02). It asks NVIDIA to confirm the record is
+  complete and when the next review runs, reports the SimReady library and the site-wide
+  Inception badge, and repeats the Showcase and ACE questions. Announced to the community in
+  the changelog the same day. No further email is due until NVIDIA answers.
 
 ## What the reply changed
 
@@ -274,6 +277,8 @@ https://three.ws
 ```
 
 ## Follow-up, 2026-11-02
+
+**Sent 2026-11-02.** Kept here verbatim as the record of what NVIDIA received.
 
 Reply in the existing `inceptionprogram@nvidia.com` thread from support@three.ws, so it
 keeps the subject `Re: three.ws (Inception member): catalog listing, Showcase, and
