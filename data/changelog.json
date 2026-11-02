@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-01",
+			"title": "A card gacha machine in /play: pull real graded trading cards",
+			"summary": "A capsule vending machine now stands on the west plaza of every /play world. Walk up and press E to browse Collector Crypt's live machines with their odds, stock, recent winners and the cards still inside, then pull a professionally graded, vaulted card for USDC straight from your own Solana wallet. Before you sign, you see exactly what the payment does, checked against the real transaction. The machine cranks out a capsule and the card flips over in its rarity colour, with a link to verify the pull was fair. Keep the card, or sell it back within 72 hours.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-01",
 			"title": "Parties in /play: team up with up to 8 players",
 			"summary": "Invite anyone from their inspect panel or your friends list and stay together across the world. Party members get a sky-blue nameplate accent, minimap blips, screen-edge chips for members out of range, a private party chat (or /p from any scope), and a Go to button that drops you safely beside a member, or hands you off to their coin's world with the party intact.",
 			"tags": [

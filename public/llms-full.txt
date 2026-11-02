@@ -2803,6 +2803,12 @@ URL: https://three.ws/docs/play-ufo
 
 How Flappin UFO runs are recorded, replayed and verified on the server, how the leaderboard ranks players, and how the ghost of the top run works.
 
+### Docs · The card gacha machine in /play
+
+URL: https://three.ws/docs/play-gacha
+
+How to pull a real graded trading card from the capsule machine on the /play plaza, what the transaction checks prove before you sign, the 72-hour buyback, and the /api/gacha routes.
+
 ### Docs · The in-game economy
 
 URL: https://three.ws/docs/in-game-economy

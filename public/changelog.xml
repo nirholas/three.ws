@@ -47,6 +47,22 @@
 			<description>How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.</description>
 		</item>
 		<item>
+			<title>Docs · The card gacha machine in /play</title>
+			<link>https://three.ws/docs/play-gacha</link>
+			<guid isPermaLink="false">2026-11-01:Docs · The card gacha machine in /play</guid>
+			<pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How to pull a real graded trading card from the capsule machine on the /play plaza, what the transaction checks prove before you sign, the 72-hour buyback, and the /api/gacha routes.</description>
+		</item>
+		<item>
+			<title>A card gacha machine in /play: pull real graded trading cards</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-01:A card gacha machine in /play: pull real graded trading cards</guid>
+			<pubDate>Sun, 01 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A capsule vending machine now stands on the west plaza of every /play world. Walk up and press E to browse Collector Crypt's live machines with their odds, stock, recent winners and the cards still inside, then pull a professionally graded, vaulted card for USDC straight from your own Solana wallet. Before you sign, you see exactly what the payment does, checked against the real transaction. The machine cranks out a capsule and the card flips over in its rarity colour, with a link to verify the pull was fair. Keep the card, or sell it back within 72 hours.</description>
+		</item>
+		<item>
 			<title>A live activity ticker and big-buy hype moments in /play</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-01:A live activity ticker and big-buy hype moments in /play</guid>

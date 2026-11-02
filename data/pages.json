@@ -3791,6 +3791,14 @@
 					"added": "2026-10-23"
 				},
 				{
+					"path": "/docs/play-gacha",
+					"title": "Docs · The card gacha machine in /play",
+					"description": "How to pull a real graded trading card from the capsule machine on the /play plaza, what the transaction checks prove before you sign, the 72-hour buyback, and the /api/gacha routes.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-01"
+				},
+				{
 					"path": "/docs/in-game-economy",
 					"title": "Docs · The in-game economy",
 					"description": "The complete reference for the /play open-world economy: gathering and selling materials, the cash purse and bank, tool upgrades, every vendor and gate, $THREE cosmetics that settle on Solana, and the catalog wire format for reading it from code.",
