@@ -620,7 +620,7 @@
 		"@coral-xyz/anchor": "^0.32.1",
 		"@dimforge/rapier3d-compat": "^0.21.0",
 		"@discord/embedded-app-sdk": "^2.5.0",
-		"@elevenlabs/elevenlabs-js": "^2.73.0",
+		"@elevenlabs/elevenlabs-js": "^2.75.0",
 		"@ellipsis-labs/rise": "^0.7.4",
 		"@ethereum-attestation-service/eas-sdk": "^2.10.0",
 		"@ffmpeg/ffmpeg": "^0.12.15",
