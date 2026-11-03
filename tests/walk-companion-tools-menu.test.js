@@ -69,6 +69,10 @@ describe('companion phone tools drawer', () => {
 		const host = makeHost();
 		ensureToolsMenu(host);
 		const btn = host.querySelector('.walk-companion-tools');
+		// jsdom applies the desktop display:none rule but cannot match the phone
+		// media query that shows the button, and it refuses focus to hidden
+		// elements. Drop the sheet so the button is focusable as on a phone.
+		document.getElementById('walk-companion-tools-style').remove();
 		btn.click();
 		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 		expect(host.classList.contains(OPEN_CLASS)).toBe(false);

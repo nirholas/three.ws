@@ -11,7 +11,8 @@
 //
 // Below 520px this keeps close and swap in the row, adds one "more" button in
 // the third slot, and stacks the five settings controls in a 44px column beside
-// the avatar while it is open. Desktop is untouched: every rule sits inside the
+// a row directly above while it is open. A row, not a column: a column beside
+// the avatar ran down into the bottom-left "Getting started" pill. Desktop is untouched: every rule sits inside the
 // phone media query and the button is display:none outside it.
 
 export const TOOL_CLASSES = [
@@ -25,13 +26,13 @@ export const TOOL_CLASSES = [
 export const OPEN_CLASS = 'is-tools-open';
 const BUTTON_CLASS = 'walk-companion-tools';
 const STYLE_ID = 'walk-companion-tools-style';
-const SLOT = 48; // 44px target plus a 4px gap between stacked controls
+const SLOT = 46; // 44px target; the 36px visible discs sit 10px apart
 
 function toolsCss() {
 	const all = TOOL_CLASSES.map((c) => `.walk-companion .${c}`).join(',');
 	const open = TOOL_CLASSES.map((c) => `.walk-companion.${OPEN_CLASS} .${c}`).join(',');
 	const offsets = TOOL_CLASSES.map(
-		(c, i) => `.walk-companion.${OPEN_CLASS} .${c}{bottom:${i * SLOT}px!important}`,
+		(c, i) => `.walk-companion.${OPEN_CLASS} .${c}{right:${i * SLOT - 4}px!important}`,
 	).join('');
 	return (
 		`.${BUTTON_CLASS}{display:none}` +
@@ -45,13 +46,20 @@ function toolsCss() {
 		`.${BUTTON_CLASS}:focus-visible{outline:2px solid #7aa2ff;outline-offset:-7px}` +
 		`.${BUTTON_CLASS} svg{display:block;width:14px;height:14px}` +
 		`${all}{display:none!important}` +
-		`${open}{display:grid!important;place-items:center;position:absolute!important;top:auto!important;left:auto!important;` +
-		'right:calc(100% + 2px)!important;width:44px!important;height:44px!important;margin:0!important;' +
+		`${open}{display:grid!important;place-items:center;position:absolute!important;top:-55px!important;bottom:auto!important;left:auto!important;` +
+		'width:44px!important;height:44px!important;margin:0!important;border-radius:50%!important;' +
 		'border:4px solid transparent!important;background-clip:padding-box!important;opacity:1!important;' +
 		'color:#fff!important;font-size:15px!important;box-shadow:none!important}' +
 		offsets +
+		// A solid tray behind the row: several controls keep a translucent "off"
+		// fill, which let page text read through them. Pointer events on the tray
+		// keep a tap between two discs from landing on the page underneath.
+		`.walk-companion.${OPEN_CLASS}::after{content:"";position:absolute;top:-58px;right:-7px;` +
+		`width:${(TOOL_CLASSES.length - 1) * SLOT + 50}px;height:50px;z-index:2;border-radius:25px;` +
+		'background:rgba(12,14,20,.92);border:1px solid rgba(255,255,255,.12);box-sizing:border-box;' +
+		'-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto}' +
 		// The bubble and the narration caption open over the same strip the
-		// column occupies; the drawer is the thing being used, so they yield.
+		// row occupies; the drawer is the thing being used, so they yield.
 		`.walk-companion.${OPEN_CLASS} .walk-companion-bubble,.walk-companion.${OPEN_CLASS} .walk-companion-caption{visibility:hidden}` +
 		'}'
 	);
