@@ -18,6 +18,10 @@ export default [
 			'**/.vercel/**',
 			'**/.svelte-kit/**',
 			'**/coverage/**',
+			// Playwright run output: traces and attachments appear and vanish
+			// mid-run, so linting them races the e2e suite and crashes ESLint.
+			'**/test-results/**',
+			'**/playwright-report/**',
 			// Vendored / external library code
 			'contracts/lib/**',
 			'character-studio/**',
