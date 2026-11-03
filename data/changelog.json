@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "A GitHub Release every week",
+			"summary": "The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/changelog"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Pages fit a phone screen, and small buttons are easier to tap",
 			"summary": "A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.",
 			"tags": [

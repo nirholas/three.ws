@@ -18,6 +18,11 @@
 // commit under the other-coin gate, which is why data/announce-gate-terms.json
 // stays empty unless the owner fills it.
 //
+// The note-building and filter logic lives in api/_lib/github-release.js, shared
+// with the weekly cron (api/cron/github-release.js, Mondays 15:00 UTC), which
+// publishes vYYYY.MM.DD releases on its own. Use this script for previews,
+// backfills and one-off windows; the cron skips a tag that already exists.
+//
 // Auth for --apply: GITHUB_TOKEN, else the gh CLI's stored token
 // (~/.config/gh/hosts.yml). The token needs the `repo` scope.
 
@@ -25,15 +30,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { loadXFilter, xFilterReason } from '../api/_lib/changelog-push.js';
-
-const REPO = 'nirholas/three.ws';
-const SITE = 'https://three.ws';
-const SECTIONS = [
-	['feature', 'New'],
-	['improvement', 'Improved'],
-	['sdk', 'SDKs and packages'],
-];
+import { REPO, MAX_BODY_CHARS, buildReleaseNotes, entriesOf } from '../api/_lib/github-release.js';
 
 function parseArgs(argv) {
 	const args = { apply: false };
@@ -50,50 +47,7 @@ function parseArgs(argv) {
 
 function feedAt(commit) {
 	const raw = execFileSync('git', ['show', `${commit}:data/changelog.json`], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
-	const feed = JSON.parse(raw);
-	return Array.isArray(feed) ? feed : feed.entries;
-}
-
-function firstSentence(text) {
-	const m = text.match(/^.*?[.!?](\s|$)/);
-	return (m ? m[0] : text).trim();
-}
-
-function entryLine(e) {
-	const link = e.link ? ` [Open](${e.link.startsWith('http') ? e.link : SITE + e.link})` : '';
-	return `- **${e.title}.** ${firstSentence(e.summary)}${link}`;
-}
-
-function otherProjectMatcher(termsFile) {
-	const escape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-	const terms = termsFile ? JSON.parse(readFileSync(termsFile, 'utf8')) : [];
-	const byName = terms.length ? new RegExp(`\\b(${terms.map(escape).join('|')})\\b`, 'i') : null;
-	const ticker = /\$(?!THREE\b)[A-Z][A-Z0-9]{1,9}\b/;
-	return (e) => {
-		const text = `${e.title}\n${e.summary}`;
-		return ticker.test(text) || (byName ? byName.test(text) : false);
-	};
-}
-
-function buildNotes(entries, { from, to, title, 'exclude-terms': termsFile }) {
-	const filter = loadXFilter();
-	const namesOtherProject = otherProjectMatcher(termsFile);
-	const inWindow = entries.filter((e) => e.date >= from && e.date <= to);
-	const kept = inWindow.filter((e) => !xFilterReason(e, filter) && !namesOtherProject(e));
-	const seen = new Set();
-	const parts = [
-		`Everything three.ws shipped from ${from} to ${to}, taken from the public changelog. ${kept.length} user-facing changes.`,
-		'',
-		`Try it at [three.ws](${SITE}), read the [docs](${SITE}/docs), follow the [full changelog](${SITE}/changelog) ([RSS](${SITE}/changelog.xml)), or connect your assistant to the 3D Studio MCP server at [three.ws/connect](${SITE}/connect).`,
-	];
-	for (const [tag, heading] of SECTIONS) {
-		const rows = kept.filter((e) => (e.tags || []).includes(tag) && !seen.has(e)).sort((a, b) => b.date.localeCompare(a.date));
-		if (!rows.length) continue;
-		rows.forEach((e) => seen.add(e));
-		parts.push('', `## ${heading}`, '', ...rows.map(entryLine));
-	}
-	parts.push('', '---', '', `Apache-2.0. Issues and discussions are open: [contribute](https://github.com/${REPO}/blob/main/CONTRIBUTING.md).`);
-	return { body: parts.join('\n'), kept: kept.length, total: inWindow.length, name: `three.ws ${title}` };
+	return entriesOf(JSON.parse(raw));
 }
 
 function githubToken() {
@@ -119,8 +73,9 @@ async function github(path, init = {}) {
 async function main() {
 	const args = parseArgs(process.argv.slice(2));
 	const sha = execFileSync('git', ['rev-parse', args.target], { encoding: 'utf8' }).trim();
-	const notes = buildNotes(feedAt(sha), args);
-	if (notes.body.length > 120_000) throw new Error(`release body is ${notes.body.length} chars, over GitHub's limit`);
+	const terms = args['exclude-terms'] ? JSON.parse(readFileSync(args['exclude-terms'], 'utf8')) : [];
+	const notes = buildReleaseNotes(feedAt(sha), { ...args, terms });
+	if (notes.body.length > MAX_BODY_CHARS) throw new Error(`release body is ${notes.body.length} chars, over GitHub's limit`);
 	console.log(`${notes.name} (${args.tag} at ${sha.slice(0, 9)}): ${notes.kept} of ${notes.total} entries pass the public filter, ${notes.body.length} chars\n`);
 	if (!args.apply) {
 		console.log(notes.body);

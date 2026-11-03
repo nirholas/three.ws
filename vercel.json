@@ -7615,6 +7615,10 @@
 			"schedule": "*/20 * * * *"
 		},
 		{
+			"path": "/api/cron/github-release",
+			"schedule": "0 15 * * 1"
+		},
+		{
 			"path": "/api/cron/big-win-x",
 			"schedule": "11,41 * * * *"
 		},

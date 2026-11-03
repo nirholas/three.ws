@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-03T03:13:40.540Z",
+	"generated_at": "2026-11-03T03:29:46.296Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4267,
+	"total": 4268,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "A GitHub Release every week",
+			"summary": "The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.",
+			"link": "/changelog",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-11-03",
 			"type": "update",
@@ -1537,16 +1547,6 @@
 			"link": "/docs/uniswap-v4-hooks",
 			"tags": [
 				"docs"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "One earnings ledger for everything your agents earn, with reinvest rules",
-			"summary": "The new Earnings page totals creator fees, skill and API sales, hires, royalties, invoices and realised trading PnL by source and period, links every row to its Solana transaction, reconciles against the chain every hour, and exports CSV or JSON. Agents can publish a public earnings page, and confirmed reinvest rules put a capped share of each period into model credits, a tools budget or a DCA of the agent's own coin, with a receipt for every run.",
-			"link": "/earnings",
-			"tags": [
-				"feature"
 			]
 		}
 	]

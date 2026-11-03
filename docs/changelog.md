@@ -36,9 +36,9 @@ only when a reader filters or asks for older updates.
 
 ### GitHub Releases
 
-Once a month the changelog also goes out as a [GitHub Release](https://github.com/nirholas/three.ws/releases),
+Every Monday at 15:00 UTC the changelog also goes out as a [GitHub Release](https://github.com/nirholas/three.ws/releases),
 which reaches every watcher and stargazer of the repository through GitHub's own feed.
-`scripts/github-release.mjs` builds the notes from `data/changelog.json` as it stood at the
+`/api/cron/github-release` publishes a `vYYYY.MM.DD` release titled "Week of YYYY-MM-DD" with the entries dated after the previous `v*` release, at the commit production runs (`dist/build-info.json`, else `COMMIT_SHA`, else `main`). It skips when the token is missing, the tag exists, or nothing user-facing shipped. It needs `GITHUB_RELEASE_TOKEN` (fine-grained PAT, Contents read and write on `nirholas/three.ws`) on the Cloud Run service. Both it and `scripts/github-release.mjs` share [api/_lib/github-release.js](../api/_lib/github-release.js). The script is for previews, backfills and one-off windows; it builds the notes from `data/changelog.json` as it stood at the
 commit production runs (read `GET /api/version` for it), keeps only entries that pass the X
 lane's public filter (`data/changelog-x-filter.json`), and drops any entry naming a `$TICKER`
 other than `$THREE`:

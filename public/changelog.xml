@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>A GitHub Release every week</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:A GitHub Release every week</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.</description>
+		</item>
+		<item>
 			<title>Codespaces, a roadmap page, a support page and categorized release notes</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-03:Codespaces, a roadmap page, a support page and categorized release notes</guid>
