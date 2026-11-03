@@ -8564,7 +8564,7 @@ endsolid threews_avatar
 - [Selfie Reconstruction Pipeline (Phase 1)](#selfie-reconstruction-pipeline-phase-1)
 - [Voice & Persona Hub (Phase 2)](#voice--persona-hub-phase-2)
 - [Livepeer Inference Network (Phase 4)](#livepeer-inference-network-phase-4)
-- [News CMS & Syndication](#news-cms--syndication)
+- [News & Syndication](#news--syndication)
 - [Security Hardening](#security-hardening)
 - [Database Schema](#database-schema)
 - [Build & Deployment](#build--deployment)
