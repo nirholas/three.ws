@@ -360,6 +360,11 @@
 				gap: calc(var(--space-sm) * var(--dr-scale));
 				overflow-y: auto;
 				align-content: start;
+				/* The grid is a flex-shrunk scroll container in the portrait sheet;
+				   there Chrome sizes auto rows without the square thumbnails and
+				   every card collapsed to its label height. max-content rows always
+				   count the thumbnail. */
+				grid-auto-rows: max-content;
 				flex: 1 1 auto;
 				padding-bottom: calc(var(--space-md) * var(--dr-scale));
 			}
@@ -463,6 +468,9 @@
 					font-size: calc(0.78rem * var(--dr-scale));
 				}
 				.dr-top { gap: calc(var(--space-xs) * var(--dr-scale)); }
+				/* Two copilots per row: one 340px-wide card per row made the
+				   picker a 9,000px scroll on a phone. */
+				.dr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 				.dr-name { font-size: calc(0.95rem * var(--dr-scale)); }
 			}
 			/* A short landscape dash (800x480 and friends) has no room for a top rail
