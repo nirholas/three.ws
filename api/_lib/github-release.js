@@ -41,6 +41,20 @@ function entryLine(e) {
 	return `- **${e.title}.** ${firstSentence(e.summary)}${link}`;
 }
 
+/**
+ * Project names to leave out of a release, from an env var (GITHUB_RELEASE_EXCLUDE_TERMS).
+ * Comma or newline separated. Kept in the runtime environment, not the repo, because
+ * committing a name would itself put that commit under the other-coin gate.
+ * @param {string | undefined} value
+ * @returns {string[]}
+ */
+export function excludeTermsFromEnv(value) {
+	return String(value || '')
+		.split(/[,\n]/)
+		.map((t) => t.trim())
+		.filter(Boolean);
+}
+
 /** Matcher for entries naming another project: any $TICKER but $THREE, plus optional names. */
 export function otherProjectMatcher(terms = []) {
 	const escape = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { buildReleaseNotes, runWeeklyRelease, weeklyIdentity, deployedSha, otherProjectMatcher } from '../api/_lib/github-release.js';
+import { buildReleaseNotes, runWeeklyRelease, weeklyIdentity, deployedSha, otherProjectMatcher, excludeTermsFromEnv } from '../api/_lib/github-release.js';
 import { loadXFilter } from '../api/_lib/changelog-push.js';
 
 const e = (over = {}) => ({ date: '2026-11-02', title: 'Parties in play', summary: 'Team up with friends. More detail here.', tags: ['feature'], link: '/play', ...over });
@@ -52,6 +52,21 @@ describe('buildReleaseNotes', () => {
 		expect(Number(src)).toBeGreaterThan(0);
 		const cron = execFileSync('grep', ['-c', "_lib/github-release.js", 'api/cron/github-release.js'], { encoding: 'utf8' });
 		expect(Number(cron)).toBeGreaterThan(0);
+	});
+});
+
+describe('excludeTermsFromEnv', () => {
+	it('splits on commas and newlines, trims, and drops blanks', () => {
+		expect(excludeTermsFromEnv(' Alpha Swap, betacoin \n\n,Gamma ')).toEqual(['Alpha Swap', 'betacoin', 'Gamma']);
+	});
+	it('returns no terms when the variable is unset or empty', () => {
+		expect(excludeTermsFromEnv(undefined)).toEqual([]);
+		expect(excludeTermsFromEnv('  ')).toEqual([]);
+	});
+	it('feeds the name matcher so a named project drops out of the notes', () => {
+		const n = buildReleaseNotes([e({ title: 'Keeps the forge' }), e({ title: 'Routes through Alpha Swap' })], { from: '2026-10-28', to: '2026-11-03', title: 'Week of 2026-11-03', terms: excludeTermsFromEnv('Alpha Swap') });
+		expect(n.body).toContain('Keeps the forge');
+		expect(n.body).not.toContain('Alpha Swap');
 	});
 });
 

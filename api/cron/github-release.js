@@ -14,10 +14,12 @@
 // (no_entries). A GitHub API failure answers 502 so wrapCron records a failed
 // heartbeat. Token: a fine-grained PAT with Contents: read and write on
 // nirholas/three.ws, as GITHUB_RELEASE_TOKEN on the Cloud Run service.
+// GITHUB_RELEASE_EXCLUDE_TERMS (comma separated) names projects whose entries are
+// left out, on top of the $TICKER rule; it lives on the service, not in git.
 
 import { error, json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
-import { loadBundledEntries, deployedSha, runWeeklyRelease } from '../_lib/github-release.js';
+import { loadBundledEntries, deployedSha, excludeTermsFromEnv, runWeeklyRelease } from '../_lib/github-release.js';
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
@@ -32,7 +34,12 @@ export default wrapCron(async (req, res) => {
 	}
 
 	try {
-		const result = await runWeeklyRelease({ token: process.env.GITHUB_RELEASE_TOKEN, entries, sha: deployedSha() });
+		const result = await runWeeklyRelease({
+			token: process.env.GITHUB_RELEASE_TOKEN,
+			entries,
+			terms: excludeTermsFromEnv(process.env.GITHUB_RELEASE_EXCLUDE_TERMS),
+			sha: deployedSha(),
+		});
 		console.log('[cron] github-release', result);
 		json(res, 200, result);
 	} catch (err) {
