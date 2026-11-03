@@ -132,13 +132,15 @@ export async function discoverVenues({ inputMint, outputMint, amount, max = MAX_
  * When discovery found no venue, tell an outage apart from a pair nothing can
  * fill: an empty venue list during a router outage is not a market reading.
  */
+function routerUnavailable() {
+	const e = new ToolInputError('router_unavailable', 'The venue router could not be reached, so no venue could be priced. This is an outage, not a market reading; try again in a minute.');
+	e.status = 503;
+	return e;
+}
+
 async function assertRouterReachable({ inputMint, outputMint, amount }) {
 	const probe = await quoteOnce({ inputMint, outputMint, amount });
-	if (probe?.error) {
-		const e = new ToolInputError('router_unavailable', 'The venue router could not be reached, so no venue could be priced. This is an outage, not a market reading; try again in a minute.');
-		e.status = 503;
-		throw e;
-	}
+	if (probe?.error) throw routerUnavailable();
 }
 
 async function resolvePair({ token, quote }) {
@@ -376,6 +378,9 @@ export async function arbitrageQuote({ token, quote = 'SOL', amount = 1, accept_
 	const buys = await mapLimit(labels, QUOTE_CONCURRENCY, (l) => quoteOnce({ inputMint: pair.quoteMint, outputMint: pair.base, amount: amountIn, dexes: [l] }));
 	const buyable = labels.map((label, i) => ({ label, q: buys[i] })).filter((x) => x.q?.outAmount);
 	if (buyable.length < 2) {
+		// A venue whose quote errored (429, timeout, 5xx) was never measured, so
+		// a shortfall it could have filled is an outage, not a thin market.
+		if (buyable.length + buys.filter((q) => q?.error).length >= 2) throw routerUnavailable();
 		throw new ToolInputError('insufficient_venues', `Only ${buyable.length} venue(s) can fill this pair at this size, so there is no cross-venue route.`, {
 			venues_quoted: buyable.map((x) => venueId(x.label)),
 		});
