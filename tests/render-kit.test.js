@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ACESFilmicToneMapping, AgXToneMapping, NeutralToneMapping, NoToneMapping } from 'three';
 import { createFrameGovernor } from '../src/render/frame-governor.js';
 import { resolveToneMapping, cappedPixelRatio } from '../src/render/studio-look.js';
+import { handleContextLoss } from '../src/render/context-loss.js';
 
 // Drive the governor at a steady frame rate for `frames` frames starting at `t`.
 function run(gov, fps, frames, t = 0) {
@@ -99,6 +100,44 @@ describe('resolveToneMapping', () => {
 	});
 	it('rejects an unknown name loudly', () => {
 		expect(() => resolveToneMapping('filmic', NoToneMapping)).toThrow(/Unknown tone mapping/);
+	});
+});
+
+describe('handleContextLoss', () => {
+	const lose = (canvas) => {
+		const e = new Event('webglcontextlost', { cancelable: true });
+		canvas.dispatchEvent(e);
+		return e;
+	};
+
+	it('claims the lost context so the browser will restore it', () => {
+		const canvas = new EventTarget();
+		const h = handleContextLoss(canvas, { notice: false });
+		expect(lose(canvas).defaultPrevented).toBe(true);
+		expect(h.lost).toBe(true);
+	});
+
+	it('pauses on loss and rebuilds on restore, in order', () => {
+		const canvas = new EventTarget();
+		const calls = [];
+		const h = handleContextLoss(canvas, {
+			notice: false,
+			onLost: () => calls.push('lost'),
+			onRestored: () => calls.push('restored'),
+		});
+		lose(canvas);
+		canvas.dispatchEvent(new Event('webglcontextrestored'));
+		expect(calls).toEqual(['lost', 'restored']);
+		expect(h.lost).toBe(false);
+	});
+
+	it('stops listening after detach', () => {
+		const canvas = new EventTarget();
+		let n = 0;
+		const h = handleContextLoss(canvas, { notice: false, onLost: () => n++ });
+		h.detach();
+		expect(lose(canvas).defaultPrevented).toBe(false);
+		expect(n).toBe(0);
 	});
 });
 

@@ -12,6 +12,7 @@
 //  - hands the frame callback a clamped delta, so a long pause never teleports
 //    an animation
 
+import { handleContextLoss } from './context-loss.js';
 import { createFrameGovernor } from './frame-governor.js';
 import { cappedPixelRatio } from './studio-look.js';
 
@@ -54,7 +55,6 @@ export function createRenderLoop(opts) {
 	let onScreen = true;
 	let contextLost = false;
 	let prev = null;
-	let notice = null;
 
 	const canRun = () => wanted && tabVisible && onScreen && !contextLost;
 
@@ -106,55 +106,21 @@ export function createRenderLoop(opts) {
 				})
 			: null;
 
-	function showNotice() {
-		if (!contextNotice || notice || !canvas.parentElement) return;
-		notice = document.createElement('div');
-		notice.setAttribute('role', 'status');
-		notice.textContent = 'The graphics driver reset. The 3D view will come back on its own in a moment.';
-		Object.assign(notice.style, {
-			position: 'absolute',
-			left: '50%',
-			top: '50%',
-			transform: 'translate(-50%, -50%)',
-			maxWidth: '22rem',
-			padding: '0.75rem 1rem',
-			borderRadius: '10px',
-			background: 'rgba(12, 12, 14, 0.86)',
-			color: '#f2f2f2',
-			font: '500 13px/1.45 system-ui, sans-serif',
-			textAlign: 'center',
-			zIndex: '5',
-			pointerEvents: 'none',
-		});
-		const host = canvas.parentElement;
-		if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
-		host.appendChild(notice);
-	}
-
-	function hideNotice() {
-		notice?.remove();
-		notice = null;
-	}
-
-	const onLost = (e) => {
-		// preventDefault is what tells the browser we can restore; without it
-		// the context is gone for good.
-		e.preventDefault();
-		contextLost = true;
-		showNotice();
-		sync();
-	};
-	const onRestored = () => {
-		contextLost = false;
-		hideNotice();
-		onContextRestored?.();
-		sync();
-	};
+	const contextLoss = handleContextLoss(canvas, {
+		notice: contextNotice,
+		onLost: () => {
+			contextLost = true;
+			sync();
+		},
+		onRestored: () => {
+			contextLost = false;
+			onContextRestored?.();
+			sync();
+		},
+	});
 
 	if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility);
 	io?.observe(observed);
-	canvas.addEventListener('webglcontextlost', onLost);
-	canvas.addEventListener('webglcontextrestored', onRestored);
 
 	return {
 		start() {
@@ -175,11 +141,9 @@ export function createRenderLoop(opts) {
 		dispose() {
 			wanted = false;
 			sync();
-			hideNotice();
+			contextLoss.detach();
 			if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility);
 			io?.disconnect();
-			canvas.removeEventListener('webglcontextlost', onLost);
-			canvas.removeEventListener('webglcontextrestored', onRestored);
 		},
 	};
 }

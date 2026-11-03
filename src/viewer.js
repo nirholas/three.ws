@@ -68,6 +68,8 @@ import {
 	DEFAULT_CINEMATIC_PRESET,
 } from './viewer/cinematic.js';
 import { log } from './shared/log.js';
+import { handleContextLoss } from './render/context-loss.js';
+import { createFrameGovernor } from './render/frame-governor.js';
 
 // Install BVH-accelerated raycasting on Three.js prototypes. This must happen
 // before any geometry is created so every Mesh benefits transparently.
@@ -335,8 +337,20 @@ export class Viewer {
 		// are capped at 1.0 regardless of mode — resolution is the second
 		// biggest lever after MSAA on weak mobile GPUs.
 		const dprCap = this._lowPower ? 1 : (options.maxPixelRatio ?? (options.kiosk ? 1.5 : 2));
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
+		const startRatio = Math.min(window.devicePixelRatio, dprCap);
+		this.renderer.setPixelRatio(startRatio);
 		this.renderer.setSize(initialWidth, initialHeight);
+
+		// Adaptive resolution: the static caps above are guesses about the
+		// device; the governor measures it. While the scene animates it steps the
+		// pixel ratio down when the GPU cannot hold ~45 fps and back up when it
+		// has headroom, settling instead of oscillating. Desktop never drops below
+		// 1 CSS pixel per device pixel; low-power devices may go to 0.75.
+		// Opt out with options.adaptiveResolution = false.
+		this._frameGovernor =
+			options.adaptiveResolution === false
+				? null
+				: createFrameGovernor({ min: Math.min(this._lowPower ? 0.75 : 1, startRatio), max: startRatio });
 
 		// Ground contact shadow (the one rendering-quality gap vs the
 		// model-viewer surfaces). Cheap when nothing casts; skipped entirely on
@@ -349,6 +363,18 @@ export class Viewer {
 		this.pmremGenerator.compileEquirectangularShader();
 
 		this.neutralEnvironment = this.pmremGenerator.fromScene(new RoomEnvironment()).texture;
+
+		// Survive a lost WebGL context (driver reset, GPU process crash, too
+		// many canvases on one page) instead of freezing on a black canvas.
+		this._contextLost = false;
+		this._contextLoss = handleContextLoss(this.renderer.domElement, {
+			notice: options.contextNotice !== false,
+			onLost: () => {
+				this._contextLost = true;
+				this._updateRenderLoop();
+			},
+			onRestored: () => this._restoreAfterContextLoss(),
+		});
 
 		this.controls = new OrbitControls(this.defaultCamera, this.renderer.domElement);
 		this.controls.screenSpacePanning = true;
@@ -852,7 +878,7 @@ export class Viewer {
 
 	_updateRenderLoop() {
 		if (this._disposed) return;
-		const canRun = this._visible && this._tabVisible;
+		const canRun = this._visible && this._tabVisible && !this._contextLost;
 		const shouldRun = canRun && (this._needsRender || this._animating);
 		if (shouldRun && this._rafId === null) {
 			this.prevTime = performance.now();
@@ -860,7 +886,44 @@ export class Viewer {
 		} else if (!canRun && this._rafId !== null) {
 			cancelAnimationFrame(this._rafId);
 			this._rafId = null;
+			this._frameGovernor?.pause();
 		}
+	}
+
+	// Feed the frame governor during continuous animation only. A render-on-
+	// demand frame after an idle gap says nothing about GPU throughput.
+	_governFrameRate(time) {
+		if (!this._frameGovernor || !this._animating) return;
+		const ratio = this._frameGovernor.tick(time);
+		if (ratio === null) return;
+		this.renderer.setPixelRatio(ratio);
+		const { clientWidth, clientHeight } = this.el;
+		if (clientWidth > 0 && clientHeight > 0) this._composer?.setSize(clientWidth, clientHeight);
+	}
+
+	// three.js re-creates its GL state and re-uploads geometry and textures on
+	// its own after a restore, but anything that was rendered INTO a GPU target
+	// is gone: the PMREM-prefiltered environments are blank. Rebuild them, then
+	// draw again. The dead generator and environment textures are dropped, not
+	// disposed: their GPU memory went with the old context, and calling
+	// dispose() on them only makes the browser warn about deleting handles from
+	// a context that no longer exists.
+	_restoreAfterContextLoss() {
+		if (this._disposed) return;
+		this._contextLost = false;
+		this.pmremGenerator = new PMREMGenerator(this.renderer);
+		this.pmremGenerator.compileEquirectangularShader();
+		const staleNeutral = this.neutralEnvironment;
+		this.neutralEnvironment = this.pmremGenerator.fromScene(new RoomEnvironment()).texture;
+		if (this.scene?.environment === staleNeutral) this.scene.environment = this.neutralEnvironment;
+		if (this.scene?.background === staleNeutral) this.scene.background = this.neutralEnvironment;
+		// Reload the selected HDRI (from the HTTP cache) through the fresh
+		// generator; clearing the slot first stops getCubeMapTexture from
+		// disposing the dead texture.
+		this._loadedEnvironment = null;
+		this.updateEnvironment();
+		this._frameGovernor?.pause();
+		this.invalidate();
 	}
 
 	animate(time) {
@@ -868,6 +931,7 @@ export class Viewer {
 		this.prevTime = time;
 
 		this._recomputeAnimating();
+		this._governFrameRate(time);
 
 		this.controls.update();
 		this.stats.update();
@@ -885,10 +949,11 @@ export class Viewer {
 		this.render(dt);
 		this._needsRender = false;
 
-		if (this._animating && this._visible && this._tabVisible && !this._disposed) {
+		if (this._animating && this._visible && this._tabVisible && !this._contextLost && !this._disposed) {
 			this._rafId = requestAnimationFrame(this.animate);
 		} else {
 			this._rafId = null;
+			this._frameGovernor?.pause();
 		}
 	}
 
@@ -2507,6 +2572,8 @@ export class Viewer {
 		}
 
 		document.removeEventListener('visibilitychange', this._onVisibilityChange);
+		this._contextLoss?.detach();
+		this._contextLoss = null;
 		window.removeEventListener('resize', this._onResize, false);
 		window.removeEventListener('keydown', this._onKeyDown);
 		if (this._onDblClick && this.renderer?.domElement) {

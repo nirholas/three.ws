@@ -48,6 +48,12 @@ A `requestAnimationFrame` loop that:
 
 Returns `{ start, stop, dispose, running, pixelRatio }`.
 
+## `handleContextLoss(canvas, opts?)`
+
+The context-loss half of the loop, for pages that keep their own scheduling (render-on-demand, `setAnimationLoop`, a video-clocked recorder). Claims the lost context with `preventDefault()` so the browser will restore it, shows the same status notice, and calls `onLost()` / `onRestored()`. Rebuild anything that was rendered into a GPU target (PMREM environments, baked render targets) in `onRestored`; three.js re-uploads geometry and textures itself. Drop the dead objects rather than disposing them: their memory went with the old context, and `dispose()` on them only makes the browser warn. Returns `{ lost, detach }`.
+
+`src/viewer.js` (every `<agent-3d>` embed) uses this plus `createFrameGovernor`: it rebuilds its neutral and HDRI environments on restore, and while a model animates it governs the pixel ratio between 1 (0.75 on low-power devices) and its DPR cap. Pass `adaptiveResolution: false` or `contextNotice: false` in the viewer options to opt out.
+
 ## `createFrameGovernor(opts)`
 
 The pure, DOM-free controller behind the adaptive pixel ratio. Averages frame times over a window, steps the ratio down below `lowFps` (45) and up at `highFps` (57) with a cooldown, ignores gaps longer than 250 ms (background tabs, GC pauses), and settles on the lower ratio after `maxFlips` reversals so it never oscillates. Tested in `tests/render-kit.test.js`.

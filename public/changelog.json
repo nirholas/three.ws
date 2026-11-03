@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-11-03T03:57:06.553Z",
+	"generated_at": "2026-11-03T04:02:58.476Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset",
+			"summary": "Nineteen 3D pages and previews that drew their own scenes, including the live agent economy, /stream, the haunted yard, the pumpkin carver, the pill, the timeline, the Agora model viewer and the motion tools, now light models with a soft studio environment. Metal, glossy plastic and skin pick up highlights instead of rendering flat or dark. Those scenes also pause when you scroll them offscreen or switch tabs, which saves battery. Every embedded avatar now lowers its resolution slightly when your device starts dropping frames, then raises it again when there is headroom. If the graphics driver resets, the scene shows a short notice and returns by itself, so you no longer need to reload the page.",
+			"link": "/live",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-03",
 			"type": "update",
