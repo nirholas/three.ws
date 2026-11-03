@@ -24,6 +24,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 
 import { getMeshoptDecoder } from './viewer/internal.js';
+import { applyStudioLook, createRenderLoop } from './render/index.js';
 import { A3SPlayer } from '../packages/avatar-stream/src/three.js';
 import { A3SStream } from '../packages/avatar-stream/src/reader.js';
 
@@ -95,12 +96,12 @@ class Stage {
 	constructor(canvas) {
 		this.canvas = canvas;
 		this.renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
-		this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
 		this.scene = new Scene();
 		this.scene.background = null;
+		applyStudioLook(this.renderer, this.scene, { environmentIntensity: 0.7 });
 		this.camera = new PerspectiveCamera(35, 1, 0.05, 100);
 		this.camera.position.set(0, 1.35, 3.1);
-		this.scene.add(new AmbientLight(0xffffff, 1.5));
+		this.scene.add(new AmbientLight(0xffffff, 0.3));
 		const key = new DirectionalLight(0xffffff, 2.2);
 		key.position.set(2, 4, 3);
 		this.scene.add(key);
@@ -108,14 +109,13 @@ class Stage {
 		rim.position.set(-3, 2, -2);
 		this.scene.add(rim);
 		this.mixer = null;
-		// three.js deprecated Clock in favour of Timer; a plain timestamp delta
-		// needs neither and keeps the console clean.
-		this.lastFrame = performance.now();
 		this.root = null;
 		this.resize();
-		this.loop = this.loop.bind(this);
-		this.running = true;
-		requestAnimationFrame(this.loop);
+		this.renderLoop = createRenderLoop({
+			renderer: this.renderer,
+			frame: (delta) => this.frame(delta),
+		});
+		this.renderLoop.start();
 	}
 
 	resize() {
@@ -163,15 +163,10 @@ class Stage {
 		this.mixer.clipAction(clip).play();
 	}
 
-	loop() {
-		if (!this.running) return;
-		const now = performance.now();
-		const delta = Math.min((now - this.lastFrame) / 1000, 0.1);
-		this.lastFrame = now;
+	frame(delta) {
 		this.mixer?.update(delta);
 		if (this.root) this.root.rotation.y += delta * 0.35;
 		this.renderer.render(this.scene, this.camera);
-		requestAnimationFrame(this.loop);
 	}
 }
 
