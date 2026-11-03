@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Agent Memory Settings · three.ws</title>
+	<meta name="description" content="See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills they drafted from experience. One switch turns learning off." />
+	<link rel="canonical" href="https://three.ws/settings/memory" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta name="robots" content="noindex" />
+	<style>
+		:root { --mm-maxw: 960px; --mm-danger: var(--danger, #e5484d); }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.mm-wrap { max-width: var(--mm-maxw); margin: 0 auto; padding: 0 18px 96px; }
+		.mm-hero { padding: 34px 0 8px; }
+		.mm-hero h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.mm-hero p { margin: 0; max-width: 66ch; color: var(--ink-dim); line-height: 1.6; }
+		.mm-hero a, .mm-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+		.mm-hero a:hover, .mm-link:hover { color: var(--ink-bright, var(--ink)); }
+
+		.mm-card { margin-top: 22px; background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); padding: 20px; }
+		.mm-card > header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+		.mm-card h2 { font-size: 1.1rem; margin: 0 0 4px; color: var(--ink-bright, var(--ink)); }
+		.mm-sub { margin: 0; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.5; max-width: 62ch; }
+
+		button, select, input, textarea { font: inherit; color: inherit; }
+		.mm-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; transition: background var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms) var(--ease-standard, ease), transform var(--duration-fast, 120ms) var(--ease-standard, ease); }
+		.mm-btn:hover { background: var(--surface-3); border-color: var(--accent); }
+		.mm-btn:active { transform: translateY(1px); }
+		.mm-btn:focus-visible, .mm-input:focus-visible, .mm-switch input:focus-visible + .mm-track, .mm-chip:focus-visible, .mm-ico:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mm-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+		.mm-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+		.mm-btn.danger { color: var(--mm-danger); border-color: color-mix(in srgb, var(--mm-danger) 50%, var(--stroke)); }
+		.mm-btn.danger:hover { background: color-mix(in srgb, var(--mm-danger) 14%, var(--surface-2)); border-color: var(--mm-danger); }
+		.mm-ico { width: 30px; height: 30px; padding: 0; justify-content: center; }
+		.mm-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--bg-0); transition: border-color var(--duration-fast, 120ms) ease; }
+		.mm-input:hover { border-color: var(--accent); }
+		textarea.mm-input { resize: vertical; min-height: 64px; line-height: 1.5; }
+
+		.mm-switch { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; }
+		.mm-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+		.mm-track { width: 46px; height: 26px; border-radius: 13px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); position: relative; transition: background var(--duration-fast, 120ms) ease; flex: none; }
+		.mm-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); transition: transform var(--duration-fast, 120ms) var(--ease-standard, ease); }
+		.mm-switch input:checked + .mm-track { background: var(--accent); }
+		.mm-switch input:checked + .mm-track::after { transform: translateX(20px); background: #fff; }
+		.mm-switch:hover .mm-track { border-color: var(--accent); }
+		.mm-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-top: 1px solid var(--hairline, var(--stroke)); }
+		.mm-row:first-of-type { border-top: 0; }
+		.mm-row strong { display: block; color: var(--ink-bright, var(--ink)); }
+		.mm-range { display: flex; align-items: center; gap: 10px; min-width: 220px; }
+		.mm-range input { flex: 1; accent-color: var(--accent); }
+		.mm-range output { min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+		.mm-off { margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-md, 8px); border: 1px solid color-mix(in srgb, var(--warn, #d9a000) 55%, var(--stroke)); background: color-mix(in srgb, var(--warn, #d9a000) 10%, var(--surface-1)); color: var(--ink); font-size: 0.9rem; }
+
+		.mm-group { margin-top: 16px; }
+		.mm-group h3 { margin: 0 0 2px; font-size: 0.95rem; color: var(--ink-bright, var(--ink)); }
+		.mm-group .mm-hint { margin: 0 0 8px; color: var(--ink-faint, var(--ink-dim)); font-size: 0.82rem; }
+		.mm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+		.mm-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 8px); background: var(--surface-2); transition: border-color var(--duration-fast, 120ms) ease, opacity 180ms ease, transform 180ms ease; }
+		.mm-item:hover, .mm-item:focus-within { border-color: var(--stroke-strong, var(--accent)); }
+		.mm-item.leaving { opacity: 0; transform: translateX(-8px); }
+		.mm-item .body { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.5; }
+		.mm-item .meta { display: block; margin-top: 3px; font-size: 0.78rem; color: var(--ink-faint, var(--ink-dim)); }
+		.mm-item .actions { display: flex; gap: 6px; flex: none; }
+		.mm-item form { flex: 1; display: grid; gap: 8px; }
+		.mm-item form .row { display: flex; flex-wrap: wrap; gap: 8px; }
+		.mm-add { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+		.mm-add .mm-input { flex: 1 1 220px; }
+		.mm-add select { flex: 0 1 180px; }
+
+		.mm-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+		.mm-toolbar .mm-input { flex: 1 1 200px; max-width: 360px; }
+		.mm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+		.mm-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; font-size: 0.85rem; transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease; }
+		.mm-chip:hover { border-color: var(--accent); }
+		.mm-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+		.mm-chip small { opacity: 0.75; margin-left: 4px; }
+		.mm-tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; border: 1px solid var(--stroke-strong, var(--stroke)); color: var(--ink-dim); margin-right: 6px; text-transform: capitalize; }
+		.mm-tag.draft { color: var(--warn, #d9a000); border-color: currentColor; }
+		.mm-tag.on { color: var(--success, #2fa86b); border-color: currentColor; }
+
+		.mm-skill { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 8px); background: var(--surface-2); }
+		.mm-skill h3 { margin: 0; font-size: 1rem; }
+		.mm-skill pre { margin: 0; padding: 10px 12px; background: var(--bg-0); border: 1px solid var(--stroke); border-radius: var(--radius-md, 8px); white-space: pre-wrap; overflow-wrap: anywhere; font: 0.82rem/1.5 var(--font-mono, ui-monospace, monospace); max-height: 280px; overflow: auto; }
+		.mm-skill .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+		.mm-versions { display: grid; gap: 6px; }
+		.mm-ver { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 1px solid var(--stroke); border-radius: 8px; font-size: 0.85rem; }
+		.mm-diff { margin: 0; }
+		.mm-diff .add { display: block; background: color-mix(in srgb, var(--success, #2fa86b) 16%, transparent); }
+		.mm-diff .del { display: block; background: color-mix(in srgb, var(--mm-danger) 16%, transparent); }
+
+		.mm-empty { padding: 22px 16px; text-align: center; color: var(--ink-dim); border: 1px dashed var(--stroke-strong, var(--stroke)); border-radius: var(--radius-md, 8px); line-height: 1.6; }
+		.mm-empty strong { display: block; color: var(--ink-bright, var(--ink)); margin-bottom: 4px; }
+		.mm-error { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; padding: 12px 14px; border-radius: var(--radius-md, 8px); border: 1px solid var(--mm-danger); background: color-mix(in srgb, var(--mm-danger) 10%, var(--surface-1)); }
+		.mm-skel { height: 44px; border-radius: 8px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: mm-shimmer 1.4s ease infinite; }
+		.mm-skel + .mm-skel { margin-top: 8px; }
+		@keyframes mm-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+		.mm-toasts { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: grid; gap: 8px; z-index: 200; width: min(92vw, 420px); }
+		.mm-toast { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 10px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); box-shadow: 0 8px 28px rgba(0,0,0,0.35); animation: mm-in 160ms ease; }
+		.mm-toast.err { border-color: var(--mm-danger); }
+		@keyframes mm-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+		dialog.mm-dialog { border: 1px solid var(--stroke-strong, var(--stroke)); border-radius: 14px; background: var(--surface-1); color: var(--ink); padding: 22px; width: min(92vw, 440px); }
+		dialog.mm-dialog::backdrop { background: rgba(0,0,0,0.55); }
+		dialog.mm-dialog h2 { margin: 0 0 8px; font-size: 1.1rem; }
+		dialog.mm-dialog p { margin: 0 0 16px; color: var(--ink-dim); line-height: 1.55; }
+		dialog.mm-dialog .acts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+		.mm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+		@media (max-width: 520px) {
+			.mm-card { padding: 14px; }
+			.mm-item { flex-wrap: wrap; }
+			.mm-item .actions { width: 100%; justify-content: flex-end; }
+			.mm-range { min-width: 0; width: 100%; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			*, *::before, *::after { animation: none !important; transition: none !important; }
+		}
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="mm-wrap" id="main">
+		<section class="mm-hero">
+			<h1>Agent memory</h1>
+			<p>Your agents can remember what you tell them and write down skills they work out. Everything they keep is listed here, and every line can be edited or deleted. Nothing leaves your account, and nothing is shared when an agent is sold. <a href="/docs/agent-memory">How it works</a></p>
+		</section>
+
+		<div id="page-error" role="alert"></div>
+
+		<section class="mm-card" aria-labelledby="h-settings">
+			<header>
+				<div>
+					<h2 id="h-settings">Learning</h2>
+					<p class="mm-sub">Control whether your agents save new memories and draft skills from what they do.</p>
+				</div>
+			</header>
+			<div id="settings-body"><div class="mm-skel"></div><div class="mm-skel"></div></div>
+		</section>
+
+		<section class="mm-card" aria-labelledby="h-model">
+			<header>
+				<div>
+					<h2 id="h-model">About you</h2>
+					<p class="mm-sub">A short profile every one of your agents reads before it answers. Agents add to it as they learn; edit anything that is wrong.</p>
+				</div>
+				<button type="button" class="mm-btn danger" id="model-clear" hidden>Clear all</button>
+			</header>
+			<div id="model-body"><div class="mm-skel"></div><div class="mm-skel"></div><div class="mm-skel"></div></div>
+		</section>
+
+		<section class="mm-card" aria-labelledby="h-mem">
+			<header>
+				<div>
+					<h2 id="h-mem">Saved memories</h2>
+					<p class="mm-sub">Facts, preferences and procedures your agents chose to keep. Deleting one removes it from every future prompt.</p>
+				</div>
+			</header>
+			<div class="mm-toolbar" id="mem-toolbar">
+				<div class="mm-chips" role="group" aria-label="Filter by kind" id="mem-kinds"></div>
+				<label class="mm-sr" for="mem-search">Search memories</label>
+				<input class="mm-input" id="mem-search" type="search" placeholder="Search memories" autocomplete="off" />
+			</div>
+			<div id="mem-body" aria-live="polite"><div class="mm-skel"></div><div class="mm-skel"></div><div class="mm-skel"></div></div>
+		</section>
+
+		<section class="mm-card" aria-labelledby="h-skills">
+			<header>
+				<div>
+					<h2 id="h-skills">Learned skills</h2>
+					<p class="mm-sub">Skills an agent drafted after a run that used several tools. A draft stays off until you read it and turn it on.</p>
+				</div>
+				<div>
+					<label class="mm-sr" for="skill-agent">Agent</label>
+					<select class="mm-input" id="skill-agent" aria-label="Agent"></select>
+				</div>
+			</header>
+			<div id="skills-body" aria-live="polite"><div class="mm-skel"></div><div class="mm-skel"></div></div>
+		</section>
+	</main>
+
+	<div class="mm-toasts" id="toasts" role="status" aria-live="polite"></div>
+	<dialog class="mm-dialog" id="dialog" aria-labelledby="dialog-title">
+		<h2 id="dialog-title"></h2>
+		<p id="dialog-text"></p>
+		<div class="acts">
+			<button type="button" class="mm-btn" id="dialog-cancel">Cancel</button>
+			<button type="button" class="mm-btn danger" id="dialog-ok">Confirm</button>
+		</div>
+	</dialog>
+
+	<script src="/brand.js" defer></script>
+	<script type="module" src="/src/settings-memory.js"></script>
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>
