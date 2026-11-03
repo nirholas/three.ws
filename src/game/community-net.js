@@ -47,6 +47,23 @@ const YAW_EPSILON = 0.01;
 
 const defaultServerUrl = defaultGameServerUrl;
 
+// WalkRoom's anti-teleport clamp (MAX_STEP_M in multiplayer/src/rooms/WalkRoom.js):
+// the server refuses any move further than this from our authoritative position.
+export const SERVER_MAX_STEP_M = 1.2;
+
+// Where the local avatar must stand after the server announces our own player.
+// Returns null when the local position is already within the clamp of the
+// server's (nothing to do), else the server position to adopt. Without this, an
+// avatar that kept walking while the socket was down is past the clamp after the
+// rejoin, every move is refused, and peers see us frozen where the server put us.
+export function selfResyncTarget(local, server) {
+	if (!local || !server) return null;
+	const { x, y, z } = server;
+	if (![x, y, z].every(Number.isFinite)) return null;
+	if (Math.hypot(x - local.x, z - local.z) <= SERVER_MAX_STEP_M - 0.1) return null;
+	return { x, y, z };
+}
+
 export class CommunityNet {
 	/**
 	 * @param {object} opts

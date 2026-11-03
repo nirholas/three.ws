@@ -21,7 +21,7 @@ import {
 
 import { captureSceneCanvas } from './scene-capture.js';
 import { AnimationManager } from '../animation-manager.js';
-import { CommunityNet } from './community-net.js';
+import { CommunityNet, selfResyncTarget } from './community-net.js';
 import { CommunityUI } from './coincommunities-ui.js';
 import { createWorldEnvironment, seedFromString } from './world-env.js';
 import { createDistrict } from './district.js';
@@ -2620,7 +2620,13 @@ export class CoinCommunities {
 
 	// ---------------------------------------------------------------- net events
 	_onAdd(player, id) {
-		if (id === this.net.sessionId) return; // that's us
+		if (id === this.net.sessionId) {
+			// That's us. The server's position is the anchor every move is clamped
+			// against; if we walked while offline, stand where the server has us.
+			const to = selfResyncTarget(this.localPos, player);
+			if (to) this.localPos.set(to.x, to.y, to.z);
+			return;
+		}
 		// A peer we already track (or one re-announced under the same id after a
 		// resync) is live, not stale, clear any stale flag rather than doubling it.
 		const existing = this.remotes.get(id);
@@ -2680,7 +2686,8 @@ export class CoinCommunities {
 		if (mine) this._sayLocal(m.text);
 		else { this.remotes.get(m.id)?.say(m.text); this._bumpTabUnread(); }
 	}
-	_sendChat(text) { this.net?.sendChat(text); }
+	// Returns whether the line reached the room, so the chat box keeps unsent text.
+	_sendChat(text) { return this.net?.sendChat(text) ?? false; }
 	_emote(name) { this._danceOff?.noteEmote(name); this.net?.sendEmote(name); playEmoteClip(this.localAnim, name, this.motion); }
 
 	// ── Tag mini-game (R08) ─────────────────────────────────────────────────────

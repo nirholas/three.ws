@@ -255,6 +255,15 @@ const WORLD_API_BASE = (process.env.WORLD_API_BASE || 'https://three.ws').replac
 // headroom for packet timing jitter.
 const MAX_STEP_M = 1.2;
 
+// Reconnect position resume. A reconnect is a fresh session the server would
+// otherwise spawn at the origin, and the MAX_STEP_M clamp then refuses every move
+// from the player's real spot, so peers would watch them frozen at spawn for the
+// rest of the session. The last authoritative position of each verified player
+// key is kept this long after they leave and handed back to a rejoin that names
+// the session it came from (see _resumePosition).
+const RESUME_POSITION_MS = 10 * 60_000;
+const RESUME_POSITION_MAX = 2000;
+
 // Tag mini-game (R08). Server-authoritative proximity: a tag is only valid when
 // the "it" player's authoritative server position is within TAG_RANGE_M of a
 // target. TAG_IMMUNITY_MS prevents the just-untagged player from being immediately
@@ -524,6 +533,7 @@ export class WalkRoom extends Room {
 		this.maxClients = MAX_CLIENTS_PER_ROOM;
 		this._moveCounters = new Map(); // sessionId → { windowStart, count }
 		this._chatCooldowns = new Map();
+		this._lastPositions = new Map(); // playerKey → { session, x, y, z, yaw, at }
 		this._kickCounters = new Map(); // R05: sessionId → { windowStart, count } for ball:kick rate limit
 		// R05 ball physics (server-authoritative). Velocity lives here (off-schema);
 		// position is written directly onto the WorldObject each tick and auto-broadcast.
@@ -938,7 +948,9 @@ export class WalkRoom extends Room {
 		// transport has not reaped yet. Keyed on the identity resolved above, never
 		// on a raw client-asserted pid, so it can't be aimed at anyone else.
 		client.userData = { ...(client.userData || {}), playerKey: playerId };
-		this._evictPriorSession(client, playerId, clean(options?.prevSession, 32));
+		const prevSession = clean(options?.prevSession, 32);
+		const superseded = this._evictPriorSession(client, playerId, prevSession);
+		this._resumePosition(player, playerId, prevSession, superseded);
 		if (identity.wallet && !client.userData?.account) {
 			// The play pass proved this wallet even though the platform gate is off,
 			// bind it as the session account so ownership + moderation checks and the
@@ -1077,9 +1089,46 @@ export class WalkRoom extends Room {
 			if (other === client || other.sessionId !== prevSession) continue;
 			if (other.userData?.playerKey !== playerKey) continue;
 			console.log(`[walk_world ${this.roomId}] retiring superseded session ${other.sessionId}`);
+			const held = this.state.players.get(other.sessionId);
+			const pos = held && !held.dead ? { x: held.x, y: held.y, z: held.z, yaw: held.yaw } : null;
 			try { other.leave(1000); } catch { /* already gone */ }
-			return;
+			return pos;
 		}
+		return null;
+	}
+
+	// Remember where a verified player stood when their session ended, so a
+	// reconnect can resume there (RESUME_POSITION_MS). Bounded: the oldest entry
+	// goes once the map is full, so a churn of guests cannot grow it without limit.
+	_rememberPosition(client) {
+		const key = client.userData?.playerKey;
+		const p = this.state.players.get(client.sessionId);
+		if (!key || !p || p.dead) return;
+		this._lastPositions.delete(key);
+		this._lastPositions.set(key, { session: client.sessionId, x: p.x, y: p.y, z: p.z, yaw: p.yaw, at: Date.now() });
+		while (this._lastPositions.size > RESUME_POSITION_MAX) {
+			this._lastPositions.delete(this._lastPositions.keys().next().value);
+		}
+	}
+
+	// Put a rejoining player back where the server last had them. Honoured only
+	// for the player's OWN previous session, matched on the verified player key
+	// exactly like _evictPriorSession, so naming a stranger's session id never
+	// hands over their spot. `superseded` is the position of a half-open prior
+	// session that is still in the room; otherwise the remembered one is used.
+	_resumePosition(player, playerKey, prevSession, superseded) {
+		if (!playerKey || !prevSession) return;
+		let pos = superseded;
+		if (!pos) {
+			const rec = this._lastPositions.get(playerKey);
+			if (rec && rec.session === prevSession && Date.now() - rec.at <= RESUME_POSITION_MS) pos = rec;
+		}
+		this._lastPositions.delete(playerKey);
+		if (!pos || ![pos.x, pos.y, pos.z, pos.yaw].every(Number.isFinite)) return;
+		player.x = Math.max(-WORLD_BOUND_M, Math.min(WORLD_BOUND_M, pos.x));
+		player.z = Math.max(-WORLD_BOUND_M, Math.min(WORLD_BOUND_M, pos.z));
+		player.y = Math.max(-10, Math.min(10, pos.y));
+		player.yaw = pos.yaw;
 	}
 
 	onLeave(client) {
@@ -1115,6 +1164,7 @@ export class WalkRoom extends Room {
 		// with their session. Their durable build props stay as part of the world
 		// (R17), that's the whole point of persistence.
 		this._reapOwnerTransients(ownerKey);
+		this._rememberPosition(client);
 		this.state.players.delete(client.sessionId);
 		// Tag mini-game (R08): finalize this player's tracked time, purge immunity,
 		// and reassign "it" if they were the tagged player and enough peers remain.
