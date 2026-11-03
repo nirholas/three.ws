@@ -121,12 +121,12 @@
 	"items": [
 		{
 			"id": "genesis",
-			"status": "review",
+			"status": "approved",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
 			"pattern": "mechanism",
-			"notBefore": "2026-10-13T20:10:59.633Z",
+			"notBefore": "2026-11-03T01:48:14.343Z",
 			"covers": [
 				"/genesis"
 			],
