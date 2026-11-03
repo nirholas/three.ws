@@ -51,6 +51,10 @@ function ensureChipStyles() {
 		'.walk-companion-id-claim:hover,.walk-companion-id-claim:focus-visible{color:#b7d1ff;text-decoration:underline;}',
 		'.walk-companion-id-claim:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px;border-radius:4px;}',
 		'@media (pointer:coarse){.walk-companion-id-claim{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-16px 0;}}',
+		// The phone companion is 112px wide, which leaves the name three letters
+		// and an ellipsis. The bubble already introduces the agent by name, so the
+		// chip keeps only the action, at a size a phone can read.
+		'@media (max-width:520px){.walk-companion-id-name{display:none;}.walk-companion-id{font-size:12px;}}',
 	].join('');
 	document.head.appendChild(s);
 }
@@ -115,7 +119,19 @@ function introduce(instance, identity) {
 		if (!instance.mounted) return;
 		try {
 			sessionStorage.setItem(INTRO_KEY, '1');
-			instance._say(`I’m ${identity.name} — your agent. Press ⌘K and put me to work.`);
+			// A phone has no ⌘K to press, so a touch visitor gets the same palette
+			// behind a button in the bubble instead of an instruction they cannot
+			// follow.
+			const touch = typeof matchMedia === 'function' && matchMedia('(hover: none) and (pointer: coarse)').matches;
+			const palette = window.__twsSearch;
+			if (touch && palette && typeof palette.open === 'function') {
+				instance.say(`I’m ${identity.name}, your agent.`, {
+					hold: 9000,
+					actions: [{ label: 'Put me to work', onClick: () => palette.open() }],
+				});
+			} else {
+				instance._say(`I’m ${identity.name}, your agent. Press ⌘K and put me to work.`);
+			}
 		} catch {
 			/* bubble is decorative — never fatal */
 		}

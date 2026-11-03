@@ -98,6 +98,10 @@
 		   opt in by putting MODAL_CLASS on <body> while it is open; the stack
 		   fades out and stops taking pointer events until the class is removed. */
 		'body.' + MODAL_CLASS + ' #' + STACK_ID + '{opacity:0;pointer-events:none;visibility:hidden;}',
+		/* The walk companion reserves the corner rather than joining the stack,
+		   but it is the same kind of widget at an even higher layer, and on a
+		   phone it covered the open nav drawer's last rows. Same rule. */
+		'body.' + MODAL_CLASS + ' .walk-companion{opacity:0;pointer-events:none;visibility:hidden;}',
 		'#' + STACK_ID + ':empty{display:none;}',
 		/* relative (not static) keeps members in the flex flow while preserving a
 		   containing block for their position:absolute children (e.g. the

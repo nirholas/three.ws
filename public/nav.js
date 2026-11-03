@@ -764,12 +764,26 @@ function initDrawer(root) {
 	// hidden from assistive tech, and blurs any descendant that holds focus —
 	// which is what aria-hidden alone cannot do (it only warns).
 	drawer.inert = true;
+	// The drawer covers the page, so it is a modal for the corner widgets: the
+	// "Getting started" pill and the walk companion sit above every page layer
+	// and used to float over the menu, covering its bottom rows. Only remove the
+	// flag if the drawer set it, so closing the menu never unhides the stack
+	// under a dialog that was already open.
+	const MODAL_CLASS = (window.twsCornerStack && window.twsCornerStack.MODAL_CLASS) || 'tws-modal-open';
+	let ownsModalFlag = false;
 	function setOpen(open) {
 		toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
 		drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
 		drawer.inert = !open;
 		document.body.style.overflow = open ? 'hidden' : '';
 		drawer.classList.toggle('open', open);
+		if (open && !document.body.classList.contains(MODAL_CLASS)) {
+			document.body.classList.add(MODAL_CLASS);
+			ownsModalFlag = true;
+		} else if (!open && ownsModalFlag) {
+			document.body.classList.remove(MODAL_CLASS);
+			ownsModalFlag = false;
+		}
 		// Move focus into the drawer on open so keyboard/SR users land on the
 		// menu, not stranded on the toggle behind the overlay. The 0ms defer
 		// lets `inert` clear first (a still-inert element rejects focus).

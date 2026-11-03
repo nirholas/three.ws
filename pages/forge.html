@@ -694,10 +694,11 @@
 			/* Inline holder note under the Quality row — links to /three. forge.js
 			   hides it while High is selected (the full in-place lock panel takes
 			   over) and swaps the copy once the viewer is a holder. */
+			/* Block, not flex: the note is a sentence with a link in the middle, and
+			   as a flex row every text run became its own shrinking column, so on a
+			   phone it wrapped into three ragged columns. The icon sits inline. */
 			.fq-holder-note {
-				display: flex;
-				align-items: center;
-				gap: 0.4rem;
+				display: block;
 				margin: 0.1rem 0 0;
 				font-size: var(--text-xs);
 				line-height: 1.5;
@@ -722,6 +723,7 @@
 			.fq-holder-note .fq-holder-ico {
 				color: #f5c451;
 				font-size: 0.9em;
+				margin-right: 0.3rem;
 			}
 			.fq-holder-note[data-state='unlocked'] .fq-holder-ico {
 				color: #6ee7a8;

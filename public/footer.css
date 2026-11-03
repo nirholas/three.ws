@@ -689,5 +689,6 @@
 	color: #f2f0ff; background: #16161f; border: 1px solid rgba(255,255,255,0.14);
 	opacity: 0; pointer-events: none; transition: opacity var(--duration-fast); z-index: 10;
 }
-.h-footer-newsletter-btn:hover > .ui-tip, .h-footer-newsletter-btn:focus-visible > .ui-tip { opacity: 1; }
+@media (hover: hover) { .h-footer-newsletter-btn:hover > .ui-tip { opacity: 1; } }
+.h-footer-newsletter-btn:focus-visible > .ui-tip { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .h-footer-newsletter-btn > .ui-tip { transition: none; } }

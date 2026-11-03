@@ -30,15 +30,27 @@
  *     mentioning `safe-area-inset` applying to them. Those bars land under the
  *     iOS home indicator.
  *  4. Horizontal overflow at the mobile viewport width (scrollWidth > clientWidth).
+ *  5. Clipped content. mobile.css sets `overflow-x: clip` on html and body, so
+ *     a row that is wider than the phone no longer scrolls sideways: its right
+ *     edge is simply cut off, and check 4 reads that page as clean. This check
+ *     finds every visible element that straddles the viewport edge outside any
+ *     scroll container of its own, then names the outermost element that
+ *     overflows (the culprit whose parent still fits), which is where the fix
+ *     goes.
+ *  6. Unreadable text: visible text set below 11 CSS px.
  *
  * Usage:
  *   node scripts/mobile-touch-audit.mjs                    # top-15 preset
  *   node scripts/mobile-touch-audit.mjs --pages /,/forge
  *   node scripts/mobile-touch-audit.mjs --json out.json --md out.md
  *   node scripts/mobile-touch-audit.mjs --base http://localhost:3000
+ *   node scripts/mobile-touch-audit.mjs --all --no-gesture --concurrency 6
+ *       every HTML route in data/pages.json (add --blog for /blog/*)
+ *   node scripts/mobile-touch-audit.mjs --pages /forge --shots out/shots
+ *       also save a phone-viewport screenshot per page
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, devices } from 'playwright';
@@ -75,6 +87,22 @@ const DEFAULT_PAGES = [
 
 const MIN_TARGET = 44;
 
+// Every HTML route the site publishes, from the same manifest audit:console
+// sweeps. The `machine` section is .xml/.txt/.json endpoints with no DOM.
+function loadAllRoutes(includeBlog) {
+	const data = JSON.parse(readFileSync(join(ROOT, 'data/pages.json'), 'utf8'));
+	const seen = new Set();
+	for (const section of data.sections) {
+		if (section.id === 'machine') continue;
+		if (section.id === 'blog' && !includeBlog) continue;
+		for (const page of section.pages) {
+			if (/\.[a-z0-9]+$/i.test(page.path) && !/\.html$/i.test(page.path)) continue;
+			seen.add(page.path);
+		}
+	}
+	return [...seen];
+}
+
 function parseArgs(argv) {
 	const out = {
 		base: 'https://three.ws',
@@ -86,6 +114,10 @@ function parseArgs(argv) {
 		md: null,
 		label: '',
 		gesture: true,
+		all: false,
+		blog: false,
+		concurrency: 1,
+		shots: null,
 	};
 	for (let i = 2; i < argv.length; i++) {
 		const a = argv[i];
@@ -99,6 +131,10 @@ function parseArgs(argv) {
 		else if (a === '--json') out.json = next();
 		else if (a === '--md') out.md = next();
 		else if (a === '--label') out.label = next();
+		else if (a === '--all') out.all = true;
+		else if (a === '--blog') out.blog = true;
+		else if (a === '--concurrency') out.concurrency = Math.max(1, Number(next()) || 1);
+		else if (a === '--shots') out.shots = next();
 	}
 	return out;
 }
@@ -354,8 +390,91 @@ function auditDom(minTarget) {
 		window.scrollTo({ left: before, top: window.scrollY, behavior: 'instant' });
 	}
 
+	// Clipped content (check 5). Only elements that carry something a reader
+	// needs (their own text, or media/controls) are candidates, so a decorative
+	// glow blob that deliberately bleeds off the edge is not a finding.
+	const vw = doc.clientWidth;
+	const clipsX = (n) => {
+		const o = getComputedStyle(n).overflowX;
+		return o === 'auto' || o === 'scroll' || o === 'hidden' || o === 'clip';
+	};
+	const straddles = (r) => (r.left < vw - 1 && r.right > vw + 1) || (r.left < -1 && r.right > 1);
+	const hasOwnText = (el) =>
+		Array.from(el.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim().length > 1);
+	const MEDIA = /^(IMG|VIDEO|CANVAS|SVG|BUTTON|INPUT|SELECT|TEXTAREA|A|IFRAME)$/i;
+	const culprits = new Map();
+	for (const el of Array.from(document.body.querySelectorAll('*'))) {
+		if (!(hasOwnText(el) || MEDIA.test(el.tagName))) continue;
+		const r = el.getBoundingClientRect();
+		if (r.width <= 2 || r.height <= 2 || !straddles(r)) continue;
+		const cs = getComputedStyle(el);
+		if (cs.visibility === 'hidden' || Number(cs.opacity) < 0.05) continue;
+		if (el.closest('[aria-hidden="true"], [inert], [hidden]')) continue;
+		// Contained: some ancestor below <body> scrolls or clips horizontally and
+		// itself sits inside the viewport, so the overflow is intended (a table
+		// in an overflow-x:auto wrapper, a carousel track).
+		let contained = false;
+		let offCanvas = false;
+		let culprit = el;
+		for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+			const nr = n.getBoundingClientRect();
+			const ncs = getComputedStyle(n);
+			if (ncs.display === 'none' || ncs.visibility === 'hidden') {
+				offCanvas = true;
+				break;
+			}
+			if ((ncs.position === 'fixed' || ncs.position === 'absolute') && (nr.left >= vw - 1 || nr.right <= 1)) {
+				offCanvas = true; // a drawer parked off-screen
+				break;
+			}
+			if (clipsX(n) && nr.right <= vw + 1 && nr.left >= -1) {
+				contained = true;
+				break;
+			}
+			if (straddles(nr)) culprit = n;
+		}
+		if (contained || offCanvas) continue;
+		const key = describe(culprit);
+		const cr = culprit.getBoundingClientRect();
+		const prev = culprits.get(key);
+		if (prev) prev.count++;
+		else
+			culprits.set(key, {
+				sel: key,
+				left: Math.round(cr.left),
+				right: Math.round(cr.right),
+				width: Math.round(cr.width),
+				sample: (el.getAttribute('aria-label') || el.textContent || el.tagName).trim().replace(/\s+/g, ' ').slice(0, 50),
+				count: 1,
+			});
+	}
+	const clipped = [...culprits.values()].sort((a, b) => b.right - a.right);
+
+	// Unreadable text (check 6).
+	const tiny = new Map();
+	let tinyText = 0;
+	const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+	for (let t = tw.nextNode(); t; t = tw.nextNode()) {
+		if (t.textContent.trim().length < 2) continue;
+		const el = t.parentElement;
+		if (!el || /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(el.tagName)) continue;
+		const cs = getComputedStyle(el);
+		const fs = parseFloat(cs.fontSize);
+		if (!(fs < 11)) continue;
+		const r = el.getBoundingClientRect();
+		if (r.width < 2 || r.height < 2 || cs.visibility === 'hidden' || Number(cs.opacity) < 0.05) continue;
+		if (el.closest('[aria-hidden="true"], [hidden]')) continue;
+		tinyText++;
+		const key = `${describe(el)} ${fs}px`;
+		tiny.set(key, (tiny.get(key) || 0) + 1);
+	}
+	const tinySamples = [...tiny.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+
 	return {
 		title: document.title,
+		clipped,
+		tinyText,
+		tinySamples,
 		overflowXStyle: getComputedStyle(doc).overflowX,
 		canScrollX,
 		checked,
@@ -472,6 +591,16 @@ async function auditPage(browser, deviceDescriptor, url, opts) {
 			error = `audit failed: ${String(err.message).slice(0, 160)}`;
 		}
 	}
+	if (dom && opts.shots) {
+		try {
+			const dir = resolve(ROOT, opts.shots);
+			mkdirSync(dir, { recursive: true });
+			const name = url.replace(/^https?:\/\/[^/]+/, '').replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '') || 'home';
+			await page.screenshot({ path: join(dir, `${name}.png`) });
+		} catch {
+			/* a screenshot is a convenience, never a finding */
+		}
+	}
 	if (dom && opts.gesture && (dom.canvases || []).some((c) => c.visible && c.w >= 100 && c.h >= 100)) {
 		try {
 			const cdp = await context.newCDPSession(page);
@@ -495,12 +624,21 @@ function renderMarkdown(report) {
 				r.inlineExempt ?? '-'
 			} | ${canvasNoTouch}/${(r.canvases || []).filter((c) => c.visible).length} | ${
 				r.viewportFitCover ? 'yes' : 'NO'
-			} | ${barsNoSafe}/${(r.bottomBars || []).length} | ${r.overflowX ?? '-'} px |`;
+			} | ${barsNoSafe}/${(r.bottomBars || []).length} | ${r.overflowX ?? '-'} px | ${r.clipped?.length ?? '-'} | ${
+				r.tinyText ?? '-'
+			} |`;
 		});
 
 	const detail = [...results]
 		.sort((a, b) => (b.smallTargets?.length ?? 0) - (a.smallTargets?.length ?? 0))
-		.filter((r) => (r.smallTargets?.length || 0) > 0 || (r.bottomBars?.length || 0) > 0 || r.overflowX > 0)
+		.filter(
+			(r) =>
+				(r.smallTargets?.length || 0) > 0 ||
+				(r.bottomBars?.length || 0) > 0 ||
+				r.overflowX > 0 ||
+				(r.clipped?.length || 0) > 0 ||
+				(r.tinyText || 0) > 0,
+		)
 		.map((r) => {
 			const groups = new Map();
 			for (const t of r.smallTargets || []) {
@@ -524,6 +662,17 @@ ${lines.length ? `- undersized targets:\n${lines.join('\n')}\n` : '- undersized 
 			}${bars.length ? `- bottom-anchored bars:\n${bars.join('\n')}\n` : ''}${
 				r.overflowX > 0
 					? `- horizontal overflow: ${r.overflowX} px beyond ${r.innerWidth} px viewport (html overflow-x: ${r.overflowXStyle}, actually scrolls sideways: ${r.canScrollX})\n`
+					: ''
+			}${
+				r.clipped?.length
+					? `- clipped past the viewport edge (outermost culprit, its box, a sample of what is cut off):\n${r.clipped
+							.slice(0, 10)
+							.map((c) => `  - \`${c.sel}\` ${c.left}..${c.right} px (w ${c.width}) x${c.count}: "${c.sample}"`)
+							.join('\n')}\n`
+					: ''
+			}${
+				r.tinyText
+					? `- text below 11px: ${r.tinyText} runs\n${r.tinySamples.map(([k, n]) => `  - ${n}x \`${k}\``).join('\n')}\n`
 					: ''
 			}${
 				r.gesture && !r.gesture.error
@@ -553,8 +702,8 @@ measured bounding box, not a source grep.
 - Inline text links are exempt (WCAG 2.5.8) and counted separately
 - Measured: ${config.startedAt}
 
-| path | undersized targets | interactive checked | inline-exempt | canvases touch-action:auto / visible | viewport-fit=cover | bottom bars w/o safe-area / total | overflow-x |
-|---|---|---|---|---|---|---|---|
+| path | undersized targets | interactive checked | inline-exempt | canvases touch-action:auto / visible | viewport-fit=cover | bottom bars w/o safe-area / total | overflow-x | clipped culprits | text < 11px |
+|---|---|---|---|---|---|---|---|---|---|
 ${rows.join('\n')}
 
 ## Detail
@@ -570,9 +719,13 @@ async function main() {
 		console.error(C.r(`unknown --device "${opts.device}"`));
 		process.exit(2);
 	}
-	const paths = (opts.pages ? opts.pages.split(',').map((p) => p.trim()).filter(Boolean) : DEFAULT_PAGES).map((p) =>
-		p.startsWith('/') ? p : `/${p}`,
-	);
+	const paths = (
+		opts.all
+			? loadAllRoutes(opts.blog)
+			: opts.pages
+				? opts.pages.split(',').map((p) => p.trim()).filter(Boolean)
+				: DEFAULT_PAGES
+	).map((p) => (p.startsWith('/') ? p : `/${p}`));
 
 	const config = {
 		base: opts.base,
@@ -586,8 +739,9 @@ async function main() {
 	console.log(C.b('\nmobile-touch-audit') + C.d(`  ${config.base} @ ${config.device}\n`));
 	const browser = await chromium.launch({ headless: true });
 	const results = [];
-	try {
-		for (const path of paths) {
+	const queue = [...paths];
+	const worker = async () => {
+		for (let path = queue.shift(); path; path = queue.shift()) {
 			const r = await auditPage(browser, deviceDescriptor, `${opts.base}${path}`, opts);
 			r.path = path;
 			results.push(r);
@@ -600,11 +754,15 @@ async function main() {
 				console.log(
 					`  ${C.c(path.padEnd(52))} ${bad === 0 ? C.g('clean') : C.y(`${r.smallTargets.length} small targets`)}` +
 						C.d(
-							`  canvas-auto ${canvasNoTouch}  bottombars-unsafe ${barsNoSafe}  overflowX ${r.overflowX}  vfc ${r.viewportFitCover}`,
+							`  canvas-auto ${canvasNoTouch}  bottombars-unsafe ${barsNoSafe}  overflowX ${r.overflowX}  clipped ${r.clipped.length}  tiny ${r.tinyText}  vfc ${r.viewportFitCover}`,
 						),
 				);
 			}
 		}
+	};
+	try {
+		await Promise.all(Array.from({ length: Math.min(opts.concurrency, paths.length) }, worker));
+		results.sort((a, b) => paths.indexOf(a.path) - paths.indexOf(b.path));
 	} finally {
 		await browser.close().catch(() => {});
 	}

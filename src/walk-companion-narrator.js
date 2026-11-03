@@ -76,6 +76,10 @@ function readMode() {
 	} catch {
 		/* private mode / disabled storage — fall through to default */
 	}
+	// A phone has no spare corner: the caption repeats copy that is already on
+	// screen, on top of that copy, across a third of the viewport. Until the
+	// visitor turns narration on from the companion's toggle, a phone stays quiet.
+	if (typeof matchMedia === 'function' && matchMedia('(max-width: 520px)').matches) return 'off';
 	return 'caption'; // captions on, audio off, until the visitor opts in
 }
 /**
@@ -146,8 +150,10 @@ function extractText(el) {
 // SDK bubble (same surface/typography) using design tokens where they apply.
 // Width is clamped border-box: the bubble is centered over a host whose center
 // sits 116px from the right viewport edge (host right:16px, width 200px), so any
-// total width above 2 x (116 - 8) = 216px would escape the viewport. The mobile
-// host (right:10px, width 148px) puts the center 84px in, hence the 156px cap.
+// total width above 2 x (116 - 8) = 216px would escape the viewport. The phone
+// host is only 112px wide, too narrow to centre a readable caption over, so below
+// 520px the caption hangs from the host's right edge and grows leftwards instead,
+// with its tail moved under the avatar.
 const CAPTION_STYLE_ID = 'walk-companion-narrate-style';
 function ensureCaptionStyles() {
 	if (document.getElementById(CAPTION_STYLE_ID)) return;
@@ -158,13 +164,13 @@ function ensureCaptionStyles() {
 .walk-companion-caption.is-in{opacity:1;transform:translateX(-50%) translateY(0)}
 .walk-companion-caption::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--surface-glass,rgba(18,20,28,.95))}
 .walk-companion-caption .wcn-speaker{display:inline-block;margin-right:5px;opacity:.7;font-size:11px}
-@media (max-width:520px){.walk-companion-caption{font-size:11.5px;max-width:min(156px,calc(100vw - 12px))}}
+@media (max-width:520px){.walk-companion-caption{left:auto;right:0;transform:translateY(8px);font-size:12px;max-width:min(220px,calc(100vw - 24px))}.walk-companion-caption.is-in{transform:translateY(0)}.walk-companion-caption::after{left:auto;right:50px;transform:none}}
 @media (prefers-reduced-motion:reduce){.walk-companion-caption{transition:none}}
 .walk-companion-narrate{position:absolute;top:2px;right:106px;z-index:3;width:22px;height:22px;border:none;border-radius:50%;background:rgba(12,14,20,.55);color:#fff;font-size:12px;line-height:1;cursor:pointer;pointer-events:auto;opacity:0;transition:opacity .2s ease,background .2s ease;display:grid;place-items:center;padding:0}
 .walk-companion:hover .walk-companion-narrate,.walk-companion:focus-within .walk-companion-narrate{opacity:1}
 .walk-companion-narrate:hover{background:rgba(122,162,255,.85)}
 .walk-companion-narrate:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px;opacity:1}
-@media (pointer:coarse){.walk-companion-narrate{opacity:1;width:44px;height:44px;top:-9px;right:103px;border:11px solid transparent;background-clip:padding-box}}
+@media (pointer:coarse){.walk-companion-narrate{opacity:1;width:44px;height:44px;top:-9px;right:103px;border:11px solid transparent;background-clip:padding-box}.walk-companion-caption{bottom:calc(100% + 12px)}}
 `;
 	document.head.appendChild(s);
 }

@@ -262,7 +262,7 @@ class WalkCompanion {
 		});
 		requestAnimationFrame(() => host.classList.add('is-in'));
 		// Claim the corner before anything else settles there, and re-measure on
-		// resize: the narrow-viewport rule shrinks the companion to 148x208.
+		// resize: the narrow-viewport rule shrinks the companion to 112x157 (a third of a phone screen at the old 148x208 sat on whatever the page put in that corner).
 		// Bound here rather than in _bindEvents() so the claim survives the
 		// avatar-failed-to-load path, where the host stays on the page.
 		this._syncCornerReserve();
@@ -757,7 +757,10 @@ function ensureStyles() {
 .walk-companion-bubble.is-alert{background:rgba(20,18,32,.96);border-color:rgba(122,162,255,.5);box-shadow:0 10px 28px rgba(0,0,0,.45),0 0 0 1px rgba(122,162,255,.18)}
 .walk-companion-bubble.is-alert::after{border-top-color:rgba(20,18,32,.96)}
 .walk-companion-bubble.has-actions{pointer-events:auto;z-index:4}
-/* z-index 4 puts an actionable bubble ABOVE the chrome control row (z-index 3).
+/* On a touch screen the control row is always shown (there is no hover to
+   reveal it), and it sat across the bubble's text, so under pointer:coarse the
+   bubble rises clear of the row instead (see the coarse rule below).
+   z-index 4 puts an actionable bubble ABOVE the chrome control row (z-index 3).
    Without it the controls sit over the bubble's own buttons and swallow the
    click: the buttons render, highlight on hover, and do nothing. Only bubbles
    that HAVE actions are raised, so a plain caption never covers the close or
@@ -770,8 +773,8 @@ function ensureStyles() {
 .walk-companion-bubble-action:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px}
 @media (pointer:coarse){.walk-companion-bubble-action{padding:9px 12px;font-size:12.5px}}
 .walk-companion-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(18,20,28,.94)}
-@media (max-width:520px){.walk-companion{width:148px;height:208px;right:10px;bottom:10px}.walk-companion-bubble{font-size:11.5px;max-width:min(156px,calc(100vw - 12px))}}
-@media (pointer:coarse){.walk-companion-close,.walk-companion-swap{opacity:1;width:44px;height:44px;top:-7px;border:9px solid transparent;background-clip:padding-box}.walk-companion-close{right:-7px}.walk-companion-swap{right:23px}}
+@media (max-width:520px){.walk-companion{width:112px;height:157px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px))}.walk-companion-bubble{left:auto;right:0;transform:translateY(6px);font-size:12px;max-width:min(220px,calc(100vw - 24px))}.walk-companion-bubble.is-in{transform:translateY(0)}.walk-companion-bubble::after{left:auto;right:50px;transform:none}}
+@media (pointer:coarse){.walk-companion-close,.walk-companion-swap{opacity:1;width:44px;height:44px;top:-7px;border:9px solid transparent;background-clip:padding-box}.walk-companion-close{right:-7px}.walk-companion-swap{right:23px}.walk-companion-bubble{bottom:calc(100% + 12px)}}
 @keyframes walk-companion-shimmer{to{transform:translateX(120%)}}
 @media (prefers-reduced-motion:reduce){.walk-companion,.walk-companion-bubble{transition:none}.walk-companion__skel::after{animation:none;opacity:.5}}
 `;

@@ -823,6 +823,10 @@ html:not(.tws-lite) .nav-tier-toggle .nav-tier-less { display: inline; }
 	transition: opacity var(--duration-fast, var(--duration-fast)), transform var(--duration-fast, var(--duration-fast));
 	z-index: 1000;
 }
-button:hover > .ui-tip, button:focus-visible > .ui-tip { opacity: 1; transform: none; }
+/* Hover reveal only where a pointer can hover: a touch browser keeps :hover on
+   the last-tapped button, so on a phone the "Menu" tip stayed stuck over the
+   open drawer until the next tap somewhere else. Keyboard focus still shows it. */
+@media (hover: hover) { button:hover > .ui-tip { opacity: 1; transform: none; } }
+button:focus-visible > .ui-tip { opacity: 1; transform: none; }
 .nav-theme-btn, .nav-toggle { position: relative; }
 @media (prefers-reduced-motion: reduce) { .ui-tip { transition: none; } }
