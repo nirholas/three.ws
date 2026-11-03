@@ -25,7 +25,6 @@
  */
 
 const GLANCE_SIZES = ['small', 'medium', 'large'];
-const GLANCE_THEMES = ['auto', 'light', 'dark'];
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FETCH_TIMEOUT_MS = 8000;
 
@@ -135,11 +134,6 @@ export class AgentGlanceElement extends HTMLElement {
 	get #size() {
 		const size = this.getAttribute('size');
 		return GLANCE_SIZES.includes(size) ? size : 'medium';
-	}
-
-	get #theme() {
-		const theme = this.getAttribute('theme');
-		return GLANCE_THEMES.includes(theme) ? theme : 'auto';
 	}
 
 	get #refreshMs() {

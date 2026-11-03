@@ -409,7 +409,7 @@ export class NichAgent {
 			let buf = '';
 			let streaming = false;
 
-			outer: while (true) {
+			while (true) {
 				const { value, done } = await reader.read();
 				if (done) break;
 				buf += decoder.decode(value, { stream: true });

@@ -868,7 +868,7 @@ export class AgentAvatar {
 	_onEmote(action) {
 		const trigger = action.payload?.trigger;
 		const weight = action.payload?.weight || 0.7;
-		if (trigger && this._emotion.hasOwnProperty(trigger)) {
+		if (trigger && Object.hasOwn(this._emotion, trigger)) {
 			this._injectStimulus(trigger, weight);
 		}
 	}
