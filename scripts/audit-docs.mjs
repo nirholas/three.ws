@@ -42,6 +42,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dropGitIgnored } from './lib/git-ignored.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -242,10 +243,12 @@ const auditFile = (file) => {
 
 const targets = explicitFiles.length
 	? explicitFiles.map((f) => resolve(root, f))
-	: markdownFiles(root).filter((f) => {
-			const rel = relative(root, f);
-			return !SKIP_TREES.some((tree) => rel === tree || rel.startsWith(`${tree}/`));
-		});
+	: dropGitIgnored(
+			root,
+			markdownFiles(root)
+				.map((f) => relative(root, f))
+				.filter((rel) => !SKIP_TREES.some((tree) => rel === tree || rel.startsWith(`${tree}/`))),
+		).map((rel) => resolve(root, rel));
 
 for (const file of targets) {
 	if (existsSync(file) && statSync(file).isFile()) auditFile(file);
@@ -298,6 +301,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['fee-bridge', 'held by the owner until launch is approved (2026-09-17); register in data/pages.json when /fee-bridge ships'],
 	['growth-programs', 'held until the owner arms a program: ops runbook for the disarmed big-win X poster, first-rug softener and early-leader bonus; register in data/pages.json when one goes live'],
 	['avatar-fidelity-program', 'internal: program goals and competitive targets'],
+	['github-trending-patterns', 'internal: growth research comparing three.ws with the GitHub trending repos, written for planning rather than for a reader arriving from search'],
 	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],
 	['aws-builder-center-before-the-signature', 'internal: draft prepared for the AWS Builder Center'],
 	['aws-builder-center-agent-commerce-spine', 'internal: draft prepared for the AWS Builder Center'],
