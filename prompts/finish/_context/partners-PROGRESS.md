@@ -730,3 +730,17 @@ Billing charge, real webhook test deliveries) remain unverifiable. The code side
 `npx vitest run tests/shopify-*.test.js` passes 5 files, 43/43. No code changed. Row 54 in
 [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md) is still the
 remaining step; the order file stays in place.
+
+## 2026-11-03: order 092 re-checked (VRoid Hub import), still open on the owner action
+
+Re-measured rather than assumed: `node scripts/read-service-env.mjs '^VROID' --names` reports
+no matching variable on `three-ws-api`, so no VRoid Hub application credentials exist yet. The
+migration `20261015070000_vroid_hub_source.sql` is already `[applied]` in production
+(`npm run db:status` against the Cloud Run `DATABASE_URL` secret), so it drops off the owner's
+list. Live probes: `hub.vroid.com/oauth/authorize` answers a documented `invalid_request`;
+production `/import/vroid` answers 200 and `/api/vroid/models` and `/api/auth/vroid/connect`
+answer the designed 501 `not_configured`. `npx vitest run tests/vroid-*.test.js` passes 5
+files, 53/53. No code changed. Row 55 in
+[_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md) and
+`marketing/growth/submissions/vroid-hub-app.md` now list only the app registration, the two
+env vars and the live verification; the order file stays in place.

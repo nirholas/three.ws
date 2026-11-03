@@ -42,8 +42,8 @@ unset.
 - Docs: `docs/vroid-hub-import.md`. Changelog, `data/pages.json`, and
   `STRUCTURE.md` wired.
 - `api/_lib/migrations/20261015070000_vroid_hub_source.sql`: adds
-  `'vroid_hub'` to the avatars `source` check constraint. Written, not
-  applied (owner action, see Step 3 below).
+  `'vroid_hub'` to the avatars `source` check constraint. Applied to
+  production (confirmed `[applied]` by `npm run db:status` on 2026-11-03).
 
 Scope requested: `default` (VRoid Hub's own minimal grant; it is what the
 `/api/account/character_models` and `/api/hearts` endpoints require and
@@ -82,7 +82,7 @@ nothing broader exists to request).
    documented at `developer.vroid.com/en/api/oauth-api.html` as of this
    session.
 
-## Step 3: set the environment on Cloud Run and run the migration
+## Step 3: set the environment on Cloud Run
 
 Use `--update-env-vars` (never `--set-env-vars`, which replaces the entire
 env set):
@@ -92,15 +92,10 @@ gcloud run services update three-ws-api --region us-central1 \
   --update-env-vars VROID_HUB_CLIENT_ID=<client id>,VROID_HUB_CLIENT_SECRET=<client secret>
 ```
 
-Then apply the pending migration:
-
-```bash
-npm run db:status   # confirm 20261015070000_vroid_hub_source.sql is the pending one expected
-npm run db:migrate  # applies immediately, no dry run
-```
-
-This widens the `avatars.source` check constraint to accept `'vroid_hub'`
-alongside the existing values.
+The migration `20261015070000_vroid_hub_source.sql` (widens the
+`avatars.source` check constraint to accept `'vroid_hub'`) is already applied
+to production: `npm run db:status` against the Cloud Run `DATABASE_URL`
+secret listed it `[applied]` on 2026-11-03. Nothing to run here.
 
 ## Step 4: verify live (this Evolve session cannot reach this point)
 
@@ -138,8 +133,13 @@ alongside the existing values.
   flow) was confirmed live against `hub.vroid.com` and
   `developer.vroid.com`'s published API reference during this session, not
   guessed.
-- Local tests: `tests/vroid-license.test.js` (9 cases, license normalization
-  and action evaluation). `npx vitest run tests/vroid-license.test.js` passes.
+- Local tests: `npx vitest run tests/vroid-*.test.js` passes 5 files, 53/53
+  (license normalization and evaluation, the license gate, enforcement on
+  fork and edit, ownership, connection status), re-run 2026-11-03.
+- Live, 2026-11-03: `hub.vroid.com/oauth/authorize` answers a documented
+  `invalid_request` (`Missing required parameters: state`) to a probe, and
+  production `/api/vroid/models` and `/api/auth/vroid/connect` answer the
+  designed 501 `not_configured` while the credentials are unset.
 - `npm run check:rules` passes on every touched file.
 
 ## Owner steps (not automatable here)
@@ -149,8 +149,7 @@ alongside the existing values.
 2. No scope/version changes needed beyond the defaults already wired
    (Step 2).
 3. Set `VROID_HUB_CLIENT_ID` / `VROID_HUB_CLIENT_SECRET` on Cloud Run with
-   `--update-env-vars`, then run `npm run db:migrate` for
-   `20261015070000_vroid_hub_source.sql` (Step 3).
+   `--update-env-vars` (Step 3). The migration is already applied.
 4. Connect a real VRoid Hub account, import a character, verify the editor
    landing and credit line, and confirm license enforcement; capture the
    screenshots this Definition of Done needs (Step 4).
