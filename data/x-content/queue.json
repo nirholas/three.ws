@@ -163,7 +163,8 @@
 								"videoCodec": "h264",
 								"pixFmt": "yuv420p"
 							},
-							"reel": true
+							"reel": true,
+							"alt": "A screen recording of the three.ws Instant Agent Genesis page: the Describe tab with the prompt \"A cosmic oracle in flowing star-speckled robes\", the Selfie tab with a photo drop zone, and the Remix tab showing a row of public 3D avatars to fork, each captioned in turn"
 						}
 					]
 				},
@@ -18501,7 +18502,8 @@
 								"videoCodec": "h264",
 								"pixFmt": "yuv420p"
 							},
-							"reel": true
+							"reel": true,
+							"alt": "A screen recording of the three.ws OpenAI page headlined \"3D, natively, inside ChatGPT.\" with an OpenAI Select Partner badge, scrolling to the live 3D Studio connector URL, which needs no key and no account, and the list of free generation tools"
 						}
 					]
 				}
