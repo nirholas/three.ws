@@ -168,6 +168,8 @@ async function main() {
 	if (problems.length) {
 		console.error('FAILED:');
 		for (const p of problems) console.error(`  - ${p}`);
+		const types = output.map((item) => (item?.name ? `${item.type}:${item.name}` : item?.type));
+		console.error(`response.output item types: ${types.join(', ') || '(none)'}`);
 		console.error('If the model never called the tool, tighten the tool description (a real defect for every agent client), not the prompt.');
 		return 1;
 	}
