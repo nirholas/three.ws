@@ -104,8 +104,18 @@ tail) rather than bare on a dev machine.
 
 ## Licensing
 
-AniGen is MIT (LICENSE read 2026-10-11). pytorch3d is BSD. nvdiffrast is
-never installed; see the section above.
+AniGen is MIT (LICENSE read 2026-10-11, re-read 2026-11-03). pytorch3d is
+BSD. nvdiffrast is never installed; see the section above.
+
+Upstream later appended a note to its LICENSE and added
+`THIRD_PARTY_LICENSES.md` (which is why GitHub now reports the repo as
+`NOASSERTION`): AniGen's own code stays MIT, but the bundled
+`extensions/CUBVH` contains a BVH from instant-ngp under the NVIDIA Source
+Code License, restricted to non-commercial use. This worker never builds
+`extensions/` or runs upstream's `setup.sh`, and AniGen imports `cubvh` only
+from its training code (`anigen/datasets/`, `anigen/trainers/`), never from
+the inference pipeline we run. When bumping the pinned commit, keep it that
+way: do not install anything from `extensions/`.
 
 ## Environment
 
