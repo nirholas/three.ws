@@ -107,7 +107,7 @@ export default wrap(async (req, res) => {
 
 	const params  = new URL(req.url, `http://${req.headers.host || 'x'}`).searchParams;
 	const network = NETWORKS.has(params.get('network')) ? params.get('network') : 'mainnet';
-	const periodKey = PERIODS.hasOwnProperty(params.get('period')) ? params.get('period') : '30d';
+	const periodKey = Object.hasOwn(PERIODS, params.get('period')) ? params.get('period') : '30d';
 	const days    = PERIODS[periodKey];
 	const tier    = TIERS.has(params.get('tier'))    ? params.get('tier')    : 'called';
 	const minAth  = Math.max(1, Number(params.get('min_ath')) || 2);

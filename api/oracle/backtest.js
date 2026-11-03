@@ -345,7 +345,7 @@ export default async function handleOracleBacktest(req, res) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const params = new URL(req.url, 'http://x').searchParams;
-	const periodKey = PERIODS.hasOwnProperty(params.get('period')) ? params.get('period') : '30d';
+	const periodKey = Object.hasOwn(PERIODS, params.get('period')) ? params.get('period') : '30d';
 	const days = PERIODS[periodKey];
 	const tier = TIERS.has(params.get('tier')) ? params.get('tier') : 'all';
 	const network = NETWORKS.has(params.get('network')) ? params.get('network') : 'mainnet';
