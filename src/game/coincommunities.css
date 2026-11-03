@@ -2133,14 +2133,87 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-prop-forge-btn:active { transform: translateY(1px); }
 .cc-prop-forge-btn:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
 .cc-prop-forge-btn.cc-on { background: rgba(102, 255, 140, 0.16); border-color: #66ff8c; }
-.cc-forge-row {
-    display: flex; align-items: center; gap: 6px; padding: 7px;
+.cc-forge-panel {
+    display: flex; flex-direction: column; gap: 6px; padding: 7px;
     background: var(--cc-panel); border: 1px solid var(--cc-edge);
     border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     animation: cc-build-in 0.16s ease;
 }
-.cc-forge-row[hidden] { display: none; }
+.cc-forge-panel[hidden] { display: none; }
+.cc-forge-row { display: flex; align-items: center; gap: 6px; }
+.cc-forge-hint { margin: 0; font-size: 11px; line-height: 1.4; color: var(--cc-dim); }
+.cc-forge-history-head {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cc-dim);
+}
+.cc-forge-history-empty { margin: 0; font-size: 11px; line-height: 1.4; color: var(--cc-dim); }
+.cc-forge-history-empty[hidden] { display: none; }
+.cc-forge-history {
+    list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px;
+    max-height: 132px; overflow-y: auto;
+}
+.cc-forge-history:empty { display: none; }
+.cc-forge-history-item {
+    display: flex; align-items: center; gap: 8px; padding: 4px 6px;
+    border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.03);
+}
+.cc-forge-history-item.is-failed { border-color: rgba(255, 138, 138, 0.4); }
+.cc-forge-history-ico { flex: 0 0 auto; width: 16px; text-align: center; color: #5ad7ff; font-weight: 700; }
+.cc-forge-history-item.is-failed .cc-forge-history-ico { color: #ff8a8a; }
+.cc-forge-history-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.cc-forge-history-name {
+    font-size: 12px; color: var(--cc-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cc-forge-history-meta {
+    font-size: 10.5px; color: var(--cc-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cc-forge-history-btn {
+    flex: 0 0 auto; height: 26px; padding: 0 10px; border-radius: var(--cc-radius-sm);
+    border: 1px solid rgba(90, 215, 255, 0.5); background: rgba(90, 215, 255, 0.1); color: var(--cc-text);
+    font: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+    transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
+}
+.cc-forge-history-btn:hover { background: rgba(90, 215, 255, 0.22); border-color: #5ad7ff; }
+.cc-forge-history-btn:active { transform: translateY(1px); }
+.cc-forge-history-btn:focus-visible { outline: 2px solid #5ad7ff; outline-offset: 2px; }
+.cc-forge-history-btn.cc-retry { border-color: rgba(255, 138, 138, 0.5); background: rgba(255, 138, 138, 0.1); }
+.cc-forge-history-btn.cc-retry:hover { background: rgba(255, 138, 138, 0.2); border-color: #ff8a8a; }
+.cc-forge-history-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cc-prop.cc-prop-holo-item { border-color: rgba(90, 215, 255, 0.55); }
+.cc-prop.cc-prop-holo-item .cc-prop-ico { animation: cc-holo-glint 1.6s ease-in-out infinite; }
+@keyframes cc-holo-glint { 50% { opacity: 0.45; } }
+
+/* The floating card pinned above a placed forge hologram (forge-hologram.js). */
+.cc-holo-card {
+    position: fixed; left: 0; top: 0; z-index: 30; max-width: 220px;
+    padding: 7px 9px; border-radius: var(--cc-radius-sm);
+    border: 1px solid rgba(90, 215, 255, 0.55); background: var(--cc-panel); color: var(--cc-text);
+    box-shadow: var(--cc-shadow); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    pointer-events: auto; will-change: transform;
+}
+.cc-holo-card[hidden] { display: none; }
+.cc-holo-card.is-error { border-color: rgba(255, 138, 138, 0.7); }
+.cc-holo-title { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-holo-status { font-size: 11px; line-height: 1.35; color: var(--cc-dim); margin-top: 2px; }
+.cc-holo-card.is-error .cc-holo-status { color: #ffb4b4; }
+.cc-holo-actions { display: flex; gap: 6px; margin-top: 6px; }
+.cc-holo-actions:not(:has(button:not([hidden]))) { display: none; }
+.cc-holo-btn {
+    height: 26px; padding: 0 10px; border-radius: var(--cc-radius-sm);
+    border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.06); color: var(--cc-text);
+    font: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+    transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
+}
+.cc-holo-btn[hidden] { display: none; }
+.cc-holo-btn:hover { background: rgba(255, 255, 255, 0.14); border-color: var(--cc-edge-hi); }
+.cc-holo-btn:active { transform: translateY(1px); }
+.cc-holo-btn:focus-visible { outline: 2px solid #5ad7ff; outline-offset: 2px; }
+.cc-holo-btn.cc-holo-retry { border-color: rgba(90, 215, 255, 0.6); background: rgba(90, 215, 255, 0.14); }
+.cc-holo-btn.cc-holo-retry:hover { background: rgba(90, 215, 255, 0.26); }
+@media (pointer: coarse) { .cc-holo-btn, .cc-forge-history-btn { height: 34px; padding: 0 14px; } }
+@media (prefers-reduced-motion: reduce) {
+    .cc-prop.cc-prop-holo-item .cc-prop-ico { animation: none; }
+}
 .cc-forge-prompt {
     flex: 1 1 auto; min-width: 0; height: 30px; padding: 0 10px;
     border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge);

@@ -72,6 +72,7 @@ export const PROP_CATALOG = [
 ];
 const PROP_BY_ID = new Map(PROP_CATALOG.map((p) => [p.id, p]));
 export function propDef(type) {
+	if (type === FORGE_HOLO_TYPE) return FORGE_HOLO_DEF;
 	return PROP_BY_ID.get(type) || GALLERY_PROPS.get(type) || UPLOAD_PROPS.get(type) || null;
 }
 export const DEFAULT_PROP = PROP_CATALOG[0].id;
@@ -329,6 +330,22 @@ export function registerUploadedProp(url, { name = 'Your model' } = {}) {
 	UPLOAD_PROPS.set(id, def);
 	return def;
 }
+
+/**
+ * Forget a registered upload (the room refused its asset, so it can never be
+ * placed here). Returns whether anything was removed.
+ */
+export function unregisterUploadedProp(id) {
+	return UPLOAD_PROPS.delete(id);
+}
+
+// ── forge hologram ───────────────────────────────────────────────────────────
+// While a forge is running, the palette arms a hologram instead of a model: the
+// player aims and drops it at once, and the finished model swaps in on that spot
+// (coincommunities.js _forgeProp). It is local only and never sent to the room,
+// so it costs no build budget and a failed forge leaves nothing behind.
+export const FORGE_HOLO_TYPE = 'forge:holo';
+const FORGE_HOLO_DEF = Object.freeze({ id: FORGE_HOLO_TYPE, name: 'Forging…', icon: '✨', foot: 0.6, fitH: 1.5, hologram: true });
 
 // Build the scene node for a prop. `url` (when present) is a player-uploaded
 // model and wins over the catalog. Procedural props are synchronous; GLB props
@@ -599,6 +616,7 @@ export class WorldObjects {
 // always immediate and never waits on an async load mid-aim.
 const GHOST_GOOD = 0x66ff8c;
 const GHOST_BAD = 0xff5a5a;
+const GHOST_HOLO = 0x5ad7ff; // the forge hologram, matching forge-hologram.js
 
 export class PropGhost {
 	constructor(scene) {
@@ -624,6 +642,8 @@ export class PropGhost {
 		this._clearChildren();
 		if (!type) { this.hide(); return; }
 		const def = url ? { foot: 0.6, fitH: 1.5 } : propDef(type);
+		this._holo = !!def?.hologram;
+		this._tint();
 		if (def && def.build) {
 			// Full-fidelity translucent clone of the procedural prop.
 			const node = def.build();
@@ -653,7 +673,11 @@ export class PropGhost {
 	setValid(valid) {
 		if (valid === this._valid) return;
 		this._valid = valid;
-		const hex = valid ? GHOST_GOOD : GHOST_BAD;
+		this._tint();
+	}
+
+	_tint() {
+		const hex = !this._valid ? GHOST_BAD : this._holo ? GHOST_HOLO : GHOST_GOOD;
 		this._fill.color.setHex(hex);
 		this._lineMat.color.setHex(hex);
 	}

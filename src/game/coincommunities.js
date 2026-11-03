@@ -46,7 +46,9 @@ import {
 	VoxelWorld, createBuildHud, parseKey, keyOf, MAX_BLOCKS, BLOCK,
 	COMPOSITE_PIECES, compositeCells,
 } from './build-voxels.js';
-import { WorldObjects, PropGhost, propDef, registerUploadedProp } from './world-objects.js';
+import { WorldObjects, PropGhost, propDef, registerUploadedProp, unregisterUploadedProp, FORGE_HOLO_TYPE } from './world-objects.js';
+import { ForgeSession, PendingSpawns } from './forge-session.js';
+import { ForgeHologram } from './forge-hologram.js';
 // P3.1: durable per-world build persistence (Postgres index + R2 blob), the same
 // store the authoritative room writes through. See src/game/world-persist.js for
 // which side is the writer when.
@@ -703,6 +705,8 @@ export class CoinCommunities {
 			onUploadProp: (file) => this._uploadProp(file),
 			// Forge-in-world: generate a brand-new prop from a prompt or photo.
 			onForgeProp: (req) => this._forgeProp(req),
+			onForgeRetry: (entry) => this._retryForgeEntry(entry),
+			onForgeRearm: (entry) => this._rearmForgeEntry(entry),
 			onShareBuild: () => this._shareBuild(),
 			onOpenFeatured: () => this._openFeatured(),
 			onPublishBuild: (meta) => this._publishBuild(meta),
@@ -1704,7 +1708,13 @@ export class CoinCommunities {
 			isMine: (obj) => !!this.net?.ownsObject(obj),
 		});
 		this.propGhost = new PropGhost(this.scene);
-		this.net.on('objectReject', ({ reason }) => this._onObjectReject(reason));
+		this._pendingSpawns = new PendingSpawns();
+		this.net.on('objectReject', ({ reason, id }) => {
+			// A tracked model placement handles its own message (and rollback).
+			if (id && this._onTrackedSpawnReject(id, reason)) return;
+			this._onObjectReject(reason);
+		});
+		this.net.on('objectAdd', (_obj, id) => this._onTrackedSpawnAdd(id));
 
 		// P3.1: the durable world store. Read it immediately (so the community's
 		// persisted build is standing here before the room even answers), and keep it
@@ -2448,6 +2458,9 @@ export class CoinCommunities {
 		if (this.voxels) { this.voxels.dispose(); this.voxels = null; }
 		if (this.worldObjects) { this.worldObjects.dispose(); this.worldObjects = null; }
 		if (this.propGhost) { this.propGhost.dispose(); this.propGhost = null; }
+		// The hologram is local to this world: leaving cancels a running forge
+		// (nothing was spawned, so nothing is lost) and drops its marker.
+		if (this._forgeSession?.job) this._dismissForge();
 		this._cancelLongPress();
 		clearTimeout(this._onboardTimer);
 		this._undoStack = []; // history is per-world; don't carry edits across coins
@@ -4243,51 +4256,250 @@ export class CoinCommunities {
 		}
 	}
 
-	// Forge-in-world: generate a brand-new prop from a text prompt (or a reference
-	// photo) on the free forge lane, then hand the finished GLB to the exact same
-	// pipeline uploads use: register it in the palette, arm it, and the next click
-	// places it into the shared world (obj:spawn carries the URL, so every player
-	// in the server renders it, and the room persists it like any other build).
-	// Reachable from the palette's Forge form and the chat command `/forge <prompt>`.
-	async _forgeProp({ prompt, file, fromChat } = {}) {
-		if (this._propForging) {
+	// Forge-in-world, placement first. Starting a forge arms a hologram in the
+	// palette at once: the player aims and drops it while the free lane works, and
+	// the finished GLB swaps in on that exact spot for everyone (obj:spawn carries
+	// the URL, the room persists it like any other build). The hologram is local
+	// only, so a failed forge leaves nothing behind and costs no build budget; it
+	// turns into an error marker with Retry and Dismiss. A player who never places
+	// the hologram gets the old flow: the finished model arrives armed.
+	// Reachable from the palette's Forge form, the chat command `/forge <prompt>`,
+	// and the Retry buttons on the hologram and in the session history.
+	async _forgeProp({ prompt, file, fromChat, pose = null } = {}) {
+		const session = (this._forgeSession ||= new ForgeSession());
+		if (session.busy) {
 			this.ui.toast('One forge at a time: yours is still cooking.', 'warn');
 			return;
 		}
-		this._propForging = true;
+		// Only reachable from forge entry points, so the lane client loads with
+		// the first forge rather than with the world.
+		const { forgeWorldProp, forgePropName } = await import('./forge-prop.js');
+		if (session.busy) return;
+		const job = session.begin({ prompt, file, name: forgePropName(prompt, file) });
+		if (pose) session.setPose(pose);
+		const ctrl = new AbortController();
+		this._forgeAbort = ctrl;
 		this.ui.setForgeBusy(true);
-		const status = (m) => this.ui.setPropUploadStatus(m || '');
+		this._renderForgeHistory();
+		this._armForgeHologram(job, { fromChat });
+		const status = (m) => {
+			this.ui.setPropUploadStatus(m || '');
+			this._forgeHolo?.setStatus(m);
+		};
 		try {
-			// Only reachable from the Forge form / `/forge` chat command, so the lane
-			// client loads with the first forge rather than with the world.
-			const { forgeWorldProp } = await import('./forge-prop.js');
-			const out = await forgeWorldProp({ prompt, file, onStatus: status });
+			const out = await forgeWorldProp({
+				prompt, file, onStatus: status, signal: ctrl.signal, worldId: this._forgeWorldId(),
+			});
+			if (session.job !== job) return; // dismissed while it finished
 			const def = registerUploadedProp(out.url, { name: out.name });
 			this.ui.addUploadedProp({ id: def.id, name: def.name });
-			// A chat-forged item arrives with the palette closed: open build mode so
-			// the armed ghost (and the palette entry) are actually visible.
-			if (fromChat && this.buildHud && !this.buildHud.active && !this.buildHud.root.hidden) {
-				this.buildHud.setActive(true);
-			}
-			this._pickProp(def.id);
+			session.succeed({ url: out.url, propId: def.id, triangles: out.triangles, bytes: out.bytes, simplified: out.simplified });
+			this._renderForgeHistory();
 			this.ui.clearForgeForm();
 			status('');
-			this.ui.toast(`"${out.name}" is forged: click in the world to place it for everyone.`, 'info');
+			this.ui.removeProp(FORGE_HOLO_TYPE);
+			if (this.buildProp === FORGE_HOLO_TYPE) this._pickProp(null);
+			if (out.simplified) {
+				this.ui.toast(`That model was too detailed for this world, so it was simplified (${Math.round(out.triangles / 1000)}k triangles).`, 'info');
+			}
 			if (!out.durable) {
 				this.ui.toast('This model is on temporary storage, so the world may refuse it. If placing fails, forge it again.', 'warn');
+			}
+			if (job.pose && this._forgeHolo) {
+				this._landForgedProp(job, def);
+			} else {
+				session.clear();
+				this._dropForgeHologram();
+				if (fromChat) this._openBuildForForge();
+				this._pickProp(def.id);
+				this.ui.toast(`"${out.name}" is forged: click in the world to place it for everyone.`, 'info');
 			}
 		} catch (err) {
 			// The lane client is loaded lazily above, so identify its errors by their
 			// own name rather than by a class binding this scope may not hold.
 			const fromLane = err?.name === 'ForgeError';
-			if (fromLane && err.cancelled) return;
+			if (session.job !== job) return; // dismissed: nothing left to report
+			if (fromLane && err.cancelled) { this._dismissForge(); return; }
 			const message = fromLane ? err.message : 'The forge hit an error. Try again in a moment.';
+			session.fail(message);
+			this._renderForgeHistory();
 			this.ui.setPropUploadStatus(message, true);
-			this.ui.toast(message, 'warn');
+			this.ui.removeProp(FORGE_HOLO_TYPE);
+			if (this.buildProp === FORGE_HOLO_TYPE) this._pickProp(null);
+			if (this._forgeHolo?.placed) {
+				this._forgeHolo.setError(message);
+			} else {
+				this._dropForgeHologram();
+				this.ui.toast(message, 'warn');
+			}
 		} finally {
-			this._propForging = false;
+			if (this._forgeAbort === ctrl) this._forgeAbort = null;
 			this.ui.setForgeBusy(false);
+			this._renderForgeHistory();
 		}
+	}
+
+	// The world id the forge endpoint keys its per-world limits to.
+	_forgeWorldId() {
+		return this._worldStore?.worldId || worldIdForCoin(this.coin?.mint || '', '');
+	}
+
+	_renderForgeHistory() {
+		const session = this._forgeSession;
+		if (!session) return;
+		this.ui.renderForgeHistory({ history: session.history, observed: session.observed(), busy: session.busy });
+	}
+
+	_openBuildForForge() {
+		// A chat-started forge arrives with the palette closed: open build mode so
+		// the armed hologram (and the palette entry) are actually visible.
+		if (this.buildHud && !this.buildHud.active && !this.buildHud.root.hidden) this.buildHud.setActive(true);
+	}
+
+	// Put the hologram in play for a job: either re-stand it where a retry's
+	// earlier attempt stood, or arm it in the palette for the player to place.
+	_armForgeHologram(job, { fromChat } = {}) {
+		if (!this.scene) return;
+		if (!this._forgeHolo) {
+			this._forgeHolo = new ForgeHologram(this.scene, {
+				onCancel: () => this._dismissForge(),
+				onRetry: () => this._retryForge(),
+				onDismiss: () => this._dismissForge(),
+			});
+		}
+		this._forgeHolo.setName(job.name);
+		this._forgeHolo.setGenerating('Sending to the forge…');
+		if (job.pose) { this._forgeHolo.place(job.pose); return; }
+		if (fromChat) this._openBuildForForge();
+		this.ui.addForgeHologramProp(FORGE_HOLO_TYPE, job.name);
+		this._pickProp(FORGE_HOLO_TYPE);
+	}
+
+	// The armed hologram was clicked into the world: stand it there. One per forge.
+	_placeForgeHologram(target, yaw) {
+		const session = this._forgeSession;
+		if (!session?.busy || !this._forgeHolo) { this._pickProp(null); return; }
+		const pose = { x: target.x, y: target.y, z: target.z, yaw, scale: this.buildPropScale };
+		session.setPose(pose);
+		this._forgeHolo.place(pose);
+		this.ui.removeProp(FORGE_HOLO_TYPE);
+		this._pickProp(null);
+		this.ui.toast('Hologram placed. Your item lands there when the forge finishes.', 'info');
+	}
+
+	// The model is ready and its hologram is standing: place it on that spot.
+	_landForgedProp(job, def) {
+		const pose = job.pose;
+		const holo = this._forgeHolo;
+		if (this._roomIsAuthority()) {
+			const spawnId = this._pendingSpawns.track({ propId: def.id, url: def.glb });
+			this._forgeLanding = { spawnId, job, def };
+			holo.setLanding('Placing it in the world…');
+			this.net.spawnObject('block', {
+				type: def.id, id: spawnId, x: pose.x, y: pose.y, z: pose.z,
+				yaw: pose.yaw, scale: pose.scale, url: def.glb,
+			});
+			return;
+		}
+		const placed = this._placeLocalProp(pose, pose.yaw, def.glb, def.id);
+		if (placed) { this._finishForgeLanding(); return; }
+		holo.setError('This world could not take it right now. The model is in your props palette.', { retryLabel: 'Place again' });
+		this._forgeLanding = { spawnId: null, job, def, placeOnly: true };
+	}
+
+	// The room (or the local store) holds the model now: release the hologram.
+	_finishForgeLanding() {
+		const holo = this._forgeHolo;
+		this._forgeHolo = null;
+		this._forgeLanding = null;
+		this._forgeSession?.clear();
+		if (holo) holo.materialize();
+		if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(18);
+	}
+
+	// Retry from the hologram's error marker: either generate again (the forge
+	// failed, or the room refused the model itself) or just place again (the
+	// model is fine; the room was full or the spot was blocked).
+	_retryForge() {
+		const landing = this._forgeLanding;
+		if (landing?.placeOnly && propDef(landing.def.id)) {
+			this._forgeHolo?.setLanding('Placing it in the world…');
+			this._landForgedProp(landing.job, landing.def);
+			return;
+		}
+		this._forgeLanding = null;
+		const req = this._forgeSession?.retryRequest();
+		if (!req) return;
+		this._forgeProp({ prompt: req.prompt, file: req.file, pose: req.pose });
+	}
+
+	/** Retry a failed generation from the session history. */
+	_retryForgeEntry(entry) {
+		if (this._forgeSession?.busy) { this.ui.toast('One forge at a time: yours is still cooking.', 'warn'); return; }
+		this._dropForgeHologram();
+		this._forgeSession?.clear();
+		this._forgeProp({ prompt: entry.prompt, file: entry.file });
+	}
+
+	/** Arm a model forged earlier this session again, without forging it again. */
+	_rearmForgeEntry(entry) {
+		const def = registerUploadedProp(entry.url, { name: entry.name });
+		this.ui.addUploadedProp({ id: def.id, name: def.name });
+		this._pickProp(def.id);
+		this.ui.toast(`"${entry.name}" is armed: click in the world to place it.`, 'info');
+	}
+
+	// Cancel a running forge or clear a failed one. Nothing was spawned, so there
+	// is nothing to undo in the world and no budget to give back.
+	_dismissForge() {
+		this._forgeAbort?.abort();
+		this._forgeAbort = null;
+		this._forgeLanding = null;
+		this._forgeSession?.clear();
+		this._dropForgeHologram();
+		this.ui.removeProp(FORGE_HOLO_TYPE);
+		if (this.buildProp === FORGE_HOLO_TYPE) this._pickProp(null);
+		this.ui.setPropUploadStatus('');
+		this.ui.setForgeBusy(false);
+		this._renderForgeHistory();
+	}
+
+	_dropForgeHologram() {
+		this._forgeHolo?.dispose();
+		this._forgeHolo = null;
+	}
+
+	// The room answered a model placement we tracked. A refusal of the model
+	// itself (off-list or over the size ceiling) rolls its palette entry back,
+	// so no phantom button is left that can never be placed.
+	_onTrackedSpawnReject(id, reason) {
+		const out = this._pendingSpawns.reject(id, reason);
+		if (!out) return false;
+		const landing = this._forgeLanding?.spawnId === id ? this._forgeLanding : null;
+		if (out.rollback) {
+			unregisterUploadedProp(out.propId);
+			this.ui.removeProp(out.propId);
+			if (this.buildProp === out.propId) this._pickProp(null);
+		}
+		if (landing && this._forgeHolo) {
+			const message = this._objectRejectMessage(reason);
+			if (out.rollback) {
+				this._forgeSession?.fail(message);
+				this._forgeLanding = null;
+				this._forgeHolo.setError(`${message} Retry forges it again.`);
+			} else {
+				landing.placeOnly = true;
+				this._forgeHolo.setError(`${message} The model is in your props palette.`, { retryLabel: 'Place again' });
+			}
+			this._renderForgeHistory();
+			return true;
+		}
+		return false;
+	}
+
+	_onTrackedSpawnAdd(id) {
+		if (!this._pendingSpawns.confirm(id)) return;
+		if (this._forgeLanding?.spawnId === id) this._finishForgeLanding();
 	}
 
 	// Rotate the armed prop a quarter-turn and re-preview it in place.
@@ -4326,10 +4538,14 @@ export class CoinCommunities {
 		if (!target) return;
 		if (!target.valid) { this._updatePropGhost(clientX, clientY); return; }
 		const yaw = this.buildPropRot * (Math.PI / 2);
+		if (this.buildProp === FORGE_HOLO_TYPE) { this._placeForgeHologram(target, yaw); return; }
 		const url = propDef(this.buildProp)?.upload ? propDef(this.buildProp).glb : '';
 		if (this._roomIsAuthority()) {
+			// A model placement is tracked so a refusal of the asset itself can roll
+			// back the palette entry it came from (_onTrackedSpawnReject).
+			const id = url ? this._pendingSpawns.track({ propId: this.buildProp, url }) : undefined;
 			this.net.spawnObject('block', {
-				type: this.buildProp, x: target.x, y: target.y, z: target.z,
+				type: this.buildProp, id, x: target.x, y: target.y, z: target.z,
 				yaw, scale: this.buildPropScale, url: url || undefined,
 			});
 		} else if (!this._placeLocalProp(target, yaw, url)) {
@@ -4344,7 +4560,7 @@ export class CoinCommunities {
 	// object in the scene AND a real row in the durable world document: not a
 	// local-only decoration that quietly disappears: so the same caps the server
 	// enforces are enforced here before anything is written.
-	_placeLocalProp(target, yaw, url) {
+	_placeLocalProp(target, yaw, url, type = this.buildProp) {
 		const store = this._worldStore;
 		if (!store) { this.ui.toast('This world’s build store is still loading, try again in a moment.', 'warn'); return false; }
 		if (!store.writable) {
@@ -4363,7 +4579,7 @@ export class CoinCommunities {
 		}
 		const rec = {
 			id: `loc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-			type: this.buildProp,
+			type,
 			kind: 'block',
 			ownerId: this._buildOwnerKey(),
 			x: target.x, y: target.y, z: target.z,
@@ -4434,12 +4650,19 @@ export class CoinCommunities {
 		this._objRejectAt ||= {};
 		if (now - (this._objRejectAt[reason] || 0) < 4000) return;
 		this._objRejectAt[reason] = now;
-		const msg = {
+		this.ui.toast(this._objectRejectMessage(reason), 'warn');
+	}
+
+	_objectRejectMessage(reason) {
+		return {
 			world_full: 'This world is full of props, remove some to place more.',
 			player_full: 'You’ve hit your prop limit for this world, remove some to place more.',
 			asset_url: 'That model isn’t hosted where this world can load it. Re-upload it and try again.',
+			asset_size: 'That model is too big for this world (8 MB per prop).',
+			protected: 'That spot is protected, place it a little further out.',
+			dense: 'That spot is crowded, place it a little further out.',
+			playercap: 'You’ve hit your build limit for this world, remove some to place more.',
 		}[reason] || 'That prop couldn’t be placed.';
-		this.ui.toast(msg, 'warn');
 	}
 
 	// ---------------------------------------------------------------- durable world build (P3.1)
@@ -5062,6 +5285,7 @@ export class CoinCommunities {
 			this.localCosmetics?.tick(dt);
 			for (const [, r] of this.remotes) r.tick(dt, this.camera.position);
 			this.worldObjects?.update();
+			this._forgeHolo?.tick(dt, this.camera, this.renderer.domElement);
 			this._updateLabels();
 			this._tickKingZone(dt);
 			this._updateVoice();

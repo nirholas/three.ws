@@ -15,6 +15,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { forgeWorldProp, forgePropName, ForgeError } from '../src/game/forge-prop.js';
 import { propBudget, simplifyTarget, MB } from '../src/game/prop-budget.js';
 import { makeGlb } from './helpers/make-glb.js';
+import { parseWorldId } from '../api/_lib/forge-world-limits.js';
+import { worldIdForCoin } from '../src/game/world-persist.js';
 
 const GLB_URL = 'https://pub-abc.r2.dev/forge/f1/model.glb';
 
@@ -280,6 +282,18 @@ describe('forgeWorldProp in-world identity', () => {
 		fetchMock.mockResolvedValueOnce(doneFrame()).mockResolvedValueOnce(glbResponse(LIGHT));
 		await settle(forgeWorldProp({ prompt: 'a lantern', worldId: 'w:synthetic', budget: BUDGET }));
 		expect(JSON.parse(fetchMock.mock.calls[0][1].body).world).toBe('w:synthetic');
+	});
+
+	// worldIdForCoin keys a holders world as `<mint>#holders`, and the endpoint's
+	// world id charset has no '#': sent raw, every forge in a holders world 400s.
+	it('sends a holders world id the endpoint accepts, distinct from the open world', async () => {
+		const holders = worldIdForCoin('THREEsynthetic1111111111111111111111111111', 'holders');
+		const open = worldIdForCoin('THREEsynthetic1111111111111111111111111111', '');
+		fetchMock.mockResolvedValueOnce(doneFrame()).mockResolvedValueOnce(glbResponse(LIGHT));
+		await settle(forgeWorldProp({ prompt: 'a lantern', worldId: holders, budget: BUDGET }));
+		const sent = JSON.parse(fetchMock.mock.calls[0][1].body).world;
+		expect(parseWorldId({ world: sent })).toBe(sent);
+		expect(sent).not.toBe(open);
 	});
 
 	it('surfaces the server wait time on a 429 cooldown', async () => {

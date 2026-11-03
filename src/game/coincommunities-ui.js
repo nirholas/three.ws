@@ -120,6 +120,11 @@ function el(tag, props = {}, kids = []) {
 	return n;
 }
 
+// What a draft-tier forge really takes, measured against the live lane on
+// 2026-11-03 (see docs/play-forge-in-world.md, "Cost and limits"). Quoted in the
+// Forge form until the player's own forges give a session median.
+const FORGE_OBSERVED = 'Usually ready in about 90 s, up to 6 min when the lane is busy or waking up.';
+
 const fmtMc = (n) => {
 	if (!n || !isFinite(n)) return null;
 	if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
@@ -2417,12 +2422,95 @@ export class CommunityUI {
 			onclick: () => this._setForgeFile(null),
 		}, [el('span', { 'aria-hidden': 'true', text: '✕' })]);
 		this.forgeGo = el('button', {
-			class: 'cc-forge-go', type: 'button', title: 'Forge it (free, about 30 seconds)',
+			class: 'cc-forge-go', type: 'button', title: 'Forge it (free)',
 			onclick: () => this._submitForge(),
 		}, ['Forge']);
-		this.forgeRow = el('div', { class: 'cc-forge-row', hidden: true }, [
+		const inputs = el('div', { class: 'cc-forge-row' }, [
 			this.forgePrompt, this.forgeAttachBtn, this.forgeAttachClear, this.forgeGo,
 		]);
+		// Expectation line: what the wait really looks like (FORGE_OBSERVED at the top of this file,
+		// then this session's own median once it has one), and that the hologram
+		// can be placed straight away.
+		this._forgeHint = el('p', { class: 'cc-forge-hint' });
+		this._forgeHistoryList = el('ul', { class: 'cc-forge-history', 'aria-label': 'Forged this session' });
+		this._forgeHistoryEmpty = el('p', {
+			class: 'cc-forge-history-empty',
+			text: 'Nothing forged yet this session. Describe an item above; it lands where you place its hologram.',
+		});
+		this.forgeRow = el('div', { class: 'cc-forge-panel', hidden: true }, [
+			inputs, this._forgeHint,
+			el('div', { class: 'cc-forge-history-head', text: 'This session' }),
+			this._forgeHistoryEmpty, this._forgeHistoryList,
+		]);
+		this.renderForgeHistory({ history: [], observed: { count: 0, medianSeconds: null } });
+	}
+
+	/**
+	 * Redraw the session history and the expectation line.
+	 * @param {{history: Array<object>, observed: {count:number, medianSeconds:number|null}, busy?: boolean}} state
+	 */
+	renderForgeHistory({ history = [], observed = { count: 0, medianSeconds: null }, busy = false } = {}) {
+		if (!this._forgeHint) return;
+		const mine = observed.count
+			? ` Yours here took about ${observed.medianSeconds} s.`
+			: '';
+		this._forgeHint.textContent = `Free. ${FORGE_OBSERVED}${mine} Place the hologram while it forges.`;
+		this._forgeHistoryEmpty.hidden = history.length > 0;
+		this._forgeHistoryList.replaceChildren(...history.map((entry) => this._forgeHistoryItem(entry, busy)));
+	}
+
+	_forgeHistoryItem(entry, busy) {
+		const meta = entry.ok
+			? [`${entry.seconds} s`, entry.triangles ? `${Math.round(entry.triangles / 1000)}k tris` : '', entry.simplified ? 'simplified' : '']
+				.filter(Boolean).join(' · ')
+			: entry.message;
+		const action = entry.ok
+			? el('button', {
+				class: 'cc-forge-history-btn', type: 'button',
+				title: 'Arm this model again (no new forge)', 'aria-label': `Place ${entry.name} again`,
+				onclick: () => this.h.onForgeRearm?.(entry),
+			}, ['Place'])
+			: el('button', {
+				class: 'cc-forge-history-btn cc-retry', type: 'button', disabled: busy || undefined,
+				title: 'Forge this again', 'aria-label': `Retry forging ${entry.name}`,
+				onclick: () => this.h.onForgeRetry?.(entry),
+			}, ['Retry']);
+		return el('li', { class: `cc-forge-history-item${entry.ok ? '' : ' is-failed'}` }, [
+			el('span', { class: 'cc-forge-history-ico', 'aria-hidden': 'true', text: entry.ok ? (entry.simplified ? '◇' : '◆') : '!' }),
+			el('span', { class: 'cc-forge-history-text' }, [
+				el('span', { class: 'cc-forge-history-name', text: entry.name }),
+				el('span', { class: 'cc-forge-history-meta', text: meta }),
+			]),
+			action,
+		]);
+	}
+
+	/**
+	 * Arm the forge hologram in the palette: a placeable stand-in for a model
+	 * that is still forging. Its button carries the item's name.
+	 */
+	addForgeHologramProp(id, name) {
+		const label = `${name || 'Forged item'} (forging)`;
+		let btn = this._propBtns.get(id);
+		if (!btn) {
+			btn = this._propButton({ id, name: label, icon: '✨' });
+			btn.classList.add('cc-prop-holo-item');
+			this.propRow.insertBefore(btn, this.propRow.firstChild);
+		} else {
+			btn.querySelector('.cc-prop-name').textContent = label;
+		}
+		btn.title = 'Place the hologram now: the model lands on that spot when it is ready';
+		btn.setAttribute('aria-label', label);
+		this.setPropSelected(id);
+	}
+
+	/** Remove a prop button (a hologram that resolved, or a model the room refused). */
+	removeProp(id) {
+		const btn = this._propBtns.get(id);
+		if (!btn) return;
+		btn.remove();
+		this._propBtns.delete(id);
+		if (this._activeProp === id) this.setPropSelected(null);
 	}
 
 	/** Show/hide the forge form. Pass a boolean to force a state. */

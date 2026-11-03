@@ -55,6 +55,16 @@ export function forgePropName(prompt, file) {
 	return ((base || 'Forged item').slice(0, 24).trim()) || 'Forged item';
 }
 
+/**
+ * The world id as /api/forge accepts it (letters, digits, `: _ . -`, at most
+ * 120 chars). worldIdForCoin keys a holders world `<mint>#holders`; the '#'
+ * becomes ':' so the holders world keeps its own cooldown and slot count
+ * instead of being refused outright.
+ */
+export function forgeWorldParam(worldId) {
+	return String(worldId || '').replace(/[^A-Za-z0-9:_.-]/g, ':').slice(0, 120);
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function throwIfAborted(signal) {
@@ -285,7 +295,7 @@ export async function forgeWorldProp({ prompt = '', file = null, onStatus, signa
 	}
 
 	const body = { tier: 'draft', path: 'image' };
-	if (worldId) body.world = String(worldId).slice(0, 120);
+	if (worldId) body.world = forgeWorldParam(worldId);
 	if (file) {
 		body.image_urls = [await uploadReferenceImage(file, { onStatus, signal })];
 		if (text) body.prompt = text;
