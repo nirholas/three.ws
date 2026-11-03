@@ -338,7 +338,10 @@ a { color: inherit; }
 		linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
 		var(--bg-0);
 	display: grid;
-	grid-template-rows: 1fr auto auto;
+	/* minmax(0, ...) so the still frame's row takes only the space the note and
+	   button leave. A bare 1fr has an auto minimum, so the 720px image kept its
+	   intrinsic height and pushed the retry button out of a short phone stage. */
+	grid-template-rows: minmax(0, 1fr) auto auto;
 	justify-items: center;
 	align-content: center;
 	gap: 0.7rem;
