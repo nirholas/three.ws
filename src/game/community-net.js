@@ -663,30 +663,30 @@ export class CommunityNet {
 		if (!this._pingSentAt) this._pingSentAt = now;
 	}
 
-	sendEmote(name) { this._send('emote', { name }); }
+	sendEmote(name) { return this._send('emote', { name }); }
 	// `target` (a session id) aims the reaction at a dance-off contestant; the server
 	// counts at most one such vote per voter per round. Omitted, it is plain confetti.
-	sendReaction(emoji, target) { this._send('reaction', target ? { emoji, target } : { emoji }); }
-	sendDanceStart() { this._send('dance:start', {}); }
-	sendSigwallPing() { this._send('sigwall-ping', {}); }
-	sendChat(text) { this._send('chat', { text }); }
+	sendReaction(emoji, target) { return this._send('reaction', target ? { emoji, target } : { emoji }); }
+	sendDanceStart() { return this._send('dance:start', {}); }
+	sendSigwallPing() { return this._send('sigwall-ping', {}); }
+	sendChat(text) { return this._send('chat', { text }); }
 	// Party ops: invite | accept | decline | leave | goto | chat | state (see party-service.js).
-	sendParty(payload) { this._send('party', payload); }
+	sendParty(payload) { return this._send('party', payload); }
 	// Place/break a voxel at an integer grid cell. Server-authoritative: these only
 	// request the edit; the block is added/removed locally when the server patches
 	// state.blocks (see the onAdd/onRemove wiring above).
-	sendPlace(x, y, z, t) { this._send('place', { x, y, z, t }); }
+	sendPlace(x, y, z, t) { return this._send('place', { x, y, z, t }); }
 	// Place a composite piece in one atomic message: an array of {x,y,z,t} cells the
 	// server validates and applies all-or-nothing (see WalkRoom._handlePlaceBatch).
 	// Each placed block streams back through the same blockAdd path as single edits.
-	sendPlaceBatch(cells) { this._send('place-batch', { cells }); }
-	sendRemove(x, y, z) { this._send('remove', { x, y, z }); }
+	sendPlaceBatch(cells) { return this._send('place-batch', { cells }); }
+	sendRemove(x, y, z) { return this._send('remove', { x, y, z }); }
 	// Creator-only moderation (R19): clear a disc of blocks around a grid cell, or the
 	// whole world. The server validates the creator identity + bounds and streams each
 	// removal back through the usual blockRemove path.
-	sendClearArea(x, z, r) { this._send('build-clear', { x, z, r }); }
-	sendClearAll() { this._send('build-clear', { all: true }); }
-	sendInteract(to, action) { this._send('interact', { to, action }); }
+	sendClearArea(x, z, r) { return this._send('build-clear', { x, z, r }); }
+	sendClearAll() { return this._send('build-clear', { all: true }); }
+	sendInteract(to, action) { return this._send('interact', { to, action }); }
 	// Spatial voice: relay a WebRTC offer/answer/ICE candidate to one peer, and
 	// flag ourselves in/out of voice so peers know whether to connect to us.
 	sendVoiceSignal(to, data) { this._send('voice-signal', { to, data }); }
@@ -696,72 +696,72 @@ export class CommunityNet {
 	// Equip a cosmetic into its slot (W03). Server-authoritative: it validates
 	// ownership, updates the player's schema `cosmetics` field (so peers re-render)
 	// and replies with a fresh profile. An unowned id is rejected with a 'notice'.
-	equipCosmetic(id) { this._send('equip-cosmetic', { id }); }
+	equipCosmetic(id) { return this._send('equip-cosmetic', { id }); }
 	// Broadcast a full loadout wire in one shot, mirrors how the avatar is sent.
 	// Server validates every id against the catalog and the account's owned set,
 	// drops anything invalid or unowned, and publishes the sanitized wire on the
 	// schema so all peers re-render the correct look.
-	setCosmetics(wire) { this.cosmetics = typeof wire === 'string' ? wire : ''; this._send('set-cosmetics', { cosmetics: this.cosmetics }); }
+	setCosmetics(wire) { this.cosmetics = typeof wire === 'string' ? wire : ''; return this._send('set-cosmetics', { cosmetics: this.cosmetics }); }
 	// Activities & economy. Server-authoritative: these only request the action; the
 	// result arrives via the profile/inv/xpgain/levelup/notice events above.
 	// R05 physics ball: send a kick intent with the impulse the server should apply.
 	// The server validates magnitude, direction, and rate before touching the ball.
-	sendBallKick(vx, vy, vz) { this._send('ball:kick', { vx, vy, vz }); }
-	fish() { this._send('fish'); }
-	chop() { this._send('chop'); }
-	mine() { this._send('mine'); }
-	cook() { this._send('cook'); }
-	pickupRod() { this._send('pickupRod'); }
-	attack() { this._send('attack'); }
+	sendBallKick(vx, vy, vz) { return this._send('ball:kick', { vx, vy, vz }); }
+	fish() { return this._send('fish'); }
+	chop() { return this._send('chop'); }
+	mine() { return this._send('mine'); }
+	cook() { return this._send('cook'); }
+	pickupRod() { return this._send('pickupRod'); }
+	attack() { return this._send('attack'); }
 	// Claim a tombstone's cash + items (W07). Server-gated by proximity; the
 	// result rides back over the usual profile/inv/notice channels.
-	lootTombstone(id) { this._send('loot', { id }); }
-	equip(slot) { this._send('equip', { slot }); }
-	consume(ref) { this._send('consume', { slot: ref }); }
-	requestProfile() { this._send('profileReq'); }
+	lootTombstone(id) { return this._send('loot', { id }); }
+	equip(slot) { return this._send('equip', { slot }); }
+	consume(ref) { return this._send('consume', { slot: ref }); }
+	requestProfile() { return this._send('profileReq'); }
 	// General store & bank/ATM (W04). Cash trades and banking settle purely
 	// off-schema; the result streams back via the 'store'/'profile'/'inv'/
 	// 'notice' events above.
-	requestStore() { this._send('storeReq'); }
-	storeBuy(item) { this._send('storeBuy', { item }); }
-	storeSell(slot, qty) { this._send('storeSell', { slot, qty }); }
-	bank(amount) { this._send('bank', { amount }); }
+	requestStore() { return this._send('storeReq'); }
+	storeBuy(item) { return this._send('storeBuy', { item }); }
+	storeSell(slot, qty) { return this._send('storeSell', { slot, qty }); }
+	bank(amount) { return this._send('bank', { amount }); }
 	// The $THREE boutique (W04). requestBoutique() fetches the catalog + owned
 	// set; boutiqueQuote() prices one item and returns the unsigned tx to sign
 	// (the reply arrives via the 'boutiqueQuote' event); boutiqueSettle() hands
 	// back the broadcast signature for the server to verify on-chain before it
 	// grants anything.
-	requestBoutique() { this._send('boutiqueReq'); }
-	boutiqueQuote(id, wallet) { this._send('boutiqueQuote', { id, wallet }); }
-	boutiqueSettle(quoteToken, txSig) { this._send('boutiqueSettle', { quoteToken, txSig }); }
+	requestBoutique() { return this._send('boutiqueReq'); }
+	boutiqueQuote(id, wallet) { return this._send('boutiqueQuote', { id, wallet }); }
+	boutiqueSettle(quoteToken, txSig) { return this._send('boutiqueSettle', { quoteToken, txSig }); }
 	// Wheel of Fortune (W09). spinInfo() asks for the current segments/eligibility/
 	// cooldown snapshot; spinFree() attempts the 12h free spin; spinPaidPrep(wallet)
 	// prices a $3-in-$THREE paid spin and returns the unsigned tx to sign (the
 	// reply arrives via the 'spinPrep' event); spinPaidSettle() hands back the
 	// broadcast signature for the server to verify on-chain before it rolls.
-	spinInfo() { this._send('spinInfo'); }
-	spinFree() { this._send('spinFree'); }
-	spinPaidPrep(wallet) { this._send('spinPaidPrep', { wallet }); }
-	spinPaidSettle(quote, txSig) { this._send('spinPaidSettle', { quote, txSig }); }
+	spinInfo() { return this._send('spinInfo'); }
+	spinFree() { return this._send('spinFree'); }
+	spinPaidPrep(wallet) { return this._send('spinPaidPrep', { wallet }); }
+	spinPaidSettle(quote, txSig) { return this._send('spinPaidSettle', { quote, txSig }); }
 	// Quests, jobs & heists (W05). Server-authoritative: accept/abandon a mission and
 	// interact at a quest object; the board + progress arrive via the 'quests' event
 	// and completions via 'questComplete'. questInteract acts on the zone the server
 	// finds the player standing in (pickup/dropoff/terminal/crack).
-	requestQuests() { this._send('questReq'); }
-	questAccept(id) { this._send('questAccept', { id }); }
-	questAbandon(id) { this._send('questAbandon', { id }); }
-	questInteract() { this._send('questInteract'); }
+	requestQuests() { return this._send('questReq'); }
+	questAccept(id) { return this._send('questAccept', { id }); }
+	questAbandon(id) { return this._send('questAbandon', { id }); }
+	questInteract() { return this._send('questInteract'); }
 	// The live event's leaderboard. The room proxies the same public read the web
 	// uses (api/play/event-leaderboard) and pins this player's own row from their
 	// verified account key, so the client never has to know or send an identity.
 	// The reply arrives on the 'eventBoard' event.
-	requestEventBoard() { this._send('eventBoardReq'); }
+	requestEventBoard() { return this._send('eventBoardReq'); }
 	// Vehicles. enter/exit take + release the wheel (server-gated by proximity +
 	// occupancy, answered on the 'vehicle' event); vsync streams the driver's
 	// authoritative Rapier transform, which the server validates and relays. vsync
 	// is throttled to the move send rate; the driving loop calls it every frame.
-	sendVEnter(id) { this._send('venter', { id }); }
-	sendVExit(state) { this._send('vexit', state || {}); }
+	sendVEnter(id) { return this._send('venter', { id }); }
+	sendVExit(state) { return this._send('vexit', state || {}); }
 	sendVSync(state) {
 		if (!this.room) return;
 		const now = performance.now();

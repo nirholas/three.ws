@@ -760,6 +760,7 @@ export class PlaySystems {
 			signing: 'Approve the purchase in your wallet…',
 			broadcasting: 'Submitting on-chain…',
 			settling: 'Confirming your unlock…',
+			reconnecting: 'Payment sent. Reconnecting to the world to confirm your unlock…',
 		};
 		try {
 			// Lazy import: boutique-purchase drags in the whole Solana wallet stack

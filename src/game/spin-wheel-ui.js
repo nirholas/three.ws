@@ -24,6 +24,9 @@ import { openModal, prefersReducedMotion } from './a11y.js';
 import { t } from './i18n-play.js';
 
 const NETWORK = 'mainnet';
+// How long a sent settle may go unanswered before it is resent. The server roll
+// is fast; silence this long means the answer went to a dropped session.
+const SETTLE_ANSWER_MS = 25_000;
 const SPIN_DECIMALS = 6; // $THREE uses 6 decimals (same as pump.fun mints)
 
 // Convert an atomics string to a human-readable token amount, e.g. "12345678" → "12.35".
@@ -193,6 +196,7 @@ class SpinWheel {
 	}
 
 	_onResult(m) {
+		clearTimeout(this._settleWatch);
 		// Land the wheel on the server's chosen segment, then reveal the prize.
 		if (m.mode === 'free' && Number.isFinite(m.nextFreeSpinAt) && this.info) this.info.nextFreeSpinAt = m.nextFreeSpinAt;
 		// Headless (modal already closed mid-settle): skip the flourish and deliver
@@ -202,6 +206,24 @@ class SpinWheel {
 	}
 
 	_onDenied(m) {
+		clearTimeout(this._settleWatch);
+		// A resend that finds the payment already consumed means the first settle
+		// DID roll; only its answer was lost with the old socket. The prize is on the
+		// profile, so refresh it and say so, never "that payment was already used".
+		if (m?.mode === 'paid' && m.reason === 'already_settled' && this._settleResent && this._sig) {
+			this.busy = false;
+			this._stopSpin();
+			this.phase = 'ready';
+			this._prep = null;
+			this._paymentLive = false;
+			this.net.requestProfile?.();
+			const text = 'Your spin was rolled while you were reconnecting. The prize is already in your purse or pack.';
+			this._sig = null;
+			if (this._headless) { this._pill(text, 'ok'); this._pillDone(); return; }
+			this._status(text, 'ok');
+			this._sync();
+			return;
+		}
 		if (m && Number.isFinite(m.nextFreeSpinAt) && this.info) this.info.nextFreeSpinAt = m.nextFreeSpinAt;
 		if (m && Number.isFinite(m.avgLevel) && this.info) { this.info.avgLevel = m.avgLevel; this.info.eligible = m.avgLevel >= m.minLevel; }
 		// A paid spin whose payment isn't visible to the server yet: it landed
@@ -264,6 +286,8 @@ class SpinWheel {
 	_resettle() {
 		if (this._closed || this.busy || !this._prep || !this._sig) return;
 		this._settleAttempts = 0;
+		this._silentResends = 0;
+		this._settleResent = true;
 		this.busy = true;
 		this.phase = 'spinning';
 		this._startSpin();
@@ -312,10 +336,17 @@ class SpinWheel {
 		this.busy = true;
 		this.phase = 'spinning';
 		this.resultLine.textContent = '';
+		if (!this.net.spinFree()) {
+			// The room socket is down: nothing went out, so nothing was spent.
+			this.busy = false;
+			this.phase = 'ready';
+			this._status('Reconnecting to the world. Nothing was spent, try again in a moment.', 'err');
+			this._sync();
+			return;
+		}
 		this._status('Rolling…', '');
 		this._sync();
 		this._startSpin();
-		this.net.spinFree();
 	}
 
 	async _paid() {
@@ -338,8 +369,14 @@ class SpinWheel {
 			address = wallet.publicKey?.toString?.();
 		}
 		if (!address) { this._status('Could not read your wallet address.', 'err'); this.busy = false; this.phase = 'ready'; this._sync(); return; }
+		if (!this.net.spinPaidPrep(address)) {
+			this.busy = false;
+			this.phase = 'ready';
+			this._status('Reconnecting to the world. Nothing was charged, try again in a moment.', 'err');
+			this._sync();
+			return;
+		}
 		this._status('Preparing your payment…', '');
-		this.net.spinPaidPrep(address);
 	}
 
 	async _runWalletPayment(prep) {
@@ -358,6 +395,8 @@ class SpinWheel {
 		const conn = new Connection(SOLANA_RPC[NETWORK], 'confirmed');
 		const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3 });
 		this._sig = sig;
+		this._settleResent = false;
+		this._silentResends = 0;
 		// Past this point real money has moved. If the player now closes the modal
 		// (e.g. dismissing the wallet overlay with Escape), the spin must NOT be
 		// abandoned: keep the server subscriptions alive and deliver the outcome in
@@ -377,10 +416,57 @@ class SpinWheel {
 	}
 
 	// Ask the server to verify the broadcast payment and roll. Kept as its own step
-	// so a transient "not confirmed yet" can retry without re-signing.
+	// so a transient "not confirmed yet" can retry without re-signing. Past this
+	// point real $THREE has moved, so a socket that is down, or an answer that went
+	// to a session the reconnect replaced, must never strand the player: the server
+	// accepts the same quote + signature until the quote expires, so resend.
 	_settle() {
 		this._settleAttempts = (this._settleAttempts || 0) + 1;
-		this.net.spinPaidSettle(this._prep.quote, this._sig);
+		clearTimeout(this._settleWatch);
+		if (this.net.spinPaidSettle(this._prep.quote, this._sig)) {
+			this._settleWatch = setTimeout(() => this._onSettleSilence(), SETTLE_ANSWER_MS);
+			return;
+		}
+		this._settleResent = true;
+		this._awaitReconnect();
+	}
+
+	_receiptLink(text = 'view on Solscan ↗') {
+		return el('a', { href: solanaTxExplorerUrl(NETWORK, this._sig), target: '_blank', rel: 'noopener', text });
+	}
+
+	_awaitReconnect() {
+		const msg = 'Payment confirmed on-chain. Reconnecting to the world to roll your spin, nothing more will be charged…';
+		if (this._headless) this._pill(msg, '');
+		else this._statusNode(el('span', {}, ['Payment confirmed on-chain (', this._receiptLink('view ↗'), '). Reconnecting to the world to roll your spin, nothing more will be charged…']), '');
+		if (this._offReconnect) return;
+		this._offReconnect = this.net.on('status', (s) => {
+			const status = typeof s === 'string' ? s : s?.status;
+			if (status !== 'online' || this._closed || !this._prep || !this._sig) return;
+			this._offReconnect?.();
+			this._offReconnect = null;
+			this._settle();
+		});
+	}
+
+	// The settle went out but no spinResult/spinDenied came back: the answer went
+	// to a session that dropped. Resend a couple of times, then hand the player
+	// the receipt and a manual re-settle instead of an endless spinner.
+	_onSettleSilence() {
+		if (this._closed || this.phase !== 'spinning' || !this._prep || !this._sig) return;
+		this._silentResends = (this._silentResends || 0) + 1;
+		this._settleResent = true;
+		if (this._silentResends <= 2) { this._settle(); return; }
+		this.busy = false;
+		this._stopSpin();
+		this.phase = 'ready';
+		if (this._headless) { this._pill('Your payment went through but the world did not answer. Reopen the wheel to retry, you will not be charged again.', 'err'); this._pillDone(); return; }
+		this._statusNode(el('span', {}, [
+			'The world did not answer. Your payment went through (', this._receiptLink(), ') and no spin was consumed. ',
+			el('button', { class: 'kg-spin-retry', type: 'button', onclick: () => this._resettle() }, 'Retry settle'),
+			' re-checks that same payment; it never charges you again.',
+		]), 'err');
+		this._sync();
 	}
 
 	// Poll signature status over HTTP (no WS, the public RPC refuses subscriptions).
@@ -721,6 +807,9 @@ class SpinWheel {
 		if (this._loadTimer) { clearTimeout(this._loadTimer); this._loadTimer = null; }
 		for (const off of this._offs || []) { try { off(); } catch {} }
 		this._offs = [];
+		clearTimeout(this._settleWatch);
+		this._offReconnect?.();
+		this._offReconnect = null;
 		this._releaseModal?.();
 		this.overlay?.remove();
 		this.overlay = null;

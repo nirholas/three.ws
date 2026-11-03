@@ -88,18 +88,78 @@ function waitForQuote(net, id, timeoutMs = 15000) {
 // Wait for the settle-outcome notice. A success resolves; a server-side
 // rejection ("Payment didn't verify", "already settled", …) rejects with the
 // server's own reason so the caller reports the failure honestly instead of
-// painting a rejection green.
+// painting a rejection green. A silence rejects with code 'timeout' so the
+// caller can tell "the server said no" from "nobody answered".
 function waitForSettleNotice(net, timeoutMs = 20000) {
 	return new Promise((resolve, reject) => {
-		const timer = setTimeout(() => { unsub(); reject(new Error('Timed out confirming the purchase. Check your wardrobe in a moment.')); }, timeoutMs);
+		const timer = setTimeout(() => {
+			unsub();
+			reject(Object.assign(new Error('Timed out confirming the purchase.'), { code: 'timeout' }));
+		}, timeoutMs);
 		const unsub = net.on('notice', (n) => {
 			if (n?.kind !== 'boutique') return;
 			clearTimeout(timer);
 			unsub();
 			if (boutiqueNoticeOk(n)) resolve(n);
-			else reject(new Error(n.text || 'The purchase did not settle.'));
+			else reject(Object.assign(new Error(n.text || 'The purchase did not settle.'), { serverText: n.text || '' }));
 		});
 	});
+}
+
+// Resolve true as soon as the room socket is open again, false at the deadline.
+function waitForOnline(net, timeoutMs) {
+	if (net.isLive?.()) return Promise.resolve(true);
+	return new Promise((resolve) => {
+		const done = (v) => { clearTimeout(timer); off?.(); resolve(v); };
+		const timer = setTimeout(() => done(false), Math.max(0, timeoutMs));
+		const off = net.on('status', (s) => {
+			const status = typeof s === 'string' ? s : s?.status;
+			if (status === 'online' && (net.isLive ? net.isLive() : true)) done(true);
+		});
+	});
+}
+
+function unconfirmedError(sig) {
+	const short = `${sig.slice(0, 6)}…${sig.slice(-6)}`;
+	return Object.assign(
+		new Error(`Your payment went through (tx ${short}) but the world could not confirm the unlock before the price quote expired. Reopen My Cosmetics in a minute; if it is still locked, contact support with that transaction.`),
+		{ sig, code: 'unconfirmed' },
+	);
+}
+
+/**
+ * Hand a confirmed payment to the world and wait for the grant, surviving a
+ * socket that drops mid-settle. The server accepts the same quote + signature
+ * until the quote expires and its replay guard makes a resend safe, so: resend
+ * whenever the first send never reached an open socket or its answer went to a
+ * session that has since been replaced, and read "already settled" after a
+ * resend as the earlier send having landed.
+ * @param {object} net CommunityNet (on, boutiqueSettle -> boolean, isLive)
+ * @param {string} quoteToken
+ * @param {string} sig the confirmed transaction signature
+ * @param {{ deadlineAt: number, noticeTimeoutMs?: number, onStage?: (s: string) => void }} opts
+ */
+export async function settleBoutique(net, quoteToken, sig, { deadlineAt, noticeTimeoutMs = 20000, onStage = () => {} }) {
+	let resent = false;
+	for (;;) {
+		const remaining = deadlineAt - Date.now();
+		if (remaining <= 0) throw unconfirmedError(sig);
+		if (!net.boutiqueSettle(quoteToken, sig)) {
+			onStage('reconnecting');
+			if (!(await waitForOnline(net, remaining))) throw unconfirmedError(sig);
+			resent = true;
+			continue;
+		}
+		try {
+			return await waitForSettleNotice(net, Math.min(noticeTimeoutMs, remaining));
+		} catch (err) {
+			if (resent && /already settled/i.test(err.serverText || '')) {
+				return { ok: true, text: 'Payment verified. Your item is unlocked, check your wardrobe.' };
+			}
+			if (err.code !== 'timeout') throw err;
+			resent = true;
+		}
+	}
 }
 
 /**
@@ -128,8 +188,11 @@ export async function buyBoutiqueItem({ net, item, onStage = () => {} }) {
 	if (!address) throw new Error('Could not read your wallet address.');
 
 	onStage('pricing');
-	net.boutiqueQuote(item.id, address);
+	if (!net.boutiqueQuote(item.id, address)) throw new Error('Reconnecting to the world. Nothing was charged, try again in a moment.');
 	const quote = await waitForQuote(net, item.id);
+	// The server honours a settle for the life of the quote; that is the window
+	// a dropped socket has to come back in.
+	const quoteDeadline = Date.now() + (Number(quote?.quote?.ttlSeconds) || 90) * 1000 - 3000;
 	if (!quote?.txBase64) throw new Error('Could not price that purchase, try again.');
 
 	onStage('signing');
@@ -158,7 +221,10 @@ export async function buyBoutiqueItem({ net, item, onStage = () => {} }) {
 	if (confirmation?.value?.err) throw new Error('Transaction failed on-chain.');
 
 	onStage('settling');
-	net.boutiqueSettle(quote.quoteToken, sig);
-	const notice = await waitForSettleNotice(net);
+	const notice = await settleBoutique(net, quote.quoteToken, sig, {
+		// At least one full answer window even if the wallet took most of the TTL.
+		deadlineAt: Math.max(quoteDeadline, Date.now() + 20000),
+		onStage,
+	});
 	return { ok: true, sig, explorerUrl: solanaTxExplorerUrl(netId, sig), text: notice.text };
 }
