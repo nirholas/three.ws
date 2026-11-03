@@ -417,6 +417,24 @@ describe('wallet card paging', () => {
 		expect(walletCardPage(walletCardIndex(cards), { q: 'CHARIZARD' }).total).toBe(2);
 	});
 
+	it('matches a number in the query as a whole number, so "psa 10" never returns a grade 4', () => {
+		const cards = [
+			{ address: 'g10', name: '2016 #11 M Charizard EX PSA 10', uri: '', standard: 'core' },
+			{ address: 'g4', name: '2002 #107 Shining Charizard PSA 4', uri: '', standard: 'core' },
+			{ address: 'g9', name: '2010 #1 Charizard PSA 9', uri: '', standard: 'core' },
+			{ address: 'g95', name: '2023 Charizard ex CGC 9.5', uri: '', standard: 'core' },
+		];
+		const index = walletCardIndex(cards);
+		const hits = (q) => walletCardPage(index, { q }).cards.map((c) => c.address).sort();
+		expect(hits('charizard psa 10')).toEqual(['g10']);
+		expect(hits('#1')).toEqual(['g9']);
+		expect(hits('9')).toEqual(['g9']);
+		expect(hits('9.5')).toEqual(['g95']);
+		expect(hits('2010')).toEqual(['g9']);
+		// Text still matches inside a word.
+		expect(hits('zard')).toHaveLength(4);
+	});
+
 	it('clamps a bad offset instead of failing', () => {
 		const index = walletCardIndex(onchain(5));
 		expect(walletCardPage(index, { offset: -3 }).offset).toBe(0);

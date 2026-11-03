@@ -284,13 +284,24 @@ export function walletQueryWords(q) {
 		.filter(Boolean);
 }
 
+const REGEX_SPECIAL = /[.*+?^${}()|[\]\\]/g;
+
+// Text matches anywhere in a name ("zard" finds Charizard). A word holding a
+// digit is a grade, a year or a set number, so it must not run into the digits
+// around it: "10" finds "PSA 10" but not "#107" or "2010", and "9" not "9.5".
+function wordMatcher(word) {
+	if (!/[0-9]/.test(word)) return (key) => key.includes(word);
+	const re = new RegExp(`(?<![0-9.])${word.replace(REGEX_SPECIAL, '\\$&')}(?![0-9]|\\.[0-9])`);
+	return (key) => re.test(key);
+}
+
 /**
  * One page of the index, optionally filtered to cards whose name holds every
  * search word. `nextOffset` is null on the last page.
  */
 export function walletCardPage(index, { offset = 0, q = '', size = WALLET_PAGE_SIZE } = {}) {
-	const words = walletQueryWords(q);
-	const matches = words.length ? index.filter((c) => words.every((w) => c.key.includes(w))) : index;
+	const tests = walletQueryWords(q).map(wordMatcher);
+	const matches = tests.length ? index.filter((c) => tests.every((t) => t(c.key))) : index;
 	const start = Math.max(0, Math.min(Number.isFinite(Number(offset)) ? Math.floor(Number(offset)) : 0, matches.length));
 	const cards = matches.slice(start, start + size).map((c) => {
 		const card = { ...c };

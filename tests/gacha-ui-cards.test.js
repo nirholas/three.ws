@@ -86,6 +86,9 @@ describe('gacha My cards', () => {
 	it('reaches every card of a wallet larger than one page through Show more', async () => {
 		const ui = await openCards();
 		expect(document.querySelector('.ga-stat-v').textContent).toBe('130');
+		const more = document.querySelector('.ga-cards-more');
+		expect(more.querySelector('.ga-more').textContent).toBe('Show 60 more');
+		expect(more.textContent).toBe('Show 60 more60 of 130 shown');
 		document.querySelector('.ga-cards-more .ga-more').click();
 		await flush();
 		document.querySelector('.ga-cards-more .ga-more').click();
@@ -94,7 +97,7 @@ describe('gacha My cards', () => {
 		const tiles = [...document.querySelectorAll('.ga-own')];
 		expect(tiles.length).toBe(130);
 		expect(document.querySelector('.ga-cards-more .ga-more')).toBeNull();
-		expect(document.querySelector('.ga-cards-more').textContent).toContain('All 130 cards shown');
+		expect(document.querySelector('.ga-cards-more').textContent).toBe('All 130 cards shown.');
 		// The sellable card is pulled to the top section, once.
 		expect(document.querySelectorAll('.ga-cards-sell .ga-own').length).toBe(1);
 		expect(ui.view).toBe('cards');

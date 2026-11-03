@@ -1242,14 +1242,18 @@ class GachaUI {
 		const { more } = this._cardsUi;
 		const shown = st.cards.length;
 		if (st.nextOffset == null) {
-			more.replaceChildren(shown > st.pageSize ? el('p', { class: 'ga-dim ga-small' }, `All ${st.total.toLocaleString()} ${st.q ? 'matching cards' : 'cards'} shown.`) : null);
+			if (shown > st.pageSize) more.replaceChildren(el('p', { class: 'ga-dim ga-small' }, `All ${st.total.toLocaleString()} ${st.q ? 'matching cards' : 'cards'} shown.`));
+			else more.replaceChildren();
 			return;
 		}
 		const next = Math.min(st.pageSize, st.total - shown);
+		// replaceChildren would print a missing note as the text "null".
 		more.replaceChildren(
-			el('button', { class: 'ga-btn ga-more', type: 'button', onclick: (e) => this._loadMoreCards(e.currentTarget) }, `Show ${next} more`),
-			el('p', { class: 'ga-dim ga-small' }, `${shown.toLocaleString()} of ${st.total.toLocaleString()} shown`),
-			note,
+			...[
+				el('button', { class: 'ga-btn ga-more', type: 'button', onclick: (e) => this._loadMoreCards(e.currentTarget) }, `Show ${next} more`),
+				el('p', { class: 'ga-dim ga-small' }, `${shown.toLocaleString()} of ${st.total.toLocaleString()} shown`),
+				note,
+			].filter(Boolean),
 		);
 	}
 
