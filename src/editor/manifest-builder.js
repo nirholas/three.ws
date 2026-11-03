@@ -331,8 +331,13 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	const shadow = host.attachShadow({ mode: 'open' });
 	rootEl.appendChild(host);
 
+	const agentId = options.agentId || null;
 	let glbBlobUrl = null;
 	let allSkills = [];
+	// Active tag filter (only one at a time keeps the UI simple).
+	let activeSkillFilter = null;
+	// Memoized tool previews keyed by skill id (lazy-loaded on first expand).
+	const _skillPreviews = new Map();
 	let validReport = null;
 	let ipfsCid = null;
 	let _draftTimer = null;
@@ -455,8 +460,6 @@ export function mountManifestBuilder(rootEl, options = {}) {
 	return { state, host };
 
 	// ── Form building ──────────────────────────────────────────────────────────
-
-	const agentId = options.agentId || null;
 
 	function buildForm() {
 		const scroll = $('#form-scroll');
@@ -1046,11 +1049,6 @@ export function mountManifestBuilder(rootEl, options = {}) {
 		const sec = $('#stt-secondary');
 		if (sec) sec.style.display = state.sttProvider === 'none' ? 'none' : '';
 	}
-
-	// Active tag filter (only one at a time keeps the UI simple).
-	let activeSkillFilter = null;
-	// Memoized tool previews keyed by skill id (lazy-loaded on first expand).
-	const _skillPreviews = new Map();
 
 	function _skillTagKind(tag) {
 		const t = String(tag || '').toLowerCase();
