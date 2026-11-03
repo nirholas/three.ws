@@ -4,6 +4,7 @@
 // delivered after the transaction confirms.
 
 import * as THREE from 'three';
+import { applyStudioLook } from './render/index.js';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -20,7 +21,6 @@ const ORACLE_X = 3.8;
 
 export function createScene(canvas) {
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 	// `false` keeps three.js from writing inline px width/height onto the canvas.
 	// With inline sizes the canvas stops obeying its `width:100%` CSS, so it can
 	// never shrink again: the ResizeObserver below watches an element whose size
@@ -30,9 +30,11 @@ export function createScene(canvas) {
 	renderer.setSize(viewport.clientWidth, viewport.clientHeight, false);
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 0.95;
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 	const scene = new THREE.Scene();
+	// Dark showroom lit by coloured rim lights: a low environment adds gloss to the
+	// agents and frames without lifting the near-black palette.
+	const undoStudioLook = applyStudioLook(renderer, scene, { environmentIntensity: 0.3 });
 	scene.background = new THREE.Color(0x05070d);
 	scene.fog = new THREE.FogExp2(0x05070d, 0.08);
 
@@ -150,6 +152,7 @@ export function createScene(canvas) {
 			stop();
 			document.removeEventListener('visibilitychange', onVisibility);
 			ro.disconnect();
+			undoStudioLook();
 			renderer.dispose();
 		},
 	};

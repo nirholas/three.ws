@@ -11,6 +11,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { applyStudioLook, createRenderLoop } from './render/index.js';
 import {
 	RISKS,
 	SCENARIOS,
@@ -103,10 +104,12 @@ function initScene() {
 		els.nodeLabels.style.display = 'none';
 		return false;
 	}
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.setSize(window.innerWidth, window.innerHeight);
 
 	scene  = new THREE.Scene();
+	// toneMapping 'none' keeps the hand-picked IBM blue palette; the low environment
+	// adds gloss to the metallic core and sentinel nodes without lifting it.
+	applyStudioLook(renderer, scene, { toneMapping: 'none', environmentIntensity: 0.3 });
 	camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.1, 100);
 	camera.position.set(0, 0.6, 8.4);
 
@@ -207,7 +210,6 @@ function onResize() {
 
 const _v = new THREE.Vector3();
 function animate() {
-	requestAnimationFrame(animate);
 	if (!sceneOk) return;
 	clock.update();
 	const dt = clock.getDelta();
@@ -523,7 +525,7 @@ function wire() {
 function boot() {
 	wire();
 	const ok = initScene();
-	if (ok) animate();
+	if (ok) createRenderLoop({ renderer, frame: animate }).start();
 	requestAnimationFrame(() => requestAnimationFrame(() => hideOverlay(els.loading)));
 }
 

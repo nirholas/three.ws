@@ -46,6 +46,7 @@ import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js'
 import { getMeshoptDecoder } from './viewer/internal.js';
 import { AnimationManager } from './animation-manager.js';
 import { log } from './shared/log.js';
+import { applyStudioLook, createRenderLoop } from './render/index.js';
 
 const DATA_URL = '/data/timeline.json';
 const AVATAR_URL = '/avatars/default.glb';
@@ -353,12 +354,14 @@ function mountTimeline(container, data) {
 	container.appendChild(canvas);
 
 	const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-	renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-	renderer.outputColorSpace = SRGBColorSpace;
 	renderer.toneMapping = ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.05;
 
 	const scene = new Scene();
+	// The tour-guide avatar is a PBR glTF; the studio environment gives it fill and
+	// specular so the ambient/hemisphere lights below can stay low and the night
+	// palette is not lifted.
+	const undoStudioLook = applyStudioLook(renderer, scene, { environmentIntensity: 0.45 });
 	scene.background = new Color(0x03040a);
 	scene.fog = new FogExp2(0x03040a, 0.016);
 	scene.add(makeStarfield());
@@ -367,8 +370,8 @@ function mountTimeline(container, data) {
 	const camera = new PerspectiveCamera(55, 1, 0.1, 400);
 	camera.position.set(0, 5.5, Math.min(24, pathLength * 0.35 + 8));
 
-	scene.add(new AmbientLight(0x8899cc, 0.55));
-	const hemi = new HemisphereLight(0x99bbff, 0x0a0810, 0.6);
+	scene.add(new AmbientLight(0x8899cc, 0.3));
+	const hemi = new HemisphereLight(0x99bbff, 0x0a0810, 0.35);
 	scene.add(hemi);
 	const sun = new DirectionalLight(0xffffff, 1.1);
 	sun.position.set(6, 12, 6);
@@ -800,7 +803,7 @@ function mountTimeline(container, data) {
 
 	// ── render loop ──
 	const timer = new Timer();
-	let raf = 0;
+	let loop = null;
 	function tick() {
 		if (state.destroyed) return;
 		timer.update();
@@ -841,9 +844,9 @@ function mountTimeline(container, data) {
 		// is needed when switching back.
 		if (state.mode === 'orbit') controls.update();
 		renderer.render(scene, camera);
-		raf = requestAnimationFrame(tick);
 	}
-	raf = requestAnimationFrame(tick);
+	loop = createRenderLoop({ renderer, frame: tick });
+	loop.start();
 
 	// initial focus (no camera fly on load — let the establishing shot hold)
 	focusEvent(0, { fly: false });
@@ -853,7 +856,8 @@ function mountTimeline(container, data) {
 	// ── teardown ──
 	function destroy() {
 		state.destroyed = true;
-		cancelAnimationFrame(raf);
+		loop?.dispose();
+		undoStudioLook();
 		clearTimeout(state.playTimer);
 		ro.disconnect();
 		barRo.disconnect();

@@ -22,6 +22,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { applyStudioLook } from './render/index.js';
 
 const PREFERS_REDUCED_MOTION =
 	typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -111,13 +112,14 @@ export function createPulseScene(canvas, opts = {}) {
 		alpha: true,
 		powerPreference: 'high-performance',
 	});
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.15;
 	renderer.setClearColor(0x000000, 0);
 
 	const scene = new THREE.Scene();
+	// Only the $THREE core gem is PBR; a low-intensity studio environment gives its
+	// facets a reflective sheen without lifting the dark galaxy palette.
+	const undoStudioLook = applyStudioLook(renderer, scene, { environmentIntensity: 0.35 });
 	scene.fog = new THREE.FogExp2(0x05070d, 0.0016);
 
 	const camera = new THREE.PerspectiveCamera(56, 1, 0.1, 6000);
@@ -825,6 +827,7 @@ export function createPulseScene(canvas, opts = {}) {
 
 			glowTex.dispose();
 			sparkTex.dispose();
+			undoStudioLook();
 			renderer.dispose();
 		} catch {
 			/* best-effort teardown */

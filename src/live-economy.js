@@ -6,6 +6,7 @@
  * The purchased data appears on the central TV screen. Real on-chain txs.
  */
 import * as THREE from 'three';
+import { applyStudioLook, createRenderLoop } from './render/index.js';
 
 // ── Scene constants ───────────────────────────────────────────────────────
 const W   = () => window.innerWidth;
@@ -22,7 +23,6 @@ const TV_POS      = new THREE.Vector3( 0, 4.2, -6);
 // ── Renderer ──────────────────────────────────────────────────────────────
 const canvas   = document.getElementById('world-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(W(), H());
 renderer.toneMapping      = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
@@ -30,6 +30,9 @@ renderer.toneMappingExposure = 1.1;
 const scene  = new THREE.Scene();
 scene.background = new THREE.Color(0x04050b);
 scene.fog        = new THREE.FogExp2(0x04050b, 0.045);
+// Low intensity: the stage is a deliberately dark neon set, so the environment only
+// adds gloss to the floor, bezels and pedestals instead of lifting the palette.
+applyStudioLook(renderer, scene, { environmentIntensity: 0.25 });
 
 const camera = new THREE.PerspectiveCamera(FOV, W() / H(), 0.1, 200);
 camera.position.copy(CAM_POS);
@@ -358,8 +361,7 @@ export function flashAgent(which) {
 // ── Render loop ───────────────────────────────────────────────────────────
 let lastTime = performance.now();
 
-(function loop() {
-	requestAnimationFrame(loop);
+function frame() {
 	const now = performance.now();
 	const dt  = Math.min((now - lastTime) / 1000, 0.05);
 	lastTime  = now;
@@ -395,7 +397,9 @@ let lastTime = performance.now();
 	}
 
 	renderer.render(scene, camera);
-})();
+}
+
+createRenderLoop({ renderer, frame }).start();
 
 // ── Init overlay positions ────────────────────────────────────────────────
 updateOverlayPositions();
