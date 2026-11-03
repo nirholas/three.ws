@@ -39,6 +39,16 @@ const MAX_TOOLS = 100;
 const TOOL_NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
 const MAX_TOOL_DESCRIPTION_LENGTH = 1024;
 
+function isHttpUrl(value) {
+	if (typeof value !== 'string') return false;
+	try {
+		const { protocol } = new URL(value);
+		return protocol === 'https:' || protocol === 'http:';
+	} catch {
+		return false;
+	}
+}
+
 // ── Manifest validation — LobeHub/pai-chat ToolManifest format ───────────────
 // Required: identifier, meta.title, api[]
 // Optional: systemRole, type, settings, version, openapi, gateway, ui
@@ -52,6 +62,10 @@ function validateManifest(json) {
 	if (json.identifier.length > MAX_IDENTIFIER_LENGTH)
 		throw new Error(`identifier must be ${MAX_IDENTIFIER_LENGTH} characters or fewer`);
 	if (!json.meta?.title) throw new Error('Missing meta.title');
+	// manifest.homepage becomes the href of a button on the public detail page, so
+	// a javascript: or data: URL stored here would run script for every viewer.
+	if (json.homepage !== undefined && json.homepage !== null && !isHttpUrl(json.homepage))
+		throw new Error('homepage must be an http or https URL');
 	if (!Array.isArray(json.api) || !json.api.length)
 		throw new Error('api must be a non-empty array');
 	if (json.api.length > MAX_TOOLS) throw new Error(`api must declare at most ${MAX_TOOLS} tools`);
@@ -363,7 +377,11 @@ async function handleImport(req, res) {
 
 const publishSchema = z.object({
 	manifest_json: z.record(z.any()),
-	manifest_url: z.string().url().optional(),
+	manifest_url: z
+		.string()
+		.url()
+		.refine(isHttpUrl, 'manifest_url must be an http or https URL')
+		.optional(),
 	is_public: z.boolean().default(true),
 });
 
