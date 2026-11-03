@@ -628,7 +628,7 @@
 		"@gltf-transform/core": "^4.4.0",
 		"@gltf-transform/extensions": "^4.5.1",
 		"@gltf-transform/functions": "^4.5.0",
-		"@grpc/grpc-js": "^1.14.6",
+		"@grpc/grpc-js": "^1.14.7",
 		"@grpc/proto-loader": "^0.8.1",
 		"@huggingface/transformers": "^4.3.2",
 		"@jaames/iro": "^5.5.2",
