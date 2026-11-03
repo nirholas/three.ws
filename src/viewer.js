@@ -367,6 +367,8 @@ export class Viewer {
 		// Survive a lost WebGL context (driver reset, GPU process crash, too
 		// many canvases on one page) instead of freezing on a black canvas.
 		this._contextLost = false;
+		// Set while renderPhotoreal() owns the canvas, so the live loop stays out.
+		this._suspended = false;
 		this._contextLoss = handleContextLoss(this.renderer.domElement, {
 			notice: options.contextNotice !== false,
 			onLost: () => {
@@ -480,8 +482,11 @@ export class Viewer {
 			});
 		};
 		this._onKeyDown = (e) => {
-			if (this.isInputFocused()) return;
-			if (e.key === 'p' || e.key === 'P') {
+			// While a path-traced still owns the canvas, its panel handles keys.
+			if (this.isInputFocused() || this._suspended) return;
+			if ((e.key === 'p' || e.key === 'P') && e.shiftKey && !this.options.kiosk && !this.options.embed) {
+				this.takePhotorealScreenshot();
+			} else if (e.key === 'p' || e.key === 'P') {
 				this.takeScreenshot();
 			} else if (e.code === 'Space') {
 				e.preventDefault();
@@ -879,7 +884,7 @@ export class Viewer {
 
 	_updateRenderLoop() {
 		if (this._disposed) return;
-		const canRun = this._visible && this._tabVisible && !this._contextLost;
+		const canRun = this._visible && this._tabVisible && !this._contextLost && !this._suspended;
 		const shouldRun = canRun && (this._needsRender || this._animating);
 		if (shouldRun && this._rafId === null) {
 			this.prevTime = performance.now();
@@ -950,7 +955,7 @@ export class Viewer {
 		this.render(dt);
 		this._needsRender = false;
 
-		if (this._animating && this._visible && this._tabVisible && !this._contextLost && !this._disposed) {
+		if (this._animating && this._visible && this._tabVisible && !this._contextLost && !this._suspended && !this._disposed) {
 			this._rafId = requestAnimationFrame(this.animate);
 		} else {
 			this._rafId = null;
@@ -1093,7 +1098,26 @@ export class Viewer {
 	}
 
 	takeScreenshot() {
+		// A raster frame would overwrite a path-traced still mid-convergence.
+		if (this._suspended) return;
 		takeScreenshot(this);
+	}
+
+	/**
+	 * Path-trace the current view into a PNG Blob (global illumination, soft
+	 * shadows, multi-bounce reflections). Loads the path tracer on first use.
+	 * @param {{ samples?: number, bounces?: number, onProgress?: Function, signal?: AbortSignal }} [opts]
+	 */
+	async renderPhotoreal(opts = {}) {
+		const environment = environments.find((e) => e.name === this.state.environment);
+		const { renderPhotoreal } = await import('./viewer/photoreal.js');
+		return renderPhotoreal(this, { ...opts, environment });
+	}
+
+	/** Path-trace the current view with an on-canvas progress panel and save the PNG. */
+	async takePhotorealScreenshot(opts) {
+		const { runPhotorealWithProgress } = await import('./viewer/photoreal-ui.js');
+		return runPhotorealWithProgress(this, opts);
 	}
 
 	captureScreenshot() {
@@ -1968,6 +1992,9 @@ export class Viewer {
 		dispFolder
 			.add({ screenshot: () => this.takeScreenshot() }, 'screenshot')
 			.name('Screenshot [P]');
+		dispFolder
+			.add({ photoreal: () => this.takePhotorealScreenshot() }, 'photoreal')
+			.name('Path-traced render [Shift+P]');
 		const infoCtrl = dispFolder.add(this.state, 'showInfo').name('model info');
 		infoCtrl.onChange(() => this.updateModelInfo(this.content, this.clips));
 		const labelsCtrl = dispFolder.add(this.state, 'showLabels').name('mesh labels');

@@ -16,6 +16,7 @@ Core capabilities:
 - **Morph targets** — per-target sliders, used by the avatar emotion system for facial animation
 - **Skeleton visualization** — colored bone overlay for animation rig debugging
 - **Screenshot capture** — PNG download via keyboard or API
+- **Path-traced stills**: physically based renders (global illumination, soft shadows, multi-bounce reflections) of the current view via keyboard, GUI or API
 - **Stats overlay** — FPS, frame time, memory usage
 - **Wireframe and axes helpers** — grid plane and corner axis gizmo
 
@@ -278,6 +279,17 @@ viewer.takeScreenshot();
 ```
 
 The implementation in `src/viewer/screenshot.js` renders one frame, encodes the canvas with `canvas.toBlob(…, 'image/png')`, and triggers a browser download via a temporary anchor element.
+
+### Path-traced stills
+
+Press `Shift+P`, or use **Path-traced render** in the **Display** folder, to render the current view with a GPU path tracer instead of the rasterizer. The pose, camera, lights and environment are the live ones; the difference is light transport: soft shadows that widen with distance, colour bleeding between surfaces, and reflections that see the rest of the scene. The canvas shows the image converging sample by sample, a panel reports progress with a **Cancel** button (`Escape` also cancels), and the finished image downloads as `3d-photoreal-<timestamp>.png`. The live view resumes unchanged afterwards.
+
+```js
+const blob = await viewer.renderPhotoreal({ samples: 256, bounces: 6, onProgress, signal });
+await viewer.takePhotorealScreenshot(); // the same, with the progress panel and download
+```
+
+`src/viewer/photoreal.js` does the work. It suspends the live render loop and locks orbit controls, swaps the scene's PMREM environment for an equirectangular twin the path tracer can importance-sample (the built-in Neutral studio room is re-captured into a float equirect on the GPU; HDR environments reload as EXR), hides the raster-only shadow catcher, and accumulates samples with [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer). The module is imported on first use. `Shift+P` is not bound in kiosk or embed mode; embeds use the `<agent-3d>` [`renderPhotoreal()`](./web-component.md#renderphotorealopts) method or the iframe `renderPhotoreal` bridge action instead.
 
 ---
 

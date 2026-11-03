@@ -3427,6 +3427,21 @@ class Agent3DElement extends HTMLElement {
 		return (await this._viewer?.activateAR?.()) ?? false;
 	}
 
+	/**
+	 * Path-trace the current view into a PNG Blob: global illumination, soft
+	 * shadows and multi-bounce reflections, from the same pose, camera and
+	 * lighting the live view shows. The live view pauses while the image
+	 * converges and resumes unchanged afterwards. Loads the path tracer on
+	 * first use.
+	 * @param {{ samples?: number, bounces?: number, onProgress?: (p: { samples: number, total: number }) => void, signal?: AbortSignal }} [opts]
+	 * @returns {Promise<Blob>}
+	 */
+	async renderPhotoreal(opts = {}) {
+		if (!this._mounted) await this._waitForReady();
+		if (!this._viewer) throw new Error('agent-3d: the 3D view is not ready');
+		return this._viewer.renderPhotoreal(opts);
+	}
+
 	/** Variant names declared by the loaded GLB's KHR_materials_variants data, or `[]` if it has none. */
 	get availableVariants() {
 		return this._variantController?.names.slice() ?? [];

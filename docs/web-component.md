@@ -469,6 +469,29 @@ el.setSize('400px', '520px');
 
 ---
 
+### `renderPhotoreal(opts?)`
+
+Path-traces the current view into a PNG: real global illumination, soft shadows, colour bleeding and multi-bounce reflections, from the same pose, camera and lighting environment the live view shows. Built on [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer), which loads on first use, so pages that never call this pay nothing for it. The live view pauses (animation frozen, orbit locked) while the image converges on the canvas, then resumes exactly as it was.
+
+```js
+const blob = await el.renderPhotoreal({
+  samples: 256,
+  onProgress: ({ samples, total }) => (bar.value = samples / total),
+});
+img.src = URL.createObjectURL(blob);
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `opts.samples` | number | Samples per pixel, 1 to 4096. Default 128. More samples, less noise. |
+| `opts.bounces` | number | Light bounces, 1 to 16. Default 5. |
+| `opts.onProgress` | function | Called after each sample with `{ samples, total }`. |
+| `opts.signal` | AbortSignal | Cancels the render; the promise rejects with an `AbortError` and the live view resumes. |
+
+Returns `Promise<Blob>` (`image/png`). Rejects if a render is already running on the element or the graphics context was lost. On a desktop GPU, 128 samples of an avatar takes seconds; integrated and mobile GPUs take longer, so pass `onProgress` and show it.
+
+---
+
 ### `pause()`
 
 Suspends the runtime (LLM stream, mic, voice).
