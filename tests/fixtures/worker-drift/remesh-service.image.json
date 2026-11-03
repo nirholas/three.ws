@@ -1,0 +1,13 @@
+{
+  "name": "projects/aerial-vehicle-466722-p5/locations/us-central1/repositories/remesh-service/dockerImages/server@sha256:10512294de6878d0bb47ce3fff7b6b53cef63cc756eb1b2c5c8e9449c13781e7",
+  "uri": "us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/remesh-service/server@sha256:10512294de6878d0bb47ce3fff7b6b53cef63cc756eb1b2c5c8e9449c13781e7",
+  "tags": [
+    "1756bc51",
+    "latest"
+  ],
+  "imageSizeBytes": "1527074477",
+  "uploadTime": "2026-06-13T04:41:43.734751Z",
+  "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+  "buildTime": "2026-06-13T04:38:32.685367620Z",
+  "updateTime": "2026-06-13T04:41:43.918783Z"
+}

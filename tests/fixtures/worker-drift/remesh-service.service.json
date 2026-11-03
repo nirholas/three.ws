@@ -1,0 +1,116 @@
+{
+  "name": "projects/aerial-vehicle-466722-p5/locations/us-central1/services/remesh-service",
+  "uid": "0ef7f34c-796d-4758-b67d-f0d987e1f7fc",
+  "generation": "5",
+  "labels": {
+    "lane": "forge-gpu",
+    "program": "gcp-credits"
+  },
+  "createTime": "2026-06-13T04:42:04.694492Z",
+  "updateTime": "2026-07-16T21:19:16.766097Z",
+  "creator": "avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com",
+  "lastModifier": "nich@sperax.io",
+  "client": "gcloud",
+  "clientVersion": "575.0.0",
+  "ingress": "INGRESS_TRAFFIC_ALL",
+  "launchStage": "GA",
+  "template": {
+    "labels": {
+      "lane": "forge-gpu",
+      "program": "gcp-credits"
+    },
+    "scaling": {
+      "minInstanceCount": 1,
+      "maxInstanceCount": 3
+    },
+    "timeout": "300s",
+    "serviceAccount": "avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com",
+    "containers": [
+      {
+        "image": "us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/remesh-service/server:1756bc51",
+        "env": [
+          {
+            "name": "GCS_BUCKET",
+            "value": "(redacted)"
+          },
+          {
+            "name": "MAX_CONCURRENT",
+            "value": "(redacted)"
+          },
+          {
+            "name": "API_KEY",
+            "valueSource": "(redacted)"
+          }
+        ],
+        "resources": {
+          "limits": {
+            "cpu": "8",
+            "memory": "16Gi"
+          },
+          "cpuIdle": true,
+          "startupCpuBoost": true
+        },
+        "ports": [
+          {
+            "name": "http1",
+            "containerPort": 8080
+          }
+        ],
+        "startupProbe": {
+          "timeoutSeconds": 240,
+          "periodSeconds": 240,
+          "failureThreshold": 1,
+          "tcpSocket": {
+            "port": 8080
+          }
+        }
+      }
+    ],
+    "maxInstanceRequestConcurrency": 640,
+    "client": "gcloud",
+    "clientVersion": "575.0.0"
+  },
+  "traffic": [
+    {
+      "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST",
+      "percent": 100
+    }
+  ],
+  "scaling": {
+    "maxInstanceCount": 100
+  },
+  "urls": [
+    "https://remesh-service-93741856042.us-central1.run.app",
+    "https://remesh-service-lp642k3kpa-uc.a.run.app"
+  ],
+  "sshEnabled": false,
+  "observedGeneration": "5",
+  "terminalCondition": {
+    "type": "Ready",
+    "state": "CONDITION_SUCCEEDED",
+    "lastTransitionTime": "2026-07-16T21:19:54.863871Z"
+  },
+  "conditions": [
+    {
+      "type": "RoutesReady",
+      "state": "CONDITION_SUCCEEDED",
+      "lastTransitionTime": "2026-07-16T21:19:54.840791Z"
+    },
+    {
+      "type": "ConfigurationsReady",
+      "state": "CONDITION_SUCCEEDED",
+      "lastTransitionTime": "2026-07-16T21:19:21.819176Z"
+    }
+  ],
+  "latestReadyRevision": "projects/aerial-vehicle-466722-p5/locations/us-central1/services/remesh-service/revisions/remesh-service-00005-8rr",
+  "latestCreatedRevision": "projects/aerial-vehicle-466722-p5/locations/us-central1/services/remesh-service/revisions/remesh-service-00005-8rr",
+  "trafficStatuses": [
+    {
+      "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST",
+      "revision": "remesh-service-00005-8rr",
+      "percent": 100
+    }
+  ],
+  "uri": "https://remesh-service-lp642k3kpa-uc.a.run.app",
+  "etag": "\"CNSV5dIGEOjspu0C/cHJvamVjdHMvYWVyaWFsLXZlaGljbGUtNDY2NzIyLXA1L2xvY2F0aW9ucy91cy1jZW50cmFsMS9zZXJ2aWNlcy9yZW1lc2gtc2VydmljZQ\""
+}

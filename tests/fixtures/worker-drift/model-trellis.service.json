@@ -1,0 +1,152 @@
+{
+  "name": "projects/aerial-vehicle-466722-p5/locations/us-central1/services/model-trellis",
+  "uid": "fa0f9d6e-2b2d-446c-afce-b9d2533231b0",
+  "generation": "36",
+  "createTime": "2026-07-07T09:10:50.761758Z",
+  "updateTime": "2026-09-30T08:13:19.209507Z",
+  "creator": "avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com",
+  "lastModifier": "nich@sperax.io",
+  "client": "gcloud",
+  "clientVersion": "587.0.0",
+  "ingress": "INGRESS_TRAFFIC_ALL",
+  "launchStage": "GA",
+  "template": {
+    "scaling": {
+      "minInstanceCount": 1,
+      "maxInstanceCount": 3
+    },
+    "timeout": "900s",
+    "serviceAccount": "avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com",
+    "containers": [
+      {
+        "image": "us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/model-trellis/server:manual1790753126",
+        "env": [
+          {
+            "name": "GCS_BUCKET",
+            "value": "(redacted)"
+          },
+          {
+            "name": "WEIGHTS_DIR",
+            "value": "(redacted)"
+          },
+          {
+            "name": "MAX_CONCURRENT",
+            "value": "(redacted)"
+          },
+          {
+            "name": "WEIGHTS_GCS_URI",
+            "value": "(redacted)"
+          },
+          {
+            "name": "WEIGHTS_LOCAL_DIR",
+            "value": "(redacted)"
+          },
+          {
+            "name": "REMBG_SERVICE_URL",
+            "value": "(redacted)"
+          },
+          {
+            "name": "API_KEY",
+            "valueSource": "(redacted)"
+          }
+        ],
+        "resources": {
+          "limits": {
+            "cpu": "8",
+            "nvidia.com/gpu": "1",
+            "memory": "32Gi"
+          },
+          "startupCpuBoost": true
+        },
+        "ports": [
+          {
+            "name": "http1",
+            "containerPort": 8080
+          }
+        ],
+        "volumeMounts": [
+          {
+            "name": "weights",
+            "mountPath": "/weights"
+          }
+        ],
+        "livenessProbe": {
+          "initialDelaySeconds": 60,
+          "timeoutSeconds": 10,
+          "periodSeconds": 60,
+          "failureThreshold": 3,
+          "httpGet": {
+            "path": "/health",
+            "port": 8080
+          }
+        },
+        "startupProbe": {
+          "timeoutSeconds": 240,
+          "periodSeconds": 240,
+          "failureThreshold": 3,
+          "tcpSocket": {
+            "port": 8080
+          }
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "name": "weights",
+        "gcs": {
+          "bucket": "three-ws-model-weights"
+        }
+      }
+    ],
+    "maxInstanceRequestConcurrency": 80,
+    "nodeSelector": {
+      "accelerator": "nvidia-l4"
+    },
+    "gpuZonalRedundancyDisabled": true,
+    "client": "gcloud",
+    "clientVersion": "587.0.0"
+  },
+  "traffic": [
+    {
+      "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST",
+      "percent": 100
+    }
+  ],
+  "scaling": {
+    "maxInstanceCount": 3
+  },
+  "urls": [
+    "https://model-trellis-93741856042.us-central1.run.app",
+    "https://model-trellis-lp642k3kpa-uc.a.run.app"
+  ],
+  "sshEnabled": false,
+  "observedGeneration": "36",
+  "terminalCondition": {
+    "type": "Ready",
+    "state": "CONDITION_SUCCEEDED",
+    "lastTransitionTime": "2026-09-30T08:13:20.514466Z"
+  },
+  "conditions": [
+    {
+      "type": "RoutesReady",
+      "state": "CONDITION_SUCCEEDED",
+      "lastTransitionTime": "2026-09-30T08:13:20.472283Z"
+    },
+    {
+      "type": "ConfigurationsReady",
+      "state": "CONDITION_SUCCEEDED",
+      "lastTransitionTime": "2026-09-30T08:05:25.792022Z"
+    }
+  ],
+  "latestReadyRevision": "projects/aerial-vehicle-466722-p5/locations/us-central1/services/model-trellis/revisions/model-trellis-00029-697",
+  "latestCreatedRevision": "projects/aerial-vehicle-466722-p5/locations/us-central1/services/model-trellis/revisions/model-trellis-00029-697",
+  "trafficStatuses": [
+    {
+      "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST",
+      "revision": "model-trellis-00029-697",
+      "percent": 100
+    }
+  ],
+  "uri": "https://model-trellis-lp642k3kpa-uc.a.run.app",
+  "etag": "\"CJ-J89UGELil82M/cHJvamVjdHMvYWVyaWFsLXZlaGljbGUtNDY2NzIyLXA1L2xvY2F0aW9ucy91cy1jZW50cmFsMS9zZXJ2aWNlcy9tb2RlbC10cmVsbGlz\""
+}

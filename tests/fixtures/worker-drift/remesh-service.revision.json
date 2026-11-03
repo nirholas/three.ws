@@ -1,0 +1,109 @@
+{
+  "name": "projects/aerial-vehicle-466722-p5/locations/us-central1/services/remesh-service/revisions/remesh-service-00005-8rr",
+  "uid": "0cc15755-cb06-4539-8d1e-cb58673cb555",
+  "generation": "1",
+  "labels": {
+    "lane": "forge-gpu",
+    "program": "gcp-credits"
+  },
+  "createTime": "2026-07-16T21:19:18.475592Z",
+  "updateTime": "2026-07-16T21:19:18.475592Z",
+  "launchStage": "GA",
+  "service": "remesh-service",
+  "scaling": {
+    "minInstanceCount": 1,
+    "maxInstanceCount": 3
+  },
+  "timeout": "300s",
+  "serviceAccount": "avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com",
+  "containers": [
+    {
+      "name": "server-1",
+      "image": "us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/remesh-service/server@sha256:10512294de6878d0bb47ce3fff7b6b53cef63cc756eb1b2c5c8e9449c13781e7",
+      "env": [
+        {
+          "name": "GCS_BUCKET",
+          "value": "(redacted)"
+        },
+        {
+          "name": "MAX_CONCURRENT",
+          "value": "(redacted)"
+        },
+        {
+          "name": "API_KEY",
+          "valueSource": "(redacted)"
+        }
+      ],
+      "resources": {
+        "limits": {
+          "cpu": "8",
+          "memory": "16Gi"
+        },
+        "cpuIdle": true,
+        "startupCpuBoost": true
+      },
+      "ports": [
+        {
+          "name": "http1",
+          "containerPort": 8080
+        }
+      ],
+      "startupProbe": {
+        "timeoutSeconds": 240,
+        "periodSeconds": 240,
+        "failureThreshold": 1,
+        "tcpSocket": {
+          "port": 8080
+        }
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "type": "Ready",
+      "state": "CONDITION_SUCCEEDED",
+      "message": "Deploying revision succeeded in 34.85s.",
+      "lastTransitionTime": "2026-07-16T21:19:53.321607Z"
+    },
+    {
+      "type": "Active",
+      "state": "CONDITION_SUCCEEDED",
+      "lastTransitionTime": "2026-07-16T21:19:53.396097Z",
+      "severity": "INFO"
+    },
+    {
+      "type": "ResourcesAvailable",
+      "state": "CONDITION_SUCCEEDED",
+      "message": "Provisioning imported containers completed in 3.66s. Checking container health. This will wait for up to 4m for the configured startup probe, including an initial delay of 0s.",
+      "lastTransitionTime": "2026-07-16T21:19:24.775540Z"
+    },
+    {
+      "type": "ContainerReady",
+      "state": "CONDITION_SUCCEEDED",
+      "message": "Container image import completed.",
+      "lastTransitionTime": "2026-07-16T21:19:21.113999Z"
+    },
+    {
+      "type": "ContainerHealthy",
+      "state": "CONDITION_SUCCEEDED",
+      "message": "Containers became healthy in 26.51s.",
+      "lastTransitionTime": "2026-07-16T21:19:50.988690Z"
+    },
+    {
+      "type": "MinInstancesProvisioned",
+      "state": "CONDITION_SUCCEEDED",
+      "message": "Min instances provisioned successfully  in 30.35s.",
+      "lastTransitionTime": "2026-07-16T21:19:53.260508Z"
+    }
+  ],
+  "observedGeneration": "1",
+  "logUri": "https://console.cloud.google.com/logs/viewer?project=aerial-vehicle-466722-p5&resource=cloud_run_revision/service_name/remesh-service/revision_name/remesh-service-00005-8rr&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22remesh-service%22%0Aresource.labels.revision_name%3D%22remesh-service-00005-8rr%22",
+  "maxInstanceRequestConcurrency": 640,
+  "scalingStatus": {
+    "desiredMinInstanceCount": 1
+  },
+  "creator": "nich@sperax.io",
+  "client": "gcloud",
+  "clientVersion": "575.0.0",
+  "etag": "\"CNaV5dIGEMDq4-IB/cHJvamVjdHMvYWVyaWFsLXZlaGljbGUtNDY2NzIyLXA1L2xvY2F0aW9ucy91cy1jZW50cmFsMS9zZXJ2aWNlcy9yZW1lc2gtc2VydmljZS9yZXZpc2lvbnMvcmVtZXNoLXNlcnZpY2UtMDAwMDUtOHJy\""
+}
