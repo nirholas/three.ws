@@ -19,6 +19,8 @@ export class LiveKitVoice {
 		this._room = null;
 		this._audioEls = []; // { track, el }[]
 		this._userSpeaking = false;
+		this._micEnabled = false;
+		this._micError = null;
 	}
 
 	async connect() {
@@ -99,7 +101,19 @@ export class LiveKitVoice {
 		});
 
 		await room.connect(this._serverUrl, this._token);
-		await room.localParticipant.setMicrophoneEnabled(true);
+
+		// The microphone is optional. A visitor with no input device, or who
+		// declines the permission prompt, is still in the room: the agent's
+		// audio plays and its data channel keeps driving lipsync and gestures,
+		// so the session continues in listen-only mode instead of failing.
+		try {
+			await room.localParticipant.setMicrophoneEnabled(true);
+			this._micEnabled = true;
+			this._micError = null;
+		} catch (err) {
+			this._micEnabled = false;
+			this._micError = err;
+		}
 	}
 
 	async disconnect() {
@@ -113,6 +127,17 @@ export class LiveKitVoice {
 			this._room = null;
 		}
 		this._userSpeaking = false;
+		this._micEnabled = false;
+	}
+
+	/** True once the visitor's microphone is publishing into the room. */
+	get micEnabled() {
+		return this._micEnabled;
+	}
+
+	/** The error that kept the microphone off (listen-only mode), or null. */
+	get micError() {
+		return this._micError;
 	}
 
 	get connected() {

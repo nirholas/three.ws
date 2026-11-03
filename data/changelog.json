@@ -12,6 +12,15 @@
 		},
 		{
 			"date": "2026-11-03",
+			"title": "LiveKit avatars keep playing for visitors without a microphone",
+			"tags": [
+				"fix"
+			],
+			"summary": "An <agent-3d voice=\"livekit\"> embed used to report a failed connection whenever the visitor had no microphone or said no to the permission prompt, even though the room was joined and the avatar was already talking. It now joins in listen-only mode: the agent's voice plays and the avatar keeps lip-syncing and gesturing. Visitors who do have a microphone can still talk back.",
+			"link": "/docs/voice-framework-integrations"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Turn a photo into a Gaussian splat right in the Splat Viewer",
 			"tags": [
 				"feature"

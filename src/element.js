@@ -3325,6 +3325,12 @@ class Agent3DElement extends HTMLElement {
 		const voice = new LiveKitVoice({ serverUrl, token, protocol });
 		this._livekitVoice = voice;
 		await voice.connect();
+		if (!voice.micEnabled) {
+			log.info(
+				'[agent-3d] LiveKit joined in listen-only mode (microphone unavailable)',
+				voice.micError?.name || voice.micError,
+			);
+		}
 	}
 
 	_teardown() {

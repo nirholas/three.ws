@@ -41,6 +41,12 @@ which already subscribes to this message shape over LiveKit's data channel.
 Any transport whose implementation routes output messages to a real data
 channel (LiveKit, Daily) works the same way.
 
+The visitor's microphone is optional. If the browser has no input device, or
+the visitor declines the permission prompt, the embed stays in the room in
+listen-only mode: the agent's audio plays and the avatar keeps lip-syncing and
+gesturing. `LiveKitVoice` exposes `micEnabled` and `micError` so a host page
+can tell the visitor why they cannot talk back.
+
 ## LiveKit Agents
 
 [`livekit-plugins-threews`](https://github.com/nirholas/three.ws/tree/main/integrations/livekit/livekit-plugins-threews)
