@@ -529,8 +529,8 @@
 	font: inherit;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .wgx-place-here .ico {
 	color: var(--accent);

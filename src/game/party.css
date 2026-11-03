@@ -12,7 +12,7 @@
 	background: var(--cc-panel); color: var(--cc-text); border: 1px solid var(--cc-party);
 	border-radius: var(--cc-radius); padding: 7px 11px; font: 700 11px/1 inherit; letter-spacing: 0.06em; text-transform: uppercase;
 	box-shadow: var(--cc-shadow); backdrop-filter: blur(12px);
-	transition: background var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .cc-party-pill[hidden] { display: none; }
 .cc-party-pill:hover { background: rgba(127, 209, 255, 0.14); }
@@ -50,7 +50,7 @@
 .cc-party-btn {
 	background: rgba(255, 255, 255, 0.08); color: var(--cc-text); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm, 3px);
 	padding: 6px 10px; font: 700 11px/1.1 inherit; letter-spacing: 0.05em; text-transform: uppercase; cursor: pointer;
-	transition: background var(--duration-fast, 120ms) ease, filter var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease;
+	transition: background var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .cc-party-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); }
 .cc-party-btn:active:not(:disabled) { transform: scale(0.97); }
@@ -91,7 +91,7 @@
 	max-width: 70vw;
 }
 .cc-party-chip:hover { background: rgba(127, 209, 255, 0.22); }
-.cc-party-chip-arrow { color: var(--cc-party); font-size: 12px; display: inline-block; transition: transform 90ms linear; }
+.cc-party-chip-arrow { color: var(--cc-party); font-size: 12px; display: inline-block; transition: transform var(--duration-instant) var(--ease-standard); }
 .cc-party-chip-name { overflow: hidden; text-overflow: ellipsis; max-width: 110px; letter-spacing: 0.03em; }
 .cc-party-chip-dist { color: var(--cc-party); font-variant-numeric: tabular-nums; }
 
@@ -104,7 +104,7 @@
 .cc-party-scope {
 	flex: none; align-self: center; background: rgba(255, 255, 255, 0.08); color: var(--cc-faint); border: 1px solid var(--cc-edge);
 	border-radius: 2px; padding: 3px 6px; font: 700 10px/1 inherit; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer;
-	transition: background var(--duration-fast, 120ms) ease, color var(--duration-fast, 120ms) ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .cc-party-scope:hover { background: rgba(255, 255, 255, 0.16); color: var(--cc-text); }
 .cc-party-scope[aria-disabled="true"] { opacity: 0.5; }

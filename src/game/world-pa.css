@@ -30,7 +30,7 @@
 .cc-pa-bars { display: inline-flex; align-items: center; gap: 2px; height: 16px; }
 .cc-pa-bars i {
 	display: block; width: 3px; height: 16px; border-radius: 2px; background: #ffce5c;
-	transform: scaleY(0.18); transform-origin: center; transition: transform 80ms linear;
+	transform: scaleY(0.18); transform-origin: center; transition: transform var(--duration-instant) var(--ease-standard);
 }
 .cc-pa-who { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
 .cc-pa-onmic { font-size: 11px; color: var(--cc-dim); white-space: nowrap; }
@@ -41,6 +41,7 @@
 .cc-pa-controls { display: flex; align-items: center; gap: 6px; }
 .cc-pa-notice { font-size: 11px; color: var(--cc-dim); max-width: 220px; }
 .cc-pa-vol { width: 84px; accent-color: #ffce5c; cursor: pointer; }
+.cc-pa-vol:hover { opacity: 0.85; }
 .cc-pa-vol:focus-visible { outline: 2px solid #ffce5c; outline-offset: 2px; }
 
 .cc-pa-btn {
@@ -48,7 +49,7 @@
 	color: var(--cc-text); background: rgba(255, 255, 255, 0.06);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
 	padding: 5px 10px; cursor: pointer; white-space: nowrap;
-	transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .cc-pa-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
 .cc-pa-btn:active:not(:disabled) { transform: scale(0.97); }
@@ -99,6 +100,7 @@
 .cc-pa-key:hover { border-color: rgba(255, 255, 255, 0.25); }
 .cc-pa-key:focus-visible { outline: 2px solid #ffce5c; outline-offset: 1px; border-color: transparent; }
 .cc-pa-check { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 12.5px; color: var(--cc-text); cursor: pointer; }
+.cc-pa-check:hover { color: #ffce5c; }
 .cc-pa-check input { accent-color: #ffce5c; width: 15px; height: 15px; }
 .cc-pa-check input:focus-visible { outline: 2px solid #ffce5c; outline-offset: 2px; }
 .cc-pa-msg { min-height: 1em; margin: 10px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--cc-text); }

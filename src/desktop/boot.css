@@ -50,7 +50,7 @@
 	inset: 0;
 	overflow: hidden;
 	background: #050505;
-	transition: opacity 0.9s var(--ease-standard);
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .os-boot.is-locked .os-boot-bg {
 	opacity: 0;
@@ -409,7 +409,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	animation: os-lock-ping 2.4s ease-out infinite;
 }
 .os-lock-status[data-ok='false'] .os-lock-dot {
-	background: #fbbf24;
+	background: var(--warn);
 	animation: none;
 	box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
 }
@@ -615,7 +615,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	font-variant-numeric: tabular-nums;
 }
 .os-lock-chip[data-tone='up'] b {
-	color: #4ade80;
+	color: var(--success);
 }
 .os-lock-chip[data-tone='down'] b {
 	color: #fb7185;

@@ -26,7 +26,7 @@
 	padding: 8px 11px; background: none; border: 0; color: inherit; cursor: pointer;
 	font: inherit; font-weight: 700; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
 	text-align: left;
-	transition: background var(--duration-fast, 120ms) var(--ease-standard, ease);
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .cc-ticker-toggle:hover { background: rgba(255, 255, 255, 0.05); }
 .cc-ticker-toggle:active { background: rgba(255, 255, 255, 0.09); }
@@ -47,7 +47,7 @@
 	flex: 0 0 auto; padding: 0 11px; background: none; border: 0;
 	border-left: 1px solid var(--cc-edge-soft, rgba(255, 255, 255, 0.07));
 	color: var(--cc-dim, #8c8c92); cursor: pointer; font: inherit; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
-	transition: color var(--duration-fast, 120ms) var(--ease-standard, ease), background var(--duration-fast, 120ms) var(--ease-standard, ease);
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-ticker-sound:hover { color: var(--cc-text, #f5f5f6); background: rgba(255, 255, 255, 0.05); }
 .cc-ticker-sound:active { background: rgba(255, 255, 255, 0.09); }

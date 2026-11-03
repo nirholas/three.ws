@@ -2,7 +2,7 @@
 
 .ps-action.sw-action {
 	bottom: 340px;
-	transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .ps-action.sw-action:hover { transform: translateY(-2px); }
 .ps-action.sw-action:active { transform: translateY(0) scale(0.98); }
@@ -20,7 +20,7 @@
 	justify-content: center;
 	padding: 16px;
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .sw-root.is-open { opacity: 1; }
 .sw-scrim { position: absolute; inset: 0; background: rgba(6, 7, 10, 0.62); backdrop-filter: blur(3px); }
@@ -38,7 +38,7 @@
 	box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
 	font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif;
 	transform: translateY(8px) scale(0.98);
-	transition: transform 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .sw-root.is-open .sw-card { transform: none; }
 .sw-card:focus { outline: none; }
@@ -60,7 +60,7 @@
 	color: inherit;
 	font: inherit;
 	resize: none;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .sw-input:hover { border-color: rgba(255, 255, 255, 0.34); }
 .sw-input:focus-visible { outline: none; border-color: #ffe14d; box-shadow: 0 0 0 3px rgba(255, 225, 77, 0.25); }
@@ -90,7 +90,7 @@
 	font-weight: 700;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .sw-btn:hover { background: #2a2e38; border-color: rgba(255, 255, 255, 0.36); }
 .sw-btn:active { transform: scale(0.97); }

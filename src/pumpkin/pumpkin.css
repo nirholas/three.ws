@@ -164,7 +164,7 @@
 	font: inherit;
 	font-size: 12px;
 	cursor: pointer;
-	transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), color var(--duration-fast), transform var(--duration-instant);
 }
 .pk-tool svg { width: 28px; height: 28px; fill: currentColor; }
 .pk-tool:hover { border-color: var(--pk-line-hi); color: var(--pk-ink); }
@@ -194,7 +194,7 @@
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: border-color 0.15s, background 0.15s, transform 0.1s, opacity 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant), opacity var(--duration-fast);
 }
 .pk-btn:hover:not(:disabled) { border-color: var(--pk-line-hi); background: rgba(255, 122, 26, 0.12); }
 .pk-btn:active:not(:disabled) { transform: scale(0.97); }
@@ -207,6 +207,7 @@
 .pk-stats { margin: 4px 0 0; font-size: 12px; color: var(--pk-faint); }
 .pk-keys { font-size: 13px; color: var(--pk-dim); }
 .pk-keys summary { cursor: pointer; padding: 2px 0; }
+.pk-keys summary:hover { color: var(--pk-orange-hi); }
 .pk-keys ul { margin: 8px 0 0; padding-left: 18px; }
 .pk-keys li { margin: 3px 0; }
 .pk-keys kbd {

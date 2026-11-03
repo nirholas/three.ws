@@ -51,7 +51,7 @@
 .er-tick { fill: var(--ink-dim); font-size: 11px; font-variant-numeric: tabular-nums; }
 .er-total { fill: var(--ink); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .er-bar { outline: none; }
-.er-bar .er-seg { transition: opacity var(--duration-fast, .15s); }
+.er-bar .er-seg { transition: opacity var(--duration-fast); }
 .er-svg:has(.er-bar.is-active) .er-bar:not(.is-active) .er-seg { opacity: .55; }
 .er-bar:focus-visible .er-seg { stroke: var(--focus-ring-color, #3b82f6); stroke-width: 2; }
 .er-hit { fill: transparent; cursor: crosshair; }

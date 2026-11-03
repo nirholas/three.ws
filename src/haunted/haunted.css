@@ -59,7 +59,7 @@
 .hn-loading[hidden], .hn-error[hidden] { display: none; }
 .hn-loading-title { font-family: var(--hn-display); font-size: 34px; letter-spacing: 0.04em; color: var(--hn-orange); margin: 0; }
 .hn-track { width: min(320px, 70vw); height: 8px; border-radius: 99px; background: rgba(246, 236, 255, 0.12); overflow: hidden; }
-.hn-bar { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--hn-orange), var(--hn-orange-hi)); transition: width 0.15s ease; }
+.hn-bar { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--hn-orange), var(--hn-orange-hi)); transition: width var(--duration-fast) var(--ease-standard); }
 .hn-loading p, .hn-error p { margin: 0; color: var(--hn-dim); max-width: 38ch; }
 .hn-error h2 { margin: 0; font-size: 20px; }
 
@@ -77,7 +77,7 @@
 .hn-chip, .hn-btn {
 	appearance: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; color: var(--hn-ink);
 	padding: 8px 12px; border-radius: 10px; border: 1px solid var(--hn-line); background: rgba(246, 236, 255, 0.06);
-	transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .hn-chip:hover, .hn-btn:hover { background: rgba(255, 154, 60, 0.14); border-color: var(--hn-line-hi); }
 .hn-chip:active, .hn-btn:active { transform: scale(0.97); }

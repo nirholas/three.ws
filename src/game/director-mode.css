@@ -122,7 +122,10 @@ body.cc-director .cc-meetup-shutter-cap { font-size: 2vw; padding: 0.5vw 1.8vw; 
 .dir-seg-next { margin-top: 0.6em; font-size: 1.15em; color: var(--dir-gold); font-weight: 800; }
 
 .dir-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 0.4em; z-index: 2; background: rgba(255, 255, 255, 0.14); }
-.dir-progress-bar { height: 100%; transform-origin: left center; background: var(--dir-gold); transition: transform 1s linear; }
+/* A meter fed every 250ms (TICK_MS), not a control: it glides linearly across
+   one tick so the fill reads as continuous instead of easing in and out four
+   times a second. The rung still zeroes under prefers-reduced-motion. */
+.dir-progress-bar { --dir-meter-ease: linear; height: 100%; transform-origin: left center; background: var(--dir-gold); transition: transform var(--duration-base) var(--dir-meter-ease); }
 
 /* Group photo: the caption sits under the top bar. The big countdown number is
    the meetup layer's own shutter overlay when it is mounted (the home world), so
