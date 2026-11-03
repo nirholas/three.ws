@@ -52,7 +52,7 @@
 
 	var pgEl = function(id) { return document.getElementById(id); };
 	var pgS = {
-		tabs:      pgEl('pg-tabs'),
+		tabs:      pgEl('api-pg-tabs'),
 		empty:     pgEl('pg-empty-state'),
 		builder:   pgEl('pg-builder'),
 		key:       pgEl('pg-key'),
