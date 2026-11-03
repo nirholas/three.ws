@@ -815,6 +815,30 @@
 					right: 4px;
 				}
 			}
+			/* Touch: the "All tutorials" back link measured 19px tall and each
+			   on-this-page entry 28px on a 393px phone. Both reach 44px, with
+			   the TOC label centred in its row. */
+			@media (hover: none) and (pointer: coarse) {
+				.tdoc-back-link {
+					min-height: 44px;
+				}
+				.tdoc-toc a {
+					display: flex;
+					align-items: center;
+					box-sizing: border-box;
+					min-height: 44px;
+				}
+			}
+			/* Phones: the eyebrow labels (tier chip, builds label, pager
+			   direction, TOC heading) sit at 0.68rem, just under 11px. */
+			@media (max-width: 768px) {
+				.tdoc-tier-chip,
+				.tdoc-builds-label,
+				.tdoc-pager-dir,
+				.tdoc-toc-heading {
+					font-size: 0.6875rem;
+				}
+			}
 
 			/* Heading anchor — hover-revealed deep link in the left margin. */
 			.tdoc-article h2,

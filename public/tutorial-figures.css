@@ -412,3 +412,11 @@ html[data-theme='light'] .tfig-zoom {
 		animation: none;
 	}
 }
+
+/* Phones: the figure number label sits at 0.64rem (10.2px), under a
+   phone's 11px floor. */
+@media (max-width: 768px) {
+	.tfig-num {
+		font-size: 0.6875rem;
+	}
+}
