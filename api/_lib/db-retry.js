@@ -59,12 +59,14 @@ function isTransientConnError(err) {
 // Race a promise-returning thunk against a deadline. The timer is always
 // cleared, so a settled query never leaves a dangling handle keeping the event
 // loop (or a serverless freeze) alive. `ms <= 0` or a non-finite `ms` disables
-// the bound and just runs the thunk.
-export function withDbTimeout(run, ms = DEFAULT_DB_TIMEOUT_MS) {
+// the bound and just runs the thunk. `budgetMs` is the figure the error
+// reports: withDbRetry races each attempt against what is left of the call's
+// budget, but the operator reading the log needs the budget the caller set.
+export function withDbTimeout(run, ms = DEFAULT_DB_TIMEOUT_MS, budgetMs = ms) {
 	if (!Number.isFinite(ms) || ms <= 0) return Promise.resolve().then(run);
 	let timer;
 	const deadline = new Promise((_, reject) => {
-		timer = setTimeout(() => reject(new DbTimeoutError(ms)), ms);
+		timer = setTimeout(() => reject(new DbTimeoutError(budgetMs)), ms);
 	});
 	return Promise.race([Promise.resolve().then(run), deadline]).finally(() => clearTimeout(timer));
 }
@@ -77,7 +79,7 @@ export async function withDbRetry(run, { timeoutMs = DEFAULT_DB_TIMEOUT_MS } = {
 		const remaining = bounded ? deadline - Date.now() : Infinity;
 		if (bounded && remaining <= 0) throw lastErr ?? new DbTimeoutError(timeoutMs);
 		try {
-			return await withDbTimeout(run, remaining);
+			return await withDbTimeout(run, remaining, timeoutMs);
 		} catch (err) {
 			lastErr = err;
 			if (attempt === MAX_DB_ATTEMPTS - 1 || !isTransientConnError(err)) throw err;

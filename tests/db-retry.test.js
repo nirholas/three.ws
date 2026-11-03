@@ -104,3 +104,22 @@ describe('withDbTimeout', () => {
 		await expect(withDbTimeout(() => Promise.resolve('ok'), Infinity)).resolves.toBe('ok');
 	});
 });
+
+// The deadline error names the caller's budget, not the slice an attempt had
+// left. Each attempt raced only the remaining time, so a retried call that
+// wedged reported a shrunken figure ("exceeded 140ms deadline" on a 300ms
+// budget), and under load even a first attempt printed 2497ms for a 2500ms
+// budget (tests/usage-direct-insert-timeout.test.js failed on exactly that).
+describe('withDbRetry deadline message', () => {
+	it('reports the whole timeoutMs budget when a retried attempt wedges', async () => {
+		let calls = 0;
+		const run = () => {
+			calls++;
+			return calls === 1 ? new Promise((_, reject) => setTimeout(() => reject(transientError()), 60)) : never();
+		};
+		const err = await withDbRetry(run, { timeoutMs: 300 }).catch((e) => e);
+		expect(calls).toBe(2);
+		expect(err).toBeInstanceOf(DbTimeoutError);
+		expect(err.message).toBe('db query exceeded 300ms deadline');
+	});
+});
