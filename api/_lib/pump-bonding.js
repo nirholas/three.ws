@@ -291,5 +291,11 @@ export async function getBondingStatus(mint) {
 		cacheSet(bondingLkgKey(mint), { status, coin: null }, LKG_TTL_S).catch(() => {});
 		return { kind: 'ok', status, coin: null, stale: false };
 	}
+	// The on-chain reader's not_a_pump_mint is a definitive answer about the mint
+	// (no pump.fun shape, no three.ws launch record), not an outage. Reporting it
+	// as upstream_down told pollers to retry the same foreign mint every 15s
+	// forever. `no_curve` stays an outage: a graduated coin whose Jupiter price
+	// read failed lands there too.
+	if (onchain.httpStatus === 404 && onchain.body?.error === 'not_a_pump_mint') return { kind: 'not_found' };
 	return { kind: 'upstream_down' };
 }

@@ -368,6 +368,23 @@ describe('getBondingStatus -- cache + last-known-good fallback', () => {
 		expect(out).toEqual({ kind: 'not_found' });
 	});
 
+	it('pump.fun unreachable and the on-chain reader says the mint is not a pump.fun mint: answers not_found, not a retry-forever upstream_down', async () => {
+		// Production 2026-11-03: pump.fun's frontend answers every request with a
+		// 403 challenge, so the on-chain reader is the only source. For a mint with
+		// no pump.fun shape and no three.ws launch record it answers a definitive
+		// 404 not_a_pump_mint, yet the endpoint reported upstream_down (503,
+		// retry-after 15), and pollers retried the same mints ~4,000 times a day.
+		const synthetic = 'THREEsynthetic1111111111111111111111111111';
+		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonRes({ message: 'challenge' }, 403)));
+		getCurveView.mockResolvedValue({
+			httpStatus: 404,
+			body: { error: 'not_a_pump_mint', error_description: 'mint has no pump.fun bonding curve' },
+		});
+
+		const out = await getBondingStatus(synthetic);
+		expect(out).toEqual({ kind: 'not_found' });
+	});
+
 	it('writes the LKG cache entry (successful-fetch call site) with a TTL that survives a multi-hour outage, not just 30 minutes', async () => {
 		// The LKG tier exists to survive hours-long outages (a 6h RPC-lane
 		// cooldown, a multi-day Cloudflare block on pump.fun's frontend), so a
