@@ -12,6 +12,16 @@ owner-gated account signups and submissions (WordPress.org, Framer Marketplace, 
 logged as row 57 in `prompts/finish/_context/production-100-OWNER-ACTIONS.md` and detailed in
 `marketing/growth/submissions/site-builders.md`. This file stays open until those land.
 
+**Re-check (2026-11-03):** all three embeds re-verified against the current tree. The pin check
+still reports `agent-3d 1.5.2` on all three; Plugin Check 2.1.0 on WordPress 7.1.4 reports "No
+errors found" (`readme.txt` "Tested up to: 7.1" is still current); both Playwright harness specs
+pass against the live CDN release. The re-check also found that `docs/wordpress-embed.md` said
+`scripts/wordpress-plugin-check.sh` verified the block and shortcode rendering on a live page, but
+the script never did. The script now does it: it publishes both pages and fails unless each serves
+a real `<agent-3d>` with the SRI-pinned loader. A real Chromium opened against both pages mounted a
+live WebGL canvas with no console errors. Row 57 (owner signups and submissions) is unchanged and
+still the only thing left.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
 ## Operating clause (binding)

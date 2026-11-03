@@ -797,3 +797,12 @@ Remaining, owner-owned: register the Discord application, set `DISCORD_CLIENT_ID
 - **Remaining (owner, row 50)**: `node scripts/cc0-animation-library.mjs` with production R2
   credentials (the full pipeline, since `--upload` alone needs the staging dir). The Adobe letter
   stays owner order 938. The order file stays open.
+
+## 2026-11-03: order 094 (partners 11, site-builder embeds) re-check
+
+- `npm run check:site-builder-embeds`: `3 pinned-release file(s) match agent-3d 1.5.2`.
+- `scripts/wordpress-plugin-check.sh` (WordPress 7.1.4, Plugin Check 2.1.0): `Success: Checks complete. No errors found.`
+- Found a doc/script gap: `docs/wordpress-embed.md` claimed the script also verified that the block and shortcode render on a live page, but it never did. The script now publishes a block page and a shortcode page and fails unless both serve a real `<agent-3d>` with the pinned loader (`https://three.ws/agent-3d/1.5.2/agent-3d.js`, its ledger SRI hash). Both passed. With `WP_KEEP=1`, real Chromium opened both pages: `agent-3d` defined, a live 645x480 WebGL canvas, no console errors. A concurrent sweep committed the script change in `9c6dcdb78`; the doc refresh lands in this entry's commit.
+- `npx playwright test tests/e2e/agent-3d-framer-component.spec.js tests/e2e/agent-3d-webflow-component.spec.js`: 2 passed.
+- `npm run audit:docs`: clean. The full `npm test` run was stopped by a 25-minute session timeout. Its partial failures are in unrelated wallet, MCP and deploy suites, and the tests that reference the plugin pass (25/25).
+- Remaining: owner row 57 (WordPress.org, Framer and Webflow account signups and submissions). The order file stays open.

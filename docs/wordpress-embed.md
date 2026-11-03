@@ -53,20 +53,28 @@ Verified against a real local WordPress install in Docker (no mocks), using the 
 scripts/wordpress-plugin-check.sh
 ```
 
-Reproduced output from a real run:
+Reproduced output from a real run (2026-11-03, WordPress 7.1.4, Plugin Check 2.1.0):
 
 ```
-[plugin-check] WordPress version: 7.1.3
+[plugin-check] WordPress version: 7.1.4
 [plugin-check] activating three-ws-agent...
 Success: Activated 1 of 1 plugins.
 [plugin-check] installing the official Plugin Check plugin from wordpress.org...
 Success: Installed 1 of 1 plugins.
 [plugin-check] running wp plugin check three-ws-agent...
 Success: Checks complete. No errors found.
+[plugin-check] publishing a block page and a shortcode page...
+[plugin-check] block renders: <agent-3d body="https://three.ws/avatars/default.glb" background="dark" framing="full" style="display:block;width:100%;height:480px">
+[plugin-check] shortcode renders: <agent-3d body="https://three.ws/avatars/default.glb" background="transparent" framing="portrait" style="display:block;width:100%;height:480px">
+[plugin-check] pinned loader on both pages: https://three.ws/agent-3d/1.5.2/agent-3d.js (sha384-KdAiFRsdcCbQMu4O5rkoL8hOEYLkmrdpf9ELd7jro+9NTNipWis3oqqFLll7v20Q)
 ```
 
-The script also confirms the block and the shortcode both render a real `<agent-3d>` tag with the
-correct pinned script tag on a live page before tearing the containers down.
+After Plugin Check, the script publishes one page with the block and one with the
+`[three_ws_agent]` shortcode, fetches both over HTTP, and exits non-zero unless each serves a real
+`<agent-3d>` element and the loader `<script type="module">` carrying the release URL and SRI hash
+from `includes/pinned-release.php`. Set `WP_KEEP=1` to leave WordPress running on
+`http://localhost:8089` (override with `WP_PORT`) and open the two pages in a browser: in Chromium
+both pages define the `agent-3d` element and mount a live WebGL canvas with no console errors.
 
 ## Submitting to the WordPress.org plugin directory
 

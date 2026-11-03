@@ -33,7 +33,7 @@ No PHP dependency beyond WordPress core (no Composer, no PHPUnit scaffold in thi
 scripts/wordpress-plugin-check.sh
 ```
 
-The script spins up `mysql:8` and `wordpress:php8.2-apache` in Docker, mounts this directory as a plugin, installs and activates Plugin Check via WP-CLI, and runs `wp plugin check three-ws-agent`. See that script for the exact commands; its output is reproduced in [`docs/wordpress-embed.md`](../../../docs/wordpress-embed.md).
+The script spins up `mysql:8` and `wordpress:php8.2-apache` in Docker, mounts this directory as a plugin, installs and activates Plugin Check via WP-CLI, runs `wp plugin check three-ws-agent`, then publishes a block page and a shortcode page and fails unless both serve a real `<agent-3d>` with the pinned, SRI-checked loader. `WP_KEEP=1` leaves WordPress running on `http://localhost:8089` for a browser check. See that script for the exact commands; its output is reproduced in [`docs/wordpress-embed.md`](../../../docs/wordpress-embed.md).
 
 ## Submitting to the WordPress.org plugin directory
 
