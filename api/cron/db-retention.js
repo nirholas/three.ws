@@ -79,6 +79,9 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { purgeExpiredActionLog } from '../_lib/home/privacy.js';
 import { purgeExpiredMcpSessions } from '../_lib/mcp-clients.js';
+import { getGcpAccessToken } from '../_lib/gcp-auth.js';
+import { createGcsStore, archiveSlice } from '../_lib/db-archive.js';
+import { ARCHIVED_TABLES } from '../_lib/db-archive-tables.js';
 
 // Mint-keyed satellites of pump_coin_intel, deleted before the master so no run
 // orphans a satellite row. Every name here is a fixed constant (never user input),
@@ -462,7 +465,59 @@ const COMPACT_CANDIDATES = [
 	...RUN_LOG_TABLES.map((t) => t.table),
 	'x402_audit_log',
 	'avatar_regen_jobs',
+	// Archived-then-pruned tables (api/_lib/db-archive-tables.js) and the tables
+	// whose update churn bloats the file far past their live rows.
+	...ARCHIVED_TABLES.map((t) => t.table),
+	'smart_wallet_folded',
+	'wallet_reputation',
 ];
+
+const ARCHIVE_BUDGET_MS = 85_000; // wrapCron allows 120s; leave room for compaction and the response
+const ARCHIVE_MAX_ROWS_PER_TABLE = 50_000;
+
+/**
+ * G. Archive-then-prune the large append-only tables. A row is deleted only
+ * after its gzip NDJSON part and manifest are verified in the archive bucket;
+ * any archive failure reports `skipped` and deletes nothing, so a bucket or
+ * auth outage degrades to "table keeps growing", never to data loss.
+ *
+ * @param {number} startedMs when the tick began
+ */
+async function archiveColdTables(startedMs) {
+	if (process.env.DB_ARCHIVE_ENABLED === '0') return { enabled: false, tables: [] };
+	const store = createGcsStore({ getToken: getGcpAccessToken });
+	const runId = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+	const deadlineMs = startedMs + ARCHIVE_BUDGET_MS;
+	const tables = [];
+	for (const spec of ARCHIVED_TABLES) {
+		if (Date.now() >= deadlineMs) {
+			tables.push({ table: spec.table, skipped: 'time_budget' });
+			continue;
+		}
+		if (!(await tableExists(spec.table))) continue;
+		try {
+			const r = await archiveSlice({
+				query: (text, params) => sql(text, params),
+				store,
+				spec,
+				prune: true,
+				maxRows: ARCHIVE_MAX_ROWS_PER_TABLE,
+				runId,
+				deadlineMs,
+			});
+			tables.push({
+				table: r.table,
+				archived: r.archivedRows,
+				deleted: r.deletedRows,
+				parts: r.parts,
+				skipped: r.skipped,
+			});
+		} catch (err) {
+			tables.push({ table: spec.table, skipped: `error: ${String(err?.message || err).slice(0, 160)}` });
+		}
+	}
+	return { enabled: true, tables };
+}
 
 /**
  * Pure target selection so the bounds are unit-testable. Keeps tables whose
@@ -622,6 +677,16 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
+	const archive = await archiveColdTables(started);
+	const archiveSkips = archive.tables.filter((t) => t.skipped && t.skipped !== 'time_budget');
+	if (archiveSkips.length) {
+		sendOpsAlert(
+			'db archive skipped',
+			`Cold-storage archive could not run for ${archiveSkips.map((t) => `${t.table} (${t.skipped})`).join(', ')}. Nothing was deleted from those tables; they will keep growing until the archive bucket is reachable again.`,
+			{ signature: 'db:archive-skipped' },
+		);
+	}
+
 	// VACUUM only tables we actually deleted from this tick.
 	const touched = Object.keys(firehose.perTable).filter((t) => firehose.perTable[t] > 0);
 	for (const t of Object.keys(orphans)) if (!touched.includes(t)) touched.push(t);
@@ -632,6 +697,7 @@ export default wrapCron(async (req, res) => {
 	if (regen.deleted > 0 || regen.stripped > 0) touched.push('avatar_regen_jobs');
 	if (homeActionLog.deleted > 0) touched.push('home_action_log');
 	if (mcpSessions.deleted > 0) touched.push('mcp_client_sessions');
+	for (const t of archive.tables) if (t.deleted > 0 && !touched.includes(t.table)) touched.push(t.table);
 	await vacuumTables(touched);
 
 	// D. Under pressure, actually shrink the files (plain VACUUM cannot) so the
@@ -690,6 +756,7 @@ export default wrapCron(async (req, res) => {
 		regen,
 		home_action_log: homeActionLog,
 		mcp_client_sessions: mcpSessions,
+		archive,
 		vacuumed: touched,
 		compaction,
 		top_tables: topTables,

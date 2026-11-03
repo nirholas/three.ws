@@ -29,6 +29,7 @@ import { SELF_FACILITATOR_ENABLED, SPONSOR_SOL_FLOOR_LAMPORTS } from './_lib/x40
 import { validateRingConfig, warnIfRingRoutesExternal } from './_lib/x402/ring-config.js';
 import { ringPoolEnabled, ringPoolTargetSize, poolCount, poolFundedCount } from './_lib/x402/pool.js';
 import { priceFor } from './_lib/x402-prices.js';
+import { settleTotals } from './_lib/x402/self-facilitator-totals.js';
 
 const PERIOD_HOURS = { '24h': 24, '7d': 168, '30d': 720 };
 // 'all' is the documented lifetime window; every other key is a windowed report.
@@ -112,14 +113,9 @@ export default wrap(async (req, res) => {
 	let dbOk = true;
 
 	try {
-		const [s] = await sql`
-			SELECT count(*)::int AS n,
-			       COALESCE(sum(amount_atomic), 0)::bigint AS gross,
-			       COALESCE(sum(fee_lamports), 0)::bigint AS fee
-			FROM x402_self_facilitator_log
-			WHERE action = 'settle' AND ok = true
-			  AND (${since}::timestamptz IS NULL OR ts >= ${since}::timestamptz)
-		`;
+		// Lifetime reads the live log plus the rollup of pruned days, so archiving
+		// old rows never moves the published total.
+		const s = await settleTotals(sql, since);
 		settlements = {
 			count: s.n,
 			gross_usdc: usdc(s.gross),

@@ -17,6 +17,7 @@
  *
  * Cron paths handled (kebab-case → handler):
  *   audit-log-cleanup             → handleAuditLogCleanup
+ *   x402-audit-drain              → handleX402AuditDrain
  *   erc8004-crawl                 → handleErc8004Crawl
  *   index-delegations             → handleIndexDelegations
  *   process-subscriptions         → handleProcessSubscriptions
@@ -72,6 +73,7 @@ import { runPumpAlertRules } from '../_lib/pump-alert-runner.js';
 import { publishUserEvent } from '../_lib/feed.js';
 import { confirmSkillPurchase } from '../_lib/purchase-confirm.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { RESERVED_WITHDRAWAL_STATUSES } from '../_lib/withdrawal-status.js';
 import { acquireLock } from '../_lib/cache.js';
 import { resolveURI } from '../../src/ipfs.js';
 import {
@@ -105,6 +107,7 @@ const HANDLERS = {
 	'run-distribute-payments': handleRunDistributePayments,
 	'run-subscriptions': handleRunSubscriptions,
 	'audit-log-cleanup': handleAuditLogCleanup,
+	'x402-audit-drain': handleX402AuditDrain,
 	'settle-royalties': handleSettleRoyalties,
 	'solana-attest-event-cleanup': handleSolanaAttestEventCleanup,
 	'solana-attestations-crawl': handleSolanaAttestationsCrawl,
@@ -4109,14 +4112,18 @@ async function handleSettleRoyalties(req, res) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// audit-log-cleanup — retention policy: keep 365 days of audit_log rows.
+// audit-log-cleanup: retention for the audit tables, archive first.
+//   audit_log       AUDIT_LOG_RETENTION_DAYS (default 365)
+//   x402_audit_log  X402_AUDIT_RETENTION_DAYS (default 365)
+// Rows are written to a gzip JSONL object in the object store and verified before
+// they are deleted (api/_lib/audit-archive.js). A day whose archive fails stays in
+// the database, and nothing is deleted when object storage is not configured.
 // Legal acceptance records (Terms of Service and Risk Disclosure clickwrap,
 // written by api/legal/tos-ack.js, api/legal/risk-ack.js, and the auth
-// endpoints) are exempt: they are the durable evidence that a user agreed,
-// and must survive for the life of the account and beyond.
+// endpoints) are exempt from audit_log pruning: they are the durable evidence
+// that a user agreed, and must survive for the life of the account and beyond.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const AUDIT_LOG_RETENTION_DAYS = 365;
 const AUDIT_LOG_RETENTION_EXEMPT_ACTIONS = ['tos-accept', 'risk-ack-accept'];
 
 async function handleAuditLogCleanup(req, res) {
@@ -4124,13 +4131,70 @@ async function handleAuditLogCleanup(req, res) {
 
 	if (!requireCron(req, res)) return;
 
-	const result = await sql`
-		delete from audit_log
-		where created_at < now() - (${AUDIT_LOG_RETENTION_DAYS} || ' days')::interval
-			and action != all(${AUDIT_LOG_RETENTION_EXEMPT_ACTIONS})
-		returning id
-	`;
-	return json(res, 200, { deleted: result.length, retention_days: AUDIT_LOG_RETENTION_DAYS });
+	const { pruneTableWithArchive, parseRetentionDays } = await import('../_lib/audit-archive.js');
+	const plans = [
+		{ table: 'audit_log', retentionDays: parseRetentionDays(process.env.AUDIT_LOG_RETENTION_DAYS), exemptActions: AUDIT_LOG_RETENTION_EXEMPT_ACTIONS },
+		{ table: 'x402_audit_log', retentionDays: parseRetentionDays(process.env.X402_AUDIT_RETENTION_DAYS) },
+	];
+	const results = [];
+	for (const plan of plans) {
+		try {
+			results.push(await pruneTableWithArchive(plan));
+		} catch (err) {
+			results.push({ table: plan.table, retentionDays: plan.retentionDays, error: err?.message ?? String(err) });
+		}
+	}
+
+	const problems = results.filter((r) => r.error || r.refused || r.failures?.length);
+	if (problems.length > 0) {
+		const { sendOpsAlert } = await import('../_lib/alerts.js');
+		await sendOpsAlert(
+			'audit retention prune blocked',
+			problems.map((r) => `${r.table}: ${r.error ?? r.refused ?? r.failures.map((f) => `${f.day} ${f.error}`).join('; ')}`).join('\n'),
+			{ signature: 'audit-retention-blocked' },
+		);
+	}
+	return json(res, 200, {
+		deleted: results.reduce((n, r) => n + (r.deleted ?? 0), 0),
+		retention_days: Object.fromEntries(results.map((r) => [r.table, r.retentionDays])),
+		results,
+	});
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// x402-audit-drain: retry audit rows that could not be written.
+// Schedule: every 5 minutes. Drains the Redis dead-letter list with backoff,
+// parks rows that exhausted their attempts, and pages ops when the dead-letter
+// has been non-empty for more than 15 minutes or anything was parked.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const AUDIT_DEAD_LETTER_ALERT_AFTER_MS = 15 * 60_000;
+
+async function handleX402AuditDrain(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+
+	if (!requireCron(req, res)) return;
+
+	const { drainAuditDeadLetter, getAuditDeadLetterStats } = await import('../_lib/x402/audit-log.js');
+	const drain = await drainAuditDeadLetter();
+	const stats = await getAuditDeadLetterStats();
+
+	const { sendOpsAlert } = await import('../_lib/alerts.js');
+	if (stats.depth > 0 && stats.oldestFailedAt && Date.now() - stats.oldestFailedAt > AUDIT_DEAD_LETTER_ALERT_AFTER_MS) {
+		await sendOpsAlert(
+			'x402 audit dead-letter not draining',
+			`${stats.depth} audit rows have been failing for ${Math.round((Date.now() - stats.oldestFailedAt) / 60_000)} min. Check Neon health and x402_audit_log.`,
+			{ signature: 'x402-audit-dead-letter-stuck' },
+		);
+	}
+	if (stats.parked) {
+		await sendOpsAlert(
+			'x402 audit rows parked',
+			`${stats.parked} audit rows exhausted their retries and sit in x402_audit_dead_letter for manual review.`,
+			{ signature: 'x402-audit-dead-letter-parked' },
+		);
+	}
+	return json(res, 200, { ok: true, drain, stats });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -4288,25 +4352,33 @@ async function handleProcessWithdrawals(req, res) {
 	const { insertNotification } = await import('../_lib/notify.js');
 	const { sendOpsAlert } = await import('../_lib/alerts.js');
 
-	// Reconciliation: a crash between the on-chain send and the 'completed' write
-	// strands a row in 'processing'. The main loop only claims 'pending', so it is
-	// never retried. We do NOT auto-resend — without an on-chain idempotency
-	// reference a blind retry could double-pay — we page an operator to reconcile
-	// by hand (confirm the transfer settled, then complete or re-queue the row).
+	// Reconcile first: every payout that may already have been broadcast (a
+	// `broadcast_unconfirmed` row, or a `processing` row that outlived its worker)
+	// is settled from the chain before new work is claimed. Rows are never
+	// re-sent; the persisted signature or nonce is the only authority.
+	const { reconcileBroadcastedWithdrawals, recordSend, markCompleted, settleSendFailure } = await import(
+		'../_lib/withdrawal-payout.js'
+	);
+	const { checkSendStatus } = await import('../_lib/withdrawal-chain-status.js');
+	const reconcile = await reconcileBroadcastedWithdrawals({ checkSendStatus, insertNotification, sendOpsAlert });
+
+	// A row claimed before this pipeline recorded signatures has no way to prove
+	// whether its transfer settled, so it is still paged for a manual check.
 	const stranded = await sql`
 		SELECT id, amount, currency_mint, chain, updated_at
 		FROM agent_withdrawals
-		WHERE status = 'processing' AND updated_at < now() - interval '15 minutes'
+		WHERE status = 'processing' AND send_attempted_at IS NULL
+		  AND updated_at < now() - interval '15 minutes'
 		ORDER BY updated_at ASC LIMIT 50
 	`;
 	if (stranded.length) {
 		await sendOpsAlert(
 			`${stranded.length} withdrawal(s) stranded in 'processing' >15m`,
 			stranded
-				.map((s) => `• ${s.id} — ${s.amount} ${s.currency_mint} (${s.chain})`)
+				.map((s) => `• ${s.id}: ${s.amount} ${s.currency_mint} (${s.chain})`)
 				.join('\n') +
-				'\nManual reconciliation required: verify whether the on-chain transfer ' +
-				'settled BEFORE completing or re-queuing — a blind retry can double-pay.',
+				'\nManual reconciliation required: these rows predate signature recording. ' +
+				'Verify whether the on-chain transfer settled BEFORE completing or re-queuing; a blind retry can double-pay.',
 			{ signature: 'withdrawals-stranded' },
 		);
 	}
@@ -4365,7 +4437,7 @@ async function handleProcessWithdrawals(req, res) {
 		LIMIT ${WITHDRAWALS_BATCH}
 	`;
 
-	const report = { processed: 0, completed: 0, failed: 0, skipped: 0, sendFailed: 0, errors: [] };
+	const report = { processed: 0, completed: 0, failed: 0, unconfirmed: 0, skipped: 0, sendFailed: 0, errors: [], reconcile };
 
 	for (const w of pending) {
 		report.processed++;
@@ -4394,7 +4466,7 @@ async function handleProcessWithdrawals(req, res) {
 		// Mark as processing atomically — only if still pending
 		const [claimed] = await sql`
 			UPDATE agent_withdrawals
-			SET status = 'processing', updated_at = now()
+			SET status = 'processing', send_attempted_at = now(), updated_at = now()
 			WHERE id = ${w.id} AND status = 'pending'
 			RETURNING id
 		`;
@@ -4404,6 +4476,13 @@ async function handleProcessWithdrawals(req, res) {
 		}
 
 		const EVM_USDC_BASE_LC = EVM_USDC[8453].toLowerCase();
+		// Flips once a signature has been durably recorded: from then on the
+		// transfer may be on the network and a failure can no longer be called safe.
+		let signed = false;
+		const onSigned = async (tx) => {
+			await recordSend(w.id, tx);
+			signed = true;
+		};
 		try {
 			let sig;
 			// Pay only the chain's USDC against a USDC balance. The EVM leg always
@@ -4423,9 +4502,10 @@ async function handleProcessWithdrawals(req, res) {
 					toAddress: w.to_address,
 					amount: BigInt(w.amount),
 					mint: w.currency_mint,
+					onSigned,
 				});
 			} else {
-				// EVM dispatch — resolve the chain name/id to a viem chain ID,
+				// EVM dispatch: resolve the chain name/id to a viem chain ID,
 				// then send the real USDC transfer.
 				const chainId = resolveEvmChainId(w.chain);
 				if (!chainId) {
@@ -4435,15 +4515,12 @@ async function handleProcessWithdrawals(req, res) {
 					chainId,
 					recipient: w.to_address,
 					amount: BigInt(w.amount),
+					onSigned,
 				});
 				sig = result.hash;
 			}
 
-			await sql`
-				UPDATE agent_withdrawals
-				SET status = 'completed', tx_signature = ${sig}, updated_at = now()
-				WHERE id = ${w.id}
-			`;
+			await markCompleted(w.id, sig);
 
 			// Deduct from referral_earnings_total (best-effort; earnings are tracked via revenue_events)
 			await sql`
@@ -4463,22 +4540,23 @@ async function handleProcessWithdrawals(req, res) {
 			report.completed++;
 		} catch (err) {
 			const msg = err.message || String(err);
-			// The row was already claimed to 'processing'. A failure HERE may mean the
-			// on-chain send threw before broadcast (safe to fail) OR after (funds may
-			// have moved). Mark failed so the user is told, but record it as a send
-			// failure so the batch alert fires and an operator reconciles.
-			await sql`
-				UPDATE agent_withdrawals
-				SET status = 'failed', error_message = ${msg}, updated_at = now()
-				WHERE id = ${w.id}
-			`;
-			await insertNotification(w.user_id, 'withdrawal_failed', {
-				withdrawal_id: w.id,
-				amount: w.amount,
-				currency_mint: w.currency_mint,
-				reason: msg,
-			}).catch((e) => console.error('[process-withdrawals] notify failed failed:', e.message));
-			report.failed++;
+			// Classified by how far the send got. Nothing signed means nothing can have
+			// left the treasury: `failed` releases the balance. A recorded signature
+			// means the transfer may be on the network: the row becomes
+			// `broadcast_unconfirmed`, the balance stays reserved, and the reconciler
+			// settles it from the chain on a later tick. It is never re-sent.
+			const outcome = await settleSendFailure(w.id, err, signed);
+			if (outcome === 'failed') {
+				await insertNotification(w.user_id, 'withdrawal_failed', {
+					withdrawal_id: w.id,
+					amount: w.amount,
+					currency_mint: w.currency_mint,
+					reason: msg,
+				}).catch((e) => console.error('[process-withdrawals] notify failed failed:', e.message));
+				report.failed++;
+			} else {
+				report.unconfirmed++;
+			}
 			report.sendFailed++;
 			report.errors.push({ id: w.id, error: msg });
 		}

@@ -157,6 +157,16 @@ describe('review, edit and rollback', () => {
 		await expect(sd.proposeSkillEdit({ agentId, userId, skillId, content: `${skill.content} more`, note: 'x' })).rejects.toMatchObject({ code: 'learning_disabled' });
 	});
 
+	it('lets the owner edit a skill by hand with learning off, versioning it as owner', async () => {
+		const { skillId, agentId, userId, skill } = await ids();
+		await updateMemorySettings(userId, { enabled: false });
+		const out = await sd.ownerEditSkill({ agentId, userId, skillId, content: `${skill.content}\n\nOwner note.`, note: 'tweak' });
+		expect(out.skill.version).toBe('1.0.1');
+		expect(out.version).toMatchObject({ version_no: 2, author: 'owner' });
+		await expect(sd.ownerEditSkill({ agentId, userId, skillId, content: out.skill.content })).rejects.toMatchObject({ code: 'no_change' });
+		await expect(sd.ownerEditSkill({ agentId, userId: b.userId, skillId, content: 'x' })).rejects.toMatchObject({ status: 403 });
+	});
+
 	it("does not let another account review, edit or roll back the skill", async () => {
 		const { skillId, agentId } = await ids();
 		await expect(sd.reviewLearnedSkill({ agentId, userId: b.userId, skillId, enable: true })).rejects.toMatchObject({ status: 403 });

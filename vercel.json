@@ -721,6 +721,19 @@
 			"dest": "/api/wk?name=oauth-protected-resource&path=$1"
 		},
 		{
+			"src": "/\\.well-known/oauth-protected-resource(/mcp)",
+			"dest": "/api/wk?name=oauth-protected-resource&path=$1"
+		},
+		{
+			"src": "/mcp/?",
+			"has": [{ "type": "header", "key": "accept", "value": "(?i).*text/html.*" }],
+			"dest": "/mcp-tools.html"
+		},
+		{
+			"src": "/mcp/?",
+			"dest": "/api/mcp/all"
+		},
+		{
 			"src": "/a/sol/([^/]+)/\\.well-known/agent-card\\.json",
 			"dest": "/api/agents/solana/[action]?action=card&asset=$1"
 		},
@@ -847,6 +860,10 @@
 		{
 			"src": "/api/v1/agents/([^/]+)/mail(/.*)?",
 			"dest": "/api/v1/agent-mail?id=$1"
+		},
+		{
+			"src": "/api/v1/agents/([^/]+)/mcp(/.*)?",
+			"dest": "/api/v1/agent-mcp?id=$1"
 		},
 		{
 			"src": "/api/v1/agents/?",
@@ -3651,8 +3668,20 @@
 			"dest": "/api/okx/3d/[service]?service=$1"
 		},
 		{
-			"src": "/api/cron/(audit-log-cleanup|cleanup-csrf-tokens|club-payouts|confirm-pending-purchases|cosmetic-splits-sweep|erc8004-crawl|expire-pending-purchases|fetch-x-metrics|index-delegations|irl-drops-refund|monetization-payouts|process-subscriptions|process-withdrawals|pump-agent-stats|pumpfun-graduations-sync|pumpfun-monitor|pumpfun-signals|run-buyback|run-coin-cycle|run-coin-payouts|run-dca|run-distribute-payments|run-subscriptions|run-three-buyback|run-x-scheduled-posts|run-x-triggers|settle-royalties|siwx-gc|solana-agents-crawl|solana-attest-event-cleanup|solana-attestations-crawl|treasury-autopilot|unstoppable-tick|x-mentions)",
+			"src": "/api/cron/(audit-log-cleanup|x402-audit-drain|cleanup-csrf-tokens|club-payouts|confirm-pending-purchases|cosmetic-splits-sweep|erc8004-crawl|expire-pending-purchases|fetch-x-metrics|index-delegations|irl-drops-refund|monetization-payouts|process-subscriptions|process-withdrawals|pump-agent-stats|pumpfun-graduations-sync|pumpfun-monitor|pumpfun-signals|run-buyback|run-coin-cycle|run-coin-payouts|run-dca|run-distribute-payments|run-subscriptions|run-three-buyback|run-x-scheduled-posts|run-x-triggers|settle-royalties|siwx-gc|solana-agents-crawl|solana-attest-event-cleanup|solana-attestations-crawl|treasury-autopilot|unstoppable-tick|x-mentions)",
 			"dest": "/api/cron/[name]?name=$1"
+		},
+		{
+			"src": "/api/agents/([^/]+)/wallet/export/(challenge|grant|rotate)",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/signer",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/signer/session",
+			"dest": "/api/agents/[id]"
 		},
 		{
 			"src": "/api/agents/([^/]+)/wallet/([^/]+)",
@@ -3671,18 +3700,6 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
-		{
-			"src": "/api/agents/([^/]+)/wallet/export/(challenge|grant|rotate)",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/signer",
-			"dest": "/api/agents/[id]"
-		},
-		{
-			"src": "/api/agents/([^/]+)/signer/session",
-			"dest": "/api/agents/[id]"
-		},
 			"src": "/api/agents/([^/]+)/activate",
 			"dest": "/api/agents/[id]"
 		},
@@ -4103,6 +4120,14 @@
 			"dest": "/api/payments/evm/[action]?action=$1"
 		},
 		{
+			"src": "/api/tx/submit",
+			"dest": "/api/tx/submit"
+		},
+		{
+			"src": "/api/tx/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+			"dest": "/api/tx/submit"
+		},
+		{
 			"src": "/api/tx/solana/([^/]+)",
 			"dest": "/api/tx/solana/[action]?action=$1"
 		},
@@ -4119,14 +4144,6 @@
 			"dest": "/api/onboarding/[action]?action=avaturn-session"
 		},
 		{
-		{
-			"src": "/api/tx/submit",
-			"dest": "/api/tx/submit"
-		},
-		{
-			"src": "/api/tx/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
-			"dest": "/api/tx/submit"
-		},
 			"src": "/api/onboarding/link-avatar",
 			"dest": "/api/onboarding/[action]?action=link-avatar"
 		},
@@ -5776,6 +5793,38 @@
 			"dest": "/settings/index.html"
 		},
 		{
+			"src": "/api/memory/settings",
+			"dest": "/api/memory/[action]?action=settings"
+		},
+		{
+			"src": "/api/memory/items",
+			"dest": "/api/memory/[action]?action=items"
+		},
+		{
+			"src": "/api/memory/items/([^/]+)",
+			"dest": "/api/memory/[action]?action=items&id=$1"
+		},
+		{
+			"src": "/api/memory/user-model",
+			"dest": "/api/memory/[action]?action=user-model"
+		},
+		{
+			"src": "/api/memory/user-model/([^/]+)",
+			"dest": "/api/memory/[action]?action=user-model&id=$1"
+		},
+		{
+			"src": "/api/memory/skills",
+			"dest": "/api/memory/[action]?action=skills"
+		},
+		{
+			"src": "/api/memory/skills/([^/]+)",
+			"dest": "/api/memory/[action]?action=skills&id=$1"
+		},
+		{
+			"src": "/api/memory/skills/([^/]+)/(versions|review|rollback)",
+			"dest": "/api/memory/[action]?action=skills&id=$1&sub=$2"
+		},
+		{
 			"src": "/settings/mcp-tools/?",
 			"dest": "/settings/mcp-tools/index.html"
 		},
@@ -7331,6 +7380,10 @@
 			"schedule": "*/15 * * * *"
 		},
 		{
+			"path": "/api/cron/x402-audit-drain",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/relayer-balance-check",
 			"schedule": "0 */6 * * *"
 		},
@@ -7755,6 +7808,10 @@
 			"schedule": "23 * * * *"
 		},
 		{
+			"path": "/api/cron/balance-snapshot",
+			"schedule": "5 * * * *"
+		},
+		{
 			"path": "/api/cron/perps-tick",
 			"schedule": "*/2 * * * *"
 		},
@@ -7780,7 +7837,3 @@
 		}
 	]
 }
-		{
-			"path": "/api/cron/balance-snapshot",
-			"schedule": "5 * * * *"
-		},

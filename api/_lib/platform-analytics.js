@@ -21,6 +21,7 @@
 //     the helper behind /api/agent-economy/volume.
 
 import { sql } from './db.js';
+import { settleDaily } from './x402/self-facilitator-totals.js';
 import { platformEconomyStats } from './agent-economy.js';
 import { MARKET_PAID_KINDS } from './marketplace-kinds.js';
 import { TOKEN_MINT, TOKEN_DECIMALS } from './token/config.js';
@@ -169,15 +170,8 @@ async function llmSource(sinceDay) {
 async function x402Source(sinceDay) {
 	// Grouped by day over the (action, ok, ts) index; the all-time totals are the
 	// sum of the days, so the table is scanned once.
-	const rows = await sql`
-		SELECT
-			to_char((ts AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD') AS day,
-			COUNT(*)::bigint AS settlements,
-			COALESCE(SUM(amount_atomic) FILTER (WHERE mint = ${SOLANA_USDC_MINT}), 0)::text AS usdc_atomic
-		FROM x402_self_facilitator_log
-		WHERE action = 'settle' AND ok = true
-		GROUP BY 1
-	`;
+	// Live log plus the rollup of days already archived and pruned.
+	const rows = await settleDaily(sql, SOLANA_USDC_MINT);
 	const daily = rows.map((r) => ({
 		day: r.day,
 		x402_settlements: Number(r.settlements),

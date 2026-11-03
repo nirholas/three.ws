@@ -21,7 +21,6 @@ vi.mock('../../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'http://localhost:3
 const { default: handler } = await import('../../api/memory/[action].js');
 const memory = await import('../../api/_lib/agent-learning/memory.js');
 const um = await import('../../api/_lib/agent-learning/user-model.js');
-const sd = await import('../../api/_lib/agent-learning/skill-drafts.js');
 
 function mkReq(method, path, body) {
 	return {
@@ -219,6 +218,5 @@ describe('learned skills', () => {
 		const skillId = await seedSkill(a);
 		const out = await call('PATCH', `/api/memory/skills/${skillId}`, { agent_id: a.agentId, content: BODY });
 		expect(out.status).toBe(409);
-		void sd;
 	});
 });

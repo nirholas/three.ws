@@ -81,3 +81,24 @@ describe('data/pages.json static page wiring', () => {
 		expect(dupes).toEqual([]);
 	});
 });
+
+// A route that rewrites to a /<name>.html file nothing builds is a 404 in
+// production for every browser that hits it (/mcp did, for anyone sending
+// Accept: text/html). Every html dest must resolve to a page source.
+describe('vercel.json html rewrites point at a real page source', () => {
+	const htmlDests = (vercelConfig.routes || [])
+		.filter((r) => typeof r.dest === 'string' && /^\/[A-Za-z0-9_-]+\.html$/.test(r.dest))
+		.map((r) => ({ src: r.src, dest: r.dest }));
+
+	it('finds html rewrites to check', () => {
+		expect(htmlDests.length).toBeGreaterThan(100);
+	});
+
+	it('has no rewrite whose html file does not exist', () => {
+		const missing = htmlDests.filter(({ dest }) => {
+			const name = dest.slice(1);
+			return !['pages/', 'public/', ''].some((dir) => existsSync(path.join(ROOT, dir + name)));
+		});
+		expect(missing).toEqual([]);
+	});
+});
