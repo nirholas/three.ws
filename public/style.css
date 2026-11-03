@@ -1055,13 +1055,6 @@ header .site-wordmark .wordmark-logo {
 		padding: var(--space-xs) var(--space-md);
 	}
 
-	footer:not([class*="h-footer"]) {
-		bottom: auto;
-		top: calc(3rem + 0.5em);
-		left: 0.5em;
-		right: auto;
-	}
-
 	.gui-wrap {
 		max-width: 65vw;
 	}
@@ -1118,53 +1111,6 @@ header .site-wordmark .wordmark-logo {
 		height: 36px;
 		line-height: 36px;
 	}
-}
-
-/******************************************************************************
- * Footer
- */
-
-/* Legacy corner credit footer (3D viewer/editor pages). Scoped with
- * :not([class*="h-footer"]) so it never hijacks the canonical site footer,
- * which ships in two class forms — <footer class="h-footer h-footer-horizon">
- * and <footer class="h-footer-horizon"> — and is a full-width block section
- * with its own layout, positioning, and clickable controls. Matching only
- * .h-footer left the bare-.h-footer-horizon pages (avatar, etc.) exposed, so
- * this floating-badge style leaked onto the real footer and overlapped it. */
-footer:not([class*="h-footer"]) {
-	position: absolute;
-	bottom: calc(4rem + env(safe-area-inset-bottom, 0));
-	right: calc(var(--space-md) + env(safe-area-inset-right, 0));
-	display: flex;
-	align-items: center;
-	gap: var(--space-sm);
-	font-family: var(--font-mono);
-	font-size: var(--text-sm);
-	color: #fff;
-	z-index: 2;
-	pointer-events: none;
-}
-
-footer:not([class*="h-footer"]) a {
-	pointer-events: all;
-	color: rgba(255, 255, 255, 0.55);
-	text-decoration: none;
-	transition: color var(--duration-fast) var(--ease-standard);
-	display: inline-flex;
-	align-items: center;
-}
-
-footer:not([class*="h-footer"]) a:hover {
-	color: #fff;
-}
-
-footer:not([class*="h-footer"]) a svg {
-	vertical-align: middle;
-}
-
-footer:not([class*="h-footer"]) .separator {
-	color: rgba(255, 255, 255, 0.2);
-	font-size: 10px;
 }
 
 /******************************************************************************
