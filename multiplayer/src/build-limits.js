@@ -121,3 +121,35 @@ export function normalizePropAssetUrl(url) {
 	// them keeps the persisted doc from carrying signed-URL noise that expires.
 	return `${parsed.origin}${parsed.pathname}`;
 }
+
+/** How long the room waits on storage before letting a placement through. */
+export const PROP_ASSET_PROBE_TIMEOUT_MS = 4000;
+
+/**
+ * Ask storage how big an (already allow-listed) prop asset is. The placing
+ * client enforces its device budget first (src/game/prop-budget.js); this is the
+ * room's own check so a modified client still cannot publish a model larger than
+ * PROP_ASSET_MAX_BYTES to every other player.
+ *
+ * Returns an obj:reject reason, or null when the asset may be placed:
+ *   'asset_size'  storage reports more than PROP_ASSET_MAX_BYTES
+ *   'asset_url'   storage says the object does not exist (404 / 410)
+ *   null          inside the ceiling, or storage could not answer. A storage
+ *                 hiccup must not freeze building for everyone, and the client
+ *                 has already held the model to its budget, so an unanswered
+ *                 probe lets the placement through.
+ */
+export async function probePropAsset(url, { timeoutMs = PROP_ASSET_PROBE_TIMEOUT_MS, fetchImpl = globalThis.fetch } = {}) {
+	if (typeof fetchImpl !== 'function') return null;
+	let res;
+	try {
+		res = await fetchImpl(url, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
+	} catch {
+		return null;
+	}
+	if (res.status === 404 || res.status === 410) return 'asset_url';
+	if (!res.ok) return null;
+	const bytes = Number(res.headers.get('content-length'));
+	if (Number.isFinite(bytes) && bytes > PROP_ASSET_MAX_BYTES) return 'asset_size';
+	return null;
+}

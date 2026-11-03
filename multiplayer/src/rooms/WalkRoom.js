@@ -26,7 +26,7 @@ import {
 import { cleanAvatarUrl } from '../avatar-url.js';
 import {
 	MAX_WORLD_OBJECTS, MAX_OBJECTS_PER_PLAYER, OBJ_SCALE_MIN, OBJ_SCALE_MAX,
-	BUILD_CLEAR_RADIUS_MAX, buildClearRadius, normalizePropAssetUrl,
+	BUILD_CLEAR_RADIUS_MAX, buildClearRadius, normalizePropAssetUrl, probePropAsset,
 } from '../build-limits.js';
 import { blockStore } from '../block-store.js';
 import { worldPersistence } from '../persistence.js';
@@ -146,6 +146,8 @@ const EDITS_PER_SEC_LIMIT = 20;
 // the rate limit is server-only and mirrors the edit limiter so a scripted client
 // can't flood spawns.
 const OBJ_OPS_PER_SEC_LIMIT = 30;     // per-client spawn/update/remove rate
+const ASSET_PROBE_TTL_MS = 5 * 60 * 1000; // how long one storage size answer is reused
+const ASSET_PROBE_CACHE_MAX = 256;        // distinct prop assets remembered per room
 const OBJ_STR_MAX = 48;               // clamp length of id/type/kind strings
 const OBJ_Y_MIN = -5;
 const OBJ_Y_MAX = 240;
@@ -3009,19 +3011,23 @@ export class WalkRoom extends Room {
 		if (!payload || typeof payload !== 'object') return;
 		// Position is mandatory and must be finite, a NaN slips past clamps.
 		if (!Number.isFinite(payload.x) || !Number.isFinite(payload.y) || !Number.isFinite(payload.z)) return;
-		if (this.state.objects.size >= MAX_WORLD_OBJECTS) { client.send('obj:reject', { reason: 'world_full' }); return; }
-
+		// Every refusal echoes the client's own spawn id (when it sent a sane one) so
+		// the placing client can tell WHICH placement failed and roll back what it
+		// armed for it, e.g. drop a forged prop's palette entry instead of leaving a
+		// phantom button that can never be placed.
+		const clientId = (typeof payload.id === 'string' && OBJ_ID_RE.test(payload.id)) ? payload.id : '';
+		const reject = (reason) => client.send('obj:reject', clientId ? { reason, id: clientId } : { reason });
 		const owner = this._ownerKey(client.sessionId);
-		let owned = 0;
-		for (const [, o] of this.state.objects) if (o.ownerId === owner) owned++;
-		if (owned >= MAX_OBJECTS_PER_PLAYER) { client.send('obj:reject', { reason: 'player_full' }); return; }
+		const capReason = () => {
+			if (this.state.objects.size >= MAX_WORLD_OBJECTS) return 'world_full';
+			let owned = 0;
+			for (const [, o] of this.state.objects) if (o.ownerId === owner) owned++;
+			return owned >= MAX_OBJECTS_PER_PLAYER ? 'player_full' : null;
+		};
+		const cap = capReason();
+		if (cap) { reject(cap); return; }
 
 		const obj = new WorldObject();
-		// Accept a client-supplied id only if it's a sane, unused token; otherwise the
-		// server mints a collision-free one. Either way ids stay server-controlled.
-		let id = (typeof payload.id === 'string' && OBJ_ID_RE.test(payload.id)) ? payload.id : '';
-		if (!id || this.state.objects.has(id)) id = `o_${client.sessionId.slice(0, 6)}_${++this._objSeq}`;
-		obj.id = id;
 		obj.type = typeof payload.type === 'string' ? payload.type.slice(0, OBJ_STR_MAX) : '';
 		// Ownership is assigned here; a client can never claim the 'server' sentinel.
 		obj.ownerId = owner;
@@ -3032,7 +3038,7 @@ export class WalkRoom extends Room {
 		// would watch their prop appear as a grey box for reasons no one explained.
 		if (payload.url != null && payload.url !== '') {
 			const url = normalizePropAssetUrl(payload.url);
-			if (!url) { client.send('obj:reject', { reason: 'asset_url' }); return; }
+			if (!url) { reject('asset_url'); return; }
 			obj.url = url;
 		}
 		obj.scale = objClamp(objNum(payload.scale, 1), OBJ_SCALE_MIN, OBJ_SCALE_MAX);
@@ -3042,16 +3048,56 @@ export class WalkRoom extends Room {
 		// pile onto a tile past the density cap so it can't wall an area off. Checked on
 		// the clamped position so a client can't dodge it with an out-of-bounds value.
 		// Transient kinds (ball, fx) and server objects are exempt, only build props.
-		if (this._objectIsPersistent(obj)) {
+		const persistent = this._objectIsPersistent(obj);
+		if (persistent) {
 			const reason = this._propPlacementBlock(obj.x, obj.z);
-			if (reason) { client.send('obj:reject', { reason }); return; }
+			if (reason) { reject(reason); return; }
 		}
 		obj.vx = objNum(payload.vx, 0);
 		obj.vy = objNum(payload.vy, 0);
 		obj.vz = objNum(payload.vz, 0);
-		obj.ts = Date.now();
-		this.state.objects.set(obj.id, obj);
-		if (this._objectIsPersistent(obj)) this._persistObjects();
+
+		const commit = () => {
+			// Accept a client-supplied id only if it's unused; otherwise the server
+			// mints a collision-free one. Either way ids stay server-controlled.
+			obj.id = clientId && !this.state.objects.has(clientId) ? clientId : `o_${client.sessionId.slice(0, 6)}_${++this._objSeq}`;
+			obj.ts = Date.now();
+			this.state.objects.set(obj.id, obj);
+			if (persistent) this._persistObjects();
+		};
+		if (!obj.url) { commit(); return; }
+
+		// A model url is also held to the per-prop byte ceiling by asking storage
+		// (defence in depth behind the client's own budget). The probe is async, so
+		// everything that can change while it runs is checked again afterwards: the
+		// player may have left, the caps may have filled, the tile may be taken.
+		return this._probeAssetCached(obj.url).then((reason) => {
+			if (!this.state.players.has(client.sessionId)) return;
+			if (reason) { reject(reason); return; }
+			const lateCap = capReason();
+			if (lateCap) { reject(lateCap); return; }
+			if (persistent) {
+				const block = this._propPlacementBlock(obj.x, obj.z);
+				if (block) { reject(block); return; }
+			}
+			commit();
+		}).catch((err) => console.warn('[WalkRoom] prop spawn after asset probe failed:', err?.message || err));
+	}
+
+	// Remember each asset's probe answer briefly, so a palette prop placed many
+	// times (or by many players) costs storage one HEAD, not one per placement.
+	_probeAssetCached(url) {
+		this._assetProbeCache ||= new Map();
+		const now = Date.now();
+		const hit = this._assetProbeCache.get(url);
+		if (hit && now - hit.at < ASSET_PROBE_TTL_MS) return hit.answer;
+		const probe = this._assetProbe || probePropAsset;
+		const answer = Promise.resolve(probe(url)).catch(() => null);
+		if (this._assetProbeCache.size >= ASSET_PROBE_CACHE_MAX) {
+			this._assetProbeCache.delete(this._assetProbeCache.keys().next().value);
+		}
+		this._assetProbeCache.set(url, { at: now, answer });
+		return answer;
 	}
 
 	_handleObjUpdate(client, payload) {

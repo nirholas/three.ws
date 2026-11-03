@@ -31,6 +31,9 @@ function makeRoom({ tier = '', creator = '' } = {}) {
 	// _persistObjects reaches the durable store; capture the calls instead.
 	room._persisted = 0;
 	room._persistObjects = () => { room._persisted++; };
+	// The storage size probe has its own suite (walkroom-prop-asset-size); here it
+	// answers "fits" so these stay offline.
+	room._assetProbe = async () => null;
 	// Room.roomId is a private-field getter on the Colyseus base class, which an
 	// Object.create stand-in can't read; the restore path logs with it.
 	Object.defineProperty(room, 'roomId', { value: 'test-room' });
@@ -47,9 +50,9 @@ describe('WalkRoom uploaded prop assets (P3.3)', () => {
 	let room;
 	beforeEach(() => { room = makeRoom(); });
 
-	it('publishes a prop url that is on our own storage', () => {
+	it('publishes a prop url that is on our own storage', async () => {
 		const client = seat(room, 's1');
-		room._handleObjSpawn(client, { kind: 'prop', type: 'u:abc', x: 30, y: 0, z: 40, url: GOOD_URL });
+		await room._handleObjSpawn(client, { kind: 'prop', type: 'u:abc', x: 30, y: 0, z: 40, url: GOOD_URL });
 		const [obj] = [...room.state.objects.values()];
 		expect(obj).toBeDefined();
 		expect(obj.url).toBe(GOOD_URL);
@@ -77,9 +80,9 @@ describe('WalkRoom uploaded prop assets (P3.3)', () => {
 		expect(obj.url).toBe('');
 	});
 
-	it('round-trips the url through snapshot and restore', () => {
+	it('round-trips the url through snapshot and restore', async () => {
 		const client = seat(room, 's1');
-		room._handleObjSpawn(client, { kind: 'prop', type: 'u:abc', x: 35, y: 0, z: 26, url: GOOD_URL });
+		await room._handleObjSpawn(client, { kind: 'prop', type: 'u:abc', x: 35, y: 0, z: 26, url: GOOD_URL });
 		const snapshot = room._snapshotObjects();
 		expect(snapshot[0].url).toBe(GOOD_URL);
 
