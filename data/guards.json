@@ -646,6 +646,22 @@
 			}
 		},
 		{
+			"id": "audit-event-client",
+			"script": "scripts/audit-event-client.mjs",
+			"npm": "audit:event-client",
+			"title": "/play event client audit",
+			"protects": "The /play world a meetup crowd loads on phones: time to a visible world, bytes, heap, frames while walking, duplicate asset downloads, page and console errors, dropped room sockets, 44 px touch targets and failure states.",
+			"why": "Every number in audits 01, 02, 03, 06 and 09 was a one-off measurement that went stale the next time src/game changed. This runs the mobile harness in Chromium and WebKit plus the touch, console and failure-mode audits, judges them against measured production ceilings in scripts/audit-event-client.baseline.json, and exits 1 on a regression, 3 when the box never gave a fair reading (WebKit's CPU WebGL rasteriser starving the page reads as unmeasured, not as a pass or a defect).",
+			"stages": [
+				"manual"
+			],
+			"needs": "browser",
+			"proof": {
+				"kind": "live",
+				"reason": "The thing measured is a real browser loading the real /play bundle for two minutes per engine. Its ceilings describe the production build, so a fixture or a dev server cannot stand in; the verdict rules themselves are unit-tested in tests/audit-event-client-verdict.test.js."
+			}
+		},
+		{
 			"id": "audit-rig-coverage",
 			"script": "scripts/audit-rig-coverage.mjs",
 			"npm": "audit:rig-coverage",
