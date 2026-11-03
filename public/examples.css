@@ -946,3 +946,30 @@ html[data-theme='light'] .exg-btn--primary {
 .exg-lane .exg-grid {
 	margin-top: 24px;
 }
+
+/* Touch screens: every control on the gallery and the per-example pages
+   reaches the 44px tap floor. Measured on a 393px phone before this block:
+   .exg-chip 28 tall, .exg-lane-link and .exg-btn 37, .exi-search 40,
+   .exi-chip 32, .exi-copy 52x25, .exi-btn 30. */
+@media (hover: none) and (pointer: coarse) {
+	.exg-chip,
+	.exg-lane-link,
+	.exg-btn,
+	.exi-chip,
+	.exi-btn {
+		box-sizing: border-box;
+		min-height: 44px;
+		justify-content: center;
+	}
+
+	.exi-search {
+		box-sizing: border-box;
+		min-height: 44px;
+	}
+
+	.exi-copy {
+		box-sizing: border-box;
+		min-height: 44px;
+		min-width: 44px;
+	}
+}
