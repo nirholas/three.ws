@@ -13,7 +13,12 @@
 const BASE = '/api/community';
 
 async function json(path, init) {
-	const res = await fetch(`${BASE}${path}`, { credentials: 'include', ...init });
+	let res;
+	try {
+		res = await fetch(`${BASE}${path}`, { credentials: 'include', ...init });
+	} catch {
+		throw Object.assign(new Error('Could not reach three.ws. Check your connection and try again.'), { code: 'network' });
+	}
 	let body = null;
 	try {
 		body = await res.json();
@@ -21,7 +26,10 @@ async function json(path, init) {
 		/* fall through */
 	}
 	if (!res.ok || body?.error) {
-		const err = new Error(body?.error_description || body?.error || `HTTP ${res.status}`);
+		const fallback = res.status >= 500
+			? `three.ws is having trouble right now (HTTP ${res.status}). Try again in a moment.`
+			: `The request was refused (HTTP ${res.status}). Reload the page and try again.`;
+		const err = new Error(body?.error_description || body?.error || fallback);
 		err.status = res.status;
 		err.code = body?.error;
 		throw err;
@@ -49,7 +57,7 @@ export async function signInWithX() {
 		'cc-x-oauth',
 		`width=${w},height=${h},left=${left},top=${top}`,
 	);
-	if (!popup) throw new Error('Popup blocked — allow popups to sign in.');
+	if (!popup) throw new Error('Popup blocked. Allow popups for this site to sign in.');
 
 	return new Promise((resolve, reject) => {
 		let settled = false;
@@ -87,7 +95,7 @@ export async function signInWithX() {
 async function connectSolana({ forceReconnect = false } = {}) {
 	const provider = window.phantom?.solana || window.solana;
 	if (!provider?.connect) {
-		throw new Error('No Solana wallet found — install Phantom to post.');
+		throw new Error('No Solana wallet found. Install Phantom to post.');
 	}
 	if (forceReconnect) {
 		try { await provider.disconnect?.(); } catch { /* nothing connected — fine */ }
