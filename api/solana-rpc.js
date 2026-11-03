@@ -142,6 +142,14 @@ export default wrap(async function handler(req, res) {
 		return error(res, status, reason, msg);
 	}
 
+	// The first token was charged above; a batch fans out into one upstream call
+	// per entry, so charge the rest individually (api/evm-rpc.js does the same).
+	const entryCount = Array.isArray(body) ? body.length : 1;
+	for (let i = 1; i < entryCount; i++) {
+		const extra = await limits.solanaRpcIp(ip);
+		if (!extra.success) return rateLimited(res, extra, 'too many RPC requests');
+	}
+
 	let upstream;
 	try {
 		const rotateFetch = upstreamFetch(network);
