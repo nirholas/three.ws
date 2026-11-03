@@ -23,6 +23,7 @@ import { env } from './env.js';
 // bearer (tests/mcp-resources.test.js fails when they drift).
 export const OAUTH_MCP_PATHS = Object.freeze([
 	'/api/mcp',
+	'/mcp',
 	'/api/mcp-3d',
 	'/api/mcp-agent',
 	'/api/mcp-bazaar',
@@ -31,6 +32,11 @@ export const OAUTH_MCP_PATHS = Object.freeze([
 ]);
 
 const PLATFORM_PATH = '/api/mcp';
+
+// The unified server is one resource, https://three.ws/mcp. Its route target
+// (api/mcp/all.js) answers to the same resource, so a request that reaches it by
+// either path is for the same audience.
+const PATH_ALIASES = Object.freeze({ '/api/mcp/all': '/mcp' });
 const PRM_ROOT = '/.well-known/oauth-protected-resource';
 
 function trimPath(p) {
@@ -53,6 +59,7 @@ export function hostedMcpPath(pathOrUrl) {
 		path = u.pathname;
 	}
 	path = trimPath(path);
+	path = PATH_ALIASES[path] || path;
 	return OAUTH_MCP_PATHS.includes(path) ? path : null;
 }
 

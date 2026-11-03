@@ -22,11 +22,12 @@
 import { hasScope } from '../_lib/auth.js';
 import { env } from '../_lib/env.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { x402AmountForTool, priceFor as mainPriceFor, resolveBillingMint } from '../_lib/pump-pricing.js';
+import { x402AmountForTool, priceFor as mainPriceFor, resolveBillingMint, findActiveSubscription } from '../_lib/pump-pricing.js';
+import { beginMeter, finishMeter, refundMeter } from '../_lib/mcp-credits.js';
 import { declareMcpDiscovery } from '../_lib/x402/bazaar-helpers.js';
 import { GETTING_STARTED_TOOL } from '../_lib/mcp-getting-started.js';
 import { TOOL_CATALOG as MAIN_CATALOG, TOOLS as MAIN_TOOLS } from '../_mcp/catalog.js';
-import { isPublicTool as isMainPublic } from '../_mcp/dispatch.js';
+import { isPublicTool as isMainPublic, toolScopeSatisfied } from '../_mcp/dispatch.js';
 import { TOOL_CATALOG as STUDIO3D_CATALOG, TOOLS as STUDIO3D_TOOLS } from '../_mcp3d/catalog.js';
 import { studioX402Amount } from '../_mcp3d/pricing.js';
 import { TOOL_CATALOG as AGENT_CATALOG, TOOLS as AGENT_TOOLS } from '../_mcpagent/catalog.js';
@@ -67,14 +68,72 @@ function runner(entry, name) {
 	};
 }
 
-function fromCatalog(catalog, tools, { skip = () => false } = {}) {
+/**
+ * The main server's call path, minus the policy gate the unified dispatcher
+ * applies itself: the x402 scope exception for a paid call, the
+ * pump-agent-payments subscription demand, and credit metering with a refund
+ * on failure (api/_mcp/dispatch.js onToolCall).
+ */
+function mainRunner(entry, name) {
+	return async (args, auth, req) => {
+		if (!toolScopeSatisfied(entry, auth, name)) {
+			throw rpcError(-32002, `insufficient scope, requires ${entry.scope}`, { scope: entry.scope });
+		}
+		if (entry.validate && !entry.validate(args)) {
+			const first = entry.validate.errors?.[0];
+			const detail = first ? `${first.instancePath || '(root)'} ${first.message || 'invalid'}` : 'invalid arguments';
+			throw rpcError(-32602, `invalid params for ${name}: ${detail}`);
+		}
+		const price = mainPriceFor(name);
+		if (price && auth.source === 'x402' && !auth.x402Paid) {
+			const billingMint = resolveBillingMint();
+			const payerWallet = args.payer_wallet || auth.payer || null;
+			const challenge = {
+				scheme: 'pump-agent-payments',
+				tool: name,
+				amount_usdc: price.amount_usdc,
+				recipient_mint: billingMint,
+				prep_endpoint: '/api/pump/accept-payment-prep',
+			};
+			if (billingMint && payerWallet) {
+				const sub = await findActiveSubscription({
+					mint: billingMint,
+					network: process.env.PUMP_DEFAULT_NETWORK || 'mainnet',
+					payerWallet,
+					toolName: name,
+					minAmountAtomics: x402AmountForTool(name) || '0',
+				});
+				if (!sub) {
+					throw rpcError(-32402, 'payment required for this tool', {
+						...challenge,
+						hint: 'POST a confirmed acceptPayment whose end_time > now() and tool_name matches this tool, then retry.',
+					});
+				}
+				auth.subscription = sub;
+			} else if (billingMint) {
+				throw rpcError(-32402, 'payment required for this tool', challenge);
+			}
+		}
+		const meter = await beginMeter({ auth, tool: name, args, rpcError });
+		try {
+			const result = await entry.handler(args, auth, req);
+			if (result?.isError) await refundMeter(meter);
+			return await finishMeter(meter, result, args);
+		} catch (err) {
+			await refundMeter(meter);
+			throw err;
+		}
+	};
+}
+
+function fromCatalog(catalog, tools, { skip = () => false, makeRun = runner } = {}) {
 	return catalog
 		.filter((def) => def.name !== GETTING_STARTED_TOOL && !skip(def.name))
 		.map((def) => ({
 			def,
 			scope: tools[def.name]?.scope || null,
 			impl: tools[def.name]?.handler || null,
-			run: runner(tools[def.name], def.name),
+			run: makeRun(tools[def.name], def.name),
 		}));
 }
 
@@ -116,7 +175,7 @@ export const SOURCES = [
 		title: 'three.ws',
 		endpoint: '/api/mcp',
 		tools: () =>
-			fromCatalog(MAIN_CATALOG, MAIN_TOOLS, { skip: (n) => OWN_TOOLS.has(n) }).map((t) => ({ ...t, def: decorateMain(t.def) })),
+			fromCatalog(MAIN_CATALOG, MAIN_TOOLS, { skip: (n) => OWN_TOOLS.has(n), makeRun: mainRunner }).map((t) => ({ ...t, def: decorateMain(t.def) })),
 		isPublic: (name) => isMainPublic(name),
 		x402Amount: (name) => x402AmountForTool(name),
 	},
@@ -136,7 +195,7 @@ export const SOURCES = [
 		endpoint: '/api/mcp-studio',
 		tools: () => {
 			const handlers = studioToolsFor('full');
-			return studioCatalogFor('full').map((def) => ({
+			return studioCatalogFor('full').filter((def) => def.name !== GETTING_STARTED_TOOL && !OWN_TOOLS.has(def.name)).map((def) => ({
 				def,
 				scope: null,
 				impl: handlers[def.name]?.handler || null,

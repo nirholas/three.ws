@@ -279,9 +279,9 @@ export async function handleSse(
 // A DELETE also releases the caller's resource subscriptions on `resourceServer`
 // (keyed by session id when sent, otherwise by credential), so a client that
 // tears down cleanly stops being polled for.
-export async function handleTerminate(req, res, { resourceServer = null } = {}) {
+export async function handleTerminate(req, res, { resourceServer = null, resourcePath = null } = {}) {
 	if (resourceServer) {
-		const auth = await authenticateBearer(extractBearer(req), { audience: acceptedAudiences(mcpResourceFor(`/api/${resourceServer}`)) });
+		const auth = await authenticateBearer(extractBearer(req), { audience: acceptedAudiences(mcpResourceFor(resourcePath || `/api/${resourceServer}`)) });
 		if (auth) {
 			await dropSubscriptions(resourceServer, auth, req).catch((err) =>
 				console.warn('[mcp] subscription cleanup failed', resourceServer, err?.message),

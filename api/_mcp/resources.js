@@ -1021,7 +1021,13 @@ const SERVER_RESOURCES = {
 	'mcp-agent': ['me', 'agents', 'agent', 'wallet', 'usage', 'runs', 'run', 'orders', 'dca', 'intents', 'earnings', 'wallets', 'launches', 'marketplace', 'x402-services'],
 	'mcp-3d': ['me', 'agents', 'agent', 'asset', 'models'],
 	'mcp-bazaar': ['me', 'x402-services', 'marketplace'],
+	// The unified endpoint (api/mcp/all.js) serves every resource the hosted
+	// servers do. It is not in RESOURCE_SERVERS because it has no catalog of its
+	// own: its read_resource tool is `utility_read_resource`.
+	'mcp-all': ['me', 'agents', 'agent', 'wallet', 'usage', 'chat', 'runs', 'run', 'orders', 'dca', 'intents', 'earnings', 'marketplace', 'models', 'wallets', 'launches', 'x402-services', 'asset'],
 };
+
+const READ_RESOURCE_TOOL = { 'mcp-all': 'utility_read_resource' };
 
 /** The resource definitions a server exposes. */
 export function resourcesFor(server) {
@@ -1035,7 +1041,7 @@ export function describeFor(def, server) {
 	const example = def.uri || def.uriTemplate;
 	const dedicated = def.tools?.[server];
 	const also = dedicated ? ` The ${dedicated} tool returns a summary of the same data.` : '';
-	return `${def.description} Tool equivalent on this server: read_resource with uri "${example}".${also}`;
+	return `${def.description} Tool equivalent on this server: ${READ_RESOURCE_TOOL[server] || 'read_resource'} with uri "${example}".${also}`;
 }
 
 // ── URI matching ──────────────────────────────────────────────────────────────
