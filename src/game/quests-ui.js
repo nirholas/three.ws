@@ -129,9 +129,27 @@ class QuestsPanel extends EconPanel {
 		// than waiting out the poll, so the panel reacts to the player's own run.
 		this.track(net.on('eventScore', () => this.net.requestEventBoard()));
 
-		net.requestQuests();
+		// A request sent while the room socket is down is dropped, not queued:
+		// show that, and ask again the moment the world is back.
+		this.track(net.on('status', (st) => {
+			const status = typeof st === 'string' ? st : st?.status;
+			if (status !== 'online') return;
+			this._offline = false;
+			if (!this._loaded) this._offline = !net.requestQuests();
+			if (!this.eventBoard || !this.eventBoard.ok) net.requestEventBoard();
+			this._render();
+		}));
+		this._offline = !net.requestQuests();
 		net.requestEventBoard();
 		this._render();
+	}
+
+	// Send an Accept/Abandon intent; a dropped send says so instead of leaving
+	// the pending label up forever.
+	_intent(sent, pendingText) {
+		if (sent) { this.setStatus(pendingText); return true; }
+		this.setStatus(t('play.jobs_offline_action', 'Not connected to the world. Reconnecting, try again in a moment.'), 'err');
+		return false;
 	}
 
 	close() {
@@ -210,7 +228,9 @@ class QuestsPanel extends EconPanel {
 
 	_renderBoard() {
 		if (!this._loaded) {
-			this.body.appendChild(el('div', { class: 'ec-empty ec-loading', text: 'Loading the jobs board…' }));
+			this.body.appendChild(this._offline
+				? el('div', { class: 'ec-empty', text: t('play.jobs_offline', 'Reconnecting to the world… the board loads as soon as you are back.') })
+				: el('div', { class: 'ec-empty ec-loading', text: 'Loading the jobs board…' }));
 			return;
 		}
 		if (!this.board.offers.length) {
@@ -233,7 +253,7 @@ class QuestsPanel extends EconPanel {
 				el('button', {
 					class: 'ec-row-btn', type: 'button', text: 'Accept',
 					'aria-label': `Accept ${offer.title}`,
-					onclick: () => { this.setStatus('Accepting…'); this.net.questAccept(offer.id); },
+					onclick: () => this._intent(this.net.questAccept(offer.id), 'Accepting…'),
 				}),
 			]);
 			this.body.appendChild(row);
@@ -242,7 +262,9 @@ class QuestsPanel extends EconPanel {
 
 	_renderActive() {
 		if (!this._loaded) {
-			this.body.appendChild(el('div', { class: 'ec-empty ec-loading', text: 'Loading your jobs…' }));
+			this.body.appendChild(this._offline
+				? el('div', { class: 'ec-empty', text: t('play.jobs_offline', 'Reconnecting to the world… the board loads as soon as you are back.') })
+				: el('div', { class: 'ec-empty ec-loading', text: 'Loading your jobs…' }));
 			return;
 		}
 		if (!this.board.active.length) {
@@ -276,9 +298,7 @@ class QuestsPanel extends EconPanel {
 					class: 'ec-row-btn ec-secondary', type: 'button', text: 'Abandon',
 					'aria-label': `Abandon ${run.title}`,
 					onclick: () => {
-						this._abandoning = { id: run.id, title: run.title };
-						this.setStatus('Abandoning…');
-						this.net.questAbandon(run.id);
+						if (this._intent(this.net.questAbandon(run.id), 'Abandoning…')) this._abandoning = { id: run.id, title: run.title };
 					},
 				}),
 			]);

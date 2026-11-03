@@ -19273,7 +19273,9 @@
 		"my_cosmetics": "Meine Kosmetik",
 		"hotbar": "Schnellleiste",
 		"chat_system": "System",
-		"chat_not_sent": "Nicht gesendet: Verbindung zur Welt wird wiederhergestellt. Deine Nachricht steht noch im Feld, drücke Enter zum erneuten Senden."
+		"chat_not_sent": "Nicht gesendet: Verbindung zur Welt wird wiederhergestellt. Deine Nachricht steht noch im Feld, drücke Enter zum erneuten Senden.",
+		"jobs_offline_action": "Keine Verbindung zur Welt. Verbindung wird wiederhergestellt, versuche es gleich noch einmal.",
+		"jobs_offline": "Verbindung zur Welt wird wiederhergestellt… das Brett lädt, sobald du zurück bist."
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

@@ -19273,7 +19273,9 @@
 		"my_cosmetics": "Cosmeticele mele",
 		"hotbar": "Bară rapidă",
 		"chat_system": "Sistem",
-		"chat_not_sent": "Netrimis: ne reconectăm la lume. Mesajul tău este încă în casetă, apasă Enter pentru a reîncerca."
+		"chat_not_sent": "Netrimis: ne reconectăm la lume. Mesajul tău este încă în casetă, apasă Enter pentru a reîncerca.",
+		"jobs_offline_action": "Nu ești conectat la lume. Ne reconectăm, încearcă din nou într-o clipă.",
+		"jobs_offline": "Ne reconectăm la lume… panoul se încarcă imediat ce revii."
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",
