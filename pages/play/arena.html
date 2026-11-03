@@ -248,7 +248,9 @@
 			background: var(--down); vertical-align: middle; animation: pulse 1.8s infinite; }
 
 		/* big-win banner */
-		.banner { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 24px); z-index: 7;
+		/* The page opts into viewport-fit=cover, so fixed bottom UI clears the
+		   home indicator itself. */
+		.banner { position: fixed; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 24px); z-index: 7;
 			padding: 12px 20px; border-radius: 999px; background: linear-gradient(135deg, rgba(52,211,153,0.16), rgba(110,231,255,0.14));
 			border: 1px solid color-mix(in srgb, var(--up) 45%, var(--line)); backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
 			box-shadow: var(--shadow); font-size: 14px; opacity: 0; pointer-events: none; max-width: calc(100vw - 36px);
@@ -285,7 +287,7 @@
 		.drawer-x { position: absolute; top: 14px; right: 14px; z-index: 2; width: 32px; height: 32px; border-radius: 9px;
 			border: 1px solid var(--line); background: rgba(255,255,255,0.04); display: grid; place-items: center; color: var(--muted); }
 		.drawer-x:hover { color: var(--ink); border-color: var(--cyan); }
-		.drawer-body { overflow-y: auto; padding: 20px 18px 24px; }
+		.drawer-body { overflow-y: auto; padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 0px)); }
 		.dw-skel { height: 56px; border-radius: 12px; margin-bottom: 12px; background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 37%, rgba(255,255,255,0.03) 63%); background-size: 400% 100%; animation: sh 1.3s infinite; }
 		@keyframes sh { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 		.dw-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 30px 10px; }
