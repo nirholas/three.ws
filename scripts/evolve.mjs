@@ -322,7 +322,7 @@ If a line genuinely needs an owner action, finish everything else, add the owner
 function scoutPrompt(lens, number) {
 	return `Scout lane: keep the work queue in prompts/finish/ full of the highest-value work available, so evolve always has something worth doing.
 
-1. Read prompts/README.md (the work-order standard), prompts/RUN-ORDER.md, ISSUES.md, STRUCTURE.md, and every file name in prompts/finish/ so you never duplicate an open order.
+1. Read prompts/README.md (the work-order standard), prompts/RUN-ORDER.md, docs/ops/ISSUES.md, STRUCTURE.md, and every file name in prompts/finish/ so you never duplicate an open order.
 2. Measure, do not trust documents: \`curl -s https://three.ws/api/version\`, \`curl -s https://three.ws/api/healthz\`, \`git log --oneline -40\`, production error logs from the last 24h (the gcloud logging command in CLAUDE.md), \`npm run test:core\`, \`npm run audit:docs\`, and \`npm run audit:web\` (the unauthenticated live-page sweep). Run what is useful; a failing check is a finding, not a blocker.
 3. Read prompts/masters/${lens} and use its discipline as this run's lens for spotting what to build or fix.
 4. Rank everything you found with the RUN-ORDER rule: a live production defect outranks an unshipped fix, an unshipped fix outranks a new feature, and work that unblocks many orders outranks work that unblocks one. Prefer things that make three.ws better for its users, and keep Solana first.

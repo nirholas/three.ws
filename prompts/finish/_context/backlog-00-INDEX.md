@@ -4,7 +4,7 @@ Every file here is a **self-contained work order**. Paste one into a fresh Claud
 Code chat in this repo and run it to 100% without further input. Read this index
 first; every work order assumes it.
 
-The pack exists because the open items were scattered across [../../ISSUES.md](../../ISSUES.md),
+The pack exists because the open items were scattered across [docs/ops/ISSUES.md](../../../docs/ops/ISSUES.md),
 retired campaign progress logs, and agent memory. A tracker line tells you a thing
 is broken. A work order tells you how to finish it.
 

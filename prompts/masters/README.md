@@ -23,7 +23,7 @@ consume it and skip re-deriving what the previous stage already established.
 
 If you supply neither a TARGET nor a HANDOFF, the master must not stall: `09-the-frontier.md`
 is the generator stage and picks its own target; every other master picks the highest-leverage
-target it can defend from the repo's own signals (ISSUES.md, `prompts/backlog/`, audit output)
+target it can defend from the repo's own signals (docs/ops/ISSUES.md, `prompts/backlog/`, audit output)
 and states the choice in its report.
 
 ## The relay: prompts that compose
@@ -95,7 +95,7 @@ inherit CLAUDE.md in full, and these rules bite most often:
   re-check `git status` and `git diff --staged` immediately before each commit.
 - Pushes, production deploys, spends, and on-chain writes are owner-gated. Commits are not.
 - Nothing referencing a crypto project other than $THREE gets committed without owner approval.
-- Solana first. Robinhood means crypto. `STRUCTURE.md` before exploring, `ISSUES.md` for
+- Solana first. Robinhood means crypto. `STRUCTURE.md` before exploring, `docs/ops/ISSUES.md` for
   known debt, `docs/ops/gcp-production.md` for production facts.
 
 ## Quality bar (the sentence every master enforces)

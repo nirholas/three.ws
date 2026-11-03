@@ -129,7 +129,7 @@ closed 2026-07-28; full history in git):
    never happened. The deploy scripts are dry-run verified and unchanged
    (`forge script script/DeployGreenfieldVault.s.sol` /
    `script/DeployWorldMoves.s.sol --broadcast`, both documented in
-   [contracts/DEPLOYMENTS.md](contracts/DEPLOYMENTS.md)). Action: fund a
+   [contracts/DEPLOYMENTS.md](../../contracts/DEPLOYMENTS.md)). Action: fund a
    throwaway EOA at `https://www.bnbchain.org/en/testnet-faucet`, set
    `BNB_TESTNET_DEPLOYER_KEY` (and `GREENFIELD_VAULT_OPERATOR_KEY`, which falls
    back to the same key), re-run the two scripts, then set

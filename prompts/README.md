@@ -91,7 +91,7 @@ Fully completed campaigns leave the queue once every order is verified shipped (
 x402-overhaul were retired 2026-07-28; agent-briefs, whose world-online program shipped through
 Phase 3, and user-value, all seven of whose orders shipped, were retired 2026-07-30); their orders,
 progress logs, and evidence remain readable in git history. Open items they still carried were
-re-homed into [../ISSUES.md](../ISSUES.md) and then into the `backlog-` orders.
+re-homed into [docs/ops/ISSUES.md](../docs/ops/ISSUES.md) and then into the `backlog-` orders.
 
 As of 2026-10-25, `event-`, `fix-queue-`, `gcp-credits-`, `home-`, `materialize-`, `openai-pr-`,
 `production-100-`, `quality-bar-`, `store-submissions-` and `swarm-100-` carry zero files under

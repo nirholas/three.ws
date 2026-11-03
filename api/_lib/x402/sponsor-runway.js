@@ -23,7 +23,7 @@
 // 1. BURN IS MEASURED, NEVER REMEMBERED. It comes from `fee_lamports` over
 //    successful settles in `x402_self_facilitator_log` across a stated window.
 //    The folklore figure carried in old triage notes ("1 to 2 SOL/day") is off by
-//    roughly 10x against the measured 0.06 to 0.09 SOL/day (ISSUES.md item 6), and
+//    roughly 10x against the measured 0.06 to 0.09 SOL/day (docs/ops/ISSUES.md item 6), and
 //    a funding ask sized from it would be wrong by an order of magnitude. Every
 //    consumer therefore carries the window alongside the number: a rate without
 //    its window is a rumour.

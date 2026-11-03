@@ -30,7 +30,7 @@ questions the next stage has to answer for itself.
 cat STRUCTURE.md | grep -i -A2 "<words from the target>"   # does a surface already own this?
 ls docs/ specs/ | grep -i "<words from the target>"        # prior art in docs and contracts
 grep -rn "<key nouns>" api/_lib/ --include=*.js -l | head  # existing libraries to build on
-cat ISSUES.md | grep -i -B1 -A3 "<words from the target>"  # known debt in this area
+cat docs/ops/ISSUES.md | grep -i -B1 -A3 "<words from the target>"  # known debt in this area
 npm run db:status                                          # migration baseline before designing schema
 ```
 

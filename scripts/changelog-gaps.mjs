@@ -80,7 +80,7 @@ const CHORE_KEYWORD =
 // new by construction. Left out, a bare `npm run build:pages` commit reads as
 // unlogged user-visible work and pads the GAPS count with pure churn.
 const INTERNAL_ONLY_PATH =
-	/^(tests?\/|\.github\/|scripts\/|\.husky\/|\.claude\/|\.agents\/|prompts\/|data\/_generated\/|CHANGELOG\.md$|CLAUDE\.md$|ISSUES\.md$|data\/changelog\.json$|public\/changelog\.(json|xml)$|public\/features\.json$|public\/llms(-full)?\.txt$|public\/sitemap\/|public\/locales\/localized-pages\.json$|.*\.lock$|.*\.test\.[jt]s$|.*\.spec\.[jt]s$)/;
+	/^(tests?\/|\.github\/|scripts\/|\.husky\/|\.claude\/|\.agents\/|prompts\/|data\/_generated\/|CHANGELOG\.md$|CLAUDE\.md$|docs\/ops\/ISSUES\.md$|data\/changelog\.json$|public\/changelog\.(json|xml)$|public\/features\.json$|public\/llms(-full)?\.txt$|public\/sitemap\/|public\/locales\/localized-pages\.json$|.*\.lock$|.*\.test\.[jt]s$|.*\.spec\.[jt]s$)/;
 
 // Plumbing: real shipped work that a $THREE holder still never perceives —
 // container builds, GPU-worker image pins, generated translation bundles,

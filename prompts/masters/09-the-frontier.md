@@ -28,7 +28,7 @@ nobody has shipped and prove it works.
 
 ```bash
 cat STRUCTURE.md | grep "| Live"           # every live capability, the combinatorial deck
-cat ISSUES.md | head -60                   # known gaps: sometimes the frontier is a gap
+cat docs/ops/ISSUES.md | head -60                   # known gaps: sometimes the frontier is a gap
 ls prompts/backlog/ prompts/roadmap/       # what is already planned, to avoid re-proposing it
 cat data/changelog.json | tail -60         # the platform's current momentum and direction
 ```

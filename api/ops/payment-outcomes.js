@@ -189,7 +189,7 @@ async function sponsorBoard() {
 		settle_floor_sol: runway?.floor_sol ?? null,
 		below_floor: Boolean(sponsor?.sol_low),
 		// Measured burn, never a remembered constant: fee_lamports over successful
-		// settles in the stated window (ISSUES.md item 6 records the folklore number
+		// settles in the stated window (docs/ops/ISSUES.md item 6 records the folklore number
 		// being wrong by roughly 10x, so it is derived on every read).
 		burn_window_days: runway?.burn_window_days ?? null,
 		settles_in_window: runway?.settles_in_window ?? 0,

@@ -139,7 +139,7 @@ The fee wallet that pays every settle's SOL fee:
   exists to warn early. `below_floor` compares against the watch floor.
 - `burn_sol_per_day` is MEASURED from `fee_lamports` over successful settles,
   never quoted from memory: the folklore burn rate has been wrong by roughly 10x
-  before (ISSUES.md item 6). It always ships with `burn_window_days` (the window
+  before (docs/ops/ISSUES.md item 6). It always ships with `burn_window_days` (the window
   it was measured over) and `settles_in_window` (the sample size). A burn rate
   without its window is a rumour, so nothing here prints one without the other.
 - `runway_days` = balance / measured burn (to empty, what a funding ask is sized
