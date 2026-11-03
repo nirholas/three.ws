@@ -507,6 +507,10 @@ export async function revokeSellerAccess({ transfer, agent }) {
 export async function detachHistory({ agent }) {
 	return runEach([
 		['memories', () => sql`DELETE FROM agent_memories WHERE agent_id = ${agent.id} RETURNING id`],
+		// Skills the agent drafted from the seller's own runs, and the cached
+		// summaries of the seller's conversations, are history too.
+		['learned_skills', () => sql`DELETE FROM agent_custom_skills WHERE agent_id = ${agent.id} AND source = 'experience' RETURNING id`],
+		['session_summaries', () => sql`DELETE FROM agent_session_summaries WHERE agent_id = ${agent.id} RETURNING session_key`],
 		['memory_entities', () => sql`DELETE FROM agent_memory_entities WHERE agent_id = ${agent.id} RETURNING id`],
 		['memory_pins', () => sql`DELETE FROM agent_memory_pins WHERE agent_id = ${agent.id} RETURNING agent_id`],
 		['mood_history', () => sql`DELETE FROM agent_mood_history WHERE agent_id = ${agent.id} RETURNING agent_id`],
