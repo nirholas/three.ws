@@ -1404,6 +1404,9 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-bubble {
 	background: #fff; color: var(--cc-ink); font-size: 13px; font-weight: 600; text-align: center;
 	padding: 7px 12px; border-radius: var(--cc-radius); max-width: 220px; white-space: normal;
+	/* Chat is capped at 200 chars server side, not at a word length: one unbroken
+	   run (a pasted address, "aaaa…") must wrap inside the bubble, not spill out. */
+	overflow-wrap: anywhere;
 	box-shadow: 0 6px 22px rgba(0, 0, 0, 0.55), var(--cc-glow); animation: cc-bubble-in 0.2s ease;
 }
 /* thought-bubble tail: two shrinking puffs trailing down toward the avatar */

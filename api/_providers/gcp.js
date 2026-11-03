@@ -71,6 +71,27 @@ function readEnv(name) {
 	return null;
 }
 
+// One circuit breaker per worker host and per call role. fetchUpstream keys its
+// breaker by name, and this provider fronts every self-host GPU worker, so a
+// single shared name let one stalled worker open the circuit for all of them.
+// The TRELLIS worker's event loop freezes for 30 to 140 s while it
+// post-processes a mesh; five timed-out status polls of running jobs then
+// failed every submit in zero milliseconds as provider_unreachable while the
+// worker still answered /health 200. Polls are separate from submits because a
+// slow poll only means "still running" to the caller, so it must never gate a
+// new job. `hostOf` falls back to the raw string so a malformed URL still gets
+// a stable, distinct name.
+function hostOf(baseUrl) {
+	try {
+		return new URL(baseUrl).host;
+	} catch {
+		return String(baseUrl);
+	}
+}
+function breakerName(role, baseUrl) {
+	return `gcp-forge-worker:${role}:${hostOf(baseUrl)}`;
+}
+
 function packJobId(payload) {
 	return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 }
@@ -759,7 +780,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 					method: 'POST',
 					headers: authHeaders,
 					body: JSON.stringify(workerReq.body),
-				}, { name: 'gcp-forge-worker', timeoutMs: 60_000, attempts: 2, okWhen: () => true });
+				}, { name: breakerName('submit', baseUrl), timeoutMs: 60_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				throw Object.assign(
 					new Error(`gcp ${mode} service unreachable: ${err?.message}`),
@@ -833,7 +854,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 
 			let response;
 			try {
-				response = await fetchUpstream(`${baseUrl.replace(/\/$/, '')}${pollPath}`, { headers: authHeaders }, { name: 'gcp-forge-worker', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
+				response = await fetchUpstream(`${baseUrl.replace(/\/$/, '')}${pollPath}`, { headers: authHeaders }, { name: breakerName('poll', baseUrl), timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 			} catch (err) {
 				return { status: 'running', error: `poll failed: ${err?.message}` };
 			}
