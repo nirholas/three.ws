@@ -1,5 +1,5 @@
 # Host environment: Modly's FastAPI backend AND the three.ws front share it
-# (system python3.10 in the image). Every line is pinned so a rebuild resolves
+# (system python3.11 in the image). Every line is pinned so a rebuild resolves
 # the same tree. Modly's own api/requirements.txt lists these packages with
 # lower bounds only; the versions below satisfy every bound it declares.
 

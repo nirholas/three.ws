@@ -59,14 +59,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # Cap glibc at two malloc arenas (see instance_health.py).
     MALLOC_ARENA_MAX=2
 
+# Python 3.11, not jammy's default 3.10: Pillow 13 (which fixes the decoder
+# advisories still open in 12.x, and this service decodes caller images) ships
+# no 3.10 build. workers/texture runs the same 3.11-on-jammy layout.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.10 python3.10-dev python3.10-venv python3-pip \
+        python3.11 python3.11-dev python3.11-venv python3-pip \
         git curl wget xz-utils build-essential ninja-build \
         libgl1 libglib2.0-0 libgomp1 libsm6 libxext6 libxrender1 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
-    && pip install --upgrade pip==24.3.1 setuptools==75.8.0 wheel==0.45.1
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python \
+    && python3 -m pip install --upgrade pip==24.3.1 setuptools==75.8.0 wheel==0.46.2
 
 COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
@@ -108,6 +111,10 @@ RUN mkdir -p /opt/u2net \
         https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx \
     && echo "${U2NET_SHA256}  /opt/u2net/u2net.onnx" | sha256sum -c -
 
+# A fresh 3.11 venv starts with ensurepip's setuptools 65, which wheel 0.46 can
+# no longer drive (it delegates bdist_wheel to setuptools >= 70.1), so each venv
+# takes its pinned setuptools and wheel before anything is built from an sdist.
+#
 # 6. TripoSG extension (MIT). Folder name must equal the manifest id. An empty
 # vendor/ tells Modly's registry the pure-Python vendor step is not needed: the
 # triposg package lives in the venv's site-packages instead, which is exactly
@@ -120,9 +127,13 @@ RUN git init -q ${EXTENSIONS_DIR}/triposg \
     && rm -rf ${EXTENSIONS_DIR}/triposg/.git \
     && mkdir ${EXTENSIONS_DIR}/triposg/vendor \
     && python3 -m venv --system-site-packages ${EXTENSIONS_DIR}/triposg/venv \
+    && ${EXTENSIONS_DIR}/triposg/venv/bin/pip install setuptools==84.1.0 wheel==0.46.2 \
     && ${EXTENSIONS_DIR}/triposg/venv/bin/pip install -r /tmp/requirements-triposg.txt
-# diso compiles against the shared torch, so build isolation must stay off.
-RUN ${EXTENSIONS_DIR}/triposg/venv/bin/pip install --no-build-isolation \
+# diso compiles against the shared torch, so build isolation must stay off. Its
+# setup.py builds the CUDA kernels only when it sees a GPU or FORCE_CUDA=1, and
+# the image builder has no GPU: without the flag it silently ships a CPU-only
+# diso._C that TripoSG's DiffDMC decoder cannot use.
+RUN FORCE_CUDA=1 ${EXTENSIONS_DIR}/triposg/venv/bin/pip install --no-build-isolation \
         "git+https://github.com/SarahWeiii/diso.git@${DISO_COMMIT}"
 RUN git init -q /tmp/TripoSG \
     && git -C /tmp/TripoSG remote add origin https://github.com/VAST-AI-Research/TripoSG.git \
@@ -144,6 +155,7 @@ RUN git init -q ${EXTENSIONS_DIR}/hunyuan3d-mini-turbo \
     && git -C ${EXTENSIONS_DIR}/hunyuan3d-mini-turbo checkout -q FETCH_HEAD \
     && rm -rf ${EXTENSIONS_DIR}/hunyuan3d-mini-turbo/.git \
     && python3 -m venv --system-site-packages ${EXTENSIONS_DIR}/hunyuan3d-mini-turbo/venv \
+    && ${EXTENSIONS_DIR}/hunyuan3d-mini-turbo/venv/bin/pip install setuptools==84.1.0 wheel==0.46.2 \
     && ${EXTENSIONS_DIR}/hunyuan3d-mini-turbo/venv/bin/pip install -r /tmp/requirements-hunyuan.txt \
     && git init -q /tmp/Hunyuan3D-2 \
     && git -C /tmp/Hunyuan3D-2 remote add origin https://github.com/Tencent-Hunyuan/Hunyuan3D-2.git \

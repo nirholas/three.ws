@@ -19,9 +19,14 @@ trimesh==4.5.3
 pymeshlab==2023.12.post2
 scikit-image==0.24.0
 opencv-python-headless==4.10.0.84
-rembg==2.0.82
+# rembg 2.0.70+ requires numpy>=2.3, which this venv cannot take: numpy stays
+# on 1.26 for the pinned diffusers/pymeshlab builds. 2.0.69 is the newest release
+# that resolves here. GHSA-3wqj-33cg-xc48 (path traversal via custom model
+# loading, fixed in 2.0.75) is not reachable: the extensions call rembg's
+# built-in u2net session, never a caller-supplied model path.
+rembg==2.0.69
 onnxruntime-gpu==1.20.0
 pybind11==2.13.6
 ninja==1.11.1.1
 setuptools==84.1.0
-wheel==0.45.1
+wheel==0.46.2
