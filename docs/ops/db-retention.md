@@ -33,6 +33,111 @@ At ~60 MB/day the firehose alone cannot fit a 14-day window inside 512 MB. That
 is a plan-capacity fact, not a bug: **a longer guaranteed history window requires
 a larger Neon plan.**
 
+3. **The append-only history tables (the 2026-11 incident).** By 2026-11-03 the
+   branch was 16,814 MB against a 16,384 MB mark, and the write-heavy crons
+   (`launcher-tick`, `coin-intel-observe`, `smart-money-rollup`,
+   `recompute-reputation`, `intel-learn`) logged `skipped - db at storage cap` on
+   every tick. None of the biggest growers were in any retention list, so the
+   skip message's "retention will reclaim space" was false. Measured that day:
+
+   | Table | Size | Rows | Live window | Kept, never pruned |
+   | --- | --- | --- | --- | --- |
+   | `agent_onchain_events` | 3,570 MB | 5.2M | 30 days on `occurred_at` | nothing (the chain is the source of truth) |
+   | `oracle_training_set` | 2,456 MB | 1.9M | 45 days on `first_seen_at` | `outcome = 'unknown'` rows (still waiting for a label) |
+   | `x402_self_facilitator_log` | 1,512 MB | 3.2M | 60 days on `ts` | nothing; pruned days roll into `x402_self_facilitator_rollup` |
+   | `firewall_decisions` | 1,350 MB | 645k | 45 days on `created_at` | nothing |
+   | `usage_events` | 934 MB | 2.9M | 60 days on `created_at` | `kind = 'metered'` rows (invoices bill any past month) |
+   | `sniper_llm_verdicts` | 521 MB | 1.1M | 30 days on `created_at` | nothing |
+   | `ops_alerts` | 507 MB | 776k | 30 days on `last_seen` | unacknowledged alerts that recurred (`count > 1`) |
+
+   Every window, the readers audited for it and their longest lookback live
+   beside the spec in `api/_lib/db-archive-tables.js`; the test
+   `tests/db-retention-archive.test.js` fails if a table over 500 MB drops out of
+   that list or loses its keyset index. `club_tips` (596 MB, 1.2M rows) is
+   deliberately **not** archived: the all-time dancer leaderboard reads it with no
+   time filter and every row with `paid_at IS NULL` is money still owed, so it
+   needs a rollup of its own before any prune. The update-churn tables
+   (`wallet_reputation`, `smart_wallet_folded`, ~170k dead tuples each) are not
+   pruned at all; they are compaction candidates so their bloat is returned.
+
+## Archive layout (cold storage)
+
+Old rows are never deleted until they are in cold storage and verified there.
+
+- **Bucket:** `gs://three-ws-db-archive` (project `aerial-vehicle-466722-p5`,
+  `us-central1`, uniform bucket-level access, public access prevention inherited).
+  Objects move to Coldline after 365 days. The runtime service account
+  `three-ws@` holds `roles/storage.objectCreator` only: it can create objects and
+  can neither read, list, overwrite nor delete them. Uploads use
+  `ifGenerationMatch=0`, so nothing in the bucket is ever overwritten.
+- **Objects per part** (20,000 rows by default), under
+  `<table>/<YYYY-MM-DD of the part's oldest row>/<runId>-<seq>-<sha8>`:
+  - `.ndjson.gz`: one `to_jsonb(row)` per line, produced by Postgres so bigint and
+    numeric values keep full precision.
+  - `.manifest.json`: table, cutoff, row count, min and max keyset key, sha256 and
+    md5 of the part, written after GCS confirmed the part's md5 server-side.
+  - `.deleted.json`: written after the delete, with the deleted row count. A part
+    with a manifest and no `.deleted.json` was archived but not pruned (an
+    archive-only run, or a delete that never started).
+- **Order of operations** (`archiveSlice` in `api/_lib/db-archive.js`): read a
+  keyset page, upload the part, check the returned size and md5, write the
+  manifest, and only then delete exactly those primary keys, re-applying the
+  table's cutoff and `where` predicate so a row that changed after it was archived
+  (an alert acknowledged late) stays. Any failure before the delete returns
+  `skipped` and deletes nothing.
+- **Keyset indexes.** Each archived table has an index leading with its archive
+  timestamp column (`*_archive_keyset` migrations from 2026-11-03). Without one,
+  every 2,500-row page was a full scan of a multi-GB table.
+
+### Who archives
+
+- **The cron** (`/api/cron/db-retention`, every 15 minutes) archives and prunes
+  the steady-state slice: up to 50,000 rows per table per tick inside an 85 s
+  budget, about 4.8M rows per table per day of capacity. `DB_ARCHIVE_ENABLED=0`
+  turns the step off; a bucket or auth outage makes it report `skipped` per table
+  and delete nothing.
+- **The script** handles the first bulk pass, verification and restores:
+
+```sh
+export PATH="$HOME/google-cloud-sdk/bin:$PATH"
+export DATABASE_URL="$(node scripts/read-service-env.mjs '^DATABASE_URL$' --raw)"
+node scripts/db-archive-table.mjs firewall_decisions            # archive only, read-only against the DB
+node scripts/db-archive-table.mjs firewall_decisions --prune    # archive, verify, delete
+node scripts/db-archive-table.mjs --all --verify                # re-hash every part, recount every line
+```
+
+`--verify` prints `{table, parts, archivedRows, deletedRows, problems}` per table
+and exits non-zero on any sha256 or line-count mismatch. `archivedRows` can exceed
+`deletedRows` by the rows of an archive-only part (for example the 1,000-row
+`sniper_llm_verdicts` trial part from 2026-11-03, whose rows were archived again by
+the prune run).
+
+### Restore a month
+
+```sh
+# dry run: lists every part overlapping the range and the rows it would restore
+node scripts/db-archive-table.mjs usage_events --restore --from 2026-08-01 --to 2026-09-01
+# apply: INSERT ... SELECT * FROM jsonb_populate_recordset(...) ON CONFLICT DO NOTHING
+node scripts/db-archive-table.mjs usage_events --restore --from 2026-08-01 --to 2026-09-01 --apply
+```
+
+Restoring is idempotent (rows already present are skipped). Restored rows are
+older than the live window, so the next cron tick archives and prunes them again
+unless you raise that table's `days` first, or set `DB_ARCHIVE_ENABLED=0` while
+you work with them.
+
+### The settle-book rollup
+
+`/api/x402-ring?period=all` and `api/_lib/platform-analytics.js` publish lifetime
+totals over `x402_self_facilitator_log`. Its delete statement fills
+`x402_self_facilitator_rollup` (per UTC day, network, action, ok, mint and reject
+class: count, amount, fee) in the same statement as the delete, so a row leaves
+the log and enters the rollup atomically, and both readers add the rollup to the
+live log. `tests/x402-ring-lifetime-rollup.test.js` proves lifetime totals are
+identical before and after a prune. The readers and the pruning cron ship in the
+same image, so totals never dip during a deploy; do not prune this table by hand
+against a production revision older than the rollup readers.
+
 ## The two mechanisms
 
 ### 1. Graceful degradation (always on)
@@ -61,11 +166,10 @@ Bounded + idempotent. Each tick:
   replay guard behind `api/_lib/x402/spent-payments.js`, keeps a **fixed** window
   (`X402_SPENT_RETENTION_DAYS`) that the valve never shortens: a shorter window is
   a shorter replay-protection window, and the rows are too small to be why the
-  branch is under pressure. `x402_self_facilitator_log` (the settle book, the
-  largest table this cron does not touch) is deliberately unmanaged because
-  `/api/x402-ring` aggregates it with no time filter for its `lifetime` totals;
-  pruning it is a product decision about published revenue figures, not a
-  retention one.
+  branch is under pressure. `x402_self_facilitator_log` (the settle book) is
+  archived and pruned with a rollup, see "The settle-book rollup" above.
+- **Archive-then-prune** of the history tables in the inventory above, see
+  "Archive layout".
 - **MCP client sessions.** `mcp_client_sessions`, the raw join table behind the
   [MCP clients board](mcp-clients.md), loses every session idle for 30 days. The
   window is fixed and the valve never touches it; `mcp_client_daily`, the
@@ -100,7 +204,8 @@ fires one deduped `db:retention-pressure` alert.
 | --- | --- | --- |
 | `PUMP_INTEL_RETENTION_DAYS` | `14` | Normal firehose window (days). Clamped `[2, 365]`. Raise after a Neon plan upgrade. |
 | `PUMP_INTEL_MIN_RETENTION_DAYS` | `3` | Floor the valve tightens to under pressure. Clamped `[1, retention]`. |
-| `DB_RETENTION_HIGH_WATER_MB` | `470` | Engage the valve at/above this size. Clamped `[128, 100000]`. Production runs `8192` (see the sizing note below). |
+| `DB_RETENTION_HIGH_WATER_MB` | `470` | Engage the valve at/above this size. Clamped `[128, 100000]`. Production runs `20992` (see the sizing note below). |
+| `DB_ARCHIVE_ENABLED` | `1` | Set `0` to stop the cron's archive-then-prune step (nothing is archived or deleted; the tables grow). |
 | `DB_COMPACT_ENABLED` | `1` | Set `0` to disable the `VACUUM FULL` compaction step entirely. |
 | `DB_COMPACT_MIN_FREE_MB` | `25` | Only rewrite a table holding at least this much reclaimable space (and at least 30% of its file). |
 | `DB_COMPACT_MAX_TABLES` | `3` | Most tables one tick may rewrite. |
@@ -154,6 +259,23 @@ are outside the retention set (`oracle_training_set` 1.8 GB, `x402_self_facilita
 `ops_alerts` 0.5 GB). At the current rate 16384 is about six weeks of headroom, so
 re-measure before it runs out and decide retention for those tables rather than
 raising the mark again.
+
+**Raised to `20992` on 2026-11-03** (16,814 MB measured plus 4,096 MB, revisions
+`three-ws-api-00518`/`00519`) as relief only, so the skipped crons ran again and
+`VACUUM FULL` had headroom. The durable fix landed the same day: the seven history
+tables above are archived to cold storage and pruned ("Archive layout"), which
+brings the footprint well under 70 percent of this mark. Do not raise it again to
+answer growth; add the growing table to `api/_lib/db-archive-tables.js`.
+
+### The `database_storage` health subsystem
+
+`/api/healthz` reports `database_storage` (`api/_lib/ops/database-storage-health.js`)
+with the size, percent of the mark, the three largest tables and the last
+retention run: `ok` under 75 percent of `DB_RETENTION_HIGH_WATER_MB`, `degraded`
+from 75 to 100 percent, `down` above the mark (the write-heavy crons are skipping).
+`/api/cron/uptime-check` escalates a degraded or down subsystem into an ops alert
+on first sight and re-pages hourly, so the cap now pages before it bites instead
+of after a month of silent skips.
 
 ## Upgrade trigger
 

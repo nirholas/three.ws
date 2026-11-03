@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T19:02:58.700Z",
+	"generated_at": "2026-11-03T19:06:38.967Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4295,
+	"total": 4296,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -141,6 +141,17 @@
 			"link": "/coin-control",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Coin intel, the launcher and reputation are updating again",
+			"summary": "For a stretch of 3 November the database sat past its storage mark, and the background jobs that refresh coin intel, the launcher feed, smart-money rollups and wallet reputation paused rather than risk filling it. They are running again. The real cause was seven big history tables (on-chain agent events, oracle training rows, the settlement log, firewall decisions, usage events, sniper verdicts and ops alerts) that nothing ever trimmed. Their older rows are now copied to cold storage on Google Cloud, checked against a fingerprint, and only then removed from the live database, so nothing is lost and any month can be restored. Rows that are still needed stay put: billing records, coins still waiting for a label, and alerts nobody has acknowledged. Lifetime settlement totals on the x402 ring keep counting pruned days through a daily rollup, so the published numbers never shrink. The platform health check now reports database storage and raises an alert at 75 percent of the mark, well before anything pauses.",
+			"link": null,
+			"tags": [
+				"infra",
+				"fix"
 			]
 		},
 		{
@@ -1539,16 +1550,6 @@
 			"title": "README 3D",
 			"summary": "Put an interactive 3D model in any GitHub README. Paste a GLB, glTF, OBJ or STL URL and get a block GitHub renders as a rotatable viewer, sized to fit its markdown limit.",
 			"link": "/readme-3d",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
-			"title": "Why three.ws",
-			"summary": "Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.",
-			"link": "/why-three-ws",
 			"tags": [
 				"launch"
 			]

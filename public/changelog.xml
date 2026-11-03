@@ -111,6 +111,14 @@
 			<description>Creators can now put the fees their agent's coin earns to work from one page. Set a rule to buy back and burn the coin each period (the burn uses exactly what the buy returned, read from the confirmed transaction), send SOL to the top holders split by size or by a lottery anyone can re-check, and post bounties paid from the agent wallet. Nothing runs until you confirm the exact terms, every send passes your spend limits, and every action appears with its Solana transaction on a public page holders can open, next to your verified X handle.</description>
 		</item>
 		<item>
+			<title>Coin intel, the launcher and reputation are updating again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:Coin intel, the launcher and reputation are updating again</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>For a stretch of 3 November the database sat past its storage mark, and the background jobs that refresh coin intel, the launcher feed, smart-money rollups and wallet reputation paused rather than risk filling it. They are running again. The real cause was seven big history tables (on-chain agent events, oracle training rows, the settlement log, firewall decisions, usage events, sniper verdicts and ops alerts) that nothing ever trimmed. Their older rows are now copied to cold storage on Google Cloud, checked against a fingerprint, and only then removed from the live database, so nothing is lost and any month can be restored. Rows that are still needed stay put: billing records, coins still waiting for a label, and alerts nobody has acknowledged. Lifetime settlement totals on the x402 ring keep counting pruned days through a daily rollup, so the published numbers never shrink. The platform health check now reports database storage and raises an alert at 75 percent of the mark, well before anything pauses.</description>
+		</item>
+		<item>
 			<title>Every partner logo now sits in the site footer</title>
 			<link>https://three.ws/partners</link>
 			<guid isPermaLink="false">2026-11-03:Every partner logo now sits in the site footer</guid>
