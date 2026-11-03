@@ -57,7 +57,10 @@
 				position: sticky; top: 0; z-index: 5;
 				display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
 				padding: 14px 0; margin-bottom: 8px;
-				background: color-mix(in srgb, var(--surface-1) 60%, transparent);
+				/* --surface-1 is itself a 3% white wash, so mixing it left the sticky bar
+				   nearly clear and the result count read over card thumbnails. Base it on
+				   the page ground so it stays legible while the grid scrolls under it. */
+				background: color-mix(in srgb, var(--bg-0) 88%, transparent);
 				backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 				border-bottom: 1px solid var(--stroke);
 			}
