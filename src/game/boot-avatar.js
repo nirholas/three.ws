@@ -9,22 +9,21 @@
 // Self-contained on purpose: this evaluates as soon as its module + Three.js
 // chunk arrive (overlapping the main bundle's download), so the avatar is on
 // screen as early as possible. It shares Three.js and the avatar-rig manifest
-// with the scene, so the second GLB fetch is served from the browser cache.
+// with the scene, and borrows the model from the avatar-rig template cache, so
+// the world reuses this download and parse instead of fetching the GLB again.
 //
 // Hand-off: coincommunities.js awaits `window.__ccBootAvatar.ready` before it
 // fades the loader out, then calls `dispose()`. `ready` ALWAYS resolves (even on
 // WebGL/asset failure) so a missing avatar can never wedge the loader open.
 
 import {
-	Scene, PerspectiveCamera, WebGLRenderer, Box3, Vector3,
+	Scene, PerspectiveCamera, WebGLRenderer, Vector3,
 	HemisphereLight, DirectionalLight, AmbientLight,
 } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { AnimationManager } from '../animation-manager.js';
-import { installVrmPlugin, prepareVrmModel } from './vrm-loader.js';
 import {
 	AVATAR_DEFAULT, loadManifest, getLocomotionDefs, CLIP_IDLE,
-	resolveAvatarUrl, dracoLoader, meshoptReady,
+	resolveAvatarUrl, borrowAvatarModel,
 } from './avatar-rig.js'; // also registers the real VRM plugin (side effect)
 import { getRequestedAvatar } from './play-handoff.js';
 import { log } from '../shared/log.js';
@@ -37,7 +36,7 @@ function boot() {
 	const canvas = document.getElementById('kx-boot-avatar');
 	if (!canvas) return { ready: Promise.resolve(), dispose() {} };
 
-	let renderer, scene, camera, anim, model, raf = 0, last = 0, yaw = -0.35, alive = true;
+	let renderer, scene, camera, anim, model, borrowed = null, raf = 0, last = 0, yaw = -0.35, alive = true;
 	let resolveReady;
 	const ready = new Promise((res) => { resolveReady = res; });
 	const done = () => { resolveReady?.(); resolveReady = null; };
@@ -75,26 +74,21 @@ function boot() {
 	// agent's GLB via a "See in 3D" link) if present, otherwise the one the player
 	// chose (persisted in cc-avatar by the lobby / a create→play handoff) — not a
 	// generic default, so the first character they see while the scene loads is the
-	// right one. DRACO and meshopt are both wired in because most avatar GLBs are
-	// compressed (the default avatar uses EXT_meshopt_compression). Falls back to
+	// right one. The model comes from the shared template cache (DRACO, meshopt and
+	// VRM handling live there), which the world's own rig then reuses. Falls back to
 	// the default on any resolve/load failure so a broken pick never wedges the loader.
-	const loader = new GLTFLoader();
-	loader.setDRACOLoader(dracoLoader);
-	installVrmPlugin(loader);
-	meshoptReady
-		.then((decoder) => { if (decoder) loader.setMeshoptDecoder(decoder); })
-		.then(() => resolveAvatarUrl(getRequestedAvatar()))
-		.then((chosen) => loader.loadAsync(chosen).catch(() => loader.loadAsync(AVATAR_DEFAULT)))
-		.then(async (gltf) => {
-		if (!alive) return;
-		prepareVrmModel(gltf);
-		model = gltf.scene;
+	resolveAvatarUrl(getRequestedAvatar())
+		.then((chosen) => borrowAvatarModel(chosen).catch(() => borrowAvatarModel(AVATAR_DEFAULT)))
+		.then(async (lent) => {
+		borrowed = lent;
+		if (!alive) { lent.release(); return; }
+		model = lent.model;
 		model.traverse((n) => { if (n.isMesh) { n.frustumCulled = false; n.castShadow = false; } });
 		scene.add(model);
 
 		// Feet on the ground, centred, framed from the chest up with a slight 3/4
-		// turn — a portrait, not a full body lost in the small frame.
-		const box = new Box3().setFromObject(model);
+		// turn: a portrait, not a full body lost in the small frame.
+		const box = lent.box;
 		const size = new Vector3(); box.getSize(size);
 		const center = new Vector3(); box.getCenter(center);
 		model.position.x -= center.x;
@@ -167,17 +161,14 @@ function boot() {
 		window.removeEventListener('resize', sizeToBox);
 		try {
 			anim?.dispose?.();
-			model?.traverse((n) => {
-				if (!n.isMesh) return;
-				n.geometry?.dispose?.();
-				const mats = Array.isArray(n.material) ? n.material : [n.material];
-				for (const m of mats) {
-					if (!m) continue;
-					for (const k in m) { const v = m[k]; if (v && v.isTexture) v.dispose(); }
-					m.dispose?.();
-				}
-			});
+			// The model's buffers are shared with the world's rigs, so they are handed
+			// back to the cache, never disposed here. Dropping this canvas's own GL
+			// context frees the GPU copies it uploaded.
+			if (model) scene.remove(model);
+			borrowed?.release();
+			borrowed = null;
 			renderer.dispose();
+			renderer.forceContextLoss();
 		} catch { /* best-effort teardown */ }
 	}
 

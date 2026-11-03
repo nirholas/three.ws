@@ -56,10 +56,19 @@ let _animDefs = null; // cached manifest defs (locomotion + emotes)
 let _emoteDefs = null;
 let _allEmoteDefs = null; // all non-locomotion emotes for the wheel
 
+let _manifestLoad = null; // the one in-flight manifest request, shared by concurrent callers
+
 // Fetch the animation manifest once and cache the locomotion + emote clip defs.
-// Idempotent: safe to await from multiple scenes.
-export async function loadManifest() {
-	if (_animDefs) return;
+// Idempotent: safe to await from multiple scenes. The local rig and the ambient
+// crowd both call this during boot, so callers share one in-flight request
+// rather than each racing past the empty cache into its own download.
+export function loadManifest() {
+	if (_animDefs) return Promise.resolve();
+	_manifestLoad ||= fetchManifestDefs().finally(() => { _manifestLoad = null; });
+	return _manifestLoad;
+}
+
+async function fetchManifestDefs() {
 	let manifest = [];
 	try {
 		const r = await fetch(MANIFEST_URL, { cache: 'force-cache' });
@@ -227,6 +236,30 @@ function evictIdleTemplates() {
 		resident -= e.bytes;
 		e.promise.then(({ scene }) => disposeTemplateScene(scene)).catch(() => { /* never parsed */ });
 	}
+}
+
+// Borrow a clone of a model from the shared template cache for a view that is
+// not a rig (the /play boot-loader preview). The world's own rigs then reuse
+// the parsed template instead of downloading and parsing the GLB a second time.
+// The clone shares geometry, materials and textures with every rig, so the
+// borrower must never dispose them: it calls release() and the cache decides.
+export async function borrowAvatarModel(url) {
+	const entry = loadTemplate(url);
+	const { scene, box } = await entry.promise;
+	entry.refs += 1;
+	entry.lastUse = Date.now();
+	let released = false;
+	return {
+		model: cloneSkinnedScene(scene),
+		box: box.clone(),
+		release() {
+			if (released) return;
+			released = true;
+			entry.refs = Math.max(0, entry.refs - 1);
+			entry.lastUse = Date.now();
+			evictIdleTemplates();
+		},
+	};
 }
 
 // Release the avatar model (and any capsule stand-in) buildAvatar put on this

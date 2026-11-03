@@ -78,7 +78,7 @@ vi.mock('../src/game/play-handoff.js', () => ({
 // buildAvatar never blocks on animation loading.
 vi.stubGlobal('fetch', vi.fn(async () => new Response('[]', { headers: { 'content-type': 'application/json' } })));
 
-const { buildAvatar, releaseAvatar, hasModelTemplate } = await import('../src/game/avatar-rig.js');
+const { buildAvatar, releaseAvatar, hasModelTemplate, borrowAvatarModel } = await import('../src/game/avatar-rig.js');
 
 // A stand-in for AnimationManager: buildAvatar only attaches and poses.
 const stubAnim = () => ({
@@ -182,5 +182,29 @@ describe('avatar template cache', () => {
 
 		releaseAvatar(rig);
 		expect(rig.children).toHaveLength(0);
+	});
+
+	// The /play boot loader shows the player's avatar while the scene bundle
+	// downloads. It used to load that GLB with its own GLTFLoader, so the world
+	// then downloaded and parsed the same model a second time (the event audit
+	// saw /avatars/default.glb fetched twice on every production load).
+	it('lets the boot preview borrow the model the world then reuses with no second load', async () => {
+		const BOOT = '/avatars/boot-preview.glb';
+		const preview = await borrowAvatarModel(BOOT);
+		expect(loadCount).toBe(1);
+		expect(preview.model.isObject3D).toBe(true);
+		expect(preview.box.max.y).toBeGreaterThan(preview.box.min.y);
+
+		const rig = new Group();
+		await buildAvatar(rig, BOOT, stubAnim(), { clips: 'locomotion' });
+		expect(loadCount).toBe(1);
+
+		// Releasing the preview must leave the world's copy intact.
+		const geometry = lastGeometry;
+		preview.release();
+		preview.release(); // idempotent: a double release must not steal the rig's ref
+		expect(geometry.dispose).not.toHaveBeenCalled();
+		expect(hasModelTemplate(BOOT)).toBe(true);
+		releaseAvatar(rig);
 	});
 });
