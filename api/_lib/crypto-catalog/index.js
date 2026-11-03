@@ -197,7 +197,6 @@ export async function loadCatalog({ dir = HERE, fresh = false } = {}) {
 
 	for (const file of files.sort()) {
 		try {
-			// eslint-disable-next-line no-await-in-loop
 			const mod = await import(pathToFileURL(join(dir, file)).href);
 			const raw = mod.default ?? mod.entry ?? mod.catalogEntry;
 			if (!isValidEntry(raw)) {

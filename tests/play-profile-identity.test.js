@@ -306,7 +306,6 @@ function extractMethod(source, name) {
 
 describe('verified nameplate badge (W10)', () => {
 	const src = readFileSync(path.join(__dirname, '../src/game/coincommunities.js'), 'utf8');
-	// eslint-disable-next-line no-new-func -- the method's own shipping source, evaluated against a real DOM
 	const updateHandleBadge = new Function(`return function () ${extractMethod(src, '_updateHandleBadge')}`)();
 
 	function peer(username) {

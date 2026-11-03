@@ -1429,7 +1429,6 @@ const appConfig = {
 					};
 					walk(outDir);
 					if (stripped.length) {
-						// eslint-disable-next-line no-console
 						console.log(
 							'[strip-sw] removed registerSW script from:',
 							stripped.map((p) => p.replace(outDir + '/', '')).join(', '),

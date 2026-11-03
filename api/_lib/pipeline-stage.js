@@ -228,7 +228,6 @@ export async function runStageJob({
 	const deadline = Date.now() + pollBudgetMs;
 	// Poll immediately, then on the interval — fast workers (rembg ~5s) often
 	// finish before the first sleep.
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const result = await regen.status(extJobId);
 		if (result.status === 'done') {

@@ -1187,7 +1187,6 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 			attempted.length,
 			'the model asked for no actions at all, so nothing was put in front of the gate',
 		).toBeGreaterThan(0);
-		// eslint-disable-next-line no-console
 		console.log(
 			`[injection] ${modelAnswered}/${turns.length} turns answered, ${attempted.length} actions attempted, ${refused.length} refused by the gate, ${attempted.filter((a) => a.domain === 'lock').length} aimed at a lock`,
 		);

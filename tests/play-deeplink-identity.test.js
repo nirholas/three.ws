@@ -36,7 +36,6 @@ function extractFn(source, name) {
 }
 
 const ccSrc = read('../src/game/coincommunities.js');
-// eslint-disable-next-line no-new-func
 const mergeCoinIdentity = new Function(`${extractFn(ccSrc, 'mergeCoinIdentity')}; return mergeCoinIdentity;`)();
 
 const TCAR = { name: 'TRENCH CAR', symbol: 'TCAR', image: '/api/img?url=x', marketCap: 41699 };

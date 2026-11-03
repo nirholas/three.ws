@@ -95,7 +95,6 @@ describe('/protocol/:slug route tables agree', () => {
 		const src = read('../../src/protocol-page.js');
 		const m = src.match(/const SLUG_RE = (\/\^\[[^/]+\]\{1,80\}\$\/i);/);
 		expect(m, 'protocol-page.js must declare SLUG_RE').toBeTruthy();
-		// eslint-disable-next-line no-eval -- reading the shipped literal, not user input
 		const re = eval(m[1]);
 		for (const slug of AWKWARD) {
 			expect(re.test(decodeURIComponent(encodeURIComponent(slug))), `${slug} must parse`).toBe(true);

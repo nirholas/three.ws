@@ -97,7 +97,7 @@ test('sanitizeContext rejects non-object / array / nullish input', () => {
 
 test('sanitizeContext drops unsafe / malformed keys', () => {
 	const out = sanitizeContext({
-		__proto__: 'x', // eslint-disable-line no-proto
+		__proto__: 'x',
 		constructor: 'y',
 		'has space': 'z',
 		'bad!key': 'w',

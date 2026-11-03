@@ -41,9 +41,7 @@ function extractFn(source, name) {
 const uiSrc = read('../src/game/coincommunities-ui.js');
 const ccSrc = read('../src/game/coincommunities.js');
 
-// eslint-disable-next-line no-new-func
 const cssBgImage = new Function(`${extractFn(uiSrc, 'cssBgImage')}; return cssBgImage;`)();
-// eslint-disable-next-line no-new-func
 const clampParam = new Function(`${extractFn(ccSrc, 'clampParam')}; return clampParam;`)();
 const isPlausibleMint = new Function(
 	`${ccSrc.match(/const SOLANA_MINT_RE = .*/)[0]}

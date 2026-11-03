@@ -188,7 +188,6 @@ async function postRateLimit(ip) {
 // Strip ASCII control chars (incl. the C1 range) that have no place in a
 // world-readable label/prompt and could break renderers or hide content.
 function stripControl(s) {
-	// eslint-disable-next-line no-control-regex
 	return String(s).replace(/[\u0000--]/g, '');
 }
 

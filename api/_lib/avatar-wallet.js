@@ -110,7 +110,6 @@ export function avatarWalletConfig() {
 /** True when `s` is a parseable Solana public key. */
 export function isValidPubkey(s) {
 	try {
-		// eslint-disable-next-line no-new
 		new PublicKey(String(s));
 		return true;
 	} catch {

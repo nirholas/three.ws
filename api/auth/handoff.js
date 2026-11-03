@@ -45,7 +45,6 @@ const MAX_NEXT_LENGTH = 2048;
 export function safeHandoffPath(next) {
 	if (typeof next !== 'string' || next.length === 0 || next.length > MAX_NEXT_LENGTH) return null;
 	if (!next.startsWith('/') || next.startsWith('//') || next.includes('\\')) return null;
-	// eslint-disable-next-line no-control-regex
 	if (/[\u0000-\u001f\u007f]/.test(next)) return null;
 	try {
 		const url = new URL(next, 'https://three.ws');

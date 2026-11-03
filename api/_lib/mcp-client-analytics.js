@@ -51,14 +51,12 @@ const FAMILIES = [
 /** clientInfo.name as stored: control characters stripped, trimmed, lowercased, capped. */
 export function normalizeClientName(raw) {
 	if (typeof raw !== 'string') return 'unknown';
-	// eslint-disable-next-line no-control-regex
 	const s = raw.replace(/[\u0000-\u001f\u007f]/g, '').trim().toLowerCase().slice(0, NAME_MAX).trim();
 	return s || 'unknown';
 }
 
 export function normalizeClientVersion(raw) {
 	if (typeof raw !== 'string') return '';
-	// eslint-disable-next-line no-control-regex
 	return raw.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, VERSION_MAX).trim();
 }
 

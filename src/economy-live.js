@@ -170,7 +170,6 @@ async function loadAgents({ quiet = false } = {}) {
 		setStat('#ae-stat-earning', String(earners));
 	} catch (err) {
 		if (token === _agentsRequest) errorState(host, () => loadAgents());
-		// eslint-disable-next-line no-console
 		console.error('[economy-live] agents', err);
 	}
 }
@@ -333,7 +332,6 @@ async function loadServices({ quiet = false } = {}) {
 			const more = $('#ae-services-more');
 			if (more) more.hidden = true;
 		}
-		// eslint-disable-next-line no-console
 		console.error('[economy-live] services', err);
 	}
 }
@@ -462,7 +460,6 @@ async function loadOffers({ quiet = false } = {}) {
 		renderOffers();
 	} catch (err) {
 		if (!_offers.length) errorState(host, () => loadOffers());
-		// eslint-disable-next-line no-console
 		console.error('[economy-live] offers', err);
 	}
 }

@@ -119,7 +119,6 @@ export async function createSniperApiRouter(deps = {}) {
 	if (payTo.solana && feePayer) {
 		lanes.solana = payTo.solana;
 	} else if (payTo.solana && !feePayer) {
-		// eslint-disable-next-line no-console -- one-time boot warning, not per-request noise.
 		console.warn(
 			'[agent-sniper] X402_PAY_TO_SOLANA is set but X402_FEE_PAYER_SOLANA is not — ' +
 			'the Solana lane needs a facilitator sponsor fee-payer and has been disabled. ' +
@@ -422,7 +421,6 @@ export async function serve(deps = {}, { port = Number(process.env.PORT) || 8787
 const isProcessEntryPoint = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isProcessEntryPoint) {
 	serve().catch((err) => {
-		// eslint-disable-next-line no-console -- entry-point fatal.
 		console.error(`[agent-sniper] failed to start HTTP API: ${err?.message || err}`);
 		process.exitCode = 1;
 	});

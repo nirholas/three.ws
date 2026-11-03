@@ -29,7 +29,6 @@ function mountPage(search) {
 }
 
 async function boot() {
-	// eslint-disable-next-line no-new-func
 	new Function(SRC)();
 	document.dispatchEvent(new Event('DOMContentLoaded'));
 	await new Promise((r) => setTimeout(r, 0));

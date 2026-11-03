@@ -24,7 +24,6 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	// Same control-character guard as /api/search: this string is forwarded to
 	// an upstream API and echoed back in the response.
-	// eslint-disable-next-line no-control-regex
 	const q = (url.searchParams.get('q') || '')
 		.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
 		.trim()

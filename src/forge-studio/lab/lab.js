@@ -292,7 +292,6 @@ async function generate() {
 		}
 	} catch (err) {
 		status(err.message || 'Generation failed.', 'err');
-		// eslint-disable-next-line no-console
 		console.error('[studio-lab]', err);
 	} finally {
 		btn.disabled = false;
@@ -327,7 +326,6 @@ async function bringAlive() {
 		await launchTalk({ name: _lastLabel || 'Your creation', glbBlob: _lastGlbBlob, kind: 'object' });
 	} catch (err) {
 		status(err.message || 'Could not start talk mode.', 'err');
-		// eslint-disable-next-line no-console
 		console.error('[studio-lab] talk', err);
 	} finally {
 		btn.disabled = false;

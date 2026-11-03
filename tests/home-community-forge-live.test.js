@@ -41,7 +41,6 @@ describe('homepage community strip: the "live" chip tracks real freshness', () =
 		expect(maxAge, `${HOME} no longer declares LIVE_MAX_AGE_MS`).not.toBeNull();
 		expect(helper, `${HOME} no longer declares feedIsLive()`).not.toBeNull();
 
-		// eslint-disable-next-line no-new-func
 		feedIsLive = new Function(`${maxAge[0]}\n${helper[0]}\nreturn feedIsLive;`)();
 	});
 

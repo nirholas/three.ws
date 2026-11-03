@@ -297,7 +297,6 @@ describe('mcp-studio dispatch', () => {
 		const guard = COMPONENT_HTML.match(/function isHttps\(u\) \{[^\n]*\}/);
 		expect(src, 'the widget must define a fetchable() indirection').not.toBeNull();
 		expect(guard, 'fetchable() leans on the widget isHttps() guard').not.toBeNull();
-		// eslint-disable-next-line no-new-func -- exercising the shipped widget source, not a copy of it
 		const fetchable = new Function(`${guard[0]}; ${src[0]}; return fetchable;`)();
 
 		const bucket = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/x.glb';

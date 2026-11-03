@@ -19,7 +19,6 @@ import { createHypeDirector, sizeOf } from './hype-threshold.js';
 
 // Controls, zero-width and bidi-override characters can reorder or hide text in
 // a feed (a name that renders as another name). Strip them, collapse whitespace.
-// eslint-disable-next-line no-control-regex
 const INVISIBLE = /[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g;
 
 /** Make untrusted display text safe for a one-line feed row. */

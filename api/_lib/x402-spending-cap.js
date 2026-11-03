@@ -178,7 +178,6 @@ export async function commit(reservation, extra = {}) {
 			});
 		} catch (err) {
 			// onRecord failures must not break paid flows. Log and continue.
-			// eslint-disable-next-line no-console
 			console.error('[spending-cap] onRecord hook failed:', err?.message || err);
 		}
 	}

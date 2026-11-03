@@ -53,7 +53,6 @@ export default wrap(async (req, res) => {
 	// sequence for encoding UTF8" (22021) out of the ILIKE query → an unhandled
 	// 500 on a public endpoint.
 	const q = (url.searchParams.get('q') || '')
-		// eslint-disable-next-line no-control-regex
 		.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
 		.trim()
 		.slice(0, 80);

@@ -106,7 +106,6 @@ describe('renderGlanceAnsi', () => {
 
 	it('keeps every row the same width once the escapes are stripped', () => {
 		const colored = renderGlanceAnsi(CARD, { color: true, width: 68 });
-		// eslint-disable-next-line no-control-regex
 		const widths = new Set(colored.split('\n').map((l) => l.replace(/\[[0-9;]*m/g, '').length));
 		expect(widths.size).toBe(1);
 		expect([...widths][0]).toBe(68);

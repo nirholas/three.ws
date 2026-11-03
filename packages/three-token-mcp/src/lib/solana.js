@@ -20,7 +20,6 @@ export function getConnection() {
 
 export function isValidPubkey(s) {
 	try {
-		// eslint-disable-next-line no-new
 		new PublicKey(s);
 		return true;
 	} catch {

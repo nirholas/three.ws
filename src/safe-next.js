@@ -20,14 +20,12 @@ export function safeNext(raw, fallback = '/dashboard') {
 	if (!raw.startsWith('/') || raw.startsWith('//')) return fallback;
 	if (raw.includes('\\')) return fallback;
 	// Control characters can smuggle a scheme past naive prefix checks.
-	// eslint-disable-next-line no-control-regex
 	if (/[\u0000-\u001f]/.test(raw)) return fallback;
 	return raw;
 }
 
 export function safeNavUrl(raw, fallback = '/') {
 	if (typeof raw !== 'string' || raw.length === 0) return fallback;
-	// eslint-disable-next-line no-control-regex
 	if (raw.includes('\\') || /[\u0000-\u001f]/.test(raw)) return fallback;
 	// Same-origin relative path.
 	if (raw.startsWith('/') && !raw.startsWith('//')) return raw;

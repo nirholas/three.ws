@@ -63,7 +63,6 @@ const merchant = { payTo: null, updatedAt: null };
 function isValidSolanaAddress(addr) {
 	if (typeof addr !== 'string' || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(addr)) return false;
 	try {
-		// eslint-disable-next-line no-new
 		new PublicKey(addr);
 		return true;
 	} catch {

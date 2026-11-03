@@ -84,7 +84,6 @@ async function buildGlbArrayBuffer(parts) {
 }
 
 beforeAll(() => {
-	// eslint-disable-next-line no-undef
 	globalThis.createImageBitmap = async (blob) => {
 		const sharp = (await import('sharp')).default;
 		const buf = Buffer.from(await blob.arrayBuffer());

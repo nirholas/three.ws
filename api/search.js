@@ -68,7 +68,6 @@ export default wrap(async (req, res) => {
 	// Strip control characters before they reach an ILIKE query (same guard as
 	// api/explore.js — a NUL byte throws invalid-UTF8 out of Postgres as an
 	// unhandled 500 on a public endpoint).
-	// eslint-disable-next-line no-control-regex
 	const q = (url.searchParams.get('q') || '')
 		.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
 		.trim()

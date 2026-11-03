@@ -36,7 +36,6 @@ function boot() {
 		writable: true,
 		value: (el) => (el === document.body ? { backgroundColor: bodyBg() } : { backgroundColor: 'rgba(0, 0, 0, 0)' }),
 	});
-	// eslint-disable-next-line no-new-func
 	new Function(SOURCE)();
 }
 

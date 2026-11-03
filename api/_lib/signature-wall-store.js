@@ -49,7 +49,6 @@ export class WallError extends Error {
 // Characters that are never legitimate in a signature: C0/C1 controls, zero-width
 // and bidi overrides (they reorder or hide text), the BOM and line/paragraph
 // separators. Removed rather than rejected so a stray paste still signs.
-// eslint-disable-next-line no-control-regex
 const INVISIBLE = /[\u0000-\u001f\u007f-\u009f\u00ad\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff]/g;
 
 /**

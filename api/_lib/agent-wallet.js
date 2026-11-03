@@ -467,7 +467,6 @@ async function isValidSolanaAddress(address) {
 	try {
 		const { PublicKey } = await import('@solana/web3.js');
 		// Constructing throws on a malformed (non-32-byte) base58 string.
-		// eslint-disable-next-line no-new
 		new PublicKey(address);
 		return true;
 	} catch {
