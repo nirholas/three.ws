@@ -39,7 +39,7 @@ export const RESOURCE_DESCRIPTION =
 	'limit_order_cancel, limit_order_history, order_book, dca_preview, dca_create, dca_list and dca_cancel. ' +
 	'Solana trading: token_search, get_price, get_indicators, get_market_signals, get_news_feed, ' +
 	'arbitrage_prices, arbitrage_quote, swap_quote (every aggregator compared on net output), swap_simulate ' +
-	'and swap_execute. Portfolio reads: get_portfolio, get_balance_history and get_pnl. ' +
+	'and swap_execute. Portfolio reads: get_portfolio, get_balance_history and get_pnl; get_private_wallet_balance and get_wallet_summaries read the owner\'s own wallet and the account total. ' +
 	'Launch sniper, signal subscriptions and alert rules: sniper_status, sniper_activate_preview, ' +
 	'sniper_activate, sniper_deactivate, sniper_subscribe, alert_rule_create, alert_rule_list and ' +
 	'alert_rule_delete. Agent duels settled in USDC: duel_challenge, duel_accept, duel_details and ' +

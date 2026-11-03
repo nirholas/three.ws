@@ -4120,6 +4120,10 @@
 			"dest": "/api/payments/evm/[action]?action=$1"
 		},
 		{
+			"src": "/api/me/wallet",
+			"dest": "/api/me/wallet"
+		},
+		{
 			"src": "/api/tx/submit",
 			"dest": "/api/tx/submit"
 		},
