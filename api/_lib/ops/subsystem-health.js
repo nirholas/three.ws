@@ -38,6 +38,7 @@ import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
 import { gatherX402SettleHealth } from './x402-settle-health.js';
 import { gatherForgeHealth } from './forge-health-sensor.js';
+import { gatherDatabaseStorageHealth } from './database-storage-health.js';
 import { gatherObjectStorageHealth } from './object-storage-health.js';
 import { gatherIndexLagHealth } from './index-lag.js';
 import { gatherHomeHealth } from './home-health.js';
@@ -644,6 +645,9 @@ function checkThreeTokenRail() {
 export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 	const checks = [
 		probeDb ? checkDatabase() : Promise.resolve({ name: 'database', label: 'Database (Neon)', status: 'unknown', detail: 'ping skipped' }),
+		// Size vs the retention high-water mark. Above it the write-heavy crons
+		// skip silently, so it gets its own signature. DB-gated.
+		probeDb ? gatherDatabaseStorageHealth() : Promise.resolve({ name: 'database_storage', label: 'Database storage vs high-water mark', status: 'unknown', detail: 'size read skipped' }),
 		Promise.resolve(checkCache()),
 		Promise.resolve(checkRateLimiter()),
 		Promise.resolve(checkHelius()),

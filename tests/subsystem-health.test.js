@@ -393,3 +393,43 @@ describe('classifySniperBeat', () => {
 		expect(classifySniperBeat(beat(30_000, { ...liveMeta, solvency: { state: 'unknown' } }), NOW).status).toBe('ok');
 	});
 });
+
+describe('database_storage subsystem', () => {
+	const top = [
+		{ table: 'a', mb: 900 },
+		{ table: 'b', mb: 500 },
+		{ table: 'c', mb: 300 },
+		{ table: 'd', mb: 10 },
+	];
+
+	it('is ok below 75% of the mark and names the top 3 tables', async () => {
+		const { classifyDatabaseStorage } = await import('../api/_lib/ops/database-storage-health.js');
+		const r = classifyDatabaseStorage({ sizeMb: 1000, markMb: 2000, topTables: top });
+		expect(r.status).toBe('ok');
+		expect(r.detail).toContain('a 900MB, b 500MB, c 300MB');
+		expect(r.detail).not.toContain('d 10MB');
+	});
+
+	it('is degraded from 75% up to the mark', async () => {
+		const { classifyDatabaseStorage } = await import('../api/_lib/ops/database-storage-health.js');
+		expect(classifyDatabaseStorage({ sizeMb: 1500, markMb: 2000 }).status).toBe('degraded');
+		expect(classifyDatabaseStorage({ sizeMb: 2000, markMb: 2000 }).status).toBe('degraded');
+	});
+
+	it('is down above the mark and carries the last retention run', async () => {
+		const { classifyDatabaseStorage } = await import('../api/_lib/ops/database-storage-health.js');
+		const lastRun = { at: '2026-11-03T12:00:00.000Z', size_before_mb: 2100, size_after_mb: 2090, deleted: 5 };
+		const r = classifyDatabaseStorage({ sizeMb: 2001, markMb: 2000, topTables: top, lastRun });
+		expect(r.status).toBe('down');
+		expect(r.detail).toContain('2026-11-03T12:00:00.000Z');
+		expect(r.hint).toMatch(/db-archive-table/);
+	});
+
+	it('reads the mark from DB_RETENTION_HIGH_WATER_MB and rolls up into the overall verdict', async () => {
+		const { highWaterMb } = await import('../api/_lib/ops/database-storage-health.js');
+		expect(highWaterMb({ DB_RETENTION_HIGH_WATER_MB: '20992' })).toBe(20992);
+		expect(highWaterMb({})).toBe(470);
+		const r = await gatherSubsystemHealth({ probeDb: false });
+		expect(r.subsystems.find((s) => s.name === 'database_storage')?.status).toBe('unknown');
+	});
+});

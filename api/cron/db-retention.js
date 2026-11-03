@@ -80,6 +80,8 @@ import { requireCron } from '../_lib/cron-auth.js';
 import { purgeExpiredActionLog } from '../_lib/home/privacy.js';
 import { purgeExpiredMcpSessions } from '../_lib/mcp-clients.js';
 import { getGcpAccessToken } from '../_lib/gcp-auth.js';
+import { cacheSet } from '../_lib/cache.js';
+import { LAST_RUN_CACHE_KEY } from '../_lib/ops/database-storage-health.js';
 import { createGcsStore, archiveSlice } from '../_lib/db-archive.js';
 import { ARCHIVED_TABLES } from '../_lib/db-archive-tables.js';
 
@@ -735,6 +737,22 @@ export default wrapCron(async (req, res) => {
 			{ signature: 'db:retention-pressure' },
 		);
 	}
+
+	// Last-run summary for the database_storage health subsystem. Best effort:
+	// a cache outage must not fail the sweep.
+	try {
+		await cacheSet(
+			LAST_RUN_CACHE_KEY,
+			{
+				at: new Date().toISOString(),
+				size_before_mb: sizeBeforeMb,
+				size_after_mb: sizeAfterMb,
+				archived: archive.tables.reduce((n, t) => n + (t.archived || 0), 0),
+				deleted: archive.tables.reduce((n, t) => n + (t.deleted || 0), 0),
+			},
+			7 * 86_400,
+		);
+	} catch { /* health detail only */ }
 
 	return json(res, 200, {
 		ok: true,
