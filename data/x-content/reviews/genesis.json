@@ -1,7 +1,7 @@
 {
 	"id": "genesis",
-	"contentHash": "a6e2cc4581b8123201494d0ad156b0e7ec2255d70ac9bd21c6f709a745796fe5",
-	"reviewedAt": "2026-11-02T23:48:14.341Z",
+	"contentHash": "59b5d015c49f20636a9c366b1b33038b81f2312ccf254718ebfe5e20b5f5d728",
+	"reviewedAt": "2026-11-03T05:46:17.264Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -147,7 +147,7 @@
 			],
 			"altText": []
 		},
-		"summary": "All claims are verified against the live page and docs, the voice contract is fully followed with no banned openings or dashes, and the reel frames match the post copy. The post is publication-ready unchanged.",
+		"summary": "The post is accurate, specific, and follows the house voice contract with no blocking issues. Every claim is verified against the live page or docs, the reel frames match the captions and show the real product, and the mechanism lead opens with the strongest true statement.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
