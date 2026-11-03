@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T05:02:16.915Z",
+	"generated_at": "2026-11-03T05:04:03.782Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -95,6 +95,16 @@
 			"title": "Smoother edges on every 3D model and avatar viewer",
 			"summary": "Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.",
 			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The A3S streaming avatar no longer turns into jagged shards as it refines",
+			"summary": "On the streaming avatar comparison page the A3S panel showed the right avatar for a moment, then collapsed into garbled, spiky geometry as the finer layers arrived, and sometimes blanked with a console error. The refinement step copied the wrong bytes out of the coarse model it was growing, so the original vertices were scrambled. It now reads those vertices correctly and refreshes the cached bounds, so the avatar sharpens in place and ends identical to the classic panel.",
+			"link": "/stream",
 			"tags": [
 				"fix"
 			]

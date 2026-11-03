@@ -79,6 +79,23 @@ export function indexPrimitives(root) {
 }
 
 /**
+ * Copy the first `elements` elements of an attribute into a tightly packed
+ * array. GLTFLoader returns an InterleavedBufferAttribute when accessors share
+ * one strided bufferView (the packer's base layer does), and for those `.array`
+ * is the whole shared buffer, so it has to be read through stride and offset.
+ */
+function packedPrefix(attribute, elements, stride) {
+	const length = Math.min(attribute.count, elements) * stride;
+	if (!attribute.isInterleavedBufferAttribute) return attribute.array.subarray(0, length);
+	const { data, offset } = attribute;
+	const out = new data.array.constructor(length);
+	for (let i = 0, e = 0; e < length; i++) {
+		for (let c = 0; c < stride; c++, e++) out[e] = data.array[i * data.stride + offset + c];
+	}
+	return out;
+}
+
+/**
  * Grow one geometry attribute so it covers `newVertexStart + newVertexCount`
  * vertices, keeping the bytes the client already holds.
  */
@@ -89,7 +106,7 @@ function growAttribute(THREE, geometry, name, meta, bytes, start, count) {
 	const total = (start + count) * stride;
 	const existing = geometry.getAttribute(name);
 	const merged = new TypedArray(total);
-	if (existing) merged.set(existing.array.subarray(0, Math.min(existing.array.length, start * stride)), 0);
+	if (existing) merged.set(packedPrefix(existing, start, stride), 0);
 	merged.set(incoming.subarray(0, count * stride), start * stride);
 	geometry.setAttribute(name, new THREE.BufferAttribute(merged, stride, meta.normalized));
 }
@@ -103,7 +120,7 @@ function growMorphAttribute(THREE, geometry, targetIndex, semantic, meta, bytes,
 	const list = (geometry.morphAttributes[slot] ||= []);
 	const existing = list[targetIndex];
 	const merged = new TypedArray((start + count) * stride);
-	if (existing) merged.set(existing.array.subarray(0, Math.min(existing.array.length, start * stride)), 0);
+	if (existing) merged.set(packedPrefix(existing, start, stride), 0);
 	merged.set(incoming.subarray(0, count * stride), start * stride);
 	list[targetIndex] = new THREE.BufferAttribute(merged, stride, meta.normalized);
 }
@@ -132,6 +149,13 @@ export function applyPrimitivePatch(THREE, mesh, entry, payload) {
 	geometry.setIndex(new THREE.BufferAttribute(typedArrayFrom(indexBytes, entry.indices.componentType), 1));
 	geometry.computeBoundingSphere();
 	geometry.computeBoundingBox();
+	// A SkinnedMesh caches its own posed bounds, measured from the vertices the
+	// base layer shipped. Left alone, frustum culling keeps using that coarse
+	// sphere. Nulling it makes the renderer recompute from the refined mesh.
+	if (mesh.isSkinnedMesh) {
+		mesh.boundingSphere = null;
+		mesh.boundingBox = null;
+	}
 }
 
 /**
