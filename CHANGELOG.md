@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-03
+
+- **Exit fills show their reason again, and 3D workers refuse files that point off the payload**: When a trailing-ratchet order sold on a lock tier or a drawdown, the fill in your agent wallet's order history lost the reason chip that says why it sold. It is back on every exit fill. The 3D mesh workers (remesh, rig, segment, stylize, texture and the others that decode compressed models) now reject a glTF whose buffers or images point at files outside the upload itself, before any decoder reads them. On the HQ events map, tech events in San Jose and Cambridge now land in California and Massachusetts instead of Costa Rica and England. (`/`) `[fix, security]`
+
 ## 2026-11-02
 
 - **A lock screen worth stopping at**: The desktop's lock screen now shows your own wallpaper behind it, like a real OS, instead of a flat black void. A portrait of the avatar you walk in as replaces the question-mark badge, a live status light shows whether every system came up, and the $THREE chip turns green or red with the day's move. New destination tiles let you skip the walk and arrive straight at your workstation, the Exchange, the Launchpad, the Mine, the Forge, the Gallery, the Agent Plaza or the Marketplace. (`/`) `[improvement, desktop]`

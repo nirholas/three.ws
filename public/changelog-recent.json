@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-11-02T22:26:09.512Z",
+	"generated_at": "2026-11-03T02:22:49.374Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4263,
+	"total": 4264,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Exit fills show their reason again, and 3D workers refuse files that point off the payload",
+			"summary": "When a trailing-ratchet order sold on a lock tier or a drawdown, the fill in your agent wallet's order history lost the reason chip that says why it sold. It is back on every exit fill. The 3D mesh workers (remesh, rig, segment, stylize, texture and the others that decode compressed models) now reject a glTF whose buffers or images point at files outside the upload itself, before any decoder reads them. On the HQ events map, tech events in San Jose and Cambridge now land in California and Massachusetts instead of Costa Rica and England.",
+			"link": "/",
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
 		{
 			"date": "2026-11-02",
 			"type": "update",
@@ -1537,16 +1548,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Prepaid credit plans and free trials for paid MCP tools",
-			"summary": "Buy a credit bundle or a 24-hour or 30-day time pass at /mcp-plans and call paid MCP tools without paying each call over x402. Every account gets 3 free calls per tool. Credits are debited before a call, refunded when the tool errors, and every result reports creditsUsed and creditsRemaining. A drained plan falls back to the per-call payment-required error.",
-			"link": "/mcp-plans",
-			"tags": [
-				"feature"
 			]
 		}
 	]
