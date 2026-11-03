@@ -2058,13 +2058,10 @@ if (arCta) {
 	});
 }
 
-// ── Recording (6s composite clip → Web Share API or download) ────────────
-// Composites the live camera feed (when AR is active) plus the WebGL canvas
-// into a single offscreen canvas, runs MediaRecorder on its captureStream,
-// and hands the resulting blob to navigator.share, the IRL viral loop.
-const RECORD_SECONDS = 6;
-let recording = false;
-
+// ── Capture (screenshot + 10s clip → share sheet) ────────────────────────
+// walk-capture.js owns the whole loop: watermarked PNG, MediaRecorder clip with
+// an ffmpeg.wasm MP4 fallback, and the download / X / Farcaster / native-share
+// sheet. The AR camera feed is composited behind the WebGL canvas when AR is on.
 function pickRecorderMime() {
 	if (typeof MediaRecorder === 'undefined') return null;
 	const candidates = [
@@ -2082,141 +2079,23 @@ function pickRecorderMime() {
 	return '';
 }
 
-async function startRecording() {
-	if (recording) return;
-	if (typeof MediaRecorder === 'undefined') {
-		setStatus('recording not supported on this browser', { error: true });
-		return;
-	}
-	const mime = pickRecorderMime();
-	if (mime === null) {
-		setStatus('recording not supported on this browser', { error: true });
-		return;
-	}
-
-	const w = renderer.domElement.width;
-	const h = renderer.domElement.height;
-	const compose = document.createElement('canvas');
-	compose.width = w;
-	compose.height = h;
-	const cctx = compose.getContext('2d');
-	if (!cctx) {
-		setStatus('recording context unavailable', { error: true });
-		return;
-	}
-
-	const stream = compose.captureStream(30);
-	let recorder;
-	try {
-		recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
-	} catch (err) {
-		setStatus(`recorder error: ${err?.message ?? err}`, { error: true });
-		return;
-	}
-	const chunks = [];
-	recorder.ondataavailable = (e) => {
-		if (e.data && e.data.size) chunks.push(e.data);
-	};
-
-	recording = true;
-	recordBtn?.setAttribute('data-recording', 'true');
-	recordStatus?.classList.add('is-visible');
-	if (recordStatusLabel) recordStatusLabel.textContent = `REC ${RECORD_SECONDS}s`;
-
-	const startMs = performance.now();
-	const renderCanvas = renderer.domElement;
-
-	function paint() {
-		if (!recording) return;
-		// 1. Camera feed (covers in AR; opaque dark fill otherwise).
-		if (arActive && video.readyState >= 2 && video.videoWidth > 0) {
-			const vw = video.videoWidth;
-			const vh = video.videoHeight;
-			const scale = Math.max(w / vw, h / vh);
-			const dw = vw * scale;
-			const dh = vh * scale;
-			cctx.drawImage(video, (w - dw) / 2, (h - dh) / 2, dw, dh);
-		} else {
-			cctx.fillStyle = '#0a0a0a';
-			cctx.fillRect(0, 0, w, h);
-		}
-		// 2. Composite the 3D canvas on top (transparent regions show camera).
-		cctx.drawImage(renderCanvas, 0, 0, w, h);
-
-		const elapsed = (performance.now() - startMs) / 1000;
-		const remaining = Math.max(0, Math.ceil(RECORD_SECONDS - elapsed));
-		if (recordStatusLabel) recordStatusLabel.textContent = `REC ${remaining}s`;
-
-		if (elapsed < RECORD_SECONDS) {
-			requestAnimationFrame(paint);
-		} else {
-			try {
-				recorder.stop();
-			} catch {}
-		}
-	}
-
-	recorder.onstop = async () => {
-		recording = false;
-		recordBtn?.setAttribute('data-recording', 'false');
-		recordStatus?.classList.remove('is-visible');
-
-		const isMp4 = (recorder.mimeType || mime || '').includes('mp4');
-		const ext = isMp4 ? 'mp4' : 'webm';
-		const blobType = isMp4 ? 'video/mp4' : 'video/webm';
-		const blob = new Blob(chunks, { type: blobType });
-		const filename = `three-ws-walk-${Date.now()}.${ext}`;
-		const file = new File([blob], filename, { type: blobType });
-
-		const canShareFile = !!(navigator.canShare && navigator.canShare({ files: [file] }));
-		if (canShareFile) {
-			try {
-				await navigator.share({
-					files: [file],
-					title: 'My 3D agent on three.ws',
-					text: 'Walking around on three.ws, your AI, in the real world.',
-				});
-				setStatus('shared');
-				return;
-			} catch (err) {
-				// User cancelled or share failed, fall through to download.
-				if (err?.name !== 'AbortError') {
-					log.warn('[walk] share failed, falling back to download:', err);
-				} else {
-					setStatus('share cancelled');
-					return;
-				}
-			}
-		}
-
-		// Download fallback (desktop, or mobile browsers without file share).
-		const url = URL.createObjectURL(blob);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = filename;
-		document.body.appendChild(a);
-		a.click();
-		a.remove();
-		setTimeout(() => URL.revokeObjectURL(url), 4000);
-		setStatus('clip saved');
-	};
-
-	recorder.onerror = (e) => {
-		log.error('[walk] recorder error:', e);
-		recording = false;
-		recordBtn?.setAttribute('data-recording', 'false');
-		recordStatus?.classList.remove('is-visible');
-		setStatus('recording failed', { error: true });
-	};
-
-	recorder.start();
-	requestAnimationFrame(paint);
-}
+const walkCapture = createWalkCapture({
+	renderer,
+	scene,
+	camera,
+	video,
+	isArActive: () => arActive,
+	getAvatarId: () => selectedAvatarId,
+	setStatus,
+	haptics,
+	recordBtn,
+	recordStatus,
+	recordStatusLabel,
+});
 
 if (recordBtn) {
 	recordBtn.addEventListener('click', () => {
-		if (recording) return; // single shot, must finish first
-		startRecording();
+		walkCapture.toggleRecording();
 		hideArCta(); // recording is a user gesture; if they hit record, dismiss the CTA
 	});
 }
@@ -4263,19 +4142,6 @@ async function initEnvironments() {
 	currentEnvName = resolveEnvName(walkManifest, want);
 	buildEnvPicker();
 	await applyEnvironment(currentEnvName, { initial: true });
-}
-
-// ── Screenshot capture ───────────────────────────────────────────────────
-function takeScreenshot() {
-	renderer.render(scene, camera); // ensure latest frame
-	const dataUrl = renderer.domElement.toDataURL('image/png');
-	const a = document.createElement('a');
-	a.href = dataUrl;
-	a.download = `three-ws-walk-${Date.now()}.png`;
-	document.body.appendChild(a);
-	a.click();
-	a.remove();
-	setStatus('Screenshot saved');
 }
 
 // ── GIF/frame recording ─────────────────────────────────────────────────
