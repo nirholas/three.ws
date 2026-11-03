@@ -111,6 +111,7 @@ Add sign-in later for the account's agents, memory, wallets and x402 tools, thro
 | Server | Endpoint | Auth |
 |---|---|---|
 | three.ws | https://three.ws/api/mcp | OAuth 2.1 (end-user), API key (server-to-server), or x402 pay-per-call |
+| three.ws (unified) | https://three.ws/mcp | OAuth 2.1 (one sign-in for every tool), API key (server-to-server), or x402 pay-per-call |
 | 3D Studio | https://three.ws/api/mcp-3d | OAuth 2.1 or x402 pay-per-call |
 | 3D Studio (free) | https://three.ws/api/mcp-studio | none |
 | Grok | https://three.ws/api/mcp-grok | OAuth 2.1 or a connector API key for the account's agent tools; none needed for the free 3D tools |
