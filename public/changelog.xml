@@ -47,6 +47,14 @@
 			<description>How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.</description>
 		</item>
 		<item>
+			<title>Docs · NVIDIA Inception member perk</title>
+			<link>https://three.ws/docs/nvidia-inception-perk</link>
+			<guid isPermaLink="false">2026-11-03:Docs · NVIDIA Inception member perk</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How NVIDIA Inception startups apply for $25 of prepaid three.ws credit, why each application is reviewed by a person, and how approval is granted through the credit ledger.</description>
+		</item>
+		<item>
 			<title>3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset</title>
 			<link>https://three.ws/live</link>
 			<guid isPermaLink="false">2026-11-03:3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset</guid>
@@ -127,6 +135,14 @@
 			<description>For a stretch of 3 November the database sat past its storage mark, and the background jobs that refresh coin intel, the launcher feed, smart-money rollups and wallet reputation paused rather than risk filling it. They are running again. The real cause was seven big history tables (on-chain agent events, oracle training rows, the settlement log, firewall decisions, usage events, sniper verdicts and ops alerts) that nothing ever trimmed. Their older rows are now copied to cold storage on Google Cloud, checked against a fingerprint, and only then removed from the live database, so nothing is lost and any month can be restored. Rows that are still needed stay put: billing records, coins still waiting for a label, and alerts nobody has acknowledged. Lifetime settlement totals on the x402 ring keep counting pruned days through a daily rollup, so the published numbers never shrink. The platform health check now reports database storage and raises an alert at 75 percent of the mark, well before anything pauses.</description>
 		</item>
 		<item>
+			<title>Editable parts engines are ready to switch on, with a commercially licensed background cutter</title>
+			<link>https://three.ws/docs/forge</link>
+			<guid isPermaLink="false">2026-11-03:Editable parts engines are ready to switch on, with a commercially licensed background cutter</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The two engines behind Editable parts (PartCrafter, which turns one photo into separately named parts, and HoloPart, which fills in the hidden side of each part) now build cleanly with every self-check passing, and their model weights are already in place on our own storage. PartCrafter's original background-removal step relied on a model licensed for non-commercial use only, so it now uses BiRefNet (MIT) instead, running on the same GPU. A real photo has been turned into named parts end to end. Both engines go live with the next owner-approved deploy.</description>
+		</item>
+		<item>
 			<title>Every partner logo now sits in the site footer</title>
 			<link>https://three.ws/partners</link>
 			<guid isPermaLink="false">2026-11-03:Every partner logo now sits in the site footer</guid>
@@ -175,6 +191,14 @@
 			<description>In production the My cards view of the /play card gacha listed cards with blank photos and no grade or value, and sometimes failed to load at all. Card details now load from a backup Arweave gateway when the main one is busy, and the wallet scan uses the platform's full set of Solana providers instead of the public node alone. Other pages that read Arweave files (agent cards, token details) also skip two gateways that had stopped answering.</description>
 		</item>
 		<item>
+			<title>NVIDIA Inception startups can apply for free generation credit</title>
+			<link>https://three.ws/nvidia</link>
+			<guid isPermaLink="false">2026-11-03:NVIDIA Inception startups can apply for free generation credit</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application against your Inception profile or contact email before the credit lands in your balance. Goes live with the next owner-approved deploy, after its database migration is applied.</description>
+		</item>
+		<item>
 			<title>Operators can extend, rename or end the live event without a deploy</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-03:Operators can extend, rename or end the live event without a deploy</guid>
@@ -215,6 +239,14 @@
 			<description>The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:&lt;network&gt;, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.</description>
 		</item>
 		<item>
+			<title>Rejoining /play after a dropped connection puts you back where you stood</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-03:Rejoining /play after a dropped connection puts you back where you stood</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A player whose connection dropped now comes back at the spot they left instead of frozen at spawn, and the world shows no ghost copy of them. Players in voice chat who mute now show a muted marker to everyone else, a long unbroken chat line such as a pasted address wraps inside the speech bubble, and a boutique purchase can only be started once while the wallet is signing, so a second click never opens a second $THREE payment. Event jobs stay closed outside the live window, including when the event config cannot be reached.</description>
+		</item>
+		<item>
 			<title>See, edit and delete everything your agents have learned about you</title>
 			<link>https://three.ws/settings/memory</link>
 			<guid isPermaLink="false">2026-11-03:See, edit and delete everything your agents have learned about you</guid>
@@ -237,6 +269,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>One slow GPU worker could trip a shared safety breaker and make every other 3D lane report as unreachable for 30 seconds at a time. Each worker now has its own breaker, and status checks no longer block new jobs, so a generation that is queued behind a busy worker is accepted instead of being rejected.</description>
+		</item>
+		<item>
+			<title>The /play world holds up better for Meetup #3: lost connections, screen readers and Safari</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-03:The /play world holds up better for Meetup #3: lost connections, screen readers and Safari</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Ahead of Community Meetup #3 we audited the /play world on phones, in Safari and with a keyboard and screen reader, and fixed what we found. When your connection drops, chat you typed stays in the box, party invites and party chat tell you they were not sent, the Jobs Board says the room is offline instead of loading forever, and paid shop and wheel purchases are resent once you reconnect rather than left hanging. The sign-in gate now says when the community service is unreachable instead of showing &quot;Failed to fetch&quot;. Escape closes the top panel every time, gold and cash changes are read out to screen readers, typing in a field no longer triggers shortcuts, and nameplates and damage numbers sit on a dark backing so they stay readable over a bright scene. The signature wall retries if its first load fails, Safari no longer logs a connection error on every join, and the trending coin board keeps showing coins when its upstream source is unavailable.</description>
 		</item>
 		<item>
 			<title>The $THREE balance gate now fails closed during an RPC outage</title>

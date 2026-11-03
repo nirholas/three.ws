@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T18:23:30.170Z",
+	"generated_at": "2026-11-03T20:16:40.946Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -8022,6 +8022,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/nvidia-inception-perk",
+					"title": "Docs · NVIDIA Inception member perk",
+					"description": "How NVIDIA Inception startups apply for $25 of prepaid three.ws credit, why each application is reviewed by a person, and how approval is granted through the credit ledger.",
+					"added": "2026-11-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{

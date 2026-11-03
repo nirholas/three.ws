@@ -12,12 +12,40 @@
 		},
 		{
 			"date": "2026-11-03",
+			"title": "The /play world holds up better for Meetup #3: lost connections, screen readers and Safari",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"summary": "Ahead of Community Meetup #3 we audited the /play world on phones, in Safari and with a keyboard and screen reader, and fixed what we found. When your connection drops, chat you typed stays in the box, party invites and party chat tell you they were not sent, the Jobs Board says the room is offline instead of loading forever, and paid shop and wheel purchases are resent once you reconnect rather than left hanging. The sign-in gate now says when the community service is unreachable instead of showing \"Failed to fetch\". Escape closes the top panel every time, gold and cash changes are read out to screen readers, typing in a field no longer triggers shortcuts, and nameplates and damage numbers sit on a dark backing so they stay readable over a bright scene. The signature wall retries if its first load fails, Safari no longer logs a connection error on every join, and the trending coin board keeps showing coins when its upstream source is unavailable.",
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Forged items in /play land where you place their hologram",
 			"tags": [
 				"feature"
 			],
 			"summary": "Forging an item inside a /play world now gives you a hologram to place straight away. It shows the real forge progress above it with a Cancel button, and when the model is ready it materializes on that exact spot for everyone in the server. If a forge fails, the hologram becomes a marker with the reason, Retry and Dismiss, and nothing comes out of your build budget. Forged models are held to a size ceiling that suits your device (phones get a lighter one), oversized results are simplified automatically, and the world itself refuses models it cannot load or that are too large. The Forge form lists what you made this session and gives an honest wait: about 90 seconds usually, up to 6 minutes when the lane is busy.",
 			"link": "/play"
+		},
+		{
+			"date": "2026-11-03",
+			"title": "NVIDIA Inception startups can apply for free generation credit",
+			"tags": [
+				"feature"
+			],
+			"summary": "If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application against your Inception profile or contact email before the credit lands in your balance. Goes live with the next owner-approved deploy, after its database migration is applied.",
+			"link": "/nvidia"
+		},
+		{
+			"date": "2026-11-03",
+			"title": "Editable parts engines are ready to switch on, with a commercially licensed background cutter",
+			"tags": [
+				"infra"
+			],
+			"summary": "The two engines behind Editable parts (PartCrafter, which turns one photo into separately named parts, and HoloPart, which fills in the hidden side of each part) now build cleanly with every self-check passing, and their model weights are already in place on our own storage. PartCrafter's original background-removal step relied on a model licensed for non-commercial use only, so it now uses BiRefNet (MIT) instead, running on the same GPU. A real photo has been turned into named parts end to end. Both engines go live with the next owner-approved deploy.",
+			"link": "/docs/forge"
 		},
 		{
 			"date": "2026-11-03",

@@ -5293,6 +5293,14 @@
 					"added": "2026-07-21"
 				},
 				{
+					"path": "/docs/nvidia-inception-perk",
+					"title": "Docs · NVIDIA Inception member perk",
+					"description": "How NVIDIA Inception startups apply for $25 of prepaid three.ws credit, why each application is reviewed by a person, and how approval is granted through the credit ledger.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-03"
+				},
+				{
 					"path": "/docs/3d-asset-pipeline",
 					"title": "Docs · The 3D asset pipeline (FBX, GLB, and clip JSON)",
 					"description": "The canonical reference for moving a 3D character or motion from a source file to something the browser renders and animates: the three formats three.ws works with (FBX, GLB, and three.js clip JSON), how each converts into the others, and what the platform does with them today.",

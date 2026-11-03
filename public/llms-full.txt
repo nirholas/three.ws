@@ -4046,6 +4046,12 @@ URL: https://three.ws/docs/nvidia-inception
 
 three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.
 
+### Docs · NVIDIA Inception member perk
+
+URL: https://three.ws/docs/nvidia-inception-perk
+
+How NVIDIA Inception startups apply for $25 of prepaid three.ws credit, why each application is reviewed by a person, and how approval is granted through the credit ledger.
+
 ### Docs · The 3D asset pipeline (FBX, GLB, and clip JSON)
 
 URL: https://three.ws/docs/3d-asset-pipeline

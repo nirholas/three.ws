@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T19:49:09.647Z",
+	"generated_at": "2026-11-03T20:16:41.019Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -52,6 +52,16 @@
 			"title": "Docs · Coin Control",
 			"summary": "How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.",
 			"link": "/docs/coin-control",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Docs · NVIDIA Inception member perk",
+			"summary": "How NVIDIA Inception startups apply for $25 of prepaid three.ws credit, why each application is reviewed by a person, and how approval is granted through the credit ledger.",
+			"link": "/docs/nvidia-inception-perk",
 			"tags": [
 				"launch"
 			]
@@ -164,6 +174,16 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "Editable parts engines are ready to switch on, with a commercially licensed background cutter",
+			"summary": "The two engines behind Editable parts (PartCrafter, which turns one photo into separately named parts, and HoloPart, which fills in the hidden side of each part) now build cleanly with every self-check passing, and their model weights are already in place on our own storage. PartCrafter's original background-removal step relied on a model licensed for non-commercial use only, so it now uses BiRefNet (MIT) instead, running on the same GPU. A real photo has been turned into named parts end to end. Both engines go live with the next owner-approved deploy.",
+			"link": "/docs/forge",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "Every partner logo now sits in the site footer",
 			"summary": "The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.",
 			"link": "/partners",
@@ -226,6 +246,16 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "NVIDIA Inception startups can apply for free generation credit",
+			"summary": "If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application against your Inception profile or contact email before the credit lands in your balance. Goes live with the next owner-approved deploy, after its database migration is applied.",
+			"link": "/nvidia",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "Operators can extend, rename or end the live event without a deploy",
 			"summary": "A new authed override, set with npm run event:override or POST /api/event-config, changes the live event's window or name on top of the baked-in schedule. The countdown, the event leaderboard and the game server's quest gate all follow it within about a minute, and fall back to the static schedule if the API is unreachable. Every change is validated with the same rules as the deploy gate and audit-logged.",
 			"link": null,
@@ -278,6 +308,16 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "Rejoining /play after a dropped connection puts you back where you stood",
+			"summary": "A player whose connection dropped now comes back at the spot they left instead of frozen at spawn, and the world shows no ghost copy of them. Players in voice chat who mute now show a muted marker to everyone else, a long unbroken chat line such as a pasted address wraps inside the speech bubble, and a boutique purchase can only be started once while the wallet is signing, so a second click never opens a second $THREE payment. Event jobs stay closed outside the live window, including when the event config cannot be reached.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "See, edit and delete everything your agents have learned about you",
 			"summary": "A new Agent memory page lists the profile your agents keep about you, every memory they saved and the skills they drafted from experience. Edit or delete any line with an undo, turn learning off with one switch, set how often agents review what to keep, and review drafted skills with a diff, version history and rollback. A marketplace transfer now also deletes an agent's drafted skills and session summaries.",
 			"link": "/settings/memory",
@@ -304,6 +344,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The /play world holds up better for Meetup #3: lost connections, screen readers and Safari",
+			"summary": "Ahead of Community Meetup #3 we audited the /play world on phones, in Safari and with a keyboard and screen reader, and fixed what we found. When your connection drops, chat you typed stays in the box, party invites and party chat tell you they were not sent, the Jobs Board says the room is offline instead of loading forever, and paid shop and wheel purchases are resent once you reconnect rather than left hanging. The sign-in gate now says when the community service is unreachable instead of showing \"Failed to fetch\". Escape closes the top panel every time, gold and cash changes are read out to screen readers, typing in a field no longer triggers shortcuts, and nameplates and damage numbers sit on a dark backing so they stay readable over a bright scene. The signature wall retries if its first load fails, Safari no longer logs a connection error on every join, and the trending coin board keeps showing coins when its upstream source is unavailable.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
