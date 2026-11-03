@@ -124,13 +124,38 @@
 		.disclaimer a { color: var(--nv-soft); text-decoration: underline; text-underline-offset: 2px; }
 		.disclaimer a:hover { text-decoration-thickness: 2px; }
 
+
+		/* Inception member perk */
+		.perk { background: var(--panel); border: 1px solid rgba(118,185,0,.3); border-radius: 18px; padding: 28px; }
+		.perk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 26px; }
+		.perk-grid div { font-size: 14px; color: var(--muted); line-height: 1.55; }
+		.perk-grid strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 4px; }
+		.perk-state { border-top: 1px solid var(--border); padding-top: 24px; }
+		.perk-state p { color: var(--muted); font-size: 14.5px; margin-bottom: 14px; max-width: 640px; }
+		.perk-state p strong { color: var(--text); }
+		.perk-form { display: grid; gap: 16px; max-width: 640px; }
+		.perk-form label { display: grid; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 500; }
+		.perk-form input, .perk-form textarea { font: inherit; font-size: 15px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; width: 100%; transition: border-color var(--duration-fast); }
+		.perk-form input:hover, .perk-form textarea:hover { border-color: #35471f; }
+		.perk-form input:focus-visible, .perk-form textarea:focus-visible { outline: 2px solid var(--nv); outline-offset: 1px; border-color: var(--nv); }
+		.perk-form [aria-invalid="true"] { border-color: #e5484d; }
+		.perk-form .hint { font-weight: 400; font-size: 12.5px; }
+		.perk-form .err { color: #ff8a8e; font-size: 12.5px; font-weight: 400; min-height: 0; }
+		.perk-form .err:empty { display: none; }
+		.perk-banner { border-radius: 10px; padding: 12px 16px; font-size: 14px; margin-bottom: 16px; max-width: 640px; }
+		.perk-banner.bad { background: rgba(229,72,77,.1); border: 1px solid rgba(229,72,77,.4); color: #ffb3b6; }
+		.perk-banner.good { background: rgba(118,185,0,.1); border: 1px solid rgba(118,185,0,.4); color: var(--nv-soft); }
+		.btn[disabled] { opacity: .55; cursor: progress; }
+		.perk-skel { height: 14px; width: 60%; border-radius: 6px; background: linear-gradient(90deg, var(--panel2), #20301a, var(--panel2)); background-size: 200% 100%; animation: perk-shimmer 1.4s linear infinite; }
+		@keyframes perk-shimmer { to { background-position: -200% 0; } }
+
 		@media (max-width: 720px) {
 			main { padding: 52px 20px 96px; }
 			.badge-plate img { width: 210px; }
 			th, td { padding: 11px 14px; }
 		}
 		@media (prefers-reduced-motion: reduce) {
-			* { transition: none !important; }
+			* { transition: none !important; animation: none !important; }
 		}
 	</style>
 
@@ -167,6 +192,7 @@
 			Generate one free
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
 		</a>
+		<a href="#inception-perk" class="btn btn-sec">Inception member perk</a>
 		<a href="/docs/nvidia-models" class="btn btn-sec" data-i18n="nvidia_index.the_model_map">The model map</a>
 		<a href="/blog/image-to-3d-on-nvidia-l4-and-blackwell" class="btn btn-sec" data-i18n="nvidia_index.engineering_post">Engineering post</a>
 		<a href="/docs/nvidia-inception" class="btn btn-sec" data-i18n="nvidia_index.about_the_membership">About the membership</a>
@@ -302,6 +328,25 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 		</div>
 	</section>
 
+	<section id="inception-perk" aria-labelledby="perk-h">
+		<h2 id="perk-h">Free generation for NVIDIA Inception members.</h2>
+		<p class="sub">
+			The free lane above needs no account. If your startup is in NVIDIA Inception, apply here for prepaid
+			credits on top of it, usable on the higher-quality and game-ready lanes.
+		</p>
+		<div class="perk">
+			<div class="perk-grid">
+				<div><strong>$25 of prepaid credit</strong>Granted to your three.ws account on approval. It spends on every metered lane, at the same prices as everyone else.</div>
+				<div><strong>Reviewed by a person</strong>NVIDIA has no public way to verify membership, so we check your Inception profile or reply to your contact email before approving.</div>
+				<div><strong>No obligation</strong>No card, no wallet, no contract.</div>
+			</div>
+			<div class="perk-state" id="perk-root" aria-live="polite">
+				<div class="perk-skel" aria-hidden="true"></div>
+				<noscript><p>Applying needs JavaScript. Or send the details through <a href="/support">support</a>.</p></noscript>
+			</div>
+		</div>
+	</section>
+
 	<section>
 		<h2 data-i18n="nvidia_index.read_next">Read next.</h2>
 		<p class="sub" data-i18n="nvidia_index.two_tutorials_you_can_follow_end_to">Two tutorials you can follow end to end, and two deeper pieces on how the stack was built.</p>
@@ -385,6 +430,7 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 
 <div id="footer-container"></div>
 
+<script type="module" src="/src/inception-perk.js"></script>
 <script src="/brand.js" defer></script>
 <script src="/footer.js"></script>
 <!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

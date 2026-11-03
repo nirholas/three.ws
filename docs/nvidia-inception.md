@@ -54,6 +54,7 @@ speaking/poster route and should not be described as a Pavilion application.
 
 ## Related
 
+- [Inception member perk](./nvidia-inception-perk.md): the $25 prepaid credit other Inception startups can apply for on three.ws
 - [NVIDIA visibility map](./nvidia-visibility-map.md): every NVIDIA surface where three.ws can earn recognition, what each one requires, and which membership benefits are still unclaimed
 - [NVIDIA models on three.ws](/docs/nvidia-models) — the free inference layer, model by model
 - [The generator was never the hard part](/docs/nvidia-nemotron-spotlight): our Nemotron Nano write-up, published on the NVIDIA Developer Forums
