@@ -79,6 +79,7 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:net';
 import { spawn } from 'node:child_process';
 import { get as httpGet } from 'node:http';
+import { get as httpsGet } from 'node:https';
 import { chromium } from 'playwright';
 import { isIgnorableConsole, isDevOnlyAsset } from './lib/console-noise.mjs';
 
@@ -129,7 +130,10 @@ function loadRoutes({ includeBlog }) {
 // ── Dev server ───────────────────────────────────────────────────────────────
 function probe(url, timeoutMs = 2000) {
 	return new Promise((resolve) => {
-		const req = httpGet(url, (res) => {
+		// AUDIT_BASE=https://three.ws sweeps production directly, so the probe
+		// speaks whichever protocol the base uses.
+		const get = url.startsWith('https:') ? httpsGet : httpGet;
+		const req = get(url, (res) => {
 			res.resume();
 			resolve(res.statusCode || 0);
 		});
