@@ -127,6 +127,17 @@ describe('job queue', () => {
 		expect((await nodes.getJob(jobId)).status).toBe('failed');
 	});
 
+	it('refuses a failure report for a job that already completed', async () => {
+		const jobId = `job_donefail_${Math.random().toString(36).slice(2)}`;
+		await nodes.enqueueJob({ capability: 'cap-donefail', model: 'm', input: { text: 'hi' }, jobId });
+		await nodes.claimJob({ capability: 'cap-donefail', publicKey: identity.publicKey });
+		await nodes.completeJob(jobId, { publicKey: identity.publicKey, output: { a: 1 }, receipt: {}, startedAt: 1, finishedAt: 2 });
+
+		const res = await nodes.failJob(jobId, { publicKey: identity.publicKey, error: 'late' });
+		expect(res).toMatchObject({ ok: false, status: 409, error: 'job_not_running' });
+		expect((await nodes.getJob(jobId)).status).toBe('done');
+	});
+
 	it('404s a result for a job that never existed', async () => {
 		expect(await nodes.completeJob('job_nope', { publicKey: identity.publicKey, output: {}, receipt: {}, startedAt: 1, finishedAt: 2 }))
 			.toMatchObject({ ok: false, status: 404 });

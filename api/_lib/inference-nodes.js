@@ -260,6 +260,7 @@ export async function failJob(jobId, { publicKey, error: errMsg }) {
 	const job = await getJob(jobId);
 	if (!job) return { ok: false, status: 404, error: 'job_not_found' };
 	if (job.claimedBy !== publicKey) return { ok: false, status: 403, error: 'not_job_owner' };
+	if (job.status !== 'running') return { ok: false, status: 409, error: 'job_not_running' };
 	job.status = 'failed';
 	job.error = String(errMsg || '').slice(0, 500);
 	job.completedAt = Date.now();

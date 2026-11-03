@@ -42,6 +42,12 @@ export default wrap(async (req, res) => {
 		return error(res, 404, 'node_not_registered', 'register via POST /api/nodes/register first');
 	}
 
+	const declared = Array.isArray(registered.capabilities)
+		&& registered.capabilities.some((c) => c?.capability === capability);
+	if (!declared) {
+		return error(res, 403, 'capability_not_registered', 'poll only for capabilities this node registered');
+	}
+
 	const job = await claimJob({ capability, publicKey: node });
 	return json(res, 200, { job: job || null });
 });
