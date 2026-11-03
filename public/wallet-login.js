@@ -40,7 +40,6 @@ function safeNext(raw, fallback = '/dashboard') {
 	if (!raw.startsWith('/') || raw.startsWith('//')) return fallback;
 	if (raw.includes('\\')) return fallback;
 	// Control characters can smuggle a scheme past naive prefix checks.
-	// eslint-disable-next-line no-control-regex
 	if (/[\u0000-\u001f]/.test(raw)) return fallback;
 	return raw;
 }

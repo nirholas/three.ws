@@ -62,7 +62,6 @@
 	// safeNavUrl: inline copy of src/safe-next.js (tests/safe-next.test.js drift-guards it).
 function safeNavUrl(raw, fallback = '/') {
 	if (typeof raw !== 'string' || raw.length === 0) return fallback;
-	// eslint-disable-next-line no-control-regex
 	if (raw.includes('\\') || /[\u0000-\u001f]/.test(raw)) return fallback;
 	// Same-origin relative path.
 	if (raw.startsWith('/') && !raw.startsWith('//')) return raw;
