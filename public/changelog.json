@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T19:06:38.517Z",
+	"generated_at": "2026-11-03T19:09:27.662Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -175,6 +175,16 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "LiveKit avatars keep playing for visitors without a microphone",
+			"summary": "An <agent-3d voice=\"livekit\"> embed used to report a failed connection whenever the visitor had no microphone or said no to the permission prompt, even though the room was joined and the avatar was already talking. It now joins in listen-only mode: the agent's voice plays and the avatar keeps lip-syncing and gesturing. Visitors who do have a microphone can still talk back.",
+			"link": "/docs/voice-framework-integrations",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "My cards reaches every card in a big wallet, with search",
 			"summary": "The My cards view of the /play card gacha used to stop at the first 120 cards. It now lists the whole wallet 60 cards at a time in name order, with a Show more button that keeps your place, and a search box that looks through every card in the wallet by name, year, set number or grade. A search for \"psa 10\" returns only grade 10 cards. Cards you can sell back right now are gathered in a Sellable now section at the top, and every card on screen gets its buyback price checked, not just the first 60. Opening My cards while the machine list was still loading no longer gets replaced by that list.",
 			"link": "/play",
@@ -337,6 +347,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Turn a photo into a Gaussian splat right in the Splat Viewer",
+			"summary": "The Splat Viewer has a new Generate from a photo card. Drop in a PNG, JPG or WebP (or paste an image link), pick Light, Balanced or Maximum detail, and a GPU running TripoSplat builds a photoreal splat of the object. The card shows each real step with the elapsed time, can be cancelled, and loads the result straight into the stage as a shareable link, ready for hotspots, the camera path and video export. If something goes wrong it says what, in plain words: a photo that is too big, uploads being down, the lane not being switched on, or the GPU rejecting the image. The first run after a quiet spell takes a few minutes while the GPU warms up; after that, about a minute.",
+			"link": "/splat",
+			"tags": [
+				"feature"
 			]
 		},
 		{

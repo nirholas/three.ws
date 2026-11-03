@@ -325,9 +325,11 @@ curl -s 'https://three.ws/api/forge-splat?job=<job_id>'
 #     "num_gaussians": 131072, "viewer_url": "/splat?src=..." }
 ```
 
-`num_gaussians` is 8192 to 262144 (default 131072): fewer is lighter to render,
-more is sharper. Returns 503 `unconfigured` until `MODEL_TRIPOSPLAT_URL` and
-`GCP_RECONSTRUCTION_KEY` point at the deployed worker.
+`num_gaussians` is 32768 to 262144 (default 131072; TripoSplat's pipeline
+asserts that floor): fewer is lighter to render, more is sharper. Returns 503
+`unconfigured` until `MODEL_TRIPOSPLAT_URL` and `GCP_RECONSTRUCTION_KEY` point
+at the deployed worker. The Splat Viewer's "Generate from a photo" card
+([docs/splat.md](./splat.md)) is the browser front end for this endpoint.
 
 **Regenerate part keeps the rig.** Before the regenerated part is swapped
 into the live model, Restyle Studio diffs the whole-model bytes HoloPart

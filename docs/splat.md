@@ -58,6 +58,17 @@ Supported inputs at a glance:
 - `.splat`: the antimatter15 layout (32 bytes per splat).
 - `.ksplat`: the compressed KSplat format for faster loads.
 
+## Generate a splat from a photo
+
+The first card on the page turns one photo into a splat without leaving the viewer. It is the browser front end for `POST /api/forge-splat`, served by the TripoSplat GPU worker (`workers/model-triposplat`, MIT code and weights).
+
+1. Pick or drop a PNG, JPG or WebP photo (up to 8 MB), or paste a public `https` image URL. One object on a plain background works best.
+2. Choose a detail level: Light (65,536 splats), Balanced (131,072, the default) or Maximum detail (262,144).
+3. Click **Generate splat**. A local photo is presigned by `/api/forge-upload` and sent straight to object storage, the same path the Forge upload slots use; a pasted URL skips that step. The job is then queued and polled every 3 seconds, and the card shows the real phase (uploading, queued, generating) with the elapsed time. **Cancel** aborts it.
+4. When the job finishes, the `.splat` loads into the stage and the page URL becomes a `?src=` deep link, so the result is shareable and works with hotspots, the camera timeline and video export straight away.
+
+The client half lives in `src/splat-generate.js` and reports each failure in its own words: an oversize or wrong-type photo before any upload, a rate limit, an upload outage (with the advice to paste a URL instead), a deployment where the lane is not switched on (`503 unconfigured`), a job the GPU rejected (with the worker's message), and a 15-minute deadline. A cold GPU instance stages about 4 GB of weights before its first job, so the first generation after a quiet spell takes a few minutes; later ones take about a minute.
+
 ## Large scenes, hotspots and video
 
 - **Level of detail**: once a scene clears 50,000 splats the viewer builds a Spark 2.3 LoD tree from the decoded buffer in Spark's worker pool, so distant regions render coarser. No network or paging is involved (Spark's `paged` mode streams chunked remote sources and has no path for an in-memory buffer).
@@ -71,7 +82,7 @@ Supported inputs at a glance:
 - **Fetching / decoding**: shows the host and the buffer size in MB; large radiance fields take a moment to decode.
 - **Error**: an invalid file reports "that file isn't a valid splat"; a blocked fetch explains the CORS limit and suggests downloading then uploading; the retry loads a sample so the stage is never dead.
 - **CORS**: only hosts that send permissive cross-origin headers load by URL; the viewer auto-rewrites GitHub, Hugging Face, and Dropbox links, but other hosts may require a local upload.
-- **Client-side only**: files you upload are decoded in the browser and never sent to a server. Generation is a separate step: `POST /api/forge-splat` (TripoSplat) turns one image into a splat and returns a `viewer_url` that opens here via `?src=`.
+- **Client-side only**: files you upload are decoded in the browser and never sent to a server. Generation is a separate, explicit step: the "Generate from a photo" card (or `POST /api/forge-splat` directly) sends one image to the TripoSplat worker and loads the returned splat here via `?src=`.
 - Rendering runs on WebGL; very large scenes are bounded by your device's GPU and memory.
 
 ## Related

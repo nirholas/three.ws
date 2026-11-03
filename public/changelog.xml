@@ -135,6 +135,14 @@
 			<description>When a trailing-ratchet order sold on a lock tier or a drawdown, the fill in your agent wallet's order history lost the reason chip that says why it sold. It is back on every exit fill. The 3D mesh workers (remesh, rig, segment, stylize, texture and the others that decode compressed models) now reject a glTF whose buffers or images point at files outside the upload itself, before any decoder reads them. On the HQ events map, tech events in San Jose and Cambridge now land in California and Massachusetts instead of Costa Rica and England.</description>
 		</item>
 		<item>
+			<title>LiveKit avatars keep playing for visitors without a microphone</title>
+			<link>https://three.ws/docs/voice-framework-integrations</link>
+			<guid isPermaLink="false">2026-11-03:LiveKit avatars keep playing for visitors without a microphone</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An &lt;agent-3d voice=&quot;livekit&quot;&gt; embed used to report a failed connection whenever the visitor had no microphone or said no to the permission prompt, even though the room was joined and the avatar was already talking. It now joins in listen-only mode: the agent's voice plays and the avatar keeps lip-syncing and gesturing. Visitors who do have a microphone can still talk back.</description>
+		</item>
+		<item>
 			<title>My cards reaches every card in a big wallet, with search</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-03:My cards reaches every card in a big wallet, with search</guid>
@@ -261,6 +269,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A payment audit row that fails to write or times out now moves to a dead-letter list and is retried with backoff instead of being discarded, and after ten failures it is parked in a table for review. A replayed event is stored once, enforced by a unique index on transaction hash and event type. Ops is paged when the dead-letter stays non-empty for 15 minutes, and the money-health board shows its depth. Audit retention is configurable and every row is archived to object storage, and verified, before it is deleted.</description>
+		</item>
+		<item>
+			<title>Turn a photo into a Gaussian splat right in the Splat Viewer</title>
+			<link>https://three.ws/splat</link>
+			<guid isPermaLink="false">2026-11-03:Turn a photo into a Gaussian splat right in the Splat Viewer</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Splat Viewer has a new Generate from a photo card. Drop in a PNG, JPG or WebP (or paste an image link), pick Light, Balanced or Maximum detail, and a GPU running TripoSplat builds a photoreal splat of the object. The card shows each real step with the elapsed time, can be cancelled, and loads the result straight into the stage as a shareable link, ready for hotspots, the camera path and video export. If something goes wrong it says what, in plain words: a photo that is too big, uploads being down, the lane not being switched on, or the GPU rejecting the image. The first run after a quiet spell takes a few minutes while the GPU warms up; after that, about a minute.</description>
 		</item>
 		<item>
 			<title>Viewer screenshots capture the model instead of a blank frame</title>

@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "LiveKit avatars keep playing for visitors without a microphone",
+			"tags": [
+				"fix"
+			],
+			"summary": "An <agent-3d voice=\"livekit\"> embed used to report a failed connection whenever the visitor had no microphone or said no to the permission prompt, even though the room was joined and the avatar was already talking. It now joins in listen-only mode: the agent's voice plays and the avatar keeps lip-syncing and gesturing. Visitors who do have a microphone can still talk back.",
+			"link": "/docs/voice-framework-integrations"
+		},
+		{
+			"date": "2026-11-03",
+			"title": "Turn a photo into a Gaussian splat right in the Splat Viewer",
+			"tags": [
+				"feature"
+			],
+			"summary": "The Splat Viewer has a new Generate from a photo card. Drop in a PNG, JPG or WebP (or paste an image link), pick Light, Balanced or Maximum detail, and a GPU running TripoSplat builds a photoreal splat of the object. The card shows each real step with the elapsed time, can be cancelled, and loads the result straight into the stage as a shareable link, ready for hotspots, the camera path and video export. If something goes wrong it says what, in plain words: a photo that is too big, uploads being down, the lane not being switched on, or the GPU rejecting the image. The first run after a quiet spell takes a few minutes while the GPU warms up; after that, about a minute.",
+			"link": "/splat"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Coin intel, the launcher and reputation are updating again",
 			"tags": [
 				"infra",
