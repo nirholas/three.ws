@@ -49,6 +49,20 @@ function el(tag, props = {}, children = []) {
 	return n;
 }
 
+/**
+ * A first load that failed has to be retried from the frame loop: the normal
+ * poll only runs once data has loaded, and the wake only fires on entering range.
+ */
+export function needsLoadRetry({ awake, loaded, loading, now, retryAt }) {
+	return awake && !loaded && !loading && now >= retryAt;
+}
+
+/** The sign panel's subtitle. An unknown count is never shown as zero. */
+export function wallSubtitle(loaded, total) {
+	const tail = 'Everyone in the world sees yours the moment you sign.';
+	return loaded ? `${total.toLocaleString('en-US')} names so far. ${tail}` : tail;
+}
+
 export class SignatureWall {
 	/**
 	 * @param {object} opts
@@ -177,6 +191,9 @@ export class SignatureWall {
 		if (!this._awake) return;
 		this._painter.update(performance.now());
 		const now = Date.now();
+		if (needsLoadRetry({ awake: true, loaded: this.data.loaded, loading: this._loading, now, retryAt: this._retryAt || 0 })) {
+			this._wake();
+		}
 		if (this.data.loaded) {
 			if (now >= this._flipAt && !this._panel) this._flip();
 			if (now >= this._pollAt) this._poll();
@@ -187,6 +204,8 @@ export class SignatureWall {
 	// ── data wiring ───────────────────────────────────────────────────────
 
 	async _wake() {
+		if (this._loading) return;
+		this._loading = true;
 		try {
 			if (!this.data.loaded) {
 				await this.data.load();
@@ -198,7 +217,10 @@ export class SignatureWall {
 			this._pollAt = Date.now() + POLL_MS;
 		} catch (err) {
 			console.warn('[signature-wall] load failed:', err?.message);
-			this._pollAt = Date.now() + 5000; // retry soon, quietly
+			this._pollAt = Date.now() + 5000;
+			this._retryAt = Date.now() + 5000;
+		} finally {
+			this._loading = false;
 		}
 	}
 
@@ -337,7 +359,7 @@ export class SignatureWall {
 			]),
 		]);
 		const title = el('h2', { class: 'sw-title', id: 'sw-title', text: 'Sign the $THREE wall' });
-		const sub = el('p', { class: 'sw-sub', text: `${this.data.total.toLocaleString('en-US')} names so far. Everyone in the world sees yours the moment you sign.` });
+		const sub = el('p', { class: 'sw-sub', text: wallSubtitle(this.data.loaded, this.data.total) });
 		const body = el('div', { class: 'sw-body' }, [title, sub, form]);
 		const card = el('div', { class: 'sw-card', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'sw-title' }, [body]);
 		const root = el('div', { class: 'sw-root' }, [
