@@ -19,6 +19,10 @@ const PORT = Number(process.env.STAKE_VALIDATOR_PORT || 18899);
 
 function run(cmd, args, opts = {}) {
 	const r = spawnSync(cmd, args, { stdio: 'inherit', env, ...opts });
+	if (r.error?.code === 'ENOENT') {
+		console.error(`${cmd} is not installed or not on PATH. Install Rust and the Solana CLI (cargo-build-sbf, solana-test-validator) as described in contracts/event-markets-stake/README.md, then rerun.`);
+		process.exit(127);
+	}
 	if (r.status !== 0) process.exit(r.status || 1);
 }
 
