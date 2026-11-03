@@ -317,7 +317,7 @@ a:focus-visible{outline-offset:3px}
 .g3d-engine{font-size:12px;color:var(--ibm-subtle);margin-left:auto}
 @media(max-width:560px){.g3d-btn{width:100%}.g3d-engine{margin-left:0;width:100%}}
 
-@media(pointer:coarse){.tier,.r-btn{min-height:44px}}
+@media(pointer:coarse){.tier,.r-btn,.g3d-suggest button,.wb-cal,.btn-tertiary{min-height:44px}}
 
 /* embed snippet */
 .embed-block{background:#161616;color:#e0e0e0;border:1px solid #393939;padding:18px 20px;overflow:auto;margin-top:24px;font-family:var(--font-mono);font-size:13px;line-height:1.6;white-space:pre}
@@ -368,7 +368,7 @@ a:focus-visible{outline-offset:3px}
    coarse-pointer query keeps desktop sizing compact while guaranteeing mobile taps. */
 @media(pointer:coarse){
   .pv-retry,.retry,.copy-btn,.err-banner button{min-height:44px;padding-top:10px;padding-bottom:10px}
-  .footer-nav a{display:inline-flex;align-items:center;min-height:44px}
+  .footer-nav a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
   .raw summary{min-height:44px;display:flex;align-items:center}
 }
 
@@ -496,6 +496,13 @@ a:focus-visible{outline-offset:3px}
 @media(max-width:671px){
   .ibm-mast .mast-nav{display:none}
   .breadcrumb ol{padding:12px}
+}
+/* The crumb links are the only way back up from here on a phone (the masthead
+   nav is hidden below 672px), so they clear the 44px tap floor; the strip's own
+   vertical padding shrinks to keep the bar the same height. */
+@media(pointer:coarse){
+  .breadcrumb ol{padding-top:4px;padding-bottom:4px}
+  .breadcrumb a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px}
 }
 </style>
 <nav class="ibm-mast" aria-label="IBM">
