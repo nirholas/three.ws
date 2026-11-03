@@ -199,9 +199,8 @@ async function bootPage(page, appUrl, mpUrl, name) {
 	throw last;
 }
 
-async function openClient(browser, appUrl, mpUrl, name, { connect = true } = {}) {
-	const context = await browser.newContext();
-	const page = await context.newPage();
+// Collect a page's console errors for the final console check.
+function watchConsole(page) {
 	const errors = [];
 	// Chromium logs every request refused by context.setOffline() as a console
 	// error ("Failed to load resource: net::ERR_INTERNET_DISCONNECTED"). That is
@@ -215,6 +214,13 @@ async function openClient(browser, appUrl, mpUrl, name, { connect = true } = {})
 		errors.push(where ? `${m.text()} (${where})` : m.text());
 	});
 	page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+	return errors;
+}
+
+async function openClient(browser, appUrl, mpUrl, name, { connect = true } = {}) {
+	const context = await browser.newContext();
+	const page = await context.newPage();
+	const errors = watchConsole(page);
 	await bootPage(page, appUrl, mpUrl, name);
 	if (connect) await page.evaluate(() => window.__net.connect());
 	return { name, context, page, errors };
@@ -449,7 +455,7 @@ async function main() {
 		}
 
 		// ---- scale -------------------------------------------------------
-		if (SCALE && want('scale')) await scalePass(browser, appUrl, mpUrl, mpProc);
+		if (SCALE && want('scale')) await scalePass(browser, appUrl, mpUrl, mpProc, clients);
 
 		// The handshake client dials a closed port on purpose, so its refused-connection
 		// errors are the test, not a defect.
@@ -465,7 +471,7 @@ async function main() {
 
 // Join N lightweight clients (one shared browser context per 10 pages keeps memory
 // sane), then measure fan-out and server cost.
-async function scalePass(browser, appUrl, mpUrl, mpProc) {
+async function scalePass(browser, appUrl, mpUrl, mpProc, clients) {
 	const pages = [];
 	const ctxs = [];
 	let reached = 0;
@@ -475,6 +481,7 @@ async function scalePass(browser, appUrl, mpUrl, mpProc) {
 		for (let i = 0; i < CLIENTS; i++) {
 			if (i % 10 === 0) ctxs.push(await browser.newContext());
 			const page = await ctxs[ctxs.length - 1].newPage();
+			clients.push({ name: `S${i}`, errors: watchConsole(page) });
 			await bootPage(page, appUrl, mpUrl, `S${i}`);
 			await page.evaluate(() => window.__net.connect());
 			pages.push(page);
