@@ -149,18 +149,13 @@ export class TalkScene {
 		// remote URLs we still use `loader.load()`.
 		const loader = new GLTFLoader();
 		loader.setMeshoptDecoder(await getMeshoptDecoder());
-		const gltf = await new Promise(async (resolve, reject) => {
-			try {
-				if (glbBlob) {
-					const buf = await glbBlob.arrayBuffer();
-					loader.parse(buf, '', resolve, reject);
-				} else {
+		const gltf = glbBlob
+			? await glbBlob
+					.arrayBuffer()
+					.then((buf) => new Promise((resolve, reject) => loader.parse(buf, '', resolve, reject)))
+			: await new Promise((resolve, reject) => {
 					loader.load(glbUrl, resolve, undefined, reject);
-				}
-			} catch (err) {
-				reject(err);
-			}
-		});
+				});
 		this.gltf = gltf;
 		this.root = gltf.scene;
 		this.scene.add(this.root);

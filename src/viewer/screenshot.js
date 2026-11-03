@@ -44,34 +44,42 @@ function getWatermark() {
 	return watermarkPending;
 }
 
-function _capture(viewer) {
-	return new Promise(async (resolve) => {
-		viewer.renderer.render(viewer.scene, viewer.activeCamera);
-		const canvas = viewer.renderer.domElement;
-
-		const watermark = await getWatermark();
-
-		if (!watermark) {
-			canvas.toBlob(resolve, 'image/png');
-			return;
+function canvasToBlob(canvas) {
+	return new Promise((resolve, reject) => {
+		try {
+			canvas.toBlob((blob) => {
+				if (blob) resolve(blob);
+				else reject(new Error('Canvas produced no image data'));
+			}, 'image/png');
+		} catch (err) {
+			reject(err);
 		}
-
-		const tempCanvas = document.createElement('canvas');
-		const ctx = tempCanvas.getContext('2d');
-		tempCanvas.width = canvas.width;
-		tempCanvas.height = canvas.height;
-
-		ctx.drawImage(canvas, 0, 0);
-
-		const margin = canvas.width * 0.04;
-		const h = canvas.width * 0.05;
-		const w = (h / watermark.height) * watermark.width;
-		ctx.globalAlpha = 0.7;
-		ctx.drawImage(watermark, margin, canvas.height - h - margin, w, h);
-		ctx.globalAlpha = 1.0;
-
-		tempCanvas.toBlob(resolve, 'image/png');
 	});
+}
+
+async function _capture(viewer) {
+	viewer.renderer.render(viewer.scene, viewer.activeCamera);
+	const canvas = viewer.renderer.domElement;
+
+	const watermark = await getWatermark();
+
+	if (!watermark) return canvasToBlob(canvas);
+
+	const tempCanvas = document.createElement('canvas');
+	const ctx = tempCanvas.getContext('2d');
+	tempCanvas.width = canvas.width;
+	tempCanvas.height = canvas.height;
+
+	ctx.drawImage(canvas, 0, 0);
+
+	const margin = canvas.width * 0.04;
+	const h = canvas.width * 0.05;
+	const w = (h / watermark.height) * watermark.width;
+	ctx.globalAlpha = 0.7;
+	ctx.drawImage(watermark, margin, canvas.height - h - margin, w, h);
+	ctx.globalAlpha = 1.0;
+
+	return canvasToBlob(tempCanvas);
 }
 
 export async function captureScreenshot(viewer) {

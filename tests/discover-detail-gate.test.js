@@ -26,7 +26,7 @@ const { default: handler } = await import('../api/discover-detail.js');
 const ID = '3f2b8c1e-5d4a-4b6e-9c7d-1a2b3c4d5e6f';
 
 function run() {
-	return new Promise(async (resolve) => {
+	return new Promise((resolve, reject) => {
 		const res = {
 			headers: {},
 			setHeader(k, v) {
@@ -36,7 +36,7 @@ function run() {
 				resolve(String(body));
 			},
 		};
-		await handler({ method: 'GET', url: `/api/discover-detail?kind=avatar&id=${ID}`, headers: {} }, res);
+		handler({ method: 'GET', url: `/api/discover-detail?kind=avatar&id=${ID}`, headers: {} }, res).catch(reject);
 	});
 }
 
