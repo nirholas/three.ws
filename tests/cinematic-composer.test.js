@@ -152,3 +152,18 @@ describe('CinematicPipeline ambient occlusion', () => {
 		expect(aoPasses).toHaveLength(0);
 	});
 });
+
+describe('CinematicPipeline presets keep the live params object', () => {
+	// The Cinematic FX GUI binds its sliders to `pipeline.params` once. If a
+	// preset swaps in a new object, every later slider move edits the stale one
+	// and the image stops responding.
+	it('applyPreset mutates params in place', () => {
+		const p = new CinematicPipeline(fakeRenderer(4), new Scene(), new PerspectiveCamera(), { width: 640, height: 480 });
+		const bound = p.params;
+		p.applyPreset('Noir');
+		expect(p.params).toBe(bound);
+		expect(bound.saturation).toBe(-1);
+		p.applyPreset('Studio');
+		expect(bound.saturation).toBe(0);
+	});
+});
