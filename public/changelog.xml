@@ -15,6 +15,14 @@
 			<description>Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.</description>
 		</item>
 		<item>
+			<title>Custody Integrity</title>
+			<link>https://three.ws/integrity</link>
+			<guid isPermaLink="false">2026-11-03:Custody Integrity</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.</description>
+		</item>
+		<item>
 			<title>Docs · Coin Control</title>
 			<link>https://three.ws/docs/coin-control</link>
 			<guid isPermaLink="false">2026-11-03:Docs · Coin Control</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.</description>
+		</item>
+		<item>
+			<title>A withdrawal that fails after it was sent can no longer be paid twice</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:A withdrawal that fails after it was sent can no longer be paid twice</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Payouts now record the signed transaction before it is broadcast. If the send errors or times out afterwards, the withdrawal shows as confirming and keeps your balance held instead of failing and freeing it, and the payout cron settles it from the chain: completed when it landed, failed only when it provably never can. Operators are paged if one stays unconfirmed for more than 30 minutes.</description>
 		</item>
 		<item>
 			<title>Add three.ws to your coding agent in one line, and read the README in Chinese, Japanese or Korean</title>
@@ -103,6 +119,14 @@
 			<description>In production the My cards view of the /play card gacha listed cards with blank photos and no grade or value, and sometimes failed to load at all. Card details now load from a backup Arweave gateway when the main one is busy, and the wallet scan uses the platform's full set of Solana providers instead of the public node alone. Other pages that read Arweave files (agent cards, token details) also skip two gateways that had stopped answering.</description>
 		</item>
 		<item>
+			<title>Operators can extend, rename or end the live event without a deploy</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:Operators can extend, rename or end the live event without a deploy</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new authed override, set with npm run event:override or POST /api/event-config, changes the live event's window or name on top of the baked-in schedule. The countdown, the event leaderboard and the game server's quest gate all follow it within about a minute, and fall back to the static schedule if the API is unreachable. Every change is validated with the same rules as the deploy gate and audit-logged.</description>
+		</item>
+		<item>
 			<title>Pages fit a phone screen, and small buttons are easier to tap</title>
 			<link>https://three.ws/docs</link>
 			<guid isPermaLink="false">2026-11-03:Pages fit a phone screen, and small buttons are easier to tap</guid>
@@ -125,6 +149,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A sweep of broken controls across the site. The API playground on the classic homepage switches to its Node SDK and cURL tabs again (a duplicated id had bound them to the embed playground instead), and the launcher's payment rail picker responds to clicks. The Retry button on the competitions page now reloads agents when the first load fails. The /grok and /connect pages lost sections that a merge had rendered twice. Trading tools report a quote router outage plainly instead of calling a busy market thin, and the onchain viewer moves to a backup Solana RPC when one stalls. In the 3D worker, the decimate and repair clean-up passes run again, and their output now stays with the job so long sessions no longer fill the worker's memory with leftover meshes. Agent templates and persona interviews in the create wizard are now counted in analytics.</description>
+		</item>
+		<item>
+			<title>Proof of custody anchors on Solana mainnet again</title>
+			<link>https://three.ws/integrity</link>
+			<guid isPermaLink="false">2026-11-03:Proof of custody anchors on Solana mainnet again</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:&lt;network&gt;, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.</description>
 		</item>
 		<item>
 			<title>Smoother edges on every 3D model and avatar viewer</title>
@@ -173,6 +205,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.</description>
+		</item>
+		<item>
+			<title>The x402 payment audit ledger no longer drops or double-writes rows</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:The x402 payment audit ledger no longer drops or double-writes rows</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A payment audit row that fails to write or times out now moves to a dead-letter list and is retried with backoff instead of being discarded, and after ten failures it is parked in a table for review. A replayed event is stored once, enforced by a unique index on transaction hash and event type. Ops is paged when the dead-letter stays non-empty for 15 minutes, and the money-health board shows its depth. Audit retention is configurable and every row is archived to object storage, and verified, before it is deleted.</description>
 		</item>
 		<item>
 			<title>Viewer screenshots capture the model instead of a blank frame</title>

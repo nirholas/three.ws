@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T17:48:44.261Z",
+	"generated_at": "2026-11-03T17:56:29.792Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4285,
+	"total": 4290,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Coin Control",
 			"summary": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
 			"link": "/coin-control",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Custody Integrity",
+			"summary": "The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.",
+			"link": "/integrity",
 			"tags": [
 				"launch"
 			]
@@ -48,6 +58,17 @@
 			"link": "/changelog",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "A withdrawal that fails after it was sent can no longer be paid twice",
+			"summary": "Payouts now record the signed transaction before it is broadcast. If the send errors or times out afterwards, the withdrawal shows as confirming and keeps your balance held instead of failing and freeing it, and the payout cron settles it from the chain: completed when it landed, failed only when it provably never can. Operators are paged if one stays unconfirmed for more than 30 minutes.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -136,6 +157,17 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "Operators can extend, rename or end the live event without a deploy",
+			"summary": "A new authed override, set with npm run event:override or POST /api/event-config, changes the live event's window or name on top of the baked-in schedule. The countdown, the event leaderboard and the game server's quest gate all follow it within about a minute, and fall back to the static schedule if the API is unreachable. Every change is validated with the same rules as the deploy gate and audit-logged.",
+			"link": null,
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "Pages fit a phone screen, and small buttons are easier to tap",
 			"summary": "A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.",
 			"link": "/docs",
@@ -161,6 +193,17 @@
 			"link": "/classic",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Proof of custody anchors on Solana mainnet again",
+			"summary": "The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:<network>, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.",
+			"link": "/integrity",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -222,6 +265,17 @@
 			"link": "/changelog",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The x402 payment audit ledger no longer drops or double-writes rows",
+			"summary": "A payment audit row that fails to write or times out now moves to a dead-letter list and is retried with backoff instead of being discarded, and after ten failures it is parked in a table for review. A replayed event is stored once, enforced by a unique index on transaction hash and event type. Ops is paged when the dead-letter stays non-empty for 15 minutes, and the money-health board shows its depth. Audit retention is configurable and every row is archived to object storage, and verified, before it is deleted.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1496,58 +1550,6 @@
 			"link": "/agent-mail",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Agents suggest skills from runs that worked",
-			"summary": "After a run that verifiably worked (several tools with no error, a passed labor-escrow job, or a closed profitable trade), an agent now drafts a real skill bundle from it and lists it under Suggested skills on the agent dashboard. Argument values from the run are never stored, only their shapes. You read the bundle and the evidence run, then install it on that agent only, publish it to the marketplace, or dismiss it. Nothing installs or publishes without your click, and a draft that fails the marketplace checks can never be installed. When an installed skill is used again and the run does better, the agent proposes a revision you can accept instead of changing the skill.",
-			"link": "/docs/skill-candidates",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "An agent can sign itself up and pay for its plan",
-			"summary": "An autonomous agent now signs up with a Solana key and no email: it signs a single-use server challenge, receives an account, a custodial wallet and an API key, and can then buy the Builder or Scale plan with one USDC x402 payment on Solana. The CLI does the whole thing with `three-ws signup --agent`. Replayed or badly signed challenges are rejected, each key gets one account, and signups are rate limited and capped per day.",
-			"link": "/docs/agent-self-onboarding",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "AR Studio source now lives in the monorepo",
-			"summary": "The 3d-ar-studio npm package and the /ar/studio page now run the same code: the package source moved into packages/ar-studio and the page imports its scene math, multi-anchor WebXR session, room client and lighting modules directly, so fixes land once instead of in two diverging copies.",
-			"link": "/ar/studio",
-			"tags": [
-				"sdk",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Backtests now prove they are free of look-ahead and can be repeated",
-			"summary": "Every strategy backtest replays its entry gate with the future removed and reports any decision that changed, pins the exact dataset it ran on with a content hash, and marks older unpinned results as unreproducible. A new canary job checks each price and candle source against a known value every 30 minutes and tries the healthy ones first.",
-			"link": "/strategies",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Bonding-curve status API no longer hard-fails when pump.fun blips",
-			"summary": "GET /api/crypto/bonding was returning a 503 to every caller during a pump.fun outage, even for mints it had already fetched successfully. It now caches each mint's bonding-curve status and keeps a longer last-known-good copy, so a failed upstream fetch serves that cached data (flagged with an x-pump-stale header) instead of a hard error. A 503 with a retry hint is now only returned for a mint that has no cached data at all.",
-			"link": "/api/crypto/bonding",
-			"tags": [
-				"fix"
 			]
 		}
 	]

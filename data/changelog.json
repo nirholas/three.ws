@@ -3,13 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
-			"title": "Proof of custody anchors on Solana mainnet again",
-			"summary": "The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:<network>, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.",
+			"title": "A withdrawal that fails after it was sent can no longer be paid twice",
+			"summary": "Payouts now record the signed transaction before it is broadcast. If the send errors or times out afterwards, the withdrawal shows as confirming and keeps your balance held instead of failing and freeing it, and the payout cron settles it from the chain: completed when it landed, failed only when it provably never can. Operators are paged if one stays unconfirmed for more than 30 minutes.",
 			"tags": [
 				"fix",
 				"security"
-			],
-			"link": "/integrity"
+			]
 		},
 		{
 			"date": "2026-11-03",
@@ -19,6 +18,25 @@
 				"feature",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-11-03",
+			"title": "The x402 payment audit ledger no longer drops or double-writes rows",
+			"summary": "A payment audit row that fails to write or times out now moves to a dead-letter list and is retried with backoff instead of being discarded, and after ten failures it is parked in a table for review. A replayed event is stored once, enforced by a unique index on transaction hash and event type. Ops is paged when the dead-letter stays non-empty for 15 minutes, and the money-health board shows its depth. Audit retention is configurable and every row is archived to object storage, and verified, before it is deleted.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"title": "Proof of custody anchors on Solana mainnet again",
+			"summary": "The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:<network>, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/integrity"
 		},
 		{
 			"date": "2026-11-03",

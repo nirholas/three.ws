@@ -792,7 +792,7 @@
 			"id": "skills",
 			"label": "Skills",
 			"summary": "Author, list, and install the skills an agent can use.",
-			"tools": 13
+			"tools": 14
 		},
 		{
 			"id": "trading",
@@ -816,7 +816,7 @@
 			"id": "launch",
 			"label": "Launch",
 			"summary": "Launch a coin: metadata upload, vanity mints, launch, and creator-fee collection.",
-			"tools": 18
+			"tools": 19
 		},
 		{
 			"id": "domains",
@@ -870,7 +870,7 @@
 			"id": "intelligence",
 			"label": "Intelligence",
 			"summary": "Market data and research: token intel, holders, trades, smart money, KOLs, Oracle conviction, alerts.",
-			"tools": 71
+			"tools": 76
 		},
 		{
 			"id": "integrations",
@@ -894,7 +894,7 @@
 			"id": "utility",
 			"label": "Utility",
 			"summary": "Getting-started guides, name resolution, vision, speech, and other stateless helpers.",
-			"tools": 86
+			"tools": 79
 		}
 	],
 	"servers": [
@@ -7478,8 +7478,8 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"category": "utility",
-			"tier": "read",
+			"category": "launch",
+			"tier": "write",
 			"safety": "read",
 			"annotations": {
 				"readOnlyHint": true,
@@ -8276,7 +8276,7 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"category": "utility",
+			"category": "skills",
 			"tier": "read",
 			"safety": "read",
 			"annotations": {
@@ -14523,7 +14523,7 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"category": "utility",
+			"category": "intelligence",
 			"tier": "read",
 			"safety": "read",
 			"annotations": {
@@ -14556,7 +14556,7 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"category": "utility",
+			"category": "intelligence",
 			"tier": "read",
 			"safety": "read",
 			"annotations": {
@@ -14610,7 +14610,7 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"category": "utility",
+			"category": "intelligence",
 			"tier": "read",
 			"safety": "read",
 			"annotations": {
@@ -14650,7 +14650,7 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"category": "utility",
+			"category": "intelligence",
 			"tier": "read",
 			"safety": "read",
 			"annotations": {
@@ -14692,7 +14692,7 @@
 				"transport": "remote",
 				"auth": "oauth-or-x402"
 			},
-			"category": "utility",
+			"category": "intelligence",
 			"tier": "read",
 			"safety": "read",
 			"annotations": {

@@ -1533,6 +1533,12 @@ URL: https://three.ws/tracker
 
 Solana crypto KOLs ranked by realized P&L computed from their own wallet's on-chain trade history, with win rate, volume, trade count, and X follower counts for verified handles.
 
+### Custody Integrity
+
+URL: https://three.ws/integrity
+
+The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.
+
 ### Verify Custody
 
 URL: https://three.ws/proof

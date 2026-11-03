@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T17:48:44.032Z",
+	"generated_at": "2026-11-03T17:56:29.574Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Coin Control",
 			"summary": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
 			"link": "/coin-control",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Custody Integrity",
+			"summary": "The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.",
+			"link": "/integrity",
 			"tags": [
 				"launch"
 			]
@@ -45,6 +55,17 @@
 			"link": "/changelog",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "A withdrawal that fails after it was sent can no longer be paid twice",
+			"summary": "Payouts now record the signed transaction before it is broadcast. If the send errors or times out afterwards, the withdrawal shows as confirming and keeps your balance held instead of failing and freeing it, and the payout cron settles it from the chain: completed when it landed, failed only when it provably never can. Operators are paged if one stays unconfirmed for more than 30 minutes.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -133,6 +154,17 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "Operators can extend, rename or end the live event without a deploy",
+			"summary": "A new authed override, set with npm run event:override or POST /api/event-config, changes the live event's window or name on top of the baked-in schedule. The countdown, the event leaderboard and the game server's quest gate all follow it within about a minute, and fall back to the static schedule if the API is unreachable. Every change is validated with the same rules as the deploy gate and audit-logged.",
+			"link": null,
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "Pages fit a phone screen, and small buttons are easier to tap",
 			"summary": "A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.",
 			"link": "/docs",
@@ -158,6 +190,17 @@
 			"link": "/classic",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Proof of custody anchors on Solana mainnet again",
+			"summary": "The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:<network>, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.",
+			"link": "/integrity",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -219,6 +262,17 @@
 			"link": "/changelog",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The x402 payment audit ledger no longer drops or double-writes rows",
+			"summary": "A payment audit row that fails to write or times out now moves to a dead-letter list and is retried with backoff instead of being discarded, and after ten failures it is parked in a table for review. A replayed event is stored once, enforced by a unique index on transaction hash and event type. Ops is paged when the dead-letter stays non-empty for 15 minutes, and the money-health board shows its depth. Audit retention is configurable and every row is archived to object storage, and verified, before it is deleted.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
