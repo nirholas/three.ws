@@ -122,10 +122,10 @@ alongside the existing values.
    in the editor with animations playing" Definition of Done line.
 5. Open the imported avatar's public page and confirm the creator credit
    line is visible, matching the character's `credit` license field.
-6. Attempt to import a character whose license sets
-   `characterization_allowed_user` to something other than `everyone` into
-   a public agent slot (if/when that surface checks `source_meta.actions`)
-   and confirm it is refused. This is the completion evidence for the
+6. Attach a character whose license sets `characterization_allowed_user`
+   to something other than `everyone` to an agent (stored at
+   `source_meta.vroid`, checked by `api/_lib/vroid/license-gate.js`) and
+   confirm the API answers 403 `license_restricted` naming the creator. This is the completion evidence for the
    license-enforcement Definition of Done line.
 
 ## Verification packet

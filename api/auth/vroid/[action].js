@@ -114,13 +114,16 @@ async function handleStatus(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
+	// Answered before auth so the picker can show its "coming soon" state to a
+	// signed-out visitor without a failing network call.
+	if (!vroidConfigured()) return json(res, 200, { configured: false, connected: false, connected_at: null });
+
 	const session = await getSessionUser(req);
 	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
 
-	const configured = vroidConfigured();
 	const status = await vroidConnectionStatus(session.id);
 
-	return json(res, 200, { configured, ...status });
+	return json(res, 200, { configured: true, ...status });
 }
 
 async function handleDisconnect(req, res) {

@@ -399,6 +399,26 @@
 
 			async function loadModels() {
 				try {
+					// The status call answers 200 with {configured, connected}, so the
+					// not-connected and not-configured states resolve without the
+					// library call failing (and logging a network error) first.
+					const statusResp = await fetch('/api/auth/vroid/status', { credentials: 'include' });
+					if (statusResp.status === 401) {
+						const returnTo = encodeURIComponent(location.pathname + location.search);
+						location.href = `/login?return=${returnTo}`;
+						return;
+					}
+					if (statusResp.ok) {
+						const status = await statusResp.json().catch(() => ({}));
+						if (status.configured === false) {
+							showOnly(els.notConfigured);
+							return;
+						}
+						if (status.connected === false) {
+							showOnly(els.disconnected);
+							return;
+						}
+					}
 					const resp = await fetch('/api/vroid/models', { credentials: 'include' });
 					if (resp.status === 401) {
 						const returnTo = encodeURIComponent(location.pathname + location.search);

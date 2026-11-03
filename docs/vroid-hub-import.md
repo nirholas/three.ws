@@ -66,10 +66,33 @@ open than it is.
    (`GET /api/download_licenses/{id}/download`) to the S3-hosted VRM/GLB,
    validates the GLB header, and runs it through
    [glb-canonicalize](../src/glb-canonicalize.js) so the idle/walk clip
-   library retargets onto it exactly like any other imported avatar. License
-   fields, the computed actions, and the credit line are stored on the
-   avatar's `source_meta` so later surfaces (agent creation, export, a
-   marketplace listing) can re-check them without another Hub round trip.
+   library retargets onto it exactly like any other imported avatar. The
+   creator's raw license, a credit line, the Hub link and whether you are the
+   creator are stored at `source_meta.vroid`. Whether you are the creator is
+   decided on the server by comparing your Hub account id (`GET /api/account`)
+   with the character's creator id; the creator's own avatars have every
+   action open and show no credit to themselves.
+
+## What is enforced after import
+
+The stored license is re-evaluated (never read back as a saved yes/no) by
+`api/_lib/vroid/license-gate.js` at every surface that would exceed it. A
+refused action answers HTTP 403 `license_restricted` with a sentence naming
+the creator. An unreadable license is treated as closed. An avatar with no
+VRoid block is never affected.
+
+| Action | Refused when the license withholds | Where |
+| --- | --- | --- |
+| Public agent | public agent | agent create/update (`api/agents.js`), MCP `attach_avatar_to_agent`, onboarding link-avatar, a fork's auto-agent |
+| Share or export | export (redistribution) | avatar visibility `public`/`unlisted`, IPFS pin, sale price, tokenize |
+| Modify | modify | outfit/appearance bake, GLB replace, regenerate; the editor shows the credit and why it is locked |
+| Monetize | monetize (either commercial flag) | sale price above zero, tokenize |
+
+A fork carries the license with it, starts private if the license withholds
+export, and gets no agent if it withholds public agents, so copying an avatar
+cannot launder its license. Credit renders on the avatar page and agent pages
+from `attribution`, with a link to the Hub page; the Download menu is hidden
+when export is withheld.
 
 ## Related
 
