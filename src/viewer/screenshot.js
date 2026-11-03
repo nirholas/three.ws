@@ -58,10 +58,14 @@ function canvasToBlob(canvas) {
 }
 
 async function _capture(viewer) {
+	// Resolve the watermark BEFORE rendering. The WebGL canvas has no
+	// preserveDrawingBuffer, so the browser clears it once the current task
+	// ends; rendering first and then awaiting the fetch read back a blank frame.
+	// Render and read below happen in one task.
+	const watermark = await getWatermark();
+
 	viewer.renderer.render(viewer.scene, viewer.activeCamera);
 	const canvas = viewer.renderer.domElement;
-
-	const watermark = await getWatermark();
 
 	if (!watermark) return canvasToBlob(canvas);
 

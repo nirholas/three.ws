@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "Viewer screenshots capture the model instead of a blank frame",
+			"summary": "Pressing P or choosing Screenshot in the 3D viewer could save an empty image with only the watermark on it. The viewer drew the frame, then waited for the watermark to download, and by then the browser had already cleared the canvas. It now has the watermark ready before it draws, so the saved PNG always shows the model you were looking at.",
+			"tags": [
+				"fix"
+			],
+			"link": "/app"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "My cards reaches every card in a big wallet, with search",
 			"summary": "The My cards view of the /play card gacha used to stop at the first 120 cards. It now lists the whole wallet 60 cards at a time in name order, with a Show more button that keeps your place, and a search box that looks through every card in the wallet by name, year, set number or grade. A search for \"psa 10\" returns only grade 10 cards. Cards you can sell back right now are gathered in a Sellable now section at the top, and every card on screen gets its buyback price checked, not just the first 60. Opening My cards while the machine list was still loading no longer gets replaced by that list.",
 			"tags": [
