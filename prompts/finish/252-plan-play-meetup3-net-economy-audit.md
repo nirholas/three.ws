@@ -1,5 +1,15 @@
 # Audit and fix /play multiplayer resilience and every economy loop (price truth, payouts, double-spend) before the 2026-11-06 meetup
 
+**Status (2026-11-03):** Mostly done; one item open. Done and committed:
+- The two-client net audit: 8/8 at the full 120 s background, and exit 1 with `--seed-fault`.
+- The 25-client scale pass: server CPU 5% of one core.
+- The event-window audit: 6/6, and exit 1 with `--seed-fault`.
+- Fixes: reconnect resumes the player's position, peers see when a voice player is muted, the boutique allows one purchase in flight per panel, and long chat runs wrap in the bubble.
+- Tests: the settlement replay and race tests, and the economy truth test.
+- Docs: `docs/event-readiness/README.md`.
+
+Open: task 4's walkthrough of the economy loops in a real QA browser session (store, bank, wheel, combat, quests, cosmetics against production data). Server-side price truth and the double-spend guards are covered by tests. The paid boutique purchase stops at the wallet confirmation by the on-chain gate. A full paid purchase needs the owner's explicit yes.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/252-plan-play-meetup3-net-economy-audit.md`.
 
 **Priority:** P0, live defect, security, or broken money rail (score 88 of 100 inside the tier). **Area:** play. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
