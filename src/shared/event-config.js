@@ -10,6 +10,27 @@
 
 const CONFIG_URL = '/event.json';
 
+// The effective document (the static file with the operator's live override merged
+// over it, api/event-config.js). The static file is the fallback so every event
+// surface keeps working when the API is down.
+export const LIVE_CONFIG_URL = '/api/event-config';
+
+/**
+ * Fetch the raw event document: the live API first, the static /event.json when
+ * the API is unreachable or answers non-2xx. Returns the parsed JSON, or null when
+ * neither is readable. Every browser event surface reads through here so they all
+ * move together when an operator extends or ends the event.
+ */
+export async function fetchEventDocument() {
+	for (const url of [LIVE_CONFIG_URL, CONFIG_URL]) {
+		try {
+			const res = await fetch(url, { cache: 'no-cache', headers: { accept: 'application/json' } });
+			if (res.ok) return await res.json();
+		} catch { /* try the next source */ }
+	}
+	return null;
+}
+
 // An event with no (or unparseable) end time stays live for this long.
 const DEFAULT_DURATION_MS = 6 * 3600 * 1000;
 
@@ -39,14 +60,7 @@ export function parseEventConfig(raw) {
  * caller can treat null as "mount nothing" without a second check.
  */
 export async function loadEventConfig(now = Date.now()) {
-	let cfg = null;
-	try {
-		const res = await fetch(CONFIG_URL, { cache: 'no-cache' });
-		if (!res.ok) return null;
-		cfg = parseEventConfig(await res.json());
-	} catch {
-		return null;
-	}
+	const cfg = parseEventConfig(await fetchEventDocument());
 	if (!cfg || now >= cfg.endsAt) return null;
 	return cfg;
 }

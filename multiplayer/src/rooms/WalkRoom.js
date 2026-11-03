@@ -42,7 +42,7 @@ import { installUnknownMessageGuard, PLAY_PASS_EVICT_CODE } from '../room-compat
 import { registerWalkRoom, unregisterWalkRoom } from '../walk-registry.js';
 import {
 	restoreProfile, serializeProfile, profileSnapshot,
-	addItem, hasRoomFor, resolveSlot, grantXp, consumeSlot,
+	addItem, hasRoomFor, roomForQty, resolveSlot, grantXp, consumeSlot,
 	countItem, removeItem,
 	dropCarried, reviveProfile, creditGold, bankTransfer, grantCosmetic,
 	equipCosmetic, ownedCosmeticSet, mergeOwnedFromLedger, mergeGrantedFromLedger,
@@ -2361,16 +2361,14 @@ export class WalkRoom extends Room {
 			client.send('notice', { kind: 'store', ok: false, text: `Not enough cash, ${entry.price} needed.` });
 			return;
 		}
-		if (!hasRoomFor(profile, entry.item)) {
+		// The whole bundle must fit before anything moves: charging full price
+		// for a partly landed bundle (12 ammo into 3 free rounds of room) is a
+		// silent overcharge, so a short pack refuses the buy and costs nothing.
+		if (roomForQty(profile, entry.item) < entry.qty) {
 			client.send('notice', { kind: 'full', text: 'Your inventory is full.' });
 			return;
 		}
-		const leftover = addItem(profile, entry.item, entry.qty);
-		const bought = entry.qty - leftover;
-		if (bought <= 0) {
-			client.send('notice', { kind: 'full', text: 'Your inventory is full.' });
-			return;
-		}
+		const bought = entry.qty - addItem(profile, entry.item, entry.qty);
 		profile.gold -= entry.price;
 		this._sendInv(client, profile);
 		client.send('notice', { kind: 'store', ok: true, text: `Bought ${bought > 1 ? bought + ' ' : ''}${itemLabel(entry.item)} for ${entry.price} cash.` });
@@ -2394,7 +2392,9 @@ export class WalkRoom extends Room {
 			client.send('notice', { kind: 'store', ok: false, text: `The store won’t buy ${itemLabel(slot.item).toLowerCase()}.` });
 			return;
 		}
-		const want = Number.isFinite(payload?.qty) && payload.qty > 0 ? Math.min(payload.qty | 0, slot.qty) : slot.qty;
+		// Floor, never `| 0`: a quantity past 2^31 wraps negative in 32-bit and the
+		// sell silently did nothing. Non-finite or non-positive means the whole stack.
+		const want = Number.isFinite(payload?.qty) && payload.qty > 0 ? Math.min(Math.max(1, Math.floor(payload.qty)), slot.qty) : slot.qty;
 		const item = slot.item;
 		const removed = removeItem(profile, item, want);
 		if (removed <= 0) return;
@@ -2415,7 +2415,7 @@ export class WalkRoom extends Room {
 		if (!profile) return;
 		if (!this._actionOk(client.sessionId, 'bank')) return;
 		if (!this._atCounter(client, 'bank')) return;
-		const amount = Number.isFinite(payload?.amount) ? payload.amount | 0 : 0;
+		const amount = Number.isFinite(payload?.amount) ? Math.trunc(payload.amount) : 0;
 		if (!amount) return;
 		const moved = bankTransfer(profile, amount);
 		if (moved === 0) {

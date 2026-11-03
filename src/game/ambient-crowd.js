@@ -14,7 +14,7 @@
 import { Group, Vector3 } from 'three';
 import { EntityManager, Vehicle, ArriveBehavior, SeparationBehavior, Vector3 as YukaVector3 } from 'yuka';
 import { AnimationManager } from '../animation-manager.js';
-import { detectProfile } from '../club-perf.js';
+import { CROWD_MODEL_BYTES, MB, currentBudgetTier } from './prop-budget.js';
 // The crowd wears the same models the players do, so it loads them through the
 // same shared template cache instead of keeping a second loader and a second
 // copy of every model. That also buys it the Draco + VRM decoders and the
@@ -30,7 +30,6 @@ import { log } from '../shared/log.js';
 const WORLD_RADIUS = 54;       // a touch inside the plaza edge
 const AMBIENT_SPEED = 1.7;     // gentle stroll, slower than the player
 
-const MB = 1024 * 1024;
 
 // Memory budget for the decorative crowd, per render tier.
 //
@@ -49,25 +48,18 @@ const MB = 1024 * 1024;
 // on the low tier, where five shadow-casting skinned meshes cost more than the
 // crowd is worth.
 const CROWD_BUDGET = {
-	high:   { count: 5, maxModelBytes: 12 * MB, sessionBytes: 80 * MB, shadows: true },
-	medium: { count: 4, maxModelBytes: 6 * MB,  sessionBytes: 32 * MB, shadows: true },
-	low:    { count: 2, maxModelBytes: 3 * MB,  sessionBytes: 10 * MB, shadows: false },
+	high:   { count: 5, maxModelBytes: CROWD_MODEL_BYTES.high,   sessionBytes: 80 * MB, shadows: true },
+	medium: { count: 4, maxModelBytes: CROWD_MODEL_BYTES.medium, sessionBytes: 32 * MB, shadows: true },
+	low:    { count: 2, maxModelBytes: CROWD_MODEL_BYTES.low,    sessionBytes: 10 * MB, shadows: false },
 };
 // A phone lands in the shared 'medium' tier because Safari reports neither
 // deviceMemory nor hardwareConcurrency, so the detector defaults both to
 // "plenty". That is the right call for the renderer (a modern iPhone draws the
 // world fine) and the wrong one for a download budget: the phone still has a
 // fraction of a laptop's memory headroom and is the device that actually gets
-// killed. Step the crowd budget down one tier when the primary pointer is
-// coarse, without touching the shared render profile.
-function crowdBudget() {
-	const tiers = ['high', 'medium', 'low'];
-	let i = Math.max(0, tiers.indexOf(detectProfile()));
-	const touchPrimary = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-	if (touchPrimary) i = Math.min(tiers.length - 1, i + 1);
-	return CROWD_BUDGET[tiers[i]];
-}
-const BUDGET = crowdBudget();
+// killed. The one-tier step-down on a coarse pointer lives in prop-budget.js so
+// forged props are held to the same tiers as the crowd.
+const BUDGET = CROWD_BUDGET[currentBudgetTier()];
 
 const NAMES = ['satoshi', 'anon', 'gm_ser', 'degenape', 'moonboy', 'pepe', 'wagmi', 'hodlqueen', 'vibes', 'chad', 'frfr', 'fomo', 'ngmi', 'based_dev', 'gigachad', '0xshill', 'florp'];
 const LINES = ['gm ☀️', 'wen moon', 'lfg 🚀', 'wagmi', 'probably nothing', 'few understand', 'based', 'diamond hands 💎', 'ser…', 'this is the way', 'bullish af', 'vibes immaculate', 'we so back', 'iykyk', 'up only 📈'];

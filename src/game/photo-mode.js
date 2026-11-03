@@ -24,8 +24,8 @@ import { captureSceneCanvas } from './scene-capture.js';
 import { threeMarkPath2D, THREE_MARK_VIEWBOX } from '../shared/brand-mark.js';
 import { parseEvent, eventState, applyPreviewOverride, PHASE } from './meetup-schedule.js';
 import { log } from '../shared/log.js';
+import { fetchEventDocument } from '../shared/event-config.js';
 
-const EVENT_URL = '/event.json';
 // Wide enough for a 1440p desktop capture, small enough that the PNG stays
 // pasteable and the render target stays cheap on a phone GPU.
 const MAX_CAPTURE_WIDTH = 2560;
@@ -79,8 +79,7 @@ function el(tag, props = {}, kids = []) {
 
 function loadEvent() {
 	if (eventDoc) return eventDoc;
-	eventDoc = fetch(EVENT_URL, { cache: 'no-cache' })
-		.then((res) => (res.ok ? res.json() : null))
+	eventDoc = fetchEventDocument()
 		.then((doc) => applyPreviewOverride(parseEvent(doc), location.search))
 		.catch(() => null);
 	return eventDoc;

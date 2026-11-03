@@ -254,6 +254,19 @@ export function hasRoomFor(profile, item) {
 	return profile.inv.some((s) => !s.item);
 }
 
+// How many of `item` the backpack can still take in total (stack headroom plus
+// whole empty slots). A multi-unit purchase checks this against its full bundle
+// before charging, so a buyer is never billed for a bundle that only half landed.
+export function roomForQty(profile, item) {
+	let room = 0;
+	const stackable = STACKABLE_ITEMS.has(item);
+	for (const s of profile.inv) {
+		if (!s.item) room += stackable ? MAX_STACK : 1;
+		else if (stackable && s.item === item && s.qty < MAX_STACK) room += MAX_STACK - s.qty;
+	}
+	return room;
+}
+
 // Add `qty` of `item` to the backpack, filling existing stacks first. Returns the
 // quantity that did NOT fit (0 = everything landed).
 export function addItem(profile, item, qty) {
@@ -410,7 +423,7 @@ export function consumeSlot(profile, slot) {
 // that's the whole risk/reward point of banking. Mutates the profile (zeroing the
 // dropped slice) and returns { gold, items:[{item,qty}] } for the tombstone.
 export function dropCarried(profile) {
-	const gold = profile.gold | 0;
+	const gold = Math.max(0, Math.floor(profile.gold) || 0);
 	profile.gold = 0;
 	const items = [];
 	for (const s of profile.inv) {
@@ -440,15 +453,19 @@ export function reviveProfile(profile) {
 // (purse → bank); `amount < 0` withdraws. Clamps to what's actually available so it
 // can never mint or strand cash. Returns the signed amount actually moved.
 export function bankTransfer(profile, amount) {
-	const amt = amount | 0;
+	// Not `| 0`: the purse and bank are saturating counters up to 0xffffffff, and
+	// a 32-bit truncation wraps anything past 2^31 negative, which minted cash.
+	const amt = Number.isFinite(amount) ? Math.trunc(amount) : 0;
+	const gold = Math.max(0, Math.floor(profile.gold) || 0);
+	const bank = Math.max(0, Math.floor(profile.bank) || 0);
 	if (amt > 0) {
-		const moved = Math.min(amt, profile.gold | 0);
-		profile.gold -= moved; profile.bank += moved;
+		const moved = Math.min(amt, gold, 0xffffffff - bank);
+		profile.gold = gold - moved; profile.bank = bank + moved;
 		return moved;
 	}
 	if (amt < 0) {
-		const moved = Math.min(-amt, profile.bank | 0);
-		profile.bank -= moved; profile.gold += moved;
+		const moved = Math.min(-amt, bank, 0xffffffff - gold);
+		profile.bank = bank - moved; profile.gold = gold + moved;
 		return -moved;
 	}
 	return 0;

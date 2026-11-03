@@ -21,8 +21,8 @@
 // browser, so no third-party calendar service ever sees who is coming.
 
 import { log } from './shared/log.js';
+import { fetchEventDocument } from './shared/event-config.js';
 
-const CONFIG_URL = '/event.json';
 
 // How often the live panel re-reads the world population. Slow on purpose: the
 // number moves on a human timescale and this page is left open for hours.
@@ -463,12 +463,8 @@ class EventPage {
 
 async function boot() {
 	let raw = null;
-	try {
-		const res = await fetch(CONFIG_URL, { cache: 'no-cache', headers: { accept: 'application/json' } });
-		if (res.ok) raw = await res.json();
-	} catch (err) {
-		log.warn('[event] config fetch failed:', err?.message || err);
-	}
+	raw = await fetchEventDocument();
+	if (!raw) log.warn('[event] config fetch failed');
 	const cfg = parseConfig(raw);
 	if (!cfg) {
 		renderNoEvent();

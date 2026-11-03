@@ -17,7 +17,10 @@
 // refresh in flight never blocks gameplay.
 
 const API_BASE = (process.env.WORLD_API_BASE || 'https://three.ws').replace(/\/$/, '');
-const CONFIG_PATH = '/event.json';
+// The live override is merged server-side by /api/event-config; the static file is
+// the fallback when that endpoint is unreachable, so a cold start with the API down
+// still reads the file (and with both down the gate stays closed).
+const CONFIG_PATHS = ['/api/event-config', '/event.json'];
 const CACHE_TTL_MS = 60_000;      // re-read the config at most once a minute
 const FETCH_TIMEOUT_MS = 6000;
 
@@ -52,13 +55,26 @@ let _cached = null;      // the last successfully parsed window (may be a past e
 let _fetchedAt = 0;      // when the config was last read (ok or not)
 let _inFlight = null;    // dedupe concurrent refreshes across rooms
 
-async function readConfig() {
-	const res = await fetch(`${API_BASE}${CONFIG_PATH}`, {
+async function readConfigFrom(path) {
+	const res = await fetch(`${API_BASE}${path}`, {
 		headers: { accept: 'application/json' },
 		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 	});
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);
 	return res.json();
+}
+
+async function readConfig() {
+	let lastErr;
+	for (const path of CONFIG_PATHS) {
+		try {
+			return await readConfigFrom(path);
+		} catch (err) {
+			lastErr = err;
+			console.warn(`[event-window] ${API_BASE}${path} unreadable: ${err?.message || err}`);
+		}
+	}
+	throw lastErr;
 }
 
 // Refresh the cached window if it's stale. Never throws and never rejects: a failed
@@ -76,7 +92,6 @@ export async function refreshEventWindow(now = Date.now()) {
 		})
 		.catch((err) => {
 			_fetchedAt = Date.now();
-			console.warn(`[event-window] ${API_BASE}${CONFIG_PATH} unreadable: ${err?.message || err}`);
 			return _cached;
 		})
 		.finally(() => { _inFlight = null; });

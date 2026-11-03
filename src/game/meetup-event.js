@@ -34,13 +34,13 @@
 
 import './meetup-event.css';
 import { isHomeTown } from './home-town.js';
+import { fetchEventDocument } from '../shared/event-config.js';
 import { getPowerSaver } from '../shared/frame-governor.js';
 import {
 	parseEvent, eventState, formatCountdown, fireworkPlan, applyPreviewOverride, groupPhotoState,
 	PHASE, BUCKET_MS, PHOTO_STAGE, PHOTO_POSE_MS, PHOTO_LATE_MS,
 } from './meetup-schedule.js';
 
-const CONFIG_URL = '/event.json';
 const SIGNAL_URL = '/api/three-signal';
 const POPULATION_URL = '/api/play/population';
 const POPULATION_POLL_MS = 20_000;
@@ -563,10 +563,7 @@ export class MeetupEvent {
 // event never pays for it.
 export async function boot() {
 	let cfg = null;
-	try {
-		const res = await fetch(CONFIG_URL, { cache: 'no-cache' });
-		if (res.ok) cfg = parseEvent(await res.json());
-	} catch { /* no event, mount nothing */ }
+	cfg = parseEvent(await fetchEventDocument());
 
 	// Local preview: ?meetup=now starts the event 20s from load; ?meetup=<ISO>
 	// shifts the whole window to that start (applyPreviewOverride, shared with

@@ -21,6 +21,7 @@
 // surface reads, so the wall can never disagree with the lobby banner.
 
 import './director-mode.css';
+import { fetchEventDocument } from '../shared/event-config.js';
 import { prefersReducedMotion, onReducedMotionChange } from './a11y.js';
 import { PHOTO_STAGE, groupPhotoState } from './meetup-schedule.js';
 import { MODE, parseDirectorEvent, overlayModel } from './director-overlay-state.js';
@@ -28,7 +29,6 @@ import {
 	buildCandidates, chooseShot, planShot, shotPose, shouldCutEarly, pushOutOfBoxes, photoCandidate,
 } from './director-shots.js';
 
-const EVENT_URL = '/event.json';
 const EVENT_REFRESH_MS = 60_000;
 const TICK_MS = 250;
 const HISTORY_LEN = 6;
@@ -383,9 +383,9 @@ export class DirectorMode {
 	async _fetchEvent() {
 		this.eventFetchedAt = Date.now();
 		try {
-			const res = await fetch(EVENT_URL, { cache: 'no-cache' });
-			if (!res.ok) return;
-			this.event = parseDirectorEvent(await res.json(), this.search, Date.now());
+			const doc = await fetchEventDocument();
+			if (!doc) return;
+			this.event = parseDirectorEvent(doc, this.search, Date.now());
 		} catch { /* keep the last good event; the wall must never go blank on a blip */ }
 	}
 
