@@ -135,6 +135,14 @@
 			<description>Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.</description>
 		</item>
 		<item>
+			<title>The $THREE balance gate now fails closed during an RPC outage</title>
+			<link>https://three.ws/three</link>
+			<guid isPermaLink="false">2026-11-03:The $THREE balance gate now fails closed during an RPC outage</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Agents that require a minimum $THREE balance for a paid skill used to let every caller through whenever the Solana RPC was unhealthy. The balance check now retries once and, if the balance still cannot be read, answers 503 and asks the caller to retry. A paid skill call in that state does not consume the payment. The public balance endpoint answers 503 rpc_unavailable instead of a false eligible: true.</description>
+		</item>
+		<item>
 			<title>The A3S streaming avatar no longer turns into jagged shards as it refines</title>
 			<link>https://three.ws/stream</link>
 			<guid isPermaLink="false">2026-11-03:The A3S streaming avatar no longer turns into jagged shards as it refines</guid>
@@ -908,7 +916,7 @@
 			<guid isPermaLink="false">2026-10-24:Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio</guid>
 			<pubDate>Sat, 24 Oct 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.</description>
+			<description>three is now r187. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.</description>
 		</item>
 		<item>
 			<title>Pay for a model request with a wallet, no account needed</title>
