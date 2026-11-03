@@ -305,13 +305,26 @@ export async function forgeWorldProp({ prompt = '', file = null, onStatus, signa
 
 	throwIfAborted(signal);
 	onStatus?.('Sending to the forge…');
-	const res = await fetch(SUBMIT_URL, {
-		method: 'POST',
-		headers: headers({ 'content-type': 'application/json' }),
-		body: JSON.stringify(body),
-		signal,
-	});
-	const data = await readJson(res);
+	// The draft lane can hold this request open until the model is ready (92 s
+	// measured on 2026-11-03), so the wait reports real elapsed time instead of
+	// leaving "Sending" up for the whole generation.
+	const sentAt = Date.now();
+	const ticker = setInterval(() => {
+		onStatus?.(statusLine({ status: 'running', elapsed_seconds: (Date.now() - sentAt) / 1000 }));
+	}, 1000);
+	let res;
+	let data;
+	try {
+		res = await fetch(SUBMIT_URL, {
+			method: 'POST',
+			headers: headers({ 'content-type': 'application/json' }),
+			body: JSON.stringify(body),
+			signal,
+		});
+		data = await readJson(res);
+	} finally {
+		clearInterval(ticker);
+	}
 	if (!res.ok) throw submitError(res, data);
 
 	const name = forgePropName(text, file);

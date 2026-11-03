@@ -100,6 +100,25 @@ describe('forgeWorldProp (text prompt)', () => {
 		expect(statuses.some((s) => s.includes('Forging'))).toBe(true);
 	});
 
+	it('reports real elapsed time while the lane holds the submit open', async () => {
+		// The draft lane answers the POST only when the model is ready (measured at
+		// 92 s on 2026-11-03), so a fixed "Sending" line would sit unchanged the whole wait.
+		let answer;
+		fetchMock
+			.mockImplementationOnce(() => new Promise((r) => { answer = r; }))
+			.mockResolvedValueOnce(glbResponse());
+		const statuses = [];
+		const run = forgeWorldProp({ prompt: 'a bronze bell', budget: BUDGET, onStatus: (m) => statuses.push(m) });
+		await vi.advanceTimersByTimeAsync(30000);
+		expect(statuses).toContain('Forging your model (30s in)…');
+		answer(jsonResponse(200, { status: 'done', glb_url: GLB_URL, durable: true }));
+		await settle(run);
+		const count = statuses.length;
+		await vi.advanceTimersByTimeAsync(10000);
+		// The ticker stops with the response: no stale elapsed lines after it.
+		expect(statuses.length).toBe(count);
+	});
+
 	it('resolves a cache hit inline without polling', async () => {
 		fetchMock
 			.mockResolvedValueOnce(jsonResponse(200, { status: 'done', glb_url: GLB_URL, durable: true, cached: true }))
