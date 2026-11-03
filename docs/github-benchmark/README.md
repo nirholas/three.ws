@@ -103,6 +103,16 @@ python3 -I analyze_wide.py data/wide               # tables on stdout, writes ow
 
 `data/` is git-ignored. The first, smaller pass (40 trending repos against our top 40, REST API) is `collect.py`.
 
+Security fixes for repos whose Dependabot updates fail with `conflicting-dependencies`:
+
+```bash
+python3 -I fix_deps.py data/wide /home/user/repo-fixes owner/repo ...   # local clones + commits, never pushes
+python3 -I report_deps.py data/wide                                      # writes dependency-fixes.md
+GH_TOKEN=... ./push_fixes.sh --yes [repo ...]                            # owner only: push branches, open PRs
+```
+
+`fix_deps.py` moves each vulnerable package to the newest patched release inside the major it is already on (`dep_plan.mjs` plans this from the lockfile and the registry), runs install, build and tests, and reruns any failing step on the original lockfile so only true regressions are flagged. Anything that needs a cross-major parent upgrade is listed, not forced.
+
 ## Appendix: full tables
 
 ### Every group, every signal
