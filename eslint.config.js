@@ -69,6 +69,8 @@ export default [
 			'public/artifact.js',
 			'public/bazaar.js',
 			'public/paywall.js',
+			// onnxruntime-web's Emscripten-generated WASM glue, vendored as-is.
+			'public/models/voice/runtime/**',
 		],
 	},
 	js.configs.recommended,
@@ -92,7 +94,9 @@ export default [
 			// structural rules that are already clean (no-dupe-keys, no-func-assign)
 			// stay at error so regressions are caught immediately.
 			'no-unused-vars': 'warn',
-			'no-console': 'warn',
+			// Browser code may report real failures with console.warn/error;
+			// stray console.log is what this catches. Node code is exempted below.
+			'no-console': ['warn', { allow: ['warn', 'error'] }],
 			'no-undef': 'warn',
 			'no-empty': 'warn',
 			'no-constant-condition': 'warn',
@@ -115,6 +119,33 @@ export default [
 		},
 	},
 	{
+		// Node-side code (CLIs, API handlers, workers, servers, tests): stdout
+		// and stderr are the log stream Cloud Run and the terminal collect, so
+		// console is the logger here, not a leftover.
+		files: [
+			'scripts/**', 'api/**', 'workers/**', 'server/**', 'services/**',
+			'tests/**', 'examples/**', 'agents/**', 'mcp-server/**', 'mcp-bridge/**',
+			'**/bin/**', '**/scripts/**', '**/server/**', '**/cli/**', '**/*.cjs',
+			'vite.config.js',
+		],
+		rules: { 'no-console': 'off' },
+	},
+	{
+		// Browser extensions run with the WebExtensions `chrome` global.
+		files: ['extensions/**'],
+		languageOptions: { globals: { ...globals.webextensions } },
+	},
+	{
+		// The scene-studio editor loads three.js as a classic script global.
+		files: ['public/scene-studio/app/**'],
+		languageOptions: { globals: { THREE: 'readonly' } },
+	},
+	{
+		// VS Code webviews receive acquireVsCodeApi from the host.
+		files: ['packages/vscode-*/webview/**'],
+		languageOptions: { globals: { acquireVsCodeApi: 'readonly' } },
+	},
+	{
 		// Service workers run in their own global scope (self, clients,
 		// registration, skipWaiting, …). Flat config replaces the old
 		// `/* eslint-env serviceworker */` directive with explicit globals.
@@ -132,7 +163,6 @@ export default [
 		},
 		rules: {
 			'no-unused-vars': 'warn',
-			'no-console': 'warn',
 			'no-undef': 'warn',
 		},
 	},
