@@ -155,7 +155,7 @@ function cleanText(s) {
 		.replace(/^\s*https?:\/\/\s*\n?/u, '')
 		.replace(/\bhttps?:\/\/\s*\n\s*/g, '')
 		.replace(/\n[ \t]*https?:\/\/[ \t]*\n/g, '\n')
-		.replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+		.replace(/\u200B|\u200C|\u200D|\uFEFF/g, '')
 		.replace(/\n{3,}/g, '\n\n')
 		.trim();
 }
