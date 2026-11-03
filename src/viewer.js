@@ -417,6 +417,7 @@ export class Viewer {
 			height: initialHeight,
 			preset: this.state.cinematicPreset,
 			lowPower: this._lowPower,
+			onUpdate: () => this.invalidate(),
 		});
 		this._composer = this._cinematic.composer;
 
@@ -1465,6 +1466,7 @@ export class Viewer {
 		const box = new Box3().setFromObject(object);
 		const size = box.getSize(new Vector3()).length();
 		const center = box.getCenter(new Vector3());
+		this._cinematic?.setContentSize(size);
 
 		this.controls.reset();
 
@@ -2072,6 +2074,7 @@ export class Viewer {
 		addFx('vignette', 0, 1, 0.01, 'vignette');
 		addFx('ssao', 0, 1, 1, 'ambient occlusion');
 		addFx('ssaoIntensity', 0, 4, 0.05, 'AO strength');
+		addFx('ssaoRadius', 0.01, 0.3, 0.005, 'AO radius');
 		addFx('dof', 0, 1, 1, 'depth of field');
 		addFx('dofFocusDistance', 0.2, 12, 0.1, 'focus distance');
 		addFx('dofBokeh', 0, 6, 0.1, 'bokeh');

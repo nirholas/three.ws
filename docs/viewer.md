@@ -192,6 +192,12 @@ Toggle `viewer.state.background` to show or hide the HDR environment as the scen
 
 Call `viewer.updateBackground()` after changing these values programmatically.
 
+### Cinematic FX (GUI → Cinematic FX folder)
+
+`src/viewer/cinematic.js` owns the post chain: RenderPass, ambient occlusion, depth of field, bloom, then one merged grade pass (saturation, contrast, brightness, chromatic aberration, film grain, vignette). Pick a look with `viewer.state.cinematicPreset` (`Off`, `Studio`, `Cinematic`, `Portrait`, `Vivid`, `Neon`, `Noir`) or the preset picker; every slider writes straight into the live pipeline. `Studio` is the default and reproduces the historical look exactly.
+
+Ambient occlusion is [N8AO](https://github.com/N8python/n8ao), the denoised screen-space AO the `/play` world also uses. It reconstructs normals from depth, so there is no separate normal pass, and the module downloads only the first time a look turns AO on (`Cinematic` and `Portrait` do), so `Studio` embeds never pay for it. The AO radius is a fraction of the model's bounding diagonal, set on every load, so a 20 cm figurine and a 2 m avatar shade alike. Low-power devices get N8AO's `Low` quality at half resolution.
+
 ---
 
 ## Material and Texture Inspection

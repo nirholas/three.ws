@@ -4,10 +4,12 @@
  * Wraps a single EffectComposer and owns the full post chain so the core
  * Viewer stays readable. The chain, in render order:
  *
- *   RenderPass → NormalPass → DepthDownsamplingPass → SSAO → DoF → Bloom → Grade
+ *   RenderPass → N8AO → DoF → Bloom → Grade
  *
- * SSAO needs scene normals + depth (NormalPass / DepthDownsamplingPass), so it
- * lives in its own pass. Bloom and depth-of-field are *convolution* effects and
+ * Ambient occlusion is N8AO (the same denoised AO the /play world uses). It
+ * reconstructs normals from depth itself, so it needs no NormalPass, and it is
+ * loaded on demand the first time a look turns AO on: the default Studio look
+ * never downloads or allocates it. Bloom and depth-of-field are *convolution* effects and
  * the postprocessing lib forbids merging two of them into one EffectPass — each
  * gets a dedicated pass. Everything cheap and per-pixel (colour grade, vignette,
  * chromatic aberration, film grain) is merged into one always-on final pass.
@@ -21,15 +23,13 @@
  */
 
 import { Vector2 } from 'three';
+import { log } from '../shared/log.js';
 import {
 	EffectComposer,
 	RenderPass,
 	EffectPass,
-	NormalPass,
-	DepthDownsamplingPass,
 	BloomEffect,
 	VignetteEffect,
-	SSAOEffect,
 	DepthOfFieldEffect,
 	HueSaturationEffect,
 	BrightnessContrastEffect,
@@ -51,10 +51,12 @@ export const CINEMATIC_DEFAULTS = Object.freeze({
 	// Vignette — darkens the frame edges to pull focus onto the avatar.
 	vignette: 0.22,
 	vignetteOffset: 0.5,
-	// Ambient occlusion — soft contact shadows in creases and where limbs meet.
+	// Ambient occlusion: soft contact shadows in creases and where limbs meet.
+	// Radius is a fraction of the model's bounding diagonal, so the shading
+	// reads the same on a 2 m avatar and a 20 cm figurine.
 	ssao: false,
 	ssaoIntensity: 1.4,
-	ssaoRadius: 0.18,
+	ssaoRadius: 0.08,
 	// Depth of field — cinematic focus falloff. World-space focus distance in metres.
 	dof: false,
 	dofFocusDistance: 2.4,
@@ -137,8 +139,22 @@ export class CinematicPipeline {
 	 * @param {import('three').Camera} camera
 	 * @param {{ width: number, height: number, preset?: string }} opts
 	 */
-	constructor(renderer, scene, camera, { width, height, preset = DEFAULT_CINEMATIC_PRESET, lowPower = false } = {}) {
+	constructor(
+		renderer,
+		scene,
+		camera,
+		{ width, height, preset = DEFAULT_CINEMATIC_PRESET, lowPower = false, onUpdate = null } = {},
+	) {
 		this.renderer = renderer;
+		this.lowPower = lowPower;
+		// Called when something changes the image outside a render the host asked
+		// for (the AO pass finishing its lazy load), so on-demand loops redraw.
+		this.onUpdate = onUpdate;
+		// Bounding diagonal of the framed model, in world units (see setContentSize).
+		this.contentSize = 2;
+		this._ao = null;
+		this._aoLoad = null;
+		this._disposed = false;
 		this.scene = scene;
 		this.camera = camera;
 		this.params = { ...CINEMATIC_DEFAULTS };
@@ -156,34 +172,6 @@ export class CinematicPipeline {
 
 		this._renderPass = new RenderPass(scene, camera);
 		this.composer.addPass(this._renderPass);
-
-		// Scene-space normals + downsampled normal/depth feed SSAO. Disabled with
-		// SSAO so they cost nothing when ambient occlusion is off (the default).
-		this._normalPass = new NormalPass(scene, camera);
-		this._depthDownsamplingPass = new DepthDownsamplingPass({
-			normalBuffer: this._normalPass.texture,
-			resolutionScale: 0.5,
-		});
-		this.composer.addPass(this._normalPass);
-		this.composer.addPass(this._depthDownsamplingPass);
-
-		this._ssaoEffect = new SSAOEffect(camera, this._normalPass.texture, {
-			blendFunction: BlendFunction.MULTIPLY,
-			normalDepthBuffer: this._depthDownsamplingPass.texture,
-			samples: 9,
-			rings: 7,
-			distanceThreshold: 0.97,
-			distanceFalloff: 0.03,
-			rangeThreshold: 0.0005,
-			rangeFalloff: 0.001,
-			luminanceInfluence: 0.7,
-			radius: this.params.ssaoRadius,
-			intensity: this.params.ssaoIntensity,
-			bias: 0.025,
-			fade: 0.01,
-		});
-		this._ssaoPass = new EffectPass(camera, this._ssaoEffect);
-		this.composer.addPass(this._ssaoPass);
 
 		this._dofEffect = new DepthOfFieldEffect(camera, {
 			focusDistance: 0,
@@ -253,12 +241,7 @@ export class CinematicPipeline {
 		this._vignetteEffect.darkness = p.vignette;
 		this._vignetteEffect.offset = p.vignetteOffset;
 
-		this._ssaoEffect.intensity = p.ssaoIntensity;
-		this._ssaoEffect.radius = p.ssaoRadius;
-		const ssaoOn = !!p.ssao;
-		this._ssaoPass.enabled = ssaoOn;
-		this._normalPass.enabled = ssaoOn;
-		this._depthDownsamplingPass.enabled = ssaoOn;
+		this._syncAo();
 
 		this._dofEffect.cocMaterial.focalLength = p.dofFocalLength;
 		this._dofEffect.bokehScale = p.dofBokeh;
@@ -272,6 +255,59 @@ export class CinematicPipeline {
 
 		this._chromaticAberration.offset.set(p.chromaticAberration, p.chromaticAberration);
 		this._noiseEffect.blendMode.opacity.value = p.grain;
+	}
+
+	/**
+	 * Tell the pipeline how big the framed model is (its bounding-box diagonal in
+	 * world units) so world-space effects like AO scale with it.
+	 */
+	setContentSize(size) {
+		if (!(size > 0) || !isFinite(size)) return;
+		this.contentSize = size;
+		this._syncAo();
+	}
+
+	_syncAo() {
+		const p = this.params;
+		if (!p.ssao) {
+			if (this._ao) this._ao.enabled = false;
+			return;
+		}
+		if (!this._ao) {
+			this._loadAo();
+			return;
+		}
+		const cfg = this._ao.configuration;
+		cfg.aoRadius = p.ssaoRadius * this.contentSize;
+		cfg.distanceFalloff = 1.0;
+		// N8AO's intensity scale runs higher than the old SSAOEffect's; the
+		// factor keeps the presets' tuned 1.0 to 1.4 range meaningful.
+		cfg.intensity = p.ssaoIntensity * 2.5;
+		this._ao.enabled = true;
+	}
+
+	_loadAo() {
+		if (this._aoLoad) return;
+		this._aoLoad = import('n8ao')
+			.then(({ N8AOPostPass }) => {
+				if (this._disposed) return;
+				const size = this.renderer.getSize?.(new Vector2()) ?? new Vector2(1, 1);
+				const ao = new N8AOPostPass(this.scene, this.camera, size.x, size.y);
+				ao.setQualityMode(this.lowPower ? 'Low' : 'Medium');
+				if (this.lowPower) ao.configuration.halfRes = true;
+				// Straight after the RenderPass: AO darkens the lit frame before
+				// DoF blurs it and bloom reads its highlights.
+				this.composer.addPass(ao, 1);
+				this._ao = ao;
+				this._syncAo();
+				this.onUpdate?.();
+			})
+			.catch((err) => {
+				// The look still renders, just without contact shadows; let a later
+				// preset change retry the download.
+				this._aoLoad = null;
+				log.warn('Ambient occlusion unavailable:', err?.message || err);
+			});
 	}
 
 	/** Set one parameter and re-push. Keeps GUI bindings one-line. */
@@ -293,8 +329,7 @@ export class CinematicPipeline {
 	setCamera(camera) {
 		this.camera = camera;
 		this._renderPass.mainCamera = camera;
-		this._normalPass.mainCamera = camera;
-		this._ssaoPass.mainCamera = camera;
+		if (this._ao) this._ao.camera = camera;
 		this._dofPass.mainCamera = camera;
 		this._bloomPass.mainCamera = camera;
 		this._finalPass.mainCamera = camera;
@@ -310,6 +345,7 @@ export class CinematicPipeline {
 	}
 
 	dispose() {
+		this._disposed = true;
 		this.composer.dispose();
 	}
 }

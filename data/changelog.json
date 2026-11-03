@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "Cinematic and Portrait looks get real contact shadows",
+			"summary": "The Cinematic and Portrait looks in the 3D viewer now use N8AO ambient occlusion, the same denoised technique the /play world runs. Creases, armpits, joints and the space between limbs pick up soft contact shading that the previous effect barely showed. The shading scales with the model, so tiny figurines and full-size avatars look equally grounded, and there is a new AO radius slider in the Cinematic FX panel. The default Studio look is unchanged and never downloads the extra code.",
+			"tags": [
+				"feature"
+			],
+			"link": "/app"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Viewer screenshots capture the model instead of a blank frame",
 			"summary": "Pressing P or choosing Screenshot in the 3D viewer could save an empty image with only the watermark on it. The viewer drew the frame, then waited for the watermark to download, and by then the browser had already cleared the canvas. It now has the watermark ready before it draws, so the saved PNG always shows the model you were looking at.",
 			"tags": [
