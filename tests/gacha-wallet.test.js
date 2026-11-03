@@ -7,7 +7,7 @@
 // Collector Crypt's published hosts, redirects included. Account bytes here are
 // built from freshly generated keys in the real on-chain layouts.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Keypair } from '@solana/web3.js';
 import bs58 from 'bs58';
 import {
@@ -20,6 +20,8 @@ import {
 	findWalletCards,
 	fetchCardJson,
 	mapPool,
+	walletRpc,
+	_resetArweaveGatewayHealth,
 } from '../api/_lib/gacha-wallet.js';
 import { CC_CARD_COLLECTION } from '../api/_lib/collectorcrypt-gacha.js';
 
@@ -269,5 +271,100 @@ describe('mapPool', () => {
 		});
 		expect(out).toEqual([50, 10, 40, 20, 30]);
 		expect(peak).toBe(2);
+	});
+});
+
+// Production regressions seen on Cloud Run (2026-11-03): arweave.net answers
+// Google Cloud egress with 429 on its per-transaction subdomain, so every card
+// in a wallet rendered blank, and the public cluster refuses getProgramAccounts
+// under load, so the scan itself 503'd while Helius sat configured and unused.
+describe('arweave gateway fallback', () => {
+	const TX = 'r8y9bQB43_bFLXEElxc5MJesGmG4Cy-aEkCFnZtkAIc';
+	const response = (status, body, headers = {}) => ({
+		status,
+		ok: status >= 200 && status < 300,
+		headers: { get: (h) => headers[h.toLowerCase()] ?? null },
+		text: async () => (typeof body === 'string' ? body : JSON.stringify(body)),
+	});
+	// arweave.net throttles; every other gateway serves the same bytes.
+	const throttledArweave = (seen) => async (url) => {
+		seen.push(url);
+		const { hostname, pathname } = new URL(url);
+		if (hostname === 'arweave.net') return response(302, '', { location: `https://sandbox.arweave.net${pathname}` });
+		if (hostname.endsWith('.arweave.net')) return response(429, '<html>429 Too Many Requests</html>');
+		if (!hostname.startsWith('sandbox.')) return response(302, '', { location: `https://sandbox.${hostname}${pathname}` });
+		return response(200, { name: `Card via ${hostname.slice('sandbox.'.length)}` });
+	};
+
+	beforeEach(() => _resetArweaveGatewayHealth());
+	afterEach(() => _resetArweaveGatewayHealth());
+
+	it('reads the card from another gateway when arweave.net throttles', async () => {
+		const seen = [];
+		const body = await fetchCardJson(`https://arweave.net/${TX}`, { fetchImpl: throttledArweave(seen) });
+		expect(body?.name).toMatch(/^Card via /);
+		expect(seen[0]).toBe(`https://arweave.net/${TX}`);
+		// Every hop, sandbox subdomains included, stays on an allowlisted gateway.
+		expect(seen.every((u) => allowedMetadataUri(u) === u)).toBe(true);
+	});
+
+	it('tries a throttled gateway last on the next card', async () => {
+		await fetchCardJson(`https://arweave.net/${TX}`, { fetchImpl: throttledArweave([]) });
+		const seen = [];
+		await fetchCardJson(`https://arweave.net/${TX}`, { fetchImpl: throttledArweave(seen) });
+		expect(new URL(seen[0]).hostname).not.toMatch(/arweave\.net$/);
+	});
+
+	it('reads a card hosted on any listed gateway through the same ladder', async () => {
+		const seen = [];
+		const body = await fetchCardJson(`https://ar-io.dev/${TX}`, { fetchImpl: throttledArweave(seen) });
+		expect(body?.name).toBe('Card via ar-io.dev');
+	});
+
+	it('does not re-point a URI that is not an arweave transaction', async () => {
+		const seen = [];
+		const fetchImpl = async (url) => {
+			seen.push(url);
+			return response(503, '');
+		};
+		expect(await fetchCardJson('https://nft.collectorcrypt.com/meta/1', { fetchImpl })).toBe(null);
+		expect(new Set(seen)).toEqual(new Set(['https://nft.collectorcrypt.com/meta/1']));
+	});
+
+	it('still refuses a redirect off the allowlist from a fallback gateway', async () => {
+		const seen = [];
+		const fetchImpl = async (url) => {
+			seen.push(url);
+			return response(302, '', { location: 'https://169.254.169.254/latest/meta-data' });
+		};
+		expect(await fetchCardJson(`https://arweave.net/${TX}`, { fetchImpl })).toBe(null);
+		expect(seen.some((u) => u.includes('169.254'))).toBe(false);
+	});
+});
+
+describe('walletRpc', () => {
+	afterEach(() => {
+		vi.unstubAllEnvs();
+		vi.unstubAllGlobals();
+	});
+
+	it('scans through the configured providers when the public cluster refuses getProgramAccounts', async () => {
+		vi.stubEnv('SOLANA_RPC_URL', '');
+		vi.stubEnv('HELIUS_API_KEY', 'test-helius-key');
+		const hosts = [];
+		vi.stubGlobal('fetch', async (url) => {
+			const { hostname } = new URL(String(url));
+			hosts.push(hostname);
+			if (hostname === 'mainnet.helius-rpc.com') {
+				return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+			}
+			return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: 429, message: 'Connection rate limits exceeded' } }), {
+				status: 429,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		const rpc = walletRpc('mainnet');
+		await expect(rpc('getProgramAccounts', ['CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d', { encoding: 'base64' }])).resolves.toEqual([]);
+		expect(hosts).toContain('mainnet.helius-rpc.com');
 	});
 });

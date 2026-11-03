@@ -48,7 +48,7 @@ import {
 } from '../_lib/collectorcrypt-gacha.js';
 import {
 	MAX_WALLET_CARDS,
-	makeRpc,
+	walletRpc,
 	findWalletCards,
 	fetchCardJson,
 	walletCardFromJson,
@@ -59,7 +59,6 @@ export const maxDuration = 30;
 
 const RARITIES = new Set(['common', 'uncommon', 'rare', 'epic']);
 
-const PUBLIC_RPC = { mainnet: 'https://api.mainnet-beta.solana.com', devnet: 'https://api.devnet.solana.com' };
 const WALLET_CACHE_TTL_S = 30;
 const CARD_JSON_TTL_S = 60 * 60 * 24; // card metadata is fixed once minted
 const MAX_BUYBACK_CHECKS = 60;
@@ -259,7 +258,7 @@ async function cards(req, res, net) {
 		}
 	}
 
-	const rpc = makeRpc([rpcUrl(net), PUBLIC_RPC[net]]);
+	const rpc = walletRpc(net);
 	let found;
 	try {
 		found = await findWalletCards(rpc, owner);
@@ -270,7 +269,7 @@ async function cards(req, res, net) {
 
 	const truncated = found.cards.length > MAX_WALLET_CARDS;
 	const onchain = found.cards.slice(0, MAX_WALLET_CARDS);
-	const rendered = await mapPool(onchain, 8, async (c) => walletCardFromJson(c, await cardJson(c.uri)));
+	const rendered = await mapPool(onchain, 12, async (c) => walletCardFromJson(c, await cardJson(c.uri)));
 	const list = rendered.filter(Boolean);
 	const quotes = await mapPool(list.slice(0, MAX_BUYBACK_CHECKS), 6, (c) => quoteFor(net, c.address));
 	list.forEach((c, i) => {

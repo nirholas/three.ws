@@ -19,12 +19,14 @@ import { fetchFirst } from '../../src/shared/failover-fetch.js';
 /** Ordered IPFS gateway prefixes (each ends in `/ipfs/`). */
 export const IPFS_GATEWAYS = [...IPFS_READ_GATEWAYS];
 
-/** Ordered Arweave gateway prefixes (each ends in `/`). */
-export const ARWEAVE_GATEWAYS = [
-	'https://arweave.net/',
-	'https://ar-io.net/',
-	'https://arweave.dev/',
-];
+/**
+ * Ordered Arweave gateway prefixes (each ends in `/`). Measured from Cloud Run
+ * egress on 2026-11-03: arweave.net answers Google Cloud with 429 on its
+ * per-transaction subdomain, so the ar.io gateways after it carry production
+ * reads. ar-io.net and arweave.dev were dropped: neither resolves from Cloud
+ * Run, so they only burned the timeout budget.
+ */
+export const ARWEAVE_GATEWAYS = ['https://arweave.net/', 'https://turbo-gateway.com/', 'https://ardrive.net/', 'https://ar-io.dev/'];
 
 const DEFAULT_TIMEOUT_MS = 8_000;
 

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T03:29:46.296Z",
+	"generated_at": "2026-11-03T03:54:17.818Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4268,
+	"total": 4269,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -48,6 +48,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "My cards shows every card's photo, grade and value again",
+			"summary": "In production the My cards view of the /play card gacha listed cards with blank photos and no grade or value, and sometimes failed to load at all. Card details now load from a backup Arweave gateway when the main one is busy, and the wallet scan uses the platform's full set of Solana providers instead of the public node alone. Other pages that read Arweave files (agent cards, token details) also skip two gateways that had stopped answering.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1537,16 +1547,6 @@
 			"link": "/onchain",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "One catalog for all 39 HookForge hooks, and a census that recognizes them",
-			"summary": "The Uniswap v4 hooks guide now carries the full HookForge registry (39 hooks, pinned by commit) grouped by family, with the agent-native ones linked to their Solana counterparts, plus a design note reconciling AgentTierHook with reputation-fee. The hook census now decodes each hook's 14 permission bits from its address and calls hookName() to flag HookForge hooks when they show up on chain.",
-			"link": "/docs/uniswap-v4-hooks",
-			"tags": [
-				"docs"
 			]
 		}
 	]

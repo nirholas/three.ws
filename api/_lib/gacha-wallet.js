@@ -5,8 +5,9 @@
 //   - Metaplex Core assets in the CCryptUf... collection (every card minted
 //     since the move to Core). Core assets are single accounts owned by the Core
 //     program with the owner at byte 1 and the collection at byte 34, so one
-//     filtered getProgramAccounts finds them all. It works on any RPC, the
-//     public endpoint included, and costs no billed DAS credits.
+//     filtered getProgramAccounts finds them all, with no billed DAS credits.
+//     The public cluster refuses that call under load, so the scan reads
+//     through the platform's rotating provider chain (walletRpc).
 //   - Token Metadata programmable NFTs in the CCryptWB... collection (older
 //     cards still circulating in the machines). These are found through the
 //     wallet's token accounts: every 1-of-1 balance is a candidate mint, and its
@@ -15,12 +16,15 @@
 //
 // The display fields (front and back image, grade, set, insured value) live in
 // the off-chain JSON each card points at. That JSON is fetched only from the
-// hosts Collector Crypt publishes metadata on, so a card can never make the
-// server fetch an arbitrary URL.
+// hosts Collector Crypt publishes metadata on and the Arweave gateways that
+// serve the same transaction, so a card can never make the server fetch an
+// arbitrary URL.
 
 import { PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { PROGRAM, CC_CARD_COLLECTION, normalizeCard } from './collectorcrypt-gacha.js';
+import { solanaRpcEndpoints, makeRotatingFetch } from './solana/connection.js';
+import { ARWEAVE_GATEWAYS } from './ipfs-gateways.js';
 
 export const CC_LEGACY_CARD_COLLECTION = 'CCryptWBYktukHDQ2vHGtVcmtjXxYzvw8XNVY64YN2Yf';
 
@@ -29,13 +33,13 @@ export const MAX_WALLET_CARDS = 120;
 const MAX_LEGACY_CANDIDATES = 600;
 const METADATA_JSON_MAX_BYTES = 96 * 1024;
 
-const METADATA_HOSTS = new Set([
-	'arweave.net',
-	'www.arweave.net',
-	'gateway.irys.xyz',
-	'nft.collectorcrypt.com',
-	'd1xpxki1g4htqu.cloudfront.net',
-]);
+const METADATA_HOSTS = new Set(['www.arweave.net', 'gateway.irys.xyz', 'nft.collectorcrypt.com', 'd1xpxki1g4htqu.cloudfront.net']);
+
+// Arweave gateways (the platform list, arweave.net first). Each one answers a
+// transaction read with a redirect to a per-transaction sandbox subdomain of
+// itself, so the gateway and its subdomains are allowed together.
+const ARWEAVE_HOSTS = ARWEAVE_GATEWAYS.map((g) => new URL(g).hostname);
+const ARWEAVE_TX_ID = /^[A-Za-z0-9_-]{43}$/;
 
 const CORE_ASSET_KEY = 1; // mpl-core Key::AssetV1
 const CORE_UA_COLLECTION = 2; // UpdateAuthority::Collection
@@ -112,7 +116,7 @@ export function allowedMetadataUri(raw) {
 	try {
 		const u = new URL(raw);
 		const host = u.hostname.toLowerCase();
-		const ok = METADATA_HOSTS.has(host) || host.endsWith('.arweave.net');
+		const ok = METADATA_HOSTS.has(host) || ARWEAVE_HOSTS.some((g) => host === g || host.endsWith(`.${g}`));
 		return u.protocol === 'https:' && ok ? u.toString() : null;
 	} catch {
 		return null;
@@ -146,8 +150,9 @@ export function walletCardFromJson({ address, name, standard }, json) {
 // ── RPC ─────────────────────────────────────────────────────────────────────
 
 /**
- * JSON-RPC against the first endpoint that answers. A configured provider that
- * is down or rate limited falls through to the next one (the public cluster).
+ * JSON-RPC against the first endpoint that answers; a provider that is down or
+ * rate limited falls through to the next. With a `fetchImpl` that picks its own
+ * endpoint (the rotating chain in walletRpc), `urls` is a single label.
  */
 export function makeRpc(urls, { fetchImpl = fetch, timeoutMs = 10_000 } = {}) {
 	const list = [...new Set(urls.filter(Boolean))];
@@ -170,6 +175,23 @@ export function makeRpc(urls, { fetchImpl = fetch, timeoutMs = 10_000 } = {}) {
 		}
 		throw lastErr || new Error(`${method}: no rpc endpoint`);
 	};
+}
+
+/**
+ * The JSON-RPC client a wallet scan reads through: the platform's canonical
+ * rotating chain (SOLANA_RPC_URL, QuickNode, Helius, Alchemy, operator and
+ * keyless fallbacks), sharing its endpoint cooldowns and per-method demotions
+ * with every other Solana caller. The public cluster alone refuses
+ * getProgramAccounts with "Connection rate limits exceeded" under load.
+ */
+const walletRpcs = new Map();
+export function walletRpc(net) {
+	const network = net === 'devnet' ? 'devnet' : 'mainnet';
+	if (!walletRpcs.has(network)) {
+		const send = makeRotatingFetch(solanaRpcEndpoints(network));
+		walletRpcs.set(network, makeRpc([`solana-${network}`], { fetchImpl: (_label, init) => send(null, init), timeoutMs: 25_000 }));
+	}
+	return walletRpcs.get(network);
 }
 
 async function findCoreCards(rpc, owner) {
@@ -237,18 +259,48 @@ export async function findWalletCards(rpc, owner) {
 
 // ── off-chain JSON ──────────────────────────────────────────────────────────
 
-/**
- * A card's off-chain JSON, or null. One retry: arweave gateways occasionally
- * answer a cold read with an empty redirect, and a blank card in someone's
- * collection is worse than a second request.
- */
-export async function fetchCardJson(uri, opts = {}) {
-	return (await fetchCardJsonOnce(uri, opts)) || (await fetchCardJsonOnce(uri, opts));
+// A gateway that throttled or failed is tried last for this long. arweave.net
+// answers Google Cloud egress with 429 on its sandbox subdomain, so without this
+// every card would pay that round trip before reaching a gateway that serves it.
+const GATEWAY_BACKOFF_MS = 5 * 60_000;
+const gatewayBackoff = new Map();
+
+export function _resetArweaveGatewayHealth() {
+	gatewayBackoff.clear();
 }
 
-async function fetchCardJsonOnce(uri, { fetchImpl = fetch, timeoutMs = 6_000 } = {}) {
-	let url = allowedMetadataUri(uri);
-	if (!url) return null;
+/** The gateways to read one URI from, in order, or just the URI itself. */
+function cardJsonCandidates(uri) {
+	const url = allowedMetadataUri(uri);
+	if (!url) return [];
+	const u = new URL(url);
+	const id = u.pathname.slice(1);
+	if (!ARWEAVE_HOSTS.includes(u.hostname) || !ARWEAVE_TX_ID.test(id) || u.search) return [url];
+	const now = Date.now();
+	const healthy = [];
+	const cooling = [];
+	for (const host of [u.hostname, ...ARWEAVE_HOSTS.filter((h) => h !== u.hostname)]) {
+		((gatewayBackoff.get(host) || 0) > now ? cooling : healthy).push(host);
+	}
+	return [...healthy, ...cooling].map((host) => `https://${host}/${id}`);
+}
+
+/**
+ * A card's off-chain JSON, or null. An Arweave transaction is content
+ * addressed, so it is read from the first gateway that serves it.
+ */
+export async function fetchCardJson(uri, opts = {}) {
+	for (const url of cardJsonCandidates(uri)) {
+		const gateway = new URL(url).hostname;
+		const body = await fetchCardJsonOnce(url, opts);
+		if (body) return body;
+		gatewayBackoff.set(gateway, Date.now() + GATEWAY_BACKOFF_MS);
+	}
+	return null;
+}
+
+async function fetchCardJsonOnce(start, { fetchImpl = fetch, timeoutMs = 6_000 } = {}) {
+	let url = start;
 	try {
 		const signal = AbortSignal.timeout(timeoutMs);
 		let res = null;

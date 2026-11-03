@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T03:29:46.063Z",
+	"generated_at": "2026-11-03T03:54:17.732Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -45,6 +45,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "My cards shows every card's photo, grade and value again",
+			"summary": "In production the My cards view of the /play card gacha listed cards with blank photos and no grade or value, and sometimes failed to load at all. Card details now load from a backup Arweave gateway when the main one is busy, and the wallet scan uses the platform's full set of Solana providers instead of the public node alone. Other pages that read Arweave files (agent cards, token details) also skip two gateways that had stopped answering.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{
