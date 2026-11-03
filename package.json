@@ -741,7 +741,7 @@
 		"hyparquet-compressors": "^1.1.2",
 		"idb-keyval": "^6.3.0",
 		"imapflow": "^2.0.5",
-		"jose": "^6.2.12",
+		"jose": "^6.2.14",
 		"lightweight-charts": "^5.2.0",
 		"livekit-client": "^2.22.3",
 		"livepeer": "^3.5.0",
