@@ -20,9 +20,12 @@ const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solan
  * @param {string} opts.toAddress    recipient Solana address
  * @param {bigint|number} opts.amount  token amount in smallest units (e.g. 6-decimal USDC)
  * @param {string} opts.mint         SPL mint address
+ * @param {(signed: { signature: string, lastValidBlockHeight: number, attempt: number }) => Promise<void>} [opts.onSigned]
+ *        awaited with each signed transaction BEFORE it is broadcast, so the caller
+ *        can persist it for crash-safe reconciliation
  * @returns {Promise<string>}        transaction signature
  */
-export async function transferSolanaUSDC({ fromWallet, toAddress, amount, mint }) {
+export async function transferSolanaUSDC({ fromWallet, toAddress, amount, mint, onSigned }) {
 	const kp = Keypair.fromSecretKey(bs58.decode(fromWallet));
 	const mintPubkey = new PublicKey(mint);
 	const recipientPubkey = new PublicKey(toAddress);
@@ -50,6 +53,7 @@ export async function transferSolanaUSDC({ fromWallet, toAddress, amount, mint }
 		connection,
 		payer: kp,
 		instructions,
+		opts: onSigned ? { onSigned } : undefined,
 	});
 	return signature;
 }

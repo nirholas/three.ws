@@ -441,6 +441,9 @@ async function sendProtected(signedTx, signature, connection, blockhashCtx, conf
  * @param {import('@solana/web3.js').AddressLookupTableAccount[]} [o.opts.addressLookupTables=[]]
  *          tables to compile the v0 message against (a launch needs pump.fun's to fit)
  * @param {boolean} [o.opts.preSimulated=false]               caller already simulated (firewall) — still estimates CU
+ * @param {(signed: { signature: string, lastValidBlockHeight: number, attempt: number }) => Promise<void>} [o.opts.onSigned]
+ *          Awaited after each attempt is signed and BEFORE it is broadcast. Throw to
+ *          abort that send (code PRESEND_RECORD_FAILED); nothing has left the process.
  * @param {(tipLamports: bigint, route: string) => Promise<void>} [o.opts.onTip]
  *          Spend-guard hook invoked BEFORE a tip is appended. Throw to veto the
  *          tip (engine then falls back to the protected route, no tip paid).
@@ -600,6 +603,25 @@ export async function submitProtected({ network, connection, payer, instructions
 		const tx = new VersionedTransaction(msg);
 		tx.sign([payer, ...extraSigners]);
 		const signature = bs58Sig(tx);
+
+		// Durable pre-send record. The caller persists the signature (and the last
+		// block height it can land at) BEFORE any lane broadcasts it, so a crash or
+		// timeout after this point can always be reconciled against the chain. If the
+		// hook throws, nothing was broadcast and the error is terminal for the send.
+		if (typeof opts.onSigned === 'function') {
+			try {
+				await opts.onSigned({
+					signature,
+					lastValidBlockHeight: blockhashCtx.lastValidBlockHeight,
+					attempt: attempts,
+				});
+			} catch (e) {
+				throw Object.assign(new Error(`pre-send record failed: ${e?.message || e}`), {
+					code: 'PRESEND_RECORD_FAILED',
+					cause: e,
+				});
+			}
+		}
 
 		try {
 			const lanes = [
