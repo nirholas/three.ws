@@ -19,6 +19,14 @@ file (`npm run event:schedule -- --start <ISO> --duration <minutes> --apply`);
 ending one means resetting it (`npm run event:schedule -- --clear --apply`).
 Nothing in this document is live until a real window is scheduled.
 
+**Changing the window during an event needs no deploy.** An operator override
+(`app_settings` key `event_override`) is merged over the file by `GET /api/event-config`,
+which the browser, the leaderboard API and the game server read (each falls back to the
+static `/event.json` if the API is down). Extend, end, rename or clear it with
+`npm run event:override -- --extend 30 | --end | --rename "..." | --clear | --show`;
+the exact curl and the rules are in
+[event-readiness/LIVE-OPS.md](event-readiness/LIVE-OPS.md#change-the-event-window-live-no-deploy).
+
 - **Surface:** `/play`, in the `$THREE` home town only (`isHomeTown()`).
 - **Modules:** [`src/game/meetup-event.js`](../src/game/meetup-event.js) (the view),
   [`src/game/meetup-schedule.js`](../src/game/meetup-schedule.js) (pure schedule

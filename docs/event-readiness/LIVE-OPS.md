@@ -223,6 +223,39 @@ regardless of which build the player loaded.
 
 ---
 
+## Change the event window live (no deploy)
+
+`public/event.json` is baked into the image, so the window used to need a deploy to
+move. An operator override now sits on top of it (`app_settings` key
+`event_override`, served by `GET /api/event-config`). The browser, the leaderboard
+API and the game server's quest gate all read the merged result and converge within
+about a minute (API 15 s, game server poll 60 s). Writes need an admin session or
+`OPS_SECRET` (`node scripts/read-service-env.mjs` shows it).
+
+```bash
+export OPS_SECRET=<from the Cloud Run service env>
+
+npm run event:override -- --show                  # effective window, in Pacific/Eastern/London/Berlin
+npm run event:override -- --extend 30             # end 30 minutes later (run again to stack)
+npm run event:override -- --end                   # end now (cancels cleanly if not started)
+npm run event:override -- --rename "New name"
+npm run event:override -- --clear                 # drop the override; public/event.json governs again
+
+# the same thing with curl
+curl -X POST https://three.ws/api/event-config \
+  -H "x-ops-secret: $OPS_SECRET" -H "content-type: application/json" \
+  -d '{"endsAt":"2026-11-06T17:30:00Z"}'          # or {"end":true} or {"clear":true}
+```
+
+Rules: the id can never change (the leaderboard is keyed by it), the same checks as
+`npm run check:event` apply (end after start, window of at most 24 hours), a rejected
+write returns 422 with the reasons, and an override written for a previous event id is
+ignored after the next deploy. Every write is audit-logged (`event_override`, with the
+actor, before and after). If the API is down the browser and game server fall back to
+the static file, so the override is lost for that window and the file's times apply.
+`npm run check:event` warns when production serves an override that differs from the
+file.
+
 ## Escalation: which tool for which subsystem
 
 | Subsystem | Tool |

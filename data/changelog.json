@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "Operators can extend, rename or end the live event without a deploy",
+			"summary": "A new authed override, set with npm run event:override or POST /api/event-config, changes the live event's window or name on top of the baked-in schedule. The countdown, the event leaderboard and the game server's quest gate all follow it within about a minute, and fall back to the static schedule if the API is unreachable. Every change is validated with the same rules as the deploy gate and audit-logged.",
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-03",
 			"title": "The $THREE balance gate now fails closed during an RPC outage",
 			"summary": "Agents that require a minimum $THREE balance for a paid skill used to let every caller through whenever the Solana RPC was unhealthy. The balance check now retries once and, if the balance still cannot be read, answers 503 and asks the caller to retry. A paid skill call in that state does not consume the payment. The public balance endpoint answers 503 rpc_unavailable instead of a false eligible: true.",
 			"tags": [

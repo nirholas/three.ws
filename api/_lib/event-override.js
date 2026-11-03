@@ -132,7 +132,7 @@ export function buildOverride({ staticDoc, current, input, now = Date.now() }) {
 		if (now <= startsAt) {
 			return { ok: true, clear: false, value: { base_id: staticDoc.id, cancelled: true }, doc: { ...NO_EVENT_DOC } };
 		}
-		const patch = { ...base, endsAt: isoOf(now) };
+		const patch = { ...base, endsAt: isoOf(Math.floor(now / 1000) * 1000) };
 		const merged = { ...staticDoc, ...patch };
 		const bad = newFailures(staticDoc, merged);
 		if (bad.length) return { ok: false, failures: bad };

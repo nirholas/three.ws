@@ -251,4 +251,27 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 		process.exit(1);
 	}
 	console.log('[check-event] OK: the configured event is coherent and has not expired');
+	await reportLiveOverride(doc);
+}
+
+/**
+ * An operator override (api/event-config.js) can make production differ from this
+ * file. Print the effective window and warn when it does. Informational only: a
+ * network failure or --offline never changes the exit code.
+ */
+async function reportLiveOverride(fileDoc) {
+	if (process.argv.includes('--offline')) return;
+	const serverArg = process.argv.indexOf('--server');
+	const server = (serverArg >= 0 ? process.argv[serverArg + 1] : 'https://three.ws').replace(/\/$/, '');
+	try {
+		const res = await fetch(`${server}/api/event-config`, { signal: AbortSignal.timeout(5000), headers: { accept: 'application/json' } });
+		if (!res.ok) return;
+		const live = await res.json();
+		const keys = ['startsAt', 'endsAt', 'name', 'tagline', 'link'];
+		const diffs = keys.filter((k) => (live?.[k] ?? null) !== (fileDoc?.[k] ?? null));
+		if (!diffs.length) return;
+		console.warn(`[check-event] WARNING: production serves a live override that differs from public/event.json (${diffs.join(', ')}).`);
+		console.warn(`[check-event]   effective window ${live.startsAt} to ${live.endsAt} UTC ("${live.name}")`);
+		console.warn('[check-event]   inspect or drop it: npm run event:override -- --show | --clear');
+	} catch { /* production unreachable from here; nothing to report */ }
 }

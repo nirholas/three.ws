@@ -14,6 +14,10 @@ Project `aerial-vehicle-466722-p5`, region `us-central1`. Pre-approved scaling a
 6. **Capacity smoke.** Drive a burst of concurrent sessions at /play (Playwright contexts or a load tool) at least 2x the expected peak. Watch p95 latency, error rate, and instance count. Fix or pre-scale whatever bends.
 7. **Third-party dependencies.** List every external dependency in the event path (Solana RPC, Pump.fun feed, IPFS gateway for coin images, LLM providers) and verify each has a working failover rung today. Test the failover, not just its existence.
 
+## Change the window during the event
+
+If the event starts late, runs long or is cancelled, do not redeploy: `npm run event:override -- --extend 30`, `--end` or `--clear` (needs `OPS_SECRET`). The curl form and the rules are in [LIVE-OPS.md](LIVE-OPS.md#change-the-event-window-live-no-deploy). Confirm with `npm run event:override -- --show` and `npm run check:event`.
+
 ## Produce: the one-page live-ops sheet
 
 Write `docs/event-readiness/LIVE-OPS.md` containing, with zero fluff:
