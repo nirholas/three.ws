@@ -61,6 +61,8 @@
 			/* Stage */
 			.sp-stage {
 				position: relative;
+				/* width: 100% stops aspect-ratio deriving a 524px width from min-height on a phone. */
+				width: 100%;
 				aspect-ratio: 16 / 11;
 				background: radial-gradient(circle at 50% 35%, #15131f 0%, #0a0a0c 70%);
 				border: 1px solid var(--hairline, #1c1c1c);

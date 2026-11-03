@@ -301,6 +301,9 @@
 		border-radius: 999px;
 		font-family: var(--mono);
 		font-size: 11px;
+		/* CAIP-2 network ids run 50+ characters with no break points. */
+		max-width: 100%;
+		overflow-wrap: anywhere;
 	}
 	.tag.price { color: var(--accent-green); border-color: rgba(74,222,128,0.3); }
 	.tag.net { color: var(--accent-blue); border-color: rgba(96,165,250,0.3); }

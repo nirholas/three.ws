@@ -158,6 +158,8 @@
 
 .dio-stage {
 	position: relative;
+	/* width: 100% stops aspect-ratio deriving a 576px width from min-height on a phone. */
+	width: 100%;
 	aspect-ratio: 16 / 10;
 	min-height: 360px;
 	border-radius: var(--radius-card, 1rem);
