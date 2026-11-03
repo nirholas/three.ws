@@ -165,6 +165,16 @@ async function init() {
 		$('ae-shell').innerHTML = `<div class="ae-error">You don't own this avatar.</div>`;
 		return;
 	}
+	if (avatar.vroid_license && avatar.vroid_license.actions.modify === false) {
+		const v = avatar.vroid_license;
+		$('ae-shell').innerHTML = `<div class="ae-error">
+			<p>${esc(v.credit_line)}</p>
+			<p>The creator's VRoid Hub license does not allow this character to be altered, so outfits and edits are turned off.
+			You can still use it as it is. <a href="${esc(v.license_url)}" target="_blank" rel="noopener">What the conditions mean</a>.</p>
+			<p><a href="/avatars/${encodeURIComponent(avatar.id)}">Back to the avatar</a></p>
+		</div>`;
+		return;
+	}
 	if (!avatar.model_url) {
 		$('ae-shell').innerHTML = `<div class="ae-error">This avatar has no GLB to customize.</div>`;
 		return;

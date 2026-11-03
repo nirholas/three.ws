@@ -652,7 +652,7 @@ function renderShell(glbUrl) {
 				<a class="av-cta-sec" href="/brain" title="Build a persona and test with AI models">Brain</a>
 				<a class="av-cta-sec" href="/voice" title="Clone a voice for this ${mode}">Voice Lab</a>
 				${avatarId ? `<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatarId)}" title="Use this body in Widget Studio">Open in Studio</a>` : ''}
-				${glbUrl ? `<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>` : ''}
+				${glbUrl && avatar.vroid_license?.actions?.export !== false ? `<button class="av-cta-sec" id="av-download" type="button">Download ▾</button>` : ''}
 			</div>
 			${avatarId ? `
 			<div class="av-ar-row">
@@ -1256,9 +1256,15 @@ function renderAttribution() {
 	if (!a) return '';
 	const url = a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.displayName || a.handle)}</a>` : esc(a.displayName || a.handle);
 	const license = a.license ? ` · ${esc(a.license)}` : '';
+	const v = avatar.vroid_license;
+	const credit = v?.credit_required && v.credit_line ? `<div>${esc(v.credit_line)}</div>` : '';
+	const limits = v
+		? `<div><a href="${esc(v.license_url)}" target="_blank" rel="noopener">Creator's conditions</a>: ${esc(v.summary.slice(0, 4).join('. '))}.</div>`
+		: '';
 	return `<div class="av-attribution">
 		<strong>Attribution</strong>
 		<div>${url}${license}</div>
+		${credit}${limits}
 	</div>`;
 }
 

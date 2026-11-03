@@ -7,6 +7,7 @@ import { cacheWrap } from './cache.js';
 import { cdnUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 import { isUuid } from './validate.js';
+import { attributionFor, describeVroidLicense } from './vroid/license-gate.js';
 
 // Absolute, so the URL is equally usable from the dashboard, an SDK on another
 // origin, and a server rendering it into a page.
@@ -690,7 +691,18 @@ function decorate(row) {
 		// null for callers whose query doesn't join it). Shape mirrors meta.onchain
 		// so the shared onchain badge can read it directly via `{ onchain }`.
 		onchain: row.agent_onchain || null,
+		// VRoid Hub imports carry their creator's credit and license so every
+		// surface can render the byline and lock what the license withholds.
+		// Both are absent for any other avatar.
+		...vroidFields(row.source_meta),
 	};
+}
+
+function vroidFields(sourceMeta) {
+	const license = describeVroidLicense(sourceMeta);
+	if (!license) return {};
+	const attribution = attributionFor(sourceMeta);
+	return attribution ? { vroid_license: license, attribution } : { vroid_license: license };
 }
 
 // Local copy of the canonical-JSON hash from bake.js so getAvatar()/listAvatars()

@@ -85,3 +85,32 @@ describe('credit line copy', () => {
 		expect(creditLineFor({})).toBe('This avatar by its VRoid Hub creator, imported from VRoid Hub.');
 	});
 });
+
+describe('vroid license for the creator of the character', () => {
+	const closed = { characterization_allowed_user: 'author', redistribution: 'disallow', modification: 'disallow' };
+
+	it('opens every action to the creator even when the license restricts everyone else', () => {
+		const result = evaluateLicense(closed, { isAuthor: true });
+		expect(result.actions).toEqual({
+			public_agent: true,
+			export: true,
+			modify: true,
+			monetize_personal: true,
+			monetize_corporate: true,
+		});
+		expect(result.author).toBe(true);
+	});
+
+	it('does not require credit for the creator, who is the credit', () => {
+		expect(evaluateLicense({ credit: 'necessary' }, { isAuthor: true }).creditRequired).toBe(false);
+	});
+
+	it('keeps the license closed for everyone who is not the creator', () => {
+		const result = evaluateLicense(closed, { isAuthor: false });
+		expect(result.actions.public_agent).toBe(false);
+		expect(result.actions.export).toBe(false);
+		expect(result.actions.modify).toBe(false);
+		expect(result.author).toBe(false);
+		expect(evaluateLicense(closed).author).toBe(false);
+	});
+});

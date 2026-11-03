@@ -15,6 +15,7 @@ import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_l
 import { requireCsrf } from '../../_lib/csrf.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse, isUuid } from '../../_lib/validate.js';
+import { refuseIfRestricted } from '../../_lib/vroid/license-gate.js';
 import { readStorageMode, storageModeSchema, defaultStorageMode } from '../../_lib/storage-mode.js';
 import { getAvatar, resolveAvatarUrl } from '../../_lib/avatars.js';
 import {
@@ -182,11 +183,13 @@ async function handlePinIpfs(req, res) {
 	if (!(await requireCsrf(req, res, session.id))) return;
 
 	const [row] = await sql`
-		SELECT id, owner_id, checksum_sha256, storage_key, content_type, name
+		SELECT id, owner_id, checksum_sha256, storage_key, content_type, name, source_meta
 		FROM avatars WHERE id = ${id} AND deleted_at IS NULL
 	`;
 	if (!row) return error(res, 404, 'not_found', 'avatar not found');
 	if (row.owner_id !== session.id) return error(res, 403, 'forbidden', 'not your avatar');
+	// Pinning publishes the model to IPFS, which is redistribution.
+	if (refuseIfRestricted(res, row.source_meta, 'export')) return;
 
 	const mode = await readStorageMode(id);
 	if (!mode) return error(res, 500, 'internal', 'storage_mode unavailable');

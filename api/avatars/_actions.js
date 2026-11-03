@@ -10,6 +10,7 @@ import { OPENROUTER_ATTRIBUTION_HEADERS } from '../_lib/openrouter-attribution.j
 import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, readBody, wrap, error, rateLimited } from '../_lib/http.js';
 import { parse, presignUploadBody, slug as slugSchema, createAvatarBody } from '../_lib/validate.js';
+import { refuseIfRestricted } from '../_lib/vroid/license-gate.js';
 import { recordEvent } from '../_lib/usage.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
@@ -385,8 +386,10 @@ const handleRegenerate = wrap(async (req, res) => {
 	const rl = await limits.upload(userId);
 	if (!rl.success) return rateLimited(res, rl);
 	const body = parse(regenerateSchema, await readJson(req));
-	const rows = await sql`select id, name, storage_key from avatars where id = ${body.sourceAvatarId} and owner_id = ${userId} and deleted_at is null limit 1`;
+	const rows = await sql`select id, name, storage_key, source_meta from avatars where id = ${body.sourceAvatarId} and owner_id = ${userId} and deleted_at is null limit 1`;
 	if (!rows[0]) return error(res, 404, 'not_found', 'source avatar not found or not owned');
+	// Regenerating rebuilds the model, which is a modification the creator may withhold.
+	if (refuseIfRestricted(res, rows[0].source_meta, 'modify')) return;
 
 	// Platform provider failover: try every configured provider (primary first),
 	// retrying transient faults, so a single outage / throttle / cold start

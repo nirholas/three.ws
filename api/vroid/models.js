@@ -17,11 +17,12 @@ import { getSessionUser } from '../_lib/auth.js';
 import { cors, json, method, error, wrap } from '../_lib/http.js';
 import { vroidConfigured, clientId } from '../_lib/vroid/config.js';
 import { hubGet, ACCOUNT_MODELS_PATH, HEARTS_PATH } from '../_lib/vroid/client.js';
+import { fetchAccountUserId, isCharacterCreator } from '../_lib/vroid/ownership.js';
 import { getValidVroidToken } from '../_lib/vroid/token-store.js';
 import { evaluateLicense } from '../_lib/vroid/license.js';
 
-function summarizeModel(raw, { hearted } = {}) {
-	const evaluated = evaluateLicense(raw?.license);
+function summarizeModel(raw, { hearted, isAuthor = false } = {}) {
+	const evaluated = evaluateLicense(raw?.license, { isAuthor });
 	return {
 		id: raw?.id ?? null,
 		name: raw?.name || raw?.character?.name || 'Untitled character',
@@ -29,6 +30,7 @@ function summarizeModel(raw, { hearted } = {}) {
 		thumbnail_url: raw?.portrait_image?.w300?.url || raw?.portrait_image?.original?.url || null,
 		downloadable: raw?.is_downloadable !== false,
 		hearted: Boolean(hearted || raw?.is_hearted),
+		author: evaluated.author,
 		license: evaluated.license,
 		actions: evaluated.actions,
 		credit_required: evaluated.creditRequired,
@@ -57,8 +59,12 @@ export default wrap(async (req, res) => {
 
 	let ownModels = [];
 	let heartedModels = [];
+	let accountUserId = null;
 	try {
-		const [ownData, heartsData] = await Promise.all([
+		let ownData;
+		let heartsData;
+		[accountUserId, ownData, heartsData] = await Promise.all([
+			fetchAccountUserId(accessToken),
 			hubGet(ACCOUNT_MODELS_PATH, accessToken, { query: { publication: 'all', count: 100 } }).catch((err) => {
 				console.error('[vroid-hub] account models fetch failed', err?.message || err);
 				return [];
@@ -76,8 +82,11 @@ export default wrap(async (req, res) => {
 		return error(res, 502, 'upstream_error', err?.message || 'VRoid Hub did not answer');
 	}
 
-	const own = ownModels.map((m) => summarizeModel(m, { hearted: false }));
-	const hearted = heartedModels.map((m) => summarizeModel(m, { hearted: true })).filter((m) => m.downloadable);
+	// Everything in the account's own list was made by this account.
+	const own = ownModels.map((m) => summarizeModel(m, { hearted: false, isAuthor: true }));
+	const hearted = heartedModels
+		.map((m) => summarizeModel(m, { hearted: true, isAuthor: isCharacterCreator(accountUserId, m) }))
+		.filter((m) => m.downloadable);
 
 	return json(res, 200, { own, hearted });
 });

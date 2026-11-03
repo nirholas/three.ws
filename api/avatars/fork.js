@@ -16,6 +16,7 @@ import { sql } from '../_lib/db.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { isUuid } from '../_lib/validate.js';
+import { forkLicensePlan } from '../_lib/vroid/license-gate.js';
 import { recordEvent } from '../_lib/usage.js';
 import { dispatchWebhooks } from '../_lib/webhook-dispatch.js';
 import { resolveScheduleForSource, snapshotForkRoyaltyTerms } from '../_lib/fork-royalties.js';
@@ -69,7 +70,7 @@ export default wrap(async (req, res) => {
 	const [src] = await sql`
 		select a.id, a.owner_id, a.name, a.description, a.storage_key, a.thumbnail_key,
 		       a.content_type, a.size_bytes, a.visibility, a.tags, a.appearance,
-		       a.model_category, a.slug, u.display_name as owner_name
+		       a.model_category, a.slug, a.source_meta, u.display_name as owner_name
 		from avatars a
 		join users u on u.id = a.owner_id
 		where a.id = ${sourceId} and a.deleted_at is null
@@ -132,6 +133,13 @@ export default wrap(async (req, res) => {
 		slug: src.slug,
 	};
 
+	// A VRoid Hub license travels with the copy, so forking cannot launder it.
+	const licensePlan = forkLicensePlan({
+		srcMeta: src.source_meta,
+		srcOwnerId: src.owner_id,
+		forkerId: auth.userId,
+	});
+
 	const avatar = await createAvatar({
 		userId: auth.userId,
 		input: {
@@ -140,10 +148,10 @@ export default wrap(async (req, res) => {
 			size_bytes: Number(src.size_bytes),
 			content_type: src.content_type || 'model/gltf-binary',
 			source: 'fork',
-			source_meta: { forked_from },
+			source_meta: { forked_from, ...licensePlan.meta },
 			// Default a fork to unlisted: usable + shareable by the new owner, but
 			// not injected into the public gallery until they choose to publish.
-			visibility: 'unlisted',
+			visibility: licensePlan.visibility,
 			tags: src.tags || [],
 			checksum_sha256: null,
 			parent_avatar_id: src.id,
@@ -163,16 +171,20 @@ export default wrap(async (req, res) => {
 
 	// Create the fork's own agent and provision its custodial wallet synchronously
 	// so the response can hand back the new wallet address. Owned by the caller.
+	// A license that keeps the character off public agents also keeps the fork
+	// from getting one; the fork is still a private copy the caller can use.
 	let agent = null;
 	try {
-		agent = await withDbRetry(async () => {
-			const [row] = await sql`
-				insert into agent_identities (user_id, name, avatar_id, is_public, created_at, updated_at)
-				values (${auth.userId}, ${avatar.name || 'My Agent'}, ${avatar.id}, false, now(), now())
-				returning id
-			`;
-			return row;
-		});
+		agent = licensePlan.agentAllowed
+			? await withDbRetry(async () => {
+					const [row] = await sql`
+						insert into agent_identities (user_id, name, avatar_id, is_public, created_at, updated_at)
+						values (${auth.userId}, ${avatar.name || 'My Agent'}, ${avatar.id}, false, now(), now())
+						returning id
+					`;
+					return row;
+				})
+			: null;
 		if (agent?.id) {
 			const wallets = await provisionAgentWallets(agent.id);
 			agent = { id: agent.id, wallet_address: wallets.evm, solana_address: wallets.solana };

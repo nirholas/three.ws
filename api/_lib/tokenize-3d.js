@@ -46,6 +46,7 @@ import { putObject, publicUrl } from './r2.js';
 import { pinToIPFS, ipfsPinningConfigured } from './ipfs-pin.js';
 import { fetchSafePublicUrl } from './ssrf-guard.js';
 import { getAvatar, resolveAvatarUrl } from './avatars.js';
+import { gateAvatarAction } from './vroid/license-gate.js';
 import { getUserSolanaWallets } from './nft-gate.js';
 import { resolveRenderParams, renderAvatarScene } from './avatar-render.js';
 import {
@@ -132,6 +133,14 @@ async function resolveSource({ avatarId, glbUrl, requesterId, name }) {
 				status: 409,
 				code: 'no_model',
 			});
+		}
+		// A VRoid Hub character may be minted only when its creator's license
+		// allows redistribution and commercial use.
+		for (const action of ['export', 'monetize']) {
+			const verdict = gateAvatarAction(avatar.source_meta, action);
+			if (!verdict.allowed) {
+				throw Object.assign(new Error(verdict.message), { status: 403, code: verdict.code });
+			}
 		}
 		const meta = avatar.source_meta || {};
 		return {

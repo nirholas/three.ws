@@ -107,6 +107,7 @@ export async function hubPost(path, accessToken, payload) {
 	return unwrapEnvelope(body);
 }
 
+export const ACCOUNT_PATH = '/api/account';
 export const ACCOUNT_MODELS_PATH = '/api/account/character_models';
 export const HEARTS_PATH = '/api/hearts';
 export const CHARACTER_MODEL_PATH = (id) => `/api/character_models/${encodeURIComponent(id)}`;

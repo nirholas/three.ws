@@ -68,10 +68,17 @@ export function normalizeLicense(raw) {
  * Evaluate which three.ws actions a license permits. Every action defaults
  * closed: a field we don't recognize, or a license we couldn't fetch, grants
  * nothing rather than falling open.
+ *
+ * `isAuthor` is true only when the signed-in VRoid Hub account is the
+ * character's creator (verified server-side by comparing account ids, never
+ * taken from the client). A creator's conditions bind everyone else, so the
+ * creator keeps every action open and owes no credit to themselves.
  * @param {Partial<VroidLicense>|null|undefined} raw
+ * @param {{ isAuthor?: boolean }} [opts]
  */
-export function evaluateLicense(raw) {
+export function evaluateLicense(raw, { isAuthor = false } = {}) {
 	const license = normalizeLicense(raw);
+	if (isAuthor) return authorEvaluation(license);
 
 	// Public agent: the avatar walks, talks and chats as a visible three.ws
 	// agent, which is "becoming" the character, a thing VRoid Hub gates with
@@ -100,6 +107,7 @@ export function evaluateLicense(raw) {
 
 	return {
 		license,
+		author: false,
 		creditRequired,
 		actions: {
 			public_agent: publicAgent,
@@ -120,6 +128,23 @@ export function evaluateLicense(raw) {
 				: 'Cannot be monetized (creator disallows commercial use)',
 			creditRequired ? 'Creator credit is required wherever this avatar appears' : 'Creator credit is optional',
 		],
+		licenseUrl: licenseDisplayUrl(),
+	};
+}
+
+function authorEvaluation(license) {
+	return {
+		license,
+		author: true,
+		creditRequired: false,
+		actions: {
+			public_agent: true,
+			export: true,
+			modify: true,
+			monetize_personal: true,
+			monetize_corporate: true,
+		},
+		summary: ['You created this character, so every action is open to you.'],
 		licenseUrl: licenseDisplayUrl(),
 	};
 }

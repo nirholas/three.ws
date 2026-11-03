@@ -22,7 +22,9 @@ import { limits } from '../_lib/rate-limit.js';
 import { vroidConfigured } from '../_lib/vroid/config.js';
 import { hubGet, issueDownloadLicense, resolveDownloadUrl, CHARACTER_MODEL_PATH } from '../_lib/vroid/client.js';
 import { getValidVroidToken } from '../_lib/vroid/token-store.js';
-import { evaluateLicense, creditLineFor } from '../_lib/vroid/license.js';
+import { evaluateLicense } from '../_lib/vroid/license.js';
+import { buildVroidBlock, VROID_META_KEY } from '../_lib/vroid/license-gate.js';
+import { fetchAccountUserId, isCharacterCreator } from '../_lib/vroid/ownership.js';
 import { createAvatar, storageKeyFor, enforceQuotas, isPlanLimitError } from '../_lib/avatars.js';
 import { putObject } from '../_lib/r2.js';
 import { isValidGlbHeader } from '../_lib/glb-inspect.js';
@@ -108,7 +110,10 @@ export default wrap(async (req, res) => {
 		return error(res, 403, 'not_downloadable', 'the creator has not made this model downloadable');
 	}
 
-	const evaluated = evaluateLicense(model.license);
+	// The creator's own conditions do not bind the creator. Decided here by
+	// comparing Hub account ids, never by anything the browser sends.
+	const isAuthor = isCharacterCreator(await fetchAccountUserId(accessToken), model);
+	const evaluated = evaluateLicense(model.license, { isAuthor });
 	const creatorName = model.character?.user?.name || null;
 	const characterName = model.name || model.character?.name || null;
 
@@ -175,16 +180,18 @@ export default wrap(async (req, res) => {
 				visibility: 'private',
 				tags: ['vroid-hub'],
 				source: 'vroid_hub',
+				// The raw license is stored, not a verdict: every later surface
+				// re-evaluates it through api/_lib/vroid/license-gate.js.
 				source_meta: {
-					character_model_id: characterModelId,
-					creator_name: creatorName,
-					character_name: characterName,
-					license: evaluated.license,
-					actions: evaluated.actions,
-					credit_required: evaluated.creditRequired,
-					credit_line: creditLineFor({ creatorName, characterName }),
-					license_url: evaluated.licenseUrl,
-					imported_at: new Date().toISOString(),
+					[VROID_META_KEY]: buildVroidBlock({
+						characterModelId,
+						characterId: model.character?.id ?? null,
+						creatorName,
+						characterName,
+						license: model.license,
+						isAuthor,
+						importedAt: new Date().toISOString(),
+					}),
 				},
 				content_type: 'model/gltf-binary',
 				size_bytes: buffer.length,

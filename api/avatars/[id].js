@@ -19,6 +19,7 @@ import { headObject } from '../_lib/r2.js';
 import { limits } from '../_lib/rate-limit.js';
 import { recordEvent } from '../_lib/usage.js';
 import { z } from 'zod';
+import { refuseIfRestricted } from '../_lib/vroid/license-gate.js';
 import { avatarVisibility, avatarAppearance, parse, isUuid } from '../_lib/validate.js';
 import { dispatchWebhooks } from '../_lib/webhook-dispatch.js';
 
@@ -125,6 +126,15 @@ export default wrap(async (req, res) => {
 		const patch = parse(patchSchema, body);
 		const appearanceChanged = Object.prototype.hasOwnProperty.call(patch, 'appearance');
 
+		// A VRoid Hub import keeps its creator's license: sharing it needs
+		// redistribution rights, and changing its look needs modification rights.
+		const sharing = patch.visibility === 'public' || patch.visibility === 'unlisted';
+		if (sharing || appearanceChanged) {
+			const sourceMeta = await ownedSourceMeta(id, auth.userId);
+			if (sharing && refuseIfRestricted(res, sourceMeta, 'export')) return;
+			if (appearanceChanged && refuseIfRestricted(res, sourceMeta, 'modify')) return;
+		}
+
 		let avatar = await updateAvatar({ id, userId: auth.userId, patch });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found or not yours');
 
@@ -205,9 +215,19 @@ export default wrap(async (req, res) => {
 const MAX_GLB_BYTES = 25 * 1024 * 1024;
 const VALID_GLB_TYPES = new Set(['model/gltf-binary', 'application/octet-stream']);
 
+async function ownedSourceMeta(id, userId) {
+	const [row] = await sql`
+		select source_meta from avatars where id = ${id} and owner_id = ${userId} and deleted_at is null limit 1
+	`;
+	return row?.source_meta ?? null;
+}
+
 async function handleGlbPatch(res, auth, id, glbUrl) {
 	const rl = await limits.avatarPatch(auth.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many patch requests');
+
+	// Replacing the model is a modification the creator's license may withhold.
+	if (refuseIfRestricted(res, await ownedSourceMeta(id, auth.userId), 'modify')) return;
 
 	if (!/^u\/[^/]+\/.+\.glb$/.test(glbUrl)) {
 		return error(
