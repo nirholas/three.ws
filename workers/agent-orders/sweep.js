@@ -476,11 +476,13 @@ async function settle(order, fire, result, mode) {
 	const ocoNote = cancelled.length ? ' The other leg of the pair was cancelled.' : '';
 	if (fire.exitCode) await recordExitDecision(order, fire, { status, signature: sig });
 	await announce(order, 'fire', {
-		meta: fire.exitCode ? { reason_code: fire.exitCode, stop: fire.stop, tier: fire.tier } : null,
 		code: status,
 		message: `${simulated ? 'Paper fill (simulation, nothing was sent): ' : ''}${describeOrder(order)}${sliceNote}${ocoNote}`,
 		link: sig ? `https://solscan.io/tx/${sig}${order.network === 'devnet' ? '?cluster=devnet' : ''}` : null,
-		meta: { status, slice: fire.sliceIndex, route: fire.route || 'launchpad', signature: sig },
+		meta: {
+			status, slice: fire.sliceIndex, route: fire.route || 'launchpad', signature: sig,
+			...(fire.exitCode ? { reason_code: fire.exitCode, stop: fire.stop, tier: fire.tier } : {}),
+		},
 	});
 
 	log.trade('fill', {

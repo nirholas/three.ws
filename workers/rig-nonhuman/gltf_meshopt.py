@@ -67,12 +67,49 @@ def uses_meshopt(document: Optional[dict]) -> bool:
     return MESHOPT_EXTENSION in declared
 
 
+def external_references(document: Optional[dict]) -> list[str]:
+    """Every buffer or image URI that would make a reader touch a resource
+    outside the payload itself.
+
+    gltfpack (cgltf) resolves buffers[].uri and images[].uri relative to the
+    input file's directory and reads absolute paths verbatim, so a caller
+    naming "../../etc/passwd" would get that file back inside the decoded GLB.
+    Only inline `data:` URIs are self-contained; a GLB buffer with no uri is
+    its own BIN chunk.
+    """
+    if not isinstance(document, dict):
+        return []
+    found: list[str] = []
+    for field in ("buffers", "images"):
+        entries = document.get(field)
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            uri = entry.get("uri")
+            if uri is None:
+                continue
+            if not isinstance(uri, str) or not uri.startswith("data:"):
+                found.append(str(uri))
+    return found
+
+
 def transcode_meshopt(data: bytes, suffix: str = ".glb") -> bytes:
     """Rewrite a meshopt-compressed asset as a plain GLB with gltfpack.
 
     `-noq` keeps the source quantization instead of re-quantizing on the way
     out, so downstream geometry is derived from what the author shipped.
+
+    Inputs that reference external files are refused before the binary runs,
+    because gltfpack would read those paths off the worker's filesystem.
     """
+    external = external_references(gltf_document(data, suffix))
+    if external:
+        shown = ", ".join(repr(uri[:80]) for uri in external[:3])
+        raise ValueError(
+            f"input references external resources ({shown}); only self-contained glTF is accepted"
+        )
     with tempfile.TemporaryDirectory() as tmpdir:
         src = Path(tmpdir) / f"input{suffix}"
         dst = Path(tmpdir) / "decoded.glb"

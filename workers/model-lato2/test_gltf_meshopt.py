@@ -138,4 +138,50 @@ else:
     finally:
         gltf_meshopt.GLTFPACK_BIN = original_bin
 
+# ── external references are refused before gltfpack ever runs ─────────────────────
+#
+# gltfpack (cgltf) resolves buffers[].uri / images[].uri relative to the input
+# file's directory, so a caller-supplied document naming "../../etc/passwd" would
+# read a file off the worker and return it inside the decoded GLB. The check
+# must fire before the binary is invoked, so these run with or without gltfpack.
+
+import json as _json
+
+_original_bin = gltf_meshopt.GLTFPACK_BIN
+gltf_meshopt.GLTFPACK_BIN = "gltfpack-not-installed"
+
+
+def _hostile(uri_field: str, uri: str, suffix: str) -> bytes:
+    doc = {
+        "asset": {"version": "2.0"},
+        "extensionsUsed": [gltf_meshopt.MESHOPT_EXTENSION],
+        "buffers": [{"byteLength": 16}],
+        "images": [],
+    }
+    doc[uri_field] = [{"uri": uri, "byteLength": 16}]
+    raw = _json.dumps(doc).encode()
+    if suffix == ".gltf":
+        return raw
+    raw += b" " * (-len(raw) % 4)
+    return b"glTF" + (2).to_bytes(4, "little") + (28 + len(raw)).to_bytes(4, "little") + len(raw).to_bytes(4, "little") + b"JSON" + raw
+
+
+for field, uri in (("buffers", "../../etc/passwd"), ("buffers", "/etc/passwd"), ("buffers", "file:///etc/passwd"), ("images", "../secret.png"), ("buffers", "http://169.254.169.254/x")):
+    for suffix in (".gltf", ".glb"):
+        label = f"{suffix} with {field}[].uri {uri!r}"
+        try:
+            gltf_meshopt.transcode_meshopt(_hostile(field, uri, suffix), suffix)
+            check(f"{label} is refused", False, "no ValueError raised")
+        except ValueError as exc:
+            check(f"{label} is refused", "external" in str(exc), str(exc))
+
+_data_ok = {
+    "asset": {"version": "2.0"},
+    "extensionsUsed": [gltf_meshopt.MESHOPT_EXTENSION],
+    "buffers": [{"uri": "data:application/octet-stream;base64,AAAA", "byteLength": 3}],
+}
+check("data: URIs are not external references", gltf_meshopt.external_references(_data_ok) == [])
+check("a uri-less GLB buffer is not an external reference", gltf_meshopt.external_references({"buffers": [{"byteLength": 4}]}) == [])
+gltf_meshopt.GLTFPACK_BIN = _original_bin
+
 print(f"\n{PASS} checks passed")
