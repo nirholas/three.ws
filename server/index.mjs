@@ -719,7 +719,11 @@ process.on('uncaughtException', (err) => {
 	console.error('[server] uncaught exception:', err);
 });
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, (bindError) => {
+	// Express 5 passes a failed bind to this callback as well. The 'error'
+	// handler below reports it; logging "listening" here would let a harness
+	// that trusts that line accept whatever else owns the port.
+	if (bindError) return;
 	console.log(
 		`[server] three-ws listening on :${PORT} (api: ${API_ROOT}, static: ${DIST_ROOT}, routes: ${phase1Routes.length}+${postFsRoutes.length})`,
 	);

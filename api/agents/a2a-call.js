@@ -94,6 +94,20 @@ function pickAccept(accepts, preference) {
 // Currency is derived from the on-chain asset id, never the peer's label.
 const currencyOf = currencyOfAccept;
 
+// True when a failure after the payment was submitted leaves the outcome unknown.
+// Only an explicit peer rejection (JSON-RPC error or an HTTP 4xx) proves nothing
+// settled.
+function isAmbiguousSettlementError(err) {
+	if (err instanceof A2AClientError) {
+		if (err.code === 'jsonrpc_error') return false;
+		if (err.code === 'transport_error') {
+			const status = err.details?.status;
+			return !(status >= 400 && status < 500);
+		}
+	}
+	return true;
+}
+
 // USDC is the only currency the A2A rails settle in, and it is a dollar with six
 // decimals, so the atomic amount IS the USD value. Any other asset is left
 // unpriced rather than guessed: the spend guard treats a null USD as unpriceable
@@ -389,6 +403,7 @@ export default wrap(async (req, res) => {
 		throw err;
 	}
 
+	let paymentSubmitted = false;
 	try {
 		const resource = quote.required.resource || { url: safeEndpoint, mimeType: 'application/json' };
 		let signer;
@@ -408,6 +423,7 @@ export default wrap(async (req, res) => {
 			payerAddress = signer.address;
 			paymentPayload = await buildEvmExactPayload({ accept, signer, resource });
 		}
+		paymentSubmitted = true;
 		const result = await submitPayment({
 			endpoint: safeEndpoint,
 			taskId: quote.taskId,
@@ -467,6 +483,23 @@ export default wrap(async (req, res) => {
 		// Any failure after reservation but before a confirmed settlement must
 		// release the hold so neither the mandate's budget nor the agent's daily
 		// headroom is silently consumed by a payment that never landed.
+		// Once the signed payload has gone to the peer, a timeout, a 5xx or an
+		// unparseable reply does not prove the payment failed: the peer may have
+		// settled it. Releasing the hold would let the same budget be spent twice,
+		// so keep the reservation and flag the receipt for reconciliation.
+		if (paymentSubmitted && isAmbiguousSettlementError(err)) {
+			await updateCustodyEvent(receiptId, {
+				meta: { settlement_unconfirmed: true, unconfirmed_reason: String(err?.code || err?.message || 'unknown').slice(0, 200) },
+			}).catch((e) => console.error('[agents/a2a-call] receipt flag failed', e?.message || e));
+			console.error('[agents/a2a-call] settlement unconfirmed, reservation kept', err?.code, err?.message);
+			return error(
+				res,
+				502,
+				'settlement_unconfirmed',
+				'the peer did not confirm the payment; the budget stays reserved until it is reconciled',
+				{ receipt_id: receiptId != null ? String(receiptId) : null },
+			);
+		}
 		await abandonReceipt('settlement_failed');
 		if (err instanceof A2AClientError) {
 			console.error('[agents/a2a-call] peer payment failed', err?.code, err?.message);

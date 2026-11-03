@@ -280,7 +280,7 @@ vi.mock('../api/_lib/agent-trade-guards.js', async (importOriginal) => {
 	};
 });
 
-const clientState = { quoteCalls: 0, submitCalls: 0, submitResult: null, asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' };
+const clientState = { quoteCalls: 0, submitCalls: 0, submitResult: null, submitError: null, asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' };
 vi.mock('../api/_lib/x402/a2a-client.js', () => ({
 	A2AClientError: class A2AClientError extends Error {
 		constructor(code, message, detail) { super(message); this.code = code; this.detail = detail; }
@@ -307,6 +307,7 @@ vi.mock('../api/_lib/x402/a2a-client.js', () => ({
 	}),
 	submitPayment: vi.fn(async () => {
 		clientState.submitCalls += 1;
+		if (clientState.submitError) throw clientState.submitError;
 		return clientState.submitResult;
 	}),
 	createSolanaSigner: vi.fn(async () => ({ address: 'PayerAddress1111111111111111111111111111111' })),
@@ -367,6 +368,7 @@ beforeEach(() => {
 	guardCalls.update.length = 0;
 	clientState.quoteCalls = 0;
 	clientState.submitCalls = 0;
+	clientState.submitError = null;
 	clientState.asset = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 	clientState.submitResult = { state: 'completed', receipts: [{ transaction: 'sig-1' }], task: { artifacts: [] } };
 	_resetMemoryStore();
@@ -488,6 +490,30 @@ describe('POST /api/agents/a2a-call — receipts', () => {
 		// WHAT was bought without asking the peer again.
 		expect(typeof guardCalls.update[0].patch.meta.cart_mandate).toBe('string');
 		expect(guardCalls.release).toHaveLength(0);
+	});
+
+	it('keeps the reservation when the submit outcome is unknown (socket hang up)', async () => {
+		sqlState.queue.push(ownedAgent());
+		clientState.submitError = new Error('socket hang up');
+
+		const { res, mandate } = await callWithMandate();
+
+		expect(res.statusCode).toBe(502);
+		expect(JSON.stringify(res.payload)).toMatch(/settlement_unconfirmed/);
+		expect(guardCalls.release).toHaveLength(0);
+		expect(await mandateSpent(mandate.mandateId)).toBeGreaterThan(0);
+	});
+
+	it('releases the reservation when the peer explicitly rejects with a JSON-RPC error', async () => {
+		sqlState.queue.push(ownedAgent());
+		const { A2AClientError } = await import('../api/_lib/x402/a2a-client.js');
+		clientState.submitError = new A2AClientError('jsonrpc_error', 'payment invalid');
+
+		const { res, mandate } = await callWithMandate();
+
+		expect(res.statusCode).toBe(502);
+		expect(guardCalls.release).toEqual([{ id: 4242, reason: 'settlement_failed' }]);
+		expect(await mandateSpent(mandate.mandateId)).toBe(0);
 	});
 
 	it('releases the receipt when the peer never completes the task', async () => {
