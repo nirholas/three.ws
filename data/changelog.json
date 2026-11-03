@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "The $THREE balance gate now fails closed during an RPC outage",
+			"summary": "Agents that require a minimum $THREE balance for a paid skill used to let every caller through whenever the Solana RPC was unhealthy. The balance check now retries once and, if the balance still cannot be read, answers 503 and asks the caller to retry. A paid skill call in that state does not consume the payment. The public balance endpoint answers 503 rpc_unavailable instead of a false eligible: true.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/three"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Cinematic and Portrait looks get real contact shadows",
 			"summary": "The Cinematic and Portrait looks in the 3D viewer now use N8AO ambient occlusion, the same denoised technique the /play world runs. Creases, armpits, joints and the space between limbs pick up soft contact shading that the previous effect barely showed. The shading scales with the model, so tiny figurines and full-size avatars look equally grounded, and there is a new AO radius slider in the Cinematic FX panel. The default Studio look is unchanged and never downloads the extra code.",
 			"tags": [

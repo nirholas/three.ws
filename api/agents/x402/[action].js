@@ -222,21 +222,27 @@ async function handleInvoke(req, res) {
 	const gate = agent.meta?.three_gate;
 	if (gate?.enabled && paid.payerAddress) {
 		const minBalance = parseInt(gate.min_balance ?? 1, 10) || 1;
+		let gateResult;
 		try {
 			const { checkThreeBalance } = await import('../../_lib/three-gate.js');
-			const gateResult = await checkThreeBalance(paid.payerAddress, minBalance);
-			if (!gateResult.eligible) {
-				return error(res, 402, 'insufficient_three_balance',
-					'This agent requires a minimum $THREE balance. Acquire $THREE to use this skill.',
-					{
-						required: minBalance,
-						held: gateResult.balance,
-						buy_url: 'https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
-					},
-				);
-			}
+			gateResult = await checkThreeBalance(paid.payerAddress, minBalance);
 		} catch {
-			// Gate check failure → fail open so callers aren't blocked by infra.
+			gateResult = { unavailable: true };
+		}
+		if (gateResult.unavailable) {
+			return error(res, 503, 'three_gate_unavailable',
+				'The $THREE balance check is temporarily unavailable. Your payment is not consumed; retry shortly.',
+				{ retry: true });
+		}
+		if (!gateResult.eligible) {
+			return error(res, 402, 'insufficient_three_balance',
+				'This agent requires a minimum $THREE balance. Acquire $THREE to use this skill.',
+				{
+					required: minBalance,
+					held: gateResult.balance,
+					buy_url: 'https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+				},
+			);
 		}
 	}
 

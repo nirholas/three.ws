@@ -10,6 +10,9 @@
 //   min: number,
 //   eligible: boolean
 // }
+//
+// Fails closed: when the RPC cannot be read the answer is 503 rpc_unavailable
+// (Retry-After: 5) with no `eligible` field, never a pass.
 
 import { cors, json, method, error, wrap } from '../_lib/http.js';
 import { checkThreeBalance } from '../_lib/three-gate.js';
@@ -39,5 +42,17 @@ export default wrap(async (req, res) => {
 	}
 
 	const result = await checkThreeBalance(wallet, minRaw);
+	if (result.unavailable) {
+		return json(
+			res,
+			503,
+			{
+				error: 'rpc_unavailable',
+				error_description: 'balance could not be read right now; retry shortly',
+				retry: true,
+			},
+			{ 'cache-control': 'no-store', 'retry-after': '5' },
+		);
+	}
 	return json(res, 200, result, { 'cache-control': 'public, max-age=30, s-maxage=30' });
 });

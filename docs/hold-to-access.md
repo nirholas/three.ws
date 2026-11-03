@@ -249,6 +249,10 @@ headers silently bills every account-less holder. Do not use it for a new gated 
 
 ---
 
+## Server balance gate (`checkThreeBalance`)
+
+[`api/_lib/three-gate.js`](../api/_lib/three-gate.js) reads a wallet's raw $THREE balance for two callers: `GET /api/pump/check-three-balance` and the paid-skill executor gate (`meta.three_gate.enabled` on an agent). It **fails closed**. The read is attempted twice; if both fail the result is `{ balance: null, eligible: false, unavailable: true, reason: 'rpc_unavailable' }` and is never cached. The endpoint then answers `503 rpc_unavailable` with `Retry-After: 5` and no `eligible` field. The executor answers `503 three_gate_unavailable` with `retry: true` and leaves the payment intent unconsumed, so the caller retries without paying again. A real below-minimum read still answers `402 insufficient_three_balance`. Tests: `tests/api/three-gate-server.test.js`.
+
 ## Activation roadmap
 
 Goal: **drive $THREE demand** by activating registered-but-dormant perks. A perk is only

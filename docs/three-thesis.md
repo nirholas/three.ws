@@ -484,7 +484,7 @@ A thesis that hides the risks is a pitch. These are the risks the three.ws docum
 
 10. **Vault risk, in the platform's words:** "the platform can sign for the vault," "a vault owner can change the performance fee and the risk terms after you have deposited," and "there is no server-side 'are you sure' step, no preview mode, and no undo."
 
-11. **A fail-open path exists.** The older `three-gate.js` returns `eligible: true` on an RPC failure. The newer tier-pass path fails to Member (closed). Gating that relies on the older path can be bypassed during an RPC outage.
+11. **The older gate path now fails closed.** `three-gate.js` used to return `eligible: true` on an RPC failure. It now retries once and then returns `unavailable: true, eligible: false` (never cached); the balance endpoint answers 503 `rpc_unavailable` and the paid-skill executor answers 503 `three_gate_unavailable` without consuming the payment. Both gate paths now fail closed during an RPC outage.
 
 12. **Funding is not secured.** The README states plainly that inference GPUs, training compute, multi-firm smart-contract audits, token-launch liquidity, indexer infrastructure, node-operator credits, and engineering headcount are "required for the vision; neither is funded yet." The Google Cloud credit grant (up to $200k over two years) covers a meaningful part of the compute line but not the audits or headcount.
 

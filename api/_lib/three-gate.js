@@ -15,9 +15,31 @@ import { getRedis } from './redis.js';
 export const THREE_CA = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const CACHE_TTL_S = 30;
 
+const READ_ATTEMPTS = 2;
+
+async function readBalance(wallet) {
+	const conn = solanaConnection('mainnet');
+	const accts = await conn.getParsedTokenAccountsByOwner(
+		new PublicKey(wallet),
+		{ mint: new PublicKey(THREE_CA) },
+		'confirmed',
+	);
+	let balance = 0;
+	for (const { account } of accts.value) {
+		const amt = account?.data?.parsed?.info?.tokenAmount?.amount;
+		if (amt) balance += Number(BigInt(amt));
+	}
+	return balance;
+}
+
 /**
- * Returns { wallet, balance, min, eligible }.
- * Never throws — returns eligible:true on infra failure so the gate fails open.
+ * Returns { wallet, balance, min, eligible } for a completed read, or
+ * { wallet, balance: null, min, eligible: false, unavailable: true,
+ *   reason: 'rpc_unavailable' } when the balance could not be read.
+ * Never throws. Fails CLOSED: an RPC outage is never eligible, so a paid gate
+ * cannot be bypassed by a zero-balance caller during an outage. The read is
+ * attempted twice (the connection rotates lanes per request) before declaring
+ * the balance unavailable. Unavailable results are never cached.
  */
 export async function checkThreeBalance(wallet, min = 1) {
 	const minNum = Math.max(0, parseInt(min, 10) || 0);
@@ -31,23 +53,14 @@ export async function checkThreeBalance(wallet, min = 1) {
 		} catch { /* continue */ }
 	}
 
-	let balance = 0;
-	try {
-		const conn = solanaConnection('mainnet');
-		const pubkey = new PublicKey(wallet);
-		const threeMint = new PublicKey(THREE_CA);
-		const accts = await conn.getParsedTokenAccountsByOwner(
-			pubkey,
-			{ mint: threeMint },
-			'confirmed',
-		);
-		for (const { account } of accts.value) {
-			const amt = account?.data?.parsed?.info?.tokenAmount?.amount;
-			if (amt) balance += Number(BigInt(amt));
-		}
-	} catch {
-		// RPC failure → fail open (return eligible:true)
-		return { wallet, balance: 0, min: minNum, eligible: true };
+	let balance = null;
+	for (let attempt = 0; attempt < READ_ATTEMPTS && balance === null; attempt++) {
+		try {
+			balance = await readBalance(wallet);
+		} catch { /* retry on the next lane, then report unavailable */ }
+	}
+	if (balance === null) {
+		return { wallet, balance: null, min: minNum, eligible: false, unavailable: true, reason: 'rpc_unavailable' };
 	}
 
 	const result = { wallet, balance, min: minNum, eligible: balance >= minNum };
