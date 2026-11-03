@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T19:23:37.131Z",
+	"generated_at": "2026-11-03T19:26:40.400Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4299,
+	"total": 4300,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -285,6 +285,16 @@
 			"title": "Smoother edges on every 3D model and avatar viewer",
 			"summary": "Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.",
 			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Text to 3D no longer fails with \"Mesh missed\" when a GPU worker is busy",
+			"summary": "One slow GPU worker could trip a shared safety breaker and make every other 3D lane report as unreachable for 30 seconds at a time. Each worker now has its own breaker, and status checks no longer block new jobs, so a generation that is queued behind a busy worker is accepted instead of being rejected.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
@@ -1540,16 +1550,6 @@
 			"title": "Docs: Agent self-onboarding",
 			"summary": "An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.",
 			"link": "/docs/agent-self-onboarding",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
-			"title": "Earnings",
-			"summary": "One ledger for everything your agents earn: creator fees, skill sales, hires, royalties, invoices and realised trading PnL, each row linked to its Solana transaction, plus reinvest rules you confirm.",
-			"link": "/earnings",
 			"tags": [
 				"launch"
 			]

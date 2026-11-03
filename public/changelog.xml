@@ -223,6 +223,14 @@
 			<description>Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.</description>
 		</item>
 		<item>
+			<title>Text to 3D no longer fails with &quot;Mesh missed&quot; when a GPU worker is busy</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:Text to 3D no longer fails with &quot;Mesh missed&quot; when a GPU worker is busy</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>One slow GPU worker could trip a shared safety breaker and make every other 3D lane report as unreachable for 30 seconds at a time. Each worker now has its own breaker, and status checks no longer block new jobs, so a generation that is queued behind a busy worker is accepted instead of being rejected.</description>
+		</item>
+		<item>
 			<title>The $THREE balance gate now fails closed during an RPC outage</title>
 			<link>https://three.ws/three</link>
 			<guid isPermaLink="false">2026-11-03:The $THREE balance gate now fails closed during an RPC outage</guid>
