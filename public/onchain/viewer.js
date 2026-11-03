@@ -1,5 +1,8 @@
 import { envelopesIn, readInscription } from '/onchain/inscriptions.js';
-const RPC = 'https://api.mainnet-beta.solana.com';
+// The site's own proxy first (keyed upstream, no browser 403s), then the public
+// node. Each attempt has a deadline so one stalled socket cannot hang a lookup.
+const RPC_ENDPOINTS = ['/api/solana-rpc', 'https://api.mainnet-beta.solana.com'];
+const RPC_TIMEOUT_MS = 10_000;
 // SPL Memo v1, v2, and the newer program that version-1 transactions use.
 const memoPrograms = new Set(['Memo1UhkJRfHyvLMcVLMbLJYfW2tfU8G8H4PqvV6v8', 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr', 'Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH']);
 const $ = (id) => document.getElementById(id);
@@ -36,9 +39,23 @@ function render(signature, transaction, memo) {
   }
 }
 async function rpcCall(method, params) {
-  const response = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
-  const payload = await response.json(); if (payload.error) throw new Error(payload.error.message);
-  return payload.result;
+  const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method, params });
+  let lastError = null;
+  for (const endpoint of RPC_ENDPOINTS) {
+    let payload;
+    try {
+      const response = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(RPC_TIMEOUT_MS) });
+      if (!response.ok) { lastError = new Error(`Solana RPC answered ${response.status}`); continue; }
+      payload = await response.json();
+    } catch (err) {
+      lastError = err.name === 'TimeoutError' ? new Error('Solana RPC timed out') : err;
+      continue;
+    }
+    // A JSON-RPC error is the node's real answer about this request, not an outage.
+    if (payload.error) throw new Error(payload.error.message);
+    return payload.result;
+  }
+  throw new Error(`Could not reach Solana: ${lastError?.message || 'no RPC endpoint answered'}. Try again in a moment.`);
 }
 const getTransaction = (signature) => rpcCall('getTransaction', [signature, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 1 }]);
 const listSignatures = (address, options) => rpcCall('getSignaturesForAddress', [address, { limit: 1000, ...options }]);
