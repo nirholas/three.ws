@@ -27,9 +27,16 @@ const flag = (n) => args.includes(n);
 const opt = (n, d) => (args.includes(n) ? args[args.indexOf(n) + 1] : d);
 const target = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1]?.startsWith('--') !== true);
 
+// gcloud access tokens live an hour; one CLI call per object (three per part)
+// made a bulk run spend most of its time in gcloud start-up, so reuse the token
+// for 40 minutes.
+let cachedToken = null;
 function token() {
 	if (process.env.GCS_ACCESS_TOKEN) return process.env.GCS_ACCESS_TOKEN;
-	return execFileSync('gcloud', ['auth', 'print-access-token'], { encoding: 'utf8' }).trim();
+	if (cachedToken && Date.now() - cachedToken.at < 40 * 60_000) return cachedToken.value;
+	const value = execFileSync('gcloud', ['auth', 'print-access-token'], { encoding: 'utf8' }).trim();
+	cachedToken = { value, at: Date.now() };
+	return value;
 }
 const store = createGcsStore({ bucket: process.env.DB_ARCHIVE_BUCKET || ARCHIVE_BUCKET, getToken: async () => token() });
 

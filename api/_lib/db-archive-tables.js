@@ -32,7 +32,7 @@ export const ARCHIVED_TABLES = [
 		days: 45,
 		where: `outcome <> 'unknown'`,
 		readers:
-			'api/cron/oracle-refit.js and scripts/oracle-fit.mjs read the oldest 400000 label_version>=2 rows (MAX_ROWS); the 45-day window still holds ~850k labeled rows, so the fit stays full. rug-softener reads one mint at a time for recent positions. Unlabeled rows are never pruned.',
+			'api/cron/oracle-refit.js and scripts/oracle-fit.mjs read the oldest 400000 label_version>=2 rows (MAX_ROWS); the 45-day window still holds 509k labeled mainnet rows (measured 2026-11-03), so the fit stays at its 400k cap. rug-softener reads one mint at a time for recent positions. Unlabeled rows are never pruned.',
 	},
 	{
 		table: 'x402_self_facilitator_log',

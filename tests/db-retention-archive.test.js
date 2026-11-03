@@ -7,6 +7,8 @@
 // 3. archive outage means skip, never delete.
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import { ARCHIVED_TABLES, archivedTableNames } from '../api/_lib/db-archive-tables.js';
 import { archiveSlice, createGcsStore } from '../api/_lib/db-archive.js';
 
@@ -31,6 +33,26 @@ describe('archived table inventory', () => {
 			expect(spec.readers, spec.table).toBeTruthy();
 			expect(spec.days, spec.table).toBeGreaterThanOrEqual(7);
 			expect(spec.pk.length, spec.table).toBeGreaterThan(0);
+		}
+	});
+
+	// Every keyset page is `WHERE ts < cutoff AND (ts, pk) > cursor ORDER BY ts, pk`.
+	// Without an index that leads with the timestamp column that is a full scan
+	// of a multi-GB table per 2,500-row page: the first bulk prune of
+	// oracle_training_set managed 40k rows in 12 minutes before the connection
+	// dropped, and a cron tick could not finish a single part.
+	it('has a migration index leading with each table archive timestamp column', () => {
+		const dir = path.join(process.cwd(), 'api/_lib/migrations');
+		const ddl = readdirSync(dir)
+			.filter((f) => f.endsWith('.sql'))
+			.map((f) => readFileSync(path.join(dir, f), 'utf8'))
+			.join('\n');
+		for (const spec of ARCHIVED_TABLES) {
+			const re = new RegExp(
+				`CREATE\\s+(?:UNIQUE\\s+)?INDEX\\s+(?:CONCURRENTLY\\s+)?(?:IF\\s+NOT\\s+EXISTS\\s+)?\\S+\\s+ON\\s+(?:public\\.)?${spec.table}\\s*(?:USING\\s+btree\\s*)?\\(\\s*${spec.tsColumn}\\b`,
+				'i',
+			);
+			expect(ddl, `${spec.table} needs an index leading with ${spec.tsColumn}`).toMatch(re);
 		}
 	});
 
