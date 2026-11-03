@@ -172,6 +172,8 @@ article em { color: var(--fg-dim); }
 .post-date { color: var(--fg-faint); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
 .post-title { font-size: 24px; margin: 6px 0 8px; letter-spacing: -0.01em; font-weight: 600; transition: color .15s; }
 .post-summary { color: var(--fg-dim); margin: 0 0 8px; font-size: 16px; }
+/* Summaries quote full URLs and mint addresses; let them break instead of widening the column. */
+.post-title, .post-summary { overflow-wrap: anywhere; }
 @media (max-width: 600px) {
 \tmain { padding: 40px 20px 64px; }
 \t.listing { padding: 40px 20px 64px; }
