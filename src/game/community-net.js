@@ -706,11 +706,11 @@ export class CommunityNet {
 	sendInteract(to, action) { return this._send('interact', { to, action }); }
 	// Spatial voice: relay a WebRTC offer/answer/ICE candidate to one peer, and
 	// flag ourselves in/out of voice so peers know whether to connect to us.
-	sendVoiceSignal(to, data) { this._send('voice-signal', { to, data }); }
+	sendVoiceSignal(to, data) { return this._send('voice-signal', { to, data }); }
 	// `muted` lets peers mark a muted voice player (Player.voiceMuted).
-	setVoiceActive(on, muted = false) { this._send('voice-state', { on: !!on, muted: !!on && !!muted }); }
-	rename(name) { this.name = name; this._send('rename', { name }); }
-	setAvatar(avatar, agent) { this.avatar = avatar; this._send('avatar', { avatar, agent }); }
+	setVoiceActive(on, muted = false) { return this._send('voice-state', { on: !!on, muted: !!on && !!muted }); }
+	rename(name) { this.name = name; return this._send('rename', { name }); }
+	setAvatar(avatar, agent) { this.avatar = avatar; return this._send('avatar', { avatar, agent }); }
 	// Equip a cosmetic into its slot (W03). Server-authoritative: it validates
 	// ownership, updates the player's schema `cosmetics` field (so peers re-render)
 	// and replies with a fresh profile. An unowned id is rejected with a 'notice'.
