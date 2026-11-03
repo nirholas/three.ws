@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-03T02:29:09.825Z",
+	"generated_at": "2026-11-03T02:43:03.593Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4264,
+	"total": 4265,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "A README you can read in two minutes, plus Codespaces, a roadmap and a support page",
+			"summary": "The root README was 11,000 lines; the long-form reference now lives in docs/reference.md and the README is a short front door with a 60-second quickstart, a comparison table and screenshots. One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed alongside.",
+			"link": null,
+			"tags": [
+				"docs"
+			]
+		},
 		{
 			"date": "2026-11-03",
 			"type": "update",
@@ -1537,17 +1547,6 @@
 			"link": "/docs/agent-allowance-budgets",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Pay any paid endpoint over MPP on Solana, and sell a skill on four rails from one price",
-			"summary": "Paid endpoints can now answer with an MPP Payment challenge beside the x402 one at the same price, and the agent payer pays either from one call with its spending caps and a dry-run quote. Marketplace skills are defined once and served over x402, MPP, A2A and AP2 with the same author and platform split and the same receipt.",
-			"link": "/docs/mpp-solana",
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]
