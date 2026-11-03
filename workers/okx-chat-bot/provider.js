@@ -25,7 +25,9 @@
 
 import { execFile } from 'node:child_process';
 import { getGcpAccessToken } from '../../api/_lib/gcp-auth.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../../api/_lib/openrouter-attribution.js';
 import { cliEnv } from './cli.js';
+import { isOpenRouterBase } from './config.js';
 import { log } from './log.js';
 
 const PROBE_TIMEOUT_MS = 20_000;
@@ -168,7 +170,12 @@ async function probeGateway(lane) {
 	const url = `${base}/v1/messages`;
 	const verdict = await postJson(
 		url,
-		{ authorization: `Bearer ${key}`, 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+		{
+			authorization: `Bearer ${key}`,
+			'x-api-key': key,
+			'anthropic-version': '2023-06-01',
+			...(isOpenRouterBase(base) ? OPENROUTER_ATTRIBUTION_HEADERS : {}),
+		},
 		{ model, max_tokens: 1, messages: [{ role: 'user', content: 'ping' }] },
 	);
 	if (verdict.code === 'ok' && /returned (400|404)/.test(verdict.detail)) {

@@ -42,6 +42,7 @@
 import { log } from './log.js';
 import { sql } from '../../api/_lib/db.js';
 import { llmComplete } from '../../api/_lib/llm.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../../api/_lib/openrouter-attribution.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -268,7 +269,7 @@ async function askOpenRouter({ model, user }) {
 			headers: {
 				authorization: `Bearer ${key}`,
 				'content-type': 'application/json',
-				'x-title': 'three.ws agent-sniper risk officer',
+				...OPENROUTER_ATTRIBUTION_HEADERS,
 			},
 			body: JSON.stringify({
 				model,

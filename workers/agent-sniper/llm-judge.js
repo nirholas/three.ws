@@ -35,6 +35,7 @@
 import { log } from './log.js';
 import { sql } from '../../api/_lib/db.js';
 import { llmComplete } from '../../api/_lib/llm.js';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../../api/_lib/openrouter-attribution.js';
 import { assessMarketRealness } from '../../api/_lib/market-realness.js';
 import { buildKnowledgePack } from './judge-knowledge.js';
 import { scoutJudgeBlock } from '../../api/_lib/sentiment-scout.js';
@@ -129,7 +130,7 @@ async function askOpenRouter({ model, user }) {
 			headers: {
 				authorization: `Bearer ${key}`,
 				'content-type': 'application/json',
-				'x-title': 'three.ws agent-sniper',
+				...OPENROUTER_ATTRIBUTION_HEADERS,
 			},
 			body: JSON.stringify({
 				model,

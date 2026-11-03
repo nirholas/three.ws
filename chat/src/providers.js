@@ -387,8 +387,11 @@ export function headersForFetch(provider, model) {
 		'Content-Type': 'application/json',
 		...(provider.name === 'OpenRouter'
 			? {
+					// Same values as api/_lib/openrouter-attribution.js (guarded by
+					// tests/openrouter-attribution.test.js), inlined for the browser bundle.
 					'HTTP-Referer': 'https://three.ws',
-					'X-Title': 'three.ws chat',
+					'X-Title': 'three.ws',
+					'X-OpenRouter-Title': 'three.ws',
 				}
 			: {}),
 	};

@@ -20,6 +20,7 @@
 // OPENROUTER_VISION_MODELS in api/_lib/vision.js.
 
 import { parseArgs } from 'node:util';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../api/_lib/openrouter-attribution.js';
 
 const MODELS_URL = 'https://openrouter.ai/api/v1/models';
 const CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -99,7 +100,7 @@ async function probe(route, imageUrl) {
 	try {
 		const res = await fetch(CHAT_URL, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+			headers: { 'content-type': 'application/json', authorization: `Bearer ${key}`, ...OPENROUTER_ATTRIBUTION_HEADERS },
 			body: JSON.stringify(body),
 			signal: AbortSignal.timeout(PER_LANE_TIMEOUT_MS),
 		});

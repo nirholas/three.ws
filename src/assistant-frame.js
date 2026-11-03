@@ -684,8 +684,13 @@ async function chatByokStream(lane, message, onChunk, signal) {
 	];
 	const headers = { 'content-type': 'application/json', authorization: `Bearer ${key}` };
 	if (lane === 'openrouter') {
-		headers['HTTP-Referer'] = 'https://three.ws';
-		headers['X-Title'] = 'three.ws assistant widget';
+		// Same values as api/_lib/openrouter-attribution.js (guarded by
+		// tests/openrouter-attribution.test.js), inlined because this is a browser bundle.
+		Object.assign(headers, {
+			'HTTP-Referer': 'https://three.ws',
+			'X-Title': 'three.ws',
+			'X-OpenRouter-Title': 'three.ws',
+		});
 	}
 	const res = await fetch(BYOK_ENDPOINTS[lane], {
 		method: 'POST',

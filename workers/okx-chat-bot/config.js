@@ -7,6 +7,7 @@
 import { existsSync } from 'node:fs';
 import { homedir, hostname } from 'node:os';
 import { join } from 'node:path';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../../api/_lib/openrouter-attribution.js';
 
 const num = (v, fallback) => {
 	const n = Number(v);
@@ -107,6 +108,18 @@ export function providerLanes(env = process.env, home = env.OKX_BOT_HOME || home
 }
 
 /**
+ * True when a gateway base URL points at OpenRouter.
+ * @param {string} base
+ */
+export function isOpenRouterBase(base) {
+	try {
+		return new URL(base).hostname.replace(/^www\./, '') === 'openrouter.ai';
+	} catch {
+		return false;
+	}
+}
+
+/**
  * The Anthropic-compatible gateway lane, or null when none is configured.
  *
  * `claude` speaks one wire format and reads its endpoint from ANTHROPIC_BASE_URL,
@@ -142,6 +155,16 @@ function gatewayLane(env) {
 			ANTHROPIC_AUTH_TOKEN: token,
 			ANTHROPIC_API_KEY: null,
 			...(model ? { ANTHROPIC_MODEL: model, ANTHROPIC_SMALL_FAST_MODEL: model } : {}),
+			// The CLI adds ANTHROPIC_CUSTOM_HEADERS ("Name: value" per line) to every
+			// request, which is the only way to attribute the spawned CLI's OpenRouter
+			// traffic to three.ws. Sent to OpenRouter only, never to another gateway.
+			...(isOpenRouterBase(base)
+				? {
+						ANTHROPIC_CUSTOM_HEADERS: Object.entries(OPENROUTER_ATTRIBUTION_HEADERS)
+							.map(([k, v]) => `${k}: ${v}`)
+							.join('\n'),
+					}
+				: {}),
 		},
 	};
 }

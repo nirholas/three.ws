@@ -45,6 +45,7 @@ import { pathToFileURL } from 'node:url';
 import { config as dotenv } from 'dotenv';
 import JSON5 from 'json5';
 import './lib/gcloud-path.mjs';
+import { OPENROUTER_ATTRIBUTION_HEADERS } from '../api/_lib/openrouter-attribution.js';
 import {
 	ROOT,
 	loadConfig,
@@ -290,7 +291,7 @@ const OPENAI_COMPAT = {
 	openrouter: {
 		envKey: 'OPENROUTER_API_KEY',
 		url: () => 'https://openrouter.ai/api/v1/chat/completions',
-		extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws i18n' },
+		extraHeaders: { ...OPENROUTER_ATTRIBUTION_HEADERS },
 	},
 	nvidia: {
 		envKey: 'NVIDIA_API_KEY',
