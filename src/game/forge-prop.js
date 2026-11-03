@@ -9,8 +9,12 @@
 
 import { log } from '../shared/log.js';
 import { coldStartLabel } from '../shared/forge-frames.js';
+import {
+	propBudget, overBudget, simplifyTarget, describeSize, countGlbTriangles, MEASURE_MAX_BYTES,
+} from './prop-budget.js';
 
 const SUBMIT_URL = '/api/forge';
+const REMESH_URL = '/api/forge-remesh';
 const UPLOAD_URL = '/api/forge-upload';
 const POLL_MS = 2500;
 // Draft-tier generations land in ~30-60s; leave generous headroom for a cold
@@ -18,6 +22,8 @@ const POLL_MS = 2500;
 const MAX_WAIT_MS = 6 * 60 * 1000;
 const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // mirrors /api/forge-upload's cap
+// The simplify pass is a GPU job of its own (retopology plus a texture re-bake).
+const REMESH_MAX_WAIT_MS = 4 * 60 * 1000;
 
 // Same anonymous handle the /forge page keys creations to, so items forged
 // in-world show up in the same gallery/history as the rest of this browser's
@@ -55,13 +61,20 @@ function throwIfAborted(signal) {
 	if (signal?.aborted) throw new ForgeError('Forge cancelled.', { cancelled: true });
 }
 
-/** Error with user-facing message plus machine flags (rateLimited/cancelled). */
+/**
+ * Error with user-facing message plus machine flags: rateLimited (with the
+ * server's retryAfter seconds and which `scope` tripped), cancelled, and
+ * oversize (the model could not be brought inside the world's size ceiling).
+ */
 export class ForgeError extends Error {
-	constructor(message, { rateLimited = false, cancelled = false } = {}) {
+	constructor(message, { rateLimited = false, cancelled = false, oversize = false, retryAfter = null, scope = null } = {}) {
 		super(message);
 		this.name = 'ForgeError';
 		this.rateLimited = rateLimited;
 		this.cancelled = cancelled;
+		this.oversize = oversize;
+		this.retryAfter = retryAfter;
+		this.scope = scope;
 	}
 }
 
@@ -71,7 +84,15 @@ async function readJson(res) {
 
 function submitError(res, data) {
 	if (res.status === 429) {
-		return new ForgeError('The forge is busy right now. Give it a minute and try again.', { rateLimited: true });
+		const retryAfter = Number.isFinite(Number(data?.retry_after)) && Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : null;
+		const scope = data?.scope === 'player' || data?.scope === 'world' ? data.scope : null;
+		let message = 'The forge is busy right now. Give it a minute and try again.';
+		if (scope === 'player') {
+			message = `You forged one a moment ago. You can forge again in ${retryAfter ?? 'a few'} s.`;
+		} else if (scope === 'world') {
+			message = `This world's forge is full right now. A slot opens in about ${retryAfter ?? 'a minute'} s.`;
+		}
+		return new ForgeError(message, { rateLimited: true, retryAfter, scope });
 	}
 	const detail = typeof data?.error === 'string' && data.error.length < 200 ? data.error : '';
 	return new ForgeError(detail ? `The forge refused that: ${detail}` : 'The forge could not take that request.');
@@ -138,6 +159,111 @@ function statusLine(job = {}) {
 		: `Forging your model${suffix}…`;
 }
 
+const oversizeError = (measured) => new ForgeError(
+	`That model was too detailed for this world${measured?.triangles ? ` (${describeSize(measured)})` : ''} and could not be simplified enough. Try a simpler description.`,
+	{ oversize: true },
+);
+
+const UNMEASURABLE = "We could not check that model's size, so it was not placed. Try forging it again.";
+
+// Download the GLB and read its size and triangle count. The Content-Length
+// header settles the byte question before any body is read, so a runaway result
+// is never pulled into the tab just to be measured.
+async function measureModel(url, { signal } = {}) {
+	let res;
+	try {
+		res = await fetch(url, { signal });
+	} catch (err) {
+		if (signal?.aborted) throw new ForgeError('Forge cancelled.', { cancelled: true });
+		throw new ForgeError(UNMEASURABLE);
+	}
+	if (!res.ok) throw new ForgeError(UNMEASURABLE);
+	const declared = Number(res.headers?.get?.('content-length'));
+	if (Number.isFinite(declared) && declared > MEASURE_MAX_BYTES) {
+		return { bytes: declared, triangles: null };
+	}
+	try {
+		const buffer = await res.arrayBuffer();
+		return { bytes: buffer.byteLength, triangles: countGlbTriangles(buffer) };
+	} catch (err) {
+		if (signal?.aborted) throw new ForgeError('Forge cancelled.', { cancelled: true });
+		throw new ForgeError(UNMEASURABLE);
+	}
+}
+
+// Ask the remesh worker to decimate the model, polling until the simplified GLB
+// is mirrored into world-loadable storage. Resolves to its URL, or null when the
+// simplifier could not produce something the world can load.
+async function simplifyModel(url, budget, { onStatus, signal } = {}) {
+	onStatus?.('That model is very detailed. Simplifying it for this world…');
+	let start;
+	try {
+		start = await fetch(REMESH_URL, {
+			method: 'POST',
+			headers: headers({ 'content-type': 'application/json' }),
+			body: JSON.stringify({
+				mesh_url: url,
+				remesh_mode: 'triangle',
+				operation: 'simplify',
+				target_faces: simplifyTarget(budget),
+				texture_size: 1024,
+				output_format: 'glb',
+			}),
+			signal,
+		});
+	} catch (err) {
+		if (signal?.aborted) throw new ForgeError('Forge cancelled.', { cancelled: true });
+		log.warn('[forge-prop] simplify submit failed:', err?.message || err);
+		return null;
+	}
+	const job = await readJson(start);
+	if (!start.ok || !job.job_id) return null;
+
+	const deadline = Date.now() + REMESH_MAX_WAIT_MS;
+	while (Date.now() < deadline) {
+		throwIfAborted(signal);
+		await sleep(POLL_MS);
+		throwIfAborted(signal);
+		let poll;
+		try {
+			poll = await fetch(`${REMESH_URL}?job=${encodeURIComponent(job.job_id)}&mirror=r2`, { headers: headers(), signal });
+		} catch (err) {
+			if (signal?.aborted) throw new ForgeError('Forge cancelled.', { cancelled: true });
+			continue; // a dropped poll is not a dropped job
+		}
+		if (poll.status === 429) { await sleep(POLL_MS * 2); continue; }
+		const frame = await readJson(poll);
+		if (frame.status === 'failed') return null;
+		if (frame.status === 'done') {
+			return frame.result_url && frame.durable !== false ? frame.result_url : null;
+		}
+		onStatus?.('Simplifying the model for this world…');
+	}
+	return null;
+}
+
+/**
+ * Hold a finished model to the world's size ceiling before anything can place
+ * it. Inside the ceiling it passes untouched; over it, it is simplified and
+ * re-measured; still over (or the simplifier is unavailable) it is rejected.
+ * Nothing raw over the ceiling is ever returned.
+ *
+ * @returns {Promise<{url: string, simplified: boolean, triangles: number, bytes: number}>}
+ */
+export async function enforcePropBudget(url, { budget, onStatus, signal } = {}) {
+	const limit = budget || propBudget();
+	onStatus?.('Checking the model fits this world…');
+	const measured = await measureModel(url, { signal });
+	if (overBudget(measured, limit).length === 0) {
+		return { url, simplified: false, triangles: measured.triangles, bytes: measured.bytes };
+	}
+	const simplifiedUrl = await simplifyModel(url, limit, { onStatus, signal });
+	if (!simplifiedUrl) throw oversizeError(measured);
+	const after = await measureModel(simplifiedUrl, { signal });
+	if (overBudget(after, limit).length > 0) throw oversizeError(after);
+	return { url: simplifiedUrl, simplified: true, triangles: after.triangles, bytes: after.bytes };
+}
+
 /**
  * Generate a placeable 3D prop from a prompt and/or reference image.
  * Resolves once the free draft lane finishes and the GLB has a stable URL.
@@ -147,16 +273,19 @@ function statusLine(job = {}) {
  * @param {File}   [req.file]    optional reference image (png/jpeg/webp ≤ 8 MB)
  * @param {(msg: string) => void} [req.onStatus]  live progress line for the UI
  * @param {AbortSignal} [req.signal]
- * @returns {Promise<{url: string, name: string, durable: boolean, creationId: string|null}>}
+ * @param {string} [req.worldId]  the world this is for; the server applies the per-player and per-world limits to it
+ * @param {{maxTriangles:number,maxBytes:number}} [req.budget]  size ceiling (default: this device's tier)
+ * @returns {Promise<{url: string, name: string, durable: boolean, creationId: string|null, simplified: boolean, triangles: number, bytes: number}>}
  * @throws {ForgeError} with a user-facing message on every failure path
  */
-export async function forgeWorldProp({ prompt = '', file = null, onStatus, signal } = {}) {
+export async function forgeWorldProp({ prompt = '', file = null, onStatus, signal, worldId = '', budget } = {}) {
 	const text = String(prompt || '').trim();
 	if (!file && text.length < 3) {
 		throw new ForgeError('Describe the item in a few words (or attach a photo).');
 	}
 
 	const body = { tier: 'draft', path: 'image' };
+	if (worldId) body.world = String(worldId).slice(0, 120);
 	if (file) {
 		body.image_urls = [await uploadReferenceImage(file, { onStatus, signal })];
 		if (text) body.prompt = text;
@@ -176,9 +305,17 @@ export async function forgeWorldProp({ prompt = '', file = null, onStatus, signa
 	if (!res.ok) throw submitError(res, data);
 
 	const name = forgePropName(text, file);
-	if (data.status === 'done' && data.glb_url) {
-		return { url: data.glb_url, name, durable: data.durable !== false, creationId: data.creation_id || null };
-	}
+	const finish = async (frame) => {
+		const sized = await enforcePropBudget(frame.glb_url, { budget, onStatus, signal });
+		return {
+			...sized,
+			name,
+			// A simplified model is mirrored into world storage by the server, so it is durable by construction.
+			durable: sized.simplified ? true : frame.durable !== false,
+			creationId: frame.creation_id || null,
+		};
+	};
+	if (data.status === 'done' && data.glb_url) return finish(data);
 	if (!data.job_id) throw new ForgeError('The forge did not accept that request. Try rephrasing it.');
 
 	onStatus?.(statusLine({ ...data, status: 'queued' }));
@@ -199,9 +336,7 @@ export async function forgeWorldProp({ prompt = '', file = null, onStatus, signa
 		}
 		if (poll.status === 429) { onStatus?.('Forging: easing off the status checks…'); await sleep(POLL_MS * 2); continue; }
 		const job = await readJson(poll);
-		if (job.status === 'done' && job.glb_url) {
-			return { url: job.glb_url, name, durable: job.durable !== false, creationId: job.creation_id || null };
-		}
+		if (job.status === 'done' && job.glb_url) return finish(job);
 		if (job.status === 'failed') {
 			const detail = typeof job.error === 'string' && job.error.length < 200 ? job.error : '';
 			throw new ForgeError(detail ? `The forge could not build that: ${detail}` : 'The forge could not build that. Try different wording.');
