@@ -103,7 +103,7 @@ async function waitHttp(url, timeoutMs = 90_000) {
 }
 
 function start(cmd, args, env) {
-	const child = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'], detached: false });
+	const child = spawn(cmd, args, { cwd: ROOT, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
 	child.out = '';
 	child.stdout.on('data', (d) => { child.out = (child.out + d).slice(-4000); });
 	child.stderr.on('data', (d) => { child.out = (child.out + d).slice(-4000); });
@@ -112,7 +112,8 @@ function start(cmd, args, env) {
 }
 
 function stopAll() {
-	for (const c of children) { try { c.kill('SIGTERM'); } catch { /* already gone */ } }
+	// Signal the whole process group: `npx vite` forks the real server as a grandchild.
+	for (const c of children) { try { process.kill(-c.pid, 'SIGTERM'); } catch { /* already gone */ } }
 }
 process.on('exit', stopAll);
 process.on('SIGINT', () => { stopAll(); process.exit(130); });
@@ -154,14 +155,14 @@ window.__booted = true;
 // retried on a fresh load until the net module is actually running.
 async function bootPage(page, appUrl, mpUrl, name) {
 	let last;
-	for (let attempt = 0; attempt < 5; attempt++) {
+	for (let attempt = 0; attempt < 10; attempt++) {
 		try {
 			await page.goto(`${appUrl}/404.html`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
 			await page.evaluate(() => { document.body.innerHTML = ''; });
 			await page.addScriptTag({ type: 'module', content: PAGE_BOOT(mpUrl, COIN, name) });
 			await page.waitForFunction(() => window.__booted === true, null, { timeout: 30_000 });
 			return;
-		} catch (err) { last = err; }
+		} catch (err) { last = err; await sleep(3000); }
 	}
 	throw last;
 }
@@ -259,7 +260,7 @@ async function main() {
 				const said = (c) => c.page.evaluate(() => window.__A.chats.map((m) => m.text));
 				const start = Date.now();
 				await A.page.evaluate(() => window.__net.sendChat('hello from alice'));
-				await until(async () => (await said(B)).includes('hello from alice'), 3000, 'chat relay to Bob');
+				await until(async () => (await said(B)).includes('hello from alice'), 3000, 'chat relay to Bob').catch(async (e) => { throw new Error(`${e.message}; Bob heard ${JSON.stringify(await said(B))}, Alice heard ${JSON.stringify(await said(A))}, Alice status ${await statusOf(A)}`); });
 				const relayMs = Date.now() - start;
 
 				await sleep(800);
@@ -298,8 +299,19 @@ async function main() {
 
 		if (A && B && want('disconnect')) {
 			await check('disconnect: 10 s offline, auto reconnect, clean resync', async () => {
-				// Bob stands still at a known spot, re-sent every 100 ms like the render loop.
-				await B.page.evaluate(() => { window.__standing = { x: 4, y: 0, z: 3, yaw: 0, motion: 'idle' }; });
+				// Bob walks to a known spot (the server clamps any single step to 1.2 m, so
+				// a teleport would be refused), then stands there re-sending it every
+				// 100 ms like the render loop does.
+				await B.page.evaluate(async () => {
+					let x = 0; let z = 0;
+					while (Math.hypot(4 - x, 3 - z) > 0.05) {
+						const d = Math.hypot(4 - x, 3 - z); const step = Math.min(0.9, d);
+						x += ((4 - x) / d) * step; z += ((3 - z) / d) * step;
+						window.__net.sendMove({ x, y: 0, z, yaw: 0, motion: 'run' });
+						await new Promise((r) => setTimeout(r, 80));
+					}
+					window.__standing = { x: 4, y: 0, z: 3, yaw: 0, motion: 'idle' };
+				});
 				const oldId = await selfOf(B);
 				await until(async () => {
 					const p = (await peersOf(A))[oldId];
@@ -381,7 +393,7 @@ async function main() {
 				await waitHttp(`http://127.0.0.1:${deadPort}/health`);
 				await c.page.evaluate(() => window.__net.retry());
 				const ms = await until(async () => (await statusOf(c)) === 'online', 30_000, 'retry() to reach online');
-				late.kill('SIGTERM');
+				try { process.kill(-late.pid, 'SIGTERM'); } catch { /* already gone */ }
 				return `error "${String(err).slice(0, 60)}", online ${ms} ms after retry`;
 			});
 		}
