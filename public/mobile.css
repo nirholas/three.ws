@@ -1380,3 +1380,17 @@
 		--text-xs: 0.6875rem;
 	}
 }
+
+/* ── Unbreakable strings in running text ──────────────────────────────
+ * Blog posts and docs carry contract addresses in inline <code> and bare
+ * URLs as link text. Neither has a break opportunity, so on a 393px
+ * screen they ran 10-250px past the edge and the overflow guard cut them
+ * off mid-string. break-word lets such a string wrap only when it would
+ * otherwise overflow, and (unlike anywhere) leaves min-content sizing
+ * alone, so flex rows and table columns lay out exactly as before.
+ */
+@media (max-width: 768px) {
+	:where(p, li, dd, blockquote, figcaption, h1, h2, h3, h4, h5, h6) {
+		overflow-wrap: break-word;
+	}
+}

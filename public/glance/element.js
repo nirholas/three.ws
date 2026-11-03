@@ -52,7 +52,8 @@ async function fetchGlanceCard(agentId, { origin } = {}) {
 const SIZE_WIDTH = { small: 240, medium: 480, large: 480 };
 
 const STYLE = `
-:host{display:inline-block;font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color-scheme:light dark}
+:host{display:inline-block;box-sizing:border-box;width:100%;max-width:480px;font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color-scheme:light dark}
+:host([size="small"]){max-width:240px}
 :host([hidden]){display:none}
 .card{--bg:#fff;--panel:#f4f5f9;--text:#0b0b18;--muted:#5b5f73;--line:#e4e6ef;
  position:relative;display:block;box-sizing:border-box;width:100%;padding:20px;border:1px solid var(--line);
@@ -88,7 +89,7 @@ a.card:focus-visible{outline:2px solid var(--from);outline-offset:3px}
 :host([size="small"]) .metric b{font-size:32px}
 :host([size="medium"]) .stats{display:none}
 :host([size="medium"]) .who{padding-right:104px}
-:host([size="medium"]) .rail{position:absolute;right:0;top:58px;text-align:right;font-size:12px;color:var(--muted);line-height:1.9;pointer-events:none}
+:host([size="medium"]) .rail{position:absolute;right:20px;top:58px;text-align:right;font-size:12px;color:var(--muted);line-height:1.9;pointer-events:none}
 :host([size="medium"]) .rail b{color:var(--text)}
 :host(:not([size="medium"])) .rail{display:none}
 .skel{animation:pulse 1.4s ease-in-out infinite;background:var(--panel);border-radius:8px;color:transparent}

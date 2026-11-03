@@ -586,7 +586,7 @@
 				   pinned below the top bar so it stays visible while the user
 				   scrolls through the controls beneath it. */
 				body { height: auto; overflow-y: visible; }
-				.as-shell { grid-template-columns: 1fr; }
+				.as-shell { grid-template-columns: minmax(0, 1fr); }
 				.as-stage {
 					border-right: 0;
 					border-bottom: 1px solid var(--border);
