@@ -19519,7 +19519,8 @@
 		"chat_not_sent": "Not sent: reconnecting to the world. Your message is still in the box, press Enter to retry.",
 		"jobs_offline_action": "Not connected to the world. Reconnecting, try again in a moment.",
 		"jobs_offline": "Reconnecting to the world… the board loads as soon as you are back.",
-		"cash_changed": "{{delta}} cash, {{total}} total"
+		"cash_changed": "{{delta}} cash, {{total}} total",
+		"party_offline": "Reconnecting to the world, so the party did not get that. Try again in a moment."
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

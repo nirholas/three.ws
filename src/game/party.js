@@ -12,6 +12,7 @@ import {
 	Mesh, RingGeometry, MeshBasicMaterial, DoubleSide, AdditiveBlending, Vector3,
 } from 'three';
 import { announce } from './a11y.js';
+import { t } from './i18n-play.js';
 
 const BLIP_COLOR = '#7fd1ff';
 const DEFAULT_RANGE_M = 70; // minimap radius; chips take over beyond it
@@ -199,7 +200,12 @@ export class PartyClient {
 	}
 
 	// ---- actions ------------------------------------------------------------
-	send(payload) { this.host.net?.sendParty(payload); }
+	/** Send a party op. A dropped socket is said out loud, never swallowed. */
+	send(payload) {
+		const sent = this.host.net?.sendParty(payload) ?? false;
+		if (!sent) this.host.ui.toast(t('play.party_offline', 'Reconnecting to the world, so the party did not get that. Try again in a moment.'), 'error');
+		return sent;
+	}
 	invitePeer(sid) { this.send({ op: 'invite', sid }); }
 	inviteFriend(friend) { this.send({ op: 'invite', uid: friend.id, name: friend.name }); }
 	accept(pid) { this.send({ op: 'accept', pid }); }
@@ -404,8 +410,8 @@ export class PartyClient {
 			this.setScope('world');
 			return true;
 		}
-		this.send({ op: 'chat', text: cmd ? cmd[1] : text });
-		return true;
+		// 'unsent' tells the chat box to keep the text and say why.
+		return this.host.net?.sendParty({ op: 'chat', text: cmd ? cmd[1] : text }) ? true : 'unsent';
 	}
 
 	// ---- per-frame work (10 Hz) --------------------------------------------
