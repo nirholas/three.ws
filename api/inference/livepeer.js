@@ -125,6 +125,10 @@ async function callPlatformLlm({ prompt, max_tokens }) {
 			timeoutMs: LEG_TIMEOUT_MS,
 		});
 	} catch (e) {
+		// The provider's failure text can carry hostnames, key fragments or
+		// internal addresses; this endpoint is anonymous, so log it and answer
+		// with a code only.
+		console.error('[inference/livepeer] platform leg failed', e?.code, e?.message);
 		return {
 			ok: false,
 			network: 'three.ws',
@@ -132,7 +136,6 @@ async function callPlatformLlm({ prompt, max_tokens }) {
 			model: null,
 			latency_ms: Date.now() - t0,
 			error: e.code === 'llm_unavailable' ? 'no_provider_configured' : 'upstream_error',
-			upstream_body: String(e?.message || e).slice(0, 1000),
 		};
 	}
 	return {
@@ -331,6 +334,10 @@ export default wrap(async function handler(req, res) {
 		callLivepeer({ prompt, model, max_tokens, temperature }),
 	]);
 
+	for (const r of [platformRes, livepeerRes]) {
+		if (r.status === 'rejected') console.error('[inference/livepeer] leg rejected', r.reason?.message || r.reason);
+	}
+
 	const platform = platformRes.status === 'fulfilled'
 		? platformRes.value
 		: {
@@ -339,7 +346,7 @@ export default wrap(async function handler(req, res) {
 				provider: null,
 				model: null,
 				error: 'leg_failed',
-				error_message: String(platformRes.reason?.message || platformRes.reason || 'unknown'),
+				error_message: 'the three.ws leg failed',
 			};
 
 	const livepeer = livepeerRes.status === 'fulfilled'
@@ -349,7 +356,7 @@ export default wrap(async function handler(req, res) {
 				network: 'Livepeer',
 				model,
 				error: 'leg_failed',
-				error_message: String(livepeerRes.reason?.message || livepeerRes.reason || 'unknown'),
+				error_message: 'the Livepeer leg failed',
 			};
 
 	return json(res, 200, {

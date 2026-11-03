@@ -249,6 +249,18 @@ describe('POST /api/inference/livepeer', () => {
 		expect(res._json.body.livepeer.ok).toBe(true);
 	});
 
+	it('does not echo an internal provider failure message to the anonymous caller', async () => {
+		process.env.LIVEPEER_API_KEY = 'lp-test-key';
+		llmComplete.mockRejectedValue(new Error('401 from api.anthropic.com for key sk-ant-SECRET123 at 10.0.0.5'));
+		fetchMock.mockResolvedValue(
+			gatewayResponse(200, { choices: [{ message: { content: 'gateway answer' } }] }),
+		);
+		const res = await call('POST', { prompt: 'hello' });
+		const platform = res._json.body.platform;
+		expect(platform.error).toBe('upstream_error');
+		expect(JSON.stringify(platform)).not.toMatch(/SECRET123|10\.0\.0\.5|anthropic/);
+	});
+
 	it('flags an empty gateway reply rather than rendering a blank card', async () => {
 		process.env.LIVEPEER_API_KEY = 'lp-test-key';
 		fetchMock.mockResolvedValue(gatewayResponse(200, { choices: [] }));
