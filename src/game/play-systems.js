@@ -29,6 +29,8 @@ import {
 	FIREPITS, nearestFirepit, MOB_SPAWNS, nearestMobSpawn,
 } from '../../multiplayer/src/world-features.js';
 import { itemDisplay } from './items.js';
+import { announce } from './a11y.js';
+import { t } from './i18n-play.js';
 import {
 	COSMETICS, SLOTS, SLOT_LABELS, getCosmetic, DEFAULT_LOADOUT,
 } from '../../multiplayer/src/cosmetics-catalog.js';
@@ -108,6 +110,25 @@ export class PlaySystems {
 		this._t = 0;                   // animation clock
 		this._invOpen = false;
 		this._skillsOpen = false;
+		this._cosOpen = false;
+		this._announcedGold = null;    // last gold total spoken to screen readers
+		// Side panels by class: their flag, element, rail button and open hook.
+		// _panelOrder is the open set, oldest first, so Escape peels the newest.
+		this._panels = {
+			'ps-inv': { flag: '_invOpen', panel: 'invPanel', btn: 'invBtn', onOpen: () => this._renderInventory() },
+			'ps-skills': {
+				flag: '_skillsOpen', panel: 'skillsPanel', btn: 'skillsBtn',
+				onOpen: () => {
+					// Ask for the wheel's gate the first time the panel opens, so the
+					// next-unlock line is populated for a player who has never walked
+					// up to the wheel. Once answered it's cached for the session.
+					if (this._wheelMinLevel === undefined) { try { this.net?.spinInfo?.(); } catch { /* offline */ } }
+					this._renderSkills();
+				},
+			},
+			'ps-cos': { flag: '_cosOpen', panel: 'cosPanel', btn: 'cosBtn', onOpen: () => this._renderCosmetics() },
+		};
+		this._panelOrder = [];
 		// The wheel's average-level gate, learned from the server's own spinInfo
 		// (see _renderNextUnlock). Undefined until it answers.
 		this._wheelMinLevel = undefined;
@@ -203,35 +224,54 @@ export class PlaySystems {
 
 	// ---------------------------------------------------------------- HUD DOM
 	_buildHud() {
-		// Gold purse (top-left, under the coin banner).
+		// Gold purse (top-left, under the coin banner). The glyph is decoration:
+		// the accessible name is the word plus the number, never "coin emoji".
 		this.goldEl = el('span', { class: 'ps-gold-amt', text: '0' });
-		this.gold = el('div', { class: 'ps-gold', title: 'Gold' }, [
-			el('span', { class: 'ps-gold-coin', text: '🪙' }), this.goldEl,
+		this.gold = el('div', { class: 'ps-gold', title: t('play.gold', 'Gold'), 'data-i18n-attr': 'title:play.gold' }, [
+			el('span', { class: 'ps-gold-coin', text: '🪙', 'aria-hidden': 'true' }),
+			el('span', { class: 'ps-sr', text: t('play.gold', 'Gold'), 'data-i18n': 'play.gold' }),
+			this.goldEl,
 		]);
 
 		// Right tool rail: inventory + skills toggles.
-		this.invBtn = el('button', { class: 'ps-rail-btn', title: 'Inventory (backpack)', 'aria-label': 'Inventory', onclick: () => this.toggleInventory() }, [el('span', { text: '🎒' })]);
-		this.skillsBtn = el('button', { class: 'ps-rail-btn', title: 'Skills', 'aria-label': 'Skills', onclick: () => this.toggleSkills() }, [el('span', { text: '📊' })]);
+		const railBtn = (key, label, glyph, onclick) => el('button', {
+			class: 'ps-rail-btn', type: 'button', title: t(key, label), 'aria-label': t(key, label),
+			'data-i18n-attr': `title:${key};aria-label:${key}`, 'aria-expanded': 'false', onclick,
+		}, [el('span', { text: glyph, 'aria-hidden': 'true' })]);
+		this.invBtn = railBtn('play.backpack', 'Backpack', '🎒', () => this.toggleInventory());
+		this.skillsBtn = railBtn('play.skills', 'Skills', '📊', () => this.toggleSkills());
 		// My Cosmetics (R23): the owned wardrobe + equip. Equipping persists to the
 		// account and re-applies in every world; peers see the fit live.
-		this.cosBtn = el('button', { class: 'ps-rail-btn', title: 'My Cosmetics', 'aria-label': 'My Cosmetics', onclick: () => this.toggleCosmetics() }, [el('span', { text: '👕' })]);
+		this.cosBtn = railBtn('play.my_cosmetics', 'My Cosmetics', '👕', () => this.toggleCosmetics());
 		this.rail = el('div', { class: 'ps-rail' }, [this.invBtn, this.skillsBtn, this.cosBtn]);
 
 		// Hotbar (bottom-center, above the emote tray).
-		this.hotbarEl = el('div', { class: 'ps-hotbar', role: 'toolbar', 'aria-label': 'Hotbar' });
+		this.hotbarEl = el('div', { class: 'ps-hotbar', role: 'toolbar', 'aria-label': t('play.hotbar', 'Hotbar'), 'data-i18n-attr': 'aria-label:play.hotbar' });
 
 		// Contextual action button (Cast / Equip rod), above the hotbar.
 		this.actionBtn = el('button', { class: 'ps-action', hidden: true, onclick: () => this._onAction() });
 
+		// The three side panels share one shape: a titled, non-modal dialog the
+		// player can keep open while walking. Escape closes the newest one (see
+		// closeTopPanel); the close button carries the same translated name.
+		const panel = (cls, key, title, body) => el('div', {
+			class: `ps-panel ${cls}`, hidden: true, role: 'dialog', 'aria-label': t(key, title), 'data-i18n-attr': `aria-label:${key}`,
+		}, [
+			el('div', { class: 'ps-panel-head' }, [
+				el('span', { class: 'ps-panel-title', text: t(key, title), 'data-i18n': key }),
+				el('button', {
+					class: 'ps-x', type: 'button', 'aria-label': t('play.close', 'Close'), 'data-i18n-attr': 'aria-label:play.close',
+					text: '✕', onclick: () => this._setPanel(cls, false),
+				}),
+			]),
+			...body,
+		]);
+
 		// Inventory panel.
 		this.invGrid = el('div', { class: 'ps-inv-grid' });
-		this.invPanel = el('div', { class: 'ps-panel ps-inv', hidden: true, role: 'dialog', 'aria-label': 'Inventory' }, [
-			el('div', { class: 'ps-panel-head' }, [
-				el('span', { class: 'ps-panel-title', text: 'Backpack' }),
-				el('button', { class: 'ps-x', 'aria-label': 'Close', text: '✕', onclick: () => this.toggleInventory(false) }),
-			]),
+		this.invPanel = panel('ps-inv', 'play.backpack', 'Backpack', [
 			this.invGrid,
-			el('div', { class: 'ps-inv-hint', text: 'Click a tool to equip it. Click food to eat.' }),
+			el('div', { class: 'ps-inv-hint', text: t('play.backpack_hint', 'Click a tool to equip it. Click food to eat.'), 'data-i18n': 'play.backpack_hint' }),
 		]);
 
 		// Skills panel. The footer line names what the current skills are working
@@ -239,26 +279,13 @@ export class PlaySystems {
 		// _renderNextUnlock), so this UI never invents a level requirement.
 		this.skillsList = el('div', { class: 'ps-skills-list' });
 		this.nextUnlock = el('div', { class: 'ps-skills-next' });
-		this.skillsPanel = el('div', { class: 'ps-panel ps-skills', hidden: true, role: 'dialog', 'aria-label': 'Skills' }, [
-			el('div', { class: 'ps-panel-head' }, [
-				el('span', { class: 'ps-panel-title', text: 'Skills' }),
-				el('button', { class: 'ps-x', 'aria-label': 'Close', text: '✕', onclick: () => this.toggleSkills(false) }),
-			]),
-			this.skillsList,
-			this.nextUnlock,
-		]);
+		this.skillsPanel = panel('ps-skills', 'play.skills', 'Skills', [this.skillsList, this.nextUnlock]);
 
 		// My Cosmetics panel (R23): the owned wardrobe. Body is rebuilt per open from
 		// the latest profile snapshot so it always reflects the authoritative owned +
 		// equipped set; states (loading/empty/error) render inside ps-cos-body.
 		this.cosBody = el('div', { class: 'ps-cos-body' });
-		this.cosPanel = el('div', { class: 'ps-panel ps-cos', hidden: true, role: 'dialog', 'aria-label': 'My Cosmetics' }, [
-			el('div', { class: 'ps-panel-head' }, [
-				el('span', { class: 'ps-panel-title', text: 'My Cosmetics' }),
-				el('button', { class: 'ps-x', 'aria-label': 'Close', text: '✕', onclick: () => this.toggleCosmetics(false) }),
-			]),
-			this.cosBody,
-		]);
+		this.cosPanel = panel('ps-cos', 'play.my_cosmetics', 'My Cosmetics', [this.cosBody]);
 
 		this.root = el('div', { id: 'ps-hud' }, [
 			this.gold, this.rail, this.actionBtn, this.hotbarEl, this.invPanel, this.skillsPanel, this.cosPanel,
@@ -370,7 +397,19 @@ export class PlaySystems {
 	}
 
 	_renderGold() {
-		this.goldEl.textContent = (this.profile?.gold ?? 0).toLocaleString();
+		const gold = this.profile?.gold ?? 0;
+		this.goldEl.textContent = gold.toLocaleString();
+		// The purse is always on screen but a screen reader only hears it when it
+		// lands on it. Speak each change once, politely, with the new total. The
+		// first snapshot is the opening balance, not news, so it stays quiet.
+		const prev = this._announcedGold;
+		this._announcedGold = gold;
+		if (prev == null || prev === gold) return;
+		const diff = gold - prev;
+		announce(t('play.gold_changed', '{{delta}} gold, {{total}} total', {
+			delta: `${diff > 0 ? '+' : '-'}${Math.abs(diff).toLocaleString()}`,
+			total: gold.toLocaleString(),
+		}));
 	}
 
 	_renderHotbar() {
@@ -523,33 +562,50 @@ export class PlaySystems {
 		return i >= 0 && hb[i] ? hb[i].item : '';
 	}
 
-	toggleInventory(force) {
-		this._invOpen = force == null ? !this._invOpen : !!force;
-		this.invPanel.hidden = !this._invOpen;
-		this.invBtn.classList.toggle('is-on', this._invOpen);
-		if (this._invOpen) this._renderInventory();
-	}
-
-	toggleSkills(force) {
-		this._skillsOpen = force == null ? !this._skillsOpen : !!force;
-		this.skillsPanel.hidden = !this._skillsOpen;
-		this.skillsBtn.classList.toggle('is-on', this._skillsOpen);
-		if (this._skillsOpen) {
-			// Ask for the wheel's gate the first time the panel opens, so the
-			// next-unlock line is populated for a player who has never walked up to
-			// the wheel. Once answered it's cached for the session.
-			if (this._wheelMinLevel === undefined) { try { this.net?.spinInfo?.(); } catch { /* offline */ } }
-			this._renderSkills();
+	// One switch for all three side panels, so open/close bookkeeping (button
+	// state, aria-expanded, the Escape order, focus return) lives in one place.
+	_setPanel(cls, force) {
+		const p = this._panels[cls];
+		const open = force == null ? !this[p.flag] : !!force;
+		const was = this[p.flag];
+		this[p.flag] = open;
+		this[p.panel].hidden = !open;
+		this[p.btn].classList.toggle('is-on', open);
+		this[p.btn].setAttribute('aria-expanded', String(open));
+		this._panelOrder = this._panelOrder.filter((c) => c !== cls);
+		if (open) {
+			this._panelOrder.push(cls);
+			p.onOpen?.();
+		} else if (was && this[p.panel].contains(document.activeElement)) {
+			// Focus was inside the panel that just vanished; hand it back to the
+			// rail button instead of dropping it on <body>.
+			this[p.btn].focus({ preventScroll: true });
 		}
 	}
 
-	// ---------------------------------------------------------------- cosmetics
-	toggleCosmetics(force) {
-		this._cosOpen = force == null ? !this._cosOpen : !!force;
-		this.cosPanel.hidden = !this._cosOpen;
-		this.cosBtn.classList.toggle('is-on', this._cosOpen);
-		if (this._cosOpen) this._renderCosmetics();
+	/**
+	 * Close the most recently opened side panel. Called by the world's Escape
+	 * handler. These panels are deliberately not on the modal Escape stack: the
+	 * player keeps the backpack open while walking, and the stack would mute
+	 * every world hotkey for as long as it stayed open.
+	 * @returns {boolean} true when a panel was closed (the Escape is consumed)
+	 */
+	closeTopPanel() {
+		const cls = this._panelOrder[this._panelOrder.length - 1];
+		if (!cls) return false;
+		const p = this._panels[cls];
+		const hadFocus = this[p.panel].contains(document.activeElement);
+		this._setPanel(cls, false);
+		if (hadFocus || document.activeElement === document.body) this[p.btn].focus({ preventScroll: true });
+		return true;
 	}
+
+	toggleInventory(force) { this._setPanel('ps-inv', force); }
+
+	toggleSkills(force) { this._setPanel('ps-skills', force); }
+
+	// ---------------------------------------------------------------- cosmetics
+	toggleCosmetics(force) { this._setPanel('ps-cos', force); }
 
 	// Render "My Cosmetics": the owned wardrobe grouped by slot, each item card
 	// showing its rarity and preview, with the equipped one marked and a per-slot
@@ -656,6 +712,10 @@ export class PlaySystems {
 			card.setAttribute('tabindex', '0');
 			card.setAttribute('title', `Buy ${item.name} for ${item.price} $THREE`);
 			card.setAttribute('aria-label', `Buy ${item.name} for ${item.price} $THREE`);
+			if (this._boutiqueBuyingId === item.id) {
+				card.classList.add('ps-cos-busy');
+				card.setAttribute('aria-busy', 'true');
+			}
 			const buy = () => this._buyPremium(item, card);
 			card.addEventListener('click', buy);
 			card.addEventListener('keydown', (e) => {
@@ -684,9 +744,16 @@ export class PlaySystems {
 	// confirmed transaction on-chain before granting anything. A fresh 'profile'
 	// snapshot (sent by the server on a successful grant) re-renders this panel
 	// with the item now owned — no optimistic local mutation.
+	//
+	// One purchase in flight for the whole panel, tracked on the instance rather
+	// than the card: a snapshot that lands mid-flight re-renders the panel with
+	// fresh cards, and a guard living only on the old card let a second click
+	// open a second payment.
 	async _buyPremium(item, card) {
-		if (!this.net || card?.classList.contains('ps-cos-busy')) return;
+		if (!this.net || this._boutiqueBuyingId) return;
+		this._boutiqueBuyingId = item.id;
 		card?.classList.add('ps-cos-busy');
+		card?.setAttribute('aria-busy', 'true');
 		const stageText = {
 			connecting: 'Connecting your wallet…',
 			pricing: 'Pricing the purchase…',
@@ -709,7 +776,9 @@ export class PlaySystems {
 		} catch (err) {
 			this.ui?.toast?.(err?.message || `Could not buy ${item.name}.`, 'warn');
 		} finally {
-			card?.classList.remove('ps-cos-busy');
+			this._boutiqueBuyingId = null;
+			if (this._cosOpen) this._renderCosmetics();
+			else { card?.classList.remove('ps-cos-busy'); card?.removeAttribute('aria-busy'); }
 		}
 	}
 

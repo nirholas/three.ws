@@ -19507,7 +19507,14 @@
 		"wheel_title": "Wheel of Fortune",
 		"zen": "Zen",
 		"zen_aria": "Zen mode",
-		"zen_title": "Zen mode: hide every panel, just the world (Z)"
+		"zen_title": "Zen mode: hide every panel, just the world (Z)",
+		"gold": "Gold",
+		"gold_changed": "{{delta}} gold, {{total}} total",
+		"backpack": "Backpack",
+		"backpack_hint": "Click a tool to equip it. Click food to eat.",
+		"skills": "Skills",
+		"my_cosmetics": "My Cosmetics",
+		"hotbar": "Hotbar"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

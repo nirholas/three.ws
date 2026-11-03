@@ -84,6 +84,33 @@ describe('play a11y: modal contract', () => {
 		expect(closed).toEqual(['second', 'first']);
 	});
 
+	it('one Escape closes only the stacked panel, not a panel beneath with its own document listener', () => {
+		// About twenty /play panels (NPC chat, signature wall, war portal, dance-off,
+		// the share sheet) close on their own document-level Escape listener rather
+		// than the shared stack. With a stacked panel (store, bank, wheel) open on top
+		// of one of them, a single Escape used to close BOTH: stopPropagation() does
+		// not stop other listeners on the same node, so the panel underneath heard
+		// the key the top panel had already consumed.
+		const top = dialog('store');
+		const beneathClosed = vi.fn();
+		const beneathCapture = (e) => { if (e.key === 'Escape') beneathClosed('capture'); };
+		const beneathBubble = (e) => { if (e.key === 'Escape') beneathClosed('bubble'); };
+		document.addEventListener('keydown', beneathCapture, true);
+		document.addEventListener('keydown', beneathBubble);
+		const topClosed = vi.fn();
+		const release = registerOverlay(top, () => { topClosed(); release(); });
+
+		esc();
+		expect(topClosed).toHaveBeenCalledTimes(1);
+		expect(beneathClosed).not.toHaveBeenCalled();
+
+		// With the stack empty, the panel beneath owns Escape again.
+		esc();
+		expect(beneathClosed).toHaveBeenCalledWith('capture');
+		document.removeEventListener('keydown', beneathCapture, true);
+		document.removeEventListener('keydown', beneathBubble);
+	});
+
 	it('does not let the world hotkey handler see a panel Escape', () => {
 		const card = dialog('trapped');
 		const worldSaw = vi.fn();
@@ -249,6 +276,27 @@ describe('play a11y: hotkeys never swallow a focused control', () => {
 		expect(src).toMatch(/e\.code === 'Space' && !onControl/);
 		// A modal panel owns the keyboard while it is open.
 		expect(src).toContain('if (hasOpenOverlay()) return;');
+	});
+
+	// Audit 09 (Meetup #3): Escape typed in the friends DM box did nothing, because
+	// the typing guard returned before the drawer's Escape branch ran, and the
+	// backpack / skills / cosmetics panels had no Escape at all.
+	it('lets Escape close a drawer even when focus is in its text field', () => {
+		const handler = src.slice(src.indexOf('_bindInput() {'));
+		const typing = handler.indexOf('if (isTypingTarget(e.target)) return;');
+		const friends = handler.indexOf("e.key === 'Escape' && this._friendsOpen");
+		const avatar = handler.indexOf("e.key === 'Escape' && this._avatarPanelOpen");
+		expect(typing).toBeGreaterThan(0);
+		expect(friends, 'friends Escape must run before the typing guard').toBeGreaterThan(0);
+		expect(friends).toBeLessThan(typing);
+		expect(avatar).toBeLessThan(typing);
+	});
+
+	it('closes the newest HUD side panel on Escape before world hotkeys see the key', () => {
+		const handler = src.slice(src.indexOf('_bindInput() {'));
+		const sidePanel = handler.indexOf("e.key === 'Escape' && this.playSystems?.closeTopPanel()");
+		expect(sidePanel, 'world Escape must call playSystems.closeTopPanel()').toBeGreaterThan(0);
+		expect(sidePanel).toBeLessThan(handler.indexOf('if (hasOpenOverlay()) return;'));
 	});
 });
 

@@ -19264,7 +19264,14 @@
 		"wheel_title": "Roata Norocului",
 		"zen": "Zen",
 		"zen_aria": "Mod Zen",
-		"zen_title": "Mod Zen: ascunde toate panourile, doar lumea (Z)"
+		"zen_title": "Mod Zen: ascunde toate panourile, doar lumea (Z)",
+		"gold": "Aur",
+		"gold_changed": "{{delta}} aur, {{total}} în total",
+		"backpack": "Rucsac",
+		"backpack_hint": "Apasă pe o unealtă ca s-o echipezi. Apasă pe mâncare ca s-o mănânci.",
+		"skills": "Abilități",
+		"my_cosmetics": "Cosmeticele mele",
+		"hotbar": "Bară rapidă"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

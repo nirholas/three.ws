@@ -3784,12 +3784,18 @@ export class CoinCommunities {
 	_bindInput() {
 		window.addEventListener('keydown', (e) => {
 			if (this.ui.chatFocused) return;
-			// Typing anywhere else (friends DM box, search fields, modal inputs) must
-			// reach the caret untouched, no hotkeys, no Enter hijack, no Space eaten.
-			if (isTypingTarget(e.target)) return;
-			// Esc closes the friends/avatar drawers before anything else claims the key.
+			// Esc closes the friends/avatar drawers before anything else claims the
+			// key, and before the typing guard below: Escape pressed in the friends DM
+			// box is the player asking to leave the drawer, not a character to type.
 			if (e.key === 'Escape' && this._friendsOpen) { e.preventDefault(); this._closeFriends(); return; }
 			if (e.key === 'Escape' && this._avatarPanelOpen) { e.preventDefault(); this._closeAvatarPanel(); return; }
+			// Typing anywhere else (search fields, modal inputs) must reach the caret
+			// untouched, no hotkeys, no Enter hijack, no Space eaten.
+			if (isTypingTarget(e.target)) return;
+			// Then the backpack / skills / cosmetics side panels, newest first. They
+			// are not on the modal stack (the player walks with them open), so this
+			// is their only keyboard way out.
+			if (e.key === 'Escape' && this.playSystems?.closeTopPanel()) { e.preventDefault(); return; }
 			// Enter/Space belong to a focused button or link (see isActivationTarget):
 			// hijacking them there leaves the whole HUD un-operable by keyboard.
 			const onControl = isActivationTarget(e.target);

@@ -19264,7 +19264,14 @@
 		"wheel_title": "Glücksrad",
 		"zen": "Zen",
 		"zen_aria": "Zen-Modus",
-		"zen_title": "Zen-Modus: Blendet alle Panels aus, nur die Welt (Z)"
+		"zen_title": "Zen-Modus: Blendet alle Panels aus, nur die Welt (Z)",
+		"gold": "Gold",
+		"gold_changed": "{{delta}} Gold, insgesamt {{total}}",
+		"backpack": "Rucksack",
+		"backpack_hint": "Klicke auf ein Werkzeug, um es auszurüsten. Klicke auf Essen, um es zu essen.",
+		"skills": "Fähigkeiten",
+		"my_cosmetics": "Meine Kosmetik",
+		"hotbar": "Schnellleiste"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

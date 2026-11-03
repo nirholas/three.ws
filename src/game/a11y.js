@@ -56,15 +56,22 @@ function onEscape(e) {
 	if (e.key !== 'Escape' || !stack.length) return;
 	const top = stack[stack.length - 1];
 	e.preventDefault();
-	e.stopPropagation();
+	// Immediate, not plain stopPropagation: the Escape is consumed, and no other
+	// listener may act on it. Panels that predate this stack (NPC chat, the
+	// signature wall, the share sheet) still close on their own document-level
+	// Escape listener, and with only stopPropagation one keypress closed the top
+	// panel AND whichever of those sat beneath it.
+	e.stopImmediatePropagation();
 	try { top.close(); } catch { /* a panel that already tore itself down */ }
 }
 
 function bindEscape() {
-	if (escBound || typeof document === 'undefined') return;
-	// Capture phase so the world's movement/hotkey handler on `window` never
-	// sees the Escape that belongs to an open panel.
-	document.addEventListener('keydown', onEscape, true);
+	if (escBound || typeof window === 'undefined') return;
+	// Window, capture phase: the very first stop on the event path, ahead of
+	// every document- and element-level listener and of the world's own
+	// movement/hotkey handler, so nothing else sees an Escape that belongs to an
+	// open panel.
+	window.addEventListener('keydown', onEscape, true);
 	escBound = true;
 }
 
