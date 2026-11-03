@@ -552,8 +552,8 @@ export function openService(serviceId, { npc, ui } = {}) {
 			ui?.toast?.(svc.title + ' — ' + (/(cancel|reject)/i.test(msg) ? 'cancelled' : 'payment failed'), 'warn');
 		} finally {
 			busy = false;
-			if (!result.hidden) return; // settled view took over
-			setBusy(false);
+			// A settled view took over the panel; only reset the form otherwise.
+			if (result.hidden) setBusy(false);
 		}
 	});
 
