@@ -1345,6 +1345,21 @@
 		align-content: center;
 	}
 
+	/* Bare links laid out as boxes. After the class-keyed floor above, the
+	   sweep's largest remaining group was ~260 class-less anchors on 92 pages
+	   that a flex/grid parent or display: block turns into boxes: header and
+	   footer navs, "links"/"actions" rows, crumbs, card footers, 14-41px tall.
+	   They read as controls, so they get the same floor. A bare link in
+	   running text stays inline, and min-height does not apply to it. Short
+	   labels ("Docs", "Home", "Next") also get the width floor; the extra
+	   width is empty hit area after the text. */
+	:where(a[href]:not([class])) {
+		box-sizing: border-box;
+		min-height: 44px;
+		min-width: 44px;
+		align-content: center;
+	}
+
 	/* Breadcrumb trails built from bare links (/features/*, /apps/*, the
 	   oracle pages) and the cookbook table of contents: 12-28px rows. */
 	.fl-breadcrumb a,
