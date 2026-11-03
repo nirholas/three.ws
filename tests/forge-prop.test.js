@@ -278,6 +278,19 @@ describe('forgeWorldProp size ceiling', () => {
 			.rejects.toMatchObject({ name: 'ForgeError', oversize: true });
 	});
 
+	it('rejects a simplified result from an API that did not mirror it (no durable field)', async () => {
+		// Observed on production on 2026-11-03: a deploy predating the mirror ignores
+		// `mirror=r2` and answers with the worker's own storage URL and no `durable`
+		// field. The room refuses that host, so the model must never be offered.
+		fetchMock
+			.mockResolvedValueOnce(doneFrame())
+			.mockResolvedValueOnce(glbResponse(HEAVY))
+			.mockResolvedValueOnce(jsonResponse(202, { job_id: 'remesh-job-0123456789ab', status: 'queued' }))
+			.mockResolvedValueOnce(jsonResponse(200, { status: 'done', result_url: 'https://storage.googleapis.com/remesh/out.glb' }));
+		await expect(settle(forgeWorldProp({ prompt: 'a heavy dragon', budget: BUDGET })))
+			.rejects.toMatchObject({ name: 'ForgeError', oversize: true });
+	});
+
 	it('refuses to place a model it could not measure', async () => {
 		fetchMock
 			.mockResolvedValueOnce(doneFrame())

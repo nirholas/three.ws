@@ -245,7 +245,10 @@ async function simplifyModel(url, budget, { onStatus, signal } = {}) {
 		const frame = await readJson(poll);
 		if (frame.status === 'failed') return null;
 		if (frame.status === 'done') {
-			return frame.result_url && frame.durable !== false ? frame.result_url : null;
+			// Only an explicit `durable: true` means the copy landed in storage the room
+			// accepts. An API without the mirror omits the field and hands back the
+			// worker's own URL, which the room refuses.
+			return frame.result_url && frame.durable === true ? frame.result_url : null;
 		}
 		onStatus?.('Simplifying the model for this world…');
 	}
