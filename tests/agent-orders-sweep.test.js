@@ -533,6 +533,20 @@ describe('runOrderSweep: conditional and trailing triggers', () => {
 		expect(JSON.stringify(dbState.calls)).toContain('DRAWDOWN');
 	});
 
+	it('ratchet: the fill event keeps its exit reason code, which the wallet hub renders as a chip', async () => {
+		const ratchet = { initial_stop_pct: 30, tiers: [{ profit_pct: 50, lock_pct: 10 }] };
+		dbState.activeOrders = [order({ type: 'trail_ratchet', side: 'sell', size_sol: null, sell_pct: 100, limit_price: null, ratchet, reference_price: 100_000, peak_price: 200_000 })];
+		priceAt(60_000);
+		await runOrderSweep(cfg);
+		const fireEvent = dbState.calls.find((c) => c.kind === 'event' && c.values[2] === 'fire');
+		expect(fireEvent).toBeTruthy();
+		const meta = JSON.parse(fireEvent.values[5]);
+		expect(meta.reason_code).toBe('TIER_LOCK');
+		expect(meta.tier).toBeDefined();
+		expect(meta.status).toBeTruthy();
+		expect(meta.route).toBe('launchpad');
+	});
+
 	it('tracks the trailing high-water mark each sweep and fires on the drawdown', async () => {
 		dbState.activeOrders = [order({ type: 'trailing', side: 'sell', size_sol: null, sell_pct: 100, trail_pct: 20, peak_price: 100_000, limit_price: null })];
 		priceAt(90_000); // only 10% off the peak
