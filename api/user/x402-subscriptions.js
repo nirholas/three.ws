@@ -124,6 +124,17 @@ export default wrap(async (req, res) => {
 		return json(res, 404, { error: 'subscription_not_found' });
 	}
 
+	// Rotation copies name, limits, expiry and meta onto a brand-new key, so on a
+	// revoked or expired subscription it would resurrect a credential that was
+	// deliberately killed (or mint one already dead). Revoke stays idempotent.
+	if (action === 'rotate' && deriveStatus(sub) !== 'active') {
+		return json(res, 409, {
+			error: 'subscription_not_active',
+			status: deriveStatus(sub),
+			message: 'This key is revoked or expired and cannot be rotated. Create a new key instead.',
+		});
+	}
+
 	const meta = sub.meta || {};
 	const isAws = meta.source === AWS_SOURCE;
 
