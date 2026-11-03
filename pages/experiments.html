@@ -83,6 +83,9 @@
 		.ex-links a { text-decoration: underline; text-underline-offset: 3px; color: var(--ink-dim); }
 		.ex-links a:hover { color: var(--ink-bright, var(--ink)); }
 		.ex-links a.is-primary { color: var(--ink-bright, var(--ink)); font-weight: 650; }
+		@media (hover: none) and (pointer: coarse) {
+			.ex-links a { display: inline-flex; align-items: center; min-height: 44px; }
+		}
 
 		.ex-skel { height: 170px; border-radius: var(--radius-md, 10px); }
 		.skeleton { background: var(--surface-2); background-image: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-3) 50%, var(--surface-1) 100%); background-size: 200% 100%; animation: ex-shimmer 1.4s ease-in-out infinite; }

@@ -1352,8 +1352,11 @@
 	   They read as controls, so they get the same floor. A bare link in
 	   running text stays inline, and min-height does not apply to it. Short
 	   labels ("Docs", "Home", "Next") also get the width floor; the extra
-	   width is empty hit area after the text. */
-	:where(a[href]:not([class])) {
+	   width is empty hit area after the text. A classed link in the same row
+	   (the "active" item of a bare nav) would otherwise be stretched to the
+	   row's new height with its label stuck at the top, so it joins the floor.
+	   */
+	:where(a[href]:not([class]), :has(> a[href]:not([class])) > a[href]) {
 		box-sizing: border-box;
 		min-height: 44px;
 		min-width: 44px;
