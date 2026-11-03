@@ -603,6 +603,14 @@ export const STUDIO_LIMITS = Object.freeze({
 });
 
 // Preset limiters. Tune once viral traffic shape is known.
+// Forge-in-world limit shapes. Exported so the admission helper can refund the
+// single-use player window with the exact same bucket identity.
+export const FORGE_WORLD_PLAYER_COOLDOWN_S = 20;
+export const FORGE_WORLD_SLOTS = 4;
+export const FORGE_WORLD_SLOT_WINDOW_S = 90;
+export const FORGE_WORLD_PLAYER_BUCKET = ['forge:world:player', { limit: 1, window: `${FORGE_WORLD_PLAYER_COOLDOWN_S} s` }];
+export const FORGE_WORLD_SLOTS_BUCKET = ['forge:world:slots', { limit: FORGE_WORLD_SLOTS, window: `${FORGE_WORLD_SLOT_WINDOW_S} s` }];
+
 export const limits = {
 	// One-click "Surprise me" avatar composition. Each call composes a rigged GLB
 	// (~1s CPU + a few base-body fetches), so the ceiling stops a script from
@@ -1059,6 +1067,14 @@ export const limits = {
 			window: '1 h',
 			critical: true,
 		}).limit('global'),
+	// Forge-in-world (api/_lib/forge-world-limits.js). Per-player cooldown: one
+	// generation per FORGE_WORLD_PLAYER_COOLDOWN_S, keyed by the signed-in user or
+	// the forge client id. A single-use window on purpose, so a refusal further
+	// down (the world is full) can hand the hit back via refundLimit.
+	forgeWorldPlayer: (key) => getLimiter(...FORGE_WORLD_PLAYER_BUCKET).limit(key),
+	// Per-world concurrency cap: at most FORGE_WORLD_SLOTS admissions per world
+	// inside one draft-job lifetime, so one crowded world cannot flood the lane.
+	forgeWorldSlots: (worldId) => getLimiter(...FORGE_WORLD_SLOTS_BUCKET).limit(worldId),
 	// Free generation lane (NVIDIA NIM TRELLIS draft). No Replicate/vendor spend,
 	// so it gets a much higher per-principal ceiling than the paid bucket and is
 	// NON-critical: a Redis outage must never deny a zero-cost generation (fail

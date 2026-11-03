@@ -56,6 +56,7 @@
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
+import { admitWorldForge, parseWorldId } from './_lib/forge-world-limits.js';
 import { textToImage, synthesizeTurnaroundViews } from './_mcp3d/text-to-image.js';
 import { createRegenProvider } from './_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from './_providers/gcp.js';
@@ -1436,6 +1437,29 @@ async function startJobWithBody(req, res, body) {
 			: await limits.mcp3dGenerate(ip);
 		if (!rl.success) {
 			return rateLimited(res, rl, 'Generation limit reached. Try again shortly.');
+		}
+		// Forge-in-world: a submit tied to a /play world is also held to the
+		// per-player cooldown and the per-world concurrency cap (see the lib).
+		const worldId = parseWorldId(body);
+		if (worldId === null) {
+			return json(res, 400, { error: 'invalid_world', message: 'world must be a world id (letters, digits, : _ . -).' });
+		}
+		if (worldId) {
+			const sessionUser = await sessionUserIdFromReq(req);
+			const admit = await admitWorldForge({
+				worldId,
+				playerKey: sessionUser ? `user:${sessionUser}` : `client:${clientKeyFrom(req)}`,
+			});
+			if (!admit.ok) {
+				return rateLimited(
+					res,
+					admit.result,
+					admit.scope === 'player'
+						? 'You just forged one. Wait a moment before forging another.'
+						: 'This world is forging as much as it can right now. Try again shortly.',
+					{ scope: admit.scope },
+				);
+			}
 		}
 		// Cost circuit breaker: a platform-wide hourly ceiling on PLATFORM-keyed paid
 		// generation (the shared Replicate/self-host budget), on top of the per-IP cap
