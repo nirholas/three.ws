@@ -54,13 +54,23 @@ RUN git clone https://github.com/VAST-AI-Research/HoloPart.git /app/holopart-src
     && git -C /app/holopart-src checkout ${HOLOPART_COMMIT} \
     && rm -rf /app/holopart-src/.git
 
-# 3. HoloPart's own requirements (minus numpy's hard == pin, which conflicts
-# with this worker's trimesh/pymeshlab stack; torch-cluster needs the
-# cu121-matched wheel index).
-RUN grep -viE '^numpy([=<> ]|$)' /app/holopart-src/requirements.txt > /tmp/holopart-reqs.txt \
-    && grep -viE '^torch-cluster([=<> ]|$)' /tmp/holopart-reqs.txt > /tmp/holopart-reqs2.txt \
-    && pip install -r /tmp/holopart-reqs2.txt "numpy>=1.24,<2" \
-    && pip install torch-cluster -f https://data.pyg.org/whl/torch-2.4.1+cu121.html
+# 3. HoloPart's own requirements, minus the lines that cannot install as
+# written:
+#   * numpy==1.22.3 has no wheel that the rest of this stack accepts;
+#   * diffusers/transformers are unpinned upstream, so they are pinned here to
+#     the releases contemporary with the pinned commit (April 2025), keeping
+#     every rebuild on the API HoloPart was written against;
+#   * torch-cluster needs the cu121-matched PyG wheel index;
+#   * diso ships only an sdist whose setup.py imports torch and compiles CUDA
+#     kernels, so it builds with --no-build-isolation (against the torch
+#     installed above) and an explicit arch list, since no GPU is visible at
+#     image build time. 8.9 is the L4 this service deploys on; 8.0/8.6 keep
+#     the image usable on A100/A10-class hardware.
+RUN grep -viE '^(numpy|diffusers|transformers|torch-cluster|diso)([=<> ]|$)' /app/holopart-src/requirements.txt > /tmp/holopart-reqs.txt \
+    && pip install -r /tmp/holopart-reqs.txt "numpy>=1.24,<2" diffusers==0.32.2 transformers==4.49.0 \
+    && pip install torch-cluster -f https://data.pyg.org/whl/torch-2.4.1+cu121.html \
+    && TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9" FORCE_CUDA=1 MAX_JOBS=8 \
+        pip install --no-build-isolation diso==0.1.4
 
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt
