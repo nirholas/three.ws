@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "Rejoining /play after a dropped connection puts you back where you stood",
+			"tags": [
+				"fix"
+			],
+			"summary": "A player whose connection dropped now comes back at the spot they left instead of frozen at spawn, and the world shows no ghost copy of them. Players in voice chat who mute now show a muted marker to everyone else, a long unbroken chat line such as a pasted address wraps inside the speech bubble, and a boutique purchase can only be started once while the wallet is signing, so a second click never opens a second $THREE payment. Event jobs stay closed outside the live window, including when the event config cannot be reached.",
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Forged items in /play land where you place their hologram",
 			"tags": [
 				"feature"
