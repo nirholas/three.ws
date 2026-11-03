@@ -70,9 +70,10 @@ const STYLE = `
 	font-size: 12.5px; font-variant-numeric: tabular-nums; transition: opacity 0.25s ease;
 }
 .hw-pill[hidden] { display: none; }
-.hw-pill a { color: #ffb36b; text-decoration: underline; text-underline-offset: 2px; }
-.hw-pill a:hover { color: #fff; }
-.hw-pill a:focus-visible, .hw-pill-x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 2px; }
+.hw-pill-claim { padding: 0; border: 0; background: none; font: inherit; color: #ffb36b; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.hw-pill-claim:hover { color: #fff; }
+.hw-pill-claim:active { opacity: 0.75; }
+.hw-pill-claim:focus-visible, .hw-pill-x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 2px; }
 .hw-pill-x { display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 50%; background: transparent; color: #d9c3ad; font: inherit; font-size: 14px; cursor: pointer; }
 .hw-pill-x:hover { background: rgba(255,255,255,0.12); color: #fff; }
 .hw-vignette {
@@ -154,8 +155,8 @@ class HalloweenPlay {
 		try { dismissed = !!localStorage.getItem(this.pillKey); } catch { /* storage blocked */ }
 		if (dismissed) return;
 		this.pillText = el('span', { role: 'timer' });
-		this.pillLink = el('a', { href: '#', text: 'Claim' });
-		this.pillLink.addEventListener('click', (e) => { e.preventDefault(); this._claim(); });
+		this.pillLink = el('button', { type: 'button', class: 'hw-pill-claim', text: 'Claim' });
+		this.pillLink.addEventListener('click', () => this._claim());
 		this.pill = el('div', { class: 'hw-pill', role: 'status', hidden: true }, [
 			el('span', { 'aria-hidden': 'true', text: '🎃' }),
 			this.pillText,
