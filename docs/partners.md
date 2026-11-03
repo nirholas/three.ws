@@ -24,6 +24,17 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 
 The page's stat bar reads 9 partners, 22 chains, and an infinity glyph for scale. It is a `<dl>` and is read out to screen readers like any other content, so the two numbers have to stay true: the partner count is reconciled against the number of cards in the DOM on load, and 22 is the number of chains in `REGISTRY_DEPLOYMENTS` in [`src/erc8004/abi.js`](../src/erc8004/abi.js). The infinity glyph is framing, not a metric; it is announced as "Unbounded".
 
+## The footer row
+
+The shared site footer ([`public/footer.html`](../public/footer.html), styles in [`public/footer.css`](../public/footer.css)) carries a **Partners and programs** row with the same nine partners, in the same order, each linking to the same destination as its `/partners` card, plus an "All partners" link to `/partners`. Adding or removing a card means updating this row too.
+
+- **Marks are monochrome by design.** Each logo is a CSS mask filled solid `#fff`; only the text labels are muted at rest and brighten on hover. Never fade the marks themselves to a translucent grey: OpenAI's logomark may appear only in solid black or solid white, and every mark in the row shares one treatment. The footer is always dark, so white is the only fill.
+- **Where the files come from.** OpenAI uses the verbatim logomark at [`public/partners/openai/openai-logomark.svg`](../public/partners/openai/openai-logomark.svg) (see [badge usage](../marketing/openai-select-partner/badge-usage.md)). Quicknode's wordmark is the path Quicknode serves on its own site header. IBM and AWS come from Simple Icons 11.15.0 and 13.21.0 (both marks were later withdrawn from the set at the brands' request, so do not "update" them from a newer release). NVIDIA, Microsoft, Google Cloud, Alibaba Cloud and HackerNoon come from Simple Icons. All live in [`public/partners/logos/`](../public/partners/logos/) with the viewBox cropped to the painted glyph, so each mark's `--h` (optical height) and `--ar` (aspect ratio) in the markup size it correctly.
+- **Wordmarks carry no text label; glyph marks do.** IBM, AWS and Quicknode are wordmarks, so their links use `aria-label` instead of visible text.
+- **The independence line is required.** The footer states that partner and program logos are trademarks of their owners and imply no endorsement. It sits beside the NVIDIA attribution line and must stay whenever the row is shown.
+- **NVIDIA appears twice on purpose.** The row shows the NVIDIA mark as a partner-map entry; the separate white-plate NVIDIA Inception badge in the brand column is the unmodified member badge the program supplies, with its own attribution line.
+- **The footer mascot stands on the row.** `.h-footer-avatar` lives inside `.h-footer-partners`, anchored to the row's top hairline, so it never drifts over the logos at any width.
+
 ---
 
 ## OpenAI

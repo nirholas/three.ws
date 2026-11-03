@@ -15,6 +15,14 @@
 			<description>The root README was 11,000 lines; the long-form reference now lives in docs/reference.md and the README is a short front door with a 60-second quickstart, a comparison table and screenshots. One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed alongside.</description>
 		</item>
 		<item>
+			<title>Every partner logo now sits in the site footer</title>
+			<link>https://three.ws/partners</link>
+			<guid isPermaLink="false">2026-11-03:Every partner logo now sits in the site footer</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.</description>
+		</item>
+		<item>
 			<title>Exit fills show their reason again, and 3D workers refuse files that point off the payload</title>
 			<link>https://three.ws/</link>
 			<guid isPermaLink="false">2026-11-03:Exit fills show their reason again, and 3D workers refuse files that point off the payload</guid>

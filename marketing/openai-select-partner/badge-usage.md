@@ -107,5 +107,6 @@ that could read as an OpenAI endorsement.
 | `/blog/three-ws-openai-select-partner` | `blog/three-ws-openai-select-partner.html` | Full badge on a white plate under the headline; announcement card as the Open Graph image |
 | `/partners` | `pages/partners.html` | No badge. The card is text only, linking to `/openai` |
 | Announcement card | `marketing/openai-select-partner/cards/social-card.html` | Badge as supplied, on a white plate with clear space, alongside the independence line |
+| Site footer, every page | `public/footer.html` | No badge. The verbatim logomark in solid white beside the word "OpenAI" in the Partners and programs row, linking to `/openai`, with the footer's trademark and independence line |
 
 If you add a new surface that uses the badge, add a row here.

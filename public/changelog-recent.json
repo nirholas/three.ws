@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T02:43:03.593Z",
+	"generated_at": "2026-11-03T02:51:53.434Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4265,
+	"total": 4266,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,16 @@
 			"link": null,
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Every partner logo now sits in the site footer",
+			"summary": "The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.",
+			"link": "/partners",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1537,16 +1547,6 @@
 			"link": "/docs/oracle",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Owner-funded agent budgets enforced on-chain",
-			"summary": "Keep funds in your own wallet and sign one transaction that gives an agent a capped, expiring allowance through the Solana Subscriptions and Allowances program. The agent can pull only what is left, the spend guards refuse a pull the program would reject before any transaction is built, and the new Budget tab shows cap, spent, remaining and expiry with one-click revoke.",
-			"link": "/docs/agent-allowance-budgets",
-			"tags": [
-				"feature"
 			]
 		}
 	]

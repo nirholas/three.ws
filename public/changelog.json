@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T02:43:03.559Z",
+	"generated_at": "2026-11-03T02:51:53.383Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,16 @@
 			"link": null,
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Every partner logo now sits in the site footer",
+			"summary": "The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.",
+			"link": "/partners",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "Every partner logo now sits in the site footer",
+			"summary": "The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/partners"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "A README you can read in two minutes, plus Codespaces, a roadmap and a support page",
 			"summary": "The root README was 11,000 lines; the long-form reference now lives in docs/reference.md and the README is a short front door with a 60-second quickstart, a comparison table and screenshots. One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed alongside.",
 			"tags": [
