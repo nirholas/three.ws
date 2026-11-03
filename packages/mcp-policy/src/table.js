@@ -119,10 +119,6 @@ export const POLICY = {
 		token_snapshot: r('intelligence'),
 		trader_leaderboard: r('intelligence'),
 		trader_profile: r('intelligence'),
-		// Third-party MCP servers on an agent (api/_mcpagent/integrations-tools.js).
-		list_integrations: r('integrations'),
-		install_integration: w('integrations'),
-		remove_integration: w('integrations'),
 		home_status: r('integrations'),
 		home_list_macros: r('integrations'),
 		home_grants: r('integrations'),
@@ -422,6 +418,10 @@ export const POLICY = {
 		agent_buy_confirm: own('commerce', 'confirm_payment', 'agent_buy'),
 		spending_check: r('commerce'),
 		spending_setup: w('commerce'),
+		// Third-party MCP servers on an agent (api/_mcpagent/integrations-tools.js).
+		list_integrations: r('integrations'),
+		install_integration: w('integrations'),
+		remove_integration: f('integrations', 'confirm_delete', 'list_integrations', ['agent_id', 'connection_id']),
 	},
 
 	// /api/mcp-3d

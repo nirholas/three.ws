@@ -185,6 +185,14 @@
 			]
 		},
 		{
+			"name": "three.ws (unified)",
+			"endpoint": "https://three.ws/mcp",
+			"transport": "streamable-http",
+			"auth": "OAuth 2.1 (one sign-in for every tool), API key (server-to-server), or x402 pay-per-call",
+			"description": "One endpoint for the whole platform: the 3D studio, avatars, agent wallets, marketplace, trading and intelligence tools behind one sign-in, with the policy tiers deciding which are on.",
+			"documentation": "https://three.ws/docs/mcp"
+		},
+		{
 			"name": "3D Studio",
 			"endpoint": "https://three.ws/api/mcp-3d",
 			"transport": "streamable-http",

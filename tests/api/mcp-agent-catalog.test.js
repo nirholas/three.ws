@@ -84,6 +84,9 @@ describe('agent-wallet MCP catalog', () => {
 			'get_portfolio',
 			'get_balance_history',
 			'get_pnl',
+			// Account-level wallets (api/_mcpagent/private-wallet-tools.js)
+			'get_private_wallet_balance',
+			'get_wallet_summaries',
 			// Launch sniper, signal subscriptions and alert rules (api/_mcpagent/sniper-alert-tools.js)
 			'sniper_status',
 			'sniper_activate_preview',
@@ -170,6 +173,10 @@ describe('agent-wallet MCP catalog', () => {
 			'places_search',
 			'places_detail_quote',
 			'places_detail',
+			// Third-party MCP servers on an agent (api/_mcpagent/integrations-tools.js)
+			'list_integrations',
+			'install_integration',
+			'remove_integration',
 		]);
 	});
 

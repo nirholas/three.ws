@@ -117,6 +117,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Motion signature index | `npm run audit:motion` | `public/animations/signatures.json` describes the clips that are actually baked, so a rebake cannot leave `/gestures` and the walk-layer tables describing motion that no longer exists. |
 | One `<model-viewer>` build | `npm run check:model-viewer` | Every `<model-viewer>` reference in tracked source names one version, no version is served under two integrity hashes, and the vendored copy matches. |
 | Quoted MCP counts | `npm run check:mcp-counts` | Every tool, resource and prompt count a living doc quotes for a three.ws MCP server equals the census in `public/tools.json`; `--fix` rewrites the markers. |
+| Unified MCP endpoint registry | `npm run check:mcp-tools` | The unified `/mcp` registry builds with no name collisions, every tool has a group and tier in the policy table, no hosted tool is dropped, `public/tools.json` carries the current unified census, and `vercel.json` routes `/mcp`. |
 | Site-builder pinned releases | `npm run check:site-builder-embeds` | The WordPress, Framer and Webflow pinned-release files name the same `<agent-3d>` release as the release ledger; `--fix` regenerates them. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
 | Interactive-state ratchet | `npm run audit:states` | A selector that declares cursor:pointer cannot ship without a hover rule behind it. |

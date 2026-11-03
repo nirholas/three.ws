@@ -103,7 +103,7 @@ const CATALOGS = [
 // in front of each financial tool (agent_card_quote, preview_marketplace_action,
 // predictions_*_preview) move nothing, so they stay outside it.
 const DESTRUCTIVE_TOOLS = new Set([
-	'delete_avatar', 'forget', 'delete_custom_skill', 'delete_agent', 'automation_delete',
+	'delete_avatar', 'remove_integration', 'forget', 'delete_custom_skill', 'delete_agent', 'automation_delete',
 	'agent_card_reveal', 'agent_card_cancel',
 	'pay_and_call', 'persona_tip', 'persona_send',
 	'agent_card_create', 'agent_card_withdraw',

@@ -8,6 +8,7 @@
 //   read   list_integrations     the catalog and an agent's connections
 //   write  install_integration   connect a catalog server (read tools only on)
 //          remove_integration    disconnect one and delete its stored credentials
+//                                (financial tier: needs confirm_delete after list_integrations)
 //
 // install_integration never enables a write or financial tool and never accepts
 // a custom URL: those need the owner's review on /mcp-integrations.
@@ -64,7 +65,7 @@ export const integrationToolDefs = [
 		group: 'integrations',
 		tier: 'read',
 		annotations: READ,
-		description: 'List the third-party MCP servers an agent can connect (the vetted catalog: GitHub, docs and search servers and more) and, with agent_id, the ones already connected with their status and how many tools are on. Use the catalog id with install_integration.',
+		description: 'List the third-party MCP servers an agent can connect (the vetted catalog: GitHub, docs and search servers and more) and, with agent_id, the ones already connected with their status and how many tools are on. Use this when the user asks what an agent can connect or what it is already connected to. Use the catalog id with install_integration.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -100,7 +101,7 @@ export const integrationToolDefs = [
 		group: 'integrations',
 		tier: 'write',
 		annotations: WRITE,
-		description: 'Connect a catalog MCP server to an agent. Only its read tools are turned on; write and financial tools stay off until the owner enables and acknowledges each one on /mcp-integrations. A server that signs in with OAuth comes back with a sign_in_url the owner must open. Custom URLs are not accepted here; use the page.',
+		description: 'Connect a catalog MCP server to an agent. Only its read tools are turned on; write and financial tools stay off until the owner enables and acknowledges each one on /mcp-integrations. A server that signs in with OAuth comes back with a sign_in_url the owner must open. Custom URLs are not accepted here; use the page. Use this when the user wants to add a catalog integration to an agent.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -131,9 +132,11 @@ export const integrationToolDefs = [
 		name: 'remove_integration',
 		title: 'Remove an integration from an agent',
 		group: 'integrations',
-		tier: 'write',
+		tier: 'financial',
+		confirmFlag: 'confirm_delete',
+		previewTool: 'list_integrations',
 		annotations: DESTRUCTIVE,
-		description: 'Disconnect an MCP server from an agent and delete the credentials stored for it. The agent loses its ext_ tools immediately.',
+		description: 'Disconnect an MCP server from an agent and delete the credentials stored for it. The credentials cannot be recovered, so the owner must sign in to the server again to reconnect. The agent loses its ext_ tools immediately. Call list_integrations with the agent_id first and show the user the connection. Use this when the user no longer wants an agent connected to an integration.',
 		inputSchema: {
 			type: 'object',
 			properties: {

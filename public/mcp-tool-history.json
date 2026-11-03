@@ -1124,6 +1124,24 @@
 				"removed": 0,
 				"total": 709
 			}
+		},
+		{
+			"date": "2026-11-03",
+			"added": {
+				"mcp-agent": [
+					"get_private_wallet_balance",
+					"get_wallet_summaries",
+					"install_integration",
+					"list_integrations",
+					"remove_integration"
+				]
+			},
+			"removed": {},
+			"counts": {
+				"added": 5,
+				"removed": 0,
+				"total": 714
+			}
 		}
 	]
 }

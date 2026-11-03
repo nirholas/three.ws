@@ -1844,6 +1844,31 @@
 			}
 		},
 		{
+			"id": "check-mcp-tools",
+			"script": "scripts/check-mcp-tools.mjs",
+			"npm": "check:mcp-tools",
+			"title": "Unified MCP endpoint registry builds clean",
+			"protects": "The unified /mcp registry boots with no name collisions, every tool has a group and tier in the policy table, no hosted tool is dropped, public/tools.json carries the current unified census, and vercel.json routes /mcp.",
+			"why": "Tools are added to the hosted MCP servers weekly. A new tool without a policy row, or a name two servers both publish, would otherwise surface only when the unified endpoint fails to boot or serves an ungated tool. The census in public/tools.json is generated, so a stale block means the quoted counts and the catalog drifted from the code.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A unified census in public/tools.json that no longer matches the registry the server builds.",
+				"violation": {
+					"json": [
+						{
+							"file": "public/tools.json",
+							"pointer": "unified.tool_count",
+							"set": 1
+						}
+					]
+				},
+				"expect": "is stale"
+			}
+		},
+		{
 			"id": "check-site-builder-embeds",
 			"script": "scripts/check-site-builder-embeds.mjs",
 			"npm": "check:site-builder-embeds",
