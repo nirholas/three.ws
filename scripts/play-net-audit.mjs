@@ -12,7 +12,7 @@
 //   movement    a walk by one client is seen by the others
 //   chat        relay, markup payload passes as inert text, length cap, spam throttle
 //   emote       an emote by one client is seen by the others
-//   disconnect  offline for 10 s: peers drop the leaver, it reconnects by itself,
+//   disconnect  offline for 10 s (no close frame, like lost signal): it reconnects by itself,
 //               no ghost or duplicated self, and a still-standing player is not
 //               teleported to the origin on resync
 //   background  page frozen (iOS-style) for --background-ms (default 120000),
@@ -29,14 +29,16 @@
 //   node scripts/play-net-audit.mjs --seed-fault          # must FAIL (proves the gate)
 //   MP_URL=ws://127.0.0.1:2567 APP_URL=http://localhost:3000 node scripts/play-net-audit.mjs
 //
-// Flags: --clients N, --background-ms MS, --quick, --seed-fault, --only a,b,c,
+// Flags: --clients N, --background-ms MS, --relay-ms MS, --quick, --seed-fault, --only a,b,c,
 //        --json (machine-readable summary on the last line).
 
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import net from 'node:net';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import os from 'node:os';
+import { writeFileSync, rmSync } from 'node:fs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { chromium } = createRequire(path.join(ROOT, 'package.json'))('playwright');
@@ -49,6 +51,12 @@ const CLIENTS = Math.max(2, Number(opt('clients', 2)) | 0);
 const SCALE = argv.includes('--clients') && CLIENTS > 2;
 const BACKGROUND_MS = flag('quick') ? 15_000 : Number(opt('background-ms', 120_000));
 const SEED_FAULT = flag('seed-fault');
+// Upper bound for one relay to reach a peer. Generous so a loaded dev box does not
+// read as a defect; the measured latency is printed with every pass.
+const RELAY_MS = Number(opt('relay-ms', 10_000));
+// Gap between scripted chat lines: well past the server's 700 ms per-client
+// cooldown, so a line delayed in transit cannot land inside the next one's window.
+const CHAT_GAP_MS = 2000;
 const ONLY = new Set(String(opt('only', '')).split(',').filter(Boolean));
 const want = (n) => ONLY.size === 0 || ONLY.has(n);
 
@@ -111,6 +119,22 @@ function start(cmd, args, env) {
 	return child;
 }
 
+// The repo's own Vite config with file watching and HMR off. Other agents edit
+// src/ in this worktree while the audit runs, and every such edit made Vite
+// full-reload the harness pages mid-check, wiping the injected net client (seen
+// as `window.__net` undefined and 503s on re-optimized deps).
+function viteConfig() {
+	const file = path.join(os.tmpdir(), `play-net-audit-vite-${process.pid}.config.mjs`);
+	const base = pathToFileURL(path.join(ROOT, 'vite.config.js')).href;
+	writeFileSync(file, [
+		`import base from ${JSON.stringify(base)};`,
+		`const cfg = typeof base === 'function' ? await base({ command: 'serve', mode: 'development' }) : base;`,
+		`export default { ...cfg, root: ${JSON.stringify(ROOT)}, server: { ...(cfg.server || {}), hmr: false, watch: null } };`,
+	].join('\n'));
+	process.on('exit', () => { try { rmSync(file); } catch { /* already gone */ } });
+	return file;
+}
+
 function stopAll() {
 	// Signal the whole process group: `npx vite` forks the real server as a grandchild.
 	for (const c of children) { try { process.kill(-c.pid, 'SIGTERM'); } catch { /* already gone */ } }
@@ -139,9 +163,17 @@ import { CommunityNet } from '/src/game/community-net.js';
 const A = window.__A = { peers: {}, chats: [], statuses: [], selfId: null, reconnects: 0, readyCount: 0 };
 const net = window.__net = new CommunityNet({ name: ${JSON.stringify(name)}, coin: ${JSON.stringify(coin)}, url: ${JSON.stringify(mpUrl)} });
 const snap = (p, id) => ({ name: p.name, x: p.x, z: p.z, emote: p.emote, emoteTs: p.emoteTs });
-net.on('add', (p, id) => { A.peers[id] = snap(p, id); });
-net.on('change', (p, id) => { A.peers[id] = snap(p, id); });
-net.on('remove', (id) => { delete A.peers[id]; });
+// Peer reconciliation mirrors coincommunities.js: a reconnect marks every known
+// peer stale on 'connecting', the new room's join snapshot re-announces the live
+// ones, and 'synced' retires whoever was not re-announced. The old room's
+// listeners are gone by then, so without this a peer who left during the outage
+// (or our own previous session) would linger here but not in the app.
+const stale = new Set();
+net.on('add', (p, id) => { stale.delete(id); A.peers[id] = snap(p, id); });
+net.on('change', (p, id) => { stale.delete(id); A.peers[id] = snap(p, id); });
+net.on('remove', (id) => { stale.delete(id); delete A.peers[id]; });
+net.on('status', (s) => { if (s.status === 'connecting') for (const id of Object.keys(A.peers)) stale.add(id); });
+net.on('synced', () => { for (const id of stale) delete A.peers[id]; stale.clear(); });
 net.on('chat', (m) => { A.chats.push({ id: m.id, name: m.name, text: m.text, at: performance.now() }); });
 net.on('status', (s) => { A.statuses.push({ status: s.status, error: s.error, at: performance.now() }); });
 net.on('ready', () => { A.readyCount++; A.selfId = net.sessionId; });
@@ -171,7 +203,17 @@ async function openClient(browser, appUrl, mpUrl, name, { connect = true } = {})
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	const errors = [];
-	page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+	// Chromium logs every request refused by context.setOffline() as a console
+	// error ("Failed to load resource: net::ERR_INTERNET_DISCONNECTED"). That is
+	// the browser describing the outage this harness injects, not page code, so
+	// only those are dropped; every other error still fails the console check.
+	page.on('console', (m) => {
+		if (m.type() !== 'error') return;
+		if (/net::ERR_INTERNET_DISCONNECTED/.test(m.text())) return;
+		// A bare "Failed to load resource" says nothing; name the URL that failed.
+		const where = m.location()?.url;
+		errors.push(where ? `${m.text()} (${where})` : m.text());
+	});
 	page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 	await bootPage(page, appUrl, mpUrl, name);
 	if (connect) await page.evaluate(() => window.__net.connect());
@@ -198,7 +240,7 @@ async function main() {
 	if (!appUrl) {
 		const port = await freePort();
 		log(`starting vite on :${port}`);
-		start('npx', ['vite', '--port', String(port), '--strictPort', '--host', '127.0.0.1'], {});
+		start('npx', ['vite', '--config', viteConfig(), '--port', String(port), '--strictPort', '--host', '127.0.0.1'], {});
 		appUrl = `http://127.0.0.1:${port}`;
 		await waitHttp(`${appUrl}/404.html`);
 	}
@@ -249,7 +291,7 @@ async function main() {
 				await until(async () => {
 					const p = (await peersOf(B))[me];
 					return p && Math.abs(p.x - x) < 0.6;
-				}, 4000, `Bob to see Alice near x=${x.toFixed(1)}`);
+				}, RELAY_MS, `Bob to see Alice near x=${x.toFixed(1)}`);
 				return `${Date.now() - started} ms for a ${x.toFixed(1)} m walk`;
 			});
 		}
@@ -260,23 +302,23 @@ async function main() {
 				const said = (c) => c.page.evaluate(() => window.__A.chats.map((m) => m.text));
 				const start = Date.now();
 				await A.page.evaluate(() => window.__net.sendChat('hello from alice'));
-				await until(async () => (await said(B)).includes('hello from alice'), 3000, 'chat relay to Bob').catch(async (e) => { throw new Error(`${e.message}; Bob heard ${JSON.stringify(await said(B))}, Alice heard ${JSON.stringify(await said(A))}, Alice status ${await statusOf(A)}`); });
+				await until(async () => (await said(B)).includes('hello from alice'), RELAY_MS, 'chat relay to Bob').catch(async (e) => { throw new Error(`${e.message}; Bob heard ${JSON.stringify(await said(B))}, Alice heard ${JSON.stringify(await said(A))}, Alice status ${await statusOf(A)}`); });
 				const relayMs = Date.now() - start;
 
-				await sleep(800);
+				await sleep(CHAT_GAP_MS);
 				const payload = '<img src=x onerror="window.__xss=1"><script>window.__xss=1</script>';
 				await A.page.evaluate((p) => window.__net.sendChat(p), payload);
-				await until(async () => (await said(B)).some((t) => t.includes('<img')), 3000, 'markup payload relay');
+				await until(async () => (await said(B)).some((t) => t.includes('<img')), RELAY_MS, 'markup payload relay');
 				const injected = await B.page.evaluate(() => window.__xss === 1 || document.querySelector('img[src="x"]') !== null);
 				if (injected) throw new Error('markup payload executed or inserted into the DOM');
 
-				await sleep(800);
+				await sleep(CHAT_GAP_MS);
 				await A.page.evaluate(() => window.__net.sendChat('x'.repeat(500)));
-				await until(async () => (await said(B)).some((t) => t.startsWith('xxxx')), 3000, 'long message relay');
+				await until(async () => (await said(B)).some((t) => t.startsWith('xxxx')), RELAY_MS, 'long message relay');
 				const long = (await said(B)).find((t) => t.startsWith('xxxx'));
 				if (long.length > 200) throw new Error(`long message relayed at ${long.length} chars, cap is 200`);
 
-				await sleep(900);
+				await sleep(CHAT_GAP_MS);
 				const before = (await said(B)).length;
 				await A.page.evaluate(() => { for (let i = 0; i < 12; i++) window.__net.sendChat(`spam ${i}`); });
 				await sleep(900);
@@ -292,7 +334,7 @@ async function main() {
 				const me = await selfOf(A);
 				const start = Date.now();
 				await A.page.evaluate(() => window.__net.sendEmote('wave'));
-				await until(async () => (await peersOf(B))[me]?.emote === 'wave', 3000, 'Bob to see the wave emote');
+				await until(async () => (await peersOf(B))[me]?.emote === 'wave', RELAY_MS, 'Bob to see the wave emote');
 				return `${Date.now() - start} ms`;
 			});
 		}
@@ -324,9 +366,14 @@ async function main() {
 					const ws = window.__net.room?.connection?.transport?.ws;
 					try { ws?.close(); } catch { /* already closed */ }
 				}, SEED_FAULT);
-				await until(async () => !(await peersOf(A))[oldId], 8000, 'Alice to drop the offline Bob');
+				// No close frame gets through an offline network, exactly like a phone
+				// losing signal, so the server only reaps the old session on its ping
+				// budget (5 s x 6, multiplayer/src/index.js). The guarantee that matters
+				// is the one checked below: once Bob is back, prevSession eviction leaves
+				// Alice with exactly one Bob and no ghost.
 				await sleep(10_000);
 				const downStatus = await statusOf(B);
+				const heldWhileDown = !!(await peersOf(A))[oldId];
 				await B.context.setOffline(false);
 
 				const ms = await until(async () => {
@@ -348,7 +395,7 @@ async function main() {
 				if (bPeers.length !== 1) throw new Error(`Bob sees ${bPeers.length} peers, expected exactly 1`);
 				const selfListed = Object.keys(await peersOf(B)).filter((id) => id === oldId).length;
 				if (selfListed) throw new Error('Bob still lists his own old session');
-				return `went ${downStatus} while down, back online ${Math.round(ms / 100) / 10} s after network return`;
+				return `went ${downStatus} while down (server ${heldWhileDown ? 'still held' : 'had reaped'} the old session), back online ${Math.round(ms / 100) / 10} s after network return, no ghost`;
 			});
 			await B.page.evaluate(() => { window.__standing = null; });
 		}
@@ -366,7 +413,10 @@ async function main() {
 				const ms = await until(async () => {
 					if (!(await B.page.evaluate(() => window.__net.isLive()))) return false;
 					return (await othersSeen(B)).length === 1;
-				}, 45_000, 'Bob live and seeing Alice after resume');
+				}, 45_000, 'Bob live and seeing Alice after resume').catch(async (err) => {
+					const s = await B.page.evaluate(() => ({ status: window.__net.status, error: window.__net.error || '', open: window.__net.room?.connection?.isOpen ?? null }));
+					throw new Error(`${err.message} (Bob: status ${s.status}, socket open ${s.open}${s.error ? `, error "${s.error}"` : ''})`);
+				});
 				const newId = await selfOf(B);
 				const aPeers = await peersOf(A);
 				const bobs = Object.values(aPeers).filter((p) => p.name === 'Bob').length;
