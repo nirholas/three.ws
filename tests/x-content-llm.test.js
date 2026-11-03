@@ -94,3 +94,24 @@ describe('a review whose editor never ran', () => {
 		expect(editorFailure(null)).toBe('the AI editor did not run');
 	});
 });
+
+describe('the NVIDIA rung', () => {
+	it('asks for a model NVIDIA still serves, not the one retired on 2026-10-15', async () => {
+		const { modelRungs } = await import('../api/_lib/x-content/llm.js');
+		const sent = [];
+		const realFetch = globalThis.fetch;
+		globalThis.fetch = async (_url, init) => {
+			sent.push(JSON.parse(init.body).model);
+			return ok('{"verdict":"publish"}');
+		};
+		try {
+			const rungs = modelRungs(request, { NVIDIA_API_KEY: 'k' });
+			const result = await rungs[rungs.length - 1]();
+			expect(result.model).toBe(`nvidia:${sent[0]}`);
+			expect(sent[0]).not.toBe('moonshotai/kimi-k3');
+			expect(sent[0]).toBe('nvidia/nemotron-3.5-super-vl-120b-a12b');
+		} finally {
+			globalThis.fetch = realFetch;
+		}
+	});
+});
