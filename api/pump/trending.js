@@ -13,7 +13,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
-import { getTrendingSlim } from '../_lib/pump-trending.js';
+import { getTrendingSlim, getTrendingRichFromRecorder } from '../_lib/pump-trending.js';
 import { fetchPumpBoard } from '../_lib/pump-feed-fetch.js';
 
 // Separate cache slot for the rich (full-coin) payload — it carries far more per
@@ -113,7 +113,16 @@ export default wrap(async (req, res) => {
 					'cache-control': 'public, max-age=10, s-maxage=20',
 				});
 			}
-			console.warn('[pump/trending] rich board unavailable (pump.fun live + last-known-good) and no stale cache');
+			// pump.fun refuses datacenter egress for hours at a time. The recorder
+			// database still knows what is trading; serve it rather than blank every
+			// rich surface, and say where it came from.
+			const recorded = await getTrendingRichFromRecorder(limit);
+			if (recorded) {
+				return json(res, 200, { data: recorded, stale: true, source: 'recorder' }, {
+					'cache-control': 'public, max-age=10, s-maxage=20',
+				});
+			}
+			console.warn('[pump/trending] rich board unavailable (pump.fun live + last-known-good + recorder) and no stale cache');
 			return error(res, 502, 'upstream_error', 'Trending market data is temporarily unavailable');
 		}
 		_richCache = { value: board.data, storedAt: now, expiresAt: now + TTL_MS, limit };

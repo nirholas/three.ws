@@ -9,7 +9,7 @@
 // feed — same shape — so consumers degrade to live pump.fun data instead of a
 // hard error. A short-lived stale cache survives a brief outage on BOTH sources.
 
-import { normalizeGatewayURL } from '../../src/ipfs.js';
+import { normalizeGatewayURL, resolveURI } from '../../src/ipfs.js';
 import { sql } from './db.js';
 
 const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY;
@@ -162,6 +162,46 @@ async function fetchDbTrending(limit) {
 				rank: i + 1,
 			}))
 			.filter((t) => typeof t.mint === 'string' && t.mint.length >= 32);
+		return data.length ? data : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * The recorder rung for the rich (full-coin) lane: the same six-hour board the
+ * thin lane falls back to, in pump.fun's coin shape. Only fields the recorder
+ * actually has are filled; market cap stays null rather than invented, so
+ * surfaces render the coin and skip the figure. Null when the table is empty or
+ * unreachable.
+ *
+ * @param {number} limit
+ * @returns {Promise<object[]|null>}
+ */
+export async function getTrendingRichFromRecorder(limit) {
+	try {
+		const rows = await sql`
+			SELECT mint, symbol, name, image_uri, created_at
+			FROM pump_coin_intel
+			WHERE first_seen_at > now() - interval '6 hours'
+			ORDER BY buy_volume_lamports DESC NULLS LAST
+			LIMIT ${limit}
+		`;
+		const data = rows
+			.filter((r) => typeof r.mint === 'string' && r.mint.length >= 32)
+			.map((r) => {
+				const image = resolveURI(r.image_uri || '') || null;
+				const created = r.created_at ? new Date(r.created_at).getTime() : null;
+				return {
+					mint: r.mint,
+					symbol: r.symbol || '?',
+					name: r.name || r.symbol || '',
+					image_uri: image,
+					created_timestamp: Number.isFinite(created) ? created : null,
+					usd_market_cap: null,
+					market_cap: null,
+				};
+			});
 		return data.length ? data : null;
 	} catch {
 		return null;

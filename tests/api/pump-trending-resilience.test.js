@@ -246,3 +246,37 @@ describe('pump/trending rich board resilience', () => {
 		expect(res.body.error).toBe('upstream_error');
 	});
 });
+
+// pump.fun's frontend API answers datacenter egress with a Cloudflare 403, so on
+// Cloud Run the rich board can be down for hours with no last-known-good copy.
+// The thin lane already falls through to the recorder database; the rich lane
+// 502'd instead, which blanked /communities and put a console error on every
+// /play load (Meetup #3 client audit). It now serves recorder rows in the rich
+// shape, market cap honestly null, flagged stale with source 'recorder'.
+describe('pump/trending rich board recorder fallback', () => {
+	afterEach(() => { vi.doUnmock('../../api/_lib/db.js'); });
+
+	it('serves recorder rows in the rich shape when pump.fun refuses and nothing is cached', async () => {
+		const created = new Date('2026-11-03T18:00:00Z');
+		vi.doMock('../../api/_lib/db.js', () => ({
+			sql: vi.fn(async () => [
+				{ mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump', symbol: 'three', name: 'three.ws', image_uri: 'ipfs://bafyexample', created_at: created },
+				{ mint: 'short', symbol: 'bad', name: 'bad', image_uri: null, created_at: null },
+			]),
+		}));
+		const handler = await freshHandler();
+		global.fetch = vi.fn(async () => new Response('forbidden', { status: 403 }));
+		const res = makeRes();
+		await handler(makeReq('/api/pump/trending?limit=50&rich=1'), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.body.stale).toBe(true);
+		expect(res.body.source).toBe('recorder');
+		expect(res.body.data).toHaveLength(1);
+		const row = res.body.data[0];
+		expect(row.mint).toBe('FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+		expect(row.created_timestamp).toBe(created.getTime());
+		expect(row.usd_market_cap).toBeNull();
+		expect(row.image_uri).not.toMatch(/^ipfs:/);
+	});
+});
