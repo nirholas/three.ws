@@ -1317,6 +1317,50 @@
 		min-width: 44px;
 	}
 
+	/* Links styled as controls. The sweep's long tail was ~300 one-page
+	   anchors named *-btn, *-cta, *-chip, *-pill, *-back, *-crumb, measured
+	   12-43px tall. The class name is the signal that a link is a control,
+	   so the floor keys on it. Inline links in running text are unaffected:
+	   min-height does not apply to inline boxes. border-box stops a padded
+	   link from adding its padding on top of the floor, and align-content
+	   centres the label in a block or inline-block link the way a flex
+	   button already does. */
+	:where(
+		a[class*='btn'],
+		a[class*='cta'],
+		a[class*='chip'],
+		a[class*='button'],
+		a[class*='pill'],
+		a[class*='back'],
+		a[class*='crumb']
+	) {
+		box-sizing: border-box;
+		min-height: 44px;
+		align-content: center;
+	}
+
+	/* Breadcrumb trails built from bare links (/features/*, /apps/*, the
+	   oracle pages) and the cookbook table of contents: 12-28px rows. */
+	.fl-breadcrumb a,
+	.ap-crumbs a,
+	.crumb a,
+	.cb-toc a {
+		box-sizing: border-box;
+		min-height: 44px;
+		align-content: center;
+	}
+	.fl-breadcrumb a,
+	.ap-crumbs a,
+	.crumb a {
+		display: inline-block;
+	}
+
+	/* The docs search shows a "/" keyboard-shortcut badge at 10px on every
+	   docs page. A phone has no keyboard shortcut to advertise. */
+	.sidebar-search kbd {
+		display: none;
+	}
+
 	/* Footer partner marks on every page with the horizon footer: 38x44,
 	   the short wordmarks fall under the width floor. */
 	.h-footer-partner {
