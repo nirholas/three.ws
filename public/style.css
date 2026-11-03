@@ -8559,6 +8559,10 @@ textarea.erc8004-code {
 	gap: 10px;
 }
 .explore-card-link {
+	/* Centred so the label stays mid-row when a touch-floored sibling button
+	   stretches the actions row to 44px. */
+	display: inline-flex;
+	align-items: center;
 	font-size: 12px;
 	color: rgba(255, 255, 255, 0.7);
 	text-decoration: none;

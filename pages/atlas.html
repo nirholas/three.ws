@@ -189,6 +189,12 @@
 					border-color var(--duration-fast) var(--ease-standard),
 					color var(--duration-fast) var(--ease-standard);
 			}
+			/* Baseline keeps the label and its count on one line, but with the
+			   phone touch floor it pins both to the top of a 44px chip. As a
+			   one-line wrapping row, align-content centres the line instead. */
+			@media (hover: none) and (pointer: coarse) {
+				.at-chip { flex-wrap: wrap; align-content: center; }
+			}
 			.at-chip:hover,
 			.at-chip[aria-current='true'] {
 				color: var(--ink);

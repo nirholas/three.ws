@@ -52,6 +52,12 @@
 	display: inline-block;
 	vertical-align: middle;
 }
+/* The phone touch floor makes this link 44px tall, and an inline-block (kept
+   for the ellipsis) puts its one line at the top. A 43px line box plus the 1px
+   hover border centres the name in the hit area instead. */
+@media (hover: none) and (pointer: coarse) {
+	.dv-table .name-cell .dv-link { line-height: 43px; }
+}
 
 /* The cell links carry the row's affordance: readable at rest, obviously
    interactive on hover, and focusable on their own for keyboard users. */

@@ -824,10 +824,17 @@ html.cv-page,
 	color: var(--cv-text-3);
 	font-size: 0.75rem;
 }
+/* flex so the name stays vertically centred when the phone touch floor makes
+   the link 44px tall; as a block the name rode the top of its hit area. */
 .cv-table .name-cell a {
 	text-decoration: none;
 	color: inherit;
-	display: block;
+	display: flex;
+	align-items: center;
+}
+.cv-table .name-cell a > .inner {
+	flex: 1 1 auto;
+	min-width: 0;
 }
 .cv-table .name-cell a:focus-visible {
 	outline: 2px solid var(--cv-accent);
