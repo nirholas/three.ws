@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T04:22:40.648Z",
+	"generated_at": "2026-11-03T05:00:08.768Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -105,6 +105,16 @@
 			"title": "The classic homepage avatar now shows head to toe, and appears on phones",
 			"summary": "On the classic homepage, the animation buttons used to cover the live avatar's feet, so the figure looked like it was floating. It now stands above the buttons with its feet and ground shadow in view. On phones the avatar area had collapsed to nothing, so mobile visitors never saw the live 3D agent at all. It now appears below the headline at a comfortable height.",
 			"link": "/classic",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The service catalog AI agents read to find three.ws loads in about a second",
+			"summary": "The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.",
+			"link": "/changelog",
 			"tags": [
 				"fix"
 			]

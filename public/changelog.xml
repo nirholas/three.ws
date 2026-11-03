@@ -87,6 +87,14 @@
 			<description>On the classic homepage, the animation buttons used to cover the live avatar's feet, so the figure looked like it was floating. It now stands above the buttons with its feet and ground shadow in view. On phones the avatar area had collapsed to nothing, so mobile visitors never saw the live 3D agent at all. It now appears below the headline at a comfortable height.</description>
 		</item>
 		<item>
+			<title>The service catalog AI agents read to find three.ws loads in about a second</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:The service catalog AI agents read to find three.ws loads in about a second</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.</description>
+		</item>
+		<item>
 			<title>A lock screen worth stopping at</title>
 			<link>https://three.ws/</link>
 			<guid isPermaLink="false">2026-11-02:A lock screen worth stopping at</guid>

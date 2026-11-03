@@ -646,39 +646,43 @@ async function buildDatapointItemsUncached(origin) {
 		tags: ['crypto', 'market-data', 'datapoint', 'x402'],
 	});
 
-	// `push` writes into whichever collector is active: `items` directly for the
-	// always-present families, or a family-scoped buffer while `slice` runs.
-	let target = items;
-
 	const sliceCache = _dpSliceCache.get(origin) ?? new Map();
 	_dpSliceCache.set(origin, sliceCache);
 
-	// Run one family's enumeration into its own buffer. Rows land in the catalog
-	// when the feed produced any; otherwise the family's last good rows do, so a
-	// transient upstream failure cannot shrink the catalog under a crawler.
-	const slice = async (family, fn) => {
-		const rows = [];
-		target = rows;
-		try {
-			await fn();
-		} catch (err) {
-			console.error(`[wk/x402-discovery] ${family} slice`, err?.message || err);
-		} finally {
-			target = items;
-		}
-		if (rows.length > 0) {
-			sliceCache.set(family, rows);
-			items.push(...rows);
-			return;
-		}
-		const retained = sliceCache.get(family);
-		if (retained?.length) {
-			console.error(`[wk/x402-discovery] ${family} slice empty, serving retained rows`);
-			items.push(...retained);
-		}
+	// Run one family's enumeration into its own buffer. The family keeps its
+	// rows when the feed produced any; otherwise its last good rows stand in, so
+	// a transient upstream failure cannot shrink the catalog under a crawler.
+	// Every family's feed is fetched at once (each has a timeout of its own), and
+	// `flushSlices` appends the results in declaration order, so the rows keep
+	// the stable offsets a paging crawler relies on. Fetching them one after
+	// another made a cold build take the sum of every feed's latency.
+	const pending = [];
+	const slice = (family, fn) => {
+		const run = (async () => {
+			const rows = [];
+			try {
+				await fn((fam, id, metric) => pushRow(rows, fam, id, metric));
+			} catch (err) {
+				console.error(`[wk/x402-discovery] ${family} slice`, err?.message || err);
+			}
+			if (rows.length > 0) {
+				sliceCache.set(family, rows);
+				return rows;
+			}
+			const retained = sliceCache.get(family);
+			if (retained?.length) {
+				console.error(`[wk/x402-discovery] ${family} slice empty, serving retained rows`);
+				return retained;
+			}
+			return [];
+		})();
+		pending.push(run);
+	};
+	const flushSlices = async () => {
+		for (const rows of await Promise.all(pending.splice(0))) items.push(...rows);
 	};
 
-	const push = (family, id, metric) => {
+	const pushRow = (into, family, id, metric) => {
 		const familyDef = DATAPOINT_FAMILIES[family];
 		const metricDef = familyDef.metrics[metric];
 		const priceAtomics = datapointPriceFor(`datapoint-${family}`, DATAPOINT_DEFAULT_ATOMICS);
@@ -688,7 +692,7 @@ async function buildDatapointItemsUncached(origin) {
 				: `/api/x402/d/${family}/${metric}`;
 		const url = `${origin}${path}`;
 		const accepts = acceptsForPrice(priceAtomics, url);
-		target.push({
+		into.push({
 			path,
 			url,
 			method: 'GET',
@@ -719,6 +723,8 @@ async function buildDatapointItemsUncached(origin) {
 		});
 	};
 
+	const push = (family, id, metric) => pushRow(items, family, id, metric);
+
 	const metricsOf = (family) => Object.keys(DATAPOINT_FAMILIES[family].metrics);
 
 	// Every metric of the no-id families — static, always present.
@@ -729,21 +735,22 @@ async function buildDatapointItemsUncached(origin) {
 	// Small headline slice when wide enumeration is disabled — reproduces the
 	// original catalog (top 20 coins × 3 metrics, top 10 protocols × tvl).
 	if (!DP_WIDE) {
-		await slice('coin', async () => {
+		slice('coin', async (push) => {
 			const { rows } = await fetchMarketsTable({ page: 1, perPage: 20, category: '' });
 			for (const row of rows) for (const metric of ['price', 'market-cap', 'change-24h']) if (row.id) push('coin', row.id, metric);
 		});
-		await slice('protocol', async () => {
+		slice('protocol', async (push) => {
 			const { protocols } = await buildProtocols();
 			for (const p of protocols.slice(0, 10)) if (p.slug) push('protocol', p.slug, 'tvl');
 		});
+		await flushSlices();
 		return items;
 	}
 
 	// ── Wide enumeration: real ids from the cached feeds × every family metric ──
 
 	// Top coins by market cap (CoinGecko markets table, one cached page ≤100).
-	await slice('coin', async () => {
+	slice('coin', async (push) => {
 		const { rows } = await fetchMarketsTable({ page: 1, perPage: Math.min(DP_CAPS.coin, 100), category: '' });
 		const all = new Set(metricsOf('coin'));
 		const metrics = DP_COIN_METRICS.filter((m) => all.has(m));
@@ -754,7 +761,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Top protocols by TVL (DeFiLlama).
-	await slice('protocol', async () => {
+	slice('protocol', async (push) => {
 		const { protocols } = await buildProtocols();
 		const metrics = metricsOf('protocol');
 		for (const p of protocols.slice(0, DP_CAPS.protocol)) {
@@ -764,7 +771,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Every chain (DeFiLlama /v2/chains — ~350, fully enumerable).
-	await slice('chain', async () => {
+	slice('chain', async (push) => {
 		const chains = [...(await allChains()).values()].map((c) => c?.name).filter(Boolean);
 		const metrics = metricsOf('chain');
 		for (const name of chains.slice(0, DP_CAPS.chain)) {
@@ -774,7 +781,7 @@ async function buildDatapointItemsUncached(origin) {
 
 	// Top stablecoins by supply (DeFiLlama). The map keys id AND symbol to the
 	// same row — enumerate each once by its canonical id (matches d/index.js).
-	await slice('stablecoin', async () => {
+	slice('stablecoin', async (push) => {
 		const seen = new Set();
 		const ids = [];
 		for (const [key, row] of (await allStablecoins()).entries()) {
@@ -788,7 +795,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Top yield pools by TVL (DeFiLlama yields — pre-sorted TVL desc).
-	await slice('pool', async () => {
+	slice('pool', async (push) => {
 		const { pools } = await loadYieldPools();
 		const metrics = metricsOf('pool');
 		for (const p of pools.slice(0, DP_CAPS.pool)) {
@@ -798,7 +805,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Top exchanges by trust rank (CoinGecko /exchanges).
-	await slice('exchange', async () => {
+	slice('exchange', async (push) => {
 		const { exchanges } = await buildExchanges();
 		const metrics = metricsOf('exchange');
 		for (const e of exchanges.slice(0, DP_CAPS.exchange)) {
@@ -808,7 +815,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Sector categories (CoinGecko categories, market-cap desc).
-	await slice('category', async () => {
+	slice('category', async (push) => {
 		const metrics = metricsOf('category');
 		let n = 0;
 		for (const id of (await allCategories()).keys()) {
@@ -818,7 +825,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Top DEXs by 24h volume (DeFiLlama).
-	await slice('dex', async () => {
+	slice('dex', async (push) => {
 		const metrics = metricsOf('dex');
 		let n = 0;
 		for (const slug of (await allDexes()).keys()) {
@@ -828,7 +835,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Top protocols by fees/revenue (DeFiLlama).
-	await slice('fees', async () => {
+	slice('fees', async (push) => {
 		const metrics = metricsOf('fees');
 		let n = 0;
 		for (const slug of (await allFees()).keys()) {
@@ -838,7 +845,7 @@ async function buildDatapointItemsUncached(origin) {
 	});
 
 	// Derivative (perp) venues by open interest (CoinGecko).
-	await slice('derivative-exchange', async () => {
+	slice('derivative-exchange', async (push) => {
 		const metrics = metricsOf('derivative-exchange');
 		let n = 0;
 		for (const id of (await allDerivativeExchanges()).keys()) {
@@ -846,6 +853,8 @@ async function buildDatapointItemsUncached(origin) {
 			for (const metric of metrics) push('derivative-exchange', id, metric);
 		}
 	});
+
+	await flushSlices();
 
 	// Per-contract token market + security — advertised via the $THREE worked
 	// example (the families resolve any address at runtime; no id list to walk).
@@ -855,23 +864,38 @@ async function buildDatapointItemsUncached(origin) {
 	return items;
 }
 
-// Memoized wrapper: the slice rebuilds at most once per DP_TTL_MS per origin. A
-// total-failure rebuild serves the last good cache (or an empty block) rather
-// than dropping — or hammering upstreams on — every discovery request.
+// The slice rebuilds at most once per DP_TTL_MS per origin, and the rebuild
+// never blocks a request that already has a slice to serve: past the TTL the
+// last good slice is returned at once while one shared rebuild runs in the
+// background. The rebuild waits on the slowest upstream market feed (about 20
+// seconds when a market-data endpoint times out), and awaiting it inline made the
+// first request after each TTL take 20 to 30 seconds. Only an instance's very first request waits, because it has nothing
+// to serve yet. A failed rebuild keeps the last good slice (or an empty block).
+const _dpRebuilds = new Map(); // origin -> in-flight rebuild promise
+
+function rebuildDatapointItems(origin) {
+	const inflight = _dpRebuilds.get(origin);
+	if (inflight) return inflight;
+	const startedAt = Date.now();
+	const run = buildDatapointItemsUncached(origin)
+		.then((items) => {
+			_dpDiscoveryCache = { origin, items, at: startedAt };
+			return items;
+		})
+		.catch((err) => {
+			console.error('[wk/x402-discovery] datapoint build failed', err?.message || err);
+			return _dpDiscoveryCache?.origin === origin ? _dpDiscoveryCache.items : [];
+		})
+		.finally(() => _dpRebuilds.delete(origin));
+	_dpRebuilds.set(origin, run);
+	return run;
+}
+
 async function buildDatapointItems(origin) {
-	const now = Date.now();
-	if (_dpDiscoveryCache && _dpDiscoveryCache.origin === origin && now - _dpDiscoveryCache.at < DP_TTL_MS) {
-		return _dpDiscoveryCache.items;
-	}
-	try {
-		const items = await buildDatapointItemsUncached(origin);
-		_dpDiscoveryCache = { origin, items, at: now };
-		return items;
-	} catch (err) {
-		console.error('[wk/x402-discovery] datapoint build failed', err?.message || err);
-		if (_dpDiscoveryCache?.items) return _dpDiscoveryCache.items;
-		return [];
-	}
+	const cached = _dpDiscoveryCache?.origin === origin ? _dpDiscoveryCache : null;
+	if (!cached) return rebuildDatapointItems(origin);
+	if (Date.now() - cached.at >= DP_TTL_MS) rebuildDatapointItems(origin);
+	return cached.items;
 }
 
 // ── output.example backfill ──────────────────────────────────────────────────
@@ -1818,10 +1842,14 @@ export async function buildX402DiscoveryDoc() {
 		},
 	});
 
-	// Agent-published paid services — dynamic, one entry per active listing.
-	const agentServiceItems = await buildAgentServiceItems(origin);
-	const sellableAgentItems = await buildSellableAgentItems();
-	const datapointItems = await buildDatapointItems(origin);
+	// The dynamic blocks are independent (two DB listings and the datapoint
+	// slice), so they load in parallel. Each one already resolves to [] on
+	// failure, so none can reject the catalog.
+	const [agentServiceItems, sellableAgentItems, datapointItems] = await Promise.all([
+		buildAgentServiceItems(origin),
+		buildSellableAgentItems(),
+		buildDatapointItems(origin),
+	]);
 
 	return {
 		$schema: 'https://x402.org/schemas/discovery.json',

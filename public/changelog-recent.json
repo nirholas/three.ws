@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T04:22:40.710Z",
+	"generated_at": "2026-11-03T05:00:08.860Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4273,
+	"total": 4274,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -108,6 +108,16 @@
 			"title": "The classic homepage avatar now shows head to toe, and appears on phones",
 			"summary": "On the classic homepage, the animation buttons used to cover the live avatar's feet, so the figure looked like it was floating. It now stands above the buttons with its feet and ground shadow in view. On phones the avatar area had collapsed to nothing, so mobile visitors never saw the live 3D agent at all. It now appears below the headline at a comfortable height.",
 			"link": "/classic",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The service catalog AI agents read to find three.ws loads in about a second",
+			"summary": "The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.",
+			"link": "/changelog",
 			"tags": [
 				"fix"
 			]
@@ -1537,17 +1547,6 @@
 			"link": "/tracker",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Leaked-wallet rescue runbook with a dry run, and live Jito tip accounts",
-			"summary": "A new rescue script moves every token and the remaining SOL out of a compromised wallet in one atomic Jito bundle, paid for by a separate safe wallet, and its default dry run simulates the whole bundle and prints the plan without sending anything. The leak alarm now links the runbook. Jito tips also read the block engine's live tip-account list with a pinned fallback, instead of three hardcoded copies.",
-			"link": null,
-			"tags": [
-				"security",
-				"infra"
 			]
 		}
 	]
