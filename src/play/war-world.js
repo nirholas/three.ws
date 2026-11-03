@@ -17,9 +17,10 @@ import {
 	Color, Fog, MathUtils,
 	PlaneGeometry, CircleGeometry, RingGeometry, BoxGeometry, CylinderGeometry, SphereGeometry,
 	MeshStandardMaterial, MeshBasicMaterial, Mesh, DoubleSide,
-	SRGBColorSpace, ACESFilmicToneMapping, AdditiveBlending,
+	ACESFilmicToneMapping, AdditiveBlending,
 } from 'three';
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
+import { applyStudioLook } from '../render/index.js';
 import { AnimationManager } from '../animation-manager.js';
 import { gltfLoader } from '../loaders/gltf.js';
 import { ArenaAvatar } from './arena-world.js';
@@ -82,8 +83,6 @@ export class WarWorld {
 
 	_initRenderer() {
 		this.renderer = new WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-		this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
 		this.renderer.toneMappingExposure = 1.05;
 		this._onResize = () => this._resize();
@@ -95,9 +94,13 @@ export class WarWorld {
 		this.scene = new Scene();
 		this.scene.background = new Color(COL.bg);
 		this.scene.fog = new Fog(COL.bg, 60, 190);
+		// Studio fill so the loaded fighter avatars and the arena props reflect
+		// light; kept low so the dark arena palette holds. The loop is left alone:
+		// the match simulation must keep ticking while the tab is hidden.
+		this._undoLook = applyStudioLook(this.renderer, this.scene, { environmentIntensity: 0.3 });
 		this.camera = new PerspectiveCamera(58, this._aspect(), 0.1, 500);
 
-		this.scene.add(new HemisphereLight(0x9fc6ff, 0x0a0a10, 0.65));
+		this.scene.add(new HemisphereLight(0x9fc6ff, 0x0a0a10, 0.5));
 		this.scene.add(new AmbientLight(0xffffff, 0.25));
 		const key = new DirectionalLight(0xffffff, 1.15);
 		key.position.set(24, 44, 18);
@@ -613,6 +616,8 @@ export class WarWorld {
 				if (Array.isArray(m)) m.forEach((x) => x?.dispose?.()); else m?.dispose?.();
 			}
 		});
+		this._undoLook?.();
+		this._undoLook = null;
 		this.renderer?.dispose();
 		this.scene = null;
 	}

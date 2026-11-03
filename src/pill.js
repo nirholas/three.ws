@@ -19,6 +19,7 @@
  */
 
 import { log } from './shared/log.js';
+import { applyStudioLook } from './render/index.js';
 
 const MODEL_URL = '/avatars/pumpfun-pill-cupsey.glb';
 const POSTER_URL = '/avatars/thumbs/pumpfun-pill-cupsey.png';
@@ -132,15 +133,16 @@ async function boot() {
 	}
 
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.05;
 
 	const scene = new THREE.Scene();
+	// The studio room gives the glossy mascot something to reflect; the hemisphere
+	// light below is lowered to leave room for it.
+	applyStudioLook(renderer, scene, { environmentIntensity: 0.55 });
 	scene.fog = new THREE.Fog(0x0b0d11, STAGE_RADIUS * 0.9, STAGE_RADIUS * 2.6);
 
-	const ambient = new THREE.HemisphereLight(0xdfe9ff, 0x1b2a20, 1.9);
+	const ambient = new THREE.HemisphereLight(0xdfe9ff, 0x1b2a20, 1.3);
 	scene.add(ambient);
 	const key = new THREE.DirectionalLight(0xffffff, 2.1);
 	key.position.set(4, 7, 5);

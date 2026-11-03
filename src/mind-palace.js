@@ -35,6 +35,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { applyStudioLook } from './render/index.js';
 import {
 	listMemories,
 	updateMemory,
@@ -588,9 +589,11 @@ class MindPalace {
 		const w = this.root.clientWidth || 800;
 		const h = this.root.clientHeight || 520;
 		this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 		this.renderer.setSize(w, h, false);
 		this.scene = new THREE.Scene();
+		// Memory orbs are semi-metallic; the studio room gives them something to
+		// reflect. Tone mapping stays off so the per-type palette is not shifted.
+		this._undoLook = applyStudioLook(this.renderer, this.scene, { toneMapping: 'none', environmentIntensity: 0.4 });
 		this.camera = new THREE.PerspectiveCamera(52, w / h, 0.1, 200);
 		this.camera.position.set(0, 2.2, 18);
 		this.controls = new OrbitControls(this.camera, canvas);
@@ -1491,6 +1494,7 @@ class MindPalace {
 				if (o.material) { const m = o.material; (Array.isArray(m) ? m : [m]).forEach((x) => x.dispose()); }
 			});
 		}
+		if (this._undoLook) { this._undoLook(); this._undoLook = null; }
 		if (this.renderer) { this.renderer.dispose(); this.renderer.forceContextLoss?.(); }
 		if (this._reservedCtx) { releaseWebGLContext(); this._reservedCtx = false; }
 		if (this.avatarEl?.remove) this.avatarEl.remove();

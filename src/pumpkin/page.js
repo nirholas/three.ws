@@ -25,7 +25,6 @@ import {
 	Vector2,
 	Vector3,
 	WebGLRenderer,
-	SRGBColorSpace,
 	DoubleSide,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -33,6 +32,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { applyStudioLook, createRenderLoop } from '../render/index.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {
 	SHAPES,
@@ -87,7 +87,9 @@ let stageEl, canvas;
 let hover = null; // { point, normal } under the pointer on the surface
 let gesture = null; // active pointer gesture
 let knifeDots = [];
-let rafId = 0;
+let loop = null;
+const ENV_DAY = 0.3;
+const ENV_CANDLE = 0.1;
 
 /* ---------- small helpers ---------- */
 
@@ -140,13 +142,14 @@ function buildStem() {
 
 function initScene() {
 	renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-	renderer.outputColorSpace = SRGBColorSpace;
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = PCFShadowMap;
 
 	scene = new Scene();
 	scene.background = new Color(0x0b0414);
+	// The OutputPass applies the tone curve, so keep the renderer's at none. The
+	// studio fill is lowered further in setCandle so a lit candle still owns the room.
+	applyStudioLook(renderer, scene, { toneMapping: 'none', environmentIntensity: ENV_DAY });
 
 	camera = new PerspectiveCamera(40, 1, 0.1, 50);
 	camera.position.set(0.6, 0.7, 4.1);
@@ -249,14 +252,14 @@ function setCandle(on) {
 	materials.flesh.emissiveIntensity = on ? 0.55 : 0;
 	bloom.strength = on ? 0.55 : 0;
 	ambient.intensity = on ? 0.18 : 0.7;
+	scene.environmentIntensity = on ? ENV_CANDLE : ENV_DAY;
 	key.intensity = on ? 0 : 2.4;
 	const btn = $('pk-candle');
 	btn.setAttribute('aria-pressed', String(on));
 	btn.textContent = on ? 'Snuff the candle' : 'Light the candle';
 }
 
-function tick(t) {
-	rafId = requestAnimationFrame(tick);
+function frame(dt, t) {
 	if (state.candle) {
 		const f = 0.82 + 0.1 * Math.sin(t * 0.017) + 0.08 * Math.sin(t * 0.043 + 1.3) + 0.04 * Math.sin(t * 0.11);
 		candleLight.intensity = 3.2 * f;
@@ -685,8 +688,17 @@ async function boot() {
 		setCursor('carve');
 		setHelp(helpText());
 		refreshButtons();
-		cancelAnimationFrame(rafId);
-		rafId = requestAnimationFrame(tick);
+		loop?.dispose();
+		loop = createRenderLoop({
+			renderer,
+			frame,
+			observe: stageEl,
+			onPixelRatioChange: (ratio) => {
+				composer.setPixelRatio(ratio);
+				resize();
+			},
+		});
+		loop.start();
 		$('pk-loading').hidden = true;
 
 		const restore = savedCuts();

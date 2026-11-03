@@ -14,6 +14,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { applyStudioLook, createRenderLoop } from '../render/index.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
 import { AnimationManager } from '../animation-manager.js';
 import { collidersFor } from './layout.js';
@@ -76,8 +77,6 @@ function makeLabel(text, { color = '#ffffff', background = 'rgba(6,8,14,0.72)', 
  */
 export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.05;
 	renderer.shadowMap.enabled = true;
@@ -85,6 +84,9 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(world.ground.sky);
+	// Low studio fill: monument and buildings pick up specular response while the
+	// palette-driven sky and fog keep the district's mood.
+	const undoLook = applyStudioLook(renderer, scene, { environmentIntensity: 0.3 });
 	/** Every world-space label, faded by distance each frame so a dense city stays readable. */
 	const labels = [];
 	scene.fog = new THREE.Fog(world.ground.fog, 34, world.ground.radius * 1.5);
@@ -126,7 +128,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	scene.add(new THREE.Mesh(skyGeo, skyMat));
 
 	// ── lighting ──────────────────────────────────────────────────────────────
-	const hemi = new THREE.HemisphereLight(world.palette.accent, world.ground.color, 1.5);
+	const hemi = new THREE.HemisphereLight(world.palette.accent, world.ground.color, 1.2);
 	scene.add(hemi);
 	// A dim fill opposite the sun, so the faces a walker sees are never black.
 	const fill = new THREE.DirectionalLight(new THREE.Color(world.palette.accent), 0.55);
@@ -513,12 +515,10 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 	// clock is one fewer deprecation warning in every embedder's console.
 	let lastFrameMs = performance.now();
 	let elapsed = 0;
-	let raf = 0;
 	let disposed = false;
 
 	function frame() {
 		if (disposed) return;
-		raf = requestAnimationFrame(frame);
 		const now = performance.now();
 		const dt = Math.min(0.05, (now - lastFrameMs) / 1000);
 		lastFrameMs = now;
@@ -595,7 +595,8 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 		halo.position.y = 1.1 + Math.sin(elapsed * 0.9) * 0.12;
 		renderer.render(scene, camera);
 	}
-	frame();
+	const loop = createRenderLoop({ renderer, frame });
+	loop.start();
 
 	function setSize(width, height) {
 		renderer.setSize(width, height, false);
@@ -618,7 +619,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 		},
 		dispose() {
 			disposed = true;
-			cancelAnimationFrame(raf);
+			loop.dispose();
 			window.removeEventListener('keydown', onKeyDown);
 			window.removeEventListener('keyup', onKeyUp);
 			window.removeEventListener('pointermove', onPointerMove);
@@ -627,6 +628,7 @@ export function createPortalWorld({ canvas, world, onDoor, onReady }) {
 			canvas.removeEventListener('wheel', onWheel);
 			anim.detach?.();
 			for (const d of disposables) d.dispose?.();
+			undoLook();
 			renderer.dispose();
 		},
 	};

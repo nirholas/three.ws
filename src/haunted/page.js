@@ -18,6 +18,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { applyStudioLook, createRenderLoop } from '../render/index.js';
 
 const BASE = '/objects/kenney-graveyard/glb/';
 const $ = (id) => document.getElementById(id);
@@ -170,8 +171,6 @@ async function start() {
 async function run() {
 	// ----- renderer, scene, camera -----
 	const renderer = new WebGLRenderer({ canvas, antialias: !coarse, powerPreference: 'high-performance' });
-	renderer.setPixelRatio(Math.min(devicePixelRatio || 1, coarse ? 1.5 : 2));
-	renderer.outputColorSpace = SRGBColorSpace;
 	renderer.toneMapping = ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.05;
 	renderer.shadowMap.enabled = true;
@@ -181,6 +180,10 @@ async function run() {
 	const night = new Color('#0b0716');
 	scene.background = night;
 	scene.fog = new FogExp2(night, 0.055);
+	// A low studio fill gives the monsters and tombstones a specular edge while the
+	// night palette stays dark.
+	const maxPixelRatio = coarse ? 1.5 : 2;
+	applyStudioLook(renderer, scene, { environmentIntensity: 0.22, maxPixelRatio });
 
 	const camera = new PerspectiveCamera(48, 1, 0.1, 140);
 	camera.position.set(0.5, 3.4, 14.5);
@@ -529,7 +532,6 @@ async function run() {
 	// ----- loop -----
 	const tmp = new Vector3();
 	function frame() {
-		requestAnimationFrame(frame);
 		const dt = Math.min(clock.getDelta(), 0.05);
 		const t = clock.elapsedTime;
 		const calm = reducedMq.matches;
@@ -580,7 +582,16 @@ async function run() {
 	paintToggles();
 	$('hn-loading').hidden = true;
 	stage.dataset.ready = 'true';
-	frame();
+	createRenderLoop({
+		renderer,
+		frame,
+		observe: stage,
+		maxPixelRatio,
+		onPixelRatioChange: (ratio) => {
+			composer.setPixelRatio(ratio);
+			resize();
+		},
+	}).start();
 }
 
 $('hn-error-retry').addEventListener('click', start);
