@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T05:00:08.768Z",
+	"generated_at": "2026-11-03T05:02:16.915Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -105,6 +105,16 @@
 			"title": "The classic homepage avatar now shows head to toe, and appears on phones",
 			"summary": "On the classic homepage, the animation buttons used to cover the live avatar's feet, so the figure looked like it was floating. It now stands above the buttons with its feet and ground shadow in view. On phones the avatar area had collapsed to nothing, so mobile visitors never saw the live 3D agent at all. It now appears below the headline at a comfortable height.",
 			"link": "/classic",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The live agent economy stage shows two idling avatars on their pedestals",
+			"summary": "On the live agent economy page both avatars stood in a stiff arms-out T-pose inside dark boxes that hid the stage, with a webcam and emote toolbar showing and the avatars floating above their pedestals. Avatar embeds now start their idle animation by default and honor the chrome-free overlay setting, the transparent background no longer paints an opaque box, the avatars stand on their pedestals, and the central screen's text is readable.",
+			"link": "/live",
 			"tags": [
 				"fix"
 			]

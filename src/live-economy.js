@@ -135,9 +135,12 @@ scene.add(bezel);
 
 // TV stand
 const standMat = new THREE.MeshStandardMaterial({ color: 0x0e1018, roughness: 0.9, metalness: 0.5 });
-const standGeo = new THREE.BoxGeometry(0.3, TV_POS.y - 0.05, 0.3);
+// The stand ends at the screen's lower edge; running it up to the centre drew a
+// dark pole across the middle of the display.
+const STAND_H = TV_POS.y - 2.25;
+const standGeo = new THREE.BoxGeometry(0.3, STAND_H, 0.3);
 const stand    = new THREE.Mesh(standGeo, standMat);
-stand.position.set(TV_POS.x, TV_POS.y / 2, TV_POS.z - 0.07);
+stand.position.set(TV_POS.x, STAND_H / 2, TV_POS.z - 0.07);
 scene.add(stand);
 
 // ── TV rendering ──────────────────────────────────────────────────────────
@@ -156,12 +159,16 @@ function drawTvIdle() {
 	}
 
 	// Idle text
-	tvCtx.fillStyle = 'rgba(107,110,138,0.6)';
-	tvCtx.font      = 'bold 15px -apple-system, system-ui, sans-serif';
+	// Sized for the TV's on-screen footprint (about a third of the canvas width at
+	// the default camera), so the idle copy stays readable instead of a speck.
+	tvCtx.fillStyle = 'rgba(170,176,210,0.9)';
+	tvCtx.font      = 'bold 32px -apple-system, system-ui, sans-serif';
 	tvCtx.textAlign = 'center';
-	tvCtx.fillText('AGENT ORACLE — MARKET INTELLIGENCE', TV_W / 2, TV_H / 2 - 12);
-	tvCtx.font      = '12px -apple-system, system-ui, sans-serif';
-	tvCtx.fillText('Awaiting trade request…', TV_W / 2, TV_H / 2 + 14);
+	tvCtx.fillText('AGENT ORACLE', TV_W / 2, TV_H / 2 - 26);
+	tvCtx.font      = '22px -apple-system, system-ui, sans-serif';
+	tvCtx.fillText('Market intelligence', TV_W / 2, TV_H / 2 + 8);
+	tvCtx.fillStyle = 'rgba(120,169,255,0.85)';
+	tvCtx.fillText('Awaiting trade request…', TV_W / 2, TV_H / 2 + 48);
 	tvTex.needsUpdate = true;
 }
 
@@ -302,6 +309,9 @@ scene.add(floatPoints);
 const v3 = new THREE.Vector3();
 
 function toScreen(worldPos) {
+	// The first call runs before any render, so the camera's view matrix is still
+	// the identity until it is refreshed here.
+	camera.updateMatrixWorld();
 	v3.copy(worldPos);
 	v3.project(camera);
 	return {
@@ -311,13 +321,19 @@ function toScreen(worldPos) {
 }
 
 export function updateOverlayPositions() {
-	const aScreen = toScreen(AGENT_A_POS.clone().add(new THREE.Vector3(0, 4, 2)));
-	const bScreen = toScreen(AGENT_B_POS.clone().add(new THREE.Vector3(0, 4, 2)));
+	// Anchor on the pedestal ring: the avatar embed frames the body with a bottom
+	// margin of FEET_MARGIN of its height, so shifting the frame down by that much
+	// puts the feet on the ring instead of floating above it.
+	const aScreen = toScreen(AGENT_A_POS);
+	const bScreen = toScreen(AGENT_B_POS);
 
 	const iframeA = document.getElementById('iframe-oracle');
 	const iframeB = document.getElementById('iframe-trader');
 	const W_HALF  = Math.min(W() * 0.24, 300);
 	const H_FULL  = Math.min(H() * 0.65, 500);
+	const FEET_MARGIN = 0.2;
+	aScreen.y += H_FULL * FEET_MARGIN;
+	bScreen.y += H_FULL * FEET_MARGIN;
 
 	if (iframeA) {
 		iframeA.style.left   = `${aScreen.x - W_HALF / 2}px`;

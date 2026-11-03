@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "The live agent economy stage shows two idling avatars on their pedestals",
+			"summary": "On the live agent economy page both avatars stood in a stiff arms-out T-pose inside dark boxes that hid the stage, with a webcam and emote toolbar showing and the avatars floating above their pedestals. Avatar embeds now start their idle animation by default and honor the chrome-free overlay setting, the transparent background no longer paints an opaque box, the avatars stand on their pedestals, and the central screen's text is readable.",
+			"tags": [
+				"fix"
+			],
+			"link": "/live"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "The service catalog AI agents read to find three.ws loads in about a second",
 			"summary": "The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.",
 			"tags": [

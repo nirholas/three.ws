@@ -62,6 +62,7 @@
 
 import { Viewer } from './viewer.js';
 import { IdleAnimation } from './idle-animation.js';
+import { isOverlayMode, startRestingPose } from './avatar-embed-options.js';
 import { LipsyncDriver, tapAudioElement } from './voice/lipsync-driver.js';
 import { AvatarMouthTarget } from './voice/avatar-morph-target.js';
 import { A2FPlayer } from './voice/a2f-player.js';
@@ -126,7 +127,7 @@ async function main() {
 	// Overlay mode — chrome-free canvas for OBS Browser Source. Hides the
 	// name plate, mocap pill, and error positioning; treats the body as a
 	// pure render surface. Press space to re-show chrome (VSeeFace "※" pattern).
-	const overlayMode = params.get('overlay') === '1' || params.get('chrome') === '0';
+	const overlayMode = isOverlayMode(params);
 	if (overlayMode) document.body.classList.add('overlay-mode');
 
 	// ── Resolve which avatar to render ─────────────────────────────────────
@@ -148,8 +149,10 @@ async function main() {
 	const viewer = new Viewer(stage, { kiosk: true });
 	const bg = params.get('bg') || 'transparent';
 	if (bg === 'transparent') {
-		viewer.renderer?.setClearAlpha(0);
-		if (viewer.scene) viewer.scene.background = null;
+		// state.transparentBg is what makes Viewer.render skip the bloom and
+		// vignette pass, which otherwise paints an opaque dark box over the host page.
+		viewer.state.transparentBg = true;
+		viewer.updateBackground();
 	}
 	if (params.get('gaze') === 'off') viewer.state.followMode = 'off';
 
@@ -175,6 +178,7 @@ async function main() {
 	// ?animation= / ?anim= — supports manifest clip names, full-library (R2)
 	// clip names, and API clip ids/slugs.
 	const startAnim = params.get('animation') || params.get('anim') || params.get('pose');
+	if (!startAnim) startRestingPose(animMgr);
 	if (startAnim) {
 		const isApiId = /^[0-9a-f-]{36}$/i.test(startAnim) || startAnim.startsWith('user:');
 		if (isApiId) {
