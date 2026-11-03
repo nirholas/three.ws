@@ -3155,7 +3155,12 @@ export class CommunityUI {
 		}
 		// Party channel (party.js) claims a message when the scope is Party or it starts with /p.
 		if (this.chatInterceptor?.(text)) { this.chatInput.value = ''; return; }
-		this.h.onChat(text);
+		// A dropped socket swallows the send: keep what the player wrote and say
+		// so, rather than clearing the box as if it went out.
+		if (this.h.onChat(text) === false) {
+			this.addChat({ name: t('play.chat_system', 'System'), text: t('play.chat_not_sent', 'Not sent: reconnecting to the world. Your message is still in the box, press Enter to retry.'), mine: true });
+			return;
+		}
 		this.chatInput.value = '';
 	}
 

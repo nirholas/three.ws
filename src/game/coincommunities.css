@@ -1380,6 +1380,14 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 }
 .cc-label.cc-speaking { color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 255, 255, 0.5); }
 .cc-label.cc-speaking::before { background: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.9); animation: cc-voice-pulse 0.7s ease-in-out infinite; }
+/* In voice with the mic muted: a hollow dot struck through, so peers can tell
+   "muted" from "listening quietly" at a glance without reading the inspect card. */
+.cc-label.cc-invoice.cc-voice-muted::before {
+	background: transparent; box-shadow: none; animation: none;
+	border: 1px solid rgba(255, 255, 255, 0.6);
+	background-image: linear-gradient(135deg, transparent 42%, rgba(255, 120, 120, 0.95) 42% 58%, transparent 58%);
+	width: 7px; height: 7px; box-sizing: border-box;
+}
 /* Wanted peers (W07): star count trails the name, matching WorldHud's own
    star row so the wanted vocabulary reads the same on the HUD and in-world. */
 .cc-label.cc-wanted::after {

@@ -707,7 +707,8 @@ export class CommunityNet {
 	// Spatial voice: relay a WebRTC offer/answer/ICE candidate to one peer, and
 	// flag ourselves in/out of voice so peers know whether to connect to us.
 	sendVoiceSignal(to, data) { this._send('voice-signal', { to, data }); }
-	setVoiceActive(on) { this._send('voice-state', { on: !!on }); }
+	// `muted` lets peers mark a muted voice player (Player.voiceMuted).
+	setVoiceActive(on, muted = false) { this._send('voice-state', { on: !!on, muted: !!on && !!muted }); }
 	rename(name) { this.name = name; this._send('rename', { name }); }
 	setAvatar(avatar, agent) { this.avatar = avatar; this._send('avatar', { avatar, agent }); }
 	// Equip a cosmetic into its slot (W03). Server-authoritative: it validates

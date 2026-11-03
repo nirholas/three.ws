@@ -19271,7 +19271,9 @@
 		"backpack_hint": "Apasă pe o unealtă ca s-o echipezi. Apasă pe mâncare ca s-o mănânci.",
 		"skills": "Abilități",
 		"my_cosmetics": "Cosmeticele mele",
-		"hotbar": "Bară rapidă"
+		"hotbar": "Bară rapidă",
+		"chat_system": "Sistem",
+		"chat_not_sent": "Netrimis: ne reconectăm la lume. Mesajul tău este încă în casetă, apasă Enter pentru a reîncerca."
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

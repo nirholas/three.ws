@@ -19271,7 +19271,9 @@
 		"backpack_hint": "Klicke auf ein Werkzeug, um es auszurüsten. Klicke auf Essen, um es zu essen.",
 		"skills": "Fähigkeiten",
 		"my_cosmetics": "Meine Kosmetik",
-		"hotbar": "Schnellleiste"
+		"hotbar": "Schnellleiste",
+		"chat_system": "System",
+		"chat_not_sent": "Nicht gesendet: Verbindung zur Welt wird wiederhergestellt. Deine Nachricht steht noch im Feld, drücke Enter zum erneuten Senden."
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

@@ -2029,6 +2029,8 @@ export class WalkRoom extends Room {
 		if (!player) return;
 		if (!this._actionOk(client.sessionId, 'voiceState')) return;
 		player.voice = !!(payload && payload.on);
+		// Muted only means something while in voice; an older client omits it.
+		player.voiceMuted = player.voice && payload?.muted === true;
 	}
 
 	_handleVoiceSignal(client, payload) {

@@ -57,6 +57,11 @@ export class Player extends Schema {
 		// open the real /u/<username> profile, follow, and DM this player. Empty
 		// for guests and wallet-only sessions.
 		this.username = '';
+		// True while this player is in voice with their mic muted. `voice` stays
+		// true when muted (they still hear the room), so peers need this to tell a
+		// muted player from a quiet one. Server-set from voice-state, never true
+		// unless `voice` is.
+		this.voiceMuted = false;
 	}
 }
 // IMPORTANT: append-only. Field indices are positional in @colyseus/schema's
@@ -91,6 +96,8 @@ defineTypes(Player, {
 	// Append-only (W10): verified three.ws username from the signed presence
 	// ticket. See the constructor note.
 	username: 'string',
+	// Append-only: voice mic muted. See the constructor note.
+	voiceMuted: 'boolean',
 });
 
 // A single placed voxel in a coin's world. Keyed in the blocks MapSchema by its

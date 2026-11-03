@@ -320,7 +320,9 @@ class RemotePlayer {
 		this.height = 1.7; // avatar head height; updated once the GLB measures
 
 		this.voice = !!player.voice;
+		this.voiceMuted = this.voice && !!player.voiceMuted;
 		this.label.classList.toggle('cc-invoice', this.voice);
+		this.label.classList.toggle('cc-voice-muted', this.voiceMuted);
 		// This peer's equipped cosmetic loadout (R23), as the wire string the server
 		// publishes on the schema. Applied once the GLB measures (setAvatar), and
 		// re-applied whenever they change their fit (apply()).
@@ -463,6 +465,12 @@ class RemotePlayer {
 			this.voice = !!player.voice;
 			this.label.classList.toggle('cc-invoice', this.voice);
 			if (!this.voice) this.setSpeaking(false);
+		}
+		const muted = this.voice && !!player.voiceMuted;
+		if (muted !== this.voiceMuted) {
+			this.voiceMuted = muted;
+			this.label.classList.toggle('cc-voice-muted', muted);
+			if (muted) this.setSpeaking(false);
 		}
 		if (player.avatar !== this._avatarUrl) this.setAvatar(player.avatar);
 		if (player.cosmetics !== undefined && player.cosmetics !== this._cosWire) this.applyCosmetics(player.cosmetics);
@@ -1769,7 +1777,7 @@ export class CoinCommunities {
 			if (status === 'online' && this.voice?.joined && this.net.sessionId !== this.voice.selfId) {
 				this.voice.setSelfId(this.net.sessionId);
 				this.voice.resetPeers();
-				this.net.setVoiceActive(true);
+				this.net.setVoiceActive(true, this.voice.state === 'muted');
 			}
 		});
 		// A holder pass can expire (10 min) between minting and a mid-session
@@ -2308,7 +2316,7 @@ export class CoinCommunities {
 			sendSignal: (to, data) => this.net?.sendVoiceSignal(to, data),
 			onStateChange: (s) => {
 				this.ui.setVoiceState(s);
-				this.net?.setVoiceActive(s === 'on' || s === 'muted');
+				this.net?.setVoiceActive(s === 'on' || s === 'muted', s === 'muted');
 			},
 			onPeerSpeaking: (id, sp) => this.remotes.get(id)?.setSpeaking(sp),
 			onLocalSpeaking: (sp) => this.ui.setMicSpeaking(sp),
@@ -2538,7 +2546,7 @@ export class CoinCommunities {
 			actions: this.party?.inspectActions(id) || [],
 			facts: [
 				...this._worldFacts(),
-				...(rp.voice ? [{ label: 'Voice', value: 'in voice chat' }] : []),
+				...(rp.voice ? [{ label: 'Voice', value: rp.voiceMuted ? 'in voice chat, muted' : 'in voice chat' }] : []),
 			],
 		}, {
 			trigger: trigger || this.canvas,
