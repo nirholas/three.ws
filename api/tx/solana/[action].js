@@ -11,6 +11,10 @@ import {
 } from '@solana/spl-token';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../../_lib/http.js';
 import { getSessionUser } from '../../_lib/auth.js';
+import { loadOwnedAgent, requirePrincipal } from '../../_lib/custody/auth.js';
+import { answerCustody } from '../../_lib/custody/http.js';
+import { buildSwapTransaction, buildTransferTransaction } from '../../_lib/custody/builders.js';
+import { prepareForExternalSigner } from '../../_lib/custody/signing.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse, isValidSolanaAddress } from '../../_lib/validate.js';
 import { jupiterQuote, jupiterSwapTx } from '../../_lib/token/jupiter.js';
@@ -110,17 +114,58 @@ const transferSchema = z.object({
 		.refine((v) => Buffer.byteLength(v, 'utf8') <= MEMO_MAX_BYTES, `memo must be at most ${MEMO_MAX_BYTES} bytes`)
 		.optional(),
 	network:   z.enum(['mainnet', 'devnet']).default('mainnet'),
+	signer:    z.literal('external').optional(),
+	agent_id:  z.string().uuid().optional(),
 });
+
+const hasBearer = (req) => /^Bearer\s+\S/i.test(String(req.headers?.authorization || ''));
+
+// signer: "external" hands the unsigned transaction to a wallet the caller holds
+// and records it for POST /api/tx/submit. The caller may be a browser session or
+// a bearer token with the wallet:write scope. Returns null for the legacy path.
+async function externalPrincipal(req, res, body) {
+	if (body?.signer !== 'external') return null;
+	const principal = await requirePrincipal(req, 'wallet:write');
+	const rl = await limits.custodyWrite(principal.userId);
+	if (!rl.success) {
+		rateLimited(res, rl);
+		return 'limited';
+	}
+	return principal;
+}
+
+async function respondExternal(res, { principal, agentId, kind, network, sender, build }) {
+	if (agentId) await loadOwnedAgent(agentId, principal.userId);
+	const prepared = await prepareForExternalSigner({
+		userId: principal.userId, agentId: agentId || null, kind, network, pubkey: sender, build,
+	});
+	return json(res, 200, prepared, { 'cache-control': 'no-store' });
+}
 
 async function handleBuildTransfer(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	if (!user && !hasBearer(req)) return error(res, 401, 'unauthorized', 'sign in required');
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const { sender, recipient, amount, token, memo, network } = parse(transferSchema, await readJson(req));
+	const input = parse(transferSchema, await readJson(req));
+	const { sender, recipient, amount, token, memo, network } = input;
+	if (input.signer === 'external') {
+		return answerCustody(res, async () => {
+			const principal = await externalPrincipal(req, res, input);
+			if (principal === 'limited') return;
+			return respondExternal(res, {
+				principal, agentId: input.agent_id, kind: 'transfer', network, sender,
+				build: async () => buildTransferTransaction({
+					connection: solanaConnection({ network, commitment: 'confirmed' }),
+					sender, recipient, amount, token, memo: memo ?? null, network,
+				}),
+			});
+		});
+	}
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 
 	// Resolve the endpoint through the shared multi-provider chain rather than
 	// pinning the public mainnet node: it is the most aggressively rate-limited
@@ -224,17 +269,34 @@ const swapSchema = z.object({
 	amount:      uiAmount,
 	slippageBps: z.number().int().min(1).max(5000).default(50),
 	network:     z.enum(['mainnet']).default('mainnet'),
+	signer:      z.literal('external').optional(),
+	agent_id:    z.string().uuid().optional(),
 });
 
 async function handleBuildSwap(req, res) {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	if (!user && !hasBearer(req)) return error(res, 401, 'unauthorized', 'sign in required');
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const { sender, inputMint, outputMint, amount, slippageBps } = parse(swapSchema, await readJson(req));
+	const input = parse(swapSchema, await readJson(req));
+	const { sender, inputMint, outputMint, amount, slippageBps } = input;
+	if (input.signer === 'external') {
+		return answerCustody(res, async () => {
+			const principal = await externalPrincipal(req, res, input);
+			if (principal === 'limited') return;
+			return respondExternal(res, {
+				principal, agentId: input.agent_id, kind: 'swap', network: 'mainnet', sender,
+				build: async () => buildSwapTransaction({
+					connection: solanaConnection({ network: 'mainnet', commitment: 'confirmed' }),
+					sender, inputMint, outputMint, amount, slippageBps,
+				}),
+			});
+		});
+	}
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
 	if (inputMint === outputMint) {
 		return error(res, 400, 'invalid_route', 'inputMint and outputMint must differ');
 	}

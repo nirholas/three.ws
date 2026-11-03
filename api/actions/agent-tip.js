@@ -6,6 +6,9 @@
 // POST /api/actions/agent-tip?agent=<uuid>&token=SOL|THREE
 //   Body: { "account": "<wallet pubkey>", "amount": <number> }
 //   → ActionPostResponse: base64 VersionedTransaction (unsigned SOL/$THREE transfer)
+//   Add "signer": "external" (signed-in callers with wallet:write) to also record
+//   the transaction for POST /api/tx/submit: the reply then carries tx_id, summary
+//   and the simulation alongside the Blink fields.
 //
 // Shares its unsigned-transaction builder (buildTransferTransaction) and its
 // envelope/header pattern with api/actions/avatar.js. The recipient is always
@@ -19,6 +22,9 @@ import { isUuid } from '../_lib/validate.js';
 import { cdnUrlOrNull } from '../_lib/r2.js';
 import { getOrCreateAgentSolanaWallet } from '../_lib/agent-wallet.js';
 import { buildTransferTransaction, MAX_UI_AMOUNT } from '../_lib/custody/builders.js';
+import { requirePrincipal } from '../_lib/custody/auth.js';
+import { prepareExternalTx } from '../_lib/custody/external-tx.js';
+import { limits } from '../_lib/rate-limit.js';
 
 export const maxDuration = 10;
 
@@ -172,6 +178,27 @@ async function handlePost(req, res, agent, token) {
 	}
 
 	const txBase64 = Buffer.from(built.transaction.serialize()).toString('base64');
+
+	if (body?.signer === 'external') {
+		let principal;
+		try {
+			principal = await requirePrincipal(req, 'wallet:write');
+		} catch (err) {
+			return actionError(res, err?.status || 401, err?.code || 'unauthorized', err?.message || 'Sign in to prepare an external-signer transaction.');
+		}
+		const rl = await limits.custodyWrite(principal.userId);
+		if (!rl.success) return actionError(res, 429, 'rate_limited', 'Too many prepared transactions. Wait a moment and retry.');
+		const prepared = await prepareExternalTx({
+			userId: principal.userId, kind: 'transfer', network: 'mainnet', signer: account,
+			transaction: built.transaction, summary: { ...built.summary, tip_for_agent: agent.id },
+			lastValidBlockHeight: built.lastValidBlockHeight,
+		});
+		return json(res, 200, {
+			type: 'transaction',
+			...prepared,
+			message: `Tip prepared for ${agent.name || 'this agent'}. Sign it, then POST it to /api/tx/submit.`,
+		}, { 'cache-control': 'no-store' });
+	}
 
 	return json(res, 200, {
 		type: 'transaction',

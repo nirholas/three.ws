@@ -80,7 +80,7 @@ export function describeError(err) {
 	if (err instanceof PerpsError || err instanceof ActionPreviewError || err instanceof SpendLimitError) {
 		return { status: err.status || 400, code: err.code, message: err.message, detail: err.detail || null };
 	}
-	if (err && err.code === 'unknown_venue' && err.status) {
+	if (err && (err.code === 'unknown_venue' || err.code === 'platform_signing_disabled') && err.status) {
 		return { status: err.status, code: err.code, message: err.message, detail: err.detail || null };
 	}
 	return null;

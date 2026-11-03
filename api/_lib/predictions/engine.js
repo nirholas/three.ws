@@ -60,6 +60,10 @@ export function describeError(err) {
 	if (err instanceof SpendLimitError) {
 		return { status: err.status || 403, code: err.code, message: err.message, detail: err.detail || null };
 	}
+	// Signing-mode refusal from recoverSolanaAgentKeypair: the agent is external or session.
+	if (err && err.code === 'platform_signing_disabled' && err.status) {
+		return { status: err.status, code: err.code, message: err.message, detail: null };
+	}
 	return null;
 }
 
