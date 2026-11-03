@@ -280,7 +280,7 @@ vi.mock('../api/_lib/agent-trade-guards.js', async (importOriginal) => {
 	};
 });
 
-const clientState = { quoteCalls: 0, submitCalls: 0, submitResult: null };
+const clientState = { quoteCalls: 0, submitCalls: 0, submitResult: null, asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' };
 vi.mock('../api/_lib/x402/a2a-client.js', () => ({
 	A2AClientError: class A2AClientError extends Error {
 		constructor(code, message, detail) { super(message); this.code = code; this.detail = detail; }
@@ -298,6 +298,7 @@ vi.mock('../api/_lib/x402/a2a-client.js', () => ({
 					network: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
 					amount: '2000000', // $2.00 USDC
 					payTo: PEER_A,
+					asset: clientState.asset,
 					extra: { name: 'USDC' },
 				}],
 				resource: { url: PEER_ENDPOINT, mimeType: 'application/json' },
@@ -366,6 +367,7 @@ beforeEach(() => {
 	guardCalls.update.length = 0;
 	clientState.quoteCalls = 0;
 	clientState.submitCalls = 0;
+	clientState.asset = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 	clientState.submitResult = { state: 'completed', receipts: [{ transaction: 'sig-1' }], task: { artifacts: [] } };
 	_resetMemoryStore();
 });
@@ -395,6 +397,16 @@ describe('POST /api/agents/a2a-call — the kill switch', () => {
 		const { res } = await callWithMandate();
 		expect(res.statusCode).toBe(200);
 		expect(clientState.submitCalls).toBe(1);
+	});
+});
+
+describe('POST /api/agents/a2a-call: settlement asset', () => {
+	it('refuses a peer asset that only labels itself USDC', async () => {
+		sqlState.queue.push(ownedAgent());
+		clientState.asset = 'FakeMint1111111111111111111111111111111111';
+		const { res } = await callWithMandate();
+		expect(res.statusCode).toBe(402);
+		expect(clientState.submitCalls).toBe(0);
 	});
 });
 

@@ -29,6 +29,7 @@
 // rail — USDC SPL TransferChecked, partially signed by the platform payer and
 // co-signed by the peer's facilitator fee payer — with EVM EIP-3009 as fallback.
 
+import { currencyOfAccept } from '../_lib/a2a/settlement-asset.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { assertBearerMaySpend } from '../_lib/spend-scope.js';
 import { cors, error, json, method, rateLimited, readJson, respondError, serverError, wrap } from '../_lib/http.js';
@@ -90,11 +91,8 @@ function pickAccept(accepts, preference) {
 	);
 }
 
-// Normalize the on-chain asset name to a currency symbol for the mandate check.
-function currencyOf(accept) {
-	const name = accept?.extra?.name || '';
-	return /usdc|usd coin/i.test(name) ? 'USDC' : name || undefined;
-}
+// Currency is derived from the on-chain asset id, never the peer's label.
+const currencyOf = currencyOfAccept;
 
 // USDC is the only currency the A2A rails settle in, and it is a dollar with six
 // decimals, so the atomic amount IS the USD value. Any other asset is left
@@ -227,6 +225,9 @@ export default wrap(async (req, res) => {
 		accept = pickAccept(quote.required.accepts, networkPreference);
 	} catch (err) {
 		return error(res, 422, err.code || 'no_supported_accept', err.message);
+	}
+	if (!accept.asset) {
+		return error(res, 422, 'no_supported_accept', 'peer accept entry names no settlement asset');
 	}
 	const amount = accept.amount;
 	const network = accept.network;
