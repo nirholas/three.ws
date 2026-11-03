@@ -1,3 +1,4 @@
+/* global IDL, RISK -- declared as constants by anchor-idl.js in the generated handlers.js this file's text is appended to */
 // Runtime half of a generated Anchor skill. This file is NOT imported: its
 // text is appended verbatim to a generated handlers.js (see anchor-idl.js),
 // which declares `IDL` and `RISK` constants above it. It must stay free of
