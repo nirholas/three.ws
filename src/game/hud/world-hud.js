@@ -17,6 +17,8 @@
 
 import './world-hud.css';
 import { Minimap } from './minimap.js';
+import { announce } from '../a11y.js';
+import { t } from '../i18n-play.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -109,9 +111,21 @@ export class WorldHud {
 	// ------------------------------------------------------------------ money
 	setCash(n, { animate = true } = {}) {
 		this._cash = Number(n) || 0;
+		this._announceCash(this._cash);
 		if (!animate) { this._cashShown = this._cash; this.cashEl.textContent = fmtCash(this._cash); }
 		this.cashRow.hidden = false;
 	}
+	// The counter animates silently; speak each change after the first snapshot
+	// so a screen-reader player hears payouts and spends with the new total.
+	_announceCash(total) {
+		const prev = this._cashSpoken;
+		this._cashSpoken = total;
+		if (prev == null || prev === total) return;
+		const diff = total - prev;
+		const delta = (diff > 0 ? '+' : '-') + fmtCash(Math.abs(diff));
+		announce(t('play.cash_changed', '{{delta}} cash, {{total}} total', { delta, total: fmtCash(total) }));
+	}
+
 	// A money delta worth celebrating (positive = gain pop, negative = spend).
 	bumpCash(delta) {
 		this.cashRow.classList.remove('is-gain', 'is-loss');
