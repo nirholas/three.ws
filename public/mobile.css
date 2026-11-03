@@ -1172,3 +1172,78 @@
 		align-items: center;
 	}
 }
+
+/* ── Tap-target floor, round 5 (touch only) ────────────────────────────
+ * A full-site sweep at 393px (Pixel 5 profile, touch emulation) on
+ * 2026-11-03, ranked by how many pages share the offending component, so a
+ * single rule here fixes hundreds of routes. Same technique as rounds 2-4:
+ * a 44px floor with the existing content centred in it, gated on pointer
+ * type so a desktop mouse keeps the compact sizing.
+ */
+@media (hover: none) and (pointer: coarse) {
+	/* Docs live-code bar on 188 docs pages: Edit 38x26, Run 112x27, and the
+	   hint's dismiss button 26x25 (public/docs-live.css). */
+	.dlive-btn {
+		min-height: 44px;
+		min-width: 44px;
+		justify-content: center;
+	}
+	.dlive-hint-close {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Freshness banner "history" link on 343 docs pages, 105x20
+	   (public/doc-freshness.js injects the banner). */
+	.doc-freshness-link {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* Tutorial code-block copy button on 69 /tutorials pages, 66x26. */
+	.tdoc-copy-btn {
+		min-height: 44px;
+		min-width: 44px;
+		justify-content: center;
+	}
+
+	/* Disclosure rows on 18 pages measured 359x38. */
+	details > summary {
+		min-height: 44px;
+	}
+
+	/* Page-scoped controls, measured box and page in each comment. */
+	/* /character-library cards, 69x36. */
+	.ch-btn,
+	/* /prompts actions, 34px tall. */
+	.pl-btn,
+	/* /docs/freshness filters and actions, 35px tall. */
+	.df-btn,
+	/* /yields pool rows, 297x22. */
+	.yl-pool-btn,
+	/* /guards copy and expand controls, 27px tall. */
+	.gd-copy,
+	.gd-card-toggle {
+		min-height: 44px;
+	}
+	/* /agents-live reactions 28x28, /everything pins 34x34, /exchanges
+	   venue links 28x28. */
+	.rx-btn,
+	.ev-pin,
+	.ex-link {
+		min-width: 44px;
+		min-height: 44px;
+	}
+	/* /ship commit hashes 66x14 and /forged receipt transactions 63x20:
+	   standalone links in their own grid cell, not words in a sentence. */
+	.sl-sha,
+	.fg-receipt-tx {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+}

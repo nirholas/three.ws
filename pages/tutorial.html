@@ -807,6 +807,14 @@
 					transform: none;
 				}
 			}
+			/* mobile.css raises this button to a 44px tap floor; a one-line
+			   block is 52px tall, so tuck it in to keep it centred. */
+			@media (hover: none) and (pointer: coarse) {
+				.tdoc-copy-btn {
+					top: 4px;
+					right: 4px;
+				}
+			}
 
 			/* Heading anchor — hover-revealed deep link in the left margin. */
 			.tdoc-article h2,

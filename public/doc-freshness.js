@@ -139,8 +139,12 @@ function injectStyle() {
 /* The link is a control, not prose, so it cannot be dimmed the way
    .doc-freshness-text is: at 0.72 it measured 4.01:1 against the banner
    background, under AA. 0.88 keeps it visibly secondary at 5.4:1. */
-.doc-freshness-link{flex:none;color:inherit;opacity:0.88;text-decoration:none;border-bottom:1px solid currentColor;
-	padding-bottom:1px;transition:opacity .15s ease}
+.doc-freshness-link{flex:none;color:inherit;opacity:0.88;transition:opacity .15s ease}
+/* A text underline, not a border: on touch mobile.css lifts this link to a
+   44px tap box, and a border would hang at the bottom of that box. Two
+   classes so it outranks the docs shell's .docs-content a border. */
+.doc-freshness .doc-freshness-link{border-bottom:0;text-decoration:underline;text-decoration-thickness:1px;
+	text-underline-offset:3px}
 .doc-freshness-link:hover{opacity:1}
 .doc-freshness-link:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:3px}
 :root[data-theme="light"] .doc-freshness.is-fresh .doc-freshness-chip{color:#0a8f66}
