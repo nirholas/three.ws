@@ -1,5 +1,7 @@
 # The operator can extend, rename or end the live event through an authed override without a redeploy
 
+**Status (2026-11-03):** Built and verified locally end to end (extend, end, clear observed on the API, the game-server window poll and the browser, with an in-memory stand-in for the database because no local DATABASE_URL exists). Code is in 9016227f3 and 6965c5677. Remaining, owner-gated: `git push threews main`, then `npm run deploy:gcp:full` and the world-server deploy so production has /api/event-config; set `OPS_SECRET` where the operator runs `npm run event:override`. Not done: a full-suite `npx vitest run` baseline comparison.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/254-plan-play-event-config-live-override.md`.
 
 **Priority:** P0, live defect, security, or broken money rail (score 86 of 100 inside the tier). **Area:** play. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
