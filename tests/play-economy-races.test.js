@@ -1,5 +1,6 @@
 // Double-spend, race and overflow guards on the authoritative /play economy
-// handlers (general store buy/sell, bank, free spin). WalkRoom handlers are
+// handlers (general store buy/sell, bank, free spin) and the on-chain settlement
+// replay guard behind paid spins and the boutique. WalkRoom handlers are
 // synchronous per message, so a burst of identical requests is the realistic
 // "fast double click": every one must be priced from the server catalog, the
 // purse must never go negative, and nothing may be charged for goods that did
@@ -12,6 +13,7 @@ import { newProfile, bankTransfer, dropCarried, INV_SIZE, MAX_STACK } from '../m
 import { buyEntry, sellPrice } from '../multiplayer/src/shop.js';
 import { VENDOR_STALLS, ATMS, WHEEL } from '../multiplayer/src/world-features.js';
 import { handleSpinFree, MIN_AVG_LEVEL } from '../multiplayer/src/spin-wheel.js';
+import { consumeSettlement } from '../multiplayer/src/settlement-guard.js';
 
 function makeRoom({ at = VENDOR_STALLS[0], profile } = {}) {
 	const room = Object.create(WalkRoom.prototype);
@@ -162,5 +164,40 @@ describe('free spin', () => {
 		room._actionOk = () => true;
 		for (let i = 0; i < 6; i++) handleSpinFree(room, client);
 		expect(room._persistEcon).toHaveBeenCalledTimes(1);
+	});
+});
+
+// Paid spins and the $THREE boutique grant only after verifyTokenPurchase, an
+// async on-chain read, so two settles of one payment (a double submit, the same
+// pair replayed into another coin world) are both mid-flight together. The one
+// atomic consumption below is what makes exactly one of them grant.
+describe('on-chain settlement replay guard', () => {
+	const uid = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+
+	it('concurrent settles of one payment grant exactly once', async () => {
+		const nonce = `n-${uid()}`; const txSig = `sig-${uid()}`;
+		const results = await Promise.all(
+			Array.from({ length: 8 }, () => consumeSettlement({ nonce, txSig, purpose: 'boutique' })),
+		);
+		expect(results.filter(Boolean)).toHaveLength(1);
+	});
+
+	it('one on-chain transfer settles one grant, even under a second quote or another sink', async () => {
+		const txSig = `sig-${uid()}`;
+		expect(await consumeSettlement({ nonce: `n-${uid()}`, txSig, purpose: 'spin' })).toBe(true);
+		expect(await consumeSettlement({ nonce: `n-${uid()}`, txSig, purpose: 'spin' })).toBe(false);
+		expect(await consumeSettlement({ nonce: `n-${uid()}`, txSig, purpose: 'boutique' })).toBe(false);
+	});
+
+	it('one quote cannot be settled by a second transfer', async () => {
+		const nonce = `n-${uid()}`;
+		expect(await consumeSettlement({ nonce, txSig: `sig-${uid()}`, purpose: 'boutique' })).toBe(true);
+		expect(await consumeSettlement({ nonce, txSig: `sig-${uid()}`, purpose: 'boutique' })).toBe(false);
+	});
+
+	it('a settle missing its nonce or signature is refused', async () => {
+		for (const bad of [{}, { nonce: 'x' }, { txSig: 'y' }, { nonce: '', txSig: 'y' }, { nonce: 1, txSig: 2 }]) {
+			expect(await consumeSettlement(bad)).toBe(false);
+		}
 	});
 });
