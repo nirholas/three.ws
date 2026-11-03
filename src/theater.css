@@ -507,7 +507,10 @@
 	.th-room-hint { display: none; }
 	.th-rail { flex-direction: column; max-height: 46%; }
 	.th-rail-block { border-right: none; border-bottom: 1px solid var(--stroke, rgba(255, 255, 255, 0.08)); }
-	.th-replay { max-width: none; }
+	/* Stacked, the rail's height cap has to come out of the tape (its list
+	   scrolls), not the replay block: shrunk to its padding, the replay heading
+	   and Play button spilled over its empty-state line below. */
+	.th-replay { max-width: none; flex: none; }
 	.th-stats { grid-template-columns: repeat(2, 1fr); }
 }
 
