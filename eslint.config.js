@@ -49,6 +49,10 @@ export default [
 			// runtime globals like agent()/log() — not standalone ES modules).
 			'scripts/wf-*.mjs',
 			'.claude/workflows/**',
+			// Other agents' git worktrees: full checkouts (often with their own
+			// eslint configs and uninstalled plugins) that are gitignored and
+			// linted from their own tree, never from this one.
+			'.claude/worktrees/**',
 			// Bundled/minified build artifacts
 			'**/*.min.js',
 			// Bundler output formats (tsup/esbuild IIFE + global builds) and

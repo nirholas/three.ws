@@ -303,7 +303,7 @@ export class MultiPlaceSession {
 		this._fireConfirmPulse();
 		try { navigator.vibrate?.(15); } catch { /* haptics are a bonus, never a failure path */ }
 
-		let anchor = null;
+		let anchor;
 		try {
 			anchor = (await this._latestHit.createAnchor?.()) ?? null;
 		} catch {

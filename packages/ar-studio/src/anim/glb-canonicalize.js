@@ -793,7 +793,7 @@ export function canonicalizeGLBBones(arrayBuffer) {
 	try {
 		json = JSON.parse(new TextDecoder().decode(jsonBytes));
 	} catch (err) {
-		throw new Error('canonicalizeGLBBones: JSON chunk parse failed: ' + err.message);
+		throw new Error('canonicalizeGLBBones: JSON chunk parse failed: ' + err.message, { cause: err });
 	}
 
 	const { renamed, samples } = canonicalizeJointNodes(json);
