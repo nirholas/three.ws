@@ -24244,7 +24244,18 @@
 		"synthetic_head_bust_14k_splats": "<span class=\"sp-sample-dot\"></span> Synthetic head bust · 14k splats",
 		"try_a_sample": "Try a sample",
 		"upload_a_file": "Upload a file",
-		"where_splats_come_from": "Where splats come from"
+		"where_splats_come_from": "Where splats come from",
+		"generate_from_a_photo": "Generate from a photo",
+		"choose_a_photo": "Choose a photo",
+		"or_image_url": "or image URL",
+		"photo_url": "Photo URL",
+		"detail": "Detail",
+		"detail_light": "Light · 65k splats",
+		"detail_balanced": "Balanced · 131k splats",
+		"detail_max": "Maximum detail · 262k splats",
+		"generate_splat": "Generate splat",
+		"cancel": "Cancel",
+		"generate_hint": "One object on a plain background works best. Runs on a GPU with TripoSplat (MIT) and takes about a minute; the first run after a quiet spell can take a few minutes while the model loads."
 	},
 	"spotlight": {
 		"browse_all": "Browse every agent",

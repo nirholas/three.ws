@@ -11,6 +11,7 @@
 import { Color } from 'three';
 import { loadSpark, detectSplatFormat, mountSplatScene, SPLAT_EXTENSIONS_LABEL } from './splat-stage.js';
 import { initHotspotTimeline } from './splat-hotspots.js';
+import { generateSplat, validatePhoto, SplatGenerateError } from './splat-generate.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 
@@ -307,11 +308,129 @@ async function loadSample(kind) {
 	setDownload(ok ? URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' })) : null, name);
 }
 
+// ── Generate from a photo (Forge "Image to splat" lane, TripoSplat) ─────────
+// Progress lives in the card, not on the stage: the stage overlays retire the
+// live scene's HUD and download, and a cancelled or failed generation should
+// leave whatever the user was looking at untouched.
+function formatElapsed(ms) {
+	const s = Math.max(0, Math.round((ms || 0) / 1000));
+	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+const GEN_PHASE_TEXT = {
+	uploading: () => 'Uploading photo\u2026',
+	submitting: () => 'Sending to the GPU\u2026',
+	queued: (ms) => `Waiting for a GPU \u00b7 ${formatElapsed(ms)}. A cold start loads the model first.`,
+	running: (ms) => `Generating splat \u00b7 ${formatElapsed(ms)}`,
+};
+
+function initGenerate() {
+	const pick = $('#sp-gen-pick');
+	if (!pick) return;
+	const fileInput = $('#sp-gen-file');
+	const urlInput = $('#sp-gen-url');
+	const thumb = $('#sp-gen-thumb');
+	const pickLabel = $('#sp-gen-pick-label');
+	const go = $('#sp-gen-go');
+	const goLabel = $('#sp-gen-go-label');
+	const cancel = $('#sp-gen-cancel');
+	const detail = $('#sp-gen-detail');
+	const status = $('#sp-gen-status');
+	const drop = $('#sp-gen-drop');
+
+	let file = null;
+	let thumbUrl = null;
+	let controller = null;
+
+	const setStatus = (text, kind) => {
+		status.hidden = !text;
+		status.classList.toggle('is-error', kind === 'error');
+		status.classList.toggle('is-done', kind === 'done');
+		setText(status, text || '');
+	};
+
+	const setFile = (next) => {
+		const invalid = next ? validatePhoto(next) : null;
+		if (invalid) { setStatus(invalid, 'error'); return; }
+		file = next;
+		if (thumbUrl) URL.revokeObjectURL(thumbUrl);
+		thumbUrl = next ? URL.createObjectURL(next) : null;
+		thumb.hidden = !thumbUrl;
+		if (thumbUrl) { thumb.src = thumbUrl; thumb.alt = next.name; } else thumb.removeAttribute('src');
+		setText(pickLabel, next ? 'Change photo' : 'Choose a photo');
+		if (next) urlInput.value = '';
+		setStatus('');
+	};
+
+	const setBusy = (busy) => {
+		go.disabled = busy;
+		pick.disabled = busy;
+		urlInput.disabled = busy;
+		detail.disabled = busy;
+		cancel.hidden = !busy;
+		setText(goLabel, busy ? 'Generating\u2026' : 'Generate splat');
+	};
+
+	pick.addEventListener('click', () => fileInput.click());
+	fileInput.addEventListener('change', (e) => {
+		const f = e.target.files?.[0];
+		if (f) setFile(f);
+		e.target.value = '';
+	});
+	urlInput.addEventListener('input', () => { if (urlInput.value.trim() && file) setFile(null); });
+	urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') go.click(); });
+	['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => {
+		e.preventDefault(); drop.classList.add('is-dragover');
+	}));
+	drop.addEventListener('dragleave', () => drop.classList.remove('is-dragover'));
+	drop.addEventListener('drop', (e) => {
+		e.preventDefault(); drop.classList.remove('is-dragover');
+		const f = e.dataTransfer?.files?.[0];
+		if (f) setFile(f);
+	});
+
+	cancel.addEventListener('click', () => controller?.abort());
+
+	go.addEventListener('click', async () => {
+		if (controller) return;
+		const imageUrl = urlInput.value.trim();
+		if (!file && !imageUrl) { setStatus('Choose a photo, or paste a public https image URL.', 'error'); return; }
+		controller = new AbortController();
+		setBusy(true);
+		const sourceName = file ? file.name : (imageUrl.split('/').pop() || 'photo');
+		try {
+			const result = await generateSplat({
+				file: file || undefined,
+				imageUrl: file ? undefined : imageUrl,
+				numGaussians: Number(detail.value),
+				signal: controller.signal,
+				onStatus: ({ phase, elapsedMs }) => setStatus(GEN_PHASE_TEXT[phase]?.(elapsedMs) || ''),
+			});
+			setStatus(`Done: ${(result.num_gaussians || Number(detail.value)).toLocaleString()} splats. Save camera views below to build a path.`, 'done');
+			// Make the result shareable and reloadable: the page already deep-links ?src=.
+			const next = new URL(location.href);
+			next.searchParams.set('src', result.splat_url);
+			next.searchParams.set('name', `From photo \u00b7 ${sourceName}`);
+			history.replaceState(null, '', next);
+			$('#sp-url').value = result.splat_url;
+			await loadFromUrl(result.splat_url, `From photo \u00b7 ${sourceName}`);
+		} catch (err) {
+			if (err?.name === 'AbortError') setStatus('Cancelled. The photo is still selected; generate again when ready.');
+			else if (err instanceof SplatGenerateError) setStatus(err.message, 'error');
+			else { setStatus('Something went wrong while generating. Try again.', 'error'); console.error('[splat] generate failed', err); }
+		} finally {
+			controller = null;
+			setBusy(false);
+		}
+	});
+}
+
 // ── Wiring ───────────────────────────────────────────────────────────────────
 function init() {
 	if (!STAGE()) return;
 
 	_hotspots = initHotspotTimeline();
+	initGenerate();
 
 	$('#sp-load-url').addEventListener('click', () => {
 		const url = $('#sp-url').value.trim();
