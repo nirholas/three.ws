@@ -6,12 +6,12 @@ One image in, one 3D Gaussian splat out. Wraps [VAST-AI-Research/TripoSplat](htt
 
 | Call | Body / response |
 |---|---|
-| `POST /infer` | `{ images: [data-uri \| https url], num_gaussians?: 8192..262144 }` -> `202 { task_id, status }`. Only the first image is used. |
+| `POST /infer` | `{ images: [data-uri \| https url], num_gaussians?: 32768..262144 }` -> `202 { task_id, status }`. Only the first image is used. |
 | `GET /tasks/:id` | `{ task_id, status, splat_url?, ply_url?, result_gcs_url?, num_gaussians?, elapsed_ms?, error?, error_kind? }` |
 | `GET /health` | `503` with `ok:false` once model load has spent its retry budget. |
 | `GET /` | Unauthenticated descriptor for the warmth probe. |
 
-All calls except `/` and `/health` need `Authorization: Bearer $API_KEY`. Image URLs go through the SSRF-hardened fetcher in `worker_security.py` (https only, private ranges refused). Task state is persisted to GCS so a poll can land on any instance. `num_gaussians` defaults to 131072; upstream's ceiling is 262144.
+All calls except `/` and `/health` need `Authorization: Bearer $API_KEY`. Image URLs go through the SSRF-hardened fetcher in `worker_security.py` (https only, private ranges refused). Task state is persisted to GCS so a poll can land on any instance. `num_gaussians` defaults to 131072; upstream's pipeline asserts 32768 to 262144, so both this worker and the API refuse counts outside that range as input errors.
 
 ## Environment
 

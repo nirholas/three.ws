@@ -13,9 +13,10 @@ from typing import Callable
 
 from PIL import Image, UnidentifiedImageError
 
-# Upstream caps a scene at 262,144 Gaussians (README); 8,192 is the floor below
-# which the decoder output stops resembling the subject.
-MIN_GAUSSIANS = 8192
+# Upstream's TripoSplatPipeline asserts 32,768 <= num_gaussians <= 262,144
+# (`_validate_num_gaussians` in triposplat.py). Refusing out-of-range counts here
+# turns that assertion into an input error instead of a failed GPU job.
+MIN_GAUSSIANS = 32768
 MAX_GAUSSIANS = 262144
 DEFAULT_GAUSSIANS = 131072
 BLOB_PREFIX = "raw-splats/triposplat"

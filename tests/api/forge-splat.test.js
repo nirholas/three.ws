@@ -86,8 +86,11 @@ describe('parseNumGaussians', () => {
 	it('accepts absent and in-range integers, rejects the rest', () => {
 		expect(parseNumGaussians(undefined)).toEqual({ value: undefined });
 		expect(parseNumGaussians(262144)).toEqual({ value: 262144 });
-		for (const bad of [0, 8191, 262145, 9000.5, '9000', true]) {
-			expect(parseNumGaussians(bad).error).toMatch(/between 8192 and 262144/);
+		expect(parseNumGaussians(32768)).toEqual({ value: 32768 });
+		// TripoSplat asserts num_gaussians >= 32768 inside the pipeline, so anything
+		// lower must be refused here as a 400 instead of failing on the GPU.
+		for (const bad of [0, 8192, 32767, 262145, 40000.5, '40000', true]) {
+			expect(parseNumGaussians(bad).error).toMatch(/between 32768 and 262144/);
 		}
 	});
 });

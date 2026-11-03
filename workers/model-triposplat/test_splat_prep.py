@@ -41,7 +41,10 @@ class SplatPrepTests(unittest.TestCase):
     def test_gaussian_bounds(self):
         self.assertEqual(sp.clamp_gaussians(None), sp.DEFAULT_GAUSSIANS)
         self.assertEqual(sp.clamp_gaussians(262144), 262144)
-        for bad in (0, 8191, 262145, True, "9000", 9000.5):
+        self.assertEqual(sp.clamp_gaussians(32768), 32768)
+        # Upstream TripoSplatPipeline asserts num_gaussians >= 32768; a lower
+        # count must be refused as input, not crash the job on the GPU.
+        for bad in (0, 8192, 32767, 262145, True, "40000", 40000.5):
             with self.assertRaises(ValueError):
                 sp.clamp_gaussians(bad)
 

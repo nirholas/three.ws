@@ -17,7 +17,8 @@ import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
 
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
-export const MIN_GAUSSIANS = 8192;
+// TripoSplat's pipeline asserts this floor; lower counts would fail on the GPU.
+export const MIN_GAUSSIANS = 32768;
 export const MAX_GAUSSIANS = 262144;
 
 function unconfigured(res) {
