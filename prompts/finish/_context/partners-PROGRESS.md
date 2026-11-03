@@ -754,3 +754,26 @@ env vars and the live verification; the order file stays in place.
 - Production migration dry run (`node scripts/apply-migrations.mjs`, no `--apply`): `20261015050000_discord_activity_rooms.sql` is `[applied]`, so step (d) of owner-actions row 52 is done and has been struck from that row.
 
 Remaining, owner-owned: register the Discord application, set `DISCORD_CLIENT_ID`/`DISCORD_CLIENT_SECRET`/`DISCORD_PUBLIC_KEY` with `--update-env-vars`, verify with two accounts in a test server, and submit the Discovery listing (row 52). The order file stays in place.
+
+## 2026-11-03: order 085-partners-02 re-check (upstream drift fixed, upload still owed)
+
+- **Step 0**: `GET https://three.ws/api/animations/library?facets=1` still answers `total: 0`, so
+  owner-action row 50 has not been run. Licenses re-read today: Mesh2Motion `LICENSE-CC0.MD` ("All
+  3d models, blend files, rigs, animations ... CC0 1.0 Universal") and the UAL2 [Standard] zip's
+  `License.txt` ("CC0 1.0 Universal (CC0 1.0) Public Domain Dedication"), both unchanged.
+- **Drift found**: the gitignored staging dir had been cleared, and rebuilding it failed twice.
+  (1) Mesh2Motion merged a data restructure on 2026-10-31 (`ec0669b9a`) that split the three
+  bundled human GLBs into per-clip files, so the branch URLs returned 404. (2) The zip extractor
+  substring-matched `UAL2_Standard.glb` against absolute paths whose extract dir carries that same
+  name, so it copied the animation-less `Female Mannequin/Mannequin_F.glb` and 42 Quaternius clips
+  failed with "no clip in source".
+- **Fixed in `1af29c7c4`** (test-first, `tests/cc0-animation-library-sources.test.js`, 4/4): pack and
+  license URLs pinned to `faed1501297a341bc1461487be612ad27ebc1775` (the restructure's first
+  parent, so the clip names in `scripts/cc0-library.config.json` stay valid; only `license_url`
+  changed in the config), and `scripts/lib/zip-member.mjs` matches on the archive-relative path.
+- **Re-verified**: full rebuild 219/219 clips, 0 failures; staged manifest 87 + 74 + 16 Mesh2Motion
+  and 42 Quaternius, all `CC0 1.0 Universal`, 0 entries missing `source`/`license`, 0 mentioning
+  Mixamo. Endpoint, animation and retarget suites 134/134.
+- **Remaining (owner, row 50)**: `node scripts/cc0-animation-library.mjs` with production R2
+  credentials (the full pipeline, since `--upload` alone needs the staging dir). The Adobe letter
+  stays owner order 938. The order file stays open.

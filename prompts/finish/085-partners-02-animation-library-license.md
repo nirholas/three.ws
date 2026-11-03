@@ -1,5 +1,7 @@
 # partners 02: Move the public animation library off Mixamo clips
 
+**Re-verified 2026-11-03:** live endpoint still `total: 0`; upstream drift fixed in `1af29c7c4` (Mesh2Motion packs pinned to commit `faed15012`, UAL2 zip extractor no longer copies the wrong GLB); full rebuild 219/219, 0 failures, all CC0 1.0. Still waiting only on owner-action row 50.
+
 **Evolve status (2026-10-13):** everything in this order is built, tested, and committed
 except one owner-gated production action. The bulk library is rebuilt from two CC0 1.0
 Universal sources (Quaternius's Universal Animation Library 2, Mesh2Motion's human animation
@@ -9,7 +11,7 @@ missing a license or naming Mixamo; `scripts/mixamo-all.mjs`'s upload phase is p
 disabled; the gallery shows per-clip credit; docs, changelog, and the never-send Adobe
 permission draft are all landed (see `production-100-PROGRESS.md`'s equivalent campaign log,
 `partners-PROGRESS.md`, for the full breakdown and commit SHAs). What remains: running
-`node scripts/cc0-animation-library.mjs --upload` against production (owner-action row 50 in
+`node scripts/cc0-animation-library.mjs` (all phases; the staging dir is gitignored, so `--upload` alone needs a prior `--build`) against production (owner-action row 50 in
 `_context/production-100-OWNER-ACTIONS.md`) to actually populate the currently-empty
 (`total: 0`) live endpoint, since that is a production-publish action under CLAUDE.md's gate 2,
 not something this session may do unattended. Sending the Adobe letter is owner order 938,
