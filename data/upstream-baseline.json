@@ -1,20 +1,20 @@
 {
 	"generated": "scripts/audit-upstreams.mjs",
 	"summary": {
-		"total": 264,
+		"total": 259,
 		"grades": {
 			"A": 0,
-			"B": 57,
-			"C": 115,
-			"D": 92,
+			"B": 50,
+			"C": 116,
+			"D": 93,
 			"F": 0
 		},
 		"protections": {
-			"deadline": 264,
-			"retry": 121,
-			"failover": 51,
+			"deadline": 259,
+			"retry": 122,
+			"failover": 44,
 			"lastGood": 6,
-			"breaker": 112
+			"breaker": 113
 		}
 	},
 	"sites": {
@@ -50,12 +50,7 @@
 		"api/_lib/sketchfab.js::api.sketchfab.com::fetch": "D",
 		"api/_lib/sniper/notify.js::api.telegram.org::fetchUpstream": "C",
 		"api/_lib/sol-price.js::api.coingecko.com::fetchFirst": "B",
-		"api/_lib/sol-price.js::lite-api.jup.ag::fetchFirst": "B",
-		"api/_lib/sol-price.js::api.kraken.com::fetchFirst": "B",
-		"api/_lib/sol-price.js::api.coinbase.com::fetchFirst": "B",
 		"api/_lib/sol-price.js::coins.llama.fi::fetchFirst": "B",
-		"api/_lib/sol-price.js::api.diadata.org::fetchFirst": "B",
-		"api/_lib/sol-price.js::api-pub.bitfinex.com::fetchFirst": "B",
 		"api/_lib/token-market.js::api.dexscreener.com::fetchUpstreamJson": "B",
 		"api/_lib/tokens-xyz.js::api.tokens.xyz::fetch": "D",
 		"api/_lib/tts-edge.js::speech.platform.bing.com::fetch": "D",
@@ -227,6 +222,7 @@
 		"api/_providers/tripo.js::openapi.tripo3d.com::fetchUpstream": "C",
 		"api/shopify/callback.js::__expr__::fetch": "D",
 		"src/desktop/os/apps/weather-data.js::api.open-meteo.com::fetch": "D",
-		"src/runtime/whisper-stt.js::esm.sh::loadModule": "B"
+		"src/runtime/whisper-stt.js::esm.sh::loadModule": "B",
+		"api/_lib/news-failover.js::cryptocurrency.cv::fetchUpstreamJson": "C"
 	}
 }
