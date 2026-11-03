@@ -253,6 +253,15 @@ export function onReducedMotionChange(fn) {
  * @param {{ assertive?: boolean }} [opts] assertive interrupts; reserve it for
  *   things the player must act on (kicked from the room, gate refusal).
  */
+// True when a key event is aimed at a field the player is typing into, so a
+// bare-letter shortcut must leave the keystroke alone.
+export function isTypingTarget(t) {
+	if (!t || t.nodeType !== 1) return false;
+	if (t.isContentEditable) return true;
+	const tag = t.tagName;
+	return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+
 export function announce(text, { assertive = false } = {}) {
 	const msg = String(text || '').trim();
 	if (!msg) return;

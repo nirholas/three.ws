@@ -22,7 +22,7 @@
 
 import './director-mode.css';
 import { fetchEventDocument } from '../shared/event-config.js';
-import { prefersReducedMotion, onReducedMotionChange } from './a11y.js';
+import { prefersReducedMotion, onReducedMotionChange, isTypingTarget } from './a11y.js';
 import { PHOTO_STAGE, groupPhotoState } from './meetup-schedule.js';
 import { MODE, parseDirectorEvent, overlayModel } from './director-overlay-state.js';
 import {
@@ -494,6 +494,7 @@ export class DirectorMode {
 		wake();
 
 		addEventListener('keydown', (e) => {
+			if (isTypingTarget(e.target)) return;
 			if ((e.key === 'f' || e.key === 'F') && !e.metaKey && !e.ctrlKey && !e.altKey) {
 				if (document.fullscreenElement) document.exitFullscreen?.();
 				else document.documentElement.requestFullscreen?.().catch(() => {});
