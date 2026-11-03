@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>agent-3d renderer harness</title>
+<!--
+	Fixture for scripts/viewer-renderer-bench.mjs. Imports /src/element.js
+	directly so the bench exercises today's source, not the published bundle.
+	`?attr=webgpu` or `?attr=webgl` sets the element's `renderer` attribute
+	before the element upgrades, so the bench covers the attribute itself and
+	the rule that it wins over the page's ?renderer= query. Not linked from any
+	nav; same convention as public/agent-3d-ar-harness.html.
+-->
+<style>html,body{margin:0;height:100%;background:#fff}agent-3d{display:block;width:480px;height:640px}</style>
+</head>
+<body>
+<agent-3d id="a3d" eager src="/avatars/cz.glb" background="#ffffff"></agent-3d>
+<script type="module">
+	const attr = new URLSearchParams(location.search).get('attr');
+	if (attr) document.getElementById('a3d').setAttribute('renderer', attr);
+	await import('/src/element.js');
+</script>
+</body>
+</html>

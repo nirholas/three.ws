@@ -2,6 +2,7 @@
 // `?bench`. It reads the live Viewer on whichever backend it got (WebGL2 or
 // WebGPU) and measures it the same way on both:
 //
+//   freeze()               stop clips and per-frame hooks, rest pose
 //   capture(w, h)          scene pass rendered into a render target, read back
 //                          as top-down RGBA (materials, lights, environment)
 //   renderMs(w, h, n)      mean ms per scene pass into that target
@@ -35,27 +36,43 @@ export function exposeViewerBench(viewer) {
 		for (let y = 0; y < h; y++) out.set(raw.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
 		return out;
 	};
-	const scenePass = async (rt, frames) => {
+	// A camera of the target's own aspect, so the live camera is never touched.
+	// The node renderer refreshes per-frame state (skinning, camera uniforms) on
+	// a frame boundary, so the first pass after a change waits one frame.
+	const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+	const scenePass = async (rt, frames, settle = true) => {
 		const renderer = viewer.renderer;
-		const camera = viewer.activeCamera;
-		const prev = renderer.getRenderTarget();
-		const aspect = camera.aspect;
+		const camera = viewer.activeCamera.clone();
 		camera.aspect = rt.width / rt.height;
 		camera.updateProjectionMatrix();
+		viewer.scene.updateMatrixWorld(true);
+		if (settle && gpu()) await nextFrame();
+		const prev = renderer.getRenderTarget();
 		renderer.setRenderTarget(rt);
 		for (let i = 0; i < frames; i++) renderer.render(viewer.scene, camera);
 		renderer.setRenderTarget(prev);
-		camera.aspect = aspect;
-		camera.updateProjectionMatrix();
 	};
 	const drain = async () => {
 		const rt = await makeTarget(1, 1);
-		await scenePass(rt, 1);
+		await scenePass(rt, 1, false);
 		await readback(rt, 1, 1);
 		rt.dispose();
 	};
 
+	// Clips and procedural motion (idle, blink, look-at) would make every
+	// capture a different pose; parity needs the same frame on both backends.
+	const freeze = () => {
+		for (const mixer of [viewer.mixer, viewer.animationManager?.mixer]) mixer?.stopAllAction();
+		viewer._afterAnimateHooks = [];
+		if (viewer.controls) viewer.controls.autoRotate = false;
+		viewer.content?.traverse((o) => {
+			if (o.isSkinnedMesh) o.skeleton.pose();
+		});
+		viewer.content?.updateMatrixWorld(true);
+	};
+
 	window.__viewerBench = {
+		freeze,
 		get backend() {
 			return viewer.backend;
 		},
@@ -74,7 +91,7 @@ export function exposeViewerBench(viewer) {
 			await scenePass(rt, 1); // warm-up: pipelines and shader compile
 			await readback(rt, w, h);
 			const t0 = performance.now();
-			await scenePass(rt, frames);
+			await scenePass(rt, frames, false);
 			await readback(rt, w, h);
 			const ms = (performance.now() - t0) / frames;
 			rt.dispose();

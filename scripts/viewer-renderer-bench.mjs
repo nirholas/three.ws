@@ -4,12 +4,14 @@
 // covers the Restyle Studio.
 //
 // Loads the main viewer (/app) with the same model under three conditions and
-// the <agent-3d> element once with WebGPU requested:
+// the <agent-3d> element with its renderer attribute set both ways:
 //
 //   default         no opt-in                               -> classic WebGL2
 //   webgpu          ?renderer=webgpu, GPU present           -> WebGPURenderer + TSL chain
 //   webgpu-denied   ?renderer=webgpu, navigator.gpu removed -> must fall back to WebGL2
-//   agent-3d        <agent-3d> harness, ?renderer=webgpu     -> element on WebGPU
+//   agent-3d        <agent-3d renderer="webgpu">             -> element on WebGPU
+//   agent-3d-pinned <agent-3d renderer="webgl">, ?renderer=webgpu on the page
+//                                                            -> attribute wins, WebGL2
 //
 // For each: the backend that rendered, console errors, an offscreen frame of
 // the scene pass (parity vs default), ms per scene pass and ms per full
@@ -50,7 +52,8 @@ const CASES = [
 	{ name: 'default', path: `/app?bench#model=${model}`, denyGpu: false, expect: 'webgl' },
 	{ name: 'webgpu', path: `/app?bench&renderer=webgpu#model=${model}`, denyGpu: false, expect: 'webgpu' },
 	{ name: 'webgpu-denied', path: `/app?bench&renderer=webgpu#model=${model}`, denyGpu: true, expect: 'webgl' },
-	{ name: 'agent-3d', path: '/agent-3d-ar-harness.html?bench&renderer=webgpu', denyGpu: false, expect: 'webgpu', element: true },
+	{ name: 'agent-3d', path: '/agent-3d-renderer-harness.html?bench&attr=webgpu', denyGpu: false, expect: 'webgpu', element: true },
+	{ name: 'agent-3d-pinned', path: '/agent-3d-renderer-harness.html?bench&attr=webgl&renderer=webgpu', denyGpu: false, expect: 'webgl', element: true },
 ];
 
 // Noise the page emits on every load regardless of renderer (dev-server dep
@@ -69,11 +72,14 @@ async function run(browser, c) {
 	const errors = [];
 	page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 	page.on('console', (m) => {
-		if (m.type() === 'error' && !IGNORED.some((re) => re.test(m.text()))) errors.push(`console.error: ${m.text()}`);
+		if (m.type() !== 'error' || IGNORED.some((re) => re.test(m.text()))) return;
+		const where = m.location()?.url;
+		errors.push(`console.error: ${m.text()}${where ? ` (${where})` : ''}`);
 	});
 	await page.goto(`${base}${c.path}`, { waitUntil: 'domcontentloaded', timeout: LOAD_TIMEOUT });
 	await page.waitForFunction(() => window.__viewerBench?.loaded, null, { timeout: LOAD_TIMEOUT });
-	await page.waitForTimeout(1500);
+	await page.waitForTimeout(3000); // camera fly-in and first-pose settle
+	await page.evaluate(() => window.__viewerBench.freeze());
 	const backend = await page.evaluate(() => window.__viewerBench.backend);
 	const canvasBackend = await page.evaluate(() => {
 		const cv = [...document.querySelectorAll('canvas[data-renderer]')];
@@ -112,7 +118,12 @@ const browser = await chromium.launch({ args: GPU_ARGS, headless: !args.includes
 const results = [];
 for (const c of CASES) {
 	try {
-		results.push(await run(browser, c));
+		results.push(await run(browser, c).catch((err) => {
+			// A dev server that discovers a new dependency mid-load (three/webgpu
+			// the first time a page opts in) reloads the page once; rerun.
+			if (!/Execution context was destroyed|Outdated Optimize Dep/.test(err.message)) throw err;
+			return run(browser, c);
+		}));
 	} catch (err) {
 		results.push({ ...c, backend: null, errors: [`harness: ${err.message.split('\n')[0]}`], sceneMs: NaN, postMs: NaN, pixels: null });
 	}

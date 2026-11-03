@@ -70,3 +70,25 @@ Headless Chromium with SwiftShader, 384x512 target, 200 frames, same model. This
 | `?renderer=webgpu`, GPU denied | WebGL2 (fallback) | 9.4, 10.1 | 0 / 255 | 1.0 | 0 |
 
 The rim effect shifts the frame by 1.18 / 255 on both paths and the two paths agree on it to 0.02 / 255.
+
+### Main viewer and `<agent-3d>`
+
+```
+node scripts/viewer-renderer-bench.mjs --base http://localhost:3000 --frames 60
+```
+
+The viewer harness loads `/app?bench` (default, `?renderer=webgpu`, `?renderer=webgpu` with `navigator.gpu` removed) and `public/agent-3d-renderer-harness.html` (`renderer="webgpu"`, and `renderer="webgl"` with `?renderer=webgpu` on the page to prove the attribute wins). Each case freezes clips to the rest pose, then reports backend, console errors, scene pass ms/frame, full cinematic frame ms/frame (EffectComposer on WebGL2, TSL RenderPipeline on WebGPU), and pixel parity against the default. Add `--shots` to save the captured frames and `--json` for machine output. It exits non-zero on any console error or wrong backend.
+
+#### Results (2026-11-03, software adapter)
+
+Headless Chromium with SwiftShader, 384x512 target, 60 frames, `/avatars/cz.glb`, on a heavily shared machine, so absolute times swing between runs (the scene pass ran 44 to 157 ms on WebGL2 across runs). Compare paths within one run and treat these as code path data, not GPU hardware data.
+
+| Case | Backend | Scene ms/frame | Cinematic ms/frame | Mean diff vs default | Silhouette overlap | Console errors |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/app` default | WebGL2 | 156.9 | 1277.5 | n/a | n/a | 0 |
+| `/app?renderer=webgpu` | WebGPU | 163.2 | 219.3 | 2.28 / 255 | 0.956 | 0 |
+| `/app?renderer=webgpu`, GPU denied | WebGL2 (fallback) | 284.5 | 1664.8 | 0.02 / 255 | 0.9995 | 0 |
+| `<agent-3d renderer="webgpu">` | WebGPU | 270.8 | 115.2 | n/a | n/a | 0 |
+| `<agent-3d renderer="webgl">` + `?renderer=webgpu` | WebGL2 | 174.2 | 802.8 | n/a | n/a | 0 |
+
+An earlier 30-frame run of the same build measured the WebGPU case at 0.05 / 255 mean diff and 0.9986 silhouette overlap; the residual difference is a sub-pixel camera offset between page loads, not shading. The TSL cinematic chain is consistently several times cheaper than the WebGL2 EffectComposer chain on the software adapter. Hardware GPU numbers need a run of the command above on a machine with a GPU.
