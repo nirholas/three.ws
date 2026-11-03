@@ -56,9 +56,9 @@ steps:
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=900
       - --allow-unauthenticated
-      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
-      - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/triposplat,MAX_CONCURRENT=1
+      - --clear-volumes
+      - --clear-volume-mounts
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_BUCKET=${_WEIGHTS_BUCKET},WEIGHTS_PREFIX=triposplat,MAX_CONCURRENT=1
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

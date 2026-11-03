@@ -14,8 +14,12 @@ API contract (same task shape as the other GPU workers):
   GET  /health    -> { ok, model, gpu_available, load_error, load_attempts }
   GET  /          -> unauthenticated descriptor for the platform warmth probe.
 
-Weights: gs://three-ws-model-weights/triposplat (stage-assets.sh), mounted at
-/weights. Environment: API_KEY, GCS_BUCKET, WEIGHTS_DIR, MAX_CONCURRENT.
+Weights: gs://three-ws-model-weights/triposplat (stage-assets.sh). At boot the
+five checkpoints are downloaded in parallel to local disk, loaded onto the GPU,
+then deleted. They are NOT read through a gcsfuse mount: safetensors mmaps and
+reads each file out of order, and on the first deploy (2026-11-03) that kept a
+cold instance loading for 17 minutes without finishing.
+Environment: API_KEY, GCS_BUCKET, WEIGHTS_BUCKET, WEIGHTS_PREFIX, MAX_CONCURRENT.
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ import asyncio
 import json
 import logging
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -37,7 +42,14 @@ from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
-from splat_prep import clamp_gaussians, decode_image, splat_blob_name, splat_public_url
+from splat_prep import (
+    clamp_gaussians,
+    decode_image,
+    pipeline_weight_paths,
+    splat_blob_name,
+    splat_public_url,
+    weight_blob_names,
+)
 from worker_security import UnsafeUrlError, fetch_remote_bytes, require_api_key, safe_error
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -45,7 +57,9 @@ log = logging.getLogger("model-triposplat")
 
 API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
-WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/triposplat")
+WEIGHTS_BUCKET = os.environ.get("WEIGHTS_BUCKET", "three-ws-model-weights")
+WEIGHTS_PREFIX = os.environ.get("WEIGHTS_PREFIX", "triposplat")
+LOCAL_WEIGHTS_DIR = os.environ.get("LOCAL_WEIGHTS_DIR", "/tmp/triposplat-weights")
 REPO_DIR = os.environ.get("TRIPOSPLAT_REPO", "/opt/triposplat")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 MODEL_LOAD_ATTEMPTS = int(os.environ.get("MODEL_LOAD_ATTEMPTS", "4"))
@@ -62,22 +76,43 @@ _task_locks: dict[str, asyncio.Lock] = {}
 _TERMINAL = frozenset({"done", "failed"})
 
 
+def _stage_weights() -> None:
+    """Download the five checkpoints to local disk in parallel (about 4.2 GB)."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    bucket = storage.Client().bucket(WEIGHTS_BUCKET)
+    prefix = WEIGHTS_PREFIX.strip("/")
+
+    def fetch(name: str) -> None:
+        dest = os.path.join(LOCAL_WEIGHTS_DIR, name[len(prefix) + 1:] if prefix else name)
+        if os.path.exists(dest):
+            return
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        part = dest + ".part"
+        blob = bucket.blob(name)
+        blob.chunk_size = 64 * 1024 * 1024
+        blob.download_to_filename(part)
+        os.replace(part, dest)
+
+    t0 = time.time()
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        list(pool.map(fetch, weight_blob_names(prefix)))
+    log.info("weights staged to %s in %.1fs", LOCAL_WEIGHTS_DIR, time.time() - t0)
+
+
 def _load_pipeline_sync() -> None:
     global _pipe
     if REPO_DIR not in sys.path:
         sys.path.insert(0, REPO_DIR)
     from triposplat import TripoSplatPipeline
 
-    w = WEIGHTS_DIR
-    log.info("Loading TripoSplat from %s", w)
-    _pipe = TripoSplatPipeline(
-        ckpt_path=f"{w}/diffusion_models/triposplat_fp16.safetensors",
-        decoder_path=f"{w}/vae/triposplat_vae_decoder_fp16.safetensors",
-        dinov3_path=f"{w}/clip_vision/dino_v3_vit_h.safetensors",
-        flux2_vae_encoder_path=f"{w}/vae/flux2-vae.safetensors",
-        rmbg_path=f"{w}/background_removal/birefnet.safetensors",
-        device="cuda",
-    )
+    _stage_weights()
+    t0 = time.time()
+    _pipe = TripoSplatPipeline(**pipeline_weight_paths(LOCAL_WEIGHTS_DIR), device="cuda")
+    log.info("TripoSplat loaded onto the GPU in %.1fs", time.time() - t0)
+    # Cloud Run's disk is RAM-backed and every tensor now lives on the GPU, so
+    # the staged files would only hold about 4 GB of instance memory hostage.
+    shutil.rmtree(LOCAL_WEIGHTS_DIR, ignore_errors=True)
 
 
 async def _load_pipeline_bg() -> None:

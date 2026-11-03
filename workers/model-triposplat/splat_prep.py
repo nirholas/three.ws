@@ -20,6 +20,17 @@ MIN_GAUSSIANS = 32768
 MAX_GAUSSIANS = 262144
 DEFAULT_GAUSSIANS = 131072
 BLOB_PREFIX = "raw-splats/triposplat"
+
+# The five checkpoints TripoSplatPipeline needs, keyed by its constructor
+# argument, as paths relative to the weights prefix (the Hugging Face layout of
+# VAST-AI/TripoSplat that stage-assets.sh mirrors into the bucket).
+WEIGHT_FILES = {
+    "ckpt_path": "diffusion_models/triposplat_fp16.safetensors",
+    "decoder_path": "vae/triposplat_vae_decoder_fp16.safetensors",
+    "dinov3_path": "clip_vision/dino_v3_vit_h.safetensors",
+    "flux2_vae_encoder_path": "vae/flux2-vae.safetensors",
+    "rmbg_path": "background_removal/birefnet.safetensors",
+}
 MAX_IMAGE_BYTES = 25 * 1024 * 1024
 
 
@@ -67,6 +78,17 @@ def clamp_gaussians(value: int | None) -> int:
     if value < MIN_GAUSSIANS or value > MAX_GAUSSIANS:
         raise ValueError(f"num_gaussians must be between {MIN_GAUSSIANS} and {MAX_GAUSSIANS}")
     return value
+
+
+def pipeline_weight_paths(local_dir: str) -> dict[str, str]:
+    """TripoSplatPipeline constructor kwargs pointing at a staged weights dir."""
+    return {arg: f"{local_dir.rstrip('/')}/{rel}" for arg, rel in WEIGHT_FILES.items()}
+
+
+def weight_blob_names(prefix: str) -> list[str]:
+    """GCS object names to stage, under the bucket's weights prefix."""
+    base = prefix.strip("/")
+    return [f"{base}/{rel}" if base else rel for rel in WEIGHT_FILES.values()]
 
 
 def splat_blob_name(task_id: str, ext: str) -> str:

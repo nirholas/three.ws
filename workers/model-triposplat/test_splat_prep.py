@@ -48,6 +48,18 @@ class SplatPrepTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 sp.clamp_gaussians(bad)
 
+    def test_weight_staging_manifest(self):
+        paths = sp.pipeline_weight_paths("/tmp/w/")
+        self.assertEqual(
+            set(paths),
+            {"ckpt_path", "decoder_path", "dinov3_path", "flux2_vae_encoder_path", "rmbg_path"},
+        )
+        self.assertEqual(paths["dinov3_path"], "/tmp/w/clip_vision/dino_v3_vit_h.safetensors")
+        names = sp.weight_blob_names("/triposplat/")
+        self.assertEqual(len(names), 5)
+        self.assertIn("triposplat/vae/flux2-vae.safetensors", names)
+        self.assertTrue(all(n.endswith(".safetensors") for n in names))
+
     def test_blob_names(self):
         self.assertEqual(sp.splat_blob_name("t1", "ply"), "raw-splats/triposplat/t1.ply")
         with self.assertRaises(ValueError):
