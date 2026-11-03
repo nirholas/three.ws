@@ -67,7 +67,7 @@ const DEFAULT_MAX_CONNECTIONS = 200;
 /**
  * Measured RSS per pooled connection at a 90/10 small/large house mix: 666 KB for
  * a 123 entity house, 1.12 MB for a 624 entity one, both amortized at 400 open
- * connections (docs/ops/home-operations.md, tasks/home/envelope-2026-09-09.json).
+ * connections (docs/ops/home-operations.md, data/reports/home/envelope-2026-09-09.json).
  */
 const RSS_PER_CONNECTION_BYTES = Math.round(0.9 * 666 * 1024 + 0.1 * 1.12 * 1024 ** 2);
 /**

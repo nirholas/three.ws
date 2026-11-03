@@ -3,7 +3,7 @@
 //
 // The controller is a pure counter with no timers and no I/O, which is exactly
 // why the safety property is testable exhaustively here rather than argued about
-// in a design document. The load-and-chaos runs in tasks/home/ prove it again
+// in a design document. The load-and-chaos runs in data/reports/home/ prove it again
 // against real Home Assistant containers; this file proves it at every state the
 // controller can reach.
 

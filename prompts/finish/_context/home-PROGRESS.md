@@ -2191,7 +2191,7 @@ working when the browser closes.
 
 **Measured** (all of it against a seeded Home Assistant 2026.9.0 plus rhasspy whisper `tiny-int8`,
 piper `en_US-lessac-low` and openWakeWord `ok_nabu`; evidence in
-[tasks/home/satellite-2026-09-09.json](../../../tasks/home/satellite-2026-09-09.json)):
+[data/reports/home/satellite-2026-09-09.json](../../../data/reports/home/satellite-2026-09-09.json)):
 
 - **Home Assistant's own screens.** Wyoming Protocol lists a service `Kitchen display`, area
   Kitchen, 8 entities, as `assist_satellite.kitchen_kitchen_display`. The Voice assistants page
@@ -2608,13 +2608,13 @@ asked for, sizes the admission ladder from the result, warns once, and reports i
   days apart at load 206 to 233 and again at 54 to 72. Every load-insensitive number reproduced
   to the kilobyte: heap per connection 245 KB both times, large house 856 then 847 KB, SSE frame
   25,168 then 25,172 bytes, descriptors per connection exactly 1, coalescing exactly 100:1. Raw
-  evidence: `tasks/home/envelope-2026-09-03.json` and `tasks/home/envelope-2026-09-09.json`, both
+  evidence: `data/reports/home/envelope-2026-09-03.json` and `data/reports/home/envelope-2026-09-09.json`, both
   committed and both read this session rather than quoted from the prose.
 - **10 homes: 4.0 MB, p95 6.5 ms. 1,000 homes: 49.7 MB at 200 measured connections, p95 31.0 ms.
   100,000: extrapolated and refused as simultaneously live**, with the model stated
   (`P x I / D`) and the honest admission that `D`, the duplicate-socket factor under
   `sessionAffinity=false`, is the one term not measured. No cell in the table says "assumed".
-- **Chaos: 7 of 7 pass, twice.** `tasks/home/chaos-2026-09-09.json` read directly:
+- **Chaos: 7 of 7 pass, twice.** `data/reports/home/chaos-2026-09-09.json` read directly:
   `results.length === 7`, `passed === true` on all seven.
 - **Scenario 6 isolation, the two numbers:** the fast house's p95 was **6.80 ms alone and 6.99 ms**
   with a house answering 2,000 times slower connected beside it. A drift of 0.19 ms, taken at

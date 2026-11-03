@@ -33,7 +33,7 @@
  * the reader templates and examples, not links that must resolve), external
  * URLs (network-dependent), generated aggregates (docs/ALL.md, EVERYTHING.md)
  * whose links are rewritten by their generator, and the internal work-order
- * packs under prompts/ and tasks/. Those packs delete work orders as they are
+ * packs under prompts/ and data/reports/. Those packs delete work orders as they are
  * completed (an owner directive, recorded by the retirement notes in each
  * pack's index), so dangling index links there are the documented convention
  * rather than rot. Pass an explicit path to audit them anyway:
@@ -79,7 +79,7 @@ const SKIP_FILES = new Set(['docs/ALL.md', 'docs/EVERYTHING.md', 'EVERYTHING.md'
 // Internal work-order packs: completed orders are deleted by design (see the
 // retirement notes in each pack index), so their indexes intentionally list
 // files that no longer exist. Audited only when named explicitly.
-const SKIP_TREES = ['prompts', 'tasks'];
+const SKIP_TREES = ['prompts', 'data/reports'];
 
 // Link targets a build step writes rather than git tracking. .gitignore excludes
 // them on purpose (marketing/*/kit/*.png and its images/ are rebuilt by

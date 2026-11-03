@@ -13,7 +13,7 @@
  *   node scripts/home-fleet.mjs status
  *   node scripts/home-fleet.mjs down
  *
- * `up` writes a manifest to tasks/home/fleet.local.json (gitignored: it holds
+ * `up` writes a manifest to data/reports/home/fleet.local.json (gitignored: it holds
  * live tokens to running containers). scripts/home-load.mjs reads it.
  */
 
@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 import WebSocket from 'ws';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const MANIFEST = path.join(ROOT, 'tasks', 'home', 'fleet.local.json');
+const MANIFEST = path.join(ROOT, 'data', 'reports', 'home', 'fleet.local.json');
 const CONFIG_ROOT = path.join(ROOT, '.home-fleet');
 const IMAGE = 'ghcr.io/home-assistant/home-assistant:stable';
 const NAME_PREFIX = 'threews-ha-';

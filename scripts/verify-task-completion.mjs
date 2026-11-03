@@ -10,7 +10,7 @@ import { execSync } from 'node:child_process';
 import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
-const ROOTS = ['tasks', 'prompts'].filter(d => existsSync(join(ROOT, d)));
+const ROOTS = ['data/reports', 'prompts'].filter(d => existsSync(join(ROOT, d)));
 const META = /(README|PLAN|MANIFEST|REPORT|CHECKLIST|PERF_NOTES|START-HERE|_shared|ORPHAN|SIGNERS|overview)/i;
 
 // --- repo ground truth -----------------------------------------------------

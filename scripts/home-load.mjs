@@ -11,7 +11,7 @@
  * 127.0.0.1. Never point a load harness at somebody's house.
  *
  *   node scripts/home-fleet.mjs up --homes 12 --big 1
- *   node --expose-gc scripts/home-load.mjs all --out tasks/home/envelope-2026-09-03.json
+ *   node --expose-gc scripts/home-load.mjs all --out data/reports/home/envelope-2026-09-03.json
  *
  * Individual measurements, all of which `all` runs:
  *

@@ -12,7 +12,7 @@
 //   node scripts/sim-readiness-probe.mjs                       # 8 forged + 8 authored
 //   node scripts/sim-readiness-probe.mjs --limit 20            # per source
 //   node scripts/sim-readiness-probe.mjs --base http://localhost:3000
-//   node scripts/sim-readiness-probe.mjs --out tasks/sim-readiness/run.json
+//   node scripts/sim-readiness-probe.mjs --out data/reports/sim-readiness/run.json
 //   node scripts/sim-readiness-probe.mjs --url https://…/thing.glb   # one asset
 
 import { writeFile, mkdir } from 'node:fs/promises';

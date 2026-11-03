@@ -175,8 +175,8 @@ and both raw outputs are committed:
 
 | Run | Evidence | Machine load during the run |
 |---|---|---|
-| 2026-09-03 | [`tasks/home/envelope-2026-09-03.json`](../../tasks/home/envelope-2026-09-03.json) | load average 206 to 233 |
-| 2026-09-09 | [`tasks/home/envelope-2026-09-09.json`](../../tasks/home/envelope-2026-09-09.json) | load average 54 to 72 |
+| 2026-09-03 | [`data/reports/home/envelope-2026-09-03.json`](../../data/reports/home/envelope-2026-09-03.json) | load average 206 to 233 |
+| 2026-09-09 | [`data/reports/home/envelope-2026-09-09.json`](../../data/reports/home/envelope-2026-09-09.json) | load average 54 to 72 |
 
 That repetition is the point, and it is what makes the memory figures worth
 anything. **Every load-insensitive number reproduced**: heap per connection at
@@ -393,8 +393,8 @@ database is pointed at a host that cannot exist.
 
 The suite has been run twice against a freshly built fleet, on 2026-09-03 and
 2026-09-09, and both transcripts are committed:
-[`tasks/home/chaos-2026-09-03.json`](../../tasks/home/chaos-2026-09-03.json) and
-[`tasks/home/chaos-2026-09-09.json`](../../tasks/home/chaos-2026-09-09.json). The
+[`data/reports/home/chaos-2026-09-03.json`](../../data/reports/home/chaos-2026-09-03.json) and
+[`data/reports/home/chaos-2026-09-09.json`](../../data/reports/home/chaos-2026-09-09.json). The
 sections below quote the later run.
 
 | # | Failure | Injected how | 2026-09-03 | 2026-09-09 |

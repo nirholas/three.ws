@@ -360,7 +360,7 @@ async function main() {
 	};
 
 	const date = new Date().toISOString().slice(0, 10);
-	const outPath = join(root, 'tasks', `mirror-drift-${date}.json`);
+	const outPath = join(root, 'data', 'reports', `mirror-drift-${date}.json`);
 	writeFileSync(outPath, JSON.stringify(report, null, '\t') + '\n');
 
 	console.log(`three.ws mirror drift report (${report.generated})`);

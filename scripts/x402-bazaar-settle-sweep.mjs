@@ -223,7 +223,7 @@ for (const p of plan) {
 	}
 }
 
-const outDir = path.join(root, 'tasks', 'x402-bazaar');
+const outDir = path.join(root, 'data', 'reports', 'x402-bazaar');
 mkdirSync(outDir, { recursive: true });
 const report = {
 	ranAt: new Date().toISOString(),

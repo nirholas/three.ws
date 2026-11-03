@@ -188,6 +188,8 @@ prompts/roadmap/_generated/**/*.log
 
 # page-audit harness (scripts/page-audit.mjs)
 reports/
+# machine-written sweep reports are committed evidence (data/reports/README.md)
+!/data/reports/
 .auth/
 .env*
 docs/internal/COINMARKETCAP_ARTICLE.md
@@ -580,7 +582,7 @@ download.zip
 /.scratch/
 # The fleet registry that pairs those instances with their long-lived access
 # tokens. Local state about local containers; the tokens make it uncommittable.
-tasks/home/*.local.json
+data/reports/home/*.local.json
 
 # Browser voice-loop runtime staged from node_modules by scripts/copy-voice-models.mjs
 # (silero VAD + the onnxruntime-web wasm). Regenerated on every install and

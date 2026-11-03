@@ -61,7 +61,7 @@ Commits: `a9c8abfae` (manifest, script rewrite, docs, changelog), plus this clos
 order asked for: for each of the 105 mirrors in `data/standalone-mirrors.json` it finds the last
 `Sync from three.ws@<sha>` commit via the GitHub commits API, archives the monorepo directory at
 that sha into the scratchpad, and diffs it against the mirror's current HEAD tarball and the
-monorepo's current tree, writing `tasks/mirror-drift-<date>.json`. It fell back to the README
+monorepo's current tree, writing `data/reports/mirror-drift-<date>.json`. It fell back to the README
 timestamp heuristic and said so once the GitHub token's rate limit reset mid-run (61 calls, 98/105
 resolved this run; a repo with no sync-marker commit at all gets `status: "no-sync-base"` per the
 order's own never-blocked table). The first run (before anything below was ported) flagged exactly

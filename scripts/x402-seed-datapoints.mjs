@@ -47,7 +47,7 @@ import {
 } from '../api/_lib/x402/pay.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = join(HERE, '..', 'tasks', 'x402-ring');
+const OUT_DIR = join(HERE, '..', 'data', 'reports', 'x402-ring');
 
 // ── args ────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);
@@ -180,7 +180,7 @@ async function main() {
 	writeFileSync(join(OUT_DIR, 'datapoint-seed-report.json'), JSON.stringify(report, null, 2));
 
 	console.log(`\ndone: ${ok} settled, ${skipped} skipped, ${failed} failed, $${(spentAtomics / 1e6).toFixed(4)} USDC moved (payer→treasury).`);
-	console.log(`report: tasks/x402-ring/datapoint-seed-report.json`);
+	console.log(`report: data/reports/x402-ring/datapoint-seed-report.json`);
 }
 
 main().catch((err) => { console.error('seed failed:', err); process.exit(1); });

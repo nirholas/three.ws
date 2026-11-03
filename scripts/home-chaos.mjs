@@ -8,7 +8,7 @@
  * module pointed at a host that is genuinely not there.
  *
  *   node scripts/home-fleet.mjs up --homes 12 --big 1
- *   node scripts/home-chaos.mjs all --out tasks/home/chaos-2026-09-03.json
+ *   node scripts/home-chaos.mjs all --out data/reports/home/chaos-2026-09-03.json
  *   node scripts/home-chaos.mjs 6            # one scenario, printed
  *
  * The scenarios:

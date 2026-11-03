@@ -12,8 +12,8 @@
 //      effect landed (tip row written, cover charged, billboard placed, sale
 //      recorded) — not just the payment log.
 //
-// It then writes tasks/x402-ring/COVERAGE.md (the human table) and
-// tasks/x402-ring/coverage-report.json (the machine record).
+// It then writes data/reports/x402-ring/COVERAGE.md (the human table) and
+// data/reports/x402-ring/coverage-report.json (the machine record).
 //
 // Real payments only — no mocks. Requires an env-complete, funded context:
 //   X402_SEED_SOLANA_SECRET_BASE58 (or X402_AGENT_…) funded with USDC + SOL,
@@ -40,7 +40,7 @@ import { RING_CATALOG } from '../api/_lib/x402/ring-catalog.js';
 import { payX402, bootstrapSolanaContext, fetchWithTimeout, parseSolanaAccept } from '../api/_lib/x402/pay.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const OUT_DIR = join(HERE, '..', 'tasks', 'x402-ring');
+const OUT_DIR = join(HERE, '..', 'data', 'reports', 'x402-ring');
 
 // ── args ──────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);

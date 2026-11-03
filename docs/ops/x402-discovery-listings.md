@@ -241,7 +241,7 @@ circular: the payer wallet pays our own treasury, so the USDC round-trips and on
 Solana network fee (~$0.000005/tx) is actually burned. An `onAccept` gate refuses any
 payment whose `payTo` is not our configured treasury, so a compromised or mis-set
 challenge cannot redirect funds. Report lands in
-`tasks/x402-ring/datapoint-seed-report.json`.
+`data/reports/x402-ring/datapoint-seed-report.json`.
 
 **Seeding this surface is what exposed the per-IP throttle on paying clients** (fixed
 2026-07-13): the verify budget metered every payment *attempt* at 20/min, so a buyer

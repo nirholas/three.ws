@@ -491,7 +491,7 @@ then kept in a verified, watched, auto-fundable state:
 - **Coverage proof** —
   [scripts/x402-ring-coverage-sweep.js](../scripts/x402-ring-coverage-sweep.js)
   pays every catalog entry once and records the facilitator settle signature +
-  verified business effect (regenerates `tasks/x402-ring/COVERAGE.md` locally) —
+  verified business effect (regenerates `data/reports/x402-ring/COVERAGE.md` locally):
   the standing guarantee that each endpoint actually settles when paid, not just
   that it 402s.
 - **Setup script** — [scripts/x402-ring-setup.mjs](../scripts/x402-ring-setup.mjs).
