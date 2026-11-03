@@ -8,7 +8,9 @@ import { test, expect } from '@playwright/test';
 // client depends on. Adding a page here guards it against the drift that left
 // the homepage showing "Sign in" to signed-in users.
 
-const PAGES = ['/', '/fact-checker'];
+// The classic homepage moved from / to /classic when / became the web desktop
+// (src/desktop), which has no shared header; its header is the one to guard.
+const PAGES = ['/classic', '/fact-checker'];
 
 const SIGN_IN = '.nav-end a[data-auth="out"]';
 const MY_AGENTS = '.nav-end a[data-auth="in"]';
