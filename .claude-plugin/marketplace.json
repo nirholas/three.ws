@@ -7,6 +7,37 @@
   "version": "1.0.0",
   "plugins": [
     {
+      "name": "three-ws-3d",
+      "source": "./marketplace/plugins/three-ws-3d",
+      "displayName": "three.ws 3D Forge",
+      "description": "Give your coding agent free text-to-3D and rigged, animation-ready avatars. Works out of the box through the keyless three.ws Studio MCP server, with the paid mesh, avatar and auto-rig lanes, scene composition and live avatar embeds when you need them.",
+      "version": "1.0.0",
+      "author": {
+        "name": "nirholas"
+      },
+      "homepage": "https://three.ws/forge",
+      "repository": "https://github.com/nirholas/three.ws",
+      "license": "Apache-2.0",
+      "keywords": [
+        "3d",
+        "forge",
+        "avatar",
+        "glb",
+        "text-to-3d",
+        "image-to-3d",
+        "rigging",
+        "trellis",
+        "mcp"
+      ],
+      "category": "creative",
+      "tags": [
+        "3d",
+        "forge",
+        "avatar",
+        "mcp"
+      ]
+    },
+    {
       "name": "three-ws-core",
       "source": "./.agents",
       "displayName": "three.ws Core",
@@ -19,17 +50,23 @@
       "repository": "https://github.com/nirholas/three.ws",
       "license": "Apache-2.0",
       "keywords": [
+        "3d",
+        "avatar",
+        "glb",
+        "mcp",
+        "solana",
         "wallet",
         "x402",
         "usdc",
         "payments",
         "trade",
         "base",
-        "solana",
         "polygon"
       ],
       "category": "payments",
       "tags": [
+        "3d",
+        "avatar",
         "wallet",
         "x402",
         "defi",
@@ -40,7 +77,7 @@
       "name": "three-ws-developer",
       "source": "./marketplace/plugins/three-ws-developer",
       "displayName": "three.ws Developer Tools",
-      "description": "Developer tools for three.ws — scaffold agents, configure MCP servers, and get runnable code examples for paid MCP tools.",
+      "description": "Developer tools for three.ws: scaffold agents, configure MCP servers, and get runnable code examples for paid MCP tools.",
       "version": "1.0.0",
       "author": {
         "name": "nirholas"
@@ -89,37 +126,6 @@
         "solana",
         "defi",
         "trading"
-      ]
-    },
-    {
-      "name": "three-ws-3d",
-      "source": "./marketplace/plugins/three-ws-3d",
-      "displayName": "three.ws 3D Forge",
-      "description": "Generate textured 3D models and rigged, animation-ready avatars from text or images — free text→3D (NVIDIA NIM / TRELLIS) plus the paid mesh, avatar, and auto-rig lanes, scene composition, and live avatar embeds over the three.ws MCP servers.",
-      "version": "1.0.0",
-      "author": {
-        "name": "nirholas"
-      },
-      "homepage": "https://three.ws/forge",
-      "repository": "https://github.com/nirholas/three.ws",
-      "license": "Apache-2.0",
-      "keywords": [
-        "3d",
-        "forge",
-        "avatar",
-        "glb",
-        "text-to-3d",
-        "image-to-3d",
-        "rigging",
-        "trellis",
-        "mcp"
-      ],
-      "category": "creative",
-      "tags": [
-        "3d",
-        "forge",
-        "avatar",
-        "mcp"
       ]
     }
   ]

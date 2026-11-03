@@ -1,7 +1,7 @@
 {
   "name": "three-ws-3d",
   "displayName": "three.ws 3D Forge",
-  "description": "three.ws 3D Forge — generate textured 3D models and rigged, animation-ready avatars from text or images. Free text→3D (NVIDIA NIM / TRELLIS) plus the paid mesh, avatar, and auto-rig lanes, scene composition, and live avatar embeds, all wired over the three.ws MCP servers.",
+  "description": "three.ws 3D Forge: generate textured 3D models and rigged, animation-ready avatars from text or images. Free text-to-3D through the keyless three.ws Studio MCP server (NVIDIA NIM / TRELLIS), plus the paid mesh, avatar and auto-rig lanes, scene composition and live avatar embeds.",
   "version": "1.0.0",
   "author": {
     "name": "nirholas",
@@ -22,6 +22,10 @@
     "mcp"
   ],
   "mcpServers": {
+    "three-ws-studio": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-studio"
+    },
     "3d-agent": {
       "command": "npx",
       "args": [

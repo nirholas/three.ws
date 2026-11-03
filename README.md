@@ -4,13 +4,72 @@
   
 [**Website**](https://three.ws) · [**Docs**](https://three.ws/docs) · [**Changelog**](https://three.ws/changelog) · [**X / Twitter**](https://x.com/trythreews) · [**GitHub**](https://github.com/nirholas/three.ws) · [**$THREE on pump.fun**](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump)
 
-[![site](https://img.shields.io/website?url=https%3A%2F%2Fthree.ws&label=three.ws)](https://three.ws) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fsdk?label=%40three-ws%2Fsdk)](https://www.npmjs.com/package/@three-ws/sdk) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fmcp-server?label=%40three-ws%2Fmcp-server)](https://www.npmjs.com/package/@three-ws/mcp-server) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.nirholas-blue)](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) [![x402scan](https://img.shields.io/badge/x402scan-listed-green)](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![good first issues](https://img.shields.io/github/issues/nirholas/three.ws/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/nirholas/three.ws/labels/good%20first%20issue)
+[![3D models forged](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fthree.ws%2Fapi%2Fhome-stats&query=%24.forge_models&label=3D%20models%20forged&color=7057ff)](https://three.ws/forge) [![agents](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fthree.ws%2Fapi%2Fhome-stats&query=%24.agents&label=agents%20created&color=7057ff)](https://three.ws/discover) [![site](https://img.shields.io/website?url=https%3A%2F%2Fthree.ws&label=three.ws)](https://three.ws) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fsdk?label=%40three-ws%2Fsdk)](https://www.npmjs.com/package/@three-ws/sdk) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fmcp-server?label=%40three-ws%2Fmcp-server)](https://www.npmjs.com/package/@three-ws/mcp-server) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.nirholas-blue)](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) [![x402scan](https://img.shields.io/badge/x402scan-listed-green)](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![good first issues](https://img.shields.io/github/issues/nirholas/three.ws/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/nirholas/three.ws/labels/good%20first%20issue)
 
 https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
 **Give your AI a body.** three.ws is an open source (Apache-2.0), browser-native 3D AI agent platform. Type a prompt and [**Forge**](https://three.ws/forge) generates a textured 3D model, or drop a GLB you already have. Add an LLM brain, register on-chain, and embed anywhere: no plugins, no server uploads, no installs required.
 
 > **Try it in 60 seconds:** open [three.ws/forge](https://three.ws/forge), type *"a brass steampunk owl, full body"*, and download the GLB. Text→3D, image→3D, and sketch→3D - free draft tier, no account. [Jump to the Forge section ↓](#forge-text--image-to-3d)
+
+### Give your coding agent a 3D pipeline
+
+Free text to 3D and rigged avatars from inside your editor. No key, no account. Works with **Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode**.
+
+**Claude Code plugin** (skills plus the keyless 3D server, wired for you):
+
+```text
+/plugin marketplace add nirholas/three.ws
+/plugin install three-ws-3d@three-ws
+```
+
+**Any MCP client:** add `https://three.ws/api/mcp-studio` (Streamable HTTP, keyless, 16 tools: text to 3D, image to 3D, rigged avatars, talking personas). Then ask your agent for *"a low-poly treasure chest as a GLB"*.
+
+<details>
+<summary>Copy-paste config for each client</summary>
+
+**Claude Code** (CLI)
+
+```bash
+claude mcp add --transport http three-ws-studio https://three.ws/api/mcp-studio
+```
+
+**Claude Desktop and claude.ai**: Settings, Connectors, Add custom connector, paste `https://three.ws/api/mcp-studio`.
+
+**Cursor** (`~/.cursor/mcp.json`)
+
+```json
+{ "mcpServers": { "three-ws-studio": { "url": "https://three.ws/api/mcp-studio" } } }
+```
+
+**VS Code** (`.vscode/mcp.json`)
+
+```json
+{ "servers": { "three-ws-studio": { "type": "http", "url": "https://three.ws/api/mcp-studio" } } }
+```
+
+**Codex** (`~/.codex/config.toml`)
+
+```toml
+[mcp_servers.three-ws-studio]
+url = "https://three.ws/api/mcp-studio"
+```
+
+**Gemini CLI** (`~/.gemini/settings.json`)
+
+```json
+{ "mcpServers": { "three-ws-studio": { "httpUrl": "https://three.ws/api/mcp-studio" } } }
+```
+
+**OpenCode** (`opencode.json`)
+
+```json
+{ "mcp": { "three-ws-studio": { "type": "remote", "url": "https://three.ws/api/mcp-studio" } } }
+```
+
+Your own library, agents and wallet need the authenticated servers: see [Install the MCP server in any client](#install-the-mcp-server-in-any-client).
+
+</details>
 
 > **Want to build it with us?** [Your first contribution](docs/first-contribution.md) goes from clone to open pull request in about 15 minutes, with a full worked example. Every [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) names the file to change and the command that proves it worked. Say hello in [Discussions](https://github.com/nirholas/three.ws/discussions) or [Telegram](https://t.me/three_ws_community).
 
@@ -8533,6 +8592,29 @@ At its core, it does five things:
 4. **Register** - optionally mints the agent on-chain: as an **ERC-8004 token on any EVM chain**, or as a **Metaplex Core NFT on Solana**. Either path gives the agent a stable on-chain identity, a wallet address, signed action history, and a reputation score that cannot be forged.
 
 5. **Embed** - distributes the agent as an `<agent-3d>` web component that anyone can drop into a page, or as one of five purpose-built widget types (turntable, animation gallery, talking agent, passport card, hotspot tour) with Open Graph and oEmbed support built in.
+
+### How it works
+
+```mermaid
+flowchart LR
+    P["Prompt, photos or sketch"] --> F["Forge<br/>text / image to 3D"]
+    G["Your own GLB"] --> V
+    F --> R["Auto-rig<br/>skeleton + skin weights"]
+    R --> V["Viewer<br/>glTF 2.0, WebGL 2"]
+    V --> A["Agent runtime<br/>LLM brain, tools, memory, emotion"]
+    A --> E["&lt;agent-3d&gt; embed<br/>any site, widget, iframe"]
+    A --> M["MCP + A2A<br/>Claude, Cursor, Codex, other agents"]
+    A -.-> W["Solana wallet<br/>on-chain identity"]
+    W -.-> X["x402 per-call skills<br/>sell and hire"]
+```
+
+### How three.ws makes money
+
+Straight answers, so you can judge it before you build on it:
+
+- **Free:** the viewer, Forge draft generation, the keyless MCP server, unlimited `<agent-3d>` embeds, one agent with a custom avatar, and self-hosting the whole stack under Apache-2.0.
+- **Paid:** [Pro](https://three.ws/pricing) at $49/month (unlimited agents, voice cloning, priority GPU), higher-tier generation billed per call, and Enterprise. Agents that sell skills get paid per call over x402.
+- **$THREE** is the platform's own Solana coin. Pro costs 20% less when paid in $THREE, per-call generation settles in $THREE at the live rate, and skill authors can price their calls in $THREE. The open-source code needs no coin at all.
 
 The backend is a set of serverless-style handlers (in `api/`) served in production by a single Google Cloud Run container ([server/index.mjs](server/index.mjs)), backed by Neon Postgres for metadata, Cloudflare R2 for model storage, and Upstash Redis for rate limiting. It exposes a full OAuth 2.1 authorization server and an MCP (Model Context Protocol) endpoint so external AI systems can drive avatars programmatically.
 

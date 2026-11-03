@@ -9,13 +9,17 @@
   "license": "Apache-2.0",
   "repository": "https://github.com/nirholas/three.ws",
   "keywords": [
+    "3d",
+    "avatar",
+    "glb",
+    "mcp",
+    "solana",
     "wallet",
     "x402",
     "usdc",
     "payments",
     "trade",
     "base",
-    "solana",
     "polygon"
   ]
 }
