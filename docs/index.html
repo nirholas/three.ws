@@ -555,6 +555,7 @@
 				margin-bottom: 4px;
 			}
 			.docs-content a {
+				overflow-wrap: anywhere;
 				color: #a78bfa;
 				text-decoration: none;
 				border-bottom: 1px solid rgba(167, 139, 250, 0.25);
@@ -579,6 +580,9 @@
 				padding: 1px 5px;
 				border-radius: 3px;
 				color: #c4b5fd;
+				/* File paths and identifiers have no spaces to break at, so on a
+				   phone one long path ran past the screen edge. */
+				overflow-wrap: anywhere;
 			}
 			.docs-content pre {
 				background: #0d0d18;
@@ -590,6 +594,7 @@
 				position: relative;
 			}
 			.docs-content pre code {
+				overflow-wrap: normal;
 				background: transparent;
 				border: none;
 				padding: 0;

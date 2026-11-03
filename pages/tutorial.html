@@ -389,6 +389,7 @@
 			}
 
 			.tdoc-article a {
+				overflow-wrap: anywhere;
 				color: var(--tdoc-accent, #ffffff);
 				text-decoration: none;
 				border-bottom: 1px solid transparent;
@@ -444,6 +445,8 @@
 				border: 1px solid rgba(255, 255, 255, 0.07);
 				border-radius: 4px;
 				color: #e4d4ff;
+				/* Long paths and identifiers have no spaces to break at. */
+				overflow-wrap: anywhere;
 			}
 
 			.tdoc-article pre {
@@ -468,6 +471,7 @@
 			}
 
 			.tdoc-article pre code {
+				overflow-wrap: normal;
 				padding: 0;
 				background: none;
 				border: none;
@@ -480,6 +484,16 @@
 				border-collapse: collapse;
 				margin: 1.25rem 0;
 				font-size: 0.92rem;
+			}
+
+			/* Comparison tables are wider than a phone: scroll the table in its
+			   own box instead of running it past the screen edge. Phone-only so a
+			   narrow table still fills the column on desktop. */
+			@media (max-width: 768px) {
+				.tdoc-article table {
+					display: block;
+					overflow-x: auto;
+				}
 			}
 
 			.tdoc-article th,

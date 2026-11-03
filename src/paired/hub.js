@@ -89,7 +89,10 @@ function renderStats() {
 		['Creator share', pct(state.config.creatorShareBps), `of the ${pct(state.config.swapFeeBps)} swap fee, in every pool`],
 	];
 	host.innerHTML = `<div class="cv-stats-grid">${tiles
-		.map(([k, v, s]) => `<div class="cv-stat-card"><div class="cv-sub">${esc(k)}</div><div class="cv-price cv-mono" style="font-size:1.375rem">${esc(v)}</div><div class="cv-sub" style="font-size:0.75rem">${esc(s)}</div></div>`)
+		// One column wrapper inside the card: .cv-stat-card is a flex row (body
+		// plus an optional icon), so loose label/value/note siblings sat side
+		// by side and pushed the card past a phone's edge.
+		.map(([k, v, s]) => `<div class="cv-stat-card"><div style="min-width:0"><p class="label">${esc(k)}</p><p class="value cv-mono">${esc(v)}</p><p class="delta cv-sub">${esc(s)}</p></div></div>`)
 		.join('')}</div>`;
 }
 

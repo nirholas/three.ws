@@ -39,6 +39,21 @@
 	}
 }
 
+/* style.css makes <body> a flex column. A page that centers its <main> with
+ * `margin: 0 auto` opts it out of the column's stretch, so main shrinks to
+ * fit its content and any wide child (a 640px table inside its own scroll
+ * wrapper, a long code line) widens main past the screen. The guard above
+ * then clips the right edge of the whole page instead of letting that one
+ * child scroll. Filling the available width puts main back at the screen's
+ * width; the wide child scrolls inside its wrapper as designed. */
+@media (max-width: 768px) {
+	body > main {
+		width: -moz-available;
+		width: -webkit-fill-available;
+		width: stretch;
+	}
+}
+
 /* iOS Safari zooms the viewport on focus when an input's computed
  * font-size is < 16px. Bump unstyled inputs/textareas/selects so that
  * tapping a search/email field doesn't punt the layout sideways. Pages

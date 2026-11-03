@@ -560,12 +560,14 @@ html.cv-page,
 
 .cv-stats-grid {
 	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+	/* minmax(0, 1fr), not 1fr: a bare 1fr track never shrinks below its
+	 * longest unbreakable value, which pushed the right column off a phone. */
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 0.75rem;
 }
 @media (min-width: 768px) {
 	.cv-stats-grid {
-		grid-template-columns: repeat(4, 1fr);
+		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 }
 
