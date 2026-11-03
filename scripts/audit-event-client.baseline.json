@@ -1,0 +1,18 @@
+{
+	"limits": {
+		"chromium": {
+			"maxWorldVisibleMs": 15000,
+			"maxTransferMB": 30,
+			"maxPeakHeapMB": 160,
+			"maxHeapGrowthMB": 40,
+			"maxWorstFrameMs": 5000
+		},
+		"webkit": {
+			"maxWorldVisibleMs": 15000,
+			"maxTransferMB": 30,
+			"maxPeakHeapMB": 160,
+			"maxHeapGrowthMB": 40,
+			"maxWorstFrameMs": 5000
+		}
+	}
+}
