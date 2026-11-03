@@ -324,8 +324,11 @@ for (let i = 0; i < scannable.length; i += FILES_PER_DIFF) {
 // A brand-new file is invisible to `git diff HEAD`: it has no tracked
 // counterpart, so nothing shows up and a whole file of TODOs would pass. Treat
 // every line of an untracked file as added, which is what it is. Skipped in
-// --base mode, where the comparison is between two committed refs.
-if (!base) {
+// --base mode, where the comparison is between two committed refs, and in
+// --staged mode (the pre-commit hook): an untracked file cannot be in the
+// commit, and in a worktree shared by several agents it is usually someone
+// else's draft, which used to block every other agent's unrelated commit.
+if (!base && !staged) {
 	const untrackedArgs = ['ls-files', '--others', '--exclude-standard'];
 	if (paths.length) untrackedArgs.push('--', ...paths);
 	let untracked = [];
