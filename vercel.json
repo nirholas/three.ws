@@ -3671,6 +3671,18 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
+		{
+			"src": "/api/agents/([^/]+)/wallet/export/(challenge|grant|rotate)",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/signer",
+			"dest": "/api/agents/[id]"
+		},
+		{
+			"src": "/api/agents/([^/]+)/signer/session",
+			"dest": "/api/agents/[id]"
+		},
 			"src": "/api/agents/([^/]+)/activate",
 			"dest": "/api/agents/[id]"
 		},
@@ -4107,6 +4119,14 @@
 			"dest": "/api/onboarding/[action]?action=avaturn-session"
 		},
 		{
+		{
+			"src": "/api/tx/submit",
+			"dest": "/api/tx/submit"
+		},
+		{
+			"src": "/api/tx/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+			"dest": "/api/tx/submit"
+		},
 			"src": "/api/onboarding/link-avatar",
 			"dest": "/api/onboarding/[action]?action=link-avatar"
 		},
@@ -7760,3 +7780,7 @@
 		}
 	]
 }
+		{
+			"path": "/api/cron/balance-snapshot",
+			"schedule": "5 * * * *"
+		},

@@ -6,7 +6,8 @@
 // Body (JSON): { customer: "<row id, or a legacy CustomerIdentifier>" }
 // Requires an active session cookie (set by /api/auth/login or /api/auth/register).
 
-import { cors, json, readJson, wrap } from '../_lib/http.js';
+import { cors, json, readJson, wrap, rateLimited } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { findCustomerByHandle, claimCustomerForUser } from '../_lib/aws-marketplace-store.js';
 
@@ -19,6 +20,9 @@ export default wrap(async (req, res) => {
 		res.end();
 		return;
 	}
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	let user;
 	try {

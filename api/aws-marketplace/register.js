@@ -20,7 +20,8 @@
 //      id, never the license ARN: a grant identifier does not belong in a URL
 //      that lands in browser history, referrers, and access logs.
 
-import { readForm, wrap } from '../_lib/http.js';
+import { readForm, wrap, rateLimited } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { resolveCustomer, awsMarketplaceConfigured } from '../_lib/aws-marketplace.js';
 import { upsertResolvedCustomer, claimCustomerForUser } from '../_lib/aws-marketplace-store.js';
 import { getSessionUser } from '../_lib/auth.js';
@@ -40,6 +41,9 @@ export default wrap(async (req, res) => {
 		res.end();
 		return;
 	}
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
 
 	let token, offerType;
 	try {

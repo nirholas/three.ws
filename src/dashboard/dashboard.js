@@ -3618,16 +3618,20 @@ function withdrawalStatusBadge(status) {
 	const colors = {
 		pending: '#f59e0b',
 		processing: '#5cc8ff',
+		broadcast_unconfirmed: '#5cc8ff',
 		completed: '#22c55e',
 		failed: '#ef4444',
 	};
 	const c = colors[status] || '#888';
-	return `<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${c}22;color:${c}">${esc(status)}</span>`;
+	// The payout was sent but is not confirmed yet. The money is still held for it.
+	const label = status === 'broadcast_unconfirmed' ? 'confirming' : status;
+	return `<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${c}22;color:${c}">${esc(label)}</span>`;
 }
 
 function withdrawalTxLink(w) {
-	if (!w.tx_signature) return '<span class="muted">—</span>';
-	const sig = encodeURIComponent(w.tx_signature);
+	const signature = w.tx_signature || w.pending_tx_signature;
+	if (!signature) return '<span class="muted">-</span>';
+	const sig = encodeURIComponent(signature);
 	const url =
 		w.chain === 'solana'
 			? `https://solscan.io/tx/${sig}`
@@ -3663,7 +3667,7 @@ async function renderWithdrawals(root) {
 	// endpoint draws on, so the number here always matches what it will accept.
 	const earned = Math.round(Number(balanceResp.balance?.earned_usdc || 0) * 1_000_000);
 	const inflight = withdrawals
-		.filter((w) => w.status === 'pending' || w.status === 'processing')
+		.filter((w) => w.status === 'pending' || w.status === 'processing' || w.status === 'broadcast_unconfirmed')
 		.reduce((s, w) => s + Number(w.amount), 0);
 	const available = Math.max(0, earned - inflight);
 	const canWithdraw = available >= MIN_WITHDRAWAL_LAMPORTS;

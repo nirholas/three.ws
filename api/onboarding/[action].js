@@ -9,6 +9,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parse } from '../_lib/validate.js';
 import { env } from '../_lib/env.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { refuseIfRestricted } from '../_lib/vroid/license-gate.js';
 
 // ── avaturn-session ───────────────────────────────────────────────────────────
 
@@ -159,8 +160,9 @@ async function handleLinkAvatar(req, res) {
 	const rl = await limits.avatarLink(userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many avatar link attempts, try again later');
 	const body = parse(linkAvatarSchema, await readJson(req));
-	const [avatar] = await sql`select id from avatars where id = ${body.avatarId} and owner_id = ${userId} and deleted_at is null limit 1`;
+	const [avatar] = await sql`select id, source_meta from avatars where id = ${body.avatarId} and owner_id = ${userId} and deleted_at is null limit 1`;
 	if (!avatar) return error(res, 404, 'not_found', 'avatar not found or not owned by you');
+	if (refuseIfRestricted(res, avatar.source_meta, 'public_agent')) return;
 	const [agent] = await sql`select id, avatar_id from agent_identities where user_id = ${userId} and deleted_at is null order by created_at asc limit 1`;
 	if (!agent) return error(res, 404, 'not_found', 'no agent identity found for user');
 	if (agent.avatar_id && agent.avatar_id !== body.avatarId && !body.force) return error(res, 409, 'already_linked', 'agent already has an avatar; pass force: true to override', { current_avatar_id: agent.avatar_id });
