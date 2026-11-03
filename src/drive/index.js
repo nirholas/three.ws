@@ -22,6 +22,7 @@ import { detectSurface, surfaceProfile, applySurface, approvalDisposition } from
 import { createBridge } from './bridge.js';
 import { createDriveInterceptor } from './commands.js';
 import { watchMotion } from './motion.js';
+import { listChoices } from './choices.js';
 import { log } from '../shared/log.js';
 
 const STORE_COPILOT = 'twx_drive_copilot';
@@ -545,22 +546,6 @@ async function fetchAvatar(id) {
 	const modelUrl = a?.model_url || a?.url;
 	if (!modelUrl) throw new Error('That agent has no 3D model yet.');
 	return { id: a.id, name: a.name || 'Your agent', model_url: modelUrl, agent_id: a.agent_id || null };
-}
-
-async function listChoices() {
-	try {
-		const mine = await fetch('/api/avatars?limit=24', { credentials: 'include' });
-		if (mine.ok) {
-			const j = await mine.json();
-			if (Array.isArray(j?.avatars) && j.avatars.length) return { avatars: j.avatars, owned: true };
-		}
-	} catch (err) {
-		log.warn('[drive] own avatars unavailable:', err?.message);
-	}
-	const featured = await fetch('/api/avatars/featured?limit=24');
-	if (!featured.ok) throw new Error(`Could not load agents (${featured.status}).`);
-	const j = await featured.json();
-	return { avatars: j?.avatars || [], owned: false };
 }
 
 function skeletons(n) {
