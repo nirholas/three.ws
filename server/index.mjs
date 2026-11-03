@@ -724,6 +724,13 @@ const server = app.listen(PORT, () => {
 		`[server] three-ws listening on :${PORT} (api: ${API_ROOT}, static: ${DIST_ROOT}, routes: ${phase1Routes.length}+${postFsRoutes.length})`,
 	);
 });
+// A failed bind (EADDRINUSE, EACCES) leaves nothing holding the event loop, so
+// without this the process ended with code 0 and looked like a clean exit.
+// Fail loudly so the supervisor (Cloud Run, a test harness) sees a crash.
+server.on('error', (err) => {
+	console.error(`[server] cannot listen on :${PORT}: ${err?.code || ''} ${err?.message || err}`);
+	process.exit(1);
+});
 // SSE endpoints hold connections open; keep Node's idle timeouts out of the way
 // (Cloud Run enforces the real request deadline).
 server.requestTimeout = 0;
