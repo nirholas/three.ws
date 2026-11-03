@@ -95,6 +95,7 @@ const COLUMNS = [
 		key: 'turnover',
 		label: 'Turnover',
 		num: true,
+		hide: 'hide-sm',
 		tip: 'Turnover = 24h DEX volume divided by TVL. A high value means capital is trading actively; a low value means it is mostly parked. Shown as n/a when a chain reports no TVL or no DEX volume.',
 	},
 	{ key: 'share_pct', label: 'Dominance', num: true },
@@ -188,7 +189,7 @@ function renderTable() {
 				<td class="rank hide-sm cv-mono">${c.__rank}</td>
 				<td class="left name-cell">${href ? `<a href="${esc(href)}">${inner}</a>` : inner}</td>
 				<td class="price">${esc(formatUsd(c.tvl))}</td>
-				<td class="pct cv-mono"${c.dex_volume_24h ? ` title="24h DEX volume ${esc(formatUsd(c.dex_volume_24h))}"` : ''}>${c.turnover == null ? 'n/a' : `${c.turnover.toFixed(c.turnover < 0.1 ? 3 : 2)}x`}</td>
+				<td class="pct hide-sm cv-mono"${c.dex_volume_24h ? ` title="24h DEX volume ${esc(formatUsd(c.dex_volume_24h))}"` : ''}>${c.turnover == null ? 'n/a' : `${c.turnover.toFixed(c.turnover < 0.1 ? 3 : 2)}x`}</td>
 				<td class="pct cv-mono">${(c.share_pct || 0).toFixed(2)}%</td>
 				<td class="left hide-md chains-bar-cell">
 					<span class="chains-bar" aria-hidden="true">
