@@ -12,8 +12,10 @@ def steps(g):
     v = g.get("verify")
     if not v:
         return "-"
-    pre = {k for k, c in (g.get("baseline") or {}).items() if c != 0}
-    return ", ".join(f"{k} {'ok' if c == 0 else 'failed before too' if k in pre else 'REGRESSED' if k in g.get('regressions', []) else 'failed'}" for k, c in v.items())
+    b = g.get("baseline") or {}
+    pre = {k for k, c in b.items() if c != 0}
+    fixed_install = b.get("install", 0) != 0 and v.get("install") == 0
+    return ("original lockfile could not install, this branch repairs it; " if fixed_install else "") + ", ".join(f"{k} {'ok' if c == 0 else 'failed before too' if k in pre else 'REGRESSED' if k in g.get('regressions', []) else 'failed'}" for k, c in v.items() if not (fixed_install and k == 'install')) + (f" ({g['note']})" if g.get("note") else "")
 
 
 total_alerts = sum(r.get("alerts") or 0 for r in rows)
@@ -50,8 +52,8 @@ for r in rows:
 out += ["", "## Still open: needs a parent upgrade", ""]
 for r in rows:
     left = sorted({u for g in r.get("groups", []) for u in g.get("unfixable", [])}) + r.get("unhandled", [])
-    if left:
-        out.append(f'**{r["repo"].split("/")[1]}**')
+    if left or r.get("manual"):
+        out.append(f'**{r["repo"].split("/")[1]}**' + (f': {r["manual"]}' if r.get("manual") else ""))
         out += [f"- {u}" for u in left[:25]] + ([f"- and {len(left) - 25} more"] if len(left) > 25 else []) + [""]
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "dependency-fixes.md"), "w").write("\n".join(out) + "\n")
 print(f"closed {closed}/{total_alerts}, commits {len(committed)}, regressions {regressed}")
