@@ -1,5 +1,7 @@
 # Drive lane D, the agent beside a projected CarPlay or Android Auto session on an open head unit
 
+**Status (2026-11-03):** Built to the USB boundary and committed (47a691f55, b130d48cb, 5bb42aae9, 001bf9e7b, a757d03bf). `apps/head-unit` runs with no dongle and shows the honest connect state; its 14 tests pass on a session recorded from node-carplay's own test data. Still to do, owned by the owner: plug a Carlinkit CPC200 (1314:1520 or 1314:1521) and a phone into a Raspberry Pi and run the first-connection checklist in `apps/head-unit/README.md`; approve `git push threews main` and `npm run deploy:gcp:full` so the loopback frame-ancestors change for `/drive` goes live. Keep this file until the checklist passes on real hardware.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/985-plan-drive-open-head-unit-carplay-lane.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 12 of 100 inside the tier). **Area:** drive. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
