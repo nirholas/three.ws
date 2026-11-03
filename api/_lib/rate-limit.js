@@ -1794,6 +1794,10 @@ export const limits = {
 	agentByAddress: (ip) =>
 		getLimiter('agents:by-address', { limit: 120, window: '1 m' }).limit(ip),
 	pricingPerIp: (ip) => getLimiter('pricing:ip', { limit: 120, window: '1 m' }).limit(ip),
+	// Custody changes (signer mode, session grants, tx submit) and the private-key
+	// export ceremony. Writes, so distributed; the export bucket is deliberately tight.
+	custodyWrite: (userId) => getLimiter('custody:write', { limit: 30, window: '10 m' }).limit(userId),
+	custodyExport: (userId) => getLimiter('custody:export', { limit: 6, window: '1 h' }).limit(userId),
 	walletLink: (userId) => getLimiter('wallet:link', { limit: 10, window: '10 m' }).limit(userId),
 	// Agent wallet read endpoints (GET balance, activity). Per authenticated user.
 	// `local`: a read guard on wallet balance/holdings views (33 call sites, polled by

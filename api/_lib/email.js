@@ -291,14 +291,14 @@ export function renderWhitelistNotice({ headline, agentName, entry = null, detai
 }
 
 // One-time code that re-authenticates the owner for a single allowlist change.
-export function renderStepUpCode({ code, expiresInMinutes = 10 }) {
+export function renderStepUpCode({ code, expiresInMinutes = 10, action = 'allowlist change', where = 'the wallet allowlist page' }) {
 	return {
 		subject: `Your three.ws confirmation code: ${code}`,
 		html: layout('Confirmation code', `
     <p class="brand">three.ws</p>
-    <h1>Confirm your allowlist change</h1>
+    <h1>Confirm your ${esc(action)}</h1>
     <p style="font-size:28px;letter-spacing:6px;font-family:ui-monospace,Menlo,monospace;margin:16px 0">${esc(code)}</p>
-    <p>Enter this code in the wallet allowlist page. It works once and expires in ${esc(expiresInMinutes)} minutes.</p>
+    <p>Enter this code in ${esc(where)}. It works once and expires in ${esc(expiresInMinutes)} minutes.</p>
     <p class="muted">Nobody from three.ws will ever ask for this code. If you did not request it, ignore this email and consider changing your password.</p>
   `),
 		text: `Your three.ws confirmation code: ${code}\n\nIt works once and expires in ${expiresInMinutes} minutes. Nobody from three.ws will ask for it. If you did not request it, ignore this email.`,

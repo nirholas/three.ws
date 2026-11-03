@@ -1429,7 +1429,7 @@ const VANITY_GRIND_BUDGET_MS = 30_000;
 // figure is exact: (A) transfer + close each token account, (B) sweep all SOL.
 // Returns { signatures, sol, tokens }. Throws if any leg fails to confirm — the
 // caller must NOT discard the source key unless this resolves.
-async function sweepWalletToAddress({ conn, fromKeypair, toPubkey, network }) {
+export async function sweepWalletToAddress({ conn, fromKeypair, toPubkey, network }) {
 	const fromPk = fromKeypair.publicKey;
 	const signatures = [];
 	const movedTokens = [];

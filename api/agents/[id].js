@@ -61,6 +61,18 @@ export default wrap(async function handler(req, res) {
 		return mod.default(req, res, id, 'withdraw');
 	}
 
+	// Self-custody: the owner's own key export (re-authenticated, sealed to the
+	// browser) and the hourly SOL + USDC balance history.
+	if (sub === 'wallet' && (action === 'export' || action === 'history')) {
+		const mod = await import('./wallet-custody.js');
+		return mod.default(req, res, id, action, parts);
+	}
+
+	if (sub === 'signer') {
+		const mod = await import('./signer.js');
+		return mod.default(req, res, id, action);
+	}
+
 	if (sub === 'wallet') return handleWallet(req, res, id, action);
 
 	if (sub === 'solana') {

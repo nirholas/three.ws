@@ -4,6 +4,7 @@ import { getSessionUser, authenticateBearer, extractBearer, hasScope } from './_
 import { cors, json, error, wrap, method, readJson, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { requireCsrf } from './_lib/csrf.js';
+import { logAudit } from './_lib/audit.js';
 import { parse } from './_lib/validate.js';
 import { z } from 'zod';
 import { API_KEY_SCOPES } from './_lib/api-keys.js';
@@ -55,6 +56,8 @@ export default wrap(async (req, res) => {
 
 	const raw = await readJson(req);
 	const body = parse(createSchema, raw);
+	if (body.expires_at && Date.parse(body.expires_at) <= Date.now())
+		return error(res, 400, 'validation_error', 'expires_at must be in the future');
 	const connector = body.preset === CONNECTOR_PRESET;
 	if (connector && raw && typeof raw === 'object' && Object.hasOwn(raw, 'scope'))
 		return error(res, 400, 'validation_error', 'a connector key has a fixed grant; omit scope');
@@ -99,6 +102,15 @@ export default wrap(async (req, res) => {
 		)
 		returning id, name, prefix, scope, preset, expires_at, created_at
 	`;
+
+	// Never the secret or its hash: id, prefix and granted scope only.
+	logAudit({
+		userId,
+		action: 'create_api_key',
+		resourceId: row.id,
+		meta: { prefix, scope: row.scope, preset: row.preset ?? null, environment: 'live', via: session ? 'legacy_session' : 'legacy_bearer' },
+		req,
+	});
 
 	// token is returned only on creation — not stored in plaintext
 	return json(res, 201, { data: { ...row, token } });
