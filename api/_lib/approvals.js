@@ -493,6 +493,21 @@ export async function revokeAutoPolicy(userId, policyId, { req = null } = {}) {
 
 // ── create + deliver ────────────────────────────────────────────────────────────
 
+// Reusing an open request or an idempotency key must mean the SAME action. A
+// caller that sends a changed payload under a key already in the inbox would
+// otherwise get the old request back and believe its new action was queued.
+// The stored payload may carry a server-added _burner stamp, which the caller
+// never supplies, so it is stripped before comparing. `hash` is the caller's
+// already-stamped hash, compared directly when present.
+function assertSamePayload(row, payload, hash = null) {
+	const { _burner, ...stored } = row.payload || {};
+	const { _burner: _ignored, ...incoming } = payload || {};
+	const same = hash && row.payload_hash === hash ? true : payloadHash(stored) === payloadHash(incoming);
+	if (!same) {
+		throw new ApprovalError(409, 'payload_mismatch', 'An approval request with this key already exists for a different action.');
+	}
+}
+
 /**
  * Queue a gated action for its owner. Idempotent on `idempotencyKey`, and at
  * most one pending request per (source, sourceRef): a rule that keeps firing
@@ -540,7 +555,10 @@ export async function createApprovalRequest({
 			  AND status = 'pending' AND expires_at > now()
 			ORDER BY created_at DESC LIMIT 1
 		`;
-		if (open) return { request: open, created: false, autoApproved: false, policy: null };
+		if (open) {
+			assertSamePayload(open, payload);
+			return { request: open, created: false, autoApproved: false, policy: null };
+		}
 	}
 
 	// A spend above the agent's burner cap waits the owner's configured window,
@@ -576,6 +594,10 @@ export async function createApprovalRequest({
 	`;
 	if (!row) {
 		const [existing] = await sql`SELECT * FROM approval_requests WHERE idempotency_key = ${idempotencyKey}`;
+		if (existing.user_id !== userId) {
+			throw new ApprovalError(409, 'idempotency_conflict', 'That idempotency key belongs to another request.');
+		}
+		assertSamePayload(existing, payload, hash);
 		return { request: existing, created: false, autoApproved: false, policy: null };
 	}
 

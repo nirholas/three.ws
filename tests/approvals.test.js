@@ -128,6 +128,22 @@ describe('createApprovalRequest', () => {
 		expect(notify.insertNotification).toHaveBeenCalledTimes(1);
 	});
 
+	it('refuses to reuse an open source ref or idempotency key for a different payload', async () => {
+		const input = request();
+		const first = await A.createApprovalRequest(input);
+		const changed = { ...input.payload, lamports: '9000000000' };
+		await expect(A.createApprovalRequest({ ...input, payload: changed, idempotencyKey: 'other-bucket' })).rejects.toMatchObject({
+			status: 409,
+			code: 'payload_mismatch',
+		});
+		await expect(A.createApprovalRequest({ ...input, payload: changed, sourceRef: null })).rejects.toMatchObject({
+			status: 409,
+			code: 'payload_mismatch',
+		});
+		const [stored] = await dbState.pg.query('select payload_hash from approval_requests where id = $1', [first.request.id]).then((r) => r.rows);
+		expect(stored.payload_hash).toBe(A.payloadHash(input.payload));
+	});
+
 	it('falls back to email when no out-of-app channel reached the owner', async () => {
 		notify.insertNotification.mockResolvedValueOnce({ id: 1, in_app: true, delivered: { push: 0 } });
 		await A.createApprovalRequest(request());
