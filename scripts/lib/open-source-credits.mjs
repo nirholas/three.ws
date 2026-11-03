@@ -528,6 +528,19 @@ const LICENSE_OVERRIDES = {
 	'sas-lib': 'MIT',
 };
 
+// ---- repository overrides for packages whose installed package.json has no
+// repository or homepage field ----------------------------------------------
+const REPO_OVERRIDES = {
+	// The published 2.0.8 tarball ships a package.json with no repository field
+	// (and a "v"-prefixed version); the source lives at upstash/ratelimit-js.
+	'@upstash/ratelimit': 'https://github.com/upstash/ratelimit-js',
+};
+
+// Some tarballs publish "v1.2.3"; the page shows bare semver.
+function normalizeVersion(version) {
+	return version ? String(version).replace(/^v(?=\d)/, '') : null;
+}
+
 // ---- fallback classifier for every other npm dependency --------------------
 function fallbackArea(name) {
 	const n = name.toLowerCase();
@@ -559,7 +572,7 @@ function npmEntries() {
 				? repoField
 				: repoField && typeof repoField === 'object'
 					? repoField.url
-					: meta.homepage || null;
+					: meta.homepage || REPO_OVERRIDES[name] || null;
 		entries.push({
 			id: `npm:${name}`,
 			kind: 'npm',
@@ -568,7 +581,7 @@ function npmEntries() {
 			license: meta.license || meta.licenses?.[0]?.type || LICENSE_OVERRIDES[name] || 'unknown',
 			repo: normalizeRepoUrl(repo),
 			funding: normalizeFunding(meta.funding),
-			version: meta.version || null,
+			version: normalizeVersion(meta.version),
 			powers: curated?.powers || null,
 		});
 	}

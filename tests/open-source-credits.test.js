@@ -130,3 +130,18 @@ describe('normalizeRepoUrl', () => {
 		);
 	});
 });
+
+describe('open-source-credits npm metadata', () => {
+	it('publishes every npm version as a bare semver, never with a leading v', () => {
+		const { entries } = buildCredits();
+		for (const entry of entries.filter((e) => e.kind === 'npm' && e.version)) {
+			expect(entry.version, entry.id).toMatch(/^\d/);
+		}
+	});
+
+	it('links @upstash/ratelimit to its upstream repo even though its package.json omits one', () => {
+		const { entries } = buildCredits();
+		const row = entries.find((e) => e.id === 'npm:@upstash/ratelimit');
+		expect(row?.repo).toBe('https://github.com/upstash/ratelimit-js');
+	});
+});
