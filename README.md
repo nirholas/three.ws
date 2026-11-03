@@ -6,6 +6,8 @@
 
 [![3D models forged](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fthree.ws%2Fapi%2Fhome-stats&query=%24.forge_models&label=3D%20models%20forged&color=7057ff)](https://three.ws/forge) [![agents](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fthree.ws%2Fapi%2Fhome-stats&query=%24.agents&label=agents%20created&color=7057ff)](https://three.ws/discover) [![site](https://img.shields.io/website?url=https%3A%2F%2Fthree.ws&label=three.ws)](https://three.ws) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fsdk?label=%40three-ws%2Fsdk)](https://www.npmjs.com/package/@three-ws/sdk) [![npm](https://img.shields.io/npm/v/%40three-ws%2Fmcp-server?label=%40three-ws%2Fmcp-server)](https://www.npmjs.com/package/@three-ws/mcp-server) [![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.nirholas-blue)](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) [![x402scan](https://img.shields.io/badge/x402scan-listed-green)](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![good first issues](https://img.shields.io/github/issues/nirholas/three.ws/good%20first%20issue?label=good%20first%20issues&color=7057ff)](https://github.com/nirholas/three.ws/labels/good%20first%20issue)
 
+**English** | [简体中文](docs/readme/README.zh-CN.md) | [日本語](docs/readme/README.ja.md) | [한국어](docs/readme/README.ko.md)
+
 https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
 **Give your AI a body.** three.ws is an open source (Apache-2.0), browser-native 3D AI agent platform. Type a prompt and [**Forge**](https://three.ws/forge) generates a textured 3D model, or drop a GLB you already have. Add an LLM brain, register on-chain, and embed anywhere: no plugins, no server uploads, no installs required.
@@ -11486,6 +11488,10 @@ three.ws is built in the open. Pick the room that fits what you want to do.
 | [@trythreews on X](https://x.com/trythreews) | Product announcements |
 
 Guidance on which channel suits which question, plus the house rules, lives in [docs/community.md](docs/community.md).
+
+### Built with three.ws
+
+Made something with Forge, an `<agent-3d>` embed, or the MCP server? Post it in [Show and tell](https://github.com/nirholas/three.ws/discussions/categories/show-and-tell) with the [project template](https://github.com/nirholas/three.ws/discussions/new?category=show-and-tell), or add it to the [running thread](https://github.com/nirholas/three.ws/discussions/123). A live URL and a screenshot or clip is all it takes. Standout projects get featured here and in the release notes.
 
 **Want to contribute?** [Your first contribution](docs/first-contribution.md) goes from clone to open pull request in about 15 minutes with a complete worked example, and [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) is a curated list where every entry names the file to change and the command that proves it worked. How we triage and how fast you can expect a response: [docs/triage.md](docs/triage.md).
 
