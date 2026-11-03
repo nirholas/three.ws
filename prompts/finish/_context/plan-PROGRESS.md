@@ -4,3 +4,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 
 2026-11-03 255-plan-three-gate-fail-closed-on-rpc-failure.md 4c94db528 (test landed in 9016227f3): the server $THREE gate now fails closed with 503 on RPC failure.
 2026-11-03 | 254-plan-play-event-config-live-override.md | 9016227f3, 6965c5677 | Event override endpoint, readers, CLI and docs built and verified locally; production deploy and OPS_SECRET remain with the owner.
+2026-11-03 265-plan-custody-proof-anchor-restore.md d2e5be083 mainnet anchor default, alerting, late-landing fix and /integrity restored in code; deploy and live anchor verification remain with the owner.

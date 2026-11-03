@@ -1,5 +1,7 @@
 # Proof of custody anchors on Solana again: 522 epochs, zero anchored, public integrity page down
 
+**Status (2026-11-03):** Code, tests, docs and changelog are committed (d2e5be083). `CUSTODY_ANCHOR_NETWORK=mainnet` is live on Cloud Run (revision three-ws-api-00519-79c). Remaining, owner: `git push threews main` then `npm run deploy:gcp:full`. The running image still has the fixed 20s confirm race, so epoch 525 landed on-chain (memo for its root, signed by the attester on mainnet) yet is stored `anchor_failed`; after the deploy, trigger `cron--api-cron-custody-attest` and confirm `epochs_anchored >= 1`, then verify the memo and `/integrity` 200 live. Not done: task 7 (sibling ledger and trader-score lanes) and a live-DB read of `anchor_error`.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/265-plan-custody-proof-anchor-restore.md`.
 
 **Priority:** P1, unshipped fix or half-built user-visible feature (score 74 of 100 inside the tier). **Area:** custody. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
