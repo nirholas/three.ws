@@ -626,3 +626,7 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 - Order 930: draft `data/x-content/stories/grok-bot-connector.json`; the thread with a real mention reply and the site article wait on go-live (928).
 - Order 931: `docs/partners/x-player-card-submission.md`. Finding: production serves `/forge/embed` with the site-wide `frame-ancestors` (IBM only), not the route's `*`, so X could not frame the player until this is fixed.
 - Order 928: production has no `/api/x/mention-bot/status` yet (the bot is not deployed). Review sample, preflight and deploy remain the owner's go-ahead.
+
+## 2026-11-03: order 023 (x-grok 01) retired
+
+Production probe 8 of 8 PASS, local probe 8 of 8 PASS, audit:docs clean, vitest down to the Chromium-dependent screen-caster test (passes alone) after the server listen-log fix `0ef6d970c`.
