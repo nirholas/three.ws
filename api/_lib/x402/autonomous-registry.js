@@ -1314,8 +1314,12 @@ const SELF_ENDPOINTS = [
 		name: 'Pay-By-Name: Resolve three.ws (paid canary)',
 		path: '/api/x402/pay-by-name',
 		method: 'POST',
-		body: { name: 'three.ws' },
-		cooldown_s: 600, // every 10 min — health check cadence
+		// The canary needs a name the resolver can actually answer. A bare
+		// domain ('three.ws') never resolves (no username, no .sol), so every
+		// paid run came back 404 after the call. The platform's own payTo
+		// address takes the raw-address lane, which always resolves.
+		body: () => (process.env.X402_PAY_TO_SOLANA ? { name: process.env.X402_PAY_TO_SOLANA } : null),
+		cooldown_s: 600, // every 10 min, health check cadence
 		priority: 52,
 		pipeline: 'health',
 		enabled: true,

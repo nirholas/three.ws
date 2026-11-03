@@ -33,7 +33,7 @@ const SHOP = [
 	{ slug: 'three-intel', priceSlug: 'three-intel', priceDefault: '10000', kind: 'intel', path: '/api/x402/three-intel', method: 'GET' },
 	{ slug: 'crypto-intel', priceSlug: 'crypto-intel', priceDefault: '10000', kind: 'intel', path: '/api/x402/crypto-intel', method: 'POST', body: { topic: 'solana' } },
 	{ slug: 'token-intel', priceSlug: 'token-intel', priceDefault: '10000', kind: 'intel', path: '/api/x402/token-intel', method: 'GET', query: { mint: THREE_CA, network: 'mainnet' } },
-	{ slug: 'feed-health', priceSlug: 'feed-health', priceDefault: '1000', kind: 'health', path: '/api/x402/feed-health', method: 'POST', body: {} },
+	{ slug: 'feed-health', priceSlug: 'feed-health', priceDefault: '1000', kind: 'health', path: '/api/x402/feed-health', method: 'POST', body: { feed: 'changelog_rss' } },
 	{ slug: 'api-key-health', priceSlug: 'api-key-health', priceDefault: '1000', kind: 'health', path: '/api/x402/api-key-health', method: 'POST', body: {} },
 	{ slug: 'solana-register-health', priceSlug: 'solana-register-health', priceDefault: '1000', kind: 'health', path: '/api/x402/solana-register-health', method: 'GET' },
 	{ slug: 'auth-health', priceSlug: 'auth-health', priceDefault: '1000', kind: 'health', path: '/api/x402/auth-health', method: 'POST', body: {} },

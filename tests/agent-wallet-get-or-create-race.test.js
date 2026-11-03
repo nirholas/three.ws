@@ -18,6 +18,9 @@ vi.mock('../api/_lib/db.js', () => {
 	return { sql, isDbUnavailableError: () => false, isDbCapacityError: () => false };
 });
 
+// Resolve the mocked module once up front: concurrent first-time dynamic imports
+// of a mocked module can race the mock registry and hand back the real one.
+await import('../api/_lib/db.js');
 const W = await import('../api/_lib/agent-wallet.js');
 
 const EVM_AGENT = '44444444-4444-4444-8444-444444444444';

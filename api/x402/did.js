@@ -190,9 +190,16 @@ const INPUT_SCHEMA = {
 		},
 		mode: {
 			type: 'string',
-			enum: ['verify'],
-			description: 'Operation. Only "verify" is supported.',
+			enum: ['verify', 'sweep'],
+			description: 'Operation. "verify" resolves one DID, "sweep" checks the registry.',
 			default: 'verify',
+		},
+		limit: {
+			type: 'integer',
+			minimum: 1,
+			maximum: 50,
+			description: 'Sweep only: how many registry entries to check.',
+			default: 10,
 		},
 	},
 };

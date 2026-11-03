@@ -41,7 +41,7 @@ const EXCEPTIONS = new Map([
 	],
 ]);
 
-const ajv = new Ajv2020({ strict: false, allErrors: true });
+const ajv = new Ajv2020({ strict: false, allErrors: true, coerceTypes: true });
 addFormats(ajv);
 
 /** Run a real handler against a stub socket and return what it wrote. */
