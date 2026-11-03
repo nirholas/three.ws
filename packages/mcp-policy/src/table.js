@@ -178,6 +178,13 @@ export const POLICY = {
 			'agent_id', 'markets', 'weights', 'name', 'symbol', 'description', 'image_url', 'socials', 'dev_buy',
 		]),
 		launch_lanes: r('launch'),
+		pumpfun_prepare_launch: w('launch'),
+		list_skill_candidates: r('skills'),
+		token_due_diligence: r('intelligence'),
+		robinhood_chain_stats: r('intelligence'),
+		robinhood_token_prices: r('intelligence'),
+		robinhood_recent_launches: r('intelligence'),
+		robinhood_wallet_holdings: r('intelligence'),
 		launch_status: r('launch'),
 		uniswap_launch_quote: w('launch'),
 		uniswap_launch: f('launch', 'confirm_launch', 'uniswap_launch_quote', [
