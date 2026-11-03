@@ -26,9 +26,12 @@ const ENDPOINTS = [
 			name: 'get_token_details',
 			args: { mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' },
 		},
-		// Indexer-backed probe, run only when pumpfun_bot_status reports the bot is
+		// Indexer-only probe, run only when pumpfun_bot_status reports the bot is
 		// configured AND healthy. Skipped (not failed) when the indexer is absent.
-		indexerProbe: { name: 'get_new_tokens', args: { limit: 3 } },
+		// It must be a member of INDEXER_TOOLS in api/pump-fun-mcp.js: the gating
+		// check below expects it listed iff the bot is configured, and
+		// get_new_tokens/get_trending_tokens stay listed via the live-feed fallback.
+		indexerProbe: { name: 'search_tokens', args: { query: 'THREE', limit: 3 } },
 	},
 	{
 		// The free generation lane. Every tool here except check_job/get_agent_persona
