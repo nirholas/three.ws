@@ -212,7 +212,8 @@
 		{
 			"src": "/drive/?$",
 			"headers": {
-				"permissions-policy": "accelerometer=(self), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(self), gyroscope=(self), magnetometer=(self), microphone=(self), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()"
+				"permissions-policy": "accelerometer=(self), autoplay=(self), camera=(), display-capture=(), encrypted-media=(self), geolocation=(self), gyroscope=(self), magnetometer=(self), microphone=(self), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()",
+				"content-security-policy": "base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://esm.sh https://ajax.googleapis.com https://s3.tradingview.com https://platform.twitter.com https://three.ws; worker-src 'self' blob:; frame-ancestors 'self' https://ibm.com https://*.ibm.com https://*.seismic.com http://localhost:* http://127.0.0.1:*; report-uri /api/client-errors"
 			},
 			"continue": true
 		},
