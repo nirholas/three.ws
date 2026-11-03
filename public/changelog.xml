@@ -71,6 +71,14 @@
 			<description>A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.</description>
 		</item>
 		<item>
+			<title>The classic homepage avatar now shows head to toe, and appears on phones</title>
+			<link>https://three.ws/classic</link>
+			<guid isPermaLink="false">2026-11-03:The classic homepage avatar now shows head to toe, and appears on phones</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On the classic homepage, the animation buttons used to cover the live avatar's feet, so the figure looked like it was floating. It now stands above the buttons with its feet and ground shadow in view. On phones the avatar area had collapsed to nothing, so mobile visitors never saw the live 3D agent at all. It now appears below the headline at a comfortable height.</description>
+		</item>
+		<item>
 			<title>A lock screen worth stopping at</title>
 			<link>https://three.ws/</link>
 			<guid isPermaLink="false">2026-11-02:A lock screen worth stopping at</guid>

@@ -245,6 +245,19 @@
 			if (heroInner) showHeroFallback(heroInner);
 		}
 	}
+	// The animation chips overlay the bottom of the stage, and a full-height
+	// viewer put the avatar's feet and its contact shadow underneath them, so the
+	// figure read as floating. The viewer stops above the band instead. The band
+	// wraps to a second row on narrower stages, so its height is measured.
+	function reserveHeroChipBand() {
+		const stage = document.getElementById('hero-stage');
+		const wrap = document.getElementById('hero-chips-wrap');
+		if (!stage || !wrap) return;
+		const sync = () => stage.style.setProperty('--hero-chip-band', wrap.offsetHeight + 'px');
+		sync();
+		new ResizeObserver(sync).observe(wrap);
+	}
+	reserveHeroChipBand();
 	bootHeroAvatar();
 
 	// ── What You Get: avatar viewer + animation gallery ────────────

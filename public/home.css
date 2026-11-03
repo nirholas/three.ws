@@ -107,6 +107,9 @@
 			display: flex; flex-direction: column; justify-content: center;
 		}
 		@media (max-width: 980px) { .hero-text { padding: 64px 20px 32px; } }
+		/* Single column: the stage's children are all absolutely positioned, so
+		   without a height it collapsed to 0px and phones never saw the avatar. */
+		@media (max-width: 980px) { .hero-stage { height: min(72vh, 540px); height: min(72svh, 540px); } }
 		.eyebrow {
 			display: inline-flex; align-items: center; gap: 10px;
 			font-family: var(--font-mono); font-size: 11.5px;
@@ -280,8 +283,11 @@
 				radial-gradient(72% 48% at 50% 104%, rgba(0,0,0,0.6) 0%, transparent 72%),
 				var(--bg);
 		}
+		/* Stops above the chip band (measured in reserveHeroChipBand) so the feet
+		   and contact shadow stay visible; the 24px overlap is the band's fade. */
 		.hero-stage agent-3d {
-			position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+			position: absolute; inset: 0 0 max(0px, calc(var(--hero-chip-band, 0px) - 24px)) 0;
+			display: block; width: 100%; height: auto;
 		}
 		.hero-stage-inner {
 			position: absolute; inset: 0;
@@ -1266,7 +1272,6 @@
 		   stale skeleton. */
 		.hero-stage agent-3d::part(loading) { display: none !important; }
 		.hero-stage agent-3d {
-			position: absolute; inset: 0; display: block; width: 100%; height: 100%;
 			opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard);
 		}
 		.hero-stage agent-3d.loaded { opacity: 1; }
