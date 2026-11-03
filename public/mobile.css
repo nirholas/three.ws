@@ -564,6 +564,12 @@
 		display: inline-flex;
 		align-items: center;
 	}
+	/* The display above loads after home.css and would otherwise revive the
+	   desktop-only "Open this model in AR" link that home.css hides on touch
+	   devices, where the Place in your space button already does that job. */
+	.har-cta-link.har-desktop-only {
+		display: none;
+	}
 
 	/* /forge. Showcase card actions and the generation-mode tabs. */
 	.showcase-vote,
