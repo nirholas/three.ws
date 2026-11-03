@@ -19,6 +19,7 @@ import { isUuid } from '../validate.js';
 import { insertNotification } from '../notify.js';
 import {
 	createSchema,
+	patchSchema,
 	slugify,
 	MAX_CUSTOM_SKILLS_PER_AGENT,
 	CUSTOM_SKILL_MAX_CHARS,
@@ -311,4 +312,37 @@ export async function reviewLearnedSkill({ agentId, userId, skillId, enable }) {
 		RETURNING ${SKILL_COLUMNS}
 	`;
 	return updated;
+}
+
+/**
+ * Owner edit of a learned skill's name, description or text. The edit is a new
+ * version (author 'owner') and moves the semver patch number, so it can be
+ * rolled back like any agent edit. Works while learning is off: the owner can
+ * always fix or tidy their own skill.
+ */
+export async function ownerEditSkill({ agentId, userId, skillId, name, description, content, note = 'edited by the owner' }) {
+	await ensureOwner(agentId, userId);
+	const skill = await fetchSkill(agentId, skillId);
+	const parsed = patchSchema.safeParse({
+		...(name !== undefined ? { name } : {}),
+		...(description !== undefined ? { description } : {}),
+		...(content !== undefined ? { content } : {}),
+	});
+	if (!parsed.success) {
+		throw new LearningError(400, 'validation_error', parsed.error.issues[0]?.message || 'invalid skill edit');
+	}
+	const next = { name: skill.name, description: skill.description || '', content: skill.content, ...parsed.data };
+	if (next.name === skill.name && next.description === (skill.description || '') && next.content === skill.content) {
+		throw new LearningError(409, 'no_change', 'nothing changed');
+	}
+	await snapshotLive(skill);
+	const [updated] = await sql`
+		UPDATE agent_custom_skills
+		SET name = ${next.name}, description = ${next.description}, content = ${next.content},
+		    version = ${bumpPatch(skill.version)}, updated_at = now()
+		WHERE id = ${skill.id} AND agent_id = ${agentId}
+		RETURNING ${SKILL_COLUMNS}
+	`;
+	const version = await recordVersion({ skill: updated, author: 'owner', note });
+	return { skill: updated, version };
 }

@@ -27,6 +27,7 @@ import { trackAgentOwnerVisit } from './_lib/retention.js';
 import { env } from './_lib/env.js';
 import { z } from 'zod';
 import { isUuid } from './_lib/validate.js';
+import { refuseIfRestricted } from './_lib/vroid/license-gate.js';
 import {
 	normalizeInferenceBudget,
 	applyInferenceBudget,
@@ -306,11 +307,12 @@ async function handleCreate(req, res) {
 		if (!isUuid(raw))
 			return error(res, 400, 'validation_error', 'avatar_id must be a UUID');
 		const [av] = await sql`
-			SELECT id FROM avatars
+			SELECT id, source_meta FROM avatars
 			 WHERE id = ${raw} AND owner_id = ${auth.userId} AND deleted_at IS NULL
 			 LIMIT 1
 		`;
 		if (!av) return error(res, 404, 'not_found', 'avatar not found');
+		if (refuseIfRestricted(res, av.source_meta, 'public_agent')) return;
 		avatarId = av.id;
 	}
 
@@ -469,11 +471,12 @@ export async function handleUpdate(req, res, id, auth) {
 		const raw = String(body.avatar_id);
 		if (!isUuid(raw)) return error(res, 400, 'validation_error', 'avatar_id must be a UUID');
 		const [av] = await sql`
-			SELECT id FROM avatars
+			SELECT id, source_meta FROM avatars
 			 WHERE id = ${raw} AND owner_id = ${auth.userId} AND deleted_at IS NULL
 			 LIMIT 1
 		`;
 		if (!av) return error(res, 404, 'not_found', 'avatar not found');
+		if (refuseIfRestricted(res, av.source_meta, 'public_agent')) return;
 		avatarId = av.id;
 	}
 
