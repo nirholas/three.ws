@@ -125,7 +125,7 @@ async function registerFormHtml(d) {
 	try {
 		agents = (await getJson('/api/agents')).agents || [];
 	} catch {
-		return `<div class="cp-error" role="alert"><span>Your agents could not be loaded.</span><button class="cp-btn" type="button" onclick="location.reload()">Retry</button></div>`;
+		return `<div class="cp-error" role="alert"><span>Your agents could not be loaded.</span><button class="cp-btn" type="button" id="cp-agents-retry">Retry</button></div>`;
 	}
 	const open = agents.filter((a) => !d.viewer.entered_agent_ids.includes(a.id));
 	if (!agents.length) {
@@ -143,6 +143,11 @@ async function registerFormHtml(d) {
 }
 
 function wireForm(c, reload) {
+	// The site CSP blocks inline handlers, so the agents-load retry is bound here.
+	document.getElementById('cp-agents-retry')?.addEventListener('click', () => {
+		setBusy(true);
+		reload();
+	});
 	const form = document.getElementById('cp-form');
 	if (!form) return;
 	form.addEventListener('submit', async (ev) => {
