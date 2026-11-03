@@ -17,7 +17,7 @@
     "test:e2e:tech": "VITE_VARIANT=tech playwright test",
     "test:e2e:runtime": "VITE_VARIANT=full playwright test e2e/runtime-fetch.spec.ts",
     "test:e2e": "npm run test:e2e:runtime && npm run test:e2e:full && npm run test:e2e:tech",
-    "test:data": "node --test tests/countries-geojson.test.mjs tests/protocol-health.test.mjs tests/venue-spread.test.mjs",
+    "test:data": "node --test tests/countries-geojson.test.mjs tests/protocol-health.test.mjs tests/venue-spread.test.mjs tests/tech-events-geocode.test.mjs",
     "test:sidecar": "node --test src-tauri/sidecar/local-api-server.test.mjs api/_cors.test.mjs api/youtube/embed.test.mjs api/cyber-threats.test.mjs",
     "test:e2e:visual:full": "VITE_VARIANT=full playwright test -g \"matches golden screenshots per layer and zoom\"",
     "test:e2e:visual:tech": "VITE_VARIANT=tech playwright test -g \"matches golden screenshots per layer and zoom\"",

@@ -165,7 +165,7 @@ const CITY_COORDS = {
   'tijuana': { lat: 32.5149, lng: -117.0382, country: 'Mexico' },
   'cancun': { lat: 21.1619, lng: -86.8515, country: 'Mexico' },
   'panama city': { lat: 8.9824, lng: -79.5199, country: 'Panama' },
-  'san jose': { lat: 9.9281, lng: -84.0907, country: 'Costa Rica' },
+  'san jose, costa rica': { lat: 9.9281, lng: -84.0907, country: 'Costa Rica' },
 
   // South America
   'sao paulo': { lat: -23.5505, lng: -46.6333, country: 'Brazil' },
@@ -187,7 +187,7 @@ const CITY_COORDS = {
 
   // Europe - UK & Ireland
   'london': { lat: 51.5074, lng: -0.1278, country: 'UK' },
-  'cambridge': { lat: 52.2053, lng: 0.1218, country: 'UK' },
+  'cambridge, uk': { lat: 52.2053, lng: 0.1218, country: 'UK' },
   'oxford': { lat: 51.7520, lng: -1.2577, country: 'UK' },
   'manchester': { lat: 53.4808, lng: -2.2426, country: 'UK' },
   'birmingham': { lat: 52.4862, lng: -1.8904, country: 'UK' },
@@ -466,14 +466,33 @@ const CITY_COORDS = {
   'hybrid': { lat: 0, lng: 0, country: 'Virtual', virtual: true },
 };
 
-function normalizeLocation(location) {
+// Country spellings a location string may use, mapped to the suffix the
+// qualified CITY_COORDS keys use.
+const COUNTRY_ALIASES = {
+  england: 'uk',
+  'united kingdom': 'uk',
+  'great britain': 'uk',
+  britain: 'uk',
+};
+
+export function normalizeLocation(location) {
   if (!location) return null;
 
   // Clean up the location string
-  let normalized = location.toLowerCase().trim();
+  let normalized = location.toLowerCase().trim().replace(/^hybrid:\s*/i, '');
 
-  // Remove common suffixes/prefixes
-  normalized = normalized.replace(/^hybrid:\s*/i, '');
+  // A city name shared by two countries keeps its bare key for the common
+  // tech-event venue and a "city, country" key for the other one, so the
+  // country the location names has to be tried before it is stripped below.
+  const named = normalized.split(',').map((part) => part.trim()).filter(Boolean);
+  for (const hint of named.slice(1)) {
+    const qualified = `${named[0]}, ${COUNTRY_ALIASES[hint] || hint}`;
+    if (CITY_COORDS[qualified]) {
+      return { ...CITY_COORDS[qualified], original: location };
+    }
+  }
+
+  // Remove common suffixes
   normalized = normalized.replace(/,\s*(usa|us|uk|canada)$/i, '');
 
   // Direct lookup
