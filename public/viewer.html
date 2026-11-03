@@ -50,6 +50,14 @@
   .brand:hover { color: #fff; }
   /* The model name is the page's h1: styled as a quiet header line, not a display heading. */
   .title { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 13.5px; font-weight: 500; color: #aeb6c4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Brand, title and both grade badges need ~400px on one line; on a phone the
+     title collapsed to nothing and the engine badge ran off the screen. Wrap the
+     badges onto their own right-aligned row and keep the title readable. */
+  @media (max-width: 560px) {
+    header.bar { flex-wrap: wrap; row-gap: 8px; }
+    .title { flex-basis: 140px; }
+    #sim-badge { margin-left: auto; }
+  }
   .stage { position: relative; flex: 1 1 auto; min-height: 0; }
   model-viewer {
     width: 100%; height: 100%;
@@ -331,10 +339,21 @@
   // swap to the ordinary ?src= view the moment the GLB lands, which also leaves a
   // shareable model link in the address bar.
   var job = params.get('job') || '';
-  if (!src && job) { watchJob(job); return; }
+  // Both grade badges show a loading skeleton the moment they connect, and only
+  // the checks at the end of this script move them on. Every early return below
+  // has no model to grade, so drop the badges there instead of leaving them
+  // promising a grade beside the empty, waiting or error state.
+  function dropGradeBadges() {
+    ['sim-badge', 'engine-qa-badge'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.remove();
+    });
+  }
+  if (!src && job) { dropGradeBadges(); watchJob(job); return; }
 
-  if (!src) { mv.classList.add('hidden'); foot.classList.add('hidden'); show(empty); return; }
+  if (!src) { dropGradeBadges(); mv.classList.add('hidden'); foot.classList.add('hidden'); show(empty); return; }
   if (!isHttps(src)) {
+    dropGradeBadges();
     // Nothing to download either: never leave a dead Download button behind.
     downloadEl.classList.add('hidden');
     fail('That model link is not a valid https URL. Open a viewer link whose ?src= points at an https .glb file.');
