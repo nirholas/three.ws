@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T05:37:25.207Z",
+	"generated_at": "2026-11-03T05:45:49.853Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4282,
+	"total": 4283,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -199,6 +199,16 @@
 			"title": "The service catalog AI agents read to find three.ws loads in about a second",
 			"summary": "The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.",
 			"link": "/changelog",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Viewer screenshots capture the model instead of a blank frame",
+			"summary": "Pressing P or choosing Screenshot in the 3D viewer could save an empty image with only the watermark on it. The viewer drew the frame, then waited for the watermark to download, and by then the browser had already cleared the canvas. It now has the watermark ready before it draws, so the saved PNG always shows the model you were looking at.",
+			"link": "/app",
 			"tags": [
 				"fix"
 			]
@@ -1535,16 +1545,6 @@
 			"title": "Coin intel funder map is now a 3D graph",
 			"summary": "The wallet network in the coin intel drawer renders as a GPU-instanced 3D force graph, with wallets sized by holdings and linked to their shared funder, a live-trades toggle, and reduced-motion support. Browsers without WebGL keep the 2D map.",
 			"link": "/coin-intel",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Copy any model as a GitHub README 3D block",
-			"summary": "Forge results, avatar pages, the avatar dashboard and model pages now have a Copy as GitHub README 3D action. It simplifies the model to a size GitHub renders and puts a stl code fence on your clipboard that GitHub shows as an interactive 3D viewer in any README, issue or pull request. The same converter is a free API (POST /api/readme-3d) and has a live page at /readme-3d.",
-			"link": "/readme-3d",
 			"tags": [
 				"feature"
 			]

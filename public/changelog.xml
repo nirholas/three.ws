@@ -159,6 +159,14 @@
 			<description>The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.</description>
 		</item>
 		<item>
+			<title>Viewer screenshots capture the model instead of a blank frame</title>
+			<link>https://three.ws/app</link>
+			<guid isPermaLink="false">2026-11-03:Viewer screenshots capture the model instead of a blank frame</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Pressing P or choosing Screenshot in the 3D viewer could save an empty image with only the watermark on it. The viewer drew the frame, then waited for the watermark to download, and by then the browser had already cleared the canvas. It now has the watermark ready before it draws, so the saved PNG always shows the model you were looking at.</description>
+		</item>
+		<item>
 			<title>A lock screen worth stopping at</title>
 			<link>https://three.ws/</link>
 			<guid isPermaLink="false">2026-11-02:A lock screen worth stopping at</guid>
