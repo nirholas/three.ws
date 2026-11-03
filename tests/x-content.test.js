@@ -526,13 +526,18 @@ describe('queue', () => {
 		const approved = queue.items.filter((row) => row.status === 'approved');
 		// Proof and review age out on the wall clock by design (the runner holds a
 		// stale item at tick time), so judging the committed queue at today's date
-		// would fail it for simply being a few weeks old. Judge it at the moment
-		// its newest review was recorded: copy, media, claims and article rules are
-		// still checked exactly, and only the age windows are made deterministic.
-		const reviewedAt = approved.map((row) => Date.parse(loadReview(root, row.id)?.reviewedAt)).filter(Number.isFinite);
-		const now = reviewedAt.length ? Math.max(...reviewedAt) : Date.now();
-		const { problems } = validateQueue(queue, root, { now });
-		for (const item of approved) expect(problems[item.id], item.id).toEqual([]);
+		// would fail it for simply being a few weeks old. Judge each item at the
+		// moment its own review was recorded: copy, media, claims, article and
+		// cross-item similarity rules are still checked exactly, and only the age
+		// windows are made deterministic. Using one shared clock (the newest
+		// review) made an item fail whenever a different item was re-reviewed.
+		const verdicts = new Map();
+		for (const item of approved) {
+			const reviewedAt = Date.parse(loadReview(root, item.id)?.reviewedAt);
+			const now = Number.isFinite(reviewedAt) ? reviewedAt : Date.now();
+			if (!verdicts.has(now)) verdicts.set(now, validateQueue(queue, root, { now }).problems);
+			expect(verdicts.get(now)[item.id], item.id).toEqual([]);
+		}
 	});
 
 	it('speeds a recording up without desyncing its captions, and pins a constant rate', () => {

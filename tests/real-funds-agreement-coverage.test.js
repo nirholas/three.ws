@@ -26,8 +26,6 @@ const EXEMPT = {
 	'api/launcher/me.js': 'reads wallet balances only',
 	'api/stage/index.js': 'ensures a wallet exists for a stage; no funds move',
 	'api/user/wallet/index.js': 'creates the master wallet and reads balances; sends go through the gated send.js',
-	'api/_mcp/resources.js': 'MCP resources are reads: a wallet signature lookup and the intent list; nothing signs or moves funds',
-	'api/cli/[action].js': 'device-link sign-in and whoami; reads the wallet address and balances only',
 	'api/agent-memory.js': 'signs memory records with the agent key; no transfer',
 	'api/agents/_id/_sub.js': 'config, reads, and message signing; no transfer',
 	'api/agents/_id/brain.js': 'agent key signs a digest; anchor gas is paid by the platform validator key',
