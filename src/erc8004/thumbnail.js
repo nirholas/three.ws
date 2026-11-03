@@ -21,11 +21,10 @@ import {
 	Color,
 	Box3,
 	Vector3,
-	SRGBColorSpace,
-	ACESFilmicToneMapping,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getDecoders } from '../viewer/internal.js';
+import { applyStudioLook } from '../render/index.js';
 import { applyThumbnailPose, sampleClipPose, THUMBNAIL_POSE_TIME, THUMBNAIL_POSE_URL } from '../thumbnail-pose.js';
 
 let _poseClipPromise = null;
@@ -71,11 +70,14 @@ export async function glbFileToThumbnail(
 	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
 	renderer.setPixelRatio(1);
 	renderer.setSize(size, size, false);
-	renderer.outputColorSpace = SRGBColorSpace;
-	renderer.toneMapping = ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 1.0;
 
 	const scene = new Scene();
+	const undoLook = applyStudioLook(renderer, scene, {
+		toneMapping: 'aces',
+		exposure: 1.0,
+		environmentIntensity: 0.7,
+		maxPixelRatio: false,
+	});
 	scene.background = new Color(background);
 	try {
 		const [buffer, { dracoLoader, ktx2Loader, meshoptDecoder }] = await Promise.all([
@@ -102,6 +104,7 @@ export async function glbFileToThumbnail(
 
 		return await renderPoster({ scene, root: gltf.scene, renderer, canvas, mimeType, quality });
 	} finally {
+		undoLook();
 		renderer.dispose();
 		scene.traverse((obj) => {
 			if (obj.geometry) obj.geometry.dispose?.();
@@ -128,7 +131,7 @@ async function renderPoster({ scene, root, renderer, canvas, mimeType, quality }
 	camera.position.set(center.x, center.y + boxSize.y * 0.05, center.z + boxSize.z / 2 + dist * 1.15);
 	camera.lookAt(center.x, center.y, center.z);
 
-	scene.add(new HemisphereLight(0xffffff, 0x444444, 2.0));
+	scene.add(new HemisphereLight(0xffffff, 0x444444, 1.0));
 	const dir = new DirectionalLight(0xffffff, 2.5);
 	dir.position.set(3, 10, 7);
 	scene.add(dir);

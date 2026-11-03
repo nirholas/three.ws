@@ -22,6 +22,7 @@
 import { log } from './shared/log.js';
 import { resolveDevR2Url } from './shared/dev-r2-proxy.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
+import { applyStudioLook } from './render/index.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -440,8 +441,14 @@ function boot(artifact) {
 function buildArtifactStage(scene, camera, renderer, artifact) {
 	// PBR glTF materials are authored for a filmic response; the house portrait
 	// is hand-lit and keeps the linear default.
-	renderer.toneMapping = THREE.ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 1.05;
+	// The shared studio environment gives metal and glossy materials something
+	// to reflect; the scene's strong coloured lights stay, so it is kept low.
+	applyStudioLook(renderer, scene, {
+		toneMapping: 'aces',
+		exposure: 1.05,
+		environmentIntensity: 0.5,
+		maxPixelRatio: false,
+	});
 
 	const pivot = new THREE.Group();
 	scene.add(pivot);

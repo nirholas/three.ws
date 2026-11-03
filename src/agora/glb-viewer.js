@@ -6,13 +6,14 @@
 
 import {
 	Scene, PerspectiveCamera, WebGLRenderer, Box3, Vector3, Group,
-	AmbientLight, DirectionalLight, HemisphereLight, Color, SRGBColorSpace,
-	ACESFilmicToneMapping, CylinderGeometry, MeshStandardMaterial, Mesh,
+	AmbientLight, DirectionalLight, HemisphereLight, Color,
+	CylinderGeometry, MeshStandardMaterial, Mesh,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { meshoptReady, dracoLoader } from '../game/avatar-rig.js';
+import { applyStudioLook, createRenderLoop } from '../render/index.js';
 
 // Reuse the app-wide draco decoder (vendored at /three/draco/gltf/) and meshopt
 // decoder so forge GLBs — which are often compressed — parse here too.
@@ -48,18 +49,19 @@ export default async function makeViewer(container, bytes) {
 	const camera = new PerspectiveCamera(45, width / height, 0.01, 1000);
 
 	const renderer = new WebGLRenderer({ antialias: true, alpha: false });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.setSize(width, height);
-	renderer.outputColorSpace = SRGBColorSpace;
-	renderer.toneMapping = ACESFilmicToneMapping;
-	renderer.toneMappingExposure = 1.0;
+	const undoLook = applyStudioLook(renderer, scene, {
+		toneMapping: 'aces',
+		exposure: 1.0,
+		environmentIntensity: 0.7,
+	});
 	container.replaceChildren(renderer.domElement);
 
-	scene.add(new AmbientLight(0xc8d4e8, 1.4));
+	scene.add(new AmbientLight(0xc8d4e8, 0.35));
 	const key = new DirectionalLight(0xffffff, 2.0);
 	key.position.set(3, 5, 4);
 	scene.add(key);
-	scene.add(new HemisphereLight(0x9fbad8, 0x2a2f3a, 0.7));
+	scene.add(new HemisphereLight(0x9fbad8, 0x2a2f3a, 0.4));
 
 	const root = new Group();
 	const model = gltf.scene || (gltf.scenes && gltf.scenes[0]);
@@ -98,15 +100,15 @@ export default async function makeViewer(container, bytes) {
 	controls.autoRotateSpeed = 1.1;
 	controls.update();
 
-	let raf = 0;
-	let alive = true;
-	const tick = () => {
-		if (!alive) return;
-		raf = requestAnimationFrame(tick);
-		controls.update();
-		renderer.render(scene, camera);
-	};
-	tick();
+	const loop = createRenderLoop({
+		renderer,
+		observe: container,
+		frame: () => {
+			controls.update();
+			renderer.render(scene, camera);
+		},
+	});
+	loop.start();
 
 	const ro = new ResizeObserver(() => {
 		const w = container.clientWidth || width;
@@ -121,8 +123,8 @@ export default async function makeViewer(container, bytes) {
 	const destroy = () => {
 		if (destroyed) return;
 		destroyed = true;
-		alive = false;
-		cancelAnimationFrame(raf);
+		loop.dispose();
+		undoLook();
 		ro.disconnect();
 		controls.dispose();
 		scene.traverse((n) => {
