@@ -3,12 +3,20 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
-			"title": "LiveKit avatars keep playing for visitors without a microphone",
+			"title": "Text to 3D no longer fails with \"Mesh missed\" when a GPU worker is busy",
 			"tags": [
 				"fix"
 			],
-			"summary": "An <agent-3d voice=\"livekit\"> embed used to report a failed connection whenever the visitor had no microphone or said no to the permission prompt, even though the room was joined and the avatar was already talking. It now joins in listen-only mode: the agent's voice plays and the avatar keeps lip-syncing and gesturing. Visitors who do have a microphone can still talk back.",
-			"link": "/docs/voice-framework-integrations"
+			"summary": "One slow GPU worker could trip a shared safety breaker and make every other 3D lane report as unreachable for 30 seconds at a time. Each worker now has its own breaker, and status checks no longer block new jobs, so a generation that is queued behind a busy worker is accepted instead of being rejected."
+		},
+		{
+			"date": "2026-11-03",
+			"title": "An open head unit: your agent beside CarPlay or Android Auto",
+			"tags": [
+				"feature"
+			],
+			"summary": "A new open-source head unit app puts a real CarPlay or Android Auto session on one half of a car screen and the three.ws Drive agent on the other, on a Raspberry Pi or any Linux box with a Carlinkit CPC200 dongle. With no dongle plugged in it says so plainly and shows the USB ids it is looking for. It is built and tested up to the USB port; the first run on real hardware is next. Drive also stops asking for your own agents when you are signed out, so a fresh head unit or phone loads the public agents without an error.",
+			"link": "/drive"
 		},
 		{
 			"date": "2026-11-03",

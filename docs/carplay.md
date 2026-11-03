@@ -145,14 +145,42 @@ That web view is never attached to a window, which means no animation frames, so
 turns the confirmation card off: a person who cannot see what they are approving is a
 recognizer being trusted with a lock, and the home safety doctrine refuses that outright.
 
-### Lane D: the open head unit (designed, not built)
+### Lane D: the open head unit (built to the USB boundary, hardware unverified)
 
 `node-carplay` plus a Carlinkit CPC200 dongle renders a real CarPlay or Android Auto session
 inside a browser surface we own, on a Raspberry Pi or any Linux box. In that lane there is no
 entitlement, no template vocabulary and no exclusive-map rule: the agent can stand beside
 the projected phone screen at full size. This is where the original idea, the agent as the
-face of the car, is legal today. It needs hardware to build against, so it is scoped and
-deliberately not half-built.
+face of the car, is legal today.
+
+It lives in [`apps/head-unit/`](../apps/head-unit/README.md): a Node service that owns the
+dongle through `node-carplay@4.1.0` (MIT, pinned, LICENSE quoted in the README) and streams
+H.264 and PCM over a loopback WebSocket, and a page that decodes the phone screen with
+WebCodecs on the driver's side and frames `/drive?surface=headunit` beside it. The dongle sits
+behind one interface (`open`, `close`, `onVideo`, `onAudio`, `onPhone`, `sendTouch`,
+`sendKey`), and the service runs a disconnected, probing, connected, error state machine with
+backoff and a manual retry. The Pi runbook (udev rule, user systemd unit, kiosk Chromium) is
+in the README and `apps/head-unit/deploy/`.
+
+**Verified, without a dongle:**
+
+- The state machine and the adapter, against a recorded dongle session built from
+  node-carplay's own test values and serialised by its own `MessageHeader`: absent, probing,
+  connected with a CarPlay phone over Wi-Fi, video, PCM, volume and audio commands, touch and
+  key bytes sent back, failure with 2, 4, 8 s backoff, the udev permission hint, replug.
+- H.264 parsing and the WebCodecs codec string on real libx264 baseline output.
+- The real server and WebSocket with an empty USB bus.
+- The page in Chromium with no dongle, at 1280x720 and 400x860: the "Connect a CarPlay dongle"
+  state with the ids `1314:1520` and `1314:1521`, the live re-check countdown, Check now, the
+  `/drive` agent loaded beside it, no console errors.
+- `/drive` now allows `http://localhost:*` and `http://127.0.0.1:*` as frame ancestors
+  (`tests/drive-head-unit-framing.test.js`), so the head unit can frame the production agent
+  once that is deployed. It was not yet deployed when this was written.
+
+**Not verified, because no dongle has touched this code:** that a CPC200 enumerates and
+completes the handshake, that a phone projects, that touch lands, that audio and the
+microphone work, wireless pairing, Android Auto, and anything on a Pi. The owner's first
+connection checklist is in [`apps/head-unit/README.md`](../apps/head-unit/README.md#first-connection-checklist).
 
 ### Explicitly not building
 
@@ -219,7 +247,7 @@ same class, which is what makes barge-in and "louder" real rather than decorativ
 | 4 | Android Auto: `CarAppService`, foreground-service web view, the same channel, the same four controls | **Done and compiled.** Needs the Desktop Head Unit and a phone to exercise on a car screen. |
 | 5 | The home lane reaching the car: guarded actions surfaced and gated on being parked | **Done.** `/api/chat`'s home tools already work from `/drive`; the confirmation card is wired and refused while moving. |
 | 6 | Android Automotive OS: `app-automotive` plus a `CarAppActivity` in its own build flavor | Scoped, not started. |
-| 7 | Lane D head unit: `node-carplay` beside the agent on a Pi | Scoped, needs a CPC200 dongle. |
+| 7 | Lane D head unit: `node-carplay` beside the agent on a Pi | **Built to the USB boundary** in `apps/head-unit/`: service, state machine, page, Pi runbook, tested against a recorded dongle session and verified in Chromium with no dongle. Needs a CPC200 dongle and a Pi for the first connection checklist. |
 
 ---
 
