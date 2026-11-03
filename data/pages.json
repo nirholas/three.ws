@@ -467,6 +467,14 @@
 					"added": "2026-10-23"
 				},
 				{
+					"path": "/docs/coin-control",
+					"title": "Docs · Coin Control",
+					"description": "How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-03"
+				},
+				{
 					"path": "/docs/backtest-integrity",
 					"title": "Docs · Backtest integrity",
 					"description": "How every strategy backtest is audited for look-ahead bias, pinned to a hashed dataset manifest, backed by price and candle canaries, and walled off from live trading code.",
