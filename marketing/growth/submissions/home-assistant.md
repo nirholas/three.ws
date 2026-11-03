@@ -1,7 +1,7 @@
-# Home Assistant submissions: HACS default store and home-assistant/brands
+# Home Assistant submissions: HACS default store
 
-Targets: [`hacs/default`](https://github.com/hacs/default) (the `integration` file) and
-[`home-assistant/brands`](https://github.com/home-assistant/brands) (`custom_integrations/three_ws/`).
+Target: [`hacs/default`](https://github.com/hacs/default) (the `integration` file). No
+`home-assistant/brands` PR is needed; see that section below.
 
 Ready for owner order 938. Built and validated end to end in work order 095; both submissions
 need a repository the owner must create first (`nirholas/three-ws-home-assistant`, per HACS's own
@@ -21,8 +21,8 @@ the "Never blocked" rule for a step that needs a third-party account/repository)
 - `custom_components/three_ws/brand/{icon,icon@2x,dark_icon,dark_icon@2x}.png`: real 256x256 and
   512x512 PNGs rendered from the existing `public/pwa-icon.svg` three.ws cube mark (the dark
   variant strips the background rect so it sits on an already-dark host UI). This satisfies
-  HACS's own `brands.py` check locally, and separately qualifies for a `home-assistant/brands`
-  submission (below), per Home Assistant 2026.3.0's local brand images feature.
+  HACS's own `brands.py` check locally and is the whole brand requirement, per Home Assistant
+  2026.3.0's local brand images feature.
 - [`scripts/export-hacs-repo.mjs`](../../../scripts/export-hacs-repo.mjs): builds the exact
   standalone-repository tree under `dist/hacs-export` (`--out` to choose another directory):
   the integration, `README.md`, `info.md`, `LICENSE` (Apache-2.0), `hacs.json`, and
@@ -76,8 +76,11 @@ the "Never blocked" rule for a step that needs a third-party account/repository)
 ### Step 2: open the pull request
 
 1. Fork `hacs/default`, branch from `master` (not `master` directly).
-2. Add `"nirholas/three-ws-home-assistant"` to the `integration` file, alphabetically between
-   `"nimroddolev/chime_tts"` and `"nishithdev/wled-taskmap"`.
+2. Add `"nirholas/three-ws-home-assistant"` to the `integration` file, between
+   `"NirBY/ha-mashov"` and `"Nischay-Pro/ha-zebra"` (re-checked 2026-11-03 against the live file:
+   4,563 entries, sorted case-insensitively, which the PR's `lint sorted` check enforces). The
+   neighbours move as other repositories land, so re-derive the spot on the day: insert the entry
+   and confirm the list still equals its case-insensitive sort.
 3. Open the PR against `hacs/default` using its pull request template, from the personal
    `nirholas` account (not an organization) so it stays editable.
 
@@ -90,28 +93,16 @@ the "Never blocked" rule for a step that needs a third-party account/repository)
 > inbound firewall rule, no Home Assistant credential ever leaves the house). Passes Hassfest and
 > HACS validation in its own CI, ships local brand images, and has a tagged release.
 
-## `home-assistant/brands`
+## `home-assistant/brands`: no pull request needed (re-checked 2026-11-03)
 
-### Step 1: open the pull request
-
-1. Fork `home-assistant/brands`, branch from `master`.
-2. Add four files under `custom_integrations/three_ws/`: `icon.png` (256x256), `icon@2x.png`
-   (512x512), `dark_icon.png` (256x256), `dark_icon@2x.png` (512x512). The exact bytes already
-   exist in this repository at
-   [`home-assistant-integration/custom_components/three_ws/brand/`](../../../home-assistant-integration/custom_components/three_ws/brand)
-   and need no regeneration, only copying.
-3. Open the PR from the personal `nirholas` account.
-
-**PR title:** `Add three_ws`
-
-**PR description:**
-
-> Brand images for `three_ws` (`nirholas/three-ws-home-assistant`), a Home Assistant custom
-> integration. Domain matches `manifest.json`. Icon only (no separate logo): a square mark, so
-> icon files alone are sufficient per the brands repository's own guidance. Note: the integration
-> also ships these same images locally under `custom_components/three_ws/brand/` (HA 2026.3.0's
-> local brand images feature), so this submission is a belt-and-suspenders addition for older HA
-> installs and the brands CDN, not a requirement for HACS inclusion.
+No submission. The brands repository's README now labels `custom_integrations/` a legacy folder
+("Since HA 2026.3.0, custom components can include their brand icons directly") and says custom
+integrations "ship their images in a `brand` folder of their own nowadays, instead of adding them
+to this repository". The `hacs/default` brands check looks for that local folder first, needs at
+least `icon.png`, and only falls back to `home-assistant/brands` when the folder is missing. The
+integration already ships all four images at
+[`home-assistant-integration/custom_components/three_ws/brand/`](../../../home-assistant-integration/custom_components/three_ws/brand),
+so the HACS PR stands on its own.
 
 ## Owner steps (not automatable here)
 
@@ -119,5 +110,3 @@ the "Never blocked" rule for a step that needs a third-party account/repository)
    `node scripts/export-hacs-repo.mjs`), set its description/topics/issues, confirm its two
    workflows pass, and cut a `v1.0.1` release (HACS default, Step 1).
 2. Fork and open the `hacs/default` PR with the title/description above (HACS default, Step 2).
-3. Fork and open the `home-assistant/brands` PR with the title/description above, copying the four
-   PNGs already sitting in this repository.

@@ -11,7 +11,9 @@ builds the exact standalone-repository tree. All five Definition of Done lines a
 real command output (hassfest, the real upstream HACS validators, a full real end-to-end container
 install with 18 real entities and a confirmed auto-reconnect, `npm test`, `npm run audit:docs`).
 What remains is creating `github.com/nirholas/three-ws-home-assistant`, cutting its `v1.0.1`
-release, and opening the `hacs/default` and `home-assistant/brands` pull requests, all logged as
+release, and opening the `hacs/default` pull request (re-checked 2026-11-03: hassfest still passes,
+the insertion point moved, and no `home-assistant/brands` PR is needed any more because that
+repository now tells custom integrations to ship a local `brand` folder, which this one does), all logged as
 row 58 in [_context/production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md)
 with the exact submission text in
 [marketing/growth/submissions/home-assistant.md](../../marketing/growth/submissions/home-assistant.md).
