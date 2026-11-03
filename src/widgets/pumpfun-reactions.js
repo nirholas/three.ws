@@ -368,7 +368,7 @@ function mintReaction(s) {
 
 function tradeReaction(s, ev) {
 	const usd = Number(ev?.amount_usd) || 0;
-	const isBuy = ev?.is_buy ?? ev?.isBuy ?? (ev?.txType === 'buy') ?? (ev?.type === 'buy');
+	const isBuy = ev?.is_buy ?? ev?.isBuy ?? (ev?.txType ?? ev?.type) === 'buy';
 	if (usd < 1000) return null;
 	if (isBuy) {
 		if (usd >= 50_000) {

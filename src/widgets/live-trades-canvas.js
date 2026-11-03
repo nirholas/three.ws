@@ -63,7 +63,7 @@ export async function fetchTrades(mint, limit = 20, fetchImpl = globalThis.fetch
 	if (!rawTrades) return null;
 	return rawTrades.map((t) => ({
 		signature: t.signature ?? t.tx ?? String(Math.random()),
-		isBuy: t.is_buy ?? t.isBuy ?? t.direction === 'buy' ?? true,
+		isBuy: t.is_buy ?? t.isBuy ?? (t.direction == null ? true : t.direction === 'buy'),
 		solAmount: Number(t.sol_amount ?? t.solAmount ?? 0),
 		usdValue: Number(t.usd_value ?? t.usdValue ?? t.sol_amount ?? 0),
 		timestamp: t.timestamp ?? t.block_time ?? Date.now() / 1000,

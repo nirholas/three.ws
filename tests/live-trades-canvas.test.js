@@ -68,6 +68,18 @@ describe('fetchTrades', () => {
 		const trades = await fetchTrades('mint', 20, makeMcpFetch(raw));
 		expect(trades[0].isBuy).toBe(false);
 	});
+
+	it('reads a buy from the direction field', async () => {
+		const raw = [{ signature: 'dir2', direction: 'buy', sol_amount: 0.5, usd_value: 75, timestamp: 1 }];
+		const trades = await fetchTrades('mint', 20, makeMcpFetch(raw));
+		expect(trades[0].isBuy).toBe(true);
+	});
+
+	it('defaults to a buy when the trade carries no side information', async () => {
+		const raw = [{ signature: 'nodir', sol_amount: 0.5, usd_value: 75, timestamp: 1 }];
+		const trades = await fetchTrades('mint', 20, makeMcpFetch(raw));
+		expect(trades[0].isBuy).toBe(true);
+	});
 });
 
 // ── filterNewTrades ─────────────────────────────────────────────────────────
