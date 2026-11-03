@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T05:04:03.742Z",
+	"generated_at": "2026-11-03T05:08:31.773Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -619,6 +619,18 @@
 					"title": "Approvals",
 					"description": "Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.",
 					"added": "2026-10-10",
+					"auth": null,
+					"indexable": false,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": "explore"
+				},
+				{
+					"path": "/coin-control",
+					"title": "Coin Control",
+					"description": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
+					"added": "2026-11-03",
 					"auth": null,
 					"indexable": false,
 					"tags": [],

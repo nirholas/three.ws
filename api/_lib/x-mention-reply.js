@@ -77,7 +77,7 @@ const HASHTAG_RE = /(^|[^\w])#\w+/;
 const HANDLE_RE = /(^|[^\w])@\w+/;
 // Names and tickers of coins people ask about. $THREE is the only coin we name.
 const OTHER_COIN_RE = /\b(?:bitcoin|btc|ethereum|ether|eth|dogecoin|doge|shib|pepe|bonk|wif|trump|melania|usdt|tether|bnb|xrp|ripple|cardano|ada|litecoin|ltc|polkadot|dot|avalanche|avax|chainlink|link|sui|aptos|toncoin|ton|hyperliquid|hype|memecoins?|altcoins?|shitcoins?|pump\.?fun|jupiter|jup|raydium|ray|orca|meteora)\b/i;
-const CONTROL_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F​-‏‪-‮⁠-⁩﻿]/;
+const CONTROL_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/;
 
 // The em and en dashes read as machine-written and are banned in everything we publish.
 const DASH_RE = /[\u2013\u2014]/;

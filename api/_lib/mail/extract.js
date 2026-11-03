@@ -15,7 +15,7 @@
 
 export const MIN_CONFIDENCE = 0.5;
 
-const INVISIBLE_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+const INVISIBLE_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
 
 const CODE_WORDS =
 	/\b(?:verification|verify|confirmation|confirm|security|authentication|login|log-in|sign-in|signin|one[- ]time|single[- ]use|access|activation|passcode|password|pin|otp|2fa|code)\b/i;

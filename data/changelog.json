@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "Coin Control: buy back, burn and reward holders with your coin's creator fees",
+			"summary": "Creators can now put the fees their agent's coin earns to work from one page. Set a rule to buy back and burn the coin each period (the burn uses exactly what the buy returned, read from the confirmed transaction), send SOL to the top holders split by size or by a lottery anyone can re-check, and post bounties paid from the agent wallet. Nothing runs until you confirm the exact terms, every send passes your spend limits, and every action appears with its Solana transaction on a public page holders can open, next to your verified X handle.",
+			"tags": [
+				"feature"
+			],
+			"link": "/coin-control"
+		},
+		{
+			"date": "2026-11-03",
+			"title": "Path-traced stills of any model or avatar, straight from the viewer",
+			"summary": "The 3D viewer can now render a physically based still of exactly what you are looking at: real soft shadows, colour bleeding between surfaces and reflections that see the rest of the scene, computed by a GPU path tracer rather than approximated. Press Shift+P or choose Path-traced render in the Display panel, watch the image converge on the canvas with a progress bar and Cancel, and the finished PNG downloads. Developers get the same render from the agent-3d element with renderPhotoreal() and from iframe embeds with the renderPhotoreal bridge action. The path tracer loads only when you ask for a render, so pages that never use it are no heavier.",
+			"tags": [
+				"feature"
+			],
+			"link": "/app"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "The A3S streaming avatar no longer turns into jagged shards as it refines",
 			"summary": "On the streaming avatar comparison page the A3S panel showed the right avatar for a moment, then collapsed into garbled, spiky geometry as the finer layers arrived, and sometimes blanked with a console error. The refinement step copied the wrong bytes out of the coarse model it was growing, so the original vertices were scrambled. It now reads those vertices correctly and refreshes the cached bounds, so the avatar sharpens in place and ends identical to the classic panel.",
 			"tags": [

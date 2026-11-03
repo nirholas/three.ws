@@ -71,9 +71,9 @@ export function parseAmount(raw, { currencyHint = null } = {}) {
 	// No currency marker anywhere means this is a quantity, a date, or a SKU.
 	if (!currency) return null;
 
-	const digits = text.match(/\d[\d.,   ]*\d|\d/);
+	const digits = text.match(/\d[\d.,\u202F\u00A0 ]*\d|\d/);
 	if (!digits) return null;
-	let body = digits[0].replace(/[   ]/g, '');
+	let body = digits[0].replace(/[\u202F\u00A0 ]/g, '');
 
 	const lastComma = body.lastIndexOf(',');
 	const lastDot = body.lastIndexOf('.');

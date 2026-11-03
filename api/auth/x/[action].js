@@ -157,7 +157,7 @@ export function decryptToken(ciphertext) {
 // Surfaces that start a connect for their own flow and want the browser back on
 // them. An allowlist, never a raw path, so the parameter cannot become an open
 // redirect.
-const RETURN_SURFACES = new Set(['/fee-bridge', '/settings/connections', '/x/claim']);
+const RETURN_SURFACES = new Set(['/fee-bridge', '/settings/connections', '/x/claim', '/coin-control']);
 
 function resolveReturnTo(value) {
 	return typeof value === 'string' && RETURN_SURFACES.has(value) ? value : null;

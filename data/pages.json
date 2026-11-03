@@ -441,6 +441,15 @@
 					"indexable": false
 				},
 				{
+					"path": "/coin-control",
+					"title": "Coin Control",
+					"description": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"added": "2026-11-03",
+					"indexable": false
+				},
+				{
 					"path": "/earnings",
 					"title": "Earnings",
 					"description": "One ledger for everything your agents earn: creator fees, skill sales, hires, royalties, invoices and realised trading PnL, each row linked to its Solana transaction, plus reinvest rules you confirm.",

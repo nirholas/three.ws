@@ -129,7 +129,7 @@ const RULES = [
 const COMMENT_DIRECTIVE = /\b(system|assistant|developer)\s*:|\byou are now\b|\b(send|transfer|sweep|drain|forward|move|upload)\b[^.\n]{0,40}\b(balance|wallet|funds|keys?|history|conversation|secrets?)\b/i;
 
 const BIDI_OR_TAG = /[‪-‮⁦-⁩]|[\u{E0000}-\u{E007F}]/u;
-const ZERO_WIDTH = /[​‌⁠-⁤﻿]/;
+const ZERO_WIDTH = /[\u200B\u200C\u2060-\u2064\uFEFF]/;
 const BASE64_BLOB = /[A-Za-z0-9+/]{300,}={0,2}/;
 
 const SPEND_RE = /\b(send|transfer|pay|tip|withdraw|swap|buy|sell|bridge|stake|deposit|mint|launch|ape)\b[^.\n]{0,50}\b(sol|usd[a-z]?|stablecoins?|tokens?|funds|lamports|coins?|\$\d)|\bx402\b|\bsendSol\b|\bwallet_send\b|\bsend_transfer\b/i;

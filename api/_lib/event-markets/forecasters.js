@@ -57,7 +57,7 @@ export function cleanRationale(input) {
 	if (input == null) return null;
 	if (typeof input !== 'string') throw new ForecastError('validation_error', 'rationale must be text');
 	const text = input
-		.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f​-‏‪-‮⁠-⁤﻿]/g, '')
+		.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u200B-\u200F\u202A-\u202E\u2060-\u2064\uFEFF]/g, '')
 		.replace(/\r\n?/g, '\n')
 		.replace(/[ \t]+/g, ' ')
 		.replace(/\n{3,}/g, '\n\n')

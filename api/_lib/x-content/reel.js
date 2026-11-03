@@ -448,7 +448,7 @@ export async function captionsThatClip(scenario) {
 	}
 }
 
-const visibleText = () => (document.querySelector('main')?.innerText || document.body?.innerText || '').replace(/[ \t ]+/g, ' ');
+const visibleText = () => (document.querySelector('main')?.innerText || document.body?.innerText || '').replace(/[ \t\u00A0]+/g, ' ');
 
 // ── The take ────────────────────────────────────────────────────────────────
 class Take {

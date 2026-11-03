@@ -1488,6 +1488,14 @@
 			"dest": "/earnings.html"
 		},
 		{
+			"src": "/coin-control/?",
+			"dest": "/coin-control.html"
+		},
+		{
+			"src": "/coin-control/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
+			"dest": "/coin-control.html"
+		},
+		{
 			"src": "/invoices/?",
 			"dest": "/commerce.html"
 		},

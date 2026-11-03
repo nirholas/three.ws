@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Coin Control</title>
+			<link>https://three.ws/coin-control</link>
+			<guid isPermaLink="false">2026-11-03:Coin Control</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.</description>
+		</item>
+		<item>
 			<title>3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset</title>
 			<link>https://three.ws/live</link>
 			<guid isPermaLink="false">2026-11-03:3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset</guid>
@@ -39,6 +47,14 @@
 			<description>One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed for contributors and new visitors. The README also gained copy-paste MCP install blocks for Claude Code, Claude Desktop, Cursor, VS Code, Codex CLI, Gemini CLI and Windsurf.</description>
 		</item>
 		<item>
+			<title>Coin Control: buy back, burn and reward holders with your coin's creator fees</title>
+			<link>https://three.ws/coin-control</link>
+			<guid isPermaLink="false">2026-11-03:Coin Control: buy back, burn and reward holders with your coin's creator fees</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Creators can now put the fees their agent's coin earns to work from one page. Set a rule to buy back and burn the coin each period (the burn uses exactly what the buy returned, read from the confirmed transaction), send SOL to the top holders split by size or by a lottery anyone can re-check, and post bounties paid from the agent wallet. Nothing runs until you confirm the exact terms, every send passes your spend limits, and every action appears with its Solana transaction on a public page holders can open, next to your verified X handle.</description>
+		</item>
+		<item>
 			<title>Every partner logo now sits in the site footer</title>
 			<link>https://three.ws/partners</link>
 			<guid isPermaLink="false">2026-11-03:Every partner logo now sits in the site footer</guid>
@@ -69,6 +85,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.</description>
+		</item>
+		<item>
+			<title>Path-traced stills of any model or avatar, straight from the viewer</title>
+			<link>https://three.ws/app</link>
+			<guid isPermaLink="false">2026-11-03:Path-traced stills of any model or avatar, straight from the viewer</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The 3D viewer can now render a physically based still of exactly what you are looking at: real soft shadows, colour bleeding between surfaces and reflections that see the rest of the scene, computed by a GPU path tracer rather than approximated. Press Shift+P or choose Path-traced render in the Display panel, watch the image converge on the canvas with a progress bar and Cancel, and the finished PNG downloads. Developers get the same render from the agent-3d element with renderPhotoreal() and from iframe embeds with the renderPhotoreal bridge action. The path tracer loads only when you ask for a render, so pages that never use it are no heavier.</description>
 		</item>
 		<item>
 			<title>Smoother edges on every 3D model and avatar viewer</title>

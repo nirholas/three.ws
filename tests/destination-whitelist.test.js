@@ -165,7 +165,7 @@ describe('address normalisation', () => {
 	});
 
 	it.each([
-		['zero-width space', (a) => `${a.slice(0, 10)}​${a.slice(10)}`],
+		['zero-width space', (a) => `${a.slice(0, 10)}\u200B${a.slice(10)}`],
 		['Cyrillic lookalike letter', (a) => a.replace(/[a-z]/, 'а')],
 		['full-width digit', (a) => `１${a.slice(1)}`],
 		['embedded newline', (a) => `${a.slice(0, 20)}\n${a.slice(20)}`],
@@ -196,7 +196,7 @@ describe('address normalisation', () => {
 describe('labels', () => {
 	it('strips markup, links and control characters and caps the length', () => {
 		const out = wl.sanitizeLabel('<b>Ops</b> https://evil.example/x​\n`rm -rf`  wallet');
-		expect(out).not.toMatch(/[<>`]|https?:|​|\n/);
+		expect(out).not.toMatch(/[<>`]|https?:|\u200B|\n/);
 		expect(wl.sanitizeLabel('x'.repeat(500)).length).toBeLessThanOrEqual(60);
 		expect(wl.sanitizeLabel('   ')).toBeNull();
 	});

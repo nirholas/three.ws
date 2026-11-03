@@ -938,6 +938,7 @@ const appConfig = {
 				commerce: resolve(__dirname, 'pages/commerce.html'),
 				earnings: resolve(__dirname, 'pages/earnings.html'),
 				'agent-earnings': resolve(__dirname, 'pages/agent-earnings.html'),
+				'coin-control': resolve(__dirname, 'pages/coin-control.html'),
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
@@ -2527,6 +2528,9 @@ const appConfig = {
 						filePath = resolve(root, 'pages/earnings.html');
 					else if (!filePath && /^\/agents\/[^/.]+\/earnings\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-earnings.html');
+					// /coin-control (owner) and /coin-control/:mint (public proof).
+					else if (!filePath && /^\/coin-control(?:\/[1-9A-HJ-NP-Za-km-z]{32,44})?\/?$/.test(path))
+						filePath = resolve(root, 'pages/coin-control.html');
 					else if (!filePath && /^\/compete\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/compete.html');
 					// /launch/intents/:id → one funded pump.fun launch intent (quote, funding,

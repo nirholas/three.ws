@@ -1534,7 +1534,8 @@ class App {
 
 	_initWidgetBridge() {
 		// MintScene bridge: { id, action, input } envelope from any parent frame.
-		// Handles exportGLB and takeScreenshot (returning base64 data to caller).
+		// Handles exportGLB, takeScreenshot and renderPhotoreal (path-traced
+		// still; input { samples?, bounces? }), returning base64 data to caller.
 		window.addEventListener('message', (event) => {
 			const data = event.data;
 			if (
@@ -1545,7 +1546,7 @@ class App {
 			)
 				return;
 			// Only handle our specific action verbs to avoid intercepting unrelated messages.
-			if (data.action !== 'exportGLB' && data.action !== 'takeScreenshot') return;
+			if (!['exportGLB', 'takeScreenshot', 'renderPhotoreal'].includes(data.action)) return;
 			if (!event.origin || event.origin === 'null') return;
 			if (!this._parentOrigin) this._parentOrigin = event.origin;
 			const replyOrigin = event.origin;
@@ -1568,6 +1569,21 @@ class App {
 				} catch (e) {
 					reply(null, e.message);
 				}
+				return;
+			}
+			if (data.action === 'renderPhotoreal') {
+				const input = data.input && typeof data.input === 'object' ? data.input : {};
+				viewer
+					.renderPhotoreal({ samples: input.samples, bounces: input.bounces })
+					.then((blob) => blob.arrayBuffer())
+					.then((buf) => {
+						const arr = new Uint8Array(buf);
+						let binary = '';
+						for (let i = 0; i < arr.length; i += 0x8000)
+							binary += String.fromCharCode(...arr.subarray(i, i + 0x8000));
+						reply(btoa(binary));
+					})
+					.catch((e) => reply(null, String(e?.message || e)));
 				return;
 			}
 			if (data.action === 'exportGLB') {

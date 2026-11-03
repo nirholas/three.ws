@@ -82,7 +82,7 @@ function trustBadge(score) {
 function volumeCell(e) {
 	if (e.volume_24h_usd != null) return esc(formatUsd(e.volume_24h_usd));
 	if (e.volume_24h_btc != null) {
-		return `${e.volume_24h_btc.toLocaleString('en-US', { maximumFractionDigits: 0 })} BTC`;
+		return `${e.volume_24h_btc.toLocaleString('en-US', { maximumFractionDigits: 0 })}\u00A0BTC`;
 	}
 	return '—';
 }

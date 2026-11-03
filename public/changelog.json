@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-03T05:04:03.782Z",
+	"generated_at": "2026-11-03T05:08:31.839Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Coin Control",
+			"summary": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
+			"link": "/coin-control",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-03",
 			"type": "update",
@@ -51,6 +61,16 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "Coin Control: buy back, burn and reward holders with your coin's creator fees",
+			"summary": "Creators can now put the fees their agent's coin earns to work from one page. Set a rule to buy back and burn the coin each period (the burn uses exactly what the buy returned, read from the confirmed transaction), send SOL to the top holders split by size or by a lottery anyone can re-check, and post bounties paid from the agent wallet. Nothing runs until you confirm the exact terms, every send passes your spend limits, and every action appears with its Solana transaction on a public page holders can open, next to your verified X handle.",
+			"link": "/coin-control",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "Every partner logo now sits in the site footer",
 			"summary": "The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.",
 			"link": "/partners",
@@ -87,6 +107,16 @@
 			"link": "/docs",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Path-traced stills of any model or avatar, straight from the viewer",
+			"summary": "The 3D viewer can now render a physically based still of exactly what you are looking at: real soft shadows, colour bleeding between surfaces and reflections that see the rest of the scene, computed by a GPU path tracer rather than approximated. Press Shift+P or choose Path-traced render in the Display panel, watch the image converge on the canvas with a progress bar and Cancel, and the finished PNG downloads. Developers get the same render from the agent-3d element with renderPhotoreal() and from iframe embeds with the renderPhotoreal bridge action. The path tracer loads only when you ask for a render, so pages that never use it are no heavier.",
+			"link": "/app",
+			"tags": [
+				"feature"
 			]
 		},
 		{

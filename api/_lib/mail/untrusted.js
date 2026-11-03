@@ -22,7 +22,7 @@ const FENCE_CLOSE = '</untrusted_email>';
 // Control characters other than tab and newline can hide text from a human
 // reviewer while a model still reads it. Bidi overrides and zero-width
 // characters likewise.
-const INVISIBLE_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+const INVISIBLE_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
 
 /**
  * Make sender-controlled text safe to embed inside a fence: strip invisible

@@ -51,7 +51,7 @@ const PAY_LABEL = { credits: 'Account credits', wallet: 'Agent wallet (USDC on S
 
 // Bidirectional overrides, zero-width and other invisible format characters:
 // the tricks a hostile sender uses to make text read differently than it is.
-const HIDDEN_CHARS = /[­؜᠎​-‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+const HIDDEN_CHARS = /[\u00AD\u061C\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
 
 const state = {
 	agent: null,

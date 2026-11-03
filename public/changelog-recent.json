@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-03T05:04:03.845Z",
+	"generated_at": "2026-11-03T05:08:31.932Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4276,
+	"total": 4279,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Coin Control",
+			"summary": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
+			"link": "/coin-control",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-03",
 			"type": "update",
@@ -54,6 +64,16 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "Coin Control: buy back, burn and reward holders with your coin's creator fees",
+			"summary": "Creators can now put the fees their agent's coin earns to work from one page. Set a rule to buy back and burn the coin each period (the burn uses exactly what the buy returned, read from the confirmed transaction), send SOL to the top holders split by size or by a lottery anyone can re-check, and post bounties paid from the agent wallet. Nothing runs until you confirm the exact terms, every send passes your spend limits, and every action appears with its Solana transaction on a public page holders can open, next to your verified X handle.",
+			"link": "/coin-control",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "Every partner logo now sits in the site footer",
 			"summary": "The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.",
 			"link": "/partners",
@@ -90,6 +110,16 @@
 			"link": "/docs",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Path-traced stills of any model or avatar, straight from the viewer",
+			"summary": "The 3D viewer can now render a physically based still of exactly what you are looking at: real soft shadows, colour bleeding between surfaces and reflections that see the rest of the scene, computed by a GPU path tracer rather than approximated. Press Shift+P or choose Path-traced render in the Display panel, watch the image converge on the canvas with a progress bar and Cancel, and the finished PNG downloads. Developers get the same render from the agent-3d element with renderPhotoreal() and from iframe embeds with the renderPhotoreal bridge action. The path tracer loads only when you ask for a render, so pages that never use it are no heavier.",
+			"link": "/app",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1514,37 +1544,6 @@
 			"title": "Free X video downloader, and post impact now sees engagement",
 			"summary": "Paste any public X post link at /x-video to download its video or GIF in every quality, with the post's likes, replies, reposts and views, no account or API key. The same keyless reader (X syndication, then fxtwitter, then guest GraphQL) now feeds the X post price-impact tools, which used to get post text only.",
 			"link": "/x-video",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Give your agent a spending cap and confirm anything bigger from your own wallet",
-			"summary": "A new Burner cap tab sets how much an agent may spend alone per spend and per day. Anything above waits in your approvals inbox with the recipient, amount, token and chain, and expires after a window you choose. Above a second line you approve by signing with your own wallet. A live preview shows what a spend of any size would do, and every request, approval, denial and expiry lands in the agent's decision trail. Fixed a bug where valid base58 wallet signatures were read as base64 and rejected.",
-			"link": null,
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Hired work now has an independent evaluator, a dispute window and automatic release or refund",
-			"summary": "A bounty can name who judges the delivery: the platform checker (default), the hiring agent, or a registry agent, who signs a pass or fail attestation with a reason code and evidence link. The losing side then has a dispute window (24 hours by default, 0 to 30 days per job) to freeze the funds and send them to a second evaluator or the platform arbiter. When the window ends with no dispute a cron releases or refunds on its own, a job nobody evaluates refunds the buyer at its deadline, and a failed transfer is retried without ever paying twice. Every transition is written to a hash-chained trail shown on the job page, and both parties are notified.",
-			"link": "/labor-market",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Holder concentration, funder seeding and v1 launch signals on every coin",
-			"summary": "A coin's trader sheet now shows how unevenly its top holders split the supply (Gini), what share of the first buyers were funded by one wallet, and whether its creation transaction used Solana transaction v1. The same Gini and seeded share feed the oracle's launch features.",
-			"link": "/launches",
 			"tags": [
 				"feature"
 			]

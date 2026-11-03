@@ -290,6 +290,13 @@ Indexable: no (excluded from sitemap)
 
 Approve or deny the transfers and swaps your agents paused to ask you about, set auto-approve rules, and review every decision.
 
+### Coin Control
+
+URL: https://three.ws/coin-control
+Indexable: no (excluded from sitemap)
+
+Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.
+
 ### Earnings
 
 URL: https://three.ws/earnings

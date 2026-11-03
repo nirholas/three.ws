@@ -80,7 +80,7 @@ describe('recipient allowlist', () => {
 describe('untrusted mail fence', () => {
 	it('strips invisible characters and defuses an early fence close', () => {
 		const out = neutralize(HOSTILE);
-		expect(out).not.toMatch(/[​‮]/);
+		expect(out).not.toMatch(/[\u200B\u202E]/);
 		expect(out).not.toContain('</untrusted_email>');
 		expect(out).toContain('[fence marker removed]');
 	});

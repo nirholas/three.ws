@@ -189,7 +189,7 @@ them; `trellis2` stays the default image-to-3D lane either way.
 | TripoSG weights | `VAST-AI/TripoSG` at `2c1c516d22d58db486a058d98d31bb6177344e06` (about 7.9 GB) |
 | Hunyuan3D 2 Mini weights | `tencent/Hunyuan3D-2mini` at `f90a0f7df7d5e6f71109cf333f6a95a0ae3194a6` (turbo DiT and VAE only, about 4.2 GB) |
 | torch | 2.6.0 + cu124, torchvision 0.21.0 |
-| Node | v20.18.1, sha256 checked |
+| Node | v22.23.4, sha256 checked (22.12+ needed: glTF Transform's CommonJS build loads the ESM-only property-graph) |
 | meshoptimizer runtime | `meshopt/package-lock.json` (`@gltf-transform/*` 4.5.1, `meshoptimizer` 1.3.0) |
 | rembg u2net.onnx | sha256 `8d10d2f3bb75ae3b6d527c77944fc5e7dcd94b29809d47a739a7a728a912b491` |
 | gltfpack | v1.2, sha256 checked |

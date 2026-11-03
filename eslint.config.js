@@ -92,34 +92,33 @@ export default [
 			},
 		},
 		rules: {
-			// This codebase predates linting, so the first pass is a warn-level
-			// baseline: it surfaces issues without failing the gate, and the team
-			// ratchets rules up to error as files are cleaned. High-value
-			// structural rules that are already clean (no-dupe-keys, no-func-assign)
-			// stay at error so regressions are caught immediately.
+			// This codebase predates linting, so the first pass was a warn-level
+			// baseline that the team ratchets to error as files are cleaned. Every
+			// rule at error below has zero findings across the repo, so a new one
+			// fails the gate immediately. The warn rules still carry a backlog.
 			'no-unused-vars': 'warn',
 			// Browser code may report real failures with console.warn/error;
 			// stray console.log is what this catches. Node code is exempted below.
 			'no-console': ['warn', { allow: ['warn', 'error'] }],
-			'no-undef': 'warn',
 			'no-empty': 'warn',
-			'no-constant-condition': 'warn',
-			'no-constant-binary-expression': 'warn',
-			'no-prototype-builtins': 'warn',
 			'no-useless-escape': 'warn',
-			'no-useless-assignment': 'off',
-			'no-cond-assign': 'warn',
-			'no-fallthrough': 'warn',
-			'no-irregular-whitespace': 'warn',
-			'no-control-regex': 'off',
-			'no-unreachable': 'warn',
-			'no-unassigned-vars': 'warn',
-			'no-async-promise-executor': 'warn',
-			'no-misleading-character-class': 'warn',
-			'no-unsafe-finally': 'warn',
-			'no-unused-private-class-members': 'warn',
-			'no-unused-labels': 'warn',
 			'preserve-caught-error': 'warn',
+			'no-useless-assignment': 'off',
+			'no-control-regex': 'off',
+			'no-undef': 'error',
+			'no-constant-condition': 'error',
+			'no-constant-binary-expression': 'error',
+			'no-prototype-builtins': 'error',
+			'no-cond-assign': 'error',
+			'no-fallthrough': 'error',
+			'no-irregular-whitespace': 'error',
+			'no-unreachable': 'error',
+			'no-unassigned-vars': 'error',
+			'no-async-promise-executor': 'error',
+			'no-misleading-character-class': 'error',
+			'no-unsafe-finally': 'error',
+			'no-unused-private-class-members': 'error',
+			'no-unused-labels': 'error',
 		},
 	},
 	{
@@ -167,7 +166,7 @@ export default [
 		},
 		rules: {
 			'no-unused-vars': 'warn',
-			'no-undef': 'warn',
+			'no-undef': 'error',
 		},
 	},
 ];

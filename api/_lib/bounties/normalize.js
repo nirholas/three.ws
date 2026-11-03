@@ -39,7 +39,7 @@ export function htmlToText(html) {
 	for (const el of root.querySelectorAll('p,li,h1,h2,h3,h4,h5,h6,div,tr')) el.insertAdjacentHTML('afterend', '\n');
 	for (const el of root.querySelectorAll('li')) el.insertAdjacentHTML('afterbegin', '- ');
 	return root.textContent
-		.replace(/ /g, ' ')
+		.replace(/\u00A0/g, ' ')
 		.replace(/[ \t]+/g, ' ')
 		.replace(/\n\s*\n\s*\n+/g, '\n\n')
 		.trim();
