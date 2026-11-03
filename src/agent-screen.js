@@ -74,7 +74,7 @@ import { mountScreenControl } from './agent-screen-control.js';
 import { LipSyncAnalyser } from './lip-sync-analyser.js';
 import { createVisemeDriver } from './runtime/lipsync.js';
 import { classifyTaskInput, ensureSessionId } from './shared/ask-routing.js';
-import { createCollabGraph } from './shared/collab-graph.js';
+import { createTeamTaskPanel } from './agent-screen-team.js';
 
 // One meshopt-aware loader, built once. Optimized agent avatars ship with
 // EXT_meshopt_compression, so the decoder must be wired before the loader can
@@ -95,6 +95,10 @@ function getAvatarLoader() {
 
 const params = new URLSearchParams(location.search);
 const agentId = params.get('agentId') || '';
+
+// Live Team Task graph: stream frames and backfilled log entries carrying
+// `meta.collab` are handed to it (see the createAgentScreenClient callbacks).
+const teamTask = createTeamTaskPanel();
 
 const noAgentEl = document.getElementById('asc-no-agent');
 const stageEl = document.getElementById('asc-stage');
