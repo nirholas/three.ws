@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T03:00:44.345Z",
+	"generated_at": "2026-11-03T03:05:19.993Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4266,
+	"total": 4267,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -38,6 +38,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Pages fit a phone screen, and small buttons are easier to tap",
+			"summary": "A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.",
+			"link": "/docs",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1537,16 +1547,6 @@
 			"link": "/earnings",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Oracle's smart-wallet prior now reads the live database",
-			"summary": "The cold-start wallet prior behind Oracle's pedigree pillar is loaded from the daily-seeded wallet_reputation table instead of a committed June snapshot, so it tracks the current gmgn.ai rankings. It is cached in-process with a bounded refresh, keeps the last good rows if the database blips, and serves an empty prior (and logs it) rather than inventing wallets.",
-			"link": "/docs/oracle",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

@@ -6227,6 +6227,12 @@ SKILL-MD 1.0: every paid HTTP route on three.ws with its price, parameters, and 
 
 Product launches, integrations, and announcements from three.ws.
 
+### The Three.ws User Group Meets Inside the World Again on November 6
+
+URL: https://three.ws/news/ibm-user-group-meetup-3
+
+Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser.
+
 ### three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace
 
 URL: https://three.ws/news/microsoft-partnership-marketplace

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T02:51:53.351Z",
+	"generated_at": "2026-11-03T03:05:19.936Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -12348,6 +12348,18 @@
 			"title": "News",
 			"description": "Product launches, integrations, and announcements from three.ws.",
 			"pages": [
+				{
+					"path": "/news/ibm-user-group-meetup-3",
+					"title": "The Three.ws User Group Meets Inside the World Again on November 6",
+					"description": "Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
 				{
 					"path": "/news/microsoft-partnership-marketplace",
 					"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
