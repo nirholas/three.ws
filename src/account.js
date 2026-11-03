@@ -2,7 +2,7 @@
 // Keeps the UI code in app.js/avatar-creator.js clean.
 
 import { identifyUser, resetIdentity } from './analytics.js';
-import { apiFetch, consumeCsrfToken } from './api.js';
+import { apiFetch, consumeCsrfToken, redirectToLogin } from './api.js';
 import { log } from './shared/log.js';
 
 // Re-export for back-compat — many modules still `import { apiFetch } from

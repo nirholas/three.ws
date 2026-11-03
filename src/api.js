@@ -115,7 +115,7 @@ export async function consumeCsrfToken() {
 	return freshCsrfToken();
 }
 
-function redirectToLogin() {
+export function redirectToLogin() {
 	if (typeof location === 'undefined') return;
 	if (/^\/login(\/|$|\?)/.test(location.pathname)) return;
 	const next = location.pathname + location.search + location.hash;
