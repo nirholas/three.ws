@@ -54,7 +54,7 @@ import {
 	expireStaleConfirmations,
 	mintConfirmation,
 } from './confirm.js';
-import { entityInScope, listMembers, listMembershipHomes, outOfScopeEntities, requireMembership } from './members.js';
+import { entityInScope, listMembers, listMembershipHomes, outOfScopeEntities, requireMembership, scopedCallRefusal } from './members.js';
 import { HOME_RUNTIME_ERR, withHome } from './runtime.js';
 import { listGrants, logHomeAction } from './store.js';
 
@@ -502,6 +502,28 @@ async function performCall({ domain, service, data }, run, { toolName, extra = {
 	// Role scope, before the gate: a guest scoped to the guest room may not act
 	// on the front door at all, confirmation or no confirmation.
 	if (run.scoped) {
+		const refusal = scopedSelectorRefusal(domain, data, run.scope, plan.targets);
+		if (refusal) {
+			logHomeAction({
+				homeId: run.homeId,
+				userId: run.userId,
+				actor: run.actor,
+				channel: run.channel,
+				action: `${domain}.${service}`,
+				entityIds: targetIds,
+				guarded: false,
+				outcome: 'refused',
+				detail: { reason: refusal, role: run.role, tool: toolName },
+			});
+			return err(
+				'out_of_scope',
+				403,
+				`The ${run.role} role in this home can only act on entities it was given, by name or through a granted area. This call ${
+					refusal === 'service_not_scopable' ? `uses ${domain}, which reaches beyond the entities it names` : 'targets something the role was not given'
+				}. Ask the household owner to widen the scope.`,
+				{ home: { id: run.homeId }, reason: refusal },
+			);
+		}
 		const outside = outOfScopeEntities(run.scope, plan.targets);
 		if (outside.length) {
 			logHomeAction({
@@ -699,6 +721,7 @@ export function resolveTargets(bridge, data = {}) {
 			state: known?.state ?? state?.state ?? 'unavailable',
 			attributes: known?.attributes || state?.attributes || {},
 			areaId: areaId || null,
+			deviceId: registryByEntity.get(entityId)?.device_id || null,
 		});
 	};
 
@@ -717,6 +740,28 @@ export function resolveTargets(bridge, data = {}) {
 	}
 
 	return [...picked.values()];
+}
+
+/**
+ * Why a scoped member's call is refused before entity scope is compared, or
+ * null. The resolved targets come from this module's copy of the registries;
+ * Home Assistant expands selectors against its own, so a selector this module
+ * cannot see inside is refused rather than trusted:
+ *
+ *   - a domain that reaches beyond entity_id (scene, script, ...) or a call
+ *     that resolves to nothing ("every light") is refused outright;
+ *   - floor_id is never allowed, and an area_id must be an area the scope names;
+ *   - a device_id must resolve to at least one entity.
+ */
+function scopedSelectorRefusal(domain, data, scope, targets) {
+	const base = scopedCallRefusal(domain, targets);
+	if (base) return base;
+	if (toList(data.floor_id).length) return 'selector_out_of_scope';
+	const areas = new Set(scope?.areas || []);
+	if (toList(data.area_id).some((id) => !areas.has(id))) return 'selector_out_of_scope';
+	const resolvedDevices = new Set(targets.map((t) => t.deviceId).filter(Boolean));
+	if (toList(data.device_id).some((id) => !resolvedDevices.has(id))) return 'selector_out_of_scope';
+	return null;
 }
 
 function toList(value) {
