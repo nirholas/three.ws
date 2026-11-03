@@ -41,14 +41,38 @@ const EXCEPTIONS = new Map([
 	],
 ]);
 
+/**
+ * Registry probes that deliberately hit a FREE read endpoint. They never meet a
+ * 402 challenge, so the paid-contract checks below do not apply; instead the
+ * handler must serve the caller's verb and refuse another one with a 405.
+ */
+const FREE_PROBES = new Map([
+	['GET /api/x402/did', 'public W3C DID document (the paid canary is the POST on the same route)'],
+	['GET /api/x402/glb-optimization-report', 'free operational read of the glb_optimizations catalog feed'],
+]);
+
+/**
+ * Routes with a free daily lane in front of the x402 rail: an unpaid POST that
+ * carries a claim spends a free-quota slot and runs the real search+LLM chain, so
+ * it answers 200. The handler documents a claim-less body as the discovery probe
+ * and answers it with the 402 challenge, so that is what this test sends; the
+ * caller's real body is still validated against the schema the challenge carries.
+ */
+const FREE_LANE_ROUTES = new Set(['/api/x402/fact-check']);
+
 const ajv = new Ajv2020({ strict: false, allErrors: true, coerceTypes: true });
 addFormats(ajv);
 
 /** Run a real handler against a stub socket and return what it wrote. */
-async function drive(handler, { method, path, query }) {
+async function drive(handler, { method, path, query, body: callBody }) {
 	const qs = new URLSearchParams(query).toString();
 	const headers = {};
 	let body;
+	// The Cloud Run server drains the request stream through body-parser and leaves
+	// the bytes on req.rawBody before any handler runs (see readBody in
+	// api/_lib/http.js). A stub with no body at all would leave readBody waiting on
+	// a stream that never ends, so a POST carries what the real caller would send.
+	const rawBody = method === 'POST' ? Buffer.from(JSON.stringify(callBody ?? {})) : undefined;
 	const res = {
 		statusCode: 200,
 		headersSent: false,
@@ -74,7 +98,13 @@ async function drive(handler, { method, path, query }) {
 	const req = {
 		method,
 		url: qs ? `${path}?${qs}` : path,
-		headers: { host: 'three.ws', 'user-agent': 'contract-test', 'x-forwarded-for': '203.0.113.7' },
+		headers: {
+			host: 'three.ws',
+			'user-agent': 'contract-test',
+			'x-forwarded-for': '203.0.113.7',
+			...(rawBody ? { 'content-type': 'application/json' } : {}),
+		},
+		...(rawBody ? { rawBody } : {}),
 		socket: { remoteAddress: '203.0.113.7' },
 		query: { ...query },
 		on() {},
@@ -166,7 +196,20 @@ describe('autonomous registry and ring agents: caller/endpoint contract', () => 
 				continue;
 			}
 			const mod = await import(/* @vite-ignore */ pathToFileURL(file).href);
-			const out = await drive(mod.default, call).catch((err) => ({ error: err }));
+			if (FREE_PROBES.has(`${call.method} ${call.path}`)) {
+				const served = await drive(mod.default, call).catch((err) => ({ error: err }));
+				const wrongVerb = await drive(mod.default, { ...call, method: 'DELETE' }).catch((err) => ({ error: err }));
+				if (served.error || wrongVerb.error) {
+					problems.push(`${label}: free probe handler threw or hung: ${(served.error || wrongVerb.error).message}`);
+				} else if (served.status === 405) {
+					problems.push(`${label}: free probe answered 405 to the verb the caller sends`);
+				} else if (wrongVerb.status !== 405) {
+					problems.push(`${label}: free probe answered ${wrongVerb.status} to a DELETE, expected 405`);
+				}
+				continue;
+			}
+			const probe = FREE_LANE_ROUTES.has(call.path) ? { ...call, body: {} } : call;
+			const out = await drive(mod.default, probe).catch((err) => ({ error: err }));
 			if (out.error) {
 				problems.push(`${label}: handler threw or hung: ${out.error.message}`);
 				continue;

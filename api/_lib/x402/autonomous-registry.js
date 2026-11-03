@@ -446,8 +446,8 @@ const SELF_ENDPOINTS = [
 		extractSignal: null,
 	},
 
-	// GLB optimization catalog feed — a zero-param GET that pays for and reads the
-	// full optimization-opportunity report. Broadens real coverage to the
+	// GLB optimization catalog feed: a zero-param GET that reads the free
+	// optimization-opportunity report. Broadens real coverage to the
 	// glb-optimization-report endpoint without any fixture: no required params, no
 	// side effects, idempotent. Slow cadence — the catalog moves gradually.
 	{
