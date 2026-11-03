@@ -11,6 +11,8 @@
  *   } → 202 { job_id, status }
  *
  *   GET  /api/forge-remesh?job=<id>
+ *   GET  /api/forge-remesh?job=<id>&mirror=r2  (copy a finished GLB into first-party storage;
+ *     the response then carries durable:boolean and bytes)
  *     → { job_id, status, result_url?, texture_url?, face_count?, quad_ratio?, textured?, mode?, error? }
  *
  * Routes to workers/remesh (GCP Cloud Run) when GCP_REMESH_URL is set.
@@ -20,6 +22,8 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
+import { mirrorToR2 } from './_lib/mirror-r2.js';
+import { createHash } from 'node:crypto';
 
 // Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
 // and run several hundred chars — a 64-char cap 400s every poll.
@@ -100,7 +104,7 @@ async function startJob(req, res) {
 	}
 }
 
-async function pollJob(req, res, jobId) {
+async function pollJob(req, res, jobId, { mirror = false } = {}) {
 	if (!JOB_ID_RE.test(jobId)) {
 		return json(res, 400, { error: 'invalid_job', message: 'Malformed job id.' });
 	}
@@ -132,10 +136,22 @@ async function pollJob(req, res, jobId) {
 			message: err?.message || 'Could not read the mesh-processing job.',
 		});
 	}
+	// Opt-in first-party copy (forge-in-world): the room's asset allow-list refuses
+	// the worker's own URL, so a world-bound GLB is mirrored into our storage and
+	// the response says whether that copy landed. The key is derived from the job
+	// id so a repeated poll overwrites the same object instead of orphaning copies.
+	let resultUrl = result.resultGlbUrl || null;
+	let mirrored = null;
+	if (mirror && result.status === 'done' && resultUrl) {
+		const key = `forge/world-props/${createHash('sha256').update(jobId).digest('hex').slice(0, 24)}.glb`;
+		mirrored = await mirrorToR2(resultUrl, key, 'glb');
+		resultUrl = mirrored.url;
+	}
 	return json(res, 200, {
 		job_id: jobId,
 		status: result.status,
-		result_url: result.resultGlbUrl || null,
+		result_url: resultUrl,
+		...(mirrored ? { durable: mirrored.durable, bytes: mirrored.bytes } : {}),
 		texture_url: result.textureUrl || null,
 		face_count: typeof result.faceCount === 'number' ? result.faceCount : null,
 		quad_ratio: typeof result.quadRatio === 'number' ? result.quadRatio : null,
@@ -154,5 +170,5 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const jobId = (url.searchParams.get('job') || '').trim();
 	if (!jobId) return json(res, 400, { error: 'missing_job', message: 'Pass ?job=<id> to poll.' });
-	return pollJob(req, res, jobId);
+	return pollJob(req, res, jobId, { mirror: url.searchParams.get('mirror') === 'r2' });
 });
