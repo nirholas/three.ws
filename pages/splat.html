@@ -56,7 +56,7 @@
 			.sp-head p { color: var(--text-2, #a8a8a8); font-size: 15px; line-height: 1.6; margin: 0; max-width: 640px; }
 			.sp-head a { color: var(--text, #f6f6f6); }
 
-			.sp-layout { display: grid; grid-template-columns: 1fr 300px; gap: 18px; margin-top: 28px; align-items: start; }
+			.sp-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; margin-top: 28px; align-items: start; }
 
 			/* Stage */
 			.sp-stage {
@@ -168,7 +168,7 @@
 			.sp-note { font-size: 11.5px; color: var(--text-3, #8a8a8a); line-height: 1.55; }
 
 			@media (max-width: 860px) {
-				.sp-layout { grid-template-columns: 1fr; }
+				.sp-layout { grid-template-columns: minmax(0, 1fr); }
 			}
 
 			/* Annotation hotspot markers, projected onto the live canvas */

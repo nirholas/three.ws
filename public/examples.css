@@ -77,6 +77,9 @@
 
 .exg-grid {
 	display: grid;
+	/* minmax(0, 1fr), not the implicit auto column: an auto track sizes to its
+	   widest code sample, which pushed cards to 1100px on a phone. */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 24px;
 	margin-top: 40px;
 }

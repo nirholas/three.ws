@@ -3408,7 +3408,7 @@ a.cv-liq-item:focus-visible {
 .mkt-cols {
 	display: grid;
 	gap: 2rem;
-	grid-template-columns: 1fr;
+	grid-template-columns: minmax(0, 1fr);
 	align-items: start;
 }
 @media (min-width: 1024px) {

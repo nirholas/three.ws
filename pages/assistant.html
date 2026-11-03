@@ -81,12 +81,13 @@
 
 			.builder {
 				display: grid;
-				grid-template-columns: 1fr;
+				/* minmax(0, 1fr) so the snippet card's code cannot widen the column past a phone. */
+				grid-template-columns: minmax(0, 1fr);
 				gap: 24px;
 				margin-top: 44px;
 			}
 			@media (min-width: 860px) {
-				.builder { grid-template-columns: 420px 1fr; align-items: start; }
+				.builder { grid-template-columns: 420px minmax(0, 1fr); align-items: start; }
 			}
 
 			.card {

@@ -180,11 +180,11 @@
 
 	.layout {
 		display: grid;
-		grid-template-columns: 260px 1fr;
+		grid-template-columns: 260px minmax(0, 1fr);
 		gap: 28px;
 		padding: 24px 0 56px;
 	}
-	@media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+	@media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 
 	aside.filters {
 		background: var(--panel);

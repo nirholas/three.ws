@@ -67,8 +67,8 @@
 			h3{font-size:15px;font-weight:650;margin-bottom:6px}
 
 			.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
-			.grid-2{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
-			@media(max-width:820px){.grid-2{grid-template-columns:1fr}}
+			.grid-2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:18px;align-items:start}
+			@media(max-width:820px){.grid-2{grid-template-columns:minmax(0,1fr)}}
 
 			label.field{display:block;margin-bottom:14px}
 			label.field > span{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px}

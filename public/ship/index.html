@@ -52,7 +52,7 @@
 	details.sl-commits > summary:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 3px; border-radius: 4px; }
 	details.sl-commits > summary::before { content: '+'; display: inline-block; width: 14px; text-align: center; color: var(--ink-dim); }
 	details.sl-commits[open] > summary::before { content: '-'; }
-	.sl-commit { display: grid; grid-template-columns: 74px 1fr auto; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed color-mix(in srgb, var(--stroke) 70%, transparent); }
+	.sl-commit { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px dashed color-mix(in srgb, var(--stroke) 70%, transparent); }
 	.sl-commit:last-child { border-bottom: none; }
 	.sl-sha { font-family: var(--font-mono); font-size: 12px; color: var(--ink-faint); text-decoration: none; }
 	.sl-sha:hover, .sl-sha:focus-visible { color: var(--accent); text-decoration: underline; }
@@ -76,7 +76,7 @@
 	.sl-error { color: var(--ink-dim); font-size: 15px; line-height: 1.6; }
 	.sl-error a { color: var(--ink); }
 	@media (max-width: 560px) {
-		.sl-commit { grid-template-columns: 66px 1fr; }
+		.sl-commit { grid-template-columns: 66px minmax(0, 1fr); }
 		.sl-audience { grid-column: 2; justify-self: start; }
 		.sl-reasons { margin-left: 0; }
 	}

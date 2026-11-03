@@ -57,7 +57,7 @@
 .dev-plans-error p { margin: 0 0 14px; font-size: 14px; }
 .dev-plans-how-grid {
 	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 16px;
 }
 .dev-plans-how-card {
@@ -121,7 +121,7 @@
 	.dev-plans-tiers { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 760px) {
-	.dev-plans-how-grid { grid-template-columns: 1fr; }
+	.dev-plans-how-grid { grid-template-columns: minmax(0, 1fr); }
 	.dev-plans-h2 { font-size: 24px; }
 }
 @media (max-width: 520px) {

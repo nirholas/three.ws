@@ -150,7 +150,9 @@
 }
 @media (max-width: 880px) {
 	.dio-stage-wrap {
-		grid-template-columns: 1fr;
+		/* minmax(0, 1fr): the stage's aspect-ratio plus min-height otherwise
+		   transfers a 576px minimum width and runs past a phone screen. */
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
