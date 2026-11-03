@@ -58,6 +58,22 @@ describe('event client verdict', () => {
 		expect(v.reasons[0]).toMatch(/crashed/);
 	});
 
+	// Playwright's WebKit on Linux rasterises WebGL on CPU threads inside the page
+	// process. /play's world starves requestAnimationFrame there until a sync GL
+	// call blocks the main thread for minutes. That is the harness engine, not
+	// /play, and must not be reported as a crash (an iOS memory kill) or a pass.
+	it('reports a page frozen by a starved software renderer as unmeasured', () => {
+		const v = judgeRun(cleanRun({ engine: 'webkit', unresponsive: { atMs: 29000, rendererStarved: true } }), LIMITS);
+		expect(v.status).toBe('unmeasured');
+		expect(v.reasons[0]).toMatch(/software renderer/);
+	});
+
+	it('fails a page that stopped answering while frames were still being drawn', () => {
+		const v = judgeRun(cleanRun({ unresponsive: { atMs: 41000, rendererStarved: false } }), LIMITS);
+		expect(v.status).toBe('fail');
+		expect(v.reasons[0]).toMatch(/stopped answering/);
+	});
+
 	it('fails when the boot watchdog swapped the loader for its error card', () => {
 		const v = judgeRun(cleanRun({ bootError: 'The world failed to load. Retry', worldVisibleMs: null }), LIMITS);
 		expect(v.status).toBe('fail');

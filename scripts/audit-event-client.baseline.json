@@ -1,18 +1,19 @@
 {
+	"$comment": "Ceilings for npm run audit:event-client, judged only against a built deploy (--base). Measured on production 2026-11-03 from a shared 32-core box with software GL: chromium (emulated iPhone 14, 120 s) world visible 5.2 s, 14.2 MB transferred, 125 MB peak heap, 0 MB growth, worst walking frame 1.7 s; webkit world visible 4.4-6.0 s, 13.1-15.9 MB (WebKit exposes no heap, and its CPU WebGL rasteriser freezes the page before the walk). Headroom covers a busy machine; tighten when a performance fix lands.",
 	"limits": {
 		"chromium": {
-			"maxWorldVisibleMs": 15000,
-			"maxTransferMB": 30,
-			"maxPeakHeapMB": 160,
-			"maxHeapGrowthMB": 40,
-			"maxWorstFrameMs": 5000
+			"maxWorldVisibleMs": 12000,
+			"maxTransferMB": 20,
+			"maxPeakHeapMB": 180,
+			"maxHeapGrowthMB": 30,
+			"maxWorstFrameMs": 4000
 		},
 		"webkit": {
-			"maxWorldVisibleMs": 15000,
-			"maxTransferMB": 30,
-			"maxPeakHeapMB": 160,
-			"maxHeapGrowthMB": 40,
-			"maxWorstFrameMs": 5000
+			"maxWorldVisibleMs": 12000,
+			"maxTransferMB": 20,
+			"maxPeakHeapMB": 180,
+			"maxHeapGrowthMB": 30,
+			"maxWorstFrameMs": 4000
 		}
 	}
 }

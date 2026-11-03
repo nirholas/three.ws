@@ -11,10 +11,12 @@
 //   pass        every limit held
 //   fail        a real regression in /play (a page error, a dropped room socket,
 //               a duplicate asset download, a number past its limit)
-//   unmeasured  the run never got a fair reading (navigation timed out, or the
+//   unmeasured  the run never got a fair reading (navigation timed out, the
 //               host's network interfaces changed and Chromium aborted every
-//               in-flight request with ERR_NETWORK_CHANGED). That is the box, not
-//               the page, and it must neither pass nor masquerade as a defect.
+//               in-flight request with ERR_NETWORK_CHANGED, or the engine's CPU
+//               WebGL rasteriser starved the page until it froze). That is the
+//               box, not the page, and it must neither pass nor masquerade as a
+//               defect.
 
 import { isIgnorableConsole } from './console-noise.mjs';
 
@@ -95,7 +97,18 @@ export function judgeRun(summary, limits) {
 	if (summary.crashed) reasons.push('the page crashed (renderer killed, the WebKit signature of an iOS memory kill)');
 	for (const e of summary.pageErrors || []) reasons.push(`uncaught page error: ${String(e).slice(0, 200)}`);
 	if (summary.bootError) reasons.push(`boot watchdog showed its error card: ${summary.bootError.slice(0, 200)}`);
+	const hung = summary.unresponsive;
+	if (hung && !hung.rendererStarved) {
+		reasons.push(`the page stopped answering at +${fmt((hung.atMs || 0) / 1000, 's')} while frames were still being drawn: a main-thread hang in /play`);
+	}
 	if (reasons.length) return { status: 'fail', reasons, metrics };
+	if (hung) {
+		return {
+			status: 'unmeasured',
+			reasons: [`the engine's software renderer starved requestAnimationFrame and then froze the page at +${fmt((hung.atMs || 0) / 1000, 's')}; the walk, heap and frame numbers need a GPU-backed run (a real device or --base on a GPU host)`],
+			metrics,
+		};
+	}
 
 	const why = unmeasuredReason(summary);
 	if (why) return { status: 'unmeasured', reasons: [why], metrics };

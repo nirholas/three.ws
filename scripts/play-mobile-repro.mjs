@@ -40,6 +40,10 @@ const summary = {
 	worldVisibleMs: null,
 	bootError: null,
 	crashed: false,
+	// Set when the page stopped answering in-page reads. rendererStarved means
+	// requestAnimationFrame had already stopped while timers still ran: the
+	// engine's CPU WebGL rasteriser, not /play, froze the page.
+	unresponsive: null,
 	pageErrors: [],
 	consoleErrors: [],
 	consoleWarnings: [],
@@ -67,8 +71,10 @@ const ctx = await browser.newContext({ ...devices[DEVICE] });
 await ctx.addInitScript(() => {
 	window.__frameRec = false;
 	window.__frameDeltas = [];
+	window.__rafTicks = 0;
 	let last = 0;
 	const tick = (t) => {
+		window.__rafTicks++;
 		if (window.__frameRec && last) window.__frameDeltas.push(t - last);
 		last = t;
 		requestAnimationFrame(tick);
@@ -198,21 +204,62 @@ try {
 // 'crash') must end the run with a recorded verdict, never an uncaught throw
 // that leaves no summary behind.
 const pageGone = (err) => /has been closed|Target crashed|Page crashed/i.test(String(err));
+const halted = () => summary.crashed || summary.unresponsive != null;
+// rAF ticks (with page time) from the last two answered reads, to tell a
+// starved renderer (timers answer, frames barely advance) from a main thread
+// stuck in our code (frames were flowing right up to the freeze).
+let rafSeen = { prev: null, last: null };
+const STARVED_FPS = 2;
+function recentFps() {
+	const { prev, last } = rafSeen;
+	if (!last) return null;
+	const from = prev || { ticks: 0, t: 0 };
+	const secs = (last.t - from.t) / 1000;
+	return secs > 0 ? (last.ticks - from.ticks) / secs : null;
+}
+const ASK_TIMEOUT_MS = 20000;
+class Unresponsive extends Error {}
+// Every in-page read is bounded: a frozen page otherwise parks page.evaluate
+// for as long as the process lives, and the run never writes its summary.
+function ask(fn, arg) {
+	return bounded(page.evaluate(fn, arg));
+}
+// Input dispatch waits for the page to take the event, so it is bounded too.
+async function bounded(work) {
+	let timer;
+	try {
+		return await Promise.race([
+			work,
+			new Promise((_, rej) => { timer = setTimeout(() => rej(new Unresponsive('no answer')), ASK_TIMEOUT_MS); }),
+		]);
+	} finally {
+		clearTimeout(timer);
+	}
+}
 const markGone = (err) => {
+	if (err instanceof Unresponsive) {
+		if (summary.unresponsive) return true;
+		const fps = recentFps();
+		const rendererStarved = fps != null && fps < STARVED_FPS;
+		summary.unresponsive = { atMs: Date.now() - t0, rendererStarved, fps: fps == null ? null : Math.round(fps * 10) / 10 };
+		console.log(at(), '[PAGE UNRESPONSIVE]', JSON.stringify(summary.unresponsive));
+		return true;
+	}
 	if (!pageGone(err)) return false;
 	if (!summary.crashed) console.log(at(), '[PAGE GONE]', String(err).split('\n')[0].slice(0, 160));
 	summary.crashed = true;
 	return true;
 };
-for (let i = 0; i < 6 && !summary.crashed; i++) {
+for (let i = 0; i < 6 && !halted(); i++) {
 	try {
 		await page.waitForTimeout(2500);
-		const clicked = await page.evaluate(() => {
+		const { clicked, raf } = await ask(() => {
 			const btn = [...document.querySelectorAll('button')]
 				.find((b) => /^(continue|enter the world|got it|start|close|skip)$/i.test(b.textContent.trim()) && b.offsetParent);
-			if (btn) { btn.click(); return btn.textContent.trim(); }
-			return null;
+			if (btn) btn.click();
+			return { clicked: btn ? btn.textContent.trim() : null, raf: { ticks: window.__rafTicks, t: performance.now() } };
 		});
+		rafSeen = { prev: rafSeen.last, last: raf };
 		if (clicked) console.log(at(), '[action] dismissed', clicked);
 	} catch (err) {
 		if (!markGone(err)) console.log(at(), '[dismiss failed]', String(err).slice(0, 160));
@@ -221,10 +268,10 @@ for (let i = 0; i < 6 && !summary.crashed; i++) {
 
 const deadline = Date.now() + RUN_MS;
 let lastDom = '';
-while (Date.now() < deadline && !summary.crashed) {
+while (Date.now() < deadline && !halted()) {
 	try {
 		await page.waitForTimeout(3000);
-		const snap = await page.evaluate(() => {
+		const snap = await ask(() => {
 			const loader = document.getElementById('kx-loading');
 			const bootErr = loader && loader.querySelector('.kx-boot-error');
 			const mem = performance.memory
@@ -237,10 +284,12 @@ while (Date.now() < deadline && !summary.crashed) {
 				loading: !!(loader && !loader.classList.contains('kx-hidden')),
 				bootError: bootErr ? bootErr.textContent.slice(0, 200) : null,
 				heapMB: mem,
+				raf: { ticks: window.__rafTicks, t: performance.now() },
 				toasts: [...document.querySelectorAll('[class*="toast"]')].map((n) => n.textContent.trim().slice(0, 100)),
 			};
 		});
-		const key = JSON.stringify({ ...snap, heapMB: undefined });
+		rafSeen = { prev: rafSeen.last, last: snap.raf };
+		const key = JSON.stringify({ ...snap, heapMB: undefined, raf: undefined });
 		if (key !== lastDom) { console.log(at(), '[dom]', JSON.stringify(snap)); lastDom = key; }
 		else if (snap.heapMB != null) console.log(at(), '[heap]', snap.heapMB, 'MB · transferred', (bytes / 1048576).toFixed(1), 'MB');
 		if (snap.bootError) summary.bootError = snap.bootError;
@@ -262,18 +311,18 @@ while (Date.now() < deadline && !summary.crashed) {
 // Walk the plaza with the frame sampler on: forward, strafe, turn, the way a
 // visitor explores. Keyboard input works in the emulated phone too, and it is
 // the one input path both engines deliver identically.
-if (WALK_MS > 0 && summary.worldVisibleMs != null && !summary.crashed) {
+if (WALK_MS > 0 && summary.worldVisibleMs != null && !halted()) {
 	try {
-		await page.evaluate(() => { window.__frameDeltas = []; window.__frameRec = true; });
+		await ask(() => { window.__frameDeltas = []; window.__frameRec = true; });
 		const pattern = [['KeyW', 3000], ['KeyD', 1200], ['KeyW', 2500], ['KeyA', 1200], ['KeyS', 1500]];
 		const walkEnd = Date.now() + WALK_MS;
 		for (let i = 0; Date.now() < walkEnd; i++) {
 			const [key, ms] = pattern[i % pattern.length];
-			await page.keyboard.down(key);
+			await bounded(page.keyboard.down(key));
 			await page.waitForTimeout(Math.min(ms, Math.max(0, walkEnd - Date.now())));
-			await page.keyboard.up(key);
+			await bounded(page.keyboard.up(key));
 		}
-		const deltas = await page.evaluate(() => { window.__frameRec = false; return window.__frameDeltas; });
+		const deltas = await ask(() => { window.__frameRec = false; return window.__frameDeltas; });
 		if (deltas.length) {
 			const sorted = [...deltas].sort((a, b) => a - b);
 			summary.frames = {
@@ -287,7 +336,7 @@ if (WALK_MS > 0 && summary.worldVisibleMs != null && !summary.crashed) {
 		if (!markGone(err)) console.log(at(), '[walk failed]', String(err).slice(0, 200));
 	}
 }
-await worldVisible.catch(() => {});
+if (!halted()) await worldVisible.catch(() => {});
 
 console.log('\n=== transfer totals ===');
 console.log('total', (bytes / 1048576).toFixed(1), 'MB');
@@ -315,7 +364,8 @@ for (const [k, [n, c]] of [...byPath].sort((a, b) => b[1][0] - a[1][0]).slice(0,
 }
 
 try {
-	const glb = await page.evaluate(() => window.__glbLoads || []);
+	if (halted()) throw new Error('page is gone or frozen, no in-page traces to read');
+	const glb = await ask(() => window.__glbLoads || []);
 	console.log('\n=== GLB loads (' + glb.length + ') ===');
 	const seen = new Set();
 	for (const g of glb) {
@@ -323,7 +373,7 @@ try {
 		const line = '  ' + g.url.replace(/^https?:\/\/[^/]+/, '').slice(0, 70) + '  <-  ' + frames.slice(0, 220);
 		if (!seen.has(line)) { seen.add(line); console.log(line); }
 	}
-	const traces = await page.evaluate(() => window.__clipFetches || []);
+	const traces = await ask(() => window.__clipFetches || []);
 	// A duplicate is the same asset URL requested more than once by page code:
 	// the second request is the loader failing to reuse what it already has.
 	summary.duplicateFetches = duplicateDownloads([...glb, ...traces]);
@@ -343,8 +393,10 @@ try {
 	console.log('[trace read failed]', String(err).slice(0, 160));
 }
 
-if (process.env.SHOT && !summary.crashed) await page.screenshot({ path: process.env.SHOT }).catch(() => {});
+if (process.env.SHOT && !halted()) await page.screenshot({ path: process.env.SHOT }).catch(() => {});
 summary.transferMB = Math.round((bytes / 1048576) * 10) / 10;
 writeSummary();
 closing = true;
-await browser.close().catch(() => {});
+// A frozen page can also park browser.close(); the summary is already on disk.
+await Promise.race([browser.close().catch(() => {}), new Promise((r) => setTimeout(r, 15000))]);
+process.exit(0);
