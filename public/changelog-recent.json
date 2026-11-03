@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T19:26:40.400Z",
+	"generated_at": "2026-11-03T19:49:09.726Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4300,
+	"total": 4301,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -183,6 +183,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Forged items in /play land where you place their hologram",
+			"summary": "Forging an item inside a /play world now gives you a hologram to place straight away. It shows the real forge progress above it with a Cancel button, and when the model is ready it materializes on that exact spot for everyone in the server. If a forge fails, the hologram becomes a marker with the reason, Retry and Dismiss, and nothing comes out of your build budget. Forged models are held to a size ceiling that suits your device (phones get a lighter one), oversized results are simplified automatically, and the world itself refuses models it cannot load or that are too large. The Forge form lists what you made this session and gives an honest wait: about 90 seconds usually, up to 6 minutes when the lane is busy.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1540,16 +1550,6 @@
 			"title": "Docs · X post reader and free video tool",
 			"summary": "One keyless reader for public X posts, shared by the price-impact tools and the free X video page: how it fetches, what it returns and where it is used.",
 			"link": "/docs/x-video",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
-			"title": "Docs: Agent self-onboarding",
-			"summary": "An agent signs itself up with a Solana key and no email, gets an account, a wallet and an API key, and buys a paid plan with one x402 payment. Challenge format, errors, limits and the CLI.",
-			"link": "/docs/agent-self-onboarding",
 			"tags": [
 				"launch"
 			]

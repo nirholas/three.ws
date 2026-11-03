@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T19:26:40.099Z",
+	"generated_at": "2026-11-03T19:49:09.647Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -180,6 +180,16 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Forged items in /play land where you place their hologram",
+			"summary": "Forging an item inside a /play world now gives you a hologram to place straight away. It shows the real forge progress above it with a Cancel button, and when the model is ready it materializes on that exact spot for everyone in the server. If a forge fails, the hologram becomes a marker with the reason, Retry and Dismiss, and nothing comes out of your build budget. Forged models are held to a size ceiling that suits your device (phones get a lighter one), oversized results are simplified automatically, and the world itself refuses models it cannot load or that are too large. The Forge form lists what you made this session and gives an honest wait: about 90 seconds usually, up to 6 minutes when the lane is busy.",
+			"link": "/play",
+			"tags": [
+				"feature"
 			]
 		},
 		{
