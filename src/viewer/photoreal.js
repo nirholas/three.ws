@@ -115,9 +115,9 @@ function loadExrEquirect(path) {
 }
 
 /** The equirect that matches what the live viewer is lit by, or null for none. */
-async function environmentEquirect(viewer, entry) {
+async function environmentEquirect(renderer, entry) {
 	if (!entry || entry.id === '') return null;
-	if (entry.id === 'neutral') return bakeRoomEquirect(viewer.renderer);
+	if (entry.id === 'neutral') return bakeRoomEquirect(renderer);
 	return loadExrEquirect(entry.path);
 }
 
@@ -135,7 +135,7 @@ function snapshot(canvas) {
  * Path-trace the viewer's current frame into a PNG.
  *
  * @param {import('../viewer.js').Viewer} viewer
- * @param {{ samples?: number, bounces?: number, onProgress?: (p: { samples: number, total: number }) => void, signal?: AbortSignal, environment?: { id: string, path?: string } }} [opts]
+ * @param {{ samples?: number, bounces?: number, onProgress?: (p: { samples: number, total: number }) => void, signal?: AbortSignal, environment?: { id: string, path?: string }, renderer?: import('three').WebGLRenderer }} [opts]
  * @returns {Promise<Blob>}
  */
 export async function renderPhotoreal(viewer, opts = {}) {
@@ -145,7 +145,10 @@ export async function renderPhotoreal(viewer, opts = {}) {
 	if (viewer._contextLost) throw new Error('The graphics context is unavailable; try again in a moment');
 
 	const { WebGLPathTracer } = await import('three-gpu-pathtracer');
-	const { renderer, scene } = viewer;
+	// The tracer is WebGL2-only. A WebGPU viewer passes a dedicated offscreen
+	// WebGL2 renderer here; the scene graph is shared, the GPU resources are not.
+	const renderer = opts.renderer ?? viewer.renderer;
+	const { scene } = viewer;
 	const camera = viewer.activeCamera;
 
 	viewer._suspended = true;
@@ -163,7 +166,7 @@ export async function renderPhotoreal(viewer, opts = {}) {
 	let equirect = null;
 	let tracer = null;
 	try {
-		equirect = await environmentEquirect(viewer, environment);
+		equirect = await environmentEquirect(renderer, environment);
 		scene.environment = equirect;
 		// The studio backdrop is the PMREM of the same room; show its equirect
 		// twin. Solid colours and transparency carry over unchanged.

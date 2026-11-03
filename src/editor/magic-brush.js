@@ -128,6 +128,12 @@ export class MagicBrush {
 		this._guiCtrl = null;
 
 		this._onPointerDown = this._onPointerDown.bind(this);
+		// A WebGPU device loss moves the viewer onto a fresh WebGL canvas
+		// (Viewer._fallBackToWebGL), which carries the old canvas's styles.
+		this._onCanvasReplaced = ({ detail }) => {
+			detail.previous.removeEventListener('pointerdown', this._onPointerDown, true);
+			detail.canvas.addEventListener('pointerdown', this._onPointerDown, true);
+		};
 		this._onPointerMove = this._onPointerMove.bind(this);
 		this._onPointerUp = this._onPointerUp.bind(this);
 		this._onKey = this._onKey.bind(this);
@@ -179,6 +185,7 @@ export class MagicBrush {
 			// Capture phase so we intercept the pointer BEFORE OrbitControls'
 			// own listener and can stop it from starting an orbit mid-stroke.
 			canvas.addEventListener('pointerdown', this._onPointerDown, true);
+			this.viewer.el?.addEventListener('viewer-canvas-replaced', this._onCanvasReplaced);
 			this._prevTouchAction = canvas.style.touchAction;
 			canvas.style.touchAction = 'none';
 			if (this.targetMesh) canvas.style.cursor = 'crosshair';
@@ -195,6 +202,7 @@ export class MagicBrush {
 		const canvas = this.viewer?.renderer?.domElement;
 		if (canvas) {
 			canvas.removeEventListener('pointerdown', this._onPointerDown, true);
+			this.viewer.el?.removeEventListener('viewer-canvas-replaced', this._onCanvasReplaced);
 			canvas.style.cursor = '';
 			if (this._prevTouchAction !== undefined) canvas.style.touchAction = this._prevTouchAction;
 		}

@@ -49,6 +49,16 @@ export class SceneExplorer {
 		this.raycaster = new Raycaster();
 		this._onKeyDown = this._onKeyDown.bind(this);
 		this._onPointerDown = this._onPointerDown.bind(this);
+		// A WebGPU device loss moves the viewer onto a fresh WebGL canvas
+		// (Viewer._fallBackToWebGL); follow it so picking and gizmos keep working.
+		this._onCanvasReplaced = ({ detail }) => {
+			detail.previous.removeEventListener('pointerdown', this._onPointerDown);
+			detail.canvas.addEventListener('pointerdown', this._onPointerDown);
+			if (this.transformControls) {
+				this.transformControls.disconnect();
+				this.transformControls.connect(detail.canvas);
+			}
+		};
 		this._attached = false;
 	}
 
@@ -58,6 +68,7 @@ export class SceneExplorer {
 		this._buildPanel();
 		this._setupTransformControls();
 		this.viewer.renderer.domElement.addEventListener('pointerdown', this._onPointerDown);
+		this.viewer.el?.addEventListener('viewer-canvas-replaced', this._onCanvasReplaced);
 		window.addEventListener('keydown', this._onKeyDown);
 	}
 
@@ -80,6 +91,7 @@ export class SceneExplorer {
 		if (this.viewer.renderer?.domElement) {
 			this.viewer.renderer.domElement.removeEventListener('pointerdown', this._onPointerDown);
 		}
+		this.viewer.el?.removeEventListener('viewer-canvas-replaced', this._onCanvasReplaced);
 		window.removeEventListener('keydown', this._onKeyDown);
 	}
 

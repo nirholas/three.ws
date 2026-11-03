@@ -21,7 +21,14 @@ function trilinear(v000, v100, v010, v110, v001, v101, v011, v111, tx, ty, tz) {
 }
 
 export class LightProbeGrid {
-	constructor(nx, ny, nz, bounds) {
+	/**
+	 * @param {object} [opts]
+	 * @param {Function} [opts.CubeRenderTarget] cube target class for the bake.
+	 *   Defaults to WebGLCubeRenderTarget; the WebGPU renderer passes the node
+	 *   renderer's CubeRenderTarget from three/webgpu.
+	 */
+	constructor(nx, ny, nz, bounds, { CubeRenderTarget = WebGLCubeRenderTarget } = {}) {
+		this._CubeRenderTarget = CubeRenderTarget ?? WebGLCubeRenderTarget;
 		this.nx = nx;
 		this.ny = ny;
 		this.nz = nz;
@@ -110,7 +117,7 @@ export class LightProbeGrid {
 	async bake(renderer, scene, cubeFaceSize = 64, onProgress) {
 		if (this._inScene) scene.remove(this._activeProbe);
 
-		const cubeRT = new WebGLCubeRenderTarget(cubeFaceSize);
+		const cubeRT = new this._CubeRenderTarget(cubeFaceSize);
 		cubeRT.texture.format = RGBAFormat;
 		const cubeCamera = new CubeCamera(0.01, 10000, cubeRT);
 		scene.add(cubeCamera);

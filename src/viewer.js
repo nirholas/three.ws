@@ -69,6 +69,13 @@ import {
 } from './viewer/cinematic.js';
 import { log } from './shared/log.js';
 import { handleContextLoss } from './render/context-loss.js';
+import {
+	BACKEND_WEBGL,
+	BACKEND_WEBGPU,
+	createAutoRenderer,
+	isWebGPUAvailable,
+	pagePreference,
+} from './renderer-factory.js';
 import { createFrameGovernor } from './render/frame-governor.js';
 
 // Install BVH-accelerated raycasting on Three.js prototypes. This must happen
@@ -196,6 +203,72 @@ function watchGUIControls(root) {
 }
 
 export class Viewer {
+	/**
+	 * Build a Viewer on the backend the page asked for. WebGPU is opt-in
+	 * (`?renderer=webgpu`, or `rendererPreference: 'webgpu'` from an element's
+	 * `renderer` attribute) and needs an async device handshake, which a
+	 * constructor cannot await, so opted-in callers come through here. Without
+	 * the opt-in this is exactly `new Viewer(el, options)`.
+	 *
+	 * @param {HTMLElement} el
+	 * @param {object} [options] Viewer options, plus `rendererPreference`.
+	 * @returns {Promise<Viewer>}
+	 */
+	static async create(el, options = {}) {
+		const prebuilt = await Viewer.prepareRenderer(options);
+		return new Viewer(el, prebuilt ? { ...options, _prebuiltRenderer: prebuilt } : options);
+	}
+
+	/**
+	 * The async half of create(): when WebGPU is requested, acquire and
+	 * initialise the renderer and load the node-renderer modules. Resolves to
+	 * the hand-off for `options._prebuiltRenderer`, or null when the classic
+	 * WebGL2 path should run (not requested, or WebGPU unavailable). Never
+	 * rejects for a missing GPU: every failure lands on WebGL2.
+	 *
+	 * @param {object} [options] `rendererPreference` ('webgpu' | 'webgl'); the
+	 *   page's `?renderer=` query when absent.
+	 */
+	static async prepareRenderer(options = {}) {
+		const prefer = options.rendererPreference ?? pagePreference(null);
+		if (prefer !== BACKEND_WEBGPU) return null;
+		if (!(await isWebGPUAvailable())) {
+			log.info?.('[viewer] WebGPU requested but no adapter, using WebGL');
+			return null;
+		}
+		let nodeLib;
+		try {
+			const [webgpu, { CinematicPipelineTSL }, { convertForNodeRenderer }] = await Promise.all([
+				import('three/webgpu'),
+				import('./viewer/cinematic-tsl.js'),
+				import('./render/webgpu-material-compat.js'),
+			]);
+			nodeLib = {
+				PMREMGenerator: webgpu.PMREMGenerator,
+				CubeRenderTarget: webgpu.CubeRenderTarget,
+				CinematicPipeline: CinematicPipelineTSL,
+				convertMaterials: convertForNodeRenderer,
+			};
+		} catch (err) {
+			// A stale chunk after a deploy or a blocked request: same picture on WebGL.
+			log.warn('[viewer] WebGPU modules failed to load, using WebGL:', err?.message || err);
+			return null;
+		}
+		const { renderer, backend, reason } = await createAutoRenderer(
+			{ antialias: !viewerLooksLowPower(), alpha: true },
+			{ prefer },
+		);
+		if (backend !== BACKEND_WEBGPU) {
+			// The factory already fell back and built a WebGL renderer; the
+			// constructor builds its own, so release this one and its context.
+			renderer.dispose();
+			renderer.forceContextLoss?.();
+			log.info?.(`[viewer] ${reason}`);
+			return null;
+		}
+		return { renderer, backend, reason, nodeLib };
+	}
+
 	constructor(el, options) {
 		this.el = el;
 		this.options = options;
@@ -329,7 +402,18 @@ export class Viewer {
 		// coarse pointer, so desktop (mouse/trackpad) never matches — default
 		// desktop behavior is unchanged.
 		this._lowPower = viewerLooksLowPower();
-		this.renderer = window.renderer = new WebGLRenderer({ antialias: !this._lowPower, alpha: true });
+		// The backend actually in use ('webgl' or 'webgpu'). Viewer.create() hands
+		// over a renderer it already initialised; a plain `new Viewer()` is the
+		// classic WebGL2 renderer, unchanged.
+		const prebuilt = options._prebuiltRenderer || null;
+		this.backend = prebuilt?.backend ?? BACKEND_WEBGL;
+		this.rendererReason = prebuilt?.reason ?? 'webgl default';
+		// Node-renderer classes (PMREM, cube target, TSL post chain, material
+		// conversion), loaded only on the WebGPU path.
+		this._nodeLib = this.backend === BACKEND_WEBGPU ? prebuilt.nodeLib : null;
+		this.renderer = window.renderer =
+			prebuilt?.renderer ?? new WebGLRenderer({ antialias: !this._lowPower, alpha: true });
+		this.renderer.domElement.dataset.renderer = this.backend;
 		this.renderer.setClearColor(0x000000, 1);
 		// DPR cap: kiosk/embed modes default to 1.5 (saves ~40% fragment work on
 		// retina). Override with options.maxPixelRatio. Standalone tabs default
@@ -359,24 +443,15 @@ export class Viewer {
 		this.renderer.shadowMap.type = PCFShadowMap;
 		this.shadowCatcher = null;
 
-		this.pmremGenerator = new PMREMGenerator(this.renderer);
-		this.pmremGenerator.compileEquirectangularShader();
-
-		this.neutralEnvironment = this.pmremGenerator.fromScene(new RoomEnvironment()).texture;
+		this._buildEnvironmentGenerator();
 
 		// Survive a lost WebGL context (driver reset, GPU process crash, too
 		// many canvases on one page) instead of freezing on a black canvas.
 		this._contextLost = false;
 		// Set while renderPhotoreal() owns the canvas, so the live loop stays out.
 		this._suspended = false;
-		this._contextLoss = handleContextLoss(this.renderer.domElement, {
-			notice: options.contextNotice !== false,
-			onLost: () => {
-				this._contextLost = true;
-				this._updateRenderLoop();
-			},
-			onRestored: () => this._restoreAfterContextLoss(),
-		});
+		this._contextLoss = null;
+		this._watchGraphicsLoss();
 
 		this.controls = new OrbitControls(this.defaultCamera, this.renderer.domElement);
 		this.controls.screenSpacePanning = true;
@@ -412,14 +487,7 @@ export class Viewer {
 		// else — so gallery thumbnails and embeds are unchanged unless a user opts
 		// into a richer look. Screenshot capture bypasses this — see screenshot.js.
 		this.state.cinematicPreset = options.cinematicPreset ?? DEFAULT_CINEMATIC_PRESET;
-		this._cinematic = new CinematicPipeline(this.renderer, this.scene, this.activeCamera, {
-			width: initialWidth,
-			height: initialHeight,
-			preset: this.state.cinematicPreset,
-			lowPower: this._lowPower,
-			onUpdate: () => this.invalidate(),
-		});
-		this._composer = this._cinematic.composer;
+		this._buildCinematic(initialWidth, initialHeight);
 
 		this.cameraCtrl = null;
 		this.cameraFolder = null;
@@ -908,20 +976,60 @@ export class Viewer {
 		if (clientWidth > 0 && clientHeight > 0) this._composer?.setSize(clientWidth, clientHeight);
 	}
 
-	// three.js re-creates its GL state and re-uploads geometry and textures on
-	// its own after a restore, but anything that was rendered INTO a GPU target
-	// is gone: the PMREM-prefiltered environments are blank. Rebuild them, then
-	// draw again. The dead generator and environment textures are dropped, not
-	// disposed: their GPU memory went with the old context, and calling
-	// dispose() on them only makes the browser warn about deleting handles from
-	// a context that no longer exists.
-	_restoreAfterContextLoss() {
-		if (this._disposed) return;
-		this._contextLost = false;
-		this.pmremGenerator = new PMREMGenerator(this.renderer);
+	// PMREM generator for the active backend (the node renderer needs its own),
+	// plus the neutral studio environment prefiltered through it.
+	_buildEnvironmentGenerator() {
+		const Generator = this._nodeLib?.PMREMGenerator ?? PMREMGenerator;
+		this.pmremGenerator = new Generator(this.renderer);
 		this.pmremGenerator.compileEquirectangularShader();
-		const staleNeutral = this.neutralEnvironment;
 		this.neutralEnvironment = this.pmremGenerator.fromScene(new RoomEnvironment()).texture;
+	}
+
+	// The cinematic post chain for the active backend: postprocessing's
+	// EffectComposer on WebGL2, the TSL RenderPipeline twin on WebGPU. Both take
+	// the same presets and expose the same methods.
+	_buildCinematic(width, height) {
+		const Pipeline = this._nodeLib?.CinematicPipeline ?? CinematicPipeline;
+		const contentSize = this._cinematic?.contentSize;
+		this._cinematic = new Pipeline(this.renderer, this.scene, this.activeCamera, {
+			width,
+			height,
+			preset: this.state.cinematicPreset,
+			lowPower: this._lowPower,
+			onUpdate: () => this.invalidate(),
+		});
+		if (contentSize) this._cinematic.setContentSize(contentSize);
+		this._composer = this._cinematic.composer;
+	}
+
+	// WebGL: survive a lost context (driver reset, GPU process crash, too many
+	// canvases on one page) and rebuild in place when the browser restores it.
+	// WebGPU: a lost device is never restored, so the viewer moves onto WebGL2.
+	_watchGraphicsLoss() {
+		if (this.backend === BACKEND_WEBGPU) {
+			this.renderer.onDeviceLost = (info) => {
+				this._fallBackToWebGL(info?.message || info?.reason || 'device lost');
+			};
+			return;
+		}
+		this._contextLoss = handleContextLoss(this.renderer.domElement, {
+			notice: this.options.contextNotice !== false,
+			onLost: () => {
+				this._contextLost = true;
+				this._updateRenderLoop();
+			},
+			onRestored: () => this._restoreAfterContextLoss(),
+		});
+	}
+
+	// Rebuild everything that was rendered INTO a GPU target (the PMREM
+	// environments) and point the scene at the new textures. The dead generator
+	// and environment textures are dropped, not disposed: their GPU memory went
+	// with the old context or device, and disposing them only makes the browser
+	// warn about deleting handles that no longer exist.
+	_rebuildEnvironments() {
+		const staleNeutral = this.neutralEnvironment;
+		this._buildEnvironmentGenerator();
 		if (this.scene?.environment === staleNeutral) this.scene.environment = this.neutralEnvironment;
 		if (this.scene?.background === staleNeutral) this.scene.background = this.neutralEnvironment;
 		// Reload the selected HDRI (from the HTTP cache) through the fresh
@@ -929,7 +1037,81 @@ export class Viewer {
 		// disposing the dead texture.
 		this._loadedEnvironment = null;
 		this.updateEnvironment();
+	}
+
+	// three.js re-creates its GL state and re-uploads geometry and textures on
+	// its own after a restore; only the GPU-rendered environments need a rebuild.
+	_restoreAfterContextLoss() {
+		if (this._disposed) return;
+		this._contextLost = false;
+		this._rebuildEnvironments();
 		this._frameGovernor?.pause();
+		this.invalidate();
+	}
+
+	/**
+	 * Move a WebGPU viewer onto a fresh WebGL2 renderer after the GPU device was
+	 * lost. A canvas that held a WebGPU context can never hand out a WebGL one,
+	 * so the canvas itself is replaced: same slot in the DOM, same attributes and
+	 * styles, controls and listeners rebound. Tools that bound their own
+	 * listeners to the canvas follow via the `viewer-canvas-replaced` event on
+	 * the host element. Materials already converted for the node renderer are
+	 * plain three materials and render unchanged on WebGL.
+	 */
+	_fallBackToWebGL(why) {
+		if (this._disposed || this.backend !== BACKEND_WEBGPU) return;
+		log.warn('[viewer] WebGPU device lost, continuing on WebGL:', why);
+		const old = this.renderer;
+		const previous = old.domElement;
+		const ratio = old.getPixelRatio();
+		const { clientWidth, clientHeight } = this.el;
+		old.onDeviceLost = () => {};
+		try {
+			this._cinematic?.dispose();
+			old.dispose();
+		} catch (err) {
+			// Releasing resources on a dead device can throw; nothing is lost.
+			log.warn('[viewer] releasing the lost WebGPU renderer:', err?.message || err);
+		}
+
+		this.backend = BACKEND_WEBGL;
+		this.rendererReason = `webgpu device lost (${why}), using webgl`;
+		this._nodeLib = null;
+		const renderer = new WebGLRenderer({ antialias: !this._lowPower, alpha: true });
+		renderer.setClearColor(0x000000, this.state.transparentBg ? 0 : 1);
+		renderer.setPixelRatio(ratio);
+		renderer.setSize(Math.max(1, clientWidth), Math.max(1, clientHeight));
+		renderer.shadowMap.enabled = old.shadowMap.enabled;
+		renderer.shadowMap.type = old.shadowMap.type;
+		renderer.toneMapping = old.toneMapping;
+		renderer.toneMappingExposure = old.toneMappingExposure;
+		const canvas = renderer.domElement;
+		canvas.className = previous.className;
+		canvas.style.cssText = previous.style.cssText;
+		canvas.tabIndex = previous.tabIndex;
+		for (const attr of ['role', 'aria-label']) {
+			const value = previous.getAttribute(attr);
+			if (value !== null) canvas.setAttribute(attr, value);
+		}
+		canvas.dataset.renderer = BACKEND_WEBGL;
+		previous.replaceWith(canvas);
+		previous.removeEventListener('keydown', this._onCanvasKeyDown);
+		previous.removeEventListener('dblclick', this._onDblClick);
+		canvas.addEventListener('keydown', this._onCanvasKeyDown);
+		canvas.addEventListener('dblclick', this._onDblClick);
+		this.controls.disconnect();
+		this.controls.connect(canvas);
+
+		if (window.renderer === old) window.renderer = renderer;
+		this.renderer = renderer;
+		this._rebuildEnvironments();
+		this._buildCinematic(Math.max(1, clientWidth), Math.max(1, clientHeight));
+		this._watchGraphicsLoss();
+		this._contextLost = false;
+		this.el.dispatchEvent(
+			new CustomEvent('viewer-canvas-replaced', { detail: { previous, canvas, backend: BACKEND_WEBGL } }),
+		);
+		this._updateRenderLoop();
 		this.invalidate();
 	}
 
@@ -1112,7 +1294,22 @@ export class Viewer {
 	async renderPhotoreal(opts = {}) {
 		const environment = environments.find((e) => e.name === this.state.environment);
 		const { renderPhotoreal } = await import('./viewer/photoreal.js');
-		return renderPhotoreal(this, { ...opts, environment });
+		if (this.backend !== BACKEND_WEBGPU) return renderPhotoreal(this, { ...opts, environment });
+		// The path tracer is WebGL2 code. On WebGPU it runs on an offscreen WebGL2
+		// renderer matched to the live canvas; the live frame stays on screen.
+		const live = this.renderer;
+		const tracerRenderer = new WebGLRenderer({ antialias: false, alpha: true });
+		try {
+			tracerRenderer.setPixelRatio(live.getPixelRatio());
+			tracerRenderer.setSize(Math.max(1, this.el.clientWidth), Math.max(1, this.el.clientHeight), false);
+			tracerRenderer.toneMapping = live.toneMapping;
+			tracerRenderer.toneMappingExposure = live.toneMappingExposure;
+			tracerRenderer.setClearColor(0x000000, this.state.transparentBg ? 0 : 1);
+			return await renderPhotoreal(this, { ...opts, environment, renderer: tracerRenderer });
+		} finally {
+			tracerRenderer.dispose();
+			tracerRenderer.forceContextLoss();
+		}
 	}
 
 	/** Path-trace the current view with an on-canvas progress panel and save the PNG. */
@@ -1141,7 +1338,9 @@ export class Viewer {
 		bounds.expandByScalar(0.5);
 
 		const { probeNx, probeNy, probeNz, probeCubeFace } = this.state;
-		const grid = new LightProbeGrid(probeNx, probeNy, probeNz, bounds);
+		const grid = new LightProbeGrid(probeNx, probeNy, probeNz, bounds, {
+			CubeRenderTarget: this._nodeLib?.CubeRenderTarget,
+		});
 
 		let progressEl = this.el.querySelector('.lpg-progress');
 		if (!progressEl) {
@@ -1237,8 +1436,13 @@ export class Viewer {
 
 		const iosOk = hasUsdz && this._arModes.includes('quick-look') && canUseQuickLook();
 		const androidOk = hasGlb && this._arModes.includes('scene-viewer') && canUseSceneViewer();
+		// three's WebXR session binds to a WebGL context (XRWebGLBinding); on the
+		// WebGPU backend AR is offered through Scene Viewer and Quick Look only.
 		const webxrOk =
-			hasGlb && this._arModes.includes('webxr') && (await WebXRSession.isSupported());
+			this.backend !== BACKEND_WEBGPU &&
+			hasGlb &&
+			this._arModes.includes('webxr') &&
+			(await WebXRSession.isSupported());
 
 		this._arBtn.hidden = !(iosOk || androidOk || webxrOk);
 	}
@@ -1263,7 +1467,7 @@ export class Viewer {
 		} else if (modes.includes('scene-viewer') && canUseSceneViewer() && this._arGlbUrl) {
 			openSceneViewer(this._arGlbUrl, { placement: this._arPlacement });
 			return true;
-		} else if (modes.includes('webxr') && this._arGlbUrl) {
+		} else if (modes.includes('webxr') && this._arGlbUrl && this.backend !== BACKEND_WEBGPU) {
 			// Desktop/Android WebXR
 			if (this._xrSession) {
 				await this._xrSession.end();
@@ -1511,6 +1715,11 @@ export class Viewer {
 		if (looksLikeAvatarMesh(object)) {
 			applyAvatarMaterialRealism(object);
 		}
+
+		// The node renderer draws every built-in material itself but not a
+		// hand-written GLSL ShaderMaterial (three-vrm's MToon); swap those for
+		// their closest built-in twin. See src/render/webgpu-material-compat.js.
+		if (this._nodeLib) this._nodeLib.convertMaterials(object);
 
 		this.state.punctualLights = true;
 		this.content.traverse((node) => {
