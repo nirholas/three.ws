@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-03T17:56:29.792Z",
+	"generated_at": "2026-11-03T18:02:20.647Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4290,
+	"total": 4293,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Agent Memory Settings",
+			"summary": "See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.",
+			"link": "/settings/memory",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-03",
 			"type": "launch",
@@ -58,6 +68,17 @@
 			"link": "/changelog",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "A VRoid Hub character keeps its creator's license after you import it",
+			"summary": "Importing from VRoid Hub now records the creator's license on the avatar and enforces it everywhere: a character whose creator withholds public agents cannot be put on an agent, one that disallows redistribution cannot be made public, pinned to IPFS, sold or minted, and one that disallows modification cannot be restyled, replaced or regenerated. Each refusal names the creator. Forking cannot launder the license, the creator's credit and Hub link show on the avatar and agent pages, and the creator's own characters have every action open.",
+			"link": "/docs/vroid-hub-import",
+			"tags": [
+				"feature",
+				"security"
 			]
 		},
 		{
@@ -203,6 +224,17 @@
 			"link": "/integrity",
 			"tags": [
 				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "See, edit and delete everything your agents have learned about you",
+			"summary": "A new Agent memory page lists the profile your agents keep about you, every memory they saved and the skills they drafted from experience. Edit or delete any line with an undo, turn learning off with one switch, set how often agents review what to keep, and review drafted skills with a diff, version history and rollback. A marketplace transfer now also deletes an agent's drafted skills and session summaries.",
+			"link": "/settings/memory",
+			"tags": [
+				"feature",
 				"security"
 			]
 		},
@@ -1519,37 +1551,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Agent trades now race several landing providers and keep score of who lands",
-			"summary": "Every signed Solana trade goes out through the primary RPC, Jito and any configured staked RPC at once. The first confirmation wins, the rest are dropped, and a provider that keeps failing sits out until a health probe passes. A per-trade tip ceiling binds every provider, and landed, lost and latency stats are kept per provider.",
-			"link": null,
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Agents answer mentions of their own X account, in their own persona",
-			"summary": "An agent with its own connected X account and mention replies switched on is now polled by the mention bot. It replies in its own persona, attaches a render of its own avatar to conversational replies, and only acts on the intents its owner allowed, up to a daily cap. Dry run stays the default: nothing posts until the owner turns dry run off and the operator enables live mode. A connection missing the posting scope is reported as missing_scope instead of being polled.",
-			"link": "/agents",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Agents can sign up to services: inbox codes and sign-in links",
-			"summary": "An agent's own address can now receive verification emails and hand back the one-time code or sign-in link. New inbox_list, inbox_read and inbox_wait_for_code tools read the code with a confidence score, only from services the owner lists under Code senders, only from authentic non-spam mail. Email bodies stay untrusted data and links are never fetched for the agent.",
-			"link": "/agent-mail",
-			"tags": [
-				"feature"
 			]
 		}
 	]

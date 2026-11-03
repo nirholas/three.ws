@@ -593,6 +593,7 @@ function renderDrawer(navData) {
 	html += navData.NAV_LINKS.filter((l) => !l.highlight).map(renderTopLink).join('');
 	html += `<a href="/mine" id="home-nav-drawer-mine" data-auth="in" hidden${i18nAttr('My creations')}>My creations</a>`;
 	html += `<a href="/dashboard" id="home-nav-drawer-dashboard" data-auth="in" hidden${i18nAttr('Dashboard')}>Dashboard</a>`;
+	html += `<a href="/settings/memory" id="home-nav-drawer-memory" data-auth="in" hidden${i18nAttr('Agent memory')}>Agent memory</a>`;
 	html += `<a href="/guardian" id="home-nav-drawer-guardian" data-auth="in" hidden${i18nAttr('Guardian console')}>Guardian console</a>`;
 	html += `<div class="sep"></div>`;
 	html += `<a href="/login" id="home-nav-drawer-cta" data-auth="out"${i18nAttr('Sign in')}>Sign in</a>`;

@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "See, edit and delete everything your agents have learned about you",
+			"link": "/settings/memory",
+			"summary": "A new Agent memory page lists the profile your agents keep about you, every memory they saved and the skills they drafted from experience. Edit or delete any line with an undo, turn learning off with one switch, set how often agents review what to keep, and review drafted skills with a diff, version history and rollback. A marketplace transfer now also deletes an agent's drafted skills and session summaries.",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"title": "A VRoid Hub character keeps its creator's license after you import it",
+			"link": "/docs/vroid-hub-import",
+			"summary": "Importing from VRoid Hub now records the creator's license on the avatar and enforces it everywhere: a character whose creator withholds public agents cannot be put on an agent, one that disallows redistribution cannot be made public, pinned to IPFS, sold or minted, and one that disallows modification cannot be restyled, replaced or regenerated. Each refusal names the creator. Forking cannot launder the license, the creator's credit and Hub link show on the avatar and agent pages, and the creator's own characters have every action open.",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
 			"title": "A withdrawal that fails after it was sent can no longer be paid twice",
 			"summary": "Payouts now record the signed transaction before it is broadcast. If the send errors or times out afterwards, the withdrawal shows as confirming and keeps your balance held instead of failing and freeing it, and the payout cron settles it from the chain: completed when it landed, failed only when it provably never can. Operators are paged if one stays unconfirmed for more than 30 minutes.",
 			"tags": [

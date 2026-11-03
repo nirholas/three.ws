@@ -5258,6 +5258,12 @@ URL: https://three.ws/grok
 
 Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.
 
+### Agent Memory Settings
+
+URL: https://three.ws/settings/memory
+
+See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.
+
 ### MCP Tool Catalog
 
 URL: https://three.ws/mcp-tools

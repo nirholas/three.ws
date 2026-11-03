@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Memory Settings</title>
+			<link>https://three.ws/settings/memory</link>
+			<guid isPermaLink="false">2026-11-03:Agent Memory Settings</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.</description>
+		</item>
+		<item>
 			<title>Coin Control</title>
 			<link>https://three.ws/coin-control</link>
 			<guid isPermaLink="false">2026-11-03:Coin Control</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.</description>
+		</item>
+		<item>
+			<title>A VRoid Hub character keeps its creator's license after you import it</title>
+			<link>https://three.ws/docs/vroid-hub-import</link>
+			<guid isPermaLink="false">2026-11-03:A VRoid Hub character keeps its creator's license after you import it</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Importing from VRoid Hub now records the creator's license on the avatar and enforces it everywhere: a character whose creator withholds public agents cannot be put on an agent, one that disallows redistribution cannot be made public, pinned to IPFS, sold or minted, and one that disallows modification cannot be restyled, replaced or regenerated. Each refusal names the creator. Forking cannot launder the license, the creator's credit and Hub link show on the avatar and agent pages, and the creator's own characters have every action open.</description>
 		</item>
 		<item>
 			<title>A withdrawal that fails after it was sent can no longer be paid twice</title>
@@ -157,6 +173,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:&lt;network&gt;, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.</description>
+		</item>
+		<item>
+			<title>See, edit and delete everything your agents have learned about you</title>
+			<link>https://three.ws/settings/memory</link>
+			<guid isPermaLink="false">2026-11-03:See, edit and delete everything your agents have learned about you</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Agent memory page lists the profile your agents keep about you, every memory they saved and the skills they drafted from experience. Edit or delete any line with an undo, turn learning off with one switch, set how often agents review what to keep, and review drafted skills with a diff, version history and rollback. A marketplace transfer now also deletes an agent's drafted skills and session summaries.</description>
 		</item>
 		<item>
 			<title>Smoother edges on every 3D model and avatar viewer</title>

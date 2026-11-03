@@ -6763,6 +6763,22 @@
 					"added": "2026-10-09"
 				},
 				{
+					"path": "/docs/agent-memory",
+					"title": "Docs · Agent memory and learning",
+					"description": "What your agents remember, the about-you profile and skills they draft from experience, the owner controls to edit, delete or turn learning off, the privacy guarantees on sale, and the /api/memory routes.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-03"
+				},
+				{
+					"path": "/settings/memory",
+					"title": "Agent Memory Settings",
+					"description": "See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.",
+					"priority": 0.3,
+					"changefreq": "monthly",
+					"added": "2026-11-03"
+				},
+				{
 					"path": "/mcp-tools",
 					"title": "MCP Tool Catalog",
 					"description": "Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.",
