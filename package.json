@@ -665,7 +665,7 @@
 		"@scure/base": "^2.4.0",
 		"@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^3.0.1",
 		"@solana-program/compute-budget": "^0.20.0",
-		"@solana-program/memo": "^0.13.1",
+		"@solana-program/memo": "^0.16.0",
 		"@solana-program/stake": "^0.11.0",
 		"@solana-program/system": "^0.16.0",
 		"@solana-program/token": "^0.18.0",
