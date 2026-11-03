@@ -87,10 +87,17 @@ async function walletBalance(address, network) {
 
 // ── what the engine did ─────────────────────────────────────────────────────
 
+// A mint's decimals are fixed at creation, so one RPC read per mint per process
+// is enough. A failed read is not cached: it falls back to pump.fun's 6.
+const decimalsCache = new Map();
+
 async function mintDecimals(mint, network) {
+	const key = `${network}:${mint}`;
+	if (decimalsCache.has(key)) return decimalsCache.get(key);
 	try {
 		const { PublicKey } = await import('@solana/web3.js');
 		const s = await solanaConnection({ network }).getTokenSupply(new PublicKey(mint), 'confirmed');
+		decimalsCache.set(key, s.value.decimals);
 		return s.value.decimals;
 	} catch {
 		return 6;

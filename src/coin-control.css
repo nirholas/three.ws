@@ -4,7 +4,7 @@
    stage, the event feed, chips, pills and the holder bars. */
 
 .cc-hero { display: grid; gap: var(--space-md); grid-template-columns: 1fr; align-items: center; margin-bottom: var(--space-md); }
-@media (min-width: 860px) { .cc-hero { grid-template-columns: 1.5fr 1fr; } }
+@media (min-width: 860px) { .cc-hero:has(.cc-stage:not(.is-empty)) { grid-template-columns: 1.5fr 1fr; } }
 .cc-hero-text .ac-lede { max-width: 62ch; }
 
 .cc-stage {

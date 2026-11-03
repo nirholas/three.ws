@@ -125,6 +125,7 @@ async function mountStage(coin) {
 	el.setAttribute('controls', 'orbit');
 	el.setAttribute('aria-label', `${coin.agent_name || 'The agent'}, ${sym(coin)}'s agent`);
 	els.stage.prepend(el);
+	els.stage.classList.remove('is-empty');
 	state.stage.el = el;
 }
 
