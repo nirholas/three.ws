@@ -23,6 +23,7 @@ import { skeletonHTML, emptyStateHTML, errorStateHTML, attachRetry, ensureStateK
 import { rigBadgeHTML, matchesRigFilter, RIG_FILTERS } from '../../shared/rig-status.js';
 import { toast } from '../../shared/toast.js';
 import { mountFarcasterSeed } from '../farcaster-seed.js';
+import { fmtUsd } from '../../shared/agent-financial-reputation.js';
 ensureStateKitStyles();
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -698,7 +699,7 @@ function showReputationPanel(card, rep) {
 					<span style="font-size:13px;color:var(--nxt-ink-dim)">/ 100 · <span style="color:${esc(accent)};font-weight:600">${esc(tier || '')}</span></span>
 				</div>
 				<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-					${[`$${fmtNum(totals.settled_usd)} volume`, `${totals.distinct_tippers || 0} tippers`, `${totals.confirmed_payments || 0} payments`, `${totals.fork_count || 0} forks`, totals.verified ? '✓ verified' : '']
+					${[`$${fmtUsd(totals.settled_usd)} volume`, `${totals.distinct_tippers || 0} tippers`, `${totals.confirmed_payments || 0} payments`, `${totals.fork_count || 0} forks`, totals.verified ? '✓ verified' : '']
 						.filter(Boolean)
 						.map((t) => `<span class="dn-tag">${esc(t)}</span>`)
 						.join('')}
