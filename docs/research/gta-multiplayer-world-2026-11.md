@@ -5,7 +5,7 @@ Goal: host a realistic, open-world, crime/driving/shooting multiplayer game alon
 ## Status (2026-11-03)
 
 - **Shortlisted:** the [Advanced Multiplayer Game Template](https://assetstore.unity.com/packages/templates/systems/advanced-multiplayer-game-template-241288) (Unity 6, $70, Redicion Studio). It is the only finished GTA-style game found that was built for multiplayer from the start.
-- **Rejected:** Gangster Crime Simulator, after a teardown of its demo APK (single player, built from other vendors' Asset Store packages we would not be licensed for). Details below.
+- **Rejected:** Gangster Crime Simulator, after a teardown of its demo APK (single player, built from other vendors' Asset Store packages we would not be licensed for), and Overdrive City, on quality after the owner played it. Details below.
 - **Not bought yet.** Before purchase, the seller (Contact@RedicionStudio.com) needs to answer:
   1. Which networking library does it use (Mirror, FishNet, Netcode for GameObjects, Photon, or custom)?
   2. Does the game server build and run headless on Linux?
@@ -15,7 +15,7 @@ Goal: host a realistic, open-world, crime/driving/shooting multiplayer game alon
 ## TL;DR
 
 - **Nothing open source is "GTA Online, ready to host."** Every project that looks like it ships GTA itself either needs Rockstar's game files or gets taken down.
-- **Closest finished games:** the Unity multiplayer template above (multiplayer, mid realism) and [Overdrive City](https://github.com/appleweiping/overdrive-city) (MIT three.js, single player, full GTA-style loop, same stack as `/play`).
+- **Closest finished game:** the Unity multiplayer template above (multiplayer, mid realism). Overdrive City (MIT three.js) was played by the owner and rejected on quality.
 - **The photoreal route is Unreal Engine 5:** Epic's free **City Sample** (the Matrix Awakens city: 13 drivable vehicles, crowds, traffic, Nanite/Lumen), plus off-the-shelf **replicated multiplayer kits** from Fab for vehicles and weapons, run on a **dedicated server** and **streamed to the browser with Pixel Streaming** from GCP L4 GPUs. That is how the "photoreal game in a browser tab" demos people post on X work. It needs an Unreal developer.
 - **For the Call of Duty feel:** Epic's free **Lyra Starter Game** is a multiplayer shooter with dedicated-server support out of the box. It uses the same pipeline.
 - **GCP credits pay for hosting.** Per-player GPU streaming is the main cost, and it is a pre-approved GCP surface.
@@ -27,7 +27,7 @@ Nothing is realistic, multiplayer, finished and open all at once. These are the 
 
 | Project | What you get | Multiplayer | Realism | License / price | Fit |
 |---|---|---|---|---|---|
-| [Overdrive City](https://github.com/appleweiping/overdrive-city) ([play](https://appleweiping.github.io/overdrive-city/)) | On foot plus driving, fists/pistol/SMG, carjacking, lane-following traffic, 5-star police (foot cops, then ramming cruisers), arrest/death penalties, 10 job types (deliveries, taxi, stealth, races, drift, bounties), day/night. About 3,400 lines of plain three.js ES modules, no build, no asset files | No | Stylized, procedural | MIT (plain, no added clauses). Pushed 2026-10-23 | Best free, browser-native base. Same stack as `/play`: add multiplayer through our Colyseus server (`multiplayer/`), swap in three.ws avatars, add Sketchbook's vehicle controllers |
+| [Overdrive City](https://github.com/appleweiping/overdrive-city) ([play](https://appleweiping.github.io/overdrive-city/)) | On foot plus driving, fists/pistol/SMG, carjacking, lane-following traffic, 5-star police (foot cops, then ramming cruisers), arrest/death penalties, 10 job types (deliveries, taxi, stealth, races, drift, bounties), day/night. About 3,400 lines of plain three.js ES modules, no build, no asset files | No | Stylized, procedural | MIT (plain, no added clauses). Pushed 2026-10-23 | **Rejected.** The owner played the demo on 2026-11-03 and judged the quality too low to build on, despite the matching stack |
 | [Advanced Multiplayer Game Template](https://assetstore.unity.com/packages/templates/systems/advanced-multiplayer-game-template-241288) (Redicion Studio) | Complete Unity 6 game marketed as "GTA Online in Unity": open world, car theft, vehicle damage, projectile weapons | Yes (networking library and dedicated-server support not published) | Mid (HDRP/URP) | $70, Unity Asset Store EULA (Single Entity covers one company). v1.14, 2026-03-29, ~54 reviews | **Shortlisted.** Best finished multiplayer one. In the browser it needs a URP WebGL build (HDRP cannot target WebGL) or GPU streaming |
 | [Gangster Crime Simulator](https://assets4unity.com/downloads/gangster-crime-simulator/) | Complete Unity 2022.3 project: shooting, cars/bikes/helicopters/tanks, missions, police chases, city | No | Mobile-game grade | $99.99. Resale rights not stated | **Rejected** (see the APK teardown below). Single player, arcade (super powers, cheats) |
 
