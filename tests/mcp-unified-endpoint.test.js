@@ -11,19 +11,22 @@ process.env.PUBLIC_APP_ORIGIN = 'https://three.ws';
 process.env.X402_PAY_TO_BASE ||= '0x0000000000000000000000000000000000000001';
 process.env.X402_ASSET_ADDRESS_BASE ||= '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 
-vi.mock('../api/_lib/auth.js', () => ({
+vi.mock('../api/_lib/auth.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	extractBearer: () => null,
 	authenticateBearer: vi.fn(async () => null),
 	hasScope: () => true,
 }));
-vi.mock('../api/_lib/rate-limit.js', () => ({
+vi.mock('../api/_lib/rate-limit.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	limits: {
 		mcpIp: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
 		mcpUser: vi.fn(async () => ({ success: true, reset: Date.now() + 1000 })),
 	},
 	clientIp: vi.fn(() => '203.0.113.12'),
 }));
-vi.mock('../api/_lib/usage.js', () => ({
+vi.mock('../api/_lib/usage.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	recordEvent: vi.fn(),
 	logger: () => ({ info: () => {}, warn: () => {}, error: () => {} }),
 }));
