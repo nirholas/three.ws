@@ -20,10 +20,18 @@
 //     its stream (responses arrive on it) and is left alone.
 
 import { lookup } from 'node:dns';
+import { isIP } from 'node:net';
 import { Agent, fetch as undiciFetch } from 'undici';
 import { isPrivateAddress } from '../ssrf.js';
 
 const IS_PROD = process.env.NODE_ENV === 'production';
+
+/**
+ * Tests reach a stub server on 127.0.0.1 through this flag. It is read on every
+ * request and ignored when NODE_ENV is production, so it cannot open a hole there.
+ */
+const loopbackAllowed = () => !IS_PROD && process.env.MCP_CONNECTIONS_ALLOW_LOOPBACK === '1';
+const isLoopback = (address) => address === '::1' || /^127\./.test(address) || address === '::ffff:127.0.0.1';
 
 /** Per-request ceiling for anything that is not the legacy SSE stream. */
 export const REQUEST_TIMEOUT_MS = 25_000;
@@ -40,7 +48,7 @@ function validatingLookup(hostname, options, cb) {
 	lookup(hostname, { all: true }, (err, addresses) => {
 		if (err) return cb(err);
 		const list = Array.isArray(addresses) ? addresses : [addresses];
-		const blocked = list.find((a) => isPrivateAddress(a.address, a.family));
+		const blocked = list.find((a) => isPrivateAddress(a.address, a.family) && !(loopbackAllowed() && isLoopback(a.address)));
 		if (blocked || !list.length) {
 			return cb(new BlockedUrlError(`${hostname} resolves to a private address; external MCP servers must be public`));
 		}
@@ -73,6 +81,11 @@ export function assertServerUrl(raw) {
 	const host = url.hostname.replace(/^\[|\]$/g, '');
 	if (IS_PROD && /^(localhost|.+\.local|.+\.internal)$/i.test(host)) {
 		throw new BlockedUrlError('local hostnames are not reachable from three.ws');
+	}
+	// An IP literal never reaches the dispatcher's DNS lookup, so it is checked here.
+	const family = isIP(host);
+	if (family && isPrivateAddress(host, family) && !(loopbackAllowed() && isLoopback(host))) {
+		throw new BlockedUrlError('that address is private; external MCP servers must be public');
 	}
 	return url;
 }

@@ -180,7 +180,7 @@ export async function createConnection(o) {
 		}
 		const transport = o.transport === 'sse' ? 'sse' : 'streamable-http';
 		const label = String(o.label || url.hostname).trim().slice(0, MAX_LABEL) || url.hostname;
-		spec = { url: url.href, transport, label, name: url.hostname.split('.').slice(-2, -1)[0] || url.hostname, authType: token ? 'bearer' : null, catalog: null, custom: true };
+		spec = { url: url.href, transport, label, name: o.label ? slugName(o.label) : url.hostname.split('.').slice(-2, -1)[0] || url.hostname, authType: token ? 'bearer' : null, catalog: null, custom: true };
 	}
 
 	// Probe before inserting, so a server that cannot be reached leaves no row.

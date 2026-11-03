@@ -119,6 +119,10 @@ export const POLICY = {
 		token_snapshot: r('intelligence'),
 		trader_leaderboard: r('intelligence'),
 		trader_profile: r('intelligence'),
+		// Third-party MCP servers on an agent (api/_mcpagent/integrations-tools.js).
+		list_integrations: r('integrations'),
+		install_integration: w('integrations'),
+		remove_integration: w('integrations'),
 		home_status: r('integrations'),
 		home_list_macros: r('integrations'),
 		home_grants: r('integrations'),
@@ -371,14 +375,14 @@ export const POLICY = {
 		get_portfolio: r('wallet'),
 		get_balance_history: r('wallet'),
 		get_pnl: r('wallet'),
-		// Launch sniper, signal subscriptions and alert rules
-		// (api/_mcpagent/sniper-alert-tools.js). Arming the sniper commits SOL, so
-		// it binds the previewed agent, network and sizing.
-		sniper_status: r('trading'),
 		// Account-level wallets (api/_mcpagent/private-wallet-tools.js): the owner's own
 		// linked wallet and the all-wallet overview. Reads only.
 		get_private_wallet_balance: r('wallet'),
 		get_wallet_summaries: r('wallet'),
+		// Launch sniper, signal subscriptions and alert rules
+		// (api/_mcpagent/sniper-alert-tools.js). Arming the sniper commits SOL, so
+		// it binds the previewed agent, network and sizing.
+		sniper_status: r('trading'),
 		sniper_activate_preview: r('trading'),
 		sniper_activate: f('trading', 'confirm_spend', 'sniper_activate_preview', ['agent_id', 'network', 'per_trade_sol', 'daily_budget_sol', 'stop_loss_pct', 'take_profit_pct', 'trigger', 'max_concurrent_positions']),
 		sniper_deactivate: w('trading'),

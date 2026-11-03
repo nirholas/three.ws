@@ -56,6 +56,7 @@ beforeAll(async () => {
 	routes = await import('../api/_lib/mcp-connections/routes.js');
 	runtime = await import('../api/_lib/mcp-connections/runtime.js');
 	stub = await startStubMcp();
+	await setupDb();
 });
 
 afterAll(async () => {
@@ -65,7 +66,7 @@ afterAll(async () => {
 beforeEach(async () => {
 	delete process.env.MCP_CONNECTIONS_ALLOW_LOOPBACK;
 	stub.state.calls.length = 0;
-	await setupDb();
+	await holder.db.exec('delete from agent_mcp_connections');
 });
 
 const allowLoopback = () => {
@@ -82,7 +83,7 @@ describe('migration chain', () => {
 
 describe('SSRF', () => {
 	it.each([
-		'http://127.0.0.1:9/mcp',
+		'http://127.0.0.1:8080/mcp',
 		'http://169.254.169.254/latest/meta-data',
 		'http://10.0.0.5/mcp',
 		'http://192.168.1.1/mcp',
@@ -127,7 +128,7 @@ describe('connect, list and classify a public server', () => {
 		await service.updateSelection(row, { reviewed: true, enabled_tools: ['get_note', 'search_notes'] });
 		const mounted = await runtime.mountExternalTools(AGENT);
 		expect(mounted.tools.map((t) => t.tier)).toEqual(['read', 'read']);
-		expect(mounted.schemas.map((s) => s.function.name).every((n) => /^ext_[a-z0-9_]+_(get|search)_note$/.test(n))).toBe(true);
+		expect(mounted.schemas.map((s) => s.function.name).every((n) => /^ext_[a-z0-9_]+_(get_note|search_notes)$/.test(n))).toBe(true);
 	});
 });
 

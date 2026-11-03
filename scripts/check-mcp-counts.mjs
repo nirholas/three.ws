@@ -9,6 +9,7 @@
 //
 // The key is <scope>.<field>. Scope is `all`, `hosted`, `stdio`, or a server id
 // from /tools.json (`mcp`, `mcp-3d`, `three-ws-mcp-server`, `vanity-mcp`, ...).
+// `unified` is the /mcp endpoint (fields tools, defaultTools, groups).
 // Fields: servers, tools, uniqueTools, resources, templates, prompts, free, paid
 // (servers and uniqueTools only make sense for all, hosted and stdio).
 //
@@ -76,6 +77,14 @@ function loadCensus() {
 	for (const [scope, ids] of Object.entries(groups)) scopes.set(scope, { ...index.totals[scope], ...priced(ids) });
 	for (const s of index.servers) {
 		scopes.set(s.id, { tools: s.tools, resources: s.resources, templates: s.templates, prompts: s.prompts, ...priced(new Set([s.id])) });
+	}
+	// The unified endpoint (/mcp): <!-- mcp-count:unified.tools -->, unified.defaultTools, unified.groups.
+	if (index.unified) {
+		scopes.set('unified', {
+			tools: index.unified.tool_count,
+			defaultTools: index.unified.default_tool_count,
+			groups: index.unified.groups.length,
+		});
 	}
 	return { index, scopes };
 }
