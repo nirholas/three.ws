@@ -19,6 +19,8 @@ const PAGE = 100;
 const LEGS = [
 	{ kind: 'model_credits', label: 'Model credits', hint: 'USDC to the platform deposit wallet, credited to your balance.' },
 	{ kind: 'dca_own_coin', label: "DCA into the agent's own coin", hint: 'A SOL buy of the agent\'s own pump.fun coin from its wallet.' },
+	{ kind: 'buyback_burn', label: "Buy back and burn the agent's own coin", hint: 'The same buy, then every token it bought is burned on chain.' },
+	{ kind: 'holder_rewards', label: 'SOL rewards to holders', hint: 'SOL to the coin\'s top holders, by holding size or a verifiable draw.' },
 	{ kind: 'tools_budget', label: 'Tools budget', hint: 'USDC credited, then added to a payment session your agent spends from.' },
 ];
 
@@ -447,6 +449,7 @@ function openRuleForm(rule = null) {
 			<div class="er-legs">${LEGS.map((l) => `
 				<div class="er-leg" data-leg="${l.kind}">
 					<div class="ac-field"><label for="rf-pct-${l.kind}">${esc(l.label)}</label><small>${esc(l.hint)}</small>
+						${l.kind === 'holder_rewards' ? `<div class="ac-inline"><select id="rf-hr-mode" aria-label="How holder rewards are split"><option value="pro_rata" ${legOf('holder_rewards')?.mode !== 'lottery' ? 'selected' : ''}>Split by holding size</option><option value="lottery" ${legOf('holder_rewards')?.mode === 'lottery' ? 'selected' : ''}>Weighted lottery</option></select><input id="rf-hr-n" inputmode="numeric" aria-label="Number of holders rewarded" value="${legOf('holder_rewards')?.recipients ?? 10}" style="max-width:5rem" /></div>` : ''}
 						${l.kind === 'tools_budget' ? `<select id="rf-session" aria-label="Payment session to top up" ${sessions.length ? '' : 'disabled'}>${sessions.length ? sessions.map((s) => `<option value="${esc(s.id)}" ${legOf('tools_budget')?.session_id === s.id ? 'selected' : ''}>${esc(s.label)} (${usd(s.budget_usd - s.spent_usd)} left)</option>`).join('') : '<option value="">No active payment session</option>'}</select>` : ''}
 					</div>
 					<div class="ac-field"><input id="rf-pct-${l.kind}" inputmode="decimal" autocomplete="off" placeholder="0" value="${legOf(l.kind)?.pct ?? ''}" aria-label="${esc(l.label)} percent" /></div>
@@ -480,6 +483,11 @@ async function submitRule(e) {
 	const legs = LEGS.map((l) => ({ kind: l.kind, pct: Number($(`rf-pct-${l.kind}`).value) })).filter((l) => l.pct > 0);
 	const tools = legs.find((l) => l.kind === 'tools_budget');
 	if (tools) tools.session_id = $('rf-session')?.value || '';
+	const rewards = legs.find((l) => l.kind === 'holder_rewards');
+	if (rewards) {
+		rewards.mode = $('rf-hr-mode')?.value || 'pro_rata';
+		rewards.recipients = Number($('rf-hr-n')?.value) || 10;
+	}
 	const body = {
 		name: $('rf-name').value, period: $('rf-period').value, network: $('rf-network').value, basis: $('rf-basis').value, legs,
 		per_run_cap_usd: Number($('rf-per').value), lifetime_cap_usd: Number($('rf-life').value), min_run_usd: Number($('rf-min').value || 0),

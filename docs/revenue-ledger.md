@@ -38,6 +38,8 @@ A rule says what share of each period's income goes where.
 | Model credits | USDC from the agent wallet to the platform deposit wallet, then your credit balance is credited from that signature |
 | Tools budget | The same deposit, then the credits move into a named x402 payment session's budget |
 | DCA into the agent's own coin | A pump.fun buy of the agent's own coin through the standard trade pipeline |
+| Buy back and burn | The same buy, then every token that buy returned is burned on chain. See [Coin Control](coin-control.md) |
+| SOL rewards to holders | SOL to the coin's top holders, split by holding size or by a lottery anyone can re-check. See [Coin Control](coin-control.md) |
 
 The base is the last complete period (day, week or month, UTC) of revenue, or revenue plus realised trading profit.
 

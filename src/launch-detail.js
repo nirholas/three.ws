@@ -1341,6 +1341,10 @@ function creatorFeesNote(fees) {
 		agent?.id && agent.is_public
 			? el('a', { href: `/agents/${encodeURIComponent(agent.id)}#av-earned`, text: 'See everything this agent earned →' })
 			: null,
+		agent?.id ? el('span', { text: ' ' }) : null,
+		agent?.id
+			? el('a', { href: `/coin-control/${encodeURIComponent(state.mint)}`, text: 'Buybacks, burns and holder rewards →' })
+			: null,
 	]);
 }
 

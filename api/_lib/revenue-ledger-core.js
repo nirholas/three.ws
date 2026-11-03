@@ -394,9 +394,18 @@ export function project(entries, { now = Date.now(), windowDays = 30, horizonDay
 
 // ── reinvest rules ──────────────────────────────────────────────────────────
 
-export const LEG_KINDS = Object.freeze(['model_credits', 'dca_own_coin', 'tools_budget']);
-export const LEG_LABELS = Object.freeze({ model_credits: 'Model credits', dca_own_coin: "DCA into the agent's own coin", tools_budget: 'Tools budget' });
+export const LEG_KINDS = Object.freeze(['model_credits', 'dca_own_coin', 'buyback_burn', 'holder_rewards', 'tools_budget']);
+export const LEG_LABELS = Object.freeze({
+	model_credits: 'Model credits',
+	dca_own_coin: "DCA into the agent's own coin",
+	buyback_burn: "Buy back and burn the agent's own coin",
+	holder_rewards: 'SOL rewards to holders',
+	tools_budget: 'Tools budget',
+});
 export const RULE_PERIODS = Object.freeze(['daily', 'weekly', 'monthly']);
+/** How a holder-rewards leg divides its SOL: by balance across the top holders, or a balance-weighted draw. */
+export const HOLDER_REWARD_MODES = Object.freeze(['pro_rata', 'lottery']);
+export const HOLDER_REWARD_MAX_RECIPIENTS = 20;
 
 export class RuleError extends Error {
 	constructor(message) {
@@ -409,7 +418,7 @@ export class RuleError extends Error {
 /** Validate and normalise a rule body. Throws RuleError with a fixable message. */
 export function normalizeRule(input) {
 	const legsIn = Array.isArray(input?.legs) ? input.legs : [];
-	if (!legsIn.length) throw new RuleError('Add at least one leg (model credits, own-coin DCA or tools budget).');
+	if (!legsIn.length) throw new RuleError('Add at least one leg (model credits, own-coin DCA, buyback and burn, holder rewards or tools budget).');
 	const seen = new Set();
 	let total = 0;
 	const legs = legsIn.map((l) => {
@@ -424,6 +433,15 @@ export function normalizeRule(input) {
 		if (kind === 'tools_budget') {
 			if (!/^[0-9a-f-]{36}$/i.test(String(l.session_id || ''))) throw new RuleError('The tools budget leg needs the payment session it tops up (session_id).');
 			out.session_id = String(l.session_id);
+		}
+		if (kind === 'holder_rewards') {
+			const mode = l.mode == null ? 'pro_rata' : String(l.mode);
+			if (!HOLDER_REWARD_MODES.includes(mode)) throw new RuleError(`Holder rewards mode must be ${HOLDER_REWARD_MODES.join(' or ')}.`);
+			const max = HOLDER_REWARD_MAX_RECIPIENTS;
+			const recipients = l.recipients == null ? (mode === 'lottery' ? 3 : 10) : Number(l.recipients);
+			if (!Number.isInteger(recipients) || recipients < 1 || recipients > max) throw new RuleError(`Holder rewards needs between 1 and ${max} recipients.`);
+			out.mode = mode;
+			out.recipients = recipients;
 		}
 		return out;
 	});
@@ -451,7 +469,12 @@ export function ruleHash(rule) {
 		per_run_cap_usd: Number(rule.per_run_cap_usd),
 		lifetime_cap_usd: Number(rule.lifetime_cap_usd),
 		min_run_usd: Number(rule.min_run_usd),
-		legs: [...rule.legs].sort((a, b) => a.kind.localeCompare(b.kind)).map((l) => ({ kind: l.kind, pct: Number(l.pct), session_id: l.session_id || null })),
+		// Leg options join the canon only when present, so rules confirmed before an
+		// option existed keep the hash their owner confirmed.
+		legs: [...rule.legs].sort((a, b) => a.kind.localeCompare(b.kind)).map((l) => ({
+			kind: l.kind, pct: Number(l.pct), session_id: l.session_id || null,
+			...(l.mode ? { mode: l.mode, recipients: Number(l.recipients) } : {}),
+		})),
 	};
 	return createHash('sha256').update(JSON.stringify(canon)).digest('hex');
 }

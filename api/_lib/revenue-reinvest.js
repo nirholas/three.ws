@@ -22,6 +22,13 @@
 //                  named x402 payment session's budget.
 //   dca_own_coin   a pump.fun buy of the agent's own coin through the standard
 //                  trade pipeline (kill switch, caps, firewall, ledger).
+//   buyback_burn   the same buy, then exactly the tokens that buy delivered are
+//                  burned from the agent wallet (read from the confirmed
+//                  transaction, never from the quote). A burn that fails is
+//                  retried by the settle pass; the buy is never repeated.
+//   holder_rewards SOL from the agent wallet to the coin's top holders, split
+//                  pro-rata or drawn by a weighted lottery whose seed (leg key +
+//                  a finalized blockhash) is stored so anyone can re-run the draw.
 
 import { sql } from './db.js';
 import { insertNotification } from './notify.js';
@@ -175,7 +182,13 @@ export async function rulePreview({ ruleId, userId, now = Date.now() }) {
 	const table = rule.legs.map((l) => {
 		const p = plan.legs.find((x) => x.kind === l.kind);
 		const base = { kind: l.kind, label: LEG_LABELS[l.kind], pct: l.pct, chain: 'solana', network: rule.network, would_send_usd: p?.capped_usd ?? 0 };
-		if (l.kind === 'dca_own_coin') return { ...base, asset: 'SOL', recipient: coin?.mint || null, recipient_label: coin ? `${coin.symbol || 'own coin'} (pump.fun)` : 'Agent has no coin on this network', ready: Boolean(coin) };
+		const noCoin = 'Agent has no coin on this network';
+		if (l.kind === 'dca_own_coin') return { ...base, asset: 'SOL', recipient: coin?.mint || null, recipient_label: coin ? `${coin.symbol || 'own coin'} (pump.fun)` : noCoin, ready: Boolean(coin) };
+		if (l.kind === 'buyback_burn') return { ...base, asset: 'SOL', recipient: coin?.mint || null, recipient_label: coin ? `Buy ${coin.symbol || 'own coin'}, then burn every token bought` : noCoin, ready: Boolean(coin) };
+		if (l.kind === 'holder_rewards') {
+			const how = l.mode === 'lottery' ? `${l.recipients} winners drawn by holding size` : `top ${l.recipients} holders, by holding size`;
+			return { ...base, asset: 'SOL', recipient: null, recipient_label: coin ? `${coin.symbol || 'own coin'} holders: ${how}` : noCoin, ready: Boolean(coin) };
+		}
 		return { ...base, asset: 'USDC', recipient: deposit, recipient_label: l.kind === 'tools_budget' ? `Platform deposit wallet, then payment session ${String(l.session_id).slice(0, 8)}` : 'Platform deposit wallet, credited to your balance', ready: Boolean(deposit) };
 	});
 	return {
@@ -325,6 +338,176 @@ async function runDcaLeg({ rule, run, leg, preview }) {
 	return setLeg(leg.id, { status: 'executed', signature: r.data.signature, destination: coin.mint, asset: 'SOL', detail: { sol, usd: leg.capped_usd, symbol: coin.symbol } });
 }
 
+/**
+ * Buy the agent's own coin, then burn what that buy delivered. A burn that
+ * cannot run yet (the transaction is not readable, the RPC is down) leaves the
+ * leg executed with the burn pending; settleBurns retries it. The buy itself
+ * is never repeated.
+ */
+async function runBuybackBurnLeg({ rule, run, leg, preview }) {
+	const bought = await runDcaLeg({ rule, run, leg, preview });
+	if (preview || bought.status !== 'executed') return bought;
+	return burnForLeg(rule, bought);
+}
+
+const MAX_BURN_ATTEMPTS = 5;
+
+/**
+ * Burn the tokens bought by an executed buyback leg, once. The claim is an
+ * atomic update, so two settle passes never burn the same buy. A burn that
+ * crashed mid-flight keeps its claim and is not retried blindly: a second
+ * burn could destroy tokens the agent held before the buy.
+ */
+async function burnForLeg(rule, leg) {
+	const [claimed] = await sql`
+		update revenue_reinvest_legs
+		set detail = detail || jsonb_build_object('burn_claimed_at', now(), 'burn_attempts', coalesce((detail->>'burn_attempts')::int, 0) + 1)
+		where id = ${leg.id} and kind = 'buyback_burn' and status = 'executed' and signature is not null
+		  and detail->>'burn_signature' is null and detail->>'burn_claimed_at' is null and detail->>'burn_skipped' is null
+		  and coalesce((detail->>'burn_attempts')::int, 0) < ${MAX_BURN_ATTEMPTS}
+		returning *`;
+	if (!claimed) return leg;
+	const { burnAgentTokens } = await import('./coin-control/chain.js');
+	try {
+		const b = await burnAgentTokens({ agentId: rule.agent_id, userId: rule.user_id, network: rule.network, mint: claimed.destination, buySignature: claimed.signature });
+		const [done] = await sql`
+			update revenue_reinvest_legs set detail = detail || ${JSON.stringify({
+				burn_signature: b.signature, burned_raw: b.burned.toString(), bought_raw: b.bought?.toString() ?? null, decimals: b.decimals,
+				burned_at: new Date().toISOString(), burn_error: null,
+			})}::jsonb
+			where id = ${leg.id} returning *`;
+		return done;
+	} catch (err) {
+		const skip = err?.code === 'nothing_to_burn' || err?.code === 'buy_failed';
+		const patch = { burn_error: String(err?.message || err).slice(0, 240), burn_claimed_at: null, ...(skip ? { burn_skipped: true } : {}) };
+		const [done] = await sql`update revenue_reinvest_legs set detail = detail || ${JSON.stringify(patch)}::jsonb where id = ${leg.id} returning *`;
+		return done;
+	}
+}
+
+/** Retry every buyback whose buy executed but whose burn has not landed yet. */
+export async function settleBurns() {
+	const rows = await sql`
+		select l.*, r.rule_id from revenue_reinvest_legs l join revenue_reinvest_runs r on r.id = l.run_id
+		where l.kind = 'buyback_burn' and l.status = 'executed' and l.signature is not null and r.mode = 'live'
+		  and l.detail->>'burn_signature' is null and l.detail->>'burn_claimed_at' is null and l.detail->>'burn_skipped' is null
+		  and coalesce((l.detail->>'burn_attempts')::int, 0) < ${MAX_BURN_ATTEMPTS}
+		  and l.executed_at > now() - interval '30 days'
+		limit 25`;
+	let burned = 0;
+	for (const leg of rows) {
+		const [rule] = await sql`select ${RULE_COLS} from revenue_reinvest_rules where id = ${leg.rule_id}`;
+		if (!rule) continue;
+		const done = await burnForLeg(rule, leg);
+		if (done?.detail?.burn_signature) burned++;
+	}
+	return burned;
+}
+
+/** Wallets that must never receive a holder reward: the agent, the platform, and the creator's own. */
+async function rewardExclusions(rule) {
+	const [agent] = await sql`select meta->>'solana_address' as address from agent_identities where id = ${rule.agent_id}`;
+	const own = await sql`select address from user_wallets where user_id = ${rule.user_id} and chain_type = 'solana'`;
+	const deposit = (await import('./credit-deposit.js')).depositWallet();
+	return [agent?.address, deposit, ...own.map((w) => w.address)].filter(Boolean);
+}
+
+/**
+ * Who gets what this period. Pure on its inputs once the holder list and (for a
+ * lottery) the blockhash are read, so the stored detail is a full receipt.
+ */
+async function planHolderRewards({ rule, leg }) {
+	const coin = await ownCoinMint(rule.agent_id, rule.network);
+	if (!coin) throw fail(409, 'no_coin', 'This agent has no coin on this network, so there are no holders to reward. Nothing was sent.');
+	const solUsd = await cachedSolUsd().catch(() => null);
+	if (!solUsd) throw fail(503, 'price_unavailable', 'No live SOL price right now, so the reward size cannot be set. Nothing was sent.');
+	const cfg = rule.legs.find((l) => l.kind === 'holder_rewards') || {};
+	const mode = cfg.mode === 'lottery' ? 'lottery' : 'pro_rata';
+	const count = Number(cfg.recipients) || (mode === 'lottery' ? 3 : 10);
+	const lamports = BigInt(Math.floor((Number(leg.capped_usd) / solUsd) * 1e9));
+	const { fetchEligibleHolders, recentBlockhash } = await import('./coin-control/chain.js');
+	const { splitProRata, drawLottery, lotterySeed, MIN_REWARD_LAMPORTS } = await import('./coin-control/core.js');
+	const holders = await fetchEligibleHolders({ mint: coin.mint, network: rule.network, exclude: await rewardExclusions(rule) });
+	let recipients;
+	let lottery = null;
+	if (mode === 'lottery') {
+		const blockhash = await recentBlockhash(rule.network);
+		const seed = lotterySeed(leg.leg_key, blockhash);
+		recipients = drawLottery(holders, lamports, count, seed, MIN_REWARD_LAMPORTS);
+		lottery = { seed, blockhash, leg_key: leg.leg_key, pool: holders.map((h) => ({ owner: h.owner, amount: h.amount })) };
+	} else {
+		recipients = splitProRata(holders, lamports, count, MIN_REWARD_LAMPORTS);
+	}
+	return {
+		coin, mode, sol_usd: solUsd, pot_lamports: lamports.toString(), eligible: holders.length, lottery,
+		recipients: recipients.map((r) => ({ owner: r.owner, amount: r.amount, lamports: r.lamports.toString() })),
+	};
+}
+
+async function parkHolderRewards({ rule, run, leg, plan, gateReason }) {
+	const { createApprovalRequest } = await import('./approvals.js');
+	const { lamportsToSolString } = await import('./coin-control/core.js');
+	const sol = lamportsToSolString(plan.pot_lamports);
+	const created = await createApprovalRequest({
+		userId: rule.user_id, agentId: rule.agent_id, source: 'revenue_reinvest', sourceRef: `leg:${leg.leg_key}`,
+		actionType: 'reinvest_transfer', venue: 'revenue_reinvest',
+		payload: { kind: 'reinvest_leg', leg_id: leg.id, leg_key: leg.leg_key, run_id: run.id, rule_id: rule.id, agent_id: rule.agent_id, network: rule.network, leg_kind: leg.kind, lamports: plan.pot_lamports, recipients: plan.recipients },
+		summary: `Send ${sol} SOL to ${plan.recipients.length} ${plan.coin.symbol || 'coin'} holder${plan.recipients.length === 1 ? '' : 's'} (rule "${rule.name}")`,
+		amount: Number(sol), amountUsd: Number(leg.capped_usd), asset: 'SOL', chain: 'solana', network: rule.network,
+		recipient: plan.recipients[0]?.owner || null, recipientLabel: `${plan.recipients.length} holders, listed in the request`,
+		riskNotes: ['This is an automatic holder reward from a rule you confirmed. It needs your yes this time because of your spend policy.'],
+		gateReason, idempotencyKey: `reinvest-approval:${leg.leg_key}`, autoApprovable: false,
+	});
+	return created.request;
+}
+
+/**
+ * Pay the period's holder rewards. On an approved retry the exact recipient
+ * list the owner saw is reused, never redrawn.
+ */
+async function runHolderRewardsLeg({ rule, run, leg, preview, stepUpApproved = false, approvalId = null }) {
+	let plan = stepUpApproved && leg.detail?.plan ? leg.detail.plan : null;
+	if (!plan) {
+		try {
+			plan = await planHolderRewards({ rule, leg });
+		} catch (err) {
+			return setLeg(leg.id, { status: 'failed', asset: 'SOL', error: String(err?.message || err).slice(0, 300) });
+		}
+	}
+	if (!plan.recipients.length) {
+		const why = plan.eligible ? 'The pot is too small to give any holder the 0.001 SOL minimum.' : 'No holder wallets were eligible (program accounts and your own wallets are excluded).';
+		return setLeg(leg.id, { status: 'skipped', destination: plan.coin.mint, asset: 'SOL', detail: { plan, reason: why } });
+	}
+	if (preview) return setLeg(leg.id, { status: 'planned', destination: plan.coin.mint, asset: 'SOL', amount_atomics: plan.pot_lamports, detail: { preview: true, plan } });
+
+	const { airdropSol } = await import('./coin-control/chain.js');
+	let res;
+	try {
+		res = await airdropSol({
+			agentId: rule.agent_id, userId: rule.user_id, network: rule.network, stepUpApproved,
+			recipients: plan.recipients.map((r) => ({ owner: r.owner, lamports: BigInt(r.lamports) })),
+			memo: `three.ws holder reward ${plan.coin.symbol || ''}`.trim(),
+			rowMeta: { source: 'revenue_reinvest', rule_id: rule.id, run_id: run.id, leg: leg.kind, idempotency_key: leg.idempotency_key, mint: plan.coin.mint },
+		});
+	} catch (err) {
+		return setLeg(leg.id, { status: 'failed', destination: plan.coin.mint, asset: 'SOL', amount_atomics: plan.pot_lamports, detail: { plan }, error: String(err?.message || err).slice(0, 300) });
+	}
+	const gate = res.failed[0];
+	if (!res.sent.length && gate?.code === 'policy_step_up' && !stepUpApproved) {
+		const req = await parkHolderRewards({ rule, run, leg, plan, gateReason: gate.error });
+		return setLeg(leg.id, { status: 'awaiting_approval', approval_id: req.id, destination: plan.coin.mint, asset: 'SOL', amount_atomics: plan.pot_lamports, detail: { plan, gate: gate.error } });
+	}
+	const sentLamports = res.sent.reduce((a, r) => a + BigInt(r.lamports), 0n).toString();
+	const detail = { plan, sent: res.sent, failed: res.failed, sent_lamports: sentLamports, signatures: res.signatures };
+	if (!res.sent.length) {
+		return setLeg(leg.id, { status: 'failed', destination: plan.coin.mint, asset: 'SOL', amount_atomics: plan.pot_lamports, detail, error: gate?.error || 'No reward was sent.' });
+	}
+	return setLeg(leg.id, {
+		status: 'executed', signature: res.signatures[0], approval_id: approvalId, destination: plan.coin.mint, asset: 'SOL', amount_atomics: sentLamports,
+		detail, error: res.failed.length ? `${res.failed.length} of ${plan.recipients.length} rewards were not sent: ${gate.error}`.slice(0, 300) : null,
+	});
+}
+
 // ── runs ────────────────────────────────────────────────────────────────────
 
 async function pauseAfterFailures(rule, why) {
@@ -385,16 +568,22 @@ export async function runRule({ rule: cur, now = Date.now(), preview = false }) 
 	const done = [];
 	for (const leg of legRows) {
 		if (Number(leg.capped_usd) <= 0) { done.push(await setLeg(leg.id, { status: 'skipped', detail: { reason: 'Nothing left after the caps.' } })); continue; }
-		if (preview) {
-			done.push(leg.kind === 'dca_own_coin'
-				? await runDcaLeg({ rule, run, leg, preview: true })
-				: await setLeg(leg.id, { status: 'planned', asset: 'USDC', detail: { preview: true, would_send_usd: Number(leg.capped_usd) } }));
-			continue;
-		}
-		done.push(leg.kind === 'dca_own_coin' ? await runDcaLeg({ rule, run, leg, preview: false }) : await runTransferLeg({ rule, run, leg }));
+		done.push(await runLeg({ rule, run, leg, preview }));
 	}
 
 	return finishRun({ rule, run, legs: done, preview });
+}
+
+function runLeg({ rule, run, leg, preview }) {
+	switch (leg.kind) {
+		case 'dca_own_coin': return runDcaLeg({ rule, run, leg, preview });
+		case 'buyback_burn': return runBuybackBurnLeg({ rule, run, leg, preview });
+		case 'holder_rewards': return runHolderRewardsLeg({ rule, run, leg, preview });
+		default:
+			return preview
+				? setLeg(leg.id, { status: 'planned', asset: 'USDC', detail: { preview: true, would_send_usd: Number(leg.capped_usd) } })
+				: runTransferLeg({ rule, run, leg });
+	}
 }
 
 async function finishRun({ rule, run, legs, preview }) {
@@ -458,8 +647,9 @@ export async function settleApprovals() {
 /** Cron entry: settle approvals, then run every active, confirmed rule for its last period. */
 export async function runDueRules({ now = Date.now() } = {}) {
 	const settled = await settleApprovals().catch(() => 0);
+	const burned = await settleBurns().catch((err) => { console.error('[revenue-reinvest] burn settle failed', err?.message); return 0; });
 	const rules = await sql`select ${RULE_COLS} from revenue_reinvest_rules where status = 'active' and confirmed_hash is not null`;
-	const out = { settled, rules: rules.length, ran: 0, skipped: 0, failed: 0 };
+	const out = { settled, burned, rules: rules.length, ran: 0, skipped: 0, failed: 0 };
 	for (const r of rules) {
 		try {
 			const res = await runRule({ rule: r, now });
@@ -486,7 +676,9 @@ export async function executeApprovedReinvestLeg(row) {
 	if (!leg || !rule) return { status: 'error', note: 'The rule behind this request was deleted, so nothing was executed.' };
 	if (String(rule.user_id) !== String(row.user_id)) return { status: 'error', note: 'This rule is no longer owned by the account that approved it, so nothing was executed.' };
 	if (leg.status === 'executed') return { status: 'ok', signature: leg.signature, usd: Number(leg.capped_usd) };
-	const done = await runTransferLeg({ rule, run, leg, stepUpApproved: true, approvalId: row.id });
+	const done = leg.kind === 'holder_rewards'
+		? await runHolderRewardsLeg({ rule, run, leg, preview: false, stepUpApproved: true, approvalId: row.id })
+		: await runTransferLeg({ rule, run, leg, stepUpApproved: true, approvalId: row.id });
 	if (done.status !== 'executed') return { status: 'error', note: done.error || 'The reinvest transfer did not go through.' };
 	return { status: 'ok', signature: done.signature, usd: Number(done.capped_usd) };
 }
