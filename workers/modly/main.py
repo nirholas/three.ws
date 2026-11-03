@@ -87,6 +87,7 @@ from request_policy import (
     FETCH_ATTEMPTS,
     TRIPOSG,
     PolicyError,
+    adopt_op_output,
     build_generation_params,
     call_with_retry,
     interpret_job,
@@ -738,7 +739,7 @@ async def _modly_op(client: httpx.AsyncClient, name: str, path: Path, params: di
     if not out.is_file():
         raise RuntimeError(f"{name} reported an output file that does not exist")
     details = {k: v for k, v in body.items() if k not in ("path", "url")}
-    return out, details
+    return adopt_op_output(out, path, name), details
 
 
 # ── The job ───────────────────────────────────────────────────────────────────

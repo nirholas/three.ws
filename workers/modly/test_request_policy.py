@@ -10,6 +10,7 @@ from request_policy import (
     SEED_MAX,
     TRIPOSG,
     PolicyError,
+    adopt_op_output,
     build_generation_params,
     call_with_retry,
     interpret_job,
@@ -256,3 +257,47 @@ def test_call_with_retry_recovers_then_gives_up():
 
     with pytest.raises(httpx.HTTPStatusError):
         call_with_retry(broken, sleep=sleeps.append)
+
+
+# Modly's /optimize/op/{name} (pinned commit f11a4d2) ignores the input's folder
+# and writes <workspace>/Workflows/<op>-<ms>.glb. The job only removes its own
+# <workspace>/<task_id>, so every post-processed job left its repaired,
+# decimated and smoothed meshes in the in-memory /tmp until the instance
+# recycled. Each op output is adopted into the job folder instead.
+def test_adopt_op_output_moves_the_mesh_into_the_job_folder(tmp_path):
+    job = tmp_path / "workspace" / "task-1"
+    job.mkdir(parents=True)
+    source = job / "input.glb"
+    source.write_bytes(b"in")
+    produced = tmp_path / "workspace" / "Workflows" / "repair-1730000000000.glb"
+    produced.parent.mkdir(parents=True)
+    produced.write_bytes(b"repaired")
+
+    adopted = adopt_op_output(produced, source, "repair")
+
+    assert adopted.parent == job
+    assert adopted.read_bytes() == b"repaired"
+    assert not produced.exists()
+
+
+def test_adopt_op_output_keeps_a_mesh_already_in_the_job_folder(tmp_path):
+    source = tmp_path / "input.glb"
+    source.write_bytes(b"in")
+    produced = tmp_path / "decimate-1.glb"
+    produced.write_bytes(b"d")
+    assert adopt_op_output(produced, source, "decimate") == produced
+
+
+def test_adopt_op_output_never_overwrites_an_earlier_step(tmp_path):
+    job = tmp_path / "job"
+    job.mkdir()
+    source = job / "input.glb"
+    source.write_bytes(b"in")
+    outs = []
+    for i in range(2):
+        produced = tmp_path / "Workflows" / "smooth-1.glb"
+        produced.parent.mkdir(exist_ok=True)
+        produced.write_bytes(bytes([i]))
+        outs.append(adopt_op_output(produced, source, "smooth"))
+    assert outs[0] != outs[1]
+    assert [o.read_bytes() for o in outs] == [b"\x00", b"\x01"]

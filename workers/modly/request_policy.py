@@ -20,6 +20,9 @@ from __future__ import annotations
 
 import math
 import random
+import shutil
+import uuid
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 import httpx
@@ -389,6 +392,21 @@ def workspace_relative(output_url: str) -> str:
     if not rel or any(p in ("", ".", "..") for p in parts) or "\\" in rel or "\x00" in rel:
         raise PolicyError("Modly output path is not a plain workspace-relative path")
     return rel
+
+
+def adopt_op_output(produced: Path, source: Path, name: str) -> Path:
+    """Move a Modly mesh-op result into the folder of the mesh it was run on.
+
+    Modly's /optimize/op/{name} writes <workspace>/Workflows/<op>-<ms>.glb no
+    matter where the input lives, and a job only cleans up its own folder, so
+    an unadopted result stays in the in-memory /tmp until the instance
+    recycles. The new name is unique, so no step overwrites an earlier one.
+    """
+    if produced.parent == source.parent:
+        return produced
+    dest = source.parent / f"{name}-{uuid.uuid4().hex[:12]}{produced.suffix or '.glb'}"
+    shutil.move(str(produced), str(dest))
+    return dest
 
 
 def readiness_problems(models: list[str], all_status: list, errors: dict) -> list[str]:
