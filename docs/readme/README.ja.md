@@ -2,7 +2,7 @@
 
 # three.ws
 
-*このページはコミュニティによってレビューされた翻訳です。修正は Pull Request で歓迎します。*
+*このページは英語版 README の冒頭部分の翻訳です。内容は[英語版 README](../../README.md) を正とします。修正は Pull Request で歓迎します。*
 
 **あなたの AI に身体を。** three.ws は、ブラウザネイティブで動くオープンソース(Apache-2.0)の 3D AI エージェントプラットフォームです。プロンプトからテクスチャ付き 3D モデルを生成し、LLM の頭脳を載せて、どんなサイトにも埋め込めます。
 
@@ -107,7 +107,7 @@ flowchart LR
 
 ## ローカルで動かす
 
-Node.js 24 以上、npm 10 以上、Neon Postgres データベース、Cloudflare R2 バケット、Anthropic API キーが必要です。`.env.local` に値を設定し(英語版 README の Environment Variables を参照)、次を実行します。
+Node.js 24 以上、npm 10 以上、Neon Postgres データベース、Cloudflare R2 バケット、Anthropic API キーが必要です。次のコマンドを順に実行します。`cp` の後、データベースを初期化する前に `.env.local` に必要な値を設定してください(英語版 README の Environment Variables を参照)。
 
 ```bash
 git clone https://github.com/nirholas/three.ws.git

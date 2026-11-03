@@ -2,7 +2,7 @@
 
 # three.ws
 
-*本页是社区审校的翻译版本,欢迎通过 Pull Request 提交修正。*
+*本页是英文 README 开头部分的翻译,内容以[英文 README](../../README.md) 为准。欢迎通过 Pull Request 提交修正。*
 
 **给你的 AI 一副身体。** three.ws 是一个开源(Apache-2.0)、原生运行在浏览器中的 3D AI 智能体平台:输入一句提示词即可生成带贴图的 3D 模型,再为它接上 LLM 大脑,嵌入任何网站。
 
@@ -107,7 +107,7 @@ flowchart LR
 
 ## 本地运行
 
-需要 Node.js 24+、npm 10+、一个 Neon Postgres 数据库、一个 Cloudflare R2 存储桶和一个 Anthropic API Key。先把 `.env.local` 里的值填好(参见英文 README 的 Environment Variables 一节),再执行:
+需要 Node.js 24+、npm 10+、一个 Neon Postgres 数据库、一个 Cloudflare R2 存储桶和一个 Anthropic API Key。依次执行下面的命令;`cp` 之后、初始化数据库之前,先在 `.env.local` 中填好所需的值(参见英文 README 的 Environment Variables 一节):
 
 ```bash
 git clone https://github.com/nirholas/three.ws.git

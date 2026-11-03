@@ -2,7 +2,7 @@
 
 # three.ws
 
-*이 문서는 커뮤니티가 검토한 번역본입니다. 수정 사항은 Pull Request로 언제든 환영합니다.*
+*이 문서는 영문 README 앞부분의 번역본이며, 내용은 [영문 README](../../README.md)를 기준으로 합니다. 수정 사항은 Pull Request로 언제든 환영합니다.*
 
 **AI에게 몸을 주세요.** three.ws는 브라우저에서 바로 동작하는 오픈소스(Apache-2.0) 3D AI 에이전트 플랫폼입니다. 프롬프트로 텍스처가 입혀진 3D 모델을 만들고, LLM 두뇌를 연결해 어떤 사이트에도 임베드할 수 있습니다.
 
@@ -107,7 +107,7 @@ flowchart LR
 
 ## 로컬에서 실행하기
 
-Node.js 24 이상, npm 10 이상, Neon Postgres 데이터베이스, Cloudflare R2 버킷, Anthropic API 키가 필요합니다. `.env.local`에 값을 채운 뒤(영문 README의 Environment Variables 참고) 다음을 실행하세요.
+Node.js 24 이상, npm 10 이상, Neon Postgres 데이터베이스, Cloudflare R2 버킷, Anthropic API 키가 필요합니다. 아래 명령을 순서대로 실행하되, `cp` 다음 데이터베이스를 초기화하기 전에 `.env.local`에 필요한 값을 채우세요(영문 README의 Environment Variables 참고).
 
 ```bash
 git clone https://github.com/nirholas/three.ws.git
