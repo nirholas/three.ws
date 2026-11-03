@@ -80,8 +80,8 @@
 		.mz-btn-block { width: 100%; padding: 13px 18px; font-size: 14.5px; }
 
 		/* Picker (empty state) */
-		.mz-pick { display: grid; grid-template-columns: 1.05fr 1fr; gap: 1rem; }
-		@media (max-width: 860px) { .mz-pick { grid-template-columns: 1fr; } }
+		.mz-pick { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 1rem; }
+		@media (max-width: 860px) { .mz-pick { grid-template-columns: minmax(0, 1fr); } }
 		.mz-drop {
 			border: 1.5px dashed var(--mz-line-strong); border-radius: 16px; background: var(--mz-panel);
 			padding: 1.9rem 1.4rem; text-align: center;

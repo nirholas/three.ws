@@ -175,6 +175,17 @@
 				padding: 0 clamp(12px, 3vw, 32px) 80px;
 				align-items: start;
 			}
+			/* On a phone the four header actions are wider than the screen: drop them to
+			   their own row under the brand and let that row scroll sideways. */
+			@media (max-width: 600px) {
+				.topbar { flex-wrap: wrap; row-gap: 10px; }
+				.topbar-right { width: 100%; overflow-x: auto; scrollbar-width: none; }
+				.topbar-right::-webkit-scrollbar { display: none; }
+				.topbar-right > * { flex-shrink: 0; }
+				/* The primary action leads so it is never the one behind the scroll edge. */
+				#create-btn { order: -1; }
+				.layout .feed-col { border-right: 0; }
+			}
 			@media (max-width: 900px) {
 				.layout {
 					grid-template-columns: 1fr;

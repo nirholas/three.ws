@@ -827,7 +827,8 @@
 	/* Full-width, stacked CTA buttons — larger, thumb-friendly tap targets. */
 	.lb-cta-inner { padding: var(--space-lg); }
 	.lb-cta-row { flex-direction: column; align-items: stretch; }
-	.lb-cta-row .lb-btn { width: 100%; justify-content: center; }
+	/* The column already stretches each button; width: 100% added the padding on top and ran 40px past the screen. */
+	.lb-cta-row .lb-btn { justify-content: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {
