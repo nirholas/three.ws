@@ -22,6 +22,7 @@
 
 import { VersionedTransaction } from '@solana/web3.js';
 
+import { sql } from './db.js';
 import { getConnection } from './pump.js';
 import { confirmOrThrow } from './solana/confirm.js';
 
