@@ -10,6 +10,18 @@ Goal: host a realistic, open-world, crime/driving/shooting multiplayer game alon
 - **GCP credits pay for it.** Per-player GPU streaming is the main cost, and it is a pre-approved GCP surface.
 - **Avoid FiveM/alt:V, the viral GTA V/GTA III browser ports, and the Call of Duty "Moon Zombies" remake.** Reasons are under "Ruled out."
 
+## Finished GTA-style projects we could adopt as-is (added 2026-11-03)
+
+Nothing is realistic, multiplayer, finished and open all at once. These are the closest finished games, ranked by how well they fit three.ws.
+
+| Project | What you get | Multiplayer | Realism | License / price | Fit |
+|---|---|---|---|---|---|
+| [Overdrive City](https://github.com/appleweiping/overdrive-city) ([play](https://appleweiping.github.io/overdrive-city/)) | On foot plus driving, fists/pistol/SMG, carjacking, lane-following traffic, 5-star police (foot cops, then ramming cruisers), arrest/death penalties, 10 job types (deliveries, taxi, stealth, races, drift, bounties), day/night. About 3,400 lines of plain three.js ES modules, no build, no asset files | No | Stylized, procedural | MIT (plain, no added clauses). Pushed 2026-10-23 | Best. Same stack as `/play`: add multiplayer through our Colyseus server (`multiplayer/`), swap in three.ws avatars, add Sketchbook's vehicle controllers |
+| [Advanced Multiplayer Game Template](https://assetstore.unity.com/packages/templates/systems/advanced-multiplayer-game-template-241288) (Redicion Studio) | Complete Unity 6 game marketed as "GTA Online in Unity": open world, car theft, vehicle damage, projectile weapons | Yes (networking library and dedicated-server support not published) | Mid (HDRP/URP) | $70, Unity Asset Store EULA. v1.14, 2026-03-29, ~54 reviews | Best finished multiplayer one. In the browser it needs a URP WebGL build (HDRP cannot target WebGL) or GPU streaming |
+| [Gangster Crime Simulator](https://assets4unity.com/downloads/gangster-crime-simulator/) | Complete Unity 2022.3 project: shooting, cars/bikes/helicopters/tanks, missions, police chases, city | No | Mobile-game grade | $99.99. Resale rights not stated | Single player, arcade (super powers, cheats) |
+
+Avoid kits sold under GTA names or advertising a "full GTA 5 map" (for example NeezGames' "Grand Theft Auto V Remake Unity Template"): they carry Rockstar trademarks or content and invite takedowns.
+
 ## Recommended path: UE5 city + Pixel Streaming (codename "three.ws City")
 
 | Layer | What | Cost / license |
