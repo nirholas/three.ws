@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "Smoother edges on every 3D model and avatar viewer",
+			"summary": "Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "The classic homepage avatar now shows head to toe, and appears on phones",
 			"summary": "On the classic homepage, the animation buttons used to cover the live avatar's feet, so the figure looked like it was floating. It now stands above the buttons with its feet and ground shadow in view. On phones the avatar area had collapsed to nothing, so mobile visitors never saw the live 3D agent at all. It now appears below the headline at a comfortable height.",
 			"tags": [

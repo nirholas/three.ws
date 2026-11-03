@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T04:13:41.397Z",
+	"generated_at": "2026-11-03T04:17:06.191Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4272,
+	"total": 4273,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -90,6 +90,16 @@
 			"link": "/docs",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Smoother edges on every 3D model and avatar viewer",
+			"summary": "Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1538,16 +1548,6 @@
 			"tags": [
 				"security",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "llms.txt links the docs as markdown, and install.md tells an agent how to connect",
-			"summary": "llms.txt now links each curated doc as /docs/<slug>.md, the text/markdown twin an agent can read directly. llms-full.txt carries the full text of those docs (capped at 40 KB each, with a link to the rest) after the page index. A new /install.md, generated from the MCP directory, gives one place for the setup command, per-client settings and every hosted endpoint.",
-			"link": "/docs/cli",
-			"tags": [
-				"docs"
 			]
 		}
 	]

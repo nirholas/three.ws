@@ -71,6 +71,14 @@
 			<description>A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.</description>
 		</item>
 		<item>
+			<title>Smoother edges on every 3D model and avatar viewer</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-03:Smoother edges on every 3D model and avatar viewer</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.</description>
+		</item>
+		<item>
 			<title>The classic homepage avatar now shows head to toe, and appears on phones</title>
 			<link>https://three.ws/classic</link>
 			<guid isPermaLink="false">2026-11-03:The classic homepage avatar now shows head to toe, and appears on phones</guid>

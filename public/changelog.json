@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T04:13:41.344Z",
+	"generated_at": "2026-11-03T04:17:06.141Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -87,6 +87,16 @@
 			"link": "/docs",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Smoother edges on every 3D model and avatar viewer",
+			"summary": "Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{

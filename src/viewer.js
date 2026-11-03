@@ -414,6 +414,7 @@ export class Viewer {
 			width: initialWidth,
 			height: initialHeight,
 			preset: this.state.cinematicPreset,
+			lowPower: this._lowPower,
 		});
 		this._composer = this._cinematic.composer;
 

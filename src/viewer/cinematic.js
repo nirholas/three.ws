@@ -137,14 +137,22 @@ export class CinematicPipeline {
 	 * @param {import('three').Camera} camera
 	 * @param {{ width: number, height: number, preset?: string }} opts
 	 */
-	constructor(renderer, scene, camera, { width, height, preset = DEFAULT_CINEMATIC_PRESET } = {}) {
+	constructor(renderer, scene, camera, { width, height, preset = DEFAULT_CINEMATIC_PRESET, lowPower = false } = {}) {
 		this.renderer = renderer;
 		this.scene = scene;
 		this.camera = camera;
 		this.params = { ...CINEMATIC_DEFAULTS };
 		this.preset = CINEMATIC_PRESETS[preset] ? preset : DEFAULT_CINEMATIC_PRESET;
 
-		this.composer = new EffectComposer(renderer);
+		// The composer renders into its own target, which bypasses the canvas's
+		// `antialias` MSAA: without multisampling here every edge stair-steps.
+		// The target stays 8-bit on purpose: the presets' bloom thresholds were
+		// tuned on clamped values, and a half-float target feeds HDR highlights
+		// into bloom and visibly blows out the Studio look.
+		const maxSamples = renderer.capabilities?.maxSamples ?? 0;
+		this.composer = new EffectComposer(renderer, {
+			multisampling: Math.min(lowPower ? 2 : 4, maxSamples),
+		});
 
 		this._renderPass = new RenderPass(scene, camera);
 		this.composer.addPass(this._renderPass);
