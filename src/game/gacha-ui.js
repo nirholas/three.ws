@@ -154,6 +154,17 @@ let _open = null;
  * Open the gacha modal (idempotent: a second call re-shows the live one).
  * @param {{ station?: object, onClose?: () => void }} opts
  */
+/**
+ * Whether a failed submit might still have broadcast the signed payment. Only a
+ * clear refusal (a 4xx the server answered before sending anything) proves it
+ * did not; a dropped connection, a timeout or a 5xx is ambiguous, so the saved
+ * pack must survive for the player to check.
+ */
+export function submitMayHaveSent(err) {
+	const status = Number(err?.status) || 0;
+	return !(status >= 400 && status < 500);
+}
+
 export function openGacha(opts = {}) {
 	if (_open) {
 		_open.onClose = opts.onClose || _open.onClose;
@@ -795,6 +806,14 @@ class GachaUI {
 			if (pend?.memo === prep.memo) writePending({ ...pend, signature: sub.signature });
 		} catch (err) {
 			this.inFlight = false;
+			if (submitMayHaveSent(err)) {
+				// Keep the saved pack: the payment may be on its way, and the status
+				// check by memo finds it whether or not we ever saw a signature.
+				this._renderPullError(`${err.message} Your payment may still have gone out, so your pack is saved. Check it before pulling again.`, {
+					retry: () => this._awaitPack(prep.memo, null), retryLabel: 'Check my pack',
+				});
+				return;
+			}
 			writePending(null);
 			this._renderPullError(err.message, { retry: () => this._renderDetail(this.machine), retryLabel: 'Back to the machine' });
 			return;
