@@ -433,6 +433,12 @@
     #main-container { flex-direction: column; }
     #viewer-container { height: 45vh; min-height: 240px; border-right: none; border-bottom: 1px solid var(--dark-grey); }
     #feed-container { width: 100%; flex: 1; min-height: 0; }
+    /* Stacked, the agent sits across the top of a page that scrolls, and the
+       viewer's touch-action: none made a swipe starting on it do nothing.
+       Vertical pans scroll the page; horizontal drag still orbits. three.js
+       OrbitControls writes touch-action: none as an inline style, which only
+       !important can override. */
+    #viewer-container canvas.tws-viewer-canvas { touch-action: pan-y !important; }
   }
 </style>
 		<link rel="stylesheet" href="/nav.css" />
