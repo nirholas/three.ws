@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T03:54:17.818Z",
+	"generated_at": "2026-11-03T03:57:06.690Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4269,
+	"total": 4270,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -16,6 +16,17 @@
 			"summary": "The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.",
 			"link": "/changelog",
 			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Add three.ws to your coding agent in one line, and read the README in Chinese, Japanese or Korean",
+			"summary": "The top of the three.ws GitHub page now shows a one-command install for Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode, plus live counts of models forged and agents created. Free text to 3D and rigged avatars work straight away, with no key and no account. The README also has a How it works diagram, a plain note on what is free and what costs money, Simplified Chinese, Japanese and Korean translations, and a place to show what you built. For just the 3D tools, the new three-ws-3d-skills repository packages six 3D skills you can install on their own.",
+			"link": "/changelog",
+			"tags": [
+				"docs",
 				"improvement"
 			]
 		},
@@ -1537,16 +1548,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Onchain viewer reads multi-part memo inscriptions",
-			"summary": "Paste any transaction of a first/1, firsts/1 or SPL404 inscription into /onchain and it collects the other parts, checks each part and the whole SHA-256, names missing parts, and shows the file. Images render from verified bytes; SVG and HTML are shown as text and never executed. The Solana Memo Media MCP gains a read_inscription tool that does the same.",
-			"link": "/onchain",
-			"tags": [
-				"feature"
 			]
 		}
 	]

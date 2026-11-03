@@ -40,25 +40,25 @@ Counts are out of 40.
 
 Structural medians:
 
-| Metric | Trending median | three.ws on GitHub today | three.ws locally |
+| Metric | Trending median | three.ws at the snapshot | three.ws after the 2026-11-03 pass |
 |---|---|---|---|
-| README length | 256 lines | **11,443 lines** | 121 lines |
-| Top-level entries in the file tree | 31 | **131** | 131 |
-| Repo description length | 101 chars | **244 chars** | same |
-| Contributors | 41 | 13 | |
-| Days spanned by the 5 most recent releases | about 25 (many under 8) | 43 (only 4 releases ever) | |
+| README length | 256 lines | **11,443 lines** | 11,583 lines, of which about 8,400 are the embedded STL model and about 3,200 are prose |
+| Top-level entries in the file tree | 31 | **131** | 125 |
+| Repo description length | 101 chars | **244 chars** | 189 chars, with a measured number |
+| Contributors | 41 | 13 | 13 |
+| Days spanned by the 5 most recent releases | about 25 (many under 8) | 43 (only 4 releases ever) | 5 releases; a weekly release cron is scheduled |
 
 ## What we already do well
 
-Health 100%: LICENSE, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, SUPPORT, FUNDING, issue and PR templates, 20 topics, homepage, custom social preview, Discussions enabled, a demo video in the hero, a comparison table, `llms.txt` and `llms-full.txt`, `AGENTS.md`, examples, a Dockerfile, Codespaces, star history and a contributors wall. The local README (commit `f410cfa5f`) already follows the trending shape: one-line pitch, "Try it in 60 seconds", one-command install, a feature table, and the full reference moved to `docs/reference.md`.
+Health 100%: LICENSE, CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, SUPPORT, FUNDING, issue and PR templates, 20 topics, homepage, custom social preview, Discussions enabled, a demo video in the hero, a comparison table, `llms.txt` and `llms-full.txt`, `AGENTS.md`, examples, a Dockerfile, Codespaces, star history and a contributors wall. The owner kept the full README as the single reference page, so the work in this pass went into its first screen: a one-line pitch, live badges, and a one-command install for every major coding agent, all before the interactive 3D model.
 
 ## The gaps, ranked by impact
 
-### 1. GitHub still serves the 11,000-line README
+### 1. The README is 40 times the median length
 
-`main` is 24 commits ahead of `threews/main`, and the README rewrite is one of them. Anyone landing on the repo today scrolls past 131 tree entries to an 11,443-line README. Every other fix below is worth less until this push lands.
+The README is 11,443 lines, against a median of 256. Most of that length is not prose: lines 82 to 8485 are an ASCII STL block that GitHub renders as a rotatable 3D avatar, which is a genuine differentiator no trending repo has. The prose is about 3,200 lines, still twelve times the median. A short README with the reference moved to `docs/` was tried and the owner restored the full version, so the README stays long. What matters is the first screen: everything a visitor needs to decide and install must sit above the 3D model.
 
-**Action:** `git push threews main` (owner gate 2).
+**Action:** keep the full README. Put the pitch, badges and install block above the STL model, and keep the STL decimated so the model loads fast.
 
 ### 2. The Claude Code plugin marketplace exists, but nothing tells anyone
 
@@ -123,14 +123,21 @@ Most trending READMEs have a "How it works" section with a diagram. Several buil
 
 13 contributors and 6 Discussions threads, against a median of 41 contributors on the trending list. Our onboarding (`docs/first-contribution.md`, labeled good first issues, Codespaces) is already better than most of the list. The gap is volume, which the fixes above feed. One cheap lever several trending repos use: a "Showcase" section or Discussions category where users post what they built, linked from the README.
 
-## Suggested order
+## Status after the 2026-11-03 pass
 
-1. Push the local README (gap 1). Owner gate.
-2. Add the coding-agent install block, rewrite the manifest framing, add the "Works with" row (gaps 2 and 8). Local edits, no gate.
-3. Pull real production numbers, then rewrite the hero and the repo description (gaps 4 and 5). The description change needs owner approval.
-4. Start the weekly release cadence (gap 6). Publishing needs owner approval.
-5. Root tree cleanup as its own tested change (gap 7).
-6. The standalone 3D-skills repo, translations, diagram and business-model note (gaps 3, 9 and 10).
+| Gap | Status | What shipped | What remains |
+|---|---|---|---|
+| 1. README length | Partly done | Pitch, live badges and the coding-agent install block now sit above the 3D model. | The owner keeps the full README, so its length stays. |
+| 2. Plugin marketplace | Done | README block with `/plugin marketplace add nirholas/three.ws`. `three-ws-3d` is listed first. Core plugin keywords and tags lead with `3d`, `avatar`, `glb`, `mcp`, `solana`. The 3D plugin also wires the keyless `https://three.ws/api/mcp-studio` server. | The marketplace description and one trading-pack entry still lead with wallet and trading terms. Rewording them names other crypto projects, so it waits for the owner under the commit gate. |
+| 3. One job | Done | Standalone repo [nirholas/three-ws-3d-skills](https://github.com/nirholas/three-ws-3d-skills): six 3D skills, a short README, a one-line install, and links back here. | None. |
+| 4. A number in the pitch | Done | shields.io badges read live figures from `https://three.ws/api/home-stats` (models forged, agents created). The repo description says "50k+ models forged". | None. |
+| 5. Repo description | Done | 189 characters, leading with one outcome: "Give your AI agent a 3D body". Topic `digital-human` swapped for `claude-code`. | Still above the 101-character median. Trim it if the harness list stops being worth the space. |
+| 6. Release cadence | Done, pending deploy | Catch-up release [v2026.11.03](https://github.com/nirholas/three.ws/releases/tag/v2026.11.03) (75 changelog entries). The weekly cron `/api/cron/github-release` runs Mondays at 15:00 UTC on the `vYYYY.MM.DD` scheme. Its Cloud Scheduler job, token secret and exclude-terms env var are live. | The handler is not live until the next production deploy. Swap the classic token in the `github-release-token` secret for a fine-grained PAT that is scoped to releases on this repo only. |
+| 7. Root tree | Partly done | 131 to 125 entries. Removed: `ISSUES.md`, `OAI Select Tier Assets/`, `_context/`, `tasks/`, `snapshots/`. | The seven `server-*.json` registry manifests stay at the root, because the move includes a manifest for another crypto project and is held for the owner. The `*-sdk/` directories stay too: about 390 references and the published npm `repository.directory` fields point at them, so moving them needs a coordinated republish of every package. |
+| 8. Other harnesses | Done | "Works with Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode", plus a config snippet per client. | None. |
+| 9. Translations | Done, review pending | `docs/readme/README.zh-CN.md`, `README.ja.md` and `README.ko.md`, linked from a language row under the badges. | A native-speaker review of each translation. |
+| 10. Diagram and business model | Done | A "How it works" Mermaid diagram and a "How three.ws makes money" section that states plainly what is free, what costs money and what $THREE is for. | None. |
+| 11. Community | Done | A "Built with three.ws" section linking the Show and tell category, a post template and the showcase thread. | Volume, which comes from the fixes above. |
 
 ## Appendix: the repos
 
@@ -139,7 +146,5 @@ Daily: vercel-labs/agent-desktop, thedotmack/claude-mem, D4Vinci/Scrapling, hypr
 Weekly (new entries only): Nutlope/hallmark, pbakaus/impeccable, AgriciDaniel/claude-seo, obra/superpowers, JetBrains/thinkrail, cloudflare/security-audit-skill, jakubkrehel/skills, multica-ai/andrej-karpathy-skills, anthropics/skills, Leonxlnx/taste-skill, TauricResearch/TradingAgents, ghostty-org/ghostty, affaan-m/ECC, heygen-com/hyperframes.
 
 Monthly (new entries only): morluto/rea, tester-army/e2e, debpalash/VoiceStudio, anthropics/knowledge-work-plugins, ranxianglei/billion-context, NationalSecurityAgency/ghidra, earthtojake/text-to-cad, michael-denyer/pstack-claude, anthropics/claude-plugins-official, mksglu/context-mode, tashfeenahmed/freellmapi.
-
-For the account-wide view (the same trending set compared against the top 40 `nirholas` repos, including CI and release coverage), see [github-benchmark/](github-benchmark/README.md).
 
 Method notes: the "install command", "number up top" and "names other harnesses" signals came from pattern matching on README text, so treat them as close approximations, not exact counts. Tree signals come from each repo's full recursive file listing. The three.ws figures come from the GitHub API (what visitors see today) and from the local checkout.

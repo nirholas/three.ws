@@ -15,6 +15,14 @@
 			<description>The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.</description>
 		</item>
 		<item>
+			<title>Add three.ws to your coding agent in one line, and read the README in Chinese, Japanese or Korean</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-03:Add three.ws to your coding agent in one line, and read the README in Chinese, Japanese or Korean</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The top of the three.ws GitHub page now shows a one-command install for Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode, plus live counts of models forged and agents created. Free text to 3D and rigged avatars work straight away, with no key and no account. The README also has a How it works diagram, a plain note on what is free and what costs money, Simplified Chinese, Japanese and Korean translations, and a place to show what you built. For just the 3D tools, the new three-ws-3d-skills repository packages six 3D skills you can install on their own.</description>
+		</item>
+		<item>
 			<title>Codespaces, a roadmap page, a support page and categorized release notes</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-03:Codespaces, a roadmap page, a support page and categorized release notes</guid>
