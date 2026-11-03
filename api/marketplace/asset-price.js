@@ -19,6 +19,7 @@ import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/
 import { requireCsrf } from '../_lib/csrf.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { z } from 'zod';
+import { refuseIfRestricted } from '../_lib/vroid/license-gate.js';
 
 const DEFAULT_USDC_MAINNET = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
@@ -109,6 +110,25 @@ async function handleGet(req, res) {
 	});
 }
 
+// The avatar's source_meta behind a priced item: the avatar itself, or the body
+// an agent wears. Null for plugins and for an agent with no avatar.
+async function getAvatarSourceMeta(itemType, itemId) {
+	if (itemType === 'avatar') {
+		const [row] = await sql`SELECT source_meta FROM avatars WHERE id = ${itemId} AND deleted_at IS NULL`;
+		return row?.source_meta ?? null;
+	}
+	if (itemType === 'agent') {
+		const [row] = await sql`
+			SELECT av.source_meta
+			  FROM agent_identities ai
+			  JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+			 WHERE ai.id = ${itemId} AND ai.deleted_at IS NULL
+		`;
+		return row?.source_meta ?? null;
+	}
+	return null;
+}
+
 async function handleSet(req, res) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
@@ -130,6 +150,15 @@ async function handleSet(req, res) {
 	const ownerId = await getOwnerUserId(item_type, item_id);
 	if (!ownerId) return error(res, 404, 'not_found', 'asset not found');
 	if (ownerId !== auth.userId) return error(res, 403, 'forbidden', 'not your asset');
+
+	// Selling a VRoid Hub character is redistribution plus commercial use; both
+	// must be open under the creator's license. Setting a price back to free is
+	// always allowed.
+	if (amount > 0) {
+		const sourceMeta = await getAvatarSourceMeta(item_type, item_id);
+		if (refuseIfRestricted(res, sourceMeta, 'export')) return;
+		if (refuseIfRestricted(res, sourceMeta, 'monetize')) return;
+	}
 
 	if (amount === 0) {
 		await sql`

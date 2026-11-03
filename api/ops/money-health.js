@@ -18,6 +18,10 @@ import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { authorizeOps } from '../_lib/ops-auth.js';
+import { getAuditDeadLetterStats } from '../_lib/x402/audit-log.js';
+
+// A dead-letter that has been non-empty this long means the drain is not keeping up.
+const AUDIT_DEAD_LETTER_STUCK_MS = 15 * 60_000;
 
 // The verdict sources each money subsystem writes into payment_reconciliation.
 const SUBSYSTEMS = [
@@ -109,8 +113,21 @@ export default wrap(async (req, res) => {
 		};
 	});
 
-	const overall = subsystems.some((s) => s.status === 'critical') ? 'critical'
-		: subsystems.some((s) => s.status === 'warn') ? 'warn' : 'ok';
+	// Audit-ledger durability: rows that failed to reach x402_audit_log and are
+	// waiting in the dead-letter list, or were parked after exhausting retries.
+	const dl = await getAuditDeadLetterStats();
+	const dlAgeMs = dl.oldestFailedAt ? now - dl.oldestFailedAt : null;
+	const auditLedger = {
+		dead_letter_depth: dl.depth,
+		buffer_depth: dl.bufferDepth,
+		parked: dl.parked,
+		oldest_failure_minutes: dlAgeMs != null ? Math.round(dlAgeMs / 60_000) : null,
+		status: (dlAgeMs != null && dlAgeMs > AUDIT_DEAD_LETTER_STUCK_MS) || dl.parked > 0 ? 'critical'
+			: dl.depth > 0 ? 'warn' : 'ok',
+	};
 
-	return json(res, 200, { ok: true, overall, subsystems, generated_at: new Date(now).toISOString() });
+	const overall = subsystems.some((s) => s.status === 'critical') || auditLedger.status === 'critical' ? 'critical'
+		: subsystems.some((s) => s.status === 'warn') || auditLedger.status === 'warn' ? 'warn' : 'ok';
+
+	return json(res, 200, { ok: true, overall, subsystems, audit_ledger: auditLedger, generated_at: new Date(now).toISOString() });
 });

@@ -28,7 +28,7 @@ and whether it is reconciled against the chain.
 
 | Flow | Ledger table (key columns) | tx sig? | Append-only | Idempotency | Chain-reconciled |
 | ---- | -------------------------- | ------- | ----------- | ----------- | ---------------- |
-| x402 settlements (main revenue) | `x402_audit_log` (`event_type, payer, network, amount_atomics, asset, tx_hash, settlement_status, …`) | ✅ | by convention* | Redis proof-hash slot + durable `x402_spent_payments` row ([`spent-payments.js`](../api/_lib/x402/spent-payments.js), replay guard beyond the cache TTL; fails open) | ❌ **no** |
+| x402 settlements (main revenue) | `x402_audit_log` (`event_type, payer, network, amount_atomics, asset, tx_hash, settlement_status, …`) | ✅ | by convention* | `UNIQUE (tx_hash, event_type)` where `tx_hash` is set (inserts are `ON CONFLICT DO NOTHING`, so a replay writes once); failed or timed-out writes go to a dead-letter list and are retried, see [audit durability](#x402-audit-durability); Redis proof-hash slot + durable `x402_spent_payments` row ([`spent-payments.js`](../api/_lib/x402/spent-payments.js), replay guard beyond the cache TTL; fails open) | ❌ **no** |
 | Signed receipts | `x402_receipts` (`payer, resource_url, receipt jsonb, transaction`) | ⚠️ often NULL (`includeTxHash` default false) | by convention | ❌ none | n/a (EIP-712 verifiable) |
 | Club tips → dancer payouts | `club_tips` (`ticket_id UNIQUE, dancer, amount_atomics, paid_tx`) → `club_payouts` (`tx, swept_tip_count`) | ✅ | payouts ✅; tips mutable | `ticket_id UNIQUE` + claim-before-send | ❌ |
 | Club cover charges | **none** (only `x402_audit_log`) | — | — | — | ❌ |
@@ -37,7 +37,7 @@ and whether it is reconciled against the chain.
 | Labor escrow (fund/settle/payout/refund) | `agent_bounties`, `agent_jobs` (`settle_key UNIQUE, settlement_sig, royalty_sig, refund_sig`) + custody ledger | ✅ | mutable status; single-shot | `settle_key UNIQUE` + atomic claim | ❌ |
 | $THREE buyback | `three_buyback_runs` (`usdc_spent_atomics, three_bought_atomics, buy_signature, sweep_signature`) | ✅ | ✅ (one row/run) | ❌ **no unique key** | ❌ |
 | Coin buyback / distribute | `pump_buyback_runs`, `pump_distribute_runs` (`tx_signature, status`) | ✅ | mutable status | ❌ **no unique key** | ❌ |
-| Withdrawals | `agent_withdrawals` (`amount, currency_mint, chain, to_address, tx_signature, status`) | ✅ | mutable status | ⚠️ claim-CAS only; **no on-chain-send idempotency** | ❌ |
+| Withdrawals | `agent_withdrawals` (`amount, currency_mint, chain, to_address, tx_signature, status, send_signature, send_attempts, last_valid_block_height, send_nonce`) | ✅ | mutable status | claim-CAS (`pending` to `processing`, single winner) + signature persisted BEFORE broadcast; an ambiguous failure parks in `broadcast_unconfirmed` (balance stays reserved) | ✅ **yes** (payout cron, every run) |
 | Treasury top-up / economy master | `economy_master_ledger` (`event, target_pubkey, lamports, signature, resulting balance, sol_usd, usd_value, prev_hash, entry_hash`): every transfer/failed/blocked plus a per-sweep heartbeat row | ✅ | ✅ SHA-256 hash-chained (tamper-evident) | ❌ no unique key on sig | ✅ **yes** (`economy-reconcile`) |
 | Autonomous x402 loop | `x402_autonomous_log` (`tx_signature, amount_atomic, success`) | ✅ | ✅ | ❌ no unique on sig | ✅ **yes** |
 | Inbound agent payments | `agent_payment_intents` (`amount, currency_mint, tx_signature, status`) | ✅ | mutable status | tx-unique index | ✅ **yes** |
@@ -86,7 +86,7 @@ Books automatically verified against the chain:
   [ring reconciliation](./x402-ring-economy.md#reconciliation--proving-every-ring-dollar-on-chain).
 
 **NOT reconciled against the chain:** `x402_audit_log` (the main revenue ledger),
-`club_payouts`, `cosmetic_sales`, `agent_jobs`, `agent_withdrawals`,
+`club_payouts`, `cosmetic_sales`, `agent_jobs`,
 `three_buyback_runs`, vanity payouts, and the 1% trade/launch fee (which has no
 ledger to reconcile).
 
@@ -164,16 +164,39 @@ or anchor**.
 
 | Table(s) | Deleted by | Window | Financial-record risk |
 | -------- | ---------- | ------ | --------------------- |
-| `x402_audit_log`, `x402_receipts`, `club_tips/payouts`, `cosmetic_sales`, `agent_*`, `credit_ledger`, payout/run tables | **nothing** | ∞ | none (safe) |
-| `audit_log` (generic action log) | `audit-log-cleanup` (daily) | **365 days, hardcoded** (legal-acceptance rows `tos-accept` / `risk-ack-accept` exempt, kept forever) | ⚠️ likely below statutory (5 to 7 yr) retention; no archive before delete |
+| `x402_receipts`, `club_tips/payouts`, `cosmetic_sales`, `agent_*`, `credit_ledger`, payout/run tables | **nothing** | ∞ | none (safe) |
+| `audit_log` (generic action log), `x402_audit_log` | `audit-log-cleanup` (daily) | `AUDIT_LOG_RETENTION_DAYS` / `X402_AUDIT_RETENTION_DAYS` (default 365, floor 30; legal-acceptance rows `tos-accept` / `risk-ack-accept` exempt, kept forever) | rows are archived to a verified gzip JSONL object (`audit-archive/<table>/<day>/`) before delete; a day that fails to archive is never deleted, and nothing is deleted when object storage is unconfigured. Set the window to the statutory period the finance owner requires |
 | `siwx_payments` (access grants) | `siwx-gc` (daily) | 7 days post-expiry | low (money record survives elsewhere; entitlement history lost) |
 | pump-intel firehose | `db-retention` (15 min) | `PUMP_INTEL_RETENTION_DAYS` (14, floor 2) | none: valve never touches money tables |
+
+### x402 audit durability
+
+`logPaymentEvent` still never blocks a payment, but a row is no longer lost when the
+write path misses ([`audit-log.js`](../api/_lib/x402/audit-log.js)):
+
+- Writes buffer in Redis (`x402:audit:buffer`) and flush in ordered batches of 200.
+  A batch that throws or exceeds the insert timeout moves to the dead-letter list
+  (`x402:audit:dead`, with attempt count and error) and the flush stops; if the
+  dead-letter push also fails the rows stay buffered. Buffer overflow moves the
+  oldest rows to the dead-letter list instead of trimming them.
+- With no Redis, a failed direct insert goes to the dead-letter list, then to the
+  `x402_audit_dead_letter` table; only if both are unreachable is the row logged
+  as lost, with its transaction hash.
+- The `x402-audit-drain` cron (every 5 min) retries dead-lettered rows with backoff
+  (30 s doubling to 1 h). After 10 failed attempts a row is parked in
+  `x402_audit_dead_letter` (`reason = 'max_attempts'`) for an operator.
+- Visibility: `/api/ops/money-health` returns `audit_ledger` (dead-letter depth,
+  buffer depth, parked count, oldest failure age). Ops is paged when the dead-letter
+  is non-empty for more than 15 minutes or any row is parked.
+- Existing duplicate `(tx_hash, event_type)` rows were copied into
+  `x402_audit_dead_letter` with `reason = 'dedupe'` before the unique index was
+  created (migration `20261103010000_x402_audit_durability.sql`).
 
 **Storage fragility:** financial tables share one **512 MB Neon branch** with a
 ~60 MB/day intel firehose. The pressure valve protects money data *by omission
 only*; at the cap **all financial/audit writes fail** (audit writes already
 fail-fast at 3 s), silently losing *new* records. Money data is not isolated onto a
-separate branch/DB, and there is no dead-letter for dropped writes.
+separate branch/DB, and dropped writes now go to a dead-letter (see above).
 
 ---
 
@@ -197,13 +220,14 @@ withdrawals have **no unified export**.
 Ranked by accounting/regulatory risk. Each is a tracked remediation item.
 
 ### P0 — must fix (unlogged or double-pay risk)
-1. **x402 revenue writes are fire-and-forget and drop under DB load.** On-chain
-   settled USDC can be absent from `x402_audit_log`, under-reporting revenue. *Fix:
-   make the settle-path audit write awaited/durable with a dead-letter, and add a
-   `UNIQUE(tx_hash)` idempotency constraint.*
-2. **Withdrawals lack on-chain-send idempotency.** Broadcast-then-throw marks
-   `failed` while funds may have left → double-pay on retry. *Fix: persist an
-   idempotency key / pre-send intent and check chain before re-issuing.*
+1. ✅ **x402 revenue audit writes no longer drop under DB load.** Failed and timed-out
+   writes are dead-lettered, retried with backoff, parked after 10 attempts, and
+   paged on; `UNIQUE (tx_hash, event_type)` makes replays idempotent. *Remaining:
+   the settle path still queues the write instead of awaiting it, so a process
+   crash between settlement and the Redis push can lose a row; the chain
+   reconciler for `x402_audit_log` (P1 #7) is what closes that.*
+2. ✅ **Withdrawals now have on-chain-send idempotency** (closed 2026-11-03, see
+   [Done](#done)).
 
 ### P1
 4. **Vanity bounty payout ledger is Redis/in-memory** (lost on restart w/o Upstash).
@@ -253,6 +277,27 @@ Ranked by accounting/regulatory risk. Each is a tracked remediation item.
     writes.
 
 ### Done
+- ✅ **Withdrawal payouts are idempotent across a failed-after-broadcast send**
+  (P0-#2). The payout cron ([`api/cron/[name].js`](../api/cron/[name].js)
+  `handleProcessWithdrawals`, helpers in
+  [`withdrawal-payout.js`](../api/_lib/withdrawal-payout.js)) claims a row with a
+  single-winner `UPDATE ... WHERE status='pending'`, signs, and persists the
+  signature plus its landing window (`lastValidBlockHeight`, or the EVM hash and
+  nonce) BEFORE broadcast through the engine's `onSigned` hook; a hook failure
+  aborts the send. A failure before anything was signed is `failed` (nothing
+  sent). Any later failure is `broadcast_unconfirmed`, which stays in the reserved
+  balance ([`withdrawal-status.js`](../api/_lib/withdrawal-status.js), the one list
+  both withdrawal endpoints and `getAvailableBalance` read). Each run first
+  reconciles those rows against the chain
+  ([`withdrawal-chain-status.js`](../api/_lib/withdrawal-chain-status.js)):
+  confirmed becomes `completed`; every attempt reverted or past its blockhash
+  window (Solana, finalized height) or nonce consumed by another transaction (EVM)
+  becomes `failed` and only then releases the balance; anything undecidable waits
+  for the next tick. A row stuck over 30 minutes pages ops
+  (`withdrawals-broadcast-unconfirmed`). Rows are never re-sent. Proven by
+  `tests/withdrawals-idempotency.test.js` and `tests/withdrawal-send-recording.test.js`.
+  Not covered: `processing` rows claimed before this change carry no signature, so
+  they still page for a manual check (`withdrawals-stranded`).
 - ✅ **Treasury top-up / economy-master transfers are logged and reconciled.**
   Every sweep appends hash-chained rows (transfer/failed/blocked plus a heartbeat)
   to `economy_master_ledger` via [`economy-ledger.js`](../api/_lib/economy-ledger.js),

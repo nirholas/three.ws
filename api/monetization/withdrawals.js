@@ -16,6 +16,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { parseLimit, parseOffset } from '../_lib/http-params.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { getAvailableBalance } from '../_lib/monetization.js';
+import { RESERVED_WITHDRAWAL_STATUSES, WITHDRAWAL_STATUSES as ALL_WITHDRAWAL_STATUSES, withdrawalStatusLabel } from '../_lib/withdrawal-status.js';
 
 const MIN_WITHDRAWAL_USDC = 1; // 1 USDC minimum
 const MIN_WITHDRAWAL_ATOMIC = MIN_WITHDRAWAL_USDC * 1_000_000;
@@ -23,7 +24,7 @@ const MIN_WITHDRAWAL_ATOMIC = MIN_WITHDRAWAL_USDC * 1_000_000;
 // The lifecycle the payout cron (api/cron/[name].js) actually writes. Anything
 // else in `?status=` is a caller typo, and answering it with an empty page
 // reads as "you have no withdrawals" instead of "that filter is not a status".
-const WITHDRAWAL_STATUSES = ['pending', 'processing', 'completed', 'failed'];
+const WITHDRAWAL_STATUSES = [...ALL_WITHDRAWAL_STATUSES];
 
 const postBody = z.object({
 	agent_id: z.string().uuid(),
@@ -109,7 +110,7 @@ export default wrap(async (req, res) => {
 		if (agentId && statusFilter) {
 			withdrawals = await sql`
 				SELECT id, agent_id, amount, currency_mint, chain, to_address,
-				       status, tx_signature, error_message, created_at, updated_at
+				       status, tx_signature, send_signature, error_message, created_at, updated_at
 				FROM agent_withdrawals
 				WHERE user_id = ${userId} AND agent_id = ${agentId} AND status = ${statusFilter}
 				ORDER BY created_at DESC
@@ -118,7 +119,7 @@ export default wrap(async (req, res) => {
 		} else if (agentId) {
 			withdrawals = await sql`
 				SELECT id, agent_id, amount, currency_mint, chain, to_address,
-				       status, tx_signature, error_message, created_at, updated_at
+				       status, tx_signature, send_signature, error_message, created_at, updated_at
 				FROM agent_withdrawals
 				WHERE user_id = ${userId} AND agent_id = ${agentId}
 				ORDER BY created_at DESC
@@ -127,7 +128,7 @@ export default wrap(async (req, res) => {
 		} else if (statusFilter) {
 			withdrawals = await sql`
 				SELECT id, agent_id, amount, currency_mint, chain, to_address,
-				       status, tx_signature, error_message, created_at, updated_at
+				       status, tx_signature, send_signature, error_message, created_at, updated_at
 				FROM agent_withdrawals
 				WHERE user_id = ${userId} AND status = ${statusFilter}
 				ORDER BY created_at DESC
@@ -136,7 +137,7 @@ export default wrap(async (req, res) => {
 		} else {
 			withdrawals = await sql`
 				SELECT id, agent_id, amount, currency_mint, chain, to_address,
-				       status, tx_signature, error_message, created_at, updated_at
+				       status, tx_signature, send_signature, error_message, created_at, updated_at
 				FROM agent_withdrawals
 				WHERE user_id = ${userId}
 				ORDER BY created_at DESC
@@ -246,7 +247,7 @@ export default wrap(async (req, res) => {
 	//
 	// pg_advisory_xact_lock serializes concurrent requests for the same
 	// (user, mint); the conditional INSERT…SELECT then re-derives available
-	// (earned − pending/processing/completed, mirroring getAvailableBalance)
+	// (earned minus reserved withdrawals, mirroring getAvailableBalance)
 	// inside the locked transaction and refuses to insert when the amount
 	// exceeds it. Matches api/billing/withdrawals/index.js.
 	const lockKey = `withdrawal:${userId}:${currencyMint}`;
@@ -269,7 +270,7 @@ export default wrap(async (req, res) => {
 					FROM agent_withdrawals w2
 					WHERE w2.user_id = ${userId}
 					  AND w2.currency_mint = ${currencyMint}
-					  AND w2.status IN ('pending', 'processing', 'completed')
+					  AND w2.status = ANY(${[...RESERVED_WITHDRAWAL_STATUSES]})
 				)
 			)
 			RETURNING id, agent_id, amount, currency_mint, chain, to_address, status, tx_signature, created_at, updated_at
@@ -302,7 +303,11 @@ function formatWithdrawal(w) {
 		chain: w.chain,
 		destination_address: w.to_address,
 		status: w.status,
+		status_label: withdrawalStatusLabel(w.status),
 		tx_hash: w.tx_signature ?? null,
+		// While a payout is confirming the transfer may already be on chain: show its
+		// signature so the owner can follow it before it settles.
+		pending_tx_hash: w.status === 'broadcast_unconfirmed' ? (w.send_signature ?? null) : null,
 		error: w.error_message ?? null,
 		requested_at: w.created_at,
 		processed_at: w.updated_at !== w.created_at ? w.updated_at : null,

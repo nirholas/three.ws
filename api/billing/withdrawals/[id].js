@@ -5,6 +5,7 @@ import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error, rateLimited } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { isUuid } from '../../_lib/validate.js';
+import { withdrawalStatusLabel } from '../../_lib/withdrawal-status.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
@@ -23,12 +24,19 @@ export default wrap(async (req, res) => {
 
 	const [withdrawal] = await sql`
 		select id, agent_id, amount, currency_mint, chain, to_address,
-		       status, tx_signature, created_at, updated_at
+		       status, tx_signature, send_signature, created_at, updated_at
 		from agent_withdrawals
 		where id = ${id} and user_id = ${user.id}
 	`;
 
 	if (!withdrawal) return error(res, 404, 'not_found', 'withdrawal not found');
 
-	return json(res, 200, { withdrawal });
+	const { send_signature, ...rest } = withdrawal;
+	return json(res, 200, {
+		withdrawal: {
+			...rest,
+			status_label: withdrawalStatusLabel(rest.status),
+			pending_tx_signature: rest.status === 'broadcast_unconfirmed' ? (send_signature ?? null) : null,
+		},
+	});
 });

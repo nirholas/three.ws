@@ -9,6 +9,7 @@ import { parse, isValidSolanaAddress, isValidEvmAddress } from '../../_lib/valid
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parseLimit, parseOffset } from '../../_lib/http-params.js';
 import { requireCsrf } from '../../_lib/csrf.js';
+import { RESERVED_WITHDRAWAL_STATUSES, withdrawalStatusLabel } from '../../_lib/withdrawal-status.js';
 import { SOLANA_USDC_MINT, EVM_USDC } from '../../payments/_config.js';
 
 // Note: the payout destination is intentionally NOT accepted from the client.
@@ -48,7 +49,7 @@ export default wrap(async (req, res) => {
 		const withdrawals = status
 			? await sql`
 				select id, agent_id, amount, currency_mint, chain, to_address,
-				       status, tx_signature, created_at, updated_at
+				       status, tx_signature, send_signature, created_at, updated_at
 				from agent_withdrawals
 				where user_id = ${user.id} and status = ${status}
 				order by created_at desc
@@ -56,7 +57,7 @@ export default wrap(async (req, res) => {
 			`
 			: await sql`
 				select id, agent_id, amount, currency_mint, chain, to_address,
-				       status, tx_signature, created_at, updated_at
+				       status, tx_signature, send_signature, created_at, updated_at
 				from agent_withdrawals
 				where user_id = ${user.id}
 				order by created_at desc
@@ -75,7 +76,16 @@ export default wrap(async (req, res) => {
 				where user_id = ${user.id}
 			`;
 
-		return json(res, 200, { withdrawals, total, limit, offset });
+		return json(res, 200, {
+			withdrawals: withdrawals.map(({ send_signature, ...w }) => ({
+				...w,
+				status_label: withdrawalStatusLabel(w.status),
+				pending_tx_signature: w.status === 'broadcast_unconfirmed' ? (send_signature ?? null) : null,
+			})),
+			total,
+			limit,
+			offset,
+		});
 	}
 
 	// POST
@@ -180,7 +190,7 @@ export default wrap(async (req, res) => {
 					select coalesce(sum(w2.amount), 0)::bigint
 					from agent_withdrawals w2
 					where w2.user_id = ${user.id}
-					  and w2.status in ('pending', 'processing', 'completed')
+					  and w2.status = any(${[...RESERVED_WITHDRAWAL_STATUSES]})
 					  and w2.currency_mint = ${currency_mint}
 				)
 			)

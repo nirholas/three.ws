@@ -49,6 +49,7 @@ import {
 	skipReasonFor,
 } from '../_lib/x402/pay.js';
 import { assessFeeAdmission } from '../_lib/x402/wallet-fee-meter.js';
+import { payWithChallengeRefresh } from '../_lib/x402/challenge-refresh.js';
 import {
 	getFullRegistry,
 	MAX_PER_TICK,
@@ -636,45 +637,82 @@ export default wrapCron(async (req, res) => {
 				continue;
 			}
 
-			// Step 2: check if receiver ATA exists (optimization — share lookup)
-			const receiverAta = getAssociatedTokenAddressSync(
-				new PublicKey(accept.asset), new PublicKey(accept.payTo),
-				false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
-			);
-			const receiverAtaInfo = await conn.getAccountInfo(receiverAta).catch(() => null);
+			// Steps 2-4, as a closure so a payment the endpoint refuses with a 402 can
+			// be re-driven once against a refreshed challenge (see challenge-refresh.js).
+			// Each call builds a byte-unique transaction: the first uses the nonce the
+			// admission check priced, a re-drive draws a new one.
+			let nextNonce = payNonce;
+			const payAgainst = async (acc) => {
+				const nonce = nextNonce ?? nextAutoNonce();
+				nextNonce = null;
+				// Step 2: check if receiver ATA exists (optimization, share lookup)
+				const receiverAta = getAssociatedTokenAddressSync(
+					new PublicKey(acc.asset), new PublicKey(acc.payTo),
+					false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+				);
+				const receiverAtaInfo = await conn.getAccountInfo(receiverAta).catch(() => null);
 
-			// Step 3: build signed tx. Signed against the freshness-cached blockhash,
-			// not the tick's: a tick runs its entries one after another and can last
-			// three minutes, and a hash read at the top of it is past its ~60 second
-			// validity by the later entries. Measured 2026-09-30: 16 settles in 90
-			// minutes died at broadcast with `BlockhashNotFound`, every one from a
-			// tick running 70 to 230 seconds.
-			const signBlockhash = await currentBlockhash(conn, blockhash);
-			const txBase64 = buildPaymentTx({
-				accept, buyer, blockhash: signBlockhash, mintInfo,
-				receiverAtaExists: receiverAtaInfo !== null,
-				nonce: payNonce,
+				// Step 3: build signed tx. Signed against the freshness-cached blockhash,
+				// not the tick's: a tick runs its entries one after another and can last
+				// three minutes, and a hash read at the top of it is past its ~60 second
+				// validity by the later entries. Measured 2026-09-30: 16 settles in 90
+				// minutes died at broadcast with `BlockhashNotFound`, every one from a
+				// tick running 70 to 230 seconds.
+				const signBlockhash = await currentBlockhash(conn, blockhash);
+				const txBase64 = buildPaymentTx({
+					accept: acc, buyer, blockhash: signBlockhash, mintInfo,
+					receiverAtaExists: receiverAtaInfo !== null,
+					nonce,
+				});
+
+				const xPayment = Buffer.from(JSON.stringify({
+					x402Version: 2,
+					scheme: 'exact',
+					network: acc.network,
+					resource: { url: endpointUrl, mimeType: 'application/json' },
+					payload: { transaction: txBase64 },
+					accepted: acc,
+				})).toString('base64');
+
+				// Step 4: fire with payment
+				return fetchWithTimeout(endpointUrl, {
+					method: entry.method || 'POST',
+					headers: {
+						'content-type': 'application/json',
+						'user-agent': 'threews-x402-autonomous/1.0',
+						'x-payment': xPayment,
+					},
+					...(requestBody != null ? { body: JSON.stringify(requestBody) } : {}),
+				});
+			};
+
+			const refreshedPay = await payWithChallengeRefresh({
+				accept,
+				limits: { usdcMint: USDC_MINT, remainingCap, payerUsdcAtomic },
+				pay: payAgainst,
+				reprobe: () => fetchWithTimeout(endpointUrl, {
+					method: entry.method || 'POST',
+					headers: { 'content-type': 'application/json', 'user-agent': 'threews-x402-autonomous/1.0' },
+					...(requestBody != null ? { body: JSON.stringify(requestBody) } : {}),
+				}),
+				admit: async (fresh) => assessFeeAdmission({
+					feeWalletB58: fresh.extra.feePayer,
+					estFeeLamports: expectedFeeLamports({
+						selfPay: false,
+						priorityMicrolamports: feeConfig.microLamports,
+						cuLimit: feeConfig.cuLimit,
+					}),
+					connection: conn,
+				}),
 			});
-
-			const xPayment = Buffer.from(JSON.stringify({
-				x402Version: 2,
-				scheme: 'exact',
-				network: accept.network,
-				resource: { url: endpointUrl, mimeType: 'application/json' },
-				payload: { transaction: txBase64 },
-				accepted: accept,
-			})).toString('base64');
-
-			// Step 4: fire with payment
-			const paidRes = await fetchWithTimeout(endpointUrl, {
-				method: entry.method || 'POST',
-				headers: {
-					'content-type': 'application/json',
-					'user-agent': 'threews-x402-autonomous/1.0',
-					'x-payment': xPayment,
-				},
-				...(requestBody != null ? { body: JSON.stringify(requestBody) } : {}),
-			});
+			const paidRes = refreshedPay.paidRes;
+			if (refreshedPay.refreshed) {
+				// The price actually paid is the refreshed one.
+				amountAtomic = Number(refreshedPay.accept.amount || 0);
+				log.info('autonomous_challenge_refreshed', { id: entry.id, amount: amountAtomic });
+			} else if (refreshedPay.refreshSkipped) {
+				log.info('autonomous_challenge_refresh_skipped', { id: entry.id, reason: refreshedPay.refreshSkipped });
+			}
 
 			responseBody = paidRes.body;
 			success = paidRes.ok;

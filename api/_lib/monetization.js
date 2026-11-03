@@ -6,6 +6,7 @@
 import { randomUUID } from 'node:crypto';
 import { sql } from './db.js';
 import { calculateFee } from './fee.js';
+import { IN_FLIGHT_WITHDRAWAL_STATUSES } from './withdrawal-status.js';
 
 /**
  * Record an immutable revenue event for a consumed skill payment.
@@ -78,7 +79,7 @@ export async function recordRevenueEvent({
 /**
  * Calculate the available (withdrawable) balance for a user.
  *
- * available = sum(net_amount from revenue_events) - sum(amount from pending/processing/completed withdrawals)
+ * available = sum(net_amount from revenue_events) - sum(amount from withdrawals in a RESERVED_WITHDRAWAL_STATUSES state, api/_lib/withdrawal-status.js)
  * Revenue flagged settled_to_wallet already landed in the owner's own wallet on
  * chain (agent API sales over x402), so it is never withdrawable from the treasury.
  *
@@ -109,7 +110,7 @@ export async function getAvailableBalance(userId, currencyMint = null) {
 	const [wResult] = currencyMint
 		? await sql`
 			SELECT
-				COALESCE(SUM(CASE WHEN status IN ('pending', 'processing') THEN amount ELSE 0 END), 0)::bigint AS pending,
+				COALESCE(SUM(CASE WHEN status = ANY(${[...IN_FLIGHT_WITHDRAWAL_STATUSES]}) THEN amount ELSE 0 END), 0)::bigint AS pending,
 				COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)::bigint AS withdrawn
 			FROM agent_withdrawals
 			WHERE user_id = ${userId}
@@ -117,7 +118,7 @@ export async function getAvailableBalance(userId, currencyMint = null) {
 		`
 		: await sql`
 			SELECT
-				COALESCE(SUM(CASE WHEN status IN ('pending', 'processing') THEN amount ELSE 0 END), 0)::bigint AS pending,
+				COALESCE(SUM(CASE WHEN status = ANY(${[...IN_FLIGHT_WITHDRAWAL_STATUSES]}) THEN amount ELSE 0 END), 0)::bigint AS pending,
 				COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0)::bigint AS withdrawn
 			FROM agent_withdrawals
 			WHERE user_id = ${userId}

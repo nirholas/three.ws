@@ -73,8 +73,9 @@ export async function checkSolanaSend(row, deps = {}) {
 
 	const height = await connection.getBlockHeight('finalized');
 	const open = undecided.filter((a) => {
-		const last = Number(a.lastValidBlockHeight);
 		// Without a recorded window the attempt can never be declared dead.
+		if (a.lastValidBlockHeight == null) return true;
+		const last = Number(a.lastValidBlockHeight);
 		return !Number.isFinite(last) || height <= last;
 	});
 	if (open.length) {

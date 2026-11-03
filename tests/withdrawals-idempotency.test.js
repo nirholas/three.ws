@@ -34,6 +34,7 @@ const db = { rows: [], statements: [] };
 
 vi.mock('../api/_lib/db.js', () => ({
 	isDbUnavailableError: vi.fn(() => false),
+	isDbCapacityError: vi.fn(() => false),
 	sql: vi.fn(async (strings, ...values) => {
 		const text = strings.join('?').replace(/\s+/g, ' ').toLowerCase();
 		db.statements.push(text);

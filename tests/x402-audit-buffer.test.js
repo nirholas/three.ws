@@ -13,14 +13,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Fakes ─────────────────────────────────────────────────────────────────────
 // A minimal in-memory Redis list supporting exactly the ops the buffer uses.
 function makeFakeRedis() {
-	let list = [];
+	const lists = new Map();
+	const get = (k) => lists.get(k) ?? [];
+	const BUFFER = 'x402:audit:buffer';
 	return {
-		_list: () => list,
-		_set: (v) => { list = v; },
-		rpush: vi.fn(async (_k, v) => list.push(v)),
-		lrange: vi.fn(async (_k, start, stop) => list.slice(start, stop + 1)),
-		ltrim: vi.fn(async (_k, start, stop) => { list = list.slice(start, stop === -1 ? undefined : stop + 1); }),
-		llen: vi.fn(async () => list.length),
+		_list: (k = BUFFER) => get(k),
+		_set: (v) => { lists.set(BUFFER, v); },
+		rpush: vi.fn(async (k, ...vals) => { const l = get(k).concat(vals); lists.set(k, l); return l.length; }),
+		lrange: vi.fn(async (k, start, stop) => get(k).slice(start, stop + 1)),
+		ltrim: vi.fn(async (k, start, stop) => { lists.set(k, get(k).slice(start, stop === -1 ? undefined : stop + 1)); }),
+		llen: vi.fn(async (k) => get(k).length),
 		expire: vi.fn(async () => 1),
 	};
 }
@@ -121,12 +123,13 @@ describe('flushAuditBuffer — batched drain', () => {
 		expect(sqlImpl).not.toHaveBeenCalled();
 	});
 
-	it('trims consumed rows even when the batch INSERT fails (no infinite retry)', async () => {
+	it('moves rows to the dead-letter list when the batch INSERT fails (no loss, no infinite retry)', async () => {
 		logPaymentEvent(EVENT); await settle();
 		sqlImpl.mockRejectedValueOnce(new Error('db query exceeded 3000ms deadline'));
 		const res = await flushAuditBuffer({ limit: 100 });
 		expect(res.errors).toBe(1);
-		expect(res.remaining).toBe(0); // consumed rows are dropped, not re-queued forever
+		expect(res.remaining).toBe(0); // the buffer is drained, not re-read forever
 		expect(fakeRedis._list()).toHaveLength(0);
+		expect(fakeRedis._list('x402:audit:dead')).toHaveLength(1); // and the row survives
 	});
 });

@@ -40,13 +40,13 @@ let fakeRedis = null;
 // statement says ON CONFLICT DO NOTHING (exactly what Postgres does).
 const table = [];
 const deadTable = [];
-let dbMode = 'ok'; // 'ok' | 'throw' | 'hang'
+let dbMode = 'ok'; // 'ok' | 'throw' | 'hang' | 'audit-throw' (dead-letter table stays reachable)
 const insertBatches = [];
 
 const sqlImpl = vi.fn(async (text, params) => {
 	if (typeof text !== 'string') return [];
 	if (text.startsWith('INSERT INTO x402_audit_log')) {
-		if (dbMode === 'throw') throw new Error('connection terminated');
+		if (dbMode === 'throw' || dbMode === 'audit-throw') throw new Error('connection terminated');
 		if (dbMode === 'hang') return new Promise(() => {});
 		const cols = 14;
 		const batch = [];
@@ -220,11 +220,7 @@ describe('drainAuditDeadLetter', () => {
 		fakeRedis.ltrim(DEAD, 1, -1);
 		await fakeRedis.rpush(DEAD, JSON.stringify(item));
 		// The audit insert still fails, but the dead-letter table is reachable.
-		sqlImpl.mockImplementation(async (text, params) => {
-			if (text.startsWith('INSERT INTO x402_audit_log')) throw new Error('row rejected');
-			if (text.startsWith('INSERT INTO x402_audit_dead_letter')) { deadTable.push(params); return []; }
-			return [];
-		});
+		dbMode = 'audit-throw';
 		const res = await drainAuditDeadLetter({ now: Date.now() + 2 * 3_600_000 });
 		expect(res.parked).toBe(1);
 		expect(deadTable).toHaveLength(1);

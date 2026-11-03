@@ -10,6 +10,12 @@
 // Design rules:
 //   1. logPaymentEvent is fire-and-forget via queueMicrotask. A DB hiccup must
 //      NEVER cause a payment to fail or a response to delay.
+//   1b. A row that cannot be written is never dropped. It moves to a dead-letter
+//      list (Redis `x402:audit:dead`) with an attempt count, and
+//      drainAuditDeadLetter retries it with capped exponential backoff. After
+//      MAX_ATTEMPTS it is parked in the x402_audit_dead_letter table for an
+//      operator. Inserts are ON CONFLICT DO NOTHING against the partial unique
+//      index on (tx_hash, event_type), so a replay writes the event once.
 //   2. Only on-chain identifiers enter the log (addresses, tx hashes, amounts).
 //      IP and UA are captured for rate-limit forensics but never surfaced to
 //      non-admin callers.
@@ -34,6 +40,12 @@ import { getRedis, isRedisAuthError } from '../redis.js';
 const BUFFER_KEY = 'x402:audit:buffer';
 const BUFFER_MAX = 20_000;   // safety cap — trim oldest if the flusher falls behind
 const BUFFER_TTL_S = 7200;   // 2h — a row should never sit buffered this long
+const DEAD_KEY = 'x402:audit:dead';
+const DEAD_TABLE = 'x402_audit_dead_letter';
+const MAX_ATTEMPTS = 10;     // after this many failed writes a row is parked in Postgres
+const FLUSH_BATCH = 200;
+const DEAD_BACKOFF_BASE_MS = 30_000;
+const DEAD_BACKOFF_MAX_MS = 3_600_000;
 
 // This is best-effort telemetry on a fire-and-forget path: the payment has
 // already been decided and the response sent by the time this runs. So a write
@@ -103,9 +115,10 @@ export function logPaymentEvent(event) {
 		if (r) {
 			try {
 				const len = await r.rpush(BUFFER_KEY, JSON.stringify(normalizeEvent(event)));
-				// Hard cap: if the flusher is falling behind, shed the oldest rows
-				// rather than let the list grow without bound.
-				if (len > BUFFER_MAX) await r.ltrim(BUFFER_KEY, len - BUFFER_MAX, -1);
+				// Hard cap: if the flusher is falling behind, move the oldest rows
+				// to the dead-letter list rather than let the buffer grow without
+				// bound or lose them.
+				if (len > BUFFER_MAX) await shedBufferOverflow(r, len - BUFFER_MAX);
 				// Set the TTL once on first push so the key self-cleans if the flusher
 				// dies — the safety-net cron (api/cron/flush-usage-events.js) normally
 				// drains it every minute.
@@ -127,8 +140,90 @@ export function logPaymentEvent(event) {
 			await insertAuditRows([event], { timeoutMs: auditWriteTimeoutMs() });
 		} catch (err) {
 			logAuditFailure(event, err);
+			await recordUnwritable(normalizeEvent(event), err);
 		}
 	});
+}
+
+// ── Dead-letter ───────────────────────────────────────────────────────────────
+// An envelope wraps one normalized row with its failure history so the drain can
+// back off and cap retries.
+function makeEnvelope(row, err, prev) {
+	const now = Date.now();
+	return {
+		row,
+		attempts: (prev?.attempts ?? 0) + 1,
+		error: String(err?.message ?? err ?? 'unknown').slice(0, 500),
+		firstFailedAt: prev?.firstFailedAt ?? now,
+		lastFailedAt: now,
+	};
+}
+
+function backoffMs(attempts) {
+	return Math.min(DEAD_BACKOFF_BASE_MS * 2 ** Math.max(0, attempts), DEAD_BACKOFF_MAX_MS);
+}
+
+function parseEnvelope(item) {
+	try {
+		const env = typeof item === 'string' ? JSON.parse(item) : item;
+		if (env && Array.isArray(env.row) && env.row.length === AUDIT_COLUMNS.length) return env;
+	} catch { /* unparseable: handled by the caller */ }
+	return null;
+}
+
+// Move the oldest `count` buffered rows onto the dead-letter list. Push first,
+// trim second: a crash in between duplicates rows (harmless, the insert is
+// idempotent) instead of losing them.
+async function shedBufferOverflow(r, count) {
+	const raw = await r.lrange(BUFFER_KEY, 0, count - 1);
+	if (!raw?.length) return;
+	const envs = raw
+		.map((item) => { try { return typeof item === 'string' ? JSON.parse(item) : item; } catch { return null; } })
+		.filter((row) => Array.isArray(row) && row.length === AUDIT_COLUMNS.length)
+		.map((row) => JSON.stringify(makeEnvelope(row, 'buffer_overflow')));
+	if (envs.length > 0) await r.rpush(DEAD_KEY, ...envs);
+	await r.ltrim(BUFFER_KEY, raw.length, -1);
+}
+
+// Park one payload in the durable dead-letter table. Returns true when stored.
+async function parkInDatabase(payload, reason, error, attempts, firstFailedAt) {
+	try {
+		await withDbRetry(
+			() => sql(
+				`INSERT INTO ${DEAD_TABLE} (payload, reason, error, attempts, first_failed_at)
+				 VALUES ($1::jsonb, $2, $3, $4, $5)`,
+				[JSON.stringify(payload), reason, error ?? null, attempts, new Date(firstFailedAt ?? Date.now()).toISOString()],
+			),
+			{ timeoutMs: auditWriteTimeoutMs() },
+		);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+// A row that failed on the no-buffer path (Redis absent or down). Try the Redis
+// dead-letter list, then the DB dead-letter table; only if both are unreachable
+// is the row lost, and that is logged with its transaction hash so it can be
+// recovered from the chain.
+async function recordUnwritable(row, err) {
+	const env = makeEnvelope(row, err);
+	const r = getRedis();
+	if (r) {
+		try { await r.rpush(DEAD_KEY, JSON.stringify(env)); return; } catch { /* fall through */ }
+	}
+	if (await parkInDatabase(env, 'insert_failed', env.error, env.attempts, env.firstFailedAt)) return;
+	console.error('[x402-audit] row lost: no buffer, no dead-letter reachable', {
+		eventType: row[0], route: row[1], txHash: row[7],
+	});
+}
+
+function withTimeout(promise, ms) {
+	let timer;
+	const timeout = new Promise((_, reject) => {
+		timer = setTimeout(() => reject(new Error(`audit insert timed out after ${ms}ms`)), ms);
+	});
+	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
 // Canonical column order for the audit table. Kept in one place so the buffered
@@ -182,34 +277,38 @@ async function insertAuditRows(events, opts) {
 	});
 
 	const text =
-		`INSERT INTO x402_audit_log (${AUDIT_COLUMNS.join(', ')}) VALUES ${tuples.join(', ')}`;
+		`INSERT INTO x402_audit_log (${AUDIT_COLUMNS.join(', ')}) VALUES ${tuples.join(', ')} ON CONFLICT DO NOTHING`;
 	await withDbRetry(() => sql(text, params), opts);
 }
 
 /**
  * Drain up to `limit` buffered audit rows from Redis and batch-insert them into
- * Neon, stopping after `deadlineMs` so a slow Neon spell can't push the caller
- * past its function timeout. Each batch is a single multi-row INSERT. Consumed
- * entries are trimmed regardless of insert success — re-inserting duplicates on
- * retry is worse than losing a few best-effort telemetry rows. Called by the
- * usage-flush cron and QStash job (they drain both telemetry buffers).
+ * Neon (200 per multi-row INSERT, oldest first), stopping after `deadlineMs` so a
+ * slow Neon spell can't push the caller past its function timeout.
  *
- * @param {{ limit?: number, deadlineMs?: number }} [opts]
- * @returns {Promise<{ flushed: number, remaining: number, errors: number, timedOut?: boolean, skipped?: string }>}
+ * Nothing is dropped. A batch that fails or exceeds `insertTimeoutMs` is moved to
+ * the dead-letter list (drained later by drainAuditDeadLetter) and the flush
+ * stops, leaving later batches buffered for the next tick instead of hammering a
+ * struggling DB. The buffer is trimmed only after the batch is either inserted or
+ * safely on the dead-letter list; if the dead-letter push also fails the rows stay
+ * buffered. Inserts are idempotent (ON CONFLICT DO NOTHING).
+ *
+ * @param {{ limit?: number, deadlineMs?: number, insertTimeoutMs?: number }} [opts]
+ * @returns {Promise<{ flushed: number, remaining: number, errors: number, deadLettered: number, timedOut?: boolean, skipped?: string }>}
  */
-export async function flushAuditBuffer({ limit = 1000, deadlineMs = 45_000 } = {}) {
+export async function flushAuditBuffer({ limit = 1000, deadlineMs = 45_000, insertTimeoutMs = 15_000 } = {}) {
 	const r = getRedis();
-	if (!r) return { flushed: 0, remaining: 0, errors: 0, skipped: 'redis_unavailable' };
+	if (!r) return { flushed: 0, remaining: 0, errors: 0, deadLettered: 0, skipped: 'redis_unavailable' };
 
-	const BATCH = 200;
 	let flushed = 0;
 	let errors = 0;
+	let deadLettered = 0;
 	let timedOut = false;
 	const startedAt = Date.now();
 
 	while (flushed < limit) {
 		if (Date.now() - startedAt > deadlineMs) { timedOut = true; break; }
-		const take = Math.min(BATCH, limit - flushed);
+		const take = Math.min(FLUSH_BATCH, limit - flushed);
 
 		let raw;
 		try {
@@ -218,7 +317,7 @@ export async function flushAuditBuffer({ limit = 1000, deadlineMs = 45_000 } = {
 			if (!err?.circuitOpen && !isRedisAuthError(err)) {
 				console.warn('[x402-audit-flush] redis unavailable on lrange:', err?.message);
 			}
-			return { flushed, remaining: -1, errors, skipped: 'redis_unavailable' };
+			return { flushed, remaining: -1, errors, deadLettered, skipped: 'redis_unavailable' };
 		}
 		if (!raw || raw.length === 0) break;
 
@@ -227,16 +326,31 @@ export async function flushAuditBuffer({ limit = 1000, deadlineMs = 45_000 } = {
 			catch { return null; }
 		}).filter((row) => Array.isArray(row) && row.length === AUDIT_COLUMNS.length);
 
+		let failure = null;
 		if (rows.length > 0) {
 			try {
-				await insertAuditRows(rows);
+				await withTimeout(insertAuditRows(rows), insertTimeoutMs);
 			} catch (err) {
-				errors += 1;
-				console.warn(`[x402-audit-flush] batch insert of ${rows.length} rows failed`, err?.message);
+				failure = err;
 			}
 		}
 
-		// Trim the entries we read, whether or not the insert succeeded.
+		if (failure) {
+			errors += 1;
+			console.warn(`[x402-audit-flush] batch insert of ${rows.length} rows failed`, failure?.message);
+			try {
+				await r.rpush(DEAD_KEY, ...rows.map((row) => JSON.stringify(makeEnvelope(row, failure))));
+			} catch (pushErr) {
+				// Cannot make the rows safe elsewhere, so leave them buffered.
+				console.error('[x402-audit-flush] dead-letter push failed, rows stay buffered', pushErr?.message);
+				break;
+			}
+			deadLettered += rows.length;
+			await r.ltrim(BUFFER_KEY, raw.length, -1);
+			flushed += raw.length;
+			break;
+		}
+
 		await r.ltrim(BUFFER_KEY, raw.length, -1);
 		flushed += raw.length;
 
@@ -244,7 +358,116 @@ export async function flushAuditBuffer({ limit = 1000, deadlineMs = 45_000 } = {
 	}
 
 	const remaining = await r.llen(BUFFER_KEY).catch(() => -1);
-	return { flushed, remaining, errors, timedOut };
+	return { flushed, remaining, errors, deadLettered, timedOut };
+}
+
+/**
+ * Retry dead-lettered audit rows. Each row waits out an exponential backoff
+ * (30s, 1m, 2m, ... capped at 1h) keyed on its attempt count. A row that fails
+ * MAX_ATTEMPTS times is parked in the x402_audit_dead_letter table for an
+ * operator; if even that write fails it stays on the Redis list. Failed and
+ * not-yet-due rows are appended to the tail BEFORE the head is trimmed, so a crash
+ * mid-drain duplicates work (idempotent) rather than losing a row.
+ *
+ * @param {{ limit?: number, deadlineMs?: number, insertTimeoutMs?: number, now?: number }} [opts]
+ * @returns {Promise<{ inserted: number, requeued: number, parked: number, deferred: number, errors: number, remaining: number, skipped?: string }>}
+ */
+export async function drainAuditDeadLetter({ limit = 500, deadlineMs = 30_000, insertTimeoutMs = 15_000, now = Date.now() } = {}) {
+	const r = getRedis();
+	const out = { inserted: 0, requeued: 0, parked: 0, deferred: 0, errors: 0, remaining: 0 };
+	if (!r) return { ...out, skipped: 'redis_unavailable' };
+
+	let raw;
+	try {
+		raw = await r.lrange(DEAD_KEY, 0, limit - 1);
+	} catch (err) {
+		if (!err?.circuitOpen && !isRedisAuthError(err)) {
+			console.warn('[x402-audit-drain] redis unavailable on lrange:', err?.message);
+		}
+		return { ...out, remaining: -1, skipped: 'redis_unavailable' };
+	}
+	if (!raw || raw.length === 0) return out;
+
+	const startedAt = Date.now();
+	const keep = []; // serialized items going back on the tail
+	const due = [];
+	for (const item of raw) {
+		const env = parseEnvelope(item);
+		if (!env) {
+			const payload = { raw: typeof item === 'string' ? item : JSON.stringify(item) };
+			if (await parkInDatabase(payload, 'unparseable', 'dead-letter item is not a valid envelope', 0, now)) out.parked += 1;
+			else keep.push(typeof item === 'string' ? item : JSON.stringify(item));
+			continue;
+		}
+		if (now >= env.lastFailedAt + backoffMs(env.attempts)) due.push(env);
+		else { out.deferred += 1; keep.push(JSON.stringify(env)); }
+	}
+
+	for (let i = 0; i < due.length; i += FLUSH_BATCH) {
+		const batch = due.slice(i, i + FLUSH_BATCH);
+		if (Date.now() - startedAt > deadlineMs) {
+			for (const env of batch) { out.deferred += 1; keep.push(JSON.stringify(env)); }
+			continue;
+		}
+		try {
+			await withTimeout(insertAuditRows(batch.map((e) => e.row)), insertTimeoutMs);
+			out.inserted += batch.length;
+		} catch (err) {
+			out.errors += 1;
+			for (const env of batch) {
+				const next = makeEnvelope(env.row, err, env);
+				if (next.attempts >= MAX_ATTEMPTS
+					&& await parkInDatabase(next, 'max_attempts', next.error, next.attempts, next.firstFailedAt)) {
+					out.parked += 1;
+				} else {
+					out.requeued += 1;
+					keep.push(JSON.stringify(next));
+				}
+			}
+		}
+	}
+
+	if (keep.length > 0) await r.rpush(DEAD_KEY, ...keep);
+	await r.ltrim(DEAD_KEY, raw.length, -1);
+	out.remaining = await r.llen(DEAD_KEY).catch(() => -1);
+	return out;
+}
+
+/**
+ * Operator-facing durability metric: how many audit rows are waiting in the
+ * dead-letter list, how long the oldest has been failing, and how many have been
+ * parked in the durable table (excluding migration dedupe copies).
+ *
+ * @returns {Promise<{ depth: number, oldestFailedAt: number|null, parked: number|null, bufferDepth: number }>}
+ */
+export async function getAuditDeadLetterStats() {
+	const r = getRedis();
+	let depth = 0;
+	let oldestFailedAt = null;
+	let bufferDepth = 0;
+	if (r) {
+		try {
+			depth = Number(await r.llen(DEAD_KEY)) || 0;
+			bufferDepth = Number(await r.llen(BUFFER_KEY)) || 0;
+			if (depth > 0) {
+				const sample = await r.lrange(DEAD_KEY, 0, 999);
+				for (const item of sample) {
+					const env = parseEnvelope(item);
+					if (env && (oldestFailedAt === null || env.firstFailedAt < oldestFailedAt)) oldestFailedAt = env.firstFailedAt;
+				}
+			}
+		} catch (err) {
+			if (!err?.circuitOpen && !isRedisAuthError(err)) {
+				console.warn('[x402-audit] dead-letter stats unavailable:', err?.message);
+			}
+		}
+	}
+	let parked = null;
+	try {
+		const rows = await sql(`SELECT count(*)::int AS n FROM ${DEAD_TABLE} WHERE reason <> 'dedupe'`);
+		parked = rows?.[0]?.n ?? 0;
+	} catch { parked = null; }
+	return { depth, oldestFailedAt, parked, bufferDepth };
 }
 
 /**
