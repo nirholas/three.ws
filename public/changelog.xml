@@ -7,12 +7,12 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
-			<title>A README you can read in two minutes, plus Codespaces, a roadmap and a support page</title>
+			<title>Codespaces, a roadmap page, a support page and categorized release notes</title>
 			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-11-03:A README you can read in two minutes, plus Codespaces, a roadmap and a support page</guid>
+			<guid isPermaLink="false">2026-11-03:Codespaces, a roadmap page, a support page and categorized release notes</guid>
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
-			<description>The root README was 11,000 lines; the long-form reference now lives in docs/reference.md and the README is a short front door with a 60-second quickstart, a comparison table and screenshots. One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed alongside.</description>
+			<description>One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed for contributors and new visitors.</description>
 		</item>
 		<item>
 			<title>Every partner logo now sits in the site footer</title>

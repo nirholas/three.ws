@@ -9,4 +9,4 @@
 | Report a vulnerability | [SECURITY.md](.github/SECURITY.md), never a public issue |
 | Contribute code | [First contribution guide](docs/first-contribution.md) |
 
-Docs live at [three.ws/docs](https://three.ws/docs) and the long-form reference is [docs/reference.md](docs/reference.md).
+Docs live at [three.ws/docs](https://three.ws/docs) and the long-form reference is [README.md](README.md).

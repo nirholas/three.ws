@@ -226,12 +226,12 @@
 	},
 	{
 		"pattern": "Avaturn",
-		"file": "docs/reference.md",
+		"file": "README.md",
 		"reason": "Top-level README enumerates the bundled vendor integrations."
 	},
 	{
 		"pattern": "avaturn",
-		"file": "docs/reference.md",
+		"file": "README.md",
 		"reason": "Env-var default value (`AVATAR_REGEN_PROVIDER=none | avaturn`) documented in the README."
 	},
 	{
@@ -311,7 +311,7 @@
 	},
 	{
 		"pattern": "Character Studio",
-		"file": "docs/reference.md",
+		"file": "README.md",
 		"reason": "Top-level README enumerates the bundled integrations."
 	},
 	{

@@ -1,6 +1,6 @@
 # Roadmap
 
-The destination: anyone can mint a 3D agent of themselves, own it onchain, and embed it anywhere on the internet. Phase-by-phase detail lives in the [full reference](docs/reference.md#roadmap). Shipped work is in the [changelog](CHANGELOG.md).
+The destination: anyone can mint a 3D agent of themselves, own it onchain, and embed it anywhere on the internet. Phase-by-phase detail lives in the [full reference](README.md#roadmap). Shipped work is in the [changelog](CHANGELOG.md).
 
 
 | Phase | Theme                                                                                  | Status                                                                                                         |
