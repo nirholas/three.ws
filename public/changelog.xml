@@ -47,6 +47,14 @@
 			<description>The top of the three.ws GitHub page now shows a one-command install for Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode, plus live counts of models forged and agents created. Free text to 3D and rigged avatars work straight away, with no key and no account. The README also has a How it works diagram, a plain note on what is free and what costs money, Simplified Chinese, Japanese and Korean translations, and a place to show what you built. For just the 3D tools, the new three-ws-3d-skills repository packages six 3D skills you can install on their own.</description>
 		</item>
 		<item>
+			<title>Cinematic and Portrait looks get real contact shadows</title>
+			<link>https://three.ws/app</link>
+			<guid isPermaLink="false">2026-11-03:Cinematic and Portrait looks get real contact shadows</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Cinematic and Portrait looks in the 3D viewer now use N8AO ambient occlusion, the same denoised technique the /play world runs. Creases, armpits, joints and the space between limbs pick up soft contact shading that the previous effect barely showed. The shading scales with the model, so tiny figurines and full-size avatars look equally grounded, and there is a new AO radius slider in the Cinematic FX panel. The default Studio look is unchanged and never downloads the extra code.</description>
+		</item>
+		<item>
 			<title>Codespaces, a roadmap page, a support page and categorized release notes</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-03:Codespaces, a roadmap page, a support page and categorized release notes</guid>

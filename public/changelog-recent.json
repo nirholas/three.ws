@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T05:45:49.853Z",
+	"generated_at": "2026-11-03T05:52:24.979Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4283,
+	"total": 4284,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -59,6 +59,16 @@
 			"tags": [
 				"docs",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Cinematic and Portrait looks get real contact shadows",
+			"summary": "The Cinematic and Portrait looks in the 3D viewer now use N8AO ambient occlusion, the same denoised technique the /play world runs. Creases, armpits, joints and the space between limbs pick up soft contact shading that the previous effect barely showed. The shading scales with the model, so tiny figurines and full-size avatars look equally grounded, and there is a new AO radius slider in the Cinematic FX panel. The default Studio look is unchanged and never downloads the extra code.",
+			"link": "/app",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1535,16 +1545,6 @@
 			"title": "Chain turnover on /chains",
 			"summary": "The chains leaderboard now has a sortable Turnover column (24h DEX volume divided by TVL) that shows which chains have capital actively trading rather than parked. Chains with no TVL or no reported volume show n/a.",
 			"link": "/chains",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "update",
-			"title": "Coin intel funder map is now a 3D graph",
-			"summary": "The wallet network in the coin intel drawer renders as a GPU-instanced 3D force graph, with wallets sized by holdings and linked to their shared funder, a live-trades toggle, and reduced-motion support. Browsers without WebGL keep the 2D map.",
-			"link": "/coin-intel",
 			"tags": [
 				"feature"
 			]
