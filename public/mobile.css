@@ -1274,3 +1274,65 @@
 		font-size: 12px;
 	}
 }
+
+/* ── Tap-target floor, round 6 (touch only) ────────────────────────────
+ * Rounds 1-5 named each offending component. The 2026-11-03 full-site
+ * sweep (1,014 routes at 393px, Pixel 5 touch profile) still found 400+
+ * distinct button and field signatures under 44px, most of them one-page
+ * chips, segment toggles and toolbar buttons. Naming them one at a time
+ * does not converge, so native form controls get a site-wide floor here.
+ *
+ * :where() keeps the specificity at zero, so any page that sets its own
+ * min-height still wins. Native buttons, selects and text fields centre
+ * their content vertically, so a text control only grows taller and keeps
+ * its look. Empty buttons (carousel dots, colour swatches) are left alone
+ * because a 44px floor would change their shape. Range sliders get the
+ * height so the thumb has a full-size touch band around the track.
+ */
+@media (hover: none) and (pointer: coarse) {
+	:where(
+		button:not(:empty),
+		select,
+		input:not([type]),
+		input[type='text'],
+		input[type='search'],
+		input[type='email'],
+		input[type='url'],
+		input[type='password'],
+		input[type='number'],
+		input[type='tel'],
+		input[type='button'],
+		input[type='submit'],
+		input[type='reset'],
+		input[type='range'],
+		input[type='color']
+	) {
+		min-height: 44px;
+	}
+
+	/* Width too: short labels ("x", a digit, an arrow) and icon-only buttons
+	   stay square instead of turning into tall slivers. A native button
+	   centres its label horizontally, so the look is unchanged. */
+	:where(button:not(:empty), input[type='color']) {
+		min-width: 44px;
+	}
+
+	/* Footer partner marks on every page with the horizon footer: 38x44,
+	   the short wordmarks fall under the width floor. */
+	.h-footer-partner {
+		min-width: 44px;
+		justify-content: center;
+	}
+}
+
+/* ── Smallest type token on phones ────────────────────────────────────
+ * tokens.css defines --text-xs as 0.618rem (9.9px), below --text-2xs
+ * (11px) and below a phone's legibility floor. The sweep found it on
+ * 49 stylesheets' worth of labels, eyebrows, badges and hints. On phones
+ * the token resolves to the 11px rung instead; desktop keeps 9.9px.
+ */
+@media (max-width: 768px) {
+	:root {
+		--text-xs: 0.6875rem;
+	}
+}
