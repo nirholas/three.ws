@@ -40,6 +40,10 @@ export const ANALYTICS_EVENTS = Object.freeze({
 	WALLET_CONNECT_FAILED: 'wallet_connect_failed',
 	/** An agent was created. props: { agent_id?, source? } */
 	AGENT_CREATED: 'agent_created',
+	/** A create-wizard template was applied. props: { source, template } */
+	CREATE_AGENT_TEMPLATE_USED: 'create_agent_template_used',
+	/** The persona interview produced (or failed to produce) a profile. props: { source, ok, questions_answered? } */
+	PERSONA_INTERVIEW_GENERATE: 'persona_interview_generate',
 	/** A recorded voice sample was cloned onto the agent. props: { agent_id?, billing?, source? } */
 	VOICE_CLONE_BOUND: 'agent_voice_clone_bound',
 	/** First embed/snippet generated for an agent. props: { agent_id?, embed_kind? } */

@@ -972,7 +972,7 @@ function wireTemplates() {
 			setInterviewStatus('', '');
 			state.publish = Boolean(state.category && state.persona.trim());
 			scheduleDraftSave();
-			track('create_agent_template_used', { source: 'create_wizard', template: template.id });
+			track(ANALYTICS_EVENTS.CREATE_AGENT_TEMPLATE_USED, { source: 'create_wizard', template: template.id });
 
 			const msg = document.createElement('span');
 			msg.textContent = `Applied "${template.name}". Personality, greeting, category and skills are filled in.`;
@@ -1662,7 +1662,7 @@ async function runInterviewExtraction() {
 			`Profile written from ${answers.length} of ${INTERVIEW_QUESTIONS.length} answers. Edit it below, or tweak your answers and regenerate.`,
 			'ok',
 		);
-		track('persona_interview_generate', {
+		track(ANALYTICS_EVENTS.PERSONA_INTERVIEW_GENERATE, {
 			source: 'create_wizard',
 			questions_answered: answers.length,
 			ok: true,
@@ -1671,7 +1671,7 @@ async function runInterviewExtraction() {
 	} catch (err) {
 		log.warn('[create-agent] interview extraction failed', err);
 		trackError('create_agent.interview', err);
-		track('persona_interview_generate', { source: 'create_wizard', ok: false });
+		track(ANALYTICS_EVENTS.PERSONA_INTERVIEW_GENERATE, { source: 'create_wizard', ok: false });
 		setInterviewStatus(
 			err?.code === 'llm_unavailable' || err?.status === 503
 				? 'The writer is offline right now. Write the profile yourself below, or try again shortly.'
