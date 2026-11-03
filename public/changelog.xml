@@ -31,6 +31,14 @@
 			<description>The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.</description>
 		</item>
 		<item>
+			<title>Docs · Agent memory and learning</title>
+			<link>https://three.ws/docs/agent-memory</link>
+			<guid isPermaLink="false">2026-11-03:Docs · Agent memory and learning</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What your agents remember, the about-you profile and skills they draft from experience, the owner controls to edit, delete or turn learning off, the privacy guarantees on sale, and the /api/memory routes.</description>
+		</item>
+		<item>
 			<title>Docs · Coin Control</title>
 			<link>https://three.ws/docs/coin-control</link>
 			<guid isPermaLink="false">2026-11-03:Docs · Coin Control</guid>

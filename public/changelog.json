@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T18:02:20.426Z",
+	"generated_at": "2026-11-03T18:23:30.228Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -32,6 +32,16 @@
 			"title": "Custody Integrity",
 			"summary": "The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.",
 			"link": "/integrity",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Docs · Agent memory and learning",
+			"summary": "What your agents remember, the about-you profile and skills they draft from experience, the owner controls to edit, delete or turn learning off, the privacy guarantees on sale, and the /api/memory routes.",
+			"link": "/docs/agent-memory",
 			"tags": [
 				"launch"
 			]
