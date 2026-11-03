@@ -473,6 +473,7 @@
 		"check:model-viewer": "node scripts/check-model-viewer-version.mjs",
 		"check:secrets": "node scripts/check-secrets.mjs",
 		"check:gcloudignore": "node scripts/check-gcloudignore.mjs",
+		"check:worker-drift": "node scripts/check-worker-drift.mjs",
 		"check:api-imports": "node scripts/check-api-imports.mjs",
 		"check:home-voice": "node scripts/check-home-voice.mjs",
 		"check:evm-rpc": "node --env-file=.env scripts/probe-evm-rpc.mjs --chain 1 --ens",

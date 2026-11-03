@@ -188,6 +188,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Deploy artifact preflight | `npm run audit:deploy` | The artifact failure classes that have taken production down. |
 | Every API module loads | `npm run check:api-imports` | Every handler and shared module under `api/` importing without throwing, since a load-time throw is a 500 on every request to that route rather than a build error. |
 | Cloud Build upload | `npm run check:gcloudignore` | What `gcloud builds submit` would actually upload. |
+| Worker image drift | `npm run check:worker-drift` | Every Cloud Run worker serves an image built from a commit that contains its current source, or the newer source is still inside the grace window. Read-only; needs gcloud credentials. |
 
 ### Runtime, assets, and money
 

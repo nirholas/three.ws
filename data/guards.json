@@ -1409,6 +1409,22 @@
 			}
 		},
 		{
+			"id": "check-worker-drift",
+			"script": "scripts/check-worker-drift.mjs",
+			"npm": "check:worker-drift",
+			"title": "Serving worker images contain their source",
+			"protects": "Every Cloud Run worker deployed from workers/<dir>/cloudbuild*.yaml is serving an image built from a commit that contains its current source, or the newer source has waited less than the grace window (7 days by default).",
+			"why": "A worker fix lands in git and reads as shipped, but the worker keeps serving the old image until someone rebuilds it, so the bug stays live in production with nothing red anywhere. This reads each service's serving revision, its image digest and build commit from Artifact Registry, and compares that with the worker's git history, so a merged but never deployed fix shows up as DRIFTED instead of being discovered from production crashes.",
+			"stages": [
+				"manual"
+			],
+			"needs": "gcloud",
+			"proof": {
+				"kind": "live",
+				"reason": "The verdict depends on which revision each Cloud Run service is serving right now and when Artifact Registry built that image, which only the live project can answer. The comparison logic itself is pinned by tests/check-worker-drift.test.js over captured gcloud responses in tests/fixtures/worker-drift/."
+			}
+		},
+		{
 			"id": "check-home-matrix",
 			"script": "scripts/home-version-matrix.mjs",
 			"npm": "check:home-matrix",
