@@ -92,13 +92,17 @@
 	user-select: none;
 }
 
+/* The mascot stands on the partners row's top hairline at its right end.
+   Anchoring it to that row (not to a percentage of the whole footer) keeps it
+   off the logos at every width; the row's stacking order paints it behind the
+   link columns above and the logos beside it. */
 .h-footer-avatar {
 	position: absolute;
-	right: 4%;
-	bottom: 12%;
+	right: 0;
+	bottom: 100%;
 	width: 140px;
 	height: 140px;
-	z-index: 3;
+	z-index: 0;
 	pointer-events: none;
 	filter: grayscale(1) drop-shadow(0 0 18px rgba(255, 255, 255, 0.30));
 }
@@ -434,6 +438,170 @@
 	color: #fff;
 }
 
+/* Partners and programs: every partner from /partners as one monochrome row.
+   Marks are CSS masks painted in currentColor, so they share the link colour,
+   hover and focus treatment of the rest of the footer. Each mark's SVG has a
+   tight viewBox; --ar is its aspect ratio and --h its optical height, tuned so
+   glyph marks and wordmarks read at the same visual weight. */
+.h-footer-partners {
+	position: relative;
+	z-index: 3;
+	max-width: 1080px;
+	margin: 0 auto;
+	padding: 1.75rem 0 2.25rem;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.h-footer-partners-head,
+.h-footer-partners-list {
+	position: relative;
+	z-index: 1;
+}
+
+.h-footer-partners-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1.1rem;
+}
+
+.h-footer-partners-head .h-footer-link-heading {
+	margin: 0;
+}
+
+.h-footer-partners-all {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	color: rgba(255, 255, 255, 0.55);
+	text-decoration: none;
+	font-family: var(--font-body);
+	font-size: 0.78rem;
+	border-radius: 4px;
+	transition: color var(--duration-base) var(--ease-standard);
+}
+
+.h-footer-partners-all svg {
+	width: 11px;
+	height: 11px;
+	transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.h-footer-partners-all:hover {
+	color: #fff;
+}
+
+.h-footer-partners-all:hover svg {
+	transform: translateX(2px);
+}
+
+.h-footer-partners-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem 2rem;
+}
+
+.h-footer-partner {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	min-height: 32px;
+	padding: 0 0.15rem;
+	color: rgba(255, 255, 255, 0.5);
+	text-decoration: none;
+	font-family: var(--font-display);
+	font-size: 0.92rem;
+	font-weight: 600;
+	letter-spacing: -0.005em;
+	white-space: nowrap;
+	border-radius: 6px;
+	transition: color var(--duration-base) var(--ease-standard), filter var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+}
+
+.h-footer-partner-mark {
+	display: block;
+	flex-shrink: 0;
+	height: var(--h, 18px);
+	aspect-ratio: var(--ar, 1);
+	background-color: currentColor;
+	-webkit-mask: var(--logo) center / contain no-repeat;
+	mask: var(--logo) center / contain no-repeat;
+}
+
+.h-footer-partner:hover {
+	color: #fff;
+	filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
+	transform: translateY(-1px);
+}
+
+.h-footer-partner:active {
+	color: rgba(255, 255, 255, 0.85);
+	transform: translateY(0);
+}
+
+/* The ring itself comes from the shared .h-footer-horizon a:focus-visible rule. */
+.h-footer-partner:focus-visible,
+.h-footer-partners-all:focus-visible {
+	color: #fff;
+}
+
+.h-footer-partners-all:active {
+	color: rgba(255, 255, 255, 0.85);
+}
+
+.h-footer-nvidia-legal + .h-footer-nvidia-legal {
+	margin-top: 0.35rem;
+}
+
+/* Nine marks fit one row down to ~1024px once the minimum gap tightens. Below
+   that a free wrap strands Quicknode alone on a second line, so tablets get a
+   balanced 5 + 4 grid; phones go back to a natural left-aligned wrap. */
+@media (max-width: 1120px) {
+	.h-footer-partners-list {
+		column-gap: 1.1rem;
+	}
+}
+
+@media (max-width: 1023px) and (min-width: 721px) {
+	.h-footer-partners-list {
+		display: grid;
+		grid-template-columns: repeat(5, max-content);
+		justify-content: space-between;
+		gap: 0.75rem 1.1rem;
+	}
+}
+
+@media (max-width: 720px) {
+	.h-footer-partners-list {
+		justify-content: flex-start;
+		gap: 0.6rem 1.5rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.h-footer-partner,
+	.h-footer-partners-all svg {
+		transition: none;
+	}
+	.h-footer-partner:hover,
+	.h-footer-partners-all:hover svg {
+		transform: none;
+	}
+}
+
+@media (hover: none) and (pointer: coarse) {
+	.h-footer-partner,
+	.h-footer-partners-all {
+		min-height: 44px;
+	}
+}
+
 .h-footer-bottom {
 	position: relative;
 	z-index: 4;
@@ -670,8 +838,6 @@
 	.h-footer-avatar {
 		width: 90px;
 		height: 90px;
-		right: 5%;
-		bottom: 18%;
 	}
 }
 
