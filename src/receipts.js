@@ -236,6 +236,32 @@ async function loadMore() {
 	}
 }
 
+/**
+ * A failed "load more" must not wipe the rows already on screen (renderLoadError
+ * does), so the message goes into the shared error panel while the list and the
+ * pager button stay put and the buyer can simply press the button again.
+ */
+function showMoreError(message) {
+	$('rc-load-error-msg').textContent = message;
+	$('rc-load-error').hidden = false;
+}
+
+function setMoreBusy(busy) {
+	const btn = $('rc-more');
+	const label = btn.querySelector('.rc-btn-label');
+	// The idle label is localized and lives in the markup; remember it once so a
+	// finished load restores it instead of overwriting it with English.
+	if (busy) {
+		btn.dataset.idleLabel ??= label.textContent;
+		$('rc-load-error').hidden = true;
+		label.textContent = 'Loading…';
+	} else if (btn.dataset.idleLabel) {
+		label.textContent = btn.dataset.idleLabel;
+	}
+	btn.disabled = busy;
+	btn.classList.toggle('busy', busy);
+}
+
 function disconnect() {
 	state.session = null;
 	state.rows = [];
@@ -498,6 +524,7 @@ function wire() {
 	$('rc-export').addEventListener('click', exportCsv);
 	$('rc-disconnect').addEventListener('click', disconnect);
 	$('rc-retry').addEventListener('click', () => refresh());
+	$('rc-more').addEventListener('click', loadMore);
 
 	$('rc-search').addEventListener('input', (e) => {
 		state.query = e.target.value;
