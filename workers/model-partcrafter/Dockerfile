@@ -56,6 +56,13 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN python3 -m pip install -r /app/requirements.txt
 
+# 5. Two surgical fixes to the pinned checkout (patch_upstream.py explains
+# both): log the part-decode exceptions upstream silently discards, and stop
+# hardcoding the CUDA device in the octree expansion. Fails the build if
+# either target line moved.
+COPY patch_upstream.py /app/patch_upstream.py
+RUN python3 /app/patch_upstream.py /app/partcrafter-src
+
 COPY worker_security.py storage_backend.py matting.py pipeline.py main.py entrypoint.sh /app/
 COPY test_app_contract.py test_matting.py /app/
 RUN chmod +x /app/entrypoint.sh

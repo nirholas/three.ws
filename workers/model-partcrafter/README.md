@@ -37,6 +37,15 @@ post-hoc segmentation are indistinguishable in shape to every downstream
 consumer: Restyle Studio's part-editing UI, Parts Studio, and the node-name
 stability contract work order 078 ("keep the rig") depends on.
 
+The image applies two small fixes to the pinned checkout at build time
+(`patch_upstream.py`; the build fails if either target line moves). Upstream
+decodes each part inside a bare `except:` that discards the exception, so a
+part that runs out of memory or decodes to no surface left no trace in the
+logs; the patch logs the traceback (logger `partcrafter.decode`) and keeps
+upstream's skip-that-part behaviour. And upstream's octree expansion hardcodes
+`device='cuda'`, which made every decode off a GPU fail silently through that
+same `except:`; it now follows the input tensor's device.
+
 ## API
 
 ```
