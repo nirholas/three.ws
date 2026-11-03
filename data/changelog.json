@@ -872,7 +872,7 @@
 		{
 			"date": "2026-10-24",
 			"title": "Opt-in WebGPU renderer with automatic WebGL2 fallback, starting in Restyle Studio",
-			"summary": "three is now r186. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.",
+			"summary": "three is now r187. Add ?renderer=webgpu to /restyle to render on WebGPU with a TSL rim light, or leave it off for the same WebGL2 picture as before. If the browser has no GPU adapter or WebGPU fails to start, the page falls back to WebGL2 on its own. A badge shows which backend is running, and exported GLBs are identical on both paths. Measured parity and timings are in the WebGPU renderer doc.",
 			"tags": [
 				"feature",
 				"improvement"

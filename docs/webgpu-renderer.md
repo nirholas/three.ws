@@ -1,6 +1,6 @@
 # WebGPU renderer (opt-in)
 
-three.ws ships on three r186. The classic WebGL2 renderer is still the default everywhere. WebGPU is strictly opt-in and always degrades to the same WebGL2 picture.
+three.ws ships on three r187. The classic WebGL2 renderer is still the default everywhere. WebGPU is strictly opt-in and always degrades to the same WebGL2 picture.
 
 ## Opting in
 
@@ -24,7 +24,7 @@ A renderer badge in the Restyle toolbar shows the backend in use. The Rim slider
 
 - The main viewer and `<agent-3d>` still use `CinematicPipeline` (EffectComposer), which is WebGL-only. The factory and the `renderer` attribute parser are ready, but the viewer is not switched until its post-processing moves to TSL.
 - `three/examples` `GaussianSplat` is WebGPU-only. The viewer splat stage keeps Spark, which also runs on WebGL2.
-- `three-mesh-bvh/webgpu` (pinned 0.9.16) accelerates GPU-side queries. The viewer's picking is CPU raycasting, so it does not apply.
+- `three-mesh-bvh/webgpu` (pinned 0.9.17) accelerates GPU-side queries. The viewer's picking is CPU raycasting, so it does not apply.
 
 ## Measuring
 
