@@ -720,3 +720,13 @@ file stays in place (not deleted) until that repository and both pull requests l
 `90590dee5` (manifest/hacs.json fixes, brand icons, README/docs fixes, changelog),
 `0c6ac3614` (export script, submission packet), this entry's commit (owner-actions row and the
 order file's Evolve status paragraph).
+
+## 2026-11-03: order 091 re-checked (Shopify product media), still open on the owner action
+
+Re-measured the owner-gated step rather than assuming it: `node scripts/read-service-env.mjs
+'^SHOPIFY' --names` still reports no matching variable on `three-ws-api`, so no Shopify Partner
+app is registered and the live Definition of done lines (storefront screenshot, test-mode
+Billing charge, real webhook test deliveries) remain unverifiable. The code side is intact:
+`npx vitest run tests/shopify-*.test.js` passes 5 files, 43/43. No code changed. Row 54 in
+[_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md) is still the
+remaining step; the order file stays in place.
