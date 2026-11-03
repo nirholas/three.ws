@@ -16,6 +16,7 @@ import {
 import { buildRegistrationJSON } from '../../../src/erc8004/registration-json.js';
 import { REGISTRY_DEPLOYMENTS } from '../../../src/erc8004/abi.js';
 import { isUuid } from '../../_lib/validate.js';
+import { gateAvatarAction } from '../../_lib/vroid/license-gate.js';
 import { logAudit } from '../../_lib/audit.js';
 
 // Base mainnet — the EVM chain we expose for ERC-8004 self-registration.
@@ -503,7 +504,7 @@ export const toolDefs = [
 			}
 
 			const [avatar] = await sql`
-				SELECT id, name, storage_key, visibility
+				SELECT id, name, storage_key, visibility, source_meta
 				FROM avatars
 				WHERE id = ${args.avatar_id} AND owner_id = ${auth.userId} AND deleted_at IS NULL
 				LIMIT 1
@@ -515,6 +516,15 @@ export const toolDefs = [
 						'and save it first, or pick one from list_my_avatars.',
 					{ avatar_id: args.avatar_id },
 				);
+			}
+
+			const licenseVerdict = gateAvatarAction(avatar.source_meta, 'public_agent');
+			if (!licenseVerdict.allowed) {
+				return designedError('license_restricted', licenseVerdict.message, {
+					avatar_id: avatar.id,
+					creator_name: licenseVerdict.creator_name,
+					license_url: licenseVerdict.license_url,
+				});
 			}
 
 			const [updated] = await sql`
