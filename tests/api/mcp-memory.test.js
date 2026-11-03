@@ -143,6 +143,13 @@ vi.mock('../../api/_lib/model-inspect.js', () => ({
 }));
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => {} }));
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
+// Usage tracking writes through sql on a 250ms timer, which would land its
+// inserts in sqlState.calls (and consume queued results) whenever a test runs
+// long. It is covered by its own suite; here only the tools' queries count.
+vi.mock('../../api/_lib/mcp-clients.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	trackMcp: () => {},
+}));
 
 // ── Import handler AFTER mocks ─────────────────────────────────────────────
 const { default: handler } = await import('../../api/mcp.js');
@@ -327,6 +334,19 @@ describe('forget policy gate', () => {
 			{ tools: FORGET_ON },
 		);
 		expect(body.result.structuredContent).toMatchObject({ reason: 'preview_mismatch' });
+		expect(sqlState.calls).toEqual([]);
+	});
+});
+
+// ── Query log isolation ─────────────────────────────────────────────────────
+// Every assertion here reads sqlState.calls, so no query may land in it except
+// the ones a tool runs. MCP usage tracking flushes on a timer, and under a busy
+// full-suite run that flush fired mid-test and showed up as two stray calls.
+describe('query log isolation', () => {
+	it('records no query after a tool call returns', async () => {
+		await recallPreviewId();
+		sqlState.calls = [];
+		await new Promise((resolve) => setTimeout(resolve, 300));
 		expect(sqlState.calls).toEqual([]);
 	});
 });
