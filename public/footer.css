@@ -417,7 +417,9 @@
 	text-align: center;
 	font-size: 0.66rem;
 	line-height: 1.5;
-	color: rgba(255, 255, 255, 0.32);
+	/* 0.5, not 0.32: 0.32 measured about 2.9:1 on the footer ground, under
+	   the WCAG AA 4.5:1 floor for body text this size. */
+	color: rgba(255, 255, 255, 0.5);
 }
 
 .h-footer-legal-links {
@@ -837,6 +839,16 @@
 		max-width: none;
 		width: 100%;
 		text-align: left;
+		/* 0.68rem (10.9px) was below a phone's 12px reading floor. The row
+		   cannot hold the whole address at a readable size, and people check
+		   the tail of a contract address, so it wraps instead of ellipsizing. */
+		font-size: 0.75rem;
+		white-space: normal;
+		overflow-wrap: anywhere;
+		text-overflow: clip;
+	}
+	.h-footer-nvidia-legal {
+		font-size: 0.75rem;
 	}
 	.h-footer-avatar {
 		width: 90px;

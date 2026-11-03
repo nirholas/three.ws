@@ -39,7 +39,7 @@
 .tws-disc-card {
 	position: fixed;
 	right: 18px;
-	bottom: 18px;
+	bottom: calc(18px + env(safe-area-inset-bottom, 0px));
 	z-index: 10001;
 	width: min(320px, calc(100vw - 36px));
 	padding: 16px 16px 14px;

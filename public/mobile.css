@@ -5,6 +5,16 @@
  * mobile layout still lives in each page's own stylesheet.
  */
 
+/* Default type. About one page in twelve never sets a font on html or body,
+ * so everything that inherits there (the shared nav, its phone drawer, the
+ * footer, discovery cards) rendered in the browser's serif default. This
+ * file is the one stylesheet the build injects into every page, and :where()
+ * gives the rule zero specificity, so any page's own html or body font still
+ * wins over it. */
+:where(html) {
+	font-family: var(--font-body, 'Inter', 'Inter Fallback', system-ui, -apple-system, 'Segoe UI', sans-serif);
+}
+
 /* Tap-highlight + 300ms delay. Coarse-pointer media query keeps these off
  * desktop, where tap-highlight is irrelevant and touch-action would
  * suppress double-click-to-zoom in some contexts. */
@@ -1245,5 +1255,22 @@
 		min-height: 44px;
 		display: inline-flex;
 		align-items: center;
+	}
+}
+
+/* ── Docs shell small type on phones ──────────────────────────────────
+ * The docs shell (docs/index.html, rendered into every /docs page) sets
+ * its sidebar section titles and pager direction labels at 10px and the
+ * page-tools descriptions at 9.9px. Those read at desktop distance but
+ * fall under a phone's 11-12px floor. This file loads after the shell's
+ * inline styles, so equal specificity is enough.
+ */
+@media (max-width: 768px) {
+	.sidebar-section-title,
+	.docs-pager-btn .pager-dir {
+		font-size: 11px;
+	}
+	.docs-pagetools-sub {
+		font-size: 12px;
 	}
 }
