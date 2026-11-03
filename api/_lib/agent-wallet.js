@@ -24,6 +24,10 @@ import { evmFallbackProvider } from './evm/rpc.js';
 // per-record salt, v1 legacy read). Shared with the coin treasury + launcher so
 // every custodial secret on the platform uses the same at-rest scheme.
 import { encryptSecret, decryptSecret, isEncryptedSecret } from './secret-box.js';
+// Static, not a per-call dynamic import: db.js builds its Neon client lazily, so
+// importing it costs nothing, and concurrent first-time dynamic imports of the
+// same module could resolve to different instances under a test module registry.
+import { sql } from './db.js';
 
 const randomBytes = (n) => {
 	const b = new Uint8Array(n);
@@ -110,7 +114,6 @@ export async function recoverAgentKey(encryptedKey, audit = null) {
  * already exists. Returns { address, created }.
  */
 export async function getOrCreateAgentEvmWallet(agentId, { chainId = 8453 } = {}) {
-	const { sql } = await import('./db.js');
 	const [row] = await sql`
 		select id, wallet_address, meta from agent_identities
 		where id = ${agentId} and deleted_at is null
@@ -127,14 +130,27 @@ export async function getOrCreateAgentEvmWallet(agentId, { chainId = 8453 } = {}
 		encrypted_wallet_key: wallet.encrypted_key,
 		evm_wallet_source: 'generated',
 	};
-	await sql`
+	// Claim the slot atomically. Two concurrent provisions both pass the read
+	// above and both generate a key; an unconditional write would let the later
+	// one silently replace the earlier, stranding anything sent to the address
+	// the first caller was handed. Only the writer that still sees the slot empty
+	// wins; the loser discards its key and returns the winner's address.
+	const claimed = await sql`
 		update agent_identities
 		set wallet_address = ${wallet.address},
 		    chain_id = coalesce(chain_id, ${chainId}),
 		    meta = ${JSON.stringify(meta)}::jsonb
 		where id = ${agentId}
+		  and deleted_at is null
+		  and not (wallet_address is not null and meta->>'encrypted_wallet_key' is not null)
+		returning wallet_address
 	`;
-	return { address: wallet.address, created: true };
+	if (claimed.length) return { address: wallet.address, created: true };
+	const [winner] = await sql`
+		select wallet_address from agent_identities where id = ${agentId} and deleted_at is null limit 1
+	`;
+	if (!winner?.wallet_address) throw new Error('agent not found');
+	return { address: winner.wallet_address, created: false };
 }
 
 /**
@@ -174,7 +190,6 @@ async function fetchEthUsdPrice() {
  * @returns {{ address: string, chain_id: number, balance_wei: string, balance_eth: string }}
  */
 export async function getAgentBalance(agentId) {
-	const { sql } = await import('./db.js');
 	const [agent] = await sql`
 		select wallet_address, chain_id
 		from agent_identities
@@ -216,7 +231,6 @@ const SPEND_ABI = [
  * @returns {Promise<string>} tx hash
  */
 export async function delegatedSpend({ agentId, recipient, amountWei, memo, signer }) {
-	const { sql } = await import('./db.js');
 	const [agent] = await sql`
 		select erc8004_agent_id, chain_id from agent_identities
 		where id = ${agentId} and deleted_at is null
@@ -242,8 +256,7 @@ export async function delegatedSpend({ agentId, recipient, amountWei, memo, sign
  */
 export async function triggerSkillPayment({ agentId, skillSlug, skillId }) {
 	try {
-		const { sql } = await import('./db.js');
-
+	
 		// Resolve skill price and author wallet
 		const [skill] = await sql`
 			select ms.id, ms.price_per_call_usd, ms.author_id,
@@ -392,7 +405,6 @@ const USDC_MINT_BY_CLUSTER = {
  * meta, and never re-create if one already exists. Returns { address, created }.
  */
 export async function getOrCreateAgentSolanaWallet(agentId) {
-	const { sql } = await import('./db.js');
 	const [row] = await sql`
 		select id, meta from agent_identities
 		where id = ${agentId} and deleted_at is null
@@ -412,8 +424,20 @@ export async function getOrCreateAgentSolanaWallet(agentId) {
 		encrypted_solana_secret: sol.encrypted_secret,
 		solana_wallet_source: 'generated',
 	};
-	await sql`update agent_identities set meta = ${JSON.stringify(meta)}::jsonb where id = ${agentId}`;
-	return { address: sol.address, created: true };
+	// Same atomic claim as the EVM path: only the writer that still sees no Solana
+	// address wins, so a concurrent provision can never replace a key whose address
+	// was already handed out.
+	const claimed = await sql`
+		update agent_identities set meta = ${JSON.stringify(meta)}::jsonb
+		where id = ${agentId} and deleted_at is null and meta->>'solana_address' is null
+		returning id
+	`;
+	if (claimed.length) return { address: sol.address, created: true };
+	const [winner] = await sql`
+		select meta->>'solana_address' as address from agent_identities where id = ${agentId} and deleted_at is null limit 1
+	`;
+	if (!winner?.address) throw new Error('agent not found');
+	return { address: winner.address, created: false };
 }
 
 /**
@@ -499,7 +523,6 @@ async function isValidSolanaAddress(address) {
  */
 export async function ensureAgentWallet(agentId, userId = null, opts = {}) {
 	if (!agentId) throw new Error('agentId required');
-	const { sql } = await import('./db.js');
 	const [row] = await sql`
 		select id, user_id, meta from agent_identities
 		where id = ${agentId} and deleted_at is null
