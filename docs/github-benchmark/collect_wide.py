@@ -210,6 +210,7 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--top", type=int, default=3000)
     ap.add_argument("--owner", default="nirholas")
+    ap.add_argument("--batch", type=int, default=10)
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     tpath = os.path.join(a.out, "targets.json")
@@ -235,7 +236,7 @@ def main():
         done = {json.loads(l)["repo"].lower() for l in open(rpath)}
     todo = [n for n in names if n.lower() not in done]
     print(f"targets {len(names)}, todo {len(todo)}", file=sys.stderr)
-    batches = [todo[i:i + 10] for i in range(0, len(todo), 10)]
+    batches = [todo[i:i + a.batch] for i in range(0, len(todo), a.batch)]
     with open(rpath, "a") as f, ThreadPoolExecutor(3) as ex:
         for i, (rows, remaining) in enumerate(ex.map(fetch_batch, batches)):
             for row in rows:
