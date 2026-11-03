@@ -100,8 +100,9 @@
 		'body.' + MODAL_CLASS + ' #' + STACK_ID + '{opacity:0;pointer-events:none;visibility:hidden;}',
 		/* The walk companion reserves the corner rather than joining the stack,
 		   but it is the same kind of widget at an even higher layer, and on a
-		   phone it covered the open nav drawer's last rows. Same rule. */
-		'body.' + MODAL_CLASS + ' .walk-companion{opacity:0;pointer-events:none;visibility:hidden;}',
+		   phone it covered the open nav drawer's last rows. Its footprint trail
+		   layer is a separate fixed sibling, so it goes with it. Same rule. */
+		'body.' + MODAL_CLASS + ' .walk-companion,body.' + MODAL_CLASS + ' .walk-trail-layer{opacity:0;pointer-events:none;visibility:hidden;}',
 		'#' + STACK_ID + ':empty{display:none;}',
 		/* relative (not static) keeps members in the flex flow while preserving a
 		   containing block for their position:absolute children (e.g. the

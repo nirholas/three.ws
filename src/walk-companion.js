@@ -20,6 +20,7 @@ import { installClickToWalk } from './walk-companion-click-to-walk.js';
 import { installNarrator } from './walk-companion-narrator.js';
 import { installFeedback } from './feedback-companion.js';
 import { installIdentity } from './walk-companion-identity.js';
+import { ensureToolsMenu } from './walk-companion-tools-menu.js';
 // The companion is the site-wide "your agent" body. Booting the mood embodiment
 // here makes it reflect the agent's live emotional state (aura + breathing) on
 // every page the companion runs — and starts the mood engine for the session.
@@ -216,6 +217,7 @@ function trailTick(now) {
 		trailClock = now;
 	}
 	ensureToggleButton(host);
+	ensureToolsMenu(host);
 	syncControllerPatch();
 	// Re-read the accent only when the avatar actually changed (avoids a
 	// getComputedStyle / parse on every frame).
