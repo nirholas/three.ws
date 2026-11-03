@@ -718,7 +718,11 @@ html.cv-page,
 
 /* ── Market table (/coins) ──────────────────────────────────────────────── */
 
+/* position: relative makes the scroller the containing block for the
+   absolutely positioned .cv-sr-only header labels; without it they were placed
+   against the page and a wide table stretched a phone viewport to 690px. */
 .cv-table-wrap {
+	position: relative;
 	overflow-x: auto;
 	border: 1px solid var(--cv-border);
 	border-radius: var(--cv-radius-lg);

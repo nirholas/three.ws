@@ -202,6 +202,7 @@ async function loadDirectory() {
 			const tag = document.createElement('span');
 			tag.className = 'tag net';
 			tag.textContent = shortNet(n);
+			tag.title = n;
 			tagrow.appendChild(tag);
 		}
 
