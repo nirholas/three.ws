@@ -13,7 +13,7 @@ remaining steps are owner-gated third-party actions (CLAUDE.md gate 2: publish, 
 third party): publishing `@three-ws/ai-sdk` and `@three-ws/langchain` to npm, opening the
 LangChain integration issue, and submitting the six registry entries. Logged as row 56 in
 [production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md). This file stays
-in place until those publishes and submissions land.
+in place until those publishes and submissions land. Re-verified 2026-11-03 (both package suites 5/5 live, packs clean, ADK check live, Postman and skills index current); that pass also fixed seven OpenRouter call sites missing the canonical attribution in `2b46da6b0`.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now, no gate.
 
