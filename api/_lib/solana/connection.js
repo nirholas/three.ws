@@ -198,6 +198,11 @@ export function normalizeRpcUrl(raw) {
 const ATTEMPT_TIMEOUT_MS = 10_000;
 const QUOTA_COOLDOWN_MS = 6 * 3_600_000; // 6h: daily/monthly quota exhausted
 const RATE_LIMIT_COOLDOWN_MS = 10 * 60_000; // 10m, transient 429
+// Helius words a per-second burst and a spent plan identically (429 "max usage
+// reached"). The first sighting is therefore a short probe; only a lane that fails
+// again straight after the probe is treated as out of credits.
+const AMBIGUOUS_QUOTA_PROBE_MS = 30_000;
+const AMBIGUOUS_QUOTA_RE = /^\s*max usage reached\s*$/i;
 const AUTH_COOLDOWN_MS = 30 * 60_000; // 30m: bad/expired key on this provider only
 const SERVER_COOLDOWN_MS = 2 * 60_000; // 2m: provider 5xx
 const NETWORK_COOLDOWN_MS = 30_000; // 30s: fetch threw (DNS/connection blip)
@@ -654,6 +659,15 @@ function cooldownMsFor(status, bodyText) {
 	return RATE_LIMIT_COOLDOWN_MS;
 }
 
+// Lanes whose last failure was the ambiguous "max usage reached" 429 and that have
+// not served a request since. A second failure while a url is in here is a spent plan.
+const _ambiguousQuotaStreak = new Set();
+
+/** Forget an ambiguous-quota streak: the lane just served a request, so it is not out of credits. */
+export function clearEndpointStreak(url) {
+	_ambiguousQuotaStreak.delete(url);
+}
+
 /** True when `url` is currently parked in cooldown and should be skipped. */
 export function isEndpointCooling(url) {
 	return (_endpointCooldown.get(url) || 0) > Date.now();
@@ -793,8 +807,13 @@ export function rpcMethodDemotions(now = Date.now()) {
  * message) is scanned for a quota signal to pick the long window.
  */
 export function markEndpointCooldown(url, status, bodyText) {
-	const ms = cooldownMsFor(status, bodyText);
 	const now = Date.now();
+	let ms = cooldownMsFor(status, bodyText);
+	if (status === 429 && AMBIGUOUS_QUOTA_RE.test(bodyText || '')) {
+		const repeated = _ambiguousQuotaStreak.has(url);
+		_ambiguousQuotaStreak.add(url);
+		ms = repeated ? QUOTA_COOLDOWN_MS : AMBIGUOUS_QUOTA_PROBE_MS;
+	}
 	_endpointCooldown.set(url, now + ms);
 	// Only quota/auth-class parks are worth telling the fleet about. A 30s network
 	// blip would churn the shared key for no benefit, and a sibling re-probing a
@@ -1633,6 +1652,7 @@ export function makeRotatingFetch(endpoints) {
 				// content-encoding/content-length would mislead the consumer since the
 				// transport already decoded the body into `okBody`.
 				noteRpc(url, 'ok', Date.now() - attemptStartedAt, 'live');
+				clearEndpointStreak(url);
 				return {
 					response: new Response(okBody, {
 						status: resp.status,

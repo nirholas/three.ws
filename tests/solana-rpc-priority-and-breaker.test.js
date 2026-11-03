@@ -137,7 +137,6 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 
 	it.each([
 		['Alchemy monthly cap', 'Monthly capacity limit exceeded. Visit https://dashboard.alchemy.com/settings/billing to upgrade your scaling policy for continued service.'],
-		['Helius plan cap', 'max usage reached'],
 		['QuickNode daily cap', 'daily request limit reached - upgrade your account'],
 	])('parks %s for the quota window, never the 10m transient one', (_label, message) => {
 		// Every paid provider words exhaustion differently. Asserting only "is
