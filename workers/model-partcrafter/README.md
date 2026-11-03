@@ -121,6 +121,11 @@ imports PartCrafter's whole inference chain against the pinned dependency
 set, so upstream or dependency drift fails the build, not the first cold
 start.
 
+`test_patch_upstream.py` (also a build gate) proves the two upstream fixes
+hold: the octree expansion runs on a CPU tensor, the part-decode handler
+logs instead of discarding, and the patcher refuses a tree whose target
+lines moved.
+
 ## Licensing
 
 PartCrafter code and weights are MIT (LICENSE read 2026-10-11; model card

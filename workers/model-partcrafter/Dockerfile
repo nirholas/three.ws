@@ -64,7 +64,7 @@ COPY patch_upstream.py /app/patch_upstream.py
 RUN python3 /app/patch_upstream.py /app/partcrafter-src
 
 COPY worker_security.py storage_backend.py matting.py pipeline.py main.py entrypoint.sh /app/
-COPY test_app_contract.py test_matting.py /app/
+COPY test_app_contract.py test_matting.py test_patch_upstream.py /app/
 RUN chmod +x /app/entrypoint.sh
 
 # Build-time guards, none of which need a GPU or the diffusion checkpoints:
@@ -73,9 +73,12 @@ RUN chmod +x /app/entrypoint.sh
 #     instead of at the first cold start);
 #   * the reference-image framing is correct;
 #   * the served contract (auth, probes, request validation) holds.
+#   * the patch_upstream.py fixes are applied and the patcher still guards
+#     against moved target lines.
 RUN python3 -c "import torch_cluster, onnxruntime; from src.pipelines.pipeline_partcrafter import PartCrafterPipeline; print('import chain ok', onnxruntime.get_available_providers())" \
     && python3 /app/test_matting.py \
-    && python3 /app/test_app_contract.py
+    && python3 /app/test_app_contract.py \
+    && python3 /app/test_patch_upstream.py
 
 # PartCrafter's weights are staged in GCS (stage-assets.sh) and mounted at
 # /weights by Cloud Run; entrypoint.sh copies them into
