@@ -234,7 +234,7 @@
           <div class="field"><label for="csym">symbol</label><input id="csym" value="NAP" maxlength="10" autocomplete="off" spellcheck="false"></div>
           <div class="field"><label for="csup">supply</label><input id="csup" value="1,000,000,000" maxlength="18" autocomplete="off" spellcheck="false"></div>
           <div class="field"><label>rail</label>
-            <div class="rails" id="rails" role="group" aria-label="Launch rail">
+            <div class="rails" id="rail-picker" role="group" aria-label="Launch rail">
               <button data-rail="noxa" aria-pressed="true">NOXA</button>
               <button data-rail="odyssey-instant" aria-pressed="false">Odyssey · instant</button>
               <button data-rail="odyssey-bonding" aria-pressed="false">Odyssey · bonding</button>
@@ -463,7 +463,7 @@ const tv=document.getElementById('tv');
 const launch=document.getElementById('launch'), launchlbl=document.getElementById('launchlbl');
 const vehicle=document.getElementById('vehicle'), tower=document.getElementById('tower');
 const netlabel=document.getElementById('netlabel'), armnote=document.getElementById('armnote');
-const railBtns=[...document.querySelectorAll('#rails button')];
+const railBtns=[...document.querySelectorAll('#rail-picker button')];
 const nameI=document.getElementById('cname'), symI=document.getElementById('csym'), supI=document.getElementById('csup');
 
 let rail='noxa', running=false, timers=[];
