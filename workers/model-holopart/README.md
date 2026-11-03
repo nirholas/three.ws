@@ -96,7 +96,11 @@ build-time gate; see the Dockerfile tail) rather than bare on a dev machine.
 
 ## Licensing
 
-HoloPart is MIT (LICENSE read 2026-10-11).
+HoloPart is MIT (LICENSE read 2026-10-11). The worker also links
+[pymeshlab](https://github.com/cnr-isti-vclab/PyMeshLab) (GPL-3.0) as an
+unmodified library for the per-part quadric decimation, the same dependency
+`model-triposg` and `model-hunyuan3d` already run server-side; the image is
+never distributed.
 
 ## Environment
 

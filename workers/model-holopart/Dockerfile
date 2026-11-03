@@ -80,10 +80,12 @@ COPY worker_security.py storage_backend.py gltf_meshopt.py pipeline.py main.py e
 COPY test_gltf_meshopt.py test_app_contract.py /app/
 RUN chmod +x /app/entrypoint.sh
 
-# Build-time guard: served-contract tests need no GPU and no checkpoints, so
-# they run here and the image does not ship if the import chain or request
-# handling broke.
-RUN python3 /app/test_gltf_meshopt.py && python3 /app/test_app_contract.py
+# Build-time guards, none of which need a GPU or the checkpoints: HoloPart's
+# whole inference import chain (including the compiled diso extension and
+# torch-cluster) resolves against the pinned dependency set, and the
+# served-contract tests hold. The image does not ship if either broke.
+RUN python3 -c "import diso, pymeshlab, torch_cluster; from holopart.pipelines.pipeline_holopart import HoloPartPipeline; from holopart.inference_utils import flash_extract_geometry; print('import chain ok')" \
+    && python3 /app/test_gltf_meshopt.py && python3 /app/test_app_contract.py
 
 # Weights are staged in GCS (stage-assets.sh) and mounted at /weights by
 # Cloud Run; entrypoint.sh copies them into HOLOPART_WEIGHTS_ROOT, the

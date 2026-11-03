@@ -1,8 +1,34 @@
-# This worker's own FastAPI/GCS layer. torch/torchvision, PartCrafter's own
-# requirements.txt install in their own Dockerfile layers BEFORE this file
-# (PartCrafter ships no pip-installable package; it is imported straight from
-# its vendored checkout on PYTHONPATH).
+# Inference dependencies for PartCrafter plus this worker's FastAPI/GCS layer.
+# torch, torchvision and torch-cluster install in their own Dockerfile layer
+# BEFORE this file (they need the cu124 wheel indexes). PartCrafter ships no
+# pip-installable package; it is imported straight from its checkout on
+# PYTHONPATH.
+#
+# The ML libraries are pinned to the releases contemporary with PartCrafter's
+# code (June 2025). Upstream leaves them unpinned, which would make every
+# rebuild resolve a different diffusers API than the one the model was
+# written against. The set is the import closure of
+# src/pipelines/pipeline_partcrafter.py, nothing from upstream's training
+# environment.
+numpy==1.26.4
+diffusers==0.33.1
+transformers==4.52.4
+accelerate==1.7.0
+einops==0.8.1
+omegaconf==2.3.0
+scipy==1.15.3
+scikit-image==0.25.2
+tqdm>=4.66,<5
 trimesh>=4.4.0,<5
+# Pillow 13.0.0, the pin every other worker carries: this service decodes a
+# caller-supplied image, the exact path the 12.x decoder CVEs live on.
+Pillow==13.0.0
+
+# Foreground matting (matting.py). The -gpu build runs BiRefNet on the L4 via
+# the CUDA execution provider, using the cuDNN 9 / cuBLAS wheels torch
+# already installed, and falls back to the CPU provider when no GPU is
+# visible (image build, local runs).
+onnxruntime-gpu==1.23.2
 
 fastapi>=0.115,<1
 uvicorn[standard]>=0.32,<1

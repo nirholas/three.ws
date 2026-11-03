@@ -3,6 +3,11 @@
 # (HoloPart ships no pip-installable package; it is imported straight from
 # its vendored checkout on PYTHONPATH).
 trimesh>=4.4.0,<5
+# pymeshlab (GPL-3.0, used as a separate unmodified library) backs
+# pipeline._simplify_mesh's quadric decimation. HoloPart's own requirements
+# do not list it, so without this line the first completion job would fail
+# on import; the Dockerfile's import-chain gate now catches that at build.
+pymeshlab==2023.12.post2
 
 fastapi>=0.115,<1
 uvicorn[standard]>=0.32,<1

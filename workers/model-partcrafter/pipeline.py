@@ -28,36 +28,39 @@ log = logging.getLogger("model-partcrafter.pipeline")
 
 _lock = threading.Lock()
 _pipeline = None
-_rmbg_net = None
+_matter = None
 
 MAX_NUM_PARTS = 16
 
 
-def load_pipeline(partcrafter_weights_dir: str, rmbg_weights_dir: str, device: str = "cuda"):
-    """Load (once) and return the (PartCrafterPipeline, BriaRMBG) pair.
+def load_pipeline(partcrafter_weights_dir: str, matting_model_path: str):
+    """Load (once) and return the (PartCrafterPipeline, BiRefNetMatter) pair.
 
     Import is deferred to call time, not module top: this lets
     test_app_contract.py exercise request validation and output handling
-    without PartCrafter's checkout or its GPU dependencies installed.
+    without PartCrafter's checkout or its GPU dependencies installed. torch is
+    imported before the matter is built so onnxruntime-gpu binds the CUDA and
+    cuDNN libraries torch's wheels already loaded.
     """
-    global _pipeline, _rmbg_net
+    global _pipeline, _matter
     with _lock:
         if _pipeline is None:
             import torch
-            from src.models.briarmbg import BriaRMBG
             from src.pipelines.pipeline_partcrafter import PartCrafterPipeline
 
+            from matting import BiRefNetMatter
+
             log.info(
-                "loading PartCrafter pipeline: weights=%s rmbg=%s",
-                partcrafter_weights_dir, rmbg_weights_dir,
+                "loading PartCrafter pipeline: weights=%s matting=%s",
+                partcrafter_weights_dir, matting_model_path,
             )
             pipeline = PartCrafterPipeline.from_pretrained(partcrafter_weights_dir)
             pipeline = pipeline.to("cuda", torch.float16)
-            rmbg_net = BriaRMBG.from_pretrained(rmbg_weights_dir).to(device)
-            rmbg_net.eval()
+            matter = BiRefNetMatter(matting_model_path)
+            log.info("BiRefNet matting bound to %s", ",".join(matter.providers))
             _pipeline = pipeline
-            _rmbg_net = rmbg_net
-        return _pipeline, _rmbg_net
+            _matter = matter
+        return _pipeline, _matter
 
 
 class PartGenerationError(RuntimeError):
@@ -82,13 +85,13 @@ def run_partcrafter(
     output_glb: Path,
     *,
     partcrafter_weights_dir: str,
-    rmbg_weights_dir: str,
+    matting_model_path: str,
     num_parts: int,
     seed: int = 0,
     num_tokens: int = 1024,
     num_inference_steps: int = 50,
     guidance_scale: float = 7.0,
-    rmbg: bool = True,
+    remove_background: bool = True,
 ) -> dict:
     """Run PartCrafter end to end on one reference image, writing a single
     named-node GLB (`part_01` .. `part_NN`) to `output_glb`, and return a
@@ -101,16 +104,20 @@ def run_partcrafter(
     import trimesh
     from accelerate.utils import set_seed
 
-    from src.utils.image_utils import prepare_image
+    from matting import prepare_reference_image
 
-    pipeline, rmbg_net = load_pipeline(partcrafter_weights_dir, rmbg_weights_dir)
+    pipeline, matter = load_pipeline(partcrafter_weights_dir, matting_model_path)
     set_seed(seed)
 
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    if rmbg:
-        img_pil = prepare_image(image, bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=rmbg_net)
+    # Decode WITHOUT flattening to RGB: a caller's transparent PNG already
+    # carries the subject outline, and prepare_reference_image uses it
+    # directly instead of re-matting.
+    image = Image.open(io.BytesIO(image_bytes))
+    image.load()
+    if remove_background:
+        img_pil = prepare_reference_image(image, matter)
     else:
-        img_pil = image
+        img_pil = image.convert("RGB")
 
     with torch.no_grad():
         outputs = pipeline(

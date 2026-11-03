@@ -67,6 +67,7 @@ from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
+from matting import ForegroundNotFound
 from pipeline import MAX_NUM_PARTS, PartGenerationError, run_partcrafter
 from storage_backend import LocalStorage
 from worker_security import (
@@ -87,7 +88,7 @@ GCS_BUCKET = os.environ.get("GCS_BUCKET", "").strip()
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "/output")
 PARTCRAFTER_WEIGHTS_ROOT = os.environ.get("PARTCRAFTER_WEIGHTS_ROOT", "/app/pretrained_weights")
 PARTCRAFTER_DIR = os.path.join(PARTCRAFTER_WEIGHTS_ROOT, "PartCrafter")
-RMBG_DIR = os.path.join(PARTCRAFTER_WEIGHTS_ROOT, "RMBG-1.4")
+MATTING_MODEL_PATH = os.environ.get("MATTING_MODEL_PATH", "/app/models/birefnet-general.onnx")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 MODEL_LOAD_ATTEMPTS = int(os.environ.get("MODEL_LOAD_ATTEMPTS", "4"))
 MODEL_LOAD_RETRY_BASE_S = float(os.environ.get("MODEL_LOAD_RETRY_BASE_S", "15"))
@@ -112,8 +113,8 @@ def _load_pipeline_sync() -> None:
     global _pipeline_loaded
     from pipeline import load_pipeline
 
-    log.info("Loading PartCrafter pipeline: weights=%s rmbg=%s", PARTCRAFTER_DIR, RMBG_DIR)
-    load_pipeline(PARTCRAFTER_DIR, RMBG_DIR)
+    log.info("Loading PartCrafter pipeline: weights=%s matting=%s", PARTCRAFTER_DIR, MATTING_MODEL_PATH)
+    load_pipeline(PARTCRAFTER_DIR, MATTING_MODEL_PATH)
     _pipeline_loaded = True
     log.info("PartCrafter pipeline loaded")
 
@@ -291,7 +292,7 @@ def _generate_sync(image_bytes: bytes, output_glb: Path, num_parts: int, seed: i
         image_bytes,
         output_glb,
         partcrafter_weights_dir=PARTCRAFTER_DIR,
-        rmbg_weights_dir=RMBG_DIR,
+        matting_model_path=MATTING_MODEL_PATH,
         num_parts=num_parts,
         seed=seed,
     )
@@ -364,6 +365,9 @@ async def _run_job(task_id: str, images: list[str], num_parts: int, seed: int | 
             )
         except ImageSourceError as exc:
             log.warning("[%s] image source rejected: %s", task_id, exc)
+            await _update_task(task_id, status="failed", error=str(exc), elapsed_ms=int((time.time() - t0) * 1000))
+        except ForegroundNotFound as exc:
+            log.warning("[%s] reference image has no isolatable subject: %s", task_id, exc)
             await _update_task(task_id, status="failed", error=str(exc), elapsed_ms=int((time.time() - t0) * 1000))
         except PartGenerationError as exc:
             log.error("[%s] PartCrafter produced no usable parts: %s", task_id, exc)
