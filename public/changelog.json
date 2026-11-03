@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T05:08:31.839Z",
+	"generated_at": "2026-11-03T05:37:24.840Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Coin Control",
 			"summary": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
 			"link": "/coin-control",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "launch",
+			"title": "Docs · Coin Control",
+			"summary": "How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.",
+			"link": "/docs/coin-control",
 			"tags": [
 				"launch"
 			]
@@ -92,6 +102,17 @@
 		{
 			"date": "2026-11-03",
 			"type": "update",
+			"title": "My cards reaches every card in a big wallet, with search",
+			"summary": "The My cards view of the /play card gacha used to stop at the first 120 cards. It now lists the whole wallet 60 cards at a time in name order, with a Show more button that keeps your place, and a search box that looks through every card in the wallet by name, year, set number or grade. A search for \"psa 10\" returns only grade 10 cards. Cards you can sell back right now are gathered in a Sellable now section at the top, and every card on screen gets its buyback price checked, not just the first 60. Opening My cards while the machine list was still loading no longer gets replaced by that list.",
+			"link": "/play",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
 			"title": "My cards shows every card's photo, grade and value again",
 			"summary": "In production the My cards view of the /play card gacha listed cards with blank photos and no grade or value, and sometimes failed to load at all. Card details now load from a backup Arweave gateway when the main one is busy, and the wallet scan uses the platform's full set of Solana providers instead of the public node alone. Other pages that read Arweave files (agent cards, token details) also skip two gateways that had stopped answering.",
 			"link": "/play",
@@ -117,6 +138,16 @@
 			"link": "/app",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "Playground tabs, competition retry and 3D clean-up passes work again",
+			"summary": "A sweep of broken controls across the site. The API playground on the classic homepage switches to its Node SDK and cURL tabs again (a duplicated id had bound them to the embed playground instead), and the launcher's payment rail picker responds to clicks. The Retry button on the competitions page now reloads agents when the first load fails. The /grok and /connect pages lost sections that a merge had rendered twice. Trading tools report a quote router outage plainly instead of calling a busy market thin, and the onchain viewer moves to a backup Solana RPC when one stalls. In the 3D worker, the decimate and repair clean-up passes run again, and their output now stays with the job so long sessions no longer fill the worker's memory with leftover meshes. Agent templates and persona interviews in the create wizard are now counted in analytics.",
+			"link": "/classic",
+			"tags": [
+				"fix"
 			]
 		},
 		{

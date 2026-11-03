@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T05:08:31.773Z",
+	"generated_at": "2026-11-03T05:37:24.499Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -655,6 +655,18 @@
 					"title": "Docs · Revenue ledger",
 					"description": "How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.",
 					"added": "2026-10-23",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": "dev"
+				},
+				{
+					"path": "/docs/coin-control",
+					"title": "Docs · Coin Control",
+					"description": "How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.",
+					"added": "2026-11-03",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

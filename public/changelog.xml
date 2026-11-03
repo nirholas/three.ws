@@ -15,6 +15,14 @@
 			<description>Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.</description>
 		</item>
 		<item>
+			<title>Docs · Coin Control</title>
+			<link>https://three.ws/docs/coin-control</link>
+			<guid isPermaLink="false">2026-11-03:Docs · Coin Control</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.</description>
+		</item>
+		<item>
 			<title>3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset</title>
 			<link>https://three.ws/live</link>
 			<guid isPermaLink="false">2026-11-03:3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset</guid>
@@ -71,6 +79,14 @@
 			<description>When a trailing-ratchet order sold on a lock tier or a drawdown, the fill in your agent wallet's order history lost the reason chip that says why it sold. It is back on every exit fill. The 3D mesh workers (remesh, rig, segment, stylize, texture and the others that decode compressed models) now reject a glTF whose buffers or images point at files outside the upload itself, before any decoder reads them. On the HQ events map, tech events in San Jose and Cambridge now land in California and Massachusetts instead of Costa Rica and England.</description>
 		</item>
 		<item>
+			<title>My cards reaches every card in a big wallet, with search</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-03:My cards reaches every card in a big wallet, with search</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The My cards view of the /play card gacha used to stop at the first 120 cards. It now lists the whole wallet 60 cards at a time in name order, with a Show more button that keeps your place, and a search box that looks through every card in the wallet by name, year, set number or grade. A search for &quot;psa 10&quot; returns only grade 10 cards. Cards you can sell back right now are gathered in a Sellable now section at the top, and every card on screen gets its buyback price checked, not just the first 60. Opening My cards while the machine list was still loading no longer gets replaced by that list.</description>
+		</item>
+		<item>
 			<title>My cards shows every card's photo, grade and value again</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-03:My cards shows every card's photo, grade and value again</guid>
@@ -93,6 +109,14 @@
 			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The 3D viewer can now render a physically based still of exactly what you are looking at: real soft shadows, colour bleeding between surfaces and reflections that see the rest of the scene, computed by a GPU path tracer rather than approximated. Press Shift+P or choose Path-traced render in the Display panel, watch the image converge on the canvas with a progress bar and Cancel, and the finished PNG downloads. Developers get the same render from the agent-3d element with renderPhotoreal() and from iframe embeds with the renderPhotoreal bridge action. The path tracer loads only when you ask for a render, so pages that never use it are no heavier.</description>
+		</item>
+		<item>
+			<title>Playground tabs, competition retry and 3D clean-up passes work again</title>
+			<link>https://three.ws/classic</link>
+			<guid isPermaLink="false">2026-11-03:Playground tabs, competition retry and 3D clean-up passes work again</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A sweep of broken controls across the site. The API playground on the classic homepage switches to its Node SDK and cURL tabs again (a duplicated id had bound them to the embed playground instead), and the launcher's payment rail picker responds to clicks. The Retry button on the competitions page now reloads agents when the first load fails. The /grok and /connect pages lost sections that a merge had rendered twice. Trading tools report a quote router outage plainly instead of calling a busy market thin, and the onchain viewer moves to a backup Solana RPC when one stalls. In the 3D worker, the decimate and repair clean-up passes run again, and their output now stays with the job so long sessions no longer fill the worker's memory with leftover meshes. Agent templates and persona interviews in the create wizard are now counted in analytics.</description>
 		</item>
 		<item>
 			<title>Smoother edges on every 3D model and avatar viewer</title>

@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "My cards reaches every card in a big wallet, with search",
+			"summary": "The My cards view of the /play card gacha used to stop at the first 120 cards. It now lists the whole wallet 60 cards at a time in name order, with a Show more button that keeps your place, and a search box that looks through every card in the wallet by name, year, set number or grade. A search for \"psa 10\" returns only grade 10 cards. Cards you can sell back right now are gathered in a Sellable now section at the top, and every card on screen gets its buyback price checked, not just the first 60. Opening My cards while the machine list was still loading no longer gets replaced by that list.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-03",
+			"title": "Playground tabs, competition retry and 3D clean-up passes work again",
+			"summary": "A sweep of broken controls across the site. The API playground on the classic homepage switches to its Node SDK and cURL tabs again (a duplicated id had bound them to the embed playground instead), and the launcher's payment rail picker responds to clicks. The Retry button on the competitions page now reloads agents when the first load fails. The /grok and /connect pages lost sections that a merge had rendered twice. Trading tools report a quote router outage plainly instead of calling a busy market thin, and the onchain viewer moves to a backup Solana RPC when one stalls. In the 3D worker, the decimate and repair clean-up passes run again, and their output now stays with the job so long sessions no longer fill the worker's memory with leftover meshes. Agent templates and persona interviews in the create wizard are now counted in analytics.",
+			"tags": [
+				"fix"
+			],
+			"link": "/classic"
+		},
+		{
+			"date": "2026-11-03",
 			"title": "Coin Control: buy back, burn and reward holders with your coin's creator fees",
 			"summary": "Creators can now put the fees their agent's coin earns to work from one page. Set a rule to buy back and burn the coin each period (the burn uses exactly what the buy returned, read from the confirmed transaction), send SOL to the top holders split by size or by a lottery anyone can re-check, and post bounties paid from the agent wallet. Nothing runs until you confirm the exact terms, every send passes your spend limits, and every action appears with its Solana transaction on a public page holders can open, next to your verified X handle.",
 			"tags": [

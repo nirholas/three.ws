@@ -310,6 +310,12 @@ URL: https://three.ws/docs/revenue-ledger
 
 How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.
 
+### Docs · Coin Control
+
+URL: https://three.ws/docs/coin-control
+
+How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.
+
 ### Docs · Backtest integrity
 
 URL: https://three.ws/docs/backtest-integrity
