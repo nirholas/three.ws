@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Coin Control · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction." />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/coin-control" />
+		<meta property="og:title" content="Coin Control · three.ws" />
+		<meta property="og:description" content="Buybacks, burns, holder rewards and bounties for agent coins, every action linked to its Solana transaction." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Coin+Control&amp;d=Buybacks%2C+burns+and+holder+rewards%2C+every+action+on+chain." />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="canonical" href="https://three.ws/coin-control" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="ac-wrap">
+			<p class="ac-crumb"><a href="/">Home</a> / <a href="/earnings">Earnings</a> / <span id="cc-crumb">Coin Control</span></p>
+
+			<div class="cc-hero">
+				<div class="cc-hero-text">
+					<h1 class="ac-h1" id="cc-title">Coin Control</h1>
+					<p class="ac-lede" id="cc-lede">Put your coin's creator fees to work. Buy back and burn, send SOL to holders, pay bounties from the agent wallet. You confirm every rule, and every action is published with its Solana transaction.</p>
+					<div class="cc-badges" id="cc-badges"></div>
+				</div>
+				<div class="cc-stage" id="cc-stage" aria-label="The agent's 3D body">
+					<p class="cc-stage-caption" id="cc-caption" aria-live="polite" hidden></p>
+				</div>
+			</div>
+
+			<div id="cc-live" class="ac-sr" aria-live="polite"></div>
+			<div id="cc-error" class="ac-notice ac-notice-error" role="alert" hidden></div>
+			<div id="cc-flash" class="ac-notice ac-notice-ok" role="status" hidden></div>
+
+			<div id="cc-auth" class="ac-empty" hidden>
+				<div class="ac-empty-icon" aria-hidden="true">🔑</div>
+				<h3>Sign in to run your coin</h3>
+				<p>Coin Control works on the coins your agents launched through three.ws. Sign in to see yours.</p>
+				<a class="ac-btn ac-btn-primary" id="cc-login" href="/login?next=/coin-control">Sign in</a>
+			</div>
+
+			<div id="cc-nocoin" class="ac-empty" hidden>
+				<div class="ac-empty-icon" aria-hidden="true">🪙</div>
+				<h3>No coin yet</h3>
+				<p>Coin Control runs on a coin one of your agents launched. Launch one from the agent's page, then come back here to buy back, burn, reward holders and post bounties.</p>
+				<div class="er-actions" style="justify-content:center"><a class="ac-btn ac-btn-primary" href="/launcher">Launch a coin</a><a class="ac-btn" href="/launches">See recent launches</a></div>
+			</div>
+
+			<div id="cc-skel" aria-hidden="true">
+				<div class="er-stats"><div class="er-skel"></div><div class="er-skel"></div><div class="er-skel"></div><div class="er-skel"></div></div>
+				<div class="er-skel" style="height:220px"></div>
+			</div>
+
+			<div id="cc-main" hidden>
+				<div class="er-controls" id="cc-controls" hidden>
+					<div class="ac-field">
+						<label for="cc-coin">Coin</label>
+						<select id="cc-coin"></select>
+					</div>
+					<div class="er-spacer"></div>
+					<div class="er-actions">
+						<button type="button" class="ac-btn" id="cc-copy-public">Copy public link</button>
+						<a class="ac-btn" id="cc-public-link" href="#" target="_blank" rel="noopener">Open public page</a>
+					</div>
+				</div>
+
+				<dl class="er-stats" id="cc-stats"></dl>
+
+				<section class="er-panel" aria-labelledby="cc-engine-h" id="cc-engine">
+					<div class="cc-panel-head">
+						<div>
+							<h2 class="ac-h2" id="cc-engine-h">Fee engine</h2>
+							<p class="ac-hint" id="cc-engine-hint"></p>
+						</div>
+						<button type="button" class="ac-btn ac-btn-primary" id="cc-new-rule" hidden>New engine rule</button>
+					</div>
+					<div id="cc-presets" class="cc-presets" hidden></div>
+					<form id="cc-rule-form" class="ac-card cc-form" hidden novalidate></form>
+					<div id="cc-rules"></div>
+				</section>
+
+				<div class="er-split">
+					<section class="er-panel" aria-labelledby="cc-events-h">
+						<h2 class="ac-h2" id="cc-events-h">What the engine did</h2>
+						<p class="ac-hint">Every executed buyback, burn and reward, newest first. Each links to its transaction.</p>
+						<ol class="cc-events" id="cc-events"></ol>
+					</section>
+					<div>
+						<section class="er-panel" aria-labelledby="cc-holders-h" id="cc-holders-panel" hidden>
+							<h2 class="ac-h2" id="cc-holders-h">Who a reward reaches now</h2>
+							<p class="ac-hint">Wallets that hold the coin today, largest first. Your agent's wallet, the bonding curve and your own wallets are left out.</p>
+							<div id="cc-holders"><button type="button" class="ac-btn ac-btn-sm" id="cc-load-holders">Load holders</button></div>
+						</section>
+						<section class="er-panel" aria-labelledby="cc-split-h">
+							<h2 class="ac-h2" id="cc-split-h">Fee split</h2>
+							<div id="cc-split"></div>
+						</section>
+					</div>
+				</div>
+
+				<section class="er-panel" aria-labelledby="cc-bounties-h">
+					<div class="cc-panel-head">
+						<div>
+							<h2 class="ac-h2" id="cc-bounties-h">Bounties</h2>
+							<p class="ac-hint" id="cc-bounties-hint"></p>
+						</div>
+						<button type="button" class="ac-btn" id="cc-new-bounty" hidden>Post a bounty</button>
+					</div>
+					<form id="cc-bounty-form" class="ac-card cc-form" hidden novalidate>
+						<div class="ac-field"><label for="cb-title">What should people do?</label><input id="cb-title" maxlength="200" required placeholder="Make a 30 second video of the agent dancing" /></div>
+						<div class="ac-field"><label for="cb-desc">Details (optional)</label><textarea id="cb-desc" rows="3" maxlength="4000"></textarea></div>
+						<div class="ac-inline">
+							<div class="ac-field"><label for="cb-reward">Reward (SOL)</label><input id="cb-reward" inputmode="decimal" required value="0.1" /><small>Paid from the agent wallet when you pick a winner.</small></div>
+							<div class="ac-field"><label for="cb-days">Open for (days)</label><input id="cb-days" inputmode="numeric" value="7" /></div>
+						</div>
+						<div class="ac-form-foot"><button type="submit" class="ac-btn ac-btn-primary">Post bounty</button><button type="button" class="ac-btn" data-cancel>Cancel</button><span class="ac-form-msg" id="cb-msg" role="alert"></span></div>
+					</form>
+					<div id="cc-bounties"></div>
+				</section>
+			</div>
+		</main>
+
+		<script type="module" src="/src/coin-control.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>
