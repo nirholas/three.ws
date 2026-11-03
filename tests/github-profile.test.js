@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildProfile } from '../scripts/build-github-profile.mjs';
+import { ABOUT_LINKS, buildProfile } from '../scripts/build-github-profile.mjs';
 import { renderVisuals, renderActivityVisuals, shortTitle } from '../scripts/lib/profile-visuals.mjs';
 import { summarizeActivity, BULK_LINES } from '../scripts/lib/profile-activity.mjs';
 
@@ -58,6 +58,15 @@ describe('github profile', () => {
 		expect(header).not.toMatch(/three\.ws/i);
 		expect(readme).toContain('srcset="./assets/planet-dark.svg"');
 		expect(llms).not.toMatch(/three\.ws ecosystem|## Platform/);
+	});
+
+	it('links every outlet named in the About section, before the repo catalog starts', () => {
+		const { readme } = buildProfile(repos);
+		const about = readme.slice(readme.indexOf('## About'), readme.indexOf('## Start here'));
+		for (const url of Object.values(ABOUT_LINKS)) expect(about).toContain(`](${url})`);
+		expect(about).toContain('Wisconsin real estate license');
+		expect(about).toContain('on X from 2014 as @nichxbt');
+		expect(about).not.toMatch(/[\u2013\u2014]/);
 	});
 
 	it('puts the star-history Top Committer badge on its own row between the follower badges and the stats chart, linked to star-history.com', () => {

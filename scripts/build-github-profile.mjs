@@ -32,6 +32,16 @@ const opt = (n) => {
 const OUT = opt('out') || join(process.env.TMPDIR || '/tmp', 'profile-repo');
 const GATED = /agenc|agora-mcp|binance|bnbchain|bitrefill|flock|lyra|memescope|metaplex|sherwood|techdollar|loxley|wisconsin|ucai|kol-quest|three-ws-intel/i;
 
+// The owner's writing, press and photography, linked from the About section.
+export const ABOUT_LINKS = {
+	entrepreneur: 'https://www.entrepreneur.com/author/nicholas-resendez',
+	hackernoon: 'https://hackernoon.com/u/nich',
+	medium: 'https://nrese.medium.com/',
+	amazon: 'https://www.amazon.com/stores/Nicholas-Resendez/author/B0964F8NZT',
+	photovogue: 'https://www.vogue.com/photovogue/photographers/311030',
+	businessInsider: 'https://www.businessinsider.com/claude-code-leak-what-happened-recreated-python-features-revealed-2026-4',
+};
+
 const gh = (a, input) => execFileSync('gh', a, { encoding: 'utf8', input, maxBuffer: 1 << 28, stdio: ['pipe', 'pipe', 'pipe'] });
 
 const CATEGORIES = [
@@ -138,7 +148,13 @@ export function buildProfile(allRepos, { includeGated = false, activityData = nu
 
 ## About
 
-I studied Marketing and Computer Science at the University of Wisconsin and finished with a double bachelor's. I have done security research for Apple, AT&T, Microsoft, Google, the U.S. Department of Defense and the State of California. Before building open source full time I wrote full-stack software for some of the largest companies and brands, and I write and contribute at Entrepreneur Magazine.
+I studied Marketing and Computer Science at the University of Wisconsin and finished with a double bachelor's. I have done security research for Apple, AT&T, Microsoft, Google, the U.S. Department of Defense and the State of California. Before building open source full time I wrote full-stack software for some of the largest companies and brands.
+
+I have written about crypto, AI and technology for years: as a contributor to [Entrepreneur Magazine](${ABOUT_LINKS.entrepreneur}), on [HackerNoon](${ABOUT_LINKS.hackernoon}) and [Medium](${ABOUT_LINKS.medium}), and in [my books on Amazon](${ABOUT_LINKS.amazon}). My photography is on Vogue's [PhotoVogue](${ABOUT_LINKS.photovogue}). I have held a Wisconsin real estate license since I was 18 and still do.
+
+My work under the handles nichxbt and nirholas has been covered in the press, including [Business Insider](${ABOUT_LINKS.businessInsider})'s reporting on the Claude Code source leak.
+
+I was on X from 2014 as @nichxbt and was close to 30,000 followers when the account was suspended without explanation. Follow me here on GitHub for new work.
 
 Today I ship in public: AI agents, MCP servers, 3D, on-chain tooling and the developer tools around them, all documented so a person or a coding agent can pick them up cold.
 
