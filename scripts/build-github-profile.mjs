@@ -38,7 +38,6 @@ export const ABOUT_LINKS = {
 	hackernoon: 'https://hackernoon.com/u/nich',
 	medium: 'https://nrese.medium.com/',
 	amazon: 'https://www.amazon.com/stores/Nicholas-Resendez/author/B0964F8NZT',
-	photovogue: 'https://www.vogue.com/photovogue/photographers/311030',
 	businessInsider: 'https://www.businessinsider.com/claude-code-leak-what-happened-recreated-python-features-revealed-2026-4',
 };
 
@@ -150,7 +149,7 @@ export function buildProfile(allRepos, { includeGated = false, activityData = nu
 
 I studied Marketing and Computer Science at the University of Wisconsin and finished with a double bachelor's. I have done security research for Apple, AT&T, Microsoft, Google, the U.S. Department of Defense and the State of California. Before building open source full time I wrote full-stack software for some of the largest companies and brands.
 
-I have written about crypto, AI and technology for years: as a contributor to [Entrepreneur Magazine](${ABOUT_LINKS.entrepreneur}), on [HackerNoon](${ABOUT_LINKS.hackernoon}) and [Medium](${ABOUT_LINKS.medium}), and in [my books on Amazon](${ABOUT_LINKS.amazon}). My photography is on Vogue's [PhotoVogue](${ABOUT_LINKS.photovogue}). I have held a Wisconsin real estate license since I was 18 and still do.
+I have written about crypto, AI and technology for years: as a contributor to [Entrepreneur Magazine](${ABOUT_LINKS.entrepreneur}), on [HackerNoon](${ABOUT_LINKS.hackernoon}) and [Medium](${ABOUT_LINKS.medium}), and in [my books on Amazon](${ABOUT_LINKS.amazon}). My photography has been featured on Vogue's PhotoVogue. I have held a Wisconsin real estate license since I was 18 and still do.
 
 My work under the handles nichxbt and nirholas has been covered in the press, including [Business Insider](${ABOUT_LINKS.businessInsider})'s reporting on the Claude Code source leak.
 
