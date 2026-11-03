@@ -1367,6 +1367,9 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-label {
 	font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #fff;
 	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9); padding: 1px 6px; text-transform: uppercase;
+	/* A dark scrim keeps the name at 4.5:1 or better over a bright sky or a lit
+	   floor (tests/play-scene-text-contrast.test.js). */
+	background: rgba(10, 12, 20, 0.8); border-radius: 4px;
 	/* A peer's name is rendered verbatim; cap and ellipsize it so a long name
 	   can't stretch a single line clear across the screen. */
 	display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis;
@@ -1391,7 +1394,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 /* Wanted peers (W07): star count trails the name, matching WorldHud's own
    star row so the wanted vocabulary reads the same on the HUD and in-world. */
 .cc-label.cc-wanted::after {
-	content: attr(data-wanted); margin-left: 5px; color: #ff5a4d;
+	content: attr(data-wanted); margin-left: 5px; color: #ff8a80;
 	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(255, 90, 77, 0.6);
 }
 /* Verified three.ws account (W10): the @handle beside the display name marks a

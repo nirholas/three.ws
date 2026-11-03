@@ -84,10 +84,11 @@
 .combat-dmg {
 	position: fixed; left: 0; top: 0; z-index: 17; pointer-events: none;
 	transform: translate(-50%, -100%); font-size: 15px; font-weight: 800;
-	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85); transition: opacity var(--duration-instant) var(--ease-standard);
+	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85); background: rgba(10, 12, 20, 0.8);
+	padding: 0 6px; border-radius: 4px; transition: opacity var(--duration-instant) var(--ease-standard);
 }
 .combat-dmg.is-dealt { color: #ffcf5c; }
-.combat-dmg.is-taken { color: #ff5a4d; font-size: 17px; }
+.combat-dmg.is-taken { color: #ff8a80; font-size: 17px; }
 
 @media (max-width: 720px) {
 	.combat-attack-btn { bottom: 118px; right: 16px; padding: 10px 14px; }
