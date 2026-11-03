@@ -49,6 +49,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createFrameGovernor, FPS_ACTIVE, FPS_IDLE, FPS_SAVER, getPowerSaver, onPowerSaverChange, trackWindowFocus } from '../shared/frame-governor.js';
 import { diffScene } from './scene-model.js';
+import { applyStudioLook } from '../render/index.js';
 
 /** Real point lights cost shader time per fragment; emissive glow does not. */
 const MAX_ROOM_LIGHTS = 12;
@@ -160,10 +161,6 @@ function addMissingMarker(node) {
 export function createHomeScene(container, options = {}) {
 	const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 	renderer.setClearColor(0x000000, 0);
-	// A phone at devicePixelRatio 3 renders nine times the fragments of a
-	// desktop for a scene nobody looks at that closely. 2 is the point past
-	// which the extra pixels stop being visible and start costing frames.
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	container.appendChild(renderer.domElement);
 	renderer.domElement.setAttribute('aria-hidden', 'true');
 	renderer.domElement.style.display = 'block';
@@ -172,6 +169,13 @@ export function createHomeScene(container, options = {}) {
 	renderer.domElement.style.touchAction = 'none';
 
 	const scene = new Scene();
+	// Studio environment so the standard materials get reflections and fill
+	// instead of reading as clay under two dim lights. The pixel ratio cap (2)
+	// lives here: a phone at devicePixelRatio 3 renders nine times the fragments
+	// for a scene nobody looks at that closely. Tone mapping stays off so the
+	// hand-picked palette is not shifted; the intensity is low because the
+	// scene's own lights and emissive accents carry the look.
+	const undoLook = applyStudioLook(renderer, scene, { environmentIntensity: 0.45, toneMapping: 'none' });
 	const camera = new PerspectiveCamera(46, 1, 0.1, 400);
 	const controls = new OrbitControls(camera, renderer.domElement);
 	// Reassigned by the reduced-motion watcher below, which cannot run before
@@ -1010,6 +1014,7 @@ export function createHomeScene(container, options = {}) {
 			slabMaterial.dispose();
 			for (const value of Object.values(geo)) value.dispose();
 			controls.dispose();
+			undoLook();
 			renderer.dispose();
 			renderer.domElement.remove();
 		},
