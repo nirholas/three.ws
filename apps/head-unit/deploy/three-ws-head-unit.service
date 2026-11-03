@@ -1,0 +1,23 @@
+# The head-unit service: owns the USB dongle and serves the page on 127.0.0.1.
+# Install as a user unit (see apps/head-unit/README.md, "Raspberry Pi runbook"):
+#   mkdir -p ~/.config/systemd/user ~/.config/three-ws
+#   cp three-ws-head-unit.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now three-ws-head-unit
+#   sudo loginctl enable-linger "$USER"
+[Unit]
+Description=three.ws head unit (CarPlay / Android Auto dongle service)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/three.ws/apps/head-unit
+# Optional overrides (PORT, DRIVE_URL, HAND_DRIVE, PROJECTION_WIDTH, ...).
+EnvironmentFile=-%h/.config/three-ws/head-unit.env
+ExecStart=/usr/bin/env node src/server.js
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target

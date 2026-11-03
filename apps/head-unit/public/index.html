@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en" data-hand="lhd">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="color-scheme" content="dark">
+	<title>three.ws head unit</title>
+	<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+	<header class="bar">
+		<span class="brand">three.ws <span class="brand-sub">head unit</span></span>
+		<span class="pill" id="status" role="status" aria-live="polite" data-tone="wait">
+			<span class="pill-dot" aria-hidden="true"></span><span id="status-text">Starting</span>
+		</span>
+		<span class="bar-spacer"></span>
+		<button class="btn" id="home" type="button" disabled aria-label="CarPlay or Android Auto home screen">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/></svg>
+			<span>Home</span>
+		</button>
+		<button class="btn" id="swap" type="button" aria-pressed="false" aria-label="Swap which side the phone screen is on">
+			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
+			<span>Swap sides</span>
+		</button>
+	</header>
+
+	<main class="panes">
+		<section class="pane projection" aria-label="Phone projection">
+			<div class="stage" id="stage">
+				<canvas id="screen" hidden aria-label="Projected phone screen. Tap to use it."></canvas>
+
+				<div class="panel" id="panel-booting" data-panel>
+					<div class="skeleton skeleton-screen" aria-hidden="true"></div>
+					<p class="panel-note">Reaching the head unit service</p>
+				</div>
+
+				<div class="panel" id="panel-service-down" data-panel hidden>
+					<div class="panel-card" role="alert">
+						<h1>The head unit service is not running</h1>
+						<p>This page talks to a small service on this box that owns the USB dongle. It is not answering on <code id="service-origin"></code>.</p>
+						<p>Start it with <code>systemctl --user start three-ws-head-unit</code>, or <code>npm start</code> in <code>apps/head-unit</code>.</p>
+						<p class="panel-note" id="service-retry-note"></p>
+						<button class="btn btn-primary" type="button" data-action="reconnect">Reconnect now</button>
+					</div>
+				</div>
+
+				<div class="panel" id="panel-disconnected" data-panel hidden>
+					<div class="panel-card">
+						<svg class="dongle-art" viewBox="0 0 160 64" aria-hidden="true">
+							<rect x="6" y="18" width="30" height="28" rx="3" class="art-plug"/>
+							<rect x="36" y="12" width="96" height="40" rx="10" class="art-body"/>
+							<circle cx="118" cy="32" r="4" class="art-led"/>
+							<path d="M132 32h22" class="art-cable"/>
+						</svg>
+						<h1>Connect a CarPlay dongle</h1>
+						<p>Plug a Carlinkit CPC200 into a USB port on this box. The phone's CarPlay or Android Auto screen appears here, beside the agent.</p>
+						<dl class="ids">
+							<dt>Looking for USB ids</dt>
+							<dd id="usb-ids"><code>1314:1520</code> <code>1314:1521</code></dd>
+						</dl>
+						<p class="panel-hint">Plugged in and still not found? Run <code>lsusb</code>: one of those ids must be listed. If it is, install the udev rule from <code>apps/head-unit/deploy</code> and replug the dongle.</p>
+						<p class="panel-note" id="probe-note"></p>
+						<button class="btn btn-primary" type="button" data-action="retry">Check now</button>
+					</div>
+				</div>
+
+				<div class="panel" id="panel-probing" data-panel hidden>
+					<div class="skeleton skeleton-screen" aria-hidden="true"></div>
+					<p class="panel-note">Opening the dongle. It resets itself first, which takes a few seconds.</p>
+				</div>
+
+				<div class="panel" id="panel-error" data-panel hidden>
+					<div class="panel-card" role="alert">
+						<h1>The dongle is not answering</h1>
+						<p id="error-text"></p>
+						<p class="panel-hint">Unplug the dongle, wait a moment and plug it back in. A dongle that keeps failing usually needs a powered USB port.</p>
+						<p class="panel-note" id="error-note"></p>
+						<button class="btn btn-primary" type="button" data-action="retry">Retry now</button>
+					</div>
+				</div>
+
+				<div class="panel" id="panel-no-phone" data-panel hidden>
+					<div class="panel-card">
+						<h1>Dongle ready. Connect your phone.</h1>
+						<p>Plug the phone into the dongle's cable, or pair over Bluetooth with <strong id="box-name">three.ws</strong> and it joins over Wi-Fi.</p>
+						<p class="panel-hint">An iPhone shows CarPlay. An Android phone needs Android Auto enabled for wireless.</p>
+					</div>
+				</div>
+
+				<div class="panel" id="panel-awaiting-video" data-panel hidden>
+					<div class="skeleton skeleton-screen" aria-hidden="true"></div>
+					<p class="panel-note" id="awaiting-video-note">Phone connected. Waiting for its first picture.</p>
+				</div>
+
+				<div class="panel" id="panel-unsupported" data-panel hidden>
+					<div class="panel-card" role="alert">
+						<h1>This browser cannot show the phone screen</h1>
+						<p id="unsupported-text">It has no H.264 decoder for WebCodecs.</p>
+						<p class="panel-hint">Use Chromium 94 or newer (Raspberry Pi OS ships one). The kiosk launcher in <code>apps/head-unit/deploy</code> starts the right browser.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="pane agent" aria-label="three.ws agent">
+			<div class="agent-frame">
+				<div class="skeleton skeleton-agent" id="agent-skeleton" aria-hidden="true"></div>
+				<iframe id="agent" title="three.ws drive agent" allow="microphone; autoplay; geolocation" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+				<div class="panel" id="panel-offline" hidden>
+					<div class="panel-card" role="alert">
+						<h1>The agent needs the internet</h1>
+						<p>The phone screen keeps working offline. The agent comes back when this box is online again.</p>
+						<button class="btn btn-primary" type="button" data-action="reload-agent">Try again</button>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+
+	<script type="module" src="/app.js"></script>
+</body>
+</html>

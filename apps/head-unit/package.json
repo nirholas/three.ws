@@ -1,0 +1,19 @@
+{
+  "name": "three-ws-head-unit",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Open head unit: a projected CarPlay or Android Auto session beside the three.ws /drive agent, on a Raspberry Pi or any Linux box with a Carlinkit CPC200 dongle.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "node-carplay": "4.1.0",
+    "ws": "8.21.0"
+  }
+}

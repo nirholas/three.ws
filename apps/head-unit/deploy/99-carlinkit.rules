@@ -1,0 +1,6 @@
+# Carlinkit CPC200 CarPlay / Android Auto dongles (USB ids 1314:1520, 1314:1521).
+# Lets the desktop user (uaccess) and the plugdev group open the dongle without
+# root, so the head-unit service can run as a normal user.
+# Install: sudo cp 99-carlinkit.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1314", ATTRS{idProduct}=="1520", MODE="0660", GROUP="plugdev", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1314", ATTRS{idProduct}=="1521", MODE="0660", GROUP="plugdev", TAG+="uaccess"

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=three.ws head unit kiosk
+Comment=Open the head-unit page full screen
+Exec=sh -c '$HOME/three.ws/apps/head-unit/deploy/kiosk.sh'
+X-GNOME-Autostart-enabled=true
