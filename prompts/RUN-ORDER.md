@@ -1,6 +1,7 @@
 # Run order: which work order to paste next
 
-Everything open lives in [finish/](finish/) as 82 work orders, and since 2026-09-07 the
+Everything open lives in [finish/](finish/) as 227 work orders (78 from the older campaigns plus
+149 `plan-` orders filed 2026-11-03), and since 2026-09-07 the
 filenames carry the ranking: sort the folder by name and you are reading it in priority order,
 so you can open one, run it, and open the next without consulting anything. Every file in
 `finish/` is runnable; the context and log files that must never be run were moved out to
@@ -10,10 +11,12 @@ so you can open one, run it, and open the next without consulting anything. Ever
 |---|---|---|
 | `023` to `039` | The `x-grok-` campaign. Runnable, no gate. | 3 |
 | `067` to `095` | The `best3d-` and `partners-` campaigns. Runnable, no gate. | 14 |
+| `249` to `286` | The `plan-` campaign's P0 and P1 orders (live defects, then unshipped fixes and half-built features), from the 2026-11-03 sweep of every markdown file in the repo. Runnable; any gated step is named per order. See [the plan- section](#plan--the-planning-corpus-as-work-orders). | 38 |
 | `401` to `434` | Written by the evolve scout lane ([docs/ops/evolve.md](../docs/ops/evolve.md)), each from a dated measurement. Runnable, no gate. | 5 |
 | `506` to `549` | The `integrate-` campaign: bringing the owner's other GitHub repositories into three.ws. Runnable; gated steps are named per order. | 13 |
 | `605` to `627` | The `beat-` campaign: closing gaps found in the open-source crypto and agent landscape survey. Runnable; on-chain steps are devnet or simulation only. | 12 |
-| `902` and up | Blocked: the last step is an owner action or an outside party. Read before running. | 35 |
+| `700` to `790` | The `plan-` campaign's P2 and P3 orders (new capabilities, then polish, developer experience and exploratory work). Runnable. | 91 |
+| `902` and up | Blocked: the last step is an owner action or an outside party. Read before running. Includes the `plan-` campaign's 20 gated orders at `966` to `985`. | 55 |
 
 The number is a position, not an identity. When an order retires its file is deleted and a gap
 is left rather than renumbering the folder, so a link to a numbered order keeps meaning the same
@@ -79,6 +82,31 @@ context file says otherwise.
 | [085](finish/085-partners-02-animation-library-license.md) through [095](finish/095-partners-12-home-assistant-hacs.md) | The `partners-` campaign's eight runnable orders (085, 087, 088, 091 to 095): the Mixamo-clip animation library license, LiveKit and Pipecat avatar plugins, a Discord Activity, a Shopify product-media app, VRoid Hub import, agent-framework tool packages, site-builder embeds, the HACS package. Shared facts: [finish/_context/partners-00-CONTEXT.md](finish/_context/partners-00-CONTEXT.md). |
 | [506](finish/506-integrate-07-pump-claims-listener.md) through [549](finish/549-integrate-50-hookforge-catalog.md) | The `integrate-` campaign's 12 runnable orders (506, 510, 512, 530, 534, 536, 539, 540, 544, 545, 548, 549): pump.fun claims listener, per-coin earnings source, native-lane anti-snipe fee, MCP registry cleanup, news reader lanes, $THREE-post impact, coin intel signals, memo/inscription reader, chains turnover, 3D funder graph, Robinhood Chain launch venues, hookforge catalog. Shared facts: [finish/_context/integrate-00-CONTEXT.md](finish/_context/integrate-00-CONTEXT.md). |
 | [605](finish/605-beat-05-onchain-allowance-budgets.md) through [627](finish/627-beat-27-launch-fee-and-holder-reward-features.md) | The `beat-` campaign's 12 runnable orders (605, 606, 610, 614, 615, 616, 619, 621, 622, 623, 626, 627): on-chain allowance budgets, a burner wallet with owner confirmation, hire-escrow evaluator and disputes, orders engine with ratcheting exits, perps venues, Solana prediction markets in shadow mode, token due diligence and funding graph, agent CLI automation and HTML reports, Solana agent registry registration, skill supply-chain scanner, metered OpenAI-compatible router, launch-fee/holder-reward features. On-chain steps are devnet or simulation only. Shared facts: [finish/_context/beat-00-CONTEXT.md](finish/_context/beat-00-CONTEXT.md). |
+
+## plan-. The planning corpus as work orders
+
+On 2026-11-03 all 2969 tracked markdown files were reviewed against the code, and every piece of
+outstanding work became a self-contained order: paste the file into a fresh chat and it runs with
+no other context, alongside any number of other sessions. The full ranked list is
+[finish/_context/plan-00-INDEX.md](finish/_context/plan-00-INDEX.md); the per-file record of what
+happened to each doc is [finish/_context/plan-COVERAGE.md](finish/_context/plan-COVERAGE.md).
+
+**Run first, before the 2026-11-06 meetup:** [251](finish/251-plan-play-meetup3-event-day-runbook.md),
+[252](finish/252-plan-play-meetup3-net-economy-audit.md),
+[253](finish/253-plan-play-forge-props-hologram-size-limits.md),
+[254](finish/254-plan-play-event-config-live-override.md) and
+[256](finish/256-plan-play-meetup3-client-ux-audit.md). Each carries the deadline; after that date
+re-scope it to the next event or close it as moot.
+
+| Order | Why now |
+|---|---|
+| [249](finish/249-plan-ops-db-storage-cap-archive-and-reclaim.md) | The production database is past its retention mark (16,758 MB against 16,384 MB), so write-heavy crons are skipping work. Archive to cold storage, verify, then prune. |
+| [250](finish/250-plan-payments-withdrawal-send-idempotency.md) | A withdrawal that fails after broadcast can be paid twice. |
+| [255](finish/255-plan-three-gate-fail-closed-on-rpc-failure.md) | The $THREE balance gate answers `eligible: true` whenever the RPC throws, an access-control bypass on a live path. |
+| [257](finish/257-plan-payments-x402-audit-ledger-durability.md) | The x402 payment audit ledger is not durable or unique per transaction. |
+| [258](finish/258-plan-mcp-unified-endpoint-serve-and-publish.md) to [286](finish/286-plan-notifications-page-category-tab-parity.md) | P1: built-but-unwired features and unshipped fixes, in score order (unified MCP endpoint, self-custody routes, the October security audit, memory settings, the language picker, stale GPU worker images, and more). |
+| [700](finish/700-plan-x402-self-hostable-solana-facilitator.md) to [790](finish/790-plan-docs-avatar-regenerate-api-reference-refresh.md) | P2 then P3, in score order. |
+| [966](finish/966-plan-token-rail-receiver-wallets-preflight.md) to [985](finish/985-plan-drive-open-head-unit-carplay-lane.md) | Gated: everything up to the owner step is runnable now; the order names the gate. |
 
 ## P2. Owner-gated distribution, listings and closeouts (batch the human touchpoints)
 
