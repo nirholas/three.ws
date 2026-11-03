@@ -7,6 +7,8 @@
 // avatar), BVH (on the platform's canonical skeleton), and FBX (server-side
 // conversion that preserves the rig, via /api/forge-remesh).
 
+import { applyStudioLook, createRenderLoop } from './render/index.js';
+
 const STOCK_AVATARS = [
 	{ id: 'default', name: 'Standard', url: '/avatars/default.glb' },
 	{ id: 'michelle', name: 'Michelle', url: '/avatars/michelle.glb' },
@@ -22,7 +24,7 @@ const CONVERT_TIMEOUT_MS = 180_000;
 const $ = (id) => document.getElementById(id);
 
 const state = {
-	three: null, // { THREE, GLTFLoader, renderer, scene, camera, mixer, action, clock }
+	three: null, // { THREE, GLTFLoader, renderer, scene, camera, mixer, action }
 	job: null,
 	artifacts: null, // { clip_url }
 	clipJSON: null,
@@ -169,16 +171,17 @@ async function bootThree() {
 	]);
 	const canvas = $('vtm-canvas');
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-	renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 	const scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x0b0b0b);
+	// The studio environment gives avatar metal and PBR materials something to
+	// reflect; the hemisphere fill is trimmed so it supplements instead of washing out.
+	applyStudioLook(renderer, scene, { environmentIntensity: 0.6 });
 	const camera = new THREE.PerspectiveCamera(35, 16 / 9, 0.1, 50);
 	camera.position.set(0, 1.2, 3.4);
 	camera.lookAt(0, 1, 0);
 
-	scene.add(new THREE.HemisphereLight(0xffffff, 0x303033, 2.4));
+	scene.add(new THREE.HemisphereLight(0xffffff, 0x303033, 1.2));
 	const key = new THREE.DirectionalLight(0xffffff, 1.8);
 	key.position.set(1.5, 3, 4);
 	scene.add(key);
@@ -193,7 +196,6 @@ async function bootThree() {
 		camera,
 		mixer: null,
 		action: null,
-		clock: new THREE.Clock(),
 		playing: true,
 	};
 	return state.three;
@@ -286,14 +288,15 @@ async function loadClip(artifacts) {
 	await loadAvatar(t, state.avatarUrl);
 	wireTrimRange(clipJSON.duration ?? 0);
 
-	cancelAnimationFrame(state._raf);
-	const tick = () => {
-		state._raf = requestAnimationFrame(tick);
-		if (t.mixer && t.playing) t.mixer.update(t.clock.getDelta());
-		else t.clock.getDelta();
-		t.renderer.render(t.scene, t.camera);
-	};
-	tick();
+	state._loop?.dispose();
+	state._loop = createRenderLoop({
+		renderer: t.renderer,
+		frame: (dt) => {
+			if (t.mixer && t.playing) t.mixer.update(dt);
+			t.renderer.render(t.scene, t.camera);
+		},
+	});
+	state._loop.start();
 }
 
 function wireTrimRange(duration) {

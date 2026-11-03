@@ -10,6 +10,8 @@
 // subject's on-screen anchor each frame, and a MediaRecorder export of the
 // canvas + original audio to a downloadable .webm.
 
+import { applyStudioLook } from './render/index.js';
+
 const STOCK_AVATARS = [
 	{ id: 'default', name: 'Standard', url: '/avatars/default.glb' },
 	{ id: 'michelle', name: 'Michelle', url: '/avatars/michelle.glb' },
@@ -172,14 +174,16 @@ async function bootThree() {
 		antialias: true,
 		preserveDrawingBuffer: true,
 	});
-	renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-	renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 	const scene = new THREE.Scene();
+	// The avatar is composited over a video backdrop; the studio environment
+	// supplies reflections for its PBR materials, with the hemisphere fill
+	// trimmed so the two add up instead of washing out.
+	applyStudioLook(renderer, scene, { environmentIntensity: 0.6 });
 	const camera = new THREE.OrthographicCamera(-0.5, 0.5, 0.5, -0.5, 0.1, 50);
 	camera.position.z = 10;
 
-	scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 2.2));
+	scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.1));
 	const key = new THREE.DirectionalLight(0xffffff, 1.6);
 	key.position.set(1.5, 3, 4);
 	scene.add(key);

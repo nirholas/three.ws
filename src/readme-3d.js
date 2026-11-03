@@ -8,6 +8,7 @@
 
 import './readme-3d.css';
 import { fetchReadme3d } from './readme-3d-copy.js';
+import { applyStudioLook } from './render/index.js';
 
 const $ = (id) => document.getElementById(id);
 const form = $('r3-form');
@@ -53,10 +54,10 @@ async function ensurePreview() {
 		import('three/addons/controls/OrbitControls.js'),
 	]);
 	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-	renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 	const scene = new THREE.Scene();
+	applyStudioLook(renderer, scene, { environmentIntensity: 0.7 });
 	const camera = new THREE.PerspectiveCamera(40, 4 / 3, 0.1, 2000);
-	scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.6));
+	scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 0.8));
 	const key = new THREE.DirectionalLight(0xffffff, 2.2);
 	key.position.set(120, -160, 200);
 	scene.add(key);
