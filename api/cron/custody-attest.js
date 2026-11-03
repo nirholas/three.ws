@@ -12,13 +12,29 @@
 // 500s on a missing key.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { runAttestationEpoch } from '../_lib/custody-proof.js';
+import { runAttestationEpoch, describeAnchorOutage } from '../_lib/custody-proof.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { sendOpsAlert } from '../_lib/alerts.js';
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 
 	const result = await runAttestationEpoch({ anchor: true });
+	if (result.anchor_status === 'anchor_failed') await alertAnchorFailure(result);
 	return json(res, 200, { ok: true, ...result });
 });
+
+// A failed anchor leaves the commitment untimestamped, so it must page ops. The
+// signature is per network so a standing outage coalesces into one alert.
+async function alertAnchorFailure(result) {
+	const { network, attester, lamports } = await describeAnchorOutage();
+	const balance = lamports == null ? 'unknown' : `${(lamports / 1e9).toFixed(6)} SOL`;
+	await sendOpsAlert(
+		'Custody proof: on-chain anchoring is down',
+		`Epoch ${result.epoch} was recorded but its Merkle root could not be anchored on Solana ${network}. ` +
+		`Reason: ${result.anchor_error}. Attester ${attester || 'key not configured'} holds ${balance} on ${network}. ` +
+		`Fix: fund the attester on ${network} (or set CUSTODY_ANCHOR_NETWORK to the cluster it is funded on).`,
+		{ signature: `custody-anchor-failed:${network}` },
+	);
+}

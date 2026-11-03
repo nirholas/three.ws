@@ -2107,6 +2107,14 @@
 					"added": "2026-07-23"
 				},
 				{
+					"path": "/integrity",
+					"title": "Custody Integrity",
+					"description": "The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"added": "2026-11-03"
+				},
+				{
 					"path": "/proof",
 					"title": "Verify Custody",
 					"description": "Verify your own three.ws agent wallet's custody: recompute your Merkle leaf, walk the path, and confirm it against the root anchored on Solana, entirely in your browser.",

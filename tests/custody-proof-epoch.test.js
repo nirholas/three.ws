@@ -9,6 +9,7 @@
 // I/O is mocked at the module seams (db.js, solana/connection.js,
 // attest-event.js): the test never touches a real database or RPC endpoint.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Keypair } from '@solana/web3.js';
 
 // Deterministic 64-hex leaf hashes are produced by the REAL computeLeafHash;
 // the tree builder runs for real too, so the persisted root is verifiable.
@@ -45,8 +46,10 @@ sqlMock.transaction = async (txs) => {
 vi.mock('../api/_lib/db.js', () => ({ sql: sqlMock }));
 
 let rpcBalance = 500_000;
+let landedStatus = null;
 vi.mock('../api/_lib/solana/connection.js', () => ({
 	solanaConnection: () => ({
+		getSignatureStatuses: async (sigs) => ({ value: sigs.map(() => landedStatus) }),
 		getBalance: async () => {
 			if (rpcBalance == null) throw new Error('rpc down');
 			return rpcBalance;
@@ -56,8 +59,14 @@ vi.mock('../api/_lib/solana/connection.js', () => ({
 
 // No ATTEST_AGENT_SECRET_KEY in the test env: the attester key is unconfigured,
 // and loadAttesterKeypair throws the same coded error it throws in production.
+let attesterConfigured = false;
+let sendImpl = async () => 'sig-ok';
+vi.mock('../api/_lib/solana/confirm.js', () => ({
+	sendAndConfirm: (...args) => sendImpl(...args),
+}));
 vi.mock('../api/_lib/attest-event.js', () => ({
 	loadAttesterKeypair: () => {
+		if (attesterConfigured) return Keypair.generate();
 		const err = new Error('ATTEST_AGENT_SECRET_KEY is not configured');
 		err.code = 'attester_key_not_configured';
 		throw err;
@@ -68,12 +77,15 @@ vi.mock('../api/_lib/avatar-wallet.js', () => ({
 	explorerTxUrl: (net, sig) => `https://explorer/${net}/${sig}`,
 }));
 
-const { runAttestationEpoch, getInclusionProof } = await import('../api/_lib/custody-proof.js');
+const { runAttestationEpoch, getInclusionProof, ANCHOR_NETWORK } = await import('../api/_lib/custody-proof.js');
 const { computeLeafHash } = await import('../src/proof-of-custody/merkle.js');
 
 beforeEach(() => {
 	statements.length = 0;
 	rpcBalance = 500_000;
+	attesterConfigured = false;
+	sendImpl = async () => 'sig-ok';
+	landedStatus = null;
 });
 
 describe('runAttestationEpoch', () => {
@@ -126,6 +138,64 @@ describe('runAttestationEpoch', () => {
 		const result = await runAttestationEpoch({ anchor: false });
 		expect(result.anchor_status).toBe('pending');
 		expect(result.anchor_signature ?? null).toBeNull();
+	});
+});
+
+describe('anchor failure handling', () => {
+	const UNFUNDED = 'Transaction simulation failed: Attempt to debit an account but found no record of a prior credit.';
+	const timeoutErr = (sig) => Object.assign(new Error(`Transaction ${sig} not confirmed within 20s`), { code: 'tx_confirm_timeout', signature: sig });
+	const failedUpdate = () => statements.find((s) => s.text.includes("anchor_status = 'anchor_failed'"));
+
+	it('stores an unfunded-payer rejection as attester_unfunded:<network>', async () => {
+		attesterConfigured = true;
+		sendImpl = async () => { throw new Error(UNFUNDED); };
+		const result = await runAttestationEpoch({ anchor: true });
+		expect(result.anchor_status).toBe('anchor_failed');
+		expect(result.anchor_error).toBe(`attester_unfunded:${ANCHOR_NETWORK}`);
+		expect(failedUpdate().values).toContain(`attester_unfunded:${ANCHOR_NETWORK}`);
+	});
+
+	it('keeps the raw message for an unrelated broadcast failure', async () => {
+		attesterConfigured = true;
+		sendImpl = async () => { throw new Error('blockhash not found'); };
+		const result = await runAttestationEpoch({ anchor: true });
+		expect(result.anchor_error).toBe('blockhash not found');
+	});
+
+	it('only ever rewrites a row that is not already anchored', async () => {
+		attesterConfigured = true;
+		sendImpl = async () => { throw new Error(UNFUNDED); };
+		await runAttestationEpoch({ anchor: true });
+		expect(failedUpdate().text).toContain("anchor_status <> 'anchored'");
+	});
+
+	it('records the anchor when the memo lands after the confirm wait gave up', async () => {
+		attesterConfigured = true;
+		sendImpl = async () => { throw timeoutErr('sigLate'); };
+		landedStatus = { err: null, confirmationStatus: 'confirmed' };
+		const result = await runAttestationEpoch({ anchor: true });
+		expect(result.anchor_status).toBe('anchored');
+		expect(result.anchor_signature).toBe('sigLate');
+		expect(statements.some((s) => s.text.includes("anchor_status = 'anchored'") && s.values.includes('sigLate'))).toBe(true);
+	});
+
+	it('still fails a timed-out anchor whose transaction never landed', async () => {
+		attesterConfigured = true;
+		sendImpl = async () => { throw timeoutErr('sigGone'); };
+		const result = await runAttestationEpoch({ anchor: true });
+		expect(result.anchor_status).toBe('anchor_failed');
+	});
+
+	it('gives the confirm wait more than the old 20s ceiling', async () => {
+		attesterConfigured = true;
+		let opts;
+		sendImpl = async (_c, _t, _s, o) => { opts = o; return 'sig-ok'; };
+		await runAttestationEpoch({ anchor: true });
+		expect(opts.timeoutMs).toBeGreaterThan(20_000);
+	});
+
+	it('anchors on mainnet by default, where the attester is funded', () => {
+		expect(ANCHOR_NETWORK).toBe('mainnet');
 	});
 });
 

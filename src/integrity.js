@@ -49,8 +49,23 @@ async function main() {
 		return;
 	}
 
+	const anchored = Number(data.epochs_anchored || 0);
+	const total = Number(data.epochs_total || 0);
+	const target = data.latest_anchored || null;
+	const latestIsAnchored = latest.anchor_status === 'anchored' && !!latest.anchor_sig;
+	const firstAnchor = data.first_anchored_at ? fmtTime(data.first_anchored_at) : null;
+	const backlogNote = anchored > 0 && Number(data.backlog) > 0
+		? `<p class="intg-p" id="intg-backlog">Anchoring began on ${esc(firstAnchor)}. The ${esc(data.backlog)} earlier epoch${Number(data.backlog) === 1 ? ' was' : 's were'} recorded and are still verifiable against their stored roots, but were not timestamped on-chain, so they are left as they are rather than anchored late.</p>`
+		: '';
+	const banner = !latestIsAnchored
+		? `<div class="intg-status is-pending" role="status" id="intg-banner"><div class="intg-seal">◷</div><div class="intg-status-main"><div class="intg-status-title">Latest epoch #${esc(latest.epoch)} is not anchored</div><div class="intg-status-sub">Its snapshot is recorded (status: ${esc(latest.anchor_status)}) but the root has no on-chain transaction. ${target ? `The verification below is for the newest anchored epoch, #${esc(target.epoch)}.` : 'Nothing below is verified on-chain yet.'}</div></div></div>`
+		: '';
+
 	root.innerHTML = `
 		<div class="intg-card">
+			<p class="intg-p" id="intg-coverage"><strong>${esc(anchored)} of ${esc(total)}</strong> epochs anchored on Solana.</p>
+			${backlogNote}
+			${banner}
 			<div class="intg-status is-pending" id="intg-status">
 				<div class="intg-seal" id="intg-seal"><span class="intg-spin" aria-hidden="true"></span></div>
 				<div class="intg-status-main">
@@ -85,7 +100,7 @@ async function main() {
 		</div>
 	`;
 
-	verifyLatest(latest);
+	verifyLatest(target);
 }
 
 async function verifyLatest(latest) {
@@ -100,19 +115,19 @@ async function verifyLatest(latest) {
 		sub.innerHTML = s;
 	};
 
-	if (!latest.anchor_sig) {
-		set('is-pending', '◷', `Epoch #${latest.epoch} not yet anchored`,
-			`The latest snapshot is recorded but its root hasn't been committed on-chain yet (status: ${esc(latest.anchor_status)}). It will be anchored shortly.`);
+	if (!latest || !latest.anchor_sig) {
+		set('is-pending', '◷', 'No epoch is anchored on-chain yet',
+			'Snapshots are recorded, but until a root is committed in a Solana transaction there is nothing to verify on-chain here.');
 		return;
 	}
 
 	try {
-		const onchain = await readOnchainAnchor(latest.anchor_sig, latest.anchor_network || 'devnet');
+		const onchain = await readOnchainAnchor(latest.anchor_sig, latest.anchor_network || 'mainnet');
 		const apiRoot = String(latest.merkle_root || '').toLowerCase();
 		const match = onchain.root === apiRoot && Number(onchain.epoch) === Number(latest.epoch);
 		if (match) {
 			set('is-verified', '✓', `Custody verified on-chain · epoch #${latest.epoch}`,
-				`The Merkle root reported here exactly matches the root committed in <a href="${esc(latest.anchor_explorer)}" target="_blank" rel="noopener">the anchor transaction</a> on Solana ${esc(latest.anchor_network || 'devnet')}. Verified ${esc(fmtTime(new Date().toISOString()))}.`);
+				`The Merkle root reported here exactly matches the root committed in <a href="${esc(latest.anchor_explorer)}" target="_blank" rel="noopener">the anchor transaction</a> on Solana ${esc(latest.anchor_network || 'mainnet')}. Verified ${esc(fmtTime(new Date().toISOString()))}.`);
 		} else {
 			set('is-failed', '✕', 'Root mismatch',
 				`The root committed on-chain (${esc(short(onchain.root))}) does not match the reported root. This should never happen — do not trust until resolved.`);

@@ -18,8 +18,22 @@ function card(html) {
 	return `<div class="awh-proof"><div class="awh-proof-card">${html}</div></div>`;
 }
 
+// The public page only earns a link once at least one epoch really is anchored
+// on-chain; until then it would headline a promise with nothing behind it.
+async function revealIntegrityLink() {
+	try {
+		const res = await fetch('/api/custody/integrity', { headers: { accept: 'application/json' } });
+		if (!res.ok) return;
+		const data = (await res.json())?.data;
+		if (Number(data?.epochs_anchored) > 0) document.getElementById('poc-integrity-link')?.removeAttribute('hidden');
+	} catch {
+		/* a link that stays hidden is the correct degraded state */
+	}
+}
+
 async function main() {
 	injectProofStyle();
+	revealIntegrityLink();
 	const agentId = new URLSearchParams(location.search).get('agent');
 
 	if (!agentId) {

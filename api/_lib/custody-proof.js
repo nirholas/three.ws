@@ -34,6 +34,14 @@ import {
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const ANCHOR_KIND = 'threews.custody.v1';
 const TX_TIMEOUT_MS = 20_000;
+// Whole-run ceiling (the route's maxDuration is 120s) and the confirm wait the
+// anchor step may use within it. A memo on public RPC routinely takes 20s+ to
+// land, so the old fixed 20s race recorded transactions that DID land (epoch 525,
+// 2026-11-03) as anchor_failed. The wait now uses whatever the run has left.
+const RUN_CEILING_MS = 112_000;
+const ANCHOR_MIN_WAIT_MS = 25_000;
+const ANCHOR_MAX_WAIT_MS = 60_000;
+const COMMITMENT_RANK = { processed: 0, confirmed: 1, finalized: 2 };
 
 // Wall-clock budget for the snapshot phase (balance + ledger-head reads). When
 // public RPC is rate-limited, the rotating fetch can sweep the whole endpoint
@@ -47,12 +55,13 @@ const SNAPSHOT_BUDGET_MS = 80_000;
 // small enough not to worsen the very 429s the rotating fetch is dodging.
 const BALANCE_READ_CONCURRENCY = 5;
 
-// The balances are read on the network the custodial wallets actually operate on
-// (mainnet). The root commitment is a hash with no value, so it is anchored on
-// the cheaper devnet by default — still a real, independently-fetchable on-chain
-// artifact. Both are overridable for operators who want mainnet anchoring.
+// Balances are read on the network the custodial wallets operate on (mainnet),
+// and the root is anchored on mainnet too: the attester signer is only ever
+// funded and auto-topped-up there (a memo costs ~5,000 lamports, four epochs a
+// day), so a devnet anchor fails every time with an unfunded payer. Devnet stays
+// selectable for local runs with CUSTODY_ANCHOR_NETWORK=devnet.
 export const SNAPSHOT_NETWORK = process.env.CUSTODY_SNAPSHOT_NETWORK === 'devnet' ? 'devnet' : 'mainnet';
-export const ANCHOR_NETWORK = process.env.CUSTODY_ANCHOR_NETWORK === 'mainnet' ? 'mainnet' : 'devnet';
+export const ANCHOR_NETWORK = process.env.CUSTODY_ANCHOR_NETWORK === 'devnet' ? 'devnet' : 'mainnet';
 
 // Reconciliation fee tolerance: a withdraw burns ~5k lamports of network fee that
 // the ledger's recorded amount does not include, and a SOL "max" sweep leaves a
@@ -214,7 +223,11 @@ export async function runAttestationEpoch({ anchor = true } = {}) {
 
 	let anchorResult = { status: 'pending', signature: null };
 	if (anchor) {
-		anchorResult = await anchorRoot({ epoch, root, walletCount: leaves.length });
+		const waitMs = Math.min(
+			ANCHOR_MAX_WAIT_MS,
+			Math.max(ANCHOR_MIN_WAIT_MS, startedAt + RUN_CEILING_MS - Date.now()),
+		);
+		anchorResult = await anchorRoot({ epoch, root, walletCount: leaves.length, waitMs });
 	}
 
 	return {
@@ -224,6 +237,7 @@ export async function runAttestationEpoch({ anchor = true } = {}) {
 		total_lamports: String(totalLamports),
 		anchor_status: anchorResult.status,
 		anchor_signature: anchorResult.signature,
+		anchor_error: anchorResult.error ?? null,
 		rpc_failures: rpcFailures,
 		snapshot_ms: Date.now() - startedAt,
 	};
@@ -237,7 +251,7 @@ export async function runAttestationEpoch({ anchor = true } = {}) {
  *
  * @returns {Promise<{ status: 'anchored'|'anchor_failed', signature: string|null, error?: string }>}
  */
-export async function anchorRoot({ epoch, root, walletCount }) {
+export async function anchorRoot({ epoch, root, walletCount, waitMs = ANCHOR_MIN_WAIT_MS }) {
 	let attester;
 	try {
 		attester = loadAttesterKeypair();
@@ -265,13 +279,17 @@ export async function anchorRoot({ epoch, root, walletCount }) {
 
 	let signature;
 	try {
-		signature = await withTimeout(
-			sendAndConfirm(conn, tx, [attester], { commitment: 'confirmed' }),
-			TX_TIMEOUT_MS,
-		);
+		signature = await sendAndConfirm(conn, tx, [attester], { commitment: 'confirmed', timeoutMs: waitMs });
 	} catch (e) {
-		await markAnchorFailed(epoch, (e && e.message) ? String(e.message).slice(0, 300) : 'anchor_send_failed');
-		return { status: 'anchor_failed', signature: null, error: 'anchor_send_failed' };
+		// A confirm timeout is not a failed transaction: it may still land. Ask the
+		// chain once more before recording a failure.
+		if (e && e.signature && (await landedOnChain(conn, e.signature))) {
+			signature = e.signature;
+		} else {
+			const reason = classifyAnchorError(e, ANCHOR_NETWORK);
+			await markAnchorFailed(epoch, reason);
+			return { status: 'anchor_failed', signature: null, error: reason };
+		}
 	}
 
 	await sql`
@@ -281,6 +299,52 @@ export async function anchorRoot({ epoch, root, walletCount }) {
 		WHERE epoch = ${String(epoch)}
 	`;
 	return { status: 'anchored', signature };
+}
+
+/** True when the signature is confirmed (or better) on-chain without an error. */
+async function landedOnChain(conn, signature) {
+	try {
+		const res = await withTimeout(
+			conn.getSignatureStatuses([signature], { searchTransactionHistory: true }),
+			TX_TIMEOUT_MS,
+		);
+		const st = res?.value?.[0];
+		return !!st && !st.err && (COMMITMENT_RANK[st.confirmationStatus] ?? -1) >= COMMITMENT_RANK.confirmed;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Turn a broadcast rejection into the stored `anchor_error`. A payer with no
+ * lamports on the anchor cluster is the one failure with a single fix (fund the
+ * attester there), so it gets a stable machine-readable code instead of the raw
+ * RPC text; everything else keeps its message.
+ */
+export function classifyAnchorError(e, network = ANCHOR_NETWORK) {
+	const message = e && e.message ? String(e.message) : '';
+	if (/no record of a prior credit|insufficient (funds|lamports)/i.test(message)) {
+		return `attester_unfunded:${network}`;
+	}
+	return message ? message.slice(0, 300) : 'anchor_send_failed';
+}
+
+/**
+ * What an operator needs to fix a failed anchor: the cluster, the attester's
+ * public key and its live balance there. Never throws; unknowns are null.
+ */
+export async function describeAnchorOutage() {
+	let pubkey = null;
+	let lamports = null;
+	try {
+		const attester = loadAttesterKeypair();
+		pubkey = attester.publicKey.toBase58();
+		const conn = solanaConnection({ url: RPC[ANCHOR_NETWORK] || RPC.mainnet, commitment: 'confirmed' });
+		lamports = await withTimeout(conn.getBalance(attester.publicKey, 'confirmed'), TX_TIMEOUT_MS);
+	} catch {
+		/* key missing or RPC down: report what is known */
+	}
+	return { network: ANCHOR_NETWORK, attester: pubkey, lamports };
 }
 
 async function markAnchorFailed(epoch, reason) {
@@ -327,7 +391,11 @@ export async function getPublicIntegrity() {
 	`;
 	const [agg] = await sql`
 		SELECT COUNT(*)::int AS epochs, MIN(created_at) AS since,
-		       COUNT(*) FILTER (WHERE anchor_status = 'anchored')::int AS anchored
+		       COUNT(*) FILTER (WHERE anchor_status = 'anchored')::int AS anchored,
+		       MIN(anchored_at) AS first_anchored_at,
+		       COUNT(*) FILTER (WHERE anchor_status <> 'anchored'
+		         AND epoch < COALESCE((SELECT MIN(epoch) FROM custody_attestation_epochs
+		                               WHERE anchor_status = 'anchored'), 9223372036854775807))::int AS backlog
 		FROM custody_attestation_epochs
 	`;
 	const recent = await sql`
@@ -336,10 +404,20 @@ export async function getPublicIntegrity() {
 		FROM custody_attestation_epochs
 		ORDER BY epoch DESC LIMIT 12
 	`;
+	const [latestAnchored] = await sql`
+		SELECT * FROM custody_attestation_epochs
+		WHERE anchor_status = 'anchored' AND anchor_sig IS NOT NULL
+		ORDER BY epoch DESC LIMIT 1
+	`;
 	return {
 		latest: epochRowToPublic(latest),
+		latest_anchored: epochRowToPublic(latestAnchored),
 		epochs_total: agg?.epochs ?? 0,
 		epochs_anchored: agg?.anchored ?? 0,
+		// Epochs recorded before the first on-chain anchor. They stay un-timestamped
+		// on purpose: anchoring an old root now would imply it was published then.
+		backlog: agg?.backlog ?? 0,
+		first_anchored_at: agg?.first_anchored_at ?? null,
 		since: agg?.since ?? null,
 		recent: recent.map(epochRowToPublic),
 	};
