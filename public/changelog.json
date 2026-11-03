@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-03T03:05:19.959Z",
+	"generated_at": "2026-11-03T03:13:40.457Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -10,7 +10,7 @@
 			"date": "2026-11-03",
 			"type": "update",
 			"title": "Codespaces, a roadmap page, a support page and categorized release notes",
-			"summary": "One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed for contributors and new visitors.",
+			"summary": "One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed for contributors and new visitors. The README also gained copy-paste MCP install blocks for Claude Code, Claude Desktop, Cursor, VS Code, Codex CLI, Gemini CLI and Windsurf.",
 			"link": null,
 			"tags": [
 				"docs"

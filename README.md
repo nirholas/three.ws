@@ -1,4 +1,6 @@
-# three.ws                  
+# three.ws
+
+<!-- mcp-name: io.github.nirholas/three.ws -->                  
   
 [**Website**](https://three.ws) · [**Docs**](https://three.ws/docs) · [**Changelog**](https://three.ws/changelog) · [**X / Twitter**](https://x.com/trythreews) · [**GitHub**](https://github.com/nirholas/three.ws) · [**$THREE on pump.fun**](https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump)
 
@@ -8486,6 +8488,7 @@ endsolid threews_avatar
 - [Brain Proxy & LLM Routing](#brain-proxy--llm-routing)
 - [Claude Code Integration](#claude-code-integration)
 - [Install in Claude Code](#install-in-claude-code)
+- [Install the MCP server in any client](#install-the-mcp-server-in-any-client)
 - [Cloud Marketplaces](#cloud-marketplaces)
 - [Ecosystem Directories](#ecosystem-directories)
 - [IBM watsonx & Granite](#ibm-watsonx--granite)
@@ -10252,6 +10255,55 @@ Then install any of the four plugins:
 ```
 
 Run `/reload-plugins` and the skills appear under each plugin's namespace (e.g. `/three-ws-3d:forge-3d`). Plugins that expose MCP tools (`three-ws-developer`, `three-ws-3d`) wire the published `@three-ws/*` MCP servers automatically - `forge_free` is free (no wallet); the paid lanes settle over x402 in USDC. The canonical manifest lives at [.claude-plugin/marketplace.json](.claude-plugin/marketplace.json).
+
+---
+
+## Install the MCP server in any client
+
+One server, every MCP host. `forge_free` (text to 3D) and the crypto-news tools work with no key, no wallet and no account; paid tools settle per call in USDC over x402. The same `npx -y @three-ws/mcp-server` command runs everywhere, only the config file differs. Full tool list: [mcp-server/README.md](mcp-server/README.md).
+
+**Claude Code**
+
+```bash
+claude mcp add three-ws -- npx -y @three-ws/mcp-server
+```
+
+**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, `%APPDATA%\Claude\claude_desktop_config.json` on Windows), **Cursor** (`~/.cursor/mcp.json`), **Gemini CLI** (`~/.gemini/settings.json`) and **Windsurf** (`~/.codeium/windsurf/mcp_config.json`) share one shape:
+
+```json
+{
+	"mcpServers": {
+		"three-ws": {
+			"command": "npx",
+			"args": ["-y", "@three-ws/mcp-server"]
+		}
+	}
+}
+```
+
+**VS Code / GitHub Copilot** (`.vscode/mcp.json`)
+
+```json
+{
+	"servers": {
+		"three-ws": {
+			"type": "stdio",
+			"command": "npx",
+			"args": ["-y", "@three-ws/mcp-server"]
+		}
+	}
+}
+```
+
+**OpenAI Codex CLI** (`~/.codex/config.toml`)
+
+```toml
+[mcp_servers.three-ws]
+command = "npx"
+args = ["-y", "@three-ws/mcp-server"]
+```
+
+To receive payments as a server operator, add `MCP_SVM_PAYMENT_ADDRESS=YourSolanaWallet` to the server's `env`. The registry listing is [io.github.nirholas/three.ws](https://registry.modelcontextprotocol.io/?q=io.github.nirholas).
 
 ---
 

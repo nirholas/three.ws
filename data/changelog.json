@@ -22,7 +22,7 @@
 		{
 			"date": "2026-11-03",
 			"title": "Codespaces, a roadmap page, a support page and categorized release notes",
-			"summary": "One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed for contributors and new visitors.",
+			"summary": "One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed for contributors and new visitors. The README also gained copy-paste MCP install blocks for Claude Code, Claude Desktop, Cursor, VS Code, Codex CLI, Gemini CLI and Windsurf.",
 			"tags": [
 				"docs"
 			]
