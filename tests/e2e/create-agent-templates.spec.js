@@ -15,6 +15,13 @@ const { templates } = JSON.parse(
 	readFileSync(path.join(import.meta.dirname, '..', '..', 'data/agent-templates.json'), 'utf8'),
 );
 const TEMPLATE = templates.find((t) => t.id === 'whale-watcher');
+const OWNED_AVATAR = {
+	id: 'ava-e2e-template',
+	name: 'Template Test Avatar',
+	model_url: '/avatars/default.glb',
+	base_model_url: '/avatars/default.glb',
+	thumbnail_url: '/favicon-32x32.png',
+};
 
 async function installFixtures(page, calls) {
 	await page.route('**/api/auth/me**', (r) =>
@@ -24,8 +31,10 @@ async function installFixtures(page, calls) {
 			body: JSON.stringify({ user: { id: 'usr_e2e', handle: 'e2e', display_name: 'E2E', plan: 'free' } }),
 		}),
 	);
+	// One owned avatar, so the wizard connects it directly instead of copying a
+	// starter GLB into the account (that upload chain has its own spec).
 	await page.route('**/api/avatars?**', (r) =>
-		r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ avatars: [] }) }),
+		r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ avatars: [OWNED_AVATAR] }) }),
 	);
 	await page.route('**/api/agents', async (r) => {
 		if (r.request().method() !== 'POST') return r.fallback();
@@ -91,14 +100,12 @@ test.describe('create-agent / template gallery', () => {
 		await expect(page.locator('#f-greeting')).toHaveValue(TEMPLATE.greeting);
 		await expect(page.locator('#f-category')).toHaveValue('finance');
 
-		// Walk back to the avatar step, choose a starter, and ship.
-		await page.locator('.stepper [data-step="1"], #stepper [data-step="1"]').first().click({ trial: false }).catch(() => {});
-		if (!(await page.locator('.panel[data-step="1"].is-active').isVisible())) {
-			while (!(await page.locator('.panel[data-step="1"].is-active').isVisible())) {
-				await page.locator('#btn-back').click();
-			}
-		}
-		await page.locator('#starter-grid .starter').first().click();
+		// Walk back to the avatar step, connect the owned avatar, and ship.
+		// The stepper pip for a completed step is a real button that jumps back.
+		await page.locator('#stepper .step-pip[data-pip="1"] .step-pip-btn').click();
+		await expect(page.locator('.panel[data-step="1"].is-active')).toBeVisible();
+		await page.locator('.model-tab[data-pane="library"]').click();
+		await page.locator('#library-grid .starter').first().click();
 		for (let i = 0; i < 5 && !(await page.locator('#btn-create').isVisible()); i++) {
 			await page.locator('#btn-next').click();
 		}
@@ -106,6 +113,7 @@ test.describe('create-agent / template gallery', () => {
 		await expect(page.locator('#success-title')).toContainText('Sol Whale Desk');
 
 		expect(calls.create.name).toBe('Sol Whale Desk');
+		expect(calls.create.avatar_id).toBe(OWNED_AVATAR.id);
 		expect(calls.publish.system_prompt).toBe(TEMPLATE.persona.trim());
 		expect(calls.publish.category).toBe('finance');
 		expect(calls.publish.greeting).toBe(TEMPLATE.greeting);
