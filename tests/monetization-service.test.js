@@ -18,6 +18,7 @@
 // the logic is tested in isolation from Neon, exactly as Prompt 18 specifies.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { IN_FLIGHT_WITHDRAWAL_STATUSES } from '../api/_lib/withdrawal-status.js';
 import { createTestAgent, createTestUser, invoke } from './_helpers/monetization.js';
 
 // ── Mock state ────────────────────────────────────────────────────────────────
@@ -309,7 +310,8 @@ describe('getAvailableBalance', () => {
 		const earnedCall = sqlState.calls.find((c) => c.query.includes('agent_revenue_events'));
 		const wdrawCall = sqlState.calls.find((c) => c.query.includes('agent_withdrawals'));
 		expect(earnedCall.values).toEqual(['user-1', USDC_MINT]);
-		expect(wdrawCall.values).toEqual(['user-1', USDC_MINT]);
+		// The withdrawals query binds the in-flight status list first, then the user and mint.
+		expect(wdrawCall.values).toEqual([[...IN_FLIGHT_WITHDRAWAL_STATUSES], 'user-1', USDC_MINT]);
 	});
 });
 

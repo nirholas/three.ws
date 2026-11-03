@@ -68,6 +68,8 @@ vi.mock('../api/_lib/rate-limit.js', () => ({
 		walletRead: vi.fn(async () => ({ success: true })),
 		walletSimulate: vi.fn(async () => ({ success: true })),
 		withdrawalPerUser: vi.fn(async () => ({ success: true })),
+		apiKeyList: vi.fn(async () => ({ success: true })),
+		apiKeyManage: vi.fn(async () => ({ success: true })),
 	},
 	clientIp: vi.fn(() => '127.0.0.1'),
 }));
@@ -503,7 +505,8 @@ describe('provider-keys: set, clear, and what never leaves', () => {
 	});
 
 	it('encrypts a new value before it reaches the column', async () => {
-		sqlState.queue.push([{ provider_keys: {} }]);
+		// The handler merges in one UPDATE ... RETURNING, so the queued row is the merged result.
+		sqlState.queue.push([{ provider_keys: { openai: 'enc(sk-plaintext)' } }]);
 		const { status, body } = await call(providerKeysHandler, {
 			method: 'PATCH',
 			url: '/api/user/provider-keys',
@@ -511,12 +514,13 @@ describe('provider-keys: set, clear, and what never leaves', () => {
 		});
 		expect(status).toBe(200);
 		expect(body.keys.openai).toEqual({ set: true });
-		const update = sqlState.calls.find((c) => /UPDATE users SET provider_keys/i.test(c.text));
-		expect(update.values[0]).toBe(JSON.stringify({ openai: 'enc(sk-plaintext)' }));
+		const update = sqlState.calls.find((c) => /UPDATE users\s+SET provider_keys/i.test(c.text));
+		expect(update.values[0]).toEqual([]);
+		expect(update.values[1]).toBe(JSON.stringify({ openai: 'enc(sk-plaintext)' }));
 	});
 
 	it('deletes the entry when a provider is set to null', async () => {
-		sqlState.queue.push([{ provider_keys: { openai: 'enc(sk-old)', grok: 'enc(xai-old)' } }]);
+		sqlState.queue.push([{ provider_keys: { grok: 'enc(xai-old)' } }]);
 		const { status, body } = await call(providerKeysHandler, {
 			method: 'PATCH',
 			url: '/api/user/provider-keys',
@@ -525,8 +529,9 @@ describe('provider-keys: set, clear, and what never leaves', () => {
 		expect(status).toBe(200);
 		expect(body.keys.openai).toEqual({ set: false });
 		expect(body.keys.grok).toEqual({ set: true });
-		const update = sqlState.calls.find((c) => /UPDATE users SET provider_keys/i.test(c.text));
-		expect(JSON.parse(update.values[0])).toEqual({ grok: 'enc(xai-old)' });
+		const update = sqlState.calls.find((c) => /UPDATE users\s+SET provider_keys/i.test(c.text));
+		expect(update.values[0]).toEqual(['openai']);
+		expect(update.values[1]).toBe('{}');
 	});
 
 	it('rejects a non-string value with a 400 naming the field', async () => {
@@ -548,7 +553,7 @@ describe('provider-keys: set, clear, and what never leaves', () => {
 			body: { openai: 'sk-plaintext' },
 		});
 		expect(status).toBe(403);
-		expect(sqlState.calls.some((c) => /UPDATE users SET provider_keys/i.test(c.text))).toBe(false);
+		expect(sqlState.calls.some((c) => /UPDATE users\s+SET provider_keys/i.test(c.text))).toBe(false);
 	});
 });
 
