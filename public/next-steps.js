@@ -174,7 +174,10 @@
 			'#tws-next-steps .tn-card span{display:block;margin-top:2px;font-size:12.5px;opacity:.7}' +
 			'#tws-next-steps a:focus-visible,#tws-next-steps button:focus-visible{outline:2px solid #8ea2ff;outline-offset:2px}' +
 			'#tws-next-steps .tn-all{display:inline-block;margin-top:12px;font-size:13px;color:inherit;opacity:.75}' +
-			'@media (prefers-reduced-motion:reduce){#tws-next-steps .tn-card{transition:none}}';
+			'@media (prefers-reduced-motion:reduce){#tws-next-steps .tn-card{transition:none}}' +
+			// Touch: the dismiss button (32x32) and the "browse everything" link
+			// (20px tall) reach the 44px tap floor.
+			'@media (hover:none) and (pointer:coarse){#tws-next-steps .tn-x{width:44px;height:44px;min-width:44px;flex:none}#tws-next-steps .tn-all{display:inline-flex;align-items:center;min-height:44px}}';
 		document.head.appendChild(style);
 
 		var wrap = document.createElement('aside');

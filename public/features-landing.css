@@ -683,3 +683,14 @@
 		animation: none;
 	}
 }
+
+/* Touch screens: the /features/* CTAs measured 32-42px tall on a 393px
+   phone. Lift them to the 44px tap floor. */
+@media (hover: none) and (pointer: coarse) {
+	.fl-btn-primary,
+	.fl-btn-ghost {
+		box-sizing: border-box;
+		min-height: 44px;
+		justify-content: center;
+	}
+}

@@ -2910,3 +2910,16 @@
 		height: 180px;
 	}
 }
+
+/* Touch screens: the hero and section CTAs measured 37-40px tall on a
+   393px phone. Lift them to the 44px tap floor with the label centred. */
+@media (hover: none) and (pointer: coarse) {
+	.btn-primary,
+	.btn-ghost {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		min-height: 44px;
+	}
+}

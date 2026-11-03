@@ -3453,6 +3453,15 @@
 				.forge-head-link {
 					margin-left: 0;
 				}
+				/* The node-builder link measured 30px tall on a phone. */
+				@media (hover: none) and (pointer: coarse) {
+					.forge-head-link {
+						display: inline-flex;
+						align-items: center;
+						box-sizing: border-box;
+						min-height: 44px;
+					}
+				}
 				/* Engine / quality / tier / aspect button groups carry up to seven
 				   chips — let them wrap instead of forcing horizontal scroll. */
 				.aspect {
