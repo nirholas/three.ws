@@ -399,10 +399,12 @@ class GachaUI {
 			this.machines = data.machines || [];
 			this.usdcMint = data.usdcMint || null;
 		} catch (err) {
-			if (this._ac.signal.aborted) return;
+			// The player may have opened My cards while the list loaded; leave that view alone.
+			if (this._ac.signal.aborted || this.view !== 'loading') return;
 			this._setView('error', this._errorBlock(err.message || 'Could not load the machines.', 'Try again', () => this._loadMachines()));
 			return;
 		}
+		if (this.view !== 'loading') return;
 		const pending = readPending();
 		if (pending && pending.net === this.net) {
 			this._renderResume(pending);
@@ -1113,9 +1115,10 @@ class GachaUI {
 			return;
 		}
 
+		this._cardsQ = '';
 		let data;
 		try {
-			data = await gachaApi('cards', { query: { owner, ...(this._cardsDirty ? { fresh: '1' } : {}) }, signal: this._ac.signal, timeoutMs: 60_000 });
+			data = await this._fetchCardsPage(owner, { offset: 0, fresh: this._cardsDirty });
 		} catch (err) {
 			if (this._ac.signal.aborted || stale()) return;
 			this._setView('cards', this._errorBlock(err.message || 'Your cards could not be read right now.', 'Try again', () => this._renderMyCards()), { back });
@@ -1123,32 +1126,46 @@ class GachaUI {
 		}
 		if (stale()) return;
 		this._cardsDirty = false;
-		this._cards = data;
-		this._renderCardsGrid(data);
+		this._cards = this._cardsState(data);
+		this._renderCardsGrid(this._cards);
 	}
 
-	_renderCardsGrid(data) {
+	_fetchCardsPage(owner, { offset = 0, q = this._cardsQ || '', fresh = false } = {}) {
+		const query = { owner, ...(offset ? { offset: String(offset) } : {}), ...(q ? { q } : {}), ...(fresh ? { fresh: '1' } : {}) };
+		return gachaApi('cards', { query, signal: this._ac.signal, timeoutMs: 60_000 });
+	}
+
+	// Everything the cards view shows, accumulated across "Show more" pages.
+	_cardsState(data, prev = null) {
+		return {
+			owner: data.owner,
+			q: data.q || '',
+			cards: [...(prev?.cards || []), ...(data.cards || [])],
+			total: Number(data.total ?? data.count ?? 0),
+			walletTotal: Number(data.walletTotal ?? data.total ?? data.count ?? 0),
+			pageSize: Number(data.pageSize) || 60,
+			nextOffset: data.nextOffset ?? null,
+			partial: !!data.partial,
+			fetchedAt: data.fetchedAt,
+		};
+	}
+
+	_renderCardsGrid(st) {
 		this._owned = null;
 		const back = this._cardsBack();
-		// A card sold this session can take a few seconds to leave the wallet
-		// on-chain; it never reappears in the list meanwhile.
-		const cards = (data.cards || []).filter((c) => !this._sold?.has(c.address));
 		const refresh = el('button', { class: 'ga-btn ga-btn-sm', type: 'button', onclick: () => { this._cardsDirty = true; this._renderMyCards(); } }, 'Refresh');
 		const walletRow = el('div', { class: 'ga-cards-wallet' }, [
 			el('span', { class: 'ga-dot ga-dot-on', 'aria-hidden': 'true' }),
-			el('a', { class: 'ga-mono', href: this.net === 'devnet' ? `https://explorer.solana.com/address/${data.owner}?cluster=devnet` : `https://solscan.io/account/${data.owner}`, target: '_blank', rel: 'noopener' }, shortAddr(data.owner)),
-			data.fetchedAt ? el('span', { class: 'ga-dim ga-small' }, `read ${timeAgo(data.fetchedAt)}`) : null,
+			el('a', { class: 'ga-mono', href: this.net === 'devnet' ? `https://explorer.solana.com/address/${st.owner}?cluster=devnet` : `https://solscan.io/account/${st.owner}`, target: '_blank', rel: 'noopener' }, shortAddr(st.owner)),
+			st.fetchedAt ? el('span', { class: 'ga-dim ga-small' }, `read ${timeAgo(st.fetchedAt)}`) : null,
 			refresh,
 		]);
-		const notices = [
-			data.partial ? el('p', { class: 'ga-note is-warn', role: 'status' }, 'Solana was busy, so some cards may be missing from this list. Refresh to read the wallet again.') : null,
-			data.truncated ? el('p', { class: 'ga-note', role: 'status' }, `This wallet holds more cards than fit here. Showing the first ${cards.length}; the rest are on Collector Crypt.`) : null,
-		];
+		const partial = st.partial ? el('p', { class: 'ga-note is-warn', role: 'status' }, 'Solana was busy, so some cards may be missing from this list. Refresh to read the wallet again.') : null;
 
-		if (!cards.length) {
+		if (!st.walletTotal && !st.q) {
 			this._setView('cards', [
 				walletRow,
-				...notices,
+				partial,
 				el('div', { class: 'ga-state' }, [
 					el('div', { class: 'ga-state-icon ga-state-gold', 'aria-hidden': 'true' }, '◎'),
 					el('p', { class: 'ga-state-title' }, 'No graded cards in this wallet yet'),
@@ -1162,15 +1179,170 @@ class GachaUI {
 			return;
 		}
 
+		const sum = el('div', { class: 'ga-cards-sum' });
+		const results = el('div', { class: 'ga-cards-results' });
+		const search = st.walletTotal > st.pageSize || st.q ? this._cardsSearch(st) : null;
+		this._cardsUi = { sum, results };
+		this._setView('cards', [walletRow, sum, search, partial, results], { back });
+		this._fillCards(st);
+		if (this._cardsScroll) {
+			this.body.scrollTop = this._cardsScroll;
+			this._cardsScroll = 0;
+		}
+	}
+
+	// Stats over what is loaded; the count is always the whole wallet (or every
+	// match), so a long collection never reads as smaller than it is.
+	_renderCardsSum(st, cards) {
+		const all = st.nextOffset == null;
 		const stat = (value, label) => el('div', { class: 'ga-stat' }, [el('span', { class: 'ga-stat-v' }, value), el('span', { class: 'ga-stat-l' }, label)]);
 		const insured = cards.reduce((s, c) => s + (c.insuredValue || 0), 0);
-		const sum = el('div', { class: 'ga-cards-sum' }, [
-			stat(String(cards.length), cards.length === 1 ? 'card' : 'cards'),
-			stat(insured ? usd(insured, { cents: false }) : 'Unlisted', 'insured value'),
-			stat(String(cards.filter((c) => c.buyback?.available).length), 'sellable now'),
-		]);
-		const grid = el('div', { class: 'ga-own-grid' }, cards.map((c) => this._ownedTile(c)));
-		this._setView('cards', [walletRow, sum, ...notices, grid], { back });
+		const n = st.q ? st.total : st.walletTotal;
+		this._cardsUi.sum.replaceChildren(
+			stat(n.toLocaleString(), st.q ? (n === 1 ? 'match' : 'matches') : n === 1 ? 'card' : 'cards'),
+			stat(insured ? usd(insured, { cents: false }) : 'Unlisted', all ? 'insured value' : `insured, ${cards.length.toLocaleString()} shown`),
+			stat(String(cards.filter((c) => c.buyback?.available).length), all ? 'sellable now' : 'sellable, shown'),
+		);
+	}
+
+	_fillCards(st) {
+		// A card sold this session can take a few seconds to leave the wallet
+		// on-chain; it never reappears in the list meanwhile.
+		const cards = st.cards.filter((c) => !this._sold?.has(c.address));
+		this._renderCardsSum(st, cards);
+		const { results } = this._cardsUi;
+		if (!cards.length) {
+			results.replaceChildren(st.q
+				? el('div', { class: 'ga-state' }, [
+					el('div', { class: 'ga-state-icon', 'aria-hidden': 'true' }, '⌕'),
+					el('p', { class: 'ga-state-title' }, `No cards match "${st.q}"`),
+					el('p', {}, 'Search looks at every card in this wallet by name, set number, year and grade. Try fewer words, or clear the search.'),
+					el('div', { class: 'ga-actions' }, [el('button', { class: 'ga-btn ga-primary', type: 'button', onclick: () => this._searchCards('', { clearInput: true }) }, 'Clear search')]),
+				])
+				: el('div', { class: 'ga-state' }, [
+					el('div', { class: 'ga-state-icon ga-state-gold', 'aria-hidden': 'true' }, '◎'),
+					el('p', { class: 'ga-state-title' }, 'Every card on this page was sold back'),
+					el('p', {}, 'The USDC is in your wallet. Refresh to read the rest of the wallet again.'),
+					el('div', { class: 'ga-actions' }, [el('button', { class: 'ga-btn ga-primary', type: 'button', onclick: () => { this._cardsDirty = true; this._renderMyCards(); } }, 'Refresh')]),
+				]));
+			return;
+		}
+		const sellable = cards.filter((c) => c.buyback?.available);
+		const sellGrid = el('div', { class: 'ga-own-grid' }, sellable.map((c) => this._ownedTile(c)));
+		const sellWrap = el('section', { class: 'ga-cards-sell', 'aria-label': 'Cards you can sell back now', hidden: !sellable.length }, [el('h4', { class: 'ga-h4' }, 'Sellable now'), sellGrid]);
+		const allHead = el('h4', { class: 'ga-h4', hidden: !sellable.length }, st.q ? 'Matching cards' : 'All cards');
+		const grid = el('div', { class: 'ga-own-grid' }, cards.filter((c) => !c.buyback?.available).map((c) => this._ownedTile(c)));
+		const more = el('div', { class: 'ga-cards-more' });
+		Object.assign(this._cardsUi, { sellWrap, sellGrid, allHead, grid, more });
+		results.replaceChildren(sellWrap, allHead, grid, more);
+		this._renderCardsMore(st);
+	}
+
+	_renderCardsMore(st, note = null) {
+		const { more } = this._cardsUi;
+		const shown = st.cards.length;
+		if (st.nextOffset == null) {
+			more.replaceChildren(shown > st.pageSize ? el('p', { class: 'ga-dim ga-small' }, `All ${st.total.toLocaleString()} ${st.q ? 'matching cards' : 'cards'} shown.`) : null);
+			return;
+		}
+		const next = Math.min(st.pageSize, st.total - shown);
+		more.replaceChildren(
+			el('button', { class: 'ga-btn ga-more', type: 'button', onclick: (e) => this._loadMoreCards(e.currentTarget) }, `Show ${next} more`),
+			el('p', { class: 'ga-dim ga-small' }, `${shown.toLocaleString()} of ${st.total.toLocaleString()} shown`),
+			note,
+		);
+	}
+
+	async _loadMoreCards(btn) {
+		const st = this._cards;
+		if (!st || st.nextOffset == null || this._cardsMoreBusy) return;
+		this._cardsMoreBusy = true;
+		const hadFocus = document.activeElement === btn;
+		btn.disabled = true;
+		btn.textContent = 'Loading cards…';
+		btn.setAttribute('aria-busy', 'true');
+		const req = this._cardsReq;
+		let data;
+		try {
+			data = await this._fetchCardsPage(st.owner, { offset: st.nextOffset, q: st.q });
+		} catch (err) {
+			this._cardsMoreBusy = false;
+			if (this._ac.signal.aborted || req !== this._cardsReq || this._cards !== st) return;
+			this._renderCardsMore(st, el('p', { class: 'ga-note is-warn', role: 'alert' }, `${err.message || 'More cards could not be read right now.'} Press Show more to try again.`));
+			return;
+		}
+		this._cardsMoreBusy = false;
+		if (req !== this._cardsReq || this._cards !== st || this.view !== 'cards') return;
+		const next = this._cardsState(data, st);
+		this._cards = next;
+		const fresh = (data.cards || []).filter((c) => !this._sold?.has(c.address));
+		const sellable = fresh.filter((c) => c.buyback?.available);
+		const { sellWrap, sellGrid, allHead, grid } = this._cardsUi;
+		sellGrid.append(...sellable.map((c) => this._ownedTile(c)));
+		grid.append(...fresh.filter((c) => !c.buyback?.available).map((c) => this._ownedTile(c)));
+		if (sellGrid.children.length) {
+			sellWrap.hidden = false;
+			allHead.hidden = false;
+		}
+		this._renderCardsSum(next, next.cards.filter((c) => !this._sold?.has(c.address)));
+		this._renderCardsMore(next);
+		if (hadFocus) (this._cardsUi.more.querySelector('button') || grid.lastElementChild)?.focus({ preventScroll: true });
+		this._say(`${fresh.length} more cards loaded. ${next.cards.length} of ${next.total} shown.`);
+	}
+
+	_cardsSearch(st) {
+		const input = el('input', {
+			class: 'ga-search-input',
+			type: 'search',
+			value: st.q,
+			placeholder: `Search ${st.walletTotal.toLocaleString()} cards by name, year or grade`,
+			'aria-label': 'Search your cards',
+			maxlength: '80',
+			autocomplete: 'off',
+			spellcheck: 'false',
+			oninput: () => {
+				clearTimeout(this._searchTimer);
+				this._searchTimer = setTimeout(() => this._searchCards(input.value), 350);
+			},
+			onkeydown: (e) => {
+				if (e.key === 'Enter') {
+					clearTimeout(this._searchTimer);
+					this._searchCards(input.value);
+				}
+			},
+		});
+		this._cardsSearchInput = input;
+		return el('div', { class: 'ga-search', role: 'search' }, [el('span', { class: 'ga-search-icon', 'aria-hidden': 'true' }, '⌕'), input]);
+	}
+
+	async _searchCards(raw, { clearInput = false, force = false } = {}) {
+		const st = this._cards;
+		if (!st || this.view !== 'cards') return;
+		const q = String(raw || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+		if (clearInput && this._cardsSearchInput) this._cardsSearchInput.value = '';
+		if (!force && q.toLowerCase() === st.q.toLowerCase()) return;
+		this._cardsQ = q;
+		const req = {};
+		this._cardsReq = req;
+		const { results } = this._cardsUi;
+		results.setAttribute('aria-busy', 'true');
+		results.replaceChildren(el('div', { class: 'ga-own-grid', 'aria-label': 'Searching your cards' }, Array.from({ length: 8 }, () => el('div', { class: 'ga-own ga-own-skel' }, [
+			el('span', { class: 'ga-skel ga-skel-card' }), el('span', { class: 'ga-skel ga-skel-line' }), el('span', { class: 'ga-skel ga-skel-line short' }),
+		]))));
+		let data;
+		try {
+			data = await this._fetchCardsPage(st.owner, { offset: 0, q });
+		} catch (err) {
+			if (this._ac.signal.aborted || req !== this._cardsReq || this.view !== 'cards') return;
+			results.removeAttribute('aria-busy');
+			results.replaceChildren(this._errorBlock(err.message || 'The search could not run right now.', 'Try again', () => this._searchCards(q, { force: true })));
+			return;
+		}
+		if (req !== this._cardsReq || this.view !== 'cards') return;
+		results.removeAttribute('aria-busy');
+		this._cards = this._cardsState(data);
+		this._fillCards(this._cards);
+		this._say(q ? `${this._cards.total} cards match ${q}` : `Showing all ${this._cards.walletTotal} cards`);
 	}
 
 	_ownedTile(c) {
@@ -1182,7 +1354,10 @@ class GachaUI {
 			type: 'button',
 			style: tier ? { '--ga-tier': tier.color } : {},
 			'aria-label': [c.name || 'Graded card', meta, sell ? `instant buyback ${c.buyback.amountUsdc} USDC` : null].filter(Boolean).join(', '),
-			onclick: () => this._renderOwnedCard(c),
+			onclick: () => {
+				this._cardsScroll = this.body.scrollTop;
+				this._renderOwnedCard(c);
+			},
 		}, [
 			el('span', { class: 'ga-own-art' }, [
 				cardImg(c.image, { width: 320, alt: '', cls: 'ga-img ga-own-img' }),

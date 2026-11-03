@@ -22,6 +22,10 @@ import {
 	mapPool,
 	walletRpc,
 	_resetArweaveGatewayHealth,
+	WALLET_PAGE_SIZE,
+	walletCardIndex,
+	walletCardPage,
+	WalletIndexCache,
 } from '../api/_lib/gacha-wallet.js';
 import { CC_CARD_COLLECTION } from '../api/_lib/collectorcrypt-gacha.js';
 
@@ -366,5 +370,78 @@ describe('walletRpc', () => {
 		const rpc = walletRpc('mainnet');
 		await expect(rpc('getProgramAccounts', ['CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d', { encoding: 'base64' }])).resolves.toEqual([]);
 		expect(hosts).toContain('mainnet.helius-rpc.com');
+	});
+});
+
+// A collector's wallet can hold far more cards than one response renders (a
+// real mainnet wallet held 20,928 on 2026-11-03). Every card must be reachable:
+// the on-chain list is ordered once, paged without gaps or repeats, and
+// searchable by name across the whole wallet, not just the loaded page.
+describe('wallet card paging', () => {
+	const onchain = (n) =>
+		Array.from({ length: n }, (_, i) => ({ address: `addr${String(n - i).padStart(5, '0')}`, name: `Card ${n - i}`, uri: `https://nft.collectorcrypt.com/${i}.json`, standard: 'core' }));
+
+	it('reaches every card of a wallet larger than one page, with no gaps or repeats', () => {
+		const index = walletCardIndex(onchain(WALLET_PAGE_SIZE * 2 + 7));
+		const seen = [];
+		let offset = 0;
+		let pages = 0;
+		while (offset != null) {
+			const page = walletCardPage(index, { offset });
+			expect(page.cards.length).toBeLessThanOrEqual(WALLET_PAGE_SIZE);
+			seen.push(...page.cards.map((c) => c.address));
+			offset = page.nextOffset;
+			pages++;
+		}
+		expect(pages).toBe(3);
+		expect(new Set(seen).size).toBe(WALLET_PAGE_SIZE * 2 + 7);
+	});
+
+	it('orders cards by name with numbers in natural order, independent of RPC order', () => {
+		const a = walletCardIndex(onchain(12));
+		const b = walletCardIndex(onchain(12).reverse());
+		expect(a.map((c) => c.address)).toEqual(b.map((c) => c.address));
+		expect(a.slice(0, 3).map((c) => c.name)).toEqual(['Card 1', 'Card 2', 'Card 3']);
+	});
+
+	it('searches every card in the wallet by name, all words, any case', () => {
+		const cards = [
+			...onchain(200),
+			{ address: 'zz1', name: '1999 Pokemon Base Set Charizard PSA 10', uri: '', standard: 'core' },
+			{ address: 'zz2', name: '2023 Pokemon Charizard ex CGC 9.5', uri: '', standard: 'core' },
+		];
+		const page = walletCardPage(walletCardIndex(cards), { q: '  charizard   PSA ' });
+		expect(page.cards.map((c) => c.address)).toEqual(['zz1']);
+		expect(page.total).toBe(1);
+		expect(page.nextOffset).toBeNull();
+		expect(walletCardPage(walletCardIndex(cards), { q: 'CHARIZARD' }).total).toBe(2);
+	});
+
+	it('clamps a bad offset instead of failing', () => {
+		const index = walletCardIndex(onchain(5));
+		expect(walletCardPage(index, { offset: -3 }).offset).toBe(0);
+		expect(walletCardPage(index, { offset: 'x' }).cards.length).toBe(5);
+		expect(walletCardPage(index, { offset: 500 }).cards).toEqual([]);
+	});
+});
+
+describe('WalletIndexCache', () => {
+	it('serves a scan until it expires, and a partial scan for less time', () => {
+		const cache = new WalletIndexCache({ ttlMs: 60_000, partialTtlMs: 10_000, max: 2 });
+		cache.set('a', { cards: [], partial: false }, 0);
+		cache.set('b', { cards: [], partial: true }, 0);
+		expect(cache.get('a', 59_000)).toBeTruthy();
+		expect(cache.get('b', 9_000)).toBeTruthy();
+		expect(cache.get('b', 11_000)).toBeNull();
+		expect(cache.get('a', 61_000)).toBeNull();
+	});
+
+	it('evicts the oldest wallet past its size cap', () => {
+		const cache = new WalletIndexCache({ ttlMs: 60_000, partialTtlMs: 10_000, max: 2 });
+		cache.set('a', { cards: [], partial: false }, 0);
+		cache.set('b', { cards: [], partial: false }, 1);
+		cache.set('c', { cards: [], partial: false }, 2);
+		expect(cache.get('a', 3)).toBeNull();
+		expect(cache.get('c', 3)).toBeTruthy();
 	});
 });

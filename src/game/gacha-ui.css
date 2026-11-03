@@ -510,3 +510,22 @@ a.ga-pcard:active { transform: none; }
 	.ga-tile, .ga-win, .ga-pcard, .ga-tile-art .ga-img, .ga-own, .ga-own-art { transition: none; }
 	.ga-own-art { transform: none; }
 }
+
+/* My cards: search across the whole wallet, sellable section, paging. */
+.ga-search {
+	position: relative; display: flex; align-items: center; margin-bottom: 12px;
+}
+.ga-search-icon { position: absolute; left: 12px; color: var(--cc-dim); font-size: 15px; pointer-events: none; }
+.ga-search-input {
+	width: 100%; min-height: 40px; padding: 8px 12px 8px 34px; font: inherit; font-size: 14px;
+	color: var(--cc-text); background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+.ga-search-input::placeholder { color: var(--cc-dim); }
+.ga-search-input:hover { border-color: var(--cc-edge-hi); }
+.ga-search-input:focus-visible { outline: 2px solid var(--cc-accent); outline-offset: 1px; border-color: var(--cc-edge-hi); }
+.ga-cards-sell { margin-bottom: 4px; }
+.ga-cards-sell > .ga-h4:first-child, .ga-cards-results > .ga-h4:first-child { margin-top: 4px; }
+.ga-cards-results[aria-busy='true'] { pointer-events: none; }
+.ga-cards-more { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 16px; text-align: center; }
+.ga-cards-more .ga-more[aria-busy='true'] { cursor: progress; }

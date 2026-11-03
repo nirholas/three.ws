@@ -29,7 +29,10 @@ import { ARWEAVE_GATEWAYS } from './ipfs-gateways.js';
 export const CC_LEGACY_CARD_COLLECTION = 'CCryptWBYktukHDQ2vHGtVcmtjXxYzvw8XNVY64YN2Yf';
 
 // Hard caps so one huge wallet cannot turn a page view into thousands of calls.
-export const MAX_WALLET_CARDS = 120;
+// The chain scan lists every card (one filtered read); only a page of them gets
+// its metadata and buyback offer fetched per request.
+export const WALLET_PAGE_SIZE = 60;
+const MAX_QUERY_CHARS = 80;
 const MAX_LEGACY_CANDIDATES = 600;
 const METADATA_JSON_MAX_BYTES = 96 * 1024;
 
@@ -189,7 +192,7 @@ export function walletRpc(net) {
 	const network = net === 'devnet' ? 'devnet' : 'mainnet';
 	if (!walletRpcs.has(network)) {
 		const send = makeRotatingFetch(solanaRpcEndpoints(network));
-		walletRpcs.set(network, makeRpc([`solana-${network}`], { fetchImpl: (_label, init) => send(null, init), timeoutMs: 25_000 }));
+		walletRpcs.set(network, makeRpc([`solana-${network}`], { fetchImpl: (_label, init) => send(null, init), timeoutMs: 18_000 }));
 	}
 	return walletRpcs.get(network);
 }
@@ -255,6 +258,77 @@ export async function findWalletCards(rpc, owner) {
 		all.push(c);
 	}
 	return { cards: all, partial: core.status === 'rejected' || legacy.status === 'rejected' };
+}
+
+// ── paging ──────────────────────────────────────────────────────────────────
+
+const NAME_ORDER = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
+
+/**
+ * The wallet's cards in one stable order (on-chain name, natural numbers, then
+ * address), so paging never skips or repeats a card whatever order the RPC
+ * node returned them in. Each entry carries a lowercase name for search.
+ */
+export function walletCardIndex(cards) {
+	return cards
+		.map((c) => ({ ...c, key: String(c.name || '').toLowerCase() }))
+		.sort((a, b) => NAME_ORDER.compare(a.name || '', b.name || '') || (a.address < b.address ? -1 : a.address > b.address ? 1 : 0));
+}
+
+/** Search words: trimmed, lowercased, capped, empty for no search. */
+export function walletQueryWords(q) {
+	return String(q || '')
+		.slice(0, MAX_QUERY_CHARS)
+		.toLowerCase()
+		.split(/\s+/)
+		.filter(Boolean);
+}
+
+/**
+ * One page of the index, optionally filtered to cards whose name holds every
+ * search word. `nextOffset` is null on the last page.
+ */
+export function walletCardPage(index, { offset = 0, q = '', size = WALLET_PAGE_SIZE } = {}) {
+	const words = walletQueryWords(q);
+	const matches = words.length ? index.filter((c) => words.every((w) => c.key.includes(w))) : index;
+	const start = Math.max(0, Math.min(Number.isFinite(Number(offset)) ? Math.floor(Number(offset)) : 0, matches.length));
+	const cards = matches.slice(start, start + size).map((c) => {
+		const card = { ...c };
+		delete card.key;
+		return card;
+	});
+	const end = start + cards.length;
+	return { cards, offset: start, total: matches.length, nextOffset: end < matches.length ? end : null };
+}
+
+/**
+ * Recent wallet scans, per instance, so "Load more" and search read the list
+ * already scanned instead of re-reading Solana for every page. A partial scan
+ * (one of the two reads failed) is kept briefly so a retry soon reads again.
+ */
+export class WalletIndexCache {
+	constructor({ ttlMs = 60_000, partialTtlMs = 10_000, max = 64 } = {}) {
+		this.ttlMs = ttlMs;
+		this.partialTtlMs = partialTtlMs;
+		this.max = max;
+		this.map = new Map();
+	}
+
+	get(key, now = Date.now()) {
+		const hit = this.map.get(key);
+		if (!hit) return null;
+		if (now - hit.at > (hit.value.partial ? this.partialTtlMs : this.ttlMs)) {
+			this.map.delete(key);
+			return null;
+		}
+		return hit.value;
+	}
+
+	set(key, value, now = Date.now()) {
+		this.map.delete(key);
+		this.map.set(key, { at: now, value });
+		while (this.map.size > this.max) this.map.delete(this.map.keys().next().value);
+	}
 }
 
 // ── off-chain JSON ──────────────────────────────────────────────────────────

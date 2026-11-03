@@ -98,7 +98,7 @@ test.describe('/play accessibility floor', () => {
 			// CSS `color` value (the same reason axe-core's colour-contrast rule
 			// exempts them), so measuring "text colour vs background" for a cell
 			// that is only emoji is a false signal, not a real legibility problem.
-			const EMOJI_ONLY = /^[\p{Extended_Pictographic}\p{Emoji_Presentation}\s‍️]+$/u;
+			const EMOJI_ONLY = /^(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}\s\uFE0F]|\u200D)+$/u;
 			const out = [];
 			for (const el of document.querySelectorAll('#cc-hud *')) {
 				if (el.children.length || !el.textContent.trim()) continue;

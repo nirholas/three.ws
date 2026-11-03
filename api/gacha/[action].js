@@ -47,11 +47,15 @@ import {
 	transactionId,
 } from '../_lib/collectorcrypt-gacha.js';
 import {
-	MAX_WALLET_CARDS,
+	WALLET_PAGE_SIZE,
 	walletRpc,
 	findWalletCards,
 	fetchCardJson,
 	walletCardFromJson,
+	walletCardIndex,
+	walletCardPage,
+	walletQueryWords,
+	WalletIndexCache,
 	mapPool,
 } from '../_lib/gacha-wallet.js';
 
@@ -61,7 +65,11 @@ const RARITIES = new Set(['common', 'uncommon', 'rare', 'epic']);
 
 const WALLET_CACHE_TTL_S = 30;
 const CARD_JSON_TTL_S = 60 * 60 * 24; // card metadata is fixed once minted
-const MAX_BUYBACK_CHECKS = 60;
+const MAX_OFFSET = 1_000_000;
+// The whole request must answer inside maxDuration; a card whose metadata is
+// still loading at this point is listed by name and the page is not cached.
+const CARDS_BUDGET_MS = 24_000;
+const walletIndexes = new WalletIndexCache();
 
 // Machines change slowly (stock counts are already up to 10 s stale upstream),
 // and every pull re-reads the price from here, so a short per-instance memo keeps
@@ -245,11 +253,30 @@ async function cardJson(uri) {
 	return body;
 }
 
+const walletIndexKey = (net, owner) => `${net}:${owner}`;
+
+function cardsOffset(raw) {
+	const n = Math.floor(Number(raw));
+	return Number.isFinite(n) && n > 0 ? Math.min(n, MAX_OFFSET) : 0;
+}
+
+// Resolves to null once the request budget runs out, so one slow gateway can
+// never push the page past the function's time limit.
+function beforeDeadline(promise, deadline) {
+	const ms = deadline - Date.now();
+	if (ms <= 0) return Promise.resolve(null);
+	let timer;
+	return Promise.race([promise, new Promise((resolve) => (timer = setTimeout(resolve, ms, null)))]).finally(() => clearTimeout(timer));
+}
+
 async function cards(req, res, net) {
+	const started = Date.now();
 	const owner = String(req.query.owner || '');
 	if (!isSolanaAddress(owner)) return error(res, 400, 'bad_owner', 'owner must be a Solana wallet address');
 	const fresh = req.query.fresh === '1';
-	const key = `gacha:wallet:${net}:${owner}`;
+	const offset = cardsOffset(req.query.offset);
+	const q = walletQueryWords(req.query.q).join(' ');
+	const key = `gacha:wallet:${net}:${owner}:${offset}:${encodeURIComponent(q)}`;
 	if (!fresh) {
 		const hit = await cacheGet(key).catch(() => null);
 		if (hit) {
@@ -258,43 +285,54 @@ async function cards(req, res, net) {
 		}
 	}
 
-	const rpc = walletRpc(net);
-	let found;
-	try {
-		found = await findWalletCards(rpc, owner);
-	} catch (err) {
-		reportServerError(err, { code: 'gacha_wallet_scan_failed', status: 503, context: { net } });
-		return error(res, 503, 'rpc_unavailable', 'Solana is not answering right now, so your cards could not be read. Try again in a moment.');
+	const indexKey = walletIndexKey(net, owner);
+	let scan = fresh ? null : walletIndexes.get(indexKey);
+	if (!scan) {
+		let found;
+		try {
+			found = await findWalletCards(walletRpc(net), owner);
+		} catch (err) {
+			reportServerError(err, { code: 'gacha_wallet_scan_failed', status: 503, context: { net } });
+			return error(res, 503, 'rpc_unavailable', 'Solana is not answering right now, so your cards could not be read. Try again in a moment.');
+		}
+		scan = { cards: walletCardIndex(found.cards), partial: found.partial, scannedAt: new Date().toISOString() };
+		walletIndexes.set(indexKey, scan);
 	}
 
-	const truncated = found.cards.length > MAX_WALLET_CARDS;
-	const onchain = found.cards.slice(0, MAX_WALLET_CARDS);
-	const rendered = await mapPool(onchain, 12, async (c) => walletCardFromJson(c, await cardJson(c.uri)));
-	const list = rendered.filter(Boolean);
-	const quotes = await mapPool(list.slice(0, MAX_BUYBACK_CHECKS), 6, (c) => quoteFor(net, c.address));
+	const page = walletCardPage(scan.cards, { offset, q });
+	const deadline = started + CARDS_BUDGET_MS;
+	let complete = true;
+	const list = (
+		await mapPool(page.cards, 12, async (c) => {
+			const body = await beforeDeadline(cardJson(c.uri), deadline);
+			if (!body) complete = false;
+			return walletCardFromJson(c, body);
+		})
+	).filter(Boolean);
+	const quotes = await mapPool(list, 8, (c) => beforeDeadline(quoteFor(net, c.address), deadline));
 	list.forEach((c, i) => {
-		c.buyback = i < quotes.length ? quotes[i] : null;
-	});
-	list.sort((a, b) => {
-		const sa = a.buyback?.available ? 1 : 0;
-		const sb = b.buyback?.available ? 1 : 0;
-		if (sa !== sb) return sb - sa;
-		return (b.insuredValue || 0) - (a.insuredValue || 0);
+		c.buyback = quotes[i];
 	});
 
 	const payload = {
 		ok: true,
 		network: net,
 		owner,
+		q,
 		cards: list,
 		count: list.length,
+		offset: page.offset,
+		nextOffset: page.nextOffset,
+		pageSize: WALLET_PAGE_SIZE,
+		total: page.total,
+		walletTotal: scan.cards.length,
 		totalInsured: Math.round(list.reduce((sum, c) => sum + (c.insuredValue || 0), 0) * 100) / 100,
 		sellable: list.filter((c) => c.buyback?.available).length,
-		truncated,
-		partial: found.partial,
-		fetchedAt: new Date().toISOString(),
+		truncated: page.nextOffset != null,
+		partial: scan.partial,
+		fetchedAt: scan.scannedAt,
 	};
-	if (!found.partial) await cacheSet(key, payload, WALLET_CACHE_TTL_S).catch(() => {});
+	if (!scan.partial && complete) await cacheSet(key, payload, WALLET_CACHE_TTL_S).catch(() => {});
 	res.setHeader('cache-control', 'private, max-age=15');
 	return json(res, 200, payload);
 }
@@ -511,15 +549,17 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, [isGet ? 'GET' : 'POST'])) return;
 
 	const ip = clientIp(req);
-	const rl =
-		action === 'cards'
-			? await limits.gachaWalletIp(ip)
-			: isGet || READ_POSTS.has(action)
-				? await limits.gachaReadIp(ip)
-				: await limits.gachaPlayIp(ip);
+	// A wallet read that has to scan Solana takes the tight wallet limit; paging
+	// or searching a wallet this instance scanned moments ago is an ordinary read.
+	const net = normalizeNetwork(String(req.query?.net || ''));
+	const scansChain = action === 'cards' && (req.query?.fresh === '1' || !walletIndexes.get(walletIndexKey(net, String(req.query?.owner || ''))));
+	const rl = scansChain
+		? await limits.gachaWalletIp(ip)
+		: isGet || READ_POSTS.has(action)
+			? await limits.gachaReadIp(ip)
+			: await limits.gachaPlayIp(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
-	const net = normalizeNetwork(String(req.query?.net || ''));
 	try {
 		if (isGet) return await GET_ROUTES[action](req, res, net);
 		const body = await readJson(req, 16_384);
