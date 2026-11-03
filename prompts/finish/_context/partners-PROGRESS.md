@@ -744,3 +744,13 @@ files, 53/53. No code changed. Row 55 in
 [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md) and
 `marketing/growth/submissions/vroid-hub-app.md` now list only the app registration, the two
 env vars and the live verification; the order file stays in place.
+
+## 2026-11-03: order 088 re-checked; only the Discord app registration and live verification remain
+
+- `node scripts/read-service-env.mjs '^DISCORD' --names`: `FAILED: no variable on three-ws-api matches /^DISCORD/`. No Discord application is registered yet.
+- `npm view @discord/embedded-app-sdk version`: `2.5.0`, which still satisfies the `^2.5.0` pin in `package.json`. Nothing to upgrade.
+- `npx vitest run tests/discord-activity-store.test.js tests/discord-activity-auth.test.js`: 2 files, 14 tests passed.
+- Live `POST https://discord.com/api/oauth2/token` with a placeholder client: `{"error": "invalid_client"}` HTTP 400, the documented error path the token endpoint already surfaces.
+- Production migration dry run (`node scripts/apply-migrations.mjs`, no `--apply`): `20261015050000_discord_activity_rooms.sql` is `[applied]`, so step (d) of owner-actions row 52 is done and has been struck from that row.
+
+Remaining, owner-owned: register the Discord application, set `DISCORD_CLIENT_ID`/`DISCORD_CLIENT_SECRET`/`DISCORD_PUBLIC_KEY` with `--update-env-vars`, verify with two accounts in a test server, and submit the Discovery listing (row 52). The order file stays in place.
