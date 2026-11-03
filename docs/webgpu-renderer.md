@@ -4,12 +4,36 @@ three.ws ships on three r187. The classic WebGL2 renderer is still the default e
 
 ## Opting in
 
-- Query string: `/restyle?renderer=webgpu`
-- Element attribute (read by `pagePreference(el)`): `renderer="webgpu"`. The attribute wins over the query string, so an embedder can pin `renderer="webgl"`.
+- Query string: `?renderer=webgpu` on `/restyle`, `/app` and any page that hosts `<agent-3d>`.
+- Element attribute (read by `pagePreference(el)`): `<agent-3d renderer="webgpu">`. The attribute wins over the query string, so an embedder can pin `renderer="webgl"`. It is read once when the element boots: the backend is fixed for the life of the canvas.
 
 Only the exact value `webgpu` opts in. The factory is [src/renderer-factory.js](../src/renderer-factory.js): `createAutoRenderer(options, { prefer, fallback })` returns `{ renderer, backend, reason }` and stamps `data-renderer` on the canvas. It falls back to the guarded WebGL2 path when `navigator.gpu` is missing, `requestAdapter()` resolves null or throws, `WebGPURenderer.init()` fails, or the node renderer lands on its own GL backend. Callers branch on `backend`, never on what was requested.
 
 ## Where it is wired
+
+### Main viewer and `<agent-3d>`
+
+`Viewer` keeps its synchronous constructor for the default WebGL2 path. WebGPU needs an async adapter and device, so the opt-in goes through `Viewer.create(el, options)` (or `Viewer.prepareRenderer(options)` followed by the constructor, which is what `/app` does so its sync `createViewer()` stays intact). `prepareRenderer` resolves to `null`, meaning "build WebGL2", whenever WebGPU was not requested, has no adapter, its modules fail to load, or the factory fell back. `<agent-3d>` always boots through `Viewer.create` with `rendererPreference: pagePreference(this)`.
+
+On the WebGPU backend the viewer swaps three pieces and keeps everything else (loading, animation, framing, lights, annotations, the editor) on one code path:
+
+| Piece | WebGL2 | WebGPU |
+| --- | --- | --- |
+| Cinematic post chain | `CinematicPipeline`, [src/viewer/cinematic.js](../src/viewer/cinematic.js) (postprocessing EffectComposer, N8AO) | `CinematicPipelineTSL`, [src/viewer/cinematic-tsl.js](../src/viewer/cinematic-tsl.js) (three `RenderPipeline`, GTAO, DoF and Bloom nodes) |
+| Environment prefilter, light-probe bake | `PMREMGenerator`, `WebGLCubeRenderTarget` | the `three/webgpu` twins |
+| Materials the node renderer cannot draw | unchanged | [src/render/webgpu-material-compat.js](../src/render/webgpu-material-compat.js) |
+
+Both pipelines read the same presets ([src/viewer/cinematic-presets.js](../src/viewer/cinematic-presets.js)) and the Cinematic FX panel drives either one. The per-pixel grade (hue and saturation, brightness and contrast, radial chromatic aberration, overlay film grain, vignette) is the exact formula of the postprocessing shaders the WebGL chain runs; `tests/cinematic-tsl.test.js` pins the CPU-side mappings against the real effects. Bloom, depth of field and ambient occlusion are three's own TSL nodes with the preset values mapped onto their units, so the default Studio look matches and the heavier looks match in character. Effects that own render targets are only in the node graph while the active look uses them; switching them rebuilds the graph once, and sliders only write uniforms.
+
+Material compatibility: WebGPURenderer converts every built-in material by itself. Hand-written GLSL `ShaderMaterial`s it cannot run. The one the viewer meets is three-vrm's `MToonMaterial`; the node port that three-vrm 3.5.x ships (`@pixiv/three-vrm/nodes`) imports TSL names three r187 removed, so on WebGPU MToon surfaces become `MeshToonMaterial` with the same colour, textures, emission and alpha, and the MToon outline pass is hidden. When three-vrm publishes a node build that loads on our three, swap the conversion for `MToonNodeMaterial`. Any other `ShaderMaterial` becomes a `MeshStandardMaterial` carrying its map and colour.
+
+Lifecycle and the features that stay WebGL:
+
+- Device loss: WebGPU has no context restore. A lost device swaps in a fresh canvas on WebGL2 (a canvas that ever held a WebGPU context can never get WebGL), rebuilds environments and the cinematic chain, rebinds controls, and fires `viewer-canvas-replaced` on the viewer's host element with `{ previous, canvas, backend }`. Scene Studio's transform gizmo and Magic Brush listen for it and move their pointer listeners.
+- AR: WebXR needs a WebGL XR binding, so on WebGPU the viewer offers only the platform viewers (Scene Viewer, Quick Look). Pin `renderer="webgl"` on pages that need in-page WebXR.
+- Photoreal stills (`renderPhotoreal`): three-gpu-pathtracer is WebGL2-only, so on WebGPU the path tracer runs on its own offscreen WebGL2 renderer sized to the canvas and is disposed when the still is done.
+
+### Restyle Studio
 
 [Restyle Studio](restyle.md) (`/restyle`) uses the factory. Its view-only Fresnel rim light lives in [src/restyle-effects.js](../src/restyle-effects.js):
 
@@ -22,9 +46,9 @@ A renderer badge in the Restyle toolbar shows the backend in use. The Rim slider
 
 ## Not ported, and why
 
-- The main viewer and `<agent-3d>` still use `CinematicPipeline` (EffectComposer), which is WebGL-only. The factory and the `renderer` attribute parser are ready, but the viewer is not switched until its post-processing moves to TSL.
-- `three/examples` `GaussianSplat` is WebGPU-only. The viewer splat stage keeps Spark, which also runs on WebGL2.
-- `three-mesh-bvh/webgpu` (pinned 0.9.17) accelerates GPU-side queries. The viewer's picking is CPU raycasting, so it does not apply.
+- `three/examples` `GaussianSplat` is WebGPU-only. The viewer splat stage keeps Spark, which also runs on WebGL2 and so serves both backends from one code path.
+- `three-mesh-bvh/webgpu` (pinned 0.9.17) accelerates GPU-side (compute) queries. The viewer's picking is CPU raycasting, which `three-mesh-bvh`'s CPU build already accelerates on both backends, so it does not apply.
+- Path-traced photoreal stills stay on WebGL2 (see above) until three-gpu-pathtracer has a WebGPU backend.
 
 ## Measuring
 

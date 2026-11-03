@@ -3,6 +3,7 @@ import WebGL from 'three/addons/capabilities/WebGL.js';
 import { initWalletButton } from './wallet.js';
 import { eagerConnectWallet } from './erc8004/agent-registry.js';
 import { Viewer } from './viewer.js';
+import { BACKEND_WEBGPU, pagePreference } from './renderer-factory.js';
 import { Editor } from './editor/index.js';
 import { SimpleDropzone } from 'simple-dropzone';
 import { Validator } from './validator.js';
@@ -1102,6 +1103,7 @@ class App {
 
 		// Mount the canvas up-front so the loading/error overlay has a parent
 		// and the page layout never collapses around an empty container.
+		if (!this.viewer) await this._prepareRenderer();
 		if (!this.viewer && !this.createViewer()) return; // WebGL fallback shown
 
 		// Surface a loading state immediately — the identity name lookup
@@ -1377,7 +1379,9 @@ class App {
 		this.view(resolved, '', new Map());
 
 		// Apply post-create brand bits once viewer exists.
-		queueMicrotask(() => this._applyWidgetConfig(cfg));
+		// On the opt-in WebGPU path the viewer exists only once the renderer
+		// resolved; _pendingView is undefined otherwise (same microtask timing).
+		Promise.resolve(this._pendingView).then(() => this._applyWidgetConfig(cfg));
 
 		// Type-specific mount (runs after viewer + content come up).
 		queueMicrotask(() => this._mountWidgetByType(widget.type, cfg, widget.id));
@@ -1752,8 +1756,15 @@ class App {
 		// Viewer constructor throw "Error creating WebGL context". Catch it and
 		// show a designed fallback instead of letting it bubble as an unhandled
 		// rejection that leaves the stage blank.
+		// A WebGPU renderer acquired by _prepareRenderer() is handed over once;
+		// later rebuilds (and every page that did not opt in) run plain WebGL2.
+		const prebuilt = this._prebuiltRenderer || null;
+		this._prebuiltRenderer = null;
 		try {
-			this.viewer = new Viewer(this.viewerEl, this.options);
+			this.viewer = new Viewer(
+				this.viewerEl,
+				prebuilt ? { ...this.options, _prebuiltRenderer: prebuilt } : this.options,
+			);
 		} catch (err) {
 			log.error('[3d-agent] WebGL viewer init failed:', err);
 			this.viewer = null;
@@ -1769,6 +1780,27 @@ class App {
 		}
 		window.VIEWER.viewer = this.viewer;
 		return this.viewer;
+	}
+
+	/**
+	 * Opt-in WebGPU (`?renderer=webgpu`): the renderer must be acquired
+	 * asynchronously before the first Viewer is built. Resolves once, to the
+	 * prebuilt hand-off or null (not requested, or no WebGPU: WebGL2 then).
+	 * Returns null synchronously when there is nothing to wait for, so the
+	 * default path keeps building the viewer in the same tick.
+	 */
+	_prepareRenderer() {
+		if (this._rendererPrepared) return null;
+		this._rendererPrepared = true;
+		if (pagePreference(null) !== BACKEND_WEBGPU) return null;
+		return Viewer.prepareRenderer({ ...this.options, rendererPreference: BACKEND_WEBGPU })
+			.catch((err) => {
+				log.warn('[3d-agent] WebGPU renderer unavailable, using WebGL:', err?.message || err);
+				return null;
+			})
+			.then((prebuilt) => {
+				this._prebuiltRenderer = prebuilt;
+			});
 	}
 
 	// Cheap, cached probe for WebGL support so we can show the fallback BEFORE
@@ -1885,6 +1917,13 @@ class App {
 	 * @param  {Map<string, File>} fileMap
 	 */
 	view(rootFile, rootPath, fileMap) {
+		if (!this.viewer) {
+			const preparing = this._prepareRenderer();
+			if (preparing) {
+				this._pendingView = preparing.then(() => this.view(rootFile, rootPath, fileMap));
+				return this._pendingView;
+			}
+		}
 		// Bail to the designed fallback before touching the viewer on devices with
 		// no WebGL — otherwise the constructor throws and the stage stays blank.
 		if (!this.viewer && !this._webglAvailable()) {

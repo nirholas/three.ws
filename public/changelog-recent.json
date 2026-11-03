@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-03T18:23:30.297Z",
+	"generated_at": "2026-11-03T19:02:58.700Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4294,
+	"total": 4295,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -267,6 +267,17 @@
 			"tags": [
 				"fix",
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-03",
+			"type": "update",
+			"title": "The 3D viewer and <agent-3d> can now render on WebGPU",
+			"summary": "Add ?renderer=webgpu to /app, or renderer=\"webgpu\" to an <agent-3d> embed, to draw the avatar on WebGPU with the full cinematic look (ambient occlusion, depth of field, bloom, color grade, grain, vignette) rebuilt on three's node pipeline. Every preset and Cinematic FX slider works the same on both paths. Without a WebGPU adapter, or if the GPU is lost mid-session, the viewer drops to WebGL2 on its own and keeps the scene. VRM toon materials are converted so VRM avatars render on WebGPU too. The default stays WebGL2. Preset sliders in the Cinematic FX panel also stay in sync after switching presets.",
+			"link": "/docs/webgpu-renderer",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1538,16 +1549,6 @@
 			"title": "Why three.ws",
 			"summary": "Why build an agent on three.ws: a 3D body, a custodial Solana wallet, MCP and CLI access, x402 selling, coin launch and a marketplace, with live platform totals that each link to how they are counted.",
 			"link": "/why-three-ws",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
-			"title": "X Video Downloader",
-			"summary": "Paste an X post link and download its video or GIF in every quality, with the post's likes, replies, reposts and views. Free, no account, no API key.",
-			"link": "/x-video",
 			"tags": [
 				"launch"
 			]

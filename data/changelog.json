@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-03",
+			"title": "The 3D viewer and <agent-3d> can now render on WebGPU",
+			"link": "/docs/webgpu-renderer",
+			"summary": "Add ?renderer=webgpu to /app, or renderer=\"webgpu\" to an <agent-3d> embed, to draw the avatar on WebGPU with the full cinematic look (ambient occlusion, depth of field, bloom, color grade, grain, vignette) rebuilt on three's node pipeline. Every preset and Cinematic FX slider works the same on both paths. Without a WebGPU adapter, or if the GPU is lost mid-session, the viewer drops to WebGL2 on its own and keeps the scene. VRM toon materials are converted so VRM avatars render on WebGPU too. The default stays WebGL2. Preset sliders in the Cinematic FX panel also stay in sync after switching presets.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-03",
 			"title": "See, edit and delete everything your agents have learned about you",
 			"link": "/settings/memory",
 			"summary": "A new Agent memory page lists the profile your agents keep about you, every memory they saved and the skills they drafted from experience. Edit or delete any line with an undo, turn learning off with one switch, set how often agents review what to keep, and review drafted skills with a diff, version history and rollback. A marketplace transfer now also deletes an agent's drafted skills and session summaries.",

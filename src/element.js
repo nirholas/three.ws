@@ -3,6 +3,7 @@
 
 import { Box3, Color, Vector3 } from 'three';
 import { Viewer } from './viewer.js';
+import { pagePreference } from './renderer-factory.js';
 import { createVariantController } from './khr-variants.js';
 import { buildBestEffortArUsdz } from './usdz-animated.js';
 import { Runtime, skillAccessFromAgentDetail } from './runtime/index.js';
@@ -1911,12 +1912,16 @@ class Agent3DElement extends HTMLElement {
 			// The stage stays hidden until the body holds its first pose; see
 			// _startInitialPlayback.
 			this._stageEl.classList.add('is-settling');
-			const viewer = new Viewer(this._stageEl, {
+			// `renderer="webgpu"` (or the page's ?renderer=webgpu) opts this
+			// element into WebGPU; Viewer.create lands on WebGL2 whenever WebGPU
+			// is missing. Read once at boot: the backend is fixed for the canvas.
+			const viewer = await Viewer.create(this._stageEl, {
 				// Never mount the editor's debug GUI or clip panel inside the
 				// element: their styles live in the site stylesheet, not here.
 				embed: true,
 				kiosk: !this._isChatMode(),
 				framing: this.getAttribute('framing') === 'portrait' ? 'portrait' : 'full',
+				rendererPreference: pagePreference(this),
 			});
 			this._viewer = viewer;
 			viewer._afterAnimateHooks = viewer._afterAnimateHooks || [];

@@ -76,6 +76,7 @@ name-plate) is **opt-in**:
 | `exposure`        | number                     | 1.0         | tone-map exposure                 |
 | `background`      | CSS color or `transparent` | transparent | canvas clear color                |
 | `skybox`          | URL                        | none        | HDRI as visible sky               |
+| `renderer`        | `webgpu` \| `webgl`        | `webgl`     | `webgpu` opts into WebGPURenderer with the TSL cinematic chain; falls back to WebGL2 when WebGPU is unavailable. Wins over the page's `?renderer=` query. Read once at boot. On WebGPU, in-page WebXR is off (Scene Viewer and Quick Look still work). See [docs/webgpu-renderer.md](../docs/webgpu-renderer.md) |
 
 ### Brain
 

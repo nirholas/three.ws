@@ -488,6 +488,10 @@ export class Viewer {
 		// into a richer look. Screenshot capture bypasses this — see screenshot.js.
 		this.state.cinematicPreset = options.cinematicPreset ?? DEFAULT_CINEMATIC_PRESET;
 		this._buildCinematic(initialWidth, initialHeight);
+		// scripts/viewer-renderer-bench.mjs reads the live viewer through this.
+		if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('bench')) {
+			import('./viewer/bench-hook.js').then(({ exposeViewerBench }) => exposeViewerBench(this));
+		}
 
 		this.cameraCtrl = null;
 		this.cameraFolder = null;

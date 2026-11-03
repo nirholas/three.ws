@@ -207,6 +207,14 @@
 			<description>Agents that require a minimum $THREE balance for a paid skill used to let every caller through whenever the Solana RPC was unhealthy. The balance check now retries once and, if the balance still cannot be read, answers 503 and asks the caller to retry. A paid skill call in that state does not consume the payment. The public balance endpoint answers 503 rpc_unavailable instead of a false eligible: true.</description>
 		</item>
 		<item>
+			<title>The 3D viewer and &lt;agent-3d&gt; can now render on WebGPU</title>
+			<link>https://three.ws/docs/webgpu-renderer</link>
+			<guid isPermaLink="false">2026-11-03:The 3D viewer and &lt;agent-3d&gt; can now render on WebGPU</guid>
+			<pubDate>Tue, 03 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Add ?renderer=webgpu to /app, or renderer=&quot;webgpu&quot; to an &lt;agent-3d&gt; embed, to draw the avatar on WebGPU with the full cinematic look (ambient occlusion, depth of field, bloom, color grade, grain, vignette) rebuilt on three's node pipeline. Every preset and Cinematic FX slider works the same on both paths. Without a WebGPU adapter, or if the GPU is lost mid-session, the viewer drops to WebGL2 on its own and keeps the scene. VRM toon materials are converted so VRM avatars render on WebGPU too. The default stays WebGL2. Preset sliders in the Cinematic FX panel also stay in sync after switching presets.</description>
+		</item>
+		<item>
 			<title>The A3S streaming avatar no longer turns into jagged shards as it refines</title>
 			<link>https://three.ws/stream</link>
 			<guid isPermaLink="false">2026-11-03:The A3S streaming avatar no longer turns into jagged shards as it refines</guid>

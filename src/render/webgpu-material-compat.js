@@ -22,16 +22,16 @@ export function needsNodeConversion(material) {
 
 const SHARED_KEYS = ['name', 'side', 'transparent', 'opacity', 'alphaTest', 'depthWrite', 'depthTest', 'visible'];
 
-function copyShared(src, dst) {
+function copyShared(src, dst, kind) {
 	for (const key of SHARED_KEYS) {
 		if (src[key] !== undefined) dst[key] = src[key];
 	}
-	dst.userData = { ...src.userData, convertedFrom: src.type };
+	dst.userData = { ...src.userData, convertedFrom: kind };
 }
 
 function toToon(mtoon) {
 	const dst = new MeshToonMaterial();
-	copyShared(mtoon, dst);
+	copyShared(mtoon, dst, 'MToonMaterial');
 	if (mtoon.color?.isColor) dst.color.copy(mtoon.color);
 	if (mtoon.map) dst.map = mtoon.map;
 	if (mtoon.normalMap) {
@@ -46,7 +46,7 @@ function toToon(mtoon) {
 
 function toStandard(shader) {
 	const dst = new MeshStandardMaterial();
-	copyShared(shader, dst);
+	copyShared(shader, dst, shader.type);
 	const u = shader.uniforms || {};
 	const map = shader.map || u.map?.value || u.diffuseMap?.value || null;
 	if (map?.isTexture) dst.map = map;
