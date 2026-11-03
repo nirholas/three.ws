@@ -586,14 +586,6 @@ async function evaluateExits({ equip, agent, nowMs, killed }) {
 				SET last_value_lamports = ${curValue}, peak_value_lamports = ${peak}, last_quoted_at = now()
 				WHERE id = ${pos.id}
 			`.catch(() => {});
-			if (result.status === 'executed' && pnl != null && pnl > 0) {
-				recordFromActionLog({
-					agentId: agent.id, userId: agent.ownerId, signal: 'profitable_trade', sourceRef: `trade:${pos.id}`,
-					goal: `Open and close a profitable ${equip.strategy_name || 'strategy'} position`, pnlLamports: pnl,
-					since: pos.opened_at ? new Date(pos.opened_at).toISOString() : undefined,
-					outcome: { position_id: pos.id, pnl_pct: pnlPct != null ? Math.round(pnlPct * 10) / 10 : null },
-				});
-			}
 			pos.peak_value_lamports = peak;
 		}
 
@@ -639,6 +631,14 @@ async function evaluateExits({ equip, agent, nowMs, killed }) {
 				    closed_at = now()
 				WHERE id = ${pos.id}
 			`.catch(() => {});
+			if (result.status === 'executed' && pnl != null && pnl > 0) {
+				recordFromActionLog({
+					agentId: agent.id, userId: agent.ownerId, signal: 'profitable_trade', sourceRef: `trade:${pos.id}`,
+					goal: `Open and close a profitable ${equip.strategy_name || 'strategy'} position`, pnlLamports: pnl,
+					since: pos.opened_at ? new Date(pos.opened_at).toISOString() : undefined,
+					outcome: { position_id: pos.id, pnl_pct: pnlPct != null ? Math.round(pnlPct * 10) / 10 : null },
+				});
+			}
 		} else {
 			// Exit failed to land — drop back to 'open' so the next sweep retries.
 			await sql`UPDATE agent_strategy_positions SET status = 'open', error = ${result.code || 'exit_failed'} WHERE id = ${pos.id} AND status = 'closing'`.catch(() => {});
