@@ -132,6 +132,18 @@ body.scene-studio {
 #studio-app .TabbedPanel .Tabs {
 	background: transparent;
 	border-bottom: 1px solid var(--stroke);
+	/* The vendor lays the tabs out as inline boxes under white-space: pre, so
+	   the whitespace between them took width too: five tabs plus four gaps came
+	   to 366px in the 349px default sidebar, the strip scrolled, and the first
+	   tab read "CENE". A flex row drops the gaps and the tabs share the width;
+	   they never shrink, so a sidebar dragged narrower still scrolls. */
+	display: flex;
+}
+
+#studio-app .TabbedPanel .Tabs .Tab {
+	flex: 1 0 auto;
+	padding: 10px 6px;
+	text-align: center;
 }
 
 #studio-app .TabbedPanel .Tab {
@@ -288,6 +300,50 @@ body.scene-studio {
  * height; the card is click-through everywhere except its own body. */
 #studio-app #toolbar {
 	z-index: 6;
+}
+
+/* The vendored touch floor (public/mobile.css) makes the toolbar buttons 44px,
+ * but the vendor pins #toolbar at height: 32px with overflow: hidden, which cut
+ * the bottom 12px off every button and the part of each target you could tap.
+ * Letting the strip size to its buttons keeps the whole target reachable. */
+@media (hover: none) and (pointer: coarse) {
+	#studio-app #toolbar {
+		height: auto;
+	}
+}
+
+/* --- Viewport camera / shading selects -------------------------------------- */
+
+/* Viewport.Controls.js pins the camera and shading selects to the viewport's
+ * top-right corner (inline right: 10px; top: 10px), which is exactly where the
+ * quick-action bar (actions.js) sits, so Import / Export / Share covered both
+ * selects at every width and only their first letters showed through. The
+ * top-left corner of the 3D view is empty at every breakpoint, so the selects
+ * move there. !important is needed only because the vendor writes the
+ * position as inline style. */
+#studio-app #viewport > .Panel:has(> select) {
+	right: auto !important;
+	left: 10px !important;
+}
+
+@media (max-width: 600px) {
+	/* Below 600px the action bar spans most of the width, so the selects drop
+	   under it (bar: 44px from the app top, i.e. 8px into the viewport, and up
+	   to 44px tall at the touch floor). They stay left of the 128px axis
+	   gizmo that the vendor parks top-right. */
+	#studio-app #viewport > .Panel:has(> select) {
+		top: 60px !important;
+	}
+
+	/* While the first-run card is up the scene holds nothing to view through
+	   another camera, shade or transform, and on a phone the 3D view is too
+	   short to fit the card beside those controls: the transform toolbar sat
+	   on the card's "Generate one in Forge" button. The controls return the
+	   moment the scene has content (empty-state.js hides the card then). */
+	#studio-app:has(> .tws-se:not([hidden])) #toolbar,
+	#studio-app:has(> .tws-se:not([hidden])) #viewport > .Panel:has(> select) {
+		display: none;
+	}
 }
 
 /* --- Listbox / dialogs -------------------------------------------------------- */

@@ -141,7 +141,8 @@ const CSS = `
       put it straight under the quick-action bar (actions.js pins that at
       top: 44px). At 320px the two boxes genuinely overlapped and the bar sat on
       top of the card's eyebrow and title. Starting the region below the bar
-      instead of centring through it keeps both readable.
+      instead of centring through it keeps both readable. 96px clears the bar
+      at its tallest, when the touch floor makes its buttons 44px.
    2. A phone-height viewport leaves this region shorter than the card: at
       320x568 the vendored layout gives the 3D view 143px and a 320px sidebar
       dock. Capping the card at the region height and letting it scroll inside
@@ -151,7 +152,7 @@ const CSS = `
 @media (max-width: 600px) {
 	.tws-se {
 		right: 0;
-		top: 76px;
+		top: 96px;
 		bottom: 320px;
 		align-items: flex-start;
 		padding: 0 12px 12px;
