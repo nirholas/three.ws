@@ -745,6 +745,26 @@ files, 53/53. No code changed. Row 55 in
 `marketing/growth/submissions/vroid-hub-app.md` now list only the app registration, the two
 env vars and the live verification; the order file stays in place.
 
+## 2026-11-03: order 095-partners-12 (Home Assistant HACS) re-check
+
+- **Step 0**: `gh repo view nirholas/three-ws-home-assistant` still returns "Could not resolve to a
+  Repository", so the standalone repository has not been created. `hacs.json` (min HA `2024.12.0`)
+  and `manifest.json` (`1.0.1`) are unchanged, and so are the four local brand PNGs.
+- **Re-verified**: `node scripts/export-hacs-repo.mjs` rebuilt `dist/hacs-export/`. The current
+  `ghcr.io/home-assistant/hassfest:latest` image (digest `sha256:d4a30239f4af...`) run against it:
+  `Integrations: 1, Invalid integrations: 0`.
+- **Drift fixed in the submission packet**: (1) the `hacs/default` `integration` file has grown to
+  4,563 entries, so the insertion point is now between `NirBY/ha-mashov` and `Nischay-Pro/ha-zebra`
+  (checked by inserting the entry and confirming the list still equals its case-insensitive sort,
+  which is what the PR's `lint sorted` check enforces). (2) The `home-assistant/brands` README now
+  labels `custom_integrations/` legacy and says custom integrations "ship their images in a `brand`
+  folder of their own nowadays, instead of adding them to this repository". The HACS brands check
+  reads the local `brand/icon.png` first, so the brands PR has been removed from the owner steps.
+  Owner-actions row 58 now covers one repository, one release and one PR.
+- **Remaining (owner, order 938)**: create the repository from `dist/hacs-export/`, set its
+  description, topics and issues, confirm both workflows pass, cut `v1.0.1`, then open the
+  `hacs/default` PR. The order file stays open until that lands.
+
 ## 2026-11-03: order 088 re-checked; only the Discord app registration and live verification remain
 
 - `node scripts/read-service-env.mjs '^DISCORD' --names`: `FAILED: no variable on three-ws-api matches /^DISCORD/`. No Discord application is registered yet.
