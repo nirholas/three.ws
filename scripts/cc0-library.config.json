@@ -8,7 +8,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-attack-ground-pound",
@@ -19,7 +19,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-backflip",
@@ -30,7 +30,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-bow",
@@ -41,7 +41,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-bow-pull-back",
@@ -52,7 +52,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-bow-pull-hold",
@@ -63,7 +63,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-bow-release",
@@ -74,7 +74,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-climb-ladder",
@@ -85,7 +85,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-climb-wall",
@@ -96,7 +96,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-confused",
@@ -107,7 +107,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-consume-item",
@@ -118,7 +118,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-crawl",
@@ -129,7 +129,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-crawl-rm",
@@ -140,7 +140,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dance-body-roll",
@@ -151,7 +151,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dance-charleston",
@@ -162,7 +162,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dance-reach-hip",
@@ -173,7 +173,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-death-a",
@@ -184,7 +184,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-death-b",
@@ -195,7 +195,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-death-c",
@@ -206,7 +206,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-defend",
@@ -217,7 +217,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dizzy",
@@ -228,7 +228,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dodge-back",
@@ -239,7 +239,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dodge-back-rm",
@@ -250,7 +250,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dodge-left",
@@ -261,7 +261,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dodge-left-rm",
@@ -272,7 +272,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dodge-right",
@@ -283,7 +283,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-dodge-right-rm",
@@ -294,7 +294,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-fighting-idle",
@@ -305,7 +305,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-fighting-left-jab",
@@ -316,7 +316,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-fighting-right-jab",
@@ -327,7 +327,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-flying-forward",
@@ -338,7 +338,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-flying-forward-super",
@@ -349,7 +349,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-glide",
@@ -360,7 +360,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-greeting",
@@ -371,7 +371,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-head-nod",
@@ -382,7 +382,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-idle-hurt",
@@ -393,7 +393,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-idle-listening",
@@ -404,7 +404,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-idle-subtle",
@@ -415,7 +415,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-jump-2",
@@ -426,7 +426,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-jump-2-rm",
@@ -437,7 +437,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-jumping-jacks",
@@ -448,7 +448,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-kneeling-tired",
@@ -459,7 +459,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-ladder-idle",
@@ -470,7 +470,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-land-three-point",
@@ -481,7 +481,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-ledge-hang",
@@ -492,7 +492,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-levitate-entrance",
@@ -503,7 +503,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-levitate-idle",
@@ -514,7 +514,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-meditate",
@@ -525,7 +525,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-pipe-climb",
@@ -536,7 +536,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-power-up",
@@ -547,7 +547,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-pushup",
@@ -558,7 +558,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-reject",
@@ -569,7 +569,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-run-anime",
@@ -580,7 +580,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-run-female",
@@ -591,7 +591,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-run-jump",
@@ -602,7 +602,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-run-stealth",
@@ -613,7 +613,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-shivering",
@@ -624,7 +624,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-sleeping",
@@ -635,7 +635,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-strafe-left",
@@ -646,7 +646,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-strafe-right",
@@ -657,7 +657,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-sword-attack-air-vertical",
@@ -668,7 +668,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-throw-object",
@@ -679,7 +679,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-tired-hunched",
@@ -690,7 +690,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-two-hand-blast",
@@ -701,7 +701,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-victory",
@@ -712,7 +712,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-victory-fist-pump",
@@ -723,7 +723,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-walk-backwards",
@@ -734,7 +734,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-walk-female",
@@ -745,7 +745,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-walk-large",
@@ -756,7 +756,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-walk-stealth",
@@ -767,7 +767,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-zombie-idle-crouch",
@@ -778,7 +778,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-zombie-rise",
@@ -789,7 +789,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-zombie-walk-2",
@@ -800,7 +800,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-addon-zombie-yell",
@@ -811,7 +811,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-addon-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-chest-open",
@@ -822,7 +822,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-chop-tree",
@@ -833,7 +833,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-climbup-1m-rm",
@@ -844,7 +844,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-consume",
@@ -855,7 +855,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-crouch-idle",
@@ -866,7 +866,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-crouch-walk",
@@ -877,7 +877,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-dance-simple",
@@ -888,7 +888,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-death-d",
@@ -899,7 +899,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-driving",
@@ -910,7 +910,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-farm-harvest",
@@ -921,7 +921,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-farm-plantseed",
@@ -932,7 +932,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-farm-watering",
@@ -943,7 +943,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-fixing-kneeling",
@@ -954,7 +954,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-hit-chest",
@@ -965,7 +965,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-hit-head",
@@ -976,7 +976,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-hit-knockback",
@@ -987,7 +987,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-hit-knockback-rm",
@@ -998,7 +998,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-a",
@@ -1009,7 +1009,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-foldarms",
@@ -1020,7 +1020,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-lantern",
@@ -1031,7 +1031,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-rail",
@@ -1042,7 +1042,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-rail-call",
@@ -1053,7 +1053,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-shakeoff",
@@ -1064,7 +1064,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-shield",
@@ -1075,7 +1075,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-shield-break",
@@ -1086,7 +1086,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-sword",
@@ -1097,7 +1097,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-talking",
@@ -1108,7 +1108,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-talkingphone",
@@ -1119,7 +1119,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-idle-torch",
@@ -1130,7 +1130,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-interact",
@@ -1141,7 +1141,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-jog",
@@ -1152,7 +1152,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-jump-air",
@@ -1163,7 +1163,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-jump-land",
@@ -1174,7 +1174,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-jump-start",
@@ -1185,7 +1185,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-laytoidle",
@@ -1196,7 +1196,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-melee-hook",
@@ -1207,7 +1207,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-melee-hook-rec",
@@ -1218,7 +1218,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-ninjajump-idle",
@@ -1229,7 +1229,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-ninjajump-land",
@@ -1240,7 +1240,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-ninjajump-start",
@@ -1251,7 +1251,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-overhandthrow",
@@ -1262,7 +1262,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-pickup-table",
@@ -1273,7 +1273,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-pistol-aim-down",
@@ -1284,7 +1284,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-pistol-aim-neutral",
@@ -1295,7 +1295,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-pistol-aim-up",
@@ -1306,7 +1306,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-pistol-idle",
@@ -1317,7 +1317,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-pistol-reload",
@@ -1328,7 +1328,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-pistol-shoot",
@@ -1339,7 +1339,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-punch-cross",
@@ -1350,7 +1350,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-punch-jab",
@@ -1361,7 +1361,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-push",
@@ -1372,7 +1372,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-roll",
@@ -1383,7 +1383,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-roll-rm",
@@ -1394,7 +1394,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-shield-dash-rm",
@@ -1405,7 +1405,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-shield-oneshot",
@@ -1416,7 +1416,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sitting-enter",
@@ -1427,7 +1427,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sitting-exit",
@@ -1438,7 +1438,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sitting-idle",
@@ -1449,7 +1449,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sitting-talking",
@@ -1460,7 +1460,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-slide",
@@ -1471,7 +1471,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-slide-exit",
@@ -1482,7 +1482,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-slide-start",
@@ -1493,7 +1493,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-spell-simple-enter",
@@ -1504,7 +1504,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-spell-simple-exit",
@@ -1515,7 +1515,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-spell-simple-idle",
@@ -1526,7 +1526,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-spell-simple-shoot",
@@ -1537,7 +1537,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sprint",
@@ -1548,7 +1548,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-swim-fwd",
@@ -1559,7 +1559,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-swim-idle",
@@ -1570,7 +1570,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-attack",
@@ -1581,7 +1581,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-attack-rm",
@@ -1592,7 +1592,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-block",
@@ -1603,7 +1603,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-dash-rm",
@@ -1614,7 +1614,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-regular-a",
@@ -1625,7 +1625,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-regular-a-rec",
@@ -1636,7 +1636,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-regular-b",
@@ -1647,7 +1647,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-regular-b-rec",
@@ -1658,7 +1658,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-regular-c",
@@ -1669,7 +1669,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-regular-c-rm",
@@ -1680,7 +1680,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-sword-regular-combo",
@@ -1691,7 +1691,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-walk",
@@ -1702,7 +1702,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-walk-carry",
@@ -1713,7 +1713,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-walk-formal",
@@ -1724,7 +1724,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-yes",
@@ -1735,7 +1735,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-zombie-idle",
@@ -1746,7 +1746,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-zombie-scratch",
@@ -1757,7 +1757,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-base-zombie-walk",
@@ -1768,7 +1768,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-base-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-cheer-one-arm",
@@ -1779,7 +1779,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-cheering-two-hands",
@@ -1790,7 +1790,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-fishing-cast",
@@ -1801,7 +1801,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-fishing-catch",
@@ -1812,7 +1812,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-fishing-reel",
@@ -1823,7 +1823,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-golf-drive",
@@ -1834,7 +1834,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-golf-idle",
@@ -1845,7 +1845,7 @@
 		"loop": true,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-help-one-arm",
@@ -1856,7 +1856,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-help-two-arms",
@@ -1867,7 +1867,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-insult",
@@ -1878,7 +1878,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-kick-breach",
@@ -1889,7 +1889,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-salute",
@@ -1900,7 +1900,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-turn-left-180",
@@ -1911,7 +1911,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-turn-left-90",
@@ -1922,7 +1922,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-turn-right-180",
@@ -1933,7 +1933,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "m2m-mocap-turn-right-90",
@@ -1944,7 +1944,7 @@
 		"loop": false,
 		"source_name": "Mesh2Motion human-mocap-animations",
 		"license": "CC0 1.0 Universal",
-		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD"
+		"license_url": "https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD"
 	},
 	{
 		"name": "qt-chest-open",

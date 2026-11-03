@@ -52,6 +52,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
+import { findZipMember } from './lib/zip-member.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -78,6 +79,11 @@ const R2_PREFIX = 'animations/library';
 // Every pack names its exact license file/sentence so a future re-check (the
 // partners campaign's standing rule: re-read the LICENSE on the day you adopt
 // anything) has a fixed target instead of a vague "we checked once".
+// GitHub-hosted packs are pinned to a full commit SHA, never a branch: on
+// 2026-10-31 Mesh2Motion split its bundled human GLBs into one file per clip
+// (upstream merge ec0669b9a), which 404'd the branch URLs. The pin is that
+// merge's first parent, so the clip names recorded in cc0-library.config.json
+// stay valid.
 const PACKS = [
 	{
 		id: 'qt',
@@ -96,8 +102,8 @@ const PACKS = [
 		id: 'm2m-base',
 		name: 'Mesh2Motion human-base-animations',
 		license: 'CC0 1.0 Universal',
-		licenseUrl: 'https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD',
-		url: 'https://raw.githubusercontent.com/Mesh2Motion/mesh2motion-app/main/static/animations/human-base-animations.glb',
+		licenseUrl: 'https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD',
+		url: 'https://raw.githubusercontent.com/Mesh2Motion/mesh2motion-app/faed1501297a341bc1461487be612ad27ebc1775/static/animations/human-base-animations.glb',
 		kind: 'glb',
 		file: join(SOURCES_DIR, 'mesh2motion/human-base-animations.glb'),
 		skip: [],
@@ -106,8 +112,8 @@ const PACKS = [
 		id: 'm2m-addon',
 		name: 'Mesh2Motion human-addon-animations',
 		license: 'CC0 1.0 Universal',
-		licenseUrl: 'https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD',
-		url: 'https://raw.githubusercontent.com/Mesh2Motion/mesh2motion-app/main/static/animations/human-addon-animations.glb',
+		licenseUrl: 'https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD',
+		url: 'https://raw.githubusercontent.com/Mesh2Motion/mesh2motion-app/faed1501297a341bc1461487be612ad27ebc1775/static/animations/human-addon-animations.glb',
 		kind: 'glb',
 		file: join(SOURCES_DIR, 'mesh2motion/human-addon-animations.glb'),
 		skip: ['Rest Pose'],
@@ -116,8 +122,8 @@ const PACKS = [
 		id: 'm2m-mocap',
 		name: 'Mesh2Motion human-mocap-animations',
 		license: 'CC0 1.0 Universal',
-		licenseUrl: 'https://github.com/Mesh2Motion/mesh2motion-app/blob/main/LICENSE-CC0.MD',
-		url: 'https://raw.githubusercontent.com/Mesh2Motion/mesh2motion-app/main/static/animations/human-mocap-animations.glb',
+		licenseUrl: 'https://github.com/Mesh2Motion/mesh2motion-app/blob/faed1501297a341bc1461487be612ad27ebc1775/LICENSE-CC0.MD',
+		url: 'https://raw.githubusercontent.com/Mesh2Motion/mesh2motion-app/faed1501297a341bc1461487be612ad27ebc1775/static/animations/human-mocap-animations.glb',
 		kind: 'glb',
 		file: join(SOURCES_DIR, 'mesh2motion/human-mocap-animations.glb'),
 		skip: [],
@@ -192,9 +198,11 @@ async function fetchPacks() {
 			const unzip = spawnSync('unzip', ['-o', '-q', zipPath, '-d', extractDir]);
 			if (unzip.status !== 0) throw new Error(`${pack.id}: unzip failed: ${unzip.stderr}`);
 			const { execFileSync } = await import('node:child_process');
-			const foundPath = execFileSync('find', [extractDir, '-name', '*.glb'], { encoding: 'utf8' })
-				.split('\n')
-				.find((p) => p.includes(pack.zipGlbPath.split('/').pop()));
+			const foundPath = findZipMember(
+				execFileSync('find', [extractDir, '-name', '*.glb'], { encoding: 'utf8' }).split('\n'),
+				extractDir,
+				pack.zipGlbPath,
+			);
 			if (!foundPath) throw new Error(`${pack.id}: ${pack.zipGlbPath} not found in zip`);
 			const { copyFileSync, rmSync } = await import('node:fs');
 			copyFileSync(foundPath, pack.file);
