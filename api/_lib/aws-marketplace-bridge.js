@@ -152,12 +152,37 @@ export async function issueSubscriptionForCustomer(customer) {
 		createdBy: customer.user_id || null,
 	});
 
-	await sql`
+	// Compare-and-swap on the link we read above. Without it two concurrent calls
+	// both mint, the later write wins the link, and the other key stays valid but
+	// unlinked, so a cancellation would never revoke it.
+	const linked = await sql`
 		update aws_marketplace_customers
 		set x402_subscription_id = ${subscription.id},
 		    updated_at           = now()
 		where id = ${rowId}
+		  and x402_subscription_id is not distinct from ${existing?.x402_subscription_id ?? null}
+		returning id
 	`;
+	if (!linked.length) {
+		await revokeSubscription(subscription.id);
+		const [winner] = await sql`
+			select
+				c.x402_subscription_id,
+				s.key_prefix,
+				s.rate_limit_per_minute
+			from aws_marketplace_customers c
+			left join x402_subscriptions s on s.id = c.x402_subscription_id
+			where c.id = ${rowId}
+			limit 1
+		`;
+		return {
+			subscriptionId: winner?.x402_subscription_id ?? null,
+			keyPrefix: winner?.key_prefix ?? null,
+			token: null,
+			alreadyIssued: true,
+			rateLimitPerMinute: winner?.rate_limit_per_minute ?? null,
+		};
+	}
 
 	return {
 		subscriptionId: subscription.id,
