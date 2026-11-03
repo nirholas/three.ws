@@ -14,7 +14,7 @@ BASE_URL=http://localhost:3000 node scripts/page-snapshot.mjs   # snapshot a loc
 
 or `npm run snapshot`.
 
-Pages come from [`data/pages.json`](../data/pages.json) — the same manifest that
+Pages come from [`data/pages.json`](../pages.json), the same manifest that
 drives `/sitemap`, `llms.txt`, and the page audit. Add a page there and it's
 snapshotted automatically. Auth-gated pages are skipped unless named explicitly.
 
@@ -31,11 +31,11 @@ current/
   mobile/<slug>.jpg
 ```
 
-The **archive is git history**. Committing `snapshots/` each day captures that
+The **archive is git history**. Committing `data/snapshots/` each day captures that
 day; the working tree stays at ~one day's size instead of growing forever.
 
 - Browse today: open `current/index.html`
-- A page's history: `git log --follow -- snapshots/current/desktop/home.jpg`
+- A page's history: `git log --follow -- data/snapshots/current/desktop/home.jpg`
 - Recover a past day: `scripts/snapshot-export-day.sh 2026-06-05`
   (writes `exported/<date>/` — gitignored, just for viewing)
 

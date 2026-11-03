@@ -167,7 +167,7 @@ Every top-level directory in the monorepo, what it is, and where to look. File c
 | `examples/` | ~52 | Runnable usage examples: `agenc-task-roundtrip`, `coach-leo`, `metamask-agent-wallet`, `pump-fun-agent`, `skills/` (pump-fun, solana-wallet), bare-avatar/embed HTML demos. |
 | `agents/` | ~15 | Reference agent definitions (`endpoint-shopper`, `fact-checker`, `tutor`, `unstoppable`) each with `src/` + an index gallery. |
 | `animation-sources/` | ~58 | Mixamo FBX source library (120+ clips) consumed by `scripts/build-animations.mjs`. |
-| `snapshots/` | ~3 | Daily visual page-snapshot record (`current/`) for pre-redesign comparison. |
+| `data/snapshots/` | ~3 | Daily visual page-snapshot record (`current/`) for pre-redesign comparison. |
 | `infra/` | ~11 | AWS CDK (TypeScript) — Lambda Function URL (Forge), S3 avatar bucket, CloudWatch. |
 | `deploy/` | ~12 | Cloud Run + Docker configs (`deploy/world/cloudrun.yaml` — Hyperfy `world.three.ws`; `deploy/sniper/` — hosted sniper worker). |
 | `.agents/` | ~133 | `three-ws-core` Claude Code plugin + skills bundle (`.claude-plugin/plugin.json` v1.0.0) — natural-language wallet + x402 skills over the three.ws wallet API, plus bundled 3D and third-party (`okx-*`, `metamask-agent-*`) skills. Installed via the plugin marketplace. |

@@ -9,16 +9,16 @@
  * can flip back to after any drastic change.
  *
  * ── Storage model: stable paths + git history as the time machine ─────────────
- * Screenshots are written to STABLE filenames (snapshots/current/<viewport>/<slug>.jpg),
- * overwritten on every run. Each day's `git commit` of snapshots/ is the archive:
+ * Screenshots are written to STABLE filenames (data/snapshots/current/<viewport>/<slug>.jpg),
+ * overwritten on every run. Each day's `git commit` of data/snapshots/ is the archive:
  *
- *   • Browse today:      open snapshots/current/index.html
- *   • See a page's past: git log --follow -- snapshots/current/desktop/home.jpg
- *   • Recover any day:   git checkout <sha> -- snapshots/current   (or git show <sha>:<path> > old.jpg)
+ *   • Browse today:      open data/snapshots/current/index.html
+ *   • See a page's past: git log --follow -- data/snapshots/current/desktop/home.jpg
+ *   • Recover any day:   git checkout <sha> -- data/snapshots/current   (or git show <sha>:<path> > old.jpg)
  *   • Export a full day: scripts/snapshot-export-day.sh <YYYY-MM-DD>   (see that script)
  *
  * This keeps the working tree at ~one day's size (~tens of MB) while git history
- * holds every prior day in full — no unbounded snapshots/<date>/ folder bloat.
+ * holds every prior day in full, no unbounded data/snapshots/<date>/ folder bloat.
  *
  * ── Target ────────────────────────────────────────────────────────────────────
  *   BASE_URL=https://three.ws        (default — the live, deployed design)
@@ -33,14 +33,14 @@
  *   node scripts/page-snapshot.mjs --settle 5000   # ms to wait after load for 3D/animations
  *   node scripts/page-snapshot.mjs --quality 80    # JPEG quality (default 72)
  *   node scripts/page-snapshot.mjs --authed        # signed-in sweep (dashboard, settings, profile)
- *   node scripts/page-snapshot.mjs --out reports/x # write somewhere other than snapshots/current
+ *   node scripts/page-snapshot.mjs --out reports/x # write somewhere other than data/snapshots/current
  *
  * ── Authenticated sweep ───────────────────────────────────────────────────────
  * `--authed` replays the Playwright storageState that `npm run audit:web:login`
  * writes to .auth/audit-state.json, and widens the route list to every page a
  * signed-in visitor can reach. Those shots show the QA account's own data, so
  * they default to reports/ui-shots/ (gitignored) rather than the committed
- * public design record under snapshots/.
+ * public design record under data/snapshots/.
  *
  * Note: headless Chromium renders WebGL via SWANGLE/SwiftShader. Most 3D heroes
  * render, but some heavy GPU scenes (and backdrop-filter) may come out dark. The
@@ -72,10 +72,10 @@ const QUALITY = Math.min(100, Math.max(30, Number(opt('quality', 72)) || 72));
 const explicitRoutes = argv.filter((a) => a.startsWith('/'));
 // Signed-in sweep. The session comes from the storageState `npm run
 // audit:web:login` writes, and it changes where the shots land: the committed
-// design record under snapshots/ is a PUBLIC record, and an authenticated run
+// design record under data/snapshots/ is a PUBLIC record, and an authenticated run
 // shows the QA account's own data, so it defaults to a gitignored directory.
 const AUTHED = flag('authed');
-const OUT_DIR = resolve(ROOT, opt('out', AUTHED ? 'reports/ui-shots' : 'snapshots/current'));
+const OUT_DIR = resolve(ROOT, opt('out', AUTHED ? 'reports/ui-shots' : 'data/snapshots/current'));
 
 // ── Route discovery ────────────────────────────────────────────────────────────
 // Pages, the authenticated route list and the slug rule come from
@@ -356,8 +356,8 @@ async function main() {
 	writeGallery(meta, pageList);
 
 	console.log(`\n■ Done. ${captured}/${pageList.length} pages captured for ${date}.`);
-	console.log(`  Gallery:  snapshots/current/index.html`);
-	console.log(`  Manifest: snapshots/current/manifest.json`);
+	console.log(`  Gallery:  data/snapshots/current/index.html`);
+	console.log(`  Manifest: data/snapshots/current/manifest.json`);
 	if (captured < pageList.length) {
 		const missing = pageList.filter((p) => !Object.keys(p.shots).length).map((p) => p.path);
 		console.log(`  Missing:  ${missing.join(', ')}`);

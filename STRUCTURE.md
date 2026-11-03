@@ -654,7 +654,7 @@ array. Runbook: [docs/contributing.md](docs/contributing.md#publishing-packages-
 - **Browser extensions**: [extensions/](extensions/README.md) (walk-avatar Chrome extension)
 - **Standalone deploy targets**: [deploy/](deploy/README.md) (always-on sniper worker; the world.three.ws Hyperfy server)
 - **AWS infra**: [infra/](infra) (AWS CDK stack)
-- **Page snapshots**: [snapshots/](snapshots) (daily visual record of every page)
+- **Page snapshots**: [data/snapshots/](data/snapshots/README.md) (daily visual record of every page)
 - **Maintenance holding page**: [maintenance/](maintenance) (zero-build static holding page)
 - **Robinhood Chain (4663) developer tooling** — [robinhood/](robinhood), standalone packages published to their own `nirholas/*` GitHub repos (each with its own README): `erc8056` (ERC-8056 Scaled UI Amount reference impl), `hood-connect` (wallet onboarding kit), `hood-pay` (USDG checkout + payment links), `hood-alerts` (Telegram/Discord/X launch + whale alerts), `hood-status` (chain status page), `hood-tokenlist` (canonical token list), `hoodkit`/`hood402`/`robinhood-chain-sdk` (shared chain + x402 primitives other packages depend on), `hood-cli` (CLI + the `hood init` trading-stack setup wizard), `hood-launcher`, `hood-mcp`, `hood-api`, `hood-js`, `hood-traders` (autonomous trading fleet, four strategies incl. a bring-your-own-key LLM strategist), `robinhood-chain-examples`, `learn-robinhood-chain`. Distinct from the in-repo `/play` and `/markets/robinhood` product surfaces above, which live in this repo's own `api/`/`src/`.
 - **Cross-chain SDKs** — [sdk/](sdk), [solana-agent-sdk/](solana-agent-sdk), [agent-payments-sdk/](agent-payments-sdk), [agent-protocol-sdk/](agent-protocol-sdk)
