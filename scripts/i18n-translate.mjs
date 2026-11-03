@@ -52,6 +52,7 @@ import {
 	flatten,
 	setDeep,
 	getDeep,
+	buildManifest,
 	missingKeys,
 	mergeOrdered,
 	pruneStale,
@@ -999,33 +1000,19 @@ function persist(code, existing, translatedFlat) {
 // applies (absent OR blank), so the manifest and the lint gate now agree on what
 // "complete" means.
 function writeManifest() {
-	const skipped = [];
-	const ready = (code) => {
-		if (code === cfg.entryLocale) return true;
-		if (!existsSync(localePath(code))) return false;
-		let gaps = 0;
-		try {
-			gaps = missingKeys(source, readJSON(localePath(code))).length;
-		} catch {
-			skipped.push(`${code} (unreadable)`);
-			return false;
-		}
-		if (gaps) skipped.push(`${code} (${gaps} untranslated key${gaps === 1 ? '' : 's'})`);
-		return gaps === 0;
-	};
-	const localesList = [cfg.entryLocale, ...cfg.outputLocales].filter(ready).map((code) => ({
-		code,
-		name: cfg.localeNames?.[code] || code,
-		dir: (cfg.rtlLocales || []).includes(code) ? 'rtl' : 'ltr',
-	}));
-	const manifest = { default: cfg.entryLocale, locales: localesList };
+	const { manifest, skipped } = buildManifest({
+		cfg,
+		source,
+		readCatalog: (code) => (existsSync(localePath(code)) ? readJSON(localePath(code)) : null),
+		threshold: Number(opt('manifest-threshold') ?? cfg.manifestThreshold ?? 1),
+	});
 	writeJsonAtomic(
 		resolve(ROOT, cfg.output, 'manifest.json'),
 		JSON.stringify(manifest, null, '\t') + '\n',
 	);
 	if (skipped.length) {
 		console.log(
-			`• manifest: ${localesList.length} locale(s) listed, ${skipped.length} held back until complete: ${skipped.join(', ')}`,
+			`• manifest: ${manifest.locales.length} locale(s) listed, ${skipped.length} held back until complete: ${skipped.join(', ')}`,
 		);
 	}
 }

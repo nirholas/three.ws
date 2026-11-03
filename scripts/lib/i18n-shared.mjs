@@ -84,6 +84,42 @@ export function untranslatedCount(catalog) {
 	return n;
 }
 
+// Decide which locales the language switcher may offer.
+//
+// Pure so it can be tested without touching disk: `readCatalog(code)` returns the
+// parsed catalog, null when the locale has no file, and may throw when the file is
+// unreadable. A locale is listed when its share of translated keys is at or above
+// `threshold` (default 1, meaning fully complete, the same rule lint applies). The
+// entry locale is always listed.
+export function buildManifest({ cfg, source, readCatalog, threshold = 1 }) {
+	const total = Object.keys(flatten(source)).length;
+	const skipped = [];
+	const ready = (code) => {
+		if (code === cfg.entryLocale) return true;
+		let catalog;
+		try {
+			catalog = readCatalog(code);
+		} catch {
+			skipped.push(`${code} (unreadable)`);
+			return false;
+		}
+		if (catalog == null) return false;
+		const gaps = missingKeys(source, catalog).length;
+		const done = total === 0 ? 1 : (total - gaps) / total;
+		if (gaps && done < threshold) {
+			skipped.push(`${code} (${gaps} untranslated key${gaps === 1 ? '' : 's'})`);
+			return false;
+		}
+		return true;
+	};
+	const locales = [cfg.entryLocale, ...cfg.outputLocales].filter(ready).map((code) => ({
+		code,
+		name: cfg.localeNames?.[code] || code,
+		dir: (cfg.rtlLocales || []).includes(code) ? 'rtl' : 'ltr',
+	}));
+	return { manifest: { default: cfg.entryLocale, locales }, skipped };
+}
+
 // Keys present in target but no longer in source — stale translations to prune.
 export function staleKeys(source, target) {
 	const src = flatten(source);
