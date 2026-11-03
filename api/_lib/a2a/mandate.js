@@ -306,7 +306,7 @@ export function assertMandateAllows({ mandate, amountAtomics, network, resource,
 	}
 
 	if (resource && mandate.resources.length) {
-		const allowed = mandate.resources.some((prefix) => resource.startsWith(prefix));
+		const allowed = mandate.resources.some((prefix) => resourceMatchesPrefix(resource, prefix));
 		if (!allowed) {
 			throw new MandateError(
 				'resource_not_allowed',
@@ -315,4 +315,24 @@ export function assertMandateAllows({ mandate, amountAtomics, network, resource,
 			);
 		}
 	}
+}
+
+/**
+ * Prefix match that cannot be fooled by host suffixes. A raw startsWith lets
+ * a mandate for "https://peer.com" authorize "https://peer.com.evil.io/x".
+ * The origin must match exactly and the path must match on a segment boundary.
+ */
+function resourceMatchesPrefix(resource, prefix) {
+	let r;
+	let p;
+	try {
+		r = new URL(resource);
+		p = new URL(prefix);
+	} catch {
+		return false;
+	}
+	if (r.origin !== p.origin || r.origin === 'null') return false;
+	const base = p.pathname.replace(/\/+$/, '');
+	if (!base) return true;
+	return r.pathname === base || r.pathname.startsWith(`${base}/`);
 }
