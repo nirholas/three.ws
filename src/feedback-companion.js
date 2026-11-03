@@ -515,6 +515,9 @@ export function installFeedback({ getInstance, getHostEl } = {}) {
 	function ensureControl() {
 		const host = resolveHost();
 		if (!host || host.querySelector('.walk-companion-feedback')) return;
+		// The sheet styles this control too, not just the panel, so it has to be
+		// in place before the control mounts or the control shows as a bare button.
+		ensureStyles();
 		const btn = document.createElement('button');
 		btn.type = 'button';
 		btn.className = 'walk-companion-feedback';
