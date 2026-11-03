@@ -24,6 +24,7 @@ import { generateSolanaAgentWallet, recoverSolanaAgentKeypair } from '../_lib/ag
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { cacheSet } from '../_lib/cache.js';
 import { CustodyHttpError, loadOwnedAgent, requirePrincipal } from '../_lib/custody/auth.js';
+import { requireRealFundsAgreement } from '../_lib/real-funds-agreement.js';
 import { answerCustody, readCustodyBody } from '../_lib/custody/http.js';
 import { assertClientPublicKey, sealForClient, SEAL_VERSION } from '../_lib/custody/export-seal.js';
 import { completeReauth, consumeReauthGrant, startReauth } from '../_lib/custody/reauth.js';
@@ -88,6 +89,9 @@ async function handleExport(req, res, id) {
 	}
 	const meta = requireKey(agent);
 	assertClientPublicKey(body.client_public_key);
+	// Checked before the single-use reauth grant is spent, so an unsigned owner can
+	// sign the agreements and retry with the same grant.
+	if (!(await requireRealFundsAgreement(req, res, { userId: principal.userId, context: 'key_export' }))) return;
 	await consumeReauthGrant({ userId: principal.userId, purpose: 'export_key', token: body.reauth_grant });
 
 	const keypair = await recoverSolanaAgentKeypair(meta.encrypted_solana_secret, {
@@ -155,6 +159,10 @@ async function handleRotate(req, res, id) {
 			},
 		}, { 'cache-control': 'no-store' });
 	}
+
+	// The preview above moves nothing. Confirming sweeps every balance on the
+	// agent wallet, so it needs the signed agreements like any other real-funds move.
+	if (!(await requireRealFundsAgreement(req, res, { userId: principal.userId, network, context: 'key_rotate' }))) return;
 
 	if (body.expected_address !== meta.solana_address) {
 		throw new CustodyHttpError(409, 'stale_preview', 'The wallet changed since the preview. Review the preview again before rotating.');

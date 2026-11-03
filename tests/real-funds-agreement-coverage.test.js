@@ -44,6 +44,8 @@ const EXEMPT = {
 	'api/actions/agent-tip.js': 'builds an unsigned Blink transaction the caller own wallet signs; the agent is only the transfer recipient, never the signer',
 	'api/creator-payouts.js': 'manages payout wallet registration and reads only; the actual transfer (sendFromAgentWallet/runDistribution in _lib/creator-payouts.js) runs from a cron, outside this route',
 	'api/pump/launch-intents.js': 'confirm records the approval only; executeApprovedFundedLaunch (the custodial signer) runs from a separate approval executor, not this route',
+	'api/agents/signer.js': 'chooses the signing mode and builds the owner-signed session grant and revoke; the platform key is never loaded here (the key-use text it matches lives only in comments of custody/signing.js) and nothing is sent',
+	'api/tx/solana/[action].js': 'builds unsigned transfer and swap transactions that the caller own wallet signs and submits; no custodial key is loaded and the platform never signs (custody/signing.js only matches the detector through comments)',
 	'api/skills/import.js': 'imports agent-pumpfun.js only for its RPC endpoint (solanaConnection) to fetch an Anchor IDL; never calls the unrelated signing export',
 };
 
