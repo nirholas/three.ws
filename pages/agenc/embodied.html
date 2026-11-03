@@ -229,6 +229,13 @@
 				cursor: pointer;
 				transition: border-color 0.15s ease, background 0.15s ease;
 			}
+			/* At the 44px touch floor, centre the baseline-aligned row in the box. */
+			@media (hover: none) and (pointer: coarse) {
+				.pick {
+					flex-wrap: wrap;
+					align-content: center;
+				}
+			}
 			.pick:hover {
 				border-color: var(--accent);
 				background: #101a17;

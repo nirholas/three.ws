@@ -540,3 +540,13 @@
 .yl-pool-btn:hover {
 	color: var(--ink-bright);
 }
+
+/* The touch floor makes this 44px tall; baseline alignment would leave the
+   label at the top of that box. A wrapping flex container lets
+   align-content centre the line while the items stay baseline-aligned. */
+@media (hover: none) and (pointer: coarse) {
+	.yl-pool-btn {
+		flex-wrap: wrap;
+		align-content: center;
+	}
+}
