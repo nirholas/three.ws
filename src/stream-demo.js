@@ -25,6 +25,7 @@ import * as THREE from 'three';
 
 import { getMeshoptDecoder } from './viewer/internal.js';
 import { applyStudioLook, createRenderLoop } from './render/index.js';
+import { describeVerdict } from './stream-verdict.js';
 import { A3SPlayer } from '../packages/avatar-stream/src/three.js';
 import { A3SStream } from '../packages/avatar-stream/src/reader.js';
 
@@ -379,8 +380,7 @@ function mount(root) {
 			]);
 			if (token !== runToken) return;
 			if (classic && streamed) {
-				const speedup = classic.firstFrameMs / streamed.firstFrameMs;
-				verdict.textContent = `${speedup.toFixed(1)}x faster to first frame: ${fmtBytes(streamed.baseBytes)} versus ${fmtBytes(classic.bytes)} before anything is on screen.`;
+				verdict.textContent = describeVerdict(classic, streamed, fmtBytes);
 			}
 		} catch (error) {
 			if (token !== runToken) return;
