@@ -12,7 +12,7 @@
 // 500s on a missing key.
 
 import { json, method, wrapCron } from '../_lib/http.js';
-import { runAttestationEpoch, describeAnchorOutage } from '../_lib/custody-proof.js';
+import { runAttestationEpoch, describeAnchorOutage, reconcileLandedAnchors } from '../_lib/custody-proof.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 
@@ -20,10 +20,33 @@ export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
 
+	const startedAt = Date.now();
 	const result = await runAttestationEpoch({ anchor: true });
+	const reconciled = await reconcileSafely(startedAt + RECONCILE_DEADLINE_MS);
+	const repaired = reconciled.promoted?.find((p) => String(p.epoch) === String(result.epoch));
+	if (repaired) {
+		result.anchor_status = 'anchored';
+		result.anchor_signature = repaired.signature;
+		delete result.anchor_error;
+	}
 	if (result.anchor_status === 'anchor_failed') await alertAnchorFailure(result);
-	return json(res, 200, { ok: true, ...result });
+	return json(res, 200, { ok: true, ...result, reconciled });
 });
+
+// The route's maxDuration is 120s and the snapshot may use up to 112s of it, so
+// reconcile starts no lookup past 110s; anything left waits for the next run.
+const RECONCILE_DEADLINE_MS = 110_000;
+
+// Epochs whose memo landed after the confirm wait gave up are promoted from
+// on-chain evidence (reconcileLandedAnchors verifies signer, epoch and root).
+// Best-effort: a missing key or an RPC outage never fails the snapshot.
+async function reconcileSafely(deadline) {
+	try {
+		return await reconcileLandedAnchors({ limit: 20, deadline });
+	} catch (e) {
+		return { error: e?.message || String(e) };
+	}
+}
 
 // A failed anchor leaves the commitment untimestamped, so it must page ops. The
 // signature is per network so a standing outage coalesces into one alert.

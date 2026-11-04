@@ -347,6 +347,101 @@ export async function describeAnchorOutage() {
 	return { network: ANCHOR_NETWORK, attester: pubkey, lamports };
 }
 
+// The two messages api/_lib/solana/confirm.js throws when its wait gives up on
+// a broadcast tx. Both carry the signature, and both can describe a tx that
+// still landed (before 2026-11-04 the confirm poll read only the RPC's recent
+// status cache, so a finalized memo could be stored as "expired").
+const GAVE_UP_RE = /^Transaction ([1-9A-HJ-NP-Za-km-z]{32,90}) (?:expired: block height exceeded|not confirmed within)/;
+const GAVE_UP_SQL = '^Transaction [1-9A-HJ-NP-Za-km-z]{32,90} (expired: block height exceeded|not confirmed within)';
+
+/**
+ * Promote anchor_failed epochs whose recorded transaction did land. A row is
+ * promoted only when that exact signature is finalized on the anchor cluster
+ * with no error, the attester signed it, and its SPL-Memo is this lane's kind
+ * for the same epoch and Merkle root. anchored_at is the block time, so a
+ * repaired epoch shows when the chain actually timestamped it, never when the
+ * repair ran. This never broadcasts anything: an epoch whose tx did not land
+ * stays anchor_failed (re-anchoring an old root late would misdate it).
+ *
+ * @param {{ limit?: number, sinceDays?: number, dryRun?: boolean, attester?: string }} [opts]
+ *   sinceDays: only epochs created in this window (the cron keeps it short so a
+ *   tx that truly never landed is not re-queried forever; an operator widens it).
+ *   deadline: epoch ms after which no further lookup starts (the cron shares the
+ *   route's maxDuration with the snapshot); out_of_time reports a cut-short run.
+ *   attester: base58 pubkey to check the signer against, for an operator
+ *   without ATTEST_AGENT_SECRET_KEY; defaults to the configured key's pubkey.
+ * @returns {Promise<{ checked: number, promoted: Array<{epoch: string, signature: string, anchored_at: string}>, errors: Array<{epoch: string, error: string}>, out_of_time?: true }>}
+ */
+export async function reconcileLandedAnchors({ limit = 50, sinceDays = 14, dryRun = false, attester, deadline = Infinity } = {}) {
+	const expected = attester ? new PublicKey(attester).toBase58() : loadAttesterKeypair().publicKey.toBase58();
+	const days = Math.max(1, Math.min(3650, Number(sinceDays) || 14));
+	const rows = await sql`
+		SELECT epoch, merkle_root, anchor_error
+		FROM custody_attestation_epochs
+		WHERE anchor_status = 'anchor_failed'
+		  AND anchor_network = ${ANCHOR_NETWORK}
+		  AND anchor_error ~ ${GAVE_UP_SQL}
+		  AND created_at > now() - make_interval(days => ${days})
+		ORDER BY epoch DESC
+		LIMIT ${Math.max(1, Math.min(500, Number(limit) || 50))}
+	`;
+	const conn = solanaConnection({ url: RPC[ANCHOR_NETWORK] || RPC.mainnet, commitment: 'finalized' });
+	const promoted = [];
+	const errors = [];
+	let checked = 0;
+	let outOfTime = false;
+	for (const row of rows) {
+		const signature = GAVE_UP_RE.exec(String(row.anchor_error || ''))?.[1];
+		if (!signature) continue;
+		const remaining = deadline - Date.now();
+		if (remaining <= 0) {
+			outOfTime = true;
+			break;
+		}
+		checked += 1;
+		let tx;
+		try {
+			tx = await withTimeout(
+				conn.getParsedTransaction(signature, { commitment: 'finalized', maxSupportedTransactionVersion: 0 }),
+				Math.min(TX_TIMEOUT_MS, remaining),
+			);
+		} catch (e) {
+			errors.push({ epoch: String(row.epoch), error: e?.message || String(e) });
+			continue;
+		}
+		if (!memoProvesEpoch(tx, { epoch: row.epoch, root: row.merkle_root, attester: expected })) continue;
+		const anchoredAt = new Date(tx.blockTime * 1000).toISOString();
+		if (!dryRun) {
+			await sql`
+				UPDATE custody_attestation_epochs
+				SET anchor_sig = ${signature}, anchor_status = 'anchored', anchor_error = NULL,
+				    anchored_at = to_timestamp(${tx.blockTime})
+				WHERE epoch = ${String(row.epoch)} AND anchor_status = 'anchor_failed'
+			`;
+		}
+		promoted.push({ epoch: String(row.epoch), signature, anchored_at: anchoredAt });
+	}
+	return outOfTime ? { checked, promoted, errors, out_of_time: true } : { checked, promoted, errors };
+}
+
+function memoProvesEpoch(tx, { epoch, root, attester }) {
+	if (!tx || tx.meta?.err || !Number.isFinite(tx.blockTime)) return false;
+	const msg = tx.transaction?.message;
+	const signers = (msg?.accountKeys || []).filter((k) => k.signer).map((k) => String(k.pubkey?.toBase58?.() ?? k.pubkey));
+	if (!signers.includes(attester)) return false;
+	const memoId = MEMO_PROGRAM_ID.toBase58();
+	return (msg?.instructions || []).some((ix) => {
+		if (String(ix.programId?.toBase58?.() ?? ix.programId) !== memoId || typeof ix.parsed !== 'string') return false;
+		let body;
+		try {
+			body = JSON.parse(ix.parsed);
+		} catch {
+			return false;
+		}
+		return body?.kind === ANCHOR_KIND && String(body.epoch) === String(epoch) && body.root === root;
+	});
+}
+
 async function markAnchorFailed(epoch, reason) {
 	await sql`
 		UPDATE custody_attestation_epochs
