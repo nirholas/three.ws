@@ -16,6 +16,39 @@ issues.** All six curated first issues from August (#110 to #115) were closed be
 with nothing to point at. Issue #254 is open and carries the `approved` label; the booking bot
 asked for a date on 2026-09-01 and no date has been posted.
 
+## Status on 2026-11-04: the menu needs a new on-air issue
+
+Re-verified against `main` on 2026-11-04 by running each issue's probe or opening its test file.
+Every one of the seven is now fixed in code:
+
+| # | Issue | How it was checked |
+|---|---|---|
+| 1 | HumanIK `Character1Hips` (held, never filed) | `Character1Hips -> Hips`, `Character1_LeftArm -> LeftArm`; `tests/animation-retarget-humanik.test.js` loads a HumanIK-renamed avatar through GLTFLoader |
+| 2 | [#339](https://github.com/nirholas/three.ws/issues/339) Biped fingers | `Bip01 L Finger0 -> LeftHandThumb1`, `Finger01 -> LeftHandThumb2` |
+| 3 | [#340](https://github.com/nirholas/three.ws/issues/340) ValveBiped | `ValveBiped.Bip01_Pelvis` and `ValveBipedBip01_Pelvis -> Hips`; Rig Doctor has a `source` convention |
+| 4 | [#341](https://github.com/nirholas/three.ws/issues/341) GLB declared length | `isValidGlbMagic` rejects a header declaring 9999 or 12 bytes; `tests/glb-magic.test.js` |
+| 5 | [#342](https://github.com/nirholas/three.ws/issues/342) URL scheme guard tests | `tests/url-scheme-guards.test.js`, `tests/safe-url.test.js` |
+| 6 | [#343](https://github.com/nirholas/three.ws/issues/343) model URL allowlist tests | `tests/safe-model-url.test.js`, with evil-host cases |
+| 7 | [#344](https://github.com/nirholas/three.ws/issues/344) Money Pulse rollover | `fmtUsd(999.6) = $1.0k`, `fmtUsd(999999) = $1.0M`, `fmtThree(999950) = 1.00M` |
+
+So issues #339 to #344 are open on GitHub but stale: the work they describe is on `main`. Close
+each one with a comment pointing at the code above (owner action; nothing here was closed or
+commented on). That leaves the repo with no open good first issue again.
+
+**The new on-air candidate is issue 8**, Blender Rigify's numbered spine, verified open on
+2026-11-04. Rigify names its trunk `DEF-spine` to `DEF-spine.006`; the raw spelling collapses all
+seven to `Spine`, the runtime spelling drops six of them, and `DEF-shoulder.L` collides with the
+upper arm on `LeftArm`. It has the same shape as issue 1 had (a rig that does not animate, then
+does) and follows the same worked example. Body:
+[08-rig-rigify-numbered-spine.md](./osf-issues/08-rig-rigify-numbered-spine.md). Create it the
+Monday before the stream:
+
+```bash
+gh issue create --repo nirholas/three.ws --title 'Rig: map the Blender Rigify numbered spine (`DEF-spine.001` to `.006`) instead of collapsing it onto `Spine`' --label 'good first issue' --label 'area: rig' --label 'enhancement' --body-file marketing/growth/events/osf-issues/08-rig-rigify-numbered-spine.md
+```
+
+The sections below are the 2026-09-17 record and are kept for history.
+
 ## The seven issues
 
 Each was verified against `main` on 2026-09-17: the file paths exist, the probe in the body

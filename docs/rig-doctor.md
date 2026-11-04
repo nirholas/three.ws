@@ -42,10 +42,13 @@ This is the most common result, and the most common shape of it is **legs**. A h
 
 ### Will not animate
 
-One of two things is true:
+One of three things is true:
 
 - **No skinned mesh.** There is no skin binding a mesh to a skeleton, so no clip can deform anything. The model renders as a static prop and every animation affordance is hidden. Fix it by re-exporting with skinning enabled, or by running the mesh through the auto-rigger (`POST /api/forge?action=rig` with a `glb_url`).
 - **Under the joint floor.** Fewer than **8** joints mapped to the canonical set. Below that threshold a retargeted clip moves a limb or two on an otherwise frozen statue, which reads worse than not animating at all, so the platform substitutes the default rig instead.
+- **Under the clip coverage floor.** A library clip carries 53 tracks: a rotation for each of the 52 canonical bones plus the Hips root translation. Thirty of those are finger joints, so the retargeter also measures the 23 body tracks on their own. A clip binds when at least **50%** of either measure maps; fingers are optional. A complete body with no finger joints passes on its body tracks, and a half-body with fully fingered hands passes on the full count. A rig short on both (arms and legs without a spine, shoulders or feet, say) builds no clip action, and the headline names both counts, for example `Clips bind only 11 of 23 body tracks (11 of 53 with fingers)`.
+
+Rig Doctor, the live viewer (`AnimationManager.supportsCanonicalClips()`), the embodiment rig-mode, and `GET /api/avatar/capabilities` all ask the same function, `canonicalClipGate` in [`src/canonical-clip-gate.js`](../src/canonical-clip-gate.js), so a rig cannot pass one surface and stand in its bind pose on another.
 
 ### Non-humanoid rigs
 
@@ -129,7 +132,7 @@ The convention detector reports which authoring tool your skeleton came from and
 | Source engine (ValveBiped) | `ValveBiped.Bip01_*` joint prefix | `custom` |
 | 3ds Max Biped | `Bip01` / `Bip001` prefix | `custom` |
 | Blender Rigify | `DEF-` / `ORG-` / `MCH-` bone layers | `custom` |
-| Autodesk HumanIK / MotionBuilder | character-namespaced joints (`Character1:Hips`) | `custom` |
+| Autodesk HumanIK / MotionBuilder | character-namespaced joints (`Character1:Hips` or `Character1Hips`) | `custom` |
 | Daz Genesis | `lShldr`, `abdomen`, `lThigh` | `custom` |
 | MakeHuman / Blender side-suffix | `.L` / `.R` suffixes | `custom` |
 | Avaturn / three.ws canonical | joint names already match exactly | `avaturn` |
@@ -217,6 +220,8 @@ if (report.verdict.level === 'fail') {
 | `manifestFromReport(report, identity)` | a schema-v1 avatar manifest. `identity` supplies `id`, `name`, `meshUri`, `owner`, `createdAt`, and optionally `sha256`. |
 | `formatBytes(n)` | a human-readable size string. |
 | `MIN_CANONICAL_BONES` | `8`, the drivability floor. |
+| `MIN_COVERAGE` (from `src/canonical-clip-gate.js`) | `0.5`, the clip coverage floor, applied to all 53 tracks or the 23 body tracks, whichever is higher. |
+| `clearsCoverageFloor(counts)` (from `src/canonical-clip-gate.js`) | `true` when `max(coverage, bodyCoverage)` reaches the floor. The retargeter and the gate both call it. |
 | `CANONICAL_TOTAL` | `52`, the size of the canonical set. |
 | `LIMB_GROUPS` | the group definitions, including each group's key joints. |
 

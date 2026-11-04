@@ -45,18 +45,19 @@ No scratch files in the repo root: probe the function straight from the shell.
 ```bash
 node --input-type=module -e "
 import { canonicalizeBoneName as c } from './src/glb-canonicalize.js';
-for (const n of ['Character1Hips', 'hips_joint', '左腕', 'upperarm_l']) console.log(n, '->', c(n));
+for (const n of ['Character1Hips', 'hips_joint', '左腕', 'upperarm_l', 'DEF-spine.003']) console.log(n, '->', c(n));
 "
 ```
 
 ```
-Character1Hips -> null        HumanIK after three.js strips the colon: not supported yet
+Character1Hips -> Hips        HumanIK after three.js strips the colon: supported, added 2026-11-04
 hips_joint -> Hips            Apple / ARKit rigs: supported
 左腕 -> LeftArm               MikuMikuDance: supported, added 2026-08-21
 upperarm_l -> LeftArm         Unreal mannequin: supported
+DEF-spine.003 -> Spine        Blender Rigify numbered spine: collapses (and DEF-spine003 at runtime -> null), not supported yet
 ```
 
-`null` means the bone would be dropped, and a rig with enough of those scores below the retarget coverage floor and falls back to a default body.
+`null` means the bone would be dropped, and a rig with enough of those scores below the retarget coverage floor and falls back to a default body. A collapse is the quieter failure: several distinct joints all print the same canonical name, so only one of them can bind and the rest stand still.
 
 ### The reference: how MikuMikuDance was added
 
@@ -134,13 +135,13 @@ describe('MMD (MikuMikuDance) Japanese skeleton', () => {
 
 ### Now do one that is actually open
 
-MMD is done, so do not re-submit it. So are Apple / ARKit, Kinect, the Reallusion numbered spine, 3ds Max Biped fingers and toes, and Source engine (`ValveBiped`) skeletons, which Rig Doctor now names too. Pick a convention that still returns `null` and give it the same four-part treatment (alias map, tests, Rig Doctor fingerprint, docs row). The one rig convention still verified open is written up with the file, the bones, and the verification command:
+MMD is done, so do not re-submit it. So are HumanIK (both `Character1:Hips` and the colonless `Character1Hips` three.js produces), Apple / ARKit, Kinect, the Reallusion numbered spine, 3ds Max Biped fingers and toes, and Source engine (`ValveBiped`) skeletons, which Rig Doctor now names too. Pick a convention that still returns `null` (or collapses) and give it the same four-part treatment (alias map, tests, Rig Doctor fingerprint, docs row). The one rig convention still verified open is written up with the file, the bones, and the verification command:
 
-- **HumanIK after three.js loads it.** `Character1:Hips` maps, but three.js deletes the colon when it loads a model, and the runtime retargeter then sees `Character1Hips`, which maps to nothing. Re-run the probe above to confirm it still prints `null` before you start.
+- **Blender Rigify's numbered spine.** A Rigify deform rig names its trunk `DEF-spine`, `DEF-spine.001` through `DEF-spine.006`, and in the raw glTF spelling every one of them canonicalizes to `Spine`; at runtime, where three.js deletes the `.`, all but `DEF-spine` map to nothing. In Rigify's layout `DEF-spine` is the hips, `.001` to `.003` are the spine and chest, `.004` and `.005` are the neck, and `.006` is the head, so a Rigify character animates with no root motion, a rigid torso and a frozen head. Re-run the probe above to confirm `DEF-spine.003` still prints `Spine` before you start. The ready-to-file body is [osf-issues/08](../marketing/growth/events/osf-issues/08-rig-rigify-numbered-spine.md).
 
-If that one has been taken or merged, any other rig whose bones print `null` in the probe qualifies. Rig Doctor ([`docs/rig-doctor.md`](rig-doctor.md)) also reports skin-weight health for non-humanoid rigs, which is a good way to find a rig worth fixing.
+If that one has been taken or merged, any other rig whose bones print `null` (or collapse) in the probe qualifies. Rig Doctor ([`docs/rig-doctor.md`](rig-doctor.md)) also reports skin-weight health for non-humanoid rigs, which is a good way to find a rig worth fixing.
 
-Find it under the [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) label. If a label search comes back empty, the ready-to-file bodies are in [marketing/growth/events/osf-issues/](../marketing/growth/events/osf-issues/01-rig-humanik-sanitized-names.md), and you can work from them directly.
+Find it under the [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) label. If a label search comes back empty, the ready-to-file bodies are in [marketing/growth/events/osf-issues/](../marketing/growth/events/osf-issues/08-rig-rigify-numbered-spine.md), and you can work from them directly.
 
 Comment on the one you are taking, then:
 

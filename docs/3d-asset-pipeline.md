@@ -209,7 +209,7 @@ There is **no rig allowlist**. [src/glb-canonicalize.js](../src/glb-canonicalize
 | MediaPipe Pose | `left_hip`, `left_knee`, `left_heel`, `left_foot_index` (landmark joints) |
 | 3ds Max Biped | `Bip01 Pelvis`, `Bip001 L UpperArm`, `Bip01 L Calf` |
 | CharacterStudio | `CH_Hips`, `CH_LeftUpLeg` |
-| Autodesk HumanIK / Maya / MotionBuilder | `Character1:Hips`, `subject:LeftArm`, `char:ns:Hips` |
+| Autodesk HumanIK / Maya / MotionBuilder | `Character1:Hips`, `subject:LeftArm`, `char:ns:Hips`, plus the colonless `Character1Hips` three.js produces on load and the `Character1_LeftArm` spelling some exporters write |
 | Advanced Skeleton (Maya) | `Root_M`, `Spine1_M`, `Chest_M`, `Scapula_R`, `IndexFinger1_R` |
 | Sketchfab / Maya `j_` exports | `j_pelvis`, `j_L_hip`, `j_L_knee`, `j_spine_0` |
 | SMPL / SMPL-X (research, mocap) | `left_hip`, `left_knee`, `left_ankle`, `left_elbow`, `left_collar` |
