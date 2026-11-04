@@ -960,6 +960,20 @@ curl -s -o /dev/null -w "%{http_code} → %{redirect_url}\n" http://three.ws/   
 `/api/healthz` is designed to stay green through dependency outages — read its
 JSON body (x402 block, monitor block) for subsystem truth.
 
+**Custodial key separation (part of every production sweep).** The wallet
+encryption key must not be the session secret. With the live values in the shell
+(`WALLET_ENCRYPTION_KEY` and `JWT_SECRET` via `scripts/read-service-env.mjs ... --raw`):
+
+```bash
+node scripts/audit-custodial-key-health.mjs --keys-only   # exit 0 separated, 4 shared, 3 not set
+```
+
+The full audit (`node scripts/audit-custodial-key-health.mjs`, also what
+`npm run triage:gcp` runs as its `custodial-keys` probe) prints the same line and
+exits 4 while the two fingerprints match; triage raises the `owner` finding
+`custodial-key-shared-with-jwt`. Only 8-hex-digit fingerprints are shown. The fix
+is the verified re-seal in [wallet-key-migration.md](wallet-key-migration.md).
+
 ---
 
 ## What Vercel still holds (decommission checklist)

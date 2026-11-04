@@ -27,18 +27,24 @@
 //   node scripts/audit-custodial-key-health.mjs
 //   node scripts/audit-custodial-key-health.mjs --json
 //   node scripts/audit-custodial-key-health.mjs --platform-only
+//   node scripts/audit-custodial-key-health.mjs --keys-only      # key separation check, no database
 //
 // Env (read from .env / .env.local, or the process env):
 //   DATABASE_URL, WALLET_ENCRYPTION_KEY, JWT_SECRET, SOLANA_RPC_URL
 //
 // Exits 3 without touching the database when no decryption key is configured:
 // a keyless run can only report 100% undecryptable, which says nothing about
-// production. Exit 0 otherwise, stranded fleet or not.
+// production. Exit 4 when WALLET_ENCRYPTION_KEY and JWT_SECRET are the SAME secret
+// (the report is still printed first): a session-secret leak would then open every
+// custodial wallet, and rotating JWT_SECRET would brick them. Only fingerprints
+// (first 8 hex of SHA-256) are ever shown. Exit 0 otherwise, stranded fleet or not.
+// docs/ops/wallet-key-migration.md has the re-seal that clears exit 4.
 
 import { readFileSync } from 'node:fs';
 
 const AS_JSON = process.argv.includes('--json');
 const PLATFORM_ONLY = process.argv.includes('--platform-only');
+const KEYS_ONLY = process.argv.includes('--keys-only');
 
 // In --json mode stdout carries ONE value: the report. The Solana connection
 // lane logs its failovers ("[solana-rpc] ... demoting that method") on stdout,
@@ -79,7 +85,19 @@ for (const file of ['.env', '.env.local']) {
 // the ops board (`stranded_custody` in /api/ops/payment-outcomes), so the number
 // an operator reads here and the number the board renders cannot drift apart.
 // This file is the CLI around it: env loading, the key guard, and rendering.
-const { secretBoxKeyCandidates } = await import('../api/_lib/secret-box.js');
+const { secretBoxKeyCandidates, keySeparation } = await import('../api/_lib/secret-box.js');
+const separation = keySeparation();
+const SEPARATION_LINE = {
+	separated: `  key separation      ok (wallet key ${separation.wallet_fp}, session secret ${separation.jwt_fp})`,
+	shared: `  key separation      FAILED: WALLET_ENCRYPTION_KEY and JWT_SECRET are the same secret (fingerprint ${separation.wallet_fp}).\n                      A session-secret leak opens every custodial wallet. Re-seal: docs/ops/wallet-key-migration.md`,
+	unknown: '  key separation      unknown: WALLET_ENCRYPTION_KEY or JWT_SECRET is not set in this shell',
+}[separation.status];
+
+if (KEYS_ONLY) {
+	if (AS_JSON) emitJson(JSON.stringify({ checked_at: new Date().toISOString(), key_separation: separation }, null, 2));
+	else console.log(SEPARATION_LINE.trimStart());
+	process.exit(separation.status === 'shared' ? 4 : separation.status === 'unknown' ? 3 : 0);
+}
 const { gatherCustodialKeyHealth } = await import('../api/_lib/custodial-key-health.js');
 
 // A shell with NO decryption key configured cannot tell "sealed under a retired
@@ -124,8 +142,8 @@ const report = await gatherCustodialKeyHealth({
 });
 
 if (AS_JSON) {
-	emitJson(JSON.stringify(report, null, 2));
-	process.exit(0);
+	emitJson(JSON.stringify({ ...report, key_separation: separation }, null, 2));
+	process.exit(separation.status === 'shared' ? 4 : 0);
 }
 
 const pct = (n, d) => (d ? `${((n / d) * 100).toFixed(1)}%` : 'n/a');
@@ -135,6 +153,7 @@ console.log(`  wallets             ${report.wallets} (${report.counts.platform} 
 console.log(`  decryptable         ${report.decryptable} (${pct(report.decryptable, report.wallets)})`);
 console.log(`  undecryptable       ${report.undecryptable} (${pct(report.undecryptable, report.wallets)}), ${report.counts.stranded_funded} confirmed funded, ${report.counts.stranded_unread} unread`);
 console.log(`  read errors         ${report.read_errors}`);
+console.log(SEPARATION_LINE);
 console.log('');
 if (report.counts.stranded_unread > 0) {
 	console.log(`  SOL stranded        UNKNOWN: ${report.counts.stranded_unread} undecryptable wallet(s) never got a balance read`);
@@ -169,4 +188,4 @@ if (report.wallets > 0 && report.undecryptable === report.wallets) {
 	console.log('  ops number: those users cannot withdraw. Escalate before anything else.');
 	console.log('  Decision brief: docs/ops/stranded-wallets.md');
 }
-process.exit(0);
+process.exit(separation.status === 'shared' ? 4 : 0);

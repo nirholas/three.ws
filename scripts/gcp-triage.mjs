@@ -1111,7 +1111,8 @@ async function probeServiceWallets() {
 async function probeCustodialKeys() {
 	if (!existsSync('.env')) return { status: 'skipped', note: 'no .env with DB/encryption secrets here' };
 	const r = await runCommand(['node', 'scripts/audit-custodial-key-health.mjs', '--json'], { timeoutMs: 300000 });
-	if (r.code !== 0 || r.timedOut) {
+	// Exit 4 is a complete report whose only failure is shared WALLET_ENCRYPTION_KEY and JWT_SECRET values; it is parsed below.
+	if ((r.code !== 0 && r.code !== 4) || r.timedOut) {
 		// Exit 3 with a structured error is the audit refusing to guess: no
 		// decryption key is configured here, so every wallet would read as
 		// undecryptable and a 100%-stranded verdict would be an artifact of this
@@ -1136,6 +1137,12 @@ async function probeCustodialKeys() {
 		findings.push(deepFinding('custodial-keys-unread', 'investigate', `${strandedUnread} undecryptable wallet(s) never got a balance read, so "stranded" is unknown for them`, {
 			count: strandedUnread, sample,
 			action: 'NOT a "0 stranded" verdict: the audit could not reach a working Solana RPC lane for these wallets. Check healthz rpc_lanes for how many lanes are cooling, then re-run once a lane recovers.',
+		}));
+	}
+	if (report.key_separation?.status === 'shared') {
+		findings.push(deepFinding('custodial-key-shared-with-jwt', 'owner', 'WALLET_ENCRYPTION_KEY and JWT_SECRET are the same secret', {
+			count: 1, sample: `fingerprint ${report.key_separation.wallet_fp}`,
+			action: 'A session-secret leak would open every custodial wallet, and rotating JWT_SECRET would brick them. Owner runs the verified re-seal in docs/ops/wallet-key-migration.md (scripts/reseal-custodial-wallets.mjs, dry run first).',
 		}));
 	}
 	const note = `${report.wallets} wallets, ${report.undecryptable} undecryptable, ${strandedUnread ? 'unknown (unread)' : `${report.sol?.stranded ?? 0}`} SOL stranded`;

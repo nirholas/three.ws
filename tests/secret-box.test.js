@@ -163,3 +163,77 @@ describe('secret-box write-key guard', () => {
 		expect(JSON.stringify(db.rows.get(WRITE_KEY_SETTING))).not.toContain(PROD);
 	});
 });
+
+describe('secret-box rotation ordering and explicit-key helpers', () => {
+	const CURRENT = 'current-wallet-encryption-key-0123456789-abcd';
+	const MID = 'middle-retired-encryption-key-5555555555-efghij';
+	const OLDEST = 'oldest-retired-encryption-key-7777777777-klmnop';
+
+	afterEach(() => {
+		delete process.env.WALLET_ENCRYPTION_KEY_PREVIOUS;
+	});
+
+	it('lists candidates as current, retired newest-first, then JWT_SECRET', async () => {
+		const { secretBoxKeyCandidates } = await load();
+		process.env.WALLET_ENCRYPTION_KEY = CURRENT;
+		process.env.WALLET_ENCRYPTION_KEY_PREVIOUS = `${MID}\n${OLDEST}`;
+		expect(secretBoxKeyCandidates()).toEqual([CURRENT, MID, OLDEST, JWT]);
+	});
+
+	it('always seals under the current key even when retired keys are configured', async () => {
+		const { encryptSecret, openWithKeys } = await load();
+		process.env.WALLET_ENCRYPTION_KEY = CURRENT;
+		process.env.WALLET_ENCRYPTION_KEY_PREVIOUS = `${MID},${OLDEST}`;
+		const ct = await encryptSecret('sealed-now');
+		expect(await openWithKeys(ct, [MID, OLDEST, JWT])).toBeNull();
+		expect(await openWithKeys(ct, [CURRENT])).toMatchObject({ plaintext: 'sealed-now', index: 0 });
+	});
+
+	it('openWithKeys reports which candidate opened a record and null when none does', async () => {
+		const { sealWithKey, openWithKeys } = await load();
+		const ct = await sealWithKey('payload', OLDEST);
+		expect(await openWithKeys(ct, [CURRENT, MID, OLDEST])).toMatchObject({ plaintext: 'payload', index: 2 });
+		expect(await openWithKeys(ct, [CURRENT, MID])).toBeNull();
+	});
+
+	it('a rotation reads old records via _PREVIOUS and, once resealed, no longer needs it', async () => {
+		const { sealWithKey, decryptSecret } = await load();
+		const legacy = await sealWithKey('rotating', MID);
+		process.env.WALLET_ENCRYPTION_KEY = CURRENT;
+		process.env.WALLET_ENCRYPTION_KEY_PREVIOUS = MID;
+		expect(await decryptSecret(legacy)).toBe('rotating');
+		const resealed = await sealWithKey(await decryptSecret(legacy), CURRENT);
+		delete process.env.WALLET_ENCRYPTION_KEY_PREVIOUS;
+		expect(await decryptSecret(resealed)).toBe('rotating');
+		await expect(decryptSecret(legacy)).rejects.toThrow();
+	});
+});
+
+describe('keySeparation', () => {
+	it('reports shared, separated and unknown without returning key values', async () => {
+		const { keySeparation } = await load();
+		const shared = keySeparation({ WALLET_ENCRYPTION_KEY: JWT, JWT_SECRET: JWT });
+		expect(shared.status).toBe('shared');
+		expect(shared.ok).toBe(false);
+		const sep = keySeparation({ WALLET_ENCRYPTION_KEY: DEDICATED, JWT_SECRET: JWT });
+		expect(sep).toMatchObject({ status: 'separated', ok: true });
+		expect(sep.wallet_fp).toMatch(/^[0-9a-f]{8}$/);
+		expect(JSON.stringify(sep)).not.toContain(DEDICATED);
+		expect(keySeparation({ JWT_SECRET: JWT }).status).toBe('unknown');
+	});
+});
+
+describe('audit-custodial-key-health --keys-only', () => {
+	const run = async (env) => {
+		const { spawnSync } = await import('node:child_process');
+		return spawnSync(process.execPath, ['scripts/audit-custodial-key-health.mjs', '--keys-only'], {
+			env: { PATH: process.env.PATH, ...env },
+			encoding: 'utf8',
+		}).status;
+	};
+	it('exits 4 when shared, 3 when unknown, 0 when separated', async () => {
+		expect(await run({ WALLET_ENCRYPTION_KEY: JWT, JWT_SECRET: JWT })).toBe(4);
+		expect(await run({ JWT_SECRET: JWT })).toBe(3);
+		expect(await run({ WALLET_ENCRYPTION_KEY: DEDICATED, JWT_SECRET: JWT })).toBe(0);
+	});
+});

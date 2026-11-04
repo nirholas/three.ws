@@ -219,7 +219,8 @@ future URL that does embed a key is classified as the credential it is.
 
 Two things the sweep surfaced that are NOT fixed here, because both need an owner decision:
 
-- `WALLET_ENCRYPTION_KEY` and `JWT_SECRET` hold the **same value** on production. The
+- `WALLET_ENCRYPTION_KEY` and `JWT_SECRET` hold the **same value** on production (tooling and runbook
+  now exist: see "Dedicated-key re-seal" below; applying it is the owner's step). The
   custodial-wallet guard in `secret-box.js` requires a dedicated key and refuses the
   `JWT_SECRET` fallback, and a var set to the same string passes that guard while defeating
   its point. Changing it is a re-key, not a config edit: see the top of this file for what
@@ -373,6 +374,151 @@ home fails to decrypt, that is one wrong key for the deployment, not a fleet of 
 broken houses: put the outgoing key in `WALLET_ENCRYPTION_KEY_PREVIOUS` before telling
 anybody to reconnect.
 
+## Dedicated-key re-seal: inventory, dry-run counts and runbook (2026-11-04)
+
+Production's `WALLET_ENCRYPTION_KEY` (Secret Manager `wallet-encryption-key`, one version)
+and `JWT_SECRET` (`jwt-secret`) hold the same value: `node scripts/audit-custodial-key-health.mjs --keys-only`
+exits 4 (fingerprint `245209ce`). A session-secret leak therefore opens every custodial
+wallet, and rotating `JWT_SECRET` to kill sessions would brick them. The fix is a verified
+re-seal of every sealed value under a new key, then the key swap. The tool is
+`scripts/reseal-custodial-wallets.mjs`; its tests are `tests/reseal-custodial-wallets.test.js`
+(synthetic keys, real in-process Postgres) and the rotation-ordering cases in
+`tests/secret-box.test.js`.
+
+### Sealed-column inventory
+
+Every `encryptSecret` call site in `api/` and what it writes (`grep -rn "encryptSecret(" api workers`).
+The re-seal script's `TARGETS` list covers every SQL column in this table; `address` is the
+stored public address the decrypted secret must derive before a row is rewritten.
+
+| Table.column | Holds | Address check |
+|---|---|---|
+| `agent_identities.meta.encrypted_solana_secret` | agent custodial Solana key | `meta.solana_address` |
+| `agent_identities.meta.encrypted_wallet_key` | agent custodial EVM key | `wallet_address` |
+| `agent_identities.meta.hyperliquid.api_wallet.encrypted` | Hyperliquid API wallet key | `...api_wallet.address` |
+| `master_wallets.encrypted_solana_secret` / `encrypted_evm_key` | per-user master wallet | `solana_address` / `evm_address` |
+| `x402_ring_pool.encrypted_secret` | x402 ring pool wallets | `pubkey` |
+| `x402_fresh_wallets.encrypted_secret` | per-job fresh x402 wallets | `pubkey` |
+| `agent_vaults.encrypted_secret` | vault trading wallet | `vault_address` |
+| `irl_drops.escrow_secret_enc` | money-drop escrow wallet | `escrow_address` |
+| `agent_signers.session_secret_enc` | self-custody session delegate | `session_pubkey` |
+| `pump_funded_launch_intents.mint_secret` | new coin mint keypair | `mint` |
+| `agent_cards.secret_enc` | virtual card secret | none (opaque JSON) |
+| `agent_mcp_connections.credentials_enc` | MCP connection credentials | none |
+| `home_satellites.viewer_secret_enc` | home satellite viewer secret | none |
+| `home_connections.access_token_enc` | Home Assistant token | none |
+| `vanity_inventory.secret_ciphertext` (`aes-256-gcm` rows) | vanity grind keypairs | none (keypair or mnemonic) |
+
+Sealed outside SQL columns, so not in the script, with the reason each is safe to leave:
+`api/vanity/drops.js` `encryptedAtRest` and `api/bnb/vault-upload.js` `contentKeyCiphertext`
+live in the TTL'd drop and key caches (they expire; both still open through `_PREVIOUS`
+during the 30-day window). `api/_lib/health-probes.js` seals a throwaway canary. Rows with
+`secret_scheme = 'gcp-kms+aes-256-gcm'` are KMS envelopes and are not secret-box values.
+
+### Dry-run counts against production (read-only, 2026-11-04)
+
+`node scripts/reseal-custodial-wallets.mjs` with the live `DATABASE_URL`, `WALLET_ENCRYPTION_KEY`
+and `JWT_SECRET` (nothing written, no new key supplied):
+
+| Target | Rows | Resealable | Undecryptable | Address mismatch |
+|---|---:|---:|---:|---:|
+| `agent_identities.meta.encrypted_solana_secret` | 1113 | 1089 | 24 | 0 |
+| `agent_identities.meta.encrypted_wallet_key` | 591 | 562 | 21 | 8 |
+| `master_wallets.encrypted_solana_secret` | 3 | 3 | 0 | 0 |
+| `master_wallets.encrypted_evm_key` | 3 | 3 | 0 | 0 |
+| `x402_ring_pool.encrypted_secret` | 2000 | 2000 | 0 | 0 |
+| `x402_fresh_wallets.encrypted_secret` | 4813 | 4813 | 0 | 0 |
+| `home_connections.access_token_enc` | 42 | 7 | 35 | 0 |
+| `home_satellites.viewer_secret_enc` | 2 | 0 | 2 | 0 |
+| `vanity_inventory.secret_ciphertext` | 2 | 0 | 2 | 0 |
+| every other target | 0 | 0 | 0 | 0 |
+
+How to read it:
+
+- **Undecryptable** rows are the already-known sealed set (24 Solana wallets sealed by
+  deployments that carried their own key, see the top of this file and `stranded-wallets.md`),
+  plus the same agents' EVM keys and 39 home and vanity rows written by non-production
+  deployments against the shared database. The script never touches them. Every key they
+  need that we hold is already tried; `scripts/recover-sealed-wallets.mjs` is still the way
+  to bring one back if its key surfaces.
+- **8 address mismatches** are agents whose stored `wallet_address` is not the address of
+  their custodial EVM key (the column was reused for another address after creation; checked
+  on one: created 2026-04-30, stored and derived addresses differ). The secret opens fine, so
+  nothing is lost, but the script refuses to rewrite a row it cannot prove. `--apply` aborts on
+  the first one; pass `--hold-mismatched` to leave exactly those rows under the old key (they
+  stay readable through `WALLET_ENCRYPTION_KEY_PREVIOUS`) and reseal everything else.
+
+### Runbook (owner-gated: steps 3 to 6 change production)
+
+All values go through files in the gitignored `.deploy/` at mode 600 and shell variables.
+Never paste a key into argv, a ticket or chat; the scripts print fingerprints and counts only.
+
+1. **Measure.** Export the live values and confirm the starting state:
+   ```sh
+   export DATABASE_URL="$(node scripts/read-service-env.mjs '^DATABASE_URL$' --raw)"
+   export WALLET_ENCRYPTION_KEY="$(node scripts/read-service-env.mjs '^WALLET_ENCRYPTION_KEY$' --raw)"
+   export JWT_SECRET="$(node scripts/read-service-env.mjs '^JWT_SECRET$' --raw)"
+   node scripts/audit-custodial-key-health.mjs --keys-only      # exit 4 while they match
+   node scripts/reseal-custodial-wallets.mjs                    # dry run, compare with the table above
+   ```
+2. **Generate the new key offline** and keep a copy of the old one:
+   ```sh
+   umask 077; mkdir -p .deploy
+   openssl rand -base64 48 | tr -d '\n' > .deploy/wallet-key-new
+   printf %s "$WALLET_ENCRYPTION_KEY" > .deploy/wallet-key-old
+   export RESEAL_NEW_KEY="$(cat .deploy/wallet-key-new)"
+   RESEAL_NEW_KEY="$RESEAL_NEW_KEY" node scripts/reseal-custodial-wallets.mjs   # dry run with the new key, same counts expected
+   ```
+3. **Let the services read both keys first** (no data changes yet). The old key becomes
+   `_PREVIOUS`, the new key becomes current. `agent-sniper` carries the key too:
+   ```sh
+   gcloud secrets create wallet-encryption-key-previous --project aerial-vehicle-466722-p5 --data-file=.deploy/wallet-key-old
+   gcloud secrets versions add wallet-encryption-key --project aerial-vehicle-466722-p5 --data-file=.deploy/wallet-key-new
+   for svc in three-ws-api agent-sniper; do
+     gcloud run services update $svc --region us-central1 --project aerial-vehicle-466722-p5 \
+       --update-secrets WALLET_ENCRYPTION_KEY=wallet-encryption-key:latest,WALLET_ENCRYPTION_KEY_PREVIOUS=wallet-encryption-key-previous:latest
+   done
+   ```
+   Use `--update-secrets` or `--update-env-vars`, never `--set-env-vars` (it replaces the whole set).
+   The write-key guard moves the database fingerprint forward because the outgoing key is
+   listed in `_PREVIOUS`. Check `/api/healthz` and run the audit with the new current key:
+   the undecryptable count must equal the dry-run figure.
+4. **Re-seal.** With the OLD values in the shell (step 1) and `RESEAL_NEW_KEY` set:
+   ```sh
+   node scripts/reseal-custodial-wallets.mjs --apply --hold-mismatched
+   node scripts/reseal-custodial-wallets.mjs                    # rerun: every target now `current`, nothing resealable
+   ```
+   The run is batched (`--batch-size`, default 100), writes the new ciphertext and a backup
+   row (`custodial_reseal_backup`: old and new ciphertext) in one atomic batch, re-reads the
+   stored value and re-derives the address after each batch, and is resumable: if it dies,
+   run the same command again, rows already under the new key are skipped.
+5. **Verify.** Re-run the audit with the new key as current and the old one in `_PREVIOUS`
+   (`node scripts/audit-custodial-key-health.mjs`): undecryptable count unchanged from the dry run,
+   `--keys-only` still exits 4 only because `JWT_SECRET` still equals the old key; that is next.
+6. **Retire the old key after 30 days.** Leave `WALLET_ENCRYPTION_KEY_PREVIOUS` set for 30
+   days. Then rotate `JWT_SECRET` to a fresh value (this signs every user out once) and delete
+   `WALLET_ENCRYPTION_KEY_PREVIOUS` with `gcloud run services update ... --remove-secrets WALLET_ENCRYPTION_KEY_PREVIOUS`.
+   Until `JWT_SECRET` changes it is still an accepted decrypt candidate for old-key records.
+   `node scripts/audit-custodial-key-health.mjs --keys-only` must exit 0 afterwards, and
+   `scripts/recover-sealed-wallets.mjs --list` should show only the known sealed set.
+
+**Rollback.** Before step 6 nothing is irreversible. Either (a) keep going forward: rows under
+the new key stay readable as long as the new key is current or in `_PREVIOUS`; or (b) restore
+the old ciphertexts with `node scripts/reseal-custodial-wallets.mjs --rollback --apply`
+(compare-and-swap: a row someone changed since is left alone and counted as skipped), then put
+the old key back as current (`gcloud run services update ... --update-secrets WALLET_ENCRYPTION_KEY=wallet-encryption-key:1`)
+and the new key in `WALLET_ENCRYPTION_KEY_PREVIOUS`. The backup table is kept until step 6.
+
+### X402_SEED_SOLANA_SECRET_BASE58 shares a value with LAUNCHER_MASTER_SECRET_KEY_B64
+
+`scripts/wire-master-wallet.mjs` assigns the two slots to different wallets; production gave
+them separate secrets (`x402-seed-solana-secret-base58`, `wallet-coin-launcher-master-b64`)
+holding the same wallet. To give the seed slot its own wallet, if the owner wants that
+corrected: generate a keypair, fund it for the seed spender's float, then
+`printf %s "<base58 secret>" | gcloud secrets versions add x402-seed-solana-secret-base58 --data-file=-`
+and roll a new revision. The launcher secret is untouched. Moving funds out of the old shared
+wallet is a separate owner-approved transfer.
+
 ## Takeaways
 
 - **A key rotation must carry the old key forward, or accompany a sweep.** This is now
@@ -398,6 +544,7 @@ anybody to reconnect.
   the corrected cause of the sealing.
 - `scripts/recover-sealed-wallets.mjs`: re-encrypt a sealed wallet in place once its
   original key is found.
+- `scripts/reseal-custodial-wallets.mjs`: verified, resumable re-seal of every sealed column under a new key.
 - `scripts/audit-custodial-key-health.mjs`: read-only sweep of every custodial wallet,
   how many still decrypt, how much SOL sits behind the ones that do not, and which
   addresses they are. Needs `DATABASE_URL` and `WALLET_ENCRYPTION_KEY`; it exits 3 rather

@@ -20,7 +20,7 @@
 // NOT tolerant: it always uses the current dedicated key (fail-closed in prod), so
 // rotation upgrades records as they are rewritten and never depends on JWT_SECRET.
 
-import { webcrypto } from 'node:crypto';
+import { createHash, webcrypto } from 'node:crypto';
 import { env } from './env.js';
 
 const subtle = globalThis.crypto?.subtle || webcrypto.subtle;
@@ -199,11 +199,36 @@ async function guardWriteKey(secret) {
 }
 
 // v2 layout: "v2:" + base64( salt[16] || iv[12] || ciphertext+tag ).
-export async function encryptSecret(plaintext) {
+/**
+ * Is the custodial wallet key a different secret from the session signing secret?
+ *
+ * Production once ran with WALLET_ENCRYPTION_KEY === JWT_SECRET, which makes a
+ * session-secret leak a custody leak and makes rotating JWT_SECRET to invalidate
+ * sessions brick every wallet sealed under it. Only 8-hex-digit SHA-256
+ * fingerprints are ever returned, never a value, so the result is safe to log.
+ *
+ * @param {Record<string, string | undefined>} [source] defaults to the live env
+ * @returns {{ status: 'separated' | 'shared' | 'unknown', ok: boolean, wallet_fp: string | null, jwt_fp: string | null }}
+ */
+export function keySeparation(source = process.env) {
+	const fp = (v) => (v ? createHash('sha256').update(String(v)).digest('hex').slice(0, 8) : null);
+	const wallet_fp = fp(source.WALLET_ENCRYPTION_KEY);
+	const jwt_fp = fp(source.JWT_SECRET);
+	if (!wallet_fp || !jwt_fp) return { status: 'unknown', ok: false, wallet_fp, jwt_fp };
+	return wallet_fp === jwt_fp
+		? { status: 'shared', ok: false, wallet_fp, jwt_fp }
+		: { status: 'separated', ok: true, wallet_fp, jwt_fp };
+}
+
+/**
+ * Seal `plaintext` under an explicit secret instead of the environment's current
+ * key. encryptSecret is this plus the production write-key guard; the re-seal
+ * tooling uses it directly because it must write under a key that is not yet the
+ * deployed one.
+ */
+export async function sealWithKey(plaintext, secret) {
 	const salt = randomBytes(16);
 	const iv = randomBytes(12);
-	const secret = walletMasterSecret();
-	await guardWriteKey(secret);
 	const key = await deriveKey(secret, salt);
 	const data = new TextEncoder().encode(plaintext);
 	const ct = await subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
@@ -212,6 +237,46 @@ export async function encryptSecret(plaintext) {
 	buf.set(iv, salt.length);
 	buf.set(new Uint8Array(ct), salt.length + iv.length);
 	return V2_PREFIX + Buffer.from(buf).toString('base64');
+}
+
+export async function encryptSecret(plaintext) {
+	const secret = walletMasterSecret();
+	await guardWriteKey(secret);
+	return sealWithKey(plaintext, secret);
+}
+
+/**
+ * Open a v2 or legacy v1 ciphertext with exactly the given candidate secrets, in
+ * order, and report which one worked. Returns null when none does. Unlike
+ * decryptSecret it never consults the environment, so a caller can ask the
+ * precise question "does the NEW key alone open this?".
+ *
+ * @param {string} ciphertext
+ * @param {string[]} secrets
+ * @returns {Promise<{ plaintext: string, index: number } | null>}
+ */
+export async function openWithKeys(ciphertext, secrets) {
+	if (typeof ciphertext !== 'string' || !ciphertext) return null;
+	const v2 = ciphertext.startsWith(V2_PREFIX);
+	let salt;
+	let iv;
+	let ct;
+	try {
+		const raw = Buffer.from(v2 ? ciphertext.slice(V2_PREFIX.length) : ciphertext, 'base64');
+		salt = v2 ? raw.subarray(0, 16) : LEGACY_SALT;
+		iv = v2 ? raw.subarray(16, 28) : raw.subarray(0, 12);
+		ct = v2 ? raw.subarray(28) : raw.subarray(12);
+	} catch {
+		return null;
+	}
+	for (let index = 0; index < secrets.length; index++) {
+		try {
+			const key = await deriveKey(secrets[index], salt);
+			const plain = await subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+			return { plaintext: new TextDecoder().decode(plain), index };
+		} catch { /* wrong key: AES-GCM authenticates every attempt */ }
+	}
+	return null;
 }
 
 export async function decryptSecret(ciphertext) {
