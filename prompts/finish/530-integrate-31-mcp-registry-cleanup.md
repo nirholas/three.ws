@@ -1,5 +1,7 @@
 # integrate 31: clean up the registry namespace and publish what is missing
 
+**Status, 2026-11-04:** all repo work is done and every Definition of done line passes except the owner's external writes. A fresh `node scripts/publish-mcp-servers.mjs --dry-run` plans exactly four writes: publish `3d-ar-studio@0.3.2` (npm and registry), publish `io.github.nirholas/solana-memo-media-mcp@0.1.1` to the registry (npm already has it), and deprecate `claude-code-explorer-mcp` and `data-workbench-mcp` (registry and npm). The decision table is in the 2026-10-25 entry of [_context/integrate-PROGRESS.md](_context/integrate-PROGRESS.md). Remaining, owner (gate 2, external publish): `node scripts/publish-mcp-servers.mjs`, then `node scripts/publish-mcp-servers.mjs --deprecate --apply`. Delete this file once both have run.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now; one gated step, named below.
 
 ## Operating clause (binding)
