@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T19:35:18.027Z",
+	"generated_at": "2026-11-04T19:48:15.382Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -245,6 +245,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Catalog and reconstructed avatars load again in embeds and the walk companion",
+			"summary": "Avatars whose model lives outside the main bucket, such as the built-in catalog characters and avatars rebuilt from a photo, answered 404 on their embed-friendly GLB link, so embeds and the walk companion showed the robot placeholder instead. That link now serves those models, with the same open cross-origin access as every other avatar.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Chain turnover never reads as zero, and coin signals say why they are blank",
 			"summary": "On /chains, a chain whose 24h DEX volume is tiny next to its TVL now shows <0.001x instead of 0.000x, which looked like no trading at all, and the Turnover header's info icon is drawn so it no longer shows as an empty box on systems without that character. On a coin's launch page, the \"Seeded by one funder\" and \"Launch tx\" cells still show a dash when the signal cannot be computed, but hovering now tells you why, for example when a coin has too much trade history to reach its creation transaction.",
 			"link": "/chains",
@@ -342,6 +352,16 @@
 			"link": "/docs/ibm",
 			"tags": [
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Hover tips no longer swallow the click on the button underneath",
+			"summary": "A hover tip that opened over a neighbouring control used to catch the click meant for it, and stayed open while the pointer sat on it. On /render-lab the Contact sheet tip covered the Poses button, so clicking Poses did nothing. Plain hover tips now let clicks pass straight through and close the moment you press their control. Glossary term tips keep their Full glossary link reachable while they are showing.",
+			"link": "/render-lab",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -594,6 +614,16 @@
 			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The predictions scanner reads the markets nearest par and names each one in full",
+			"summary": "The no-arbitrage scanner on Agent Predictions now spends its order-book reads on the open markets whose YES plus NO price sits closest to par, skips markets whose close time has passed, and honours its market cap even when one event holds hundreds of brackets. Each row now shows the event and the outcome together, and the note under the scanner says how many books were read and how many had both sides quoted.",
+			"link": "/agent-predictions",
+			"tags": [
+				"fix"
 			]
 		},
 		{

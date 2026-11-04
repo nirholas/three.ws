@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T19:35:18.129Z",
+	"generated_at": "2026-11-04T19:48:15.424Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4372,
+	"total": 4375,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -248,6 +248,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Catalog and reconstructed avatars load again in embeds and the walk companion",
+			"summary": "Avatars whose model lives outside the main bucket, such as the built-in catalog characters and avatars rebuilt from a photo, answered 404 on their embed-friendly GLB link, so embeds and the walk companion showed the robot placeholder instead. That link now serves those models, with the same open cross-origin access as every other avatar.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Chain turnover never reads as zero, and coin signals say why they are blank",
 			"summary": "On /chains, a chain whose 24h DEX volume is tiny next to its TVL now shows <0.001x instead of 0.000x, which looked like no trading at all, and the Turnover header's info icon is drawn so it no longer shows as an empty box on systems without that character. On a coin's launch page, the \"Seeded by one funder\" and \"Launch tx\" cells still show a dash when the signal cannot be computed, but hovering now tells you why, for example when a coin has too much trade history to reach its creation transaction.",
 			"link": "/chains",
@@ -345,6 +355,16 @@
 			"link": "/docs/ibm",
 			"tags": [
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Hover tips no longer swallow the click on the button underneath",
+			"summary": "A hover tip that opened over a neighbouring control used to catch the click meant for it, and stayed open while the pointer sat on it. On /render-lab the Contact sheet tip covered the Poses button, so clicking Poses did nothing. Plain hover tips now let clicks pass straight through and close the moment you press their control. Glossary term tips keep their Full glossary link reachable while they are showing.",
+			"link": "/render-lab",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -597,6 +617,16 @@
 			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The predictions scanner reads the markets nearest par and names each one in full",
+			"summary": "The no-arbitrage scanner on Agent Predictions now spends its order-book reads on the open markets whose YES plus NO price sits closest to par, skips markets whose close time has passed, and honours its market cap even when one event holds hundreds of brackets. Each row now shows the event and the outcome together, and the note under the scanner says how many books were read and how many had both sides quoted.",
+			"link": "/agent-predictions",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1522,37 +1552,6 @@
 			"title": "Halloween Weekend gifts are claimable on /play",
 			"summary": "The /play lobby now shows the Halloween Weekend 2026 drop with a live countdown, the gift list and a one-click claim for the Pumpkin Cap and Witchlight Aura. A pill follows you into the world until you claim, and a moonlit vignette dresses /play for the weekend (toggle it off with the Halloween look button).",
 			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Halloween Weekend on three.ws: a haunted desktop, a spooky classic homepage and four free gifts at /halloween",
-			"summary": "Through Sunday night the desktop boots and locks on a moonlit night palette with Creepster headings, then opens on a haunted hill wallpaper with drifting fog, bats and a pumpkin accent, plus a Halloween Gifts app. The classic homepage gets a ribbon, bats and embers over the hero, Halloween prompt ideas and a Trick or treat chip that sends a flock of bats out of the avatar. The new /halloween page counts down to the close and claims all four gifts in one press: the Pumpkin Cap and Witchlight Aura for /play, a Halloween 2026 profile badge, and the Haunted wallpaper, which claimers keep in desktop Settings after the weekend. Gifts are free, only claimable this weekend, and yours forever. Prefer your usual look? Turn it off in Settings, Personalization, Season. Claims now reach their own endpoint, so they no longer collide with the 3D drops service.",
-			"link": "/halloween",
-			"tags": [
-				"feature",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Live presenter PA in /play: one host speaks to the whole coin world",
-			"summary": "A meetup host can now speak live to every player in a coin world, across every shard and both the General and Holders worlds. Type /host in chat to open the presenter panel. The coin creator, a listed host wallet, or anyone with the event host key can go live. Listeners see a LIVE bar with the speaker, a level meter, mute and volume, plus optional live captions. Only one person holds the mic at a time, and the host can take it over.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "One shared group photo for everyone in the meetup world, and a live headcount",
-			"summary": "Meetups in /play can now end with a group photo the whole plaza takes together. A minute before, a banner calls everyone to the totem; ten seconds out a big countdown appears; three seconds out every avatar strikes the same cheering pose while fireworks launch overhead; then every player's camera fires at the same instant and the shot, stamped with the event name, is ready to download or copy. If your game stutters right at the moment you still get the photo, and nobody who missed the countdown gets one. The event chip and agenda now also show how many people are in the world right now, read from the live server and left off rather than guessed when it does not answer. Meetup #3 on November 6 takes its photo at 8:58 AM Pacific.",
-			"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three",
 			"tags": [
 				"feature"
 			]

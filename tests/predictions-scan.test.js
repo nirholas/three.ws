@@ -15,7 +15,7 @@ function market(id, { yes, no, close = future, status = true } = {}) {
 		id,
 		event_id: `E-${id}`,
 		title: id,
-		provider: 'polymarket',
+		provider: 'example',
 		tradable: status,
 		close_time: close,
 		outcomes: [

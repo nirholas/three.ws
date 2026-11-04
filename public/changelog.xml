@@ -191,6 +191,14 @@
 			<description>A run you start from the API or the Runs tab can now call the third-party MCP servers you connected to the agent on /mcp-integrations, the same ext_ tools chat already had. Every call shows on the Runs tab with its arguments, the server's answer and the step's cost. Tools that move money or cannot be undone stay out of autonomous runs, since nobody is there to approve them; the agent says in its report that you need to take that step. A run's toolsAllowed list can now name ext_ tools too.</description>
 		</item>
 		<item>
+			<title>Catalog and reconstructed avatars load again in embeds and the walk companion</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Catalog and reconstructed avatars load again in embeds and the walk companion</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Avatars whose model lives outside the main bucket, such as the built-in catalog characters and avatars rebuilt from a photo, answered 404 on their embed-friendly GLB link, so embeds and the walk companion showed the robot placeholder instead. That link now serves those models, with the same open cross-origin access as every other avatar.</description>
+		</item>
+		<item>
 			<title>Chain turnover never reads as zero, and coin signals say why they are blank</title>
 			<link>https://three.ws/chains</link>
 			<guid isPermaLink="false">2026-11-04:Chain turnover never reads as zero, and coin signals say why they are blank</guid>
@@ -269,6 +277,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>Granite Guardian screens agent messages, identities and autonomous sends for risks like jailbreaks and harm. When no Guardian lane was configured, the assess endpoint answered 503 and the identity check let everything through, yet every health probe stayed green. /api/healthz now carries a granite_guardian subsystem: down in production while no lane is set, ok once the self-hosted GPU worker answers its health probe or the watsonx lane is configured, and degraded when the self-hosted worker fails but watsonx can still answer. The worker deploy config was also corrected for the pinned vLLM release, which no longer accepts one of its old flags.</description>
+		</item>
+		<item>
+			<title>Hover tips no longer swallow the click on the button underneath</title>
+			<link>https://three.ws/render-lab</link>
+			<guid isPermaLink="false">2026-11-04:Hover tips no longer swallow the click on the button underneath</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A hover tip that opened over a neighbouring control used to catch the click meant for it, and stayed open while the pointer sat on it. On /render-lab the Contact sheet tip covered the Poses button, so clicking Poses did nothing. Plain hover tips now let clicks pass straight through and close the moment you press their control. Glossary term tips keep their Full glossary link reachable while they are showing.</description>
 		</item>
 		<item>
 			<title>HumanIK avatars and complete bodies without finger joints now animate</title>
@@ -461,6 +477,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.</description>
+		</item>
+		<item>
+			<title>The predictions scanner reads the markets nearest par and names each one in full</title>
+			<link>https://three.ws/agent-predictions</link>
+			<guid isPermaLink="false">2026-11-04:The predictions scanner reads the markets nearest par and names each one in full</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The no-arbitrage scanner on Agent Predictions now spends its order-book reads on the open markets whose YES plus NO price sits closest to par, skips markets whose close time has passed, and honours its market cap even when one event holds hundreds of brackets. Each row now shows the event and the outcome together, and the note under the scanner says how many books were read and how many had both sides quoted.</description>
 		</item>
 		<item>
 			<title>The roadmap now shows where each phase really stands</title>

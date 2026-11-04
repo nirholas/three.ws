@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "The predictions scanner reads the markets nearest par and names each one in full",
+			"summary": "The no-arbitrage scanner on Agent Predictions now spends its order-book reads on the open markets whose YES plus NO price sits closest to par, skips markets whose close time has passed, and honours its market cap even when one event holds hundreds of brackets. Each row now shows the event and the outcome together, and the note under the scanner says how many books were read and how many had both sides quoted.",
+			"tags": ["fix"],
+			"link": "/agent-predictions"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Catalog and reconstructed avatars load again in embeds and the walk companion",
 			"summary": "Avatars whose model lives outside the main bucket, such as the built-in catalog characters and avatars rebuilt from a photo, answered 404 on their embed-friendly GLB link, so embeds and the walk companion showed the robot placeholder instead. That link now serves those models, with the same open cross-origin access as every other avatar.",
 			"tags": ["fix"]
