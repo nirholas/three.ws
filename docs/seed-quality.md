@@ -24,7 +24,7 @@ GLB bytes
    │      fails ──► quarantine (forge/rejected/) ──► never published
    │      passes
    │
-   ├─ 2. VISION JUDGE ─────────── render + Vertex Gemini, ~10-20 s
+   ├─ 2. VISION JUDGE ─────────── render + vision chain, ~15-30 s
    │      fails ──► quarantine ──► never published
    │      unreachable ──► publish anyway, flagged vision_unavailable
    │      passes
@@ -68,9 +68,9 @@ Two deliberate asymmetries:
 
 Renders one view and asks a vision model two separate questions.
 
-**Realism**, via [`judgeOnce`](../api/_lib/quality-bench.js) from the realism
-regression bench. It is *imported, never forked*, so the catalog gate and the
-bench can never disagree about what a score of 7 means. Four dimensions on a
+**Realism**, asked with [`buildJudgePrompt`](../api/_lib/quality-bench.js) from
+the realism regression bench. The prompt is *imported, never forked*, so the
+catalog gate and the bench can never disagree about what a score of 7 means. Four dimensions on a
 1-10 scale: `photorealism`, `geometryIntegrity`, `textureFidelity`,
 `promptAdherence`.
 
@@ -124,6 +124,13 @@ counts the attempt in `forge_seed_jobs.gate_attempts`. The next tick re-gates it
 Only after `GATE_MAX_ATTEMPTS` (3) does the row move to the terminal `gate_error`
 state.
 
+The vision phase (below) reuses the same column and the same bound with one
+difference in the outcome: a row in `mesh_passed` has already passed the
+deterministic stage, so once its vision attempts are spent it is **published**
+on the mesh verdict, marked `vision_unavailable`, rather than buried in
+`gate_error`. Vision fails soft at the job level exactly as it does inside the
+verdict.
+
 That bound matters in both directions. Nothing ever revisits `gate_error`, so
 burying a row on the first fault throws away a finished mesh that already cost
 GPU time: on 2026-08-12 two seed jobs were lost that way inside one day, both to
@@ -139,8 +146,9 @@ without reading the table.
 Every read the gate makes is bounded so one slow host cannot stall the rest of
 the tick: a lane's public GLB URL is fetched through the shared `fetchUpstream`
 (30 s deadline, two attempts, and a non-2xx is a gate throw rather than an error
-page handed to the GLB parser as mesh bytes), and the in-process Vertex judge
-call carries a 45 s deadline with no retry.
+page handed to the GLB parser as mesh bytes), and each provider attempt the
+in-process judge makes is bounded at 20 s, so one hung rung falls through to the
+next well inside the vision cron's per-asset budget.
 
 ## Rejects are kept, not deleted
 
@@ -169,13 +177,22 @@ is the point: the bar cannot drift between how an asset arrives.
 
 | Transport | Runs in | Render | Judge |
 | --- | --- | --- | --- |
-| `inProcessTransport()` | Cloud Run, GCP service account attached | [`render-clip.js`](../api/_lib/render-clip.js) in process | Vertex Gemini direct |
+| `inProcessTransport()` | Cloud Run (the vision cron) | [`render-clip.js`](../api/_lib/render-clip.js) in process | `describeImage()` from [`vision.js`](../api/_lib/vision.js), Workers AI first |
 | `remoteTransport({ origin })` | A workstation with no GCP credentials | `POST /api/render/avatar-clip` | `POST /api/vision` |
 | `localJudgeTransport({ origin })` | A workstation measuring a vision-chain fix before it deploys | `POST /api/render/avatar-clip` | `describeImage()` from [`vision.js`](../api/_lib/vision.js) in this process |
 
-`remoteTransport` and `localJudgeTransport` share one body (`buildTransport`) and
-differ only in which process calls the model, so their accept rates stay
-comparable. Both ask for the verdict through `askJson`, which gives a model that
+All three share one body (`buildTransport`) and differ only in where the render
+happens and which process calls the model, so their accept rates stay
+comparable. `inProcessTransport` used to call Vertex Gemini directly for both
+questions with nothing behind it; with Vertex on a project billing hold since
+2026-11-01 that made every in-process verdict `unavailable` while the other two
+kept judging, so it now goes through the same provider chain. The in-process and
+local judges ask Workers AI's Llama 4 Scout first (the rung measured to return
+bare JSON 8 times in 8, see `QUALITY_GATE_VISION_LEAD` in
+[`forge-quality-gate.js`](../api/_lib/forge-quality-gate.js)); on 2026-11-04 every
+other rung was down at once (NIM 404, the free OpenRouter routes 429, Vertex and
+OpenAI on billing holds). The prompts did not change, so `SEED_GATE_VERSION`
+stays at 1. Both ask for the verdict through `askJson`, which gives a model that
 replied in prose exactly **one** more attempt with the format instruction
 restated last. That retry never relaxes the verdict, only the format: a second
 prose reply still fails. It exists because the free vision rungs occasionally
@@ -288,28 +305,98 @@ with no redeploy):
 | --- | --- | --- |
 | `SEED_CRON_BATCH` | 1 | Jobs started per tick, submitted two at a time |
 | `SEED_CRON_MAX_PENDING` | 3 x batch | In-flight ceiling |
-| `SEED_CRON_VISION` | off | Enables stage 2 inside the cron |
-| `SEED_CRON_VISION_MS` | 20,000 | Wall-clock budget for stage 2 |
+| `SEED_VISION_PHASE` | off | Two-phase gate: the seed cron stops after the mesh gate and the vision cron judges (see below) |
+| `SEED_VISION_BATCH` | 2 (max 6) | `mesh_passed` rows the vision cron claims per tick |
+| `SEED_VISION_TICK_MS` | 50,000 | Wall-clock budget for one vision-cron tick |
+| `SEED_VISION_ASSET_MS` | 40,000 | Budget for one asset's render + judge in the vision cron |
+| `SEED_CRON_VISION` | off | Legacy: runs stage 2 inline in the seed cron. Ignored while `SEED_VISION_PHASE` is on |
+| `SEED_CRON_VISION_MS` | 20,000 | Budget for the legacy inline stage 2 |
 | `SEED_CRON_RIG` | **on** | Auto-rigs accepted avatars before publishing (`0` to publish static). Only shapes `riggableShape()` accepts are sent |
 
-### Why stage 2 is off by default in the cron
+### The vision phase: stage 2 in a cron of its own
 
-`SEED_CRON_VISION` is deliberately unset in production. The seed cron has a hard
-70-second wall and a history of 504s when a phase overruns, while a render plus
-two judge calls costs 10-20 seconds of it. **Stage 1 always runs** (it is
-deterministic, local, and costs only the GLB fetch), so the catalog is never
-ungated: it is gated on structure but not yet on appearance.
+Stage 2 never ran in the seed cron in production. That cron has a hard 70-second
+wall and a history of 504s when a phase overruns, and a render plus two judge
+calls costs most of it, so the catalog was gated on structure but not on
+appearance. With `SEED_VISION_PHASE=1` the work is split across two crons:
 
-Turning it on is a one-variable change with no deploy:
+```
+generated ──► forge-seed-cron: mesh gate
+                 │ fails ──────────────► rejected (forge/rejected/)
+                 │ passes
+                 ▼
+             mesh_passed  (mesh verdict stored, mesh_passed_at = now)
+                 │
+                 ▼  forge-seed-vision-cron, every minute
+             claim (lease) ──► render + judge
+                 │ accepted ──────────► rigging / done (published)
+                 │ rejected ──────────► rejected (forge/rejected/ + sidecar)
+                 │ judge unreachable ─► stays mesh_passed, gate_attempts + 1
+                 │     attempts spent, or waited > 30 min
+                 │                   ──► done, marked vision_unavailable
+```
+
+[`api/cron/forge-seed-vision-cron.js`](../api/cron/forge-seed-vision-cron.js)
+claims up to `SEED_VISION_BATCH` rows, oldest first, with one `UPDATE` over a
+`FOR UPDATE SKIP LOCKED` subselect that writes `vision_lease_until` (two
+minutes). The lease, not the row lock, is what keeps an overlapping tick off a
+row: the serverless driver commits every statement on its own, so the lock is
+gone the moment the claim returns. A tick that dies mid-judge frees its rows when
+the lease expires, and a row the tick has no time left for is handed back at
+once. Every transition out of `mesh_passed` is a compare-and-set on the status,
+so two ticks (or the sweep below) can never both publish one creation.
+
+Publishing, rigging and quarantine go through
+[`api/_lib/seed-publish.js`](../api/_lib/seed-publish.js), the same module the
+seed cron uses, so an asset judged in the vision phase is written exactly like
+one gated inline.
+
+**Fail soft, bounded.** A judge that cannot be reached is retried on the next
+tick, counted in `gate_attempts` up to `GATE_MAX_ATTEMPTS` (3). After that the
+keeper is published on its mesh verdict with `vision.status = 'unavailable'`.
+That is a deliberate choice: the mesh already passed the deterministic stage, and
+burying a finished, structurally sound asset because a provider was down is the
+failure the retry rule exists to prevent. The accept rate stays honest because it
+is computed over judged assets only.
+
+**The 30-minute bound.** No row waits in `mesh_passed` longer than
+`MESH_PASSED_MAX_WAIT_MS` (30 minutes). The vision cron publishes a row past the
+bound on its mesh verdict, and the seed cron's `vision_sweep` phase does the same
+for up to five stale rows per tick, so even a vision cron that is not running
+(not deployed, unscheduled, crashing on boot) never strands an asset. The vision
+cron also drains `mesh_passed` with the flag off, so turning it off mid-flight
+leaves nothing behind.
+
+**Budget, measured.** On 2026-11-04, `scripts/gcp/seed-vision-measure.mjs` over
+the 10 most recent published seeds (all gate version 1) judged all 10 with the
+chain judge: 8 accepted, 2 rejected (one off-prompt scarf, one figure with an
+incomplete body), an 80% accept rate, at a p50 of 20.5 s and a max of 28 s per
+asset including the render. `SEED_VISION_ASSET_MS` defaults to 40 s for that
+reason; the inline 20 s budget would have turned most assets into retries. A
+real tick on a synthetic clone of a published row ran in 16 to 18 s end to end,
+on both the publish and the quarantine path. Throughput is not the constraint:
+the seed cron publishes single digits per hour.
+
+Measure before and after flipping the flag (read-only, writes nothing):
+
+```sh
+node scripts/gcp/seed-vision-measure.mjs --limit=10                # live chain via /api/vision
+node scripts/gcp/seed-vision-measure.mjs --limit=10 --judge=local  # chain judge in this process
+```
+
+Turning it on, after the code that knows `mesh_passed` is deployed:
 
 ```sh
 gcloud run services update three-ws-api --region us-central1 \
-  --update-env-vars SEED_CRON_VISION=1
+  --update-env-vars SEED_VISION_PHASE=1
 ```
 
-Use `--update-env-vars` (merges), never `--set-env-vars` (replaces the entire
-set). Watch `forge_creations` and the `forge/rejected/` prefix afterwards: if
-ticks start timing out, lower `SEED_CRON_VISION_MS` before turning it back off.
+Rollback is the same command with `SEED_VISION_PHASE=0`: the seed cron goes back
+to publishing straight after the mesh gate, and any rows already parked are
+still judged (or swept) as above. Use `--update-env-vars` (merges), never
+`--set-env-vars` (replaces the entire set). Watch the vision cron's tick
+responses (`published`, `rejected`, `retries`, `vision_unavailable`,
+`duration_ms`) and the `forge/rejected/` prefix afterwards.
 
 ## Tuning the thresholds
 

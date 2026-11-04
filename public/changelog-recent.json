@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T18:20:18.154Z",
+	"generated_at": "2026-11-04T18:35:36.642Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4357,
+	"total": 4360,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -228,6 +228,17 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Embeds can allowlist the skill authors and hosts they trust",
+			"summary": "The agent-3d element's whitelist skill policy now works: list the authors you trust with skill-trusted-authors and the hosts with skill-trusted-origins (or set el.skillTrust from script), and only skills from those authors or hosts install. Before this, whitelist mode had no way to receive the lists and refused every skill. A refused skill now fires a skill:error event so the page can tell the visitor, and a misspelled skill-trust value falls back to the safe owner-only default instead of installing everything unchecked.",
+			"link": "/docs/web-component",
+			"tags": [
+				"security",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Every new agent now starts with a drafted coin",
 			"summary": "A new agent gets a private coin plan drafted from its own name and persona, and its Solana wallet is set up at creation if that step had failed. Owners see a Next step card on the agent page with the drafted name and ticker, whether the launch wallet can cover launch costs, and one Review and launch button that opens the confirmation screen, where nothing is signed or spent until you approve it. Each step from plan viewed to launch succeeded is now recorded so the launch drop-off can be measured.",
 			"link": "/docs/experiments-agent-launch-funnel",
@@ -374,6 +385,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Ops alerts can now reach an inbox, not only the dashboard",
+			"summary": "Operator alerts gain an email channel next to the private Telegram chat. Critical alerts (a leak, a halted payer, a compromised signer) are emailed and pushed every time they fire; warnings reach Telegram once an hour per signature and arrive by email as one hourly digest with counts and the oldest unresolved item, so an inbox is never flooded. Each channel has its own hourly ceiling, so a storm on one never silences the other. The health check now lists which alert channels are wired and flags production as degraded when no one would be told, and a self-test script proves real delivery on every configured channel.",
+			"link": null,
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Optional one-wallet-per-call payer for the x402 ring",
 			"summary": "With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting.",
 			"link": null,
@@ -401,6 +422,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Seeded catalog assets can now be judged on how they look, not just their structure",
+			"summary": "Platform-seeded models in /characters and /objects were gated on mesh structure only, because rendering and judging an asset did not fit inside the seed cron's time limit. A new per-minute vision cron now takes assets that pass the mesh check, renders each one and asks the vision judge whether it is realistic, on-prompt and complete, then publishes it or sets it aside with the full verdict for tuning. A judge that is down is retried and never blocks a sound asset for more than 30 minutes. The judge also now falls back across every vision provider instead of depending on one. It switches on with SEED_VISION_PHASE=1 after deploy.",
+			"link": "/docs/seed-quality",
+			"tags": [
+				"feature",
+				"infra"
 			]
 		},
 		{
@@ -1527,38 +1559,6 @@
 				"fix",
 				"improvement",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-10-30",
-			"type": "update",
-			"title": "Skill import reads YAML specs again, and payment checks run on the current Solana Pay",
-			"summary": "Importing a skill from a YAML OpenAPI spec failed with \"not valid YAML\" for every document, and the API routes that share the importer stopped loading after a parser upgrade. Both work again, with a test that parses a real YAML spec. Marketplace, skill, subscription, bundle and print-order payments are now verified with Solana Pay 1.x through one adapter, tested against real transaction bytes for split purchases, short payments, wrong references, wrong recipients and memos. The rest of the dependency tree is on current releases, and the few held back are documented with the reason.",
-			"link": "/changelog",
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-10-30",
-			"type": "update",
-			"title": "The built-in chat keeps answering when the shared free model quota runs out",
-			"summary": "When the free OpenRouter quota is exhausted, the chat now falls back to Vertex Gemini on the platform's own capacity instead of showing \"the built-in model is rate-limited\". Tools and streaming work the same on either lane.",
-			"link": "/chat",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-30",
-			"type": "update",
-			"title": "three.ws partners with Microsoft and is live on Microsoft Marketplace",
-			"summary": "three.ws and Microsoft have announced a partnership, and three.ws now has a publisher profile on Microsoft Marketplace, so enterprise teams can find and procure open-source 3D AI agents through the storefront they already buy from. Microsoft now appears on /partners, /partners/benefits, the home page press strip, the press kit, the timeline and the listings registry, with a full write-up in the docs.",
-			"link": "/blog/three-ws-microsoft-partnership",
-			"tags": [
-				"feature",
-				"docs"
 			]
 		}
 	]

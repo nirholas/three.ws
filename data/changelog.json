@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Seeded catalog assets can now be judged on how they look, not just their structure",
+			"summary": "Platform-seeded models in /characters and /objects were gated on mesh structure only, because rendering and judging an asset did not fit inside the seed cron's time limit. A new per-minute vision cron now takes assets that pass the mesh check, renders each one and asks the vision judge whether it is realistic, on-prompt and complete, then publishes it or sets it aside with the full verdict for tuning. A judge that is down is retried and never blocks a sound asset for more than 30 minutes. The judge also now falls back across every vision provider instead of depending on one. It switches on with SEED_VISION_PHASE=1 after deploy.",
+			"tags": [
+				"feature",
+				"infra"
+			],
+			"link": "/docs/seed-quality"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Embeds can allowlist the skill authors and hosts they trust",
 			"summary": "The agent-3d element's whitelist skill policy now works: list the authors you trust with skill-trusted-authors and the hosts with skill-trusted-origins (or set el.skillTrust from script), and only skills from those authors or hosts install. Before this, whitelist mode had no way to receive the lists and refused every skill. A refused skill now fires a skill:error event so the page can tell the visitor, and a misspelled skill-trust value falls back to the safe owner-only default instead of installing everything unchecked.",
 			"tags": [

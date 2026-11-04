@@ -175,6 +175,14 @@
 			<description>The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. If a marketplace bid or sale involving your agent is still settling, the purge waits until the other person has been paid or refunded. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.</description>
 		</item>
 		<item>
+			<title>Embeds can allowlist the skill authors and hosts they trust</title>
+			<link>https://three.ws/docs/web-component</link>
+			<guid isPermaLink="false">2026-11-04:Embeds can allowlist the skill authors and hosts they trust</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The agent-3d element's whitelist skill policy now works: list the authors you trust with skill-trusted-authors and the hosts with skill-trusted-origins (or set el.skillTrust from script), and only skills from those authors or hosts install. Before this, whitelist mode had no way to receive the lists and refused every skill. A refused skill now fires a skill:error event so the page can tell the visitor, and a misspelled skill-trust value falls back to the safe owner-only default instead of installing everything unchecked.</description>
+		</item>
+		<item>
 			<title>Every new agent now starts with a drafted coin</title>
 			<link>https://three.ws/docs/experiments-agent-launch-funnel</link>
 			<guid isPermaLink="false">2026-11-04:Every new agent now starts with a drafted coin</guid>
@@ -287,6 +295,14 @@
 			<description>Opening the spin wheel in /play could crash the game server and disconnect every player in the world at once. The wheel now opens normally, and when paid spins are unavailable it says so instead of failing. The server also stays up through any single bad message from one player, so one fault costs that player one action rather than costing everyone their session.</description>
 		</item>
 		<item>
+			<title>Ops alerts can now reach an inbox, not only the dashboard</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Ops alerts can now reach an inbox, not only the dashboard</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Operator alerts gain an email channel next to the private Telegram chat. Critical alerts (a leak, a halted payer, a compromised signer) are emailed and pushed every time they fire; warnings reach Telegram once an hour per signature and arrive by email as one hourly digest with counts and the oldest unresolved item, so an inbox is never flooded. Each channel has its own hourly ceiling, so a storm on one never silences the other. The health check now lists which alert channels are wired and flags production as degraded when no one would be told, and a self-test script proves real delivery on every configured channel.</description>
+		</item>
+		<item>
 			<title>Optional one-wallet-per-call payer for the x402 ring</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-04:Optional one-wallet-per-call payer for the x402 ring</guid>
@@ -309,6 +325,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the connection drops in Play, you now get a plain explanation and a way forward instead of a raw error code. Builds that fail to save retry on their own until they land, and a world whose saved builds did not load tries again before telling you. A dropped matchmaking poll keeps your community in the war queue. A message thread that fails to load shows a Retry button, and a chat reply that drops shows why instead of &quot;They went quiet&quot;. The pay demo only says no funds moved when that is certain. Escape now closes only the top panel, and the loading and error screens, the wheel and the stage prompt follow your language.</description>
+		</item>
+		<item>
+			<title>Seeded catalog assets can now be judged on how they look, not just their structure</title>
+			<link>https://three.ws/docs/seed-quality</link>
+			<guid isPermaLink="false">2026-11-04:Seeded catalog assets can now be judged on how they look, not just their structure</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Platform-seeded models in /characters and /objects were gated on mesh structure only, because rendering and judging an asset did not fit inside the seed cron's time limit. A new per-minute vision cron now takes assets that pass the mesh check, renders each one and asks the vision judge whether it is realistic, on-prompt and complete, then publishes it or sets it aside with the full verdict for tuning. A judge that is down is retried and never blocks a sound asset for more than 30 minutes. The judge also now falls back across every vision provider instead of depending on one. It switches on with SEED_VISION_PHASE=1 after deploy.</description>
 		</item>
 		<item>
 			<title>Slow phones and laptops now drop to lighter graphics in /play within seconds</title>
