@@ -77,6 +77,10 @@ RUN pip install xformers==0.0.29.post2 --index-url https://download.pytorch.org/
 RUN git clone --recursive https://github.com/microsoft/TRELLIS.2.git /tmp/ext/TRELLIS.2 \
     && git -C /tmp/ext/TRELLIS.2 checkout 75fbf0183001ed9876c8dbb35de6b68552ee08bd \
     && git -C /tmp/ext/TRELLIS.2 submodule update --init --recursive
+# MAX_JOBS caps ninja's parallel nvcc processes. Uncapped, ninja runs one per core
+# and CuMesh alone needs gigabytes per process, so the 32 GB build machine
+# OOM-killed the compile (exit 137, 2026-11-04); same cap as workers/model-trellis2.
+ENV MAX_JOBS=8
 RUN git clone -b v0.4.0 --depth 1 https://github.com/NVlabs/nvdiffrast.git /tmp/ext/nvdiffrast \
     && pip install --no-build-isolation /tmp/ext/nvdiffrast
 RUN git clone --recursive https://github.com/JeffreyXiang/CuMesh.git /tmp/ext/CuMesh \
