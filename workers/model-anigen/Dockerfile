@@ -53,11 +53,22 @@ RUN python3 /app/test_patch_anigen.py && python3 /app/patch_anigen.py /app/anige
 # 4. requirements.txt, minus torch/torchvision (installed above) and minus
 # nvdiffrast/pytorch3d (installed separately below; spconv needs its own
 # CUDA-major-keyed wheel, same as workers/rig-nonhuman).
+# pytorch3d 0.7.8 is the release AniGen's own setup.sh builds. Its git tag is
+# spelled `V0.7.8` (capital V; there is no `v0.7.8`, which the first build
+# tried and died on), so it is pinned by that tag's commit instead of a name.
+# Cloud Build has no GPU, so pytorch3d's setup.py would detect none and
+# silently compile CPU-only kernels, failing the first request on the L4 with
+# "Not compiled with GPU support". FORCE_CUDA builds the CUDA kernels anyway,
+# for sm_89 (L4) only, which also keeps the compile inside the build timeout.
+ARG PYTORCH3D_COMMIT=75ebeeaea0908c5527e7b1e305fbc7681382db47
+ENV FORCE_CUDA=1 \
+    TORCH_CUDA_ARCH_LIST=8.9
 RUN pip install -r /app/anigen-src/requirements.txt \
     && pip install spconv-cu120 \
     && pip install "fvcore>=0.1.5" iopath \
     && pip install --no-build-isolation \
-        "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.8"
+        "git+https://github.com/facebookresearch/pytorch3d.git@${PYTORCH3D_COMMIT}" \
+    && python3 -c "import pytorch3d; assert pytorch3d.__version__ == '0.7.8', pytorch3d.__version__; print('pytorch3d', pytorch3d.__version__)"
 
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt
