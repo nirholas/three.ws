@@ -187,6 +187,12 @@ describe('analyzeGlb verdicts', () => {
 		expect(r.skeleton.renames[0].from).toMatch(/^mixamorig/i);
 	});
 
+	it('reads the pass note with the right article for the convention name', () => {
+		const vowel = analyzeGlb(syntheticRig(humanIkTree('Character1'))).verdict.notes[0];
+		expect(vowel).toMatch(/mapped from an Autodesk HumanIK \/ MotionBuilder rig\.$/);
+		expect(report('michelle').verdict.notes[0]).toMatch(/mapped from a Mixamo rig\.$/);
+	});
+
 	it('identifies Ready Player Me from its Wolf3D mesh nodes, not its bone names', () => {
 		const r = report('default');
 		expect(r.skeleton.convention.id).toBe('rpm');

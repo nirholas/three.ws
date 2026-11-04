@@ -36,7 +36,7 @@ DEF-upper_arm.L -> LeftArm | runtime DEF-upper_armL -> LeftArm
 
 1. In `src/glb-canonicalize.js`, recognise the Rigify trunk after the `DEF-`/`ORG-`/`MCH-` prefix strip, in both the dotted (`spine.003`) and sanitized (`spine003`) spellings. Map `DEF-spine` to `Hips`, `.001` to `Spine`, `.002` to `Spine1`, `.003` to `Spine2`, `.004` to `Neck`, and `.006` to `Head`. `.005` is the upper neck: leave it unmapped (the canonical set has one neck joint) and say so in a comment. Scope the rule to Rigify-prefixed names so a bare `spine003` from another exporter is not swept in.
 2. Map `shoulder` to the sided `Shoulder` target when it follows a Rigify prefix, so `DEF-shoulder.L` lands on `LeftShoulder` and stops colliding with the upper arm.
-3. Add a `rigify` entry to `CONVENTIONS` in `src/rig-report.js` that matches `DEF-spine` with a numbered sibling, and add its row to the conventions table in [`docs/rig-doctor.md`](https://github.com/nirholas/three.ws/blob/main/docs/rig-doctor.md). Add a row to the bone-convention table in [`docs/3d-asset-pipeline.md`](https://github.com/nirholas/three.ws/blob/main/docs/3d-asset-pipeline.md) too.
+3. Rig Doctor already names the convention (the `rigify` entry in `CONVENTIONS` in `src/rig-report.js` matches the `DEF-`/`ORG-`/`MCH-` layers), so no fingerprint work is needed. Add `DEF-spine.003` to the existing Rigify row of the bone-convention table in [`docs/3d-asset-pipeline.md`](https://github.com/nirholas/three.ws/blob/main/docs/3d-asset-pipeline.md).
 
 ## Acceptance criteria
 
@@ -44,7 +44,7 @@ DEF-upper_arm.L -> LeftArm | runtime DEF-upper_armL -> LeftArm
 - [ ] `DEF-shoulder.L` and `DEF-shoulder.R` resolve to `LeftShoulder` and `RightShoulder`; no mapping crosses sides.
 - [ ] A Rigify-named skeleton has no two joints resolving to the same canonical bone (assert it over the full chain in the test).
 - [ ] Every existing case in `tests/glb-canonicalize.test.js` still passes, including the Unreal and Reallusion numbered spines.
-- [ ] `detectConvention` reports `rigify` for a Rigify skeleton; a test in `tests/rig-report.test.js` proves it.
+- [ ] `analyzeGlb` on a Rigify-named skeleton reports convention `rigify` and maps `Hips`, `Spine2`, `Neck` and `Head`; a test in `tests/rig-report.test.js` builds the rig with the file's `syntheticRig` helper and proves it.
 
 ## How to test
 

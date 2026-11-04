@@ -671,7 +671,10 @@ function buildVerdict(report, drivable, gate) {
 		};
 	}
 
-	notes.push(`${s.mapped} of ${s.total} canonical joints mapped from a ${s.convention.label} rig.`);
+	// Every convention label is a proper name whose first letter is how it is
+	// said (Autodesk, Apple, Unreal), so a leading vowel takes "an".
+	const article = /^[aeiou]/i.test(s.convention.label) ? 'an' : 'a';
+	notes.push(`${s.mapped} of ${s.total} canonical joints mapped from ${article} ${s.convention.label} rig.`);
 	if (report.morphs.lipSync) notes.push(`${report.morphs.visemeCount} visemes present, so lip-sync will work too.`);
 	else notes.push('No viseme blendshapes, so this avatar animates but cannot lip-sync.');
 	if (!report.morphs.lipSync) fixes.push('Add the 15 Oculus visemes (viseme_aa, viseme_PP, …) if you want speech.');
