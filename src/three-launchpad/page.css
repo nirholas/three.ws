@@ -547,6 +547,9 @@
 	border-radius: var(--radius-card, 16px);
 	background: var(--surface-2);
 }
+.tl-fees--standalone {
+	margin-top: 14px;
+}
 .tl-fees h3 {
 	margin: 0 0 6px;
 	font-size: 13px;

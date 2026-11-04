@@ -29,6 +29,7 @@ const QUOTE_DEBOUNCE_MS = 300;
 
 const state = {
 	lane: null,
+	feeCurve: null, // the lane's fee-over-time curve, read once
 	launches: null, // null while loading
 	launchesError: '',
 	hasMore: false,
@@ -113,6 +114,17 @@ function renderShell() {
 	`;
 	renderCoins();
 	renderLaunch();
+}
+
+// The lane's fee schedule in plain words, its fee-over-time curve (filled by
+// loadFeeCurve) and the swap referral share.
+function feeSectionHtml(extraClass = '') {
+	return `<section class="tl-fees ${extraClass}" aria-labelledby="tl-fees-h">
+			<h3 id="tl-fees-h">Fee schedule</h3>
+			<p class="tl-fees-line" id="tl-fees-preview">${esc(state.lane?.fee_schedule_preview || '')}</p>
+			<div id="tl-fees-curve" aria-live="polite"><div class="tl-skel" aria-busy="true" style="height:56px"></div></div>
+			<p class="tl-fees-line tl-fees-ref">${esc(state.lane?.referral?.preview || '')}</p>
+		</section>`;
 }
 
 function laneClosedNotice() {
@@ -427,7 +439,10 @@ function renderLaunch() {
 	const body = $('#tl-launch-body');
 	if (!body) return;
 	if (!state.lane?.available) {
-		body.innerHTML = laneClosedNotice();
+		// The fee terms are fixed by the lane config, not by the on-chain publish, so
+		// a creator preparing for opening day can read exactly what trades will pay.
+		body.innerHTML = laneClosedNotice() + (state.lane?.fee_schedule_preview ? feeSectionHtml('tl-fees--standalone') : '');
+		if (state.lane?.fee_schedule_preview) loadFeeCurve();
 		return;
 	}
 	if (state.user === undefined) {
@@ -449,12 +464,7 @@ function renderLaunch() {
 		<label class="tl-field"><span><span>Ticker</span><span>max 10</span></span><input name="symbol" maxlength="10" required autocomplete="off" placeholder="NOVA" /></label>
 		<label class="tl-field tl-span"><span><span>Description</span><span>optional</span></span><textarea name="description" maxlength="500" placeholder="What this agent does and why its coin exists."></textarea></label>
 		<label class="tl-field tl-span"><span><span>Your first buy, in $THREE</span><span>optional, fills the start of your own curve</span></span><input name="buy" inputmode="decimal" autocomplete="off" placeholder="0" /></label>
-		<section class="tl-span tl-fees" aria-labelledby="tl-fees-h">
-			<h3 id="tl-fees-h">Fee schedule</h3>
-			<p class="tl-fees-line" id="tl-fees-preview">${esc(state.lane?.fee_schedule_preview || '')}</p>
-			<div id="tl-fees-curve" aria-live="polite"><div class="tl-skel" aria-busy="true" style="height:56px"></div></div>
-			<p class="tl-fees-line tl-fees-ref">${esc(state.lane?.referral?.preview || '')}</p>
-		</section>
+		${feeSectionHtml('tl-span')}
 		<div class="tl-span" style="margin-top:18px"><button type="submit" class="tl-btn tl-btn--primary tl-btn--block" id="tl-launch-btn">Launch on the $THREE curve</button><p class="tl-status" id="tl-launch-status" aria-live="polite"></p></div>
 	</form>`;
 	const form = $('#tl-form');
@@ -471,16 +481,20 @@ async function loadFeeCurve() {
 	const slot = $('#tl-fees-curve');
 	if (!slot) return;
 	try {
-		const data = await api('/api/native-launch/fee-config', { method: 'POST', body: { network: NETWORK } });
-		if (!$('#tl-fees-curve')) return;
+		// The curve is fixed per lane config, so one read serves every re-render.
+		const data = (state.feeCurve ??= await api('/api/native-launch/fee-config', { method: 'POST', body: { network: NETWORK } }));
+		const target = $('#tl-fees-curve');
+		if (!target) return;
 		$('#tl-fees-preview').textContent = data.preview;
-		slot.innerHTML = `<table class="tl-fees-table"><caption class="tl-sr">Trading fee by time after the pool opens</caption><thead><tr><th scope="col">After</th><th scope="col">Fee</th></tr></thead><tbody>${data.fee_curve
+		target.innerHTML = `<table class="tl-fees-table"><caption class="tl-sr">Trading fee by time after the pool opens</caption><thead><tr><th scope="col">After</th><th scope="col">Fee</th></tr></thead><tbody>${data.fee_curve
 			.map((p) => `<tr><td>${p.seconds === 0 ? 'First block' : `${p.seconds}s`}</td><td>${fmt(p.fee_bps / 100, 2)}%</td></tr>`)
 			.join('')}</tbody></table>`;
 	} catch (err) {
-		slot.innerHTML = `<p class="tl-status" data-tone="error" role="alert">Could not load the fee curve: ${esc(err.message)} <button type="button" class="tl-btn" id="tl-fees-retry">Try again</button></p>`;
+		const target = $('#tl-fees-curve');
+		if (!target) return;
+		target.innerHTML = `<p class="tl-status" data-tone="error" role="alert">Could not load the fee curve: ${esc(err.message)} <button type="button" class="tl-btn" id="tl-fees-retry">Try again</button></p>`;
 		$('#tl-fees-retry')?.addEventListener('click', () => {
-			slot.innerHTML = '<div class="tl-skel" aria-busy="true" style="height:56px"></div>';
+			target.innerHTML = '<div class="tl-skel" aria-busy="true" style="height:56px"></div>';
 			loadFeeCurve();
 		});
 	}

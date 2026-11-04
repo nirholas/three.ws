@@ -38,6 +38,38 @@ steps:
       - .
     timeout: 1800s
 
+  # Boot the image that was just built and read its health endpoint, so a module
+  # the Dockerfile forgot to COPY fails here instead of at Cloud Run startup.
+  # The worker validates DATABASE_URL and JWT_SECRET at boot but only connects on
+  # its first query, and ORDERS_GLOBAL_KILL=1 with ORDERS_HEARTBEAT_MS=0 means it
+  # never makes one: an unreachable URL and a throwaway secret are enough to load
+  # the whole module graph and answer the probe.
+  - id: smoke
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        docker run -d --name orders-smoke \
+          -e PORT=8080 \
+          -e JWT_SECRET="$$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')" \
+          -e DATABASE_URL=postgres://smoke:smoke@127.0.0.1:5432/smoke \
+          -e ORDERS_GLOBAL_KILL=1 -e ORDERS_HEARTBEAT_MS=0 \
+          agent-orders:verify
+        for i in $$(seq 1 30); do
+          if docker exec orders-smoke node -e "fetch('http://127.0.0.1:8080/').then((r) => r.json()).then((j) => { console.log(JSON.stringify(j)); process.exit(j.ok ? 0 : 1); }).catch(() => process.exit(1))"; then
+            docker logs orders-smoke
+            exit 0
+          fi
+          if [ "$$(docker inspect -f '{{.State.Running}}' orders-smoke)" != "true" ]; then break; fi
+          sleep 1
+        done
+        echo "agent-orders image did not answer its health endpoint"
+        docker logs orders-smoke || true
+        exit 1
+    timeout: 120s
+
 options:
   machineType: E2_HIGHCPU_8
   logging: CLOUD_LOGGING_ONLY

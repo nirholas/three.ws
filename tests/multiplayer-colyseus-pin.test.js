@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import semver from 'semver';
 
 // The multiplayer image installs from multiplayer/package-lock.json with `npm ci`,
@@ -55,12 +55,20 @@ describe('multiplayer Colyseus pin', () => {
 	});
 
 	it('has a standalone lock that satisfies package.json, so npm ci succeeds in the image', () => {
+		// A file: spec (a patched copy under multiplayer/vendor/, which the Dockerfile
+		// copies in) has no semver range: npm ci needs the lock to link that exact
+		// folder, and the folder to be committed with a package.json.
 		const unsatisfied = Object.entries(serverDeps)
 			.filter(([name, range]) => {
-				const locked = lock.packages[`node_modules/${name}`]?.version;
-				return !locked || !semver.satisfies(locked, range);
+				const entry = lock.packages[`node_modules/${name}`];
+				if (range.startsWith('file:')) {
+					const target = range.slice('file:'.length).replace(/^\.\//, '');
+					return !entry?.link || entry.resolved !== target || !lock.packages[target] ||
+						!existsSync(new URL(`../multiplayer/${target}/package.json`, import.meta.url));
+				}
+				return !entry?.version || !semver.satisfies(entry.version, range);
 			})
-			.map(([name, range]) => `${name}@${range} locked ${lock.packages[`node_modules/${name}`]?.version}`);
+			.map(([name, range]) => `${name}@${range} locked ${JSON.stringify(lock.packages[`node_modules/${name}`])}`);
 		expect(unsatisfied).toEqual([]);
 	});
 });
