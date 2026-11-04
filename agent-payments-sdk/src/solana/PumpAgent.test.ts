@@ -156,3 +156,80 @@ describe("PumpAgent.getBalances", () => {
     expect(balances.paymentVault.balance).toBe(5n);
   });
 });
+
+// Anchor 0.30+ keys `program.account` by the camelCased IDL name
+// (globalConfig, tokenAgentPayments, tokenAgentPaymentInCurrency). Reading
+// `program.account.GlobalConfig` is undefined at runtime, so every on-chain
+// read below threw "Cannot read properties of undefined (reading 'fetch')"
+// and updateBuybackBps could never build. These run the real coder against a
+// connection that serves encoded accounts, with no spies on the fetch path.
+describe("PumpAgent on-chain account reads", () => {
+  const agentMint = Keypair.generate().publicKey;
+  const currency = Keypair.generate().publicKey;
+
+  async function agentWith(accounts: Map<string, AccountInfo<Buffer>>) {
+    const connection = {
+      commitment: "confirmed",
+      rpcEndpoint: "stub",
+      getAccountInfo: async (key: PublicKey) => accounts.get(key.toBase58()) ?? null,
+      getAccountInfoAndContext: async (key: PublicKey) => ({
+        context: { slot: 1 },
+        value: accounts.get(key.toBase58()) ?? null,
+      }),
+      getMultipleAccountsInfo: async (keys: PublicKey[]) =>
+        keys.map((k) => accounts.get(k.toBase58()) ?? null),
+    } as unknown as import("@solana/web3.js").Connection;
+    return new PumpAgent(agentMint, "mainnet", connection);
+  }
+
+  async function globalConfigFixture() {
+    const { getPumpProgram } = await import("./program");
+    const { getGlobalConfigPDA } = await import("./pdas");
+    const program = getPumpProgram({} as never);
+    const supported = Array.from({ length: 10 }, () => PublicKey.default);
+    supported[0] = currency;
+    const { default: BN } = await import("bn.js");
+    const data = await program.coder.accounts.encode("globalConfig", {
+      bump: 255,
+      protocolAuthority: Keypair.generate().publicKey,
+      buybackAuthority: Keypair.generate().publicKey,
+      supportedCurrenciesMint: supported,
+      tokenizedAgentSequence: new BN(0),
+    });
+    return {
+      program,
+      pda: getGlobalConfigPDA()[0],
+      info: fakeAccountInfo(data, program.programId),
+    };
+  }
+
+  it("reads GlobalConfig through the camelCased account namespace", async () => {
+    const { pda, info } = await globalConfigFixture();
+    const agent = await agentWith(new Map([[pda.toBase58(), info]]));
+    const cfg = await agent.getGlobalConfig();
+    expect(cfg.supportedCurrenciesMint[0].equals(currency)).toBe(true);
+  });
+
+  it("builds updateBuybackBps with every supported currency on its own token program", async () => {
+    const { program, pda, info } = await globalConfigFixture();
+    const agent = await agentWith(
+      new Map([
+        [pda.toBase58(), info],
+        [currency.toBase58(), fakeAccountInfo(Buffer.alloc(82), TOKEN_2022_PROGRAM_ID)],
+      ]),
+    );
+    const authority = Keypair.generate().publicKey;
+    const ix = await agent.updateBuybackBps({ authority, buybackBps: 2500 });
+    expect(ix.programId.equals(program.programId)).toBe(true);
+    const { getAssociatedTokenAddressSync } = await import("@solana/spl-token");
+    const { getTokenAgentPaymentsPDA } = await import("./pdas");
+    const vault2022 = getAssociatedTokenAddressSync(
+      currency,
+      getTokenAgentPaymentsPDA(agentMint)[0],
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
+    expect(ix.keys.some((k) => k.pubkey.equals(vault2022))).toBe(true);
+    expect(ix.keys.some((k) => k.pubkey.equals(authority) && k.isSigner)).toBe(true);
+  });
+});

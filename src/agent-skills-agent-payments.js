@@ -20,6 +20,7 @@
  */
 
 import { detectSolanaWallet, SOLANA_RPC } from './erc8004/solana-deploy.js';
+import { resolveMintInfo } from './shared/spl-token-program.js';
 
 const DEFAULT_NETWORK = 'mainnet';
 const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -46,6 +47,15 @@ async function loadPumpSdk() {
 function getConnection(web3, network) {
 	const url = SOLANA_RPC[network] || SOLANA_RPC[DEFAULT_NETWORK];
 	return new web3.Connection(url, 'confirmed');
+}
+
+// The currency's token program and decimals, read from the mint account. The SDK
+// defaults every vault and payer ATA to the classic program, which is wrong for
+// Token-2022 currencies such as $THREE, so every skill passes this explicitly.
+async function currencyInfo(connection, currency) {
+	const spl = await import('@solana/spl-token');
+	const { programId, decimals } = await resolveMintInfo(connection, currency, spl);
+	return { spl, tokenProgram: programId, decimals };
 }
 
 async function requireWallet() {
@@ -141,9 +151,10 @@ export function registerAgentPaymentSkills(skills) {
 			const connection = getConnection(web3, network);
 			const mint = new web3.PublicKey(args.agentMint);
 			const currency = new web3.PublicKey(args.currencyMint || USDC_MINT);
-			const agent = new pay.PumpAgent(mint, connection);
-			const balances = await agent.getBalances(currency);
-			const fmt = (v) => (Number(v) / 1e6).toFixed(6);
+			const { tokenProgram, decimals } = await currencyInfo(connection, currency);
+			const agent = new pay.PumpAgent(mint, network, connection);
+			const balances = await agent.getBalances(currency, tokenProgram);
+			const fmt = (v) => (Number(v) / 10 ** decimals).toFixed(decimals);
 			return {
 				success: true,
 				output: `Payment: ${fmt(balances.paymentVault.balance)} | Buyback: ${fmt(balances.buybackVault.balance)} | Withdraw: ${fmt(balances.withdrawVault.balance)}`,
@@ -184,9 +195,10 @@ export function registerAgentPaymentSkills(skills) {
 			const connection = getConnection(web3, network);
 			const mint = new web3.PublicKey(args.agentMint);
 			const currency = new web3.PublicKey(args.currencyMint || USDC_MINT);
+			const { tokenProgram } = await currencyInfo(connection, currency);
 			const agent = pay.PumpAgentOffline.load(mint, connection);
-			const ix = await agent.distributePayments({ user: pubkey, currencyMint: currency });
-			const sig = await sendIxs({ web3, connection, wallet, payer: pubkey, instructions: [ix] });
+			const instructions = await agent.distributePayments({ user: pubkey, currencyMint: currency, tokenProgram });
+			const sig = await sendIxs({ web3, connection, wallet, payer: pubkey, instructions });
 			return {
 				success: true,
 				output: `Payments distributed for ${args.agentMint.slice(0, 8)}…`,
@@ -217,17 +229,26 @@ export function registerAgentPaymentSkills(skills) {
 		handler: async (args, _ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
 			const { pay, web3 } = await loadPayments();
-			const spl = await import('@solana/spl-token');
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);
 			const mint = new web3.PublicKey(args.agentMint);
 			const currency = new web3.PublicKey(args.currencyMint);
-			const receiverAta = args.receiverAta
-				? new web3.PublicKey(args.receiverAta)
-				: spl.getAssociatedTokenAddressSync(currency, pubkey);
+			const { spl, tokenProgram } = await currencyInfo(connection, currency);
+			const instructions = [];
+			let receiverAta;
+			if (args.receiverAta) {
+				receiverAta = new web3.PublicKey(args.receiverAta);
+			} else {
+				// The owner's own ATA on the currency's program, opened idempotently so
+				// a first withdrawal of a currency the owner never held still lands.
+				receiverAta = spl.getAssociatedTokenAddressSync(currency, pubkey, false, tokenProgram);
+				instructions.push(
+					spl.createAssociatedTokenAccountIdempotentInstruction(pubkey, receiverAta, pubkey, currency, tokenProgram),
+				);
+			}
 			const agent = pay.PumpAgentOffline.load(mint, connection);
-			const ix = await agent.withdraw({ authority: pubkey, currencyMint: currency, receiverAta });
-			const sig = await sendIxs({ web3, connection, wallet, payer: pubkey, instructions: [ix] });
+			instructions.push(await agent.withdraw({ authority: pubkey, currencyMint: currency, receiverAta, tokenProgram }));
+			const sig = await sendIxs({ web3, connection, wallet, payer: pubkey, instructions });
 			return {
 				success: true,
 				output: `Withdrawal complete. Tx: ${sig.slice(0, 12)}…`,
@@ -260,7 +281,9 @@ export function registerAgentPaymentSkills(skills) {
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);
 			const mint = new web3.PublicKey(args.agentMint);
-			const agent = new pay.PumpAgent(mint, connection);
+			// The online agent reads GlobalConfig for the supported currencies and
+			// their token programs, which the instruction must list.
+			const agent = new pay.PumpAgent(mint, network, connection);
 			const ix = await agent.updateBuybackBps({ authority: pubkey, buybackBps: args.buybackBps });
 			const sig = await sendIxs({ web3, connection, wallet, payer: pubkey, instructions: [ix] });
 			return {
@@ -294,24 +317,27 @@ export function registerAgentPaymentSkills(skills) {
 		},
 		handler: async (args, _ctx) => {
 			const network = args.network || DEFAULT_NETWORK;
-			const { pay, web3, BN } = await loadPayments();
+			const { pay, web3 } = await loadPayments();
 			const { wallet, pubkey } = await requireWallet();
 			const connection = getConnection(web3, network);
 			const mint = new web3.PublicKey(args.agentMint);
 			const currency = new web3.PublicKey(args.currencyMint || USDC_MINT);
+			const { tokenProgram } = await currencyInfo(connection, currency);
 			const duration = args.durationSeconds ?? 600;
 			const now = Math.floor(Date.now() / 1000);
 			const agent = pay.PumpAgentOffline.load(mint, connection);
-			const ixs = await agent.acceptPaymentSimple({
+			// Derives the payer's ATA on the currency's program and, for wSOL, wraps
+			// and unwraps around the accept, so the wallet pays from what it holds.
+			const instructions = await agent.buildAcceptPaymentInstructions({
 				user: pubkey,
-				userTokenAccount: pubkey,
 				currencyMint: currency,
 				amount: BigInt(args.amount),
 				memo: BigInt(args.memo),
 				startTime: BigInt(now),
 				endTime: BigInt(now + duration),
+				tokenProgram,
 			});
-			const sig = await sendIxs({ web3, connection, wallet, payer: pubkey, instructions: [ixs] });
+			const sig = await sendIxs({ web3, connection, wallet, payer: pubkey, instructions });
 			return {
 				success: true,
 				output: `v2 payment of ${args.amount} accepted. Tx: ${sig.slice(0, 12)}…`,

@@ -673,7 +673,7 @@ export class PumpAgentOffline {
     const quoteMint = await PumpAgentOffline.getCoinQuoteMint(connection, baseMint);
 
     const [globalConfigPda] = getGlobalConfigPDA();
-    const cfg = await this.program.account.GlobalConfig.fetch(globalConfigPda);
+    const cfg = await this.program.account.globalConfig.fetch(globalConfigPda);
 
     const registeredCurrencies = (cfg.supportedCurrenciesMint as PublicKey[]).filter(
       (m) => !PublicKey.default.equals(m),

@@ -48,7 +48,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [112,97,121,109,101,110,116,45,105,110,45,99,117,114,114,101,110,99,121] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
               { kind: "account"; path: "currencyMint" },
             ];
           };
@@ -96,7 +96,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [112,97,121,109,101,110,116,45,105,110,45,99,117,114,114,101,110,99,121] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
               { kind: "account"; path: "currencyMint" },
             ];
           };
@@ -114,7 +114,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [98,117,121,98,97,99,107,45,97,117,116,104,111,114,105,116,121] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
             ];
           };
         },
@@ -177,7 +177,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [112,97,121,109,101,110,116,45,105,110,45,99,117,114,114,101,110,99,121] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
               { kind: "account"; path: "currencyMint" },
             ];
           };
@@ -205,7 +205,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [98,117,121,98,97,99,107,45,97,117,116,104,111,114,105,116,121] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
             ];
           };
         },
@@ -214,7 +214,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [119,105,116,104,100,114,97,119,45,97,117,116,104,111,114,105,116,121] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
             ];
           };
         },
@@ -321,7 +321,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [116,111,107,101,110,45,97,103,101,110,116,45,112,97,121,109,101,110,116,115] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
             ];
           };
         },
@@ -398,7 +398,7 @@ export type PumpAgentPayments = {
           pda: {
             seeds: [
               { kind: "const"; value: [119,105,116,104,100,114,97,119,45,97,117,116,104,111,114,105,116,121] },
-              { kind: "account"; path: "tokenAgentPayments.mint"; account: "TokenAgentPayments" },
+              { kind: "account"; path: "tokenAgentPayments.mint"; account: "tokenAgentPayments" },
             ];
           };
         },
@@ -543,10 +543,10 @@ export type PumpAgentPayments = {
     },
   ];
   accounts: [
-    { name: "BondingCurve"; discriminator: [23, 183, 248, 55, 96, 216, 172, 96] },
-    { name: "GlobalConfig"; discriminator: [149, 8, 156, 202, 160, 252, 176, 217] },
-    { name: "TokenAgentPaymentInCurrency"; discriminator: [225, 195, 81, 227, 115, 43, 25, 177] },
-    { name: "TokenAgentPayments"; discriminator: [136, 241, 242, 217, 173, 77, 112, 186] },
+    { name: "bondingCurve"; discriminator: [23, 183, 248, 55, 96, 216, 172, 96] },
+    { name: "globalConfig"; discriminator: [149, 8, 156, 202, 160, 252, 176, 217] },
+    { name: "tokenAgentPaymentInCurrency"; discriminator: [225, 195, 81, 227, 115, 43, 25, 177] },
+    { name: "tokenAgentPayments"; discriminator: [136, 241, 242, 217, 173, 77, 112, 186] },
   ];
   events: [
     { name: "AgentAcceptPaymentEvent"; discriminator: [114, 190, 188, 192, 105, 79, 41, 147] },
@@ -680,7 +680,7 @@ export type PumpAgentPayments = {
       };
     },
     {
-      name: "BondingCurve";
+      name: "bondingCurve";
       type: {
         kind: "struct";
         fields: [
@@ -720,7 +720,7 @@ export type PumpAgentPayments = {
       };
     },
     {
-      name: "GlobalConfig";
+      name: "globalConfig";
       type: {
         kind: "struct";
         fields: [
@@ -757,7 +757,7 @@ export type PumpAgentPayments = {
       };
     },
     {
-      name: "TokenAgentPaymentInCurrency";
+      name: "tokenAgentPaymentInCurrency";
       type: {
         kind: "struct";
         fields: [
@@ -771,7 +771,7 @@ export type PumpAgentPayments = {
       };
     },
     {
-      name: "TokenAgentPayments";
+      name: "tokenAgentPayments";
       type: {
         kind: "struct";
         fields: [

@@ -38,7 +38,7 @@ function fakeAccountInfo(
 function makeMockProgram(supportedMints: PublicKey[]) {
   return {
     account: {
-      GlobalConfig: {
+      globalConfig: {
         fetch: vi
           .fn()
           .mockResolvedValue({ supportedCurrenciesMint: supportedMints }),

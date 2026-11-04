@@ -167,15 +167,15 @@ export interface CloseAccountParams {
 import { OFFLINE_PUMP_PROGRAM } from "./program";
 
 export type GlobalConfig = Awaited<
-  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.GlobalConfig.fetch>
+  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.globalConfig.fetch>
 >;
 
 export type TokenAgentPaymentInCurrency = Awaited<
-  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.TokenAgentPaymentInCurrency.fetch>
+  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.tokenAgentPaymentInCurrency.fetch>
 >;
 
 export type TokenAgentPayments = Awaited<
-  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.TokenAgentPayments.fetch>
+  ReturnType<typeof OFFLINE_PUMP_PROGRAM.account.tokenAgentPayments.fetch>
 >;
 
 // ─── PumpTradeClient (v2 bonding-curve trading) ─────────────────────────────
