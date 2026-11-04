@@ -109,12 +109,13 @@ export function testContext(env, baseUrl, extra = {}) {
 	return createAgentContext({ env, mcp: false });
 }
 
-export async function waitFor(fn, { timeoutMs = 5000, stepMs = 10 } = {}) {
+/** Poll until fn returns something truthy; on timeout, `explain()` says what was there instead. */
+export async function waitFor(fn, { timeoutMs = 5000, stepMs = 10, explain = null } = {}) {
 	const start = Date.now();
 	for (;;) {
 		const v = await fn();
 		if (v) return v;
-		if (Date.now() - start > timeoutMs) throw new Error('waitFor timed out');
+		if (Date.now() - start > timeoutMs) throw new Error(`waitFor timed out${explain ? `; last state:\n${explain()}` : ''}`);
 		await sleep(stepMs);
 	}
 }

@@ -73,7 +73,7 @@ afterEach(async () => {
 });
 
 async function setup(reply, { webhookUrl } = {}) {
-	const t = tempEnv();
+	const t = tempEnv({ TELEGRAM_BOT_TOKEN: TOKEN });
 	const model = await modelServer(reply);
 	const tg = await botApi({ webhookUrl });
 	const ctx = testContext(t.env, model.baseUrl);
@@ -83,7 +83,8 @@ async function setup(reply, { webhookUrl } = {}) {
 
 describe('allowlist parsing', () => {
 	it('reads ids from flags, config arrays and env strings, and rejects anything else', () => {
-		expect(parseAllowlist(['111,222'], [-100333], '444 555')).toEqual(['111,222'.split(',')[0], '222', '-100333', '444', '555']);
+		// `--allow 111,222` arrives from parseArgs as ['111,222'].
+		expect(parseAllowlist(['111,222'], [-100333], '444 555')).toEqual(['111', '222', '-100333', '444', '555']);
 		expect(() => parseAllowlist('@someone')).toThrow(GatewayError);
 		expect(() => parseAllowlist('12a')).toThrow(/not a Telegram chat id/);
 	});
