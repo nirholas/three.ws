@@ -144,3 +144,82 @@ describe('privacy of a stored line', () => {
 		expect(JSON.stringify(await sb.tail(WORLD))).not.toContain('secret first line');
 	});
 });
+
+describe('WalkRoom wiring', () => {
+	// The room's own methods, run against a stand-in carrying only what chat
+	// touches, with the scrollback injected so no Redis or server is needed.
+	async function makeRoom() {
+		const { WalkRoom } = await import('../multiplayer/src/rooms/WalkRoom.js');
+		const broadcasts = [];
+		const room = Object.create(WalkRoom.prototype);
+		Object.assign(room, {
+			worldKey: THREE,
+			state: { players: new Map() },
+			_chatCooldowns: new Map(),
+			_chatHistorySent: new Set(),
+			_chatStore: new ChatScrollback({ store: createMemoryStore() }),
+			broadcast: (type, msg) => broadcasts.push({ type, msg }),
+		});
+		const join = (id, name) => {
+			room.state.players.set(id, { name });
+			const sent = [];
+			return { client: { sessionId: id, send: (type, msg) => sent.push({ type, msg }) }, sent };
+		};
+		return { room, broadcasts, join };
+	}
+
+	it('broadcasts each line with the id it is stored under', async () => {
+		const { room, broadcasts, join } = await makeRoom();
+		const { client } = join('s1', 'nova');
+		room._handleChat(client, { text: 'gm event' });
+		const live = broadcasts.find((b) => b.type === 'chat').msg;
+		expect(live).toMatchObject({ id: 's1', name: 'nova', text: 'gm event' });
+		await vi.waitFor(async () => expect(await room._chatStore.tail(scrollbackKey(THREE))).toHaveLength(1));
+		const [stored] = await room._chatStore.tail(scrollbackKey(THREE));
+		expect(stored.mid).toBe(live.mid);
+		expect(JSON.stringify(stored)).not.toContain('s1');
+	});
+
+	it('hands a late joiner the scrollback once, however many times they say ready', async () => {
+		const { room, join } = await makeRoom();
+		const speaker = join('s1', 'nova');
+		room._handleChat(speaker.client, { text: 'first' });
+		await vi.waitFor(async () => expect(await room._chatStore.tail(scrollbackKey(THREE))).toHaveLength(1));
+		const late = join('s2', 'orbit');
+		await room._sendChatHistory(late.client);
+		await room._sendChatHistory(late.client);
+		const history = late.sent.filter((m) => m.type === 'chat_history');
+		expect(history).toHaveLength(1);
+		expect(history[0].msg.lines.map((l) => l.text)).toEqual(['first']);
+	});
+
+	it('tells an arrival in a quiet world that there is nothing yet, with an empty batch', async () => {
+		const { room, join } = await makeRoom();
+		const { client, sent } = join('s1', 'nova');
+		await room._sendChatHistory(client);
+		expect(sent).toEqual([{ type: 'chat_history', msg: { lines: [] } }]);
+	});
+
+	it('keeps the General and Holders scrollback of a coin apart', async () => {
+		const { room, join } = await makeRoom();
+		room._handleChat(join('s1', 'nova').client, { text: 'general only' });
+		await vi.waitFor(async () => expect(await room._chatStore.tail(scrollbackKey(THREE))).toHaveLength(1));
+		room.worldKey = `${THREE}#holders`;
+		const { client, sent } = join('s2', 'orbit');
+		await room._sendChatHistory(client);
+		expect(sent[0].msg.lines).toEqual([]);
+	});
+
+	it('still relays a slur-free line when the store is down', async () => {
+		const { room, broadcasts, join } = await makeRoom();
+		room._chatStore = new ChatScrollback({
+			store: { async push() { throw new Error('ECONNRESET'); }, async range() { throw new Error('ECONNRESET'); } },
+			log: { warn() {} },
+		});
+		const { client, sent } = join('s1', 'nova');
+		room._handleChat(client, { text: 'still here' });
+		expect(broadcasts.some((b) => b.type === 'chat' && b.msg.text === 'still here')).toBe(true);
+		await room._sendChatHistory(client);
+		expect(sent).toEqual([{ type: 'chat_history', msg: { lines: [] } }]);
+	});
+});

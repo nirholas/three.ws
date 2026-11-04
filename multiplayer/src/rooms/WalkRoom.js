@@ -92,6 +92,7 @@ import { eventLiveNow, eventWindow, refreshEventWindow } from '../event-window.j
 import { reportEventRun, fetchEventBoard } from '../event-score.js';
 import { hydratePlayer, loadPlayer, savePlayer, flushPlayer } from '../playerStore.js';
 import { publishFeedEvent } from '../feed.js';
+import { chatScrollback, scrollbackKey, toScrollbackRecord } from '../chat-scrollback.js';
 import { wantsSpectator, isSpectator, seatSpectator, guardSpectatorMessages, publishSpectatorCount } from '../spectator.js';
 import { attachDanceOff } from '../dance-off-room.js';
 import { reportQuestComplete } from '../quest-notify.js';
@@ -577,6 +578,10 @@ export class WalkRoom extends Room {
 		// Sessions whose join snapshot has gone out, so the 'ready' handshake and
 		// the fallback timer cannot both send it.
 		this._joinSnapshotSent = new Set();
+		// Sessions that have been handed the world's chat scrollback. One batched
+		// `chat_history` per arrival: 'ready' can repeat (a reconnecting client
+		// re-announces), and a second copy would double every line in their log.
+		this._chatHistorySent = new Set();
 		// King of the Totem (R07): off-schema round + score state. `phase` is the
 		// round machine ('idle' waiting for players | 'active' round running |
 		// 'intermission' showing the winner). `scores` is sessionId → accumulated
@@ -668,6 +673,7 @@ export class WalkRoom extends Room {
 		this.onMessage('ready', (client) => {
 			this._readyClients.add(client.sessionId);
 			this._flushJoinSnapshot(client, { force: true });
+			this._sendChatHistory(client).catch(() => {});
 			paSyncJoiner(this, client).catch(() => {});
 		});
 		this.onMessage('move', (client, payload) => this._handleMove(client, payload));
@@ -1183,6 +1189,7 @@ export class WalkRoom extends Room {
 		this._readyClients.delete(client.sessionId);
 		this._joinedAt.delete(client.sessionId);
 		this._joinSnapshotSent.delete(client.sessionId);
+		this._chatHistorySent.delete(client.sessionId);
 		// King of the Totem (R07): drop their current-round score and demote them if
 		// they were holding the zone. Their accumulated points are forfeited (a player
 		// who leaves can't win), and the next tick re-evaluates occupancy from scratch,
@@ -2004,9 +2011,35 @@ export class WalkRoom extends Room {
 		const last = this._chatCooldowns.get(client.sessionId) || 0;
 		if (now - last < 700) return;
 		this._chatCooldowns.set(client.sessionId, now);
+		// The message id lets a client that just received the scrollback drop a
+		// live line it already has (history and relay can overlap by one line).
+		const record = toScrollbackRecord({ name: player.name, text, ts: now });
 		// Relay to everyone (including the sender, so their own bubble is driven
 		// by the same authoritative event the others see).
-		this.broadcast('chat', { id: client.sessionId, name: player.name, text, ts: now });
+		this.broadcast('chat', { id: client.sessionId, mid: record?.mid, name: player.name, text, ts: now });
+		// Keep it for late arrivals. Best-effort and never awaited: the relay above
+		// has already happened, and a Redis outage only means no scrollback.
+		if (record) this._scrollback().append(scrollbackKey(this.worldKey), record).catch(() => {});
+	}
+
+	/** The process-wide scrollback store (Upstash when configured, memory otherwise).
+	 *  A test may assign `room._chatStore` to inject its own. */
+	_scrollback() {
+		return this._chatStore || chatScrollback();
+	}
+
+	/** Hand one arrival the world's recent chat in a single batched message, so a
+	 *  late joiner reads the room instead of an empty log. Sent once per session,
+	 *  only after 'ready' (an older bundle that never says ready has no handler for
+	 *  it). An empty world still gets `{ lines: [] }`, which is what lets the
+	 *  client show "No messages yet" rather than guessing. */
+	async _sendChatHistory(client) {
+		const id = client.sessionId;
+		if (this._chatHistorySent.has(id)) return;
+		this._chatHistorySent.add(id);
+		const lines = await this._scrollback().tail(scrollbackKey(this.worldKey));
+		if (!this.state.players.has(id)) return; // left while we read
+		try { client.send('chat_history', { lines }); } catch { /* gone */ }
 	}
 
 	_handleAvatar(client, payload) {
