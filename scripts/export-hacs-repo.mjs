@@ -12,7 +12,7 @@
 // from this tree, and turning the workflows on, is the owner's call.
 
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,8 +27,12 @@ const hacsManifest = JSON.parse(readFileSync(join(SOURCE, 'hacs.json'), 'utf8'))
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-// The integration, as-is: custom_components/three_ws/** including brand/.
-cpSync(join(SOURCE, 'custom_components'), join(OUT, 'custom_components'), { recursive: true });
+// The integration, as-is: custom_components/three_ws/** including brand/, minus the
+// Python bytecode a local run leaves behind (never part of a release).
+cpSync(join(SOURCE, 'custom_components'), join(OUT, 'custom_components'), {
+	recursive: true,
+	filter: (src) => basename(src) !== '__pycache__' && !/\.py[cod]$/.test(src),
+});
 
 // Repository-root files the standalone repo needs that already live next to
 // the integration in this monorepo.
