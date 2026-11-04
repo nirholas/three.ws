@@ -2066,6 +2066,22 @@
 				"kind": "live",
 				"reason": "Quotes and simulates against live aggregators and a mainnet RPC for a funded wallet's public key."
 			}
+		},
+		{
+			"id": "evals-gate",
+			"script": "scripts/evals.mjs",
+			"npm": "evals:gate",
+			"title": "Agent eval smoke gate",
+			"protects": "The agent loop the platform serves still clears the smoke suite (evals/suites/smoke.json) at its gate.minScore, scored task by task against the pinned eval model.",
+			"why": "A prompt, tool or loop change can leave every unit test green while the agent stops finishing real tasks. Only running the tasks through the served loop and scoring the answers shows that. With no model key configured the step skips with exit 0, so the gate stays runnable on a machine without credentials.",
+			"stages": [
+				"gate"
+			],
+			"needs": "credentials",
+			"proof": {
+				"kind": "live",
+				"reason": "Runs the smoke tasks through the real agent loop against a live model and scores the answers, so it needs a model key. A static fixture cannot show that a model completes a task."
+			}
 		}
 	],
 	"exempt": [
