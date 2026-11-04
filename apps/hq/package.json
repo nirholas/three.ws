@@ -45,7 +45,9 @@
     "@types/maplibre-gl": "^1.13.2",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
+    "deepmerge": "file:vendor/deepmerge",
     "markdownlint-cli2": "^0.24.0",
+    "minimatch": "file:vendor/minimatch",
     "typescript": "^6.0.3",
     "vite": "^8.3.5",
     "vite-plugin-pwa": "^2.0.0",
@@ -75,6 +77,9 @@
     "katex@^0.16": "^0.18.2",
     "@loaders.gl/core": "4.5.4",
     "@loaders.gl/gltf": "4.5.4",
-    "@loaders.gl/textures": "4.5.4"
+    "@loaders.gl/textures": "4.5.4",
+    "deepmerge": "$deepmerge",
+    "minimatch@>=7.0.0 <11.0.1": "$minimatch",
+    "re2js@2.8.6": "^2.8.7"
   }
 }

@@ -19,6 +19,7 @@
 		"@solana/spl-token": "^0.4.15",
 		"@solana/web3.js": "^1.99.0",
 		"@three-ws/oracle-model": "^0.1.0",
+		"bigint-buffer": "file:vendor/bigint-buffer",
 		"bn.js": "^5.2.5",
 		"bs58": "^6.0.0",
 		"eventsource": "^5.1.2",
@@ -39,6 +40,7 @@
 	"overrides": {
 		"toml@^3": "^5.0.1",
 		"uuid@^8": "^11.1.1",
-		"jayson@^4": "^5.0.0"
+		"jayson@^4": "^5.0.0",
+		"bigint-buffer": "$bigint-buffer"
 	}
 }

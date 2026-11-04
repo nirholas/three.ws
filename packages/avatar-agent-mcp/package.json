@@ -79,6 +79,10 @@
 	"overrides": {
 		"toml@^3": "^5.0.1",
 		"uuid@^8": "^11.1.1",
-		"jayson@^4": "^5.0.0"
+		"jayson@^4": "^5.0.0",
+		"bigint-buffer": "$bigint-buffer"
+	},
+	"devDependencies": {
+		"bigint-buffer": "file:vendor/bigint-buffer"
 	}
 }

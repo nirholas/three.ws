@@ -85,6 +85,7 @@
     "@types/ws": "^8.18.0",
     "better-sqlite3": "^13.0.3",
     "hoodchain": "file:../robinhood-chain-sdk",
+    "minimatch": "file:vendor/minimatch",
     "react": "^19.0.0",
     "tsup": "^9.0.0",
     "typedoc": "^0.28.0",
@@ -92,5 +93,8 @@
     "viem": "^2.55.0",
     "vitest": "^5.0.5",
     "ws": "^8.18.0"
+  },
+  "overrides": {
+    "minimatch@>=7.0.0 <11.0.1": "$minimatch"
   }
 }

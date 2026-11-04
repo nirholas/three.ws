@@ -76,6 +76,9 @@
 		"express": "^5.2.1"
 	},
 	"devDependencies": {
+		"bigint-buffer": "file:vendor/bigint-buffer",
+		"deepmerge": "file:vendor/deepmerge",
+		"elliptic": "file:vendor/elliptic",
 		"vitest": "^5.0.1"
 	},
 	"overrides": {
@@ -88,6 +91,13 @@
 		"undici@^5": "^6.29.0",
 		"uuid@^8": "^11.1.1",
 		"jayson@^4": "^5.0.0",
-		"fast-uri@^3": "^3.1.9"
+		"fast-uri@^3": "^3.1.9",
+		"deepmerge": "$deepmerge",
+		"elliptic": "$elliptic",
+		"bigint-buffer": "$bigint-buffer",
+		"follow-redirects@^1": "^1.16.2",
+		"node-forge": "1.4.2",
+		"helia@^5": "^7.1.16",
+		"@helia/unixfs@^4": "^7"
 	}
 }

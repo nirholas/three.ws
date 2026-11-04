@@ -10,6 +10,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
+    "minimatch": "file:vendor/minimatch",
     "mocha": "^12.0.3",
     "typescript": "^6.0.3"
   },
@@ -18,6 +19,7 @@
     "serialize-javascript@^6": "^7.0.5",
     "toml@^3": "^5.0.1",
     "uuid@^8": "^11.1.1",
-    "jayson@^4": "^5.0.0"
+    "jayson@^4": "^5.0.0",
+    "minimatch@>=7.0.0 <11.0.1": "$minimatch"
   }
 }

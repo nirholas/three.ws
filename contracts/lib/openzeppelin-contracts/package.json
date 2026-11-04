@@ -67,6 +67,7 @@
     "@openzeppelin/upgrade-safe-transpiler": "^0.4.1",
     "@openzeppelin/upgrades-core": "^1.20.6",
     "chai": "^4.2.0",
+    "elliptic": "file:vendor/elliptic",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
     "ethers": "^6.16.0",
@@ -83,6 +84,7 @@
     "lint-staged": "^16.0.0",
     "lodash.startcase": "^4.4.0",
     "micromatch": "^4.0.2",
+    "minimatch": "file:vendor/minimatch",
     "p-limit": "^7.0.0",
     "prettier": "^3.0.0",
     "prettier-plugin-solidity": "^2.0.0",
@@ -114,6 +116,9 @@
     "serialize-javascript@^6": "^7.0.5",
     "tmp@~0.0": "^0.2.7",
     "undici@^5": "^6.29.0",
-    "uuid@^8": "^11.1.1"
+    "uuid@^8": "^11.1.1",
+    "elliptic": "$elliptic",
+    "minimatch@>=7.0.0 <11.0.1": "$minimatch",
+    "follow-redirects@^1": "^1.16.2"
   }
 }

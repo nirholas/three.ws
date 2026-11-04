@@ -1,0 +1,15 @@
+{
+  "name": "bigint-buffer",
+  "version": "1.1.5",
+  "description": "bigint-buffer 1.1.5 API without the native binding, fixing CVE-2025-3194 / GHSA-3gc7-fjrx-p6mg (vendored; upstream has no patched release)",
+  "license": "Apache-2.0",
+  "main": "dist/node.js",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">= 10.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/no2chem/bigint-buffer.git"
+  }
+}

@@ -55,6 +55,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.6.0",
     "jsdom": "^30.1.3",
+    "minimatch": "file:vendor/minimatch",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
@@ -63,7 +64,8 @@
   },
   "overrides": {
     "esbuild": "^0.28.0",
-    "postcss-selector-parser": "^7.1.7"
+    "postcss-selector-parser": "^7.1.7",
+    "minimatch@>=7.0.0 <11.0.1": "$minimatch"
   },
   "homepage": "https://three.ws/forge-desktop",
   "license": "MIT"

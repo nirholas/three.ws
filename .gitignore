@@ -3,6 +3,8 @@ dist
 !satellites/glb-quality-gate/dist/
 !satellites/glb-quality-gate/dist/*.js
 !satellites/glb-quality-gate/dist/package.json
+# vendored dependency copies ship their built files
+!**/vendor/*/dist/
 dist-lib
 dist-artifact
 .cache

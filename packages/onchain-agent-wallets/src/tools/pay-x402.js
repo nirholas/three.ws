@@ -35,7 +35,7 @@ export const def = {
 		id: z.string().describe('The agent wallet paying.'),
 		url: z.string().url().describe('The resource to call.'),
 		method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional().describe('HTTP method. Default GET.'),
-		headers: z.record(z.string()).optional().describe('Extra request headers.'),
+		headers: z.record(z.string(), z.string()).optional().describe('Extra request headers.'),
 		body: z.string().optional().describe('Request body, for POST/PUT/PATCH.'),
 		max_price: z.string().optional().describe('Refuse if the resource asks for more than this, in whole tokens. A ceiling for this call only.'),
 		confirm: z.boolean().optional().describe('Set true to authorize payment.'),
