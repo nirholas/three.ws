@@ -50,8 +50,20 @@ import { sql } from './db.js';
 import { json, error } from './http.js';
 import { resolvePayoutAddress } from './payout.js';
 import { resolveSolanaRecipient } from '../../src/solana/sns.js';
+import { IDEMPOTENCY_TTL_S } from './idempotency.js';
 
 export const X402_VERSION = 'x402/0.1';
+
+// The replay contract POST /api/agents/x402/invoke honours, advertised on the
+// manifest and the 402 so a buyer (src/onchain/x402/client.js among them) can
+// rely on it: a retry of a delivered call with the same `Idempotency-Key`, or
+// the same `x-payment-intent` when no key is sent, returns the stored result
+// with `replayed: true` for this long instead of a fresh 402.
+export const X402_IDEMPOTENCY = Object.freeze({
+	header: 'Idempotency-Key',
+	ttl_seconds: IDEMPOTENCY_TTL_S,
+	replay_field: 'replayed',
+});
 
 // Resolve the manifest's `recipient` to a base58 wallet and a human-readable
 // `recipient_name`. Two inputs feed this:
@@ -145,6 +157,7 @@ export async function emit402(res, { agent, skill, amount, currency, chain = 'so
 		verify_url: '/api/agents/payments/pay-confirm',
 		manifest_url: manifestUrl(agent.id, skill),
 		retry_with_header: 'x-payment-intent',
+		idempotency: X402_IDEMPOTENCY,
 	};
 	res.statusCode = 402;
 	res.setHeader('content-type', 'application/json');
@@ -271,5 +284,6 @@ export async function manifestOnly(res, opts) {
 		verify_url: '/api/agents/payments/pay-confirm',
 		manifest_url: manifestUrl(opts.agent.id, opts.skill),
 		retry_with_header: 'x-payment-intent',
+		idempotency: X402_IDEMPOTENCY,
 	});
 }

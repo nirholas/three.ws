@@ -1,5 +1,5 @@
 /**
- * x402 client — fetch wrapper that follows 402 Payment Required automatically.
+ * x402 client: fetch wrapper that follows 402 Payment Required automatically.
  *
  * Usage:
  *   import { x402Fetch } from 'src/onchain/x402/client.js';
@@ -15,17 +15,48 @@
  * Flow:
  *   1. Make the request.
  *   2. If 402: parse manifest, hand it to onPaymentRequired (caller can
- *      reject — useful for showing a confirmation modal). On 'auto', use the
+ *      reject, useful for showing a confirmation modal). On 'auto', use the
  *      Pump.fun payments adapter to pay, then retry once with
  *      `x-payment-intent`.
- *   3. Return the final response (whatever it is — 200, 4xx, etc.).
+ *   3. Return the final response (whatever it is: 200, 4xx, etc.).
+ *
+ * Idempotency: every logical call carries one `Idempotency-Key` (a caller
+ * supplied one is kept, otherwise a fresh UUID). The same key rides the paid
+ * retry, so if the server ran the skill but the response was lost, asking
+ * again replays the stored result (`replayed: true`) instead of charging or
+ * executing twice. A network error after payment is retried once with that
+ * same key before the error is surfaced.
  */
 
 import { getPaymentsAdapter } from '../payments/index.js';
 
-/** @typedef {{ version: string, kind: string, agent_id: string, skill: string, amount: string, currency: string, recipient: string, valid_until: number, intent_url: string, verify_url: string, retry_with_header: string }} X402Manifest */
+/** @typedef {{ version: string, kind: string, agent_id: string, skill: string, amount: string, currency: string, recipient: string, valid_until: number, intent_url: string, verify_url: string, retry_with_header: string, idempotency?: { header: string, ttl_seconds: number, replay_field: string } }} X402Manifest */
 
 const MAX_RETRIES = 1;
+const MAX_NETWORK_RETRIES_AFTER_PAYMENT = 1;
+// A retry can land while the first paid execution is still running; the
+// server answers 409 idempotency_in_progress with a retry-after. Wait it out a
+// bounded number of times, then hand the 409 back to the caller.
+const MAX_IN_PROGRESS_WAITS = 3;
+const MAX_IN_PROGRESS_WAIT_MS = 5000;
+
+async function inProgressDelayMs(response) {
+	if (response.status !== 409) return null;
+	const ct = response.headers.get('content-type') || '';
+	if (!ct.includes('json')) return null;
+	const body = await response.clone().json().catch(() => null);
+	if (body?.error !== 'idempotency_in_progress') return null;
+	const seconds = Number(response.headers.get('retry-after'));
+	const ms = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 1000;
+	return Math.min(ms, MAX_IN_PROGRESS_WAIT_MS);
+}
+
+function newIdempotencyKey() {
+	if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+	const bytes = new Uint8Array(16);
+	globalThis.crypto.getRandomValues(bytes);
+	return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 /**
  * @param {string|URL} url
@@ -46,15 +77,43 @@ export async function x402Fetch(url, opts = {}) {
 
 	let attempt = 0;
 	let intentId = null;
+	let networkRetries = 0;
+	let inProgressWaits = 0;
+	const idempotencyKey =
+		new Headers(fetchOpts.headers || {}).get('idempotency-key') || newIdempotencyKey();
 
 	while (true) {
 		const headers = new Headers(fetchOpts.headers || {});
+		headers.set('idempotency-key', idempotencyKey);
 		if (intentId) headers.set('x-payment-intent', intentId);
-		const response = await fetch(url, {
-			...fetchOpts,
-			credentials: fetchOpts.credentials || 'include',
-			headers,
-		});
+		let response;
+		try {
+			response = await fetch(url, {
+				...fetchOpts,
+				credentials: fetchOpts.credentials || 'include',
+				headers,
+			});
+		} catch (err) {
+			// Once paid, a dropped connection must not strand the payment: the
+			// server keys the call on idempotencyKey, so asking again either
+			// replays the delivered result or runs the call that never landed.
+			if (intentId && networkRetries < MAX_NETWORK_RETRIES_AFTER_PAYMENT) {
+				networkRetries += 1;
+				onProgress('retrying');
+				continue;
+			}
+			throw err;
+		}
+
+		if (intentId && inProgressWaits < MAX_IN_PROGRESS_WAITS) {
+			const waitMs = await inProgressDelayMs(response);
+			if (waitMs != null) {
+				inProgressWaits += 1;
+				onProgress('waiting');
+				await new Promise((resolve) => setTimeout(resolve, waitMs));
+				continue;
+			}
+		}
 
 		if (response.status !== 402) return response;
 		if (attempt >= MAX_RETRIES) return response; // gave up after one paid retry

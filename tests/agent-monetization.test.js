@@ -400,7 +400,7 @@ describe('Revenue Attribution', () => {
 		expect(status).toBe(402);
 	});
 
-	it('second invoke with already-consumed intent returns 402', async () => {
+	it('a consumed intent replays its delivered result and never buys a second execution', async () => {
 		const { agent, session } = createTestAgent();
 		authState.session = session;
 		const intentId = 'intent-double-001';
@@ -432,7 +432,23 @@ describe('Revenue Attribution', () => {
 		});
 		expect(first).toBe(200);
 
-		// Second invoke: intent is consumed → verifyPaid finds no 'paid' row → 402
+		// Same intent, same call: a buyer whose response was lost collects the
+		// stored result (replayed) before any intent lookup, so no second run.
+		sqlState.queue.push([agent]);
+		sqlState.queue.push([]); // priceFor: agent_skill_prices → no row, use meta
+		sqlState.queue.push([]); // hasSkillAccess: no canonical price → paid:false, x402 path
+
+		const replay = await invoke(x402Handler, {
+			method: 'POST',
+			url: '/api/agents/x402/invoke',
+			headers: { 'x-payment-intent': intentId },
+			body: { agent_id: agent.id, skill: 'echo', args: {} },
+		});
+		expect(replay.status).toBe(200);
+		expect(replay.body.replayed).toBe(true);
+
+		// Same intent under a fresh Idempotency-Key: no stored result for that
+		// key, the intent is consumed, so verifyPaid finds no 'paid' row → 402.
 		sqlState.queue.push([agent]);
 		sqlState.queue.push([]); // priceFor: agent_skill_prices → no row, use meta
 		sqlState.queue.push([]); // hasSkillAccess: no canonical price → paid:false, x402 path
@@ -441,7 +457,7 @@ describe('Revenue Attribution', () => {
 		const { status: second } = await invoke(x402Handler, {
 			method: 'POST',
 			url: '/api/agents/x402/invoke',
-			headers: { 'x-payment-intent': intentId },
+			headers: { 'x-payment-intent': intentId, 'idempotency-key': 'a-new-logical-call' },
 			body: { agent_id: agent.id, skill: 'echo', args: {} },
 		});
 		expect(second).toBe(402);

@@ -326,8 +326,8 @@ await consumeIntent(paid.intentId);  // single-shot
 return doTheThing();
 ```
 
-Reference impl: `api/agents/x402/invoke.js` (paid-skill router with `echo`
-demo skill). Manifest discovery at `GET /api/agents/x402/manifest`.
+Reference impl: `api/agents/x402/[action].js` (the paid-skill router behind
+`POST /api/agents/x402/invoke`, with an `echo` demo skill). Manifest discovery at `GET /api/agents/x402/manifest`.
 
 Client wrapper that follows 402 automatically:
 
@@ -339,6 +339,12 @@ const res = await x402Fetch('/api/agents/x402/invoke', {
   onPaymentRequired: () => 'auto',
 });
 ```
+
+Each call carries one `Idempotency-Key` (pass your own in `headers` to tie
+it to an order id, otherwise a UUID is generated). The paid retry reuses it,
+a network error after payment is retried once with the same key, and a
+`409 idempotency_in_progress` is waited out up to three times, so a lost
+response is collected as a replay (`replayed: true`) rather than paid twice.
 
 Full spec at [docs/x402.md](../../docs/x402.md).
 

@@ -11,6 +11,7 @@ import {
 	normalizeIdempotencyKey,
 	readIdempotent,
 	releaseIdempotent,
+	runOnce,
 	writeIdempotent,
 } from '../api/_lib/idempotency.js';
 
@@ -48,5 +49,32 @@ describe('idempotency store', () => {
 		await releaseIdempotent(key);
 		expect(await readIdempotent(key)).toBeNull();
 		expect(await claimIdempotent(key, { state: 'running', n: 3 })).toBe(true);
+	});
+
+	it('runOnce tells a same-instance duplicate the first call is still running, even with no shared lock', async () => {
+		// No Redis here, so acquireLock grants every caller; the in-process
+		// single-flight is what stops the duplicate from running the work twice.
+		const key = `single-flight-${Date.now()}`;
+		let runs = 0;
+		let finish;
+		const first = runOnce({
+			caller: 'caller',
+			key,
+			fingerprint: 'fp',
+			run: () => { runs += 1; return new Promise((resolve) => { finish = resolve; }); },
+		});
+		await Promise.resolve();
+		const dup = await runOnce({ caller: 'caller', key, fingerprint: 'fp', run: async () => { runs += 1; return 'second'; } });
+		expect(dup).toEqual({ state: 'in_progress' });
+		finish('first');
+		expect(await first).toEqual({ state: 'fresh', value: 'first' });
+		expect(await runOnce({ caller: 'caller', key, fingerprint: 'fp', run: async () => 'third' })).toEqual({ state: 'replayed', stored: 'first' });
+		expect(runs).toBe(1);
+	});
+
+	it('runOnce frees the key after a failed run, so the retry runs', async () => {
+		const key = `single-flight-fail-${Date.now()}`;
+		await expect(runOnce({ caller: 'caller', key, fingerprint: 'fp', run: async () => { throw new Error('boom'); } })).rejects.toThrow('boom');
+		expect(await runOnce({ caller: 'caller', key, fingerprint: 'fp', run: async () => 'ok' })).toEqual({ state: 'fresh', value: 'ok' });
 	});
 });

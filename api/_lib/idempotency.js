@@ -8,11 +8,10 @@
 //     header, and the free 3D studio's job queue (../_mcp-studio/jobs.js)
 //     hands a retried generation the job the first call started.
 //   • runOnce(), a higher-level wrapper that acquires an in-flight lock, runs
-//     the work, and stores the outcome in one call: used by the domains
-//     service, x402 spec and remix-asset handlers, the MCP studio's
-//     generation tools, and the perps tools, so a scheduled agent that
-//     retries after a timeout collects the job it already started rather than
-//     burning the shared quota on a second one.
+//     the work, and stores the outcome in one call: used by the pay-per-call
+//     agent skill route (../agents/x402/[action].js), so a buyer whose
+//     response was lost after paying collects the delivered result on retry
+//     instead of being sent a fresh 402.
 //
 // A record lives in the shared cache (Redis, with per-instance memory as its
 // degraded fallback), keyed by who is calling and a hash of the key they chose,
@@ -115,6 +114,13 @@ export async function releaseIdempotent(storeKey) {
 	await cacheDel(storeKey);
 }
 
+// Keys whose first call is running on this instance. acquireLock degrades to
+// "always granted" when Redis is unconfigured or unreachable, so without this a
+// duplicate arriving at the same instance mid-run would run the work a second
+// time; with it, the shared lock coordinates instances and this set covers the
+// same-instance case whatever the shared store is doing.
+const inFlight = new Set();
+
 function runOnceStoreKey(caller, key) {
 	return `mcp:idem:${sha256Hex(caller)}:${sha256Hex(key)}`;
 }
@@ -153,15 +159,21 @@ export async function runOnce({
 		if (current !== null) return { state: 'replayed', stored: current };
 		await cacheDel(k).catch(() => {});
 	}
+	if (inFlight.has(k)) return { state: 'in_progress' };
+	inFlight.add(k);
 	const lock = `${k}:lock`;
-	if (!(await acquireLock(lock, LOCK_TTL_S))) return { state: 'in_progress' };
 	try {
-		const value = await run();
-		if (shouldStore(value)) {
-			await cacheSet(k, { fingerprint: fp, stored: toStored(value) }, IDEMPOTENCY_TTL_S).catch(() => {});
+		if (!(await acquireLock(lock, LOCK_TTL_S))) return { state: 'in_progress' };
+		try {
+			const value = await run();
+			if (shouldStore(value)) {
+				await cacheSet(k, { fingerprint: fp, stored: toStored(value) }, IDEMPOTENCY_TTL_S).catch(() => {});
+			}
+			return { state: 'fresh', value };
+		} finally {
+			await releaseLock(lock);
 		}
-		return { state: 'fresh', value };
 	} finally {
-		await releaseLock(lock);
+		inFlight.delete(k);
 	}
 }

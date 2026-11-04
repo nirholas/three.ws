@@ -11,6 +11,7 @@ import { calculateFee } from '../../_lib/fee.js';
 import { insertNotification } from '../../_lib/notify.js';
 import { hasSkillAccess, consumeTrialUse, logSkillUsage } from '../../_lib/skill-access.js';
 import { enforceOnchainLicense } from '../../_lib/skill-license-verify.js';
+import { runOnce, argsDigest, normalizeIdempotencyKey, IDEMPOTENCY_KEY_MAX } from '../../_lib/idempotency.js';
 
 const HANDLERS = { echo: async (args) => ({ ok: true, echoed: args }) };
 
@@ -200,14 +201,54 @@ async function handleInvoke(req, res) {
 		);
 	}
 
-	const paid = await verifyPaid(req, {
-		agentId: agent.id,
-		skill: body.skill,
-		payerUserId: auth.userId,
-		expectedAmount: price.amount,
-		expectedCurrency: price.currency,
-	});
-	if (!paid)
+	// The pay-per-call path runs at most once per (caller, key). The intent is
+	// consumed before the skill runs, so without this a buyer whose response was
+	// lost (timeout, dropped mobile connection) retried, found the intent
+	// `consumed`, failed verifyPaid and was told to pay again for work already
+	// delivered. The key is the buyer's `Idempotency-Key` header when sent (it
+	// wins, so an SDK can pick its own) and the intent id otherwise; the store is
+	// scoped to the authenticated caller, so only the account that paid can
+	// collect the result. Only a delivered call is stored: a failure releases the
+	// intent and leaves the key free, so the retry actually retries.
+	let headerKey;
+	try {
+		headerKey = normalizeIdempotencyKey(req.headers['idempotency-key']);
+	} catch {
+		return error(res, 400, 'invalid_idempotency_key',
+			`Idempotency-Key must be at most ${IDEMPOTENCY_KEY_MAX} characters.`);
+	}
+	const intentHeader = (req.headers['x-payment-intent'] || '').toString().trim();
+	const replayKey = headerKey ? `key:${headerKey}` : intentHeader ? `intent:${intentHeader}` : null;
+
+	const attempt = () => paidCall(req, { agent, body, auth, price });
+	const outcome = replayKey
+		? await runOnce({
+			caller: `x402-invoke:${auth.userId}`,
+			key: replayKey,
+			fingerprint: argsDigest({ agent_id: agent.id, skill: body.skill, args: body.args }),
+			run: attempt,
+			shouldStore: (o) => o.kind === 'delivered',
+			toStored: (o) => o.body,
+		})
+		: { state: 'fresh', value: await attempt() };
+
+	if (outcome.state === 'replayed') {
+		res.setHeader('idempotent-replayed', 'true');
+		return json(res, 200, { ...outcome.stored, replayed: true });
+	}
+	if (outcome.state === 'conflict') {
+		return error(res, 409, 'idempotency_conflict',
+			'This payment intent or Idempotency-Key was already used for a different request.');
+	}
+	if (outcome.state === 'in_progress') {
+		res.setHeader('retry-after', '2');
+		return error(res, 409, 'idempotency_in_progress',
+			'The first call with this payment is still running. Retry shortly to collect its result.',
+			{ retry: true });
+	}
+
+	const result = outcome.value;
+	if (result.kind === 'challenge') {
 		return emit402(res, {
 			agent,
 			skill: body.skill,
@@ -215,8 +256,31 @@ async function handleInvoke(req, res) {
 			currency: price.currency,
 			chain: price.chain ?? 'solana',
 		});
+	}
+	if (result.kind === 'refused') {
+		return error(res, result.status, result.code, result.message, result.extra);
+	}
+	return json(res, 200, { ...result.body, replayed: false });
+}
 
-	// $THREE holder gate — agents can require callers to hold a minimum $THREE
+// Verify the payment, apply the $THREE holder gate, consume the intent, run the
+// skill and credit revenue. Returns an outcome rather than writing the response
+// so handleInvoke can store a delivered call for replay:
+//   { kind: 'challenge' }                          not paid: answer the 402
+//   { kind: 'refused', status, code, message, extra }  paid, but not runnable now
+//   { kind: 'delivered', body }                    the skill ran; body is the 200
+// A throw from the skill releases the intent and propagates (a 500, nothing stored).
+async function paidCall(req, { agent, body, auth, price }) {
+	const paid = await verifyPaid(req, {
+		agentId: agent.id,
+		skill: body.skill,
+		payerUserId: auth.userId,
+		expectedAmount: price.amount,
+		expectedCurrency: price.currency,
+	});
+	if (!paid) return { kind: 'challenge' };
+
+	// $THREE holder gate: agents can require callers to hold a minimum $THREE
 	// balance. Checked after payment to use the verified payerAddress; the intent
 	// is NOT consumed on gate failure so the caller can acquire $THREE and retry.
 	const gate = agent.meta?.three_gate;
@@ -230,19 +294,26 @@ async function handleInvoke(req, res) {
 			gateResult = { unavailable: true };
 		}
 		if (gateResult.unavailable) {
-			return error(res, 503, 'three_gate_unavailable',
-				'The $THREE balance check is temporarily unavailable. Your payment is not consumed; retry shortly.',
-				{ retry: true });
+			return {
+				kind: 'refused',
+				status: 503,
+				code: 'three_gate_unavailable',
+				message: 'The $THREE balance check is temporarily unavailable. Your payment is not consumed; retry shortly.',
+				extra: { retry: true },
+			};
 		}
 		if (!gateResult.eligible) {
-			return error(res, 402, 'insufficient_three_balance',
-				'This agent requires a minimum $THREE balance. Acquire $THREE to use this skill.',
-				{
+			return {
+				kind: 'refused',
+				status: 402,
+				code: 'insufficient_three_balance',
+				message: 'This agent requires a minimum $THREE balance. Acquire $THREE to use this skill.',
+				extra: {
 					required: minBalance,
 					held: gateResult.balance,
 					buy_url: 'https://pump.fun/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
 				},
-			);
+			};
 		}
 	}
 
@@ -255,8 +326,12 @@ async function handleInvoke(req, res) {
 	// burned on a failed call.
 	const claimed = await consumeIntent(paid.intentId);
 	if (!claimed) {
-		return error(res, 409, 'payment_in_flight',
-			'This payment intent was already used or is being processed. Retry shortly.');
+		return {
+			kind: 'refused',
+			status: 409,
+			code: 'payment_in_flight',
+			message: 'This payment intent was already used or is being processed. Retry shortly.',
+		};
 	}
 
 	let result;
@@ -290,13 +365,16 @@ async function handleInvoke(req, res) {
 		net_amount: net,
 		currency_mint: paid.currency,
 	});
-	return json(res, 200, {
-		ok: true,
-		intent_id: paid.intentId,
-		amount: paid.amount,
-		currency: paid.currency,
-		result,
-	});
+	return {
+		kind: 'delivered',
+		body: {
+			ok: true,
+			intent_id: paid.intentId,
+			amount: paid.amount,
+			currency: paid.currency,
+			result,
+		},
+	};
 }
 
 // ── manifest ──────────────────────────────────────────────────────────────────
