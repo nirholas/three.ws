@@ -2078,6 +2078,10 @@
 			"reason": "A live-browser walkthrough that needs a running dev server and a real generation, so it is run on demand like the page audit and never inside a repository guard stage."
 		},
 		{
+			"pattern": "scripts/audit-button-families.mjs",
+			"reason": "A migration inventory for the legacy button and pill class families (docs/btn-pill-migration.md). It prints every open family with file counts and fails only when a family already marked migrated reappears, so it is run by hand while that migration is in progress rather than inside a repository guard stage."
+		},
+		{
 			"pattern": "scripts/check-kit-links.mjs",
 			"reason": "A send-day link checker run by hand on a marketing kit or partner packet before it goes out. It fetches live URLs and takes the files to check as arguments, so it belongs with the kit workflow rather than in a repository guard stage."
 		}
