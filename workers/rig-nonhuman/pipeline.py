@@ -21,6 +21,7 @@ command builders expect.
 from __future__ import annotations
 
 import logging
+import re
 import subprocess
 from pathlib import Path
 
@@ -66,9 +67,34 @@ def build_skin_cmd(merged_glb: Path, rigged_glb: Path) -> list[str]:
 class PipelineStepError(RuntimeError):
     """One of the three subprocess steps failed: non-zero exit, a timeout, or
     a reported success that wrote no output file. The message carries the
-    step name and a stderr tail only; the caller logs the full capture
-    server-side (see main.py's use of worker_security.safe_error for what
-    ultimately reaches the HTTP caller)."""
+    step name plus the tails of the step's stdout and stderr: UniRig reports
+    its own failures with print() on stdout (merge.py's "failed to load ..."),
+    and merge.sh backgrounds the python process and always exits 0, so a
+    stderr-only tail threw the actual cause away. main.py returns the message
+    to the caller as the task error, so absolute paths in the tails are
+    reduced to their final component; the full, unredacted capture goes to
+    the server log."""
+
+
+TAIL_LINES = 20
+
+
+_ABS_PATH = re.compile(r"(?<![\w.])/(?:[\w.\-]+/)+([\w.\-]+)")
+
+
+def _tail(text: str | None) -> str:
+    lines = (text or "").strip().splitlines()[-TAIL_LINES:]
+    return _ABS_PATH.sub(r"\1", "\n".join(lines))
+
+
+def _describe(result: subprocess.CompletedProcess) -> str:
+    parts = []
+    out, err = _tail(result.stdout), _tail(result.stderr)
+    if out:
+        parts.append(f"stdout tail:\n{out}")
+    if err:
+        parts.append(f"stderr tail:\n{err}")
+    return "\n".join(parts) if parts else "(no output captured)"
 
 
 def _run(cmd: list[str], cwd: Path, step: str) -> subprocess.CompletedProcess:
@@ -87,10 +113,13 @@ def _run(cmd: list[str], cwd: Path, step: str) -> subprocess.CompletedProcess:
 def _run_step(cmd: list[str], cwd: Path, step: str, output: Path) -> None:
     result = _run(cmd, cwd, step)
     if result.returncode != 0:
-        tail = "\n".join(result.stderr.strip().splitlines()[-20:])
-        raise PipelineStepError(f"{step} failed (exit {result.returncode}): {tail}")
+        log.error("[%s] exit %s\nstdout:\n%s\nstderr:\n%s", step, result.returncode, result.stdout, result.stderr)
+        raise PipelineStepError(f"{step} failed (exit {result.returncode}): {_describe(result)}")
     if not output.exists():
-        raise PipelineStepError(f"{step} reported success but wrote no output file")
+        log.error("[%s] no output %s\nstdout:\n%s\nstderr:\n%s", step, output, result.stdout, result.stderr)
+        raise PipelineStepError(
+            f"{step} reported success but wrote no output file: {_describe(result)}"
+        )
 
 
 def run_pipeline(mesh_glb: Path, workdir: Path, unirig_dir: Path, skintokens_dir: Path) -> Path:

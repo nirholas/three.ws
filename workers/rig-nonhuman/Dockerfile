@@ -29,12 +29,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # The X11 client libraries are what the bpy 4.2 wheel links against even when
 # Blender runs headless (UniRig's merge step imports bpy to write the skinned
 # GLB); without libXrender the import fails at runtime, not at pip install.
+# libusb-1.0-0 is the same kind of runtime-only link: open3d's pybind module
+# needs libusb-1.0.so.0, UniRig's src/inference/merge.py imports open3d at the
+# top, and merge.sh backgrounds that python process and exits 0 regardless.
+# Without it every merge died on ImportError and the fox QA run (2026-11-04)
+# reported only "unirig-merge reported success but wrote no output file".
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-dev python3.11-venv python3-pip \
         git curl build-essential \
         libgl1 libglib2.0-0 \
         libx11-6 libxext6 libxrender1 libxfixes3 libxi6 libxxf86vm1 \
-        libxkbcommon0 libsm6 libice6 libgomp1 \
+        libxkbcommon0 libsm6 libice6 libgomp1 libusb-1.0-0 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
     && ln -sf /usr/bin/python3.11 /usr/bin/python \
@@ -99,13 +104,13 @@ RUN chmod +x /app/entrypoint.sh
 # checkout, so it runs here and the image does not ship if it broke.
 RUN python3 /app/test_pipeline.py && python3 /app/test_gltf_meshopt.py
 
-# Import gate: load the exact entry modules pipeline.py runs (UniRig's run.py,
-# SkinTokens' demo.py; both guard their CLI behind __main__) so a dependency
-# that cannot import fails the build, not the first rig request. pip check
-# catches resolver conflicts the installs above only warn about. Its one
-# tolerated line is "bpy 4.2.0 is not supported on this platform": a false
-# positive from pip's wheel-tag check (the installed wheel is
-# manylinux_2_28_x86_64 and this Ubuntu 22.04 base has glibc 2.35), and the
+# Import gate: load the exact entry modules pipeline.py runs (UniRig's run.py
+# and src.inference.merge, SkinTokens' demo.py; all guard their CLI behind
+# __main__) so a dependency that cannot import fails the build, not the first
+# rig request. pip check catches resolver conflicts the installs above only
+# warn about. Its one tolerated line is "bpy 4.2.0 is not supported on this
+# platform": a false positive from pip's wheel-tag check (the installed wheel
+# is manylinux_2_28_x86_64 and this Ubuntu 22.04 base has glibc 2.35), and the
 # `import bpy` below proves bpy loads here. Any other line fails the build.
 # SkinTokens' demo asks torch.cuda.get_device_name(0) at import (its
 # FlashAttention-3 probe looks for an H100), and the builder has no GPU, so the
@@ -116,6 +121,7 @@ RUN { pip check > /tmp/pip-check.txt 2>&1 || true; } \
     && ! grep -vxE 'No broken requirements found\.|bpy 4\.2\.0 is not supported on this platform' /tmp/pip-check.txt \
     && python3 -c "import bpy; print('bpy', bpy.app.version_string)" \
     && cd /app/unirig && python3 -c "import run" \
+    && python3 -c "import open3d, src.inference.merge; print('open3d', open3d.__version__)" \
     && cd /app/skintokens && python3 -c "import torch; torch.cuda.get_device_name = lambda *a, **k: 'build-host-no-gpu'; import demo" \
     && python3 -c "import numpy, pandas; print('numpy', numpy.__version__, 'pandas', pandas.__version__)"
 

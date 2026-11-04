@@ -188,6 +188,42 @@ def test_run_pipeline_stops_before_skinning_if_merge_fails():
         shutil.rmtree(root)
 
 
+def test_missing_output_error_carries_the_step_stdout():
+    """UniRig's merge.sh backgrounds `python -m src.inference.merge`, waits,
+    and always exits 0; merge.py reports a failed load or export with print()
+    on stdout and returns. The production fox run on 2026-11-04 surfaced only
+    "unirig-merge reported success but wrote no output file", with the cause
+    thrown away. The error must carry the step's own output."""
+    root = Path(tempfile.mkdtemp())
+    try:
+        unirig_dir, skintokens_dir = _stub_checkouts(root)
+        workdir = root / "work"
+        workdir.mkdir()
+        mesh_glb = workdir / "mesh.glb"
+        mesh_glb.write_bytes(b"glTF-fake-mesh")
+
+        _fake_bash_script(
+            unirig_dir / "launch/inference/generate_skeleton.sh", workdir / "skeleton.fbx"
+        )
+        merge = unirig_dir / "launch/inference/merge.sh"
+        merge.write_text(
+            "#!/bin/sh\n"
+            f"echo 'failed to load {workdir / 'skeleton.fbx'}'\n"
+            "echo done\n"
+            "exit 0\n"
+        )
+        merge.chmod(merge.stat().st_mode | stat.S_IEXEC)
+        try:
+            run_pipeline(mesh_glb, workdir, unirig_dir, skintokens_dir)
+            _check(False, "expected PipelineStepError for a silent merge failure")
+        except PipelineStepError as exc:
+            _check("wrote no output file" in str(exc), f"still names the missing output: {exc}")
+            _check("failed to load skeleton.fbx" in str(exc), f"carries merge.py's stdout: {exc}")
+            _check(str(root) not in str(exc), f"absolute work paths are redacted: {exc}")
+    finally:
+        shutil.rmtree(root)
+
+
 if __name__ == "__main__":
     test_skeleton_cmd_matches_unirig_cli_contract()
     test_merge_cmd_matches_unirig_cli_contract()
@@ -196,6 +232,7 @@ if __name__ == "__main__":
     test_run_pipeline_raises_on_nonzero_exit()
     test_run_pipeline_raises_on_missing_output_despite_zero_exit()
     test_run_pipeline_stops_before_skinning_if_merge_fails()
+    test_missing_output_error_carries_the_step_stdout()
     if _FAILED:
         print("\nFAILED")
         sys.exit(1)
