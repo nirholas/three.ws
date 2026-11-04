@@ -15,6 +15,7 @@ import { extname, basename, dirname, relative, sep } from 'path';
 import { VitePWA } from 'vite-plugin-pwa';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { rewriteHead } from './server/seo-head.mjs';
+import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
 
@@ -689,9 +690,8 @@ const appConfig = {
 				'walk-playground': resolve(__dirname, 'src/walk-playground.js'),
 				'feature-tour': resolve(__dirname, 'src/feature-tour.js'),
 				notifications: resolve(__dirname, 'src/notifications.js'),
-				// /herald.js: the CDN build of @three-ws/herald, imported by
-				// third-party pages and by /herald's own playground.
-				herald: resolve(__dirname, 'src/herald-embed.js'),
+				// /herald.js (the CDN build of @three-ws/herald) is emitted by the
+				// keepEntryExports plugin below so its named exports survive.
 				'nav-tier-badge': resolve(__dirname, 'src/nav-tier-badge.js'),
 				i18n: resolve(__dirname, 'src/i18n.js'),
 				drops: resolve(__dirname, 'pages/drops.html'),
@@ -1274,6 +1274,9 @@ const appConfig = {
 		},
 	},
 	plugins: [
+		// /herald.js is imported by third-party pages and by /herald's own playground:
+		// `import { createHerald, pollSource } from 'https://three.ws/herald.js'`.
+		keepEntryExports({ herald: resolve(__dirname, 'src/herald-embed.js') }),
 		// Resolve the shared runtime i18n entry as an EXTERNAL script — but only
 		// during BUILD. Many static pages load the locale runtime via
 		// `<script type="module" src="/i18n.js">` (injected by

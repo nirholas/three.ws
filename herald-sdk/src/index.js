@@ -68,6 +68,8 @@ const PRUNE_EVERY = 20;
  * @param {object} [options]
  * @param {'auto'|'avatar'|'card'} [options.presenter='auto'] `auto` uses the
  *   avatar when one can be rendered and the card when it cannot.
+ * @param {() => boolean} [options.prefersReducedMotion] test seam; defaults to the
+ *   `prefers-reduced-motion` media query. When true, `auto` uses the card.
  * @param {object} [options.presenters] override the built-in presenters
  *   (`{ avatar, card }`), for tests or a bespoke body.
  * @param {import('./rules.js').Rules} [options.rules]
@@ -229,10 +231,21 @@ export function createHerald(options = {}) {
 		return built.slice(0, 3);
 	}
 
+	function prefersReducedMotion() {
+		if (typeof opts.prefersReducedMotion === 'function') return !!opts.prefersReducedMotion();
+		try {
+			return !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+		} catch {
+			return false;
+		}
+	}
+
 	let preferred = null;
 	async function pickPresenter() {
 		if (opts.presenter === 'card') return presenters.card;
 		if (opts.presenter === 'avatar') return presenters.avatar;
+		// A walking, gesturing 3D body is motion the visitor asked not to see.
+		if (prefersReducedMotion()) return presenters.card;
 		if (preferred) return preferred;
 		preferred = (await presenters.avatar.ready?.()) ? presenters.avatar : presenters.card;
 		return preferred;

@@ -92,13 +92,20 @@ export function createAvatarPresenter({
 		const ctl = await resolveControl();
 		if (!ctl?.announce) return false;
 		const line = message.from ? `${message.from}: ${message.text}` : message.text;
-		return !!(await ctl.announce(line, {
+		const startedAt = Date.now();
+		const shown = !!(await ctl.announce(line, {
 			hold: dwellMs,
 			tone: message.tone === 'neutral' ? 'neutral' : 'alert',
 			emote: message.emote || (message.tone === 'celebrate' ? 'dance' : 'wave'),
 			actions,
 			...(message.avatar ? { avatar: message.avatar } : {}),
 		}));
+		// A persistent companion returns as soon as the line is up. The runtime
+		// treats this promise as "the message left the screen", so hold it for
+		// the rest of the dwell or the next message would stack on this one.
+		const remaining = dwellMs - (Date.now() - startedAt);
+		if (shown && remaining > 0) await new Promise((r) => setTimeout(r, remaining));
+		return shown;
 	}
 
 	function stop() {
