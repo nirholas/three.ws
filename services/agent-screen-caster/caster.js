@@ -23,6 +23,7 @@ const DEFAULT_JPEG_QUALITY   = 72;
 const DEFAULT_VIEWPORT       = { width: 1280, height: 720 };
 const ACTIVITY_RETRIES       = 2;     // extra attempts for an activity push
 const RETRY_BACKOFF_MS       = 500;   // multiplied by the attempt number
+const LAUNCH_ATTEMPTS        = 3;     // Chromium can die at startup under host contention
 
 /** 429 and 5xx are worth another attempt; every other status is a verdict. */
 export function isRetryableStatus(status) {
@@ -62,26 +63,39 @@ export class AgentScreenCaster {
 
 	async launch(headless = true) {
 		this._closing = false;
-		this.browser = await chromium.launch({
-			headless,
-			args: [
-				'--no-sandbox',
-				'--disable-setuid-sandbox',
-				'--disable-dev-shm-usage',
-				'--disable-gpu',
-			],
-		});
+		// Chromium occasionally dies during startup ("Target page, context or
+		// browser has been closed") when many browsers start at once. Retry the
+		// whole launch + context + page bring-up, tearing down the failed browser.
+		for (let attempt = 1; ; attempt++) {
+			try {
+				this.browser = await chromium.launch({
+					headless,
+					args: [
+						'--no-sandbox',
+						'--disable-setuid-sandbox',
+						'--disable-dev-shm-usage',
+						'--disable-gpu',
+					],
+				});
 
-		this.context = await this.browser.newContext({
-			viewport: DEFAULT_VIEWPORT,
-			userAgent:
-				'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' +
-				'(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-			locale: 'en-US',
-			timezoneId: 'America/New_York',
-		});
+				this.context = await this.browser.newContext({
+					viewport: DEFAULT_VIEWPORT,
+					userAgent:
+						'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' +
+						'(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+					locale: 'en-US',
+					timezoneId: 'America/New_York',
+				});
 
-		this.page = await this.context.newPage();
+				this.page = await this.context.newPage();
+				break;
+			} catch (err) {
+				await this.browser?.close().catch(() => {});
+				this.browser = this.context = this.page = null;
+				if (attempt >= LAUNCH_ATTEMPTS) throw err;
+				await sleep(RETRY_BACKOFF_MS * attempt);
+			}
+		}
 
 		// Push a frame on every finished navigation so the watcher sees transitions.
 		this.page.on('load', () => this._safePushFrame());
