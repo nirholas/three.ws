@@ -81,6 +81,16 @@ The math lives in `computeSkillRoyaltySplit`
 ([api/_lib/skill-royalty.js](../api/_lib/skill-royalty.js)) and is pure: no
 database, no chain access, so the invariants are provable in isolation.
 
+The platform's share is also booked in the platform fee ledger
+(`platform_fee_events`, see [Financial controls](financial-controls.md)) as
+source `x402_skill_split`, written in the same transaction as your
+`royalty_ledger` row. It is an accounting entry (`settlement: 'ledger'`), not a
+second transfer: the caller paid you in one settlement and the row only records
+what the split attributes to the platform. It is keyed by the settlement
+transaction (`<rail>:<tx_hash>`), so a settle hook that fires twice books it
+once. If the fee row cannot be written, your accrual is still recorded and ops
+is paged to backfill the fee, so a ledger fault never costs you a credit.
+
 ---
 
 ## Where you watch it

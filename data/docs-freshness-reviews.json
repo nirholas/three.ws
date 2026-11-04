@@ -1407,10 +1407,10 @@
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
 		"docs/ux-flows/01-onboarding-creation.md": {
-			"commit": "9c9d80bcc",
+			"commit": "cb9d8b0f5",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "checked 5810e7721 (scan page now says a free account is needed, matching the doc's auth-required selfie gate), 7a39eee75 (config adds microsoftEnabled for /login, outside this cluster) and the 2026-11-04 vercel.json route additions (mcp, Teams, Microsoft activate): nothing in this cluster changed"
 		},
 		"docs/ux-flows/02-forge-text-to-3d.md": {
 			"commit": "9c9d80bcc",
