@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T16:25:46.417Z",
+	"generated_at": "2026-11-04T16:49:06.681Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -57,6 +57,7 @@
 				"title": "Developers",
 				"paths": [
 					"/connect",
+					"/chatgpt",
 					"/grok",
 					"/mcp-tools",
 					"/docs/start-here",
@@ -10465,6 +10466,18 @@
 					"title": "Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code",
 					"description": "Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.",
 					"added": "2026-09-29",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.8,
+					"job": null
+				},
+				{
+					"path": "/chatgpt",
+					"title": "Add three.ws to ChatGPT: free 3D models and avatars inside your chats",
+					"description": "Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.",
+					"added": "2026-11-04",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

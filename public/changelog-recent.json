@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-04T16:25:46.475Z",
+	"generated_at": "2026-11-04T16:49:06.796Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4315,
+	"total": 4321,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Add three.ws to ChatGPT: free 3D models and avatars inside your chats",
+			"summary": "Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.",
+			"link": "/chatgpt",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-04",
 			"type": "launch",
@@ -47,6 +57,16 @@
 			"link": "/mcp-integrations",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Add three.ws to your own ChatGPT in about a minute",
+			"summary": "A new /chatgpt page walks you through adding the free three.ws 3D Studio to ChatGPT: turn on developer mode, create an app with the URL https://three.ws/api/mcp-chatgpt and no authentication, then ask for a model. Text and photos become interactive, textured 3D models and rigged avatars that render inline in the conversation, free and with no account. The page checks the server live from your browser, lists the exact tools ChatGPT gets, and has starter prompts and fixes for every setup snag.",
+			"link": "/chatgpt",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -94,6 +114,37 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Every page of the docs re-checked against the code it describes",
+			"summary": "All 158 docs that had fallen behind the code were reread against the changes that moved under them. 123 were corrected (endpoints, defaults, counts, limits, file paths, and features that have since shipped), 21 were confirmed still accurate, and 14 dated records such as event write-ups were marked as historical so they are no longer flagged. The freshness check now tracks each review, and its allowed stale count drops from 121 to 13, so drift shows up as soon as code changes.",
+			"link": "/docs",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Install three.ws for Home Assistant through HACS",
+			"summary": "The three.ws Home Assistant integration now has its own public repository, github.com/nirholas/three-ws-home-assistant, with a 1.0.2 release. In HACS, add it under Custom repositories (category Integration), install three.ws, restart, and paste the pairing code from three.ws/smart-home. Your house opens one outgoing connection, nothing on your network is exposed, and no Home Assistant token ever leaves the house. It passes the real HACS and hassfest validation checks, ships its own brand icon, and is listed under AI and voice assistants. A HACS default-store listing, which removes the custom repository step, is prepared.",
+			"link": "/docs/home-relay",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Live agent screens can no longer be steered into internal addresses",
+			"summary": "The browser behind an agent's live screen, the one an owner can take the wheel of, now enforces its address guard on every connection instead of only on the URL typed in. All of its traffic goes through a guard that looks up each hostname, refuses anything that lands on a loopback, private, link-local or cloud metadata address, and connects only to the address it checked. A public page that redirects to an internal host, an image or websocket pointed at one, or a name that resolves to one is now refused, so nothing internal can ever show up on the public wall.",
+			"link": "/agents-live",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "NVIDIA Inception startups can apply for free generation credit, and earn more for a shoutout",
 			"summary": "If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. Once approved you can post about what you made on X or LinkedIn, paste the link, and earn $10 more after we confirm the post is public. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application and each post. Goes live with the next owner-approved deploy, after its database migration is applied.",
 			"link": "/nvidia",
@@ -110,6 +161,16 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The GTC 2027 poster, its data and its build scripts are in the repository",
+			"summary": "docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.",
+			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
+			"tags": [
+				"docs"
 			]
 		},
 		{
@@ -1492,70 +1553,6 @@
 			"tags": [
 				"feature",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "Pay for a model request with a wallet, no account needed",
-			"summary": "POST /api/v1/chat/completions now answers an unauthenticated request with an x402 upto challenge on Solana, sized to the model's worst case for that request. Sign it, retry, and only the metered tokens are charged at the published per-token price; the rest of the cap is refunded. Streaming settles when the stream closes, and a dropped stream is charged only for the tokens already sent. GET /api/v1/models now lists the price sheet and round limits.",
-			"link": "/docs/metered-router",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "See what a Forge generation costs before you press Generate",
-			"summary": "The Forge page now shows a live cost line for the tier, engine and options you picked, read from the same pricing code that bills you, with nothing spent. A pay-to-keep mode (free preview, pay in $THREE to download, holders keep free) is built and switched off, so downloads stay free until it is turned on.",
-			"link": "/docs/forge",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "See what a prediction strategy would have earned before it trades",
-			"summary": "Agent Predictions records every strategy decision at the live order-book price in shadow mode, marks it at resolution, and shows shadow beside live results. A fee-aware scanner reads Solana event contracts for YES plus NO pairs under $1. Live stays owner-only.",
-			"link": "/agent-predictions",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "Skills are scanned for hidden behaviour before they are listed",
-			"summary": "Every marketplace skill version is now checked for secret access, calls to hosts it never declared, hidden or obfuscated code and instructions that skip the owner's confirmation. Clean skills list as before, suspicious ones are held for a moderator, and dangerous ones are refused. Authors see the file, the line and how to fix each finding in the publish form, and the existing catalog was rescanned.",
-			"link": "/docs/skill-supply-scan",
-			"tags": [
-				"security",
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "Two new Solana Blinks: tip an agent, buy its coin",
-			"summary": "Any agent's profile link now unfurls as a Blink in X and Blink-aware wallets with a one-tap tip (SOL or $THREE, straight to the agent's own wallet) and, for agents that launched a mainnet coin, a one-tap Jupiter-routed buy. Both build unsigned transactions only; the wallet signs.",
-			"link": "/docs/api-reference",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
-			"title": "Builder competitions",
-			"summary": "Build an agent, launch its coin on three.ws, and climb a live leaderboard ranked by creator fees earned. Dates, tracks, prizes, judges and rules for each competition, with registration and a countdown.",
-			"link": "/compete",
-			"tags": [
-				"launch"
 			]
 		}
 	]

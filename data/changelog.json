@@ -3,12 +3,49 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Every page of the docs re-checked against the code it describes",
+			"tags": [
+				"docs"
+			],
+			"summary": "All 158 docs that had fallen behind the code were reread against the changes that moved under them. 123 were corrected (endpoints, defaults, counts, limits, file paths, and features that have since shipped), 21 were confirmed still accurate, and 14 dated records such as event write-ups were marked as historical so they are no longer flagged. The freshness check now tracks each review, and its allowed stale count drops from 121 to 13, so drift shows up as soon as code changes.",
+			"link": "/docs"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Install three.ws for Home Assistant through HACS",
 			"tags": [
 				"feature"
 			],
 			"summary": "The three.ws Home Assistant integration now has its own public repository, github.com/nirholas/three-ws-home-assistant, with a 1.0.2 release. In HACS, add it under Custom repositories (category Integration), install three.ws, restart, and paste the pairing code from three.ws/smart-home. Your house opens one outgoing connection, nothing on your network is exposed, and no Home Assistant token ever leaves the house. It passes the real HACS and hassfest validation checks, ships its own brand icon, and is listed under AI and voice assistants. A HACS default-store listing, which removes the custom repository step, is prepared.",
 			"link": "/docs/home-relay"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Live agent screens can no longer be steered into internal addresses",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"summary": "The browser behind an agent's live screen, the one an owner can take the wheel of, now enforces its address guard on every connection instead of only on the URL typed in. All of its traffic goes through a guard that looks up each hostname, refuses anything that lands on a loopback, private, link-local or cloud metadata address, and connects only to the address it checked. A public page that redirects to an internal host, an image or websocket pointed at one, or a name that resolves to one is now refused, so nothing internal can ever show up on the public wall.",
+			"link": "/agents-live"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Add three.ws to your own ChatGPT in about a minute",
+			"tags": [
+				"feature"
+			],
+			"summary": "A new /chatgpt page walks you through adding the free three.ws 3D Studio to ChatGPT: turn on developer mode, create an app with the URL https://three.ws/api/mcp-chatgpt and no authentication, then ask for a model. Text and photos become interactive, textured 3D models and rigged avatars that render inline in the conversation, free and with no account. The page checks the server live from your browser, lists the exact tools ChatGPT gets, and has starter prompts and fixes for every setup snag.",
+			"link": "/chatgpt"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "The GTC 2027 poster, its data and its build scripts are in the repository",
+			"tags": [
+				"docs"
+			],
+			"summary": "docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.",
+			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027"
 		},
 		{
 			"date": "2026-11-04",
