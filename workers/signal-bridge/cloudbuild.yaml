@@ -47,6 +47,8 @@ steps:
 
   - id: build
     name: gcr.io/cloud-builders/docker
+    # The Dockerfile uses COPY --chmod, which the legacy builder rejects.
+    env: ['DOCKER_BUILDKIT=1']
     args:
       - build
       - --tag
