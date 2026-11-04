@@ -163,9 +163,9 @@ Use the MetaPerson trial (B) and the existing Avaturn client (C) as a measured b
 ## 5. Engineering follow-ups that need no owner decision
 
 - Write forge reference images to GCS instead of the R2 dev endpoint.
-- Swap TripoSG's RMBG-1.4 for BiRefNet (MIT), or remove TripoSG's photo rung.
-- Unpin the warm `model-trellis` instance in us-east4. Nothing routes to it, so it is idle capacity. This is a config-only change.
-- Root-cause the `zero-size array` and malformed-response errors in `model-trellis`, and the inference errors in `model-hunyuan3d-21-rtx`.
-- Fix `/features/scan`, which says the first scan needs no account when sign-in is required.
-- Wire `api/input-photo.js` and `api/input-multiview.js` to a caller, or delete them.
-- `gemini-2.5-flash-image` is marked deprecated on the Gemini API (shutdown 2026-10-02). Vertex's own retirement date could not be checked while Vertex is denied. Move the image lanes to `gemini-3.1-flash-image` when access returns.
+- Swap TripoSG's RMBG-1.4 for BiRefNet (MIT), or remove TripoSG's photo rung. **Done 2026-11-04:** TripoSG mattes photos through `rembg-service` with `birefnet-general-lite` and no longer stages or loads RMBG-1.4 (`workers/model-triposg/matte.py`); the photo rung stays.
+- Unpin the warm `model-trellis` instance in us-east4. Nothing routes to it, so it is idle capacity. This is a config-only change. **Done:** revision `model-trellis-00003-f2m` (2026-11-04) carries no `minScale`; only the retired `00001-jgq` had `minScale=1`.
+- Root-cause the `zero-size array` and malformed-response errors in `model-trellis`, and the inference errors in `model-hunyuan3d-21-rtx`. **Done 2026-11-04:** the malformed responses were liveness kills during xatlas's GIL-holding UV unwrap of 212k+ face meshes; the worker now caps the bake at 150k faces (see [forge-error-triage.md](forge-error-triage.md)). No `zero-size array` or `hunyuan3d-21-rtx` error occurred in the 7 days before.
+- Fix `/features/scan`, which says the first scan needs no account when sign-in is required. **Done 2026-11-04:** the page now says a free account is needed to generate, under new locale keys.
+- Wire `api/input-photo.js` and `api/input-multiview.js` to a caller, or delete them. **Done 2026-11-04:** deleted; no caller existed and `/api/forge` covers both.
+- `gemini-2.5-flash-image` is marked deprecated on the Gemini API (shutdown 2026-10-02). Vertex's own retirement date could not be checked while Vertex is denied. Move the image lanes to `gemini-3.1-flash-image` when access returns. **Done 2026-11-04:** every lane resolves through `api/_lib/image-model.js` (primary `gemini-3.1-flash-image`, fallback to `gemini-2.5-flash-image` only on a not-found answer), and the production pins `VERTEX_IMAGEN_MODEL` and `VERTEX_IMAGEN_EDIT_MODEL` were removed.

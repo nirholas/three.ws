@@ -168,6 +168,31 @@ recovery accounting above matters more than the raw count.
   and `/health` answers `503 ok:false` with `load_error` and `load_attempts`, so
   the instance is drained and recycled instead of staying resident. A latched
   load used to read as healthy.
+- **Bursts of `malformed response` on `model-trellis`** (188 on 2026-10-28 to
+  11-04, all `GET /tasks/<id>` answered 503 after about 86s) are a liveness
+  kill, not a bad payload. `to_glb` runs xatlas's UV unwrap, which holds the
+  GIL, so while it runs the event loop cannot answer `/health`; once the probe
+  (60s period, 3 failures) gives up, Cloud Run kills the instance and every
+  poll in flight on it fails. Over 1,633 completed jobs that week, every kill
+  was at 212k or more decimated faces (up to 488k), because a fixed `simplify`
+  fraction let a 1.3M-face raw extraction through at 330k. The worker now
+  raises `simplify` just enough to keep the bake at or under `MAX_BAKE_FACES`
+  (150k, above the p90 of 128k) and logs `simplify X -> Y to stay within the
+  bake budget` when it does
+  ([workers/model-trellis/request_policy.py](../../workers/model-trellis/request_policy.py)).
+  A kill burst after that ships is a new cause: read the instance's last
+  `After remove invisible faces` line before the `LIVENESS` message. It was a
+  hang, not a GPU OOM, so the fix is a budget rather than a 4xx. The
+  `zero-size array` crash and the `hunyuan3d-21-rtx` errors had no occurrence
+  in the same window.
+- **`rembg matte failed, using original image`** on `model-trellis` is the
+  optional pre-matte degrading gracefully; the job still completes. In
+  `model-triposg` the matte is not optional: photos are cut out by the
+  sibling `rembg-service` (`birefnet-general-lite`, which replaced the
+  non-commercial RMBG-1.4). An unreachable service raises `MatteUnavailable`,
+  which stays a worker fault so the platform fails over to the next lane
+  instead of generating from an unmatted photo; an empty matte is the
+  caller's input problem and comes back as `InputImageError`.
 - **`upstream_5xx`, `rate_limited`, `unauthorized`, `payment_required`** are all
   vendor-side and resolve on the vendor's dashboard or in the env, not in code.
   See [production-log-triage.md](production-log-triage.md) for the same

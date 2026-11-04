@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Large 3D generations stop dropping mid-job, and photo cutouts move to a commercially licensed model",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"summary": "Very detailed TRELLIS generations could stall the worker long enough for Cloud Run to restart it, so every job on that machine failed with a malformed response. The worker now keeps each bake within a measured face budget, which covers every model that already succeeded. The TripoSG photo lane cuts out your subject with BiRefNet through our own background-removal service instead of a non-commercial model. Image lanes move to Gemini 3.1 Flash Image, falling back to the previous model only where the new one is not served. The scan page now says plainly that generating needs a free account.",
+			"link": "/features/scan"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Every page of the docs re-checked against the code it describes",
 			"tags": [
 				"docs"
