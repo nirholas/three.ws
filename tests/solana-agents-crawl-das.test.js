@@ -41,9 +41,13 @@ vi.mock('../api/_lib/db.js', () => ({
 	),
 }));
 
+// noteRpcSpend meters every metered call against the lane it hit; the crawl
+// calls it before each getAsset, so the mock has to export it.
+const noteRpcSpend = vi.fn();
 vi.mock('../api/_lib/solana/connection.js', () => ({
 	solanaRpcEndpoints: () => [LANE_UNSUPPORTED, LANE_SERVING],
 	solanaConnection: vi.fn(() => ({ tag: 'rotating-connection' })),
+	noteRpcSpend: (...args) => noteRpcSpend(...args),
 }));
 
 function gpaBuilder(accounts) {
@@ -87,6 +91,7 @@ describe('DAS enrichment rotates the lane chain', () => {
 	beforeEach(() => {
 		freshRefs = [];
 		upserts.length = 0;
+		noteRpcSpend.mockClear();
 		vi.unstubAllGlobals();
 	});
 
@@ -104,6 +109,9 @@ describe('DAS enrichment rotates the lane chain', () => {
 		// per account: a -32601 is a capability answer, and re-asking is pure latency.
 		expect(calls.filter((c) => c === LANE_UNSUPPORTED)).toHaveLength(1);
 		expect(report.errors).toEqual([]);
+		// Every getAsset is metered against the lane it actually hit.
+		expect(noteRpcSpend.mock.calls.map(([url]) => url)).toEqual(calls);
+		for (const [, body] of noteRpcSpend.mock.calls) expect(JSON.parse(body).method).toBe('getAsset');
 	});
 
 	it('treats a rate limit as transient and keeps the lane', async () => {
