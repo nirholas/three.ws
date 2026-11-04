@@ -2,15 +2,18 @@
 //
 // Every execution runs under one LIMITS object: CPU and memory (the size of the
 // machine it gets), wall time, captured output, workspace size, how many
-// executions one run may start, and how many bridge calls one execution may
-// make. The plan comes from users.plan; a request can ask for less wall time
-// than its plan allows, never more.
+// executions one run may start, how many bridge calls one execution may
+// make, and whether a script may reach the network at all. A program never has
+// a network interface of its own; `egress: 'allowlist'` lets it fetch through
+// the bridge, to the hosts its owner listed in /settings/sandbox, and
+// `egress: 'none'` refuses every fetch. The plan comes from users.plan; a
+// request can ask for less wall time than its plan allows, never more.
 //
 // Pricing follows what the compute costs the platform: a Cloud Run execution is
 // billed per allocated vCPU-second and GiB-second for its whole wall time, so
 // that is exactly what is metered, at a published rate, with a floor per
-// execution that covers the job start. Backends that run on the user's own
-// machine (local, docker, ssh) cost the platform nothing and are recorded at
+// execution that covers the instance start. Backends that run on the user's own
+// machine (local, docker) cost the platform nothing and are recorded at
 // zero, so every execution still shows up with its usage.
 
 export const LANGUAGES = Object.freeze({
@@ -21,9 +24,10 @@ export const LANGUAGES = Object.freeze({
 export const LANGUAGE_IDS = Object.freeze(Object.keys(LANGUAGES));
 
 /**
- * Cloud Run job sizes. Each size is its own job (a job's CPU and memory are
- * fixed at deploy time; an execution cannot override them), named
- * `${SANDBOX_CLOUDRUN_JOB}-${size}`.
+ * Runner machine sizes. A Cloud Run service's CPU and memory are fixed at
+ * deploy time, so each size is its own runner service
+ * (three-ws-sandbox-runner-s, -m, -l), and SANDBOX_RUNNER_URL names them with
+ * a `{size}` placeholder.
  */
 export const JOB_SIZES = Object.freeze({
 	s: { cpu: 1, memoryMb: 1024 },
@@ -40,6 +44,7 @@ export const PLAN_LIMITS = Object.freeze({
 		workspaceBytes: 50 * 1024 * 1024,
 		executionsPerRun: 25,
 		bridgeCallsPerExecution: 100,
+		egress: 'none',
 	},
 	pro: {
 		size: 'm',
@@ -49,6 +54,7 @@ export const PLAN_LIMITS = Object.freeze({
 		workspaceBytes: 500 * 1024 * 1024,
 		executionsPerRun: 100,
 		bridgeCallsPerExecution: 500,
+		egress: 'allowlist',
 	},
 	team: {
 		size: 'l',
@@ -58,6 +64,7 @@ export const PLAN_LIMITS = Object.freeze({
 		workspaceBytes: 1024 * 1024 * 1024,
 		executionsPerRun: 250,
 		bridgeCallsPerExecution: 1000,
+		egress: 'allowlist',
 	},
 	enterprise: {
 		size: 'l',
@@ -67,6 +74,7 @@ export const PLAN_LIMITS = Object.freeze({
 		workspaceBytes: 2 * 1024 * 1024 * 1024,
 		executionsPerRun: 500,
 		bridgeCallsPerExecution: 2000,
+		egress: 'allowlist',
 	},
 });
 
@@ -105,6 +113,7 @@ export function limitsFor(plan, request = {}) {
 		workspaceBytes: base.workspaceBytes,
 		executionsPerRun: base.executionsPerRun,
 		bridgeCallsPerExecution: base.bridgeCallsPerExecution,
+		egress: base.egress,
 	};
 }
 

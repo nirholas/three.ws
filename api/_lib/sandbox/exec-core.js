@@ -10,13 +10,14 @@
 //   runProcess(opts)            spawn under resource limits, capture capped
 //                               output, enforce wall time, sample CPU and memory
 //   serveBridge(path, handle)   the local socket `three_ws.tool(...)` talks to
+//   isolate(argv, mode)         own network and PID namespace, unprivileged uid
 //
 // Node builtins and ./paths.js only: the runner image copies this file as is.
 
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 
@@ -218,17 +219,138 @@ export function withLimits(argv, { limits, nproc = null, language }) {
 	return ['/bin/sh', '-c', `${lines.join('; ')}; exec "$@"`, 'sandbox', ...argv];
 }
 
-function sampleProc(pid) {
+// ── isolation ───────────────────────────────────────────────────────────────
+//
+// A program gets its own network namespace (no interface but a downed
+// loopback, so nothing it opens can leave the machine: the bridge socket is its
+// only way out), its own PID namespace (it cannot see or signal the process
+// that launched it, or read that process's environment through /proc), and
+// runs as an unprivileged uid with no-new-privs and no capabilities.
+//
+//   'root'    the launcher is root: unshare the namespaces, then drop to
+//             nobody with setpriv, clearing groups and every capability.
+//   'userns'  the launcher is not root: an unprivileged user namespace maps
+//             the program to nobody, which gives the same network and PID
+//             isolation without any privilege on the host.
+//
+// detectIsolation() probes each mode with a real child and keeps the first
+// whose child sees no network interface but loopback. A caller that gets null
+// must refuse to run untrusted code.
+
+export const SANDBOX_UID = 65534;
+
+/** argv that runs `argv` isolated under `mode`. */
+export function isolate(argv, mode) {
+	const ns = ['--net', '--pid', '--ipc', '--uts', '--fork', '--kill-child', '--mount-proc'];
+	if (mode === 'root') {
+		return [
+			'unshare',
+			...ns,
+			'--',
+			'setpriv',
+			`--reuid=${SANDBOX_UID}`,
+			`--regid=${SANDBOX_UID}`,
+			'--clear-groups',
+			'--no-new-privs',
+			'--inh-caps=-all',
+			'--bounding-set=-all',
+			'--',
+			...argv,
+		];
+	}
+	if (mode === 'userns') {
+		return ['unshare', '--user', `--map-user=${SANDBOX_UID}`, `--map-group=${SANDBOX_UID}`, ...ns, '--', 'setpriv', '--no-new-privs', '--', ...argv];
+	}
+	throw new Error(`unknown isolation mode: ${mode}`);
+}
+
+/** Whether `/proc/net/dev` text lists any interface other than loopback. */
+export function hasExternalInterface(procNetDev) {
+	return String(procNetDev)
+		.split('\n')
+		.slice(2)
+		.map((l) => l.split(':')[0].trim())
+		.some((name) => name && name !== 'lo');
+}
+
+/**
+ * Probe the isolation modes this host supports, best first.
+ * @param {{ modes?: string[] }} [o]
+ * @returns {{ mode: string|null, tried: { mode: string, ok: boolean, reason: string }[] }}
+ */
+export function detectIsolation({ modes } = {}) {
+	const order = modes || (typeof process.getuid === 'function' && process.getuid() === 0 ? ['root', 'userns'] : ['userns']);
+	const tried = [];
+	for (const mode of order) {
+		const argv = isolate(['/bin/sh', '-c', 'cat /proc/net/dev; id -u'], mode);
+		const r = spawnSync(argv[0], argv.slice(1), { encoding: 'utf8', timeout: 10_000 });
+		if (r.status !== 0) {
+			tried.push({ mode, ok: false, reason: (r.stderr || r.error?.message || `exit ${r.status}`).trim().slice(0, 200) });
+			continue;
+		}
+		const lines = r.stdout.trim().split('\n');
+		const uid = Number(lines.pop());
+		if (hasExternalInterface(lines.join('\n'))) {
+			tried.push({ mode, ok: false, reason: 'the child still saw a network interface' });
+			continue;
+		}
+		if (uid !== SANDBOX_UID) {
+			tried.push({ mode, ok: false, reason: `the child ran as uid ${uid}, not ${SANDBOX_UID}` });
+			continue;
+		}
+		tried.push({ mode, ok: true, reason: 'no network interface but loopback; unprivileged uid' });
+		return { mode, tried };
+	}
+	return { mode: null, tried };
+}
+
+function readProc(pid) {
 	try {
 		const stat = readFileSync(`/proc/${pid}/stat`, 'utf8');
-		const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
-		const cpuMs = ((Number(fields[11]) + Number(fields[12])) * 1000) / CLOCK_TICKS;
+		const f = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+		// utime, stime, and the time of children already reaped (cutime, cstime).
+		const ticks = Number(f[11]) + Number(f[12]) + Number(f[13]) + Number(f[14]);
 		const status = readFileSync(`/proc/${pid}/status`, 'utf8');
 		const hwm = /VmHWM:\s+(\d+)\s+kB/.exec(status);
-		return { cpuMs, peakKb: hwm ? Number(hwm[1]) : 0 };
+		return { ticks, hwmKb: hwm ? Number(hwm[1]) : 0 };
 	} catch {
 		return null;
 	}
+}
+
+function childrenOf(pid) {
+	const out = [];
+	try {
+		for (const tid of readdirSync(`/proc/${pid}/task`)) {
+			const txt = readFileSync(`/proc/${pid}/task/${tid}/children`, 'utf8').trim();
+			if (txt) for (const c of txt.split(/\s+/)) out.push(Number(c));
+		}
+	} catch {
+		/* the process exited between the listing and the read */
+	}
+	return out;
+}
+
+/**
+ * CPU time and resident memory of a process and everything under it. The
+ * program is usually not the direct child (prlimit, unshare and setpriv sit in
+ * between, and a script may fork), so the whole tree is measured.
+ */
+function sampleTree(rootPid) {
+	let ticks = 0;
+	let hwmKb = 0;
+	let seen = 0;
+	const stack = [rootPid];
+	while (stack.length && seen < 512) {
+		const pid = stack.pop();
+		const p = readProc(pid);
+		if (!p) continue;
+		seen++;
+		ticks += p.ticks;
+		hwmKb += p.hwmKb;
+		stack.push(...childrenOf(pid));
+	}
+	return seen ? { cpuMs: (ticks * 1000) / CLOCK_TICKS, peakKb: hwmKb } : null;
 }
 
 /** Keep the first 40% and the last 60% of a stream up to `cap` bytes. */
@@ -348,9 +470,9 @@ export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, 
 			killTree();
 		}, limits.wallSeconds * 1000);
 		const sampler = setInterval(() => {
-			const s = child.pid ? sampleProc(child.pid) : null;
+			const s = child.pid ? sampleTree(child.pid) : null;
 			if (s) {
-				cpuMs = s.cpuMs;
+				cpuMs = Math.max(cpuMs || 0, s.cpuMs);
 				peakKb = Math.max(peakKb, s.peakKb);
 			}
 		}, SAMPLE_MS);

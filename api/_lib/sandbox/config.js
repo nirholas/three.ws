@@ -9,10 +9,14 @@
 //                           it would run untrusted code inside the API container.
 //   SANDBOX_DOCKER          1 enables the docker backend (needs a docker CLI and daemon)
 //   SANDBOX_DOCKER_IMAGE    image the docker backend runs (default three-ws-sandbox:latest)
-//   SANDBOX_CLOUDRUN_JOB    job name prefix; the size suffix -s / -m / -l is appended
-//   SANDBOX_CLOUDRUN_REGION region of the jobs (default us-central1)
-//   SANDBOX_GCP_PROJECT     project of the jobs and the bucket
-//   SANDBOX_BRIDGE_ORIGIN   origin the Cloud Run runner calls back to (default the app origin)
+//   SANDBOX_RUNNER_URL      base URL of the runner service (workers/sandbox-runner). A
+//                           `{size}` placeholder is replaced by the job size (s, m, l),
+//                           so each size can be its own Cloud Run service; without it
+//                           every size goes to the one URL. Unset: the cloudrun backend
+//                           is unavailable.
+//   SANDBOX_RUNNER_TOKEN    bearer the API presents to the runner (shared secret)
+//   SANDBOX_GCP_PROJECT     project of the bucket
+//   SANDBOX_BRIDGE_ORIGIN   origin the runner calls back to (default the app origin)
 //   SANDBOX_BRIDGE_SECRET   HMAC key for bridge tokens (default: derived from JWT_SECRET)
 
 import os from 'node:os';
@@ -46,11 +50,17 @@ export const sandboxConfig = {
 	get dockerImage() {
 		return e('SANDBOX_DOCKER_IMAGE') || 'three-ws-sandbox:latest';
 	},
-	get cloudRunJob() {
-		return e('SANDBOX_CLOUDRUN_JOB') || 'three-ws-sandbox';
+	get runnerUrl() {
+		const u = e('SANDBOX_RUNNER_URL');
+		return u ? u.replace(/\/+$/, '') : null;
 	},
-	get cloudRunRegion() {
-		return e('SANDBOX_CLOUDRUN_REGION') || 'us-central1';
+	/** The runner URL for one job size. */
+	runnerUrlFor(size) {
+		const u = this.runnerUrl;
+		return u ? u.replace(/\{size\}/g, size) : null;
+	},
+	get runnerToken() {
+		return e('SANDBOX_RUNNER_TOKEN');
 	},
 	get gcpProject() {
 		return e('SANDBOX_GCP_PROJECT') || e('GOOGLE_CLOUD_PROJECT') || e('GCP_PROJECT_ID') || 'aerial-vehicle-466722-p5';
@@ -62,6 +72,6 @@ export const sandboxConfig = {
 		return (e('PUBLIC_APP_ORIGIN') || 'https://three.ws').replace(/\/+$/, '');
 	},
 	get bridgeSecret() {
-		return e('SANDBOX_BRIDGE_SECRET');
+		return e('SANDBOX_BRIDGE_SECRET') || (e('JWT_SECRET') ? `sandbox-bridge:${e('JWT_SECRET')}` : null);
 	},
 };
