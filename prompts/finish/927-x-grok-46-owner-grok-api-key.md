@@ -30,7 +30,7 @@ How to run: paste this file's repo path into a fresh Claude Code chat in this re
 
 ## Definition of done
 
-- [ ] The service has the key as a secret reference, and `npm run e2e:xai-mcp` passes with it; then this file is deleted, and `prompts/finish/039-x-grok-17-xai-remote-mcp-e2e.md` is deleted in the same commit (owner instruction 2026-11-04: delete order 039 once its live run passes).
+- [ ] The service has the key as a secret reference, and `npm run e2e:xai-mcp` passes with it; then this file is deleted, and `prompts/finish/941-x-grok-17-xai-remote-mcp-e2e.md` is deleted in the same commit (owner instruction 2026-11-04: delete order 039 once its live run passes).
 - [ ] Or: the owner message was sent and this file stays with that line open.
 
 ## Never blocked

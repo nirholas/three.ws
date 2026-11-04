@@ -56,5 +56,5 @@ Source of the finding: [docs/research/3d-landscape-2026-10.md](../../docs/resear
 
 1. Verify every Definition of done line with the actual command output in front of you. Never claim a line you did not verify.
 2. Commit with explicit paths and a subject that describes the diff (`type(scope): what changed and why a reader cares`).
-3. If every line passes, delete this file in that commit (`git rm prompts/finish/067-best3d-01-trellis2-default-lane.md`) and append a dated entry to [_context/best3d-PROGRESS.md](_context/best3d-PROGRESS.md) with the commit SHAs. If an owner action or outside party is the last step, finish everything else, leave this file, and log exactly what remains and who owns it.
+3. If every line passes, delete this file in that commit (`git rm prompts/finish/942-best3d-01-trellis2-default-lane.md`) and append a dated entry to [_context/best3d-PROGRESS.md](_context/best3d-PROGRESS.md) with the commit SHAs. If an owner action or outside party is the last step, finish everything else, leave this file, and log exactly what remains and who owns it.
 4. Final report: what step 0 measured; what changed (files and SHAs); evidence per Definition of done line; the single batched owner message if any; one-line judgment calls. No trailing questions.

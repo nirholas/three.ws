@@ -1001,7 +1001,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/everything.md` | no-open-work | reference page for /everything |
 | `docs/examples.md` | no-open-work | examples gallery reference |
 | `docs/exit-lab.md` | no-open-work | shipped feature reference |
-| `docs/experiments-agent-launch-funnel.md` | order | [276](../276-plan-launch-funnel-default-coin-path.md). 2 of 788 agents launched; auto-draft and instrumentation missing |
+| `docs/experiments-agent-launch-funnel.md` | order | [276](../949-plan-launch-funnel-default-coin-path.md). 2 of 788 agents launched; auto-draft and instrumentation missing |
 | `docs/experiments-autonomous-trading.md` | order | [763](../763-plan-sniper-experiment-judge-cost-and-exit-giveback.md). judge cost columns and giveback analysis missing |
 | `docs/experiments.md` | no-open-work | process doc for publishing experiments |
 | `docs/fact-check.md` | no-open-work | shipped feature reference |
@@ -2141,7 +2141,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/_context/beat-00-CONTEXT.md` | shipped | beat lane done |
 | `prompts/finish/_context/beat-PROGRESS.md` | shipped | beat lane done |
 | `prompts/finish/_context/best3d-00-CONTEXT.md` | no-open-work | context only |
-| `prompts/finish/_context/best3d-PROGRESS.md` | order | [263](../263-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [751](../751-plan-forge-quality-bench-fleet-ceilings-remeasure.md). remaining items are undeployed GPU lanes and stale quality numbers |
+| `prompts/finish/_context/best3d-PROGRESS.md` | order | [263](../947-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [751](../751-plan-forge-quality-bench-fleet-ceilings-remeasure.md). remaining items are undeployed GPU lanes and stale quality numbers |
 | `prompts/finish/_context/elevate-00-CONTEXT.md` | no-open-work | context only |
 | `prompts/finish/_context/event-00-CONTEXT.md` | not-a-plan | event context |
 | `prompts/finish/_context/event-PROGRESS.md` | no-open-work | event copy, nothing agent-doable open |
@@ -2164,7 +2164,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/_context/partners-00-CONTEXT.md` | no-open-work | context only |
 | `prompts/finish/_context/partners-PROGRESS.md` | covered-by-existing:085-partners-02-animation-library-license.md | open partner items have existing orders |
 | `prompts/finish/_context/production-100-00-INDEX.md` | order | [724](../724-plan-play-multiplayer-redis-scale-out.md). multiplayer single-instance row |
-| `prompts/finish/_context/production-100-OWNER-ACTIONS.md` | order | [249](../249-plan-ops-db-storage-cap-archive-and-reclaim.md), [263](../263-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [271](../271-plan-ops-world-health-retired-state.md). rows 32, 31/38/46/67/69/71, 68; rest owner-only |
+| `prompts/finish/_context/production-100-OWNER-ACTIONS.md` | order | [249](../249-plan-ops-db-storage-cap-archive-and-reclaim.md), [263](../947-plan-ops-gpu-worker-images-redeploy-and-drift-check.md), [271](../271-plan-ops-world-health-retired-state.md). rows 32, 31/38/46/67/69/71, 68; rest owner-only |
 | `prompts/finish/_context/production-100-PROGRESS.md` | order | [262](../262-plan-i18n-restore-language-picker-manifest.md). untranslated locale keys; rest shipped |
 | `prompts/finish/_context/quality-bar-_shared.md` | not-a-plan | shared rules |
 | `prompts/finish/_context/quality-bar-README.md` | order | [733](../733-plan-web-mobile-core-vitals-remeasure-and-fix.md). stale mobile baseline |
@@ -2175,15 +2175,15 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/_context/x-grok-PROGRESS.md` | covered-by-existing:023-x-grok-01-connector-compat-probe.md | open items have existing x-grok orders |
 | `prompts/finish/023-x-grok-01-connector-compat-probe.md` | excluded | already a work order in the queue |
 | `prompts/finish/024-x-grok-02-cloud-agent-rate-limits.md` | excluded | already a work order in the queue |
-| `prompts/finish/039-x-grok-17-xai-remote-mcp-e2e.md` | excluded | already a work order in the queue |
-| `prompts/finish/067-best3d-01-trellis2-default-lane.md` | excluded | already a work order in the queue |
-| `prompts/finish/068-best3d-02-pixal3d-multiview.md` | excluded | already a work order in the queue |
-| `prompts/finish/069-best3d-03-rig-anything.md` | excluded | already a work order in the queue |
-| `prompts/finish/070-best3d-04-editable-parts.md` | excluded | already a work order in the queue |
+| `prompts/finish/941-x-grok-17-xai-remote-mcp-e2e.md` | excluded | already a work order in the queue |
+| `prompts/finish/942-best3d-01-trellis2-default-lane.md` | excluded | already a work order in the queue |
+| `prompts/finish/943-best3d-02-pixal3d-multiview.md` | excluded | already a work order in the queue |
+| `prompts/finish/944-best3d-03-rig-anything.md` | excluded | already a work order in the queue |
+| `prompts/finish/945-best3d-04-editable-parts.md` | excluded | already a work order in the queue |
 | `prompts/finish/074-best3d-08-webgpu-tsl-path.md` | excluded | already a work order in the queue |
 | `prompts/finish/081-best3d-15-splat-parity.md` | excluded | already a work order in the queue |
 | `prompts/finish/085-partners-02-animation-library-license.md` | excluded | already a work order in the queue |
-| `prompts/finish/087-partners-04-livekit-pipecat-avatar.md` | excluded | work order, closed and deleted 2026-11-04; owner steps tracked as owner-actions row 51 |
+| `prompts/finish/946-partners-04-livekit-pipecat-avatar.md` | excluded | work order, closed and deleted 2026-11-04; owner steps tracked as owner-actions row 51 |
 | `prompts/finish/093-partners-10-agent-tool-packages.md` | excluded | work order closed 2026-11-04; remaining owner steps are order 938 |
 | `prompts/finish/094-partners-11-site-builder-embeds.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 57 |
 | `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 58 |
@@ -2916,7 +2916,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `workers/agent-anchor/README.md` | no-open-work | reference README, no open work |
 | `workers/agent-crawler/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). no Cloud Run service; needs verify build and tests |
 | `workers/agent-forge/README.md` | no-open-work | reference README, no open work |
-| `workers/agent-gateway/README.md` | order | [270](../270-plan-gateway-chat-worker-ship-readiness.md). built and tested, no Cloud Run service, no verify build or live round trip |
+| `workers/agent-gateway/README.md` | order | [270](../948-plan-gateway-chat-worker-ship-readiness.md). built and tested, no Cloud Run service, no verify build or live round trip |
 | `workers/agent-mm/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). not deployed; verify build and ship command |
 | `workers/agent-orders/README.md` | covered-by-existing:614-beat-14-deploy-orders-engine-with-ratcheting-exits.md | order engine deploy is order 614 |
 | `workers/agent-screen-pool/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). cloudbuild present, no service; verify build |
@@ -2932,17 +2932,17 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `workers/garment-forge/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
 | `workers/granite-guardian/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). not deployed; verify build and tests |
 | `workers/longcat/README.md` | order | [977](../977-plan-avatar-longcat-gpu-host-bringup.md). needs 80GB GPU (quota 0) and 44.8GB staged weights; GATED on quota |
-| `workers/model-anigen/README.md` | covered-by-existing:069-best3d-03-rig-anything.md | AniGen lane in rig-anything order |
+| `workers/model-anigen/README.md` | covered-by-existing:944-best3d-03-rig-anything.md | AniGen lane in rig-anything order |
 | `workers/model-asl-recognition/README.md` | order | [768](../768-plan-sign-asl-word-level-recognition.md). roadmap: word-level recognition via PopSign retrain |
-| `workers/model-holopart/README.md` | covered-by-existing:070-best3d-04-editable-parts.md | HoloPart in editable parts order |
+| `workers/model-holopart/README.md` | covered-by-existing:945-best3d-04-editable-parts.md | HoloPart in editable parts order |
 | `workers/model-hunyuan3d/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
 | `workers/model-lato2/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). no service; verify build |
-| `workers/model-partcrafter/README.md` | covered-by-existing:070-best3d-04-editable-parts.md | PartCrafter in editable parts order |
-| `workers/model-pixal3d/README.md` | covered-by-existing:068-best3d-02-pixal3d-multiview.md | Pixal3D lane order |
+| `workers/model-partcrafter/README.md` | covered-by-existing:945-best3d-04-editable-parts.md | PartCrafter in editable parts order |
+| `workers/model-pixal3d/README.md` | covered-by-existing:943-best3d-02-pixal3d-multiview.md | Pixal3D lane order |
 | `workers/model-sam3d-objects/README.md` | no-open-work | reference README, no open work |
 | `workers/model-text2motion/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). MoMask backend never had an in-house production run; benchmark script and ship commands |
 | `workers/model-trellis/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
-| `workers/model-trellis2/README.md` | covered-by-existing:067-best3d-01-trellis2-default-lane.md | TRELLIS.2 default lane order |
+| `workers/model-trellis2/README.md` | covered-by-existing:942-best3d-01-trellis2-default-lane.md | TRELLIS.2 default lane order |
 | `workers/model-triposg/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
 | `workers/model-triposplat/README.md` | covered-by-existing:081-best3d-15-splat-parity.md | TripoSplat in splat parity order |
 | `workers/model-triposr/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
@@ -2959,7 +2959,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `workers/rig/README.md` | no-open-work | reference README, no open work |
 | `workers/robinhood-feed/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). not deployed; verify build and tests |
 | `workers/segment/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
-| `workers/signal-bridge/README.md` | order | [270](../270-plan-gateway-chat-worker-ship-readiness.md). Signal needs this bridge; no tests or verify config |
+| `workers/signal-bridge/README.md` | order | [270](../948-plan-gateway-chat-worker-ship-readiness.md). Signal needs this bridge; no tests or verify config |
 | `workers/stylize/README.md` | no-open-work | deployed worker reference (service live in gcloud run services list) |
 | `workers/texture/README.md` | order | [734](../734-plan-workers-fleet-status-and-ship-readiness.md). not deployed; verify build and tests |
 | `workers/vanity-grinder/README.md` | no-open-work | live tooling reference |

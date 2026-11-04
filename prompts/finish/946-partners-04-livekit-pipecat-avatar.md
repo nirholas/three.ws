@@ -60,5 +60,5 @@ Read the merged plugin's layout to learn the expected package structure and the 
 
 1. Verify every Definition of done line with the actual command output in front of you. Never claim a line you did not verify.
 2. Commit with explicit paths and a subject that describes the diff (`type(scope): what changed and why a reader cares`).
-3. If every line passes, delete this file in that commit (`git rm prompts/finish/087-partners-04-livekit-pipecat-avatar.md`) and append a dated entry to [_context/partners-PROGRESS.md](_context/partners-PROGRESS.md) with the commit SHAs. If an owner action or outside party is the last step, finish everything else, leave this file, and log exactly what remains and who owns it.
+3. If every line passes, delete this file in that commit (`git rm prompts/finish/946-partners-04-livekit-pipecat-avatar.md`) and append a dated entry to [_context/partners-PROGRESS.md](_context/partners-PROGRESS.md) with the commit SHAs. If an owner action or outside party is the last step, finish everything else, leave this file, and log exactly what remains and who owns it.
 4. Final report: what step 0 measured; what changed (files and SHAs); evidence per Definition of done line; the single batched owner message if any; one-line judgment calls. No trailing questions.

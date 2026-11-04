@@ -40,20 +40,20 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 260 | [Close the 2026-10-25 security audit (32 unvalidated findings) and sweep the seven surfaces it never reached](../260-plan-security-close-oct25-audit-and-sweep-gaps.md) | security | 82 |
 | 261 | [Give the learning loop its owner surface: /settings/memory, memory and user-model routes, learned-skill review](../261-plan-agent-memory-settings-page-and-api.md) | agent | 78 |
 | 262 | [Restore the 85-language picker by closing the missing keys, draining the lint backlog and republishing the locale manifest](../262-plan-i18n-restore-language-picker-manifest.md) | i18n | 78 |
-| 263 | [Redeploy the stale GPU worker images that carry already-shipped fixes, and add a drift check so a worker fix cannot sit unbuilt again](../263-plan-ops-gpu-worker-images-redeploy-and-drift-check.md) | ops | 78 |
+| 263 | [Redeploy the stale GPU worker images that carry already-shipped fixes, and add a drift check so a worker fix cannot sit unbuilt again](../947-plan-ops-gpu-worker-images-redeploy-and-drift-check.md) | ops | 78 |
 | 264 | [Deleted accounts are permanently purged after 30 days, as the privacy policy promises](../264-plan-auth-purge-deleted-accounts-after-30-days.md) | auth | 74 |
 | 265 | [Proof of custody anchors on Solana again: 522 epochs, zero anchored, public integrity page down](../265-plan-custody-proof-anchor-restore.md) | custody | 74 |
 | 266 | [Let an agent connect third-party MCP servers: connection routes, OAuth, runtime mounting and a catalog page](../266-plan-mcp-external-integrations-agent-connections.md) | mcp | 74 |
 | 267 | [Re-measure the x402 autonomous loop's failure classes against current code and fix every one still above 1 percent](../267-plan-x402-loop-failure-classes-remeasure-fix.md) | x402 | 74 |
 | 268 | [Cut Solana RPC call volume with per-route accounting, request coalescing and a short fresh-read cache](../268-plan-solana-rpc-call-volume-budget-and-read-cache.md) | solana | 72 |
 | 269 | [Agent screen caster refuses private-network targets at the request level, not just the typed hostname](../269-plan-agent-screen-pool-egress-guard.md) | agent-screen | 70 |
-| 270 | [Chat gateway worker passes a build-verify and a live Telegram round trip, ready to ship in one command](../270-plan-gateway-chat-worker-ship-readiness.md) | gateway | 68 |
+| 270 | [Chat gateway worker passes a build-verify and a live Telegram round trip, ready to ship in one command](../948-plan-gateway-chat-worker-ship-readiness.md) | gateway | 68 |
 | 271 | [Retire the deleted world.three.ws surface with a reversible "retired" health state so healthz, alerts, links and docs match reality](../271-plan-ops-world-health-retired-state.md) | ops | 68 |
 | 272 | [Ship the three-ws-agent command, terminal UI, slash commands, subagents, local cron and gateway on top of the finished agent-cli runtime core](../272-plan-agent-cli-tui-slash-commands-and-entrypoints.md) | agent-cli | 66 |
 | 273 | [Forge image lanes drop the non-commercial RMBG-1.4 matte and move off the retired Gemini image model](../273-plan-forge-image-lane-licence-and-model-currency.md) | forge | 66 |
 | 274 | [Platform fee events table records every fee taken, reconcilable against revenue and chain](../274-plan-payments-platform-fee-events-ledger.md) | payments | 66 |
 | 275 | [Re-run the full console sweep on a quiet box, fix every real error, and gate the result with a baseline](../275-plan-site-console-resweep-and-fix.md) | site | 66 |
-| 276 | [Fix the agent launch funnel by auto-drafting a coin plan and instrumenting each step](../276-plan-launch-funnel-default-coin-path.md) | launch | 64 |
+| 276 | [Fix the agent launch funnel by auto-drafting a coin plan and instrumenting each step](../949-plan-launch-funnel-default-coin-path.md) | launch | 64 |
 | 277 | [Fix the functional defects filming found on concierge, agent-identities, embed-doctor, tty, herald, stream, validation and labs](../277-plan-site-announced-surfaces-defect-sweep.md) | site | 64 |
 | 278 | [Make every @three-ws/agents SDK method hit a real mounted /api/v1 route, add the missing test suite, and leave the package one command from npm](../278-plan-agents-sdk-route-parity-and-release-readiness.md) | agents-sdk | 58 |
 | 279 | [Bring the Granite Guardian lane live on Cloud Run so every IBM claim is true](../279-plan-ibm-granite-guardian-lane-live.md) | ibm | 58 |

@@ -1,6 +1,6 @@
 # Chat gateway worker passes a build-verify and a live Telegram round trip, ready to ship in one command
 
-**How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/270-plan-gateway-chat-worker-ship-readiness.md`.
+**How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/948-plan-gateway-chat-worker-ship-readiness.md`.
 
 **Priority:** P1, unshipped fix or half-built user-visible feature (score 68 of 100 inside the tier). **Area:** gateway. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
 
@@ -102,7 +102,7 @@ The actual `gcloud run deploy` of agent-gateway and signal-bridge is the routine
 
 1. Verify every Definition of done line with real output in front of you.
 2. Commit with explicit paths and a message that describes the diff: `type(scope): what changed and why a reader would care`. Split unrelated changes into separate commits. If the diff references a crypto project other than $THREE, stop and ask the owner before that commit (CLAUDE.md commit gate).
-3. If every Definition of done line passes, delete this work order in your final commit (`git rm prompts/finish/270-plan-gateway-chat-worker-ship-readiness.md`) and append one dated line to `prompts/finish/_context/plan-PROGRESS.md` (create it if missing): the date, `270-plan-gateway-chat-worker-ship-readiness.md`, the commit SHAs, and one sentence on what shipped.
+3. If every Definition of done line passes, delete this work order in your final commit (`git rm prompts/finish/948-plan-gateway-chat-worker-ship-readiness.md`) and append one dated line to `prompts/finish/_context/plan-PROGRESS.md` (create it if missing): the date, `948-plan-gateway-chat-worker-ship-readiness.md`, the commit SHAs, and one sentence on what shipped.
 4. If the last step belongs to the owner or an outside party, finish everything else, keep this file, add a dated "Status" paragraph directly under its title saying exactly what remains and who owns it, and append the same to `prompts/finish/_context/plan-PROGRESS.md`.
 5. Never push or deploy unless the owner's message that started this session explicitly told you to. Leave the ship as one command (`git push threews main`, then `npm run deploy:gcp:full` per `.claude/skills/deploy-runbook/SKILL.md`) and name it in the report.
 
