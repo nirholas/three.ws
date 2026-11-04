@@ -25,6 +25,10 @@ substitutions:
   # --min-instances=1` once the grant allows.
   _MIN_INSTANCES: "0"
   _MAX_INSTANCES: "2"
+  # 8 vCPU / 32 GiB: Cloud Run's writable filesystem is in memory, and the
+  # staged serving set (10.4 GiB of flows, decoders, DINOv2 and Marigold,
+  # measured 2026-11-04) lives there next to the process and the loaded
+  # models' host copies. rembg's BiRefNet background removal runs on CPU.
 
 steps:
   - id: build
@@ -63,8 +67,8 @@ steps:
       - --gpu-type=nvidia-l4
       - --no-gpu-zonal-redundancy
       - --no-cpu-throttling
-      - --cpu=4
-      - --memory=16Gi
+      - --cpu=8
+      - --memory=32Gi
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=900

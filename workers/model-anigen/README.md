@@ -42,6 +42,56 @@ worker:
 real excerpts of AniGen's own source) carry the full trace. `pytorch3d`
 (Meta, BSD, license read 2026-10-11) is installed with no restriction.
 
+## DSINE: replaced with Marigold normals
+
+AniGen conditions its sparse-structure flow on a surface-normal map of the
+input photo. Upstream estimates it with DSINE, which `from_pretrained` pulls
+from an unpinned GitHub branch (`hugoycj/DSINE-hub:main`) at load time.
+DSINE's licence (Imperial College, clause 2(b), read 2026-11-04) permits use
+"solely for non-commercial, internal or academic research purposes", so this
+worker never loads it:
+
+1. `patch_anigen.py` swaps the single `load_dsine(device)` call for
+   `normal_estimator.load_normal_estimator(device)`, and an AST scan fails
+   the build if any other `load_dsine` call site appears after a bump.
+2. `normal_estimator.py` runs
+   [Marigold normals](https://huggingface.co/prs-eth/marigold-normals-lcm-v0-1)
+   (Apache-2.0, pinned revision `28214f06`) through diffusers'
+   `MarigoldNormalsPipeline`, offline from the staged checkpoint, 4 LCM
+   steps x 5-member ensemble at 768 px, seeded so the same photo gives the
+   same map.
+3. Marigold's frame (x right, y up, z to the viewer) is converted to DSINE's
+   (OpenCV axes, normals along the view ray, which is `(-x, y, z)`), so after
+   AniGen's own `estimate_normal` post-processing the conditioning map is
+   the same OpenGL-style normal map DSINE produced. `test_normal_estimator.py`
+   proves the conversion on an analytic sphere and, inside the image, through
+   the real upstream `estimate_normal`.
+
+Background removal stays upstream's `rembg` BiRefNet (MIT); its ONNX model
+is baked into the image at build time instead of downloaded on first request.
+
+## Checkpoints staged per instance
+
+AniGen resolves every checkpoint relative to the process cwd, so
+`entrypoint.sh` copies exactly the serving set into `ANIGEN_CKPT_ROOT/ckpts/`
+and serves from there (`uvicorn --app-dir /app`):
+
+| Path under `ckpts/` | Size | Used for |
+|---|---|---|
+| `anigen/ss_flow_solo` | 3.14 GiB | sparse-structure flow |
+| `anigen/slat_flow_auto` | 2.29 GiB | SLat flow |
+| `anigen/{ss_dae,slat_dae}` (config + `decoder_final.pt`) | 1.38 GiB | decoders |
+| `dinov2` (local hub repo + reg4 weights) | 1.14 GiB | image conditioning |
+| `marigold-normals-lcm-v0-1` | 2.40 GiB | normal conditioning |
+
+10.4 GiB in total (measured 2026-11-04). Cloud Run's writable filesystem is
+in memory, so the service runs at 8 vCPU / 32 GiB. The first europe-west4
+revision copied the whole 18 GiB bucket tree (unused flows, both encoders,
+DSINE, VGG) into a 16 GiB container, never staged DINOv2, and never passed
+its startup probe; `test_entrypoint.py` pins the staged set so that cannot
+recur. A missing checkpoint fails the entrypoint before serving, naming the
+file.
+
 ## API
 
 ```
@@ -74,7 +124,7 @@ gcloud builds submit --config workers/model-anigen/cloudbuild.yaml \
 ```
 
 Service: `model-anigen`, **europe-west4**, 1x L4 (`--no-gpu-zonal-redundancy`),
-scale-to-zero. The image stays in the us-central1 registry (`_REGION`); the
+8 vCPU / 32 GiB, scale-to-zero. The image stays in the us-central1 registry (`_REGION`); the
 service runs in `_RUN_REGION`. us-central1's L4 quota is 3, an increase was
 denied, and the three min-instance workers (`model-rig`, `model-rig-nonhuman`,
 `model-trellis`) hold all of it, so the first us-central1 deploy failed on GPU
@@ -97,7 +147,9 @@ self-hosted image lane).
 
 ```bash
 cd workers/model-anigen
-python3 test_patch_anigen.py   # nvdiffrast-removal patch, against real AniGen source
+python3 test_patch_anigen.py     # nvdiffrast + DSINE patches, against real AniGen source
+python3 test_entrypoint.py       # checkpoint staging: exact serving set, cwd, fail-fast
+python3 test_normal_estimator.py # Marigold -> DSINE frame conversion (predictor test needs torch)
 ```
 
 `test_app_contract.py` additionally proves the served contract, but it needs
@@ -109,7 +161,8 @@ tail) rather than bare on a dev machine.
 ## Licensing
 
 AniGen is MIT (LICENSE read 2026-10-11, re-read 2026-11-03). pytorch3d is
-BSD. nvdiffrast is never installed; see the section above.
+BSD. Marigold normals and diffusers are Apache-2.0; rembg is MIT. nvdiffrast
+is never installed and DSINE is never loaded; see the sections above.
 
 Upstream later appended a note to its LICENSE and added
 `THIRD_PARTY_LICENSES.md` (which is why GitHub now reports the repo as
@@ -128,7 +181,8 @@ way: do not install anything from `extensions/`.
 | `API_KEY` | (secret) | shared bearer secret (`avatar-reconstruction-key`) |
 | `GCS_BUCKET` | (optional) | output bucket for rigged GLBs; local `OUTPUT_DIR` storage when unset |
 | `OUTPUT_DIR` | `/output` | local task/result volume when `GCS_BUCKET` is unset |
-| `ANIGEN_CKPT_ROOT` | `/app` | root `entrypoint.sh` stages `ckpts/anigen/...` under |
+| `ANIGEN_CKPT_ROOT` | `/app` | root `entrypoint.sh` stages `ckpts/...` under and serves from (AniGen loads relative to the cwd) |
+| `NORMALS_MODEL_PATH` | `ckpts/marigold-normals-lcm-v0-1` | Marigold normals checkpoint directory |
 | `MAX_CONCURRENT` | `1` | parallel inference jobs per instance |
 | `WEIGHTS_ROOT` | `/weights/anigen` | staged checkpoints, read by `entrypoint.sh` |
 | `MODEL_LOAD_ATTEMPTS` / `MODEL_LOAD_RETRY_BASE_S` / `MODEL_LOAD_RETRY_CAP_S` | `4` / `15` / `120` | model-load retry budget |

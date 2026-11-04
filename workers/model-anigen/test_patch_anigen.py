@@ -16,7 +16,9 @@ import ast
 from patch_anigen import (
     NVDIFFRAST_SENTINEL,
     POSTPROCESSING_DR_FUNCTIONS,
+    assert_dsine_unreachable,
     patch_mesh_renderer,
+    patch_normal_estimator,
     patch_postprocessing_utils,
 )
 
@@ -273,6 +275,93 @@ def test_patch_mesh_renderer_raises_on_drifted_marker():
         )
 
 
+# anigen/pipelines/anigen_image_to_3d.py at the pinned commit: the import
+# (line 18) and from_pretrained's model loads (lines 53-75), verbatim.
+PIPELINE_FROM_PRETRAINED_REAL = """from ..utils.model_utils import load_model_from_path, load_decoder
+from ..utils.image_utils import load_dsine, preprocess_image, encode_image
+
+
+class AnigenImageTo3DPipeline:
+    @staticmethod
+    def from_pretrained(
+        ss_flow_path: str = 'ckpts/anigen/ss_flow_solo',
+        slat_flow_path: str = 'ckpts/anigen/slat_flow_control',
+        device: str = 'cuda',
+        use_ema: bool = False
+    ) -> "AnigenImageTo3DPipeline":
+        \"\"\"
+        Load pretrained models from paths.
+        \"\"\"
+        print("Loading models...")
+        
+        # Image Cond Model (DINOv2)
+        dinov2_model = torch.hub.load('./ckpts/dinov2', 'dinov2_vitl14_reg', pretrained=True, source='local')
+        dinov2_model.to(device).eval()
+
+        # DSINE Model
+        print("Loading DSINE...")
+        dsine_model = load_dsine(device)
+
+        # SLat Flow Model
+        slat_model, slat_config = load_model_from_path(slat_flow_path, model_name_in_config='denoiser', device=device, use_ema=use_ema)
+"""
+
+
+def test_patch_normal_estimator_swaps_the_single_dsine_load():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "anigen_image_to_3d.py"
+        path.write_text(PIPELINE_FROM_PRETRAINED_REAL)
+        patch_normal_estimator(path)
+        patched = path.read_text()
+        calls = [
+            n for n in ast.walk(ast.parse(patched))
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "load_dsine"
+        ]
+        _check(not calls, "no load_dsine call remains")
+        _check("        dsine_model = load_normal_estimator(device)\n" in patched,
+               "dsine_model now comes from load_normal_estimator")
+        _check("from normal_estimator import load_normal_estimator" in patched,
+               "imports the worker's estimator")
+        _check("torch.hub.load('./ckpts/dinov2'" in patched, "DINOv2 load left intact")
+        compile(patched, str(path), "exec")
+        print("  [ok] patched file is syntactically valid Python")
+
+
+def test_patch_normal_estimator_raises_on_drifted_marker():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "anigen_image_to_3d.py"
+        path.write_text(PIPELINE_FROM_PRETRAINED_REAL.replace(
+            "dsine_model = load_dsine(device)", "dsine_model = load_dsine(device, fp16=True)"
+        ))
+        _check_raises(
+            lambda: patch_normal_estimator(path), AssertionError,
+            "raises when the DSINE load line has changed (upstream drift)",
+        )
+
+
+def test_dsine_unreachable_scan_catches_a_second_call_site():
+    with tempfile.TemporaryDirectory() as tmp:
+        pkg = Path(tmp) / "anigen"
+        (pkg / "utils").mkdir(parents=True)
+        (pkg / "pipelines").mkdir()
+        (pkg / "utils" / "image_utils.py").write_text(
+            "def load_dsine(device):\n    return None\n"
+        )
+        (pkg / "pipelines" / "a.py").write_text("x = load_normal_estimator('cuda')\n")
+        try:
+            assert_dsine_unreachable(pkg)
+            _check(True, "the definition alone passes")
+        except AssertionError as exc:
+            _check(False, f"the definition alone passes ({exc})")
+        (pkg / "pipelines" / "other.py").write_text(
+            "from ..utils import image_utils\nm = image_utils.load_dsine('cuda')\n"
+        )
+        _check_raises(
+            lambda: assert_dsine_unreachable(pkg), AssertionError,
+            "a new load_dsine call anywhere in the package fails the build",
+        )
+
+
 if __name__ == "__main__":
     test_patch_postprocessing_utils_removes_only_the_top_level_import()
     test_patch_postprocessing_utils_raises_on_drifted_marker()
@@ -282,6 +371,9 @@ if __name__ == "__main__":
     test_known_dr_functions_constant_matches_the_bake_pair()
     test_patch_mesh_renderer_relocates_import_into_init()
     test_patch_mesh_renderer_raises_on_drifted_marker()
+    test_patch_normal_estimator_swaps_the_single_dsine_load()
+    test_patch_normal_estimator_raises_on_drifted_marker()
+    test_dsine_unreachable_scan_catches_a_second_call_site()
     if _FAILED:
         print("\nFAILED")
         sys.exit(1)

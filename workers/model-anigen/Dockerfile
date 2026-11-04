@@ -1,7 +1,8 @@
 # AniGen (VAST-AI-Research, MIT, LICENSE read 2026-10-11): one reference
 # image to a rigged 3D asset (skeleton + skin weights predicted in the same
 # pass). Translates upstream's conda setup.sh into a reproducible pip build,
-# deliberately EXCLUDING one of its three CUDA extensions:
+# deliberately EXCLUDING one of its three CUDA extensions and its normal
+# estimator:
 #
 #   * torch 2.4.0 + cu121, upstream setup.sh's own default matrix for
 #     Python <=3.12.
@@ -15,13 +16,19 @@
 #     worker always runs the pipeline with fill_holes=False, texture_size=0
 #     (pipeline.py), so nothing in its call path ever touches the renderer
 #     that would need it.
+#   * DSINE (the normal estimator upstream fetches from GitHub at load time)
+#     is NEVER loaded. Its licence (Imperial College, clause 2(b)) is
+#     non-commercial only. patch_anigen.py swaps the call for
+#     normal_estimator.py, Marigold normals (Apache-2.0) through diffusers,
+#     loaded offline from the weights bucket.
 FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
-    PYTHONPATH=/app/anigen-src \
+    PYTHONPATH=/app/anigen-src:/app \
+    U2NET_HOME=/opt/rembg \
     HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1 \
     HF_HUB_DISABLE_TELEMETRY=1 \
@@ -90,19 +97,30 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
-COPY worker_security.py storage_backend.py pipeline.py main.py entrypoint.sh /app/
-COPY test_app_contract.py /app/
+# Bake rembg's BiRefNet background-removal model (MIT) into the image.
+# preprocess_image opens rembg.new_session('birefnet-general') per request,
+# which otherwise downloads the ONNX from GitHub releases on first use: a
+# runtime egress dependency and a cold-start stall. U2NET_HOME (above) pins
+# where rembg looks, so the baked copy is the one it finds.
+RUN python3 -c "import rembg; rembg.new_session('birefnet-general'); print('rembg birefnet-general cached')" \
+    && ls -la /opt/rembg
+
+COPY worker_security.py storage_backend.py pipeline.py main.py entrypoint.sh normal_estimator.py /app/
+COPY test_app_contract.py test_entrypoint.py test_normal_estimator.py /app/
 RUN chmod +x /app/entrypoint.sh
 
-# Build-time guard: served-contract tests need no GPU and no checkpoints, so
-# they run here and the image does not ship if the patch, the import chain,
-# or request handling broke.
-RUN python3 /app/test_app_contract.py
+# Build-time guards: none needs a GPU or checkpoints, so they run here and
+# the image does not ship if the patch, the import chain, request handling,
+# the checkpoint staging, or the normal-map frame conversion broke.
+RUN python3 /app/test_app_contract.py \
+    && python3 /app/test_entrypoint.py \
+    && cd /app && python3 /app/test_normal_estimator.py
 
 # Checkpoints are staged in GCS (stage-assets.sh) and mounted at /weights by
-# Cloud Run; entrypoint.sh copies them into ANIGEN_CKPT_ROOT/ckpts/anigen/...,
-# the exact literal relative path AniGen's own from_pretrained call uses
-# (example.py), so inference needs no Hugging Face egress at runtime.
+# Cloud Run; entrypoint.sh copies only the serving set (two flows, two
+# decoders, DINOv2, Marigold) into ANIGEN_CKPT_ROOT/ckpts/ and serves from
+# there, because AniGen resolves every checkpoint relative to the cwd. No
+# Hugging Face or GitHub egress at runtime.
 
 EXPOSE 8080
 

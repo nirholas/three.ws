@@ -1,6 +1,6 @@
 """
-Build-time patch: remove every module-level dependency on nvdiffrast from the
-vendored AniGen checkout.
+Build-time patch: remove every module-level dependency on nvdiffrast, and
+the DSINE normal estimator, from the vendored AniGen checkout.
 
 Why: AniGen (VAST-AI-Research/AniGen) is MIT, but two of its files import
 nvdiffrast at module scope. nvdiffrast's own license (NVlabs/nvdiffrast,
@@ -34,6 +34,15 @@ ONLY two Python files under `anigen/` (excluding the optional, unused
      Instantiating MeshRenderer still would, but nothing in this worker's
      call path does.
 
+A third patch has the same cause, a non-commercial licence, on a different
+dependency: from_pretrained loads DSINE (hugoycj/DSINE-hub, Imperial College
+licence clause 2(b), "solely for non-commercial, internal or academic
+research purposes", read 2026-11-04) as its normal estimator, fetched from
+an unpinned GitHub branch at load time. patch_normal_estimator swaps that one
+call for normal_estimator.load_normal_estimator (Marigold normals,
+Apache-2.0; that module documents the frame conversion), and
+assert_dsine_unreachable proves no other call site exists in the package.
+
 Each patch asserts its exact target text is present before editing, so a
 future AniGen version that moves or rewrites these lines fails the Docker
 build loudly instead of silently shipping unpatched (and therefore either
@@ -43,6 +52,7 @@ from __future__ import annotations
 
 import ast
 import sys
+import warnings
 from pathlib import Path
 
 POSTPROCESSING_UTILS_IMPORT = "import nvdiffrast.torch as dr\n"
@@ -154,6 +164,53 @@ def patch_mesh_renderer(path: Path) -> None:
     print(f"patched {path}: moved nvdiffrast import into MeshRenderer.__init__")
 
 
+DSINE_LOAD_LINE = "        dsine_model = load_dsine(device)\n"
+NORMAL_ESTIMATOR_LOAD = (
+    "        from normal_estimator import load_normal_estimator\n"
+    "        dsine_model = load_normal_estimator(device)\n"
+)
+
+
+def patch_normal_estimator(path: Path) -> None:
+    """Swap from_pretrained's one DSINE load for the worker's Marigold
+    estimator (normal_estimator.py). The result keeps the `dsine_model` name,
+    so models_dict['dsine'] and every downstream use are untouched."""
+    text = path.read_text()
+    count = text.count(DSINE_LOAD_LINE)
+    if count != 1:
+        raise AssertionError(
+            f"{path}: expected exactly one '{DSINE_LOAD_LINE.strip()}' line, found "
+            f"{count}; AniGen's from_pretrained has changed, re-check how it "
+            "loads its normal estimator before patching blind"
+        )
+    path.write_text(text.replace(DSINE_LOAD_LINE, NORMAL_ESTIMATOR_LOAD, 1))
+    print(f"patched {path}: DSINE (non-commercial licence) -> Marigold normals (Apache-2.0)")
+
+
+def assert_dsine_unreachable(package: Path) -> None:
+    """After patching, no module in the package may call load_dsine. The
+    definition in utils/image_utils.py stays (dead code); a new call site
+    anywhere, after an AniGen bump, fails the build."""
+    offenders = []
+    for py in sorted(package.rglob("*.py")):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)  # upstream docstrings with "\m"
+            tree = ast.parse(py.read_text(), str(py))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            fn = node.func
+            name = fn.id if isinstance(fn, ast.Name) else fn.attr if isinstance(fn, ast.Attribute) else None
+            if name == "load_dsine":
+                offenders.append(f"{py.relative_to(package)}:{node.lineno}")
+    if offenders:
+        raise AssertionError(
+            f"load_dsine (DSINE, non-commercial licence) is still called at {offenders}; "
+            "route it through normal_estimator.load_normal_estimator"
+        )
+    print(f"verified {package}: no load_dsine call remains")
+
+
 def main() -> None:
     if len(sys.argv) != 2:
         print("usage: patch_anigen.py <anigen-checkout-root>", file=sys.stderr)
@@ -161,6 +218,8 @@ def main() -> None:
     root = Path(sys.argv[1])
     patch_postprocessing_utils(root / "anigen" / "utils" / "postprocessing_utils.py")
     patch_mesh_renderer(root / "anigen" / "renderers" / "mesh_renderer.py")
+    patch_normal_estimator(root / "anigen" / "pipelines" / "anigen_image_to_3d.py")
+    assert_dsine_unreachable(root / "anigen")
 
 
 if __name__ == "__main__":
