@@ -158,6 +158,38 @@ npm run smoke:prod
 npm run seo:indexnow
 ```
 
+### Worker image drift (run with every deploy)
+
+`deploy:gcp:full` rebuilds `three-ws-api` and nothing else. Each service under
+`workers/` (the GPU model workers, `remesh-service`, `segment-service`,
+`stylize-service`, `garment-forge` and the rest) ships from its own
+`workers/<dir>/cloudbuild.yaml`, so a fix merged into a worker reaches
+production only when someone rebuilds that worker. Without a check this goes
+unnoticed: on 2026-11-03, 21 worker service rows were serving images built
+before source that had waited longer than a week, `remesh-service` among them,
+still segfaulting on a July image three months after its fix landed.
+
+```bash
+npm run check:worker-drift                      # table; exit 1 on DRIFTED, 2 if the check could not run
+npm run check:worker-drift -- --grace-days 3    # tighter window
+npm run check:worker-drift -- --worker remesh   # one worker directory
+npm run check:worker-drift -- --json            # machine-readable report
+```
+
+For each `cloudbuild*.yaml` with a Cloud Run deploy step it resolves the
+service and regions, follows the revisions taking traffic to the image digest,
+reads the image's build time and commit tag from Artifact Registry, and diffs
+that against `git log -- workers/<dir>` (Markdown edits excluded, they never
+reach an image). Status per row: `current`, `drifting` (unbuilt source inside
+the grace window), `DRIFTED` (past it), `NOT-DEPLOYED` (config exists, no
+service). Rows marked `(extra)` are copies in a region the config does not
+deploy to; a rebuild will not refresh them, so the report prints the
+pre-approved `gcloud run services update --image` roll that does. It is
+read-only and needs a gcloud login, so it runs from the operator machine (it is
+also listed in `docs/guards.md`). Every rebuild it prints is a production
+rollout and needs owner approval like any other deploy. Logic and its tests:
+`scripts/lib/worker-drift.mjs`, `tests/check-worker-drift.test.js`.
+
 > **A fresh deploy worktree needs THREE staged artifacts, not just
 > `node_modules`.** `build:gcp` shells into two nested projects that carry their
 > own dependency trees, and neither is in git. Hardlinking only the root
