@@ -1010,7 +1010,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/fee-bridge.md` | owner-only | held, not public by owner decision |
 | `docs/feedback.md` | no-open-work | shipped feature reference |
 | `docs/field.md` | no-open-work | shipped feature reference |
-| `docs/financial-controls.md` | order | [250](../250-plan-payments-withdrawal-send-idempotency.md), [257](../257-plan-payments-x402-audit-ledger-durability.md), [274](../274-plan-payments-platform-fee-events-ledger.md), [722](../722-plan-payments-accounting-export-and-durable-ledgers.md), [758](../758-plan-payments-retention-kill-switch-and-alerting.md). open gap register items verified against code |
+| `docs/financial-controls.md` | order | [250](../250-plan-payments-withdrawal-send-idempotency.md), 257 (retired 2026-11-04), [274](../274-plan-payments-platform-fee-events-ledger.md), [722](../722-plan-payments-accounting-export-and-durable-ledgers.md), [758](../758-plan-payments-retention-kill-switch-and-alerting.md). open gap register items verified against code |
 | `docs/first-contribution.md` | not-a-plan | contributor guide |
 | `docs/forge-background-generation.md` | no-open-work | shipped background job design |
 | `docs/forge-desktop.md` | no-open-work | shipped; apps/forge-desktop, cloudbuild.yaml and live /releases/forge/release.json; signing certs are owner secrets already wired |
