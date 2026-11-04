@@ -312,6 +312,105 @@ export async function releaseClaim(dropId, idx) {
  * Shapes
  * ────────────────────────────────────────────────────────────────────────── */
 
+/* ────────────────────────────────────────────────────────────────────────── *
+ * On-chain mint (Metaplex Core collection + items)
+ *
+ * Every write here is a conditional UPDATE, and the row it returns (or the
+ * absence of one) is the lock: only one caller wins a claim, so a double submit
+ * can never send two transactions. A claim older than MINT_CLAIM_STALE_MS is
+ * treated as abandoned (the process died mid-mint) and can be taken again. The
+ * mint address is recorded only after chain confirmation, so an abandoned claim
+ * never leaves a half-recorded mint.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+export const MINT_CLAIM_STALE_MS = 10 * 60 * 1000;
+
+/** Win the right to create this drop's collection, or get false. */
+export async function claimCollectionCreate(dropId) {
+	const rows = await sql`
+		update drops
+		set collection_claimed_at = now()
+		where id = ${dropId} and deleted_at is null and collection_address is null
+		  and (collection_claimed_at is null
+		       or collection_claimed_at < now() - ${MINT_CLAIM_STALE_MS / 1000} * interval '1 second')
+		returning id
+	`;
+	return rows.length > 0;
+}
+
+export async function setCollectionAddress(dropId, address, network, signature = null) {
+	await sql`
+		update drops
+		set collection_address = ${address}, collection_network = ${network},
+		    collection_signature = ${signature}, collection_claimed_at = null
+		where id = ${dropId}
+	`;
+}
+
+export async function releaseCollectionClaim(dropId) {
+	await sql`update drops set collection_claimed_at = null where id = ${dropId} and collection_address is null`;
+}
+
+/** The row's live mint state, including the claim marker publicItem hides. */
+export async function getItemMintState(dropId, idx) {
+	const rows = await sql`
+		select * from drop_items where drop_id = ${dropId} and idx = ${idx} limit 1
+	`;
+	const row = rows[0];
+	if (!row) return null;
+	return {
+		...publicItem(row),
+		mint_signature: row.mint_signature ?? null,
+		claimed: Boolean(row.mint_claimed_at) &&
+			Date.now() - Date.parse(row.mint_claimed_at) < MINT_CLAIM_STALE_MS,
+	};
+}
+
+/** Atomic: only a revealed, unminted, unclaimed (or stale-claimed) item transitions. */
+export async function claimItemForMint(dropId, idx) {
+	const rows = await sql`
+		update drop_items
+		set mint_claimed_at = now(), mint_error = null
+		where drop_id = ${dropId} and idx = ${idx}
+		  and status = 'revealed' and mint_address is null
+		  and (mint_claimed_at is null
+		       or mint_claimed_at < now() - ${MINT_CLAIM_STALE_MS / 1000} * interval '1 second')
+		returning idx
+	`;
+	return rows.length > 0;
+}
+
+export async function markItemMinted(dropId, idx, { mint, ownerWallet, signature = null }) {
+	const rows = await sql`
+		update drop_items
+		set mint_address = ${mint}, owner_wallet = ${ownerWallet}, mint_signature = ${signature},
+		    minted_at = now(), mint_claimed_at = null, mint_error = null
+		where drop_id = ${dropId} and idx = ${idx} and mint_address is null
+		returning *
+	`;
+	return rows[0] ? publicItem(rows[0]) : null;
+}
+
+export async function releaseItemMintClaim(dropId, idx, message = null) {
+	await sql`
+		update drop_items
+		set mint_claimed_at = null, mint_error = ${message ? String(message).slice(0, 500) : null}
+		where drop_id = ${dropId} and idx = ${idx} and mint_address is null
+	`;
+}
+
+/** Revealed, unminted item indexes in order, for the bounded "mint all" batch. */
+export async function listMintableIndexes(dropId, limit = 5) {
+	const rows = await sql`
+		select idx from drop_items
+		where drop_id = ${dropId} and status = 'revealed' and mint_address is null
+		  and (mint_claimed_at is null
+		       or mint_claimed_at < now() - ${MINT_CLAIM_STALE_MS / 1000} * interval '1 second')
+		order by idx asc limit ${Math.min(Math.max(Number(limit) || 5, 1), 25)}
+	`;
+	return rows.map((r) => r.idx);
+}
+
 /**
  * The client-facing drop shape. `seed` is present only when the caller is
  * entitled to it, so a draft's commitment stays sealed until it goes live.
@@ -331,6 +430,7 @@ export function publicDrop(row, { includeSeed = false, isOwner = false } = {}) {
 		seed: includeSeed ? row.seed : null,
 		layers: parseJson(row.layers, []),
 		collection_address: row.collection_address,
+		collection_network: row.collection_network ?? null,
 		cover_item_index: row.cover_item_index,
 		revealed_count: Number(row.revealed_count ?? 0),
 		minted_count: Number(row.minted_count ?? 0),
@@ -353,6 +453,8 @@ export function publicItem(row) {
 		reveal_error: row.reveal_error,
 		mint_address: row.mint_address,
 		owner_wallet: row.owner_wallet,
+		minting: Boolean(row.mint_claimed_at) && !row.mint_address,
+		mint_error: row.mint_error ?? null,
 		revealed_at: row.revealed_at,
 		minted_at: row.minted_at,
 	};

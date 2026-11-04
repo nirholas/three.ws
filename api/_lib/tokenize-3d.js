@@ -86,11 +86,11 @@ export function resolveNetwork(preferred) {
 	return preferred === 'mainnet' ? 'mainnet' : 'devnet';
 }
 
-function rpcForNetwork(network) {
+export function rpcForNetwork(network) {
 	return network === 'devnet' ? env.SOLANA_RPC_URL_DEVNET : env.SOLANA_RPC_URL;
 }
 
-function isValidBase58Pubkey(addr) {
+export function isValidBase58Pubkey(addr) {
 	try {
 		umiPublicKey(addr);
 		return true;
@@ -99,11 +99,11 @@ function isValidBase58Pubkey(addr) {
 	}
 }
 
-function encodeSignature(sig) {
+export function encodeSignature(sig) {
 	return typeof sig === 'string' ? sig : bs58.encode(sig);
 }
 
-function assetExplorerUrl(mint, network) {
+export function assetExplorerUrl(mint, network) {
 	const cluster = network === 'devnet' ? '?cluster=devnet' : '';
 	return `https://solscan.io/token/${mint}${cluster}`;
 }
@@ -211,7 +211,7 @@ async function resolveOwnerWallet({ ownerWallet, requesterId }) {
  *
  * @returns {Promise<{ glbUrl: string, imageUrl: string, glbIpfs: string|null, imageIpfs: string|null }>}
  */
-async function promoteToDurableStorage({ idempotencyKey, sourceUrl, name }) {
+export async function promoteToDurableStorage({ idempotencyKey, sourceUrl, name }) {
 	const base = `tokenized/${idempotencyKey}`;
 
 	// 1. GLB bytes → durable R2 key.
@@ -284,7 +284,7 @@ async function promoteToDurableStorage({ idempotencyKey, sourceUrl, name }) {
 	return { glbUrl, imageUrl, glbIpfs, imageIpfs };
 }
 
-async function uploadMetadataJson({ idempotencyKey, metadata }) {
+export async function uploadMetadataJson({ idempotencyKey, metadata }) {
 	const key = `tokenized/${idempotencyKey}/metadata.json`;
 	await putObject({
 		key,
@@ -310,7 +310,7 @@ async function uploadMetadataJson({ idempotencyKey, metadata }) {
  * holder owns/transfers the asset, three.ws can curate its on-chain metadata);
  * the recipient wallet is the owner.
  */
-async function mintCoreAsset({ network, ownerWallet, name, metadataUri, royaltyBps, royaltyRecipient }) {
+export async function mintCoreAsset({ network, ownerWallet, name, metadataUri, royaltyBps, royaltyRecipient }) {
 	const umi = createUmi(solanaConnection({ url: rpcForNetwork(network), network })).use(mplCore());
 	const authority = collectionAuthoritySigner(umi);
 	umi.use(signerIdentity(authority));

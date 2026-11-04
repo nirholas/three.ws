@@ -1055,6 +1055,12 @@ export const limits = {
 	domainsRegister: (key) => getLimiter('domains:register', { limit: 10, window: '1 h', critical: true }).limit(key),
 	mcpMint3dUnpaidDevnet: (key) =>
 		getLimiter('mcp:mint3d:unpaid:devnet', { limit: 30, window: '1 h', critical: true }).limit(key),
+	// Drop mints: the three.ws authority pays Core rent for each, so the creator
+	// gets a bounded budget per account. Devnet is free; mainnet is real SOL.
+	dropMintDevnet: (key) =>
+		getLimiter('drops:mint:devnet', { limit: 300, window: '1 h', critical: true }).limit(key),
+	dropMintMainnet: (key) =>
+		getLimiter('drops:mint:mainnet', { limit: 25, window: '1 d', critical: true }).limit(key),
 	// 3D Studio MCP. Generation submits a real GPU job on Replicate (text→image
 	// and/or image→3D reconstruction) that costs real money, so it gets a hard
 	// hourly ceiling per principal. Status polling is cheap and frequent.
