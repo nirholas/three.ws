@@ -299,6 +299,12 @@ describe('price impact of a post', () => {
 		expect(rows[2].engagement).toBe(35);
 	});
 
+	it('writes the excerpt with plain hyphens in place of the long dash glyphs', () => {
+		const dashes = String.fromCharCode(0x2014) + ' and ' + String.fromCharCode(0x2013);
+		const [row] = impactForPosts([post({ tweetId: 'd', postedAt: iso(start + 10 * 900), text: `ship ${dashes} done` })], rising);
+		expect(row.text).toBe('ship - and - done');
+	});
+
 	it('thins the series to one point per bucket without losing the open, close or volume', () => {
 		const thin = downsample(rising.slice(0, 32), 4 * 3600);
 		expect(thin).toHaveLength(2);

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "The $THREE Posts chart now runs to today and keeps every post it has ever measured",
+			"summary": "The Posts view on the $THREE coin page now plots @trythreews posts through November, with all 197 posts measured at +1h, +4h and +24h against the any-time baseline. The price source only serves the last 180 days, so every 15-minute bar read is now archived and merged on each refresh, and the oldest posts keep the returns measured for them earlier instead of going blank.",
+			"tags": ["improvement"],
+			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Agents on one stage take turns speaking instead of talking over each other",
 			"summary": "When several <agent-3d> agents share an <agent-stage>, everything they say out loud now goes through one speaking queue, so a cue answered by two agents plays one voice after the other. Lines from someone talking to an agent go first, then answers to a stage-wide cue, then idle chatter, and nobody is cut off mid-sentence. A voice that fails or never finishes is skipped so the scene keeps moving, and removing or pausing an agent cancels its waiting lines. Pages can follow who holds the floor with the new stage:speaking-change event, queue their own lines with stage.speak(), and say() now resolves to the reply. Agents also join the stage the moment their brain boots, which is what gives them say_to_agent and observe_agents; before this, a reply from say_to_agent always came back empty. The two-agents example shows the floor live.",
 			"tags": [

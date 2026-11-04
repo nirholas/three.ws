@@ -73,7 +73,8 @@ export function impactForPosts(posts, candles, opts = {}) {
 				id: post.tweetId,
 				url: post.url,
 				postedAt: post.postedAt,
-				text: String(post.text || '').replace(/\s+/g, ' ').trim().slice(0, 140),
+				// The excerpt is a label, and the repo bans the long dash glyphs.
+				text: String(post.text || '').replace(/[\u2013\u2014]/g, '-').replace(/\s+/g, ' ').trim().slice(0, 140),
 				engagement: engagementOf(post),
 				hasMedia: Boolean(post.hasImage || post.hasVideo),
 				...returnsAt(candles, atSec, opts),

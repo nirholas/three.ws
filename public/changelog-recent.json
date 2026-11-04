@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T19:16:48.720Z",
+	"generated_at": "2026-11-04T19:29:01.451Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4370,
+	"total": 4371,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -567,6 +567,16 @@
 			"link": "/play",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The $THREE Posts chart now runs to today and keeps every post it has ever measured",
+			"summary": "The Posts view on the $THREE coin page now plots @trythreews posts through November, with all 197 posts measured at +1h, +4h and +24h against the any-time baseline. The price source only serves the last 180 days, so every 15-minute bar read is now archived and merged on each refresh, and the oldest posts keep the returns measured for them earlier instead of going blank.",
+			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
@@ -1546,17 +1556,6 @@
 			"tags": [
 				"desktop",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Rate limits hold steady again instead of falling back to the slower path",
-			"summary": "A routine dependency update brought back a rate-limiter release whose Redis scripts our production Redis rejects, so every limit quietly ran on the slower database fallback. The limiter is pinned back to the compatible release, with a test that fails on any version carrying the incompatible scripts and an update rule that stops it drifting again.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
 			]
 		}
 	]

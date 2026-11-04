@@ -439,6 +439,14 @@
 			<description>The build share sheet now uses the shared modal stack, so Escape closes only the sheet, Tab stays inside it and focus returns to where you were. Friends, NPC purchases and coin-buy sign-in show a plain network message instead of raw browser text when a connection drops. A new test pins the HUD text colors at WCAG AA contrast over bright and dark scenes.</description>
 		</item>
 		<item>
+			<title>The $THREE Posts chart now runs to today and keeps every post it has ever measured</title>
+			<link>https://three.ws/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</link>
+			<guid isPermaLink="false">2026-11-04:The $THREE Posts chart now runs to today and keeps every post it has ever measured</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Posts view on the $THREE coin page now plots @trythreews posts through November, with all 197 posts measured at +1h, +4h and +24h against the any-time baseline. The price source only serves the last 180 days, so every 15-minute bar read is now archived and merged on each refresh, and the oldest posts keep the returns measured for them earlier instead of going blank.</description>
+		</item>
+		<item>
 			<title>The GTC 2027 poster, its data and its build scripts are in the repository</title>
 			<link>https://three.wshttps://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027</link>
 			<guid isPermaLink="false">2026-11-04:The GTC 2027 poster, its data and its build scripts are in the repository</guid>

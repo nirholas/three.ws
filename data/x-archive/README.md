@@ -12,6 +12,7 @@ its API terms again.
 | `<handle>-api-<YYYY-MM-DD>.json` | A metrics refresh written by `npm run x:archive:refresh`: the same shape, with exact counters from the X API v2. Carries `"source": "x-api-v2"`. |
 | `<handle>-articles-<YYYY-MM-DD>.json` | Every X Article the account has published, written by `npm run x:articles:pull`: title, preview, full plain text, exact metrics, and the replies and quote posts readers left under each one. Carries `"source": "x-api-v2"`. |
 | `analysis/<handle>-engagement.json` | The computed analysis behind the readable report in [docs/x-archive/](../../docs/x-archive/). Generated, not hand-edited. (Named `analysis/`, not `reports/`, because the repo's `.gitignore` drops any directory called `reports/`.) |
+| `analysis/<handle>-three-candles.json` | Every 15-minute $THREE/SOL candle `npm run x:archive:price` has read, as `[t, o, h, l, c, v]` rows with the pool they came from. Merged on every run, never truncated: GeckoTerminal's keyless tier only serves the last 180 days, so this file is the only place older bars survive. |
 
 Snapshots are additive. Never overwrite an old one to "update" a post: the
 whole point of keeping them separate is that engagement is a time series, so a
@@ -42,7 +43,17 @@ drifts down every day makes every post look bad. The result is
 `public/data/trythreews-post-impact.json`, which the **Posts** view on the
 $THREE chart at `/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`
 reads: bubbles sized by engagement, coloured by the +4h return, each linking to
-the post. The content pipeline stamps its own outcome rows the same way, so
+the post.
+
+Because GeckoTerminal's keyless tier refuses candles older than 180 days, the
+command keeps every bar it reads in `analysis/<handle>-three-candles.json` and
+merges each new read into it, reading only the bars since the archive's last
+one. Paging back into that history window ends the read at what was already
+fetched instead of failing the run. A post older than even the archive keeps
+the returns an earlier run measured for it (copied wholesale from the previous
+output, only when it is the same mint and pool), and the output's `carried`
+field counts those posts. A pool change restarts the archive, since a different
+pool is a different price series. The content pipeline stamps its own outcome rows the same way, so
 `learnLifts` reports a `priceLifts` section (the +24h return after posts with
 each attribute, shrunk by sample size) and `learnedScore` adds at most 4 ranking
 points for it once 20 matured posts carry a measured return.
