@@ -34,10 +34,14 @@ import { seedLineage, appendVersion, summarizeLineage } from '../mcp-server/src/
 import { verifyPreserved } from '../api/_lib/preserve-contract.js';
 import { createAutoRenderer, pagePreference } from './renderer-factory.js';
 import { createRestyleEffects } from './restyle-effects.js';
+import { DEFAULT_STAGE_AVATAR_URL } from './default-stage-avatar.js';
 
-// A small, always-present local sample so the page is never an empty void — the
-// platform's default humanoid, served from /avatars.
-const DEFAULT_MODEL = '/avatars/realistic-female.glb';
+// A small, always-present local sample so the page is never an empty void: the
+// house default humanoid with its idle clip baked in, so it never stands in bind
+// pose (see src/default-stage-avatar.js).
+const DEFAULT_MODEL = DEFAULT_STAGE_AVATAR_URL;
+
+const REDUCED_MOTION = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const state = {
 	renderer: null,
@@ -68,6 +72,12 @@ const state = {
 	dimmed: [], // [{ material, opacity, transparent }] restored on deselect
 	regenRunToken: 0,
 	benchHold: false, // ?bench hook: pause the on-screen loop while it renders offscreen
+	// The loaded model's own clips. The first one loops in the live view, and
+	// all of them ride along into every exported or saved version.
+	clips: [],
+	mixer: null,
+	clipAction: null,
+	exportHold: false, // keep the last frame on screen while an export reads the rest pose
 	backend: 'webgl', // which renderer the factory actually produced
 	fx: null, // view effects for that backend (restyle-effects.js)
 };
@@ -150,9 +160,14 @@ async function buildScene() {
 	if (new URLSearchParams(location.search).has('bench')) exposeBenchHook(renderer, scene, camera, backend);
 
 	onResize();
+	const clock = new THREE.Clock();
 	const tick = () => {
 		state.raf = requestAnimationFrame(tick);
 		controls.update();
+		// Clamp the step so a backgrounded tab does not jump the clip on return.
+		const dt = Math.min(clock.getDelta(), 0.1);
+		if (state.exportHold) return;
+		if (state.mixer && !REDUCED_MOTION) state.mixer.update(dt);
 		if (!state.benchHold) renderer.render(scene, camera);
 	};
 	tick();
@@ -184,6 +199,11 @@ function exposeBenchHook(renderer, scene, camera, backend) {
 	};
 	window.__restyleBench = {
 		backend,
+		// The loaded model, read-only, for in-page probes such as
+		// tests/e2e/stage-avatar-pose.spec.js checking it is not in bind pose.
+		get root() {
+			return state.root;
+		},
 		setRim: (strength) => state.fx.setRim({ strength }),
 		async capture(w, h) {
 			state.benchHold = true;
@@ -239,7 +259,7 @@ function loadModel(src, label, opts = {}) {
 	showState('loading');
 	const onLoaded = (gltf) => {
 		try {
-			mountModel(gltf.scene, label, opts);
+			mountModel(gltf.scene, label, { ...opts, animations: gltf.animations || [] });
 			showState('ready');
 		} catch (err) {
 			fail(err);
@@ -262,6 +282,7 @@ function mountModel(newRoot, label, opts = {}) {
 		state.scene.remove(state.root);
 		disposeTree(state.root);
 	}
+	stopClips();
 	state.root = newRoot;
 	state.originals.clear();
 	state.lineage = [];
@@ -271,6 +292,7 @@ function mountModel(newRoot, label, opts = {}) {
 	captureOriginals(newRoot);
 	frameModel(newRoot);
 	state.scene.add(newRoot);
+	playClips(newRoot, opts.animations || []);
 	state.parts = detectParts(newRoot);
 	state.selectedPartIndex = null;
 	state.dimmed = [];
@@ -329,16 +351,59 @@ function mountModel(newRoot, label, opts = {}) {
 	renderLineageStrip();
 }
 
+// ── animation ────────────────────────────────────────────────────────────────
+// A rigged model plays its own first clip on a loop (the house default carries
+// an idle), so nothing on this page stands in bind pose. Reduced motion holds
+// the clip's first frame instead.
+function playClips(root, clips) {
+	state.clips = clips;
+	if (!clips.length) return;
+	state.mixer = new THREE.AnimationMixer(root);
+	state.clipAction = state.mixer.clipAction(clips[0]);
+	state.clipAction.setLoop(THREE.LoopRepeat, Infinity).play();
+	state.mixer.update(0);
+}
+
+function stopClips() {
+	if (state.mixer) {
+		state.mixer.stopAllAction();
+		state.mixer.uncacheRoot(state.mixer.getRoot());
+	}
+	state.mixer = null;
+	state.clipAction = null;
+	state.clips = [];
+}
+
 // Serialise a root to GLB with the classic glTF materials in place, so a WebGPU
 // session exports the same asset a WebGL one does (see restyle-effects.js).
-function exportGlb(root) {
+// The model's clips are written alongside it, and the nodes are read in their
+// rest pose rather than mid-clip: stopping the action makes the mixer restore
+// every bone it animated, and the canvas keeps its last frame meanwhile so the
+// viewer never sees the bind pose.
+async function exportGlb(root) {
 	const exporter = new GLTFExporter();
-	return state.fx.withClassicMaterials(
-		root,
-		() => new Promise((res, rej) => {
-			exporter.parse(root, (result) => res(result), (err) => rej(err), { binary: true });
-		}),
-	);
+	const animate = root === state.root && state.mixer;
+	if (animate) {
+		state.exportHold = true;
+		state.mixer.stopAllAction();
+	}
+	try {
+		return await state.fx.withClassicMaterials(
+			root,
+			() => new Promise((res, rej) => {
+				exporter.parse(root, (result) => res(result), (err) => rej(err), {
+					binary: true,
+					animations: root === state.root ? state.clips : [],
+				});
+			}),
+		);
+	} finally {
+		if (animate && state.mixer === animate) {
+			state.clipAction.play();
+			state.mixer.update(0);
+		}
+		state.exportHold = false;
+	}
 }
 
 // Export the CURRENT root as-is (used only to mint an origin URL for a

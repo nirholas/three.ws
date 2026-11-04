@@ -150,9 +150,9 @@ The commands a host can send (inbound) and the events the iframe emits (outbound
 | host → iframe | `walk:config` | `{ speed?, bg?, controls? }` |
 | iframe → host | `walk:ready` | `{ avatarId, env }` (fires once, when loaded) |
 | iframe → host | `walk:position` | `{ x, z, heading }` (~10 Hz while moving) |
-| iframe → host | `walk:gesture` | `{ gesture }` |
+| iframe → host | `walk:gesture` | `{ gesture, played? }`: `played` is `false` when the body cannot perform a `wave` or `jump` (a static mesh), so do not announce it |
 | iframe → host | `walk:speak` | `{ text, durationMs }` |
-| iframe → host | `walk:error` | `{ code, message }` |
+| iframe → host | `walk:error` | `{ code, message, fallback? }`: with `fallback: true` the default body is standing in (`avatar_load_failed`, or `avatar_not_animatable` for a skeleton the walk clips cannot drive) and the embed is still ready |
 
 Two things the runtime enforces, so plan around them:
 

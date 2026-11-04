@@ -590,6 +590,76 @@ function getAvatarLoader() {
 	return _loaderPromise;
 }
 
+// ── Mounting a body ───────────────────────────────────────────────────────
+// Put a loaded glTF on stage: shadows, feet on the ground, camera framed to its
+// height, and the animation manager bound to its skeleton.
+function mountBody(gltf) {
+	if (avatar) {
+		avatarRig.remove(avatar);
+		disposeBody(avatar);
+	}
+	avatar = gltf.scene;
+	avatar.traverse((n) => {
+		if (n.isMesh) {
+			n.castShadow = true;
+			n.receiveShadow = false;
+			if (n.material && 'envMapIntensity' in n.material) {
+				n.material.envMapIntensity = 0.85;
+			}
+		}
+	});
+
+	const box = new Box3().setFromObject(avatar);
+	avatar.position.y -= box.min.y;
+	avatarRig.add(avatar);
+
+	const height = Math.max(0.5, box.max.y - box.min.y);
+	CAM_OFFSET.set(0, height * 1.05 * ZOOM_PARAM, height * 1.95 * ZOOM_PARAM);
+	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
+	applyCameraImmediate();
+
+	animationManager.attach(avatar);
+	// Arms the clip library cannot name-map would otherwise stay out in a T;
+	// swing them down before the first clip plays.
+	animationManager.relaxUndrivenArms();
+}
+
+// Free the GPU buffers of a body leaving the stage, so swapping cartridges
+// all afternoon does not grow the embed's memory.
+function disposeBody(root) {
+	root.traverse((n) => {
+		n.geometry?.dispose?.();
+		const mats = Array.isArray(n.material) ? n.material : n.material ? [n.material] : [];
+		for (const m of mats) {
+			for (const v of Object.values(m)) if (v?.isTexture) v.dispose();
+			m.dispose?.();
+		}
+	});
+}
+
+const UNDRIVABLE_STATUS = "this body can't walk yet, showing the default";
+
+// A skinned rig the clip library cannot drive (too few canonical bones, or
+// under the coverage floor) would idle and walk in its bind pose: arms out,
+// legs locked, sliding across the ground. The embed promises a walking body, so
+// such a rig is swapped for the default. A static mesh (no skin) has no bind
+// pose to show and stays as the agent's own body.
+function bodyNeedsDefault() {
+	const gate = animationManager.clipGate();
+	return !!gate && !gate.ok && gate.why !== 'no-skin';
+}
+
+async function swapToDefaultBody(loader) {
+	const gate = animationManager.clipGate();
+	log.warn('[walk-embed] body cannot drive the clip library, using the default:', gate?.why);
+	emit(OUTBOUND.ERROR, {
+		code: 'avatar_not_animatable',
+		message: `This body's skeleton can't play the walk clips (${gate?.why || 'unmapped'}), so the default body is standing in.`,
+		fallback: true,
+	});
+	mountBody(await loader.loadAsync(AVATAR_URL_DEFAULT));
+}
+
 async function loadAvatar() {
 	setStatus('loading avatar…', { sticky: true });
 
@@ -617,29 +687,13 @@ async function loadAvatar() {
 		usedFallback = true;
 		gltf = await loader.loadAsync(AVATAR_URL_DEFAULT);
 	}
-	avatar = gltf.scene;
-	avatar.traverse((n) => {
-		if (n.isMesh) {
-			n.castShadow = true;
-			n.receiveShadow = false;
-			if (n.material && 'envMapIntensity' in n.material) {
-				n.material.envMapIntensity = 0.85;
-			}
-		}
-	});
-
-	const box = new Box3().setFromObject(avatar);
-	const minY = box.min.y;
-	avatar.position.y -= minY;
-
-	avatarRig.add(avatar);
-
-	const height = Math.max(0.5, box.max.y - box.min.y);
-	CAM_OFFSET.set(0, height * 1.05 * ZOOM_PARAM, height * 1.95 * ZOOM_PARAM);
-	CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
-	applyCameraImmediate();
-
-	animationManager.attach(avatar);
+	mountBody(gltf);
+	let undrivable = false;
+	if (!usedFallback && requestedUrl !== AVATAR_URL_DEFAULT && bodyNeedsDefault()) {
+		undrivable = true;
+		usedFallback = true;
+		await swapToDefaultBody(loader);
+	}
 
 	const manifest = await fetch(ANIMATIONS_MANIFEST_URL, { cache: 'force-cache' })
 		.then((r) => {
@@ -661,7 +715,9 @@ async function loadAvatar() {
 		input.autoplay.t = 0;
 	}
 
-	if (usedFallback) {
+	if (undrivable) {
+		setStatus(UNDRIVABLE_STATUS, { sticky: true });
+	} else if (usedFallback) {
 		setStatus("couldn't load that avatar — showing the default", { sticky: true });
 	} else {
 		setStatus('walk it');
@@ -889,6 +945,11 @@ const runtime = {
 	getReady() {
 		return isReady ? { avatarId: currentAvatarId, env: currentEnv } : null;
 	},
+	// The body on stage (a three.js Object3D), read-only, for in-page probes
+	// such as tests/e2e/stage-avatar-pose.spec.js checking it is not in bind pose.
+	getAvatar() {
+		return avatar;
+	},
 	// Walk to a world (x, z) then stop. Steered each frame in readMoveInput.
 	goto(x, z) {
 		cancelProgrammatic();
@@ -923,10 +984,12 @@ const runtime = {
 	gesture(g) {
 		if (g === 'wave' || g === 'jump') {
 			const clip = GESTURE_CLIPS[g];
-			if (clip && animationManager.supportsCanonicalClips?.() !== false) {
-				animationManager.playOnce(clip, { settleTo: CLIP_IDLE, fade: 0.18 });
-			}
-			emit(OUTBOUND.GESTURE, { gesture: g });
+			// `played` tells the host whether the body actually performs it: a
+			// static mesh, or a clip this rig rejected, plays nothing, and a host
+			// must not announce a wave nobody saw.
+			const played = !!clip && animationManager.supportsCanonicalClips() && animationManager.canPlay(clip);
+			if (played) animationManager.playOnce(clip, { settleTo: CLIP_IDLE, fade: 0.18 });
+			emit(OUTBOUND.GESTURE, { gesture: g, played });
 			return;
 		}
 		if (g === 'walk' || g === 'run') {
@@ -958,22 +1021,11 @@ const runtime = {
 				: `/api/avatars/${encodeURIComponent(avatarId)}/glb`;
 			const loader = await getAvatarLoader();
 			const gltf = await loader.loadAsync(url);
-			if (avatar) avatarRig.remove(avatar);
-			avatar = gltf.scene;
-			avatar.traverse((n) => {
-				if (n.isMesh) {
-					n.castShadow = true;
-					if (n.material && 'envMapIntensity' in n.material) n.material.envMapIntensity = 0.85;
-				}
-			});
-			const box = new Box3().setFromObject(avatar);
-			avatar.position.y -= box.min.y;
-			avatarRig.add(avatar);
-			const height = Math.max(0.5, box.max.y - box.min.y);
-			CAM_OFFSET.set(0, height * 1.05 * ZOOM_PARAM, height * 1.95 * ZOOM_PARAM);
-			CAM_LOOK_OFFSET.set(0, height * 0.6, 0);
-			applyCameraImmediate();
-			animationManager.attach(avatar);
+			mountBody(gltf);
+			if (url !== AVATAR_URL_DEFAULT && bodyNeedsDefault()) {
+				await swapToDefaultBody(loader);
+				setStatus(UNDRIVABLE_STATUS, { sticky: true });
+			}
 			await animationManager.crossfadeTo(CLIP_IDLE, 0.0);
 			currentMotion = 'idle';
 			currentAvatarId = avatarId;

@@ -170,8 +170,29 @@ window.addEventListener('message', (event) => {
 		return;
 	}
 	if (data.type === 'walk:error') {
+		// A fallback notice (the agent's body could not load, or cannot walk, so
+		// the default body stands in) is not a dead screen: the embed still
+		// answers ready. Say what happened and keep playing.
+		if (data.fallback) {
+			toast(data.code === 'avatar_not_animatable'
+				? "This agent's body can't walk yet, so the default body is standing in."
+				: "This agent's body didn't load, so the default body is standing in.");
+			return;
+		}
 		clearTimeout(state.swapTimer);
 		failBoot(data.message ? String(data.message).slice(0, 90) : 'Screen error');
+		return;
+	}
+	// The screen echoes each gesture with whether the body performed it, so
+	// the console only announces a wave somebody actually saw.
+	if (data.type === 'walk:gesture' && (data.gesture === 'wave' || data.gesture === 'jump')) {
+		if (data.played === false) {
+			const msg = `This body can't ${data.gesture}.`;
+			toast(msg);
+			announce(msg);
+		} else {
+			announce(data.gesture);
+		}
 	}
 });
 
@@ -625,7 +646,6 @@ function pressFace(btn) {
 			return;
 		}
 		post('walk:gesture', { gesture: 'wave' });
-		announce('wave');
 		return;
 	}
 	if (btn === 'b') {
@@ -634,7 +654,6 @@ function pressFace(btn) {
 			return;
 		}
 		post('walk:gesture', { gesture: 'jump' });
-		announce('jump');
 	}
 }
 

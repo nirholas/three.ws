@@ -22,10 +22,13 @@
 // Outbound (iframe → host):
 //   walk:ready    { avatarId, env }
 //   walk:position { x, z, heading }                 (10 Hz while moving)
-//   walk:gesture  { gesture }                        (when a gesture plays)
+//   walk:gesture  { gesture, played? }               (echo; played=false when the body
+//                                                    cannot perform a wave/jump)
 //   walk:speak    { text, durationMs }               (when the avatar speaks)
 //   walk:env      { env }                            (environment changed)
-//   walk:error    { code, message }
+//   walk:error    { code, message, fallback? }       (fallback=true: the default body is
+//                                                    standing in, e.g. avatar_load_failed,
+//                                                    avatar_not_animatable; still ready)
 // Inbound (host → iframe):
 //   walk:goto     { x, z }
 //   walk:gesture  { gesture }
@@ -284,11 +287,18 @@ export function installEmbedBridge(runtime, {
 	// Outbound: re-emit the runtime's real lifecycle events as typed messages.
 	runtime.on?.(OUTBOUND.READY, (d) => post(OUTBOUND.READY, { avatarId: d.avatarId, env: d.env }));
 	runtime.on?.(OUTBOUND.POSITION, (d) => post(OUTBOUND.POSITION, { x: d.x, z: d.z, heading: d.heading }));
-	runtime.on?.(OUTBOUND.GESTURE, (d) => post(OUTBOUND.GESTURE, { gesture: d.gesture }));
+	runtime.on?.(OUTBOUND.GESTURE, (d) => post(OUTBOUND.GESTURE, {
+		gesture: d.gesture,
+		...(typeof d.played === 'boolean' ? { played: d.played } : {}),
+	}));
 	runtime.on?.(OUTBOUND.SPEAK, (d) => post(OUTBOUND.SPEAK, { text: d.text, durationMs: d.durationMs }));
 	runtime.on?.(OUTBOUND.ENVIRONMENT, (d) => post(OUTBOUND.ENVIRONMENT, { env: d.env }));
 	runtime.on?.(OUTBOUND.AVATAR_CHANGED, (d) => post(OUTBOUND.AVATAR_CHANGED, { avatarId: d.avatarId }));
-	runtime.on?.(OUTBOUND.ERROR, (d) => post(OUTBOUND.ERROR, { code: d.code || 'error', message: d.message }));
+	runtime.on?.(OUTBOUND.ERROR, (d) => post(OUTBOUND.ERROR, {
+		code: d.code || 'error',
+		message: d.message,
+		...(d.fallback === true ? { fallback: true } : {}),
+	}));
 
 	// Inbound: validate, then apply to the real avatar/controls.
 	function onMessage(e) {
