@@ -1,7 +1,7 @@
 # LIVE-OPS: $THREE Community Meetup #3
 
 One page. Everything an operator needs while the event is running, and nothing else.
-Prepared 2026-11-03. Project `aerial-vehicle-466722-p5`, region `us-central1`.
+Prepared 2026-11-03, re-verified 2026-11-04 17:30 UTC. Project `aerial-vehicle-466722-p5`, region `us-central1`.
 Freshness is machine-checked: `npm run check:live-ops` fails when the three lines
 below disagree with `public/event.json` or with what `/api/version` serves.
 
@@ -130,7 +130,7 @@ npm run deploy:gcp:purge-cdn
 
 Return to normal afterwards with `--to-latest` instead of `--to-revisions`.
 
-**Rehearsal (2026-11-03):** every revision above reports `Ready=True`. The API's
+**Rehearsal (2026-11-03, re-read 2026-11-04 17:20 UTC: same revisions, all `Ready=True`, 100% on the current ones):** every revision above reports `Ready=True`. The API's
 previous revision was proven routable without shifting traffic: it was tagged
 `rollback` at 0%, `https://rollback---three-ws-api-lp642k3kpa-uc.a.run.app/api/version`
 answered 200 in 0.39s with commit `0a913e8a7`, and the tag was removed. Re-run the
@@ -211,9 +211,15 @@ p95 418ms, and the world server never exceeded 8% CPU. The single instance carri
 where Cloud Run wants a second instance that `max-instances=1` refuses: raise
 `--concurrency` if the count approaches it.
 
+Re-run 2026-11-04 17:10 UTC (`--n 400 --ramp 45 --hold 150`, same box, load average
+~118): **PASS on all four thresholds.** 400 of 400 joined, 400 held to the end, 0%
+drops, 0% silent sessions, join p50 1,505ms, p95 3,518ms, max 6,131ms, 212,272 moves
+sent, 413,882 state patches. An idle `curl` of `/play` straight after measured
+57-143ms.
+
 ---
 
-## Third-party failover (proven 2026-11-03)
+## Third-party failover (proven 2026-11-03, re-proven 2026-11-04 17:00 UTC)
 
 | Dependency | Primary today | Failover proof |
 |---|---|---|
@@ -313,9 +319,10 @@ below**: on the live build `0a913e8a7` it does not exist yet.
 ```bash
 git push threews main
 
-# 1. API + frontend. The one pending migration
-#    (20261103130000_agent_mcp_connections_reshape.sql) belongs to this release:
-#    read `npm run db:status`, then apply it alongside the deploy.
+# 1. API + frontend. Four migrations are pending and belong to this release
+#    (account_purge, microsoft_marketplace_saas, webhook_bearer_token,
+#    inception_programs_and_shoutouts, all dated 2026-11-04): read
+#    `npm run db:status` (it must show no drift), then apply them alongside the deploy.
 npm run deploy:gcp:full
 
 # 2. The world server: reconnect-position, chat-draft, prop-budget and event-config
@@ -332,13 +339,13 @@ rollback table, and run `npm run check:live-ops`.
 ## T-minus checklist (UTC)
 
 **2026-11-05 (T-1 day)**
-- [ ] Owner-approved deploy of API and world server (above); `smoke:prod` clean.
-- [ ] Owner: add the `X-Client-Region` header on `three-ws-backend` (command in failure modes).
-- [ ] Owner: pay the GCP billing balance; confirm `forge_free` delivers a GLB twice in a row.
-- [ ] Owner: 0.05 SOL to the sponsor fee wallet; rerun `x402-economy-triage`.
-- [ ] Owner: top up Helius or Alchemy.
-- [ ] Update the release line and rollback table; `npm run check:live-ops` and `npm run check:event` pass.
-- [ ] Rehearse every agenda beat once in the $THREE world.
+- [ ] 12:00: owner decisions in one pass: approve the deploy, pay the GCP billing balance, fund the sponsor fee wallet (0.05 SOL), top up Helius or Alchemy, add the `X-Client-Region` header on `three-ws-backend` (command in failure modes).
+- [ ] 13:00: push and deploy both services with the commands in "Ship the release" above. Apply the four pending migrations as described there.
+- [ ] 15:00: `npm run smoke:prod` clean (the `/coin-control` and `/docs/coin-control` 404s go away with the deploy), then `npm run deploy:gcp:purge-cdn`.
+- [ ] 15:30: update the **Live release** line and the rollback table; `npm run check:live-ops` and `npm run check:event` pass.
+- [ ] 16:00: confirm `forge_free` delivers a GLB twice in a row; rerun `x402-economy-triage`.
+- [ ] 17:00: rehearse every agenda beat once in the $THREE world with `scripts/announce-play.mjs`.
+- [ ] 18:00: `npm run event:failover`, `npm run event:capacity -- --n 400 --ramp 45 --hold 120`, `npm run clean:worktrees`.
 
 **2026-11-06**
 - [ ] 14:00: `npm run event:watch -- --once`, `npm run event:failover`.
