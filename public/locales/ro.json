@@ -19287,7 +19287,11 @@
 		"boot_retry": "Încearcă din nou",
 		"boot_home": "Înapoi la three.ws",
 		"wheel_spin": "Învârte roata",
-		"stage_enter": "Intră în spectacol"
+		"stage_enter": "Intră în spectacol",
+		"photo": "Foto",
+		"photo_aria": "Fă o fotografie",
+		"photo_title": "Mod foto: surprinde această lume pe un card de distribuit (P)",
+		"hud_region": "Comenzile lumii"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

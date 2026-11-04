@@ -19287,7 +19287,11 @@
 		"boot_retry": "Erneut versuchen",
 		"boot_home": "Zurück zu three.ws",
 		"wheel_spin": "Glücksrad drehen",
-		"stage_enter": "Zur Show"
+		"stage_enter": "Zur Show",
+		"photo": "Foto",
+		"photo_aria": "Foto aufnehmen",
+		"photo_title": "Fotomodus: Halte diese Welt als Teilkarte fest (P)",
+		"hud_region": "Weltsteuerung"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

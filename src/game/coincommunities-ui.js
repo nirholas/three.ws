@@ -1977,13 +1977,14 @@ export class CommunityUI {
 		this.photoBtn = el('button', {
 			id: 'cc-photo-btn', class: 'cc-photo-hud-btn', type: 'button', 'aria-pressed': 'false',
 			'aria-label': 'Take a photo', title: 'Photo mode: capture this world as a share card (P)',
+			'data-i18n-attr': 'aria-label:play.photo_aria;title:play.photo_title',
 			onclick: () => this.h.onPhoto?.(),
 		}, [
 			el('span', { class: 'cc-photo-hud-ico', 'aria-hidden': 'true', html:
 				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
 				+ '<path d="M3 8.2h3.4L8.1 5.4h7.8l1.7 2.8H21v10.4H3z"/><circle cx="12" cy="13.2" r="3.4"/>'
 				+ '</svg>' }),
-			el('span', { class: 'cc-photo-hud-label', text: 'Photo' }),
+			el('span', { class: 'cc-photo-hud-label', text: 'Photo', 'data-i18n': 'play.photo' }),
 		]);
 
 		// Zen mode: hide every overlay so the world renders clean. Same
@@ -2040,7 +2041,7 @@ export class CommunityUI {
 		this._buildKingHud();
 		// A labelled landmark, so a screen reader can jump straight to the world
 		// controls instead of arrowing through the whole document.
-		this.hud = el('div', { id: 'cc-hud', hidden: true, role: 'region', 'aria-label': 'World controls' }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.photoBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
+		this.hud = el('div', { id: 'cc-hud', hidden: true, role: 'region', 'aria-label': 'World controls', 'data-i18n-attr': 'aria-label:play.hud_region' }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.photoBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
 		document.body.appendChild(this.hud);
 	}
 
