@@ -889,3 +889,19 @@ orders still on disk.
 - **Remaining**: sending the Adobe letter
   (`marketing/growth/submissions/adobe-mixamo-permission.md`) stays owner order 938; it no longer
   blocks anything. The order file is deleted in this commit.
+
+## 2026-11-04: Home Assistant HACS, external steps run at the owner's "complete everything"
+
+- Created public `github.com/nirholas/three-ws-home-assistant` from the export (description,
+  homepage, Issues, six topics, Apache-2.0 detected), released `v1.0.1`, then `v1.0.2` after adding
+  manifest `categories: ["ai_voice.voice_assistants"]` to clear the HACS validator's only warning.
+- The real `ghcr.io/hacs/action:main` container against the live repository: `All (10) checks
+  passed`, no warnings. Hassfest on the 1.0.2 export: `Invalid integrations: 0`.
+- Forked `hacs/default` to `nirholas/default` and pushed branch `add-three-ws-home-assistant` with
+  the one-line, sort-verified entry.
+- The PR is held: the repository's own Hassfest and HACS workflow runs were refused with "The job
+  was not started because your account is locked due to a billing issue", and the `hacs/default`
+  template requires links to green runs. New `scripts/hacs-default-submit.mjs` reports that blocker,
+  re-runs the workflows (`--rerun`), and opens the PR with real links (`--open`) once they pass.
+  The export now skips `__pycache__` (test-first, `tests/export-hacs-repo.test.js`).
+- Remaining (owner): clear the billing lock in the browser, then the two commands. Row 58.

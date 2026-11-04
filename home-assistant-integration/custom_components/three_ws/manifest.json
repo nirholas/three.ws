@@ -1,6 +1,7 @@
 {
   "domain": "three_ws",
   "name": "three.ws",
+  "categories": ["ai_voice.voice_assistants"],
   "codeowners": ["@nirholas"],
   "config_flow": true,
   "dependencies": ["auth", "http"],
@@ -9,5 +10,5 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/nirholas/three-ws-home-assistant/issues",
   "requirements": [],
-  "version": "1.0.1"
+  "version": "1.0.2"
 }

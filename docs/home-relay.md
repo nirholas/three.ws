@@ -43,10 +43,12 @@ unlocking, opening and disarming always stop and ask a person first.
 To install without HACS, download the latest release, copy `custom_components/three_ws` into your
 Home Assistant `config` folder, restart, and do step 4.
 
-The integration validates clean against the real `hassfest` and HACS checks (`scripts/export-hacs-repo.mjs`
-builds the exact tree those checks run against) and ships its own brand icon, so once
-`nirholas/three-ws-home-assistant` is live it is ready for the HACS default store: no custom
-repository step, just **HACS, Integrations, search "three.ws"**.
+The integration lives in its own repository,
+[`nirholas/three-ws-home-assistant`](https://github.com/nirholas/three-ws-home-assistant), built
+from this repository by `scripts/export-hacs-repo.mjs`. It passes the real `hassfest` and HACS
+validation checks and ships its own brand icon. Its HACS default-store submission is prepared;
+once it is listed, the custom repository step goes away and it is just **HACS, Integrations, search
+"three.ws"**.
 
 ### What it can and cannot do
 
