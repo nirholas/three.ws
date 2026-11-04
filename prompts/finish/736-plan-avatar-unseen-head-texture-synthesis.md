@@ -1,5 +1,7 @@
 # Texture the unseen 60 percent of the head from identity-gated synthesised views
 
+**Status 2026-11-04:** Built and unit-tested (view_synthesis.py, view_texture.py, multi-view projection, identity/pose/seam gates, texture_eval, flag RECON_VIEW_SYNTHESIS default off). Remaining, owned by the owner: restore the GCP billing hold (Vertex returns 403), then run make_refs, `eval.capture_vertex_fixture`, `eval.texture_eval --make-heldout` and `eval.texture_eval`, calibrate the provisional gate thresholds, and enable the flag only if the held-out SSIM and histogram distance improve and seams pass on all 40.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/736-plan-avatar-unseen-head-texture-synthesis.md`.
 
 **Priority:** P2, new capability with clear value (score 50 of 100 inside the tier). **Area:** avatar. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

@@ -86,3 +86,5 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 978-plan-drops-onchain-core-collection-mint.md | 11c47fa75 | Drop mint code, routes, UI, docs shipped; migration unapplied, devnet e2e awaits a funded key, mainnet owner-gated.
 2026-11-04 | 977-plan-avatar-longcat-gpu-host-bringup.md | see git log | LongCat GPU host scripts, quota requests, staging job, wake path shipped; quota grant, weights checksum and deploy pending.
 2026-11-04 | 979-plan-mobile-seeker-v1-1-widget-release-prep.md | see git log | 1.1.0 APK built and verified, docs corrected, release runbook written; portal publish and device checks pending owner.
+2026-11-04 | 705-plan-agent-evals-cli-replay-evaluate-tab.md | 7d1879425 | Evals API, replay, trajectory export, CLI and Evaluate tab shipped; migration unapplied, live browser pass pending.
+2026-11-04 | 736-plan-avatar-unseen-head-texture-synthesis.md | f10302b3d | Gated synthesised-view texture built, flag off; billing hold blocks real Vertex fixture, calibration and held-out numbers.
