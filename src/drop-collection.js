@@ -13,6 +13,8 @@
  * page hide, so a backgrounded tab never holds an open loop.
  */
 
+import { initMintPanel } from './drop-mint-panel.js';
+
 const PAGE_SIZE = 48;
 const POLL_MS = 4000;
 const TIERS = ['legendary', 'epic', 'rare', 'common'];
@@ -92,6 +94,13 @@ async function load() {
 		renderFilters();
 		renderItems();
 		select(state.items[0] || null);
+		mintPanel = initMintPanel({
+			getDrop: () => state.drop,
+			getSelected: () => state.selected,
+			onMinted: (m) => patchItem({ index: m.index, mint_address: m.mint_address, owner_wallet: m.owner_wallet, minted_at: m.minted_at }),
+			reloadDrop,
+		});
+		mintPanel.render();
 
 		el.page.hidden = false;
 		document.title = `${state.drop.name} · three.ws Drops`;
@@ -100,6 +109,21 @@ async function load() {
 	} finally {
 		el.items.setAttribute('aria-busy', 'false');
 	}
+}
+
+let mintPanel = null;
+
+/** Re-read the drop so counts and the collection address reflect the chain writes. */
+async function reloadDrop() {
+	const res = await fetch(`/api/drops/get?slug=${encodeURIComponent(state.slug)}`, {
+		headers: { accept: 'application/json' },
+		credentials: 'same-origin',
+	});
+	if (!res.ok) return;
+	const data = await res.json();
+	state.drop = data.drop;
+	renderSupply(data.stats);
+	mintPanel?.render();
 }
 
 function fail(message) {
@@ -264,6 +288,13 @@ function itemButton(item) {
 	pill.textContent = TIER_SHORT[item.rarity_tier] || item.rarity_tier;
 	foot.append(rank, pill);
 
+	if (item.mint_address) {
+		const badge = document.createElement('span');
+		badge.className = 'dr-minted-badge';
+		badge.textContent = 'minted';
+		art.appendChild(badge);
+	}
+
 	b.append(art, foot);
 	b.addEventListener('click', () => select(item));
 	return b;
@@ -273,6 +304,7 @@ function itemButton(item) {
 
 function select(item) {
 	stopPolling();
+	queueMicrotask(() => mintPanel?.render());
 	state.selected = item;
 	renderItems();
 	renderStage();
@@ -383,6 +415,10 @@ function renderItemActions() {
 			link('Open in viewer', `/viewer?src=${encodeURIComponent(item.glb_url)}`),
 		);
 		el.itemActions.appendChild(link('Download GLB', item.glb_url, true));
+		if (item.mint_address) {
+			const net = state.drop?.collection_network === 'devnet' ? '?cluster=devnet' : '';
+			el.itemActions.appendChild(link('View on Solscan', `https://solscan.io/token/${item.mint_address}${net}`));
+		}
 		return;
 	}
 

@@ -583,6 +583,7 @@
 .dr-item[aria-current='true'] { border-color: var(--accent, #fff); }
 
 .dr-item-art {
+	position: relative;
 	aspect-ratio: 1 / 1;
 	display: grid;
 	place-items: center;
@@ -670,4 +671,35 @@
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
 	border: 0;
+}
+
+/* ── on-chain mint panel ──────────────────────────────────────────────── */
+
+.dr-chain-skeleton { min-height: 96px; margin-top: var(--space-sm, 12px); }
+
+.dr-chain-confirm,
+.dr-chain-wallet {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: var(--space-sm, 12px);
+}
+
+.dr-chain-confirm { flex-direction: row; align-items: flex-start; gap: 8px; cursor: pointer; }
+.dr-chain-confirm input { margin-top: 3px; }
+.dr-chain-confirm input:focus-visible { outline: 2px solid var(--focus-ring-color, var(--accent)); outline-offset: 2px; }
+
+.dr-minted-badge {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	padding: 2px 7px;
+	border-radius: 999px;
+	font-size: var(--text-xs, 11px);
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--success, #34d399);
+	background: color-mix(in srgb, var(--success, #34d399) 16%, transparent);
+	border: 1px solid color-mix(in srgb, var(--success, #34d399) 40%, transparent);
+	pointer-events: none;
 }

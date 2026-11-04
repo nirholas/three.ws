@@ -8,6 +8,9 @@
 //   POST /api/drops/publish  { slug }
 //   POST /api/drops/reveal   { slug, index }
 //   GET  /api/drops/reveal?slug=<slug>&index=<n>     (poll an in-flight reveal)
+//   POST /api/drops/mint-collection { slug, network?, confirm_mainnet? }   (create the Core collection)
+//   POST /api/drops/mint    { slug, index | all:true, owner_wallet?, network?, confirm_mainnet? }
+//   GET  /api/drops/mint?slug=<slug>[&index=<n>]     (on-chain state of a drop or one item)
 //
 // The split that shapes this file: rolling a supply is pure and instant, so
 // create does the whole collection in one request. Forging the art is neither,
@@ -20,6 +23,9 @@ import { sql } from '../_lib/db.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../_lib/auth.js';
 import { originFromReq, startForge } from '../_mcp-studio/forge-client.js';
+import { getUserSolanaWallets } from '../_lib/nft-gate.js';
+import { DropMintError, createDropCollection, mintDropItem } from '../_lib/drop-mint.js';
+import { resolveNetwork, assetExplorerUrl } from '../_lib/tokenize-3d.js';
 import {
 	DropSpecError,
 	itemPrompt,
@@ -36,9 +42,11 @@ import {
 	dropsConfigured,
 	getDropBySlug,
 	getItem,
+	getItemMintState,
 	itemDistribution,
 	listDrops,
 	listItems,
+	listMintableIndexes,
 	markRevealFailed,
 	markRevealed,
 	publishDrop,
@@ -76,11 +84,16 @@ export default wrap(async (req, res) => {
 				return await handlePublish(req, res);
 			case 'reveal':
 				return req.method === 'POST' ? await handleReveal(req, res) : await handleRevealStatus(req, res);
+			case 'mint-collection':
+				return await handleMintCollection(req, res);
+			case 'mint':
+				return req.method === 'POST' ? await handleMint(req, res) : await handleMintState(req, res);
 			default:
 				return error(res, 404, 'not_found', `unknown drops action "${action}"`);
 		}
 	} catch (err) {
 		if (err instanceof DropSpecError) return error(res, 400, err.code, err.message);
+		if (err instanceof DropMintError) return error(res, err.status, err.code, err.message);
 		throw err;
 	}
 });
@@ -404,6 +417,174 @@ async function handleRevealStatus(req, res) {
 	}
 
 	return json(res, 200, { item, pending: true });
+}
+
+/* ────────────────────────────────────────────────────────────────────────── *
+ * On-chain mint
+ *
+ * Devnet is the default and costs nothing. Mainnet is a real, irreversible
+ * on-chain write paid for in SOL rent by the three.ws collection authority, so
+ * it needs an explicit confirm_mainnet:true on every call and a per-account
+ * daily budget. Only the drop's creator mints.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+// Items minted per "mint all" request. Each is a confirmed transaction, so the
+// batch is bounded to stay inside a request and the client loops until done.
+const MINT_BATCH = 3;
+
+async function resolveMintContext(req, res, body) {
+	const auth = await resolveAuth(req, 'avatars:write');
+	if (!auth) {
+		error(res, 401, 'unauthorized', 'sign in to put a drop on Solana');
+		return null;
+	}
+	const { drop, failure } = await resolveSlugOnly(body?.slug, auth.userId);
+	if (failure) {
+		error(res, failure.status, failure.code, failure.message);
+		return null;
+	}
+	if (!drop.is_owner) {
+		error(res, 403, 'forbidden', 'only the creator can put this drop on Solana');
+		return null;
+	}
+	const network = resolveNetwork(body?.network);
+	if (network === 'mainnet' && body?.confirm_mainnet !== true) {
+		error(
+			res,
+			400,
+			'mainnet_confirmation_required',
+			'mainnet is a real on-chain write that spends SOL rent and cannot be undone; send confirm_mainnet:true to proceed',
+		);
+		return null;
+	}
+	return { auth, drop: { ...drop, owner_id: auth.userId }, network };
+}
+
+async function resolveSlugOnly(rawSlug, viewerId) {
+	const slug = String(rawSlug ?? '').trim();
+	if (!slug) return { failure: { status: 400, code: 'validation_error', message: 'slug is required' } };
+	const drop = await getDropBySlug(slug, { viewerId });
+	if (!drop) return { failure: { status: 404, code: 'not_found', message: 'no such drop' } };
+	return { drop };
+}
+
+async function mintBudget(res, network, userId) {
+	const limiter = network === 'mainnet' ? limits.dropMintMainnet : limits.dropMintDevnet;
+	const rl = await limiter(`drop-mint:${userId}`);
+	if (rl.success) return true;
+	const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
+	error(res, 429, 'rate_limited', `mint budget reached for ${network}; retry in ${retryAfter}s`);
+	return false;
+}
+
+async function handleMintCollection(req, res) {
+	if (!method(req, res, ['POST'])) return;
+	const body = await readJson(req);
+	const ctx = await resolveMintContext(req, res, body);
+	if (!ctx) return;
+	if (!(await mintBudget(res, ctx.network, ctx.auth.userId))) return;
+
+	const result = await createDropCollection({ drop: ctx.drop, network: ctx.network });
+	return json(res, result.created ? 201 : 200, {
+		...result,
+		explorer_url: assetExplorerUrl(result.collection_address, result.network),
+		real_onchain_write: result.network === 'mainnet',
+	});
+}
+
+async function handleMint(req, res) {
+	const body = await readJson(req);
+	const ctx = await resolveMintContext(req, res, body);
+	if (!ctx) return;
+	const { auth, drop, network } = ctx;
+
+	let ownerWallet = typeof body?.owner_wallet === 'string' ? body.owner_wallet.trim() : '';
+	const linked = await getUserSolanaWallets(auth.userId);
+	if (!ownerWallet) ownerWallet = linked[0] || '';
+	if (!ownerWallet) {
+		return error(res, 400, 'validation_error', 'owner_wallet is required: link a Solana wallet or pass one');
+	}
+	const royaltyRecipient = linked[0] || ownerWallet;
+
+	if (body?.all === true) {
+		const indexes = await listMintableIndexes(drop.id, MINT_BATCH);
+		const minted = [];
+		const failed = [];
+		for (const index of indexes) {
+			if (!(await mintBudget(res, network, auth.userId))) return;
+			try {
+				minted.push(await mintDropItem({ drop, index, ownerWallet, royaltyRecipient, network }));
+			} catch (err) {
+				if (!err?.code) throw err;
+				failed.push({ index, code: err.code, message: err.message });
+			}
+		}
+		const remaining = (await listMintableIndexes(drop.id, 25)).length;
+		return json(res, 200, { minted, failed, remaining, done: remaining === 0 && failed.length === 0 });
+	}
+
+	const index = Number(body?.index);
+	if (!Number.isInteger(index) || index < 0 || index >= drop.supply) {
+		return error(res, 400, 'validation_error', `index must be a whole number between 0 and ${drop.supply - 1}`);
+	}
+	const existing = await getItemMintState(drop.id, index);
+	if (!existing?.mint_address && !(await mintBudget(res, network, auth.userId))) return;
+
+	const result = await mintDropItem({ drop, index, ownerWallet, royaltyRecipient, network });
+	return json(res, result.idempotent ? 200 : 201, {
+		...result,
+		explorer_url: assetExplorerUrl(result.mint_address, drop.collection_network || network),
+		real_onchain_write: (drop.collection_network || network) === 'mainnet',
+	});
+}
+
+async function handleMintState(req, res) {
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests; slow down');
+
+	const q = queryOf(req);
+	const viewer = await resolveAuth(req, 'avatars:read');
+	const { drop, failure } = await resolveSlugOnly(q.get('slug'), viewer?.userId || null);
+	if (failure) return error(res, failure.status, failure.code, failure.message);
+
+	const network = drop.collection_network || null;
+	const rawIndex = q.get('index');
+	if (rawIndex === null || rawIndex === '') {
+		return json(res, 200, {
+			collection_address: drop.collection_address,
+			network,
+			explorer_url: drop.collection_address ? assetExplorerUrl(drop.collection_address, network || 'devnet') : null,
+			minted_count: drop.minted_count,
+			revealed_count: drop.revealed_count,
+			mintable_count: Math.max(drop.revealed_count - drop.minted_count, 0),
+		});
+	}
+	const index = Number(rawIndex);
+	if (!Number.isInteger(index) || index < 0 || index >= drop.supply) {
+		return error(res, 400, 'validation_error', `index must be between 0 and ${drop.supply - 1}`);
+	}
+	const item = await getItemMintState(drop.id, index);
+	if (!item) return error(res, 404, 'not_found', 'no such item');
+	const state = item.mint_address
+		? 'minted'
+		: item.claimed
+			? 'minting'
+			: item.mint_error
+				? 'failed'
+				: item.status === 'revealed'
+					? 'revealed'
+					: 'sealed';
+	return json(res, 200, {
+		index,
+		state,
+		mint_address: item.mint_address,
+		owner_wallet: item.owner_wallet,
+		minted_at: item.minted_at,
+		mint_error: item.mint_error,
+		collection_address: drop.collection_address,
+		network,
+		explorer_url: item.mint_address ? assetExplorerUrl(item.mint_address, network || 'devnet') : null,
+	});
 }
 
 function isStalled(updatedAt) {

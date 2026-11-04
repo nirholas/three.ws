@@ -87,6 +87,38 @@
 							</div>
 							<p class="dr-note" id="dr-verify-note" role="status" aria-live="polite"></p>
 						</section>
+
+						<section class="dr-provenance dr-chain" id="dr-chain" hidden aria-labelledby="dr-chain-title">
+							<h3 class="dr-h2" id="dr-chain-title" style="font-size: var(--text-ui); margin: 0" data-i18n="drop_collection.chain_title">Put on Solana</h3>
+							<div class="dr-skeleton dr-chain-skeleton" id="dr-chain-skeleton" aria-hidden="true"></div>
+							<div id="dr-chain-body" hidden>
+								<p class="dr-hint" style="margin: 6px 0 0" data-i18n="drop_collection.chain_intro">Anchor this drop as a Metaplex Core collection, then mint revealed items into it. You keep ownership of each item; three.ws pays the rent.</p>
+								<p class="dr-card-meta" id="dr-chain-collection" hidden></p>
+								<div id="dr-chain-controls">
+									<div class="dr-filters" role="group" aria-label="Network" style="margin-top: 10px">
+										<button type="button" class="dr-chip" id="dr-chain-net-devnet" aria-pressed="true" data-i18n="drop_collection.chain_devnet">Devnet</button>
+										<button type="button" class="dr-chip" id="dr-chain-net-mainnet" aria-pressed="false" data-i18n="drop_collection.chain_mainnet">Mainnet</button>
+									</div>
+									<p class="dr-note" id="dr-chain-cost"></p>
+									<label class="dr-hint dr-chain-confirm" id="dr-chain-confirm-row" hidden>
+										<input type="checkbox" id="dr-chain-confirm" />
+										<span data-i18n="drop_collection.chain_confirm">I understand mainnet writes are real and cannot be undone.</span>
+									</label>
+									<label class="dr-hint dr-chain-wallet">
+										<span data-i18n="drop_collection.chain_wallet">Recipient wallet (defaults to your linked Solana wallet)</span>
+										<input type="text" id="dr-chain-wallet" class="dr-input" autocomplete="off" spellcheck="false" placeholder="Solana address" />
+									</label>
+									<p class="dr-note" id="dr-chain-empty" hidden></p>
+									<div class="dr-ctas" style="margin-top: var(--space-sm, 12px)">
+										<button type="button" class="dr-btn dr-btn-primary dr-btn-sm" id="dr-chain-create">Create collection</button>
+										<button type="button" class="dr-btn dr-btn-sm" id="dr-chain-mint-one" data-i18n="drop_collection.chain_mint_one">Mint this item</button>
+										<button type="button" class="dr-btn dr-btn-sm" id="dr-chain-mint-all">Mint all revealed</button>
+									</div>
+									<p class="dr-card-meta" id="dr-chain-progress" hidden role="status"></p>
+								</div>
+								<p class="dr-note" id="dr-chain-note" role="status" aria-live="polite"></p>
+							</div>
+						</section>
 					</div>
 				</div>
 
