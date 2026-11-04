@@ -8,7 +8,7 @@ pygltflib==1.16.2
 scipy>=1.11.0
 
 # ── Image processing ──────────────────────────────────────────────────────────
-Pillow==13.0.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
+Pillow==12.3.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
 numpy<2.0
 opencv-python-headless>=4.9.0
 
