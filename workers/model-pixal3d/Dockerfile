@@ -121,13 +121,14 @@ WORKDIR /app
 COPY worker_security.py request_policy.py storage_backend.py instance_health.py \
      pipeline_config.py glb_pack.py camera_rig.py mv_adapter_fill.py main.py /app/
 COPY test_request_policy.py test_storage_backend.py test_instance_health.py \
-     test_pipeline_config.py test_glb_pack.py test_camera_rig.py test_app_contract.py /app/
+     test_pipeline_config.py test_glb_pack.py test_camera_rig.py test_gpu_driver_absence.py \
+     test_app_contract.py /app/
 
 # Build-time gate, neither half of which needs a GPU: the pure-logic tests, then
 # the served contract against the exact dependency set that will run.
 RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py \
         /app/test_instance_health.py /app/test_pipeline_config.py /app/test_glb_pack.py \
-        /app/test_camera_rig.py -q \
+        /app/test_camera_rig.py /app/test_gpu_driver_absence.py -q \
     && python3 /app/test_app_contract.py
 
 EXPOSE 8080
