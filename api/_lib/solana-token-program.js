@@ -23,9 +23,11 @@ import {
 	createAssociatedTokenAccountIdempotentInstruction,
 	createTransferCheckedInstruction,
 	getAssociatedTokenAddressSync,
+	unpackAccount,
 	TOKEN_PROGRAM_ID,
 	TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token';
+import { mintDecimals } from './solana/read-guards.js';
 
 export const SUPPORTED_TOKEN_PROGRAMS = [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID];
 
@@ -152,4 +154,44 @@ export async function createMissingAtas(connection, { payer, mint, tokenProgram,
 		.map((t) =>
 			createAssociatedTokenAccountIdempotentInstruction(toKey(payer), t.ata, t.owner, mintPk, tokenProgram),
 		);
+}
+
+// The whole SPL leg of a custodial transfer (escrow funding, release, refund,
+// reclaim): resolve the mint's program and decimals, open the destination ATA
+// when it is missing (payer funds the rent), then one TransferChecked from the
+// sender's ATA. `authority` is the owner signing for the source, `from` by
+// default. Callers that already hold the program or decimals pass them to skip
+// the reads; the platform's own mints never touch the network.
+export async function splTransferInstructions(
+	connection,
+	{ mint, from, to, payer, atomics, authority = from, tokenProgram = null, decimals = null },
+) {
+	const mintPk = toKey(mint);
+	const program = tokenProgram || (await tokenProgramForMint(connection, mintPk));
+	const dec = decimals ?? (await mintDecimals(connection, mintPk, { programId: program }));
+	const creates = await createMissingAtas(connection, { payer, mint: mintPk, tokenProgram: program, owners: [to] });
+	const transfer = tokenTransfer({
+		source: ataFor(mintPk, from, program, { allowOwnerOffCurve: true }),
+		mint: mintPk,
+		destination: ataFor(mintPk, to, program, { allowOwnerOffCurve: true }),
+		authority,
+		atomics,
+		decimals: dec,
+		tokenProgram: program,
+	});
+	return [...creates, transfer];
+}
+
+// Raw balance of `owner`'s associated token account for `mint`, under the
+// mint's own program. A wallet that never held the mint has no account and reads
+// 0n. Anything else that goes wrong (the node is unreachable, the address holds
+// a non-token account) throws, because a sweep that read "empty" off an RPC blip
+// would record the drop as settled and strand what is still in it.
+export async function tokenBalanceAtomics(connection, { mint, owner, tokenProgram = null }) {
+	const mintPk = toKey(mint);
+	const program = tokenProgram || (await tokenProgramForMint(connection, mintPk));
+	const ata = ataFor(mintPk, owner, program, { allowOwnerOffCurve: true });
+	const info = await connection.getAccountInfo(ata, 'confirmed');
+	if (!info) return 0n;
+	return unpackAccount(ata, info, program).amount;
 }

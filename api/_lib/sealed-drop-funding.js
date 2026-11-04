@@ -38,15 +38,9 @@ import {
 	SystemProgram,
 	LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
-import {
-	getAssociatedTokenAddress,
-	createAssociatedTokenAccountIdempotentInstruction,
-	createTransferInstruction,
-	getAccount,
-} from '@solana/spl-token';
 
 import { env } from './env.js';
-import { ataExists } from './solana/read-guards.js';
+import { splTransferInstructions, tokenBalanceAtomics } from './solana-token-program.js';
 import { solanaConnection } from './agent-pumpfun.js';
 import { submitProtected } from './execution-engine.js';
 import { SOLANA_USDC_MINT } from '../payments/_config.js';
@@ -194,19 +188,18 @@ export async function fundDropAddress({ toAddress, asset, atomics }) {
 	if (asset === 'SOL') {
 		instructions.push(SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: recipient, lamports: amount }));
 	} else {
-		const mint = new PublicKey(mintForAsset(asset));
-		const fromATA = await getAssociatedTokenAddress(mint, payer.publicKey);
-		const toATA = await getAssociatedTokenAddress(mint, recipient);
-// The create is the IDEMPOTENT variant on purpose: it pairs with ataExists,
-// which fails open to "missing" when the chain cannot be read. With the plain
-// create that guess would be unsafe (a create for an account that already
-// exists fails the whole transaction); with this one an unnecessary create is a
-// no-op, so a dead RPC costs nothing and the probe-then-submit race disappears
-// with it.
-		if (!(await ataExists(conn, toATA))) {
-			instructions.push(createAssociatedTokenAccountIdempotentInstruction(payer.publicKey, toATA, recipient, mint));
-		}
-		instructions.push(createTransferInstruction(fromATA, toATA, payer.publicKey, amount));
+		// On the mint's own token program ($THREE is Token-2022, USDC is classic).
+		// The destination ATA create is idempotent, so an unreadable chain that
+		// reads as "missing" costs a no-op rather than the whole transaction.
+		instructions.push(
+			...(await splTransferInstructions(conn, {
+				mint: mintForAsset(asset),
+				from: payer.publicKey,
+				to: recipient,
+				payer: payer.publicKey,
+				atomics: amount,
+			})),
+		);
 	}
 
 	// Protected send: priority fee + CU estimate, rebroadcast with blockhash
@@ -228,14 +221,8 @@ export async function readDropBalance({ address, asset }) {
 			const lamports = await conn.getBalance(owner, 'confirmed');
 			return { atomics: String(lamports) };
 		}
-		const mint = new PublicKey(mintForAsset(asset));
-		const ata = await getAssociatedTokenAddress(mint, owner);
-		try {
-			const acct = await getAccount(conn, ata);
-			return { atomics: acct.amount.toString() };
-		} catch {
-			return { atomics: '0' }; // no ATA yet → zero
-		}
+		const atomics = await tokenBalanceAtomics(conn, { mint: mintForAsset(asset), owner });
+		return { atomics: atomics.toString() }; // no ATA yet reads as zero
 	} catch {
 		return { atomics: null };
 	}
@@ -287,23 +274,24 @@ export async function sweepReclaim({ record, dropSecretKey, toAddress }) {
 		// Fee is paid by the platform fee-payer, so the full drop balance moves.
 		instructions.push(SystemProgram.transfer({ fromPubkey: dropKp.publicKey, toPubkey: recipient, lamports }));
 	} else {
-		const mint = new PublicKey(mintForAsset(asset));
-		const fromATA = await getAssociatedTokenAddress(mint, dropKp.publicKey);
-		let amount = 0n;
-		try {
-			amount = (await getAccount(conn, fromATA)).amount;
-		} catch {
-			amount = 0n;
-		}
+		const mint = mintForAsset(asset);
+		// Only a drop wallet with no token account reads as empty. A read that
+		// fails throws instead: recording 'empty' is final, so guessing it off an
+		// RPC blip would strand whatever the drop still holds.
+		const amount = await tokenBalanceAtomics(conn, { mint, owner: dropKp.publicKey });
 		if (amount <= 0n) {
 			await recordReclaim({ id: record.id, reclaimTx: 'empty' });
 			return { reclaimTx: 'empty', alreadyReclaimed: false };
 		}
-		const toATA = await getAssociatedTokenAddress(mint, recipient);
-		if (!(await ataExists(conn, toATA))) {
-			instructions.push(createAssociatedTokenAccountIdempotentInstruction(feePayer.publicKey, toATA, recipient, mint));
-		}
-		instructions.push(createTransferInstruction(fromATA, toATA, dropKp.publicKey, amount));
+		instructions.push(
+			...(await splTransferInstructions(conn, {
+				mint,
+				from: dropKp.publicKey,
+				to: recipient,
+				payer: feePayer.publicKey,
+				atomics: amount,
+			})),
+		);
 	}
 
 	// Protected send: platform fee-payer pays + signs, the drop wallet co-signs the
