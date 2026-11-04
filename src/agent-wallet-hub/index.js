@@ -46,6 +46,7 @@ import './tabs/withdraw.js';
 import './tabs/whitelist.js';
 import './tabs/give.js';
 import './tabs/access.js';
+import './tabs/custody.js';
 import './tabs/recovery.js';
 import './tabs/guard.js';
 import './tabs/proof.js';
