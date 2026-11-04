@@ -25,6 +25,7 @@
 import { log } from './log.js';
 import { showToast } from '../ui-helpers.js';
 import { leaveAppForPayment } from './native-handoff.js';
+import { buildReferencedSplTransfer } from './spl-token-program.js';
 
 export const USDC_MAINNET_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
@@ -598,24 +599,14 @@ export async function apiPostWithCsrf(url, body) {
 	return apiWriteWithCsrf(url, { method: 'POST', body });
 }
 
-async function buildSplTransferWithReference({ payer, recipient, mint, amount, reference }) {
+// Build the purchase transfer. `amount` is the seller's leg (the full price when
+// no platform fee applies). When `fee` is present, a second leg moves the
+// platform fee to the treasury in the SAME transaction, so the buyer signs once
+// and both legs settle atomically. Both legs run on the mint's own token
+// program (Token-2022 for $THREE), see src/shared/spl-token-program.js.
+async function buildSplTransferWithReference(args) {
 	const { web3, spl } = await loadSolanaModules();
-	const { PublicKey, Transaction } = web3;
-	const { getAssociatedTokenAddress, createTransferInstruction } = spl;
-
-	const recipientKey = new PublicKey(recipient);
-	const mintKey = new PublicKey(mint);
-	const referenceKey = new PublicKey(reference);
-
-	const fromAta = await getAssociatedTokenAddress(mintKey, payer);
-	const toAta = await getAssociatedTokenAddress(mintKey, recipientKey);
-
-	const ix = createTransferInstruction(fromAta, toAta, payer, amount);
-	ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
-
-	const { blockhash } = await (await getSolanaConnection()).getLatestBlockhash('confirmed');
-	const tx = new Transaction({ feePayer: payer, recentBlockhash: blockhash }).add(ix);
-	return tx;
+	return buildReferencedSplTransfer({ ...args, connection: await getSolanaConnection(), web3, spl });
 }
 
 function base64ToBytes(b64) {

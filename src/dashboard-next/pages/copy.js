@@ -13,6 +13,7 @@ import { errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/
 import { gmgnAddressUrl } from '../../shared/trading-terminals.js';
 import { mountAlphaDripPanel, formatDelay } from '../../alpha-drip-panel.js';
 import { shortAddress as shortAddr } from '../../shared/address.js';
+import { splPaymentInstructions } from '../../shared/spl-token-program.js';
 
 const SKIP_LABEL = {
 	below_mcap_floor: 'Below your market-cap floor',
@@ -556,8 +557,10 @@ async function payWithCopyFee(subscriptionId, onStatus = () => {}) {
 
 	// 2. Load Solana SDK lazily
 	onStatus('Preparing transaction…');
-	const [{ Connection, PublicKey, Transaction, TransactionInstruction }, { getAssociatedTokenAddressSync, createTransferInstruction, createAssociatedTokenAccountIdempotentInstruction }] =
-		await Promise.all([import('@solana/web3.js'), import('@solana/spl-token')]);
+	const [{ Connection, PublicKey, Transaction, TransactionInstruction }, spl] = await Promise.all([
+		import('@solana/web3.js'),
+		import('@solana/spl-token'),
+	]);
 
 	const wallet = window.solana;
 	if (!wallet) throw Object.assign(new Error('No wallet found. Install Phantom.'), { code: 'no_wallet' });
@@ -568,16 +571,16 @@ async function payWithCopyFee(subscriptionId, onStatus = () => {}) {
 	const rpc = window.__solanaRpc || `${location.origin}/api/solana-rpc`;
 	const connection = new Connection(rpc, 'confirmed');
 
-	// 3. Build the $THREE SPL transfer + memo transaction
-	const mint = new PublicKey(charge.mint);
-	const fromAta = getAssociatedTokenAddressSync(mint, payer);
-	const tx = new Transaction();
-	for (const leg of charge.legs) {
-		const owner = new PublicKey(leg.address);
-		const destAta = getAssociatedTokenAddressSync(mint, owner, true);
-		tx.add(createAssociatedTokenAccountIdempotentInstruction(payer, destAta, owner, mint));
-		tx.add(createTransferInstruction(fromAta, destAta, payer, BigInt(leg.atomics)));
-	}
+	// 3. Build the fee legs + memo transaction. $THREE is a Token-2022 mint, so
+	// every leg is a TransferChecked on the mint's own program.
+	const { instructions } = await splPaymentInstructions({
+		connection,
+		spl,
+		mint: new PublicKey(charge.mint),
+		payer,
+		legs: charge.legs.map((leg) => ({ owner: new PublicKey(leg.address), atomics: leg.atomics })),
+	});
+	const tx = new Transaction().add(...instructions);
 	tx.add(new TransactionInstruction({
 		keys: [],
 		programId: new PublicKey(MEMO_PROGRAM_ID),

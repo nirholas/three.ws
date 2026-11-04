@@ -16,6 +16,7 @@ import { apiFetch } from '../api.js';
 import { escNotif as esc, relTime } from '../notifications.js';
 import { injectedProvider, connectLaunchWallet, restoreLaunchWallet } from './launch-wallet.js';
 import { shortAddress } from '../shared/address.js';
+import { resolveMintInfo, splPaymentInstructions } from '../shared/spl-token-program.js';
 
 const POLL_MS = 8_000;
 const TICK_MS = 1_000;
@@ -581,7 +582,8 @@ async function fundFromWallet(btn) {
 }
 
 // Build and send the funding transfer with the connected wallet. SOL is a
-// system transfer; a stable quote is an SPL transfer that also creates the
+// system transfer; a stable quote is an SPL TransferChecked on the mint's own
+// token program that also creates the
 // agent wallet's token account when it does not exist yet. The transaction
 // also pays the SOL leg of a stable quote (rent and network fees) in the same
 // signature, so one wallet prompt funds the whole quote.
@@ -605,12 +607,18 @@ async function sendFunding({ from, intent }) {
 			legs += 1;
 			continue;
 		}
+		// The quote mint's own token program (Token-2022 for $THREE) and its
+		// on-chain decimals drive the ATAs and the TransferChecked leg.
 		const mint = new PublicKey(intent.quote_asset.mint);
-		const decimals = intent.quote_asset.decimals;
-		const fromAta = spl.getAssociatedTokenAddressSync(mint, payer);
-		const toAta = spl.getAssociatedTokenAddressSync(mint, to, true);
-		tx.add(spl.createAssociatedTokenAccountIdempotentInstruction(payer, toAta, to, mint));
-		tx.add(spl.createTransferInstruction(fromAta, toAta, payer, BigInt(Math.ceil(missing * 10 ** decimals))));
+		const { decimals } = await resolveMintInfo(connection, mint, spl);
+		const { instructions } = await splPaymentInstructions({
+			connection,
+			spl,
+			mint,
+			payer,
+			legs: [{ owner: to, atomics: BigInt(Math.ceil(missing * 10 ** decimals)) }],
+		});
+		tx.add(...instructions);
 		legs += 1;
 	}
 	if (!legs) throw new Error('The agent wallet already holds the quoted amount. Record a payment signature, or confirm the launch if it is already recorded.');

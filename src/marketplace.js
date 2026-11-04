@@ -30,6 +30,7 @@ import { log } from './shared/log.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
+import { buildReferencedSplTransfer } from './shared/spl-token-program.js';
 import { withPayoutStepUp } from './payout-step-up.js';
 import { shortAddress as shortWalletAddress } from './shared/address.js';
 import { wireModelViewerFallback } from './shared/model-viewer-fallback.js';
@@ -7891,46 +7892,11 @@ async function startQrPurchase() {
 // Build the purchase transfer. `amount` is the seller's leg (the full price when
 // no platform fee applies). When `fee` is present, a second leg moves the
 // platform fee to the treasury in the SAME transaction, so the buyer signs once
-// and both legs settle atomically — no custody, no second approval.
-async function buildSplTransferWithReference({ payer, recipient, mint, amount, reference, fee }) {
+// and both legs settle atomically. Both legs run on the mint's own token
+// program (Token-2022 for $THREE), see src/shared/spl-token-program.js.
+async function buildSplTransferWithReference(args) {
 	const { web3, spl } = await loadSolanaModules();
-	const { PublicKey, Transaction } = web3;
-	const {
-		getAssociatedTokenAddress,
-		createTransferInstruction,
-		createAssociatedTokenAccountIdempotentInstruction,
-	} = spl;
-
-	const recipientKey = new PublicKey(recipient);
-	const mintKey = new PublicKey(mint);
-	const referenceKey = new PublicKey(reference);
-
-	const fromAta = await getAssociatedTokenAddress(mintKey, payer);
-	const toAta = await getAssociatedTokenAddress(mintKey, recipientKey);
-
-	const { blockhash } = await (await getSolanaConnection()).getLatestBlockhash('confirmed');
-	const tx = new Transaction({ feePayer: payer, recentBlockhash: blockhash });
-
-	// Fee leg first (when present): the platform fee to the treasury. The seller
-	// leg goes LAST and carries the Solana-Pay reference — @solana/pay's
-	// validateTransfer only inspects the FINAL instruction for the reference
-	// binding, so the referenced transfer must be the last one in the tx.
-	if (fee && fee.amount > 0n) {
-		const feeOwner = new PublicKey(fee.recipient);
-		const feeAta = await getAssociatedTokenAddress(mintKey, feeOwner);
-		// Create the treasury's token account on first use (buyer funds the tiny
-		// rent once); idempotent so repeat purchases add nothing.
-		tx.add(createAssociatedTokenAccountIdempotentInstruction(payer, feeAta, feeOwner, mintKey));
-		tx.add(createTransferInstruction(fromAta, feeAta, payer, fee.amount));
-	}
-
-	const ix = createTransferInstruction(fromAta, toAta, payer, amount);
-	// Solana Pay: append the reference as a readonly, non-signer key so the
-	// server can later locate this tx via getSignaturesForAddress(reference).
-	ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
-	tx.add(ix);
-
-	return tx;
+	return buildReferencedSplTransfer({ ...args, connection: await getSolanaConnection(), web3, spl });
 }
 
 async function pollConfirm(reference, windowMs = 60_000) {
