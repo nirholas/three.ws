@@ -271,6 +271,14 @@
 			<description>If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. Once approved you can post about what you made on X or LinkedIn, paste the link, and earn $10 more after we confirm the post is public. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application and each post. Goes live with the next owner-approved deploy, after its database migration is applied.</description>
 		</item>
 		<item>
+			<title>One MCP server for every three.ws tool: https://three.ws/mcp</title>
+			<link>https://three.ws/mcp</link>
+			<guid isPermaLink="false">2026-11-04:One MCP server for every three.ws tool: https://three.ws/mcp</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>https://three.ws/mcp (also /api/mcp/all) now mounts every tool from every hosted three.ws MCP server behind one URL and one sign-in, 371 tools in 19 groups, each tool classed as read, write or financial. A key or session sees the read and write tiers by default and turns financial groups on explicitly, and every call keeps the scope checks, rate limits and x402 pricing of the server it came from. The seven older endpoints work unchanged. Open /mcp in a browser for the live tool and group counts and copy-paste install steps for Claude Code, Claude Desktop and any stdio client; the new @three-ws/mcp package is the stdio proxy for clients that cannot speak HTTP. npm run check:mcp-tools now fails the gate if two servers publish the same name or a tool has no group or tier.</description>
+		</item>
+		<item>
 			<title>Opening the spin wheel no longer drops everyone in the world</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-04:Opening the spin wheel no longer drops everyone in the world</guid>
@@ -341,6 +349,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.</description>
+		</item>
+		<item>
+			<title>The roadmap now shows where each phase really stands</title>
+			<link>https://three.ws/docs/three-thesis</link>
+			<guid isPermaLink="false">2026-11-04:The roadmap now shows where each phase really stands</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>ROADMAP.md renders correctly again (its status icons had been corrupted) and matches the README roadmap line for line. Phase 2 now says what has shipped: voice preview, the voice library and voice cloning, the persona interview and memory seeding all run in the main creation flow, not only on the demos hub, and the week-2 retention target is measured. Phase 3 notes the economy contracts and their audit pack are built with the external audit next, and Phase 5 shows the macOS and iOS widget is built and waits only on an Apple Developer account.</description>
 		</item>
 		<item>
 			<title>The Solana agent SDK pays in $THREE, confirms every transaction for real, and throws errors you can catch by type</title>

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T18:09:06.789Z",
+	"generated_at": "2026-11-04T18:20:18.050Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -350,6 +350,17 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "One MCP server for every three.ws tool: https://three.ws/mcp",
+			"summary": "https://three.ws/mcp (also /api/mcp/all) now mounts every tool from every hosted three.ws MCP server behind one URL and one sign-in, 371 tools in 19 groups, each tool classed as read, write or financial. A key or session sees the read and write tiers by default and turns financial groups on explicitly, and every call keeps the scope checks, rate limits and x402 pricing of the server it came from. The seven older endpoints work unchanged. Open /mcp in a browser for the live tool and group counts and copy-paste install steps for Claude Code, Claude Desktop and any stdio client; the new @three-ws/mcp package is the stdio proxy for clients that cannot speak HTTP. npm run check:mcp-tools now fails the gate if two servers publish the same name or a tool has no group or tier.",
+			"link": "/mcp",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Opening the spin wheel no longer drops everyone in the world",
 			"summary": "Opening the spin wheel in /play could crash the game server and disconnect every player in the world at once. The wheel now opens normally, and when paid spins are unavailable it says so instead of failing. The server also stays up through any single bad message from one player, so one fault costs that player one action rather than costing everyone their session.",
 			"link": "/play",
@@ -437,6 +448,16 @@
 			"title": "The GTC 2027 poster, its data and its build scripts are in the repository",
 			"summary": "docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.",
 			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The roadmap now shows where each phase really stands",
+			"summary": "ROADMAP.md renders correctly again (its status icons had been corrupted) and matches the README roadmap line for line. Phase 2 now says what has shipped: voice preview, the voice library and voice cloning, the persona interview and memory seeding all run in the main creation flow, not only on the demos hub, and the week-2 retention target is measured. Phase 3 notes the economy contracts and their audit pack are built with the external audit next, and Phase 5 shows the macOS and iOS widget is built and waits only on an Apple Developer account.",
+			"link": "/docs/three-thesis",
 			"tags": [
 				"docs"
 			]

@@ -442,8 +442,8 @@ From the README roadmap:
 |---|---|---|
 | 0 | Foundations: viewer, runtime, ERC-8004 and Metaplex Core identity, embed layer | Shipped |
 | 1 | Selfie-to-avatar engine | Capture, reconstruction, rigging, storage, and draft mint wired end to end; likeness fidelity is the open track |
-| 2 | Agent personalization and voice cloning | Voice clone, persona, and memory seeds shipped behind `/demos`; main-flow integration next |
-| 3 | **On-chain economy**: agent tokens, reputation markets, royalties | Bonding-curve sim, EAS reputation viewer, 0xsplits and EAS SDKs landed; per-call skill royalties accrue in `royalty_ledger`; contracts and audits next |
+| 2 | Agent personalization and voice cloning | In the main flow: voice preview and library in `/create`, voice cloning from talk mode, the persona interview in `/create-agent`, memory seeding from X, GitHub and Farcaster, and on-chain-anchored brain passports; the week-2 retention gate is measured and is the open track |
+| 3 | **On-chain economy**: agent tokens, reputation markets, royalties | Bonding-curve sim, EAS reputation viewer, 0xsplits and EAS SDKs landed; per-call skill royalties accrue in `royalty_ledger`; economy contracts and their audit pack built; the external audit is next |
 | 4 | Open inference network (decentralized GPU) | Node-operator client (CPU and CUDA) and `/api/nodes` job queue with signed, server-recomputed receipts shipped; Livepeer federation behind a flag |
 
 Token-specific catalysts, in rough order of proximity:

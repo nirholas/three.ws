@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "The roadmap now shows where each phase really stands",
+			"summary": "ROADMAP.md renders correctly again (its status icons had been corrupted) and matches the README roadmap line for line. Phase 2 now says what has shipped: voice preview, the voice library and voice cloning, the persona interview and memory seeding all run in the main creation flow, not only on the demos hub, and the week-2 retention target is measured. Phase 3 notes the economy contracts and their audit pack are built with the external audit next, and Phase 5 shows the macOS and iOS widget is built and waits only on an Apple Developer account.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/three-thesis"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "One MCP server for every three.ws tool: https://three.ws/mcp",
 			"summary": "https://three.ws/mcp (also /api/mcp/all) now mounts every tool from every hosted three.ws MCP server behind one URL and one sign-in, 371 tools in 19 groups, each tool classed as read, write or financial. A key or session sees the read and write tiers by default and turns financial groups on explicitly, and every call keeps the scope checks, rate limits and x402 pricing of the server it came from. The seven older endpoints work unchanged. Open /mcp in a browser for the live tool and group counts and copy-paste install steps for Claude Code, Claude Desktop and any stdio client; the new @three-ws/mcp package is the stdio proxy for clients that cannot speak HTTP. npm run check:mcp-tools now fails the gate if two servers publish the same name or a tool has no group or tier.",
 			"tags": [
@@ -10,15 +19,6 @@
 				"sdk"
 			],
 			"link": "/mcp"
-		},
-		{
-			"date": "2026-11-04",
-			"title": "The Solana agent SDK pays in $THREE, confirms every transaction for real, and throws errors you can catch by type",
-			"summary": "Several fixes in @three-ws/solana-agent for developers building agents on Solana. x402 exact payments now work in Token-2022 tokens such as $THREE on both sides: the paying client builds the transfer under the token's real program and the facilitator verifies it there, so a $THREE payment is no longer impossible, and a payee that is a program address (an escrow or vault) no longer crashes the payer. Plain token transfers can pay those program addresses too. The swap approval prompt reads each token's real decimals from chain, so a 9-decimal Token-2022 coin is no longer shown a thousand times too large, and if a token cannot be read the swap stops instead of showing a guessed figure. Token balance and token list reads cover both token programs. Every send now waits for real confirmation: a transaction that landed but failed throws instead of reporting success, and a send whose blockhash expired stops right away instead of waiting out the full timeout, Jupiter swaps included. Every failure is a named error class (wallet not connected, confirmation timeout, retries exhausted, invalid input, request failed and more) whose name survives the minified build and whose instanceof check works across the package's entry points. The test suite grew from 59 to 238 tests. Reaches npm with the next @three-ws/solana-agent release.",
-			"tags": [
-				"sdk",
-				"fix"
-			]
 		},
 		{
 			"date": "2026-11-04",

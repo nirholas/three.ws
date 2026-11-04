@@ -10800,10 +10800,10 @@ three.ws ships in five phases. Each phase closes a specific gap between the curr
 | ----- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | **0** | Platform foundations (viewer, runtime, ERC-8004 + Metaplex Core identity, embed layer) | ✅ Shipped                                                                                                     |
 | **1** | Selfie → Avatar engine (3-photo capture, hosted inference)                             | 🟡 In progress: capture, reconstruction backend, rigging, R2 storage and draft mint are wired end to end; likeness fidelity is the open track |
-| **2** | Agent personalization + voice cloning                                                  | 🟡 In progress - voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next        |
-| **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); contracts + audits next |
+| **2** | Agent personalization + voice cloning                                                  | 🟡 In progress: in the main flow now, with voice preview and the voice library in the `/create` review step, voice cloning from talk mode, the persona interview in `/create-agent`, memory seeding from X, GitHub and Farcaster in the memory studio, and signed, on-chain-anchored brain passports; the open track is the week-2 retention gate, which is now measured |
+| **3** | Onchain economy (agent tokens, reputation markets, royalties)                          | 🟡 In progress: bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; per-call skill royalties accrue on paid skill calls (`royalty_ledger`); the economy contracts and their audit pack (invariants, threat model, static analysis) are built; the external audit is next |
 | **4** | Open inference network (decentralized GPU layer)                                       | 🟡 Live core: open node-operator client (CPU + CUDA images) + `/api/nodes` job queue with signed, server-recomputed receipts shipped; Livepeer federation behind a flag               |
-| **5** | Native widgets (agent on your home screen and desktop)                                  | 🟡 In progress: Glance shipped the card endpoint (JSON, SVG, PNG, Adaptive Card), the Windows 11 widget (installs from the PWA manifest, no store), the `<agent-glance>` element, and the Android home screen widget (app 1.1.0, linked from `/glance` with its own revocable token); macOS and iOS next |
+| **5** | Native widgets (agent on your home screen and desktop)                                  | 🟡 In progress: Glance shipped the card endpoint (JSON, SVG, PNG, Adaptive Card), the Windows 11 widget (installs from the PWA manifest, no store), the `<agent-glance>` element, and the Android home screen widget (app 1.1.0, linked from `/glance` with its own revocable token); the macOS and iOS widget (one WidgetKit extension in `apple/`) is built and waits on an Apple Developer account to sign and ship |
 
 ---
 
@@ -10860,12 +10860,12 @@ The path a capture actually takes, end to end. Each hop is a real service; nothi
 
 **Deliverables**
 
-- Voice cloning (30+ seconds of speech → ElevenLabs custom voice bound to the agent)
-- Persona extraction from a short onboarding interview (tone, vocabulary, interests)
-- Memory seeding from connected accounts (X, GitHub, Farcaster) with explicit user consent
-- Per-agent fine-tuned system prompt stored in the manifest, signed and pinned to IPFS
+- Voice cloning (30+ seconds of speech → ElevenLabs custom voice bound to the agent). Shipped in the main flow: the `/create` review step opens the voice preview and voice library ([src/create-review.js](src/create-review.js)), and talk mode on every agent page opens the clone modal ([src/voice/talk-mode.js](src/voice/talk-mode.js), [src/voice/voice-clone-modal.js](src/voice/voice-clone-modal.js))
+- Persona extraction from a short onboarding interview (tone, vocabulary, interests). Shipped in the main flow: `/create-agent` runs the interview ([src/agents/persona-interview.js](src/agents/persona-interview.js), [api/persona/interview.js](api/persona/interview.js))
+- Memory seeding from connected accounts (X, GitHub, Farcaster) with explicit user consent. Shipped: [api/seed/](api/seed/) behind [src/memory-seed.js](src/memory-seed.js), reached from the memory studio and settings
+- Per-agent system prompt committed to the agent's identity. Shipped as the brain passport: the persona prompt hash and the signed memory hashes collapse to one `brain_hash`, the passport is stored in object storage, and the hash is anchored on the ERC-8004 ValidationRegistry ([api/\_lib/brain-anchor.js](api/_lib/brain-anchor.js)). The passport is not pinned to IPFS
 
-**Verification:** users return to converse with their own agent; ≥30% week-2 retention on minted agents.
+**Verification:** users return to converse with their own agent; ≥30% week-2 retention on minted agents. Measured since August 2026 from owner return visits ([docs/analytics-retention.md](docs/analytics-retention.md)); meeting the target is the open track.
 
 ---
 
@@ -10928,8 +10928,8 @@ This is a different product from the embeddable web widgets at [three.ws/widgets
 | 1 | Windows 11 widgets board | None | **Shipped.** The installed PWA declares a `widgets` manifest member and an Adaptive Card template ([/api/glance/template](api/glance/template.js)); the service worker ([public/glance-sw.js](public/glance-sw.js)) answers `widgetinstall`, `widgetresume`, `widgetclick` and `periodicsync` |
 | 2 | Any web page | None | **Shipped.** `<agent-glance>` ([public/glance/element.js](public/glance/element.js)), plus one SVG or PNG URL for a README, a Slack unfurl, or any `<img>` |
 | 3 | Android home screen | Already shipped (`ws.three.app`) | **Shipped** in app 1.1.0. Native `AppWidgetProvider` overlay on the Bubblewrap project ([solana-mobile/android-overlay](solana-mobile/android-overlay/README.md)) in a 2x2 and a 4x2 / 4x3 layout, refreshed by `WorkManager` from `GET /api/glance/mine?format=png` about every 30 minutes, keeping the last card when the phone is offline, tapping deep links into the TWA. It carries its own `glw_` widget token, linked from [/glance](public/glance/index.html) ("Link this phone") and revocable there at any time |
-| 4 | macOS | Small SwiftUI host app | WidgetKit extension plus a menu bar companion; needs an Apple Developer account |
-| 5 | iOS | App Store wrapper | Same WidgetKit extension target as macOS; gated on shipping the iOS app itself |
+| 4 | macOS | Small SwiftUI host app | **Built.** A SwiftUI host with a menu bar companion ([apple/macos](apple/macos/)) and the shared WidgetKit extension ([apple/GlanceWidget](apple/GlanceWidget/)); `npm run check:apple-widget` validates both Xcode projects and the wire contract. Signing and distribution wait on an Apple Developer account |
+| 5 | iOS | App Store wrapper | **Built.** The same WidgetKit extension is a target in the iOS app's Capacitor project ([ios-app.md](docs/ios-app.md)); it ships with the iOS app once an Apple Developer account signs both |
 
 **Deliverables**
 
@@ -10938,7 +10938,7 @@ This is a different product from the embeddable web widgets at [three.ws/widgets
 - ✅ Card content that is worth a home screen slot: the agent, one live number (actions in the last 24 hours), its last action, and a direct way back in
 - ✅ A playground and install guide at [/glance](public/glance/index.html), and an npm client, [@three-ws/agent-glance](packages/agent-glance), with a terminal renderer
 - ✅ Android app widget in two layouts (2x2, and 4x2 / 4x3), refreshed by WorkManager on a battery-aware schedule, degrading to the last cached card when the device is offline
-- A native shell for Apple platforms, which is also the prerequisite for an iOS build of three.ws
+- ✅ A native shell for Apple platforms: the macOS host app in [apple/macos](apple/macos/) and the iOS app's Capacitor project, sharing one WidgetKit extension. Built; signing and distribution wait on an Apple Developer account
 
 **Verification:** a widget installed from the Android app updates without opening the app, survives a reboot and airplane mode, and returns the user into the right screen on tap. The Apple half is one WidgetKit extension over the same endpoint, shared by a Mac menu bar app and the iPhone app; `npm run check:apple-widget` holds its two Xcode projects and its wire contract honest without a Mac. Product doc: [docs/native-widgets.md](docs/native-widgets.md). Sources: [apple/](apple/README.md).
 
@@ -10997,7 +10997,9 @@ The avatar isn't just _you_ - the agent _acts_ like you. The Voice & Persona Hub
 
 Memory seed extensions (X, GitHub, Farcaster) feed the agent's memory store at creation time with explicit user consent - see [docs/persona-hub.md](docs/persona-hub.md).
 
-The per-agent fine-tuned system prompt is stored in the manifest, signed, and pinned to IPFS - the persona becomes a verifiable part of the agent's onchain identity.
+These run in the main creation flow, not only on the demos hub: the `/create` review step offers the voice preview and voice library, talk mode opens the clone modal, and `/create-agent` runs the persona interview.
+
+The persona becomes a verifiable part of the agent's onchain identity through the brain passport: its prompt hash and the signed memory hashes collapse to one `brain_hash`, which is anchored on the ERC-8004 ValidationRegistry ([api/\_lib/brain-anchor.js](api/_lib/brain-anchor.js)).
 
 ---
 
