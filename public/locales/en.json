@@ -7601,6 +7601,13 @@
 		"vanity_wallet": "Vanity wallet"
 	},
 	"drop_collection": {
+		"chain_title": "Put on Solana",
+		"chain_intro": "Anchor this drop as a Metaplex Core collection, then mint revealed items into it. You keep ownership of each item; three.ws pays the rent.",
+		"chain_devnet": "Devnet",
+		"chain_mainnet": "Mainnet",
+		"chain_confirm": "I understand mainnet writes are real and cannot be undone.",
+		"chain_wallet": "Recipient wallet (defaults to your linked Solana wallet)",
+		"chain_mint_one": "Mint this item",
 		"drops_label": "<a href=\"/drops\" style=\"color: inherit\">Drops</a> <span aria-hidden=\"true\">/</span>",
 		"every_item_s_traits_come_from_the": "Every item's traits come from the seed below and its index alone. Recompute them yourself, or ask the server to recompute them for you.",
 		"items": "Items",

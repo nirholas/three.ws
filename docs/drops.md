@@ -175,16 +175,47 @@ keyed by the layer's slug, adding a layer to a draft does not perturb the values
 already rolled on the layers beside it, and reordering the layer array changes
 nothing at all.
 
-## Not yet wired: minting a drop on-chain
+## Minting on Solana
 
-The schema carries `drops.collection_address` and the per-item `mint_address` /
-`owner_wallet` / `minted_at` columns, but nothing writes them yet: there is no
-endpoint that anchors a collection as a Metaplex Core collection or mints an
-item into it. Revealed items are real, exportable GLBs that a creator can mint
-one at a time through the existing [Minted 3D Assets](minted.md) path today.
-Wiring a drop-native mint (one Core collection per drop, each revealed item
-minted into it) is the next step, and the columns are there so it does not need
-a schema change.
+A drop becomes a real on-chain collection in two steps, both on the collection
+page under **Put on Solana** (creator only):
+
+1. **Create the collection.** One Metaplex Core collection per drop, carrying the
+   drop's `provenance_hash`, supply and (once the drop is live) its seed, so the
+   commitment travels with the collection account. A drop has exactly one
+   collection on exactly one network; a second call returns the first.
+2. **Mint items into it.** Each revealed item becomes a Core asset in that
+   collection, owned by the wallet you choose (default: your linked Solana
+   wallet), with an enforced 5% Royalties plugin paid to you, the GLB as its
+   `animation_url`, and its traits and rarity as attributes so marketplaces can
+   filter the collection. Mint one item, or **Mint all revealed**, which works in
+   bounded batches the page loops over until nothing is left.
+
+The ownership model matches [Minted 3D Assets](minted.md): the holder owns the
+asset, the three.ws collection authority pays the rent and stays the collection's
+update authority. Every drop mint is also recorded as a launch row, so it
+appears in `/minted` with its collection address in the provenance.
+
+**Network.** Devnet is the default and free. Mainnet is a real, irreversible
+on-chain write that spends SOL rent (roughly 0.003 SOL per item), so the page
+puts it behind a toggle, shows the cost, and requires a confirmation checkbox,
+and the API refuses a mainnet call without `confirm_mainnet: true`. Mainnet is
+capped at 25 mints per account per day.
+
+**Safe to retry.** Claims are atomic conditional updates. A double submit returns
+the same mint and sends no second transaction; a chain failure releases the claim
+so the item can be minted again; a claim abandoned by a crashed process expires
+after ten minutes. An unrevealed item cannot be minted.
+
+Item states: `sealed`, `revealed`, `minting`, `minted`, `failed`.
+
+Operations: the schema additions live in
+`api/_lib/migrations/20261105060000_drops_onchain_mint.sql` and must be applied
+(`npm run db:status`, then `npm run db:migrate`) before the mint routes are used.
+`node scripts/drops-devnet-e2e.mjs` runs the real mint path against devnet and
+reads each asset back over RPC to confirm collection membership and owner; it
+needs a funded throwaway devnet key in `DROPS_E2E_DEVNET_KEY` while the public
+faucet is closed.
 
 ## API reference
 
@@ -200,6 +231,9 @@ writes need a session cookie or a bearer token with `avatars:write`.
 | `POST` | `/api/drops/create` | Roll a new collection. Body as shown above. |
 | `POST` | `/api/drops/publish` | Freeze a draft and publish its seed. Body `{slug}`. |
 | `POST` | `/api/drops/reveal` | Start one item's generation. Body `{slug, index}`. |
+| `POST` | `/api/drops/mint-collection` | Create the drop's Core collection. Body `{slug, network?, confirm_mainnet?}`. Creator only. |
+| `POST` | `/api/drops/mint` | Mint one item `{slug, index, owner_wallet?, network?, confirm_mainnet?}` or a batch `{slug, all: true, ...}`. Creator only. |
+| `GET` | `/api/drops/mint?slug=&index=` | Collection address and counts, or one item's state (`sealed`, `revealed`, `minting`, `minted`, `failed`). |
 | `GET` | `/api/drops/reveal?slug=&index=` | Poll an in-flight reveal. One upstream check per call. |
 
 A deployment with no database answers `503 not_configured` on every route; the

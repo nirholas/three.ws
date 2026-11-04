@@ -14,7 +14,12 @@
 import { Keypair, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import bs58 from 'bs58';
 
-const authority = Keypair.generate();
+// A pre-funded THROWAWAY devnet key can be supplied when the public faucet is
+// closed (it has been since 2026): DROPS_E2E_DEVNET_KEY=<base58 secret>. Never
+// the production authority.
+const authority = process.env.DROPS_E2E_DEVNET_KEY
+	? Keypair.fromSecretKey(bs58.decode(process.env.DROPS_E2E_DEVNET_KEY))
+	: Keypair.generate();
 process.env.SOLANA_AGENT_COLLECTION_AUTHORITY_KEY = bs58.encode(authority.secretKey);
 const RPC = process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
 process.env.SOLANA_RPC_URL_DEVNET = RPC;
@@ -27,6 +32,11 @@ const { publicKey } = await import('@metaplex-foundation/umi');
 const conn = new Connection(RPC, 'confirmed');
 
 async function fund() {
+	if ((await conn.getBalance(authority.publicKey)) >= 0.05 * LAMPORTS_PER_SOL) {
+		console.log(`authority ${authority.publicKey.toBase58()} already funded`);
+		return;
+	}
+	console.log(`fund ${authority.publicKey.toBase58()} on devnet`);
 	for (let attempt = 1; attempt <= 6; attempt++) {
 		try {
 			const sig = await conn.requestAirdrop(authority.publicKey, 1 * LAMPORTS_PER_SOL);

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Put a drop on Solana from its collection page",
+			"summary": "Drop creators can now create the drop's Metaplex Core collection and mint revealed items into it, one at a time or all at once. Devnet is free, mainnet is confirmation-gated, retries never double-mint, and minted items show a badge and Solscan link and appear in /minted.",
+			"tags": ["feature"],
+			"link": "/drop-collection"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Served Parametric avatars drop 306 identity sliders from GPU memory",
 			"summary": "Avatar bakes now fold the saved identity morphs into the mesh and keep only the expression targets, cutting about 68 MB of morph memory per viewer on Parametric bodies. The editor keeps live sliders, and scripts/rebake-avatars.mjs migrates older bakes.",
 			"tags": ["improvement", "infra"]
