@@ -29,10 +29,11 @@ Page: [/mcp-integrations](https://three.ws/mcp-integrations)
    - **read**: looks things up.
    - **write**: creates or changes data in the other service.
    - **financial**: moves money or cannot be undone (deletes, merges, payments).
-   The tier comes from the catalog entry's `tiers` globs first, then from the
-   tool's MCP annotations (`readOnlyHint`, `destructiveHint`), then from its name.
-   You can override a tier, but only upward toward more caution is shown as the
-   default.
+   First match wins: your own per-tool override, then the catalog entry's `tiers`
+   globs, then built-in name rules (`delete_*`, `create_*`, and so on). A server's
+   own MCP annotations can only move a tool toward caution, never into the read
+   tier, because they are the server's claim about itself. Anything unrecognised
+   is treated as write, so it starts off.
 4. **Turn tools on.** A catalog server starts with only its read tools on. Write
    and financial tools stay off until you turn each one on and acknowledge what it
    can do. The API refuses to enable an unacknowledged write or financial tool

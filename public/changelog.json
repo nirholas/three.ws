@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T16:15:17.334Z",
+	"generated_at": "2026-11-04T16:25:46.444Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,12 +49,33 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Agent wallet key export and rotation now require the real-funds agreements",
+			"summary": "Exporting an agent wallet key and confirming a rotate-and-sweep now check that the owner has signed the real-funds agreements, like every other path that moves or releases custodial funds. The rotation preview stays open, devnet is unaffected, and an owner who has not signed can sign and retry with the same re-authentication. Agent wallet provisioning also claims the wallet slot atomically, so two concurrent first requests can no longer replace a key whose address was already handed out.",
+			"link": null,
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Announced surfaces defect sweep",
 			"summary": "Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.",
 			"link": null,
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Connect your agent to third-party MCP servers",
+			"summary": "The new MCP Integrations page connects an agent to GitHub, Linear, Notion, DeepWiki and 80+ other vetted MCP servers, or any public HTTPS MCP server by URL. Sign in with OAuth or paste a token, then choose which tools the agent may call: read tools start on, write and financial tools stay off until you acknowledge each one, and a custom server's tools are reviewed before anything runs. The agent sees them as ext_ tools in every run, and the same connections can be made from the CLI with three-ws mcp install.",
+			"link": "/mcp-integrations",
+			"tags": [
+				"feature"
 			]
 		},
 		{

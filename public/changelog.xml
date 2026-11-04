@@ -39,12 +39,28 @@
 			<description>Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_&lt;name&gt;_&lt;tool&gt;.</description>
 		</item>
 		<item>
+			<title>Agent wallet key export and rotation now require the real-funds agreements</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Agent wallet key export and rotation now require the real-funds agreements</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Exporting an agent wallet key and confirming a rotate-and-sweep now check that the owner has signed the real-funds agreements, like every other path that moves or releases custodial funds. The rotation preview stays open, devnet is unaffected, and an owner who has not signed can sign and retry with the same re-authentication. Agent wallet provisioning also claims the wallet slot atomically, so two concurrent first requests can no longer replace a key whose address was already handed out.</description>
+		</item>
+		<item>
 			<title>Announced surfaces defect sweep</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-04:Announced surfaces defect sweep</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.</description>
+		</item>
+		<item>
+			<title>Connect your agent to third-party MCP servers</title>
+			<link>https://three.ws/mcp-integrations</link>
+			<guid isPermaLink="false">2026-11-04:Connect your agent to third-party MCP servers</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new MCP Integrations page connects an agent to GitHub, Linear, Notion, DeepWiki and 80+ other vetted MCP servers, or any public HTTPS MCP server by URL. Sign in with OAuth or paste a token, then choose which tools the agent may call: read tools start on, write and financial tools stay off until you acknowledge each one, and a custom server's tools are reviewed before anything runs. The agent sees them as ext_ tools in every run, and the same connections can be made from the CLI with three-ws mcp install.</description>
 		</item>
 		<item>
 			<title>Every new agent now starts with a drafted coin</title>

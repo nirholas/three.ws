@@ -16,7 +16,7 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
-body { width: 43in; height: 24in; padding: 1in; font-family: 'Inter', 'Inter Fallback', Arial, sans-serif; font-size: 27px; line-height: 1.28; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: hidden; }
+body { width: 43in; height: 24in; padding: 1in; font-family: 'Inter', 'Inter Fallback', Arial, sans-serif; font-size: 26px; line-height: 1.27; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: hidden; }
 .sheet { width: 41in; height: 22in; display: grid; grid-template-rows: auto 1fr; row-gap: 0.22in; }
 header { display: grid; grid-template-columns: 1fr auto; column-gap: 0.6in; align-items: start; border-bottom: 6px solid var(--ink); padding-bottom: 0.18in; }
 h1 { margin: 0; font-size: 92px; line-height: 1.02; font-weight: 700; letter-spacing: -0.015em; }
@@ -121,6 +121,15 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 		<li><b>Audio2Face-3D</b> (NVCF bidirectional stream) returns per-frame weights for 55 shapes; the server packs them as <code>{fps, blendShapeNames, frames[{t, w[55]}]}</code>.</li>
 	</ul>
 </section>
+
+<section>
+	<h2>Code, data and live demo</h2>
+	<div class="reproduce">
+		<div class="qr">{{qr_repo}}<div class="t"><b>Source and measurements</b>Player, composition tables, coverage and latency scripts, raw data behind every figure.</div></div>
+		<div class="qr">{{qr_demo}}<div class="t"><b>Live demo</b>Speak or type; drop in your own glTF and watch which path binds each morph.</div></div>
+	</div>
+</section>
+
 </div>
 
 <div class="col">
@@ -161,9 +170,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 <section>
 	<h2><span class="n">4</span> Benchmarking method</h2>
 	<ul>
-		<li><b>Rig coverage.</b> {{files}} distinct avatar files from human accounts (at most 60 per creation source; seeded, QA, and synthetic accounts excluded). Each glTF's JSON chunk is fetched by HTTP range request and its morph dictionaries are handed to the <i>shipping</i> <code>A2FPlayer.attach()</code>, so the classification is the production code path, not a reimplementation.</li>
-		<li><b>Latency.</b> Ten consecutive production calls to the text-to-face endpoint with the same 22-word sentence, wall clock from request start to the full JSON response (TTS, resample, Audio2Face-3D stream). Calls refused by the per-client rate limit are excluded, not retried.</li>
-		<li><b>Overshoot.</b> Replay of the real 228-frame track through the composition tables, measuring the mapping-implied jaw opening with and without the suppression rule.</li>
+		<li><b>Rig coverage.</b> {{files}} distinct avatar files from human accounts, at most 60 per creation source (seeded, QA and synthetic accounts excluded). Each glTF's JSON chunk is read by HTTP range request and its morph dictionaries are classified by the <i>shipping</i> <code>A2FPlayer.attach()</code>, not a reimplementation.</li>
+		<li><b>Latency.</b> Ten consecutive production calls with the same 22-word sentence; wall clock from request start to the full JSON response (TTS, resample, Audio2Face-3D stream). Rate-limited calls are excluded, not retried.</li>
+		<li><b>Overshoot.</b> The real 228-frame track replayed through the composition tables, with and without the suppression rule.</li>
 	</ul>
 </section>
 
@@ -178,13 +187,13 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 		<h3 style="margin-top:0">Which path drives each rig, by how the avatar was made</h3>
 		<div class="legend"><span style="--sw:#2a78d6">Direct ARKit</span><span style="--sw:#eb6834">Derived from vowels or visemes</span><span style="--sw:#1baf7a">Morphs, unmapped</span><span class="hatch">No facial morphs</span></div>
 		{{coverage_svg}}
-		<figcaption>Sources that produce faces (selfie reconstruction, studio, auto-rig) are driven almost entirely by the direct path. The derived path matters where files are imported from other ecosystems (Import, Fork): {{derived}} rigs that would otherwise have been frozen. Photo-avatar exports and text-to-3D props carry no facial morphs and get amplitude lipsync.</figcaption>
+		<figcaption>Face-producing sources (selfie reconstruction, studio, auto-rig) bind by the direct path. The derived path matters for files imported from other ecosystems (Import, Fork): {{derived}} rigs that would otherwise be frozen. Photo-avatar exports and text-to-3D props carry no facial morphs and get amplitude lipsync.</figcaption>
 	</figure>
 	<figure class="chart">
 		<h3 style="margin-top:0">Latency per call versus the speech it produced</h3>
 		<div class="legend"><span style="--sw:#2a78d6">Wall-clock latency</span><span style="--sw:#eb6834">Duration of the generated speech</span></div>
 		{{latency_svg}}
-		<figcaption>{{fast_calls}} of 10 calls finished in 2.7 to 4.3 s for 6.9 to 7.6 s of speech (real-time ratio {{ratio_min}} to {{ratio_max}}); two calls hit upstream tail latency at 11.0 and 13.7 s. Earlier runs: median 2.96 s (2026-10-08, six calls) and 1.29 to 2.19 s when audio is supplied directly and TTS is skipped (2026-09-22).</figcaption>
+		<figcaption>{{fast_calls}} of 10 calls finished in 2.7 to 4.3 s for 6.9 to 7.6 s of speech (real-time ratio {{ratio_min}} to {{ratio_max}}); two hit upstream tail latency at 11.0 and 13.7 s. Earlier runs: median 2.96 s (2026-10-08, six calls); 1.29 to 2.19 s with audio supplied directly, skipping TTS (2026-09-22).</figcaption>
 	</figure>
 </section>
 </div>
@@ -203,7 +212,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 			<div class="rig"><img src="figures/rig-default-derived-only.png" alt=""><div class="tag"><span class="k derived"></span>Derived only ({{expr_default}} viseme morphs)</div></div>
 			<div class="rig"><img src="figures/rig-default-both.png" alt=""><div class="tag"><span class="k both"></span>Both paths: overshoot</div></div>
 		</div>
-		<figcaption>Same rig, same frame. <b>Derived only</b> is what a VRM or Oculus-style rig receives, produced here by hiding the rig's ARKit mouth shapes from the player: a usable mouth from visemes alone. <b>Both</b> is the failure the rule prevents.</figcaption>
+		<figcaption>Same rig, same frame. <b>Derived only</b> (the rig's ARKit mouth shapes hidden from the player) is what a VRM or Oculus-style rig receives: a usable mouth from visemes alone. <b>Both</b> is the failure the rule prevents.</figcaption>
 	</figure>
 </section>
 
@@ -212,17 +221,13 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 	<ul>
 		<li><b>Name canonicalization beats allowlists.</b> One normalization function covered vendor spellings (<code>ARKit_jawOpen</code>, <code>jaw_open</code>, <code>JawOpen</code>) that an explicit rig list would have missed.</li>
 		<li><b>Clock the face from the audio element</b>, not from <code>requestAnimationFrame</code>. Drift was the first bug users noticed and the cheapest to remove.</li>
-		<li><b>Latency is dominated by upstream tails</b>, not by retargeting (sub-millisecond per frame). Streaming the first frames before TTS completes is the next step.</li>
-		<li><b>Limits.</b> Derived weights are a linear inverse of hand-authored compositions; expressive shapes with no vowel analogue (<code>mouthRollUpper</code>) are lost on viseme-only rigs. Head pose columns are applied only when a head bone exists. {{no_morph_pct}} of uploaded files have no facial morphs, which no mapping can fix.</li>
+		<li><b>Latency is dominated by upstream tails</b>, not retargeting (sub-millisecond per frame). Streaming the first frames before TTS completes is the next step.</li>
+		<li><b>Limits.</b> Derived weights are a linear inverse of hand-authored compositions; shapes with no vowel analogue (<code>mouthRollUpper</code>) are lost on viseme-only rigs. {{no_morph_pct}} of uploaded files have no facial morphs, which no mapping can fix.</li>
 	</ul>
 </section>
 
 <section>
-	<h2><span class="n">8</span> Reproduce</h2>
-	<div class="reproduce">
-		<div class="qr">{{qr_repo}}<div class="t"><b>Source, data, scripts</b>Player, composition tables, coverage and latency scripts, and the raw measurements behind every figure.</div></div>
-		<div class="qr">{{qr_demo}}<div class="t"><b>Live demo</b>Speak or type; drop in your own glTF and watch which path binds each morph.</div></div>
-	</div>
+	<h3 style="margin-top:0">References</h3>
 	<div class="refs">
 		<ol>
 			<li>NVIDIA. Audio2Face-3D NIM, blendshape output and gRPC streaming. <span class="u">docs.nvidia.com/ace/audio2face-3d-microservice</span></li>
@@ -235,6 +240,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 		</ol>
 	</div>
 </section>
+
+
 </div>
 
 </div>

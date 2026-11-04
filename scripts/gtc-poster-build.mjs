@@ -139,7 +139,7 @@ function latencyChart() {
 	out += `<text x="${left + plotW / 2}" y="${H}" text-anchor="middle" fill="${C.muted}" font-size="20">consecutive production calls, 2026-11-04</text>`;
 	// Median line.
 	out += `<line x1="${left}" y1="${y(medianLatency)}" x2="${W - right}" y2="${y(medianLatency)}" stroke="${C.direct}" stroke-width="2" stroke-dasharray="6 6" opacity="0.7"/>`;
-	out += `<text x="${W - right}" y="${y(medianLatency) + 30}" text-anchor="end" fill="${C.ink2}" font-size="21">median ${fmt(medianLatency, 2)} s</text>`;
+	out += `<text x="${W - right}" y="${y(medianLatency) - 12}" text-anchor="end" fill="${C.ink2}" font-size="21">median ${fmt(medianLatency, 2)} s</text>`;
 	// Latency dots with a 2px surface ring; label only the two tails.
 	calls.forEach((c, i) => {
 		out += `<circle cx="${x(i)}" cy="${y(c.latency_s)}" r="11" fill="${C.surface}"/><circle cx="${x(i)}" cy="${y(c.latency_s)}" r="9" fill="${C.direct}"/>`;
@@ -149,7 +149,7 @@ function latencyChart() {
 }
 
 function overshootChart() {
-	const W = 940, H = 360, left = 90, right = 20, top = 16, bottom = 52;
+	const W = 940, H = 300, left = 90, right = 20, top = 16, bottom = 52;
 	const plotW = W - left - right, plotH = H - top - bottom;
 	const tMax = series[series.length - 1].t, yMax = 2.0;
 	const x = (t) => left + (t / tMax) * plotW;
@@ -171,12 +171,12 @@ function overshootChart() {
 	out += `<path d="${pathOf('direct')}" fill="none" stroke="${C.direct}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
 	// Mark the frame used in the rig figures.
 	out += `<line x1="${x(peak.t)}" y1="${top}" x2="${x(peak.t)}" y2="${y(0)}" stroke="${C.axis}" stroke-width="1"/>`;
-	out += `<text x="${x(peak.t) - 8}" y="${y(0) - 12}" text-anchor="end" fill="${C.ink2}" font-size="20">frame ${peak.i} (figures)</text>`;
+	out += `<text x="${x(peak.t) + 8}" y="${y(0) - 12}" fill="${C.ink2}" font-size="20">frame ${peak.i} (figures)</text>`;
 	return out + '</svg>';
 }
 
 function pipelineSvg() {
-	const W = 940, H = 330;
+	const W = 940, H = 300;
 	const boxes = [
 		['Microphone', 'browser', C.muted],
 		['Riva ASR', 'NVCF gRPC', C.direct],
@@ -186,7 +186,7 @@ function pipelineSvg() {
 		['Audio2Face-3D', 'NVCF stream, 30 fps', C.direct],
 		['A2FPlayer', 'browser, per morph', C.derived],
 	];
-	const cols = 4, bw = 206, bh = 96, gx = 38, gy = 52;
+	const cols = 4, bw = 206, bh = 88, gx = 38, gy = 44;
 	let out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" ${FONT} font-size="24">`;
 	out += `<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${C.ink2}"/></marker></defs>`;
 	const pos = boxes.map((_, i) => {
@@ -281,7 +281,8 @@ const layout = await page.evaluate(() => {
 	const px = (v) => Math.round(v);
 	const cols = [...document.querySelectorAll(".columns > .col")].map((c) => ({ scroll: px(c.scrollHeight), box: px(c.clientHeight) }));
 	const fonts = [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family);
-	return { body: { w: px(document.body.scrollWidth), h: px(document.body.scrollHeight) }, cols, fonts: [...new Set(fonts)] };
+	const sections = [...document.querySelectorAll('section')].map((s) => `${s.querySelector('h2 .n')?.textContent}:${px(s.getBoundingClientRect().height)}`);
+	return { body: { w: px(document.body.scrollWidth), h: px(document.body.scrollHeight) }, header: px(document.querySelector('header').getBoundingClientRect().height), cols, sections, fonts: [...new Set(fonts)] };
 });
 console.log('layout', JSON.stringify(layout));
 const overflow = layout.cols.filter((c) => c.scroll > c.box + 2);

@@ -162,4 +162,5 @@ for the full table.
 - [Widget Types](./widgets.md): every widget type and how to configure one
 - [Embody](./embody.md): giving an agent a body in more contexts
 - [MCP](./mcp.md): the avatar MCP server for AI assistants
+- [MCP integrations](./mcp-integrations.md): the other direction, connecting your agent to third-party MCP servers such as GitHub or DeepWiki ([/mcp-integrations](https://three.ws/mcp-integrations))
 - Pages: [/integrations](https://three.ws/integrations), [/widgets](https://three.ws/widgets)
