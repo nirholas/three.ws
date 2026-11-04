@@ -1,5 +1,7 @@
 # Re-run the full console sweep on a quiet box, fix every real error, and gate the result with a baseline
 
+**Status (2026-11-04):** Task 5 already shipped: `scripts/audit-console.mjs` judges its exit code against `scripts/audit-console.baseline.json` through `scripts/lib/console-baseline.mjs` and supports `--update-baseline`. The sweep itself (tasks 1 to 4, 6, 7) was not run because the box was not quiet (1-minute load 59 on 32 cores, with about ten concurrent agents), and the order says to sweep only when load is below the core count. Owner or next quiet session: run the Step 0 commands, then classify and fix.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/275-plan-site-console-resweep-and-fix.md`.
 
 **Priority:** P1, unshipped fix or half-built user-visible feature (score 66 of 100 inside the tier). **Area:** site. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
