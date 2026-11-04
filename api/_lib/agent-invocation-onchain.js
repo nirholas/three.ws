@@ -32,7 +32,36 @@ import { solanaConnection } from './solana/connection.js';
 /** Program id baked into the on-chain program's `declare_id!`. Override per
  *  deployment (e.g. a devnet build) with AGENT_INVOCATION_PROGRAM_ID. */
 export const AGENT_INVOCATION_PROGRAM_ID =
-	process.env.AGENT_INVOCATION_PROGRAM_ID || 'AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo';
+	process.env.AGENT_INVOCATION_PROGRAM_ID || 'FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv';
+
+/** Cluster the invocation program is deployed to. Devnet until a mainnet deploy is
+ *  recorded in contracts/SOLANA_DEPLOYMENTS.md; set AGENT_INVOCATION_NETWORK=mainnet
+ *  once that row exists. */
+export function defaultNetwork() {
+	return process.env.AGENT_INVOCATION_NETWORK === 'mainnet' ? 'mainnet' : 'devnet';
+}
+
+const DEPLOYED_TTL_MS = 60_000;
+const deployedCache = new Map();
+
+/** True when `programId` is an executable account on `network`. Cached for a
+ *  minute so a hot route does not hit RPC per call; RPC failures are not cached
+ *  and surface as thrown errors rather than a false "not deployed". */
+export async function isProgramDeployed(network = defaultNetwork(), programId = AGENT_INVOCATION_PROGRAM_ID, connection) {
+	const key = `${network}:${programPk(programId).toBase58()}`;
+	const hit = deployedCache.get(key);
+	if (hit && Date.now() - hit.at < DEPLOYED_TTL_MS) return hit.value;
+	const conn = connection || solanaConnection({ network, commitment: 'confirmed' });
+	const info = await conn.getAccountInfo(programPk(programId), 'confirmed');
+	const value = Boolean(info?.executable);
+	deployedCache.set(key, { value, at: Date.now() });
+	return value;
+}
+
+/** Test hook: forget cached probe results. */
+export function resetDeployedCache() {
+	deployedCache.clear();
+}
 
 // On-chain limits enforced by the program; validated here too so a caller gets a
 // clear error instead of a failed simulation. Must match contracts/agent-invocation.
@@ -133,7 +162,7 @@ export async function recordInvocationReceipt({
 	targetAuthority,
 	skillName,
 	parameters = '',
-	network = process.env.AGENT_INVOCATION_NETWORK || 'mainnet',
+	network = defaultNetwork(),
 	programId = AGENT_INVOCATION_PROGRAM_ID,
 	connection,
 }) {
@@ -156,6 +185,12 @@ export async function recordInvocationReceipt({
 	});
 
 	const conn = connection || solanaConnection({ network, commitment: 'confirmed' });
+	if (!(await isProgramDeployed(network, programId, conn))) {
+		const err = new Error(`agent_invocation program ${programPk(programId).toBase58()} is not deployed on ${network}`);
+		err.code = 'program_not_deployed';
+		err.status = 503;
+		throw err;
+	}
 	const tx = new Transaction().add(instruction);
 	const signature = await sendAndConfirm(conn, tx, [invokerKeypair], {
 		commitment: 'confirmed',
