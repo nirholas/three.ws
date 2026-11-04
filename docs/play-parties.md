@@ -7,6 +7,7 @@ A party is a small group (up to 8) that stays together across the world. Members
 - **Invite.** Open a player's inspect panel and press "Invite to party" (works for guests too), or press the party icon on a friend in the friends drawer (the friend must be online).
 - **Respond.** An invite arrives as a card with Accept and Decline. The inviter gets a toast either way. Invites expire after 2 minutes.
 - **Leave.** Open the party pill (top of the screen) and press Leave. When the last other member leaves, the party dissolves.
+- **Offline.** Party ops and party chat need the room socket. If it is down, an invite, accept or other op shows an error toast ("Reconnecting to the world, so the party did not get that. Try again in a moment.", string `play.party_offline`) instead of vanishing, and party chat keeps your text in the box with the same not-sent line world chat uses.
 - **Cap.** 8 members. The roster shows "n / 8". Inviting into a full party tells you it is full. A player already in a party cannot be invited.
 - **Chat.** The chat bar has a World / Party scope button. `/p text` sends to the party from any scope. Party lines have a distinct style.
 - **Go to.** In the roster, "Go to" next to a member:

@@ -6,7 +6,7 @@
 
 - A fenced yard with a gate, a road, a crypt, an altar, nine graves with headstones, lampposts, fire baskets, a pumpkin patch, hay bales and a ring of pine trees. The layout is deterministic (a seeded generator in [src/haunted/page.js](../src/haunted/page.js)), so everyone sees the same yard.
 - Five animated characters (the keeper, zombie, skeleton, vampire and ghost). Each plays the kit's own clips; pick one in the panel, choose any of its clips, or let them wander.
-- Moonlight, fog, bloom and flickering lamp and basket light. Sliders for fog and moonlight, a lights toggle, wandering toggle, and PNG capture.
+- Moonlight, fog, bloom and flickering lamp and basket light. A low shared studio environment (`applyStudioLook`, intensity 0.22) gives monsters and tombstones a specular edge while the palette stays dark, and the scene renders through the shared `createRenderLoop`, which pauses when the stage is hidden. Sliders for fog and moonlight, a lights toggle, wandering toggle, and PNG capture.
 - Keyboard: `1` to `5` fly to a character, `L` lights, `W` wandering. Click a character and it reacts.
 
 ## Where the models come from

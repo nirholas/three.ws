@@ -115,6 +115,7 @@ additions to the vocabulary:
 | `remix` (someone remixed your model) | [api/x402/remix-asset.js](../api/x402/remix-asset.js) |
 | `dm_received` | [api/friends/messages.js](../api/friends/messages.js) |
 | `pump_launch_filled` (your coin graduated its bonding curve) | the pump cron in [api/cron/[name].js](../api/cron/%5Bname%5D.js) |
+| `creator_payout_sent`, `creator_payout_held`, `creator_payout_wallet` (creator-fee share sent or held, payout wallet changed) | [api/_lib/creator-payouts.js](../api/_lib/creator-payouts.js); the first two are in the sales category, the wallet change in account & security |
 | `follow` | the follow endpoint above |
 
 Endpoints:
@@ -143,7 +144,7 @@ Bell client: [src/notifications.js](../src/notifications.js).
 `telegram` and `discord` deliver to chats paired with an agent through the
 chat gateways (`/api/gateway/connections`), so `GET /preferences` reports a
 `gateways: { telegram, discord }` count of paired chats with notifications on,
-and the panel keeps a column disabled until one exists (Telegram also accepts
+and the panel keeps a column disabled until one exists (pairing from the site is two steps: `POST /api/gateway/connections` with `action: "preview"` names the chat that printed the code and returns a signed `confirm`, then `action: "redeem"` with that `confirm` pairs it) (Telegram also accepts
 a legacy `telegram_chat_id`). Both default off except for market alerts.
 `push.subscribed_devices` counts Web Push browsers plus iPhones enrolled
 through the iOS app (APNs), with the iPhones also reported alone as
@@ -200,7 +201,7 @@ first remix received, a 7-day streak, completing the copy-trade path,
 founding or joining a syndicate, daily trading quests (first quest, a daily
 clear, a 7-day quest streak), and trader duels (first call, a correct call,
 three correct in a row, and 70% or better over ten or more decided duels),
-plus the Event Market forecaster badges (first correct call, an upset call, five
+plus the one-off seasonal gift badge (`halloween_2026`, claimed through [seasonal drops](./seasonal-drops.md)) and the Event Market forecaster badges (first correct call, an upset call, five
 in a row, season top 10, season champion; see [event-markets.md](./event-markets.md)).
 Badges and streaks also render on profile pages.
 

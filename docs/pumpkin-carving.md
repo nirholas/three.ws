@@ -10,6 +10,7 @@ A browser pumpkin carver. The pumpkin is a hollow, ribbed, real 3D shell and eve
 - **Surface picking.** Pointer hits are tested against an invisible ellipsoid, not the carved mesh, so orientation stays stable once the mesh is full of holes.
 - **Undo.** `carve()` never mutates its input; the page keeps up to 60 carved brushes and undo swaps one back in.
 - **Persistence.** The cut log (up to 300 cuts) is saved in `localStorage` under `twx_pumpkin_v1` and replayed on load.
+- **Lighting and loop.** The scene uses the shared studio environment (`applyStudioLook`, intensity 0.3, dropped to 0.1 while the candle is lit so the flame owns the room), with the tone curve left to the OutputPass. It renders through the shared `createRenderLoop`, which pauses when the stage is hidden.
 - **Export.** Save picture writes the canvas as PNG. Download GLB bakes the visible triangles (three-bvh-csg keeps spare capacity past `drawRange`) and writes a binary glTF with the stem, openable in the three.ws viewer.
 
 ## Files
@@ -24,5 +25,6 @@ A browser pumpkin carver. The pumpkin is a hollow, ribbed, real 3D shell and eve
 
 ## Notes
 
+- The page footer links on to the [weekend gifts](seasonal-drops.md) (`/halloween`) and the [haunted graveyard](haunted-graveyard.md) (`/haunted`).
 - three-bvh-csg 0.0.18 logs a `maxLeafSize` deprecation warning from three-mesh-bvh 0.9.x. It comes from the library and is harmless.
 - Cutters are straight extrusions, so cut walls run along the surface normal, like a real carving.

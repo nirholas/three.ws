@@ -106,8 +106,12 @@ While the drop is live, three surfaces dress themselves for it.
   - Halloween prompt suggestions;
   - a "Trick or treat" chip that sends a flock of bats out of the hero
     avatar.
-- **`/play`**: a moonlit vignette and the lobby claim card, from
-  [src/game/halloween.js](../src/game/halloween.js).
+- **`/play`**: a moonlit vignette, a lobby banner and an in-world pill with a
+  countdown and a **Claim** button (a real `<button>`, not a link), from
+  [src/game/halloween.js](../src/game/halloween.js); a scatter of glowing
+  jack-o'-lanterns (instanced copies of the Pumpkin Cap model, 36, 24 or 12 by
+  graphics tier) from [src/game/halloween-decor.js](../src/game/halloween-decor.js),
+  which removes itself when the weekend ends or the look is off.
 
 ### Open-source effects
 
