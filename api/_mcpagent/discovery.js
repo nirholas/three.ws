@@ -58,6 +58,8 @@ export const RESOURCE_DESCRIPTION =
 	'news_wire_search, news_wire_poll_quote and news_wire_poll, transit_plan_quote and transit_plan, ' +
 	'transit_delays_quote and transit_delays, places_search_quote and places_search, and ' +
 	'places_detail_quote and places_detail. ' +
+	'Bounties and the Build program: list_bounties searches open hackathons, bounties and grants from every source, and ' +
+	'submit_build_entry enters one of your agents in an open Build round (no funds move). ' +
 	'Agent memory: get_learning_status reports whether memory is on, what agents remember and which ' +
 	'learned skills wait for review (read only). ' +
 	'Agent sandbox with no network: execute_code runs Python, JavaScript or bash, terminal keeps a shell, ' +

@@ -431,6 +431,9 @@ export const POLICY = {
 		list_integrations: r('integrations'),
 		install_integration: w('integrations'),
 		remove_integration: f('integrations', 'confirm_delete', 'list_integrations', ['agent_id', 'connection_id']),
+		// Bounty feed and Build program (api/_mcpagent/bounties-tools.js). No funds move.
+		list_bounties: r('discovery'),
+		submit_build_entry: w('agents'),
 		// Agent learning loop status (api/_mcpagent/learning-tools.js). Read only.
 		get_learning_status: r('agents'),
 		// Sandboxed code execution (api/_mcpagent/sandbox-tools.js). Write tier:

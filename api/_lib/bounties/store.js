@@ -8,6 +8,7 @@
 import { sql } from '../db.js';
 import { contentHash, finalizeListing } from './normalize.js';
 import { SOURCES } from './sources/index.js';
+import { id as PROGRAM_SOURCE_ID } from './sources/program.js';
 
 /** Upsert one normalized listing. Returns its row id. */
 export async function upsertListing(l) {
@@ -72,7 +73,7 @@ export async function refreshSource(source) {
 		}
 		// Our own rounds close by status, so an empty answer there is real; an
 		// external source answering empty is treated as an outage.
-		const authoritative = source.id === 'threews-build' || listings.length > 0;
+		const authoritative = source.id === PROGRAM_SOURCE_ID || listings.length > 0;
 		const closed = authoritative ? await closeStale(source.id, listings.map((l) => l.externalId)) : 0;
 		return { source: source.id, ok: true, fetched: raw.length, upserted, closed, ms: Date.now() - started };
 	} catch (err) {
@@ -91,7 +92,7 @@ export async function untriagedListings(limit = 20) {
 	return sql`
 		SELECT * FROM bounty_listings
 		 WHERE status = 'open' AND triage_hash IS DISTINCT FROM content_hash
-		 ORDER BY (source = 'threews-build') DESC, reward_usd DESC NULLS LAST, first_seen_at DESC
+		 ORDER BY (source = 'three-build') DESC, reward_usd DESC NULLS LAST, first_seen_at DESC
 		 LIMIT ${limit}
 	`;
 }
@@ -132,7 +133,7 @@ export async function queryFeed({ q = '', source = null, kind = null, category =
 		   AND (${agentEligible}::boolean IS NULL OR agent_eligible IS DISTINCT FROM false)
 		   AND (${like}::text IS NULL OR title ILIKE ${like} OR summary ILIKE ${like} OR sponsor ILIKE ${like} OR ${needle.toLowerCase()} = ANY(skills))
 		 ORDER BY
-		   (source = 'threews-build') DESC,
+		   (source = 'three-build') DESC,
 		   CASE WHEN ${order} = 'deadline' THEN deadline END ASC NULLS LAST,
 		   CASE WHEN ${order} = 'new' THEN first_seen_at END DESC,
 		   reward_usd DESC NULLS LAST,

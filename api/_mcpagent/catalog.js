@@ -21,10 +21,11 @@ import { integrationToolDefs } from './integrations-tools.js';
 import { learningToolDefs } from './learning-tools.js';
 import { accountToolDefs } from './account-tools.js';
 import { sandboxToolDefs } from './sandbox-tools.js';
+import { bountiesToolDefs } from './bounties-tools.js';
 
 const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs, ...perpsToolDefs, ...papertradeToolDefs, ...tradingToolDefs,
 	...portfolioToolDefs, ...privateWalletToolDefs, ...sniperAlertToolDefs, ...duelToolDefs, ...commerceToolDefs, ...orderToolDefs, ...eventMarketToolDefs, ...eventMarketForecastToolDefs,
-	...namedServiceToolDefs, ...integrationToolDefs, ...accountToolDefs, ...learningToolDefs, ...sandboxToolDefs];
+	...namedServiceToolDefs, ...integrationToolDefs, ...accountToolDefs, ...learningToolDefs, ...sandboxToolDefs, ...bountiesToolDefs];
 
 // Free, public entry point, listed first so discovery clients see it up top.
 // Annotations: a static, local overview built at module load: read-only,

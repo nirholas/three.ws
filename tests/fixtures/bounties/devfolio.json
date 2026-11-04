@@ -1,0 +1,408 @@
+{
+ "hits": {
+  "total": {
+   "value": 9
+  },
+  "hits": [
+   {
+    "_source": {
+     "country": "India",
+     "devfolio_official": null,
+     "featured": null,
+     "private": false,
+     "starts_at": "2026-11-20T03:30:00+00:00",
+     "hosted_by": null,
+     "hashtags": [],
+     "apply_mode": "both",
+     "city": "Soladevanahalli",
+     "timezone": "Asia/Calcutta",
+     "rating": 0,
+     "type": "HACKATHON",
+     "uuid": "0dab52b6085941a6b366b2425310d8b8",
+     "sponsor_tiers": [],
+     "themes": [],
+     "hackathon_setting": {
+      "winner_announce_at": null,
+      "reg_starts_at": "2026-10-18T03:30:00+00:00",
+      "winner_announced": false,
+      "women_only": false,
+      "reg_ends_at": "2026-11-10T11:00:00+00:00",
+      "facebook": null,
+      "telegram": null,
+      "medium": null,
+      "instagram": "https://www.instagram.com/thebigo_ait/",
+      "linkedin": null,
+      "external_apply_url": null,
+      "primary_color": "#8ed1fc",
+      "uuid": "1fab9d00bafb457dbd2f42e1f85f3072",
+      "contact_email": "bigo@acharya.ac.in",
+      "twitter": null,
+      "site": null,
+      "discord": null,
+      "review": false,
+      "slack": null,
+      "logo": "https://assets.devfolio.co/hackathons/0dab52b6085941a6b366b2425310d8b8/assets/logo/847.png",
+      "subdomain": "the-big-hack-2",
+      "farcaster": null
+     },
+     "ends_at": "2026-11-20T19:15:00+00:00",
+     "is_online": false,
+     "state": "Karnataka",
+     "slug": "the-big-hack-2",
+     "team_min": 2,
+     "themed": false,
+     "discover": false,
+     "participants_count": 334,
+     "hackathon_faqs": [],
+     "participants_details": [
+      {
+       "profile_image": "https://assets.devfolio.co/users/46610aeb04a64fdda8734a89e536730c/avatar-2bdbd452-e4f5-4b46-8e6f-f72120f195cf.jpeg",
+       "last_name": "Vibi",
+       "first_name": "Anugrah",
+       "uuid": "46610aeb04a64fdda8734a89e536730c",
+       "username": "anugrah_vibi"
+      },
+      {
+       "profile_image": "https://assets.devfolio.co/users/f490e62ce8f8466099135673c5f434ad/avatar-65d59e3d-5f97-402f-b165-cc1e4192e7c9.jpeg",
+       "last_name": "Shain",
+       "first_name": "Emil",
+       "uuid": "f490e62ce8f8466099135673c5f434ad",
+       "username": "emilshain"
+      },
+      {
+       "profile_image": "https://assets.devfolio.co/users/78ab0731e2b74ddc99c53fe883e4cf8b/avatar-da640c4c-c7a9-43d7-b258-c217bd93bfb6.jpeg",
+       "last_name": "Benoy",
+       "first_name": "Caine",
+       "uuid": "78ab0731e2b74ddc99c53fe883e4cf8b",
+       "username": "caine_benoy"
+      }
+     ],
+     "team_size": 4,
+     "verified": true,
+     "prizes": [
+      {
+       "parent_prize_uuid": null,
+       "name": "Overall Hackathon Prize",
+       "is_sponsor_prize": false,
+       "uuid": "0dadf3f190894824a1c852571f604a1f",
+       "desc": "Awarded to the top 3 overall projects across all tracks (1st: \u20b925,000 | 2nd: \u20b915,000 | 3rd: \u20b910,000)"
+      }
+     ],
+     "projects_submitted": 0,
+     "name": "THE BIG HACK 2.0",
+     "tagline": "National Level Tech Fest",
+     "location": "Acharya Institute of Technology, Acharya College Main Road, Soladevanahalli, Bengaluru, Karnataka, India",
+     "judges": [],
+     "cover_img": "https://assets.devfolio.co/hackathons/0dab52b6085941a6b366b2425310d8b8/assets/cover/968.jpeg",
+     "desc": "Welcome to Tech Habba 2.0\n\nOne Fest. Countless Ideas. Infinite Possibilities.\nTech Habba 2.0 is a National-Level Technical Fest hosted at Acharya Institutes, Bengaluru, from November 19\u201321, 2026. Bringing together students, developers, and innovators from across India, the fest celebrates technology, creativity, and collaboration.\nThe Experience\nExplore 13 exciting technical and non-technical events, compete with talented participants, and showcase your skills. Participate in a 24-hour hackathon where ideas transform into working prototypes and innovative solutions.\nHackathon Tracks\n- Autonomous Systems: Build intelligent autonomous solutions and AI-powered agents.\n- Voice & Multimodal AI: Create applications using voice, text, images, and other modalities.\n- Healthcare: Develop technology-driven healthcare solutions.\n- Mobility: Innovate for transportation and smarter mobility.\n- Cybersecurity: Strengthen digital security and address cyber threats.\nWhat to Expect\n- 13 technical and non-technical events\n- \u20b91,25,000 prize pool\n- 24-hour hackathon and project showcases\n- Innovation, teamwork, and hands-on learning\n- Networking and opportunities for recognition\nWho Can Participate?\nSt",
+     "status": "publish",
+     "user_hackathon": null,
+     "user_hackathon_reminder": null
+    }
+   },
+   {
+    "_source": {
+     "country": "India",
+     "devfolio_official": null,
+     "featured": null,
+     "private": false,
+     "starts_at": "2026-12-12T05:00:00+00:00",
+     "hosted_by": null,
+     "hashtags": [],
+     "apply_mode": "both",
+     "city": "Myladi",
+     "timezone": "Asia/Calcutta",
+     "rating": 0,
+     "type": "HACKATHON",
+     "uuid": "50e23a48e3964f43878279a3bf81339d",
+     "sponsor_tiers": [
+      {
+       "sponsors": [
+        {
+         "name": "GDG Kozhikode | Google Developer Groups",
+         "about": null,
+         "logo": "https://assets.devfolio.co/hackathons/50e23a48e3964f43878279a3bf81339d/sponsors/c9534393f78849629b03286230494a4c/656.png",
+         "company": {
+          "domain": "https://gdg.community.dev/gdg-kozhikode/",
+          "name": "GDG Kozhikode | Google Developer Groups",
+          "verified": false,
+          "logo": null,
+          "uuid": "1c7893c4c6e8414cb1ad8351c90be141"
+         },
+         "position": 1,
+         "uuid": "c9534393f78849629b03286230494a4c"
+        }
+       ],
+       "name": "community partner",
+       "width": 400,
+       "about": "",
+       "position": 1,
+       "uuid": "03ba7679d9c547cba79857f432b37bc1",
+       "height": null
+      },
+      {
+       "sponsors": [
+        {
+         "name": "ElevenLabs",
+         "about": null,
+         "logo": "https://assets.devfolio.co/hackathons/50e23a48e3964f43878279a3bf81339d/sponsors/7929ddcfe761446cbbc17abbb0e0933e/426.png",
+         "company": {
+          "domain": "elevenlabs.io",
+          "name": "ElevenLabs",
+          "verified": false,
+          "logo": "https://api.devfolio.co/api/miscellaneous/logo/elevenlabs.io.png",
+          "uuid": "a46baa7955334325926ef81ba2f77b42"
+         },
+         "position": 1,
+         "uuid": "7929ddcfe761446cbbc17abbb0e0933e"
+        }
+       ],
+       "name": "Tech partner",
+       "width": 400,
+       "about": "",
+       "position": 2,
+       "uuid": "578fd40a4f59437f893b406095444ad7",
+       "height": null
+      }
+     ],
+     "themes": [
+      {
+       "name": "FinTech",
+       "verified": true,
+       "uuid": "10f3c52e650b4229a2dc2edcebff20db"
+      }
+     ],
+     "hackathon_setting": {
+      "winner_announce_at": null,
+      "reg_starts_at": "2026-08-14T18:29:00+00:00",
+      "winner_announced": false,
+      "women_only": false,
+      "reg_ends_at": "2026-11-10T18:29:00+00:00",
+      "facebook": null,
+      "telegram": null,
+      "medium": null,
+      "instagram": null,
+      "linkedin": null,
+      "external_apply_url": null,
+      "primary_color": "#00d084",
+      "uuid": "83bf933e337b4f188a60097b5ba1cab1",
+      "contact_email": "haxfinity@gmail.com",
+      "twitter": null,
+      "site": null,
+      "discord": null,
+      "review": false,
+      "slack": null,
+      "logo": "https://assets.devfolio.co/hackathons/50e23a48e3964f43878279a3bf81339d/assets/logo/960.jpeg",
+      "subdomain": "haxfinity",
+      "farcaster": null
+     },
+     "ends_at": "2026-12-13T05:00:00+00:00",
+     "is_online": false,
+     "state": "Kerala",
+     "slug": "haxfinity",
+     "team_min": 2,
+     "themed": false,
+     "discover": false,
+     "participants_count": 462,
+     "hackathon_faqs": [],
+     "participants_details": [
+      {
+       "profile_image": "https://assets.devfolio.co/users/950ccbbdd7834dc3953d9bff3bb31653/avatar-81ed3d75-8adc-4749-bf8a-8210c55620f6.jpeg",
+       "last_name": "Kumar G",
+       "first_name": "Krishna",
+       "uuid": "950ccbbdd7834dc3953d9bff3bb31653",
+       "username": "realksquare"
+      },
+      {
+       "profile_image": "https://assets.devfolio.co/users/01ac1aa8a36d44ddab4fa02723553786/avatar-8fbaec5a-b89a-4956-8372-bb6435fa0d5e.jpeg",
+       "last_name": "Yadav",
+       "first_name": "Mayank",
+       "uuid": "01ac1aa8a36d44ddab4fa02723553786",
+       "username": "Mayankyadav"
+      },
+      {
+       "profile_image": "https://assets.devfolio.co/users/4be405b7882c451c9b5a21a56ec5e544/avatar-082ff923-72d6-49a7-88ee-062501da7891.jpeg",
+       "last_name": "Patel",
+       "first_name": "Sujal",
+       "uuid": "4be405b7882c451c9b5a21a56ec5e544",
+       "username": "Sujal_0510"
+      }
+     ],
+     "team_size": 4,
+     "verified": true,
+     "prizes": [],
+     "projects_submitted": 0,
+     "name": "haxfinity",
+     "tagline": null,
+     "location": "Amal College of Advanced Studies, Nilambur, Myladi, Eranhimangad, Kerala, India",
+     "judges": [],
+     "cover_img": "https://assets.devfolio.co/hackathons/50e23a48e3964f43878279a3bf81339d/assets/cover/953.png",
+     "desc": "HAXFINITY \u2014 Hack the Infinite\n\nThe 24-hour hackathon of XTHRON \u201926\n\n12\u201313 December 2026  \n10:30 AM, 12 December \u2013 10:30 AM, 13 December  \nAmal College of Advanced Studies (Autonomous), Nilambur, Kerala\n\nPrizes:Exciting prizes \u2014 details to be announced  \nTeam size:2\u20134 participants  \nParticipation: Free\n\nBuild real solutions, solve meaningful problems, and create something that works.\n\nHAXFINITY is a 24-hour hackathon conducted as part of XTHRON \u201926, the annual IT fest of the Department of Computer Science, Amal College of Advanced Studies (Autonomous), Nilambur.\n\nStudents from different colleges and backgrounds will identify problems, build software prototypes, and present their work to judges.\n\nThe event includes the opening ceremony, a 21-hour project-building window, demonstrations, judging, and awards.\n\nThere is no compulsory theme. Teams may choose any problem and build a software solution using any suitable technology.\n\n Tracks\n\nOpen Innovation\n\nBuild a product, tool, or prototype that solves a real problem or explores an idea.\n\nAI / ML\n\nBuild an application using machine learning, generative AI, NLP, computer vision, data analysis, or another AI-related technology.\n\nSocial Go",
+     "status": "publish",
+     "user_hackathon": null,
+     "user_hackathon_reminder": null
+    }
+   },
+   {
+    "_source": {
+     "country": "India",
+     "devfolio_official": null,
+     "featured": null,
+     "private": false,
+     "starts_at": "2026-11-21T06:30:00+00:00",
+     "hosted_by": null,
+     "hashtags": [],
+     "apply_mode": "both",
+     "city": "Kolkata",
+     "timezone": "Asia/Calcutta",
+     "rating": 0,
+     "type": "HACKATHON",
+     "uuid": "40f5203a0b9842038b51dd3f73236690",
+     "sponsor_tiers": [
+      {
+       "sponsors": [
+        {
+         "name": "Eventopia.in",
+         "about": null,
+         "logo": "https://assets.devfolio.co/hackathons/40f5203a0b9842038b51dd3f73236690/sponsors/1f8505c514f24c4e884c470b9358db05/504.png",
+         "company": {
+          "domain": "https://eventopia.in/",
+          "name": "Eventopia.in",
+          "verified": false,
+          "logo": null,
+          "uuid": "7828dfffee9e4f65bc434658fa0e13ea"
+         },
+         "position": 1,
+         "uuid": "1f8505c514f24c4e884c470b9358db05"
+        }
+       ],
+       "name": "Offlicial Media Partner",
+       "width": 200,
+       "about": "",
+       "position": 1,
+       "uuid": "f6ea99ce93d246f7bea4504e7767f684",
+       "height": null
+      }
+     ],
+     "themes": [
+      {
+       "name": "Design",
+       "verified": true,
+       "uuid": "6d18c73b2609447098e347382e471d44"
+      }
+     ],
+     "hackathon_setting": {
+      "winner_announce_at": null,
+      "reg_starts_at": "2026-09-27T04:30:00+00:00",
+      "winner_announced": false,
+      "women_only": false,
+      "reg_ends_at": "2026-11-10T18:29:00+00:00",
+      "facebook": null,
+      "telegram": null,
+      "medium": null,
+      "instagram": "https://www.instagram.com/gfg_campusbodytiu/",
+      "linkedin": "https://www.linkedin.com/company/gfg-campusbody-tiu",
+      "external_apply_url": null,
+      "primary_color": "#b026ff",
+      "uuid": "430f4364950e4027a24e407b760c2a23",
+      "contact_email": "nishamallici821@gmail.com",
+      "twitter": null,
+      "site": "https://genarrative-clash-2026.web.app/",
+      "discord": null,
+      "review": false,
+      "slack": null,
+      "logo": "https://assets.devfolio.co/hackathons/40f5203a0b9842038b51dd3f73236690/assets/logo/897.png",
+      "subdomain": "genarrative-clash",
+      "farcaster": null
+     },
+     "ends_at": "2026-11-21T12:15:00+00:00",
+     "is_online": false,
+     "state": "West Bengal",
+     "slug": "genarrative-clash",
+     "team_min": 2,
+     "themed": false,
+     "discover": false,
+     "participants_count": 1086,
+     "hackathon_faqs": [
+      {
+       "question": "Is there any registration fee to participate in GeNarrative Clash?",
+       "answer": "**No, participation is completely free!** There are no entry fees or hidden costs to register, build, or compete in the hackathon.",
+       "uuid": "895513c47690438baf90cdf1eb17d252"
+      },
+      {
+       "question": "Who can participate? Is the hackathon open to working professionals?",
+       "answer": "**GeNarrative Clash** is exclusively for currently enrolled university and college students. Working professionals are not eligible to compete as participants, though they are **welcome to join us as mentors or judges.**",
+       "uuid": "cd05603970384c49b018002e22304324"
+      },
+      {
+       "question": "Do I need to be a Computer Science student to participate?",
+       "answer": "**Not at all!** Since this hackathon merges Generative AI with the creative arts, we strongly encourage students from design, media, literature, and other non-technical backgrounds to form teams with developers. **Diverse perspectives build the best tools.**",
+       "uuid": "08090aa8266d439f86b49f1c971568e3"
+      },
+      {
+       "question": "Can our team have members from different colleges or universities?",
+       "answer": "**Yes, Cross-college and inter-disciplinary teams are absolutely allowed.** As long as every member is a currently enrolled student, you can team up with anyone you want.",
+       "uuid": "6b5c94e7e8464f67a447eb35d407ff0b"
+      },
+      {
+       "question": "What is the allowed team size?",
+       "answer": "Teams can consist of anywhere from **2 to 4 members**. We highly recommend having a mix of technical developers and creative designers on your squad.",
+       "uuid": "be915bee52e648289797e03fde6e6bdd"
+      },
+      {
+       "question": "Is the hackathon held entirely online or in person?",
+       "answer": "**It is a hybrid event.** The first round is online, where you will build and submit your 50% project prototype in between November 10th to November 16th . **The top 150** shortlisted teams will then be invited to Techno India University, Kolkata, on November 21st for the offline 6-hour hack sprint and live final pitches.",
+       "uuid": "80e2e2a2f3dc438ca0f52c8d50a7e23e"
+      },
+      {
+       "question": "What exactly do we need to submit for the online evaluation round?",
+       "answer": "Your online submission must include a **GitHub repository link** demonstrating at least 50% code completion, a clean and **comprehensive README file** explaining your tool, and a **live video demonstration link** showing your working prototype in action.",
+       "uuid": "01c4322f61944691a090751b3c33d390"
+      },
+      {
+       "question": "What should we bring if our team is shortlisted for the in-person finale?",
+       "answer": "Bring your laptops, chargers, any specialized hardware you need, and a valid **college student ID card**. We will provide the **workspace, power outlets, Wi-Fi, and an AI masterclass to kick off the day.**",
+       "uuid": "af86fc345d5647d981ef2e1134309fbf"
+      }
+     ],
+     "participants_details": [
+      {
+       "profile_image": "https://assets.devfolio.co/users/5c715ac123c043caa0bcd900999201fc/avatar-0f55c200-70fc-4eef-b392-3b65780dfc10.jpeg",
+       "last_name": "Karmakar",
+       "first_name": "Animesh",
+       "uuid": "5c715ac123c043caa0bcd900999201fc",
+       "username": "animesh207"
+      },
+      {
+       "profile_image": "https://assets.devfolio.co/users/15c6be57e8324b02b35e9f70a044974d/avatar-e9a5226f-48b4-4e3b-afc9-ea90f0228b88.jpeg",
+       "last_name": "Mallick",
+       "first_name": "Deb",
+       "uuid": "15c6be57e8324b02b35e9f70a044974d",
+       "username": "deb7679"
+      },
+      {
+       "profile_image": "https://assets.devfolio.co/users/b2784210203e45eeb97fbe20a9dbd16d/avatar-8e4a75c9-c377-4cfd-83c2-fcbf63eaaecb.jpeg",
+       "last_name": "Shaw",
+       "first_name": "Puskar",
+       "uuid": "b2784210203e45eeb97fbe20a9dbd16d",
+       "username": "puskarshaw"
+      }
+     ],
+     "team_size": 4,
+     "verified": true,
+     "prizes": [],
+     "projects_submitted": 0,
+     "name": "GeNarrative Clash",
+     "tagline": "Where Generative AI Meets Human Creativity: Kolkata's Ultimate Prompt Engineering Challenge",
+     "location": "Techno India University, EM Block, Sector V, Bidhannagar, Kolkata, West Bengal 700091, India",
+     "judges": [],
+     "cover_img": "https://assets.devfolio.co/hackathons/40f5203a0b9842038b51dd3f73236690/assets/cover/38.png",
+     "desc": "# GeNarrative Clash 2026\n*Where Generative AI Meets Human Creativity*\n\nAre you ready to redefine how stories are told, music is composed, and digital art is created? **GeNarrative Clash** is Kolkata's premier Prompt Engineering & AI Building Challenge, organized by the GeeksforGeeks Student Chapter at Techno India University.\n\n---\n\n### \ud83d\ude80 Hands-On AI & API Masterclass (Included!)\nDon't worry if you are new to AI development! Before the live challenge kicks off, every participant gets access to an exclusive **1-Hour Hands-On Masterclass on AI Development & API Integration**. Learn how to harness cutting-edge LLMs, query GenAI APIs, and leverage rapid prototyping tools so you can build a solid, production-ready product with confidence.\n\n---\n\n### \ud83c\udf81 Perks, Bounties & Swag\n* **Cash Bounties & Prize Pool:** Generous rewards or prizes for top-performing teams and winners.\n* **Exclusive Swags:** Official sponsor goodies for top 12 finalists.\n* **Certificates for All:** Official certificates of participation and achievement for all attending hackers.\n\n---\n\n### \ud83c\udfa8 The Challenge: Empowering the Creative Artist (Open Track)\nGenerative AI shouldn't replace human creators, it should supercharge th",
+     "status": "publish",
+     "user_hackathon": null,
+     "user_hackathon_reminder": null
+    }
+   }
+  ]
+ }
+}

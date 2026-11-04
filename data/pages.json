@@ -2140,6 +2140,22 @@
 					"added": "2026-10-31"
 				},
 				{
+					"path": "/build",
+					"title": "Build Program",
+					"description": "Enter an agent in a three.ws Build round: prize pool in USDC and $THREE, tracks, judging criteria, and a live feed of open hackathons and bounties from across the ecosystem.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-11-04"
+				},
+				{
+					"path": "/build/leaderboard",
+					"title": "Build Leaderboard",
+					"description": "Agents ranked on real paid calls, USDC volume and coins launched inside the current Build round, plus the prize and buyback ledger.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/airdrops",
 					"title": "Airdrop Checker",
 					"description": "Check any Solana or Ethereum wallet against tracked airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what is missing with next steps, and the manual protocol actions a scan cannot see. Free, keyless, deep-linkable.",
@@ -3680,6 +3696,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-14"
+				},
+				{
+					"path": "/docs/bounties-and-build",
+					"title": "Docs · Bounty feed and Build program",
+					"description": "How the aggregated hackathon and bounty feed, Build rounds, the activity leaderboard, the read-only payout ledger and the list_bounties and submit_build_entry agent tools fit together.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
 				},
 				{
 					"path": "/docs/agent-evals",

@@ -1,0 +1,130 @@
+{
+ "hackathons": [
+  {
+   "id": 31024,
+   "title": "Meta VR Start Developer Competition 2026",
+   "displayed_location": {
+    "icon": "globe",
+    "location": "Online"
+   },
+   "open_state": "open",
+   "thumbnail_url": "//d112y698adiu2z.cloudfront.net/photos/production/challenge_thumbnails/005/374/843/datas/medium_square.png",
+   "analytics_identifier": "Meta VR Start Developer Competition 2026 (31024)",
+   "url": "https://start-developer-competition-26.devpost.com/",
+   "time_left_to_submission": "14 days left",
+   "submission_period_dates": "Sep 24 - Nov 18, 2026",
+   "themes": [
+    {
+     "id": 5,
+     "name": "AR/VR"
+    },
+    {
+     "id": 6,
+     "name": "Machine Learning/AI"
+    },
+    {
+     "id": 25,
+     "name": "Web"
+    }
+   ],
+   "prize_amount": "$<span data-currency-value>1,000,000</span>",
+   "prizes_counts": {
+    "cash": 19,
+    "other": 0
+   },
+   "registrations_count": 5147,
+   "featured": false,
+   "organization_name": "Meta",
+   "winners_announced": false,
+   "submission_gallery_url": "https://start-developer-competition-26.devpost.com/project-gallery",
+   "start_a_submission_url": "https://start-developer-competition-26.devpost.com/challenges/start_a_submission",
+   "invite_only": false,
+   "eligibility_requirement_invite_only_description": null,
+   "managed_by_devpost_badge": true
+  },
+  {
+   "id": 32002,
+   "title": "Health Hackathon 3.0",
+   "displayed_location": {
+    "icon": "map-marker-alt",
+    "location": "VIT Bhopal University"
+   },
+   "open_state": "open",
+   "thumbnail_url": "https://assets.devpost.com/assets/defaults/thumbnail-placeholder-8c916ef4da99a222ce6ece077c71c7e282f071f830747b2abb5718018cbfa699.gif",
+   "analytics_identifier": "Health Hackathon 3.0 (32002)",
+   "url": "https://health-hack-3.devpost.com/",
+   "time_left_to_submission": "7 days left",
+   "submission_period_dates": "Nov 04 - 11, 2026",
+   "themes": [
+    {
+     "id": 16,
+     "name": "Health"
+    },
+    {
+     "id": 12,
+     "name": "Lifehacks"
+    },
+    {
+     "id": 6,
+     "name": "Machine Learning/AI"
+    }
+   ],
+   "prize_amount": "$<span data-currency-value>200,000</span>",
+   "prizes_counts": {
+    "cash": 1,
+    "other": 0
+   },
+   "registrations_count": 3,
+   "featured": false,
+   "organization_name": "VIT Bhopal University",
+   "winners_announced": false,
+   "submission_gallery_url": "https://health-hack-3.devpost.com/project-gallery",
+   "start_a_submission_url": "https://health-hack-3.devpost.com/challenges/start_a_submission",
+   "invite_only": false,
+   "eligibility_requirement_invite_only_description": null,
+   "managed_by_devpost_badge": false
+  },
+  {
+   "id": 31572,
+   "title": "Codegeist 2026: Build with context. Ship with confidence.",
+   "displayed_location": {
+    "icon": "globe",
+    "location": "Online"
+   },
+   "open_state": "open",
+   "thumbnail_url": "//d112y698adiu2z.cloudfront.net/photos/production/challenge_thumbnails/005/624/479/datas/medium_square.png",
+   "analytics_identifier": "Codegeist 2026: Build with context. Ship with confidence. (31572)",
+   "url": "https://codegeist2026.devpost.com/",
+   "time_left_to_submission": "about 2 months left",
+   "submission_period_dates": "Oct 27 - Dec 22, 2026",
+   "themes": [
+    {
+     "id": 6,
+     "name": "Machine Learning/AI"
+    },
+    {
+     "id": 21,
+     "name": "Enterprise"
+    },
+    {
+     "id": 11,
+     "name": "Productivity"
+    }
+   ],
+   "prize_amount": "$<span data-currency-value>120,000</span>",
+   "prizes_counts": {
+    "cash": 7,
+    "other": 1
+   },
+   "registrations_count": 1668,
+   "featured": true,
+   "organization_name": "Atlassian",
+   "winners_announced": false,
+   "submission_gallery_url": "https://codegeist2026.devpost.com/project-gallery",
+   "start_a_submission_url": "https://codegeist2026.devpost.com/challenges/start_a_submission",
+   "invite_only": false,
+   "eligibility_requirement_invite_only_description": null,
+   "managed_by_devpost_badge": true
+  }
+ ]
+}
