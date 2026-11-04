@@ -59,7 +59,7 @@ import {
 } from '../../multiplayer/src/build-limits.js';
 import { proxiedImageURL } from '../ipfs.js';
 import {
-	loadManifest, getEmoteDefs, getAllEmoteDefs, resolveAvatarUrl, buildAvatar, releaseAvatar, playEmoteClip,
+	loadManifest, getEmoteDefs, getAllEmoteDefs, resolveAvatar, resolveAvatarUrl, buildAvatar, releaseAvatar, playEmoteClip,
 	crossfadeToMotion, CLIP_IDLE, CLIP_WALK,
 } from './avatar-rig.js';
 import { GUEST_SENTINEL, uploadPendingGuestAvatar, getPlayCosmetics, setPlayCosmetics, setPlayAvatar } from './play-handoff.js';
@@ -103,6 +103,7 @@ import { VehicleManager } from './vehicles.js';
 import { CombatSystem } from './combat-system.js';
 import { DanceOffClient } from './dance-off.js';
 import { PartyClient } from './party.js';
+import { netErrorMessage } from './net-error.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked, exactly the `?bg=transparent` embed case (e.g. the IBM
@@ -1650,7 +1651,8 @@ export class CoinCommunities {
 		// that avatar for the session without overwriting the player's saved pick;
 		// otherwise use whatever they selected in the lobby (preset / paste / upload).
 		const avatarInput = this._urlAvatar || this.ui.getAvatar();
-		const url = await resolveAvatarUrl(avatarInput);
+		const resolved = await resolveAvatar(avatarInput);
+		const url = resolved.url;
 		// Kick off the local avatar build (GLB + locomotion clips only; emotes
 		// lazy-load on first use via playEmoteClip) WITHOUT awaiting it here. The
 		// room join below runs concurrently, so a slow avatar download no longer
@@ -1999,7 +2001,9 @@ export class CoinCommunities {
 		this._applyLocalCosmetics(getPlayCosmetics());
 		// Don't silently swap a broken model for the stand-in: tell the player so
 		// they know to pick another avatar.
-		if (avatarFallback && avatarInput !== GUEST_SENTINEL) {
+		if (resolved.fallback) {
+			this.ui.toast('Couldn’t find that avatar, so you are wearing the default for now. Pick another from the avatar menu.', 'warn');
+		} else if (avatarFallback && avatarInput !== GUEST_SENTINEL) {
 			this.ui.toast('Couldn’t load that avatar, so a stand-in is filling in. Try another in the lobby.', 'warn');
 		}
 		// Second warm pass: the avatar's skinned materials (and its cosmetics) are
@@ -3238,7 +3242,14 @@ export class CoinCommunities {
 		const epoch = this._enterEpoch;
 		const token = (this._avatarSwapToken = (this._avatarSwapToken || 0) + 1);
 		const isGuest = value === GUEST_SENTINEL;
-		const url = await resolveAvatarUrl(value);
+		const resolved = await resolveAvatar(value);
+		// The id did not resolve (offline, deleted): keep the current avatar
+		// rather than silently swapping the player into the default.
+		if (resolved.fallback) {
+			const stale = token !== this._avatarSwapToken || epoch !== this._enterEpoch || this.localRig !== rig;
+			return { ok: false, reason: stale ? 'stale' : 'load-failed' };
+		}
+		const url = resolved.url;
 		const staging = new Group();
 		const anim = new AnimationManager();
 		const built = await buildAvatar(staging, url, anim, { clips: 'locomotion' });
@@ -4273,7 +4284,14 @@ export class CoinCommunities {
 		}
 		// Only reachable from forge entry points, so the lane client loads with
 		// the first forge rather than with the world.
-		const { forgeWorldProp, forgePropName } = await import('./forge-prop.js');
+		let forgeMod;
+		try {
+			forgeMod = await import('./forge-prop.js');
+		} catch (err) {
+			this.ui.toast(netErrorMessage(err, 'Forge could not start. Check your connection and try again.'), 'error');
+			return;
+		}
+		const { forgeWorldProp, forgePropName } = forgeMod;
 		if (session.busy) return;
 		const job = session.begin({ prompt, file, name: forgePropName(prompt, file) });
 		if (pose) session.setPose(pose);

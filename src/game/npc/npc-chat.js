@@ -17,6 +17,7 @@
 import { SERVICES, openService, isServicePanelOpen } from './npc-services.js';
 import { isHomeTown } from '../home-town.js';
 import { log } from '../../shared/log.js';
+import { netErrorMessage } from '../net-error.js';
 
 const THREE = '$three';
 const ENDPOINT = '/api/brain/chat';
@@ -99,7 +100,12 @@ function buildSystemPrompt({ npc, svc, persona, greeting, world }) {
 }
 
 // ── SSE streaming (matches the /api/brain/chat protocol used by the brain page) ─
-async function streamReply({ provider, messages, system, signal, onChunk, onDone, onError }) {
+const MODEL_UNAVAILABLE = 'That model isn’t available. Pick another from the menu.';
+
+// Every failure reaches onError as a sentence a player can act on (never a raw
+// status or browser network string), and a failed reply never also fires
+// onDone, which would paint "They went quiet" over the real reason.
+export async function streamReply({ provider, messages, system, signal, onChunk, onDone, onError }) {
 	let res;
 	try {
 		res = await fetch(ENDPOINT, {
@@ -109,13 +115,14 @@ async function streamReply({ provider, messages, system, signal, onChunk, onDone
 			body: JSON.stringify({ provider, messages, system, maxTokens: MAX_TOKENS }),
 		});
 	} catch (err) {
-		if (err?.name !== 'AbortError') onError?.(err?.message || 'Network error');
+		if (err?.name !== 'AbortError') onError?.(netErrorMessage(err, 'Couldn’t reach them. Try again.'));
 		return;
 	}
 	if (!res.ok || !res.body) {
-		let msg = `HTTP ${res.status}`;
-		try { const j = await res.json(); msg = j.message || j.error || msg; } catch { /* non-JSON body */ }
-		onError?.(msg);
+		let msg = '';
+		try { const j = await res.json(); msg = j.message || j.error || ''; } catch { /* non-JSON body */ }
+		if (res.status === 503 || /not configured|api key/i.test(msg)) onError?.(MODEL_UNAVAILABLE);
+		else onError?.(netErrorMessage({ status: res.status, message: msg }, 'They couldn’t answer that. Try again.'));
 		return;
 	}
 
@@ -123,6 +130,7 @@ async function streamReply({ provider, messages, system, signal, onChunk, onDone
 	const decoder = new TextDecoder();
 	let buf = '';
 	let gotDone = false;
+	let errored = false;
 	try {
 		for (;;) {
 			const { done, value } = await reader.read();
@@ -143,14 +151,20 @@ async function streamReply({ provider, messages, system, signal, onChunk, onDone
 					gotDone = true;
 					try { onDone?.(JSON.parse(data)); } catch { onDone?.({}); }
 				} else if (evType === 'error') {
-					try { onError?.(JSON.parse(data).message || 'upstream error'); } catch { onError?.('upstream error'); }
+					errored = true;
+					let upstream = '';
+					try { upstream = JSON.parse(data).message || ''; } catch { /* malformed error frame */ }
+					onError?.(/not configured|api key/i.test(upstream) ? MODEL_UNAVAILABLE : 'They lost the thread. Try again.');
 				}
 			}
 		}
 	} catch (err) {
-		if (err?.name !== 'AbortError') onError?.(err?.message || 'stream error');
+		if (err?.name !== 'AbortError') {
+			errored = true;
+			onError?.(netErrorMessage(err, 'They lost the thread. Try again.'));
+		}
 	} finally {
-		if (!gotDone) onDone?.({});
+		if (!gotDone && !errored) onDone?.({});
 	}
 }
 
@@ -308,9 +322,7 @@ export function openChat(npc, { ui, serviceId, persona, greeting, world, role, o
 			onError: (msg) => {
 				target.parentElement.classList.remove('is-typing');
 				target.parentElement.classList.add('is-error');
-				target.textContent = /not configured|HTTP 503|api key/i.test(msg)
-					? 'That model isn’t available — pick another from the menu.'
-					: `Couldn’t reach them: ${msg}`;
+				target.textContent = msg;
 				setBusy(false);
 				input.focus();
 			},

@@ -14,6 +14,35 @@
 
 import { aixbtPayHud } from './aixbt-pay-hud.js';
 import { shortAddress } from '../../shared/address.js';
+import { netErrorMessage, isNetworkFailure } from '../net-error.js';
+
+// Pay-demo stages, in the order `active` walks them. Before the challenge
+// arrives nothing has been signed. While 'built' is pending the server is
+// signing: its own error report there is a clean rollback, but a dropped
+// connection could have cut off a transfer already on its way. From 'verified'
+// on the transfer is out of our hands either way.
+const PRE_SIGN_STAGES = new Set(['idle', 'challenge']);
+
+function sentence(text) {
+	const s = String(text || '').trim();
+	return /[.!?]$/.test(s) ? s : `${s}.`;
+}
+
+// The player-facing line for a failed pay-demo run. `noFunds` is only true when
+// the failure provably happened before a signed transfer left the server.
+export function paymentFailureCopy(err, stage) {
+	const rolledBack = PRE_SIGN_STAGES.has(stage) || (stage === 'built' && !isNetworkFailure(err));
+	if (!rolledBack) {
+		return {
+			text: 'Connection lost after the transfer was signed. It may still settle, so check your wallet before trying again.',
+			noFunds: false,
+		};
+	}
+	const reason = Number.isFinite(err?.status) && err.status < 500 && err?.message
+		? err.message
+		: netErrorMessage(err, 'The payment service did not answer.');
+	return { text: `Payment didn't go through: ${sentence(reason)} No funds moved.`, noFunds: true };
+}
 
 // ── tiny DOM helper (mirrors npc-services.js conventions) ─────────────────────
 function el(tag, attrs, kids) {
@@ -784,6 +813,7 @@ export function openAixbtTerminal(npc, { ui } = {}) {
 				const notWired = res.status === 404 || code === 'config_missing';
 				throw Object.assign(new Error(msg), {
 					code: notWired ? 'pay_not_configured' : `http_${res.status}`,
+					status: res.status,
 				});
 			}
 			for await (const { event, data } of sseEvents(res)) {
@@ -824,18 +854,14 @@ export function openAixbtTerminal(npc, { ui } = {}) {
 			paint(active, active);
 			tail.textContent = '';
 			const configErr = err?.code === 'pay_not_configured';
-			aixbtPayHud.fail(
-				configErr
-					? 'Payer not wired up on this deployment.'
-					: `Rolled back: ${err.message}. No funds moved.`,
-				active,
-			);
+			const copy = paymentFailureCopy(err, active);
+			aixbtPayHud.fail(configErr ? 'Payer not wired up on this deployment.' : copy.text, active);
 			tail.appendChild(
 				el('div', {
 					class: 'aixbt-pay-note is-err',
 					text: configErr
 						? "The on-chain payer isn't wired up on this deployment yet."
-						: `Payment didn't go through: ${err.message}. No funds moved.`,
+						: copy.text,
 				}),
 			);
 			if (!configErr)
