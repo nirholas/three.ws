@@ -28,6 +28,12 @@
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
 			"maxDuration": 30
 		},
+		"api/cron/hire-blink-sweep.js": {
+			"maxDuration": 120
+		},
+		"api/actions/agent-hire.js": {
+			"maxDuration": 60
+		},
 		"api/agents/[id].js": {
 			"maxDuration": 45
 		},
@@ -6037,6 +6043,10 @@
 			"dest": "/api/agent-share?id=$1"
 		},
 		{
+			"src": "/agents/([^/.]+)/hire/?",
+			"dest": "/api/agent-share?id=$1&hire=1"
+		},
+		{
 			"src": "/agents/([^/.]+)/mind/?",
 			"dest": "/agent-mind.html"
 		},
@@ -7282,6 +7292,10 @@
 		},
 		{
 			"path": "/api/cron/payment-session-sweep",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/hire-blink-sweep",
 			"schedule": "*/5 * * * *"
 		},
 		{
