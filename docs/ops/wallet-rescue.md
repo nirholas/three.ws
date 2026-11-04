@@ -4,6 +4,8 @@ When a wallet key leaks, a sweeper bot drains anything that lands in that wallet
 
 The `wallets-leak-scan` cron ([api/cron/wallets-leak-scan.js](../../api/cron/wallets-leak-scan.js)) raises the alarm and links here.
 
+This runbook covers a leaked key. When a customer instead asks support to release a balance stranded in an agent wallet, ownership is proven by signature first: follow [stranded-wallet-ownership-proof.md](../support/stranded-wallet-ownership-proof.md) (`npm run verify:wallet-ownership`), and pay out only to the login wallet it prints.
+
 ## What the bundle does
 
 Up to five transactions, each self-contained:
