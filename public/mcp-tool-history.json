@@ -1142,6 +1142,20 @@
 				"removed": 0,
 				"total": 714
 			}
+		},
+		{
+			"date": "2026-11-04",
+			"added": {
+				"mcp-agent": [
+					"get_learning_status"
+				]
+			},
+			"removed": {},
+			"counts": {
+				"added": 1,
+				"removed": 0,
+				"total": 715
+			}
 		}
 	]
 }
