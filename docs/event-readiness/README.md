@@ -153,4 +153,15 @@ Measured on a shared dev host (32 cores, load average 35 to 115 from other agent
 
 Reading the 25-client numbers: the server cost is the real figure (5% of one core). The 25-client join time (643 s), emote fan-out (3.3 s) and client frame time (237 ms) measure 25 headless Chromium pages competing for a saturated host, not the server; at 4 clients on the same host the fan-out is 122 ms and frames run at 60 fps. The server's `/health` reports liveness only, so tick time is not exposed and was not measured.
 
+### Results, 2026-11-04 (HEAD `71cb403ea`, Cloud Build `E2_HIGHCPU_32`)
+
+Rerun on a quiet build VM because the shared dev host sat at load average 200. The upload left out `public/animations` to stay small, so the only console errors were 404s for `animations/clips/idle.json` and `walk.json`; every functional check is the real figure.
+
+| Run | Result |
+|-----|--------|
+| `play-net-audit.mjs` (120 s background) | join 117 ms, movement, chat, emote 107 ms, handshake retry all pass. Disconnect: the server reaped the session during the 10 s outage, so the client rejoined fresh 11.4 s after the network returned, no ghost. Background: frozen 120 s, same session kept on resume |
+| `play-net-audit.mjs --quick --seed-fault` | fails the disconnect check as designed |
+| `play-net-audit.mjs --only scale --clients 25` | all 25 joined in 11.8 s and saw the full room; server CPU 5% of one core at about 14 Hz movement, fan-out to 24 peers 148 ms, client frame 16.7 ms |
+| `play-event-window-audit.mjs` | 6/6 pass |
+
 Capacity assumption: `multiplayer/deploy-cloudrun.sh` pins the service to max-instances 1 (4 vCPU, 8 GiB, concurrency 1000) while `REDIS_URI` is unset, so every player in a coin world lands on the same instance. At about 5% of one core per 25 moving players the single instance has headroom well past the meetup's expected crowd; going above one instance needs `REDIS_URI` for the shared room registry first.
