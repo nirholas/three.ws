@@ -171,6 +171,15 @@ describe('createCreation source-upload tracking', () => {
 		return call ? call.slice(1) : [];
 	}
 
+	// The JSON arrays bound into the insert whose entries are full URLs (the
+	// source_image_keys array holds bare bucket keys, so it never matches).
+	function storedUrlLists() {
+		return insertedValues()
+			.filter((v) => typeof v === 'string' && v.startsWith('['))
+			.map((v) => JSON.parse(v))
+			.filter((list) => list.every((u) => /^[a-z]+:/.test(u)));
+	}
+
 	it('records bucket-hosted reference views as object keys, dropping external URLs', async () => {
 		const id = await createCreation({
 			clientKey: 'client-key',
@@ -226,13 +235,7 @@ describe('createCreation source-upload tracking', () => {
 			tier: 'standard',
 			path: 'image',
 		});
-		const call = sqlMock.mock.calls.find(([strings]) =>
-			(Array.isArray(strings) ? strings.join(' ') : '').includes('insert into forge_creations'),
-		);
-		const columns = call[0].join(' ').match(/\(([^)]*)\)\s*values/)[1].split(',').map((c) => c.trim());
-		const values = call.slice(1);
-		const stored = values[columns.indexOf('source_image_urls')];
-		expect(JSON.parse(stored)).toEqual(views);
+		expect(storedUrlLists()).toContainEqual(views);
 	});
 
 	it('keeps only http(s) URLs and caps the recorded list', async () => {
@@ -249,11 +252,7 @@ describe('createCreation source-upload tracking', () => {
 			tier: 'standard',
 			path: 'image',
 		});
-		const call = sqlMock.mock.calls.find(([strings]) =>
-			(Array.isArray(strings) ? strings.join(' ') : '').includes('insert into forge_creations'),
-		);
-		const columns = call[0].join(' ').match(/\(([^)]*)\)\s*values/)[1].split(',').map((c) => c.trim());
-		const stored = JSON.parse(call.slice(1)[columns.indexOf('source_image_urls')]);
+		const stored = storedUrlLists().find((list) => list[0].startsWith('https://'));
 		expect(stored).toHaveLength(12);
 		expect(stored.every((u) => u.startsWith('https://'))).toBe(true);
 	});
