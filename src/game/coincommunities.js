@@ -745,6 +745,7 @@ export class CoinCommunities {
 			onPick: (i) => { this.buildType = i; this._refreshGhost(); },
 			onModeChange: () => this._refreshGhost(),
 			onClearArea: (scope) => this._onClearArea(scope),
+			onVisibility: () => this._openVisibility(),
 		});
 		// Build permissions (R19), refreshed from the server's build-perms snapshot:
 		// the player's per-world block cap + usage, and whether they're the coin creator
@@ -1913,7 +1914,6 @@ export class CoinCommunities {
 			ensureHolderPass: () => this._passHolderGate(this.coin),
 			returningMatchKey: this._urlWar,
 		});
-		// One echo per return: clear the key so re-entering another world from the
 		// F17: the Plaza Stage, a hosted Living Stage in the plaza. Only worlds with a
 		// coin mint can derive a stage id. The landmark is geometry + a marquee + one
 		// distance check per frame; the show client (socket, host avatar, voice)
@@ -1928,6 +1928,7 @@ export class CoinCommunities {
 				isPowerSaver: () => !!this._powerSaver,
 			})
 			: null;
+		// One echo per return: clear the key so re-entering another world from the
 		// lobby does not replay a battle the player already saw.
 		this._urlWar = '';
 		this.net.on('profile', (snap) => { this.playSystems?.setProfile(snap); this._onCosmeticsProfile(snap); });
@@ -2442,8 +2443,8 @@ export class CoinCommunities {
 		if (this.gachaStation) { this.gachaStation.dispose(); this.gachaStation = null; }
 		if (this.signatureWall) { this.signatureWall.dispose(); this.signatureWall = null; }
 		if (this.warPortal) { this.warPortal.dispose(); this.warPortal = null; }
-		this._disposeFriends();
 		if (this.plazaStage) { this.plazaStage.dispose(); this.plazaStage = null; }
+		this._disposeFriends();
 		this._disposeAvatarPanel();
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
@@ -4768,10 +4769,16 @@ export class CoinCommunities {
 	// syncs in the meantime restores the same doc itself, so retries stop there;
 	// only when every attempt failed and no room has it is the player told.
 	_loadWorldStore(store, epoch, attempt) {
-		store.load().then(({ doc, error }) => {
+		store.load().then(({ doc, error, hidden }) => {
 			// The player may have left (or hopped coins) while the read was in flight.
 			if (this._worldStore !== store || epoch !== this._enterEpoch) return;
 			if (!error) { this._restorePersistedBuild(doc); return; }
+			// A private world that is not shared with this player: no retry can help,
+			// and the room (which has its own service access) still runs the live world.
+			if (hidden) {
+				this.ui?.toast('This world’s saved build is private. Ask its owner to invite you to see it.', 'info');
+				return;
+			}
 			// Designed degradation: the world opens without its persisted props and
 			// the store keeps serving saves, so this is expected-path telemetry
 			// rather than a warning, matching _loadCoins above.
@@ -4865,6 +4872,23 @@ export class CoinCommunities {
 		this.ui.toast(reason === 'signin'
 			? 'Sign in to save what you build here, until then it only exists in this tab.'
 			: 'This world belongs to someone else, so your offline build can’t be saved to it.', 'warn');
+	}
+
+	// The "Who can see this world" dialog (Silver `worlds.private`). Loaded on
+	// demand so the dialog and its $THREE upsell never weigh on world entry.
+	async _openVisibility() {
+		const store = this._worldStore;
+		if (!store) {
+			this.ui.toast('Join a world first, then you can choose who sees it.', 'info');
+			return;
+		}
+		try {
+			const { openWorldVisibility } = await import('./world-visibility.js');
+			openWorldVisibility({ store, toast: (msg, kind) => this.ui.toast(msg, kind) });
+		} catch (err) {
+			log.warn('[coincommunities] visibility dialog failed to load:', err?.message || err);
+			this.ui.toast('Couldn’t open the visibility settings. Reload and try again.', 'warn');
+		}
 	}
 
 	_onWorldSaveError({ reason }) {
@@ -5404,6 +5428,7 @@ export class CoinCommunities {
 			this.gachaStation?.tick(dt);
 			this.signatureWall?.tick(dt);
 			this.warPortal?.tick(dt);
+			this.plazaStage?.tick(dt);
 			this.agentCommerce?.tick(dt);
 			this.intelKiosk?.tick(dt);
 			if (this.worldLife) { this.worldLife.setRealPeers(this.remotes.size); this.worldLife.tick(dt); }
@@ -5428,7 +5453,6 @@ export class CoinCommunities {
 				}
 			}
 		}
-			this.plazaStage?.tick(dt);
 		this._tickEnv(dt);
 		this._updateCamera(dt);
 		// Drawing into a lost context throws GL errors on every call and can keep

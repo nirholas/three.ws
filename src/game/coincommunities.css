@@ -2080,6 +2080,12 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     background: rgba(255, 255, 255, 0.12);
     border-color: rgba(255, 255, 255, 0.34);
 }
+.cc-build-mod-btn:active {
+    background: rgba(255, 255, 255, 0.2);
+}
+.cc-build-vis {
+    align-self: flex-start;
+}
 .cc-build-mod-btn:focus-visible {
     outline: 2px solid #66ff8c;
     outline-offset: 2px;

@@ -8,6 +8,8 @@
 // it belongs in `planned`, which every surface renders with the Planned flag.
 
 import { describe, it, expect } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { TIERS } from '../api/_lib/three-tier.js';
 import { GATED_FEATURES } from '../api/_lib/three-access.js';
 
@@ -61,5 +63,32 @@ describe('$THREE tier ladder honesty', () => {
 		expect(GATED_FEATURES['forge.gameready'].enforced).toBe(true);
 		expect(GATED_FEATURES['forge.high'].minLevel).toBe(1);
 		expect(GATED_FEATURES['forge.gameready'].minLevel).toBe(1);
+	});
+
+	it('marks private worlds enforced at Silver and lists them as a delivered perk', () => {
+		expect(GATED_FEATURES['worlds.private'].enforced).toBe(true);
+		expect(GATED_FEATURES['worlds.private'].minLevel).toBe(2);
+		const silver = TIERS.find((t) => t.id === 'silver');
+		expect(silver.perks.map(norm).some((p) => p.includes('private'))).toBe(true);
+		expect(silver.planned.map(norm).some((p) => p.includes('private'))).toBe(false);
+	});
+
+	it('wires every enforced feature to a requireFeatureAccess call site', () => {
+		const files = [];
+		const walk = (dir) => {
+			for (const e of readdirSync(dir, { withFileTypes: true })) {
+				const p = join(dir, e.name);
+				if (e.isDirectory()) walk(p);
+				else if (p.endsWith('.js')) files.push(p);
+			}
+		};
+		walk(join(process.cwd(), 'api'));
+		const source = files.map((f) => readFileSync(f, 'utf8')).join('\n');
+		for (const [id, f] of Object.entries(GATED_FEATURES)) {
+			if (!f.enforced) continue;
+			const needle = `'${id}'`;
+			const wired = /(requireFeatureAccess|checkFeatureAccess)\(/.test(source) && source.includes(needle);
+			expect(wired, `${id} is enforced but no gate call names it`).toBe(true);
+		}
 	});
 });

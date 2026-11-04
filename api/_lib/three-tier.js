@@ -60,8 +60,8 @@ export const TIERS = Object.freeze([
 		minUsd: 100,
 		discountBps: 1000, // 10%
 		rateMultiplier: 3,
-		perks: Object.freeze(['10% off all $THREE compute', '3× free generation quota']),
-		planned: Object.freeze(['Private worlds', 'Priority MCP routing']),
+		perks: Object.freeze(['10% off all $THREE compute', '3× free generation quota', 'Private, invite-only worlds']),
+		planned: Object.freeze(['Priority MCP routing']),
 	}),
 	Object.freeze({
 		level: 3,

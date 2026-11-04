@@ -121,8 +121,8 @@ describe('GET /api/three/access — full matrix (anonymous)', () => {
 		const res = await get('/api/three/access');
 		const byId = Object.fromEntries(res.json.features.map((f) => [f.feature, f]));
 		// Only the wired forge.high gate is enforced today; the rest are planned.
-		expect(byId['forge.high'].enforced).toBe(true);
-		expect(byId['worlds.private'].enforced).toBe(false);
+	// forge.high and worlds.private are wired; the rest are planned.
+		expect(byId['worlds.private'].enforced).toBe(true);
 		expect(byId['names.first_dibs'].enforced).toBe(false);
 	});
 });

@@ -241,6 +241,8 @@ describe('world-store: loadWorldMeta', () => {
 			etag: saved.etag,
 			size: saved.size,
 			ownerId: 'alice',
+			visibility: 'public',
+			invitees: [],
 			updatedAt: saved.updatedAt,
 		});
 		expect(meta.doc).toBeUndefined();
@@ -329,5 +331,36 @@ describe('world-service-auth: only the multiplayer server can forge a service wr
 		expect(await verifyWorldServiceToken('nope')).toBeNull();
 		expect(await verifyWorldServiceToken('')).toBeNull();
 		expect(await verifyWorldServiceToken(null)).toBeNull();
+	});
+});
+
+describe('world-store: private read gate and access changes', () => {
+	it('canReadWorld: public is open; private reads only for service, owner and invitees', async () => {
+		const { canReadWorld } = await import('../api/_lib/world-store.js');
+		expect(canReadWorld({ visibility: 'public' })).toBe(true);
+		const priv = { visibility: 'private', ownerId: 'o', invitees: ['i'] };
+		expect(canReadWorld({ ...priv })).toBe(false);
+		expect(canReadWorld({ ...priv, account: 'x' })).toBe(false);
+		expect(canReadWorld({ ...priv, account: 'o' })).toBe(true);
+		expect(canReadWorld({ ...priv, account: 'i' })).toBe(true);
+		expect(canReadWorld({ ...priv, isService: true })).toBe(true);
+		// An unowned private world is service-managed: no account is its owner.
+		expect(canReadWorld({ visibility: 'private', ownerId: null, invitees: [], account: 'o' })).toBe(false);
+	});
+
+	it('setWorldAccess caps invitees and reports an unsaved world as null', async () => {
+		const { makeWorldBackend } = await import('./helpers/world-memory-backend.js');
+		const { MAX_INVITEES } = await import('../api/_lib/world-store.js');
+		const b = makeWorldBackend();
+		const s = createWorldStore(b);
+		expect(await s.setWorldAccess({ worldId: 'ghost', visibility: 'private' })).toBeNull();
+		await s.saveWorld({ worldId: 'w', doc: {}, writer: 'o', owner: 'o', ifMatch: '*' });
+		const ids = Array.from({ length: MAX_INVITEES }, (_, i) => `u${i}`);
+		const full = await s.setWorldAccess({ worldId: 'w', visibility: 'private', invite: ids });
+		expect(full.invitees).toHaveLength(MAX_INVITEES);
+		await expect(s.setWorldAccess({ worldId: 'w', invite: ['extra'] })).rejects.toMatchObject({ code: 'invitee_limit', status: 409 });
+		const loaded = await s.loadWorld('w');
+		expect(loaded.visibility).toBe('private');
+		expect(loaded.invitees).toHaveLength(MAX_INVITEES);
 	});
 });

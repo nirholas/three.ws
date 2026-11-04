@@ -170,7 +170,7 @@ how an unbuilt feature ends up reading as a benefit, so when a gate ships, flip 
 | `forge.high` — High-quality generation (200k poly + PBR) | Bronze | **Live** | yes | [`api/forge.js`](../api/forge.js) |
 | `forge.gameready` — Game-ready export (Unity/Unreal) | Bronze | **Live** | yes | [`api/forge-gameready.js`](../api/forge-gameready.js) |
 | `forge.keep`: Keep a Forge generation (original file) | Bronze | Off by default (`enforced: false`) | per-tier `forge.keep.<tier>` | [`api/forge-keep.js`](../api/forge-keep.js) |
-| `worlds.private` — Private, invite-only worlds | Silver | Planned | — | partial (no visibility dim yet) |
+| `worlds.private`: Private, invite-only worlds | Silver | **Live** | no (hold-only) | [`api/world/[action].js`](../api/world/[action].js), [`api/_lib/world-store.js`](../api/_lib/world-store.js) |
 | `mcp.priority` — Priority MCP routing | Silver | Planned | — | not built (no shared queue) |
 | `worlds.branded` — Branded worlds + custom environments | Gold | Planned | — | not built |
 | `drops.early` — Early access to drops | Gold | Planned | — | drop endpoints exist |
@@ -277,49 +277,29 @@ changes — the access endpoint and `/three` pick it up automatically.
 
 ---
 
-## Spec: `worlds.private` (first activation)
+## How `worlds.private` works (live)
 
-Today worlds are **owner-based with no visibility concept**
-([`api/_lib/world-store.js`](../api/_lib/world-store.js),
-[`api/world/[action].js`](../api/world/[action].js)). A world's doc is readable by anyone
-with its id. Making "private" a real perk means adding a visibility dimension and
-enforcing it on read.
+Worlds carry a `visibility` (`public`, `unlisted`, `private`) and an `invitees` list of
+up to 50 user ids, stored on `world_docs` by the unapplied-until-deploy migration
+`api/_lib/migrations/20261105040000_world_private_visibility.sql`. Existing worlds stay
+`public`.
 
-**1. Schema**: a new migration in `api/_lib/migrations/` (timestamp-prefixed, like
-`20261015000000_world_gems.sql`) against the `world_docs` table from
-`2026-06-01-world-docs.sql`:
-
-```sql
-ALTER TABLE world_docs ADD COLUMN IF NOT EXISTS visibility text NOT NULL DEFAULT 'public';
-```
-
-Thread `visibility` through `world-store.js` `saveWorld` / `loadWorld` and the returned
-shape. Default `'public'` so every existing world is untouched.
-
-**2. Create gate** — in `api/world/[action].js` `handleSave`, when a write sets
-`visibility: 'private'`:
-
-```js
-const gate = await requireFeatureAccess(req, res, 'worlds.private', { body });
-if (!gate.ok) return; // 402 three_hold_required (hold-only, Silver+)
-```
-
-Hold-only (no pay-per-use) — a private world is a held perk, not a per-call cost.
-
-**3. Load enforcement** — in `handleLoad`, a `private` world's doc is returned only to its
-owner (or a service-token writer); any other caller gets `403 forbidden`. This is the step
-that makes the perk *real* rather than a label.
-
-**4. Activate** — flip `enforced: true` on `worlds.private` in
-[`three-access.js`](../api/_lib/three-access.js). `/three` auto-flips it to **Live**.
-
-**5. Test** — `tests/world-private-gate.test.js`: non-holder blocked with a 402 on
-private create; Silver holder allowed; private-world load forbidden to a stranger; public
-worlds unaffected.
-
-**6. UI** — a visibility toggle in the world builder, defaulting to public.
-
-**7. Changelog** — a `feature` entry in `data/changelog.json`.
+- **Create or flip to private** (`save`, `visibility` action): gated by
+  `requireFeatureAccess(..., 'worlds.private')`. Hold-only, Silver or above, 402
+  `three_hold_required` otherwise. Going back to public is never gated, so a lapsed
+  holder can always reopen their world.
+- **Read** (`canReadWorld`): a private world loads for its owner, its invitees and the
+  service token. Everyone else gets **404, never 403**, so the world's existence does not
+  leak.
+- **Invites** (`invite`, `uninvite` actions): by username, resolved by
+  `api/_lib/world-invites.js`. Only the owner can change access.
+- **UI**: the world builder has a Visibility button that opens
+  `src/game/world-visibility.js` (public/unlisted/private, invitee list, empty and error
+  states, Silver upsell for non-holders).
+- **Tests**: `tests/world-private-gate.test.js` (402 for non-holders, owner and invitee
+  read, stranger 404, public unaffected).
+- **Known limit**: the realtime room server reads worlds with a service token, so
+  room-level join gating of private worlds is not enforced yet. Document loads are.
 
 ---
 

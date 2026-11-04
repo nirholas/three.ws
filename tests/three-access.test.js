@@ -56,8 +56,8 @@ const PAY_PER_USE = {
 	'drops.early': null,
 	'names.first_dibs': 'name.auction',
 };
-// forge.high (High-tier Forge gate) and forge.gameready (engine-ready export gate)
-// are WIRED today. The rest are planned — registered so the UI can show them, but
+// forge.high (High-tier Forge gate), forge.gameready (engine-ready export gate) and
+// worlds.private (private worlds, api/world/[action].js) are WIRED today. The restare planned, registered so the UI can show them, but
 // not yet enforced anywhere. /three reads this flag to mark each perk "Live" vs
 // "Planned"; pinning it here makes flipping a feature to enforced a deliberate,
 // tested change rather than a silent one.
@@ -65,7 +65,7 @@ const ENFORCED = {
 	'forge.high': true,
 	'forge.gameready': true,
 	'forge.keep': false,
-	'worlds.private': false,
+	'worlds.private': true,
 	'mcp.priority': false,
 	'worlds.branded': false,
 	'drops.early': false,
@@ -111,9 +111,9 @@ describe('registry shape', () => {
 		}
 	});
 
-	it('marks the wired Forge gates enforced today — the rest are planned', () => {
+	it('marks the wired gates enforced today: the rest are planned', () => {
 		const enforced = FEATURE_IDS.filter((id) => GATED_FEATURES[id].enforced);
-		expect(enforced).toEqual(['forge.high', 'forge.gameready']);
+		expect(enforced).toEqual(['forge.high', 'forge.gameready', 'worlds.private']);
 	});
 
 	it('references no coin other than $THREE in its copy', () => {

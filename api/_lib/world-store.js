@@ -36,7 +36,9 @@
 // createWorldStore() and is exercised by the unit tests.
 //
 // ── Auth ─────────────────────────────────────────────────────────────────────
-// Reads are public (worlds are shared, visible places). Writes go through
+// Reads are public for a `public` world (worlds are shared, visible places). A
+// `private` world (the Silver `worlds.private` perk) reads only for its owner,
+// its invitees and the game server: canReadWorld(). Writes go through
 // canWriteWorld() — the permission hook T16 tightens. The authoritative game
 // server writes as a service principal (always permitted); a browser session
 // writes subject to ownership.
@@ -46,6 +48,11 @@ import { putObject, getObjectBuffer, deleteObject } from './r2.js';
 import { createHash } from 'node:crypto';
 
 export const SCHEMA_VERSION = 1;
+
+export const VISIBILITIES = Object.freeze(['public', 'private']);
+// One private world can be shared with this many accounts. Bounded so the
+// invitee array on the index row (read on every load) stays small.
+export const MAX_INVITEES = 50;
 
 // A whole world doc is capped so one save is one bounded write. Placed-object
 // builds at the catalog's per-world object cap serialize well under this.
@@ -133,6 +140,26 @@ export function canWriteWorld({ isService = false, account = null, currentOwner 
 	return account === currentOwner; // otherwise owner-only (T16 widens this)
 }
 
+// The read gate. A public world is open to everyone. A private world reads only
+// for the game server, its owner and its invitees; anyone else is told the world
+// does not exist (the handler answers 404, never 403, so existence never leaks).
+// An unowned private world is service-managed, so only the service reads it.
+export function canReadWorld({ isService = false, account = null, ownerId = null, visibility = 'public', invitees = [] } = {}) {
+	if (visibility !== 'private') return true;
+	if (isService) return true;
+	if (!account) return false;
+	if (ownerId && account === ownerId) return true;
+	return Array.isArray(invitees) && invitees.includes(account);
+}
+
+export function isValidVisibility(v) {
+	return typeof v === 'string' && VISIBILITIES.includes(v);
+}
+
+function inviteesOf(row) {
+	return Array.isArray(row.invitees) ? row.invitees.map(String) : [];
+}
+
 // ── orchestration (storage-agnostic) ─────────────────────────────────────────
 // Build a world store over any backend implementing the contract below.
 export function createWorldStore(backend) {
@@ -158,6 +185,8 @@ export function createWorldStore(backend) {
 			etag: row.etag,
 			size: row.size_bytes,
 			ownerId: row.owner_id ?? null,
+			visibility: row.visibility === 'private' ? 'private' : 'public',
+			invitees: inviteesOf(row),
 			updatedAt: row.updated_at,
 			doc,
 		};
@@ -178,6 +207,8 @@ export function createWorldStore(backend) {
 			etag: row.etag,
 			size: row.size_bytes,
 			ownerId: row.owner_id ?? null,
+			visibility: row.visibility === 'private' ? 'private' : 'public',
+			invitees: inviteesOf(row),
 			updatedAt: row.updated_at,
 		};
 	}
@@ -186,8 +217,16 @@ export function createWorldStore(backend) {
 	//   ifMatch — the etag the caller last read (see concurrency notes above).
 	//   writer  — the principal recorded as updated_by (account id or 'service').
 	//   owner   — owner_id to set ON CREATE only; ignored for existing rows.
-	async function saveWorld({ worldId, doc, ifMatch = null, writer = null, owner = null }) {
+	//   visibility: 'public' | 'private' to change it; omitted/null PRESERVES the
+	//             stored value (a build autosave never flips a world's privacy).
+	async function saveWorld({ worldId, doc, ifMatch = null, writer = null, owner = null, visibility = null }) {
 		assertWorldId(worldId);
+		if (visibility != null && !isValidVisibility(visibility)) {
+			const e = new Error('visibility must be "public" or "private"');
+			e.status = 400;
+			e.code = 'validation_error';
+			throw e;
+		}
 
 		const bytes = serialize(doc);
 		if (bytes.length > MAX_DOC_BYTES) {
@@ -217,6 +256,7 @@ export function createWorldStore(backend) {
 			owner,
 			writer,
 			ifMatch,
+			visibility,
 		});
 
 		if (!res.committed) {
@@ -240,8 +280,32 @@ export function createWorldStore(backend) {
 			etag: res.etag,
 			size: bytes.length,
 			ownerId: res.ownerId ?? null,
+			visibility: res.visibility === 'private' ? 'private' : 'public',
 			updatedAt: res.updatedAt,
 		};
+	}
+
+	// Change a world's access without rewriting its document: flip visibility
+	// and/or add and remove invitees in one atomic statement. Returns the new
+	// `{ visibility, invitees }`, or null when the world has never been saved.
+	// Throws a 409 `invitee_limit` past MAX_INVITEES.
+	async function setWorldAccess({ worldId, visibility = null, invite = [], uninvite = [] }) {
+		assertWorldId(worldId);
+		if (visibility != null && !isValidVisibility(visibility)) {
+			const e = new Error('visibility must be "public" or "private"');
+			e.status = 400;
+			e.code = 'validation_error';
+			throw e;
+		}
+		const res = await backend.updateAccess({ worldId, visibility, invite, uninvite, maxInvitees: MAX_INVITEES });
+		if (!res) return null;
+		if (res.limited) {
+			const e = new Error(`a private world can be shared with at most ${MAX_INVITEES} accounts`);
+			e.status = 409;
+			e.code = 'invitee_limit';
+			throw e;
+		}
+		return { visibility: res.visibility === 'private' ? 'private' : 'public', invitees: inviteesOf(res) };
 	}
 
 	// Remove a world entirely (its index row and any offloaded blob).
@@ -255,7 +319,7 @@ export function createWorldStore(backend) {
 		return true;
 	}
 
-	return { loadWorld, loadWorldMeta, saveWorld, deleteWorld };
+	return { loadWorld, loadWorldMeta, saveWorld, setWorldAccess, deleteWorld };
 }
 
 // ── default backend: Postgres index + R2 blob ────────────────────────────────
@@ -263,7 +327,7 @@ export const postgresR2Backend = {
 	async readRow(worldId) {
 		const rows = await sql`
 			SELECT world_id, schema_version, doc_version, etag, size_bytes,
-			       inline_doc, r2_key, owner_id, updated_at
+			       inline_doc, r2_key, owner_id, visibility, invitees, updated_at
 			FROM world_docs
 			WHERE world_id = ${worldId}
 			LIMIT 1
@@ -286,16 +350,17 @@ export const postgresR2Backend = {
 	// Compare-and-set upsert. The WHERE guard on DO UPDATE is the concurrency
 	// gate: '*' overwrites unconditionally; otherwise the stored etag must equal
 	// ifMatch (NULL for a create → never matches an existing row → conflict).
-	async upsert({ worldId, schemaVersion, etag, size, inlineDoc, r2Key, owner, writer, ifMatch }) {
+	async upsert({ worldId, schemaVersion, etag, size, inlineDoc, r2Key, owner, writer, ifMatch, visibility }) {
 		const guard = ifMatch === '*' ? sql`TRUE` : sql`world_docs.etag = ${ifMatch}`;
 		const inlineParam = inlineDoc == null ? null : JSON.stringify(inlineDoc);
 		const rows = await sql`
 			INSERT INTO world_docs (
 				world_id, schema_version, doc_version, etag, size_bytes,
-				inline_doc, r2_key, owner_id, updated_by, created_at, updated_at
+				inline_doc, r2_key, owner_id, updated_by, visibility, created_at, updated_at
 			) VALUES (
 				${worldId}, ${schemaVersion}, 1, ${etag}, ${size},
-				${inlineParam}::jsonb, ${r2Key}, ${owner}, ${writer}, now(), now()
+				${inlineParam}::jsonb, ${r2Key}, ${owner}, ${writer},
+				COALESCE(${visibility}::text, 'public'), now(), now()
 			)
 			ON CONFLICT (world_id) DO UPDATE SET
 				schema_version = ${schemaVersion},
@@ -305,9 +370,10 @@ export const postgresR2Backend = {
 				inline_doc     = EXCLUDED.inline_doc,
 				r2_key         = EXCLUDED.r2_key,
 				updated_by     = EXCLUDED.updated_by,
+				visibility     = COALESCE(${visibility}::text, world_docs.visibility),
 				updated_at     = now()
 			WHERE ${guard}
-			RETURNING doc_version, etag, owner_id, updated_at
+			RETURNING doc_version, etag, owner_id, visibility, updated_at
 		`;
 		if (!rows.length) return { committed: false };
 		const row = rows[0];
@@ -316,8 +382,40 @@ export const postgresR2Backend = {
 			version: Number(row.doc_version),
 			etag: row.etag,
 			ownerId: row.owner_id ?? null,
+			visibility: row.visibility,
 			updatedAt: row.updated_at,
 		};
+	},
+
+	// Atomic access change. The invitee array is rebuilt in one statement:
+	// existing minus `uninvite`, plus `invite`, de-duplicated. A result that would
+	// pass the cap is reported as `limited` without writing.
+	async updateAccess({ worldId, visibility, invite, uninvite, maxInvitees }) {
+		const rows = await sql`
+			WITH next AS (
+				SELECT world_id,
+				       COALESCE((
+				         SELECT array_agg(DISTINCT x)
+				         FROM unnest(
+				           ARRAY(SELECT unnest(invitees) EXCEPT SELECT unnest(${uninvite}::text[]))
+				           || ${invite}::text[]
+				         ) AS x
+				       ), '{}'::text[]) AS invitees
+				FROM world_docs
+				WHERE world_id = ${worldId}
+			)
+			UPDATE world_docs w
+			SET visibility = COALESCE(${visibility}::text, w.visibility),
+			    invitees   = next.invitees,
+			    updated_at = now()
+			FROM next
+			WHERE w.world_id = next.world_id
+			  AND cardinality(next.invitees) <= ${maxInvitees}
+			RETURNING w.visibility, w.invitees
+		`;
+		if (rows.length) return rows[0];
+		const exists = await sql`SELECT 1 FROM world_docs WHERE world_id = ${worldId} LIMIT 1`;
+		return exists.length ? { limited: true } : null;
 	},
 
 	async remove(worldId) {
@@ -334,4 +432,5 @@ const defaultStore = createWorldStore(postgresR2Backend);
 export const loadWorld = defaultStore.loadWorld;
 export const loadWorldMeta = defaultStore.loadWorldMeta;
 export const saveWorld = defaultStore.saveWorld;
+export const setWorldAccess = defaultStore.setWorldAccess;
 export const deleteWorld = defaultStore.deleteWorld;

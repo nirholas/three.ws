@@ -79,6 +79,35 @@ function outcomeOf(status) {
 }
 
 /**
+ * Change who can see a world: flip it public or private, or add or remove an
+ * invitee. Owner-only on the server; going private is the Silver `worlds.private`
+ * hold, answered as a 402 `three_hold_required` body the caller hands to the
+ * upsell. Never throws: a network failure resolves as `{ ok:false, status:0 }`.
+ * @param {string} worldId
+ * @param {'visibility'|'invite'|'uninvite'} action
+ * @param {object} payload `{ visibility }` or `{ invitee }`
+ * @param {{ fetchImpl?: typeof fetch, headers?: Record<string,string> }} [opts]
+ * @returns {Promise<{ ok:boolean, status:number, body:object|null }>}
+ */
+export async function changeWorldAccess(worldId, action, payload, { fetchImpl, headers = {} } = {}) {
+	const doFetch = fetchImpl || ((...a) => fetch(...a));
+	let res;
+	try {
+		res = await doFetch(`/api/world/${action}`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', ...headers },
+			credentials: 'include',
+			body: JSON.stringify({ worldId, ...payload }),
+		});
+	} catch (err) {
+		return { ok: false, status: 0, body: { message: err?.message || 'network error' } };
+	}
+	let body = null;
+	try { body = await res.json(); } catch { /* empty or non-JSON body */ }
+	return { ok: res.status >= 200 && res.status < 300, status: res.status, body };
+}
+
+/**
  * A single world's durable document, as seen from the browser.
  *
  * Lifecycle: `load()` once on entering the world, `queueSave(produce)` on every
@@ -106,6 +135,11 @@ export class WorldBuildStore {
 		this.version = 0;
 		this.ownerId = null;
 		this.doc = null;
+		// Who can see this world. `hidden` is set when the store answered 404 for a
+		// world that exists but is private to someone else.
+		this.visibility = 'public';
+		this.invitees = [];
+		this.hidden = false;
 		// Terminal for this session once the store refuses our identity: retrying a
 		// 403 on every placement would spam the API and lie to the player twice.
 		this.denied = false;
@@ -146,8 +180,18 @@ export class WorldBuildStore {
 		const url = `/api/world/load?worldId=${encodeURIComponent(this.worldId)}`;
 		try {
 			const res = await this._fetch(url, { headers: { accept: 'application/json' } });
+			if (res.status === 404) {
+				// A private world answers 404 to anyone it is not shared with, so a
+				// retry can never succeed: report it as its own state, not an outage.
+				this.hidden = true;
+				this.lastError = 'private';
+				return { doc: null, etag: null, version: 0, error: 'private', hidden: true };
+			}
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const body = await res.json();
+			this.hidden = false;
+			this.visibility = body.visibility === 'private' ? 'private' : 'public';
+			this.invitees = Array.isArray(body.invitees) ? body.invitees : [];
 			this.etag = body.etag ?? null;
 			this.version = Number(body.version) || 0;
 			this.ownerId = body.ownerId ?? null;

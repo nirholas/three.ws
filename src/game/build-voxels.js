@@ -464,7 +464,7 @@ export class VoxelWorld {
 // place/break mode toggle, and an enable toggle. Returned controller lets the
 // scene drive selection from keys and reflect connection state. Kept here so the
 // build feature owns its own chrome end-to-end.
-export function createBuildHud({ onToggle, onPick, onModeChange, onClearArea }) {
+export function createBuildHud({ onToggle, onPick, onModeChange, onClearArea, onVisibility }) {
 	const el = (tag, props = {}, kids = []) => {
 		const n = document.createElement(tag);
 		for (const [k, v] of Object.entries(props)) {
@@ -555,7 +555,15 @@ export function createBuildHud({ onToggle, onPick, onModeChange, onClearArea }) 
 		clearAreaBtn, clearAllBtn,
 	]);
 
-	const panel = el('div', { class: 'cc-build-panel', hidden: true }, [modeBtn, hotbar, budget, mine, durBadge, modRow, hint]);
+	// Who can see this world (Silver `worlds.private`). Opens the visibility
+	// dialog; the owner check and the hold are enforced by the server.
+	const visBtn = el('button', {
+		class: 'cc-build-mod-btn cc-build-vis', type: 'button',
+		title: 'Choose who can see this world',
+		onclick: () => onVisibility?.(),
+	}, ['Visibility']);
+
+	const panel = el('div', { class: 'cc-build-panel', hidden: true }, [modeBtn, hotbar, budget, mine, durBadge, modRow, visBtn, hint]);
 	const root = el('div', { id: 'cc-build', class: 'cc-build' }, [toggleBtn, panel]);
 	document.body.appendChild(root);
 

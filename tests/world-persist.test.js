@@ -247,3 +247,43 @@ describe('WorldBuildStore', () => {
 		expect(fetchImpl).not.toHaveBeenCalled();
 	});
 });
+
+describe('private worlds (client)', () => {
+	it('reports a 404 load as a hidden private world, not an outage', async () => {
+		const fetchImpl = fakeFetch([jsonResponse(404, { error: 'not_found' })]);
+		const store = new WorldBuildStore({ worldId: MINT, fetchImpl });
+		const out = await store.load();
+		expect(out).toMatchObject({ doc: null, error: 'private', hidden: true });
+		expect(store.hidden).toBe(true);
+	});
+
+	it('records visibility and the owner-only invitee list from a load', async () => {
+		const fetchImpl = fakeFetch([
+			jsonResponse(200, { doc: { objects: [] }, etag: 'e1', version: 2, visibility: 'private', invitees: [{ id: 'u1', username: 'bob' }] }),
+		]);
+		const store = new WorldBuildStore({ worldId: MINT, fetchImpl });
+		await store.load();
+		expect(store.hidden).toBe(false);
+		expect(store.visibility).toBe('private');
+		expect(store.invitees).toEqual([{ id: 'u1', username: 'bob' }]);
+	});
+
+	it('changeWorldAccess posts the action and hands back a 402 body for the upsell', async () => {
+		const { changeWorldAccess } = await import('../src/game/world-persist.js');
+		const gate = { error: 'three_hold_required', feature: 'worlds.private' };
+		const fetchImpl = fakeFetch([jsonResponse(402, gate)]);
+		const out = await changeWorldAccess(MINT, 'visibility', { visibility: 'private' }, { fetchImpl, headers: { 'x-three-tier-pass': 'p' } });
+		expect(out).toEqual({ ok: false, status: 402, body: gate });
+		expect(fetchImpl.calls[0].url).toBe('/api/world/visibility');
+		expect(fetchImpl.calls[0].body).toEqual({ worldId: MINT, visibility: 'private' });
+		expect(fetchImpl.calls[0].init.headers['x-three-tier-pass']).toBe('p');
+	});
+
+	it('changeWorldAccess resolves a network failure as status 0', async () => {
+		const { changeWorldAccess } = await import('../src/game/world-persist.js');
+		const fetchImpl = fakeFetch([new Error('offline')]);
+		const out = await changeWorldAccess(MINT, 'invite', { invitee: 'bob' }, { fetchImpl });
+		expect(out.ok).toBe(false);
+		expect(out.status).toBe(0);
+	});
+});

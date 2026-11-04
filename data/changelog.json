@@ -3,9 +3,29 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "The inference node network now has buyers, a roster and an earnings ledger",
+			"summary": "Anyone can pay USDC to run a job on a live community node through /api/x402/node-inference and is only billed when the node signed receipt verifies. Node operators can read their accrued earnings, and the new /nodes page lists the network.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Private, invite-only worlds for Silver holders",
+			"summary": "Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public, unlisted or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.",
+			"tags": [
+				"feature"
+			],
+			"link": "/three"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Agents speak AG-UI to CopilotKit and assistant-ui",
 			"summary": "POST /api/agent/run?protocol=ag-ui now streams the run as AG-UI events (run, text message and tool call lifecycle, plus avatar embodiment cues as CUSTOM events), so CopilotKit, assistant-ui and LangChain front ends can drive a three.ws agent with no adapter. The default OpenAI stream is unchanged.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/docs/ag-ui"
 		},
 		{

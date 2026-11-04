@@ -671,3 +671,7 @@ Record the 24-hour and seven-day rows in the format in [measurement.md](../growt
 - No price, return, urgency, or "moon" language. No hashtags, no emoji.
 ~~~~
 
+
+## Status (2026-11-04)
+
+DONE-PENDING-OWNER (apply migration `20261105040000_world_private_visibility.sql` after `npm run db:status`, then deploy). Server gate, `canReadWorld` (404 for strangers), invite/uninvite/visibility actions, Visibility dialog, `worlds.private` enforced, tests and docs are complete and verified in a real browser (holder and Member flows, empty and error states). Room-level (Colyseus) join gating is not enforced because the room reads with a service token.

@@ -68,7 +68,9 @@ export const GATED_FEATURES = Object.freeze({
 	}),
 	'worlds.private': Object.freeze({
 		minLevel: 2,
-		enforced: false,
+		// Gate: api/world/[action].js (gatePrivate, on save and on /visibility).
+		// Read side: canReadWorld() in world-store.js. Test: tests/world-private-gate.test.js.
+		enforced: true,
 		label: 'Private, invite-only worlds',
 		why: 'A persistent private space is a held perk, not a per-call cost.',
 		payPerUse: null,

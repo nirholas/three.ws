@@ -44,6 +44,7 @@ const PUBLISHED = [
 const LIVE_GATES = [
 	{ feature: 'forge.high', required: 'bronze' },
 	{ feature: 'forge.gameready', required: 'bronze' },
+	{ feature: 'worlds.private', required: 'silver' },
 ];
 
 let failures = 0;
@@ -118,6 +119,19 @@ async function checkDeny() {
 		check(`${feature} tells the caller how to acquire`, body?.acquire?.mint === MINT);
 		check(`${feature} offers a pay-per-use alternative`, typeof body?.pay_per_use?.usd === 'number', `$${body?.pay_per_use?.usd}`);
 	}
+
+	// Private worlds are a hold-only Silver perk: an anonymous create-private is
+	// refused with the same 402, names Silver and offers no pay-per-use. The gate
+	// answers before any auth or storage, so the probe writes nothing.
+	const priv = await getJson(`${BASE}/api/world/save`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ worldId: 'verify-three-gate', doc: {}, visibility: 'private' }),
+	});
+	check('worlds.private returns 402', priv.status === 402, `HTTP ${priv.status}`);
+	check('worlds.private error code', priv.body?.error === 'three_hold_required', String(priv.body?.error));
+	check('worlds.private names Silver', priv.body?.required?.id === 'silver', `${priv.body?.required?.label} @ $${priv.body?.required?.min_usd}`);
+	check('worlds.private is hold-only', priv.body?.pay_per_use == null);
 }
 
 // ── 3. Allow path, read-only ─────────────────────────────────────────────────
