@@ -41,13 +41,13 @@ describe('playMeta', () => {
 		expect(card.pathname).toBe('/api/play-og');
 		expect(card.searchParams.get('coin')).toBe(THREE_MINT);
 		expect(card.searchParams.get('symbol')).toBe('three');
-		expect(card.searchParams.get('image')).toMatch(/^\/api\/img\?/);
+		expect(m.description).toContain('three.ws ($THREE)');
 	});
 
 	it('carries the invite link identity into the card and drops unsafe images', () => {
 		const m = playMeta(new URLSearchParams({ coin: OTHER_MINT, name: 'Other Coin', symbol: '$othr', image: 'javascript:alert(1)' }));
 		expect(m.label).toBe('$OTHR');
-		expect(m.description).toContain('$OTHR (Other Coin)');
+		expect(m.description).toContain('Other Coin ($OTHR)');
 		expect(new URL(m.image).searchParams.has('image')).toBe(false);
 	});
 

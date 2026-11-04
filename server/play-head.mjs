@@ -75,7 +75,9 @@ export function playMeta(params, origin = ORIGIN) {
 	const home = isHomeTown(mint);
 	const name = clean(params.get('name'), NAME_MAX) || (home ? HOME_TOWN.name : '');
 	const symbol = (clean(params.get('symbol'), SYMBOL_MAX) || (home ? HOME_TOWN.symbol : '')).replace(/^\$/, '');
-	const image = safeImage(params.get('image')) || (home ? HOME_TOWN.image : '');
+	// Only a link's own image rides into the card URL; /api/play-og already
+	// knows the home town's art and the live lookup finds everyone else's.
+	const image = safeImage(params.get('image'));
 	const ticker = symbol ? '$' + symbol.toUpperCase() : '';
 	const label = ticker || name;
 
@@ -87,10 +89,8 @@ export function playMeta(params, origin = ORIGIN) {
 	if (image) card.searchParams.set('image', image);
 
 	const title = label ? `${label}, a live 3D world · three.ws` : 'A live 3D coin world · three.ws';
-	const named = label && name && ticker && name.toLowerCase() !== symbol.toLowerCase() ? `${ticker} (${name})` : label;
-	const description = label
-		? `Walk into ${named}'s live 3D world on three.ws with your avatar. Meet holders, chat, and explore together in the browser. No download.`
-		: 'Walk into this coin\'s live 3D world on three.ws with your avatar. Meet holders, chat, and explore together in the browser. No download.';
+	const named = ticker && name && name.toLowerCase() !== symbol.toLowerCase() ? `${name} (${ticker})` : label;
+	const description = `Walk into the live 3D world of ${named || 'this coin'} with your avatar. Meet holders, chat and explore together in your browser. No download.`;
 	const alt = label ? `${label}'s 3D world on three.ws` : 'A coin\'s 3D world on three.ws';
 	return { mint, home, label, pageUrl, image: card.toString(), title, description, alt };
 }
