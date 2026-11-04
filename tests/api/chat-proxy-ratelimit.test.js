@@ -11,9 +11,17 @@ const rateLimitState = {
 	chatIp: { success: true },
 };
 
-vi.mock('../../api/_lib/env.js', () => ({
-	env: { APP_ORIGIN: 'http://localhost:3000', OPENROUTER_API_KEY: 'sk-or-test', OPENROUTER_FALLBACK_KEYS: [] },
-}));
+// Inherit the real env (its getters and defaults, e.g. the $THREE decimals the
+// token layer reads at import) and override only what this test controls.
+vi.mock('../../api/_lib/env.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	const env = Object.create(actual.env, {
+		APP_ORIGIN: { value: 'http://localhost:3000' },
+		OPENROUTER_API_KEY: { value: 'sk-or-test' },
+		OPENROUTER_FALLBACK_KEYS: { value: [] },
+	});
+	return { ...actual, env };
+});
 
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
