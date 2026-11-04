@@ -302,7 +302,13 @@ export async function fetchSafePublicUrlPinned(input, init = {}, opts = {}) {
 				port: url.port || (url.protocol === 'https:' ? 443 : 80),
 				path: url.pathname + url.search,
 				method: (init.method || 'GET').toUpperCase(),
-				headers: { host: url.hostname, ...(init.headers || {}) },
+				headers: {
+					host: url.hostname,
+					...(init.headers || {}),
+					// Per-hop headers (for example a request signature, which covers the
+					// authority and so must be recomputed for each redirect target).
+					...(typeof opts.hopHeaders === 'function' ? opts.hopHeaders(url.href) : {}),
+				},
 				agent,
 			};
 			const req = mod.request(reqOpts, (nodeRes) => {

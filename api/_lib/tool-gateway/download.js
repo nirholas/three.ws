@@ -9,6 +9,7 @@
 
 import { fetchSafePublicUrlPinned, SsrfBlockedError, MaxBytesExceededError } from '../ssrf-guard.js';
 import { GatewayError } from './errors.js';
+import { botAuthHeaders } from '../web-bot-auth.js';
 
 const USER_AGENT = 'three.ws-tool-gateway/1.0 (+https://three.ws/docs/tool-gateway)';
 
@@ -23,7 +24,7 @@ export async function downloadPublic(url, { maxBytes, timeoutMs = 20_000, accept
 		res = await fetchSafePublicUrlPinned(
 			String(url),
 			{ headers: { 'user-agent': USER_AGENT, accept }, signal: AbortSignal.timeout(timeoutMs) },
-			{ allowHttp: true, maxBytes },
+			{ allowHttp: true, maxBytes, hopHeaders: (hop) => botAuthHeaders(hop) },
 		);
 	} catch (err) {
 		if (err instanceof SsrfBlockedError) {

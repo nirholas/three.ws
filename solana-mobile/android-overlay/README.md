@@ -41,7 +41,10 @@ background process may not hold the microphone. Docs:
 | `app/src/main/res/values/drive.xml` | Every string on the car screen and in the session notification. |
 | `AndroidManifest.permissions.xml` | Spliced after the `<manifest>` tag: `INTERNET`, `ACCESS_NETWORK_STATE`, `RECORD_AUDIO`, the typed foreground-service permissions, `POST_NOTIFICATIONS`. |
 | `AndroidManifest.application.xml` | Spliced before `</application>`: the widget receiver, the link activity, the car app service, and the drive web service. |
-| `build.gradle.fragment` | Appended to `app/build.gradle`: `androidx.work:work-runtime`, `androidx.car.app:app`, `androidx.car.app:app-projected`. |
+| `build.gradle.fragment` | Appended to `app/build.gradle`: `androidx.work:work-runtime`, `androidx.car.app:app`, `androidx.car.app:app-projected`, plus the conditional `automotive` flavor with `app-automotive` (only when an automotive task is requested). |
+| `app/src/automotive/AndroidManifest.xml` | The `automotive` flavor's manifest: automotive and templates-host features, `CarAppActivity` launcher, phone entry points removed. |
+| `app/src/automotive/res/xml/drive_aaos_app_desc.xml` | `<uses name="template" />` for Android Automotive OS discovery. |
+| `app/src/automotive/res/values/drive_aaos.xml` | AAOS-only strings. |
 
 ## Rules
 

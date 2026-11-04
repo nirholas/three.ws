@@ -44,7 +44,20 @@ MIN_INSTANCES="${MIN_INSTANCES:-1}"
 # that is set we MUST stay single-instance, or players for the same coin land on
 # different instances and can't see each other. Set REDIS_URI to scale out.
 REDIS_URI="${REDIS_URI:-}"
+# Preferred: bind the Redis URI from Secret Manager (never plaintext in the
+# service's env). REDIS_SECRET names the secret; the default MULTIPLAYER_REDIS_URI
+# is used whenever USE_REDIS_SECRET=1. A plaintext REDIS_URI still works for a
+# throwaway test deploy but is warned about.
+REDIS_SECRET="${REDIS_SECRET:-}"
+[[ "${USE_REDIS_SECRET:-}" == "1" && -z "${REDIS_SECRET}" ]] && REDIS_SECRET="MULTIPLAYER_REDIS_URI"
+if [[ -n "${REDIS_SECRET}" && -n "${REDIS_URI}" ]]; then
+	echo "Set either REDIS_SECRET/USE_REDIS_SECRET or REDIS_URI, not both." >&2
+	exit 1
+fi
 if [[ -n "${REDIS_URI}" ]]; then
+	echo "  warning: REDIS_URI is passed as a plaintext env var. Use USE_REDIS_SECRET=1 (secret MULTIPLAYER_REDIS_URI) instead." >&2
+fi
+if [[ -n "${REDIS_URI}" || -n "${REDIS_SECRET}" ]]; then
 	MAX_INSTANCES="${MAX_INSTANCES:-10}"
 else
 	MAX_INSTANCES="${MAX_INSTANCES:-1}"
@@ -86,7 +99,7 @@ if [[ -z "${UPSTASH_REDIS_REST_URL}" || -z "${UPSTASH_REDIS_REST_TOKEN}" ]]; the
 fi
 
 echo "Deploying '${SERVICE}' to Cloud Run (project=${PROJECT}, region=${REGION})..."
-echo "  cpu=${CPU} memory=${MEMORY} concurrency=${CONCURRENCY} instances=${MIN_INSTANCES}..${MAX_INSTANCES} redis=$([[ -n "${REDIS_URI}" ]] && echo on || echo off) builds=$([[ -n "${UPSTASH_REDIS_REST_URL}" && -n "${UPSTASH_REDIS_REST_TOKEN}" ]] && echo durable || echo memory-only)"
+echo "  cpu=${CPU} memory=${MEMORY} concurrency=${CONCURRENCY} instances=${MIN_INSTANCES}..${MAX_INSTANCES} redis=$([[ -n "${REDIS_SECRET}" ]] && echo secret || ([[ -n "${REDIS_URI}" ]] && echo env || echo off)) builds=$([[ -n "${UPSTASH_REDIS_REST_URL}" && -n "${UPSTASH_REDIS_REST_TOKEN}" ]] && echo durable || echo memory-only)"
 
 # Flags that matter for a long-lived Colyseus game server on Cloud Run:
 #   --no-cpu-throttling : keep CPU allocated between requests so the room
@@ -105,6 +118,14 @@ echo "  cpu=${CPU} memory=${MEMORY} concurrency=${CONCURRENCY} instances=${MIN_I
 # (and some org policies block its auto-creation), so builds use a dedicated SA.
 BUILD_SA="${BUILD_SA:-projects/${PROJECT}/serviceAccounts/three-ws-build@${PROJECT}.iam.gserviceaccount.com}"
 
+# Redis URI source. A secret binding and a plaintext env var of the same name
+# cannot coexist on a service, so switching to the secret clears the old env var
+# in the same deploy. Without either, nothing about REDIS_URI is touched.
+REDIS_FLAGS=()
+if [[ -n "${REDIS_SECRET}" ]]; then
+	REDIS_FLAGS=(--update-secrets "REDIS_URI=${REDIS_SECRET}:latest" --remove-env-vars REDIS_URI)
+fi
+
 gcloud run deploy "${SERVICE}" \
 	--source . \
 	--quiet \
@@ -122,6 +143,7 @@ gcloud run deploy "${SERVICE}" \
 	--cpu "${CPU}" \
 	--timeout 3600 \
 	--session-affinity \
+	${REDIS_FLAGS[@]+"${REDIS_FLAGS[@]}"} \
 	--update-env-vars "^@^${ENV_VARS}"
 
 URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --format 'value(status.url)')"

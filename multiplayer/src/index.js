@@ -14,6 +14,7 @@
 // ERR_HTTP_HEADERS_SENT against the matchmaker's prepended listener.
 
 import http from 'node:http';
+import crypto from 'node:crypto';
 import express from 'express';
 import { Server, matchMaker } from '@colyseus/core';
 import { WebSocketTransport } from '@colyseus/ws-transport';
@@ -32,6 +33,7 @@ import { flushAllPlayers } from './playerStore.js';
 import { socialHub } from './social-hub.js';
 import { verifyNotifySignature, verifyStageSignature, verifyAnnounceSignature } from './presence-token.js';
 import { liveWalkRooms } from './walk-registry.js';
+import { createFanout } from './fanout.js';
 
 const PORT = Number(process.env.PORT || 2567);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -71,9 +73,42 @@ if (PLAY_GATE_MINT) {
 const app = express();
 
 // Liveness probes for the host platform (Fly/Railway/Render).
+// `presence` says whether this instance shares state with its peers ('redis')
+// or runs alone ('local'), so a deploy that silently lost its Redis is visible.
+const INSTANCE_ID = process.env.K_REVISION ? `${process.env.K_REVISION}-${crypto.randomUUID().slice(0, 8)}` : crypto.randomUUID();
+let presenceMode = 'local';
+// Set once the Redis presence is up; null means single-instance (no fan-out).
+let fanoutRef = null;
 app.get(['/health', '/healthz'], (_req, res) => {
-	res.json({ ok: true, name: 'three.ws-multiplayer' });
+	res.json({ ok: true, name: 'three.ws-multiplayer', presence: presenceMode, instance: INSTANCE_ID });
 });
+
+// Local halves of the three internal webhooks. Each acts only on this
+// process's sockets/rooms; the route handlers below also ask every peer
+// instance to run the same half (fanout.js) because the target may live there.
+function localNotify({ to, type, payload }) {
+	return { delivered: !!socialHub.deliver(to, type, payload || {}) };
+}
+function localStage({ stageId, tip }) {
+	const room = getStageRoom(stageId);
+	if (!room) return { delivered: false, reason: 'not_found' };
+	const result = room.injectTip(tip);
+	return { delivered: !!result?.ok };
+}
+function localAnnounce({ coin, payload }) {
+	const rooms = liveWalkRooms(coin || '');
+	let players = 0;
+	for (const room of rooms) {
+		try {
+			room.broadcast('notice', payload);
+			players += room.clients?.length || 0;
+		} catch (err) {
+			console.warn('[multiplayer] announce broadcast failed:', err?.message || err);
+		}
+	}
+	return { rooms: rooms.length, players };
+}
+
 
 // Internal friends delivery webhook (Task 15). The three.ws API calls this after
 // persisting a DM or friend-graph change to push it live to every socket the
@@ -81,7 +116,7 @@ app.get(['/health', '/healthz'], (_req, res) => {
 // the API can inject events; returns whether the recipient was online (the API
 // uses that to decide live vs. next-login delivery). Body is small JSON; an
 // unsigned or malformed request is rejected before any work.
-app.post('/internal/notify', express.json({ limit: '16kb' }), (req, res) => {
+app.post('/internal/notify', express.json({ limit: '16kb' }), async (req, res) => {
 	const { type, to, payload } = req.body || {};
 	const sig = req.headers['x-mp-signature'];
 	const ts = req.headers['x-mp-timestamp'];
@@ -94,7 +129,12 @@ app.post('/internal/notify', express.json({ limit: '16kb' }), (req, res) => {
 	if (!verifyNotifySignature(to, type, payload || {}, ts, sig)) {
 		return res.status(401).json({ error: 'bad_signature' });
 	}
-	const delivered = socialHub.deliver(to, type, payload || {});
+	const job = { to, type, payload: payload || {} };
+	let delivered = localNotify(job).delivered;
+	if (!delivered && fanoutRef?.enabled) {
+		const acks = await fanoutRef.request('notify', job, { until: (r) => r.some((x) => x?.delivered) });
+		delivered = acks.some((x) => x?.delivered);
+	}
 	res.json({ delivered });
 });
 
@@ -108,7 +148,7 @@ app.post('/internal/notify', express.json({ limit: '16kb' }), (req, res) => {
 // money already settled to the host wallet on-chain, this only drives the live
 // reaction, so a `not_found` (room not hosted on this instance) loses nothing but
 // the in-room flourish.
-app.post('/internal/stage', express.json({ limit: '16kb' }), (req, res) => {
+app.post('/internal/stage', express.json({ limit: '16kb' }), async (req, res) => {
 	const { stageId, event, tip } = req.body || {};
 	const sig = req.headers['x-stage-signature'];
 	const ts = req.headers['x-stage-timestamp'];
@@ -118,14 +158,15 @@ app.post('/internal/stage', express.json({ limit: '16kb' }), (req, res) => {
 	if (!verifyStageSignature(req.body || {}, ts, sig)) {
 		return res.status(401).json({ error: 'bad_signature' });
 	}
-	const room = getStageRoom(stageId);
-	if (!room) return res.json({ ok: true, delivered: false, reason: 'not_found' });
+	if (event !== 'tip' || !tip) return res.status(400).json({ error: 'unknown_event' });
 	try {
-		if (event === 'tip' && tip) {
-			const result = room.injectTip(tip);
-			return res.json({ ok: true, delivered: !!result?.ok });
+		const job = { stageId, tip };
+		let result = localStage(job);
+		if (!result.delivered && fanoutRef?.enabled) {
+			const acks = await fanoutRef.request('stage', job, { until: (r) => r.some((x) => x?.delivered) });
+			if (acks.some((x) => x?.delivered)) result = { delivered: true };
 		}
-		return res.status(400).json({ error: 'unknown_event' });
+		return res.json({ ok: true, delivered: result.delivered, ...(result.delivered ? {} : { reason: 'not_found' }) });
 	} catch (err) {
 		console.error('[multiplayer] /internal/stage error:', err?.message || err);
 		return res.status(500).json({ error: 'inject_failed' });
@@ -140,7 +181,7 @@ app.post('/internal/stage', express.json({ limit: '16kb' }), (req, res) => {
 // when a title is present), so announcements need no client version to land.
 // HMAC-signed and timestamp-bound like the other internal webhooks; an unsigned
 // or stale request is rejected before it reaches a room.
-app.post('/internal/announce', express.json({ limit: '16kb' }), (req, res) => {
+app.post('/internal/announce', express.json({ limit: '16kb' }), async (req, res) => {
 	const sig = req.headers['x-announce-signature'];
 	const ts = req.headers['x-announce-timestamp'];
 	const { text, title, detail, coin, durationMs } = req.body || {};
@@ -157,18 +198,21 @@ app.post('/internal/announce', express.json({ limit: '16kb' }), (req, res) => {
 		...(typeof detail === 'string' && detail.trim() ? { detail: detail.trim().slice(0, 200) } : {}),
 		...(Number(durationMs) > 0 ? { durationMs: Math.min(120_000, Number(durationMs)) } : {}),
 	};
-	const rooms = liveWalkRooms(typeof coin === 'string' ? coin.trim() : '');
-	let players = 0;
-	for (const room of rooms) {
-		try {
-			room.broadcast('notice', payload);
-			players += room.clients?.length || 0;
-		} catch (err) {
-			console.warn('[multiplayer] announce broadcast failed:', err?.message || err);
+	const job = { coin: typeof coin === 'string' ? coin.trim() : '', payload };
+	const local = localAnnounce(job);
+	let { rooms, players } = local;
+	let instances = 1;
+	if (fanoutRef?.enabled) {
+		const acks = await fanoutRef.request('announce', job);
+		for (const a of acks) {
+			if (!a || a.error) continue;
+			rooms += a.rooms || 0;
+			players += a.players || 0;
+			instances += 1;
 		}
 	}
-	console.log(`[multiplayer] event announce → ${rooms.length} room(s), ${players} player(s): ${payload.text}`);
-	res.json({ ok: true, rooms: rooms.length, players });
+	console.log(`[multiplayer] event announce → ${rooms} room(s), ${players} player(s) on ${instances} instance(s): ${payload.text}`);
+	res.json({ ok: true, rooms, players, instances });
 });
 
 // Public live population. The only aggregate this process publishes without a
@@ -329,6 +373,11 @@ const transport = new WebSocketTransport({
 const REDIS_URI = process.env.REDIS_URI || process.env.REDIS_URL;
 let driver, presence;
 if (REDIS_URI) {
+	// A set REDIS_URI is a promise of horizontal scaling. If Redis is unreachable
+	// the old code kept running single-instance, which on a multi-instance deploy
+	// silently splits every coin community across instances. Fail the boot loudly
+	// instead so Cloud Run keeps the previous revision serving.
+	const bootTimeout = Number(process.env.REDIS_BOOT_TIMEOUT_MS) > 0 ? Number(process.env.REDIS_BOOT_TIMEOUT_MS) : 10_000;
 	try {
 		const [{ RedisDriver }, { RedisPresence }] = await Promise.all([
 			import('@colyseus/redis-driver'),
@@ -336,12 +385,25 @@ if (REDIS_URI) {
 		]);
 		driver = new RedisDriver(REDIS_URI);
 		presence = new RedisPresence(REDIS_URI);
+		await Promise.race([
+			presence.setex('three-ws:boot-probe', '1', 5),
+			new Promise((_, reject) => setTimeout(() => reject(new Error(`no reply from Redis within ${bootTimeout}ms`)), bootTimeout)),
+		]);
+		presenceMode = 'redis';
 		console.log('[multiplayer] horizontal scaling ENABLED (Redis driver + presence)');
 	} catch (err) {
-		console.error('[multiplayer] REDIS_URI set but Redis deps unavailable, staying single-instance:', err?.message);
+		console.error(`[multiplayer] FATAL: REDIS_URI is set but Redis is unusable (${err?.message || err}). Refusing to start single-instance.`);
+		process.exit(1);
 	}
 } else {
 	console.log('[multiplayer] single-instance mode (set REDIS_URI to scale horizontally)');
+}
+if (presence) {
+	fanoutRef = createFanout({
+		presence,
+		instanceId: INSTANCE_ID,
+		handlers: { notify: localNotify, stage: localStage, announce: localAnnounce },
+	});
 }
 
 // gracefullyShutdown: false turns off Colyseus's built-in process hooks. Its
@@ -355,6 +417,10 @@ const gameServer = new Server({
 	gracefullyShutdown: false,
 	...(driver && { driver }),
 	...(presence && { presence }),
+	// Colyseus tells a client which host owns its room. Behind one shared load
+	// balancer leave it unset; for per-instance addressing (tests, or a mesh with
+	// direct instance URLs) set PUBLIC_ADDRESS to this instance's own host:port.
+	...(process.env.PUBLIC_ADDRESS && { publicAddress: process.env.PUBLIC_ADDRESS }),
 });
 // Each coin is its own world, split by access tier: filterBy(['coin','tier'])
 // makes joinOrCreate match only rooms sharing the same community coin (mint) AND

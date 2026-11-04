@@ -98,7 +98,35 @@ the declared category, on top of the normal listing. Two things follow:
 - **The IOT claim has to stay true.** It is true today because the home lane is built and
   wired into `/api/chat` ([docs/smart-home.md](../../docs/smart-home.md)). If that lane were
   ever removed, the category would have to change with it.
-- **Android Automotive OS is a separate build.** AAOS runs the app on the head unit itself
-  and needs `androidx.car.app:app-automotive` plus a `CarAppActivity` entry point, in its own
-  build flavor. It is deliberately not in this overlay yet; the templates are the same, the
-  packaging is not.
+
+## Android Automotive OS
+
+AAOS runs the app on the head unit itself, so it ships as its own artifact: the `automotive`
+product flavor. It reuses `DriveCarAppService`, `DriveSession`, `DriveScreen`, `DriveLink` and
+`DriveWebService` unchanged; only packaging differs.
+
+| Piece | What it does |
+| --- | --- |
+| `app/src/automotive/AndroidManifest.xml` | Merged over the main manifest for this flavor only. Requires `android.hardware.type.automotive` and the templates host, relaxes portrait, landscape, Wi-Fi and camera, swaps the Android Auto descriptor for `com.android.automotive`, declares `androidx.car.app.activity.CarAppActivity` as the one launcher (the only place `distractionOptimized` is set), and removes the phone entry points (TWA launcher, site settings launcher, home widget). |
+| `app/src/automotive/res/xml/drive_aaos_app_desc.xml` | `<uses name="template" />`, which is how AAOS discovers a templated app. |
+| `build.gradle.fragment` | Declares the flavor and `androidx.car.app:app-automotive:1.4.0` only when a task name mentions `automotive` or `-Pthreews.automotive=true` is passed, so the phone build output and APK path stay exactly as they were. The head unit build excludes `app-projected`, which collides with `app-automotive` on a manifest key. |
+
+The page protocol is unchanged. The conversation runs in `DriveWebService`'s windowless web
+view, which exposes `ThreeWsDriveNative`, so `src/drive/surface.js` already resolves the
+surface to `androidauto` there: the 3D stage stays off and the confirmation card is refused.
+No new `?surface=` value was needed.
+
+Build (after `bubblewrap update`, then the overlay, with an absolute `--project` path):
+
+```
+node solana-mobile/scripts/apply-overlay.mjs --project /abs/path/to/generated --overlay solana-mobile/android-overlay
+cd /abs/path/to/generated && ./gradlew :app:assembleAutomotiveDebug
+./gradlew :app:assembleDebug   # the phone build, unchanged
+```
+
+Verified 2026-11-04 on a freshly generated Bubblewrap project (JDK 17, Gradle 8.11.1): both
+`:app:assembleAutomotiveDebug` and `:app:assembleDebug` end in `BUILD SUCCESSFUL`. Not
+verified: running on an Automotive emulator image or a real head unit. To do that, create an
+"Automotive" AVD with the SDK manager, install the automotive APK, and launch the app from the
+car launcher. Play distribution of an AAOS artifact needs a separate listing and Google's car
+app quality review, which is an owner action.

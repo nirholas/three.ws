@@ -246,7 +246,7 @@ same class, which is what makes barge-in and "louder" real rather than decorativ
 | 3 | Apple's entitlement request | **Owner action.** See `ios/docs/CARPLAY.md`. Nothing else blocks. |
 | 4 | Android Auto: `CarAppService`, foreground-service web view, the same channel, the same four controls | **Done and compiled.** Needs the Desktop Head Unit and a phone to exercise on a car screen. |
 | 5 | The home lane reaching the car: guarded actions surfaced and gated on being parked | **Done.** `/api/chat`'s home tools already work from `/drive`; the confirmation card is wired and refused while moving. |
-| 6 | Android Automotive OS: `app-automotive` plus a `CarAppActivity` in its own build flavor | Scoped, not started. |
+| 6 | Android Automotive OS: `app-automotive` plus a `CarAppActivity` in its own build flavor | **Built and compiled** as the `automotive` flavor of the Android overlay (`./gradlew :app:assembleAutomotiveDebug` succeeds, phone build unchanged). Not run on an Automotive emulator or head unit. |
 | 7 | Lane D head unit: `node-carplay` beside the agent on a Pi | **Built to the USB boundary** in `apps/head-unit/`: service, state machine, page, Pi runbook, tested against a recorded dongle session and verified in Chromium with no dongle. Needs a CPC200 dongle and a Pi for the first connection checklist. |
 
 ---

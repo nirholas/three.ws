@@ -29,6 +29,7 @@
 // fails on drift).
 
 import http from 'node:http';
+import { botAuthHeaders } from './web-bot-auth.js';
 import net from 'node:net';
 import { lookup as dnsLookup } from 'node:dns/promises';
 
@@ -275,7 +276,11 @@ export function createEgressGuard({
 				await route.abort('blockedbyclient').catch(() => {});
 				return;
 			}
-			await route.continue().catch(() => {});
+			// Navigations carry the agent's Web Bot Auth signature. Subresources do not:
+			// a custom header on a cross-origin fetch forces a CORS preflight that
+			// would break pages that never asked for it.
+			const signed = request.isNavigationRequest() ? botAuthHeaders(url) : {};
+			await route.continue(Object.keys(signed).length ? { headers: { ...request.headers(), ...signed } } : undefined).catch(() => {});
 		});
 
 		if (typeof context.routeWebSocket === 'function') {

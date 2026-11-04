@@ -162,7 +162,7 @@ describe('multiplayer entry point', () => {
 		for (const route of ['/health', '/healthz']) {
 			const res = await fetch(`${base}${route}`);
 			expect(res.status, route).toBe(200);
-			expect(await res.json()).toEqual({ ok: true, name: 'three.ws-multiplayer' });
+			expect(await res.json()).toMatchObject({ ok: true, name: 'three.ws-multiplayer', presence: 'local' });
 		}
 	});
 

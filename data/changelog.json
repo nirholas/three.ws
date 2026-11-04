@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Multiplayer worlds can run on more than one server",
+			"summary": "The multiplayer server now reports whether it shares state with its peers on /health, refuses to boot single-instance when its Redis is configured but unreachable, and forwards friend messages, stage tips and event announcements to whichever instance holds the target. A two-process test and a real-socket load test back it. Turning it on in production needs the Memorystore steps in multiplayer/README.md.",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "The inference node network now has buyers, a roster and an earnings ledger",
 			"summary": "Anyone can pay USDC to run a job on a live community node through /api/x402/node-inference and is only billed when the node signed receipt verifies. Node operators can read their accrued earnings, and the new /nodes page lists the network.",
 			"tags": [

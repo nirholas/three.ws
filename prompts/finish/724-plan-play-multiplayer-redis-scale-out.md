@@ -373,3 +373,9 @@ rather than three. Nothing was cleared by the owner; the corrections are all mea
 Evidence is in [PROGRESS.md](production-100-PROGRESS.md) under 2026-09-02.
 ~~~~
 
+
+## Status 2026-11-04 (code complete, owner steps remain)
+
+Shipped: Redis presence fan-out for the three internal webhooks (`multiplayer/src/fanout.js`), `presence`/`instance` on `/health`, boot failure on a dead `REDIS_URI`, `PUBLIC_ADDRESS`, Secret Manager binding in `deploy-cloudrun.sh` (`USE_REDIS_SECRET=1`), `multiplayer/test/*` (5 passing against a real Redis), `scripts/multiplayer-load-test.mjs` (local two-instance run: 100 percent chat delivery, one room per coin).
+
+Owner steps left (deploy and cloud-spend gated): run the Memorystore and secret commands in `multiplayer/README.md`, `USE_REDIS_SECRET=1 ./deploy-cloudrun.sh`, then run the load test against the live service and paste the numbers under "Load test" in that README, then verify two browsers on `/play` land on different `instance` ids. Delete this order once those are recorded.

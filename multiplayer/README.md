@@ -47,7 +47,8 @@ Everything is optional except `HOLDER_PASS_SECRET` in production, which the proc
 
 | Var | Default | Purpose |
 | --- | --- | --- |
-| `REDIS_URI` (or `REDIS_URL`) | unset | Colyseus room registry + presence Redis; setting it switches on horizontal scaling (see Scaling notes) |
+| `REDIS_URI` (or `REDIS_URL`) | unset | Colyseus room registry + presence Redis; setting it switches on horizontal scaling (see Scaling notes). If it is set but Redis is unreachable within `REDIS_BOOT_TIMEOUT_MS` (default 10000) the process exits non-zero instead of running single-instance |
+| `PUBLIC_ADDRESS` | unset | `host:port` Colyseus hands clients as the owner of a room. Leave unset behind one shared load balancer; set per instance only when instances are individually addressable (the two-instance test does) |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | unset | Durable persistence for builds, player profiles, cosmetics ownership, the activity feed, the live war registry, and the settlement replay guard; memory-only without them. The friends/DM presence hub alone also accepts `KV_REST_API_URL` / `KV_REST_API_TOKEN` as a fallback pair |
 
 **Trust boundaries (shared secrets)**
@@ -89,11 +90,11 @@ Everything is optional except `HOLDER_PASS_SECRET` in production, which the proc
 
 | Route | Purpose |
 | --- | --- |
-| `GET /health`, `GET /healthz` | Liveness probe, returns `{ok:true,name:"three.ws-multiplayer"}` |
+| `GET /health`, `GET /healthz` | Liveness probe, returns `{ok,name,presence:"redis"|"local",instance}`. `presence` shows whether this process shares state with peers; `instance` is a per-process id (prefixed with the Cloud Run revision) so two sockets can be proven to have landed on different instances |
 | `GET /population` | Public live aggregate: `{ok,coin,rooms,players}` across every `walk_world` (cluster-wide when `REDIS_URI` is set). `?coin=<mint>` narrows to one community. A count only, never an identity; the site reads it through `api/play/population.js` |
-| `POST /internal/notify` | Friends/DM delivery from the API. HMAC-signed (`x-mp-signature` + `x-mp-timestamp`); answers `{delivered}` so the API knows whether to fall back to next-login delivery |
+| `POST /internal/notify` | Friends/DM delivery from the API. HMAC-signed (`x-mp-signature` + `x-mp-timestamp`); answers `{delivered}` so the API knows whether to fall back to next-login delivery. With Redis presence, an instance that does not hold the recipient's socket asks its peers (see Scaling notes) |
 | `POST /internal/stage` | Living Stages tip bridge; the API calls it once a `$THREE` tip settles on-chain so the live `stage_world` reacts within ~1s. Same HMAC scheme (`x-stage-*`) |
-| `POST /internal/announce` | Operator broadcast into every live `walk_world` (optionally one coin's), delivered on the `notice` channel every deployed client already renders. Same HMAC scheme (`x-announce-*`) |
+| `POST /internal/announce` | Operator broadcast into every live `walk_world` (optionally one coin's), delivered on the `notice` channel every deployed client already renders. Same HMAC scheme (`x-announce-*`). Fans out to every instance; answers `{ok,rooms,players,instances}` summed across the fleet |
 | `/colyseus` | Admin monitor UI ([@colyseus/monitor](https://docs.colyseus.io/tools/monitor/)). Set `MONITOR_USER` + `MONITOR_PASS` to mount it behind basic auth; in production it is not mounted at all without them |
 | WS upgrade | Colyseus protocol; clients connect with `new Client('ws://host:2567')`. Origin-filtered (see `ALLOWED_ORIGINS`), with each room's `onAuth` as the real access boundary |
 
@@ -161,7 +162,40 @@ Clients find the server through meta tags baked into the pages (use the `wss://`
 
 - A single Node process holds many rooms; Colyseus's matchmaker creates a new room per coin world as needed and spills into a fresh one when a room fills.
 - `walk_world` caps at 100 clients per room by default (`MAX_CLIENTS_PER_ROOM` in [WalkRoom.js](src/rooms/WalkRoom.js), tunable via `WALK_ROOM_MAX_CLIENTS`, clamped to 2-500).
-- Across instances: horizontal scaling is already wired in [`src/index.js`](src/index.js). Set `REDIS_URI` (e.g. a Memorystore instance) and the server boots with `@colyseus/redis-driver` + `@colyseus/redis-presence`, making matchmaking cluster-aware; `deploy-cloudrun.sh` then allows multiple instances. Without it the server logs `single-instance mode` and must stay at one instance.
+- Across instances: horizontal scaling is wired in [`src/index.js`](src/index.js). Set `REDIS_URI` and the server boots with `@colyseus/redis-driver` + `@colyseus/redis-presence`, making matchmaking cluster-aware; `deploy-cloudrun.sh` then allows multiple instances. Without it the server logs `single-instance mode` and must stay at one instance. A set-but-dead `REDIS_URI` is a boot failure on purpose: the old "stay single-instance" fallback silently split every coin community across instances.
+- Per-process state audit (what makes a second instance safe): game, play-pass, guest and presence tokens are stateless HMACs from env secrets, so they verify on any instance. The settlement replay guard, player profiles, cosmetics and social presence live in Upstash, not in memory. The event-score and feed caches are per-instance read caches that only cost a refetch. The stage registry and walk registry are per-process by nature, so the three `/internal/*` webhooks use [`src/fanout.js`](src/fanout.js): the receiving instance handles the event locally, publishes it on the Redis presence channel `three-ws:fanout`, and every peer handles it against its own sockets and rooms and acks on a per-request channel (bounded 300 ms wait).
+- Cloud Run caveat: with a shared load balancer a client that is told a room lives on a peer connects back to the balancer, which may land on a third instance. `--session-affinity` (already set) pins repeat connections but cannot choose the room's host. Measure it with the load test below before trusting a high `--max-instances`.
+
+### Provision Memorystore (owner step, one time)
+
+```bash
+PROJECT=aerial-vehicle-466722-p5; REGION=us-central1
+gcloud services enable redis.googleapis.com vpcaccess.googleapis.com --project $PROJECT
+gcloud redis instances create three-ws-multiplayer --size=1 --tier=basic --region=$REGION --redis-version=redis_7_0 --project $PROJECT
+HOST=$(gcloud redis instances describe three-ws-multiplayer --region=$REGION --project $PROJECT --format='value(host)')
+PORT=$(gcloud redis instances describe three-ws-multiplayer --region=$REGION --project $PROJECT --format='value(port)')
+printf 'redis://%s:%s' "$HOST" "$PORT" | gcloud secrets create MULTIPLAYER_REDIS_URI --data-file=- --project $PROJECT
+gcloud secrets add-iam-policy-binding MULTIPLAYER_REDIS_URI --member=serviceAccount:three-ws-build@$PROJECT.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project $PROJECT
+# Cloud Run reaches the instance's private IP over Direct VPC egress:
+USE_REDIS_SECRET=1 ./deploy-cloudrun.sh   # binds REDIS_URI from the secret, max-instances 10
+gcloud run services update three-ws-multiplayer --region $REGION --network default --subnet default --vpc-egress private-ranges-only
+```
+
+Then confirm `curl <service>/health` shows `"presence":"redis"`.
+
+### Tests
+
+`npm test` in this directory runs `node --test`: `test/boot.test.js` (local presence, and a dead `REDIS_URI` exits non-zero) and `test/two-instance.test.js` (two real server processes plus a real Redis from `redis-server` or `docker run redis:7-alpine`: same-coin players on different instances share a room, and `/internal/announce` counts both). Without `REDIS_URI` the two instances host disjoint rooms, which is what the shared-room assertion catches.
+
+### Load test
+
+```bash
+node scripts/multiplayer-load-test.mjs --url wss://<service-host> --clients 200 --duration 60 --coins 4
+```
+
+Real colyseus.js clients across N coin worlds move and chat for the duration. It reports join latency p50/p95, dropped sockets, distinct instances seen on `/health`, rooms per coin (must be 1) and chat delivery percent (must be 100); exit code 1 otherwise. Repeat `--url` to dial several entry points.
+
+Local two-instance reference run (60 clients, 3 coins, 15 s, two processes sharing one Redis): 100 percent chat delivery (4800 of 4800), one room per coin. The production-fleet figures are recorded here once the service is redeployed with Memorystore (owner step above); until then they are not claimed.
 
 ## What the schema looks like on the wire
 
