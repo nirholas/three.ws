@@ -207,6 +207,14 @@ function renderThrottle(channel, environment) {
 
 // ─── The alerter ─────────────────────────────────────────────────────────────
 
+// Resolved per call, not captured when the module loads: http.js imports this
+// file, so the default alerter below is built on every import, and suites that
+// mock cache.js with only some of its exports must still be able to load it.
+const defaultCache = {
+	get: (key) => cacheGet(key),
+	set: (key, value, ttlS) => cacheSet(key, value, ttlS),
+};
+
 /**
  * Build an alerter. Production uses the default instance behind sendOpsAlert;
  * tests inject recording transports, an in-memory cache and a clock.
@@ -220,7 +228,7 @@ function renderThrottle(channel, environment) {
  */
 export function createOpsAlerter(deps = {}) {
 	const transportsOf = typeof deps.transports === 'function' ? deps.transports : () => deps.transports || {};
-	const cache = deps.cache || { get: cacheGet, set: cacheSet };
+	const cache = deps.cache || defaultCache;
 	const persist = deps.persist || persistAlert;
 	const now = deps.now || Date.now;
 	const envOf = typeof deps.environment === 'function' ? deps.environment : () => deps.environment || process.env.VERCEL_ENV || 'development';
@@ -461,7 +469,7 @@ async function loadDigestRows(nowMs) {
 export async function sendWarnDigest(deps = {}) {
 	const transport = 'transport' in deps ? deps.transport : configuredTransports().email || null;
 	const load = deps.load || loadDigestRows;
-	const cache = deps.cache || { get: cacheGet, set: cacheSet };
+	const cache = deps.cache || defaultCache;
 	const t = (deps.now || Date.now)();
 	const environment = deps.environment || process.env.VERCEL_ENV || 'development';
 	if (!transport) return { sent: false, reason: 'email_unconfigured' };
