@@ -46,9 +46,11 @@ michelle.a3s   54.7 KB  ->  first frame at  1,094 ms on slow 3G     15.2x faster
 npm install @three-ws/avatar-stream
 ```
 
-The browser entry (`.` and `./three`) has zero dependencies. Packing pulls in
-`@gltf-transform/*`, `meshoptimizer`, `draco3dgltf`, and `sharp`, all declared as
-optional peers so a front-end bundle never sees them.
+The browser entry (`.` and `./three`) imports none of its dependencies, so a
+front-end bundle never sees them. The `a3s` CLI and `./node` packer do import
+`@gltf-transform/*`, `meshoptimizer`, `draco3dgltf`, and `sharp`, so they are
+regular dependencies: `npx @three-ws/avatar-stream pack ...` works with no
+extra install step.
 
 ## Quick start
 

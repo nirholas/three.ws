@@ -60,21 +60,13 @@
   "engines": {
     "node": ">=18"
   },
-  "peerDependencies": {
-    "@gltf-transform/core": ">=4",
-    "@gltf-transform/extensions": ">=4",
-    "@gltf-transform/functions": ">=4",
-    "draco3dgltf": ">=1.5",
-    "meshoptimizer": ">=1.1",
-    "sharp": ">=0.33"
-  },
-  "peerDependenciesMeta": {
-    "@gltf-transform/core": { "optional": true },
-    "@gltf-transform/extensions": { "optional": true },
-    "@gltf-transform/functions": { "optional": true },
-    "draco3dgltf": { "optional": true },
-    "meshoptimizer": { "optional": true },
-    "sharp": { "optional": true }
+  "dependencies": {
+    "@gltf-transform/core": "^4.4.0",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.0",
+    "draco3dgltf": "^1.5.7",
+    "meshoptimizer": "^1.2.0",
+    "sharp": "^0.35.5"
   },
   "publishConfig": {
     "access": "public"
