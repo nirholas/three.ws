@@ -11,6 +11,7 @@
 		"@three-ws/agora-mcp": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: its job board is fed by that same third-party protocol alongside our own x402 services. Release it with /agenc/room.",
 		"@three-ws/agent-sniper": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the package is built for a third-party launchpad, named in its own title. Owner approval on naming that launchpad releases this package and the one below it.",
 		"@three-ws/alerts-mcp": "Held under the operating rules' commit gate on content referencing a crypto project other than $THREE: the package manages alert rules for that same third-party launchpad, named in its own title. Release it with @three-ws/agent-sniper.",
-		"/mocap-studio": "Captured 2026-09-20 and deferred: the page drives an avatar's face from your webcam, and the capture rig is a headless browser with no camera, so every frame of it shows the studio waiting rather than working. Revisit with a recorded clip shot on a real machine."
+		"/mocap-studio": "Captured 2026-09-20 and deferred: the page drives an avatar's face from your webcam, and the capture rig is a headless browser with no camera, so every frame of it shows the studio waiting rather than working. Revisit with a recorded clip shot on a real machine.",
+		"/genesis": "Withdrawn from the X queue 2026-11-04 by the owner: Agent Genesis has already been posted on @trythreews several times, so another post repeats the account. Remove this entry only if Genesis ships something new worth its own post."
 	}
 }
