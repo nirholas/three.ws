@@ -11,7 +11,7 @@
 # build instead of the first job.
 torch==2.6.0
 numpy==1.26.4
-transformers==4.41.0
+transformers==4.57.6
 diffusers==0.35.1
 
 # diffusers 0.35.1 requires huggingface-hub>=0.34.0. Nothing in the image imports

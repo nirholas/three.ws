@@ -36,8 +36,8 @@ if "cu124" not in torch.__version__ and torch.version.cuda != "12.4":
     )
 if not numpy.__version__.startswith("1.26"):
     failures.append(f"numpy drifted to {numpy.__version__}, expected 1.26.x")
-if not transformers.__version__.startswith("4.41"):
-    failures.append(f"transformers drifted to {transformers.__version__}, expected 4.41.x")
+if transformers.__version__ != "4.57.6":
+    failures.append(f"transformers drifted to {transformers.__version__}, expected 4.57.6")
 if not diffusers.__version__.startswith("0.35"):
     failures.append(f"diffusers drifted to {diffusers.__version__}, expected 0.35.x")
 

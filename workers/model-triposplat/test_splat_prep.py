@@ -48,6 +48,20 @@ class SplatPrepTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 sp.clamp_gaussians(bad)
 
+    def test_only_png_jpeg_webp_reach_a_decoder(self):
+        # Every other Pillow plugin carries open advisories on the Pillow 12
+        # line Python 3.10 is held to, so a caller's bytes never reach one.
+        def encoded(fmt):
+            buf = io.BytesIO()
+            Image.new("RGB", (8, 8), (200, 10, 10)).save(buf, format=fmt)
+            return buf.getvalue()
+
+        for fmt in ("PNG", "JPEG", "WEBP"):
+            self.assertEqual(sp.open_rgba(encoded(fmt)).size, (8, 8))
+        for fmt in ("TIFF", "GIF", "BMP"):
+            with self.assertRaises(ValueError):
+                sp.open_rgba(encoded(fmt))
+
     def test_weight_staging_manifest(self):
         paths = sp.pipeline_weight_paths("/tmp/w/")
         self.assertEqual(

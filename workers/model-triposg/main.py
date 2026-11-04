@@ -93,7 +93,9 @@ from matte import (
 )
 from worker_security import (
     UnsafeUrlError,
+    UnsupportedImageError,
     fetch_remote_bytes,
+    open_caller_image,
     require_api_key,
     safe_error,
 )
@@ -293,6 +295,15 @@ def _decode_image_bytes(src: str) -> bytes:
     raise InputImageError("unsupported image source: expected https or data:image")
 
 
+def _open_input(data: bytes, mode: Optional[str] = None) -> Image.Image:
+    """Decode the caller's bytes with only the PNG, JPEG and WEBP decoders.
+    Bytes they refuse are the caller's input problem, never a worker fault."""
+    try:
+        return open_caller_image(data, mode)
+    except UnsupportedImageError as exc:
+        raise InputImageError(str(exc)) from exc
+
+
 def _matte(img: Image.Image) -> Image.Image:
     """Background matte via rembg-service. A cutout the caller already made
     passes through untouched; an empty matte is the caller's input problem; a
@@ -321,7 +332,7 @@ def _prepare_photo(src: str) -> Image.Image:
     from image_process import prepare_image
 
     data = _decode_image_bytes(src)
-    matted = _matte(Image.open(io.BytesIO(data)))
+    matted = _matte(_open_input(data))
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
         matted.convert("RGBA").save(tmp, format="PNG")
         tmp_path = tmp.name
@@ -352,7 +363,7 @@ def _prepare_sketch(src: str) -> Image.Image:
     over white, so flatten any alpha onto a white background. No bg removal:
     a sketch has no photographic background to strip."""
     data = _decode_image_bytes(src)
-    img = Image.open(io.BytesIO(data)).convert("RGBA")
+    img = _open_input(data, "RGBA")
     flat = Image.new("RGBA", img.size, (255, 255, 255, 255))
     flat.alpha_composite(img)
     return flat.convert("RGB")

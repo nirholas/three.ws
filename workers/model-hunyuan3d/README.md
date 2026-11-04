@@ -117,7 +117,7 @@ The Notice file the agreement requires is in [`NOTICE`](NOTICE).
 - `images` — 1 to 6 entries, each a `data:image/…;base64,…` URI or an `https://`
   URL. **Only the first is used.** `https` sources go through the SSRF guard in
   [`worker_security.py`](./worker_security.py) (https-only; private, loopback,
-  link-local, and cloud-metadata IPs rejected on every redirect hop).
+  link-local, and cloud-metadata IPs rejected on every redirect hop). Only PNG, JPEG and WEBP are decoded (`open_caller_image` in `worker_security.py`); any other format, or bytes that do not decode, is refused as the caller's error before it reaches a model.
 - `tier` — `draft` | `standard` | `high` (default `high`). Selects the
   generation budget (see below).
 - `job_id` — optional correlation string.

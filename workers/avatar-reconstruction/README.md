@@ -169,6 +169,8 @@ bounded).
 }
 ```
 
+Only PNG, JPEG and WEBP are decoded (`open_caller_image` in `worker_security.py`); any other format, or bytes that do not decode, fails the job with `error_kind: "input"` and an error naming the three formats, before it reaches a model.
+
 `body_type` is `male` | `female` | `neutral` (default `neutral`); see
 [Templates](#templates) for why it currently has no effect. `job_id` lets the
 caller choose the id, which is how the platform correlates a reconstruction with

@@ -13,7 +13,7 @@ networkx==3.3
 scipy==1.13.1
 
 # ── Imaging (reference-image decode, WEBP thumbnails) ────────────────────────
-Pillow>=10.3.0
+Pillow==13.0.0
 
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0

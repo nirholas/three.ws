@@ -57,7 +57,7 @@ Request body:
 
 | Field | Type | Notes |
 |---|---|---|
-| `images` | string[] (1–6) | `https://` URLs or `data:image/…` URIs. Only the first is used. Remote URLs pass through the SSRF guard in [`worker_security.py`](./worker_security.py) (https-only; private/loopback/link-local/metadata IPs rejected after DNS; redirects re-validated per hop). |
+| `images` | string[] (1-6) | `https://` URLs or `data:image/…` URIs. Only the first is used. Remote URLs pass through the SSRF guard in [`worker_security.py`](./worker_security.py) (https-only; private/loopback/link-local/metadata IPs rejected after DNS; redirects re-validated per hop). Only PNG, JPEG and WEBP are decoded (`open_caller_image` in `worker_security.py`); any other format, or bytes that do not decode, is refused as the caller's error before it reaches a model. |
 | `body_type` | string | Optional, default `"neutral"`. |
 | `job_id` | string | Optional caller correlation id. |
 

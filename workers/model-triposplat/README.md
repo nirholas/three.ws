@@ -11,7 +11,7 @@ One image in, one 3D Gaussian splat out. Wraps [VAST-AI-Research/TripoSplat](htt
 | `GET /health` | `503` with `ok:false` once model load has spent its retry budget. |
 | `GET /` | Unauthenticated descriptor for the warmth probe. |
 
-All calls except `/` and `/health` need `Authorization: Bearer $API_KEY`. Image URLs go through the SSRF-hardened fetcher in `worker_security.py` (https only, private ranges refused). Task state is persisted to GCS so a poll can land on any instance. `num_gaussians` defaults to 131072; upstream's pipeline asserts 32768 to 262144, so both this worker and the API refuse counts outside that range as input errors.
+All calls except `/` and `/health` need `Authorization: Bearer $API_KEY`. Image URLs go through the SSRF-hardened fetcher in `worker_security.py` (https only, private ranges refused). Task state is persisted to GCS so a poll can land on any instance. `num_gaussians` defaults to 131072; upstream's pipeline asserts 32768 to 262144, so both this worker and the API refuse counts outside that range as input errors. Only PNG, JPEG and WEBP are decoded (`open_caller_image` in `worker_security.py`); any other format, or bytes that do not decode, is refused as the caller's error before it reaches a model.
 
 ## Environment
 

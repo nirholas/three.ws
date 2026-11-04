@@ -55,7 +55,7 @@ Request (`InferRequest`):
 
 - `images` — 1 to 6 entries, `data:image/…;base64,…` URI or `https://` URL. **Only
   the first is used.** `https` sources go through the SSRF guard in
-  [`worker_security.py`](./worker_security.py).
+  [`worker_security.py`](./worker_security.py). Only PNG, JPEG and WEBP are decoded (`open_caller_image` in `worker_security.py`); any other format, or bytes that do not decode, is refused as the caller's error before it reaches a model.
 - `mode` — `"image"` (default) or `"scribble"`. Any other value falls back to `image`.
 - `prompt` — text conditioning. **Required in scribble mode** — an empty prompt in
   scribble mode returns `422`. Ignored in image mode.

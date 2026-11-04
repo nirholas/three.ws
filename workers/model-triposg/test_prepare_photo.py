@@ -154,7 +154,10 @@ def _install_stub_modules() -> None:
         def alpha_composite(self, _other):
             pass
 
-    def _open(_fp):
+        def load(self):
+            pass
+
+    def _open(_fp, formats=None):
         return _Image()
 
     def _new(_mode, size, _color=None):
@@ -260,6 +263,50 @@ def test_usable_image_passes_through():
 
     result = _with_stub_prepare_image(_prepare_image)
     assert result is sentinel
+
+
+def _with_undecodable_pil(fn):
+    """Make PIL refuse the bytes the way the real Image.open does for garbage
+    or a disallowed format (UnidentifiedImageError, an OSError subclass)."""
+    pil_image = sys.modules["PIL.Image"]
+    original = pil_image.open
+
+    def _refuse(_fp, formats=None):
+        raise OSError("cannot identify image file")
+
+    def _never_reached(_path, bg_color=None, rmbg_net=None):
+        raise AssertionError("prepare_image ran on bytes PIL refused")
+
+    image_process_stub = types.ModuleType("image_process")
+    image_process_stub.prepare_image = _never_reached
+    previous = sys.modules.get("image_process")
+    sys.modules["image_process"] = image_process_stub
+    pil_image.open = _refuse
+    try:
+        return fn()
+    finally:
+        pil_image.open = original
+        if previous is None:
+            del sys.modules["image_process"]
+        else:
+            sys.modules["image_process"] = previous
+
+
+def test_undecodable_photo_is_the_callers_fault_not_a_worker_fault():
+    """A caller's undecodable image must leave as InputImageError, which
+    _run_inference reports as "input image unusable", never as an opaque
+    worker fault that sends the platform into failover."""
+    for prepare in (main._prepare_photo, main._prepare_sketch):
+        try:
+            _with_undecodable_pil(lambda: prepare(_data_uri()))
+        except main.InputImageError as exc:
+            assert "PNG, JPEG or WEBP" in str(exc), exc
+            continue
+        except OSError as exc:  # pragma: no cover, the bug this test guards
+            raise AssertionError(
+                f"{prepare.__name__} let a decode OSError escape as a worker fault: {exc}"
+            ) from exc
+        raise AssertionError(f"{prepare.__name__} accepted undecodable bytes")
 
 
 if __name__ == "__main__":

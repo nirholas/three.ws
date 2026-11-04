@@ -36,7 +36,7 @@ import glb_ops
 import face_geometry
 import face_projection
 import pygltflib
-from worker_security import UnsafeUrlError, fetch_remote_bytes
+from worker_security import UnsafeUrlError, UnsupportedImageError, fetch_remote_bytes, open_caller_image
 
 log = logging.getLogger("face_pipeline")
 
@@ -141,9 +141,9 @@ def _decode_image(src: str) -> Image.Image:
     if src.startswith("data:image"):
         b64 = src.split(",", 1)[1]
         try:
-            return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
-        except Exception as exc:
-            raise InputError("an inline image could not be decoded") from exc
+            return open_caller_image(base64.b64decode(b64), "RGB")
+        except ValueError as exc:  # bad base64 (binascii.Error) or UnsupportedImageError
+            raise InputError("an inline image could not be decoded (send PNG, JPEG or WEBP)") from exc
     if src.startswith("https://"):
         # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
         # rejected after DNS resolution, redirects re-validated per hop, bounded.
@@ -159,9 +159,9 @@ def _decode_image(src: str) -> Image.Image:
         except httpx.HTTPError as exc:
             raise InputError(f"could not fetch image source: {type(exc).__name__}") from exc
         try:
-            return Image.open(io.BytesIO(data)).convert("RGB")
-        except Exception as exc:
-            raise InputError("a fetched image could not be decoded") from exc
+            return open_caller_image(data, "RGB")
+        except UnsupportedImageError as exc:
+            raise InputError("a fetched image could not be decoded (send PNG, JPEG or WEBP)") from exc
     raise InputError(f"unsupported image source: {src[:60]}")
 
 

@@ -78,6 +78,58 @@ def main() -> int:
         else:
             check(f"photo loader refuses {url}", False)
 
+    import io
+
+    import PIL.ImageOps
+    from PIL import Image
+
+    def encoded(fmt, size=(4, 2), **save):
+        buf = io.BytesIO()
+        Image.new("RGB", size, (90, 140, 200)).save(buf, format=fmt, **save)
+        return buf.getvalue()
+
+    real_fetch = app_module._fetch_bytes
+    real_transpose = PIL.ImageOps.exif_transpose
+    transposed = []
+
+    def recording_transpose(img, **kwargs):
+        size = len(img.info.get("exif", b""))
+        transposed.append(size)
+        # Record, but never run the vulnerable parser on the hostile blob here.
+        return img if size > 65535 else real_transpose(img, **kwargs)
+
+    PIL.ImageOps.exif_transpose = recording_transpose
+    try:
+        app_module._fetch_bytes = lambda *_a: encoded("TIFF")
+        try:
+            app_module._load_photo(photo)
+        except app_module.ImageSourceError:
+            check("photo loader refuses a TIFF before its decoder runs", True)
+        else:
+            check("photo loader refuses a TIFF before its decoder runs", False)
+
+        exif = Image.Exif()
+        exif[0x0112] = 6  # Orientation: rotate 90 CW
+        app_module._fetch_bytes = lambda *_a: encoded("JPEG", exif=exif.tobytes())
+        upright = app_module._load_photo(photo)
+        check("camera EXIF orientation is still honoured", upright.shape[:2] == (4, 2), str(upright.shape))
+
+        # Pillow before 13.0.0 parses a PNG eXIf chunk of repeated Exif headers
+        # in quadratic time (PYSEC-2026-4342) inside exif_transpose. Real
+        # camera EXIF fits the 64 KiB JPEG APP1 ceiling, so a larger blob is
+        # never handed to the parser.
+        transposed.clear()
+        app_module._fetch_bytes = lambda *_a: encoded("PNG", exif=b"Exif\x00\x00" * 20_000)
+        hostile = app_module._load_photo(photo)
+        check(
+            "an oversized EXIF blob never reaches the EXIF parser",
+            transposed == [] and hostile.shape[:2] == (2, 4),
+            f"exif_transpose ran on {transposed} byte(s) of EXIF",
+        )
+    finally:
+        app_module._fetch_bytes = real_fetch
+        PIL.ImageOps.exif_transpose = real_transpose
+
     app_module._load_error = "weights missing"
     r = client.get("/health")
     check("dead pipeline drains on /health", r.status_code == 503 and r.json()["ok"] is False, r.text)

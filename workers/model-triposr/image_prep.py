@@ -11,10 +11,11 @@ from __future__ import annotations
 
 import base64
 import binascii
-import io
 from typing import Callable
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
+
+from worker_security import UnsupportedImageError, open_caller_image
 
 # TripoSR's tokenizer normalizes with a 3-channel mean/std (tsr/models/
 # tokenizers/image.py) and errors on a 4-channel RGBA tensor ("size of tensor a
@@ -39,11 +40,12 @@ def decode_data_uri(src: str) -> bytes:
 
 
 def open_rgb(data: bytes) -> Image.Image:
-    """Decode image bytes to an RGB PIL image, or raise ValueError."""
+    """Decode PNG, JPEG or WEBP bytes to an RGB PIL image, or raise ValueError.
+    No other Pillow decoder ever sees caller bytes (worker_security)."""
     try:
-        return Image.open(io.BytesIO(data)).convert("RGB")
-    except (UnidentifiedImageError, OSError) as exc:
-        raise ValueError("image bytes could not be decoded") from exc
+        return open_caller_image(data, "RGB")
+    except UnsupportedImageError as exc:
+        raise ValueError("image bytes could not be decoded (send PNG, JPEG or WEBP)") from exc
 
 
 def decode_image(src: str, *, fetch: Callable[[str], bytes]) -> Image.Image:

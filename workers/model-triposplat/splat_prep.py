@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import base64
 import binascii
-import io
 from typing import Callable
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
+
+from worker_security import UnsupportedImageError, open_caller_image
 
 # Upstream's TripoSplatPipeline asserts 32,768 <= num_gaussians <= 262,144
 # (`_validate_num_gaussians` in triposplat.py). Refusing out-of-range counts here
@@ -50,9 +51,9 @@ def open_rgba(data: bytes) -> Image.Image:
     if len(data) > MAX_IMAGE_BYTES:
         raise ValueError("image is larger than the 25 MB limit")
     try:
-        return Image.open(io.BytesIO(data)).convert("RGBA")
-    except (UnidentifiedImageError, OSError) as exc:
-        raise ValueError("image bytes could not be decoded") from exc
+        return open_caller_image(data, "RGBA")
+    except UnsupportedImageError as exc:
+        raise ValueError("image bytes could not be decoded (send PNG, JPEG or WEBP)") from exc
 
 
 def decode_image(src: str, *, fetch: Callable[[str], bytes]) -> Image.Image:

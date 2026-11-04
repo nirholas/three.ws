@@ -103,6 +103,29 @@ def test_none_mask_is_backwards_compatible():
     print("ok  omitting the mask is unchanged behaviour (hair tint unaffected)")
 
 
+def _encoded_uri(fmt):
+    import base64
+    import io
+
+    buf = io.BytesIO()
+    Image.new("RGB", (8, 8), (180, 120, 90)).save(buf, format=fmt)
+    return f"data:image/{fmt.lower()};base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def test_selfie_decode_accepts_only_png_jpeg_webp():
+    # Every other Pillow plugin carries open advisories on the Pillow 12 line
+    # Python 3.10 is held to, so a caller's selfie never reaches one.
+    for fmt in ("PNG", "JPEG", "WEBP"):
+        assert fp._decode_image(_encoded_uri(fmt)).size == (8, 8), fmt
+    for fmt in ("TIFF", "GIF", "BMP"):
+        try:
+            fp._decode_image(_encoded_uri(fmt))
+        except fp.InputError:
+            continue
+        raise AssertionError(f"{fmt} selfie reached a decoder")
+    print("ok  selfie decode refuses every format outside PNG, JPEG and WEBP")
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     try:

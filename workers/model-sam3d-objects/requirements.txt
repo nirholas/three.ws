@@ -3,7 +3,7 @@
 # this file (upstream is installed from its pinned checkout).
 trimesh>=4.4.0,<5
 numpy>=1.24,<2
-Pillow>=10,<12
+Pillow==11.3.0  # newest under the pillow<12 cap of upstream gradio==5.49.0
 
 fastapi>=0.115,<1
 uvicorn[standard]>=0.32,<1

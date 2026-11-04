@@ -28,7 +28,6 @@ back verbatim instead of an error ref.
 from __future__ import annotations
 
 import base64
-import io
 import time
 from typing import Callable, Optional
 from urllib.parse import urlsplit
@@ -36,7 +35,12 @@ from urllib.parse import urlsplit
 import httpx
 from PIL import Image
 
-from worker_security import UnsafeUrlError, fetch_remote_bytes
+from worker_security import (
+    UnsafeUrlError,
+    UnsupportedImageError,
+    fetch_remote_bytes,
+    open_caller_image,
+)
 
 # Seconds allowed for one attempt at one caller-supplied image URL.
 IMAGE_FETCH_TIMEOUT_S = 30.0
@@ -162,10 +166,10 @@ def fetch_image_bytes(
 
 def open_image(data: bytes, mode: str, label: str) -> Image.Image:
     try:
-        return Image.open(io.BytesIO(data)).convert(mode)
-    except Exception as exc:  # noqa: BLE001 - undecodable caller input, not an internal fault
+        return open_caller_image(data, mode)
+    except UnsupportedImageError as exc:
         raise ImageSourceError(
-            f"image source {label} is not a decodable image ({type(exc).__name__})"
+            f"image source {label} is not a decodable image (send PNG, JPEG or WEBP)"
         ) from exc
 
 

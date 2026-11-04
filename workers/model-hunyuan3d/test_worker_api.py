@@ -165,6 +165,25 @@ def test_decode_image_accepts_a_data_uri():
     assert img.getpixel((0, 0)) == (10, 20, 30)
 
 
+def test_decode_image_accepts_only_png_jpeg_webp():
+    # Every other Pillow plugin carries open advisories on the Pillow 12 line
+    # Python 3.10 is held to, so a caller's bytes never reach one.
+    def encoded(fmt):
+        buf = io.BytesIO()
+        Image.new("RGB", (8, 8), (10, 20, 30)).save(buf, format=fmt)
+        return buf.getvalue()
+
+    for fmt in ("PNG", "JPEG", "WEBP"):
+        assert image_source.open_image(encoded(fmt), "RGB", "test").size == (8, 8)
+    for fmt in ("TIFF", "GIF", "BMP"):
+        try:
+            image_source.open_image(encoded(fmt), "RGB", "test")
+        except image_source.ImageSourceError as exc:
+            assert "PNG, JPEG or WEBP" in str(exc), str(exc)
+            continue
+        raise AssertionError(f"{fmt} reached a decoder")
+
+
 def test_decode_image_refuses_unsafe_sources():
     # http, loopback, and the cloud metadata server are all refused before any
     # socket is opened for the fetch itself.

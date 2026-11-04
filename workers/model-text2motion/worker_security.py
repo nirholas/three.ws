@@ -5,7 +5,7 @@ This module is intentionally dependency-light (stdlib only) so it can be
 COPYed verbatim into every worker's Docker build context. The same canonical
 file lives in each worker directory; keep them byte-identical when editing.
 
-It provides three primitives that every worker needs:
+It provides four primitives that every worker needs:
 
   1. ``require_api_key`` - constant-time bearer-token check (timing-safe).
   2. ``fetch_remote_bytes`` - SSRF-hardened HTTP(S) fetch of caller-supplied
@@ -14,11 +14,16 @@ It provides three primitives that every worker needs:
   3. ``safe_error`` - turns an exception into an opaque, correlation-id-tagged
      message safe to persist/return to callers, after logging the full
      traceback server-side only.
+  4. ``open_caller_image`` - decodes caller-supplied image bytes with only the
+     PNG, JPEG and WEBP Pillow plugins, so no other decoder ever sees them.
+     Pillow is imported inside the function: workers that never decode an
+     image do not ship it.
 """
 
 from __future__ import annotations
 
 import hmac
+import io
 import ipaddress
 import logging
 import asyncio
@@ -301,6 +306,46 @@ async def _fetch_once_async(
                 chunks.append(chunk)
             return b"".join(chunks)
     raise UnsafeUrlError(f"too many redirects (>{_MAX_REDIRECTS})")
+
+
+# ── caller image decode ─────────────────────────────────────────────────────────
+
+# The formats a caller may send as an input image, and the only ones the Forge
+# UI uploads. Every other Pillow plugin (TIFF, EPS, PDF, GIF, BMP, FPX, MSP,
+# SPIDER, XBM and the rest) carries open advisories on the Pillow lines some
+# images are held to (12.x on Python 3.10, 11.x under an upstream cap), so a
+# caller's bytes are never handed to one. See docs/audit/python-deps-2026-09-07.md.
+CALLER_IMAGE_FORMATS = ("PNG", "JPEG", "WEBP")
+
+
+class UnsupportedImageError(ValueError):
+    """Caller image bytes that are not a decodable image in an allowed format.
+    The message is ours, never Pillow's, so it is safe to return verbatim."""
+
+
+def open_caller_image(
+    data: bytes,
+    mode: Optional[str] = None,
+    *,
+    formats: Iterable[str] = CALLER_IMAGE_FORMATS,
+):
+    """Decode caller-supplied image bytes, fully loaded, optionally converted
+    to ``mode``. Only the plugins named in ``formats`` may identify the bytes;
+    anything else, a truncated file, or a decompression bomb raises
+    ``UnsupportedImageError``."""
+    from PIL import Image
+
+    allowed = tuple(formats)
+    try:
+        img = Image.open(io.BytesIO(data), formats=list(allowed))
+        img.load()
+        return img.convert(mode) if mode else img
+    except Exception as exc:  # noqa: BLE001 - Pillow raises many types for hostile input
+        raise UnsupportedImageError(
+            f"image is not a decodable {', '.join(allowed[:-1])} or {allowed[-1]} file"
+            if len(allowed) > 1
+            else f"image is not a decodable {allowed[0]} file"
+        ) from exc
 
 
 # ── opaque error handling ───────────────────────────────────────────────────────

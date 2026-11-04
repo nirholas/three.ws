@@ -34,7 +34,6 @@ from __future__ import annotations
 
 import asyncio
 import gc
-import io
 import json
 import logging
 import os
@@ -56,7 +55,14 @@ from pydantic import BaseModel, Field
 import scene_layout as layout
 from request_policy import RequestRejected, validate_request
 from storage_backend import LocalStorage
-from worker_security import UnsafeUrlError, fetch_remote_bytes, require_api_key, safe_error
+from worker_security import (
+    UnsafeUrlError,
+    UnsupportedImageError,
+    fetch_remote_bytes,
+    open_caller_image,
+    require_api_key,
+    safe_error,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("model-sam3d-objects")
@@ -77,6 +83,11 @@ MAX_MASK_BYTES = 16 * 1024 * 1024
 # The model works at a fixed internal resolution; a larger photo only costs memory.
 MAX_PHOTO_SIDE = 2048
 MAX_PHOTO_PIXELS = 40_000_000
+# Real camera EXIF fits one 64 KiB JPEG APP1 segment. The Pillow this image is
+# held to (11.3.0, see requirements.txt) parses a larger crafted blob in
+# quadratic time (PYSEC-2026-4342), so an oversized one is ignored instead of
+# handed to the EXIF parser; the photo is then used as stored.
+MAX_EXIF_BYTES = 65535
 
 _bucket: Optional[storage.Bucket] = None
 _local_storage: Optional[LocalStorage] = None
@@ -197,11 +208,13 @@ def _load_photo(url: str) -> np.ndarray:
     data = _fetch_bytes(url, "photo", MAX_IMAGE_BYTES)
     try:
         Image.MAX_IMAGE_PIXELS = MAX_PHOTO_PIXELS
-        img = Image.open(io.BytesIO(data))
-        img.load()
-    except Exception as exc:  # noqa: BLE001 - PIL raises many types, including decompression bombs
+        img = open_caller_image(data)
+    except UnsupportedImageError as exc:
         raise ImageSourceError("photo is not a readable image (use PNG, JPEG or WebP)") from exc
-    img = ImageOps.exif_transpose(img).convert("RGB")
+    exif_size = max(len(img.info.get("exif") or b""), len(img.info.get("Raw profile type exif") or ""))
+    if exif_size <= MAX_EXIF_BYTES:
+        img = ImageOps.exif_transpose(img)
+    img = img.convert("RGB")
     if max(img.size) > MAX_PHOTO_SIDE:
         scale = MAX_PHOTO_SIDE / max(img.size)
         img = img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.LANCZOS)

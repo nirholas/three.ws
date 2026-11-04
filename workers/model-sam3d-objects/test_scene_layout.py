@@ -102,6 +102,17 @@ def test_empty_and_corrupt_masks_are_rejected():
         sl.mask_from_png_bytes(b"not an image", 4, 4)
 
 
+def test_mask_in_a_format_outside_png_jpeg_webp_is_rejected():
+    # Pillow 11.3.0 (held there by upstream's gradio==5.49.0) carries open
+    # advisories in its TIFF, GIF and BMP decoders, so a caller's mask never
+    # reaches one.
+    for fmt in ("TIFF", "GIF", "BMP"):
+        buf = io.BytesIO()
+        Image.fromarray(np.full((4, 4), 255, np.uint8), "L").save(buf, format=fmt)
+        with pytest.raises(ValueError, match="readable"):
+            sl.mask_from_png_bytes(buf.getvalue(), 4, 4)
+
+
 def test_scene_has_one_named_node_per_object_and_round_trips():
     items = []
     for i in range(3):

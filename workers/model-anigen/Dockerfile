@@ -38,6 +38,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 1. torch, its own cached layer (every extension below links against it).
 RUN pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121
+# 1b. xformers (BSD), the sparse-attention kernel. Upstream calls it optional,
+# but only the DENSE attention module has an SDPA fallback: the sparse
+# modules (anigen/modules/sparse/attention/*) dispatch to xformers or
+# flash_attn only, and sparse/__init__.py probes find_spec('xformers.ops'),
+# which raises ModuleNotFoundError at import when neither is installed.
+# 0.0.27.post2 is the wheel built against torch 2.4.0 + cu121; --no-deps keeps
+# pip from replacing the torch pinned above.
+RUN pip install --no-deps xformers==0.0.27.post2 --index-url https://download.pytorch.org/whl/cu121 \
+    && python3 -c "import importlib.metadata as m; v = m.version('xformers'); assert v == '0.0.27.post2', v; print('xformers', v)"
+# Pin both attention dispatchers to it instead of trusting import-time probing.
+ENV ATTN_BACKEND=xformers \
+    SPARSE_ATTN_BACKEND=xformers
 
 # 2. AniGen, pinned to the commit read on 2026-10-11
 # (https://github.com/VAST-AI-Research/AniGen/commit/c49db3d6b466537a02ccf2286688903d77af7e4f).

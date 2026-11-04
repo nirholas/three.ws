@@ -109,6 +109,20 @@ check(
 check("payload-less data URI is refused", raises(ValueError, decode_data_uri, "data:image/png"))
 check("garbage bytes are refused", raises(ValueError, open_rgb, b"not-an-image"))
 
+
+def encoded(fmt: str) -> bytes:
+    buf = io.BytesIO()
+    Image.new("RGB", (8, 8), (200, 30, 30)).save(buf, format=fmt)
+    return buf.getvalue()
+
+
+# Only the formats the Forge UI uploads reach a Pillow decoder: every other
+# plugin carries open advisories on the Pillow 12 line Python 3.10 is held to.
+for fmt in ("JPEG", "WEBP"):
+    check(f"{fmt} decodes", open_rgb(encoded(fmt)).size == (8, 8))
+for fmt in ("TIFF", "GIF", "BMP"):
+    check(f"{fmt} is refused before any decoder runs", raises(ValueError, open_rgb, encoded(fmt)))
+
 # ── matting (the 2026-07-08 regression) ─────────────────────────────────────
 
 cutout = Image.new("RGBA", (4, 2), (0, 0, 0, 0))

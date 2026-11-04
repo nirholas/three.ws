@@ -100,11 +100,12 @@ def mask_from_png_bytes(data: bytes, width: int, height: int) -> np.ndarray:
     """
     from PIL import Image
 
+    from worker_security import UnsupportedImageError, open_caller_image
+
     try:
-        img = Image.open(io.BytesIO(data))
-        img.load()
-    except Exception as exc:  # noqa: BLE001 - PIL raises many types for a bad file
-        raise ValueError("mask is not a readable image") from exc
+        img = open_caller_image(data)
+    except UnsupportedImageError as exc:
+        raise ValueError("mask is not a readable image (use PNG, JPEG or WebP)") from exc
     if img.mode in ("RGBA", "LA"):
         alpha = np.asarray(img.getchannel("A"))
         channel = alpha if alpha.min() != alpha.max() else np.asarray(img.convert("L"))
