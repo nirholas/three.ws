@@ -303,6 +303,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['avatar-fidelity-program', 'internal: program goals and competitive targets'],
 	['github-trending-patterns', 'internal: growth research comparing three.ws with the GitHub trending repos, written for planning rather than for a reader arriving from search'],
 	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],
+	['huggingface-audio2face-any-rig', 'internal: Hugging Face community article draft, owner approval required before posting'],
 	['aws-builder-center-before-the-signature', 'internal: draft prepared for the AWS Builder Center'],
 	['aws-builder-center-agent-commerce-spine', 'internal: draft prepared for the AWS Builder Center'],
 	['aws-builder-center-claims-ledger', 'internal: draft prepared for the AWS Builder Center'],
