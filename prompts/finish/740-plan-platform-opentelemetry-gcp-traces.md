@@ -1,5 +1,7 @@
 # Distributed traces from the API through every GPU worker land in Google Cloud Trace
 
+**Status 2026-11-04:** API tracing module, fetchUpstream client spans, forge.submit/forge.poll spans and vendored tracing.py in eight workers are shipped (112812796) and verified with a live Cloud Trace query. Remaining, owned by the owner or a deploy: redeploy the eight workers, capture one real Forge-path trace, and measure boot-time delta.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/740-plan-platform-opentelemetry-gcp-traces.md`.
 
 **Priority:** P2, new capability with clear value (score 46 of 100 inside the tier). **Area:** platform. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

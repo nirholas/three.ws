@@ -81,5 +81,5 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 724-plan-play-multiplayer-redis-scale-out.md | see git log (multiplayer scale-out) | Redis presence fan-out, health presence/instance, fail-fast boot, secret-bound deploy, tests and load test; Memorystore provisioning and live numbers pending owner.
 2026-11-04 | 773-plan-identity-web-bot-auth-signed-requests.md | see git log | Web Bot Auth signing, key directory route, gateway and screen-pool hooks shipped; owner provisions WEB_BOT_AUTH_PRIVATE_KEY and deploys.
 2026-11-04 | 747-plan-memory-file-layer-semantic-recall.md | 70423f326 | Memory file layer recall is semantic via POST /api/memory/rank with a substring fallback.
-2026-11-04 | 773-plan-identity-web-bot-auth-signed-requests.md | see git log | Web Bot Auth signing, key directory route, gateway and screen-pool hooks shipped; owner provisions WEB_BOT_AUTH_PRIVATE_KEY and deploys.
-2026-11-04 | 761-plan-avatar-parametric-identity-morph-fold.md | pending | Identity morph fold shipped in served bakes; owner runs rebake-avatars.mjs --apply and the render diff.
+2026-11-04 | 740-plan-platform-opentelemetry-gcp-traces.md | 112812796 | Tracing shipped and verified in Cloud Trace; worker redeploy and real Forge-path trace pending owner deploy.
+2026-11-04 | 739-plan-glasses-meta-display-lens-web-app.md | dad3b0b4d | /glass lens app shipped; hardware verification, portrait, push lane pending.
