@@ -1,4 +1,4 @@
-// `defineExecutor` — wire a typed implementation map onto a tool defined
+// `defineExecutor` - wire a typed implementation map onto a tool defined
 // with `defineTool`. Every call goes through one `invoke(apiName, params, ctx)`
 // entry point that:
 //
@@ -8,7 +8,7 @@
 //   4. Wraps thrown errors into `{ success: false, error: { message, code } }`
 //      instead of letting them propagate.
 //   5. Normalizes a successful return into `{ success: true, content, state }`
-//      — unless the implementation already returned that shape itself (an
+//      - unless the implementation already returned that shape itself (an
 //      implementation is free to return a full result envelope when it needs
 //      to set `content` and `state` to different values).
 //
@@ -22,8 +22,8 @@ import { createRateLimiter } from './permissions.js';
  * @typedef {object} ToolResult
  * @property {boolean} success
  * @property {*} [content] Present on success (and on `ExecutorError` failures,
- *   as a human-readable summary — mirrors the reference SDK's shape).
- * @property {*} [state] Present on success — structured data for callers that
+ *   as a human-readable summary - mirrors the reference SDK's shape).
+ * @property {*} [state] Present on success - structured data for callers that
  *   want more than the rendered `content`.
  * @property {{ message: string, code?: string, issues?: unknown, body?: unknown }} [error]
  *   Present on failure.

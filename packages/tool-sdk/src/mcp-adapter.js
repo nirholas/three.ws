@@ -1,4 +1,4 @@
-// `toMcpTools` — the piece that makes this port ours: adapt a `defineTool` +
+// `toMcpTools` - the piece that makes this port ours: adapt a `defineTool` +
 // `defineExecutor` pair into the exact registration shape three.ws's MCP
 // servers already use, so adoption is one call.
 //
@@ -10,7 +10,7 @@
 //     name: string,
 //     title: string,
 //     description: string,
-//     inputSchema: Record<string, ZodTypeAny>,  // raw Zod shape, NOT JSON Schema —
+//     inputSchema: Record<string, ZodTypeAny>,  // raw Zod shape, NOT JSON Schema -
 //                                                // the MCP SDK converts this itself.
 //     annotations: { readOnlyHint, idempotentHint, openWorldHint, ... },
 //     async handler(args, extra) { ... },       // returns data on success, THROWS on failure

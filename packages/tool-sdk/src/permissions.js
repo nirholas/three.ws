@@ -1,24 +1,24 @@
 // Permission-manifest primitives for @three-ws/tool-sdk.
 //
-// A tool declares what it is allowed to do — which hosts it may fetch from,
-// how often each API may be called, and whether it may read wallet context —
+// A tool declares what it is allowed to do - which hosts it may fetch from,
+// how often each API may be called, and whether it may read wallet context -
 // as plain, inspectable data (`PluginPermissions`, see define-tool.js). This
 // module turns that declaration into two things that are cheap to enforce at
 // the SDK layer, without a host runtime:
 //
 //   1. An in-memory token-bucket rate limiter, keyed per API name.
-//   2. `guardedFetch(permissions)` — a `fetch` wrapper that throws on any
+//   2. `guardedFetch(permissions)` - a `fetch` wrapper that throws on any
 //      host outside the declared `network` allowlist. Deny-by-default: a
 //      tool that declares no `network` permission may not fetch anything.
 //
-// Wallet access is declarative only — the SDK does not (and cannot) enforce
+// Wallet access is declarative only - the SDK does not (and cannot) enforce
 // it; enforcement stays with the host that grants a signer to the executor's
 // `ctx`.
 
 /**
  * @typedef {object} PluginPermissions
  * @property {string[]} [network] Allowlisted hostnames the executor may fetch
- *   from (exact match — no wildcards). Omit or leave empty to deny all
+ *   from (exact match - no wildcards). Omit or leave empty to deny all
  *   outbound network access via `guardedFetch`.
  * @property {{ calls: number, perSeconds: number }} [rateLimit] Token-bucket
  *   rate limit applied per API name (e.g. `{ calls: 60, perSeconds: 60 }` for
@@ -29,7 +29,7 @@
 
 /**
  * Normalize a raw `permissions` config into a stable, deduplicated shape.
- * Safe to call with `undefined` — returns the "no permissions" default
+ * Safe to call with `undefined` - returns the "no permissions" default
  * (empty network allowlist, no rate limit, no wallet access).
  *
  * @param {Partial<PluginPermissions>} [permissions]
@@ -75,7 +75,7 @@ export function createRateLimiter(rateLimit) {
 		/**
 		 * Attempt to take one token from the bucket identified by `key`.
 		 * @param {string} [key]
-		 * @param {number} [now] Injectable clock (ms) — primarily for tests.
+		 * @param {number} [now] Injectable clock (ms) - primarily for tests.
 		 * @returns {boolean} `true` if the call is allowed, `false` if rate-limited.
 		 */
 		tryTake(key = 'default', now = Date.now()) {
@@ -132,7 +132,7 @@ export function guardedFetch(permissions) {
 
 		if (!allow.has(hostname)) {
 			const detail = allow.size > 0 ? `allowlist: [${[...allow].join(', ')}]` : 'no hosts allowlisted (deny-all by default)';
-			throw Object.assign(new Error(`guardedFetch: host "${hostname}" is not permitted — ${detail}`), {
+			throw Object.assign(new Error(`guardedFetch: host "${hostname}" is not permitted - ${detail}`), {
 				code: 'NETWORK_NOT_ALLOWED',
 				hostname,
 			});

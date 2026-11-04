@@ -1,4 +1,4 @@
-// `defineTool` — declare a tool's identity, API surface, and permission
+// `defineTool` - declare a tool's identity, API surface, and permission
 // manifest once, and derive everything else (JSON-Schema params for the
 // manifest, a raw Zod shape for MCP registration, per-API metadata for the
 // executor) from that single declaration.
@@ -16,7 +16,7 @@ import { normalizePermissions } from './permissions.js';
 
 /**
  * @typedef {object} PluginApiConfig
- * @property {string} name API name — the method key on the executor's
+ * @property {string} name API name - the method key on the executor's
  *   implementation map, and (via `toMcpTools`) the registered MCP tool name.
  * @property {string} description Short, LLM-facing description of what this
  *   API does.
@@ -36,7 +36,7 @@ import { normalizePermissions } from './permissions.js';
  * @property {string} description Short description of the tool as a whole.
  * @property {string} version Semantic version, e.g. "1.0.0".
  * @property {import('./permissions.js').PluginPermissions} [permissions]
- *   Permission manifest — network allowlist, rate limit, wallet access.
+ *   Permission manifest - network allowlist, rate limit, wallet access.
  * @property {PluginApiConfig[]} apis API surface of the tool. Must be non-empty.
  */
 

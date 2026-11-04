@@ -12,7 +12,10 @@
 
 import { z } from 'zod';
 
-import { defineTool, defineExecutor, toMcpTools } from '@three-ws/tool-sdk';
+// tool-sdk is private and unpublished, so this published package imports a
+// byte-identical vendored copy (../vendor/tool-sdk/VENDORED.md) instead of
+// depending on it. Resync with `npm run vendor:tool-sdk`.
+import { defineTool, defineExecutor, toMcpTools } from '../vendor/tool-sdk/index.js';
 
 import { apiRequest } from '../lib/api.js';
 import { THREE_WS_BASE } from '../config.js';

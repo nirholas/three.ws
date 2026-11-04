@@ -52,7 +52,6 @@
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@three-ws/tool-sdk": "file:../tool-sdk",
 		"zod": "^4.6.7"
 	}
 }
