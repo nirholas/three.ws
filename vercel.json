@@ -145,11 +145,7 @@
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
 		},
-		"api/input-multiview.js": {
-			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
-			"maxDuration": 90
-		},
-		"{api/input-photo,api/vision,api/a2f,api/autopilot/proposals,api/ibm/galaxy,api/ibm/vision,api/agent/reflect,api/walk/pilot,api/agent-trade/demo}.js": {
+		"{api/vision,api/a2f,api/autopilot/proposals,api/ibm/galaxy,api/ibm/vision,api/agent/reflect,api/walk/pilot,api/agent-trade/demo}.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 60
 		},
