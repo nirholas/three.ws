@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "One MCP install for every three.ws tool",
+			"summary": "Add https://three.ws/mcp to Claude, Cursor or any MCP client and get every three.ws tool behind one sign-in, with financial tools off until you opt in. Clients that only speak stdio can run npx -y @three-ws/mcp with a THREE_WS_API_KEY, and the MCP registry listing and docs now lead with the unified endpoint.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/mcp-tools"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Opening the spin wheel no longer drops everyone in the world",
 			"tags": [
 				"fix"

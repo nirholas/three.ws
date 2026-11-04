@@ -1,0 +1,41 @@
+{
+	"name": "@three-ws/mcp",
+	"version": "0.1.0",
+	"description": "One stdio MCP server for every three.ws tool: a zero-dependency proxy to the unified https://three.ws/mcp endpoint, authenticated with THREE_WS_API_KEY.",
+	"type": "module",
+	"main": "./src/proxy.js",
+	"bin": {
+		"three-ws-mcp": "./src/cli.js"
+	},
+	"exports": {
+		".": "./src/proxy.js",
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"test": "node --test test/proxy.test.mjs",
+		"prepublishOnly": "node --test test/proxy.test.mjs"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/mcp",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": ["mcp", "model-context-protocol", "three.ws", "3d", "agents", "solana"],
+	"publishConfig": {
+		"access": "public"
+	}
+}

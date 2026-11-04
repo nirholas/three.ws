@@ -19,6 +19,10 @@
 	"remotes": [
 		{
 			"type": "streamable-http",
+			"url": "https://three.ws/mcp"
+		},
+		{
+			"type": "streamable-http",
 			"url": "https://three.ws/api/mcp"
 		}
 	],
