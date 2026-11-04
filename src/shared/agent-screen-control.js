@@ -65,22 +65,124 @@ function cleanText(raw) {
 // must never let it reach the cloud metadata endpoint, loopback, or any private
 // range. Only public http(s) destinations are allowed.
 
-function ipv4Parts(host) {
-	const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
+// ── egress-guard:address-policy:start ──
+// Resolved-address policy, shared byte-for-byte by the API sanitizer
+// (src/shared/agent-screen-control.js) and the caster worker
+// (workers/agent-screen-pool/egress-guard.js). tests/agent-screen-egress-guard.test.js
+// fails if the two copies drift. Pure and dependency-free so the browser bundle
+// can import it too. An address is public only when it falls in none of the
+// ranges below; IPv6 forms that embed an IPv4 address (mapped, NAT64, 6to4) are
+// judged by the embedded IPv4 address.
+
+const V4_BLOCKED = [
+	['0.0.0.0', 8],        // this network
+	['10.0.0.0', 8],       // private
+	['100.64.0.0', 10],    // carrier-grade NAT
+	['127.0.0.0', 8],      // loopback
+	['169.254.0.0', 16],   // link-local, cloud metadata
+	['172.16.0.0', 12],    // private
+	['192.0.0.0', 24],     // IETF protocol assignments
+	['192.0.2.0', 24],     // documentation
+	['192.88.99.0', 24],   // 6to4 relay anycast
+	['192.168.0.0', 16],   // private
+	['198.18.0.0', 15],    // benchmarking
+	['198.51.100.0', 24],  // documentation
+	['203.0.113.0', 24],   // documentation
+	['224.0.0.0', 4],      // multicast
+	['240.0.0.0', 4],      // reserved, broadcast
+];
+
+const V6_BLOCKED = [
+	['::', 96],            // unspecified, loopback, IPv4-compatible
+	['64:ff9b:1::', 48],   // local-use NAT64
+	['100::', 64],         // discard-only
+	['2001::', 32],        // Teredo
+	['2001:db8::', 32],    // documentation
+	['fc00::', 7],         // unique local
+	['fe80::', 10],        // link-local
+	['fec0::', 10],        // site-local (deprecated)
+	['ff00::', 8],         // multicast
+];
+
+function parseIpv4(s) {
+	const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s);
 	if (!m) return null;
 	const p = m.slice(1).map(Number);
 	if (p.some((n) => n > 255)) return null;
-	return p;
+	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]) >>> 0;
 }
 
-function isPrivateIpv4([a, b]) {
-	if (a === 0 || a === 127) return true;            // this-host / loopback
-	if (a === 10) return true;                         // private
-	if (a === 172 && b >= 16 && b <= 31) return true;  // private
-	if (a === 192 && b === 168) return true;           // private
-	if (a === 169 && b === 254) return true;           // link-local (incl. metadata)
-	if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-	return false;
+// IPv6 text to eight 16-bit groups, or null. Accepts '::' compression, a zone
+// suffix (fe80::1%eth0) and a dotted IPv4 tail (::ffff:10.0.0.1).
+function parseIpv6(s) {
+	let str = s.replace(/%.*$/, '');
+	if (!str.includes(':')) return null;
+	const tail = /(\d{1,3}(?:\.\d{1,3}){3})$/.exec(str);
+	if (tail) {
+		const v4 = parseIpv4(tail[1]);
+		if (v4 === null) return null;
+		str = `${str.slice(0, -tail[1].length)}${(v4 >>> 16).toString(16)}:${(v4 & 0xffff).toString(16)}`;
+	}
+	const halves = str.split('::');
+	if (halves.length > 2) return null;
+	const part = (h) => (h ? h.split(':') : []);
+	const head = part(halves[0]);
+	const rest = halves.length === 2 ? part(halves[1]) : [];
+	const fill = 8 - head.length - rest.length;
+	if (halves.length === 2 ? fill < 1 : fill !== 0) return null;
+	const groups = [...head, ...Array(halves.length === 2 ? fill : 0).fill('0'), ...rest];
+	const out = [];
+	for (const g of groups) {
+		if (!/^[0-9a-f]{1,4}$/i.test(g)) return null;
+		out.push(parseInt(g, 16));
+	}
+	return out;
+}
+
+function v4InRange(n, [base, bits]) {
+	const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+	return ((n & mask) >>> 0) === ((parseIpv4(base) & mask) >>> 0);
+}
+
+function v6InRange(g, [base, bits]) {
+	const b = parseIpv6(base);
+	for (let i = 0; i < 8 && bits > 0; i++, bits -= 16) {
+		const take = Math.min(16, bits);
+		const mask = (0xffff << (16 - take)) & 0xffff;
+		if ((g[i] & mask) !== (b[i] & mask)) return false;
+	}
+	return true;
+}
+
+const isPublicV4 = (n) => !V4_BLOCKED.some((r) => v4InRange(n, r));
+
+export function isAddressAllowed(ip) {
+	let s = String(ip ?? '').trim().toLowerCase();
+	if (s.startsWith('[') && s.endsWith(']')) s = s.slice(1, -1);
+	if (!s) return false;
+	const v4 = parseIpv4(s);
+	if (v4 !== null) return isPublicV4(v4);
+	const g = parseIpv6(s);
+	if (!g) return false;
+	const embedded = (hi, lo) => ((g[hi] << 16) | g[lo]) >>> 0;
+	// ::ffff:a.b.c.d (mapped) and 64:ff9b::a.b.c.d (well-known NAT64).
+	if (v6InRange(g, ['::ffff:0:0', 96]) || v6InRange(g, ['64:ff9b::', 96])) return isPublicV4(embedded(6, 7));
+	// 2002:aabb:ccdd::/48, 6to4 carries the IPv4 address in groups 1-2.
+	if (v6InRange(g, ['2002::', 16])) return isPublicV4(embedded(1, 2));
+	return !V6_BLOCKED.some((r) => v6InRange(g, r));
+}
+
+// Literal host check on a parsed URL hostname. The WHATWG URL parser has already
+// folded decimal, octal, hex and short IPv4 forms into dotted quads and IPv6 into
+// canonical hex, so a literal is judged exactly like a resolved address.
+export function isHostLiteralAllowed(hostname) {
+	let host = String(hostname || '').toLowerCase().replace(/\.$/, '');
+	if (host.startsWith('[') && host.endsWith(']')) host = host.slice(1, -1);
+	if (!host) return false;
+	if (host === 'localhost' || host.endsWith('.localhost')) return false;
+	if (host === 'metadata.google.internal' || host.endsWith('.internal')) return false;
+	if (host.includes(':') || parseIpv4(host) !== null) return isAddressAllowed(host);
+	return true;
 }
 
 export function isNavAllowed(rawUrl) {
@@ -91,23 +193,9 @@ export function isNavAllowed(rawUrl) {
 		return false;
 	}
 	if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-	let host = u.hostname.toLowerCase();
-	if (!host) return false;
-	// Strip IPv6 brackets for literal checks.
-	if (host.startsWith('[') && host.endsWith(']')) host = host.slice(1, -1);
-	if (host === 'localhost' || host.endsWith('.localhost')) return false;
-	if (host === 'metadata.google.internal' || host.endsWith('.internal')) return false;
-	// IPv6 loopback / unique-local / link-local.
-	if (host === '::1' || host === '::' ) return false;
-	if (/^fe80:/i.test(host)) return false;         // link-local
-	if (/^f[cd][0-9a-f]{2}:/i.test(host)) return false; // fc00::/7 unique-local
-	// IPv4 literal ranges.
-	const v4 = ipv4Parts(host);
-	if (v4 && isPrivateIpv4(v4)) return false;
-	// An IPv4 literal that parsed but is public is fine; a hostname resolves at
-	// nav time (DNS-rebinding is out of scope for v1 and noted in the docs).
-	return true;
+	return isHostLiteralAllowed(u.hostname);
 }
+// ── egress-guard:address-policy:end ──
 
 // Sanitize ONE raw event → a clean event or null (dropped). Coordinates are kept
 // normalized; the caster maps them to real pixels at dispatch time.

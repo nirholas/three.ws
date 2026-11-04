@@ -147,6 +147,20 @@ describe('isNavAllowed, SSRF guard', () => {
 	it('blocks loopback, private, link-local, metadata, and non-http schemes', () => {
 		for (const u of BLOCKED) expect(isNavAllowed(u), u).toBe(false);
 	});
+
+	it('blocks encoded IPv4 forms and IPv6 literals that embed a private IPv4', () => {
+		const ENCODED = [
+			'http://2130706433/',                       // decimal 127.0.0.1
+			'http://0x7f.1/',                           // hex short form
+			'http://0177.0.0.1/',                       // octal
+			'http://[::ffff:10.0.0.1]/',                // IPv4-mapped IPv6
+			'http://[::ffff:169.254.169.254]/latest/',  // mapped metadata
+			'http://[64:ff9b::7f00:1]/',                // NAT64 of loopback
+			'http://[2002:a9fe:a9fe::1]/',              // 6to4 of metadata
+			'http://[ff02::1]/',                        // multicast
+		];
+		for (const u of ENCODED) expect(isNavAllowed(u), u).toBe(false);
+	});
 });
 
 describe('sanitizeEvents, batch', () => {
