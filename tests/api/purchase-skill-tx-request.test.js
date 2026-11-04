@@ -34,13 +34,17 @@ const BLOCKHASH = Keypair.generate().publicKey.toBase58();
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 
-// One pending purchase row, mutated per test.
+// One pending purchase row, mutated per test. The sql mock is hoisted because
+// the db.js factory runs as soon as any import (solana-token-program.js above
+// reaches it through read-guards) loads db.js, ahead of this module's body.
 let purchaseRow = null;
-const sqlMock = vi.fn(async (strings) => {
-	const text = strings.join('?').toLowerCase();
-	if (text.includes('from skill_purchases')) return purchaseRow ? [purchaseRow] : [];
-	return [];
-});
+const sqlMock = vi.hoisted(() =>
+	vi.fn(async (strings) => {
+		const text = strings.join('?').toLowerCase();
+		if (text.includes('from skill_purchases')) return purchaseRow ? [purchaseRow] : [];
+		return [];
+	}),
+);
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: sqlMock,
 	isDbUnavailableError: () => false,
