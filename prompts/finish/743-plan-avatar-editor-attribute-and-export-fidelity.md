@@ -1,5 +1,8 @@
 # The GLB editor reaches 1.0: <agent-3d editor> works, every edit survives export, and hosts get DOM events
 
+**Status (2026-11-04):** Implemented and committed in 1fed88375 (export fidelity landed earlier inside 26df3658a). Verified: tests/editor-glb-export.test.js and tests/editor-edit-persistence.test.js pass (14); in a real browser `<agent-3d editor>` docked the editor, the emissive edit, hidden node and replaced texture survived export and reloaded through the viewer loader plugin, and the inspector Replace error and success paths worked. Not done: `npm run build:pages` (would rewrite other sessions' generated files), a full `npx vitest run` baseline comparison, and re-opening the export in the `/viewer` page itself (used the same GLTFLoader plugin in-page instead). Order file kept for those three.
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/743-plan-avatar-editor-attribute-and-export-fidelity.md`.
 
 **Priority:** P2, new capability with clear value (score 44 of 100 inside the tier). **Area:** avatar. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

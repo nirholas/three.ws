@@ -107,3 +107,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 772-plan-growth-credibility-files-translations-credits.md | bf9e1b38b | Credibility files, credit, locale heads and READMEs shipped; owner connects Zenodo, OpenSSF, FLOSS/fund accounts.
 2026-11-04 | 768-plan-sign-asl-word-level-recognition.md (kept) | see git log | Word-level signs endpoint, proxy, client and training pipeline built; owner supplies Kaggle token, GPU training, 80% eval, weights and deploy.
 2026-11-04 | 770-plan-agora-cartographer-profession-reactivation.md (kept) | see git log | Cartographer runner re-enabled with measured compose budget, typed errors, roster citizen and patron tier; owner runs a funded devnet loop and diorama permalink receipts remain.
+2026-11-04 | 743 | 1fed88375 | editor attribute, export fidelity, texture replace done; build:pages, full vitest baseline and /viewer reopen not run
