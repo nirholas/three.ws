@@ -20,6 +20,16 @@ server and bundle skills rather than calling `/api/forge` directly:
 | Cursor plugin | [`cursor/three-ws/`](cursor/three-ws/) (Open Plugins: `.cursor-plugin/plugin.json`, `mcp.json`, four skills; mirrored to [nirholas/three-ws-cursor-plugin](https://github.com/nirholas/three-ws-cursor-plugin) for cursor.directory) | [Cursor](https://cursor.com) |
 | Dify tool plugin | [`dify/three_ws/`](dify/three_ws/) (four Python tools over the studio server; packaged with `dify-plugin plugin package`) | [Dify](https://github.com/langgenius/dify) |
 
+Listing packages for developer-tool stores each carry a README and a `SUBMITTING.md` with the exact registry steps (the submission itself is an owner action). Verify all of them with `npm run check:integrations`:
+
+| Package | Folder | Host |
+|---|---|---|
+| Zed extension (MCP context server running `@three-ws/mcp-server`) | [`zed/`](zed/) | [Zed](https://zed.dev) |
+| Raycast extension (Forge a 3D Model command) | [`raycast/`](raycast/) | [Raycast](https://raycast.com) |
+| Gradio Space and MCP server | [`huggingface-space/`](huggingface-space/) | [Hugging Face Spaces](https://huggingface.co/spaces) |
+| Poe server bot | [`poe/`](poe/) | [Poe](https://poe.com) |
+| n8n community node | [`n8n/`](n8n/) | [n8n](https://n8n.io) |
+
 Microsoft 365 and Power Platform get packages of their own, each built and validated by a script in `scripts/`:
 
 | Package | Folder | Host |
@@ -66,6 +76,8 @@ cp integrations/_pyclient/three_ws_client.py integrations/blender/three_ws/three
 cp integrations/_pyclient/three_ws_client.py integrations/comfyui/three_ws_nodes/three_ws_client.py
 cp integrations/_pyclient/three_ws_client.py integrations/modly/three-ws/three_ws_client.py
 cp integrations/_pyclient/three_ws_client.py integrations/modly/three-ws-publish/three_ws_client.py
+cp integrations/_pyclient/three_ws_client.py integrations/huggingface-space/three_ws_client.py
+cp integrations/_pyclient/three_ws_client.py integrations/poe/three_ws_client.py
 ```
 
 ## Tests

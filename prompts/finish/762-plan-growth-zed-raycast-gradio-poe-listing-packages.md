@@ -1,5 +1,7 @@
 # Build the Zed, Raycast, Poe and Gradio MCP Space packages (and an n8n node) that the listing sweep says are accepted elsewhere
 
+**Status 2026-11-04:** all five packages are built and verified (`npm run check:integrations` exits 0; Zed wasm build, Raycast tests/types/build, n8n tests/build/lint, Gradio and Poe tests; Gradio via a real MCP client and Poe and n8n against production Forge returned real GLB links). Remaining, owner-owned and tracked by order 938: create the Raycast account and set `author` in `integrations/raycast/package.json` (`ray lint` fails only on that), add Raycast screenshots, then submit the Zed, Raycast, Hugging Face, Poe and npm/n8n listings per each folder's `SUBMITTING.md`. Poe needs a public deploy of `forge_bot.py`.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/762-plan-growth-zed-raycast-gradio-poe-listing-packages.md`.
 
 **Priority:** P3, polish, developer experience, or exploratory (score 36 of 100 inside the tier). **Area:** growth. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

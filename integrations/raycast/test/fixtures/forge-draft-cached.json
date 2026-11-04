@@ -1,0 +1,12 @@
+{
+ "recorded": "2026-11-04",
+ "note": "Real POST /api/forge response for a prompt Forge had already generated: status done with glb_url and no job_id.",
+ "submit": {
+  "job_id": null,
+  "creation_id": null,
+  "status": "done",
+  "glb_url": "https://three.ws/cdn/forge/063bba73c280/1587ae10-6f80-4454-ae15-9faf8237130d.glb",
+  "durable": true,
+  "cached": true
+ }
+}

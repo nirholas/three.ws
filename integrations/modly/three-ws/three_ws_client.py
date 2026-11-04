@@ -329,9 +329,20 @@ class ThreeWSClient:
         if err:
             raise ThreeWSError(result.get("message") or err, code=err)
         job_id = result.get("job_id")
-        if not job_id:
+        if not job_id and not _is_finished(result):
             raise ThreeWSError("Forge returned no job id.", code="no_job")
         return result
+
+    def wait(self, submission: dict, **poll_kwargs) -> str:
+        """Return the GLB URL for a submission.
+
+        Forge answers a repeated prompt straight from its cache: the POST then
+        carries ``status: "done"`` and ``glb_url`` with no ``job_id``. That case
+        returns at once; every other submission is polled.
+        """
+        if _is_finished(submission):
+            return submission["glb_url"]
+        return self.poll(submission["job_id"], **poll_kwargs)
 
     # -- poll ----------------------------------------------------------------
 
@@ -661,8 +672,8 @@ class ThreeWSClient:
         job = self.submit_text_to_3d(
             prompt, tier=tier, backend=backend, path=path, aspect_ratio=aspect_ratio
         )
-        return self.poll(
-            job["job_id"], on_progress=on_progress, should_cancel=should_cancel, timeout=poll_timeout
+        return self.wait(
+            job, on_progress=on_progress, should_cancel=should_cancel, timeout=poll_timeout
         )
 
     def generate_image_to_3d(
@@ -680,9 +691,14 @@ class ThreeWSClient:
     ) -> str:
         public_url = self.upload_image(image_bytes, content_type)
         job = self.submit_image_to_3d(public_url, prompt=prompt, tier=tier, backend=backend, path=path)
-        return self.poll(
-            job["job_id"], on_progress=on_progress, should_cancel=should_cancel, timeout=poll_timeout
+        return self.wait(
+            job, on_progress=on_progress, should_cancel=should_cancel, timeout=poll_timeout
         )
+
+
+def _is_finished(submission: dict) -> bool:
+    """True when a submit response already carries the finished GLB (cache hit)."""
+    return submission.get("status") == "done" and _is_web_url(submission.get("glb_url"))
 
 
 def is_glb(data: bytes) -> bool:

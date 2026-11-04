@@ -457,5 +457,45 @@ class MeshOpsTest(unittest.TestCase):
         self.assertNotIn("remesh_body", self.server.state)
 
 
+class _CachedHandler(BaseHTTPRequestHandler):
+    """Answers POST /api/forge the way production does for a repeated prompt."""
+
+    def log_message(self, *args):
+        pass
+
+    def do_POST(self):
+        length = int(self.headers.get("content-length", 0))
+        self.rfile.read(length)
+        body = json.dumps(
+            {"job_id": None, "creation_id": None, "status": "done", "glb_url": "https://three.ws/cdn/forge/x/y.glb", "cached": True}
+        ).encode("utf-8")
+        self.send_response(200)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+
+class CachedSubmitTest(unittest.TestCase):
+    """A cache hit has status done and glb_url but no job_id; it must not be an error."""
+
+    def setUp(self):
+        self.server = HTTPServer(("127.0.0.1", 0), _CachedHandler)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.client = ThreeWSClient(f"http://127.0.0.1:{self.server.server_address[1]}", client_handle="t")
+
+    def tearDown(self):
+        self.server.shutdown()
+        self.server.server_close()
+
+    def test_generate_returns_the_cached_glb_without_polling(self):
+        url = self.client.generate_text_to_3d("a small wooden chair", tier="draft")
+        self.assertEqual(url, "https://three.ws/cdn/forge/x/y.glb")
+
+    def test_wait_returns_cached_url(self):
+        sub = self.client.submit_text_to_3d("a small wooden chair", tier="draft")
+        self.assertEqual(self.client.wait(sub), "https://three.ws/cdn/forge/x/y.glb")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -19,6 +19,8 @@ _VENDORED = [
     os.path.join(_ROOT, "comfyui", "three_ws_nodes", "three_ws_client.py"),
     os.path.join(_ROOT, "modly", "three-ws", "three_ws_client.py"),
     os.path.join(_ROOT, "modly", "three-ws-publish", "three_ws_client.py"),
+    os.path.join(_ROOT, "huggingface-space", "three_ws_client.py"),
+    os.path.join(_ROOT, "poe", "three_ws_client.py"),
 ]
 
 

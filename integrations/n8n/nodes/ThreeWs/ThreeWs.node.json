@@ -1,0 +1,9 @@
+{
+  "node": "n8n-nodes-three-ws.threeWs",
+  "nodeVersion": "1.0",
+  "codexVersion": "1.0",
+  "categories": ["Development", "Miscellaneous"],
+  "resources": {
+    "primaryDocumentation": [{ "url": "https://three.ws/docs/forge" }]
+  }
+}

@@ -1,0 +1,5 @@
+{
+  // Optional. Leave both empty to use the free tools on https://three.ws.
+  "base_url": "",
+  "payment_address": ""
+}

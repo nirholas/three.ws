@@ -1,0 +1,10 @@
+id = "three-ws"
+name = "three.ws 3D Agent"
+description = "MCP context server for three.ws: free text-to-3D generation, avatar and rigging tools, and agent data, available to the Zed Agent Panel."
+version = "0.1.0"
+schema_version = 1
+authors = ["three.ws <hello@three.ws>"]
+repository = "https://github.com/nirholas/three.ws"
+
+[context_servers.three-ws]
+name = "three.ws 3D Agent"
