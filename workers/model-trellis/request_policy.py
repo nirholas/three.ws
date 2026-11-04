@@ -141,6 +141,31 @@ def clamped_quality(q: Optional[dict], tier: Optional[str] = None) -> dict:
     }
 
 
+# Ceiling on the faces handed to to_glb's UV unwrap and texture bake. xatlas
+# holds the GIL for the whole unwrap, so while it runs the event loop cannot
+# answer /health; past a few minutes the Cloud Run liveness probe (60s period,
+# 3 failures) kills the instance and every in-flight /tasks poll fails as a 503.
+# Measured over 2026-10-28..11-04 (1,633 completed jobs): unwrap plus bake took
+# about 25s at 100k faces and 40 to 130s at 150k to 210k; every killed job was
+# at 212k faces or more (up to 488k), because a fixed simplify fraction lets a
+# 1.3M-face raw extraction through at 330k. 150k keeps every observed success
+# shape (p90 was 128k) and sits well under the smallest kill.
+MAX_BAKE_FACES = 150_000
+
+
+def effective_simplify(raw_faces: int, simplify: float, max_faces: int = MAX_BAKE_FACES) -> float:
+    """Raise the decimation fraction just enough to keep the mesh in budget.
+
+    `simplify` is the fraction of triangles to_glb removes. A raw extraction of
+    `raw_faces` would keep raw_faces * (1 - simplify); when that exceeds
+    `max_faces`, the fraction is raised so it does not. It is never lowered, so
+    a caller asking for heavier decimation always gets it.
+    """
+    if raw_faces <= 0 or raw_faces * (1 - simplify) <= max_faces:
+        return simplify
+    return min(0.999, max(simplify, 1 - max_faces / raw_faces))
+
+
 # Total attempts (not extra retries) for one caller-supplied image URL, and the
 # first backoff gap. Three attempts at 1s then 2s costs at most a few seconds of
 # an already-asynchronous job, and covers the single-blip read timeouts that

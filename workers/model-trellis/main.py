@@ -98,6 +98,7 @@ from request_policy import (
     TIER_PRESETS,
     call_with_retry,
     clamped_quality,
+    effective_simplify,
     matte_enabled,
     normalize_tier,
 )
@@ -801,10 +802,21 @@ async def _run_job(
                     outputs = _pipeline.run_multi_image(imgs, mode="stochastic", **sampler_kwargs)
                 else:
                     outputs = _pipeline.run(imgs[0], **sampler_kwargs)
+                mesh = outputs["mesh"][0]
+                raw_faces = int(mesh.faces.shape[0])
+                simplify = effective_simplify(raw_faces, q["simplify"])
+                if simplify != q["simplify"]:
+                    # A huge raw extraction would stall xatlas long enough for
+                    # the liveness probe to kill the instance (request_policy
+                    # MAX_BAKE_FACES), so decimate it into the bake budget.
+                    log.info(
+                        "[%s] %d raw faces: simplify %.3f -> %.3f to stay within the bake budget",
+                        task_id, raw_faces, q["simplify"], simplify,
+                    )
                 glb = postprocessing_utils.to_glb(
                     outputs["gaussian"][0],
-                    outputs["mesh"][0],
-                    simplify=q["simplify"],
+                    mesh,
+                    simplify=simplify,
                     texture_size=q["texture_size"],
                 )
                 return glb.export(file_type="glb")

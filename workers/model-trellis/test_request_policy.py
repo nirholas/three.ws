@@ -15,10 +15,12 @@ import pytest
 
 from request_policy import (
     FETCH_ATTEMPTS,
+    MAX_BAKE_FACES,
     QUALITY_DEFAULTS,
     TIER_PRESETS,
     call_with_retry,
     clamped_quality,
+    effective_simplify,
     is_transient_fetch_error,
     matte_enabled,
     normalize_tier,
@@ -192,3 +194,38 @@ def test_on_retry_receives_the_attempt_delay_and_cause():
 
     call_with_retry(flaky, sleep=lambda _: None, on_retry=lambda n, d, e: seen.append((n, d, type(e))))
     assert seen == [(1, 1.0, httpx.ReadTimeout)]
+
+
+# ------------------------------------------------------------ bake face budget
+# Regression for the 2026-10-28..11-04 "malformed response" bursts: oversized
+# meshes reached xatlas's UV unwrap, which holds the GIL for minutes, so /health
+# stopped answering, the liveness probe killed the instance, and every in-flight
+# poll came back as a 503. Kills were all at 212k+ decimated faces; a fixed
+# simplify fraction let a 1.3M-face raw mesh through at 330k.
+
+
+def test_small_mesh_keeps_the_requested_simplify():
+    assert effective_simplify(100_000, 0.75) == 0.75
+
+
+def test_oversized_mesh_is_decimated_to_the_budget():
+    raw = 1_317_346  # the raw face count of a job killed on 2026-11-03
+    s = effective_simplify(raw, 0.75)
+    assert s > 0.75
+    assert raw * (1 - s) <= MAX_BAKE_FACES + 1
+
+
+def test_budget_sits_below_every_observed_kill():
+    assert MAX_BAKE_FACES <= 200_000
+    for raw in (850_000, 1_317_346, 2_000_000, 5_000_000):
+        for requested in (0.5, 0.75, 0.9, 0.95):
+            assert raw * (1 - effective_simplify(raw, requested)) <= MAX_BAKE_FACES + 1
+
+
+def test_budget_never_lowers_a_caller_requested_decimation():
+    assert effective_simplify(1_000_000, 0.95) == 0.95
+
+
+def test_degenerate_counts_keep_the_requested_simplify():
+    assert effective_simplify(0, 0.75) == 0.75
+    assert effective_simplify(-5, 0.5) == 0.5
