@@ -71,7 +71,7 @@ export async function verifyPrepaidDeposit(signature) {
 	if (typeof signature !== 'string' || signature.length < 32 || signature.length > 128) {
 		throw chainError('a valid tx_signature is required', 400, 'bad_request');
 	}
-	const connection = solanaConnection({ network: 'mainnet', commitment: 'finalized' });
+	const connection = solanaConnection({ network: 'mainnet', commitment: 'finalized', fresh: true });
 	let tx = null;
 	try {
 		tx = await connection.getParsedTransaction(signature, {
@@ -137,7 +137,7 @@ export async function sendBatchTransfers(batches) {
 	const preSend = (err) => Object.assign(err, { code: err.code || 'PRE_SEND' });
 	let settler;
 	let built;
-	const connection = solanaConnection({ network: 'mainnet', commitment: 'confirmed' });
+	const connection = solanaConnection({ network: 'mainnet', commitment: 'confirmed', fresh: true });
 	try {
 		settler = await loadSettler();
 		if (!settler) throw new Error('X402_PREPAID_SETTLER_SECRET_BASE58 is not configured');
@@ -188,7 +188,7 @@ export async function depositWalletUsdcBalance() {
 	const wallet = await prepaidDepositWallet();
 	if (!wallet) return null;
 	try {
-		const connection = solanaConnection({ network: 'mainnet', commitment: 'confirmed' });
+		const connection = solanaConnection({ network: 'mainnet', commitment: 'confirmed', fresh: true });
 		const mint = new PublicKey(USDC_MINT_SOLANA);
 		const programId = await tokenProgramIdForMint(connection, mint);
 		const ata = await getAssociatedTokenAddress(mint, new PublicKey(wallet), true, programId);

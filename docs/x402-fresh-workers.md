@@ -108,11 +108,12 @@ which is derived from the handlers themselves, so a purchase never pays for
 a request the endpoint would reject. `tests/x402-fresh-workers.test.js`
 fails if a listed dataset is missing from the catalog.
 
-At the defaults (3 wallets a minute, a prop every 10 ticks) a full day is
-about 4,300 fresh wallets, 144 new library props and 4,100 datasets, for
-roughly $26 of USDC that recirculates to the treasury and about 0.07 SOL of
-network fees. `X402_FRESH_WORKERS_DAILY_CAP_ATOMIC` (default $40) is the hard
-ceiling on the USDC side.
+At the defaults (30 wallets a minute, a prop every 10 ticks) a full day is
+about 43,000 fresh wallets, 144 new library props and 43,000 datasets, for
+roughly $240 of USDC that recirculates to the treasury and about 0.65 SOL of
+network fees (the funder must hold that headroom above the sponsor floor).
+`X402_FRESH_WORKERS_DAILY_CAP_ATOMIC` (default $400) is the hard ceiling on
+the USDC side.
 
 ## Safety
 
@@ -191,9 +192,9 @@ in code for a tick that runs first).
 | Var | Default | Meaning |
 | --- | --- | --- |
 | `X402_FRESH_WORKERS_ENABLED` | `true` | `false` pauses the lane |
-| `X402_FRESH_WORKERS_PER_TICK` | `3` | fresh wallets minted and jobs bought per minute |
+| `X402_FRESH_WORKERS_PER_TICK` | `30` | fresh wallets minted and jobs bought per minute |
 | `X402_FRESH_WORKERS_FORGE_EVERY_N_TICKS` | `10` | one Forge generation every N ticks; the rest are datasets |
-| `X402_FRESH_WORKERS_DAILY_CAP_ATOMIC` | `40000000` ($40) | USDC the lane may spend per UTC day |
+| `X402_FRESH_WORKERS_DAILY_CAP_ATOMIC` | `400000000` ($400) | USDC the lane may spend per UTC day |
 | `X402_FRESH_WORKERS_TICK_BUDGET_MS` | `50000` | wall-clock budget per tick |
 | `X402_FRESH_WORKERS_RECLAIM_AFTER_S` | `90` | how long a mid-flight wallet is left to its tick before reclaim |
 | `X402_FRESH_WORKERS_MAX_SWEEP_ATTEMPTS` | `20` | sweep retries before a wallet is stranded and alerted |

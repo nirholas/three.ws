@@ -74,18 +74,52 @@ export function pickDeterministic(items, seed, n = 1) {
  *   otherwise         → 'none'
  * All amounts are atomic USDC (6dp). Never returns a negative amount.
  *
- * @param {{ balanceAtomic: number|bigint, floorAtomic: number, targetAtomic: number, ceilingAtomic: number }} p
+ * `availableAtomic` is what the treasury holds right now. A top-up is capped to
+ * it: the payer sweep keeps the treasury lean (measured 0.06 to 1.3 USDC on
+ * 2026-11-04), so a drained agent asking for its whole 2.0 USDC deficit in one
+ * transfer failed preflight on every run and stayed at zero for a day while
+ * agents with smaller deficits kept being funded. A partial top-up gets the
+ * agent buying again, and the next run tops up the rest. Unknown (null) means
+ * uncapped. Sweeps are never capped: they move money INTO the treasury.
+ *
+ * @param {{ balanceAtomic: number|bigint, floorAtomic: number, targetAtomic: number, ceilingAtomic: number, availableAtomic?: number|bigint|null }} p
  * @returns {{ action: 'top_up'|'sweep'|'none', amountAtomic: number }}
  */
-export function planFloatMove({ balanceAtomic, floorAtomic, targetAtomic, ceilingAtomic }) {
+export function planFloatMove({ balanceAtomic, floorAtomic, targetAtomic, ceilingAtomic, availableAtomic = null }) {
 	const bal = Number(balanceAtomic);
 	if (bal < floorAtomic) {
-		return { action: 'top_up', amountAtomic: Math.max(0, targetAtomic - bal) };
+		const need = Math.max(0, targetAtomic - bal);
+		const avail = availableAtomic == null ? Infinity : Math.max(0, Number(availableAtomic));
+		return { action: 'top_up', amountAtomic: Math.min(need, avail) };
 	}
 	if (bal > ceilingAtomic) {
 		return { action: 'sweep', amountAtomic: Math.max(0, bal - targetAtomic) };
 	}
 	return { action: 'none', amountAtomic: 0 };
+}
+
+/**
+ * Execution order for one float pass: sweeps first (they refill the treasury the
+ * top-ups draw from), then top-ups from the emptiest wallet up, so a dry agent is
+ * funded before a half-full one when the treasury cannot cover everyone. Members
+ * inside the band keep their relative order at the end. Pure; does not mutate.
+ *
+ * @template {{ balanceAtomic: number|bigint }} M
+ * @param {M[]} members
+ * @param {{ floorAtomic: number, ceilingAtomic: number }} band
+ * @returns {M[]}
+ */
+export function orderFloatMembers(members, { floorAtomic, ceilingAtomic }) {
+	const rank = (m) => {
+		const bal = Number(m.balanceAtomic);
+		if (bal > ceilingAtomic) return 0;
+		if (bal < floorAtomic) return 1;
+		return 2;
+	};
+	return members
+		.map((m, i) => ({ m, i, r: rank(m), bal: Number(m.balanceAtomic) }))
+		.sort((a, b) => a.r - b.r || (a.r === 1 ? a.bal - b.bal : 0) || a.i - b.i)
+		.map((x) => x.m);
 }
 
 /**

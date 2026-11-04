@@ -51,15 +51,15 @@ describe('fresh workers config', () => {
 
 	it('has sane defaults and tolerates junk', () => {
 		const d = freshWorkersConfig({});
-		expect(d.perTick).toBe(3);
+		expect(d.perTick).toBe(30);
 		expect(d.forgeEveryNTicks).toBe(10);
-		expect(d.dailyCapAtomic).toBe(40_000_000);
+		expect(d.dailyCapAtomic).toBe(400_000_000);
 		expect(d.tickBudgetMs).toBe(50_000);
 		expect(d.reclaimAfterS).toBe(90);
 		expect(d.maxSweepAttempts).toBe(20);
 		expect(d.membershipWindowHours).toBe(36);
 		const j = freshWorkersConfig({ X402_FRESH_WORKERS_PER_TICK: 'abc', X402_FRESH_WORKERS_FORGE_EVERY_N_TICKS: '0', X402_FRESH_WORKERS_TICK_BUDGET_MS: '1' });
-		expect(j.perTick).toBe(3);
+		expect(j.perTick).toBe(30);
 		expect(j.forgeEveryNTicks).toBe(1);
 		expect(j.tickBudgetMs).toBe(10_000);
 	});

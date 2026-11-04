@@ -631,7 +631,7 @@ export function refreshSponsorFloorState(now = Date.now()) {
 
 	_floorRefreshInFlight = (async () => {
 		try {
-			const conn = solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+			const conn = solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed', fresh: true });
 			const lamports = await conn.getBalance(new PublicKey(pubkey), 'confirmed');
 			_solCache.set(pubkey, { lamports, at: Date.now() });
 			noteFloorState(lamports, Date.now());
@@ -810,7 +810,7 @@ export async function settleRingPayment({
 	idempotencyKey,
 }) {
 	const network = requirement.network;
-	const connection = conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+	const connection = conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed', fresh: true });
 
 	const txBase64 = txBase64FromPayload(paymentPayload);
 	if (!txBase64) return { success: false, reason: 'missing_transaction' };
@@ -1295,7 +1295,7 @@ export async function verifyRingPayment({ paymentPayload, requirement, feePayerP
 	const txBase64 = txBase64FromPayload(paymentPayload);
 	if (!txBase64) return { isValid: false, invalidReason: 'missing_transaction' };
 	const connection =
-		conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+		conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed', fresh: true });
 	const program = await resolveRingTokenProgram(connection, requirement);
 	if (!program.ok) return { isValid: false, invalidReason: program.reason };
 	const validation = validateRingTransaction({
@@ -1352,7 +1352,7 @@ export const SETTLEMENT_DROP_HORIZON_MS = 180_000;
 //                 answer. Ask again next pass.
 export async function probeSettlementSignature({ conn, signature, broadcastAtMs }) {
 	const connection =
-		conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+		conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed', fresh: true });
 	let status;
 	try {
 		status = (

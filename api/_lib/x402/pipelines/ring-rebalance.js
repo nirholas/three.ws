@@ -189,7 +189,7 @@ export async function run(ctx = {}) {
 	}
 	const payerPub = payerKp.publicKey;
 
-	const conn = ctx.conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+	const conn = ctx.conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed', fresh: true });
 	const mint = new PublicKey(USDC_MINT);
 	const treasuryAta = getAssociatedTokenAddressSync(mint, treasury.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 
@@ -431,7 +431,7 @@ export async function floatTopUp(ctx = {}) {
 
 	// Lazy imports: keep the rebalancer's core dependency graph small, and avoid a
 	// module-load cycle with the agents driver (which imports pay.js).
-	const [{ ensureRosterAgents }, { planFloatMove, floatBand, recoverAgentBuyer }, { ringAllowedAddresses }] = await Promise.all([
+	const [{ ensureRosterAgents }, { planFloatMove, orderFloatMembers, floatBand, recoverAgentBuyer }, { ringAllowedAddresses }] = await Promise.all([
 		import('../agents/index.js'),
 		import('../agents/persona-kit.js'),
 		import('../ring-allowlist.js'),
@@ -445,7 +445,7 @@ export async function floatTopUp(ctx = {}) {
 		return { success: false, amountAtomic: 0, errorMsg: 'treasury_not_allowlisted' };
 	}
 
-	const conn = ctx.conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+	const conn = ctx.conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed', fresh: true });
 	const mint = new PublicKey(USDC_MINT);
 	const decimals = await mintDecimals(conn, mint);
 	const band = floatBand();
@@ -462,6 +462,9 @@ export async function floatTopUp(ctx = {}) {
 	const moves = [];
 	const minMove = Math.max(0, Number(process.env.X402_RING_AGENT_MIN_FLOAT_MOVE_ATOMIC || 100_000)); // $0.10
 
+	// Read every balance first so the pass can be ordered: sweeps before top-ups
+	// (they refill the treasury), then the emptiest agent first.
+	const members = [];
 	for (const member of roster) {
 		// Both counterparties must be inside the controlled set — fail-closed.
 		if (!allowed.has(member.address)) {
@@ -477,13 +480,34 @@ export async function floatTopUp(ctx = {}) {
 		} catch {
 			balance = 0n; // no ATA yet → treated as empty; a top-up creates it
 		}
+		members.push({ member, agentPub, balanceAtomic: balance });
+	}
 
+	// What the treasury can actually give. The payer sweep keeps it lean, so a
+	// top-up is capped to this and the figure is tracked across the pass. An
+	// unreadable treasury (no ATA, RPC miss) leaves the cap off: the transfer's
+	// own preflight stays the authoritative check.
+	let treasuryAvailable = null;
+	try {
+		const treasuryAta = getAssociatedTokenAddressSync(mint, treasury.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+		treasuryAvailable = Number((await getAccount(conn, treasuryAta)).amount);
+	} catch (err) {
+		// No token account is a real, empty treasury; any other failure is unknown.
+		treasuryAvailable = err?.name === 'TokenAccountNotFoundError' ? 0 : null;
+	}
+
+	for (const { member, agentPub, balanceAtomic: balance } of orderFloatMembers(members, band)) {
 		const plan = planFloatMove({
 			balanceAtomic: balance, floorAtomic: band.floorAtomic,
 			targetAtomic: band.targetAtomic, ceilingAtomic: band.ceilingAtomic,
+			availableAtomic: treasuryAvailable,
 		});
 		if (plan.action === 'none' || plan.amountAtomic < minMove) {
-			moves.push({ agent: member.id, action: 'none', balance_atomic: Number(balance) });
+			const short = plan.action === 'top_up' && treasuryAvailable != null;
+			moves.push({
+				agent: member.id, action: 'none', balance_atomic: Number(balance),
+				...(short ? { reason: 'treasury_short', treasury_atomic: treasuryAvailable } : {}),
+			});
 			continue;
 		}
 
@@ -515,6 +539,10 @@ export async function floatTopUp(ctx = {}) {
 		}
 
 		if (!res.ok) {
+			// Logged, not just returned: the float pass's moves never reach
+			// x402_autonomous_log, and a top-up that failed silently on every run
+			// left the curator dry for a day before anyone could see why.
+			log.warn('ring_float_move_failed', { agent: member.id, action: plan.action, amount_atomic: plan.amountAtomic, reason: res.err });
 			moves.push({ agent: member.id, action: plan.action, reason: res.err });
 			continue;
 		}
@@ -526,6 +554,9 @@ export async function floatTopUp(ctx = {}) {
 			`;
 		} catch (err) {
 			log.warn('float_fund_ledger_write_failed', { agent: member.id, message: err?.message });
+		}
+		if (treasuryAvailable != null) {
+			treasuryAvailable += plan.action === 'sweep' ? plan.amountAtomic : -plan.amountAtomic;
 		}
 		moves.push({ agent: member.id, persona: member.persona.id, action: plan.action, amount_atomic: plan.amountAtomic, tx: res.signature });
 		log.info('ring_float_move', { agent: member.id, action: plan.action, amount_atomic: plan.amountAtomic, tx: res.signature });

@@ -34,12 +34,12 @@ export function freshWorkersConfig(e = process.env) {
 		// is the global kill switch and is honored by the cron before this is read.
 		enabled: String(e.X402_FRESH_WORKERS_ENABLED ?? 'true').trim().toLowerCase() !== 'false',
 		// Fresh wallets minted (and jobs bought) per minute.
-		perTick: Math.max(0, Math.floor(num(e.X402_FRESH_WORKERS_PER_TICK, 3))),
+		perTick: Math.max(0, Math.floor(num(e.X402_FRESH_WORKERS_PER_TICK, 30))),
 		// One of the tick's jobs is a paid Forge generation every N ticks; the rest
 		// buy datasets. 10 -> ~144 new library props a day at 1 tick/min.
 		forgeEveryNTicks: Math.max(1, Math.floor(num(e.X402_FRESH_WORKERS_FORGE_EVERY_N_TICKS, 10))),
 		// USDC the lane may spend per UTC day (atomics). Recirculates to the treasury.
-		dailyCapAtomic: Math.floor(num(e.X402_FRESH_WORKERS_DAILY_CAP_ATOMIC, 40_000_000)),
+		dailyCapAtomic: Math.floor(num(e.X402_FRESH_WORKERS_DAILY_CAP_ATOMIC, 400_000_000)),
 		// Worst-case fee the pay transaction may carry (mirrors the ring ceiling).
 		maxPayFeeLamports: Math.floor(num(e.X402_RING_MAX_FEE_PER_TX_LAMPORTS, 10_000)),
 		// Wall-clock budget for one tick. The economy heartbeat aborts a target at

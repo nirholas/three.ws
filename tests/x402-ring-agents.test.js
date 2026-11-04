@@ -5,6 +5,7 @@ import {
 	seedFromString,
 	pickDeterministic,
 	planFloatMove,
+	orderFloatMembers,
 	floatBand,
 	isRingAddress,
 	executePurchase,
@@ -133,6 +134,38 @@ describe('float top-up — band arithmetic', () => {
 		const move = planFloatMove({ balanceAtomic: 0, ...band });
 		expect(move.action).toBe('top_up');
 		expect(move.amountAtomic).toBe(2_000_000);
+	});
+
+	// Measured on production 2026-11-04: the curator wallet sat at 0 USDC for 26h
+	// (insufficient_payer_usdc, 1.62% of all loop calls) because its top-up asked
+	// the treasury for the full 2.0 USDC deficit in one transfer while the payer
+	// sweep keeps the treasury between 0.06 and 1.3 USDC. The transfer failed
+	// preflight every run; agents with a ~1.0 deficit kept fitting and kept
+	// getting funded. A top-up must take what the treasury holds, not nothing.
+	it('caps a top-up at what the treasury actually holds', () => {
+		const move = planFloatMove({ balanceAtomic: 0, ...band, availableAtomic: 1_279_000 });
+		expect(move.action).toBe('top_up');
+		expect(move.amountAtomic).toBe(1_279_000);
+	});
+
+	it('leaves a top-up uncapped when the treasury covers it or is unknown', () => {
+		expect(planFloatMove({ balanceAtomic: 0, ...band, availableAtomic: 9_000_000 }).amountAtomic).toBe(2_000_000);
+		expect(planFloatMove({ balanceAtomic: 0, ...band, availableAtomic: null }).amountAtomic).toBe(2_000_000);
+	});
+
+	it('never caps a sweep by the treasury balance', () => {
+		const move = planFloatMove({ balanceAtomic: 5_500_000, ...band, availableAtomic: 0 });
+		expect(move).toEqual({ action: 'sweep', amountAtomic: 3_500_000 });
+	});
+
+	it('orders sweeps first, then the hungriest agent, so a dry wallet is funded before a half-full one', () => {
+		const ordered = orderFloatMembers([
+			{ id: 'agora', balanceAtomic: 1_676_000 },
+			{ id: 'shopper', balanceAtomic: 840_000 },
+			{ id: 'rich', balanceAtomic: 5_000_000 },
+			{ id: 'curator', balanceAtomic: 0 },
+		], band);
+		expect(ordered.map((m) => m.id)).toEqual(['rich', 'curator', 'shopper', 'agora']);
 	});
 
 	it('floatBand derives a symmetric band from env defaults', () => {
