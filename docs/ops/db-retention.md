@@ -43,6 +43,7 @@ a larger Neon plan.**
    | Table | Size | Rows | Live window | Kept, never pruned |
    | --- | --- | --- | --- | --- |
    | `agent_onchain_events` | 3,570 MB | 5.2M | 30 days on `occurred_at` | nothing (the chain is the source of truth) |
+   | `agent_sniper_price_ticks` | new (2026-11-04) | 0 | 14 days on `ts` | nothing (one tick a second per open position and moon bag) |
    | `oracle_training_set` | 2,456 MB | 1.9M | 45 days on `first_seen_at` | `outcome = 'unknown'` rows (still waiting for a label) |
    | `x402_self_facilitator_log` | 1,512 MB | 3.2M | 60 days on `ts` | nothing; pruned days roll into `x402_self_facilitator_rollup` |
    | `firewall_decisions` | 1,350 MB | 645k | 45 days on `created_at` | nothing |

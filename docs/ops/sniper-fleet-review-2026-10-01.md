@@ -239,9 +239,9 @@ tamper-evident ledger entry showing an agent's reasoning at entry and a clean
 | 6 | `resolveEntrySize` honors the operational floor at every size | code | committed |
 | 7 | Global throttle consumed after the wallet check | code | committed |
 | 8 | Reclaim stranded rent from empty token accounts (`npm run sniper:reclaim-rent`, dry run measured 1,106 accounts / 2.08 SOL with 3 wallets unread) | on-chain, owner approval | pending approval |
-| 9 | Moon-bag manager (re-quote and sell retained floor bags) | code | next; no longer blocking, since a recovered bag now rides open on its trailing stop |
+| 9 | Moon-bag manager (re-quote and sell retained floor bags) | code | shipped 2026-11-04 (`workers/agent-sniper/moonbag-manager.js`); migration `20261105080000` unapplied |
 | 10 | Optimizer and evolve | config | switched to shadow on 2026-10-01 (`SNIPER_OPTIMIZER_MODE=shadow`, `SNIPER_EVOLVE_APPLY=0`) until they are re-validated on the corrected % data and fresh Oracle labels |
-| 11 | Latency and per-second price telemetry for backtests | code | next |
+| 11 | Latency and per-second price telemetry for backtests | code | shipped 2026-11-04 (`telemetry.js`, `scripts/sniper-latency-report.mjs`); migration `20261105080000` unapplied |
 | 12 | Fund one rebuilt arm with a capped experiment budget | on-chain, owner approval | after 1-7 deploy |
 
 ### Decisions recorded

@@ -15,6 +15,14 @@
 
 export const ARCHIVED_TABLES = [
 	{
+		table: 'agent_sniper_price_ticks',
+		tsColumn: 'ts',
+		pk: [{ col: 'id', type: 'bigint' }],
+		days: 14,
+		readers:
+			'Written once a second per open position and moon bag by workers/agent-sniper/telemetry.js for exit-rule replays; read only by scripts/sniper-latency-report.mjs and ad hoc analysis, never by a live path. Older ticks are archived to cold storage.',
+	},
+	{
 		table: 'agent_onchain_events',
 		tsColumn: 'occurred_at',
 		pk: [{ col: 'id', type: 'bigint' }],

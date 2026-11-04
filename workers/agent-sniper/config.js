@@ -129,6 +129,16 @@ export function loadConfig() {
 		// the 30-minute timeout. 0 disables. Default 5 minutes: on a minutes-old
 		// pump.fun launch, five minutes of literally zero trades is a dead market.
 		liquidityDecayS: Math.max(0, num('SNIPER_LIQUIDITY_DECAY_S', 300)),
+		// Moon-bag manager: retained free bags are re-quoted every moonbagSweepMs,
+		// sold whole when value falls moonbag.trailPct below their high-water mark,
+		// and written off once worth under dustLamports and unmoved for writeOffS.
+		moonbagSweepMs: Math.max(5_000, num('SNIPER_MOONBAG_SWEEP_MS', 60_000)),
+		moonbagBatch: Math.max(1, num('SNIPER_MOONBAG_BATCH', 50)),
+		moonbag: {
+			trailPct: Math.min(95, Math.max(1, num('SNIPER_MOONBAG_TRAIL_PCT', 40))),
+			dustLamports: Math.max(0, num('SNIPER_MOONBAG_DUST_LAMPORTS', 50_000)),
+			writeOffS: Math.max(0, num('SNIPER_MOONBAG_WRITE_OFF_S', 600)),
+		},
 		// How often the strategy cache is refreshed from the DB.
 		strategyRefreshMs: Math.max(5_000, num('SNIPER_STRATEGY_REFRESH_MS', 15_000)),
 		// Platform-wide buy throttle — a backstop independent of per-agent caps.

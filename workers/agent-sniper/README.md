@@ -238,6 +238,8 @@ full set the worker can produce:
 | `signal_flip` | `decideExit` | Paid x402 sentiment turned confidently bearish on an UNDERWATER position. Opt-in via `SNIPER_EXIT_ON_BEARISH`. |
 | `take_initials` | `decideLadderedExit` | The ladder sold enough to recover the initial cost basis. Normally a PARTIAL sell that leaves a moon bag riding; it only books the position closed when the fraction rounds down to a full exit. |
 | `liquidity_decay` | `positions.js` | The market went dead: quoted value stopped moving for `SNIPER_LIQUIDITY_DECAY_S`. Exits and frees the concurrency slot. A position already on house money keeps its moon bag. |
+| `trailing_stop` (moon bag) | `moonbag-manager.js` | A retained bag fell `SNIPER_MOONBAG_TRAIL_PCT` below its own high-water mark. Sells the whole bag. Recorded on `moonbag_exit_reason`, not `exit_reason`. |
+| `written_off` (moon bag) | `moonbag-manager.js` | A bag worth under `SNIPER_MOONBAG_DUST_LAMPORTS` whose value did not move for `SNIPER_MOONBAG_WRITE_OFF_S`. Never sold, only dropped from the sweep. |
 | `kill_switch` | `positions.js` | The agent's `kill_switch` column was set; open positions exit at market. |
 | `manual` | `/api/sniper/close` | Closed by the owner. |
 | `graduated` | exit path | Booked against the post-graduation AMM rather than the dead curve. |
@@ -455,3 +457,9 @@ the next poll), run the one-shot backfill — idempotent, honors `SNIPER_MODE`:
 ```bash
 SNIPER_MODE=simulate node scripts/sniper-backfill-graduated.mjs
 ```
+
+## Moon-bag manager and telemetry
+
+A terminal profitable exit can keep a free bag in the wallet and close the position row. `moonbag-manager.js` sweeps those bags every `SNIPER_MOONBAG_SWEEP_MS` (60000): it re-quotes each off the curve or, once graduated, the AMM, stamps `moonbag_last_quoted_at`, keeps a high-water mark, sells the whole bag when value falls `SNIPER_MOONBAG_TRAIL_PCT` (40) below it, and never sells a bag worth under `SNIPER_MOONBAG_DUST_LAMPORTS` (50000). A dust bag unmoved for `SNIPER_MOONBAG_WRITE_OFF_S` (600) is written off. Simulate mode follows the same path as the position sell.
+
+`telemetry.js` writes `agent_sniper_price_ticks` (at most one row per second per position, so the effective rate is the larger of `SNIPER_POLL_MS` and one second; candidates that never open a position are not polled, to spare RPC) and the executor stamps `signal_seen_at`, `decision_at`, `sent_at` and `landed_at` on each live entry. `node scripts/sniper-latency-report.mjs --days 7` prints p50 and p90 per stage per arm. Ticks older than 14 days are archived by db-retention. Needs migration `20261105080000_sniper_moonbag_manager_telemetry.sql`.

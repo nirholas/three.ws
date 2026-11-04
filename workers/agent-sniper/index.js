@@ -20,6 +20,7 @@ import { oracleGate } from './oracle-gate.js';
 import { judgeLaunch, llmVerdictGate } from './llm-judge.js';
 import { isPaidIntel, startPaidIntelWatch } from './paid-intel.js';
 import { runPositionSweep } from './positions.js';
+import { runMoonbagSweep } from './moonbag-manager.js';
 import { runSwarmConsensus, runSwarmSettlement } from './swarm.js';
 import { startFirstClaimWatch } from './first-claim-watch.js';
 import { startOracleCrossingWatch } from './oracle-crossing.js';
@@ -159,6 +160,7 @@ async function main() {
 		}
 
 		if (kind !== 'mint') return;
+		data.signal_seen_at = Date.now();
 		const sym = (data.symbol || data.mint.slice(0, 6)).toUpperCase();
 		screenPush(`New token: $${sym} — scoring`, 'analysis');
 		const strategies = cachedStrategies();
@@ -437,6 +439,21 @@ async function main() {
 		}
 	}, cfg.pollMs);
 
+	// Moon-bag manager: trails and writes off the free bags terminal exits kept.
+	let moonbagBusy = false;
+	const moonbagTimer = setInterval(async () => {
+		if (moonbagBusy || draining || cfg.globalKill) return;
+		moonbagBusy = true;
+		try {
+			await runMoonbagSweep(cfg);
+		} catch (err) {
+			log.error('moonbag sweep failed', { err: err?.message });
+			noteError('moonbag', err?.message);
+		} finally {
+			moonbagBusy = false;
+		}
+	}, cfg.moonbagSweepMs);
+
 	// Trading-swarm consensus + settlement — overlap-guarded so a slow pass can't
 	// stack. Consensus pools members' live positions into a reputation-weighted vote
 	// and fires firewall-gated treasury buys; settlement distributes realized profit
@@ -510,6 +527,7 @@ async function main() {
 		if (cfg.announceLifecycle) alertShutdown({ signal, inFlight: queue.inFlight });
 		clearInterval(strategyTimer);
 		clearInterval(positionTimer);
+		clearInterval(moonbagTimer);
 		clearInterval(swarmTimer);
 		clearInterval(watchdogTimer);
 		try { stopHeartbeat?.(); } catch {}

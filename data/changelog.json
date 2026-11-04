@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Sniper manages the free moon bags it keeps and records entry latency",
+			"summary": "Retained moon bags are now re-quoted every minute, sold whole on a 40 percent trailing stop from their own peak, and written off when dead instead of sitting unwatched. Per-second price ticks and per-stage entry latency are recorded for backtests, with a p50 and p90 report script.",
+			"tags": ["sniper", "trading"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Avatar reconstruction: gated synthesised views for the scalp and far side of the head",
 			"summary": "The avatar worker can now ask Vertex AI for extra camera views of a selfie, reject any that do not look like the same person or that break UV seams, and project the rest onto the scalp, far cheek, ears and neck. Texture only, off by default until the held-out quality check passes.",
 			"tags": [

@@ -259,6 +259,11 @@ function makeTipGuard({ strat, network, alreadyCommittedLamports, dailySpentLamp
  */
 export async function executeBuy({ cfg, strat, mint, throttle }) {
 	return withAgentLock(strat.agent_id, async () => {
+		// Stage stamps for the latency report: the decision starts when the buy
+		// gets past the agent lock; the signal stamp rides in on the mint event.
+		const decisionAt = Date.now();
+		let sentAt = null;
+		let landedAt = null;
 		let perTrade = BigInt(strat.per_trade_lamports);
 		const tag = { agent: strat.agent_id, mint: mint.mint, symbol: mint.symbol };
 
@@ -567,6 +572,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			let exec = { route: 'simulated', tipLamports: 0, priorityFeeMicroLamports: null, landedMs: null };
 			screenPush(`Buying $${(mint.symbol || mint.mint.slice(0, 6)).toUpperCase()} — sending tx`, 'trade');
 			if (cfg.mode === 'live') {
+				sentAt = Date.now();
 				const tipMode = ['economy', 'turbo'].includes(strat.mev_tip_mode) ? strat.mev_tip_mode : 'off';
 				// The tip guard needs to know what's already committed today + this trade.
 				strat._tip_mint = mint.mint;
@@ -579,6 +585,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 					tipMode, onTip, preSimulated: firewallLevel !== 'off',
 				});
 				sig = result.signature;
+				landedAt = Date.now();
 				exec = {
 					route: result.route,
 					tipLamports: result.tipLamports,
@@ -613,6 +620,10 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 					tip_lamports = ${exec.tipLamports != null ? String(exec.tipLamports) : null},
 					priority_fee_microlamports = ${exec.priorityFeeMicroLamports != null ? String(exec.priorityFeeMicroLamports) : null},
 					landed_ms = ${exec.landedMs},
+					signal_seen_at = ${stampIso(mint.signal_seen_at)},
+					decision_at = ${stampIso(decisionAt)},
+					sent_at = ${stampIso(sentAt)},
+					landed_at = ${stampIso(landedAt)},
 					last_quoted_at = now()
 				WHERE id = ${posId}
 			`, buyFeeEvent);
@@ -932,6 +943,10 @@ async function buildGraduatedSell({ cfg, position, keypair, baseAmount, slippage
 	return { instructions, expectedQuoteOut };
 }
 
+function stampIso(ms) {
+	return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
+
 function skip(tag, reason) {
 	log.info('skip', { ...tag, reason });
 	return { status: 'skip', reason };
@@ -949,4 +964,97 @@ function errCode(err) {
 
 function lamportsToSol(l) {
 	return Number(BigInt(l)) / 1e9;
+}
+
+/**
+ * Sell a retained moon bag in full. The position row is already closed (its P&L
+ * was booked when the bag was kept), so this books only the bag's own exit on
+ * the moonbag_* columns and never touches realized_pnl_lamports.
+ *
+ * @returns {Promise<{status:'closed'|'retry', sig?:string, venue?:string, reason?:string}>}
+ */
+export async function executeMoonbagSell({ cfg, bag, reason }) {
+	return withAgentLock(bag.agent_id, async () => {
+		const tag = { agent: bag.agent_id, mint: bag.mint, symbol: bag.symbol, reason, moonbag: true };
+		try {
+			const loaded = await loadAgentKeypair(bag.agent_id, bag.user_id, 'sniper_moonbag_sell');
+			if (!loaded) {
+				await sql`UPDATE agent_sniper_positions SET moonbag_error = 'no_wallet' WHERE id = ${bag.id}`;
+				return { status: 'retry', reason: 'no_wallet' };
+			}
+			const { keypair } = loaded;
+			const ctx = await getTradeCtx(cfg.network);
+
+			let sellBase = BigInt(bag.moonbag_base_amount);
+			const realBalance = await getWalletBaseBalance(ctx, keypair.publicKey, bag.mint);
+			if (realBalance === 0n) {
+				await sql`
+					UPDATE agent_sniper_positions
+					SET moonbag_closed_at = now(), moonbag_exit_reason = 'bag_gone', moonbag_error = NULL
+					WHERE id = ${bag.id} AND moonbag_closed_at IS NULL
+				`;
+				log.warn('moonbag already gone from wallet', tag);
+				return { status: 'closed', reason: 'bag_gone' };
+			}
+			if (realBalance != null && realBalance < sellBase) sellBase = realBalance;
+
+			const mintPk = new ctx.web3.PublicKey(bag.mint);
+			const baseAmount = bn(ctx, sellBase);
+			const slippagePct = (bag.slippage_bps_live ?? bag.slippage_bps ?? 500) / 100;
+			let expectedOut;
+			let built;
+			let venue = 'bonding_curve';
+			try {
+				const quote = await ctx.client.quoteForSell({ mint: mintPk, baseAmount, slippagePct });
+				expectedOut = BigInt(quote.expectedQuoteOut.toString());
+				built = await ctx.client.buildSellInstructions({ mint: mintPk, user: keypair.publicKey, baseAmount, slippagePct });
+			} catch (err) {
+				if (err?.name !== 'CoinGraduatedError') throw err;
+				built = await buildGraduatedSell({ cfg, position: bag, keypair, baseAmount, slippagePct });
+				expectedOut = BigInt(built.expectedQuoteOut.toString());
+				venue = 'amm';
+			}
+
+			const sellFloor = (expectedOut * BigInt(Math.max(0, Math.round((100 - slippagePct) * 100)))) / 10_000n;
+			const sellFee = await buildAgentTradeFee({ network: cfg.network, payer: keypair.publicKey, userId: bag.user_id, side: 'sell', lamports: sellFloor });
+			if (sellFee) built = { ...built, instructions: [...built.instructions, ...sellFee.instructions] };
+			const sellFeeLamports = sellFee ? BigInt(sellFee.disclosure.amount) : 0n;
+
+			let sig = 'SIMULATED';
+			if (cfg.mode === 'live') sig = await signAndSend(ctx, keypair, built.instructions, cfg.confirmTimeoutMs);
+			const sellFeeEvent = cfg.mode === 'live' ? feeEventFromDisclosure({
+				disclosure: sellFee?.disclosure, signature: sig, source: 'agent_trade', network: cfg.network,
+				payer: keypair.publicKey.toBase58(), userId: bag.user_id, agentId: bag.agent_id,
+				meta: { mint: bag.mint, side: 'sell', venue, position_id: bag.id, reason, source: 'agent_sniper_moonbag' },
+			}) : null;
+
+			const proceeds = expectedOut - sellFeeLamports;
+			await withPlatformFeeOrAlert(sql, () => sql`
+				UPDATE agent_sniper_positions SET
+					moonbag_closed_at = now(), moonbag_exit_reason = ${reason},
+					moonbag_exit_sig = ${sig}, moonbag_exit_lamports = ${proceeds.toString()},
+					moonbag_error = NULL
+				WHERE id = ${bag.id} AND moonbag_closed_at IS NULL
+			`, sellFeeEvent);
+			await recordJournal({
+				position: bag, cfg, event: 'moonbag_exit', reason, sig, venue, soldFraction: 1, legPnlLamports: proceeds,
+			});
+			const sol = lamportsToSol(proceeds);
+			log.trade('moonbag-sell', { ...tag, venue, mode: cfg.mode, sig, proceeds_sol: sol });
+			screenPush(`Closed the free moon bag on $${(bag.symbol || bag.mint.slice(0, 6)).toUpperCase()}: +${sol.toFixed(4)} SOL`, 'trade', {
+				phase: 'moonbag_exit', mint: bag.mint, symbol: bag.symbol || null, solDelta: sol,
+			});
+			if (cfg.mode === 'live') {
+				void reclaimMintRent({
+					ctx, keypair, mint: bag.mint, tag,
+					sendTx: (ixs) => signAndSend(ctx, keypair, ixs, cfg.confirmTimeoutMs),
+				});
+			}
+			return { status: 'closed', sig, venue };
+		} catch (err) {
+			await sql`UPDATE agent_sniper_positions SET moonbag_error = ${errCode(err)} WHERE id = ${bag.id}`;
+			log.warn('moonbag sell failed (will retry)', { ...tag, code: errCode(err), err: err?.message });
+			return { status: 'retry', reason: errCode(err) };
+		}
+	});
 }

@@ -270,6 +270,51 @@ export function decideLadderedExit(pos, value, peak, now = Date.now(), sentiment
 }
 
 /**
+ * What to do with a moon bag a terminal exit left riding in the wallet.
+ *
+ * A retained bag is free (its cost basis was recovered), so there is no stop
+ * loss: it only trails from its own high-water mark and is written off when the
+ * coin is dead. Rules, in order:
+ *
+ *   - The peak only ever rises.
+ *   - A bag worth less than `dustLamports` is never sold: the sell fee would eat
+ *     the proceeds. If its value also has not moved for `writeOffS` it is written
+ *     off (the manager stops quoting it) instead of being re-quoted forever.
+ *   - The trailing stop arms only once the bag has been worth more than dust and
+ *     sells the WHOLE bag when value falls `trailPct` below the peak.
+ *
+ * The stale clock reuses `updateStaleClock`, with the dust line standing in for
+ * the cost basis, so "underwater" means "not worth selling".
+ *
+ * Pure.
+ *
+ * @param {{value:number, peak:number, prevValue:number|null, staleSince:number|null, entry:number}} bag
+ *        value: this sweep's quote; peak/prevValue/staleSince: stored state; entry: residual cost basis.
+ * @param {number} now epoch ms
+ * @param {{trailPct:number, dustLamports:number, writeOffS:number}} opts
+ * @returns {{action:'hold'|'sell'|'write_off', reason?:string, peak:number, staleSince:number|null}}
+ */
+export function decideMoonbagAction(bag, now, opts) {
+	const value = Number(bag.value);
+	const peak = Math.max(Number(bag.peak) || 0, value);
+	const dust = Math.max(0, Number(opts.dustLamports) || 0);
+	const staleSince = updateStaleClock(bag.prevValue, value, Math.max(Number(bag.entry) || 0, dust), bag.staleSince, now);
+
+	if (value < dust) {
+		if (staleSince != null && opts.writeOffS > 0 && (now - staleSince) / 1000 >= opts.writeOffS) {
+			return { action: 'write_off', reason: 'written_off', peak, staleSince };
+		}
+		return { action: 'hold', peak, staleSince };
+	}
+	const trail = pct(opts.trailPct);
+	const armed = peak > Math.max(Number(bag.entry) || 0, dust);
+	if (trail != null && armed && value <= peak * (1 - trail / 100)) {
+		return { action: 'sell', reason: 'trailing_stop', peak, staleSince };
+	}
+	return { action: 'hold', peak, staleSince };
+}
+
+/**
  * Has an unreconcilable position waited long enough to give up on?
  *
  * A position parks as `reconcile_pending` when its bag is provably gone from the

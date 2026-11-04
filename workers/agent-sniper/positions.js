@@ -13,6 +13,7 @@ import { executeSell } from './executor.js';
 import { quoteAmmSell } from './amm-exit.js';
 import { decideLadderedExit, decideLiquidityDecay, moonbagAlways, moonbagFraction, updateStaleClock } from './exit-logic.js';
 import { screenPush } from './screen-push.js';
+import { recordPriceTick } from './telemetry.js';
 
 async function tickPosition(cfg, pos) {
 	// Kill-switch flipped while holding → exit at market now.
@@ -48,6 +49,8 @@ async function tickPosition(cfg, pos) {
 		    last_quoted_at = now()
 		WHERE id = ${pos.id}
 	`;
+
+	await recordPriceTick(pos, value, 'position');
 
 	if (decideLiquidityDecay(staleSince, cfg.liquidityDecayS, Date.now())) {
 		// Dead market: exit and free the slot. Consistency with the moon-bag rule:
