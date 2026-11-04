@@ -216,7 +216,7 @@ export function createAgentLoop({
 							await block(extra);
 							continue;
 						}
-						await emit({ kind: 'tool_call', tool: name, args });
+						await emit({ kind: 'tool_call', tool: name, args, id: tc.id });
 						allowed.push(tc);
 					}
 

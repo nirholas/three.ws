@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Agents speak AG-UI to CopilotKit and assistant-ui",
+			"summary": "POST /api/agent/run?protocol=ag-ui now streams the run as AG-UI events (run, text message and tool call lifecycle, plus avatar embodiment cues as CUSTOM events), so CopilotKit, assistant-ui and LangChain front ends can drive a three.ws agent with no adapter. The default OpenAI stream is unchanged.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/ag-ui"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Fact-check evidence is now ranked by source reliability",
 			"summary": "The fact checker now puts government, peer-reviewed and encyclopedia sources ahead of blogs and social posts, keeps one passage per domain, and rewards agreement across independent domains. The benchmark score also reports macro-F1 and the abstain rate.",
 			"tags": [

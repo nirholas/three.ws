@@ -6909,6 +6909,14 @@
 					"added": "2026-10-09"
 				},
 				{
+					"path": "/docs/ag-ui",
+					"title": "Docs · AG-UI event stream",
+					"description": "Drive a three.ws agent from CopilotKit, assistant-ui or any AG-UI front end: POST /api/agent/run?protocol=ag-ui, the event sequence, tool calls, avatar embodiment cues and a CopilotKit example.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/agent-memory",
 					"title": "Docs · Agent memory and learning",
 					"description": "What your agents remember, the about-you profile and skills they draft from experience, the owner controls to edit, delete or turn learning off, the privacy guarantees on sale, and the /api/memory routes.",

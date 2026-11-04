@@ -19,10 +19,15 @@
 // fund-moving tools live client-side behind the wallet modal and
 // /api/agent/guard.
 //
+// With `?protocol=ag-ui` (or `Accept: application/vnd.ag-ui.event+stream`) the
+// same loop answers in AG-UI events instead (api/_lib/ag-ui.js,
+// docs/ag-ui.md); the default stream below is untouched.
+//
 // Tool activity is surfaced as SSE comment lines (`: tool web_search …`),
 // which every OpenAI SSE parser ignores by spec, so observability rides along
 // without breaking any client.
 
+import { agUiRunInput, createAgUiEncoder, wantsAgUi } from '../_lib/ag-ui.js';
 import { cors, error, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
@@ -203,7 +208,8 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		: { schemas: [], handlers: {}, note: '' };
 	if (sandbox.note) messages.splice(sysIdx + 1, 0, { role: 'system', content: sandbox.note });
 
-	const stream = body?.stream !== false;
+	const agui = opts.agUi ? createAgUiEncoder({ threadId: opts.agUi.threadId || `thread-${completionId}`, runId: opts.agUi.runId || completionId }) : null;
+	const stream = agui ? true : body?.stream !== false;
 
 	let sseOpen = false;
 	const sse = (text) => {
@@ -212,11 +218,14 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 			res.setHeader('content-type', 'text/event-stream; charset=utf-8');
 			res.setHeader('cache-control', 'no-store');
 			res.setHeader('x-accel-buffering', 'no');
-			res.write(chunkFrame(completionId, { role: 'assistant' }));
+			res.write(agui ? agui.start() : chunkFrame(completionId, { role: 'assistant' }));
 			sseOpen = true;
 		}
 		res.write(text);
 	};
+	// AG-UI clients get RUN_STARTED before the model is called, so a failure
+	// anywhere in the loop reaches them as RUN_ERROR rather than a bare 502.
+	if (agui) sse('');
 
 	let streamedAny = false;
 	let usedSandbox = false;
@@ -231,7 +240,8 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		maxToolRounds: MAX_TOOL_ROUNDS,
 		onContent: (delta) => {
 			streamedAny = true;
-			if (stream) sse(chunkFrame(completionId, { content: delta }));
+			if (agui) sse(agui.text(delta));
+			else if (stream) sse(chunkFrame(completionId, { content: delta }));
 		},
 		onEvent: (event) => {
 			if (event.kind === 'model_call' && event.usage) {
@@ -247,11 +257,13 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 				toolTrace.push({ kind: 'tool_result', tool: event.tool, input: event.args, output: event.error ? { error: event.error } : event.result });
 			}
 			if (event.kind === 'tool_call' || event.kind === 'tool_blocked') toolTrace.push({ kind: event.kind, tool: event.tool, input: event.args });
-			if (stream && event.kind === 'tool_call') sse(`: tool ${event.tool}\n\n`);
+			if (agui) sse(agui.loopEvent(event));
+			else if (stream && event.kind === 'tool_call') sse(`: tool ${event.tool}\n\n`);
 			// The workspace id rides along once, so the client can continue it next turn (`sandbox_run`).
 			if (event.kind === 'tool_call' && sandbox.handlers[event.tool] && !usedSandbox) {
 				usedSandbox = true;
-				if (stream) sse(`: sandbox ${sandboxRun}\n\n`);
+				if (agui) sse(agui.custom('three.ws.sandbox', { sandbox_run: sandboxRun }));
+				else if (stream) sse(`: sandbox ${sandboxRun}\n\n`);
 			}
 		},
 	});
@@ -267,6 +279,10 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 			({ state, context } = await loop.step(state, context));
 		}
 	} catch (err) {
+		if (agui) {
+			sse(agui.error(String(err?.message || err).slice(0, 300), 'agent_loop_failed'));
+			return res.end();
+		}
 		if (sseOpen) {
 			sse(`: error ${String(err?.message || err).slice(0, 200)}\n\n`);
 			sse(chunkFrame(completionId, {}, 'stop'));
@@ -279,6 +295,10 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 
 	if (state.status === 'error') {
 		const detail = String(state.error?.message || state.error || 'agent loop error').slice(0, 300);
+		if (agui) {
+			sse(agui.error(detail, 'agent_loop_failed'));
+			return res.end();
+		}
 		if (sseOpen) {
 			sse(`: error ${detail}\n\n`);
 			sse(chunkFrame(completionId, {}, 'stop'));
@@ -300,6 +320,13 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		binding && learning?.enabled
 			? afterRunCompleted({ agentId: binding.agentId, userId: binding.userId, runRef: completionId, goal, steps: toolTrace, finalAnswer: finalContent })
 			: null;
+
+	if (agui) {
+		if (!streamedAny && finalContent) sse(agui.text(finalContent));
+		sse(agui.finish({ usage: openAiUsage, ...(billed ? { billing: billed } : {}), ...(usedSandbox ? { sandbox_run: sandboxRun } : {}) }));
+		await learnFromRun();
+		return res.end();
+	}
 
 	if (stream) {
 		// A run whose final round emitted no deltas (e.g. everything came from a
@@ -348,5 +375,9 @@ export default wrap(async function handler(req, res) {
 		return error(res, err?.status || 400, 'bad_json', err?.message || 'Body must be JSON.');
 	}
 
+	if (wantsAgUi(req)) {
+		const input = agUiRunInput(body);
+		return runAgentCompletion(req, res, input.body, { agUi: { threadId: input.threadId, runId: input.runId } });
+	}
 	return runAgentCompletion(req, res, body);
 });
