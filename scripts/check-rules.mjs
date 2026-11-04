@@ -98,6 +98,10 @@ const SKIP = [
 	// is upstream's, pinned to a commit, and never edited here. Our own contracts,
 	// tests and scripts next to them are still scanned.
 	/^contracts\/(.+\/)?lib\//,
+	// Patched third-party packages vendored byte-identical beside an app or SDK
+	// (minimatch). Upstream's comments are not ours to rewrite; the copies are
+	// pinned by tests/vendored-deps.test.js.
+	/^(.+\/)?vendor\/minimatch\//,
 	/\.min\.(js|css)$/,
 	/package-lock\.json$/,
 	/\.(png|jpg|jpeg|gif|webp|glb|gltf|bin|woff2?|ttf|mp4|wasm|ico|svg)$/i,

@@ -5,3 +5,6 @@ coverage/
 .env.*
 .npmrc
 *.tgz
+
+# vendored dependency copies ship their built files
+!vendor/*/dist/

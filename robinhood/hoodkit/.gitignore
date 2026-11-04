@@ -11,3 +11,6 @@ coverage
 .DS_Store
 examples/react-demo/dist
 examples/*.sqlite
+
+# vendored dependency copies ship their built files
+!vendor/*/dist/

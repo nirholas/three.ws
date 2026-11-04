@@ -15,3 +15,6 @@ CLAUDE.md
 .windsurf/
 skills/
 test-results/
+
+# vendored dependency copies ship their built files
+!vendor/*/dist/
