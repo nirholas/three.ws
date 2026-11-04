@@ -634,3 +634,8 @@ Production probe 8 of 8 PASS, local probe 8 of 8 PASS, audit:docs clean, vitest 
 ## 2026-11-04: order 039 (x-grok 17) re-verified, still open on order 927
 
 No xAI key exists in `process.env`, `.env`, `.env.local` or the `three-ws-api` service. `npm run e2e:xai-mcp -- --dry-run` prints the request matching `docs.x.ai/developers/tools/remote-mcp`, 13 of 13 unit tests pass under vitest, and production `https://three.ws/api/mcp-grok` answers `tools/list` with 200. The live run against production is the only Definition of done line left. Owner: order 927 supplies the key; then `npm run e2e:xai-mcp` must exit 0 and the order file is retired.
+
+## 2026-11-04: order 024 (cloud agent rate limits) re-verified, one line open
+- Held catalog resolved: `tests/mcp-schema.test.js` passes at HEAD; studio, install-token, rate-limit and schema suites 80/80.
+- Scripted run failed first because a render now takes 12 to 20 s, so five sequential calls outlived the 1-minute burst window and the first hit aged out (the limiter was correct). `efdcaf7ae` fires token A's five calls together. Result against local `server/index.mjs`: four admitted, fifth refused `generation_burst` keyed on `install` with reset time and OAuth remedy, token B from the same IP admitted. PASS.
+- Open: `E2E_PORT=3107 npm test` exits 1, 20 of 2778 files, none in this order's scope (concurrent commits `fec740bd2`, `69fe8bdef`, `409dc1318`, `b97611a69` landed tests ahead of their modules; older reds belong to order 401). Owner: those orders; then rerun `npm test` and delete the order file.
