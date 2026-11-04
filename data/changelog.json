@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Coin war results echo into the ticker and jumbotron",
+			"summary": "A finished Coin Wars battle now adds a row to the world's activity ticker and, on a win for your community, flashes on the chart-screen jumbotron, once per battle.",
+			"tags": ["play", "coin-wars"],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Dense photometric head fit (opt-in GPU path)",
 			"summary": "Avatar reconstruction can refine the morphed head against the user's own photo with a bounded, deterministic analysis-by-synthesis fit (PyTorch, optional PyTorch3D silhouette). It ships disabled: a GPU image and a RECONSTRUCT_DENSE_URL route exist, and the CPU service is unchanged.",
 			"tags": [

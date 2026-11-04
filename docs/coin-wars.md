@@ -38,6 +38,18 @@ A battle still in its lobby reads "waiting on both sides" until both communities
 have fielded a fighter, and a battle that has already ended is never flown as
 live: the portal skips it when it picks the running war to banner.
 
+### Results in the shared world
+
+`WarPortal._announce` is the single place a finished battle is detected (the
+`/api/wars` poll and the `?war=` return link both end there, with no extra
+fetch). It calls the `onResult(battle, outcome)` option, which the world wires to
+`activityHub.noteWarResult` (`src/game/activity-feeds.js`). A win for this coin
+posts a highlighted `war` ticker row and one jumbotron band (60 character cap);
+a loss or draw posts a quiet row only. Each `matchKey` is announced once from a
+bounded set, so a refresh of the return link does not repeat it. Decision: only
+this community's own wars are shown, because the portal only reports battles
+that involve its coin.
+
 ---
 
 ## How a battle is put together
