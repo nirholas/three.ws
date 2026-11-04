@@ -369,7 +369,9 @@ export function subscriptionColumns(sub) {
 		name: typeof sub.name === 'string' ? sub.name.slice(0, 200) : null,
 		offer_id: sub.offerId || null,
 		plan_id: sub.planId || null,
-		quantity: Number.isFinite(Number(sub.quantity)) ? Number(sub.quantity) : null,
+		// Flat-rate plans carry no seat count; Microsoft sends it absent, null or 0.
+		// Store null so activation never echoes a quantity of 0 back to the API.
+		quantity: Number(sub.quantity) > 0 && Number.isFinite(Number(sub.quantity)) ? Number(sub.quantity) : null,
 		saas_status: SAAS_STATUSES.includes(sub.saasSubscriptionStatus) ? sub.saasSubscriptionStatus : 'PendingFulfillmentStart',
 		purchaser_email: sub.purchaser?.emailId || null,
 		purchaser_oid: sub.purchaser?.objectId || null,
@@ -479,10 +481,16 @@ export function hoursToMeter({ meteredThrough, activatedAt, now = new Date() }) 
 	return hours;
 }
 
+// Per-event verdicts Microsoft documents as transient: a server-side error and a
+// subscription that is not active yet (activation still in flight). Both stay
+// pending so the next tick resubmits while the hour is inside the window.
+const TRANSIENT_USAGE_STATUSES = new Set(['Error', 'ResourceNotActive']);
+
 /** How a Metering API per-event status settles our stored row. */
 export function settleUsageStatus(status) {
 	if (status === 'Accepted' || status === 'Duplicate') return 'accepted';
 	if (status === 'Expired') return 'expired';
+	if (TRANSIENT_USAGE_STATUSES.has(status)) return 'pending';
 	return 'rejected';
 }
 

@@ -15,7 +15,8 @@
 //      rerun never double counts.
 //   4. Post every pending row in batches of 25 and settle each one from
 //      Microsoft's per-event verdict (Accepted / Duplicate are final successes,
-//      Expired is final, anything else is rejected with Microsoft's message).
+//      Expired is final, Error / ResourceNotActive are transient and stay
+//      pending, anything else is rejected with Microsoft's message).
 //
 // metered_through advances only after the hour's rows are stored, so a crash
 // between steps resumes from the same hour. Pending rows that failed to post
@@ -117,7 +118,7 @@ async function postPending(now) {
 		order by effective_start_time asc
 		limit ${METERING_BATCH_MAX * 40}
 	`;
-	const tally = { posted: 0, accepted: 0, rejected: 0, expired: stale.length, failed_batches: 0, firstRejection: null };
+	const tally = { posted: 0, accepted: 0, rejected: 0, retrying: 0, expired: stale.length, failed_batches: 0, firstRejection: null };
 	for (const batch of chunk(pending, METERING_BATCH_MAX)) {
 		const events = batch.map((r) => ({
 			resourceId: r.subscription_id,
@@ -150,6 +151,7 @@ async function postPending(now) {
 			const message = hit ? (hit.error?.message || hit.status) : 'Microsoft returned no result for this event';
 			if (settled === 'accepted') tally.accepted += 1;
 			else if (settled === 'expired') tally.expired += 1;
+			else if (settled === 'pending') tally.retrying += 1;
 			else {
 				tally.rejected += 1;
 				tally.firstRejection ??= message;
