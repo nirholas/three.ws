@@ -1,0 +1,8 @@
+node_modules
+tests
+Dockerfile
+docker-compose.yml
+flake.nix
+flake.lock
+install.ps1
+*.log

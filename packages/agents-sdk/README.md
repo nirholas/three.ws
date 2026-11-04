@@ -37,18 +37,19 @@ Read this before building on the package.
   from this directory (below) and depend on the built `dist/`. Publishing is an
   owner-approved step: `npm run release` from this directory runs `npm publish
   --access public`, and `prepublishOnly` gates it on `typecheck`, `test` and `build`.
-- **The client is complete; most server routes are not mounted yet.** On
-  2026-10-08 production answered these methods: `getModels()` (`GET /models`),
-  `getFreeTierStatus()` (`GET /me/free-tier`), `startAgent()` and `stopAgent()`
-  (`POST /agents/:id/start|stop`). Every other method calls a `/api/v1` path that
-  production answers with `404 not_found` (or, under `/agents/:id/...`, with the
-  on-chain card resolver's `400 invalid_caip`). The server-side logic for those
-  routes exists in [api/_lib/agents-v1/](../../api/_lib/agents-v1) but has no
-  route entry under `api/v1/` yet. The errors are typed, so a caller sees a
-  `NotFoundError` or `ValidationError`, never a crash.
-- `npm test` (`vitest run packages/agents-sdk/tests`) and `npm run examples`
-  (`scripts/run-examples.mjs`) name directories that are not in the tree; use
-  `npm run typecheck` and `npm run build` to verify a change.
+- **Every method hits a mounted route.** The `/api/v1` routes are served by
+  `api/v1/rest.js` (agents, runs, automations, webhooks, skills, strategies,
+  `me/*`, `intel/*` and the read side of the agent wallet) and the trading router
+  (`POST /trading/swap/quote`). `tests/route-parity.test.js` parses `src/client.ts`
+  and fails when a method points at a path no router serves. Routes added in this
+  release reach production with the next deploy; until then production answers
+  them with `404 not_found`, which the client surfaces as `NotFoundError`.
+- **No money-moving methods.** Swap execution, transfers and withdrawal-address
+  changes are deliberately not in this API. They live in the MCP wallet tools and
+  the dashboard.
+- `npm test` runs the SDK suite (transport, errors, SSE, request shapes, route
+  parity); `tests/live.test.js` runs only when `THREE_WS_API_KEY` is set and is
+  skipped otherwise. `npm run examples` runs `examples/` against the same key.
 
 ## Install and build
 
@@ -135,18 +136,15 @@ agent a goal and lets the server-side tool loop work toward it inside a credit
 budget, an on-chain budget and a step limit; follow it with `streamRun` (Server-Sent
 Events, resumed from the last event id when the connection drops) or `getRunSteps`.
 
-**Custodial versus non-custodial.** `swapQuote` with an `agentId` trades from the
-agent's custodial wallet, and `swapExecute` then needs `confirm: true` and signs
-server-side. Without `agentId` the quote is built for your own wallet and
-`swapExecute` returns an unsigned base64 transaction for you to sign.
-
-**Money needs a preview and a yes.** `transfer` and `setExternalWallet` throw
-`ConfirmationRequiredError` before any request unless their `confirm` flag is
-literally `true`. Call the preview method the error names (`transferQuote`,
-`getWallet`) and show the result first.
+**Money stays out of the API.** `swapQuote` compares routes across every
+aggregator and, with an `agentId`, runs the trade guard chain against that
+agent's wallet. It never signs or sends. Executing a swap, transferring funds
+and changing a withdrawal address are not part of this API: they live in the MCP
+wallet tools and the dashboard, behind an explicit confirmation. Wallet reads
+(`getWallet`, `getWalletHistory`) need the `wallet:read` scope.
 
 **Idempotency.** Every non-GET request carries an `Idempotency-Key` that is
-reused across retries, so a retried create, transfer or swap acts at most once.
+reused across retries, so a retried create acts at most once.
 
 **Pagination.** List methods return `Page<T>` (`data`, `hasMore`, `nextCursor`,
 `requestId`). `client.paginate(fetchPage)` walks every page:
@@ -157,7 +155,7 @@ for await (const agent of client.paginate((cursor) => client.listAgents({ cursor
 
 ## API reference
 
-Paths are relative to `baseUrl`. Live means production answered it on 2026-10-08.
+Paths are relative to `baseUrl`. Every route is mounted in `api/v1/rest.js` or the trading router, and `tests/route-parity.test.js` fails if a method points at a path that is not. Live means production answered it on 2026-10-08.
 
 ### Agents
 
@@ -209,10 +207,10 @@ Paths are relative to `baseUrl`. Live means production answered it on 2026-10-08
 | Method | Route | Live |
 |---|---|---|
 | `getPrice(mint)` | `GET /intel/price` | no |
-| `getTopMovers(params)` | `GET /intel/top-movers` | no |
+| `getTopMovers({ window, board, limit })` | `GET /intel/top-movers` | no |
 | `getIndicators({ mint, indicators, interval })` | `GET /intel/indicators` | no |
 | `getSignals(mint)` | `GET /intel/signals` | no |
-| `getAnomalies()`, `getMacro()` | `GET /intel/anomalies`, `GET /intel/macro` | no |
+| `getAnomalies({ window })`, `getMacro({ window })` | `GET /intel/anomalies`, `GET /intel/macro` | no |
 
 ### Catalog and account
 
@@ -224,21 +222,17 @@ Paths are relative to `baseUrl`. Live means production answered it on 2026-10-08
 | `getTransactions(page)` | `GET /me/transactions` | no |
 | `listIntegrations()`, `saveIntegration(provider, params)`, `removeIntegration(provider)` | `/me/integrations[/:provider]` | no |
 | `generateLinkCode(params)`, `redeemLinkCode({ code })` | `POST /me/link-code[/redeem]` | no |
-| `setExternalWallet(agentId, { ..., confirm: true })` | `PUT /agents/:id/external-wallet` | no |
 
-### Wallet and swap
+### Wallet (read only) and swap quote
 
 | Method | Route | Live |
 |---|---|---|
 | `getWallet(agentId, { network })` | `GET /agents/:id/wallet` | no |
 | `getWalletHistory(agentId, { limit, cursor, network, category })` | `GET /agents/:id/wallet/history` | no |
-| `transferQuote(agentId, params)` | `POST /agents/:id/wallet/transfer/quote` | no |
-| `transfer(agentId, { quoteId, confirm: true })` | `POST /agents/:id/wallet/transfer` | no |
-| `swapQuote(params)` | `POST /swap/quote` | no |
-| `swapExecute(params)` | `POST /swap/execute` | no |
+| `swapQuote({ inputMint, outputMint, amount, dex?, slippageBps?, agentId? })` | `POST /trading/swap/quote` | no |
 
 Request and response types for every method are exported from the package
-(`CreateAgentParams`, `MessageReply`, `Run`, `RunEvent`, `SwapQuote`, `Wallet`,
+(`CreateAgentParams`, `MessageReply`, `Run`, `RunEvent`, `SwapQuoteParams`, `Wallet`,
 `Page<T>` and the rest, from [src/types.ts](src/types.ts)).
 
 ## Errors
@@ -255,7 +249,7 @@ the `rateLimit` headers, `method` and `path`.
 | `ValidationError` | 400/422, with per-field `fields`. Also thrown client-side for an empty id. |
 | `RateLimitError` | 429, with `retryAfter` in seconds. |
 | `InsufficientFundsError` | The wallet or credit balance cannot cover the call. |
-| `ConfirmationRequiredError` | A fund-moving call without its confirm flag; names `confirmFlag` and `previewMethod`. |
+| `ConfirmationRequiredError` | The server refused an action that needs an explicit confirm flag. |
 | `ServerError` | 5xx after the retries are spent. |
 | `TimeoutError` | An attempt exceeded `timeout` (`timeoutMs`). |
 | `ConnectionError` | The request never got a response. |

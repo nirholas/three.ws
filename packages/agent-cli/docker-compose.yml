@@ -1,0 +1,29 @@
+# Runs the Telegram gateway with local schedules on a server.
+#
+#   cd packages/agent-cli
+#   TELEGRAM_BOT_TOKEN=... TELEGRAM_ALLOWED_CHATS=123456789 THREE_WS_API_KEY=... docker compose up -d
+#
+# Without THREE_WS_API_KEY, point it at your own OpenAI-compatible model with
+# THREE_WS_AGENT_BASE_URL and THREE_WS_AGENT_MODEL instead.
+
+services:
+  agent:
+    build: .
+    image: three-ws-agent
+    command: ["gateway"]
+    restart: unless-stopped
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?set TELEGRAM_BOT_TOKEN to your bot token from @BotFather}
+      TELEGRAM_ALLOWED_CHATS: ${TELEGRAM_ALLOWED_CHATS:?set TELEGRAM_ALLOWED_CHATS to the chat ids allowed to talk to the agent}
+      THREE_WS_API_KEY: ${THREE_WS_API_KEY:-}
+      THREE_WS_AGENT_ID: ${THREE_WS_AGENT_ID:-}
+      THREE_WS_AGENT_BASE_URL: ${THREE_WS_AGENT_BASE_URL:-}
+      THREE_WS_AGENT_MODEL: ${THREE_WS_AGENT_MODEL:-}
+      THREE_WS_AGENT_API_KEY: ${THREE_WS_AGENT_API_KEY:-}
+    volumes:
+      - agent-data:/data
+      - agent-workspace:/workspace
+
+volumes:
+  agent-data:
+  agent-workspace:

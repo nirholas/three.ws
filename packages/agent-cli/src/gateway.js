@@ -49,7 +49,7 @@ export function saveTelegramToken(token, env) {
 export function parseAllowlist(...sources) {
 	const ids = new Set();
 	for (const src of sources) {
-		const list = Array.isArray(src) ? src : String(src || '').split(/[\s,]+/);
+		const list = (Array.isArray(src) ? src : [src]).flatMap((s) => String(s ?? '').split(/[\s,]+/));
 		for (const raw of list) {
 			const v = String(raw).trim();
 			if (!v) continue;
