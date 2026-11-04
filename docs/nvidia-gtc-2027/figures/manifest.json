@@ -1,0 +1,131 @@
+{
+ "rendered_at": "2026-11-04T02:49:09.457Z",
+ "size_px": 1400,
+ "track": "data/a2f-track-sample.json",
+ "t_seconds": 5.3333,
+ "rigs": [
+  {
+   "id": "selfie",
+   "file": "/avatars/selfie-girl.glb",
+   "label": "Selfie reconstruction, ARKit names",
+   "variants": [
+    {
+     "variant": "rest",
+     "t": 5.3333,
+     "file": "rig-selfie-rest.png"
+    },
+    {
+     "variant": "direct",
+     "t": 5.3333,
+     "direct": 172,
+     "expression": 0,
+     "jawOpen": 0.6840315031503157,
+     "file": "rig-selfie-direct.png"
+    }
+   ],
+   "meshes": [
+    {
+     "name": "EyeLeft",
+     "morphs": 63
+    },
+    {
+     "name": "EyeRight",
+     "morphs": 63
+    },
+    {
+     "name": "Wolf3D_Head",
+     "morphs": 63
+    },
+    {
+     "name": "Wolf3D_Teeth",
+     "morphs": 63
+    }
+   ]
+  },
+  {
+   "id": "default",
+   "file": "/avatars/default.glb",
+   "label": "Web avatar, Oculus visemes plus ARKit",
+   "variants": [
+    {
+     "variant": "rest",
+     "t": 5.3333,
+     "file": "rig-default-rest.png"
+    },
+    {
+     "variant": "direct",
+     "t": 5.3333,
+     "direct": 208,
+     "expression": 0,
+     "jawOpen": 0.6840315031503157,
+     "file": "rig-default-direct.png"
+    },
+    {
+     "variant": "derived-only",
+     "t": 5.3333,
+     "direct": 100,
+     "expression": 56,
+     "jawOpen": 0.6840315031503157,
+     "file": "rig-default-derived-only.png"
+    },
+    {
+     "variant": "both",
+     "t": 5.3333,
+     "direct": 208,
+     "expression": 0,
+     "jawOpen": 0.6840315031503157,
+     "derivedAdded": 48,
+     "file": "rig-default-both.png"
+    }
+   ],
+   "meshes": [
+    {
+     "name": "EyeLeft",
+     "morphs": 67
+    },
+    {
+     "name": "EyeRight",
+     "morphs": 67
+    },
+    {
+     "name": "Wolf3D_Head",
+     "morphs": 67
+    },
+    {
+     "name": "Wolf3D_Teeth",
+     "morphs": 67
+    }
+   ]
+  },
+  {
+   "id": "realistic",
+   "file": "/avatars/realistic-female.glb",
+   "label": "Creator export, ARKit plus visemes",
+   "variants": [
+    {
+     "variant": "rest",
+     "t": 5.3333,
+     "file": "rig-realistic-rest.png"
+    },
+    {
+     "variant": "direct",
+     "t": 5.3333,
+     "direct": 86,
+     "expression": 0,
+     "jawOpen": 0.6840315031503157,
+     "file": "rig-realistic-direct.png"
+    }
+   ],
+   "meshes": [
+    {
+     "name": "mesh_3",
+     "morphs": 60
+    },
+    {
+     "name": "mesh_7",
+     "morphs": 60
+    }
+   ]
+  }
+ ]
+}
