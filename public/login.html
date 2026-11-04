@@ -671,6 +671,15 @@
 					<span data-i18n="login.continue_with_google">Continue with Google</span>
 				</button>
 
+				<!-- Sign in with Microsoft (Entra ID). Revealed by the script below only
+				     when the Entra sign-in app is configured (GET /api/config →
+				     microsoftEnabled). Signs in accounts a Microsoft Marketplace purchase
+				     linked; api/microsoft-marketplace/[action].js. -->
+				<button type="button" id="microsoft-btn" class="privy-chain-btn sso-btn" hidden>
+					<svg width="14" height="14" viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+					<span data-i18n="login.continue_with_microsoft">Continue with Microsoft</span>
+				</button>
+
 				<!-- Sign in with Telegram. Revealed by src/telegram-login.js only when a
 				     bot token is configured (GET /api/config → telegramEnabled). -->
 				<button type="button" id="telegram-btn" class="privy-chain-btn sso-btn" hidden>
@@ -920,6 +929,20 @@
 					telegram_already_linked: 'A different Telegram account is already linked to that three.ws account.',
 					telegram_cancelled: 'Telegram sign-in was cancelled. Nothing changed.',
 					telegram_failed: 'Telegram sign-in could not be completed. Please try again.',
+					microsoft_sso_unavailable: 'Sign in with Microsoft is not available right now. Use another method below.',
+					microsoft_sso_cancelled: 'Microsoft sign-in was cancelled. Nothing changed.',
+					microsoft_sso_expired: 'That Microsoft sign-in took too long. Please try again.',
+					microsoft_sso_failed: 'Microsoft sign-in could not be completed. Please try again.',
+					microsoft_sso_exchange_failed: 'Microsoft did not accept the sign-in. Please try again in a moment.',
+					microsoft_sso_invalid_token: 'Microsoft sign-in could not be verified. Please try again.',
+					microsoft_admin_consent_required:
+						'Your organisation has to approve three.ws before you can sign in with Microsoft. Ask your Microsoft Entra administrator, or sign in another way.',
+					microsoft_not_linked:
+						'That Microsoft account is not linked to a three.ws account yet. It is linked when you activate a Microsoft Marketplace purchase; until then, sign in another way.',
+					microsoft_existing_account:
+						'You already have a three.ws account with that email. Sign in to it below, and your Microsoft purchase will be linked to it next.',
+					microsoft_account_deleted: 'The account linked to that Microsoft sign-in has been deleted.',
+					microsoft_rate_limited: 'Too many attempts. Please try again in a moment.',
 				};
 				const X_MESSAGES = {
 					x_unavailable: 'Sign in with X is not available right now.',
@@ -961,6 +984,15 @@
 					googleBtn.addEventListener('click', () => {
 						const next = window.__loginNext || params.get('next') || '/dashboard';
 						window.location.href = '/api/auth/google/start?next=' + encodeURIComponent(next);
+					});
+				}
+
+				const microsoftBtn = document.getElementById('microsoft-btn');
+				if (microsoftBtn && cfg?.microsoftEnabled) {
+					microsoftBtn.hidden = false;
+					microsoftBtn.addEventListener('click', () => {
+						const next = window.__loginNext || params.get('next') || '/dashboard';
+						window.location.href = '/api/microsoft-marketplace/sso/start?next=' + encodeURIComponent(next);
 					});
 				}
 

@@ -263,9 +263,11 @@ async function handleMe(req, res) {
 // Soft delete, matching the model the rest of auth already assumes: every login
 // path (password, SIWE, SIWS, SAML, Privy) filters on `deleted_at is null`, and
 // the wallet and SSO paths answer `account_deleted` rather than reviving the row
-// or minting a fresh account for a subject whose owner left. Rows stay for
-// support/forensics; what changes is that nothing can sign in as this user and
-// none of their content is public.
+// or minting a fresh account for a subject whose owner left. Rows stay for the
+// 30-day recovery window the privacy policy states; nothing can sign in as this
+// user and none of their content is public. After 30 days
+// api/cron/purge-deleted-accounts.js purges the account permanently
+// (api/_lib/account-purge.js, docs/account-deletion.md).
 //
 // Three explicit gates before anything is written: a live session, a single-use
 // CSRF token, and a typed confirmation phrase in the body. CSRF alone would let

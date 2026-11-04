@@ -403,14 +403,16 @@ function buildPlan({ fks, columns }) {
 			continue;
 		}
 		const sets = n.columns.map((c) => `${qi(c)} = null`);
-		for (const ic of identifierColumns(n.table, n.columns)) {
+		const scrubbed = identifierColumns(n.table, n.columns);
+		for (const ic of scrubbed) {
 			const replacement = ic.nullable ? 'null' : `'purged-' || md5(random()::text)`;
 			sets.push(`${qi(ic.name)} = case when lower(${qi(ic.name)}) = any($2::text[]) then ${replacement} else ${qi(ic.name)} end`);
 		}
 		statements.push({
 			label: `anonymized:${n.label}`,
 			text: `with x as (update ${qi(n.table)} set ${sets.join(', ')} where ${n.pred} returning 1) select count(*)::int as n from x`,
-			identifiers: true,
+			// Postgres rejects a bind that supplies a parameter the text never uses.
+			identifiers: scrubbed.length > 0,
 		});
 	}
 	for (const d of deletes) {
@@ -531,9 +533,11 @@ async function purgeOne(user, plan, columns, olderThanDays) {
 	}
 
 	const queries = [
-		// Abort the whole transaction unless the account is still past its window.
+		// Abort the whole transaction unless the account is still past its window
+		// (restored or already purged since the batch was selected): dividing by
+		// a zero count raises 22012, which errorCode() reports as not_eligible.
 		sql(
-			`select case when count(*) = 1 then 1 else ('not_eligible')::text::int end as ok
+			`select 1 / count(*)::int as ok
 			from users where id = $1::uuid and deleted_at is not null and deleted_at < now() - make_interval(days => $2::int)`,
 			[user.id, olderThanDays],
 		),
@@ -562,7 +566,7 @@ async function purgeOne(user, plan, columns, olderThanDays) {
 function errorCode(err) {
 	if (err instanceof PurgeError) return err.code;
 	const message = String(err?.message || '');
-	if (message.includes('not_eligible')) return 'not_eligible';
+	if (err?.code === '22012' || message.includes('division by zero')) return 'not_eligible';
 	if (err?.code === '23503') return `fk_violation:${err.constraint || err.table || 'unknown'}`;
 	if (err?.code) return `db_error:${err.code}`;
 	return 'purge_failed';
