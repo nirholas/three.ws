@@ -472,6 +472,7 @@
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"lint:ui": "lintapple http://localhost:3000",
+		"lint:ui:core": "node scripts/lint-ui-pages.mjs",
 		"check:dist": "node scripts/check-dist.mjs",
 		"check:pages": "node scripts/check-pages.mjs",
 		"check:tutorials": "node scripts/sync-tutorial-pages.mjs",
