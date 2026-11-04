@@ -26,6 +26,7 @@ import { makeScreenCanvas, makeScreenTexture, screenMaterial } from './screen-te
 import { isHomeTown } from './home-town.js';
 import { log } from '../shared/log.js';
 import { ensureX402 } from '../shared/x402-loader.js';
+import { netErrorMessage } from './net-error.js';
 
 const KIOSK_POS = new Vector3(-8, 0, -7);
 const INTERACT_RANGE = 5.5;
@@ -306,7 +307,7 @@ export class IntelKiosk {
 			// A dismissed wallet modal is a normal exit, not an error state.
 			const cancelled = /cancel|dismiss|closed|denied/i.test(String(err?.message || ''));
 			if (!cancelled) {
-				this.ui?.toast?.(`Intel purchase failed — ${err?.message || 'no funds moved'}`, 'error');
+				this.ui?.toast?.(`Intel purchase failed: ${netErrorMessage(err, 'The payment did not complete.')}`, 'error');
 			}
 		} finally {
 			this.busy = false;

@@ -392,29 +392,37 @@ class TradeModal {
 	// Read the coin's quote asset (and graduation status) from the on-chain
 	// curve. The buy/sell-prep endpoints auto-detect server-side too — this is
 	// purely so the UI denominates correctly before the user enters an amount.
-	async _detectDenom() {
+	async _detectDenom(attempt = 0) {
+		let data;
 		try {
 			const r = await fetch(`/api/pump/quote?mint=${encodeURIComponent(this.coin.mint)}&network=${NETWORK}`);
-			const data = await r.json().catch(() => ({}));
-			if (!r.ok || !data?.quote_mint) return;
-			this.graduated = !!data.graduated;
-			this._captureFee(data);
-			this._renderStage();
-			if (data.quote_mint !== WSOL && this.denom.kind !== 'usdc') {
-				this.denom = usdcDenom(NETWORK);
-				if (this.mode === 'buy') {
-					this.amount = this.denom.presets[0];
-					this.amountInput.value = String(this.amount);
-				}
-				this._syncMode();
-				this._refreshBalances();
-				this._quote();
-				this._syncCta();
-				// The coin prices in USDC, which the agent-trade endpoint does not
-				// take, so withdraw the payer row (and any selection made on it).
-				this._renderPayers();
+			data = await r.json().catch(() => ({}));
+			if (!r.ok || !data?.quote_mint) throw new Error(`quote ${r.status}`);
+		} catch {
+			// One quiet retry covers a dropped request. If the quote service still
+			// cannot say which currency this coin prices in, say so: the SOL amount
+			// shown is a guess until then, and the server re-detects it at prep.
+			if (attempt === 0) return this._detectDenom(1);
+			if (!this.busy) this._setStatus('Could not confirm whether this coin prices in SOL or USDC. The order is checked again before you sign.', '');
+			return;
+		}
+		this.graduated = !!data.graduated;
+		this._captureFee(data);
+		this._renderStage();
+		if (data.quote_mint !== WSOL && this.denom.kind !== 'usdc') {
+			this.denom = usdcDenom(NETWORK);
+			if (this.mode === 'buy') {
+				this.amount = this.denom.presets[0];
+				this.amountInput.value = String(this.amount);
 			}
-		} catch { /* keep optimistic SOL — prep still auto-detects server-side */ }
+			this._syncMode();
+			this._refreshBalances();
+			this._quote();
+			this._syncCta();
+			// The coin prices in USDC, which the agent-trade endpoint does not
+			// take, so withdraw the payer row (and any selection made on it).
+			this._renderPayers();
+		}
 	}
 
 	// --------------------------------------------------------------- wallet
@@ -584,7 +592,7 @@ class TradeModal {
 				this.balLine.append(el('span', { text: `Balance ${fmtQuote(this.quoteBalance.ui, this.denom)} USDC` }));
 				if (low) this.balLine.append(el('span', { class: 'cc-buy-bal-sep', text: ' · ' }), el('button', { class: 'cc-buy-link', type: 'button', text: 'Add USDC', onclick: () => this._openFund() }));
 			} else {
-				this.balLine.append(el('span', { text: 'Balance —' }));
+				this.balLine.append(el('span', { text: 'Balance unknown' }));
 			}
 		} else if (this.mode === 'sell') {
 			this.balLine.hidden = false;
@@ -598,7 +606,7 @@ class TradeModal {
 					this.balLine.append(el('span', { class: 'cc-buy-wallet-off', text: `You don't hold any ${this.symTokens} yet` }));
 				}
 			} else {
-				this.balLine.append(el('span', { text: 'Holdings —' }));
+				this.balLine.append(el('span', { text: 'Holdings unknown' }));
 			}
 		} else {
 			this.balLine.hidden = true;
@@ -656,7 +664,7 @@ class TradeModal {
 		// The user can still read the verdict above; the action is what's refused.
 		if (this.denom.kind === 'sol' && this.safetyVerdict?.verdict === 'block') {
 			this.ctaLabel = 'buy';
-			this.cta.textContent = 'Blocked — unsafe to buy';
+			this.cta.textContent = 'Blocked: unsafe to buy';
 			this.cta.disabled = true;
 			return;
 		}
@@ -791,7 +799,7 @@ class TradeModal {
 			this.graduated = onCurve ? false : this.graduated;
 			this._renderStage();
 			this.quoteLine.classList.add('cc-buy-quote-warn');
-			this.quoteLine.textContent = `Still on the bonding curve — priced at buy. You'll receive ${this.sym} for ${this.amount} SOL.`;
+			this.quoteLine.textContent = `Still on the bonding curve, priced at buy. You'll receive ${this.sym} for ${this.amount} SOL.`;
 		}
 	}
 
@@ -844,7 +852,7 @@ class TradeModal {
 				} else {
 					// The server answered and had no pre-quote: genuinely on-curve.
 					this.quoteLine.classList.add('cc-buy-quote-warn');
-					this.quoteLine.textContent = `Priced at buy — you'll receive ${this.sym} for ${this.amount} USDC.`;
+					this.quoteLine.textContent = `Priced at buy: you'll receive ${this.sym} for ${this.amount} USDC.`;
 				}
 			} catch (err) {
 				if (seq !== this._quoteSeq) return;
@@ -873,7 +881,7 @@ class TradeModal {
 			} else {
 				// The server answered and had no pre-quote: genuinely on-curve.
 				this.quoteLine.classList.add('cc-buy-quote-warn');
-				this.quoteLine.textContent = `Priced at sale — you'll receive ${this.denom.label}.`;
+				this.quoteLine.textContent = `Priced at sale: you'll receive ${this.denom.label}.`;
 			}
 		} catch (err) {
 			if (seq !== this._quoteSeq) return;
@@ -932,7 +940,7 @@ class TradeModal {
 			const { showAddFunds } = await import('../shared/add-funds.js');
 			const res = await showAddFunds({ walletAddress: addr, requiredUsdc: this.amount });
 			if (res) {
-				this._setStatus('USDC added — you can buy now.', 'ok');
+				this._setStatus('USDC added. You can buy now.', 'ok');
 				await this._refreshBalances();
 			}
 		} catch (err) {
@@ -946,7 +954,7 @@ class TradeModal {
 		// Never broadcast a buy the firewall blocked, even if the CTA were somehow
 		// reached — the verdict above explains why.
 		if (this.denom.kind === 'sol' && this.safetyVerdict?.verdict === 'block') {
-			this._setStatus('This coin failed the safety check — buying is blocked.', 'err');
+			this._setStatus('This coin failed the safety check, so buying is blocked.', 'err');
 			return;
 		}
 		const isUsdc = this.denom.kind === 'usdc';
@@ -971,7 +979,7 @@ class TradeModal {
 			const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3 });
 
 			const url = solanaTxExplorerUrl(NETWORK, sig);
-			this._setStatusNode(el('span', {}, ['Submitted — ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view ↗' }), ' · confirming…']), 'ok');
+			this._setStatusNode(el('span', {}, ['Submitted: ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view ↗' }), ' · confirming…']), 'ok');
 
 			await this._confirmOnChain(conn, sig);
 
@@ -1022,7 +1030,7 @@ class TradeModal {
 			const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3 });
 
 			const url = solanaTxExplorerUrl(NETWORK, sig);
-			this._setStatusNode(el('span', {}, ['Submitted — ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view ↗' }), ' · confirming…']), 'ok');
+			this._setStatusNode(el('span', {}, ['Submitted: ', el('a', { href: url, target: '_blank', rel: 'noopener', text: 'view ↗' }), ' · confirming…']), 'ok');
 
 			await this._confirmOnChain(conn, sig);
 
@@ -1078,7 +1086,7 @@ class TradeModal {
 		try {
 			const { signInWithWallet } = await import('../wallet-auth.js');
 			await signInWithWallet();
-			this._setStatus('Signed in — retrying…', 'ok');
+			this._setStatus('Signed in. Retrying…', 'ok');
 			(retry || (() => this._buy()))();
 		} catch (err) {
 			this._setStatus(err?.message || 'Sign-in failed.', 'err');

@@ -15,6 +15,7 @@
 
 import { celebrateWithConfetti, startHalloweenPageFx } from '../shared/halloween-fx.js';
 import { HALLOWEEN_2026, dropPhase, formatCountdown, isHalloweenLive, seasonalLookEnabled, setSeasonalLookEnabled, markClaimedLocally } from '../shared/seasonal-drops.js';
+import { netErrorMessage } from './net-error.js';
 
 const DROP_URL = `/api/seasonal/${HALLOWEEN_2026.id}`;
 
@@ -217,7 +218,7 @@ class HalloweenPlay {
 			this._renderAction();
 			if (body.claim?.newlyClaimed) celebrateWithConfetti({ x: 0.5, y: 0.35 });
 		} catch (err) {
-			this._say(err.message || 'Could not claim right now. Check your connection and try again.', 'error');
+			this._say(netErrorMessage(err, 'Could not claim right now. Check your connection and try again.'), 'error');
 			if (this.claimBtn) { this.claimBtn.disabled = false; this.claimBtn.textContent = 'Claim gifts'; }
 		} finally {
 			this.busy = false;

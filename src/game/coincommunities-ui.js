@@ -21,6 +21,7 @@ import { getMe } from '../account.js';
 import { threeMarkSvg } from '../shared/brand-mark.js';
 import { proxiedImageURL } from '../ipfs.js';
 import { log } from '../shared/log.js';
+import { netErrorMessage } from './net-error.js';
 import { t, onLocaleChange } from './i18n-play.js';
 import { announce } from './a11y.js';
 import { countUp } from '../ui-juice.js';
@@ -738,7 +739,7 @@ export class CommunityUI {
 			this._addUploadedAvatar(url, file.name);
 			this._setUploadState('done', `“${file.name}” is now your avatar.`);
 		} catch (err) {
-			this._setUploadState('error', err?.message || 'Upload failed.');
+			this._setUploadState('error', netErrorMessage(err, 'Upload failed. Try again.'));
 		} finally {
 			this._uploading = false;
 		}
@@ -1592,7 +1593,7 @@ export class CommunityUI {
 				this.closeGateConfig();
 				this.toast(value > 0 ? `Holders world now needs ${fmtCompact(value)} ${sym}.` : 'Holders gate removed, default floor applies.', 'success');
 			} catch (err) {
-				fail(err?.message || 'Couldn’t save the gate. Try again.');
+				fail(netErrorMessage(err, 'Couldn’t save the gate. Try again.'));
 			}
 		};
 		saveBtn.onclick = () => {
@@ -1903,7 +1904,7 @@ export class CommunityUI {
 			},
 		});
 		this.chatUnread = el('span', { class: 'cc-chat-unread', hidden: true });
-		this.chatChevron = el('span', { class: 'cc-chat-chevron', text: '▾' });
+		this.chatChevron = el('span', { class: 'cc-chat-chevron', 'aria-hidden': 'true', text: '▾' });
 		const head = el('div', {
 			class: 'cc-chat-head', role: 'button', tabindex: '0', 'aria-label': 'Toggle chat',
 			'aria-expanded': 'true', 'aria-controls': 'cc-chat-body',
@@ -2795,15 +2796,17 @@ export class CommunityUI {
 			status,
 		]);
 		this.shareSheet = el('div', { id: 'cc-share', onclick: () => this.closeShareSheet() }, [card]);
-		this._shareKeydown = (e) => { if (e.key === 'Escape') this.closeShareSheet(); };
-		document.addEventListener('keydown', this._shareKeydown);
+		// Capture phase + stop: Escape closes this sheet only, never the drawer or
+		// panel stack behind it (the world's own Escape handling runs on bubble).
+		this._shareKeydown = (e) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); this.closeShareSheet(); } };
+		document.addEventListener('keydown', this._shareKeydown, true);
 		document.body.appendChild(this.shareSheet);
 		requestAnimationFrame(() => this.shareSheet?.classList.add('cc-on'));
 		(canPublish ? titleInput : copyBtn).focus();
 	}
 
 	closeShareSheet() {
-		if (this._shareKeydown) { document.removeEventListener('keydown', this._shareKeydown); this._shareKeydown = null; }
+		if (this._shareKeydown) { document.removeEventListener('keydown', this._shareKeydown, true); this._shareKeydown = null; }
 		if (this.shareSheet) { this.shareSheet.remove(); this.shareSheet = null; }
 	}
 
@@ -2830,15 +2833,16 @@ export class CommunityUI {
 			this._featuredBody,
 		]);
 		this.featuredPanel = el('div', { id: 'cc-featured', onclick: () => this.closeFeatured() }, [card]);
-		this._featuredKeydown = (e) => { if (e.key === 'Escape') this.closeFeatured(); };
-		document.addEventListener('keydown', this._featuredKeydown);
+		// Same contract as the share sheet: Escape dismisses this layer only.
+		this._featuredKeydown = (e) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); this.closeFeatured(); } };
+		document.addEventListener('keydown', this._featuredKeydown, true);
 		document.body.appendChild(this.featuredPanel);
 		requestAnimationFrame(() => this.featuredPanel?.classList.add('cc-on'));
 		closeBtn.focus();
 	}
 
 	closeFeatured() {
-		if (this._featuredKeydown) { document.removeEventListener('keydown', this._featuredKeydown); this._featuredKeydown = null; }
+		if (this._featuredKeydown) { document.removeEventListener('keydown', this._featuredKeydown, true); this._featuredKeydown = null; }
 		if (this.featuredPanel) { this.featuredPanel.remove(); this.featuredPanel = null; }
 		this.h.onFeaturedClosed?.();
 	}
