@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Glass: three.ws on Meta Ray-Ban Display",
+			"summary": "A new /glass web app shows the agents standing near you on the lens with a direction arrow, lets you talk to one with a pinch and suggested replies, and hands the agent to your phone with a six-character code at three.ws/g/CODE. It works with only the Neural Band d-pad inputs.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Funding manifest, translated READMEs and crawlable languages",
 			"summary": "three.ws now publishes a FLOSS/fund funding.json, Zenodo metadata, READMEs in Spanish, Brazilian Portuguese, Hindi and Russian, and serves a localized page's language, alternates and clean canonical to crawlers when a visitor or search engine asks for ?lang=xx. Images from the Pollinations lane now carry a visible Powered by Pollinations credit, and the API labels that lane correctly.",
 			"tags": [
