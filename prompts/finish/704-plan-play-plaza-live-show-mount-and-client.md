@@ -1,5 +1,7 @@
 # Mount the plaza stage in /play and write the show client so a crowd can attend a live hosted show in the world
 
+**Status (2026-11-04):** code, tests, docs and changelog are done and committed. Remaining, owned by the owner: Definition-of-done browser lines that need a running multiplayer server and a claimed plaza (two browsers on the $THREE world, identical captions, one leaderboard update per tip signature, socket closes on walk-away), plus any live tip, which needs the owner's explicit yes on recipient, amount and token. `npm run dev:multi` fails to boot in the agent sandbox (`@colyseus/core` cannot import the default export of `nanoid`), so it was not run here. The panel was verified in real Chromium against the real StageNet (offline state, retry, placeholder host, disposal).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/704-plan-play-plaza-live-show-mount-and-client.md`.
 
 **Priority:** P2, new capability with clear value (score 66 of 100 inside the tier). **Area:** play. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

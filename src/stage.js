@@ -28,12 +28,10 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { apiFetch } from './api.js';
 import { StageNet } from './stage-net.js';
 import { tipAgent, TipError } from './shared/agent-tip.js';
+import { THREE_MINT, THREE_DECIMALS, TIP_PRESETS } from './shared/stage-tip.js';
 import { StageVoice, MouthTarget, findHead, modelHeight } from './shared/stage-voice.js';
 import { loadEnvironment } from './shared/cinematic-render.js';
 
-const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
-const THREE_DECIMALS = 6;
-const TIP_PRESETS = [100, 500, 2000, 10000]; // $THREE
 const REACTIONS = [
 	{ id: 'clap', emoji: '👏' },
 	{ id: 'fire', emoji: '🔥' },

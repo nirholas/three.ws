@@ -97,6 +97,7 @@ import { WheelStation } from './wheel-station.js';
 import { GachaStation, gachaCollider } from './gacha-station.js';
 import { SignatureWall } from './signature-wall.js';
 import { WarPortal } from './war-portal.js';
+import { PlazaStage } from './plaza-stage.js';
 import { PlayOnboard } from './play-onboard.js';
 import { log } from '../shared/log.js';
 import { t } from './i18n-play.js';
@@ -1913,6 +1914,20 @@ export class CoinCommunities {
 			returningMatchKey: this._urlWar,
 		});
 		// One echo per return: clear the key so re-entering another world from the
+		// F17: the Plaza Stage, a hosted Living Stage in the plaza. Only worlds with a
+		// coin mint can derive a stage id. The landmark is geometry + a marquee + one
+		// distance check per frame; the show client (socket, host avatar, voice)
+		// lazy-loads when the player walks into the venue.
+		this.plazaStage = this.coin?.mint
+			? new PlazaStage({
+				scene: this.scene,
+				camera: this.camera,
+				getPlayer: () => ({ x: this.localPos.x, y: this.localPos.y, z: this.localPos.z }),
+				coin: this.coin,
+				ui: this.ui,
+				isPowerSaver: () => !!this._powerSaver,
+			})
+			: null;
 		// lobby does not replay a battle the player already saw.
 		this._urlWar = '';
 		this.net.on('profile', (snap) => { this.playSystems?.setProfile(snap); this._onCosmeticsProfile(snap); });
@@ -2428,6 +2443,7 @@ export class CoinCommunities {
 		if (this.signatureWall) { this.signatureWall.dispose(); this.signatureWall = null; }
 		if (this.warPortal) { this.warPortal.dispose(); this.warPortal = null; }
 		this._disposeFriends();
+		if (this.plazaStage) { this.plazaStage.dispose(); this.plazaStage = null; }
 		this._disposeAvatarPanel();
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
@@ -2737,7 +2753,13 @@ export class CoinCommunities {
 		else { this.remotes.get(m.id)?.say(m.text); this._bumpTabUnread(); }
 	}
 	// Returns whether the line reached the room, so the chat box keeps unsent text.
-	_sendChat(text) { return this.net?.sendChat(text) ?? false; }
+	_sendChat(text) {
+		// Standing at the plaza stage, the chat bar is a question to the host, not a
+		// chat line. `away` means the stage is not taking questions from here.
+		const asked = this.plazaStage?.ask(text);
+		if (asked && asked !== 'away') return asked === 'sent';
+		return this.net?.sendChat(text) ?? false;
+	}
 	_emote(name) { this._danceOff?.noteEmote(name); this.net?.sendEmote(name); playEmoteClip(this.localAnim, name, this.motion); }
 
 	// ── Tag mini-game (R08) ─────────────────────────────────────────────────────
@@ -3912,7 +3934,7 @@ export class CoinCommunities {
 					// in range, try the Intel Kiosk, then fall through to the Agent
 					// Exchange.
 					if (!this.worldLife?.interact() && !this.intelKiosk?.interact() && !this.combat?.interact()
-						&& !this.wheelStation?.interact() && !this.gachaStation?.interact() && !this.signatureWall?.interact() && !this.warPortal?.interact()) this.agentCommerce?.interact();
+						&& !this.wheelStation?.interact() && !this.gachaStation?.interact() && !this.signatureWall?.interact() && !this.warPortal?.interact() && !this.plazaStage?.interact()) this.agentCommerce?.interact();
 					return;
 				}
 				// F is contextual: enter/exit a nearby vehicle takes priority (the
@@ -5406,6 +5428,7 @@ export class CoinCommunities {
 				}
 			}
 		}
+			this.plazaStage?.tick(dt);
 		this._tickEnv(dt);
 		this._updateCamera(dt);
 		// Drawing into a lost context throws GL errors on every call and can keep

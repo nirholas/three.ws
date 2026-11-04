@@ -56,8 +56,10 @@ export class PlazaStage {
 	 * @param {() => ({x:number,y:number,z:number})} opts.getPlayer  local avatar pose
 	 * @param {object} opts.coin   the world's coin ({ mint, name, symbol })
 	 * @param {object} opts.ui     CommunityUI, toasts + the chat bar
+	 * @param {() => boolean} [opts.isPowerSaver]  the world's power-saver flag
 	 */
-	constructor({ scene, camera, getPlayer, coin, ui }) {
+	constructor({ scene, camera, getPlayer, coin, ui, isPowerSaver }) {
+		this.isPowerSaver = isPowerSaver || (() => false);
 		this.scene = scene;
 		this.camera = camera;
 		this.getPlayer = getPlayer;
@@ -345,6 +347,7 @@ export class PlazaStage {
 				hostAnchor: this.hostAnchor,
 				audienceAnchor: this.audienceAnchor,
 				ui: this.ui,
+				isPowerSaver: this.isPowerSaver,
 				detail: this.state.phase === 'unclaimed' ? null : this.state,
 				onShowState: (patch) => this._onShowState(patch),
 			});

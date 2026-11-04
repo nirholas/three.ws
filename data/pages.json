@@ -3778,6 +3778,14 @@
 					"added": "2026-08-08"
 				},
 				{
+					"path": "/docs/play-plaza-stage",
+					"title": "Docs · The Plaza Stage in /play",
+					"description": "How the hosted Living Stage in every coin world works: proximity join and leave, spatial host voice with captions, ring seats, questions from the chat bar, and $THREE tips behind an explicit confirm step.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/play-live-events",
 					"title": "Docs · Live events in the /play world",
 					"description": "How a scheduled event runs inside the $THREE world: one config file drives the countdown chip, the agenda drawer, the go-live moment, and a fireworks show every player sees identically without a single packet. Includes how to schedule, preview, and verify one.",
