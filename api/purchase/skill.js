@@ -29,9 +29,7 @@
 import { PublicKey, Transaction } from '@solana/web3.js';
 import {
 	getAccount,
-	getAssociatedTokenAddressSync,
 	createAssociatedTokenAccountIdempotentInstruction,
-	createTransferCheckedInstruction,
 	TokenAccountNotFoundError,
 	TokenInvalidAccountOwnerError,
 } from '@solana/spl-token';
@@ -44,6 +42,7 @@ import { logEvent, resolvePayoutAddress } from '../_lib/purchase-confirm.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { blockhashKey, getRecentBlockhashInfo } from '../_lib/solana/read-guards.js';
 import { resolveMarketplacePayer } from '../_lib/solana/gasless-tx.js';
+import { ataFor, tokenProgramForMint, tokenTransfer } from '../_lib/solana-token-program.js';
 
 const REFERENCE_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/; // base58 Pubkey
 
@@ -86,9 +85,9 @@ async function readAccount(req) {
 // message the buyer can act on. Returns the balance in atomic units, or null when
 // the RPC could not answer: an unreachable node must never reject a purchase the
 // chain would have accepted.
-async function readBuyerBalance(connection, buyerAta) {
+async function readBuyerBalance(connection, buyerAta, tokenProgram) {
 	try {
-		const account = await getAccount(connection, buyerAta, 'confirmed');
+		const account = await getAccount(connection, buyerAta, 'confirmed', tokenProgram);
 		return account.amount;
 	} catch (err) {
 		if (err instanceof TokenAccountNotFoundError || err instanceof TokenInvalidAccountOwnerError) {
@@ -191,11 +190,28 @@ export default wrap(async (req, res) => {
 	const payer = await resolveMarketplacePayer();
 	const feePayer = payer ? payer.publicKey : buyer;
 
-	const buyerAta = getAssociatedTokenAddressSync(mintKey, buyer);
-	const creatorAta = getAssociatedTokenAddressSync(mintKey, creatorKey);
+	// Every ATA and transfer follows the mint's own program: a $THREE purchase
+	// pays between Token-2022 accounts, a USDC one between classic accounts.
+	let tokenProgram;
+	try {
+		tokenProgram = await tokenProgramForMint(connection, mintKey);
+	} catch (err) {
+		if (err?.code === 'mint_not_found' || err?.code === 'mint_not_token') {
+			return payError(res, 409, 'invalid_quote', 'this purchase is priced in a token that does not exist on Solana');
+		}
+		return payError(
+			res,
+			503,
+			'rpc_unavailable',
+			'the Solana network did not answer while preparing this payment; scan the code again in a moment',
+		);
+	}
+
+	const buyerAta = ataFor(mintKey, buyer, tokenProgram);
+	const creatorAta = ataFor(mintKey, creatorKey, tokenProgram, { allowOwnerOffCurve: true });
 
 	const required = creatorAtomics + (feeKey ? feeAtomics : 0n);
-	const buyerBalance = await readBuyerBalance(connection, buyerAta);
+	const buyerBalance = await readBuyerBalance(connection, buyerAta, tokenProgram);
 	if (buyerBalance !== null && buyerBalance < required) {
 		const short = formatAtomics(required - buyerBalance, decimals);
 		return payError(
@@ -213,28 +229,38 @@ export default wrap(async (req, res) => {
 	// nothing when the account already exists and rescues the purchase when it
 	// does not; the fee payer funds the rent.
 	instructions.push(
-		createAssociatedTokenAccountIdempotentInstruction(feePayer, creatorAta, creatorKey, mintKey),
+		createAssociatedTokenAccountIdempotentInstruction(feePayer, creatorAta, creatorKey, mintKey, tokenProgram),
 	);
 	if (feeKey) {
-		const treasuryAta = getAssociatedTokenAddressSync(mintKey, feeKey);
+		const treasuryAta = ataFor(mintKey, feeKey, tokenProgram, { allowOwnerOffCurve: true });
 		instructions.push(
-			createAssociatedTokenAccountIdempotentInstruction(feePayer, treasuryAta, feeKey, mintKey),
-			createTransferCheckedInstruction(buyerAta, mintKey, treasuryAta, buyer, feeAtomics, decimals),
+			createAssociatedTokenAccountIdempotentInstruction(feePayer, treasuryAta, feeKey, mintKey, tokenProgram),
+			tokenTransfer({
+				source: buyerAta,
+				mint: mintKey,
+				destination: treasuryAta,
+				authority: buyer,
+				atomics: feeAtomics,
+				decimals,
+				tokenProgram,
+			}),
 		);
 	}
 
 	// Creator leg LAST, carrying the Solana Pay reference: this is the
 	// instruction findReference locates and validateTransfer checks.
-	const creatorIx = createTransferCheckedInstruction(
-		buyerAta,
-		mintKey,
-		creatorAta,
-		buyer,
-		creatorAtomics,
-		decimals,
+	instructions.push(
+		tokenTransfer({
+			source: buyerAta,
+			mint: mintKey,
+			destination: creatorAta,
+			authority: buyer,
+			atomics: creatorAtomics,
+			decimals,
+			tokenProgram,
+			references: [referenceKey],
+		}),
 	);
-	creatorIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
-	instructions.push(creatorIx);
 
 	const { blockhash } = await getRecentBlockhashInfo(connection, blockhashKey({ network: 'mainnet' }));
 	const tx = new Transaction({ feePayer, recentBlockhash: blockhash }).add(...instructions);

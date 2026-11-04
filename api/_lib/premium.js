@@ -24,13 +24,7 @@
 // cheapest way to go premium, by design.
 
 import { PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
-import {
-	TOKEN_PROGRAM_ID,
-	ASSOCIATED_TOKEN_PROGRAM_ID,
-	getAssociatedTokenAddressSync,
-	createAssociatedTokenAccountIdempotentInstruction,
-	createTransferCheckedInstruction,
-} from '@solana/spl-token';
+import { createAssociatedTokenAccountIdempotentInstruction } from '@solana/spl-token';
 
 import { sql } from './db.js';
 import { env } from './env.js';
@@ -38,6 +32,7 @@ import { solPriceUsd } from './sol-price.js';
 import { getTokenPriceUsd } from './token/price.js';
 import { usdToUsdcAtomics, USDC_DECIMALS } from './subscription-pricing.js';
 import { createSubscription } from './x402/api-keys.js';
+import { ataFor, tokenProgramForMint, tokenTransfer } from './solana-token-program.js';
 import { siwxStorage } from './siwx-storage.js';
 import { solanaConnection } from './solana/connection.js';
 import { blockhashKey, getRecentBlockhashInfo } from './solana/read-guards.js';
@@ -218,6 +213,39 @@ export function assertWallet(wallet) {
 }
 
 /**
+ * The instructions of a Premium pass payment: a single transfer from the buyer
+ * to the treasury. SPL assets go through the mint's own token program, so a
+ * $THREE (Token-2022) quote pays between Token-2022 ATAs and a USDC quote stays
+ * on the classic program. The buyer funds the treasury ATA if it does not exist
+ * yet (idempotent: a few cents once, a no-op forever after).
+ *
+ * Pure, so scripts/verify-token2022-purchase.mjs simulates exactly what a quote
+ * hands the wallet.
+ */
+export function buildPassPaymentInstructions({ buyer, payTo, asset, atomics, mint, decimals, tokenProgram }) {
+	const buyerKey = new PublicKey(buyer);
+	const dest = new PublicKey(payTo);
+	if (asset === 'SOL') {
+		return [SystemProgram.transfer({ fromPubkey: buyerKey, toPubkey: dest, lamports: atomics })];
+	}
+	const mintKey = new PublicKey(mint);
+	const fromAta = ataFor(mintKey, buyerKey, tokenProgram);
+	const toAta = ataFor(mintKey, dest, tokenProgram, { allowOwnerOffCurve: true });
+	return [
+		createAssociatedTokenAccountIdempotentInstruction(buyerKey, toAta, dest, mintKey, tokenProgram),
+		tokenTransfer({
+			source: fromAta,
+			mint: mintKey,
+			destination: toAta,
+			authority: buyerKey,
+			atomics,
+			decimals,
+			tokenProgram,
+		}),
+	];
+}
+
+/**
  * Build the unsigned payment transaction (buyer is fee payer, single transfer
  * to the treasury) and persist the locked quote. Returns
  * { quote, tx_base64 } where quote carries id/asset/atomics/expiry.
@@ -229,26 +257,19 @@ export async function createQuote({ wallet, asset, planId = 'developer', userId 
 	const plan = planById(planId);
 	const priced = await priceAsset(asset, plan);
 
-	const buyer = new PublicKey(wallet);
-	const dest = new PublicKey(payTo);
-	const instructions = [];
-	if (asset === 'SOL') {
-		instructions.push(
-			SystemProgram.transfer({ fromPubkey: buyer, toPubkey: dest, lamports: priced.atomics }),
-		);
-	} else {
-		const mintKey = new PublicKey(mint);
-		const fromAta = getAssociatedTokenAddressSync(mintKey, buyer, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
-		const toAta = getAssociatedTokenAddressSync(mintKey, dest, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
-		instructions.push(
-			// Buyer funds the treasury ATA if it doesn't exist yet (idempotent, a
-			// few cents once, no-op forever after).
-			createAssociatedTokenAccountIdempotentInstruction(buyer, toAta, dest, mintKey, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID),
-			createTransferCheckedInstruction(fromAta, mintKey, toAta, buyer, priced.atomics, decimals, [], TOKEN_PROGRAM_ID),
-		);
-	}
-
 	const conn = solanaConnection();
+	const tokenProgram = asset === 'SOL' ? null : await tokenProgramForMint(conn, mint);
+	const instructions = buildPassPaymentInstructions({
+		buyer: wallet,
+		payTo,
+		asset,
+		atomics: priced.atomics,
+		mint,
+		decimals,
+		tokenProgram,
+	});
+	const buyer = new PublicKey(wallet);
+
 	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ network: 'mainnet' }));
 	const message = new TransactionMessage({
 		payerKey: buyer,

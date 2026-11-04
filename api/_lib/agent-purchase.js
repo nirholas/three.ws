@@ -29,14 +29,11 @@
  */
 
 import { PublicKey } from '@solana/web3.js';
-import {
-	getAssociatedTokenAddressSync,
-	createTransferCheckedInstruction,
-	createAssociatedTokenAccountIdempotentInstruction,
-} from '@solana/spl-token';
+import { createAssociatedTokenAccountIdempotentInstruction } from '@solana/spl-token';
 
 import { sql } from './db.js';
 import { mintDecimals } from './solana/read-guards.js';
+import { ataFor, tokenProgramForMint, tokenTransfer } from './solana-token-program.js';
 import { submitProtected } from './execution-engine.js';
 import { ensureAgentWallet, recoverSolanaAgentKeypair } from './agent-wallet.js';
 
@@ -139,6 +136,32 @@ export async function loadBuyerAgentKeypair({ agentId, userId, reason, meta = {}
 }
 
 /**
+ * The instructions for an autonomous purchase: an idempotent ATA-create for the
+ * seller (buyer pays the rent) plus a transferChecked carrying the Solana Pay
+ * reference key as its last account. `tokenProgram` is the program that owns
+ * the mint ($THREE is Token-2022, USDC is classic); both ATAs and both
+ * instructions use it.
+ */
+export function buildAgentPurchaseInstructions({ buyer, mint, tokenProgram, recipient, amountAtomics, decimals, referenceKey }) {
+	const mintKey = new PublicKey(mint);
+	const recipKey = new PublicKey(recipient);
+	const toAta = ataFor(mintKey, recipKey, tokenProgram);
+	return [
+		createAssociatedTokenAccountIdempotentInstruction(buyer, toAta, recipKey, mintKey, tokenProgram),
+		tokenTransfer({
+			source: ataFor(mintKey, buyer, tokenProgram),
+			mint: mintKey,
+			destination: toAta,
+			authority: buyer,
+			atomics: amountAtomics,
+			decimals,
+			tokenProgram,
+			references: [referenceKey],
+		}),
+	];
+}
+
+/**
  * Build and broadcast the SPL payment for an autonomous purchase: an idempotent
  * ATA-create for the seller (buyer pays the rent) plus a transferChecked
  * carrying the Solana Pay reference key, so the same findReference /
@@ -167,28 +190,17 @@ export async function sendAgentPurchaseTransfer({
 	referenceKey,
 }) {
 	const mintKey = new PublicKey(currencyMint);
-	const recipKey = new PublicKey(recipient);
-	const decimals = await mintDecimals(connection, mintKey);
-
-	const fromAta = getAssociatedTokenAddressSync(mintKey, keypair.publicKey);
-	const toAta = getAssociatedTokenAddressSync(mintKey, recipKey);
-
-	const transferIx = createTransferCheckedInstruction(
-		fromAta, mintKey, toAta, keypair.publicKey,
-		BigInt(amountAtomics), decimals,
-	);
-	// The reference key is a non-signer, non-writable account on the transfer so
-	// findReference() can locate this exact payment on-chain afterwards.
-	transferIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
-
-	const { signature } = await submitProtected({
-		network: 'mainnet',
-		connection,
-		payer: keypair,
-		instructions: [
-			createAssociatedTokenAccountIdempotentInstruction(keypair.publicKey, toAta, recipKey, mintKey),
-			transferIx,
-		],
+	const tokenProgram = await tokenProgramForMint(connection, mintKey);
+	const decimals = await mintDecimals(connection, mintKey, { programId: tokenProgram });
+	const instructions = buildAgentPurchaseInstructions({
+		buyer: keypair.publicKey,
+		mint: mintKey,
+		tokenProgram,
+		recipient,
+		amountAtomics,
+		decimals,
+		referenceKey,
 	});
+	const { signature } = await submitProtected({ network: 'mainnet', connection, payer: keypair, instructions });
 	return signature;
 }

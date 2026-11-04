@@ -206,6 +206,58 @@ describe('createCreation source-upload tracking', () => {
 		expect(JSON.parse(stored)).toEqual(['forge/uploads/client-abc/only.png']);
 	});
 
+	// The multi-view lanes (Pixal3D fuses up to four photos) must leave a record
+	// of every view the reconstructor was fed, including externally hosted ones
+	// that source_image_keys deliberately drops because they are not ours to delete.
+	it('records every input URL, bucket-hosted or external, in request order', async () => {
+		const views = [
+			'https://cdn.example.com/forge/uploads/client-abc/front.png',
+			'https://raw.githubusercontent.com/example/repo/abc123/right.png',
+			'https://raw.githubusercontent.com/example/repo/abc123/back.png',
+		];
+		await createCreation({
+			clientKey: 'client-key',
+			prompt: 'image-to-3d',
+			previewImageUrl: views[0],
+			sourceImageUrls: views,
+			viewsRequested: 3,
+			multiview: true,
+			backend: 'pixal3d',
+			tier: 'standard',
+			path: 'image',
+		});
+		const call = sqlMock.mock.calls.find(([strings]) =>
+			(Array.isArray(strings) ? strings.join(' ') : '').includes('insert into forge_creations'),
+		);
+		const columns = call[0].join(' ').match(/\(([^)]*)\)\s*values/)[1].split(',').map((c) => c.trim());
+		const values = call.slice(1);
+		const stored = values[columns.indexOf('source_image_urls')];
+		expect(JSON.parse(stored)).toEqual(views);
+	});
+
+	it('keeps only http(s) URLs and caps the recorded list', async () => {
+		const views = [
+			'data:image/png;base64,AAAA',
+			...Array.from({ length: 14 }, (_, i) => `https://cdn.example.com/forge/uploads/c/v${i}.png`),
+		];
+		await createCreation({
+			clientKey: 'client-key',
+			prompt: 'image-to-3d',
+			previewImageUrl: views[1],
+			sourceImageUrls: views,
+			backend: 'pixal3d',
+			tier: 'standard',
+			path: 'image',
+		});
+		const call = sqlMock.mock.calls.find(([strings]) =>
+			(Array.isArray(strings) ? strings.join(' ') : '').includes('insert into forge_creations'),
+		);
+		const columns = call[0].join(' ').match(/\(([^)]*)\)\s*values/)[1].split(',').map((c) => c.trim());
+		const stored = JSON.parse(call.slice(1)[columns.indexOf('source_image_urls')]);
+		expect(stored).toHaveLength(12);
+		expect(stored.every((u) => u.startsWith('https://'))).toBe(true);
+	});
+
 	it('stores null for text-to-3D rows whose preview is provider-hosted', async () => {
 		await createCreation({
 			clientKey: 'client-key',

@@ -30,9 +30,9 @@ import { createHash } from 'node:crypto';
 import {
 	PublicKey,
 	Transaction,
-	TransactionInstruction,
 } from '@solana/web3.js';
 import { sendAndConfirm } from './solana/confirm.js';
+import { attestationMemoInstructions } from './solana/memo-attest.js';
 
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
@@ -42,7 +42,6 @@ import { validateGlb } from './validation-attest.js';
 import { putObject, publicUrl } from './r2.js';
 import { KIND_GLB_SCHEMA } from '../../src/erc8004/validation-report.js';
 
-const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const VALIDATION_KIND = 'threews.validation.v1';
 const TX_TIMEOUT_MS = 15_000;
 
@@ -175,15 +174,10 @@ export async function attestValidationSolana({ network, agentAsset, glbUrl, vali
 
 	// 4. Sign + send the memo.
 	const conn = solanaConnection({ url: RPC[network] || RPC.devnet, commitment: 'confirmed' });
-	const ix = new TransactionInstruction({
-		programId: MEMO_PROGRAM_ID,
-		keys: [
-			{ pubkey: attester.publicKey, isSigner: true, isWritable: false },
-			{ pubkey: new PublicKey(agentAsset), isSigner: false, isWritable: false },
-		],
-		data: Buffer.from(JSON.stringify(payload), 'utf8'),
-	});
-	const tx = new Transaction().add(ix);
+	// Subject rides on a ComputeBudget carrier, not the memo: SPL Memo v2
+	// rejects any non-signer account (see solana/memo-attest.js).
+	const ixs = attestationMemoInstructions({ signer: attester.publicKey, subject: agentAsset, data: JSON.stringify(payload) });
+	const tx = new Transaction().add(...ixs);
 
 	let signature;
 	try {

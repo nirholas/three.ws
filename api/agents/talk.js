@@ -45,7 +45,10 @@ export default wrap(async (req, res) => {
 	if (!principal) return error(res, 401, 'unauthorized', 'sign in required');
 	const userId = session?.id ?? principal?.userId ?? null;
 
-	const rl = await limits.agentDelegate(clientIp(req));
+	// Keyed on the caller, not the IP: connector platforms (Power Automate, Logic
+	// Apps, Copilot Studio) send every tenant's calls from a few shared egress
+	// addresses, which turned a per-IP bucket into one bucket for all of them.
+	const rl = await limits.agentDelegate(userId ? `user:${userId}` : `ip:${clientIp(req)}`);
 	if (!rl.success) return rateLimited(res, rl, 'agent delegate rate limit');
 
 	let raw;

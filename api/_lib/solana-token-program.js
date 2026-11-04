@@ -11,9 +11,21 @@
 // A mint's owning program is fixed at creation and can never change, so the
 // answer is cached for the life of the process and the two mints the platform
 // settles are seeded, which keeps the hot path free of an RPC round-trip.
+//
+// The rule every payment builder follows: resolve the program with
+// tokenProgramForMint, then derive every ATA with ataFor and pass the same
+// program to every create and transfer instruction. Never call
+// getAssociatedTokenAddressSync or createTransferCheckedInstruction without
+// the program argument; their default is the classic program.
 
 import { PublicKey } from '@solana/web3.js';
-import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
+import {
+	createAssociatedTokenAccountIdempotentInstruction,
+	createTransferCheckedInstruction,
+	getAssociatedTokenAddressSync,
+	TOKEN_PROGRAM_ID,
+	TOKEN_2022_PROGRAM_ID,
+} from '@solana/spl-token';
 
 export const SUPPORTED_TOKEN_PROGRAMS = [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID];
 
@@ -72,4 +84,72 @@ export async function tokenProgramForMint(connection, mint) {
 	}
 	programByMint.set(key, program);
 	return program;
+}
+
+// Associated token account for `owner` under the mint's owning program. The
+// program is required: there is no default, because the default is what broke
+// every $THREE builder. allowOwnerOffCurve is for PDA owners (escrows, vaults).
+export function ataFor(mint, owner, tokenProgram, { allowOwnerOffCurve = false } = {}) {
+	if (typeof tokenProgram?.toBase58 !== 'function' || !isSupportedTokenProgram(tokenProgram)) {
+		throw new Error(`ataFor needs the mint's token program, got: ${tokenProgram}`);
+	}
+	const mintPk = typeof mint === 'string' ? new PublicKey(mint) : mint;
+	const ownerPk = typeof owner === 'string' ? new PublicKey(owner) : owner;
+	return getAssociatedTokenAddressSync(mintPk, ownerPk, allowOwnerOffCurve, tokenProgram);
+}
+
+function toKey(value) {
+	return typeof value === 'string' ? new PublicKey(value) : value;
+}
+
+// transferChecked addressed to the mint's own program. `references` ride as
+// read-only keys at the end, which is where @solana/pay looks for them.
+export function tokenTransfer({ source, mint, destination, authority, atomics, decimals, tokenProgram, references = [] }) {
+	if (!isSupportedTokenProgram(tokenProgram)) {
+		throw new Error(`tokenTransfer needs the mint's token program, got: ${tokenProgram}`);
+	}
+	const ix = createTransferCheckedInstruction(
+		toKey(source),
+		toKey(mint),
+		toKey(destination),
+		toKey(authority),
+		BigInt(atomics),
+		Number(decimals),
+		[],
+		tokenProgram,
+	);
+	for (const ref of references) ix.keys.push({ pubkey: toKey(ref), isSigner: false, isWritable: false });
+	return ix;
+}
+
+// Idempotent create instructions for every owner whose ATA does not exist yet,
+// funded by `payer`. A seller or treasury that has never held the mint has no
+// token account, and a transfer into a missing account fails the whole payment.
+// One batched read decides which are missing; when the node cannot answer, every
+// create is included instead, because an idempotent create on an existing
+// account is a no-op and a missing one is the failure we are preventing.
+export async function createMissingAtas(connection, { payer, mint, tokenProgram, owners }) {
+	const mintPk = toKey(mint);
+	const seen = new Set();
+	const targets = [];
+	for (const owner of owners) {
+		if (!owner) continue;
+		const ownerPk = toKey(owner);
+		const ata = ataFor(mintPk, ownerPk, tokenProgram, { allowOwnerOffCurve: true });
+		if (seen.has(ata.toBase58())) continue;
+		seen.add(ata.toBase58());
+		targets.push({ owner: ownerPk, ata });
+	}
+	if (!targets.length) return [];
+	let infos = null;
+	try {
+		infos = await connection.getMultipleAccountsInfo(targets.map((t) => t.ata), 'confirmed');
+	} catch {
+		infos = null;
+	}
+	return targets
+		.filter((_, i) => !Array.isArray(infos) || !infos[i])
+		.map((t) =>
+			createAssociatedTokenAccountIdempotentInstruction(toKey(payer), t.ata, t.owner, mintPk, tokenProgram),
+		);
 }

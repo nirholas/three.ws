@@ -5,10 +5,14 @@
  * row) + the buyer's wallet pubkey, quotes the exact USDC split, persists a
  * pending `subscription_checkouts` row, and returns a base64 VersionedTransaction
  * the browser wallet signs and sends. The platform pre-signs as fee-payer so the
- * subscriber needs no SOL — only the USDC for the first period.
+ * subscriber needs no SOL; only the USDC for the first period.
  *
  * Fee split: (price − platform_fee) → creator, platform_fee → treasury, both in
- * one atomic transaction alongside the Solana-Pay reference key.
+ * one atomic transaction alongside the Solana-Pay reference key. The fee leg
+ * goes first and the reference-carrying creator leg closes the transaction,
+ * because @solana/pay validateTransfer (api/_lib/subscription-checkout.js)
+ * decodes only the last instruction. Accounts and transfers follow the checkout
+ * mint's own token program, so a Token-2022 mint pays between Token-2022 ATAs.
  *
  * Body: { tierId, buyerPublicKey }
  * Returns: { data: { transaction, reference, recipient, amount, creator_amount,
@@ -21,10 +25,6 @@ import {
 	Keypair, PublicKey,
 	TransactionMessage, VersionedTransaction,
 } from '@solana/web3.js';
-import {
-	getAssociatedTokenAddressSync,
-	createTransferCheckedInstruction,
-} from '@solana/spl-token';
 import { z } from 'zod';
 
 import { solanaConnection } from '../_lib/solana/connection.js';
@@ -36,6 +36,7 @@ import { clientIp, limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { resolveMarketplaceFee } from '../_lib/marketplace-platform-fee.js';
 import { decodeSecretKey } from '../_lib/solana-signers.js';
+import { ataFor, createMissingAtas, tokenProgramForMint, tokenTransfer } from '../_lib/solana-token-program.js';
 import {
 	USDC_MAINNET_MINT,
 	usdToUsdcAtomics,
@@ -165,7 +166,7 @@ export default wrap(async (req, res) => {
 				          currency_mint, recipient
 			`;
 		} catch (e) {
-			// Lost a race for the (user, plan) pending slot — reuse the winner.
+			// Lost a race for the (user, plan) pending slot: reuse the winner.
 			if (e?.code === '23505') {
 				[checkout] = await sql`
 					SELECT reference, amount, creator_amount, platform_fee_amount, platform_fee_wallet,
@@ -181,36 +182,57 @@ export default wrap(async (req, res) => {
 	}
 	if (!checkout) return error(res, 500, 'checkout_failed', 'could not create the subscription checkout');
 
-	// Build the SPL transfer (creator leg + reference, fee leg) the buyer signs.
+	// Build the SPL transfer the buyer signs: creates for any missing creator or
+	// treasury ATA, the fee leg, then the creator leg carrying the reference LAST.
 	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
 	const { blockhash } = await getRecentBlockhashInfo(connection, blockhashKey({ url: SOLANA_RPC }));
 	const mintKey = new PublicKey(checkout.currency_mint);
+	const tokenProgram = await tokenProgramForMint(connection, mintKey);
 	// USDC and the other settlement mints have fixed, known decimals, so the
 	// common case costs no network read at all and a dead RPC cannot stall a
 	// checkout over a constant.
-	const decimals = await mintDecimals(connection, mintKey);
+	const decimals = await mintDecimals(connection, mintKey, { programId: tokenProgram });
 
 	const buyer = new PublicKey(buyerPublicKey);
-	const fromAta = getAssociatedTokenAddressSync(mintKey, buyer);
+	const fromAta = ataFor(mintKey, buyer, tokenProgram);
 	const creatorKey = new PublicKey(checkout.recipient);
-	const toAta = getAssociatedTokenAddressSync(mintKey, creatorKey);
-
-	const referenceKey = new PublicKey(checkout.reference);
-	const creatorLeg = BigInt(checkout.creator_amount);
-	const creatorIx = createTransferCheckedInstruction(fromAta, mintKey, toAta, buyer, creatorLeg, decimals);
-	creatorIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
-	const instructions = [creatorIx];
-
 	const feeLeg = BigInt(checkout.platform_fee_amount || 0);
-	if (feeLeg > 0n && checkout.platform_fee_wallet) {
-		const treasuryAta = getAssociatedTokenAddressSync(mintKey, new PublicKey(checkout.platform_fee_wallet));
-		instructions.push(
-			createTransferCheckedInstruction(fromAta, mintKey, treasuryAta, buyer, feeLeg, decimals),
-		);
-	}
+	const feeKey = feeLeg > 0n && checkout.platform_fee_wallet ? new PublicKey(checkout.platform_fee_wallet) : null;
 
 	const platformPayer = await resolvePlatformPayer();
 	const feePayer = platformPayer ? platformPayer.publicKey : buyer;
+
+	const instructions = await createMissingAtas(connection, {
+		payer: feePayer,
+		mint: mintKey,
+		tokenProgram,
+		owners: [creatorKey, feeKey],
+	});
+	if (feeKey) {
+		instructions.push(
+			tokenTransfer({
+				source: fromAta,
+				mint: mintKey,
+				destination: ataFor(mintKey, feeKey, tokenProgram, { allowOwnerOffCurve: true }),
+				authority: buyer,
+				atomics: feeLeg,
+				decimals,
+				tokenProgram,
+			}),
+		);
+	}
+	instructions.push(
+		tokenTransfer({
+			source: fromAta,
+			mint: mintKey,
+			destination: ataFor(mintKey, creatorKey, tokenProgram, { allowOwnerOffCurve: true }),
+			authority: buyer,
+			atomics: BigInt(checkout.creator_amount),
+			decimals,
+			tokenProgram,
+			references: [new PublicKey(checkout.reference)],
+		}),
+	);
 
 	const messageV0 = new TransactionMessage({
 		payerKey: feePayer,

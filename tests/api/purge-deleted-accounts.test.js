@@ -54,11 +54,12 @@ vi.mock('../../api/_lib/r2.js', () => ({
 }));
 
 await import('../../api/_lib/db.js');
-const { purgeDeletedAccounts, countPurgeable, RETAINED_TABLES, userRef } = await import('../../api/_lib/account-purge.js');
+const { purgeDeletedAccounts, countPurgeable, previewPurge, RETAINED_TABLES, userRef } = await import(
+	'../../api/_lib/account-purge.js'
+);
 
-const MIGRATION = readFileSync(
-	new URL('../../api/_lib/migrations/20261104180000_account_purge.sql', import.meta.url),
-	'utf8',
+const MIGRATIONS = ['20261104180000_account_purge.sql', '20261104220000_account_purge_transfer_links.sql'].map((file) =>
+	readFileSync(new URL(`../../api/_lib/migrations/${file}`, import.meta.url), 'utf8'),
 );
 
 const SCHEMA = `
@@ -124,7 +125,20 @@ create table agent_listings (
 create table agent_listing_bids (
 	id bigserial primary key,
 	listing_id uuid not null references agent_listings(id),
-	bidder_user_id uuid not null references users(id)
+	bidder_user_id uuid not null references users(id),
+	status text not null default 'expired',
+	refund_status text
+);
+create table agent_transfers (
+	id uuid primary key default gen_random_uuid(),
+	listing_id uuid not null unique references agent_listings(id),
+	bid_id bigint not null unique references agent_listing_bids(id),
+	agent_id uuid not null references agent_identities(id),
+	buyer_user_id uuid not null references users(id),
+	seller_user_id uuid not null references users(id),
+	amount_atomics numeric not null,
+	status text not null default 'in_progress',
+	payout_signature text
 );
 create table home_invites (id bigserial primary key, email text not null);
 create table avatar_regen_jobs (id bigserial primary key, user_id uuid);
@@ -184,7 +198,7 @@ async function findValueAnywhere(value) {
 beforeEach(async () => {
 	dbState.pg = new PGlite();
 	await dbState.pg.exec(SCHEMA);
-	await dbState.pg.exec(MIGRATION);
+	for (const migration of MIGRATIONS) await dbState.pg.exec(migration);
 	r2State.deleted = [];
 	r2State.failKeys = new Set();
 });
@@ -307,6 +321,87 @@ describe('purgeDeletedAccounts', () => {
 		expect(await countRows('users', 'id = $1', [other])).toBe(1);
 	});
 
+	it('keeps a completed sale of the purged account\'s agent, unlinked from the deleted listing, bid and seller', async () => {
+		const seller = await makeUser({ email: 'seller@example.test', wallet: 'THREEsyntheticWalletSeller1111111111111111', deletedDaysAgo: 60 });
+		const buyer = await makeUser({ email: 'buyer@example.test', wallet: 'THREEsyntheticWalletBuyer11111111111111111' });
+		const { agentId } = await giveContent(seller, 'seller');
+		const [listing] = await q(`insert into agent_listings (seller_user_id, agent_id) values ($1, $2) returning id`, [seller, agentId]);
+		const [bid] = await q(
+			`insert into agent_listing_bids (listing_id, bidder_user_id, status) values ($1, $2, 'accepted') returning id`,
+			[listing.id, buyer],
+		);
+		const [t] = await q(
+			`insert into agent_transfers (listing_id, bid_id, agent_id, buyer_user_id, seller_user_id, amount_atomics, status, payout_signature)
+			values ($1, $2, $3, $4, $5, 2500000, 'completed', 'sigPayout') returning id`,
+			[listing.id, bid.id, agentId, buyer, seller],
+		);
+
+		const result = await purgeDeletedAccounts({ olderThanDays: 30, limit: 25 });
+
+		expect(result.failed).toEqual([]);
+		expect(result.purged).toBe(1);
+		const [row] = await q(`select * from agent_transfers where id = $1`, [t.id]);
+		expect(row).toMatchObject({
+			listing_id: null,
+			bid_id: null,
+			agent_id: null,
+			seller_user_id: null,
+			buyer_user_id: buyer,
+			status: 'completed',
+			payout_signature: 'sigPayout',
+		});
+		expect(Number(row.amount_atomics)).toBe(2500000);
+	});
+
+	it.each([
+		['an open bid still holding escrowed funds', `status = 'open'`, 'in_flight:agent_listing_bids'],
+		['a bid awaiting its funding transfer', `status = 'awaiting_funds'`, 'in_flight:agent_listing_bids'],
+		['a refund still owed to the bidder', `status = 'expired', refund_status = 'failed'`, 'in_flight:agent_listing_bids'],
+	])('waits while %s, then purges once the marketplace settles it', async (_label, inFlight, code) => {
+		const seller = await makeUser({ email: 'seller@example.test', wallet: null, deletedDaysAgo: 60 });
+		const bidder = await makeUser({ email: 'bidder@example.test', wallet: null });
+		const { agentId } = await giveContent(seller, 'seller');
+		const [listing] = await q(`insert into agent_listings (seller_user_id, agent_id) values ($1, $2) returning id`, [seller, agentId]);
+		const [bid] = await q(`insert into agent_listing_bids (listing_id, bidder_user_id) values ($1, $2) returning id`, [listing.id, bidder]);
+		await q(`update agent_listing_bids set ${inFlight} where id = $1`, [bid.id]);
+
+		const first = await purgeDeletedAccounts({ olderThanDays: 30, limit: 25 });
+
+		expect(first.purged).toBe(0);
+		expect(first.failed).toEqual([{ ref: userRef(seller).slice(0, 12), code }]);
+		expect(await countRows('agent_listing_bids', 'id = $1', [bid.id])).toBe(1);
+		expect(await countRows('users', 'id = $1', [seller])).toBe(1);
+
+		// The escrow sweep refunds the bidder; the next tick purges the seller.
+		await q(`update agent_listing_bids set status = 'expired', refund_status = 'sent' where id = $1`, [bid.id]);
+		const second = await purgeDeletedAccounts({ olderThanDays: 30, limit: 25 });
+		expect(second.failed).toEqual([]);
+		expect(second.purged).toBe(1);
+	});
+
+	it('waits while a sale of the purged account\'s agent is still settling', async () => {
+		const seller = await makeUser({ email: 'seller@example.test', wallet: null, deletedDaysAgo: 60 });
+		const buyer = await makeUser({ email: 'buyer@example.test', wallet: null });
+		const { agentId } = await giveContent(seller, 'seller');
+		const [listing] = await q(`insert into agent_listings (seller_user_id, agent_id) values ($1, $2) returning id`, [seller, agentId]);
+		const [bid] = await q(
+			`insert into agent_listing_bids (listing_id, bidder_user_id, status) values ($1, $2, 'accepted') returning id`,
+			[listing.id, buyer],
+		);
+		const [t] = await q(
+			`insert into agent_transfers (listing_id, bid_id, agent_id, buyer_user_id, seller_user_id, amount_atomics, status)
+			values ($1, $2, $3, $4, $5, 2500000, 'in_progress') returning id`,
+			[listing.id, bid.id, agentId, buyer, seller],
+		);
+
+		const result = await purgeDeletedAccounts({ olderThanDays: 30, limit: 25 });
+
+		expect(result.purged).toBe(0);
+		expect(result.failed).toEqual([{ ref: userRef(seller).slice(0, 12), code: 'in_flight:agent_transfers' }]);
+		const [row] = await q(`select seller_user_id, listing_id from agent_transfers where id = $1`, [t.id]);
+		expect(row).toEqual({ seller_user_id: seller, listing_id: listing.id });
+	});
+
 	it('is a no-op when run twice', async () => {
 		const id = await makeUser({ email: 'twice@example.test', wallet: 'THREEsyntheticWalletTwice11111111111111111', deletedDaysAgo: 60 });
 		await giveContent(id, 'twice');
@@ -382,6 +477,30 @@ describe('purgeDeletedAccounts', () => {
 
 		expect(await countPurgeable({ olderThanDays: 30 })).toEqual({ purgeable: 1, pending: 1 });
 		expect(await countRows('users', 'true', [])).toBe(3);
+	});
+
+	it('previews which accounts the next run would purge or refuse, without writing anything', async () => {
+		const ready = await makeUser({ email: 'ready@example.test', wallet: null, deletedDaysAgo: 40 });
+		const held = await makeUser({ email: 'held@example.test', wallet: null, deletedDaysAgo: 40 });
+		await makeUser({ email: 'recent@example.test', wallet: null, deletedDaysAgo: 3 });
+		await giveContent(ready, 'ready');
+		await q(`create table mystery_holds (id serial primary key, user_id uuid not null references users(id))`);
+		await q(`insert into mystery_holds (user_id) values ($1)`, [held]);
+
+		const preview = await previewPurge({ olderThanDays: 30 });
+
+		expect(preview.purgeable).toBe(2);
+		expect(preview.pending).toBe(1);
+		expect(preview.ready).toBe(1);
+		expect(preview.blocked).toEqual([{ ref: userRef(held).slice(0, 12), code: 'unclassified_fk:mystery_holds.user_id' }]);
+		expect(preview.plan.statements).toBeGreaterThan(0);
+		expect(preview.plan.guards).toContain('unclassified_fk:mystery_holds.user_id');
+		expect(JSON.stringify(preview)).not.toMatch(/@example\.test/);
+		expect(await countRows('users', 'true', [])).toBe(3);
+		expect(await countRows('avatars', 'owner_id = $1', [ready])).toBe(1);
+		expect(await countRows('account_purge_failures', 'true', [])).toBe(0);
+		expect(await countRows('account_purge_log', 'true', [])).toBe(0);
+		expect(r2State.deleted).toEqual([]);
 	});
 
 	it('hashes the user id into the receipt reference', () => {

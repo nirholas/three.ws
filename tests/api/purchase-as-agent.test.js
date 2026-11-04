@@ -126,6 +126,21 @@ vi.mock('@solana/spl-token', () => ({
 	getMint: vi.fn(async () => ({ decimals: 6 })),
 }));
 
+// The mint's token program as the shared resolver reports it. A sentinel, so a
+// test can prove the handler threads the resolved program into every ATA,
+// create and transfer instead of the spl-token classic default.
+const TOKEN_2022_SENTINEL = { toBase58: () => 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' };
+const tokenProgramMock = vi.hoisted(() => ({
+	tokenProgramForMint: vi.fn(),
+	ataFor: vi.fn(),
+	tokenTransfer: vi.fn(),
+}));
+vi.mock('../../api/_lib/solana-token-program.js', () => ({
+	tokenProgramForMint: (...a) => tokenProgramMock.tokenProgramForMint(...a),
+	ataFor: (...a) => tokenProgramMock.ataFor(...a),
+	tokenTransfer: (...a) => tokenProgramMock.tokenTransfer(...a),
+}));
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeReq(body) {
@@ -179,6 +194,16 @@ beforeEach(() => {
 	confirmResult.tx_signature = 'sig123';
 	submitProtectedMock.mockReset();
 	submitProtectedMock.mockResolvedValue({ signature: 'txSig', slot: 1, route: 'protected' });
+	tokenProgramMock.tokenProgramForMint.mockReset().mockResolvedValue(TOKEN_2022_SENTINEL);
+	tokenProgramMock.ataFor.mockReset().mockImplementation((mint, owner, program) => ({
+		toBase58: () => `ata:${owner.toBase58()}:${program.toBase58()}`,
+	}));
+	tokenProgramMock.tokenTransfer.mockReset().mockImplementation((args) => ({
+		keys: (args.references || []).map((pubkey) => ({ pubkey, isSigner: false, isWritable: false })),
+		programId: args.tokenProgram,
+		data: new Uint8Array(),
+		args,
+	}));
 });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -311,5 +336,32 @@ describe('POST /api/marketplace/purchase-as-agent', () => {
 		sqlQueue.push([]);             // UPDATE status = 'failed'
 		const { res } = await invoke(makeReq({ buyer_agent_id: BUYER_ID, seller_agent_id: SELLER_ID, skill: 'pro' }), makeRes());
 		expect(res.statusCode).toBe(502);
+	});
+
+	it("builds the purchase with the mint's own token program ($THREE is Token-2022)", async () => {
+		const { createAssociatedTokenAccountIdempotentInstruction } = await import('@solana/spl-token');
+		createAssociatedTokenAccountIdempotentInstruction.mockClear();
+		sqlQueue.push([BUYER_ROW]);
+		sqlQueue.push([SELLER_ROW]);
+		sqlQueue.push([]);             // no existing purchase
+		sqlQueue.push([PRICE_ROW]);
+		sqlQueue.push(PURCHASE_ROW);   // INSERT RETURNING
+		const { res } = await invoke(makeReq({ buyer_agent_id: BUYER_ID, seller_agent_id: SELLER_ID, skill: 'pro' }), makeRes());
+		expect(res.statusCode).toBe(200);
+
+		expect(tokenProgramMock.tokenProgramForMint).toHaveBeenCalledTimes(1);
+		expect(tokenProgramMock.tokenProgramForMint.mock.calls[0][1].toBase58()).toBe('EPjF');
+		for (const call of tokenProgramMock.ataFor.mock.calls) expect(call[2]).toBe(TOKEN_2022_SENTINEL);
+		expect(createAssociatedTokenAccountIdempotentInstruction).toHaveBeenCalledTimes(1);
+		expect(createAssociatedTokenAccountIdempotentInstruction.mock.calls[0][4]).toBe(TOKEN_2022_SENTINEL);
+
+		const { instructions } = submitProtectedMock.mock.calls[0][0];
+		const transfer = instructions.at(-1);
+		expect(transfer.programId).toBe(TOKEN_2022_SENTINEL);
+		expect(transfer.args).toMatchObject({ atomics: 1_000_000n, decimals: 6 });
+		expect(transfer.args.source.toBase58()).toBe(`ata:${mockKeypair.publicKey.toBase58()}:${TOKEN_2022_SENTINEL.toBase58()}`);
+		// The Solana Pay reference (the stubbed Keypair.generate key) closes the transfer.
+		const { Keypair } = await import('@solana/web3.js');
+		expect(transfer.keys.at(-1).pubkey.toBase58()).toBe(Keypair.generate().publicKey.toBase58());
 	});
 });

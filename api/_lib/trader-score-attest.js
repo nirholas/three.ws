@@ -15,8 +15,9 @@
  *     same day returns the existing signature instead of broadcasting a duplicate.
  */
 
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { sendAndConfirm } from './solana/confirm.js';
+import { attestationMemoInstructions } from './solana/memo-attest.js';
 
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
@@ -28,7 +29,6 @@ export const MEMO_PROGRAM_ID_BASE58 = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfc
 /** Attestation kind written by this module and read back by the Trader Passport. */
 export const TRADESCORE_KIND = 'threews.tradescore.v1';
 
-const MEMO_PROGRAM_ID = new PublicKey(MEMO_PROGRAM_ID_BASE58);
 const TX_TIMEOUT_MS = 15_000;
 
 class TraderScoreAttestError extends Error {
@@ -115,19 +115,14 @@ export async function attestTraderScore({ network, wallet, agentId, metrics, win
 	};
 
 	const conn = solanaConnection({ url: RPC[network] || RPC.devnet, commitment: 'confirmed' });
-	const ix = new TransactionInstruction({
-		programId: MEMO_PROGRAM_ID,
-		keys: [
-			{ pubkey: attester.publicKey, isSigner: true, isWritable: false },
-			{ pubkey: new PublicKey(wallet), isSigner: false, isWritable: false },
-		],
-		data: Buffer.from(JSON.stringify(payload), 'utf8'),
-	});
+	// Subject rides on a ComputeBudget carrier, not the memo: SPL Memo v2
+	// rejects any non-signer account (see solana/memo-attest.js).
+	const ixs = attestationMemoInstructions({ signer: attester.publicKey, subject: wallet, data: JSON.stringify(payload) });
 
 	let signature;
 	try {
 		signature = await withTimeout(
-			sendAndConfirm(conn, new Transaction().add(ix), [attester], { commitment: 'confirmed' }),
+			sendAndConfirm(conn, new Transaction().add(...ixs), [attester], { commitment: 'confirmed' }),
 			TX_TIMEOUT_MS,
 		);
 	} catch (err) {

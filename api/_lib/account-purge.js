@@ -205,6 +205,23 @@ export const OWNED_WITHOUT_FK = [
 	].map(([table, column]) => ({ table, column, action: /** @type {const} */ ('nullify') })),
 ];
 
+/**
+ * Rows that still move someone's money. If the purge would delete or unlink one
+ * (an open bid on the account's listing still holds a bidder's escrow, a refund
+ * is still owed, a sale is still settling), the account waits with
+ * in_flight:<table> and a later tick purges it once the marketplace escrow
+ * sweep has settled the row. Deleting it first would erase the only record of
+ * what is owed.
+ */
+export const IN_FLIGHT = [
+	{
+		table: 'agent_listing_bids',
+		columns: ['status', 'refund_status'],
+		when: `"status" in ('awaiting_funds', 'open') or "refund_status" in ('pending', 'failed')`,
+	},
+	{ table: 'agent_transfers', columns: ['status'], when: `"status" <> 'completed'` },
+];
+
 /** Records keyed by the account's email address rather than its id. */
 export const EMAIL_KEYED = [{ table: 'home_invites', column: 'email' }];
 
@@ -314,7 +331,12 @@ async function loadCatalog() {
 // ── Plan ─────────────────────────────────────────────────────────────────────
 // Built once per run from the live catalog. Every statement takes $1 = user id;
 // statements that clear identifiers also take $2 = the account's identifiers.
-
+//
+// The walk only records which edges reach each table. WHERE clauses are rendered
+// after the walk, so a table reached by several paths (an agent listing found
+// through the seller and again through the seller's agent) carries every path,
+// and deletes run children first by the longest path from users, so a row is
+// never deleted while something still selects or references it.
 function buildPlan({ fks, columns }) {
 	const col = (table, name) => columns.get(table)?.get(name);
 	const byParent = new Map();
@@ -323,31 +345,30 @@ function buildPlan({ fks, columns }) {
 		byParent.get(fk.parent).push(fk);
 	}
 
-	// table -> { preds, depth }: the rows of that table the purge removes.
-	const nodes = new Map([['users', { preds: ['"id" = $1::uuid'], depth: 0 }]]);
-	const queue = ['users'];
-	const processed = new Set();
-	const guards = [];
+	// table -> { roots: direct predicates on $1, edges: FKs from rows being removed }
+	const nodes = new Map();
+	const queue = [];
+	const deleteTables = new Set();
+	const guardEdges = [];
+	const nullifyEdges = [];
 	const nullifies = [];
-	const deletes = [];
 
-	const addNode = (table, pred, depth) => {
-		const node = nodes.get(table);
-		if (!node) {
-			nodes.set(table, { preds: [pred], depth });
+	const node = (table) => {
+		if (!nodes.has(table)) {
+			nodes.set(table, { roots: [], edges: [] });
 			queue.push(table);
-		} else if (!processed.has(table)) {
-			node.preds.push(pred);
 		}
+		return nodes.get(table);
 	};
+	node('users').roots.push('"id" = $1::uuid');
 
 	for (const entry of OWNED_WITHOUT_FK) {
 		const info = col(entry.table, entry.column);
 		if (!info) continue;
 		const pred = `${qi(entry.column)} = ${info.type === 'uuid' ? '$1::uuid' : '$1::uuid::text'}`;
 		if (entry.action === 'delete') {
-			deletes.push({ label: entry.table, table: entry.table, pred, depth: 1 });
-			addNode(entry.table, pred, 1);
+			node(entry.table).roots.push(pred);
+			deleteTables.add(entry.table);
 		} else {
 			nullifies.push({ label: entry.table, table: entry.table, columns: [entry.column], pred, nullable: info.nullable });
 		}
@@ -355,37 +376,88 @@ function buildPlan({ fks, columns }) {
 
 	while (queue.length) {
 		const parent = queue.shift();
-		if (processed.has(parent)) continue;
-		processed.add(parent);
-		const pnode = nodes.get(parent);
-		const parentWhere = pnode.preds.map((p) => `(${p})`).join(' or ');
 		for (const fk of byParent.get(parent) || []) {
 			if (fk.rule === 'n' || fk.rule === 'd') continue;
 			const key = `${fk.child}.${fk.cols.join(',')}`;
-			const pred = `(${fk.cols.map(qi).join(', ')}) in (select ${fk.pcols.map(qi).join(', ')} from ${qi(parent)} where ${parentWhere})`;
-			const depth = pnode.depth + 1;
 			if (fk.rule === 'c') {
-				addNode(fk.child, pred, depth);
+				node(fk.child).edges.push(fk);
 				continue;
 			}
 			const nullable = fk.cols.every((c) => col(fk.child, c)?.nullable);
 			const policy = EDGE_POLICY[key];
 			if (policy === 'delete') {
-				deletes.push({ label: fk.child, table: fk.child, pred, depth });
-				addNode(fk.child, pred, depth);
+				node(fk.child).edges.push(fk);
+				deleteTables.add(fk.child);
 			} else if (policy === 'nullify' && !nullable) {
-				guards.push({ code: `fk_not_nullable:${key}`, table: fk.child, pred });
+				guardEdges.push({ code: `fk_not_nullable:${key}`, fk });
 			} else if (policy === 'nullify' || nullable) {
 				// An unclassified edge on a nullable column gets what ON DELETE SET
 				// NULL would have done: the other row survives, unlinked.
-				nullifies.push({ label: fk.child, table: fk.child, columns: fk.cols, pred, nullable: true });
+				nullifyEdges.push(fk);
 			} else {
-				guards.push({ code: `unclassified_fk:${key}`, table: fk.child, pred });
+				guardEdges.push({ code: `unclassified_fk:${key}`, fk });
 			}
 		}
 	}
 
-	deletes.sort((a, b) => b.depth - a.depth);
+	// The rows of `table` the purge removes. A self-reference or cycle is not
+	// followed back into a table already on the path: Postgres cascades those
+	// rows itself, and the walk has no other way to reach them.
+	const memo = new Map();
+	const whereOf = (table, path = new Set()) => {
+		if (memo.has(table)) return memo.get(table);
+		const n = nodes.get(table);
+		const next = new Set(path).add(table);
+		let cut = false;
+		const parts = [...n.roots];
+		for (const fk of n.edges) {
+			if (next.has(fk.parent)) {
+				cut = true;
+				continue;
+			}
+			parts.push(edgePred(fk, next));
+		}
+		const where = parts.length ? parts.map((p) => `(${p})`).join(' or ') : 'false';
+		if (!cut) memo.set(table, where);
+		return where;
+	};
+	const edgePred = (fk, path = new Set()) =>
+		`(${fk.cols.map(qi).join(', ')}) in (select ${fk.pcols.map(qi).join(', ')} from ${qi(fk.parent)} where ${whereOf(fk.parent, path)})`;
+
+	// Longest path from users, so every table is deleted after all of its
+	// children in the walk.
+	const depthMemo = new Map();
+	const depthOf = (table, path = new Set()) => {
+		if (depthMemo.has(table)) return depthMemo.get(table);
+		const n = nodes.get(table);
+		const next = new Set(path).add(table);
+		let cut = false;
+		let depth = n.roots.length && table !== 'users' ? 1 : 0;
+		for (const fk of n.edges) {
+			if (next.has(fk.parent)) {
+				cut = true;
+				continue;
+			}
+			depth = Math.max(depth, depthOf(fk.parent, next) + 1);
+		}
+		if (!cut) depthMemo.set(table, depth);
+		return depth;
+	};
+
+	for (const fk of nullifyEdges) {
+		nullifies.push({ label: fk.child, table: fk.child, columns: fk.cols, pred: edgePred(fk), nullable: true });
+	}
+	const guards = guardEdges.map(({ code, fk }) => ({ code, table: fk.child, pred: edgePred(fk) }));
+	for (const f of IN_FLIGHT) {
+		if (!f.columns.every((c) => col(f.table, c))) continue;
+		const touched = nullifies.filter((n) => n.table === f.table).map((n) => n.pred);
+		if (nodes.has(f.table)) touched.push(whereOf(f.table));
+		if (!touched.length) continue;
+		guards.push({ code: `in_flight:${f.table}`, table: f.table, pred: `(${touched.map((p) => `(${p})`).join(' or ')}) and (${f.when})` });
+	}
+	const deletes = [...deleteTables]
+		.map((table) => ({ label: table, table, pred: whereOf(table), depth: depthOf(table) }))
+		.sort((a, b) => b.depth - a.depth || a.table.localeCompare(b.table));
 
 	const identifierColumns = (table, skip) => {
 		const out = [];
@@ -444,7 +516,7 @@ function buildPlan({ fks, columns }) {
 				.join(', ')}], null) as codes`
 		: null;
 
-	return { statements, guardSql };
+	return { statements, guardSql, guardCodes: guards.map((g) => g.code) };
 }
 
 // ── Object storage ───────────────────────────────────────────────────────────
@@ -638,4 +710,45 @@ export async function countPurgeable({ olderThanDays = PURGE_AFTER_DAYS } = {}) 
 		[days],
 	);
 	return { purgeable: row?.purgeable || 0, pending: row?.pending || 0 };
+}
+
+/**
+ * Read-only dry run of the next purge: builds the plan from the live catalog
+ * and runs only its guard SELECT for each account past the window, so a
+ * blocking foreign key nobody has classified shows up before a live run hits
+ * it. Deletes nothing, writes nothing, touches no object storage.
+ *
+ * `ready` counts accounts no guard refuses. A ready account can still fail a
+ * live run on object storage or a row that changes between now and then.
+ */
+export async function previewPurge({ olderThanDays = PURGE_AFTER_DAYS, limit = 500 } = {}) {
+	const days = Math.max(PURGE_AFTER_DAYS, Math.floor(Number(olderThanDays) || PURGE_AFTER_DAYS));
+	const { purgeable, pending } = await countPurgeable({ olderThanDays: days });
+	const catalog = await loadCatalog();
+	const plan = buildPlan(catalog);
+	const batch = await sql(
+		`select id from users
+		where deleted_at is not null and deleted_at < now() - make_interval(days => $1::int)
+		order by deleted_at asc
+		limit $2::int`,
+		[days, Math.max(1, Math.min(5000, Math.floor(Number(limit) || 500)))],
+	);
+	const blocked = [];
+	for (const user of batch) {
+		if (!plan.guardSql) break;
+		const [row] = await sql(plan.guardSql, [user.id]);
+		if (row?.codes?.length) blocked.push({ ref: userRef(user.id).slice(0, 12), code: row.codes[0] });
+	}
+	return {
+		purgeable,
+		pending,
+		checked: batch.length,
+		ready: batch.length - blocked.length,
+		blocked,
+		plan: {
+			statements: plan.statements.length,
+			guards: plan.guardCodes,
+			sql_bytes: plan.statements.reduce((n, st) => n + st.text.length, 0) + (plan.guardSql?.length || 0),
+		},
+	};
 }

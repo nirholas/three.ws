@@ -14,9 +14,14 @@ import { Keypair, PublicKey, Transaction } from '@solana/web3.js';
 import {
 	ACCOUNT_SIZE,
 	AccountLayout,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
+	MINT_SIZE,
+	MintLayout,
+	TOKEN_2022_PROGRAM_ID,
 	TOKEN_PROGRAM_ID,
 	getAssociatedTokenAddressSync,
 } from '@solana/spl-token';
+import { seedTokenProgramForMint } from '../../api/_lib/solana-token-program.js';
 
 const PAYER = Keypair.generate();
 const BUYER = Keypair.generate();
@@ -55,6 +60,8 @@ vi.mock('../../api/_lib/purchase-confirm.js', () => ({
 // (build the transaction anyway) is exercised.
 let buyerBalance = 5_000_000n;
 let rpcAnswers = true;
+// The program that owns the purchase mint: classic for USDC, Token-2022 for $THREE.
+let mintProgram = TOKEN_PROGRAM_ID;
 
 function tokenAccountInfo(owner, mint, amount) {
 	const data = Buffer.alloc(ACCOUNT_SIZE);
@@ -74,7 +81,24 @@ function tokenAccountInfo(owner, mint, amount) {
 		},
 		data,
 	);
-	return { data, owner: TOKEN_PROGRAM_ID, lamports: 2_039_280, executable: false, rentEpoch: 0 };
+	return { data, owner: mintProgram, lamports: 2_039_280, executable: false, rentEpoch: 0 };
+}
+
+function mintAccountInfo() {
+	const data = Buffer.alloc(MINT_SIZE);
+	MintLayout.encode(
+		{
+			mintAuthorityOption: 0,
+			mintAuthority: PublicKey.default,
+			supply: 1n,
+			decimals: 6,
+			isInitialized: true,
+			freezeAuthorityOption: 0,
+			freezeAuthority: PublicKey.default,
+		},
+		data,
+	);
+	return { data, owner: mintProgram, lamports: 1_461_600, executable: false, rentEpoch: 0 };
 }
 
 vi.mock('../../api/_lib/solana/connection.js', () => ({
@@ -82,9 +106,11 @@ vi.mock('../../api/_lib/solana/connection.js', () => ({
 		getLatestBlockhash: async () => ({ blockhash: BLOCKHASH, lastValidBlockHeight: 1 }),
 		getAccountInfo: async (address) => {
 			if (!rpcAnswers) throw new Error('failed to get info about account: fetch failed');
-			const buyerAta = getAssociatedTokenAddressSync(MINT.publicKey, BUYER.publicKey);
+			const mint = new PublicKey(purchaseRow.currency_mint);
+			if (address.equals(mint)) return mintAccountInfo();
+			const buyerAta = getAssociatedTokenAddressSync(mint, BUYER.publicKey, false, mintProgram);
 			if (!address.equals(buyerAta) || buyerBalance === null) return null;
-			return tokenAccountInfo(BUYER.publicKey, MINT.publicKey, buyerBalance);
+			return tokenAccountInfo(BUYER.publicKey, mint, buyerBalance);
 		},
 	}),
 }));
@@ -158,6 +184,7 @@ beforeEach(() => {
 	payerConfigured = true;
 	buyerBalance = 5_000_000n;
 	rpcAnswers = true;
+	mintProgram = TOKEN_PROGRAM_ID;
 	sqlMock.mockClear();
 	logEventMock.mockClear();
 });
@@ -309,6 +336,9 @@ describe('POST /api/purchase/skill', () => {
 	});
 
 	it('builds the transaction anyway when the RPC cannot answer the balance', async () => {
+		// The mint's program was already resolved in this instance; only the
+		// balance read fails.
+		seedTokenProgramForMint(MINT.publicKey, TOKEN_PROGRAM_ID);
 		rpcAnswers = false;
 		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
 		expect(res.statusCode).toBe(200);
@@ -320,5 +350,56 @@ describe('POST /api/purchase/skill', () => {
 		for (const callArgs of sqlMock.mock.calls) {
 			expect(callArgs[0].join(' ').toLowerCase()).not.toContain('insert into skill_purchases');
 		}
+	});
+});
+
+describe('POST /api/purchase/skill with a Token-2022 mint ($THREE)', () => {
+	// A fresh mint per test, so the process-wide program cache never answers for it.
+	let mint;
+	beforeEach(() => {
+		mint = Keypair.generate().publicKey;
+		mintProgram = TOKEN_2022_PROGRAM_ID;
+		purchaseRow = basePurchase({
+			currency_mint: mint.toBase58(),
+			platform_fee_amount: '100000',
+			platform_fee_wallet: TREASURY.publicKey.toBase58(),
+		});
+	});
+
+	const ata = (owner) => getAssociatedTokenAddressSync(mint, owner, false, TOKEN_2022_PROGRAM_ID);
+
+	it('pays between Token-2022 ATAs through the Token-2022 program', async () => {
+		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
+		expect(res.statusCode).toBe(200);
+		const tx = Transaction.from(Buffer.from(body.transaction, 'base64'));
+		const creates = tx.instructions.filter((ix) => ix.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID));
+		const transfers = tx.instructions.filter((ix) => !ix.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID));
+		expect(creates).toHaveLength(2);
+		for (const ix of creates) expect(ix.keys[5].pubkey.equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+		expect(transfers).toHaveLength(2);
+		for (const ix of transfers) {
+			expect(ix.programId.equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+			expect(ix.keys[0].pubkey.equals(ata(BUYER.publicKey))).toBe(true);
+		}
+		expect(transfers[0].keys[2].pubkey.equals(ata(TREASURY.publicKey))).toBe(true);
+		const last = tx.instructions.at(-1);
+		expect(last.keys[2].pubkey.equals(ata(SELLER.publicKey))).toBe(true);
+		expect(last.keys.at(-1).pubkey.equals(new PublicKey(REFERENCE))).toBe(true);
+	});
+
+	it("reads the buyer's balance from the Token-2022 ATA", async () => {
+		buyerBalance = 650_000n;
+		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
+		expect(res.statusCode).toBe(409);
+		expect(body.error).toBe('insufficient_funds');
+		expect(body.message).toContain('0.35');
+	});
+
+	it('answers 503 with a retry hint when the mint program cannot be read', async () => {
+		rpcAnswers = false;
+		const { res, body } = await call({ method: 'POST', body: { account: BUYER.publicKey.toBase58() } });
+		expect(res.statusCode).toBe(503);
+		expect(body.error).toBe('rpc_unavailable');
+		expect(body.message).toMatch(/again/i);
 	});
 });

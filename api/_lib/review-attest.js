@@ -17,15 +17,15 @@
  */
 
 import crypto from 'node:crypto';
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { sendAndConfirm } from './solana/confirm.js';
+import { attestationMemoInstructions } from './solana/memo-attest.js';
 
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
 import { RPC } from './solana-attestations.js';
 import { loadAttesterKeypair } from './attest-event.js';
 
-const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const REVIEW_KIND = 'threews.review.v1';
 const TX_TIMEOUT_MS = 15_000;
 
@@ -118,19 +118,14 @@ export async function attestReview({ reviewId, updatedAt, agentId, rating, body,
 	};
 
 	const conn = solanaConnection({ url: RPC[network] || RPC.devnet, commitment: 'confirmed' });
-	const ix = new TransactionInstruction({
-		programId: MEMO_PROGRAM_ID,
-		keys: [
-			{ pubkey: attester.publicKey, isSigner: true, isWritable: false },
-			{ pubkey: new PublicKey(agentAsset), isSigner: false, isWritable: false },
-		],
-		data: Buffer.from(JSON.stringify(payload), 'utf8'),
-	});
+	// Subject rides on a ComputeBudget carrier, not the memo: SPL Memo v2
+	// rejects any non-signer account (see solana/memo-attest.js).
+	const ixs = attestationMemoInstructions({ signer: attester.publicKey, subject: agentAsset, data: JSON.stringify(payload) });
 
 	let signature;
 	try {
 		signature = await withTimeout(
-			sendAndConfirm(conn, new Transaction().add(ix), [attester], { commitment: 'confirmed' }),
+			sendAndConfirm(conn, new Transaction().add(...ixs), [attester], { commitment: 'confirmed' }),
 			TX_TIMEOUT_MS,
 		);
 	} catch (err) {

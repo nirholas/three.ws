@@ -14,17 +14,15 @@ import { solanaConnection } from './solana/connection.js';
 import {
 	Connection,
 	Keypair,
-	PublicKey,
 	Transaction,
-	TransactionInstruction,
 } from '@solana/web3.js';
 import { sendAndConfirm } from './solana/confirm.js';
+import { attestationMemoInstructions } from './solana/memo-attest.js';
 import bs58 from 'bs58';
 
 import { sql } from './db.js';
 import { RPC, KIND_MAP } from './solana-attestations.js';
 
-const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const TX_TIMEOUT_MS = 12_000;
 
 export function taskHash(task_id, token_mint) {
@@ -211,15 +209,10 @@ export async function mintAttestation(input) {
 	const memo = JSON.stringify(payload);
 
 	const conn = solanaConnection({ url: RPC[network] || RPC.devnet, commitment: 'confirmed' });
-	const ix = new TransactionInstruction({
-		programId: MEMO_PROGRAM_ID,
-		keys: [
-			{ pubkey: attester.publicKey,        isSigner: true,  isWritable: false },
-			{ pubkey: new PublicKey(agent_asset), isSigner: false, isWritable: false },
-		],
-		data: Buffer.from(memo, 'utf8'),
-	});
-	const tx = new Transaction().add(ix);
+	// Subject rides on a ComputeBudget carrier, not the memo: SPL Memo v2
+	// rejects any non-signer account (see solana/memo-attest.js).
+	const ixs = attestationMemoInstructions({ signer: attester.publicKey, subject: agent_asset, data: memo });
+	const tx = new Transaction().add(...ixs);
 
 	let signature;
 	try {

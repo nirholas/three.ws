@@ -16,6 +16,9 @@
 // small. Everything is gated behind CIRCULATION_ENABLED + a treasury secret; with
 // neither set the engine is fully inert.
 
+import { PublicKey } from '@solana/web3.js';
+import { createAssociatedTokenAccountIdempotentInstruction } from '@solana/spl-token';
+import { ataFor, tokenProgramForMint, tokenTransfer } from './solana-token-program.js';
 import { sql } from './db.js';
 import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from './solana/read-guards.js';
 import { env } from './env.js';
@@ -648,9 +651,8 @@ async function ensurePayoutWallet(agent) {
 // Read an owner's $THREE balance in atomic units (0 when the token account does
 // not exist yet). Cheap, read-only.
 async function threeBalanceAtomic(conn, ownerAddress) {
-	const { PublicKey } = await import('@solana/web3.js');
-	const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
-	const ata = getAssociatedTokenAddressSync(new PublicKey(THREE_MINT()), new PublicKey(ownerAddress));
+	const mintKey = new PublicKey(THREE_MINT());
+	const ata = ataFor(mintKey, new PublicKey(ownerAddress), await tokenProgramForMint(conn, mintKey));
 	try {
 		const bal = await conn.getTokenAccountBalance(ata, 'confirmed');
 		return BigInt(bal?.value?.amount ?? '0');
@@ -754,51 +756,54 @@ async function ensureThree(ctx, agent, needAtomic) {
 	throw new Skip('still short on $THREE after top-up buy — will retry next tick');
 }
 
-// Build, sign, and submit an SPL transferChecked of `atomic` $THREE from `fromKp`
-// to `toAddress`, tagging it with a Solana-Pay `referenceKey` so confirm/validate
-// can find it on-chain. Buyer pays the seller-ATA rent idempotently. Returns the
-// confirmed signature.
-// Transfer $THREE to a recipient, tagging the leg with a Solana-Pay reference so
-// confirmSkillPurchase can find it. When `feeLeg` is supplied ({ wallet, atomics }),
-// a SECOND transferChecked routes the platform fee to the treasury in the SAME
-// transaction — the exact split confirmSkillPurchase verifies. `atomic` is the
-// CREATOR leg (price − fee); pass the full price with no feeLeg for a plain transfer.
-async function transferThreeWithReference(conn, fromKp, toAddress, atomic, referenceKey, network, feeLeg = null) {
-	const { PublicKey } = await import('@solana/web3.js');
-	const {
-		getAssociatedTokenAddressSync,
-		createTransferCheckedInstruction,
-		createAssociatedTokenAccountIdempotentInstruction,
-	} = await import('@solana/spl-token');
+// The instructions for a $THREE payment from `from` to `to`, tagged with a
+// Solana-Pay `referenceKey` so confirmSkillPurchase can find it on-chain. The
+// payer opens the recipient ATAs idempotently. When `feeLeg` is supplied
+// ({ wallet, atomics }), a SECOND transferChecked routes the platform fee to the
+// treasury in the SAME transaction, the exact split confirmSkillPurchase
+// verifies. `atomic` is the CREATOR leg (price minus fee); pass the full price
+// with no feeLeg for a plain transfer.
+//
+// Every ATA and transfer uses `tokenProgram`, the program that owns the mint
+// ($THREE is Token-2022). The creator leg carries the reference and goes LAST:
+// validateTransfer reads only the final instruction.
+export function buildThreeTransferInstructions({ mint, tokenProgram, decimals, from, to, atomic, referenceKey, feeLeg = null }) {
+	const mintKey = new PublicKey(mint);
+	const recipKey = new PublicKey(to);
+	const fromAta = ataFor(mintKey, from, tokenProgram);
+	const toAta = ataFor(mintKey, recipKey, tokenProgram);
+	const leg = (destination, atomics, references) =>
+		tokenTransfer({ source: fromAta, mint: mintKey, destination, authority: from, atomics, decimals, tokenProgram, references });
 
-	const mintKey = new PublicKey(THREE_MINT());
-	const recipKey = new PublicKey(toAddress);
-	// $THREE's decimals are a constant, so this costs no network read and a dead
-	// RPC cannot stall a circulation transfer over a value we already know.
-	const decimals = await mintDecimals(conn, mintKey);
-	const fromAta = getAssociatedTokenAddressSync(mintKey, fromKp.publicKey);
-	const toAta = getAssociatedTokenAddressSync(mintKey, recipKey);
-
-	const transferIx = createTransferCheckedInstruction(
-		fromAta, mintKey, toAta, fromKp.publicKey, atomic, decimals,
-	);
-	transferIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
-
-	const ixs = [
-		createAssociatedTokenAccountIdempotentInstruction(fromKp.publicKey, toAta, recipKey, mintKey),
-		transferIx,
-	];
-
+	const ixs = [createAssociatedTokenAccountIdempotentInstruction(from, toAta, recipKey, mintKey, tokenProgram)];
 	if (feeLeg && feeLeg.atomics > 0n && feeLeg.wallet) {
 		const feeKey = new PublicKey(feeLeg.wallet);
-		const feeAta = getAssociatedTokenAddressSync(mintKey, feeKey);
-		ixs.push(createAssociatedTokenAccountIdempotentInstruction(fromKp.publicKey, feeAta, feeKey, mintKey));
-		ixs.push(createTransferCheckedInstruction(
-			fromAta, mintKey, feeAta, fromKp.publicKey, feeLeg.atomics, decimals,
-		));
+		const feeAta = ataFor(mintKey, feeKey, tokenProgram);
+		ixs.push(createAssociatedTokenAccountIdempotentInstruction(from, feeAta, feeKey, mintKey, tokenProgram));
+		ixs.push(leg(feeAta, feeLeg.atomics, []));
 	}
+	ixs.push(leg(toAta, atomic, [referenceKey]));
+	return ixs;
+}
 
-	const { signature } = await submitProtected({ network, connection: conn, payer: fromKp, instructions: ixs });
+// Build, sign, and submit the $THREE payment above. Returns the confirmed signature.
+async function transferThreeWithReference(conn, fromKp, toAddress, atomic, referenceKey, network, feeLeg = null) {
+	const mintKey = new PublicKey(THREE_MINT());
+	const tokenProgram = await tokenProgramForMint(conn, mintKey);
+	// $THREE's decimals are a constant, so this costs no network read and a dead
+	// RPC cannot stall a circulation transfer over a value we already know.
+	const decimals = await mintDecimals(conn, mintKey, { programId: tokenProgram });
+	const instructions = buildThreeTransferInstructions({
+		mint: mintKey,
+		tokenProgram,
+		decimals,
+		from: fromKp.publicKey,
+		to: toAddress,
+		atomic,
+		referenceKey,
+		feeLeg,
+	});
+	const { signature } = await submitProtected({ network, connection: conn, payer: fromKp, instructions });
 	return signature;
 }
 

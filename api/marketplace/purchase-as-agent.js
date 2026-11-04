@@ -23,11 +23,8 @@ import { Keypair, PublicKey } from '@solana/web3.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { mintDecimals } from '../_lib/solana/read-guards.js';
 import { submitProtected } from '../_lib/execution-engine.js';
-import {
-	getAssociatedTokenAddressSync,
-	createTransferCheckedInstruction,
-	createAssociatedTokenAccountIdempotentInstruction,
-} from '@solana/spl-token';
+import { createAssociatedTokenAccountIdempotentInstruction } from '@solana/spl-token';
+import { ataFor, tokenProgramForMint, tokenTransfer } from '../_lib/solana-token-program.js';
 
 import { sql } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
@@ -231,27 +228,46 @@ export default wrap(async (req, res) => {
 		}
 	}
 
-	// Build, sign, and submit the SPL transferChecked
+	// Build, sign, and submit the transferChecked through the mint's own token
+	// program, so a $THREE (Token-2022) price pays between Token-2022 ATAs.
 	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
 	const mintKey  = new PublicKey(price.currency_mint);
 	const recipKey = new PublicKey(recipientAddr);
-	const decimals = await mintDecimals(connection, mintKey);
+	const buyerKey = buyerKeypair.publicKey;
+	let tokenProgram;
+	let decimals;
+	try {
+		tokenProgram = await tokenProgramForMint(connection, mintKey);
+		decimals = await mintDecimals(connection, mintKey, { programId: tokenProgram });
+	} catch (e) {
+		await sql`
+			UPDATE skill_purchases SET status = 'failed'
+			WHERE id = ${pur.id} AND status = 'pending'
+		`;
+		log('purchase_as_agent.mint_unreadable', { purchase_id: pur.id, error: e.message });
+		if (e?.code === 'mint_not_found' || e?.code === 'mint_not_token') {
+			return error(res, 409, 'invalid_price', 'this skill is priced in a token that does not exist on Solana');
+		}
+		return respondError(res, 503, 'rpc_unavailable', e);
+	}
 
-	const fromAta = getAssociatedTokenAddressSync(mintKey, buyerKeypair.publicKey);
-	const toAta   = getAssociatedTokenAddressSync(mintKey, recipKey);
+	const fromAta = ataFor(mintKey, buyerKey, tokenProgram);
+	const toAta   = ataFor(mintKey, recipKey, tokenProgram, { allowOwnerOffCurve: true });
 
 	const ixs = [
 		// Idempotently create seller's ATA (buyer pays the rent)
-		createAssociatedTokenAccountIdempotentInstruction(
-			buyerKeypair.publicKey, toAta, recipKey, mintKey,
-		),
+		createAssociatedTokenAccountIdempotentInstruction(buyerKey, toAta, recipKey, mintKey, tokenProgram),
+		tokenTransfer({
+			source: fromAta,
+			mint: mintKey,
+			destination: toAta,
+			authority: buyerKey,
+			atomics: BigInt(price.amount),
+			decimals,
+			tokenProgram,
+			references: [referenceKey],
+		}),
 	];
-	const transferIx = createTransferCheckedInstruction(
-		fromAta, mintKey, toAta, buyerKeypair.publicKey,
-		BigInt(price.amount), decimals,
-	);
-	transferIx.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
-	ixs.push(transferIx);
 
 	let txSig;
 	try {

@@ -81,6 +81,20 @@ function sourceImageKeysFrom(urls) {
 	return keys.size ? [...keys].slice(0, 12) : null;
 }
 
+// Every reference view the reconstructor was fed, in request order, whoever
+// hosts it: the audit trail of a multi-view run. Only http(s) URLs are kept (a
+// data: URI is the image itself, not a reference to it) and the list is capped
+// like source_image_keys so a row stays small.
+function sourceImageUrlsFrom(urls) {
+	const out = [];
+	for (const url of Array.isArray(urls) ? urls : []) {
+		if (typeof url !== 'string' || url.length > 2048 || !/^https?:\/\//i.test(url)) continue;
+		out.push(url);
+		if (out.length === 12) break;
+	}
+	return out.length ? out : null;
+}
+
 // Record a generation the moment it starts, so the prompt + reference image are
 // retained even if the mesh step later fails. Returns the new creation id (used
 // as the durable object key and the client-facing handle) or null when the
@@ -196,20 +210,22 @@ export async function createCreation({
 	const sourceKeys = sourceImageKeysFrom(
 		Array.isArray(sourceImageUrls) && sourceImageUrls.length ? sourceImageUrls : [previewImageUrl],
 	);
+	const sourceUrls = sourceImageUrlsFrom(sourceImageUrls);
 	try {
 		await sql`
 			insert into forge_creations
 				(id, client_key, ip_hash, prompt, aspect, preview_image_url,
 				 replicate_job_id, text_to_image_model, views_requested, views_used,
 				 multiview, backend, tier, path, status, outcome, model_category, user_id,
-				 source_image_keys, destination, internal)
+				 source_image_keys, destination, internal, source_image_urls)
 			values
 				(${id}, ${clientKey}, ${ipHash ?? null}, ${prompt}, ${aspect ?? null},
 				 ${previewImageUrl ?? null}, ${replicateJobId ?? null},
 				 ${textToImageModel ?? null}, ${viewsRequested ?? null}, ${viewsUsed ?? null},
 				 ${typeof multiview === 'boolean' ? multiview : null}, ${backend ?? null},
 				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null},
-				 ${sourceKeys ? JSON.stringify(sourceKeys) : null}, ${nextDestination}, ${isInternal})
+				 ${sourceKeys ? JSON.stringify(sourceKeys) : null}, ${nextDestination}, ${isInternal},
+				 ${sourceUrls ? JSON.stringify(sourceUrls) : null})
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.

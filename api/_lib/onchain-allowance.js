@@ -15,7 +15,6 @@
 // agent's own custodial key by the caller (api/agents/solana-allowance.js).
 
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
-import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { address, createNoopSigner, createSolanaRpc } from '@solana/kit';
 import {
 	SUBSCRIPTIONS_PROGRAM_ADDRESS,
@@ -34,6 +33,7 @@ import {
 	getTransferRecurringOverlayInstructionAsync,
 	getSubscriptionsErrorMessage,
 } from '@solana/subscriptions';
+import { ataFor, tokenProgramForMint } from './solana-token-program.js';
 
 export const ALLOWANCE_PROGRAM_ID = SUBSCRIPTIONS_PROGRAM_ADDRESS;
 
@@ -101,15 +101,21 @@ function kitRpc(conn) {
 }
 
 async function tokenProgramFor(connection, mint) {
-	const info = await connection.getAccountInfo(new PublicKey(mint), 'confirmed');
-	if (!info) throw new AllowanceError('mint_not_found', 'that token mint does not exist on this network');
-	if (info.owner.equals(TOKEN_PROGRAM_ID)) return TOKEN_PROGRAM_ID;
-	if (info.owner.equals(TOKEN_2022_PROGRAM_ID)) return TOKEN_2022_PROGRAM_ID;
-	throw new AllowanceError('mint_unsupported', 'that account is not an SPL or Token-2022 mint');
+	try {
+		return await tokenProgramForMint(connection, mint);
+	} catch (err) {
+		if (err.code === 'mint_not_found') {
+			throw new AllowanceError('mint_not_found', 'that token mint does not exist on this network');
+		}
+		if (err.code === 'mint_not_token') {
+			throw new AllowanceError('mint_unsupported', 'that account is not an SPL or Token-2022 mint');
+		}
+		throw err;
+	}
 }
 
 function ownerAta(mint, owner, tokenProgram) {
-	return getAssociatedTokenAddressSync(new PublicKey(mint), new PublicKey(owner), true, tokenProgram);
+	return ataFor(mint, owner, tokenProgram, { allowOwnerOffCurve: true });
 }
 
 // ── pure ceiling math ─────────────────────────────────────────────────────────

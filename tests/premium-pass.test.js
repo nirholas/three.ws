@@ -12,7 +12,8 @@
 // @solana/spl-token run for real so the built transaction is genuine.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Keypair, VersionedTransaction } from '@solana/web3.js';
+import { Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } from '@solana/spl-token';
 
 const TREASURY = 'wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU';
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -160,6 +161,46 @@ describe('createQuote', () => {
 		// buyer is the fee payer; ATA-idempotent + transferChecked instructions
 		expect(tx.message.staticAccountKeys[0].toBase58()).toBe(BUYER);
 		expect(tx.message.compiledInstructions.length).toBe(2);
+	});
+
+	function decodeIxs(txBase64) {
+		const tx = VersionedTransaction.deserialize(Buffer.from(txBase64, 'base64'));
+		const keys = tx.message.staticAccountKeys;
+		return tx.message.compiledInstructions.map((ix) => ({
+			program: keys[ix.programIdIndex],
+			accounts: ix.accountKeyIndexes.map((i) => keys[i]),
+		}));
+	}
+
+	it('a $THREE quote pays the treasury Token-2022 ATA through the Token-2022 program', async () => {
+		db.handlers.push({
+			match: /insert into premium_quotes/,
+			result: (values) => [{ id: 'q-3', wallet: BUYER, asset: 'THREE', amount_atomics: values[3], expires_at: 'soon' }],
+		});
+		const { tx_base64 } = await premium.createQuote({ wallet: BUYER, asset: 'THREE' });
+		const [create, transfer] = decodeIxs(tx_base64);
+		const ata = (owner) =>
+			getAssociatedTokenAddressSync(new PublicKey(THREE_MINT), new PublicKey(owner), false, TOKEN_2022_PROGRAM_ID);
+		expect(create.accounts[1].equals(ata(TREASURY))).toBe(true);
+		expect(create.accounts[5].equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+		expect(transfer.program.equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+		expect(transfer.accounts[0].equals(ata(BUYER))).toBe(true);
+		expect(transfer.accounts[2].equals(ata(TREASURY))).toBe(true);
+	});
+
+	it('a USDC quote stays on the classic Token program', async () => {
+		db.handlers.push({
+			match: /insert into premium_quotes/,
+			result: (values) => [{ id: 'q-u', wallet: BUYER, asset: 'USDC', amount_atomics: values[3], expires_at: 'soon' }],
+		});
+		const { tx_base64 } = await premium.createQuote({ wallet: BUYER, asset: 'USDC' });
+		const [, transfer] = decodeIxs(tx_base64);
+		expect(transfer.program.equals(TOKEN_PROGRAM_ID)).toBe(true);
+		expect(
+			transfer.accounts[2].equals(
+				getAssociatedTokenAddressSync(new PublicKey(USDC_MINT), new PublicKey(TREASURY), false, TOKEN_PROGRAM_ID),
+			),
+		).toBe(true);
 	});
 
 	it('native SOL quote is a single SystemProgram transfer', async () => {

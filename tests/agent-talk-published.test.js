@@ -50,6 +50,8 @@ import talk from '../api/agents/talk.js';
 import { runAgentTurn } from '../api/_lib/agent-turn.js';
 import { llmComplete } from '../api/_lib/llm.js';
 import { runAgentDelegation, AgentNotFoundError } from '../api/_lib/agent-delegate.js';
+import { limits } from '../api/_lib/rate-limit.js';
+import { authenticateBearer } from '../api/_lib/auth.js';
 
 const call = () => {
 	const res = {};
@@ -97,5 +99,29 @@ describe('runAgentDelegation visibility', () => {
 		agentRow.is_published = true;
 		await runAgentDelegation({ toAgentId: AGENT, message: 'x', callerUserId: OTHER });
 		expect(llmComplete).toHaveBeenCalledOnce();
+	});
+});
+
+describe('agents/talk rate limit', () => {
+	// Connector platforms (Power Automate, Logic Apps, Copilot Studio) send every
+	// tenant's calls from a few shared egress IPs. Keying the limit on the IP made
+	// all of their users share one 10-a-minute bucket, so it is keyed on the
+	// authenticated caller instead.
+	it('limits each signed-in caller on their own bucket, not the shared IP', async () => {
+		agentRow.is_published = true;
+		limits.agentDelegate.mockClear();
+		await call();
+		session = { id: OWNER };
+		await call();
+		expect(limits.agentDelegate.mock.calls.map((c) => c[0])).toEqual([`user:${OTHER}`, `user:${OWNER}`]);
+	});
+
+	it('limits a bearer caller (OAuth connector) on its user', async () => {
+		agentRow.is_published = true;
+		session = null;
+		authenticateBearer.mockResolvedValueOnce({ userId: OTHER, scope: 'agents:read', source: 'oauth' });
+		limits.agentDelegate.mockClear();
+		expect((await call()).status).toBe(200);
+		expect(limits.agentDelegate).toHaveBeenCalledWith(`user:${OTHER}`);
 	});
 });

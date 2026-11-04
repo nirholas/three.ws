@@ -16,15 +16,15 @@
  *     instead of broadcasting a duplicate.
  */
 
-import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, Transaction } from '@solana/web3.js';
 import { sendAndConfirm } from './solana/confirm.js';
+import { attestationMemoInstructions } from './solana/memo-attest.js';
 
 import { sql } from './db.js';
 import { solanaConnection } from './solana/connection.js';
 import { RPC } from './solana-attestations.js';
 import { loadAttesterKeypair } from './attest-event.js';
 
-const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 export const TOURNAMENT_KIND = 'threews.tournament.v1';
 const TX_TIMEOUT_MS = 15_000;
 // Keep the memo well under Solana's ~1232-byte tx size ceiling: attest the podium
@@ -129,19 +129,14 @@ export async function attestTournamentStandings({ tournament, standings, now = D
 	};
 
 	const conn = solanaConnection({ url: RPC[network] || RPC.devnet, commitment: 'confirmed' });
-	const ix = new TransactionInstruction({
-		programId: MEMO_PROGRAM_ID,
-		keys: [
-			{ pubkey: attester.publicKey, isSigner: true, isWritable: false },
-			{ pubkey: new PublicKey(subject), isSigner: false, isWritable: false },
-		],
-		data: Buffer.from(JSON.stringify(payload), 'utf8'),
-	});
+	// Subject rides on a ComputeBudget carrier, not the memo: SPL Memo v2
+	// rejects any non-signer account (see solana/memo-attest.js).
+	const ixs = attestationMemoInstructions({ signer: attester.publicKey, subject: subject, data: JSON.stringify(payload) });
 
 	let signature;
 	try {
 		signature = await withTimeout(
-			sendAndConfirm(conn, new Transaction().add(ix), [attester], { commitment: 'confirmed' }),
+			sendAndConfirm(conn, new Transaction().add(...ixs), [attester], { commitment: 'confirmed' }),
 			TX_TIMEOUT_MS,
 		);
 	} catch (err) {

@@ -1,14 +1,23 @@
 // Unit tests for the gasless (platform-sponsored) purchase transaction builder.
 //
-// Runs fully offline: real @solana/web3.js + @solana/spl-token, a fake RPC
-// connection that returns a fixed blockhash, and `decimals` passed in so no
-// on-chain getMint call is needed. Proves the platform is the fee-payer, that
-// it pre-signs, that the buyer's authority is an unsigned slot, and that the
-// fee split / reference key land in the compiled message.
+// Runs fully offline: real @solana/web3.js + @solana/spl-token and an
+// in-memory RPC connection that serves a fixed blockhash, a real encoded mint
+// account owned by the chosen token program, and token accounts that either
+// exist or do not. Proves the platform is the fee-payer, that it pre-signs,
+// that the buyer's authority is an unsigned slot, that the fee split and
+// reference key land in the compiled message, and that a Token-2022 mint
+// ($THREE) gets Token-2022 ATAs, transfers and decimals end to end.
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Keypair, VersionedTransaction } from '@solana/web3.js';
-import { getAssociatedTokenAddressSync } from '@solana/spl-token';
+import { Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import {
+	ASSOCIATED_TOKEN_PROGRAM_ID,
+	MINT_SIZE,
+	MintLayout,
+	TOKEN_2022_PROGRAM_ID,
+	TOKEN_PROGRAM_ID,
+	getAssociatedTokenAddressSync,
+} from '@solana/spl-token';
 
 import {
 	buildGaslessPurchaseTx,
@@ -25,9 +34,44 @@ const REFERENCE = Keypair.generate().publicKey;
 
 // A valid base58 32-byte string to stand in for a recent blockhash.
 const FAKE_BLOCKHASH = Keypair.generate().publicKey.toBase58();
-const fakeConnection = {
-	getLatestBlockhash: async () => ({ blockhash: FAKE_BLOCKHASH, lastValidBlockHeight: 1 }),
-};
+
+function encodedMint(decimals) {
+	const data = Buffer.alloc(MINT_SIZE);
+	MintLayout.encode(
+		{
+			mintAuthorityOption: 0,
+			mintAuthority: PublicKey.default,
+			supply: 1_000_000_000_000n,
+			decimals,
+			isInitialized: true,
+			freezeAuthorityOption: 0,
+			freezeAuthority: PublicKey.default,
+		},
+		data,
+	);
+	return data;
+}
+
+// `program` owns the mint; every token account exists unless listed in `missing`.
+function makeConnection({ program = TOKEN_PROGRAM_ID, missing = [], mintDecimals = 6 } = {}) {
+	const absent = new Set(missing.map((k) => k.toBase58()));
+	return {
+		getLatestBlockhash: async () => ({ blockhash: FAKE_BLOCKHASH, lastValidBlockHeight: 1 }),
+		getAccountInfo: async () => ({
+			owner: program,
+			data: encodedMint(mintDecimals),
+			lamports: 1_461_600,
+			executable: false,
+		}),
+		getMultipleAccountsInfo: async (keys) =>
+			keys.map((k) =>
+				absent.has(k.toBase58())
+					? null
+					: { owner: program, data: Buffer.alloc(165), lamports: 2_039_280, executable: false },
+			),
+	};
+}
+const fakeConnection = makeConnection();
 
 function setPayerEnv() {
 	process.env.MARKETPLACE_PAYER_KEYPAIR = Buffer.from(PAYER.secretKey).toString('base64');
@@ -126,6 +170,95 @@ describe('buildGaslessPurchaseTx', () => {
 
 		const sellerAta = getAssociatedTokenAddressSync(MINT.publicKey, SELLER.publicKey);
 		expect(last.accountKeyIndexes.some((i) => keys[i].equals(sellerAta))).toBe(true);
+	});
+});
+
+describe('buildGaslessPurchaseTx with a Token-2022 mint', () => {
+	beforeEach(() => setPayerEnv());
+
+	const MINT_2022 = Keypair.generate().publicKey; // stand-in Token-2022 mint, like $THREE
+	const ata2022 = (owner) => getAssociatedTokenAddressSync(MINT_2022, owner, false, TOKEN_2022_PROGRAM_ID);
+	const args2022 = {
+		...baseArgs,
+		mint: MINT_2022.toBase58(),
+		creatorAtomics: 900_000n,
+		platformFeeAtomics: 100_000n,
+		platformFeeWallet: TREASURY.publicKey.toBase58(),
+	};
+
+	function decode(out) {
+		const tx = VersionedTransaction.deserialize(Buffer.from(out.transaction, 'base64'));
+		const keys = tx.message.staticAccountKeys;
+		return tx.message.compiledInstructions.map((ix) => ({
+			program: keys[ix.programIdIndex],
+			accounts: ix.accountKeyIndexes.map((i) => keys[i]),
+			data: Buffer.from(ix.data),
+		}));
+	}
+	const TRANSFER_CHECKED = 12;
+
+	it('addresses every transfer to Token-2022 and moves tokens between the Token-2022 ATAs', async () => {
+		const out = await buildGaslessPurchaseTx({
+			...args2022,
+			connection: makeConnection({ program: TOKEN_2022_PROGRAM_ID }),
+		});
+		const transfers = decode(out).filter((ix) => ix.data[0] === TRANSFER_CHECKED);
+		expect(transfers).toHaveLength(2);
+		for (const ix of transfers) {
+			expect(ix.program.equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+			expect(ix.accounts[0].equals(ata2022(BUYER.publicKey))).toBe(true);
+			expect(ix.accounts[1].equals(MINT_2022)).toBe(true);
+		}
+		expect(transfers[0].accounts[2].equals(ata2022(TREASURY.publicKey))).toBe(true);
+		expect(transfers[1].accounts[2].equals(ata2022(SELLER.publicKey))).toBe(true);
+		expect(transfers[1].accounts.at(-1).equals(REFERENCE)).toBe(true);
+	});
+
+	it('reads the decimals of a Token-2022 mint from the Token-2022 program when none are passed', async () => {
+		const out = await buildGaslessPurchaseTx({
+			...args2022,
+			decimals: undefined,
+			connection: makeConnection({ program: TOKEN_2022_PROGRAM_ID, mintDecimals: 6 }),
+		});
+		const transfers = decode(out).filter((ix) => ix.data[0] === TRANSFER_CHECKED);
+		expect(transfers.map((ix) => ix.data[9])).toEqual([6, 6]);
+	});
+
+	it('creates the missing seller and treasury ATAs idempotently, paid by the platform payer, before the transfers', async () => {
+		const out = await buildGaslessPurchaseTx({
+			...args2022,
+			connection: makeConnection({
+				program: TOKEN_2022_PROGRAM_ID,
+				missing: [ata2022(SELLER.publicKey), ata2022(TREASURY.publicKey)],
+			}),
+		});
+		const ixs = decode(out);
+		expect(ixs).toHaveLength(4);
+		const creates = ixs.slice(0, 2);
+		for (const ix of creates) {
+			expect(ix.program.equals(ASSOCIATED_TOKEN_PROGRAM_ID)).toBe(true);
+			expect(ix.data[0]).toBe(1); // CreateIdempotent
+			expect(ix.accounts[0].equals(PAYER.publicKey)).toBe(true); // rent payer
+			expect(ix.accounts[3].equals(MINT_2022)).toBe(true);
+			expect(ix.accounts[5].equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+		}
+		expect(creates.map((ix) => ix.accounts[1].toBase58()).sort()).toEqual(
+			[ata2022(SELLER.publicKey), ata2022(TREASURY.publicKey)].map((k) => k.toBase58()).sort(),
+		);
+		const last = ixs.at(-1);
+		expect(last.data[0]).toBe(TRANSFER_CHECKED);
+		expect(last.accounts[2].equals(ata2022(SELLER.publicKey))).toBe(true);
+		expect(last.accounts.at(-1).equals(REFERENCE)).toBe(true);
+	});
+
+	it('adds no create instruction for an ATA that already exists', async () => {
+		const out = await buildGaslessPurchaseTx({
+			...args2022,
+			connection: makeConnection({ program: TOKEN_2022_PROGRAM_ID, missing: [ata2022(SELLER.publicKey)] }),
+		});
+		const creates = decode(out).filter((ix) => ix.program.equals(ASSOCIATED_TOKEN_PROGRAM_ID));
+		expect(creates).toHaveLength(1);
+		expect(creates[0].accounts[1].equals(ata2022(SELLER.publicKey))).toBe(true);
 	});
 });
 

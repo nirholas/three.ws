@@ -13,8 +13,24 @@
 //
 // A HEAD probe used to match no dispatch branch and fall through to 405 on both
 // handlers; RFC 9110 9.3.2 requires it to reach whatever GET reaches.
+//
+// POST /api/subscriptions/subscribe builds the transaction the subscriber signs.
+// Two faults locked in there: the reference-bound creator leg went FIRST, so
+// @solana/pay validateTransfer (which reads only the last instruction) decoded
+// the treasury fee leg and every fee-split subscription failed to confirm; and
+// every ATA and transfer used the classic token program, so a checkout in a
+// Token-2022 mint ($THREE) addressed accounts that never exist.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
+import {
+	ASSOCIATED_TOKEN_PROGRAM_ID,
+	MINT_SIZE,
+	MintLayout,
+	TOKEN_2022_PROGRAM_ID,
+	TOKEN_PROGRAM_ID,
+	getAssociatedTokenAddressSync,
+} from '@solana/spl-token';
 
 const sqlMock = vi.fn();
 vi.mock('../api/_lib/db.js', () => ({
@@ -42,8 +58,35 @@ vi.mock('../api/_lib/subscription-billing.js', () => ({
 	chargeSubscription: vi.fn(async () => ({ success: false, error: 'creator_payout_wallet_missing' })),
 }));
 
+const chain = vi.hoisted(() => ({ program: null, missing: new Set(), payout: null, fee: null }));
+vi.mock('../api/_lib/solana/connection.js', () => ({
+	solanaConnection: () => ({
+		getLatestBlockhash: async () => ({ blockhash: '9sHcv6xwn9YkB8nxTUGKDwPwNnmqVp5oAXxU8Fdkm4J6', lastValidBlockHeight: 1 }),
+		getAccountInfo: async () => ({ owner: chain.program, data: chain.mintData, lamports: 1_461_600, executable: false }),
+		getMultipleAccountsInfo: async (keys) =>
+			keys.map((k) =>
+				chain.missing.has(k.toBase58())
+					? null
+					: { owner: chain.program, data: Buffer.alloc(165), lamports: 2_039_280, executable: false },
+			),
+	}),
+}));
+vi.mock('../api/_lib/solana/read-guards.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	getRecentBlockhashInfo: async () => ({ blockhash: '9sHcv6xwn9YkB8nxTUGKDwPwNnmqVp5oAXxU8Fdkm4J6', lastValidBlockHeight: 1 }),
+}));
+vi.mock('../api/_lib/marketplace-platform-fee.js', () => ({
+	resolveMarketplaceFee: async ({ grossAtomics }) =>
+		chain.fee ? { bps: 1000, feeAtomics: grossAtomics / 10n, recipient: chain.fee } : null,
+}));
+vi.mock('../api/_lib/subscription-checkout.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	resolveSubscriptionPayout: async () => chain.payout,
+}));
+
 const { default: plansHandler } = await import('../api/subscriptions/plans.js');
 const { default: subsHandler } = await import('../api/subscriptions/index.js');
+const { default: subscribeHandler } = await import('../api/subscriptions/subscribe.js');
 
 const OWNER = 'ab2aabd2-39f7-493b-8191-c9f174af62ab';
 const OTHER = 'f23703c0-9d75-4e60-9a4c-349da5d7a2f2';
@@ -239,5 +282,122 @@ describe('subscriptions: unchanged contract', () => {
 		await plansHandler(mkReq({ url: '/api/subscriptions/plans' }), res);
 		expect(res.statusCode).toBe(400);
 		expect(parse(res).error_description).toMatch(/creator_id or agent_id/);
+	});
+});
+
+describe('POST /api/subscriptions/subscribe: the transaction the subscriber signs', () => {
+	const THREE_MINT = new PublicKey('FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump');
+	const USDC_MINT = new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+	const BUYER = Keypair.generate().publicKey;
+	const CREATOR = Keypair.generate().publicKey;
+	const TREASURY = Keypair.generate().publicKey;
+	const REFERENCE = Keypair.generate().publicKey;
+	const TRANSFER_CHECKED = 12;
+
+	function mintData(decimals) {
+		const data = Buffer.alloc(MINT_SIZE);
+		MintLayout.encode(
+			{
+				mintAuthorityOption: 0,
+				mintAuthority: PublicKey.default,
+				supply: 1n,
+				decimals,
+				isInitialized: true,
+				freezeAuthorityOption: 0,
+				freezeAuthority: PublicKey.default,
+			},
+			data,
+		);
+		return data;
+	}
+
+	// The handler reuses a fresh pending checkout row, which is the source of
+	// truth for the split the transaction encodes.
+	function queuePendingCheckout(mint) {
+		sqlQueue = [
+			[{ id: PLAN, creator_id: OTHER, agent_id: null, name: 'Gold', price_usd: '10.00', interval: 'monthly', active: true }],
+			[],
+			[
+				{
+					reference: REFERENCE.toBase58(),
+					amount: '10000000',
+					creator_amount: '9000000',
+					platform_fee_amount: '1000000',
+					platform_fee_wallet: TREASURY.toBase58(),
+					currency_mint: mint.toBase58(),
+					recipient: CREATOR.toBase58(),
+				},
+			],
+		];
+	}
+
+	async function subscribe() {
+		const res = mkRes();
+		await subscribeHandler(
+			jsonReq('POST', '/api/subscriptions/subscribe', { tierId: PLAN, buyerPublicKey: BUYER.toBase58() }),
+			res,
+		);
+		expect(res.statusCode).toBe(200);
+		const tx = VersionedTransaction.deserialize(Buffer.from(parse(res).data.transaction, 'base64'));
+		const keys = tx.message.staticAccountKeys;
+		return tx.message.compiledInstructions.map((ix) => ({
+			program: keys[ix.programIdIndex],
+			accounts: ix.accountKeyIndexes.map((i) => keys[i]),
+			data: Buffer.from(ix.data),
+		}));
+	}
+
+	beforeEach(() => {
+		delete process.env.MARKETPLACE_PAYER_KEYPAIR;
+		delete process.env.PLATFORM_TREASURY_KEYPAIR;
+		delete process.env.TREASURY_KEYPAIR;
+		chain.payout = CREATOR.toBase58();
+		chain.fee = TREASURY;
+		chain.missing = new Set();
+		chain.program = TOKEN_PROGRAM_ID;
+		chain.mintData = mintData(6);
+	});
+
+	it('closes a fee-split USDC subscription with the reference-bound creator leg', async () => {
+		queuePendingCheckout(USDC_MINT);
+		const ixs = await subscribe();
+		const transfers = ixs.filter((ix) => ix.data[0] === TRANSFER_CHECKED);
+		expect(transfers).toHaveLength(2);
+		const ata = (owner) => getAssociatedTokenAddressSync(USDC_MINT, owner, false, TOKEN_PROGRAM_ID);
+		expect(transfers[0].accounts[2].equals(ata(TREASURY))).toBe(true);
+		const last = ixs.at(-1);
+		expect(last.data[0]).toBe(TRANSFER_CHECKED);
+		expect(last.accounts[2].equals(ata(CREATOR))).toBe(true);
+		expect(last.accounts.at(-1).equals(REFERENCE)).toBe(true);
+	});
+
+	it('builds a checkout persisted in $THREE with Token-2022 ATAs and transfers', async () => {
+		chain.program = TOKEN_2022_PROGRAM_ID;
+		queuePendingCheckout(THREE_MINT);
+		const ixs = await subscribe();
+		const ata = (owner) => getAssociatedTokenAddressSync(THREE_MINT, owner, false, TOKEN_2022_PROGRAM_ID);
+		const transfers = ixs.filter((ix) => ix.data[0] === TRANSFER_CHECKED);
+		expect(transfers).toHaveLength(2);
+		for (const ix of transfers) {
+			expect(ix.program.equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+			expect(ix.accounts[0].equals(ata(BUYER))).toBe(true);
+		}
+		expect(ixs.at(-1).accounts[2].equals(ata(CREATOR))).toBe(true);
+	});
+
+	it("opens the creator's and treasury's missing ATAs idempotently before the transfers", async () => {
+		chain.program = TOKEN_2022_PROGRAM_ID;
+		const ata = (owner) => getAssociatedTokenAddressSync(THREE_MINT, owner, false, TOKEN_2022_PROGRAM_ID);
+		chain.missing = new Set([ata(CREATOR).toBase58(), ata(TREASURY).toBase58()]);
+		queuePendingCheckout(THREE_MINT);
+		const ixs = await subscribe();
+		expect(ixs).toHaveLength(4);
+		for (const ix of ixs.slice(0, 2)) {
+			expect(ix.program.equals(ASSOCIATED_TOKEN_PROGRAM_ID)).toBe(true);
+			expect(ix.data[0]).toBe(1);
+			expect(ix.accounts[0].equals(BUYER)).toBe(true); // no platform payer configured: the buyer funds rent
+			expect(ix.accounts[5].equals(TOKEN_2022_PROGRAM_ID)).toBe(true);
+		}
+		expect(ixs.at(-1).accounts.at(-1).equals(REFERENCE)).toBe(true);
 	});
 });
