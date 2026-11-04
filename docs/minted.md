@@ -74,4 +74,5 @@ The companion MCP tool `get_3d_asset_onchain` resolves any Core mint address to 
 - [Verifiable 3D provenance](provenance.md): signed content credentials and free verification for generated models
 - [The three.ws mint mark](mint-mark.md): the `3ws` address brand on coin launches
 - [MCP servers](mcp.md): the `mint_3d_asset` and `get_3d_asset_onchain` tools
+- [Drops](drops.md#minting-on-solana): minting a whole generative collection into a Core collection
 - [Custody you can verify](custody.md): the wallet rails behind agent-held assets

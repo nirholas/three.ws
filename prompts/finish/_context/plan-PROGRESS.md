@@ -83,3 +83,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 747-plan-memory-file-layer-semantic-recall.md | 70423f326 | Memory file layer recall is semantic via POST /api/memory/rank with a substring fallback.
 2026-11-04 | 740-plan-platform-opentelemetry-gcp-traces.md | 112812796 | Tracing shipped and verified in Cloud Trace; worker redeploy and real Forge-path trace pending owner deploy.
 2026-11-04 | 739-plan-glasses-meta-display-lens-web-app.md | dad3b0b4d | /glass lens app shipped; hardware verification, portrait, push lane pending.
+2026-11-04 | 978-plan-drops-onchain-core-collection-mint.md | 11c47fa75 | Drop mint code, routes, UI, docs shipped; migration unapplied, devnet e2e awaits a funded key, mainnet owner-gated.
