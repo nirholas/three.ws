@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     && chmod +x /usr/local/bin/gltfpack \
     && /usr/local/bin/gltfpack -v
 
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.3-runtime-ubuntu22.04
 COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -31,15 +31,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && pip install --upgrade pip
 
 # torch first (big, cached layer)
-RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
+# torch 2.13.0 clears every published torch advisory; its cu126 wheels bring
+# their own cuDNN 9 / cuBLAS, so the base only supplies the CUDA 12.6 runtime.
+RUN pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu126
 
-# xformers alongside torch, from the same cu121 index, exactly as
-# workers/model-trellis does. Two reasons it is not in requirements.txt: every
-# xformers release pins one exact torch version (0.0.27 is the one built for
-# 2.3.1), so listing it there made pip refuse the whole file as unsolvable
-# against our torch pin; and the PyPI wheel is built against a different CUDA
-# than the base image, which fails at import rather than at install.
-RUN pip install xformers==0.0.27 --index-url https://download.pytorch.org/whl/cu121
+# xformers alongside torch, from the same cu126 index. It stays out of
+# requirements.txt so pip resolves it against the CUDA build of torch installed
+# above, not a PyPI wheel built against a different CUDA. 0.0.35 ships one
+# stable-ABI wheel that loads on any torch>=2.10.
+RUN pip install xformers==0.0.35 --index-url https://download.pytorch.org/whl/cu126
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt

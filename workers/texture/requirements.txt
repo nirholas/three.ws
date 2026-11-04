@@ -1,27 +1,26 @@
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
-# transformers 4.57.6 and accelerate 1.15.0: newest releases that clear their
-# advisories and still run on the torch 2.3.1 pinned below (transformers only
-# imports DTensor on torch>=2.5). diffusers stays on 0.31.0: its open advisories
-# need 0.38 and are reachable only by loading an attacker-chosen repo or
-# custom_pipeline, and this worker loads fixed SDXL/ControlNet repos from the
-# operator-staged cache. torch 2.3.1 is held by the cu121 base image and the
-# xformers 0.0.27 pairing in the Dockerfile; moving it is a base-image change.
-diffusers==0.31.0
-transformers==4.57.6
+# diffusers 0.38.0 and transformers 5.10.1: first releases clear of every
+# published advisory, the same pair workers/model-partcrafter runs. diffusers
+# 0.38 needs safetensors>=0.8 and transformers 5.10 needs huggingface_hub>=1.5.
+diffusers==0.38.0
+transformers==5.10.1
 accelerate==1.15.0
-safetensors==0.4.5
+safetensors==0.8.0
 controlnet-aux==0.0.9
 trimesh[easy]==4.5.3
 pyrender==0.1.45
 scipy==1.14.1
 numpy==1.26.4
-# Pillow 12.3.0, not 11.x: every 11.x release carries open advisories, several of
+# Pillow 13.0.0: every 11.x/12.x release carries open advisories, several of
 # them heap out-of-bounds writes reachable from a decoded image. `npm run
 # audit:deps` surfaces the next one.
 Pillow==13.0.0
+# torch/torchvision install first from the cu126 index in the Dockerfile; these
+# pins keep pip from swapping them. torchvision 0.28.0 is the release built for
+# torch 2.13.0.
 torch==2.13.0
-torchvision==0.18.1
+torchvision==0.28.0
 google-cloud-storage==2.19.0
 httpx==0.27.2
 pydantic==2.10.3

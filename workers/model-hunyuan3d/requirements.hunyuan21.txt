@@ -8,7 +8,7 @@
 #   - gradio: demo UI only.
 #   - deepspeed: training-only; its sole import in the shape stack sits inside a
 #     training-EMA branch that inference never reaches.
-#   - bpy (Blender): has no cp310 wheel on PyPI, and it is only reached through
+#   - bpy (Blender): a Blender-sized wheel that is only reached through
 #     DifferentiableRenderer.mesh_utils.convert_obj_to_glb (the save_glb=True OBJ
 #     to GLB exporter). This worker never calls it — it paints with
 #     save_glb=False and assembles the final PBR GLB with pygltflib via
@@ -23,9 +23,11 @@ ninja==1.11.1.1
 pybind11==2.13.4
 
 # ── Core ML / diffusion ──────────────────────────────────────────────────────
-# Security bumps over upstream's list, each clearing every advisory its line can:
-#   - transformers 4.57.6 (from 4.46.0) needs huggingface-hub>=0.34, hence 0.36.2,
-#     the hub release model-triposg already runs.
+# Security bumps over upstream's list, each clearing every advisory its line has:
+#   - transformers 5.10.1 (from 4.46.0) needs torch>=2.4 (both Dockerfiles ship
+#     2.5.1 or newer) and huggingface-hub 1.x, hence 1.33.0 and safetensors 0.8.0.
+#   - diffusers 0.38.0 (from 0.30.0): the custom_pipeline / remote-repo loading
+#     advisories.
 #   - accelerate 1.15.0 (from 1.1.1): sharded-checkpoint path traversal.
 #   - pytorch-lightning 2.6.6 (from 1.9.5): inference only subclasses
 #     pl.LightningModule at import (hunyuanpaintpbr/unet/model.py); every Trainer,
@@ -33,37 +35,41 @@ pybind11==2.13.4
 #     1.9.5 also stopped importing on a fresh build: its lightning_fabric calls
 #     pkg_resources, which the setuptools 84 that the Dockerfile's
 #     `pip install --upgrade setuptools` pulls no longer ships.
-# diffusers stays on 0.30.0: its open advisories need 0.38 and are reachable only
-# by loading an attacker-chosen repo or custom_pipeline; the paint pass loads the
-# in-image hy3dpaint/hunyuanpaintpbr pipeline from operator-staged weights.
-transformers==4.57.6
-diffusers==0.30.0
+#   - rembg 2.0.86 and Pillow 13.0.0 pull numpy 2.3 and Python 3.11, so the
+#     scientific / CV / mesh pins below are their first numpy-2.3 releases
+#     (opencv 4.13, scikit-image 0.26, scipy 1.16, pymeshlab 2025.7, open3d 0.19,
+#     cupy 13.6) and both Dockerfiles run Python 3.11.
+# basicsr 1.4.2 is the newest release and has no fix for its advisory (shell
+# injection through SLURM_NODELIST in its distributed-training init); the paint
+# pass only imports its RRDBNet arch for RealESRGAN inference.
+transformers==5.10.1
+diffusers==0.38.0
 accelerate==1.15.0
 pytorch-lightning==2.6.6
-huggingface-hub==0.36.2
-safetensors==0.4.4
+huggingface-hub==1.33.0
+safetensors==0.8.0
 
 # ── Scientific computing ─────────────────────────────────────────────────────
-numpy==1.24.4
-scipy==1.14.1
+numpy==2.3.5
+scipy==1.16.3
 einops==0.8.0
-pandas==2.2.2
+pandas==2.3.3
 
 # ── Computer vision / image processing ───────────────────────────────────────
-opencv-python==4.10.0.84
+opencv-python==4.13.0.92
 imageio==2.36.0
-scikit-image==0.24.0
-rembg==2.0.65
+scikit-image==0.26.0
+rembg==2.0.86
 realesrgan==0.3.0
 tb_nightly==2.18.0a20240726
 basicsr==1.4.2
 
 # ── 3D mesh processing ───────────────────────────────────────────────────────
 trimesh==4.4.7
-pymeshlab==2022.2.post3
+pymeshlab==2025.7.post1
 pygltflib==1.16.3
 xatlas==0.0.9
-open3d==0.18.0
+open3d==0.19.0
 
 # ── Configuration ────────────────────────────────────────────────────────────
 omegaconf==2.3.0
@@ -76,20 +82,20 @@ uvicorn[standard]==0.34.3
 pydantic==2.10.6
 
 # ── Utilities ────────────────────────────────────────────────────────────────
-tqdm==4.66.5
+tqdm==4.67.1
 psutil==6.0.0
 timm
 pythreejs
 torchdiffeq
 
 # ── GPU computing ────────────────────────────────────────────────────────────
-cupy-cuda12x==13.4.1
+cupy-cuda12x==13.6.0
 
 # ── Blender (bpy): intentionally NOT installed — stubbed in the Dockerfile ────
 # (only reachable via the unused save_glb OBJ->GLB exporter; see header note).
 
 # ── ONNX runtime (rembg background removal) ──────────────────────────────────
-onnxruntime==1.16.3
+onnxruntime==1.23.2
 torchmetrics==1.6.0
 
 # ── three.ws worker deps ─────────────────────────────────────────────────────

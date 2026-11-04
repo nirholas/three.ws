@@ -15,16 +15,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 # ── System dependencies ───────────────────────────────────────────────────────
+# Python 3.11, not jammy's default 3.10: Pillow 13 (which fixes the decoder
+# advisories still open in 12.x, and this service decodes caller images) ships
+# no 3.10 build. workers/texture and workers/modly run the same 3.11-on-jammy layout.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.10 python3.10-dev python3-pip \
+        python3.11 python3.11-dev python3-pip \
         git curl wget \
         # OpenCV headless runtime deps
         libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
         # MediaPipe runtime deps
         libgomp1 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python \
     && pip install --upgrade pip setuptools wheel
 
 # ── Python dependencies ───────────────────────────────────────────────────────

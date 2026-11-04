@@ -3,7 +3,7 @@
 FastAPI inference workers that turn **one image into a textured GLB** with
 Tencent's Hunyuan3D. Two model generations run side by side as **two separate
 Cloud Run services**, because their Python stacks are mutually incompatible
-(torch 2.3 / cu121 + `hy3dgen` for 2.0 vs torch 2.5 / cu124 +
+(torch 2.5.1 / cu121 + `hy3dgen` for 2.0 vs torch 2.5.1 / cu124 +
 `hy3dshape` / `hy3dpaint` for 2.1):
 
 | Service | Model | Entry point | Dockerfile | Output material |

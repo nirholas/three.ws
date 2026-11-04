@@ -13,7 +13,7 @@
 numpy==1.26.4
 diffusers==0.38.0
 transformers==5.10.1
-accelerate==1.7.0
+accelerate==1.15.0
 einops==0.8.1
 omegaconf==2.3.0
 scipy==1.15.3

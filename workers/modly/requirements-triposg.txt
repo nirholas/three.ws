@@ -5,30 +5,29 @@
 # TripoSG commit, neither of which comes from this file.
 # diffusers/transformers/accelerate/peft/huggingface_hub are the versions proven
 # on workers/model-triposg and workers/model-hunyuan3d.
-diffusers==0.31.0
-transformers==4.57.6
+diffusers==0.38.0
+transformers==5.10.1
 accelerate==1.15.0
 peft==0.19.1
-huggingface_hub==0.36.2
-safetensors==0.5.3
+huggingface_hub==1.33.0
+safetensors==0.8.0
 einops==0.8.0
 omegaconf==2.3.0
 antlr4-python3-runtime==4.9.3
 PyYAML==6.0.2
 jaxtyping==0.2.36
 typeguard==4.4.2
-numpy==1.26.4
+numpy==2.3.5
 Pillow==13.0.0
 trimesh==4.5.3
-pymeshlab==2023.12.post2
-scikit-image==0.24.0
-opencv-python-headless==4.10.0.84
-# rembg 2.0.70+ requires numpy>=2.3, which this venv cannot take: numpy stays
-# on 1.26 for the pinned diffusers/pymeshlab builds. 2.0.69 is the newest release
-# that resolves here. GHSA-3wqj-33cg-xc48 (path traversal via custom model
-# loading, fixed in 2.0.75) is not reachable: the extensions call rembg's
-# built-in u2net session, never a caller-supplied model path.
-rembg==2.0.69
+pymeshlab==2025.7.post1
+scikit-image==0.26.0
+opencv-python-headless==4.13.0.92
+# rembg 2.0.86 clears every published rembg advisory and accepts Pillow 13; it
+# needs numpy>=2.3, scipy>=1.16.3 and scikit-image 0.26, hence the numpy-2
+# builds of pymeshlab (2025.7) and opencv above. diffusers 0.38.0 and
+# transformers 5.10.1 are the first releases clear of their advisories.
+rembg==2.0.86
 onnxruntime-gpu==1.20.0
 # diso builds with --no-build-isolation, so its build-time imports and the
 # CMake it drives live here.
