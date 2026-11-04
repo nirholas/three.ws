@@ -363,6 +363,45 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName(input)).toBe(expected);
 	});
 
+	// The same HumanIK rig after three.js GLTFLoader: PropertyBinding.sanitizeNodeName
+	// deletes the `:`, so the runtime retargeter sees `Character1Hips`, never
+	// `Character1:Hips`. Every fused (and single-underscore) spelling must resolve to
+	// exactly what its namespaced spelling resolves to, or the avatar bind-poses.
+	const HUMANIK_STEMS = [
+		'Hips', 'Spine', 'Spine1', 'Neck', 'Head',
+		...['Left', 'Right'].flatMap((side) => [
+			`${side}Shoulder`, `${side}Arm`, `${side}ForeArm`, `${side}Hand`,
+			`${side}UpLeg`, `${side}Leg`, `${side}Foot`, `${side}ToeBase`,
+		]),
+		'LeftHandIndex1', 'RightHandThumb2', 'LeftHandThumb1', 'RightHandMiddle3',
+	];
+	const fusedCases = [
+		...HUMANIK_STEMS.map((stem) => [`Character1${stem}`, `Character1:${stem}`]),
+		...HUMANIK_STEMS.map((stem) => [`Character1_${stem}`, `Character1:${stem}`]),
+		['Character2Hips', 'Character2:Hips'],
+		['Character12LeftArm', 'Character12:LeftArm'],
+	];
+	it.each(fusedCases)('maps the loader-sanitized HumanIK name %s like %s', (fused, namespaced) => {
+		const expected = canonicalizeBoneName(namespaced);
+		expect(expected).not.toBeNull();
+		expect(canonicalizeBoneName(fused)).toBe(expected);
+	});
+
+	it('never maps a fused HumanIK name across sides', () => {
+		for (const stem of HUMANIK_STEMS) {
+			const got = canonicalizeBoneName(`Character1${stem}`);
+			if (stem.startsWith('Left')) expect(got).not.toMatch(/^Right/);
+			if (stem.startsWith('Right')) expect(got).not.toMatch(/^Left/);
+		}
+	});
+
+	it('requires the character number before stripping a Character prefix', () => {
+		expect(canonicalizeBoneName('CharacterMesh')).toBeNull();
+		expect(canonicalizeBoneName('Character')).toBeNull();
+		expect(canonicalizeBoneName('CharacterHips')).toBeNull();
+		expect(canonicalizeBoneName('Character1Mesh')).toBeNull();
+	});
+
 	// A namespaced node that isn't a real bone must still resolve to null (the
 	// strip only ever helps a name that was already a humanoid bone).
 	it('returns null for a namespaced non-bone node', () => {

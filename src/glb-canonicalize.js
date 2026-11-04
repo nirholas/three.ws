@@ -470,6 +470,14 @@ function _lookupBone(name) {
 	// Safe by construction: a stripped name that isn't a real bone (`prop:Sword`
 	// → `Sword`) simply falls through to null and is left untouched.
 	s = s.replace(/^(?:[A-Za-z][\w]*:)+/, '');
+	// The same HumanIK namespace after three.js has loaded the file: GLTFLoader
+	// names every node through PropertyBinding.sanitizeNodeName, which deletes
+	// the `:`, so the runtime sees `Character1Hips` / `Character1LeftArm`, and
+	// some exporters write `Character1_LeftArm` instead. The character number is
+	// required, which keeps ordinary names that merely start with "Character"
+	// (`CharacterMesh`, `CharacterHips`) out of the strip, and a stem that isn't
+	// a real bone (`Character1Mesh` -> `Mesh`) still falls through to null.
+	s = s.replace(/^Character\d+_?/, '');
 	// Strip well-known vendor prefixes (case-insensitive, in priority order).
 	s = s.replace(/^mixamorig\d*[_:]?/i, '');
 	s = s.replace(/^Armature[_/]?/i, '');
