@@ -60,6 +60,8 @@ export const RESOURCE_DESCRIPTION =
 	'places_detail_quote and places_detail. ' +
 	'Agent memory: get_learning_status reports whether memory is on, what agents remember and which ' +
 	'learned skills wait for review (read only). ' +
+	'Agent sandbox with no network: execute_code runs Python, JavaScript or bash, terminal keeps a shell, ' +
+	'and read_file and write_file move files in and out, billed per second of runtime. ' +
 	'Third-party MCP servers on your agents: list_integrations, install_integration and remove_integration. ' +
 	'Every money-moving tool needs its preview first and an explicit confirm flag. ' +
 	'Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no ' +

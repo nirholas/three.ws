@@ -1147,14 +1147,18 @@
 			"date": "2026-11-04",
 			"added": {
 				"mcp-agent": [
-					"get_learning_status"
+					"execute_code",
+					"get_learning_status",
+					"read_file",
+					"terminal",
+					"write_file"
 				]
 			},
 			"removed": {},
 			"counts": {
-				"added": 1,
+				"added": 5,
 				"removed": 0,
-				"total": 715
+				"total": 719
 			}
 		}
 	]
