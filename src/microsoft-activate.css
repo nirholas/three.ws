@@ -1,0 +1,78 @@
+/* Microsoft Marketplace landing page (/microsoft/activate). Tokens come from
+   public/tokens.css via style.css, so the page follows both themes. */
+
+.ma-wrap {
+	width: 100%;
+	max-width: 720px;
+	margin: 0 auto;
+	padding: calc(var(--space-md) * 2) var(--space-md) calc(var(--space-md) * 5);
+}
+.ma-crumb { font-size: var(--text-sm); color: var(--ink-dim); margin: 0 0 var(--space-lg); }
+.ma-crumb a { color: inherit; }
+.ma-crumb a:hover { color: var(--ink); }
+.ma-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.ma-eyebrow { font-size: var(--text-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); margin: 0 0 6px; }
+.ma-h1 { font-family: var(--font-display); font-size: var(--text-xl); color: var(--ink-bright); margin: 0; line-height: 1.15; letter-spacing: -0.01em; }
+.ma-lede { color: var(--ink-dim); font-size: var(--text-md); line-height: 1.55; margin: var(--space-xs) 0 0; }
+
+.ma-card {
+	margin-top: var(--space-lg);
+	padding: var(--space-lg);
+	background: var(--surface-1);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-card, 14px);
+}
+.ma-card.is-error { border-color: color-mix(in srgb, var(--danger) 55%, var(--stroke)); }
+.ma-card.is-good { border-color: color-mix(in srgb, var(--success, #22c55e) 55%, var(--stroke)); }
+.ma-card h2 { font-size: var(--text-lg); color: var(--ink-bright); margin: 0 0 var(--space-xs); }
+.ma-card p { color: var(--ink); line-height: 1.55; margin: 0 0 var(--space-sm); }
+.ma-card p:last-child { margin-bottom: 0; }
+
+.ma-facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: var(--space-md) 0; font-size: var(--text-sm); }
+.ma-facts dt { color: var(--ink-dim); }
+.ma-facts dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+	.ma-facts { grid-template-columns: 1fr; gap: 2px; }
+	.ma-facts dd { margin-bottom: 8px; }
+}
+
+.ma-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: var(--text-xs); border: 1px solid var(--stroke-strong); color: var(--ink); }
+.ma-badge.is-good { color: var(--success, #22c55e); border-color: currentColor; }
+.ma-badge.is-warn { color: var(--warning, #f59e0b); border-color: currentColor; }
+.ma-badge.is-bad { color: var(--danger); border-color: currentColor; }
+
+.ma-steps { margin: var(--space-md) 0 0; padding-left: 1.2em; color: var(--ink); line-height: 1.6; }
+.ma-steps li { margin-bottom: 4px; }
+
+.ma-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--space-md); }
+.ma-btn {
+	display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+	min-height: 42px; padding: 10px 18px;
+	font: var(--weight-medium) var(--text-sm) / 1 var(--font-body);
+	color: var(--ink); background: var(--surface-2);
+	border: 1px solid var(--stroke-strong); border-radius: var(--radius-control, 8px);
+	cursor: pointer; text-decoration: none; white-space: nowrap;
+	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant), filter var(--duration-fast);
+}
+.ma-btn:hover { border-color: var(--ink-dim); background: var(--surface-3); }
+.ma-btn:active { transform: translateY(1px); }
+.ma-btn[aria-disabled="true"], .ma-btn:disabled { opacity: .45; cursor: default; transform: none; pointer-events: none; }
+.ma-btn-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: var(--weight-semibold); }
+.ma-btn-primary:hover { background: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
+.ma-btn svg { width: 16px; height: 16px; flex: none; }
+.ma-btn:focus-visible, .ma-wrap a:focus-visible {
+	outline: var(--focus-ring-width, 2px) solid var(--focus-ring-color, #3b82f6);
+	outline-offset: var(--focus-ring-offset, 2px);
+}
+.ma-wrap a:not(.ma-btn) { color: var(--ink-bright); }
+.ma-wrap a:not(.ma-btn):hover { color: var(--accent); }
+
+.ma-hint { color: var(--ink-dim); font-size: var(--text-xs); line-height: 1.5; margin-top: var(--space-sm); }
+.ma-code { font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--text-xs); color: var(--ink-dim); }
+
+.ma-skel { border-radius: var(--radius-card, 14px); background: var(--skeleton-base); background-image: linear-gradient(90deg, var(--skeleton-base) 0%, var(--skeleton-sheen) 50%, var(--skeleton-base) 100%); background-size: 200% 100%; animation: ma-shimmer 1.4s ease-in-out infinite; }
+.ma-skel.is-title { height: 64px; max-width: 420px; }
+.ma-skel.is-card { height: 260px; margin-top: var(--space-lg); }
+@keyframes ma-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .ma-skel { animation: none; } }

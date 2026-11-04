@@ -28,7 +28,18 @@
       "name": "3D Viewer",
       "contentUrl": "https://three.ws/viewer",
       "websiteUrl": "https://three.ws/viewer",
-      "scopes": ["personal"]
+      "scopes": [
+        "personal"
+      ]
+    },
+    {
+      "entityId": "threews-agent",
+      "name": "My Agent",
+      "contentUrl": "https://three.ws/microsoft/teams-tab",
+      "websiteUrl": "https://three.ws/dashboard",
+      "scopes": [
+        "personal"
+      ]
     }
   ],
   "agentConnectors": [
@@ -39,7 +50,9 @@
       "toolSource": {
         "remoteMcpServer": {
           "mcpServerUrl": "https://three.ws/api/mcp-studio",
-          "mcpToolDescription": { "file": "mcptools.json" },
+          "mcpToolDescription": {
+            "file": "mcptools.json"
+          },
           "authorization": {
             "type": "AzureKeyVault",
             "referenceId": "${MS_KEYVAULT_URL}"
@@ -48,5 +61,45 @@
       }
     }
   ],
-  "validDomains": ["three.ws"]
+  "validDomains": [
+    "three.ws"
+  ],
+  "composeExtensions": [
+    {
+      "botId": "${MS_TEAMS_BOT_APP_ID}",
+      "commands": [
+        {
+          "id": "searchAgents",
+          "type": "query",
+          "title": "Agents",
+          "description": "Find a three.ws agent and share its live card",
+          "initialRun": true,
+          "context": [
+            "compose",
+            "commandBox"
+          ],
+          "parameters": [
+            {
+              "name": "searchQuery",
+              "title": "Agent name",
+              "description": "Name or description of a three.ws agent",
+              "inputType": "text"
+            }
+          ]
+        }
+      ],
+      "messageHandlers": [
+        {
+          "type": "link",
+          "value": {
+            "domains": [
+              "three.ws",
+              "www.three.ws"
+            ],
+            "supportsAnonymizedPayloads": true
+          }
+        }
+      ]
+    }
+  ]
 }

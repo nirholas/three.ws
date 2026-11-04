@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Activate your Microsoft purchase · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Activate a three.ws subscription bought on Microsoft Marketplace. Sign in with your Microsoft work account to link the purchase to your three.ws account and unlock the plan." />
+		<meta name="robots" content="noindex" />
+		<meta name="referrer" content="no-referrer" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Activate your Microsoft purchase · three.ws" />
+		<meta property="og:description" content="Link a three.ws subscription bought on Microsoft Marketplace to your account." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Microsoft+Marketplace&amp;d=Activate+your+three.ws+subscription.&amp;p=%2Fmicrosoft%2Factivate" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body>
+		<div id="nav-container"></div>
+
+		<main class="ma-wrap">
+			<p class="ma-crumb"><a href="/">Home</a> / <a href="/pricing">Pricing</a> / Microsoft Marketplace</p>
+			<div id="ma-live" class="ma-sr" aria-live="polite"></div>
+			<div id="ma-root" aria-busy="true">
+				<div class="ma-skel is-title" aria-hidden="true"></div>
+				<div class="ma-skel is-card" aria-hidden="true"></div>
+			</div>
+		</main>
+
+		<script type="module" src="/src/microsoft-activate.js"></script>
+		<script src="/nav.js" defer></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

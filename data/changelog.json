@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Play holds up on a shaky connection",
+			"summary": "When the connection drops in Play, you now get a plain explanation and a way forward instead of a raw error code. Builds that fail to save retry on their own until they land, and a world whose saved builds did not load tries again before telling you. A dropped matchmaking poll keeps your community in the war queue. A message thread that fails to load shows a Retry button, and a chat reply that drops shows why instead of \"They went quiet\". The pay demo only says no funds moved when that is certain. Escape now closes only the top panel, and the loading and error screens, the wheel and the stage prompt follow your language.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "One MCP install for every three.ws tool",
 			"summary": "Add https://three.ws/mcp to Claude, Cursor or any MCP client and get every three.ws tool behind one sign-in, with financial tools off until you opt in. Clients that only speak stdio can run npx -y @three-ws/mcp with a THREE_WS_API_KEY, and the MCP registry listing and docs now lead with the unified endpoint.",
 			"tags": [
