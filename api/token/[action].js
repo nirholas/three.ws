@@ -48,18 +48,26 @@ const PURPOSES = {
 
 const SOLANA_ADDRESS = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, 'invalid Solana address');
 
-// Typed failures from the pricing / fund-routing layer that mean "briefly
-// unavailable", not "internal fault". Their messages carry no secrets, so we
-// answer them with an honest 503 + retry hint here — before they reach wrap()'s
+// Typed failures from the pricing / fund-routing layer. Their messages carry no
+// secrets, so we answer them with an honest 503 here, before they reach wrap()'s
 // generic sanitizer, which would otherwise flatten them into the scary
-// "internal error — quote ref …" support dump and strip the actionable code.
+// "internal error, quote ref ..." support dump and strip the actionable code.
+//
+// Two families, because they recover differently:
+//   - transient: the price feed or RPC dropped out. A retry in a few seconds can
+//     succeed, so the answer carries a retry-after back-off.
+//   - not configured: a fund-routing variable (treasury, holder rewards, quote
+//     signing secret) is unset on this deployment. No retry can succeed until an
+//     operator sets it, so there is no retry hint and the copy says so plainly.
+const NOT_CONFIGURED_DETAIL = 'Paying in $THREE is not switched on yet, so nothing was charged.';
 const QUOTE_UNAVAILABLE_DETAIL = {
 	price_unavailable: 'Live $THREE price is briefly unavailable. Try again in a moment.',
-	treasury_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
-	rewards_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
-	quote_signing_unavailable: 'The $THREE payment rail is briefly unavailable. Try again shortly.',
 	rpc_unavailable: 'Solana RPC is briefly unavailable, so a live quote cannot be priced. Try again shortly.',
+	treasury_unavailable: NOT_CONFIGURED_DETAIL,
+	rewards_unavailable: NOT_CONFIGURED_DETAIL,
+	quote_signing_unavailable: NOT_CONFIGURED_DETAIL,
 };
+const QUOTE_NOT_CONFIGURED = new Set(['treasury_unavailable', 'rewards_unavailable', 'quote_signing_unavailable']);
 
 // ── GET /api/token/config ────────────────────────────────────────────────────
 
@@ -146,8 +154,10 @@ async function handleQuote(req, res) {
 		const code = QUOTE_UNAVAILABLE_DETAIL[err?.code] ? err.code : isRpcOutageError(err) ? 'rpc_unavailable' : null;
 		const detail = code ? QUOTE_UNAVAILABLE_DETAIL[code] : null;
 		if (detail) {
-			// Honest, safe-to-show 503 with the actionable code preserved + a back-off
-			// hint, so the client renders a clean "try again shortly" retry state.
+			// Honest, safe-to-show 503 with the actionable code preserved. Only a
+			// transient cause gets the back-off hint; a configuration gap gets none,
+			// so no client loops on a retry that cannot succeed.
+			if (QUOTE_NOT_CONFIGURED.has(code)) return error(res, 503, code, detail, { configured: false });
 			res.setHeader('retry-after', '15');
 			return error(res, 503, code, detail, { retry_after: 15 });
 		}

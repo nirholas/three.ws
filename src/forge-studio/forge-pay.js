@@ -16,7 +16,7 @@
 // (Retry). The modal never throws; it resolves { ok:false } on cancel/error and
 // { ok:true, paymentId, refId } on a verified on-chain payment.
 
-import { payWithToken } from '../token-pay.js';
+import { fetchTokenConfig, payWithToken } from '../token-pay.js';
 import { leaveAppForPayment } from '../shared/native-handoff.js';
 
 const ECONOMY_URL = '/three-token';
@@ -54,6 +54,32 @@ const PHASE_COPY = {
 	confirming: 'Confirming on Solana…',
 	settling: 'Verifying your payment…',
 };
+
+const NOT_CONFIGURED_CODES = new Set(['treasury_unavailable', 'rewards_unavailable', 'quote_signing_unavailable']);
+
+function notConfiguredState() {
+	return {
+		title: 'Not switched on yet',
+		detail: 'Paying in $THREE is not switched on yet, so nothing was charged.',
+		cta: null,
+	};
+}
+
+// Whether the consumption split can route today. /api/token/config reports each
+// fund-routing wallet as configured or not; when one the consumption split pays
+// is unset, every quote answers 503 not-configured, so the sheet says so before
+// any risk prompt or Pay button. A failed read returns null and the sheet goes
+// on as normal: the quote stays the authority either way.
+async function consumptionRailReady() {
+	try {
+		const cfg = await fetchTokenConfig();
+		const configured = { treasury: cfg?.treasury_configured, rewards: cfg?.rewards_configured };
+		const roles = (cfg?.split_policies?.consumption || []).map((leg) => leg.role);
+		return roles.every((role) => configured[role] !== false);
+	} catch {
+		return null;
+	}
+}
 
 // Classify a thrown error into a designed, recoverable state. Returns
 // { title, detail, cta } where cta is { label, href } | { label, retry:true } | null.
@@ -113,15 +139,17 @@ function classifyError(err) {
 			cta: { label: 'Try again', retry: true },
 		};
 	}
-	// The server fails closed on a transient back-end gap (treasury/rewards routing
-	// not ready, generation lane down) with a typed, safe-to-show code. Recognize
-	// that family so the user sees an honest, reassuring retry state. A genuinely
-	// unexpected fault (code 'internal_error') falls through to the generic branch
-	// below, which keeps the support ref the user can quote.
+	// A fund-routing variable (treasury, holder rewards, quote signing secret) is
+	// unset on this deployment. No retry can succeed until an operator sets it,
+	// so the state says so and offers none.
+	if (NOT_CONFIGURED_CODES.has(code) || err?.configured === false) return notConfiguredState();
+	// The server fails closed on a transient back-end gap (generation lane down,
+	// allowance read failed) with a typed, safe-to-show code. Recognize that
+	// family so the user sees an honest retry state. A genuinely unexpected fault
+	// (code 'internal_error') falls through to the generic branch below, which
+	// keeps the support ref the user can quote.
 	if (
 		code === 'service_unavailable' ||
-		code === 'treasury_unavailable' ||
-		code === 'rewards_unavailable' ||
 		code === 'allowance_unavailable' ||
 		code === 'generation_unavailable'
 	) {
@@ -156,7 +184,7 @@ function classifyError(err) {
  * @param {string} [params.refPrefix]    client-nonce prefix (action name)
  * @returns {Promise<{ ok: true, paymentId: string, refId: string } | { ok: false, cancelled?: boolean }>}
  */
-export function payForConsumption({
+export async function payForConsumption({
 	usd,
 	unit = 'one generation',
 	confirm = 'One generation, paid in $THREE.',
@@ -164,7 +192,9 @@ export function payForConsumption({
 	successText = 'Payment confirmed — continuing…',
 	refPrefix = 'forge',
 } = {}) {
-	if (leaveAppForPayment()) return Promise.resolve({ ok: false, cancelled: true });
+	if (leaveAppForPayment()) return { ok: false, cancelled: true };
+	// A rail that is not switched on gets the honest sheet straight away.
+	const ready = await consumptionRailReady();
 	injectStyles();
 	return new Promise((resolve) => {
 		const refId = clientNonce(refPrefix);
@@ -213,7 +243,10 @@ export function payForConsumption({
 		}
 
 		function showError(err) {
-			const info = classifyError(err);
+			showState(classifyError(err));
+		}
+
+		function showState(info) {
 			statusEl.className = 'fpay-status fpay-status--err';
 			statusEl.innerHTML =
 				`<strong class="fpay-err-title">${escapeHtml(info.title)}</strong>` +
@@ -280,7 +313,11 @@ export function payForConsumption({
 			overlay.classList.add('fpay-in');
 			(modal || overlay).focus?.();
 		});
-		showConfirm();
+		if (ready === false) {
+			// Nothing can be paid, so the headline states the price without "Pay".
+			overlay.querySelector('.fpay-title').textContent = `${usdLabel(usd)} in $THREE`;
+			showState(notConfiguredState());
+		} else showConfirm();
 	});
 }
 
