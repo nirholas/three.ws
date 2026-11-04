@@ -28,10 +28,17 @@ RUN mkdir -p /models \
     && mv /tmp/aslfr/cfg_2/fold-1/model.tflite /models/model.tflite \
     && rm -rf /tmp/weights.zip /tmp/aslfr
 
+# Word-level PopSign model + label map (signs.tflite, signs_labels.json), staged
+# into signs-weights/ by cloudbuild.yaml from gs://three-ws-model-weights/popsign-250/.
+# Empty when the model has not passed its quality bar: the service then serves
+# fingerspelling only and /recognize-signs answers 503.
+COPY signs-weights/ /models/
+
 WORKDIR /app
 COPY inference_args.json /app/inference_args.json
 COPY character_to_prediction_index.json /app/character_to_prediction_index.json
 COPY decode.py /app/decode.py
+COPY signs.py /app/signs.py
 COPY main.py /app/main.py
 
 EXPOSE 8080

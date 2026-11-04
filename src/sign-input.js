@@ -34,6 +34,30 @@ const GROUP_FIELDS = {
 	pose: 'poseLandmarks',
 };
 
+export const MODES = Object.freeze(['fingerspelling', 'signs']);
+
+/** Schema URL for a mode; fingerspelling keeps the bare endpoint it always used. */
+export function schemaUrl(apiBase, mode) {
+	return mode === 'signs' ? `${apiBase}?mode=signs` : apiBase;
+}
+
+/** POST body for a mode. Fingerspelling is byte-identical to the original shape. */
+export function requestBody(frames, mode) {
+	return mode === 'signs' ? { mode: 'signs', frames } : { frames };
+}
+
+/**
+ * Normalise a worker response. Signs carry a ranked `signs` list and `text` is
+ * the best guess; fingerspelling keeps its text/raw/cleaned fields.
+ */
+export function parseRecognition(out, mode) {
+	if (mode === 'signs') {
+		const signs = Array.isArray(out.signs) ? out.signs : [];
+		return { mode, signs, text: signs[0]?.sign ?? '', raw: signs[0]?.sign ?? '', confidence: out.confidence ?? signs[0]?.probability ?? null, cleaned: false, ms: out.ms };
+	}
+	return { mode, text: out.text ?? '', raw: out.raw ?? out.text ?? '', confidence: out.confidence ?? null, cleaned: !!out.cleaned, ms: out.ms };
+}
+
 /** Parse the worker's column names once into fast extractors. */
 export function buildColumnExtractors(columns) {
 	return columns.map((name) => {
@@ -61,12 +85,15 @@ export class SignInput {
 	 *   onState?: (state: 'loading'|'capturing'|'transcribing'|'idle', detail?: object) => void,
 	 *   maxSeconds?: number,
 	 *   targetFps?: number,
+	 *   mode?: 'fingerspelling'|'signs',
 	 * }} [opts]
 	 */
 	constructor(opts = {}) {
 		this.apiBase = opts.apiBase ?? '/api/asl-recognition';
 		this.onState = opts.onState ?? (() => {});
-		this.maxSeconds = opts.maxSeconds ?? 20;
+		this.mode = MODES.includes(opts.mode) ? opts.mode : 'fingerspelling';
+		// A word sign lasts a second or two; spelling a name runs much longer.
+		this.maxSeconds = opts.maxSeconds ?? (this.mode === 'signs' ? 6 : 20);
 		this.targetFps = opts.targetFps ?? 24;
 
 		this._landmarker = null;
@@ -90,7 +117,7 @@ export class SignInput {
 		if (this._landmarker && this._extractors) return;
 		this.onState('loading');
 		const [schemaRes, fileset] = await Promise.all([
-			fetch(this.apiBase, { headers: { accept: 'application/json' } }),
+			fetch(schemaUrl(this.apiBase, this.mode), { headers: { accept: 'application/json' } }),
 			visionWasmBase().then((base) => FilesetResolver.forVisionTasks(base)),
 		]);
 		if (!schemaRes.ok) {
@@ -164,18 +191,11 @@ export class SignInput {
 			const res = await fetch(this.apiBase, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ frames }),
+				body: JSON.stringify(requestBody(frames, this.mode)),
 			});
 			const out = await res.json().catch(() => ({}));
 			if (!res.ok) throw new Error(out.message || `transcription failed (${res.status})`);
-			return {
-				text: out.text ?? '',
-				raw: out.raw ?? out.text ?? '',
-				confidence: out.confidence ?? null,
-				cleaned: !!out.cleaned,
-				frames: frames.length,
-				ms: out.ms,
-			};
+			return { ...parseRecognition(out, this.mode), frames: frames.length };
 		} finally {
 			this.onState('idle');
 		}

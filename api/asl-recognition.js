@@ -12,6 +12,15 @@
  *       and get the worker's raw output); `confidence` is the recognizer's
  *       mean per-character softmax, which the UI uses to warn on a bad read.
  *
+ * Word-level signs (PopSign ASL, 250 everyday signs) share the endpoint:
+ *
+ *   GET  /api/asl-recognition?mode=signs
+ *     → { columns, max_frames, min_frames, labels, top_k }
+ *   POST /api/asl-recognition  { mode: 'signs', frames }
+ *     → { signs: [{ sign, probability } x5], confidence, frames, ms }
+ *       503 { error: 'signs_unavailable' } until the worker carries the word
+ *       model. `mode` defaults to 'fingerspelling'; any other value is a 400.
+ *
  * Thin authenticated proxy to workers/model-asl-recognition (Kaggle-2023
  * ASLFR 1st-place model, Apache-2.0 weights, FSboard CC BY 4.0 corpus).
  * Landmarks are extracted client-side (src/sign-input.js), so raw video
@@ -46,8 +55,8 @@ function unconfigured(res) {
 	});
 }
 
-let _schemaCache = null;
-let _schemaAt = 0;
+const MODES = ['fingerspelling', 'signs'];
+const _schemas = {}; // mode -> { value, at }
 const SCHEMA_TTL_MS = 10 * 60 * 1000;
 
 export default wrap(async (req, res) => {
@@ -58,16 +67,18 @@ export default wrap(async (req, res) => {
 	if (!cfg) return unconfigured(res);
 
 	if (req.method === 'GET') {
-		if (_schemaCache && Date.now() - _schemaAt < SCHEMA_TTL_MS) {
-			return json(res, 200, _schemaCache);
-		}
-		const r = await fetchUpstream(`${cfg.base}/schema`, {
+		const qmode = new URL(req.url || '/', 'http://localhost').searchParams.get('mode') || 'fingerspelling';
+		if (!MODES.includes(qmode)) return badMode(res);
+		const cached = _schemas[qmode];
+		if (cached && Date.now() - cached.at < SCHEMA_TTL_MS) return json(res, 200, cached.value);
+		const r = await fetchUpstream(`${cfg.base}${qmode === 'signs' ? '/signs-schema' : '/schema'}`, {
 			headers: { authorization: `Bearer ${cfg.key}` },
 		}, { name: WORKER_BREAKER, timeoutMs: SCHEMA_TIMEOUT_MS, attempts: 3, okWhen: () => true });
+		if (r.status === 503 && qmode === 'signs') return signsUnavailable(res);
 		if (!r.ok) return json(res, 502, { error: 'worker_error', status: r.status });
-		_schemaCache = await r.json();
-		_schemaAt = Date.now();
-		return json(res, 200, _schemaCache);
+		const value = await r.json();
+		_schemas[qmode] = { value, at: Date.now() };
+		return json(res, 200, value);
 	}
 
 	const rl = await limits.aslTranscribeIp(clientIp(req));
@@ -76,7 +87,10 @@ export default wrap(async (req, res) => {
 	if (!body || !Array.isArray(body.frames)) {
 		return json(res, 400, { error: 'bad_request', message: 'Body must be { frames: [[…]] }.' });
 	}
-	const r = await fetchUpstream(`${cfg.base}/transcribe`, {
+	const mode = body.mode ?? 'fingerspelling';
+	if (!MODES.includes(mode)) return badMode(res);
+	const route = mode === 'signs' ? '/recognize-signs' : '/transcribe';
+	const r = await fetchUpstream(`${cfg.base}${route}`, {
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
@@ -85,12 +99,14 @@ export default wrap(async (req, res) => {
 		body: JSON.stringify({ frames: body.frames }),
 	}, { name: WORKER_BREAKER, timeoutMs: TRANSCRIBE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 	const out = await r.json().catch(() => ({}));
+	if (mode === 'signs' && r.status === 503) return signsUnavailable(res);
 	if (!r.ok) {
 		return json(res, r.status === 400 ? 400 : 502, {
 			error: r.status === 400 ? 'bad_frames' : 'worker_error',
 			message: out.detail || out.message || `worker returned ${r.status}`,
 		});
 	}
+	if (mode === 'signs') return json(res, 200, out);
 	out.raw = out.text ?? '';
 	if (out.raw && body.clean !== false) {
 		out.text = await cleanTranscription(out.raw);
@@ -98,6 +114,17 @@ export default wrap(async (req, res) => {
 	}
 	return json(res, 200, out);
 });
+
+function badMode(res) {
+	return json(res, 400, { error: 'bad_request', message: `mode must be one of: ${MODES.join(', ')}.` });
+}
+
+function signsUnavailable(res) {
+	return json(res, 503, {
+		error: 'signs_unavailable',
+		message: 'Word-level sign recognition is not live yet. Fingerspelling is available.',
+	});
+}
 
 /**
  * Webcam fingerspelling decodes at a 10–20% character error rate; a

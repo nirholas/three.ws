@@ -869,3 +869,7 @@ Kaggle ISLR 1st-place architecture on the PopSign ASL v1.0 corpus (CC BY 4.0),
 a one-GPU-day job, and compiling both models behind this same endpoint.
 ~~~~
 
+
+## Status (2026-11-04)
+
+Built and tested: worker `/recognize-signs` and `/signs-schema` (fail closed with 503 until weights exist), proxy `mode: "signs"`, `SignInput` signs mode, Cloud Build verify config, and the full training pipeline under `workers/model-asl-recognition/training/` (landmark extraction, signer-disjoint split, model + TFLite export, eval with the 80% bar). Docs and PROVENANCE.md written. Owner-owned remainder: Kaggle token and PopSign download (none exists on this machine), GPU training run, eval at or above 80% top-1, copy weights into `signs-weights/`, worker deploy, then the UI mode switch.

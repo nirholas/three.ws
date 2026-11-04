@@ -335,6 +335,8 @@ POST /api/asl-recognition   { frames: [[390 numbers|null] …] }
 
 `GET` returns the feature schema: the exact MediaPipe Holistic landmark columns, in order, that a frame row must contain (`x_face_0` … `z_pose_21`). `POST` takes one row per video frame and returns the transcription. `null` marks a missing landmark. `text` is the decode after the LLM cleanup pass, `raw` is the recognizer's untouched output, and `confidence` (0 to 1) is its mean per-character certainty, which the UI uses to warn on a poor read instead of inserting the text silently. Full field reference: [docs/api-reference.md](./api-reference.md#transcribe).
 
+**Word-level mode.** Send `"mode": "signs"` (and `GET ?mode=signs` for its schema) to recognise whole signs instead of fingerspelled letters. The reply is `{ signs: [{ sign, probability }, ...5], confidence, frames, ms }` with no LLM pass. Until the sign model is trained and deployed this answers `503 signs_unavailable`; fingerspelling is unaffected. `SignInput` accepts `mode: 'signs'` and returns the same shape. The UI switch stays hidden until the model clears 80% top-1 on held-out signers. Pipeline and licences: [workers/model-asl-recognition](../workers/model-asl-recognition/README.md).
+
 The browser class that does all of this for you is [`src/sign-input.js`](../src/sign-input.js):
 
 ```js

@@ -256,7 +256,7 @@ The endpoint allows cross-origin `GET` and `POST` requests and requires no authe
 curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
 ```
 
-Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->725<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->762<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->55<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
 
 ## Asset Catalog API
 
@@ -3244,6 +3244,10 @@ then build every frame row in this column order.
 | `columns`    | string[] | 390 landmark column names, in order: `<x\|y\|z>_<face\|left_hand\|right_hand\|pose>_<index>` |
 | `max_frames` | number   | Longest accepted capture                                                         |
 | `min_frames` | number   | Below this the capture is too short to decode                                    |
+
+### Word-level signs
+
+`GET /api/asl-recognition?mode=signs` returns `{ columns, labels, top_k, max_frames, min_frames }`. `POST /api/asl-recognition` with `{ "mode": "signs", "frames": [...] }` returns `{ signs: [{ sign, probability }], confidence, frames, ms }` (top 5, no cleanup pass). Errors: `400 bad_request` (unknown mode or bad frames), `429` rate limited, `503 signs_unavailable` (no sign model deployed yet), `502` upstream failure.
 
 ### Transcribe
 

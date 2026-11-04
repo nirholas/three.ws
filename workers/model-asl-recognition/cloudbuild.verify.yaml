@@ -1,0 +1,22 @@
+# Build-only verification: builds the image and runs the unit tests inside it.
+# No push, no deploy.   gcloud builds submit --config workers/model-asl-recognition/cloudbuild.verify.yaml .
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: [build, --tag, verify:local, .]
+
+  - id: test
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker run --rm -v "$$PWD:/src" -w /src verify:local \
+          sh -c "pip install -q pytest httpx && python -m pytest -q -p no:cacheprovider test_decode.py test_signs_decode.py test_model_smoke.py"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s

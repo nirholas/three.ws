@@ -7,6 +7,17 @@ substitutions:
   _REPO: model-asl-recognition
 
 steps:
+  # Stage the word-level model if one has been published. A missing prefix is
+  # not an error: the image then ships fingerspelling only.
+  - id: stage-signs-weights
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        mkdir -p workers/model-asl-recognition/signs-weights
+        gcloud storage cp 'gs://three-ws-model-weights/popsign-250/signs.tflite' 'gs://three-ws-model-weights/popsign-250/signs_labels.json' workers/model-asl-recognition/signs-weights/ || echo 'no popsign-250 weights published; fingerspelling only'
+
   - id: build
     name: gcr.io/cloud-builders/docker
     dir: workers/model-asl-recognition

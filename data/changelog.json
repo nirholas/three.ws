@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Word-level sign recognition pipeline",
+			"summary": "The ASL recognition worker, API proxy and webcam client gained a word-level signs mode over 250 signs, with the training and evaluation pipeline; it answers 503 until the model is trained and deployed.",
+			"tags": ["feature", "asl"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Durable bounty ledger and accounting export",
 			"summary": "Grind-bounty escrow, payout and refund history now lives in Postgres instead of Redis, and admins can export withdrawals, platform fees and bounty flows as CSV or JSON for bookkeeping.",
 			"tags": [

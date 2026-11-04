@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildColumnExtractors, extractRow } from '../src/sign-input.js';
+import { buildColumnExtractors, extractRow, schemaUrl, requestBody, parseRecognition, MODES } from '../src/sign-input.js';
 
 describe('buildColumnExtractors', () => {
 	it('parses the worker column naming', () => {
@@ -40,5 +40,30 @@ describe('extractRow', () => {
 	it('nulls everything on an empty result', () => {
 		expect(extractRow({}, ex)).toEqual([null, null, null]);
 		expect(extractRow(null, ex)).toEqual([null, null, null]);
+	});
+});
+
+describe('recognition modes', () => {
+	it('keeps the fingerspelling request exactly as it was', () => {
+		expect(schemaUrl('/api/asl-recognition', 'fingerspelling')).toBe('/api/asl-recognition');
+		expect(requestBody([[1]], 'fingerspelling')).toEqual({ frames: [[1]] });
+	});
+	it('addresses the word-level route in signs mode', () => {
+		expect(schemaUrl('/api/asl-recognition', 'signs')).toBe('/api/asl-recognition?mode=signs');
+		expect(requestBody([[1]], 'signs')).toEqual({ mode: 'signs', frames: [[1]] });
+		expect(MODES).toEqual(['fingerspelling', 'signs']);
+	});
+	it('parses a ranked signs response with the best guess as text', () => {
+		const r = parseRecognition({ signs: [{ sign: 'hello', probability: 0.8 }, { sign: 'yes', probability: 0.1 }], confidence: 0.8, ms: 9 }, 'signs');
+		expect(r).toMatchObject({ mode: 'signs', text: 'hello', confidence: 0.8, cleaned: false, ms: 9 });
+		expect(r.signs).toHaveLength(2);
+	});
+	it('parses an empty signs response without throwing', () => {
+		expect(parseRecognition({}, 'signs')).toMatchObject({ text: '', signs: [], confidence: null });
+	});
+	it('parses a fingerspelling response unchanged', () => {
+		expect(parseRecognition({ text: 'hi', raw: 'h i', confidence: 0.7, cleaned: true }, 'fingerspelling')).toEqual({
+			mode: 'fingerspelling', text: 'hi', raw: 'h i', confidence: 0.7, cleaned: true, ms: undefined,
+		});
 	});
 });

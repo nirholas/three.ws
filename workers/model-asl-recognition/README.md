@@ -57,6 +57,36 @@ garbage.
 The browser extracts landmarks client-side with MediaPipe tasks-vision, so no
 video ever leaves the user's machine, only pose coordinates.
 
+### Word-level signs (`/recognize-signs`)
+
+```
+GET  /signs-schema     → { columns, labels, top_k, max_frames, min_frames }
+POST /recognize-signs  { frames: [[390 numbers|null]…] }
+                       → { signs: [{ sign, probability }×5], confidence, frames, ms }
+```
+
+Same frame format and auth as `/transcribe`, so the browser captures once for
+either mode. The service loads `signs-weights/sign_model.tflite` and
+`signs-weights/sign_labels.json` when both exist. Without them the endpoint
+answers `503 signs_model_unavailable` and `/health` reports
+`signs_model_loaded: false`; it never guesses. `/api/asl-recognition` exposes it
+as `mode: "signs"`.
+
+## Training the sign model
+
+`training/` holds the full pipeline (see `training/DATA.md` for the data steps):
+`prepare_popsign.py` (video to landmark TFRecords, signer-disjoint splits),
+`model.py` + `train_islr.py` (Conv1D + Transformer, TFLite export that takes the
+raw frames), and `eval_islr.py` (runs the shipped TFLite on the held-out test
+split and fails below 80% top-1). `columns.py` derives the 390-column layout from
+`inference_args.json`, with `training/test_columns.py` guarding that training and
+serving agree. Run `python -m pytest training test_signs_decode.py`.
+
+## Attribution
+
+The architecture follows the MIT-licensed Kaggle ISLR 1st-place solution; the
+training corpus is PopSign ASL v1.0 (CC BY 4.0). See `PROVENANCE.md`.
+
 ## Local run
 
 ```bash
@@ -129,6 +159,8 @@ curl -s https://three.ws/api/asl-recognition | jq '.columns | length'   # 390
 
 ## Roadmap
 
-Word-level recognition (250 everyday signs) comes from retraining the MIT
-Kaggle ISLR 1st-place architecture on the PopSign ASL v1.0 corpus (CC BY 4.0),
-a one-GPU-day job, and compiling both models behind this same endpoint.
+The word-level endpoint, proxy mode, browser client and training pipeline are
+built. Remaining, owner-owned: a Kaggle token to download PopSign, the GPU
+training run, an eval at or above 80% top-1 on `eval_islr.py`, copying the two
+weight files into `signs-weights/`, and a deploy. The UI mode switch ships only
+after that bar is met.
