@@ -119,3 +119,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 732 | 478f431b2 | autonomous browse loop, policy, pool runner, API, Browse panel and browse_web tool shipped; owner: deploy, live example.com run, observed take-over
 2026-11-04 | 778-plan-robinhood-standalone-repos-reverify.md | see git log | verify:robinhood script (17 rows green, RPC probes ok), live suites split out of hood-api and hood-tokenlist default tests; order file deleted.
 2026-11-04 | 745 | a690ecfa7 | shipped avatar texture layers (schema, compositor, bake, catalog, Skin tab, upload); browser-verified; build:pages and storage-backed upload bake not run
+2026-11-04 | 779-plan-agent-ens-dns-claim-verification.md | see git log | resolver verifies ENS/DNS claims (4 states, 3s/4 names), schema v1.1 claims, badge chips; order file deleted.

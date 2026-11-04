@@ -87,7 +87,21 @@ vi.mock('../../api/_lib/ssrf-guard.js', () => ({
 			: { ok: false, arrayBuffer: async () => new ArrayBuffer(0) },
 }));
 
+// Claim verification has its own suite (tests/agent-name-claims.test.js); here
+// only the handler wiring is under test, so the resolver boundary is stubbed.
+let claimCalls = [];
+let claimsResult = [];
+vi.mock('../../api/_lib/agent-name-claims.js', () => ({
+	MAX_CLAIMS: 4,
+	verifyClaims: async (card, ctx) => {
+		claimCalls.push({ card, ctx });
+		return claimsResult;
+	},
+}));
+
 beforeEach(() => {
+	claimCalls = [];
+	claimsResult = [];
 	quotaOk = true;
 	modelBytes = null;
 	chainResult = {
@@ -106,10 +120,10 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-function makeReq(caip, { method = 'GET' } = {}) {
+function makeReq(caip, { method = 'GET', search = '' } = {}) {
 	const stream = Readable.from([]);
 	stream.method = method;
-	stream.url = `/api/v1/agents/${caip}`;
+	stream.url = `/api/v1/agents/${caip}${search}`;
 	stream.headers = { host: 'three.ws' };
 	stream.query = { caip };
 	return stream;
@@ -144,6 +158,30 @@ describe('GET /api/v1/agents/:caip handler', () => {
 		expect(body.card.name).toBe('Test Agent');
 		expect(body.verified).toEqual({ modelSha256: null, cardSchema: '3d-agent-card-v1' });
 		expect(res.getHeader('cache-control')).toMatch(/s-maxage=300/);
+	});
+
+	it('omits claims entirely when the card has none and no name is queried', async () => {
+		const { body } = await dispatch(makeReq(REF), makeRes());
+		expect('claims' in body).toBe(false);
+		expect(claimCalls).toHaveLength(0);
+	});
+
+	it('adds a verified claims array next to verified when the card lists claims', async () => {
+		chainResult.manifest.claims = [{ type: 'ens', name: 'coachleo.eth' }];
+		claimsResult = [{ type: 'ens', name: 'coachleo.eth', verified: true, state: 'verified' }];
+		const { res, body } = await dispatch(makeReq(REF), makeRes());
+		expect(res.statusCode).toBe(200);
+		expect(body.claims).toEqual(claimsResult);
+		expect(body.verified).toEqual({ modelSha256: null, cardSchema: '3d-agent-card-v1' });
+		expect(claimCalls[0].ctx).toMatchObject({ chainId: 8453, registry: REGISTRY, agentId: '1', names: [] });
+	});
+
+	it('checks names passed as ?name= even when the card lists no claims, capped at 4', async () => {
+		claimsResult = [{ type: 'ens', name: 'a.eth', verified: false, state: 'half_from_name' }];
+		const search = '?name=a.eth&name=b.eth&name=c.eth&name=d.eth&name=e.eth';
+		const { body } = await dispatch(makeReq(REF, { search }), makeRes());
+		expect(body.claims).toEqual(claimsResult);
+		expect(claimCalls[0].ctx.names).toEqual(['a.eth', 'b.eth', 'c.eth', 'd.eth']);
 	});
 
 	it('accepts the array form a catch-all param can take', async () => {

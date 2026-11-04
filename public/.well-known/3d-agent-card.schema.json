@@ -1,7 +1,7 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"$id": "https://three.ws/.well-known/3d-agent-card.schema.json",
-	"title": "three.ws Card v1",
+	"title": "three.ws Card v1.1",
 	"description": "Strict superset of the ERC-8004 registration card (https://eips.ethereum.org/EIPS/eip-8004#registration-v1) for agents whose primary embodiment is a 3D model. Pointed to by the ERC-721 tokenURI on the Identity Registry.",
 	"type": "object",
 	"required": ["type", "name", "description", "model"],
@@ -143,6 +143,20 @@
 					"description": "e.g. \"agent-validation-report/0.1\""
 				},
 				"validator": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" }
+			}
+		},
+
+		"claims": {
+			"type": "array",
+			"description": "Names that claim this agent (v1.1). A claim is verified only when the name also points back at the agent: the ENS text record `agent`, or a TXT record at `_agent.<domain>` (see specs/ENS_AGENT_CLAIM.md). The resolver at /api/v1/agents/:caip verifies each entry and reports a trust state.",
+			"maxItems": 16,
+			"items": {
+				"type": "object",
+				"required": ["type", "name"],
+				"properties": {
+					"type": { "type": "string", "enum": ["ens", "dns"] },
+					"name": { "type": "string", "minLength": 3, "maxLength": 253 }
+				}
 			}
 		},
 

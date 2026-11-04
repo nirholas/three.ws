@@ -72,11 +72,28 @@ The HTTP resolver at [`/api/v1/agents/:caip`](../api/v1/agents/[...caip].js) cur
 }
 ```
 
-Any `claims` array appears only inside `card` (verbatim from the agent card); the resolver does not yet verify it. As a future extension, the resolver SHOULD resolve the card's `claims` array and annotate each entry with a per-name `verified` flag (and a `reason` on failure), e.g. `{ "type": "ens", "name": "coachleo.eth", "verified": true }`. When implemented, verification is best-effort and time-bounded; failures are reported, not thrown.
+When the card lists `claims` (or the request carries `?name=`), the response gains a `claims` array next to `verified`, one entry per name, each with a trust state:
+
+```json
+"claims": [
+	{ "type": "ens", "name": "coachleo.eth", "verified": true, "state": "verified", "canonical": true },
+	{ "type": "dns", "name": "coachleo.com", "verified": false, "state": "half_from_agent",
+	  "reason": "coachleo.com does not point at this agent (TXT record at _agent.coachleo.com has no matching ref)" }
+]
+```
+
+| `state` | Meaning |
+| --- | --- |
+| `verified` | The card lists the name and the name points at the agent. `canonical` says whether the agent is the first ref in the name's record. |
+| `half_from_agent` | The card lists the name, the name does not point back. |
+| `half_from_name` | The name points at the agent but the card does not list it. Only reported for names passed as `?name=<name>` (repeatable, at most 4), since the resolver cannot discover unlisted names. |
+| `unverified` | Neither direction matches, the claim is malformed, or the lookup failed (the `reason` says which). |
+
+Verification is best-effort and time-bounded: ENS is read from mainnet through `MAINNET_RPC_URL` (`getEnsText`, key `agent`), DNS through DNS-over-HTTPS (Cloudflare) with the SSRF-safe fetch. At most 4 names are checked per request, each within 3 seconds; further names come back `unverified` with a "not checked" reason. Failures are reported on the claim, never thrown, and successful lookups are cached for the same 5 minutes as the endpoint. Implementation: [api/_lib/agent-name-claims.js](../api/_lib/agent-name-claims.js); the `<three-d-agent-badge>` embed shows each state.
 
 ## Adding `claims` to the v1 schema
 
-Treat `claims` as an optional extension block (not yet in [3d-agent-card.schema.json](../public/.well-known/3d-agent-card.schema.json) v1.0). It will be promoted to v1.1 once at least one validator runs claim verification as part of the suite.
+`claims` is an optional property of [3d-agent-card.schema.json](../public/.well-known/3d-agent-card.schema.json) as of v1.1, promoted once the resolver began verifying it. The conformance URI is unchanged: a v1 card without `claims` is still a valid v1.1 card.
 
 ## Security notes
 

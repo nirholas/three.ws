@@ -15,6 +15,10 @@
  *   2. sha256(model bytes) === card.model.sha256.
  *   3. Validation report present and reportType matches (if card has `validation`).
  *
+ * When the resolver reports name claims (ENS / DNS, specs/ENS_AGENT_CLAIM.md),
+ * one chip per claim follows the pill: verified, half_from_agent,
+ * half_from_name or unverified. Nothing renders when there are no claims.
+ *
  * Renders a pill: verified / partial / unverified / error.
  */
 
@@ -36,7 +40,46 @@ const STYLES = `
 .unverified{ color: #8a1f1f; background: #fdebeb; }
 .loading   { color: #555;    background: #eee; }
 .error     { color: #8a1f1f; background: #fdebeb; }
+.claims { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.claim {
+	display: inline-flex; align-items: center; gap: 5px;
+	padding: 2px 8px; border-radius: 6px; border: 1px solid currentColor;
+	font-size: 11px; cursor: help; user-select: text;
+	transition: opacity .15s, box-shadow .15s;
+}
+.claim:hover { opacity: .8; }
+.claim:active { opacity: .65; }
+.claim:focus-visible, .pill:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.claim.verified        { color: #0a7d2c; background: #e6f5ec; }
+.claim.half_from_agent,
+.claim.half_from_name  { color: #8a5a00; background: #fff3d6; }
+.claim.unverified      { color: #8a1f1f; background: #fdebeb; }
 `;
+
+const CLAIM_LABELS = {
+	verified: 'verified both ways',
+	half_from_agent: 'listed by the agent, name does not point back',
+	half_from_name: 'name points at the agent, agent does not list it',
+	unverified: 'not verified',
+};
+
+function esc(value) {
+	return String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+function claimsHtml(claims) {
+	if (!Array.isArray(claims) || !claims.length) return '';
+	const chips = claims
+		.map((c) => {
+			const state = CLAIM_LABELS[c?.state] ? c.state : 'unverified';
+			const text = `${CLAIM_LABELS[state]}${c?.reason ? `. ${c.reason}` : ''}`;
+			const label = `${c?.type === 'dns' ? 'DNS' : 'ENS'} name ${c?.name || 'unknown'}: ${text}`;
+			return `<span class="claim ${state}" part="claim" tabindex="0" role="note"
+				data-state="${state}" title="${esc(label)}" aria-label="${esc(label)}"><span class="dot"></span>${esc(c?.name || 'unknown')}</span>`;
+		})
+		.join('');
+	return `<div class="claims" part="claims">${chips}</div>`;
+}
 
 async function sha256Hex(bytes) {
 	const buf = await crypto.subtle.digest('SHA-256', bytes);
@@ -54,7 +97,7 @@ async function fetchCard({ agent, cardUrl, resolver }) {
 	if (cardUrl) {
 		const r = await fetch(cardUrl, { mode: 'cors' });
 		if (!r.ok) throw new Error(`card HTTP ${r.status}`);
-		return await r.json();
+		return { card: await r.json(), claims: [] };
 	}
 	if (!agent) throw new Error('no agent ref or card-url provided');
 	// The resolver takes the CAIP ref's "/" as a real path separator, so encode
@@ -65,7 +108,7 @@ async function fetchCard({ agent, cardUrl, resolver }) {
 	const r = await fetch(url, { mode: 'cors' });
 	if (!r.ok) throw new Error(`resolver HTTP ${r.status}`);
 	const body = await r.json();
-	return body.card || body;
+	return { card: body.card || body, claims: Array.isArray(body.claims) ? body.claims : [] };
 }
 
 async function verify(card) {
@@ -123,12 +166,12 @@ class ThreeDAgentBadge extends HTMLElement {
 	attributeChangedCallback() {
 		if (this.isConnected) this.refresh();
 	}
-	render(status, detail) {
+	render(status, detail, claims) {
 		this.shadowRoot.innerHTML = `<style>${STYLES}</style>
-			<a class="pill ${status}" part="pill" title="${detail || ''}"
-				href="${this.detailUrl()}" target="_blank" rel="noopener">
+			<a class="pill ${status}" part="pill" title="${esc(detail)}"
+				href="${esc(this.detailUrl())}" target="_blank" rel="noopener">
 				<span class="dot"></span>${LABELS[status]}
-			</a>`;
+			</a>${claimsHtml(claims)}`;
 	}
 	detailUrl() {
 		const agent = this.getAttribute('agent');
@@ -137,7 +180,7 @@ class ThreeDAgentBadge extends HTMLElement {
 	}
 	async refresh() {
 		try {
-			const card = await fetchCard({
+			const { card, claims } = await fetchCard({
 				agent: this.getAttribute('agent'),
 				cardUrl: this.getAttribute('card-url'),
 				resolver: this.getAttribute('resolver') || DEFAULT_RESOLVER,
@@ -145,9 +188,9 @@ class ThreeDAgentBadge extends HTMLElement {
 			const checks = await verify(card);
 			const status = statusFor(checks);
 			const detail = `model=${checks.model} validation=${checks.validation}`;
-			this.render(status, detail);
+			this.render(status, detail, claims);
 			this.dispatchEvent(
-				new CustomEvent('verified', { detail: { status, checks, card }, bubbles: true }),
+				new CustomEvent('verified', { detail: { status, checks, card, claims }, bubbles: true }),
 			);
 		} catch (err) {
 			this.render('error', String(err.message || err));

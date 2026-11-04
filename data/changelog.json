@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Agent ENS and DNS name claims are verified both ways",
+			"summary": "The agent resolver now checks the names a card claims (ENS text record agent, DNS TXT at _agent.<domain>) and reports verified, half from agent, half from name or unverified for each. The embed badge shows a chip per name with its state.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/api-reference"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Makeup, tattoos and decals for Parametric avatars",
 			"summary": "The Avatar Studio Skin tab layers complexion washes, makeup, tattoos and decals, or your own image, over the Parametric body. The preview matches the saved avatar.",
 			"tags": [

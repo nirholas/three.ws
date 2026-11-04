@@ -29,8 +29,16 @@
  *       modelSha256: true|false|null,   // null when card has no model.sha256
  *       cardSchema:  "registration-v1" | "3d-agent-card-v1" | "unknown"
  *     },
+ *     claims: [                          // only when the card lists claims or ?name= is given
+ *       { type: "ens"|"dns", name, verified: bool,
+ *         state: "verified"|"half_from_agent"|"half_from_name"|"unverified", reason? }
+ *     ],
  *     fetchedAt:   "2026-04-27T12:00:00Z"
  *   }
+ *
+ * Query: `?name=<ens-or-domain>` (repeatable, at most 4) also tests a name the card does
+ * not list, so a name that points at the agent without being listed reports
+ * `half_from_name`.
  *
  * Errors: 400 invalid_caip, 404 not_found, 502 upstream, 429 rate_limited.
  */
@@ -39,6 +47,7 @@ import { wrap, cors, method, json, error, rateLimited } from '../../_lib/http.js
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { resolveOnChainAgent, resolveURI } from '../../_lib/onchain.js';
 import { fetchSafePublicUrl } from '../../_lib/ssrf-guard.js';
+import { verifyClaims, MAX_CLAIMS } from '../../_lib/agent-name-claims.js';
 
 const CAIP_RE = /^eip155:(\d+):(0x[a-fA-F0-9]{40})\/(\d+)$/;
 
@@ -59,6 +68,16 @@ function caipFromReq(req) {
 		return '';
 	}
 }
+// Names passed as ?name=, read from the raw URL so it works on every runtime.
+function queriedNames(req) {
+	const { searchParams } = new URL(req.url, 'http://internal');
+	return searchParams
+		.getAll('name')
+		.map((n) => n.trim())
+		.filter(Boolean)
+		.slice(0, MAX_CLAIMS);
+}
+
 const CACHE_HEADERS = {
 	// 5 min fresh, 1 h stale-while-revalidate at the edge.
 	'cache-control': 'public, s-maxage=300, stale-while-revalidate=3600',
@@ -101,6 +120,12 @@ export default wrap(async (req, res) => {
 
 	const card = result.manifest || null;
 	const verified = await verifyCard(card);
+	const names = queriedNames(req);
+	const hasClaims = Array.isArray(card?.claims) && card.claims.length > 0;
+	const claims =
+		hasClaims || names.length
+			? await verifyClaims(card, { chainId, registry: result.registry, agentId, names })
+			: null;
 
 	return json(
 		res,
@@ -114,6 +139,7 @@ export default wrap(async (req, res) => {
 			tokenURI: result.tokenURI,
 			card,
 			verified,
+			...(claims ? { claims } : {}),
 			fetchedAt: new Date().toISOString(),
 		},
 		CACHE_HEADERS,
