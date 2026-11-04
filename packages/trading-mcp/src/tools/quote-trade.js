@@ -27,7 +27,7 @@ export const def = {
 		'Quote a buy or sell from the agent\'s custodial wallet without sending anything. Runs the same guard chain ' +
 		'a real fill runs (kill switch, per-trade cap, daily budget, USD ceiling, price-impact breaker, rug firewall, ' +
 		'SOL headroom) and returns the venue, expected output, minimum received, price impact, fees, wallet balance ' +
-		'and any guard or funds warning. Always quote before execute_trade.',
+		'and any guard or funds warning. Use this before every execute_trade to show the owner what a fill would do.',
 	inputSchema,
 	async handler(args) {
 		const agentId = agentIdArg(args?.agentId);

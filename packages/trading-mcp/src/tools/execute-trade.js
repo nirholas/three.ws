@@ -17,7 +17,7 @@ export const def = {
 	title: 'Execute a trade (moves real funds)',
 	annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
 	description:
-		'FILL a buy or sell from the agent\'s custodial wallet. REAL FUNDS, IRREVERSIBLE: you MUST pass confirm:true, ' +
+		'Use this after the owner approved a quoted trade, to FILL a buy or sell from the agent\'s custodial wallet. REAL FUNDS, IRREVERSIBLE: you MUST pass confirm:true, ' +
 		'and the owner should have approved the exact side, mint and size first (run quote_trade, show the result, ' +
 		'get a yes). The server enforces the per-trade cap, daily budget, USD ceiling, price-impact breaker, rug ' +
 		'firewall and kill switch, and requires the wallet:trade grant plus the signed real-funds agreement; a breach ' +
