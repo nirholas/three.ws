@@ -152,7 +152,7 @@ Click any thumbnail to open a full-screen lightbox with advanced inspection tool
 - **UV wireframe overlay** — draw UV seams from mesh attributes over the texture
 - **Zoom and pan** — mouse wheel to zoom, drag to pan, Fit button to reset
 
-The Texture Inspector is read-only. Texture replacement (upload a new image to replace an existing slot) is on the roadmap but is not yet available in the current release.
+**Replace a texture.** In the lightbox, choose Replace and pick a PNG, JPEG or WebP (up to 32 MB). The image shows on the model straight away and is written into the exported GLB. Base color, normal, metallic-roughness, occlusion and emissive can be replaced; metallic and roughness share one slot, so replacing either replaces both. If the file is the wrong type or too large, the lightbox says why and you can pick another.
 
 ---
 
@@ -324,13 +324,21 @@ The `onChange` callback fires on any material, transform, or visibility edit, an
 
 ## Known Limitations
 
-The editor is at format version `agent-editor/0.1`. The following rough edges are documented in the spec and will be addressed before 1.0:
+The editor is at format version `agent-editor/0.2`. Current limits:
 
-1. **`editor` attribute not wired** — the `<agent-3d editor>` attribute is parsed but does not auto-mount the editor panels. Use the JS `Editor` class directly.
-2. **Emissive intensity not persisted** — emissive intensity changes are visible in the viewport but are not written to the exported GLB.
-3. **Visibility via scale hack** — hidden nodes are exported with `scale=[0,0,0]` rather than being removed or flagged. This is not spec-compliant and may cause issues in downstream tools.
-4. **Duplicate material names** — if the GLB contains two materials with the same name, only the first match is patched during export.
-5. **No DOM events** — the editor does not fire DOM events on session changes. External code must call `session.onChange()` directly.
+1. **Embed host has no account actions** - `<agent-3d editor>` offers Download GLB but not Publish or Save to account; those need a three.ws session and live in the app.
+2. **Duplicate names on old sessions** - edits recorded without a glTF index (restored from an older stash) apply to every same-named material or node and the export warns.
+3. **Metallic and roughness textures** share one glTF slot, so they are replaced together.
+
+## Embedding the editor
+
+Add the boolean `editor` attribute to an `<agent-3d>` element (it is ignored when `kiosk` is set):
+
+```html
+<agent-3d editor src="/avatars/cesium-man.glb"></agent-3d>
+```
+
+The element carries `data-editor-version="agent-editor/0.2"` and dispatches bubbling `editor:ready`, `editor:change` (`{ kind, editCount }`), `editor:export` (`{ bytes, warnings }`) and `editor:error` events. Hidden nodes are exported with `KHR_node_visibility`, emissive intensity with `KHR_materials_emissive_strength`.
 
 The full contract lives in [specs/EDITOR_SPEC.md](https://github.com/nirholas/three.ws/blob/main/specs/EDITOR_SPEC.md).
 

@@ -14,10 +14,22 @@ import { TextureInspector } from './texture-inspector.js';
 import { MagicBrush } from './magic-brush.js';
 import { exportEditedGLB, downloadGLB } from './glb-export.js';
 import { log } from '../shared/log.js';
+import { toast } from '../shared/toast.js';
+
+/** Contract version of the editor events and the data-editor-version marker. */
+export const EDITOR_VERSION = 'agent-editor/0.2';
 
 export class Editor {
-	constructor(viewer) {
+	/**
+	 * @param {object} viewer
+	 * @param {{ host?: 'app'|'embed', eventTarget?: HTMLElement|null }} [opts]
+	 *   `embed` is the <agent-3d editor> host: no publish or save-to-account.
+	 */
+	constructor(viewer, { host = 'app', eventTarget = null } = {}) {
 		this.viewer = viewer;
+		this.host = host;
+		this._eventTarget = eventTarget;
+		this._unsubscribe = null;
 		this.session = new EditorSession(viewer);
 		this.materialEditor = new MaterialEditor(viewer, this.session);
 		this.textureInspector = new TextureInspector(viewer, this.session);
@@ -38,11 +50,26 @@ export class Editor {
 		this.sceneExplorer.attach();
 		this._addExportFolder();
 		this.magicBrush.attach();
-		this.session.onChange(() => {
+		this._unsubscribe = this.session.onChange((_session, kind) => {
 			this._updateExportLabel();
 			this._updateExportEnabled();
+			this._dispatch('editor:change', { kind, editCount: this.session.editCount() });
 		});
 		this._updateExportEnabled();
+		const root = this._root();
+		if (root) root.setAttribute('data-editor-version', EDITOR_VERSION);
+		this._dispatch('editor:ready', { version: EDITOR_VERSION });
+	}
+
+	_root() {
+		return this._eventTarget || this.viewer.el || null;
+	}
+
+	/** Bubbling, composed CustomEvent so a host page can listen on <agent-3d> or any ancestor. */
+	_dispatch(type, detail) {
+		const root = this._root();
+		if (!root) return;
+		root.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
 	}
 
 	onContentChanged({ url = null, file = null, name = null } = {}) {
@@ -65,14 +92,11 @@ export class Editor {
 				'download',
 			)
 			.name('💾 download GLB');
-		this._publishCtrl = folder
-			.add(
-				{
-					publish: () => this._openPublishModal(),
-				},
-				'publish',
-			)
-			.name('📤 publish as embed');
+		if (this.host !== 'embed') {
+			this._publishCtrl = folder
+				.add({ publish: () => this._openPublishModal() }, 'publish')
+				.name('📤 publish as embed');
+		}
 		folder
 			.add(
 				{
@@ -81,26 +105,20 @@ export class Editor {
 				'explorer',
 			)
 			.name('🗂 scene panel [T]');
-		this._saveCtrl = folder
-			.add({ save: () => this._saveEdits() }, 'save')
-			.name('☁️ save edits');
-		folder
-			.add(
-				{
-					reset: () => this._resetAll(),
-				},
-				'reset',
-			)
-			.name('↺ revert all edits');
+		if (this.host !== 'embed') {
+			this._saveCtrl = folder
+				.add({ save: () => this._saveEdits() }, 'save')
+				.name('☁️ save edits');
+			folder
+				.add({ reset: () => this._resetAll() }, 'reset')
+				.name('↺ revert all edits');
+		}
 		this.exportFolder = folder;
 	}
 
 	_updateExportLabel() {
 		if (!this._exportCtrl) return;
-		const count =
-			Object.keys(this.session.materialEdits).length +
-			Object.keys(this.session.transformEdits).length +
-			Object.keys(this.session.visibilityEdits).length;
+		const count = this.session.editCount();
 		const base = '💾 download GLB';
 		this._exportCtrl.name(count > 0 ? `${base} (${count})` : base);
 	}
@@ -117,14 +135,18 @@ export class Editor {
 
 	async _exportGLB() {
 		try {
-			const bytes = await exportEditedGLB(this.session);
+			const { bytes, warnings } = await exportEditedGLB(this.session);
 			const base = (this.session.sourceName || 'model')
 				.replace(/\?.*$/, '')
 				.replace(/\.(glb|gltf)$/i, '');
 			downloadGLB(bytes, `${base}.edited.glb`);
+			this._dispatch('editor:export', { bytes: bytes.byteLength, warnings });
+			if (warnings?.length) {
+				toast(`Exported with ${warnings.length} warning${warnings.length === 1 ? '' : 's'}: ${warnings[0]}`, { variant: 'info' });
+			}
 		} catch (err) {
 			log.error('[editor] GLB export failed', err);
-			window.alert('GLB export failed: ' + (err.message || err));
+			toast('GLB export failed: ' + (err.message || err), { variant: 'error' });
 		}
 	}
 
@@ -199,8 +221,13 @@ export class Editor {
 			modal.open();
 
 			try {
-				const result = await publishEditedGLB(this.session, { onStep: modal.onStep });
-				modal.showResult(result.urls);
+				const result = await publishEditedGLB(this.session, {
+					onStep: (e) => {
+						modal.onStep(e);
+						this._dispatch('editor:publish', { step: e.step, pct: e.pct });
+					},
+				});
+				modal.showResult(result.urls, result.warnings);
 			} catch (err) {
 				if (err instanceof AuthRequiredError || err?.name === 'AuthRequiredError') {
 					modal.showAuthRequired();
@@ -229,6 +256,9 @@ export class Editor {
 	}
 
 	dispose() {
+		this._unsubscribe?.();
+		this._unsubscribe = null;
+		this._root()?.removeAttribute('data-editor-version');
 		this.materialEditor.dispose();
 		this.textureInspector.dispose();
 		this.sceneExplorer.detach();

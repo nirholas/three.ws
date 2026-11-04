@@ -183,3 +183,29 @@ describe('texture replacement', () => {
 		expect(Array.from(mat.getNormalTexture().getImage())).toEqual(Array.from(PNG));
 	});
 });
+
+describe('re-import in the viewer loader', () => {
+	it('a hidden node comes back hidden with its real scale', async () => {
+		const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+		const { installNodeVisibility } = await import('../src/viewer/node-visibility.js');
+		const src = await glbOf((d) => {
+			const scene = d.createScene();
+			const n = d.createNode('Hat').setScale([2, 2, 2]);
+			scene.addChild(n);
+			scene.addChild(d.createNode('Head'));
+		});
+		const { bytes } = await run(
+			session(src, { visibilityEdits: { u1: { name: 'Hat', uuid: 'u1', nodeIndex: 0, visible: false } } }),
+		);
+		const loader = new GLTFLoader();
+		installNodeVisibility(loader);
+		const gltf = await new Promise((res, rej) =>
+			loader.parse(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '', res, rej),
+		);
+		const hat = gltf.scene.getObjectByName('Hat');
+		expect(hat.visible).toBe(false);
+		expect(hat.scale.x).toBe(2);
+		expect(gltf.scene.getObjectByName('Head').visible).toBe(true);
+		expect(gltf.parser.associations.get(hat)?.nodes).toBe(0);
+	});
+});

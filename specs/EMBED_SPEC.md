@@ -159,7 +159,7 @@ The canonical embed shape is `<agent-3d chain-id="8453" agent-id="42">` — the 
 | --------- | ------------------------------------------------------------------------------ |
 | `kiosk`   | forces the bare avatar — hides all chrome (chat, controls, debug GUI, plate)    |
 | `debug`   | overlays scene graph, tool-call log, memory inspector                          |
-| `editor`  | mounts the embed editor instead of the live agent                              |
+| `editor`  | docks the in-page editor (materials, scene explorer, textures, GLB download) on the loaded model; ignored with `kiosk` |
 
 Note: the debug GUI and axes gizmo are already hidden on every bare avatar (the
 default), so `kiosk` is only needed to force bare on an `agent-id`/`manifest`
@@ -431,7 +431,7 @@ If the script fails to load, the element falls back to:
 
 ## Editor mode
 
-`editor` attribute replaces the live agent with the embed editor described in `EDITOR_SPEC.md` (coming next) — drag-to-position, scale handles, live-preview-on-your-site, copy-snippet.
+The boolean `editor` attribute docks the in-page editor on the loaded model (materials, scene explorer, texture inspector with image replacement, Download GLB). It is specified in `EDITOR_SPEC.md` (`agent-editor/0.2`). While active the element carries `data-editor-version` and dispatches `editor:ready`, `editor:change`, `editor:export` and `editor:error` (bubbling, composed).
 
 ```html
 <agent-3d editor src="agent://base/42"></agent-3d>

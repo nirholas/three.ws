@@ -58,6 +58,7 @@ import { estimateFacingYaw, forwardFromYaw, horizontalExtentAt } from './viewer/
 import { LightProbeGrid } from './light-probe-grid.js';
 import { AnimationManager } from './animation-manager.js';
 import { installVrmPlugin, prepareVrmModel } from './game/vrm-loader.js';
+import { installNodeVisibility } from './viewer/node-visibility.js';
 import './game/vrm-boot.js'; // side effect: registers the real @pixiv/three-vrm plugin
 import { applyAvatarMaterialRealism, looksLikeAvatarMesh } from './shared/avatar-material-realism.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
@@ -1579,11 +1580,13 @@ export class Viewer {
 					.setKTX2Loader(ktx2Loader.detectSupport(this.renderer))
 					.setMeshoptDecoder(meshoptDecoder);
 				installVrmPlugin(loader);
+				installNodeVisibility(loader);
 
 				loader.load(
 					url,
 					(gltf) => {
 						if (window.VIEWER) window.VIEWER.json = gltf;
+						this.gltfParser = gltf.parser;
 						prepareVrmModel(gltf);
 
 						const scene = gltf.scene || gltf.scenes[0];

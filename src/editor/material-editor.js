@@ -11,6 +11,9 @@ import { traverseMaterials } from '../viewer/internal.js';
 
 const SIDES = { Front: FrontSide, Back: BackSide, Double: DoubleSide };
 
+/** Texture slots a replacement can change; restored from the snapshot on reset. */
+const MAP_PROPS = ['map', 'normalMap', 'metalnessMap', 'roughnessMap', 'aoMap', 'emissiveMap'];
+
 export class MaterialEditor {
 	constructor(viewer, session) {
 		this.viewer = viewer;
@@ -58,6 +61,7 @@ export class MaterialEditor {
 			flatShading: mat.flatShading,
 			envMapIntensity: mat.envMapIntensity ?? 1,
 			side: mat.side,
+			maps: Object.fromEntries(MAP_PROPS.map((p) => [p, mat[p] ?? null])),
 		};
 		this.snapshots.set(mat.uuid, snap);
 
@@ -74,6 +78,7 @@ export class MaterialEditor {
 				metalness: mat.metalness,
 				roughness: mat.roughness,
 				emissive: [mat.emissive.r, mat.emissive.g, mat.emissive.b],
+				emissiveIntensity: mat.emissiveIntensity,
 				opacity: mat.opacity,
 				alphaMode: mat.transparent ? 'BLEND' : mat.alphaTest > 0 ? 'MASK' : 'OPAQUE',
 				alphaCutoff: mat.alphaTest,
@@ -99,10 +104,7 @@ export class MaterialEditor {
 		folder
 			.add(mat, 'emissiveIntensity', 0, 4, 0.01)
 			.name('emissive int')
-			.onChange(() => {
-				mat.needsUpdate = true;
-				this.viewer.invalidate();
-			});
+			.onChange(record);
 		folder.add(mat, 'opacity', 0, 1, 0.01).onChange(() => {
 			mat.transparent = mat.opacity < 1;
 			record();
@@ -158,6 +160,7 @@ export class MaterialEditor {
 		mat.flatShading = snap.flatShading;
 		if (mat.envMapIntensity !== undefined) mat.envMapIntensity = snap.envMapIntensity;
 		mat.side = snap.side;
+		for (const p of MAP_PROPS) if (p in snap.maps) mat[p] = snap.maps[p];
 		proxy.color = '#' + mat.color.getHexString();
 		proxy.emissive = '#' + mat.emissive.getHexString();
 		proxy.side = Object.keys(SIDES).find((k) => SIDES[k] === mat.side) || 'Front';

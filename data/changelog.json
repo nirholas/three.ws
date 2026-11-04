@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Avatar editor exports what you see, and runs inside <agent-3d editor>",
+			"summary": "Emissive intensity, hidden nodes and duplicate-named materials now survive export (KHR_materials_emissive_strength, KHR_node_visibility, glTF-index matching with warnings), textures can be replaced from the inspector lightbox, and the editor attribute on <agent-3d> docks the editor with data-editor-version and editor:* events.",
+			"tags": [
+				"editor",
+				"avatar",
+				"embed"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Word-level sign recognition pipeline",
 			"summary": "The ASL recognition worker, API proxy and webcam client gained a word-level signs mode over 250 signs, with the training and evaluation pipeline; it answers 503 until the model is trained and deployed.",
 			"tags": ["feature", "asl"]

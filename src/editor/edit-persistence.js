@@ -11,7 +11,9 @@ import { log } from '../shared/log.js';
 const DB_NAME = '3dagent';
 const STORE_NAME = 'edt-bytes';
 const SS_PREFIX = 'edt:';
-const BLOB_VERSION = 1;
+// v2 added textureEdits (image bytes live in IndexedDB under `<id>:tex`).
+// v1 blobs carry no texture edits and restore as-is.
+const BLOB_VERSION = 2;
 
 function base64url(bytes) {
 	let s = '';
@@ -94,6 +96,12 @@ function snapshotEdits(session) {
 		materialEdits: { ...(session.materialEdits || {}) },
 		transformEdits: { ...(session.transformEdits || {}) },
 		visibilityEdits: { ...(session.visibilityEdits || {}) },
+		textureEdits: Object.fromEntries(
+			Object.entries(session.textureEdits || {}).map(([k, e]) => {
+				const { bytes: _bytes, ...meta } = e;
+				return [k, meta];
+			}),
+		),
 	};
 }
 
@@ -101,6 +109,7 @@ const EMPTY_EDITS = {
 	materialEdits: {},
 	transformEdits: {},
 	visibilityEdits: {},
+	textureEdits: {},
 };
 
 /**
@@ -114,6 +123,16 @@ export async function stashSession(session) {
 	const id = newToken();
 	const edits = snapshotEdits(session);
 	const blob = { v: BLOB_VERSION, edits, ts: Date.now() };
+
+	const texEntries = Object.entries(session.textureEdits || {}).map(([key, e]) => ({ key, bytes: e.bytes }));
+	if (texEntries.length) {
+		try {
+			await idbPut(id + ':tex', texEntries);
+		} catch (err) {
+			log.warn('[edit-persistence] failed to stash texture bytes', err);
+			blob.edits.textureEdits = {};
+		}
+	}
 
 	if (session.sourceURL) {
 		blob.source = { url: session.sourceURL };
@@ -168,7 +187,24 @@ export async function restoreSession(token) {
 	}
 	if (!blob || !blob.source) return null;
 
-	const edits = blob.edits || EMPTY_EDITS;
+	const edits = { ...EMPTY_EDITS, ...(blob.edits || {}) };
+	if (blob.v >= 2 && Object.keys(edits.textureEdits || {}).length) {
+		let stored = null;
+		try {
+			stored = await idbGet(token + ':tex');
+		} catch (err) {
+			log.warn('[edit-persistence] idb texture read failed', err);
+		}
+		const bytesByKey = new Map((stored || []).map((t) => [t.key, t.bytes]));
+		const restored = {};
+		for (const [key, meta] of Object.entries(edits.textureEdits)) {
+			const bytes = bytesByKey.get(key);
+			if (bytes) restored[key] = { ...meta, bytes: bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes) };
+		}
+		edits.textureEdits = restored;
+	} else {
+		edits.textureEdits = {};
+	}
 
 	if (blob.source.url) {
 		return { source: { url: blob.source.url }, edits };
@@ -202,6 +238,7 @@ export async function clearStash(token) {
 	}
 	try {
 		await idbDelete(token);
+		await idbDelete(token + ':tex');
 	} catch {
 		/* ignore */
 	}

@@ -76,8 +76,9 @@ export async function publishEditedGLB(
 	// 1. Export
 	onStep({ step: 'export', pct: 0 });
 	let bytes;
+	let warnings = [];
 	try {
-		bytes = await exportEditedGLB(session);
+		({ bytes, warnings } = await exportEditedGLB(session));
 	} catch (e) {
 		throw new ExportFailedError(e);
 	}
@@ -144,7 +145,7 @@ export async function publishEditedGLB(
 		`<script type="module" src="${origin}/dist-lib/agent-3d.js"></script>\n` +
 		`<agent-3d src="${origin}/api/avatars/${avatar.id}" style="width:600px;height:600px"></agent-3d>`;
 
-	return { widget, avatar, urls: { page, iframe, element } };
+	return { widget, avatar, urls: { page, iframe, element }, warnings };
 }
 
 async function postJson(url, body, step, onStatus) {

@@ -16,6 +16,7 @@ import {
 	LinearMipmapLinearFilter,
 } from 'three';
 import { traverseMaterials } from '../viewer/internal.js';
+import { slotForMap, validateTextureFile, previewTexture, ACCEPTED_TEXTURE_TYPES } from './texture-replace.js';
 
 const SLOT_LABELS = {
 	map: 'Base Color',
@@ -145,11 +146,15 @@ export class TextureInspector {
 				if (!tex || !tex.image) continue;
 				const key = tex.uuid;
 				if (!byUuid.has(key)) {
-					byUuid.set(key, { tex, slots: new Set(), materials: new Set(), meshes: [] });
+					byUuid.set(key, { tex, slots: new Set(), materials: new Set(), meshes: [], users: [] });
 				}
 				const entry = byUuid.get(key);
 				entry.slots.add(SLOT_LABELS[slot]);
 				entry.materials.add(mat.name || mat.type);
+				const editable = slotForMap(slot);
+				if (editable && !entry.users.some((u) => u.mat === mat && u.slot === editable)) {
+					entry.users.push({ mat, slot: editable });
+				}
 			}
 		});
 
@@ -235,7 +240,7 @@ export class TextureInspector {
 	}
 
 	_openLightbox(entry) {
-		const { tex, slots, materials, meshes } = entry;
+		const { tex, slots, materials, meshes, users } = entry;
 		const img = tex.image;
 		const w = img.width || 256;
 		const h = img.height || 256;
@@ -263,6 +268,8 @@ export class TextureInspector {
 					<button data-ch="checker" title="Alpha over checkerboard">⌗</button>
 					<button data-act="uv" title="Toggle UV wireframe">UV</button>
 					<button data-act="fit" title="Reset zoom">⤢</button>
+					<button data-act="replace" title="Replace this texture with a PNG, JPEG or WebP image" ${users.length ? '' : 'disabled'}>Replace</button>
+					<input type="file" class="texture-lightbox__file" accept="${ACCEPTED_TEXTURE_TYPES.join(',')}" hidden>
 				</div>
 				<button class="texture-lightbox__close" title="Close">×</button>
 			</div>
@@ -272,6 +279,7 @@ export class TextureInspector {
 					<canvas class="texture-lightbox__uv" width="${w}" height="${h}"></canvas>
 				</div>
 			</div>
+			<div class="texture-lightbox__status" role="status" aria-live="polite" hidden></div>
 			<div class="texture-lightbox__footer">Used by: ${[...materials].join(', ')} · ${meshes.length} mesh${meshes.length === 1 ? '' : 'es'}</div>
 		`;
 		document.body.appendChild(lb);
@@ -434,6 +442,43 @@ export class TextureInspector {
 			applyTransform();
 		};
 
+		const fileInput = lb.querySelector('.texture-lightbox__file');
+		const statusEl = lb.querySelector('.texture-lightbox__status');
+		const replaceBtn = lb.querySelector('[data-act="replace"]');
+		const say = (msg, kind) => {
+			statusEl.hidden = !msg;
+			statusEl.textContent = msg || '';
+			statusEl.dataset.kind = kind || '';
+			statusEl.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+		};
+		if (!users.length) {
+			say('This texture is used by a slot the editor cannot replace yet (only base color, normal, metallic-roughness, occlusion and emissive).', 'info');
+		}
+		fileInput.addEventListener('change', async () => {
+			const file = fileInput.files?.[0];
+			fileInput.value = '';
+			const problem = validateTextureFile(file);
+			if (problem) {
+				say(`${problem} Click Replace to try another file.`, 'error');
+				return;
+			}
+			replaceBtn.disabled = true;
+			say('Applying…', 'info');
+			try {
+				const bytes = new Uint8Array(await file.arrayBuffer());
+				for (const { mat, slot } of users) {
+					await previewTexture(mat, slot, bytes, file.type);
+					this.session.recordTextureEdit(mat, slot, bytes, file.type);
+				}
+				lb.remove();
+				this.rebuild();
+				if (this._lastTextures?.length) this._openPanel(this._lastTextures);
+			} catch (err) {
+				replaceBtn.disabled = false;
+				say(`${err.message || 'The texture could not be applied.'} Click Replace to try again.`, 'error');
+			}
+		});
+
 		lb.querySelectorAll('.texture-lightbox__channels button').forEach((btn) => {
 			btn.addEventListener('click', () => {
 				const act = btn.dataset.act;
@@ -445,6 +490,10 @@ export class TextureInspector {
 				}
 				if (act === 'fit') {
 					fit();
+					return;
+				}
+				if (act === 'replace') {
+					fileInput.click();
 					return;
 				}
 				lb.querySelectorAll('.texture-lightbox__channels button[data-ch]').forEach((b) =>

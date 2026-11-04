@@ -129,7 +129,7 @@ export class SceneExplorer {
 			<div class="scene-explorer__tree"></div>
 			<div class="scene-explorer__inspector"></div>
 		`;
-		this.viewer.el.appendChild(panel);
+		(this.viewer.editorMount || this.viewer.el).appendChild(panel);
 		this.panel = panel;
 		this.treeEl = panel.querySelector('.scene-explorer__tree');
 		this.inspectorEl = panel.querySelector('.scene-explorer__inspector');

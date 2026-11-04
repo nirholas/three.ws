@@ -29,6 +29,7 @@ import { AgentAvatar } from './agent-avatar.js';
 // END:EMBED_BRIDGES_IMPORT
 import { AgentNotifier } from './agent-notifier.js';
 import { log } from './shared/log.js';
+import editorPanelsCss from './editor/editor-panels.css?inline';
 import {
 	apiOriginFromScriptURL,
 	resolveApiBase,
@@ -742,6 +743,7 @@ class Agent3DElement extends HTMLElement {
 			'name-plate',
 			'tracked-mint',
 			'avatar-chat',
+			'editor',
 			'avatar-walk',
 			'chat',
 			'clip',
@@ -1014,6 +1016,10 @@ class Agent3DElement extends HTMLElement {
 		// The skill registry exists from mid-boot on; a policy change applies to
 		// every skill installed after it, including the rest of the boot list.
 		if (name.startsWith('skill-trust') && this._skills) applySkillTrust(this._skills, this, log);
+		if (name === 'editor') {
+			this._syncEditor();
+			return;
+		}
 		if (!this._mounted) return;
 		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name))
 			this._applyLayout();
@@ -2026,6 +2032,7 @@ class Agent3DElement extends HTMLElement {
 				}
 				if (!loaded)
 					throw bodyErr || new Error('avatar body could not be loaded from any gateway');
+				this._syncEditor(loadedCandidate);
 				if (usedFallbackBody) {
 					this._emit(
 						'agent:body-fallback',
@@ -3371,7 +3378,84 @@ class Agent3DElement extends HTMLElement {
 		}
 	}
 
+	/**
+	 * Mount or remove the in-page editor to match the `editor` attribute.
+	 * Opt-in and never in `kiosk`: the editor code is a separate lazy chunk, so a
+	 * page that does not set the attribute downloads none of it. Edits stay in
+	 * this tab until the host exports (the `editor:export` event carries the size
+	 * and any warnings; publishing to an account is the app's job, not the embed's).
+	 */
+	async _syncEditor(url) {
+		if (url !== undefined) this._editorUrl = url;
+		const viewer = this._viewer;
+		const wanted = this.hasAttribute('editor') && !this.hasAttribute('kiosk');
+		if (!viewer || !wanted) {
+			this._disposeEditor();
+			return;
+		}
+		if (this._editor || this._editorLoading) {
+			this._editor?.onContentChanged({ url: this._editorUrl });
+			return;
+		}
+		this._editorLoading = true;
+		const token = this._bootToken;
+		try {
+			const { Editor } = await import('./editor/index.js');
+			if (token !== this._bootToken || this._viewer !== viewer || !this.hasAttribute('editor')) return;
+			this._mountEditorStyles();
+			const dock = document.createElement('div');
+			dock.className = 'agent3d-editor-dock';
+			this._stageEl.appendChild(dock);
+			viewer.editorMount = dock;
+			if (viewer._guiWrap) {
+				dock.appendChild(viewer._guiWrap);
+				viewer._guiWrap.classList.remove('gui-wrap--hidden');
+			}
+			this._editorDock = dock;
+			this._editor = new Editor(viewer, { host: 'embed', eventTarget: this });
+			this._editor.attach();
+			this._editor.onContentChanged({ url: this._editorUrl });
+		} catch (err) {
+			log.warn('[agent-3d] editor failed to load:', err?.message || err);
+			this._emit('editor:error', { message: err?.message || String(err) }, { bubbles: true, composed: true });
+		} finally {
+			this._editorLoading = false;
+		}
+	}
+
+	_mountEditorStyles() {
+		const mk = () => {
+			const el = document.createElement('style');
+			el.setAttribute('data-agent3d-editor', '');
+			el.textContent = editorPanelsCss;
+			return el;
+		};
+		if (!this.shadowRoot.querySelector('style[data-agent3d-editor]')) this.shadowRoot.appendChild(mk());
+		// The texture inspector and its lightbox mount on document.body.
+		if (!document.head.querySelector('style[data-agent3d-editor]')) document.head.appendChild(mk());
+	}
+
+	_disposeEditor() {
+		if (this._editor) {
+			try {
+				this._editor.dispose();
+			} catch (err) {
+				log.warn('[agent-3d] editor dispose failed:', err?.message || err);
+			}
+			this._editor = null;
+		}
+		const wrap = this._viewer?._guiWrap;
+		if (wrap) {
+			wrap.classList.add('gui-wrap--hidden');
+			wrap.remove();
+		}
+		if (this._viewer) this._viewer.editorMount = null;
+		this._editorDock?.remove();
+		this._editorDock = null;
+	}
+
 	_teardown() {
+		this._disposeEditor();
 		// Invalidate any in-flight _wirePostLoadMedia() run from this boot.
 		this._bootToken++;
 		this._variantController = null;

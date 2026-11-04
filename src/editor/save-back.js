@@ -15,14 +15,15 @@ export class SaveError extends Error {
  * Export the current editor session and persist it back to the saved avatar.
  * @param {EditorSession} session
  * @param {{ avatarId: string, onStep?: (s: {step: string, pct: number}) => void }} opts
- * @returns {Promise<{ok: true, avatar: object}>}
+ * @returns {Promise<{ok: true, avatar: object, warnings: string[]}>}
  */
 export async function saveEditedAvatar(session, { avatarId, onStep = () => {} } = {}) {
 	// 1. Export
 	onStep({ step: 'export', pct: 0 });
 	let bytes;
+	let warnings = [];
 	try {
-		bytes = await exportEditedGLB(session);
+		({ bytes, warnings } = await exportEditedGLB(session));
 	} catch (e) {
 		throw new SaveError('server', 'GLB export failed: ' + (e?.message || e));
 	}
@@ -106,5 +107,5 @@ export async function saveEditedAvatar(session, { avatarId, onStep = () => {} } 
 	}
 	onStep({ step: 'patch', pct: 1 });
 
-	return { ok: true, avatar: patchRes.avatar ?? patchRes };
+	return { ok: true, avatar: patchRes.avatar ?? patchRes, warnings };
 }

@@ -1,17 +1,13 @@
-# Editor Spec v0.1 — `<agent-3d editor>` & `src/editor/`
+# Editor Spec v0.2 - `<agent-3d editor>` & `src/editor/`
 
-> **Format ID:** `agent-editor/0.1` > **Stability:** draft — breaking changes may occur before 1.0
+> **Format ID:** `agent-editor/0.2` > **Stability:** draft - breaking changes may occur before 1.0
 > **Relationship to EMBED_SPEC:** EMBED*SPEC defines how a finished agent is played back. This spec defines the surface for \_authoring* one. The `editor` attribute switches the same `<agent-3d>` element from playback mode into editing mode. The "Copy Embed" output of the editor is a plain `<agent-3d>` element with no `editor` attribute — a clean embed the user pastes anywhere.
 
 ---
 
 ## 1. Identity
 
-The editor layer lives in [`src/editor/`](../src/editor/) and is orchestrated by [`src/editor/index.js`](../src/editor/index.js) (`Editor` class). It is activated in the Studio/viewer via a dat.gui `Editor` folder; the intended web-component activation path uses the `editor` boolean attribute on `<agent-3d>`.
-
-### Pre-1.0 rough edge #1 — `editor` attribute not yet wired
-
-[`EMBED_SPEC.md` §Dev/debug](./EMBED_SPEC.md) documents `<agent-3d editor>` and says it "mounts the embed editor instead of the live agent." However, [`src/element.js`](../src/element.js) does not include `editor` in `observedAttributes()` (line 211–226) and `_boot()` has no branch for it. The embed editor module ([`src/editor/embed-editor.js`](../src/editor/embed-editor.js)) must be imported and mounted manually today. Downstream hosts must not rely on the attribute-driven path until this is wired.
+The editor layer lives in [`src/editor/`](../src/editor/) and is orchestrated by [`src/editor/index.js`](../src/editor/index.js) (`Editor` class). It is activated in the Studio/viewer via a dat.gui `Editor` folder; the web-component path is the `editor` boolean attribute on `<agent-3d>` (section 2).
 
 ---
 
@@ -27,7 +23,19 @@ The editor layer lives in [`src/editor/`](../src/editor/) and is orchestrated by
 
 Replaces the live agent runtime with the embed editor. Intended to be a boolean presence attribute — no value required.
 
-**Current state:** not handled by `observedAttributes` in [`src/element.js:211`](../src/element.js#L211). Manual integration required (see §6).
+**Current state (0.2):** wired. `element.js` observes `editor`; once the body has loaded it lazy-imports the editor chunk, docks the control panel and scene explorer inside the element's shadow root, and mounts the texture inspector on `document.body`. The attribute is ignored when `kiosk` is set. The embed host omits Publish and Save-to-account (those need a three.ws session); Download GLB, the material editor, scene explorer, texture inspector and Magic Brush are available. Removing the attribute disposes the editor and restores the playback view.
+
+### Events and version marker
+
+The `Editor` dispatches bubbling, composed `CustomEvent`s on the `<agent-3d>` element (or `viewer.el` in the app), so a host can listen on the element or any ancestor. While attached the element carries `data-editor-version="agent-editor/0.2"`.
+
+| Event            | `detail`                                                                  | When                                                         |
+| ---------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `editor:ready`   | `{ version }`                                                             | The editor attached                                          |
+| `editor:change`  | `{ kind: 'material', 'transform', 'visibility' or 'reset', editCount }`   | Any edit is recorded or the session resets                   |
+| `editor:export`  | `{ bytes, warnings }`                                                     | A GLB download finished; `warnings` lists unresolved matches |
+| `editor:publish` | `{ step, pct }`                                                           | Each publish step (app host only)                            |
+| `editor:error`   | `{ message }`                                                             | The editor chunk failed to load (element host only)          |
 
 ### Other attributes used by editor flows
 
@@ -124,7 +132,7 @@ The central shared state object. All panels read from and write to it.
 | metalness          | 0–1               |                                                      |
 | roughness          | 0–1               |                                                      |
 | emissive color     | hex color         | `mat.emissive`                                       |
-| emissive intensity | 0–4               | **Not recorded to session** (pre-1.0 rough edge #2)  |
+| emissive intensity | 0-4               | Recorded; exported as `KHR_materials_emissive_strength` |
 | opacity            | 0–1               | Sets `mat.transparent` automatically when < 1        |
 | transparent        | boolean           |                                                      |
 | alpha test         | 0–1               |                                                      |
@@ -145,10 +153,6 @@ The central shared state object. All panels read from and write to it.
 
 - If `viewer.gui` is null, no UI is built (silent no-op).
 - If the scene has no standard/physical materials, the `Materials` folder is not created.
-
-### Pre-1.0 rough edge #2 — emissive intensity not persisted
-
-`emissiveIntensity` changes call `mat.needsUpdate = true` and `viewer.invalidate()` but do **not** call `record()` ([`src/editor/material-editor.js:100–103`](../src/editor/material-editor.js#L100)). The value is visible in the viewport but will not appear in an exported GLB.
 
 ---
 
@@ -225,6 +229,8 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 
 **Keyboard shortcut:** `X` — toggle the texture grid panel open/closed.
 
+**Replace:** the lightbox has a Replace button for textures used by an editable slot (base color, normal, metallic-roughness, occlusion, emissive). It accepts PNG, JPEG or WebP up to 32 MB (`validateTextureFile` in `texture-replace.js`), previews the image live on every material that used the texture, and records it with `session.recordTextureEdit(material, slot, bytes, mime)`. An unsupported or oversized file shows the reason in the lightbox status line and Replace stays available to retry. Metallic and roughness share one glTF slot, so replacing either replaces both.
+
 **Inputs:** `viewer.content`, `viewer.gui`.
 
 **Outputs:** none to session. DOM panels appended to `document.body`.
@@ -246,11 +252,15 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 
 - Material properties: base color factor, metallic factor, roughness factor, emissive factor, alpha mode, alpha cutoff, double-sided.
 - Node transforms: translation, rotation (converted from Euler XYZ to quaternion), scale.
-- Node visibility: hidden nodes are written with `scale = [0, 0, 0]` (no glTF `extras.hidden` — see rough edge #3).
+- Emissive intensity: written as `KHR_materials_emissive_strength` (1.0 removes the extension).
+- Node visibility: hidden nodes get `KHR_node_visibility { visible: false }` plus `extras.threeWsHidden: true`; the node keeps its real scale. The viewer reads both back on load (`src/viewer/node-visibility.js`).
+- Textures: a replaced image is written as one new texture per edited material slot (base color, normal, metallic-roughness, occlusion, emissive). The old texture is removed only if nothing else uses it. WebP is written with the required `EXT_texture_webp`.
 
 **What is stripped:** Nothing — all geometry, animations, extensions, and accessories in the source file are preserved.
 
-**Name matching:** Materials and nodes are matched to glTF-Transform entities by **name**, not UUID. Three.js UUIDs do not cross the serialization boundary. The first material/node with a matching name receives the edit. Duplicate names silently affect only the first match.
+**Identity:** Edits carry the glTF index of the material or node (read from the loader's `parser.associations`), which is checked against the recorded name and used first. Edits without an index (older sessions, restored stashes) fall back to name matching: the edit applies to every same-named entity and the export adds a warning.
+
+**Return value:** `exportEditedGLB(session)` resolves to `{ bytes: Uint8Array, warnings: string[] }`.
 
 **`downloadGLB(bytes, filename)`:** Creates a `Blob` URL, triggers an `<a download>` click, removes the element, and revokes the URL after 1 second.
 
@@ -260,15 +270,7 @@ Nodes are identified in the tree DOM by `data-uuid` attribute.
 
 - `exportEditedGLB(session)` throws `Error('No source buffer for export')` if `session.getSourceBuffer()` returns nothing.
 - `getSourceBuffer()` throws if no source URL or File is set.
-- Caller in `Editor._exportGLB()` catches and shows `window.alert`.
-
-### Pre-1.0 rough edge #3 — visibility via scale hack
-
-Hidden nodes are written as `scale = [0, 0, 0]` rather than using a `KHR_node_visibility` extension or `extras.hidden`. This works visually but destroys the scale edit for those nodes and is not spec-compliant glTF visibility. ([`src/editor/glb-export.js:106–109`](../src/editor/glb-export.js#L106))
-
-### Pre-1.0 rough edge #4 — duplicate name collision
-
-Both material edits and transform/visibility edits match by the first occurrence of each name in the glTF root. If a model has two materials both named `"Material"`, only the first is patched. The GUI shows both under different folder labels but they share the name key. ([`src/editor/glb-export.js:53–58`](../src/editor/glb-export.js#L53))
+- Caller in `Editor._exportGLB()` catches and shows an error toast; warnings from a successful export are toasted and carried on `editor:export`.
 
 ---
 
@@ -435,10 +437,6 @@ Passed to `publishEditedGLB({ onStep })` as a callback, not DOM events.
 
 (`PublishModal.onStep` maps `'presign'` → `'upload'` bucket for UI display.)
 
-### Pre-1.0 rough edge #5 — no DOM CustomEvents from the Editor
-
-The `Editor` class and all panels communicate via `session.onChange()` callbacks and direct method calls. No `CustomEvent` is dispatched on any DOM node. External hosts integrating the editor cannot listen to edit events on the element without accessing `editor.session.onChange()` directly. This is an integration gap for the `<agent-3d editor>` web-component path.
-
 ---
 
 ## 6. Extension points
@@ -460,7 +458,7 @@ To wire a custom panel into the orchestrator, modify `Editor` in [`src/editor/in
 `exportEditedGLB` in [`src/editor/glb-export.js`](../src/editor/glb-export.js) is a standalone async function:
 
 ```js
-async function exportEditedGLB(session: EditorSession): Promise<Uint8Array>
+async function exportEditedGLB(session: EditorSession): Promise<{ bytes: Uint8Array, warnings: string[] }>
 ```
 
 A custom exporter can be dropped in by:
@@ -513,7 +511,7 @@ The presign flow issues a PUT URL for direct browser-to-R2 upload; the server ne
 
 ### Spec version
 
-This document covers `agent-editor/0.1`. Breaking changes bump the minor until 1.0; after 1.0 they bump the major.
+This document covers `agent-editor/0.2`. Breaking changes bump the minor until 1.0; after 1.0 they bump the major.
 
 A **breaking change** is:
 
@@ -531,23 +529,13 @@ A **non-breaking change** is:
 
 ### Detecting the editor version at runtime
 
-No version attribute or event exists today. To check which spec version an editor host speaks:
-
-**Recommended (not yet implemented):** Add a `data-editor-version="agent-editor/0.1"` attribute to the root element mounted by `mountEmbedEditor`, and/or dispatch a `editor:ready` CustomEvent with `{ version: 'agent-editor/0.1' }` on the host element at mount time. This attribute/event should be added before the `editor` attribute is wired in `element.js`.
-
-Until then, feature-detect by checking whether the `Editor` class is exported from [`src/editor/index.js`](../src/editor/index.js).
+Read `data-editor-version` from the host element (set while the editor is attached), or listen for `editor:ready` and read `detail.version`.
 
 ---
 
-## Pre-1.0 rough edges — summary
+## Changes in 0.2
 
-| #   | Location                                                                     | Issue                                                                                                                      |
-| --- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 1   | [`src/element.js:211`](../src/element.js#L211)                               | `editor` boolean attribute not wired — `<agent-3d editor>` does not activate the editor                                    |
-| 2   | [`src/editor/material-editor.js:100`](../src/editor/material-editor.js#L100) | `emissiveIntensity` changes are not recorded to session — lost on export                                                   |
-| 3   | [`src/editor/glb-export.js:106`](../src/editor/glb-export.js#L106)           | Hidden nodes written as `scale=[0,0,0]` instead of `KHR_node_visibility`                                                   |
-| 4   | [`src/editor/glb-export.js:53`](../src/editor/glb-export.js#L53)             | Duplicate material/node names resolve to first match only — no warning                                                     |
-| 5   | [`src/editor/index.js`](../src/editor/index.js)                              | No DOM `CustomEvent` emitted — external hosts cannot observe edit activity without accessing `session.onChange()` directly |
+All five 0.1 rough edges are closed: the `editor` attribute is wired, emissive intensity is recorded and exported, hidden nodes use `KHR_node_visibility`, duplicate names resolve by glTF index with a warning fallback, and the editor dispatches DOM events. Texture replacement (inspector lightbox, Replace) is new, with edits persisted across the sign-in redirect (stash blob version 2; version 1 blobs still restore).
 
 ---
 

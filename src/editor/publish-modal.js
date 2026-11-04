@@ -82,7 +82,7 @@ export class PublishModal {
 		this._renderSteps();
 	};
 
-	showResult(urls) {
+	showResult(urls, warnings = []) {
 		if (!this.body) return;
 		this._setTitle('Published ✓');
 		const rows = [
@@ -92,6 +92,7 @@ export class PublishModal {
 		];
 		this.body.innerHTML = `
 			<div class="publish-result">
+				${warnings.length ? `<ul class="publish-warnings" role="status">${warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join('')}</ul>` : ''}
 				${rows.map((r, i) => this._renderSnippetHTML(r, i)).join('')}
 				<div class="publish-actions">
 					<button type="button" class="publish-done-btn">Done</button>
