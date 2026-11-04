@@ -1,8 +1,15 @@
-// POST /api/agents/a2a-paid — A2A (Agent-to-Agent) x402 endpoint.
+// POST /api/agents/a2a-paid: the three.ws A2A JSON-RPC endpoint, the `url` of
+// public/.well-known/agent-card.json.
 //
-// Exposes the three.ws glTF/GLB inspector as a paid A2A skill. Other agents
-// invoke it by sending JSON-RPC `message/send` with the X-A2A-Extensions
-// header set to https://github.com/google-a2a/a2a-x402/v0.1.
+// It routes every skill on that card (registry: api/_lib/a2a/skills.js) over
+// A2A 1.0 (SendMessage, GetTask, CancelTask) and 0.3 (message/send, tasks/get,
+// tasks/cancel); the dispatcher is api/_lib/a2a/service.js. The free skills
+// (generate-3d-model, validate-model, search-avatars, x402-service-catalog) need
+// no account and no extension.
+//
+// This file configures the one paid skill, the glTF/GLB inspector. A caller
+// activates it with the A2A-Extensions (or 0.3 X-A2A-Extensions) header set to
+// https://github.com/google-a2a/a2a-x402/v0.1.
 //
 // First call (no payment metadata): replies with a task in state
 //   `input-required` carrying `x402.payment.required`.
@@ -13,7 +20,7 @@
 // Verification + settlement reuse api/_lib/x402-spec.js so this endpoint
 // inherits Base / Solana / BSC support automatically from the env config.
 
-import { a2aPaidEndpoint } from '../_lib/x402/a2a-server.js';
+import { createA2AService } from '../_lib/a2a/service.js';
 import { inspectModel, suggestOptimizations } from '../_lib/model-inspect.js';
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
 
@@ -56,20 +63,8 @@ const DESCRIPTION =
 	'recommendations. Used by other agents to vet 3D assets before minting, ' +
 	'rendering, or buying them.';
 
-const SKILL = {
-	id: 'inspect-glb-a2a',
-	name: 'Inspect glTF/GLB (A2A)',
-	description:
-		'Run the canonical glTF-Transform inspector against a remote model URL. ' +
-		'Returns counts, extensions used, and prioritized optimization suggestions.',
-	tags: ['model', 'gltf', 'glb', 'inspect', 'a2a'],
-	examples: [
-		'Inspect https://three.ws/avatars/mannequin.glb',
-		'Vet this GLB before I mint it',
-	],
-	inputModes: ['application/json', 'text/plain'],
-	outputModes: ['application/json'],
-};
+// The card entry for this skill lives in the registry (api/_lib/a2a/skills.js).
+const SKILL_ID = 'inspect-glb-a2a';
 
 // Pull the model URL out of the A2A `message.parts[]`. Clients send the
 // request either as a plain text part ("Inspect https://...") or as a
@@ -161,7 +156,7 @@ async function fetchAndInspect(targetUrl) {
 	};
 }
 
-export default a2aPaidEndpoint({
+export default createA2AService({
 	route: ROUTE,
 	description: DESCRIPTION,
 	priceAtomics: '1000',
@@ -169,7 +164,6 @@ export default a2aPaidEndpoint({
 	prompt:
 		'Send the URL of a glTF or GLB model in the next message (text or data part). ' +
 		'Inspection completes after payment settles.',
-	skill: SKILL,
 	services: ['gltf-inspect'],
 	async handler({ taskId, payer, message }) {
 		const url = extractUrl(message);
@@ -198,7 +192,7 @@ export default a2aPaidEndpoint({
 			],
 			metadata: {
 				'three.ws.payer': payer || null,
-				'three.ws.skill': SKILL.id,
+				'three.ws.skill': SKILL_ID,
 			},
 		};
 	},

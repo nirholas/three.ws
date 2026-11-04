@@ -1020,6 +1020,11 @@ export const env = {
 	get X402_IDEMPOTENCY_TTL_SECONDS() {
 		return opt('X402_IDEMPOTENCY_TTL_SECONDS', '3600');
 	},
+	// TTL (seconds) of an A2A task record (api/_lib/a2a/task-store.js): how long
+	// a client can read a task back with GetTask / tasks/get after the last update.
+	get A2A_TASK_TTL_SECONDS() {
+		return opt('A2A_TASK_TTL_SECONDS', '86400');
+	},
 	// Per-network facilitators. PayAI supports both Solana and Base mainnet;
 	// x402.org's reference facilitator only supports base-sepolia, so it cannot
 	// be the default for Base mainnet payments.

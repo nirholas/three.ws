@@ -218,14 +218,17 @@ function encodePaymentHeaderFromPayload(payload) {
 
 function clientAcceptsExtension(headers) {
 	// Per the A2A x402 spec: clients activate the extension by listing its URI
-	// in the X-A2A-Extensions header. We require it when the AgentCard
-	// declared the extension as `required: true`. Header names are
-	// case-insensitive — Node lowercases them on `req.headers`.
-	const raw = headers['x-a2a-extensions'];
-	if (!raw) return false;
-	const values = Array.isArray(raw) ? raw : String(raw).split(',');
-	for (const v of values) {
-		if (v.trim() === A2A_X402_EXTENSION_URI) return true;
+	// in the extension header, A2A-Extensions on A2A 1.0 and X-A2A-Extensions on
+	// 0.3. The paid leg needs it to know the caller speaks the payment protocol;
+	// the free skills on the same endpoint never reach this check. Node
+	// lowercases header names on `req.headers`.
+	for (const name of ['a2a-extensions', 'x-a2a-extensions']) {
+		const raw = headers[name];
+		if (!raw) continue;
+		const values = Array.isArray(raw) ? raw.join(',').split(',') : String(raw).split(',');
+		for (const v of values) {
+			if (v.trim() === A2A_X402_EXTENSION_URI) return true;
+		}
 	}
 	return false;
 }

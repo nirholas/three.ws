@@ -277,31 +277,14 @@ export default wrap(async (req, res) => {
 		return error(res, e.status || 502, e.code || 'fetch_failed', e.message, e.extra || {});
 	}
 
-	// Parse structure. A parse failure here means the bytes are not a real glTF/GLB.
-	let info;
+	let payload;
 	try {
-		info = await inspectModel(bytes, { fileSize: bytes.byteLength });
+		payload = await buildReport(bytes, sourceUrl, filename);
 	} catch (e) {
-		return error(res, 400, 'invalid_model', `not a valid glTF/GLB: ${e.message || 'could not parse model'}`);
+		return error(res, e.status || 400, e.code || 'invalid_model', e.message);
 	}
 
-	const validation = await runValidator(bytes, filename);
-	const stats = buildStats(info);
-	const recommendations = buildRecommendations(info);
-
-	const payload = {
-		url: sourceUrl,
-		// `valid` reflects the Khronos validator's error count when it ran; when the
-		// validator is unavailable the bytes still parsed, so it's structurally usable.
-		valid: validation ? validation.valid : true,
-		stats,
-		sizeBytes: bytes.byteLength,
-		recommendations,
-		validation: validation || { valid: true, note: 'validator unavailable — structural parse succeeded' },
-		ts: new Date().toISOString(),
-	};
-
-	// URL-sourced GETs are deterministic — let the CDN cache them briefly. Raw
+	// URL-sourced GETs are deterministic, so let the CDN cache them briefly. Raw
 	// uploads and POSTs are never cached.
 	if (req.method === 'GET' && sourceUrl) {
 		res.setHeader('cache-control', 'public, max-age=60, s-maxage=300');
@@ -310,6 +293,41 @@ export default wrap(async (req, res) => {
 	}
 	return json(res, 200, payload);
 });
+
+// Parse, validate and shape one model. A parse failure means the bytes are not
+// a real glTF/GLB (a typed 400, never a 500).
+async function buildReport(bytes, sourceUrl, filename) {
+	let info;
+	try {
+		info = await inspectModel(bytes, { fileSize: bytes.byteLength });
+	} catch (e) {
+		throw httpError(400, 'invalid_model', `not a valid glTF/GLB: ${e.message || 'could not parse model'}`);
+	}
+
+	const validation = await runValidator(bytes, filename);
+	return {
+		url: sourceUrl,
+		// `valid` reflects the Khronos validator's error count when it ran; when the
+		// validator is unavailable the bytes still parsed, so it's structurally usable.
+		valid: validation ? validation.valid : true,
+		stats: buildStats(info),
+		sizeBytes: bytes.byteLength,
+		recommendations: buildRecommendations(info),
+		validation: validation || { valid: true, note: 'validator unavailable, structural parse succeeded' },
+		ts: new Date().toISOString(),
+	};
+}
+
+/**
+ * The free inspect + validate report for a public model URL: the same report
+ * GET /api/3d/inspect?url= returns, for in-process callers (the A2A
+ * validate-model skill). Throws an Error carrying { status, code } on a bad
+ * URL, an unreachable or oversized model, or bytes that are not glTF.
+ */
+export async function inspectModelUrl(url) {
+	const fetched = await fetchByUrl(String(url || '').trim());
+	return buildReport(fetched.bytes, fetched.url, urlFilename(fetched.url));
+}
 
 function urlFilename(u) {
 	try {
