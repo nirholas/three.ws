@@ -57,6 +57,19 @@ function pack({ nonce, ciphertext }) {
 	return out;
 }
 
+const SEMANTIC_MIN_SCORE = 0.3;
+const RANK_TEXT_CHARS = 3900;
+const RANK_MAX_ITEMS = 64;
+
+/** Occurrence count of the whole query in each entry's name, description and body. */
+function lexicalScores(entries, q) {
+	const needle = q.toLowerCase();
+	return entries.map(({ meta, body }) => {
+		const hay = `${meta.name || ''} ${meta.description || ''} ${body}`.toLowerCase();
+		return hay.split(needle).length - 1;
+	});
+}
+
 export class Memory {
 	constructor({ mode = 'local', namespace, index = {}, files = {}, timeline = [], cryptoKey = null, remoteIds = {}, backend = null } = {}) {
 		this.mode = mode;
@@ -302,15 +315,62 @@ export class Memory {
 			}
 		}
 		const { limit = 5 } = opts;
-		// Placeholder: naive substring match. Real impl: embeddings via runtime.
-		const q = query.toLowerCase();
-		const hits = [];
+		const q = String(query || '').trim();
+		if (!q) return [];
+		const entries = [];
 		for (const [file, raw] of this.files) {
 			const { meta, body } = parseFrontmatter(raw);
-			const hay = `${meta.name || ''} ${meta.description || ''} ${body}`.toLowerCase();
-			if (hay.includes(q)) hits.push({ file, meta, body, score: hay.split(q).length - 1 });
+			entries.push({ file, meta, body });
 		}
+		const lexical = lexicalScores(entries, q);
+		let semantic = null;
+		if (this.mode !== 'none' && entries.length >= 2) {
+			try {
+				semantic = await this._rank(q, entries);
+			} catch (e) {
+				log.warn('[memory] semantic rank unavailable; using substring recall', e);
+			}
+		}
+		const minScore = Number.isFinite(opts.minScore) ? opts.minScore : semantic ? SEMANTIC_MIN_SCORE : 0;
+		const hits = [];
+		entries.forEach((entry, i) => {
+			let score;
+			if (semantic) {
+				// An exact phrase match is the strongest signal there is, so it
+				// outranks any cosine score; everything else ranks by similarity.
+				score = lexical[i] > 0 ? Math.max(1, semantic.get(entry.file) ?? 0) : semantic.get(entry.file) ?? 0;
+			} else {
+				score = lexical[i];
+			}
+			if (score <= 0 || score < minScore) return;
+			hits.push({ ...entry, text: entry.body, score });
+		});
 		return hits.sort((a, b) => b.score - a.score).slice(0, limit);
+	}
+
+	/**
+	 * Cosine scores from the server embedder, keyed by file name. Overridable per
+	 * instance (`memory.rankFn`) for hosts that bring their own embedder. Throws on
+	 * any network error or non-2xx (including 503 embeddings_unconfigured) so the
+	 * caller falls back to substring matching.
+	 */
+	async _rank(query, entries) {
+		if (typeof this.rankFn === 'function') return this.rankFn(query, entries);
+		const items = entries.map((e) => ({
+			id: e.file,
+			text: `${e.meta.name || ''}. ${e.meta.description || ''}\n${e.body}`.trim().slice(0, RANK_TEXT_CHARS),
+		}));
+		const resp = await apiFetch(`${this.apiOrigin}/api/memory/rank`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ query: query.slice(0, 1000), items: items.slice(0, RANK_MAX_ITEMS) }),
+			allowAnonymous: true,
+			timeoutMs: 8000,
+		});
+		if (!resp.ok) throw new Error(`rank failed: ${resp.status}`);
+		const { results } = await resp.json();
+		return new Map((results || []).map((r) => [r.id, r.score]));
 	}
 
 	_rebuildIndex() {

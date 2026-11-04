@@ -214,7 +214,7 @@ The runtime calls `memory.contextBlock({ maxTokens: 8192 })` before each LLM tur
 
 This context block is injected into the system prompt. The LLM sees it as structured background knowledge, not as user messages.
 
-Memory retrieval currently uses substring matching against `description` fields and body content. Embedding-based semantic search is planned but not yet implemented — `memory.recall(query)` does substring matching today.
+Memory retrieval is semantic. `memory.recall(query)` sends the query and each file's name, description and a truncated body to `POST /api/memory/rank`, which embeds them (NIM, Vertex or OpenAI lane, whichever is configured) and returns cosine scores. A file that contains the whole query verbatim always ranks first. When the endpoint is unreachable, the caller is signed out, embeddings are unconfigured (503), or the memory holds fewer than two files, `recall` falls back to substring matching, so it never hard-fails mid-conversation. Semantic hits below `minScore` (default 0.3) are dropped.
 
 ---
 
@@ -264,10 +264,12 @@ if (tone) {
   console.log(tone.body);      // full body text
 }
 
-// Substring search across all files. The whole query must appear verbatim in a
-// memory's name, description, or body, so pass a phrase, not a question.
-const hits = await ctx.memory.recall('direct critique');
-// hits: [{ file, meta, body, score }, ...] where score is the occurrence count
+// Semantic search across all files, so a question works: 'what theme do I like'
+// finds a memory that says 'prefers dark mode'. Offline it degrades to a verbatim
+// substring match.
+const hits = await ctx.memory.recall('direct critique', { limit: 5, minScore: 0.3 });
+// hits: [{ file, meta, body, text, score }, ...] where score is cosine similarity
+// (1 or more for a verbatim phrase match; an occurrence count in the offline fallback)
 ```
 
 ### Exporting and importing

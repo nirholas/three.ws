@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T21:03:18.827Z",
+	"generated_at": "2026-11-04T21:21:11.600Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -190,6 +190,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Agent memory recall now understands meaning, not just exact words",
+			"summary": "An agent whose memory says it prefers dark mode now recalls that when you ask what theme you like. The memory file layer ranks files by embedding similarity through a new signed-in endpoint, POST /api/memory/rank, instead of requiring the whole query to appear verbatim. Results carry a text field and honor a minimum score, so the studio Brain memory node gets usable recalls. If the endpoint is unreachable or embeddings are not configured, recall falls back to the old substring match, so it never fails mid-conversation.",
+			"link": "/docs/memory",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Agent payment mandates are pinned to USDC and refuse any other currency",
 			"summary": "An Intent Mandate lets your agent pay other agents without asking you each time, within a budget. Issuing one with an empty or non-USDC currency used to succeed and quietly turned off the currency check, so a payment in an asset the spend guard cannot price could bypass your per-payment, daily and per-recipient dollar limits. Mandates now accept USDC only, refuse anything else with unsupported_currency, and any mandate signed with a bad currency before this fix is refused when the agent tries to spend under it.",
 			"link": "/docs/a2a-payments",
@@ -353,6 +363,16 @@
 			"link": "/docs/financial-controls",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Forge and Marketplace buttons now share the platform button system",
+			"summary": "The Forge page and the Marketplace now use the same button component as the rest of the site, so hover, pressed, keyboard-focus, disabled and loading states look and behave the same on both. Forge no longer carries its own copy of the button styles, and four unused button and badge style families were deleted. A new audit, npm run audit:buttons, lists the remaining legacy button families and fails if a finished one comes back.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{

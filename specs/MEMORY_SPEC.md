@@ -159,7 +159,7 @@ Memory.registerBackend('vector', {
 	},
 
 	// OPTIONAL. Real semantic search. Return ranked { file, meta, body, score }
-	// hits. If it throws, Memory silently falls back to substring matching, so
+	// hits. If it throws, Memory falls back to the built-in recall (server embedding rank via `/api/memory/rank`, then substring matching), so
 	// recall never hard-fails mid-conversation.
 	async recall(query, memory, { limit = 5 } = {}) {
 		const matches = await myVectorStore.search(memory.namespace, query, limit);

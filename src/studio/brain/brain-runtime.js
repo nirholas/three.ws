@@ -170,7 +170,11 @@ export class BrainRuntime {
 		const mem = this.studio.identity?.memory;
 		if (!mem?.recall) return [];
 		const results = await mem.recall(query, { limit: cfg.topK, minScore: cfg.minScore });
-		return (results || []).map((m) => m.text || m.content || (typeof m === 'string' ? m : JSON.stringify(m))).filter(Boolean);
+		// AgentMemory returns `content`, the file layer returns `text` (alias of `body`).
+		return (results || [])
+			.map((m) => (typeof m === 'string' ? m : m.text || m.content || m.body || ''))
+			.map((t) => t.trim())
+			.filter(Boolean);
 	}
 
 	async _remember(userText, replyText) {

@@ -950,6 +950,10 @@ export const limits = {
 	// mcp3dGenerate, mcpPumpGated — which stay distributed). At 1200/min and 600/min
 	// these were among the biggest Redis-command consumers on the platform while
 	// bounding nothing that costs money.
+	// /api/memory/rank embeds a handful of memory files per call. A recall runs once
+	// per chat turn, so 120/min per user is far above real use and caps embed spend.
+	memoryRankUser: (userId) =>
+		getLimiter('memory:rank:user', { limit: 120, window: '1 m', local: true }).limit(userId),
 	mcpUser: (userId) => getLimiter('mcp:user', { limit: 1200, window: '1 m', local: true }).limit(userId),
 	mcpIp: (ip) => getLimiter('mcp:ip', { limit: 600, window: '1 m', local: true }).limit(ip),
 	// Generic per-IP bucket for authenticated app endpoints (agent screen feed,

@@ -151,6 +151,14 @@
 			<description>A new /chatgpt page walks you through adding the free three.ws 3D Studio to ChatGPT: turn on developer mode, create an app with the URL https://three.ws/api/mcp-chatgpt and no authentication, then ask for a model. Text and photos become interactive, textured 3D models and rigged avatars that render inline in the conversation, free and with no account. The page checks the server live from your browser, lists the exact tools ChatGPT gets, and has starter prompts and fixes for every setup snag.</description>
 		</item>
 		<item>
+			<title>Agent memory recall now understands meaning, not just exact words</title>
+			<link>https://three.ws/docs/memory</link>
+			<guid isPermaLink="false">2026-11-04:Agent memory recall now understands meaning, not just exact words</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>An agent whose memory says it prefers dark mode now recalls that when you ask what theme you like. The memory file layer ranks files by embedding similarity through a new signed-in endpoint, POST /api/memory/rank, instead of requiring the whole query to appear verbatim. Results carry a text field and honor a minimum score, so the studio Brain memory node gets usable recalls. If the endpoint is unreachable or embeddings are not configured, recall falls back to the old substring match, so it never fails mid-conversation.</description>
+		</item>
+		<item>
 			<title>Agent payment mandates are pinned to USDC and refuse any other currency</title>
 			<link>https://three.ws/docs/a2a-payments</link>
 			<guid isPermaLink="false">2026-11-04:Agent payment mandates are pinned to USDC and refuse any other currency</guid>
@@ -277,6 +285,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Each fee three.ws takes (pump.fun trades and launches, agent trades, skill sales, bundles, subscriptions and the x402 skill split) is now recorded once in an append-only fee ledger, in the same database write as the purchase or trade it belongs to, and replays never record it twice. A daily reconciler checks every recorded fee against what the fee wallet actually received on Solana. Bundle and subscription confirmations also stopped booking a platform fee when the buyer paid the full price straight to the creator, so creators now see their full earnings for those sales.</description>
+		</item>
+		<item>
+			<title>Forge and Marketplace buttons now share the platform button system</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Forge and Marketplace buttons now share the platform button system</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Forge page and the Marketplace now use the same button component as the rest of the site, so hover, pressed, keyboard-focus, disabled and loading states look and behave the same on both. Forge no longer carries its own copy of the button styles, and four unused button and badge style families were deleted. A new audit, npm run audit:buttons, lists the remaining legacy button families and fails if a finished one comes back.</description>
 		</item>
 		<item>
 			<title>Grok Bot gets the Solana market, and three.ws events can wake it</title>
