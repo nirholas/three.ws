@@ -865,3 +865,27 @@ Closed and deleted at the owner's instruction. All agent work was verified in th
 the `hacs/default` PR using the text in `marketing/growth/submissions/home-assistant.md`. Links to the
 deleted order now point at row 58 and order 938, and RUN-ORDER's partners row lists only the
 orders still on disk.
+
+## 2026-11-04: order 085-partners-02 retired (CC0 library live in production)
+
+- **Upload (owner-action row 50)**: run on the owner's instruction "complete everything" with the
+  production S3 credentials read from the `three-ws-api` Cloud Run service via
+  `node scripts/read-service-env.mjs`. `node scripts/cc0-animation-library.mjs` rebuilt 219/219
+  clips and uploaded them to `animations/library/manifest.json` in bucket `chatty-storage`.
+- **Public endpoint**: `GET https://three.ws/api/animations/library?limit=500` answers `total: 219`,
+  219 clips, every one `CC0 1.0 Universal` with `source` and `license`, 0 mentioning Mixamo;
+  `?facets=1` reports real per-category counts (idle 16, locomotion 39, weapons 40, ...).
+- **Mirror path**: `node scripts/mirror-animation-library.mjs --no-thumbs` mirrored 219 clips; the
+  mirrored manifest is all CC0 and no mirrored file mentions Mixamo.
+- **Product surfaces**: `/animations` in headless Chromium fetches the library (200) and renders the
+  per-clip credit (a search for "angry" shows the `m2m-addon-angry` card credited "Mesh2Motion
+  human-addon-animations"), no console errors. The embed viewer (`?animation=`) and the pose studio
+  (`/pose?anim=`) resolve non-curated names through `GET /api/animations/library?name=`; that exact
+  request returns the CC0 def for `m2m-addon-angry` and its clip JSON loads (200, 156 tracks).
+  Driving those two pages to playback in this sandbox's software WebGL stalled on the avatar load
+  before the lookup, so the playback step was proven at the request level, not on screen. No product
+  source deep-links an `mx-*` name; the curated in-product clips keep their Mixamo credit under the
+  2026-10-13 decision (in-product playback, not redistributed as a raw library).
+- **Remaining**: sending the Adobe letter
+  (`marketing/growth/submissions/adobe-mixamo-permission.md`) stays owner order 938; it no longer
+  blocks anything. The order file is deleted in this commit.
