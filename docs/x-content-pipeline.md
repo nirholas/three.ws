@@ -223,6 +223,28 @@ How it is filmed, and why:
 A scenario needs a browser and ffmpeg, so reels are made where posts are reviewed. Production
 only checks the record.
 
+### Refreshing a stale item
+
+A proof and a review each expire after 14 days (`PROOF_MAX_AGE_DAYS` in `reel.js`,
+`REVIEW_MAX_AGE_DAYS` in `review.js`), and `check` reports both as errors on any item in `review` or
+`approved`, because an old reel shows a product that may have moved. Refresh in this order, since a
+review reads the proof:
+
+```bash
+npm run x:content -- check                  # lists "the reel was filmed N days ago" and "the review is N days old"
+npm run x:content -- prove <id>             # films production again and rewrites the proof and reel
+npm run x:content -- review <id>            # reruns the fact checks and the editor against the new reel
+npm run x:content -- check                  # the item should no longer appear
+```
+
+When `prove` fails, the proof records the step (`the last run failed at step 11 (...)`) and the
+page as it stood is saved to `node_modules/.cache/x-content/<id>-failure.png`. A failed step is
+almost always the product, not the scenario: the render-lab sheet reel failed because a hover tip
+sat over the button the next step clicked, and the fix was the tooltip, not a different selector.
+Retarget a step only when the control itself moved or was renamed. `prove` films production, so a
+product fix has to be deployed before the reel can pass; until then the item stays where it is with
+its failure recorded.
+
 ## What the queue learns
 
 The rules this pipeline started with came from a scrape taken before X had loaded the like counts
