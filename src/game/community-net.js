@@ -139,6 +139,8 @@ export class CommunityNet {
 			xpgain: new Set(),      // ({skill, amount, xp, level, levelXp, nextXp})
 			levelup: new Set(),     // ({skill, level})
 			notice: new Set(),      // ({kind, text, ...}), activity result toast (fish/eat/tool/full/quest)
+			'report-result': new Set(), // ({ok, error?}), answer to sendReport
+			removed: new Set(),     // ({reason: 'kicked'|'banned', detail?}), a moderator removed this player; terminal
 			souvenir: new Set(),    // ({id, name, slot, eventId, eventName}): a live event just granted this account its free commemorative wearable (once, ever)
 			// General store, bank/ATM & the $THREE boutique (W04).
 			store: new Set(),          // ({sell:[{item,label,price}], buy:[{item,qty,price,label}]})
@@ -400,6 +402,8 @@ export class CommunityNet {
 			this.room.onMessage('xpgain', (msg) => this._emit('xpgain', msg || {}));
 			this.room.onMessage('levelup', (msg) => this._emit('levelup', msg || {}));
 			this.room.onMessage('notice', (msg) => this._emit('notice', msg || {}));
+			// Answer to a `report` (see sendReport): { ok } or { ok: false, error }.
+			this.room.onMessage('report-result', (msg) => this._emit('report-result', msg || {}));
 			// General store, bank/ATM & the $THREE boutique (W04).
 			this.room.onMessage('store', (msg) => this._emit('store', msg || {}));
 			this.room.onMessage('boutique', (msg) => this._emit('boutique', msg || {}));
@@ -571,6 +575,10 @@ export class CommunityNet {
 				// know), treating those as "session expired" kicked healthy players to a
 				// sign-in gate that wasn't even enabled. Anything else non-consented is a
 				// connection fault: reconnect with backoff.
+				// A moderator removed us (4403: kicked, or banned). Terminal like a pass
+				// eviction: reconnecting would drop us straight back in (kick) or be refused
+				// at join (ban), so say why and stop.
+				if (code === 4403) { this._setStatus('denied', 'removed'); this._emit('removed', { reason: reason || 'kicked' }); return; }
 				if (/play_pass/i.test(reason || '')) { this._setStatus('denied', 'play_pass_required'); this._emit('denied', 'play_pass_required'); return; }
 				if (code === 4002) log.warn('[community-net] server closed with error:', reason || '(no reason)');
 				if (!this._destroyed && (code !== 1000 || this.spectator)) this._scheduleReconnect();
@@ -608,6 +616,13 @@ export class CommunityNet {
 			// A holder-gate refusal (onAuth threw) is terminal, not a flaky link,
 			// retrying with the same expired/invalid pass just loops. Surface it so
 			// the scene can route the player back to the gate, and stop here.
+			// Refused at join because the identity is banned. Terminal for the same reason.
+			if (/banned/i.test(msg)) {
+				log.info('[community-net] join refused:', msg);
+				this._setStatus('denied', 'removed');
+				this._emit('removed', { reason: 'banned', detail: msg.replace(/^.*banned:?\s*/i, '') });
+				return;
+			}
 			if (/holder_pass|play_pass/i.test(msg)) {
 				log.warn('[community-net] gate denied join:', msg);
 				this._setStatus('denied', msg);
@@ -691,6 +706,20 @@ export class CommunityNet {
 	sendDanceStart() { return this._send('dance:start', {}); }
 	sendSigwallPing() { return this._send('sigwall-ping', {}); }
 	sendChat(text) { return this._send('chat', { text }); }
+	/**
+	 * Flag another player to the room's moderators. Resolves with the server's
+	 * answer ({ ok: true } or { ok: false, error }), or { ok: false, error:
+	 * 'timeout' | 'offline' } when nothing came back, so the dialog can offer Retry.
+	 */
+	sendReport(targetSessionId, reason) {
+		if (!this.room) return Promise.resolve({ ok: false, error: 'offline' });
+		return new Promise((resolve) => {
+			let off = () => {};
+			const timer = setTimeout(() => { off(); resolve({ ok: false, error: 'timeout' }); }, 8000);
+			off = this.on('report-result', (res) => { clearTimeout(timer); off(); resolve(res); });
+			this._send('report', { targetSessionId, reason });
+		});
+	}
 	// Party ops: invite | accept | decline | leave | goto | chat | state (see party-service.js).
 	sendParty(payload) { return this._send('party', payload); }
 	// Place/break a voxel at an integer grid cell. Server-authoritative: these only

@@ -300,6 +300,25 @@ below**: on the live build `0a913e8a7` it does not exist yet.
 
 ---
 
+## Moderation
+
+Name one moderator before doors. They need `MULTIPLAYER_SHARED_SECRET` in `.env` (the same secret `scripts/announce-play.mjs` uses) and a terminal. Every command is a signed request to the multiplayer service's `/internal/moderate`; a wrong or stale signature gets `401`. Without `--server` the commands go to the production multiplayer service.
+
+```
+node scripts/moderate-play.mjs list                                     # who is online: name, session id, world, [muted]
+node scripts/moderate-play.mjs mute rowdy --minutes 15 --reason "spam"  # chat, voice, emotes and reactions stop reaching others
+node scripts/moderate-play.mjs unmute rowdy
+node scripts/moderate-play.mjs kick rowdy --reason "harassment"         # closes the socket; they may rejoin
+node scripts/moderate-play.mjs ban rowdy --minutes 1440 --reason "abuse" # omit --minutes for permanent; refused at join
+node scripts/moderate-play.mjs unban --account <wallet>
+```
+
+Targets are a display name (case-insensitive), `--session <id>`, `--account <wallet>` or `--key <playerKey>`. Add `--coin <mint>` to act in one community's world only. A ban matches the wallet, the three.ws account and the guest token together, so reconnecting does not dodge it. A guest who clears browser storage gets a new guest identity: kick again, or ban their wallet if they sign in.
+
+Players can report each other from the player card (click a nameplate, then Report). Three distinct reporters inside five minutes mute the target for ten minutes automatically; a report never bans, a moderator decides that. The muted player sees a strip above the chat box saying how long is left. Reports are logged as `report <from> -> <to> (<reason>)` in the multiplayer service logs.
+
+Bans are stored in memory and, when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set on the multiplayer service, in Redis, so they survive a restart. Check the service log for `[moderation] bans persisted in Upstash Redis`; if it says `memory-only`, re-apply bans after a restart. Mutes are always memory-only and end on their own.
+
 ## Escalation: which tool for which subsystem
 
 | Subsystem | Tool |

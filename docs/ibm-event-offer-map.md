@@ -29,7 +29,7 @@ IBM-facing that comes out of this document is read against [ibm.md](./ibm.md) an
 | Group size | 18 members, 7 blogs, 8 threads, 2 past events | Small. Events should recruit into the group, not assume it |
 | No IBM model is serving in production | Verified live: `/api/ibm/galaxy` answers `watsonx_not_configured` and `/api/guardian/assess` answers `guardian_unconfigured`. The Cloud Run service carries no `WATSONX_*` and no `GRANITE_GUARDIAN_*` variable, and the self-hosted Guardian GPU worker in `workers/granite-guardian/` is not deployed. Re-measured 2026-11-04: unchanged (`POST /api/guardian/assess` 503 `guardian_unconfigured`, no `granite-guardian` service in europe-west4). The worker's deploy config now matches the pinned vLLM v0.29.0 flags (its September run never got past staging weights), and `/api/healthz` reports the gap as the `granite_guardian` subsystem, `down` in production until a lane is wired | Every idea below marked "needs Granite" is code-complete and dark. Restoring this is the single highest-leverage fix on the page (section 6) |
 | One room holds 100 people | `WALK_ROOM_MAX_CLIENTS` defaults to 100 and is not set on the live service. Past the cap, new joiners land silently in a parallel copy of the world | A crowd above 100 does not see itself as one crowd. Host announcements still reach every copy |
-| Moderation | Automatic slur gate and rate limits only. No mute, no kick, no ban | Plan a human answer, or build the tools first |
+| Moderation | Slur gate and rate limits, plus operator mute, kick and ban (`node scripts/moderate-play.mjs`) and in-world player reports that auto-mute at three distinct reporters | Name a moderator and rehearse the runbook in [LIVE-OPS.md](./event-readiness/LIVE-OPS.md#moderation) |
 | In-world stage | `StageRoom`, the show director and `/stage` all work. The plaza landmark `src/game/plaza-stage.js` is never imported by the world, and the show module it lazy-loads does not exist | Living Stage shows run at `/stage` today, not inside `/play`. The event-two kit's tour beat that points at a Plaza Stage marquee will find nothing |
 | Host broadcast | `node scripts/announce-play.mjs` raises a banner in every live room, HMAC-signed | This is the host microphone that exists |
 | Post-event numbers | Nothing records peak concurrency. `/api/play/population` is instantaneous | Leave `npm run event:watch -- --interval 15` running and keep its output, or the recap has no number |
@@ -265,13 +265,13 @@ that does the thing being discussed.
    no Granite claim, no live Granite beat and no `@IBM` tag.
 5. **Fix the run of show.** The kit's plaza tour points at a Plaza Stage marquee that the
    world never mounts. Cut that stop or mount the landmark.
-6. **Plan moderation.** There is no mute and no kick. Name a moderator, and keep the
-   announce script open in a terminal.
+6. **Plan moderation.** Name a moderator and keep `node scripts/moderate-play.mjs list` open in a
+   terminal next to the announce script (runbook: LIVE-OPS.md, Moderation).
 7. **Capture the numbers.** Start `npm run event:watch -- --interval 15` before doors and
    keep the log. It is the only source for a headcount.
 8. **Refresh the runbook.** [event-readiness/LIVE-OPS.md](./event-readiness/LIVE-OPS.md)
    still carries the first meetup's release SHA and revisions.
 
 Worth building before the October session, smallest first: chat scrollback for late
-joiners, a triangle and file-size ceiling on forged props, host mute and kick, mounting the
+joiners, a triangle and file-size ceiling on forged props, mounting the
 plaza stage, and a projector mode for a physical room.

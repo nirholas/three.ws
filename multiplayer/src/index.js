@@ -33,6 +33,7 @@ import { flushAllPlayers } from './playerStore.js';
 import { socialHub } from './social-hub.js';
 import { verifyNotifySignature, verifyStageSignature, verifyAnnounceSignature } from './presence-token.js';
 import { liveWalkRooms } from './walk-registry.js';
+import { handleModerate, runLocal } from './moderate-route.js';
 import { createFanout } from './fanout.js';
 
 const PORT = Number(process.env.PORT || 2567);
@@ -214,6 +215,20 @@ app.post('/internal/announce', express.json({ limit: '16kb' }), async (req, res)
 	console.log(`[multiplayer] event announce → ${rooms} room(s), ${players} player(s) on ${instances} instance(s): ${payload.text}`);
 	res.json({ ok: true, rooms, players, instances });
 });
+
+// Operator moderation (mute, unmute, kick, ban, unban, list). HMAC-signed with
+// the shared secret like the other internal webhooks; the route logic lives in
+// moderate-route.js and answers 401 before any room is touched. See
+// scripts/moderate-play.mjs and docs/event-readiness/LIVE-OPS.md.
+function localModerate(job) {
+	return runLocal(job, { liveWalkRooms });
+}
+app.post('/internal/moderate', express.json({ limit: '4kb' }), (req, res) =>
+	handleModerate(req, res, { liveWalkRooms, fanout: fanoutRef }).catch((err) => {
+		console.error('[multiplayer] /internal/moderate error:', err?.message || err);
+		res.status(500).json({ error: 'internal' });
+	}),
+);
 
 // Public live population. The only aggregate this process publishes without a
 // signature, and deliberately so: it is a count, never an identity. No session
@@ -402,7 +417,7 @@ if (presence) {
 	fanoutRef = createFanout({
 		presence,
 		instanceId: INSTANCE_ID,
-		handlers: { notify: localNotify, stage: localStage, announce: localAnnounce },
+		handlers: { notify: localNotify, stage: localStage, announce: localAnnounce, moderate: localModerate },
 	});
 }
 

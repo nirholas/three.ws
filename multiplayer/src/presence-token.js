@@ -138,6 +138,30 @@ export function verifyAnnounceSignature(payload, ts, sig) {
 	return timingSafeEqualStr(sig, expected);
 }
 
+// ── Operator moderation ──────────────────────────────────────────────────────
+// /internal/moderate lets an operator (scripts/moderate-play.mjs, which holds the
+// same shared secret) mute, kick or ban a player and list who is online. Same
+// discipline as /internal/announce: the signature binds the exact body and a
+// fresh timestamp. Keep byte-compatible with the signer in scripts/moderate-play.mjs.
+const MODERATE_MAX_AGE_S = 120;
+
+export function verifyModerateSignature(payload, ts, sig) {
+	if (typeof sig !== 'string' || !sig) return false;
+	const tsNum = Number(ts);
+	if (!Number.isFinite(tsNum)) return false;
+	const nowS = Math.floor(Date.now() / 1000);
+	if (Math.abs(nowS - tsNum) > MODERATE_MAX_AGE_S) return false;
+	const payloadHash = crypto
+		.createHash('sha256')
+		.update(JSON.stringify(payload ?? {}))
+		.digest('base64url');
+	const expected = crypto
+		.createHmac('sha256', secret())
+		.update(`moderate:${tsNum}:${payloadHash}`)
+		.digest('base64url');
+	return timingSafeEqualStr(sig, expected);
+}
+
 // Sign an outbound room → API request (the host loop fetching the next beat from
 // /api/stage/host). Mirrored by verifyStageRequest in api/_lib/stage-bridge.js.
 export function signStageRequest(payload) {

@@ -102,6 +102,7 @@ import { PlayOnboard } from './play-onboard.js';
 import { log } from '../shared/log.js';
 import { t } from './i18n-play.js';
 import { openAvatarInspector, isAvatarInspectorOpen, closeAvatarInspector } from '../shared/avatar-inspector.js';
+import { openReportDialog } from './moderation-ui.js';
 import { createAgentDesk } from './agent-desk.js';
 import { VehicleManager } from './vehicles.js';
 import { CombatSystem } from './combat-system.js';
@@ -1821,6 +1822,14 @@ export class CoinCommunities {
 			this.ui.toast('Your holder pass expired, re-enter to verify your holdings.', 'warn');
 			this.leave();
 		});
+		// A moderator removed us (kicked or banned). Terminal: say so plainly and
+		// return to the lobby instead of reconnecting into the same world.
+		this.net.on('removed', ({ reason, detail }) => {
+			this.ui.toast(reason === 'banned'
+				? `You cannot join this world${detail ? `: ${detail}` : '.'}`
+				: 'A moderator removed you from this world. You can rejoin later.', 'warn');
+			this.leave();
+		});
 		this.net.on('add', (p, id) => this._onAdd(p, id));
 		this._activity?.bindNet(this.net);
 		this._activityTicker?.show();
@@ -1940,6 +1949,9 @@ export class CoinCommunities {
 			// /internal/announce) get the centre-screen treatment; every other
 			// notice stays a play-systems activity toast.
 			if (n?.kind === 'event') return this._onEventAnnounce(n);
+			// Moderation (mute / unmute / auto-mute): drive the persistent muted
+			// state in the chat box, and fall through so the text also toasts.
+			if (n?.kind === 'moderation' && 'mutedUntil' in n) this.ui.setMuted(n.mutedUntil);
 			// A refused equip sends a notice and NO profile echo, so the wardrobe's
 			// pending spinner had nothing to clear it and span forever on the card.
 			// Hand it the refusal so it can drop the spinner and say why.
@@ -2593,7 +2605,17 @@ export class CoinCommunities {
 			// real profile with follow / message / creations.
 			username: rp.username,
 			avatarUrl: rp._avatarUrl,
-			actions: this.party?.inspectActions(id) || [],
+			actions: [
+				...(this.party?.inspectActions(id) || []),
+				{
+					label: t('play.report', 'Report'),
+					onClick: () => openReportDialog({
+						targetName: rp.name || 'this player',
+						send: (reason) => this.net.sendReport(id, reason),
+						trigger: this.canvas,
+					}),
+				},
+			],
 			facts: [
 				...this._worldFacts(),
 				...(rp.voice ? [{ label: 'Voice', value: rp.voiceMuted ? 'in voice chat, muted' : 'in voice chat' }] : []),

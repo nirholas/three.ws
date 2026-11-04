@@ -34,6 +34,7 @@ import { verifyHolderPass } from '../holder-pass.js';
 import { socialHub } from '../social-hub.js';
 import { partyService } from '../party-service.js';
 import { verifyPresenceTicket } from '../presence-token.js';
+import { moderation, identityKeys, applyToStore, KICK_CLOSE_CODE, AUTO_MUTE_REPORTERS, AUTO_MUTE_MINUTES, REPORT_WINDOW_MS } from '../moderation.js';
 import { verifyPlayPass } from '../play-pass.js';
 import { containsHateSlur } from '../display-name-safety.js';
 import { newGuestId, signGuestToken, verifyGuestToken } from '../guest-token.js';
@@ -461,6 +462,9 @@ export class WalkRoom extends Room {
 	// TypeError on join. The instance form receives the real client at WS join
 	// time and its return value is stored as client.auth.
 	onAuth(client, options) {
+		// A banned identity never gets a seat. Checked first so a banned spectator
+		// or holder is refused the same way as anyone else.
+		this._assertNotBanned(client, options);
 		// Director / projector view: a watch-only seat, capped per room. Seated here
 		// so the flag is server-decided before onJoin ever runs.
 		if (wantsSpectator(options)) {
@@ -745,12 +749,17 @@ export class WalkRoom extends Room {
 		// Broadcast reactions (R04): a client sends an emoji; the server rate-limits
 		// and rebroadcasts to all clients in the room (including the sender).
 		this.onMessage('reaction', (client, payload) => this._handleReaction(client, payload));
+		this.onMessage('report', (client, payload) => this._handleReport(client, payload));
 		// Signature wall (docs/signature-wall.md): a signer tells the room a new name
 		// landed. The ping carries no content; every client re-reads the public API.
 		this.onMessage('sigwall-ping', (client) => this._handleSigwallPing(client));
 		this._sigwallPings = new Map(); // sessionId -> last ping ms
 		this._emoteCooldowns = new Map();
 		this._reactionCooldowns = new Map();
+		this._moderation = moderation;
+		this._muteNoticeAt = new Map(); // sessionId -> last muted-notice ms
+		this._reportCooldowns = new Map(); // sessionId -> last report ms
+		this._reports = new Map(); // target key -> Map(reporter key -> ms)
 		this._editCounters = new Map(); // sessionId → { windowStart, count }
 		this._batchCounters = new Map(); // sessionId → { windowStart, count } for composite stamps
 		this._voiceCounters = new Map(); // sessionId → { windowStart, count }
@@ -1205,6 +1214,8 @@ export class WalkRoom extends Room {
 		this._editCounters?.delete(client.sessionId);
 		this._batchCounters?.delete(client.sessionId);
 		this._emoteCooldowns?.delete(client.sessionId);
+		this._muteNoticeAt?.delete(client.sessionId);
+		this._reportCooldowns?.delete(client.sessionId);
 		this._reactionCooldowns?.delete(client.sessionId);
 		this._sigwallPings?.delete(client.sessionId);
 		this._voiceCounters?.delete(client.sessionId);
@@ -1965,6 +1976,7 @@ export class WalkRoom extends Room {
 	_handleEmote(client, payload) {
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
+		if (this._muteBlocked(client, { silent: true })) return;
 		const name = clean(payload?.name, 32);
 		if (!name) return;
 		const now = Date.now();
@@ -1986,6 +1998,7 @@ export class WalkRoom extends Room {
 	_handleReaction(client, payload) {
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
+		if (this._muteBlocked(client, { silent: true })) return;
 		const ALLOWED = ['🎉', '😂', '🔥', '❤️', '👏', '🤔'];
 		const emoji = typeof payload?.emoji === 'string' ? payload.emoji.trim() : '';
 		if (!ALLOWED.includes(emoji)) return;
@@ -1997,9 +2010,143 @@ export class WalkRoom extends Room {
 		this._danceOff?.reaction(client, payload);
 	}
 
+	// --- Moderation ----------------------------------------------------------
+	// Mutes and bans are keyed by stable identity (wallet, account uid, persistence
+	// key), see moderation.js. The operator drives them through the signed
+	// /internal/moderate route; players feed them through `report`.
+
+	_clientKeys(client) {
+		const u = client?.userData || {};
+		return identityKeys({ account: u.account, accountUid: u.accountUid, playerKey: u.playerKey });
+	}
+
+	/** Refuse a banned identity at join. Derives the same identities onJoin will
+	 *  bind, from the verified inputs only (never a raw client option). */
+	_assertNotBanned(client, options) {
+		const pass = verifyPlayPass(options?.playPass);
+		const guest = verifyGuestToken(options?.guestToken);
+		const wallet = client?.userData?.account || pass?.wallet || '';
+		const keys = identityKeys({
+			account: wallet,
+			accountUid: verifyPresenceTicket(options?.presence)?.uid || '',
+			playerKey: wallet || guest || '',
+		});
+		const ban = this._moderation.active(keys, 'ban');
+		if (ban) throw new Error(`banned: ${ban.reason || 'removed by a moderator'}`);
+	}
+
+	/** True when this session is muted. Tells the player why at most once a
+	 *  minute (unless `silent`, used for emotes, reactions and voice signalling). */
+	_muteBlocked(client, { silent = false } = {}) {
+		const mute = this._moderation.active(this._clientKeys(client), 'mute');
+		if (!mute) return false;
+		if (!silent) {
+			const now = Date.now();
+			const told = (this._muteNoticeAt ??= new Map());
+			if (now - (told.get(client.sessionId) || 0) >= 60_000) {
+				told.set(client.sessionId, now);
+				const mins = Math.max(1, Math.ceil((mute.until - now) / 60_000));
+				try {
+					client.send('notice', { kind: 'moderation', ok: false, mutedUntil: mute.until, text: `You are muted for ${mins} more minute${mins === 1 ? '' : 's'}. Others cannot see your messages or hear you.` });
+				} catch { /* gone */ }
+			}
+		}
+		return true;
+	}
+
+	_moderationNotice(client, text, extra = {}) {
+		try { client.send('notice', { kind: 'moderation', ok: false, text, ...extra }); } catch { /* gone */ }
+	}
+
+	/** Online players for the operator tool (no wallets or keys leave the process). */
+	listPlayersForModeration() {
+		return this.clients
+			.filter((c) => this.state.players.has(c.sessionId))
+			.map((c) => ({
+				sessionId: c.sessionId,
+				name: this.state.players.get(c.sessionId)?.name || '',
+				room: this.roomId,
+				coin: this.state.coin || '',
+				muted: !!this._moderation.active(this._clientKeys(c), 'mute'),
+			}));
+	}
+
+	/** Apply an operator action to the players in this room that match the target. */
+	moderate({ action, target = {}, minutes = 0, reason = '', by = 'operator' }) {
+		const wantName = typeof target.name === 'string' ? target.name.trim().toLowerCase() : '';
+		const matched = [];
+		for (const client of this.clients) {
+			const player = this.state.players.get(client.sessionId);
+			if (!player) continue;
+			const u = client.userData || {};
+			const hit =
+				(target.sessionId && client.sessionId === target.sessionId) ||
+				(wantName && String(player.name || '').toLowerCase() === wantName) ||
+				(target.account && u.account === target.account) ||
+				(target.playerKey && u.playerKey === target.playerKey);
+			if (!hit) continue;
+			matched.push({ sessionId: client.sessionId, name: player.name });
+			const keys = this._clientKeys(client);
+			if (action === 'mute') {
+				applyToStore(this._moderation, 'mute', keys, { minutes, reason, by });
+				if (player.voice) { player.voice = false; player.voiceMuted = false; }
+				const mins = minutes > 0 ? minutes : 15;
+				this._moderationNotice(client, `A moderator muted you for ${mins} minute${mins === 1 ? '' : 's'}${reason ? `: ${reason}` : ''}.`, { mutedUntil: this._moderation.active(keys, 'mute')?.until || 0 });
+			} else if (action === 'unmute') {
+				applyToStore(this._moderation, 'unmute', keys);
+				this._muteNoticeAt?.delete(client.sessionId);
+				try { client.send('notice', { kind: 'moderation', ok: true, mutedUntil: 0, text: 'A moderator lifted your mute.' }); } catch { /* gone */ }
+			} else if (action === 'unban') {
+				applyToStore(this._moderation, 'unban', keys);
+			} else if (action === 'kick' || action === 'ban') {
+				if (action === 'ban') applyToStore(this._moderation, 'ban', keys, { minutes, reason, by });
+				this._moderationNotice(client, `You were removed from this world by a moderator${reason ? `: ${reason}` : ''}.`);
+				try { client.leave(KICK_CLOSE_CODE, action === 'ban' ? 'banned' : 'kicked'); } catch { /* gone */ }
+			}
+		}
+		return { matched };
+	}
+
+	/** A player flags another. Three distinct reporters inside five minutes mute
+	 *  the target for ten; a report never bans. */
+	_handleReport(client, payload) {
+		const reply = (body) => { try { client.send('report-result', body); } catch { /* gone */ } };
+		const targetId = typeof payload?.targetSessionId === 'string' ? payload.targetSessionId : '';
+		const target = targetId && targetId !== client.sessionId ? this.clients.find((c) => c.sessionId === targetId) : null;
+		if (!target || !this.state.players.has(targetId) || !this.state.players.has(client.sessionId)) {
+			return reply({ ok: false, error: 'invalid_target' });
+		}
+		const now = Date.now();
+		if (now - (this._reportCooldowns.get(client.sessionId) || 0) < 10_000) {
+			return reply({ ok: false, error: 'rate_limited' });
+		}
+		this._reportCooldowns.set(client.sessionId, now);
+
+		const reason = clean(payload?.reason, 120) || 'unspecified';
+		const targetKey = target.userData?.playerKey || target.sessionId;
+		const reporterKey = client.userData?.playerKey || client.sessionId;
+		let seen = this._reports.get(targetKey);
+		if (!seen) { seen = new Map(); this._reports.set(targetKey, seen); }
+		for (const [k, at] of seen) if (now - at > REPORT_WINDOW_MS) seen.delete(k);
+		seen.set(reporterKey, now);
+		console.log(`[walk_world ${this.roomId}] report ${client.sessionId} -> ${targetId} (${reason}); ${seen.size}/${AUTO_MUTE_REPORTERS} distinct`);
+
+		if (seen.size >= AUTO_MUTE_REPORTERS) {
+			this._reports.delete(targetKey);
+			const keys = this._clientKeys(target);
+			applyToStore(this._moderation, 'mute', keys, { minutes: AUTO_MUTE_MINUTES, reason: 'multiple player reports', by: 'auto-report' });
+			const tp = this.state.players.get(targetId);
+			if (tp?.voice) { tp.voice = false; tp.voiceMuted = false; }
+			this._moderationNotice(target, `Several players reported you, so you are muted for ${AUTO_MUTE_MINUTES} minutes.`, { mutedUntil: this._moderation.active(keys, 'mute')?.until || 0 });
+			console.log(`[walk_world ${this.roomId}] auto-mute ${targetId} for ${AUTO_MUTE_MINUTES} min after ${AUTO_MUTE_REPORTERS} reports`);
+		}
+		reply({ ok: true });
+	}
+
 	_handleChat(client, payload) {
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
+		if (this._muteBlocked(client)) return;
 		const text = clean(payload?.text, 200);
 		if (!text) return;
 		// Narrow whole-word hate-slur gate (see display-name-safety.js): deliberately
@@ -2060,6 +2207,7 @@ export class WalkRoom extends Room {
 	_handleVoiceState(client, payload) {
 		const player = this.state.players.get(client.sessionId);
 		if (!player) return;
+		if (this._muteBlocked(client)) return;
 		if (!this._actionOk(client.sessionId, 'voiceState')) return;
 		player.voice = !!(payload && payload.on);
 		// Muted only means something while in voice; an older client omits it.
@@ -2068,6 +2216,7 @@ export class WalkRoom extends Room {
 
 	_handleVoiceSignal(client, payload) {
 		if (!this.state.players.has(client.sessionId)) return;
+		if (this._muteBlocked(client, { silent: true })) return;
 		if (!payload || typeof payload !== 'object') return;
 		const to = typeof payload.to === 'string' ? payload.to : '';
 		if (!to || to === client.sessionId) return;

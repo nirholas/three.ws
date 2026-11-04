@@ -23,6 +23,7 @@ import { proxiedImageURL } from '../ipfs.js';
 import { log } from '../shared/log.js';
 import { netErrorMessage } from './net-error.js';
 import { t, onLocaleChange } from './i18n-play.js';
+import { createMuteState } from './moderation-ui.js';
 import { announce, openModal } from './a11y.js';
 import { countUp } from '../ui-juice.js';
 import { ChatLogView } from './chat-log-view.js';
@@ -1958,9 +1959,15 @@ export class CommunityUI {
 					: t('play.chat_earlier_many', '{{n}} earlier messages', { n })),
 			},
 		});
+		// Shown while a moderator (or enough player reports) has muted this player.
+		// role=status so a screen reader hears it appear; cleared by createMuteState
+		// when the server lifts the mute or its clock runs out.
+		this.chatMutedStrip = el('div', { class: 'cc-chat-muted', role: 'status', hidden: true });
+		this._muteState = createMuteState({ strip: this.chatMutedStrip, input: this.chatInput });
 		this.chatWorld = el('div', { class: 'cc-chat-world', id: 'cc-chat-world', role: 'tabpanel', 'aria-labelledby': 'cc-chat-tab-world' }, [
 			this.chatEmpty,
 			this.chatLog,
+			this.chatMutedStrip,
 			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { class: 'cc-chat-send', type: 'button', text: 'Send', 'data-i18n': 'play.send', onclick: () => this._sendChat() })]),
 		]);
 		// The coin's community board (read-only). Its tab stays hidden until the
@@ -3318,6 +3325,9 @@ export class CommunityUI {
 		btn.classList.add('cc-cooldown');
 		setTimeout(() => btn.classList.remove('cc-cooldown'), 620);
 	}
+
+	/** Server-driven mute state (epoch ms from the moderation notice; 0 clears). */
+	setMuted(until) { this._muteState.set(until); }
 
 	_sendChat() {
 		const text = this.chatInput.value.trim();

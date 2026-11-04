@@ -4100,3 +4100,47 @@ select.npc-svc-input {
 select.npc-svc-input:hover {
 	border-color: var(--stroke-strong);
 }
+
+/* Moderation: muted strip above the chat box, and the Report dialog. */
+.cc-chat-muted {
+	flex: none; margin: 0 0 6px; padding: 7px 10px; font-size: 12px; line-height: 1.4;
+	color: #ffd9a8; background: rgba(255, 170, 60, 0.12);
+	border: 1px solid rgba(255, 170, 60, 0.35); border-radius: var(--cc-radius-sm);
+}
+.cc-chat-input input:disabled { cursor: not-allowed; opacity: 0.6; }
+.cc-report-overlay {
+	position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center;
+	padding: 16px; background: rgba(0, 0, 0, 0.6);
+}
+.cc-report-card {
+	width: min(420px, 100%); max-height: 100%; overflow: auto; padding: 18px;
+	background: #14161c; color: var(--cc-text, #eee);
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.18)); border-radius: 12px;
+	box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
+}
+.cc-report-title { margin: 0 0 6px; font-size: 16px; }
+.cc-report-intro { margin: 0 0 12px; font-size: 12px; color: var(--cc-dim, #aab); line-height: 1.45; }
+.cc-report-reasons { display: grid; gap: 6px; margin-bottom: 12px; }
+.cc-report-reason {
+	display: flex; align-items: center; gap: 10px; padding: 9px 10px; font-size: 13px; cursor: pointer;
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.18)); border-radius: 8px;
+	transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease;
+}
+.cc-report-reason:hover { background: rgba(255, 255, 255, 0.07); }
+.cc-report-reason:has(input:checked) { border-color: var(--cc-edge-hi, #fff); background: rgba(255, 255, 255, 0.1); }
+.cc-report-reason:focus-within { outline: 2px solid #8ab4ff; outline-offset: 2px; }
+.cc-report-status { min-height: 18px; margin: 0 0 10px; font-size: 12px; }
+.cc-report-ok { color: #8be6a3; }
+.cc-report-error { color: #ff9a9a; }
+.cc-report-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.cc-report-btn {
+	padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; color: inherit;
+	background: transparent; border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.25)); border-radius: 8px;
+	transition: background var(--duration-fast, 120ms) ease, transform 80ms ease;
+}
+.cc-report-btn:hover { background: rgba(255, 255, 255, 0.1); }
+.cc-report-btn:active { transform: translateY(1px); }
+.cc-report-btn:focus-visible { outline: 2px solid #8ab4ff; outline-offset: 2px; }
+.cc-report-btn:disabled { opacity: 0.6; cursor: progress; }
+.cc-report-primary { background: #fff; color: #111; border-color: #fff; }
+.cc-report-primary:hover { background: #e6e6e6; }
