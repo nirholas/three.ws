@@ -262,16 +262,34 @@ export default wrap(async (req, res) => {
 			continue;
 		}
 
-		// Connected, stream the answer through.
-		sseHead();
+		// Connected. The SSE head goes out only with the first content chunk, so
+		// a rung that streams nothing (or dies before its first token) can still
+		// fall to the next rung instead of becoming an empty answer.
+		let headSent = false;
 		let reply = '';
 		try {
-			reply = await pumpOpenAIStream(upstream, (text) => sendSSE({ type: 'chunk', text }));
+			reply = await pumpOpenAIStream(upstream, (text) => {
+				if (!headSent) {
+					headSent = true;
+					sseHead();
+				}
+				sendSSE({ type: 'chunk', text });
+			});
 		} catch (err) {
 			captureException(err, { route: 'concierge', stage: 'stream', provider: provider.name });
+			if (!headSent) {
+				lastFailure = err;
+				void markProviderCooldown(provider.name);
+				continue;
+			}
 			sendSSE({ type: 'error', code: 'stream_error', message: 'stream interrupted' });
 			res.end();
 			return;
+		}
+		if (!headSent) {
+			lastFailure = new Error(`${provider.name} streamed no content`);
+			void markProviderCooldown(provider.name);
+			continue;
 		}
 		sendSSE({ type: 'done', provider: provider.name, model: provider.model });
 		res.end();

@@ -23,6 +23,7 @@ import { AVATARS, DEFAULT_AVATAR_ID, DEFAULT_ASSET_BASE, getAvatar, avatarUrl, c
 import { buildSitePayload } from './context.js';
 import { askConcierge, DEFAULT_ENDPOINT, MAX_HISTORY_TURNS } from './client.js';
 import { renderMarkdown, stripMarkdown, escapeHtml } from './markdown.js';
+import { drainSentences } from './sentences.js';
 import { createMic, micSupported } from './mic.js';
 import { ensureStyles } from './styles.js';
 import {
@@ -78,20 +79,7 @@ function storageSet(store, key, value) {
 	}
 }
 
-/** Split streamed text into complete sentences for the voice channel. */
-export function drainSentences(buffer) {
-	const sentences = [];
-	let rest = buffer;
-	let m;
-	const re = /[^.!?\n]*[.!?\n]+["')\]]?\s*/g;
-	let consumed = 0;
-	while ((m = re.exec(rest)) !== null) {
-		const s = m[0].trim();
-		if (s) sentences.push(s);
-		consumed = re.lastIndex;
-	}
-	return { sentences, rest: rest.slice(consumed) };
-}
+export { drainSentences };
 
 export class Concierge {
 	/**
