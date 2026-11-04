@@ -61,6 +61,7 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 ## Developers
 
 - [Connect three.ws to Claude, ChatGPT, Grok Bot, Cursor & VS Code](https://three.ws/connect): Add three.ws to your AI client in two clicks: one connector URL gives Claude, ChatGPT, Grok Bot, Cursor, VS Code or Claude Code the three.ws MCP tools for 3D generation, agents, wallets and x402 payments. Sign in once in your browser, with no API key to copy.
+- [Add three.ws to ChatGPT: free 3D models and avatars inside your chats](https://three.ws/chatgpt): Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.
 - [three.ws for Grok Bot: a free 3D studio and a body for Grok](https://three.ws/grok): Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.
 - [MCP Tool Catalog](https://three.ws/mcp-tools): Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.
 - [Docs · Start Here](https://three.ws/docs/start-here.md): Plain-language introduction to three.ws for creators and non-developers: what it is, who it’s for, and where to begin.
@@ -103,6 +104,6 @@ Machine-readable entry points. Fetch these instead of scraping HTML.
 
 ## Optional
 
-- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (1070) with full descriptions, plus the full markdown of the curated docs.
+- [llms-full.txt](https://three.ws/llms-full.txt): Every public page (1072) with full descriptions, plus the full markdown of the curated docs.
 - [Sitemap](https://three.ws/sitemap): The same index for people, with search.
 - [sitemap.xml](https://three.ws/sitemap.xml): XML sitemap for crawlers, including every agent and avatar page.

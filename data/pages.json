@@ -39,15 +39,54 @@
 		"llms": [
 			{
 				"title": "Start here",
-				"paths": ["/", "/what-is", "/everything", "/create", "/forge", "/image-to-3d", "/create-agent", "/agents", "/marketplace", "/spotlight"]
+				"paths": [
+					"/",
+					"/what-is",
+					"/everything",
+					"/create",
+					"/forge",
+					"/image-to-3d",
+					"/create-agent",
+					"/agents",
+					"/marketplace",
+					"/spotlight"
+				]
 			},
 			{
 				"title": "Developers",
-				"paths": ["/connect", "/chatgpt", "/grok", "/mcp-tools", "/docs/start-here", "/docs/mcp", "/docs/cli", "/docs/api-reference", "/avatar-sdk", "/3d", "/crypto-api", "/docs/x402", "/x402", "/docs/skills", "/prompts"]
+				"paths": [
+					"/connect",
+					"/chatgpt",
+					"/grok",
+					"/mcp-tools",
+					"/docs/start-here",
+					"/docs/mcp",
+					"/docs/cli",
+					"/docs/api-reference",
+					"/avatar-sdk",
+					"/3d",
+					"/crypto-api",
+					"/docs/x402",
+					"/x402",
+					"/docs/skills",
+					"/prompts"
+				]
 			},
 			{
 				"title": "Economy and $THREE",
-				"paths": ["/three-token", "/three", "/three-launchpad", "/launch", "/launches", "/pay", "/credits", "/domains", "/pricing", "/economy", "/analytics"]
+				"paths": [
+					"/three-token",
+					"/three",
+					"/three-launchpad",
+					"/launch",
+					"/launches",
+					"/pay",
+					"/credits",
+					"/domains",
+					"/pricing",
+					"/economy",
+					"/analytics"
+				]
 			},
 			{
 				"title": "Learn",
@@ -3656,6 +3695,14 @@
 					"added": "2026-09-16"
 				},
 				{
+					"path": "/docs/account-deletion",
+					"title": "Docs · Account deletion and the 30-day purge",
+					"description": "What happens after you delete a three.ws account: the 30-day recovery window, the permanent purge of uploads and account data, the records kept for legal and accounting reasons and how they are stripped of your identity, and the hashed receipt each purge leaves.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/analytics-retention",
 					"title": "Docs · Week-2 retention on minted agents",
 					"description": "How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.",
@@ -4884,7 +4931,7 @@
 					"description": "Serve and pay MPP Payment challenges on Solana beside x402 on the same URL: the challenge and credential wire format, the mpp option on paid endpoints, the agent payer with spending caps and a dry-run quote, and how to verify it.",
 					"added": "2026-10-23"
 				},
-					{
+				{
 					"path": "/docs/skill-import",
 					"title": "Docs · Importing skills",
 					"description": "Install SKILL.md skills from any public GitHub repository or registry manifest: pinned to an exact commit, licence-checked, scanned for hostile instructions, approved by the owner, and run under the spend gate when they ask to spend, sign or message. Includes the fork and publish flow, the MCP tools and the REST API.",
@@ -7555,6 +7602,32 @@
 					"added": "2026-05-17"
 				},
 				{
+					"path": "/blog/three-ws-nvidia-inception-gtc-2027",
+					"title": "three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster",
+					"description": "What three.ws runs on NVIDIA today: an NVIDIA Inception member since July 2026, a self-hosted fleet of L4 and Blackwell GPUs, NIM-hosted Nemotron, Riva and Audio2Face-3D, and the research poster we are submitting to the NVIDIA GTC 2027 call for posters.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-11-04"
+				},
+				{
+					"path": "/blog/ibm-user-group-meetup-3",
+					"title": "The Three.ws User Group Meets Inside the World Again on November 6",
+					"description": "Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser, with a souvenir granted only during the hour.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-10-30",
+					"added": "2026-10-30"
+				},
+				{
+					"path": "/blog/three-ws-microsoft-partnership",
+					"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
+					"description": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-10-30",
+					"added": "2026-10-30"
+				},
+				{
 					"path": "/blog/ibm-user-group-first-in-world-meetup-recap",
 					"title": "The Three.ws User Group's First In-World Meetup: How It Went",
 					"description": "The Three.ws User Group on IBM Community held its first meetup inside three.ws itself, 8 AM to 5 PM Pacific, peaking at 3,145 concurrent users in the $THREE home town at three.ws/play. Here's how a nine-hour user group meetup held inside a 3D world actually went.",
@@ -7621,24 +7694,6 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"lastmod": "2026-07-18"
-				},
-				{
-					"path": "/blog/ibm-user-group-meetup-3",
-					"title": "The Three.ws User Group Meets Inside the World Again on November 6",
-					"description": "Meetup #3 of the Three.ws User Group on IBM Community, hosted with IBM Community: Friday, November 6, 8 to 9 AM Pacific (16:00 UTC), in the $THREE home town at three.ws/play. Free, in the browser, with a souvenir granted only during the hour.",
-					"priority": 0.6,
-					"changefreq": "monthly",
-					"lastmod": "2026-10-30",
-					"added": "2026-10-30"
-				},
-				{
-					"path": "/blog/three-ws-microsoft-partnership",
-					"title": "three.ws Partners with Microsoft and Goes Live on Microsoft Marketplace",
-					"description": "three.ws and Microsoft have announced a partnership, and three.ws is now live on Microsoft Marketplace, putting open-source 3D AI agents inside the procurement flow Microsoft customers already use.",
-					"priority": 0.6,
-					"changefreq": "monthly",
-					"lastmod": "2026-10-30",
-					"added": "2026-10-30"
 				},
 				{
 					"path": "/blog/three-ws-quicknode-startup-program",

@@ -24047,6 +24047,136 @@
 				}
 			],
 			"mentions": {}
+		},
+		{
+			"id": "gtc-2027-poster",
+			"status": "draft",
+			"kind": "post",
+			"tier": 2,
+			"lane": "developer",
+			"pattern": "proof",
+			"notBefore": "2026-11-06T12:00:00Z",
+			"note": "Hold until the owner has submitted the poster in the GTC portal (deadline 2026-11-10, 5 p.m. PT). The post says submission, never acceptance; notification is rolling from mid-December 2026.",
+			"source": {
+				"path": "docs/nvidia-gtc-2027/README.md",
+				"url": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027"
+			},
+			"covers": [
+				"/demos/audio2face"
+			],
+			"posts": [
+				{
+					"text": "We measured our Audio2Face-3D rig mapping on 468 real user avatars for a GTC 2027 poster submission: 98.1% of rigs with any face morphs are driven from one blendshape track, with no per-rig code, and text to synchronized speech and animation takes a median 3.8 s. Poster, data and build scripts: github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
+					"media": [
+						{
+							"path": "public/x-media/gtc-poster/poster.png",
+							"alt": "The GTC 2027 poster sheet, white with seven numbered sections in four columns: the problem, the Riva, Nemotron, Magpie and Audio2Face-3D pipeline, the direct and derived blendshape mapping with three avatar faces at the same frame, the coverage chart by avatar source, the latency chart, and the overshoot ablation"
+						}
+					]
+				},
+				{
+					"text": "The derived path runs the viseme-to-ARKit tables backwards, so a VRM or Oculus rig gets a usable mouth from the same track. It stays off any mesh that already has a direct jaw or mouth shape: with that rule off, the mouth saturates in 23% of voiced frames."
+				}
+			],
+			"claims": [
+				{
+					"says": "468 real user avatars",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-gtc-2027/README.md",
+							"contains": "207 of 211; 200 direct, 7 derived, 4 unmapped; 257 files with no morphs"
+						},
+						{
+							"type": "file",
+							"path": "docs/nvidia-gtc-2027/data/coverage-2026-11-04.json",
+							"contains": "\"readable\": 468"
+						}
+					]
+				},
+				{
+					"says": "98.1% of rigs with any face morphs are driven from one blendshape track",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-gtc-2027/data/derived-figures.json",
+							"contains": "\"driven_pct\": \"98.1%\""
+						}
+					]
+				},
+				{
+					"says": "with no per-rig code",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-gtc-2027/poster.template.html",
+							"contains": "No rig-specific code or allowlist exists"
+						}
+					]
+				},
+				{
+					"says": "text to synchronized speech and animation takes a median 3.8 s",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-gtc-2027/data/derived-figures.json",
+							"contains": "\"median_latency_s\": 3.807"
+						}
+					]
+				},
+				{
+					"says": "GTC 2027 poster submission",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-gtc-2027/README.md",
+							"contains": "NVIDIA GTC 2027 Call for Posters"
+						}
+					]
+				},
+				{
+					"says": "the mouth saturates in 23% of voiced frames",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "docs/nvidia-gtc-2027/data/derived-figures.json",
+							"contains": "\"saturated_pct_without_rule\": \"23%\""
+						}
+					]
+				}
+			],
+			"mentions": {},
+			"probes": [
+				{
+					"type": "api",
+					"name": "the live Audio2Face demo the poster cites answers",
+					"url": "https://three.ws/demos/audio2face",
+					"expect": {
+						"status": 200
+					}
+				},
+				{
+					"type": "api",
+					"name": "the production endpoint the latency run measured still answers a text request",
+					"url": "https://three.ws/api/a2f",
+					"method": "POST",
+					"body": {
+						"text": "One track, any rig."
+					},
+					"expect": {
+						"status": 200,
+						"contains": "blendShapeNames"
+					}
+				},
+				{
+					"type": "api",
+					"name": "the poster PDF is published in the repository",
+					"url": "https://raw.githubusercontent.com/nirholas/three.ws/main/docs/nvidia-gtc-2027/poster.pdf",
+					"expect": {
+						"status": 200
+					}
+				}
+			]
 		}
 	]
 }

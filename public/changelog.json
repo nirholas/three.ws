@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T16:49:06.717Z",
+	"generated_at": "2026-11-04T17:01:16.585Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -80,6 +80,17 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Agents SDK routes are all real",
+			"summary": "Every @three-ws/agents method now calls a mounted /api/v1 route: account usage, budget, ledger, integrations and link codes, six market intel reads (price, top movers, RSI/EMA/MACD indicators, signals, anomalies, macro) and read-only agent wallet balance and history. Swap execution and transfers stay out of the API by design. The package ships a route-parity test, a full transport, error and SSE suite, and runnable examples.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Announced surfaces defect sweep",
 			"summary": "Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.",
 			"link": null,
@@ -121,11 +132,32 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Grok Bot gets the Solana market, and three.ws events can wake it",
+			"summary": "The three.ws connector for Grok Bot now covers more than 3D. Signed in, Grok can read live pump.fun graduations and token intel, Oracle conviction plays, the Sentiment Scout, token due diligence, the trader leaderboard and Solana agent passports, and a new market-brief prompt turns them into a scheduled daily brief. None of these tools can trade or spend. Developer webhooks can now carry a bearer token, so a three.ws event such as a finished generation or agent run can start a Grok Bot routine. The token is stored encrypted and never shown again. The /grok page and docs also cover Grok Build, xAI's coding CLI, which picks up the three.ws MCP config and plugin marketplace with no extra setup.",
+			"link": "/grok",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Install three.ws for Home Assistant through HACS",
 			"summary": "The three.ws Home Assistant integration now has its own public repository, github.com/nirholas/three-ws-home-assistant, with a 1.0.2 release. In HACS, add it under Custom repositories (category Integration), install three.ws, restart, and paste the pairing code from three.ws/smart-home. Your house opens one outgoing connection, nothing on your network is exposed, and no Home Assistant token ever leaves the house. It passes the real HACS and hassfest validation checks, ships its own brand icon, and is listed under AI and voice assistants. A HACS default-store listing, which removes the custom repository step, is prepared.",
 			"link": "/docs/home-relay",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Large 3D generations stop dropping mid-job, and photo cutouts move to a commercially licensed model",
+			"summary": "Very detailed TRELLIS generations could stall the worker long enough for Cloud Run to restart it, so every job on that machine failed with a malformed response. The worker now keeps each bake within a measured face budget, which covers every model that already succeeded. The TripoSG photo lane cuts out your subject with BiRefNet through our own background-removal service instead of a non-commercial model. Image lanes move to Gemini 3.1 Flash Image, falling back to the previous model only where the new one is not served. The scan page now says plainly that generating needs a free account.",
+			"link": "/features/scan",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -152,6 +184,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Opening the spin wheel no longer drops everyone in the world",
+			"summary": "Opening the spin wheel in /play could crash the game server and disconnect every player in the world at once. The wheel now opens normally, and when paid spins are unavailable it says so instead of failing. The server also stays up through any single bad message from one player, so one fault costs that player one action rather than costing everyone their session.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Optional one-wallet-per-call payer for the x402 ring",
 			"summary": "With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting.",
 			"link": null,
@@ -163,9 +205,40 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Play holds up on a shaky connection",
+			"summary": "When the connection drops in Play, you now get a plain explanation and a way forward instead of a raw error code. Builds that fail to save retry on their own until they land, and a world whose saved builds did not load tries again before telling you. A dropped matchmaking poll keeps your community in the war queue. A message thread that fails to load shows a Retry button, and a chat reply that drops shows why instead of \"They went quiet\". The pay demo only says no funds moved when that is certain. Escape now closes only the top panel, and the loading and error screens, the wheel and the stage prompt follow your language.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "The GTC 2027 poster, its data and its build scripts are in the repository",
 			"summary": "docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.",
 			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "three.ws 3D Studio plugins for Hermes and Dify",
+			"summary": "Two more agent platforms can now make 3D models for free. The Hermes plugin connects Hermes Agent to the studio MCP server and bundles the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "What three.ws builds with NVIDIA, and the poster we are taking to GTC 2027",
+			"summary": "A new blog post lays out everything three.ws runs on NVIDIA: thirteen L4 and Blackwell GPU deployments that generated 19,270 3D models in a month, Nemotron, Riva and Magpie through NIM, and an Audio2Face-3D digital human that talks in a browser tab with nothing installed. It explains what NVIDIA Inception membership adds, and previews our application to the GTC 2027 call for posters: one facial animation track that drives 98.1% of real user avatars that have face morphs, from text to a speaking face in a median 3.8 seconds. Inception startups can also claim $25 of three.ws credit on the NVIDIA page.",
+			"link": "/blog/three-ws-nvidia-inception-gtc-2027",
 			"tags": [
 				"docs"
 			]
