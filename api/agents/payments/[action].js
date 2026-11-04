@@ -16,6 +16,10 @@ import { solanaConnection } from '../../_lib/solana/connection.js';
 import { blockhashKey, getRecentBlockhashInfo } from '../../_lib/solana/read-guards.js';
 import { PublicKey, Transaction, ComputeBudgetProgram } from '@solana/web3.js';
 import {
+	createAssociatedTokenAccountIdempotentInstruction,
+	getAssociatedTokenAddressSync,
+} from '@solana/spl-token';
+import {
 	PumpAgentOffline,
 	PumpAgent,
 	PUMP_AGENT_PAYMENTS_PROGRAM_ID,
@@ -30,6 +34,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { randomToken } from '../../_lib/crypto.js';
 import { insertNotification } from '../../_lib/notify.js';
+import { tokenProgramIdForMint } from '../../_lib/token/token-program.js';
 
 function rpcUrl(cluster) {
 	return cluster === 'devnet'
@@ -276,7 +281,7 @@ async function handlePayPrep(req, res) {
 	const body = parse(payPrepSchema, await readJson(req));
 
 	// The payer wallet is the fee-payer of the invoice tx and is persisted as the
-	// intent's owner-facing wallet, so it must belong to the authenticated caller —
+	// intent's owner-facing wallet, so it must belong to the authenticated caller:
 	// otherwise any signed-in user could mint intent rows "as" an arbitrary wallet
 	// for any agent/amount/mint (record pollution + spoofed payer attribution).
 	// Mirrors the linkage check every other wallet-signing prep handler enforces.
@@ -314,13 +319,24 @@ async function handlePayPrep(req, res) {
 	const startTime = Math.floor(Date.now() / 1000);
 	const endTime = startTime + 60 * 60 * 24; // 24h validity window for the invoice
 
+	// The currency's own token program: $THREE is Token-2022, USDC is classic,
+	// and the SDK defaults every account to classic when it is not told.
+	const currencyMint = new PublicKey(body.currency_mint);
+	const tokenProgram = await tokenProgramIdForMint(conn, currencyMint);
+
+	// The SDK leads with its own compute-budget instructions, so the limit and
+	// price go through it: a second SetComputeUnitLimit in the same transaction
+	// is rejected by the runtime (DuplicateInstruction).
 	const ixs = await pumpAgent.buildAcceptPaymentInstructions({
 		user: payerPk,
-		currencyMint: new PublicKey(body.currency_mint),
+		currencyMint,
 		amount: new BN(body.amount),
 		memo: new BN(memo),
 		startTime: new BN(startTime),
 		endTime: new BN(endTime),
+		tokenProgram,
+		computeUnitLimit: 200_000,
+		computeUnitPrice: 1000,
 	});
 
 	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: body.cluster }));
@@ -328,11 +344,7 @@ async function handlePayPrep(req, res) {
 		feePayer: payerPk,
 		blockhash,
 		lastValidBlockHeight,
-	}).add(
-		ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
-		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 }),
-		...ixs,
-	);
+	}).add(...ixs);
 
 	const txBase64 = tx
 		.serialize({ requireAllSignatures: false, verifySignatures: false })
@@ -441,7 +453,7 @@ async function handlePayConfirm(req, res) {
 		where id = ${intent.id} and status = 'pending'
 		returning id, agent_id, amount, currency_mint, paid_at
 	`;
-	// Concurrent request already marked this paid — idempotent success.
+	// Concurrent request already marked this paid; idempotent success.
 	if (!updated) return json(res, 200, { ok: true, intent_id: intent.id, status: 'paid' });
 
 	// Fire-and-forget: notify the agent owner that they received a payment.
@@ -479,7 +491,8 @@ async function handleBalances(req, res) {
 	const body = parse(balancesSchema, { ...req.query });
 	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
 	const agent = new PumpAgent(new PublicKey(body.mint), body.cluster, conn);
-	const balances = await agent.getBalances(new PublicKey(body.currency_mint));
+	const currency = new PublicKey(body.currency_mint);
+	const balances = await agent.getBalances(currency, await tokenProgramIdForMint(conn, currency));
 	return json(res, 200, {
 		paymentVault: {
 			address: balances.paymentVault.address.toBase58(),
@@ -532,16 +545,16 @@ async function handleDistributePrep(req, res) {
 	if (agent.user_id !== user.id) return error(res, 404, 'not_found', 'agent not found');
 	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
 	const wallet = new PublicKey(body.wallet_address);
+	const currencyMint = new PublicKey(body.currency_mint);
+	const tokenProgram = await tokenProgramIdForMint(conn, currencyMint);
 	const offline = PumpAgentOffline.load(new PublicKey(body.mint), conn);
-	const ix = await offline.distributePayments({
-		user: wallet,
-		currencyMint: new PublicKey(body.currency_mint),
-	});
+	// An array: native SOL prepends a transfer-extra-lamports instruction.
+	const ixs = await offline.distributePayments({ user: wallet, currencyMint, tokenProgram });
 	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: body.cluster }));
 	const tx = new Transaction({ feePayer: wallet, blockhash, lastValidBlockHeight }).add(
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 120_000 }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100_000 }),
-		ix,
+		...ixs,
 	);
 	const txBase64 = tx
 		.serialize({ requireAllSignatures: false, verifySignatures: false })
@@ -608,18 +621,25 @@ async function handleWithdrawPrep(req, res) {
 	if (!agent) return error(res, 404, 'not_found', 'no payments-enabled agent for this mint');
 	if (agent.user_id !== user.id) return error(res, 404, 'not_found', 'agent not found');
 	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
-	const spl = await import('@solana/spl-token');
 	const authority = new PublicKey(body.wallet_address);
 	const currency = new PublicKey(body.currency_mint);
+	const tokenProgram = await tokenProgramIdForMint(conn, currency);
+	// Default receiver: the owner's own ATA under the currency's program, opened
+	// in the same transaction (idempotent, owner pays the rent) because the
+	// program requires it to exist and a first $THREE withdrawal has none yet.
 	const receiverAta = body.receiver_ata
 		? new PublicKey(body.receiver_ata)
-		: spl.getAssociatedTokenAddressSync(currency, authority);
+		: getAssociatedTokenAddressSync(currency, authority, false, tokenProgram);
+	const openReceiver = body.receiver_ata
+		? []
+		: [createAssociatedTokenAccountIdempotentInstruction(authority, receiverAta, authority, currency, tokenProgram)];
 	const offline = PumpAgentOffline.load(new PublicKey(body.mint), conn);
-	const ix = await offline.withdraw({ authority, currencyMint: currency, receiverAta });
+	const ix = await offline.withdraw({ authority, currencyMint: currency, receiverAta, tokenProgram });
 	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: body.cluster }));
 	const tx = new Transaction({ feePayer: authority, blockhash, lastValidBlockHeight }).add(
 		ComputeBudgetProgram.setComputeUnitLimit({ units: 100_000 }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 100_000 }),
+		...openReceiver,
 		ix,
 	);
 	const txBase64 = tx
