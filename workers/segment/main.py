@@ -56,6 +56,7 @@ from google.cloud.storage.retry import DEFAULT_RETRY
 from pydantic import BaseModel, Field, field_validator
 
 from gltf_meshopt import decode_if_meshopt
+from tracing import install_tracing
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -122,6 +123,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="segment-service", lifespan=lifespan)
+install_tracing(app, "segment")
 
 
 def _require_api_key(authorization: str) -> None:

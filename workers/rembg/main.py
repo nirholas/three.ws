@@ -56,6 +56,7 @@ from rembg_policy import (
     gpu_providers,
     prune_tasks,
 )
+from tracing import install_tracing
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -133,6 +134,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="rembg-service", lifespan=lifespan)
+install_tracing(app, "rembg")
 
 
 def _require_api_key(authorization: Optional[str]) -> None:

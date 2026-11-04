@@ -80,4 +80,5 @@ COPY main.py /app/main.py
 RUN python3 /app/test_texture_projection.py && python3 /app/test_gltf_meshopt.py
 
 EXPOSE 8080
+COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

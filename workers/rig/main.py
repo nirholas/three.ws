@@ -72,6 +72,7 @@ import rig_glb
 from blendshapes import head_mask_from_weights, load_template, transfer_blendshapes
 from gltf_meshopt import decode_if_meshopt
 from mesh_classify import HUMANOID, classify_mesh
+from tracing import install_tracing
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes_async,
@@ -121,6 +122,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="rig", lifespan=lifespan)
+install_tracing(app, "rig")
 
 
 def _require_api_key(authorization: str) -> None:

@@ -39,6 +39,7 @@ import { recordSource } from './brownout/provenance.js';
 import { applyFault, faultFor } from './brownout/chaos.js';
 import { assertSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
 import { pinnedFetch } from './ssrf.js';
+import { currentSpan, startChildSpan, runWithSpan, formatTraceparent, SPAN_KIND_CLIENT } from './tracing.js';
 
 export const DEFAULT_TIMEOUT_MS = 8_000;
 const DEFAULT_ATTEMPTS = 3;
@@ -117,6 +118,46 @@ function composeSignal(callerSignal, timeoutMs) {
  * @returns {Promise<Response>}
  */
 export async function fetchUpstream(url, init = {}, opts = {}) {
+	// With no active request span (a cron, a script, a test) there is nothing to
+	// join, so the call runs exactly as it always did.
+	if (!currentSpan()) return fetchUpstreamImpl(url, init, opts, null);
+	const shownUrl = safeUrl(url);
+	let host = shownUrl;
+	let path = '';
+	try {
+		const u = new URL(shownUrl);
+		host = u.host;
+		path = u.pathname;
+	} catch {
+		/* a relative or malformed URL keeps the redacted string as its host */
+	}
+	const span = startChildSpan(`upstream ${opts.name || host}`, { 'upstream.name': opts.name || host, 'http.host': host, 'http.path': path, 'http.request.method': String(init.method || 'GET').toUpperCase() }, SPAN_KIND_CLIENT);
+	try {
+		const res = await runWithSpan(span, () => fetchUpstreamImpl(url, init, opts, span));
+		span.setAttribute('http.response.status_code', res.status);
+		return res;
+	} catch (err) {
+		span.recordError(err);
+		span.setAttribute('http.response.status_code', /** @type {any} */ (err)?.status);
+		throw err;
+	} finally {
+		span.end();
+	}
+}
+
+/** Copy of `headers` (Headers, array or object) carrying this span's traceparent. */
+export function withTraceparent(headers, span) {
+	const tp = formatTraceparent(span.context);
+	if (headers instanceof Headers) {
+		const h = new Headers(headers);
+		h.set('traceparent', tp);
+		return h;
+	}
+	if (Array.isArray(headers)) return [...headers.filter(([k]) => String(k).toLowerCase() !== 'traceparent'), ['traceparent', tp]];
+	return { ...(headers || {}), traceparent: tp };
+}
+
+async function fetchUpstreamImpl(url, init, opts, span) {
 	const {
 		timeoutMs = DEFAULT_TIMEOUT_MS,
 		attempts = DEFAULT_ATTEMPTS,
@@ -147,7 +188,9 @@ export async function fetchUpstream(url, init = {}, opts = {}) {
 			// own fetch; see pinnedFetch in ssrf.js.
 			// undici's Response is the same WHATWG Response the global returns.
 			const send = /** @type {typeof fetch} */ (init.dispatcher ? pinnedFetch : fetch);
-			if (!res) res = await send(url, { ...init, signal: composeSignal(init.signal, timeoutMs) });
+			if (span) span.setAttribute('upstream.attempts', (span.attrs['upstream.attempts'] || 0) + 1);
+			const sendInit = span ? { ...init, headers: withTraceparent(init.headers, span) } : init;
+			if (!res) res = await send(url, { ...sendInit, signal: composeSignal(init.signal, timeoutMs) });
 		} catch (err) {
 			if (init.signal?.aborted) throw err;
 			const e = new UpstreamError(`${shown}: ${err?.name === 'TimeoutError' ? `timed out after ${timeoutMs}ms` : err?.message || 'network error'}`, { url: shown, cause: err });

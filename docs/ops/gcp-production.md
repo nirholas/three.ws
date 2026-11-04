@@ -383,6 +383,32 @@ phases.
 
 ---
 
+## Distributed tracing (Cloud Trace)
+
+One slow `/forge` request fans out to rembg, a mesh lane, rig and texture. Each hop now joins one trace in Google Cloud Trace, so the slow stage is a bar in a waterfall instead of four log searches.
+
+How it works (no OpenTelemetry SDK, no auto-instrumentation, so no cold-start cost):
+
+- [api/_lib/tracing.js](../../api/_lib/tracing.js) parses and emits W3C `traceparent`, keeps the active span in `AsyncLocalStorage`, and exports finished spans in batches to the Telemetry API (`https://telemetry.googleapis.com/v1/traces`, OTLP/HTTP JSON) using the runtime service account's token.
+- `server/index.mjs` mounts `tracingMiddleware()`: one SERVER span per `/api/*` request (route with ids collapsed to `:id`, status code, coarse user-agent class).
+- `fetchUpstream` ([api/_lib/upstream-fetch.js](../../api/_lib/upstream-fetch.js)) opens one CLIENT span per call, named `upstream <name>`, and sends `traceparent` on every attempt. `api/_providers/gcp.js` adds `forge.submit <mode>` and `forge.poll` spans, so a lane failover walk reads as a sequence of `forge.submit` spans.
+- Workers vendor `tracing.py` (stdlib only, byte-identical, guarded by `npm run check:vendored`) and call `install_tracing(app, "<name>")`. It records a SERVER span only when the inbound `traceparent` has the sampled flag, so a worker never starts a trace and a sampled-out request costs one header parse. Wired into rembg, segment, rig, texture, model-trellis, model-trellis2, model-triposg and model-pixal3d; the rest pick it up at their next rollout (add `tracing.py` and `test_tracing.py` to the Dockerfile COPY, then `install_tracing`).
+
+Environment (all optional): `TRACE_SAMPLE_RATE` (0..1; default 0.05 on Cloud Run, 0 elsewhere), `TRACE_PROJECT`, `TRACE_ENDPOINT`. A request that arrives with a sampled `traceparent` (`00-<32 hex>-<16 hex>-01`) is always recorded, which is how to force a trace: `curl -H 'traceparent: 00-<random 32 hex>-<random 16 hex>-01' https://three.ws/api/...`. Sampled-out requests make no network call. Export failures are logged once a minute and never reach a caller.
+
+Finding a slow Forge request: Console, Trace explorer, project `aerial-vehicle-466722-p5`, filter span name `POST /api/forge`, sort by latency, open the waterfall. Each `forge.submit <mode>` bar contains its `upstream gcp:submit:...` call, and the worker's own `POST /infer` span nests under it. From the CLI: `curl -H "authorization: Bearer $(gcloud auth print-access-token)" https://cloudtrace.googleapis.com/v1/projects/aerial-vehicle-466722-p5/traces/<trace id>`.
+
+One-time setup (already applied 2026-11-04; config only):
+
+```bash
+gcloud services enable cloudtrace.googleapis.com telemetry.googleapis.com --project aerial-vehicle-466722-p5
+gcloud projects add-iam-policy-binding aerial-vehicle-466722-p5 \
+  --member=serviceAccount:three-ws@aerial-vehicle-466722-p5.iam.gserviceaccount.com \
+  --role=roles/cloudtrace.agent --condition=None
+```
+
+A worker that runs as a different service account needs the same `roles/cloudtrace.agent` binding.
+
 ## Crons (Cloud Scheduler)
 
 The schedules in `vercel.json` `crons` are mirrored to Cloud Scheduler jobs in

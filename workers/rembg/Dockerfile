@@ -30,4 +30,5 @@ RUN python test_rembg_policy.py && \
     API_KEY=build-gate GCS_BUCKET=build-gate python test_rembg_smoke.py
 
 EXPOSE 8080
+COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

@@ -51,6 +51,7 @@ COPY test_request_policy.py test_matte.py test_app_contract.py /app/
 
 EXPOSE 8080
 
+COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", \
      "--host", "0.0.0.0", \
      "--port", "8080", \

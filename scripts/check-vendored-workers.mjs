@@ -27,6 +27,8 @@ const VENDORED = [
 	'oin_upload.py',
 	'gltf_meshopt.py',
 	'test_gltf_meshopt.py',
+	'tracing.py',
+	'test_tracing.py',
 ];
 
 const WORKERS_DIR = 'workers';

@@ -110,6 +110,7 @@ from request_policy import (
     resolve_resolution,
     step_down,
 )
+from tracing import install_tracing
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -365,6 +366,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="model-pixal3d", lifespan=lifespan)
+install_tracing(app, "model-pixal3d")
 
 
 def _require_api_key(authorization: str) -> None:

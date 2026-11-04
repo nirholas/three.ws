@@ -65,6 +65,7 @@
 // the service discriminator and the upstream task_id without another DB call.
 
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { withSpan } from '../_lib/tracing.js';
 
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
@@ -755,7 +756,13 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			return Boolean(urlForMode('reconstruct'));
 		},
 
-		async submit(request) {
+		// One span per lane attempt, tagged with the mode, so a failover walk reads as a
+		// sequence of forge.submit spans (each parenting its upstream call) in Cloud Trace.
+		submit(request) {
+			return withSpan(`forge.submit ${request?.mode}`, { 'forge.mode': request?.mode }, () => this.submitUntraced(request));
+		},
+
+		async submitUntraced(request) {
 			const { mode } = request;
 			const baseUrl = urlForMode(mode);
 			if (!baseUrl) {
@@ -825,7 +832,11 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			};
 		},
 
-		async status(extJobId) {
+		status(extJobId) {
+			return withSpan('forge.poll', null, () => this.statusUntraced(extJobId));
+		},
+
+		async statusUntraced(extJobId) {
 			if (!extJobId) {
 				return { status: 'failed', error: 'missing ext_job_id' };
 			}

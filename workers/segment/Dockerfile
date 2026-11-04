@@ -46,4 +46,5 @@ COPY test_segment_input.py /app/test_segment_input.py
 RUN python3 test_segment_core.py && python3 test_gltf_meshopt.py && python3 test_segment_input.py
 
 EXPOSE 8080
+COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]

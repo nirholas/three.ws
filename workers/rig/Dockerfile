@@ -81,4 +81,5 @@ RUN python3 /app/test_rig_glb.py \
 
 EXPOSE 8080
 
+COPY tracing.py test_tracing.py /app/
 CMD ["/app/entrypoint.sh"]

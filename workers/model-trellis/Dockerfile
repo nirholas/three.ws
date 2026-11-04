@@ -147,6 +147,7 @@ RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py /
 
 EXPOSE 8080
 
+COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", \
      "--host", "0.0.0.0", \
      "--port", "8080", \

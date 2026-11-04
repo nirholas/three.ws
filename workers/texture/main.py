@@ -108,6 +108,7 @@ from pydantic import BaseModel, Field, field_validator
 
 import texture_projection as tp
 from gltf_meshopt import decode_if_meshopt
+from tracing import install_tracing
 from worker_security import (
     fetch_remote_bytes,
     require_api_key,
@@ -361,6 +362,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="texture-service", lifespan=lifespan)
+install_tracing(app, "texture")
 
 
 def _require_api_key(authorization: str) -> None:

@@ -91,6 +91,7 @@ from matte import (
     NoSubjectFound,
     matte_photo,
 )
+from tracing import install_tracing
 from worker_security import (
     UnsafeUrlError,
     UnsupportedImageError,
@@ -258,6 +259,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="model-triposg", lifespan=lifespan)
+install_tracing(app, "model-triposg")
 
 
 def _require_api_key(authorization: str) -> None:
