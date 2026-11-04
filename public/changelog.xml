@@ -87,6 +87,14 @@
 			<description>How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.</description>
 		</item>
 		<item>
+			<title>Docs: The three.ws A2A agent</title>
+			<link>https://three.ws/docs/a2a-agent</link>
+			<guid isPermaLink="false">2026-11-04:Docs: The three.ws A2A agent</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The A2A endpoint any agent can call: the Agent Card, the generate-3d-model, validate-model and search-avatars skills, A2A 1.0 and 0.3 JSON-RPC methods, task lifetime, error codes, optional bearer auth, and curl calls that work today.</description>
+		</item>
+		<item>
 			<title>MCP Integrations</title>
 			<link>https://three.ws/mcp-integrations</link>
 			<guid isPermaLink="false">2026-11-04:MCP Integrations</guid>
@@ -181,6 +189,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.</description>
+		</item>
+		<item>
+			<title>Any A2A agent can now generate, validate and find 3D models on three.ws</title>
+			<link>https://three.ws/docs/a2a-agent</link>
+			<guid isPermaLink="false">2026-11-04:Any A2A agent can now generate, validate and find 3D models on three.ws</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws answers the Agent-to-Agent protocol at one endpoint, in both A2A 1.0 and 0.3. Another agent can ask for a 3D model from a text description and follow the task until the GLB is ready. It can also run the Khronos validator on any public glTF or GLB file, or search the public avatar gallery. These skills are free and need no key. Tasks are kept for a day, so a caller can read one back from any server. The Agent Card at /.well-known/agent-card.json now points at that endpoint and lists only skills the endpoint actually serves. It also declares the optional bearer key in the current format and carries the platform's real version. A second card built for Google Cloud Marketplace lists the three free 3D skills and states the default Gemini model. Both cards are checked against the A2A rules on every build, so a broken card cannot ship.</description>
 		</item>
 		<item>
 			<title>Autonomous agent runs can use the integrations you connected</title>

@@ -4366,6 +4366,12 @@ URL: https://three.ws/docs/a2a-payments
 
 How one three.ws agent pays another agent's paid endpoint with no human approving each payment: how the spending mandate is issued, every gate a payment passes, the record each one leaves behind, and how to stop an agent that has gone wrong.
 
+### Docs: The three.ws A2A agent
+
+URL: https://three.ws/docs/a2a-agent
+
+The A2A endpoint any agent can call: the Agent Card, the generate-3d-model, validate-model and search-avatars skills, A2A 1.0 and 0.3 JSON-RPC methods, task lifetime, error codes, optional bearer auth, and curl calls that work today.
+
 ### Docs: Agent wallet control API
 
 URL: https://three.ws/docs/agent-wallet-api
@@ -6330,7 +6336,7 @@ Directory of every hosted three.ws MCP server: endpoint, transport, auth, and wh
 URL: https://three.ws/.well-known/agent-card.json
 Indexable: no (excluded from sitemap)
 
-A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.
+A2A agent card: the JSON-RPC endpoint, supported A2A versions, optional bearer auth, and every skill the endpoint serves, generated from the skill registry.
 
 ### .well-known/x402.json
 

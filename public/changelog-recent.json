@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T20:06:15.107Z",
+	"generated_at": "2026-11-04T21:03:18.893Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4377,
+	"total": 4379,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -105,6 +105,16 @@
 			"title": "Docs · World chat in /play: scrollback and the community board",
 			"summary": "How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.",
 			"link": "/docs/play-chat",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs: The three.ws A2A agent",
+			"summary": "The A2A endpoint any agent can call: the Agent Card, the generate-3d-model, validate-model and search-avatars skills, A2A 1.0 and 0.3 JSON-RPC methods, task lifetime, error codes, optional bearer auth, and curl calls that work today.",
+			"link": "/docs/a2a-agent",
 			"tags": [
 				"launch"
 			]
@@ -233,6 +243,17 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Any A2A agent can now generate, validate and find 3D models on three.ws",
+			"summary": "three.ws answers the Agent-to-Agent protocol at one endpoint, in both A2A 1.0 and 0.3. Another agent can ask for a 3D model from a text description and follow the task until the GLB is ready. It can also run the Khronos validator on any public glTF or GLB file, or search the public avatar gallery. These skills are free and need no key. Tasks are kept for a day, so a caller can read one back from any server. The Agent Card at /.well-known/agent-card.json now points at that endpoint and lists only skills the endpoint actually serves. It also declares the optional bearer key in the current format and carries the platform's real version. A second card built for Google Cloud Marketplace lists the three free 3D skills and states the default Gemini model. Both cards are checked against the A2A rules on every build, so a broken card cannot ship.",
+			"link": "/docs/a2a-agent",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1534,26 +1555,6 @@
 			"tags": [
 				"desktop",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Game-Ready export gets an Artist mesh option for cleaner low-poly",
-			"summary": "The Game-Ready panel has a new Artist mesh topology: a generative retopology model (LATO.2, MIT) that builds an even low-poly mesh of up to about 10,000 faces. Every result is checked for holes and drift from your model, and if the check fails you automatically get the QuadriFlow mesh instead, so an export never ships torn.",
-			"link": "/forge",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Glowing jack-o'-lanterns in /play, and a crowd that walks around each other",
-			"summary": "During Halloween Weekend, /play worlds are dotted with carved, glowing jack-o'-lanterns (drawn as a few instanced batches, so they stay cheap). The ambient crowd now uses steering behaviours: wanderers arrive smoothly at their destination and keep a body's width from each other instead of walking through one another.",
-			"link": "/play",
-			"tags": [
-				"improvement"
 			]
 		}
 	]

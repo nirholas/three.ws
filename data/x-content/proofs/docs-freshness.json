@@ -1,10 +1,10 @@
 {
 	"id": "docs-freshness",
 	"scenarioHash": "4b9e8d63ee821d9eebb1af4a8df9236638c12cbb8981d0fa08fe7fd68aab33ea",
-	"ranAt": "2026-10-09T17:18:29.457Z",
+	"ranAt": "2026-11-04T19:48:35.362Z",
 	"target": {
-		"commit": "ec8d1d270",
-		"revision": "three-ws-api-00482-fzq"
+		"commit": "0a913e8a7",
+		"revision": "three-ws-api-00524-5xv"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/docs/configuration",
 			"detail": "loaded https://three.ws/docs/configuration",
 			"ok": true,
-			"ms": 7377,
+			"ms": 7536,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 15297,
+			"ms": 12728,
 			"frames": 60
 		},
 		{
@@ -32,43 +32,43 @@
 			"target": "See what changed",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 6245,
+			"ms": 6127,
 			"frames": 21
 		},
 		{
 			"index": 4,
 			"kind": "expect",
 			"target": "Does this documentation still describe the code?",
-			"detail": "appeared after 0.6 s",
+			"detail": "appeared after 0.9 s",
 			"ok": true,
-			"ms": 646,
+			"ms": 881,
 			"frames": 0
 		},
 		{
 			"index": 5,
 			"kind": "read",
 			"target": "docs",
-			"detail": "docs = \"851\"",
+			"detail": "docs = \"1003\"",
 			"ok": true,
-			"ms": 33,
+			"ms": 25,
 			"frames": 0
 		},
 		{
 			"index": 6,
 			"kind": "read",
 			"target": "files",
-			"detail": "files = \"4248\"",
+			"detail": "files = \"5375\"",
 			"ok": true,
-			"ms": 40,
+			"ms": 21,
 			"frames": 0
 		},
 		{
 			"index": 7,
 			"kind": "read",
 			"target": "commit",
-			"detail": "commit = \"ec8d1d270\"",
+			"detail": "commit = \"0a913e8a7\"",
 			"ok": true,
-			"ms": 30,
+			"ms": 22,
 			"frames": 0
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "1500",
 			"detail": "1500 ms",
 			"ok": true,
-			"ms": 13288,
+			"ms": 11038,
 			"frames": 45
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "520",
 			"detail": "scrolled 520 px",
 			"ok": true,
-			"ms": 15455,
+			"ms": 11985,
 			"frames": 48
 		},
 		{
@@ -95,7 +95,7 @@
 			"target": "1500",
 			"detail": "1500 ms",
 			"ok": true,
-			"ms": 12675,
+			"ms": 11016,
 			"frames": 45
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "forge",
 			"detail": "typed 5 characters",
 			"ok": true,
-			"ms": 10559,
+			"ms": 9258,
 			"frames": 26
 		},
 		{
@@ -113,14 +113,14 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 17977,
+			"ms": 15168,
 			"frames": 78
 		}
 	],
 	"facts": {
-		"docs": "851",
-		"files": "4248",
-		"commit": "ec8d1d270"
+		"docs": "1003",
+		"files": "5375",
+		"commit": "0a913e8a7"
 	},
 	"saw": [
 		"Does this documentation still describe the code?"
@@ -129,7 +129,7 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/docs-freshness/reel.mp4",
-		"sha256": "9b7d3538a1351b5cc90c2c7bf19974bbf0a5d4e2d3c3e53ddc437578d072bafd",
+		"sha256": "db597e69ddc001053dd91c1c7195bdf9eca44947a70b1b2fbaa6258a0b21abb1",
 		"frames": 323,
 		"motion": 0.252,
 		"durationSec": 10.77,

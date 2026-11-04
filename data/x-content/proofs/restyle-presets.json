@@ -1,10 +1,10 @@
 {
 	"id": "restyle-presets",
 	"scenarioHash": "389ce88c7346042116e0fef378210fc43cc4cbc9d4a00a8383989ffca00d2aed",
-	"ranAt": "2026-10-13T06:15:32.734Z",
+	"ranAt": "2026-11-04T19:59:17.489Z",
 	"target": {
-		"commit": "771cfef01",
-		"revision": "three-ws-api-00497-2ss"
+		"commit": "0a913e8a7",
+		"revision": "three-ws-api-00524-5xv"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/restyle",
 			"detail": "loaded https://three.ws/restyle",
 			"ok": true,
-			"ms": 14861,
+			"ms": 24682,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "public/vehicles/trench-car.glb",
 			"detail": "uploaded public/vehicles/trench-car.glb",
 			"ok": true,
-			"ms": 15375,
+			"ms": 15483,
 			"frames": 21
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 61045,
+			"ms": 83911,
 			"frames": 78
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "220",
 			"detail": "scrolled 220 px",
 			"ok": true,
-			"ms": 22299,
+			"ms": 27390,
 			"frames": 27
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 33405,
+			"ms": 41226,
 			"frames": 42
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "Gold",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 13603,
+			"ms": 16479,
 			"frames": 21
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "history",
 			"detail": "history = \"Gold\"",
 			"ok": true,
-			"ms": 8,
+			"ms": 11,
 			"frames": 0
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "1000",
 			"detail": "1000 ms",
 			"ok": true,
-			"ms": 11006,
+			"ms": 13596,
 			"frames": 30
 		},
 		{
@@ -86,7 +86,7 @@
 			"target": "0.18,0.6,0.42,0.6",
 			"detail": "dragged over 60 frames",
 			"ok": true,
-			"ms": 31687,
+			"ms": 41074,
 			"frames": 78
 		},
 		{
@@ -95,7 +95,7 @@
 			"target": "Chrome",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 8180,
+			"ms": 10793,
 			"frames": 21
 		},
 		{
@@ -104,7 +104,7 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 15819,
+			"ms": 21358,
 			"frames": 42
 		},
 		{
@@ -113,7 +113,7 @@
 			"target": "Holographic",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 7734,
+			"ms": 9304,
 			"frames": 21
 		},
 		{
@@ -122,7 +122,7 @@
 			"target": "-484",
 			"detail": "scrolled -484 px",
 			"ok": true,
-			"ms": 9203,
+			"ms": 11062,
 			"frames": 24
 		},
 		{
@@ -131,7 +131,7 @@
 			"target": "last",
 			"detail": "last = \"Holographic\"",
 			"ok": true,
-			"ms": 4,
+			"ms": 9,
 			"frames": 0
 		},
 		{
@@ -140,7 +140,7 @@
 			"target": "0.42,0.6,0.2,0.6",
 			"detail": "dragged over 60 frames",
 			"ok": true,
-			"ms": 34590,
+			"ms": 38459,
 			"frames": 78
 		},
 		{
@@ -149,7 +149,7 @@
 			"target": "2800",
 			"detail": "2800 ms",
 			"ok": true,
-			"ms": 31275,
+			"ms": 35645,
 			"frames": 84
 		}
 	],
@@ -168,9 +168,9 @@
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/restyle-presets/reel.mp4",
-		"sha256": "941104d884cab2369a0ae65faa4caaf24be0a9086a9ee8f76ead070073f2c761",
+		"sha256": "1871664d328046c479f39c670e4e21c4abb6485b0370d6bb90732686f7a7be3e",
 		"frames": 567,
-		"motion": 0.866,
+		"motion": 0.859,
 		"durationSec": 18.9,
 		"width": 1280,
 		"height": 720,

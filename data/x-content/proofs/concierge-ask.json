@@ -1,10 +1,10 @@
 {
 	"id": "concierge-ask",
 	"scenarioHash": "1edae7ac8457a5b0c7713cf3edc477a1ea2a5051fba79642f264152602eae25e",
-	"ranAt": "2026-10-13T06:13:51.043Z",
+	"ranAt": "2026-11-04T19:45:32.042Z",
 	"target": {
-		"commit": "771cfef01",
-		"revision": "three-ws-api-00497-2ss"
+		"commit": "0a913e8a7",
+		"revision": "three-ws-api-00524-5xv"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/concierge",
 			"detail": "loaded https://three.ws/concierge",
 			"ok": true,
-			"ms": 7119,
+			"ms": 7219,
 			"frames": 0
 		},
 		{
@@ -23,7 +23,7 @@
 			"target": "Open site assistant",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 9678,
+			"ms": 12441,
 			"frames": 21
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "3000",
 			"detail": "3000 ms",
 			"ok": true,
-			"ms": 25597,
+			"ms": 35267,
 			"frames": 90
 		},
 		{
@@ -41,16 +41,16 @@
 			"target": "How do I install you on my site?",
 			"detail": "typed 32 characters",
 			"ok": true,
-			"ms": 18090,
+			"ms": 26375,
 			"frames": 80
 		},
 		{
 			"index": 5,
 			"kind": "press",
 			"target": "Enter",
-			"detail": "pressed Enter; POST /api/concierge answered 200 in 3 s",
+			"detail": "pressed Enter; POST /api/concierge answered 200 in 4.1 s",
 			"ok": true,
-			"ms": 3120,
+			"ms": 4306,
 			"frames": 6
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "9000",
 			"detail": "9000 ms",
 			"ok": true,
-			"ms": 63027,
+			"ms": 91571,
 			"frames": 270
 		}
 	],
@@ -70,13 +70,13 @@
 			"method": "POST",
 			"path": "/api/concierge",
 			"status": 200,
-			"seconds": 3
+			"seconds": 4.1
 		}
 	],
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/concierge-ask/reel.mp4",
-		"sha256": "69ce1b26c64e1db8d8419a2a375545f8e12c4ba8a1839bae88ea25867ca1f6b1",
+		"sha256": "bfb86fdddb059398df86a00036b4a315399f6646aca8f4ecd21f3bf1b7e6d419",
 		"frames": 467,
 		"motion": 1,
 		"durationSec": 15.57,

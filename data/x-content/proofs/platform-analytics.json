@@ -1,10 +1,10 @@
 {
 	"id": "platform-analytics",
 	"scenarioHash": "61291855f08ba58c7daedb6ee7cdb29af3f0a6e6be1d186333f9105d15fa0299",
-	"ranAt": "2026-10-09T17:20:07.101Z",
+	"ranAt": "2026-11-04T19:52:49.669Z",
 	"target": {
-		"commit": "ec8d1d270",
-		"revision": "three-ws-api-00482-fzq"
+		"commit": "0a913e8a7",
+		"revision": "three-ws-api-00524-5xv"
 	},
 	"passed": true,
 	"steps": [
@@ -14,7 +14,7 @@
 			"target": "https://three.ws/analytics",
 			"detail": "loaded https://three.ws/analytics",
 			"ok": true,
-			"ms": 9426,
+			"ms": 13161,
 			"frames": 0
 		},
 		{
@@ -23,43 +23,43 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 17989,
+			"ms": 33720,
 			"frames": 66
 		},
 		{
 			"index": 3,
 			"kind": "read",
 			"target": "agents",
-			"detail": "agents = \"4,392\"",
+			"detail": "agents = \"4,764\"",
 			"ok": true,
-			"ms": 3,
+			"ms": 7,
 			"frames": 0
 		},
 		{
 			"index": 4,
 			"kind": "read",
 			"target": "wallets",
-			"detail": "wallets = \"977\"",
+			"detail": "wallets = \"1,032\"",
 			"ok": true,
-			"ms": 1,
+			"ms": 5,
 			"frames": 0
 		},
 		{
 			"index": 5,
 			"kind": "read",
 			"target": "models",
-			"detail": "models = \"47,672\"",
+			"detail": "models = \"51,066\"",
 			"ok": true,
-			"ms": 2,
+			"ms": 4,
 			"frames": 0
 		},
 		{
 			"index": 6,
 			"kind": "click",
 			"target": "All time",
-			"detail": "clicked; GET /api/platform/analytics answered 200 in 2.2 s",
+			"detail": "clicked; GET /api/platform/analytics answered 200 in 1.8 s",
 			"ok": true,
-			"ms": 5492,
+			"ms": 9430,
 			"frames": 21
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "2000",
 			"detail": "2000 ms",
 			"ok": true,
-			"ms": 14115,
+			"ms": 32262,
 			"frames": 60
 		},
 		{
@@ -77,7 +77,7 @@
 			"target": "Running total",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 5147,
+			"ms": 11903,
 			"frames": 21
 		},
 		{
@@ -86,16 +86,16 @@
 			"target": "1800",
 			"detail": "1800 ms",
 			"ok": true,
-			"ms": 11940,
+			"ms": 29144,
 			"frames": 54
 		},
 		{
 			"index": 10,
 			"kind": "scroll",
 			"target": "One chart per metric over the selected window.",
-			"detail": "scrolled 725 px",
+			"detail": "scrolled 748 px",
 			"ok": true,
-			"ms": 9088,
+			"ms": 16428,
 			"frames": 30
 		},
 		{
@@ -104,16 +104,16 @@
 			"target": "2200",
 			"detail": "2200 ms",
 			"ok": true,
-			"ms": 24019,
+			"ms": 39377,
 			"frames": 66
 		},
 		{
 			"index": 12,
 			"kind": "scroll",
 			"target": "How each number is calculated",
-			"detail": "scrolled 1564 px",
+			"detail": "scrolled 1563 px",
 			"ok": true,
-			"ms": 11506,
+			"ms": 22264,
 			"frames": 30
 		},
 		{
@@ -122,14 +122,14 @@
 			"target": "2600",
 			"detail": "2600 ms",
 			"ok": true,
-			"ms": 21019,
+			"ms": 40658,
 			"frames": 78
 		}
 	],
 	"facts": {
-		"agents": "4,392",
-		"wallets": "977",
-		"models": "47,672"
+		"agents": "4,764",
+		"wallets": "1,032",
+		"models": "51,066"
 	},
 	"saw": [],
 	"responses": [
@@ -137,13 +137,13 @@
 			"method": "GET",
 			"path": "/api/platform/analytics",
 			"status": 200,
-			"seconds": 2.2
+			"seconds": 1.8
 		}
 	],
 	"cuts": [],
 	"video": {
 		"path": "public/x-media/platform-analytics/reel.mp4",
-		"sha256": "4f9918d79c46dd2259e22371c01fb9b423836b7f9bbaefa352176ba80d3bd523",
+		"sha256": "cd8fb136ef9dd89ba2fc0e557bc8b5766d15ac94fdeb822e3c62bafd7fe77de7",
 		"frames": 426,
 		"motion": 1,
 		"durationSec": 14.2,

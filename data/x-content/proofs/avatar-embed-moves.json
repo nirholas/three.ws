@@ -1,12 +1,12 @@
 {
 	"id": "avatar-embed-moves",
 	"scenarioHash": "6f7830235bfa6c6a4d56959fa9063f1807808d16795631980a3d53635a249dad",
-	"ranAt": "2026-10-10T05:57:13.727Z",
+	"ranAt": "2026-11-04T20:05:53.776Z",
 	"target": {
-		"commit": "5af439bc0",
-		"revision": "three-ws-api-00487-7mt"
+		"commit": "0a913e8a7",
+		"revision": "three-ws-api-00524-5xv"
 	},
-	"passed": true,
+	"passed": false,
 	"steps": [
 		{
 			"index": 1,
@@ -14,16 +14,16 @@
 			"target": "https://three.ws/embed/avatar?model=/avatars/michelle.glb&bg=dark&anim=idle",
 			"detail": "loaded https://three.ws/embed/avatar?model=/avatars/michelle.glb&bg=dark&anim=idle",
 			"ok": true,
-			"ms": 22741,
+			"ms": 19847,
 			"frames": 0
 		},
 		{
 			"index": 2,
 			"kind": "expect",
 			"target": "Animations",
-			"detail": "appeared after 0.5 s",
+			"detail": "appeared after 3.5 s",
 			"ok": true,
-			"ms": 465,
+			"ms": 3549,
 			"frames": 0
 		},
 		{
@@ -32,7 +32,7 @@
 			"target": "1400",
 			"detail": "1400 ms",
 			"ok": true,
-			"ms": 23053,
+			"ms": 97851,
 			"frames": 42
 		},
 		{
@@ -41,7 +41,7 @@
 			"target": "Animations",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 12369,
+			"ms": 48148,
 			"frames": 21
 		},
 		{
@@ -50,7 +50,7 @@
 			"target": "500",
 			"detail": "500 ms",
 			"ok": true,
-			"ms": 9221,
+			"ms": 34141,
 			"frames": 15
 		},
 		{
@@ -59,7 +59,7 @@
 			"target": "Boxer Dance",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 12756,
+			"ms": 51006,
 			"frames": 21
 		},
 		{
@@ -68,7 +68,7 @@
 			"target": "3400",
 			"detail": "3400 ms",
 			"ok": true,
-			"ms": 62161,
+			"ms": 181863,
 			"frames": 102
 		},
 		{
@@ -77,53 +77,17 @@
 			"target": "Back Flip",
 			"detail": "clicked",
 			"ok": true,
-			"ms": 10650,
+			"ms": 38170,
 			"frames": 21
 		},
 		{
 			"index": 9,
 			"kind": "hold",
 			"target": "2600",
-			"detail": "2600 ms",
-			"ok": true,
-			"ms": 41090,
-			"frames": 78
-		},
-		{
-			"index": 10,
-			"kind": "click",
-			"target": "Arm Flex",
-			"detail": "clicked",
-			"ok": true,
-			"ms": 13875,
-			"frames": 21
-		},
-		{
-			"index": 11,
-			"kind": "hold",
-			"target": "2400",
-			"detail": "2400 ms",
-			"ok": true,
-			"ms": 34476,
-			"frames": 72
-		},
-		{
-			"index": 12,
-			"kind": "click",
-			"target": "Brag & Clap",
-			"detail": "clicked",
-			"ok": true,
-			"ms": 11140,
-			"frames": 21
-		},
-		{
-			"index": 13,
-			"kind": "hold",
-			"target": "4200",
-			"detail": "4200 ms",
-			"ok": true,
-			"ms": 82667,
-			"frames": 126
+			"ok": false,
+			"detail": "page.screenshot: Target page, context or browser has been closed",
+			"ms": 70155,
+			"frames": 38
 		}
 	],
 	"facts": {},
@@ -132,16 +96,5 @@
 	],
 	"responses": [],
 	"cuts": [],
-	"video": {
-		"path": "public/x-media/avatar-embed-moves/reel.mp4",
-		"sha256": "e306203bf019323ec543746c5cdaab30375c1a84fc1eb1689520bc871abcb54a",
-		"frames": 540,
-		"motion": 1,
-		"durationSec": 18,
-		"width": 1080,
-		"height": 1080,
-		"fps": 30,
-		"videoCodec": "h264",
-		"pixFmt": "yuv420p"
-	}
+	"video": null
 }
