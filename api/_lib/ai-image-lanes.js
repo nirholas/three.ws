@@ -96,11 +96,13 @@ export function dimensionsFor(aspectRatio) {
 /**
  * Friendly provider label for a textToImage() result. Distinguishes NIM FLUX
  * from the Replicate flux backstop (both carry a black-forest-labs/flux* model
- * id) via the Replicate-only predictionId, and Vertex by its vertex-ai/ prefix.
+ * id) via the Replicate-only predictionId, Vertex by its vertex-ai/ prefix and
+ * the keyless Pollinations lane by its pollinations/ prefix.
  */
 export function providerLabel(result) {
 	const model = String(result?.model || '');
 	if (model.startsWith('vertex-ai/')) return 'vertex';
+	if (model.startsWith('pollinations/')) return 'pollinations';
 	if (result?.predictionId) return 'replicate';
 	if (model) return 'nvidia-nim';
 	return 'unknown';

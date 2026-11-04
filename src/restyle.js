@@ -35,6 +35,7 @@ import { verifyPreserved } from '../api/_lib/preserve-contract.js';
 import { createAutoRenderer, pagePreference } from './renderer-factory.js';
 import { createRestyleEffects } from './restyle-effects.js';
 import { DEFAULT_STAGE_AVATAR_URL } from './default-stage-avatar.js';
+import { appendLaneCredit } from './shared/image-lane-credit.js';
 
 // A small, always-present local sample so the page is never an empty void: the
 // house default humanoid with its idle clip baked in, so it never stands in bind
@@ -549,6 +550,8 @@ function applyFactors(factors) {
 // material's base color map. Free-quota-then-x402 like every other caller of
 // this endpoint; a 402 past the daily quota surfaces as an honest note rather
 // than a silent failure — flat-PBR restyle above still applied regardless.
+// Which lane made the last texture, so the note can credit Pollinations.
+let lastTextureProvider = null;
 async function generateAndApplyTexture(instruction) {
 	const prompt =
 		`seamless tileable PBR material texture swatch: ${instruction}, physically based rendering, ` +
@@ -566,6 +569,7 @@ async function generateAndApplyTexture(instruction) {
 				: apiReason(data, res);
 		throw new Error(msg);
 	}
+	lastTextureProvider = data.provider || null;
 	const tex = await new THREE.TextureLoader().loadAsync(data.url);
 	tex.colorSpace = THREE.SRGBColorSpace;
 	tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
@@ -1012,6 +1016,7 @@ async function aiRestyle() {
 			try {
 				await generateAndApplyTexture(instruction);
 				setNote(el['ai-note'], `Restyled "${instruction}": PBR + texture ${savedNote}.`, 'done');
+				appendLaneCredit(el['ai-note'], lastTextureProvider);
 			} catch (texErr) {
 				setNote(el['ai-note'], `PBR ${savedNote}. Texture skipped: ${texErr?.message || texErr}`, 'error');
 			}

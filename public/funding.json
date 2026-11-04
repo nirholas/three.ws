@@ -1,0 +1,83 @@
+{
+	"$schema": "https://fundingjson.org/schema/v1.1.0.json",
+	"version": "v1.1.0",
+	"entity": {
+		"type": "organisation",
+		"role": "owner",
+		"name": "three.ws",
+		"email": "support@three.ws",
+		"description": "three.ws builds an open-source browser platform for embodied 3D AI agents: text-to-3D generation, rigged avatar creation and animation, an embeddable agent-3d web component and Model Context Protocol servers.",
+		"webpageUrl": { "url": "https://three.ws", "wellKnown": "https://three.ws/.well-known/funding-manifest-urls" }
+	},
+	"projects": [
+		{
+			"guid": "three-ws",
+			"name": "three.ws",
+			"description": "The three.ws platform: a browser-based studio and runtime for 3D AI agents, with text-to-3D, avatars, animation retargeting, hosted agents with wallets, and an embeddable agent-3d web component.",
+			"webpageUrl": { "url": "https://three.ws", "wellKnown": "https://three.ws/.well-known/funding-manifest-urls" },
+			"repositoryUrl": { "url": "https://github.com/nirholas/three.ws" },
+			"licenses": ["spdx:Apache-2.0"],
+			"tags": ["3d", "ai", "agents", "webgl", "gltf", "threejs", "avatars", "mcp"]
+		},
+		{
+			"guid": "mcp-server",
+			"name": "@three-ws/mcp-server",
+			"description": "A Model Context Protocol server that lets any MCP client generate 3D models and avatars, read and write agent data and pay for services through three.ws.",
+			"webpageUrl": { "url": "https://three.ws/docs", "wellKnown": "https://three.ws/.well-known/funding-manifest-urls" },
+			"repositoryUrl": { "url": "https://github.com/nirholas/three.ws/tree/main/mcp-server" },
+			"licenses": ["spdx:Apache-2.0"],
+			"tags": ["mcp", "ai", "agents", "3d", "developer-tools"]
+		},
+		{
+			"guid": "agent-3d-viewer",
+			"name": "agent-3d web component and viewer",
+			"description": "The embeddable agent-3d web component and glTF viewer that put a live animated 3D avatar on any website.",
+			"webpageUrl": { "url": "https://three.ws/docs", "wellKnown": "https://three.ws/.well-known/funding-manifest-urls" },
+			"repositoryUrl": { "url": "https://github.com/nirholas/three.ws" },
+			"licenses": ["spdx:Apache-2.0"],
+			"tags": ["web-components", "threejs", "gltf", "avatars", "embeds"]
+		}
+	],
+	"funding": {
+		"channels": [
+			{
+				"guid": "three-ws-billing",
+				"type": "payment-provider",
+				"address": "https://three.ws/pricing",
+				"description": "Subscriptions and metered usage on three.ws, paid by card or USDC, fund development of the open-source platform."
+			}
+		],
+		"plans": [
+			{
+				"guid": "pro",
+				"status": "active",
+				"name": "Pro subscription",
+				"description": "More hosted agents, automations and a larger free allowance. Revenue funds platform development.",
+				"amount": 49,
+				"currency": "USD",
+				"frequency": "monthly",
+				"channels": ["three-ws-billing"]
+			},
+			{
+				"guid": "team",
+				"status": "active",
+				"name": "Team subscription",
+				"description": "Room for a fleet of agents and the automations that run them. Revenue funds platform development.",
+				"amount": 79,
+				"currency": "USD",
+				"frequency": "monthly",
+				"channels": ["three-ws-billing"]
+			},
+			{
+				"guid": "enterprise",
+				"status": "active",
+				"name": "Enterprise subscription",
+				"description": "Unlimited agents and automations, dedicated capacity and a named contact. Revenue funds platform development.",
+				"amount": 299,
+				"currency": "USD",
+				"frequency": "monthly",
+				"channels": ["three-ws-billing"]
+			}
+		]
+	}
+}

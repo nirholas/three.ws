@@ -39,6 +39,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead, CANONICAL_ORIGIN } from './seo-head.mjs';
+import { rewriteLocaleHead } from './locale-head.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, loadPublicCreation } from './creation-head.mjs';
 import { isPlayPath, rewritePlayHead } from './play-head.mjs';
 import { renderCrawlerBody } from './crawler-body.mjs';
@@ -47,6 +48,7 @@ import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
 import { setBounded, touchBounded } from './bounded-cache.mjs';
 import { runWithRequestContext } from '../api/_lib/request-context.js';
+import { tracingMiddleware, flushSpans } from '../api/_lib/tracing.js';
 // Route resolution lives in its own module so the audit scripts
 // (scripts/audit-cron-liveness.mjs) exercise the SAME resolver production runs,
 // instead of a copy that can silently drift from it.
@@ -381,6 +383,10 @@ app.disable('x-powered-by');
 // `x-accel-buffering: no`, so a live text stream is not held until it ends.
 app.use(compression({ filter: shouldCompress }));
 
+// One SERVER span per /api/* request, exported to Cloud Trace when sampled
+// (api/_lib/tracing.js). Sampled-out requests cost two random ids and no I/O.
+app.use(tracingMiddleware());
+
 // Canonical host. `www.three.ws` resolves to the same load balancer as the apex
 // and serves the identical app, but the apex is the only origin the platform
 // declares: seo-head.mjs pins every canonical URL to it, and the media bucket's
@@ -665,6 +671,20 @@ app.use(async (req, res) => {
 					return;
 				}
 			}
+			// A localized page requested with a supported ?lang= declares that language
+			// in its head so crawlers index the translation: see server/locale-head.mjs.
+			if (req.method === 'GET' && file.endsWith('.html') && url.searchParams.has('lang')) {
+				const src = cspForStaticHtml(file);
+				const html = src === null ? null : rewriteLocaleHead(src, url.pathname, url.searchParams.get('lang'));
+				if (html) {
+					res.set(hardenHeaderBag(collected, html));
+					if (fileStatus) res.status(fileStatus);
+					res.set('content-type', 'text/html; charset=utf-8');
+					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.send(html);
+					return;
+				}
+			}
 			await serveFile(req, res, file, collected, fileStatus);
 			return;
 		}
@@ -771,6 +791,6 @@ server.keepAliveTimeout = 620_000;
 // Cloud Run sends SIGTERM before scale-down; finish in-flight work, then exit.
 process.on('SIGTERM', () => {
 	console.log('[server] SIGTERM received, draining…');
-	server.close(() => process.exit(0));
+	void flushSpans().finally(() => server.close(() => process.exit(0)));
 	setTimeout(() => process.exit(0), 10_000).unref();
 });

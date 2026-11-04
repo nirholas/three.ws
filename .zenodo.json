@@ -1,0 +1,13 @@
+{
+	"title": "three.ws: a browser platform for 3D AI agents",
+	"upload_type": "software",
+	"description": "Open-source platform for embodied 3D AI agents in the browser: text-to-3D generation, rigged avatar creation and animation retargeting, an embeddable agent-3d web component, and Model Context Protocol servers.",
+	"creators": [{ "name": "three.ws" }],
+	"license": "Apache-2.0",
+	"access_right": "open",
+	"keywords": ["three.js", "glTF", "text-to-3D", "avatars", "AI agents", "Model Context Protocol"],
+	"related_identifiers": [
+		{ "identifier": "https://github.com/nirholas/three.ws", "relation": "isSupplementTo", "scheme": "url" },
+		{ "identifier": "https://three.ws", "relation": "isDocumentedBy", "scheme": "url" }
+	]
+}
