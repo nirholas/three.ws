@@ -1,5 +1,7 @@
 # Deploy the four built Solana programs to devnet, smoke-test them, and ship a one-command mainnet runbook
 
+**Status 2026-11-04:** program ids rotated and committed, deploy planner/gated deploy script, onchain preflight and smoke scripts written. Devnet deploy NOT done: the devnet faucet is rate limited and payer G57Hd6u15bnvt1iNH9HW7DmgJ6Sq1hkZuxgdMFp9R5N3 holds 0 SOL. Remaining command after funding it: `node scripts/deploy-solana-programs.mjs --cluster devnet --keypair .deploy/devnet-payer.json --max-len-factor 1 --yes`, then the two smoke scripts. Mainnet broadcast is an owner gate (docs/ops/solana-programs-mainnet.md).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/969-plan-solana-programs-devnet-deploy-and-mainnet-runbook.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 66 of 100 inside the tier). **Area:** solana. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

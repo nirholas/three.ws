@@ -700,3 +700,6 @@ ui-lint-report/
 
 # Wallet-recovery claim records (scripts/verify-wallet-ownership.mjs): they name real customer wallets
 /.support-claims/
+
+# Local deploy keypairs and authority files, mode 600, never committed.
+/.deploy/
