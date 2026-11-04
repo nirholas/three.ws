@@ -2467,22 +2467,22 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `services/pump-graduations/README.md` | no-open-work | reference doc, no outstanding work found |
 | `services/README.md` | no-open-work | reference doc, no outstanding work found |
 | `solana-agent-sdk/README.md` | no-open-work | reference doc, no outstanding work found |
-| `solana-agent-sdk/tasks/add-custom-errors.md` | order | [764](../764-plan-solana-sdk-typed-errors-and-test-coverage.md). errors.ts shipped but 3 classes never thrown and generic Errors remain |
-| `solana-agent-sdk/tasks/add-decimal-fetch-onchain.md` | shipped | solana-agent-sdk/src/utils/format.ts and token-program.ts |
-| `solana-agent-sdk/tasks/add-memo-support.md` | shipped | solana-agent-sdk/src/utils/memo.ts |
-| `solana-agent-sdk/tasks/add-staking-actions.md` | shipped | solana-agent-sdk/src/actions/stake.ts |
-| `solana-agent-sdk/tasks/add-tests-actions.md` | order | [764](../764-plan-solana-sdk-typed-errors-and-test-coverage.md). swap/ata/transfer tests exist; stake, balance, accounts, guard, fees untested |
-| `solana-agent-sdk/tasks/add-tests-wallet-providers.md` | order | [764](../764-plan-solana-sdk-typed-errors-and-test-coverage.md). keypair and browser tests exist; wallet-adapter untested |
-| `solana-agent-sdk/tasks/add-token-balance-methods.md` | shipped | solana-agent-sdk/src/actions/get-token-balance.ts and get-token-accounts.ts; tests tracked in solana-sdk-typed-errors-and-test-coverage |
-| `solana-agent-sdk/tasks/add-token22-support.md` | shipped | solana-agent-sdk/src/utils/token-program.ts |
-| `solana-agent-sdk/tasks/add-versioned-tx-buildandsend.md` | shipped | solana-agent-sdk/src/tx/build.ts |
-| `solana-agent-sdk/tasks/add-wallet-adapter-provider.md` | shipped | solana-agent-sdk/src/wallet/wallet-adapter.ts |
-| `solana-agent-sdk/tasks/fix-bigint-precision-swap.md` | shipped | solana-agent-sdk/src/actions/swap.ts and utils/format.ts |
-| `solana-agent-sdk/tasks/fix-cu-fallback.md` | shipped | solana-agent-sdk/src/tx/fees.ts |
-| `solana-agent-sdk/tasks/fix-duplicate-pendingtx.md` | shipped | single PendingTx definition in solana-agent-sdk/src/wallet/types.ts |
-| `solana-agent-sdk/tasks/fix-missing-exports.md` | shipped | solana-agent-sdk/src/index.ts exports errors and actions |
-| `solana-agent-sdk/tasks/fix-onconfirmed-callback.md` | shipped | solana-agent-sdk/src/tx/build.ts |
-| `solana-agent-sdk/tasks/fix-sender-ata-missing.md` | shipped | MissingTokenAccountError thrown in solana-agent-sdk/src/actions/transfer-spl.ts |
+| `solana-agent-sdk/tasks/add-custom-errors.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-decimal-fetch-onchain.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-memo-support.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-staking-actions.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-tests-actions.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-tests-wallet-providers.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-token-balance-methods.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-token22-support.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-versioned-tx-buildandsend.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/add-wallet-adapter-provider.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/fix-bigint-precision-swap.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/fix-cu-fallback.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/fix-duplicate-pendingtx.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/fix-missing-exports.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/fix-onconfirmed-callback.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
+| `solana-agent-sdk/tasks/fix-sender-ata-missing.md` | shipped | verified in the code and pruned on 2026-11-04 (b4ff90e33, beeb1e7c2); tests in solana-agent-sdk/tests |
 | `solana-mobile/android-overlay/README.md` | no-open-work | reference doc, no outstanding work found |
 | `solana-mobile/docs/ANDROID-AUTO.md` | no-open-work | reference doc, no outstanding work found |
 | `solana-mobile/docs/ASSETS.md` | no-open-work | reference doc, no outstanding work found |
