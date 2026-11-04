@@ -1,0 +1,372 @@
+{
+	"version": 1,
+	"layers": [
+		{
+			"id": "sun-kissed",
+			"kind": "complexion",
+			"label": "Sun-kissed",
+			"file": "sun-kissed.png",
+			"width": 256,
+			"height": 256,
+			"defaults": {
+				"region": "all",
+				"blend": "multiply",
+				"opacity": 0.45,
+				"uv": {
+					"offset": [
+						0.5,
+						0.5
+					],
+					"scale": 1,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "porcelain",
+			"kind": "complexion",
+			"label": "Porcelain",
+			"file": "porcelain.png",
+			"width": 256,
+			"height": 256,
+			"defaults": {
+				"region": "all",
+				"blend": "multiply",
+				"opacity": 0.3,
+				"uv": {
+					"offset": [
+						0.5,
+						0.5
+					],
+					"scale": 1,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "ruddy",
+			"kind": "complexion",
+			"label": "Ruddy",
+			"file": "ruddy.png",
+			"width": 256,
+			"height": 256,
+			"defaults": {
+				"region": "all",
+				"blend": "overlay",
+				"opacity": 0.28,
+				"uv": {
+					"offset": [
+						0.5,
+						0.5
+					],
+					"scale": 1,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "flushed-face",
+			"kind": "complexion",
+			"label": "Flushed face",
+			"file": "flushed-face.png",
+			"width": 256,
+			"height": 256,
+			"defaults": {
+				"region": "scalp",
+				"blend": "normal",
+				"opacity": 0.35,
+				"uv": {
+					"offset": [
+						0.82,
+						0.517
+					],
+					"scale": 0.3,
+					"rotation": -90
+				}
+			}
+		},
+		{
+			"id": "lips",
+			"kind": "makeup",
+			"label": "Lipstick",
+			"file": "lips.png",
+			"width": 256,
+			"height": 128,
+			"defaults": {
+				"region": "scalp",
+				"blend": "normal",
+				"opacity": 0.85,
+				"tint": "#b02a4a",
+				"uv": {
+					"offset": [
+						0.903,
+						0.517
+					],
+					"scale": 0.056,
+					"rotation": -90
+				}
+			}
+		},
+		{
+			"id": "blush",
+			"kind": "makeup",
+			"label": "Blush",
+			"file": "blush.png",
+			"width": 512,
+			"height": 256,
+			"defaults": {
+				"region": "scalp",
+				"blend": "normal",
+				"opacity": 0.5,
+				"tint": "#ff6f8f",
+				"uv": {
+					"offset": [
+						0.868,
+						0.517
+					],
+					"scale": 0.2,
+					"rotation": -90
+				}
+			}
+		},
+		{
+			"id": "eyeshadow",
+			"kind": "makeup",
+			"label": "Eyeshadow",
+			"file": "eyeshadow.png",
+			"width": 512,
+			"height": 160,
+			"defaults": {
+				"region": "scalp",
+				"blend": "multiply",
+				"opacity": 0.6,
+				"tint": "#7a4f9a",
+				"uv": {
+					"offset": [
+						0.826,
+						0.517
+					],
+					"scale": 0.18,
+					"rotation": -90
+				}
+			}
+		},
+		{
+			"id": "eyeliner",
+			"kind": "makeup",
+			"label": "Eyeliner",
+			"file": "eyeliner.png",
+			"width": 512,
+			"height": 128,
+			"defaults": {
+				"region": "scalp",
+				"blend": "normal",
+				"opacity": 0.9,
+				"tint": "#1b1416",
+				"uv": {
+					"offset": [
+						0.842,
+						0.517
+					],
+					"scale": 0.16,
+					"rotation": -90
+				}
+			}
+		},
+		{
+			"id": "freckles",
+			"kind": "makeup",
+			"label": "Freckles",
+			"file": "freckles.png",
+			"width": 512,
+			"height": 224,
+			"defaults": {
+				"region": "scalp",
+				"blend": "multiply",
+				"opacity": 0.7,
+				"tint": "#8a5230",
+				"uv": {
+					"offset": [
+						0.862,
+						0.517
+					],
+					"scale": 0.17,
+					"rotation": -90
+				}
+			}
+		},
+		{
+			"id": "war-stripes",
+			"kind": "makeup",
+			"label": "Face stripes",
+			"file": "war-stripes.png",
+			"width": 512,
+			"height": 256,
+			"defaults": {
+				"region": "scalp",
+				"blend": "normal",
+				"opacity": 0.85,
+				"tint": "#e9e2d0",
+				"uv": {
+					"offset": [
+						0.865,
+						0.517
+					],
+					"scale": 0.21,
+					"rotation": -90
+				}
+			}
+		},
+		{
+			"id": "tribal-band",
+			"kind": "tattoo",
+			"label": "Tribal band",
+			"file": "tribal-band.png",
+			"width": 192,
+			"height": 460,
+			"defaults": {
+				"region": "upperArms",
+				"blend": "multiply",
+				"opacity": 0.85,
+				"tint": "#1d2230",
+				"uv": {
+					"offset": [
+						0.215,
+						0.215
+					],
+					"scale": 0.05,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "sun-mandala",
+			"kind": "tattoo",
+			"label": "Sun mandala",
+			"file": "sun-mandala.png",
+			"width": 512,
+			"height": 512,
+			"defaults": {
+				"region": "torso",
+				"blend": "multiply",
+				"opacity": 0.8,
+				"tint": "#1d2230",
+				"uv": {
+					"offset": [
+						0.38,
+						0.17
+					],
+					"scale": 0.1,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "wave-band",
+			"kind": "tattoo",
+			"label": "Wave band",
+			"file": "wave-band.png",
+			"width": 192,
+			"height": 460,
+			"defaults": {
+				"region": "lowerLegs",
+				"blend": "multiply",
+				"opacity": 0.8,
+				"tint": "#1d3a4a",
+				"uv": {
+					"offset": [
+						0.19,
+						0.76
+					],
+					"scale": 0.05,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "star-scatter",
+			"kind": "tattoo",
+			"label": "Star scatter",
+			"file": "star-scatter.png",
+			"width": 480,
+			"height": 480,
+			"defaults": {
+				"region": "upperLegs",
+				"blend": "multiply",
+				"opacity": 0.8,
+				"tint": "#241a3a",
+				"uv": {
+					"offset": [
+						0.25,
+						0.6
+					],
+					"scale": 0.1,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "star-badge",
+			"kind": "decal",
+			"label": "Star badge",
+			"file": "star-badge.png",
+			"width": 256,
+			"height": 256,
+			"defaults": {
+				"region": "torso",
+				"blend": "normal",
+				"opacity": 1,
+				"uv": {
+					"offset": [
+						0.45,
+						0.17
+					],
+					"scale": 0.05,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "heart",
+			"kind": "decal",
+			"label": "Heart",
+			"file": "heart.png",
+			"width": 256,
+			"height": 256,
+			"defaults": {
+				"region": "upperArms",
+				"blend": "normal",
+				"opacity": 1,
+				"uv": {
+					"offset": [
+						0.566,
+						0.215
+					],
+					"scale": 0.04,
+					"rotation": 0
+				}
+			}
+		},
+		{
+			"id": "bolt",
+			"kind": "decal",
+			"label": "Lightning bolt",
+			"file": "bolt.png",
+			"width": 192,
+			"height": 256,
+			"defaults": {
+				"region": "upperLegs",
+				"blend": "normal",
+				"opacity": 1,
+				"uv": {
+					"offset": [
+						0.52,
+						0.6
+					],
+					"scale": 0.04,
+					"rotation": 0
+				}
+			}
+		}
+	]
+}

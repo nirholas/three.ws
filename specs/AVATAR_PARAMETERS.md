@@ -1,6 +1,6 @@
 # Avatar Parameter Model v0.1
 
-**Status:** partial (morphs, colors, layers, garments, accessories, proportions and free-sculpt deltas are live; texture layers are reserved; animation identity is live).
+**Status:** partial (morphs, colors, layers, garments, accessories, proportions and free-sculpt deltas are live; texture layers are live; animation identity is live).
 
 The parameter model is the serialized description of a three.ws avatar's body: one JSON document that says what the character *is*, independent of any particular GLB. It is what saves, what re-opens in the editor, what the server bakes, and what a fork or a share link carries.
 
@@ -24,7 +24,8 @@ Every three.ws avatar keeps its parameters. The GLB is a *render* of the documen
   "colors": { "skin": "#c99a70", "hair": "#241a12" },
   "hidden": ["hair"],
   "garments": [{ "slot": "top", "id": "garment-id" }],
-  "attachments": [{ "bone": "mixamorig:Head", "url": "https://…/crown.glb", "name": "Horned crown" }]
+  "attachments": [{ "bone": "mixamorig:Head", "url": "https://…/crown.glb", "name": "Horned crown" }],
+  "layers": [{ "id": "freckles", "kind": "makeup", "source": "catalog:freckles", "region": "scalp", "opacity": 0.7, "blend": "multiply", "uv": { "offset": [0.85, 0.517], "scale": 0.14, "rotation": -90 } }]
 }
 ```
 
@@ -41,6 +42,7 @@ Every field is optional. An absent field means "default", and a document with no
 | `hidden` | slot[] | Garment layers to drop | `src/avatar-wardrobe.js` |
 | `garments` | {slot, id}[] | Additive catalog wearables. Skinned pieces conform to `morphs` and `sculpt` (`src/garment-conform.js`); rigid pieces ride a bone | `specs/GARMENT_MANIFEST.md` |
 | `attachments` | {bone, url, name?}[] | Custom bone-mounted props that are in no catalog | `src/agent-accessories.js` |
+| `layers` | layer[] | Ordered texture layers over the canonical UVs (complexion, makeup, tattoo, decal) | `src/avatar-layers.js`, `api/_lib/bake-layers.js` |
 
 ## `morphs`: shape
 
@@ -96,13 +98,35 @@ A sculpt is tied to a topology. `vertexCount` records the mesh it was authored a
 - At most 8 per document, matching `accessories`.
 - Attachments are applied at runtime rather than baked: `bakeAppearance()` merges catalog GLBs it can resolve from the pack it ships with, and does not fetch remote URLs server-side. `isBakeable()` therefore ignores this field, and an avatar whose only appearance is attachments keeps serving its base GLB.
 
+## `layers`: surface
+
+Ordered array (bottom first) of at most 8 texture layers composited over the Parametric base's canonical UVs into one base-color texture. Each entry:
+
+| Key | Type | Meaning |
+|---|---|---|
+| `id` | `[a-z0-9-]` 1-32 | Unique within the document. |
+| `kind` | `complexion`, `makeup`, `tattoo`, `decal` | What the layer is. Drives the region rule below. |
+| `source` | `catalog:<id>` or `upload:<id>` | An immutable catalog asset (`public/avatars/layers/index.json`) or an image the owner uploaded (`POST /api/avatars/layer-upload`, stored at `u/<userId>/layers/<id>.png`). Never a URL or a data URL. |
+| `region` | `all` or a body region (`torso`, `upperArms`, `lowerArms`, `hands`, `hips`, `upperLegs`, `lowerLegs`, `feet`, `neck`, `scalp`) | The layer is clipped to this region of `parametric-base.regions.png`. `scalp` is the head and face, including the jaw that the bone-built mask leaves unassigned. |
+| `opacity` | 0 to 1 | Layer strength. |
+| `blend` | `normal`, `multiply`, `overlay` | sRGB blend against what is below. |
+| `uv` | `{ offset: [u, v], scale, rotation }` | Sprite centre in UV (0 to 1), sprite width as a fraction of the texture (0.01 to 2), rotation in degrees clockwise (-180 to 180). |
+| `tint` | `#rrggbb`, optional | Multiplies the sprite colour. Lets one monochrome catalog sprite serve any ink or lip colour. |
+
+Rules:
+
+- `tattoo` and `decal` layers may not use `region: "scalp"` or `"all"`: face art is `makeup`, and a tattoo clipped to the body can never reach the lips. Eyes, teeth and tongue are separate meshes the layers never touch.
+- Compositing is deterministic (`src/avatar-layers.js`, pure JS over RGBA arrays, no canvas): the same document and the same sources give byte-identical pixels in the browser and the baker, which is what makes the bake cacheable by the appearance hash.
+- The composite is 2048 by 2048. The baker paints it over the skin colour (`colors.skin` or the material factor), then sets the material factor to white, so the texture carries the whole skin colour.
+- Layers apply only to the Parametric base, whose body material has no texture of its own. On any other body the field is stored and ignored by the baker.
+- `layers: []` is omitted, like every other empty field.
+
 ## Reserved
 
 Named here so implementations do not claim the keys for anything else:
 
 | Field | For |
 |---|---|
-| `layers` | Texture layers over the canonical UVs (tattoos, makeup, complexion) |
 | `base` | Explicit base-body id, once more than one parametric base ships |
 
 ## Animation identity

@@ -2,6 +2,15 @@
 
 import { z } from 'zod';
 import { validateAppearance as _validateAppearance } from './accessories.js';
+import {
+	LAYER_BLENDS,
+	LAYER_KINDS,
+	LAYER_REGIONS,
+	LAYER_SCALE_MAX,
+	LAYER_SCALE_MIN,
+	MAX_LAYERS,
+	layerRegionError,
+} from '../../src/avatar-layers.js';
 
 export const email = z.string().trim().toLowerCase().email().max(254);
 export const password = z.string().min(10).max(200);
@@ -14,6 +23,29 @@ export const slug = z
 	.regex(/^[a-z0-9][a-z0-9_-]*$/, 'slug must be lowercase alphanumeric with - or _');
 
 export const avatarVisibility = z.enum(['private', 'unlisted', 'public']);
+
+// One texture layer over the Parametric base's canonical UVs
+// (specs/AVATAR_PARAMETERS.md, "layers"). `source` is a catalog id or an
+// owner-uploaded id, never a URL or data URL, so a stored record cannot make the
+// baker fetch anything. Region/kind rules live in the appearance superRefine.
+export const avatarLayer = z
+	.object({
+		id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,31}$/),
+		kind: z.enum(LAYER_KINDS),
+		source: z.string().regex(/^(catalog|upload):[a-z0-9][a-z0-9-]{0,63}$/),
+		region: z.enum(LAYER_REGIONS),
+		opacity: z.number().min(0).max(1),
+		blend: z.enum(LAYER_BLENDS),
+		uv: z
+			.object({
+				offset: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1)]),
+				scale: z.number().min(LAYER_SCALE_MIN).max(LAYER_SCALE_MAX),
+				rotation: z.number().min(-180).max(180),
+			})
+			.strict(),
+		tint: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+	})
+	.strict();
 
 // Appearance: outfit + bone-attached accessories + arbitrary morph overrides.
 // Shape is enforced here; preset-ID allowlist enforcement lives in
@@ -86,9 +118,21 @@ export const avatarAppearance = z
 			)
 			.max(8)
 			.optional(),
+		// Texture layers: ordered, bottom first (src/avatar-layers.js).
+		layers: z.array(avatarLayer).max(MAX_LAYERS).optional(),
 	})
 	.strict()
 	.superRefine((val, ctx) => {
+		if (val?.layers) {
+			const ids = val.layers.map((l) => l.id);
+			if (new Set(ids).size !== ids.length) {
+				ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'appearance.layers: layer ids must be unique' });
+			}
+			for (const layer of val.layers) {
+				const msg = layerRegionError(layer);
+				if (msg) ctx.addIssue({ code: z.ZodIssueCode.custom, message: `appearance.layers.${layer.id}: ${msg}` });
+			}
+		}
 		const err = _validateAppearance(val);
 		if (err) ctx.addIssue({ code: z.ZodIssueCode.custom, message: err });
 		if (val && val.morphs && Object.keys(val.morphs).length > 32) {

@@ -45,6 +45,7 @@ import { uploadAvatarSnapshot } from './voice/avatar-snapshot.js';
 import { optimizeAndValidateGlb } from './avatar-studio-optimize.js';
 import { poseSkeletonsToBind, captureBoneTransforms, restoreBoneTransforms } from './glb-bind-pose.js';
 import { openColorPopover, closeActivePopover } from './avatar-studio-colorpicker.js';
+import { createSkinLayers } from './avatar-studio-skin.js';
 import {
 	collapseAppearance,
 	hydrateAppearance,
@@ -218,6 +219,7 @@ function beginBusy(label) {
 // rig); its handoff into /walk is what degrades, inside the panel.
 const TABS = [
 	{ id: 'color', label: 'Color', kinds: [], emoji: '🎨', color: true },
+	{ id: 'skin', label: 'Skin', kinds: [], emoji: '🖌️', skin: true },
 	{ id: 'wardrobe', label: 'Wardrobe', kinds: [], emoji: '👕', wardrobe: true },
 	{ id: 'hat', label: 'Hats', kinds: ['hat'], emoji: '🎩', single: true },
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
@@ -227,6 +229,26 @@ const TABS = [
 	{ id: 'walk', label: 'Walk', kinds: [], emoji: '🚶', walk: true },
 	{ id: 'rig', label: 'Rig', kinds: [], emoji: '🦴', rig: true, editOnly: true },
 ];
+
+// Texture layers (makeup, tattoos, decals) over the Parametric skin. Built on
+// first use; every dependency is a getter so it follows scene and appearance
+// swaps without being rebuilt.
+let skinCtl = null;
+function skinLayers() {
+	skinCtl ||= createSkinLayers({
+		getRoot: () => scene?.root || null,
+		getWorking: () => workingAppearance,
+		getSkinHex: () => workingAppearance.colors.skin || null,
+		setStatus: (kind, text) => setStatus(kind, text),
+		onChange: () => {
+			pushHistory();
+			renderChips();
+			updateDirtyState();
+			scheduleDraftSave();
+		},
+	});
+	return skinCtl;
+}
 
 function visibleTabs() {
 	return TABS.filter((t) => !t.editOnly || editAvatar);
@@ -1198,6 +1220,11 @@ function renderActivePanel() {
 		return;
 	}
 
+	if (tab.skin) {
+		skinLayers().render(panel);
+		return;
+	}
+
 	if (tab.walk) {
 		renderWalkPanel(panel);
 		return;
@@ -1912,12 +1939,18 @@ function applySlotColor(slot, hex) {
 			m.color.set(hex || m.userData.origColor);
 		}
 	});
+	// Active skin layers carry the colour in their texture: re-composite over
+	// the new tone and keep the material factor white.
+	if (slot.id === 'skin') skinCtl?.apply(hex);
 }
 
 function applyAllColors() {
 	for (const slot of COLOR_SLOTS) {
 		applySlotColor(slot, workingAppearance.colors[slot.id] || null);
 	}
+	// Layers composite over the skin colour just applied; restore() also loads
+	// any sprites a restored or undone appearance needs.
+	if (workingAppearance.layers?.length || skinCtl) skinLayers().restore();
 }
 
 function bindSearch() {

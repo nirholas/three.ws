@@ -125,6 +125,7 @@ const EMPTY = {
 	colors: {},
 	hidden: [],
 	garments: [],
+	layers: [],
 	proportions: {},
 	// Free-sculpt deltas (src/avatar-sculpt-doc.js). null, not {}, because the
 	// field is one document or nothing: an empty one would collapse away anyway.
@@ -161,6 +162,7 @@ describe('hydrateAppearance', () => {
 			colors: { hair: '#0e0e0e' },
 			hidden: ['outfit'],
 			garments: [{ slot: 'outerwear', id: 'parka' }],
+			layers: [],
 			proportions: { height: 1.08 },
 			sculpt: null,
 			animation: { idle: 'av-chilling', walk: 'jog', gestureIntensity: 0.8, emotes: ['dance'] },

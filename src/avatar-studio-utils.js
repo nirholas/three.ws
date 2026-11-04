@@ -23,6 +23,15 @@ function copyGarments(list) {
 		: [];
 }
 
+/** Copy the texture-layer stack (src/avatar-layers.js), isolating each layer and its uv. */
+function copyLayers(list) {
+	return Array.isArray(list)
+		? list
+				.filter((l) => l && typeof l === 'object')
+				.map((l) => ({ ...l, uv: l.uv ? { ...l.uv, offset: [...(l.uv.offset || [0.5, 0.5])] } : l.uv }))
+		: [];
+}
+
 /** Collapse a working appearance to only non-empty fields. Returns null if nothing set. */
 export function collapseAppearance(a) {
 	if (!a) return null;
@@ -33,6 +42,7 @@ export function collapseAppearance(a) {
 	if (a.colors && Object.keys(a.colors).length) out.colors = { ...a.colors };
 	if (a.hidden?.length) out.hidden = [...a.hidden];
 	if (a.garments?.length) out.garments = copyGarments(a.garments);
+	if (a.layers?.length) out.layers = copyLayers(a.layers);
 	// Skeleton-space build (src/avatar-proportions.js). Normalizing here is what
 	// makes the record canonical: out-of-range and neutral (1.0) values are
 	// dropped, so an untouched body serializes to nothing and the appearance
@@ -56,7 +66,7 @@ export function hydrateAppearance(raw) {
 	if (!raw || typeof raw !== 'object') {
 		return {
 			outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [],
-			garments: [], proportions: {}, sculpt: null, animation: {},
+			garments: [], layers: [], proportions: {}, sculpt: null, animation: {},
 		};
 	}
 	return {
@@ -66,6 +76,7 @@ export function hydrateAppearance(raw) {
 		colors: raw.colors && typeof raw.colors === 'object' ? { ...raw.colors } : {},
 		hidden: Array.isArray(raw.hidden) ? [...raw.hidden] : [],
 		garments: copyGarments(raw.garments),
+		layers: copyLayers(raw.layers),
 		proportions: normalizeProportions(raw.proportions),
 		sculpt: sanitizeSculptDoc(raw.sculpt),
 		animation: normalizeAnimation(raw.animation),
@@ -81,6 +92,7 @@ export function cloneAppearance(a) {
 		colors: { ...a.colors },
 		hidden: [...a.hidden],
 		garments: copyGarments(a.garments),
+		layers: copyLayers(a.layers),
 		proportions: { ...(a.proportions || {}) },
 		// The sculpt document is immutable once serialized: the brush replaces
 		// it wholesale rather than mutating in place, so sharing the reference

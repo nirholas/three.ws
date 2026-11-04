@@ -5144,6 +5144,10 @@
 			"dest": "/api/avatars/thumbnail"
 		},
 		{
+			"src": "/api/avatars/layer-upload",
+			"dest": "/api/avatars/layer-upload"
+		},
+		{
 			"src": "/api/avatars/from-forge",
 			"dest": "/api/avatars/from-forge"
 		},

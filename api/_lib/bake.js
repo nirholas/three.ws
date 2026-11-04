@@ -71,6 +71,8 @@ export function isBakeable(appearance) {
 	if (appearance.proportions && Object.keys(appearance.proportions).length > 0) return true;
 	// Free-sculpt deltas (src/avatar-sculpt-brush.js, baked by bake-sculpt.js).
 	if (appearance.sculpt?.meshes && Object.keys(appearance.sculpt.meshes).length > 0) return true;
+	// Texture layers (src/avatar-layers.js, baked by bake-layers.js).
+	if (Array.isArray(appearance.layers) && appearance.layers.length > 0) return true;
 	return false;
 }
 
@@ -95,6 +97,14 @@ export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 			'meshopt.decoder': MeshoptDecoder,
 		});
 	const doc = await io.readBinary(toUint8(baseGlbBytes));
+
+	// The morph fold below strips the identity targets isParametricDocument()
+	// keys on, so decide now whether texture layers apply to this body.
+	let layersApply = false;
+	if (Array.isArray(appearance?.layers) && appearance.layers.length > 0) {
+		const { isParametricDocument } = await import('./bake-morph-fold.js');
+		layersApply = isParametricDocument(doc);
+	}
 
 	// Catalog garments conform to the body's morphs (bake-garments.js), which
 	// needs the unmorphed silhouette they were authored against. Capture it
@@ -170,6 +180,29 @@ export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 	// 1b) Material tints: multiply each slot's baseColorFactor by the chosen color.
 	if (appearance?.colors && Object.keys(appearance.colors).length > 0) {
 		applyColors(doc, appearance.colors);
+	}
+
+	// 1b2) Texture layers (complexion, makeup, tattoos, decals): composited over
+	//      the skin colour just set, onto Parametric bodies only. Runs after the
+	//      tint because the composite is painted over the final skin colour and
+	//      the material factor then goes to white.
+	let layersBaked = false;
+	if (Array.isArray(appearance?.layers) && appearance.layers.length > 0) {
+		try {
+			if (layersApply) {
+				const { applyLayers } = await import('./bake-layers.js');
+				const { applied, skipped } = await applyLayers(doc, appearance, { userPrefix: opts.userPrefix });
+				layersBaked = applied.length > 0;
+				if (applied.length) console.log(`[bake] texture layers baked: ${applied.join(', ')}`);
+				if (skipped.length) {
+					console.warn(`[bake] texture layers skipped: ${skipped.map((s) => `${s.id} (${s.reason})`).join(', ')}`);
+				}
+			} else {
+				console.warn('[bake] texture layers ignored: the base is not a Parametric body');
+			}
+		} catch (err) {
+			console.warn(`[bake] texture-layer pass failed, baking without it: ${err.message}`);
+		}
 	}
 
 	// 1c) Hidden garment layers: drop the meshes so the bake exposes the base
@@ -346,7 +379,9 @@ export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 			textureCompress({
 				encoder: sharp,
 				targetFormat: 'webp',
-				resize: [1024, 1024],
+				// The skin composite is authored at 2048; every other texture
+				// stays capped at 1024.
+				resize: layersBaked ? [2048, 2048] : [1024, 1024],
 				quality: 85,
 			}),
 		);
@@ -390,7 +425,9 @@ export async function bakeAndUploadAppearance({ baseStorageKey, appearance, fold
 	if (!isBakeable(appearance)) return null;
 
 	const baseBytes = await getObjectBuffer(baseStorageKey);
-	const bakedBytes = await bakeAppearance(baseBytes, appearance, { fold });
+	// u/{userId}/{slug}/{ts}.glb: the owner's prefix scopes uploaded layer art.
+	const userPrefix = baseStorageKey.split('/').slice(0, 2).join('/');
+	const bakedBytes = await bakeAppearance(baseBytes, appearance, { fold, userPrefix });
 	const hash = appearanceHash(appearance);
 	const bakedKey = bakedStorageKeyFor({ baseStorageKey, hash, fold });
 
