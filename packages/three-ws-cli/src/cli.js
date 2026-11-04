@@ -37,6 +37,9 @@ ${c.bold('Commands')}
   mcp list              Show three.ws servers configured in each client (--available lists all servers)
   mcp add <server>      Add one server to your clients without prompts
   mcp remove <server>   Remove one server from your clients
+  mcp install <name> --agent <id>  Connect an agent to a third-party MCP server (GitHub, DeepWiki, Linear, ...)
+  mcp installed --agent <id>       An agent's third-party MCP connections and how many tools are on
+  mcp uninstall <name> --agent <id> Disconnect one and delete its stored credentials
   skills <sub>          Browse and install community agent skills (list, search, show, import|install, installed)
   agents list|get       Your agents, for scripts: ids, names, pages and wallets
   runs list|get         An agent's runs (--agent), or one run with its steps, tool calls and receipt chain
@@ -175,6 +178,9 @@ const OPTIONS = {
 	data: { type: 'string' },
 	header: { type: 'string', short: 'H', multiple: true },
 	storage: { type: 'string' },
+	token: { type: 'string' },
+	label: { type: 'string' },
+	transport: { type: 'string' },
 	claude: { type: 'boolean' },
 	cursor: { type: 'boolean' },
 	codex: { type: 'boolean' },

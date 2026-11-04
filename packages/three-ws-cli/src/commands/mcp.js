@@ -1,5 +1,14 @@
 // `three-ws mcp list | add <server> | remove <server>`: the non-interactive
 // equivalents of setup, for scripts, dotfiles and CI.
+//
+// `three-ws mcp install <name|url> --agent <id>`, `mcp installed --agent <id>`
+// and `mcp uninstall <name|id> --agent <id>` manage the other direction: the
+// third-party MCP servers one of your agents can call (GitHub, documentation
+// servers, Linear and the rest of data/mcp-catalog.json). They are thin callers
+// of /api/v1/agents/:id/mcp, so the server's safety rules apply unchanged: a
+// catalog server starts with only its read tools on, a custom URL starts with
+// nothing on until the owner reviews it, and write tools are switched on only
+// from /mcp-integrations.
 
 import { c, line, sym, printJson, tildify } from '../ui.js';
 import { readStore } from '../store.js';
@@ -7,6 +16,11 @@ import { loadDirectory, hostedServers } from '../servers.js';
 import { detectClients, getClient, removeServer, isRemote } from '../clients/index.js';
 import { verifyServers, ensureSelections, applyToClients } from '../configure.js';
 import { scanClients } from './account.js';
+import { requireBearer } from './agent.js';
+import { resolveAgent } from './automation.js';
+import { requestJson } from '../http.js';
+import { openBrowser } from '../browser.js';
+import { CliError, EXIT_CODES } from '../automation.js';
 
 function clientsFrom(flags, env) {
 	if (flags.clients) {
@@ -99,10 +113,140 @@ function removeCmd(ctx, name) {
 	return 0;
 }
 
+const INTEGRATIONS_PAGE = '/mcp-integrations';
+
+async function agentScope(ctx) {
+	const headers = { authorization: `Bearer ${await requireBearer(ctx)}` };
+	const agent = await resolveAgent(ctx, headers, ctx.flags.agent);
+	const base = `${ctx.origin}/api/v1/agents/${encodeURIComponent(agent.id)}/mcp`;
+	return { headers, agent, base };
+}
+
+/** Match a catalog entry by id, id without `-mcp`, or display name. */
+export function findCatalogEntry(servers, name) {
+	const k = String(name).trim().toLowerCase();
+	return servers.find((s) => s.id === k || s.id === `${k}-mcp` || s.id.replace(/-mcp$/, '') === k || s.name.toLowerCase() === k) || null;
+}
+
+function suggestions(servers, name) {
+	const k = String(name).toLowerCase();
+	return servers.filter((s) => s.id.includes(k) || s.name.toLowerCase().includes(k) || s.category === k).slice(0, 6).map((s) => s.id);
+}
+
+function connectionView(conn) {
+	return {
+		id: conn.id,
+		name: conn.name,
+		label: conn.label,
+		status: conn.status,
+		tool_prefix: conn.tool_prefix,
+		auth_type: conn.auth_type,
+		tools: conn.tool_counts,
+		enabled_tools: conn.tools.filter((t) => t.enabled).map((t) => t.name),
+		last_error: conn.last_error,
+	};
+}
+
+function printConnection(conn) {
+	const t = conn.tool_counts;
+	const state = conn.status === 'active' ? c.green('connected') : c.yellow(conn.status.replace(/_/g, ' '));
+	line(`${c.bold(conn.label)} ${c.dim(conn.id)} ${state}`);
+	line(`  ${t.enabled} of ${t.total} tools on (${t.read} read, ${t.write} write, ${t.financial} financial), named ${conn.tool_prefix}<tool>`);
+	if (conn.last_error) line(`  ${c.red(sym.fail)} ${conn.last_error}`);
+}
+
+async function installCmd(ctx, name) {
+	const { flags, origin } = ctx;
+	if (!name) throw new CliError(EXIT_CODES.USAGE, 'usage', 'usage: three-ws mcp install <catalog-name|https-url> --agent <id|name> [--token <access-token>] [--label <name>] [--transport sse]');
+	const custom = /^https:\/\//i.test(name);
+	const body = {};
+	let entry = null;
+	if (custom) {
+		body.server_url = name;
+		if (flags.transport) body.transport = String(flags.transport);
+		if (flags.label) body.label = String(flags.label);
+	} else {
+		const { servers = [] } = await requestJson(`${origin}/api/mcp-connections/catalog`);
+		entry = findCatalogEntry(servers, name);
+		if (!entry) {
+			const near = suggestions(servers, name);
+			throw new CliError(EXIT_CODES.USAGE, 'unknown_integration', `no catalog server named "${name}".${near.length ? ` Did you mean: ${near.join(', ')}?` : ''} Browse them at ${origin}${INTEGRATIONS_PAGE}.`);
+		}
+		if (entry.runtime === 'local') {
+			throw new CliError(EXIT_CODES.USAGE, 'stdio_not_hosted', `${entry.name} runs on your own machine, not on three.ws. Install it locally: ${entry.docs}`);
+		}
+		body.catalog_id = entry.id;
+	}
+	if (flags.token) body.bearer_token = String(flags.token);
+
+	const { headers, agent, base } = await agentScope(ctx);
+	const { data: conn } = await requestJson(base, { method: 'POST', headers, json: body, timeoutMs: 45_000 });
+
+	let authorizationUrl = null;
+	if (conn.status === 'pending_auth' && conn.auth_type === 'oauth') {
+		const { data } = await requestJson(`${base}/${conn.id}/auth`, { method: 'POST', headers, json: { return_to: INTEGRATIONS_PAGE }, timeoutMs: 45_000 });
+		authorizationUrl = data.authorization_url || null;
+	}
+	const page = `${origin}${INTEGRATIONS_PAGE}?agent=${encodeURIComponent(agent.id)}`;
+
+	if (flags.json) {
+		printJson({ agent: agent.id, connection: connectionView(conn), authorization_url: authorizationUrl, manage: page });
+		return EXIT_CODES.OK;
+	}
+	printConnection(conn);
+	if (authorizationUrl) {
+		const opened = await openBrowser(authorizationUrl, { env: ctx.env.vars });
+		line(opened ? '  Finish signing in in the browser window that just opened.' : `  Finish signing in: ${authorizationUrl}`);
+		line(c.dim('  Sign-in links must be opened in a browser signed in to the same three.ws account.'));
+	} else if (conn.status === 'pending_auth') {
+		line(`  This server needs an access token. ${entry?.auth?.tokenHelp || ''}`.trimEnd());
+		line(`  Re-run with --token <token>, or paste it at ${page}`);
+	} else if (conn.status === 'pending_review') {
+		line(`  Custom server: nothing is switched on until you review its tools at ${page}`);
+	}
+	if (conn.tool_counts.write + conn.tool_counts.financial > 0) {
+		line(c.dim(`  Write and financial tools stay off until you acknowledge and enable them at ${page}`));
+	}
+	return EXIT_CODES.OK;
+}
+
+async function installedCmd(ctx) {
+	const { headers, agent, base } = await agentScope(ctx);
+	const { data = [] } = await requestJson(base, { headers });
+	if (ctx.flags.json) {
+		printJson({ agent: agent.id, connections: data.map(connectionView) });
+		return EXIT_CODES.OK;
+	}
+	if (!data.length) {
+		line(`${agent.name || agent.id} has no integrations yet. Add one: three-ws mcp install deepwiki --agent ${agent.id.slice(0, 8)}`);
+		return EXIT_CODES.OK;
+	}
+	for (const conn of data) printConnection(conn);
+	return EXIT_CODES.OK;
+}
+
+async function uninstallCmd(ctx, key) {
+	if (!key) throw new CliError(EXIT_CODES.USAGE, 'usage', 'usage: three-ws mcp uninstall <connection-name|id> --agent <id|name>');
+	const { headers, agent, base } = await agentScope(ctx);
+	const { data = [] } = await requestJson(base, { headers });
+	const k = String(key).toLowerCase();
+	const conn = data.find((x) => x.id === key || x.name === k || x.catalog_id === k || String(x.label).toLowerCase() === k);
+	if (!conn) {
+		throw new CliError(EXIT_CODES.USAGE, 'connection_not_found', `${agent.name || agent.id} has no integration "${key}". \`three-ws mcp installed --agent ${agent.id.slice(0, 8)}\` lists them.`);
+	}
+	await requestJson(`${base}/${conn.id}`, { method: 'DELETE', headers });
+	if (ctx.flags.json) printJson({ agent: agent.id, removed: conn.id, name: conn.name });
+	else line(`${c.green(sym.ok)} Removed ${conn.label} from ${agent.name || agent.id}. Its stored credentials were deleted.`);
+	return EXIT_CODES.OK;
+}
+
 export async function mcp(ctx) {
 	const [sub = 'list', name] = ctx.positionals;
 	if (sub === 'list') return listCmd(ctx);
 	if (sub === 'add') return addCmd(ctx, name);
 	if (sub === 'remove' || sub === 'rm') return removeCmd(ctx, name);
-	throw new Error(`unknown mcp subcommand "${sub}". Use list, add or remove.`);
+	if (sub === 'install') return installCmd(ctx, name);
+	if (sub === 'installed') return installedCmd(ctx);
+	if (sub === 'uninstall') return uninstallCmd(ctx, name);
+	throw new Error(`unknown mcp subcommand "${sub}". Use list, add, remove, install, installed or uninstall.`);
 }

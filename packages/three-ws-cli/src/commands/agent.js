@@ -30,7 +30,7 @@ const SYMBOL_MAX = 10;
 const COIN_DESCRIPTION_MAX = 500;
 
 /** A bearer for the signed-in account, signing in first when a prompt is allowed. */
-async function requireBearer(ctx) {
+export async function requireBearer(ctx) {
 	if (ctx.env.vars.THREE_WS_API_KEY) return ctx.env.vars.THREE_WS_API_KEY;
 	let bearer = await bearerFor(ctx.env, { origin: ctx.origin });
 	if (bearer) return bearer;
