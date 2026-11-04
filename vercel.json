@@ -892,11 +892,11 @@
 			"dest": "/api/v1/rest"
 		},
 		{
-			"src": "/api/v1/agents/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/(messages|runs|automations|skills|export|start|stop|wallet)(/.*)?)?/?",
+			"src": "/api/v1/agents/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/(messages|runs|automations|skills|evals|export|start|stop|wallet)(/.*)?)?/?",
 			"dest": "/api/v1/rest"
 		},
 		{
-			"src": "/api/v1/(runs|automations|webhooks|skills|strategies|intel)(/.*)?",
+			"src": "/api/v1/(runs|automations|webhooks|skills|strategies|intel|evals)(/.*)?",
 			"dest": "/api/v1/rest"
 		},
 		{

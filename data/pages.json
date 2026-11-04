@@ -3682,6 +3682,14 @@
 					"added": "2026-08-14"
 				},
 				{
+					"path": "/docs/agent-evals",
+					"title": "Docs · Agent evals",
+					"description": "Score an agent against fixed task suites from the Evaluate tab, REST or CLI, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/x-memory-seeding",
 					"title": "Docs · X memory seeding",
 					"description": "Seed an agent's memory from your X account behind an explicit, versioned consent: only your profile and recent original public posts are read, they are distilled into short facts (never stored verbatim), and revoking consent or disconnecting X deletes every memory the grant produced.",

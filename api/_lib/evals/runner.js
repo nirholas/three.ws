@@ -75,17 +75,25 @@ export function summarize(tasks) {
  * @param {string} o.model           the model id the rung serves
  * @param {string} [o.target]        where it ran: 'local' or an origin
  * @param {string[]} [o.only]        run only these task ids
+ * @param {number} [o.maxCostUsd]    stop before the next task once measured spend reaches this ceiling
  * @param {(row: object, index: number, total: number) => void|Promise<void>} [o.onTask]
  */
-export async function runSuite(suite, config, { rung, model, target = 'local', only, onTask, deadlineMs } = {}) {
+export async function runSuite(suite, config, { rung, model, target = 'local', only, onTask, deadlineMs, maxCostUsd } = {}) {
 	const tasks = only?.length ? suite.tasks.filter((t) => only.includes(t.id)) : suite.tasks;
 	if (!tasks.length) throw new Error(`No task in suite "${suite.name}" matches ${only.join(', ')}`);
 	const startedAt = new Date();
 	const rows = [];
+	let spent = 0;
+	let truncated = null;
 	for (const [i, task] of tasks.entries()) {
+		if (maxCostUsd != null && spent >= maxCostUsd) {
+			truncated = { reason: 'cost_cap', maxCostUsd, spentUsd: round(spent, 6), skipped: tasks.slice(i).map((t) => t.id) };
+			break;
+		}
 		const trace = await runTask(task, config, { rung, suiteDefaults: suite.defaults || {}, deadlineMs });
 		const row = taskResult(task, trace);
 		rows.push(row);
+		spent += trace.costUsd || 0;
 		if (onTask) await onTask(row, i, tasks.length);
 	}
 	const finishedAt = new Date();
@@ -101,6 +109,7 @@ export async function runSuite(suite, config, { rung, model, target = 'local', o
 		finishedAt: finishedAt.toISOString(),
 		durationMs: finishedAt - startedAt,
 		summary: summarize(rows),
+		...(truncated ? { truncated } : {}),
 		tasks: rows,
 	};
 }

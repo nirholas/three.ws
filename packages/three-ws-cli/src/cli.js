@@ -43,6 +43,8 @@ ${c.bold('Commands')}
   skills <sub>          Browse and install community agent skills (list, search, show, import|install, installed)
   agents list|get       Your agents, for scripts: ids, names, pages and wallets
   runs list|get         An agent's runs (--agent), or one run with its steps, tool calls and receipt chain
+  runs export|replay    One run as redacted JSONL (--format jsonl), or replayed deterministically (--model previews it on another model)
+  evals run|list|show   Score an agent on a suite (--suite, --model), its history, or one report
   orders list           An agent's programmable orders (--agent, --network)
   report run <id>       One run as a single self-contained HTML file (--out report.html)
   proxy <url>           Run a stdio bridge to a hosted server (written into client configs by setup)
@@ -159,6 +161,9 @@ const OPTIONS = {
 	available: { type: 'boolean' },
 	amount: { type: 'string' },
 	agent: { type: 'string' },
+	suite: { type: 'string' },
+	model: { type: 'string' },
+	format: { type: 'string' },
 	name: { type: 'string' },
 	description: { type: 'string' },
 	avatar: { type: 'string' },
@@ -246,6 +251,7 @@ const COMMANDS = {
 		return 0;
 	},
 	agents: async (ctx) => (await import('./commands/automation.js')).agents(ctx),
+	evals: async (ctx) => (await import('./commands/evals.js')).evals(ctx),
 	runs: async (ctx) => (await import('./commands/automation.js')).runs(ctx),
 	orders: async (ctx) => (await import('./commands/automation.js')).orders(ctx),
 	report: async (ctx) => (await import('./commands/automation.js')).report(ctx),

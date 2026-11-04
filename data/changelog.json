@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Score, replay and export any agent run",
+			"summary": "Owners can run a task suite against an agent from a new Evaluate tab, the REST API or `three-ws evals run`, watch per-task progress live, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL. Runs are limited to free and Vertex lanes with a cost cap.",
+			"tags": ["feature"],
+			"link": "/docs/agent-evals"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Native launchpad coins get their own page and a one-click buy from SOL",
 			"summary": "Every coin launched on the $THREE curve now opens at /launches/<mint> with its curve progress, price, market cap, recent trades read from chain, the fee schedule and the agent behind it. Holders of only SOL can buy in one transaction: the page swaps SOL to $THREE through Jupiter and buys on the curve, showing the exact total first.",
 			"tags": ["feature"],

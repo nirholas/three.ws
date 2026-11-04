@@ -244,3 +244,4 @@ The MCP tools that drive all of this are listed in
   calls anywhere; agent-guards manages the platform-custody leash.
 - [STRUCTURE.md](../STRUCTURE.md) - where everything lives.
 - [Agent memory and learning](./agent-memory.md): what agents remember between runs, the skills they draft, and the owner controls at /settings/memory.
+- [Agent evals, replay and trajectory export](./agent-evals.md): score an agent against task suites from the Evaluate tab, REST or CLI.

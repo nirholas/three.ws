@@ -5,6 +5,8 @@
 //
 //   three-ws agents list | get <id|name>
 //   three-ws runs list --agent <id|name> | get <run-id>
+//   three-ws runs export <run-id> --agent <id|name> [--format jsonl] [--out file]
+//   three-ws runs replay <run-id> --agent <id|name> [--model <id>]
 //   three-ws wallet balance [--agent <id|name>] [--network mainnet|devnet]
 //   three-ws orders list --agent <id|name> [--network mainnet|devnet]
 //   three-ws report run <run-id> --out <file.html> [--agent <id>]
@@ -18,7 +20,7 @@ import path from 'node:path';
 import { createSolanaRpc } from '@solana/kit';
 import { c, line, printJson, rows, shortAddress } from '../ui.js';
 import { bearerFor } from '../oauth.js';
-import { requestJson, ApiError } from '../http.js';
+import { request, requestJson, ApiError } from '../http.js';
 import { CliError, EXIT_CODES, requireInput } from '../automation.js';
 import { buildRunReport } from '../report/run-report.js';
 import { rpcUrlFor } from '../pay/x402.js';
@@ -27,7 +29,7 @@ import { keystoreFor } from './pay.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-async function authed(ctx) {
+export async function authed(ctx) {
 	const key = ctx.env.vars.THREE_WS_API_KEY;
 	const bearer = key || (await bearerFor(ctx.env, { origin: ctx.origin }));
 	if (!bearer) throw new ApiError('not signed in. Run `three-ws login`, or set THREE_WS_API_KEY.', { code: 'login_required' });
@@ -124,7 +126,59 @@ export async function runs(ctx) {
 			], '  ');
 		});
 	}
-	throw new CliError(EXIT_CODES.USAGE, 'usage', 'usage: three-ws runs <list --agent <id|name>|get <run-id>>');
+	if (sub === 'export' || sub === 'replay') {
+		requireInput(id, 'a run id', `usage: three-ws runs ${sub} <run-id> --agent <id|name>`);
+		if (!UUID_RE.test(id)) throw new CliError(EXIT_CODES.USAGE, 'invalid_run_id', 'a run id is a uuid. List yours with `three-ws runs list --agent <id>`.');
+		const agent = await resolveAgent(ctx, headers, ctx.flags.agent);
+		const base = `${ctx.origin}/api/v1/agents/${agent.id}/runs/${id}`;
+		if (sub === 'replay') {
+			const model = ctx.flags.model;
+			const res = model
+				? await requestJson(`${base}/replay`, { method: 'POST', headers, json: { model }, timeoutMs: 280_000 })
+				: await requestJson(`${base}/replay`, { headers });
+			const data = res.data;
+			return out(ctx, data, () => {
+				line(c.bold(data.goal || `Run ${data.runId}`));
+				if (data.mode === 'preview') {
+					rows([
+						['Model', data.model],
+						['Status', data.status],
+						['Recorded tools', data.recorded.tools.join(', ') || 'none'],
+						['Replayed tools', data.replayed.tools.join(', ') || 'none'],
+						['Same sequence', data.sameSequence ? 'yes' : 'no'],
+						['Side effects run', String(data.executed.length)],
+					], '  ');
+				} else {
+					rows([
+						['Status', data.status],
+						['Tool calls', String(data.calls.length)],
+						['Receipt chain', data.receiptChain.verified ? `verified (${data.receiptChain.checked})` : `broken at ${data.receiptChain.brokenAt}`],
+						['Signature', data.signature],
+					], '  ');
+					for (const call of data.calls) line(`  ${String(call.index + 1).padStart(2)}. ${call.tool}  ${c.dim(call.status)}`);
+				}
+			});
+		}
+		const format = ctx.flags.format || 'jsonl';
+		if (format !== 'jsonl') throw new CliError(EXIT_CODES.USAGE, 'invalid_format', '--format must be jsonl.');
+		const res = await request(`${base}/trajectory`, { headers: { ...headers, accept: 'application/x-ndjson' }, timeoutMs: 60_000 });
+		const text = await res.text();
+		if (!res.ok) {
+			let body = null;
+			try { body = JSON.parse(text); } catch { body = null; }
+			throw new ApiError(`${res.status} ${body?.error?.code ? `${body.error.code}: ` : ''}${body?.error?.message || text.slice(0, 200)}`, { status: res.status, code: body?.error?.code || null, body });
+		}
+		if (ctx.flags.out) {
+			const file = path.resolve(ctx.flags.out);
+			fs.mkdirSync(path.dirname(file), { recursive: true });
+			fs.writeFileSync(file, text);
+			process.stderr.write(`Wrote ${text.split('\n').filter(Boolean).length} lines to ${file}\n`);
+		} else {
+			process.stdout.write(text);
+		}
+		return EXIT_CODES.OK;
+	}
+	throw new CliError(EXIT_CODES.USAGE, 'usage', 'usage: three-ws runs <list --agent <id|name>|get <run-id>|export <run-id> --agent <id>|replay <run-id> --agent <id>>');
 }
 
 const num = (n, d = 2) => (Number.isFinite(Number(n)) ? Number(n).toFixed(d) : '?');

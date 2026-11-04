@@ -805,6 +805,9 @@ function renderShell(glbUrl) {
 				<div class="av-panel" data-panel="runs" id="av-panel-runs" role="tabpanel" aria-labelledby="av-tab-runs" tabindex="0">
 					<div id="av-runs-root"></div>
 				</div>
+				<div class="av-panel" data-panel="evals" id="av-panel-evals" role="tabpanel" aria-labelledby="av-tab-evals" tabindex="0">
+					<div id="av-evals-root"></div>
+				</div>
 				` : ''}
 				<div class="av-panel" data-panel="embed" id="av-panel-embed" role="tabpanel" aria-labelledby="av-tab-embed" tabindex="0">
 					${renderEmbedPanel(glbUrl)}
@@ -1381,7 +1384,7 @@ function tabList() {
 		{ id: 'skills', label: mode === 'agent' ? 'Capabilities' : 'Skills' },
 		{ id: 'plugins', label: 'Plugins' },
 		// Owner-only replay of the agent's autonomous runs (src/agent-run-replay.js).
-		...(mode === 'agent' && viewerOwns ? [{ id: 'runs', label: 'Runs' }] : []),
+		...(mode === 'agent' && viewerOwns ? [{ id: 'runs', label: 'Runs' }, { id: 'evals', label: 'Evaluate' }] : []),
 		{ id: 'embed', label: 'Embed' },
 	];
 }
@@ -1415,6 +1418,7 @@ function activateTab(tab, { focus = false, push = true } = {}) {
 	if (tab === 'pose') enterPoseMode();
 	else leavePoseMode();
 	if (tab === 'runs') mountRunsTab();
+	if (tab === 'evals') mountEvalsTab();
 	return true;
 }
 
@@ -1442,6 +1446,28 @@ async function mountRunsTab() {
 			actions: [{ label: 'Retry', id: 'runs-retry', primary: true }],
 		});
 		root.querySelector('[data-sk-action="runs-retry"]')?.addEventListener('click', mountRunsTab, { once: true });
+	}
+}
+
+// The Evaluate tab (owner-only) loads on first open for the same reason.
+let evalsTab = null;
+async function mountEvalsTab() {
+	if (evalsTab) return;
+	const root = $('av-evals-root');
+	if (!root) return;
+	evalsTab = 'loading';
+	try {
+		const { mountAgentEvals } = await import('./agent-evals-tab.js');
+		evalsTab = mountAgentEvals(root, { agentId: agent?.id || entityId, agentName: agent?.name || avatar?.name });
+	} catch (err) {
+		evalsTab = null;
+		log.error('[avatar-page] evals tab failed to load', err);
+		root.innerHTML = errorStateHTML({
+			title: 'Could not open Evaluate',
+			body: 'The evaluation view did not load. Check your connection and reopen this tab.',
+			actions: [{ label: 'Retry', id: 'evals-retry', primary: true }],
+		});
+		root.querySelector('[data-sk-action="evals-retry"]')?.addEventListener('click', mountEvalsTab, { once: true });
 	}
 }
 

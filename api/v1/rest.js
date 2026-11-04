@@ -69,6 +69,7 @@ import { ROUTES as SKILL_ROUTES } from '../_lib/agents-v1/routes/skills.js';
 import { ROUTES as ME_ROUTES } from '../_lib/agents-v1/routes/me.js';
 import { ROUTES as INTEL_ROUTES } from '../_lib/agents-v1/routes/intel.js';
 import { ROUTES as WALLET_ROUTES } from '../_lib/agents-v1/routes/wallet.js';
+import { EVAL_ROUTES } from '../_lib/evals/routes.js';
 import { lifecycleRoutes } from '../_lib/strategy-loop/routes.js';
 
 const SPEND_ACTIONS = new Set(['swap', 'transfer']);
@@ -357,6 +358,7 @@ export const ROUTES = [
 	...runRoutes,
 	...automationRoutes,
 	...SKILL_ROUTES,
+	...EVAL_ROUTES,
 	...strategyRoutes,
 	...webhookRoutes,
 	...ME_ROUTES,
