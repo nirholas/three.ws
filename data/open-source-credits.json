@@ -215,7 +215,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/hyparam/hyparquet",
 			"funding": null,
-			"version": "1.31.5",
+			"version": "1.32.0",
 			"powers": "Reads Parquet files for dataset and analytics tooling."
 		},
 		{
@@ -473,7 +473,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.91",
+			"version": "4.0.94",
 			"powers": null
 		},
 		{
@@ -484,7 +484,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.104",
+			"version": "4.0.106",
 			"powers": null
 		},
 		{
@@ -495,7 +495,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1160.0",
+			"version": "3.1161.0",
 			"powers": null
 		},
 		{
@@ -506,7 +506,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1159.0",
+			"version": "3.1161.0",
 			"powers": null
 		},
 		{
@@ -671,7 +671,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/electric-sql/pglite",
 			"funding": null,
-			"version": "0.5.13",
+			"version": "0.5.14",
 			"powers": null
 		},
 		{
@@ -704,7 +704,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/grpc/grpc-node/tree/master/packages/grpc-js",
 			"funding": null,
-			"version": "1.14.6",
+			"version": "1.14.7",
 			"powers": null
 		},
 		{
@@ -825,7 +825,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/metaplex-foundation/genesis",
 			"funding": null,
-			"version": "0.43.5",
+			"version": "0.43.6",
 			"powers": null
 		},
 		{
@@ -1089,7 +1089,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/solana-program/memo",
 			"funding": null,
-			"version": "0.13.1",
+			"version": "0.16.0",
 			"powers": null
 		},
 		{
@@ -1353,7 +1353,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.28.0",
+			"version": "2.29.0",
 			"powers": null
 		},
 		{
@@ -1419,7 +1419,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.28.0",
+			"version": "2.29.0",
 			"powers": null
 		},
 		{
@@ -1496,7 +1496,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "7.0.157",
+			"version": "7.0.159",
 			"powers": "The Vercel AI SDK powering agent chat streaming and tool calls."
 		},
 		{
@@ -1870,7 +1870,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/postalsys/imapflow",
 			"funding": null,
-			"version": "2.9.1",
+			"version": "2.10.0",
 			"powers": null
 		},
 		{
@@ -1881,7 +1881,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/panva/jose",
 			"funding": "https://github.com/sponsors/panva",
-			"version": "6.2.13",
+			"version": "6.2.14",
 			"powers": null
 		},
 		{
@@ -2178,7 +2178,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/resend/resend-node",
 			"funding": null,
-			"version": "6.35.0",
+			"version": "6.37.0",
 			"powers": null
 		},
 		{
@@ -2310,7 +2310,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/viem",
 			"funding": "https://github.com/sponsors/wevm",
-			"version": "2.57.13",
+			"version": "2.57.14",
 			"powers": "Typed EVM client used alongside ethers for EVM-chain integrations."
 		},
 		{
