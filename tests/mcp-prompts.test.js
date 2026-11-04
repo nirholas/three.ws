@@ -25,7 +25,7 @@ const AGENT_SURFACES = [
 	['mcp-grok', 'mcp-grok', grokAnon],
 	['mcp-grok signed in', 'mcp-grok', grokSignedIn],
 ];
-const AGENT_PROMPTS = ['agent-get-started', 'daily-3d-brief', 'asset-pack', 'avatar-from-photo', 'agent-report'];
+const AGENT_PROMPTS = ['agent-get-started', 'daily-3d-brief', 'asset-pack', 'avatar-from-photo', 'agent-report', 'market-brief'];
 const GENERATION_PROMPTS = ['daily-3d-brief', 'asset-pack', 'avatar-from-photo'];
 
 const REQUIRED = [
@@ -117,7 +117,7 @@ describe('agent prompts for an unattended agent (x-grok order 031)', () => {
 		expect(names('mcp-grok', grokAnon)).toEqual(['agent-get-started', 'daily-3d-brief', 'asset-pack', 'avatar-from-photo']);
 		expect(names('mcp-grok', grokSignedIn)).toEqual(AGENT_PROMPTS);
 		// The core server holds the account tools and no free generation.
-		expect(names('mcp', mainCatalog)).toEqual(expect.arrayContaining(['agent-get-started', 'agent-report']));
+		expect(names('mcp', mainCatalog)).toEqual(expect.arrayContaining(['agent-get-started', 'agent-report', 'market-brief']));
 		for (const name of GENERATION_PROMPTS) expect(names('mcp', mainCatalog)).not.toContain(name);
 	});
 
