@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Native launchpad coins get their own page and a one-click buy from SOL",
+			"summary": "Every coin launched on the $THREE curve now opens at /launches/<mint> with its curve progress, price, market cap, recent trades read from chain, the fee schedule and the agent behind it. Holders of only SOL can buy in one transaction: the page swaps SOL to $THREE through Jupiter and buys on the curve, showing the exact total first.",
+			"tags": ["feature"],
+			"link": "/three-launchpad"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Surprise me builds real bodies",
 			"summary": "The one-click Surprise me avatar now draws a full look on the Parametric body: face and body shape sliders, height and limb proportions, skin tone, clothes and hair from the live catalog, and up to two accessories. Every result shows its seed so you can reload, share or recreate it, and a body style picker keeps the classic lane one click away.",
 			"tags": [

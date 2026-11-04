@@ -75,7 +75,10 @@ vi.mock('../api/_lib/pump.js', () => ({
 			: null,
 }));
 
+const SIG_T = 's'.repeat(88);
 const txInvokesDbcProgram = vi.fn(() => true);
+const buildSolBuyTx = vi.fn(async () => ({ txBase64: 'AQID', pay_with: 'sol', sol_in: 0.1, three_expected: 17, three_min: 16, expected_out: 100, min_out: 99, pool: 'p', side: 'buy', amount_in: 0.1, slippage_bps: 100 }));
+vi.mock('../api/_lib/native-launch/sol-in.js', () => ({ buildSolBuyTx: (...a) => buildSolBuyTx(...a) }));
 vi.mock('../api/_lib/native-launch/dbc.js', () => ({
 	txInvokesDbcProgram: (...a) => txInvokesDbcProgram(...a),
 	buildCreatePoolTx: vi.fn(async () => ({
@@ -86,6 +89,10 @@ vi.mock('../api/_lib/native-launch/dbc.js', () => ({
 	getPoolState: vi.fn(async () => ({ pool: 'PoolAddress11111111111111111111111111111111' })),
 	quoteBuy: vi.fn(async () => ({ pool: 'p', side: 'buy', three_in: 1000, tokens_out: 100 })),
 	quoteSell: vi.fn(async () => ({ pool: 'p', side: 'sell', tokens_in: 100, three_out: 990 })),
+	getRecentTrades: vi.fn(async ({ limit }) => ({
+		pool: 'PoolAddress11111111111111111111111111111111',
+		trades: [{ signature: SIG_T, side: 'buy', time: 1767225600, trader: 'FjRJ24ecvmPX488PcN3RpNPM9gq3xCxRjnju4LSr9M6f', tokens: 100, three: 10, price_three: 0.1 }].slice(0, limit),
+	})),
 	buildSwapTx: vi.fn(async ({ side, amountIn, slippageBps }) => ({
 		txBase64: 'AQID',
 		pool: 'PoolAddress11111111111111111111111111111111',
@@ -404,5 +411,81 @@ describe('launches', () => {
 		dbRows.native_launches = [dbRows.native_launches[1]];
 		const priv = await call('launches', { query: { network: 'devnet' } });
 		expect(priv.body.data.launches[0].agent.avatar_thumbnail_url).toBeNull();
+	});
+});
+
+
+describe('launches mint filter', () => {
+	it('rejects a malformed mint before the database', async () => {
+		const r = await call('launches', { query: { mint: 'not-a-mint' } });
+		expect(r.status).toBe(400);
+		expect(r.body.error).toBe('validation_error');
+		expect(sqlCalls).toEqual([]);
+	});
+
+	it('looks one coin up by mint', async () => {
+		dbRows.native_launches = [
+			{ mint: MINT, pool: 'PoolAddress11111111111111111111111111111111', network: 'devnet', name: 'Native Coin', symbol: 'NTV', metadata_uri: null, status: 'live', created_at: '2026-08-13T00:00:00.000Z', creator_address: WALLET, agent_id: null },
+		];
+		const r = await call('launches', { query: { mint: MINT, network: 'devnet' } });
+		expect(r.status).toBe(200);
+		expect(r.body.data.launches).toHaveLength(1);
+		expect(r.body.data.launches[0].mint).toBe(MINT);
+		expect(sqlCalls.join(' ')).toContain('nl.mint');
+	});
+});
+
+describe('trades', () => {
+	it('rejects a malformed mint without touching the database or RPC', async () => {
+		const r = await call('trades', { query: { mint: 'not-a-mint' } });
+		expect(r.status).toBe(400);
+		expect(sqlCalls).toEqual([]);
+	});
+
+	it('404s a mint that is not a recorded native launch', async () => {
+		const r = await call('trades', { query: { mint: MINT, network: 'devnet' } });
+		expect(r.status).toBe(404);
+		expect(r.body.error).toBe('not_found');
+	});
+
+	it('clamps limit into 1..50', async () => {
+		dbRows.native_launches = [{ mint: MINT }];
+		const dbc = await import('../api/_lib/native-launch/dbc.js');
+		await call('trades', { query: { mint: MINT, network: 'devnet', limit: '9999' } });
+		expect(dbc.getRecentTrades.mock.calls.at(-1)[0].limit).toBe(50);
+		await call('trades', { query: { mint: MINT, network: 'devnet', limit: '0' } });
+		expect(dbc.getRecentTrades.mock.calls.at(-1)[0].limit).toBe(1);
+		await call('trades', { query: { mint: MINT, network: 'devnet', limit: 'abc' } });
+		expect(dbc.getRecentTrades.mock.calls.at(-1)[0].limit).toBe(20);
+	});
+
+	it('returns the parsed trades', async () => {
+		dbRows.native_launches = [{ mint: MINT }];
+		const r = await call('trades', { query: { mint: MINT, network: 'devnet' } });
+		expect(r.status).toBe(200);
+		expect(r.body.data.trades[0]).toMatchObject({ side: 'buy', tokens: 100 });
+	});
+});
+
+describe('swap-prep pay_with sol', () => {
+	const body = { mint: MINT, wallet_address: WALLET, side: 'buy', amount: 0.1, pay_with: 'sol' };
+
+	it('routes to the SOL builder', async () => {
+		const r = await call('swap-prep', { method: 'POST', body });
+		expect(r.status).toBe(200);
+		expect(r.body.pay_with).toBe('sol');
+		expect(buildSolBuyTx).toHaveBeenCalled();
+	});
+
+	it('refuses SOL for a sell', async () => {
+		const r = await call('swap-prep', { method: 'POST', body: { ...body, side: 'sell' } });
+		expect(r.status).toBe(400);
+	});
+
+	it('passes a typed builder error through', async () => {
+		buildSolBuyTx.mockRejectedValueOnce(Object.assign(new Error('nope'), { status: 400, code: 'sol_swap_unavailable_on_devnet' }));
+		const r = await call('swap-prep', { method: 'POST', body: { ...body, network: 'devnet' } });
+		expect(r.status).toBe(400);
+		expect(r.body.error).toBe('sol_swap_unavailable_on_devnet');
 	});
 });

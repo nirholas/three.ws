@@ -270,7 +270,7 @@ export async function quoteSell({ network = 'mainnet', mint, tokensIn, slippageB
 // `referralTokenAccount` (optional) is the referrer's token account for the quote mint:
 // the program pays it the referral share of the protocol fee, taken out of the
 // protocol's cut so the trader's price is unchanged.
-export async function buildSwapTx({ network = 'mainnet', mint, trader, side, amountIn, slippageBps = 100, referralTokenAccount = null } = {}) {
+export async function buildSwapInstructions({ network = 'mainnet', mint, trader, side, amountIn, slippageBps = 100, referralTokenAccount = null } = {}) {
 	const BN = (await import('bn.js')).default;
 	const traderPk = solanaPubkey(trader);
 	if (!traderPk) throw Object.assign(new Error('invalid trader pubkey'), { status: 400, code: 'validation_error' });
@@ -290,16 +290,89 @@ export async function buildSwapTx({ network = 'mainnet', mint, trader, side, amo
 		swapBaseForQuote: selling,
 		referralTokenAccount: referralPk,
 	});
-	const txBase64 = await buildUnsignedTxBase64({ network, payer: traderPk, instructions: tx.instructions });
 	const outUnit = selling ? QUOTE_UNIT : BASE_UNIT;
 	return {
-		txBase64,
+		traderPk,
+		instructions: tx.instructions,
+		summary: {
+			pool: pool.toBase58(),
+			side: selling ? 'sell' : 'buy',
+			amount_in: amountIn,
+			expected_out: fromAtomics(quote.outputAmount, outUnit),
+			min_out: fromAtomics(quote.minimumAmountOut ?? quote.outputAmount, outUnit),
+			slippage_bps: slippageBps,
+			referral: Boolean(referralPk),
+		},
+	};
+}
+
+export async function buildSwapTx(args = {}) {
+	const { traderPk, instructions, summary } = await buildSwapInstructions(args);
+	const txBase64 = await buildUnsignedTxBase64({ network: args.network ?? 'mainnet', payer: traderPk, instructions });
+	return { txBase64, ...summary };
+}
+
+const tradeCache = new Map(); // `${network}:${mint}:${limit}:${before}` -> { at, value }
+const TRADE_CACHE_MS = 6000;
+
+// Recent swaps on a native pool, read from chain. Each trade is the change in the
+// pool's own base and quote vaults in that transaction, so it is exact for any route
+// into the pool (a plain $THREE buy, a sell, or a Jupiter SOL buy that ends in a curve
+// buy). `three` is what the curve vault received or paid, net of the protocol fee.
+// Pages by signature: pass the last signature back as `before`.
+export async function getRecentTrades({ network = 'mainnet', mint, limit = 20, before = null } = {}) {
+	const key = `${network}:${mint}:${limit}:${before ?? ''}`;
+	const hit = tradeCache.get(key);
+	if (hit && Date.now() - hit.at < TRADE_CACHE_MS) return hit.value;
+
+	const { account, pool } = await fetchPool({ network, mint });
+	const baseVault = account.baseVault.toBase58();
+	const quoteVault = account.quoteVault.toBase58();
+	const connection = getConnection({ network });
+	const sigs = await connection.getSignaturesForAddress(pool, { limit, ...(before ? { before } : {}) }, 'confirmed');
+	const ok = sigs.filter((s) => !s.err);
+	const txs = ok.length
+		? await connection.getParsedTransactions(
+				ok.map((s) => s.signature),
+				{ maxSupportedTransactionVersion: 0, commitment: 'confirmed' },
+			)
+		: [];
+
+	const trades = [];
+	txs.forEach((tx, i) => {
+		const trade = tradeFromTx(tx, baseVault, quoteVault);
+		if (trade) trades.push({ signature: ok[i].signature, time: ok[i].blockTime ?? null, ...trade });
+	});
+	const value = {
 		pool: pool.toBase58(),
-		side: selling ? 'sell' : 'buy',
-		amount_in: amountIn,
-		expected_out: fromAtomics(quote.outputAmount, outUnit),
-		min_out: fromAtomics(quote.minimumAmountOut ?? quote.outputAmount, outUnit),
-		slippage_bps: slippageBps,
-		referral: Boolean(referralPk),
+		trades,
+		next_before: sigs.length === limit ? sigs[sigs.length - 1].signature : null,
+	};
+	tradeCache.set(key, { at: Date.now(), value });
+	if (tradeCache.size > 200) tradeCache.delete(tradeCache.keys().next().value);
+	return value;
+}
+
+// Pure: one parsed transaction -> a trade, or null when it did not swap on this pool.
+export function tradeFromTx(tx, baseVault, quoteVault) {
+	if (!tx?.meta || tx.meta.err) return null;
+	const keys = tx.transaction.message.accountKeys.map((k) => (typeof k === 'string' ? k : k.pubkey.toBase58 ? k.pubkey.toBase58() : String(k.pubkey)));
+	const delta = (vault) => {
+		const idx = keys.indexOf(vault);
+		if (idx < 0) return 0;
+		const amt = (list) => Number(list?.find((b) => b.accountIndex === idx)?.uiTokenAmount?.amount ?? 0);
+		return amt(tx.meta.postTokenBalances) - amt(tx.meta.preTokenBalances);
+	};
+	const baseDelta = delta(baseVault);
+	const quoteDelta = delta(quoteVault);
+	if (baseDelta === 0 || quoteDelta === 0) return null;
+	const tokens = Math.abs(baseDelta) / BASE_UNIT;
+	const three = Math.abs(quoteDelta) / QUOTE_UNIT;
+	return {
+		side: baseDelta < 0 ? 'buy' : 'sell', // tokens leaving the vault means someone bought
+		trader: keys[0],
+		tokens,
+		three,
+		price_three: three / tokens,
 	};
 }

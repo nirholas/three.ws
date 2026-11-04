@@ -217,3 +217,29 @@ describe('config key resolution', () => {
 		expect(laneInfo('mainnet').config_key).toBeNull();
 	});
 });
+
+describe('tradeFromTx', () => {
+	it('reads a buy and a sell from the pool vault deltas, whatever route funded them', async () => {
+		const { tradeFromTx } = await import('../api/_lib/native-launch/dbc.js');
+		const mk = (basePre, basePost, quotePre, quotePost) => ({
+			meta: {
+				err: null,
+				preTokenBalances: [
+					{ accountIndex: 1, uiTokenAmount: { amount: String(basePre) } },
+					{ accountIndex: 2, uiTokenAmount: { amount: String(quotePre) } },
+				],
+				postTokenBalances: [
+					{ accountIndex: 1, uiTokenAmount: { amount: String(basePost) } },
+					{ accountIndex: 2, uiTokenAmount: { amount: String(quotePost) } },
+				],
+			},
+			transaction: { message: { accountKeys: [{ pubkey: 'Trader' }, { pubkey: 'BaseVault' }, { pubkey: 'QuoteVault' }].map((k) => ({ pubkey: { toBase58: () => k.pubkey } })) } },
+		});
+		const buy = tradeFromTx(mk(5_000_000_000, 4_000_000_000, 0, 250_000_000), 'BaseVault', 'QuoteVault');
+		expect(buy).toMatchObject({ side: 'buy', trader: 'Trader', tokens: 1000, three: 250, price_three: 0.25 });
+		const sell = tradeFromTx(mk(4_000_000_000, 4_500_000_000, 250_000_000, 100_000_000), 'BaseVault', 'QuoteVault');
+		expect(sell).toMatchObject({ side: 'sell', tokens: 500, three: 150 });
+		expect(tradeFromTx(mk(1, 1, 1, 1), 'BaseVault', 'QuoteVault')).toBeNull();
+		expect(tradeFromTx({ meta: { err: {} } }, 'BaseVault', 'QuoteVault')).toBeNull();
+	});
+});

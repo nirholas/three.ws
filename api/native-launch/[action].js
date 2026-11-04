@@ -15,7 +15,8 @@
 //   pool            -> handlePool          (public: pool state / curve progress)
 //   launch-prep     -> handleLaunchPrep    (authed: unsigned create-pool tx)
 //   launch-confirm  -> handleLaunchConfirm (authed: verify + record launch)
-//   launches        -> handleLaunches      (public: native launch directory)
+//   launches        -> handleLaunches      (public: native launch directory; ?mint= looks one coin up)
+//   trades          -> handleTrades        (public: recent swaps on a native pool, parsed from chain)
 //   fee-config      -> handleFeeConfig     (public: validate + describe a decaying-fee schedule, optional devnet/mainnet simulation)
 
 import { z } from 'zod';
@@ -35,6 +36,7 @@ import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.j
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
 import { verifySignature, solanaPubkey } from '../_lib/pump.js';
 import { laneInfo, configKeyFor, quoteMintFor } from '../_lib/native-launch/config.js';
+import { buildSolBuyTx } from '../_lib/native-launch/sol-in.js';
 import { previewFeeConfig, simulateFeeConfig } from '../_lib/native-launch/fee-config.js';
 import {
 	buildCreatePoolTx,
@@ -43,6 +45,7 @@ import {
 	quoteBuy,
 	quoteSell,
 	buildSwapTx,
+	getRecentTrades,
 } from '../_lib/native-launch/dbc.js';
 import { logger } from '../_lib/usage.js';
 
@@ -71,6 +74,7 @@ async function handleConfig(req, res) {
 
 // Both a coin's supply and $THREE's are 1B, so no single swap can exceed this.
 const MAX_SWAP_AMOUNT = 1_000_000_000;
+const MAX_SOL_IN = 1000;
 
 async function handleQuote(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -103,6 +107,9 @@ const swapPrepSchema = z.object({
 	mint: z.string().min(32).max(44),
 	wallet_address: z.string().min(32).max(44),
 	side: z.enum(['buy', 'sell']),
+	// 'three' (default) spends $THREE already in the wallet; 'sol' swaps SOL to $THREE
+	// through Jupiter in the same transaction (mainnet buys only), and `amount` is then SOL.
+	pay_with: z.enum(['three', 'sol']).default('three'),
 	amount: z.number().positive().max(MAX_SWAP_AMOUNT),
 	slippage_bps: z.number().int().min(1).max(5000).default(100),
 	// Referrer's token account for the quote mint; it earns the referral share of the protocol fee.
@@ -121,6 +128,20 @@ async function handleSwapPrep(req, res) {
 		const body = parse(swapPrepSchema, await readJson(req));
 		if (!solanaPubkey(body.mint) || !solanaPubkey(body.wallet_address)) {
 			return error(res, 400, 'validation_error', 'valid mint and wallet_address required');
+		}
+		if (body.pay_with === 'sol') {
+			if (body.side !== 'buy') return error(res, 400, 'validation_error', 'pay_with sol is only available for buys');
+			if (body.amount > MAX_SOL_IN) return error(res, 400, 'validation_error', `amount must be in (0, ${MAX_SOL_IN}] SOL`);
+			const sol = await buildSolBuyTx({
+				network: body.network,
+				mint: body.mint,
+				trader: body.wallet_address,
+				solAmount: body.amount,
+				slippageBps: body.slippage_bps,
+				referralTokenAccount: body.referral_token_account ?? null,
+			});
+			const { txBase64, ...rest } = sol;
+			return json(res, 200, { network: body.network, mint: body.mint, tx_base64: txBase64, ...rest });
 		}
 		const built = await buildSwapTx({
 			network: body.network,
@@ -419,10 +440,26 @@ async function handleLaunches(req, res) {
 	if (agentId && !isUuid(agentId)) {
 		return error(res, 400, 'validation_error', 'agent_id must be a uuid');
 	}
+	const mintFilter = url.searchParams.get('mint') || null;
+	if (mintFilter && !solanaPubkey(mintFilter)) {
+		return error(res, 400, 'validation_error', 'mint must be a valid base58 address');
+	}
 	const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0', 10) || 0);
 	const limit = Math.max(1, Math.min(100, parseInt(url.searchParams.get('limit') || '24', 10) || 24));
 
-	const rows = agentId
+	const rows = mintFilter
+		? await sql`
+				select nl.mint, nl.pool, nl.network, nl.name, nl.symbol, nl.metadata_uri,
+				       nl.status, nl.created_at, nl.creator_address,
+				       ai.id as agent_id, ai.name as agent_name,
+				       a.thumbnail_key as avatar_thumbnail_key, a.visibility as avatar_visibility
+				from native_launches nl
+				left join agent_identities ai on ai.id = nl.agent_id and ai.deleted_at is null
+				left join avatars a on a.id = ai.avatar_id and a.deleted_at is null
+				where nl.network=${network} and nl.mint=${mintFilter}
+				limit 1
+			`
+		: agentId
 		? await sql`
 				select nl.mint, nl.pool, nl.network, nl.name, nl.symbol, nl.metadata_uri,
 				       nl.status, nl.created_at,
@@ -461,6 +498,7 @@ async function handleLaunches(req, res) {
 			status: r.status,
 			metadata_uri: normalizeGatewayURL(r.metadata_uri) || r.metadata_uri,
 			created_at: r.created_at,
+			creator_address: r.creator_address ?? null,
 			agent: r.agent_id
 				? {
 						id: r.agent_id,
@@ -479,6 +517,33 @@ async function handleLaunches(req, res) {
 		{ data: { launches, has_more: hasMore, offset, limit, network } },
 		{ 'cache-control': 'public, max-age=15' },
 	);
+}
+
+// ── trades ─────────────────────────────────────────────────────────────────
+
+async function handleTrades(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+	const mint = url.searchParams.get('mint');
+	if (!mint || !solanaPubkey(mint)) return error(res, 400, 'validation_error', 'valid mint required');
+	const rawLimit = parseInt(url.searchParams.get('limit') ?? '20', 10);
+	const limit = Number.isNaN(rawLimit) ? 20 : Math.max(1, Math.min(50, rawLimit));
+	const before = url.searchParams.get('before') || null;
+	if (before && !/^[1-9A-HJ-NP-Za-km-z]{64,90}$/.test(before)) {
+		return error(res, 400, 'validation_error', 'before must be a transaction signature');
+	}
+	const known = await sql`select 1 from native_launches where network=${network} and mint=${mint} limit 1`;
+	if (!known.length) return error(res, 404, 'not_found', 'no native launch for this mint');
+	try {
+		const out = await getRecentTrades({ network, mint, limit, before });
+		return json(res, 200, { data: { network, mint, ...out } }, { 'cache-control': 'public, max-age=5' });
+	} catch (e) {
+		return error(res, e.status || 500, e.code || 'trades_failed', e.message);
+	}
 }
 
 // ── dispatcher ─────────────────────────────────────────────────────────────
@@ -546,6 +611,7 @@ async function dispatch(req, res) {
 		case 'launch-prep': return handleLaunchPrep(req, res);
 		case 'launch-confirm': return handleLaunchConfirm(req, res);
 		case 'launches': return handleLaunches(req, res);
+		case 'trades': return handleTrades(req, res);
 		case 'fee-config': return handleFeeConfig(req, res);
 		default:
 			return error(res, 404, 'not_found', `unknown launchpad action: ${action || '(none)'}`);

@@ -6,7 +6,7 @@ import bs58 from 'bs58';
 import BN from 'bn.js';
 import { Connection, Keypair, VersionedTransaction } from '@solana/web3.js';
 import { getBaseFeeParams, getBaseFeeNumerator, feeNumeratorToBps } from '@meteora-ag/dynamic-bonding-curve-sdk';
-import { buildCreatePoolTx, buildSwapTx, getPoolState, quoteBuy } from '../api/_lib/native-launch/dbc.js';
+import { buildCreatePoolTx, buildSwapTx, getPoolState, getRecentTrades, quoteBuy } from '../api/_lib/native-launch/dbc.js';
 import { curveBuildParams, NATIVE_LANE } from '../api/_lib/native-launch/config.js';
 
 const conn = new Connection(process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com', 'confirmed');
@@ -131,6 +131,16 @@ assert(afterSell.quote_reserve_three < afterBuy.quote_reserve_three, 'a sell pay
 
 console.log('progress:        ', afterCreate.curve_progress, '->', afterBuy.curve_progress, '->', afterSell.curve_progress);
 console.log('$THREE in curve: ', afterCreate.quote_reserve_three, '->', afterBuy.quote_reserve_three, '->', afterSell.quote_reserve_three);
+// The coin page reads recent swaps from chain through the same function the
+// /api/native-launch/trades endpoint calls. The create-time first buy, the buy and
+// the sell above must all be there, newest first, with the right sides.
+const { trades } = await getRecentTrades({ network: 'devnet', mint, limit: 20 });
+console.log('trades read from chain:', trades.map((t) => `${t.side} ${t.tokens} for ${t.three} $THREE`).join(' | '));
+assert(trades.length >= 3, 'the first buy, the buy and the sell all show in the parsed trades');
+assert(trades[0].side === 'sell' && trades[1].side === 'buy', 'trades come newest first with the right sides');
+assert(trades.every((t) => t.trader === wallet.publicKey.toBase58()), 'every trade names the trading wallet');
+
 console.log('');
 console.log('E2E OK');
+console.log(`coin page: /launches/${mint}?network=devnet (run the dev server with the devnet NATIVE_LAUNCH_* env set)`);
 console.log(`explorer: https://solscan.io/tx/${createSig}?cluster=devnet`);

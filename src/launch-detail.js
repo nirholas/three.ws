@@ -2226,6 +2226,18 @@ function renderCopilot() {
 // BOOT
 // ════════════════════════════════════════════════════════════════════════════
 
+async function lookupNativeLaunch(mint, network) {
+	try {
+		const res = await fetch(`/api/native-launch/launches?mint=${mint}&network=${network}`, {
+			signal: AbortSignal.timeout(4000),
+		});
+		if (!res.ok) return null;
+		return (await res.json()).data?.launches?.[0] ?? null;
+	} catch {
+		return null;
+	}
+}
+
 async function boot() {
 	startParticleField();
 
@@ -2240,6 +2252,17 @@ async function boot() {
 	}
 
 	renderSkeleton();
+
+	// A coin launched on the native $THREE curve has its own page; everything below
+	// is the pump.fun view and is untouched. The lookup fails open: a native-API
+	// hiccup must never stop a pump coin from rendering.
+	const native = await lookupNativeLaunch(state.mint, state.network);
+	if (native) {
+		const { mountNativeCoin } = await import('./launch-detail-native.js');
+		mountNativeCoin({ mint: state.mint, network: state.network, launch: native });
+		$('ld-shell').setAttribute('aria-busy', 'false');
+		return;
+	}
 
 	let detail;
 	try {

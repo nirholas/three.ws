@@ -257,6 +257,7 @@ function renderTrade() {
 				<dt>$THREE in the curve</dt><dd>${pool?.error ? 'unavailable' : pool ? fmt(pool.quote_reserve_three) : 'reading…'}</dd>
 				<dt>Graduates at</dt><dd>${pool?.migration_quote_threshold_three ? `${fmt(pool.migration_quote_threshold_three)} $THREE` : ''}</dd>
 				<dt>Creator</dt><dd>${esc(short(pool?.creator))}</dd>
+				<dt>Coin page</dt><dd><a href="/launches/${esc(coin.mint)}${NETWORK === 'devnet' ? '?network=devnet' : ''}">Open full page</a></dd>
 				${coin.agent ? `<dt>Agent</dt><dd><a href="${esc(coin.agent.url)}">${esc(coin.agent.name || 'View agent')}</a></dd>` : ''}
 			</dl>
 		</div>
@@ -583,7 +584,8 @@ async function onLaunchSubmit(event) {
 		say(`Sent. Waiting for confirmation… <a href="${explorerTx(signature)}" target="_blank" rel="noopener">view</a>`);
 		await waitForConfirmation(signature);
 		await api('/api/native-launch/launch-confirm', { method: 'POST', body: { prep_id: prep.prep_id, tx_signature: signature } });
-		say(`Launched. <a href="${explorerTx(signature)}" target="_blank" rel="noopener">View transaction</a>`, 'ok');
+		const coinPage = `/launches/${prep.mint}${NETWORK === 'devnet' ? '?network=devnet' : ''}`;
+		say(`Launched. <a href="${coinPage}">Open the coin page</a> or <a href="${explorerTx(signature)}" target="_blank" rel="noopener">view the transaction</a>.`, 'ok');
 		form.reset();
 		state.selected = prep.mint;
 		await loadLaunches({ reset: true });

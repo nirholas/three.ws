@@ -157,7 +157,8 @@ All public, no auth:
 - `GET /api/native-launch/config[?network=]` — the lane's live economics and whether it is deployed. This is what the launch UI renders, so the fee story on the page always comes from the same source as the on-chain config.
 - `GET /api/native-launch/pool?mint=…[&network=]`: pool address, curve progress (0..1), `quote_reserve_three` ($THREE held in the curve), `migration_quote_threshold_three`, migration status.
 - `GET /api/native-launch/quote?mint=…&three_in=…[&network=]`: a live buy quote off the curve: tokens out, minimum out, and the fee breakdown in $THREE. Pass `tokens_in=…` instead for a sell quote (`three_out`, `min_three_out`).
-- `GET /api/native-launch/launches[?network=&agent_id=&limit=&offset=]`: the native launch directory, each row carrying its agent and avatar thumbnail. `agent_id` must be a uuid: anything else answers `400 validation_error` instead of reaching the database. `limit` is clamped to 1..100 (default 24), `offset` to a non-negative integer.
+- `GET /api/native-launch/launches[?network=&agent_id=&mint=&limit=&offset=]`: the native launch directory, each row carrying its agent, avatar thumbnail and `creator_address`. `mint` looks up one coin (base58, 32..44 characters, anything else answers `400` before the database); the coin page uses it to decide whether a mint is native.
+- `GET /api/native-launch/trades?mint=&network=[&limit=&before=]`: recent swaps on a native pool, parsed from chain. `limit` is clamped to 1..50 (default 20); `before` is a transaction signature to page from and the answer carries `next_before`. An invalid mint answers `400` and an unrecorded one `404`, both before any RPC call. Each trade is the change in the pool's own base and quote vaults in that transaction, so it is exact whatever route funded it (a $THREE buy, a sell, or a Jupiter SOL buy). `three` is what the curve vault moved, net of the protocol fee. Results are cached for 6 seconds. `agent_id` must be a uuid: anything else answers `400 validation_error` instead of reaching the database. `limit` is clamped to 1..100 (default 24), `offset` to a non-negative integer.
 
 ### `POST /api/native-launch/swap-prep`
 
@@ -166,6 +167,8 @@ Public, no session: trading a curve needs only the trader's signature.
 ```json
 { "mint": "3ws…", "wallet_address": "<trader>", "side": "buy", "amount": 50000, "slippage_bps": 100, "network": "mainnet" }
 ```
+
+Add `"pay_with": "sol"` for a one-click buy from SOL (mainnet, buys only): `amount` is then SOL and the single transaction swaps SOL to $THREE through Jupiter, then buys on the curve. The curve leg is sized from Jupiter's worst-case output (`otherAmountThreshold`), so it can never ask for more $THREE than the swap delivered, and `min_out` is the curve quote for that worst case. The answer adds `sol_in`, `three_expected`, `three_min` and `jupiter_price_impact_pct`. Typed errors: `sol_swap_unavailable_on_devnet` (400, Jupiter and $THREE do not exist on devnet; use the $THREE path), `sol_route_unavailable` (422), `sol_quote_failed` and `sol_swap_build_failed` (502).
 
 A `buy` spends `amount` $THREE; a `sell` spends `amount` of the coin's tokens. The quote is taken in the same call, so the slippage floor inside the transaction is the one returned as `min_out`. Returns `tx_base64` (an unsigned v0 transaction for the trader's wallet), `expected_out`, `min_out`, and the pool address.
 
@@ -218,12 +221,15 @@ The SOL-quoted v1 of this lane was proven end to end on devnet (config `FK3HQrWG
 | Curve economics (single source of truth) | [`api/_lib/native-launch/config.js`](../api/_lib/native-launch/config.js) |
 | DBC wrapper (build launch and swap txs, read pool, quote) | [`api/_lib/native-launch/dbc.js`](../api/_lib/native-launch/dbc.js) |
 | Public page (lane facts, coin directory, buy and sell, launch) | [`pages/three-launchpad.html`](../pages/three-launchpad.html) + [`src/three-launchpad/`](../src/three-launchpad) `→ /three-launchpad` |
+| SOL-in buy (Jupiter swap + curve buy in one v0 tx) | [`api/_lib/native-launch/sol-in.js`](../api/_lib/native-launch/sol-in.js) |
+| Coin page for a native mint (`/launches/<mint>`) | [`src/launch-detail-native.js`](../src/launch-detail-native.js) + [`.css`](../src/launch-detail-native.css), mounted by [`src/launch-detail.js`](../src/launch-detail.js) |
+| Recorded Jupiter responses for the SOL-in tests | [`tests/fixtures/native-launch/`](../tests/fixtures/native-launch) |
 | HTTP dispatcher | [`api/native-launch/[action].js`](../api/native-launch/%5Baction%5D.js) |
 | Launch table | `native_launches` (migration `20260726100000_native_launchpad.sql`) |
 | Launch UI (lane toggle) | [`public/studio/launch-panel.js`](../public/studio/launch-panel.js) |
 | Config creation | [`scripts/native-launchpad-create-config.mjs`](../scripts/native-launchpad-create-config.mjs) |
 | Devnet end-to-end | [`scripts/native-launchpad-e2e-devnet.mjs`](../scripts/native-launchpad-e2e-devnet.mjs) |
-| Tests | `tests/native-launch-curve.test.js`, `tests/native-launch-endpoint.test.js` |
+| Tests | `tests/native-launch-curve.test.js`, `tests/native-launch-endpoint.test.js`, `tests/native-launch-sol-in.test.js` |
 
 Note the namespace: this lane is `/api/native-launch/*`. The unrelated `/api/launchpad/*` endpoints belong to Launchpad Studio, the page builder.
 
@@ -234,7 +240,5 @@ Note the namespace: this lane is `/api/native-launch/*`. The unrelated `/api/lau
 Stated plainly, because a half-built feature that claims to be finished is worse than one that names its edges:
 
 - **No custodial launch path.** The pump.fun lane can launch from an agent's own server-signed wallet; the native lane is always signed by the launcher's connected wallet. The lane toggle switches the signer back to the connected wallet automatically rather than offering an option that would fail.
-- **No coin-detail page yet.** `/launches/<mint>` reads price history, trades, safety, and smart-money data from pump-specific endpoints, so it cannot render a native coin. The launch success screen links to Solscan and the agent page instead of a link that would 404.
 - **No coin variants.** Mayhem, USDC pairing, buyback binding, and delegated reward splits are pump.fun program features. The native lane is $THREE-quoted and variant-free, so that picker is withheld on this lane rather than shown with dead options.
-- **No one-click buy from SOL.** A buyer who holds only SOL swaps to $THREE first (the page links to [/three-token](https://three.ws/three-token)). Bundling a Jupiter SOL to $THREE swap in front of the curve buy is the obvious next step.
 - **Thin $THREE liquidity cuts both ways.** A graduation needs about 12.3M $THREE bought through the curve. That is the point, and it also means early curves fill slowly until $THREE's own liquidity deepens.

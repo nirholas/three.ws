@@ -375,7 +375,7 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 // Build a versioned tx from a list of instructions, return base64 (unsigned).
 // Mirrors the pattern used in api/agents/solana-register-prep.js so frontends
 // can decode via VersionedTransaction.deserialize and submit via injected wallet.
-export async function buildUnsignedTxBase64({ network, payer, instructions }) {
+export async function buildUnsignedTxBase64({ network, payer, instructions, lookupTables = [] }) {
 	const [{ TransactionMessage, VersionedTransaction, PublicKey: PK }] = await Promise.all([
 		import('@solana/web3.js'),
 	]);
@@ -392,7 +392,7 @@ export async function buildUnsignedTxBase64({ network, payer, instructions }) {
 		payerKey: payerPk,
 		recentBlockhash: blockhash,
 		instructions,
-	}).compileToV0Message();
+	}).compileToV0Message(lookupTables);
 	const vtx = new VersionedTransaction(msg);
 	return Buffer.from(vtx.serialize()).toString('base64');
 }
