@@ -5,6 +5,9 @@
 // and curate the working core. See README.md for the full reference.
 
 import { createHttp, ThreeWsError } from './http.js';
+import { asOf as filterAsOf, currentFirst, isCurrent, toEpochMs } from './temporal.js';
+
+export { isValidAt, isCurrent, asOf, currentFirst, supersede } from './temporal.js';
 
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
 
@@ -63,6 +66,9 @@ export function createAgentMemory(options = {}) {
 			createdAt: merged.createdAt,
 			updatedAt: merged.updatedAt,
 			expiresAt: merged.expiresAt,
+			validFrom: instant(merged.validFrom, 'validFrom'),
+			sourceRef: merged.sourceRef,
+			supersedes: idList(merged.supersedes, 'supersedes'),
 		});
 
 		const res = await request('/api/agent-memory', {
@@ -73,7 +79,12 @@ export function createAgentMemory(options = {}) {
 		return shapeMemory(res?.entry);
 	}
 
-	/** Semantic search over the agent's memories. Wraps `POST /api/memory/search`. */
+	/**
+	 * Semantic search over the agent's memories. Wraps `POST /api/memory/search`.
+	 * Returns facts that are true now; pass `asOf` for what was true at an
+	 * earlier moment, or `includeHistory` for superseded versions too (current
+	 * versions first).
+	 */
 	async function recall(query, opts = {}) {
 		const q = String(query || '').trim();
 		if (!q) throw new ThreeWsError('recall() needs a non-empty query.', { code: 'invalid_input' });
@@ -88,13 +99,19 @@ export function createAgentMemory(options = {}) {
 				minScore: opts.minScore,
 				tiers: cleanTiers(opts.tiers),
 				type: normalizeEnum(opts.type, MEMORY_TYPES, 'type'),
+				asOf: instant(opts.asOf, 'asOf'),
+				includeHistory: opts.includeHistory === true ? true : undefined,
 			}),
 			signal: opts.signal,
 		});
 		return (res?.results || []).map(shapeMemory);
 	}
 
-	/** Every memory for the agent (newest, salience-first). Wraps `GET /api/agent-memory`. */
+	/**
+	 * Every memory for the agent (newest, salience-first). Wraps `GET /api/agent-memory`.
+	 * By default returns every version; `current: true` keeps facts true now and
+	 * `asOf` keeps facts that were true at that moment.
+	 */
 	async function list(opts = {}) {
 		const res = await request('/api/agent-memory', {
 			query: prune({
@@ -105,7 +122,10 @@ export function createAgentMemory(options = {}) {
 			}),
 			signal: opts.signal,
 		});
-		return (res?.entries || []).map(shapeMemory);
+		const all = (res?.entries || []).map(shapeMemory);
+		if (opts.asOf !== undefined && opts.asOf !== null) return filterAsOf(all, instant(opts.asOf, 'asOf'));
+		if (opts.current === true) return all.filter((m) => isCurrent(m));
+		return opts.includeHistory === false ? all.filter((m) => isCurrent(m)) : currentFirst(all);
 	}
 
 	/** The full temporal knowledge graph. Wraps `GET /api/memory/graph`. */
@@ -272,6 +292,10 @@ function shapeMemory(row) {
 		updatedAt: row.updatedAt ?? null,
 		lastAccessedAt: row.lastAccessedAt ?? null,
 		expiresAt: row.expiresAt ?? null,
+		validFrom: row.validFrom ?? row.createdAt ?? null,
+		validTo: row.validTo ?? null,
+		sourceRef: row.sourceRef ?? null,
+		supersededBy: row.supersededBy ?? null,
 		raw: row,
 	};
 	if ('score' in row) memory.score = row.score;
@@ -304,6 +328,27 @@ function normalizeEnum(value, allowed, label, soft = false) {
 		throw new ThreeWsError(`Invalid ${label} "${value}". Expected one of: ${allowed.join(', ')}.`, { code: 'invalid_input' });
 	}
 	return value;
+}
+
+// An instant the server accepts: epoch ms, kept as the caller's ISO string when
+// they gave one. Throws before the network on a value that is not a time.
+function instant(value, label) {
+	if (value === undefined || value === null || value === '') return undefined;
+	try {
+		const ms = toEpochMs(value, label);
+		return typeof value === 'string' ? value : new Date(ms).toISOString();
+	} catch (err) {
+		throw new ThreeWsError(err.message, { code: 'invalid_input' });
+	}
+}
+
+function idList(value, label) {
+	if (value === undefined || value === null) return undefined;
+	const list = Array.isArray(value) ? value : [value];
+	if (list.some((id) => typeof id !== 'string' || !id)) {
+		throw new ThreeWsError(`${label} must be a memory id string or a list of them.`, { code: 'invalid_input' });
+	}
+	return list;
 }
 
 function assertUnit(value, label) {

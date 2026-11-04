@@ -238,3 +238,85 @@ test('a 402 surfaces as PaymentRequiredError carrying the x402 challenge', async
 		return true;
 	});
 });
+
+// ── Temporal validity and provenance ────────────────────────────────────────
+
+import { asOf, supersede, isCurrent, isValidAt, currentFirst } from '../src/index.js';
+
+const T = (iso) => Date.parse(iso);
+
+test('supersede() closes the prior interval at the new validFrom and links the versions', () => {
+	const paris = { id: 'a', content: 'Alice lives in Paris', validFrom: T('2025-01-01'), validTo: null };
+	const next = supersede([paris], { id: 'b', content: 'Alice lives in Berlin', validFrom: '2026-03-01', sourceRef: 'message:4812', supersedes: ['a'] });
+
+	assert.equal(next[0].validTo, T('2026-03-01'));
+	assert.equal(next[0].supersededBy, 'b');
+	assert.equal(next[1].validTo, null);
+	assert.equal(next[1].sourceRef, 'message:4812');
+	assert.equal(paris.validTo, null, 'input is not mutated');
+});
+
+test('supersede() never closes an interval before it began, and refuses a closed or unknown fact', () => {
+	const late = { id: 'a', content: 'x', validFrom: T('2026-06-01'), validTo: null };
+	const [closed] = supersede([late], { id: 'b', content: 'y', validFrom: '2026-01-01', supersedes: ['a'] });
+	assert.equal(closed.validTo, T('2026-06-01'));
+	assert.throws(() => supersede([closed], { id: 'c', content: 'z', supersedes: ['a'] }), /already superseded/);
+	assert.throws(() => supersede([late], { id: 'c', content: 'z', supersedes: ['nope'] }), /unknown fact/);
+});
+
+test('asOf() returns the version that was true at the given moment', () => {
+	const facts = supersede(
+		[{ id: 'a', content: 'Paris', validFrom: T('2025-01-01'), validTo: null }],
+		{ id: 'b', content: 'Berlin', validFrom: '2026-03-01', supersedes: ['a'] },
+	);
+	assert.deepEqual(asOf(facts, '2025-07-01').map((f) => f.content), ['Paris']);
+	assert.deepEqual(asOf(facts, '2026-03-01').map((f) => f.content), ['Berlin']);
+	assert.deepEqual(asOf(facts, '2024-01-01'), []);
+	assert.equal(isValidAt(facts[0], T('2026-03-01')), false, 'validTo is exclusive');
+	assert.equal(isCurrent(facts[1]), true);
+	assert.deepEqual(currentFirst(facts).map((f) => f.content), ['Berlin', 'Paris']);
+});
+
+test('remember() sends validFrom, sourceRef and supersedes; the stored provenance round-trips', async () => {
+	const { fetch, calls } = stubFetch([
+		{ status: 201, body: { entry: storedMemory({ id: 'm2', content: 'Alice lives in Berlin', validFrom: T('2026-03-01'), validTo: null, sourceRef: 'message:4812', supersededBy: undefined }) } },
+	]);
+	const memory = new AgentMemory({ agentId: AGENT, token: 'tok', fetch });
+
+	const mem = await memory.remember('Alice lives in Berlin', { validFrom: '2026-03-01T00:00:00Z', sourceRef: 'message:4812', supersedes: 'm1' });
+
+	const body = JSON.parse(calls[0].init.body);
+	assert.equal(body.entry.validFrom, '2026-03-01T00:00:00Z');
+	assert.equal(body.entry.sourceRef, 'message:4812');
+	assert.deepEqual(body.entry.supersedes, ['m1']);
+	assert.equal(mem.validFrom, T('2026-03-01'));
+	assert.equal(mem.sourceRef, 'message:4812');
+	assert.equal(mem.validTo, null);
+});
+
+test('remember() rejects a validFrom that is not a time before any request', async () => {
+	const { fetch, calls } = stubFetch([]);
+	const memory = new AgentMemory({ agentId: AGENT, token: 'tok', fetch });
+	await assert.rejects(() => memory.remember('x', { validFrom: 'last tuesday' }), (e) => e instanceof ThreeWsError && e.code === 'invalid_input');
+	assert.equal(calls.length, 0);
+});
+
+test('recall() forwards asOf and includeHistory', async () => {
+	const { fetch, calls } = stubFetch([{ body: { results: [] } }]);
+	const memory = new AgentMemory({ agentId: AGENT, token: 'tok', fetch });
+	await memory.recall('where does Alice live', { asOf: '2025-07-01T00:00:00Z', includeHistory: true });
+	const body = JSON.parse(calls[0].init.body);
+	assert.equal(body.asOf, '2025-07-01T00:00:00Z');
+	assert.equal(body.includeHistory, true);
+});
+
+test('list() filters by asOf and current locally', async () => {
+	const rows = [
+		storedMemory({ id: 'a', validFrom: T('2025-01-01'), validTo: T('2026-03-01') }),
+		storedMemory({ id: 'b', validFrom: T('2026-03-01'), validTo: null }),
+	];
+	const make = () => new AgentMemory({ agentId: AGENT, token: 'tok', fetch: stubFetch([{ body: { entries: rows } }]).fetch });
+	assert.deepEqual((await make().list({ asOf: '2025-07-01' })).map((m) => m.id), ['a']);
+	assert.deepEqual((await make().list({ current: true })).map((m) => m.id), ['b']);
+	assert.deepEqual((await make().list()).map((m) => m.id), ['b', 'a']);
+});

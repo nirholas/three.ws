@@ -66,6 +66,8 @@ export default wrap(async (req, res) => {
 		if (invalid.length) return error(res, 400, 'validation_error', `unknown tier: ${invalid.join(', ')}`);
 		const type = url.searchParams.get('type') || undefined;
 		if (type && !MEMORY_TYPES.includes(type)) return error(res, 400, 'validation_error', `unknown type: ${type}`);
+		const temporal = parseTemporal(url.searchParams.get('as_of') || url.searchParams.get('asOf'), url.searchParams.get('include_history') || url.searchParams.get('includeHistory'));
+		if (temporal.error) return error(res, 400, 'validation_error', temporal.error);
 		// Anonymous / non-owner → empty (no leak, no console noise on public embeds).
 		if (!auth || !(await ownsAgent(agentId, auth.userId))) return json(res, 200, { results: [] });
 
@@ -74,6 +76,7 @@ export default wrap(async (req, res) => {
 			minScore: clampFloat(url.searchParams.get('minScore'), 0.25, 0, 1),
 			tiers,
 			type,
+			...temporal.opts,
 		});
 		return json(res, 200, out);
 	}
@@ -91,15 +94,32 @@ export default wrap(async (req, res) => {
 	const type = body.type || undefined;
 	if (type && !MEMORY_TYPES.includes(type)) return error(res, 400, 'validation_error', `unknown type: ${type}`);
 	if (!(await ownsAgent(agentId, auth.userId))) return error(res, 403, 'forbidden', 'not your agent');
+	const temporal = parseTemporal(body.asOf ?? body.as_of, body.includeHistory ?? body.include_history);
+	if (temporal.error) return error(res, 400, 'validation_error', temporal.error);
 
 	const out = await searchMemories(agentId, String(body.query || ''), {
 		topK: clampInt(body.topK, 8, 1, 50),
 		minScore: clampFloat(body.minScore, 0.25, 0, 1),
 		tiers,
 		type,
+		...temporal.opts,
 	});
 	return json(res, 200, out);
 });
+
+// as_of: an ISO 8601 time (or epoch ms) to ask what was true then. include_history:
+// also return superseded versions. A bad date is a 400, never an empty result.
+function parseTemporal(asOfRaw, historyRaw) {
+	const opts = {};
+	if (asOfRaw !== null && asOfRaw !== undefined && asOfRaw !== '') {
+		const n = typeof asOfRaw === 'number' || /^\d{10,}$/.test(String(asOfRaw)) ? Number(asOfRaw) : String(asOfRaw);
+		const d = new Date(n);
+		if (Number.isNaN(d.getTime())) return { error: 'as_of must be an ISO 8601 date or epoch milliseconds' };
+		opts.asOf = d.toISOString();
+	}
+	opts.includeHistory = historyRaw === true || historyRaw === 'true' || historyRaw === '1';
+	return { opts };
+}
 
 function clampInt(v, dflt, min, max) {
 	const n = Number(v);

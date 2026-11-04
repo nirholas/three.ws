@@ -21,6 +21,7 @@ const MIGRATIONS = [
 	'20260619120000_memory_studio.sql',
 	'20260922153000_agent_custom_skills.sql',
 	'20260922190000_agent_memory_learning.sql',
+	'20261105020000_agent_memory_temporal_facts.sql',
 ];
 
 /** Build a fresh database with the learning schema. */

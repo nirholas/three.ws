@@ -1,5 +1,8 @@
 # Add temporal validity and provenance to agent memory and score it on LoCoMo and LongMemEval
 
+**Status (2026-11-04):** temporal validity, provenance, supersession, as-of recall, the SDK 0.2.0 and the benchmark harness are shipped and tested. Remaining and owned by the owner: apply migration 20261105020000 (`npm run db:status` then `npm run db:migrate`), and produce the published scores with `node --env-file=.env scripts/memory-bench.mjs --subset 50 --write-doc` once the LLM chain is not rate limited (every free lane returned 429 during this session; a Vertex or Gemini key lifts it). The run appends the results block to docs/research/memory-bench-results.md.
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/759-plan-memory-temporal-facts-benchmark-scores.md`.
 
 **Priority:** P3, polish, developer experience, or exploratory (score 38 of 100 inside the tier). **Area:** memory. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

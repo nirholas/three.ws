@@ -52,6 +52,14 @@ export interface Memory {
 	updatedAt: number | null;
 	lastAccessedAt: number | null;
 	expiresAt: number | null;
+	/** Epoch ms the fact became true (defaults to createdAt). */
+	validFrom: number | null;
+	/** Epoch ms the fact stopped being true; null while it is current. */
+	validTo: number | null;
+	/** Where the fact came from, e.g. `message:4812`, `run:<uuid>` or a URL. */
+	sourceRef: string | null;
+	/** Id of the newer memory that replaced this one, when superseded. */
+	supersededBy: string | null;
 	/** recall() only: cosine similarity (4-dp), or null for a lexical hit. */
 	score?: number | null;
 	/** recall() only: how the hit was found. */
@@ -112,6 +120,12 @@ export interface RememberOptions {
 	createdAt?: number | string;
 	updatedAt?: number | string;
 	expiresAt?: number | string;
+	/** When the fact became true. Default: now. */
+	validFrom?: number | string | Date;
+	/** Provenance pointer, e.g. `message:4812`. */
+	sourceRef?: string;
+	/** Id(s) of current memories this one replaces. Their interval closes at `validFrom`. */
+	supersedes?: string | string[];
 	signal?: AbortSignal;
 }
 
@@ -124,6 +138,10 @@ export interface RecallOptions {
 	tiers?: MemoryTier[];
 	/** Restrict to one memory type. */
 	type?: MemoryType;
+	/** Return the facts that were true at this moment instead of now. */
+	asOf?: number | string | Date;
+	/** Also return superseded versions, current versions first. */
+	includeHistory?: boolean;
 	signal?: AbortSignal;
 }
 
@@ -133,6 +151,10 @@ export interface ListOptions {
 	since?: number;
 	/** Max rows, <= 500. Default 200. */
 	limit?: number;
+	/** Keep only the facts that were true at this moment. */
+	asOf?: number | string | Date;
+	/** Keep only facts that are true now. */
+	current?: boolean;
 	signal?: AbortSignal;
 }
 
@@ -191,3 +213,17 @@ export declare class AgentMemory implements AgentMemoryClient {
 	merge(memoryIds: string[], opts?: { signal?: AbortSignal }): Promise<{ entry: Memory | null; merged: number }>;
 	forget(id: string, opts?: { signal?: AbortSignal }): Promise<{ ok: boolean; id: string }>;
 }
+
+/** True when the memory's [validFrom, validTo) interval contains `at` (default: now). */
+export declare function isValidAt(memory: Pick<Memory, 'validFrom' | 'validTo'> & Partial<Pick<Memory, 'createdAt'>>, at?: number | string | Date): boolean;
+/** True when the fact has not been closed or superseded as of `at`. */
+export declare function isCurrent(memory: Pick<Memory, 'validFrom' | 'validTo'> & Partial<Pick<Memory, 'createdAt'>>, at?: number | string | Date): boolean;
+/** The memories that were true at `at`. */
+export declare function asOf<T extends Pick<Memory, 'validFrom' | 'validTo'>>(memories: T[], at: number | string | Date): T[];
+/** Current versions first, history after. */
+export declare function currentFirst<T extends Pick<Memory, 'validFrom' | 'validTo'>>(memories: T[], at?: number | string | Date): T[];
+/** Close the intervals of superseded facts and append the new one. Does not mutate its input. */
+export declare function supersede<T extends { id: string; validFrom?: any; validTo?: any }>(
+	facts: T[],
+	next: { id: string; content: string; validFrom?: number | string | Date; sourceRef?: string | null; supersedes?: string[] },
+): Array<T | { id: string; content: string; validFrom: number; validTo: null; sourceRef: string | null; supersededBy: null }>;

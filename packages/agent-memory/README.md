@@ -128,6 +128,9 @@ Store (or upsert) a memory. Wraps `POST /api/agent-memory { agentId, entry }`.
 | `tier` | `'working' \| 'recall' \| 'archival'` | auto | Defaults: pinned → `working`, low-salience reference → `archival`, else `recall`. |
 | `id` | `string` | — | Pass to upsert an existing memory idempotently. |
 | `expiresAt` | `number \| string` | — | Auto-expiry timestamp. |
+| `validFrom` | `number \| string \| Date` | now | When the fact became true. See [temporal facts](#temporal-facts-and-provenance). |
+| `sourceRef` | `string` | none | Where the fact came from, e.g. `message:4812` or a URL. |
+| `supersedes` | `string \| string[]` | none | Id(s) of current memories this one replaces; their interval closes at `validFrom`. |
 
 Returns the stored `Memory` (see [shape](#memory-shape)). Content is capped at
 10,000 chars. Changing an existing memory's content resets its vector and mined
@@ -143,6 +146,8 @@ Semantic search over the agent's memories. Wraps `POST /api/memory/search`.
 | `minScore` | `number` | `0.25` | Min cosine similarity, `0..1`. |
 | `tiers` | `string[]` | all | Restrict to e.g. `['working', 'recall']`. |
 | `type` | `string` | all | Restrict to one memory type. |
+| `asOf` | `number \| string \| Date` | now | Return the facts that were true at that moment. |
+| `includeHistory` | `boolean` | `false` | Also return superseded versions, current versions first. |
 
 Each result carries a `score` (cosine, 4-dp) and `match` of `'semantic'` or
 `'lexical'`. Results are semantic-first, then back-filled with salience-ranked
@@ -203,6 +208,25 @@ Owner-only edits over `POST /api/memory/curate`:
 | `merge([target, ...dupes])` | `merge` | Fold duplicates into one; re-indexes. |
 | `forget(id)` | `forget` | Delete a memory. |
 
+### Temporal facts and provenance
+
+A fact is true over an interval, not forever. Without that, an agent that was told "I live in Paris" and later "I moved to Berlin" answers with whichever it finds first, with equal confidence.
+
+```js
+const paris = await memory.remember('Alice lives in Paris', { validFrom: '2025-01-01' });
+await memory.remember('Alice lives in Berlin', {
+  validFrom: '2026-03-01',
+  sourceRef: 'message:4812',
+  supersedes: paris.id, // paris.validTo becomes 2026-03-01, paris.supersededBy the new id
+});
+
+await memory.recall('where does Alice live');                       // Berlin
+await memory.recall('where does Alice live', { asOf: '2025-07-01' }); // Paris
+await memory.recall('where does Alice live', { includeHistory: true }); // Berlin, then Paris
+```
+
+`validFrom` is inclusive and `validTo` exclusive. Recall and the prompt section return current facts by default. Superseding a memory that is already closed is a `409`; supersede its current version instead. `list()` takes `asOf` or `current: true`. The same arithmetic is exported for memories you hold locally: `isValidAt`, `isCurrent`, `asOf`, `currentFirst` and `supersede` (see `src/temporal.js`). Benchmark scores: [docs/research/memory-bench-results.md](../../docs/research/memory-bench-results.md).
+
 ### Memory shape
 
 ```ts
@@ -221,6 +245,10 @@ type Memory = {
   tokens: number;              // ~chars/4
   createdAt: number; updatedAt: number;
   lastAccessedAt: number | null; expiresAt: number | null;
+  validFrom: number | null;    // epoch ms the fact became true (defaults to createdAt)
+  validTo: number | null;      // epoch ms it stopped being true; null while current
+  sourceRef: string | null;    // provenance pointer
+  supersededBy: string | null; // id of the memory that replaced it
   // recall() only:
   score?: number | null;       // cosine, or null for a lexical hit
   match?: 'semantic' | 'lexical';

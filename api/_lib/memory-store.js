@@ -82,6 +82,13 @@ export function decorateMemory(row, extra = {}) {
 		signedAt: row.signed_at ? new Date(row.signed_at).getTime() : (row.signed_at === null ? null : undefined),
 		storageMode: row.storage_mode ?? undefined,
 		ipfsCid: row.ipfs_cid ?? undefined,
+		// Temporal validity + provenance: the interval the fact is true over, where
+		// it came from, and the newer memory that replaced it. Absent on rows read
+		// without the temporal columns.
+		validFrom: row.valid_from ? new Date(row.valid_from).getTime() : undefined,
+		validTo: row.valid_to ? new Date(row.valid_to).getTime() : row.valid_to === null ? null : undefined,
+		sourceRef: row.source_ref ?? undefined,
+		supersededBy: row.superseded_by ?? undefined,
 		...extra,
 	};
 }
@@ -156,7 +163,8 @@ export async function ensureEmbeddings(agentId, cap = EMBED_CAP) {
  * @returns {Promise<{ results:Array<object>, provider:boolean, scored:number }>}
  */
 export async function searchMemories(agentId, query, opts = {}) {
-	const { topK = 8, minScore = 0.25, tiers, type, bump = true } = opts;
+	const { topK = 8, minScore = 0.25, tiers, type, bump = true, asOf = null, includeHistory = false } = opts;
+	const atIso = asOf == null || asOf === '' ? null : new Date(asOf).toISOString();
 	const q = String(query || '').trim();
 	if (!q) return { results: [], provider: false, scored: 0 };
 
@@ -166,10 +174,13 @@ export async function searchMemories(agentId, query, opts = {}) {
 	const rows = await sql`
 		SELECT id, agent_id, type, content, tags, context, salience, tier, pinned,
 		       embedder, embedding, access_count, is_public, created_at, updated_at,
-		       last_accessed_at, expires_at
+		       last_accessed_at, expires_at, valid_from, valid_to, source_ref, superseded_by
 		FROM agent_memories
 		WHERE agent_id = ${agentId}
 		  AND (expires_at IS NULL OR expires_at > now())
+		  AND (${includeHistory}::boolean
+		       OR (valid_from <= coalesce(${atIso}::timestamptz, now())
+		           AND (valid_to IS NULL OR valid_to > coalesce(${atIso}::timestamptz, now()))))
 		  AND (${type ?? null}::text IS NULL OR type = ${type ?? null})
 		  AND (${tierList}::text[] IS NULL OR tier = ANY(${tierList}))
 		ORDER BY created_at DESC
@@ -244,6 +255,13 @@ export async function searchMemories(agentId, query, opts = {}) {
 			}));
 			if (ranked.length >= topK) break;
 		}
+	}
+
+	// History was asked for: the current version of a fact outranks the versions
+	// it replaced, each group keeping its own relevance order.
+	if (includeHistory) {
+		const current = ranked.filter((r) => r.validTo == null);
+		ranked.splice(0, ranked.length, ...current, ...ranked.filter((r) => r.validTo != null));
 	}
 
 	if (bump && ranked.length) {

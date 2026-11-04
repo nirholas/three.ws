@@ -43,7 +43,7 @@ export const AUTONOMOUS_TOOL_NAMES = Object.freeze(LEARNING_TOOL_NAMES.filter((n
 export const LEARNING_TOOLS = Object.freeze({
 	memory_save: {
 		description:
-			'Keep one durable idea so you never have to ask again. kind: preference (how the person wants things done), fact (true about the world or the work), procedure (steps of a task that worked), or user-model (about the person themself; also pass section). One idea per memory, written to make sense with no other context. Saving the same thing twice reinforces it. Never save secrets such as keys, passwords or seed phrases.',
+			'Keep one durable idea so you never have to ask again. kind: preference (how the person wants things done), fact (true about the world or the work), procedure (steps of a task that worked), or user-model (about the person themself; also pass section). One idea per memory, written to make sense with no other context. Saving the same thing twice reinforces it. When a fact changed (moved to Berlin after living in Paris), pass the id of the old memory in supersedes so the old version is closed, not contradicted. Never save secrets such as keys, passwords or seed phrases.',
 		parameters: {
 			type: 'object',
 			properties: {
@@ -52,19 +52,24 @@ export const LEARNING_TOOLS = Object.freeze({
 				section: { type: 'string', enum: SECTION_IDS, description: 'Required for kind user-model: which part of the about-the-person document it belongs to.' },
 				tags: { type: 'array', items: { type: 'string' }, maxItems: 8 },
 				confidence: { type: 'number', minimum: 0, maximum: 1, description: 'How sure you are, 0 to 1. Default 0.7; use 0.9+ only when the person said it outright.' },
+				supersedes: { type: 'array', items: { type: 'string', format: 'uuid' }, maxItems: 10, description: 'Ids of current memories this one replaces. They stop being true as of valid_from and stay searchable as history.' },
+				valid_from: { type: 'string', description: 'ISO 8601 time the fact became true, when that is not now.' },
+				source_ref: { type: 'string', maxLength: 300, description: 'Where you learned it, e.g. message:4812 or a URL.' },
 			},
 			required: ['kind', 'content'],
 			additionalProperties: false,
 		},
 	},
 	memory_search: {
-		description: 'Search your memories about this person and your work by meaning and words. Call it before asking something they may already have told you.',
+		description: 'Search your memories about this person and your work by meaning and words. Returns what is true now; pass as_of to ask what was true at an earlier time. Call it before asking something they may already have told you.',
 		parameters: {
 			type: 'object',
 			properties: {
 				query: { type: 'string', maxLength: 300 },
 				kind: { type: 'string', enum: [...ROW_KINDS] },
 				limit: { type: 'integer', minimum: 1, maximum: 25 },
+				as_of: { type: 'string', description: 'ISO 8601 time. Return the facts that were true then instead of now.' },
+				include_history: { type: 'boolean', description: 'Also return superseded versions, current ones first.' },
 			},
 			required: ['query'],
 			additionalProperties: false,
@@ -161,12 +166,15 @@ export async function runLearningTool(name, args, ctx) {
 					source: ctx.source || 'tool',
 					sourceRunId: ctx.runRef || null,
 					sourceMessageId: ctx.messageId || null,
+					sourceRef: a.source_ref ?? null,
+					validFrom: a.valid_from ?? null,
+					supersedes: a.supersedes ?? null,
 				});
-				return { ok: true, status: out.status, kind: out.kind, memory: out.memory || out.entry };
+				return { ok: true, status: out.status, kind: out.kind, memory: out.memory || out.entry, ...(out.superseded ? { superseded: out.superseded.map(slim) } : {}) };
 			}
 			case 'memory_search': {
-				const out = await searchAgentMemory({ agentId, userId, query: a.query, kind: a.kind || null, limit: a.limit });
-				return { ok: true, query: out.query, count: out.results.length, memories: out.results.map(slim) };
+				const out = await searchAgentMemory({ agentId, userId, query: a.query, kind: a.kind || null, limit: a.limit, asOf: a.as_of ?? null, includeHistory: a.include_history === true });
+				return { ok: true, query: out.query, as_of: out.as_of, count: out.results.length, memories: out.results.map(slim) };
 			}
 			case 'memory_list': {
 				const out = await listAgentMemory({ agentId, userId, kind: a.kind || null, limit: a.limit || 20 });
@@ -220,6 +228,9 @@ function slim(m) {
 		confidence: m.confidence,
 		use_count: m.use_count,
 		created_at: m.created_at,
+		valid_from: m.valid_from ?? null,
+		valid_to: m.valid_to ?? null,
+		source_ref: m.source_ref ?? null,
 		...(m.score != null ? { score: m.score } : {}),
 	};
 }

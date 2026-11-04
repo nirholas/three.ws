@@ -10,6 +10,17 @@ Your agents can remember what you tell them, keep a short profile of you, and dr
 | Saved memories | Facts, preferences and procedures an agent chose to keep. | The agent. | The agent's prompt, ranked by relevance and recency. |
 | Learned skills | A skill drafted after a run that used several different tools. | The agent, as a disabled draft. | Only after you enable it. |
 
+## Facts over time
+
+A memory is true over an interval. Every row carries `valid_from` (when the fact became true), `valid_to` (null while current), `source_ref` (where it came from, such as `message:4812`) and `superseded_by`. When a fact changes, the agent saves the new one with `supersedes: [old id]` and the old version's interval closes at the new `valid_from`; it stays searchable as history.
+
+- `memory_save` takes `supersedes`, `valid_from` and `source_ref`. Superseding an already-closed memory returns `already_superseded` with the id that replaced it.
+- `memory_search` returns current facts by default, `as_of` (ISO 8601) for what was true then, and `include_history` for superseded versions with the current one first.
+- The prompt section only ever includes current facts.
+- `POST /api/agent-memory` accepts `entry.validFrom`, `entry.sourceRef` and `entry.supersedes`; `GET`/`POST /api/memory/search` accept `as_of` and `include_history`.
+- Migration: `api/_lib/migrations/20261105020000_agent_memory_temporal_facts.sql` (backfills `valid_from = created_at`). Apply it before deploying the code that reads the columns.
+- Quality is tracked on LoCoMo and LongMemEval: [research/memory-bench-results.md](research/memory-bench-results.md), reproduce with `node --env-file=.env scripts/memory-bench.mjs --subset 50`.
+
 ## Controls
 
 - **Let my agents learn** is the master switch. Off means no new memories, no profile lines and no skill drafts, and nothing saved is added to prompts. Existing data stays until you delete it, and you can still edit or delete it.

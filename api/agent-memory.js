@@ -121,8 +121,13 @@ async function handleUpsert(req, res) {
 	const createdAt = toIso(entry.createdAt);
 	const updatedAt = toIso(entry.updatedAt);
 	const expiresAt = toIso(entry.expiresAt);
-	if (createdAt === INVALID_DATE || updatedAt === INVALID_DATE || expiresAt === INVALID_DATE)
+	const validFrom = toIso(entry.validFrom);
+	if (createdAt === INVALID_DATE || updatedAt === INVALID_DATE || expiresAt === INVALID_DATE || validFrom === INVALID_DATE)
 		return error(res, 400, 'validation_error', 'timestamps must be ISO dates or epoch milliseconds');
+	const sourceRef = typeof entry.sourceRef === 'string' && entry.sourceRef.trim() ? entry.sourceRef.trim().slice(0, 300) : null;
+	const supersedes = entry.supersedes == null ? [] : Array.isArray(entry.supersedes) ? entry.supersedes : [entry.supersedes];
+	if (supersedes.length > 10 || supersedes.some((id) => !isUuid(id)))
+		return error(res, 400, 'validation_error', 'entry.supersedes must be up to 10 memory uuids');
 
 	// Verify ownership
 	const [agentRow] = await sql`
@@ -130,6 +135,17 @@ async function handleUpsert(req, res) {
 	`;
 	if (!agentRow) return error(res, 404, 'not_found', 'agent not found');
 	if (agentRow.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
+
+	// Checked before the insert so a bad supersedes list never leaves a half-applied
+	// write: every id must be an open memory of this agent.
+	if (supersedes.length) {
+		const open = await sql`
+			SELECT id FROM agent_memories
+			WHERE id = ANY(${supersedes}::uuid[]) AND agent_id = ${agentId} AND valid_to IS NULL
+		`;
+		if (open.length !== new Set(supersedes).size)
+			return error(res, 409, 'not_supersedable', 'each superseded memory must belong to this agent and still be current');
+	}
 
 	const validTypes = ['user', 'feedback', 'project', 'reference'];
 	const memType = validTypes.includes(entry.type) ? entry.type : 'project';
@@ -211,6 +227,29 @@ async function handleUpsert(req, res) {
 	// suppressed by the ON CONFLICT WHERE guard. Report a conflict so the
 	// client generates a new ID instead of silently losing the write.
 	if (!row) return error(res, 409, 'id_conflict', 'memory id already in use');
+
+	// Temporal validity + provenance. The fact became true at validFrom (default:
+	// when it was recorded); every memory it supersedes stops being true then and
+	// points at this one. The closing UPDATE only touches this agent's still-open
+	// rows, so a stale or foreign id changes nothing.
+	const startsAt = validFrom || createdAt || now;
+	if (validFrom || createdAt || sourceRef) {
+		const [stamped] = await sql`
+			UPDATE agent_memories
+			SET valid_from = ${startsAt}::timestamptz,
+			    source_ref = COALESCE(${sourceRef}, source_ref)
+			WHERE id = ${row.id}
+			RETURNING valid_from, valid_to, source_ref, superseded_by
+		`;
+		Object.assign(row, stamped);
+	}
+	if (supersedes.length) {
+		await sql`
+			UPDATE agent_memories
+			SET valid_to = GREATEST(valid_from, ${startsAt}::timestamptz), superseded_by = ${row.id}, updated_at = now()
+			WHERE id = ANY(${supersedes}::uuid[]) AND agent_id = ${agentId} AND id <> ${row.id} AND valid_to IS NULL
+		`;
+	}
 
 	// Sign the committed memory with the agent's wallet (ERC-191) so its
 	// authorship + integrity are publicly verifiable. Best-effort: an agent

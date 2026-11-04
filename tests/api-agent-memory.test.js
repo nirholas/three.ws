@@ -673,4 +673,51 @@ describe('agent-memory rejects malformed input before it reaches Postgres', () =
 		await handler(req, res);
 		expect(res.statusCode).toBe(404);
 	});
+	it('closes a superseded memory when the new entry carries supersedes', async () => {
+		const OLD = '66666666-6666-4666-8666-666666666666';
+		queueSql(
+			[{ user_id: 'u1' }],
+			[{ id: OLD }],
+			[{ id: 'new-id', agent_id: VALID_AGENT, type: 'project', content: 'Alice lives in Berlin', tags: [], context: {}, salience: 0.5, created_at: new Date(), expires_at: null }],
+			[{ valid_from: new Date('2026-03-01T00:00:00Z'), valid_to: null, source_ref: 'message:4812', superseded_by: null }],
+			[],
+		);
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: { agentId: VALID_AGENT, entry: { content: 'Alice lives in Berlin', validFrom: '2026-03-01T00:00:00Z', sourceRef: 'message:4812', supersedes: [OLD] } },
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(201);
+		const entry = parseBody(res).entry;
+		expect(entry.validFrom).toBe(Date.parse('2026-03-01T00:00:00Z'));
+		expect(entry.sourceRef).toBe('message:4812');
+		expect(entry.validTo).toBeNull();
+	});
+
+	it('rejects supersedes naming a memory that is not an open memory of this agent, before inserting', async () => {
+		queueSql([{ user_id: 'u1' }], []);
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: { agentId: VALID_AGENT, entry: { content: 'x', supersedes: ['66666666-6666-4666-8666-666666666666'] } },
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(409);
+		expect(parseBody(res).error).toBe('not_supersedable');
+	});
+
+	it('rejects a supersedes list that is not uuids', async () => {
+		const req = mkReq({
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: { agentId: VALID_AGENT, entry: { content: 'x', supersedes: ['nope'] } },
+		});
+		const res = mkRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(400);
+	});
+
 });

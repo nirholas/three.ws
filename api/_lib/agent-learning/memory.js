@@ -8,7 +8,11 @@
 //   kind        fact | preference | procedure   (rows in agent_memories)
 //               user-model                      (lines in user_model_entries)
 //   provenance  source (tool, chat, run, mcp, owner), source_run_id,
-//               source_message_id, confidence
+//               source_message_id, source_ref, confidence
+//   validity    valid_from, valid_to, superseded_by: a fact is true over an
+//               interval. Saving a memory with `supersedes` closes the older
+//               version's interval; search returns current facts by default
+//               and any past moment through `asOf`.
 //   ownership   user_id: the account the memory was written for
 //
 // Reads and writes are scoped to (agent, account). A memory written for one
@@ -20,6 +24,7 @@ import { isUuid } from '../validate.js';
 import { searchMemories, estimateTokens } from '../memory-store.js';
 import { LearningError, memoryOffError } from './errors.js';
 import { memoryEnabled } from './settings.js';
+import { parseInstant, isValidAt, isCurrent, closingInstant, currentFirst } from './temporal.js';
 import { addUserModelEntry, userModelForPrompt, SECTION_IDS } from './user-model.js';
 
 export const MEMORY_KINDS = Object.freeze(['fact', 'preference', 'procedure', 'user-model']);
@@ -42,7 +47,8 @@ const RECENCY_HALF_LIFE_MS = 14 * 24 * 60 * 60 * 1000;
 
 const COLUMNS = sql`
 	id, agent_id, user_id, kind, type, content, tags, salience, confidence, source,
-	source_run_id, source_message_id, access_count, last_accessed_at, created_at, updated_at
+	source_run_id, source_message_id, source_ref, valid_from, valid_to, superseded_by,
+	access_count, last_accessed_at, created_at, updated_at
 `;
 
 function normalize(text) {
@@ -61,6 +67,11 @@ export function presentMemory(row, extra = {}) {
 		source: row.source || null,
 		source_run_id: row.source_run_id || null,
 		source_message_id: row.source_message_id != null ? Number(row.source_message_id) : null,
+		source_ref: row.source_ref || null,
+		valid_from: row.valid_from || row.created_at || null,
+		valid_to: row.valid_to || null,
+		superseded_by: row.superseded_by || null,
+		current: isCurrent(row),
 		use_count: row.access_count ?? 0,
 		last_used_at: row.last_accessed_at || null,
 		created_at: row.created_at,
@@ -115,6 +126,9 @@ export async function saveMemory({
 	source = 'tool',
 	sourceRunId = null,
 	sourceMessageId = null,
+	sourceRef = null,
+	validFrom = null,
+	supersedes = null,
 }) {
 	if (!MEMORY_KINDS.includes(kind)) {
 		throw new LearningError(400, 'validation_error', `kind must be one of: ${MEMORY_KINDS.join(', ')}`);
@@ -150,15 +164,21 @@ export async function saveMemory({
 	const src = MEMORY_SOURCES.includes(source) ? source : 'tool';
 	const runId = isUuid(sourceRunId) ? sourceRunId : null;
 	const messageId = sourceMessageId != null && /^\d+$/.test(String(sourceMessageId)) ? String(sourceMessageId) : null;
+	const ref = sourceRef != null && String(sourceRef).trim()
+		? String(sourceRef).trim().slice(0, 300)
+		: messageId ? `message:${messageId}` : runId ? `run:${runId}` : null;
+	const startsAt = parseInstant(validFrom, 'valid_from') || new Date();
+	const priors = await loadSupersededRows({ agentId, userId, supersedes });
 
 	const [dupe] = await sql`
 		SELECT id FROM agent_memories
 		WHERE agent_id = ${agentId} AND user_id = ${userId}
 		  AND lower(content) = lower(${text})
+		  AND valid_to IS NULL
 		  AND (expires_at IS NULL OR expires_at > now())
 		LIMIT 1
 	`;
-	if (dupe) {
+	if (dupe && !priors.length) {
 		const [row] = await sql`
 			UPDATE agent_memories
 			SET confidence = LEAST(1.0, (confidence + ${conf}) / 2 + 0.05),
@@ -175,14 +195,53 @@ export async function saveMemory({
 	const [row] = await sql`
 		INSERT INTO agent_memories
 			(agent_id, user_id, type, kind, content, tags, context, salience, confidence, tier,
-			 source, source_run_id, source_message_id)
+			 source, source_run_id, source_message_id, source_ref, valid_from)
 		VALUES
 			(${agentId}, ${userId}, ${TYPE_FOR_KIND[kind]}, ${kind}, ${text}, ${cleanTags},
 			 ${JSON.stringify({ source: src, ...(runId ? { run_id: runId } : {}) })}::jsonb,
-			 ${SALIENCE_FOR_KIND[kind]}, ${conf}, 'recall', ${src}, ${runId}, ${messageId})
+			 ${SALIENCE_FOR_KIND[kind]}, ${conf}, 'recall', ${src}, ${runId}, ${messageId}, ${ref},
+			 ${startsAt.toISOString()}::timestamptz)
 		RETURNING ${COLUMNS}
 	`;
-	return { status: 'saved', kind, memory: presentMemory(row) };
+
+	const closed = [];
+	for (const prior of priors) {
+		const [done] = await sql`
+			UPDATE agent_memories
+			SET valid_to = ${closingInstant(prior, startsAt).toISOString()}::timestamptz,
+			    superseded_by = ${row.id},
+			    updated_at = now()
+			WHERE id = ${prior.id} AND valid_to IS NULL
+			RETURNING ${COLUMNS}
+		`;
+		if (done) closed.push(presentMemory(done));
+	}
+	return { status: 'saved', kind, memory: presentMemory(row), ...(closed.length ? { superseded: closed } : {}) };
+}
+
+/**
+ * The rows a new memory replaces, checked before anything is written: each id
+ * must be a memory this agent holds for this account and must still be current.
+ */
+async function loadSupersededRows({ agentId, userId, supersedes }) {
+	const ids = [...new Set((Array.isArray(supersedes) ? supersedes : supersedes ? [supersedes] : []).map(String))];
+	if (!ids.length) return [];
+	if (ids.length > 10) throw new LearningError(400, 'validation_error', 'supersedes takes at most 10 memory ids');
+	const bad = ids.find((id) => !isUuid(id));
+	if (bad) throw new LearningError(400, 'validation_error', 'supersedes must be a list of memory uuids');
+	const rows = await sql`
+		SELECT ${COLUMNS} FROM agent_memories
+		WHERE id = ANY(${ids}::uuid[]) AND agent_id = ${agentId} AND (user_id = ${userId} OR user_id IS NULL)
+	`;
+	const missing = ids.filter((id) => !rows.some((r) => r.id === id));
+	if (missing.length) throw new LearningError(404, 'not_found', `no memory of yours with id ${missing[0]} to supersede`);
+	const closedRow = rows.find((r) => r.valid_to);
+	if (closedRow) {
+		throw new LearningError(409, 'already_superseded', `memory ${closedRow.id} is already closed; supersede its current version instead`, {
+			superseded_by: closedRow.superseded_by || null,
+		});
+	}
+	return rows;
 }
 
 /**
@@ -190,8 +249,10 @@ export async function saveMemory({
  * Memory Studio engine when an embedder is configured; a token-overlap pass
  * fills the rest so search works with no provider at all.
  */
-export async function searchAgentMemory({ agentId, userId, query, kind = null, limit = 8 }) {
+export async function searchAgentMemory({ agentId, userId, query, kind = null, limit = 8, asOf = null, includeHistory = false }) {
 	await assertAgentOwner(agentId, userId);
+	const at = parseInstant(asOf, 'as_of');
+	const atMs = (at || new Date()).getTime();
 	const q = normalize(query);
 	if (!q) throw new LearningError(400, 'validation_error', 'query is required');
 	if (kind && !ROW_KINDS.includes(kind)) {
@@ -208,9 +269,10 @@ export async function searchAgentMemory({ agentId, userId, query, kind = null, l
 		LIMIT 1500
 	`;
 	const byId = new Map(pool.map((r) => [r.id, r]));
-	const matchesKind = (r) => !kind || (r.kind || kindFromType(r.type)) === kind;
+	const matchesKind = (r) =>
+		(!kind || (r.kind || kindFromType(r.type)) === kind) && (includeHistory || isValidAt(r, atMs));
 
-	const out = [];
+	let out = [];
 	const seen = new Set();
 	try {
 		const semantic = await searchMemories(agentId, q, { topK: n * 3, bump: false });
@@ -238,6 +300,8 @@ export async function searchAgentMemory({ agentId, userId, query, kind = null, l
 		}
 	}
 
+	if (includeHistory) out = currentFirst(out);
+
 	if (out.length) {
 		const ids = out.map((m) => m.id);
 		sql`
@@ -245,7 +309,7 @@ export async function searchAgentMemory({ agentId, userId, query, kind = null, l
 			WHERE id = ANY(${ids}::uuid[])
 		`.catch(() => {});
 	}
-	return { query: q, results: out };
+	return { query: q, as_of: at ? at.toISOString() : null, results: out };
 }
 
 function tokens(text) {
@@ -286,7 +350,8 @@ export async function listMemories({ userId, agentId = null, kind = null, q = nu
 
 	const rows = await sql`
 		SELECT m.id, m.agent_id, m.user_id, m.kind, m.type, m.content, m.tags, m.salience, m.confidence,
-		       m.source, m.source_run_id, m.source_message_id, m.access_count, m.last_accessed_at,
+		       m.source, m.source_run_id, m.source_message_id, m.source_ref, m.valid_from, m.valid_to,
+		       m.superseded_by, m.access_count, m.last_accessed_at,
 		       m.created_at, m.updated_at, a.name AS agent_name
 		FROM agent_memories m
 		JOIN agent_identities a ON a.id = m.agent_id
@@ -314,7 +379,8 @@ export async function getMemory(userId, memoryId) {
 	if (!isUuid(memoryId)) throw new LearningError(400, 'validation_error', 'memory id must be a uuid');
 	const [row] = await sql`
 		SELECT m.id, m.agent_id, m.user_id, m.kind, m.type, m.content, m.tags, m.salience, m.confidence,
-		       m.source, m.source_run_id, m.source_message_id, m.access_count, m.last_accessed_at,
+		       m.source, m.source_run_id, m.source_message_id, m.source_ref, m.valid_from, m.valid_to,
+		       m.superseded_by, m.access_count, m.last_accessed_at,
 		       m.created_at, m.updated_at
 		FROM agent_memories m
 		JOIN agent_identities a ON a.id = m.agent_id
@@ -392,6 +458,7 @@ export async function memoryPromptSection({ agentId, userId, query = '' }) {
 		WHERE agent_id = ${agentId}
 		  AND (user_id = ${userId} OR user_id IS NULL)
 		  AND (expires_at IS NULL OR expires_at > now())
+		  AND valid_from <= now() AND (valid_to IS NULL OR valid_to > now())
 		ORDER BY last_accessed_at DESC NULLS LAST, created_at DESC
 		LIMIT 400
 	`;
