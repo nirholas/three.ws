@@ -13,7 +13,7 @@
 //
 //   NVIDIA_API_KEY          — nvapi key from build.nvidia.com (enables the free NIM lane)
 //   GOOGLE_CLOUD_PROJECT    — GCP project id (enables Vertex AI Imagen path)
-//   VERTEX_IMAGEN_MODEL     — override Imagen model (default: imagen-3.0-generate-001)
+//   VERTEX_IMAGEN_MODEL     : override the Vertex image model (default and fallback: api/_lib/image-model.js)
 //   REPLICATE_API_TOKEN     — paid backstop when the free lanes are absent or down
 //   REPLICATE_TXT2IMG_MODEL — optional Replicate model override
 //

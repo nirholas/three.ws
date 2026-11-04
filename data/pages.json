@@ -5303,10 +5303,18 @@
 				{
 					"path": "/docs/nvidia-inception-perk",
 					"title": "Docs · NVIDIA Inception member perk",
-					"description": "How NVIDIA Inception startups apply for $25 of prepaid three.ws credit, why each application is reviewed by a person, and how approval is granted through the credit ledger.",
+					"description": "How NVIDIA Inception startups apply for $25 of prepaid three.ws credit and earn $10 more for a public shoutout, why a person reviews each one, and how both grants flow through the credit ledger.",
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-11-03"
+				},
+				{
+					"path": "/docs/partner-shoutout-playbook",
+					"title": "Docs · Partner shoutout playbook",
+					"description": "How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.",
+					"priority": 0.4,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
 				},
 				{
 					"path": "/docs/3d-asset-pipeline",
@@ -6793,6 +6801,22 @@
 					"priority": 0.3,
 					"changefreq": "monthly",
 					"added": "2026-11-03"
+				},
+				{
+					"path": "/mcp-integrations",
+					"title": "MCP Integrations",
+					"description": "Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_<name>_<tool>.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-11-04"
+				},
+				{
+					"path": "/docs/mcp-integrations",
+					"title": "Docs · MCP integrations",
+					"description": "How an agent connects third-party MCP servers: the catalog, OAuth and token sign-in, tool tiers and acknowledgements, custom-server review, the HTTP API, the three-ws mcp install CLI, and how to add a server to the catalog.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
 				},
 				{
 					"path": "/mcp-tools",

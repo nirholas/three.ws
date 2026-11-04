@@ -17,10 +17,11 @@
 //       shut down ~2026-06-30 (already past) — these 404 now.
 //   - imagen-4.0-generate-001 / -fast / -ultra: deprecated, discontinued
 //       2026-06-30…2026-08-17. A dead end even where still callable.
-// The recommended, still-live replacement is the Gemini image model
-// `gemini-2.5-flash-image` ("Nano Banana"), which uses the `:generateContent`
-// API shape (not `:predict`). It still bills to GCP credits, so it remains the
-// credit-burner this lane was built to be — it just talks a different endpoint.
+// The replacement is the Gemini image family, which uses the `:generateContent`
+// API shape (not `:predict`) and still bills to GCP credits. Its first Flash
+// Image id was itself deprecated (Gemini API shutdown 2026-10-02), so the model id now lives in api/_lib/image-model.js: the
+// successor is the default and the retired id is a fallback tried only when
+// Vertex answers that the primary is not served.
 //
 // This client supports BOTH shapes and routes on the model id:
 //   - id starts with "gemini" → `:generateContent` (default, live)
@@ -32,29 +33,24 @@
 //   GOOGLE_CLOUD_LOCATION      — region (default: us-central1). Set to "global"
 //                                for models only served on the global endpoint.
 //   GCP_SERVICE_ACCOUNT_JSON   — service-account key JSON (via gcp-auth.js)
-//   VERTEX_IMAGEN_MODEL        — override the generation model
-//                                (default: gemini-2.5-flash-image)
-//   VERTEX_IMAGEN_EDIT_MODEL   — override the edit model
-//                                (default: gemini-2.5-flash-image)
-//   VERTEX_IMAGEN_LOCATION     — location for the image models only (falls back
+//   VERTEX_IMAGEN_MODEL        : override the generation model
+//                                (default: IMAGE_MODEL_PRIMARY in image-model.js)
+//   VERTEX_IMAGEN_EDIT_MODEL   : override the edit model (same default)
+//   VERTEX_IMAGEN_LOCATION     : location for the image models only (falls back
 //                                to GOOGLE_CLOUD_LOCATION). Some preview image
 //                                models are served only from "global", not
 //                                regionally; set it here if the configured
 //                                model requires that.
 //   VERTEX_IMAGE_SIZE          — requested output resolution, "1K"/"2K"/"4K"
-//                                (default: 2K). gemini-2.5-flash-image ignores
-//                                it (always 1024px); models that reject the
-//                                knob get one retry without it.
+//                                (default: 2K). Models that reject the knob get
+//                                one retry without it.
 //
 // Output: a base64 image returned inline as a data: URI. The caller
 // (text-to-image.js) uploads it to R2/S3 before handing it to the 3D backend.
 
 import { getGcpAccessToken } from '../_lib/gcp-auth.js';
+import { imageModelChain, isModelNotFound } from '../_lib/image-model.js';
 
-// Default to the live Gemini image model; the Imagen `:predict` ids it replaced
-// are past or near their shutdown (see the model-landscape note above).
-const DEFAULT_MODEL = 'gemini-2.5-flash-image';
-const DEFAULT_EDIT_MODEL = 'gemini-2.5-flash-image';
 const DEFAULT_LOCATION = 'us-central1';
 
 // Node's fetch has no default timeout, so a Vertex connection that opens and
@@ -151,12 +147,28 @@ export async function generateImage(prompt, { aspectRatio = '1:1', timeoutMs = V
   }
 
   const location = imageLaneLocation();
-  const model = readEnv('VERTEX_IMAGEN_MODEL') || DEFAULT_MODEL;
   const token = await getGcpAccessToken();
 
-  return isImagenPredictModel(model)
-    ? generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs })
-    : generateViaGemini({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs });
+  return withModelFallback(imageModelChain('VERTEX_IMAGEN_MODEL'), (model) =>
+    isImagenPredictModel(model)
+      ? generateViaImagenPredict({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs })
+      : generateViaGemini({ prompt, aspectRatio, project, location, model, token, timeoutMs: laneTimeoutMs }),
+  );
+}
+
+// Run `call` on each model id in turn, moving on ONLY when Vertex says the id
+// is not served (404 / model not found). A 429, a 403 billing hold or a safety
+// block is a real answer from a model that exists and surfaces unchanged.
+async function withModelFallback(chain, call) {
+  for (let i = 0; i < chain.length; i++) {
+    try {
+      return await call(chain[i]);
+    } catch (err) {
+      if (i === chain.length - 1 || !isModelNotFound(err?.providerStatus, err?.message)) throw err;
+      console.warn(`[vertex-imagen] ${chain[i]} not served (${err.providerStatus}), trying ${chain[i + 1]}`);
+    }
+  }
+  throw new Error('Vertex image lane: empty model chain');
 }
 
 // ── Gemini image (generateContent) — the live default path ──────────────────
@@ -273,14 +285,15 @@ export async function editImage(imageUrl, prompt, { maskUrl = null } = {}) {
   }
 
   const location = imageLaneLocation();
-  const model = readEnv('VERTEX_IMAGEN_EDIT_MODEL') || DEFAULT_EDIT_MODEL;
   const token = await getGcpAccessToken();
 
   const source = await imageToInlineData(imageUrl);
 
-  return isImagenPredictModel(model)
-    ? editViaImagenPredict({ source, prompt, maskUrl, project, location, model, token })
-    : editViaGemini({ source, prompt, project, location, model, token });
+  return withModelFallback(imageModelChain('VERTEX_IMAGEN_EDIT_MODEL'), (model) =>
+    isImagenPredictModel(model)
+      ? editViaImagenPredict({ source, prompt, maskUrl, project, location, model, token })
+      : editViaGemini({ source, prompt, project, location, model, token }),
+  );
 }
 
 // Vertex rejects an inlineData part whose mimeType disagrees with the bytes, and

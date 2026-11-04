@@ -875,15 +875,15 @@
 			"dest": "/api/v1/rest"
 		},
 		{
-			"src": "/api/v1/agents/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/(messages|runs|automations|skills|export|start|stop)(/.*)?)?/?",
+			"src": "/api/v1/agents/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(/(messages|runs|automations|skills|export|start|stop|wallet)(/.*)?)?/?",
 			"dest": "/api/v1/rest"
 		},
 		{
-			"src": "/api/v1/(runs|automations|webhooks|skills|strategies)(/.*)?",
+			"src": "/api/v1/(runs|automations|webhooks|skills|strategies|intel)(/.*)?",
 			"dest": "/api/v1/rest"
 		},
 		{
-			"src": "/api/v1/me/?",
+			"src": "/api/v1/me(/(usage|budget|transactions|integrations|link-code)(/.*)?)?/?",
 			"dest": "/api/v1/rest"
 		},
 		{
@@ -6804,6 +6804,10 @@
 		{
 			"src": "/awesome/",
 			"dest": "/awesome.html"
+		},
+		{
+			"src": "/mcp-integrations/?",
+			"dest": "/mcp-integrations.html"
 		},
 		{
 			"src": "/mcp-tools",

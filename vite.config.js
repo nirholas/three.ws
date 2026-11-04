@@ -735,6 +735,7 @@ const appConfig = {
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
+				'mcp-integrations': resolve(__dirname, 'pages/mcp-integrations.html'),
 				'settings-memory': resolve(__dirname, 'pages/settings-memory.html'),
 				'mcp-tool': resolve(__dirname, 'pages/mcp-tool.html'),
 				connect: resolve(__dirname, 'pages/connect.html'),

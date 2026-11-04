@@ -1,0 +1,25 @@
+{
+	"$comment": "Microsoft Marketplace SaaS offer configuration. Plan ids are the ids entered for each plan in Partner Center (Plan overview > Plan ID) and map onto the purchasable plans in data/plans.json. Dimension ids are the metered billing dimensions declared on each plan; each one counts real usage_events rows for the linked account. Read by api/_lib/microsoft-marketplace.js.",
+	"offer_id": "three-ws",
+	"landing_path": "/microsoft/activate",
+	"webhook_path": "/api/microsoft-marketplace/webhook",
+	"plans": {
+		"pro": "pro",
+		"team": "team",
+		"enterprise": "enterprise"
+	},
+	"dimensions": [
+		{
+			"id": "mcp_tool_calls",
+			"display_name": "MCP tool calls",
+			"unit": "per call",
+			"usage_kind": "tool_call"
+		},
+		{
+			"id": "agent_messages",
+			"display_name": "Agent messages",
+			"unit": "per message",
+			"usage_kind": "llm"
+		}
+	]
+}

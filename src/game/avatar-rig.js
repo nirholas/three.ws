@@ -100,20 +100,32 @@ export function getLocomotionDefs() {
 }
 
 // Resolve an avatar input (GLB/VRM URL, site path, or three.ws avatar id) to a
-// loadable model URL. Falls back to the default avatar on anything unresolved.
-export async function resolveAvatarUrl(input) {
+// loadable model URL. `fallback` is true when the player asked for a specific
+// avatar and it could not be resolved (offline, deleted, guest file gone), so
+// the caller can tell them why they are wearing the default instead.
+export async function resolveAvatar(input) {
 	const v = (input || '').trim();
-	if (!v) return AVATAR_DEFAULT;
+	if (!v) return { url: AVATAR_DEFAULT, fallback: false };
 	// A just-created avatar staged locally (create → play handoff). Resolves to a
 	// blob: URL for instant self-preview; the scene uploads it in the background
 	// and swaps in a public URL so peers can load it too.
-	if (v === GUEST_SENTINEL) return (await resolveGuestAvatar()) || AVATAR_DEFAULT;
-	if (/^https?:\/\//i.test(v) || v.startsWith('/')) return v;
+	if (v === GUEST_SENTINEL) {
+		const guest = await resolveGuestAvatar();
+		return guest ? { url: guest, fallback: false } : { url: AVATAR_DEFAULT, fallback: true };
+	}
+	if (/^https?:\/\//i.test(v) || v.startsWith('/')) return { url: v, fallback: false };
 	try {
 		const r = await fetch(`/api/avatars/${encodeURIComponent(v)}`, { headers: { accept: 'application/json' } });
-		if (r.ok) { const { avatar } = await r.json(); if (avatar?.url) return avatar.url; }
-	} catch { /* ignore */ }
-	return AVATAR_DEFAULT;
+		if (r.ok) { const { avatar } = await r.json(); if (avatar?.url) return { url: avatar.url, fallback: false }; }
+	} catch (err) {
+		log.warn('[avatar-rig] avatar lookup failed:', err?.message);
+	}
+	return { url: AVATAR_DEFAULT, fallback: true };
+}
+
+// The URL alone, for callers that only need something loadable.
+export async function resolveAvatarUrl(input) {
+	return (await resolveAvatar(input)).url;
 }
 
 // ── shared model templates ────────────────────────────────────────────────────

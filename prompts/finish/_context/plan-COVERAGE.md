@@ -5,11 +5,11 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | Disposition | Files | Meaning |
 |---|---:|---|
 | order | 204 | Outstanding work was found; it is now the linked work order(s), with this file copied verbatim inside. |
-| shipped | 200 | The work it describes exists in the code today (the note names the evidence). |
-| covered-by-existing | 94 | An order that was already in the queue covers it. |
+| shipped | 202 | The work it describes exists in the code today (the note names the evidence). |
+| covered-by-existing | 90 | An order that was already in the queue covers it. |
 | no-open-work | 803 | Reviewed: reference or descriptive doc with nothing outstanding. |
 | not-a-plan | 269 | Content, rules, or configuration rather than work to do. |
-| owner-only | 95 | Open, but only the owner can do it (no agent-doable part). |
+| owner-only | 97 | Open, but only the owner can do it (no agent-doable part). |
 | retired-by-owner | 16 | The owner retired this work on 2026-09-09 (finish/_context/00-RETIRED-BY-OWNER.md). |
 | excluded | 1287 | Not reviewed for tasks by category (vendored code, skill bundles, published content, existing orders). |
 
@@ -1784,14 +1784,14 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `integrations/comfyui/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `integrations/comfyui/SUBMITTING.md` | owner-only | Comfy Registry publish needs owner publisher account |
 | `integrations/framer/README.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | Framer marketplace submission under owner account |
-| `integrations/livekit/livekit-plugins-threews/README.md` | covered-by-existing:087-partners-04-livekit-pipecat-avatar.md | LiveKit avatar plugin package |
+| `integrations/livekit/livekit-plugins-threews/README.md` | shipped | LiveKit avatar plugin package; order 087 closed 2026-11-04 (ruff, pytest, pdoc and the local livekit-server E2E pass) |
 | `integrations/modly/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `integrations/modly/SUBMITTING.md` | owner-only | owner-approved GitHub publish and trust PR to Modly registry |
 | `integrations/modly/three-ws-publish/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `integrations/pipecat/pipecat-threews/CHANGELOG.md` | excluded | license, changelog or repository boilerplate |
 | `integrations/pipecat/pipecat-threews/docs-submission/docs-json-navigation.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | Pipecat docs PR text, sent by owner |
 | `integrations/pipecat/pipecat-threews/docs-submission/supported-services-row.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | Pipecat docs PR text, sent by owner |
-| `integrations/pipecat/pipecat-threews/README.md` | covered-by-existing:087-partners-04-livekit-pipecat-avatar.md | Pipecat avatar service package |
+| `integrations/pipecat/pipecat-threews/README.md` | shipped | Pipecat avatar service package; order 087 closed 2026-11-04 (ruff, pytest, pdoc and the local livekit-server E2E pass) |
 | `integrations/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `integrations/webflow/README.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | Webflow Apps submission is part of the site-builders send step |
 | `integrations/wordpress/three-ws-agent/README.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | WordPress directory submission is part of the site-builders send step |
@@ -1864,9 +1864,9 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `marketing/growth/submissions/e2b-awesome-ai-agents.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/home-assistant.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | HACS submission |
 | `marketing/growth/submissions/khronos-gltf-project-explorer.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
-| `marketing/growth/submissions/livekit-avatar-plugin.md` | covered-by-existing:087-partners-04-livekit-pipecat-avatar.md | LiveKit avatar plugin submission |
+| `marketing/growth/submissions/livekit-avatar-plugin.md` | owner-only | LiveKit avatar plugin submission; PyPI publish, livekit/agents PR and Startups application are owner-actions row 51 |
 | `marketing/growth/submissions/mcpservers-org.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
-| `marketing/growth/submissions/pipecat-integration.md` | covered-by-existing:087-partners-04-livekit-pipecat-avatar.md | Pipecat integration submission |
+| `marketing/growth/submissions/pipecat-integration.md` | owner-only | Pipecat integration submission; PyPI publish and pipecat-ai/pipecat docs PR are owner-actions row 51 |
 | `marketing/growth/submissions/programs/avaturn-partner.md` | covered-by-existing:939-partners-16-program-applications.md | partner/startup program application |
 | `marketing/growth/submissions/programs/cloudflare-for-startups.md` | covered-by-existing:939-partners-16-program-applications.md | partner/startup program application |
 | `marketing/growth/submissions/programs/composio-toolkit.md` | covered-by-existing:939-partners-16-program-applications.md | partner/startup program application |
@@ -2183,7 +2183,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/074-best3d-08-webgpu-tsl-path.md` | excluded | already a work order in the queue |
 | `prompts/finish/081-best3d-15-splat-parity.md` | excluded | already a work order in the queue |
 | `prompts/finish/085-partners-02-animation-library-license.md` | excluded | already a work order in the queue |
-| `prompts/finish/087-partners-04-livekit-pipecat-avatar.md` | excluded | already a work order in the queue |
+| `prompts/finish/087-partners-04-livekit-pipecat-avatar.md` | excluded | work order, closed and deleted 2026-11-04; owner steps tracked as owner-actions row 51 |
 | `prompts/finish/093-partners-10-agent-tool-packages.md` | excluded | work order closed 2026-11-04; remaining owner steps are order 938 |
 | `prompts/finish/094-partners-11-site-builder-embeds.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 57 |
 | `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 58 |

@@ -4040,6 +4040,12 @@ URL: https://three.ws/docs/microsoft
 
 The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.
 
+### Docs · Microsoft distribution and offer plan
+
+URL: https://three.ws/docs/microsoft-marketplace-offer-plan
+
+How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.
+
 ### Docs · NVIDIA Inception membership
 
 URL: https://three.ws/docs/nvidia-inception
@@ -4050,7 +4056,13 @@ three.ws is a member of the NVIDIA Inception program: what the platform runs on 
 
 URL: https://three.ws/docs/nvidia-inception-perk
 
-How NVIDIA Inception startups apply for $25 of prepaid three.ws credit, why each application is reviewed by a person, and how approval is granted through the credit ledger.
+How NVIDIA Inception startups apply for $25 of prepaid three.ws credit and earn $10 more for a public shoutout, why a person reviews each one, and how both grants flow through the credit ledger.
+
+### Docs · Partner shoutout playbook
+
+URL: https://three.ws/docs/partner-shoutout-playbook
+
+How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.
 
 ### Docs · The 3D asset pipeline (FBX, GLB, and clip JSON)
 
@@ -5275,6 +5287,18 @@ What your agents remember, the about-you profile and skills they draft from expe
 URL: https://three.ws/settings/memory
 
 See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.
+
+### MCP Integrations
+
+URL: https://three.ws/mcp-integrations
+
+Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_<name>_<tool>.
+
+### Docs · MCP integrations
+
+URL: https://three.ws/docs/mcp-integrations
+
+How an agent connects third-party MCP servers: the catalog, OAuth and token sign-in, tool tiers and acknowledgements, custom-server review, the HTTP API, the three-ws mcp install CLI, and how to add a server to the catalog.
 
 ### MCP Tool Catalog
 

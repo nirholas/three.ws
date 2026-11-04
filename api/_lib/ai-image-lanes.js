@@ -15,6 +15,7 @@
 
 import { getGcpAccessToken, gcpAuthConfigured } from './gcp-auth.js';
 import { providersInCooldown } from './provider-health.js';
+import { imageModelChain, isModelNotFound, resolveImageModel } from './image-model.js';
 
 function readEnv(name) {
 	if (typeof process !== 'undefined' && process.env?.[name]) return process.env[name];
@@ -171,10 +172,14 @@ async function probeVertex() {
 			configured: true,
 			status: 'down',
 			detail: 'GCP_SERVICE_ACCOUNT_JSON not set',
-			model: readEnv('VERTEX_IMAGEN_MODEL') || 'gemini-2.5-flash-image',
+			model: resolveImageModel(),
 		};
 	}
-	const model = readEnv('VERTEX_IMAGEN_MODEL') || 'gemini-2.5-flash-image';
+	// Probe the model the lane will actually call: the primary, and the retired
+	// fallback only when Vertex says the primary is not served, exactly like a
+	// real generation walks the chain.
+	const chain = imageModelChain();
+	let model = chain[0];
 	const location = readEnv('GOOGLE_CLOUD_LOCATION') || 'us-central1';
 	try {
 		const token = await getGcpAccessToken();
@@ -191,17 +196,24 @@ async function probeVertex() {
 		// they 404 with an HTML body on the regional host whether or not the
 		// project is healthy, which would report a working lane as down.
 		const host = location === 'global' ? 'https://aiplatform.googleapis.com' : `https://${location}-aiplatform.googleapis.com`;
-		const res = await fetch(
-			`${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:countTokens`,
-			{
+		const countTokens = (id) =>
+			fetch(`${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${id}:countTokens`, {
 				method: 'POST',
 				headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
 				body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'x' }] }] }),
 				signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-			},
-		);
+			});
+		let res = await countTokens(model);
+		let body = '';
+		for (let i = 1; !res.ok && i < chain.length; i++) {
+			body = await res.text().catch(() => '');
+			if (!isModelNotFound(res.status, body)) break;
+			model = chain[i];
+			body = '';
+			res = await countTokens(model);
+		}
 		if (res.ok) return { configured: true, status: 'ok', model, location };
-		const body = await res.text().catch(() => '');
+		if (!body) body = await res.text().catch(() => '');
 		let message = body.slice(0, 120);
 		try {
 			message = JSON.parse(body)?.error?.message || message;

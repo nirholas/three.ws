@@ -14,6 +14,7 @@
 import { Box3, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from '../viewer/internal.js';
+import { netErrorMessage } from './net-error.js';
 
 // Kept in sync with MAX_GLB_BYTES in api/avatar/presign-glb.js.
 export const MAX_GLB_BYTES = 16 * 1024 * 1024;
@@ -174,7 +175,7 @@ function putWithProgress(url, file, onProgress) {
 		xhr.onload = () => (xhr.status >= 200 && xhr.status < 300
 			? resolve()
 			: reject(new Error(`Upload was rejected by storage (${xhr.status}).`)));
-		xhr.onerror = () => reject(new Error('Upload failed — check your connection and try again.'));
+		xhr.onerror = () => reject(new Error(netErrorMessage({ code: 'network' }, '')));
 		xhr.send(file);
 	});
 }
@@ -191,9 +192,15 @@ export async function uploadGlb(file, onProgress) {
 			body: JSON.stringify({ filename: file.name, content_type: GLB_CONTENT_TYPE, bytes: file.size }),
 		});
 		presign = await r.json().catch(() => ({}));
-		if (!r.ok) throw new Error(presign?.message || `Could not prepare the upload (${r.status}).`);
+		if (!r.ok) {
+			// A 4xx carries the server's own explanation (too big, signed out);
+			// a 5xx is our outage and gets plain copy instead of a status code.
+			if (r.status < 500 && presign?.message) throw Object.assign(new Error(presign.message), { friendly: true });
+			throw Object.assign(new Error(netErrorMessage({ status: r.status }, 'Could not prepare the upload. Try again.')), { friendly: true });
+		}
 	} catch (err) {
-		throw new Error(err?.message || 'Could not reach the upload service.');
+		if (err?.friendly) throw err;
+		throw new Error(netErrorMessage(err, 'Could not reach the upload service. Try again.'));
 	}
 	if (!presign?.upload_url || !presign?.public_url) throw new Error('Upload service returned an invalid response.');
 
