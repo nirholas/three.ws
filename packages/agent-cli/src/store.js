@@ -127,7 +127,7 @@ export function openStore(file) {
 	const st = {
 		insertSession: db.prepare('INSERT INTO sessions (id, title, kind, parent_id, agent_id, model, cwd, channel, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'),
 		getSession: db.prepare('SELECT * FROM sessions WHERE id = ?'),
-		findSession: db.prepare("SELECT * FROM sessions WHERE id LIKE ? ESCAPE '\\' ORDER BY updated_at DESC LIMIT 2"),
+		findSession: db.prepare('SELECT * FROM sessions WHERE id LIKE ? ORDER BY updated_at DESC LIMIT 2'),
 		byChannel: db.prepare('SELECT * FROM sessions WHERE channel = ? ORDER BY updated_at DESC LIMIT 1'),
 		touch: db.prepare('UPDATE sessions SET updated_at = ? WHERE id = ?'),
 		setTitle: db.prepare('UPDATE sessions SET title = ? WHERE id = ?'),
@@ -197,7 +197,7 @@ export function openStore(file) {
 		resolveSession(idOrPrefix) {
 			const exact = st.getSession.get(idOrPrefix);
 			if (exact) return exact;
-			const rows = st.findSession.all(`${String(idOrPrefix).replace(/[\\%_]/g, '\\$&')}%`);
+			const rows = st.findSession.all(`${String(idOrPrefix).replace(/[%_]/g, '')}%`);
 			return rows.length === 1 ? rows[0] : null;
 		},
 		sessionForChannel(channel) {

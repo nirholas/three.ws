@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Choose who signs for your agent, export its key, and watch its balance over time",
+			"summary": "The agent wallet hub has a new Custody tab. Switch an agent between platform signing, your own wallet signing every transaction, or a session key with an on-chain spend cap and expiry. Export the wallet key encrypted to a passphrase only you know, then optionally rotate to a fresh key that receives every balance. A new chart shows the wallet's value hour by hour over 24 hours, 7 days or 30 days.",
+			"tags": [
+				"feature",
+				"security"
+			],
+			"link": "/agent-wallet"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "One MCP install for every three.ws tool",
 			"summary": "Add https://three.ws/mcp to Claude, Cursor or any MCP client and get every three.ws tool behind one sign-in, with financial tools off until you opt in. Clients that only speak stdio can run npx -y @three-ws/mcp with a THREE_WS_API_KEY, and the MCP registry listing and docs now lead with the unified endpoint.",
 			"tags": [

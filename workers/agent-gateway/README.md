@@ -49,17 +49,6 @@ api/_lib/gateway/notify.js (notifications) ────┘
 - **Nobody left in silence.** When a row is dead-lettered for a reason that is
   ours (not a platform refusal, not a partial answer, not a timeout that may
   still answer), the chat gets a short apology asking the owner to send it again.
-- **A late answer is worse than an honest one.** A delivery that waited longer
-  than `GATEWAY_BACKLOG_TTL_SECONDS` (default six hours) is not answered as if it
-  were new: the first stale row the drain claims for a chat closes every other
-  stale row for that chat and sends one reply, "Sorry, I was offline when you
-  sent this and missed it. I am back now: send it again and I will answer." No
-  agent turn runs, so a hours-old `/buy` never executes and a stale `/start`
-  never mints a pairing code. The apology goes only where a person is waiting
-  (a private chat, a command, a button press); group chatter and forwards are
-  closed silently. Notifications and approval requests are exempt: they carry
-  their own freshness checks. The closed rows keep `aged_out: waited Ns, over the
-  Ts backlog TTL` in `last_error` for the audit trail.
 - **Housekeeping.** Every `GATEWAY_SWEEP_MS` it expires overdue trade previews
   and edits their buttons away ("Expired. Ask your agent again for a fresh
   quote."), and once an hour it prunes finished rows older than
@@ -81,8 +70,7 @@ api/_lib/gateway/notify.js (notifications) ────┘
 
 | File | Role |
 |---|---|
-| [src/index.js](src/index.js) | Boot: loads config and adapters, starts the inbound listeners, the drain loop and the `/healthz` server, and handles SIGTERM. Importing it does not boot the worker; only running it as the process entry does. |
-| [src/health.js](src/health.js) | The `/healthz` report and its HTTP server. |
+| [src/index.js](src/index.js) | Boot: loads config and adapters, starts the inbound listeners, the drain loop and the `/healthz` server, and handles SIGTERM. |
 | [src/config.js](src/config.js) | Reads every knob once at boot, with production defaults and clamped ranges. |
 | [src/drain.js](src/drain.js) | The platform-neutral drain loop: claim, lease renewal, timeout, acknowledge, retry, dead-letter, preview sweep, prune. |
 | [src/adapters/index.js](src/adapters/index.js) | The adapter registry. A new platform is one entry in `FACTORIES` plus its file; the drain loop never changes. |
@@ -91,11 +79,7 @@ api/_lib/gateway/notify.js (notifications) ────┘
 | [src/errors.js](src/errors.js) | `PlatformError`, the permanent / retry-after / transient classification, and the backoff curve. |
 | [src/setup.js](src/setup.js) | Operator commands: register Discord slash commands, point the Telegram webhook, read the inbox, requeue a dead letter. |
 | [scripts/deploy-env.mjs](scripts/deploy-env.mjs) | Derives the Cloud Run environment from the live `three-ws-api` service at deploy time. |
-| [scripts/ship-check.mjs](scripts/ship-check.mjs) | `npm run gateway:ship-check` from the repo root: the test suite, the deploy env preview, which adapters would boot, then the ship command. |
-| [scripts/live-smoke.mjs](scripts/live-smoke.mjs) | Read-only production check: Telegram `getWebhookInfo` and `gateway_inbox` counts by status. Never prints the token. |
-| [scripts/image-selfcheck.mjs](scripts/image-selfcheck.mjs) | Runs as the Dockerfile's last step: module graph, adapter registry, ffmpeg, and a real Ogg Opus transcode. A broken image fails its build. |
 | [Dockerfile](Dockerfile), [cloudbuild.yaml](cloudbuild.yaml) | The image (built from the repo root) and the Cloud Build to Cloud Run pipeline. |
-| [cloudbuild.verify.yaml](cloudbuild.verify.yaml), [verify.gcloudignore](verify.gcloudignore) | The same image build with no push and no deploy, so the image can be proven without shipping it. |
 | [tests/](tests) | Vitest suites for the drain loop, both adapters, the registry, the setup commands, and approval requests in chat. |
 
 ## Configuration
@@ -136,7 +120,6 @@ so the service needs only credentials.
 | `GATEWAY_TURN_TIMEOUT_MS` | `300000` | min 1000 | A row still running after this is failed and its lease released. |
 | `GATEWAY_SWEEP_MS` | `60000` | min 1000 | Preview expiry sweep interval. |
 | `GATEWAY_PRUNE_KEEP_DAYS` | `7` | min 1 | Finished rows older than this are deleted (checked hourly). |
-| `GATEWAY_BACKLOG_TTL_SECONDS` | `21600` | min 0 | A delivery older than this gets one "I was offline" reply per chat instead of an answer. `0` answers everything however old. |
 | `GATEWAY_SHUTDOWN_GRACE_MS` | `8000` | min 0 | How long SIGTERM waits for in-flight rows before exiting. |
 | `GATEWAY_PLATFORMS` | every configured one | comma list | Restrict which adapters load, e.g. `telegram`. |
 | `GATEWAY_CHAT_KEYS` | all chats | comma list | Drain only these chats. For debugging one conversation. |
@@ -193,8 +176,8 @@ Output, abridged:
 
 ```
 {"ok":false,"platforms":[],"inflight":0,"concurrency":8,"claimed":0,"completed":0,
- "adapters":{},"skipped":[{"platform":"telegram","missing":["TELEGRAM_BOT_TOKEN"],"reason":"missing TELEGRAM_BOT_TOKEN"},
- {"platform":"discord","missing":["DISCORD_BOT_TOKEN","DISCORD_APP_ID"],"reason":"missing DISCORD_BOT_TOKEN, DISCORD_APP_ID"}],
+ "adapters":{},"skipped":[{"platform":"telegram","missing":["TELEGRAM_BOT_TOKEN"]},
+ {"platform":"discord","missing":["DISCORD_BOT_TOKEN","DISCORD_APP_ID"]}],
  "backlog":{"open":0,"oldestSeconds":0}}
 HTTP 503
 ```
@@ -202,10 +185,8 @@ HTTP 503
 `/healthz` (also `/`) answers `200` when the drain loop is turning and at least
 one adapter loaded, `503` otherwise. Beyond `ok` it carries the claim, completion,
 retry and dead-letter counters, the preview sweep count, each adapter's status
-(Telegram reports `webhook` or `polling` mode), a `reason` for every platform
-that did not load (missing credentials, or excluded by `GATEWAY_PLATFORMS`), and
-the open backlog from `gateway_inbox` (`null`, with a logged warning, when the
-database cannot be read; the probe itself still answers).
+(Telegram reports `webhook` or `polling` mode), and the open backlog from
+`gateway_inbox`.
 
 ### Operator commands
 
@@ -250,49 +231,11 @@ group-start updates; Discord commands, buttons and mentions).
 
 ## Deploy
 
-**Status (2026-11-04): ship-ready, not deployed.** Deploys are owner-gated
-(CLAUDE.md); everything up to the deploy is done and proven.
-
-- **Image verified without shipping it.** Cloud Build `e6aa9918-8aae-4b9d-95bd-e5d683ab791f`
-  built this Dockerfile with [cloudbuild.verify.yaml](cloudbuild.verify.yaml) (no
-  push, no deploy) and its last step,
-  [scripts/image-selfcheck.mjs](scripts/image-selfcheck.mjs), passed inside the
-  image: the worker module graph, the adapter registry (telegram, discord),
-  `ffmpeg 5.1.9`, and a real WAV to Ogg Opus transcode (44178 bytes in, 2436
-  out).
-- **No `agent-gateway` Cloud Run service exists.** Both gateway migrations are
-  applied to production.
-- **Telegram has no webhook set**, measured with
-  [scripts/live-smoke.mjs](scripts/live-smoke.mjs) at 2026-11-04 16:39 UTC:
-  `url` empty, `pending_update_count` 10, no `last_error_message`. So today
-  messages to the bot never reach `gateway_inbox`: Telegram holds them and drops
-  each after 24 hours. `gateway_inbox` holds one row, a `failed` delivery from
-  2026-10-11 (`permanent: telegram: Bad Request: chat not found`), and nothing
-  open.
-
-So shipping is three commands, in this order (the worker first, so the inbox
-has a consumer before Telegram starts filling it):
-
-```bash
-npm run gateway:ship-check                                   # tests, env preview, adapters that would boot
-gcloud builds submit --config workers/agent-gateway/cloudbuild.yaml . \
-  --region us-central1 --project aerial-vehicle-466722-p5 \
-  --substitutions=SHORT_SHA=manual$(date +%s)
-npm --prefix workers/agent-gateway run webhook:telegram      # point the bot at /api/gateway/telegram
-node workers/agent-gateway/scripts/live-smoke.mjs            # webhook url set, pending 0, inbox draining
-```
-
-When the webhook is set, Telegram delivers whatever it is still holding (up to
-24 hours old). Anything older than the six-hour backlog TTL gets the one "I was
-offline" reply per chat rather than a stale answer.
-
-To prove the image again without deploying:
-
-```bash
-gcloud builds submit . --config workers/agent-gateway/cloudbuild.verify.yaml \
-  --ignore-file workers/agent-gateway/verify.gcloudignore \
-  --region us-central1 --project aerial-vehicle-466722-p5
-```
+**Status: built and tested, not deployed.** There is no `agent-gateway` Cloud Run
+service yet (checked 2026-10-09). Both gateway migrations are applied to
+production, and the receivers in `api/gateway/` already queue into
+`gateway_inbox`, so deliveries wait in the inbox until this worker runs. Deploys
+are owner-gated (CLAUDE.md); the command is ready.
 
 Build from the repo root, because the image carries the root install and `api/`
 (the gateway core reaches the copilot engine, the agent wallet and the trade
@@ -324,7 +267,7 @@ So a variable the gateway needs belongs on `three-ws-api`, and reaches the worke
 on its next deploy. Today `three-ws-api` carries `TELEGRAM_BOT_TOKEN` and none of
 the Discord variables, so a deploy now would load the Telegram adapter only and
 list Discord under `skipped` in `/healthz`. To preview what a deploy would
-mirror (names only, never values), run `npm run gateway:ship-check`, or by hand:
+mirror (names only, never values):
 
 ```bash
 gcloud run services describe three-ws-api --region us-central1 --format=json > /tmp/api.json
@@ -346,8 +289,7 @@ The deploy flags in [cloudbuild.yaml](cloudbuild.yaml) are load-bearing:
 and `_MAX_ATTEMPTS` build substitutions.
 
 After the first deploy, point the bots at production once:
-`npm run webhook:telegram` and, once the Discord variables are on
-`three-ws-api`, `npm run register:discord` (from this directory).
+`npm run webhook:telegram` and `npm run register:discord` (from this directory).
 
 ## Operations
 

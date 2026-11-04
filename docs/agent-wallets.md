@@ -80,6 +80,36 @@ Key endpoints:
 
 Full request/response shapes are in the [REST API reference](api-reference.md).
 
+## Custody modes
+
+The platform key above is the default, not the only option. Owners choose who signs an agent's fund-moving transactions from the **Custody** tab of the wallet hub (owner only):
+
+| Mode | Who signs | Use it when |
+|------|-----------|-------------|
+| `platform` | The server, inside your spend policy | The agent must act unattended with no wallet open |
+| `external` | Your own wallet, one transaction at a time | You never want the platform to sign. Build routes called with `signer: "external"` return an unsigned, simulated transaction and a `tx_id`; `POST /api/tx/submit` broadcasts the signed one and reconciles it to the custody ledger |
+| `session` | A delegate key the platform holds, capped on-chain | The agent acts alone inside a limit you grant. Your wallet approves the delegate for a USDC cap and an expiry; a 2 USDC transfer on a 1 USDC cap is refused. Switching mode revokes the approval on-chain |
+
+The confirm-flag rule applies to the custodial path only. The external path is confirmed by the signature itself.
+
+### Exporting the key
+
+The Custody tab can export the wallet's private key. The ceremony is: re-authenticate (password, emailed code or a wallet signature, single-use grant valid five minutes), the server seals the key to an ephemeral browser key, and the browser re-encrypts it to a passphrase you type (PBKDF2 and AES-GCM, `src/wallet/export.js`). The server never sees the passphrase or returns the plaintext, shows it once, and records a `kind=export` event in the custody ledger. Only a browser session can export, never an API key. **Rotate after export** previews, then moves every balance to a freshly generated platform key so the exported key controls an empty wallet. Decrypt an export offline with `scripts/decrypt-wallet-export.mjs`.
+
+### Balance history
+
+The `balance-snapshot` cron records each agent wallet's SOL, USDC and USD value every hour into `agent_balance_history`. The Custody tab draws the series for 24 hours, 7 days or 30 days, and `GET /api/agents/:id/wallet/history?range=24h|7d|30d` returns it. The `get_balance_history` MCP tool reads the same wallet value series.
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET`/`PUT /api/agents/:id/signer` | Read or set the mode. `PUT` with `mode: "session"` returns the unsigned grant transaction |
+| `DELETE /api/agents/:id/signer/session` | End the session and return the on-chain revoke to sign |
+| `POST /api/tx/submit` | Settle a transaction you signed (`tx_id`, `signed_transaction`) |
+| `POST /api/agents/:id/wallet/export/{challenge,grant}` then `/export` | Re-authenticate, then export the sealed key |
+| `POST /api/agents/:id/wallet/export/rotate` | Preview, then confirm rotate-and-sweep |
+| `GET /api/agents/:id/wallet/history` | Hourly balance series |
+| `GET /api/me/wallet` | Your own linked wallet, next to the agent wallets |
+
 ## Paying by name
 
 An agent can pay a human-readable name instead of a base58 address. `/api/x402/pay-by-name` resolves a recipient across three namespaces: a raw base58 address (passes straight through), a `.sol` SNS name resolved on-chain via Bonfida (subdomains included), or a `@username` (which resolves to that user's default agent's Solana address). `GET` resolves only, so you can show the user the address before spending; `POST` with `mode='send'` (authenticated, `agent_id` required) signs a USDC transfer as the caller's agent under the same spend policy as any other outbound path, and `mode='prep'` returns an unsigned transaction for a browser wallet to sign.

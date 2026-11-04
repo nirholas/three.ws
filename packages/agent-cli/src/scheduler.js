@@ -169,9 +169,7 @@ function phraseToCron(rest, times, text) {
 	return null;
 }
 
-// Digits, the cron operators, and the three-letter month and weekday names only,
-// so a five-word phrase such as "every 15 minutes at 9am" is never read as cron.
-const CRON_FIELD = /^(?:[\d*,/\-?LW#]|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|sun|mon|tue|wed|thu|fri|sat)+$/i;
+const CRON_FIELD = /^[\d*,/\-A-Za-z?LW#]+$/;
 
 function looksLikeCron(text) {
 	const f = text.trim().split(/\s+/);
@@ -306,10 +304,10 @@ function automationTitle(prompt) {
 	return `three-ws-agent: ${String(prompt).replace(/\s+/g, ' ').slice(0, 60)}`;
 }
 
-async function createServerAutomation({ platform, agentId, cron, tz, prompt, now = new Date() }) {
+async function createServerAutomation({ platform, agentId, cron, tz, prompt }) {
 	if (!platform) throw new ScheduleError('Server mode needs a three.ws sign-in. Run `three-ws-agent login` first.');
 	if (!agentId) throw new ScheduleError('Server mode runs the prompt as one of your three.ws agents. Pick one with `/agent <id>` (or pass --agent), then try again.');
-	const utc = toUtcCron(cron, tz, now);
+	const utc = toUtcCron(cron, tz);
 	if (minGapMs(utc) < SERVER_MIN_GAP_MS) {
 		throw new ScheduleError('Server schedules may fire at most once every 5 minutes. Use "every 5 minutes" or slower, or keep this one in local mode.');
 	}
@@ -332,7 +330,7 @@ export async function addSchedule({ store, when, prompt, mode = 'local', platfor
 	if (!['local', 'server'].includes(mode)) throw new ScheduleError(`mode must be local or server, not "${mode}"`);
 	const parsed = parseSchedule(when, { tz, now });
 	if (mode === 'server') {
-		const { automation, utc } = await createServerAutomation({ platform, agentId, cron: parsed.cron, tz: parsed.tz, prompt: text, now });
+		const { automation, utc } = await createServerAutomation({ platform, agentId, cron: parsed.cron, tz: parsed.tz, prompt: text });
 		return store.addCron({
 			scheduleText: parsed.text,
 			cron: utc,
@@ -367,7 +365,7 @@ export async function setScheduleMode({ store, id, mode, platform = null, agentI
 	if (cron.mode === mode) return cron;
 	if (mode === 'server') {
 		const owner = cron.agent_id || agentId;
-		const { automation, utc } = await createServerAutomation({ platform, agentId: owner, cron: cron.cron, tz: cron.tz, prompt: cron.prompt, now });
+		const { automation, utc } = await createServerAutomation({ platform, agentId: owner, cron: cron.cron, tz: cron.tz, prompt: cron.prompt });
 		store.setCronSchedule(id, { cron: utc, tz: 'UTC', description: describeCron(utc, 'UTC'), agentId: owner });
 		store.setCronMode(id, 'server', automation.id, null);
 		return store.getCron(id);
