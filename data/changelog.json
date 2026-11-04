@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Invite friends to a /play world with a QR code and a link that unfurls as that coin",
+			"summary": "A new Invite button in /play (and on every lobby card) opens a sheet with a live QR code, the world's link with one-click Copy, and Share, falling back to X and Telegram where the browser has no share sheet. During the week before an event and while it is live, the sheet leads with the event name and a countdown. Pasted links now unfurl as the coin's own world: its art, ticker, name and the biome it actually renders in, instead of a generic Play card. The card also used to name the wrong biome for most coins and showed no art for $THREE; both are fixed.",
+			"tags": [
+				"feature",
+				"fix"
+			],
+			"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Status page shows the retired world as retired, not down",
 			"summary": "The deleted world.three.ws service now carries an explicit, reversible retired state: the health rollup, alerts and status page no longer report a permanent false outage, so a red status always means something real.",
 			"tags": [

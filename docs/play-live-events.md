@@ -144,6 +144,49 @@ late. A tab hidden during the countdown, or a player who arrives after the
 instant, takes no photo: a picture of a moment the player missed is not the
 shared moment.
 
+## Inviting people
+
+The person-plus button on the HUD (and an "Invite" button on every lobby
+card) opens the invite sheet: a live QR code, the world's link with Copy,
+and Share. It loads lazily (`src/game/invite-sheet.js` and its CSS) on the
+first press, so nobody who never invites pays for it.
+
+- **Two links, on purpose** (`src/game/invite-link.js`). The QR encodes the
+  bare canonical `coinWorldUrl()` made absolute
+  (`https://three.ws/play?coin=<mint>`), because a projector QR has to scan
+  from the back of a room and every extra character adds modules. The
+  copied and shared link also carries `name`, `symbol` and `image` so the
+  person opening it lands in a named world even when the coin lookup is
+  slow. Neither ever copies session, auth or tracking params.
+- **Event framing.** From seven days before `startsAt` until `endsAt`, and
+  only in the world `public/event.json` links to, the sheet leads with the
+  event name and a countdown ("Starts in 1d 02:05:09", then "Live now,
+  ends in 00:45:00"), and the share text names the event. Everywhere else
+  it is the plain invite.
+- **Share.** Uses the Web Share sheet where the browser has one; otherwise
+  it offers post-to-X and send-to-Telegram links. Copy falls back to
+  selecting the field when the clipboard is blocked, and says so.
+- **The unfurl.** `server/play-head.mjs` rewrites the `/play` shell's head
+  for any `?coin=<mint>` request (production in `server/index.mjs`, dev in
+  `vite.config.js`): title, description, canonical, Open Graph, Twitter,
+  oEmbed discovery and JSON-LD all name the coin, and `og:image` points at
+  `/api/play-og`. That card shows the coin's art (fetched through the
+  `/api/img` proxy and converted to PNG), its ticker and name, and the biome
+  its world really renders in (`src/game/world-biomes.js`, the same table
+  the world uses). When the art cannot be fetched it draws a monogram disc
+  instead; `x-play-og-art: coin|monogram` says which. $THREE falls back to
+  `HOME_TOWN`, so its card is never generic.
+
+Check an unfurl locally:
+
+```bash
+curl -s "http://localhost:3000/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" | grep -o '<meta property="og:[^>]*>'
+curl -s -o /tmp/card.png -D - "http://localhost:3000/api/play-og?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" | grep -i x-play-og-art
+```
+
+Tests: `tests/play-invite.test.js`, `tests/play-og.test.js`,
+`tests/play-head.test.js`.
+
 ## The live headcount
 
 While the event is mounted, the chip and the agenda drawer show how many
