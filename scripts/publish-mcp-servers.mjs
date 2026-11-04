@@ -98,6 +98,8 @@ const SERVERS = [
 	// Autonomous-agent control plane + account/discovery + capability surfaces
 	// (the 2025-06 buildout). Each is a stdio npm package with its own server.json.
 	{ key: 'autopilot-mcp', dir: 'packages/autopilot-mcp', manifest: 'packages/autopilot-mcp/server.json' },
+	{ key: 'oracle-mcp', dir: 'packages/oracle-mcp', manifest: 'packages/oracle-mcp/server.json' },
+	{ key: 'agent-trader-mcp', dir: 'packages/agent-trader-mcp', manifest: 'packages/agent-trader-mcp/server.json' },
 	{ key: 'portfolio-mcp', dir: 'packages/portfolio-mcp', manifest: 'packages/portfolio-mcp/server.json' },
 	{ key: 'provenance-mcp', dir: 'packages/provenance-mcp', manifest: 'packages/provenance-mcp/server.json' },
 	{ key: 'copy-mcp', dir: 'packages/copy-mcp', manifest: 'packages/copy-mcp/server.json' },
@@ -139,6 +141,7 @@ const SERVERS = [
 	{ key: 'remote-agent', manifest: 'server-agent.json' },
 	{ key: 'remote-ibm', manifest: 'server-ibm.json' },
 	{ key: 'remote-bazaar', manifest: 'server-bazaar.json' },
+	{ key: 'remote-oracle', manifest: 'server-oracle.json' },
 	// Free, non-crypto 3D Studio (api/mcp-studio.js) for the OpenAI Apps SDK.
 	{ key: 'remote-studio', manifest: 'server-studio.json' },
 	// The free studio plus signed-in agent tools for Grok Bot (api/mcp-grok.js).

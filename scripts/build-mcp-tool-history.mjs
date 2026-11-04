@@ -36,6 +36,7 @@ const LEGACY_IDS = {
 	'threews-3d-studio': 'mcp-3d',
 	'threews-3d-studio-free': 'mcp-studio',
 	'threews-x402-bazaar': 'mcp-bazaar',
+	'threews-oracle': 'mcp-oracle',
 	'ibm-x402-mcp-remote': 'ibm-mcp',
 	'threews-pumpfun': 'pump-fun-mcp',
 	'mcp-server': 'three-ws-mcp-server',

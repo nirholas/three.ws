@@ -67,6 +67,7 @@ const STATIC_ENDPOINTS = [
 	[(f) => f.startsWith('api/_mcp-studio/'), '/api/mcp-studio'],
 	[(f) => f.startsWith('api/_mcpagent/'), '/api/mcp-agent'],
 	[(f) => f.startsWith('api/_mcpbazaar/'), '/api/mcp-bazaar'],
+	[(f) => f.startsWith('api/_mcporacle/'), '/api/mcp-oracle'],
 	[(f) => f.startsWith('api/_mcpibm/'), '/api/ibm-mcp'],
 	[(f) => f === 'src/pump/mcp-tools.js', '/api/pump-fun-mcp'],
 	[(f) => f.startsWith('mcp-server/'), 'mcp-server'],
@@ -89,6 +90,8 @@ const HOSTED_AUTH = {
 	// Shares the main server's OAuth/x402 gate (see api/mcp-bazaar.js): only
 	// getting_started answers unauthenticated.
 	'mcp-bazaar': 'oauth-or-x402',
+	// Read-only market data, no account and no payment (api/mcp-oracle.js).
+	'mcp-oracle': 'none',
 	'ibm-mcp': 'x402',
 	'mcp-studio': 'none',
 	'mcp-chatgpt': 'none',

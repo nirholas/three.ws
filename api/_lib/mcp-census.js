@@ -27,6 +27,7 @@ import { TOOL_CATALOG as MAIN_CATALOG } from '../_mcp/catalog.js';
 import { TOOL_CATALOG as AGENT_CATALOG } from '../_mcpagent/catalog.js';
 import { TOOL_CATALOG as STUDIO_PAID_CATALOG } from '../_mcp3d/catalog.js';
 import { TOOL_CATALOG as BAZAAR_CATALOG } from '../_mcpbazaar/catalog.js';
+import { TOOL_CATALOG as ORACLE_CATALOG } from '../_mcporacle/catalog.js';
 import { TOOL_CATALOG as IBM_CATALOG } from '../_mcpibm/catalog.js';
 import { VIEWER_TOOLS } from './viewer-mcp-tools.js';
 import { resourcesFor } from '../_mcp/resources.js';
@@ -72,6 +73,7 @@ export const HOSTED_ENDPOINTS = Object.freeze([
 	{ id: 'mcp-agent', title: 'Agent Wallet', endpoint: '/api/mcp-agent', policy: 'threews-agent', resourceServer: 'mcp-agent', promptServer: 'mcp-agent' },
 	{ id: 'mcp-3d', title: '3D Studio', endpoint: '/api/mcp-3d', policy: 'threews-3d-studio', resourceServer: 'mcp-3d', promptServer: 'mcp-3d' },
 	{ id: 'mcp-bazaar', title: 'x402 Bazaar', endpoint: '/api/mcp-bazaar', policy: 'threews-x402-bazaar', resourceServer: 'mcp-bazaar', promptServer: 'mcp-bazaar' },
+	{ id: 'mcp-oracle', title: 'Oracle', endpoint: '/api/mcp-oracle' },
 	{ id: 'ibm-mcp', title: 'IBM Granite', endpoint: '/api/ibm-mcp', policy: 'ibm-x402-mcp-remote' },
 	{ id: 'mcp-studio', title: '3D Studio (free)', endpoint: '/api/mcp-studio', policy: 'threews-3d-studio-free', surface: 'full', promptServer: 'mcp-studio' },
 	{ id: 'mcp-chatgpt', title: '3D Studio for ChatGPT', endpoint: '/api/mcp-chatgpt', policy: 'threews-3d-studio-free', surface: 'chatgpt' },
@@ -85,6 +87,7 @@ const STATIC_CATALOGS = {
 	'mcp-agent': AGENT_CATALOG,
 	'mcp-3d': STUDIO_PAID_CATALOG,
 	'mcp-bazaar': BAZAAR_CATALOG,
+	'mcp-oracle': ORACLE_CATALOG,
 	'ibm-mcp': IBM_CATALOG,
 	'chat-mcp': VIEWER_TOOLS,
 };

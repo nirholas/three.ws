@@ -27,6 +27,7 @@ export const OAUTH_MCP_PATHS = Object.freeze([
 	'/api/mcp-3d',
 	'/api/mcp-agent',
 	'/api/mcp-bazaar',
+	'/api/mcp-oracle',
 	'/api/ibm-mcp',
 	'/api/mcp-grok',
 ]);

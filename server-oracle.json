@@ -1,0 +1,30 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/threews-oracle",
+	"title": "three.ws Oracle",
+	"websiteUrl": "https://three.ws",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": ["any"]
+		}
+	],
+	"description": "Free read-only Solana pump.fun Oracle: feed, scored calls, wins, backtest, leaderboard. No account.",
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github"
+	},
+	"version": "1.0.0",
+	"remotes": [
+		{
+			"type": "streamable-http",
+			"url": "https://three.ws/api/mcp-oracle"
+		}
+	],
+	"_meta": {
+		"io.modelcontextprotocol.registry/publisher-provided": {
+			"prompts": []
+		}
+	}
+}

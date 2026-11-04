@@ -48,6 +48,12 @@ const ENDPOINTS = [
 		type: 'free',
 		requireTools: ['forge_free', 'forge_avatar', 'check_job', 'create_agent_persona', 'persona_say'],
 	},
+	{
+		// Free read-only Oracle data. Reads can answer 503 during a DB outage, so the probe checks the catalog only.
+		path: '/api/mcp-oracle',
+		type: 'free',
+		requireTools: ['oracle_getting_started', 'oracle_feed', 'oracle_wins', 'oracle_leaderboard'],
+	},
 	{ path: '/api/mcp', type: 'paid' },
 	{ path: '/api/mcp-3d', type: 'paid' },
 	{ path: '/api/mcp-agent', type: 'paid' },

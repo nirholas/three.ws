@@ -33,6 +33,7 @@ const SERVERS = [
 	{ id: 'mcp-agent', manifest: 'server-agent.json', endpoint: 'https://three.ws/api/mcp-agent', catalog: '../api/_mcpagent/catalog.js' },
 	{ id: 'mcp-3d', manifest: 'server-3d.json', endpoint: 'https://three.ws/api/mcp-3d', catalog: '../api/_mcp3d/catalog.js' },
 	{ id: 'mcp-bazaar', manifest: 'server-bazaar.json', endpoint: 'https://three.ws/api/mcp-bazaar', catalog: '../api/_mcpbazaar/catalog.js' },
+	{ id: 'mcp-oracle', manifest: 'server-oracle.json', endpoint: 'https://three.ws/api/mcp-oracle', catalog: '../api/_mcporacle/catalog.js', bare: true },
 	// The studio surfaces serve prompts but no resources. Their catalog is the
 	// surface's own tools/list; the Grok surface adds the account tools a
 	// signed-in connector sees, so the directory lists agent-report there too.
@@ -53,7 +54,9 @@ async function catalogFor(server) {
 	return [...studio, ...core.filter((t) => isAccountTool(t.name))];
 }
 
+// A bare server serves tools only: no resources and no prompts.
 async function surfaceFor(server) {
+	if (server.bare) return { studio: true, resources: [], resourceTemplates: [], prompts: [] };
 	const TOOL_CATALOG = await catalogFor(server);
 	const defs = server.studio ? [] : resourcesFor(server.id);
 	return {

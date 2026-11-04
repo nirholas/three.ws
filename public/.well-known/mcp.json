@@ -281,6 +281,15 @@
 			"prompts": ["get-started", "hire-agent", "explore-marketplace", "explore-x402"]
 		},
 		{
+			"name": "Oracle",
+			"endpoint": "https://three.ws/api/mcp-oracle",
+			"transport": "streamable-http",
+			"auth": "none for the read tools; OAuth 2.1 for oracle_arm_watch and oracle_watch_status",
+			"description": "The Oracle conviction signal on pump.fun launches: free scores, backtest and wins, plus arming an agent on the live stream inside a spend limit.",
+			"documentation": "https://three.ws/docs/oracle",
+			"prompts": []
+		},
+		{
 			"name": "pump.fun",
 			"endpoint": "https://three.ws/api/pump-fun-mcp",
 			"transport": "streamable-http",

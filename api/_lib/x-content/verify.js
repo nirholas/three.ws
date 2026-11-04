@@ -125,12 +125,7 @@ export async function browserProblem() {
 	}
 }
 
-// How long a page gets to go quiet after it loads. Settling is best effort: a 3D
-// viewer streaming assets or a feed that polls never goes network-idle, and its
-// status and text are still what a reader sees.
-const PAGE_IDLE_TIMEOUT_MS = 15_000;
-
-export function createPageReader({ idleTimeout = PAGE_IDLE_TIMEOUT_MS } = {}) {
+export function createPageReader() {
 	let browser = null;
 	const cache = new Map();
 	return {
@@ -142,12 +137,8 @@ export function createPageReader({ idleTimeout = PAGE_IDLE_TIMEOUT_MS } = {}) {
 			}
 			const page = await browser.newPage({ userAgent: UA });
 			try {
-				// Navigate to `load` for the status, then let the network settle on top of
-				// it. Waiting for networkidle inside goto turned a page that never idles
-				// into "HTTP 0" even though it had answered 200.
-				const response = await page.goto(url, { waitUntil: 'load', timeout: 60_000 }).catch(() => null);
+				const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60_000 }).catch(() => null);
 				const status = response?.status() ?? 0;
-				if (response) await page.waitForLoadState('networkidle', { timeout: idleTimeout }).catch(() => {});
 				// Client-rendered pages (AWS Builder Center, most SPAs) can still be
 				// empty at network idle. Wait until the text stops growing, so a
 				// claim is never failed by a page that had not finished rendering.

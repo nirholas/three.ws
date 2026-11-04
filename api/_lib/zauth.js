@@ -288,7 +288,7 @@ function buildMiddleware(sdk) {
 // failures (and verification rejections of real payment attempts) still
 // reach the dashboard.
 const MONITORED_SERVERS =
-	/\/api\/(wk-x402|mcp|mcp-3d|mcp-agent|mcp-bazaar|pump-fun-mcp|ibm-mcp|x402-pay)(\/|$)/;
+	/\/api\/(wk-x402|mcp|mcp-3d|mcp-agent|mcp-bazaar|mcp-oracle|pump-fun-mcp|ibm-mcp|x402-pay)(\/|$)/;
 const MONITORED_AGENTS =
 	/\/api\/agents\/x402\/|\/api\/agents\/[^/]+\/x402\/|\/api\/agents\/payments\//;
 
