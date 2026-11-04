@@ -1,0 +1,11 @@
+{
+  "name": "nanoid",
+  "version": "3.3.18+v2-compat",
+  "description": "nanoid 2.x default-export API backed by patched nanoid 3.3.18+ (GHSA-mwcw-c2x4-8c55, GHSA-xwg4-73v4-xw9w, GHSA-28wg-ghj8-5hjv, GHSA-2v37-7h3g-55p8)",
+  "license": "MIT",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "dependencies": {
+    "nanoid3": "npm:nanoid@^3.3.18"
+  }
+}

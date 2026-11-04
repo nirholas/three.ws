@@ -11,6 +11,8 @@
 FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# Patched copies of unmaintained transitive deps, linked from node_modules.
+COPY vendor ./vendor
 # npm ci installs the exact, pre-resolved versions from package-lock.json.
 # The lock pins Colyseus to a set that uses @colyseus/ws-transport and never
 # pulls uWebSockets.js (an optional transport that resolves to a git ssh ref
@@ -22,6 +24,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=2567
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/vendor ./vendor
 COPY package.json ./
 COPY src ./src
 EXPOSE 2567
