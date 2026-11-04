@@ -42,7 +42,7 @@ Only `model` is new and required. The block is intentionally small:
 
 - **`manifest`** — pointer to a full [AGENT_MANIFEST](AGENT_MANIFEST.md) bundle when the agent has a brain/voice/skills.
 - **`validation`** — pointer to a signed [validation report](../public/validation/REPORT_FORMAT.md).
-- **`claims`** (v1.1) — names (`ens` or `dns`) that claim this agent. Verified in both directions by the resolver; see [ENS_AGENT_CLAIM](ENS_AGENT_CLAIM.md).
+- **`claims`** (v1.1): names (`ens` or `dns`) that claim this agent. Verified in both directions by the resolver; see [ENS_AGENT_CLAIM](ENS_AGENT_CLAIM.md).
 - **`previousVersion`** — URI of the prior card. Forms a provenance chain across model updates.
 
 ## Conformance
