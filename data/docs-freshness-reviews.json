@@ -9,10 +9,10 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"STRUCTURE.md": {
-			"commit": "9c9d80bcc",
+			"commit": "f9c4ee423",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Rig Doctor row notes the runtime arm/shoulder collision pass (a12f2a3e1); memory settings row notes get_learning_status on /api/mcp-agent (6a78ba5bf); table.js drift is that tool's policy row."
 		},
 		"docs/3d-api.md": {
 			"commit": "0a10f48c2",
