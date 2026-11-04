@@ -1173,21 +1173,26 @@
 			// Returns whether the anchor actually matched something on the page, so a
 			// caller can tell "scrolled to the heading" from "there is no such
 			// heading here" and decide what the hash meant instead.
+			function findAnchor(anchor) {
+				const target = document.getElementById(anchor);
+				if (target) return target;
+				// Older docs carry hand-written anchors that punctuate differently
+				// from the slug. Match on letters and digits alone before giving up.
+				const loose = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+				const want = loose(anchor);
+				return (
+					[...document.querySelectorAll('#docs-content h2, #docs-content h3, #docs-content h4')].find(
+						h => loose(h.id) === want || loose(h.textContent) === want,
+					) || null
+				);
+			}
+
 			function scrollToAnchor(anchor) {
 				if (!anchor) {
 					window.scrollTo({ top: 0 });
 					return true;
 				}
-				let target = document.getElementById(anchor);
-				if (!target) {
-					// Older docs carry hand-written anchors that punctuate differently
-					// from the slug. Match on letters and digits alone before giving up.
-					const loose = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
-					const want = loose(anchor);
-					target = [...document.querySelectorAll('#docs-content h2, #docs-content h3, #docs-content h4')].find(
-						h => loose(h.id) === want || loose(h.textContent) === want,
-					);
-				}
+				const target = findAnchor(anchor);
 				if (target) target.scrollIntoView({ block: 'start' });
 				else window.scrollTo({ top: 0 });
 				return Boolean(target);
@@ -1675,6 +1680,18 @@
 				// refetch and rebuild it: that would lose the reader's place.
 				if (path === loadedPath) {
 					scrollToAnchor(anchor);
+					return;
+				}
+				// A bare "#section" edited into the address bar, or followed from a
+				// hand-written link, names a heading on the doc already open, not a
+				// doc: loading it as one fetched a 404 and replaced the page the
+				// reader was on. A listed doc still wins a name clash, so "#forge"
+				// keeps opening the Forge doc. The address is rewritten to the
+				// routed form so a reload or a copied link lands in the same place.
+				const bare = !location.hash.includes('@');
+				if (bare && loadedPath && !ALL_PAGES.some(p => p.path === path) && findAnchor(path)) {
+					history.replaceState(null, '', location.pathname + '#' + loadedPath + '@' + path);
+					scrollToAnchor(path);
 					return;
 				}
 				loadedPath = path;
