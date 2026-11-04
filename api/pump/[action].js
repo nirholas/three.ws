@@ -67,6 +67,7 @@ import { resolveOrCreateAgentForAvatar as resolveLaunchAgentId } from '../_lib/a
 import { parse, isUuid } from '../_lib/validate.js';
 import { queryAgentLaunches } from '../_lib/pump-agent-launches.js';
 import { markPlanLaunched } from '../_lib/agent-token-plan.js';
+import { recordFunnelStep } from '../_lib/launch-funnel.js';
 import { randomToken } from '../_lib/crypto.js';
 import { publishFeedEvent } from '../_lib/feed.js';
 import { recordDailyActivity } from '../_lib/streaks.js';
@@ -1661,6 +1662,7 @@ async function handleLaunchPrep(req, res) {
 		)
 	`;
 
+	await recordFunnelStep({ agentId: resolvedAgentId, userId: user.id, step: 'launch_submitted', network: body.network });
 	return json(res, 201, {
 		prep_id: prepId,
 		agent_id: resolvedAgentId,
@@ -1783,6 +1785,7 @@ async function prepGaslessLaunch(res, { user, body, creator, signer, mint, mintK
 		platformShareBps: built.platform_share_bps,
 	});
 
+	await recordFunnelStep({ agentId, userId: user.id, step: 'launch_submitted', network: body.network });
 	return json(res, 201, {
 		prep_id: prepId,
 		agent_id: agentId,

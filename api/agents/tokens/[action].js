@@ -40,6 +40,7 @@ import {
 	deletePlan,
 	recordDryRun,
 	markPlanLaunched,
+	ensureDraftPlan,
 	shapePlan,
 	planReadiness,
 	estimateLaunchCost,
@@ -49,6 +50,8 @@ import {
 	PLAN_LIMITS,
 } from '../../_lib/agent-token-plan.js';
 
+import { recordFunnelStep, gatherLaunchFunnel, CLIENT_FUNNEL_STEPS } from '../../_lib/launch-funnel.js';
+import { authorizeOps } from '../../_lib/ops-auth.js';
 import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 // Heavy SDKs (Solana web3, Pump.fun, AWS S3 commands) are dynamic-imported
 // inside the handlers that need them. Loading them at module top-level was
@@ -88,6 +91,10 @@ export default wrap(async (req, res) => {
 			return handleLaunchConfirm(req, res);
 		case 'launch-quote':
 			return handleLaunchQuote(req, res);
+		case 'funnel':
+			return handleFunnelBeacon(req, res);
+		case 'funnel-report':
+			return handleFunnelReport(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown tokens action');
 	}
@@ -111,7 +118,7 @@ export default wrap(async (req, res) => {
 async function loadAgentForPlan(req, agentId) {
 	if (!agentId) return null;
 	const [agent] = await sql`
-		select id, name, user_id, wallet_address, meta
+		select id, name, description, persona_prompt, user_id, wallet_address, meta
 		from agent_identities
 		where id = ${agentId} and deleted_at is null
 		limit 1
@@ -188,6 +195,7 @@ async function handlePlan(req, res) {
 			'this agent already launched its token on this network — the plan that minted it is permanent',
 		);
 	}
+	await recordFunnelStep({ agentId: body.agent_id, userId: user.id, step: 'plan_edited', network: body.network });
 	return json(res, 200, { ok: true, plan: shapePlan(row), is_owner: true });
 }
 
@@ -203,7 +211,14 @@ async function handlePlanRead(req, res) {
 	const loaded = await loadAgentForPlan(req, agentId);
 	if (!loaded) return error(res, 404, 'not_found', 'agent not found');
 
-	const row = await getPlan({ agentId, network });
+	let row = await getPlan({ agentId, network });
+	// Agents created before plans were auto-drafted get theirs the first time the
+	// owner looks: same derivation, same idempotent insert. An agent that already
+	// launched a coin has no use for a draft.
+	if (!row && loaded.isOwner && network === 'mainnet' && !loaded.agent.meta?.token) {
+		const drafted = await ensureDraftPlan({ agent: loaded.agent });
+		row = drafted.row;
+	}
 	// A draft is the owner's private workbench; visitors see it as "no plan yet".
 	const visible = row && (loaded.isOwner || row.status !== 'draft') ? row : null;
 
@@ -771,6 +786,7 @@ async function handleLaunchPrep(req, res) {
 		on conflict (id) do nothing
 	`;
 
+	await recordFunnelStep({ agentId, userId: user.id, step: 'launch_submitted', network: body.cluster === 'devnet' ? 'devnet' : 'mainnet' });
 	return json(res, 201, {
 		prep_id: prepId,
 		mint: mintKeypair.publicKey.toBase58(),
@@ -986,4 +1002,77 @@ async function handleLaunchQuote(req, res) {
 		initial_buy: buyEstimate,
 		total_sol: totalSol,
 	});
+}
+
+// ── funnel ───────────────────────────────────────────────────────────────────
+//
+// POST: the owner's browser reports a funnel step it alone can see (the plan
+// card was viewed, the launch confirmation screen opened). `wallet_funded` is
+// never taken on trust: the server reads the launch wallet's SOL balance and
+// records the step only when it covers the fixed launch cost.
+// GET funnel-report: step counts for agents created in a window (ops only).
+
+const funnelBeaconSchema = z.object({
+	agent_id: z.string().uuid(),
+	step: z.enum(CLIENT_FUNNEL_STEPS),
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+async function handleFunnelBeacon(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	if (!isSameSiteOrigin(req)) return error(res, 403, 'forbidden', 'cross-site request blocked');
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const body = parse(funnelBeaconSchema, await readJson(req));
+	const loaded = await loadAgentForPlan(req, body.agent_id);
+	if (!loaded) return error(res, 404, 'not_found', 'agent not found');
+	if (!loaded.isOwner) return error(res, 403, 'forbidden', 'only the agent owner can report launch progress');
+
+	let funded = null;
+	if (body.step === 'wallet_funded') {
+		const wallet = agentLaunchWallet(loaded.agent);
+		const { getSolanaAddressBalances } = await import('../../_lib/agent-wallet.js');
+		const bal = wallet ? await getSolanaAddressBalances(wallet, body.network) : { sol: null };
+		funded = { sol: bal.sol, required_sol: FIXED_LAUNCH_TOTAL_SOL };
+		if (!(bal.sol != null && bal.sol >= FIXED_LAUNCH_TOTAL_SOL)) {
+			return json(res, 200, { ok: true, recorded: false, ...funded }, { 'cache-control': 'private, no-store' });
+		}
+	}
+
+	const recorded = await recordFunnelStep({ agentId: body.agent_id, userId: user.id, step: body.step, network: body.network });
+	return json(res, 200, { ok: true, recorded, ...(funded || {}) }, { 'cache-control': 'private, no-store' });
+}
+
+async function handleFunnelReport(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const auth = await authorizeOps(req);
+	if (!auth.ok) return error(res, 401, 'unauthorized', 'ops secret or admin session required');
+
+	const url = new URL(req.url, 'http://x');
+	const parseDay = (v) => {
+		const t = v ? Date.parse(v) : NaN;
+		return Number.isFinite(t) ? new Date(t).toISOString() : null;
+	};
+	const to = parseDay(url.searchParams.get('to')) || new Date().toISOString();
+	const from =
+		parseDay(url.searchParams.get('from')) ||
+		new Date(Date.parse(to) - 30 * 86_400_000).toISOString();
+	if (Date.parse(from) >= Date.parse(to)) {
+		return error(res, 400, 'validation_error', 'from must be before to');
+	}
+	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
+
+	const report = await gatherLaunchFunnel({ from, to, network });
+	return json(res, 200, { ok: true, ...report }, { 'cache-control': 'private, no-store' });
 }
