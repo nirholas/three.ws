@@ -1,6 +1,13 @@
 // The shared mint-to-token-program resolver and ATA derivation every Solana
 // payment builder uses. $THREE is a Token-2022 mint, so an ATA derived under
 // the classic program is an account that never exists on chain.
+//
+// Mainnet proof (2026-11-04, scripts/verify-token2022-purchase.mjs, simulated
+// with sigVerify:false and replaceRecentBlockhash:true, nothing signed or sent):
+// for a real $THREE holder, the gasless purchase (Token-2022 ATA create for a
+// new seller, 5% fee leg, seller leg with the Solana Pay reference) and the
+// Premium developer quote (29307010161 atomics at the Jupiter price) both
+// returned err: null, each transfer a Token-2022 TransferChecked.
 
 import { describe, it, expect, vi } from 'vitest';
 import { Keypair, PublicKey, SystemProgram } from '@solana/web3.js';
