@@ -14,7 +14,7 @@ Read the results side by side: the summary reports shadow and live separately, e
 
 ## Scanner
 
-`GET /api/predictions/scan` reads the most active open markets, fetches order books for the ones whose YES plus NO prices sit near par, and reports for each the gross edge (`1 - yes_ask - no_ask`), the net edge after fees, and how much is fillable at positive net edge. `executable` is true only when the net edge clears the thresholds in the fee model file. A negative edge is the normal state of an efficient market, and the scanner says so rather than inventing opportunities.
+`GET /api/predictions/scan` reads the most active open markets (at most `max_markets_scanned`, counted per market because one event can hold hundreds, and skipping any market past its close time), fetches order books for the `max_books_fetched` whose quoted YES plus NO sits closest to par, and reports for each the gross edge (`1 - yes_ask - no_ask`), the net edge after fees, and how much is fillable at positive net edge. `executable` is true only when the net edge clears the thresholds in the fee model file. A negative edge is the normal state of an efficient market, and the scanner says so rather than inventing opportunities. The response counts `books_read` (books returned), `books_scored` (two-sided books that could form a pair; a book with no asks on one side scores nothing) and `books_failed` (book reads the venue refused).
 
 ## Fee models
 

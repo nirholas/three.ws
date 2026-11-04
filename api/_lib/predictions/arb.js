@@ -114,7 +114,7 @@ export function topOfBookEdge(book, { models = MODELS, provider = null } = {}) {
 
 /**
  * Score one market's book into a scanner row.
- * @param {{ id: string, title: string, provider: string|null, event_id?: string|null, close_time?: string|null }} market
+ * @param {{ id: string, title: string, provider: string|null, event_id?: string|null, event_title?: string|null, close_time?: string|null }} market
  * @param {Book} book
  * @param {{ models?: typeof MODELS, minEdge?: number, minDepthUsd?: number }} [opts]
  */
@@ -130,6 +130,7 @@ export function scoreMarket(market, book, { models = MODELS, minEdge, minDepthUs
 		market_id: market.id,
 		event_id: market.event_id || null,
 		title: market.title,
+		event_title: market.event_title || null,
 		provider: market.provider,
 		close_time: market.close_time || null,
 		...top,
@@ -166,16 +167,28 @@ async function mapLimit(items, limit, fn) {
 export async function scanVenue(venue, { models = MODELS, limit = 20 } = {}) {
 	const th = models.thresholds;
 	const pageSize = 25;
+	const now = Date.now();
 	const markets = [];
-	for (let start = 0; markets.length < th.max_markets_scanned && start < 100; start += pageSize) {
+	// One event can carry hundreds of markets (a bracket per outcome), so the cap
+	// is enforced per market, not per page. A market past its close time is
+	// awaiting resolution even while the venue still reports it open: neither leg
+	// of a pair can be bought there, so it is never a candidate.
+	scan: for (let start = 0; start < 100; start += pageSize) {
 		const page = await venue.listEvents({ sort: 'volume_24h', start, limit: pageSize });
 		for (const ev of page.events || []) {
 			for (const m of ev.markets || []) {
-				if (m.tradable) markets.push({ ...m, event_title: ev.title });
+				if (!m.tradable) continue;
+				const closes = m.close_time ? Date.parse(m.close_time) : NaN;
+				if (Number.isFinite(closes) && closes <= now) continue;
+				markets.push({ ...m, event_title: ev.title });
+				if (markets.length >= th.max_markets_scanned) break scan;
 			}
 		}
 		if (!page.has_more) break;
 	}
+	// Order books are the expensive read, so they go to the markets whose quoted
+	// YES plus NO sits closest to (or under) par: those are the only ones that can
+	// clear a positive edge after fees.
 	const priced = markets
 		.map((m) => {
 			const y = m.outcomes.find((o) => o.side === 'yes')?.buy_price;
@@ -183,19 +196,29 @@ export async function scanVenue(venue, { models = MODELS, limit = 20 } = {}) {
 			return { m, sum: y != null && n != null ? y + n : null };
 		})
 		.filter((x) => x.sum != null && x.sum >= th.candidate_sum_min && x.sum <= th.candidate_sum_max)
+		.sort((a, b) => a.sum - b.sum)
 		.slice(0, th.max_books_fetched);
 
-	const rows = (
+	let failed = 0;
+	const books = (
 		await mapLimit(priced, 6, async ({ m }) => {
-			const book = await venue.getOrderbook(m.id).catch(() => null);
-			return book ? scoreMarket(m, book, { models }) : null;
+			try {
+				return { m, book: await venue.getOrderbook(m.id) };
+			} catch {
+				failed++;
+				return null;
+			}
 		})
 	).filter(Boolean);
+	// A one-sided book (no asks on YES or NO) cannot form a pair and scores null.
+	const rows = books.map(({ m, book }) => scoreMarket(m, book, { models })).filter(Boolean);
 
 	return {
 		venue: venue.id,
 		scanned_markets: markets.length,
-		books_read: rows.length,
+		books_read: books.length,
+		books_scored: rows.length,
+		books_failed: failed,
 		scanned_at: new Date().toISOString(),
 		thresholds: th,
 		opportunities: rankRows(rows).slice(0, limit),
