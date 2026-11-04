@@ -77,9 +77,9 @@ What the numbers say: the fleet as a whole loses money. The only exits that make
 
 - **The retune made the numbers worse, not better.** The 2026-08-09 retune (section "The 2026-08-09 retune" of [the spec](trading-experiment.md)) rewrote the strategy table around what the first trades said. Measured by trade open date, the win rate after it fell from 33.2% to 12.5%, and the loss per SOL deployed grew from 1.13% to 12.37%. The fleet also traded far more after it (241 closed trades before, 1,055 after). Either way, it did not do what it was for.
 - **Stops do not cap the downside.** Stop-loss exits alone lost 0.6752 SOL, more than the whole fleet's net loss. The spec already records why: on a thin bonding curve a coin can gap straight through a stop before it fires.
-- **The trailing stop, meant to lock in gains, lost money in aggregate** (297 trades, -0.2304 SOL). We have not yet compared each trade's peak value with its exit value, which is the measurement that would say why.
+- **The trailing stop, meant to lock in gains, lost money in aggregate** (297 trades, -0.2304 SOL). `scripts/sniper-experiment-report.mjs` now makes that comparison. On the 100 closed live mainnet trades of the last 30 days (2026-11-04 run), the 36 trailing-stop exits gave back a median 43.2% of their peak value before the stop fired (-0.0024 SOL combined). A trailing stop that surrenders over two fifths of the peak is not locking in much; any tightening of `trailing_stop_pct` is a follow-up to test on one arm, not a change made here.
 - **We measured win rate first.** Early reporting led with win rate. It is the wrong headline: the rule arms won 16.1%, and the only exit groups that made money are the 67 take-profits (+0.5512 SOL) and the 63 ladder recoveries (+0.5298 SOL), which can overlap. The blog post makes the same case in its section "Win rate is a vanity metric".
-- **We cannot state the full cost.** The model calls behind 357,988 verdicts were never priced per verdict, so "spend" above is trading losses only.
+- **We cannot yet state the full cost.** The model calls behind 357,988 verdicts were never priced, so "spend" above is trading losses only. The judge now records input tokens, output tokens and the provider-reported cost on every new verdict (migration `20261105100000_sniper_llm_verdict_cost.sql`, written but not yet applied). Once applied, `node scripts/sniper-experiment-report.mjs` prints per-arm net P&L after model cost. Older verdicts stay unpriced; they are never estimated.
 
 ## What we changed because of it
 
@@ -93,7 +93,7 @@ Changed already, each documented in [the spec](trading-experiment.md):
 Will change next, and re-measure with the same queries:
 
 - **Size entries as if every coin can go to zero**, since stops do not hold. The next measurement should show stop-loss losses shrinking as a share of deployed SOL.
-- **Price the model calls**, so the spend line can include the judges and the model arms can be compared on cost as well as P&L.
+- **Price the model calls** (recording is built; it starts when the migration is applied), so the spend line can include the judges and the model arms can be compared on cost as well as P&L.
 - **Judge the retune by the numbers above**, not by the reasoning behind it: if the post-retune loss rate does not fall in the next window, roll the strategy table back toward the pre-retune shape.
 
 ## Appendix: the queries

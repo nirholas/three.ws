@@ -118,6 +118,21 @@ export function parseVerdict(text) {
 	return { buy: obj.buy, confidence, thesis: String(obj.thesis || '').slice(0, 280) };
 }
 
+/**
+ * Token counts and USD cost from an OpenRouter chat completion. The cost is the
+ * provider's own figure (usage accounting is switched on in the request), never
+ * a price table of ours, so an unreported cost stays null instead of a guess.
+ */
+export function usageFromBody(body) {
+	const usage = body?.usage || {};
+	const num = (v) => (Number.isFinite(Number(v)) && v !== null && v !== undefined && v !== '' ? Number(v) : null);
+	return {
+		inputTokens: num(usage.prompt_tokens),
+		outputTokens: num(usage.completion_tokens),
+		costUsd: num(usage.cost),
+	};
+}
+
 async function askOpenRouter({ model, user }) {
 	const key = process.env.OPENROUTER_API_KEY;
 	if (!key) throw new Error('OPENROUTER_API_KEY not configured');
@@ -136,6 +151,7 @@ async function askOpenRouter({ model, user }) {
 				model,
 				max_tokens: 200,
 				temperature: 0.2,
+				usage: { include: true },
 				messages: [
 					{ role: 'system', content: SYSTEM_PROMPT },
 					{ role: 'user', content: user },
@@ -147,7 +163,7 @@ async function askOpenRouter({ model, user }) {
 			throw new Error(`openrouter ${resp.status}: ${body.slice(0, 160)}`);
 		}
 		const body = await resp.json();
-		return body?.choices?.[0]?.message?.content || '';
+		return { text: body?.choices?.[0]?.message?.content || '', ...usageFromBody(body) };
 	} finally {
 		clearTimeout(timer);
 	}
@@ -157,9 +173,19 @@ async function judge(mint, model, knowledge = '') {
 	const user = launchBrief(mint, knowledge);
 	const t0 = Date.now();
 	try {
-		const text = await askOpenRouter({ model, user });
-		const verdict = parseVerdict(text);
-		if (verdict) return { ...verdict, model, answeredBy: model, latencyMs: Date.now() - t0 };
+		const reply = await askOpenRouter({ model, user });
+		const verdict = parseVerdict(reply.text);
+		if (verdict) {
+			return {
+				...verdict,
+				model,
+				answeredBy: model,
+				latencyMs: Date.now() - t0,
+				inputTokens: reply.inputTokens,
+				outputTokens: reply.outputTokens,
+				costUsd: reply.costUsd,
+			};
+		}
 		throw new Error('unparseable verdict');
 	} catch (err) {
 		// Free-first platform chain as the backstop, the experiment arm keeps
@@ -168,7 +194,15 @@ async function judge(mint, model, knowledge = '') {
 		const res = await llmComplete({ system: SYSTEM_PROMPT, user, maxTokens: 200, timeoutMs: TIMEOUT_MS });
 		const verdict = parseVerdict(res?.text ?? res);
 		if (!verdict) return null;
-		return { ...verdict, model: `fallback:${res?.provider || 'free-chain'}`, answeredBy: res?.model || res?.provider || 'free-chain', latencyMs: Date.now() - t0 };
+		return {
+			...verdict,
+			model: `fallback:${res?.provider || 'free-chain'}`,
+			answeredBy: res?.model || res?.provider || 'free-chain',
+			latencyMs: Date.now() - t0,
+			inputTokens: res?.usage?.input ?? null,
+			outputTokens: res?.usage?.output ?? null,
+			costUsd: null,
+		};
 	}
 }
 
@@ -179,9 +213,10 @@ async function judge(mint, model, knowledge = '') {
 // identity); answered_by records who actually replied when the chain fell back.
 function recordVerdict({ mint, network, requestedModel, verdict }) {
 	sql`
-		insert into sniper_llm_verdicts (mint, network, model, buy, confidence, thesis, latency_ms, answered_by)
+		insert into sniper_llm_verdicts (mint, network, model, buy, confidence, thesis, latency_ms, answered_by, input_tokens, output_tokens, cost_usd)
 		values (${mint}, ${network}, ${requestedModel}, ${verdict.buy}, ${verdict.confidence},
-		        ${verdict.thesis || null}, ${verdict.latencyMs ?? null}, ${verdict.answeredBy || null})
+		        ${verdict.thesis || null}, ${verdict.latencyMs ?? null}, ${verdict.answeredBy || null},
+		        ${verdict.inputTokens ?? null}, ${verdict.outputTokens ?? null}, ${verdict.costUsd ?? null})
 		on conflict (mint, network, model) do nothing
 	`.catch((err) => log.warn('llm verdict record failed', { mint, model: requestedModel, err: err?.message }));
 }

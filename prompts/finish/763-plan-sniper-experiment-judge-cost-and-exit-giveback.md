@@ -650,3 +650,8 @@ much - and tune the next run. That is the whole point of the experiment.
   gate (`agent_sniper_strategies.auto_fund_enabled`).
 ~~~~
 
+
+
+## Status (2026-11-04)
+
+Built: per-verdict token and cost recording in `workers/agent-sniper/llm-judge.js`, migration `20261105100000_sniper_llm_verdict_cost.sql` (written, NOT applied), and the read-only `scripts/sniper-experiment-report.mjs` with tested math in `workers/agent-sniper/experiment-report.js`. Measured on the live DB: trailing-stop exits give back a median 43.2% of peak. Remaining, owner-owned: apply the migration (`npm run db:status`, then `db:migrate`) and deploy the sniper worker, then rerun the report for real net P&L. Any trailing_stop_pct change is a follow-up experiment, not made here.

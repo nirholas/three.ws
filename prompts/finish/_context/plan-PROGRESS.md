@@ -96,3 +96,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 - 983 vscode-3d publish-ready: release script + tests done 2026-11-04; owner sets VSCE_PAT/OVSX_PAT and runs npm run release.
 2026-11-04 | 700-plan-x402-self-hostable-solana-facilitator.md | 1d3496b3c, 353058202 | Facilitator extracted into @three-ws/x402-server/facilitator with attack suite, CLI, guards tests and metrics; npm publish, upstream issue, deploy and devnet settle remain with the owner.
 2026-11-04 | 762-plan-growth-zed-raycast-gradio-poe-listing-packages.md | see git log | Zed, Raycast, Gradio Space, Poe and n8n packages built and verified with live Forge GLBs; owner creates the Raycast account/author and submits listings (order 938).
+763 | DONE-PENDING-OWNER (apply migration 20261105100000 to start pricing verdicts) | 2026-11-04 | judge cost recording + scripts/sniper-experiment-report.mjs + giveback measured (43.2% median)
