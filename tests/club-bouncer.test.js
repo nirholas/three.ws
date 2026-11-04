@@ -29,16 +29,45 @@ import {
 } from 'three';
 import { ClubBouncer, BOUNCER_RADIUS } from '../src/club-bouncer.js';
 
-const RIG_BONES = ['Hips', 'Spine', 'Chest', 'Neck', 'Head', 'LeftArm', 'RightArm', 'LeftUpLeg'];
+// A full humanoid body (no fingers), the shape of the shipped bouncer GLB
+// (/avatars/realistic-male.glb). The canonical clip gate refuses a rig that
+// binds under half the library's body tracks, and the bouncer never stands a
+// rig the gate refuses at the door, so a thinner stick figure would not mount.
+const RIG_TREE = {
+	Hips: ['Spine', 'LeftUpLeg', 'RightUpLeg'],
+	Spine: ['Spine1'],
+	Spine1: ['Spine2'],
+	Spine2: ['Neck', 'LeftShoulder', 'RightShoulder'],
+	Neck: ['Head'],
+	LeftShoulder: ['LeftArm'],
+	LeftArm: ['LeftForeArm'],
+	LeftForeArm: ['LeftHand'],
+	RightShoulder: ['RightArm'],
+	RightArm: ['RightForeArm'],
+	RightForeArm: ['RightHand'],
+	LeftUpLeg: ['LeftLeg'],
+	LeftLeg: ['LeftFoot'],
+	LeftFoot: ['LeftToeBase'],
+	RightUpLeg: ['RightLeg'],
+	RightLeg: ['RightFoot'],
+	RightFoot: ['RightToeBase'],
+};
 
-function makeRig(boneNames = RIG_BONES) {
+function makeRig(tree = RIG_TREE) {
 	const root = new Object3D();
-	const bones = boneNames.map((name) => {
-		const b = new Bone();
-		b.name = name;
-		return b;
-	});
-	for (let i = 1; i < bones.length; i++) bones[i - 1].add(bones[i]);
+	const byName = new Map();
+	const bone = (name) => {
+		if (!byName.has(name)) {
+			const b = new Bone();
+			b.name = name;
+			byName.set(name, b);
+		}
+		return byName.get(name);
+	};
+	for (const [parent, children] of Object.entries(tree)) {
+		for (const child of children) bone(parent).add(bone(child));
+	}
+	const bones = [...byName.values()];
 	// A real skinned body (every vertex on the hips) so the bouncer can measure
 	// and scale it the way it does a loaded GLB.
 	const body = new BoxGeometry(0.5, 1.8, 0.3);
@@ -142,6 +171,24 @@ describe('ClubBouncer', () => {
 		expect(bouncer.position.y).toBeCloseTo(0, 5);
 		// Facing the approaching player (+Z).
 		expect(bouncer.group.rotation.y).toBeCloseTo(0, 5);
+	});
+
+	it('stays away from the door with a rig the clip gate refuses, rather than stand in a T-pose', async () => {
+		const thin = new ClubBouncer({
+			scene,
+			model: makeRig({ Hips: ['Spine', 'LeftUpLeg'], Spine: ['Neck'], Neck: ['Head'] }),
+			manifest: [],
+			idleClipJson: idleClipJson(),
+			bubbleEl: makeBubble(),
+		});
+		try {
+			expect(thin.drivable).toBe(false);
+			expect(await thin.mount({ envRoot: makeAlley(), path: PATH, doorAnchor: DOOR_ANCHOR })).toBe(false);
+			expect(thin.mounted).toBe(false);
+			expect(scene.children).not.toContain(thin.group);
+		} finally {
+			thin.dispose();
+		}
 	});
 
 	it('posts on the pavement at the foot of the steps, never on or inside them', async () => {
