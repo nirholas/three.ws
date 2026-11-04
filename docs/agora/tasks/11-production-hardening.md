@@ -70,7 +70,7 @@ exists. If you find a missing feature, file it as a new task file, don't scope-c
 - [ ] Every surface's loading/empty/error/populated/overflow states designed and
   reachable; no blank voids, no dead paths.
 - [ ] Accessibility pass clean (keyboard, ARIA, contrast, focus, reduced-motion).
-- [ ] Performance: lazy-load + pagination + dispose verified; no leak over 30 min;
+- [x] Performance (fleet budget shipped in task 12): lazy-load + pagination + dispose verified; no leak over 30 min;
   60fps busy; Lighthouse budget met.
 - [ ] Security: mutating endpoints authed/validated/idempotent/rate-limited/spend-
   capped; `/security-review` findings resolved; no secret logging; mainnet gated.

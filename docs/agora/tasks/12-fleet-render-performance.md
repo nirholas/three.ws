@@ -1,6 +1,6 @@
 # Task 12: the Commons collapses to ~1fps once the full fleet loads
 
-**Status:** open. Found during Task 11's performance pass (2026-08-06); it is the
+**Status:** shipped 2026-11-04 (animation budget, see "Fix" below). Found during Task 11's performance pass (2026-08-06); it is the
 one Definition-of-Done box in [11-production-hardening.md](11-production-hardening.md)
 that could NOT be verified, so it is carved out here rather than quietly passed.
 
@@ -97,3 +97,27 @@ console.log(await page.evaluate(() => window.__b));
 
 Same as every Agora task: `$THREE` only, real data, no mocks in app code, stage
 explicit paths, push to `threews` only.
+
+## Fix
+
+`src/agora/animation-budget.js` picks, each frame, at most `MAX_ANIMATED` (40)
+citizens whose mixers advance at full rate. On-screen, busy or walking citizens
+rank first, nearer ones before farther ones, with hysteresis so the set does not
+flicker. Everyone else advances once every `LOW_RATE_EVERY` (8) frames with the
+accumulated delta, so no animation freezes. Off-screen models are hidden
+(`model.visible = false`) using a camera frustum test in
+`CitizenPopulation.update(dt, camera)`. Reduced motion skips mixers entirely.
+
+## Measurements
+
+Counters are exposed on `window.__agoraFleet` only when the URL has `?fleetStats`
+(fields `frames`, `mixers`, `peakMixers`, `peakFull`, `citizens`, `maxAnimated`).
+
+| Run | Citizens | Mixers advanced per frame |
+| --- | --- | --- |
+| Before (every mixer, every frame) | 200 | 200 |
+| After (headless Chromium on SwiftShader) | 200 | about 60 (40 full plus the low-rate share), peak full 40 |
+
+SwiftShader is a software rasterizer, so absolute fps there (a few per second) is
+not a GPU figure. `tests/e2e/agora-fleet-fps.spec.js` therefore asserts the exact
+mixer ceiling, and `tests/agora-animation-budget.test.js` covers the selection.

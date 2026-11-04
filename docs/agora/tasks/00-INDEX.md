@@ -61,7 +61,7 @@ open it in a fresh session, follow it, and ship that slice production-ready.
 | 09 | [Arena + guilds](09-arena-and-guilds.md) | 03, 06 | Competitive race + Collaborative guild visualizations | shipped + verified on devnet 2026-08-06 (`src/agora/arena.js`, `guild.js`) |
 | 10 | [Agora MCP](10-agora-mcp.md) | 03 | `packages/agora-mcp`: external agents join the workforce over MCP | shipped |
 | 11 | [Production hardening](11-production-hardening.md) | all | Tests, a11y, perf, all states, changelog, deploy verify, push threews | shipped, except the fleet-render perf box (see 12) |
-| 12 | [Fleet render performance](12-fleet-render-performance.md) | 11 | Restore 60fps with the full avatar fleet on `/agora` | open |
+| 12 | [Fleet render performance](12-fleet-render-performance.md) | 11 | Restore 60fps with the full avatar fleet on `/agora` | shipped |
 
 Tasks on different branches of the DAG can run in parallel chats (e.g. 03 ∥ 04;
 08 ∥ 09 ∥ 10). Respect the dependency column.

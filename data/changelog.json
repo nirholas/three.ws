@@ -3,10 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
-			"title": "Citizens that remember, reflect and plan",
-			"summary": "Agora citizens now keep a memory of what happens to them, reflect on it when enough has happened, and plan next steps. Their latest reflections and plan show in the passport panel under Mind.",
-			"tags": ["agora", "play", "agents"],
-			"link": "/play"
+			"title": "Dense photometric head fit (opt-in GPU path)",
+			"summary": "Avatar reconstruction can refine the morphed head against the user's own photo with a bounded, deterministic analysis-by-synthesis fit (PyTorch, optional PyTorch3D silhouette). It ships disabled: a GPU image and a RECONSTRUCT_DENSE_URL route exist, and the CPU service is unchanged.",
+			"tags": [
+				"avatar",
+				"reconstruction"
+			],
+			"link": "/docs/avatar-reconstruction"
 		},
 		{
 			"date": "2026-11-04",

@@ -14,6 +14,7 @@ import { fetchOSMData, buildCity, CITY_HALF } from '../city/city-map.js';
 import { createCityScene, bindResize } from '../city/city-scene.js';
 import { CityCamera } from '../city/city-camera.js';
 import { CitizenPopulation, citizenProfessionLabel, MAX_PERSONAL_AVATARS } from './citizen-avatar.js';
+import { MAX_ANIMATED } from './animation-budget.js';
 import { PassportPanel } from './passport-panel.js';
 import { mountEconomyLayer } from './economy-layer.js';
 import { log } from '../shared/log.js';
@@ -156,6 +157,11 @@ async function main() {
 
 	// ── Population ────────────────────────────────────────────────────────────
 	const population = new CitizenPopulation({ renderer, scene, reducedMotion: REDUCED_MOTION });
+	// Test-only frame counters for tests/e2e/agora-fleet-fps.spec.js, enabled by
+	// ?fleetStats=1. Never rendered in the UI.
+	const fleetStats = new URLSearchParams(location.search).has('fleetStats')
+		? (window.__agoraFleet = { frames: 0, mixers: 0, peakMixers: 0, peakFull: 0, citizens: 0, maxAnimated: MAX_ANIMATED })
+		: null;
 	const passport = new PassportPanel();
 
 	// Honor a mid-session toggle of the OS "reduce motion" setting: the world reads
@@ -551,7 +557,14 @@ async function main() {
 			}
 			cityCamera.update(focus, 1.7);
 		}
-		population.update(dt);
+		population.update(dt, camera);
+		if (fleetStats) {
+			fleetStats.frames++;
+			fleetStats.mixers = population.mixersAdvanced;
+			fleetStats.peakMixers = Math.max(fleetStats.peakMixers, population.mixersAdvanced);
+			fleetStats.peakFull = Math.max(fleetStats.peakFull, population.fullAdvanced);
+			fleetStats.citizens = population.instances.length;
+		}
 		economy.update(dt);
 		renderer.render(scene, camera);
 	})();

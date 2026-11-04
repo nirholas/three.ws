@@ -18,14 +18,15 @@
 //     it just holds its authored pose instead of idling — never a T-pose void.
 
 import {
-	AnimationMixer, Box3, CanvasTexture, Group, Mesh, RingGeometry,
-	MeshBasicMaterial, Sprite, SpriteMaterial, Vector3, DoubleSide, SRGBColorSpace,
+	AnimationMixer, Box3, CanvasTexture, Frustum, Group, Matrix4, Mesh, RingGeometry,
+	MeshBasicMaterial, Sphere, Sprite, SpriteMaterial, Vector3, DoubleSide, SRGBColorSpace,
 } from 'three';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import { gltfLoader } from '../loaders/gltf.js';
 import { AnimationManager } from '../animation-manager.js';
 import { loadManifest, getLocomotionDefs, resolveAvatarUrl, AVATAR_DEFAULT, CLIP_IDLE, CLIP_WALK } from '../game/avatar-rig.js';
 import { log } from '../shared/log.js';
+import { selectAnimated, MAX_ANIMATED } from './animation-budget.js';
 import { scaleToHeight, groundFeet } from '../shared/avatar-fit.js';
 
 // Target on-screen height so wildly-scaled GLBs all read as people in the square.
@@ -116,6 +117,11 @@ export function citizenProfessionLabel(citizen) {
 }
 
 const _box = new Box3();
+const _frustum = new Frustum();
+const _viewProj = new Matrix4();
+const _bounds = new Sphere();
+// A standing citizen fits inside this sphere around its feet position.
+const CITIZEN_RADIUS = 1.4;
 const _v = new Vector3();
 
 // Build a crisp, high-DPI billboard label: bold name over a profession chip.
@@ -482,11 +488,39 @@ export class CitizenPopulation {
 		this._beginFade(inst);
 	}
 
-	/** Advance idle loops + fade-ins + locomotion. Cheap: one mixer.update per citizen. */
-	update(dt) {
+	/**
+	 * Advance locomotion, fade-ins and the pose of the citizens the animation
+	 * budget selects (src/agora/animation-budget.js). Locomotion runs for all
+	 * citizens because it is cheap and keeps positions honest; the mixer, bone
+	 * matrices and bone texture upload are the per-citizen cost, so they run at
+	 * full rate for at most MAX_ANIMATED citizens, once every few frames for the
+	 * rest, and never for a model that is off screen.
+	 * @param {number} dt
+	 * @param {import('three').Camera} [camera] without one every citizen animates
+	 */
+	update(dt, camera) {
+		this._frame = (this._frame || 0) + 1;
+		if (camera) {
+			camera.updateMatrixWorld();
+			_viewProj.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+			_frustum.setFromProjectionMatrix(_viewProj);
+		}
+
+		const items = [];
 		for (const inst of this.instances) {
 			this._advanceMotion(inst, dt);
-			if (!this.reducedMotion) inst.mixer?.update(dt);
+			if (camera) {
+				const g = inst.group.position;
+				_bounds.center.set(g.x, inst.height * 0.5, g.z);
+				_bounds.radius = Math.max(CITIZEN_RADIUS, inst.height * 0.6);
+				inst.onScreen = _frustum.intersectsSphere(_bounds);
+				if (inst.model.visible !== inst.onScreen) inst.model.visible = inst.onScreen;
+			} else {
+				inst.onScreen = true;
+			}
+			if (inst.mixer) {
+				items.push({ id: inst.citizen.id, x: inst.group.position.x, z: inst.group.position.z, onScreen: inst.onScreen, busy: inst.busy, walking: Boolean(inst.walkTarget) });
+			}
 			if (inst.fade) {
 				inst.fade.t += dt;
 				const k = Math.min(1, inst.fade.t / FADE_IN_SEC);
@@ -498,6 +532,30 @@ export class CitizenPopulation {
 				}
 			}
 		}
+
+		let advanced = 0;
+		let fullCount = 0;
+		if (!this.reducedMotion) {
+			const camPos = camera ? camera.position : { x: 0, y: 0, z: 0 };
+			const { full, low } = camera
+				? selectAnimated({ items, camera: camPos, cap: MAX_ANIMATED, frame: this._frame, prev: this._animated || new Set() })
+				: { full: new Set(items.map((i) => i.id)), low: new Set() };
+			this._animated = full;
+			for (const inst of this.instances) {
+				if (!inst.mixer) continue;
+				const id = inst.citizen.id;
+				if (full.has(id) || low.has(id)) {
+					inst.mixer.update(dt + (inst.pendingDt || 0));
+					inst.pendingDt = 0;
+					advanced++;
+					if (full.has(id)) fullCount++;
+				} else {
+					inst.pendingDt = (inst.pendingDt || 0) + dt;
+				}
+			}
+		}
+		this.mixersAdvanced = advanced;
+		this.fullAdvanced = fullCount;
 	}
 
 	// ── Locomotion + economy state (Task 06) ──────────────────────────────────
