@@ -76,6 +76,17 @@ A page error, boot error card or main-thread hang still fails a run, but when an
 
 Exit codes: `0` every step passed, `1` a real regression, `3` a step never got a fair reading (a navigation timeout or `net::ERR_NETWORK_CHANGED` on a busy box) even after one automatic retry. `3` means "rerun when the machine is quiet", never "fine".
 
+### Client audit results (2026-11-04)
+
+| Area | Result | Evidence |
+| --- | --- | --- |
+| First impression (production, chromium, loaded machine) | 0 page errors, 0 disconnects, 18.8 MB, world visible at 10 s, heap 93 MB with no growth | `npm run audit:event-client -- --base https://three.ws --only mobile:chromium`; later reruns were `unmeasured` because the software renderer froze the page, which the harness reports as exit 3, not a pass |
+| Failure states | Share sheet joins the shared modal stack (Escape, Tab trap, focus return); friends, NPC purchases and coin-buy sign-in show the translated network line | `tests/play-share-sheet-modal.test.js`, `tests/play-fetch-boundary-copy.test.js` |
+| Accessibility | HUD text roles measure at least 4.5:1 over white and black scenes | `tests/play-hud-contrast.test.js` |
+| Gate proof | `--limit chromium.maxTransferMB=1` and the verdict unit tests show a seeded regression exits 1 | `tests/audit-event-client-verdict.test.js` |
+
+Not measurable without a GPU: WebKit and phone-width frame numbers. Run `npm run audit:event-client -- --base https://three.ws` on a GPU host or real device before the meetup.
+
 ## Net and economy harnesses (meetup 3, 2026-11-06)
 
 Two scripts audit the /play world end to end against the real multiplayer server. Both boot their own server on a free port, exit 0 only when every check holds, and accept `--seed-fault` to prove they can fail.

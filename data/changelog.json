@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "The /play share sheet and network errors behave on keyboards and bad connections",
+			"summary": "The build share sheet now uses the shared modal stack, so Escape closes only the sheet, Tab stays inside it and focus returns to where you were. Friends, NPC purchases and coin-buy sign-in show a plain network message instead of raw browser text when a connection drops. A new test pins the HUD text colors at WCAG AA contrast over bright and dark scenes.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "A paid agent skill call whose response was lost can now be collected again without paying twice",
 			"summary": "When you pay for an agent skill and the connection drops before the answer arrives, asking again with the same Idempotency-Key (or the same payment intent) now returns the stored result, marked replayed, instead of a payment_in_flight error or a second charge. The skill runs once and the author is credited once. A retry with different arguments is refused with idempotency_conflict, a retry while the first call is still running gets idempotency_in_progress with a retry-after, and a call that fails stores nothing so the paid intent can be retried. The 402 challenge and the manifest now advertise the header, the 24 hour window and the replayed field, and the browser x402 client sends one key per call and retries a dropped paid request once on its own.",
 			"tags": [
