@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T17:53:57.000Z",
+	"generated_at": "2026-11-04T18:03:25.677Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4348,
+	"total": 4352,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -127,6 +127,17 @@
 			"link": "/microsoft/teams-tab",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "3D generation workers accept PNG, JPEG and WEBP only, and say so when an image is refused",
+			"summary": "Every photo you hand Forge, avatar reconstruction or scene decomposition is now decoded only as PNG, JPEG or WEBP, so a file in any other format never reaches an image parser on the GPU workers. A refused or corrupt image now fails with a clear message naming the three formats instead of a generic worker error. The image library is pinned exactly on every worker, the talking-avatar worker moves to transformers 4.57.6 with bit-identical output, and oversized EXIF blocks are ignored rather than parsed. Takes effect as each worker image is rebuilt.",
+			"link": null,
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -277,6 +288,17 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Invite friends to a /play world with a QR code and a link that unfurls as that coin",
+			"summary": "A new Invite button in /play (and on every lobby card) opens a sheet with a live QR code, the world's link with one-click Copy, and Share, falling back to X and Telegram where the browser has no share sheet. During the week before an event and while it is live, the sheet leads with the event name and a countdown. Pasted links now unfurl as the coin's own world: its art, ticker, name and the biome it actually renders in, instead of a generic Play card. The card also used to name the wrong biome for most coins and showed no art for $THREE; both are fixed.",
+			"link": "/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Knocks, agent mail and event markets get their own tabs on /notifications",
 			"summary": "The notifications page now builds its filter tabs from the same category list as your notification preferences, so it can no longer fall out of step with them. Knocks, agent mail, event-market entries, orders and approvals each get their own tab instead of landing under Account, and those rows now read as sentences (\"Scout got mail from Bob\") with their own icon. A knock now opens your knock inbox when clicked. Only categories you have notifications in are shown, the tabs work with arrow keys, each empty tab links to that category's delivery settings, and if the category list cannot load the page still shows everything with a Retry.",
 			"link": "/notifications",
@@ -341,6 +363,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Paid endpoint 402 challenges validate on external x402 directories",
+			"summary": "The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.",
+			"link": "/docs/x402-distribution",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Play holds up on a shaky connection",
 			"summary": "When the connection drops in Play, you now get a plain explanation and a way forward instead of a raw error code. Builds that fail to save retry on their own until they land, and a world whose saved builds did not load tries again before telling you. A dropped matchmaking poll keeps your community in the war queue. A message thread that fails to load shows a Retry button, and a chat reply that drops shows why instead of \"They went quiet\". The pay demo only says no funds moved when that is certain. Escape now closes only the top panel, and the loading and error screens, the wheel and the stage prompt follow your language.",
 			"link": "/play",
@@ -357,6 +389,17 @@
 			"link": "/play",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Status page shows the retired world as retired, not down",
+			"summary": "The deleted world.three.ws service now carries an explicit, reversible retired state: the health rollup, alerts and status page no longer report a permanent false outage, so a red status always means something real.",
+			"link": "/status",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1511,46 +1554,6 @@
 			"title": "Commit feed cron skips quietly on a lock-check fault",
 			"summary": "The commit feed cron now skips a tick with a 200 when the database lock check hits a transient fault, instead of answering a raw 500 and raising an ops alert. The next tick retries.",
 			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-25",
-			"type": "update",
-			"title": "Fixed phone/desktop/CLI/Telegram account linking, which was failing on every attempt",
-			"summary": "Every account-link action (mint, claim, poll, pending, decide, devices, revoke) behind /dashboard/account and the mobile-app pairing flow had been throwing on every call since the device-linking feature shipped on 2026-10-11, because its own first migration created a table under a name an older, unrelated agent-identity feature already owned, so the new table silently never got created with the right columns. The old table is renamed out of the way instead of dropped, so its rows are preserved, and the device-linking table now gets created with the shape the feature actually needs.",
-			"link": "/dashboard/account",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-25",
-			"type": "update",
-			"title": "Gallery and marketplace thumbnails degrade gracefully instead of showing a broken-image icon",
-			"summary": "Six image spots on /gallery and /marketplace (the avatar grid thumbnail, the equip-avatar picker row, the live-sale ticker avatar, the animation marketplace listing card, the animation buy-modal preview, and a tool-detail icon) rendered a plain <img> with no fallback, so a 502 or missing thumbnail left the browser's default broken-image glyph on two of the highest-traffic pages in the product. All six now carry the same data-fallback attribute the site already uses elsewhere: card-style thumbnails swap to the existing placeholder box, small avatar icons just disappear instead. A seventh untagged image turned up in the gallery's forge-card renderer while verifying the other six and got the same fix.",
-			"link": "/gallery",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-25",
-			"type": "update",
-			"title": "GET /api/crypto/bonding's last-known-good cache now survives a full RPC-lane cooldown, not just 30 minutes",
-			"summary": "The last-known-good tier behind /api/crypto/bonding (added to survive a pump.fun Cloudflare block) kept each mint's cached bonding-curve status for only 30 minutes, far shorter than the outages it exists to cover: the Solana RPC lane cooldown runs up to 6 hours once a lane exhausts its quota, and the pump.fun Cloudflare block it was built for has stayed up for multiple days straight. Once both the 25-second live cache and the 30-minute backup expired during one of those outages, the endpoint fell all the way through to a hard 503 on every /launches and /oracle/coin bonding-progress panel. The cache now holds each mint's last good read for 6 hours by default, still overridable with PUMP_BONDING_LKG_TTL_S.",
-			"link": "/docs/api-reference",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-25",
-			"type": "update",
-			"title": "GET /api/pump-bounties and its stats/detail routes serve last-known-good data instead of a 502",
-			"summary": "pump.fun's Cloudflare anti-bot challenge has been rejecting livestream-api.pump.fun's bounty API for hours at a time, which left the bounty list, the aggregate stats, and individual bounty detail pages 502ing for every visitor even though the board itself had not changed. All three routes now go through the same last-known-good cache tier already proven on /api/portal and /api/crypto/bonding: a fresh answer is mirrored into a 24-hour backup, and that backup answers (flagged with an x-pump-stale header) instead of a 502 once the live fetch fails. A true miss, with nothing cached at all, still returns the original pump.fun error unchanged.",
-			"link": "/bounties",
 			"tags": [
 				"fix"
 			]

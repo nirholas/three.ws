@@ -103,6 +103,14 @@
 			<description>The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.</description>
 		</item>
 		<item>
+			<title>3D generation workers accept PNG, JPEG and WEBP only, and say so when an image is refused</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:3D generation workers accept PNG, JPEG and WEBP only, and say so when an image is refused</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Every photo you hand Forge, avatar reconstruction or scene decomposition is now decoded only as PNG, JPEG or WEBP, so a file in any other format never reaches an image parser on the GPU workers. A refused or corrupt image now fails with a clear message naming the three formats instead of a generic worker error. The image library is pinned exactly on every worker, the talking-avatar worker moves to transformers 4.57.6 with bit-identical output, and oversized EXIF blocks are ignored rather than parsed. Takes effect as each worker image is rebuilt.</description>
+		</item>
+		<item>
 			<title>A paid agent skill call whose response was lost can now be collected again without paying twice</title>
 			<link>https://three.ws/docs/x402</link>
 			<guid isPermaLink="false">2026-11-04:A paid agent skill call whose response was lost can now be collected again without paying twice</guid>
@@ -215,6 +223,14 @@
 			<description>The three.ws Home Assistant integration now has its own public repository, github.com/nirholas/three-ws-home-assistant, with a 1.0.2 release. In HACS, add it under Custom repositories (category Integration), install three.ws, restart, and paste the pairing code from three.ws/smart-home. Your house opens one outgoing connection, nothing on your network is exposed, and no Home Assistant token ever leaves the house. It passes the real HACS and hassfest validation checks, ships its own brand icon, and is listed under AI and voice assistants. A HACS default-store listing, which removes the custom repository step, is prepared.</description>
 		</item>
 		<item>
+			<title>Invite friends to a /play world with a QR code and a link that unfurls as that coin</title>
+			<link>https://three.ws/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</link>
+			<guid isPermaLink="false">2026-11-04:Invite friends to a /play world with a QR code and a link that unfurls as that coin</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Invite button in /play (and on every lobby card) opens a sheet with a live QR code, the world's link with one-click Copy, and Share, falling back to X and Telegram where the browser has no share sheet. During the week before an event and while it is live, the sheet leads with the event name and a countdown. Pasted links now unfurl as the coin's own world: its art, ticker, name and the biome it actually renders in, instead of a generic Play card. The card also used to name the wrong biome for most coins and showed no art for $THREE; both are fixed.</description>
+		</item>
+		<item>
 			<title>Knocks, agent mail and event markets get their own tabs on /notifications</title>
 			<link>https://three.ws/notifications</link>
 			<guid isPermaLink="false">2026-11-04:Knocks, agent mail and event markets get their own tabs on /notifications</guid>
@@ -263,6 +279,14 @@
 			<description>With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting.</description>
 		</item>
 		<item>
+			<title>Paid endpoint 402 challenges validate on external x402 directories</title>
+			<link>https://three.ws/docs/x402-distribution</link>
+			<guid isPermaLink="false">2026-11-04:Paid endpoint 402 challenges validate on external x402 directories</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.</description>
+		</item>
+		<item>
 			<title>Play holds up on a shaky connection</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-04:Play holds up on a shaky connection</guid>
@@ -277,6 +301,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>/play, the club and the trade room lower their graphics settings when a device can't keep up, but they were measuring frame time in a way that made a device drawing 2 frames a second look like one drawing 20. A struggling phone or older laptop could spend half a minute or more on the heaviest settings before anything changed, and a device below 1 frame a second could stay there for minutes. They now measure the real time between frames, so a device that can't keep up steps down to lighter settings within a couple of seconds, while a healthy device coming back from a hidden tab is left alone.</description>
+		</item>
+		<item>
+			<title>Status page shows the retired world as retired, not down</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-11-04:Status page shows the retired world as retired, not down</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The deleted world.three.ws service now carries an explicit, reversible retired state: the health rollup, alerts and status page no longer report a permanent false outage, so a red status always means something real.</description>
 		</item>
 		<item>
 			<title>The /play share sheet and network errors behave on keyboards and bad connections</title>
