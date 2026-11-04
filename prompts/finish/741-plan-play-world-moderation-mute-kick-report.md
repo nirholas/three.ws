@@ -1,5 +1,7 @@
 # /play world moderation with host mute, kick, ban and player reports
 
+**Status (2026-11-04):** Code, tests, CLI and runbook are committed (5944e12c5). Verified: 21 unit tests, a live signed e2e against a real multiplayer server (list, mute, unmute, kick, 401 on bad or missing signature), and a browser run of the report dialog and muted strip. Remaining for the owner: redeploy the multiplayer service with `multiplayer/deploy-cloudrun.sh`, set `UPSTASH_REDIS_REST_URL`/`_TOKEN` on it for ban persistence, run `npm run i18n:translate` once Vertex billing is restored (non-English locales fall back to English).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/741-plan-play-world-moderation-mute-kick-report.md`.
 
 **Priority:** P2, new capability with clear value (score 46 of 100 inside the tier). **Area:** play. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

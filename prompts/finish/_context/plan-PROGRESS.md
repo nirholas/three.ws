@@ -100,3 +100,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 762-plan-growth-zed-raycast-gradio-poe-listing-packages.md | see git log | Zed, Raycast, Gradio Space, Poe and n8n packages built and verified with live Forge GLBs; owner creates the Raycast account/author and submits listings (order 938).
 - 984 EVM AgentPayments CREATE2 readiness done 2026-11-04 (fork-proven, Basescan verified); owner broadcasts per chain after choosing the owner and funding the deployer.
 765 | DONE-PENDING-OWNER (apply migration 20261105110000, deploy, then open a tagged link to verify browser flow) | 2026-11-04 | first-party campaign touch ledger, conversions, report, link helper
+2026-11-04 | 741-plan-play-world-moderation-mute-kick-report.md | 5944e12c5 | Mute, kick, ban, report and muted strip built and verified live; owner redeploys the multiplayer service and sets Upstash env for ban persistence.
