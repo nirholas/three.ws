@@ -342,6 +342,14 @@
 					"added": "2026-06-13"
 				},
 				{
+					"path": "/glass",
+					"title": "Glass",
+					"description": "The three.ws web app for Meta Ray-Ban Display. See the agents standing around you, talk to one with a pinch, and hand it off to your phone.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/irl-privacy",
 					"title": "How location works on IRL",
 					"description": "Placed agents are private by location: they appear only to people physically standing near them, never on a map or a list. What's shared, what isn't, and how your camera, motion, and location are used.",

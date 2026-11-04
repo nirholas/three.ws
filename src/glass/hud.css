@@ -1,0 +1,70 @@
+/* Meta Ray-Ban Display HUD: pure black is transparent on the waveguide, so every
+   surface is #000 and content is light on dark. 600x600 viewport, 20px minimum
+   body text, a visible focus glow, and no continuous animation. */
+:root {
+	--g-bg: #000;
+	--g-fg: #f2f4f8;
+	--g-dim: #a9b0bd;
+	--g-accent: #7aa2ff;
+	--g-alert: #ffd479;
+	--g-line: #2a2f3a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--g-bg); color: var(--g-fg); }
+body {
+	font: 400 22px/1.3 system-ui, -apple-system, 'Segoe UI', sans-serif;
+	min-height: 100vh;
+	overflow: hidden;
+}
+.g-root {
+	width: 100%;
+	max-width: 600px;
+	height: 100vh;
+	max-height: 600px;
+	margin: 0 auto;
+	padding: 20px 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	outline: none;
+}
+.g-title { font-size: 26px; font-weight: 600; margin: 0; }
+.g-sub { color: var(--g-dim); font-size: 20px; margin: 0; }
+.g-alert { color: var(--g-alert); }
+.g-arrow {
+	font-size: 96px;
+	line-height: 1;
+	color: var(--g-accent);
+	text-align: center;
+	transition: transform 120ms linear;
+}
+.g-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.g-btn, .g-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	min-height: 56px;
+	padding: 10px 16px;
+	font: inherit;
+	color: var(--g-fg);
+	background: var(--g-bg);
+	border: 2px solid var(--g-line);
+	border-radius: 14px;
+	cursor: pointer;
+	text-align: left;
+}
+.g-btn:hover, .g-item:hover { border-color: var(--g-dim); }
+.g-btn:active, .g-item:active { background: #14171d; }
+.g-btn:focus-visible, .g-item:focus-visible, .g-btn:focus, .g-item:focus {
+	outline: none;
+	border-color: var(--g-accent);
+	box-shadow: 0 0 0 3px rgba(122, 162, 255, 0.45);
+}
+.g-dist { color: var(--g-accent); font-variant-numeric: tabular-nums; }
+.g-skel { height: 56px; border-radius: 14px; background: #101216; }
+.g-reply { white-space: pre-wrap; overflow-y: auto; flex: 1; }
+.g-code { font-size: 72px; letter-spacing: 0.12em; text-align: center; color: var(--g-accent); font-variant-numeric: tabular-nums; }
+.g-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.g-row > .g-btn { flex: 1 1 auto; justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .g-arrow { transition: none; } }

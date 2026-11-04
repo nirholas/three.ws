@@ -2098,6 +2098,14 @@
 			"dest": "/api/irl/share/[token]?token=$1"
 		},
 		{
+			"src": "/g/([^/]+)/?",
+			"dest": "/api/glass/handoff?code=$1"
+		},
+		{
+			"src": "/glass/?",
+			"dest": "/glass.html"
+		},
+		{
 			"src": "/irl/?",
 			"dest": "/irl.html"
 		},

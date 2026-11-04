@@ -196,6 +196,8 @@ it. Nothing here is gated on Meta approving anything, except distribution.
 
 ### Phase 0: access and proof
 
+> Status 2026-11-04: pending hardware. Every item here needs a physical Meta Ray-Ban Display or the Chrome simulator extension and belongs to the owner. The `/glass` page itself is live, so the stub step reduces to scanning its QR code.
+
 - [ ] Meta Ray-Ban Display glasses on v125+, Meta AI app v272+, Developer Mode on.
 - [ ] Install the Meta Ray-Ban Display Web App Simulator Chrome extension and
       confirm the 600x600 additive preview against a static page.
@@ -211,17 +213,19 @@ glasses and logs a d-pad event from a real pinch.
 
 ### Phase 1: the lens surface
 
-- [ ] `pages/glass.html` with the documented viewport and
+> Status 2026-11-04: built and covered by `tests/glass-dpad.test.js` and `tests/e2e/glass.spec.js` (600x600, keys only). On-lens verification is pending hardware.
+
+- [x] `pages/glass.html` with the documented viewport and
       `<meta name="mrbd-web-app-capable" content="yes">`, registered in
       [vite.config.js](../../vite.config.js), [vercel.json](../../vercel.json)
       and [data/pages.json](../../data/pages.json).
-- [ ] `src/glass/hud.css`: the additive design system above, as tokens.
-- [ ] `src/glass/dpad.js`: roving focus over `.focusable`, wrap-around, `Enter`
+- [x] `src/glass/hud.css`: the additive design system above, as tokens.
+- [x] `src/glass/dpad.js`: roving focus over `.focusable`, wrap-around, `Enter`
       to activate, `Escape` to pop, continuous-drag scrubbing. Pure and unit
       tested (no DOM assumptions beyond an element list).
-- [ ] `src/glass/main.js`: view stack, document-visibility lifecycle, a single
+- [x] `src/glass/main.js`: view stack, document-visibility lifecycle, a single
       render pass per state change (never a per-event DOM write).
-- [ ] Every designed state present, including the ones that are not the happy
+- [x] Every designed state present, including the ones that are not the happy
       path.
 
 **Done when:** the surface passes `npm run check:dist` and `npm run check:pages`,
@@ -230,13 +234,13 @@ the five inputs.
 
 ### Phase 2: the presence loop
 
-- [ ] `src/glass/presence.js`: check-in, token expiry and geohash-cell re-mint,
+- [x] `src/glass/presence.js`: check-in, token expiry and geohash-cell re-mint,
       adaptive polling, request coalescing, honest error surfacing.
-- [ ] `src/glass/compass.js`: `deviceorientation` to a screen-relative bearing,
+- [x] `src/glass/compass.js`: `deviceorientation` to a screen-relative bearing,
       `requestPermission()` behind the first pinch, a calibration state when the
       heading is unreliable.
 - [ ] Scanning view: heading ring, nearby count, last-fix age.
-- [ ] Nearby view: ranked list, each row name + `formatDistance()` +
+- [x] Nearby view: ranked list, each row name + `formatDistance()` +
       `arrowGlyph()` from the shared protocol module.
 - [ ] Arrival: crossing into a pin's radius promotes that agent to the lens once,
       with a real interaction logged (`POST /api/irl/interactions`, type
@@ -249,15 +253,15 @@ tracks the turn, on hardware, with the phone in a pocket.
 
 - [ ] Agent card: portrait from `/api/render/avatar-clip`, name, caption, the
       actions (Talk, See it in AR, and its x402 endpoint when the pin carries one).
-- [ ] `POST /api/chat` extended with an opt-in `suggestReplies` count, returning
+- [x] `POST /api/chat` extended with an opt-in `suggestReplies` count, returning
       three short suggestions in the same completion. Wired for `/glass` first,
       then offered to [src/irl/pin-talk.js](../../src/irl/pin-talk.js), which
       wants it too.
-- [ ] Talk view: transcript, focused reply list, send on pinch, honest thinking
+- [x] Talk view: transcript, focused reply list, send on pinch, honest thinking
       and error states, conversation capped to what fits on a lens.
 - [ ] Capability gates for the composer and for audio, each proven at runtime
       rather than assumed.
-- [ ] One `talk` interaction per conversation, never the transcript, matching
+- [x] One `talk` interaction per conversation, never the transcript, matching
       the existing IRL privacy posture.
 
 **Done when:** a full exchange with a real pinned agent happens on the lens with
@@ -266,12 +270,12 @@ log) shows the encounter.
 
 ### Phase 4: handing off to the body
 
-- [ ] `api/glass/handoff.js`: mint a six-character code for a pin, resolve
+- [x] `api/glass/handoff.js`: mint a six-character code for a pin, resolve
       `three.ws/g/<code>` to `/irl?pin=<id>`, expiring, owner-free, rate limited.
 - [ ] Push lane for signed-in wearers through the existing notification rail.
-- [ ] `api/glass/pair.js`: claim a lens session from the phone, upgrading the
+- [x] `api/glass/pair.js`: claim a lens session from the phone, upgrading the
       anonymous device token to the account.
-- [ ] `/irl` recognises an arrival that started on the lens and opens the pin
+- [x] `/irl` recognises an arrival that started on the lens and opens the pin
       card directly, the way the visit link already does.
 
 **Done when:** a pinch on the lens puts the avatar in your hand in AR in under
