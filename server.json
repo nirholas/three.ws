@@ -214,6 +214,11 @@
 					"name": "agent-report",
 					"title": "Agent status report",
 					"arguments": ["agentId"]
+				},
+				{
+					"name": "market-brief",
+					"title": "Solana market brief",
+					"arguments": ["focus", "count"]
 				}
 			]
 		}

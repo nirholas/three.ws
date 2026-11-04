@@ -181,7 +181,8 @@
 				"predictions",
 				"embed-avatar",
 				"agent-get-started",
-				"agent-report"
+				"agent-report",
+				"market-brief"
 			]
 		},
 		{
@@ -225,7 +226,8 @@
 				"daily-3d-brief",
 				"asset-pack",
 				"avatar-from-photo",
-				"agent-report"
+				"agent-report",
+				"market-brief"
 			]
 		},
 		{
