@@ -16,71 +16,72 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
-body { width: 43in; height: 24in; padding: 1in; font-family: 'Inter', 'Inter Fallback', Arial, sans-serif; font-size: 34px; line-height: 1.32; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: hidden; }
-.sheet { width: 41in; height: 22in; display: grid; grid-template-rows: auto 1fr; row-gap: 0.32in; }
-header { display: grid; grid-template-columns: 1fr auto; column-gap: 0.6in; align-items: start; border-bottom: 6px solid var(--ink); padding-bottom: 0.26in; }
-h1 { margin: 0; font-size: 112px; line-height: 1.04; font-weight: 700; letter-spacing: -0.015em; }
-.subtitle { margin: 0.16in 0 0; font-size: 50px; line-height: 1.22; font-weight: 500; color: var(--ink-2); }
+body { width: 43in; height: 24in; padding: 1in; font-family: 'Inter', 'Inter Fallback', Arial, sans-serif; font-size: 27px; line-height: 1.28; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: hidden; }
+.sheet { width: 41in; height: 22in; display: grid; grid-template-rows: auto 1fr; row-gap: 0.22in; }
+header { display: grid; grid-template-columns: 1fr auto; column-gap: 0.6in; align-items: start; border-bottom: 6px solid var(--ink); padding-bottom: 0.18in; }
+h1 { margin: 0; font-size: 92px; line-height: 1.02; font-weight: 700; letter-spacing: -0.015em; }
+.subtitle { margin: 0.12in 0 0; font-size: 40px; line-height: 1.2; font-weight: 500; color: var(--ink-2); }
 .subtitle b { color: var(--ink); font-weight: 700; }
-.authors { text-align: right; font-size: 34px; line-height: 1.35; color: var(--ink-2); padding-top: 0.1in; min-width: 7.5in; }
-.authors .name { font-size: 42px; font-weight: 600; color: var(--ink); }
-.authors .mono { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 28px; }
+.authors { text-align: right; font-size: 27px; line-height: 1.35; color: var(--ink-2); padding-top: 0.1in; min-width: 7.5in; }
+.authors .name { font-size: 36px; font-weight: 600; color: var(--ink); }
+.authors .mono { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 23px; }
 .columns { display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 0.5in; min-height: 0; }
-.col { display: flex; flex-direction: column; gap: 0.3in; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 0.22in; min-height: 0; }
 section { break-inside: avoid; }
-h2 { margin: 0 0 0.14in; font-size: 50px; line-height: 1.1; font-weight: 700; padding: 10px 18px; background: var(--ink); color: #fff; border-radius: 6px; }
+h2 { margin: 0 0 0.1in; font-size: 38px; line-height: 1.1; font-weight: 700; padding: 8px 16px; background: var(--ink); color: #fff; border-radius: 6px; }
 h2 .n { display: inline-block; min-width: 1.1em; opacity: 0.72; font-weight: 500; }
-h3 { margin: 0.14in 0 0.05in; font-size: 36px; font-weight: 600; }
-p { margin: 0 0 0.11in; }
-ul { margin: 0 0 0.11in; padding-left: 0.42in; }
-li { margin: 0 0 0.06in; }
+h3 { margin: 0.1in 0 0.04in; font-size: 29px; font-weight: 600; }
+p { margin: 0 0 0.08in; }
+ul { margin: 0 0 0.08in; padding-left: 0.34in; }
+li { margin: 0 0 0.04in; }
 li::marker { color: var(--muted); }
-.lede { font-size: 38px; }
-.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.18in; margin: 0.1in 0 0.16in; }
-.stat { background: var(--panel); border-radius: 8px; padding: 0.14in 0.18in; }
-.stat .v { font-size: 74px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
-.stat .l { font-size: 27px; color: var(--ink-2); margin-top: 0.06in; line-height: 1.25; }
+.lede { font-size: 30px; }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.14in; margin: 0.06in 0 0.12in; }
+.stat { background: var(--panel); border-radius: 8px; padding: 0.1in 0.14in; }
+.stat .v { font-size: 58px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.stat .l { font-size: 22px; color: var(--ink-2); margin-top: 0.05in; line-height: 1.25; }
 .stat.direct .v { color: var(--direct); }
 .stat.derived .v { color: var(--derived); }
 code, .mono { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; }
 code { font-size: 0.86em; background: var(--panel); padding: 0 0.16em; border-radius: 4px; }
-pre { margin: 0 0 0.12in; padding: 0.14in 0.18in; background: var(--panel); border-radius: 8px; font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 27px; line-height: 1.38; white-space: pre; overflow: hidden; }
+pre { margin: 0 0 0.09in; padding: 0.1in 0.14in; background: var(--panel); border-radius: 8px; font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 21px; line-height: 1.36; white-space: pre; overflow: hidden; }
 pre .c { color: var(--muted); }
 pre .d { color: var(--direct); font-weight: 600; }
 pre .e { color: var(--derived); font-weight: 600; }
-figure { margin: 0 0 0.12in; }
-figcaption { font-size: 28px; line-height: 1.32; color: var(--ink-2); margin-top: 0.07in; }
+figure { margin: 0 0 0.09in; }
+figcaption { font-size: 22px; line-height: 1.3; color: var(--ink-2); margin-top: 0.05in; }
 figcaption b { color: var(--ink); }
 .chart svg { display: block; width: 100%; height: auto; }
-.rigs { display: grid; gap: 0.1in; }
+.rigs { display: grid; gap: 0.08in; }
+.rigs.six { grid-template-columns: repeat(6, 1fr); }
 .rigs.three { grid-template-columns: repeat(3, 1fr); }
 .rigs.two { grid-template-columns: repeat(2, 1fr); }
 .rig { background: var(--panel); border-radius: 8px; overflow: hidden; position: relative; }
 .rig img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
-.rig .tag { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 14px; font-size: 25px; line-height: 1.25; background: rgba(252,252,251,0.92); color: var(--ink); border-top: 1px solid var(--grid); }
+.rig .tag { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 12px; font-size: 20px; line-height: 1.25; background: rgba(252,252,251,0.92); color: var(--ink); border-top: 1px solid var(--grid); }
 .rig .tag .k { display: inline-block; width: 18px; height: 18px; border-radius: 4px; margin-right: 8px; vertical-align: -1px; }
 .k.direct { background: var(--direct); } .k.derived { background: var(--derived); } .k.rest { background: var(--axis); } .k.both { background: linear-gradient(90deg, var(--direct) 50%, var(--derived) 50%); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.1in; }
 .pipeline svg { display: block; width: 100%; height: auto; }
-.callout { background: var(--accent-soft); border-left: 10px solid var(--direct); border-radius: 6px; padding: 0.12in 0.18in; margin: 0 0 0.12in; }
+.callout { background: var(--accent-soft); border-left: 8px solid var(--direct); border-radius: 6px; padding: 0.09in 0.14in; margin: 0 0 0.09in; }
 .callout.warn { background: #fdeee6; border-left-color: var(--derived); }
 .reproduce { display: grid; grid-template-columns: 1fr 1fr; gap: 0.18in; }
-.qr { display: grid; grid-template-columns: 2.1in 1fr; gap: 0.14in; align-items: center; }
-.qr svg { width: 2.1in; height: 2.1in; display: block; }
-.qr .t { font-size: 29px; line-height: 1.3; color: var(--ink-2); }
-.qr .t b { display: block; color: var(--ink); font-size: 31px; }
-.refs { font-size: 25px; line-height: 1.32; color: var(--ink-2); }
+.qr { display: grid; grid-template-columns: 1.7in 1fr; gap: 0.12in; align-items: center; }
+.qr svg { width: 1.7in; height: 1.7in; display: block; }
+.qr .t { font-size: 23px; line-height: 1.3; color: var(--ink-2); }
+.qr .t b { display: block; color: var(--ink); font-size: 25px; }
+.refs { font-size: 20px; line-height: 1.3; color: var(--ink-2); }
 .refs ol { margin: 0; padding-left: 0.4in; }
 .refs li { margin: 0 0 0.04in; }
-.refs .u { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 22px; word-break: break-all; }
+.refs .u { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 18px; word-break: break-all; }
 table { border-collapse: collapse; width: 100%; font-size: 29px; margin: 0 0 0.12in; }
 th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
 th { font-weight: 600; color: var(--ink-2); font-size: 26px; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.legend { display: flex; flex-wrap: wrap; gap: 0.08in 0.28in; font-size: 27px; color: var(--ink-2); margin: 0.04in 0 0.08in; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.06in 0.22in; font-size: 22px; color: var(--ink-2); margin: 0.04in 0 0.08in; }
 .legend span::before { content: ''; display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 9px; vertical-align: -2px; background: var(--sw); }
 .legend .hatch::before { background: repeating-linear-gradient(45deg, #f0efec 0 5px, #c3c2b7 5px 7px); }
-.small { font-size: 28px; color: var(--ink-2); }
+.small { font-size: 22px; color: var(--ink-2); }
 </style>
 </head>
 <body>
@@ -141,12 +142,15 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 	<div class="callout">A mesh that already has <b>any direct jaw or mouth shape</b> gets no derived bindings. Both paths at once double-drive the mouth (Section 6). Meshes with neither path fall back to amplitude lipsync from the playing audio, so a face is never frozen.</div>
 	<figure>
 		<div class="rigs three">
-			<div class="rig"><img src="figures/rig-selfie-rest.png" alt=""><div class="tag"><span class="k rest"></span>Selfie reconstruction, rest</div></div>
-			<div class="rig"><img src="figures/rig-default-rest.png" alt=""><div class="tag"><span class="k rest"></span>Web avatar (ARKit + visemes), rest</div></div>
-			<div class="rig"><img src="figures/rig-realistic-rest.png" alt=""><div class="tag"><span class="k rest"></span>Creator export, rest</div></div>
-			<div class="rig"><img src="figures/rig-selfie-direct.png" alt=""><div class="tag"><span class="k direct"></span>Direct, 172 morphs bound</div></div>
-			<div class="rig"><img src="figures/rig-default-direct.png" alt=""><div class="tag"><span class="k direct"></span>Direct, 208 morphs bound</div></div>
-			<div class="rig"><img src="figures/rig-realistic-direct.png" alt=""><div class="tag"><span class="k direct"></span>Direct, 86 morphs bound</div></div>
+			<div class="rig"><img src="figures/rig-selfie-direct.png" alt=""><div class="tag"><span class="k direct"></span>Selfie reconstruction: direct, 172 morphs</div></div>
+			<div class="rig"><img src="figures/rig-default-direct.png" alt=""><div class="tag"><span class="k direct"></span>Web avatar (ARKit + visemes): direct, 208</div></div>
+			<div class="rig"><img src="figures/rig-realistic-direct.png" alt=""><div class="tag"><span class="k direct"></span>Creator export: direct, 86 morphs</div></div>
+		</div>
+		<div class="rigs six" style="margin-top:0.08in">
+			<div class="rig"><img src="figures/rig-selfie-rest.png" alt=""></div>
+			<div class="rig"><img src="figures/rig-default-rest.png" alt=""></div>
+			<div class="rig"><img src="figures/rig-realistic-rest.png" alt=""></div>
+			<div class="small" style="grid-column: span 3; align-self:center">Rest poses of the same three rigs (every morph at 0), for comparison.</div>
 		</div>
 		<figcaption><b>The same frame on three unrelated rigs.</b> Frame 160 (t = 5.33 s, JawOpen = 0.68) of a production track for the sentence <i>"Hello, I am a three dimensional agent running in your browser, and my face is animated live by Audio2Face as I speak."</i>, applied by the shipping player to three avatar files with different authors, tools, and morph vocabularies. No rig-specific code or allowlist exists; new rigs are supported by adding a name composition, never a rig entry.</figcaption>
 	</figure>
@@ -179,7 +183,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 	<figure class="chart">
 		<h3 style="margin-top:0">Latency per call versus the speech it produced</h3>
 		<div class="legend"><span style="--sw:#2a78d6">Wall-clock latency</span><span style="--sw:#eb6834">Duration of the generated speech</span></div>
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 400" font-family="Inter, 'Inter Fallback', Arial, sans-serif" font-size="22"><line x1="90" y1="348" x2="920" y2="348" stroke="#c3c2b7" stroke-width="1"/><text x="78" y="355" text-anchor="end" fill="#898781">0</text><line x1="90" y1="300.57142857142856" x2="920" y2="300.57142857142856" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="307.57142857142856" text-anchor="end" fill="#898781">2</text><line x1="90" y1="253.14285714285717" x2="920" y2="253.14285714285717" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="260.14285714285717" text-anchor="end" fill="#898781">4</text><line x1="90" y1="205.71428571428572" x2="920" y2="205.71428571428572" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="212.71428571428572" text-anchor="end" fill="#898781">6</text><line x1="90" y1="158.2857142857143" x2="920" y2="158.2857142857143" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="165.2857142857143" text-anchor="end" fill="#898781">8</text><line x1="90" y1="110.85714285714286" x2="920" y2="110.85714285714286" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="117.85714285714286" text-anchor="end" fill="#898781">10</text><line x1="90" y1="63.428571428571445" x2="920" y2="63.428571428571445" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="70.42857142857144" text-anchor="end" fill="#898781">12</text><line x1="90" y1="16" x2="920" y2="16" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="23" text-anchor="end" fill="#898781">14</text><text x="78" y="14" text-anchor="end" fill="#898781" font-size="20">s</text><line x1="109.5" y1="168.554" x2="153.5" y2="168.554" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="131.5" y="378" text-anchor="middle" fill="#898781">1</text><line x1="192.5" y1="167.77142857142857" x2="236.5" y2="167.77142857142857" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="214.5" y="378" text-anchor="middle" fill="#898781">2</text><line x1="275.5" y1="174.10314285714284" x2="319.5" y2="174.10314285714284" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="297.5" y="378" text-anchor="middle" fill="#898781">3</text><line x1="358.5" y1="183.58885714285714" x2="402.5" y2="183.58885714285714" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="380.5" y="378" text-anchor="middle" fill="#898781">4</text><line x1="441.5" y1="185.154" x2="485.5" y2="185.154" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="463.5" y="378" text-anchor="middle" fill="#898781">5</text><line x1="524.5" y1="173.29685714285714" x2="568.5" y2="173.29685714285714" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="546.5" y="378" text-anchor="middle" fill="#898781">6</text><line x1="607.5" y1="174.10314285714284" x2="651.5" y2="174.10314285714284" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="629.5" y="378" text-anchor="middle" fill="#898781">7</text><line x1="690.5" y1="176.47457142857147" x2="734.5" y2="176.47457142857147" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="712.5" y="378" text-anchor="middle" fill="#898781">8</text><line x1="773.5" y1="182" x2="817.5" y2="182" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="795.5" y="378" text-anchor="middle" fill="#898781">9</text><line x1="856.5" y1="181.21742857142857" x2="900.5" y2="181.21742857142857" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="878.5" y="378" text-anchor="middle" fill="#898781">10</text><text x="505" y="400" text-anchor="middle" fill="#898781" font-size="20">consecutive production calls, 2026-11-04</text><line x1="90" y1="257.7197142857143" x2="920" y2="257.7197142857143" stroke="#2a78d6" stroke-width="2" stroke-dasharray="6 6" opacity="0.7"/><text x="920" y="287.7197142857143" text-anchor="end" fill="#52514e" font-size="21">median 3.81 s</text><circle cx="131.5" cy="253.78314285714288" r="11" fill="#fcfcfb"/><circle cx="131.5" cy="253.78314285714288" r="9" fill="#2a78d6"/><circle cx="214.5" cy="250.8662857142857" r="11" fill="#fcfcfb"/><circle cx="214.5" cy="250.8662857142857" r="9" fill="#2a78d6"/><circle cx="297.5" cy="23.46999999999997" r="11" fill="#fcfcfb"/><circle cx="297.5" cy="23.46999999999997" r="9" fill="#2a78d6"/><text x="315.5" y="31.46999999999997" fill="#52514e" font-size="21">13.7 s</text><circle cx="380.5" cy="247.57" r="11" fill="#fcfcfb"/><circle cx="380.5" cy="247.57" r="9" fill="#2a78d6"/><circle cx="463.5" cy="282.9042857142857" r="11" fill="#fcfcfb"/><circle cx="463.5" cy="282.9042857142857" r="9" fill="#2a78d6"/><circle cx="546.5" cy="261.65628571428573" r="11" fill="#fcfcfb"/><circle cx="546.5" cy="261.65628571428573" r="9" fill="#2a78d6"/><circle cx="629.5" cy="272.1854285714286" r="11" fill="#fcfcfb"/><circle cx="629.5" cy="272.1854285714286" r="9" fill="#2a78d6"/><circle cx="712.5" cy="87.214" r="11" fill="#fcfcfb"/><circle cx="712.5" cy="87.214" r="9" fill="#2a78d6"/><text x="730.5" y="95.214" fill="#52514e" font-size="21">11.0 s</text><circle cx="795.5" cy="283.7105714285714" r="11" fill="#fcfcfb"/><circle cx="795.5" cy="283.7105714285714" r="9" fill="#2a78d6"/><circle cx="878.5" cy="272.13800000000003" r="11" fill="#fcfcfb"/><circle cx="878.5" cy="272.13800000000003" r="9" fill="#2a78d6"/></svg>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 330" font-family="Inter, 'Inter Fallback', Arial, sans-serif" font-size="22"><line x1="90" y1="278" x2="920" y2="278" stroke="#c3c2b7" stroke-width="1"/><text x="78" y="285" text-anchor="end" fill="#898781">0</text><line x1="90" y1="240.57142857142858" x2="920" y2="240.57142857142858" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="247.57142857142858" text-anchor="end" fill="#898781">2</text><line x1="90" y1="203.14285714285717" x2="920" y2="203.14285714285717" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="210.14285714285717" text-anchor="end" fill="#898781">4</text><line x1="90" y1="165.71428571428572" x2="920" y2="165.71428571428572" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="172.71428571428572" text-anchor="end" fill="#898781">6</text><line x1="90" y1="128.2857142857143" x2="920" y2="128.2857142857143" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="135.2857142857143" text-anchor="end" fill="#898781">8</text><line x1="90" y1="90.85714285714286" x2="920" y2="90.85714285714286" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="97.85714285714286" text-anchor="end" fill="#898781">10</text><line x1="90" y1="53.428571428571445" x2="920" y2="53.428571428571445" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="60.428571428571445" text-anchor="end" fill="#898781">12</text><line x1="90" y1="16" x2="920" y2="16" stroke="#e1e0d9" stroke-width="1"/><text x="78" y="23" text-anchor="end" fill="#898781">14</text><text x="78" y="14" text-anchor="end" fill="#898781" font-size="20">s</text><line x1="109.5" y1="136.389" x2="153.5" y2="136.389" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="131.5" y="308" text-anchor="middle" fill="#898781">1</text><line x1="192.5" y1="135.77142857142857" x2="236.5" y2="135.77142857142857" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="214.5" y="308" text-anchor="middle" fill="#898781">2</text><line x1="275.5" y1="140.76814285714286" x2="319.5" y2="140.76814285714286" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="297.5" y="308" text-anchor="middle" fill="#898781">3</text><line x1="358.5" y1="148.25385714285713" x2="402.5" y2="148.25385714285713" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="380.5" y="308" text-anchor="middle" fill="#898781">4</text><line x1="441.5" y1="149.489" x2="485.5" y2="149.489" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="463.5" y="308" text-anchor="middle" fill="#898781">5</text><line x1="524.5" y1="140.13185714285714" x2="568.5" y2="140.13185714285714" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="546.5" y="308" text-anchor="middle" fill="#898781">6</text><line x1="607.5" y1="140.76814285714286" x2="651.5" y2="140.76814285714286" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="629.5" y="308" text-anchor="middle" fill="#898781">7</text><line x1="690.5" y1="142.63957142857146" x2="734.5" y2="142.63957142857146" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="712.5" y="308" text-anchor="middle" fill="#898781">8</text><line x1="773.5" y1="147" x2="817.5" y2="147" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="795.5" y="308" text-anchor="middle" fill="#898781">9</text><line x1="856.5" y1="146.3824285714286" x2="900.5" y2="146.3824285714286" stroke="#eb6834" stroke-width="3" stroke-linecap="round"/><text x="878.5" y="308" text-anchor="middle" fill="#898781">10</text><text x="505" y="330" text-anchor="middle" fill="#898781" font-size="20">consecutive production calls, 2026-11-04</text><line x1="90" y1="206.75471428571427" x2="920" y2="206.75471428571427" stroke="#2a78d6" stroke-width="2" stroke-dasharray="6 6" opacity="0.7"/><text x="920" y="236.75471428571427" text-anchor="end" fill="#52514e" font-size="21">median 3.81 s</text><circle cx="131.5" cy="203.6481428571429" r="11" fill="#fcfcfb"/><circle cx="131.5" cy="203.6481428571429" r="9" fill="#2a78d6"/><circle cx="214.5" cy="201.34628571428573" r="11" fill="#fcfcfb"/><circle cx="214.5" cy="201.34628571428573" r="9" fill="#2a78d6"/><circle cx="297.5" cy="21.894999999999982" r="11" fill="#fcfcfb"/><circle cx="297.5" cy="21.894999999999982" r="9" fill="#2a78d6"/><text x="315.5" y="29.894999999999982" fill="#52514e" font-size="21">13.7 s</text><circle cx="380.5" cy="198.745" r="11" fill="#fcfcfb"/><circle cx="380.5" cy="198.745" r="9" fill="#2a78d6"/><circle cx="463.5" cy="226.62928571428571" r="11" fill="#fcfcfb"/><circle cx="463.5" cy="226.62928571428571" r="9" fill="#2a78d6"/><circle cx="546.5" cy="209.8612857142857" r="11" fill="#fcfcfb"/><circle cx="546.5" cy="209.8612857142857" r="9" fill="#2a78d6"/><circle cx="629.5" cy="218.17042857142857" r="11" fill="#fcfcfb"/><circle cx="629.5" cy="218.17042857142857" r="9" fill="#2a78d6"/><circle cx="712.5" cy="72.19900000000001" r="11" fill="#fcfcfb"/><circle cx="712.5" cy="72.19900000000001" r="9" fill="#2a78d6"/><text x="730.5" y="80.19900000000001" fill="#52514e" font-size="21">11.0 s</text><circle cx="795.5" cy="227.26557142857143" r="11" fill="#fcfcfb"/><circle cx="795.5" cy="227.26557142857143" r="9" fill="#2a78d6"/><circle cx="878.5" cy="218.133" r="11" fill="#fcfcfb"/><circle cx="878.5" cy="218.133" r="9" fill="#2a78d6"/></svg>
 		<figcaption>8 of 10 calls finished in 2.7 to 4.3 s for 6.9 to 7.6 s of speech (real-time ratio 0.39 to 0.61); two calls hit upstream tail latency at 11.0 and 13.7 s. Earlier runs: median 2.96 s (2026-10-08, six calls) and 1.29 to 2.19 s when audio is supplied directly and TTS is skipped (2026-09-22).</figcaption>
 	</figure>
 </section>

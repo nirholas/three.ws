@@ -195,6 +195,51 @@ describe('game server reader (multiplayer/src/event-window.js)', () => {
 	});
 });
 
+describe('souvenir reader (multiplayer/src/event-drop.js)', () => {
+	const WITH_SOUVENIR = { ...STATIC, souvenir: { cosmeticId: 'orbit-crown-meetup-3' } };
+	const COIN = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+	let mod;
+	beforeEach(async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+		mod = await import('../multiplayer/src/event-drop.js');
+		mod.resetEventDropCache();
+	});
+	afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+	const ok = (doc) => ({ ok: true, status: 200, json: async () => doc });
+
+	it('reads /api/event-config first, so an extended end keeps granting', async () => {
+		const fetchMock = vi.fn(async () => ok({ ...WITH_SOUVENIR, endsAt: '2026-11-06T17:30:00Z' }));
+		vi.stubGlobal('fetch', fetchMock);
+		const drop = await mod.currentEventDrop();
+		expect(String(fetchMock.mock.calls[0][0])).toMatch(/\/api\/event-config$/);
+		expect(mod.dropClaimable(drop, COIN, T('2026-11-06T17:10:00Z'))).toBe(true);
+	});
+
+	it('an ended event from the API stops grants', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => ok(NO_EVENT_DOC)));
+		const drop = await mod.currentEventDrop();
+		expect(mod.dropClaimable(drop, COIN, DURING)).toBe(false);
+	});
+
+	it('falls back to /event.json when the API is unreachable', async () => {
+		const fetchMock = vi.fn(async (url) => {
+			if (String(url).endsWith('/api/event-config')) throw new Error('ECONNREFUSED');
+			return ok(WITH_SOUVENIR);
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		const drop = await mod.currentEventDrop();
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		expect(String(fetchMock.mock.calls[1][0])).toMatch(/\/event\.json$/);
+		expect(mod.dropClaimable(drop, COIN, DURING)).toBe(true);
+	});
+
+	it('grants nothing on a cold start when both sources fail', async () => {
+		vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
+		expect(await mod.currentEventDrop()).toBeNull();
+	});
+});
+
 describe('browser reader (src/shared/event-config.js)', () => {
 	afterEach(() => vi.unstubAllGlobals());
 	const ok = (doc) => ({ ok: true, status: 200, json: async () => doc });

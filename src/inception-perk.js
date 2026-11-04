@@ -5,6 +5,8 @@
 // /api/inception/apply; nothing here is a placeholder.
 
 const root = document.getElementById('perk-root');
+const PROGRAM = root?.dataset.program || 'nvidia-inception';
+let meta = { shoutout_draft: null, program: null };
 
 const FIELDS = [
 	{ name: 'company', label: 'Company', type: 'text', autocomplete: 'organization', required: true },
@@ -52,9 +54,9 @@ function banner(kind, text) {
 	return el('div', { class: `perk-banner ${kind}`, role: kind === 'bad' ? 'alert' : 'status', text });
 }
 
-async function api(init) {
+async function api(init, path = `/api/inception/apply?program=${encodeURIComponent(PROGRAM)}`) {
 	try {
-		return await fetch('/api/inception/apply', { credentials: 'include', ...init });
+		return await fetch(path, { credentials: 'include', ...init });
 	} catch {
 		throw new Error(
 			navigator.onLine === false
@@ -83,12 +85,84 @@ function showPending(app) {
 	);
 }
 
+function usd(n) {
+	return `$${Number(n).toFixed(2)}`;
+}
+
 function showApproved(app) {
-	const amount = app.grant_usd == null ? '' : ` $${app.grant_usd.toFixed(2)} of credit is in your balance.`;
-	render(
-		paragraph(el('strong', { text: 'Approved.' }), amount, app.reviewer_note ? ` Note from the reviewer: ${app.reviewer_note}` : ''),
-		el('div', { class: 'cta-row', style: 'margin-bottom:0' }, link('/forge', 'Generate a model'), link('/credits', 'View balance', 'btn btn-sec')),
+	const bonus = meta.program?.shoutout_bonus_usd;
+	const sh = app.shoutout || { status: 'none' };
+	const granted = app.grant_usd == null ? '' : ` ${usd(app.grant_usd)} of credit is in your balance.`;
+	const nodes = [
+		paragraph(
+			el('strong', { text: 'Approved.' }),
+			granted,
+			app.reviewer_note ? ` Note from the reviewer: ${app.reviewer_note}` : '',
+		),
+		el('div', { class: 'cta-row', style: 'margin-bottom:24px' }, link('/forge', 'Generate a model'), link('/credits', 'View balance', 'btn btn-sec')),
+	];
+	if (sh.status === 'approved') {
+		nodes.push(banner('good', `Shoutout verified, thank you. ${usd(sh.bonus_usd)} bonus credit added.`));
+	} else if (sh.status === 'submitted') {
+		nodes.push(banner('good', 'Your post is queued for review. The bonus lands in your balance once we confirm it is live.'));
+	} else if (bonus) {
+		nodes.push(shoutoutForm(sh, bonus));
+	}
+	render(...nodes);
+}
+
+function shoutoutForm(sh, bonus) {
+	const draft = meta.shoutout_draft;
+	const form = el('form', { class: 'perk-form', novalidate: true });
+	const intro = el(
+		'p',
+		{},
+		el('strong', { text: `Earn ${usd(bonus)} more. ` }),
+		'Post about what you made on X or LinkedIn, then paste the link. We check that it is public and add the credit.',
 	);
+	const compose = draft
+		? el('a', { href: draft.intent_url, target: '_blank', rel: 'noopener noreferrer', class: 'btn btn-sec', text: 'Write the post on X' })
+		: '';
+	const label = el(
+		'label',
+		{ for: 'perk-shout-url' },
+		'Link to your public post',
+		el('input', { id: 'perk-shout-url', name: 'url', type: 'url', required: true, placeholder: 'https://x.com/you/status/123456789', 'aria-describedby': 'perk-shout-err' }),
+		el('span', { class: 'err', id: 'perk-shout-err' }),
+	);
+	const submit = el('button', { type: 'submit', class: 'btn btn-primary', text: 'Submit the post' });
+	if (sh.status === 'rejected' && sh.note) form.append(banner('bad', `Your last link was not accepted: ${sh.note}`));
+	form.append(label, el('div', { class: 'cta-row', style: 'margin-bottom:0' }, submit, compose));
+	form.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		const err = form.querySelector('#perk-shout-err');
+		const input = form.elements.url;
+		err.textContent = '';
+		input.removeAttribute('aria-invalid');
+		submit.disabled = true;
+		submit.textContent = 'Sending...';
+		try {
+			const res = await api(
+				{ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ program: PROGRAM, url: input.value }) },
+				'/api/inception/shoutout',
+			);
+			const data = await res.json().catch(() => ({}));
+			if (res.status === 401) return showSignedOut();
+			if (!res.ok) {
+				err.textContent = data.error_description || 'Something went wrong. Try again in a minute.';
+				input.setAttribute('aria-invalid', 'true');
+				input.focus();
+				return;
+			}
+			load();
+		} catch (e) {
+			err.textContent = e.message;
+		} finally {
+			submit.disabled = false;
+			submit.textContent = 'Submit the post';
+		}
+	});
+	return el('div', { class: 'perk-shout' }, intro, form);
 }
 
 function field(def) {
@@ -137,6 +211,7 @@ function showForm({ intro, notice } = {}) {
 		event.preventDefault();
 		setErrors();
 		const body = Object.fromEntries(FIELDS.map((def) => [def.name, form.elements[def.name].value]));
+		body.program = PROGRAM;
 		submit.disabled = true;
 		submit.textContent = 'Sending...';
 		try {
@@ -152,6 +227,7 @@ function showForm({ intro, notice } = {}) {
 				return;
 			}
 			if (res.status === 409) return load();
+			if (res.status === 400) throw new Error(data.error_description || 'This program is not available.');
 			if (!res.ok) throw new Error(data.error_description || data.message || 'Something went wrong on our side. Try again in a minute.');
 			showPending(data.application);
 		} catch (err) {
@@ -170,7 +246,9 @@ async function load() {
 		const res = await api({ method: 'GET' });
 		if (res.status === 401) return showSignedOut();
 		if (!res.ok) throw new Error('We could not load your application status. Refresh to try again.');
-		const { application } = await res.json();
+		const data = await res.json();
+		meta = { shoutout_draft: data.shoutout_draft, program: data.program };
+		const application = data.application;
 		if (!application) return showForm();
 		if (application.status === 'pending') return showPending(application);
 		if (application.status === 'approved') return showApproved(application);

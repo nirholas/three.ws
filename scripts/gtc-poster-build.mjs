@@ -120,7 +120,7 @@ function coverageChart() {
 }
 
 function latencyChart() {
-	const W = 940, H = 400, left = 90, right = 20, top = 16, bottom = 52;
+	const W = 940, H = 330, left = 90, right = 20, top = 16, bottom = 52;
 	const plotW = W - left - right, plotH = H - top - bottom;
 	const yMax = 14;
 	const y = (s) => top + plotH - (s / yMax) * plotH;
@@ -279,7 +279,7 @@ await page.goto(`http://127.0.0.1:${port}/docs/nvidia-gtc-2027/poster.html`, { w
 await page.evaluate(() => document.fonts.ready);
 const layout = await page.evaluate(() => {
 	const px = (v) => Math.round(v);
-	const cols = [...document.querySelectorAll('.col')].map((c) => ({ scroll: px(c.scrollHeight), box: px(c.clientHeight) }));
+	const cols = [...document.querySelectorAll(".columns > .col")].map((c) => ({ scroll: px(c.scrollHeight), box: px(c.clientHeight) }));
 	const fonts = [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family);
 	return { body: { w: px(document.body.scrollWidth), h: px(document.body.scrollHeight) }, cols, fonts: [...new Set(fonts)] };
 });

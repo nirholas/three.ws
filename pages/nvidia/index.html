@@ -133,6 +133,7 @@
 		.perk-state { border-top: 1px solid var(--border); padding-top: 24px; }
 		.perk-state p { color: var(--muted); font-size: 14.5px; margin-bottom: 14px; max-width: 640px; }
 		.perk-state p strong { color: var(--text); }
+		.perk-shout { border-top: 1px solid var(--border); padding-top: 22px; }
 		.perk-form { display: grid; gap: 16px; max-width: 640px; }
 		.perk-form label { display: grid; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 500; }
 		.perk-form input, .perk-form textarea { font: inherit; font-size: 15px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; width: 100%; transition: border-color var(--duration-fast); }
@@ -338,9 +339,9 @@ curl -s -X POST <span class="s">https://three.ws/api/forge</span> \
 			<div class="perk-grid">
 				<div><strong>$25 of prepaid credit</strong>Granted to your three.ws account on approval. It spends on every metered lane, at the same prices as everyone else.</div>
 				<div><strong>Reviewed by a person</strong>NVIDIA has no public way to verify membership, so we check your Inception profile or reply to your contact email before approving.</div>
-				<div><strong>No obligation</strong>No card, no wallet, no contract.</div>
+				<div><strong>+$10 for a shoutout</strong>Post about what you made on X or LinkedIn, paste the link, and we add $10 more once we confirm it is public.</div>
 			</div>
-			<div class="perk-state" id="perk-root" aria-live="polite">
+			<div class="perk-state" id="perk-root" data-program="nvidia-inception" aria-live="polite">
 				<div class="perk-skel" aria-hidden="true"></div>
 				<noscript><p>Applying needs JavaScript. Or send the details through <a href="/support">support</a>.</p></noscript>
 			</div>
