@@ -3,6 +3,7 @@
 // Wikipedia full-text search → DuckDuckGo instant answer.
 // At least 3 results are always returned (or a descriptive error thrown).
 
+import { readFileSync } from 'node:fs';
 import { webSearchAvailable, groundedSearch } from '../../../api/_lib/web-search.js';
 
 const TIMEOUT_MS = 10_000;
@@ -482,6 +483,93 @@ async function searchDuckDuckGo(query) {
 	return results.slice(0, 10);
 }
 
+// ── Evidence ranking ──────────────────────────────────────────────────────────
+
+const TIER_TABLE = JSON.parse(
+	readFileSync(new URL('./source-tiers.json', import.meta.url), 'utf8'),
+).tiers;
+const DEFAULT_TIER = TIER_TABLE.find((t) => !t.domains && !t.tldSuffixes) || { name: 'reference_other', weight: 45 };
+
+function hostOf(url) {
+	try {
+		return new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+	} catch {
+		return '';
+	}
+}
+
+function hostMatches(host, suffix) {
+	return host === suffix || host.endsWith(`.${suffix}`);
+}
+
+/** Tier ({name, weight}) of a URL, from the data table in source-tiers.json. */
+export function sourceTier(url) {
+	const host = hostOf(url);
+	if (!host) return DEFAULT_TIER;
+	for (const tier of TIER_TABLE) {
+		if (tier.domains?.some((d) => hostMatches(host, d))) return tier;
+		if (tier.tldSuffixes?.some((d) => hostMatches(host, d))) return tier;
+	}
+	return DEFAULT_TIER;
+}
+
+function registrable(host) {
+	const parts = host.split('.');
+	const twoPart = parts.length > 2 && /^(co|com|ac|gov|org|net)$/.test(parts[parts.length - 2]);
+	return parts.slice(twoPart ? -3 : -2).join('.');
+}
+
+function tokenSet(p) {
+	return new Set(
+		`${p.title || ''} ${p.snippet || ''}`
+			.toLowerCase()
+			.split(/[^a-z0-9]+/)
+			.filter((w) => w.length > 3),
+	);
+}
+
+/**
+ * Order evidence passages best first. Score = source tier weight, plus a
+ * recency bonus when the claim is time-bound, plus a small agreement bonus per
+ * other independent domain whose passage overlaps this one's wording. One
+ * passage per registrable domain survives (the highest scoring); ties keep input
+ * order so the caller's query interleave is preserved. Pure: does not mutate.
+ *
+ * @param {Array<{url:string,title?:string,snippet?:string,publishedAt?:string}>} passages
+ * @param {{now?:number,timeBound?:boolean}} [opts]
+ */
+export function rankEvidence(passages, { now = Date.now(), timeBound = false } = {}) {
+	const list = Array.isArray(passages) ? passages : [];
+	const tokens = list.map(tokenSet);
+	const hosts = list.map((p) => registrable(hostOf(p.url)));
+	const scored = list.map((p, i) => {
+		const tier = sourceTier(p.url);
+		let score = tier.weight;
+		if (timeBound && p.publishedAt) {
+			const ageDays = (now - Date.parse(p.publishedAt)) / 86400000;
+			if (Number.isFinite(ageDays)) score += Math.max(0, 30 - Math.min(ageDays, 3650) / 120);
+		}
+		let agree = 0;
+		for (let j = 0; j < list.length; j++) {
+			if (j === i || hosts[j] === hosts[i]) continue;
+			let shared = 0;
+			for (const w of tokens[i]) if (tokens[j].has(w)) shared++;
+			const denom = Math.min(tokens[i].size, tokens[j].size) || 1;
+			if (shared / denom >= 0.4) agree++;
+		}
+		score += Math.min(agree, 3) * 4;
+		return { p, i, score, tier: tier.name, host: hosts[i] };
+	});
+	const best = new Map();
+	for (const s of scored) {
+		const cur = best.get(s.host);
+		if (!s.host || !cur || s.score > cur.score) best.set(s.host || `__${s.i}`, s);
+	}
+	return [...best.values()]
+		.sort((a, b) => b.score - a.score || a.i - b.i)
+		.map((s) => ({ ...s.p, tier: s.tier }));
+}
+
 // ── Deduplicate by URL ────────────────────────────────────────────────────────
 
 function deduplicate(results) {
@@ -632,5 +720,7 @@ export async function searchAll(queries, opts = {}) {
 			if (i < list.length) interleaved.push(list[i]);
 		}
 	}
-	return deduplicate(interleaved);
+	return rankEvidence(deduplicate(interleaved), { timeBound: Boolean(opts.timeBound) }).map(
+		({ tier, ...rest }) => rest,
+	);
 }

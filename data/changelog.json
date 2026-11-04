@@ -3,6 +3,22 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Fact-check evidence is now ranked by source reliability",
+			"summary": "The fact checker now puts government, peer-reviewed and encyclopedia sources ahead of blogs and social posts, keeps one passage per domain, and rewards agreement across independent domains. The benchmark score also reports macro-F1 and the abstain rate.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"title": "The Plaza Stage goes live in /play",
+			"summary": "Walk up to the stage in the plaza of any coin world and the hosted show plays around you: spatial voice with lip-sync, live captions, a seat in the ring, questions to the host from the chat bar, and $THREE tips behind an explicit confirm step that shows the recipient, amount and token before anything signs. The show only connects when you are close and shuts down when you walk away.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Glass: three.ws on Meta Ray-Ban Display",
 			"summary": "A new /glass web app shows the agents standing near you on the lens with a direction arrow, lets you talk to one with a pinch and suggested replies, and hands the agent to your phone with a six-character code at three.ws/g/CODE. It works with only the Neural Band d-pad inputs.",
 			"tags": [

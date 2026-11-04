@@ -1,0 +1,12 @@
+{
+	"version": 1,
+	"description": "Source reliability tiers for evidence ranking. Higher weight ranks first. Matching is by registrable domain suffix or TLD suffix; no per-claim entries.",
+	"tiers": [
+		{ "name": "primary", "weight": 100, "tldSuffixes": ["gov", "mil", "int", "edu", "gov.uk", "ac.uk", "europa.eu", "gc.ca", "gov.au"], "domains": ["who.int", "un.org", "nasa.gov", "nih.gov", "ncbi.nlm.nih.gov", "cdc.gov", "sec.gov", "congress.gov", "supremecourt.gov", "worldbank.org", "imf.org", "oecd.org", "iso.org", "w3.org", "ietf.org", "rfc-editor.org"] },
+		{ "name": "peer_reviewed", "weight": 90, "domains": ["nature.com", "science.org", "sciencedirect.com", "thelancet.com", "nejm.org", "jamanetwork.com", "bmj.com", "cell.com", "pnas.org", "arxiv.org", "springer.com", "link.springer.com", "wiley.com", "onlinelibrary.wiley.com", "ieee.org", "acm.org", "plos.org", "doi.org", "pubmed.ncbi.nlm.nih.gov"] },
+		{ "name": "encyclopedia", "weight": 75, "domains": ["wikipedia.org", "britannica.com"] },
+		{ "name": "major_news", "weight": 65, "domains": ["reuters.com", "apnews.com", "bbc.com", "bbc.co.uk", "nytimes.com", "washingtonpost.com", "theguardian.com", "wsj.com", "ft.com", "economist.com", "npr.org", "bloomberg.com"] },
+		{ "name": "reference_other", "weight": 45 },
+		{ "name": "blog_social", "weight": 15, "domains": ["medium.com", "substack.com", "blogspot.com", "wordpress.com", "tumblr.com", "reddit.com", "quora.com", "facebook.com", "x.com", "twitter.com", "tiktok.com", "instagram.com", "pinterest.com", "linkedin.com", "wixsite.com"] }
+	]
+}

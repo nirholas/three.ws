@@ -53,3 +53,11 @@ Above the free quota the same request returns a 402 quote for $0.10 in USDC on B
 - **x402**: `POST /api/x402/fact-check` is a paid, Bazaar-listed endpoint ($0.10, USDC on Base or Solana) with a free daily lane; responses carry `lane` and `free_remaining_today`.
 - **Consumers**: the `/fact-check` page, paying agents via the Bazaar, and the Sheriff Boone NPC in `/play`.
 - **Attestation**: every verdict ships with a SHA-256 attestation over the claim, verdict, and sources, computed in the endpoint.
+
+## Evidence ranking
+
+`searchAll` in `src/search-sources.js` returns passages ordered by `rankEvidence`, a pure function. Score is the source tier weight (from the data table `src/source-tiers.json`: primary and government, peer-reviewed, encyclopedia, major news, other, blog and social), plus a recency bonus when the claim is time-bound (`searchAll(queries, { timeBound: true })`), plus a bonus of up to 3 other independent domains whose wording overlaps. Only the best passage per registrable domain survives, and ties keep the query-interleaved input order. Tests: `tests/fact-check-evidence-ranking.test.js`.
+
+## Benchmark metrics
+
+`scoreResults` (`api/_lib/fact-check-benchmark.js`) reports accuracy, per-class and per-difficulty accuracy, a confusion matrix, macro-F1 over the four verdict classes and the abstain rate (share of checked claims answered `insufficient`). Errored claims count against recall and are never dropped from the denominator. Not yet measured: citation validity (fetching each cited URL to confirm it contains the quoted evidence) and a labelled benchmark under `agents/fact-checker/benchmark/`; the suite lives in `tests/fixtures/fact-check-benchmark.json`.

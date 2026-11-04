@@ -85,11 +85,30 @@ export function scoreResults(results) {
 		row[r.actual_verdict] = (row[r.actual_verdict] || 0) + 1;
 	}
 
+	// Macro-F1 over the verdict classes: the unweighted mean of per-class F1, so a
+	// class the checker never predicts costs as much as a common one. Errored
+	// claims count as a miss for their expected class (recall) and predict nothing.
+	let f1Sum = 0;
+	let f1Classes = 0;
+	for (const cls of VERDICT_CLASSES) {
+		const tp = results.filter((r) => r.expected_verdict === cls && r.actual_verdict === cls).length;
+		const fp = results.filter((r) => r.expected_verdict !== cls && r.actual_verdict === cls).length;
+		const fn = results.filter((r) => r.expected_verdict === cls && r.actual_verdict !== cls).length;
+		if (tp + fp + fn === 0) continue;
+		f1Sum += tp === 0 ? 0 : (2 * tp) / (2 * tp + fp + fn);
+		f1Classes += 1;
+	}
+	// Abstain rate: share of checked claims where the chain answered "insufficient".
+	const checked = total - errors;
+	const abstained = results.filter((r) => r.actual_verdict === 'insufficient').length;
+
 	return {
 		total,
 		correct,
 		errors,
 		accuracy_pct: pct(correct, total),
+		macro_f1: f1Classes ? Math.round((f1Sum / f1Classes) * 1000) / 1000 : null,
+		abstain_rate_pct: pct(abstained, checked),
 		by_class: byClass,
 		by_difficulty: byDifficulty,
 		confusion,

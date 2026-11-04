@@ -185,3 +185,21 @@ describe('runClaims', () => {
 		expect(isDegraded(score)).toBe(true);
 	});
 });
+
+describe('scoreResults macro-F1 and abstain rate', () => {
+	const mk = (expected, actual) => ({ expected_verdict: expected, actual_verdict: actual, difficulty: 'easy' });
+	it('is 1.0 / 0 abstain for a perfect run', () => {
+		const s = scoreResults([mk('supported', 'supported'), mk('contradicted', 'contradicted')]);
+		expect(s.macro_f1).toBe(1);
+		expect(s.abstain_rate_pct).toBe(0);
+	});
+	it('penalises a never-predicted class and counts abstentions among checked claims', () => {
+		const s = scoreResults([
+			mk('supported', 'supported'),
+			mk('contradicted', 'insufficient'),
+			mk('mixed', null),
+		]);
+		expect(s.macro_f1).toBeLessThan(0.5);
+		expect(s.abstain_rate_pct).toBe(50);
+	});
+});
