@@ -59,5 +59,12 @@ ENV NODE_ENV=production \
 RUN find /app \( \( -type d ! -perm -555 \) -o \( -type f \( ! -perm -444 -o \( -perm /111 ! -perm -111 \) \) \) \) -exec chmod a+rX {} +
 USER node
 
+# 5. Prove the image before it can ship: the full worker module graph resolves
+#    as the runtime user after the prune, the adapter registry knows every
+#    platform, and ffmpeg turns a generated tone into Ogg Opus through the real
+#    voice path. A missing dependency or codec fails the build here, not the
+#    first voice note in production.
+RUN node workers/agent-gateway/scripts/image-selfcheck.mjs
+
 EXPOSE 8080
 CMD ["node", "workers/agent-gateway/src/index.js"]

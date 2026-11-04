@@ -1,0 +1,53 @@
+# Upload allowlist for cloudbuild.verify.yaml (gitignore syntax; last match wins).
+#
+# The repo-root .gcloudignore, minus dist/: the gateway image runs api/ and its
+# own src/, never the built frontend, and dist/ is about 1.1 GB of upload. Every
+# other path stays, because the Dockerfile copies every workspace package.json
+# and runs the root postinstall, which builds the workspace SDKs and runs the
+# scripts/ fixups over public/ and data/.
+/*
+!/workers/
+!/api/
+!/src/
+!/agent-payments-sdk/
+!/package.json
+!/package-lock.json
+!/.npmrc
+!/.gcloudignore
+!/.dockerignore
+!/server/
+!/Dockerfile
+!/vercel.json
+!/scripts/
+!/data/
+!/examples/
+!/public/
+!/pages/
+!/sdk/
+!/solana-agent-sdk/
+!/mcp-server/
+!/mcp-bridge/
+!/packages/
+!/agent-ui-sdk/
+!/avatar-sdk/
+!/page-agent-sdk/
+!/multiplayer/
+!/walk-sdk/
+!/tour-sdk/
+!/agents/
+!/services/
+!/.agents/
+!/community-skills/
+!/tests/
+/tests/*
+!/tests/fixtures/
+!/character-studio/
+/character-studio/*
+!/character-studio/package.json
+**/node_modules/
+.git/
+**/.venv*/
+**/__pycache__/
+**/*.pyc
+**/.wrangler/
+**/.cache/
