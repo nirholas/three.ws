@@ -50,6 +50,7 @@ import { listBazaarServices, serviceResourceUrl } from './_lib/agent-paid-servic
 import { listActiveAgentServices, CALL_INPUT_EXAMPLE, CALL_INPUT_SCHEMA, CALL_OUTPUT_EXAMPLE, serviceNameFor } from './_lib/agent-api-service.js';
 import { buildRequirements } from './_lib/x402-paid-endpoint.js';
 import { toBazaarDiscovery } from './_lib/service-catalog/index.js';
+import { authMethodsFor } from './_lib/x402/route-auth-hints.js';
 
 // ── agent-attestation-schemas ─────────────────────────────────────────────────
 
@@ -1954,8 +1955,16 @@ export async function buildX402DiscoveryDoc() {
 			...datapointItems,
 		]
 			.filter(Boolean)
-			.map(addOutputExample),
+			.map(addOutputExample)
+			.map(withAuthMethods),
 	};
+}
+
+// Publishes the free auth methods a route accepts in place of payment as
+// `authMethods`, so the challenge itself stays free of amount-0 entries.
+function withAuthMethods(resource) {
+	const authMethods = authMethodsFor(resource.path);
+	return authMethods ? { ...resource, authMethods } : resource;
 }
 
 async function handleX402Discovery(req, res) {

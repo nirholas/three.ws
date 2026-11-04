@@ -21,6 +21,7 @@ import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
+import { ROUTE_AUTH_HINTS } from '../_lib/x402/route-auth-hints.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { isUuid } from '../_lib/validate.js';
 import { vetSolanaAgent } from '../_lib/trust/solana-bouncer.js';
@@ -199,10 +200,7 @@ export default paidEndpoint({
 	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
 	// Buyers with a granted OAuth scope or a fresh SIWX proof skip payment; the
 	// USDC accepts apply otherwise — same posture as agent-reputation.
-	authHints: {
-		oauth2: { requiredScope: 'read:agent-reputation', tokenType: 'Bearer' },
-		siwx: true,
-	},
+	authHints: ROUTE_AUTH_HINTS[ROUTE],
 	async handler({ req }) {
 		const q = req.query || {};
 		const agentId = String(q.agent_id || '').trim().toLowerCase();

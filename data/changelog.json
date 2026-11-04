@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Paid endpoint 402 challenges validate on external x402 directories",
+			"summary": "The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/x402-distribution"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "HumanIK avatars and complete bodies without finger joints now animate",
 			"summary": "Two kinds of avatar used to pass every check and then stand still in their bind pose. HumanIK and MotionBuilder rigs name their joints Character1:Hips, which three.js turns into Character1Hips when it loads the model, and that spelling mapped to nothing. Both spellings now resolve, and so does Character1_LeftArm. A complete body with no finger joints, such as a Meshy biped or a handless Mixamo export, fell under the clip coverage floor because 30 of a clip's 53 tracks are fingers; clips now bind when half of either all tracks or the 23 body tracks map, so fingers are optional and the shipped half-body avatar keeps animating. The live viewer, Rig Doctor, avatar thumbnails and the avatar capabilities API now all ask one gate, so a rig cannot be called animatable on one surface and fail on another. Across uploaded avatars in production, 333 of 350 skinned rigs now animate, up from 306.",
 			"tags": [

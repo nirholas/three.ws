@@ -240,16 +240,21 @@ script. Everything else above updates itself.
 
 ## Known listing blockers
 
-- **Zero-amount auth-hint accepts break external validators.** Endpoints that
-  declare `authHints` (currently `agent-reputation`, `agent-bouncer`) append
-  USE-21 zero-amount placeholder entries to `accepts[]`. 402index's validator
-  rejects the whole challenge ("no valid x402 challenge detected"), and other
-  crawlers likely apply the same amount-must-be-positive rule. **Resolution:**
-  set `X402_AUTH_HINT_ACCEPTS=false` on the deployment to suppress the
-  advertisement (both the zero-amount entries and the auth-hints extension —
-  the extension schema requires them together). Auth bypass itself keeps
-  working either way; the access-control hook honors Bearer/SIWX headers
-  before the payment dance. Default stays `true` until the owner flips it.
+- **Zero-amount auth-hint accepts break external validators (resolved by
+  default).** Endpoints that declare `authHints` (currently `agent-reputation`,
+  `agent-bouncer`) used to append USE-21 zero-amount placeholder entries to
+  `accepts[]`. 402index's validator rejected the whole challenge ("no valid
+  x402 challenge detected"), and other crawlers likely apply the same
+  amount-must-be-positive rule. `X402_AUTH_HINT_ACCEPTS` now defaults to
+  `false`, so the 402 carries only payable entries. Set it to `true` to opt
+  back in to the zero-amount entries plus the `auth-hints` extension (the
+  extension schema requires them together). The free path is unaffected
+  either way: a Bearer token with scope `read:agent-reputation` or a
+  SIGN-IN-WITH-X proof is honored before the payment dance whatever the
+  flag says, and the supported methods are published in `GET /openapi.json`
+  (`x-auth-methods` on each operation) and in `/.well-known/x402.json`
+  (`authMethods` on each resource). The per-route declaration lives in
+  `api/_lib/x402/route-auth-hints.js`.
 - **Bazaar indexing needs the CDP facilitator.** Solana-only settles through
   the self-hosted facilitator never reach the Bazaar catalog. The Base rail
   must settle via CDP at least once per endpoint; that is exactly what

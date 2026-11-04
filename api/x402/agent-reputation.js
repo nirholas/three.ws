@@ -26,6 +26,7 @@ import { readBody } from '../_lib/http.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
+import { ROUTE_AUTH_HINTS } from '../_lib/x402/route-auth-hints.js';
 import { priceFor } from '../_lib/x402-prices.js';
 // The generalized any-subject engine — auto-detect + deterministic scoring.
 import {
@@ -177,10 +178,7 @@ const singleEndpoint = paidEndpoint({
 	// scope `read:agent-reputation` skip payment, as do wallets that present
 	// a fresh CAIP-122 SIGN-IN-WITH-X proof for this resource. Without either,
 	// the regular USDC accepts entries apply.
-	authHints: {
-		oauth2: { requiredScope: 'read:agent-reputation', tokenType: 'Bearer' },
-		siwx: true,
-	},
+	authHints: ROUTE_AUTH_HINTS[ROUTE],
 	async handler({ req }) {
 		// Accept any counterparty identifier. `subject` is canonical; `agent_id` is
 		// kept as an alias so existing three.ws-agent callers don't break.
@@ -361,10 +359,7 @@ const sweepEndpoint = paidEndpoint({
 	}),
 	requiredScope: 'x402:bypass',
 	accessControl: installAccessControl({ requiredScope: 'x402:bypass' }),
-	authHints: {
-		oauth2: { requiredScope: 'read:agent-reputation', tokenType: 'Bearer' },
-		siwx: true,
-	},
+	authHints: ROUTE_AUTH_HINTS[ROUTE],
 	async handler({ req }) {
 		let body;
 		try {

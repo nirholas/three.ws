@@ -15,6 +15,7 @@ import { env } from './_lib/env.js';
 import { cors, json, method, wrap } from './_lib/http.js';
 import { providerCatalog } from './v1/_providers.js';
 import { PAID_SERVICES } from './_lib/service-catalog/services/index.js';
+import { ROUTE_AUTH_HINTS, authMethodsFor } from './_lib/x402/route-auth-hints.js';
 import { agentsV1Paths, AGENTS_V1_TAGS } from './_lib/agents-v1/openapi.js';
 
 // Single source of truth for the protocol list on every paid operation. Each
@@ -230,7 +231,7 @@ function queryParameters(inputSchema) {
 // Pure document builder, factored out so api/_lib/skill-md.js (the
 // /skill.md generator) can read the exact same paid-operation catalog this
 // endpoint serves, instead of re-deriving it or faking an HTTP round trip.
-export function buildOpenApiDoc(origin = env.APP_ORIGIN) {
+function buildBaseOpenApiDoc(origin) {
 	return (
 		{
 			openapi: '3.1.0',
@@ -1539,6 +1540,22 @@ export function buildOpenApiDoc(origin = env.APP_ORIGIN) {
 			},
 		}
 	);
+}
+
+// Tags every operation on a route that accepts a free auth method (Bearer scope or
+// SIWX) with `x-auth-methods`. `security` stays payment-only on purpose: the 402
+// challenge carries no amount-0 entries (external validators reject them), so
+// the free path is advertised here and in /.well-known/x402.json instead.
+export function buildOpenApiDoc(origin = env.APP_ORIGIN) {
+	const doc = buildBaseOpenApiDoc(origin);
+	for (const route of Object.keys(ROUTE_AUTH_HINTS)) {
+		for (const operation of Object.values(doc.paths?.[route] || {})) {
+			if (operation && typeof operation === 'object') {
+				operation['x-auth-methods'] = authMethodsFor(route);
+			}
+		}
+	}
+	return doc;
 }
 
 export default wrap(async (req, res) => {
