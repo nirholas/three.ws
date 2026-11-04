@@ -336,6 +336,8 @@ generation is rejected rather than painted on.
 
 ### Track 3 — Dense identity geometry by per-subject optimisation
 
+**Status 2026-11-04.** The optimiser is built and ships disabled: `workers/avatar-reconstruction/dense_fit.py` behind `DENSE_FIT=1` (per-pixel Lambertian photometric term, landmark, smoothness and symmetry priors, optional PyTorch3D silhouette on CUDA, normal-only bounded displacement, wall-clock budget, returns None rather than a worse head). On a synthetic sphere with a known relief it recovers the relief shape (correlation above 0.6 with the truth, detrended error below the starting error). The 40-face `eval.run_eval` on/off comparison and `eval/detection_guard.py` have not been run: they need the GPU image (`Dockerfile.rtx`, `cloudbuild.rtx.yaml`), so no fidelity gain is claimed yet and the step stays off.
+
 The Phase-2 morph is driven by 468 sparse landmarks diffused across 2162 head
 vertices. It captures gross proportion — face width, jaw, nose projection, brow
 — and cannot capture fine structure, because the signal is not there.

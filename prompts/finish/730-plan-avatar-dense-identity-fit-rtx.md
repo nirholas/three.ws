@@ -856,3 +856,9 @@ The backend needs no change - Phase 2 ships inside the same image and the
 Full runbook: [`docs/ops/gcp-production.md`](ops/gcp-production.md).
 ~~~~
 
+
+## Status 2026-11-04
+
+Built and committed, shipped disabled: `dense_fit.py` plus `test_dense_fit.py` (10 tests pass on CPU), pipeline integration behind `DENSE_FIT=1`, `Dockerfile.rtx` (CUDA 12.8, cu128, PyTorch3D for sm_120), `cloudbuild.rtx.yaml` (build and push only), routing via `RECONSTRUCT_DENSE_URL` with tests in `tests/avatars-reconstruct.test.js`, README, fidelity-program status, `.env.example`, changelog.
+
+Remaining owner steps (need Cloud Build, GPU and the 40-face set): build the RTX image to a staging tag, deploy a staging revision and confirm `/healthz`, run `python -m eval.run_eval` with the step off and on and `--compare`, record the numbers in `docs/avatar-fidelity-program.md`, rerun `eval/detection_guard.py`. Enable only if mean ISE improves materially.
