@@ -154,7 +154,9 @@ room, and why running more than one gesture at a time needs a mode are all in
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `skills` | comma-separated URIs | — | Additional skill URIs to install on top of manifest skills. |
-| `skill-trust` | `any` \| `whitelist` \| `owned-only` | `owned-only` | Controls which skill URIs are allowed to install. `owned-only` allows only skills whose author matches the agent's `ownerAddress`. |
+| `skill-trust` | `any` \| `whitelist` \| `owned-only` | `owned-only` | Controls which skill URIs are allowed to install. `owned-only` allows only skills whose author matches the agent's `ownerAddress`. `whitelist` allows only skills whose author or serving origin is listed in the two attributes below (empty lists allow nothing). Any other value logs a warning and falls back to `owned-only`. |
+| `skill-trusted-authors` | comma-separated addresses | - | Authors a `whitelist` policy admits, matched against `manifest.author` case-insensitively. Merged with `skillTrust.authors`. |
+| `skill-trusted-origins` | comma-separated URLs | - | Origins a `whitelist` policy admits; only the origin of each URL is kept (`https://skills.example.com/a/b` becomes `https://skills.example.com`). A value that is not an absolute http(s) URL is ignored with a console warning. Merged with `skillTrust.origins`. |
 | `memory` | `local` \| `ipfs` \| `encrypted-ipfs` \| `none` | from manifest | Memory storage mode. |
 | `memory-key` | string | agent ID or name | Namespace under which memory is persisted. Useful when embedding the same agent in multiple contexts. |
 
@@ -197,6 +199,7 @@ el.manifest   // The loaded agent manifest object
 el.runtime    // The Runtime instance (LLM brain + tool loop)
 el.memory     // The Memory instance
 el.skills     // Array of installed Skill objects
+el.skillTrust // Skill allowlist: { authors, origins }
 ```
 
 **`el.manifest`** — The resolved manifest object as loaded from `manifest.json`, the on-chain registry, or constructed from `body`/`instructions` attributes. Available after `agent:ready`.
@@ -206,6 +209,13 @@ el.skills     // Array of installed Skill objects
 **`el.memory`** — The `Memory` instance. Supports `read(key)`, `write(key, value)`, and `export()` for portability.
 
 **`el.skills`** — Array of all currently installed `Skill` objects. Updated live as skills are installed or uninstalled.
+
+**`el.skillTrust`** - Settable allowlist for `skill-trust="whitelist"`: `{ authors?: string[], origins?: string[] }`. Merged with the `skill-trusted-authors` and `skill-trusted-origins` attributes. Can be assigned before or after the element is defined; it applies to skills installed from then on, and skills already installed stay installed.
+
+```js
+el.skillTrust = { authors: ['0xYourAuthorAddress'], origins: ['https://skills.example.com'] };
+el.setAttribute('skill-trust', 'whitelist');
+```
 
 **`el.sonarRunning`** - Read-only boolean, true while the microphone is open and hand gestures are being read. See [`startSonar()`](#startsonaropts).
 
@@ -559,6 +569,7 @@ All events bubble and are `composed: true`, meaning they cross shadow DOM bounda
 | Event | Detail | When |
 |-------|--------|------|
 | `skill:loaded` | `{ name, uri }` | A skill was successfully installed during boot. |
+| `skill:error` | `{ uri, error }` | A skill from the manifest could not be installed during boot: refused by the `skill-trust` policy, or its bundle failed to load. Boot continues without it. |
 | `skill:tool-called` | `{ tool, args, result }` | The LLM invoked a tool. `result` has shape `{ ok, ... }`. |
 
 ### Memory events

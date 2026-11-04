@@ -245,10 +245,23 @@ The `skill-trust` attribute controls which skill URLs the element will load:
 | Mode | Allows |
 |------|--------|
 | `owned-only` (default for registered agents) | Skills where `manifest.author` matches the agent owner's wallet address |
-| `whitelist` | Only URLs you explicitly approve |
+| `whitelist` | Only skills whose author or serving origin you list in `skill-trusted-authors` / `skill-trusted-origins` |
 | `any` | Any skill URL — use only in controlled environments |
 
 `owned-only` prevents a third party from publishing a malicious skill and tricking your agent into loading it.
+
+To admit specific third-party authors or hosts, use `whitelist` and list them. Empty lists admit nothing, and a misspelled mode falls back to `owned-only` rather than loading everything:
+
+```html
+<agent-3d
+  agent-id="YOUR_AGENT_ID"
+  skill-trust="whitelist"
+  skill-trusted-authors="0xYourAuthorAddress"
+  skill-trusted-origins="https://skills.example.com"
+></agent-3d>
+```
+
+The same lists can be set from script with `el.skillTrust = { authors: [...], origins: [...] }`; they merge with the attributes. A skill the policy refuses fires `skill:error` on the element.
 
 ### ERC-7710 permission sandboxing
 

@@ -356,7 +356,9 @@ When a skill executes, `AgentSkills.perform()` emits `perform-skill` (so the ava
 Skills loaded from a manifest bundle go through `SkillRegistry` (`skills/index.js`), which enforces trust modes:
 - `any` — any skill installs without restriction
 - `owned-only` — `manifest.author` must match the `ownerAddress` element attribute or backend record
-- `whitelist`: accepted as a mode, but the allowlist check is not wired yet, so today it installs like `any`
+- `whitelist`: a bundle installs only when its `manifest.author` is in `trustedAuthors` or the origin serving it is in `trustedOrigins`; empty lists admit nothing. `<agent-3d>` fills both lists from the `skill-trusted-authors` and `skill-trusted-origins` attributes and the `skillTrust` property (`src/skills/registry-config.js`)
+
+Any other `skill-trust` value is refused by the element with a warning and treated as `owned-only`, because the registry enforces only the modes it knows. A skill refused at boot fires `skill:error` with `{ uri, error }`.
 
 A bundle's `sandboxPolicy: "trusted-main-thread"` is only a request. Handlers run in the worker sandbox unless `SkillRegistry.mayRunOnMainThread()` grants the main thread, which it does only for a bundle served from a trusted origin (by default the page's own; `<agent-3d>` passes `mainThreadOrigins` with the page's origin and the origin that served its script) and never under `any` trust. A refused request logs a warning and the skill still runs, sandboxed.
 

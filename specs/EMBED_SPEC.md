@@ -103,7 +103,9 @@ name-plate) is **opt-in**:
 | ------------- | -------------------------------- | -------------------------------------------------------- |
 | `skills`      | comma-separated URIs             | adds to (or replaces with `skills-only`) manifest skills |
 | `skills-only` | boolean                          | use only `skills` attribute, ignore manifest             |
-| `skill-trust` | `any`\|`whitelist`\|`owned-only` | overrides manifest default                               |
+| `skill-trust` | `any`\|`whitelist`\|`owned-only` | overrides manifest default; unknown values fall back to `owned-only` |
+| `skill-trusted-authors` | comma-separated addresses | authors `whitelist` admits (case-insensitive); merged with `el.skillTrust.authors` |
+| `skill-trusted-origins` | comma-separated http(s) URLs | origins `whitelist` admits; merged with `el.skillTrust.origins` |
 
 ### Memory
 
@@ -273,6 +275,7 @@ All events bubble and compose (`composed: true`).
 | `agent:load-progress` | `{ phase, pct }`          | `"body"` \| `"skills"` \| `"memory"` with 0–1 |
 | `agent:error`         | `{ phase, error }`        | anything fatal                                |
 | `skill:loaded`        | `{ name, uri }`           | per skill                                     |
+| `skill:error`         | `{ uri, error }`          | per skill refused by policy or failed to load |
 | `skill:tool-called`   | `{ tool, args, result }`  | every tool call                               |
 | `brain:thinking`      | `{ content }`             | streamed thinking tokens (if enabled)         |
 | `brain:message`       | `{ role, content }`       | each assistant or user turn                   |

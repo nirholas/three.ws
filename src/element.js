@@ -9,7 +9,7 @@ import { buildBestEffortArUsdz } from './usdz-animated.js';
 import { Runtime, skillAccessFromAgentDetail } from './runtime/index.js';
 import { SkillPaymentModal, PaymentChip } from './payment-modal.js';
 import { SceneController } from './runtime/scene.js';
-import { SkillRegistry } from './skills/index.js';
+import { buildSkillRegistry, applySkillTrust } from './skills/registry-config.js';
 import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
 import { uriCandidates } from './ipfs.js';
@@ -754,6 +754,9 @@ class Agent3DElement extends HTMLElement {
 			'ar-placement',
 			'ios-src',
 			'variant-name',
+			'skill-trust',
+			'skill-trusted-authors',
+			'skill-trusted-origins',
 		];
 	}
 
@@ -814,6 +817,13 @@ class Agent3DElement extends HTMLElement {
 	}
 
 	connectedCallback() {
+		// A `skillTrust` assigned before the element upgraded is an own property
+		// that shadows the accessor; move it onto the accessor so it applies.
+		if (Object.prototype.hasOwnProperty.call(this, 'skillTrust')) {
+			const value = this.skillTrust;
+			delete this.skillTrust;
+			this.skillTrust = value;
+		}
 		this._renderShell();
 		this._applyLayout();
 		this._setupResponsive();
@@ -996,6 +1006,9 @@ class Agent3DElement extends HTMLElement {
 			this._boot();
 			return;
 		}
+		// The skill registry exists from mid-boot on; a policy change applies to
+		// every skill installed after it, including the rest of the boot list.
+		if (name.startsWith('skill-trust') && this._skills) applySkillTrust(this._skills, this, log);
 		if (!this._mounted) return;
 		if (['mode', 'position', 'width', 'height', 'responsive'].includes(name))
 			this._applyLayout();
@@ -2093,13 +2106,11 @@ class Agent3DElement extends HTMLElement {
 
 			// Skills
 			this._emit('agent:load-progress', { phase: 'skills', pct: 0.75 });
-			this._skills = new SkillRegistry({
-				trust: this.getAttribute('skill-trust') || 'owned-only',
-				ownerAddress: manifest.id?.owner,
-				// Bundles from the page itself or from the origin that served this
-				// library may run on the main thread; any other origin is sandboxed.
-				mainThreadOrigins: [_pageOrigin(), _scriptOrigin].filter(Boolean),
-			});
+			// Trust policy comes from `skill-trust`, `skill-trusted-authors`,
+			// `skill-trusted-origins` and the `skillTrust` property. Bundles from the
+			// page itself or from the origin that served this library may run on the
+			// main thread; any other origin is sandboxed.
+			this._skills = buildSkillRegistry(this, manifest, [_pageOrigin(), _scriptOrigin], log);
 			const skillList = manifest.skills || [];
 			for (const entry of skillList) {
 				// A string entry that points at a hosted bundle is a skill the owner
@@ -2120,6 +2131,7 @@ class Agent3DElement extends HTMLElement {
 					this._emit('skill:loaded', { name: skill.name, uri: skill.uri });
 				} catch (e) {
 					log.warn('[agent-3d] skill load failed', spec, e);
+					this._emit('skill:error', { uri: spec.uri, error: e?.message || String(e) });
 				}
 			}
 
@@ -3456,6 +3468,20 @@ class Agent3DElement extends HTMLElement {
 	/** Variant names declared by the loaded GLB's KHR_materials_variants data, or `[]` if it has none. */
 	get availableVariants() {
 		return this._variantController?.names.slice() ?? [];
+	}
+
+	/**
+	 * Skill allowlist merged with the `skill-trusted-authors` and
+	 * `skill-trusted-origins` attributes: `{ authors?: string[], origins?: string[] }`.
+	 * Takes effect for skills installed after it is set.
+	 */
+	get skillTrust() {
+		return this._skillTrust ?? null;
+	}
+
+	set skillTrust(value) {
+		this._skillTrust = value && typeof value === 'object' ? value : null;
+		if (this._skills) applySkillTrust(this._skills, this, log);
 	}
 
 	get variantName() {
