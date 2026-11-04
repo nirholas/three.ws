@@ -12,7 +12,9 @@
 
 import { cors, json, method, readJson, wrap, error, validationError, rateLimited } from '../_lib/http.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
-import { ataExists, blockhashKey, getRecentBlockhashInfo } from '../_lib/solana/read-guards.js';
+import { blockhashKey, getRecentBlockhashInfo, mintDecimals } from '../_lib/solana/read-guards.js';
+import { splTransferInstructions } from '../_lib/solana-token-program.js';
+import { tokenProgramIdForMint } from '../_lib/token/token-program.js';
 import { evmFallbackProvider } from '../_lib/evm/rpc.js';
 import { limits } from '../_lib/rate-limit.js';
 import { getSessionUser, isSameSiteOrigin } from '../_lib/auth.js';
@@ -365,23 +367,26 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 			e.status = 400;
 			throw e;
 		}
-		const { getAssociatedTokenAddress, createAssociatedTokenAccountIdempotentInstruction, createTransferInstruction } = await import('@solana/spl-token');
 		const mintPk = new PublicKey(asset);
-
-		const mintInfo = await conn.getParsedAccountInfo(mintPk);
-		const decimals = mintInfo.value?.data?.parsed?.info?.decimals ?? 6;
-
-		const senderAta = await getAssociatedTokenAddress(mintPk, kp.publicKey);
-		const recipientAta = await getAssociatedTokenAddress(mintPk, recipientPk);
-		// Fails open to "missing" when the chain cannot be read: the worst case is
-		// an extra create instruction for an account that already exists, which the
-		// runtime treats as a no-op, whereas throwing here loses the whole transfer.
-		const recipientAccountExists = await ataExists(conn, recipientAta);
-		if (!recipientAccountExists) {
-			tx.add(createAssociatedTokenAccountIdempotentInstruction(kp.publicKey, recipientAta, recipientPk, mintPk));
-		}
+		// The mint's own program ($THREE is Token-2022) and its real decimals. A
+		// mint that cannot be read is refused (422 missing, 503 unreadable chain)
+		// rather than sent with guessed decimals, which would mis-scale the amount.
+		const tokenProgram = await tokenProgramIdForMint(conn, mintPk);
+		const decimals = await mintDecimals(conn, mintPk, { programId: tokenProgram });
 		const amountUnits = parseAmountToBaseUnits(amount, decimals);
-		tx.add(createTransferInstruction(senderAta, recipientAta, kp.publicKey, amountUnits));
+		// Opens the recipient's account with an idempotent create when it is
+		// missing, then one TransferChecked the chain validates against decimals.
+		tx.add(
+			...(await splTransferInstructions(conn, {
+				mint: mintPk,
+				from: kp.publicKey,
+				to: recipientPk,
+				payer: kp.publicKey,
+				atomics: amountUnits,
+				tokenProgram,
+				decimals,
+			})),
+		);
 	}
 
 	const { blockhash } = await getRecentBlockhashInfo(conn, blockhashKey({ url: env.SOLANA_RPC_URL }), { commitment: 'finalized' });
@@ -455,6 +460,9 @@ async function handleSend(req, res) {
 		if (e.code === 'validation_error') return error(res, 400, 'validation_error', e.message);
 		if (e.code === 'no_key') return error(res, 409, 'no_key', e.message);
 		if (e.code === 'no_rpc') return error(res, 503, 'no_rpc', e.message);
+		// Typed mint lookups: 422 when the asset is not a token mint, 503 when the
+		// chain could not be read (nothing was signed, retrying is safe).
+		if ((e.status === 422 || e.status === 503) && e.code) return error(res, e.status, e.code, e.message);
 		console.error('[portfolio/send] failed', e?.message);
 		return error(res, 502, 'send_failed', e?.message || 'transaction failed');
 	}

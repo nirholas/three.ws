@@ -112,7 +112,9 @@ vi.mock('../../src/shared/failover-fetch.js', () => ({
 }));
 
 // The signing path must never reach a real RPC or a real key.
-const sendState = { signed: [], lamports: null, keyAudit: null };
+// `accounts` maps a base58 address to the account the fake chain returns for it
+// (mints for the SPL cases); anything else reads as an existing plain account.
+const sendState = { signed: [], lamports: null, keyAudit: null, accounts: new Map() };
 vi.mock('../../api/_lib/agent-wallet.js', () => ({
 	recoverAgentKey: vi.fn(async (_k, audit) => {
 		sendState.keyAudit = audit;
@@ -127,7 +129,10 @@ vi.mock('../../api/_lib/solana/connection.js', () => ({
 	solanaConnection: vi.fn(() => ({
 		getLatestBlockhash: async () => ({ blockhash: '11111111111111111111111111111111' }),
 		getParsedAccountInfo: async () => ({ value: { data: { parsed: { info: { decimals: 6 } } } } }),
-		getAccountInfo: async () => ({ lamports: 1 }),
+		getAccountInfo: async (pk) => {
+			const key = pk.toBase58();
+			return sendState.accounts.has(key) ? sendState.accounts.get(key) : { lamports: 1 };
+		},
 		sendRawTransaction: async (raw) => {
 			sendState.signed.push(raw);
 			return 'sig-' + sendState.signed.length;
@@ -183,6 +188,7 @@ beforeEach(() => {
 	priceState.coin = null;
 	sendState.signed = [];
 	sendState.keyAudit = null;
+	sendState.accounts = new Map();
 });
 
 describe('dispatcher + auth', () => {
@@ -395,5 +401,70 @@ describe('send', () => {
 		await send({ ...base, chain: 'evm', recipient: '0x' + '2'.repeat(40), amount: '1' });
 		expect(sendState.keyAudit?.userId).toBe(USER.id);
 		expect(sendState.keyAudit?.agentId).toBe(AGENT_ID);
+	});
+});
+
+// SPL sends used to derive both ATAs and a plain Transfer on the classic token
+// program for every mint, so a $THREE (Token-2022) send named accounts the agent
+// does not have and failed preflight. Decimals fell back to 6 whenever the mint
+// read came back empty, which mis-scales the amount for any mint with other
+// decimals. The send now runs on the mint's own program as a TransferChecked
+// and refuses a mint it cannot read.
+describe('send SPL tokens on the mint program', () => {
+	const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+	const agentRow = { id: AGENT_ID, name: 'A', wallet_address: null, chain_id: null, meta: { encrypted_solana_secret: 'enc' } };
+
+	async function signedTransfer(asset, amount) {
+		const { Transaction } = await import('@solana/web3.js');
+		const r = await send({ agent_id: AGENT_ID, chain: 'solana', asset, recipient: SOL_WALLET, amount });
+		expect(r.statusCode).toBe(200);
+		expect(sendState.signed).toHaveLength(1);
+		const tx = Transaction.from(sendState.signed[0]);
+		return { tx, transfer: tx.instructions.at(-1) };
+	}
+
+	it('sends $THREE as a TransferChecked between Token-2022 accounts', async () => {
+		const { PublicKey } = await import('@solana/web3.js');
+		const spl = await import('@solana/spl-token');
+		sqlState.agent = agentRow;
+		const { tx, transfer } = await signedTransfer(THREE, '1.5');
+		const mint = new PublicKey(THREE);
+		const sender = tx.feePayer;
+		const ata = (owner) => spl.getAssociatedTokenAddressSync(mint, owner, true, spl.TOKEN_2022_PROGRAM_ID);
+		expect(transfer.programId.equals(spl.TOKEN_2022_PROGRAM_ID)).toBe(true);
+		expect(transfer.data[0]).toBe(spl.TokenInstruction.TransferChecked);
+		expect(transfer.keys[0].pubkey.equals(ata(sender))).toBe(true);
+		expect(transfer.keys[1].pubkey.equals(mint)).toBe(true);
+		expect(transfer.keys[2].pubkey.equals(ata(new PublicKey(SOL_WALLET)))).toBe(true);
+		expect(transfer.data.readBigUInt64LE(1)).toBe(1_500_000n);
+		expect(transfer.data[9]).toBe(6);
+	});
+
+	it('scales the amount by the decimals read from an arbitrary Token-2022 mint', async () => {
+		const { Keypair } = await import('@solana/web3.js');
+		const spl = await import('@solana/spl-token');
+		const mint = Keypair.generate().publicKey;
+		const data = Buffer.alloc(spl.MINT_SIZE);
+		spl.MintLayout.encode(
+			{ mintAuthorityOption: 0, mintAuthority: mint, supply: 0n, decimals: 9, isInitialized: true, freezeAuthorityOption: 0, freezeAuthority: mint },
+			data,
+		);
+		sendState.accounts.set(mint.toBase58(), { owner: spl.TOKEN_2022_PROGRAM_ID, data, lamports: 1, executable: false });
+		sqlState.agent = agentRow;
+		const { transfer } = await signedTransfer(mint.toBase58(), '2');
+		expect(transfer.programId.equals(spl.TOKEN_2022_PROGRAM_ID)).toBe(true);
+		expect(transfer.data.readBigUInt64LE(1)).toBe(2_000_000_000n);
+		expect(transfer.data[9]).toBe(9);
+	});
+
+	it('refuses a mint that does not exist instead of guessing its decimals, without signing', async () => {
+		const { Keypair } = await import('@solana/web3.js');
+		const mint = Keypair.generate().publicKey.toBase58();
+		sendState.accounts.set(mint, null);
+		sqlState.agent = agentRow;
+		const r = await send({ agent_id: AGENT_ID, chain: 'solana', asset: mint, recipient: SOL_WALLET, amount: '1' });
+		expect(r.statusCode).toBe(422);
+		expect(body(r).error).toBe('mint_not_found');
+		expect(sendState.signed).toHaveLength(0);
 	});
 });
