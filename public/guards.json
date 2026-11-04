@@ -662,6 +662,22 @@
 			}
 		},
 		{
+			"id": "check-live-ops",
+			"script": "scripts/check-live-ops-fresh.mjs",
+			"npm": "check:live-ops",
+			"title": "Event live-ops sheet is the current one",
+			"protects": "docs/event-readiness/LIVE-OPS.md names the event configured in public/event.json (id, start instant, H1) and the release SHA that /api/version reports, with no leftover lines from another event.",
+			"why": "The live-ops sheet is the page an operator keeps open during an event, and it is written by hand. A sheet from the previous event looks just as authoritative and sends the operator to the wrong rollback revisions and the wrong window; that already happened once when a Community Day sheet survived into the next meetup prep.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "The release half of the check compares the sheet with the commit https://three.ws/api/version is serving right now, which no fixture can stand in for. The parsing and comparison rules are unit-tested in tests/check-live-ops-fresh.test.js, and --offline skips the live half."
+			}
+		},
+		{
 			"id": "audit-rig-coverage",
 			"script": "scripts/audit-rig-coverage.mjs",
 			"npm": "audit:rig-coverage",

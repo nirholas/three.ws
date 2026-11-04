@@ -201,6 +201,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Computer-use operability sweep | `npm run audit:agent-operability` | The primary task on `/create`, `/forge`, `/connect`, an agent profile chat, and `/launch` stays reachable with accessibility-tree locators alone (`getByRole`/`getByLabel`), the way a screen reader or a computer-use agent drives it. |
 | Hosted IBM page | `npm run audit:ibm-hosted` | The publish-once partnership page still works from a domain that is not three.ws: the live update applies, i18n mounts, and the x402 widget binds. See [ops/ibm-hosted-page-audit.md](ops/ibm-hosted-page-audit.md). |
 | `/play` event client | `npm run audit:event-client` | The /play world a meetup crowd loads on phones holds its measured ceilings (load time, bytes, heap, frames), downloads nothing twice, logs no errors, keeps its room socket, and passes the touch and failure-mode audits. |
+| Event live-ops sheet freshness | `npm run check:live-ops` | `docs/event-readiness/LIVE-OPS.md` names the configured event and the release `/api/version` is serving, with no leftover lines from a previous event. |
 | `/play` failure modes | `npm run audit:play-failures` | `/play` stays usable when its dependencies fail, and hostile deep-link params never execute. |
 | Overlapping fixed overlays | `npm run audit:overlays` | No persistent floating widget can cover another one's controls. |
 | Image loading attributes | `npm run check:images` | Every JS-rendered image sets `loading` and `decoding`. |
