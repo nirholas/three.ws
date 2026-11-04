@@ -1,0 +1,97 @@
+{
+ "measured_at": "2026-11-04",
+ "method": "node scripts/a2f-rig-coverage.mjs: distinct avatar files from human accounts, at most 60 per source, glTF JSON read by HTTP range request, each file classified by the shipping A2FPlayer.attach() on its real morph target names",
+ "files": 470,
+ "readable": 468,
+ "paths": [
+  "direct",
+  "derived",
+  "unmapped",
+  "no_morphs"
+ ],
+ "sources": [
+  {
+   "source": "Selfie reconstruction",
+   "direct": 57,
+   "derived": 0,
+   "unmapped": 0,
+   "no_morphs": 3
+  },
+  {
+   "source": "Studio",
+   "direct": 54,
+   "derived": 0,
+   "unmapped": 0,
+   "no_morphs": 6
+  },
+  {
+   "source": "Direct upload",
+   "direct": 28,
+   "derived": 0,
+   "unmapped": 2,
+   "no_morphs": 0
+  },
+  {
+   "source": "Fork",
+   "direct": 25,
+   "derived": 3,
+   "unmapped": 0,
+   "no_morphs": 32
+  },
+  {
+   "source": "Auto-rig",
+   "direct": 19,
+   "derived": 0,
+   "unmapped": 0,
+   "no_morphs": 0
+  },
+  {
+   "source": "Import",
+   "direct": 8,
+   "derived": 4,
+   "unmapped": 1,
+   "no_morphs": 47
+  },
+  {
+   "source": "Upload",
+   "direct": 4,
+   "derived": 0,
+   "unmapped": 1,
+   "no_morphs": 55
+  },
+  {
+   "source": "Photo-avatar export",
+   "direct": 0,
+   "derived": 0,
+   "unmapped": 0,
+   "no_morphs": 59
+  },
+  {
+   "source": "Forge (text to 3D props)",
+   "direct": 5,
+   "derived": 0,
+   "unmapped": 0,
+   "no_morphs": 54
+  },
+  {
+   "source": "Genome",
+   "direct": 0,
+   "derived": 0,
+   "unmapped": 0,
+   "no_morphs": 1
+  }
+ ],
+ "earlier_run": {
+  "measured_at": "2026-10-08",
+  "morphed": 204,
+  "driven": 200
+ },
+ "totals": {
+  "direct": 200,
+  "derived": 7,
+  "unmapped": 4,
+  "no_morphs": 257
+ },
+ "morphed": 211,
+ "driven": 207
+}

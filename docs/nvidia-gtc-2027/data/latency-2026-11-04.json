@@ -1,0 +1,105 @@
+{
+ "measured_at": "2026-11-04",
+ "method": "ten consecutive POST https://three.ws/api/a2f calls from one client with the 22-word line in a2f-track-sample.json; wall-clock from request start to full JSON response (Magpie TTS, 16 kHz resample, Audio2Face-3D over NVCF gRPC); calls 11 to 16 were refused by the per-client rate limit and are excluded",
+ "text_words": 22,
+ "calls": [
+  {
+   "call": 1,
+   "latency_s": 3.973,
+   "speech_s": 7.567,
+   "frames": 228,
+   "status": 200
+  },
+  {
+   "call": 2,
+   "latency_s": 4.096,
+   "speech_s": 7.6,
+   "frames": 229,
+   "status": 200
+  },
+  {
+   "call": 3,
+   "latency_s": 13.685,
+   "speech_s": 7.333,
+   "frames": 221,
+   "status": 200
+  },
+  {
+   "call": 4,
+   "latency_s": 4.235,
+   "speech_s": 6.933,
+   "frames": 209,
+   "status": 200
+  },
+  {
+   "call": 5,
+   "latency_s": 2.745,
+   "speech_s": 6.867,
+   "frames": 207,
+   "status": 200
+  },
+  {
+   "call": 6,
+   "latency_s": 3.641,
+   "speech_s": 7.367,
+   "frames": 222,
+   "status": 200
+  },
+  {
+   "call": 7,
+   "latency_s": 3.197,
+   "speech_s": 7.333,
+   "frames": 221,
+   "status": 200
+  },
+  {
+   "call": 8,
+   "latency_s": 10.997,
+   "speech_s": 7.233,
+   "frames": 218,
+   "status": 200
+  },
+  {
+   "call": 9,
+   "latency_s": 2.711,
+   "speech_s": 7,
+   "frames": 211,
+   "status": 200
+  },
+  {
+   "call": 10,
+   "latency_s": 3.199,
+   "speech_s": 7.033,
+   "frames": 212,
+   "status": 200
+  }
+ ],
+ "median_latency_s": 3.807,
+ "median_speech_s": 7.333,
+ "earlier_runs": [
+  {
+   "measured_at": "2026-10-08",
+   "calls": 6,
+   "median_latency_s": 2.96,
+   "speech_s_range": [
+    5.9,
+    7
+   ]
+  },
+  {
+   "measured_at": "2026-09-22",
+   "text_in_s": [
+    1.94,
+    2.9,
+    3.17
+   ],
+   "audio_in_s": [
+    1.29,
+    2.09,
+    2.19
+   ],
+   "speech_s": 5.5,
+   "frames": 166
+  }
+ ]
+}

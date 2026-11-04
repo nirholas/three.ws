@@ -42,11 +42,11 @@ allows more than one per author.
 
 **Abstract, short (about 500 characters)**
 
-> Audio2Face-3D emits ARKit blendshape tracks, but avatars on the open web use ARKit, VRM vowels, Oculus visemes, or no face morphs at all. We present a browser runtime that maps one A2F-3D track onto any of them: direct canonicalization of ARKit spellings, plus a derived path that reconstructs vowel and viseme expressions from ARKit weights. On 467 real user avatars, 98.0% of rigs with any morph targets were face-driven by A2F. Text to speech to 30 fps animation completes in a median 2.96 s for 6 s of speech.
+> Audio2Face-3D emits ARKit blendshape tracks, but avatars on the open web use ARKit, VRM vowels, Oculus visemes, or no face morphs at all. We present a browser runtime that maps one A2F-3D track onto any of them: direct canonicalization of ARKit spellings, plus a derived path that reconstructs vowel and viseme expressions from ARKit weights. On 468 real user avatars, 98.1% of rigs with any morph targets were face-driven by A2F. Text to speech to 30 fps animation completes in a median 3.8 s for 7 s of speech.
 
 **Abstract, standard (about 1,250 characters)**
 
-> NVIDIA Audio2Face-3D produces high-quality facial animation as an ARKit-52 blendshape track, and is usually demonstrated on characters authored for it in a game engine. Web avatars are different: they arrive from text-to-3D generators, photo reconstruction, avatar creators, and arbitrary uploads, and expose ARKit morphs, VRM vowel expressions, Oculus visemes, or nothing usable. We built a browser runtime that drives any of these from one A2F-3D track. A direct path canonicalizes the many spellings of ARKit shapes; a derived path inverts a VRM/Oculus-to-ARKit component map so an expression's activation is reconstructed from the ARKit frame, and is suppressed on meshes that already have direct mouth coverage to prevent lip overshoot. Speech comes from Magpie TTS at 44.1 kHz; A2F-3D consumes a 16 kHz resample while the browser plays the original audio and samples the 30 fps track by the audio clock. Measured on production: across 467 distinct user avatar files, 98.0% of rigs carrying any morph targets were face-driven (194 direct, 6 derived), and text in to speech plus animation out completed in a median 2.96 s (2.29 to 3.90 s) for 5.9 to 7.0 s of speech. We report the mapping tables, failure modes, and coverage by avatar source.
+> NVIDIA Audio2Face-3D produces high-quality facial animation as an ARKit-52 blendshape track, and is usually demonstrated on characters authored for it in a game engine. Web avatars are different: they arrive from text-to-3D generators, photo reconstruction, avatar creators, and arbitrary uploads, and expose ARKit morphs, VRM vowel expressions, Oculus visemes, or nothing usable. We built a browser runtime that drives any of these from one A2F-3D track. A direct path canonicalizes the many spellings of ARKit shapes; a derived path inverts a VRM/Oculus-to-ARKit component map so an expression's activation is reconstructed from the ARKit frame, and is suppressed on meshes that already have direct mouth coverage to prevent lip overshoot. Speech comes from Magpie TTS at 44.1 kHz; A2F-3D consumes a 16 kHz resample while the browser plays the original audio and samples the 30 fps track by the audio clock. Measured on production: across 468 distinct user avatar files, 98.1% of rigs carrying any morph targets were face-driven (200 direct, 7 derived), and text in to speech plus animation out completed in a median 3.81 s for 6.9 to 7.6 s of speech. We report the mapping tables, failure modes, and coverage by avatar source.
 
 **Abstract, long (about 300 words)**
 
@@ -54,17 +54,17 @@ allows more than one per author.
 >
 > **Method.** We present a zero-install browser runtime that drives any such rig from one A2F-3D track. The voice loop is Riva ASR in, Nemotron (NIM) reasoning, Magpie TTS out, and A2F-3D animation, all over NVCF gRPC. Magpie's 44.1 kHz output is downmixed and resampled to the 16 kHz A2F-3D contract, while the browser plays the original audio and samples the 30 fps, 55-shape track against the audio clock with inter-frame interpolation. Per mesh, a direct path canonicalizes ARKit spellings; a derived path inverts a VRM/Oculus-to-ARKit component map, reconstructing each expression's activation as the normalized sum of its ARKit components. The derived path is suppressed when a mesh already has direct jaw or mouth coverage, which removes double-driven lip overshoot. Unmappable rigs degrade to amplitude lipsync rather than a frozen face.
 >
-> **Benchmark.** We classified 469 distinct avatar files made by real users (stratified by source, at most 60 per source; 467 readable) with the production player, and measured end-to-end latency on the production endpoint.
+> **Benchmark.** We classified 470 distinct avatar files made by real users (stratified by source, at most 60 per source; 468 readable) with the production player, and measured end-to-end latency on the production endpoint.
 >
-> **Results.** 98.0% of rigs that carry any morph targets are face-driven by A2F-3D (194 direct, 6 derived, 4 unmapped). Source matters: 57 of 60 selfie reconstructions and 53 of 60 studio avatars are driven directly, while third-party creator exports often ship without morphs. Text in to synchronized speech and animation out completes in a median 2.96 s for about 6 s of speech, faster than real time.
+> **Results.** 98.1% of rigs that carry any morph targets are face-driven by A2F-3D (200 direct, 7 derived, 4 unmapped). Source matters: 57 of 60 selfie reconstructions and 54 of 60 studio avatars are driven directly, while third-party creator exports often ship without morphs. Text in to synchronized speech and animation out completes in a median 3.8 s for about 7 s of speech, faster than real time.
 
 ### Evidence behind every number
 
 | Claim | Value | How it was measured | Reproduce |
 |---|---|---|---|
-| Rig coverage | 98.0% of morphed rigs driven (200 of 204); 42.8% of all files (200 of 467) | 469 distinct avatar files from human accounts, at most 60 per source, classified by the shipping `A2FPlayer.attach()` on each file's real morph target names, 2026-10-08 | `node scripts/a2f-rig-coverage.mjs` |
-| Direct vs derived | 194 direct ARKit mouth, 6 derived from VRM/Oculus expressions | same run | same |
-| End-to-end latency, text in | median 2.96 s, range 2.29 to 3.90 s, for 5.9 to 7.0 s of speech; 6 of 6 succeeded | six consecutive `POST https://three.ws/api/a2f` with a 20-word line, 2026-10-08 | `curl -X POST https://three.ws/api/a2f -H 'content-type: application/json' -d '{"text":"..."}'` |
+| Rig coverage | 98.1% of morphed rigs driven (207 of 211); 44.2% of all files (207 of 468) | 470 distinct avatar files from human accounts, at most 60 per source, classified by the shipping `A2FPlayer.attach()` on each file's real morph target names, 2026-11-04 (first run on 2026-10-08: 98.0%, 200 of 204) | `node scripts/a2f-rig-coverage.mjs` |
+| Direct vs derived | 200 direct ARKit mouth, 7 derived from VRM/Oculus expressions | same run | same |
+| End-to-end latency, text in | median 3.81 s for 6.9 to 7.6 s of speech; 8 of 10 calls 2.71 to 4.24 s, two at 11.0 and 13.7 s; 10 of 10 succeeded | ten consecutive `POST https://three.ws/api/a2f` with a 22-word line, 2026-11-04 (the endpoint rate-limits a single caller after ten). Earlier run, 2026-10-08: median 2.96 s for 5.9 to 7.0 s of speech, 6 calls | `curl -X POST https://three.ws/api/a2f -H 'content-type: application/json' -d '{"text":"..."}'` |
 | End-to-end latency, audio in | 1.29 to 2.19 s for 5.5 s of audio | three consecutive calls with a WAV body, 2026-09-22 | [forum post](./nvidia-forum-browser-digital-human.md#measured-against-production-2026-09-22) |
 | Track shape | 30 fps, 55 blendshapes (ARKit-52 plus three tongue shapes) | every response above | response `animation.fps`, `animation.blendShapeNames` |
 
@@ -73,14 +73,15 @@ Coverage by source, from the same run (counts of distinct files):
 | Source | Direct | Derived | Unmapped | No morphs |
 |---|---|---|---|---|
 | Selfie reconstruction | 57 | 0 | 0 | 3 |
-| Studio | 53 | 0 | 0 | 7 |
-| Direct upload | 27 | 0 | 2 | 0 |
-| Fork | 26 | 2 | 0 | 32 |
+| Studio | 54 | 0 | 0 | 6 |
+| Direct upload | 28 | 0 | 2 | 0 |
+| Fork | 25 | 3 | 0 | 32 |
 | Auto-rig | 19 | 0 | 0 | 0 |
 | Import | 8 | 4 | 1 | 47 |
 | Upload | 4 | 0 | 1 | 55 |
 | Photo-avatar exports | 0 | 0 | 0 | 59 |
-| Forge (text to 3D props) | 0 | 0 | 0 | 59 |
+| Forge (text to 3D props) | 5 | 0 | 0 | 54 |
+| Genome | 0 | 0 | 0 | 1 |
 
 Say plainly in the poster: forge outputs are mostly props and have no face, and the photo-avatar
 exports stored on three.ws carry no morph targets at all (verified on the raw files), so those
