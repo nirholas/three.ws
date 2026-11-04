@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Avatars keep their own idle, walk and gestures",
+			"summary": "A new Animation tab in Avatar Studio lets you pick a resting idle, a walk, a gesture intensity and an emote loadout. The choices save with the avatar and are used by embeds, the walk page and the stage, so two avatars with similar bodies can move like different characters.",
+			"tags": [
+				"feature"
+			],
+			"link": "/avatar-studio"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Campaign links are now measured first-party",
 			"summary": "A page opened from a tagged campaign link records the visitor's first touch in our own ledger, and signups, agents, forge generations and paid calls are credited to it. Admins get a per-campaign report; no IP or referrer is stored.",
 			"tags": [

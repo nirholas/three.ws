@@ -6653,6 +6653,13 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/web-bot-auth",
+					"title": "Docs · Web Bot Auth",
+					"description": "three.ws agents sign their outbound web requests with Ed25519 HTTP Message Signatures (RFC 9421) and publish the key directory, so a site can verify and attribute the fetch instead of blocking it.",
+					"priority": 0.5,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/hold-to-access",
 					"title": "Docs · Hold-to-access",
 					"description": "three.ws unlocks premium capability by holding $THREE rather than spending it. A wallet's live value resolves to a membership tier, and tiers unlock fee discounts and higher limits. How tiers are computed and refreshed.",
