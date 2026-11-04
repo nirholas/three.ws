@@ -32,6 +32,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import { randomToken, hmacSha256 } from './crypto.js';
 import { readTextCapped } from './read-capped.js';
 import { validatePublicUrl, resolvePublicHost, pinnedAgent, pinnedFetch, disposeAgent, SsrfError } from './ssrf.js';
+import { decryptBearerToken } from './webhook-auth.js';
 
 const DELIVERY_TIMEOUT_MS = 10_000;
 const LEASE_SECONDS = 30;
@@ -300,7 +301,7 @@ export async function processDelivery(deliveryId) {
 		  and d.status = 'pending'
 		  and d.next_attempt_at <= now()
 		returning d.id, d.event_id, d.event_type, d.payload, d.attempt,
-		          w.id as webhook_id, w.url, w.secret, w.active
+		          w.id as webhook_id, w.url, w.secret, w.active, w.auth_token_enc
 	`;
 	if (!row) return null;
 
@@ -317,7 +318,21 @@ export async function processDelivery(deliveryId) {
 
 	const body = typeof row.payload === 'string' ? row.payload : JSON.stringify(row.payload);
 	const t0 = Date.now();
-	const result = await deliver(row.url, row.secret, row.event_id, body);
+	// An endpoint with a bearer token (a Grok Bot routine trigger, say) gets it
+	// as an Authorization header. A token that no longer decrypts (JWT_SECRET
+	// rotated) fails the attempt here rather than posting without it, so the
+	// receiver never sees an unauthenticated call it would reject anyway and
+	// the delivery log says what to fix.
+	let bearerToken = null;
+	let result;
+	if (row.auth_token_enc) {
+		try {
+			bearerToken = await decryptBearerToken(row.auth_token_enc);
+		} catch {
+			result = { statusCode: null, responseBody: null, error: 'bearer_token_unreadable' };
+		}
+	}
+	result ??= await deliver(row.url, row.secret, row.event_id, body, { bearerToken });
 	const durationMs = Date.now() - t0;
 	const attemptNo = Number(row.attempt || 0) + 1;
 	const ok = result.statusCode >= 200 && result.statusCode < 300;
@@ -415,7 +430,11 @@ export async function webhookUrlProblem(raw) {
 	return null;
 }
 
-export async function deliver(url, secret, eventId, body) {
+/**
+ * POST one signed delivery. `bearerToken`, when set, is sent as
+ * `Authorization: Bearer <token>` alongside the signature headers.
+ */
+export async function deliver(url, secret, eventId, body, { bearerToken = null } = {}) {
 	const timestamp = Math.floor(Date.now() / 1000);
 	const signature = await signatureHeader(secret, eventId, timestamp, body);
 
@@ -459,6 +478,7 @@ export async function deliver(url, secret, eventId, body) {
 				'webhook-timestamp': String(timestamp),
 				'webhook-signature': signature,
 				'user-agent': 'three.ws-webhooks/1.0',
+				...(bearerToken ? { authorization: `Bearer ${bearerToken}` } : {}),
 			},
 			body,
 			signal: controller.signal,

@@ -1,6 +1,6 @@
-// GET    /api/developer/webhooks/:id — webhook details + recent deliveries
-// PATCH  /api/developer/webhooks/:id — update webhook (url, events, active, description)
-// DELETE /api/developer/webhooks/:id — delete webhook
+// GET    /api/developer/webhooks/:id: webhook details + recent deliveries
+// PATCH  /api/developer/webhooks/:id: update webhook (url, events, active, description, bearer_token)
+// DELETE /api/developer/webhooks/:id: delete webhook
 
 import { cors, error, json, method, readJson, wrap } from '../../_lib/http.js';
 import { getSessionUser } from '../../_lib/auth.js';
@@ -8,6 +8,7 @@ import { requireCsrf } from '../../_lib/csrf.js';
 import { sql } from '../../_lib/db.js';
 import { selectEventTypes, webhookUrlProblem } from '../../_lib/webhook-dispatch.js';
 import { isUuid } from '../../_lib/validate.js';
+import { bearerTokenColumn } from '../../_lib/webhook-auth.js';
 
 export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,PATCH,DELETE,OPTIONS', credentials: true })) return;
@@ -25,7 +26,8 @@ export default wrap(async function handler(req, res) {
 	if (!isUuid(id)) return error(res, 404, 'not_found', 'Webhook not found');
 
 	const [webhook] = await sql`
-		select id, url, events, active, description, created_at, updated_at
+		select id, url, events, active, description, created_at, updated_at,
+		       (auth_token_enc is not null) as has_bearer_token
 		from developer_webhooks
 		where id = ${id} and user_id = ${user.id}
 	`;
@@ -76,6 +78,10 @@ export default wrap(async function handler(req, res) {
 		if (typeof body.description === 'string') {
 			updates.description = body.description.trim().slice(0, 200);
 		}
+		// Write-only bearer token: a string sets it, null or "" clears it.
+		const bearer = await bearerTokenColumn(body);
+		if (bearer.error) return error(res, 400, 'bad_request', bearer.error);
+		if (bearer.value !== undefined) updates.auth_token_enc = bearer.value;
 
 		if (!Object.keys(updates).length) {
 			return json(res, 200, { webhook });
@@ -87,11 +93,13 @@ export default wrap(async function handler(req, res) {
 				events = ${updates.events ?? webhook.events},
 				active = ${updates.active ?? webhook.active},
 				description = ${updates.description !== undefined ? updates.description : webhook.description},
+				auth_token_enc = case when ${'auth_token_enc' in updates} then ${updates.auth_token_enc ?? null} else auth_token_enc end,
 				consecutive_failures = case when ${reenable} then 0 else consecutive_failures end,
 				disabled_reason = case when ${reenable} then null else disabled_reason end,
 				updated_at = now()
 			where id = ${id} and user_id = ${user.id}
-			returning id, url, events, active, description, created_at, updated_at
+			returning id, url, events, active, description, created_at, updated_at,
+			          (auth_token_enc is not null) as has_bearer_token
 		`;
 		return json(res, 200, { webhook: updated });
 	}

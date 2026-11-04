@@ -616,6 +616,11 @@ function renderWebhooksTab(root) {
 				<span class="dev-field-label">Description <span class="dev-field-opt">(optional)</span></span>
 				<input type="text" id="wh-desc" class="dev-input" placeholder="Production server" maxlength="200" />
 			</label>
+			<label class="dev-field">
+				<span class="dev-field-label">Bearer token <span class="dev-field-opt">(optional)</span></span>
+				<input type="password" id="wh-bearer" class="dev-input" placeholder="Sent as Authorization: Bearer ..." maxlength="519" autocomplete="off" spellcheck="false" />
+				<span class="dev-field-hint">For a receiver that checks a static key, such as a Grok Bot routine webhook trigger: paste the key Grok gave you. It is stored encrypted and never shown again. Signature headers are still sent.</span>
+			</label>
 			${agentScopeHTML()}
 			<fieldset class="dev-field">
 				<legend class="dev-field-label">Events</legend>
@@ -678,12 +683,14 @@ function webhookCardHTML(wh) {
 					<button class="dev-wh-view-btn" data-action="deliveries" aria-expanded="false">View Deliveries</button>
 					<button class="dn-btn ghost" data-action="test" ${wh.active ? '' : 'disabled title="Resume the endpoint to send a test"'}>Send test</button>
 					<button class="dn-btn ghost" data-action="rotate">Rotate secret</button>
+					<button class="dn-btn ghost" data-action="bearer">${wh.has_bearer_token ? 'Change token' : 'Add token'}</button>
 					<button class="dn-btn ghost" data-action="toggle">${wh.active ? 'Pause' : 'Resume'}</button>
 					<button class="dn-btn ghost danger" data-action="delete">Delete</button>
 				</div>
 			</div>
 			<div class="dev-wh-card-meta">
 				<span class="dev-wh-meta-item">Scope: ${wh.agent_id ? `<span class="dn-tag">${esc(agent?.name || wh.agent_id.slice(0, 8))}</span>` : '<span class="dev-text-dim">every agent</span>'}</span>
+				<span class="dev-wh-meta-item">Auth: ${wh.has_bearer_token ? '<span class="dn-tag">Bearer token</span>' : '<span class="dev-text-dim">signature only</span>'}</span>
 				<span class="dev-wh-meta-item">Events: ${wh.events?.length ? wh.events.map(e => `<span class="dn-tag">${esc(e)}</span>`).join(' ') : '<span class="dev-text-dim">all</span>'}</span>
 			</div>
 			${s ? `<div class="dev-wh-card-stats">
@@ -772,6 +779,19 @@ function wireWebhookCard(card, container) {
 			showSecretModal(res.data.secret);
 		} catch (err) {
 			showToast(v1Error(err, 'Failed to rotate the secret'), 'danger');
+		}
+	});
+
+	on('bearer', async () => {
+		const choice = await bearerTokenModal({ hasToken: Boolean(wh.has_bearer_token) });
+		if (!choice) return;
+		try {
+			const { webhook } = await patch(`/api/developer/webhooks/${id}`, { bearer_token: choice.token });
+			wh.has_bearer_token = Boolean(webhook?.has_bearer_token);
+			renderWebhookList(container);
+			showToast(choice.token ? 'Bearer token saved' : 'Bearer token removed');
+		} catch (err) {
+			showToast(v1Error(err, 'Failed to update the bearer token'), 'danger');
 		}
 	});
 
@@ -1032,16 +1052,19 @@ function wireWebhookForm(el) {
 		saveBtn.disabled = true;
 		saveBtn.textContent = 'Creating...';
 		try {
+			const bearer = el.querySelector('#wh-bearer').value.trim();
 			const res = await post('/api/v1/webhooks', {
 				url,
 				description: desc || undefined,
 				events,
 				agentId: agentSelect.value || undefined,
+				bearerToken: bearer || undefined,
 			});
 			form.style.display = 'none';
 			createBtn.style.display = '';
 			urlInput.value = '';
 			el.querySelector('#wh-desc').value = '';
+			el.querySelector('#wh-bearer').value = '';
 			await reloadWebhooks(el.querySelector('#wh-list'));
 			showSecretModal(res.data.secret);
 			showToast('Webhook created');
@@ -1080,6 +1103,65 @@ function confirmModal({ title, body, confirmLabel = 'Confirm', danger = false })
 		overlay.querySelector('[data-confirm]').addEventListener('click', () => done(true));
 		overlay.addEventListener('click', (e) => { if (e.target === overlay) done(false); });
 		overlay.querySelector('[data-confirm]').focus();
+	});
+}
+
+// Set, replace or remove an endpoint's bearer token. Resolves { token } where
+// token is the new value, or null to remove it; resolves null on cancel. The
+// stored token is never sent back, so the field always starts empty.
+function bearerTokenModal({ hasToken }) {
+	return new Promise((resolve) => {
+		const overlay = document.createElement('div');
+		overlay.className = 'dev-modal-overlay';
+		overlay.innerHTML = `
+			<div class="dev-modal" role="dialog" aria-modal="true" aria-labelledby="bearer-title">
+				<h3 class="dev-modal-title" id="bearer-title">${hasToken ? 'Change bearer token' : 'Add a bearer token'}</h3>
+				<p class="dev-modal-desc">Every delivery will carry <code>Authorization: Bearer &lt;token&gt;</code>. Use it for a Grok Bot routine webhook trigger or any receiver that checks a static key. ${hasToken ? 'The current token is stored encrypted and cannot be shown.' : 'It is stored encrypted and never shown again.'}</p>
+				<label class="dev-field">
+					<span class="dev-field-label">Token</span>
+					<input type="password" class="dev-input" data-token maxlength="519" autocomplete="off" spellcheck="false" placeholder="Paste the key" />
+					<span class="dev-field-hint dev-text-danger" data-err hidden></span>
+				</label>
+				<div class="dev-modal-actions" style="gap:8px">
+					${hasToken ? '<button class="dn-btn ghost danger" data-remove>Remove token</button>' : ''}
+					<button class="dn-btn ghost" data-cancel>Cancel</button>
+					<button class="dn-btn primary" data-save>Save token</button>
+				</div>
+			</div>
+		`;
+		document.body.appendChild(overlay);
+		const input = overlay.querySelector('[data-token]');
+		const err = overlay.querySelector('[data-err]');
+		const done = (val) => {
+			overlay.remove();
+			document.removeEventListener('keydown', onKey);
+			resolve(val);
+		};
+		const save = () => {
+			const token = input.value.trim().replace(/^bearer\s+/i, '');
+			// Mirrors api/_lib/webhook-auth.js so the common mistakes are caught here.
+			const problem = token.length < 8 ? 'The token must be at least 8 characters.'
+				: token.length > 512 ? 'The token must be at most 512 characters.'
+				: !/^[\x21-\x7e]+$/.test(token) ? 'The token may contain only visible ASCII characters, with no spaces.'
+				: null;
+			if (problem) {
+				err.textContent = problem;
+				err.hidden = false;
+				input.focus();
+				return;
+			}
+			done({ token });
+		};
+		const onKey = (e) => {
+			if (e.key === 'Escape') done(null);
+			if (e.key === 'Enter' && document.activeElement === input) save();
+		};
+		document.addEventListener('keydown', onKey);
+		overlay.querySelector('[data-cancel]').addEventListener('click', () => done(null));
+		overlay.querySelector('[data-save]').addEventListener('click', save);
+		overlay.querySelector('[data-remove]')?.addEventListener('click', () => done({ token: null }));
+		overlay.addEventListener('click', (e) => { if (e.target === overlay) done(null); });
+		input.focus();
 	});
 }
 

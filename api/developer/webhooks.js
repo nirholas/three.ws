@@ -6,6 +6,7 @@ import { getSessionUser } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { sql } from '../_lib/db.js';
 import { EVENT_TYPES, newWebhookSecret, selectEventTypes, webhookUrlProblem } from '../_lib/webhook-dispatch.js';
+import { bearerTokenColumn } from '../_lib/webhook-auth.js';
 import { getDevSubscription } from '../_lib/dev-plans/subscription.js';
 import { DEV_PLAN_UPGRADE_URL } from '../_lib/dev-plans/config.js';
 
@@ -21,6 +22,7 @@ export default wrap(async function handler(req, res) {
 		const rows = await sql`
 			select w.id, w.url, w.events, w.active, w.description, w.agent_id, w.disabled_reason,
 			       w.consecutive_failures, w.created_at, w.updated_at,
+			       (w.auth_token_enc is not null) as has_bearer_token,
 			       s.total, s.succeeded, s.failed, s.pending, s.last_delivery_at
 			from developer_webhooks w
 			left join lateral (
@@ -69,6 +71,10 @@ export default wrap(async function handler(req, res) {
 	const events = selection.events;
 	const description =
 		typeof body.description === 'string' ? body.description.trim().slice(0, 200) : null;
+	// Optional, write-only: sent as `Authorization: Bearer` on every delivery
+	// (a Grok Bot routine trigger needs it). Stored encrypted, never returned.
+	const bearer = await bearerTokenColumn(body);
+	if (bearer.error) return error(res, 400, 'bad_request', bearer.error);
 
 	// The cap is the developer plan's (api/_lib/dev-plans/config.js).
 	const [[{ count: existing }], sub] = await Promise.all([
@@ -88,9 +94,10 @@ export default wrap(async function handler(req, res) {
 	const secret = newWebhookSecret();
 
 	const [webhook] = await sql`
-		insert into developer_webhooks (user_id, url, secret, events, description)
-		values (${user.id}, ${url}, ${secret}, ${events}, ${description})
-		returning id, url, events, active, description, created_at
+		insert into developer_webhooks (user_id, url, secret, events, description, auth_token_enc)
+		values (${user.id}, ${url}, ${secret}, ${events}, ${description}, ${bearer.value ?? null})
+		returning id, url, events, active, description, created_at,
+		          (auth_token_enc is not null) as has_bearer_token
 	`;
 
 	return json(res, 201, { webhook: { ...webhook, secret } });

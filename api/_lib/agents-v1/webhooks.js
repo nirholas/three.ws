@@ -26,6 +26,7 @@ import {
 	sendTestEvent,
 	webhookUrlProblem,
 } from '../webhook-dispatch.js';
+import { bearerTokenColumn } from '../webhook-auth.js';
 import { apiError, intParam, page, requireUuid, strParam } from './http.js';
 import { loadOwnedAgent } from './agents.js';
 
@@ -42,6 +43,8 @@ export function serializeWebhook(w) {
 		description: w.description || null,
 		events: w.events || [],
 		agentId: w.agent_id || null,
+		// Write-only: whether deliveries carry `Authorization: Bearer`, never the token.
+		hasBearerToken: Boolean(w.auth_token_enc),
 		active: w.active,
 		disabledReason: w.disabled_reason || null,
 		consecutiveFailures: w.consecutive_failures ?? 0,
@@ -138,6 +141,12 @@ async function agentParam(raw, userId) {
 	return id;
 }
 
+async function bearerParam(body) {
+	const { value, error } = await bearerTokenColumn(body);
+	if (error) throw apiError(400, 'invalid_parameter', error, { parameter: 'bearerToken' });
+	return value;
+}
+
 function descriptionParam(raw) {
 	if (raw == null) return null;
 	if (typeof raw !== 'string') throw apiError(400, 'invalid_parameter', 'description must be a string.', { parameter: 'description' });
@@ -172,6 +181,7 @@ export async function createWebhook(userId, body) {
 	const events = eventsParam(body.events);
 	const agentId = await agentParam(body.agentId, userId);
 	const description = descriptionParam(body.description);
+	const authTokenEnc = (await bearerParam(body)) ?? null;
 	// The cap is the developer plan's (api/_lib/dev-plans/config.js).
 	const [[{ n }], sub] = await Promise.all([
 		sql`SELECT count(*)::int AS n FROM developer_webhooks WHERE user_id = ${userId}`,
@@ -182,8 +192,8 @@ export async function createWebhook(userId, body) {
 	}
 	const secret = newWebhookSecret();
 	const [row] = await sql`
-		INSERT INTO developer_webhooks (user_id, url, secret, events, description, agent_id)
-		VALUES (${userId}, ${url}, ${secret}, ${events}, ${description}, ${agentId})
+		INSERT INTO developer_webhooks (user_id, url, secret, events, description, agent_id, auth_token_enc)
+		VALUES (${userId}, ${url}, ${secret}, ${events}, ${description}, ${agentId}, ${authTokenEnc})
 		RETURNING *
 	`;
 	return { ...serializeWebhook(row), secret };
@@ -208,7 +218,8 @@ export async function getWebhook(userId, id) {
 }
 
 /**
- * Patch url, events, agentId, description or active. Re-enabling an endpoint
+ * Patch url, events, agentId, description, bearerToken (null or "" clears it)
+ * or active. Re-enabling an endpoint
  * the failure breaker switched off clears the breaker.
  */
 export async function updateWebhook(userId, id, body) {
@@ -217,6 +228,8 @@ export async function updateWebhook(userId, id, body) {
 	const events = 'events' in body ? eventsParam(body.events) : row.events;
 	const agentId = 'agentId' in body ? await agentParam(body.agentId, userId) : row.agent_id;
 	const description = 'description' in body ? descriptionParam(body.description) : row.description;
+	const bearer = await bearerParam(body);
+	const authTokenEnc = bearer === undefined ? row.auth_token_enc ?? null : bearer;
 	let active = row.active;
 	if ('active' in body) {
 		if (typeof body.active !== 'boolean') throw apiError(400, 'invalid_parameter', 'active must be true or false.', { parameter: 'active' });
@@ -226,6 +239,7 @@ export async function updateWebhook(userId, id, body) {
 	const [next] = await sql`
 		UPDATE developer_webhooks SET
 			url = ${url}, events = ${events}, agent_id = ${agentId}, description = ${description}, active = ${active},
+			auth_token_enc = ${authTokenEnc},
 			consecutive_failures = CASE WHEN ${reenable} THEN 0 ELSE consecutive_failures END,
 			disabled_reason = CASE WHEN ${reenable} THEN NULL ELSE disabled_reason END,
 			updated_at = now()
