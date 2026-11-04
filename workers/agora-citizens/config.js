@@ -113,6 +113,8 @@ export function loadConfig() {
 		maxOpenTasks: Math.max(1, num('AGORA_MAX_OPEN_TASKS', 8)),
 		taskRewardLamports: Math.max(1, num('AGORA_TASK_REWARD_LAMPORTS', 1_000_000)), // 0.001 SOL devnet
 		taskDeadlineSecs: Math.max(300, num('AGORA_TASK_DEADLINE_SECS', 3_600)),
+		// Per-call budget for the Cartographer's /api/diorama compose request.
+		cartographerTimeoutMs: Math.max(5_000, num('AGORA_CARTOGRAPHER_TIMEOUT_MS', 60_000)),
 
 		// Arena (Competitive) + Guild (Collaborative) demand (Task 09). A patron
 		// occasionally posts a multi-worker task so several citizens race (Arena —

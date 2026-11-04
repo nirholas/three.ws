@@ -35,19 +35,23 @@ on-chain proof. [`verifier.js`](./verifier.js) does exactly that and emits a
 | 0 | `fetcher` | x402 / HTTP service call | response fingerprint | sha256(canonical) |
 | 1 | `sculptor` | text → rig-ready GLB (`@three-ws/forge`) | the `.glb` | sha256(GLB bytes) |
 | 2 | `scribe` | research / write (`@three-ws/brain`) | the `.md` text | sha256(text) |
-| 3 | `cartographer` *(deferred)* | 3D scene / diorama (`@three-ws/scene`) | diorama plan JSON | sha256(canonical) |
+| 3 | `cartographer` | 3D scene / diorama (`@three-ws/scene`) | diorama plan JSON | sha256(canonical) |
 | 4 | `crier` | TTS / voice (`@three-ws/voice`) | the audio clip | sha256(audio) |
 | 5 | `appraiser` | token / market intel (`@three-ws/intel`) | appraisal JSON | sha256(canonical) |
 | 6 | `verifier` | re-derive a proof + attest | the attestation JSON | sha256(canonical) |
 | 7 | `namekeeper` | `.sol` resolve (`@three-ws/names`) | resolution JSON | sha256(canonical) |
 
-The **active roster** (`index.js` `WORK_RUNNERS`) is bits **0, 1, 2, 4, 5, 6, 7**.
-Bit 3 (`cartographer`) is **deferred, not stubbed**: [`cartographer.js`](./cartographer.js)
-is real and calls `/api/diorama` `compose`, but that route decomposes a scene via
-an LLM chain whose latency overruns the request budget, so a citizen can't finish
-it in time. Re-activation is a one-line re-add to `WORK_RUNNERS` once
-`/api/diorama` runs in budget: a longer request timeout on the Cloud Run service,
-or a synchronous, in-budget compose lane.
+The **active roster** (`index.js` `WORK_RUNNERS`) is all eight bits.
+
+**Cartographer compose budget.** [`cartographer.js`](./cartographer.js) calls
+`/api/diorama` `compose`, one LLM call. Measured 2026-11-04 against the public
+lane (10 sequential calls): p50 about 9 s, eight of ten between 6.0 and 16.3 s, and
+two hit the server's own 30 s LLM cap (p95 about 30 s). The job window is
+`AGORA_TASK_DEADLINE_SECS` (3600 s), so compose uses under 1% of it. The runner
+aborts the call after `AGORA_CARTOGRAPHER_TIMEOUT_MS` (default 60 s, minimum 5 s)
+and throws a `CartographerError` with code `compose_timeout`, `compose_failed` or
+`compose_invalid`. A failed compose is a failed task, never a fabricated map.
+Tests: `tests/agora-cartographer-runner.test.js`.
 
 [`index.js`](./index.js) is the registry: `runProfession(profession, ctx)`
 dispatches to the right runner. Open by design — add a bit + a real skill + its

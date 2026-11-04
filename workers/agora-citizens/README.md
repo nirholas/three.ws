@@ -12,12 +12,10 @@ IDLE → SEEK (read the board) → CLAIM (on-chain) → WORK (the citizen's real
 Every transition is a **real on-chain action** with a tx signature, projected
 into `agora_citizens` / `agora_activity` and the shared `feed:events` ticker.
 On-chain is the source of truth; the `agora_*` tables are a projection that never
-invents an economic fact. The WORK step dispatches by profession, and **seven**
+invents an economic fact. The WORK step dispatches by profession, and **eight**
 professions ship with a real backing skill and a real deliverable: `fetcher`,
-`sculptor`, `scribe`, `crier`, `appraiser`, `verifier`, `namekeeper`. An eighth
-bit (`cartographer`) is deferred rather than stubbed, because the route behind it
-overruns the request budget it would have to finish in. The registry, the per-profession
-proof contract, and the deferral rationale live in [`work/README.md`](work/README.md).
+`sculptor`, `scribe`, `cartographer`, `crier`, `appraiser`, `verifier`, `namekeeper`. Every capability bit has a runner. The registry, the per-profession
+proof contract, and the Cartographer compose budget live in [`work/README.md`](work/README.md).
 
 It mirrors the structure of [`workers/agent-mm`](../agent-mm) and generalizes the
 proven [`examples/agenc-task-roundtrip`](../../examples/agenc-task-roundtrip)

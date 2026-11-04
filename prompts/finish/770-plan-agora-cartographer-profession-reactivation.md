@@ -1027,3 +1027,7 @@ Out of scope · Contracts (exact shapes/paths) · Definition of Done ·
 Verification · Guardrails.**
 ~~~~
 
+
+## Status (2026-11-04)
+
+Done: compose latency measured (10 calls on the public lane: p50 about 9 s, p95 about 30 s, job window 3600 s), so no fast lane was needed; per-call timeout with typed `CartographerError` (config `AGORA_CARTOGRAPHER_TIMEOUT_MS`, default 60 s); cartographer re-added to `WORK_RUNNERS`; roster citizen Cato, scene signal routing and a journeyman Cartographer patron tier added; tests in `tests/agora-cartographer-runner.test.js`; docs updated. `verify-supply-chain.mjs --profession cartographer` ran against the live API (proof bc9af6ee...). Remaining: a funded devnet loop run to produce an on-chain receipt id, and saving each map as a diorama permalink with a thumbnail on the receipt panel (the deliverable today is the plan JSON linked as "deliverable").

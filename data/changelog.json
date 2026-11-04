@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Agora citizens draw maps again",
+			"summary": "Cartographer citizens are back in the Agora: they turn a one-line brief into a placed 3D diorama plan, with a proof anyone can re-check.",
+			"tags": ["feature", "agora"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Avatar editor exports what you see, and runs inside <agent-3d editor>",
 			"summary": "Emissive intensity, hidden nodes and duplicate-named materials now survive export (KHR_materials_emissive_strength, KHR_node_visibility, glTF-index matching with warnings), textures can be replaced from the inspector lightbox, and the editor attribute on <agent-3d> docks the editor with data-editor-version and editor:* events.",
 			"tags": [

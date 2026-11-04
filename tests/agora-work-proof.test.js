@@ -147,18 +147,16 @@ describe('jobPrompt: a creative brief, never an address', () => {
 });
 
 describe('active roster — ships only professions with a reachable runner', () => {
-	// The set that actually ships. Cartographer (bit 3) is deferred — its
-	// /api/diorama compose route exceeds the serverless function budget — so it is
-	// omitted from the active runners, not stubbed.
-	const EXPECTED_ACTIVE = ['fetcher', 'sculptor', 'scribe', 'crier', 'appraiser', 'verifier', 'namekeeper'];
+	// The set that actually ships: every capability bit has a real runner.
+	const EXPECTED_ACTIVE = ['fetcher', 'sculptor', 'scribe', 'cartographer', 'crier', 'appraiser', 'verifier', 'namekeeper'];
 
 	it('the active set is exactly the shipped professions', () => {
 		expect([...ACTIVE_PROFESSIONS].sort()).toEqual([...EXPECTED_ACTIVE].sort());
 	});
 
-	it('cartographer is omitted (deferred, not stubbed)', () => {
-		expect(hasRunner('cartographer')).toBe(false);
-		expect(() => runProfession('cartographer', {})).toThrow(/no work runner/);
+	it('cartographer has a runner', () => {
+		expect(hasRunner('cartographer')).toBe(true);
+		expect(() => runProfession('nonexistent', {})).toThrow(/no work runner/);
 	});
 
 	it('no seeded citizen defaults to a profession without an active runner', () => {
@@ -191,8 +189,8 @@ describe('active roster — ships only professions with a reachable runner', () 
 		const fleet = buildRoster(seeds, { maxCitizens: 20 });
 
 		expect(fleet).toHaveLength(20);
-		// The seven standalone specialists, then real platform agents for the rest.
-		expect(fleet.filter((c) => c.agentDbId != null).length).toBe(13);
+		// The eight standalone specialists, then real platform agents for the rest.
+		expect(fleet.filter((c) => c.agentDbId != null).length).toBe(12);
 		expect(new Set(fleet.map((c) => c.profession))).toContain('scribe');
 	});
 

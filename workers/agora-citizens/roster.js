@@ -87,15 +87,14 @@ function districtFor(i) {
 // references. Bits are additive — see roster PROFESSIONS.
 //
 // Only professions with a reachable backing skill get a standalone specialist
-// (work/index.js WORK_RUNNERS is the active set). Cartographer (bit 3) is
-// deferred — its /api/diorama compose route exceeds the serverless function
-// budget — so no Cartographer citizen is seeded here (omitted, not stubbed).
+// (work/index.js WORK_RUNNERS is the active set).
 const STANDALONE = [
 	{ key: 'aria-sculpt', displayName: 'Aria', professions: ['sculptor', 'fetcher', 'verifier'] },
 	{ key: 'sol-scribe', displayName: 'Sol', professions: ['scribe', 'fetcher'] },
 	{ key: 'echo-crier', displayName: 'Echo', professions: ['crier', 'fetcher'] },
 	{ key: 'mira-appraise', displayName: 'Mira', professions: ['appraiser', 'fetcher'] },
 	{ key: 'nyx-name', displayName: 'Nyx', professions: ['namekeeper', 'fetcher'] },
+	{ key: 'cato-map', displayName: 'Cato', professions: ['cartographer', 'fetcher'] },
 	{ key: 'koa-fetch', displayName: 'Koa', professions: ['fetcher', 'verifier'] },
 	{ key: 'wren-fetch', displayName: 'Wren', professions: ['fetcher', 'verifier'] },
 ];
@@ -215,17 +214,14 @@ function hashStr(str) {
 // signal-less agent is spread across so the Commons reads as a varied labour
 // market. Every craft is backed by a real platform skill (work/*.js), so the
 // assignment is a JOB, never a fabricated capability.
-const CRAFTS = ['sculptor', 'scribe', 'crier', 'appraiser', 'namekeeper', 'verifier'];
+const CRAFTS = ['sculptor', 'scribe', 'cartographer', 'crier', 'appraiser', 'namekeeper', 'verifier'];
 
 // Real-signal to profession, checked before the deterministic spread so an agent
 // that actually carries a signal works the matching craft.
 const SIGNAL_PROFESSION = [
 	[/voice|audio|music|speech|sing|podcast|narrat|entertain/i, 'crier'],
 	[/design|3d|model|sculpt|render|\bart\b|avatar|blender|mesh/i, 'sculptor'],
-	// Scene/world signals route to Sculptor, the nearest craft that actually
-	// ships. Cartographer (bit 3) is deferred and has no runner, so labelling a
-	// citizen with it would seat a worker that fails every job it is handed.
-	[/scene|\bmap\b|world|diorama|architect|spatial|environment/i, 'sculptor'],
+	[/scene|\bmap\b|world|diorama|architect|spatial|environment/i, 'cartographer'],
 	[/market|token|trad|finance|invest|intel|analy|\bdao\b|governance|defi|price/i, 'appraiser'],
 	[/name|\bens\b|domain|registr|resolver/i, 'namekeeper'],
 	[/verif|audit|proof|security|moderat|fact.?check/i, 'verifier'],

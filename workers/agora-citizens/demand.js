@@ -72,6 +72,9 @@ export function defaultPatronTiers(cfg) {
 		{ tier: 'apprentice', profession: 'fetcher', rewardAtomic: base },
 		{ tier: 'apprentice', profession: 'fetcher', rewardAtomic: base },
 		{ tier: 'journeyman', profession: 'fetcher', rewardAtomic: base * 2n },
+		// A themed-map ask for the Cartographer: priced like any journeyman job,
+		// well inside the ladder's range (base to base * 6).
+		{ tier: 'journeyman', profession: 'cartographer', rewardAtomic: base * 2n },
 	];
 	// Arena — a Competitive purse several citizens race for; the first valid proof
 	// takes the WHOLE escrow. Gated on reputation so a juicy purse belongs to

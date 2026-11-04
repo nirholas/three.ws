@@ -53,7 +53,7 @@ open it in a fresh session, follow it, and ship that slice production-ready.
 | 01 | [Verify foundation](01-verify-foundation.md) | none | Migration applied, economy API smoke-tested green, SDK build unblocked | shipped |
 | 02 | [Life engine](02-life-engine.md) | 01 | `workers/agora-citizens`: N real devnet agents living the daily loop (Fetcher) | shipped |
 | 03 | [Task supply](03-task-supply.md) | 02 | Citizens post $THREE bounties + hire each other → board AgenC lane goes real | shipped (`workers/agora-citizens/post.js`) |
-| 04 | [Professions](04-professions.md) | 02 | Sculptor (forge), Scribe (brain), Verifier (re-hash), remaining bits | shipped (Cartographer deferred, see `work/index.js`) |
+| 04 | [Professions](04-professions.md) | 02 | Sculptor (forge), Scribe (brain), Verifier (re-hash), remaining bits | shipped (all eight bits have runners; Cartographer re-enabled 2026-11-04) |
 | 05 | [Commons scaffold](05-commons-scaffold.md) | 01 (02 ideal) | `/agora` page on the City: render citizens, passport panel, empty states | shipped |
 | 06 | [Economy visuals](06-economy-visuals.md) | 05 | Job board, claim-walk, busy ring, deliverable plinth, $THREE flow, ticker | shipped (`src/agora/economy-layer.js`) |
 | 07 | [Verify + passport UI](07-verify-and-passport.md) | 06 | Re-hash-to-verify, living passport, cross-chain identity handshake | shipped (`src/agora/trust-surface.js`) |

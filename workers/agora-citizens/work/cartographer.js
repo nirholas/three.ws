@@ -22,16 +22,63 @@ function briefFor(citizen, job) {
 	return DEFAULT_BRIEFS[h % DEFAULT_BRIEFS.length];
 }
 
+// Budget for the compose call. Measured against the public lane on 2026-11-04
+// (see work/README.md): a single Gemini/LLM call, typically 6 to 12 s and capped
+// server-side at 30 s. The citizen's job window is AGORA_TASK_DEADLINE_SECS
+// (3600 s default), so 60 s leaves headroom without letting a hung call stall
+// the daily loop. Override with AGORA_CARTOGRAPHER_TIMEOUT_MS.
+export const DEFAULT_COMPOSE_TIMEOUT_MS = 60_000;
+
+/** Typed failure: `code` is one of compose_timeout | compose_failed | compose_invalid. */
+export class CartographerError extends Error {
+	constructor(code, message, cause) {
+		super(`cartographer: ${message}`);
+		this.name = 'CartographerError';
+		this.code = code;
+		if (cause) this.cause = cause;
+	}
+}
+
+const finite = (n) => typeof n === 'number' && Number.isFinite(n);
+
+/** A placed object must name something to forge and sit at a real [x, y, z]. */
+function objectIsPlaceable(o) {
+	return (
+		o &&
+		typeof o.prompt === 'string' &&
+		o.prompt.trim().length > 0 &&
+		Array.isArray(o.position) &&
+		o.position.length === 3 &&
+		o.position.every(finite)
+	);
+}
+
 export async function runCartographer({ cfg, citizen, job } = {}) {
 	const apiBase = cfg?.apiBase || 'https://three.ws';
 	const log = cfg?.log || (() => {});
 	const prompt = briefFor(citizen, job);
 
 	log?.(`cartographer: composing diorama for "${prompt.slice(0, 80)}"`);
-	const res = await httpJson(apiBase, '/api/diorama', { method: 'POST', body: { action: 'compose', prompt } });
+	const timeoutMs = Number(cfg?.cartographerTimeoutMs) > 0 ? Number(cfg.cartographerTimeoutMs) : DEFAULT_COMPOSE_TIMEOUT_MS;
+	let res;
+	try {
+		res = await httpJson(apiBase, '/api/diorama', {
+			method: 'POST',
+			body: { action: 'compose', prompt },
+			signal: AbortSignal.timeout(timeoutMs),
+		});
+	} catch (err) {
+		if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
+			throw new CartographerError('compose_timeout', `composer did not answer within ${timeoutMs} ms`, err);
+		}
+		throw new CartographerError('compose_failed', `composer failed (${err?.code || 'error'}): ${err?.message || err}`, err);
+	}
 	const diorama = res?.diorama || res?.data?.diorama || null;
 	if (!diorama || !Array.isArray(diorama.objects) || diorama.objects.length === 0) {
-		throw new Error('cartographer: composer returned no diorama plan');
+		throw new CartographerError('compose_invalid', 'composer returned no diorama plan');
+	}
+	if (!diorama.objects.every(objectIsPlaceable)) {
+		throw new CartographerError('compose_invalid', 'composer returned an object that cannot be placed');
 	}
 
 	const bytes = canonicalJsonBytes({ kind: 'agora.diorama.v1', prompt, diorama });
