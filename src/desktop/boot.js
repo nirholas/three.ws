@@ -107,10 +107,12 @@ export function createBootScreen({ host = document.body, reducedMotion = false }
 		const parts = new Intl.DateTimeFormat([], { hour: clock24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !clock24 }).formatToParts(d);
 		const time = parts.filter((p) => p.type !== 'dayPeriod').map((p) => p.value).join('').trim();
 		const period = parts.find((p) => p.type === 'dayPeriod')?.value || '';
+		// The space between the parts is collapsed by the flex layout but keeps the accessible
+		// name reading "6:50 PM" (a <time> cannot carry an aria-label).
 		const label = period ? `${time} ${period}` : time;
-		if (clock.getAttribute('aria-label') !== label) {
-			clock.innerHTML = `<span>${esc(time)}</span>${period ? `<small>${esc(period)}</small>` : ''}`;
-			clock.setAttribute('aria-label', label);
+		if (clock.dataset.label !== label) {
+			clock.innerHTML = `<span>${esc(time)}</span>${period ? ` <small>${esc(period)}</small>` : ''}`;
+			clock.dataset.label = label;
 		}
 		clock.dateTime = d.toISOString();
 		date.textContent = d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });

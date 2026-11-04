@@ -119,3 +119,25 @@ describe('lock screen presentation', () => {
 		expect(guest.el.querySelector('.os-lock-avatar').textContent).toBe('');
 	});
 });
+
+describe('lock screen accessibility', () => {
+	it('names the clock by its own text instead of an aria-label a <time> cannot carry', () => {
+		const boot = createBootScreen({ reducedMotion: true });
+		boot.toLock(lockOpts('desktop'));
+		const clock = boot.el.querySelector('.os-lock-clock');
+		expect(clock.hasAttribute('aria-label')).toBe(false);
+		expect(clock.textContent).toMatch(/^\d{1,2}:\d{2}( [^\s\d]+)?$/);
+		expect(clock.dateTime).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+	});
+});
+
+describe('desktop page root', () => {
+	it('gives the labelled #os root a landmark role, since aria-label on a bare div is ignored', async () => {
+		const { readFileSync } = await import('node:fs');
+		const { resolve } = await import('node:path');
+		const html = readFileSync(resolve(__dirname, '../pages/desktop.html'), 'utf8');
+		const root = html.match(/<div id="os"[^>]*>/)[0];
+		expect(root).toMatch(/\saria-label="[^"]+"/);
+		expect(root).toMatch(/\srole="(region|main)"/);
+	});
+});

@@ -11,7 +11,7 @@
 	inset: 0;
 	z-index: 1000;
 	color: #fff;
-	font: 14px/1.5 'Inter', system-ui, sans-serif;
+	font: var(--text-ui)/1.5 var(--font-body);
 	-webkit-font-smoothing: antialiased;
 	overflow: hidden;
 	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
@@ -117,7 +117,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	padding: 5px 12px;
 	border: 1px solid rgba(255, 255, 255, 0.12);
 	border-radius: 999px;
-	font: 500 12px/1 'JetBrains Mono', ui-monospace, monospace;
+	font: 500 var(--text-sm)/1 var(--font-mono);
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: rgba(255, 255, 255, 0.72);
@@ -158,7 +158,7 @@ html.os-lock-up #os > :not(.os-wall) {
 .os-boot-sub {
 	margin: 14px 0 0;
 	color: rgba(255, 255, 255, 0.6);
-	font-size: 15px;
+	font-size: var(--text-base);
 }
 
 .os-boot-log {
@@ -170,7 +170,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: 12px;
 	background: rgba(255, 255, 255, 0.02);
-	font: 12.5px/1.9 'JetBrains Mono', ui-monospace, monospace;
+	font: var(--text-sm)/1.9 var(--font-mono);
 	color: rgba(255, 255, 255, 0.78);
 	scrollbar-width: thin;
 }
@@ -236,7 +236,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	display: flex;
 	justify-content: space-between;
 	margin: 0;
-	font: 12px/1 'JetBrains Mono', ui-monospace, monospace;
+	font: var(--text-sm)/1 var(--font-mono);
 	color: rgba(255, 255, 255, 0.45);
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
@@ -280,7 +280,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	align-self: end;
 }
 .os-lock-date {
-	font: 500 15px/1 'Inter', system-ui, sans-serif;
+	font: 500 var(--text-base)/1 var(--font-body);
 	letter-spacing: 0.02em;
 	color: rgba(255, 255, 255, 0.78);
 	text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
@@ -397,7 +397,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	gap: 8px;
 	margin: 8px 0 0;
 	color: rgba(255, 255, 255, 0.68);
-	font-size: 14px;
+	font-size: var(--text-ui);
 }
 .os-lock-dot {
 	flex: none;
@@ -434,7 +434,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	border-radius: 999px;
 	border: 1px solid transparent;
 	font-weight: 600;
-	font-size: 14px;
+	font-size: var(--text-ui);
 	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .os-lock-enter {
@@ -450,7 +450,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	padding: 3px 6px;
 	border-radius: 6px;
 	background: rgba(5, 5, 5, 0.08);
-	font: 600 10.5px/1 'JetBrains Mono', ui-monospace, monospace;
+	font: 600 var(--text-2xs)/1 var(--font-mono);
 	letter-spacing: 0.04em;
 	color: rgba(5, 5, 5, 0.55);
 }
@@ -478,7 +478,7 @@ html.os-lock-up #os > :not(.os-wall) {
 }
 .os-lock-hint {
 	margin: 14px 0 0;
-	font-size: 12.5px;
+	font-size: var(--text-sm);
 	line-height: 1.55;
 	color: rgba(255, 255, 255, 0.52);
 }
@@ -503,7 +503,7 @@ html.os-lock-up #os > :not(.os-wall) {
 }
 .os-lock-places h3 {
 	margin: 0 0 12px;
-	font: 500 11px/1 'JetBrains Mono', ui-monospace, monospace;
+	font: 500 var(--text-2xs)/1 var(--font-mono);
 	letter-spacing: 0.12em;
 	text-transform: uppercase;
 	color: rgba(255, 255, 255, 0.5);
@@ -543,7 +543,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	min-width: 0;
 }
 .os-lock-place b {
-	font-size: 13px;
+	font-size: var(--text-md);
 	font-weight: 600;
 	color: #fff;
 	white-space: nowrap;
@@ -551,7 +551,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	text-overflow: ellipsis;
 }
 .os-lock-place small {
-	font-size: 11.5px;
+	font-size: var(--text-2xs);
 	line-height: 1.3;
 	color: rgba(255, 255, 255, 0.52);
 	display: -webkit-box;
@@ -604,7 +604,7 @@ html.os-lock-up #os > :not(.os-wall) {
 	-webkit-backdrop-filter: blur(14px);
 }
 .os-lock-chip small {
-	font-size: 11px;
+	font-size: var(--text-2xs);
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: rgba(255, 255, 255, 0.5);
