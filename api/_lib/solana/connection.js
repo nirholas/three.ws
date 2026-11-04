@@ -29,6 +29,7 @@
 // across the whole set, so the platform keeps serving even mid-outage.
 
 import { Connection } from '@solana/web3.js';
+import { recordRpcSpend, isLaneOverBudget } from './rpc-spend.js';
 
 // NOTE: the shared cache is deliberately NOT imported at module scope. This
 // module is shared with the BROWSER bundle (public/agent/index.html →
@@ -1494,11 +1495,219 @@ function rpcFault(url) {
 	);
 }
 
-export function makeRotatingFetch(endpoints) {
-	return async function rotatingFetch(_info, init) {
+// Fresh-read cache and in-flight coalescing.
+//
+// The LAST-GOOD cache above only answers when every lane has failed. These two
+// sit in FRONT of the lanes and exist to make fewer calls:
+//
+//   * Coalescing: identical concurrent reads (same method and params, so the
+//     commitment is part of the key; the JSON-RPC id is not) share one upstream
+//     promise. A burst of N page loads reading the same holder balance costs one
+//     call, not N.
+//   * Fresh-read cache: a successful live answer to a hot read is reused for a
+//     few seconds, per method (READ_CACHE_TTL_MS). Process-local on purpose: a
+//     Redis round trip per read would cost about what it saves, and a few
+//     seconds of reuse on one warm instance is where the duplicates are.
+//
+// Neither ever applies to a write (sendTransaction, simulateTransaction, any
+// method not on the read list), to a batch, or to a caller that asked for
+// `fresh: true` (settle, send and verify paths), which always goes upstream.
+// Errors and stale last-good answers are never cached.
+const READ_CACHE_TTL_MS = {
+	// Under the verify path's tolerance by two orders of magnitude: a blockhash
+	// stays valid for ~150 slots (about 60s), and settle/send pass fresh anyway.
+	getLatestBlockhash: 2_000,
+	getBalance: 4_000,
+	getAccountInfo: 4_000,
+	getMultipleAccounts: 4_000,
+	getTokenAccountsByOwner: 4_000,
+	getTokenAccountBalance: 4_000,
+	getTokenSupply: 5_000,
+	getTokenLargestAccounts: 5_000,
+	// Network constants: reused far longer than any balance.
+	getMinimumBalanceForRentExemption: 60_000,
+	getGenesisHash: 60_000,
+};
+// getSignatureStatuses is only cached once every status in the answer is
+// finalized: a finalized status cannot change, a pending one changes per slot.
+const FINALIZED_STATUS_TTL_MS = 30_000;
+// Methods that are never coalesced or cached, whatever their name suggests.
+const NEVER_SHARE_METHODS = new Set(['sendTransaction', 'simulateTransaction', 'requestAirdrop']);
+const READ_CACHE_MAX_ENTRIES = 5_000;
+const READ_CACHE_MAX_BYTES = 256 * 1024;
+/** @type {Map<string, { body: string, expiresAt: number }>} */
+const _readCache = new Map();
+/** @type {Map<string, Promise<{ text: string, stale: string | null, status: number }>>} */
+const _inflightReads = new Map();
+
+/**
+ * The share key (coalescing and fresh-read cache) for a single read, or null when
+ * the request must go upstream on its own: a batch, a write, a non-read method,
+ * or an unparseable body.
+ * @param {unknown} parsed  the parsed JSON-RPC body
+ */
+export function readShareKey(parsed) {
+	if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+	const m = parsed.method;
+	if (typeof m !== 'string' || NEVER_SHARE_METHODS.has(m) || !/^get[A-Z]/.test(m)) return null;
+	return `${m}${METHOD_KEY_SEP}${JSON.stringify(parsed.params ?? [])}`;
+}
+
+/** How long a successful answer to `method` may be reused, from the answer itself. 0 = never. */
+export function readCacheTtlMs(method, result) {
+	if (method === 'getSignatureStatuses') {
+		const values = result && Array.isArray(result.value) ? result.value : null;
+		if (!values || values.length === 0) return 0;
+		return values.every((v) => v && v.confirmationStatus === 'finalized') ? FINALIZED_STATUS_TTL_MS : 0;
+	}
+	return READ_CACHE_TTL_MS[method] || 0;
+}
+
+function readCacheGet(key, now = Date.now()) {
+	const hit = _readCache.get(key);
+	if (!hit) return null;
+	if (hit.expiresAt <= now) {
+		_readCache.delete(key);
+		return null;
+	}
+	return hit.body;
+}
+
+function readCachePut(key, method, text, now = Date.now()) {
+	if (!key || text.length > READ_CACHE_MAX_BYTES) return;
+	let parsed;
+	try {
+		parsed = JSON.parse(text);
+	} catch {
+		return;
+	}
+	if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || parsed.error || !('result' in parsed)) return;
+	const ttl = readCacheTtlMs(method, parsed.result);
+	if (!ttl) return;
+	if (_readCache.size >= READ_CACHE_MAX_ENTRIES) {
+		for (const [k, v] of _readCache) {
+			if (v.expiresAt <= now) _readCache.delete(k);
+		}
+		// Still full of live entries: drop the oldest insertions.
+		while (_readCache.size >= READ_CACHE_MAX_ENTRIES) _readCache.delete(_readCache.keys().next().value);
+	}
+	_readCache.set(key, { body: text, expiresAt: now + ttl });
+}
+
+/** Re-address a shared body to this caller's JSON-RPC id. */
+function readdress(text, id, extraHeaders = {}) {
+	let body = text;
+	try {
+		const parsed = JSON.parse(text);
+		if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) body = JSON.stringify({ ...parsed, id: id ?? null });
+	} catch {
+		/* not JSON: hand it back verbatim, the caller validates */
+	}
+	return new Response(body, { status: 200, headers: { 'content-type': 'application/json', ...extraHeaders } });
+}
+
+/**
+ * Await a shared read, but give up as soon as THIS caller's signal aborts. The
+ * shared request keeps running for everyone else waiting on it.
+ */
+function withCallerSignal(promise, signal) {
+	if (!signal) return promise;
+	if (signal.aborted) return Promise.reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
+	return new Promise((resolve, reject) => {
+		const onAbort = () => reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
+		signal.addEventListener('abort', onAbort, { once: true });
+		promise.then(
+			(v) => {
+				signal.removeEventListener('abort', onAbort);
+				resolve(v);
+			},
+			(e) => {
+				signal.removeEventListener('abort', onAbort);
+				reject(e);
+			},
+		);
+	});
+}
+
+/** Test hook: forget every fresh-read cache entry and in-flight read. */
+export function _resetReadCache() {
+	_readCache.clear();
+	_inflightReads.clear();
+}
+
+/** Lane label for accounting and budgets: the provider host, never the key. */
+function laneHost(url) {
+	try {
+		return new URL(url).host;
+	} catch {
+		return 'unknown';
+	}
+}
+
+/** meteredMethods over a raw request body; [] when it is unreadable. */
+function meteredMethodsFromBody(body) {
+	if (typeof body !== 'string' || !body) return [];
+	try {
+		return meteredMethods(JSON.parse(body));
+	} catch {
+		return [];
+	}
+}
+
+/** One method name per JSON-RPC call in the body (a batch repeats them), for metering. */
+function meteredMethods(parsed) {
+	const items = Array.isArray(parsed) ? parsed : [parsed];
+	const out = [];
+	for (const item of items) {
+		const m = item && typeof item === 'object' ? item.method : null;
+		out.push(typeof m === 'string' && m ? m : 'unknown');
+	}
+	return out;
+}
+
+/**
+ * Count JSON-RPC calls a caller sent to `url` OUTSIDE the rotating fetch (a raw
+ * fetch to one lane), so the spend report sees them too.
+ * @param {string} url
+ * @param {string|object} body  the request body, raw or parsed
+ */
+export function noteRpcSpend(url, body) {
+	let parsed = body;
+	if (typeof body === 'string') {
+		try {
+			parsed = JSON.parse(body);
+		} catch {
+			return;
+		}
+	}
+	if (!parsed || typeof parsed !== 'object') return;
+	recordRpcSpend({ lane: laneHost(url), methods: meteredMethods(parsed) });
+}
+
+/**
+ * The endpoint order for one request. A paid lane past its daily budget share
+ * (RPC_LANE_BUDGETS, see rpc-spend.js) moves to the back for non-money callers,
+ * so the remaining quota serves settles, sends and verifies first. Money callers
+ * keep the configured order. Nothing is removed: a demoted lane is still tried
+ * when every lane ahead of it fails.
+ */
+export function orderEndpointsForCaller(endpoints, { money = false, now = Date.now() } = {}) {
+	if (money) return endpoints;
+	const ahead = [];
+	const behind = [];
+	for (const url of endpoints) (isLaneOverBudget(laneHost(url), now) ? behind : ahead).push(url);
+	return behind.length ? [...ahead, ...behind] : endpoints;
+}
+
+export function makeRotatingFetch(endpoints, { fresh = false } = {}) {
+	// Reads are shared only between connections on the SAME endpoint chain, so a
+	// devnet connection can never be handed a mainnet answer.
+	const chainKey = hashText(endpoints.join(','));
+	const rotatingCore = async (_info, init, endpoints) => {
 		// The call shapes in this request. Empty for an unreadable body, which makes
 		// every capability check a no-op rather than guessing.
 		const methods = rpcMethodsFromBody(typeof init?.body === 'string' ? init.body : '');
+		const metered = meteredMethodsFromBody(init?.body);
 
 		// Park the lane, or demote just this call shape on it, and log the choice
 		// once. A method refusal is NOT a lane fault: the lane keeps serving every
@@ -1553,6 +1762,7 @@ export function makeRotatingFetch(endpoints) {
 			let cursor = 0;
 			const worker = async () => {
 				for (let i = cursor++; i < batch.length; i = cursor++) {
+					recordRpcSpend({ lane: laneHost(url), methods: meteredMethods(batch[i]) });
 					const resp = await fetch(url, { ...init, signal, body: JSON.stringify(batch[i]) });
 					if (!resp.ok) throw new Error(`solana rpc ${resp.status} @ ${maskUrl(url)} (unbatched)`);
 					const text = await resp.text();
@@ -1597,6 +1807,9 @@ export function makeRotatingFetch(endpoints) {
 				// the re-sweep all behave exactly as they would in an outage.
 				const fault = rpcFault(url);
 				const injected = fault ? await _brownoutMod.applyFault(fault, url) : null;
+				// Metered here, the one place a request leaves for a provider: an
+				// injected fault never reaches one, so it is not a call.
+				if (!injected) recordRpcSpend({ lane: laneHost(url), methods: metered });
 				const resp = injected || (await fetch(url, { ...init, signal }));
 				// A per-batch cap is the lane's own policy, not a caller error and not a
 				// lane fault, so it neither rotates nor cools: unroll and re-send here.
@@ -1787,6 +2000,56 @@ export function makeRotatingFetch(endpoints) {
 		);
 		throw lastErr || new Error('all solana rpc endpoints failed');
 	};
+
+	return async function rotatingFetch(_info, init) {
+		const bodyText = typeof init?.body === 'string' ? init.body : '';
+		let parsed = null;
+		try {
+			parsed = bodyText ? JSON.parse(bodyText) : null;
+		} catch {
+			parsed = null;
+		}
+		const parsedMethods = parsed ? meteredMethods(parsed) : [];
+		const money = fresh || parsedMethods.some((m) => NEVER_SHARE_METHODS.has(m));
+		const order = orderEndpointsForCaller(endpoints, { money });
+		const readKey = fresh ? null : readShareKey(parsed);
+		const shareKey = readKey ? `${chainKey}${METHOD_KEY_SEP}${readKey}` : null;
+		if (!shareKey) return rotatingCore(_info, init, order);
+
+		const method = parsed.method;
+		const id = parsed.id ?? null;
+		const cached = readCacheGet(shareKey);
+		if (cached !== null) {
+			recordRpcSpend({ lane: 'cache', methods: [method] });
+			return readdress(cached, id, { 'x-solana-rpc-cache': 'hit' });
+		}
+		const pending = _inflightReads.get(shareKey);
+		if (pending) {
+			recordRpcSpend({ lane: 'coalesced', methods: [method] });
+			const shared = await withCallerSignal(pending, init?.signal);
+			return readdress(shared.text, id, shared.stale ? { 'x-solana-rpc-stale': shared.stale } : {});
+		}
+		// The leader's own signal is NOT forwarded to the shared request: one
+		// caller walking away must not abort the answer every follower is
+		// waiting on. Each attempt is still bounded by ATTEMPT_TIMEOUT_MS.
+		const shared = (async () => {
+			const resp = await rotatingCore(_info, { ...init, signal: undefined }, order);
+			const text = await resp.text();
+			const stale = resp.headers.get('x-solana-rpc-stale');
+			if (!stale) readCachePut(shareKey, method, text);
+			return { text, stale, status: resp.status };
+		})().finally(() => {
+			// Cleared when the UPSTREAM read settles, not when this caller stops
+			// waiting, so a leader that aborts leaves the read joinable.
+			if (_inflightReads.get(shareKey) === shared) _inflightReads.delete(shareKey);
+		});
+		// Every caller attaches its own handler; this one only stops a read whose
+		// callers have all walked away from surfacing as an unhandled rejection.
+		shared.catch(() => {});
+		_inflightReads.set(shareKey, shared);
+		const out = await withCallerSignal(shared, init?.signal);
+		return readdress(out.text, id, out.stale ? { 'x-solana-rpc-stale': out.stale } : {});
+	};
 }
 
 /**
@@ -1794,7 +2057,7 @@ export function makeRotatingFetch(endpoints) {
  * RPC failover. Pass the url the call site already resolved as `url`; it stays
  * the highest-priority endpoint and the keyed/public fallbacks are appended.
  */
-export function solanaConnection({ url = null, commitment = 'confirmed', network = null } = {}) {
+export function solanaConnection({ url = null, commitment = 'confirmed', network = null, fresh = false } = {}) {
 	const net = network || inferNetwork(url);
 	const endpoints = solanaRpcEndpoints(net, url);
 	const primary = endpoints[0] || (net === 'devnet' ? PUBLIC_DEVNET : PUBLIC_MAINNET);
@@ -1805,6 +2068,6 @@ export function solanaConnection({ url = null, commitment = 'confirmed', network
 		// rotating fetch already hides 429s, and with a single endpoint we want to
 		// fail fast to the caller rather than spend seconds retrying a dead lane.
 		disableRetryOnRateLimit: true,
-		...(endpoints.length > 1 ? { fetch: makeRotatingFetch(endpoints) } : {}),
+		...(endpoints.length > 1 ? { fetch: makeRotatingFetch(endpoints, { fresh }) } : {}),
 	});
 }

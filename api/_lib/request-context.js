@@ -24,6 +24,15 @@ export function requestContext() {
 	return store.getStore() ?? null;
 }
 
+/**
+ * Run `fn` with Solana RPC calls attributed to `tag` (api/_lib/solana/rpc-spend.js).
+ * The API server tags each dispatch with its route; a cron runner, worker or
+ * script that is not behind that dispatch tags its own work with this.
+ */
+export function runWithRpcCaller(tag, fn) {
+	return store.run({ ...(store.getStore() || {}), rpcCaller: String(tag) }, fn);
+}
+
 /** The request being served, or null outside one. */
 export function currentRequest() {
 	return store.getStore()?.req ?? null;

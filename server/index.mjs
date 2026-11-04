@@ -162,6 +162,15 @@ const ROUTE_CACHE_MAX = 5000;
 /** @type {Map<string, Promise<any>>} */
 const moduleCache = new Map();
 
+// The RPC accounting tag for a dispatch: the route TEMPLATE ("/api/agents/[id]"),
+// never the raw path, so ids cannot multiply the key space. Crons are the
+// exception: they share one dynamic file, and their name is exactly what an
+// operator needs, from a bounded set.
+function rpcCallerTag(file, apiPath) {
+	const template = '/api/' + path.relative(API_ROOT, file).split(path.sep).join('/').replace(/\.m?js$/, '').replace(/\/index$/, '');
+	return template.startsWith('/api/cron/[') ? apiPath : template;
+}
+
 async function dispatchApi(req, res, pathname, extraQuery) {
 	// Route-table dests may target the file directly ("/api/x402/service.js").
 	const apiPath = pathname.endsWith('.js') ? pathname.slice(0, -3) : pathname;
@@ -226,7 +235,9 @@ async function dispatchApi(req, res, pathname, extraQuery) {
 		// Every helper under the handler can read the caller's address from the
 		// request context (api/_lib/request-context.js): a key's IP allowlist is
 		// enforced inside authenticateBearer, whatever route called it.
-		await runWithRequestContext({ req }, () => handler(req, res));
+		// rpcCaller attributes every Solana RPC call under this handler to its
+		// route (api/_lib/solana/rpc-spend.js), so a quota event names who spent it.
+		await runWithRequestContext({ req, rpcCaller: rpcCallerTag(route.file, apiPath) }, () => handler(req, res));
 	} catch (err) {
 		console.error(`[api] ${req.method} ${pathname} failed:`, err);
 		if (!res.headersSent) {
