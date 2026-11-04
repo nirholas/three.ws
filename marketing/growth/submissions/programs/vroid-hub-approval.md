@@ -35,7 +35,7 @@ No deadline. Eligibility is "a VRoid Hub developer account that registered an OA
 
 ## Owner steps
 
-1. Register the application at <https://hub.vroid.com/oauth/applications> (Step 1 of the linked file) and set the Cloud Run env vars and migration (Step 3).
+1. Register the application at <https://hub.vroid.com/oauth/applications> (Step 1 of the linked file) and set the two Cloud Run env vars (Step 3; the migration is already applied in production).
 2. Run a real import and capture the screenshots (Step 4).
 3. Open the Approval request page from developer.vroid.com, paste the table above, and update this file with the actual fields.
 4. Log the outcome. When approved, link the `hub.vroid.com/apps` entry from `docs/vroid-hub-import.md`.
