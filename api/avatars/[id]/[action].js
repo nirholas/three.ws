@@ -612,6 +612,58 @@ async function handleThumb(req, res) {
 	return redirect(res, thumbnailUrl(row.thumbnail_key));
 }
 
+// Fetch a publicly readable GLB and pipe it into `res` with the GLB headers.
+// Throws before anything is written when the upstream cannot be read, so the
+// caller can still answer with an error; a mid-stream failure rejects after
+// headers are committed and the caller destroys the socket.
+async function streamPublicGlb(res, url, { name, cacheControl }) {
+	const upstream = await fetchUpstream(
+		url,
+		{ headers: { accept: 'model/gltf-binary,*/*' } },
+		{ name, timeoutMs: 20_000, attempts: 2 },
+	);
+	res.statusCode = 200;
+	res.setHeader('content-type', 'model/gltf-binary');
+	const len = upstream.headers.get('content-length');
+	if (len) res.setHeader('content-length', len);
+	const etag = upstream.headers.get('etag');
+	if (etag) res.setHeader('etag', etag);
+	res.setHeader('cache-control', cacheControl);
+	await pipeline(Readable.fromWeb(upstream.body), res);
+}
+
+// The hosts an absolute storage key may point at: the app origin (static
+// catalog GLBs), the bucket's public domain, and Google Cloud Storage (the
+// reconstruction lane). Keys are written by our own seed and finalize code,
+// never by a caller (uploads must exist as a bucket object), but the server
+// still refuses to fetch anything else so a stray row cannot aim it at an
+// internal address. https only.
+const GCS_HOST = 'storage.googleapis.com';
+function externalGlbUrl(key) {
+	let url;
+	try {
+		url = new URL(key);
+	} catch {
+		return null;
+	}
+	if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
+	const hosts = new Set([GCS_HOST, 'three.ws', 'www.three.ws']);
+	for (const origin of [env.APP_ORIGIN, safePublicDomain()]) {
+		try {
+			if (origin) hosts.add(new URL(origin).hostname);
+		} catch {}
+	}
+	return hosts.has(url.hostname) ? url.href : null;
+}
+
+function safePublicDomain() {
+	try {
+		return env.S3_PUBLIC_DOMAIN;
+	} catch {
+		return null;
+	}
+}
+
 // ── glb (same-origin CORS-friendly proxy) ─────────────────────────────────
 // GET /api/avatars/:id/glb — streams the avatar's GLB through the API so
 // hosts on any origin can fetch it without R2 CORS configuration. The R2
@@ -665,6 +717,32 @@ async function handleGlb(req, res) {
 			: avatar.storage_key;
 	if (!key) return error(res, 404, 'not_found', 'avatar has no glb');
 
+	// Catalog and reconstruction avatars keep the absolute URL of a file that
+	// lives outside the bucket as their key (Michelle is
+	// https://three.ws/avatars/michelle.glb, reconstructions sit on GCS), and
+	// r2.js already treats such a key as "a public URL, not a bucket object".
+	// Asking R2 for an object literally named after that URL got NoSuchKey, so
+	// this route answered 404 for every one of them and the walk companion
+	// swapped the avatar for the robot placeholder. Read the URL itself, only on
+	// a host we publish GLBs from, and stream it so the wildcard CORS above holds.
+	if (/^[a-z][a-z0-9+.-]*:/i.test(key)) {
+		const external = externalGlbUrl(key);
+		if (!external) return error(res, 404, 'not_found', 'avatar glb is not on a readable host');
+		try {
+			await streamPublicGlb(res, external, {
+				name: 'avatars:external-glb',
+				cacheControl: 'public, max-age=300, s-maxage=86400',
+			});
+			return;
+		} catch (err) {
+			console.error('[avatars/glb] external glb read failed:', external, err?.message);
+			if (res.headersSent) return res.destroy(err);
+			res.removeHeader('content-length');
+			res.removeHeader('etag');
+			return error(res, 502, 'upstream_error', 'failed to fetch avatar glb');
+		}
+	}
+
 	try {
 		const { Body, ContentLength, ETag } = await r2.send(
 			new GetObjectCommand({ Bucket: env.S3_BUCKET, Key: key }),
@@ -711,22 +789,10 @@ async function handleGlb(req, res) {
 		if (fallbackUrl) {
 			console.error('[avatars/glb] signed read failed, streaming public bucket domain:', key, err?.message);
 			try {
-				const upstream = await fetchUpstream(
-					fallbackUrl,
-					{ headers: { accept: 'model/gltf-binary,*/*' } },
-					{ name: 'r2:public-glb', timeoutMs: 20_000, attempts: 2 },
-				);
-				res.statusCode = 200;
-				res.setHeader('content-type', 'model/gltf-binary');
-				const len = upstream.headers.get('content-length');
-				if (len) res.setHeader('content-length', len);
-				const etag = upstream.headers.get('etag');
-				if (etag) res.setHeader('etag', etag);
 				// Never cache the degraded path: the moment the credential is
 				// healthy again traffic has to return to the signed read with no
 				// stale hop pinned at the edge.
-				res.setHeader('cache-control', 'no-store');
-				await pipeline(Readable.fromWeb(upstream.body), res);
+				await streamPublicGlb(res, fallbackUrl, { name: 'r2:public-glb', cacheControl: 'no-store' });
 				return;
 			} catch (fallbackErr) {
 				console.error('[avatars/glb] public bucket domain failed too:', key, fallbackErr?.message);
