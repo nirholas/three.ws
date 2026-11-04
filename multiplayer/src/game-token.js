@@ -60,7 +60,7 @@ let _treasuryWarned = false;
 // if it isn't configured (mirrors the HOLDER_PASS_SECRET boot guard) — without it
 // the split has nowhere to send the 5% and the sale can't settle.
 export function treasuryWallet() {
-	const w = process.env.GAME_TOKEN_TREASURY || process.env.PAYMENT_RECIPIENT_SOLANA || '';
+	const w = configuredTreasury();
 	if (w) return w;
 	if (process.env.NODE_ENV === 'production') {
 		throw new Error('[game-token] GAME_TOKEN_TREASURY is required in production — refusing to settle token sales without a treasury wallet.');
@@ -72,8 +72,22 @@ export function treasuryWallet() {
 	return '';
 }
 
+// The configured treasury address, or '' when none is set. Never throws: this is
+// what the "is the paid path available?" gates read, so a missing treasury
+// degrades paid spins and token listings to unavailable instead of crashing the
+// room handler that asked.
+function configuredTreasury() {
+	return process.env.GAME_TOKEN_TREASURY || process.env.PAYMENT_RECIPIENT_SOLANA || '';
+}
+
+let _unconfiguredWarned = false;
 export function tokenConfigured() {
-	return !!treasuryWallet();
+	if (configuredTreasury()) return true;
+	if (!_unconfiguredWarned) {
+		_unconfiguredWarned = true;
+		console.warn('[game-token] no GAME_TOKEN_TREASURY/PAYMENT_RECIPIENT_SOLANA set: paid spins and token-priced listings are disabled until one is configured.');
+	}
+	return false;
 }
 
 // Is this account id a real Solana wallet address (vs. a guest id like `g_…`)?

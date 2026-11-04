@@ -14,6 +14,7 @@
 
 import { apiFetch } from './api.js';
 import { log } from './shared/log.js';
+import { netErrorMessage } from './game/net-error.js';
 
 // Same auth-hint gate notifications.js uses: skip authenticated endpoints
 // entirely while the visitor is anonymous instead of collecting 401s on every
@@ -187,14 +188,21 @@ export class FriendsClient {
 	}
 
 	async _action(action, userId) {
-		const res = await apiFetch('/api/friends', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ action, userId }),
-		});
+		let res;
+		try {
+			res = await apiFetch('/api/friends', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ action, userId }),
+			});
+		} catch (err) {
+			throw new Error(netErrorMessage(err, 'That did not go through. Try again.'));
+		}
 		if (!res.ok) {
 			const body = await res.json().catch(() => ({}));
-			const err = new Error(body.error_description || 'request failed');
+			const err = new Error(res.status < 500 && body.error_description
+				? body.error_description
+				: netErrorMessage({ status: res.status }, 'That did not go through. Try again.'));
 			err.code = body.error;
 			throw err;
 		}
@@ -244,7 +252,13 @@ export class FriendsClient {
 		this._emit();
 	}
 
+	/** The player-facing reason the last load of this thread failed, or null. */
+	threadError(friendId) {
+		return this._threadErrors?.get(friendId) ?? null;
+	}
+
 	async loadThread(friendId, { quiet = false } = {}) {
+		this._threadErrors ||= new Map();
 		try {
 			const res = await apiFetch(`/api/friends/messages?with=${encodeURIComponent(friendId)}`, {
 				allowAnonymous: true,
@@ -255,11 +269,18 @@ export class FriendsClient {
 			const prev = this.threads.get(friendId) || [];
 			const changed = next.length !== prev.length || next[next.length - 1]?.id !== prev[prev.length - 1]?.id;
 			this.threads.set(friendId, next);
+			const recovered = this._threadErrors.delete(friendId);
 			// A quiet poll that found no new messages must not repaint — otherwise the
 			// open composer rebuilds every few seconds and steals the caret.
-			if (changed || !quiet) this._emit();
+			if (changed || !quiet || recovered) this._emit();
 		} catch (err) {
 			if (!quiet) log.warn('[friends] thread load failed:', err?.message);
+			// Only an empty thread needs the error on screen: one that already shows
+			// messages keeps them, and the next poll catches up.
+			if (!this.threads.has(friendId)) {
+				this._threadErrors.set(friendId, netErrorMessage(err, 'Could not load these messages. Try again.'));
+				this._emit();
+			}
 		}
 	}
 
@@ -269,14 +290,21 @@ export class FriendsClient {
 	async sendDM(friendId, body) {
 		const text = String(body || '').trim();
 		if (!text) return;
-		const res = await apiFetch('/api/friends/messages', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ to: friendId, body: text }),
-		});
+		let res;
+		try {
+			res = await apiFetch('/api/friends/messages', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ to: friendId, body: text }),
+			});
+		} catch (err) {
+			throw new Error(netErrorMessage(err, 'Not sent. Try again.'));
+		}
 		if (!res.ok) {
 			const b = await res.json().catch(() => ({}));
-			const err = new Error(b.error_description || 'could not send');
+			const err = new Error(res.status < 500 && b.error_description
+				? b.error_description
+				: netErrorMessage({ status: res.status }, 'Not sent. Try again.'));
 			err.code = b.error;
 			throw err;
 		}

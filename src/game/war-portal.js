@@ -37,6 +37,7 @@ import {
 	WAR_PORTAL, warPortalInRange, warPortalBoardInRange,
 } from '../../multiplayer/src/world-features.js';
 import { createLogger } from '../shared/log.js';
+import { netErrorMessage } from './net-error.js';
 import './war-portal.css';
 
 const log = createLogger('war-portal');
@@ -52,6 +53,8 @@ const POLL_LIVE_MS = 5_000;
 // While queued, the pairing poll has to be brisk or the other community is left
 // standing in their own plaza wondering whether anything happened.
 const POLL_QUEUE_MS = 3_000;
+// Consecutive failed queue polls tolerated before the queue is given up on.
+const QUEUE_MISS_LIMIT = 3;
 
 // How long the win takeover holds the board after a battle this community won.
 const HYPE_MS = 9_000;
@@ -135,6 +138,8 @@ export class WarPortal {
 		this._loading = true;
 		this._queue = null;          // { status, waiting, matchKey, ticket, side, opponent }
 		this._queueError = '';
+		this._queueMisses = 0;       // consecutive failed queue polls
+		this._queueHiccup = false;   // a poll failed but the ticket is still held
 		this._busy = false;          // a queue/gate round trip is in flight
 		this._pollTimer = 0;
 		this._nextPollAt = 0;
@@ -335,7 +340,7 @@ export class WarPortal {
 			this._boardError = '';
 			this._echoNewResults();
 		} catch (err) {
-			this._boardError = err?.message || 'could not reach the war league';
+			this._boardError = netErrorMessage(err, 'Could not reach the war league.');
 			log.warn('board fetch failed', err);
 		}
 		this._loading = false;
@@ -439,7 +444,7 @@ export class WarPortal {
 
 		if (this._hype) this._paintHype(ctx);
 		else if (this._loading && !this._board) this._paintCentred(ctx, 'READING THE LEAGUE', 'Standings load as you walk up.');
-		else if (this._boardError && !this._board) this._paintCentred(ctx, 'LEAGUE UNREACHABLE', this._boardError + ', press E to retry.');
+		else if (this._boardError && !this._board) this._paintCentred(ctx, 'LEAGUE UNREACHABLE', this._boardError + ' Press E to retry.');
 		else {
 			const live = this._liveHere();
 			if (live) this._paintLive(ctx, live);
@@ -764,7 +769,7 @@ export class WarPortal {
 
 		// Queue state, when there is one.
 		if (this._queue?.status === 'waiting') {
-			parts.push(waitingCard(this._queue.waiting, () => this._leaveQueue()));
+			parts.push(waitingCard(this._queue.waiting, () => this._leaveQueue(), this._queueHiccup));
 		}
 		if (this._queueError) {
 			parts.push(retryCard('Matchmaking refused', this._queueError, 'Try again', () => this._onCta()));
@@ -886,7 +891,7 @@ export class WarPortal {
 			if (res?.status === 'matched') return this._handoff(res);
 			this._queue = res;
 		} catch (err) {
-			this._queueError = err?.message || 'could not queue for a war';
+			this._queueError = netErrorMessage(err, 'Could not join the queue. Try again.');
 		}
 		this._busy = false;
 		this._renderPanel();
@@ -921,10 +926,22 @@ export class WarPortal {
 			const res = await this._queueRequest();
 			if (res?.status === 'matched') return this._handoff(res);
 			this._queue = res;
+			this._queueMisses = 0;
+			this._queueHiccup = false;
 			this._renderPanel();
 		} catch (err) {
-			this._queueError = err?.message || 'matchmaking stopped answering';
-			this._queue = null;
+			// One dropped poll on a shaky connection should not throw the community
+			// out of the queue: the ticket lives server-side for a while, so hold it
+			// and keep polling. Only a run of failures means matchmaking is gone.
+			this._queueMisses += 1;
+			if (this._queueMisses < QUEUE_MISS_LIMIT) {
+				this._queueHiccup = true;
+			} else {
+				this._queueError = netErrorMessage(err, 'Matchmaking stopped answering. Try again.');
+				this._queue = null;
+				this._queueMisses = 0;
+				this._queueHiccup = false;
+			}
 			this._renderPanel();
 		}
 	}
@@ -1038,7 +1055,7 @@ function standingCard(s) {
 		stats.flatMap(([k, v]) => [el('dt', { text: k }), el('dd', { text: v })])));
 }
 
-function waitingCard(waiting, onCancel) {
+function waitingCard(waiting, onCancel, hiccup) {
 	const others = Math.max(0, (waiting || 1) - 1);
 	return el('section', { class: 'wp-card wp-waiting' }, [
 		el('h3', { class: 'wp-card-t', text: 'In the queue' }),
@@ -1048,6 +1065,7 @@ function waitingCard(waiting, onCancel) {
 				? `${others} other ${others === 1 ? 'community is' : 'communities are'} queued. Pairing happens within seconds.`
 				: 'No other community is queued yet. The arena opens the moment one is.',
 		}),
+		hiccup ? el('p', { class: 'wp-empty-b', role: 'status', text: 'Connection hiccup. You are still in the queue.' }) : null,
 		el('button', { class: 'wp-retry-btn', text: 'Leave the queue', onclick: onCancel }),
 	]);
 }

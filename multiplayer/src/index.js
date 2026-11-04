@@ -344,7 +344,18 @@ if (REDIS_URI) {
 	console.log('[multiplayer] single-instance mode (set REDIS_URI to scale horizontally)');
 }
 
-const gameServer = new Server({ transport, ...(driver && { driver }), ...(presence && { presence }) });
+// gracefullyShutdown: false turns off Colyseus's built-in process hooks. Its
+// uncaughtException hook disposes every room and calls process.exit(1), which
+// overrides the keep-alive handler below and turns one bad message into an
+// outage for every player on the single instance. Its SIGTERM hook races our own
+// shutdown handler and can exit before the world and player flushes land. That
+// handler calls gameServer.gracefullyShutdown itself, so nothing is lost.
+const gameServer = new Server({
+	transport,
+	gracefullyShutdown: false,
+	...(driver && { driver }),
+	...(presence && { presence }),
+});
 // Each coin is its own world, split by access tier: filterBy(['coin','tier'])
 // makes joinOrCreate match only rooms sharing the same community coin (mint) AND
 // the same tier, so a coin's open General world and its gated Holders world are

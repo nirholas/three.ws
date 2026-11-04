@@ -9,6 +9,7 @@ import {
 	rpcMethodDemotions,
 	classifyRpcBody,
 	throwDisposition,
+	_resetReadCache,
 } from '../api/_lib/solana/connection.js';
 
 // Lanes are not interchangeable, and the router used to pretend they were.
@@ -202,6 +203,8 @@ describe('makeRotatingFetch: a method refusal demotes the method, never the lane
 
 		await rf(null, rpc('getTokenAccountsByOwner'));
 		global.fetch.mockClear();
+		// The repeat must reach the router, not the few-second fresh-read cache.
+		_resetReadCache();
 		await rf(null, rpc('getTokenAccountsByOwner'));
 
 		// One call, straight to the healthy lane, the refusal is not re-paid.

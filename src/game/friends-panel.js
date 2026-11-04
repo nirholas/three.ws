@@ -489,7 +489,17 @@ export class FriendsPanel {
 		]);
 
 		const scroll = el('div', { class: 'kg-fr-thread-msgs' });
-		if (!msgs) {
+		const loadErr = !msgs && this.client.threadError?.(id);
+		if (loadErr) {
+			scroll.append(el('div', { class: 'kg-fr-thread-empty', role: 'alert' }, [
+				el('p', { class: 'kg-fr-empty-sub' }, loadErr),
+				el('button', {
+					class: 'kg-fr-btn kg-fr-btn--primary',
+					type: 'button',
+					onclick: () => this.client.loadThread(id),
+				}, 'Retry'),
+			]));
+		} else if (!msgs) {
 			scroll.append(el('p', { class: 'kg-fr-hint' }, 'Loading messages…'));
 		} else if (!msgs.length) {
 			scroll.append(el('div', { class: 'kg-fr-thread-empty' }, [

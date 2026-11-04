@@ -156,11 +156,13 @@ export function openStore(file) {
 		listCrons: db.prepare('SELECT * FROM crons ORDER BY created_at'),
 		getCron: db.prepare('SELECT * FROM crons WHERE id = ?'),
 		deleteCron: db.prepare('DELETE FROM crons WHERE id = ?'),
-		claimCron: db.prepare("UPDATE crons SET running_since = ? WHERE id = ? AND (running_since IS NULL OR running_since < ?)"),
+		claimCron: db.prepare(`UPDATE crons SET running_since = ? WHERE id = ? AND enabled = 1 AND (running_since IS NULL OR running_since < ?)
+			AND (? IS NULL OR (next_run_at IS NOT NULL AND next_run_at <= ?))`),
 		finishCron: db.prepare('UPDATE crons SET running_since = NULL, last_run_at = ?, next_run_at = ?, last_status = ?, last_run_id = ? WHERE id = ?'),
 		setCronNext: db.prepare('UPDATE crons SET next_run_at = ? WHERE id = ?'),
 		setCronMode: db.prepare('UPDATE crons SET mode = ?, server_automation_id = ?, next_run_at = ? WHERE id = ?'),
 		setCronEnabled: db.prepare('UPDATE crons SET enabled = ? WHERE id = ?'),
+		setCronSchedule: db.prepare('UPDATE crons SET cron = ?, tz = ?, description = ?, agent_id = ? WHERE id = ?'),
 		kvGet: db.prepare('SELECT value FROM kv WHERE key = ?'),
 		kvSet: db.prepare('INSERT INTO kv (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at'),
 		kvDelete: db.prepare('DELETE FROM kv WHERE key = ?'),
@@ -278,10 +280,14 @@ export function openStore(file) {
 		deleteCron(id) {
 			return st.deleteCron.run(id).changes > 0;
 		},
-		/** Atomically mark a cron running; false if another process holds it (stale after staleMs). */
-		claimCron(id, staleMs = 3 * 60 * 60 * 1000) {
+		/**
+		 * Atomically mark a cron running; false if another process holds it (stale
+		 * after staleMs) or, when `dueBy` is given, if it is no longer due by then
+		 * (another scheduler already ran it and moved next_run_at forward).
+		 */
+		claimCron(id, staleMs = 3 * 60 * 60 * 1000, dueBy = null) {
 			const t = new Date();
-			return st.claimCron.run(t.toISOString(), id, new Date(t.getTime() - staleMs).toISOString()).changes > 0;
+			return st.claimCron.run(t.toISOString(), id, new Date(t.getTime() - staleMs).toISOString(), dueBy, dueBy).changes > 0;
 		},
 		finishCron(id, { lastRunAt, nextRunAt, status, runId }) {
 			st.finishCron.run(lastRunAt, nextRunAt, status, runId || null, id);
@@ -294,6 +300,9 @@ export function openStore(file) {
 		},
 		setCronEnabled(id, enabled) {
 			st.setCronEnabled.run(enabled ? 1 : 0, id);
+		},
+		setCronSchedule(id, { cron, tz, description = null, agentId = null }) {
+			st.setCronSchedule.run(cron, tz, description, agentId, id);
 		},
 
 		kvGet(key) {

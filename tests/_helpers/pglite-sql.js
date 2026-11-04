@@ -46,6 +46,26 @@ export function createPgliteSql() {
 		fragment.finally = (fn) => settle().finally(fn);
 		return fragment;
 	};
+	// Mirrors the Neon HTTP driver's non-interactive transaction: every query in
+	// the array runs inside one BEGIN/COMMIT, and any failure rolls all of them
+	// back. Resolves to each query's rows, in order.
+	sql.transaction = async (queries) => {
+		await state.pg.exec('begin');
+		try {
+			const results = [];
+			for (const q of queries) {
+				const params = [];
+				const text = compile(q, params);
+				state.calls.push(text);
+				results.push((await state.pg.query(text, params)).rows);
+			}
+			await state.pg.exec('commit');
+			return results;
+		} catch (e) {
+			await state.pg.exec('rollback');
+			throw e;
+		}
+	};
 	return {
 		sql,
 		exec: (ddl) => state.pg.exec(ddl),

@@ -9,6 +9,7 @@ import {
 	isEndpointCooling,
 	lastGoodKey,
 	_resetLastGoodMemo,
+	_resetReadCache,
 } from '../api/_lib/solana/connection.js';
 
 const body = (method, params = [], id = 7) => JSON.stringify({ jsonrpc: '2.0', id, method, params });
@@ -121,6 +122,8 @@ describe('makeRotatingFetch whole-chain transport fallbacks', () => {
 		await new Promise((r) => setTimeout(r, 20));
 
 		down = true;
+		// Past the fresh-read cache's window: only the last-good path may answer.
+		_resetReadCache();
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const stale = await rotate(eps[0], { method: 'POST', body: body('getBalance', ['wallet1'], 31) });
 		expect(stale.status).toBe(200);
@@ -146,6 +149,8 @@ describe('makeRotatingFetch whole-chain transport fallbacks', () => {
 		await rotate(eps[0], { method: 'POST', body: body('getLatestBlockhash') });
 		await new Promise((r) => setTimeout(r, 20));
 		down = true;
+		// Past the 2s fresh-read window: a blockhash is never served from last-good.
+		_resetReadCache();
 		vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await expect(rotate(eps[0], { method: 'POST', body: body('getLatestBlockhash') })).rejects.toThrow(/ECONNRESET/);
 	});

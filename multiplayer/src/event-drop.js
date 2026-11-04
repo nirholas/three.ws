@@ -28,8 +28,15 @@
 
 import { getCosmetic } from './cosmetics-catalog.js';
 
-const CONFIG_URL = process.env.EVENT_CONFIG_URL
-	|| `${(process.env.WORLD_API_BASE || 'https://three.ws').replace(/\/$/, '')}/event.json`;
+// Sources in order. /api/event-config merges the live override (an operator's
+// --extend or --end) over the static file, so the grant window moves with the
+// countdown players see. /event.json is the fallback when the API is down, the
+// same order event-window.js uses for the quest gate. EVENT_CONFIG_URL pins a
+// single source (the conformance harnesses serve their own config).
+const API_BASE = (process.env.WORLD_API_BASE || 'https://three.ws').replace(/\/$/, '');
+const CONFIG_URLS = process.env.EVENT_CONFIG_URL
+	? [process.env.EVENT_CONFIG_URL]
+	: [`${API_BASE}/api/event-config`, `${API_BASE}/event.json`];
 
 // How long a fetched config is trusted before a refresh. Short enough that an
 // operator moving the event window is picked up within a couple of minutes,
@@ -109,16 +116,30 @@ export function dropClaimable(drop, coin, now) {
 let _cache = { drop: null, at: 0, ok: false };
 let _inflight = null;
 
+async function readConfigFrom(url) {
+	const res = await fetch(url, {
+		headers: { accept: 'application/json' },
+		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+	});
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	return res.json();
+}
+
+async function readConfig() {
+	let lastErr;
+	for (const url of CONFIG_URLS) {
+		try {
+			return await readConfigFrom(url);
+		} catch (err) {
+			lastErr = err;
+		}
+	}
+	throw lastErr;
+}
+
 async function fetchDrop() {
-	const controller = new AbortController();
-	const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 	try {
-		const res = await fetch(CONFIG_URL, {
-			headers: { accept: 'application/json' },
-			signal: controller.signal,
-		});
-		if (!res.ok) throw new Error(`HTTP ${res.status}`);
-		const drop = parseEventDrop(await res.json());
+		const drop = parseEventDrop(await readConfig());
 		_cache = { drop, at: Date.now(), ok: true };
 		return drop;
 	} catch (err) {
