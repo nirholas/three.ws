@@ -36,6 +36,7 @@ function esc(s) {
  * @param {() => HTMLElement|null} options.getStageEl - the 3D stage container.
  * @param {() => void} options.pauseAmbient - stop the editor's procedural idle layer.
  * @param {() => void} options.resumeAmbient - restart it on exit.
+ * @param {() => object|null} [options.getAppearance] - the working appearance, whose `animation` picks the walk and idle clips.
  * @param {string} [options.buttonClass] - host page's button class for the handoff CTA.
  * @param {string} [options.emptyClass] - host page's "waiting for the avatar" class.
  * @param {() => Promise<string>} [options.openWalkUrl] - resolve the /walk URL to
@@ -48,6 +49,7 @@ export function createWalkPanel({
 	getStageEl,
 	pauseAmbient,
 	resumeAmbient,
+	getAppearance = () => null,
 	buttonClass = 'ae-btn',
 	emptyClass = 'ae-empty',
 	openWalkUrl = null,
@@ -65,6 +67,7 @@ export function createWalkPanel({
 			stageEl: getStageEl(),
 			pauseAmbient,
 			resumeAmbient,
+			getAppearance,
 		});
 		preview.onStatus((msg) => {
 			if (statusEl) statusEl.textContent = msg || '';

@@ -1,6 +1,6 @@
 # Parametric Avatar v1
 
-**Status:** live. Base body, morph library, skeleton proportions and free sculpt all ship. Conforming assets (phase 3) ship as `garments` with morph conform, identity capture into parameters (phase 5), texture layers (phase 6) and animation identity (phase 7) are reserved and named at the bottom.
+**Status:** live. Base body, morph library, skeleton proportions and free sculpt all ship. Conforming assets (phase 3) ship as `garments` with morph conform, identity capture into parameters (phase 5) and texture layers (phase 6) are reserved and named at the bottom. Animation identity (phase 7) ships: see `specs/AVATAR_PARAMETERS.md`.
 
 This spec describes the **base body and the editing pipeline over it**: what `parametric-base-v1` is, what a consumer is allowed to assume about it, and which of its capabilities every downstream surface must honour. The serialized record that describes one avatar built on it is [`AVATAR_PARAMETERS.md`](./AVATAR_PARAMETERS.md); the two are read together.
 
@@ -158,7 +158,6 @@ The rule behind the table: **the record is authoritative for editors, the baked 
 | Identity-morph fold | Shipped. `bakeAndUploadAppearance` folds the weighted identity targets into `POSITION` after the final weights are set and before proportions, recomputes bind-pose normals (welding vertices that share position and normal, angle and area weighted) and removes the identity targets. ARKit, viseme and `customSculpt` targets stay. Served bakes carry the `-f<version>` key suffix; `scripts/rebake-avatars.mjs` migrates older bakes (dry run by default). The editor never reads a served bake, so sliders stay live there. |
 | `slots` | Delivered as `appearance.garments` (phase 3, `workers/garment-forge`). Worn skinned pieces follow identity morphs and free sculpt through `src/garment-conform.js` (nearest-triangle barycentric binding with a falloff), identically in the editor and the server bake. The `slots` key is retired. |
 | `layers` | Texture layers over the canonical UVs: complexion, makeup, tattoos, decals, age maps (phase 6) |
-| `animation` | Per-avatar animation identity: default idle and walk, gesture intensity, mood blend, emote loadout (phase 7) |
 
 ## Related
 

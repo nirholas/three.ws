@@ -548,6 +548,11 @@ export class AnimationLibrary {
 	}
 
 	/** Load → retarget → play a preset on the current rig. */
+	/** The library clip playing right now, or null (generated clips have no name). */
+	get activeName() {
+		return this._activeName;
+	}
+
 	async preview(def) {
 		const rig = this.getRig();
 		if (!rig || rig.kind === 'mannequin') {

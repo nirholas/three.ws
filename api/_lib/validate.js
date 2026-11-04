@@ -36,6 +36,20 @@ export const avatarAppearance = z
 		// hex validity is enforced in validateAppearance() (accessories.js).
 		colors: z.record(z.string().regex(/^#[0-9a-fA-F]{6}$/)).optional(),
 		hidden: z.array(z.string().min(1).max(32)).max(8).optional(),
+		// Animation identity (specs/AVATAR_PARAMETERS.md): which clips this avatar
+		// idles, walks and gestures with. Clip ids are checked against the
+		// platform manifest in validateAppearance() (accessories.js). The baker
+		// ignores it and appearanceHash() excludes it.
+		animation: z
+			.object({
+				idle: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(64).optional(),
+				walk: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(64).optional(),
+				gestureIntensity: z.number().min(0).max(1).optional(),
+				moodBlend: z.number().min(0).max(1).optional(),
+				emotes: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(64)).max(8).optional(),
+			})
+			.strict()
+			.optional(),
 		// Additive catalog garments ({slot, id} refs into the garment catalog —
 		// specs/GARMENT_MANIFEST.md). Slot list mirrors GARMENT_SLOTS in
 		// src/avatar-garment.js; existence against the live catalog is checked

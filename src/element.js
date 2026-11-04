@@ -14,6 +14,7 @@ import { Memory } from './memory/index.js';
 import { loadManifest, fetchRelative } from './manifest.js';
 import { uriCandidates } from './ipfs.js';
 import { DEFAULT_AVATAR_GLB } from './shared/model-viewer-fallback.js';
+import { resolveClip, clipsToPreload } from './avatar-animation-identity.js';
 import {
 	resolveAgentById,
 	resolveByAvatarId,
@@ -1974,6 +1975,7 @@ class Agent3DElement extends HTMLElement {
 						}
 					}
 					viewer.setAnimationDefs(_defs);
+					if (Array.isArray(_defs)) this._animKnown = new Set(_defs.map((d) => d?.name));
 				}
 			} catch {}
 
@@ -2036,7 +2038,10 @@ class Agent3DElement extends HTMLElement {
 				// actually fetches the clips (or returns immediately if cached).
 				const _am = viewer.animationManager;
 				if (_am) {
-					await Promise.allSettled([_am.ensureLoaded('idle'), _am.ensureLoaded('walk')]);
+					const _identity = { animation: manifest.animationIdentity };
+					await Promise.allSettled(
+						clipsToPreload(_identity, { known: this._animKnown }).map((c) => _am.ensureLoaded(c)),
+					);
 				}
 				// After the reveal tween completes, shift the orbital target upward
 				// so the avatar's upper body fills the chat shell's avatar-anchor
@@ -2976,6 +2981,19 @@ class Agent3DElement extends HTMLElement {
 		}
 	}
 
+	/**
+	 * The clip this avatar uses for `intent` (idle, walk, gesture, emote:<n>):
+	 * its saved animation identity when the manifest carries one, the platform
+	 * default otherwise. One resolver for every runtime (src/avatar-animation-identity.js).
+	 * @param {string} intent
+	 * @returns {string}
+	 */
+	_identityClip(intent) {
+		return resolveClip({ animation: this._manifest?.animationIdentity }, intent, {
+			known: this._animKnown,
+		}).clip;
+	}
+
 	// Walk animation: debounced — keeps walking as long as chunks arrive within 600ms of each other.
 	_onStreamChunk() {
 		if (!this._scene || this.getAttribute('avatar-walk') === 'off') return;
@@ -2984,7 +3002,7 @@ class Agent3DElement extends HTMLElement {
 			this._isWalking = true;
 			clearTimeout(this._gestureDoneIdle);
 			// fade_ms: 300ms idle→walk, 500ms walk→idle, 600ms debounce after last chunk
-			this._scene.playClipByName('walk', { loop: true, fade_ms: 300 });
+			this._scene.playClipByName(this._identityClip('walk'), { loop: true, fade_ms: 300 });
 			// Keep the state-machine bookkeeping in sync — react/emote fired
 			// while walking will then correctly return to walk afterwards.
 			this._avatar?.fireAnimationEvent('walk');
@@ -3004,16 +3022,19 @@ class Agent3DElement extends HTMLElement {
 		}
 		const am = this._viewer?.animationManager;
 		const currentClip = am?.currentName;
-		const isGesture = currentClip && currentClip !== 'walk' && currentClip !== 'idle';
+		const isGesture =
+			currentClip &&
+			currentClip !== this._identityClip('walk') &&
+			currentClip !== this._identityClip('idle');
 		if (!isGesture) {
-			this._scene?.playClipByName('idle', { loop: true, fade_ms: 500 });
+			this._scene?.playClipByName(this._identityClip('idle'), { loop: true, fade_ms: 500 });
 			this._avatar?.fireAnimationEvent('walk-end');
 		} else {
 			// Let the one-shot gesture finish; idle transition fires after gesture + fade-back (~2.5s)
 			clearTimeout(this._gestureDoneIdle);
 			this._gestureDoneIdle = setTimeout(() => {
 				if (!this._isWalking) {
-					this._scene?.playClipByName('idle', { loop: true, fade_ms: 500 });
+					this._scene?.playClipByName(this._identityClip('idle'), { loop: true, fade_ms: 500 });
 					this._avatar?.fireAnimationEvent('walk-end');
 				}
 			}, 2500);
@@ -3930,7 +3951,7 @@ class Agent3DElement extends HTMLElement {
 	 */
 	async _startInitialPlayback() {
 		if (this._isChatMode()) {
-			this._scene.playClipByName('idle', { loop: true, fade_ms: 0 });
+			this._scene.playClipByName(this._identityClip('idle'), { loop: true, fade_ms: 0 });
 		} else {
 			// idle and walk were fetched during the load; a `clip` attribute naming
 			// anything else is fetched here, so the reveal waits for it too.
@@ -3954,7 +3975,7 @@ class Agent3DElement extends HTMLElement {
 			this._playStaticIdle();
 			return;
 		}
-		this._playDecorationClip(this.getAttribute('clip') || 'idle', fade_ms);
+		this._playDecorationClip(this.getAttribute('clip') || this._identityClip('idle'), fade_ms);
 	}
 
 	/**
@@ -3974,7 +3995,7 @@ class Agent3DElement extends HTMLElement {
 		} else if (am && typeof am.playOnce === 'function') {
 			// A snapped start (fade_ms 0) still settles back into idle with a
 			// real crossfade rather than a hard cut.
-			am.playOnce(name, { settleTo: 'idle', fade: (fade_ms || 400) / 1000, fadeIn: fade_ms / 1000 });
+			am.playOnce(name, { settleTo: this._identityClip('idle'), fade: (fade_ms || 400) / 1000, fadeIn: fade_ms / 1000 });
 		} else {
 			this._scene?.playClipByName(name, { loop: false, fade_ms });
 		}
@@ -3988,11 +4009,11 @@ class Agent3DElement extends HTMLElement {
 	async _playStaticIdle() {
 		const am = this._viewer?.animationManager;
 		if (!am) {
-			this._scene?.playClipByName('idle', { loop: false, fade_ms: 0 });
+			this._scene?.playClipByName(this._identityClip('idle'), { loop: false, fade_ms: 0 });
 			return;
 		}
 		try {
-			await am.crossfadeTo('idle', 0);
+			await am.crossfadeTo(this._identityClip('idle'), 0);
 		} catch {}
 		// Let one frame apply the idle pose, then freeze it.
 		const freeze = () => {

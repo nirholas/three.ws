@@ -129,6 +129,7 @@ const EMPTY = {
 	// Free-sculpt deltas (src/avatar-sculpt-doc.js). null, not {}, because the
 	// field is one document or nothing: an empty one would collapse away anyway.
 	sculpt: null,
+	animation: {},
 };
 
 describe('hydrateAppearance', () => {
@@ -162,8 +163,17 @@ describe('hydrateAppearance', () => {
 			garments: [{ slot: 'outerwear', id: 'parka' }],
 			proportions: { height: 1.08 },
 			sculpt: null,
+			animation: { idle: 'av-chilling', walk: 'jog', gestureIntensity: 0.8, emotes: ['dance'] },
 		};
 		expect(hydrateAppearance(raw)).toEqual(raw);
+	});
+
+	it('keeps the animation identity through hydrate, clone and collapse', () => {
+		const animation = { idle: 'av-chilling', emotes: ['dance', 'wave'] };
+		const working = hydrateAppearance({ animation });
+		expect(cloneAppearance(working).animation).toEqual(animation);
+		expect(collapseAppearance(working)).toEqual({ animation });
+		expect(collapseAppearance(hydrateAppearance({ animation: { idle: 'Bad Id!' } }))).toBeNull();
 	});
 
 	it('normalises proportions: neutral values drop out, unknown params are ignored', () => {

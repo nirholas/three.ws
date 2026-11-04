@@ -57,6 +57,15 @@ import {
 	DRAFT_KEY,
 } from './avatar-studio-utils.js';
 import { log } from './shared/log.js';
+import {
+	resolveClip,
+	normalizeAnimation,
+	intensityTimeScale,
+	PLATFORM_DEFAULTS,
+	MAX_EMOTES,
+	DEFAULT_INTENSITY,
+} from './avatar-animation-identity.js';
+import { categoryOf } from './animation-presets.js';
 
 const BASE_GLB_URL = '/avatars/default.glb';
 
@@ -214,7 +223,7 @@ const TABS = [
 	{ id: 'glasses', label: 'Glasses', kinds: ['glasses'], emoji: '🕶️', single: true },
 	{ id: 'earrings', label: 'Earrings', kinds: ['earrings'], emoji: '💎', single: false },
 	{ id: 'sculpt', label: 'Sculpt', kinds: [], emoji: '✨', single: true, sculpt: true },
-	{ id: 'animate', label: 'Animate', kinds: [], emoji: '🎬', animate: true },
+	{ id: 'animate', label: 'Animation', kinds: [], emoji: '🎬', animate: true },
 	{ id: 'walk', label: 'Walk', kinds: [], emoji: '🚶', walk: true },
 	{ id: 'rig', label: 'Rig', kinds: [], emoji: '🦴', rig: true, editOnly: true },
 ];
@@ -577,6 +586,7 @@ async function applyHistoryState(state) {
 		applyProportions();
 		applySculpt();
 	}
+	syncIdlePlayback();
 	renderChips();
 	renderActivePanel();
 	updateUndoRedoBtns();
@@ -812,6 +822,7 @@ function getWalkPanel() {
 	walkPanel = createWalkPanel({
 		getScene: () => scene,
 		getStageEl: () => $('as-stage'),
+		getAppearance: () => workingAppearance,
 		buttonClass: 'as-btn',
 		emptyClass: 'as-empty',
 		pauseAmbient: () => {
@@ -880,10 +891,19 @@ async function startIdleClip() {
 	if (activeTab === 'animate') renderActivePanel();
 	try {
 		const ok = await emotes.loadManifest();
-		if (ok && (await scene.playEmote(DEFAULT_EMOTE))) {
+		// The avatar's saved idle when it has one; the platform default when it
+		// does not, or when the saved clip will not bind to this rig.
+		const saved = resolveClip(workingAppearance, 'idle', { known: knownClips() }).clip;
+		let idleName = saved;
+		let started = ok && (await scene.playEmote(saved));
+		if (ok && !started && saved !== DEFAULT_EMOTE) {
+			idleName = DEFAULT_EMOTE;
+			started = await scene.playEmote(DEFAULT_EMOTE);
+		}
+		if (started) {
 			emotesReady = true;
-			currentEmote = DEFAULT_EMOTE;
-			activeIdleClip = DEFAULT_EMOTE;
+			currentEmote = idleName;
+			activeIdleClip = idleName;
 			idle?.setChannels({ breathing: false, saccade: false, weightShift: false, blink: true });
 		} else {
 			emotesFailed = true;
@@ -895,28 +915,141 @@ async function startIdleClip() {
 	if (activeTab === 'animate') renderActivePanel();
 }
 
+/** Clip names the loaded manifest can play (empty until the library loads). */
+function knownClips() {
+	const defs = scene?.getEmoteController?.()?.getAllDefs?.() || [];
+	return new Set(defs.map((d) => d.name));
+}
+
+function clipDef(name) {
+	return (scene?.getEmoteController?.()?.getAllDefs?.() || []).find((d) => d.name === name) || null;
+}
+
+function clipLabel(name) {
+	const curated = EMOTE_BY_NAME.get(name);
+	if (curated) return curated.label;
+	const def = clipDef(name);
+	return def?.label || name;
+}
+
+function clipEmoji(name) {
+	return EMOTE_BY_NAME.get(name)?.emoji || clipDef(name)?.icon || '🎬';
+}
+
 /**
- * Play an emote on the live rig. Looping clips become the new resting state
- * (and the idle baked into Save); one-shots play once and settle back to the
- * current idle so the avatar never freezes on a final frame.
+ * Commit a change to the avatar's animation identity: normalized, recorded in
+ * undo history, and marked dirty so Save sends it with the rest of the record.
+ * A key set to undefined is removed.
+ */
+function setAnimation(patch) {
+	workingAppearance.animation = normalizeAnimation({ ...workingAppearance.animation, ...patch });
+	pushHistory();
+	updateDirtyState();
+	scheduleDraftSave();
+}
+
+/**
+ * Bring the live rig's resting loop in line with the working record. Called
+ * wherever the whole appearance is restored (undo, redo, reset) so the avatar
+ * on stage never idles differently from the record that Save will send.
+ */
+async function syncIdlePlayback() {
+	if (!emotesReady || !scene) return;
+	const { clip } = resolveClip(workingAppearance, 'idle', { known: knownClips() });
+	if (clip === activeIdleClip) return;
+	try {
+		if (await scene.playEmote(clip)) {
+			currentEmote = clip;
+			activeIdleClip = clip;
+		}
+	} catch (err) {
+		log.warn(`[avatar-studio] idle "${clip}" failed:`, err?.message);
+	}
+}
+
+/** Make `name` the avatar's resting loop: preview it now, record it for Save. */
+async function pickIdle(name) {
+	if (!emotesReady || !scene) return;
+	try {
+		if (!(await scene.playEmote(name))) {
+			setStatus('error', `"${clipLabel(name)}" will not play on this rig.`);
+			return;
+		}
+		currentEmote = name;
+		activeIdleClip = name;
+	} catch (err) {
+		log.warn(`[avatar-studio] idle "${name}" failed:`, err?.message);
+		return;
+	}
+	setAnimation({ idle: name === PLATFORM_DEFAULTS.idle ? undefined : name });
+	renderActivePanel();
+}
+
+let walkPreviewTimer = null;
+
+/** Make `name` the avatar's walk: preview the loop briefly, then return to idle. */
+async function pickWalk(name) {
+	if (!emotesReady || !scene) return;
+	clearTimeout(walkPreviewTimer);
+	try {
+		if (!(await scene.playEmote(name))) {
+			setStatus('error', `"${clipLabel(name)}" will not play on this rig.`);
+			return;
+		}
+		currentEmote = name;
+	} catch (err) {
+		log.warn(`[avatar-studio] walk "${name}" failed:`, err?.message);
+		return;
+	}
+	walkPreviewTimer = setTimeout(() => {
+		if (currentEmote === name) {
+			scene.playEmote(activeIdleClip).then(() => {
+				currentEmote = activeIdleClip;
+				if (activeTab === 'animate') markActiveEmote();
+			}).catch(() => {});
+		}
+	}, 4000);
+	setAnimation({ walk: name === PLATFORM_DEFAULTS.walk ? undefined : name });
+	renderActivePanel();
+}
+
+/**
+ * Play a one-shot gesture on the live rig at the avatar's gesture intensity,
+ * then settle back to the current idle so the rig never freezes on a last frame.
  */
 async function playEmote(name) {
 	if (!emotesReady || !scene) return;
-	const def = EMOTE_BY_NAME.get(name);
-	if (!def) return;
+	clearTimeout(walkPreviewTimer);
 	try {
-		if (def.loop) {
-			await scene.playEmote(name);
-			currentEmote = name;
-			activeIdleClip = name;
-		} else {
-			currentEmote = name;
-			await scene.playEmoteOnce(name, { settleTo: activeIdleClip });
-		}
+		currentEmote = name;
+		await scene.playEmoteOnce(name, { settleTo: activeIdleClip });
+		const timeScale = intensityTimeScale(workingAppearance.animation?.gestureIntensity);
+		scene.getEmoteController()?.setClipTimeScale(name, timeScale);
 	} catch (err) {
 		log.warn(`[avatar-studio] emote "${name}" failed:`, err?.message);
 	}
 	if (activeTab === 'animate') markActiveEmote();
+}
+
+/** Add or remove a gesture from the emote loadout (capped, first entry is the default gesture). */
+function toggleLoadout(name) {
+	const list = [...(workingAppearance.animation?.emotes || [])];
+	const at = list.indexOf(name);
+	if (at >= 0) list.splice(at, 1);
+	else if (list.length < MAX_EMOTES) list.push(name);
+	else return;
+	setAnimation({ emotes: list });
+	renderActivePanel();
+}
+
+function moveLoadout(name, delta) {
+	const list = [...(workingAppearance.animation?.emotes || [])];
+	const from = list.indexOf(name);
+	const to = from + delta;
+	if (from < 0 || to < 0 || to >= list.length) return;
+	[list[from], list[to]] = [list[to], list[from]];
+	setAnimation({ emotes: list });
+	renderActivePanel();
 }
 
 // ── Fetch presets ────────────────────────────────────────────────────
@@ -1249,6 +1382,31 @@ function tilePreviewMarkup(preset) {
 
 // ── Animate panel ────────────────────────────────────────────────────
 
+/** Loop clips that make a good resting idle: the Idle category plus the curated looping emotes. */
+function idleChoices() {
+	const defs = scene?.getEmoteController?.()?.getAllDefs?.() || [];
+	const names = new Set();
+	for (const d of defs) if (d.loop !== false && categoryOf(d.name) === 'idle') names.add(d.name);
+	for (const e of EMOTES) if (e.loop && clipDef(e.name)) names.add(e.name);
+	names.add(PLATFORM_DEFAULTS.idle);
+	return [...names];
+}
+
+function walkChoices() {
+	const defs = scene?.getEmoteController?.()?.getAllDefs?.() || [];
+	const names = defs.filter((d) => d.loop !== false && categoryOf(d.name) === 'locomotion').map((d) => d.name);
+	return names.includes(PLATFORM_DEFAULTS.walk) ? names : [PLATFORM_DEFAULTS.walk, ...names];
+}
+
+function pickTile(attr, name, selected) {
+	return `
+		<button class="as-tile as-anim-tile${selected ? ' selected' : ''}" type="button" role="radio"
+		        ${attr}="${esc(name)}" aria-checked="${selected ? 'true' : 'false'}" title="${esc(clipLabel(name))}">
+			<div class="as-tile-preview" aria-hidden="true">${clipEmoji(name)}</div>
+			<div class="as-tile-name">${esc(clipLabel(name))}</div>
+		</button>`;
+}
+
 function renderAnimatePanel(panel) {
 	if (!scene?.root) {
 		panel.innerHTML = `<div class="as-empty">Waiting for avatar to load…</div>`;
@@ -1277,24 +1435,94 @@ function renderAnimatePanel(panel) {
 		return;
 	}
 
-	const tiles = EMOTES.map((e) => {
-		const active = currentEmote === e.name;
+	const anim = workingAppearance.animation || {};
+	const idleName = resolveClip(workingAppearance, 'idle', { known: knownClips() }).clip;
+	const walkName = resolveClip(workingAppearance, 'walk', { known: knownClips() }).clip;
+	const intensity = typeof anim.gestureIntensity === 'number' ? anim.gestureIntensity : DEFAULT_INTENSITY;
+	const loadout = anim.emotes || [];
+	const gestures = EMOTES.filter((e) => !e.loop && clipDef(e.name));
+
+	const idleTiles = idleChoices().map((n) => pickTile('data-pick-idle', n, n === idleName)).join('');
+	const walkTiles = walkChoices().map((n) => pickTile('data-pick-walk', n, n === walkName)).join('');
+
+	const gestureCells = gestures.map((e) => {
+		const inLoadout = loadout.includes(e.name);
+		const full = !inLoadout && loadout.length >= MAX_EMOTES;
 		return `
-			<button class="as-tile as-anim-tile${active ? ' selected' : ''}" type="button"
-			        data-emote="${esc(e.name)}" aria-pressed="${active ? 'true' : 'false'}"
-			        title="${esc(e.label)}">
-				<div class="as-tile-preview" aria-hidden="true">${e.emoji}</div>
-				<div class="as-tile-name">${esc(e.label)}</div>
-				<div class="as-tile-kind">${e.loop ? 'loop' : 'play once'}</div>
-			</button>`;
+			<div class="as-anim-cell">
+				<button class="as-tile as-anim-tile${currentEmote === e.name ? ' selected' : ''}" type="button"
+				        data-emote="${esc(e.name)}" aria-pressed="${currentEmote === e.name ? 'true' : 'false'}"
+				        title="Play ${esc(e.label)}">
+					<div class="as-tile-preview" aria-hidden="true">${e.emoji}</div>
+					<div class="as-tile-name">${esc(e.label)}</div>
+				</button>
+				<button class="as-anim-add${inLoadout ? ' on' : ''}" type="button" data-loadout="${esc(e.name)}"
+				        aria-pressed="${inLoadout ? 'true' : 'false'}" ${full ? 'disabled' : ''}
+				        title="${full ? `Loadout is full (${MAX_EMOTES})` : inLoadout ? 'Remove from loadout' : 'Add to loadout'}">
+					${inLoadout ? 'In loadout' : 'Add'}
+				</button>
+			</div>`;
 	}).join('');
 
-	panel.innerHTML = `
-		<div class="as-animate-intro">Drive the rig live. A looping motion becomes your avatar's resting idle when you save.</div>
-		<div class="as-grid as-anim-grid">${tiles}</div>`;
+	const chips = loadout.length
+		? `<ol class="as-anim-loadout" aria-label="Emote loadout, first is the default gesture">${loadout.map((n, i) => `
+			<li class="as-anim-chip">
+				<span class="as-anim-chip-name">${clipEmoji(n)} ${esc(clipLabel(n))}</span>
+				<button type="button" class="as-anim-chip-btn" data-move="${esc(n)}" data-delta="-1" aria-label="Move ${esc(clipLabel(n))} earlier" ${i === 0 ? 'disabled' : ''}>&uarr;</button>
+				<button type="button" class="as-anim-chip-btn" data-move="${esc(n)}" data-delta="1" aria-label="Move ${esc(clipLabel(n))} later" ${i === loadout.length - 1 ? 'disabled' : ''}>&darr;</button>
+				<button type="button" class="as-anim-chip-btn" data-loadout="${esc(n)}" aria-label="Remove ${esc(clipLabel(n))} from loadout">&times;</button>
+			</li>`).join('')}</ol>`
+		: `<p class="as-anim-empty">No emotes chosen yet. Add up to ${MAX_EMOTES} gestures below. The first one is what this avatar reaches for by default; with none, it waves.</p>`;
 
-	panel.querySelectorAll('[data-emote]').forEach((btn) => {
-		btn.addEventListener('click', () => playEmote(btn.dataset.emote));
+	panel.innerHTML = `
+		<div class="as-animate-intro">Give this avatar its own body language. Everything here is saved with the avatar and used by embeds, the stage and Play.</div>
+
+		<section class="as-anim-section" aria-labelledby="as-anim-idle-h">
+			<h3 class="as-anim-h" id="as-anim-idle-h">Resting idle</h3>
+			<div class="as-grid as-anim-grid" role="radiogroup" aria-labelledby="as-anim-idle-h">${idleTiles}</div>
+		</section>
+
+		<section class="as-anim-section" aria-labelledby="as-anim-walk-h">
+			<h3 class="as-anim-h" id="as-anim-walk-h">Walk</h3>
+			<div class="as-grid as-anim-grid" role="radiogroup" aria-labelledby="as-anim-walk-h">${walkTiles}</div>
+		</section>
+
+		<section class="as-anim-section" aria-labelledby="as-anim-int-h">
+			<h3 class="as-anim-h" id="as-anim-int-h">Gesture intensity</h3>
+			<div class="as-anim-slider">
+				<span aria-hidden="true">Calm</span>
+				<input type="range" min="0" max="100" step="5" value="${Math.round(intensity * 100)}"
+				       data-intensity aria-labelledby="as-anim-int-h" aria-valuetext="${Math.round(intensity * 100)} percent">
+				<span aria-hidden="true">Lively</span>
+				<output class="as-anim-out" data-intensity-out>${Math.round(intensity * 100)}%</output>
+			</div>
+		</section>
+
+		<section class="as-anim-section" aria-labelledby="as-anim-load-h">
+			<h3 class="as-anim-h" id="as-anim-load-h">Emote loadout <span class="as-anim-count">${loadout.length}/${MAX_EMOTES}</span></h3>
+			${chips}
+			<div class="as-grid as-anim-grid as-anim-gestures">${gestureCells}</div>
+		</section>`;
+
+	panel.querySelectorAll('[data-pick-idle]').forEach((b) => b.addEventListener('click', () => pickIdle(b.dataset.pickIdle)));
+	panel.querySelectorAll('[data-pick-walk]').forEach((b) => b.addEventListener('click', () => pickWalk(b.dataset.pickWalk)));
+	panel.querySelectorAll('[data-emote]').forEach((b) => b.addEventListener('click', () => playEmote(b.dataset.emote)));
+	panel.querySelectorAll('[data-loadout]').forEach((b) => b.addEventListener('click', () => toggleLoadout(b.dataset.loadout)));
+	panel.querySelectorAll('[data-move]').forEach((b) => b.addEventListener('click', () => moveLoadout(b.dataset.move, Number(b.dataset.delta))));
+
+	const slider = panel.querySelector('[data-intensity]');
+	const out = panel.querySelector('[data-intensity-out]');
+	slider?.addEventListener('input', () => {
+		out.textContent = `${slider.value}%`;
+		slider.setAttribute('aria-valuetext', `${slider.value} percent`);
+	});
+	// One history step per drag, committed on release, so undo steps over a whole
+	// adjustment instead of every pixel of it.
+	slider?.addEventListener('change', () => {
+		const value = Number(slider.value) / 100;
+		setAnimation({ gestureIntensity: value === DEFAULT_INTENSITY ? undefined : value });
+		const first = (workingAppearance.animation?.emotes || [])[0] || gestures[0]?.name;
+		if (first) playEmote(first);
 	});
 }
 
@@ -2050,6 +2278,7 @@ async function resetAll() {
 		if (accessoryManager) await accessoryManager.hydrateFromAppearance(workingAppearance);
 	});
 	pushHistory();
+	syncIdlePlayback();
 	renderChips();
 	renderActivePanel();
 	updateDirtyState();

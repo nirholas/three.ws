@@ -31,6 +31,10 @@ Every edit updates the live scene graph, and a working "appearance" object track
 
 The studio has 50-deep undo/redo, a dirty-state indicator in the title bar, and a draft autosave to local storage that is offered back if you leave and return (in create mode).
 
+### Animation tab
+
+The Animation tab gives the avatar its own body language: a resting idle, a walk, a gesture intensity slider (calm to lively) and an emote loadout of up to eight gestures, ordered, where the first is the avatar's default gesture. Clicking an idle or walk previews it on the rig at once. Everything saves with the avatar in `appearance.animation` ([contract](../specs/AVATAR_PARAMETERS.md)), and the `<agent-3d>` embed, the walk page and the stage read it back through one shared resolver. If the motion library fails to load the tab says so and offers a retry; the avatar keeps its procedural idle meanwhile. The bake ignores this field, so changing it never re-bakes the model.
+
 ### Save
 
 Saving takes one of two paths, and which one it takes matters.

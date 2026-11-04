@@ -32,6 +32,7 @@ import './tabs/copilot.js';
 import './tabs/snipe.js';
 import './tabs/orders.js';
 import './tabs/earn.js';
+import './tabs/lend.js';
 import './tabs/autopilot.js';
 import './tabs/credits.js';
 import './tabs/intents.js';

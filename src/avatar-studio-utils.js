@@ -5,6 +5,7 @@
 
 import { normalizeProportions } from './avatar-proportions.js';
 import { sanitizeSculptDoc } from './avatar-sculpt-doc.js';
+import { normalizeAnimation } from './avatar-animation-identity.js';
 
 export const DRAFT_KEY = 'avatar-studio-draft';
 export const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -43,6 +44,10 @@ export function collapseAppearance(a) {
 	// collapses to nothing rather than riding along and failing at bake time.
 	const sculpt = sanitizeSculptDoc(a.sculpt);
 	if (sculpt) out.sculpt = sculpt;
+	// Animation identity (src/avatar-animation-identity.js): normalized so a
+	// stale or hand-edited record never reaches the server as a 400.
+	const animation = normalizeAnimation(a.animation);
+	if (Object.keys(animation).length) out.animation = animation;
 	return Object.keys(out).length ? out : null;
 }
 
@@ -51,7 +56,7 @@ export function hydrateAppearance(raw) {
 	if (!raw || typeof raw !== 'object') {
 		return {
 			outfit: null, accessories: [], morphs: {}, colors: {}, hidden: [],
-			garments: [], proportions: {}, sculpt: null,
+			garments: [], proportions: {}, sculpt: null, animation: {},
 		};
 	}
 	return {
@@ -63,6 +68,7 @@ export function hydrateAppearance(raw) {
 		garments: copyGarments(raw.garments),
 		proportions: normalizeProportions(raw.proportions),
 		sculpt: sanitizeSculptDoc(raw.sculpt),
+		animation: normalizeAnimation(raw.animation),
 	};
 }
 
@@ -80,6 +86,7 @@ export function cloneAppearance(a) {
 		// it wholesale rather than mutating in place, so sharing the reference
 		// is safe and a structural clone of tens of KB per history step is not.
 		sculpt: a.sculpt || null,
+		animation: normalizeAnimation(a.animation),
 	};
 }
 

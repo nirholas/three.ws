@@ -126,6 +126,7 @@ export async function resolveAgentById(
 		tools: ['wave', 'lookAt', 'play_clip', 'setExpression', 'speak', 'remember'],
 		...(doc.animationSlots ? { animationSlots: doc.animationSlots } : {}),
 		...(Array.isArray(doc.choreographies) ? { choreographies: doc.choreographies } : {}),
+		...(doc.animationIdentity ? { animationIdentity: doc.animationIdentity } : {}),
 		version: '0.1.0',
 		_baseURI: `${origin}/agent/${id}/`,
 		_source: 'agent-id',
@@ -196,5 +197,6 @@ export async function resolveByAvatarId(
 		brain: { provider: 'none' },
 		voice: { tts: { provider: 'browser' }, stt: { provider: 'browser' } },
 		skills: [],
+		...(avatar.appearance?.animation ? { animationIdentity: avatar.appearance.animation } : {}),
 	};
 }

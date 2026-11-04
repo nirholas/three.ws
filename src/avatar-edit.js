@@ -31,6 +31,7 @@ import { renderWardrobePanel } from './avatar-wardrobe.js';
 import { GarmentCloset, renderClosetSection } from './garment-closet.js';
 import { renderRigPanel } from './avatar-rig.js';
 import { createWalkPanel } from './avatar-walk-panel.js';
+import { normalizeAnimation } from './avatar-animation-identity.js';
 import { apiFetch } from './api.js';
 import { playAs } from './game/play-handoff.js';
 import { log } from './shared/log.js';
@@ -598,6 +599,7 @@ function getWalkPreview() {
 	walkPreview = createWalkPanel({
 		getScene: () => scene,
 		getStageEl: () => $('ae-stage'),
+		getAppearance: () => workingAppearance,
 		// The editor's ambient idle layer writes bone rotations every frame; pause
 		// it while a retargeted walk clip owns the skeleton, resume on exit.
 		pauseAmbient: () => {
@@ -1047,6 +1049,9 @@ function normalizeAppearance(a) {
 		// in so an out-of-range or hand-edited record can never drive the rig.
 		proportions: normalizeProportions(a.proportions),
 		sculpt: sanitizeSculptDoc(a.sculpt),
+		// Animation identity is owned by the Studio's Animation tab; carried
+		// through so saving here never strips a chosen idle, walk or loadout.
+		animation: normalizeAnimation(a.animation),
 	};
 }
 
@@ -1064,6 +1069,8 @@ function collapseAppearance(a) {
 	if (Object.keys(proportions).length) out.proportions = proportions;
 	const sculpt = sanitizeSculptDoc(a.sculpt);
 	if (sculpt) out.sculpt = sculpt;
+	const animation = normalizeAnimation(a.animation);
+	if (Object.keys(animation).length) out.animation = animation;
 	return Object.keys(out).length ? out : null;
 }
 

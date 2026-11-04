@@ -45,7 +45,9 @@ import { FOLD_VERSION } from './bake-morph-fold.js';
  */
 export function appearanceHash(appearance) {
 	if (!appearance) return null;
-	return createHash('sha256').update(canonicalize(appearance)).digest('hex');
+	// Animation identity never reaches the baked GLB, so editing it must not
+	// mint a new baked key or orphan the cached one.
+	return createHash('sha256').update(canonicalize(omitAnimation(appearance))).digest('hex');
 }
 
 /**
@@ -101,7 +103,6 @@ export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 		const { snapshotBodyRest } = await import('./bake-garments.js');
 		snapshotBodyRest(doc);
 	}
-
 
 	const presets = await loadPresets();
 	const byId = new Map(presets.map((p) => [p.id, p]));
@@ -283,7 +284,17 @@ export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 		}
 	}
 
-	// 3) Tag + clean.
+	// 3) Tag + clean. mergeDocuments copies each merged accessory/garment
+	//    document's scene across, and those scenes end up with no nodes once the
+	//    props are re-parented onto the avatar's bones. glTF forbids an empty
+	//    `nodes` array, so drop every extra scene that has nothing in it.
+	{
+		const root = doc.getRoot();
+		const keep = root.getDefaultScene() || root.listScenes().find((sc) => sc.listChildren().length);
+		for (const sc of root.listScenes()) {
+			if (sc !== keep && sc.listChildren().length === 0) sc.dispose();
+		}
+	}
 	const asset = doc.getRoot().getAsset();
 	asset.generator =
 		(asset.generator || '') + ' / three.ws appearance-baker @gltf-transform';
@@ -291,7 +302,7 @@ export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 	doc.getRoot().getAsset().extras = {
 		...extras,
 		bakedAt: new Date().toISOString(),
-		appearance: appearance ?? null,
+		appearance: appearance ? omitAnimation(appearance) : null,
 	};
 
 	// Compression pipeline:
@@ -603,4 +614,10 @@ function canonicalize(obj) {
 		return '{' + keys.map((k) => JSON.stringify(k) + ':' + canonicalize(obj[k])).join(',') + '}';
 	}
 	return 'null';
+}
+
+/** The appearance minus fields the bake never reads (animation identity). */
+function omitAnimation(appearance) {
+	const { animation: _animation, ...rest } = appearance;
+	return rest;
 }

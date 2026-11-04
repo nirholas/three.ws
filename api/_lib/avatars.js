@@ -709,7 +709,8 @@ function vroidFields(sourceMeta) {
 // stay cheap (no @gltf-transform import). Must stay identical to bake.js's
 // appearanceHash() output — change both together.
 function _hashAppearance(appearance) {
-	return createHash('sha256').update(_canonicalize(appearance)).digest('hex');
+	const { animation: _animation, ...bakeInput } = appearance;
+	return createHash('sha256').update(_canonicalize(bakeInput)).digest('hex');
 }
 function _canonicalize(obj) {
 	if (obj === undefined || obj === null) return 'null';

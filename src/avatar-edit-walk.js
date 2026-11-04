@@ -20,6 +20,7 @@
 
 import { Box3, Vector3, MathUtils } from 'three';
 import { AnimationManager } from './animation-manager.js';
+import { resolveClip, clipsToPreload } from './avatar-animation-identity.js';
 import {
 	fetchEnvironmentManifest,
 	resolveEnvName,
@@ -31,8 +32,6 @@ import {
 import { log } from './shared/log.js';
 
 const MANIFEST_URL = '/animations/manifest.json';
-const CLIP_IDLE = 'idle';
-const CLIP_WALK = 'av-walk-feminine';
 const NATURAL_WALK_SPEED = 1.5; // m/s cadence the walk clip was authored at
 
 const CIRCLE_RADIUS = 1.5; // m — auto-pilot orbit radius
@@ -52,9 +51,12 @@ export class AvatarWalkPreview {
 	 * @param {HTMLElement} opts.stageEl  the editor stage element (for the on-stage hint + sky)
 	 * @param {() => void} [opts.pauseAmbient]  pause the editor's idle layer while walking
 	 * @param {() => void} [opts.resumeAmbient] resume it on exit
+	 * @param {() => object|null} [opts.getAppearance] the working appearance; its `animation` picks the idle and walk clips
 	 */
-	constructor({ scene, stageEl, pauseAmbient, resumeAmbient }) {
+	constructor({ scene, stageEl, pauseAmbient, resumeAmbient, getAppearance }) {
 		this.scene = scene;
+		this.getAppearance = getAppearance || (() => null);
+		this._known = null;
 		this.stageEl = stageEl || null;
 		this.pauseAmbient = pauseAmbient || (() => {});
 		this.resumeAmbient = resumeAmbient || (() => {});
@@ -120,12 +122,19 @@ export class AvatarWalkPreview {
 				if (!r.ok) throw new Error(`HTTP ${r.status} loading animation manifest`);
 				return r.json();
 			});
-			defs = manifest.filter((d) => d.name === CLIP_IDLE || d.name === CLIP_WALK);
+			defs = manifest;
+			this._known = new Set(manifest.map((d) => d.name));
 		} catch (err) {
 			log.warn('[avatar-edit-walk] manifest load failed:', err?.message);
 		}
 		anim.setAnimationDefs(defs);
-		await anim.loadAll();
+		// Only the clips this avatar will use are fetched; a different pick made
+		// while the preview is open is fetched on demand in _updateAnimation.
+		await Promise.all(
+			clipsToPreload(this.getAppearance(), { known: this._known || undefined }).map((c) =>
+				anim.ensureLoaded(c).catch(() => false),
+			),
+		);
 		this.anim = anim;
 	}
 
@@ -488,7 +497,11 @@ export class AvatarWalkPreview {
 		const want = moving ? 'walk' : 'idle';
 		if (this._motion !== want) {
 			this._motion = want;
-			this.anim.crossfadeTo(want === 'walk' ? CLIP_WALK : CLIP_IDLE, 0.2).catch(() => {});
+			const { clip } = resolveClip(this.getAppearance(), want, { known: this._known || undefined });
+			this.anim
+				.ensureLoaded(clip)
+				.then(() => (this._motion === want ? this.anim.crossfadeTo(clip, 0.2) : null))
+				.catch(() => {});
 		}
 		if (this.anim.mixer) {
 			this.anim.mixer.timeScale = moving

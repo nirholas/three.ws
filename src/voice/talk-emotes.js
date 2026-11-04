@@ -196,6 +196,17 @@ export class TalkEmotes {
 		return true;
 	}
 
+	/**
+	 * Scale the playback speed of one loaded clip (the Studio's gesture-intensity
+	 * preview). Per-action, so the idle underneath keeps its own speed; the next
+	 * play of the clip resets it. No-op for a clip that has not loaded.
+	 * @param {string} name
+	 * @param {number} timeScale
+	 */
+	setClipTimeScale(name, timeScale) {
+		this._manager.actions.get(name)?.setEffectiveTimeScale(timeScale);
+	}
+
 	get currentEmote() {
 		return this._manager.currentName;
 	}

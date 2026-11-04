@@ -1,6 +1,6 @@
 # Avatar Parameter Model v0.1
 
-**Status:** partial (morphs, colors, layers, garments, accessories, proportions and free-sculpt deltas are live; texture layers and animation identity are reserved).
+**Status:** partial (morphs, colors, layers, garments, accessories, proportions and free-sculpt deltas are live; texture layers are reserved; animation identity is live).
 
 The parameter model is the serialized description of a three.ws avatar's body: one JSON document that says what the character *is*, independent of any particular GLB. It is what saves, what re-opens in the editor, what the server bakes, and what a fork or a share link carries.
 
@@ -103,8 +103,21 @@ Named here so implementations do not claim the keys for anything else:
 | Field | For |
 |---|---|
 | `layers` | Texture layers over the canonical UVs (tattoos, makeup, complexion) |
-| `animation` | Per-avatar animation identity (default idle/walk, gesture intensity, mood) |
 | `base` | Explicit base-body id, once more than one parametric base ships |
+
+## Animation identity
+
+`animation` is an optional object that gives an avatar its own body language. Every key is optional; an unset key means the platform default.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `idle` | clip id | Resting loop (platform default `idle`) |
+| `walk` | clip id | Locomotion loop (platform default `av-walk-feminine`) |
+| `gestureIntensity` | number 0..1 | Playback speed scale for one-shot gestures (default 0.5, which is real time) |
+| `moodBlend` | number 0..1 | How strongly the mood layer shows through |
+| `emotes` | clip id[] (max 8) | Emote loadout. The first entry is the default gesture; empty falls back to `wave` |
+
+Clip ids are names in `public/animations/manifest.json`. The API rejects an unknown id (`api/_lib/animation-clips.js`), so the record only ever names a clip that exists; a runtime still falls back to the platform default if a clip cannot play on a given rig. All runtimes resolve clips through `src/avatar-animation-identity.js` (`resolveClip`). The server bake and `appearanceHash` ignore `animation` entirely: changing it never re-bakes the GLB.
 
 ## Processing rules
 

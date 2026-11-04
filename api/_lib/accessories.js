@@ -2,6 +2,8 @@
 // Inline constant avoids runtime fs I/O in Vercel serverless.
 // When the preset pack changes, update both files together.
 
+import { isValidClipId } from './animation-clips.js';
+
 const PRESET_IDS = new Set([
 	'outfit-casual',
 	'outfit-formal',
@@ -113,6 +115,23 @@ export function validateAppearance(appearance) {
 		for (const slot of appearance.hidden) {
 			if (typeof slot !== 'string') return 'appearance.hidden entries must be strings';
 			if (!HIDEABLE_SLOT_IDS.has(slot)) return `unknown hidden slot: ${slot}`;
+		}
+	}
+
+	if (appearance.animation !== undefined && appearance.animation !== null) {
+		const a = appearance.animation;
+		if (typeof a !== 'object' || Array.isArray(a)) return 'appearance.animation must be an object';
+		for (const key of ['idle', 'walk']) {
+			if (a[key] !== undefined && !isValidClipId(a[key])) {
+				return `unknown animation clip: appearance.animation.${key} = ${a[key]}`;
+			}
+		}
+		if (a.emotes !== undefined) {
+			if (!Array.isArray(a.emotes)) return 'appearance.animation.emotes must be an array';
+			if (a.emotes.length > 8) return 'appearance.animation.emotes max length is 8';
+			for (const id of a.emotes) {
+				if (!isValidClipId(id)) return `unknown animation clip: ${id}`;
+			}
 		}
 	}
 

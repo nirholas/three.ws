@@ -293,3 +293,25 @@ describe('bakeAppearance — bone-attached accessories', () => {
 		expect(hatRoot).toBeTruthy();
 	});
 });
+
+describe('animation identity does not reach the bake', () => {
+	const animation = { idle: 'av-chilling', walk: 'av-walk-crouching', gestureIntensity: 0.9, emotes: ['dance'] };
+
+	it('appearanceHash ignores the animation field, so editing it never mints a new baked key', () => {
+		const plain = { outfit: 'outfit-casual', accessories: ['hat-baseball'] };
+		expect(appearanceHash({ ...plain, animation })).toBe(appearanceHash(plain));
+	});
+
+	it('bakes byte-identical GLBs with and without an animation record', async () => {
+		const plain = { outfit: 'outfit-casual' };
+		const a = await bakeAppearance(BASE_GLB, plain);
+		const b = await bakeAppearance(BASE_GLB, { ...plain, animation });
+		// bakedAt is a wall-clock stamp, the only legitimate difference between two bakes.
+		const strip = (bytes) => Buffer.from(bytes).toString('latin1').replace(/"bakedAt":"[^"]*"/, '');
+		expect(strip(b)).toBe(strip(a));
+	});
+
+	it('an animation-only record is not bakeable', () => {
+		expect(isBakeable({ animation })).toBe(false);
+	});
+});

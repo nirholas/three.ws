@@ -87,6 +87,7 @@ import {
 	FPS_IDLE,
 	FPS_SAVER,
 } from './shared/frame-governor.js';
+import { resolveClip, PLATFORM_DEFAULTS } from './avatar-animation-identity.js';
 import { Minimap } from './game/hud/minimap.js';
 import './game/hud/world-hud.css';
 
@@ -171,9 +172,11 @@ const COIN_PARAMS = (() => {
 })();
 
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
-const CLIP_IDLE = 'idle';
-const CLIP_WALK = 'av-walk-feminine';
-const CLIP_RUN = 'av-walk-feminine'; // no separate run clip; timeScale handles pace difference
+// Defaults; loadAvatar() re-points them at the avatar's saved animation
+// identity (appearance.animation) once the clip manifest is known.
+let CLIP_IDLE = PLATFORM_DEFAULTS.idle;
+let CLIP_WALK = PLATFORM_DEFAULTS.walk;
+let CLIP_RUN = PLATFORM_DEFAULTS.walk; // no separate run clip; timeScale handles pace difference
 
 const WALK_SPEED = 1.6; // m/s, target ground speed in walk mode
 const RUN_SPEED = 4.0; // m/s, target ground speed in run mode
@@ -1624,6 +1627,13 @@ async function loadAvatar() {
 	});
 	// Store the full manifest for emote tray population.
 	_fullManifest = manifest;
+	{
+		const identity = { animation: (pendingDraftAppearance || avatarMeta?.appearance)?.animation };
+		const known = new Set(manifest.map((d) => d?.name));
+		CLIP_IDLE = resolveClip(identity, 'idle', { known }).clip;
+		CLIP_WALK = resolveClip(identity, 'walk', { known }).clip;
+		CLIP_RUN = CLIP_WALK;
+	}
 	const needed = manifest.filter(
 		(d) => d.name === CLIP_IDLE || d.name === CLIP_WALK || d.name === CLIP_RUN,
 	);

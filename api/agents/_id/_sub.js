@@ -375,7 +375,7 @@ export const handleManifest = wrap(async (req, res, id) => {
 		return error(res, 400, 'invalid_request', 'agent id required');
 
 	const [row] =
-		await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, a.voice_provider, a.voice_id, a.voice_model, a.voice_settings, a.persona_prompt_hash, a.persona_tone_tags, a.persona_extracted_at, a.persona_traits, av.id as avatar_db_id, av.storage_key, av.content_type from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
+		await sql`select a.id, a.name, a.description, a.avatar_id, a.skills, a.meta, a.chain_id, a.erc8004_agent_id, a.erc8004_registry, a.registration_cid, a.created_at, a.voice_provider, a.voice_id, a.voice_model, a.voice_settings, a.persona_prompt_hash, a.persona_tone_tags, a.persona_extracted_at, a.persona_traits, av.id as avatar_db_id, av.storage_key, av.content_type, av.appearance as avatar_appearance from agent_identities a left join avatars av on av.id = a.avatar_id and av.deleted_at is null where a.id = ${id} and a.deleted_at is null limit 1`;
 	if (!row) return error(res, 404, 'not_found', 'agent not found');
 
 	// Live signal: whether the agent has claimed its activation grant (funded +
@@ -485,6 +485,10 @@ export const handleManifest = wrap(async (req, res, id) => {
 		choreographies: Array.isArray(row.meta?.choreographies) && row.meta.choreographies.length
 			? row.meta.choreographies
 			: undefined,
+		// The bound avatar's saved animation identity (idle, walk, gesture
+		// intensity, emote loadout), so an embed idles and walks the way its
+		// owner chose. Resolved client-side by src/avatar-animation-identity.js.
+		animationIdentity: row.avatar_appearance?.animation ?? undefined,
 		// Live signal — funded + active on the Money Pulse via the activation grant.
 		activated,
 		activatedAt,
