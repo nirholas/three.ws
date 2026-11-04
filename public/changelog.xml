@@ -15,6 +15,14 @@
 			<description>Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.</description>
 		</item>
 		<item>
+			<title>Docs · Account deletion and the 30-day purge</title>
+			<link>https://three.ws/docs/account-deletion</link>
+			<guid isPermaLink="false">2026-11-04:Docs · Account deletion and the 30-day purge</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What happens after you delete a three.ws account: the 30-day recovery window, the permanent purge of uploads and account data, the records kept for legal and accounting reasons and how they are stripped of your identity, and the hashed receipt each purge leaves.</description>
+		</item>
+		<item>
 			<title>Docs · MCP integrations</title>
 			<link>https://three.ws/docs/mcp-integrations</link>
 			<guid isPermaLink="false">2026-11-04:Docs · MCP integrations</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.</description>
+		</item>
+		<item>
+			<title>Docs · three-ws-agent</title>
+			<link>https://three.ws/docs/agent-cli</link>
+			<guid isPermaLink="false">2026-11-04:Docs · three-ws-agent</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.</description>
 		</item>
 		<item>
 			<title>MCP Integrations</title>
@@ -85,6 +101,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The new MCP Integrations page connects an agent to GitHub, Linear, Notion, DeepWiki and 80+ other vetted MCP servers, or any public HTTPS MCP server by URL. Sign in with OAuth or paste a token, then choose which tools the agent may call: read tools start on, write and financial tools stay off until you acknowledge each one, and a custom server's tools are reviewed before anything runs. The agent sees them as ext_ tools in every run, and the same connections can be made from the CLI with three-ws mcp install.</description>
+		</item>
+		<item>
+			<title>Deleted accounts are now permanently purged after 30 days</title>
+			<link>https://three.ws/docs/account-deletion</link>
+			<guid isPermaLink="false">2026-11-04:Deleted accounts are now permanently purged after 30 days</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.</description>
 		</item>
 		<item>
 			<title>Every new agent now starts with a drafted coin</title>
@@ -175,12 +199,20 @@
 			<description>docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.</description>
 		</item>
 		<item>
-			<title>three.ws 3D Studio plugins for Hermes and Dify</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-11-04:three.ws 3D Studio plugins for Hermes and Dify</guid>
+			<title>three-ws-agent: run your three.ws agent from the terminal</title>
+			<link>https://three.ws/docs/agent-cli</link>
+			<guid isPermaLink="false">2026-11-04:three-ws-agent: run your three.ws agent from the terminal</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>Two more agent platforms can now make 3D models for free. The Hermes plugin connects Hermes Agent to the studio MCP server and bundles the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.</description>
+			<description>A new command-line agent runs on your own machine or VPS. Sign in with a browser code, then chat in a terminal UI that streams replies, asks before every write, shell, network or wallet action (wallet actions always ask and show recipient, amount, token and chain), and lets you stop or redirect a turn mid-stream. Sessions are saved and searchable, /subagent runs side tasks in parallel, schedules accept plain language such as &quot;every weekday at 9am&quot; and can run on this machine or as a three.ws automation that runs while your computer is off, and gateway mode answers allowlisted Telegram chats. Install it from the repository, with Docker, Nix or the Windows installer.</description>
+		</item>
+		<item>
+			<title>three.ws 3D Studio plugins for Hermes, Cursor and Dify</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:three.ws 3D Studio plugins for Hermes, Cursor and Dify</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Three more agent platforms can now make 3D models for free. The Hermes and Cursor plugins connect the agent to the studio MCP server and bundle the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.</description>
 		</item>
 		<item>
 			<title>What three.ws builds with NVIDIA, and the poster we are taking to GTC 2027</title>

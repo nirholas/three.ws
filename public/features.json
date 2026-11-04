@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T17:01:16.425Z",
+	"generated_at": "2026-11-04T17:10:23.991Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -63,6 +63,7 @@
 					"/docs/start-here",
 					"/docs/mcp",
 					"/docs/cli",
+					"/docs/agent-cli",
 					"/docs/api-reference",
 					"/avatar-sdk",
 					"/3d",
@@ -5338,6 +5339,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/account-deletion",
+					"title": "Docs · Account deletion and the 30-day purge",
+					"description": "What happens after you delete a three.ws account: the 30-day recovery window, the permanent purge of uploads and account data, the records kept for legal and accounting reasons and how they are stripped of your identity, and the hashed receipt each purge leaves.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/analytics-retention",
 					"title": "Docs · Week-2 retention on minted agents",
 					"description": "How three.ws measures the one number that gates phase 2 of the roadmap: whether users come back to converse with the agent they minted. Defines the cohort, the return event, and the query behind the reported figure.",
@@ -7082,6 +7095,18 @@
 					"title": "Docs · three-ws CLI",
 					"description": "Connect Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CLI or Hermes to three.ws in one command: npx three-ws setup signs you in, writes every client's MCP config and verifies each server with a live tools/list.",
 					"added": "2026-09-29",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/agent-cli",
+					"title": "Docs · three-ws-agent",
+					"description": "Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.",
+					"added": "2026-11-04",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

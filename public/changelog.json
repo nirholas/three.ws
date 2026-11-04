@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T17:01:16.585Z",
+	"generated_at": "2026-11-04T17:10:24.156Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Add three.ws to ChatGPT: free 3D models and avatars inside your chats",
 			"summary": "Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.",
 			"link": "/chatgpt",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · Account deletion and the 30-day purge",
+			"summary": "What happens after you delete a three.ws account: the 30-day recovery window, the permanent purge of uploads and account data, the records kept for legal and accounting reasons and how they are stripped of your identity, and the hashed receipt each purge leaves.",
+			"link": "/docs/account-deletion",
 			"tags": [
 				"launch"
 			]
@@ -42,6 +52,16 @@
 			"title": "Docs · Partner shoutout playbook",
 			"summary": "How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.",
 			"link": "/docs/partner-shoutout-playbook",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · three-ws-agent",
+			"summary": "Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.",
+			"link": "/docs/agent-cli",
 			"tags": [
 				"launch"
 			]
@@ -107,6 +127,17 @@
 			"link": "/mcp-integrations",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Deleted accounts are now permanently purged after 30 days",
+			"summary": "The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.",
+			"link": "/docs/account-deletion",
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -226,8 +257,19 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
-			"title": "three.ws 3D Studio plugins for Hermes and Dify",
-			"summary": "Two more agent platforms can now make 3D models for free. The Hermes plugin connects Hermes Agent to the studio MCP server and bundles the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.",
+			"title": "three-ws-agent: run your three.ws agent from the terminal",
+			"summary": "A new command-line agent runs on your own machine or VPS. Sign in with a browser code, then chat in a terminal UI that streams replies, asks before every write, shell, network or wallet action (wallet actions always ask and show recipient, amount, token and chain), and lets you stop or redirect a turn mid-stream. Sessions are saved and searchable, /subagent runs side tasks in parallel, schedules accept plain language such as \"every weekday at 9am\" and can run on this machine or as a three.ws automation that runs while your computer is off, and gateway mode answers allowlisted Telegram chats. Install it from the repository, with Docker, Nix or the Windows installer.",
+			"link": "/docs/agent-cli",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "three.ws 3D Studio plugins for Hermes, Cursor and Dify",
+			"summary": "Three more agent platforms can now make 3D models for free. The Hermes and Cursor plugins connect the agent to the studio MCP server and bundle the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.",
 			"link": null,
 			"tags": [
 				"feature"

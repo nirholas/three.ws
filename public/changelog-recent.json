@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T17:01:16.780Z",
+	"generated_at": "2026-11-04T17:10:24.385Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4328,
+	"total": 4332,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Add three.ws to ChatGPT: free 3D models and avatars inside your chats",
 			"summary": "Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.",
 			"link": "/chatgpt",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · Account deletion and the 30-day purge",
+			"summary": "What happens after you delete a three.ws account: the 30-day recovery window, the permanent purge of uploads and account data, the records kept for legal and accounting reasons and how they are stripped of your identity, and the hashed receipt each purge leaves.",
+			"link": "/docs/account-deletion",
 			"tags": [
 				"launch"
 			]
@@ -45,6 +55,16 @@
 			"title": "Docs · Partner shoutout playbook",
 			"summary": "How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.",
 			"link": "/docs/partner-shoutout-playbook",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · three-ws-agent",
+			"summary": "Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.",
+			"link": "/docs/agent-cli",
 			"tags": [
 				"launch"
 			]
@@ -110,6 +130,17 @@
 			"link": "/mcp-integrations",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Deleted accounts are now permanently purged after 30 days",
+			"summary": "The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.",
+			"link": "/docs/account-deletion",
+			"tags": [
+				"security",
+				"fix"
 			]
 		},
 		{
@@ -229,8 +260,19 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
-			"title": "three.ws 3D Studio plugins for Hermes and Dify",
-			"summary": "Two more agent platforms can now make 3D models for free. The Hermes plugin connects Hermes Agent to the studio MCP server and bundles the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.",
+			"title": "three-ws-agent: run your three.ws agent from the terminal",
+			"summary": "A new command-line agent runs on your own machine or VPS. Sign in with a browser code, then chat in a terminal UI that streams replies, asks before every write, shell, network or wallet action (wallet actions always ask and show recipient, amount, token and chain), and lets you stop or redirect a turn mid-stream. Sessions are saved and searchable, /subagent runs side tasks in parallel, schedules accept plain language such as \"every weekday at 9am\" and can run on this machine or as a three.ws automation that runs while your computer is off, and gateway mode answers allowlisted Telegram chats. Install it from the repository, with Docker, Nix or the Windows installer.",
+			"link": "/docs/agent-cli",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "three.ws 3D Studio plugins for Hermes, Cursor and Dify",
+			"summary": "Three more agent platforms can now make 3D models for free. The Hermes and Cursor plugins connect the agent to the studio MCP server and bundle the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.",
 			"link": null,
 			"tags": [
 				"feature"
@@ -1507,49 +1549,6 @@
 			"title": "Chat no longer fails when its default NVIDIA model is retired",
 			"summary": "NVIDIA stopped serving the Nemotron 3 Super function while still listing it, so chat requests that fell through to it got a 404 and, with the other providers throttled, ended in a 503. Chat, the tool chain, the brain and the CAD writer now use the Nemotron 3.5 Lightning model (with Ultra as its fallback), both verified live.",
 			"link": "/chat",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "Desktop app moves to Electron 45",
-			"summary": "The desktop app now runs on Electron 45 and electron-builder 26, clearing 61 security advisories from the old Electron 33 toolchain. Launch at login still starts the app hidden in the tray; on Windows, toggle the setting once if the console window opens at login.",
-			"link": null,
-			"tags": [
-				"desktop",
-				"security"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "Drive the CLI from scripts and agents, and download a run report",
-			"summary": "Every three-ws command now takes --json (one JSON document on stdout, diagnostics on stderr) and --non-interactive (never prompts), with a stable exit-code table: 2 usage, 3 auth, 4 refused by a guard, 5 payment required, 6 network. New commands cover agents, runs, wallet balance, skill install and orders. `three-ws report run <id> --out run.html` writes one self-contained offline file with the goal, tool calls, decisions, trades, outcome and the decision-trail head hash, and the run page has a matching Download report button.",
-			"link": "/docs/cli",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "Engine bridges are packaged for the Unity, Godot and Unreal stores",
-			"summary": "One command, npm run package:engine-stores, validates the Unity, Godot and Unreal bridges and builds a reproducible upload package for each, with listing metadata and a submission checklist. The Unity package and Unreal plugin manifests now carry their documentation links.",
-			"link": "/docs/engine-store-publishing",
-			"tags": [
-				"sdk",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-10-24",
-			"type": "update",
-			"title": "Fixed three more legacy thumbnail links that browsers refused to load",
-			"summary": "A handful of forge creations and 3D props stored from before an earlier URL fix still pointed straight at the storage bucket's own domain instead of three.ws's own CDN link, which Chrome blocks as an opaque cross-origin response. Model-page posters, a creation's related-models sidebar, forge share-card previews (the image X and Discord show when a link is pasted), and the Forged gallery's model-viewer thumbnails now all resolve through the same CDN link as everything else.",
-			"link": "/forge",
 			"tags": [
 				"fix"
 			]
