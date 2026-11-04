@@ -166,25 +166,32 @@ export async function setExecutionExternalId(id, externalId) {
 }
 
 /**
- * Count one bridge call against its execution and append it to the log.
- * Returns the new count, or null when the execution is no longer running.
+ * Count one bridge call against its execution and append it to the log, in one
+ * statement, so concurrent calls cannot slip past the cap. Returns
+ * `{ count }` when the call was counted, `{ refused: 'finished' }` when the
+ * execution is no longer running, or `{ refused: 'limit' }` when it has
+ * already made `cap` calls.
  */
-export async function recordBridgeCall(execId, entry) {
+export async function recordBridgeCall(execId, entry, { cap = Infinity } = {}) {
+	const limit = Number.isFinite(cap) ? Math.max(0, Math.floor(cap)) : 2147483647;
 	const [row] = await sql`
 		update sandbox_executions set
 			bridge_calls = bridge_calls + 1,
 			bridge_log = case when jsonb_array_length(bridge_log) < ${BRIDGE_LOG_CAP}
 				then bridge_log || ${JSON.stringify([entry])}::jsonb else bridge_log end
-		where id = ${execId} and status = 'running'
+		where id = ${execId} and status = 'running' and bridge_calls < ${limit}
 		returning bridge_calls, run_id
 	`;
-	if (!row) return null;
+	if (!row) {
+		const [cur] = await sql`select status from sandbox_executions where id = ${execId}`;
+		return { refused: cur?.status === 'running' ? 'limit' : 'finished' };
+	}
 	await sql`
 		update sandbox_runs set bridge_calls = bridge_calls + 1,
-			refusals = refusals + ${entry.ok ? 0 : entry.financial ? 1 : 0}, updated_at = now()
+			refusals = refusals + ${entry.ok ? 0 : 1}, updated_at = now()
 		where run_id = ${row.run_id}
 	`;
-	return row.bridge_calls;
+	return { count: row.bridge_calls };
 }
 
 // ── settings ─────────────────────────────────────────────────────────────────
