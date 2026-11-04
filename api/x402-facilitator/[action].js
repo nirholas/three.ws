@@ -47,6 +47,9 @@ import {
 import { facilitatorFeeMeter, recordSettledFee } from '../_lib/x402/wallet-fee-meter.js';
 import { claimSettleCredit } from '../_lib/x402/settle-credit.js';
 import { listDiscoveryResources } from '../_lib/x402/discovery-resources.js';
+import { facilitatorPackage } from '../_lib/x402/facilitator-package.js';
+import { facilitatorMetrics } from '../_lib/x402/facilitator-metrics.js';
+import { ringAllowedAddresses } from '../_lib/x402/ring-allowlist.js';
 
 function actionFrom(req) {
 	const q = req.query?.action;
@@ -112,6 +115,7 @@ export default wrap(async (req, res) => {
 				'No third party touches settlement.',
 			x402Version: X402_VERSION,
 			enabled: SELF_FACILITATOR_ENABLED,
+			package: facilitatorPackage(),
 			kinds: [
 				{ x402Version: X402_VERSION, scheme: 'exact', network: NETWORK_SOLANA_MAINNET },
 			],
@@ -127,6 +131,7 @@ export default wrap(async (req, res) => {
 				verify: { method: 'POST', path: `${base}/verify` },
 				settle: { method: 'POST', path: `${base}/settle` },
 				discovery: { method: 'GET', path: `${base}/discovery/resources` },
+				metrics: { method: 'GET', path: `${base}/metrics` },
 			},
 			docs: 'https://three.ws/docs/x402-ring-economy',
 		});
@@ -147,6 +152,17 @@ export default wrap(async (req, res) => {
 			offset: req.query?.offset,
 		});
 		return json(res, 200, list, { 'cache-control': 'public, max-age=300' });
+	}
+
+	// GET /metrics: public operating numbers for the last 7 days, split into the
+	// platform's own canary traffic and every other payer. Read-only, no secret.
+	if (action === 'metrics') {
+		if (!method(req, res, ['GET'])) return;
+		const ipRl = await limits.x402FacilitatorIp(clientIp(req));
+		if (!ipRl.success) return rateLimited(res, ipRl);
+		const metrics = await facilitatorMetrics(sql, await ringAllowedAddresses({ sql }));
+		res.setHeader('cache-control', 'public, max-age=60');
+		return json(res, 200, { package: facilitatorPackage(), ...metrics });
 	}
 
 	// /supported is a public capability probe (no payment, no secret needed) so

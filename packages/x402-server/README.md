@@ -398,6 +398,26 @@ A buyer running [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws
 calls any of these with a plain `fetch` — the `402` is paid automatically and the
 result comes back as if the endpoint were free.
 
+## Run your own facilitator
+
+Since 0.2.0 the package ships the facilitator three.ws runs in production for Solana:
+the verify and settle engine, the anti-drain transaction gate, sponsor guards (SOL
+floor, minimum settle, rolling fee budget), idempotent settlement with lost-confirmation
+recovery, and an attack suite that fires hostile transactions at any facilitator you
+operate.
+
+```js
+import { createFacilitator, createFacilitatorHandler } from '@three-ws/x402-server/facilitator';
+```
+
+```bash
+npx @three-ws/x402-server attack --facilitator http://localhost:8080
+```
+
+Solana libraries are optional peer dependencies, only needed for this entry point.
+See [docs/operating-a-facilitator.md](docs/operating-a-facilitator.md) and
+[examples/facilitator](examples/facilitator).
+
 ## Related
 
 - [`@three-ws/x402-fetch`](https://www.npmjs.com/package/@three-ws/x402-fetch) — **buyer side.** A `fetch` wrapper that auto-pays the `402` your server here emits.
