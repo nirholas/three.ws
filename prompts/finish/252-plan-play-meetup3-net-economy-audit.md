@@ -1,5 +1,7 @@
 # Audit and fix /play multiplayer resilience and every economy loop (price truth, payouts, double-spend) before the 2026-11-06 meetup
 
+**Status (2026-11-04):** Re-ran `WS=wss://three-ws-multiplayer-93741856042.us-central1.run.app node scripts/play-economy-audit.mjs --qa` (signed-in QA ticket). Store catalog, sell, re-sell, unaffordable refusal, deposit and over-withdrawal clamp all pass on production. The spin paytable/minLevel, quest accept and bank-before-fight checks fail with undefined fields, consistent with the deployed multiplayer service running an older revision than the repo (not re-verified: local `npm run dev:multi` needs `npm install` in multiplayer/). Remaining, owner: deploy the multiplayer service, then re-run the command above; a full paid boutique purchase needs the owner's explicit yes.
+
 **Status (2026-11-03):** Mostly done; one item open. Done and committed:
 - The two-client net audit: 8/8 at the full 120 s background, and exit 1 with `--seed-fault`.
 - The 25-client scale pass: server CPU 5% of one core.
