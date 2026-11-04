@@ -56,11 +56,19 @@ copy_one() { # <repo> <src path> <size> <dest uri>
 
 mirror_repo() { # <repo> <dest prefix> [path regex]
   local repo="$1" dest="$2" only="${3:-.}"
+  # Capture first: a failure inside `< <(...)` is invisible to set -e, so a
+  # failed listing used to stage nothing and still report success.
+  local listing
+  listing="$(list_repo "$repo")"
+  if [[ -z "$listing" ]]; then
+    echo "FAIL  $repo: empty file listing" >&2
+    exit 1
+  fi
   while read -r path size; do
     [[ "$path" =~ $only ]] || continue
     [[ "$path" == .gitattributes ]] && continue
     copy_one "$repo" "$path" "$size" "${dest}/${path}"
-  done < <(list_repo "$repo")
+  done <<< "$listing"
 }
 
 mirror_repo microsoft/TRELLIS.2-4B "${DEST}"

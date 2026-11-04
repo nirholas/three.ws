@@ -66,12 +66,20 @@ copy_one() { # <repo> <src path> <size> <dest uri>
 
 mirror_repo() { # <repo> <dest prefix> [include regex] [exclude regex]
   local repo="$1" dest="$2" include="${3:-.}" exclude="${4:-$}"
+  # Capture first: a failure inside `< <(...)` is invisible to set -e, so a
+  # failed listing used to stage nothing and still report success.
+  local listing
+  listing="$(list_repo "$repo")"
+  if [[ -z "$listing" ]]; then
+    echo "FAIL  $repo: empty file listing" >&2
+    exit 1
+  fi
   while read -r path size; do
     [[ "$path" =~ $include ]] || continue
     [[ "$path" == .gitattributes ]] && continue
     [[ "$exclude" != '$' && "$path" =~ $exclude ]] && continue
     copy_one "$repo" "$path" "$size" "${dest}/${path}"
-  done < <(list_repo "$repo")
+  done <<< "$listing"
 }
 
 # TencentARC/Pixal3D's pipeline.json / pipeline_mv.json / ckpts/*.
