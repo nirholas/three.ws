@@ -22,9 +22,9 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 /// `skill_license`'s `declare_id!`.
-pub const SKILL_LICENSE_ID: &str = "EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8";
+pub const SKILL_LICENSE_ID: &str = "9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj";
 /// `agent_invocation`'s `declare_id!`.
-pub const AGENT_INVOCATION_ID: &str = "AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo";
+pub const AGENT_INVOCATION_ID: &str = "FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv";
 
 /// SPL Associated Token Account program, the canonical mainnet address.
 pub const ASSOCIATED_TOKEN_PROGRAM_ID: &str = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL";

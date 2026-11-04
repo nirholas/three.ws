@@ -3,7 +3,7 @@
 Escrowed, refundable payments for a **knock**: a priced message to a person that
 pays out only against a reply.
 
-Program id: `uVX46U6sGUs6PD3339ZXbTpMyhZwkQhBLPxnvRX9ps7` (Solana, Anchor 0.31.1)
+Program id: `ApwxLLTWiEsiv1z3wXjbsGimmyUdbMamR7eKM8rePQuj` (Solana, Anchor 0.31.1)
 
 ## Why this exists
 

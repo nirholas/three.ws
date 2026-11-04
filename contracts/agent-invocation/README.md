@@ -19,7 +19,7 @@ the audit rail under three.ws agent-to-agent (A2A) coordination. This is the
 published client is [`@three-ws/agent-protocol-sdk`](../../agent-protocol-sdk/README.md).
 
 Program id (same on every cluster, baked into `declare_id!`):
-**[`AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`](https://explorer.solana.com/address/AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo)**
+**[`FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv`](https://explorer.solana.com/address/FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv)**
 
 ## Agent identity: PDAs, not registrations
 

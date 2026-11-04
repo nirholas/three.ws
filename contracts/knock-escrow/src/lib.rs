@@ -36,7 +36,7 @@ use anchor_spl::token_interface::{
     self, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
-declare_id!("uVX46U6sGUs6PD3339ZXbTpMyhZwkQhBLPxnvRX9ps7");
+declare_id!("ApwxLLTWiEsiv1z3wXjbsGimmyUdbMamR7eKM8rePQuj");
 
 /// PDA seed for the singleton protocol config.
 const CONFIG_SEED: &[u8] = b"config";

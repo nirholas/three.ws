@@ -6,7 +6,7 @@ use anchor_spl::token::{
     self, Burn, CloseAccount, FreezeAccount, Mint, MintTo, SetAuthority, Token, TokenAccount,
 };
 
-declare_id!("EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8");
+declare_id!("9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj");
 
 /// Max accepted length (bytes) for `skill_name`. Bounds the `SkillLicense`
 /// account size and the work spent hashing/recording the name.

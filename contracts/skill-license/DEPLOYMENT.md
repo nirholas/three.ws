@@ -1,7 +1,7 @@
 # Deploying `skill_license`
 
 The program id is the program keypair's pubkey, baked into `declare_id!` and
-`Anchor.toml`: **`EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`**. The same id is
+`Anchor.toml`: **`9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj`**. The same id is
 used on localnet, devnet, and mainnet.
 
 ## Keys (never commit)
@@ -86,6 +86,6 @@ after the first deploy:
 
 ```bash
 solana program set-upgrade-authority \
-  EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8 \
+  9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj \
   --new-upgrade-authority <COLD_AUTHORITY_PUBKEY>
 ```

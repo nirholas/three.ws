@@ -36,7 +36,7 @@ use solana_pubkey::Pubkey;
 use solana_signer::Signer;
 use solana_system_interface::program as system_program;
 
-const KNOCK_ESCROW_ID: &str = "uVX46U6sGUs6PD3339ZXbTpMyhZwkQhBLPxnvRX9ps7";
+const KNOCK_ESCROW_ID: &str = "ApwxLLTWiEsiv1z3wXjbsGimmyUdbMamR7eKM8rePQuj";
 const RENT_SYSVAR_ID: &str = "SysvarRent111111111111111111111111111111111";
 
 const CONFIG_SEED: &[u8] = b"config";

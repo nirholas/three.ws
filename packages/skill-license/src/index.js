@@ -11,7 +11,7 @@ export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js'
 const NETWORKS = ['mainnet', 'devnet'];
 
 /** The `skill_license` Anchor program id — identical on every cluster. */
-export const PROGRAM_ID = 'EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8';
+export const PROGRAM_ID = '9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj';
 
 /**
  * Create a skill-license client bound to a base URL, fetch, and optional auth.

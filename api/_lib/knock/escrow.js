@@ -28,7 +28,7 @@ import { createHash } from 'node:crypto';
 import { PublicKey } from '@solana/web3.js';
 
 /** knock_escrow's `declare_id!`. */
-export const KNOCK_ESCROW_PROGRAM_ID = 'uVX46U6sGUs6PD3339ZXbTpMyhZwkQhBLPxnvRX9ps7';
+export const KNOCK_ESCROW_PROGRAM_ID = 'ApwxLLTWiEsiv1z3wXjbsGimmyUdbMamR7eKM8rePQuj';
 
 /** PDA seeds, byte-identical to the constants in the program. */
 const CONFIG_SEED = Buffer.from('config');

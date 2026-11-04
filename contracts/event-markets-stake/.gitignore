@@ -1,0 +1,5 @@
+/target
+
+# Deploy keypairs (mode 600), never committed.
+/.deploy
+*-keypair.json

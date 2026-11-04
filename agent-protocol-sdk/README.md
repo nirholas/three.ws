@@ -29,12 +29,12 @@
 > anyone can verify. Built for three.ws agent-to-agent (A2A) coordination.
 
 > **Program id, and where it stands.** `AGENT_INVOCATION_PROGRAM_ID` is
-> [`AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`](https://explorer.solana.com/address/AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo),
+> [`FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv`](https://explorer.solana.com/address/FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv),
 > the id baked into the program's `declare_id!` and therefore the same on every
 > cluster. As of 2026-08-11 that account is **not yet deployed** on mainnet-beta
 > or devnet: `invokeSkill` builds and signs a correct instruction, and the
 > cluster rejects it until the program is published. Verify before you build on
-> it (`solana account AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`, or run
+> it (`solana account FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv`, or run
 > `node scripts/onchain-smoke.mjs --only=solana-invoke` in the repo, which probes
 > the cluster and reports the current state). Build and deploy instructions are
 > in
@@ -117,7 +117,7 @@ const [agentPda, bump] = deriveAgentPda(authority, programId);
 | --- | --- | --- |
 | `MAX_SKILL_NAME_LEN` | `number` | `64`, max `skillName` length in bytes. |
 | `MAX_PARAMETERS_LEN` | `number` | `512`, max `parameters` length in bytes. |
-| `AGENT_INVOCATION_PROGRAM_ID` | `string` | The program's `declare_id!` (`AgEnt…Zfo`), same on every cluster. |
+| `AGENT_INVOCATION_PROGRAM_ID` | `string` | The program's `declare_id!` (`FGFr3u…tWPv`), same on every cluster. |
 | `IDL` | Anchor `Idl` | The `agent_invocation` IDL (Anchor 0.30+ format). |
 | `AgentInvocation` | `type` | TypeScript type of `IDL` for `new Program<AgentInvocation>(...)`. |
 | `InvokeSkillParams` | `interface` | Parameter shape for `invokeSkill`. |

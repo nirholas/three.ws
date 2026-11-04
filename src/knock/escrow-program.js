@@ -27,7 +27,7 @@ import {
 } from '@solana/spl-token';
 
 /** knock_escrow's `declare_id!`. */
-export const KNOCK_ESCROW_PROGRAM_ID = 'uVX46U6sGUs6PD3339ZXbTpMyhZwkQhBLPxnvRX9ps7';
+export const KNOCK_ESCROW_PROGRAM_ID = 'ApwxLLTWiEsiv1z3wXjbsGimmyUdbMamR7eKM8rePQuj';
 
 /** The mint a door opened from this UI prices itself in. */
 export const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';

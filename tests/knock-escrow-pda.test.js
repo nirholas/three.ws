@@ -38,10 +38,10 @@ const NONCE = 7;
 // Produced by the Rust program's own find_program_address calls.
 const EXPECT = {
 	doorIdHex: 'b3d92abfa95658f0d35e6b20752e8ca9ba4fad9e9bbc62352c999c75853fb53d',
-	config: '7jAKSyTgRC8aGAjdYkMjQMPv7uh3uJX869GRXkBTUPkZ',
-	door: 'DMDKj3mSoM5rjsftGAhSbLbrAWMwmFxEkHDLsx997vk8',
-	knock: '8WvZ64SL6JNss232BC78aapB2M6MjE95f9LtWfYYRn5t',
-	vault: '8LLgeTjcL4ZiU1MwoFWR4DkTkYnXruBsorMG7MKWbSwv',
+	config: 'Ey8JGkP3N1PzrCksfLA7JGra97TivY5mKV3BknMRzkoB',
+	door: 'Fp9wGctrEamkS1CgZNc6ATH4W7HNtJgxvcUahQtSMf43',
+	knock: '8X4RsvHDxW5znQXo2ChDzATN7qqnPu3nAwrpcAX7pcPW',
+	vault: '2yuESKBFyVHkF2gqiRBZJVdwSdsqPeXD42xFsi7eFn2Q',
 	discDoor: '541e65686ab2068c',
 	discKnock: 'f9c621b06c558191',
 };

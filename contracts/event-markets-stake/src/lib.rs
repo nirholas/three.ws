@@ -38,7 +38,7 @@ use anchor_spl::token_interface::{
     self, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
-declare_id!("6EHBAEEFZ9J8EUq9gLA6x1Kpbaanfvz55YSy9FiYs9W1");
+declare_id!("6DsLYSQcYZSegSKgRkRMP93L7uHxvV1cQhm6YoXa9xXU");
 
 const CONFIG_SEED: &[u8] = b"config";
 const POOL_SEED: &[u8] = b"pool";

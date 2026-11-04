@@ -9,3 +9,6 @@ test-ledger
 *program*.json
 *deployer*.json
 *authority*.json
+
+# Deploy keypairs (mode 600), never committed.
+/.deploy

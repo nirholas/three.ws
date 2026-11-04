@@ -6,13 +6,13 @@ resolver = "2"
 # Same program id on every cluster — it is the program keypair's pubkey, baked
 # into `declare_id!`. See DEPLOYMENT.md for deploy signatures + upgrade authority.
 [programs.localnet]
-agent_invocation = "AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo"
+agent_invocation = "FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv"
 
 [programs.devnet]
-agent_invocation = "AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo"
+agent_invocation = "FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv"
 
 [programs.mainnet]
-agent_invocation = "AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo"
+agent_invocation = "FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv"
 
 [registry]
 url = "https://api.apr.dev"

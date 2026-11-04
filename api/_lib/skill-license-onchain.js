@@ -36,7 +36,7 @@ import { solanaConnection } from './solana/connection.js';
 /** Program id baked into the on-chain program's `declare_id!`. Override per
  *  deployment with SKILL_LICENSE_PROGRAM_ID. */
 export const SKILL_LICENSE_PROGRAM_ID =
-	process.env.SKILL_LICENSE_PROGRAM_ID || 'EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8';
+	process.env.SKILL_LICENSE_PROGRAM_ID || '9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj';
 
 export const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
 export const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(

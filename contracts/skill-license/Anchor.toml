@@ -6,13 +6,13 @@ resolver = "2"
 # Same program id on every cluster — it is the program keypair's pubkey, baked
 # into `declare_id!`. See DEPLOYMENT.md for deploy signatures + upgrade authority.
 [programs.localnet]
-skill_license = "EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8"
+skill_license = "9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj"
 
 [programs.devnet]
-skill_license = "EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8"
+skill_license = "9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj"
 
 [programs.mainnet]
-skill_license = "EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8"
+skill_license = "9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj"
 
 [registry]
 url = "https://api.apr.dev"

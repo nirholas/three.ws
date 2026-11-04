@@ -11,9 +11,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PublicKey } from '@solana/web3.js';
 
-const PROGRAM = 'uVX46U6sGUs6PD3339ZXbTpMyhZwkQhBLPxnvRX9ps7';
-const KNOCK = '8WvZ64SL6JNss232BC78aapB2M6MjE95f9LtWfYYRn5t';
-const DOOR = 'DMDKj3mSoM5rjsftGAhSbLbrAWMwmFxEkHDLsx997vk8';
+const PROGRAM = 'ApwxLLTWiEsiv1z3wXjbsGimmyUdbMamR7eKM8rePQuj';
+const KNOCK = '8X4RsvHDxW5znQXo2ChDzATN7qqnPu3nAwrpcAX7pcPW';
+const DOOR = 'Fp9wGctrEamkS1CgZNc6ATH4W7HNtJgxvcUahQtSMf43';
 const SENDER = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 

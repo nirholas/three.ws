@@ -22,10 +22,10 @@ const HANDLE = 'nirholas';
 const NONCE = 7;
 const PRICE = '50000';
 // From tests/knock-escrow-pda.test.js, which pins these against the program.
-const KNOCK_PDA = '8WvZ64SL6JNss232BC78aapB2M6MjE95f9LtWfYYRn5t';
-const DOOR_PDA = 'DMDKj3mSoM5rjsftGAhSbLbrAWMwmFxEkHDLsx997vk8';
+const KNOCK_PDA = '8X4RsvHDxW5znQXo2ChDzATN7qqnPu3nAwrpcAX7pcPW';
+const DOOR_PDA = 'Fp9wGctrEamkS1CgZNc6ATH4W7HNtJgxvcUahQtSMf43';
 const DISC_KNOCK = 'f9c621b06c558191';
-const PROGRAM = 'uVX46U6sGUs6PD3339ZXbTpMyhZwkQhBLPxnvRX9ps7';
+const PROGRAM = 'ApwxLLTWiEsiv1z3wXjbsGimmyUdbMamR7eKM8rePQuj';
 
 const state = {
 	door: null,

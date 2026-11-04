@@ -17,7 +17,7 @@ exists with `revoked_at == 0` means the wallet owns the skill. The platform's
 read path is [`api/skills/license-onchain.js`](../../api/skills/license-onchain.js),
 backed by [`api/_lib/skill-license-onchain.js`](../../api/_lib/skill-license-onchain.js).
 
-Program id (same on every cluster): **`EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`**
+Program id (same on every cluster): **`9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj`**
 
 ## State
 
