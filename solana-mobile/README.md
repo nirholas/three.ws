@@ -2,7 +2,7 @@
 
 Everything needed to package three.ws as an Android app and publish it: the Mobile Wallet Adapter (MWA) wallet that signs through the on-device Seed Vault, the Trusted Web Activity (TWA) wrapper, the release pipeline, and the listing copy for both stores.
 
-**Next: v1.1.0 (versionCode 2) adds the Agent glance home screen widget** ([../docs/native-widgets.md](../docs/native-widgets.md)); it is built and emulator-verified (2026-08-29) and ships once its API lane is deployed.
+**Next: v1.1.0 (versionCode 2) adds the Agent glance home screen widget** ([../docs/native-widgets.md](../docs/native-widgets.md)). Its API lane is live in production (`GET /api/glance/mine?format=png` answers 200, `POST /api/glance/token` answers 401 without a session, `/glance` answers 200, re-measured 2026-11-04). The signed 1.1.0 APK was rebuilt unattended from the stored release key on 2026-11-04 and its certificate matches the live `assetlinks.json`. The remaining steps are the owner's: [RELEASE-1.1.0.md](RELEASE-1.1.0.md).
 
 **Status: v1.0.0 approved and live on the Solana dApp Store** (submitted 2026-08-28, approved 2026-09-01) (release `#331044442814`, versionCode 1). The reviewed bytes are the `v1.0.0` GitHub release. Identifiers and what the portal recorded: [../docs/seeker-submission-day.md](../docs/seeker-submission-day.md).
 

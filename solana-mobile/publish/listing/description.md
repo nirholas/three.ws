@@ -15,6 +15,10 @@ WHY SEEKER
 
 three.ws talks to the Seeker's on-device wallet through the Mobile Wallet Adapter protocol, so signing lives inside the hardware-isolated secure element and sign-in is a single tap. The agents you create on Seeker show up on the three.ws web app the moment you sign in there: your wallet, your library, anywhere you sign in.
 
+HOME SCREEN WIDGET
+
+Add Agent glance to your home screen to see your agent's avatar, its name, and how many moves it made today. It refreshes about every 30 minutes without opening the app, keeps the last card when you are offline, and opens your agent with a tap. Link it once from three.ws/glance; you can revoke any linked widget there.
+
 OPEN BY DEFAULT
 
 three.ws is open source (github.com/nirholas/three.ws). Agents are Metaplex Core assets on Solana with an open manifest, so they are portable to any compatible marketplace or wallet. No vendor lock-in.

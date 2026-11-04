@@ -1,5 +1,7 @@
 # The Seeker app 1.1.0 (Agent glance widget) is built, signed, verified and staged so the owner's only step is the portal upload
 
+**Status (2026-11-04):** Signed 1.1.0 (versionCode 2) APK built unattended from the Secret Manager key; signer SHA-256 matches the live assetlinks.json; widget receiver present; publish.sh dry run prints the 1.1.0 upload command and refuses a reused versionCode; README, listings, data-safety and CHECKLIST corrected; RELEASE-1.1.0.md holds the owner commands; bash -n test added. Remaining (owner): emulator and device checks (sandbox has no KVM), portal API key, funded publisher keypair, real publish, Play upload.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/979-plan-mobile-seeker-v1-1-widget-release-prep.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 40 of 100 inside the tier). **Area:** mobile. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

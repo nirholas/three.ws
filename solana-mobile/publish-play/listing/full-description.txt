@@ -24,6 +24,10 @@ WALLETS ARE OPTIONAL
 
 You can use three.ws without ever connecting a wallet. If you do connect one, signing runs through Mobile Wallet Adapter, so it happens inside the wallet app you already trust and this app never sees a private key or a seed phrase. three.ws is not a wallet, does not hold your funds, and does not operate an exchange.
 
+HOME SCREEN WIDGET
+
+Add Agent glance to your home screen to see your agent's avatar, its name, and how many moves it made today. It refreshes about every 30 minutes without opening the app, keeps the last card when you are offline, and opens your agent with a tap. Link it once from three.ws/glance; you can revoke any linked widget there.
+
 OPEN BY DEFAULT
 
 three.ws is open source at github.com/nirholas/three.ws. Agents are published with an open manifest so they stay portable to any compatible viewer or marketplace. Your work is yours, and it leaves with you.

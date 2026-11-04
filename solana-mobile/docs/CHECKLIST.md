@@ -2,6 +2,15 @@
 
 Work top-to-bottom. Do not submit until every box is checked. A date after a box is when it was last verified against production; re-verify anything older than the current release.
 
+## Owner device checks (still open, 2026-11-04)
+
+An agent sandbox without KVM cannot run these. Everything else an agent can observe is ticked below.
+
+- Seed Vault sheet on first sign-in, one-tap SIWS, `signMessage`, `signAndSendTransaction`, cancelled-sheet state, `disconnect()` (section 4).
+- Session survives force stop (section 4) and the Photos share target (section 9).
+- Launcher icon and splash, camera permission prompt, fresh-install timing, poor-light capture, airplane-mode page (sections 3, 7, 9).
+- Publisher portal items: wallet, storage provider, Add a dApp, API key, keypair (section 6), then `../RELEASE-1.1.0.md`.
+
 ## 1. Web app readiness (three.ws itself)
 
 - [x] `https://three.ws/manifest.webmanifest` returns 200 with `Content-Type: application/manifest+json`. (verified 2026-08-27)
@@ -80,10 +89,10 @@ Work top-to-bottom. Do not submit until every box is checked. A date after a box
 
 ## 8. Repeat builds
 
-- [ ] `KEYSTORE_PASSWORD=... ./scripts/build-apk.sh` runs end-to-end unattended on the release machine (no interactive prompts).
+- [x] `KEYSTORE_PASSWORD=... ./scripts/build-apk.sh` runs end-to-end unattended on the release machine (no interactive prompts). (2026-11-04: ran with stdin not a TTY, produced 1.1.0 / versionCode 2, `[apply-overlay] overlay applied`, signer SHA-256 `98:0A:...:11:13:D7` equals the live assetlinks.json)
 - [ ] Keystore path and password live in the owner's password manager, not in the repo.
-- [ ] `appVersionCode` was bumped in `twa/twa-manifest.json` (or via `VERSION_CODE`); the dApp Store rejects a re-used versionCode, and `scripts/publish.sh` refuses one it already shipped.
-- [ ] `scripts/publish.sh` completes with the publisher wallet's keypair and the portal API key.
+- [x] (2026-11-04: `twa/twa-manifest.json` is 2, and a dry run with `build/.last-published-version-code` = 2 was refused) `appVersionCode` was bumped in `twa/twa-manifest.json` (or via `VERSION_CODE`); the dApp Store rejects a re-used versionCode, and `scripts/publish.sh` refuses one it already shipped.
+- [ ] `scripts/publish.sh` completes with the publisher wallet's keypair and the portal API key. (Dry run observed 2026-11-04 and printed the upload command for `build/three-ws-release.apk` with the 1.1.0 notes; the real run needs the owner's keypair and key, see `../RELEASE-1.1.0.md`.)
 
 ## 9. Pre-submit smoke (real Seeker)
 
