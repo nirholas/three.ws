@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>One Blendshape Track, Any Avatar Rig</title>
+<style>
+/* GTC 2027 poster: 43 in wide by 24 in high, 1 in white margin, no branding.
+   Built by scripts/gtc-poster-build.mjs; edit the template, not poster.html. */
+@font-face { font-family: 'Inter'; font-weight: 300 800; src: url('../../public/fonts/inter-latin.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 400; src: url('../../public/fonts/jetbrains-mono-latin.woff2') format('woff2'); }
+@page { size: 43in 24in; margin: 0; }
+:root {
+	--ink: #0b0b0b; --ink-2: #52514e; --muted: #898781; --grid: #e1e0d9; --axis: #c3c2b7;
+	--surface: #fcfcfb; --paper: #ffffff; --panel: #f6f6f3;
+	--direct: #2a78d6; --derived: #eb6834; --unmapped: #1baf7a; --accent-soft: #e4eefb;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); }
+body { width: 43in; height: 24in; padding: 1in; font-family: 'Inter', 'Inter Fallback', Arial, sans-serif; font-size: 34px; line-height: 1.32; -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: hidden; }
+.sheet { width: 41in; height: 22in; display: grid; grid-template-rows: auto 1fr; row-gap: 0.32in; }
+header { display: grid; grid-template-columns: 1fr auto; column-gap: 0.6in; align-items: start; border-bottom: 6px solid var(--ink); padding-bottom: 0.26in; }
+h1 { margin: 0; font-size: 112px; line-height: 1.04; font-weight: 700; letter-spacing: -0.015em; }
+.subtitle { margin: 0.16in 0 0; font-size: 50px; line-height: 1.22; font-weight: 500; color: var(--ink-2); }
+.subtitle b { color: var(--ink); font-weight: 700; }
+.authors { text-align: right; font-size: 34px; line-height: 1.35; color: var(--ink-2); padding-top: 0.1in; min-width: 7.5in; }
+.authors .name { font-size: 42px; font-weight: 600; color: var(--ink); }
+.authors .mono { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 28px; }
+.columns { display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 0.5in; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 0.3in; min-height: 0; }
+section { break-inside: avoid; }
+h2 { margin: 0 0 0.14in; font-size: 50px; line-height: 1.1; font-weight: 700; padding: 10px 18px; background: var(--ink); color: #fff; border-radius: 6px; }
+h2 .n { display: inline-block; min-width: 1.1em; opacity: 0.72; font-weight: 500; }
+h3 { margin: 0.14in 0 0.05in; font-size: 36px; font-weight: 600; }
+p { margin: 0 0 0.11in; }
+ul { margin: 0 0 0.11in; padding-left: 0.42in; }
+li { margin: 0 0 0.06in; }
+li::marker { color: var(--muted); }
+.lede { font-size: 38px; }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.18in; margin: 0.1in 0 0.16in; }
+.stat { background: var(--panel); border-radius: 8px; padding: 0.14in 0.18in; }
+.stat .v { font-size: 74px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+.stat .l { font-size: 27px; color: var(--ink-2); margin-top: 0.06in; line-height: 1.25; }
+.stat.direct .v { color: var(--direct); }
+.stat.derived .v { color: var(--derived); }
+code, .mono { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; }
+code { font-size: 0.86em; background: var(--panel); padding: 0 0.16em; border-radius: 4px; }
+pre { margin: 0 0 0.12in; padding: 0.14in 0.18in; background: var(--panel); border-radius: 8px; font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 27px; line-height: 1.38; white-space: pre; overflow: hidden; }
+pre .c { color: var(--muted); }
+pre .d { color: var(--direct); font-weight: 600; }
+pre .e { color: var(--derived); font-weight: 600; }
+figure { margin: 0 0 0.12in; }
+figcaption { font-size: 28px; line-height: 1.32; color: var(--ink-2); margin-top: 0.07in; }
+figcaption b { color: var(--ink); }
+.chart svg { display: block; width: 100%; height: auto; }
+.rigs { display: grid; gap: 0.1in; }
+.rigs.three { grid-template-columns: repeat(3, 1fr); }
+.rigs.two { grid-template-columns: repeat(2, 1fr); }
+.rig { background: var(--panel); border-radius: 8px; overflow: hidden; position: relative; }
+.rig img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.rig .tag { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 14px; font-size: 25px; line-height: 1.25; background: rgba(252,252,251,0.92); color: var(--ink); border-top: 1px solid var(--grid); }
+.rig .tag .k { display: inline-block; width: 18px; height: 18px; border-radius: 4px; margin-right: 8px; vertical-align: -1px; }
+.k.direct { background: var(--direct); } .k.derived { background: var(--derived); } .k.rest { background: var(--axis); } .k.both { background: linear-gradient(90deg, var(--direct) 50%, var(--derived) 50%); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.1in; }
+.pipeline svg { display: block; width: 100%; height: auto; }
+.callout { background: var(--accent-soft); border-left: 10px solid var(--direct); border-radius: 6px; padding: 0.12in 0.18in; margin: 0 0 0.12in; }
+.callout.warn { background: #fdeee6; border-left-color: var(--derived); }
+.reproduce { display: grid; grid-template-columns: 1fr 1fr; gap: 0.18in; }
+.qr { display: grid; grid-template-columns: 2.1in 1fr; gap: 0.14in; align-items: center; }
+.qr svg { width: 2.1in; height: 2.1in; display: block; }
+.qr .t { font-size: 29px; line-height: 1.3; color: var(--ink-2); }
+.qr .t b { display: block; color: var(--ink); font-size: 31px; }
+.refs { font-size: 25px; line-height: 1.32; color: var(--ink-2); }
+.refs ol { margin: 0; padding-left: 0.4in; }
+.refs li { margin: 0 0 0.04in; }
+.refs .u { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 22px; word-break: break-all; }
+table { border-collapse: collapse; width: 100%; font-size: 29px; margin: 0 0 0.12in; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); font-size: 26px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 0.08in 0.28in; font-size: 27px; color: var(--ink-2); margin: 0.04in 0 0.08in; }
+.legend span::before { content: ''; display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 9px; vertical-align: -2px; background: var(--sw); }
+.legend .hatch::before { background: repeating-linear-gradient(45deg, #f0efec 0 5px, #c3c2b7 5px 7px); }
+.small { font-size: 28px; color: var(--ink-2); }
+</style>
+</head>
+<body>
+<div class="sheet">
+<header>
+	<div>
+		<h1>One Blendshape Track, Any Avatar Rig: Real-Time Speech-Driven Faces in the Browser</h1>
+		<p class="subtitle"><b>{{driven_pct}} of user-uploaded rigs with morph targets animate from one Audio2Face-3D track</b>, with no per-rig retargeting step, at a median <b>{{median_latency}} s</b> from text to speaking face.</p>
+	</div>
+	<div class="authors">
+		<div class="name">Nicholas Resendez</div>
+		<div>three.ws, open-source browser agents</div>
+		<div class="mono">github.com/nirholas/three.ws</div>
+		<div class="small">Measured 2026-09-22 to 2026-11-04 on production traffic</div>
+	</div>
+</header>
+
+<div class="columns">
+
+<div class="col">
+<section>
+	<h2><span class="n">1</span> Problem</h2>
+	<p class="lede">Speech-driven facial animation ships as a <b>fixed blendshape vocabulary</b>, but the avatars people actually bring to a browser do not share one.</p>
+	<p>Audio2Face-3D emits 52 ARKit shapes plus tongue and head pose at 30 fps. On a platform where users upload, fork, auto-rig, and reconstruct their own characters, the receiving mesh exposes ARKit names, VRM vowels (<code>Aa Ih Ou Ee Oh</code>), Oculus visemes (<code>viseme_aa</code> &hellip;), vendor spellings, or no morph targets at all. In our sample, <b>{{no_morph_pct}}</b> of files carry no facial morphs at all, and <b>{{nonarkit}}</b> of the morphed files expose no ARKit mouth shape under any spelling.</p>
+	<p><b>Goal.</b> Drive every rig a user brings from the same track, in the browser, with no per-rig authoring, no model-side retargeting, and no frozen faces when coverage is partial.</p>
+	<p><b>Constraints.</b> Audio must stay perceptually synchronized with the mouth; the client is a web page (no native runtime); rigs are untrusted glTF with meshopt and Draco compression, quantization, and arbitrary node structure.</p>
+</section>
+
+<section>
+	<h2><span class="n">2</span> Application of NVIDIA technology</h2>
+	<figure class="pipeline">{{pipeline_svg}}
+	<figcaption>End-to-end path for one spoken turn. Everything above the browser runs as hosted NVIDIA Cloud Functions over gRPC; the browser receives the original audio and a JSON track and does all retargeting locally.</figcaption></figure>
+	<ul>
+		<li><b>Riva ASR</b> (Canary, multilingual) transcribes the user's microphone audio.</li>
+		<li><b>Nemotron</b> (<code>nemotron-3.5-lightning-30b-a3b</code> via NIM) produces the reply and tool calls.</li>
+		<li><b>Magpie TTS Multilingual</b> renders speech at 44.1 kHz; the server downmixes and linearly resamples a copy to 16 kHz mono for inference while the browser plays the original.</li>
+		<li><b>Audio2Face-3D</b> (NVCF bidirectional stream) returns per-frame weights for 55 shapes; the server packs them as <code>{fps, blendShapeNames, frames[{t, w[55]}]}</code>.</li>
+	</ul>
+</section>
+</div>
+
+<div class="col">
+<section>
+	<h2><span class="n">3</span> Method: direct and derived mapping</h2>
+	<p>At attach time the player inspects every morphed mesh once and binds each morph target to one of two paths. Per frame it does no string work: the track is sampled by the <b>audio element's clock</b> with linear interpolation, so the mouth cannot drift from the sound even when frames drop.</p>
+	<h3>Direct path</h3>
+	<p>A morph name is canonicalized (case, separators, an <code>ARKit_</code> prefix stripped) and, if it resolves to one of the 52 ARKit shapes, it is driven by that track column verbatim.</p>
+	<h3>Derived path</h3>
+	<p>A VRM vowel or Oculus viseme morph <i>v</i> with published ARKit composition <i>c<sub>v</sub></i> receives the weighted mean of the ARKit frame <i>a</i> over its components, the inverse of the authoring map:</p>
+	<pre>w(v) = clamp<sub>01</sub>( &Sigma;<sub>k</sub> a[k] &middot; c<sub>v</sub>[k]  /  &Sigma;<sub>k</sub> c<sub>v</sub>[k] )
+
+<span class="c">// composition tables (excerpt)</span>
+<span class="e">viseme_aa</span>: { jawOpen: 0.95 }
+<span class="e">viseme_O</span>:  { jawOpen: 0.50, mouthFunnel: 0.55 }
+<span class="e">viseme_PP</span>: { mouthClose: 0.90, mouthPressLeft: 0.40, mouthPressRight: 0.40 }
+<span class="e">Ou</span> (VRM): { mouthFunnel: 0.70, mouthPucker: 0.40, jawOpen: 0.20 }</pre>
+	<h3>Suppression rule</h3>
+	<div class="callout">A mesh that already has <b>any direct jaw or mouth shape</b> gets no derived bindings. Both paths at once double-drive the mouth (Section 6). Meshes with neither path fall back to amplitude lipsync from the playing audio, so a face is never frozen.</div>
+	<figure>
+		<div class="rigs three">
+			<div class="rig"><img src="figures/rig-selfie-rest.png" alt=""><div class="tag"><span class="k rest"></span>Selfie reconstruction, rest</div></div>
+			<div class="rig"><img src="figures/rig-default-rest.png" alt=""><div class="tag"><span class="k rest"></span>Web avatar (ARKit + visemes), rest</div></div>
+			<div class="rig"><img src="figures/rig-realistic-rest.png" alt=""><div class="tag"><span class="k rest"></span>Creator export, rest</div></div>
+			<div class="rig"><img src="figures/rig-selfie-direct.png" alt=""><div class="tag"><span class="k direct"></span>Direct, {{direct_selfie}} morphs bound</div></div>
+			<div class="rig"><img src="figures/rig-default-direct.png" alt=""><div class="tag"><span class="k direct"></span>Direct, {{direct_default}} morphs bound</div></div>
+			<div class="rig"><img src="figures/rig-realistic-direct.png" alt=""><div class="tag"><span class="k direct"></span>Direct, {{direct_realistic}} morphs bound</div></div>
+		</div>
+		<figcaption><b>The same frame on three unrelated rigs.</b> Frame {{peak_frame}} (t = {{peak_t}} s, JawOpen = {{peak_jaw}}) of a production track for the sentence <i>"{{sample_text_short}}"</i>, applied by the shipping player to three avatar files with different authors, tools, and morph vocabularies. No rig-specific code or allowlist exists; new rigs are supported by adding a name composition, never a rig entry.</figcaption>
+	</figure>
+</section>
+</div>
+
+<div class="col">
+<section>
+	<h2><span class="n">4</span> Benchmarking method</h2>
+	<ul>
+		<li><b>Rig coverage.</b> {{files}} distinct avatar files from human accounts (at most 60 per creation source; seeded, QA, and synthetic accounts excluded). Each glTF's JSON chunk is fetched by HTTP range request and its morph dictionaries are handed to the <i>shipping</i> <code>A2FPlayer.attach()</code>, so the classification is the production code path, not a reimplementation.</li>
+		<li><b>Latency.</b> Ten consecutive production calls to the text-to-face endpoint with the same 22-word sentence, wall clock from request start to the full JSON response (TTS, resample, Audio2Face-3D stream). Calls refused by the per-client rate limit are excluded, not retried.</li>
+		<li><b>Overshoot.</b> Replay of the real 228-frame track through the composition tables, measuring the mapping-implied jaw opening with and without the suppression rule.</li>
+	</ul>
+</section>
+
+<section>
+	<h2><span class="n">5</span> Results and outcomes</h2>
+	<div class="stat-row">
+		<div class="stat direct"><div class="v">{{driven_pct}}</div><div class="l">of morphed rigs driven ({{driven}} of {{morphed}})</div></div>
+		<div class="stat"><div class="v">{{median_latency}} s</div><div class="l">median text to animated speech, {{median_speech}} s of audio</div></div>
+		<div class="stat derived"><div class="v">{{derived}}</div><div class="l">rigs rescued only by the derived path ({{unmapped}} still unmapped)</div></div>
+	</div>
+	<figure class="chart">
+		<h3 style="margin-top:0">Which path drives each rig, by how the avatar was made</h3>
+		<div class="legend"><span style="--sw:#2a78d6">Direct ARKit</span><span style="--sw:#eb6834">Derived from vowels or visemes</span><span style="--sw:#1baf7a">Morphs, unmapped</span><span class="hatch">No facial morphs</span></div>
+		{{coverage_svg}}
+		<figcaption>Sources that produce faces (selfie reconstruction, studio, auto-rig) are driven almost entirely by the direct path. The derived path matters where files are imported from other ecosystems (Import, Fork): {{derived}} rigs that would otherwise have been frozen. Photo-avatar exports and text-to-3D props carry no facial morphs and get amplitude lipsync.</figcaption>
+	</figure>
+	<figure class="chart">
+		<h3 style="margin-top:0">Latency per call versus the speech it produced</h3>
+		<div class="legend"><span style="--sw:#2a78d6">Wall-clock latency</span><span style="--sw:#eb6834">Duration of the generated speech</span></div>
+		{{latency_svg}}
+		<figcaption>{{fast_calls}} of 10 calls finished in 2.7 to 4.3 s for 6.9 to 7.6 s of speech (real-time ratio {{ratio_min}} to {{ratio_max}}); two calls hit upstream tail latency at 11.0 and 13.7 s. Earlier runs: median 2.96 s (2026-10-08, six calls) and 1.29 to 2.19 s when audio is supplied directly and TTS is skipped (2026-09-22).</figcaption>
+	</figure>
+</section>
+</div>
+
+<div class="col">
+<section>
+	<h2><span class="n">6</span> Ablation: why both paths cannot run at once</h2>
+	<figure class="chart">
+		<div class="legend"><span style="--sw:#2a78d6">Direct only (shipped)</span><span style="--sw:#eb6834">Direct + derived on the same mesh</span></div>
+		{{overshoot_svg}}
+		<figcaption>Mapping-implied jaw opening over the real track. With the suppression rule off, the ARKit <code>jawOpen</code> column and the visemes derived from it stack: the mouth saturates in <b>{{overshoot_pct}}</b> of voiced frames (peak {{overshoot_peak}}&times; the authored opening) instead of {{clean_pct}}.</figcaption>
+	</figure>
+	<figure>
+		<div class="rigs three">
+			<div class="rig"><img src="figures/rig-default-direct.png" alt=""><div class="tag"><span class="k direct"></span>Direct only</div></div>
+			<div class="rig"><img src="figures/rig-default-derived-only.png" alt=""><div class="tag"><span class="k derived"></span>Derived only ({{expr_default}} viseme morphs)</div></div>
+			<div class="rig"><img src="figures/rig-default-both.png" alt=""><div class="tag"><span class="k both"></span>Both paths: overshoot</div></div>
+		</div>
+		<figcaption>Same rig, same frame. <b>Derived only</b> is what a VRM or Oculus-style rig receives, produced here by hiding the rig's ARKit mouth shapes from the player: a usable mouth from visemes alone. <b>Both</b> is the failure the rule prevents.</figcaption>
+	</figure>
+</section>
+
+<section>
+	<h2><span class="n">7</span> Lessons and limitations</h2>
+	<ul>
+		<li><b>Name canonicalization beats allowlists.</b> One normalization function covered vendor spellings (<code>ARKit_jawOpen</code>, <code>jaw_open</code>, <code>JawOpen</code>) that an explicit rig list would have missed.</li>
+		<li><b>Clock the face from the audio element</b>, not from <code>requestAnimationFrame</code>. Drift was the first bug users noticed and the cheapest to remove.</li>
+		<li><b>Latency is dominated by upstream tails</b>, not by retargeting (sub-millisecond per frame). Streaming the first frames before TTS completes is the next step.</li>
+		<li><b>Limits.</b> Derived weights are a linear inverse of hand-authored compositions; expressive shapes with no vowel analogue (<code>mouthRollUpper</code>) are lost on viseme-only rigs. Head pose columns are applied only when a head bone exists. {{no_morph_pct}} of uploaded files have no facial morphs, which no mapping can fix.</li>
+	</ul>
+</section>
+
+<section>
+	<h2><span class="n">8</span> Reproduce</h2>
+	<div class="reproduce">
+		<div class="qr">{{qr_repo}}<div class="t"><b>Source, data, scripts</b>Player, composition tables, coverage and latency scripts, and the raw measurements behind every figure.</div></div>
+		<div class="qr">{{qr_demo}}<div class="t"><b>Live demo</b>Speak or type; drop in your own glTF and watch which path binds each morph.</div></div>
+	</div>
+	<div class="refs">
+		<ol>
+			<li>NVIDIA. Audio2Face-3D NIM, blendshape output and gRPC streaming. <span class="u">docs.nvidia.com/ace/audio2face-3d-microservice</span></li>
+			<li>NVIDIA. Riva ASR and Magpie TTS on NVIDIA Cloud Functions. <span class="u">docs.nvidia.com/nim/riva</span></li>
+			<li>Apple. ARFaceAnchor.BlendShapeLocation (52 shapes). <span class="u">developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation</span></li>
+			<li>VRM Consortium. VRM 1.0 expressions (aa, ih, ou, ee, oh). <span class="u">github.com/vrm-c/vrm-specification</span></li>
+			<li>Meta. Oculus Lipsync viseme reference (15 visemes). <span class="u">developers.meta.com/horizon/documentation/unity/audio-ovrlipsync-viseme-reference</span></li>
+			<li>Khronos. glTF 2.0, KHR_mesh_quantization, EXT_meshopt_compression. <span class="u">github.com/KhronosGroup/glTF</span></li>
+			<li>three.js r{{three_version}}, GLTFLoader and morph target animation. <span class="u">threejs.org</span></li>
+		</ol>
+	</div>
+</section>
+</div>
+
+</div>
+</div>
+</body>
+</html>
