@@ -41,6 +41,12 @@ vi.mock('../api/_lib/db.js', () => ({
 	isDbCapacityError: () => false,
 }));
 
+// Funnel rows are covered by launch-funnel.test.js; here they would only consume
+// queued SQL results meant for the handler under test.
+vi.mock('../api/_lib/launch-funnel.js', () => ({
+	recordFunnelStep: vi.fn(async () => true),
+}));
+
 vi.mock('../api/_lib/rate-limit.js', () => ({
 	limits: {
 		authIp: vi.fn(async () => ({ success: true })),

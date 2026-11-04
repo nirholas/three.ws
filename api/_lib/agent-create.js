@@ -8,7 +8,8 @@
 
 import { sql } from './db.js';
 import { env } from './env.js';
-import { generateAgentWallet, generateSolanaAgentWallet } from './agent-wallet.js';
+import { generateAgentWallet, generateSolanaAgentWallet, getOrCreateAgentSolanaWallet } from './agent-wallet.js';
+import { ensureDraftPlan } from './agent-token-plan.js';
 import { checkIdentityIntegrity } from './identity-integrity.js';
 import { pingIndexNow } from './indexnow.js';
 import { publishFeedEvent } from './feed.js';
@@ -122,6 +123,18 @@ export async function createAgentIdentity({
 		)
 		RETURNING *
 	`;
+
+	// Make the coin the default next step: make sure the agent can sign a launch
+	// (a mint that failed above is retried now) and draft its coin plan. Neither
+	// may fail creation; both self-heal on later use.
+	if (!agent.meta?.solana_address) {
+		try {
+			await getOrCreateAgentSolanaWallet(agent.id);
+		} catch (err) {
+			console.warn('[agents] solana wallet provisioning deferred:', err?.message);
+		}
+	}
+	await ensureDraftPlan({ agent });
 
 	// Push the new agent's URL to IndexNow so Bing / Yandex discover it within
 	// minutes instead of waiting for the next crawl. Fire-and-forget.

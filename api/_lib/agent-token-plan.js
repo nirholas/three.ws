@@ -20,6 +20,7 @@
 // `markPlanLaunched` once a real mint confirms.
 
 import { sql } from './db.js';
+import { recordFunnelStep } from './launch-funnel.js';
 
 /** Hard bounds, mirrored by the zod schema on the API and by the SQL checks. */
 export const PLAN_LIMITS = {
@@ -300,7 +301,7 @@ export async function upsertPlan({ agentId, userId, input }) {
 			(${agentId}, ${userId}, ${plan.network}, ${plan.name}, ${plan.symbol},
 			 ${plan.description}, ${plan.image_url}, ${plan.website}, ${plan.twitter},
 			 ${plan.telegram}, ${plan.coin_type}, ${plan.quote_currency},
-			 ${plan.buyback_bps}, ${plan.sol_buy_in}, ${plan.usdc_buy_in}, ${status})
+			 ${plan.buyback_bps}, ${plan.sol_buy_in}, ${plan.usdc_buy_in}, ${status}, false)
 		on conflict (agent_id, network) do update set
 			name = excluded.name,
 			symbol = excluded.symbol,
@@ -315,6 +316,7 @@ export async function upsertPlan({ agentId, userId, input }) {
 			sol_buy_in = excluded.sol_buy_in,
 			usdc_buy_in = excluded.usdc_buy_in,
 			status = excluded.status,
+			auto_drafted = false,
 			updated_at = now()
 		returning *
 	`;
@@ -368,5 +370,89 @@ export async function markPlanLaunched({ agentId, network, mint }) {
 		where agent_id = ${agentId} and network = ${network} and status <> 'launched'
 		returning *
 	`;
+	// The funnel counts the launch whether or not a saved plan existed. A retry
+	// may add a second row; the report counts distinct agents per step.
+	await recordFunnelStep({ agentId, step: 'launch_succeeded', network });
 	return row || null;
+}
+
+// ── Auto-drafted plan ────────────────────────────────────────────────────────
+
+/** First sentence of a block of text, capped to the description limit. */
+function firstSentence(text) {
+	const t = str(text).replace(/\s+/g, ' ');
+	if (!t) return '';
+	const m = t.match(/^.+?[.!?](?=\s|$)/);
+	return (m ? m[0] : t).slice(0, PLAN_LIMITS.descriptionMax);
+}
+
+/**
+ * A ticker from an agent name: the first word's letters and digits, upper-cased
+ * and capped at 6. Names with no latin letters or digits fall back to AGENT so
+ * every draft is launchable as it stands.
+ */
+function symbolFromName(name) {
+	const words = str(name).toUpperCase().split(/\s+/);
+	for (const w of words) {
+		const clean = w.replace(/[^A-Z0-9]/g, '').slice(0, 6);
+		if (clean.length >= PLAN_LIMITS.symbolMin) return clean;
+	}
+	const all = str(name).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+	return all.length >= PLAN_LIMITS.symbolMin ? all : 'AGENT';
+}
+
+/**
+ * The coin plan the platform proposes for an agent, from its own name and
+ * persona. Pure. The coin is mainnet, agent-bound, SOL-paired, with no dev buy
+ * and no buyback: the owner decides what money goes in.
+ *
+ * @param {{ name?: string, description?: string|null, persona_prompt?: string|null }} agent
+ * @param {{ imageUrl?: string|null }} [opts] an already-public image for the coin
+ */
+export function deriveDraftPlan(agent = {}, { imageUrl = null } = {}) {
+	const name = str(agent.name).replace(/\s+/g, ' ').slice(0, PLAN_LIMITS.nameMax).trim();
+	return normalizePlanInput({
+		network: 'mainnet',
+		name: /[A-Za-z0-9]/.test(name) ? name : 'My Agent',
+		symbol: symbolFromName(name),
+		description: firstSentence(agent.description) || firstSentence(agent.persona_prompt),
+		image_url: imageUrl,
+		coin_type: 'agent',
+		quote_currency: 'sol',
+	});
+}
+
+/**
+ * Create the agent's draft coin plan if it has none on mainnet. Idempotent
+ * (`on conflict do nothing`: an owner's saved plan is never overwritten) and
+ * never throws, so it can sit on the agent-creation path. The row is always a
+ * 'draft' flagged `auto_drafted`: visitors never see it, and it becomes the
+ * owner's plan only when they save it.
+ *
+ * @param {{ agent: object, imageUrl?: string|null }} o
+ * @returns {Promise<{ created: boolean, row: object|null }>}
+ */
+export async function ensureDraftPlan({ agent, imageUrl = null }) {
+	if (!agent?.id || !agent?.user_id) return { created: false, row: null };
+	try {
+		const plan = deriveDraftPlan(agent, { imageUrl });
+		const [row] = await sql`
+			insert into agent_token_plans
+				(agent_id, user_id, network, name, symbol, description, image_url,
+				 coin_type, quote_currency, buyback_bps, sol_buy_in, usdc_buy_in,
+				 status, auto_drafted)
+			values
+				(${agent.id}, ${agent.user_id}, ${plan.network}, ${plan.name}, ${plan.symbol},
+				 ${plan.description}, ${plan.image_url}, ${plan.coin_type}, ${plan.quote_currency},
+				 ${plan.buyback_bps}, ${plan.sol_buy_in}, ${plan.usdc_buy_in}, 'draft', true)
+			on conflict (agent_id, network) do nothing
+			returning *
+		`;
+		if (!row) return { created: false, row: null };
+		await recordFunnelStep({ agentId: agent.id, userId: agent.user_id, step: 'plan_drafted', network: plan.network });
+		return { created: true, row };
+	} catch (err) {
+		console.warn('[agent-token-plan] auto-draft failed:', err?.message);
+		return { created: false, row: null };
+	}
 }
