@@ -30,7 +30,9 @@ export const POLICY_PATH = 'ui-policy.json';
 // Each entry: the route, the selector that proves the app has mounted, and an optional
 // component scope for pages too large to check whole.
 export const CORE_PAGES = [
-	{ path: '/', ready: 'body' },
+	// The home route is the windowed desktop: its crawlable fallback HTML is replaced on mount, so
+	// wait for the taskbar (visible at phone and desktop widths) rather than the bare body.
+	{ path: '/', ready: '.os-task-mid' },
 	{ path: '/gallery', ready: 'main' },
 	{ path: '/create', ready: 'main' },
 	{ path: '/forge', ready: 'main' },
@@ -51,6 +53,12 @@ export function pageExitCode(result) {
 export function aggregateExitCode(results) {
 	if (!results.length) return EXIT.ERROR;
 	return results.reduce((worst, r) => Math.max(worst, pageExitCode(r)), EXIT.PASS);
+}
+
+// A dev-server full reload (another editor saving a file under Vite's watcher) tears the page down
+// mid-check. That says nothing about the page, so such a check is retried once before it counts.
+export function isReloadError(message) {
+	return /Execution context was destroyed|frame was detached|Target page, context or browser has been closed/i.test(String(message));
 }
 
 // Every core page must be a real, listed static page, unique, with a ready selector.
@@ -152,7 +160,7 @@ async function checkScoped(lintapple, url, policy, page, timeout) {
 	return { findings, suppressed };
 }
 
-async function lintPage(lintapple, base, page, policy, timeout) {
+async function lintPage(lintapple, base, page, policy, timeout, attempt = 1) {
 	const url = base + page.path;
 	const started = Date.now();
 	try {
@@ -167,6 +175,10 @@ async function lintPage(lintapple, base, page, policy, timeout) {
 		return { path: page.path, scope: page.scope, findings, suppressed, error: null, ms: Date.now() - started };
 	} catch (error) {
 		const message = String(error?.message || error).split('\n')[0].slice(0, 300);
+		if (attempt === 1 && isReloadError(message)) {
+			process.stderr.write('page reloaded during the check, retrying once ... ');
+			return lintPage(lintapple, base, page, policy, timeout, 2);
+		}
 		return { path: page.path, scope: page.scope, findings: [], suppressed: 0, error: message, ms: Date.now() - started };
 	}
 }

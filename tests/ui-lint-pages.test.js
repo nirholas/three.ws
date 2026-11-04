@@ -5,6 +5,7 @@ import {
 	EXIT,
 	aggregateExitCode,
 	formatTable,
+	isReloadError,
 	pageExitCode,
 	parseArgs,
 	ruleCounts,
@@ -80,6 +81,15 @@ describe('summary', () => {
 		expect(lines[2]).toMatch(/^\/a\s+PASS\s+0\s+0 suppressed by policy exceptions$/);
 		expect(lines[3]).toMatch(/^\/b\s+FINDINGS\s+1\s+control-gap 1$/);
 		expect(lines[4]).toMatch(/^\/c \(#grid\)\s+ERROR\s+0\s+Page checks exceeded the time limit\.$/);
+	});
+});
+
+describe('dev-server reload detection', () => {
+	it('recognises a page torn down by a reload, and nothing else', () => {
+		expect(isReloadError('page.evaluate: Execution context was destroyed, most likely because of a navigation')).toBe(true);
+		expect(isReloadError('locator.waitFor: Target page, context or browser has been closed')).toBe(true);
+		expect(isReloadError('Page checks exceeded the time limit.')).toBe(false);
+		expect(isReloadError('Page exceeds the 5000 element limit. Check a smaller page or component.')).toBe(false);
 	});
 });
 
