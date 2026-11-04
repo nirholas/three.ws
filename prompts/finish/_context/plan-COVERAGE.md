@@ -4,8 +4,8 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 
 | Disposition | Files | Meaning |
 |---|---:|---|
-| order | 199 | Outstanding work was found; it is now the linked work order(s), with this file copied verbatim inside. |
-| shipped | 208 | The work it describes exists in the code today (the note names the evidence). |
+| order | 196 | Outstanding work was found; it is now the linked work order(s), with this file copied verbatim inside. |
+| shipped | 211 | The work it describes exists in the code today (the note names the evidence). |
 | covered-by-existing | 90 | An order that was already in the queue covers it. |
 | no-open-work | 803 | Reviewed: reference or descriptive doc with nothing outstanding. |
 | not-a-plan | 269 | Content, rules, or configuration rather than work to do. |
@@ -1429,9 +1429,9 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/sdk.md` | no-open-work | reference doc, verified against code, no outstanding items |
 | `docs/seasonal-drops.md` | no-open-work | shipped reference |
 | `docs/security.md` | excluded | license, changelog or repository boilerplate |
-| `docs/security/audit-2026-10-25/FINDINGS-DETAIL.md` | order | [260](../260-plan-security-close-oct25-audit-and-sweep-gaps.md). 17 needs_validation records and seven unexamined surfaces never closed out. |
-| `docs/security/audit-2026-10-25/NEEDS-VALIDATION.md` | order | [260](../260-plan-security-close-oct25-audit-and-sweep-gaps.md). 17 needs_validation records and seven unexamined surfaces never closed out. |
-| `docs/security/audit-2026-10-25/REPORT.md` | order | [260](../260-plan-security-close-oct25-audit-and-sweep-gaps.md). 17 needs_validation records and seven unexamined surfaces never closed out. |
+| `docs/security/audit-2026-10-25/FINDINGS-DETAIL.md` | shipped | Order 260 retired 2026-11-04: every record, fingerprint and surface is closed in `docs/security/audit-2026-10-25/CLOSURE.md` with its fixing commit and regression test. |
+| `docs/security/audit-2026-10-25/NEEDS-VALIDATION.md` | shipped | Order 260 retired 2026-11-04: every record, fingerprint and surface is closed in `docs/security/audit-2026-10-25/CLOSURE.md` with its fixing commit and regression test. |
+| `docs/security/audit-2026-10-25/REPORT.md` | shipped | Order 260 retired 2026-11-04: every record, fingerprint and surface is closed in `docs/security/audit-2026-10-25/CLOSURE.md` with its fixing commit and regression test. |
 | `docs/security/review-2026-06-24.md` | order | [714](../714-plan-security-csp-drop-unsafe-eval.md). unsafe-eval is the one security header item still tracked. |
 | `docs/security/SECURITY_AUDIT.md` | order | [714](../714-plan-security-csp-drop-unsafe-eval.md). H12 unsafe-eval still in 26 vercel.json lines; other findings fixed |
 | `docs/security/SECURITY_REMEDIATION.md` | order | [714](../714-plan-security-csp-drop-unsafe-eval.md). item 7 (scope unsafe-eval) is the only open item |
