@@ -85,7 +85,7 @@ const rigInfo = (id, variant) => manifest.rigs.find((r) => r.id === id).variants
 // ---------------------------------------------------------------- charts
 function coverageChart() {
 	const rows = coverage.sources.filter((s) => s.direct + s.derived + s.unmapped + s.no_morphs >= 5);
-	const W = 940, labelW = 300, barH = 24, rowH = 46, top = 8;
+	const W = 940, labelW = 300, barH = 24, rowH = 40, top = 8;
 	const H = top + rows.length * rowH + 44;
 	const plotW = W - labelW - 170;
 	const maxN = Math.max(...rows.map((s) => s.direct + s.derived + s.unmapped + s.no_morphs));
@@ -120,7 +120,7 @@ function coverageChart() {
 }
 
 function latencyChart() {
-	const W = 940, H = 330, left = 90, right = 20, top = 16, bottom = 52;
+	const W = 940, H = 270, left = 90, right = 20, top = 16, bottom = 52;
 	const plotW = W - left - right, plotH = H - top - bottom;
 	const yMax = 14;
 	const y = (s) => top + plotH - (s / yMax) * plotH;
@@ -149,7 +149,7 @@ function latencyChart() {
 }
 
 function overshootChart() {
-	const W = 940, H = 300, left = 90, right = 20, top = 16, bottom = 52;
+	const W = 940, H = 320, left = 90, right = 20, top = 16, bottom = 52;
 	const plotW = W - left - right, plotH = H - top - bottom;
 	const tMax = series[series.length - 1].t, yMax = 2.0;
 	const x = (t) => left + (t / tMax) * plotW;
