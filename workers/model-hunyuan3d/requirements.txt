@@ -39,7 +39,7 @@ pybind11==2.13.6
 ninja==1.11.1.1
 
 # ── Input preprocessing (hy3dgen.rembg background removal) ───────────────────
-rembg==2.0.59
+rembg==2.0.69
 onnxruntime==1.20.1
 
 # ── Image processing ──────────────────────────────────────────────────────────

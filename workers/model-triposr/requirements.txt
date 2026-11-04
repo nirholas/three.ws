@@ -8,10 +8,11 @@ trimesh>=4.4.0
 Pillow==12.3.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
 
 # Background removal (TripoSR works best with isolated subject).
-# 2.0.59 clears the 2.0.57-and-earlier CORS/SSRF advisories. The rest are fixed
-# only in 2.0.75, which needs Python 3.11 and numpy 2.3 (this image is 3.10); all
-# of them live in rembg's own HTTP server, which this worker never starts.
-rembg[gpu]==2.0.59
+# 2.0.69 is the newest release that installs on Python 3.10 (2.0.75 and later
+# need Python 3.11 and numpy 2.3; this image is 3.10). The advisories fixed only
+# in 2.0.75 and 2.0.82 live in rembg's own HTTP server and its custom-model
+# loader, neither of which this worker starts or exposes.
+rembg[gpu]==2.0.69
 
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0

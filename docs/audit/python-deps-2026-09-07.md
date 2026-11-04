@@ -195,3 +195,12 @@ Before the pins, those Pillow floors had already resolved to the same versions
 The pins and code above take effect when each worker image is rebuilt through
 the normal worker pipeline. Until then the deployed images run what they were
 built with.
+
+### Addendum 2026-11-04
+
+Re-measured: 194 advisories across 11 package versions. Two pin edits closed 11 of them and 3 package versions:
+
+- `accelerate==1.7.0` to `1.15.0` in `model-partcrafter` (the version the rest of the fleet runs; the sharded-checkpoint path traversal has no listed fix on 1.7.0 and is absent on 1.15.0). Dry-run resolve on Python 3.11 with the PartCrafter numpy, diffusers, transformers, scipy and Pillow pins: resolves.
+- `rembg` 2.0.59 and 2.0.65 to 2.0.69 in `model-triposr`, `avatar-reconstruction` and both `model-hunyuan3d` files. 2.0.69 is the newest release pip will install on Python 3.10 (`pip install --dry-run --python-version 3.10 rembg` picks 2.0.69; 2.0.70 and later need 3.11). `model-triposr` resolves in full with the new pin; `avatar-reconstruction` and `model-hunyuan3d/requirements.txt` resolve on the rembg, numpy, Pillow, onnxruntime, opencv and scipy subset; `requirements.hunyuan21.txt` hits an existing numpy 1.24.4 pin conflict that is identical with the old rembg pin, so the bump does not change it. The full files cannot be resolved binary-only offline of the GPU images because `pygltflib==1.16.2`, `basicsr` and `antlr4-python3-runtime` publish sdists only.
+
+`node scripts/check-deps.mjs` now reports 184 advisories across 8 package versions. Everything left is already in the accepted-residue table above, with `rembg==2.0.69` as the only row that changed (now the single rembg version on Python 3.10; its remaining four advisories are the HTTP server and custom-model loader paths fixed only on 3.11+).

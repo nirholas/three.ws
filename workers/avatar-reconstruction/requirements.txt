@@ -18,7 +18,7 @@ opencv-python-headless>=4.9.0
 # rest landed in 2.0.75, which needs Python 3.11 and numpy 2.3; this image is
 # Python 3.10 with mediapipe holding numpy<2. All of them live in rembg's own
 # HTTP server (`rembg s`), which this worker never starts: it calls rembg.remove.
-rembg[gpu]==2.0.59
+rembg[gpu]==2.0.69
 
 # ── Mesh operations (UV pre-computation, runs once at build time) ─────────────
 trimesh==4.4.0

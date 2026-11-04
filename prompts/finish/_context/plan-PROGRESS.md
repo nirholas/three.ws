@@ -88,3 +88,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 979-plan-mobile-seeker-v1-1-widget-release-prep.md | see git log | 1.1.0 APK built and verified, docs corrected, release runbook written; portal publish and device checks pending owner.
 2026-11-04 | 705-plan-agent-evals-cli-replay-evaluate-tab.md | 7d1879425 | Evals API, replay, trajectory export, CLI and Evaluate tab shipped; migration unapplied, live browser pass pending.
 2026-11-04 | 736-plan-avatar-unseen-head-texture-synthesis.md | f10302b3d | Gated synthesised-view texture built, flag off; billing hold blocks real Vertex fixture, calibration and held-out numbers.
+2026-11-04 | 725-plan-workers-python-osv-residual-bumps.md | see git log (worker pins) | accelerate 1.15.0 on partcrafter, rembg 2.0.69 across the Python 3.10 workers, scan 194 to 184 advisories, residue documented.
