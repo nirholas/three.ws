@@ -5,12 +5,16 @@
 import { parseArgs } from 'node:util';
 import { VERSION } from './http.js';
 import { systemEnv } from './paths.js';
-import { createAgentContext } from './session.js';
-import { login, logout, printLogin, printLoginCode, printLogout, printWhoami, whoami } from './commands/auth.js';
-import { exportSession, listSessions, printExport, printSearch, printSessions, searchSessions } from './commands/sessions.js';
-import { addCron, listCrons, printCron, printCronEvent, printCrons, removeCron, runCronDaemon, runCronOnce, setCronEnabled, setCronMode } from './commands/cron.js';
-import { doctor, printDoctor } from './commands/doctor.js';
-import { printGatewayLog, runGateway, saveToken } from './commands/gateway.js';
+
+// Commands load on demand, so --help and --version never pull in the MCP SDK, Ink or SQLite.
+const load = {
+	session: () => import('./session.js'),
+	auth: () => import('./commands/auth.js'),
+	sessions: () => import('./commands/sessions.js'),
+	cron: () => import('./commands/cron.js'),
+	doctor: () => import('./commands/doctor.js'),
+	gateway: () => import('./commands/gateway.js'),
+};
 
 export class UsageError extends Error {
 	constructor(message, command = null) {
@@ -190,6 +194,7 @@ function untilSignal() {
 }
 
 async function withContext(values, env, fn, { mcp = true } = {}) {
+	const { createAgentContext } = await load.session();
 	const ctx = createAgentContext({ env: makeEnv(values, env), mcp, overrides: overridesOf(values) });
 	try {
 		return await fn(ctx);
@@ -232,17 +237,23 @@ export async function main(argv, { stdout = process.stdout, stderr = process.std
 				return 0;
 			}
 			case 'login': {
+				const { login, printLogin, printLoginCode } = await load.auth();
 				const r = await login({ env, extraScopes: values.scope || [], onCode: (link) => out(printLoginCode(link)), signal: untilSignal() });
 				out(printLogin(r));
 				return 0;
 			}
-			case 'logout':
+			case 'logout': {
+				const { logout, printLogout } = await load.auth();
 				out(printLogout(logout({ env })));
 				return 0;
-			case 'whoami':
+			}
+			case 'whoami': {
+				const { whoami, printWhoami } = await load.auth();
 				out(printWhoami(await whoami({ env })));
 				return 0;
+			}
 			case 'doctor': {
+				const { doctor, printDoctor } = await load.doctor();
 				const r = await doctor({ env: makeEnv(values, env), mcp: true });
 				out(printDoctor(r));
 				return r.ok ? 0 : 1;
@@ -252,6 +263,7 @@ export async function main(argv, { stdout = process.stdout, stderr = process.std
 			case 'cron':
 				return await withContext(values, env, (ctx) => cronCommand(ctx, args, values, out));
 			case 'gateway': {
+				const { printGatewayLog, runGateway, saveToken } = await load.gateway();
 				if (values['save-telegram-token']) {
 					saveToken({ env, token: await readStdin(stdin) });
 					out('Telegram bot token saved to the credential store.');
@@ -272,7 +284,8 @@ export async function main(argv, { stdout = process.stdout, stderr = process.std
 	}
 }
 
-function sessionsCommand(ctx, args, values, out) {
+async function sessionsCommand(ctx, args, values, out) {
+	const { exportSession, listSessions, printExport, printSearch, printSessions, searchSessions } = await load.sessions();
 	const [sub = 'list', ...rest] = args;
 	const limit = values.limit ? Number(values.limit) : 20;
 	if (sub === 'list') out(printSessions(listSessions({ store: ctx.store, limit })));
@@ -285,6 +298,7 @@ function sessionsCommand(ctx, args, values, out) {
 }
 
 async function cronCommand(ctx, args, values, out) {
+	const { addCron, listCrons, printCron, printCronEvent, printCrons, removeCron, runCronDaemon, runCronOnce, setCronEnabled, setCronMode } = await load.cron();
 	const [sub = 'list', ...rest] = args;
 	if (sub === 'list') out(printCrons(listCrons({ ctx })));
 	else if (sub === 'add') {
