@@ -77,7 +77,7 @@ export function laneTimeoutMs(ownCeilingMs, { budgetMs, remainingMs, laneRemains
 
 A leader never takes more than 60% of what is left while another lane waits behind it.
 
-Here is the honest part. The code puts Vertex AI's Gemini image model first, because it draws the most photoreal reference. Our generation ledger (section 10) records which model drew every reference. Over the 60 days to 8 October, the last reference Gemini drew is dated 13 August: **none since**. In that window FLUX.1-dev on NVIDIA's hosted inference drew 22,690 references and a keyless public FLUX endpoint, the last rung, drew 3,649. From 3 to 5 October the keyless rung was the only one serving at all. The ladder did its job: nobody's generation failed because the top rung was down. It also hid an eight-week outage of the rung we consider best, which is the first item in section 13.
+Here is the honest part. The code puts Vertex AI's Gemini image model first, because it draws the most photoreal reference. Our generation ledger (section 10) records which model drew every reference. Over the 60 days to 8 October, the last reference Gemini drew is dated 13 August: **none since**. In that window FLUX.1-dev on NVIDIA's hosted inference drew 22,690 references and a keyless public FLUX endpoint, the last rung, drew 3,649. From 3 to 5 October the keyless rung was the only one serving at all. The ladder did its job: nobody's generation failed because the top rung was down. It also hid an eight-week outage of the rung we consider best, which is the first item in section 13. One later change to that rung: Google retired `gemini-2.5-flash-image`, so the model id now resolves in one place, [`api/_lib/image-model.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/image-model.js), with a newer primary and the retired id kept as a one-step fallback that is tried only when Vertex answers that the primary is not served. A 429, a billing hold or a safety block is a real answer from a model that exists and is never retried on a different model.
 
 One more detail from the same path, because it surprised us. "Plain background" is not "transparent background". On 8 September we rendered six text personas through the TRELLIS lane and found the reconstruction fusing the plain backdrop in as geometry: four of six figures stood on a full-footprint slab of reconstructed backdrop, and two of them lost the figure entirely, leaving a bare plane. So every non-draft TRELLIS job now goes through our background-removal worker first, from [`api/forge.js`](https://github.com/nirholas/three.ws/blob/main/api/forge.js):
 
@@ -146,7 +146,7 @@ The lesson generalizes: **a port answering is not a model answering.** Separate 
 
 ## 5. Three layers of failover
 
-Submit-time failure is the easy case. When a worker refuses a submit with a 429, a 5xx, or no answer at all, the handler marks the lane unhealthy in the shared cooldown for 90 seconds, so every instance steers new requests around it, and moves the request to the next lane with the reference image it already holds. Genuine input or configuration errors are not retried; only "upstream unavailable" is.
+Submit-time failure is the easy case. When a worker refuses a submit with a 429, a 5xx, or no answer at all, the handler marks the lane unhealthy in the shared cooldown for 90 seconds, so every instance steers new requests around it, and moves the request to the next lane with the reference image it already holds. Genuine input or configuration errors are not retried; only "upstream unavailable" is. A submit made from inside a /play world is also held to a per-player cooldown and a per-world concurrency cap, answered with a 429 that names the scope.
 
 The hard case is a worker that accepts a job with a 202 and fails it minutes later. By then the request that started it is long gone; the failure surfaces on some later `GET /api/forge?job=...` poll, in a different process, with no request body. Until mid-July that poll dead-ended. Now three layers stand behind it.
 
@@ -354,7 +354,7 @@ def uses_meshopt(document: Optional[dict]) -> bool:
             )
 ```
 
-Check both extension lists, not just `extensionsRequired`. `-noq` keeps the source quantization so the decoded geometry is what the author shipped. `decode_if_meshopt` returns any non-meshopt payload untouched, so it is safe to call on every input path. The binary is pinned by release and checksum in each worker's image, from [`workers/stylize/Dockerfile`](https://github.com/nirholas/three.ws/blob/main/workers/stylize/Dockerfile):
+Check both extension lists, not just `extensionsRequired`. `-noq` keeps the source quantization so the decoded geometry is what the author shipped. `decode_if_meshopt` returns any non-meshopt payload untouched, so it is safe to call on every input path. The decoder also refuses any glTF whose buffers or images point at a non-`data:` URI, before the binary runs, because gltfpack resolves those paths against the worker's own filesystem and would otherwise return a file it should never read inside the decoded GLB. The binary is pinned by release and checksum in each worker's image, from [`workers/stylize/Dockerfile`](https://github.com/nirholas/three.ws/blob/main/workers/stylize/Dockerfile):
 
 ```dockerfile
 ARG GLTFPACK_VERSION=v1.2

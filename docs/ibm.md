@@ -239,7 +239,7 @@ It returns one vector per input (the response reports the model and its native `
 
 **Page:** [`/constellation`](https://three.ws/constellation)
 
-The Constellation applies the same Granite embedding space to live market data instead of agents. It pulls trending Solana tokens from `GET /api/pump/trending`, embeds each token's name and ticker through `POST /api/watsonx/embed`, projects the vectors to three axes with classical MDS in the browser, and renders each token as a star, so tokens that mean similar things sit near each other. Picking a star opens its detail panel and streams an IBM Granite analysis of that token from `POST /api/brain/chat` with `provider: ibm-granite`.
+The Constellation applies the same Granite embedding space to live market data instead of agents. It pulls trending Solana tokens from `GET /api/pump/trending`, embeds each token's name and ticker through `POST /api/watsonx/embed`, projects the vectors to three axes with classical MDS in the browser, and renders each token as a star, so tokens that mean similar things sit near each other. When pump.fun refuses the platform's egress, the trending endpoint serves the recorded board instead, marked `stale: true` with `source: "recorder"`, so the page still has real tokens. Picking a star opens its detail panel and streams an IBM Granite analysis of that token from `POST /api/brain/chat` with `provider: ibm-granite`.
 
 Three behaviours matter if you are reading the page or building on it:
 
@@ -293,7 +293,7 @@ curl -s https://three.ws/api/agents/identity-check \
 Granite Vision is the multimodal eye of the suite. Show it a rendered 3D avatar (or any image) and `ibm/granite-vision-3-2-2b` reads the look and returns a complete agent identity — appearance, vibe, persona, a suggested name, a one-line bio, tone tags, and a fitting voice descriptor — in a single multimodal call. Turn a face into an agent.
 
 - `GET /api/ibm/vision` returns a handful of real public avatars so anonymous callers can try it with no upload.
-- `POST` accepts either an `image` data URL (a client canvas capture or uploaded file, capped at 6 MB) or an `imageUrl` the server fetches. Server-side fetches are **SSRF-allowlisted** to the platform's own asset host and a small set of content-addressed media CDNs (IPFS, Arweave, Pinata, GitHub) — never an arbitrary host — with a byte cap and timeout, so the endpoint can't be turned into an internal-network probe.
+- `POST` accepts either an `image` data URL (a client canvas capture or uploaded file, capped at 6 MB) or an `imageUrl` the server fetches. Server-side fetches are **SSRF-allowlisted** to the platform's own asset host and a small set of content-addressed media CDNs (IPFS gateways, Arweave, Pinata, 4EVERLAND, Filebase, GitHub), never an arbitrary host, with a byte cap and timeout, so the endpoint can't be turned into an internal-network probe. Token art pinned to a retired IPFS gateway is re-pointed at a live one before it is fetched.
 
 ---
 

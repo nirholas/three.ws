@@ -176,7 +176,7 @@ The asset must be the configured USDC mint, or the payment is declined as unexpe
 
 An optional recipient hook sees payTo, asset and amount before anything is signed. Platform ring agents use it to require that every counterparty is a platform-controlled wallet, and a hook that throws counts as a decline.
 
-The amount must fit the remaining spend cap, or the payment is declined as cap_would_exceed with a clear message naming the endpoint, price and cap.
+The amount must fit the remaining spend cap, or the payment is declined as cap_would_exceed with a clear message naming the endpoint, price and cap. When the payer's own USDC balance is what falls short, the decline is reported as insufficient_payer_usdc, so a funding need is never mistaken for a cap to raise.
 
 The worst-case network fee must sit under a per-transaction ceiling, 10,000 lamports by default.
 

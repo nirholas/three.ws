@@ -113,9 +113,10 @@ One design detail we are particularly happy with: when an end event identifies o
 | `401 unauthenticated` | No valid session. Sign in and retry. |
 | `403 customer_linked_to_other_account` | Already attached to a different account. |
 | `404 customer_not_found` | Unknown subscription record. Re-open the setup link from Marketplace. |
+| `429` | Per-IP rate limit on `register`, `link` and `issue-key`. Retry after the `Retry-After` interval. |
 | `409 subscription_inactive` | Cancelled or expired. Re-subscribe first. |
 
-Returning the plaintext key once is a deliberate choice: it keeps the only readable copy of the key with its owner, where it belongs.
+Returning the plaintext key once is a deliberate choice: it keeps the only readable copy of the key with its owner, where it belongs. The new key is linked to the subscription with a compare-and-swap, so two racing `issue-key` calls cannot leave a valid key that no cancellation would ever revoke: the loser's key is revoked and it is told the winner's key prefix.
 
 Code: [`api/aws-marketplace/`](https://github.com/nirholas/three.ws/tree/main/api/aws-marketplace), [`api/_lib/aws-marketplace.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/aws-marketplace.js), the store in `api/_lib/aws-marketplace-store.js`, and the bridge into the shared authorization path in [`api/_lib/aws-marketplace-bridge.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/aws-marketplace-bridge.js). The SDK v3 clients in use are `@aws-sdk/client-marketplace-metering`, `@aws-sdk/client-marketplace-entitlement-service`, `@aws-sdk/client-s3`, and `@aws-sdk/s3-request-presigner`.
 
@@ -140,6 +141,8 @@ The framing we design against: **an autonomous spend has the same three properti
 ## 4. Payment sessions: what "budget" looks like as an API
 
 A policy is most useful when it is easy to hand out, so we published it as a session primitive: [`@three-ws/agentcore-payments-mcp`](https://www.npmjs.com/package/@three-ws/agentcore-payments-mcp) creates a **budgeted payment session** and lets an agent pay any priced endpoint from it without ever holding a key. Its one-line summary is the whole philosophy: the agent does not hold a wallet; it proposes spend, and governance enforces policy.
+
+A session can also carry a blocked-host list, an approval threshold above which a spend is parked for the owner instead of failing, and per-rail daily caps. The dry-run simulator and the enforcing path share one evaluator, so a predicted verdict and an enforced one cannot disagree, and each verdict is signed.
 
 An owner creates a session with a total budget, a per-transaction ceiling, an allowlist of hosts, and an expiry:
 

@@ -43,6 +43,8 @@ If you are integrating three.ws programmatically after subscribing via AWS Marke
 
 `register` and `subscription` are called by AWS during and after the subscription flow; you do not call them directly. `link` and `issue-key` are called by the welcome page on your behalf once you sign in.
 
+`issue-key` binds a not-yet-claimed subscription row to the signed-in account before it mints, so presenting a row id never hands a key to someone other than the account that claims it. The new key is linked to the subscription with a compare-and-swap: if two calls race, the losing key is revoked and the loser receives the winner's key prefix with no plaintext token (`alreadyIssued`), so a cancellation always revokes the one live key.
+
 Both `link` and `issue-key` require an active session and refuse a subscription that belongs to someone else, so a given AWS subscription can only ever be attached to one three.ws account:
 
 | Status | Meaning |
@@ -50,6 +52,7 @@ Both `link` and `issue-key` require an active session and refuse a subscription 
 | `401 unauthenticated` | No valid session cookie. Sign in, then retry. |
 | `403 customer_linked_to_other_account` | This AWS subscription is already attached to a different three.ws account. |
 | `404 customer_not_found` | The subscription record is unknown. Re-open the setup link from AWS Marketplace. |
+| `429` | Too many requests from your IP on `register`, `link` or `issue-key`. These endpoints share the per-IP auth limit (50 requests per 10 minutes); wait for `Retry-After` and retry. |
 | `409 subscription_inactive` | The AWS subscription is cancelled or expired. Re-subscribe in AWS Marketplace first. |
 
 ## Lifecycle notifications

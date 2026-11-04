@@ -161,7 +161,7 @@ Sizing adapts to the wallet. A buy that would overrun the day's remaining budget
 
 ### Spend policy and session keys
 
-The sniper also answers to the same per-agent spend policy that governs withdrawals, x402 payments and discretionary trades across three.ws: a rolling 24-hour USD ceiling, a per-transaction ceiling, a per-counterparty ceiling and an optional withdrawal allowlist. These are opt-in, and once set they apply on every path.
+The sniper also answers to the same per-agent spend policy that governs withdrawals, x402 payments and discretionary trades across three.ws: a rolling 24-hour USD ceiling, a per-transaction ceiling, a per-counterparty ceiling and an optional withdrawal allowlist. These are opt-in, and once set they apply on every path. An optional approval threshold parks an autonomous payment above that amount as a request the owner answers before it runs, and discretionary trades can carry holder-quality limits: the share of supply held by creator-linked wallets, launch-slot snipers, bundled holders and fresh wallets. A limit that cannot be checked blocks the trade instead of passing it.
 
 Owners can layer natural-language rules on top, which a pure evaluator enforces and which can only ever tighten the numbers, never loosen them. Scoped session keys let an owner grant narrow authority, for example permission to spend only on one strategy against one mint. Inside the sniper, the strategy's own lamport caps sit underneath all of this as the innermost backstop, so the policy is layered from the outside in.
 

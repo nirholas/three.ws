@@ -230,7 +230,7 @@ Ordered so the event is runnable even if the last item never lands.
    theme going live needs no deploy.
 3. **Ceremony config**: write the window, the agenda and the souvenir cosmetic id into
    `public/event.json` per [play-live-events.md](./play-live-events.md). A config change
-   plus a deploy, and that is the entire in-world event.
+   plus a deploy, and that is the entire in-world event. Once it is live, the window can be extended, renamed or ended without a deploy through the operator override (`GET`/`POST /api/event-config`, `npm run event:override`).
 4. **A daily crowning read** over the existing board so the evening winner is a query, not a
    person scrolling. The weekly crowning already exists; this is the same window narrowed to
    a day.

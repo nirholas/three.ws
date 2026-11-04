@@ -23,7 +23,7 @@ accuracy_notes: |
   the body describes each epoch's Merkle root as a published, reproducible commitment
   verifiable at /proof, and describes on-chain anchoring as built into the pipeline
   and activated by a configured, funded attester key (docs/custody.md). It does NOT
-  claim any root is currently anchored on-chain. Every mechanism, constant and status
+  claim any specific root is anchored on-chain (the default anchor network moved from devnet to mainnet on 2026-11-03). Every mechanism, constant and status
   line comes from the repo: docs/solana.md (identity, registration checks),
   docs/solana-reputation.md and api/_lib/solana-attestations.js (envelope kinds,
   validation, verified rules, 10-minute crawl, 8-second Passport polling),
@@ -263,7 +263,7 @@ Folding the trail head into the leaf is the elegant part. Every authorized movem
 
 At /proof, an owner fetches their wallet's inclusion proof and re-verifies it in their own browser with an independent verifier: it recomputes the leaf hash from the public fields, walks the Merkle path, and checks the result against the epoch's published root. Prover and verifier share one hashing module, so they always agree on how a leaf is built. The aggregate view, with the latest epoch, its root, wallet count and recent epochs, is public at GET /api/custody/integrity and GET /api/custody/anchor.
 
-Every leaf holds a balance read live from the chain for that epoch, so every committed figure is a measured one. On-chain anchoring of each root as a signed SPL Memo envelope of kind threews.custody.v1 is built into the pipeline and activates with a configured, funded attester key, with the anchor network chosen per deployment.
+Every leaf holds a balance read live from the chain for that epoch, so every committed figure is a measured one. On-chain anchoring of each root as a signed SPL Memo envelope of kind threews.custody.v1 is built into the pipeline and activates with a configured, funded attester key. The root is anchored on Solana mainnet by default, the confirm wait uses whatever time the run has left, and a memo that lands after a slow confirm is recorded as anchored rather than failed.
 
 At the audit dated 2026-08-25, 126,522 custody proofs had been written across 244 epochs. On 2026-10-08, the live integrity endpoint reported 418 epochs since the series began on 2026-06-23, with 492 wallets in the latest epoch.
 

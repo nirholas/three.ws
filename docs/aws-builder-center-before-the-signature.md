@@ -76,7 +76,7 @@ Agreement and license notifications now arrive as EventBridge events. Our webhoo
 
 ### What refuses what
 
-Four endpoints carry the integration: `register` (the registration URL AWS posts the token to), `subscription` (the lifecycle webhook), `link` (attaches a resolved subscription to a signed-in account), and `issue-key` (mints or returns the access key). The last two require an active session and both refuse a subscription belonging to somebody else, so one AWS subscription can only ever attach to one account: `403 customer_linked_to_other_account` when it is already taken, `409 subscription_inactive` when it is cancelled or expired.
+Four endpoints carry the integration: `register` (the registration URL AWS posts the token to), `subscription` (the lifecycle webhook), `link` (attaches a resolved subscription to a signed-in account), and `issue-key` (mints or returns the access key). The last two require an active session and both refuse a subscription belonging to somebody else, so one AWS subscription can only ever attach to one account: `403 customer_linked_to_other_account` when it is already taken, `409 subscription_inactive` when it is cancelled or expired. All three of `register`, `link` and `issue-key` sit behind a per-IP rate limit, and the minted key is linked with a compare-and-swap so two racing `issue-key` calls cannot leave a valid key that a cancellation would never revoke.
 
 "The plaintext key is returned once, on first issue" is a deliberate constraint worth holding even under support pressure. A key you can re-read is a key your support process can leak.
 
@@ -106,7 +106,7 @@ All three share one category error. They conflate three concerns that only look 
 
 A private key fuses all three into one secret. Split them and the design improves immediately.
 
-The developer creates a **payment session**: a budget envelope with a total, a per-transaction ceiling, a host allowlist, a network and an expiry. In return they get a bearer token, once, which they hand to the agent. The agent can now call paid endpoints. It cannot exceed the budget, pay a host outside the allowlist, spend after the expiry, or sign anything itself, because the platform's wallet signs and the agent never sees a key.
+The developer creates a **payment session**: a budget envelope with a total, a per-transaction ceiling, a host allowlist, a network and an expiry. Sessions can also carry a blocked-host list that wins over any allow, an approval threshold above which a spend is parked for the owner instead of failing, and per-rail daily caps. In return they get a bearer token, once, which they hand to the agent. The agent can now call paid endpoints. It cannot exceed the budget, pay a host outside the allowlist, spend after the expiry, or sign anything itself, because the platform's wallet signs and the agent never sees a key.
 
 Custody sits with the platform, authority with the developer, execution with the agent. Compromising the agent gets an attacker exactly one thing: the remaining budget, spendable only at hosts you approved, only until the session expires. That is not zero. It is a number you chose in advance, which is the entire point.
 
@@ -235,13 +235,19 @@ The allowlist is policy. This is the floor underneath it, and it applies even wh
 
 This is the section most write-ups skip, and it decides whether you can run any of this in production.
 
-**Rejected before settlement.** The service answers `402` again, usually because it re-quoted between the probe and the replay. Because the protocol verifies before it settles, no funds moved, so the reservation is safe to release and the budget goes back:
+**Rejected after the signed payment was submitted.** The service answers `402` again, usually because it re-quoted between the probe and the replay. It is tempting to read that as "no funds moved" and release the reservation. We did, and stopped: a host that is also the fee payer can co-sign and broadcast the transfer and then still answer `402`, so the answer is not proof that nothing landed. The reservation stays spent and the failure is recorded as `payment_rejected`:
 
 ```js
 if (paid.status === 402) {
-  await rollbackReservation(sessionRecord.id, amountAtomics).catch(() => {});
-  return error(res, 402, 'payment_rejected',
-    'Service rejected the payment before settlement. Budget has been restored.');
+  // A host that is also the fee payer can co-sign and broadcast the
+  // transfer, then answer 402, so the reservation stays spent.
+  await recordExecution({ status: 'failed', errorCode: 'payment_rejected' /* ... */ })
+    .catch(() => {});
+  return {
+    ok: false, status: 402, code: 'payment_rejected',
+    message: 'Service answered 402 after the signed payment was submitted. ' +
+      'The budget stays reserved because the transfer may still land.',
+  };
 }
 ```
 

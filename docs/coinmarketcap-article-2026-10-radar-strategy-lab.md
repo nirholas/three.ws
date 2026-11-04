@@ -300,6 +300,8 @@ Costs are modelled too. Entry cost is inflated by slippage (500 basis points by 
 
 Creator history is computed carefully: prior launch and graduation counts come only from coins that creator launched before the one being scored, so each decision sees only what was knowable at the time. Every response carries a caveats field describing the run's assumptions in plain words.
 
+Every run also audits itself. A look-ahead audit recomputes each launch's entry verdict with every later launch removed and confirms it does not change, and it checks that creator history only ever rises with each earlier launch. The response carries an integrity block with the audit result and a manifest that pins the dataset by a content hash of the fields that can change a result, so the same rules over the same data reproduce the same answer.
+
 ### What it returns
 
 You get win rate, expected value per trade, the median, the 10th and 90th percentile, the best and worst trade, net PnL, maximum drawdown, an exit-reason breakdown, the outcome mix of the coins your rules entered, sample hits and misses, and how many launches were skipped and why.
@@ -325,6 +327,8 @@ Every strategy trade passes the same guards as any agent trade: the owner's stra
 ### The sniper fleet
 
 The first seconds of a launch belong to the agent sniper, a long-lived worker that fires on the new-mint feed, a creator's first fee claim, intel and radar signals, a coin's migration, or its first Oracle conviction crossing. A coin must pass the entry scorer (the same one the backtester replays), a fleet-wide market-cap band a strategy can narrow but never widen, a filter excluding pump.fun Mayhem-mode tokens, and a firewall that runs a real simulated buy and sell on chain to prove the coin can be sold. Only then does the executor sign from the agent's custodial wallet. Exits run in strict priority: stop-loss, signal flip, trailing stop, take-profit, timeout.
+
+A strategy can also carry pre-buy research gates: minimum holders, maximum top-holder share, minimum liquidity, a firewall security score, no mint or freeze authority, and creator history limits. The backtester judges the same gates on what was recorded and reports how many entries each one blocked. Strategies run in one of two modes: auto buys within the owner's caps, and ask files an approval request and waits for the owner's explicit yes. New strategies default to ask, and a strategy can limit its sources to any pump.fun curve launch or to coins agents launched through three.ws.
 
 Every buy writes a hash-chained entry to the agent's decision ledger with its inputs, rationale, a falsifiable prediction and a confidence, and the chain head is anchored on Solana so the history can be verified independently. The fleet is public at three.ws/sniper/experiments, refreshed every 30 seconds, with each arm's wallet, live balance and full reasoning ledger.
 
