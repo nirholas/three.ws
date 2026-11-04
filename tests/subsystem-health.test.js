@@ -476,3 +476,123 @@ describe('rpc_lanes call ledger', () => {
 		expect(lanes.detail).toMatch(/; 0 calls\/24h$/);
 	});
 });
+
+// Order 279: /api/guardian/assess answered 503 guardian_unconfigured in
+// production for weeks while every probe stayed green. granite_guardian gives
+// that state a signature, and probes the self-hosted vLLM lane's /health when
+// one is wired. The upstream here is a real local HTTP server, not a fetch mock.
+describe('granite_guardian subsystem', () => {
+	const GUARDIAN_KEYS = [
+		'GRANITE_GUARDIAN_URL',
+		'GRANITE_GUARDIAN_API_KEY',
+		'GRANITE_GUARDIAN_MODEL_ID',
+		'GCP_RECONSTRUCTION_KEY',
+		'WATSONX_API_KEY',
+		'WATSONX_PROJECT_ID',
+		'WATSONX_SPACE_ID',
+	];
+	let guardianSaved;
+	let server;
+	let healthStatus;
+	let healthHits;
+
+	async function startUpstream() {
+		const { createServer } = await import('node:http');
+		server = createServer((req, res) => {
+			if (req.url === '/health') healthHits++;
+			res.writeHead(req.url === '/health' ? healthStatus : 404);
+			res.end();
+		});
+		await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+		return `http://127.0.0.1:${server.address().port}`;
+	}
+
+	beforeEach(() => {
+		guardianSaved = {};
+		for (const k of GUARDIAN_KEYS) {
+			guardianSaved[k] = process.env[k];
+			delete process.env[k];
+		}
+		healthStatus = 200;
+		healthHits = 0;
+	});
+
+	afterEach(async () => {
+		for (const k of GUARDIAN_KEYS) {
+			if (guardianSaved[k] === undefined) delete process.env[k];
+			else process.env[k] = guardianSaved[k];
+		}
+		if (server) await new Promise((resolve) => server.close(resolve));
+		server = null;
+	});
+
+	it('is DOWN in production when no Granite Guardian lane is configured', async () => {
+		process.env.NODE_ENV = 'production';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		const g = sub(health, 'granite_guardian');
+		expect(g.status).toBe('down');
+		expect(g.detail).toMatch(/guardian_unconfigured/);
+		expect(g.missing).toEqual(['GRANITE_GUARDIAN_URL']);
+		expect(g.hint).toMatch(/workers\/granite-guardian/);
+		expect(health.degraded).toContain('granite_guardian');
+	});
+
+	it('names the missing bearer when the self-hosted URL is set without a key', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.GRANITE_GUARDIAN_URL = 'http://127.0.0.1:9';
+		const g = sub(await gatherSubsystemHealth({ probeDb: false }), 'granite_guardian');
+		expect(g.status).toBe('down');
+		expect(g.missing).toEqual(['GRANITE_GUARDIAN_API_KEY or GCP_RECONSTRUCTION_KEY']);
+	});
+
+	it('stays neutral outside production when nothing is configured', async () => {
+		process.env.NODE_ENV = 'test';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		expect(sub(health, 'granite_guardian').status).toBe('unknown');
+		expect(health.degraded).not.toContain('granite_guardian');
+	});
+
+	it('is OK when the self-hosted lane answers /health', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.GRANITE_GUARDIAN_URL = `${await startUpstream()}/`;
+		process.env.GCP_RECONSTRUCTION_KEY = 'test-worker-bearer';
+		const g = sub(await gatherSubsystemHealth({ probeDb: false }), 'granite_guardian');
+		expect(healthHits).toBe(1);
+		expect(g.status).toBe('ok');
+		expect(g.detail).toMatch(/^self-hosted ibm-granite\/granite-guardian-3\.3-8b healthy/);
+		expect(g.metrics.lanes).toEqual(['self-hosted']);
+		expect(typeof g.metrics.latency_ms).toBe('number');
+	});
+
+	it('is DOWN when the only lane fails its /health probe', async () => {
+		process.env.NODE_ENV = 'production';
+		healthStatus = 503;
+		process.env.GRANITE_GUARDIAN_URL = await startUpstream();
+		process.env.GRANITE_GUARDIAN_API_KEY = 'test-guardian-bearer';
+		const g = sub(await gatherSubsystemHealth({ probeDb: false }), 'granite_guardian');
+		expect(g.status).toBe('down');
+		expect(g.detail).toMatch(/self-hosted \/health answered 503/);
+	});
+
+	it('is DEGRADED when the self-hosted lane fails but watsonx is still configured', async () => {
+		process.env.NODE_ENV = 'production';
+		healthStatus = 503;
+		process.env.GRANITE_GUARDIAN_URL = await startUpstream();
+		process.env.GRANITE_GUARDIAN_API_KEY = 'test-guardian-bearer';
+		process.env.WATSONX_API_KEY = 'test-watsonx-key';
+		process.env.WATSONX_PROJECT_ID = 'test-project';
+		const g = sub(await gatherSubsystemHealth({ probeDb: false }), 'granite_guardian');
+		expect(g.status).toBe('degraded');
+		expect(g.metrics.lanes).toEqual(['watsonx', 'self-hosted']);
+	});
+
+	it('is OK on the watsonx lane alone, without a network probe', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.WATSONX_API_KEY = 'test-watsonx-key';
+		process.env.WATSONX_SPACE_ID = 'test-space';
+		const g = sub(await gatherSubsystemHealth({ probeDb: false }), 'granite_guardian');
+		expect(g.status).toBe('ok');
+		expect(g.detail).toMatch(/watsonx/);
+		expect(g.metrics.lanes).toEqual(['watsonx']);
+	});
+});

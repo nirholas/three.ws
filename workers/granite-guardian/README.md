@@ -28,6 +28,10 @@ gcloud run services update three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --update-env-vars GRANITE_GUARDIAN_URL=$URL
 ```
 
+Verify with `node scripts/verify-granite-guardian.mjs` (a benign prompt must come back safe and a harmful one flagged, with logprob scores), then read the `granite_guardian` subsystem in `curl -s https://three.ws/api/healthz`: it turns from `down` to `ok` once the API's `GET /health` probe of this service passes.
+
+The `--args` in `cloudbuild.yaml` must only use flags the pinned `_VLLM_TAG` accepts, because `vllm serve` exits on an unknown argument and the startup probe then waits its full 20 minutes before failing the revision. On v0.29.0 request logging is off by default and only `--enable-log-requests` exists (the older `--disable-log-requests` was removed), so the config passes neither. Re-check the flags against that release's `vllm/engine/arg_utils.py` whenever you bump the tag.
+
 ## API env
 
 | Variable | Meaning |

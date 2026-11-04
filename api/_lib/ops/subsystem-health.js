@@ -46,6 +46,7 @@ import { gatherHomeHealth } from './home-health.js';
 import { gatherMentionBotHealth } from '../x-mention-health.js';
 import { describeSolvency } from '../sniper-solvency.js';
 import { treasuryWalletOrNull, rewardsWalletOrNull } from '../token/config.js';
+import { guardianConfig } from '../granite-guardian.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
 const DB_SLOW_MS = 1_000;
@@ -688,6 +689,64 @@ function checkThreeTokenRail() {
 	}
 }
 
+// Granite Guardian, the governance model behind /api/guardian/assess, the agent
+// identity integrity check and governSend. Unconfigured it fails SOFT by design
+// (identity-check treats it as allowed, assess answers 503
+// guardian_unconfigured), so production ran without it from launch with every
+// reachability probe green. This gives that state a signature, and probes the
+// self-hosted vLLM lane's /health (unauthenticated, no tokens spent) when one is
+// wired. The watsonx lane is a config read only: probing it would mint an IAM
+// token on every health gather.
+const GUARDIAN_PROBE_TIMEOUT_MS = 2_500;
+
+async function checkGraniteGuardian() {
+	const base = { name: 'granite_guardian', label: 'Granite Guardian (governance model)' };
+	try {
+		const cfg = guardianConfig();
+		const lanes = [cfg.wx.configured && 'watsonx', cfg.local.configured && 'self-hosted'].filter(Boolean);
+		if (!lanes.length) {
+			const missing = cfg.local.url ? ['GRANITE_GUARDIAN_API_KEY or GCP_RECONSTRUCTION_KEY'] : ['GRANITE_GUARDIAN_URL'];
+			if (process.env.NODE_ENV !== 'production') {
+				return { ...base, status: 'unknown', detail: 'no Granite Guardian lane configured outside production', missing };
+			}
+			return {
+				...base,
+				status: 'down',
+				detail: 'no Granite Guardian lane configured: /api/guardian/assess answers 503 guardian_unconfigured and the identity check passes unassessed',
+				missing,
+				hint: 'Deploy workers/granite-guardian (see its README) and set GRANITE_GUARDIAN_URL on three-ws-api with --update-env-vars, or set WATSONX_API_KEY and WATSONX_PROJECT_ID for the hosted lane.',
+			};
+		}
+		if (!cfg.local.configured) {
+			return { ...base, status: 'ok', detail: `watsonx lane configured (${cfg.wxModel})`, metrics: { lanes } };
+		}
+		const started = Date.now();
+		let failure = null;
+		try {
+			const res = await fetch(`${cfg.local.url}/health`, { signal: AbortSignal.timeout(GUARDIAN_PROBE_TIMEOUT_MS) });
+			if (!res.ok) failure = `self-hosted /health answered ${res.status}`;
+		} catch (err) {
+			failure = `self-hosted /health unreachable: ${err?.name === 'TimeoutError' ? `no answer in ${GUARDIAN_PROBE_TIMEOUT_MS}ms` : err?.cause?.code || err?.message || 'fetch failed'}`;
+		}
+		const metrics = { lanes, latency_ms: Date.now() - started };
+		if (!failure) {
+			return { ...base, status: 'ok', detail: `self-hosted ${cfg.local.model} healthy${cfg.wx.configured ? ', watsonx configured' : ''}`, metrics };
+		}
+		if (cfg.wx.configured) {
+			return { ...base, status: 'degraded', detail: `${failure}; assessments fall back to watsonx`, metrics };
+		}
+		return {
+			...base,
+			status: 'down',
+			detail: `${failure}; /api/guardian/assess cannot answer`,
+			metrics,
+			hint: 'Check the granite-guardian Cloud Run service in europe-west4 (startup can take up to 20 minutes while weights load).',
+		};
+	} catch (err) {
+		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };
+	}
+}
+
 /**
  * Gather every subsystem's health and roll it into one verdict.
  * @param {{ probeDb?: boolean }} [opts] set probeDb:false to skip the live DB
@@ -735,6 +794,7 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// because an unset $THREE receiver takes down every paid $THREE surface at
 		// once while leaving every reachability probe green.
 		Promise.resolve(checkThreeTokenRail()),
+		checkGraniteGuardian(),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),
 		// The marketplace chat bot goes offline SILENTLY (expired wallet session =
 		// no XMTP delivery), and until it was hosted it had no health surface at

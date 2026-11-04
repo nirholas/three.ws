@@ -125,6 +125,8 @@ Set these as environment variables (locally in `.env`, in production on the Clou
 
 **Optional: self-hosted Granite Guardian lane.** Granite Guardian is open-weight, so the governance surfaces do not depend on watsonx alone. [workers/granite-guardian](../workers/granite-guardian/README.md) serves `ibm-granite/granite-guardian-3.3-8b` with vLLM on our own GPU; watsonx stays the lead lane when configured, and this one answers when watsonx is absent or failing. Every verdict reports the `model` and `provider` (`watsonx` or `self-hosted`) that actually produced it.
 
+**Health.** `/api/healthz` carries a `granite_guardian` subsystem. In production it is `down` while neither lane is configured (the state measured on 2026-11-04: `/api/guardian/assess` answers 503 `guardian_unconfigured`), `ok` when the self-hosted worker answers `GET /health` within 2.5 seconds or when only the watsonx pair is set (a config read, so a health gather never mints an IAM token), and `degraded` when the self-hosted probe fails but watsonx can still answer. Outside production an unconfigured lane reads `unknown`.
+
 | Variable                    | Notes                                                                                   |
 | --------------------------- | --------------------------------------------------------------------------------------- |
 | `GRANITE_GUARDIAN_URL`      | Base URL of the worker. Setting it, with a key, turns the lane on.                      |

@@ -111,7 +111,7 @@ steps:
       # the probe allows up to 20 minutes before declaring the start failed.
       - --startup-probe=httpGet.path=/health,httpGet.port=8080,periodSeconds=20,timeoutSeconds=10,failureThreshold=60
       - --command=vllm
-      - --args=serve,/weights/${_WEIGHTS_PATH},--served-model-name,${_HF_REPO},--host,0.0.0.0,--port,8080,--dtype,bfloat16,--max-model-len,8192,--gpu-memory-utilization,0.92,--max-logprobs,20,--disable-log-requests
+      - --args=serve,/weights/${_WEIGHTS_PATH},--served-model-name,${_HF_REPO},--host,0.0.0.0,--port,8080,--dtype,bfloat16,--max-model-len,8192,--gpu-memory-utilization,0.92,--max-logprobs,20
       # vLLM rejects any request without this bearer (VLLM_API_KEY). The API
       # sends GCP_RECONSTRUCTION_KEY, which resolves to the same secret.
       - --set-secrets=VLLM_API_KEY=avatar-reconstruction-key:latest
