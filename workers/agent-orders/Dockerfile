@@ -32,6 +32,7 @@ COPY workers/agent-sniper/scorer.js ./workers/agent-sniper/scorer.js
 COPY workers/agent-sniper/intel ./workers/agent-sniper/intel
 COPY public/risk-ack.js ./public/risk-ack.js
 COPY data/plans.json ./data/plans.json
+COPY data/mcp-catalog.json ./data/mcp-catalog.json
 COPY community-skills/tools/registry.mjs ./community-skills/tools/registry.mjs
 COPY packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js ./packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js
 RUN npm run build --prefix agent-payments-sdk

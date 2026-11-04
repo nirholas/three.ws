@@ -17,5 +17,28 @@
 !/package-lock.json
 !/.npmrc
 !/.dockerignore
+# Single files the Dockerfile copies out of otherwise-excluded trees: re-include
+# each parent directory, exclude its contents, then re-include the one file.
+!/public/
+/public/*
+!/public/risk-ack.js
+!/data/
+/data/*
+!/data/plans.json
+!/data/mcp-catalog.json
+!/community-skills/
+/community-skills/*
+!/community-skills/tools/
+/community-skills/tools/*
+!/community-skills/tools/registry.mjs
+!/packages/
+/packages/*
+!/packages/avatar-agent-mcp/
+/packages/avatar-agent-mcp/*
+!/packages/avatar-agent-mcp/src/
+/packages/avatar-agent-mcp/src/*
+!/packages/avatar-agent-mcp/src/lib/
+/packages/avatar-agent-mcp/src/lib/*
+!/packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js
 **/node_modules/
 **/.git/
