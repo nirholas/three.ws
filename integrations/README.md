@@ -20,6 +20,13 @@ server and bundle skills rather than calling `/api/forge` directly:
 | Cursor plugin | [`cursor/three-ws/`](cursor/three-ws/) (Open Plugins: `.cursor-plugin/plugin.json`, `mcp.json`, four skills; mirrored to [nirholas/three-ws-cursor-plugin](https://github.com/nirholas/three-ws-cursor-plugin) for cursor.directory) | [Cursor](https://cursor.com) |
 | Dify tool plugin | [`dify/three_ws/`](dify/three_ws/) (four Python tools over the studio server; packaged with `dify-plugin plugin package`) | [Dify](https://github.com/langgenius/dify) |
 
+Microsoft 365 and Power Platform get packages of their own, each built and validated by a script in `scripts/`:
+
+| Package | Folder | Host |
+|---|---|---|
+| Microsoft 365 app (Copilot agent, Teams tabs and the Agents search command) | [`microsoft/copilot-teams/`](microsoft/copilot-teams/) (built by `npm run package:microsoft-app`) | Microsoft 365 Copilot, Teams, Outlook |
+| Power Platform connector (five actions over `/api/3d/studio` and the agents API, OAuth 2.0 with PKCE) | [`microsoft/power-platform-connector/`](microsoft/power-platform-connector/) (built by `npm run package:power-platform-connector`) | Power Automate, Power Apps, Logic Apps, Copilot Studio |
+
 Driving Blender from an **agent** rather than by hand is a different job, and it
 has its own package: [`packages/blender-mcp/`](../packages/blender-mcp) is an MCP
 server that runs Blender headlessly (no GUI, no add-on) so an assistant can

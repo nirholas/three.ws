@@ -19,7 +19,7 @@ Ranked by payoff against effort. "Owner" marks steps that need Partner Center or
 | 5 | **Teams app** with Glance cards | Teams store (Microsoft 365 apps) | Medium | Adaptive Cards in [`api/_lib/glance-adaptive.js`](../api/_lib/glance-adaptive.js) | Agents and 3D previews in Teams chats and channels |
 | 6 | **VS Code Marketplace** | Visual Studio Marketplace | Low | [`packages/vscode-3d/`](../packages/vscode-3d), [`packages/vscode-x402/`](../packages/vscode-x402) built | Developer install base |
 | 7 | **Edge Add-ons** | Microsoft Edge Add-ons store | Low | Two MV3 extensions in [`extensions/`](../extensions) | Edge users get the walk avatar and checkout companion |
-| 8 | **Microsoft Store (PWA)** | Windows | Low | [`public/site.webmanifest`](../public/site.webmanifest) with `standalone` display | three.ws as an installable Windows app |
+| 8 | **Microsoft Store (PWA)** | Windows | Low | The VitePWA manifest in [`vite.config.js`](../vite.config.js) (served at `/manifest.webmanifest`) with shortcuts, a share target and a Windows 11 widget | three.ws as an installable Windows app |
 | 9 | **GitHub MCP Registry and Technology Partner Program** | GitHub (Microsoft) | Low | Form drafted: [`github-technology-partner.md`](../marketing/growth/submissions/programs/github-technology-partner.md) | MCP discovery inside Copilot in VS Code and GitHub |
 | 10 | **Foundry agent tools** | Azure AI Foundry Agent Service | Low | MCP endpoints live | Foundry builders attach three.ws MCP as a tool. Covered by #2 certification |
 | 11 | **Microsoft 365 Certification / Publisher Attestation** | Microsoft 365 App Compliance | Medium | Security docs, OAuth | Trust badge for #2 and #5; enterprise IT reviewers check it |
@@ -109,7 +109,7 @@ Microsoft's ISV connector certification publishes a custom connector to every Po
 |---|---|---|
 | Visual Studio Marketplace | `packages/vscode-3d`, `packages/vscode-x402` | Create the publisher, `vsce package`, `vsce publish` (owner token). Listing text from [vscode.md](./vscode.md) |
 | Microsoft Edge Add-ons | `extensions/walk-avatar`, `extensions/checkout-companion` | MV3 builds run on Edge unchanged. Register in the Edge Partner Center dashboard, upload the zip, add Edge store screenshots |
-| Microsoft Store | PWA from `public/site.webmanifest` | Package with PWABuilder (MSIX), reserve the app name in Partner Center, submit. Add `share_target` and `shortcuts` to the manifest so the Windows app earns its install |
+| Microsoft Store | PWA from `https://three.ws/manifest.webmanifest` | `npm run package:microsoft-store -- --check` validates the manifest and every asset it names. Reserve the app name in Partner Center, then `npm run package:microsoft-store` builds the MSIX upload bundle through PWABuilder. Steps and listing copy: [`microsoft-edge-and-store.md`](../marketing/growth/submissions/programs/microsoft-edge-and-store.md#microsoft-store-windows-app) |
 
 ## 9 and 10. GitHub and Foundry
 
@@ -156,14 +156,60 @@ Package the agent runtime and, separately, a GPU worker image. Needs a versioned
 3. **Next:** SaaS fulfillment, webhook and metering (#1), then the Teams package (#5) and the Power Platform connector (#4).
 4. **After first sale:** Marketplace Rewards, co-marketing (#14), and the Power BI visual or container offer only if customers ask.
 
-## Owner steps
+## What is built in the repo
 
-- Partner Center access: Entra app registrations, the Microsoft 365 and Copilot program enrollment, the preview tenant allow-list.
-- Business verification of the publisher account (required for #2).
-- Final plan names, prices and metered rates.
-- Legal: privacy policy and terms review, the support contact.
-- Publishing every offer and store listing (outward-facing, needs owner approval).
-- Written confirmation of any Microsoft partner tier before it appears anywhere.
+| Item | In-repo | Validate |
+|---|---|---|
+| #1 SaaS offer | Fulfillment v2 and Metering client [`api/_lib/microsoft-marketplace.js`](../api/_lib/microsoft-marketplace.js), landing page `/microsoft/activate`, webhook and Entra sign-in [`api/microsoft-marketplace/[action].js`](../api/microsoft-marketplace/[action].js), hourly metering cron [`api/cron/microsoft-metering.js`](../api/cron/microsoft-metering.js), plan and dimension map [`data/microsoft-marketplace.json`](../data/microsoft-marketplace.json). Reference: [microsoft-marketplace-saas.md](./microsoft-marketplace-saas.md) | `npx vitest run tests/microsoft-marketplace.test.js` |
+| #2 and #5 Copilot and Teams app | One app package in [`integrations/microsoft/copilot-teams/`](../integrations/microsoft/copilot-teams): the MCP plugin, the Agents message extension and the Agents personal tab (`/microsoft/teams-tab`), served by [`api/microsoft-teams/messages.js`](../api/microsoft-teams/messages.js) | `npm run package:microsoft-app -- --check` |
+| #4 Power Platform connector | [`integrations/microsoft/power-platform-connector/`](../integrations/microsoft/power-platform-connector) | `npm run package:power-platform-connector -- --check` |
+| #7 Edge Add-ons | Both MV3 extensions | `npm run package:edge` |
+| #8 Microsoft Store | The live manifest, packaged through PWABuilder | `npm run package:microsoft-store -- --check` |
+| #3, #11, #13 copy | [`microsoft-marketplace-professional-services.md`](../marketing/growth/submissions/programs/microsoft-marketplace-professional-services.md), [`microsoft-365-publisher-attestation.md`](../marketing/growth/submissions/programs/microsoft-365-publisher-attestation.md), [`bing-webmaster-tools.md`](../marketing/growth/submissions/programs/bing-webmaster-tools.md) | Paste-ready |
+
+## Owner checklist (in order)
+
+Every remaining step needs Partner Center, the Azure portal or a production approval, and none can be done from the repo. Do them in this order, because later steps take values from earlier ones. Set production env vars with `gcloud run services update three-ws-api --region us-central1 --update-env-vars KEY=VALUE`, never `--set-env-vars`.
+
+**Account and programmes**
+
+1. Partner Center: complete business verification of the publisher account (needed for #2 and for the Store publisher name).
+2. Partner Center: enroll in the Microsoft 365 and Copilot program and in ISV Success. Confirm in writing any partner tier before it appears anywhere.
+3. Bing Webmaster Tools: verify `https://three.ws` and submit the sitemaps listed in [`bing-webmaster-tools.md`](../marketing/growth/submissions/programs/bing-webmaster-tools.md).
+
+**Entra and Azure (the values every later step uses)**
+
+4. Entra admin center, publisher tenant: register a **single-tenant** app for the Fulfillment and Metering APIs and create a client secret. Production env: `MS_MARKETPLACE_TENANT_ID`, `MS_MARKETPLACE_CLIENT_ID`, `MS_MARKETPLACE_CLIENT_SECRET`.
+5. Entra admin center: register a **multitenant** app for buyer sign-in with the redirect URI `https://three.ws/api/microsoft-marketplace/sso/callback`, the `openid profile email` scopes and a client secret. Production env: `MS_ENTRA_SSO_CLIENT_ID`, `MS_ENTRA_SSO_CLIENT_SECRET`. This also shows the "Continue with Microsoft" button on `/login`, which signs in accounts a Marketplace purchase linked (it never creates accounts).
+6. Azure portal: create an **Azure Bot** (app type single tenant; the bot answers in the HTTP response, so it never uses a client secret), set the messaging endpoint to `https://three.ws/api/microsoft-teams/messages` and enable the Microsoft Teams channel. Production env: `MS_TEAMS_BOT_APP_ID`.
+7. Azure portal: create a Key Vault and store the OAuth client Microsoft uses for the MCP plugin (the confidential client from step 8). Note its URL for `MS_KEYVAULT_URL`.
+8. Register the three.ws OAuth client for Copilot at `https://three.ws/oauth/register` as described in [`microsoft-copilot-mcp-certification.md`](../marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md), and put its values in the vault from step 7.
+9. Apply the migration and deploy: `npm run db:status`, then `npm run db:migrate` (creates `microsoft_saas_subscriptions`, `microsoft_saas_operations` and `microsoft_saas_usage_events`), then `npm run deploy:gcp:full` so the landing page, webhook, Teams endpoints, metering cron and the corrected manifest go live. Confirm `https://three.ws/api/microsoft-marketplace/status` reports `"ready": true` and `"sso": true`.
+
+**#1 SaaS offer**
+
+10. Partner Center, Marketplace offers, New SaaS offer with the offer id `three-ws`. Technical configuration: landing page `https://three.ws/microsoft/activate`, connection webhook `https://three.ws/api/microsoft-marketplace/webhook`, Entra tenant id and app id from step 4.
+11. Create the plans with the plan ids `pro`, `team` and `enterprise` (they must match [`data/microsoft-marketplace.json`](../data/microsoft-marketplace.json)), set prices, and declare the metered dimensions `mcp_tool_calls` and `agent_messages` on each plan that bills usage.
+12. Listing, properties and legal fields from section 1 above. Add the preview audience (an allow-listed tenant) and publish to preview.
+13. In the preview tenant, buy each plan and run the test plan in section 1: purchase, landing page sign-in and activation, plan change, quantity change, suspend, reinstate, cancel. Each step shows on `/microsoft/activate` and in `microsoft_saas_operations`. Then go live.
+
+**#2 and #5 Copilot and Teams app**
+
+14. Partner Center, Apps and Agents for Microsoft 365 and Copilot: create the offer and note its app GUID.
+15. Build the package with the values from steps 6, 7 and 14: `MS_APP_ID=... MS_DEVELOPER_NAME=... MS_KEYVAULT_URL=... MS_TEAMS_BOT_APP_ID=... npm run package:microsoft-app`, sideload it in Teams to test, then upload the zip to the offer and submit for MCP certification.
+16. Microsoft 365 App Compliance: submit Publisher Attestation with the answers in [`microsoft-365-publisher-attestation.md`](../marketing/growth/submissions/programs/microsoft-365-publisher-attestation.md).
+
+**#4 Power Platform connector**
+
+17. Follow the five owner steps in the [connector README](../integrations/microsoft/power-platform-connector/README.md#owner-steps-to-publish): `pac connector create`, copy the redirect URL, register the public PKCE client, rebuild and `pac connector update`, run each action 10 times, then certify through Partner Center and the `microsoft/PowerPlatformConnectors` pull request.
+
+**#3, #6 to #8 listings**
+
+18. Partner Center: create the three professional service offers from [`microsoft-marketplace-professional-services.md`](../marketing/growth/submissions/programs/microsoft-marketplace-professional-services.md).
+19. Edge Add-ons: `npm run package:edge`, then submit both zips with the copy in [`microsoft-edge-and-store.md`](../marketing/growth/submissions/programs/microsoft-edge-and-store.md).
+20. Microsoft Store: reserve `three.ws`, copy the product identity, run `npm run package:microsoft-store` with the four `MS_STORE_*` values, and submit, as described in [the Store section](../marketing/growth/submissions/programs/microsoft-edge-and-store.md#microsoft-store-windows-app).
+21. Visual Studio Marketplace: covered by work order 983.
+22. Record every listing that goes live in [listings-registry.md](./listings-registry.md).
 
 ## Done when
 

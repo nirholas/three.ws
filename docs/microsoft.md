@@ -39,6 +39,18 @@ Microsoft open source was in the three.ws stack before the partnership. These ar
 | **TypeScript** | Types for every published SDK (`sdk/`, `solana-agent-sdk/`, `agent-payments-sdk/`). |
 | **Playwright** | Browser tests and page audits. |
 
+## Built for Microsoft surfaces
+
+These are in the repo and validated. Each one goes live when the owner completes its Partner Center or store step, in the order the [plan's owner checklist](./microsoft-marketplace-offer-plan.md#owner-checklist-in-order) gives.
+
+| Surface | What is built | Check it |
+|---|---|---|
+| Microsoft Marketplace SaaS offer | Purchase landing page `/microsoft/activate`, Entra sign-in, the fulfilment webhook, and hourly metered billing. A Microsoft subscription grants the same plan as a card purchase. See [Microsoft Marketplace SaaS offer](./microsoft-marketplace-saas.md) | `npx vitest run tests/microsoft-marketplace.test.js` |
+| Microsoft 365 Copilot and Teams app | A declarative agent wired to the three.ws MCP server, a Teams bot that answers in chats and channels, and a Teams tab (`/microsoft/teams-tab`). Package builder: [`scripts/build-microsoft-app-package.mjs`](../scripts/build-microsoft-app-package.mjs) | `npm run package:microsoft-app -- --check` |
+| Power Platform connector | Five actions for Power Automate, Power Apps, Logic Apps and Copilot Studio, with OAuth and PKCE: [`integrations/microsoft/power-platform-connector/`](../integrations/microsoft/power-platform-connector) | `npm run package:power-platform-connector -- --check` |
+| Microsoft Store (Windows app) | The installable web app packaged as MSIX through PWABuilder: [`scripts/package-microsoft-store-pwa.mjs`](../scripts/package-microsoft-store-pwa.mjs). Listing copy in [`microsoft-edge-and-store.md`](../marketing/growth/submissions/programs/microsoft-edge-and-store.md) | `npm run package:microsoft-store -- --check` |
+| Edge Add-ons | The browser extension package | `npm run package:edge` |
+
 ## In flight
 
 - **Microsoft MCP server certification** (Copilot Studio, Microsoft 365 Copilot, Foundry). The submission package, eligibility table, and the one open gap (Microsoft does not support Dynamic Client Registration, so a pre-registered OAuth client is needed) are drafted in [`marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md`](../marketing/growth/submissions/programs/microsoft-copilot-mcp-certification.md). Submission runs through Partner Center and is an owner step.
@@ -74,5 +86,6 @@ Microsoft open source was in the three.ws stack before the partnership. These ar
 - [Partner ecosystem](./partners.md)
 - [Partner benefits](./partner-benefits.md)
 - [Microsoft distribution and offer plan](./microsoft-marketplace-offer-plan.md)
+- [Microsoft Marketplace SaaS offer](./microsoft-marketplace-saas.md)
 - [Listings and distribution](./listings.md)
 - [Press kit](./press-kit.md)

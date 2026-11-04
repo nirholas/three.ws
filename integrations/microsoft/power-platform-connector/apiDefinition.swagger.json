@@ -1,0 +1,622 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "three.ws 3D Studio",
+    "description": "three.ws turns a text prompt into a textured 3D model you can view, place in augmented reality or download as GLB, and hosts AI agents with a 3D body. Use it to generate 3D models from your flows, list and search agents, and send an agent a message to get its reply.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "three.ws support",
+      "url": "https://three.ws/support",
+      "email": "support@three.ws"
+    }
+  },
+  "host": "three.ws",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/3d/studio": {
+      "post": {
+        "operationId": "GenerateModel",
+        "summary": "Generate a 3D model from text",
+        "description": "Turns a plain-language description of one object or character into a textured GLB 3D model. Fast jobs finish in the response; slower ones return status pending and a job id to pass to Get generation job.",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "prompt"
+              ],
+              "properties": {
+                "prompt": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 1000,
+                  "title": "Prompt",
+                  "description": "One object or character to model, for example: a small ceramic robot figurine.",
+                  "x-ms-summary": "Prompt",
+                  "x-ms-visibility": "important"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The finished model, or a pending job to poll.",
+            "schema": {
+              "$ref": "#/definitions/GenerationJob"
+            }
+          },
+          "400": {
+            "description": "The prompt is missing, outside 3 to 1000 characters, or was refused by the content safety check.",
+            "schema": {
+              "$ref": "#/definitions/StudioError"
+            }
+          },
+          "429": {
+            "description": "The free generation lane is saturated. Retry after the number of seconds in retry_after.",
+            "schema": {
+              "$ref": "#/definitions/StudioError"
+            }
+          },
+          "502": {
+            "description": "The generation lane could not start the job. Retrying is free.",
+            "schema": {
+              "$ref": "#/definitions/StudioError"
+            }
+          },
+          "503": {
+            "description": "Generation is not available right now. Retry later.",
+            "schema": {
+              "$ref": "#/definitions/StudioError"
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "GetGenerationJob",
+        "summary": "Get generation job",
+        "description": "Checks a pending generation job. Returns status done with the model links, pending while the job runs, or error with a reason.",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "job",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "x-ms-summary": "Job id",
+            "description": "The job value returned by Generate a 3D model from text."
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "x-ms-summary": "Title",
+            "description": "A label for the finished model's viewer and AR pages, usually the prompt.",
+            "x-ms-visibility": "advanced"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The job state.",
+            "schema": {
+              "$ref": "#/definitions/GenerationJob"
+            }
+          },
+          "400": {
+            "description": "The job id is malformed or unknown.",
+            "schema": {
+              "$ref": "#/definitions/StudioError"
+            }
+          },
+          "429": {
+            "description": "Polling too often. Retry after the number of seconds in retry_after.",
+            "schema": {
+              "$ref": "#/definitions/StudioError"
+            }
+          }
+        }
+      }
+    },
+    "/api/agents": {
+      "get": {
+        "operationId": "ListMyAgents",
+        "summary": "List my agents",
+        "description": "Lists the AI agents in the signed-in three.ws account, oldest first.",
+        "x-ms-visibility": "important",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The account's agents.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "agents": {
+                  "type": "array",
+                  "x-ms-summary": "Agents",
+                  "items": {
+                    "$ref": "#/definitions/Agent"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The connection is not signed in. Sign in to the connection again.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "/api/agents/public": {
+      "get": {
+        "operationId": "SearchAgents",
+        "summary": "Search public agents",
+        "description": "Searches every public three.ws agent by name and description.",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "x-ms-summary": "Search text",
+            "description": "Words to match in the agent's name or description. Leave empty to list agents by popularity."
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "popular",
+              "newest",
+              "name",
+              "live"
+            ],
+            "default": "popular",
+            "x-ms-summary": "Sort",
+            "description": "popular ranks by conversations, newest by creation date, name alphabetically, live by most recent activity.",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "maximum": 48,
+            "default": 24,
+            "x-ms-summary": "Limit",
+            "description": "How many agents to return, 1 to 48.",
+            "x-ms-visibility": "advanced"
+          },
+          {
+            "name": "avatar",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "1"
+            ],
+            "x-ms-summary": "Only agents with a 3D body",
+            "description": "Set to 1 to return only agents whose 3D avatar anyone can load.",
+            "x-ms-visibility": "advanced"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching public agents.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "agents": {
+                  "type": "array",
+                  "x-ms-summary": "Agents",
+                  "items": {
+                    "$ref": "#/definitions/PublicAgent"
+                  }
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "int32",
+                  "x-ms-summary": "Count",
+                  "description": "Agents in this page."
+                },
+                "has_more": {
+                  "type": "boolean",
+                  "x-ms-summary": "Has more",
+                  "description": "True when more agents match than this page holds."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many searches. Wait a few seconds and retry.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          }
+        }
+      }
+    },
+    "/api/agents/talk": {
+      "post": {
+        "operationId": "SendAgentMessage",
+        "summary": "Send a message to an agent",
+        "description": "Sends one message to a three.ws agent and returns its reply. The agent answers with its own persona, knowledge and skills.",
+        "x-ms-visibility": "important",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "agentId",
+                "message"
+              ],
+              "properties": {
+                "agentId": {
+                  "type": "string",
+                  "title": "Agent",
+                  "description": "The agent to talk to: one of yours, or the id of any published agent.",
+                  "x-ms-summary": "Agent",
+                  "x-ms-visibility": "important",
+                  "x-ms-dynamic-values": {
+                    "operationId": "ListMyAgents",
+                    "value-collection": "agents",
+                    "value-path": "id",
+                    "value-title": "name"
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4000,
+                  "title": "Message",
+                  "description": "What to say to the agent, up to 4000 characters.",
+                  "x-ms-summary": "Message",
+                  "x-ms-visibility": "important"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The agent's reply.",
+            "schema": {
+              "$ref": "#/definitions/AgentReply"
+            }
+          },
+          "400": {
+            "description": "The message is empty, too long, or the body is not valid.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "401": {
+            "description": "The connection is not signed in. Sign in to the connection again.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "403": {
+            "description": "The agent's owner has turned off conversations from other apps.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "404": {
+            "description": "No published agent, and none of yours, has that id.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "429": {
+            "description": "Too many messages. Wait a few seconds and retry.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          },
+          "503": {
+            "description": "The agent's language model is not available right now. Retry later.",
+            "schema": {
+              "$ref": "#/definitions/ApiError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "GenerationJob": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "done",
+            "pending",
+            "error"
+          ],
+          "x-ms-summary": "Status",
+          "description": "done when the model is ready, pending while it is being made, error when the job failed."
+        },
+        "job": {
+          "type": "string",
+          "x-ms-summary": "Job id",
+          "description": "Pass to Get generation job while the status is pending."
+        },
+        "glbUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-ms-summary": "Model file URL",
+          "description": "The finished GLB file."
+        },
+        "viewerUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-ms-summary": "Viewer URL",
+          "description": "An interactive 3D viewer page for the model."
+        },
+        "arUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-ms-summary": "AR URL",
+          "description": "Opens the model in augmented reality on a phone, or the viewer on a desktop."
+        },
+        "previewImageUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-ms-summary": "Preview image URL",
+          "description": "A reference image of the model, when one was made."
+        },
+        "watchUrl": {
+          "type": "string",
+          "format": "uri",
+          "x-ms-summary": "Watch URL",
+          "description": "A page that shows the job progress live."
+        },
+        "poll": {
+          "type": "string",
+          "x-ms-summary": "Poll path",
+          "description": "The path to check this job, relative to https://three.ws."
+        },
+        "etaSeconds": {
+          "type": "integer",
+          "format": "int32",
+          "x-ms-summary": "Estimated seconds",
+          "description": "The lane's estimate of how long the job still needs."
+        },
+        "format": {
+          "type": "string",
+          "x-ms-summary": "Format",
+          "description": "Always glb."
+        },
+        "tier": {
+          "type": "string",
+          "x-ms-summary": "Tier",
+          "description": "The quality tier that made the model."
+        },
+        "error": {
+          "type": "string",
+          "x-ms-summary": "Error",
+          "description": "Why the job failed, when the status is error."
+        }
+      }
+    },
+    "StudioError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-ms-summary": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "x-ms-summary": "Message"
+        },
+        "retry_after": {
+          "type": "integer",
+          "format": "int32",
+          "x-ms-summary": "Retry after seconds"
+        }
+      }
+    },
+    "ApiError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-ms-summary": "Error code"
+        },
+        "error_description": {
+          "type": "string",
+          "x-ms-summary": "Error description"
+        }
+      }
+    },
+    "Agent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-ms-summary": "Agent id"
+        },
+        "name": {
+          "type": "string",
+          "x-ms-summary": "Name"
+        },
+        "description": {
+          "type": "string",
+          "x-ms-summary": "Description"
+        },
+        "home_url": {
+          "type": "string",
+          "x-ms-summary": "Profile path",
+          "description": "The agent's public page, relative to https://three.ws."
+        },
+        "avatar_model_url": {
+          "type": "string",
+          "x-ms-summary": "3D model URL"
+        },
+        "avatar_thumbnail_url": {
+          "type": "string",
+          "x-ms-summary": "Thumbnail URL"
+        },
+        "solana_address": {
+          "type": "string",
+          "x-ms-summary": "Solana address",
+          "description": "The agent wallet's public Solana address."
+        },
+        "chat_count": {
+          "type": "integer",
+          "format": "int32",
+          "x-ms-summary": "Conversations"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Created"
+        }
+      }
+    },
+    "PublicAgent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "x-ms-summary": "Agent id"
+        },
+        "name": {
+          "type": "string",
+          "x-ms-summary": "Name"
+        },
+        "description": {
+          "type": "string",
+          "x-ms-summary": "Description"
+        },
+        "home_url": {
+          "type": "string",
+          "x-ms-summary": "Profile path",
+          "description": "The agent's public page, relative to https://three.ws."
+        },
+        "avatar_model_url": {
+          "type": "string",
+          "x-ms-summary": "3D model URL"
+        },
+        "avatar_thumbnail": {
+          "type": "string",
+          "x-ms-summary": "Thumbnail URL"
+        },
+        "chat_count": {
+          "type": "integer",
+          "format": "int32",
+          "x-ms-summary": "Conversations"
+        },
+        "is_registered": {
+          "type": "boolean",
+          "x-ms-summary": "Registered on chain"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Created"
+        }
+      }
+    },
+    "AgentReply": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "type": "boolean",
+          "x-ms-summary": "OK"
+        },
+        "agentId": {
+          "type": "string",
+          "x-ms-summary": "Agent id"
+        },
+        "agentName": {
+          "type": "string",
+          "x-ms-summary": "Agent name"
+        },
+        "response": {
+          "type": "string",
+          "x-ms-summary": "Reply",
+          "description": "The agent's answer."
+        },
+        "model": {
+          "type": "string",
+          "x-ms-summary": "Model",
+          "description": "The language model that answered."
+        },
+        "durationMs": {
+          "type": "integer",
+          "format": "int32",
+          "x-ms-summary": "Duration in milliseconds"
+        },
+        "fetchedAt": {
+          "type": "string",
+          "format": "date-time",
+          "x-ms-summary": "Answered at"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "oauth2-auth": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://three.ws/oauth/authorize",
+      "tokenUrl": "https://three.ws/oauth/token",
+      "scopes": {
+        "profile": "Read your three.ws profile",
+        "agents:read": "See your agents and their identities",
+        "offline_access": "Stay connected without signing in again"
+      }
+    }
+  },
+  "security": [
+    {
+      "oauth2-auth": [
+        "profile",
+        "agents:read",
+        "offline_access"
+      ]
+    }
+  ],
+  "tags": [],
+  "x-ms-connector-metadata": [
+    {
+      "propertyName": "Website",
+      "propertyValue": "https://three.ws"
+    },
+    {
+      "propertyName": "Privacy policy",
+      "propertyValue": "https://three.ws/legal/privacy"
+    },
+    {
+      "propertyName": "Categories",
+      "propertyValue": "AI;Productivity"
+    }
+  ]
+}
