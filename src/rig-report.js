@@ -621,6 +621,13 @@ function buildVerdict(report, drivable, gate) {
 		};
 	}
 
+	// The clavicle/upper-arm collision the runtime settles from the hierarchy.
+	// Named so a creator reading the renames sees why their clavicle became the
+	// shoulder, not an unexplained reassignment.
+	for (const r of s.resolvedCollisions) {
+		notes.push(`${r.name} spells the same joint as the upper arm (${r.from}); its place in the hierarchy makes it the ${r.to}, which is how the runtime reads it too.`);
+	}
+
 	const frozen = s.groups.filter((g) => !g.driven);
 	if (frozen.length) {
 		for (const g of frozen) {

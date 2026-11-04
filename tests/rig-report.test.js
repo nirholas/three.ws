@@ -42,6 +42,57 @@ function documentedRigConventions() {
 	return rows;
 }
 
+// A JSON-only GLB built from a joint tree, so a rig convention can be checked
+// without committing a binary fixture. `tree` is [name, ...children] nested.
+function syntheticRig(tree) {
+	const nodes = [{ name: 'Body', mesh: 0, skin: 0 }];
+	const joints = [];
+	const add = ([name, ...children]) => {
+		const index = nodes.length;
+		const node = { name };
+		nodes.push(node);
+		joints.push(index);
+		const kids = children.map(add);
+		if (kids.length) node.children = kids;
+		return index;
+	};
+	const rootJoint = add(tree);
+	const json = {
+		asset: { version: '2.0' },
+		nodes,
+		meshes: [{ name: 'Body', primitives: [{ attributes: {} }] }],
+		skins: [{ joints }],
+		scenes: [{ nodes: [0, rootJoint] }],
+	};
+	let bytes = new TextEncoder().encode(JSON.stringify(json));
+	const pad = (4 - (bytes.length % 4)) % 4;
+	if (pad) {
+		const padded = new Uint8Array(bytes.length + pad).fill(0x20);
+		padded.set(bytes);
+		bytes = padded;
+	}
+	const out = new Uint8Array(20 + bytes.length);
+	const v = new DataView(out.buffer);
+	v.setUint32(0, 0x46546c67, true);
+	v.setUint32(4, 2, true);
+	v.setUint32(8, out.length, true);
+	v.setUint32(12, bytes.length, true);
+	v.setUint32(16, 0x4e4f534a, true);
+	out.set(bytes, 20);
+	return out.buffer;
+}
+
+const FINGERS = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky'];
+const fingerChains = (prefix) => FINGERS.map((f) => [`${prefix}${f}1`, [`${prefix}${f}2`, [`${prefix}${f}3`]]]);
+
+// A HumanIK skeleton in the given spelling (`Character1:` or `Character1`).
+function humanIkTree(ns) {
+	const n = (b) => `${ns}${b}`;
+	const arm = (side) => [n(`${side}Shoulder`), [n(`${side}Arm`), [n(`${side}ForeArm`), [n(`${side}Hand`), ...fingerChains(n(`${side}Hand`))]]]];
+	const leg = (side) => [n(`${side}UpLeg`), [n(`${side}Leg`), [n(`${side}Foot`), [n(`${side}ToeBase`)]]]];
+	return [n('Hips'), [n('Spine'), [n('Spine1'), [n('Spine2'), [n('Neck'), [n('Head')]], arm('Left'), arm('Right')]]], leg('Left'), leg('Right')];
+}
+
 describe('readGlbJson', () => {
 	it('rejects a file that is not a GLB with a message a creator can act on', () => {
 		const notGlb = new TextEncoder().encode('this is plainly not a binary glTF file');
@@ -299,5 +350,33 @@ describe('the /rig-doctor hero facts match the analyser', () => {
 		const m = html.match(/<strong id="rd-fact-joints">(\d+)<\/strong>/);
 		expect(m, 'pages/rig-doctor.html lost its #rd-fact-joints element').not.toBeNull();
 		expect(Number(m[1])).toBe(CANONICAL_TOTAL);
+	});
+});
+
+describe('Rig Doctor agrees with the runtime', () => {
+	it.each([['Character1:'], ['Character1']])('fingerprints and fully maps a HumanIK rig spelled %s', (ns) => {
+		const r = analyzeGlb(syntheticRig(humanIkTree(ns)));
+		expect(r.skeleton.convention.id).toBe('humanik');
+		expect(r.skeleton.mapped).toBe(CANONICAL_TOTAL);
+		expect(r.skeleton.mappedNames.Hips).toBe(`${ns}Hips`);
+		expect(r.skeleton.collisions).toEqual([]);
+		expect(r.verdict.level).toBe('pass');
+	});
+
+	it('reports the Rigify clavicle/upper-arm collision as resolved, the way the runtime resolves it', () => {
+		const side = (s) => [`DEF-shoulder.${s}`, [`DEF-upper_arm.${s}`, [`DEF-forearm.${s}`, [`DEF-hand.${s}`]]]];
+		const leg = (s) => [`DEF-thigh.${s}`, [`DEF-shin.${s}`, [`DEF-foot.${s}`, [`DEF-toe.${s}`]]]];
+		const r = analyzeGlb(syntheticRig(['DEF-hips', ['DEF-spine', ['DEF-chest', ['DEF-neck', ['DEF-head']], side('L'), side('R')]], leg('L'), leg('R')]));
+		expect(r.skeleton.convention.id).toBe('rigify');
+		expect(r.skeleton.collisions).toEqual([]);
+		expect(r.skeleton.mappedNames.LeftShoulder).toBe('DEF-shoulder.L');
+		expect(r.skeleton.mappedNames.LeftArm).toBe('DEF-upper_arm.L');
+		expect(r.skeleton.mappedNames.RightShoulder).toBe('DEF-shoulder.R');
+		expect(r.skeleton.mappedNames.RightArm).toBe('DEF-upper_arm.R');
+		expect(r.skeleton.resolvedCollisions).toEqual([
+			{ name: 'DEF-shoulder.L', from: 'LeftArm', to: 'LeftShoulder' },
+			{ name: 'DEF-shoulder.R', from: 'RightArm', to: 'RightShoulder' },
+		]);
+		expect(r.skeleton.renames).toContainEqual({ from: 'DEF-shoulder.L', to: 'LeftShoulder' });
 	});
 });
