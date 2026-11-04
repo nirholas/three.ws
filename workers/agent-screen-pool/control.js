@@ -8,6 +8,10 @@
 // and re-guards navigation as defense in depth, the caster never trusts the
 // queue blindly.
 
+import { isNavAllowed, assertResolvedPublic } from './egress-guard.js';
+
+export { isNavAllowed };
+
 const VP_DEFAULT = { width: 1280, height: 720 };
 
 const clamp01 = (n) => {
@@ -16,39 +20,21 @@ const clamp01 = (n) => {
 	return v < 0 ? 0 : v > 1 ? 1 : v;
 };
 
-// Mirror of the API-side nav guard (src/shared/agent-screen-control.js). The
-// worker is deployed standalone and cannot import repo-shared code, so the guard
-// is duplicated here on purpose, keep the two in sync.
-function ipv4Parts(host) {
-	const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
-	if (!m) return null;
-	const p = m.slice(1).map(Number);
-	if (p.some((n) => n > 255)) return null;
-	return p;
-}
-function isPrivateIpv4([a, b]) {
-	if (a === 0 || a === 127 || a === 10) return true;
-	if (a === 172 && b >= 16 && b <= 31) return true;
-	if (a === 192 && b === 168) return true;
-	if (a === 169 && b === 254) return true;
-	if (a === 100 && b >= 64 && b <= 127) return true;
-	return false;
-}
-export function isNavAllowed(rawUrl) {
-	let u;
-	try { u = new URL(String(rawUrl)); } catch { return false; }
-	if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
-	let host = u.hostname.toLowerCase();
-	if (!host) return false;
-	if (host.startsWith('[') && host.endsWith(']')) host = host.slice(1, -1);
-	if (host === 'localhost' || host.endsWith('.localhost')) return false;
-	if (host === 'metadata.google.internal' || host.endsWith('.internal')) return false;
-	if (host === '::1' || host === '::') return false;
-	if (/^fe80:/i.test(host)) return false;
-	if (/^f[cd][0-9a-f]{2}:/i.test(host)) return false;
-	const v4 = ipv4Parts(host);
-	if (v4 && isPrivateIpv4(v4)) return false;
-	return true;
+// Navigation guard. isNavAllowed (the literal-host filter, a byte-identical
+// mirror of the API-side guard) runs first; then the destination's resolved
+// addresses are checked through the pool's egress guard, which also re-checks
+// every redirect hop and subresource at the browser context. Uses the pool's
+// shared, cached guard when one is passed; otherwise resolves directly so the
+// check is never skipped.
+async function navTargetAllowed(url, guard) {
+	if (!isNavAllowed(url)) return false;
+	if (guard) return (await guard.checkUrl(url)).ok;
+	try {
+		await assertResolvedPublic(new URL(url).hostname);
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 // Map a normalized event's (x,y) to real pixels within the viewport.
@@ -60,7 +46,7 @@ function toPixels(ev, vp) {
 // navigation (or any transient Playwright error) never aborts the rest of the
 // gesture. Returns true if the event likely changed the page enough to warrant an
 // immediate fresh frame (click / key / nav), so the driver sees feedback fast.
-async function applyOne(page, ev, vp) {
+async function applyOne(page, ev, vp, guard) {
 	try {
 		switch (ev.t) {
 			case 'move': {
@@ -98,7 +84,7 @@ async function applyOne(page, ev, vp) {
 				await page.keyboard.type(String(ev.text), { delay: 12 });
 				return true;
 			case 'nav':
-				if (!isNavAllowed(ev.url)) return false;
+				if (!(await navTargetAllowed(String(ev.url), guard))) return false;
 				await page.goto(String(ev.url), { waitUntil: 'domcontentloaded', timeout: 30_000 });
 				return true;
 			case 'back':
@@ -119,8 +105,9 @@ async function applyOne(page, ev, vp) {
 }
 
 // Apply a batch of drained events in order. Returns { changed } where changed is
-// true if any event warrants an immediate frame push.
-export async function applyEvents(page, events, viewport = VP_DEFAULT) {
+// true if any event warrants an immediate frame push. opts.guard is the pool's
+// egress guard (createEgressGuard) used to vet 'nav' targets.
+export async function applyEvents(page, events, viewport = VP_DEFAULT, { guard = null } = {}) {
 	if (!page || page.isClosed?.() || !Array.isArray(events) || !events.length) {
 		return { changed: false };
 	}
@@ -131,7 +118,7 @@ export async function applyEvents(page, events, viewport = VP_DEFAULT) {
 	let changed = false;
 	for (const ev of events) {
 		if (page.isClosed?.()) break;
-		const c = await applyOne(page, ev, vp);
+		const c = await applyOne(page, ev, vp, guard);
 		changed = changed || c;
 	}
 	return { changed };

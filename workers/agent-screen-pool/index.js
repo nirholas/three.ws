@@ -33,6 +33,7 @@ import { chromium } from 'playwright';
 import { pickTask } from './tasks/index.js';
 import { generateNarration, runTaskSteps } from './task-runner.js';
 import { applyEvents, isNavAllowed } from './control.js';
+import { createEgressGuard } from './egress-guard.js';
 
 const BASE_URL   = (process.env.BASE_URL || 'https://three.ws').replace(/\/$/, '');
 const WANTED_URL = process.env.WANTED_URL || `${BASE_URL}/api/agent/watch-wanted`;
@@ -119,6 +120,12 @@ const pool = new Map();
 let browser = null;
 let context = null;
 let stopping = false;
+// Request-level SSRF guard for the shared, owner-steerable browser: every
+// request, redirect hop and websocket is resolved and refused when it maps to a
+// non-public address, and a response that actually connected to one tears the
+// page down (DNS rebinding). Only the operator-configured BASE_URL host is
+// trusted without resolution. See egress-guard.js.
+const egress = createEgressGuard({ trustedHosts: [new URL(BASE_URL).host] });
 const BOOT_AT = new Date().toISOString();
 
 // Cloud Run requires a service to answer a startup probe on $PORT, and this
@@ -156,7 +163,11 @@ async function ensureBrowser() {
 		userAgent:
 			'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
 		locale: 'en-US',
+		// Requests a service worker makes are invisible to context.route, so no
+		// page may register one: every fetch then passes the egress guard.
+		serviceWorkers: 'block',
 	});
+	await egress.install(context, { onViolation: handleEgressViolation });
 	log('chromium launched');
 }
 
@@ -173,11 +184,31 @@ async function fetchWanted() {
 	}
 }
 
-function resolveUrl(homeUrl, agentId) {
+// A blocked request is already aborted by the guard; log it. A response that
+// connected to a non-public address means Chromium's own resolution disagreed
+// with the guard's (rebinding): stop casting that page at once so not one more
+// frame of it reaches the wall. reconcile() restarts the agent from its vetted
+// home URL on the next poll if it is still watched.
+function handleEgressViolation(v) {
+	const entry = v.page ? [...pool.values()].find((e) => e.page === v.page) : null;
+	log('egress blocked', v.kind, entry?.agentId || '-', v.url, v.reason);
+	if (v.kind !== 'response' || !entry) return;
+	entry.tainted = true;
+	stopCasting(entry.agentId).catch(() => {});
+}
+
+async function resolveUrl(homeUrl, agentId) {
 	const u = homeUrl || `/agent/${agentId}`;
+	const fallback = `${BASE_URL}/agent/${agentId}`;
 	// homeUrl is agent-owner supplied: refuse loopback, private and metadata
-	// hosts so the casting browser cannot be pointed at internal services.
-	if (/^https?:\/\//.test(u)) return isNavAllowed(u) ? u : `${BASE_URL}/agent/${agentId}`;
+	// hosts, by literal and by what the name resolves to, so the casting browser
+	// cannot be pointed at internal services.
+	if (/^https?:\/\//.test(u)) {
+		if (!isNavAllowed(u)) return fallback;
+		const v = await egress.checkUrl(u);
+		if (!v.ok) log('homeUrl refused', agentId, v.reason);
+		return v.ok ? u : fallback;
+	}
 	return `${BASE_URL}${u.startsWith('/') ? '' : '/'}${u}`;
 }
 
@@ -219,7 +250,7 @@ async function drainControl() {
 			}
 			const events = Array.isArray(info.events) ? info.events : [];
 			if (events.length) {
-				const { changed } = await applyEvents(entry.page, events, VIEWPORT);
+				const { changed } = await applyEvents(entry.page, events, VIEWPORT, { guard: egress });
 				if (changed) await pushTaskFrame(entry, {}); // land the result immediately
 			} else if (isManual(entry)) {
 				await pushTaskFrame(entry, {}); // held wheel, no new input: keep pixels live
@@ -236,10 +267,11 @@ async function drainControl() {
 }
 
 async function pushFrame(entry) {
-	if (entry.pushing || !entry.page || entry.page.isClosed()) return;
+	if (entry.pushing || entry.tainted || !entry.page || entry.page.isClosed()) return;
 	entry.pushing = true;
 	try {
 		const buf = await entry.page.screenshot({ type: 'jpeg', quality: JPEG_QUALITY, fullPage: false });
+		if (entry.tainted) return; // the page tripped the egress guard mid-capture
 		const b64 = buf.toString('base64');
 		const headers = { 'content-type': 'application/json', authorization: `Bearer ${SECRET}` };
 		const res = await fetch(PUSH_URL, {
@@ -272,7 +304,7 @@ async function startCasting(agent) {
 	const page = await context.newPage();
 	const entry = { agentId, page, name: agent.name || 'Agent', timer: null, pushing: false, lastErrorAt: 0, controller: new AbortController() };
 	pool.set(agentId, entry);
-	const url = resolveUrl(agent.homeUrl, agentId);
+	const url = await resolveUrl(agent.homeUrl, agentId);
 	try {
 		await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
 	} catch (err) {
@@ -351,7 +383,7 @@ async function runTour(entry) {
 // typing/waits/dwell WITHOUT spamming the activity log (the API logs only frames
 // that carry activity).
 async function pushTaskFrame(entry, { activity = '', type = 'screenshot', shoot = true } = {}) {
-	if (!entry.page || entry.page.isClosed()) return;
+	if (entry.tainted || !entry.page || entry.page.isClosed()) return;
 	let b64 = null;
 	if (shoot) {
 		try {
@@ -359,6 +391,7 @@ async function pushTaskFrame(entry, { activity = '', type = 'screenshot', shoot 
 			b64 = buf.toString('base64');
 		} catch { /* page navigating — push the narration line without pixels */ }
 	}
+	if (entry.tainted) return; // the page tripped the egress guard mid-capture
 	const dataUrl = b64 ? `data:image/jpeg;base64,${b64}` : null;
 	const headers = { 'content-type': 'application/json', authorization: `Bearer ${SECRET}` };
 	try {

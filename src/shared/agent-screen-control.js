@@ -63,7 +63,11 @@ function cleanText(raw) {
 // ── Navigation host guard (SSRF) ─────────────────────────────────────────────
 // The caster's browser runs inside our infrastructure. A driver-supplied nav URL
 // must never let it reach the cloud metadata endpoint, loopback, or any private
-// range. Only public http(s) destinations are allowed.
+// range. Only public http(s) destinations are allowed. This is the cheap literal
+// filter at the API boundary; the caster re-checks every request it makes against
+// the addresses the hostname resolves to and the address it connected to
+// (workers/agent-screen-pool/egress-guard.js), which covers redirects,
+// subresources and DNS rebinding.
 
 // ── egress-guard:address-policy:start ──
 // Resolved-address policy, shared byte-for-byte by the API sanitizer

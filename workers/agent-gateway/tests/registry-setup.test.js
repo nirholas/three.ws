@@ -11,7 +11,7 @@ describe('adapter registry', () => {
 	it('loads only configured adapters and names the missing variables', () => {
 		const { adapters, skipped } = loadAdapters({ env: { TELEGRAM_BOT_TOKEN: '1:fixture' } });
 		expect([...adapters.keys()]).toEqual(['telegram']);
-		expect(skipped).toEqual([{ platform: 'discord', missing: ['DISCORD_BOT_TOKEN', 'DISCORD_APP_ID'] }]);
+		expect(skipped).toEqual([{ platform: 'discord', missing: ['DISCORD_BOT_TOKEN', 'DISCORD_APP_ID'], reason: 'missing DISCORD_BOT_TOKEN, DISCORD_APP_ID' }]);
 	});
 
 	it('honours GATEWAY_PLATFORMS and accepts a new platform without touching the loop', () => {
@@ -24,7 +24,11 @@ describe('adapter registry', () => {
 		expect([...adapters.keys()]).toEqual(['x']);
 		expect(created).toHaveLength(1);
 		const unknown = loadAdapters({ env: {}, config: { platforms: ['fax'] }, factories });
-		expect(unknown.skipped).toEqual([{ platform: 'fax', missing: [], reason: 'unknown platform' }]);
+		expect(unknown.skipped).toEqual([
+			{ platform: 'telegram', missing: [], reason: 'excluded by GATEWAY_PLATFORMS' },
+			{ platform: 'x', missing: [], reason: 'excluded by GATEWAY_PLATFORMS' },
+			{ platform: 'fax', missing: [], reason: 'unknown platform' },
+		]);
 	});
 });
 

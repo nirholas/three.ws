@@ -49,7 +49,17 @@ ARG UNIRIG_COMMIT=6793c6640ff01c8fb389f3993434124bb43d2933
 RUN git clone https://github.com/VAST-AI-Research/UniRig.git /app/unirig \
     && git -C /app/unirig checkout ${UNIRIG_COMMIT} \
     && rm -rf /app/unirig/.git
-RUN pip install -r /app/unirig/requirements.txt \
+# flash-attn (Dao-AILab, BSD-3-Clause) comes from its official prebuilt wheel,
+# never a source build: this is a CUDA runtime image with no nvcc, and pip's
+# build isolation hides the installed torch from flash-attn's setup.py (the
+# first deploy attempt died there). UniRig lists it unpinned, so it is
+# stripped from that file and installed once here. The wheel's C++ ABI must
+# match torch's; the assert fails the build, not the running service.
+ARG FLASH_ATTN_WHEEL=https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.7cxx11abiTRUE-cp311-cp311-linux_x86_64.whl
+RUN python3 -c "import torch, sys; sys.exit(0 if torch._C._GLIBCXX_USE_CXX11_ABI else 'torch is not built with the CXX11 ABI; switch FLASH_ATTN_WHEEL to the cxx11abiFALSE wheel')" \
+    && pip install "${FLASH_ATTN_WHEEL}"
+RUN grep -viE '^flash[-_]attn' /app/unirig/requirements.txt > /tmp/unirig-requirements.txt \
+    && pip install -r /tmp/unirig-requirements.txt \
     && pip install spconv-cu120 \
     && pip install torch_scatter torch_cluster \
         -f https://data.pyg.org/whl/torch-2.7.0+cu128.html --no-cache-dir \
@@ -62,8 +72,9 @@ ARG SKINTOKENS_COMMIT=273b691d35989d71cd17ff2895fdc735097b92d1
 RUN git clone https://github.com/VAST-AI-Research/SkinTokens.git /app/skintokens \
     && git -C /app/skintokens checkout ${SKINTOKENS_COMMIT} \
     && rm -rf /app/skintokens/.git
-RUN pip install -r /app/skintokens/requirements.txt \
-    && pip install flash-attn --no-build-isolation
+RUN grep -viE '^flash[-_]attn' /app/skintokens/requirements.txt > /tmp/skintokens-requirements.txt \
+    && pip install -r /tmp/skintokens-requirements.txt \
+    && python3 -c "import importlib.metadata as m; v = m.version('flash_attn'); assert v == '2.8.3', v; print('flash_attn', v)"
 
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt

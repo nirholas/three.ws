@@ -15,7 +15,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY index.js control.js task-runner.js ./
+COPY index.js control.js egress-guard.js task-runner.js ./
 COPY tasks ./tasks
 
 # Chromium is baked into the base image at /ms-playwright.

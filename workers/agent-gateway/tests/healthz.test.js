@@ -53,8 +53,8 @@ afterEach(async () => {
 
 describe('/healthz', () => {
 	it('answers 200 with the loaded adapter, the open backlog, and why Discord was skipped', async () => {
-		await store.enqueueInbox({ platform: 'telegram', dedupeKey: '1', chatKey: 'telegram:1', payload: { update_id: 1 } });
 		await boot(telegramEnv);
+		await store.enqueueInbox({ platform: 'telegram', dedupeKey: '1', chatKey: 'telegram:1', payload: { update_id: 1 } });
 		const { status, headers, body } = await get('/healthz');
 		expect(status).toBe(200);
 		expect(headers.get('cache-control')).toBe('no-store');

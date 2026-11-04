@@ -34,12 +34,17 @@ export const FACTORIES = {
 /**
  * Build every adapter that is both wanted (config.platforms, default all) and
  * configured (its credentials are present).
- * @returns {{ adapters: Map<string, object>, skipped: Array<{ platform:string, missing:string[] }> }}
+ * @returns {{ adapters: Map<string, object>, skipped: Array<{ platform:string, missing:string[], reason:string }> }}
  */
 export function loadAdapters({ env = process.env, config = {}, log = null, factories = FACTORIES, overrides = {} } = {}) {
 	const adapters = new Map();
 	const skipped = [];
 	const wanted = config.platforms || Object.keys(factories);
+	// A platform left out on purpose is listed too, so /healthz never makes an
+	// operator guess why an adapter is absent.
+	for (const platform of Object.keys(factories)) {
+		if (!wanted.includes(platform)) skipped.push({ platform, missing: [], reason: 'excluded by GATEWAY_PLATFORMS' });
+	}
 	for (const platform of wanted) {
 		const f = factories[platform];
 		if (!f) {
@@ -48,7 +53,7 @@ export function loadAdapters({ env = process.env, config = {}, log = null, facto
 		}
 		const check = f.configured(env);
 		if (!check.ok) {
-			skipped.push({ platform, missing: check.missing });
+			skipped.push({ platform, missing: check.missing, reason: `missing ${check.missing.join(', ')}` });
 			continue;
 		}
 		adapters.set(platform, f.create({ env, config, log, ...(overrides[platform] || {}) }));

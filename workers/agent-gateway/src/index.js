@@ -16,46 +16,23 @@
 // Local: npm run dev (loads ../../.env and ../../.env.local). README.md has the
 // env vars and the deploy command.
 
-import http from 'node:http';
-import { enqueueInbox, inboxBacklog } from '../../../api/_lib/gateway/store.js';
+import { pathToFileURL } from 'node:url';
+import { enqueueInbox } from '../../../api/_lib/gateway/store.js';
 import { loadConfig } from './config.js';
 import { loadAdapters } from './adapters/index.js';
 import { createDrainer } from './drain.js';
+import { startHealthServer } from './health.js';
 import { errorSummary } from './errors.js';
 import { log } from './log.js';
 
-function startHealthServer({ port, drainer, adapters, skipped }) {
-	const server = http.createServer(async (req, res) => {
-		const path = new URL(req.url, 'http://localhost').pathname;
-		if (req.method !== 'GET' || (path !== '/' && path !== '/healthz')) {
-			res.writeHead(404, { 'content-type': 'application/json' });
-			res.end(JSON.stringify({ error: 'not_found' }));
-			return;
-		}
-		const h = drainer.health();
-		const backlog = await inboxBacklog().catch(() => null);
-		const body = {
-			...h,
-			ok: h.ok && adapters.size > 0,
-			adapters: Object.fromEntries([...adapters].map(([p, a]) => [p, a.describe ? a.describe() : {}])),
-			skipped,
-			backlog,
-		};
-		res.writeHead(body.ok ? 200 : 503, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-		res.end(JSON.stringify(body));
-	});
-	server.listen(port, () => log.info('health endpoint listening', { port }));
-	return server;
-}
-
-async function main() {
+export async function main() {
 	const config = loadConfig();
 	const { adapters, skipped } = loadAdapters({ config, log });
 	for (const s of skipped) log.warn('adapter not loaded', s);
 	if (!adapters.size) log.error('no chat platform is configured; set TELEGRAM_BOT_TOKEN and/or DISCORD_BOT_TOKEN + DISCORD_APP_ID');
 
 	const drainer = createDrainer({ adapters, config, log });
-	const server = startHealthServer({ port: config.port, drainer, adapters, skipped });
+	const server = await startHealthServer({ port: config.port, drainer, adapters, skipped });
 
 	const enqueue = async (delivery) => {
 		const fresh = await enqueueInbox(delivery);
@@ -97,9 +74,14 @@ async function main() {
 	process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
-process.on('unhandledRejection', (e) => log.error('unhandled rejection', errorSummary(e)));
-
-main().catch((e) => {
-	log.error('agent gateway failed to start', errorSummary(e));
-	process.exit(1);
-});
+// Boot only when run as the process entry point (node src/index.js). Imported,
+// the module just exposes main(), so the image build and the tests can prove
+// the whole module graph resolves without opening a socket or a database.
+const isEntry = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isEntry) {
+	process.on('unhandledRejection', (e) => log.error('unhandled rejection', errorSummary(e)));
+	main().catch((e) => {
+		log.error('agent gateway failed to start', errorSummary(e));
+		process.exit(1);
+	});
+}
