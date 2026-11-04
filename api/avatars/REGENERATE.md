@@ -1,6 +1,6 @@
 # Avatar Regeneration API
 
-Pluggable endpoint for avatar re-mesh, re-texture, re-rig, and restyle operations. Designed to support multiple ML backends with a consistent interface.
+Endpoints for avatar re-mesh, re-texture, re-rig, restyle and reconstruct (image to avatar) jobs. Several ML backends sit behind one submit/status interface, with automatic failover between the platform providers. Source: [`_actions.js`](./_actions.js) (handlers), [`api/_lib/regen-provider.js`](../_lib/regen-provider.js) (provider loader), [`api/_providers/`](../_providers/) (adapters).
 
 ## Endpoints
 
@@ -15,7 +15,7 @@ Initiate an avatar regeneration job.
 ```json
 {
 	"sourceAvatarId": "avatar-uuid",
-	"mode": "remesh|retex|rerig|restyle",
+	"mode": "remesh|retex|rerig|restyle|reconstruct",
 	"params": {
 		"custom": "values"
 	}
@@ -24,10 +24,11 @@ Initiate an avatar regeneration job.
 
 **Mode definitions:**
 
-- `remesh` — regenerate mesh topology from source material or reference
-- `retex` — regenerate textures and materials
-- `rerig` — regenerate skeleton/rig bindings
-- `restyle` — regenerate styling/appearance from description
+- `remesh`: regenerate mesh topology from source material or reference
+- `retex`: regenerate textures and materials
+- `rerig`: regenerate skeleton/rig bindings
+- `restyle`: regenerate styling/appearance from description
+- `reconstruct`: build a new avatar from images (the selfie lane; normally called through `POST /api/avatars/reconstruct`)
 
 **Success response (202):**
 
@@ -36,21 +37,27 @@ Initiate an avatar regeneration job.
 	"ok": true,
 	"jobId": "string",
 	"status": "queued",
-	"eta": null
+	"eta": null,
+	"provider": "replicate"
 }
 ```
 
 **Error responses:**
 
-- **404 not_found** — source avatar not found or not owned
-- **501 regen_unconfigured** — `AVATAR_REGEN_PROVIDER` env var not set
+- **401 unauthorized**, no session and no valid bearer token with the `avatars:write` scope
+- **404 not_found**, source avatar not found or not owned
+- **429 rate_limited**, the caller exceeded the upload rate limit
+- **501 regen_unconfigured**, no platform provider has credentials on this deployment
     ```json
     {
     	"error": "regen_unconfigured",
-    	"error_description": "Avatar regeneration is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var."
+    	"error_description": "Avatar regeneration is not available on this deployment yet."
     }
     ```
-- **429 rate_limited** — user has exceeded upload quota
+    The same code (with the copy "The 3D engine is not available for this request right now.") is returned when the chosen provider does not support the requested `mode`.
+- **402 insufficient_credits**, **400 invalid_request**, **429 rate_limited**, **502 regen_provider_error**, a provider rejected or failed the submit after every configured provider was tried. The message is vendor-free; the raw detail stays in server logs.
+
+`jobId` is `<provider>-<uuid>`; `eta` is seconds when the provider reports one, otherwise `null`.
 
 `POST /api/avatars/reconstruct` (the selfie and text→avatar lane) additionally
 pre-flights the caller's plan quota before it spends any GPU time, and answers a
@@ -73,7 +80,7 @@ Poll the status of a regeneration job.
 
 **Query parameters:**
 
-- `jobId` (required) — job ID from regenerate endpoint
+- `jobId` (required): job ID from regenerate endpoint
 
 **Success response (200):**
 
@@ -85,17 +92,18 @@ Poll the status of a regeneration job.
 	"resultAvatarId": "avatar-uuid",
 	"resultGlbUrl": "https://…/model.glb",
 	"error": "optional error message",
-	"errorKind": "input"
+	"errorKind": "input",
+	"provider": "replicate"
 }
 ```
 
 **Status values:**
 
-- `queued` — job waiting for processing
-- `running` — actively processing
+- `queued`: job waiting for processing
+- `running`: actively processing
 - `rigging`, the mesh landed bare and a child auto-rig job is running
-- `done` — completed successfully
-- `failed` — failed (check `error` field)
+- `done`: completed successfully
+- `failed`: failed (check `error` field)
 
 **`error` and `errorKind`:**
 
@@ -116,95 +124,46 @@ when it is absent, the `/create/selfie` poll loop does exactly this
 exact reason with a keyword guess sends the user off to retake a photo that was
 never the problem.
 
-## Provider Plug Shape
+## Providers
 
-Providers are swapped via the `AVATAR_REGEN_PROVIDER` env var (e.g., `meshy`, `csm`, `rodin`, `tripor`, `stub`).
+Platform providers are loaded by `api/_lib/regen-provider.js`. A provider is used only when its credentials are present, and `POST /api/avatars/regenerate` tries them in order, retrying transient faults, until one accepts the job. The explicit `AVATAR_REGEN_PROVIDER` (if credentialed) leads; the rest follow in the fixed order below.
 
-### Provider function signature
+| Order | Provider | Credentials | Modes | Adapter |
+| ----- | -------- | ----------- | ----- | ------- |
+| 1 | `replicate` | `REPLICATE_API_TOKEN` | a mode is supported when its model resolves (`REPLICATE_<MODE>_MODEL`, built-in default for `reconstruct`) | `api/_providers/replicate.js` |
+| 2 | `gcp` | `GCP_RECONSTRUCTION_URL` and `GCP_RECONSTRUCTION_KEY` | a mode is supported when its worker URL is set (`GCP_*_URL`, for example `GCP_UNIRIG_URL` for `rerig`) | `api/_providers/gcp.js` |
+| 3 | `huggingface` (alias `hf`) | `HF_TOKEN` | per the adapter | `api/_providers/huggingface.js` |
+| 4 | `tripo` (house key) | `TRIPO_API_KEY` | `rerig` lane for auto-rig, never inferred as the primary | `createTripoRegenAdapter` in `regen-provider.js` |
 
-```typescript
-// Each provider exports an async factory function
-export async function createRegenProvider(config) {
-	return {
-		// Accept regeneration request, return job handle
-		submit: async (request) => {
-			// request shape:
-			// {
-			//   userId: string,
-			//   sourceAvatarId: string,
-			//   mode: 'remesh' | 'retex' | 'rerig' | 'restyle',
-			//   params: Record<string, unknown>,
-			//   sourceStorageKey: string,  // R2 path to source GLB
-			// }
+Bring-your-own-key providers are request-scoped and are not in the failover chain. `meshy` (`reconstruct` only) and `tripo` (`reconstruct` and `rerig`) are listed in `BYOK_REGEN_PROVIDERS`; the caller's stored key is resolved with `resolveProviderKey` at submit and again at every status poll, and is never written to the job row. `POST /api/avatars/reconstruct` falls back to the stored BYOK key when no platform provider is configured.
 
-			// return shape:
-			// { jobId: string, eta?: number }
-			return { jobId: 'ext-' + Date.now(), eta: 30 };
-		},
+### Adapter contract
 
-		// Poll job status
-		status: async (jobId) => {
-			// return shape:
-			// {
-			//   status: 'queued' | 'running' | 'done' | 'failed',
-			//   resultGlbUrl?: string,   // temporary signed URL or CDN URL
-			//   textureUrls?: string[],  // optional pre-resolved texture URLs
-			//   error?: string,
-			// }
-			return { status: 'done', resultGlbUrl: 'https://...' };
-		},
-	};
-}
-```
+Each adapter returns an object with these members (see `createRegenProvider` in `api/_providers/replicate.js` for the reference implementation):
 
-### Output requirements
+- `supportsMode(mode)`: boolean, true when the adapter can run `mode`.
+- `supportsMultiview()`: boolean, true when more than one reference image can be fused into one mesh.
+- `submit(request)`: `request` is `{ userId, sourceAvatarId, mode, params, sourceUrl, sourceStorageKey }`. Resolves to `{ extJobId, eta?, backend }`. Failures throw an `Error` carrying a stable `code` and `status` (for example `mode_unconfigured` 501, `invalid_key` 401, `insufficient_credits` 402, `rate_limited` 429), which `classifyProviderError` maps to the masked envelopes above.
+- `status(extJobId)`: resolves to `{ status, resultGlbUrl?, error? }` with `status` one of `queued`, `running`, `done`, `failed` (the GCP adapter may also return `resultImageUrl`). A missing id returns `{ status: 'failed', error: 'missing ext_job_id' }`.
 
-When `status` returns `done`:
-
-- **resultGlbUrl** (required) — HTTP(S) URL to the regenerated GLB file. If temporary signed URL, provider must guarantee it stays valid for at least 24 hours.
-- **textureUrls** (optional) — Array of HTTP(S) URLs to texture files if they differ from those embedded in the GLB.
-
-Provider is responsible for:
-
-1. Storing intermediate results (probably temporary S3 / R2 bucket)
-2. Persisting temporary URLs long enough for the client to register the avatar
-3. Handling cleanup of stale jobs after X days
-
-The client will:
-
-1. Fetch the GLB from `resultGlbUrl` and store it in `avatars` R2 bucket
-2. Register the new avatar via `POST /api/avatars` with `parent_avatar_id = sourceAvatarId`
-3. Delete or archive the old avatar (user decision)
-
-## Candidate providers
-
-Research-stage notes (costs and integration effort unknown):
-
-| Provider    | Specialization         | Notes                                                                            |
-| ----------- | ---------------------- | -------------------------------------------------------------------------------- |
-| **Meshy**   | 3D generation          | Text/image → mesh. API available; evaluate cost/time.                            |
-| **CSM**     | Custom avatar builder  | Photo → avatar. Avalready integrated for `POST /api/onboarding/avaturn-session`. |
-| **Rodin**   | Avatar generation      | Competitors of Meshy; check pricing.                                             |
-| **TripoSR** | Text-to-3D models      | Open-source model; would need self-hosted inference.                             |
-| **Kaedim**  | Automated mesh cleanup | Specifically optimized remeshing for game assets.                                |
-
-Picking a provider is a separate decision and out of scope for this contract. When chosen, create `api/_providers/<name>.js` implementing the shape above, then set `AVATAR_REGEN_PROVIDER=<name>` in Vercel env.
+The status endpoint polls the adapter recorded on the job row (`provider`), not whichever provider currently leads the chain, then downloads the finished GLB, stores it, registers the avatar and sets `result_avatar_id`. Result URLs are checked with `isAllowedProviderResultUrl` before they are fetched.
 
 ## Environment
 
-Add to `.env.local` or Vercel settings. The provider is **auto-detected from
-present credentials** (priority: paid → free). Set `AVATAR_REGEN_PROVIDER`
-explicitly to override.
+Use `.env.local` for local development. In production the variables live on the
+Cloud Run service `three-ws-api`. The provider is **auto-detected from present
+credentials** (priority: paid, then free). Set `AVATAR_REGEN_PROVIDER` explicitly
+to lead the failover order.
 
 ```
-# Explicit override (optional). Auto-detected order is replicate → gcp → huggingface.
+# Explicit override (optional). Auto-detected order is replicate, gcp, huggingface, tripo.
 AVATAR_REGEN_PROVIDER=replicate
 
 # --- Replicate (paid, $0.035/run TRELLIS default) ---
 REPLICATE_API_TOKEN=r8_...
-# Optional — defaults to firtoz/trellis (MIT TRELLIS). Pin a version with owner/name:hash
+# Optional: defaults to firtoz/trellis (MIT TRELLIS). Pin a version with owner/name:hash
 REPLICATE_RECONSTRUCT_MODEL=firtoz/trellis
-# Optional — if APP_ORIGIN is set this is derived. Replicate POSTs done predictions here.
+# Optional: if APP_ORIGIN is set this is derived. Replicate POSTs done predictions here.
 REPLICATE_WEBHOOK_URL=https://three.ws/api/webhooks/replicate
 # REQUIRED if you create the webhook in Replicate dashboard (gives you whsec_…)
 REPLICATE_WEBHOOK_SIGNING_KEY=whsec_…
@@ -212,6 +171,9 @@ REPLICATE_WEBHOOK_SIGNING_KEY=whsec_…
 # --- GCP Cloud Run (self-hosted InstantMesh, see workers/avatar-reconstruction/) ---
 GCP_RECONSTRUCTION_URL=https://avatar-reconstruction-…run.app
 GCP_RECONSTRUCTION_KEY=…
+
+# --- Tripo house key (rerig auto-rig lane only) ---
+TRIPO_API_KEY=…
 
 # --- HuggingFace (free, Space queue, variable wait) ---
 HF_TOKEN=hf_…
@@ -221,12 +183,19 @@ HF_TOKEN=hf_…
 HF_RECONSTRUCT_SPACES=tencent/Hunyuan3D-2.1,JeffreyXiang/TRELLIS:image_to_3d
 ```
 
-## Webhooks (Replicate only — optional but recommended)
+To set a single key on production, update only that key. Never use `--set-env-vars`, which replaces the whole set:
+
+```
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars AVATAR_REGEN_PROVIDER=replicate
+```
+
+## Webhooks (Replicate only, optional but recommended)
 
 When `REPLICATE_WEBHOOK_URL` is configured, every prediction submission asks
 Replicate to POST `/api/webhooks/replicate` when the prediction completes.
 That handler verifies the `webhook-signature` (Standard Webhooks spec), updates
-the `avatar_regen_jobs` row, and — for `reconstruct` jobs — materializes the
+the `avatar_regen_jobs` row, and, for `reconstruct` jobs, materializes the
 avatar inline. The client's status poll then sees `done` + `resultAvatarId`
 on its very next hit without any Replicate API call.
 
@@ -236,34 +205,33 @@ that reconciles the row.
 
 To create the webhook + grab the signing secret:
 
-1. Set `REPLICATE_WEBHOOK_URL=https://three.ws/api/webhooks/replicate` in Vercel.
+1. Set `REPLICATE_WEBHOOK_URL=https://three.ws/api/webhooks/replicate` with `gcloud run services update three-ws-api --region us-central1 --update-env-vars REPLICATE_WEBHOOK_URL=...`.
 2. Replicate dashboard → Webhooks → Add → URL = same → Save.
-3. Copy the `whsec_…` secret → set as `REPLICATE_WEBHOOK_SIGNING_KEY` in Vercel.
-4. Redeploy.
+3. Copy the `whsec_…` secret → set as `REPLICATE_WEBHOOK_SIGNING_KEY` the same way.
+4. The service rolls a new revision automatically when env vars change.
 
-## Database schema (future migration)
+## Database schema
 
-The stub provider and status endpoint assume a `avatar_regen_jobs` table:
+Jobs live in `avatar_regen_jobs`, created by `api/_lib/migrations/20260517000000_avatar_regen_jobs.sql`:
 
 ```sql
-create table avatar_regen_jobs (
-  job_id text primary key,
-  user_id uuid not null,
-  source_avatar_id uuid not null,
-  mode text not null,  -- remesh | retex | rerig | restyle
-  params jsonb,
-  status text not null,  -- queued | running | done | failed
-  result_avatar_id uuid,
-  error text,
-  created_at timestamp default now(),
-  updated_at timestamp default now(),
-  foreign key (user_id) references users(id),
-  foreign key (source_avatar_id) references avatars(id),
-  foreign key (result_avatar_id) references avatars(id)
+CREATE TABLE IF NOT EXISTS avatar_regen_jobs (
+	job_id            text PRIMARY KEY,
+	user_id           uuid NOT NULL,
+	source_avatar_id  uuid NOT NULL,   -- nullable since 2026-05-17-avatar-reconstruct.sql
+	mode              text NOT NULL,
+	params            jsonb,
+	status            text NOT NULL,
+	provider          text,            -- replicate | gcp | huggingface | meshy | tripo
+	ext_job_id        text,            -- provider-side job id
+	result_glb_url    text,            -- temporary URL returned by provider
+	result_avatar_id  uuid,            -- our avatar id after import
+	error             text,
+	created_at        timestamptz NOT NULL DEFAULT now(),
+	updated_at        timestamptz NOT NULL DEFAULT now()
 );
-
-create index on avatar_regen_jobs(user_id);
-create index on avatar_regen_jobs(job_id, user_id);
 ```
 
-This table is not required if using an external provider (e.g., Meshy) for job tracking.
+Indexes: `(user_id, created_at DESC)` and a partial index on `status` for `queued` and `running`. Later migrations add `error_kind` (`input` or `internal`, see `20260811130000_reconstruct_forge_registration.sql`) and drop the `NOT NULL` on `source_avatar_id`, because a `reconstruct` job starts from photos and has no source avatar.
+
+Retention: `api/cron/db-retention.js` deletes `done` and `failed` jobs older than 30 days and, after one day, strips the multi-megabyte base64 `images` and `image` keys out of the `params` of terminal jobs. In-flight jobs are advanced by `api/cron/reconstruct-sweep.js` and the Replicate webhook (`api/webhooks/replicate.js`).

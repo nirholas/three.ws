@@ -1,8 +1,21 @@
 # Chat gateways
 
-Talk to your three.ws agent from a chat app. A paired chat can ask for balances and portfolio, run `/pause` and `/kill`, approve or deny requests your spend policy holds, send voice notes and photos, and receive account notifications. Telegram and Discord are live today. Slack, WhatsApp, Signal, SMS and email share the same core.
+Talk to your three.ws agent from a chat app. A paired chat can ask for balances and portfolio, run `/pause` and `/kill`, approve or deny requests your spend policy holds, send voice notes and photos, and receive account notifications. Telegram and Discord are built and tested end to end; the worker that answers them ships on owner approval (see below). Slack, WhatsApp, Signal, SMS and email share the same core.
 
 The API only verifies and queues. The [agent-gateway worker](../workers/agent-gateway/README.md) drains the queue, runs the turn and replies.
+
+## Before and after the worker runs
+
+**Before (today, measured 2026-11-04).** The `agent-gateway` worker is not deployed and the bot has no webhook set. A message to the bot gets no reply: Telegram holds it (10 updates were waiting when this was measured) and discards each one after 24 hours. The web side works on its own: Connections, Linked devices and Telegram sign-in do not need the worker.
+
+**After the owner ships it.** The worker deploys first, then `npm run webhook:telegram` points the bot at `POST /api/gateway/telegram`. From then on:
+
+- A message or command gets its answer in the same chat, usually within seconds. Replies in one chat arrive in the order the messages were sent.
+- A message Telegram resends never gets a second answer.
+- A message that waited longer than six hours (anything still held from before the webhook was set, or anything queued during a long outage) is not answered as if it were new. The chat gets one reply: "Sorry, I was offline when you sent this and missed it. I am back now: send it again and I will answer." Nothing in that backlog runs: an old `/buy` never trades and an old `/start` never issues a pairing code. Group chatter and forwards from that window are dropped without a reply. Approval requests and notifications are exempt; they check their own deadlines.
+- If a reply fails for a reason on our side, the chat is told to send the message again instead of being left in silence.
+
+Discord follows the same path once its bot variables are configured on the API service.
 
 ## Platform capabilities
 

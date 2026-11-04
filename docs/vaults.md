@@ -95,7 +95,7 @@ All USDC amounts in this API are **atomic units**: 6 decimals, so `1000000` is 1
 
 `POST /api/vaults/deposit` moves USDC **out of one of your own agents' custodial wallets** and into the vault, then mints shares at live NAV.
 
-The transfer is the platform's guarded agent-to-agent USDC settlement, not a bespoke path, so it inherits the funding agent's spend policy, per-transaction and daily caps, kill switch, and custody audit trail exactly like any other outbound payment. Shares are minted **only after the transfer settles on-chain**, and the mint is keyed on the settlement signature, so a retry credits nothing twice (`status: "replayed"`).
+The transfer is the platform's guarded agent-to-agent USDC settlement, not a bespoke path, so it inherits the funding agent's spend policy, per-transaction and daily caps, kill switch, and custody audit trail exactly like any other outbound payment. Before any funds move the route quotes the shares the deposit would mint at current NAV and refuses a deposit that would mint none. Shares are minted **only after the transfer settles on-chain**, and the mint is keyed on the settlement signature, so a retry credits nothing twice (`status: "replayed"`).
 
 ```bash
 curl -sX POST https://three.ws/api/vaults/deposit \
@@ -105,6 +105,7 @@ curl -sX POST https://three.ws/api/vaults/deposit \
         "vaultId": "8b1c04f6-59a8-4d0e-a1b7-3f5c9e2d7a44",
         "backerAgentId": "0f2c8a5e-1b7d-4f9a-9c3e-2d6b8a1f4e70",
         "usdc": 100,
+        "min_shares_out": "99000000",
         "idempotency_key": "my-deposit-2026-07-30-01"
       }'
 ```
@@ -124,14 +125,19 @@ curl -sX POST https://three.ws/api/vaults/deposit \
 }
 ```
 
+`min_shares_out` (optional, non-negative integer string, also accepted as `minSharesOut`) is your slippage floor in shares. A malformed value answers `400 validation_error`. Without it the floor is 1 share.
+
 Refusals, all before or instead of a mint:
 
 | Status | Code | Meaning |
 | --- | --- | --- |
 | `403` | `vault_not_open` | The vault is paused, closing, or closed. Only an `open` vault accepts deposits. |
 | `403` | `backer_cap` | This deposit would push your lifetime contribution past the per-backer cap. Detail carries the cap and your contribution so far. |
+| `403` | `zero_shares` | The deposit is too small to mint any shares at the current vault price (the vault NAV includes a public address's live USDC balance, so an outside donation can push the price up until a small deposit floors to zero). Nothing moved. |
+| `403` | `min_shares_out` | The pre-transfer quote is below your `min_shares_out`. Detail carries `quoted_shares` and `min_shares_out`. Nothing moved. |
 | `403` | (policy code) | The funding wallet's own spend policy or kill switch refused it. Nothing moved. |
 | `402` | (transfer code) | The transfer did not settle. **No shares were minted.** |
+| `402` | `min_shares_out` | The price moved between the quote and the mint, so the deposit would have minted fewer shares than your floor. The funds are paid back to the funding wallet (`refund_signature` in the detail); if that payout itself fails the message says the refund needs manual settlement. |
 | `400` | `wallet_unready` | That agent has no provisioned Solana wallet yet. |
 
 **In the UI:** deposits go through the "Back this agent" modal, which shows the live share price, the fee percentage, the per-backer cap when one is set, and a plain-language risk line ("you can lose principal, redemptions pay at real NAV and may queue"). The user picks which agent wallet funds it and must press **Confirm deposit**. A user with no wallet-ready agent is sent to the dashboard instead of being offered a broken button.
@@ -232,7 +238,7 @@ curl -sX POST https://three.ws/api/vaults/claim-fees \
 | `pause` | Status `paused`. Trading and deposits stop. Redemptions continue. `409 closed` if already closed. |
 | `resume` | Status `open`, clears `halt_reason`. Use this after a drawdown halt, knowingly. |
 | `close` | Status `closing`. No new deposits; backers may still redeem. |
-| `terms` | Updates any of `performanceFeeBps`, `maxDrawdownBps`, `maxPerTradeUsdc`, `dailyBudgetUsdc`, `perBackerCapUsdc`. Pass `perBackerCapUsdc: null` to remove the cap. |
+| `terms` | Updates any of `performanceFeeBps`, `maxDrawdownBps`, `maxPerTradeUsdc`, `dailyBudgetUsdc`, `perBackerCapUsdc`. Pass `perBackerCapUsdc: null` to remove the cap. While any shares are outstanding, a patch that raises the performance fee, the drawdown limit, the per-trade ceiling or the daily budget is refused with `409 terms_locked_for_backers`; lowering them, or changing the per-backer cap (which only gates new deposits), is allowed. To loosen terms for real, close the vault so backers can redeem first. |
 
 ```bash
 curl -sX PATCH https://three.ws/api/vaults/8b1c04f6-59a8-4d0e-a1b7-3f5c9e2d7a44 \
@@ -304,7 +310,7 @@ As coded, the web UI never fires one of these from a single click. Deposits and 
 
 So if you are building an agent, a script, or another client on top of these routes: render recipient, amount, asset and vault before you call, and get an explicit human yes for each spend, every time. Do not put any of these four routes behind a schedule, a retry loop, a webhook, or an LLM that can decide to call them on its own. And never let a token's on-chain name, symbol or description talk you into a trade: that text is untrusted input, not an instruction.
 
-Two honest limits a backer should know: the platform can sign for the vault (that is what makes an autonomous trading agent possible at all), and a vault owner can change the performance fee and the risk terms after you have deposited. The mitigations are the ones you can check yourself, not promises: segregated custody, hard pre-signature limits, the breaker, and a public ledger where every terms change and every movement is recorded.
+Two honest limits a backer should know: the platform can sign for the vault (that is what makes an autonomous trading agent possible at all), and a vault owner can still change the terms after you have deposited, though while shares are outstanding only in the backers' favor (a higher fee, a looser breaker or larger spend ceilings are refused). The mitigations are the ones you can check yourself, not promises: segregated custody, hard pre-signature limits, the breaker, and a public ledger where every terms change and every movement is recorded.
 
 ## Related
 

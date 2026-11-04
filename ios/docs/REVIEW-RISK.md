@@ -156,15 +156,17 @@ except killing it.
   From the user's side it is final: every avatar, agent and widget is taken
   down, the handle is released, every session and refresh token is revoked,
   household access is removed, and no sign-in path (password, wallet, SSO)
-  will open the account again. The user row itself is kept as a tombstone with
-  its email, so a wallet or SSO sign-in answers `account_deleted` instead of
-  quietly creating a fresh account for the same person. Guideline 5.1.1(v)
-  allows keeping data for a stated reason. The privacy policy
-  (`/legal/privacy`, section 5) promises deleted accounts are purged after 30
-  days, and no job does that purge today (`api/cron/db-retention.js` does not
-  touch `users`). Close that gap before submitting, either with a purge job or
-  by rewording section 5 to describe the tombstone, because a policy that
-  promises a deletion the system never performs is the finding to avoid.
+  will open the account again. For 30 days the user row is kept as a tombstone
+  (the recovery window section 5 of `/legal/privacy` states), so a wallet or
+  SSO sign-in answers `account_deleted` instead of quietly creating a fresh
+  account for the same person. Guideline 5.1.1(v) allows keeping data for a
+  stated reason. After 30 days the daily `api/cron/purge-deleted-accounts.js`
+  job permanently purges the account (`api/_lib/account-purge.js`): every R2
+  upload, the user row and everything that cascades from it, with financial
+  records kept but unlinked and stripped of the user's email and wallets, and
+  legal acceptance records kept as the policy says. Each purge leaves only a
+  hashed receipt in `account_purge_log`. The retained-data list is in
+  `docs/account-deletion.md`.
   Reviewers test deletion by hand; walk it on the review build with a
   throwaway account.
 - **Sign in with Apple (guideline 4.8).** The login page offers GitHub and X

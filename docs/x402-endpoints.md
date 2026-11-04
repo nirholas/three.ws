@@ -42,8 +42,10 @@ token chooser whenever a resource quotes more than one asset on a network, so a
 buyer can actually pay in either. `paidEndpoint` lists networks Solana first, then
 Base; a handler passes `networks` only to narrow that set, and
 `tests/x402-solana-first-ordering.test.js` fails any handler that pins a non-Solana
-network first. The relevant config (see
-[Configuration](configuration.md)):
+network first. A route that sets
+`mpp: true` (currently `gas-oracle`) also answers an MPP Solana `charge` challenge
+beside x402 at the same price, see [MPP on Solana](mpp-solana.md). The relevant
+config (see [Configuration](configuration.md)):
 
 | Key                                                  | Meaning                              |
 | ---------------------------------------------------- | ------------------------------------ |
@@ -181,7 +183,7 @@ GeckoTerminal, DefiLlama, Raydium) instead of a single DexScreener call.
 | `/api/x402/stablecoin-health`   | $0.005  | Peg deviation (bps) + on-peg/drifting/depegged verdict + supply flow per stablecoin, depeg alerts. |
 | `/api/x402/hack-check`          | $0.002  | Protocol name → clean / incident-history verdict over the full DeFi exploit database.           |
 | `/api/x402/market-heatmap`      | $0.002  | Top coins with 1 h/24 h/7 d momentum + breadth stats (CoinGecko→CoinPaprika failover).          |
-| `/api/x402/gas-oracle`          | $0.001  | Live fee tiers for Ethereum + Base (real `eth_feeHistory`) and Solana priority-fee percentiles.  |
+| `/api/x402/gas-oracle`          | $0.001  | Live fee tiers for Ethereum + Base (real `eth_feeHistory`) and Solana priority-fee percentiles. Also answers an MPP Solana `charge` challenge on the same URL ([MPP on Solana](mpp-solana.md)). |
 | `/api/x402/market-mood`         | $0.002  | Fear & Greed × 192-feed news sentiment composite (0–100) with divergence flag + driver headlines. |
 | `/api/x402/news-pulse`          | $0.002  | Per-ticker news coverage: mentions, velocity vs prior window, sentiment split, top headlines.    |
 | `/api/x402/robinhood-portfolio` | $0.002  | Multiplier-correct Stock Token portfolio for a Robinhood Chain wallet: each symbol's true position (balance x ERC-8056 uiMultiplier) at on-chain Chainlink NAV, plus total USD value. |
@@ -265,7 +267,7 @@ datapoints at **$0.0005** USDC each by default, overridable per family with
 | `/api/x402/cosmetic-purchase`                                                                                                                                             | per item       | Buy a cosmetic; the price comes from the catalog rarity, never the client. Ownership is recorded to the `account` query param. A wallet that already paid re-confirms for free with SIWX, but only for itself or for an account that already owns the item, so one purchase can never unlock the cosmetic on a third account. |
 | `/api/x402/tutor`                                                                                                                                                         | $0.01 / answer | Paid tutoring; a session accumulates a running tab across answers.                                                          |
 | `/api/x402/spend-session`                                                                                                                                                 | $0.01          | Open a metered spend session.                                                                                               |
-| `/api/x402/llm-proxy`                                                                                                                                                     | $0.005         | Paid LLM proxy.                                                                                                             |
+| `/api/x402/llm-proxy`                                                                                                                                                     | $0.005         | Paid LLM proxy. `model` must be `fast` (default), `smart` or the pinned Haiku id `claude-haiku-4-5-20251001`; anything else is `400 invalid_model` so a caller cannot pick a model the rate was not priced for. Also offers an `upto` Solana accept: escrow a cap (5x the flat price), pay 5 atomics per token used (minimum 500), and the rest is refunded ([x402 upto](x402-upto.md)). |
 | `/api/x402/notify`                                                                                                                                                        | $0.001         | Notification gateway (Telegram + the autonomous loop's `canary` heartbeat lane).                                            |
 | `/api/x402/wallet-connect`                                                                                                                                                | $0.001         | Wallet-bridge connect probe.                                                                                                |
 | `/api/x402/permit2-paid-demo`                                                                                                                                             | $0.001         | Reference endpoint for the Permit2 / EIP-2612 gasless-approval scheme.                                                      |

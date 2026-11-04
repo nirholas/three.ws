@@ -1,5 +1,7 @@
 # Security audit report: three.ws (run-1)
 
+**Closure:** the 17 records, 15 fingerprints, 7 surfaces and the hardening notes below are tracked in [CLOSURE.md](CLOSURE.md) with the fixing commit and regression test for each. The text below is the original report and is kept as written.
+
 **Candidate validation is incomplete.** The 50-agent budget ran out after 17 of 32 candidates were independently re-checked. These 15 fingerprints were reported by hunters but never independently verified. They are kept out of findings.json and listed in their ledger units as unresolved:
 
 - home-call-gate-first-entity-only-bypass

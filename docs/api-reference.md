@@ -256,7 +256,7 @@ The endpoint allows cross-origin `GET` and `POST` requests and requires no authe
 curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
 ```
 
-Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->709<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->714<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
 
 ## Asset Catalog API
 
@@ -573,6 +573,24 @@ node scripts/verify-agent-manifest.mjs --cid bafy...
 Full reference: [Agent Manifest](./agent-manifest.md#signed-manifests-v03). Wire format: [specs/AGENT_MANIFEST.md](../specs/AGENT_MANIFEST.md#signed-envelope-v03).
 
 ---
+
+### Your own linked wallet: `GET /api/me/wallet`
+
+```
+GET /api/me/wallet?network=mainnet|devnet
+```
+
+The signed-in account's primary linked Solana wallet with live SOL and USDC balances.
+Read only: the platform never holds this key. Needs a session or a bearer with
+`wallet:read`; rate limited per user (`429` with `retry_after`). `network` defaults to
+`mainnet`. Cached `private, max-age=15`.
+
+```json
+{ "data": { "linked": true, "address": "…", "network": "mainnet", "sol": 0.42, "lamports": "420000000",
+            "usdc": 12.5, "usdc_raw": "12500000", "sol_usd": 150.1, "usd_total": 75.54 } }
+```
+
+With no linked wallet, `data` is `{ "linked": false, "network": "mainnet" }`.
 
 ### Link wallet to agent
 
@@ -2023,6 +2041,23 @@ labeled with the prompt.
 | `502`  | `generation_failed`              | The lane could not start the job; retry is free                      |
 | `503`  | `not_configured` / `lane_timeout`| Lane unavailable on this deployment, or slow to accept; retry later  |
 
+### Forge in a world: the `world` field
+
+`POST /api/forge` accepts an optional `world` string (letters, digits, `: _ . -`, up
+to 120 chars) when the submit comes from a [/play](https://three.ws/play) world. An
+in-world submit is also held to a per-player cooldown (one generation per 20 s, keyed
+to the signed-in user, else the forge client id) and a per-world cap (4 admissions per
+90 s, the lifetime of one draft job). A malformed `world` is
+`400 invalid_world`. A refusal is the standard `429 rate_limited` body plus a `scope`:
+
+```json
+{ "error": "rate_limited", "error_description": "You just forged one. Wait a moment before forging another.", "retry_after": 14, "scope": "player" }
+```
+
+`scope` is `player` (your own cooldown) or `world` (the room is full; the cooldown hit
+is handed back, so being turned away does not start one). Wait `retry_after` seconds
+(also the `Retry-After` header). Source: `api/_lib/forge-world-limits.js`.
+
 ### Model quality gate — `POST /api/forge-quality-check`
 
 ```
@@ -2113,6 +2148,11 @@ the prompt). `FORGE_QUALITY_GATE` chooses which lanes pay for the vision pass:
 | `high` | Only the High tier is vision-scored; free lanes keep only the deterministic floor. |
 | `all` | Every tier is vision-scored unconditionally (no fast-scorer shortcut). |
 | `off` | No vision QA anywhere (the deterministic floor still runs). |
+
+The deterministic pass measures the mesh in world units: it applies each node's
+transform before taking the bounding box, because a meshopt or
+`KHR_mesh_quantization` file stores integer positions and relies on the node scale to
+get back to metres, so raw accessor min/max can be off by orders of magnitude.
 
 On a failing verdict the router runs a bounded best-of retry
 (`FORGE_QUALITY_GATE_MAX_RETRIES`, default 1, clamped 0-2), keeping the
@@ -5556,6 +5596,36 @@ GET answers `405` with `allow: POST, DELETE`.
 
 **DELETE** — terminate session.
 
+### Unified endpoint
+
+```
+POST /mcp          (also POST /api/mcp/all)
+GET  /mcp
+DELETE /mcp
+```
+
+Every tool of every hosted three.ws MCP server behind one URL and one sign-in
+([api/mcp/all.js](../api/mcp/all.js)). Pricing, payment replay protection and
+settlement are identical to `/api/mcp`, and a priced tool costs the same on either
+URL. Unlike `/api/mcp`, an authenticated `GET` opens the resource-update stream
+instead of answering `405`. A browser `GET /mcp` that accepts `text/html` shows the
+tools page. The per-server endpoints (`/api/mcp`, `/api/mcp-3d`, and the rest) keep
+working unchanged.
+
+### Tool-group settings
+
+```
+GET /api/mcp-tools
+PUT /api/mcp-tools     { "groups": { "<group id>": true | false | null } }
+```
+
+The account-wide switches behind [/settings/mcp-tools](https://three.ws/settings/mcp-tools).
+`GET` returns `{ groups: [{ id, label, summary }], account: { <group id>: boolean }, key: null }`;
+a group absent from `account` follows the tier default (read and write tools on,
+financial tools off). `PUT` merges a sparse change: `true` turns a whole group on
+(financial tools included), `false` turns it off, `null` restores the default, and an
+unknown group id is `400`. A save takes effect on the next `tools/list` and `tools/call`.
+
 ### Available tools
 
 | Tool                    | Scope required   | Description                                 |
@@ -8232,13 +8302,15 @@ curl -s -b cookies.txt 'https://three.ws/api/users/referrals?funnel_days=7' | jq
 
 ---
 
-## Transaction API: build and explain
+## Transaction API: build, submit and explain
 
-Three endpoints the in-app wallet and the chat wallet tools
+Endpoints the in-app wallet and the chat wallet tools
 ([chat/src/tools.js](../chat/src/tools.js)) use to prepare a transaction for the
-user's wallet to sign, and to read one back in plain English. **The server never
-signs and never broadcasts**: it returns unsigned bytes, and the wallet owns the
-approval.
+user's wallet to sign, to read one back in plain English, and to settle one the
+caller signed. **The server never signs for these routes**: it returns unsigned
+bytes, and the wallet owns the approval. The only broadcast is
+[`POST /api/tx/submit`](#submit-a-transaction-you-signed), which sends bytes the
+caller already signed.
 
 ### Build a Solana transfer
 
@@ -8257,6 +8329,34 @@ transaction moving SOL or any SPL token from `sender` to `recipient`.
 | `token` | string | `SOL` | `SOL` for a native transfer, otherwise the SPL mint address. |
 | `memo` | string | none | Attached as an SPL Memo instruction. Max 512 bytes. |
 | `network` | string | `mainnet` | `mainnet` or `devnet`. |
+
+**`signer: "external"`.** Both build routes accept `signer: "external"` (and an optional
+`agent_id` UUID of an agent you own). That form also accepts a bearer API key or OAuth
+token holding `wallet:write`, not only a session cookie, and is rate limited as a
+custody write. Instead of the bare transaction it simulates the build, stores the exact
+message bytes, and returns a prepared record for the wallet to sign and
+[submit](#submit-a-transaction-you-signed):
+
+```json
+{
+  "tx_id": "0b6f...",
+  "signer": "external",
+  "kind": "transfer",
+  "network": "mainnet",
+  "signer_pubkey": "<wallet>",
+  "transaction": "AQAAAAAA...",
+  "encoding": "base64",
+  "version": "legacy",
+  "summary": {},
+  "simulation": { "ok": true, "err": null, "units_consumed": 450, "logs": [] },
+  "last_valid_block_height": 417508552,
+  "expires_at": "2026-11-04T16:30:00.000Z",
+  "submit": { "method": "POST", "path": "/api/tx/submit", "body": { "tx_id": "0b6f...", "signed_transaction": "<base64>" } }
+}
+```
+
+A build whose simulation fails answers `422 simulation_failed`. The record lives about
+150 seconds, roughly one blockhash lifetime.
 
 The mint's owning program is read from the chain, so **Token-2022 mints work**,
 including `$THREE` and every other pump.fun-era launch. The transfer instruction is
@@ -8327,6 +8427,37 @@ shared lite-api client ([api/_lib/token/jupiter.js](../api/_lib/token/jupiter.js
 found no route for the pair and size, `swap_failed` (422) that it quoted but could
 not build, `invalid_route` (400) that both mints are the same, and `upstream_error`
 (502) that Jupiter was unreachable.
+
+### Submit a transaction you signed
+
+```
+POST /api/tx/submit      { "tx_id": "...", "signed_transaction": "<base64>" }
+GET  /api/tx/:id         status of a prepared or submitted transaction
+GET  /api/tx/submit?tx_id=...
+```
+
+Session cookie or a bearer key with `wallet:write` for the POST (`wallet:read` for the
+GET). `signed_transaction` is the base64 transaction from the build, signed, at most
+4096 characters. The server proves the expected key signed it, checks the signed
+message still carries every prepared instruction (wallets may add instructions such as
+priority fees, never drop or alter one), broadcasts, confirms, and reconciles the
+result into the custody ledger. The response is `{ "data": { ...status, "ledger": { ... } } }`
+where `status` is the same shape as the prepared record's `tx_id`, `kind`, `network`,
+`status`, `signature`, `message_modified`, `custody_event_id`, `error`, and timestamps.
+
+| Code | Status | When |
+|---|---|---|
+| `invalid_parameter` | 400 | `tx_id` is not a UUID, or `signed_transaction` is missing or oversized. |
+| `invalid_transaction` | 400 | The bytes are not base64 or do not decode as a Solana transaction. |
+| `not_found` | 404 | No prepared transaction with that `tx_id` for this account. |
+| `expired` | 410 | The blockhash window passed before it was signed. Prepare again. |
+| `in_flight` | 409 | The transaction is already being submitted. Poll the GET. |
+| `already_failed` | 409 | An earlier attempt failed. Prepare a new one. |
+| `transaction_mismatch` / `invalid_signature` | 422 | The signed message dropped or changed a prepared instruction, or the expected key did not sign. |
+| `broadcast_failed` / `reverted` | 422 | The network rejected it, or it landed and reverted. |
+
+Perps and prediction-market routes answer `409 platform_signing_disabled` when the agent's signing
+mode is `external` or `session`, so the platform never signs for a key it does not hold.
 
 ### Explain a transaction
 
@@ -10684,7 +10815,14 @@ adds `Idempotent-Replayed: true`.
 | Automations | `POST/GET /automations`, `GET /agents/:id/automations`, `GET/PATCH/DELETE /automations/:id`, `POST /automations/:id/trigger` |
 | Skills | `GET /skills`, `GET /skills/community[/:slug]`, `GET/POST /agents/:id/skills/custom`, `POST /agents/:id/skills/custom/import`, `GET/PATCH/DELETE /agents/:id/skills/custom/:skillId` |
 | Webhooks | `GET/POST /webhooks`, `GET/PATCH/DELETE /webhooks/:id`, `POST /webhooks/:id/rotate-secret`, `POST /webhooks/:id/test`, `GET /webhooks/:id/deliveries`, `GET /webhooks/deliveries/:id`, `POST /webhooks/deliveries/:id/replay`, `GET /webhooks/events` |
-| Other | `GET /strategies[/:id]`, `GET /models`, `GET /me` |
+| Other | `GET /strategies[/:id]`, `GET /models`, `GET /me`, `GET /me/free-tier` |
+| Account | `GET /me/usage` (plan limits, counts, LLM spend this month), `GET /me/budget` (credit balance, lifetime totals, free allowance), `GET /me/transactions` (credit ledger, paged), `GET /me/integrations`, `PUT/DELETE /me/integrations/:provider`, `POST /me/link-code` (mint an eight-letter pairing code, ten minutes), `POST /me/link-code/redeem` (public, the code is the credential). Scope `profile`. |
+| Intel | `GET /intel/price?mint=`, `GET /intel/top-movers?window=&board=&limit=`, `GET /intel/indicators?mint=&indicators=rsi,ema,sma,macd,bbands&interval=`, `GET /intel/signals?mint=`, `GET /intel/anomalies?window=`, `GET /intel/macro?window=`. Scope `agents:read`. Same data layer as the trading MCP tools and `/radar`; indicators are computed server-side with `trading-signals`. A mint with no market answers with a typed refusal (`no_market`, `no_candles`), never a made-up value. |
+| Wallet (read only) | `GET /agents/:id/wallet`, `GET /agents/:id/wallet/history`. Scope `wallet:read`. Swap quotes are `POST /api/v1/trading/swap/quote`. |
+
+Swap execution, transfers and withdrawal-address changes are deliberately not
+routes on this API; they live in the MCP wallet tools and the dashboard, behind
+an explicit confirmation.
 
 Passing `schedule` (a cron expression) to `POST /agents/:id/runs` creates an
 automation that starts the run on that schedule and returns it.

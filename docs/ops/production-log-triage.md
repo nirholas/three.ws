@@ -581,8 +581,13 @@ HTTP 502 GET /api/pump/trending?limit=48&rich=1
   first, then falls back to the pump.fun board through the shared,
   cross-instance reader [api/_lib/pump-feed-fetch.js](../../api/_lib/pump-feed-fetch.js),
   which already retries once honoring `Retry-After` and serves a stale board
-  for up to 10 minutes after both live sources fail. A 502 only fires when
-  Birdeye, pump.fun, AND the stale cache are all empty at once.
+  for up to 10 minutes after both live sources fail. Since 2026-11-03 the rich
+  lane (`?rich=1`) also falls through to the `pump_coin_intel` recorder
+  (`getTrendingRichFromRecorder()` in
+  [api/_lib/pump-trending.js](../../api/_lib/pump-trending.js)) and answers 200
+  with `stale: true, source: 'recorder'` (market cap left null, never invented),
+  as the thin lane already did. A 502 only fires when Birdeye, pump.fun, the
+  stale cache AND the recorder are all empty at once.
 - **What it means:** usually the same Birdeye compute-unit exhaustion as
   `pump-price-history-upstreams-502` landing at the same moment pump.fun's
   frontend feed is also rate-limiting the shared Cloud Run egress IP, on an
@@ -824,6 +829,7 @@ Container failed to become healthy. Startup probes timed out after 4m (1 attempt
 
 - **Source:** [api/_lib/http.js](../../api/_lib/http.js) `wrapCron({ requireWriteCapacity: true })`, via `isStoragePressured()` in [api/_lib/db.js](../../api/_lib/db.js). Emitted by the write-heavy crons that opt into the preflight: `launcher-tick`, `coin-intel-observe`, `smart-money-rollup`, `recompute-reputation`, `intel-learn`.
 - **What it means:** the Neon branch is over its high-water mark (`DB_RETENTION_HIGH_WATER_MB`, default 470). Rather than run a full write-tick that would fail per-row with SQLSTATE 53100 and flood the logs, each write-heavy cron **preflight-skips** with a single warn and a healthy heartbeat (uptime reads it as up, not stalled). [api/cron/db-retention.js](../../api/cron/db-retention.js) runs every 15 min, tightens its retention window to the floor under pressure, DELETEs + VACUUMs, and the next tick resumes once size drops back under the mark. In the 2026-07-05 export db-retention was scheduled and returning `200` (~3.5 s/run) the whole window — the valve is working; the branch is simply sitting above the mark because the live data footprint exceeds it and Neon's storage GC is not instant.
+- **There is a health sensor for this now (2026-11-03).** `/api/healthz` carries a `database_storage` subsystem ([api/_lib/ops/database-storage-health.js](../../api/_lib/ops/database-storage-health.js)), fed by the last `db-retention` run: `ok` below 75% of the mark, `degraded` from 75% to 100%, `down` above it (the crons are skipping right now). Its detail names the three largest tables and the last retention run, so a `degraded` reading is the cue to act before the skips start.
 - **Check the mark against the REAL cap first (2026-07-29).** The high-water mark is a config value, not a measurement, and it has been set to a phantom cap before. Confirm both numbers before touching anything else:
 
   ```sh
@@ -897,8 +903,10 @@ ws error: Unexpected server response: 301
 ## 🟢 `[balances] helius quota/rate-limited — skipping it … using public RPC`
 
 - **Source:** [api/_lib/balances.js](../../api/_lib/balances.js) (and the token-market path).
-- **What it means:** Helius hit `max usage reached`; the code backs off Helius for
-  a few minutes and serves from the **public Solana RPC** in the meantime.
+- **What it means:** Helius hit `max usage reached`; the code backs off Helius
+  for 10 minutes (the balances module's own breaker; the shared rotating router
+  probes a max-usage 429 for 30s and benches the lane for 6h only on a repeat
+  failure, see [solana-rpc-lanes.md](solana-rpc-lanes.md)) and serves from the **public Solana RPC** in the meantime.
 - **Resolve:** 🟢 nothing required — the public-RPC fallback is working. 🟡 raise
   the Helius quota to avoid the degraded window.
 - **But do not read this line as "only Helius is affected."** It watches one
@@ -999,6 +1007,10 @@ ws error: Unexpected server response: 301
   The monitor now classifies it `bonding-upstream-unavailable-503`
   (self-healing). Escalate only if it persists for the same mint after the
   pump.fun public frontend itself is reachable again;
+  Since 2026-11-03 a mint the on-chain reader rules out (`not_a_pump_mint`)
+  answers `400 not_pumpfun_mint` instead of this 503, so pollers stop retrying a
+  foreign mint every 15s; `no_curve` stays a 503 because a graduated coin with a
+  failed Jupiter read lands there too.
   [api/crypto/bonding.js](../../api/crypto/bonding.js) and
   [api/_lib/pump-bonding.js](../../api/_lib/pump-bonding.js) are the handler
   and composition logic. Regression-covered in
@@ -1478,7 +1490,9 @@ ERROR  502 POST /api/pump/launch-agent
 
 - **Source:** `/api/3d/generate` self-calls `/api/forge`, whose reference-image
   step ([api/_lib/forge-reference-image.js](../../api/_lib/forge-reference-image.js))
-  tries Vertex, then falls through to the text-to-image ladder
+  tries Vertex (model id from [api/_lib/image-model.js](../../api/_lib/image-model.js):
+  `gemini-3.1-flash-image`, with `gemini-2.5-flash-image` tried only when Vertex
+  says the primary is not served), then falls through to the text-to-image ladder
   ([api/_mcp3d/text-to-image.js](../../api/_mcp3d/text-to-image.js)): NIM FLUX,
   HF fal-ai, HF nscale, keyless Pollinations, Replicate. A 502 means every rung
   the request reached failed.

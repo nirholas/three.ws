@@ -382,6 +382,7 @@ Request body:
 | `url` | string | yes | HTTPS only, max 2048 characters, must resolve to a public address |
 | `events` | string[] | no | empty or omitted = **all events**; an unknown event type is rejected, it is never silently dropped |
 | `description` | string | no | trimmed, truncated to 200 characters |
+| `bearer_token` | string | no | write-only; sent as `Authorization: Bearer <token>` on every delivery (a [Grok Bot routine trigger](./grok-bot.md#wake-grok-bot-from-threews-events) needs it). 8 to 512 visible ASCII characters, a pasted `Bearer ` prefix is stripped. Stored encrypted; responses carry `has_bearer_token` instead. The v1 API takes it as `bearerToken` |
 
 The URL is checked against SSRF at registration time: a hostname that resolves
 to a private, loopback, link-local, or cloud-metadata address is rejected with
@@ -443,6 +444,9 @@ Partial update. Session + CSRF required. Any subset of:
   a `400` and an empty array resets the webhook to all events)
 - `active` (boolean; pause or resume delivery)
 - `description`
+- `bearer_token` (a string sets or replaces it, `null` or `""` removes it,
+  leaving it out keeps it; never returned, `has_bearer_token` says whether one
+  is set)
 
 A body with no recognized fields is a no-op that returns the current webhook.
 Response, `200`: `{ "webhook": { … } }` with `updated_at` refreshed.
@@ -468,6 +472,7 @@ Deliveries are `POST` requests in the
 | `webhook-timestamp` | unix epoch seconds |
 | `webhook-signature` | `v1,{spec signature} v1,{legacy signature}`, space separated; accept either |
 | `user-agent` | `three.ws-webhooks/1.0` |
+| `authorization` | `Bearer <token>`, only when the webhook has a `bearer_token` |
 
 Body:
 

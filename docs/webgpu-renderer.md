@@ -63,7 +63,7 @@ The harness loads `/restyle?bench` three ways (default, `?renderer=webgpu`, `?re
 
 ### Results (2026-10-24, software adapter)
 
-Headless Chromium with SwiftShader, 384x512 target, 200 frames, same model. This is a software rasterizer, so it compares the two code paths and is not GPU hardware data. Run the command above with `--adapter hardware` on a machine with a GPU for hardware numbers.
+Headless Chromium with SwiftShader, 384x512 target, 200 frames, same model. This is a software rasterizer, so it compares the two code paths and is not GPU hardware data. Hardware numbers are in the 2026-11-04 section below.
 
 | Case | Backend | Render ms/frame (2 runs) | Mean diff vs default | Silhouette overlap | Console errors |
 | --- | --- | --- | --- | --- | --- |
@@ -93,4 +93,35 @@ Headless Chromium with SwiftShader, 384x512 target, 60 frames, `/avatars/cz.glb`
 | `<agent-3d renderer="webgpu">` | WebGPU | 270.8 | 115.2 | n/a | n/a | 0 |
 | `<agent-3d renderer="webgl">` + `?renderer=webgpu` | WebGL2 | 174.2 | 802.8 | n/a | n/a | 0 |
 
-An earlier 30-frame run of the same build measured the WebGPU case at 0.05 / 255 mean diff and 0.9986 silhouette overlap; the residual difference is a sub-pixel camera offset between page loads, not shading. The TSL cinematic chain is consistently several times cheaper than the WebGL2 EffectComposer chain on the software adapter. Hardware GPU numbers need a run of the command above with `--adapter hardware` on a machine with a GPU.
+An earlier 30-frame run of the same build measured the WebGPU case at 0.05 / 255 mean diff and 0.9986 silhouette overlap; the residual difference is a sub-pixel camera offset between page loads, not shading. The TSL cinematic chain is consistently several times cheaper than the WebGL2 EffectComposer chain on the software adapter.
+
+### Results (2026-11-04, hardware: NVIDIA L4)
+
+Google Compute Engine `g2-standard-8` with one NVIDIA L4 (us-east4-a), NVIDIA driver 580.178.04 server, headless Chromium 156 (`chromium` channel) through Vulkan, 384x512 target, 200 frames, 2 runs per case. The probe reported the NVIDIA adapter on both WebGPU and WebGL2 (ANGLE Vulkan) for every case. Commands:
+
+```
+node scripts/viewer-renderer-bench.mjs --base http://localhost:3000 --adapter hardware --frames 200
+node scripts/renderer-bench.mjs --base http://localhost:3000 --adapter hardware --frames 200
+```
+
+Main viewer and `<agent-3d>` (`/avatars/cz.glb`):
+
+| Case | Backend | Scene ms/frame | Cinematic ms/frame | Mean diff vs default | Silhouette overlap | Console errors |
+| --- | --- | --- | --- | --- | --- | --- |
+| `/app` default | WebGL2 | 0.44, 0.50 | 0.89, 1.11 | n/a | n/a | 0 |
+| `/app?renderer=webgpu` | WebGPU | 0.44, 0.45 | 0.54, 0.55 | 0.01 / 255 | 1.0 | 0 |
+| `/app?renderer=webgpu`, GPU denied | WebGL2 (fallback) | 0.44, 0.51 | 0.61, 1.08 | 0 / 255 | 1.0 | 0 |
+| `<agent-3d renderer="webgpu">` | WebGPU | 0.25, 0.31 | 0.50, 0.52 | n/a | n/a | 0 |
+| `<agent-3d renderer="webgl">` + `?renderer=webgpu` | WebGL2 | 0.36, 0.36 | 0.98, 1.13 | n/a | n/a | 0 |
+
+Restyle (`/restyle?bench`):
+
+| Case | Backend | Render ms/frame | Mean diff vs default | Silhouette overlap | Console errors |
+| --- | --- | --- | --- | --- | --- |
+| default | WebGL2 | 0.58, 0.59 | n/a | n/a | 0 |
+| `?renderer=webgpu` | WebGPU | 0.39, 0.40 | 0 / 255 | 1.0 | 0 |
+| `?renderer=webgpu`, GPU denied | WebGL2 (fallback) | 0.56, 0.61 | 0 / 255 | 1.0 | 0 |
+
+The rim effect shifts the frame by 1.18 / 255 on both paths and the paths agree on it to 0.01 / 255. On real hardware the scene pass is equal or faster on WebGPU and the cinematic post chain runs about twice as fast as the WebGL2 EffectComposer chain, with pixel parity held.
+
+Host setup for a headless Linux NVIDIA run: the GCE deeplearning images ship the compute-only driver, so install `libnvidia-gl-<driver>-server` and GLVND `libegl1`, confirm `vulkaninfo --summary` lists the GPU, and install the full Chromium build (`npx playwright install chromium`). The `hardware` adapter in [scripts/lib/bench-browser.mjs](../scripts/lib/bench-browser.mjs) passes `--use-vulkan=native --disable-vulkan-surface` and launches the `chromium` channel. Without them, headless Chromium falls back to SwiftShader for WebGPU.

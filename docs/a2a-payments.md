@@ -189,7 +189,11 @@ curl -s "https://three.ws/api/agents/$AGENT_ID/solana/custody?category=x402&limi
 ```
 
 Amounts are USDC atomics (six decimals), so `500000` is $0.50. USDC is the only
-currency the A2A rails settle in; any other asset is recorded unpriced rather
+currency the A2A rails settle in. The currency is derived from the on-chain
+asset id in the peer's accept entry (a fixed set of known USDC mints and
+contracts), never from the peer's free-text label, so a worthless token cannot
+call itself USDC; an accept entry that names no asset is refused with
+`no_supported_accept`, and any other asset is recorded unpriced rather
 than guessed, and the unpriceable spend is governed by the allowlist and the
 mandate rather than by a USD ceiling the guard cannot compute.
 

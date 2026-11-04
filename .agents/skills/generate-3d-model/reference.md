@@ -89,7 +89,7 @@ https://three.ws/viewer?src=<URL-encoded glbUrl>
 
 All optional, with production defaults:
 
-| Env | Default | Purpose |
+| Variable | Default | Purpose |
 | --- | --- | --- |
 | `FORGE_FREE_API_BASE` | `https://three.ws` | Origin to call. |
 | `FORGE_FREE_TIMEOUT_MS` | `180000` | Reconstruct poll budget. |

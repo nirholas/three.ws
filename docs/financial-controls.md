@@ -44,7 +44,7 @@ and whether it is reconciled against the chain.
 | a2a mandate settlements | **no durable ledger** — mandate is an unstored JWS; cap in Redis (`INCRBY`) with per-replica memory fallback | ❌ | ❌ | Redis atomic (bypassable w/o Upstash) | ❌ |
 | Credit deposits | `credit_ledger` (`amount_usd, balance_after, tx_signature, idempotency_key UNIQUE`) — balance+ledger in one CTE | ✅ | ✅ | `idempotency_key UNIQUE` + finalized-only | on finalized tx |
 | Subscriptions | `subscription_checkouts` (`reference UNIQUE, amount, platform_fee_amount, tx_signature`) | ✅ | mutable status | `reference UNIQUE` + payment-idempotency | ❌ |
-| Platform trade & launch fee (1%, live since 2026-09-16) | **no fee ledger of its own.** A server-signed agent trade records the fee block in `agent_custody_events.meta.platform_fee` next to the trade's signature; a wallet-signed trade or launch carries it only in the prep/confirm response, and `launch-confirm` refuses to list a launch whose confirmed transaction did not pay it (`txPaidPlatformFee`) | ✅ via the trade's own signature | custody events by convention | the trade's own claim row | ❌ **no** |
+| Platform fees (pump trade & launch 1%, agent trades, skill sales, bundles, subscriptions, x402 skill splits) | `platform_fee_events` (`source, source_ref UNIQUE, settlement, chain, network, asset, asset_mint, amount_atomics, decimals, bps, basis, tx_signature, payer, beneficiary, user_id, agent_id, occurred_at`), written in the same `sql.transaction` as the money-state row it belongs to | ✅ (`tx_signature`; `ledger` settlement for the x402 split) | ✅ UPDATE/DELETE/TRUNCATE refused by trigger | `UNIQUE (source, source_ref)` + `ON CONFLICT DO NOTHING` | ✅ **yes** (`npm run audit:platform-fees`) |
 | Vanity bounty payouts | **Redis / in-memory** (`vanity-bounty-store.js`) — not Postgres | ⚠️ in Redis only | ❌ (memory fallback loses on restart) | Redis CAS | ❌ |
 
 \* **"By convention"** means the code never issues UPDATE/DELETE on the table, but
@@ -85,10 +85,17 @@ Books automatically verified against the chain:
   missing/failed/mismatch, WARN (daily-throttled) for coherence/fee drift. See
   [ring reconciliation](./x402-ring-economy.md#reconciliation--proving-every-ring-dollar-on-chain).
 
+- ✅ `platform_fee_events` (every platform fee three.ws takes) by
+  [`reconcile-platform-fees.mjs`](../scripts/reconcile-platform-fees.mjs)
+  (`npm run audit:platform-fees`, read-only, one or more UTC days): each onchain
+  Solana fee leg must be backed by what its beneficiary received in the confirmed
+  transaction, and every confirmed skill purchase, bundle and subscription whose
+  transaction paid the fee wallet must have its event. Exit 0 consistent, 1
+  unbacked or missing fee, 2 cannot run.
+
 **NOT reconciled against the chain:** `x402_audit_log` (the main revenue ledger),
 `club_payouts`, `cosmetic_sales`, `agent_jobs`,
-`three_buyback_runs`, vanity payouts, and the 1% trade/launch fee (which has no
-ledger to reconcile).
+`three_buyback_runs` and vanity payouts.
 
 Two blind spots default a record to `reconciled=true` without verifying it:
 **EVM/Base** settlements (`skipped_non_solana`) and **RPC failures** (`unknown`).
@@ -265,18 +272,29 @@ Ranked by accounting/regulatory risk. Each is a tracked remediation item.
     covered, see §3); **no external alert channel beyond Telegram, and the push
     lane self-throttles**; **global kill switches need a redeploy** (add a
     runtime halt flag).
-14. **The 1% trade and launch fee has no revenue ledger.** Every customer trade
-    three.ws builds or signs pays it on-chain (see
-    [pump platform fee](pump-platform-fee.md)), but the only durable record is the
-    custody event of a server-signed trade; fees paid inside a user-signed
-    transaction are countable only by scanning the fee wallet. *Fix: an append-only
-    `platform_fee_events` row per charged transaction, keyed `UNIQUE` on the
-    signature, and a reconciler against the fee wallet's on-chain receipts.*
-15. **Financial data shares the storage-capped Neon branch.** Isolate money/audit
+14. **Financial data shares the storage-capped Neon branch.** Isolate money/audit
     tables onto their own branch/DB so an intel-firehose cap can't drop financial
     writes.
 
 ### Done
+- ✅ **Every platform fee has an append-only ledger row** (formerly P2-#14).
+  `platform_fee_events`
+  ([migration](../api/_lib/migrations/20261104150000_platform_fee_events.sql),
+  helper [`platform-fee-events.js`](../api/_lib/platform-fee-events.js)) holds one
+  row per fee with amount, asset and mint, chain, tx signature, payer, beneficiary
+  and an idempotency key `UNIQUE (source, source_ref)`; triggers refuse UPDATE,
+  DELETE and TRUNCATE. Each fee-taking path writes it inside the same
+  `sql.transaction` as its own state change: pump trade and launch confirms
+  (amount read from the fee wallet's balance delta in the confirmed tx, never
+  from the client), server-signed agent trades (custody confirm, pumpfun spend
+  finalize, mirror, strategy and sniper), skill purchases, bundles, subscriptions
+  and the x402 skill royalty split (`ledger` settlement). Where money has already
+  moved, a failed fee insert keeps the state row and pages ops
+  (`withPlatformFeeOrAlert`) instead of losing the purchase. The work also fixed
+  bundle and subscription confirms booking the quoted fee when the buyer had paid
+  the full price to the seller (no fee taken). Daily totals:
+  `platform_fee_daily`; reconciler: `npm run audit:platform-fees`. Proven by
+  `tests/platform-fee-events.test.js`.
 - ✅ **Withdrawal payouts are idempotent across a failed-after-broadcast send**
   (P0-#2). The payout cron ([`api/cron/[name].js`](../api/cron/[name].js)
   `handleProcessWithdrawals`, helpers in
