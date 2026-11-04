@@ -140,7 +140,7 @@ curl -s https://three.ws/api/mcp-chatgpt \
 ["forge_free","text_to_avatar","mesh_forge","rig_mesh","forge_avatar","refine_model","check_job","look_at_model"]
 ```
 
-The doors are rows in one `SURFACES` table in [`api/_mcp-studio/dispatch.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp-studio/dispatch.js), each naming its catalog, model instructions and, for hosts with a hard clock, a call budget. The listing below is condensed to the two doors this post uses; the table now has a third row for the Grok connector, with its own budget and sign-in:
+The doors are rows in one `SURFACES` table in [`api/_mcp-studio/dispatch.js`](https://github.com/nirholas/three.ws/blob/main/api/_mcp-studio/dispatch.js), each naming its catalog, model instructions and, for hosts with a hard clock, a call budget. The listing below is condensed to the two doors this post uses; the table now has a third row for the Grok connector, with its own budget and sign-in, and each row also carries a `widgets` flag (true for these two doors) that says whether the Apps SDK widget resources are served:
 
 ```js
 const SURFACES = {
@@ -148,6 +148,7 @@ const SURFACES = {
 		server: 'mcp-studio',
 		catalog: [...TOOL_CATALOG, ...JOB_TOOL_CATALOG, ...CATALOG_TOOL_CATALOG, ...PERSONA_TOOL_CATALOG],
 		tools: { ...TOOLS, ...JOB_TOOLS, ...CATALOG_TOOLS, ...PERSONA_TOOLS },
+		widgets: true,
 		personas: true,
 		prompts: true,
 		jobTool: 'get_job',
@@ -157,6 +158,7 @@ const SURFACES = {
 		server: 'mcp-chatgpt',
 		catalog: [...TOOL_CATALOG],
 		tools: { ...TOOLS },
+		widgets: true,
 		personas: false,
 		instructions: [...BASE_INSTRUCTIONS, ...CHATGPT_INSTRUCTIONS].join(' '),
 		callBudgetMs: CHATGPT_CALL_BUDGET_MS,
@@ -500,7 +502,7 @@ curl -s https://three.ws/api/mcp -H 'content-type: application/json' \
 
 **A fallback for clients without a resource reader:** every resource is also reachable through a `read_resource` tool on the same server. Host support for resources is uneven; the data should not be.
 
-**Prompts are rendered against the live tool catalog,** never a hand-kept list. A prompt is listed only where every tool it needs exists; each tool name passes through a function that throws if the server does not publish it; a test renders every prompt on every server against `tools/list`; confirmation flags are read from each tool's own `inputSchema`. The main server lists sixteen, among them `get-started`, `create-agent`, `review-costs`, `embed-avatar` and `agent-get-started`.
+**Prompts are rendered against the live tool catalog,** never a hand-kept list. A prompt is listed only where every tool it needs exists; each tool name passes through a function that throws if the server does not publish it; a test renders every prompt on every server against `tools/list`; confirmation flags are read from each tool's own `inputSchema`. The main server lists seventeen, among them `get-started`, `create-agent`, `review-costs`, `embed-avatar`, `agent-get-started` and `market-brief`. A studio surface lists only the prompts written for unattended agents, so the Grok connector lists those four plus `agent-report` once it is signed in, and `market-brief` too, since signing in adds the market-intelligence tools that prompt reads.
 
 **Prices in metadata must be real.** `three://models` is what an assistant reads to compare model costs. On 2026-09-25 we fixed it so free models read `[0, 0]` rather than `null`, and a key that routes to another model is priced at the model that answers. The concrete case was IBM's: our `ibm-granite` key names no priced model itself, so it read `null`. Live today:
 

@@ -76,6 +76,22 @@ an RPC blip must not report a healthy fleet as starved.
   failover chain (ordered by recent canary health, so a degraded source is tried last), so the dollar columns are spot. If every source is down it
   falls back to the last price stamped into `sniper_trade_analytics`.
 
+## Since the last review (2026-11-04)
+
+- Strategy Object trades now book a platform fee ledger row (`source: agent_trade`,
+  tagged `agent_strategy`) when they confirm, the same disclosure the manual agent
+  trade path records (5bce46a92). The report's strategy `PnL` column still reads
+  `agent_strategy_positions.realized_pnl_lamports` and does not subtract that fee.
+- Before 2026-11-03 an exit that closed in profit threw a `ReferenceError` in
+  `evaluateExits()` each sweep, because the profitable-trade skill hook ran before the
+  exit trade it reads; open strategy positions were affected. The hook now runs after
+  the exit lands (bd2a43161).
+- `submitProtected()` accepts an `onSigned` hook awaited before each broadcast; a hook
+  failure aborts the send with `PRESEND_RECORD_FAILED` and nothing leaves the process
+  (229a55725). It does not change the `SIM_FAILED` behavior above.
+- `getAssetsByOwner` wallet reads in `api/_lib/balances.js` now count toward RPC spend
+  accounting (7a39eee75). Report output is unchanged.
+
 ## Related
 
 - [gcp-production.md](gcp-production.md) - the production runbook the crons run under.

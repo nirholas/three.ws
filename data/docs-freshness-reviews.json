@@ -759,10 +759,10 @@
 			"note": "freshness sweep: checked against the drifted commits"
 		},
 		"docs/ibm-community-long-running-mcp-tools-post.md": {
-			"commit": "0a10f48c2",
+			"commit": "ead445645",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Prompt count updated to seventeen for market-brief (7a39eee75), Grok connector prompt list noted, SURFACES listing shows widgets: true on full and chatgpt; studio four prompts and tool counts re-checked; framing_notes kept (no crypto content)."
 		},
 		"docs/ibm-next-event.md": {
 			"commit": "9c9d80bcc",
@@ -987,10 +987,10 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/ops/trading-bot-report.md": {
-			"commit": "53f2a200f",
+			"commit": "670dd81c7",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Re-verified SIM_FAILED, resolveEntrySize, the nine-source SOL price chain and the kill switch split; added a dated section for the strategy fee ledger row (5bce46a92), the exit-hook ordering fix (bd2a43161), the onSigned presend hook (229a55725) and RPC spend counting for getAssetsByOwner (7a39eee75)."
 		},
 		"docs/ops/wallet-key-migration.md": {
 			"commit": "53f2a200f",
