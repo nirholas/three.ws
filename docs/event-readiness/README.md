@@ -85,6 +85,21 @@ Exit codes: `0` every step passed, `1` a real regression, `3` a step never got a
 | Accessibility | HUD text roles measure at least 4.5:1 over white and black scenes | `tests/play-hud-contrast.test.js` |
 | Gate proof | `--limit chromium.maxTransferMB=1` and the verdict unit tests show a seeded regression exits 1 | `tests/audit-event-client-verdict.test.js` |
 
+### Production device matrix (2026-11-04)
+
+`/play` in the canonical $THREE world on production, one Cloud Build run (`E2_HIGHCPU_8`, the `mcr.microsoft.com/playwright:v1.63.0-noble` image, software WebGL). Each profile overrides `deviceMemory` and `hardwareConcurrency`, throttles CPU and network over CDP, clicks the intro, waits for `__CC__.phase === 'world'`, settles 25 s, then samples 10 s of frames.
+
+| Profile | Emulation | Tier picked | Render settings | Transfer (GLB) | Page errors |
+| --- | --- | --- | --- | --- | --- |
+| desktop | 1440x900 @2x, 8 GB, 16 cores | high | DPR 2, shadows, 2880x1800 | 24.7 MB (17 GLB, 17.8 MB) | 0 |
+| midrange Android | Galaxy S9+, 4 GB, 8 cores, CPU 2x, 20 Mbps | medium | DPR 1.5, shadows | 20.1 MB (13 GLB, 14.0 MB) | 0 |
+| budget Android, 4G | Moto G4, 2 GB, 4 cores, CPU 4x, 9 Mbps, 70 ms | low | DPR 1, no shadows, 360x640 | 18.8 MB (11 GLB, 13.0 MB) | 0 |
+| budget Android, 3G | Moto G4, 2 GB, 4 cores, CPU 4x, 1.6 Mbps, 300 ms | low | DPR 1, no shadows, 360x640 | 10.1 MB (8 GLB, 5.0 MB) | 0 |
+
+Every profile reached the world and the tier detector picked the right tier for each. The 3G phone entered the world after 10 MB because avatars stream in behind it. The one failing request on every profile was `GET /api/pump/trending?limit=50&rich=1` answering 502 (the recorder fallback that fixes it is committed, not yet deployed). Time to world (82 to 155 s) and frame rates (0.3 to 0.8 fps) measure software WebGL on a build VM, not a phone, and are not device numbers.
+
+That run found a real defect: the desktop session at 0.3 fps was still on `high` after 35 s. Every render loop fed the quality watchdog the dt it clamps for physics, so a 2 fps device looked like a 20 fps one and took about 27 s per tier step. Fixed in `watchdogFrameSec` (`src/club-perf.js`, tests in `tests/club-perf.test.js`): a 2 fps device now reaches `low` within 5 s.
+
 Not measurable without a GPU: WebKit and phone-width frame numbers. Run `npm run audit:event-client -- --base https://three.ws` on a GPU host or real device before the meetup.
 
 ## Net and economy harnesses (meetup 3, 2026-11-06)
