@@ -2303,6 +2303,17 @@ export const limits = {
 		getLimiter('video:generate:global', { limit: 100, window: '1 h', critical: true }).limit(
 			'global',
 		),
+	// Waking the stopped LongCat GPU host boots a billed 80 GB GPU. One wake per
+	// five minutes platform-wide, and a daily ceiling, so a burst of callers on a
+	// stopped host starts it once and a flood cannot keep restarting it. Critical.
+	longcatWakeBurst: () =>
+		getLimiter('longcat:wake:burst', { limit: 1, window: '5 m', critical: true }).limit('global'),
+	longcatWakeDaily: () =>
+		getLimiter('longcat:wake:daily', {
+			limit: Math.max(1, Number(process.env.LONGCAT_MAX_WAKES_PER_DAY) || 8),
+			window: '24 h',
+			critical: true,
+		}).limit('global'),
 	// Oracle personal Telegram test-alert (api/oracle/test-alert). Fires a real
 	// Telegram message via the bot, so keep per-IP burst tight to prevent spamming
 	// third-party chats. 5 per 10 minutes is generous enough for manual setup

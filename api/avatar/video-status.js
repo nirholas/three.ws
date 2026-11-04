@@ -26,13 +26,16 @@
 //   400 invalid_request  - missing job_id
 //   403 forbidden        - job belongs to a different user
 //   404 not_found        - job not found
-//   502 worker_error     - Cloud Run worker returned an error
+//   502 worker_error     - the worker returned an error
+//   503 capacity_unavailable - the GPU host is stopped or warming up; the job is
+//                          not lost, poll again after `retry_after_seconds`
 //   503 worker_unconfigured - LongCat worker is not configured on this deployment
 
 import { cors, error, json, wrap } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { isCapacityFailure, respondCapacityUnavailable } from '../_lib/longcat-host.js';
 
 // Job reads are idempotent: short deadline, retried, same breaker as the submit.
 const WORKER_BREAKER = 'longcat-worker';
@@ -89,9 +92,11 @@ export default wrap(async (req, res) => {
 			headers: { authorization: `Bearer ${worker.key}` },
 		}, { name: WORKER_BREAKER, timeoutMs: STATUS_TIMEOUT_MS, attempts: 3, okWhen: () => true });
 	} catch (err) {
-		return error(res, 502, 'worker_unreachable', err?.message || 'worker request failed');
+		console.error('[video-status] worker unreachable:', err?.message || err);
+		return respondCapacityUnavailable(res);
 	}
 
+	if (isCapacityFailure({ status: workerRes.status })) return respondCapacityUnavailable(res);
 	if (workerRes.status === 404) return error(res, 404, 'not_found', 'job not found');
 	if (!workerRes.ok) {
 		const text = await workerRes.text().catch(() => '');

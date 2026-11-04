@@ -24,7 +24,10 @@
 // Errors:
 //   400 invalid_request   - missing required fields
 //   402 free_trial_used   - free user has already used their 1 free generation
-//   502 worker_error      - Cloud Run worker returned an error
+//   502 worker_error      - the worker returned an error
+//   503 capacity_unavailable - the GPU host is stopped or warming up; retry after
+//                            `retry_after_seconds` (also sent as Retry-After). The
+//                            free-trial slot is released, and the host is woken.
 //   503 worker_unconfigured - LongCat worker is not configured on this deployment
 
 import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
@@ -34,6 +37,7 @@ import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { getSessionUser } from '../_lib/auth.js';
 import { env } from '../_lib/env.js';
 import { fetchUpstream } from '../_lib/upstream-fetch.js';
+import { isCapacityFailure, respondCapacityUnavailable } from '../_lib/longcat-host.js';
 
 // A submit starts a GPU job, so it is never retried; the deadline only bounds
 // the wait for the worker to accept it. Shared breaker with video-status.
@@ -299,12 +303,14 @@ export default wrap(async (req, res) => {
 			}, { name: WORKER_BREAKER, timeoutMs: GENERATE_TIMEOUT_MS, attempts: 1, okWhen: () => true });
 		} catch (err) {
 			await releaseReservation(reservationId);
-			return error(res, 502, 'worker_unreachable', err?.message || 'worker request failed');
+			console.error('[video-generate] worker unreachable:', err?.message || err);
+			return respondCapacityUnavailable(res);
 		}
 
 		if (!workerRes.ok) {
 			const text = await workerRes.text().catch(() => '');
 			await releaseReservation(reservationId);
+			if (isCapacityFailure({ status: workerRes.status })) return respondCapacityUnavailable(res);
 			return error(
 				res,
 				502,

@@ -31,6 +31,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -92,6 +93,12 @@ _db:      firestore.Client | None = None
 _bucket:  storage.Bucket   | None = None
 _job_sem: asyncio.Semaphore | None = None
 _http:    httpx.AsyncClient | None = None
+
+# Accepted but unfinished jobs (queued plus running) and the wall-clock time of
+# the last accept or finish. /health reports both so the host's idle-shutdown
+# check can tell "nothing to do for N minutes" from "a job is still rendering".
+_pending_jobs:  int   = 0
+_last_activity: float = time.time()
 
 
 # ── lifespan ───────────────────────────────────────────────────────────────────
@@ -184,6 +191,20 @@ def _probe_audio_seconds(path: Path) -> float | None:
 
 
 async def _process_job(
+    job_id: str,
+    image_url: str,
+    audio_url: str,
+    prompt: str,
+) -> None:
+    global _pending_jobs, _last_activity
+    try:
+        await _process_job_body(job_id, image_url, audio_url, prompt)
+    finally:
+        _pending_jobs = max(0, _pending_jobs - 1)
+        _last_activity = time.time()
+
+
+async def _process_job_body(
     job_id: str,
     image_url: str,
     audio_url: str,
@@ -388,6 +409,9 @@ async def generate(
         "prompt":    body.prompt,
         "created_at": datetime.now(timezone.utc),
     })
+    global _pending_jobs, _last_activity
+    _pending_jobs += 1
+    _last_activity = time.time()
     background_tasks.add_task(
         _process_job, job_id, body.image_url, body.audio_url, body.prompt,
     )
@@ -422,4 +446,6 @@ async def health() -> dict:
         "base_model_dir": str(BASE_MODEL_DIR),
         "resolution": RESOLUTION,
         "max_segments": MAX_SEGMENTS,
+        "active_jobs": _pending_jobs,
+        "idle_seconds": max(0, int(time.time() - _last_activity)),
     }

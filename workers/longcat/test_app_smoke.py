@@ -103,6 +103,11 @@ health = asyncio.run(main.health())
 check("health is unauthenticated and answers", health.get("ok") is True)
 check("health names the pipeline", health.get("pipeline") == "longcat-avatar-1.5")
 check(
+    "health reports activity so the host can idle-stop",
+    health.get("active_jobs") == 0 and isinstance(health.get("idle_seconds"), int),
+    str(health),
+)
+check(
     "health does not claim a model is loaded when weights are absent",
     health.get("model_loaded") is False,
     str(health),

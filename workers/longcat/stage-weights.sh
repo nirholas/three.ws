@@ -24,6 +24,10 @@
 #   WEIGHTS_PREFIX   object prefix inside the bucket  (default: longcat)
 #   LOCAL_DIR        local staging directory (default: /tmp/longcat-weights)
 #   HF_TOKEN         optional; the repos are public, so normally unset
+#
+# After the layout check the script writes <dest>/weights.sha256 (one sha256sum line
+# per file) and uploads it with the weights. The repo copy is workers/longcat/weights.sha256;
+# `workers/longcat/scripts/verify-weights.sh` compares a staged tree against it.
 
 set -euo pipefail
 
@@ -157,13 +161,22 @@ if missing:
 print('layout complete under', root)
 "
 
+echo "==> writing the sha256 manifest"
+MANIFEST="${LOCAL_DIR}/weights.sha256"
+(
+  cd "$LOCAL_DIR"
+  find . -type f ! -name weights.sha256 -not -path './.cache/*' -not -path '*/.cache/*' \
+    | LC_ALL=C sort | sed 's#^\./##' | xargs -d '\n' sha256sum > weights.sha256
+)
+echo "manifest: $(wc -l < "$MANIFEST") file(s) at $MANIFEST"
+
 if [[ "$LOCAL_ONLY" == "1" ]]; then
   echo "local-only: staged at $LOCAL_DIR, skipping upload."
   exit 0
 fi
 
 echo "==> uploading to gs://${WEIGHTS_BUCKET}/${WEIGHTS_PREFIX}/"
-gcloud storage rsync --recursive \
+gcloud storage rsync --recursive --exclude='(.*/)?\.cache/.*' \
   "$LOCAL_DIR" "gs://${WEIGHTS_BUCKET}/${WEIGHTS_PREFIX}"
 
 echo "done. Mount gs://${WEIGHTS_BUCKET} and set WEIGHTS_DIR=/weights/${WEIGHTS_PREFIX}"

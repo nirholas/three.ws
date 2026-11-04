@@ -159,3 +159,12 @@ work on the quota.
 - Never trade quality down to save credits. If a quality knob costs GPU time, turn it up and measure.
 - GCP builds/deploys must pin the `three-ws-build@` (build) and `three-ws@` (runtime) service accounts; the default compute SA was deleted.
 - Verify prod after any service update: `curl -s -o /dev/null -w "%{http_code}" https://three.ws/api/healthz` must return 200.
+
+## LongCat talking-avatar host (Compute Engine, 80 GB GPU)
+
+The one GPU workload that does not run on Cloud Run L4s (see [workers/longcat/README.md](../../workers/longcat/README.md)). It bills a whole 80 GB GPU per hour, so it is on demand, not warm.
+
+- **Accounting line:** `a2-ultragpu-1g` (1x A100-80GB) is the unit. GPU-hours are tracked by `workers/longcat/scripts/host.mjs` in `gs://three-ws-avatar-reconstructions/longcat-host/ledger.json` from the instance's real start and stop timestamps. Read today's burn with `node workers/longcat/scripts/host.mjs status` (`gpuHoursToday` of `gpuHoursCap`).
+- **Hard cap:** `LONGCAT_GPU_HOURS_PER_DAY` (default 6, UTC day). `host.mjs start` and `ensure` refuse to boot the VM when under 30 minutes remain (exit 3, `gpu_hour_cap_reached`); `host.mjs reap` stops a running VM that has passed it. The API's own wake path (`api/_lib/longcat-host.js`) is additionally limited to one wake per 5 minutes and `LONGCAT_MAX_WAKES_PER_DAY` (default 8) wakes per day.
+- **Idle stop:** the VM halts itself after 20 idle minutes (15 minute boot grace), so the worst case per wake is the grace window plus the idle window plus the job. Price the hour from the Compute Engine pricing page before raising the cap; at the default cap the ceiling is 6 GPU-hours a day.
+- **Quota:** A100-80GB and H100 quota in `us-central1` was 0 on 2026-11-04. Requests are filed with `workers/longcat/scripts/request-quota.sh --submit`; Spot A100-40GB (16) cannot hold the 45 GB weight set.
