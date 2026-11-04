@@ -55,10 +55,10 @@ Honest limits of this pass: the vitest runner was unavailable while this record 
 | Agent commerce and A2A mandates | reviewed at the test-coverage level (mandate scope, cart mandate, spend ledger, settlement asset, platform ceiling reserve/release in `a2a-call.js`); no defect found | `tests/a2a-*.test.js`, `tests/agent-a2a-payments.test.js` |
 | Account and credential CRUD | covered by the existing credential and CSRF suites; no new defect found | `tests/csrf-bearer-exemption.test.js`, `tests/csrf-call-sites.test.js`, `tests/agent-identity-csrf.test.js` |
 | Plugin and LobeHub registry | reviewed: publish URL scheme check and registry endpoints covered; no defect found | `tests/plugins-publish-url-scheme.test.js`, `tests/plugins-marketplace-endpoint.test.js`, `tests/lobehub-plugin-endpoint.test.js`, `tests/chat-plugin-*.test.js` |
-| Paid upstream RPC, SDP and pinning proxies | reviewed: pinning `sourceUrl` is prefix-locked to the owned R2 origin with a trailing slash and redirects refused; RPC and SDP are rate-limited | `tests/pinning-endpoint.test.js`, `tests/api-sdp-proxy.test.js`, `tests/evm-rpc-proxy.test.js`, `tests/solana-rpc-*.test.js` |
+| Paid upstream RPC, SDP and pinning proxies | reviewed: pinning `sourceUrl` is prefix-locked to the owned R2 origin with a trailing slash and redirects refused; RPC and SDP are rate-limited. Handler-level pass found and fixed three defects: `eth_estimateGas` skipped the two-param cap that `eth_call` has (state-override argument), the pinning daily byte quota was a check-then-insert race (now reserve-first, released on failure), and a malformed percent-encoded `data:` URL threw a 500 instead of a 400 | `tests/pinning-endpoint.test.js`, `tests/api-sdp-proxy.test.js`, `tests/evm-rpc-proxy.test.js`, `tests/solana-rpc-*.test.js` |
 | Teams runtime and social ingestion | covered by runtime, injection and escalation suites; no new defect found | `tests/teams-runtime.test.js`, `tests/team-chat-injection.test.js`, `tests/team-chat-escalation.test.js`, `tests/social-sentiment-endpoints.test.js` |
 
-The inference, A2A, account, plugin and teams rows are a coverage read, not a line-by-line audit of every handler. A deeper handler-level pass on those five surfaces is the remaining follow-up.
+The plugin, LobeHub, chat-plugin, teams, social and AWS handlers were read line by line with no further defect. The inference, A2A and account rows are a coverage read, not a line-by-line audit of every handler. A handler-level pass on those three surfaces is the remaining follow-up.
 
 ## Hardening notes
 
