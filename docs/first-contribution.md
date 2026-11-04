@@ -134,13 +134,13 @@ describe('MMD (MikuMikuDance) Japanese skeleton', () => {
 
 ### Now do one that is actually open
 
-MMD is done, so do not re-submit it. So are Apple / ARKit, Kinect, and the Reallusion numbered spine: the three issues this section used to list were all merged in September 2026. Pick a convention that still returns `null` and give it the same four-part treatment (alias map, tests, Rig Doctor fingerprint, docs row). The next ones are verified open and written up with the file, the bones, and the verification command:
+MMD is done, so do not re-submit it. So are Apple / ARKit, Kinect, the Reallusion numbered spine, 3ds Max Biped fingers and toes, and Source engine (`ValveBiped`) skeletons, which Rig Doctor now names too. Pick a convention that still returns `null` and give it the same four-part treatment (alias map, tests, Rig Doctor fingerprint, docs row). The one rig convention still verified open is written up with the file, the bones, and the verification command:
 
-- **HumanIK after three.js loads it.** `Character1:Hips` maps, but three.js deletes the colon when it loads a model, and the runtime retargeter then sees `Character1Hips`, which maps to nothing. The smallest of the three.
-- **3ds Max Biped fingers.** The body maps; `Bip01 L Finger0`, `Finger01`, and the rest of the numbered finger chain do not.
-- **Source engine skeletons.** `ValveBiped.Bip01_Pelvis` and the rest of the `ValveBiped` rig map to nothing, and Rig Doctor does not recognise the convention.
+- **HumanIK after three.js loads it.** `Character1:Hips` maps, but three.js deletes the colon when it loads a model, and the runtime retargeter then sees `Character1Hips`, which maps to nothing. Re-run the probe above to confirm it still prints `null` before you start.
 
-Find them under the [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) label. If a label search comes back empty, the ready-to-file bodies are in [marketing/growth/events/osf-issues/](../marketing/growth/events/osf-issues/01-rig-humanik-sanitized-names.md), and you can work from them directly.
+If that one has been taken or merged, any other rig whose bones print `null` in the probe qualifies. Rig Doctor ([`docs/rig-doctor.md`](rig-doctor.md)) also reports skin-weight health for non-humanoid rigs, which is a good way to find a rig worth fixing.
+
+Find it under the [`good first issue`](https://github.com/nirholas/three.ws/labels/good%20first%20issue) label. If a label search comes back empty, the ready-to-file bodies are in [marketing/growth/events/osf-issues/](../marketing/growth/events/osf-issues/01-rig-humanik-sanitized-names.md), and you can work from them directly.
 
 Comment on the one you are taking, then:
 
@@ -174,6 +174,8 @@ git push origin feat/arkit-bone-names
 Then open the PR on GitHub. In the description say what changed, what you tested it against, and paste the test output. If you have a real GLB that exercises the change, link it.
 
 **Commit message format:** `type(scope): what changed and why a reader would care`. Plain language, specific to your diff. `wip`, `update`, and `changes` are rejected.
+
+`npm install` also installs two git hooks (`scripts/setup-git-hooks.mjs`): a pre-commit hook that runs the hard-rules check (`scripts/check-rules.mjs`) on the lines you staged, and a pre-push hook that runs it, plus a secrets scan and a commit-subject lint, on the commits you push. If one blocks you, fix the flagged line or subject; you can preview with `npm run check:rules -- --paths <files>`.
 
 ## 5. What happens next
 

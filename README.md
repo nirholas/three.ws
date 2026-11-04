@@ -10213,6 +10213,8 @@ _Pump.fun_ ([`api/_mcp/tools/pumpfun.js`](api/_mcp/tools/pumpfun.js))
 
 Ten further category modules register the rest of the catalog: _Animations_ (`list_animations`, `animation_signature`, `find_similar_animations`, `apply_animation`, `text_to_animation`), _Agents_ (`call_agent`, `register_agent`, `attach_avatar_to_agent`, `identity_check`), _Garments_ (`generate_garment`, `garment_status`, `list_garment_catalog`), _Memory_ (`remember`, `recall`, `forget`), _Oracle_ (`oracle_top_plays`, `oracle_coin`, `oracle_arm_watch`, `oracle_watch_status`), _Trader_ (`trader_leaderboard`, `trader_profile`, `copy_subscribe`, `copy_status`), _Embed_ (`get_embed_code`, `create_gated_embed`), _Sign_ (`list_sign_vocabulary`, `sign_text`), _Crypto data_ (`crypto_data`, `token_snapshot`), and _Tokenize_ (`mint_3d_asset`, `get_3d_asset_onchain`).
 
+**Unified endpoint:** [`api/mcp/all.js`](api/mcp/all.js), served at `https://three.ws/mcp` and `/api/mcp/all`, puts every tool of every hosted three.ws MCP server behind one URL and one OAuth sign-in. Pricing and payment replay protection are identical to `api/mcp.js`, and the per-server endpoints keep working unchanged.
+
 **MCP discovery:** configured in `.mcp.json` at the repo root for Claude Desktop integration.
 
 **SSE stream:** `GET /api/mcp` returns a Server-Sent Events stream for real-time notifications from long-running operations (validation, optimization).
@@ -10400,7 +10402,7 @@ three.ws is available on major cloud marketplaces and open to infrastructure par
 | **AWS**           | **AWS Partner** (APN Software Path). AWS Marketplace SaaS listing in review: see [docs/aws-marketplace.md](docs/aws-marketplace.md) and the public partner page at [three.ws/aws](https://three.ws/aws). Part of the stack runs on AWS `us-east-1` (the Forge sculptor Lambda `three-ws-forge` and the S3 avatar bucket), registered in AWS MyApplications under account `155407237916` (the main app runs on Google Cloud Run). We publish engineering write-ups on the AWS Builder Center as [@threews](https://builder.aws.com/community/@threews); the index is [docs/aws-builder-center.md](docs/aws-builder-center.md). |
 | **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html)                       |
 | **Microsoft**     | **Microsoft partner**, live on Microsoft Marketplace: [publisher profile →](https://marketplace.microsoft.com/en-us/partners/d11c4453-6e12-499d-8dfe-48fcbaa22e2f/overview) · [announcement →](https://three.ws/blog/three-ws-microsoft-partnership). Details: [docs/microsoft.md](docs/microsoft.md). |
-| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 110 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run: a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
+| **Google Cloud**  | Production runs on **Google Cloud Run** (`three-ws-api`, `us-central1`) fronted by a global HTTPS load balancer + Cloud CDN, with all 154 scheduled jobs on Cloud Scheduler and GPU inference workers on Cloud Run: a natural fit for GCP's AI infrastructure and Vertex AI. Open to co-listing, credits, and joint GTM. |
 
 ## Ecosystem Directories
 

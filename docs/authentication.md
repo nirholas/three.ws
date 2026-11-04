@@ -2,7 +2,7 @@
 
 Authentication is how three.ws knows who you are: it protects your agents, your avatars, and your dashboard, and it is required for anything that writes data. Sign in at [three.ws/login](https://three.ws/login) with a crypto wallet or a plain email/social account; developers can also mint API keys for scripts and servers.
 
-three.ws supports four authentication methods. Which one you need depends on how you're building:
+three.ws supports the following authentication methods (Google and Telegram sign-in are covered further down). Which one you need depends on how you're building:
 
 | Method | Best for |
 |--------|----------|
@@ -578,9 +578,16 @@ const res = await fetch('/api/agents', {
 | `profile` | Read/write profile data; required to manage API keys themselves |
 | `herald:announce` | Post announcements through the [Herald](herald.md) (`POST /api/herald/announce`); the scope the `herald-mcp` package's `THREE_WS_API_KEY` needs |
 | `wallet:read` | See the agent wallet balance, history, and spending caps |
-| `wallet:write` | Move, commit, or redirect funds from a custodial wallet (withdraw, trade, pay, hire, launch), within its caps |
+| `wallet:trade` | Swap, bid, and open or close positions from a custodial wallet: value stays in the wallet |
+| `wallet:launch` | Launch a coin and claim its creator fees |
+| `wallet:write` | Move, commit, or redirect funds from a custodial wallet (withdraw, trade, pay, hire, launch), within its caps. Implies `wallet:trade` and `wallet:launch` |
 | `services:write` | Publish paid services that earn USDC to the agent wallet |
+| `read` | Coarse scope that expands to `avatars:read`, `memory:read`, `agents:read` and `wallet:read` |
+| `generate` | Coarse scope that expands to `avatars:write`: create 3D models and avatars |
+| `spend` | Coarse scope that expands to `wallet:write`, `wallet:trade`, `wallet:launch` and `services:write`: everything that moves funds |
 | `inference` | Model calls on the OpenAI-compatible endpoint (`/api/v1/chat/completions`), billed to the account's credits; keys from `/api/me/inference/provision` carry this scope alone |
+
+An `expires_at` in the past is refused with `400 validation_error`. Every key creation, including the legacy `/api/api-keys` route, writes a `create_api_key` audit row (id, prefix and granted scope, never the secret).
 
 Scopes are space-separated in the `scope` field. Default when unspecified: `avatars:read avatars:write`.
 
@@ -642,10 +649,10 @@ A rejected secret returns `401` with `{"error": "invalid_client"}`. If you sent 
 
 ### Resource indicators (RFC 8707)
 
-three.ws issues access tokens for exactly one resource, its MCP server. If you pass `resource`, it must name that server; anything else is rejected with `invalid_target` at both `/api/oauth/authorize` and `/api/oauth/token`, rather than handing you a token whose audience is something you did not ask for. A trailing slash is ignored, and omitting the parameter entirely is fine.
+three.ws issues access tokens only for its own MCP servers: the platform resource (`https://three.ws/api/mcp`) and each hosted MCP server's own URL, including the unified endpoint (`https://three.ws/mcp`). If you pass `resource`, it must name one of them; anything else is rejected with `invalid_target` at both `/api/oauth/authorize` and `/api/oauth/token`, rather than handing you a token whose audience is something you did not ask for. The token's `aud` is the resource you asked for. A trailing slash is ignored, and omitting the parameter entirely is fine. The servers are listed at `/.well-known/mcp.json`, and each one's metadata is at `/.well-known/oauth-protected-resource/<path>` (RFC 9728 path insertion, for example `/.well-known/oauth-protected-resource/mcp`).
 
 ```bash
-# The canonical value, also published as `resource` in
+# The platform value, also published as `resource` in
 # /.well-known/oauth-protected-resource
 curl -X POST https://three.ws/api/oauth/token \
   -d "grant_type=authorization_code" \

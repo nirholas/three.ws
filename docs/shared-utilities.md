@@ -174,6 +174,15 @@ const { value } = await fetchAnyJson(['https://api.drand.sh/public/latest', 'htt
 const { value: rows, stale } = await lastGood('llama:chains', () => fetchUpstreamJson(LLAMA));
 ```
 
+Use `fetchUpstreamPublic` instead when the URL was chosen by a user, a caller, or
+on-chain data: same retries, timeout and breaker, but redirects are followed by
+hand and every hop is checked with `assertSafePublicUrl`, so a public host cannot
+302 the server into a private, loopback or metadata address (it rejects with
+`SsrfBlockedError`, status 400). A caller-pinned undici `dispatcher` in `init`
+(alert delivery) is sent through undici's own fetch via `pinnedFetch` in
+`api/_lib/ssrf.js`, because the global `fetch` ignores a dispatcher from another
+undici copy.
+
 A non-2xx response rejects with an `UpstreamError` carrying `status`, `url` and
 a body excerpt, so `isRetryableError` and handlers can branch on it. Solana and
 EVM RPC do not go through here: `api/_lib/solana/connection.js` and
@@ -388,7 +397,7 @@ node scripts/check-cron-drift.mjs --json     # machine-readable report
 Reports invalid expressions, duplicate job ids, schedules that are declared but
 missing from Cloud Scheduler, live schedules that disagree with the declared
 one, jobs that are not `ENABLED`, and orphaned jobs no longer declared. Exits
-non-zero on anything but orphans, so it can gate a deploy.
+non-zero on anything but orphans, so it can gate a deploy. A live run that cannot read Cloud Scheduler (a dead gcloud session) also exits 1 and reports `liveError` in `--json`, rather than comparing nothing and passing. `--offline` is the deliberate expression-only check (`npm run check:cron-syntax`, the one `npm run gate` runs) and still exits 0 in that case.
 
 `vercel.json` is a live config file, but nothing previously verified that
 Cloud Scheduler still matched it: a schedule edited without a re-sync, or a job
