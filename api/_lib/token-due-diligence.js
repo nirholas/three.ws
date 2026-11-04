@@ -387,36 +387,111 @@ const RPC_TIMEOUT_MS = 20_000;
 // cluster is the keyless fallback that serves full history.
 const PRUNED_HISTORY_HOSTS = /publicnode\.com|solanavibestation\.com|tatum\.(io|com)/;
 
-export function realChainDeps() {
-	const all = solanaRpcEndpoints('mainnet');
-	const rpcFetch = makeRotatingFetch(all);
-	const archival = all.filter((u) => !PRUNED_HISTORY_HOSTS.test(u));
-	const historyFetch = makeRotatingFetch(archival.length ? archival : all);
-	const call = (fetcher) => async (method, params) => {
+const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// A rate-limit or capacity refusal, as the rotating fetch reports it (HTTP 429,
+// JSON-RPC -32005, or the providers' own quota wording).
+const THROTTLE_RE = /\b429\b|-32005|too many requests|rate.?limit|max usage|capacity/i;
+export const isThrottle = (err) => THROTTLE_RE.test(String(err?.message ?? err ?? ''));
+
+/** Plain lane: three tries, short backoff. */
+export const RPC_LANE = Object.freeze({ attempts: 3, delayMs: (n) => 350 * n });
+
+/**
+ * History lane (getSignaturesForAddress, getTransaction). When the keyed lanes
+ * are at quota it is the public cluster alone, which throttles per IP over a
+ * 10 s window: three tries inside one second all land in the same window, and
+ * the report then withholds every field that needs a wallet's history. So a
+ * throttle backs off across the window (1, 2, 4, 8, 8 s, plus jitter), and for
+ * a minute after one, calls are spaced `paceMs` apart (about 3 a second, under
+ * the cluster's per-method rate) so the report's own burst stops re-tripping it.
+ * Any other error keeps the plain lane's short schedule. A healthy lane is never
+ * delayed.
+ */
+export const HISTORY_LANE = Object.freeze({
+	...RPC_LANE,
+	throttleAttempts: 6,
+	throttleDelayMs: (n) => Math.min(8_000, 1_000 * 2 ** (n - 1)),
+	paceMs: 300,
+	paceHoldMs: 60_000,
+});
+
+/**
+ * One JSON-RPC caller over a (rotating) fetch. Pacing state lives in the
+ * caller, so callers that share an egress IP should share one caller.
+ * @param {Function} fetcher  fetch-shaped (info, init) => Response
+ * @param {object} lane  RPC_LANE or HISTORY_LANE
+ * @param {{ sleep?: (ms:number)=>Promise<void>, now?: ()=>number }} [io]
+ */
+export function makeRpcCaller(fetcher, lane = RPC_LANE, { sleep = defaultSleep, now = Date.now } = {}) {
+	let pacedUntil = -Infinity;
+	let nextSlot = 0;
+	// Slots are reserved synchronously, so concurrent callers queue in order.
+	const waitForSlot = async () => {
+		const t = now();
+		if (!lane.paceMs || t >= pacedUntil) return;
+		const slot = Math.max(t, nextSlot);
+		nextSlot = slot + lane.paceMs;
+		if (slot > t) await sleep(slot - t);
+	};
+	const send = async (method, params) => {
+		const resp = await fetcher(null, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+			signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
+		});
+		const body = await resp.json();
+		if (body?.error) throw new Error(`rpc ${method}: ${body.error.message || body.error.code}`);
+		return body?.result ?? null;
+	};
+	return async (method, params) => {
 		let lastErr;
-		for (let attempt = 0; attempt < 3; attempt++) {
-			if (attempt) await new Promise((r) => setTimeout(r, 350 * attempt));
+		let throttles = 0;
+		for (let attempt = 0; ; attempt++) {
+			await waitForSlot();
 			try {
-				const resp = await fetcher(null, {
-					method: 'POST',
-					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-					signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
-				});
-				const body = await resp.json();
-				if (body?.error) throw new Error(`rpc ${method}: ${body.error.message || body.error.code}`);
-				return body?.result ?? null;
+				return await send(method, params);
 			} catch (err) {
 				lastErr = err;
+			}
+			const throttled = !!lane.throttleAttempts && isThrottle(lastErr);
+			if (throttled) {
+				throttles++;
+				pacedUntil = now() + lane.paceHoldMs;
+				if (attempt + 1 >= lane.throttleAttempts) break;
+				const base = lane.throttleDelayMs(throttles);
+				await sleep(Math.round(base * (1 + Math.random() * 0.25)));
+			} else {
+				if (attempt + 1 >= lane.attempts) break;
+				await sleep(lane.delayMs(attempt + 1));
 			}
 		}
 		throw lastErr;
 	};
+}
+
+// One history caller per endpoint chain for the whole process: the public
+// cluster's limit is per egress IP, so concurrent reports must share the pace.
+const historyCallers = new Map();
+function historyCaller(endpoints) {
+	const key = endpoints.join(',');
+	let caller = historyCallers.get(key);
+	if (!caller) {
+		caller = makeRpcCaller(makeRotatingFetch(endpoints), HISTORY_LANE);
+		historyCallers.set(key, caller);
+	}
+	return caller;
+}
+
+export function realChainDeps() {
+	const all = solanaRpcEndpoints('mainnet');
+	const archival = all.filter((u) => !PRUNED_HISTORY_HOSTS.test(u));
 	return {
 		// Retried: the keyless lanes throttle bursts, and a single 429 must not turn
 		// a wallet into "unknown" when the next attempt would have answered.
-		rpc: call(rpcFetch),
-		history: call(historyFetch),
+		rpc: makeRpcCaller(makeRotatingFetch(all), RPC_LANE),
+		history: historyCaller(archival.length ? archival : all),
 		now: () => Math.floor(Date.now() / 1000),
 	};
 }

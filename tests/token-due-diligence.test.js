@@ -10,6 +10,7 @@ import { PublicKey } from '@solana/web3.js';
 import {
 	DD_THRESHOLDS, DD_FIELDS, DD_DEFINITIONS, clusterHolders, computeDueDiligence, buildFundingGraph,
 	oldestSignature, getTokenDueDiligence, traceFundingGraph, isProgramDerived,
+	makeRpcCaller, RPC_LANE, HISTORY_LANE,
 } from '../api/_lib/token-due-diligence.js';
 import { checkDueDiligence, guardDueDiligence, normalizeTradeLimits, tradeGuardResponse, TRADE_LIMIT_DEFAULTS } from '../api/_lib/agent-trade-guards.js';
 
@@ -283,5 +284,59 @@ describe('agent trade guard over the due-diligence fields', () => {
 		expect(n.max_sniper_pct).toBeNull();
 		expect(n.max_bundler_pct).toBeNull();
 		expect(n.max_fresh_wallet_pct).toBe(12.5);
+	});
+});
+
+// The history lane in production is often the public cluster alone (keyed lanes
+// at quota), which throttles per IP over a 10 s window. A fake clock stands in
+// for time: sleeping advances it, so the schedule is measured, not waited on.
+describe('history lane caller', () => {
+	const ok = (result) => new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result }), { headers: { 'content-type': 'application/json' } });
+	function clocked() {
+		const clock = { t: 0, sleeps: [] };
+		const io = { now: () => clock.t, sleep: async (ms) => { clock.sleeps.push(ms); clock.t += ms; } };
+		return { clock, io };
+	}
+	// Throttles every call that lands before `until` ms, like a per-IP window.
+	const throttledUntil = (clock, until, calls = []) => async () => {
+		calls.push(clock.t);
+		if (clock.t < until) throw new Error('solana rpc 429 @ https://api.mainnet-beta.solana.com');
+		return ok([{ signature: 'S', slot: 1 }]);
+	};
+
+	it('outlasts a throttle window that the plain lane gives up inside', async () => {
+		const a = clocked();
+		const plain = makeRpcCaller(throttledUntil(a.clock, 10_000), RPC_LANE, a.io);
+		await expect(plain('getSignaturesForAddress', [])).rejects.toThrow(/429/);
+
+		const b = clocked();
+		const history = makeRpcCaller(throttledUntil(b.clock, 10_000), HISTORY_LANE, b.io);
+		await expect(history('getSignaturesForAddress', [])).resolves.toEqual([{ signature: 'S', slot: 1 }]);
+		expect(b.clock.t).toBeLessThan(30_000);
+	});
+
+	it('spaces calls once the lane has throttled, so the read stops tripping the limit itself', async () => {
+		const { clock, io } = clocked();
+		const calls = [];
+		const history = makeRpcCaller(throttledUntil(clock, 1, calls), HISTORY_LANE, io);
+		for (let i = 0; i < 6; i++) await history('getSignaturesForAddress', []);
+		const after = calls.slice(2);
+		for (let i = 1; i < after.length; i++) expect(after[i] - after[i - 1]).toBeGreaterThanOrEqual(HISTORY_LANE.paceMs);
+	});
+
+	it('adds no delay on a healthy lane', async () => {
+		const { clock, io } = clocked();
+		const history = makeRpcCaller(async () => ok(1), HISTORY_LANE, io);
+		for (let i = 0; i < 10; i++) await history('getSlot', []);
+		expect(clock.sleeps).toEqual([]);
+	});
+
+	it('gives up fast on an error that is not a throttle', async () => {
+		const { clock, io } = clocked();
+		let n = 0;
+		const history = makeRpcCaller(async () => { n++; return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32602, message: 'Invalid param' } })); }, HISTORY_LANE, io);
+		await expect(history('getTransaction', [])).rejects.toThrow(/Invalid param/);
+		expect(n).toBe(RPC_LANE.attempts);
+		expect(clock.t).toBeLessThan(2_000);
 	});
 });

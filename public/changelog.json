@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T19:48:15.382Z",
+	"generated_at": "2026-11-04T20:06:15.053Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -410,6 +410,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Jumping to a section of the doc you are reading no longer loads a missing page",
+			"summary": "Editing the address bar from one section of a docs page to another, or following a hand-written section link, used to read the section name as a doc, fetch a page that does not exist, and replace the doc you were reading with a not-found panel, live request blocks included. The docs reader now scrolls to that section of the open doc and rewrites the address so a reload or a shared link lands in the same place. A section that shares its name with a listed doc still opens that doc.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Knocks, agent mail and event markets get their own tabs on /notifications",
 			"summary": "The notifications page now builds its filter tabs from the same category list as your notification preferences, so it can no longer fall out of step with them. Knocks, agent mail, event-market entries, orders and approvals each get their own tab instead of landing under Account, and those rows now read as sentences (\"Scout got mail from Bob\") with their own icon. A knock now opens your knock inbox when clicked. Only categories you have notifications in are shown, the tabs work with arrow keys, each empty tab links to that category's delivery settings, and if the category list cannot load the page still shows everything with a Retry.",
 			"link": "/notifications",
@@ -676,6 +686,16 @@
 			"link": "/docs/microsoft-marketplace-saas",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Token due diligence finishes its holder reads when the public RPC is throttling",
+			"summary": "With the keyed RPC providers at quota, the public cluster rate-limits per address over a ten second window, and the report's history reads used to give up inside one second, so most holder wallets went unread and the insider, sniper, bundler and fresh-wallet fields were withheld. History reads now back off across that window and space themselves out for a minute after a throttle, shared by every report on the server. A cold $THREE report now reads all 16 wallet holders with no failed reads and fills every field. Healthy lanes are never slowed.",
+			"link": "/docs/token-due-diligence",
+			"tags": [
+				"fix"
 			]
 		},
 		{

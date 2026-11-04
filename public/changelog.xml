@@ -319,6 +319,14 @@
 			<description>Walking into a world mid-conversation no longer means an empty chat box. You now see the last 60 lines, stamped with when they were said, above a &quot;You're caught up&quot; divider, and new lines carry on below it. Reconnecting or refreshing never repeats a line, screen readers hear one short summary instead of the whole backlog, and an empty world offers a Say hi button. Lines are kept for at most three days and only name, text and time are stored. Worlds can also show the coin's community board in a read-only Board tab next to world chat.</description>
 		</item>
 		<item>
+			<title>Jumping to a section of the doc you are reading no longer loads a missing page</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-11-04:Jumping to a section of the doc you are reading no longer loads a missing page</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Editing the address bar from one section of a docs page to another, or following a hand-written section link, used to read the section name as a doc, fetch a page that does not exist, and replace the doc you were reading with a not-found panel, live request blocks included. The docs reader now scrolls to that section of the open doc and rewrites the address so a reload or a shared link lands in the same place. A section that shares its name with a listed doc still opens that doc.</description>
+		</item>
+		<item>
 			<title>Knocks, agent mail and event markets get their own tabs on /notifications</title>
 			<link>https://three.ws/notifications</link>
 			<guid isPermaLink="false">2026-11-04:Knocks, agent mail and event markets get their own tabs on /notifications</guid>
@@ -525,6 +533,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The groundwork for selling three.ws through Microsoft is in place. A team that buys a three.ws plan on Microsoft Marketplace lands on /microsoft/activate, signs in with their work account, and gets the same plan a card purchase gives, billed on their Microsoft invoice. Plan changes, suspension and cancellation flow back automatically, and tool calls and agent messages are reported to Microsoft every hour, with Microsoft-side hiccups retried rather than dropped. Alongside it: a Microsoft 365 Copilot agent and Teams app with a bot and a tab, a Power Platform connector with five actions for Power Automate, Power Apps, Logic Apps and Copilot Studio, and a Windows app package for the Microsoft Store, each with a validator. Each one goes live after its Microsoft review.</description>
+		</item>
+		<item>
+			<title>Token due diligence finishes its holder reads when the public RPC is throttling</title>
+			<link>https://three.ws/docs/token-due-diligence</link>
+			<guid isPermaLink="false">2026-11-04:Token due diligence finishes its holder reads when the public RPC is throttling</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>With the keyed RPC providers at quota, the public cluster rate-limits per address over a ten second window, and the report's history reads used to give up inside one second, so most holder wallets went unread and the insider, sniper, bundler and fresh-wallet fields were withheld. History reads now back off across that window and space themselves out for a minute after a throttle, shared by every report on the server. A cold $THREE report now reads all 16 wallet holders with no failed reads and fills every field. Healthy lanes are never slowed.</description>
 		</item>
 		<item>
 			<title>Token holder and security checks now share their Solana reads, cutting RPC calls by about 43%</title>

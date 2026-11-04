@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Token due diligence finishes its holder reads when the public RPC is throttling",
+			"summary": "With the keyed RPC providers at quota, the public cluster rate-limits per address over a ten second window, and the report's history reads used to give up inside one second, so most holder wallets went unread and the insider, sniper, bundler and fresh-wallet fields were withheld. History reads now back off across that window and space themselves out for a minute after a throttle, shared by every report on the server. A cold $THREE report now reads all 16 wallet holders with no failed reads and fills every field. Healthy lanes are never slowed.",
+			"tags": ["fix"],
+			"link": "/docs/token-due-diligence"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Jumping to a section of the doc you are reading no longer loads a missing page",
 			"summary": "Editing the address bar from one section of a docs page to another, or following a hand-written section link, used to read the section name as a doc, fetch a page that does not exist, and replace the doc you were reading with a not-found panel, live request blocks included. The docs reader now scrolls to that section of the open doc and rewrites the address so a reload or a shared link lands in the same place. A section that shares its name with a listed doc still opens that doc.",
 			"tags": ["fix"],
