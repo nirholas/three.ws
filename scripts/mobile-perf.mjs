@@ -42,14 +42,18 @@
  *   node scripts/mobile-perf.mjs --device "iPhone 13" --net fast4g --cpu 2
  *   node scripts/mobile-perf.mjs --settle 8000         # post-load idle window
  *
+ *   node scripts/mobile-perf.mjs --budget             # gate: home, play, marketplace, forge, coin, agent profile
+ *
  * Exit code is 0 unless every page failed to load (so it is safe in CI as a
- * measurement step, not a gate).
+ * measurement step, not a gate). With --budget the exit code is 1 when any page
+ * is over LCP 4000 ms, CLS 0.1 or TBT* 600 ms, or could not be measured.
  */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, devices } from 'playwright';
+import { BUDGET, BUDGET_PAGES, checkBudget } from './lib/mobile-perf-budget.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -148,6 +152,7 @@ function parseArgs(argv) {
 		headful: false,
 		scroll: false,
 		scrollDwell: 2500,
+		budget: false,
 	};
 	for (let i = 2; i < argv.length; i++) {
 		const a = argv[i];
@@ -166,6 +171,7 @@ function parseArgs(argv) {
 		else if (a === '--md') out.md = next();
 		else if (a === '--label') out.label = next();
 		else if (a === '--headful') out.headful = true;
+		else if (a === '--budget') out.budget = true;
 		else if (a === '--scroll') out.scroll = true;
 		else if (a === '--scroll-dwell') out.scrollDwell = Math.max(200, Number(next()) || 200);
 		else if (a === '--help' || a === '-h') {
@@ -193,6 +199,7 @@ ${C.b('mobile-perf')} - Playwright-measured mobile field metrics (NOT Lighthouse
   --json <file>       write raw results JSON
   --md <file>         write a readable Markdown table
   --label <text>      free-text label stored in the JSON (e.g. "baseline")
+  --budget            gate mode: default pages home, play, marketplace, forge, coin, agent profile; exit 1 over LCP 4000 / CLS 0.1 / TBT* 600
   --scroll            after metrics are read, scroll the page and sample the
                       WebGL live/visible context ceiling (grid pages)
   --scroll-dwell <ms> settle per scroll step (default 2500)
@@ -674,7 +681,9 @@ async function main() {
 	}
 
 	let pageList;
-	if (!opts.pages || opts.pages === 'top15') {
+	if (opts.budget && !opts.pages) {
+		pageList = [...BUDGET_PAGES, await resolveAgentPage(opts.base)];
+	} else if (!opts.pages || opts.pages === 'top15') {
 		pageList = [...TOP15_STATIC, await resolveAgentPage(opts.base)];
 	} else {
 		pageList = opts.pages
@@ -747,6 +756,16 @@ async function main() {
 		mkdirSync(dirname(p), { recursive: true });
 		writeFileSync(p, renderMarkdown(report));
 		console.log(C.g(`  wrote ${p}`));
+	}
+
+	if (opts.budget) {
+		const verdict = checkBudget(results);
+		console.log(C.b(`\n  budget: LCP < ${BUDGET.lcp} ms, CLS < ${BUDGET.cls}, TBT* < ${BUDGET.tbtProxy} ms`));
+		for (const f of verdict.failures) {
+			console.log(C.r(`    OVER ${f.label}: ${f.metric} ${f.value === null ? 'not measured' : f.value} (limit ${f.limit ?? '-'})`));
+		}
+		console.log(verdict.pass ? C.g('  budget met on every page') : C.r(`  ${verdict.failures.length} budget failure(s)`));
+		process.exit(verdict.pass ? 0 : 1);
 	}
 
 	const anyOk = results.some((r) => r.okRuns > 0);

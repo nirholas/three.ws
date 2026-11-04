@@ -444,6 +444,22 @@ html.cv-page,
 	gap: 0.5rem;
 	margin-bottom: 1rem;
 }
+.cv-chart-bar {
+	min-height: 2rem;
+}
+.cv-chart-skel,
+#cv-chart .cv-chart-state:not(.col) {
+	/* Same height as the embedded provider chart (.cv-adv-wrap) so the swap from
+	   skeleton to loaded chart does not move the page below it. */
+	height: 440px;
+	border-radius: 8px;
+}
+@media (min-width: 768px) {
+	.cv-chart-skel,
+	#cv-chart .cv-chart-state:not(.col) {
+		height: 520px;
+	}
+}
 .cv-chart-bar .left {
 	display: flex;
 	align-items: center;

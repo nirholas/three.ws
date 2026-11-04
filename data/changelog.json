@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Mobile performance budget gate and coin chart layout fix",
+			"summary": "mobile-perf.mjs gains a --budget mode that fails when LCP, CLS or blocking time exceed budget on six key pages, and the coin page reserves its chart height so the page no longer jumps when the chart loads.",
+			"tags": [
+				"perf",
+				"tooling"
+			],
+			"link": "/docs/audit/mobile-perf-2026-11-03.md"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Agent ENS and DNS name claims are verified both ways",
 			"summary": "The agent resolver now checks the names a card claims (ENS text record agent, DNS TXT at _agent.<domain>) and reports verified, half from agent, half from name or unverified for each. The embed badge shows a chip per name with its state.",
 			"tags": [

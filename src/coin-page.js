@@ -62,6 +62,15 @@ async function getJson(url) {
 
 // ── Skeletons ───────────────────────────────────────────────────────────────
 
+// The chart panel's first paint. pages/coin.html carries the same markup so the
+// section is already its final height before this script runs. The body keeps
+// the chart's 800:300 aspect (CHART_W x CHART_H) so the skeleton, the loading
+// state and the rendered SVG are the same height at every width; the loaded
+// chart used to be shorter than the 300px placeholder on a phone and pulled the
+// whole page up (CLS 0.48 on /coin/<mint>, measured 2026-11-04).
+const CHART_SKELETON_HTML =
+	'<div class="cv-chart-panel"><div class="cv-chart-bar"></div><div class="cv-skel cv-chart-skel"></div></div>';
+
 function renderSkeletons() {
 	$('cv-head').innerHTML = `
 		<div class="cv-coin-head">
@@ -71,8 +80,7 @@ function renderSkeletons() {
 				<div class="cv-skel" style="width:18rem;height:3rem;margin-top:0.75rem"></div>
 			</div>
 		</div>`;
-	$('cv-chart').innerHTML =
-		'<div class="cv-chart-panel"><div class="cv-skel" style="height:300px;border-radius:8px"></div></div>';
+	$('cv-chart').innerHTML = CHART_SKELETON_HTML;
 	$('cv-stats').innerHTML =
 		'<div class="cv-stats-grid">' +
 		Array.from({ length: 8 }, () => '<div class="cv-skel" style="height:5rem"></div>').join('') +
@@ -334,6 +342,7 @@ function setChartSource(coin, id) {
 
 const CHART_W = 800;
 const CHART_H = 300;
+
 const PAD = { top: 20, right: 60, bottom: 30, left: 10 };
 
 function chartGeometry(series) {
