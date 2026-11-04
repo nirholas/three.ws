@@ -142,8 +142,52 @@ export function downsample(candles, bucketSeconds = 4 * 3600) {
 // The document the Posts view on /oracle-coin reads: the summary, and every post
 // that has a $THREE price at the moment it went out. Posts from before the pool
 // existed carry no price and are counted in the summary as unavailable instead.
-export function buildImpactDocument({ handle, posts, pool, candles, now = Date.now(), mint = THREE_MINT }) {
-	const rows = impactForPosts(posts, candles);
+// Union of candle lists keyed by bar time, later lists winning, oldest first.
+export function mergeCandles(...lists) {
+	const byTime = new Map();
+	for (const list of lists) for (const bar of list || []) byTime.set(bar.t, bar);
+	return [...byTime.values()].sort((a, b) => a.t - b.t);
+}
+
+const measuredCount = (row) => (row.priceAtPost === null ? 0 : 1) + HORIZONS.filter(({ key }) => row[key] !== null).length;
+
+// Returns a previous run measured for posts the current series no longer covers.
+// The keyless price API only serves a rolling window of history, so a post that
+// was measured once would otherwise turn unavailable on every later run. Only
+// posts older than the series start plus the longest horizon qualify (a recent
+// post with no +24h yet is not filled from anywhere), and a previous row
+// replaces the fresh one's price fields wholesale, never mixed per horizon.
+export function carryForwardRows(rows, previousRows, seriesStartSec) {
+	const previous = new Map((previousRows || []).map((row) => [String(row.id), row]));
+	const cutoff = seriesStartSec + HORIZONS[HORIZONS.length - 1].seconds + MAX_STALE_SECONDS;
+	let carried = 0;
+	const out = rows.map((row) => {
+		if (Date.parse(row.postedAt) / 1000 >= cutoff) return row;
+		const old = previous.get(String(row.id));
+		if (!old || measuredCount(old) <= measuredCount(row)) return row;
+		carried++;
+		const fields = { priceAtPost: old.priceAtPost ?? null };
+		for (const { key } of HORIZONS) fields[key] = old[key] ?? null;
+		return { ...row, ...fields };
+	});
+	return { rows: out, carried };
+}
+
+// `previous` is the document an earlier run wrote. When it describes the same
+// mint and pool, the posts and chart points that predate this run's series are
+// kept from it (see carryForwardRows), and `carried` says how many posts were.
+export function buildImpactDocument({ handle, posts, pool, candles, now = Date.now(), mint = THREE_MINT, previous = null }) {
+	let rows = impactForPosts(posts, candles);
+	let points = downsample(candles);
+	let carried = 0;
+	let from = candles[0].t;
+	if (previous && previous.mint === mint && previous.pool === pool) {
+		({ rows, carried } = carryForwardRows(rows, previous.posts, candles[0].t));
+		const firstSlot = points.length ? points[0].t : Infinity;
+		const older = (previous.points || []).filter((point) => point.t < firstSlot);
+		points = [...older, ...points];
+		if (older.length) from = Math.min(from, older[0].t);
+	}
 	return {
 		handle,
 		mint,
@@ -151,12 +195,13 @@ export function buildImpactDocument({ handle, posts, pool, candles, now = Date.n
 		generatedAt: new Date(now).toISOString(),
 		series: {
 			barSeconds: BAR_SECONDS,
-			from: new Date(candles[0].t * 1000).toISOString(),
+			from: new Date(from * 1000).toISOString(),
 			to: new Date((candles[candles.length - 1].t + BAR_SECONDS) * 1000).toISOString(),
 			bars: candles.length,
 		},
+		carried,
 		summary: summarize(rows, baselineReturns(candles)),
-		points: downsample(candles),
+		points,
 		posts: rows.filter((row) => row.priceAtPost !== null),
 	};
 }
@@ -174,6 +219,11 @@ const realSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // covered. `rateLimitRetries` is how many times one page answered 429 is asked
 // again after a doubling backoff. The batch script sets it; request-time callers
 // keep the default 0 so a throttle fails fast instead of holding a request open.
+// The keyless GeckoTerminal tier answers a request older than its window with
+// "You can only access data from the past 180 days" (a 401, tagged 502 by
+// ohlcv.js), so the window is read from the message rather than the status.
+const isHistoryWindowRefusal = (err) => /\b(?:past|last) \d+ days\b/i.test(String(err?.message || ''));
+
 export async function loadSeries({
 	mint = THREE_MINT,
 	fromSec = 0,
@@ -192,6 +242,7 @@ export async function loadSeries({
 	const pool = await resolvePool(mint, 'solana');
 	const byTime = new Map();
 	let before = null;
+	let historyLimited = false;
 	for (let page = 0; page < MAX_PAGES; page++) {
 		const query = { pool, network: 'solana', timeframe: 'minute', aggregate: 15, limit: PAGE_BARS, beforeTimestamp: before };
 		let out;
@@ -200,10 +251,17 @@ export async function loadSeries({
 				out = await fetchBars(query);
 				break;
 			} catch (err) {
+				// Paging back past the provider's history window ends the series at
+				// what was already read; the posts before it measure as unavailable.
+				if (page > 0 && isHistoryWindowRefusal(err)) {
+					historyLimited = true;
+					break;
+				}
 				if (err?.status !== 429 || attempt >= rateLimitRetries) throw err;
 				await sleep(THROTTLE_BACKOFF_MS * 2 ** attempt);
 			}
 		}
+		if (historyLimited) break;
 		const bars = out.candles || [];
 		if (!bars.length) break;
 		for (const bar of bars) byTime.set(bar.t, bar);
@@ -211,7 +269,7 @@ export async function loadSeries({
 		if (bars.length < PAGE_BARS || oldest <= fromSec || oldest === before) break;
 		before = oldest;
 	}
-	return { pool, candles: [...byTime.values()].sort((a, b) => a.t - b.t) };
+	return { pool, candles: [...byTime.values()].sort((a, b) => a.t - b.t), historyLimited };
 }
 
 // The candles the content pipeline stamps its rows with, or null when the market

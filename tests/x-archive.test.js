@@ -17,7 +17,7 @@ import {
 	percentile,
 	topicsOf,
 } from '../scripts/x-archive-lib.mjs';
-import { baselineReturns, buildImpactDocument, downsample, impactForPosts, loadSeries, priceAt, returnsAt, summarize } from '../api/_lib/x-content/price-impact.js';
+import { baselineReturns, buildImpactDocument, downsample, impactForPosts, loadSeries, mergeCandles, priceAt, returnsAt, summarize } from '../api/_lib/x-content/price-impact.js';
 
 const post = (over = {}) => ({
 	tweetId: over.tweetId || '1',
@@ -322,6 +322,44 @@ describe('price impact of a post', () => {
 		expect(doc.points.length).toBeGreaterThan(1);
 	});
 
+	it('keeps returns a previous run measured for posts that predate the series now served', () => {
+		const posts = [
+			post({ tweetId: 'gone', postedAt: iso(start - 86_400) }),
+			post({ tweetId: 'a', postedAt: iso(start + 10 * 900) }),
+			post({ tweetId: 'recent', postedAt: iso(start + 380 * 900) }),
+		];
+		const previous = {
+			mint: 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+			pool: 'pool1',
+			points: [{ t: start - 8 * 3600, o: 90, c: 95, v: 5 }],
+			posts: [
+				{ id: 'gone', priceAtPost: 80, r1h: 1.5, r4h: 2, r24h: -3 },
+				{ id: 'a', priceAtPost: 1, r1h: 99, r4h: 99, r24h: 99 },
+				{ id: 'recent', priceAtPost: 1, r1h: 7, r4h: 7, r24h: 7 },
+			],
+		};
+		const doc = buildImpactDocument({ handle: 'trythreews', posts, pool: 'pool1', candles: rising, previous });
+		const byId = Object.fromEntries(doc.posts.map((p) => [p.id, p]));
+		expect(doc.carried).toBe(1);
+		expect(byId.gone).toMatchObject({ priceAtPost: 80, r1h: 1.5, r4h: 2, r24h: -3 });
+		// A post the fresh series measured keeps the fresh numbers.
+		expect(byId.a.priceAtPost).toBe(109);
+		// A post too recent for +24h is never filled from an older run.
+		expect(byId.recent.r24h).toBeNull();
+		expect(doc.summary.horizons.r24h.measured).toBe(2);
+		expect(doc.points[0].t).toBe(start - 8 * 3600);
+		expect(doc.series.from).toBe(iso(start - 8 * 3600));
+		// A different pool is a different price series: nothing carries.
+		const other = buildImpactDocument({ handle: 'trythreews', posts, pool: 'pool2', candles: rising, previous });
+		expect(other.carried).toBe(0);
+		expect(other.posts.map((p) => p.id)).not.toContain('gone');
+	});
+
+	it('merges candle lists by bar time with the later list winning', () => {
+		const merged = mergeCandles([{ t: 2, c: 1 }, { t: 1, c: 1 }], [{ t: 2, c: 5 }, { t: 3, c: 6 }]);
+		expect(merged).toEqual([{ t: 1, c: 1 }, { t: 2, c: 5 }, { t: 3, c: 6 }]);
+	});
+
 	it('summarizes against the baseline and counts what could not be measured', () => {
 		const rows = impactForPosts(
 			[post({ tweetId: 'a', postedAt: iso(start + 10 * 900) }), post({ tweetId: 'b', postedAt: iso(start - 86_400) })],
@@ -390,5 +428,39 @@ describe('loading the price series', () => {
 			}),
 		).rejects.toThrow(/404/);
 		expect(waits).toHaveLength(0);
+	});
+
+	// The keyless GeckoTerminal tier refuses candles older than its history
+	// window (a 401 that ohlcv.js tags as a 502). Paging back into that wall is
+	// the end of what can be read, not a failure of the pages already read.
+	const historyWall = () =>
+		Object.assign(
+			new Error('GeckoTerminal 401: {"errors":[{"status":"401","title":"You can only access data from the past 180 days with Public API"}]}'),
+			{ status: 502 },
+		);
+
+	it('keeps the pages already read when paging back hits the history window', async () => {
+		const answers = [page(1000, 2_000_000_000), historyWall()];
+		const out = await loadSeries({
+			resolvePool: async () => 'p',
+			fetchBars: async () => {
+				const next = answers.shift();
+				if (next instanceof Error) throw next;
+				return next;
+			},
+		});
+		expect(out.candles).toHaveLength(1000);
+		expect(out.historyLimited).toBe(true);
+	});
+
+	it('still fails when the very first page is refused', async () => {
+		await expect(
+			loadSeries({
+				resolvePool: async () => 'p',
+				fetchBars: async () => {
+					throw historyWall();
+				},
+			}),
+		).rejects.toThrow(/180 days/);
 	});
 });
