@@ -1,5 +1,7 @@
 # beat 06: a capped burner wallet per agent that needs the owner's main wallet to confirm anything above the cap
 
+**Status (2026-11-04):** In progress in an interactive session. Do not start it in parallel.
+
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now; gated steps, if any, are named below.
 
 ## Operating clause (binding)
