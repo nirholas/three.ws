@@ -116,6 +116,29 @@ All three are live public reads against Solana mainnet. A `.sol` name with no ow
 | `THREE_WS_BASE`       | no       | `https://three.ws` |
 | `THREE_WS_TIMEOUT_MS` | no       | `20000`            |
 
+## Developing in the monorepo
+
+`sns_resolve` is authored with `@three-ws/tool-sdk`, which is private and never
+published. So that this package installs for everyone, `src/vendor/tool-sdk/`
+carries a byte-identical copy of the SDK's sources instead of a dependency on
+it. Edit the SDK in `packages/tool-sdk/src/`, never the copy, then resync:
+
+```bash
+npm run vendor:tool-sdk   # recopy the SDK into src/vendor/tool-sdk
+npm run check:vendored    # fails on drift between the SDK and the copy
+```
+
+Tests, from the repo root:
+
+```bash
+node --test "packages/naming-mcp/test/**/*.test.mjs"
+```
+
+`test/registration.test.mjs` checks the tool surface offline.
+`test/packed-install.test.mjs` packs the tarball, installs it into an empty
+directory with no workspace, and lists the tools over stdio, which proves the
+published package resolves every dependency from the npm registry.
+
 ## Links
 
 - Homepage: https://three.ws

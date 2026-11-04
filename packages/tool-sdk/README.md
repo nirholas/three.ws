@@ -44,11 +44,10 @@ it by name from anywhere in the monorepo:
 import { defineTool, defineExecutor, toMcpTools, guardedFetch, z } from '@three-ws/tool-sdk';
 ```
 
-A package that consumes it locally needs a `file:` dependency pointing at this
-package (npm workspaces resolves it automatically once both packages are
-listed in the root `package.json` `workspaces` array; see
-[Consuming from a package that also ships to npm](#consuming-from-a-package-that-also-ships-to-npm)
-for the one caveat that matters before you publish).
+A private, in-repo package can consume it through npm workspaces (both packages
+listed in the root `package.json` `workspaces` array). A package that ships to
+npm must vendor it instead; see
+[Consuming from a package that also ships to npm](#consuming-from-a-package-that-also-ships-to-npm).
 
 ## Quick start — full runnable example
 
@@ -232,15 +231,38 @@ takes a hard `dependencies` entry on this SDK will fail to install for
 external consumers, because npm cannot resolve an unpublished private
 package from the registry.
 
-For **in-monorepo development and testing** this is not a problem: a `file:`
-dependency (`"@three-ws/tool-sdk": "file:../tool-sdk"`) resolves correctly for
-every local `npm install`/`npm test` run, which is what
-`packages/naming-mcp/src/tools/sns-resolve.js` uses as this package's
-proof-of-port. Before that server's *next npm publish*, either (a) publish
-`@three-ws/tool-sdk` itself, (b) bundle the two files it actually uses at
-build time, or (c) inline the thin adapter call for that one file. This is a
-known, disclosed follow-up — not a blocker for using the SDK inside the
-monorepo today.
+A `file:` or `workspace:` dependency is no way around this: it resolves inside
+the monorepo, so every local `npm install` and `npm test` stays green, and then
+the published tarball fails to install for everyone else.
+
+**The route in use: vendor a byte-identical copy.** `naming-mcp` (this SDK's
+proof-of-port, `packages/naming-mcp/src/tools/sns-resolve.js`) ships a copy of
+`src/*.js` under `packages/naming-mcp/src/vendor/tool-sdk/` and imports
+`../vendor/tool-sdk/index.js`. The copy's only external import is `zod`, which
+the consumer already depends on, so the tarball installs with no extra
+dependency. `VENDORED.md` in that folder records the source commit and a hash of
+every file.
+
+```bash
+npm run vendor:tool-sdk   # recopy packages/tool-sdk/src into naming-mcp after editing the SDK
+npm run check:vendored    # fails on any drift between the SDK and the copy (part of npm run gate)
+```
+
+Edit the SDK here, never the copy, then run `npm run vendor:tool-sdk` and commit
+both. Another published package that adopts the SDK follows the same pattern
+with its own vendor script chained into `check:vendored`.
+
+Two guards keep this from regressing:
+
+- `tests/publishable-package-deps.test.js` (in `npm test`) fails when any
+  non-private workspace or `packages/*` package declares a `file:`, `link:`,
+  `workspace:` or `portal:` runtime dependency.
+- `packages/naming-mcp/test/packed-install.test.mjs` runs `npm pack`, installs
+  the tarball into an empty directory with no workspace, starts the installed
+  bin over stdio and lists its tools through the MCP client SDK.
+
+Publishing `@three-ws/tool-sdk` to npm would also work, and would let consumers
+drop the copy. That is a release decision for the owner; nothing depends on it.
 
 ## Test
 
