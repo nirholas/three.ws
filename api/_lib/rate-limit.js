@@ -612,6 +612,11 @@ export const FORGE_WORLD_PLAYER_BUCKET = ['forge:world:player', { limit: 1, wind
 export const FORGE_WORLD_SLOTS_BUCKET = ['forge:world:slots', { limit: FORGE_WORLD_SLOTS, window: `${FORGE_WORLD_SLOT_WINDOW_S} s` }];
 
 export const limits = {
+	// First-party campaign touch (/api/growth/touch). A real visitor records one
+	// touch per browser; 20 per 10 min per IP leaves shared NAT (an office, a
+	// conference hall) headroom while stopping a script from flooding the ledger.
+	campaignTouchIp: (ip) =>
+		getLimiter('growth:touch:ip', { limit: 20, window: '10 m', local: true }).limit(ip),
 	// One-click "Surprise me" avatar composition. Each call composes a rigged GLB
 	// (~1s CPU + a few base-body fetches), so the ceiling stops a script from
 	// hammering the composer while leaving a delighted human free to reroll fast:

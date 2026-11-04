@@ -38,6 +38,28 @@ Use lowercase ASCII and hyphens. Do not rename a campaign after links are live. 
 partner gets its own `utm_source` and `utm_content=partner-repost` while preserving the
 campaign ID.
 
+## First-party attribution (how a tagged link is measured)
+
+PostHog is not the record for campaigns. A visitor opening any three.ws page from a link
+tagged `utm_campaign=<id>` (or the short form `c=<ID>`) is recorded once in our own
+database, whichever page they land on:
+
+1. `public/nav.js` loads `public/campaign-attribution.js` only when the URL carries a tag.
+2. The first valid tag becomes the browser's first touch for 30 days and is POSTed to
+   `/api/growth/touch`: campaign id, `utm_source`, `utm_medium` and the landing pathname.
+   No IP, user agent, referrer or query string is stored. Browsers that send Do Not Track
+   or Global Privacy Control are not recorded.
+3. A later visit with a different campaign never replaces the first touch.
+4. A first-party `tws_ct` cookie lets the server credit `signup`, `agent_created`,
+   `forge_generation` and `paid_call` (a paid High forge) to that touch. A conversion made in
+   a browser with no first touch is not attributed to anything.
+5. `node scripts/campaign-report.mjs` prints touches and conversions per campaign joined to
+   `campaigns.csv`; `GET /api/growth/report` (admin) returns the same as JSON.
+
+Build links with `node scripts/campaign-link.mjs <campaign-id> <url> --source x --medium social`.
+It refuses ids that are not in `campaigns.csv`. Layer 3 (product action) and the community
+layer still need the manual capture described below for actions the ledger does not see.
+
 ## Funnel
 
 Measure each campaign through five layers:
@@ -115,6 +137,7 @@ Track these rollups:
 | ----------------------------------------- | ------------------------------------------------------------- | -------------------------------------------- |
 | `data/x-archive/`                         | X post content and engagement                                 | Refresh weekly and after large partner posts |
 | `docs/x-archive/trythreews-engagement.md` | Format and topic baselines                                    | Regenerate after archive refresh             |
+| First-party ledger (`node scripts/campaign-report.mjs`) | First touches and signup, agent, forge and paid-call conversions per campaign | 24 hours and 7 days                          |
 | Web analytics                             | UTM sessions and conversion events                            | 24 hours and 7 days                          |
 | `data/changelog.json`                     | Shipping volume and story discovery                           | Weekly editorial review                      |
 | IBM Community catalog                     | Members, articles, discussions, events                        | Monthly and after each event                 |

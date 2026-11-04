@@ -41,6 +41,7 @@ import { env } from '../../_lib/env.js';
 import { logAudit } from '../../_lib/audit.js';
 import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
 import { safeNext } from '../../../src/safe-next.js';
+import { recordConversion } from '../../_lib/campaign-ledger.js';
 import {
 	googleConfigured, startGoogleFlow, readGoogleFlow, exchangeGoogleCode, verifyGoogleIdToken,
 	findUserByIdentity, touchIdentity, linkIdentity, listSignInMethods, reauthCookie, readReauth,
@@ -197,6 +198,7 @@ async function completeLogin(req, res, flow, claims) {
 		return renderConfirm(res, { claims, next: flow.next });
 	}
 	const userId = await createGoogleUser(claims);
+	queueMicrotask(() => recordConversion(req, 'signup', userId));
 	await linkIdentity({ userId, provider: PROVIDER, claims });
 	await signIn(req, res, userId, { isNew: true });
 	return finish(res, flow.next);

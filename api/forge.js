@@ -53,6 +53,7 @@
  * model.
  */
 
+import { recordConversion } from './_lib/campaign-ledger.js';
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
@@ -1652,6 +1653,7 @@ async function startJobWithBody(req, res, body) {
 				});
 			}
 			paidHigh.redeemed = true;
+			recordConversion(req, 'paid_call');
 		}
 
 		// Prepaid-credit charge: debit now, immediately before provider work, so
@@ -3536,7 +3538,9 @@ export default wrap(async (req, res) => {
 		if ((url.searchParams.get('action') || '').trim() === 'rig') {
 			return startRigJob(req, res);
 		}
-		return startJob(req, res);
+		await startJob(req, res);
+		if (res.statusCode === 200) recordConversion(req, 'forge_generation');
+		return;
 	}
 
 	// ?catalog: the tier + backend + cost/time matrix the composer renders.

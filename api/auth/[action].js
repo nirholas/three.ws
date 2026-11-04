@@ -23,6 +23,7 @@ import { logAudit } from '../_lib/audit.js';
 import { tosAcceptanceFromBody, recordTosAcceptance } from '../_lib/legal.js';
 import { revokeAllMemberships } from '../_lib/home/members.js';
 import { z } from 'zod';
+import { recordConversion } from '../_lib/campaign-ledger.js';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
 
@@ -204,6 +205,7 @@ async function handleRegister(req, res) {
 		if (err?.status === 409) return error(res, 409, err.code || 'conflict', err.message);
 		throw err;
 	}
+	queueMicrotask(() => recordConversion(req, 'signup', user.id));
 	// Funnel: record the referred signup so visit→signup is measurable. The
 	// wallet auth paths (Privy/SIWS/SIWE) attribute later via referral-claim.js,
 	// which emits the mirror event.

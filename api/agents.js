@@ -12,6 +12,7 @@
  * DELETE /api/agents/:id/wallet — unlink wallet
  */
 
+import { recordConversion } from './_lib/campaign-ledger.js';
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from './_lib/auth.js';
 import { assertBearerMaySpend } from './_lib/spend-scope.js';
 import { sql } from './_lib/db.js';
@@ -332,6 +333,7 @@ async function handleCreate(req, res) {
 	}
 	const { agent } = created;
 
+	queueMicrotask(() => recordConversion(req, 'agent_created', auth.userId));
 	return json(res, 201, { agent: decorate(agent) });
 }
 

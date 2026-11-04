@@ -530,3 +530,8 @@ figures, or automate a prize transfer.
 - [Listings](../docs/listings.md): public status record.
 ~~~~
 
+
+
+## Status (2026-11-04)
+
+Built and unit-tested (22 tests): shared capture/validate module, touch and admin report endpoints, conversion hooks at signup (email, SIWS, Privy, Google), agent creation, forge generation and paid High forge, `scripts/campaign-link.mjs`, `scripts/campaign-report.mjs`, docs. Owner-owned remainder: apply migration `20261105110000_campaign_attribution_ledger.sql` (the database has 12 migrations pending, so apply deliberately after `npm run db:status`), deploy, then open `/forge?utm_campaign=MKT-2026-11-GCP-AGENT&utm_source=test` once and confirm one row via `node scripts/campaign-report.mjs`. The browser end-to-end check could not run because the tables do not exist yet. Paid x402 calls made by non-browser payers carry no cookie and are not attributed.

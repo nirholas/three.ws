@@ -13,6 +13,7 @@ import { randomToken, hmacSha256, sha256, constantTimeEquals } from '../../_lib/
 import { parseSiwsMessage, verifySiwsSignature } from '../../_lib/siws.js';
 import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
 import { tosAcceptanceFromBody, recordTosAcceptance } from '../../_lib/legal.js';
+import { recordConversion } from '../../_lib/campaign-ledger.js';
 
 const NONCE_TTL_SEC = 5 * 60;
 const CSRF_COOKIE = '__Host-csrf-siws';
@@ -274,6 +275,7 @@ async function handleVerify(req, res) {
 				// No welcome email here — placeholderEmail is a synthetic
 				// @wallet.local address and is not deliverable.
 				queueMicrotask(() => seedDefaultAgent(userId));
+				queueMicrotask(() => recordConversion(req, 'signup', userId));
 			}
 		}
 	}

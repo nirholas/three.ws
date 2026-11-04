@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Campaign links are now measured first-party",
+			"summary": "A page opened from a tagged campaign link records the visitor's first touch in our own ledger, and signups, agents, forge generations and paid calls are credited to it. Admins get a per-campaign report; no IP or referrer is stored.",
+			"tags": ["growth", "analytics"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Report and moderate players in /play",
 			"summary": "Players can report someone from their player card, and three distinct reports in five minutes mute that player for ten. Operators can list, mute, kick and ban players from a signed command, and a muted player sees how long is left above the chat box.",
 			"tags": [

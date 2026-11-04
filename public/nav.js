@@ -337,6 +337,11 @@ function boot() {
 	// Start the auth module now, beside the markup it will act on, instead of
 	// after it lands (see initAuthHint).
 	loadNavAuth();
+	// First-party campaign attribution: only pages opened from a tagged link
+	// (utm_campaign or c=) fetch the module, so ordinary visits pay nothing.
+	if (/[?&](utm_campaign|c)=/.test(location.search)) {
+		import('/campaign-attribution.js').then((m) => m.captureFirstTouch()).catch(() => {});
+	}
 	Promise.all([
 		fetch('/nav.html').then((response) => response.text()),
 		import('/nav-data.js'),

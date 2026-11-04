@@ -24,6 +24,7 @@ import { parse } from '../../_lib/validate.js';
 import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
 import { logAudit } from '../../_lib/audit.js';
 import { tosAcceptanceFromBody, recordTosAcceptance } from '../../_lib/legal.js';
+import { recordConversion } from '../../_lib/campaign-ledger.js';
 
 const bodySchema = z.object({
 	token: z.string().min(10),
@@ -121,6 +122,7 @@ export default wrap(async (req, res) => {
 
 	if (isNew) {
 		queueMicrotask(() => seedDefaultAgent(userId));
+		queueMicrotask(() => recordConversion(req, 'signup', userId));
 	}
 
 	// Pull linked wallets from Privy (app-secret API; token payload as fallback)
