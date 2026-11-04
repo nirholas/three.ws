@@ -17,7 +17,7 @@
 //   both          direct AND derived applied together (the overshoot the
 //                 suppression rule in a2f-player.js exists to prevent)
 //
-// Usage: node scripts/gtc-poster-render-rigs.mjs [--size 1400] [--t 5.3333]
+// Usage: node scripts/gtc-poster-render-rigs.mjs [--size 1200] [--t 5.3333]
 // Needs the Playwright Chromium that `npm test` already uses.
 
 import http from 'node:http';
@@ -35,7 +35,7 @@ const opt = (name, fallback) => {
 	const i = args.indexOf(`--${name}`);
 	return i >= 0 && args[i + 1] ? args[i + 1] : fallback;
 };
-const SIZE = Number(opt('size', 1400));
+const SIZE = Number(opt('size', 1200));
 const T = Number(opt('t', 5.3333));
 
 const RIGS = [
@@ -100,10 +100,10 @@ window.loadRig = async (url) => {
 	const box = new THREE.Box3();
 	for (const m of meshes) box.union(new THREE.Box3().setFromObject(m));
 	const size = box.getSize(new THREE.Vector3()); const center = box.getCenter(new THREE.Vector3());
-	const h = Math.max(size.x, size.y) * 1.25;
+	const h = Math.max(size.x, size.y) * 1.08;
 	const dist = (h / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-	camera.position.set(center.x, center.y - size.y * 0.04, center.z + dist + size.z / 2);
-	camera.lookAt(center.x, center.y - size.y * 0.04, center.z);
+	camera.position.set(center.x, center.y, center.z + dist + size.z / 2);
+	camera.lookAt(center.x, center.y, center.z);
 	camera.updateProjectionMatrix();
 	return { meshes: meshes.map((m) => ({ name: m.name, morphs: m.morphTargetInfluences.length })) };
 };
