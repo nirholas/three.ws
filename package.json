@@ -496,7 +496,6 @@
 		"evals:gate": "node scripts/evals.mjs --suite smoke --gate",
 		"check:rules": "node scripts/check-rules.mjs",
 		"check:fetch-timeouts": "node scripts/check-fetch-timeouts.mjs",
-		"check:integrations": "node scripts/check-integrations.mjs",
 		"check:vendored": "node scripts/check-vendored-workers.mjs && node packages/naming-mcp/scripts/vendor-tool-sdk.mjs --check",
 		"check:model-viewer": "node scripts/check-model-viewer-version.mjs",
 		"check:secrets": "node scripts/check-secrets.mjs",

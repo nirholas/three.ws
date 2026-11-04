@@ -117,6 +117,7 @@ Add sign-in later for the account's agents, memory, wallets and x402 tools, thro
 | Grok | https://three.ws/api/mcp-grok | OAuth 2.1 or a connector API key for the account's agent tools; none needed for the free 3D tools |
 | Agent wallet | https://three.ws/api/mcp-agent | OAuth 2.1 |
 | x402 Bazaar | https://three.ws/api/mcp-bazaar | OAuth 2.1 or x402 |
+| Oracle | https://three.ws/api/mcp-oracle | none for the read tools; OAuth 2.1 for oracle_arm_watch and oracle_watch_status |
 | pump.fun | https://three.ws/api/pump-fun-mcp | none for the read-only tools; API key or x402 for pumpfun_upload_metadata |
 | IBM x402 | https://three.ws/api/ibm-mcp | x402 pay-per-call (authenticated three.ws principals call without per-call payment) |
 

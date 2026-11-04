@@ -663,10 +663,6 @@
 			"dest": "/api/web-bot-auth-directory"
 		},
 		{
-			"src": "/\\.well-known/http-message-signatures-directory",
-			"dest": "/api/web-bot-auth-directory"
-		},
-		{
 			"src": "/\\.well-known/chat-plugin\\.json",
 			"dest": "/api/wk?name=chat-plugin"
 		},
@@ -5879,15 +5875,15 @@
 			"dest": "/settings/index.html"
 		},
 		{
+			"src": "/settings/",
+			"dest": "/settings/index.html"
+		},
+		{
 			"src": "/settings/connections/?",
 			"headers": {
 				"Location": "/dashboard/settings#x-posting"
 			},
 			"status": 302
-		},
-		{
-			"src": "/settings/",
-			"dest": "/settings/index.html"
 		},
 		{
 			"src": "/api/memory/settings",
@@ -7857,11 +7853,11 @@
 			"schedule": "*/20 * * * *"
 		},
 		{
-			"path": "/api/cron/build-leaderboard",
+			"path": "/api/cron/bounties-refresh",
 			"schedule": "*/30 * * * *"
 		},
 		{
-			"path": "/api/cron/bounties-refresh",
+			"path": "/api/cron/build-leaderboard",
 			"schedule": "*/30 * * * *"
 		},
 		{
