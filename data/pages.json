@@ -6867,6 +6867,14 @@
 					"added": "2026-11-03"
 				},
 				{
+					"path": "/settings/mcp-tools",
+					"title": "MCP Tool Access Settings",
+					"description": "Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.",
+					"priority": 0.3,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/mcp-integrations",
 					"title": "MCP Integrations",
 					"description": "Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_<name>_<tool>.",

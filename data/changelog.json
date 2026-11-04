@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Turn MCP tool groups on or off yourself at /settings/mcp-tools",
+			"summary": "When an MCP server refuses a tool because it is switched off, the link in the refusal now opens a real page. Sign in and you see every tool group with its plain description. Set a group to on to unlock all of its tools, including financial ones such as swaps, transfers and launches, or to off to hide it from every connected client. Your choice is saved to your account and applies to every client within about 15 seconds, with no need to reconnect or send a header.",
+			"tags": [
+				"feature"
+			],
+			"link": "/settings/mcp-tools"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Every platform fee now has its own ledger, and bundle and subscription earnings are booked correctly",
 			"summary": "Each fee three.ws takes (pump.fun trades and launches, agent trades, skill sales, bundles, subscriptions and the x402 skill split) is now recorded once in an append-only fee ledger, in the same database write as the purchase or trade it belongs to, and replays never record it twice. A daily reconciler checks every recorded fee against what the fee wallet actually received on Solana. Bundle and subscription confirmations also stopped booking a platform fee when the buyer paid the full price straight to the creator, so creators now see their full earnings for those sales.",
 			"tags": [
