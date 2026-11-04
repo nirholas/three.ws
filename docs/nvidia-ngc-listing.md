@@ -275,3 +275,5 @@ and none of them are an agent's call:
 - [NVIDIA Inception membership](./nvidia-inception.md): what membership is, and the rule that it is not an endorsement
 - [NVIDIA models on three.ws](./nvidia-models.md): the source of truth for every NVIDIA technical claim
 - [Listings and distribution](./listings.md): the canonical program and directory inventory
+
+Validation record and owner steps: [workers/model-trellis/NGC-VALIDATION.md](../workers/model-trellis/NGC-VALIDATION.md).

@@ -416,3 +416,5 @@ surfaced as the self-hosted TRELLIS `/forge` tier in
 [avatar-pipeline-controller](../avatar-pipeline-controller/) also lists it as a
 mesh backend via its own `MODEL_TRELLIS_URL`. All workers share the platform-side
 bearer secret `GCP_RECONSTRUCTION_KEY`, which must equal this service's `API_KEY`.
+
+NGC listing validation: see [NGC-VALIDATION.md](NGC-VALIDATION.md).

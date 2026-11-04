@@ -102,4 +102,5 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 730-plan-avatar-dense-identity-fit-rtx.md (kept) | see git log | Dense photometric head fit, RTX image and routing built and shipped disabled; owner runs the GPU image build, staging healthz and 40-face eval.
 
 - 982 (2026-11-04): glasses wearables lane code and docs landed; Mac build, Meta enrollment and hardware demo remain with the owner.
-2026-11-04 | 722-plan-payments-accounting-export-and-durable-ledgers.md | see git log | Bounty ledger moved to Postgres and admin accounting export built and tested; owner applies the migration, runs the backfill and exports against the real DB.
+- 981 (2026-11-04): image hardening committed; scan/A100 validation pending the c4fb8f6d build; NGC push is owner-held.
+- 977 (2026-11-04): weights build a7a81ea6 failed on an incomplete HF download; rerun scripts for longcat weights, then commit weights.sha256.

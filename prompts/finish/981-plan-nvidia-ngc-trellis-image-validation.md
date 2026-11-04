@@ -1,5 +1,7 @@
 # The TRELLIS NGC container passes real Ampere and Hopper inference and a CVE-clean two-stage build
 
+Status (2026-11-04): hardened two-stage image, scan and staging scripts and tests are committed. Candidate build c4fb8f6d was still running at close; the Trivy comparison and A100 smoke are not yet recorded (commands in workers/model-trellis/NGC-VALIDATION.md). Owner: NGC Partner Legal Agreement, intake form, `scripts/ngc-stage-trellis.sh --yes-push`.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/981-plan-nvidia-ngc-trellis-image-validation.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 30 of 100 inside the tier). **Area:** nvidia. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
