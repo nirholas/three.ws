@@ -73,16 +73,20 @@ gcloud builds submit --config workers/model-anigen/cloudbuild.yaml \
   --substitutions=SHORT_SHA=manual$(date +%s) .
 ```
 
-Service: `model-anigen`, us-central1, 1x L4 (`--no-gpu-zonal-redundancy`),
-scale-to-zero by default against the shared per-region L4 quota in
-`docs/ops/gcp-credits-plan.md`.
+Service: `model-anigen`, **europe-west4**, 1x L4 (`--no-gpu-zonal-redundancy`),
+scale-to-zero. The image stays in the us-central1 registry (`_REGION`); the
+service runs in `_RUN_REGION`. us-central1's L4 quota is 3, an increase was
+denied, and the three min-instance workers (`model-rig`, `model-rig-nonhuman`,
+`model-trellis`) hold all of it, so the first us-central1 deploy failed on GPU
+quota. europe-west4 has 8 L4s approved. The `three-ws-model-weights` bucket
+mounts cross-region, so a cold start copies the checkpoints over a longer path.
 
 Then point the Forge API at it:
 
 ```bash
 gcloud run services update three-ws-api --region us-central1 \
   --update-env-vars MODEL_ANIGEN_URL=$(gcloud run services describe \
-      model-anigen --region us-central1 --format='value(status.url)')
+      model-anigen --region europe-west4 --format='value(status.url)')
 ```
 
 `MODEL_ANIGEN_URL` is unset by default, so until that command runs, the

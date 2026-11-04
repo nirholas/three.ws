@@ -5,7 +5,15 @@
 serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
 
 substitutions:
+  # The image lives in the us-central1 registry, next to every other worker.
   _REGION: us-central1
+  # The service runs in europe-west4. The us-central1 L4 quota is 3 (an
+  # increase to 14 was denied) and the min-instance workers model-rig,
+  # model-rig-nonhuman and model-trellis hold all three, so the first deploy
+  # there (build 060a36e2, 2026-11-04) failed with "Quota exceeded for total
+  # allowable count of GPUs per project per region". europe-west4 has 8 L4s
+  # approved and nothing else on them; the weights bucket mounts cross-region.
+  _RUN_REGION: europe-west4
   _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
   _SERVICE: model-anigen
   _REPO: model-anigen
@@ -47,7 +55,7 @@ steps:
       - deploy
       - ${_SERVICE}
       - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
-      - --region=${_REGION}
+      - --region=${_RUN_REGION}
       - --service-account=${_RUN_SA}
       - --platform=managed
       - --port=8080
