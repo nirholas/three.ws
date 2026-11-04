@@ -1,5 +1,7 @@
 # Deleted accounts are permanently purged after 30 days, as the privacy policy promises
 
+**Status (2026-11-04):** Implementation is committed (account-purge lib, daily cron plus vercel.json route and cron entry, migration 20261104180000_account_purge.sql, tests/api/purge-deleted-accounts.test.js, SIWS deleted-account test, privacy.html, ios REVIEW-RISK, docs/account-deletion.md, changelog). Not verified because the shared node_modules is broken this session: vitest runs (new tests and full-suite baseline), `npm run db:status` and applying the migration with `npm run db:migrate` (owner of deploy applies it), the read-only production count of accounts past 30 days, `check:rules` and `audit:docs`. Re-run those, then delete this file.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/264-plan-auth-purge-deleted-accounts-after-30-days.md`.
 
 **Priority:** P1, unshipped fix or half-built user-visible feature (score 74 of 100 inside the tier). **Area:** auth. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
