@@ -34,6 +34,7 @@ import { createHash } from 'node:crypto';
 import { cacheHealth, cacheGet } from '../cache.js';
 import { heliusHealth } from '../balances.js';
 import { rpcLaneHealth } from '../solana/connection.js';
+import { readRpcSpend, summarizeRpcSpend } from '../solana/rpc-spend.js';
 import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
 import { gatherX402SettleHealth } from './x402-settle-health.js';
@@ -282,7 +283,7 @@ function coolingCensus(lanes) {
 	return `; ${shown.join(', ')}${rest > 0 ? `, +${rest} more cooling` : ''}`;
 }
 
-function checkRpcLanes() {
+function checkRpcLaneState() {
 	const base = { name: 'rpc_lanes', label: 'Solana RPC lanes' };
 	try {
 		const h = rpcLaneHealth();
@@ -333,6 +334,58 @@ function checkRpcLanes() {
 	} catch (err) {
 		return { ...base, status: 'unknown', detail: err?.message || 'unreadable' };
 	}
+}
+
+// How long healthz waits for the 24h call ledger before reporting the lanes
+// without it. The ledger is a few dozen shared-cache reads; a slow cache must
+// never hold the whole health board hostage.
+const RPC_SPEND_HEALTH_TIMEOUT_MS = 1500;
+
+/**
+ * Lane state plus the last 24h of real provider calls (cache and coalesced
+ * reads excluded): `calls_24h`, the top caller, and per-lane `calls_24h`. The
+ * spend half is best-effort: if the ledger is unreadable or slow the check still
+ * reports lane state, with `spend: 'unavailable'` in its metrics.
+ */
+async function checkRpcLanes() {
+	const state = checkRpcLaneState();
+	if (state.status === 'unknown') return state;
+	let summary = null;
+	let timer;
+	try {
+		summary = await Promise.race([
+			readRpcSpend({ hours: 24 }).then(({ rows }) => summarizeRpcSpend(rows, 5)),
+			new Promise((resolve) => {
+				timer = setTimeout(() => resolve(null), RPC_SPEND_HEALTH_TIMEOUT_MS);
+			}),
+		]);
+	} catch {
+		summary = null;
+	} finally {
+		clearTimeout(timer);
+	}
+	if (!summary) return { ...state, metrics: { ...state.metrics, spend: 'unavailable' } };
+	const byLane = new Map(summary.byLane.map((l) => [l.lane, l.calls]));
+	const laneHostOf = (url) => {
+		try {
+			return new URL(url).host;
+		} catch {
+			return url;
+		}
+	};
+	const top = summary.topCaller;
+	return {
+		...state,
+		detail: `${state.detail}; ${summary.calls} calls/24h${top ? `, top ${top.caller} (${top.calls})` : ''}`,
+		metrics: {
+			...state.metrics,
+			calls_24h: summary.calls,
+			saved_24h: summary.saved,
+			top_caller: top ? top.caller : null,
+			top_caller_calls_24h: top ? top.calls : 0,
+		},
+		lanes: (state.lanes || []).map((l) => ({ ...l, calls_24h: byLane.get(laneHostOf(l.url)) || 0 })),
+	};
 }
 
 function checkRing() {
@@ -652,7 +705,7 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		Promise.resolve(checkRateLimiter()),
 		Promise.resolve(checkHelius()),
 		// Whole paid RPC tier, not just Helius (see checkRpcLanes).
-		Promise.resolve(checkRpcLanes()),
+		checkRpcLanes(),
 		Promise.resolve(checkRing()),
 		// Settle SUCCESS RATE, not just "armed" — reads x402_autonomous_log. Needs
 		// the DB, so it shares the probeDb gate; skipped-DB callers get `unknown`.

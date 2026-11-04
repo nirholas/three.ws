@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import {
 	solanaRpcEndpoints,
@@ -8,7 +8,11 @@ import {
 	rpcLaneHealth,
 	classifyRpcBody,
 	formatCooldown,
+	orderEndpointsForCaller,
+	makeRotatingFetch,
+	_resetReadCache,
 } from '../api/_lib/solana/connection.js';
+import { recordRpcSpend, refreshLaneSpendNow, laneBudgets, _resetRpcSpend } from '../api/_lib/solana/rpc-spend.js';
 import { cacheGet, cacheSet, cacheDel } from '../api/_lib/cache.js';
 
 // Two production defects this file locks down, both found in the 2026-07-28
@@ -344,5 +348,103 @@ describe('endpoint breaker — quota verdicts are shared fleet-wide', () => {
 		await new Promise((r) => setTimeout(r, 25));
 		const shared = await cacheGet(COOLDOWN_CACHE_KEY);
 		expect(shared?.[blip]).toBeUndefined();
+	});
+});
+
+// Daily budget guard (RPC_LANE_BUDGETS). A paid lane that has used its share of
+// today's quota is moved behind every other lane for ordinary reads, so the
+// quota that remains is kept for money paths (fresh reads, sends, simulates),
+// which always keep the configured order.
+describe('lane budget guard: an over-budget paid lane is demoted for non-money callers', () => {
+	const PAID = 'https://paid-lane.test/';
+	const FREE = 'https://free-lane.test/';
+	const okBody = (id = 1) =>
+		new Response(JSON.stringify({ jsonrpc: '2.0', id, result: { context: { slot: 1 }, value: 1 } }), {
+			status: 200,
+			headers: { 'content-type': 'application/json' },
+		});
+	let origFetch;
+	let savedBudgets;
+	let savedFraction;
+
+	const spend = async (lane, n) => {
+		for (let i = 0; i < n; i++) recordRpcSpend({ lane, methods: ['getBalance'], caller: '/api/test/budget' });
+		await refreshLaneSpendNow();
+	};
+
+	beforeEach(() => {
+		origFetch = global.fetch;
+		savedBudgets = process.env.RPC_LANE_BUDGETS;
+		savedFraction = process.env.RPC_LANE_BUDGET_FRACTION;
+		delete process.env.RPC_LANE_BUDGET_FRACTION;
+		process.env.RPC_LANE_BUDGETS = JSON.stringify({ 'paid-lane.test': 100 });
+		_resetRpcSpend();
+		_resetReadCache();
+	});
+	afterEach(() => {
+		global.fetch = origFetch;
+		if (savedBudgets === undefined) delete process.env.RPC_LANE_BUDGETS;
+		else process.env.RPC_LANE_BUDGETS = savedBudgets;
+		if (savedFraction === undefined) delete process.env.RPC_LANE_BUDGET_FRACTION;
+		else process.env.RPC_LANE_BUDGET_FRACTION = savedFraction;
+		_resetRpcSpend();
+		_resetReadCache();
+	});
+
+	it('keeps the configured order while the lane is under its share', async () => {
+		await spend('paid-lane.test', 79);
+		expect(orderEndpointsForCaller([PAID, FREE])).toEqual([PAID, FREE]);
+	});
+
+	it('moves the lane to the back once it reaches the default 80% share', async () => {
+		await spend('paid-lane.test', 80);
+		expect(orderEndpointsForCaller([PAID, FREE])).toEqual([FREE, PAID]);
+	});
+
+	it('never reorders for a money caller, even over budget', async () => {
+		await spend('paid-lane.test', 100);
+		expect(orderEndpointsForCaller([PAID, FREE], { money: true })).toEqual([PAID, FREE]);
+	});
+
+	it('honours a per-lane fraction and the global fraction env', async () => {
+		process.env.RPC_LANE_BUDGETS = JSON.stringify({ 'https://paid-lane.test/rpc': { daily: 100, fraction: 0.5 } });
+		await spend('paid-lane.test', 50);
+		expect(laneBudgets().get('paid-lane.test')).toEqual({ daily: 100, fraction: 0.5 });
+		expect(orderEndpointsForCaller([PAID, FREE])).toEqual([FREE, PAID]);
+
+		process.env.RPC_LANE_BUDGETS = JSON.stringify({ 'paid-lane.test': 1000 });
+		process.env.RPC_LANE_BUDGET_FRACTION = '0.04';
+		expect(orderEndpointsForCaller([PAID, FREE])).toEqual([FREE, PAID]);
+	});
+
+	it('does not count saved reads (cache, coalesced) against a lane', async () => {
+		for (let i = 0; i < 500; i++) recordRpcSpend({ lane: 'cache', methods: ['getBalance'] });
+		await spend('paid-lane.test', 10);
+		expect(orderEndpointsForCaller([PAID, FREE])).toEqual([PAID, FREE]);
+	});
+
+	it('disables itself on unparseable JSON rather than demoting anything', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		process.env.RPC_LANE_BUDGETS = '{not json';
+		await spend('paid-lane.test', 1000);
+		expect(orderEndpointsForCaller([PAID, FREE])).toEqual([PAID, FREE]);
+		expect(warn).toHaveBeenCalled();
+		warn.mockRestore();
+	});
+
+	it('routes a plain read to the free lane and a send to the paid lane, end to end', async () => {
+		await spend('paid-lane.test', 90);
+		const hosts = [];
+		global.fetch = vi.fn(async (url) => {
+			hosts.push(new URL(String(url)).host);
+			return okBody();
+		});
+		const rf = makeRotatingFetch([PAID, FREE]);
+		const body = (method, params) => JSON.stringify({ jsonrpc: '2.0', id: 1, method, params });
+		const post = (b) => ({ method: 'POST', headers: { 'content-type': 'application/json' }, body: b });
+		await rf(null, post(body('getBalance', ['FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'])));
+		await rf(null, post(body('sendTransaction', ['AQ=='])));
+		await makeRotatingFetch([PAID, FREE], { fresh: true })(null, post(body('getAccountInfo', ['FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'])));
+		expect(hosts).toEqual(['free-lane.test', 'paid-lane.test', 'paid-lane.test']);
 	});
 });
