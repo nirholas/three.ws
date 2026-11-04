@@ -4,8 +4,9 @@
 // agents and creations with them, so /characters listed "QA devnet squad Trader"
 // and "Test Agent" beside real creators and /rankings ranked the QA account.
 // Migration 20261105000000_users_is_test.sql adds users.is_test (backfill plus a
-// BEFORE INSERT trigger); GET /api/characters and GET /api/leaderboard/unified
-// filter on it. Both handlers and the migration run for real here, against an
+// BEFORE INSERT trigger); GET /api/characters, GET /api/leaderboard/unified and
+// GET /api/agents/public (the /pocket roster, /agents and the live wall) filter
+// on it. The handlers and the migration run for real here, against an
 // in-process Postgres (PGlite).
 
 import { readFileSync } from 'node:fs';
@@ -29,7 +30,7 @@ vi.mock('../api/_lib/rate-limit.js', async (importActual) => {
 	const ok = async () => ({ success: true, limit: 100, remaining: 99, reset: Date.now() + 60_000 });
 	return { ...actual, limits: new Proxy({}, { get: () => ok }), clientIp: () => '127.0.0.1' };
 });
-vi.mock('../api/_lib/r2.js', () => ({ thumbnailUrl: () => null }));
+vi.mock('../api/_lib/r2.js', () => ({ thumbnailUrl: () => null, publicUrlOrNull: () => null }));
 vi.mock('../api/_lib/zauth.js', () => ({ instrument: () => {}, drain: async () => {} }));
 vi.mock('../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 
@@ -44,14 +45,18 @@ const LATE_QA = '44444444-4444-4444-8444-444444444444';
 
 const DDL = `
 	create table users (id uuid primary key, email text, username text, display_name text,
-		avatar_url text, deleted_at timestamptz);
+		avatar_url text, service_account boolean default false, deleted_at timestamptz);
 	create table avatars (id uuid primary key default gen_random_uuid(), owner_id uuid, thumbnail_key text,
-		visibility text default 'public', created_at timestamptz default now(), deleted_at timestamptz);
+		storage_key text, visibility text default 'public', created_at timestamptz default now(),
+		deleted_at timestamptz);
 	create table agent_identities (
 		id uuid primary key default gen_random_uuid(), user_id uuid, name text, description text,
 		meta jsonb default '{}'::jsonb, avatar_id uuid, is_published boolean default true,
+		is_public boolean default true, skills text[] default '{}', home_url text,
+		erc8004_agent_id bigint, chain_id int,
 		created_at timestamptz default now(), deleted_at timestamptz
 	);
+	create table agent_actions (id bigserial primary key, agent_id uuid, created_at timestamptz default now());
 	create table usage_events (id bigserial primary key, agent_id uuid, kind text);
 	create table forge_creations (id uuid primary key default gen_random_uuid(), user_id uuid,
 		status text, glb_url text, parent_creation_id uuid);
@@ -92,12 +97,14 @@ async function call(handler, url) {
 
 let characters;
 let unified;
+let publicAgents;
 let accounts;
 
 beforeAll(async () => {
 	accounts = await import('../api/_lib/test-accounts.js');
 	({ default: characters } = await import('../api/characters.js'));
 	({ default: unified } = await import('../api/leaderboard/unified.js'));
+	({ default: publicAgents } = await import('../api/agents/public.js'));
 });
 
 beforeEach(async () => {
@@ -213,5 +220,31 @@ describe('GET /api/leaderboard/unified', () => {
 		expect(status).toBe(200);
 		expect(body.total).toBe(1);
 		expect(body.rows).toEqual([expect.objectContaining({ userId: REAL, rank: 1, value: 1 })]);
+	});
+});
+
+describe('GET /api/agents/public', () => {
+	beforeEach(async () => {
+		await holder.db.query(
+			`insert into agent_identities (user_id, name, description) values
+			 ($1, 'Sherlox', 'A detective'), ($2, 'QA devnet squad Trader', 'audit'),
+			 ($3, 'E2E paper squad Trader', 'e2e')`,
+			[REAL, QA, E2E],
+		);
+		await holder.db.query(`insert into agent_actions (agent_id) select id from agent_identities`);
+	});
+
+	for (const sort of ['popular', 'newest', 'name', 'live']) {
+		it(`lists real creators' agents only (sort=${sort})`, async () => {
+			const { status, body } = await call(publicAgents, `/api/agents/public?sort=${sort}&limit=24`);
+			expect(status).toBe(200);
+			expect(body.agents.map((a) => a.name)).toEqual(['Sherlox']);
+		});
+	}
+
+	it('counts only real agents in the live wall header', async () => {
+		const { body } = await call(publicAgents, '/api/agents/public?sort=live');
+		expect(body.total).toBe(1);
+		expect(body.active_total).toBe(1);
 	});
 });

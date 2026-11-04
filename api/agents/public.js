@@ -37,6 +37,10 @@
  * own published persona agents (service-account owned, published) still list,
  * and so do people's unpublished starter agents.
  *
+ * QA, audit and e2e accounts never list either (users.is_test, set by migration
+ * 20261105000000_users_is_test.sql): our own sweeps publish real agents with
+ * them, and those were filling the /pocket roster and the live wall.
+ *
  * Public, IP rate-limited, 30-second CDN cache.
  */
 
@@ -141,6 +145,7 @@ export default wrap(async (req, res) => {
 			  and not (i.is_published is not true and exists (
 			        select 1 from users su where su.id = i.user_id and su.service_account
 			      ))
+			  and not exists (select 1 from users tu where tu.id = i.user_id and tu.is_test)
 			  and (${!q} or (
 			        to_tsvector('english', coalesce(i.name,'') || ' ' || coalesce(i.description,''))
 			        @@ plainto_tsquery('english', ${q})
@@ -189,6 +194,7 @@ export default wrap(async (req, res) => {
 				  and not (i.is_published is not true and exists (
 				        select 1 from users su where su.id = i.user_id and su.service_account
 				      ))
+				  and not exists (select 1 from users tu where tu.id = i.user_id and tu.is_test)
 				  and (
 				        exists (select 1 from agent_actions aa where aa.agent_id = i.id)
 				        or exists (select 1 from usage_events ue where ue.agent_id = i.id and ue.kind = 'llm')
@@ -243,6 +249,7 @@ export default wrap(async (req, res) => {
 		  and not (i.is_published is not true and exists (
 		        select 1 from users su where su.id = i.user_id and su.service_account
 		      ))
+		  and not exists (select 1 from users tu where tu.id = i.user_id and tu.is_test)
 		  and (${!q} or (
 		        to_tsvector('english', coalesce(i.name,'') || ' ' || coalesce(i.description,''))
 		        @@ plainto_tsquery('english', ${q})
