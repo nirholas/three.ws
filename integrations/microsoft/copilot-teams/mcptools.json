@@ -1,0 +1,822 @@
+{
+  "tools": [
+    {
+      "name": "forge_free",
+      "title": "Generate a 3D model from text",
+      "description": "Turn a text prompt into a textured, downloadable 3D model (GLB), free. Describe a single object, character, or creature; the studio generates an interactive model you can rotate, view, and download. Optional quality tier (draft, standard, high); high is slower and may fall back to standard under load. Renders inline in an interactive 3D viewer. Use this when the user wants a new 3D object, character or creature from a text description.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 1000,
+            "description": "Description of the single object or character to model, e.g. \"a friendly round robot mascot, glossy white plastic\"."
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "standard",
+              "high"
+            ],
+            "description": "Detail level: draft (fastest), standard (default), or high (best, slower; may fall back to standard under load)."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Optional: any string you choose (up to 200 characters) that names this one generation, such as a task id. Calling again with the same key within 24 hours returns the original job instead of starting a new one, so a retry after a timeout never generates twice. Use a new key for a new model."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Generating your 3D model...",
+        "openai/toolInvocation/invoked": "Here is your 3D model",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "text_to_avatar",
+      "title": "Generate a 3D avatar",
+      "description": "Generate a textured 3D avatar (GLB) from a text description or a reference image URL. Best for characters and figures. Renders inline in an interactive 3D viewer. Use this when the user wants a character or figure generated from a text description or a reference image.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Description of the avatar to generate."
+          },
+          "image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional http(s) URL to a reference image to reconstruct in 3D."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Optional: any string you choose (up to 200 characters) that names this one generation, such as a task id. Calling again with the same key within 24 hours returns the original job instead of starting a new one, so a retry after a timeout never generates twice. Use a new key for a new model."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Generating your avatar...",
+        "openai/toolInvocation/invoked": "Here is your avatar",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "mesh_forge",
+      "title": "Generate a 3D mesh (art-directed)",
+      "description": "Generate a textured 3D mesh (GLB) from a text prompt or a reference image URL. In text mode an AI art-director first refines your prompt into an optimized single-subject spec for higher mesh quality. Renders inline in an interactive 3D viewer. Use this when you want a higher quality mesh from a rough prompt or reference image, with the prompt refined for you first.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Description of the single object to model."
+          },
+          "image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional http(s) URL to a reference image to reconstruct directly."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Optional: any string you choose (up to 200 characters) that names this one generation, such as a task id. Calling again with the same key within 24 hours returns the original job instead of starting a new one, so a retry after a timeout never generates twice. Use a new key for a new model."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Generating your 3D mesh...",
+        "openai/toolInvocation/invoked": "Here is your 3D mesh",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "rig_mesh",
+      "title": "Rig a 3D model for animation",
+      "description": "Auto-rig a static 3D model (GLB) into an animation-ready model: adds a humanoid skeleton and skin weights so it can be posed and animated. Provide the GLB URL of a model (e.g. one generated by the other tools). Renders the rigged result inline in an interactive 3D viewer. Use this when you already have a GLB and want it rigged so it can be posed and animated.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "glb_url"
+        ],
+        "properties": {
+          "glb_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "http(s) URL to the static GLB mesh to rig."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Optional: any string you choose (up to 200 characters) that names this one generation, such as a task id. Calling again with the same key within 24 hours returns the original job instead of starting a new one, so a retry after a timeout never generates twice. Use a new key for a new model."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Rigging your model...",
+        "openai/toolInvocation/invoked": "Here is your rigged model",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "forge_avatar",
+      "title": "Generate a rigged, animation-ready avatar",
+      "description": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, in one step. Generates the mesh, then auto-rigs it with a humanoid skeleton so it is ready to pose and animate. Best for characters; objects are steered to the mesh generator. Renders inline in an interactive 3D viewer. Use this when the user wants a posable, animation-ready character in one step instead of generating then rigging.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Description of the character/avatar to generate."
+          },
+          "image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional http(s) URL to a reference image to reconstruct in 3D."
+          },
+          "allow_non_humanoid": {
+            "type": "boolean",
+            "description": "Set true to rig a non-humanoid subject anyway (rigging assumes a humanoid figure)."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Optional: any string you choose (up to 200 characters) that names this one generation, such as a task id. Calling again with the same key within 24 hours returns the original job instead of starting a new one, so a retry after a timeout never generates twice. Use a new key for a new model."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Generating your rigged avatar...",
+        "openai/toolInvocation/invoked": "Here is your rigged avatar",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "refine_model",
+      "title": "Refine a 3D model by describing a change",
+      "description": "Iterate on a model you already generated: just describe the change in words (\"make it metallic\", \"bigger helmet\", \"add wings\"). The studio re-generates a new version anchored to the previous one, carrying its form and materials forward. Pass the previous model's glb_url and, when you have it, the prompt that made it (parent_prompt) so the change builds on it. Each refinement is recorded as a new version in a lineage you can revert to or branch from, and the returned lineage drives a version strip in the viewer. Renders the new version inline in the interactive 3D viewer. Use this when the user wants to change a model you already generated instead of starting over.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "glb_url",
+          "instruction"
+        ],
+        "properties": {
+          "glb_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "http(s) URL of the model to refine (e.g. the glbUrl a previous generation returned)."
+          },
+          "instruction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "The change to make, in plain language: \"make it metallic\", \"bigger helmet\", \"add a cape\"."
+          },
+          "parent_prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Optional: the prompt that produced the model being refined, so the change builds on it instead of starting over."
+          },
+          "reference_image_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional http(s) image of the current model to anchor the re-generation (image->3D). Omit for text-guided refinement."
+          },
+          "parent_lineage": {
+            "type": "array",
+            "description": "Optional: the lineage array from a previous refine_model result, to extend the same version history.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "parent_index": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optional: branch off an earlier version in parent_lineage (its index) instead of the latest."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Optional: any string you choose (up to 200 characters) that names this one generation, such as a task id. Calling again with the same key within 24 hours returns the original job instead of starting a new one, so a retry after a timeout never generates twice. Use a new key for a new model."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Refining your 3D model...",
+        "openai/toolInvocation/invoked": "Here is the refined model",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "check_job",
+      "title": "Check a pending 3D generation",
+      "description": "Check on a 3D generation that returned status \"pending\" and collect the finished model. Pass the job_id from the pending result. While it is still rendering you get updated timing; call again after the suggested wait. Checking can save the completed model and restart failed work on another provider. When it is done the model renders inline in the interactive 3D viewer. Use this when a generation tool returned status \"pending\" and you need to collect the finished model.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "job_id"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 4096,
+            "description": "The job_id (or jobId) a pending generation returned."
+          },
+          "refine": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Optional: the refine object a pending refine_model result carried. Pass it back unchanged so the finished model joins that version history.",
+            "properties": {
+              "lineage": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "instruction": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "parentIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "refKind": {
+                "type": "string",
+                "enum": [
+                  "text",
+                  "image"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Checking your 3D model...",
+        "openai/toolInvocation/invoked": "Here is your 3D model",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "look_at_model",
+      "title": "Look at a 3D model",
+      "description": "FREE. See a 3D model instead of just linking to it. Renders the GLB from several angles and returns the frames as images you can actually look at, plus its geometry (triangles, materials, textures) and a plain reading of what those numbers mean. Use it right after generating to check your own work: is the subject complete, is the back finished, is anything melted or fused? Then regenerate naming the fault you saw. Works on any public https .glb, not only ones made here. Use this to visually inspect a GLB for defects before you hand it to the user.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "glb_url"
+        ],
+        "properties": {
+          "glb_url": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 2048,
+            "description": "Public https URL of the .glb to look at."
+          },
+          "views": {
+            "type": "array",
+            "maxItems": 6,
+            "items": {
+              "type": "string",
+              "enum": [
+                "front",
+                "three-quarter",
+                "side",
+                "back",
+                "top",
+                "bottom"
+              ]
+            },
+            "description": "Angles to render. Default: three-quarter, front, side, back."
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 128,
+            "maximum": 1024,
+            "description": "Pixel size of each square frame. Default 512."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-model.html",
+        "openai/toolInvocation/invoking": "Looking at your 3D model...",
+        "openai/toolInvocation/invoked": "Here is what the model looks like",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "read",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "get_job",
+      "title": "Get a 3D generation job",
+      "description": "Status of a 3D generation job. Pass the job_id any generation tool returned with status \"pending\". Returns status (pending, done or failed), phase, progress from 0 to 1, eta_seconds and elapsed_seconds while it runs; when done, the model with its viewer_url, glb_url, poster_png_url and embed_html; when failed, the reason and what to do next. Call it as often as you like: it never starts or repeats a generation. Between calls, wait about the eta_seconds it reports, or 15 seconds when it reports none. Use this when a generation tool returned status \"pending\" and you need its current status or the finished model.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "job_id"
+        ],
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 4096,
+            "description": "The job_id (or jobId) a generation tool returned."
+          },
+          "refine": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Optional: the refine object a pending refine_model result carried, passed back unchanged so the finished model joins that version history."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "search_catalog",
+      "title": "Search the three.ws asset catalog",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Free, no account needed. Search every ready-made asset three.ws publishes in one call: CC0 3D props and objects, rigged humanoid characters, and retargetable motion clips. Returns ids, titles, tags, licenses, and CDN urls, plus category facets to narrow the next query. Use this before generating anything: if the catalog already has the prop or character, dropping it in is instant and free where generating one is not. Feed a returned id to get_item_source for code that renders it on any site.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "q": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Free text over titles, names, tags, and categories, e.g. \"wooden chair\", \"office\", \"wave\". Every word must match somewhere, so start broad."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "object",
+              "character",
+              "animation"
+            ],
+            "description": "Narrow to one library: object (CC0 props), character (rigged humanoids), animation (motion clips)."
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Exact category from a previous result's facets."
+          },
+          "tag": {
+            "type": "string",
+            "maxLength": 80,
+            "description": "Exact tag from a previous result's facets."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 12
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Page offset. Use next_offset from the previous response."
+          }
+        }
+      },
+      "_meta": {
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "read",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "get_catalog_item",
+      "title": "Read one catalog item",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Free, no account needed. Read one three.ws catalog item in full by its id from search_catalog (for example \"object:adjustable_wrench\"): metadata, license, CDN urls, the site links that preview or edit it, related items of the same kind, and which source frameworks get_item_source can emit for it. Use this after search_catalog to inspect one result before you embed it; for paste-ready code call get_item_source instead.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Catalog id as `<kind>:<name>` from search_catalog. A bare name is also accepted."
+          }
+        }
+      },
+      "_meta": {
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "read",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "get_item_source",
+      "title": "Get paste-ready source for a catalog item",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Free, no account needed. Returns working code that renders one three.ws catalog item on any site: the <agent-3d> web component (pinned to the exact published version with its SRI hash), the <model-viewer> tag our own browse grids use, plain three.js with GLTFLoader, or a React component. Motion clips return three.js code that parses the clip JSON and plays it. Omit `framework` to get the one that fits the item best; pass `all` to get every variant at once. Use this when you are ready to put a catalog item on a page or in an app; call get_catalog_item first if you still need its license or metadata.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Catalog id from search_catalog."
+          },
+          "framework": {
+            "type": "string",
+            "enum": [
+              "agent-3d",
+              "model-viewer",
+              "three",
+              "react",
+              "all"
+            ],
+            "description": "Which form to emit. Defaults to the recommended one for the item kind. \"all\" returns every applicable variant."
+          }
+        }
+      },
+      "_meta": {
+        "three.ws/policy": {
+          "group": "assets",
+          "tier": "read",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "search_docs",
+      "title": "Search the three.ws documentation",
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "description": "Free, no account needed. Search the three.ws documentation for the section that answers a question, such as \"how do I embed an avatar on my site\" or \"how does auto-rigging work\". Returns the best sections ranked, each with the page and heading title, a url that opens the docs reader at that heading, and a snippet from the start of the section. Use this before guessing at an API or a flow; to browse ready-made 3D assets call search_catalog instead.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 300,
+            "description": "A question or keywords, in plain words."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 5,
+            "description": "How many sections to return."
+          }
+        }
+      },
+      "_meta": {
+        "three.ws/policy": {
+          "group": "utility",
+          "tier": "read",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "create_agent_persona",
+      "title": "Save a rigged model as a living, persistent agent body",
+      "description": "Turn a generated GLB into a NAMED, persistent agent body: a \"persona\" the assistant reuses across turns and across sessions. The model is copied into durable storage so the body survives the source URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. Use this once a rigged model should become a recurring character the assistant speaks through. No sign-in required.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "glb_url",
+          "name"
+        ],
+        "properties": {
+          "glb_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public https URL of the rigged GLB to embody (e.g. from forge_avatar)."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "A display name for the persona, 1-80 characters."
+          },
+          "voice": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Optional voice name to speak with (used for audio-driven lip-sync when available)."
+          },
+          "source_prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Optional: the prompt that generated this body, kept as provenance."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-persona.html",
+        "openai/toolInvocation/invoking": "Saving your agent...",
+        "openai/toolInvocation/invoked": "Your agent is ready",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "agents",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "get_agent_persona",
+      "title": "Reload a persona by id (continuity across sessions)",
+      "description": "Bring back a previously saved persona by its persona_id: the SAME body and identity, in a fresh session. Returns the persona name, its model, the accumulated turn count, and the inline living-body view. Use this when a conversation starts and the user returns to a named agent.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "persona_id"
+        ],
+        "properties": {
+          "persona_id": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64,
+            "description": "The persona_id returned by create_agent_persona."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-persona.html",
+        "openai/toolInvocation/invoking": "Bringing your agent back...",
+        "openai/toolInvocation/invoked": "Your agent is back",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "agents",
+          "tier": "read",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    },
+    {
+      "name": "persona_say",
+      "title": "Speak a reply through a persona: lip-sync + emotion + gesture",
+      "description": "Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching facial expression and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is detected from the text automatically (or set it explicitly). The returned view animates the body for this turn: show it alongside the reply. Use this whenever the persona speaks, on every turn, with the persona_id from create_agent_persona or get_agent_persona.",
+      "inputSchema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "persona_id",
+          "text"
+        ],
+        "properties": {
+          "persona_id": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64,
+            "description": "The persona to speak through."
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "The reply text the agent is saying this turn: drives lip-sync and emotion."
+          },
+          "emotion": {
+            "type": "string",
+            "enum": [
+              "neutral",
+              "joy",
+              "sad",
+              "angry",
+              "surprised",
+              "thinking"
+            ],
+            "description": "Optional explicit emotion override; omit to auto-detect from the text."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
+      "_meta": {
+        "openai/outputTemplate": "ui://widget/three-studio-persona.html",
+        "openai/toolInvocation/invoking": "Performing the reply...",
+        "openai/toolInvocation/invoked": "Here is your agent",
+        "openai/widgetAccessible": true,
+        "three.ws/policy": {
+          "group": "agents",
+          "tier": "write",
+          "confirmFlag": null,
+          "previewTool": null,
+          "previewArg": null
+        }
+      }
+    }
+  ]
+}

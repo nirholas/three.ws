@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.30/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.30",
+  "version": "1.0.0",
+  "id": "${MS_APP_ID}",
+  "developer": {
+    "name": "${MS_DEVELOPER_NAME}",
+    "websiteUrl": "https://three.ws",
+    "privacyUrl": "https://three.ws/legal/privacy",
+    "termsOfUseUrl": "https://three.ws/legal/tos"
+  },
+  "name": {
+    "short": "three.ws 3D Studio",
+    "full": "three.ws 3D Studio: text and photo to 3D"
+  },
+  "description": {
+    "short": "Generate, rig and view 3D models and avatars from text or a photo.",
+    "full": "three.ws 3D Studio gives Microsoft 365 Copilot and Copilot Studio agents tools that turn a plain-language request or a photo into a textured, downloadable GLB 3D model, auto-rig it for animation, find ready-made CC0 assets, and open the result in an interactive viewer. The free tools need no account. Generation takes 30 to 300 seconds, so the generate tool returns a job id and a second tool checks the job. The personal tab opens the three.ws 3D viewer inside Microsoft 365."
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#080814",
+  "staticTabs": [
+    {
+      "entityId": "threews-viewer",
+      "name": "3D Viewer",
+      "contentUrl": "https://three.ws/viewer",
+      "websiteUrl": "https://three.ws/viewer",
+      "scopes": ["personal"]
+    }
+  ],
+  "agentConnectors": [
+    {
+      "id": "threews-studio",
+      "displayName": "three.ws 3D Studio",
+      "description": "Generate, rig, look up and view 3D models and avatars.",
+      "toolSource": {
+        "remoteMcpServer": {
+          "mcpServerUrl": "https://three.ws/api/mcp-studio",
+          "mcpToolDescription": { "file": "mcptools.json" },
+          "authorization": {
+            "type": "AzureKeyVault",
+            "referenceId": "${MS_KEYVAULT_URL}"
+          }
+        }
+      }
+    }
+  ],
+  "validDomains": ["three.ws"]
+}
