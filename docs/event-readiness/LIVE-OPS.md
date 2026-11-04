@@ -7,7 +7,7 @@ below disagree with `public/event.json` or with what `/api/version` serves.
 
 **Event id:** `three-community-meetup-3`
 **Starts:** `2026-11-06T16:00:00Z` (ends `2026-11-06T17:00:00Z`, one hour)
-**Live release:** `0a913e8a7` on revision `three-ws-api-00521-hxr`
+**Live release:** `0a913e8a7` on revision `three-ws-api-00522-tsn`
 
 "The Three.ws User Group on IBM Community, meeting inside the world." Virtual: every
 attendee joins from their own network, so there is no shared venue NAT to plan for.
@@ -26,8 +26,8 @@ attendee joins from their own network, so there is no shared venue NAT to plan f
 https://three.ws/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three&image=%2Fapi%2Fimg%3Furl%3Dhttps%253A%252F%252Fipfs.io%252Fipfs%252Fbafybeihe22b5sxr3ihnxt7pregfieyteqvubqhik3j3y4bbx243xlqjw3q%26seed%3DFeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
 ```
 
-The live API build is `0a913e8a7` (built 2026-11-03 05:04 UTC). Revisions `00520`
-and `00521` are config-only revisions of that same image (min-instances raise, one
+The live API build is `0a913e8a7` (built 2026-11-03 05:04 UTC). Revisions `00520`, `00521`
+and `00522` are config-only revisions of that same image (min-instances raise, one
 env var). The world server runs `three-ws-multiplayer-00012-fhl`, built 2026-10-30
 21:52 UTC.
 
@@ -101,7 +101,7 @@ release deploy creates new revisions, these are what you roll back TO.
 
 | Service | current (roll back to this after the deploy) | previous |
 |---|---|---|
-| `three-ws-api` | `three-ws-api-00521-hxr` | `three-ws-api-00519-79c` (same image, min 6) |
+| `three-ws-api` | `three-ws-api-00522-tsn` | `three-ws-api-00521-hxr` (same image, previous config) |
 | `three-ws-multiplayer` | `three-ws-multiplayer-00012-fhl` | `three-ws-multiplayer-00011-qjv` |
 | `three-ws-redis-proxy` | `three-ws-redis-proxy-00005-8d6` | `three-ws-redis-proxy-00004-bwk` (min 3 / max 10) |
 
@@ -111,7 +111,7 @@ R="--region us-central1 --project aerial-vehicle-466722-p5"
 
 # API + frontend
 gcloud run services update-traffic three-ws-api $R \
-  --to-revisions=three-ws-api-00521-hxr=100
+  --to-revisions=three-ws-api-00522-tsn=100
 
 # The /play world server (kicks everyone in-world; they auto-reconnect)
 gcloud run services update-traffic three-ws-multiplayer $R \
