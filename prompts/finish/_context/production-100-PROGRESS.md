@@ -1984,3 +1984,7 @@ Diagnostic test passed unmodified, so branch A: the same-lane resubmit logic is 
 ## 2026-10-25 order 454 closed (root CVE triage, @solana/pay pin)
 
 Re-measured `npm audit`: bigint-buffer, lodash.set and node-forge have no patched release and are unreachable from three.ws code; accepted with reachability notes in `docs/ops/security-exceptions.md` (linked from `docs/ops/README.md`). The root `@solana/pay` stays on `^0.2.6`: 1.x is a `@solana/kit` rewrite incompatible with the web3.js call sites on the payment path, so no bump was made; kit migration of the five verifiers is the follow-up. No dependency or lockfile change.
+
+## 2026-11-04 order 403 closed (docs freshness drained)
+
+`npm run check:docs-freshness` measures 0 stale against a budget now ratcheted to 5 (`data/docs-freshness-budget.json`, dated history entry), and `npm run audit:docs` is clean (2263 files). The final batch refreshed and stamped `docs/ops/solana-rpc-lanes.md` (5dac4762f), `docs/skill-royalties.md` plus the onboarding flow stamp (c5e130b7a), `docs/event-readiness/04-play-multiplayer-net.md` and `docs/ux-flows/12-home-and-content.md` (88c5e5245), `docs/ops/trading-bot-report.md` and the IBM MCP post (5ac60d0bc), `docs/crypto-api.md` (f9c4ee423) and `STRUCTURE.md` (923073df3). Each correction was checked against the drifted commits it names.

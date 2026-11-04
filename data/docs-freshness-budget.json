@@ -1,7 +1,7 @@
 {
 	"$doc": "/docs/freshness",
 	"$comment": "Ratchet for `npm run check:docs-freshness`. maxStale is the number of docs allowed to be describing code that moved after they were written. It goes DOWN as docs are refreshed and never up without a reason recorded below, which is what stops drift from being permanently normal.",
-	"maxStale": 13,
+	"maxStale": 5,
 	"history": [
 		{
 			"date": "2026-07-31",
@@ -32,6 +32,11 @@
 			"date": "2026-11-04",
 			"maxStale": 13,
 			"reason": "Full sweep of the whole stale queue, 158 docs (156 ranked at the start plus 2 that crossed the line during the pass): 123 corrected against the drifted commits, 21 read and found already accurate, 14 classified as dated records. 10 of the corrected docs stay measured-stale only because their edits name other crypto projects and are held for owner approval under the commit gate; once committed and stamped the measured count is 0, and this ratchets to 5."
+		},
+		{
+			"date": "2026-11-04",
+			"maxStale": 5,
+			"reason": "Order 403 close-out: the 9 docs left stale (8 at the start of the pass plus STRUCTURE.md, which crossed the line during it) reviewed against their drifted commits and stamped (solana-rpc-lanes, skill-royalties, ux-flows/01 onboarding, event-readiness/04 multiplayer, ux-flows/12 home, crypto-api, ops/trading-bot-report, the IBM MCP post, STRUCTURE.md). Measured 0 stale; floor of 5 kept as headroom for routine drift."
 		}
 	]
 }
