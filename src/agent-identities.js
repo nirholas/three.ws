@@ -8,18 +8,14 @@
 // swaps the image for a <model-viewer> of the rigged GLB. Heavy 3D loads only
 // on request, never on page load.
 
+import { ensureModelViewer } from './shared/model-viewer-loader.js';
+
 const grid = document.getElementById('identity-grid');
 const priceChip = document.getElementById('ai-service-price');
 
-let modelViewerLoaded = false;
-function ensureModelViewer() {
-	if (modelViewerLoaded) return;
-	modelViewerLoaded = true;
-	const s = document.createElement('script');
-	s.type = 'module';
-	s.src = '/model-viewer-meshopt.js';
-	document.head.appendChild(s);
-}
+// The rigged GLB is a few MB and the CDN chain can stall; past this the card
+// shows an error with a retry instead of spinning.
+const LOAD_TIMEOUT_MS = 30_000;
 
 function el(tag, attrs = {}, children = []) {
 	const node = document.createElement(tag);
@@ -168,35 +164,60 @@ function card(identity) {
 		view3d.setAttribute('aria-pressed', 'false');
 	}
 
+	function showViewerError(message) {
+		closeViewer();
+		const retry = el('button', { type: 'button', class: 'ai-3d-retry', text: 'Try again' });
+		retry.addEventListener('click', () => {
+			stage.querySelector('.ai-3d-error')?.remove();
+			openViewer();
+		});
+		stage.appendChild(
+			el('div', { class: 'ai-3d-status ai-3d-error', role: 'alert' }, [
+				el('span', { text: message }),
+				retry,
+				el('a', { href: identity.viewerUrl, target: '_blank', rel: 'noopener', text: 'Open it in the full viewer' }),
+			]),
+		);
+	}
+
 	function openViewer() {
-		ensureModelViewer();
 		const status = el('div', { class: 'ai-3d-status', role: 'status' }, [
 			el('span', { class: 'ai-spinner', 'aria-hidden': 'true' }),
 			el('span', { text: 'Loading the rigged avatar' }),
 		]);
 		const viewer = el('model-viewer', {
-			src: identity.riggedGlbUrl,
 			'camera-controls': '',
 			'touch-action': 'pan-y',
 			'shadow-intensity': '0.6',
 			exposure: '1.05',
 			alt: `${agentName}, rigged 3D avatar`,
-			onload: () => status.remove(),
-			onerror: () => {
-				closeViewer();
-				stage.appendChild(
-					el('div', { class: 'ai-3d-status ai-3d-error', role: 'status' }, [
-						el('span', { text: 'The 3D avatar failed to load.' }),
-						el('a', { href: identity.viewerUrl, target: '_blank', rel: 'noopener', text: 'Open it in the full viewer' }),
-					]),
-				);
-			},
 		});
+		let settled = false;
+		const settle = (fn) => () => {
+			if (settled || !viewer.isConnected) return;
+			settled = true;
+			clearTimeout(timer);
+			fn();
+		};
+		const timer = setTimeout(
+			settle(() => showViewerError('The 3D avatar took too long to load.')),
+			LOAD_TIMEOUT_MS,
+		);
+		viewer.addEventListener('load', settle(() => status.remove()));
+		viewer.addEventListener('error', settle(() => showViewerError('The 3D avatar failed to load.')));
 		hero.style.opacity = '0';
 		stage.appendChild(viewer);
 		stage.appendChild(status);
 		view3d.textContent = 'Back to renders';
 		view3d.setAttribute('aria-pressed', 'true');
+		// The src is set only once the element is defined, so the load event is
+		// never missed and a blocked CDN becomes the error state, not a spinner.
+		ensureModelViewer().then(
+			() => {
+				if (!settled && viewer.isConnected) viewer.setAttribute('src', identity.riggedGlbUrl);
+			},
+			(err) => settle(() => showViewerError(err.message))(),
+		);
 	}
 
 	view3d.addEventListener('click', () => {
