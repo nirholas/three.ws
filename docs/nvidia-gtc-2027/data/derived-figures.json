@@ -1,0 +1,33 @@
+{
+ "built_at": "2026-11-04T06:16:00.241Z",
+ "driven_pct": "98.1%",
+ "median_latency_s": 3.807,
+ "median_speech_s": 7.2829999999999995,
+ "fast_calls": 8,
+ "real_time_ratio_range": [
+  0.39,
+  0.61
+ ],
+ "overshoot": {
+  "voiced_frames": 142,
+  "saturated_pct_without_rule": "23%",
+  "saturated_pct_with_rule": "0%",
+  "peak_ratio": 6.1,
+  "visemes_with_jaw_component": [
+   "viseme_TH",
+   "viseme_DD",
+   "viseme_kk",
+   "viseme_CH",
+   "viseme_nn",
+   "viseme_RR",
+   "viseme_aa",
+   "viseme_E",
+   "viseme_O"
+  ]
+ },
+ "peak_frame": {
+  "v": 0.6841,
+  "i": 160,
+  "t": 5.33333
+ }
+}
