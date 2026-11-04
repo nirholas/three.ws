@@ -48,14 +48,18 @@ function injectStyles() {
 	s.textContent = `
 #pi-overlay {
   position: fixed; inset: 0; z-index: 60;
-  display: flex; align-items: center; justify-content: center; padding: 20px;
+  /* Scrollable, with the card centred by its own auto margins: when the card
+     is taller than the viewport (200% zoom, landscape phone) it starts at the
+     top edge and scrolls, instead of being pushed above it out of reach. */
+  display: flex; padding: 20px;
+  overflow-y: auto; overscroll-behavior: contain;
   background: rgba(4,4,5,0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   opacity: 0; transition: opacity 0.24s ease;
 }
 #pi-overlay.pi-show { opacity: 1; }
 
 .pi-card {
-  position: relative; box-sizing: border-box;
+  position: relative; box-sizing: border-box; margin: auto; flex-shrink: 0;
   width: min(480px, calc(100vw - 32px));
   background: var(--cc-panel-solid, #0c0c0e);
   border: 1px solid var(--cc-edge, rgba(255,255,255,0.12));
