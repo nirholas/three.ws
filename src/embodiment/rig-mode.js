@@ -14,67 +14,65 @@
  */
 
 import { canonicalizeBoneName } from '../glb-canonicalize.js';
+import { MIN_CANONICAL_BONES, MIN_COVERAGE, canonicalClipGate } from '../canonical-clip-gate.js';
 
 /**
  * Minimum number of distinct canonical bones a rig must expose to drive the
- * baked clip library. Mirrors the live AnimationManager gate exactly — drop
- * below this and idle/walk would only animate a fraction of the skeleton, so
- * we fall back to the default rig instead.
+ * baked clip library. Re-exported from the shared gate the live AnimationManager
+ * reads, so the two bars cannot drift.
  */
-export const MIN_CANONICAL_BONES = 8;
+export { MIN_CANONICAL_BONES };
 
 /**
- * Count how many distinct canonical bones a list of raw bone names resolves to.
- * Deduped so a rig that ships a bone twice (de-dup suffixes, mirrored helpers)
- * can't inflate its way past the threshold.
+ * The distinct canonical bones a list of raw bone names resolves to. Deduped so
+ * a rig that ships a bone twice (de-dup suffixes, mirrored helpers) can't
+ * inflate its way past the threshold.
  *
  * @param {string[]} boneNames
- * @returns {number}
+ * @returns {Set<string>}
  */
-function countCanonicalBones(boneNames) {
+function canonicalBones(boneNames) {
 	const seen = new Set();
 	for (const name of boneNames) {
 		const canonical = canonicalizeBoneName(name);
 		if (canonical) seen.add(canonical);
 	}
-	return seen.size;
+	return seen;
 }
 
 /**
- * Decide whether a rig can drive the canonical clip library.
+ * Decide whether a rig can drive the canonical clip library: the same decision
+ * AnimationManager.supportsCanonicalClips() makes, including the retargeter's
+ * coverage floor, so a rig is never put in canonical mode only to bind no clip.
  *
  * @param {{ hasSkinnedMesh?: boolean, boneNames?: string[] }} [info]
- * @returns {{ mode: 'canonical'|'fallback', reason: string, canonicalCount: number, hasSkinnedMesh: boolean }}
+ * @returns {{ mode: 'canonical'|'fallback', reason: string, canonicalCount: number, hasSkinnedMesh: boolean, coverage: number }}
  */
 export function decideRigMode(info = {}) {
 	const hasSkinnedMesh = !!info.hasSkinnedMesh;
 	const boneNames = Array.isArray(info.boneNames) ? info.boneNames : [];
+	const gate = canonicalClipGate({ hasSkinnedMesh, canonical: hasSkinnedMesh ? canonicalBones(boneNames) : [] });
+	const out = (mode, reason) => ({
+		mode,
+		reason,
+		canonicalCount: gate.canonicalCount,
+		hasSkinnedMesh,
+		coverage: gate.coverage,
+	});
 
-	if (!hasSkinnedMesh) {
-		return {
-			mode: 'fallback',
-			reason: 'No SkinnedMesh — nothing to skin, so the canonical clips have nothing to drive.',
-			canonicalCount: 0,
-			hasSkinnedMesh: false,
-		};
+	if (gate.why === 'no-skin') {
+		return out('fallback', 'No SkinnedMesh, so nothing to skin and the canonical clips have nothing to drive.');
 	}
-
-	const canonicalCount = countCanonicalBones(boneNames);
-	if (canonicalCount < MIN_CANONICAL_BONES) {
-		return {
-			mode: 'fallback',
-			reason: `Only ${canonicalCount} canonical bone(s) — below the ${MIN_CANONICAL_BONES} the baked clips need.`,
-			canonicalCount,
-			hasSkinnedMesh: true,
-		};
+	if (gate.why === 'too-few-bones') {
+		return out('fallback', `Only ${gate.canonicalCount} canonical bone(s), below the ${MIN_CANONICAL_BONES} the baked clips need.`);
 	}
-
-	return {
-		mode: 'canonical',
-		reason: `${canonicalCount} canonical bones mapped — drives the baked clip library.`,
-		canonicalCount,
-		hasSkinnedMesh: true,
-	};
+	if (gate.why === 'low-coverage') {
+		return out(
+			'fallback',
+			`${gate.canonicalCount} canonical bones map ${gate.matched} of ${gate.total} clip tracks, under the ${Math.round(MIN_COVERAGE * 100)}% the retargeter binds (finger joints are most of a clip).`,
+		);
+	}
+	return out('canonical', `${gate.canonicalCount} canonical bones mapped, which drives the baked clip library.`);
 }
 
 /**

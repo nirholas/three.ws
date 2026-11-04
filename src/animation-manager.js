@@ -8,7 +8,7 @@ import {
 	Quaternion,
 	Vector3,
 } from 'three';
-import { canonicalizeBoneName } from './glb-canonicalize.js';
+import { canonicalClipGate } from './canonical-clip-gate.js';
 import {
 	canonicalNodeMapFromObject,
 	canonicalRestDirectionMapFromObject,
@@ -81,13 +81,6 @@ export function measureHipsTiltDeg(retargetedClip, model, canonicalToNode) {
 	const dot = Math.max(-1, Math.min(1, _worldUp.dot(_UP)));
 	return (Math.acos(dot) * 180) / Math.PI;
 }
-
-// Minimum number of canonical bones a skinned model must expose before the
-// pre-baked clip library can drive it meaningfully. The clips address tracks by
-// canonical Avaturn bone names; a model sharing only a stray bone or two would
-// twitch a single joint rather than perform the motion. Eight covers the torso
-// + a limb, which is enough to read as a real humanoid performance.
-const MIN_CANONICAL_BONES = 8;
 
 // Canonical bones that belong to the lower body. When a gesture plays as an
 // upper-body overlay (so the avatar can wave while it keeps walking), every
@@ -237,7 +230,7 @@ export class AnimationManager {
 		// ground-native export). The retarget adds it to the hip track so the
 		// clip's ground lands on the model's actual ground.
 		this._hipGroundLocalY = hipGroundLocalY(model);
-		this._canonicalClipsSupported = _modelSupportsCanonicalClips(model);
+		this._canonicalClipsSupported = _modelSupportsCanonicalClips(model, this._canonicalToNode);
 		// A VRM's spring bones, look-at and expressionManager all live on the vrm
 		// instance stashed by src/game/vrm-loader.js's prepareVrmModel(), not on
 		// any node the mixer touches, so they need their own per-frame tick below.
@@ -1031,20 +1024,18 @@ export class AnimationManager {
 }
 
 // A pre-baked clip only deforms the mesh when its tracks address real skeleton
-// bones. Require both a SkinnedMesh and enough canonically-named bones so we
-// don't mistake a static prop (whose node happens to be named "Head") for a
-// rig the library can animate.
-function _modelSupportsCanonicalClips(model) {
+// bones AND enough of them bind to clear the retargeter's coverage floor. The
+// decision reads the same canonical-to-node map every clip is retargeted
+// through, so "supported" means the library's clips actually bind: a skinned
+// body with no finger joints has plenty of canonical bones but maps 23 of a
+// clip's 53 tracks, builds no action, and must be reported as unanimated so the
+// caller falls back to the default body instead of showing a bind pose.
+function _modelSupportsCanonicalClips(model, canonicalToNode) {
 	let hasSkinnedMesh = false;
-	const canonical = new Set();
 	model.traverse((node) => {
 		if (node.isSkinnedMesh) hasSkinnedMesh = true;
-		if (node.name) {
-			const c = canonicalizeBoneName(node.name);
-			if (c) canonical.add(c);
-		}
 	});
-	return hasSkinnedMesh && canonical.size >= MIN_CANONICAL_BONES;
+	return canonicalClipGate({ hasSkinnedMesh, canonical: canonicalToNode?.keys() }).ok;
 }
 
 // Surface a fallen-pose retarget through the existing client-error pipeline

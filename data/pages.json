@@ -62,6 +62,7 @@
 					"/docs/start-here",
 					"/docs/mcp",
 					"/docs/cli",
+					"/docs/agent-cli",
 					"/docs/api-reference",
 					"/avatar-sdk",
 					"/3d",
@@ -4806,6 +4807,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-09-29"
+				},
+				{
+					"path": "/docs/agent-cli",
+					"title": "Docs · three-ws-agent",
+					"description": "Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
 				},
 				{
 					"path": "/docs/mcp",

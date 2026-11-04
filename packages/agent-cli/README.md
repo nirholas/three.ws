@@ -17,24 +17,41 @@ local llama.cpp, Ollama or vLLM server, or a hosted lane with its own key.
 
 ## Status
 
-The runtime core in `src/` is complete and runs today (see the example below).
-The terminal UI and the `three-ws-agent` command that `package.json` declares
-(`bin/three-ws-agent.js`, `src/index.js`, `src/cli.js`) and its `tests/`
-directory are not in the tree yet, so the package is not publishable and is not
-on npm. Until they land, use the modules by path from inside this repository, as
-the example does. The design brief for the full CLI (slash commands, subagents,
-natural-language cron, Telegram gateway mode) is
-[docs/prompts/20-local-agent-runtime-tui.md](../../docs/prompts/20-local-agent-runtime-tui.md).
-
-`src/loop.js` and `src/tools/registry.js` import `@three-ws/agent-runtime`,
-which resolves through the monorepo workspace link; it is not yet listed in this
-package's `dependencies`.
+Complete in this repository: the runtime core, the `three-ws-agent` command, the
+Ink terminal UI with slash commands, SQLite sessions with full-text search,
+parallel subagents, natural-language cron (local and three.ws server mode), the
+Telegram gateway, and a test suite (`npm test` in this directory). The package
+is not on npm yet; install it from a checkout as below. Full user guide:
+[docs/agent-cli.md](../../docs/agent-cli.md).
 
 ## Requirements
 
 Node **22.13+**: the session store uses the built-in `node:sqlite`, so there is
 no native addon to compile and the same install works on Linux, macOS, Windows,
-WSL and Termux. Run `npm install` at the repo root first.
+WSL and Termux.
+
+## Quick start
+
+```bash
+npm install                                   # at the repo root
+npm link --workspace @three-ws/agent          # puts three-ws-agent on PATH
+three-ws-agent doctor                         # Node, config, key, model, MCP
+three-ws-agent login                          # device link, approve in the browser
+three-ws-agent                                # the terminal UI
+```
+
+| Command | What it does |
+|---|---|
+| `three-ws-agent [--resume <id>] [--agent <id>] [--model <id>] [--cwd <dir>] [--avatar <glb>]` | the TUI; `/help` inside lists the slash commands |
+| `three-ws-agent login [--scope <s>]` / `logout` / `whoami` | the shared three.ws credential (`~/.config/three-ws`) |
+| `three-ws-agent sessions [list \| search <q> \| export <id> [--out f]]` | past conversations |
+| `three-ws-agent cron [list \| add "<when>" "<prompt>" [--server] \| rm \| mode \| on \| off \| run]` | schedules |
+| `three-ws-agent gateway --allow <chat ids>` | answer an allowlisted Telegram chat (`TELEGRAM_BOT_TOKEN`) |
+| `three-ws-agent doctor`, `--version`, `--help` | |
+
+Other ways to run it: [Dockerfile](Dockerfile) and [docker-compose.yml](docker-compose.yml)
+(the gateway as a service), [flake.nix](flake.nix) (`nix run`), and
+[install.ps1](install.ps1) for Windows. Every command's `--help` prints its flags.
 
 ## Example
 
@@ -257,6 +274,14 @@ money-moving scopes are opt-in. Files are written atomically with mode `0600`.
 | `src/tools/registry.js` | `createToolset({ local, remote, extra, maxTools })` returning `{ get, all, schemasFor, size }` |
 | `src/tools/sandbox.js` | `runCommand(command, opts)`, `scrubEnv` |
 | `src/tools/netguard.js` | `assertPublicUrl`, `isPrivateAddress` |
+| `src/cli.js` | `main(argv)`, `parseCli`, `HELP`, `UsageError`: the `three-ws-agent` command; each command returns a result object and has a printer in `src/commands/` |
+| `src/session.js` | `createAgentContext({ env, cwd, store, mcp, overrides })`, `createSession(ctx, opts)` returning `{ id, send(text, { approve, onContent, onEvent, signal }) }`, `runHeadless`, `systemPrompt` |
+| `src/subagent.js` | `createSubagentPool(ctx, { maxConcurrent })`, `runSubagent`: child sessions with their own budget, capped concurrency |
+| `src/scheduler.js` | `parseSchedule`, `addSchedule`, `setScheduleMode`, `removeSchedule`, `runDue`, `startScheduler`, `toUtcCron`, `ACCEPTED_FORMS`, `SERVER_MIN_GAP_MS` |
+| `src/platform.js` | `createPlatform({ origin, credential })`: `me`, agents, wallet, skills, runs and `/api/v1/automations` |
+| `src/gateway.js` | `startTelegramGateway`, `parseAllowlist`, `approvalText`, `telegramClient`, `GatewayError` |
+| `src/approval.js` | `financialFacts(args)` (recipient, amount, token, chain), `summarizeArgs` |
+| `src/tui/app.js`, `src/tui/slash.js` | the Ink `App`, the slash registry (`COMMANDS`, `complete`, `runSlash`) |
 
 ## Related
 

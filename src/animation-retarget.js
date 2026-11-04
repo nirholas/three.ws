@@ -19,6 +19,7 @@
 
 import { AnimationClip, Box3, Quaternion, Vector3 } from 'three';
 import { canonicalizeBoneName, resolveArmShoulderCollisions } from './glb-canonicalize.js';
+import { MIN_COVERAGE } from './canonical-clip-gate.js';
 import {
 	CANONICAL_PARENT,
 	CANONICAL_REST,
@@ -29,7 +30,9 @@ import {
 // A clip retargets cleanly only when enough of its tracks find a home on the
 // target rig. Below this the motion would read as a few twitching joints rather
 // than a performance, so callers surface an actionable "can't retarget" error.
-export const MIN_COVERAGE = 0.5;
+// Defined beside the rig gate (src/canonical-clip-gate.js) so the "does this rig
+// animate" answer and this floor are one number.
+export { MIN_COVERAGE };
 
 // Rest (bind-pose) local rotation of each canonical bone *on the authoring rig*
 // the clips were baked against (the Avaturn-rigged public/avatars/cz.glb). The

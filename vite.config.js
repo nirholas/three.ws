@@ -951,6 +951,7 @@ const appConfig = {
 				'coin-control': resolve(__dirname, 'pages/coin-control.html'),
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
 				'microsoft-activate': resolve(__dirname, 'pages/microsoft-activate.html'),
+				'microsoft-teams-tab': resolve(__dirname, 'pages/microsoft-teams-tab.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
 				duel: resolve(__dirname, 'pages/duel.html'),
@@ -2544,6 +2545,9 @@ const appConfig = {
 					// Mirrors vercel.json.
 					else if (!filePath && /^\/microsoft\/activate\/?$/.test(path))
 						filePath = resolve(root, 'pages/microsoft-activate.html');
+					// /microsoft/teams-tab → the Agents tab of the three.ws Teams app.
+					else if (!filePath && /^\/microsoft\/teams-tab\/?$/.test(path))
+						filePath = resolve(root, 'pages/microsoft-teams-tab.html');
 					// /earnings → the revenue ledger console; /agents/:id/earnings → the
 					// agent's public earnings page. Mirrors vercel.json.
 					else if (!filePath && /^\/earnings\/?$/.test(path))

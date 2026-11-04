@@ -126,7 +126,10 @@ const page = await browser.newPage({ viewport: { width: 960, height: 720 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
 page.on('console', (m) => {
-	if (m.type() === 'error') errors.push(`console.error: ${m.text()}`);
+	if (m.type() === 'error') errors.push(`console.error: ${m.text()} (${m.location()?.url || 'no url'})`);
+});
+page.on('response', (r) => {
+	if (r.status() >= 400) errors.push(`HTTP ${r.status()}: ${r.url()}`);
 });
 await page.route(`**${servedPath}`, (route) =>
 	route.fulfill({ status: 200, contentType: 'model/gltf-binary', body: Buffer.from(glb) }),
