@@ -5,13 +5,13 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | Disposition | Files | Meaning |
 |---|---:|---|
 | order | 204 | Outstanding work was found; it is now the linked work order(s), with this file copied verbatim inside. |
-| shipped | 202 | The work it describes exists in the code today (the note names the evidence). |
+| shipped | 203 | The work it describes exists in the code today (the note names the evidence). |
 | covered-by-existing | 90 | An order that was already in the queue covers it. |
 | no-open-work | 803 | Reviewed: reference or descriptive doc with nothing outstanding. |
 | not-a-plan | 269 | Content, rules, or configuration rather than work to do. |
 | owner-only | 97 | Open, but only the owner can do it (no agent-doable part). |
 | retired-by-owner | 16 | The owner retired this work on 2026-09-09 (finish/_context/00-RETIRED-BY-OWNER.md). |
-| excluded | 1287 | Not reviewed for tasks by category (vendored code, skill bundles, published content, existing orders). |
+| excluded | 1284 | Not reviewed for tasks by category (vendored code, skill bundles, published content, existing orders). |
 
 | File | Disposition | Detail |
 |---|---|---|
@@ -2189,7 +2189,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 58 |
 | `prompts/finish/401-auto-restore-green-vitest.md` | excluded | already a work order in the queue |
 | `prompts/finish/403-auto-drain-docs-freshness.md` | excluded | already a work order in the queue |
-| `prompts/finish/456-auto-mcp-tools-settings-page.md` | excluded | already a work order in the queue |
+| `prompts/finish/456-auto-mcp-tools-settings-page.md` | shipped | order retired 2026-11-04: /settings/mcp-tools page and /api/mcp-tools (cc2a0b51f 7780a3df0 7e1842e0d) |
 | `prompts/finish/458-auto-solana-agent-sdk-zod-cve.md` | excluded | already a work order in the queue |
 | `prompts/finish/506-integrate-07-pump-claims-listener.md` | excluded | already a work order in the queue |
 | `prompts/finish/512-integrate-13-anti-snipe-native-lane.md` | excluded | already a work order in the queue |
