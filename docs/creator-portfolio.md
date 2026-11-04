@@ -141,7 +141,13 @@ Two card-level actions let a visitor take a copy of what they find:
 
 - **Fork an avatar** (`POST /api/avatars/fork` with `{ source_avatar_id }`,
   handler [api/avatars/fork.js](../api/avatars/fork.js)): clones the GLB,
-  its agent, and a fresh wallet into the viewer's account. Downstream, forks
+  its agent, and a fresh wallet into the viewer's account. The copy lands
+  unlisted. If the lineage carries a fork royalty, the call answers
+  `409 royalty_consent_required` with the terms until the client re-sends it
+  with `accept_royalty: true`. A VRoid Hub license travels with the copy: when
+  it bars export the fork lands private instead of unlisted, and when it keeps
+  the character off public agents no agent or wallet is created (the fork is
+  still a private copy the viewer can use). Downstream, forks
   of a paid avatar are what produce the `royalty_paid` notifications
   documented in [Notifications](./notifications.md).
 - **Fork an agent** (`POST /api/marketplace/agents/:id/fork`, handler
@@ -163,7 +169,7 @@ Everything the page calls, in the order it calls them:
 | `GET/POST/DELETE /api/users/:username/follow` | Follow state and toggling. | [api/users/[username]/follow.js](../api/users/%5Busername%5D/follow.js) |
 | `GET /api/users/:username/follows` | Follower / following lists for the modal. | [api/users/[username]/follows.js](../api/users/%5Busername%5D/follows.js) |
 | `GET /api/users/:username/creations?before=<iso>` | Cursor pagination for the Creations tab (pages of 24, `?type=model\|world\|restyle` to scope). Returns `{ items, next }`. | [api/users/[username]/creations.js](../api/users/%5Busername%5D/creations.js) |
-| `GET /api/users/:username/collectibles` | Lazy wallets + NFTs + accessories. Split out because the NFT providers are slow and billed per call; the response is cached 10 minutes and the profile paints without it. Failure is silent: the surfaces stay absent, never broken. | [api/users/[username]/collectibles.js](../api/users/%5Busername%5D/collectibles.js) |
+| `GET /api/users/:username/collectibles` | Lazy wallets + NFTs + accessories. Split out because the NFT providers are slow and billed per call; the response is cached 5 minutes and the profile paints without it. Failure is silent: the surfaces stay absent, never broken. | [api/users/[username]/collectibles.js](../api/users/%5Busername%5D/collectibles.js) |
 | `GET /api/threews/subdomain?label=<username>` | Is `<username>.threews.sol` claimed, and by whom. | [api/threews/subdomain.js](../api/threews/subdomain.js) |
 | `PATCH /api/auth/profile` | Claim a handle; save profile edits (owner only). | [api/auth/[action].js](../api/auth/%5Baction%5D.js) |
 | `POST /api/avatars/fork` | Fork an avatar into the viewer's account. | [api/avatars/fork.js](../api/avatars/fork.js) |

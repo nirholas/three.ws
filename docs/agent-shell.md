@@ -28,6 +28,10 @@ claims it.
   draft; finishing the wizard `POST /api/agents` creates the real agent (with
   its wallets) and clears the draft. Signed-in visitors see their canonical
   agent's name (from [src/agents/active-agent.js](../src/agents/active-agent.js)).
+- On phones there is no ⌘K to press, so touch visitors get a **Put me to work**
+  button in the introduction bubble that opens the same palette, and below
+  520px the chip drops the name (the bubble already said it) and keeps only the
+  Claim action.
 - The agent reacts to work done through the ⌘K palette — it waves and comments
   when a forge finishes or a digest arrives (`tws:palette-action` DOM events,
   mirrored onto the agent bus as `action:taken`).

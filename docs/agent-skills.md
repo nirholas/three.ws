@@ -22,14 +22,15 @@ trigger is generated into [`.agents/skills/SKILLS.md`](../.agents/skills/SKILLS.
 (human) and [`.agents/skills/skills-pack.json`](../.agents/skills/skills-pack.json)
 (machine/registry) by `node scripts/build-skills-pack.mjs`.
 
-Three categories:
+Categories:
 
 | Category | Skills | Notes |
 | --- | --- | --- |
-| **3d/creative** | `find-3d-assets`, `generate-3d-model`, `create-3d-avatar`, `rig-a-model` | Text→GLB on the free lane, one-call rigged avatars, auto-rigging. **Cross-platform-safe**: zero coin/wallet/payment content, so this subset is reusable on non-Claude tracks (OpenAI, etc.). |
+| **3d/creative** | `find-3d-assets`, `generate-3d-model`, `create-3d-avatar`, `rig-a-model`, `embed-three-ws-avatar`, `anatomy` | Text→GLB on the free lane, one-call rigged avatars, auto-rigging, the `<agent-3d>` embed, and interactive cutaway explainers. **Cross-platform-safe**: zero coin/wallet/payment content, so this subset is reusable on non-Claude tracks (OpenAI, etc.). |
 | **platform/agents** | `create-a-three-ws-agent`, `build-an-agent-skill`, `sell-an-agent-skill`, `hire-an-agent`, `connect-three-ws-mcp` | Building ON three.ws: create an agent with a body, wallet and persona; author an in-app skill bundle; publish and price it in $THREE; hire another agent; wire a client to the MCP servers. Written against the public REST + MCP surfaces, so they work from any Claude surface. |
 | **wallet/payments** | `authenticate-wallet`, `fund`, `send-usdc`, `trade`, `search-for-service`, `pay-for-service`, `monetize-service`, `query-onchain-data`, `x402`, `metamask-agent-*`, okx wallet/identity set | The x402 agent-economy set. Never bundle these on non-crypto tracks. |
 | **intel/trading** | okx dex/defi market-data and execution set | Vendored partner skills (byte-identical to the vendor drop; categorized only in the pack manifest). |
+| **ops/production** | `gcp-triage` | Operating the three.ws production fleet. For maintainers of this repo, not platform users; excluded from every standalone repo. |
 
 `skills-pack.json` carries `category`, `origin` (`three.ws` / `okx` / `metamask`), and
 `crossPlatformSafe` per skill, so a registry or a bundling script can slice the pack
@@ -189,8 +190,10 @@ schema, and failure envelope, so the model does not have to guess.
   the bundle. Its worked example calls a real public API end to end.
 - **`sell-an-agent-skill`**: publish to the catalog (`POST /api/skills`), price per call,
   price an agent's skill in $THREE (`PUT /api/monetization/prices`), metered trials and
-  pay-what-you-want (`PUT /api/agents/:id/skills-pricing`), the 250 bps author split, and
-  where the money lands.
+  pay-what-you-want (`PUT /api/agents/:id/skills-pricing`), the 250 bps platform fee (author keeps the
+  rest), and where the money lands. Every published version is scanned first (a
+  blocked skill is refused with `422 skill_blocked`; see
+  [skill-supply-scan.md](skill-supply-scan.md)).
 - **`hire-an-agent`**: the demand side. Browse `/api/agents/economy?view=offers`, take a
   metered trial, buy over Solana Pay, or let one agent hire another with
   `POST /api/agents/a2a-hire` under per-call and daily spend caps. Carries the mandatory
@@ -210,14 +213,18 @@ The platform's signature set, safe to reuse anywhere:
   existing asset is instant where a generation is GPU minutes. Reachable three
   ways off one catalog (the `search_catalog` / `get_catalog_item` /
   `get_item_source` MCP tools, `GET /api/catalog`, or `npx @three-ws/assets`).
-- **`generate-3d-model`** — text → textured GLB on the free `forge_free` lane
+- **`generate-3d-model`**: text → textured GLB on the free `forge_free` lane
   (NVIDIA NIM / TRELLIS; no key, no account). Returns `glbUrl` + viewer link.
-- **`create-3d-avatar`** — text/image → **rigged** avatar via `forge_avatar`
+- **`create-3d-avatar`**: text/image → **rigged** avatar via `forge_avatar`
   (generate + auto-rig in one call, humanoid gate). Returns rigged `glbUrl` +
   pose-studio link.
-- **`rig-a-model`** — existing GLB → animation-ready GLB via `rig_mesh` /
+- **`rig-a-model`**: existing GLB → animation-ready GLB via `rig_mesh` /
   `POST /api/forge?action=rig` (Make-It-Animatable). Returns `riggedGlbUrl` +
   pose-studio link.
+- **`embed-three-ws-avatar`**: put a live `<agent-3d>` avatar on any site and drive
+  its animations and moods from page code.
+- **`anatomy`**: explain how a machine works as an interactive isometric 3D
+  cutaway with a shareable three.ws link.
 
 The three generation skills run free against the hosted studio endpoint
 `https://three.ws/api/mcp-studio` (JSON-RPC `tools/call`), documented with runnable
