@@ -34,6 +34,7 @@ import { isValidPresetId } from './accessories.js';
 import { env } from './env.js';
 import { getObjectBuffer, putObject } from './r2.js';
 import { fetchUpstream } from './upstream-fetch.js';
+import { FOLD_VERSION } from './bake-morph-fold.js';
 
 // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ export function isBakeable(appearance) {
  * @param {object} appearance: { outfit?, accessories?, morphs?, proportions?, sculpt?, garments? }
  * @returns {Promise<Uint8Array>}
  */
-export async function bakeAppearance(baseGlbBytes, appearance) {
+export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 	// `meshopt({ encoder })` configures the EXT_meshopt_compression extension on
 	// the document, but the writer also needs the encoder when serializing the
 	// compressed buffers, and the reader needs the decoder when re-baking a
@@ -132,6 +133,29 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 	}
 	if (appearance?.morphs) Object.assign(morphMap, appearance.morphs);
 	if (Object.keys(morphMap).length > 0) applyMorphs(doc, morphMap);
+
+	// 1a) Fold the identity morph targets into the geometry for served bakes of
+	//     a Parametric body: the weights are final, so the ~300 dense target
+	//     layers only cost viewers VRAM. Runs before proportions (see
+	//     bake-morph-fold.js). Opt-in so the editor path keeps live sliders.
+	if (opts.fold) {
+		try {
+			const { foldIdentityMorphs, isParametricDocument } = await import('./bake-morph-fold.js');
+			if (isParametricDocument(doc)) {
+				const { folded, skipped, vramBefore, vramAfter } = foldIdentityMorphs(doc);
+				if (folded.length) {
+					console.log(
+						`[bake] morph fold: ${folded.map((f) => `${f.mesh} -${f.targets} targets`).join(', ')}; morph VRAM ${(vramBefore / 1048576).toFixed(1)} -> ${(vramAfter / 1048576).toFixed(1)} MB`,
+					);
+				}
+				if (skipped.length) {
+					console.warn(`[bake] morph fold skipped: ${skipped.map((x) => `${x.mesh} (${x.reason})`).join(', ')}`);
+				}
+			}
+		} catch (err) {
+			console.warn(`[bake] morph fold failed, serving the unfolded bake: ${err.message}`);
+		}
+	}
 
 	// 1b) Material tints: multiply each slot's baseColorFactor by the chosen color.
 	if (appearance?.colors && Object.keys(appearance.colors).length > 0) {
@@ -323,11 +347,11 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
  * grouped by user and slug, and the hash is the cache key so old bakes don't
  * overwrite mid-flight.
  */
-export function bakedStorageKeyFor({ baseStorageKey, hash }) {
+export function bakedStorageKeyFor({ baseStorageKey, hash, fold = false }) {
 	// baseStorageKey is "u/{userId}/{slug}/{ts}.glb"
 	const parts = baseStorageKey.split('/');
 	const base = parts.slice(0, -1).join('/');
-	return `${base}/baked-${hash.slice(0, 16)}.glb`;
+	return `${base}/baked-${hash.slice(0, 16)}${fold ? `-f${FOLD_VERSION}` : ''}.glb`;
 }
 
 /**
@@ -342,13 +366,13 @@ export function bakedStorageKeyFor({ baseStorageKey, hash }) {
  * @param {object} args.appearance      { outfit?, accessories?, morphs? }
  * @returns {Promise<{baked_storage_key: string, appearance_hash: string, size_bytes: number} | null>}
  */
-export async function bakeAndUploadAppearance({ baseStorageKey, appearance }) {
+export async function bakeAndUploadAppearance({ baseStorageKey, appearance, fold = true }) {
 	if (!isBakeable(appearance)) return null;
 
 	const baseBytes = await getObjectBuffer(baseStorageKey);
-	const bakedBytes = await bakeAppearance(baseBytes, appearance);
+	const bakedBytes = await bakeAppearance(baseBytes, appearance, { fold });
 	const hash = appearanceHash(appearance);
-	const bakedKey = bakedStorageKeyFor({ baseStorageKey, hash });
+	const bakedKey = bakedStorageKeyFor({ baseStorageKey, hash, fold });
 
 	await putObject({
 		key: bakedKey,
@@ -433,7 +457,7 @@ function applyMorphs(doc, binding) {
 // api/_lib/accessories.js. Tints key skin/hair/outfit; hide keys
 // hair/outfit/glasses (skin is never hidden).
 const SLOT_MATERIALS = {
-	skin: ['Wolf3D_Skin', 'Wolf3D_Body'],
+	skin: ['Wolf3D_Skin', 'Wolf3D_Body', 'Parametric_Body'],
 	hair: ['Wolf3D_Hair'],
 	outfit: ['Wolf3D_Outfit_Top', 'Wolf3D_Outfit_Bottom', 'Wolf3D_Outfit_Footwear'],
 	glasses: ['Wolf3D_Glasses'],

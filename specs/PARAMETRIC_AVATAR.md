@@ -57,7 +57,7 @@ three.js uploads morph targets as an RGBA32F `DataArrayTexture` with **one dense
 
 Sparse glTF accessors keep the *download* small (306 sliders cost 6.5 MB on disk, up from 4.1 MB at 122) and do nothing at all for VRAM. At 306 targets the base needs **68.0 MB**. The baker enforces a **96 MB** ceiling (`MORPH_VRAM_BUDGET_MB`) and a 12 MB file ceiling, and fails the bake rather than shipping past them. `tests/parametric-base.test.js` asserts the same number independently.
 
-Growing well past 306 sliders therefore needs the identity-morph fold described under **Reserved** below, not a bigger budget.
+The budget binds the editor and the base, not served avatars: the server bake folds the identity sliders into `POSITION` (`api/_lib/bake-morph-fold.js`), so a served Parametric avatar spends 0 MB of morph VRAM on them. Growing well past 306 sliders is therefore a base-size and editor question, not a viewer question.
 
 ## Editing pipeline
 
@@ -155,7 +155,7 @@ The rule behind the table: **the record is authoritative for editors, the baked 
 
 | Item | For |
 |---|---|
-| Identity-morph fold | Folding applied identity morphs into `POSITION` at bake time, with recomputed normals, so a served avatar carries only the ARKit expression targets. That is what lifts the 96 MB budget and unblocks 400+ sliders. It needs correct normal recomputation on a skinned mesh, which is why it is not in v1. |
+| Identity-morph fold | Shipped. `bakeAndUploadAppearance` folds the weighted identity targets into `POSITION` after the final weights are set and before proportions, recomputes bind-pose normals (welding vertices that share position and normal, angle and area weighted) and removes the identity targets. ARKit, viseme and `customSculpt` targets stay. Served bakes carry the `-f<version>` key suffix; `scripts/rebake-avatars.mjs` migrates older bakes (dry run by default). The editor never reads a served bake, so sliders stay live there. |
 | `slots` | Conforming hair and garments auto-fitted to the canonical body (phase 3, `workers/garment-forge`) |
 | `layers` | Texture layers over the canonical UVs: complexion, makeup, tattoos, decals, age maps (phase 6) |
 | `animation` | Per-avatar animation identity: default idle and walk, gesture intensity, mood blend, emote loadout (phase 7) |

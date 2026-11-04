@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Served Parametric avatars drop 306 identity sliders from GPU memory",
+			"summary": "Avatar bakes now fold the saved identity morphs into the mesh and keep only the expression targets, cutting about 68 MB of morph memory per viewer on Parametric bodies. The editor keeps live sliders, and scripts/rebake-avatars.mjs migrates older bakes.",
+			"tags": ["improvement", "infra"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Agents sign their web requests",
 			"summary": "Fetches made by three.ws agents through the tool gateway and the screen caster now carry a Web Bot Auth signature, and the matching public key directory is served at /.well-known/http-message-signatures-directory, so sites can verify and rate-limit three.ws agents instead of blocking them.",
 			"tags": [

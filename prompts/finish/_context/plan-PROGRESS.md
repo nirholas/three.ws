@@ -82,3 +82,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 773-plan-identity-web-bot-auth-signed-requests.md | see git log | Web Bot Auth signing, key directory route, gateway and screen-pool hooks shipped; owner provisions WEB_BOT_AUTH_PRIVATE_KEY and deploys.
 2026-11-04 | 747-plan-memory-file-layer-semantic-recall.md | 70423f326 | Memory file layer recall is semantic via POST /api/memory/rank with a substring fallback.
 2026-11-04 | 773-plan-identity-web-bot-auth-signed-requests.md | see git log | Web Bot Auth signing, key directory route, gateway and screen-pool hooks shipped; owner provisions WEB_BOT_AUTH_PRIVATE_KEY and deploys.
+2026-11-04 | 761-plan-avatar-parametric-identity-morph-fold.md | pending | Identity morph fold shipped in served bakes; owner runs rebake-avatars.mjs --apply and the render diff.

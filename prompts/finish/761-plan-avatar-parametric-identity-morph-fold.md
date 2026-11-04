@@ -129,3 +129,7 @@ Growing well past 306 sliders therefore needs the identity-morph fold described 
 | `animation` | Per-avatar animation identity: default idle and walk, gesture intensity, mood blend, emote loadout (phase 7) |
 ~~~~
 
+
+## Status (2026-11-04)
+
+Shipped: `api/_lib/bake-morph-fold.js`, the `fold` option on `bakeAppearance`, `-f1` served-bake keys, `scripts/rebake-avatars.mjs` (dry run verified against the live avatar table), spec updated, test seen failing first and passing (fold sum within 1e-5, normals equal the reference recompute, 306 targets and 68 MB reduced to 0). Remaining and owner-owned: the rendered folded versus unfolded thumbnail pixel-error comparison (needs a GPU browser, swiftshader stalls here) and running `rebake-avatars.mjs --apply` against production storage.
