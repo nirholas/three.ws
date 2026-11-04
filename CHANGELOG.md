@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-11-04
+
+- **Every new agent now starts with a drafted coin**: A new agent gets a private coin plan drafted from its own name and persona, and its Solana wallet is set up at creation if that step had failed. Owners see a Next step card on the agent page with the drafted name and ticker, whether the launch wallet can cover launch costs, and one Review and launch button that opens the confirmation screen, where nothing is signed or spent until you approve it. Each step from plan viewed to launch succeeded is now recorded so the launch drop-off can be measured. (`/docs/experiments-agent-launch-funnel`) `[feature]`
+
 ## 2026-11-03
 
 - **Agent Memory Settings** (`/settings/memory`): See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.

@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-04",
+			"title": "Every new agent now starts with a drafted coin",
+			"tags": [
+				"feature"
+			],
+			"summary": "A new agent gets a private coin plan drafted from its own name and persona, and its Solana wallet is set up at creation if that step had failed. Owners see a Next step card on the agent page with the drafted name and ticker, whether the launch wallet can cover launch costs, and one Review and launch button that opens the confirmation screen, where nothing is signed or spent until you approve it. Each step from plan viewed to launch succeeded is now recorded so the launch drop-off can be measured.",
+			"link": "/docs/experiments-agent-launch-funnel"
+		},
+		{
 			"date": "2026-11-03",
 			"title": "Rejoining /play after a dropped connection puts you back where you stood",
 			"tags": [

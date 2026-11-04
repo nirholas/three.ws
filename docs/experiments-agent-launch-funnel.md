@@ -66,7 +66,7 @@ Changed already:
 - **A launch no longer has to start from a blank form.** `npx three-ws launch` hands a prefilled coin to `/launch` for the owner to sign ([CLI docs](cli.md)). It was built on 2026-09-29 and reaches creators once the `three-ws` package is published to npm, which is still pending.
 - **Creators can see what a launched coin earns.** Per-agent creator earnings are now public on the agent profile and coin page, so the reason to launch is visible before launching.
 
-Will change next, and re-measure with these same queries once it ships:
+Shipped 2026-11-04 (in the repository; production follows the next deploy), described under "Follow-up" below:
 
 - **One default "launch my agent's coin" path** that drafts the token plan from the agent's identity and 3D render and asks for one confirmation (item 4 of the landscape doc's plan).
 - **Instrument each step** between "agent created", "wallet provisioned", "plan saved" and "coin launched", so the next version of this write-up can say where people stop instead of only that they stop.
@@ -146,3 +146,18 @@ where network = 'mainnet' and created_at < '2026-09-30T00:00:00Z';
 ```
 
 Derived figures: 2 / 788 = 0.25%; 208 / 788 = 26.4%; (788 - 509) / 509 = 55%.
+
+## Follow-up: default coin path and per-step funnel (2026-11-04)
+
+What changed in the code:
+
+- **Every new agent gets a draft coin plan.** `createAgentIdentity` (`api/_lib/agent-create.js`) now provisions the custodial Solana wallet if minting failed at creation, then calls `ensureDraftPlan` (`api/_lib/agent-token-plan.js`). The draft takes its name from the agent, its ticker from the first word of the name, and its description from the agent description or the first sentence of its persona. It is a mainnet, agent-bound, SOL-paired plan with no dev buy. It is stored as `status = 'draft'` with `auto_drafted = true`, so visitors never see it as an announcement; saving it as the owner clears the flag. The insert is `on conflict do nothing`, so a plan an owner already saved is never overwritten.
+- **Existing agents are backfilled lazily.** The first time an owner loads the plan for an agent with no plan and no launched coin, the same draft is created.
+- **The agent page leads with the coin.** Owners of an agent with no coin see a "Next step" card (`src/agent-launch-card.js`) above the token card: the drafted name and ticker, whether the launch wallet holds enough SOL for rent and fees, and a "Review and launch" button that opens the launch confirmation screen. Nothing is signed or spent from the card.
+- **Each step is recorded.** `agent_launch_funnel_events` (migration `20261104120000_agent_launch_funnel.sql`) holds one row per step: `plan_drafted`, `plan_viewed`, `plan_edited`, `wallet_funded`, `launch_confirm_opened`, `launch_submitted`, `launch_succeeded`. The server writes drafted, edited, submitted and succeeded. The browser reports viewed and confirm-opened, and `wallet_funded` is verified by the server reading the wallet balance. The same names are allowlisted client analytics events (`src/analytics.js`, funnel `agentLaunch`).
+
+How to read the funnel. `GET /api/agents/tokens/funnel-report?from=<iso>&to=<iso>&network=mainnet` (admin session or `x-ops-secret`) returns, for agents created in the window, the agents created, those holding a Solana wallet, those with an owner-saved plan, those that launched, and distinct agents per funnel step. Defaults to the last 30 days. Counts are distinct agents, so reloading a page does not inflate a step.
+
+Baseline status. The baseline above (2 of 788, 208 wallets, 0 plans) is the 2026-09-30 measurement. It was not re-run on 2026-11-04: the session had no read access to the production database. Re-run the appendix queries with the same pinned windows before the next measurement.
+
+Follow-up measurement. Apply the migration, deploy, then measure agents created 2026-12-01 to 2027-01-01 (end exclusive) with the report endpoint and the appendix queries. The numbers to compare are the share of new agents that reach `plan_viewed`, `wallet_funded` and `launch_confirm_opened`, and the launch rate against 0.25%.

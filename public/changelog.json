@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-11-03T20:50:43.587Z",
+	"generated_at": "2026-11-04T06:28:39.065Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Every new agent now starts with a drafted coin",
+			"summary": "A new agent gets a private coin plan drafted from its own name and persona, and its Solana wallet is set up at creation if that step had failed. Owners see a Next step card on the agent page with the drafted name and ticker, whether the launch wallet can cover launch costs, and one Review and launch button that opens the confirmation screen, where nothing is signed or spent until you approve it. Each step from plan viewed to launch succeeded is now recorded so the launch drop-off can be measured.",
+			"link": "/docs/experiments-agent-launch-funnel",
+			"tags": [
+				"feature"
+			]
+		},
 		{
 			"date": "2026-11-03",
 			"type": "launch",
