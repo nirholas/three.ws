@@ -2,16 +2,19 @@
 #
 # This image translates the upstream conda `setup.sh` into a reproducible pip
 # build. Reliability choices that matter for Cloud Build + Cloud Run L4:
-#   • CUDA 12.1 *devel* base — nvcc is required to compile diffoctreerast /
-#     nvdiffrast / diff-gaussian-rasterization from source. The runtime image
-#     keeps them; we don't strip nvcc because cold imports JIT a little.
+#   • TWO STAGES. The CUDA 12.1 *devel* base (nvcc) is needed only to compile
+#     diffoctreerast / nvdiffrast / diff-gaussian-rasterization, so it is the
+#     `builder` stage. The shipped image is the CUDA 12.1 *runtime* base plus the
+#     built Python environment, TRELLIS source and baked dinov2 copied across:
+#     no compiler, no CUDA headers, far fewer packages for a CVE scanner to flag
+#     (NVIDIA's NGC step 3 scan reads the shipped image, not the build stage).
 #   • torch 2.4.0 + cu121, the matrix every TRELLIS extension has wheels/【builds】for.
 #   • Attention backend = xformers, NOT flash-attn. flash-attn compiles from
 #     source for 30+ min and routinely OOMs the builder; xformers is an upstream-
 #     supported backend and an L4 (sm_89) runs it well. Set via ATTN_BACKEND.
 #   • TORCH_CUDA_ARCH_LIST defaults to 8.9 for the production L4 image. NGC
 #     builds can pass a wider list without editing this file.
-FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04 AS builder
 
 ARG TORCH_CUDA_ARCH_LIST="8.9"
 
@@ -126,13 +129,52 @@ RUN git clone https://github.com/facebookresearch/dinov2.git /opt/dinov2 \
          https://dl.fbaipublicfiles.com/dinov2/dinov2_vitl14/dinov2_vitl14_reg4_pretrain.pth \
     && python3 -c "import os; p='/opt/torch/hub/checkpoints/dinov2_vitl14_reg4_pretrain.pth'; s=os.path.getsize(p); assert s > 1_000_000_000, f'dinov2 checkpoint truncated: {s} bytes'"
 
+
+# ══ Runtime stage ═══════════════════════════════════════════════════════════
+# Same env contract as the builder (and as the single-stage image this replaces):
+# the entrypoint, ports, ATTN_BACKEND, PYTHONPATH, TORCH_HOME and DINOV2_LOCAL_DIR
+# are unchanged, so the production Cloud Run revision behaves identically.
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+
+ARG TORCH_CUDA_ARCH_LIST="8.9"
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST}" \
+    ATTN_BACKEND=xformers \
+    SPCONV_ALGO=native \
+    PYTHONPATH=/app/TRELLIS \
+    MALLOC_ARENA_MAX=2 \
+    TORCH_HOME=/opt/torch \
+    DINOV2_LOCAL_DIR=/opt/dinov2
+
+# Runtime libraries only (see the builder stage for why libusb and libegl are
+# here). `apt-get upgrade` pulls the Ubuntu security patches published since the
+# CUDA base image was cut.
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+        python3.10 \
+        libgl1 libglib2.0-0 libgomp1 \
+        libusb-1.0-0 libegl1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.10 /usr/bin/python
+
+# pip installs land in /usr/local on Ubuntu's Python, so one COPY carries every
+# package, the compiled CUDA extensions and the console scripts (uvicorn).
+COPY --from=builder /usr/local /usr/local
+COPY --from=builder /app/TRELLIS /app/TRELLIS
+COPY --from=builder /opt/dinov2 /opt/dinov2
+COPY --from=builder /opt/torch /opt/torch
+
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY request_policy.py /app/request_policy.py
 COPY storage_backend.py /app/storage_backend.py
 COPY instance_health.py /app/instance_health.py
+COPY tracing.py /app/tracing.py
 COPY main.py /app/main.py
-COPY test_request_policy.py test_storage_backend.py test_instance_health.py test_app_contract.py /app/
+COPY test_request_policy.py test_storage_backend.py test_instance_health.py test_app_contract.py test_tracing.py /app/
 
 # Build-time gate, neither half of which needs a GPU:
 #   1. The quality tiers, the clamps that keep a caller value from crashing the
@@ -142,12 +184,11 @@ COPY test_request_policy.py test_storage_backend.py test_instance_health.py test
 #   2. The served contract, against the exact dependency set that will run: the
 #      TRELLIS import chain (FlexiCubes submodule included), the auth boundary,
 #      the probe surfaces, request validation, and the SSRF guard.
-RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py /app/test_instance_health.py -q \
+RUN python3 -m pytest /app/test_request_policy.py /app/test_storage_backend.py /app/test_instance_health.py /app/test_tracing.py -q \
     && python3 /app/test_app_contract.py
 
 EXPOSE 8080
 
-COPY tracing.py test_tracing.py /app/
 CMD ["uvicorn", "main:app", \
      "--host", "0.0.0.0", \
      "--port", "8080", \

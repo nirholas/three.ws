@@ -1,0 +1,37 @@
+# Cloud Build for the GPU (dense head fit) image. Builds and pushes only: the
+# Dockerfile.rtx build runs test_dense_fit.py and the smoke test as gates, and
+# nothing is deployed from here. Deploying it to a GPU service is an owner step
+# (see workers/avatar-reconstruction/README.md, "Dense head fit").
+#
+#   gcloud builds submit workers/avatar-reconstruction \
+#     --config workers/avatar-reconstruction/cloudbuild.rtx.yaml \
+#     --substitutions _CUDA_ARCH=12.0
+
+substitutions:
+  _REGION: us-central1
+  _REPO: avatar-reconstruction
+  _CUDA_ARCH: "12.0"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=Dockerfile.rtx
+      - --build-arg=TORCH_CUDA_ARCH_LIST=${_CUDA_ARCH}
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server-rtx:$BUILD_ID
+      - .
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server-rtx:$BUILD_ID
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server-rtx:$BUILD_ID
+
+serviceAccount: projects/$PROJECT_ID/serviceAccounts/avatar-reconstruction-sa@$PROJECT_ID.iam.gserviceaccount.com
+
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY

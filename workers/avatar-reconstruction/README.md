@@ -229,6 +229,14 @@ Unauthenticated, and what the Cloud Run startup probe hits.
 `pipeline` is `face_texture_transfer_v2` when the geometry morph is live and
 `face_texture_transfer_v1` when it is off or its map is missing.
 
+## Dense head fit (default off, `DENSE_FIT=1`)
+
+`dense_fit.py` refines the morphed head with an analysis-by-synthesis fit against the user's own photo: PyTorch, a weak-perspective camera from `face_projection`, a per-pixel Lambertian photometric term (barycentric blend of vertex normals, light solved by least squares and kept front-lit to remove the bas-relief ambiguity), a landmark term, Laplacian smoothness, a mirror symmetry prior, and (CUDA with PyTorch3D only) a one-sided silhouette term. Displacement runs along the initial vertex normal, is band-limited, and is structurally capped at `DENSE_FIT_MAX_DISP_FRAC` (default 0.03) of the head height. `fit_dense_head` never raises: a timeout (`DENSE_FIT_MAX_SECONDS`, default 20), bad mesh or a result that does not lower the loss returns `None` and the morphed head is kept. Shading cannot see a uniform shift along the normal, so the fit recovers relief shape, not absolute offset. It only runs on inputs the morph accepted (yaw gate, landmarks, solved camera).
+
+Licensing: PyTorch and PyTorch3D are BSD-3. No nvdiffrast, FLAME or MICA.
+
+The CPU image (`Dockerfile`) does not ship torch, so the step stays off there. `Dockerfile.rtx` (CUDA 12.8, torch cu128, PyTorch3D built for sm_120) builds the GPU variant and runs `test_dense_fit.py` as a build gate; `cloudbuild.rtx.yaml` builds and pushes it without deploying. The API routes face jobs to that service when `RECONSTRUCT_DENSE_URL` is set (`api/_providers/gcp.js`); high-detail jobs (tier, path or polycount budget) and an unset variable keep the CPU service. Acceptance (40-face eval on and off, `--compare`, `eval/detection_guard.py`) runs on that image and is an owner step; the step ships disabled until the report shows a material ISE gain.
+
 ## View synthesis (texture only, default off)
 
 `view_synthesis.py` asks Vertex AI for extra camera views of the selfie (yaw plus or

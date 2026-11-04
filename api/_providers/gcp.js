@@ -748,6 +748,22 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 	const urlForMode = (mode) =>
 		mode === 'reconstruct' && reconstructUrl ? reconstructUrl : serviceUrlForMode(mode);
 
+	// Face-avatar reconstructions (no tier, path or polycount budget: those mark
+	// the self-host high-detail flow) go to the GPU service that runs the dense
+	// photometric head fit, when RECONSTRUCT_DENSE_URL is set. The worker still
+	// decides per photo whether the fit applies; unset, every job takes the CPU
+	// service exactly as before.
+	const denseUrl = () => readEnv('RECONSTRUCT_DENSE_URL');
+	const urlForRequest = (request) => {
+		const mode = request?.mode;
+		if (mode === 'reconstruct' && !reconstructUrl && denseUrl()) {
+			const p = request?.params ?? {};
+			const highDetail = p.tier || p.path || Number.isFinite(Number(p.target_polycount));
+			if (!highDetail) return denseUrl();
+		}
+		return urlForMode(mode);
+	};
+
 	return {
 		supportsMode(mode) {
 			return Boolean(urlForMode(mode));
@@ -768,7 +784,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 
 		async submitUntraced(request) {
 			const { mode } = request;
-			const baseUrl = urlForMode(mode);
+			const baseUrl = urlForRequest(request);
 			if (!baseUrl) {
 				throw Object.assign(
 					new Error(`gcp provider: no service URL configured for mode "${mode}"`),
@@ -856,7 +872,7 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			// worker bearer key, so only a configured worker URL may be polled.
 			const trimUrl = (u) => (typeof u === 'string' ? u.replace(/\/+$/, '') : '');
 			const allowedBase = new Set(
-				[urlForMode(mode), serviceUrlForMode(mode), reconstructUrl].filter(Boolean).map(trimUrl),
+				[urlForMode(mode), serviceUrlForMode(mode), reconstructUrl, mode === 'reconstruct' ? denseUrl() : null].filter(Boolean).map(trimUrl),
 			);
 			if (typeof baseUrl !== 'string' || !allowedBase.has(trimUrl(baseUrl))) {
 				return { status: 'failed', error: 'malformed ext_job_id' };

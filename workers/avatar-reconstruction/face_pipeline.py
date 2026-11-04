@@ -34,6 +34,7 @@ from scipy.interpolate import RBFInterpolator
 
 import glb_ops
 import face_geometry
+import dense_fit
 import face_projection
 import view_synthesis
 import view_texture
@@ -582,6 +583,44 @@ def _load_template(body_type: str) -> bytes:
 
 # ── main pipeline ──────────────────────────────────────────────────────────────
 
+def _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw, best_img, fg_img, uv_map) -> None:
+    """
+    Optional dense, photometric refinement of the morphed head (DENSE_FIT=1).
+
+    Runs only on inputs the morph accepted, under a wall-clock budget, with a
+    structurally bounded displacement. Any failure or non-improvement keeps the
+    morphed head untouched: this stage can only ever add detail.
+    """
+    lm_vtx = uv_map.get("landmark_vtx")
+    lm_idx = np.asarray(lm_vtx, dtype=np.int64) if lm_vtx else None
+    camera = (
+        face_projection.solve_camera(detected, lm_idx, morphed, *best_img.size)
+        if lm_idx is not None else None
+    )
+    if not dense_fit.eligible(yaw_deg=yaw, max_yaw_deg=MAX_MORPH_YAW_DEG,
+                              landmarks_ok=lm_idx is not None, camera_ok=camera is not None):
+        log.info("[%s] dense fit skipped: input not eligible", job_id)
+        return
+    width, height = best_img.size
+    n = min(len(detected), len(lm_idx))
+    fg_alpha = np.array(fg_img.convert("RGBA"), dtype=np.uint8)[:, :, 3].astype(np.float32) / 255.0
+    result = dense_fit.fit_dense_head(
+        morphed, faces, camera,
+        np.array(best_img.convert("RGB"), dtype=np.uint8),
+        dense_fit.build_face_mask(detected[:, :2], width, height),
+        landmarks_px=detected[:n, :2],
+        landmark_vertices=lm_idx[:n],
+        foreground=fg_alpha,
+    )
+    if result is None:
+        log.info("[%s] dense fit kept the morphed head (no improvement or out of budget)", job_id)
+        return
+    glb_ops.set_head_geometry(glb, result.positions, faces=faces)
+    log.info("[%s] dense fit refined the head: loss %.5f -> %.5f, max displacement %.4f, "
+             "silhouette=%s (%.1fs)", job_id, result.loss_before, result.loss_after,
+             result.max_displacement, result.used_silhouette, time.time() - t0)
+
+
 def process(
     job_id: str,
     image_sources: list[str],
@@ -711,6 +750,9 @@ def process(
                     glb_ops.set_head_geometry(glb, morphed, faces=faces)
                     log.info("[%s] head geometry morphed to face identity, yaw %.1f° (%.1fs)",
                              job_id, yaw, time.time() - t0)
+                    if dense_fit.enabled():
+                        _refine_dense(job_id, t0, glb, morphed, faces, detected, yaw,
+                                      best_img, fg_img, uv_map)
         except Exception as exc:  # noqa: BLE001 — refinement must never fail the job
             log.warning("[%s] geometry morph failed (%s) — keeping template shape",
                         job_id, exc)

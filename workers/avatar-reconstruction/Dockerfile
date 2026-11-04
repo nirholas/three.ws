@@ -41,6 +41,7 @@ WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY main.py          /app/main.py
 COPY face_pipeline.py /app/face_pipeline.py
+COPY dense_fit.py /app/dense_fit.py
 COPY face_geometry.py /app/face_geometry.py
 COPY face_projection.py /app/face_projection.py
 COPY view_synthesis.py /app/view_synthesis.py

@@ -1,0 +1,40 @@
+# Vulnerability scan of a model-trellis image already in Artifact Registry.
+# Read-only: pulls the image remotely, writes a report to the build log.
+#
+#   gcloud builds submit workers/model-trellis --project aerial-vehicle-466722-p5 \
+#     --region us-central1 --config workers/model-trellis/cloudbuild.scan.yaml \
+#     --substitutions _IMAGE=us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/model-trellis/server@sha256:<digest>
+substitutions:
+  _IMAGE: ""
+  _TRIVY: "0.58.1"
+
+steps:
+  - id: registry-token
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args: ["-c", "gcloud auth print-access-token > /workspace/token"]
+
+  - id: trivy-scan
+    name: aquasec/trivy:${_TRIVY}
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        export TRIVY_USERNAME=oauth2accesstoken
+        export TRIVY_PASSWORD="$(cat /workspace/token)"
+        trivy image --scanners vuln --severity HIGH,CRITICAL --format json \
+          --output /workspace/report.json --timeout 40m "${_IMAGE}"
+
+  - id: summarise
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: python3
+    args: ["scan_summary.py", "/workspace/report.json"]
+
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 200
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 3000s
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
