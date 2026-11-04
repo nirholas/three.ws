@@ -13,32 +13,35 @@
 
 import { Client } from '@upstash/qstash';
 import { Receiver } from '@upstash/qstash';
+import { env } from './env.js';
 
 let _client = null;
 let _receiver = null;
 
 export function qstashEnabled() {
-	return Boolean(process.env.QSTASH_TOKEN);
+	return Boolean(env.QSTASH_TOKEN);
 }
 
 function client() {
-	if (!process.env.QSTASH_TOKEN) {
+	const token = env.QSTASH_TOKEN;
+	if (!token) {
 		throw new Error('qstash: QSTASH_TOKEN not set');
 	}
 	if (!_client) {
-		_client = new Client({ token: process.env.QSTASH_TOKEN });
+		_client = new Client({ token });
 	}
 	return _client;
 }
 
 function receiver() {
-	if (!process.env.QSTASH_CURRENT_SIGNING_KEY) {
+	const currentSigningKey = env.QSTASH_CURRENT_SIGNING_KEY;
+	if (!currentSigningKey) {
 		throw new Error('qstash: QSTASH_CURRENT_SIGNING_KEY not set');
 	}
 	if (!_receiver) {
 		_receiver = new Receiver({
-			currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY,
-			nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || process.env.QSTASH_CURRENT_SIGNING_KEY,
+			currentSigningKey,
+			nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY || currentSigningKey,
 		});
 	}
 	return _receiver;

@@ -22,6 +22,7 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { getRedis } from '../_lib/redis.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { env } from '../_lib/env.js';
 
 const QUOTA_WARN_PCT = 70;
 const QUOTA_CRITICAL_PCT = 90;
@@ -92,7 +93,7 @@ async function checkUpstashQuota() {
 }
 
 async function checkQstashDlq() {
-	const token = process.env.QSTASH_TOKEN;
+	const token = env.QSTASH_TOKEN;
 	if (!token) return { skipped: true, reason: 'qstash_not_configured' };
 
 	const controller = new AbortController();

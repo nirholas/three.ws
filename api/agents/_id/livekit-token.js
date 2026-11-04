@@ -8,16 +8,18 @@ import { sql } from '../../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, error } from '../../_lib/http.js';
 import { isUuid } from '../../_lib/validate.js';
-
-const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
-const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_SERVER_URL = process.env.LIVEKIT_SERVER_URL;
+import { env } from '../../_lib/env.js';
 
 export async function handleLiveKitToken(req, res, agentId) {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	if (!LIVEKIT_API_KEY || !LIVEKIT_API_SECRET || !LIVEKIT_SERVER_URL) {
+	// Read per request through env.js, not captured at import, so credentials
+	// added to the running service take effect without a cold start.
+	const apiKey = env.LIVEKIT_API_KEY;
+	const apiSecret = env.LIVEKIT_API_SECRET;
+	const serverUrl = env.LIVEKIT_SERVER_URL;
+	if (!apiKey || !apiSecret || !serverUrl) {
 		return error(
 			res,
 			503,
@@ -46,7 +48,7 @@ export async function handleLiveKitToken(req, res, agentId) {
 	const roomName = `agent-${agentId}`;
 	const participantId = `user-${userId}`;
 
-	const secret = new TextEncoder().encode(LIVEKIT_API_SECRET);
+	const secret = new TextEncoder().encode(apiSecret);
 	const now = Math.floor(Date.now() / 1000);
 
 	const token = await new SignJWT({
@@ -57,12 +59,12 @@ export async function handleLiveKitToken(req, res, agentId) {
 			canSubscribe: true,
 		},
 		sub: participantId,
-		iss: LIVEKIT_API_KEY,
+		iss: apiKey,
 		nbf: now,
 		exp: now + 3600,
 	})
 		.setProtectedHeader({ alg: 'HS256' })
 		.sign(secret);
 
-	return json(res, 200, { token, serverUrl: LIVEKIT_SERVER_URL });
+	return json(res, 200, { token, serverUrl });
 }

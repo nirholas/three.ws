@@ -62,7 +62,7 @@ export default wrap(async (req, res) => {
 	// inside the catch below, and "invalid qstash signature" sends the operator
 	// hunting an attacker instead of a missing secret. wrap() turns this exact
 	// message shape into a 503 not_configured plus one deduped alert naming the var.
-	if (!process.env.QSTASH_CURRENT_SIGNING_KEY) {
+	if (!env.QSTASH_CURRENT_SIGNING_KEY) {
 		throw new Error('Missing required env var: QSTASH_CURRENT_SIGNING_KEY');
 	}
 

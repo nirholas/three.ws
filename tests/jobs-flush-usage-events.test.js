@@ -30,7 +30,19 @@ process.env.QSTASH_NEXT_SIGNING_KEY = NEXT_KEY;
 const flushUsageBuffer = vi.fn(async () => ({ flushed: 4, remaining: 0, errors: 0 }));
 const flushAuditBuffer = vi.fn(async () => ({ flushed: 2, remaining: 0, errors: 0 }));
 
-vi.mock('../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'https://three.ws' } }));
+// The QStash keys read through env.js, so the mock forwards them live from
+// process.env: the tests below set and delete them per case.
+vi.mock('../api/_lib/env.js', () => ({
+	env: {
+		APP_ORIGIN: 'https://three.ws',
+		get QSTASH_CURRENT_SIGNING_KEY() {
+			return process.env.QSTASH_CURRENT_SIGNING_KEY;
+		},
+		get QSTASH_NEXT_SIGNING_KEY() {
+			return process.env.QSTASH_NEXT_SIGNING_KEY;
+		},
+	},
+}));
 vi.mock('../api/_lib/usage.js', () => ({ flushUsageBuffer: (...a) => flushUsageBuffer(...a) }));
 vi.mock('../api/_lib/x402/audit-log.js', () => ({ flushAuditBuffer: (...a) => flushAuditBuffer(...a) }));
 vi.mock('../api/_lib/http.js', () => ({

@@ -1844,6 +1844,36 @@ export const env = {
 		return opt('LIVEPEER_T2I_MODEL');
 	},
 
+	// LiveKit realtime rooms, optional. api/agents/_id/livekit-token.js signs a
+	// room JWT with the key and secret and hands the client the server URL; when
+	// any of the three is unset the route answers 503 livekit_not_configured.
+	// Trimmed because a pasted secret with a trailing newline signs every token
+	// with the wrong bytes and LiveKit rejects them as an invalid signature.
+	get LIVEKIT_API_KEY() {
+		return addr(opt('LIVEKIT_API_KEY'));
+	},
+	get LIVEKIT_API_SECRET() {
+		return addr(opt('LIVEKIT_API_SECRET'));
+	},
+	get LIVEKIT_SERVER_URL() {
+		return addr(opt('LIVEKIT_SERVER_URL'));
+	},
+
+	// Upstash QStash, optional. QSTASH_TOKEN publishes background jobs
+	// (api/_lib/qstash.js) and reads the dead-letter queue (api/cron/
+	// quota-check.js); when unset, qstashEnabled() is false and callers run the
+	// work synchronously. The signing keys verify inbound QStash webhooks;
+	// QSTASH_NEXT_SIGNING_KEY is the rotation key.
+	get QSTASH_TOKEN() {
+		return addr(opt('QSTASH_TOKEN'));
+	},
+	get QSTASH_CURRENT_SIGNING_KEY() {
+		return addr(opt('QSTASH_CURRENT_SIGNING_KEY'));
+	},
+	get QSTASH_NEXT_SIGNING_KEY() {
+		return addr(opt('QSTASH_NEXT_SIGNING_KEY'));
+	},
+
 	// Dev.to syndication — required for the news admin's "Publish to Dev.to"
 	// hook to do anything. Generate at https://dev.to/settings/extensions
 	// (look for "Generate API Key"). When unset, syndication is skipped
