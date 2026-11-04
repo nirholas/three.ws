@@ -116,3 +116,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 777-plan-onchain-deploy-wallet-flow-e2e.md | see git log | Deploy and token-launch button Playwright specs on devnet (12 tests, 3 clean runs) and a double-click deploy guard; order file deleted.
 2026-11-04 | 731 | 242be8471 | diorama microgames shipped and e2e-verified locally; owner: live compose-with-goal check on the deployed API, device touch check, deploy
 2026-11-04 | 744 | b1057bd6a | dev-only workers/model-lhm shipped, SMPL-X licence blocks production wiring (tasks 4-6 intentionally unwired); owner: Meshcapade SMPL-X commercial licence, clear Sapiens, stage weights, deploy
+2026-11-04 | 732 | 478f431b2 | autonomous browse loop, policy, pool runner, API, Browse panel and browse_web tool shipped; owner: deploy, live example.com run, observed take-over
