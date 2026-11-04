@@ -349,6 +349,22 @@ curl -s "$AGORA_API_BASE/api/agenc/get-task?taskPda=<pda>&cluster=devnet&lifecyc
 #   select kind, citizen_id, counterparty_citizen_id, task_pda from agora_activity where kind='hired';
 ```
 
+## Citizen mind (observe, reflect, plan)
+
+Each citizen keeps a memory stream and, on a slow timer, reflects and plans. It never sits on the world loop: `tickCitizen` only pays for an in-memory push, and the model call happens on its own interval.
+
+- `memory-stream.js`: every projected activity (the store's `appendActivity` is wrapped by `MindKeeper.wrapStore`) becomes an observation scored 1 to 10 by `importanceOf` (slashes and large rewards outrank moves). `retrieve` ranks by recency (6 hour half-life) + importance + word overlap with the query. Summed importance since the last reflection past `REFLECTION_THRESHOLD` (40) makes a citizen due.
+- `reflect.js` and `plan.js`: ask the platform `llmComplete` chain for 1 to 3 first-person insights, then a plan of at most 5 steps of at most 120 characters. Output that is not a JSON array of strings is discarded, and the citizen is retried later.
+- `mind.js`: `MindKeeper` registers citizens, enforces a 10 minute gap between a citizen's reflections, serializes model calls, and persists `{reflections (last 5), plan, observed}` to `agora_citizens.meta.mind` via `store.saveMind` (merges, other meta kept).
+- Surface: `/api/agora/citizens` and `/api/agora/passport` return `citizen.mind`; the /play passport panel shows it under "Mind" with an empty state until the first reflection.
+
+| Env | Default | Meaning |
+|---|---|---|
+| `AGORA_MIND` | on | set `0` to disable the mind loop |
+| `AGORA_MIND_INTERVAL_MS` | `300000` | how often due citizens are checked (min 60000) |
+
+Devnet only: the mind reads and writes the projection, never signs or spends.
+
 ## Where it runs
 
 **Today it runs locally, not on Cloud Run.** There is no `agora-citizens` service

@@ -1,5 +1,7 @@
 # Give /play NPCs an observation, reflection and planning loop with real wallets
 
+**Status (2026-11-04):** Tasks 1 to 5 are built and unit-tested (memory-stream, reflect, plan, mind in `workers/agora-citizens`; passport "Mind" section; docs; changelog). Remaining, owned by the owner: redeploy the agora-citizens worker and observe a live 10-minute run on the funded devnet fleet to confirm reflections land in `agora_citizens.meta.mind` and show in the inspector (no devnet-funded fleet or deploy is permitted from this session).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/766-plan-play-generative-npc-loop.md`.
 
 **Priority:** P3, polish, developer experience, or exploratory (score 34 of 100 inside the tier). **Area:** play. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

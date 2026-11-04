@@ -381,6 +381,21 @@ html, body {
 	color: rgba(255, 255, 255, 0.4);
 	margin: 6px 0 12px;
 }
+.agora-pp-mind { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.agora-pp-mind-item {
+	padding: 10px 12px; border-radius: 10px;
+	background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);
+	font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.82);
+	transition: background 0.15s, border-color 0.15s;
+}
+.agora-pp-mind-item:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.12); }
+.agora-pp-mind-when { display: block; margin-top: 4px; font-size: 11px; color: rgba(255, 255, 255, 0.4); }
+.agora-pp-mind-plan { margin-bottom: 12px; font-size: 13px; color: rgba(255, 255, 255, 0.8); }
+.agora-pp-mind-plan summary { cursor: pointer; font-weight: 600; padding: 6px 0; border-radius: 6px; }
+.agora-pp-mind-plan summary:hover { color: #fff; }
+.agora-pp-mind-plan summary:focus-visible { outline: 2px solid #aac4ff; outline-offset: 2px; }
+.agora-pp-mind-plan summary .agora-pp-mind-when { display: inline; margin-left: 6px; }
+.agora-pp-mind-plan ol { margin: 4px 0 0; padding-left: 20px; display: grid; gap: 4px; line-height: 1.5; }
 .agora-pp-empty { font-size: 13px; line-height: 1.6; color: rgba(255, 255, 255, 0.5); }
 
 .agora-pp-feed { list-style: none; display: flex; flex-direction: column; gap: 12px; }

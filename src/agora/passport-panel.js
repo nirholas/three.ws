@@ -288,6 +288,9 @@ export class PassportPanel {
 				<h3 class="agora-pp-section">Cross-chain identity</h3>
 				<div class="agora-handshake-mount"></div>` : ''}
 
+			<h3 class="agora-pp-section">Mind</h3>
+			${this._renderMind(c.mind)}
+
 			<h3 class="agora-pp-section">Activity</h3>
 			${this._renderActivity(data.activity || [])}`;
 
@@ -323,6 +326,31 @@ export class PassportPanel {
 			? 'Couldn\'t reach the AgenC program for a live read — showing the latest projected snapshot.'
 			: 'Not yet registered on the AgenC chain — projection record only.';
 		return `<p class="agora-pp-empty">${esc(msg)}</p>`;
+	}
+
+	// Reflections and the current plan the citizen's worker wrote after enough
+	// had happened to it. Absent until a first reflection, so say what triggers one.
+	_renderMind(mind) {
+		if (!mind) {
+			return `<p class="agora-pp-empty">No reflections yet. A citizen reflects after enough has happened to it, such as winning a bounty or losing stake, then plans what to do next.</p>`;
+		}
+		const ago = (at) => {
+			const mins = Math.max(0, Math.round((Date.now() - Number(at)) / 60000));
+			if (!at) return '';
+			return mins < 60 ? `${mins}m ago` : mins < 1440 ? `${Math.round(mins / 60)}h ago` : `${Math.round(mins / 1440)}d ago`;
+		};
+		const reflections = [...mind.reflections].reverse().map((r) => `
+			<li class="agora-pp-mind-item">
+				<span class="agora-pp-mind-text">${esc(r.text)}</span>
+				${r.at ? `<span class="agora-pp-mind-when">${esc(ago(r.at))}</span>` : ''}
+			</li>`).join('');
+		const plan = mind.plan
+			? `<details class="agora-pp-mind-plan" open>
+					<summary>Next steps${mind.plan.at ? ` <span class="agora-pp-mind-when">planned ${esc(ago(mind.plan.at))}</span>` : ''}</summary>
+					<ol>${mind.plan.steps.map((st) => `<li>${esc(st)}</li>`).join('')}</ol>
+				</details>`
+			: '';
+		return `${plan}${reflections ? `<ul class="agora-pp-mind">${reflections}</ul>` : ''}`;
 	}
 
 	_renderActivity(activity) {

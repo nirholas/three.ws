@@ -360,6 +360,16 @@ export function makeStore(cfg) {
 			`;
 		},
 
+		/** Persist a citizen's reflections and plan under meta.mind (merge, other meta kept). */
+		async saveMind(citizenId, mind) {
+			const db = requireSql();
+			await db`
+				update agora_citizens set
+					meta = meta || jsonb_build_object('mind', ${JSON.stringify(mind)}::jsonb)
+				where id = ${citizenId}
+			`;
+		},
+
 		/** Lightweight status/position write for the IDLE/SEEK/BUSY transitions. */
 		async setStatus(citizenId, status, pos) {
 			const db = requireSql();

@@ -146,6 +146,28 @@ async function resolveCitizenAvatarUrls(rows) {
 // and dashboards consume. `avatarUrls` is the batch map from
 // resolveCitizenAvatarUrls; without it `avatarUrl` falls back to the raw stored
 // value (an avatar id), which every client still resolves on its own.
+// A citizen's reflections and plan, written by workers/agora-citizens/mind.js into
+// meta.mind. Re-bounded here so a malformed row can never bloat the response.
+export function shapeMind(meta) {
+	const m = meta && typeof meta === 'object' ? meta.mind : null;
+	if (!m || typeof m !== 'object') return null;
+	const str = (v, n) => (typeof v === 'string' ? v.slice(0, n) : '');
+	const reflections = (Array.isArray(m.reflections) ? m.reflections : [])
+		.filter((r) => r && typeof r.text === 'string' && r.text)
+		.slice(-5)
+		.map((r) => ({ text: str(r.text, 700), at: Number(r.at) || null }));
+	const steps = (Array.isArray(m.plan?.steps) ? m.plan.steps : [])
+		.filter((x) => typeof x === 'string' && x)
+		.slice(0, 5)
+		.map((x) => str(x, 120));
+	if (!reflections.length && !steps.length) return null;
+	return {
+		reflections,
+		plan: steps.length ? { steps, at: Number(m.plan.at) || null } : null,
+		observed: Number(m.observed) || 0,
+	};
+}
+
 function shapeCitizen(row, avatarUrls) {
 	const storedAvatar = row.avatar_url;
 	return {
@@ -174,6 +196,7 @@ function shapeCitizen(row, avatarUrls) {
 		tasksPosted: row.tasks_posted,
 		joinedAt: row.joined_at,
 		lastActiveAt: row.last_active_at,
+		mind: shapeMind(row.meta),
 	};
 }
 

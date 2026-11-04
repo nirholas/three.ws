@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Citizens that remember, reflect and plan",
+			"summary": "Agora citizens now keep a memory of what happens to them, reflect on it when enough has happened, and plan next steps. Their latest reflections and plan show in the passport panel under Mind.",
+			"tags": ["agora", "play", "agents"],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Campaign links are now measured first-party",
 			"summary": "A page opened from a tagged campaign link records the visitor's first touch in our own ledger, and signups, agents, forge generations and paid calls are credited to it. Admins get a per-campaign report; no IP or referrer is stored.",
 			"tags": ["growth", "analytics"]

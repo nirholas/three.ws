@@ -19,10 +19,13 @@ import { makeStore } from './store.js';
 import { bootFleet, tickCitizen, replenishWork, planDryRun } from './engine.js';
 import { seedWorld } from './seed.js';
 import { reconcileOnce } from './reconcile.js';
+import { MindKeeper } from './mind.js';
+import { llmComplete } from '../../api/_lib/llm.js';
 import { log } from './log.js';
 
 // Reconcile cadence — re-read open postings from the chain and drop any that are
 // no longer open (claimed/cancelled/expired) off the board. Independent of ticks.
+const MIND_MS = Math.max(60_000, Number(process.env.AGORA_MIND_INTERVAL_MS || 300_000));
 const RECONCILE_MS = Math.max(30_000, Number(process.env.AGORA_RECONCILE_MS) || 60_000);
 
 const BOOT_AT = new Date().toISOString();
@@ -121,6 +124,18 @@ async function runForever(ctx) {
 		}, cfg.heartbeatMs);
 	}
 
+	// Slow-path mind: observe every projected activity, reflect and plan on its
+	// own timer. A model outage only skips a reflection; the world loop never waits.
+	let mindTimer = null;
+	if (process.env.AGORA_MIND !== '0') {
+		const keeper = new MindKeeper({ store: ctx.store, llm: llmComplete, log });
+		for (const c of ctx.citizens) keeper.register({ id: c.id, name: c.spec.displayName, profession: c.spec.profession });
+		ctx.store = keeper.wrapStore(ctx.store);
+		mindTimer = setInterval(() => {
+			if (!draining) keeper.tick().catch((err) => log.warn('mind error', { err: err?.message }));
+		}, MIND_MS);
+	}
+
 	await replenishWork(ctx, true);
 	for (const citizen of ctx.citizens) schedule(citizen);
 	log.info('fleet running', { citizens: ctx.citizens.length, tickBaseMs: cfg.tickBaseMs, jitterMs: cfg.tickJitterMs });
@@ -132,6 +147,7 @@ async function runForever(ctx) {
 		for (const t of timers) clearTimeout(t);
 		clearInterval(supplyTimer);
 		clearInterval(reconcileTimer);
+		if (mindTimer) clearInterval(mindTimer);
 		if (heartbeatTimer) clearInterval(heartbeatTimer);
 		// Neon HTTP + Upstash REST are stateless — nothing to close. Give an
 		// in-flight tick a moment to land its projection writes.
