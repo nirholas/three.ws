@@ -85,6 +85,7 @@ import { isChatPanelOpen } from './npc/npc-chat.js';
 import { isServicePanelOpen } from './npc/npc-services.js';
 import { isAixbtPanelOpen } from './npc/npc-aixbt.js';
 import { isZauthPanelOpen } from './npc/npc-zauth.js';
+import { fetchCapabilities } from '../community/town-client.js';
 import { requestHolderPass, signInWithX, ensureSolanaWallet, relinkSolanaWallet, getSession, getWorldGate, setWorldGate } from '../community/town-auth.js';
 import { ensurePlayAccess } from './play-gate.js';
 import { hasOpenOverlay } from './a11y.js';
@@ -1516,6 +1517,7 @@ export class CoinCommunities {
 		coin = { ...coin, tier, holderMinUsd, holderMinTokens };
 		this.coin = coin;
 		this.ui.enterWorld(coin);
+		this._offerCommunityBoard();
 		this._setTabTitle(coin.symbol ? '$' + coin.symbol.toUpperCase() : (coin.name || 'Community'));
 		document.body.classList.toggle('cc-holders', tier === 'holders');
 		// Reflect the community in the URL so it can be shared / refreshed into. A
@@ -1822,6 +1824,7 @@ export class CoinCommunities {
 		this.net.on('change', (p, id) => this._onChange(p, id));
 		this.net.on('remove', (id) => this._onRemove(id));
 		this.net.on('chat', (m) => this._onChat(m));
+		this.net.on('chatHistory', (lines) => this.ui.addChatHistory(lines));
 		this.net.on('reaction', (m) => this._onReaction(m));
 		this.net.on('tag', (msg) => this._onTagMessage(msg)); // R08 tag mini-game
 		this.net.on('king', (msg) => this._onKing(msg)); // R07 King of the Totem
@@ -2710,9 +2713,18 @@ export class CoinCommunities {
 		this._activity = null;
 		if (import.meta.env.DEV) { delete window.__ccInjectTrade; delete window.__ccActivity; }
 	}
+	// The chat panel's Board tab reads the coin's persisted community stream. It
+	// only appears when this deployment has community boards connected; one
+	// capabilities read per page load answers that for every world.
+	_offerCommunityBoard() {
+		this._boardCaps ??= fetchCapabilities().then((c) => !!c?.configured, () => false);
+		this._boardCaps.then((ok) => { if (ok) this.ui.enableBoard(); });
+	}
 	_onChat(m) {
 		const mine = m.id === this.net.sessionId;
-		this.ui.addChat({ name: m.name, text: m.text, mine });
+		// A line already on screen (it also came in the join scrollback) is not
+		// said again over anyone's head.
+		if (!this.ui.addChat({ mid: m.mid, name: m.name, text: m.text, mine, ts: m.ts })) return;
 		if (mine) this._sayLocal(m.text);
 		else { this.remotes.get(m.id)?.say(m.text); this._bumpTabUnread(); }
 	}

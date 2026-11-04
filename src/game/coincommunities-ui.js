@@ -25,6 +25,8 @@ import { netErrorMessage } from './net-error.js';
 import { t, onLocaleChange } from './i18n-play.js';
 import { announce, openModal } from './a11y.js';
 import { countUp } from '../ui-juice.js';
+import { ChatLogView } from './chat-log-view.js';
+import { CommunityBoard } from './community-board.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
 // storage is blocked (the `?bg=transparent` embed). Guard every access so a
@@ -1939,16 +1941,75 @@ export class CommunityUI {
 			this.chatUnread,
 			this.chatChevron,
 		]);
-		this.chatBody = el('div', { class: 'cc-chat-body', id: 'cc-chat-body' }, [
+		// Shown while the world has nothing to read. "Say hi" is a real control:
+		// it puts the cursor in the box, which is the next thing to do.
+		this.chatEmpty = el('div', { class: 'cc-chat-empty', hidden: true }, [
+			el('p', { text: 'No messages yet.', 'data-i18n': 'play.chat_empty' }),
+			el('button', { class: 'cc-chat-sayhi', type: 'button', text: 'Say hi', 'data-i18n': 'play.chat_say_hi', onclick: () => this.chatInput.focus() }),
+		]);
+		this.chatView = new ChatLogView({
+			log: this.chatLog,
+			empty: this.chatEmpty,
+			announce: (text) => announce(text),
+			copy: {
+				caughtUp: t('play.chat_caught_up', "You're caught up"),
+				earlier: (n) => (n === 1
+					? t('play.chat_earlier_one', '1 earlier message')
+					: t('play.chat_earlier_many', '{{n}} earlier messages', { n })),
+			},
+		});
+		this.chatWorld = el('div', { class: 'cc-chat-world', id: 'cc-chat-world', role: 'tabpanel', 'aria-labelledby': 'cc-chat-tab-world' }, [
+			this.chatEmpty,
 			this.chatLog,
 			el('div', { class: 'cc-chat-input' }, [this.chatInput, el('button', { class: 'cc-chat-send', type: 'button', text: 'Send', 'data-i18n': 'play.send', onclick: () => this._sendChat() })]),
 		]);
+		// The coin's community board (read-only). Its tab stays hidden until the
+		// deployment says boards are connected (enableBoard), so there is never a
+		// tab that can only ever say "unavailable".
+		this.boardPanel = el('div', { class: 'cc-board', id: 'cc-chat-board', role: 'tabpanel', 'aria-labelledby': 'cc-chat-tab-board', tabindex: '0', hidden: true });
+		this.board = new CommunityBoard({ panel: this.boardPanel });
+		const tabKeys = (e) => {
+			const order = [this.chatTabWorld, this.chatTabBoard];
+			const i = order.indexOf(e.currentTarget);
+			let next = null;
+			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') next = order[(i + 1) % 2];
+			else if (e.key === 'Home') next = order[0];
+			else if (e.key === 'End') next = order[1];
+			if (!next) return;
+			e.preventDefault();
+			e.stopPropagation();
+			this.showChatTab(next === this.chatTabBoard ? 'board' : 'world');
+			next.focus();
+		};
+		this.chatTabWorld = el('button', {
+			class: 'cc-chat-tab', type: 'button', role: 'tab', id: 'cc-chat-tab-world',
+			'aria-selected': 'true', 'aria-controls': 'cc-chat-world', tabindex: '0',
+			text: 'World', 'data-i18n': 'play.chat_tab_world',
+			onclick: () => this.showChatTab('world'), onkeydown: tabKeys,
+		});
+		this.chatTabBoard = el('button', {
+			class: 'cc-chat-tab', type: 'button', role: 'tab', id: 'cc-chat-tab-board',
+			'aria-selected': 'false', 'aria-controls': 'cc-chat-board', tabindex: '-1',
+			text: 'Board', 'data-i18n': 'play.chat_tab_board',
+			onclick: () => this.showChatTab('board'), onkeydown: tabKeys,
+		});
+		this.chatTabs = el('div', { class: 'cc-chat-tabs', role: 'tablist', 'aria-label': 'Chat views', 'data-i18n-attr': 'aria-label:play.chat_views_aria', hidden: true }, [
+			this.chatTabWorld,
+			this.chatTabBoard,
+			el('button', {
+				class: 'cc-board-refresh', type: 'button', hidden: true, 'aria-label': 'Refresh the board',
+				'data-i18n-attr': 'aria-label:play.board_refresh_aria', text: '↻',
+				onclick: () => this.board.refresh(),
+			}),
+		]);
+		this.chatBody = el('div', { class: 'cc-chat-body', id: 'cc-chat-body' }, [this.chatTabs, this.chatWorld, this.boardPanel]);
 		this.chatHead = head;
 		this.chat = el('div', { id: 'cc-chat', role: 'region', 'aria-label': 'Chat', 'data-i18n-attr': 'aria-label:play.chat' }, [head, this.chatBody]);
 		// Default: collapsed on touch (small screens), open on desktop, unless the
 		// user has expressed a preference before.
 		const stored = lsGet('cc-chat-min');
 		this._unread = 0;
+		this._chatTab = 'world';
 		this.toggleChat(stored != null ? stored === '1' : matchMedia('(pointer: coarse)').matches);
 		const chat = this.chat;
 
@@ -3314,7 +3375,9 @@ export class CommunityUI {
 			this.coinMono.hidden = false;
 		}
 		this.refreshTierBadge(coin);
-		this.chatLog.textContent = '';
+		this.chatView.reset();
+		this.board.setCoin(coin.mint || '');
+		if (this._chatTab === 'board') this.board.open();
 		this._unread = 0;
 		this.chatUnread.hidden = true;
 		this.pingText.hidden = true;
@@ -3426,22 +3489,12 @@ export class CommunityUI {
 		this._toastTimer = setTimeout(() => this._toast.classList.remove('cc-on'), 4200);
 	}
 
-	addChat({ name, text, mine, scope }) {
-		const now = new Date();
-		const stamp = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-		// Stick to bottom only if the user is already near it, so reading scrollback
-		// isn't yanked away when a new message lands.
-		const nearBottom = this.chatLog.scrollHeight - this.chatLog.scrollTop - this.chatLog.clientHeight < 60;
-		const row = el('div', { class: 'cc-chat-msg' + (mine ? ' cc-mine' : '') + (scope === 'party' ? ' cc-party-msg' : '') }, [
-			el('span', { class: 'cc-chat-meta' }, [
-				el('b', { text: name }),
-				el('time', { text: stamp }),
-			]),
-			el('span', { class: 'cc-chat-text', text }),
-		]);
-		this.chatLog.appendChild(row);
-		while (this.chatLog.children.length > 200) this.chatLog.removeChild(this.chatLog.firstChild);
-		if (nearBottom || mine) this.chatLog.scrollTop = this.chatLog.scrollHeight;
+	/** Add one live line. Returns false when the line was already on screen
+	 *  (same message id, e.g. it also arrived in the join scrollback). */
+	addChat({ mid, name, text, mine, scope, ts }) {
+		// The view sticks to the bottom only if the reader is already near it, so
+		// someone reading back is not yanked away when a new message lands.
+		if (!this.chatView.addLive({ mid, name, text, mine, scope, ts })) return false;
 		if (this._chatMin && !mine) {
 			this._unread += 1;
 			this.chatUnread.textContent = this._unread > 99 ? '99+' : String(this._unread);
@@ -3452,6 +3505,34 @@ export class CommunityUI {
 			// the panel is shut (which is the default on touch).
 			announce(t('play.chat_from', '{{name}} says: {{text}}', { name, text }));
 		}
+		return true;
+	}
+
+	/** The world's recent chat, handed over once on join (and again after a
+	 *  reconnect). Rendered muted above the live lines with a divider. History is
+	 *  not new to anyone, so it never bumps the unread badge. */
+	addChatHistory(lines) {
+		return this.chatView.addHistory(lines);
+	}
+
+	/** Reveal the Board tab once the deployment reports community boards are
+	 *  connected (GET /api/community/capabilities `configured`). */
+	enableBoard() {
+		this.chatTabs.hidden = false;
+	}
+
+	/** Switch the chat panel between live world chat and the coin's board. */
+	showChatTab(which) {
+		const board = which === 'board';
+		this._chatTab = board ? 'board' : 'world';
+		this.chatTabWorld.setAttribute('aria-selected', String(!board));
+		this.chatTabBoard.setAttribute('aria-selected', String(board));
+		this.chatTabWorld.tabIndex = board ? -1 : 0;
+		this.chatTabBoard.tabIndex = board ? 0 : -1;
+		this.chatWorld.hidden = board;
+		this.boardPanel.hidden = !board;
+		this.chatTabs.querySelector('.cc-board-refresh').hidden = !board;
+		if (board) this.board.open();
 	}
 
 	/** Collapse/expand the chat sidebar. Pass a boolean to force a state. */

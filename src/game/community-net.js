@@ -119,6 +119,7 @@ export class CommunityNet {
 			change: new Set(), // (player, id)
 			remove: new Set(), // (id)
 			chat: new Set(),   // ({id, name, text, ts})
+			chatHistory: new Set(), // (lines), the world's recent chat on join: [{mid, name, text, ts}] oldest first
 			interact: new Set(), // ({from, fromName, action, ts}), a peer interacted with us
 			denied: new Set(),  // (reason), server refused the join (e.g. holder gate); no retry
 			voiceSignal: new Set(), // ({from, data}), relayed WebRTC SDP/ICE from a peer
@@ -370,6 +371,9 @@ export class CommunityNet {
 					}
 				});
 				this.room.onMessage('chat', (msg) => this._emit('chat', msg));
+				// The world's recent chat, one batched message after 'ready' (and again
+				// after a reconnect). See multiplayer/src/chat-scrollback.js.
+				this.room.onMessage('chat_history', (msg) => this._emit('chatHistory', Array.isArray(msg?.lines) ? msg.lines : []));
 			this.room.onMessage('interact', (msg) => this._emit('interact', msg));
 			// Friends (W09): live DM + request/accept events pushed by the social hub
 			// to whichever realm room the account is currently registered in.
