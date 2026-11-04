@@ -58,7 +58,9 @@ async function loadPosts() {
 
 const posts = await loadPosts();
 const earliest = Math.floor(Math.min(...posts.map((p) => Date.parse(p.postedAt))) / 1000);
-const { pool, candles } = await loadSeries({ mint: THREE_MINT, fromSec: earliest });
+// Up to five waits (15s doubling to 240s) per throttled page: the keyless tier
+// throttles a full-history page burst, and a wait costs less than a lost run.
+const { pool, candles } = await loadSeries({ mint: THREE_MINT, fromSec: earliest, rateLimitRetries: 5 });
 if (candles.length < 2) throw new Error('GeckoTerminal returned no $THREE candles');
 
 const doc = buildImpactDocument({ handle: HANDLE, posts, pool, candles });

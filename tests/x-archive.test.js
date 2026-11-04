@@ -17,7 +17,7 @@ import {
 	percentile,
 	topicsOf,
 } from '../scripts/x-archive-lib.mjs';
-import { baselineReturns, buildImpactDocument, downsample, impactForPosts, priceAt, returnsAt, summarize } from '../api/_lib/x-content/price-impact.js';
+import { baselineReturns, buildImpactDocument, downsample, impactForPosts, loadSeries, priceAt, returnsAt, summarize } from '../api/_lib/x-content/price-impact.js';
 
 const post = (over = {}) => ({
 	tweetId: over.tweetId || '1',
@@ -334,5 +334,61 @@ describe('price impact of a post', () => {
 		expect(summary.horizons.r1h.positiveShare).toBe(1);
 		expect(summary.horizons.r24h.baselineSamples).toBeGreaterThan(0);
 		expect(summarize([], []).horizons.r1h.median).toBeNull();
+	});
+});
+
+// GeckoTerminal's keyless tier answers 429 after a burst of pages, which is what
+// stopped `npm run x:archive:price` before it wrote anything on 2026-10-23,
+// 2026-10-25 and 2026-11-04. The paged loader waits out a throttled page and
+// asks again instead of discarding every page already read.
+describe('loading the price series', () => {
+	const throttled = () => Object.assign(new Error('GeckoTerminal 429: rate limited'), { status: 429 });
+	const page = (n, endSec) => ({ candles: Array.from({ length: n }, (_, i) => ({ t: endSec - (n - i) * 900, o: 1, h: 1, l: 1, c: 1, v: 1 })) });
+
+	it('retries a throttled page after a backoff and keeps the pages already read', async () => {
+		const answers = [page(1000, 2_000_000_000), throttled(), page(10, 2_000_000_000 - 1000 * 900)];
+		const waits = [];
+		const out = await loadSeries({
+			resolvePool: async () => 'pool1',
+			fetchBars: async () => {
+				const next = answers.shift();
+				if (next instanceof Error) throw next;
+				return next;
+			},
+			rateLimitRetries: 3,
+			sleep: async (ms) => waits.push(ms),
+		});
+		expect(out.pool).toBe('pool1');
+		expect(out.candles).toHaveLength(1010);
+		expect(waits).toHaveLength(1);
+		expect(waits[0]).toBeGreaterThan(0);
+	});
+
+	it('gives up after the allowed retries and fails fast when none are allowed', async () => {
+		const always = async () => {
+			throw throttled();
+		};
+		const waits = [];
+		await expect(
+			loadSeries({ resolvePool: async () => 'p', fetchBars: always, rateLimitRetries: 2, sleep: async (ms) => waits.push(ms) }),
+		).rejects.toThrow(/429/);
+		expect(waits).toHaveLength(2);
+		expect(waits[1]).toBeGreaterThan(waits[0]);
+		await expect(loadSeries({ resolvePool: async () => 'p', fetchBars: always })).rejects.toThrow(/429/);
+	});
+
+	it('does not retry an error that is not a throttle', async () => {
+		const waits = [];
+		await expect(
+			loadSeries({
+				resolvePool: async () => 'p',
+				fetchBars: async () => {
+					throw Object.assign(new Error('GeckoTerminal 404'), { status: 404 });
+				},
+				rateLimitRetries: 3,
+				sleep: async (ms) => waits.push(ms),
+			}),
+		).rejects.toThrow(/404/);
+		expect(waits).toHaveLength(0);
 	});
 });

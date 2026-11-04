@@ -163,10 +163,25 @@ export function buildImpactDocument({ handle, posts, pool, candles, now = Date.n
 
 // ── Loading ─────────────────────────────────────────────────────────────────
 
+// First wait after a throttled page; each further retry doubles it. GeckoTerminal's
+// keyless tier refills its per-minute budget within a minute.
+const THROTTLE_BACKOFF_MS = 15_000;
+
+const realSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // The whole 15-minute history of a pool, oldest first, paged back from now with
 // GeckoTerminal's before_timestamp until a page comes back short or `fromSec` is
-// covered.
-export async function loadSeries({ mint = THREE_MINT, fromSec = 0, fetchBars = null, resolvePool = null } = {}) {
+// covered. `rateLimitRetries` is how many times one page answered 429 is asked
+// again after a doubling backoff. The batch script sets it; request-time callers
+// keep the default 0 so a throttle fails fast instead of holding a request open.
+export async function loadSeries({
+	mint = THREE_MINT,
+	fromSec = 0,
+	fetchBars = null,
+	resolvePool = null,
+	rateLimitRetries = 0,
+	sleep = realSleep,
+} = {}) {
 	// Loaded on use so the pure functions above (and their tests) carry none of
 	// the market layer's cache and network dependencies.
 	if (!fetchBars || !resolvePool) {
@@ -178,7 +193,17 @@ export async function loadSeries({ mint = THREE_MINT, fromSec = 0, fetchBars = n
 	const byTime = new Map();
 	let before = null;
 	for (let page = 0; page < MAX_PAGES; page++) {
-		const out = await fetchBars({ pool, network: 'solana', timeframe: 'minute', aggregate: 15, limit: PAGE_BARS, beforeTimestamp: before });
+		const query = { pool, network: 'solana', timeframe: 'minute', aggregate: 15, limit: PAGE_BARS, beforeTimestamp: before };
+		let out;
+		for (let attempt = 0; ; attempt++) {
+			try {
+				out = await fetchBars(query);
+				break;
+			} catch (err) {
+				if (err?.status !== 429 || attempt >= rateLimitRetries) throw err;
+				await sleep(THROTTLE_BACKOFF_MS * 2 ** attempt);
+			}
+		}
 		const bars = out.candles || [];
 		if (!bars.length) break;
 		for (const bar of bars) byTime.set(bar.t, bar);
