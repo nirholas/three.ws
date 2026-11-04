@@ -639,3 +639,7 @@ No xAI key exists in `process.env`, `.env`, `.env.local` or the `three-ws-api` s
 - Held catalog resolved: `tests/mcp-schema.test.js` passes at HEAD; studio, install-token, rate-limit and schema suites 80/80.
 - Scripted run failed first because a render now takes 12 to 20 s, so five sequential calls outlived the 1-minute burst window and the first hit aged out (the limiter was correct). `efdcaf7ae` fires token A's five calls together. Result against local `server/index.mjs`: four admitted, fifth refused `generation_burst` keyed on `install` with reset time and OAuth remedy, token B from the same IP admitted. PASS.
 - Open: `E2E_PORT=3107 npm test` exits 1, 20 of 2778 files, none in this order's scope (concurrent commits `fec740bd2`, `69fe8bdef`, `409dc1318`, `b97611a69` landed tests ahead of their modules; older reds belong to order 401). Owner: those orders; then rerun `npm test` and delete the order file.
+
+## 2026-11-04: order 039 (xAI remote MCP e2e) re-verified, live line open
+- Step 0: no GROK_API_KEY/XAI_API_KEY in env, `.env`, `.env.local` or the `three-ws-api` service. Dry run matches docs.x.ai remote-mcp fields; production `/api/mcp-grok` tools/list serves. Unit suite not runnable here (vitest absent from node_modules).
+- Open: live `npm run e2e:xai-mcp` against production. Owner: order 927 (xAI key). Then delete the order file.
