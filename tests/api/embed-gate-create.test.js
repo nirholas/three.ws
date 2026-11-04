@@ -39,6 +39,7 @@ vi.mock('../../api/_lib/auth.js', () => ({
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		embedGateCreateIp: vi.fn(async () => ({ success: true, limit: 20, remaining: 19, reset: 0 })),
+		embedGateReadUser: vi.fn(async () => ({ success: true, limit: 120, remaining: 119, reset: 0 })),
 	},
 	clientIp: () => '203.0.113.11',
 }));
@@ -208,5 +209,119 @@ describe('creating a gate', () => {
 		const { res, json } = await post({ assetId: ASSET });
 		expect(res.statusCode).toBe(400);
 		expect(json.error).toBe('validation_error');
+	});
+});
+
+// Widget Studio's "Holders only" panel reads the gate back on every avatar pick
+// (GET) so it shows what the server enforces rather than local state, and can
+// remove a gate (DELETE). Both are owner-only for the same reason create is: a
+// stranger must not learn or lift the gate on someone else's avatar.
+async function call(methodName, query) {
+	const req = {
+		method: methodName,
+		url: `/api/embed/gate-create${query}`,
+		headers: {},
+		on() {},
+		destroy() {},
+	};
+	const res = mkRes();
+	await handler(req, res);
+	return { res, json: res.body ? JSON.parse(res.body) : null };
+}
+
+const gateRow = {
+	id: 'AbCdEf123456',
+	asset_id: ASSET,
+	owner_user_id: OWNER,
+	chain: 'solana',
+	mint: DEFAULT_GATE_MINT,
+	min_amount: '50000',
+	created_at: '2026-11-04T10:00:00.000Z',
+};
+
+function stubGateDb({ gate = [gateRow], revoked = [{ id: gateRow.id }], owner = [{ owner_id: OWNER }] } = {}) {
+	sqlMock.mockImplementation((strings) => {
+		const text = Array.isArray(strings) ? strings.join(' ') : String(strings);
+		if (/update embed_gates[\s\S]*returning/i.test(text)) return Promise.resolve(revoked);
+		if (/from embed_gates/i.test(text)) return Promise.resolve(gate);
+		if (/select owner_id from avatars/i.test(text)) return Promise.resolve(owner);
+		if (/from\s+avatars/i.test(text)) return Promise.resolve([avatarRow]);
+		return Promise.resolve([]);
+	});
+}
+
+describe('reading the current gate', () => {
+	it('401s a signed-out caller before touching the database', async () => {
+		getSessionUserMock.mockResolvedValue(null);
+		stubGateDb();
+		const { res } = await call('GET', `?assetId=${encodeURIComponent(ASSET)}`);
+		expect(res.statusCode).toBe(401);
+		expect(sqlMock).not.toHaveBeenCalled();
+	});
+
+	it('403s a caller who does not own the asset, without revealing the gate', async () => {
+		getSessionUserMock.mockResolvedValue({ id: 'user_someone_else' });
+		stubGateDb();
+		const { res, json } = await call('GET', `?assetId=${encodeURIComponent(ASSET)}`);
+		expect(res.statusCode).toBe(403);
+		expect(json.error).toBe('not_owner');
+		expect(JSON.stringify(json)).not.toContain(gateRow.id);
+	});
+
+	it('returns the active gate with the same snippet and preview create hands back', async () => {
+		getSessionUserMock.mockResolvedValue({ id: OWNER });
+		stubGateDb();
+		const { res, json } = await call('GET', `?assetId=${encodeURIComponent(ASSET)}`);
+		expect(res.statusCode).toBe(200);
+		expect(json.gateId).toBe(gateRow.id);
+		expect(json.gate).toEqual({ mint: DEFAULT_GATE_MINT, minAmount: 50000, chain: 'solana' });
+		expect(json.createdAt).toBe(gateRow.created_at);
+		expect(json.embed.snippet).toContain(`agent="${ASSET}"`);
+		expect(json.embed.previewUrl).toContain(encodeURIComponent(ASSET));
+		expect(JSON.stringify(json)).not.toContain('avatars/nova.glb');
+		expect(res.getHeader('cache-control')).toBe('no-store');
+	});
+
+	it('answers gate: null for an ungated asset so the panel shows the create form', async () => {
+		getSessionUserMock.mockResolvedValue({ id: OWNER });
+		stubGateDb({ gate: [] });
+		const { res, json } = await call('GET', `?assetId=${encodeURIComponent(ASSET)}`);
+		expect(res.statusCode).toBe(200);
+		expect(json).toMatchObject({ assetId: ASSET, gate: null, gateId: null, embed: null });
+	});
+
+	it('400s a malformed assetId', async () => {
+		getSessionUserMock.mockResolvedValue({ id: OWNER });
+		stubGateDb();
+		const { res, json } = await call('GET', '?assetId=nope');
+		expect(res.statusCode).toBe(400);
+		expect(json.error).toBe('validation_error');
+	});
+});
+
+describe('removing a gate', () => {
+	it('lets the owner revoke the gate', async () => {
+		getSessionUserMock.mockResolvedValue({ id: OWNER });
+		stubGateDb();
+		const { res, json } = await call('DELETE', `?assetId=${encodeURIComponent(ASSET)}`);
+		expect(res.statusCode).toBe(200);
+		expect(json).toEqual({ assetId: ASSET, revoked: true });
+		const revokeCall = sqlMock.mock.calls.find(([s]) => /update embed_gates/i.test(s.join(' ')));
+		expect(revokeCall).toBeTruthy();
+	});
+
+	it('reports revoked: false when there was no gate to remove', async () => {
+		getSessionUserMock.mockResolvedValue({ id: OWNER });
+		stubGateDb({ revoked: [] });
+		const { json } = await call('DELETE', `?assetId=${encodeURIComponent(ASSET)}`);
+		expect(json.revoked).toBe(false);
+	});
+
+	it('refuses a non-owner and leaves the gate in place', async () => {
+		getSessionUserMock.mockResolvedValue({ id: 'user_someone_else' });
+		stubGateDb();
+		const { res } = await call('DELETE', `?assetId=${encodeURIComponent(ASSET)}`);
+		expect(res.statusCode).toBe(403);
+		expect(sqlMock.mock.calls.some(([s]) => /update embed_gates/i.test(s.join(' ')))).toBe(false);
 	});
 });

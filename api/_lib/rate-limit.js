@@ -1413,6 +1413,10 @@ export const limits = {
 	// bucket is the one that actually matters — a distributed-IP attacker still
 	// can't brute-force past a single wallet's budget without also owning it).
 	embedGateCreateIp: (ip) => getLimiter('embed:gate:create:ip', { limit: 20, window: '10 m' }).limit(ip),
+	// Widget Studio reads the current gate every time the creator picks an
+	// avatar, so the read gets its own, roomier per-user bucket and never eats
+	// into the create budget above.
+	embedGateReadUser: (userId) => getLimiter('embed:gate:read:user', { limit: 120, window: '5 m' }).limit(userId),
 	embedGateVerifyIp: (ip) => getLimiter('embed:gate:verify:ip', { limit: 30, window: '5 m' }).limit(ip),
 	embedGateVerifyWallet: (addr) =>
 		getLimiter('embed:gate:verify:wallet', { limit: 10, window: '5 m' }).limit(addr),

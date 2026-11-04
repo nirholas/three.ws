@@ -108,6 +108,21 @@ export async function createEmbedGate({ assetId, ownerUserId, mint, minAmount, c
 }
 
 /**
+ * Remove the gate from an embed asset, turning it back into an open embed.
+ * Every access token minted against the revoked gate stops verifying at once,
+ * for the same reason a replaced gate's do. Returns how many rows were revoked
+ * (0 when the asset had no active gate).
+ */
+export async function revokeEmbedGate(assetId) {
+	const rows = await sql`
+		update embed_gates set revoked_at = now(), updated_at = now()
+		where asset_id = ${assetId} and revoked_at is null
+		returning id
+	`;
+	return rows.length;
+}
+
+/**
  * Does `userId` own the underlying asset well enough to gate it?
  *   - avatar:<uuid>       → avatars.owner_id === userId
  *   - <chainId>:<agentId> → the on-chain agent's `owner` (0x address) matches
