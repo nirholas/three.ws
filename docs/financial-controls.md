@@ -154,6 +154,28 @@ auto-set by the anomaly engine), per-agent/strategy `kill_switch`, worker global
 kills (`SNIPER_/ORACLE_/MM_/ORDERS_GLOBAL_KILL` — **env flags, need a redeploy**),
 `CIRCULATION_ENABLED`, dead-man switch.
 
+**Payout kill switch (runtime, no redeploy)**: the `payouts_paused` row in
+`app_flags` ([flags.js](../api/_lib/flags.js), env fallback `PAYOUTS_PAUSED`)
+stops the `process-withdrawals` / `monetization-payouts`, `run-coin-payouts`,
+`club-payouts` and `growth-payouts` crons from claiming or sending anything; each
+answers `{ paused: true, reason: "payouts_paused" }`. It propagates fleet-wide
+within the 30 s flag cache. Flip it with `POST /api/admin-payouts-pause`
+`{ "paused": true, "reason": "..." }` (admin session plus CSRF; a reason is
+required to pause); `GET` reads the state. Every flip writes an `audit_log` row
+(`payouts.pause` / `payouts.resume`). Pausing never edits a ledger row: pending
+withdrawals stay `pending`, and a payout already broadcast is reconciled from the
+chain when the cron runs again, so unpausing resumes exactly where it stopped.
+Not covered: `creator-payout-distribute` (already off until `CREATOR_PAYOUTS_LIVE`
+is set), the worker global kills above, and agent-initiated transfers (freeze the
+wallet instead).
+
+**Payout anomaly alert**: the hourly [`payout-anomaly`](../api/cron/payout-anomaly.js)
+cron ([logic](../api/_lib/payout-anomaly.js)) pages the operator alert channel when
+the last 24 h of withdrawals exceed 3x (`PAYOUT_ANOMALY_MULTIPLIER`) the median
+daily volume of the previous 14 days per currency, or when more than 20 percent
+of at least 5 payouts failed. With a zero-volume history it falls back to a count
+floor of 25 payouts. It only alerts; the alert text names the pause endpoint.
+
 **Breach detection** — `wallet-anomaly.js` scores outbound transfers (size,
 velocity, first-time destination) and **auto-freezes** the wallet, but notifies
 only the **wallet owner, never platform ops** (`sendOpsAlert` is not called), and
@@ -270,8 +292,8 @@ Ranked by accounting/regulatory risk. Each is a tracked remediation item.
 13. **Reconciliation blind spots** (EVM/RPC-miss default to reconciled); **no USDC
     balance watchdog on the non-x402 treasuries** (the ring/seed wallets are
     covered, see §3); **no external alert channel beyond Telegram, and the push
-    lane self-throttles**; **global kill switches need a redeploy** (add a
-    runtime halt flag).
+    lane self-throttles**; **worker global kill switches need a redeploy**
+    (the payout crons now have a runtime halt flag, see Kill switches).
 14. **Financial data shares the storage-capped Neon branch.** Isolate money/audit
     tables onto their own branch/DB so an intel-firehose cap can't drop financial
     writes.
@@ -349,6 +371,8 @@ Ranked by accounting/regulatory risk. Each is a tracked remediation item.
 - **Daily:** review `SELECT * FROM payment_reconciliation WHERE reconciled = false`
   and clear or escalate every row. An alert here means recorded revenue disagrees
   with the chain — treat as a financial incident until explained.
+- **On a payout anomaly alert:** `POST /api/admin-payouts-pause` with a reason,
+  investigate, then resume with `{ "paused": false }`.
 - **On a breach/anomaly alert:** freeze the affected wallet(s)
   (`spend_limits.frozen`), and for a signer-key concern rotate the key
   ([Solana signers runbook](../api/_lib/solana-signers.js)) and

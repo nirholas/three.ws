@@ -3,54 +3,86 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Funding manifest, translated READMEs and crawlable languages",
+			"summary": "three.ws now publishes a FLOSS/fund funding.json, Zenodo metadata, READMEs in Spanish, Brazilian Portuguese, Hindi and Russian, and serves a localized page's language, alternates and clean canonical to crawlers when a visitor or search engine asks for ?lang=xx. Images from the Pollinations lane now carry a visible Powered by Pollinations credit, and the API labels that lane correctly.",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Agent sandbox settings",
 			"summary": "A new Settings page lists every program your agents ran in their sandbox with its output and exit code, lets you download the files it wrote, stop a workspace, and choose which hosts sandboxed code may call.",
-			"tags": ["feature"]
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Operators can pause every payout instantly, and get paged when payouts spike",
+			"summary": "A single switch now stops withdrawals, coin payouts, club payouts and growth payouts the moment it is flipped, with no redeploy. It is set through an admin-only endpoint that requires a reason and writes an audit record, and nothing in the ledger is rewritten, so resuming picks up exactly where it stopped. A new hourly check also alerts operators when the last 24 hours of payouts run above three times the recent daily median, or when more than a fifth of them fail.",
+			"tags": [
+				"security",
+				"infra"
+			],
+			"link": "/docs/financial-controls"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Agent memory now knows when a fact was true",
 			"summary": "Memories carry a validity interval and a source. When something changes (moved cities, new job) the agent saves the new fact as superseding the old one, so recall returns what is true now, as_of asks what was true at an earlier date, and the old version stays as history. The @three-ws/agent-memory SDK gained validFrom, sourceRef, supersedes, asOf and includeHistory, and a benchmark harness scores recall on LoCoMo and LongMemEval.",
-			"tags": ["feature", "sdk"]
+			"tags": [
+				"feature",
+				"sdk"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Eval removed from the site-wide CSP",
 			"summary": "Pages no longer allow string-to-code evaluation. The Draco loader and texture resize no longer need it, and only the Scene Studio shell keeps it.",
-			"tags": ["security", "improvement"]
-		},
-		{
-			"date": "2026-11-04",
-			"title": "Agent memory now knows when a fact was true",
-			"summary": "Memories carry a validity interval and a source. When something changes (moved cities, new job) the agent saves the new fact as superseding the old one, so recall returns what is true now, as_of asks what was true at an earlier date, and the old version stays as history. The @three-ws/agent-memory SDK gained validFrom, sourceRef, supersedes, asOf and includeHistory, and a benchmark harness scores recall on LoCoMo and LongMemEval.",
-			"tags": ["feature", "sdk"]
+			"tags": [
+				"security",
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-11-05",
 			"title": "Autopilot can propose trades, and a trading MCP fills them under the wallet guards",
 			"summary": "Autopilot gained a trade action. The agent can queue a buy with SOL or a sell of a non-$THREE token, grounded in the memories that motivated it; nothing moves until you confirm, and every fill runs the wallet guards (per-trade cap, daily budget, price-impact breaker, rug firewall) with buys counted against the daily SOL limit. A sell of $THREE is refused. The new @three-ws/trading-mcp quotes, lists positions and fills the same way from any MCP client.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/autopilot"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Demo pages stop defaulting to a real person's likeness",
 			"summary": "The animation gallery previews now play on the house default avatar instead of a real person's likeness. The avatar-engines filter bar is fully opaque so headings no longer show through it, Render Lab shows one chip per model and no longer stacks two tooltips on its buttons, and Restyle Studio keeps the 3D view beside the presets and Reset while you scroll.",
-			"tags": ["improvement", "fix"],
+			"tags": [
+				"improvement",
+				"fix"
+			],
 			"link": "/animations"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Tool gateway: web search, fetch, documents, speech and images on one balance",
 			"summary": "Agents and developers can now call six metered tools without collecting vendor keys: web_search, web_fetch, parse_document (PDF, DOCX, XLSX, CSV), tts, transcribe and image_generate. They are on REST at /api/v1/tools/{tool} and on the main MCP server, charged to the same account credits as model calls, settled to what the tool actually produced and refunded in full if it fails. Prices are listed live on the pricing page.",
-			"tags": ["feature", "sdk"],
+			"tags": [
+				"feature",
+				"sdk"
+			],
 			"link": "/pricing"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Forge-Off themed events: a board for every day and a landing page",
 			"summary": "The Forge-Off can now run a themed event with one board per UTC day and an overall winner, all on the same no-login, one-vote-per-browser voting. The new /forge-off page shows the live day's theme with a countdown to its close, a button to make an entry on the right surface, that day's board, the overall standings and past days. Between events it shows the standing weekly board. Events are entries in a config file, so a partner or community contest needs no code. The first event is the proposed five-day Forge-Off Open.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/forge-off"
 		},
 		{
@@ -75,19 +107,26 @@
 			"date": "2026-11-04",
 			"title": "$THREE buyback lanes can no longer sweep the holder-rewards pool",
 			"summary": "If the rewards wallet is ever the same wallet as the buyback or micro-buy signer, those lanes now refuse to run instead of sweeping the whole rewards pool into the treasury, and the ops health check flags it. A new read-only preflight, npm run token:preflight, validates the treasury and rewards addresses against mainnet and prints the one command that applies them.",
-			"tags": ["security", "infra"]
+			"tags": [
+				"security",
+				"infra"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Forge and Marketplace buttons now share the platform button system",
 			"summary": "The Forge page and the Marketplace now use the same button component as the rest of the site, so hover, pressed, keyboard-focus, disabled and loading states look and behave the same on both. Forge no longer carries its own copy of the button styles, and four unused button and badge style families were deleted. A new audit, npm run audit:buttons, lists the remaining legacy button families and fails if a finished one comes back.",
-			"tags": ["improvement"]
+			"tags": [
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Agent memory recall now understands meaning, not just exact words",
 			"summary": "An agent whose memory says it prefers dark mode now recalls that when you ask what theme you like. The memory file layer ranks files by embedding similarity through a new signed-in endpoint, POST /api/memory/rank, instead of requiring the whole query to appear verbatim. Results carry a text field and honor a minimum score, so the studio Brain memory node gets usable recalls. If the endpoint is unreachable or embeddings are not configured, recall falls back to the old substring match, so it never fails mid-conversation.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/memory"
 		},
 		{
@@ -104,48 +143,62 @@
 			"date": "2026-11-04",
 			"title": "Token due diligence finishes its holder reads when the public RPC is throttling",
 			"summary": "With the keyed RPC providers at quota, the public cluster rate-limits per address over a ten second window, and the report's history reads used to give up inside one second, so most holder wallets went unread and the insider, sniper, bundler and fresh-wallet fields were withheld. History reads now back off across that window and space themselves out for a minute after a throttle, shared by every report on the server. A cold $THREE report now reads all 16 wallet holders with no failed reads and fills every field. Healthy lanes are never slowed.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/docs/token-due-diligence"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Jumping to a section of the doc you are reading no longer loads a missing page",
 			"summary": "Editing the address bar from one section of a docs page to another, or following a hand-written section link, used to read the section name as a doc, fetch a page that does not exist, and replace the doc you were reading with a not-found panel, live request blocks included. The docs reader now scrolls to that section of the open doc and rewrites the address so a reload or a shared link lands in the same place. A section that shares its name with a listed doc still opens that doc.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/docs/mcp-studio"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "The predictions scanner reads the markets nearest par and names each one in full",
 			"summary": "The no-arbitrage scanner on Agent Predictions now spends its order-book reads on the open markets whose YES plus NO price sits closest to par, skips markets whose close time has passed, and honours its market cap even when one event holds hundreds of brackets. Each row now shows the event and the outcome together, and the note under the scanner says how many books were read and how many had both sides quoted.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/agent-predictions"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Catalog and reconstructed avatars load again in embeds and the walk companion",
 			"summary": "Avatars whose model lives outside the main bucket, such as the built-in catalog characters and avatars rebuilt from a photo, answered 404 on their embed-friendly GLB link, so embeds and the walk companion showed the robot placeholder instead. That link now serves those models, with the same open cross-origin access as every other avatar.",
-			"tags": ["fix"]
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Hover tips no longer swallow the click on the button underneath",
 			"summary": "A hover tip that opened over a neighbouring control used to catch the click meant for it, and stayed open while the pointer sat on it. On /render-lab the Contact sheet tip covered the Poses button, so clicking Poses did nothing. Plain hover tips now let clicks pass straight through and close the moment you press their control. Glossary term tips keep their Full glossary link reachable while they are showing.",
-			"tags": ["fix"],
+			"tags": [
+				"fix"
+			],
 			"link": "/render-lab"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Autonomous agent runs can use the integrations you connected",
 			"summary": "A run you start from the API or the Runs tab can now call the third-party MCP servers you connected to the agent on /mcp-integrations, the same ext_ tools chat already had. Every call shows on the Runs tab with its arguments, the server's answer and the step's cost. Tools that move money or cannot be undone stay out of autonomous runs, since nobody is there to approve them; the agent says in its report that you need to take that step. A run's toolsAllowed list can now name ext_ tools too.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/mcp-integrations"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "The $THREE Posts chart now runs to today and keeps every post it has ever measured",
 			"summary": "The Posts view on the $THREE coin page now plots @trythreews posts through November, with all 197 posts measured at +1h, +4h and +24h against the any-time baseline. The price source only serves the last 180 days, so every 15-minute bar read is now archived and merged on each refresh, and the oldest posts keep the returns measured for them earlier instead of going blank.",
-			"tags": ["improvement"],
+			"tags": [
+				"improvement"
+			],
 			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
 		},
 		{

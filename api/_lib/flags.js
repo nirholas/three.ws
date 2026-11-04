@@ -32,6 +32,11 @@ export const KNOWN_FLAGS = {
 		description:
 			'world.three.ws (Hyperfy) is formally retired (service deleted 2026-10-23): healthz reports it as "retired" and the world-health cron and forge probe make no network call and raise no alert. Turn off after redeploying the world.',
 	},
+	payouts_paused: {
+		env: 'PAYOUTS_PAUSED',
+		description:
+			'Operator kill switch: while on, the withdrawals, coin-payout and club-payout crons claim and send nothing and answer paused:true. Flip it through POST /api/admin-payouts-pause so the change is audited.',
+	},
 	avaturn_seed: {
 		env: 'AVATURN_SEED_ENABLED',
 		description:

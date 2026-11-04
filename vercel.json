@@ -7558,6 +7558,10 @@
 			"schedule": "*/10 * * * *"
 		},
 		{
+			"path": "/api/cron/payout-anomaly",
+			"schedule": "37 * * * *"
+		},
+		{
 			"path": "/api/cron/solana-attestations-crawl",
 			"schedule": "*/10 * * * *"
 		},

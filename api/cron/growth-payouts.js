@@ -10,11 +10,14 @@
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { payoutsPaused } from '../_lib/payout-kill-switch.js';
 import { runPayoutPrograms } from '../_lib/growth-programs/index.js';
 
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
+
+	if (await payoutsPaused()) return json(res, 200, { ok: true, paused: true, reason: 'payouts_paused' });
 
 	const result = await runPayoutPrograms();
 	return json(res, 200, { ok: true, ...result });

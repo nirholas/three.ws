@@ -74,6 +74,7 @@ import { publishUserEvent } from '../_lib/feed.js';
 import { confirmSkillPurchase } from '../_lib/purchase-confirm.js';
 import { requireCron } from '../_lib/cron-auth.js';
 import { RESERVED_WITHDRAWAL_STATUSES } from '../_lib/withdrawal-status.js';
+import { payoutsPaused } from '../_lib/payout-kill-switch.js';
 import { acquireLock } from '../_lib/cache.js';
 import { resolveURI } from '../../src/ipfs.js';
 import {
@@ -4338,6 +4339,8 @@ async function handleProcessWithdrawals(req, res) {
 
 	if (!requireCron(req, res)) return;
 
+	if (await payoutsPaused()) return json(res, 200, { paused: true, reason: 'payouts_paused', processed: 0 });
+
 	const treasuryKeypair = process.env.TREASURY_KEYPAIR || process.env.PLATFORM_TREASURY_KEYPAIR;
 	const evmTreasuryKey = process.env.EVM_TREASURY_PRIVATE_KEY;
 	if (!treasuryKeypair && !evmTreasuryKey) {
@@ -5163,6 +5166,8 @@ async function handleRunCoinPayouts(req, res) {
 
 	if (!requireCron(req, res)) return;
 
+	if (await payoutsPaused()) return json(res, 200, { paused: true, reason: 'payouts_paused', processed: 0 });
+
 	// Demo gate — see handleRunCoinCycle. Until COIN_DEMO_ENABLED=true is set,
 	// the payout drainer cannot fire even if rows are pending.
 	if (process.env.COIN_DEMO_ENABLED !== 'true') {
@@ -5198,6 +5203,8 @@ async function handleClubPayouts(req, res) {
 	if (!method(req, res, ['GET', 'POST'])) return;
 
 	if (!requireCron(req, res)) return;
+
+	if (await payoutsPaused()) return json(res, 200, { paused: true, reason: 'payouts_paused', processed: 0 });
 
 	const { runClubPayoutSweep, expireStaleClaims } = await import('../_lib/club/sweep.js');
 
