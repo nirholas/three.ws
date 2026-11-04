@@ -196,12 +196,23 @@ async function handleVerify(req, res) {
 	// 7. Find or create user. Solana address is stored as-is (base58, no lowercasing needed).
 	const addr = fields.address;
 
+	// deleted_at rides along: a soft-deleted account keeps its user_wallets
+	// link for the 30-day recovery window, and must not get a session through
+	// it. After api/_lib/account-purge.js removes the account, the link is gone
+	// and this wallet falls through to a brand-new account below.
 	let [wallet] = await sql`
-		select user_id from user_wallets where address = ${addr} limit 1
+		select w.user_id, u.deleted_at
+		from user_wallets w
+		left join users u on u.id = w.user_id
+		where w.address = ${addr}
+		limit 1
 	`;
 	let userId;
 
 	if (wallet) {
+		if (wallet.deleted_at) {
+			return error(res, 403, 'account_deleted', 'this wallet is linked to a deleted account');
+		}
 		userId = wallet.user_id;
 		await sql`
 			update user_wallets

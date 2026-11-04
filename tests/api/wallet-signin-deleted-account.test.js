@@ -13,7 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { randomBytes, createHmac } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { PGlite } from '@electric-sql/pglite';
 import { ed25519 } from '@noble/curves/ed25519.js';
@@ -83,6 +83,7 @@ vi.mock('../../api/_lib/r2.js', () => ({
 const { default: siwsHandler } = await import('../../api/auth/siws/[action].js');
 const { default: siweHandler } = await import('../../api/auth/siwe/[action].js');
 const { purgeDeletedAccounts } = await import('../../api/_lib/account-purge.js');
+const { hmacSha256 } = await import('../../api/_lib/crypto.js');
 
 const MIGRATION = readFileSync(
 	new URL('../../api/_lib/migrations/20261104180000_account_purge.sql', import.meta.url),
@@ -153,15 +154,16 @@ function makeRes() {
 	};
 }
 
-function csrfHeaders(kind) {
+// The same double-submit pair the /nonce endpoint hands a browser.
+async function csrfHeaders(kind) {
 	const raw = randomBytes(24).toString('hex');
-	const token = createHmac('sha256', process.env.JWT_SECRET).update(`csrf-${kind}:${raw}`).digest('hex');
+	const token = await hmacSha256(process.env.JWT_SECRET, `csrf-${kind}:${raw}`);
 	return { cookie: `__Host-csrf-${kind}=${raw}`, 'x-csrf-token': token };
 }
 
 async function call(handler, path, body, kind) {
 	const res = makeRes();
-	await handler(makeReq(path, body, csrfHeaders(kind)), res);
+	await handler(makeReq(path, body, await csrfHeaders(kind)), res);
 	return { status: res.statusCode, body: JSON.parse(res.body) };
 }
 

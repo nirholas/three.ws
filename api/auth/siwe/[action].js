@@ -221,12 +221,23 @@ async function handleVerify(req, res) {
 	const addrLower = claimed.toLowerCase();
 	const chainId = fields.chainId || null;
 
+	// deleted_at rides along: a soft-deleted account keeps its user_wallets
+	// link for the 30-day recovery window, and must not get a session through
+	// it. After api/_lib/account-purge.js removes the account, the link is gone
+	// and this wallet falls through to a brand-new account below.
 	let [wallet] = await sql`
-		select user_id from user_wallets where address = ${addrLower} limit 1
+		select w.user_id, u.deleted_at
+		from user_wallets w
+		left join users u on u.id = w.user_id
+		where w.address = ${addrLower}
+		limit 1
 	`;
 	let userId;
 
 	if (wallet) {
+		if (wallet.deleted_at) {
+			return error(res, 403, 'account_deleted', 'this wallet is linked to a deleted account');
+		}
 		userId = wallet.user_id;
 		await sql`
 			update user_wallets
