@@ -420,6 +420,58 @@ cut and attribute quota spend before a lane is ever picked:
   verifies. Unset, the guard is off; invalid JSON logs a warning and disables it. Saved
   reads (`cache`, `coalesced`) never count against a lane. Pinned by the lane budget guard
   suite in [tests/solana-rpc-priority-and-breaker.test.js](../../tests/solana-rpc-priority-and-breaker.test.js).
+- **Health detail.** `/api/healthz` and `/api/ops/health` carry the same ledger in the
+  `rpc_lanes` subsystem: the detail line ends with `N calls/24h, top <caller> (<n>)`, and
+  the metrics hold `calls_24h`, `saved_24h`, `top_caller`, `top_caller_calls_24h`, plus
+  `calls_24h` on every lane row. The ledger read is capped at 1.5s; when the cache is
+  unreachable the metrics say `spend: "unavailable"` and the lane verdict is unaffected.
+
+### Measured offenders and the source cuts (2026-11-04)
+
+The ledger did not exist yet in production, so the baseline was measured from the Cloud
+Run request log for one full hour (2026-11-04 10:00 to 11:00 UTC, `gcloud logging read`
+on `three-ws-api`), with each route mapped to the RPC reads its handler makes:
+
+| Route                      | Requests/h | RPC reads per uncached request                                               | Notes                                                  |
+| -------------------------- | ---------: | ---------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `/api/crypto/holders`      |      2,089 | 3 (mint `getAccountInfo`, `getTokenLargestAccounts`, `getMultipleAccounts`)  | already had a 60s per-mint result tier                 |
+| `/api/crypto/security`     |      1,811 | 3 (mint `getAccountInfo`, `getTokenLargestAccounts`, metadata `getAccountInfo`) | no server cache at all                              |
+| `/api/crypto/bonding`      |      1,759 | 0 normally (launchpad HTTP API), RPC only when both HTTP sources miss         | not an RPC offender                                    |
+| `/api/crypto/whales`       |      1,654 | 0 (launch feed)                                                              | not an RPC offender                                    |
+| `/api/pump/smart-money`    |      1,014 | 0 (database)                                                                 | not an RPC offender                                    |
+
+One client IP sent 87% of that traffic, walking 755 mints and hitting all four
+`/api/crypto/*` routes for each one; 67% of same-mint requests arrived within 5 seconds of
+the previous request for that mint, on a different route and usually a different
+instance. That is why the process-local fresh-read cache could not catch it, and why the
+holders and security routes paid for the same mint `getAccountInfo` and
+`getTokenLargestAccounts` twice.
+
+The cuts, at the source:
+
+1. **Shared mint reads.** `/holders` and `/security` read the mint account and the largest
+   accounts through `sharedRpcRead()` with identical params, so the second route and every
+   other instance reuse the first answer for 30s (owners 120s, metadata 300s).
+2. **Security verdict cache.** `/api/crypto/security` serves a per-mint verdict for 60s
+   (`x-security-cache: hit`), and the last good verdict for up to 6h, marked
+   `x-security-stale: 1`, when every source is down.
+3. **Holders.** Unchanged result tier; its keyless fallback now rides the shared reads.
+
+Replaying the same hour against the new tiers (every request, in timestamp order, with
+the TTLs above) gives:
+
+| Window (UTC)            | Holders + security RPC reads before | After | Reduction |
+| ----------------------- | ----------------------------------: | ----: | --------: |
+| 2026-11-04 10:00-11:00  |                              10,479 | 5,968 |     43.0% |
+
+The holders baseline assumes the keyless path. When the Helius DAS walk answers, holders
+already skipped the largest-accounts and owners reads, so the real saving on holders is
+the shared mint read only. **Verify after deploy:** run
+`node scripts/rpc-spend-report.mjs --base https://three.ws --hours 24` once a full day has
+been recorded and compare `/api/crypto/holders` + `/api/crypto/security` calls against
+the 10,479/h baseline (about 251k/day), then record the measured figure here. Check that
+`blockhash_expired` in the settle outcomes stays at or below its baseline of 3, since
+every send and settle path passes `fresh: true` and never touches these caches.
 
 ## Knock-on effects to expect
 
