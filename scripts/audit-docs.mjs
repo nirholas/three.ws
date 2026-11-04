@@ -381,6 +381,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['nvidia-nemotron-ask-the-experts-questions', 'internal: paste-ready live-chat copy drafted for an external stream'],
 	['native-launchpad', 'owner-gated: names a crypto project other than $THREE'],
 	['openai-community-3d-studio-post', 'internal: forum post drafted for an external developer community'],
+	['chatgpt-app-announcement', 'internal: social and community copy announcing /chatgpt, posted by the owner'],
 	['openai-community-physical-world-post', 'internal: forum post drafted for an external developer community'],
 	['open-source-friday-plan', 'internal: program application plan and stream runsheet, not a reader-facing product doc'],
 	['oss-adoption-2026-09', 'internal: engineering adoption plan naming unshipped lanes, sibling of popular-3d-github-repos'],

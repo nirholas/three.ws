@@ -6830,6 +6830,10 @@
 			"dest": "/grok.html"
 		},
 		{
+			"src": "/chatgpt/?",
+			"dest": "/chatgpt.html"
+		},
+		{
 			"src": "/render-lab",
 			"dest": "/render-lab.html"
 		},

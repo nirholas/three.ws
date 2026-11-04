@@ -740,6 +740,7 @@ const appConfig = {
 				'mcp-tool': resolve(__dirname, 'pages/mcp-tool.html'),
 				connect: resolve(__dirname, 'pages/connect.html'),
 				grok: resolve(__dirname, 'pages/grok.html'),
+				chatgpt: resolve(__dirname, 'pages/chatgpt.html'),
 				'x-claim': resolve(__dirname, 'pages/x-claim.html'),
 				'event-market-announcements': resolve(__dirname, 'pages/event-market-announcements.html'),
 				'event-markets-staking-admin': resolve(__dirname, 'pages/event-markets-staking-admin.html'),
