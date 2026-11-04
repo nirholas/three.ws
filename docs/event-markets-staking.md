@@ -91,7 +91,7 @@ I searched for an audited, reusable parimutuel or escrow program. The repo has [
 
 Nothing below has been run. Fund-moving commands print recipient, amount, token and chain, and do nothing without `--yes` (and `--confirm-mainnet` on mainnet).
 
-1. **Audit.** Have the program reviewed externally. Local suite: `npm run test:stake-program`.
+1. **Audit.** Have the program reviewed externally. Local suite: `npm run test:stake-program`. It needs Rust and the Solana CLI (`cargo-build-sbf`, `solana-test-validator`, see the contract README); if one is missing the script names it and exits 127 instead of failing silently.
 2. **Generate the keys** (authority and resolver, hardware-backed in production): `solana-keygen new -o ~/.config/three-ws/stake-authority.json` and the same for the resolver; set `EVENT_MARKETS_STAKE_AUTHORITY_KEYPAIR` and `EVENT_MARKETS_STAKE_RESOLVER_KEYPAIR` to the file paths.
 3. **Deploy the program.** `cd contracts/event-markets-stake && cargo build-sbf && solana program deploy target/deploy/event_markets_stake.so --program-id target/deploy/event_markets_stake-keypair.json --url mainnet-beta` (devnet first with `--url devnet`). Set `EVENT_MARKETS_STAKE_PROGRAM_ID`.
 4. **Apply the migration.** `npm run db:status` then `npm run db:migrate` (20261013000000).

@@ -1,6 +1,6 @@
 # Plan: ship Oracle and the autonomous trading agents as MCP servers
 
-**Status:** planned, not started. Written 2026-08-19; still unstarted at 2026-10-23 (no `packages/oracle-mcp`, no `packages/agent-trader-mcp`, no `api/mcp-oracle.js` in the tree; `packages/oracle-model` is the local scorer library, not an MCP server). Facts below re-verified 2026-10-23.
+**Status:** planned, not started. Written 2026-08-19; still unstarted at 2026-11-04 (no `packages/oracle-mcp`, no `packages/agent-trader-mcp`, no `api/mcp-oracle.js` in the tree; `packages/oracle-model` is the local scorer library, not an MCP server). Facts below re-verified 2026-11-04. One thing changed since the plan was written: on 2026-11-03 a unified MCP endpoint (`https://three.ws/mcp`, served by `api/mcp/all.js`) began mounting every hosted server's tools behind one sign-in, so the four Oracle tools are reachable there too. That does not close the gap below: it solves connecting, not being found by name in the registry.
 **Goal:** make [Oracle](https://three.ws/oracle) and the autonomous trading agents first-class,
 discoverable MCP servers, publish them to the official MCP registry
 (`registry.modelcontextprotocol.io`), document them, and announce them in one plain-language X post.
@@ -16,21 +16,21 @@ Oracle is the best thing we run and almost nobody can find it from an agent clie
 
 Its four MCP tools (`oracle_top_plays`, `oracle_coin`, `oracle_arm_watch`, `oracle_watch_status`)
 live inside the main `https://three.ws/api/mcp` server, buried among 140+ avatar, model, animation,
-sign-language, memory, and market tools (149 for the `mcp` server in `public/mcp-catalog.json` today). In the registry that server is listed as
+sign-language, memory, and market tools (152 for the `mcp` server in `public/mcp-catalog.json` today). In the registry that server is listed as
 "3D avatars, embeds, glTF tools, agent memory, and on-chain agent identity". An agent looking for
 a conviction signal on a new launch has no way to find it, and a human browsing the registry has
 no reason to click.
 
 The same is true of the autonomous side. `oracle_arm_watch` is the single most interesting write
 tool on the platform (it arms an agent to trade a live conviction stream inside a spend leash), and
-it is discoverable only by reading a 149-tool list on an avatar server.
+it is discoverable only by reading a 152-tool list on an avatar server.
 
 The fix is not new capability. It is **packaging**: two focused servers, named for what they do,
 listed under their own registry entries.
 
 ---
 
-## What already exists (verified 2026-08-19, re-checked 2026-10-23)
+## What already exists (verified 2026-08-19, re-checked 2026-11-04)
 
 ### Oracle
 
@@ -69,7 +69,7 @@ handles npm plus registry, idempotently, and skips anything already at the targe
 - `npm run smoke:mcp`: hits the hosted remotes for real. `npm run probe:mcp-clients`
   (`scripts/mcp-client-probe.mjs`) drives every hosted server the way a cloud connector does,
   OAuth discovery included.
-- `public/.well-known/mcp.json`: the hand-maintained hosted-server directory (8 entries today).
+- `public/.well-known/mcp.json`: the hand-maintained hosted-server directory (9 entries today, including the unified `/mcp` endpoint).
 - `public/mcp-catalog.json` + `/mcp-tools` page: the human-facing catalog, built by
   `scripts/build-mcp-catalog.mjs`.
 
@@ -93,12 +93,12 @@ Registry name `io.github.nirholas/threews-oracle`, URL `https://three.ws/api/mcp
 
 Route the handler in `vercel.json` and add the entry to `public/.well-known/mcp.json`. Since
 2026-10-08 every hosted MCP server is its own OAuth resource (RFC 8707): add `/api/mcp-oracle` to
-`OAUTH_MCP_PATHS` (six paths today: `/api/mcp`, `/api/mcp-3d`, `/api/mcp-agent`, `/api/mcp-bazaar`, `/api/ibm-mcp`, `/api/mcp-grok`) in `api/_lib/mcp-resources.js`, and pass `resourcePath` through the `api/_mcp/auth.js`
+`OAUTH_MCP_PATHS` (seven paths today: `/api/mcp`, `/mcp`, `/api/mcp-3d`, `/api/mcp-agent`, `/api/mcp-bazaar`, `/api/ibm-mcp`, `/api/mcp-grok`) in `api/_lib/mcp-resources.js`, and pass `resourcePath` through the `api/_mcp/auth.js`
 helpers as `api/mcp-3d.js` does. That alone makes its 401 point at
 `/.well-known/oauth-protected-resource/api/mcp-oracle` (already routed generically to `api/wk.js`, so
 no new `vercel.json` metadata route) with `resource` set to the server's own URL, which is what stock
 MCP SDK connectors check before they will sign in. `tests/mcp-resources.test.js` fails when that list
-and `public/.well-known/mcp.json` drift.
+and `public/.well-known/mcp.json` drift. To make the new server's tools appear on the unified `/mcp` endpoint as well, add it as a source in `api/_mcpall/sources.js` (each source adapts one server's catalog, handlers and pricing; nothing is copied).
 
 **1b. stdio package: `packages/oracle-mcp`**
 
@@ -200,10 +200,10 @@ npm run smoke:mcp            # hit the hosted remotes for real
 Also in this phase, because they are one-line fixes that are currently drifted:
 
 - Keep the registry in step with the tree: `autopilot-mcp` 0.2.2, `copy-mcp` 0.1.4, `signals-mcp` 0.1.3
-  and `portfolio-mcp` 0.1.2 are all published and match as of 2026-10-23. `npm run publish:mcp:dry`
+  and `portfolio-mcp` 0.1.2 are all published and match as of 2026-11-04. `npm run publish:mcp:dry`
   reports any drift, and `scripts/publish-mcp-servers.mjs --stale` flags a published npm package
   that lags its source.
-- Add both new remotes to `public/.well-known/mcp.json` (8 entries today, 9 after Phase 1).
+- Add both new remotes to `public/.well-known/mcp.json` (9 entries today, 10 after Phase 1).
 - Add both new server keys to the `SERVERS` array in `scripts/publish-mcp-servers.mjs`. A server
   that is not in that array is invisible to the publisher, which is the single easiest way for
   this whole plan to silently ship nothing.
@@ -221,7 +221,7 @@ Per the documentation rules in `CLAUDE.md`, all of these apply and none are opti
 - `packages/oracle-mcp/README.md` and `packages/agent-trader-mcp/README.md`: what it does, install,
   full tool table, one runnable example each. Package README coverage is currently 100% and this
   plan must not be what breaks it.
-- `docs/mcp.md`: update the server count (it currently says 73, which has already drifted; the registry lists 80) and add both servers to the hosted
+- `docs/mcp.md`: update the server count (it currently says 73, which has already drifted; the registry listed 80 on 2026-10-23) and add both servers to the hosted
   and install-and-run lists.
 - `docs/oracle.md`: expand the existing "the MCP path" section into a real quickstart with the new
   server name and a copy-pasteable client config.

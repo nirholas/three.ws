@@ -18,7 +18,7 @@ A provider whose credential is missing stays in the table with the env var that 
 
 ## How a trade is raced
 
-1. Build, sign and serialize the transaction once.
+1. Build, sign and serialize the transaction once. If the caller passed `opts.onSigned`, it is awaited with `{ signature, lastValidBlockHeight, attempt }` after each attempt is signed and before any lane broadcasts, so the signature is durably recorded first. If the hook throws, nothing is sent and the send fails with code `PRESEND_RECORD_FAILED`.
 2. Start one lane per enabled, non-skipped provider, ordered by recent success.
 3. RPC lanes `sendTransaction` to their endpoint and then poll that endpoint's own `getSignatureStatuses`, so a slow provider genuinely loses.
 4. The first lane to confirm wins. Lanes still in flight are aborted and counted as outpaced. A hard on-chain revert from any lane ends the race for everyone.

@@ -1,11 +1,11 @@
-# three-vanity/v1 — Provably-Fair Vanity Grinding Protocol
+# three-vanity/v1: Provably-Fair Vanity Grinding Protocol
 
 A vanity-address service normally asks you to **trust the operator**: trust that
 your key was generated with real randomness, that no copy was kept, that they
 didn't grind thousands of candidates and hand you the one whose key they secretly
 logged. There is no proof; you just hope.
 
-`three-vanity/v1` replaces that hope with a **commit–reveal + sealed-delivery +
+`three-vanity/v1` replaces that hope with a **commit-reveal + sealed-delivery +
 signed-receipt** protocol. A buyer can verify, after the fact and with
 open-source tooling, that:
 
@@ -17,7 +17,7 @@ open-source tooling, that:
    the difficulty claim is the honest probability model;
 4. the receipt was **signed by the three.ws service key**, not an impostor;
 5. (optionally) the key the buyer recovered from the sealed envelope is
-   byte-for-byte the key the receipt describes — **the buyer alone holds it**.
+   byte-for-byte the key the receipt describes, so **the buyer alone holds it**.
 
 This document specifies the scheme precisely enough to reimplement the verifier
 in any language. The reference implementations are
@@ -85,7 +85,7 @@ masterSeed = HKDF-SHA256(
     len  = 32 )
 ```
 
-- `clientSeed` is buyer-supplied entropy (hex or Base58, any length 1–1024
+- `clientSeed` is buyer-supplied entropy (hex or Base58, any length 1-1024
   bytes). If the buyer omits it, the server generates a fresh random 32-byte
   `clientSeed` and **reveals** it in the receipt. Either way the buyer can
   confirm their entropy went into the mix.
@@ -219,7 +219,7 @@ Ed25519 identity key (published at
 [`/.well-known/three-vanity.json`](https://three.ws/.well-known/three-vanity.json)
 and pinned in the SDK + CLI + web verifier).
 
-**Signed fields** (and only these — delivery payload and navigation hints are
+**Signed fields** (and only these; delivery payload and navigation hints are
 *not* signed):
 
 ```
@@ -248,17 +248,17 @@ verifier re-projects to the signed fields before checking.
 ## Verification algorithm
 
 Given a receipt (and, optionally, the opened secret seed), a verifier MUST
-recompute — never trust — each of the following. All must pass.
+recompute (never trust) each of the following. All must pass.
 
-1. **protocol** — `receipt.protocol == "three-vanity/v1"`.
-2. **commitment** — `SHA-256(TAG_SEED_COMMIT ‖ serverSeed) == commitment`.
-3. **derivation** — re-derive `masterSeed` (§2) and `address_{winningIndex}`
+1. **protocol**: `receipt.protocol == "three-vanity/v1"`.
+2. **commitment**: `SHA-256(TAG_SEED_COMMIT ‖ serverSeed) == commitment`.
+3. **derivation**: re-derive `masterSeed` (§2) and `address_{winningIndex}`
    (§3); it MUST equal `receipt.address`.
-4. **pattern** — `receipt.address` satisfies `receipt.pattern` (§4).
+4. **pattern**: `receipt.address` satisfies `receipt.pattern` (§4).
 5. **difficulty**, `difficulty.expectedAttempts == round(expectedAttempts(…))`
    under the model named in `difficulty.model` (§4.1), NOT under the verifier's
    current default.
-6. **signature** — Ed25519-verify the canonical message (§6) against the pinned
+6. **signature**: Ed25519-verify the canonical message (§6) against the pinned
    service key, AND the receipt's `servicePublicKey` equals the pinned key
    (reject impostors that self-sign under a different key).
 7. **custody** *(optional)*: whenever the verifier holds the 32-byte secret seed,
