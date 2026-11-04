@@ -15,12 +15,14 @@
 // a machine with a real GPU for hardware numbers.
 //
 // Usage: node scripts/renderer-bench.mjs [--base http://localhost:3000] [--frames 60]
-//        [--json out.json] [--shots dir] [--headed]
+//        [--json out.json] [--shots dir] [--headed] [--adapter swiftshader|hardware]
 // Needs a dev/preview server running and Playwright's chromium installed.
+// `--adapter hardware` drives the machine's GPU (setup in scripts/lib/bench-browser.mjs)
+// and every run prints the adapters Chromium picked.
 
-import { chromium } from 'playwright';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { PNG } from 'pngjs';
+import { launchBenchBrowser, probeAdapters } from './lib/bench-browser.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name, dflt) => {
@@ -34,13 +36,7 @@ const shotsDir = opt('shots', '');
 const W = 384;
 const H = 512;
 
-const GPU_ARGS = [
-	'--enable-unsafe-webgpu',
-	'--enable-features=Vulkan,WebGPU',
-	'--use-angle=swiftshader',
-	'--use-webgpu-adapter=swiftshader',
-	'--ignore-gpu-blocklist',
-];
+const adapter = opt('adapter', 'swiftshader');
 
 const CASES = [
 	{ name: 'default', query: '', denyGpu: false },
@@ -100,7 +96,9 @@ function compare(a, b) {
 	return { meanAbsDiff: sum / (a.length / 4), silhouetteOverlap: covered ? both / covered : 0 };
 }
 
-const browser = await chromium.launch({ args: GPU_ARGS, headless: !args.includes('--headed') });
+const browser = await launchBenchBrowser({ adapter, headed: args.includes('--headed') });
+const adapterInfo = await probeAdapters(browser, base);
+console.log(`adapter=${adapter} webgpu="${adapterInfo.webgpu}" webgl2="${adapterInfo.webgl2}"`);
 const results = [];
 for (const c of CASES) results.push(await run(browser, c));
 await browser.close();
@@ -137,7 +135,7 @@ if (shotsDir) {
 		writeFileSync(`${shotsDir}/${r.case}-rim.png`, toPng(r.rimPixels));
 	}
 }
-if (jsonOut) writeFileSync(jsonOut, JSON.stringify({ frames, size: [W, H], rows }, null, 2));
+if (jsonOut) writeFileSync(jsonOut, JSON.stringify({ frames, size: [W, H], adapter, adapterInfo, rows }, null, 2));
 
 const failed =
 	results.some((r) => r.errors.length > 0) ||
