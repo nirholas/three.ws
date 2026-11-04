@@ -44,6 +44,30 @@ export function parseWithBigInts(text) {
 
 const clients = new Map();
 
+// Public RPC lanes reject getMultipleAccounts above 100 keys, and lending venue
+// SDKs load a whole market in one call.
+const MAX_MULTIPLE_ACCOUNTS = 100;
+
+/**
+ * Send a JSON-RPC payload through `send`, splitting a getMultipleAccounts call
+ * over the account limit into ordered chunks and stitching the replies back
+ * together. Any other payload goes through untouched; the first error reply
+ * wins over a partial result.
+ * @param {{ id: any, method: string, params: any[] }} payload
+ * @param {(p: object) => Promise<any>} send
+ */
+export async function chunkMultipleAccounts(payload, send) {
+	const keys = payload?.method === 'getMultipleAccounts' ? payload.params?.[0] : null;
+	if (!Array.isArray(keys) || keys.length <= MAX_MULTIPLE_ACCOUNTS) return send(payload);
+	const replies = [];
+	for (let i = 0; i < keys.length; i += MAX_MULTIPLE_ACCOUNTS) {
+		const reply = await send({ ...payload, params: [keys.slice(i, i + MAX_MULTIPLE_ACCOUNTS), ...payload.params.slice(1)] });
+		if (reply?.error) return reply;
+		replies.push(reply);
+	}
+	return { ...replies[0], id: payload.id, result: { ...replies[0].result, value: replies.flatMap((r) => r.result.value) } };
+}
+
 /**
  * A kit Rpc for `network` whose every call fails over across the platform's
  * Solana endpoints. Cached per network for the life of the process.
@@ -55,7 +79,7 @@ export function solanaKitRpc(network = 'mainnet') {
 	if (rpc) return rpc;
 	const endpoints = solanaRpcEndpoints(net);
 	const rotatingFetch = makeRotatingFetch(endpoints);
-	const transport = async ({ payload, signal }) => {
+	const sendOne = async (payload, signal) => {
 		const res = await rotatingFetch(endpoints[0], {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
@@ -69,6 +93,7 @@ export function solanaKitRpc(network = 'mainnet') {
 		}
 		return parseWithBigInts(await res.text());
 	};
+	const transport = ({ payload, signal }) => chunkMultipleAccounts(payload, (p) => sendOne(p, signal));
 	rpc = createSolanaRpcFromTransport(transport);
 	clients.set(net, rpc);
 	return rpc;
