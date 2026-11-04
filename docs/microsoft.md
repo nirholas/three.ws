@@ -73,5 +73,6 @@ Microsoft open source was in the three.ws stack before the partnership. These ar
 
 - [Partner ecosystem](./partners.md)
 - [Partner benefits](./partner-benefits.md)
+- [Microsoft distribution and offer plan](./microsoft-marketplace-offer-plan.md)
 - [Listings and distribution](./listings.md)
 - [Press kit](./press-kit.md)
