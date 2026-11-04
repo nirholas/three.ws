@@ -104,3 +104,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 - 982 (2026-11-04): glasses wearables lane code and docs landed; Mac build, Meta enrollment and hardware demo remain with the owner.
 - 981 (2026-11-04): image hardening committed; scan/A100 validation pending the c4fb8f6d build; NGC push is owner-held.
 - 977 (2026-11-04): weights build a7a81ea6 failed on an incomplete HF download; rerun scripts for longcat weights, then commit weights.sha256.
+2026-11-04 | 772-plan-growth-credibility-files-translations-credits.md | bf9e1b38b | Credibility files, credit, locale heads and READMEs shipped; owner connects Zenodo, OpenSSF, FLOSS/fund accounts.

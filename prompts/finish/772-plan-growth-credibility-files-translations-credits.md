@@ -1,5 +1,7 @@
 # Ship the free credibility files and crawlable-locale fixes that funding and listing programs check for
 
+**Status (2026-11-04):** Built, tested and committed (bf9e1b38b): funding.json and its well-known pointer, .zenodo.json, the Pollinations credit (browser-verified present for provider pollinations, absent for another), crawlable ?lang= heads, es/pt-BR/hi/ru READMEs. Remaining owner steps: connect Zenodo, OpenSSF and FLOSS/fund accounts using docs/ops/credibility-submissions.md, and decide the Sponsor button target in .github/FUNDING.yml.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/772-plan-growth-credibility-files-translations-credits.md`.
 
 **Priority:** P3, polish, developer experience, or exploratory (score 30 of 100 inside the tier). **Area:** growth. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
