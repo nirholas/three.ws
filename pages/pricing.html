@@ -234,6 +234,7 @@
 						<button class="pricing-cta primary pc-continue" id="pc-continue" type="button" data-i18n="pricing.continue">
 							Continue
 						</button>
+						<div class="pc-status" id="pc-asset-status" role="status" aria-live="polite"></div>
 						<p class="pc-fineprint" data-i18n="pricing.payments_are_verified_on_chain_and_activate">
 							Payments are verified on-chain and activate instantly. SOL and $THREE
 							amounts are pinned when the quote is created.
@@ -1318,6 +1319,11 @@
 				let user = null;
 				let plans = null;
 				let selectedAsset = 'USDC';
+				// Assets checkout accepts right now, from the plans endpoint. Until it
+				// answers, nothing is marked off, and checkout's own refusal still
+				// reaches the buyer as a typed message.
+				let ready = null;
+				const isReady = (a) => !ready || ready[a] === true;
 				let intent = null;
 				let countdownTimer = null;
 				let pollTimer = null;
@@ -1347,10 +1353,13 @@
 								amountEl.innerHTML = fmtUsd(pro.price_usd) + '<sub>/mo</sub>';
 							}
 						}
+						ready = plans.checkout_ready || null;
 						const pct = (plans.three_discount_bps / 100).toFixed(0);
 						const discountEl = $('pro-three-discount');
-						if (discountEl && plans.three_discount_bps > 0) {
-							discountEl.textContent = `— ${pct}% off in $THREE`;
+						// The discount is only a claim worth making when $THREE checkout
+						// is switched on.
+						if (discountEl && plans.three_discount_bps > 0 && isReady('THREE')) {
+							discountEl.textContent = `, ${pct}% off in $THREE`;
 							discountEl.hidden = false;
 						}
 						document.querySelector('[data-asset-price="USDC"]').textContent =
@@ -1360,7 +1369,11 @@
 						document.querySelector('[data-asset-price="THREE"]').textContent =
 							fmtUsd(pro.three_price_usd);
 						const badge = document.querySelector('[data-three-badge]');
-						if (badge) badge.textContent = `${pct}% off`;
+						if (badge) {
+							badge.textContent = `${pct}% off`;
+							badge.hidden = !isReady('THREE') || !(plans.three_discount_bps > 0);
+						}
+						applyReadiness();
 					} catch (err) {
 						console.warn('[pricing] plan config load failed:', err?.message);
 					}
@@ -1375,6 +1388,89 @@
 						proCta.textContent = 'You’re on ' + (user.plan === 'pro' ? 'Pro ✓' : user.plan[0].toUpperCase() + user.plan.slice(1) + ' ✓');
 						proCta.href = '/dashboard/account';
 					}
+				}
+
+				// Mark every asset checkout will refuse, move the selection onto one
+				// it accepts, and say so plainly when none is switched on yet.
+				function applyReadiness() {
+					const buttons = [...overlay.querySelectorAll('.pc-asset')];
+					for (const btn of buttons) {
+						const on = isReady(btn.dataset.asset);
+						btn.disabled = !on;
+						btn.classList.toggle('is-off', !on);
+						let off = btn.querySelector('.pc-asset-off');
+						if (!on && !off) {
+							off = document.createElement('span');
+							off.className = 'pc-asset-off';
+							off.textContent = 'Not switched on yet';
+							btn.append(off);
+						} else if (on && off) {
+							off.remove();
+						}
+					}
+					const firstReady = buttons.find((b) => !b.disabled);
+					if (firstReady && !isReady(selectedAsset)) selectAsset(firstReady);
+					const continueBtn = $('pc-continue');
+					continueBtn.disabled = !firstReady;
+					setAssetStatus(
+						firstReady
+							? ''
+							: 'Solana checkout is not switched on yet, so nothing can be charged. Check back soon, or contact us for Enterprise billing.',
+						firstReady ? '' : 'err',
+					);
+				}
+
+				function selectAsset(btn) {
+					selectedAsset = btn.dataset.asset;
+					for (const b of overlay.querySelectorAll('.pc-asset')) {
+						const on = b === btn;
+						b.classList.toggle('is-selected', on);
+						b.setAttribute('aria-checked', String(on));
+					}
+				}
+
+				// Status line under the asset picker. `retry` adds a button that
+				// runs it again, for refusals a second attempt can clear.
+				function setAssetStatus(text, kind = '', retry = null) {
+					const el = $('pc-asset-status');
+					el.className = 'pc-status' + (kind ? ' is-' + kind : '');
+					el.replaceChildren(document.createTextNode(text));
+					if (retry) {
+						const btn = document.createElement('button');
+						btn.type = 'button';
+						btn.className = 'pc-retry';
+						btn.textContent = 'Try again';
+						btn.addEventListener('click', retry);
+						el.append(' ', btn);
+					}
+				}
+
+				// What a refused checkout means for the buyer, keyed by the API's
+				// typed error code.
+				function checkoutRefusal(status, d) {
+					const asset = assetLabel(selectedAsset);
+					if (d.error === 'not_configured') {
+						return {
+							text: `Paying in ${asset} is not switched on yet, so nothing was charged. Pick another asset above.`,
+							retry: false,
+						};
+					}
+					if (d.error === 'price_unavailable') {
+						return {
+							text: `The live ${asset} price did not load, so no quote was made. Try again in a moment.`,
+							retry: true,
+						};
+					}
+					if (status === 401) {
+						return { text: 'Your session ended. Sign in again to finish checkout.', retry: false };
+					}
+					if (status === 429) {
+						return { text: 'Too many quotes in a short time. Wait a minute, then try again.', retry: true };
+					}
+					return {
+						text: d.error_description || d.message || `Checkout could not start (HTTP ${status}). Try again.`,
+						retry: status >= 500,
+					};
 				}
 
 				function setStatus(text, kind = '') {
@@ -1394,6 +1490,7 @@
 					document.body.style.overflow = 'hidden';
 					showStep('pc-step-asset');
 					setStatus('');
+					applyReadiness();
 					$('pc-dialog').focus();
 					track(ANALYTICS_EVENTS.SURFACE_OPENED, { surface: 'pricing:checkout' });
 				}
@@ -1426,12 +1523,9 @@
 
 				for (const btn of overlay.querySelectorAll('.pc-asset')) {
 					btn.addEventListener('click', () => {
-						selectedAsset = btn.dataset.asset;
-						for (const b of overlay.querySelectorAll('.pc-asset')) {
-							const on = b === btn;
-							b.classList.toggle('is-selected', on);
-							b.setAttribute('aria-checked', String(on));
-						}
+						if (btn.disabled) return;
+						selectAsset(btn);
+						setAssetStatus('');
 					});
 				}
 
@@ -1462,6 +1556,7 @@
 				async function createCheckout() {
 					$('pc-continue').disabled = true;
 					$('pc-continue').textContent = 'Creating quote…';
+					setAssetStatus('');
 					try {
 						const r = await fetch('/api/payments/solana/checkout', {
 							method: 'POST',
@@ -1469,9 +1564,19 @@
 							headers: { 'content-type': 'application/json' },
 							body: JSON.stringify({ plan: PLAN, asset: selectedAsset }),
 						});
-						const d = await r.json();
-						if (!r.ok)
-							throw new Error(d.error_description || d.message || 'checkout failed');
+						const d = await r.json().catch(() => ({}));
+						if (!r.ok) {
+							const why = checkoutRefusal(r.status, d);
+							if (d.error === 'not_configured') {
+								// Checkout knows better than the cached plans: mark the asset
+								// off so the picker moves to one that can still be paid.
+								ready = { ...(ready || {}), [selectedAsset]: false };
+								applyReadiness();
+								if (!overlay.querySelector('.pc-asset:not(:disabled)')) return;
+							}
+							setAssetStatus(why.text, 'err', why.retry ? createCheckout : null);
+							return;
+						}
 						intent = d;
 						$('pc-amount').textContent =
 							`${d.amount_asset} ${assetLabel(d.asset)}`;
@@ -1496,11 +1601,15 @@
 							location: 'pricing',
 						});
 					} catch (err) {
-						setStatus(err.message, 'err');
-						alert(err.message);
+						// Network failure or an unreadable reply: nothing was charged.
+						setAssetStatus(
+							`Checkout could not reach the server (${err?.message || 'network error'}). Nothing was charged.`,
+							'err',
+							createCheckout,
+						);
 					} finally {
-						$('pc-continue').disabled = false;
 						$('pc-continue').textContent = 'Continue';
+						$('pc-continue').disabled = !overlay.querySelector('.pc-asset:not(:disabled)');
 					}
 				}
 

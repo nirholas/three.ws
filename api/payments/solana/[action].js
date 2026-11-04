@@ -261,6 +261,16 @@ async function handleConfirm(req, res) {
 // Server-truth plan prices + accepted assets, so pricing UIs never hardcode a
 // figure that drifts from what checkout actually charges.
 
+// Which assets checkout will accept right now. Mirrors handleCheckout's own
+// refusals: every asset needs the recipient wallet, and $THREE also needs its
+// mint. A live price is checked at quote time (price_unavailable), not here,
+// because it is transient and a retry recovers it.
+function checkoutReady() {
+	const recipient = Boolean(getSolanaRecipient());
+	const ready = { USDC: recipient, SOL: recipient, THREE: recipient && Boolean(THREE_MINT) };
+	return Object.fromEntries(PLAN_ASSETS.map((a) => [a, Boolean(ready[a])]));
+}
+
 async function handlePlans(req, res) {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -272,6 +282,7 @@ async function handlePlans(req, res) {
 			duration_days: p.duration_days,
 		}])),
 		assets: PLAN_ASSETS,
+		checkout_ready: checkoutReady(),
 		three_discount_bps: threePlanDiscountBps(),
 		three_mint: THREE_MINT,
 	});

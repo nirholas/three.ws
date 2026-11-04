@@ -1589,3 +1589,42 @@
 	font-size: 14px;
 	margin: 0 0 18px;
 }
+
+/* An asset checkout will refuse right now (GET /api/payments/solana/plans
+   checkout_ready). Visible but inert, with the reason written on the card. */
+.pc-asset:disabled,
+.pc-asset.is-off {
+	cursor: not-allowed;
+	opacity: 0.55;
+	transform: none;
+	border-style: dashed;
+}
+
+.pc-asset:disabled:hover { border-color: rgba(var(--pr-fg), 0.12); transform: none; }
+
+.pc-asset-off {
+	font-size: 11.5px;
+	font-weight: 600;
+	color: rgba(var(--pr-fg), 0.75);
+	line-height: 1.4;
+}
+
+.pc-continue:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.pc-retry {
+	margin-left: 6px;
+	padding: 3px 10px;
+	font: inherit;
+	font-size: 12.5px;
+	font-weight: 600;
+	color: rgb(var(--pr-fg));
+	background: rgba(var(--pr-fg), 0.08);
+	border: 1px solid rgba(var(--pr-fg), 0.3);
+	border-radius: 99px;
+	cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+
+.pc-retry:hover { background: rgba(var(--pr-fg), 0.14); border-color: rgba(var(--pr-fg), 0.5); }
+.pc-retry:active { background: rgba(var(--pr-fg), 0.2); }
+.pc-retry:focus-visible { outline: 2px solid rgb(var(--pr-fg)); outline-offset: 2px; }
