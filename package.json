@@ -92,6 +92,12 @@
 		"lodash.set": "$lodash.set",
 		"@colyseus/core": {
 			"nanoid": "file:../../../multiplayer/vendor/nanoid"
+		},
+		"qwen-ai-provider": {
+			"undici": "^6.29.1"
+		},
+		"satori": {
+			"fflate": "^0.7.5"
 		}
 	},
 	"engines": {
