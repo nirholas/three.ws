@@ -23,24 +23,31 @@ const COMPRESSION_EXTENSIONS = new Set([DRACO_EXTENSION, 'EXT_meshopt_compressio
 const DRACO_BASE = '/three/draco/gltf/';
 
 let dracoPromise = null;
+let dracoBase = DRACO_BASE;
+
+/** Point the Draco loader at another decoder directory (tests, self-hosted mirrors). */
+export function configureDraco({ base } = {}) {
+	dracoBase = base || DRACO_BASE;
+	dracoPromise = null;
+}
 
 /**
- * The Draco decoder module, built from /three/draco/gltf/. Fetched as text and
- * evaluated so it works the same in a module worker (no importScripts) and on
- * the main thread. Only ever reached for a Draco-compressed file.
+ * The Draco decoder module, imported as an ES module from /three/draco/gltf/
+ * (written next to the classic wrapper by scripts/copy-three-decoders.mjs).
+ * An import works the same in a module worker and on the main thread and needs
+ * no string-to-code evaluation, so the page CSP can omit 'unsafe-eval'. Only
+ * ever reached for a Draco-compressed file.
  */
 function loadDracoDecoder() {
 	if (!dracoPromise) {
 		dracoPromise = (async () => {
-			const [wrapperRes, wasmRes] = await Promise.all([
-				fetch(`${DRACO_BASE}draco_wasm_wrapper.js`),
-				fetch(`${DRACO_BASE}draco_decoder.wasm`),
+			const [mod, wasmRes] = await Promise.all([
+				import(/* @vite-ignore */ `${dracoBase}draco_wasm_wrapper.esm.js`),
+				fetch(`${dracoBase}draco_decoder.wasm`),
 			]);
-			if (!wrapperRes.ok || !wasmRes.ok) throw new Error('The Draco decoder could not be downloaded.');
-			const source = await wrapperRes.text();
+			if (!wasmRes.ok) throw new Error('The Draco decoder could not be downloaded.');
 			const wasmBinary = await wasmRes.arrayBuffer();
-			const factory = new Function(`${source}\nreturn DracoDecoderModule;`)();
-			return factory({ wasmBinary });
+			return mod.default({ wasmBinary });
 		})().catch((err) => {
 			dracoPromise = null;
 			throw err;

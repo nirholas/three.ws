@@ -7,9 +7,10 @@
 // /public/three/ — but they MUST be present in the deployed dist/ for
 // /club to render (it loads a Draco-compressed venue GLB at runtime).
 
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dracoEsmSource } from './lib/draco-esm.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(__dirname, '..');
@@ -50,6 +51,12 @@ if (existsSync(dracoSrc)) {
 	rmDir(dracoOut);
 	cpSync(dracoSrc, dracoOut, { recursive: true });
 	console.log(`[copy-three-decoders] draco/ → ${dracoOut.replace(repo + '/', '')}`);
+	// ES-module twin of the gltf wrapper so the mesh-ops worker can import the
+	// decoder instead of eval-ing it (keeps 'unsafe-eval' out of the site CSP).
+	const gltfWrapper = join(dracoOut, 'gltf/draco_wasm_wrapper.js');
+	if (existsSync(gltfWrapper)) {
+		writeFileSync(join(dracoOut, 'gltf/draco_wasm_wrapper.esm.js'), dracoEsmSource(readFileSync(gltfWrapper, 'utf8')));
+	}
 } else {
 	console.warn(`[copy-three-decoders] ${dracoSrc} not found`);
 }

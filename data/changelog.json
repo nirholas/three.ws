@@ -2,6 +2,18 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-04",
+			"title": "Eval removed from the site-wide CSP",
+			"summary": "Pages no longer allow string-to-code evaluation. The Draco loader and texture resize no longer need it, and only the Scene Studio shell keeps it.",
+			"tags": ["security", "improvement"]
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Agent memory now knows when a fact was true",
+			"summary": "Memories carry a validity interval and a source. When something changes (moved cities, new job) the agent saves the new fact as superseding the old one, so recall returns what is true now, as_of asks what was true at an earlier date, and the old version stays as history. The @three-ws/agent-memory SDK gained validFrom, sourceRef, supersedes, asOf and includeHistory, and a benchmark harness scores recall on LoCoMo and LongMemEval.",
+			"tags": ["feature", "sdk"]
+		},
+		{
 			"date": "2026-11-05",
 			"title": "Autopilot can propose trades, and a trading MCP fills them under the wallet guards",
 			"summary": "Autopilot gained a trade action. The agent can queue a buy with SOL or a sell of a non-$THREE token, grounded in the memories that motivated it; nothing moves until you confirm, and every fill runs the wallet guards (per-trade cap, daily budget, price-impact breaker, rug firewall) with buys counted against the daily SOL limit. A sell of $THREE is refused. The new @three-ws/trading-mcp quotes, lists positions and fills the same way from any MCP client.",

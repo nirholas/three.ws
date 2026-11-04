@@ -18,8 +18,8 @@ Statuses are kept in sync as each item lands.
 7. **Headers** — frame-ancestors/X-Frame-Options (H11), Permissions-Policy (M14),
    CSP trim/dedupe (H12), CORS audit (H13). `'unsafe-inline'` came out on
    2026-08-06 via per-response script hashes (`server/csp-hashes.mjs`);
-   `'unsafe-eval'` scoping is the one piece still open, and SECURITY_AUDIT.md
-   H12 records what has to move first.
+   `'unsafe-eval'` was scoped to `/scene` on 2026-11-04 (everything else ships
+   `'wasm-unsafe-eval'`); SECURITY_AUDIT.md H12 lists the eval users.
 8. **Missing rate limits / auth** — oracle/social (M3), ibm/attest (M4), persona
    (M5), forever/inscribe (M9), render endpoints (L10), misc Low.
 9. **Payment concurrency** — idempotency NX (M10), USD spend cap atomic (H9),

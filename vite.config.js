@@ -581,6 +581,11 @@ const appConfig = {
 			// by /deploy-onchain) loads node-fetch's Node build, which dereferences
 			// `stream.Readable.prototype` at module scope and crashes the page.
 			'node-fetch': resolve(__dirname, 'src/shims/node-fetch-browser.js'),
+			// `ndarray-ops` builds its loops with `cwise`, which compiles source text
+			// through Function(). That needs 'unsafe-eval' in the page CSP (audit
+			// finding H12). The app only reaches assign/assigns (through
+			// ndarray-pixels), so a plain-loop twin replaces the package.
+			'ndarray-ops': resolve(__dirname, 'src/shims/ndarray-ops-static.js'),
 		},
 	},
 	optimizeDeps: {

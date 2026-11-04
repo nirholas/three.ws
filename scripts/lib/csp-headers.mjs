@@ -112,3 +112,28 @@ export function headerProblems(declared, served) {
 	}
 	return problems;
 }
+
+// Route `src` patterns in vercel.json that may carry the bare 'unsafe-eval'
+// token in their script-src. Everything else must use 'wasm-unsafe-eval' (which
+// WebAssembly decoders need) or neither. Scene Studio (pages/scene.html) runs user-authored
+// scripts through acorn and `new Function`, so it is the one reviewable
+// exception (audit finding H12).
+export const UNSAFE_EVAL_ALLOWED_SRCS = ['/scene/?$'];
+
+/**
+ * Every vercel.json route whose CSP script-src contains the bare 'unsafe-eval'
+ * token (a token match: 'wasm-unsafe-eval' is a different token and is fine)
+ * while not being on the allow list.
+ */
+export function unsafeEvalViolations(routes, allowed = UNSAFE_EVAL_ALLOWED_SRCS) {
+	const out = [];
+	for (const route of routes || []) {
+		const csp = route?.headers?.['content-security-policy'];
+		if (!csp) continue;
+		const scriptSrc = parsePolicy(csp).get('script-src');
+		if (!scriptSrc || !scriptSrc.has("'unsafe-eval'")) continue;
+		if (allowed.includes(route.src)) continue;
+		out.push(route.src);
+	}
+	return out;
+}
