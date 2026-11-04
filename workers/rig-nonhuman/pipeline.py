@@ -25,6 +25,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from skeleton_roots import SkeletonNormalizeError, single_root_skeleton
+
 log = logging.getLogger("rig-nonhuman.pipeline")
 
 # Each stage is a multi-second-to-minute autoregressive model forward pass on
@@ -140,6 +142,14 @@ def run_pipeline(mesh_glb: Path, workdir: Path, unirig_dir: Path, skintokens_dir
         build_merge_cmd(skeleton_fbx, mesh_glb, merged_glb), unirig_dir,
         "unirig-merge", merged_glb,
     )
+    # UniRig can emit more than one root joint; SkinTokens accepts exactly
+    # one ("multiple roots found"). See skeleton_roots.py.
+    try:
+        reparented = single_root_skeleton(merged_glb)
+    except SkeletonNormalizeError as exc:
+        raise PipelineStepError(f"unirig-merge wrote an unusable file: {exc}") from exc
+    if reparented:
+        log.info("[unirig-merge] re-parented %d extra root joint(s) under the main skeleton", reparented)
     _run_step(
         build_skin_cmd(merged_glb, rigged_glb), skintokens_dir,
         "skintokens-skin", rigged_glb,

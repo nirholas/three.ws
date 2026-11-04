@@ -23,6 +23,7 @@ from pipeline import (
     build_skin_cmd,
     run_pipeline,
 )
+from skeleton_roots import write_glb
 
 _FAILED = False
 
@@ -87,6 +88,52 @@ def _fake_py_script(path: Path, writes: Path | None = None, exit_code: int = 0) 
     path.write_text("\n".join(lines) + "\n")
 
 
+def _merged_glb(path: Path, two_roots: bool) -> None:
+    """A minimal GLB shaped like UniRig's merge output: an Armature node over
+    the skin's joints. With two_roots the last joint is a second root, the
+    shape the fox QA run produced on 2026-11-04."""
+    doc = {
+        "asset": {"version": "2.0"},
+        "scenes": [{"nodes": [0, 4]}],
+        "nodes": [
+            {"name": "Armature", "children": [1, 3] if two_roots else [1]},
+            {"name": "bone_1", "children": [2], "translation": [0.0, 1.0, 0.0]},
+            {"name": "bone_2", **({} if two_roots else {"children": [3]}), "translation": [0.0, 1.0, 0.0]},
+            {"name": "bone_3", "translation": [0.2, 2.1, 0.0] if two_roots else [0.2, 0.1, 0.0]},
+            {"name": "character", "mesh": 0, "skin": 0},
+        ],
+        "meshes": [{"primitives": [{"attributes": {"POSITION": 0}}]}],
+        "skins": [{"joints": [1, 2, 3]}],
+    }
+    write_glb(path, doc, b"\x00" * 16)
+
+
+def _fake_merge_copying(path: Path, source: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    out = '"$6"'  # merge.sh --source S --target T --output O: O is $6
+    path.write_text(f"#!/bin/sh\ncp '{source}' {out}\nexit 0\n")
+    path.chmod(path.stat().st_mode | stat.S_IEXEC)
+
+
+# Applies SkinTokens' real rule (Asset.set_order: one root joint or
+# "multiple roots found") to its --input before writing --output.
+_SKIN_CHECKING_ROOTS = """
+import json, struct, sys
+args = sys.argv[1:]
+src, dst = args[args.index('--input') + 1], args[args.index('--output') + 1]
+data = open(src, 'rb').read()
+size = struct.unpack_from('<I', data, 12)[0]
+doc = json.loads(data[20:20 + size])
+parent = {c: i for i, n in enumerate(doc['nodes']) for c in n.get('children', [])}
+joints = set(doc['skins'][0]['joints'])
+roots = [j for j in joints if parent.get(j) not in joints]
+if len(roots) != 1:
+    print('ValueError: multiple roots found', file=sys.stderr)
+    sys.exit(1)
+open(dst, 'wb').write(data)
+"""
+
+
 def _stub_checkouts(root: Path) -> tuple[Path, Path]:
     unirig_dir = root / "unirig"
     skintokens_dir = root / "skintokens"
@@ -107,7 +154,8 @@ def test_run_pipeline_chains_all_three_steps():
         _fake_bash_script(
             unirig_dir / "launch/inference/generate_skeleton.sh", workdir / "skeleton.fbx"
         )
-        _fake_bash_script(unirig_dir / "launch/inference/merge.sh", workdir / "merged.glb")
+        _merged_glb(root / "merge-output.glb", two_roots=False)
+        _fake_merge_copying(unirig_dir / "launch/inference/merge.sh", root / "merge-output.glb")
         _fake_py_script(skintokens_dir / "demo.py", workdir / "rigged.glb")
 
         result = run_pipeline(mesh_glb, workdir, unirig_dir, skintokens_dir)
@@ -224,6 +272,53 @@ def test_missing_output_error_carries_the_step_stdout():
         shutil.rmtree(root)
 
 
+def test_two_root_merge_output_reaches_skinning_with_one_root():
+    """The fox QA run: UniRig's skeleton had two root joints and SkinTokens
+    died with "multiple roots found". The pipeline must hand SkinTokens a
+    single-rooted skeleton."""
+    root = Path(tempfile.mkdtemp())
+    try:
+        unirig_dir, skintokens_dir = _stub_checkouts(root)
+        workdir = root / "work"
+        workdir.mkdir()
+        mesh_glb = workdir / "mesh.glb"
+        mesh_glb.write_bytes(b"glTF-fake-mesh")
+        _fake_bash_script(
+            unirig_dir / "launch/inference/generate_skeleton.sh", workdir / "skeleton.fbx"
+        )
+        _merged_glb(root / "merge-output.glb", two_roots=True)
+        _fake_merge_copying(unirig_dir / "launch/inference/merge.sh", root / "merge-output.glb")
+        (skintokens_dir / "demo.py").write_text(_SKIN_CHECKING_ROOTS)
+        try:
+            result = run_pipeline(mesh_glb, workdir, unirig_dir, skintokens_dir)
+            _check(result.exists(), "skinning accepted the merged skeleton")
+        except PipelineStepError as exc:
+            _check(False, f"two-root skeleton reached SkinTokens unchanged: {exc}")
+    finally:
+        shutil.rmtree(root)
+
+
+def test_unreadable_merge_output_is_a_named_merge_failure():
+    root = Path(tempfile.mkdtemp())
+    try:
+        unirig_dir, skintokens_dir = _stub_checkouts(root)
+        workdir = root / "work"
+        workdir.mkdir()
+        mesh_glb = workdir / "mesh.glb"
+        mesh_glb.write_bytes(b"glTF-fake-mesh")
+        _fake_bash_script(
+            unirig_dir / "launch/inference/generate_skeleton.sh", workdir / "skeleton.fbx"
+        )
+        _fake_bash_script(unirig_dir / "launch/inference/merge.sh", workdir / "merged.glb")
+        try:
+            run_pipeline(mesh_glb, workdir, unirig_dir, skintokens_dir)
+            _check(False, "expected PipelineStepError for a non-GLB merge output")
+        except PipelineStepError as exc:
+            _check("unirig-merge" in str(exc) and "GLB" in str(exc), f"names the step and format: {exc}")
+    finally:
+        shutil.rmtree(root)
+
+
 if __name__ == "__main__":
     test_skeleton_cmd_matches_unirig_cli_contract()
     test_merge_cmd_matches_unirig_cli_contract()
@@ -233,6 +328,8 @@ if __name__ == "__main__":
     test_run_pipeline_raises_on_missing_output_despite_zero_exit()
     test_run_pipeline_stops_before_skinning_if_merge_fails()
     test_missing_output_error_carries_the_step_stdout()
+    test_two_root_merge_output_reaches_skinning_with_one_root()
+    test_unreadable_merge_output_is_a_named_merge_failure()
     if _FAILED:
         print("\nFAILED")
         sys.exit(1)

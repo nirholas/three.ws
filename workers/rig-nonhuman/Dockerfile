@@ -96,13 +96,15 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install -c /app-constraints.txt -r /app/requirements.txt
 
-COPY worker_security.py gltf_meshopt.py pipeline.py main.py entrypoint.sh /app/
-COPY test_gltf_meshopt.py test_pipeline.py /app/
+COPY worker_security.py gltf_meshopt.py skeleton_roots.py pipeline.py main.py entrypoint.sh /app/
+COPY test_gltf_meshopt.py test_skeleton_roots.py test_pipeline.py /app/
 RUN chmod +x /app/entrypoint.sh
 
-# Build-time guard: the chaining/error-handling logic needs no GPU and no
-# checkout, so it runs here and the image does not ship if it broke.
-RUN python3 /app/test_pipeline.py && python3 /app/test_gltf_meshopt.py
+# Build-time guard: the chaining/error-handling logic and the single-root
+# skeleton normalizer need no GPU and no checkout, so they run here and the
+# image does not ship if either broke.
+RUN python3 /app/test_skeleton_roots.py && python3 /app/test_pipeline.py \
+    && python3 /app/test_gltf_meshopt.py
 
 # Import gate: load the exact entry modules pipeline.py runs (UniRig's run.py
 # and src.inference.merge, SkinTokens' demo.py; all guard their CLI behind
