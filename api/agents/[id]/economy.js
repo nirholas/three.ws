@@ -29,7 +29,7 @@ import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/au
 import { cors, json, method, wrap, error } from '../../_lib/http.js';
 import { sql } from '../../_lib/db.js';
 import { getSpendLimits, getDailySpendUsd } from '../../_lib/agent-trade-guards.js';
-import { composeEarnings } from '../../_lib/economy-shape.js';
+import { composeEarnings, walletLabel } from '../../_lib/economy-shape.js';
 import { isUuid } from '../../_lib/validate.js';
 import { env } from '../../_lib/env.js';
 
@@ -204,7 +204,7 @@ export default wrap(async (req, res) => {
 				`,
 				sql`
 					SELECT h.id, h.usd, h.skill_name, h.payment_signature, h.invocation_signature,
-					       h.hirer_agent_id, hr.name AS hirer_name,
+					       h.hirer_agent_id, hr.name AS hirer_name, h.payer_address,
 					       COALESCE(h.completed_at, h.created_at) AS at
 					FROM agent_hires h
 					LEFT JOIN agent_identities hr ON hr.id = h.hirer_agent_id
@@ -311,7 +311,7 @@ export default wrap(async (req, res) => {
 				direction: 'in',
 				kind: 'hire',
 				usd: r.usd != null ? Number(r.usd) : null,
-				counterparty: r.hirer_name || r.hirer_agent_id || null,
+				counterparty: r.hirer_agent_id ? r.hirer_name || r.hirer_agent_id : walletLabel(r.payer_address),
 				counterparty_agent_id: r.hirer_agent_id || null,
 				label: r.skill_name ? `Hired · ${r.skill_name}` : 'Agent hire',
 				skill: r.skill_name || null,

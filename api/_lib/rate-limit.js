@@ -1590,6 +1590,12 @@ export const limits = {
 	// still stops a scripted flood. Page-load-critical clusters additionally get
 	// their own dedicated buckets below so one surface can never starve another.
 	publicIp: (ip) => getLimiter('public:ip', { limit: 240, window: '1 m', local: true }).limit(ip),
+	// Hire Blink POSTs (api/actions/agent-hire.js): each builds a payment
+	// transaction (a balance read and a blockhash) and may write a pending hire
+	// row, and the confirm callback runs a chain verification. Anonymous wallets
+	// call it, so it is held per IP; 30 in 10 minutes covers a buyer who
+	// retries, re-opens the Blink, and confirms, well under a scripted flood.
+	hireBlinkIp: (ip) => getLimiter('hire:blink:ip', { limit: 30, window: '10 m' }).limit(ip),
 	// /api/avatar-stream with a remote ?src: one download (up to 64 MB) and one
 	// CPU-bound pack per distinct URL, so it is held well under publicIp.
 	avatarStreamRemoteIp: (ip) => getLimiter('avatar-stream:remote:ip', { limit: 20, window: '1 m' }).limit(ip),

@@ -2782,6 +2782,12 @@ URL: https://three.ws/docs/play-parties
 
 How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.
 
+### Docs · World chat in /play: scrollback and the community board
+
+URL: https://three.ws/docs/play-chat
+
+How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.
+
 ### Docs · The /play activity ticker and hype moments
 
 URL: https://three.ws/docs/play-activity-ticker
@@ -7854,6 +7860,85 @@ When a request carries a `payment-identifier`, the idempotency hash covers the H
   the wire shape (manifest + retry header) is unchanged.
 - Currency is always an SPL mint pubkey. SOL-native payments aren't
   supported yet.
+
+## $THREE is a Token-2022 mint: never pass a default token program
+
+$THREE (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`) is owned by the
+Token-2022 program, not the legacy SPL Token program. `@solana/spl-token`
+helpers such as `getAssociatedTokenAddressSync`,
+`createTransferCheckedInstruction` and
+`createAssociatedTokenAccountIdempotentInstruction` silently default to the
+legacy program when no program argument is passed. For $THREE that derives the
+wrong associated token account and builds a transfer the cluster rejects, so
+every Solana payment builder must resolve the program from the mint and pass it
+explicitly.
+
+Use the shared helper in
+[api/_lib/solana-token-program.js](../api/_lib/solana-token-program.js) and
+nothing else:
+
+- `tokenProgramForMint(connection, mint)` reads the mint account owner, accepts
+  only SPL Token and Token-2022, caches per mint, and short-circuits the known
+  $THREE mint.
+- `ataFor(mint, owner, tokenProgram, { allowOwnerOffCurve })` derives the ATA
+  under that program.
+- `tokenTransfer(...)` and `createMissingAtas(...)` build `transferChecked` and
+  idempotent ATA creates with the same program.
+
+The gasless skill purchase, the agent purchase, the skill and subscription
+checkouts, the Premium pass quote, the self-hosted x402 facilitator and the
+on-chain allowance all go through it. `tests/solana-token-program.test.js`
+pins a legacy mint, a Token-2022 mint, a missing mint and an unsupported owner.
+
+Transactions the browser builds for the wallet to sign follow the same rule
+through [src/shared/spl-token-program.js](../src/shared/spl-token-program.js):
+
+- `resolveMintInfo(connection, mint, spl)` reads the mint's owner program and
+  its on-chain decimals, and refuses a missing or non-SPL account instead of
+  guessing.
+- `splPaymentInstructions({ connection, spl, mint, payer, legs })` opens each
+  recipient's ATA idempotently on that program and sends one
+  `transferChecked` per leg.
+- `buildReferencedSplTransfer(...)` adds the optional platform fee leg first
+  and the seller leg carrying the Solana Pay reference last.
+
+The marketplace and skill-purchase fallback (used when the platform cannot
+sponsor the fee), the copy-trading fee settle and launch funding all build
+through it (`tests/spl-payment-builders.test.js`).
+
+Every `@three-ws/agent-payments` call that touches a vault (`getBalances`,
+`distributePayments`, `withdraw`, `buildAcceptPaymentInstructions`) takes a
+`tokenProgram` and defaults to the legacy program without one, so pass the
+program resolved from the currency mint. `updateBuybackBps` needs no argument:
+the online `PumpAgent` reads GlobalConfig and derives every supported
+currency's vault on that mint's own program
+(`tests/agent-skills-agent-payments.test.js`,
+`tests/pump-governance-prep.test.js`).
+
+To prove the builders against the real chain at zero cost, run:
+
+    node scripts/verify-token2022-purchase.mjs [--payer <pubkey>] [--treasury <pubkey>] [--rpc <url>]
+
+It finds a real $THREE holder with a canonical Token-2022 ATA, builds the
+gasless purchase and the Premium quote transactions for that holder, and runs
+`simulateTransaction` on mainnet with `sigVerify:false` and
+`replaceRecentBlockhash:true`. Nothing is signed or sent. It exits 0 only when
+both simulations return `err: null` (2026-11-04: gasless 24,300 compute units,
+Premium 7,432).
+
+### When a rail is not switched on
+
+A rail whose receiving wallet is unset answers a typed refusal, never a retry
+loop. `POST /api/token/quote` answers `503 treasury_unavailable`,
+`rewards_unavailable` or `quote_signing_unavailable` with `configured: false`,
+the message "Paying in $THREE is not switched on yet, so nothing was charged."
+and no `retry-after`. Only transient causes (`price_unavailable`,
+`rpc_unavailable`) carry the 15 second back-off. Clients read readiness up
+front: `GET /api/token/config` reports `treasury_configured` and
+`rewards_configured` (the Forge pay sheet checks the wallets the consumption
+split pays), and `GET /api/payments/solana/plans` reports `checkout_ready` per
+asset (`/pricing` disables any asset that is not ready and hides the $THREE
+discount).
 
 ## Sell your agent as an API
 

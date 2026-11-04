@@ -312,6 +312,7 @@ async function agentLeaderboardReport(limit, windowDays) {
 		from agent_hires h
 		left join agent_identities ai on ai.id = h.hirer_agent_id
 		where h.status = 'completed'
+		  and h.hirer_agent_id is not null
 		  and h.created_at >= now() - (${windowDays}::int * interval '1 day')
 		group by h.hirer_agent_id, ai.name, ai.meta->>'solana_address'
 		order by spend_usdc desc nulls last, last_hire_at desc

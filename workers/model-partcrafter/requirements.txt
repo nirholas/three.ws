@@ -11,8 +11,8 @@
 # src/pipelines/pipeline_partcrafter.py, nothing from upstream's training
 # environment.
 numpy==1.26.4
-diffusers==0.33.1
-transformers==4.52.4
+diffusers==0.38.0
+transformers==5.10.1
 accelerate==1.7.0
 einops==0.8.1
 omegaconf==2.3.0

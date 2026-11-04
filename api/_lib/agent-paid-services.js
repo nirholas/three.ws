@@ -171,6 +171,42 @@ export async function getActiveServiceBySlug(slug) {
 	return row || null;
 }
 
+// The Solana offers one agent sells publicly, cheapest first, for the hire
+// Blink card (api/actions/agent-hire.js). Only active, bazaar-listed rows that
+// carry a payout wallet: an unlisted offer is private to its owner, and an offer
+// with nowhere to settle cannot be paid from a wallet.
+export async function listSolanaServicesForAgent(agentId, { limit = 6 } = {}) {
+	const capped = Math.min(Math.max(1, limit | 0 || 6), 20);
+	return sql`
+		SELECT id, owner_user_id, agent_id, slug, name, description, price_atomics,
+		       target_url, target_method, input_schema, network, payout_address
+		FROM agent_paid_services
+		WHERE agent_id = ${agentId}
+		  AND network = 'solana'
+		  AND archived_at IS NULL
+		  AND bazaar_listed = true
+		  AND payout_address IS NOT NULL AND payout_address <> ''
+		ORDER BY price_atomics::numeric ASC, created_at DESC
+		LIMIT ${capped}
+	`;
+}
+
+// One service by id, archived or not. A wallet that already paid for a hire is
+// owed its result even if the owner archived the offer while the payment was in
+// flight, so settlement reads the row it priced against, never only live ones.
+export async function getServiceById(id) {
+	if (!id || typeof id !== 'string') return null;
+	const [row] = await sql`
+		SELECT id, owner_user_id, agent_id, slug, name, description, price_atomics,
+		       target_url, target_method, input_schema, network, payout_address,
+		       archived_at
+		FROM agent_paid_services
+		WHERE id = ${id}
+		LIMIT 1
+	`;
+	return row || null;
+}
+
 // Active, bazaar-listed services for the discovery doc. Capped so a flood of
 // listings can't bloat the heavily-crawled /.well-known/x402.json payload.
 export async function listBazaarServices({ limit = 200 } = {}) {

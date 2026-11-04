@@ -9,6 +9,15 @@
 // ledger query — so the invariants that matter (hires are their own bucket; the
 // total sums all three without double-counting) are unit-testable in full.
 
+// A hire paid straight from a wallet (the hire Blink, api/actions/agent-hire.js)
+// has no hiring agent, only the paying wallet. Every hire feed names that
+// counterparty by its wallet rather than calling it "Agent".
+export function walletLabel(address) {
+	const a = typeof address === 'string' ? address.trim() : '';
+	if (a.length < 12) return 'Wallet';
+	return `Wallet ${a.slice(0, 4)}...${a.slice(-4)}`;
+}
+
 function num(v) {
 	const n = Number(v);
 	return Number.isFinite(n) ? n : 0;

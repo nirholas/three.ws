@@ -5,6 +5,9 @@
 		{ "pathPattern": "/api/actions/agent-tip", "apiPath": "/api/actions/agent-tip" },
 		{ "pathPattern": "/api/actions/agent-tip?*", "apiPath": "/api/actions/agent-tip?*" },
 		{ "pathPattern": "/api/actions/agent-buy-coin", "apiPath": "/api/actions/agent-buy-coin" },
-		{ "pathPattern": "/api/actions/agent-buy-coin?*", "apiPath": "/api/actions/agent-buy-coin?*" }
+		{ "pathPattern": "/api/actions/agent-buy-coin?*", "apiPath": "/api/actions/agent-buy-coin?*" },
+		{ "pathPattern": "/api/actions/agent-hire", "apiPath": "/api/actions/agent-hire" },
+		{ "pathPattern": "/api/actions/agent-hire?*", "apiPath": "/api/actions/agent-hire?*" },
+		{ "pathPattern": "/agents/*/hire", "apiPath": "/api/actions/agent-hire?agent=*" }
 	]
 }

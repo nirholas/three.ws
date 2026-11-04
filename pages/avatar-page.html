@@ -125,11 +125,21 @@
 				font-family: inherit;
 				transition:
 					color var(--duration-fast),
-					border-color var(--duration-fast);
+					border-color var(--duration-fast),
+					transform var(--duration-fast);
 			}
 			.av-share-btn:hover {
 				color: var(--text);
 				border-color: var(--text-3);
+			}
+			.av-share-btn:focus-visible {
+				outline: 2px solid var(--accent, #7c9cff);
+				outline-offset: 2px;
+				color: var(--text);
+			}
+			.av-share-btn:active {
+				transform: translateY(1px);
+				border-color: var(--text-2);
 			}
 			.av-share-btn.copied {
 				color: var(--success);
@@ -1922,6 +1932,9 @@
 			<div class="av-actionbar-center" id="view-switch-slot"></div>
 			<div class="av-share-group">
 				<button class="av-share-btn" id="share-link" data-i18n="avatar_page.copy_link">Copy link</button>
+				<button class="av-share-btn" id="share-hire" type="button" hidden
+					title="Copy a link anyone can hire this agent from, right in their Solana wallet or feed"
+					data-i18n="avatar_page.share_hire_link">Share hire link</button>
 				<a class="av-share-btn" id="share-twitter" target="_blank" rel="noopener"
 					 data-i18n="avatar_page.share_on_x">Share on X</a
 				>

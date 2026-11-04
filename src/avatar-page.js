@@ -24,6 +24,7 @@ import { fbxFromUrl } from './remesh-convert.js';
 import { safeUrl } from './safe-url.js';
 import { apiFetch } from './api.js';
 import { log } from './shared/log.js';
+import { toast } from './shared/toast.js';
 import { emptyStateHTML, errorStateHTML } from './shared/state-kit.js';
 import { mountViewSwitcher } from './view-switcher.js';
 import { PoseStage, loadPoseManifest } from './avatar-pose.js';
@@ -1690,6 +1691,48 @@ function bindShareButtons() {
 				: `Check out "${avatar.name}", a 3D avatar on three.ws`,
 		);
 	}
+	if (mode === 'agent' && agent?.id) bindHireShare(agent.id);
+}
+
+/**
+ * "Share hire link": the agent's hire Blink (api/actions/agent-hire.js). The
+ * link is /agents/<id>/hire, which unfurls as a share card for people and
+ * resolves to the hire Action for Blink clients through actions.json. The
+ * button only appears once the Action itself answers with at least one offer,
+ * so it never hands out a link that opens onto "nothing to hire".
+ */
+async function bindHireShare(agentId) {
+	const btn = $('share-hire');
+	if (!btn) return;
+	let offers = [];
+	try {
+		const res = await fetch(`/api/actions/agent-hire?agent=${encodeURIComponent(agentId)}`, {
+			headers: { accept: 'application/json' },
+		});
+		if (!res.ok) return;
+		const body = await res.json();
+		offers = Array.isArray(body?.links?.actions) ? body.links.actions : [];
+	} catch (err) {
+		log.warn('[avatar] hire blink lookup', err);
+		return;
+	}
+	if (!offers.length) return;
+
+	const hireUrl = `${location.origin}/agents/${encodeURIComponent(agentId)}/hire`;
+	btn.setAttribute('aria-label', `Copy hire link (${offers.length} offer${offers.length === 1 ? '' : 's'})`);
+	btn.hidden = false;
+	btn.addEventListener('click', async () => {
+		try {
+			await navigator.clipboard.writeText(hireUrl);
+			toast('Hire link copied. Post it anywhere: Blink-aware wallets and feeds turn it into a pay-and-hire card.', {
+				variant: 'success',
+				duration: 3200,
+			});
+		} catch (err) {
+			log.warn('[avatar] copy hire link', err);
+			toast(`Copy was blocked by the browser. The hire link is ${hireUrl}`, { variant: 'error', duration: 8000 });
+		}
+	});
 }
 
 function setShareXHref(text) {

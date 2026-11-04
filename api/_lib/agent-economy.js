@@ -15,6 +15,7 @@
 import { publicRegistry8004 } from './solana-8004.js';
 import { sql } from './db.js';
 import { cdnUrlOrNull } from './r2.js';
+import { walletLabel } from './economy-shape.js';
 
 export function atomicsToUsdc(atomics) {
 	return Number(atomics || 0) / 1_000_000;
@@ -26,6 +27,11 @@ export function atomicsToUsdc(atomics) {
 function avatarThumb(thumbKey, visibility) {
 	const visible = visibility === 'public' || visibility === 'unlisted';
 	return thumbKey && visible ? cdnUrlOrNull(thumbKey) : null;
+}
+
+function hirerLabel(row) {
+	if (row.hirer_agent_id) return row.hirer_name || 'Agent';
+	return walletLabel(row.payer_address);
 }
 
 function shapeProvider(row) {
@@ -124,6 +130,110 @@ export async function updateHire(id, patch = {}) {
 		RETURNING *
 	`;
 	return row || null;
+}
+
+// ── Wallet hires (the hire Blink) ─────────────────────────────────────────
+//
+// A hire paid straight from a Solana wallet through api/actions/agent-hire.js
+// has no hiring agent or account: hirer_agent_id and hirer_user_id stay null and
+// payer_address names who paid. meta carries the Solana Pay reference the
+// payment is located by, the validated offer input, and the cluster it was
+// priced on. Settlement (api/_lib/hire-blink.js) claims a row before it runs the
+// offer so the confirm callback and the sweep cron can never run it twice.
+
+const BLINK_REUSE_WINDOW = '10 minutes';
+const BLINK_CLAIM_LEASE = '2 minutes';
+
+/**
+ * The open Blink hire the same wallet started for the same offer and input a
+ * moment ago, so a wallet that re-opens the Blink (or retries a dropped
+ * request) pays against one row instead of littering the ledger.
+ */
+export async function findReusableBlinkHire({ payerAddress, serviceId, inputHash, cluster }) {
+	const [row] = await sql`
+		SELECT * FROM agent_hires
+		WHERE hirer_agent_id IS NULL
+		  AND status = 'pending'
+		  AND payer_address = ${payerAddress}
+		  AND service_id = ${serviceId}
+		  AND meta->>'source' = 'blink'
+		  AND meta->>'input_hash' = ${inputHash}
+		  AND meta->>'cluster' = ${cluster}
+		  AND meta->>'claimed_at' IS NULL
+		  AND created_at > now() - ${BLINK_REUSE_WINDOW}::interval
+		ORDER BY created_at DESC
+		LIMIT 1
+	`;
+	return row || null;
+}
+
+/** Insert a pending wallet hire. The caller has already validated every field. */
+export async function recordBlinkHire({
+	providerAgentId,
+	providerUserId,
+	serviceId,
+	serviceSlug,
+	skillName,
+	amountAtomics,
+	usd,
+	payerAddress,
+	payoutAddress,
+	meta,
+}) {
+	const [row] = await sql`
+		INSERT INTO agent_hires
+			(hirer_agent_id, hirer_user_id, provider_agent_id, provider_user_id,
+			 service_id, service_slug, skill_name, amount_atomics, usd, currency,
+			 network, status, payer_address, payout_address, meta)
+		VALUES (
+			NULL, NULL, ${providerAgentId}, ${providerUserId},
+			${serviceId}, ${serviceSlug}, ${skillName}, ${String(amountAtomics)},
+			${usd}, 'USDC', 'solana', 'pending', ${payerAddress}, ${payoutAddress},
+			${JSON.stringify(meta ?? {})}::jsonb
+		)
+		RETURNING *
+	`;
+	return row;
+}
+
+/**
+ * Atomically take the right to settle one pending Blink hire. Returns the row
+ * when this caller won it, or null when the hire is no longer pending or another
+ * settler holds a fresh lease. A lease older than BLINK_CLAIM_LEASE is treated
+ * as abandoned (the settler crashed mid-run) and can be taken over.
+ */
+export async function claimBlinkHire(id, { signature }) {
+	const [row] = await sql`
+		UPDATE agent_hires
+		SET meta = meta || jsonb_build_object('claimed_at', now(), 'claim_signature', ${signature}::text),
+		    updated_at = now()
+		WHERE id = ${id}
+		  AND status = 'pending'
+		  AND hirer_agent_id IS NULL
+		  AND (meta->>'claimed_at' IS NULL
+		       OR (meta->>'claimed_at')::timestamptz < now() - ${BLINK_CLAIM_LEASE}::interval)
+		RETURNING *
+	`;
+	return row || null;
+}
+
+/**
+ * Pending Blink hires old enough that the buyer's wallet should have chained
+ * the confirm callback by now. The sweep cron settles the ones that were paid
+ * and expires the ones that never will be.
+ */
+export async function listOpenBlinkHires({ olderThanSeconds = 60, limit = 50 } = {}) {
+	const lim = Math.min(200, Math.max(1, Number(limit) || 50));
+	const age = Math.max(0, Math.floor(Number(olderThanSeconds) || 0));
+	return sql`
+		SELECT * FROM agent_hires
+		WHERE status = 'pending'
+		  AND hirer_agent_id IS NULL
+		  AND meta->>'source' = 'blink'
+		  AND created_at < now() - (${age} || ' seconds')::interval
+		ORDER BY created_at ASC
+		LIMIT ${lim}
+	`;
 }
 
 /** Set the hirer's 1–5 rating on a completed hire (one rating, owner-gated). */
@@ -354,7 +464,7 @@ function shapeHire(r, viewerAgentId) {
 		direction: isHirer ? 'outlay' : 'income',
 		counterparty: {
 			agent_id: isHirer ? r.provider_agent_id : r.hirer_agent_id,
-			name: (isHirer ? r.provider_name : r.hirer_name) || 'Agent',
+			name: isHirer ? r.provider_name || 'Agent' : hirerLabel(r),
 		},
 		payment_signature: r.payment_signature || null,
 		invocation_signature: r.invocation_signature || null,
@@ -450,7 +560,7 @@ export async function platformEconomyStats({
 			SELECT
 				COALESCE(SUM(usd) FILTER (WHERE status = 'completed'), 0)                       AS volume_usd,
 				COUNT(*) FILTER (WHERE status = 'completed')                                    AS hires,
-				COUNT(DISTINCT hirer_agent_id) FILTER (WHERE status = 'completed')              AS unique_hirers,
+				COUNT(DISTINCT COALESCE(hirer_agent_id::text, 'wallet:' || payer_address)) FILTER (WHERE status = 'completed') AS unique_hirers,
 				COUNT(DISTINCT provider_agent_id) FILTER (WHERE status = 'completed' AND provider_agent_id IS NOT NULL) AS unique_providers,
 				AVG(usd) FILTER (WHERE status = 'completed')                                    AS avg_hire_usd,
 				COALESCE(SUM(usd) FILTER (WHERE status = 'completed' AND completed_at > now() - interval '24 hours'), 0) AS volume_24h_usd,
@@ -512,6 +622,7 @@ export async function platformEconomyStats({
 			LEFT JOIN agent_identities ai ON ai.id = h.hirer_agent_id AND ai.deleted_at IS NULL
 			LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 			WHERE h.status = 'completed'
+			  AND h.hirer_agent_id IS NOT NULL
 			  AND h.completed_at > now() - (${win} || ' days')::interval
 			GROUP BY h.hirer_agent_id, ai.id, ai.name, ai.is_public, av.thumbnail_key, av.visibility
 			ORDER BY spent_usd DESC
@@ -525,7 +636,7 @@ export async function platformEconomyStats({
 			SELECT
 				h.id, h.skill_name, h.service_slug, h.usd, h.amount_atomics,
 				h.currency, h.network, h.payment_signature, h.completed_at,
-				h.hirer_agent_id, h.provider_agent_id,
+				h.hirer_agent_id, h.provider_agent_id, h.payer_address,
 				hr.name AS hirer_name, pr.name AS provider_name,
 				(hr.id IS NOT NULL AND hr.is_public IS NOT FALSE) AS hirer_linkable,
 				(pr.id IS NOT NULL AND pr.is_public IS NOT FALSE) AS provider_linkable
@@ -584,7 +695,7 @@ export async function platformEconomyStats({
 				completed_at: r.completed_at,
 				hirer: {
 					agent_id: r.hirer_agent_id,
-					name: r.hirer_name || 'Agent',
+					name: hirerLabel(r),
 					url: r.hirer_linkable && r.hirer_agent_id ? `/agents/${r.hirer_agent_id}` : null,
 				},
 				provider: {

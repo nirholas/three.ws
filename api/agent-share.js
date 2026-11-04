@@ -4,6 +4,7 @@
  * GET /api/agent-share?id=<agentId>
  *
  * Wired via vercel.json: /agents/<agentId>/share → /api/agent-share?id=$1
+ *                        /agents/<agentId>/hire  → /api/agent-share?id=$1&hire=1
  *
  * Bakes Open Graph + Twitter Card + Farcaster Frame meta into <head> so social
  * crawlers render a rich preview with the agent's name, avatar, and on-chain
@@ -80,20 +81,32 @@ export default wrap(async (req, res) => {
 	// loop: a wallet worth screenshotting that links back to pay or fork it.
 	const walletShare = url.searchParams.get('wallet') === '1';
 
+	// "Share hire link" variant (?hire=1, served at /agents/<id>/hire). The same
+	// URL is the agent's hire Blink: actions.json maps /agents/*/hire to
+	// /api/actions/agent-hire, so Blink-aware wallets and feeds render a
+	// pay-and-hire card from it, while everything else gets this share card.
+	const hireShare = !walletShare && url.searchParams.get('hire') === '1';
+
 	const ogImage  = `${origin}/api/og/agent?id=${encodeURIComponent(id)}`;
-	const pageUrl  = `${origin}/agents/${encodeURIComponent(id)}/share${walletShare ? '?wallet=1' : ''}`;
+	const pageUrl  = hireShare
+		? `${origin}/agents/${encodeURIComponent(id)}/hire`
+		: `${origin}/agents/${encodeURIComponent(id)}/share${walletShare ? '?wallet=1' : ''}`;
 	const deepUrl  = walletShare
 		? `${origin}/agents/${encodeURIComponent(id)}/wallet`
 		: `${origin}/agents/${encodeURIComponent(id)}`;
 
 	const title = walletShare
 		? `Tip ${name}'s wallet · 3D AI Agent · three.ws`
-		: isOnchain
-			? `${name} · 3D AI Agent on ${chainLabel} · three.ws`
-			: `${name} · 3D AI Agent · three.ws`;
+		: hireShare
+			? `Hire ${name} · 3D AI Agent · three.ws`
+			: isOnchain
+				? `${name} · 3D AI Agent on ${chainLabel} · three.ws`
+				: `${name} · 3D AI Agent · three.ws`;
 	const desc  = walletShare
 		? `${name} is a self-custodial 3D AI agent on three.ws. Tip it, or fork it to mint your own wallet.`
-		: buildDesc({ description, isOnchain, chainLabel });
+		: hireShare
+			? `Hire ${name} on three.ws: pay in USDC from your Solana wallet and get the result back in the same card.`
+			: buildDesc({ description, isOnchain, chainLabel });
 
 	// For a wallet share, always use the SVG card (it carries the wallet identity);
 	// otherwise prefer the richer raw thumbnail when the avatar is public.

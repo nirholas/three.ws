@@ -265,6 +265,38 @@ describe('an unconfigured bucket degrades the image, never the page', () => {
 	});
 });
 
+// The "Share hire link" button copies /agents/<id>/hire. actions.json maps that
+// path to the hire Blink for wallet clients; everyone else (and every crawler)
+// is routed here with ?hire=1 and must get a hire-specific card whose canonical
+// URL is the same /hire link, not the plain profile share.
+describe('agent-share hire variant', () => {
+	it('renders a hire card whose canonical URL is the shared /hire link', async () => {
+		sqlMock.mockResolvedValue([{
+			id: AGENT, name: 'Probe', description: 'A probe agent', chain_id: null,
+			erc8004_agent_id: null, meta: null, thumbnail_key: null, storage_key: null, visibility: 'public',
+		}]);
+		const res = mkRes();
+		await agentShare(mkReq({ url: `/api/agent-share?id=${AGENT}&hire=1` }), res);
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toContain('<title>Hire Probe');
+		expect(res.body).toMatch(/og:description" content="Hire Probe on three\.ws: pay in USDC from your Solana wallet/);
+		expect(res.body).toContain(`<link rel="canonical" href="https://three.ws/agents/${AGENT}/hire">`);
+		// People land on the agent page itself.
+		expect(res.body).toContain(`window.location.replace("https://three.ws/agents/${AGENT}")`);
+	});
+
+	it('leaves the plain profile share untouched', async () => {
+		sqlMock.mockResolvedValue([{
+			id: AGENT, name: 'Probe', description: 'A probe agent', chain_id: null,
+			erc8004_agent_id: null, meta: null, thumbnail_key: null, storage_key: null, visibility: 'public',
+		}]);
+		const res = mkRes();
+		await agentShare(mkReq({ url: `/api/agent-share?id=${AGENT}` }), res);
+		expect(res.body).not.toContain('Hire Probe');
+		expect(res.body).toContain(`/agents/${AGENT}/share">`);
+	});
+});
+
 describe('agent-screen-stream tells a viewer the agent is dark', () => {
 	it('emits dark once up front when no frame store is configured', async () => {
 		sqlMock.mockResolvedValue([{ name: 'Probe' }]);
