@@ -1,17 +1,17 @@
-# generate-3d-model — full reference
+# generate-3d-model - full reference
 
 Loaded on demand. The free text→3D path in `SKILL.md` covers most needs; this file
 documents the art-directed lanes, the raw REST pipeline, and tuning.
 
 ## The three.ws generation lanes
 
-Every lane produces the same artifact — a textured **GLB** plus a viewer link. They
+Every lane produces the same artifact - a textured **GLB** plus a viewer link. They
 differ in how the mesh is reconstructed and in fidelity.
 
 | Lane | Tool | Cost | Input | Notes |
 | --- | --- | --- | --- | --- |
 | Free text→3D | `forge_free` | Free | text only | NVIDIA NIM / TRELLIS. Default for this skill. |
-| Art-directed | `mesh_forge` | Paid | text, image, or 1–4 multi-view images | IBM Granite "prompt director" refines the prompt, FLUX renders a reference, then TRELLIS / Hunyuan3D reconstruct. Higher single-subject fidelity. |
+| Art-directed | `mesh_forge` | Paid | text, image, or 1-4 multi-view images | IBM Granite "prompt director" refines the prompt, FLUX renders a reference, then TRELLIS / Hunyuan3D reconstruct. Higher single-subject fidelity. |
 | Avatar | `text_to_avatar` | Paid (free on the hosted studio) | text or image | Tuned for figures/characters. |
 
 The **hosted studio** at `https://three.ws/api/mcp-studio` exposes `forge_free`,
@@ -26,7 +26,7 @@ avatar lanes as paid, higher-fidelity options.
 
 | Tier | Speed | Mesh density |
 | --- | --- | --- |
-| `draft` | fastest (default) | light — good for previews |
+| `draft` | fastest (default) | light - good for previews |
 | `standard` | balanced | medium |
 | `high` | slowest | densest |
 
@@ -38,7 +38,7 @@ All three are free. Higher tiers cost only time.
   brass studs, deep oxblood"`.
 - Describe **one** object. The lane reconstructs a single subject; scenes and
   multiple objects degrade quality.
-- Name the **material and finish** (matte / glossy / metallic / ceramic) — it
+- Name the **material and finish** (matte / glossy / metallic / ceramic) - it
   drives the texture far more than adjectives like "cool" or "nice".
 - Keep it under ~77 meaningful characters of subject description for the free lane.
 
