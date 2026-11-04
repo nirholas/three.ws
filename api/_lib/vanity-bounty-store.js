@@ -4,8 +4,8 @@
  * Stores the bounty board, the escrow record (USDC the requester paid up front
  * via x402, held until a winning claim or expiry), and the single, atomic
  * open→settled transition that picks exactly one winner. Mirrors the rest of the
- * codebase: Upstash Redis when configured, an in-process Map fallback otherwise
- * (so local/CI works and a Redis outage degrades rather than throwing).
+ * codebase: Postgres when a database is configured, an in-process Map otherwise
+ * (so local/CI works).
  *
  * ── Secret-blind by construction ─────────────────────────────────────────────
  * A stored bounty NEVER holds a private key or seed, only the requester's PUBLIC
@@ -31,24 +31,17 @@
  * a retried settle isn't a double-pay). Expiry refunds are gated by the same
  * compare-and-set on open→refunded, so a bounty can never both pay AND refund.
  *
- * Layout (Redis):
- *   HASH  vanity:bounty:rec               field=id → JSON(bounty record)
- *   ZSET  vanity:bounty:open              member=id  score=expiresAt(ms)   (live board)
- *   ZSET  vanity:bounty:by-recency        member=id  score=createdAt(ms)
- *   ZSET  vanity:bounty:leaderboard       member=workerId  score=earnedAtomics (top grinders)
+ * Storage: Postgres is the source of truth (tables `vanity_bounties` and
+ * `vanity_bounty_events`, migration 20261105120000_vanity_bounties.sql), so a
+ * Redis flush or eviction cannot lose escrow, payout or refund history. Every
+ * state change is ONE guarded statement (UPDATE ... WHERE status = <expected>),
+ * which is what makes the open->settled and open->refunded transitions atomic.
+ * Only when no database is configured (local dev, CI) does the in-process Map
+ * serve, and it is never used once a database is configured.
  */
 
-import { getRedis } from './redis.js';
-
-const NS = 'vanity:bounty';
-const K = {
-	rec: `${NS}:rec`,
-	open: `${NS}:open`,
-	byRecency: `${NS}:by-recency`,
-	leaderboard: `${NS}:leaderboard`,
-};
-
-const MAX_SCAN = 500;
+import { sql } from './db.js';
+import { databaseConfigured } from './env.js';
 
 // Statuses a bounty holds before (or instead of) going live. Neither is a real
 // bounty: they never reach the board, the claim queue, or the stats totals.
@@ -68,7 +61,12 @@ const PUBLIC_FIELDS = Object.freeze([
 	'winnerAddress', 'winnerWorkerId', 'payoutTx', 'refundTx', 'label',
 ]);
 
-const mem = new Map(); // id → record (fallback store)
+// In-process store, used only when no database is configured (local dev, CI).
+const mem = new Map(); // id → record
+
+function usePg() {
+	return databaseConfigured();
+}
 
 /** Project a record to its public board shape (no sealed envelope, no escrow proof). */
 export function toPublicBounty(rec) {
@@ -76,8 +74,16 @@ export function toPublicBounty(rec) {
 	const out = {};
 	for (const k of PUBLIC_FIELDS) if (rec[k] !== undefined) out[k] = rec[k];
 	if (!out.id) return null;
-	// Never leak the sealed envelope or any escrow secret on the public view.
 	return out;
+}
+
+function num(v) {
+	const n = Number(v);
+	return Number.isFinite(n) ? n : 0;
+}
+
+function duplicate() {
+	return Object.assign(new Error('bounty id collision'), { status: 409, code: 'duplicate_bounty' });
 }
 
 /**
@@ -86,84 +92,64 @@ export function toPublicBounty(rec) {
  * actually funded it.
  *
  * Pass `status: 'escrow_pending'` (what api/vanity/bounties.js does) to record the
- * bounty WITHOUT indexing it: it stays off the board and out of the claim queue
- * until `activateBounty` confirms the escrow settled. A record created straight
- * into `open` is indexed immediately, which is only correct when the caller has
- * already collected the escrow.
+ * bounty WITHOUT making it live: it stays off the board and out of the claim queue
+ * until `activateBounty` confirms the escrow settled.
  *
  * @param {object} rec - fully-formed bounty record (see api/vanity/bounties.js).
  * @returns {Promise<object>} the stored record.
  */
 export async function createBounty(rec) {
 	const record = { ...rec, status: rec.status || 'open' };
-	const indexed = record.status === 'open';
-	const redis = getRedis();
-	if (redis) {
-		// Claim the id atomically FIRST (hsetnx) so a (astronomically unlikely)
-		// collision can't repoint the index ZSETs at an existing record. Only on a
-		// fresh insert do we add the board/recency index entries.
-		const created = await redis.hsetnx(K.rec, record.id, JSON.stringify(record));
-		if (created === 0 || created === false) {
-			throw Object.assign(new Error('bounty id collision'), { status: 409, code: 'duplicate_bounty' });
-		}
-		if (indexed) {
-			const pipe = redis.multi();
-			pipe.zadd(K.open, { score: record.expiresAt, member: record.id });
-			pipe.zadd(K.byRecency, { score: record.createdAt, member: record.id });
-			await pipe.exec();
-		}
-	} else {
-		if (mem.has(record.id)) {
-			throw Object.assign(new Error('bounty id collision'), { status: 409, code: 'duplicate_bounty' });
-		}
-		mem.set(record.id, record);
+	if (usePg()) {
+		const json = JSON.stringify(record);
+		const rows = await sql`
+			with ins as (
+				insert into vanity_bounties (id, status, record, created_at, expires_at, amount_atomics)
+				values (${String(record.id)}, ${record.status}, ${json}::jsonb, ${num(record.createdAt)},
+					${record.expiresAt == null ? null : num(record.expiresAt)}, ${num(record.amountAtomics)})
+				on conflict (id) do nothing
+				returning id
+			)
+			insert into vanity_bounty_events (bounty_id, kind, at, data)
+			select id, 'created', ${Date.now()}, jsonb_build_object('status', ${record.status}::text) from ins
+			returning bounty_id`;
+		if (!rows.length) throw duplicate();
+		return record;
 	}
+	if (mem.has(record.id)) throw duplicate();
+	mem.set(record.id, record);
 	return record;
 }
 
-// Atomic escrow_pending→open compare-and-set, run only once the x402 escrow has
-// really settled on-chain. Indexes the bounty in the same call, so it becomes
-// board-visible and claimable at the instant it becomes funded, never before.
-// Idempotent: re-activating an already-open bounty returns 1.
-// Returns 1=live, 0=wrong-status, -2=missing.
-const ACTIVATE_LUA = `
-local raw = redis.call('HGET', KEYS[1], ARGV[1])
-if not raw then return -2 end
-local rec = cjson.decode(raw)
-if rec.status == 'open' then return 1 end
-if rec.status ~= 'escrow_pending' then return 0 end
-rec.status = 'open'
-rec.escrowSettledAt = tonumber(ARGV[2])
-rec.escrowTx = ARGV[3]
-rec.escrowNetwork = ARGV[4]
-redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(rec))
-redis.call('ZADD', KEYS[2], tonumber(rec.expiresAt), ARGV[1])
-redis.call('ZADD', KEYS[3], tonumber(rec.createdAt), ARGV[1])
-return 1
-`;
-
 /**
- * Flip a pending bounty live now that its escrow settled on-chain, recording the
- * settlement tx as the audit trail. Idempotent.
+ * Atomic escrow_pending→open transition, run only once the x402 escrow has
+ * really settled on-chain, so a bounty becomes board-visible and claimable at the
+ * instant it becomes funded, never before. Idempotent: re-activating an
+ * already-open bounty reports 'live'.
  *
- * @param {object} p
- * @param {string} p.id
- * @param {string} [p.escrowTx] - the x402 settlement transaction.
- * @param {string} [p.escrowNetwork] - the network the escrow settled on.
- * @returns {Promise<'live'|'ineligible'|'missing'>}
+ * @returns {Promise<'live'|'missing'|'ineligible'>}
  */
 export async function activateBounty({ id, escrowTx, escrowNetwork }) {
 	const now = Date.now();
-	const redis = getRedis();
-	if (redis) {
-		const r = Number(await redis.eval(
-			ACTIVATE_LUA,
-			[K.rec, K.open, K.byRecency],
-			[String(id), String(now), String(escrowTx || ''), String(escrowNetwork || '')],
-		));
-		if (r === 1) return 'live';
-		if (r === -2) return 'missing';
-		return 'ineligible';
+	if (usePg()) {
+		const [row] = await sql`
+			with cur as (select status from vanity_bounties where id = ${String(id)}),
+			upd as (
+				update vanity_bounties
+				set status = 'open',
+					record = record || jsonb_build_object('status', 'open'::text, 'escrowSettledAt', ${now}::bigint,
+						'escrowTx', ${String(escrowTx || '')}::text, 'escrowNetwork', ${String(escrowNetwork || '')}::text)
+				where id = ${String(id)} and status = 'escrow_pending'
+				returning id
+			),
+			ev as (
+				insert into vanity_bounty_events (bounty_id, kind, at, data)
+				select id, 'activated', ${now}, jsonb_build_object('escrowTx', ${String(escrowTx || '')}::text) from upd
+				returning 1
+			)
+			select (select status from cur) as prev, (select count(*) from upd)::int as changed`;
+		if (row.changed === 1 || row.prev === 'open') return 'live';
+		return row.prev == null ? 'missing' : 'ineligible';
 	}
 	const rec = mem.get(String(id));
 	if (!rec) return 'missing';
@@ -177,39 +163,33 @@ export async function activateBounty({ id, escrowTx, escrowNetwork }) {
 	return 'live';
 }
 
-// Atomic escrow_pending→void compare-and-set for a bounty whose escrow never
-// settled. A void bounty was never indexed, so voiding is purely a status +
-// reason write: it can never be claimed, refunded, or listed. Idempotent.
-const VOID_LUA = `
-local raw = redis.call('HGET', KEYS[1], ARGV[1])
-if not raw then return -2 end
-local rec = cjson.decode(raw)
-if rec.status == 'void' then return 1 end
-if rec.status ~= 'escrow_pending' then return 0 end
-rec.status = 'void'
-rec.voidedAt = tonumber(ARGV[2])
-rec.voidReason = ARGV[3]
-redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(rec))
-return 1
-`;
-
 /**
- * Void a pending bounty whose escrow failed to settle, so the unfunded record can
- * never be claimed or refunded. Idempotent.
+ * Atomic escrow_pending→void transition: the escrow settle failed, so the bounty
+ * can never go live and can never be claimed or refunded. Idempotent.
  *
- * @param {object} p
- * @param {string} p.id
- * @param {string} [p.reason] - why the escrow never landed (audit trail).
- * @returns {Promise<'void'|'ineligible'|'missing'>}
+ * @returns {Promise<'void'|'missing'|'ineligible'>}
  */
 export async function voidBounty({ id, reason }) {
 	const now = Date.now();
-	const redis = getRedis();
-	if (redis) {
-		const r = Number(await redis.eval(VOID_LUA, [K.rec], [String(id), String(now), String(reason || '')]));
-		if (r === 1) return 'void';
-		if (r === -2) return 'missing';
-		return 'ineligible';
+	if (usePg()) {
+		const [row] = await sql`
+			with cur as (select status from vanity_bounties where id = ${String(id)}),
+			upd as (
+				update vanity_bounties
+				set status = 'void',
+					record = record || jsonb_build_object('status', 'void'::text, 'voidedAt', ${now}::bigint,
+						'voidReason', ${String(reason || '')}::text)
+				where id = ${String(id)} and status = 'escrow_pending'
+				returning id
+			),
+			ev as (
+				insert into vanity_bounty_events (bounty_id, kind, at, data)
+				select id, 'voided', ${now}, jsonb_build_object('reason', ${String(reason || '')}::text) from upd
+				returning 1
+			)
+			select (select status from cur) as prev, (select count(*) from upd)::int as changed`;
+		if (row.changed === 1 || row.prev === 'void') return 'void';
+		return row.prev == null ? 'missing' : 'ineligible';
 	}
 	const rec = mem.get(String(id));
 	if (!rec) return 'missing';
@@ -222,73 +202,56 @@ export async function voidBounty({ id, reason }) {
 	return 'void';
 }
 
-/** Fetch the full internal record by id (includes sealed envelope when settled). */
+/** Full record (including the sealed envelope + escrow proof). Server-side only. */
 export async function getBountyRecord(id) {
 	const key = String(id || '');
 	if (!key) return null;
-	const redis = getRedis();
-	if (redis) return parse(await redis.hget(K.rec, key));
+	if (usePg()) {
+		const [row] = await sql`select record from vanity_bounties where id = ${key}`;
+		return row ? parse(row.record) : null;
+	}
 	return mem.get(key) || null;
 }
 
-/** Fetch the public board view by id. */
+/** Public projection of one bounty (no sealed envelope). */
 export async function getBounty(id) {
 	return toPublicBounty(await getBountyRecord(id));
 }
 
-// Atomic open→settled compare-and-set. Idempotent on claimDigest: a retry of the
-// SAME winning claim returns won=1 again (so a settle retry after a transient
-// payout error doesn't pay a second worker), while a DIFFERENT claim on an
-// already-settled bounty returns won=0 (lost the race). Also rejects expired and
-// already-refunded bounties. Returns: 1=won, 0=lost, -1=not-open/expired, -2=missing.
-const CLAIM_LUA = `
-local raw = redis.call('HGET', KEYS[1], ARGV[1])
-if not raw then return -2 end
-local rec = cjson.decode(raw)
-if rec.status == 'settled' then
-  if rec.claimDigest == ARGV[2] then return 1 else return 0 end
-end
-if rec.status ~= 'open' then return -1 end
-local now = tonumber(ARGV[5])
-if rec.expiresAt and now > tonumber(rec.expiresAt) then return -1 end
-rec.status = 'settled'
-rec.claimDigest = ARGV[2]
-rec.winnerAddress = ARGV[3]
-rec.winnerWorkerId = ARGV[4]
-rec.settledAt = now
-rec.sealedSecret = cjson.decode(ARGV[6])
-redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(rec))
-redis.call('ZREM', KEYS[2], ARGV[1])
-return 1
-`;
-
 /**
- * Atomically claim a bounty for a worker. The FIRST valid claim wins; every later
- * one loses (idempotent on the same claimDigest). Records the winner + sealed
- * envelope on the record but leaves payout to the caller (so payout failure can
- * be retried without re-racing). Returns a status enum the caller maps to a
- * response.
+ * Atomic open→settled transition: the first caller wins; any later caller, even
+ * with a different valid key, loses. Re-submitting the SAME claim digest returns
+ * 'won' again so a retried settle is not a double-pay.
  *
- * @param {object} p
- * @param {string} p.id
- * @param {string} p.claimDigest - deterministic digest from bounty-protocol.
- * @param {string} p.winnerAddress - the ground Base58 address.
- * @param {string} p.workerId - the claiming worker's id (anonymous ok).
- * @param {object} p.sealedSecret - the ECIES envelope addressed to the requester.
- * @returns {Promise<'won'|'lost'|'closed'|'missing'>}
+ * @returns {Promise<'won'|'lost'|'missing'|'closed'>}
  */
 export async function claimBounty({ id, claimDigest, winnerAddress, workerId, sealedSecret }) {
 	const now = Date.now();
-	const redis = getRedis();
-	if (redis) {
-		const r = await redis.eval(
-			CLAIM_LUA,
-			[K.rec, K.open],
-			[String(id), String(claimDigest), String(winnerAddress), String(workerId || 'anon'), String(now), JSON.stringify(sealedSecret)],
-		);
-		return claimCode(Number(r));
+	if (usePg()) {
+		const worker = String(workerId || 'anon');
+		const [row] = await sql`
+			with cur as (select status, record->>'claimDigest' as digest from vanity_bounties where id = ${String(id)}),
+			upd as (
+				update vanity_bounties
+				set status = 'settled',
+					record = record || jsonb_build_object('status', 'settled'::text, 'claimDigest', ${String(claimDigest)}::text,
+						'winnerAddress', ${String(winnerAddress)}::text, 'winnerWorkerId', ${worker}::text,
+						'settledAt', ${now}::bigint, 'sealedSecret', ${JSON.stringify(sealedSecret ?? null)}::jsonb)
+				where id = ${String(id)} and status = 'open' and (expires_at is null or ${now}::bigint <= expires_at)
+				returning id
+			),
+			ev as (
+				insert into vanity_bounty_events (bounty_id, kind, at, data)
+				select id, 'settled', ${now}, jsonb_build_object('winnerAddress', ${String(winnerAddress)}::text,
+					'winnerWorkerId', ${worker}::text, 'claimDigest', ${String(claimDigest)}::text) from upd
+				returning 1
+			)
+			select (select status from cur) as prev, (select digest from cur) as digest, (select count(*) from upd)::int as changed`;
+		if (row.changed === 1) return 'won';
+		if (row.prev == null) return 'missing';
+		if (row.prev === 'settled') return row.digest === String(claimDigest) ? 'won' : 'lost';
+		return 'closed';
 	}
-	// Memory fallback: emulate the same compare-and-set semantics single-threaded.
 	const rec = mem.get(String(id));
 	if (!rec) return 'missing';
 	if (rec.status === 'settled') return rec.claimDigest === claimDigest ? 'won' : 'lost';
@@ -304,66 +267,65 @@ export async function claimBounty({ id, claimDigest, winnerAddress, workerId, se
 	return 'won';
 }
 
-function claimCode(n) {
-	if (n === 1) return 'won';
-	if (n === 0) return 'lost';
-	if (n === -2) return 'missing';
-	return 'closed';
-}
-
-/** Record the on-chain payout tx after a successful settle (idempotent set). */
+/**
+ * Record the on-chain payout of a settled bounty and credit the worker's total.
+ * Re-recording replaces the payout columns, so the leaderboard never double-counts.
+ */
 export async function recordPayout({ id, payoutTx, workerId, amountAtomics }) {
-	const rec = await getBountyRecord(id);
+	const now = Date.now();
+	if (usePg()) {
+		const worker = workerId && amountAtomics ? String(workerId) : null;
+		const amount = workerId && amountAtomics ? num(amountAtomics) : null;
+		const [row] = await sql`
+			with upd as (
+				update vanity_bounties
+				set payout_tx = ${String(payoutTx)}, payout_worker_id = ${worker}, payout_amount_atomics = ${amount},
+					record = record || jsonb_build_object('payoutTx', ${String(payoutTx)}::text, 'payoutAt', ${now}::bigint)
+				where id = ${String(id)}
+				returning record
+			),
+			ev as (
+				insert into vanity_bounty_events (bounty_id, kind, at, data)
+				select ${String(id)}, 'payout', ${now}, jsonb_build_object('payoutTx', ${String(payoutTx)}::text) from upd
+				returning 1
+			)
+			select record from upd`;
+		return row ? parse(row.record) : null;
+	}
+	const rec = mem.get(String(id));
 	if (!rec) return null;
 	rec.payoutTx = payoutTx;
-	rec.payoutAt = Date.now();
-	const redis = getRedis();
-	if (redis) {
-		const pipe = redis.multi();
-		pipe.hset(K.rec, { [id]: JSON.stringify(rec) });
-		if (workerId && amountAtomics) pipe.zincrby(K.leaderboard, Number(amountAtomics), String(workerId));
-		await pipe.exec();
-	} else {
-		mem.set(id, rec);
-	}
+	rec.payoutAt = now;
+	mem.set(String(id), rec);
 	return rec;
 }
 
-// Atomic open→refunded compare-and-set, only for EXPIRED bounties. Mutually
-// exclusive with settlement: a settled bounty can never be refunded and vice
-// versa. Idempotent: re-running on an already-refunded bounty returns 1 so a
-// retried refund doesn't error. Returns 1=refundable(now refunded), 0=not-eligible.
-const REFUND_LUA = `
-local raw = redis.call('HGET', KEYS[1], ARGV[1])
-if not raw then return -2 end
-local rec = cjson.decode(raw)
-if rec.status == 'refunded' then return 1 end
-if rec.status ~= 'open' then return 0 end
-local now = tonumber(ARGV[2])
-if not rec.expiresAt or now <= tonumber(rec.expiresAt) then return 0 end
-rec.status = 'refunded'
-rec.refundedAt = now
-redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(rec))
-redis.call('ZREM', KEYS[2], ARGV[1])
-return 1
-`;
-
 /**
- * Atomically mark an EXPIRED open bounty as refunded so its escrow can be paid
- * back to the requester exactly once. Returns 'refundable' (caller should now
- * send the on-chain refund), 'ineligible' (still live, or already settled), or
- * 'missing'. Mutually exclusive with claimBounty by construction.
- * @param {string} id
+ * Atomic open→refunded transition once a bounty has expired unclaimed. Gated like
+ * the settle, so a bounty can never both pay AND refund. Idempotent.
+ *
+ * @returns {Promise<'refundable'|'missing'|'ineligible'>}
  */
 export async function markRefundable(id) {
 	const now = Date.now();
-	const redis = getRedis();
-	if (redis) {
-		const r = await redis.eval(REFUND_LUA, [K.rec, K.open], [String(id), String(now)]);
-		const n = Number(r);
-		if (n === 1) return 'refundable';
-		if (n === -2) return 'missing';
-		return 'ineligible';
+	if (usePg()) {
+		const [row] = await sql`
+			with cur as (select status from vanity_bounties where id = ${String(id)}),
+			upd as (
+				update vanity_bounties
+				set status = 'refunded',
+					record = record || jsonb_build_object('status', 'refunded'::text, 'refundedAt', ${now}::bigint)
+				where id = ${String(id)} and status = 'open' and expires_at is not null and ${now}::bigint > expires_at
+				returning id
+			),
+			ev as (
+				insert into vanity_bounty_events (bounty_id, kind, at, data)
+				select id, 'refundable', ${now}, '{}'::jsonb from upd
+				returning 1
+			)
+			select (select status from cur) as prev, (select count(*) from upd)::int as changed`;
+		if (row.changed === 1 || row.prev === 'refunded') return 'refundable';
+		return row.prev == null ? 'missing' : 'ineligible';
 	}
 	const rec = mem.get(String(id));
 	if (!rec) return 'missing';
@@ -376,26 +338,38 @@ export async function markRefundable(id) {
 	return 'refundable';
 }
 
-/** Record the on-chain refund tx after a successful refund. */
+/** Record the on-chain refund of an expired bounty. */
 export async function recordRefund({ id, refundTx }) {
-	const rec = await getBountyRecord(id);
+	const now = Date.now();
+	if (usePg()) {
+		const [row] = await sql`
+			with upd as (
+				update vanity_bounties
+				set refund_tx = ${String(refundTx)},
+					record = record || jsonb_build_object('refundTx', ${String(refundTx)}::text, 'refundAt', ${now}::bigint)
+				where id = ${String(id)}
+				returning record
+			),
+			ev as (
+				insert into vanity_bounty_events (bounty_id, kind, at, data)
+				select ${String(id)}, 'refund', ${now}, jsonb_build_object('refundTx', ${String(refundTx)}::text) from upd
+				returning 1
+			)
+			select record from upd`;
+		return row ? parse(row.record) : null;
+	}
+	const rec = mem.get(String(id));
 	if (!rec) return null;
 	rec.refundTx = refundTx;
-	rec.refundAt = Date.now();
-	const redis = getRedis();
-	if (redis) await redis.hset(K.rec, { [id]: JSON.stringify(rec) });
-	else mem.set(id, rec);
+	rec.refundAt = now;
+	mem.set(String(id), rec);
 	return rec;
 }
 
 /**
- * Query the board.
- * @param {object} [q]
- * @param {'open'|'all'|'settled'} [q.status='open']
- * @param {'recency'|'expiry'|'reward'} [q.sort='recency']
- * @param {number} [q.limit=24]
- * @param {number} [q.offset=0]
- * @returns {Promise<{ bounties:object[], total:number, hasMore:boolean }>}
+ * Board query. `status`: 'open' (default, unexpired), 'settled', or anything else
+ * for every real (non-transient) bounty. `sort`: 'recency' (default), 'reward',
+ * 'expiry'. Returns public projections only.
  */
 export async function queryBounties(q = {}) {
 	const status = q.status || 'open';
@@ -404,23 +378,28 @@ export async function queryBounties(q = {}) {
 	const offset = Math.max(0, Number(q.offset) || 0);
 	const now = Date.now();
 
-	const redis = getRedis();
-	let recs;
-	if (redis) {
-		// `open` reads the live ZSET (and lazily filters out anything past expiry
-		// that hasn't been swept yet); everything else reads by-recency then filters.
-		const indexKey = status === 'open' ? K.open : K.byRecency;
-		const members = await redis.zrange(indexKey, 0, MAX_SCAN - 1, { rev: status !== 'open' });
-		if (!members.length) return { bounties: [], total: 0, hasMore: false };
-		const raw = await redis.hmget(K.rec, ...members);
-		recs = members.map((_, i) => parse(raw?.[i])).filter(Boolean);
-	} else {
-		recs = [...mem.values()];
+	if (usePg()) {
+		const where =
+			status === 'open'
+				? sql`status = 'open' and expires_at > ${now}`
+				: status === 'settled'
+					? sql`status = 'settled'`
+					: sql`status not in ('escrow_pending', 'void')`;
+		const order =
+			sort === 'reward'
+				? sql`amount_atomics desc, created_at desc`
+				: sort === 'expiry'
+					? sql`expires_at asc nulls last`
+					: sql`created_at desc`;
+		const [rows, [count]] = await Promise.all([
+			sql`select record from vanity_bounties where ${where} order by ${order} limit ${limit} offset ${offset}`,
+			sql`select count(*)::int as total from vanity_bounties where ${where}`,
+		]);
+		const total = count?.total || 0;
+		return { bounties: rows.map((r) => toPublicBounty(parse(r.record))), total, hasMore: offset + limit < total };
 	}
 
-	// A pending/void record has no escrow behind it, so it never appears on the
-	// board: not even under status=all, which reads the whole recency index.
-	let filtered = recs.filter((r) => !isTransient(r));
+	let filtered = [...mem.values()].filter((r) => !isTransient(r));
 	if (status === 'open') filtered = filtered.filter((r) => r.status === 'open' && r.expiresAt > now);
 	else if (status === 'settled') filtered = filtered.filter((r) => r.status === 'settled');
 
@@ -435,18 +414,16 @@ export async function queryBounties(q = {}) {
 	return { bounties: page, total, hasMore: offset + limit < total };
 }
 
-/** Open bounties only, oldest-expiry-first: the worker fleet's claim queue. */
+/** Open, unexpired bounties soonest-expiring first: what a grinder claims from. */
 export async function listClaimable(limit = 30) {
 	const now = Date.now();
-	const redis = getRedis();
-	if (redis) {
-		// Score is expiresAt; range from now upward returns only still-live bounties
-		// in expiry order (soonest-to-expire first: fill them before they refund).
-		const members = await redis.zrange(K.open, now, '+inf', { byScore: true });
-		const slice = members.slice(0, Math.max(1, Math.min(60, limit)));
-		if (!slice.length) return [];
-		const raw = await redis.hmget(K.rec, ...slice);
-		return slice.map((_, i) => parse(raw?.[i])).filter((r) => r && r.status === 'open').map(toPublicBounty);
+	const n = Math.max(1, Math.min(60, limit));
+	if (usePg()) {
+		const rows = await sql`
+			select record from vanity_bounties
+			where status = 'open' and expires_at > ${now}
+			order by expires_at asc limit ${n}`;
+		return rows.map((r) => toPublicBounty(parse(r.record)));
 	}
 	return [...mem.values()]
 		.filter((r) => r.status === 'open' && r.expiresAt > now)
@@ -455,20 +432,28 @@ export async function listClaimable(limit = 30) {
 		.map(toPublicBounty);
 }
 
-/** Aggregate board stats: open count, total escrowed, settled count, total paid. */
+/** Aggregate board stats over every real (non-transient) bounty. */
 export async function bountyStats() {
-	const redis = getRedis();
-	let recs;
-	if (redis) {
-		const all = await redis.hgetall(K.rec);
-		recs = all ? Object.values(all).map(parse).filter(Boolean) : [];
-	} else {
-		recs = [...mem.values()];
-	}
 	const now = Date.now();
-	// Pending/void records never became bounties, so they count toward nothing -
-	// including `total`, which is the number of bounties the market actually took.
-	const real = recs.filter((r) => !isTransient(r));
+	if (usePg()) {
+		const [r] = await sql`
+			select
+				count(*) filter (where status = 'open' and expires_at > ${now})::int as open,
+				coalesce(sum(amount_atomics) filter (where status = 'open' and expires_at > ${now}), 0)::text as open_escrow,
+				count(*) filter (where status = 'settled')::int as settled,
+				coalesce(sum(amount_atomics) filter (where status = 'settled'), 0)::text as paid_out,
+				count(*)::int as total
+			from vanity_bounties
+			where status not in ('escrow_pending', 'void')`;
+		return {
+			open: r.open,
+			openEscrowAtomics: Number(r.open_escrow),
+			settled: r.settled,
+			paidOutAtomics: Number(r.paid_out),
+			total: r.total,
+		};
+	}
+	const real = [...mem.values()].filter((r) => !isTransient(r));
 	let open = 0, openEscrow = 0, settled = 0, paidOut = 0;
 	for (const r of real) {
 		if (r.status === 'open' && r.expiresAt > now) { open++; openEscrow += r.amountAtomics || 0; }
@@ -477,20 +462,19 @@ export async function bountyStats() {
 	return { open, openEscrowAtomics: openEscrow, settled, paidOutAtomics: paidOut, total: real.length };
 }
 
-/** Top grinders by total USDC earned (the leaderboard). */
+/** Top earning workers by recorded payout. */
 export async function topGrinders(limit = 10) {
 	const n = Math.max(1, Math.min(50, Number(limit) || 10));
-	const redis = getRedis();
-	if (redis) {
-		const rows = await redis.zrange(K.leaderboard, 0, n - 1, { rev: true, withScores: true });
-		// withScores returns a flat [member, score, member, score, …] array.
-		const out = [];
-		for (let i = 0; i < rows.length; i += 2) {
-			out.push({ workerId: String(rows[i]), earnedAtomics: Number(rows[i + 1]) || 0 });
-		}
-		return out;
+	if (usePg()) {
+		const rows = await sql`
+			select payout_worker_id as worker_id, sum(payout_amount_atomics)::text as earned
+			from vanity_bounties
+			where payout_worker_id is not null and payout_tx is not null
+			group by payout_worker_id
+			order by sum(payout_amount_atomics) desc, payout_worker_id asc
+			limit ${n}`;
+		return rows.map((r) => ({ workerId: String(r.worker_id), earnedAtomics: Number(r.earned) || 0 }));
 	}
-	// Memory fallback: aggregate from settled records.
 	const tally = new Map();
 	for (const r of mem.values()) {
 		if (r.status === 'settled' && r.payoutTx && r.winnerWorkerId) {
@@ -505,11 +489,11 @@ export async function topGrinders(limit = 10) {
 
 function parse(raw) {
 	if (!raw) return null;
-	if (typeof raw === 'object') return raw; // Upstash auto-deserializes JSON
+	if (typeof raw === 'object') return raw;
 	try { return JSON.parse(raw); } catch { return null; }
 }
 
-// Test-only: reset the in-memory fallback between specs.
+/** Test seam: drop every in-memory record (the Postgres path is untouched). */
 export function __resetMemoryStore() {
 	mem.clear();
 }
