@@ -1,6 +1,6 @@
 # best3d 03: Rig non-humanoids: SkinTokens, UniRig and AniGen
 
-## Evolve status (2026-10-11, re-checked 2026-11-03: both services still undeployed)
+## Evolve status (2026-10-11, re-checked 2026-11-04: both services still undeployed; AniGen license re-verified)
 
 Built, tested and committed; NOT closed. Two Definition of done lines need an owner GPU deploy that this session cannot run (gate 2, deploy). What remains and who owns it:
 
