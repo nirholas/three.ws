@@ -10,7 +10,7 @@ Proof of Custody turns "trust us with your agent's wallet" into "check it yourse
 
 ## How it works
 
-A scheduled job runs every six hours: it reads each custodial wallet's live on-chain balance, combines it with the wallet address, a commitment to the wallet's activity-ledger head, and the epoch number into a hashed "leaf," builds a Merkle tree over all wallets, stores the tree, and anchors the root on Solana as a signed memo transaction. When the owner opens the tab, it fetches their private inclusion proof from an ownership-gated endpoint, then a verifier running entirely in the browser recomputes the leaf hash from the public facts, folds the Merkle path up to a root, fetches the anchor transaction straight from public Solana RPC nodes (deliberately not the platform's own infrastructure), and confirms the computed root matches the one committed on-chain. Server and browser share the exact same hashing module, so the prover and the verifier can never drift apart. Alongside the proof, the server reconciles the balance change since the previous epoch against the wallet's authorized withdraw/spend events, with a small allowance for network fees, and reports "reconciled" or "unexplained."
+A scheduled job runs every six hours: it reads each custodial wallet's live on-chain balance, combines it with the wallet address, a commitment to the wallet's activity-ledger head, and the epoch number into a hashed "leaf," builds a Merkle tree over all wallets, stores the tree, and anchors the root on Solana mainnet as a signed memo transaction. When the owner opens the tab, it fetches their private inclusion proof from an ownership-gated endpoint, then a verifier running entirely in the browser recomputes the leaf hash from the public facts, folds the Merkle path up to a root, fetches the anchor transaction straight from public Solana RPC nodes (deliberately not the platform's own infrastructure), and confirms the computed root matches the one committed on-chain. Server and browser share the exact same hashing module, so the prover and the verifier can never drift apart. Alongside the proof, the server reconciles the balance change since the previous epoch against the wallet's authorized withdraw/spend events, with a small allowance for network fees, and reports "reconciled" or "unexplained."
 
 ## Every feature
 
@@ -42,7 +42,9 @@ A scheduled job runs every six hours: it reads each custodial wallet's live on-c
 - Server and browser import the same hashing/Merkle module, pinned by golden tests, so proof and verification can never diverge
 - Wallets whose balance can't be read this round are skipped, never attested with a guessed balance — they're included again next epoch
 - Epoch and leaves are persisted atomically so a proof read can never see a half-written tree
-- Anchoring is best-effort: an unfunded or missing attester key records the epoch as pending/failed honestly instead of blocking, and it can be re-anchored later
+- Anchoring is best-effort: an unfunded or missing attester key records the epoch as pending/failed honestly instead of blocking (an unfunded payer is stored as `attester_unfunded:<network>`), and it can be re-anchored later. The root is anchored on Solana mainnet by default (`CUSTODY_ANCHOR_NETWORK=devnet` is for local runs only)
+- A failed anchor pages ops with one coalesced alert per outage, naming the attester and its balance
+- A memo that lands after the confirm wait is recorded as anchored, not failed: the wait uses the run's remaining time (25 to 60 seconds) and the chain is asked once more before a failure is stored
 - Reduced-motion and ARIA support throughout the loading and status states
 
 ## Guardrails & safety
@@ -66,7 +68,7 @@ The platform-wide aggregate is public:
 curl 'https://three.ws/api/custody/integrity'
 ```
 
-That endpoint is public and needs no account. The `/integrity` page that used to render it is switched off while on-chain anchoring is unavailable, so read the JSON directly (check `epochs_anchored` against `epochs_total` before treating a root as anchored). The standalone per-wallet verifier lives at `three.ws/proof`.
+That endpoint is public and needs no account. The `/integrity` page renders it: anchored epochs out of total, the newest anchored epoch re-verified in your browser, a banner when the latest epoch is not anchored yet, and a note on the backlog of early epochs recorded before the first on-chain anchor (those stay un-timestamped on purpose). Before treating a root as anchored in the raw JSON, check `epochs_anchored` against `epochs_total`. The standalone per-wallet verifier lives at `three.ws/proof`.
 
 ## API surface
 

@@ -158,12 +158,12 @@ With the defaults, the most the two payout programs can ever send is $100 a day 
 Both payout programs write committed payouts to one ledger table, `growth_program_payouts` (migration [`20260929120000_growth_program_payouts.sql`](../api/_lib/migrations/20260929120000_growth_program_payouts.sql)). `/api/cron/growth-payouts` runs at minute 23 of every hour. For each program it refuses to send unless all of these hold:
 
 1. The program's flag is set.
-2. The dedicated payout key is configured: `THREE_PRIZE_PAYOUT_KEY`, the same funded $THREE wallet the [Arena](./trading-arenas.md) pays tournament prizes from, so there is one payout wallet to watch. The Arena's fallback to the club treasury secret is deliberately not used here: on production that secret is the economy master (funding root) wallet, which these programs must never spend. As of 2026-09-29, `THREE_PRIZE_PAYOUT_KEY` is not set on production, so an armed payout program reports `payout_unconfigured` and sends nothing until it is.
+2. The dedicated payout key is configured: `THREE_PRIZE_PAYOUT_KEY`, the same funded $THREE wallet the [Arena](./trading-arenas.md) pays tournament prizes from, so there is one payout wallet to watch. The Arena's fallback to the club treasury secret is deliberately not used here: on production that secret is the economy master (funding root) wallet, which these programs must never spend. As of 2026-11-04 (read from the live service, unchanged since 2026-09-29), `THREE_PRIZE_PAYOUT_KEY` is not set on production, so an armed payout program reports `payout_unconfigured` and sends nothing until it is.
 3. The recipient is a valid Solana address and not a platform wallet (the treasury, the rewards pool, or the payout wallet itself).
 4. The payout fits under the program's rolling cap, summed over everything already sending or sent in the period. The queue is first-come-first-served: a payout that does not fit waits for the window to roll, and a smaller one behind it does not jump ahead.
 5. A live $THREE price is available. A payout never goes out at a guessed price.
 
-Each row moves to `sending` in a single compare-and-set before the transfer, so two overlapping runs can never pay it twice. The transfer is a Token-2022-aware `TransferChecked` ([`transferSplTokenChecked`](../api/_lib/solana-transfer.js)), sent through the platform's protected send path. A row that is left in `sending` after a crash is never retried automatically: reconcile it by hand against the chain.
+Each row moves to `sending` in a single compare-and-set before the transfer, so two overlapping runs can never pay it twice. The transfer is a Token-2022-aware `TransferChecked` ([`transferSplTokenChecked`](../api/_lib/solana-transfer.js)), sent through the platform's protected send path on an uncached RPC connection (`fresh: true`), so its reads skip the shared recent-read cache and always go upstream. A row that is left in `sending` after a crash is never retried automatically: reconcile it by hand against the chain.
 
 Row statuses: `claimed` (queued), `sending`, `sent` (with `tx_signature`), `failed` (retried next run), `blocked` (a guard refused it; `note` says why).
 
@@ -176,7 +176,7 @@ Each program is armed on its own. Do not arm anything until you have read today'
 **Before either payout program**
 
 1. Apply the ledger migration: `npm run db:status`, confirm `20260929120000_growth_program_payouts.sql` is the pending one you expect, then `npm run db:migrate`.
-2. Set `THREE_PRIZE_PAYOUT_KEY` on the Cloud Run service (it is unset as of 2026-09-29) to a dedicated wallet holding enough $THREE, plus a little SOL for fees and new token accounts, to cover the caps. Store it in Secret Manager like the other keys, and check it with `node scripts/read-service-env.mjs '^THREE_PRIZE_PAYOUT_KEY$' --names`.
+2. Set `THREE_PRIZE_PAYOUT_KEY` on the Cloud Run service (it is unset as of 2026-11-04) to a dedicated wallet holding enough $THREE, plus a little SOL for fees and new token accounts, to cover the caps. Store it in Secret Manager like the other keys, and check it with `node scripts/read-service-env.mjs '^THREE_PRIZE_PAYOUT_KEY$' --names`.
 3. Deploy the commit that ships this code, following the deploy runbook in `CLAUDE.md`, so both crons exist and Cloud Scheduler has synced them.
 4. Read the dry run: `curl -s -H "x-ops-secret: $OPS_SECRET" https://three.ws/api/ops/growth-programs | jq .`
 

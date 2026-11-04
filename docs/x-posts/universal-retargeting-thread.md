@@ -12,7 +12,7 @@ payments, no roadmap.
 
 **Posting precondition (hard).** The news hook in post 1 and the mechanism in post 7 describe commit
 `8561d5c5d` (merged 3 October 2026). When this draft was written, production was serving commit
-`76081013b`, which predates it. Do not post until this prints `deployed`:
+`76081013b`, which predates it. Do not post until this prints `deployed` (it did on 2026-11-04, when production served `0a913e8a7`; re-run it anyway):
 
 ```bash
 git merge-base --is-ancestor 8561d5c5d \
@@ -45,20 +45,19 @@ Each claim the thread makes, and where it was checked on 2026-10-08.
 | Only rotations and the hip translation cross over; hip motion is rescaled to the avatar's height | `retargetClip` in `src/animation-retarget.js`; `_retarget` in `src/animation-manager.js` |
 | A clip that would tip the hips past 45 degrees is disabled | `CATASTROPHE_TILT_DEG = 45` and `_guardAgainstFallenPose` in `src/animation-manager.js` |
 | Unmapped arms are found by direction and swung down | `src/animation-arm-relax.js` |
-| 477 tests in the canonicalizer suite | `npx vitest run tests/glb-canonicalize.test.js` on 2026-10-08: 477 passed |
+| Over 470 tests in the canonicalizer suite | `npx vitest run tests/glb-canonicalize.test.js` on 2026-10-08: 477 passed. Tests were added on 10 and 11 October (Biped, ValveBiped, non-humanoid rigs, VRM), so the count is higher now; re-run it and put the current number in post 10 |
 | A test runs without the fix and asserts the avatar falls | "the test has teeth" in `tests/animation-upright-invariant.test.js` |
 | 10 of 10 naming conventions move both arms and both legs | `node scripts/animation-dignity-sweep.mjs` on 2026-10-08: "10/10 conventions animate both arms and both legs on both lanes" |
-| Biped fingers, ValveBiped, and colon-stripped HumanIK names do not map | `canonicalizeBoneName('Bip01 L Finger0')`, `('ValveBiped.Bip01_Pelvis')`, `('Character1Hips')` all return `null`; listed as open in `docs/first-contribution.md` |
-| A Biped rig with fingers gets no clip | scratch test against current code: idle maps 21 of 53 tracks (39.6 percent), `clip: null` |
+| 3ds Max Biped fingers and Source ValveBiped now map; only HumanIK names with the colon stripped (`Character1Hips`) still return `null` | commit `638a7f687` (10 October) and its tests in `tests/glb-canonicalize.test.js`; the HumanIK gap is the one still listed as open in `docs/first-contribution.md` |
 | Rig Doctor reads the file in the browser and never uploads it | `src/rig-doctor-page.js` header (FileReader, blob URL); live page copy "Nothing is uploaded" |
-| Rig Doctor recognises 15 conventions | `CONVENTION_COUNT` in `src/rig-report.js` (15); live `/rig-doctor` shows "15 rig conventions recognised" |
+| Rig Doctor recognises 16 conventions | `CONVENTION_COUNT` in `src/rig-report.js` (16, Source engine added in `638a7f687`); `pages/rig-doctor.html` hero reads 16 |
 
 ## Do not claim
 
 1. **Do not post before the precondition passes.** The A-pose re-aim is merged, not deployed, as of this draft.
-2. **Do not say "any rig" or "every avatar" without "humanoid".** Non-humanoid skeletons are refused on purpose, and three humanoid conventions (Biped fingers, ValveBiped, colon-stripped HumanIK) still fail. The thread says so in post 11; keep it.
-3. **Do not quote a convention count other than 15 (Rig Doctor fingerprints) or 10 (the motion sweep).** The canonicalizer's header lists more spellings than that, but nobody has counted them into a defensible number.
-4. **Do not say the re-aim is tested.** It shipped without a dedicated unit test. The upright suite and the sweep predate it.
+2. **Do not say "any rig" or "every avatar" without "humanoid".** Non-humanoid skeletons are refused on purpose, and one humanoid convention (HumanIK names with the colon stripped by three.js) still fails. The thread says so in post 11; keep it.
+3. **Do not quote a convention count other than 16 (Rig Doctor fingerprints) or 10 (the motion sweep).** The canonicalizer's header lists more spellings than that, but nobody has counted them into a defensible number.
+4. **Do not say the re-aim is unit-tested for arm travel.** Its only test is a parity test (`tests/animation-retarget-rig-parity.test.js`: the Animation Studio and the viewer must produce the same limb tracks on an A-posed rig). The upright suite and the sweep predate it.
 5. **Do not say the npm package has the re-aim.** `@three-ws/retarget` 0.1.2 (published 2026-09-11) predates it. The Animation Studio gallery and GLB export (`retargetClipToRig`) got it in a follow-up commit, so the same deploy precondition applies to them.
 6. **Do not call it AI or machine learning.** It is deterministic name tables and quaternion math.
 7. **Do not imply AWS hosting.** The companion article is on the AWS Builder Center; the platform runs on Google Cloud Run and retargeting runs in the browser.
@@ -155,17 +154,17 @@ Counts are X weighted characters, with the one URL counted as 23. Every post is 
 
 **10/** (413)
 
-> The tests are written so they can fail. 477 name tests, one table of real export spellings per convention. An upright suite that also runs WITHOUT the correction and asserts the avatar falls over, so it would catch anyone removing it.
+> The tests are written so they can fail. Over 470 name tests, one table of real export spellings per convention. An upright suite that also runs WITHOUT the correction and asserts the avatar falls over, so it would catch anyone removing it.
 >
 > And a motion sweep, because names passing is not limbs moving: idle and walk on 10 differently named rigs, measuring hand and foot travel. 10 of 10 move both arms and both legs.
 
 **11/** (479)
 
-> Where it still fails, plainly. A 3ds Max Biped rig maps its body but not its numbered fingers (Bip01 L Finger0), so it lands under the half-the-tracks line, gets no clip, and shows its bind pose. Source-engine ValveBiped rigs and HumanIK names with the colon stripped don't map either. All three are open contributor tasks.
+> Where it still fails, plainly. Autodesk HumanIK names lose their colon when three.js loads a model (Character1:Hips becomes Character1Hips), and that spelling maps to nothing, so such a rig lands under the half-the-tracks line, gets no clip, and shows its bind pose. It is an open contributor task.
 >
 > And no retargeter can fix skinning: a sleeve weighted to the wrong bone bends with that bone.
 >
-> The re-aim from post 7 also has no dedicated unit test yet.
+> The re-aim from post 7 is tested only for parity between our two retarget paths, not for how far the arm travels.
 
 **12/** (281)
 

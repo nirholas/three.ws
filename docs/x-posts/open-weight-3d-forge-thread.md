@@ -14,7 +14,7 @@ token talk, no wallet or payment talk, no roadmap.
 Posting is owner-gated per [`CLAUDE.md`](../../CLAUDE.md). This file is copy waiting for a human to
 send.
 
-**Every claim below was verified on 2026-10-08**, against the code in this repository, the
+**Every claim below was verified on 2026-10-08, and the routing, vendoring and live-state rows were re-checked on 2026-11-04**, against the code in this repository, the
 production database (read-only queries), the live Cloud Run services, or the live site:
 
 | Claim in the thread | Where it was verified |
@@ -24,9 +24,10 @@ production database (read-only queries), the live Cloud Run services, or the liv
 | All 147 rescues were self-hosted GPU worker failures, under the same job id | `superseded_by` counts by backend: `trellis_selfhost` 93, `hunyuan3d` 49, `triposg` 5; successor binding in `bindJobSuccessor` ([`api/_lib/forge-failover.js`](../../api/_lib/forge-failover.js)) and the poll handler in [`api/forge.js`](../../api/forge.js); unattended rescues by [`api/cron/forge-finalize.js`](../../api/cron/forge-finalize.js) |
 | Reconstruction models read a picture; a text prompt is painted first as one centered subject on a plain background with even light | header of [`api/_lib/forge-reference-image.js`](../../api/_lib/forge-reference-image.js) |
 | Six text personas: four on a backdrop slab, two lost the figure; non-Draft TRELLIS jobs are matted first | the `matte: tier.id !== 'draft'` comment in [`api/forge.js`](../../api/forge.js) (measured 2026-09-08) |
-| Draft and Standard lead with TRELLIS on an L4; High leads with Hunyuan3D 2.1 on an RTX PRO 6000 Blackwell; hard-surface prompts at High move TRELLIS first | `FREE_DEFAULT_FOR_TIERS`, `classifyForgeSubject`, `freeLaneCandidates` in [`api/_lib/forge-tiers.js`](../../api/_lib/forge-tiers.js); live `default_backend_for_tier` at [three.ws/api/forge?catalog=1](https://three.ws/api/forge?catalog=1); `gcloud run services describe` of `model-trellis` (nvidia-l4, min 1, max 3) and `model-hunyuan3d-21-rtx` (nvidia-rtx-pro-6000, min 1, max 1), which `GCP_HUNYUAN3D_URL` points at |
+| Every tier leads with a TRELLIS worker on an NVIDIA L4; Hunyuan3D 2.1 on an RTX PRO 6000 Blackwell is a fallback behind it. Since 9 October (`5e8115967`) the code names TRELLIS.2 first at all three tiers, then TRELLIS v1, then Hunyuan3D; the TRELLIS.2 worker is not configured in production on 2026-11-04, so the live catalog resolves to the TRELLIS v1 worker | `FREE_DEFAULT_FOR_TIERS` and `FREE_FALLBACK_FOR_PATH` in [`api/_lib/forge-tiers.js`](../../api/_lib/forge-tiers.js); live `default_backend_for_tier` at [three.ws/api/forge?catalog=1](https://three.ws/api/forge?catalog=1) (`trellis_selfhost` at draft, standard and high) and `trellis2` "not configured" at [three.ws/api/forge?health=1](https://three.ws/api/forge?health=1); L4 settings in [`workers/model-trellis/cloudbuild.yaml`](../../workers/model-trellis/cloudbuild.yaml) and [`workers/model-trellis2/cloudbuild.yaml`](../../workers/model-trellis2/cloudbuild.yaml); RTX settings in [`workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml`](../../workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml) |
 | Hunyuan3D 2.1 paints colour, roughness and normal maps | [`workers/model-hunyuan3d/README.md`](../../workers/model-hunyuan3d/README.md) ("PBR: baseColor + metallicRoughness + normal") |
 | Health tempers the order: healthy or unknown first, else not confirmed down, then the fallback | `defaultBackendForHealthAware` in [`forge-tiers.js`](../../api/_lib/forge-tiers.js) |
+| The Tencent Hunyuan3D lanes are dropped for requests from the EU, the UK, South Korea or an unknown country | [`api/_lib/forge-territory.js`](../../api/_lib/forge-territory.js), commit `5e8115967` |
 | Until August the probe hit the root URL and scored anything under 500 as healthy, including a worker whose model failed to load | comment on `probeSelfHostLane` in [`api/_lib/forge-lane-health.js`](../../api/_lib/forge-lane-health.js) (changed 2026-08-11) |
 | Routing reads model readiness separately from process liveness | `ready` / `pipeline_loaded` / `model_loaded` and `load_error` handling in `probeSelfHostLane`; live worker `/health` bodies for TRELLIS, Hunyuan3D 2.1 and TripoSG read 2026-10-08 |
 | Poll recovers prompt and reference picture from the row, resubmits, binds old id to new; up to three backups; "running" only once the binding is written | `MAX_FAILOVER_HOPS = 3`, `submitFailoverJob`, `bindJobSuccessor` in [`forge-failover.js`](../../api/_lib/forge-failover.js); `if (bound)` in the poll handler in [`api/forge.js`](../../api/forge.js) |
@@ -36,13 +37,13 @@ production database (read-only queries), the live Cloud Run services, or the liv
 | RTX PRO 6000 tier starts at 80 GiB; CUDA 12.8; extensions compiled for both GPU generations | same README; `--cpu=20`, `--memory=80Gi` in [`workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml`](../../workers/model-hunyuan3d/cloudbuild.hunyuan21rtx.yaml) |
 | Meshopt web copy: 1.25 to 3.34 MB down to 0.11 to 0.67 MB on six samples | comment on `buildWebVariant` in [`api/_lib/forge-store.js`](../../api/_lib/forge-store.js) (sampled 2026-09-04) |
 | Most three.ws avatars ship as meshopt; the Python mesh library (trimesh) has no meshopt decoder | header of [`workers/stylize/gltf_meshopt.py`](../../workers/stylize/gltf_meshopt.py) |
-| Pinned, checksummed gltfpack; the decoder is copied into five workers | `GLTFPACK_VERSION=v1.2` and `GLTFPACK_SHA256` in the Dockerfiles of `remesh`, `rig`, `segment`, `stylize`, `texture` (5 identical pins) |
-| A repo check fails on drift; 27 copies across 36 workers, all identical | `npm run check:vendored` ([`scripts/check-vendored-workers.mjs`](../../scripts/check-vendored-workers.mjs)) on 2026-10-08: "OK: 27 vendored file copies across 36 workers are byte-identical" |
+| Pinned, checksummed gltfpack; the decoder (`gltf_meshopt.py`) is copied into nine workers | `GLTFPACK_VERSION=v1.2` and `GLTFPACK_SHA256` in the Dockerfiles (identical in all 11 that pin it); `workers/*/gltf_meshopt.py` is present in `holopart`, `lato2`, `modly`, `remesh`, `rig`, `rig-nonhuman`, `segment`, `stylize`, `texture`. It was five workers on 2026-10-08 |
+| A repo check fails on drift; 46 copies across 47 workers, all identical | `npm run check:vendored` ([`scripts/check-vendored-workers.mjs`](../../scripts/check-vendored-workers.mjs)) on 2026-11-04: "OK: 46 vendored file copies across 47 workers are byte-identical, and every worker that vendors gltf_meshopt.py stages the gltfpack binary" (27 across 36 on 2026-10-08) |
 | Every generation is a row from submit, carrying engine, tier, reference model, status, raw error, rescue pointer | `createCreation` in [`forge-store.js`](../../api/_lib/forge-store.js); migrations `20260604000000_forge_creations.sql`, `20260607000000_forge_tier_path.sql`, `20260814200000_forge_failover_supersede.sql` in [`api/_lib/migrations/`](../../api/_lib/migrations/) |
 | 95.7% of last week's generations finished, rescued attempts counted as successes | `npm run forge:errors` on 2026-10-08: "success rate 95.7% (recovered attempts are not counted against it)" |
-| The Gemini image model on Vertex AI has drawn no reference since 13 August; it sits first in the ladder | `text_to_image_model` in `forge_creations` over 60 days: `vertex-ai/gemini-2.5-flash-image` last on 2026-08-13; `black-forest-labs/flux.1-dev` 22,690 and `pollinations/flux` 3,649 since; ladder order in `seedReferenceImage` ([`api/forge.js`](../../api/forge.js)); live [three.ws/api/forge?health=1](https://three.ws/api/forge?health=1) reports `vertex-gemini` 403 |
+| The Gemini image model on Vertex AI has drawn no reference since 13 August; it sits first in the ladder | `text_to_image_model` in `forge_creations` over 60 days: `vertex-ai/gemini-2.5-flash-image` last on 2026-08-13; `black-forest-labs/flux.1-dev` 22,690 and `pollinations/flux` 3,649 since; ladder order in `seedReferenceImage` ([`api/forge.js`](../../api/forge.js)); live [three.ws/api/forge?health=1](https://three.ws/api/forge?health=1) still reports `vertex-gemini` 403 on 2026-11-04; since `9d2cd957d` a 401, 402 or 403 parks the Vertex rung for five minutes so it stops costing every request its timeout |
 | TripoSG's cold-start estimate is 45 seconds; it took about three and a half minutes to load | `coldStartSeconds: 45` on `triposg` in [`forge-tiers.js`](../../api/_lib/forge-tiers.js); live health report at 04:26:36 UTC read TripoSG "down" (4 s probe timeout), the worker's `/health` read `model_loaded: false` from 04:27, `true` at 04:30:14 |
-| The last-resort engine returns shape without textures | `ASYNC_REDISPATCH_ORDER` comment in [`forge-failover.js`](../../api/_lib/forge-failover.js); TripoSG `blurb` in [`forge-tiers.js`](../../api/_lib/forge-tiers.js) |
+| The last-resort engine returns shape without textures | `ASYNC_REDISPATCH_ORDER` comment in [`forge-failover.js`](../../api/_lib/forge-failover.js) (TripoSG sits last); TripoSG `blurb` in [`forge-tiers.js`](../../api/_lib/forge-tiers.js) |
 | Draft and Standard are free and need no account | the live page reads "Free · no sign-up"; an unauthenticated `POST /api/forge` with `"tier":"draft"` on 2026-10-08 was accepted at 04:37:13 UTC and done at 04:38:15 on `trellis_selfhost` |
 | The workers, router and failover code are open source | [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws), Apache-2.0; every file above is tracked and present on `main` |
 
@@ -94,9 +95,9 @@ the last post.
 >
 > Plain turned out not to be enough. In a test of six text-prompted characters, four came back standing on a slab of reconstructed backdrop and two lost the figure entirely. Now every non-Draft TRELLIS job gets its background cut out by a separate worker before reconstruction.
 
-**3/** (490 weighted characters)
+**3/** (522 weighted characters)
 
-> Each engine is one entry in a registry, and one function orders them. Draft and Standard lead with TRELLIS on an NVIDIA L4. High leads with Hunyuan3D 2.1 on an RTX PRO 6000 Blackwell, which paints colour, roughness and normal maps. Hard-surface prompts at High swap TRELLIS first.
+> Each engine is one entry in a registry, and one function orders them. Every tier leads with a TRELLIS worker on an NVIDIA L4. Behind it sits Hunyuan3D 2.1 on an RTX PRO 6000 Blackwell, which paints colour, roughness and normal maps, and which is kept out of the EU, the UK and South Korea because of its license.
 >
 > Health tempers that order, never replaces it: take the first lane that is healthy or unknown, else the first not confirmed down, and only then the fallback. Missing telemetry never demotes a preferred engine.
 
@@ -130,11 +131,11 @@ the last post.
 >
 > The RTX PRO 6000 tier starts at 80 GiB, which clears it. Blackwell needs CUDA 12.8, so the image compiles its GPU code for both card generations, and which GPU runs it is a deploy flag.
 
-**8/** (575 weighted characters)
+**8/** (560 weighted characters)
 
 > We compress the web copy of every large model with meshopt: 1.25 to 3.34 MB down to 0.11 to 0.67 MB on six samples. Most three.ws avatars ship that way too.
 >
-> Then our own editing workers could not read it, because the Python mesh library they use has no meshopt decoder. Now every worker that loads a caller's mesh decodes it first with a pinned, checksummed gltfpack binary. The decoder is one file copied into five workers, like the rest of our shared worker code, and a repo check fails if any copy drifts. Today: 27 copies across 36 workers, all identical.
+> Then our own editing workers could not read it, because the Python mesh library they use has no meshopt decoder. Now every worker that loads a caller's mesh decodes it first with a pinned, checksummed gltfpack binary. The decoder is one file copied into nine workers, like the rest of our shared worker code, and a repo check fails if any copy drifts. Today: 46 copies across 47 workers, all identical.
 
 **9/** (382 weighted characters)
 

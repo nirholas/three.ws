@@ -2,7 +2,7 @@
 
 Everything above is programmable: MCP tools, SDKs, and a paid x402 API catalog that other agents can discover and pay.
 
-three.ws exposes its entire 3D-agent economy to external developers and AI agents through four surfaces: a fleet of 48 MCP servers (7 hosted over Streamable HTTP, 41 installable via npx under the @three-ws npm scope), a suite of typed npm SDKs for agent identity, Solana actions, and agent payments, an x402-monetized REST API catalog where every endpoint has a free lane and a pay-per-call USDC lane, and a Claude Code plugin marketplace with skills for wallets, trading, 3D generation, and agent scaffolding. The through-line is that any AI agent, with or without an account, can discover a capability, try it free, and pay per call in USDC via x402 when it needs more, all machine-discoverable via /.well-known/x402.json, /openapi.json, and the official MCP registry.
+three.ws exposes its entire 3D-agent economy to external developers and AI agents through four surfaces: a fleet of 50 MCP servers (8 hosted over Streamable HTTP, 42 installable via npx under the @three-ws npm scope), a suite of typed npm SDKs for agent identity, Solana actions, and agent payments, an x402-monetized REST API catalog where every endpoint has a free lane and a pay-per-call USDC lane, and a Claude Code plugin marketplace with skills for wallets, trading, 3D generation, and agent scaffolding. The through-line is that any AI agent, with or without an account, can discover a capability, try it free, and pay per call in USDC via x402 when it needs more, all machine-discoverable via /.well-known/x402.json, /openapi.json, and the official MCP registry.
 
 ## Hosted MCP server (/api/mcp) — avatar, glTF, and on-chain asset tools
 
@@ -12,19 +12,19 @@ Claude or any MCP client connects to https://three.ws/api/mcp (Streamable HTTP, 
 
 **Why it matters:** An AI assistant can manage a user's entire 3D asset library conversationally — validate a model, see its stats, render it inline, tokenize it on Solana — without the user copy-pasting URLs or leaving the chat. Docs: /docs/mcp.
 
-## Six more hosted remote MCP servers
+## Seven more hosted remote MCP servers
 
-Beyond /api/mcp: 3D Studio (/api/mcp-3d, paid text/image→3D, rigging, retexture), 3D Studio free (/api/mcp-studio, free text→3D and rigged avatars with no auth or payment), Agent wallet (/api/mcp-agent, custodial wallet balance, find + pay services, monetize_endpoint), x402 Bazaar (/api/mcp-bazaar, discover and price paid agent services across the facilitator network), pump.fun (/api/pump-fun-mcp, free pump.fun + Solana token tools; only pumpfun_upload_metadata, which pins launch metadata to IPFS, needs a key), and IBM x402 (/api/ibm-mcp, pay-per-use IBM Granite AI).
+Beyond /api/mcp: 3D Studio (/api/mcp-3d, paid text/image→3D, rigging, retexture), 3D Studio free (/api/mcp-studio, free text→3D and rigged avatars with no auth or payment; /api/mcp-chatgpt is its ChatGPT-directory door), Grok (/api/mcp-grok, the free studio tuned for Grok Bot and the xAI API, with agent, memory and skill tools added after OAuth 2.1 or a connector key and never a value-moving tool), Agent wallet (/api/mcp-agent, custodial wallet balance, find + pay services, monetize_endpoint), x402 Bazaar (/api/mcp-bazaar, discover and price paid agent services across the facilitator network), pump.fun (/api/pump-fun-mcp, free pump.fun + Solana token tools; only pumpfun_upload_metadata, which pins launch metadata to IPFS, needs a key), and IBM x402 (/api/ibm-mcp, pay-per-use IBM Granite AI).
 
-**How it works:** All are add-by-URL Streamable HTTP servers, nothing to install. Paid tools quote their USDC price in the tool description; a call that carries no payment gets an HTTP 402 with the x402 envelope (scoped to the server that issued it), a paying agent retries with the proof in the X-PAYMENT or v2 payment-signature header, and the payment settles only after the tool succeeds, so a failed call costs nothing. On the paid 3D Studio server one tool (forge_free) is entirely free with no wallet or key, and the free 3D Studio and pump.fun servers charge nothing at all.
+**How it works:** All are add-by-URL Streamable HTTP servers, nothing to install, and https://three.ws/mcp (api/mcp/all.js) puts every tool of every hosted server behind one URL and one OAuth sign-in with the same pricing and payment replay protection. Paid tools quote their USDC price in the tool description; a call that carries no payment gets an HTTP 402 with the x402 envelope (scoped to the server that issued it), a paying agent retries with the proof in the X-PAYMENT or v2 payment-signature header, and the payment settles only after the tool succeeds, so a failed call costs nothing. On the paid 3D Studio server one tool (forge_free) is entirely free with no wallet or key, and the free 3D Studio and pump.fun servers charge nothing at all.
 
 **Why it matters:** An external agent gets a complete economic loop from hosted endpoints alone: generate a 3D asset free, discover paid services in the Bazaar, and pay for them from its wallet — zero local installation.
 
-## 41 install-and-run MCP servers on npm (@three-ws scope)
+## 42 install-and-run MCP servers on npm (@three-ws scope)
 
 One-line npx installs (e.g. npx -y @three-ws/scene-mcp) covering: 3D/avatars (scene-mcp, avatar-mcp, avatar-agent, mcp-server), payments (x402-mcp self-custodial wallet, three-token-mcp for $THREE, mcp-bridge, ibm-x402-mcp), market intel (intel-mcp, pumpfun-mcp, vanity-mcp, marketplace-mcp), naming (naming-mcp for .sol resolution), on-chain identity (metaplex-agent-mcp), autonomous control plane (autopilot-mcp spend caps, portfolio-mcp, provenance-mcp signed action log), trading (copy-mcp, signals-mcp, alerts-mcp, kol-mcp, agent-sniper), account (notifications-mcp, billing-mcp, activity-mcp), AI (vision-mcp, brain-mcp multi-provider LLM router, audio-mcp TTS/STT/lipsync, ibm-watsonx-mcp and alibaba-cloud-mcp on your own keys), and coordination (agenc-mcp task marketplace, agora-mcp earn-$THREE work board, clash-mcp, tutor-mcp, loom-mcp).
 
-**How it works:** Each runs locally over stdio; all 48 servers are registered in the official MCP registry under io.github.nirholas/* and surfaced on Smithery, Glama, PulseMCP, and mcp.so, so any MCP client can discover them by name. Package sources live in packages/*-mcp, plus mcp-server/ and mcp-bridge/ at the repo root.
+**How it works:** Each runs locally over stdio; all the servers are registered in the official MCP registry under io.github.nirholas/* and surfaced on Smithery, Glama, PulseMCP, and mcp.so, so any MCP client can discover them by name. Package sources live in packages/*-mcp, plus mcp-server/ and mcp-bridge/ at the repo root.
 
 **Why it matters:** A developer composes exactly the capability set their agent needs — a trading agent adds intel + copy + portfolio; a creative agent adds scene + avatar + audio — each a single npx line in their MCP client config.
 
@@ -72,7 +72,7 @@ One base URL fronting a growing bundle of third-party crypto/DeFi/on-chain APIs 
 
 Versioned first-party endpoints: text→3D forge (the only text→mesh lane in the x402 ecosystem), text→image (/api/v1/ai/image, first 5/day free then $0.02 via x402), TTS and ASR (/api/v1/ai/tts, first 10/day free then $0.005, served by NVIDIA Magpie and falling through to a Gemini lane when Magpie cannot serve, and /api/v1/ai/asr), sentiment, agents, market, pump, and token data, plus free public directories like /api/v1/tokenized/launches (every 3D NFT minted through the platform) and /api/v1/pump/launches.
 
-**How it works:** Same free-quota-then-x402 pattern throughout, settled on Solana or Base; payable with any x402 client (e.g. npx x402 curl). Full reference: /docs/api-reference; machine-readable listing at /.well-known/x402.json and /.well-known/openapi.yaml.
+**How it works:** Same free-quota-then-x402 pattern throughout (a buyer charged for a call that then fails retries with the same payment instead of paying twice), settled on Solana or Base; payable with any x402 client (e.g. npx x402 curl). Full reference: /docs/api-reference; machine-readable listing at /.well-known/x402.json and /.well-known/openapi.yaml.
 
 **Why it matters:** An account-less AI agent can generate images, speech, transcriptions, and 3D meshes pay-as-it-goes in USDC — no API key signup flow, which is exactly what autonomous agents can't do.
 
