@@ -3,15 +3,6 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
-			"title": "Trader scores, reviews, model checks and tournament results now land on Solana",
-			"summary": "Five kinds of on-chain record had been failing on every attempt. The daily trader-score credential, review attestations, GLB validation attestations, tournament podiums and hire attestations each named their subject (the trader wallet or the agent) on the memo instruction without that account signing, and Solana's memo program rejects any account that did not sign. No trader score had ever been recorded on mainnet. The subject now sits on a separate read-only instruction, so each record lands and still shows up under the subject's own transaction history, which is what Trader Passport verification and the reputation crawler rely on. The same fix applies to feedback, task and dispute attestations sent through the @three-ws/sdk browser helpers, which had the same flaw.",
-			"tags": [
-				"fix"
-			],
-			"link": "/docs/trader-passport"
-		},
-		{
-			"date": "2026-11-04",
 			"title": "Paid endpoint 402 challenges validate on external x402 directories",
 			"summary": "The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.",
 			"tags": [
@@ -21,13 +12,21 @@
 		},
 		{
 			"date": "2026-11-04",
-			"title": "HumanIK avatars and complete bodies without finger joints now animate",
-			"summary": "Two kinds of avatar used to pass every check and then stand still in their bind pose. HumanIK and MotionBuilder rigs name their joints Character1:Hips, which three.js turns into Character1Hips when it loads the model, and that spelling mapped to nothing. Both spellings now resolve, and so does Character1_LeftArm. A complete body with no finger joints, such as a Meshy biped or a handless Mixamo export, fell under the clip coverage floor because 30 of a clip's 53 tracks are fingers; clips now bind when half of either all tracks or the 23 body tracks map, so fingers are optional and the shipped half-body avatar keeps animating. The live viewer, Rig Doctor, avatar thumbnails and the avatar capabilities API now all ask one gate, so a rig cannot be called animatable on one surface and fail on another. Across uploaded avatars in production, 333 of 350 skinned rigs now animate, up from 306.",
+			"title": "Health checks now show when the Granite Guardian governance model is not serving",
+			"summary": "Granite Guardian screens agent messages, identities and autonomous sends for risks like jailbreaks and harm. When no Guardian lane was configured, the assess endpoint answered 503 and the identity check let everything through, yet every health probe stayed green. /api/healthz now carries a granite_guardian subsystem: down in production while no lane is set, ok once the self-hosted GPU worker answers its health probe or the watsonx lane is configured, and degraded when the self-hosted worker fails but watsonx can still answer. The worker deploy config was also corrected for the pinned vLLM release, which no longer accepts one of its old flags.",
 			"tags": [
-				"fix",
-				"improvement"
+				"infra"
 			],
-			"link": "/rig-doctor"
+			"link": "/docs/ibm"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Trader scores, reviews, model checks and tournament results now land on Solana",
+			"summary": "Five kinds of on-chain record had been failing on every attempt. The daily trader-score credential, review attestations, GLB validation attestations, tournament podiums and hire attestations each named their subject (the trader wallet or the agent) on the memo instruction without that account signing, and Solana's memo program rejects any account that did not sign. No trader score had ever been recorded on mainnet. The subject now sits on a separate read-only instruction, so each record lands and still shows up under the subject's own transaction history, which is what Trader Passport verification and the reputation crawler rely on. The same fix applies to feedback, task and dispute attestations sent through the @three-ws/sdk browser helpers, which had the same flaw.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/trader-passport"
 		},
 		{
 			"date": "2026-11-04",
@@ -41,27 +40,36 @@
 		},
 		{
 			"date": "2026-11-04",
-			"title": "Health checks now show when the Granite Guardian governance model is not serving",
-			"summary": "Granite Guardian screens agent messages, identities and autonomous sends for risks like jailbreaks and harm. When no Guardian lane was configured, the assess endpoint answered 503 and the identity check let everything through, yet every health probe stayed green. /api/healthz now carries a granite_guardian subsystem: down in production while no lane is set, ok once the self-hosted GPU worker answers its health probe or the watsonx lane is configured, and degraded when the self-hosted worker fails but watsonx can still answer. The worker deploy config was also corrected for the pinned vLLM release, which no longer accepts one of its old flags.",
+			"title": "HumanIK avatars and complete bodies without finger joints now animate",
+			"summary": "Two kinds of avatar used to pass every check and then stand still in their bind pose. HumanIK and MotionBuilder rigs name their joints Character1:Hips, which three.js turns into Character1Hips when it loads the model, and that spelling mapped to nothing. Both spellings now resolve, and so does Character1_LeftArm. A complete body with no finger joints, such as a Meshy biped or a handless Mixamo export, fell under the clip coverage floor because 30 of a clip's 53 tracks are fingers; clips now bind when half of either all tracks or the 23 body tracks map, so fingers are optional and the shipped half-body avatar keeps animating. The live viewer, Rig Doctor, avatar thumbnails and the avatar capabilities API now all ask one gate, so a rig cannot be called animatable on one surface and fail on another. Across uploaded avatars in production, 333 of 350 skinned rigs now animate, up from 306.",
 			"tags": [
-				"infra"
+				"fix",
+				"improvement"
 			],
-			"link": "/docs/ibm"
+			"link": "/rig-doctor"
 		},
 		{
 			"date": "2026-11-04",
-			"title": "Token holder and security checks now share their Solana reads, cutting RPC calls by about 43%",
-			"summary": "The holders and security panels read the same mint account and largest-holder list for a token, and a page that shows both used to pay for those reads twice, once per server instance it landed on. Those public reads are now shared across the whole fleet for 30 seconds, and the security verdict for a token is reused for 60 seconds, so a burst of lookups costs a fraction of the calls. If every data source is down, the security check now serves the last good verdict for up to 6 hours, clearly marked as stale, instead of failing. Operators also get a per-route RPC spend board at /api/ops/rpc-spend, a terminal report, and an optional daily budget per RPC lane that keeps the remaining quota for payments and settlements.",
+			"title": "three.ws can now be bought through Microsoft Marketplace, Copilot, Teams, Power Platform and the Microsoft Store",
+			"summary": "The groundwork for selling three.ws through Microsoft is in place. A team that buys a three.ws plan on Microsoft Marketplace lands on /microsoft/activate, signs in with their work account, and gets the same plan a card purchase gives, billed on their Microsoft invoice. Plan changes, suspension and cancellation flow back automatically, and tool calls and agent messages are reported to Microsoft every hour, with Microsoft-side hiccups retried rather than dropped. Alongside it: a Microsoft 365 Copilot agent and Teams app with a bot and a tab, a Power Platform connector with five actions for Power Automate, Power Apps, Logic Apps and Copilot Studio, and a Windows app package for the Microsoft Store, each with a validator. Each one goes live after its Microsoft review.",
 			"tags": [
-				"improvement",
-				"infra"
+				"feature"
 			],
-			"link": "/docs/crypto-api"
+			"link": "/docs/microsoft-marketplace-saas"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "The /play share sheet and network errors behave on keyboards and bad connections",
 			"summary": "The build share sheet now uses the shared modal stack, so Escape closes only the sheet, Tab stays inside it and focus returns to where you were. Friends, NPC purchases and coin-buy sign-in show a plain network message instead of raw browser text when a connection drops. A new test pins the HUD text colors at WCAG AA contrast over bright and dark scenes.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Slow phones and laptops now drop to lighter graphics in /play within seconds",
+			"summary": "/play, the club and the trade room lower their graphics settings when a device can't keep up, but they were measuring frame time in a way that made a device drawing 2 frames a second look like one drawing 20. A struggling phone or older laptop could spend half a minute or more on the heaviest settings before anything changed, and a device below 1 frame a second could stay there for minutes. They now measure the real time between frames, so a device that can't keep up steps down to lighter settings within a couple of seconds, while a healthy device coming back from a hidden tab is left alone.",
 			"tags": [
 				"fix"
 			],
@@ -87,6 +95,16 @@
 		},
 		{
 			"date": "2026-11-04",
+			"title": "Token holder and security checks now share their Solana reads, cutting RPC calls by about 43%",
+			"summary": "The holders and security panels read the same mint account and largest-holder list for a token, and a page that shows both used to pay for those reads twice, once per server instance it landed on. Those public reads are now shared across the whole fleet for 30 seconds, and the security verdict for a token is reused for 60 seconds, so a burst of lookups costs a fraction of the calls. If every data source is down, the security check now serves the last good verdict for up to 6 hours, clearly marked as stale, instead of failing. Operators also get a per-route RPC spend board at /api/ops/rpc-spend, a terminal report, and an optional daily budget per RPC lane that keeps the remaining quota for payments and settlements.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/docs/crypto-api"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Every platform fee now has its own ledger, and bundle and subscription earnings are booked correctly",
 			"summary": "Each fee three.ws takes (pump.fun trades and launches, agent trades, skill sales, bundles, subscriptions and the x402 skill split) is now recorded once in an append-only fee ledger, in the same database write as the purchase or trade it belongs to, and replays never record it twice. A daily reconciler checks every recorded fee against what the fee wallet actually received on Solana. Bundle and subscription confirmations also stopped booking a platform fee when the buyer paid the full price straight to the creator, so creators now see their full earnings for those sales.",
 			"tags": [
@@ -107,7 +125,7 @@
 		{
 			"date": "2026-11-04",
 			"title": "Deleted accounts are now permanently purged after 30 days",
-			"summary": "The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.",
+			"summary": "The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. If a marketplace bid or sale involving your agent is still settling, the purge waits until the other person has been paid or refunded. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.",
 			"tags": [
 				"security",
 				"fix"
