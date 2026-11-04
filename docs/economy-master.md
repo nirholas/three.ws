@@ -611,6 +611,10 @@ Non-reconciled findings are upserted into the **shared** `payment_reconciliation
 table (the same finance-integrity surface x402 revenue reconciliation writes to),
 so `WHERE reconciled = false` on the ops board shows master discrepancies next to
 everything else. The monitor is **read-only on-chain** — it never moves funds.
+The route is also one of the `economy-tick` fan-out targets, so each run takes a
+25-minute lease (`cron:economy-reconcile:lease`, never released: its TTL is the
+cadence). Whoever calls it inside that window gets `200 { skipped: true,
+reason: "lease_held" }` instead of a second full on-chain scan.
 
 ### 3. Accounting export
 

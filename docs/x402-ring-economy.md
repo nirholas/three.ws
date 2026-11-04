@@ -949,7 +949,15 @@ cost**, so the economy reads as many participants instead of one cron. It is
 [ring-pool-fund](../api/_lib/x402/pipelines/ring-pool-fund.js) pipeline, off by
 default (`X402_RING_POOL_ENABLED`).
 
-**Reused, not throwaway — the efficiency call.** A fresh wallet per call would add
+**Optional per-call fresh payer.** With `X402_RING_FRESH_PAYER=true` the ring tick
+instead pays every call from a wallet minted for that call alone (funded with
+exactly its price, then swept and closed), so each settlement shows as its own
+buyer. It takes precedence over the pool, and any mint or fund failure falls back
+to the shared payer so the ring never stalls. It is off by default and costs the
+extra hop and ATA rent described next; see
+[Fresh-wallet workers](./x402-fresh-workers.md#one-fresh-buyer-for-every-ring-call-x402_ring_fresh_payer).
+
+**Reused, not throwaway: the efficiency call (the default).** A fresh wallet per call would add
 a funding hop **and** a one-time USDC-ATA rent (~0.00204 SOL ≈ $0.15) on *every*
 settle, roughly tripling the per-settle cost, and the wallets would still cluster
 on-chain in one hop (they are all funded from the same float, the textbook cluster
@@ -1126,7 +1134,11 @@ top-up** step — `floatTopUp()` in
 hungry agent from the treasury, sweeps an overfull one back, asserts every
 counterparty against `ringAllowedAddresses()` first (fail-closed), and records each
 move to `x402_ring_ledger` as **`kind='fund'`**. Recirculation, not spend — it
-returns `amountAtomic:0` and never consumes the daily cap.
+returns `amountAtomic:0` and never consumes the daily cap. A pass sweeps first
+(that refills the treasury), then tops up the emptiest agent first, and each
+top-up is capped to what the treasury actually holds: a drained agent gets a
+partial top-up instead of failing preflight every run, the next pass tops up the
+rest, and an agent left short is reported as `reason: "treasury_short"`.
 
 ### On-chain deployments in the loop
 
@@ -1261,7 +1273,9 @@ The ring's scoreboard is the JSON read model at
 [/api/x402-ring](../api/x402-ring.js): settlement counts and gross
 volume, live wallet balances with the sponsor's SOL floor, fee burn vs
 volume, and the most recent settles with their signatures, all composed
-from real chain and DB reads. The former in-app operator dashboard was
+from real chain and DB reads. The lifetime (`all`) settlement totals include the
+rollup of settle-log rows that `db-retention` has pruned, so archiving never moves
+the published figure. The former in-app operator dashboard was
 removed with the admin panel; watch the ring from a shell instead:
 
 ```bash

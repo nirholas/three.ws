@@ -41,7 +41,7 @@ fixed allow-list of types:
 | `coin-buy` | A coin buy landed. |
 | `agent-deploy` / `agent-onchain` | An agent was deployed / registered on chain. |
 | `payment` | A skill/service payment confirmed (`usdcAtomic`, `recipientLabel`, `txSig`, `explorerUrl`). |
-| `level-up`, `world-join`, `jackpot`, `mission-complete` | Play / world events. |
+| `level-up`, `world-join`, `jackpot`, `mission-complete`, `dance-off` | Play / world events. `dance-off` is a /play dance-off round won (`votes`, `contestants`, `coin`; the actor is the winning dancer). |
 | `member-join` | A person signed in (throttled to once per user per 6h). |
 | `agent-guard` | An autonomous buy was refused by a safety rule (`agentId`, `mint`, `reason`, `label`). |
 | `war-result` | A Coin Wars battle ended (`winner`, `reason`, the two sides, `matchKey`, `network`). |

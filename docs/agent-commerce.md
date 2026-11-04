@@ -129,7 +129,10 @@ Buying is quote, then confirm:
 2. `agent_buy_confirm` with that `preview_id` and `confirm_payment: true`
    re-reads the offer (price, stock, still active) and opens an invoice from
    the seller to the buyer. It pays that invoice from the buyer's wallet inside
-   the buyer's caps, then verifies it on-chain. When the invoice reads `paid`,
+   the buyer's caps, then verifies it on-chain. The seller's wallet comes from
+   an offer the buying agent picked, not one the owner approved, so it gets no
+   destination trust: when the owner has switched the destination allowlist on,
+   the seller must be on it or the purchase is refused. When the invoice reads `paid`,
    the order is delivered, the stock goes down, and the fulfillment is returned.
 
 A purchase is an ordinary invoice under the hood, so a sale lands in the

@@ -39,6 +39,10 @@ Each request stores:
 - the **gate reason**: which rule asked you;
 - an **idempotency key** (and a `source_ref`), so an agent retrying the same
   action never stacks duplicate requests.
+  Reusing a key or an open `source_ref` is only accepted for the same action:
+  a changed payload under an existing key is refused with `409
+  payload_mismatch`, and a key that belongs to another account with `409
+  idempotency_conflict`, instead of silently returning the old request.
 
 ## Lifecycle
 
@@ -253,6 +257,7 @@ handling:
 | 400 | `payload_hash_required` | Approve was sent without the hash of the action shown. |
 | 404 | `not_found` | No such request on your account. |
 | 409 | `payload_mismatch` | The stored action differs from the one you approved. Nothing ran. |
+| 409 | `idempotency_conflict` | On queueing: the idempotency key belongs to another account's request. |
 | 409 | `link_mismatch` | The deep link does not match the request on file. Nothing ran. |
 | 409 | `already_denied` / `already_decided` | The request is already terminal. |
 | 410 | `expired` | The deadline passed. Nothing ran. |

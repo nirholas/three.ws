@@ -23,7 +23,7 @@ This is the safe shape for autonomous spending. The usual alternative is to give
 
 - A three.ws account. Sign in at [three.ws/login](https://three.ws/login).
 - A **Solana wallet linked to that account**, holding a little SOL or $THREE. Credits are funded by an on-chain transfer that the platform verifies, and it requires that one of the transaction's signers is a wallet linked to your account. Signing in with the wallet is the simplest way to link it.
-- An API key for scripting, from `/dashboard` → **API Keys** → **Create Key**. The session and credits endpoints accept any authenticated bearer token; they do not require a special scope. A browser session cookie works too, and needs no CSRF token on these routes. See the [Authentication guide](/docs/authentication.md).
+- An API key for scripting, from `/dashboard` → **API Keys** → **Create Key**. A bearer token that writes to the session and credits endpoints needs the `wallet:write` scope, because those calls move credits into a spend envelope. A browser session cookie works too, and needs no CSRF token on these routes. See the [Authentication guide](/docs/authentication.md).
 - `curl` and `jq`. Every command below is copy-pasteable.
 - Optional but useful: read the [Payment Sessions reference](/docs/payment-sessions.md) first. This tutorial is the guided path through it; that page is the exhaustive field-by-field contract.
 
@@ -216,6 +216,9 @@ Why each field matters:
 | `budget_usd` | `0.05` | The total the agent can ever spend on this token. Debited from credits **now**, refunded on cancel. Min $0.001, max $1000. |
 | `max_per_tx_usd` | `0.002` | The ceiling on any single call. This is your defence against one expensive endpoint eating the whole envelope in one request. Set it just above the prices you expect, not at the budget. `null` removes the cap; do not do that on a first run. |
 | `allowed_hosts` | `["three.ws"]` | Exact hostname or any subdomain of it. A call to any other host fails with `allowlist_blocked` before any money moves. An empty array means **any host**, which is almost never what you want. Max 50 entries. |
+| `blocked_hosts` | not set | Optional denylist, max 50 entries. Checked after the allowlist, so a block always wins, fails with `host_blocked`. |
+| `approval_threshold_usd` | not set | Optional. A call priced above it is parked for the owner's approval instead of settling. `null` means no threshold. |
+| `per_rail_daily_usd` | not set | Optional rolling 24h spend cap per settlement network, for example `{ "solana": 5 }`. Exceeding it fails with `rail_daily_exceeded`. |
 | `expiry_seconds` | `3600` | One hour. After this the session stops spending, and a sweep (`/api/cron/payment-session-sweep`, every 5 minutes) refunds the remainder automatically. Min 60, max 7776000 (90 days). |
 
 Two more you did not set: `agent_id` associates the session with one of your agents, and `metadata` is arbitrary JSON stored and echoed back, which is where to put your own correlation IDs.
@@ -332,7 +335,7 @@ What just happened inside the platform, in order:
 1. **Token check** against the stored hash.
 2. **Probe.** The endpoint is fetched with an SSRF-guarded client (20 second timeout, redirects not followed) to read its `402` challenge.
 3. **Accept selection.** A Solana USDC accept with a `feePayer` is picked out of `accepts[]`.
-4. **Governance.** Five checks in order: session active, not expired, host allowed, amount under `max_per_tx_usd`, remaining budget sufficient. The budget reservation is a single atomic SQL update, so concurrent calls can never collectively overspend the envelope. If two racing calls each fit individually but not together, exactly one wins and the other gets `insufficient_budget`.
+4. **Governance.** Checks in order: session active, not expired, host allowed and not blocked, amount under `max_per_tx_usd`, within any `per_rail_daily_usd` cap, remaining budget sufficient, and at or below any `approval_threshold_usd` (a call above it is parked and answered `202` with an approval link instead of settling). The budget reservation is a single atomic SQL update, so concurrent calls can never collectively overspend the envelope. If two racing calls each fit individually but not together, exactly one wins and the other gets `insufficient_budget`.
 5. **Sign and pay.** The platform's Solana payer wallet signs a USDC transfer matching the accept and re-requests the endpoint with an `X-PAYMENT` header.
 6. **Record.** The execution lands in the session ledger with the settlement transaction hash and an explorer link.
 
@@ -389,7 +392,7 @@ curl -s $BASE/api/pay/session -H "$AUTH" | jq .stats
 
 ## Step 10 - Tighten the policy without restarting the agent
 
-An active session's policy is mutable. `label`, `allowed_hosts`, and `max_per_tx_usd` can all be changed in place, and the change applies to the next call the agent makes. The token does not rotate, so the agent never notices.
+An active session's policy is mutable. `label`, `allowed_hosts`, `max_per_tx_usd`, `blocked_hosts`, `approval_threshold_usd`, and `per_rail_daily_usd` can all be changed in place, and the change applies to the next call the agent makes. The token does not rotate, so the agent never notices.
 
 ```bash
 # Lower the per-call ceiling to $0.0015 and add a second allowed host.
@@ -401,7 +404,7 @@ curl -s -X PATCH $BASE/api/pay/session/$SID \
 
 Budget, network, and expiry are immutable after creation. That is deliberate: those three are the guarantees you gave yourself, and a mutable budget is not a budget. If you need more headroom, cancel and create a new session, or run a second one alongside.
 
-Pass `"max_per_tx_usd": null` to remove the cap entirely. `400 nothing_to_update` means none of the three recognized fields was present.
+Pass `"max_per_tx_usd": null` to remove the cap entirely. `400 nothing_to_update` means none of the recognized fields was present.
 
 ---
 
@@ -541,7 +544,7 @@ The two "budget stays reserved" cases are the only place the system deliberately
 - The three-credential model, and why only the weakest one ever reaches an agent
 - How to fund credits from a Solana wallet with a server-verified, idempotent deposit
 - How to read an x402 price for free before authorizing any budget
-- The four policy fields that define an envelope, and which of them are deliberately immutable
+- The policy fields that define an envelope, and which of them are deliberately immutable
 - How to prove the entire payment path against a free endpoint before spending a cent
 - What the spend governor checks, in what order, and why the budget reservation is atomic
 - How to read the execution ledger, and which two failure codes must never be retried blind
