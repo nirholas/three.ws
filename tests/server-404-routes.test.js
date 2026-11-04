@@ -119,25 +119,26 @@ describe.skipIf(!HAS_FRONTEND_BUILD)('shared-shell surfaces do not soft-404', ()
 
 // The tutorial shell (dist/tutorial.html) is only present in a full build, so
 // its serve path is asserted at the resolver instead of over HTTP: these are
-// the decisions the server acts on, and they hold against the repo's own
-// docs/tutorials sources either way.
+// the decisions the server acts on. The build copies docs/ into dist/docs/
+// (vite.config.js, minus the private ops subtrees), so the repo root stands in
+// for dist/ here and the cases hold on a tree that was never frontend-built.
 describe('article resolution behind the shells', () => {
-	const DIST = path.resolve(fileURLToPath(new URL('..', import.meta.url)), 'dist');
+	const ARTICLE_ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 	it('a real tutorial resolves to its article', () => {
-		expect(isMissingShellPage(DIST, '/tutorial.html', '/tutorials/text-to-3d')).toBe(false);
+		expect(isMissingShellPage(ARTICLE_ROOT, '/tutorial.html', '/tutorials/text-to-3d')).toBe(false);
 	});
 
 	it('an unknown tutorial has no article', () => {
-		expect(isMissingShellPage(DIST, '/tutorial.html', '/tutorials/not-a-tutorial-xyz')).toBe(true);
+		expect(isMissingShellPage(ARTICLE_ROOT, '/tutorial.html', '/tutorials/not-a-tutorial-xyz')).toBe(true);
 	});
 
 	it('routes that are not shells are never gated', () => {
-		expect(isMissingShellPage(DIST, '/docs-world.html', '/docs/world')).toBe(false);
-		expect(isMissingShellPage(DIST, '/index.html', '/anything')).toBe(false);
+		expect(isMissingShellPage(ARTICLE_ROOT, '/docs-world.html', '/docs/world')).toBe(false);
+		expect(isMissingShellPage(ARTICLE_ROOT, '/index.html', '/anything')).toBe(false);
 	});
 
 	it('the shell index itself always resolves', () => {
-		expect(isMissingShellPage(DIST, '/docs/index.html', '/docs/')).toBe(false);
+		expect(isMissingShellPage(ARTICLE_ROOT, '/docs/index.html', '/docs/')).toBe(false);
 	});
 });
