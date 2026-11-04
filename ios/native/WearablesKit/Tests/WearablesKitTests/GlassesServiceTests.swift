@@ -1,5 +1,6 @@
 import MWDATCore
 import MWDATMockDevice
+import UIKit
 import XCTest
 @testable import WearablesKit
 
@@ -41,7 +42,8 @@ final class GlassesServiceTests: XCTestCase {
         let glasses = try MockDeviceKit.shared.pairGlasses(model: GlassesModel.allCases[0])
         glasses.powerOn()
         glasses.don()
-        let url = Bundle.module.url(forResource: "marker", withExtension: "jpg")!
+        let url = try Self.writeSampleJpeg()
+        defer { try? FileManager.default.removeItem(at: url) }
         glasses.services.cameraCapture.setCapturedPhoto(fileURL: url)
         try await Task.sleep(nanoseconds: 500_000_000)
         let jpeg = try await service.capturePhoto()
@@ -56,5 +58,19 @@ final class GlassesServiceTests: XCTestCase {
         } catch {
             XCTAssertEqual(error as? GlassesError, .notConnected)
         }
+    }
+
+    /// A real 640x480 JPEG drawn on the spot, handed to the mock camera as the "captured" photo.
+    private static func writeSampleJpeg() throws -> URL {
+        let renderer = UIGraphicsImageRenderer(size: CGSize(width: 640, height: 480))
+        let data = renderer.jpegData(withCompressionQuality: 0.9) { ctx in
+            UIColor.white.setFill()
+            ctx.fill(CGRect(x: 0, y: 0, width: 640, height: 480))
+            UIColor.black.setFill()
+            ctx.fill(CGRect(x: 250, y: 170, width: 140, height: 140))
+        }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("wearables-sample-\(UUID().uuidString).jpg")
+        try data.write(to: url)
+        return url
     }
 }

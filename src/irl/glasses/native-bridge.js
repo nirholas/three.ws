@@ -156,13 +156,15 @@ export function createWearablesLane({ plugin, decode, detectQr }) {
 		let decoded = null;
 		try {
 			const shot = await plugin.capturePhoto();
+			const fov = vfovDeg ?? shot.vfovDeg;
+			if (!(fov > 0 && fov < 180)) throw coded('Glasses camera field of view is not calibrated', 'fov_unknown');
 			const bytes = Uint8Array.from(atob(shot.base64), (c) => c.charCodeAt(0));
 			decoded = await decode(new Blob([bytes], { type: shot.mime || 'image/jpeg' }));
 			const detections = await detectQr(decoded.bitmap);
 			return relocalizeFromDetections({
 				detections,
 				frame: { w: decoded.w, h: decoded.h },
-				vfovDeg: vfovDeg ?? shot.vfovDeg,
+				vfovDeg: fov,
 				anchorRoomId,
 				markerSizeM,
 			});

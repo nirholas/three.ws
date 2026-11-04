@@ -38,6 +38,7 @@
 		C4A11E0230B1005000000000 /* GlanceWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C4A11E0230B1000E00000000 /* GlanceWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C4A11E0330C1001100000000 /* QuickActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000100000000 /* QuickActions.swift */; };
 		C4A11E0330C1001200000000 /* ThreeWsAppPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000200000000 /* ThreeWsAppPlugin.swift */; };
+		C4A11E0330C1007200000000 /* ThreeWsWearablesPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1007100000000 /* ThreeWsWearablesPlugin.swift */; };
 		C4A11E0330C1001300000000 /* SharedInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000300000000 /* SharedInbox.swift */; };
 		C4A11E0330C1001400000000 /* SharedInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000300000000 /* SharedInbox.swift */; };
 		C4A11E0330C1001500000000 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4A11E0330C1000400000000 /* ShareViewController.swift */; };
@@ -109,6 +110,7 @@
 		C4A11E0230B1000E00000000 /* GlanceWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = GlanceWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4A11E0330C1000100000000 /* QuickActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickActions.swift; sourceTree = "<group>"; };
 		C4A11E0330C1000200000000 /* ThreeWsAppPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeWsAppPlugin.swift; sourceTree = "<group>"; };
+		C4A11E0330C1007100000000 /* ThreeWsWearablesPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThreeWsWearablesPlugin.swift; sourceTree = "<group>"; };
 		C4A11E0330C1000300000000 /* SharedInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInbox.swift; sourceTree = "<group>"; };
 		C4A11E0330C1000400000000 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		C4A11E0330C1000500000000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 				7A31B0C14E5F41A290C30011 /* MainViewController.swift */,
 				C4A11E0330C1000100000000 /* QuickActions.swift */,
 				C4A11E0330C1000200000000 /* ThreeWsAppPlugin.swift */,
+				C4A11E0330C1007100000000 /* ThreeWsWearablesPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -389,6 +392,7 @@
 				C4A11E0230B1003500000000 /* GlanceLink.swift in Sources */,
 				C4A11E0330C1001100000000 /* QuickActions.swift in Sources */,
 				C4A11E0330C1001200000000 /* ThreeWsAppPlugin.swift in Sources */,
+				C4A11E0330C1007200000000 /* ThreeWsWearablesPlugin.swift in Sources */,
 				C4A11E0330C1001300000000 /* SharedInbox.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

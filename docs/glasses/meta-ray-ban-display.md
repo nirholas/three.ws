@@ -293,15 +293,15 @@ phone.
 
 ### Phase 6: the native lane (camera, voice, precision)
 
-- [ ] Add the Meta Wearables Device Access Toolkit to the iOS app
+- [x] Code complete, awaiting a Mac build and hardware ([ios/docs/WEARABLES.md](../../ios/docs/WEARABLES.md)): add the Meta Wearables Device Access Toolkit to the iOS app
       ([ios/](../../ios/README.md)) over Swift Package Manager, behind the
       existing Capacitor shell, with MockDeviceKit covering the no-hardware path.
-- [ ] Spoken conversation: glasses microphone into the same `TalkController`
+- [x] Code complete, awaiting hardware: spoken conversation, glasses microphone into the same `TalkController`
       pipeline, agent voice out through the glasses speakers.
-- [ ] Camera frames into a re-localisation pass so a pin lands where it was
+- [x] Code complete, awaiting hardware: camera frames into a re-localisation pass so a pin lands where it was
       placed rather than where GPS guesses, keeping the presence-gated contract
       intact (frames are processed for pose, never uploaded as a location feed).
-- [ ] Android parity, same toolkit.
+- [ ] Android parity, same toolkit (needs a Capacitor Android shell first; see WEARABLES.md).
 
 **Done when:** you can hold a spoken conversation with a street agent, hands
 free, and the agent stands in the same doorway it was left in.

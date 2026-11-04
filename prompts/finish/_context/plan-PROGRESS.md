@@ -100,5 +100,5 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 762-plan-growth-zed-raycast-gradio-poe-listing-packages.md | see git log | Zed, Raycast, Gradio Space, Poe and n8n packages built and verified with live Forge GLBs; owner creates the Raycast account/author and submits listings (order 938).
 - 984 EVM AgentPayments CREATE2 readiness done 2026-11-04 (fork-proven, Basescan verified); owner broadcasts per chain after choosing the owner and funding the deployer.
 2026-11-04 | 730-plan-avatar-dense-identity-fit-rtx.md (kept) | see git log | Dense photometric head fit, RTX image and routing built and shipped disabled; owner runs the GPU image build, staging healthz and 40-face eval.
-2026-11-04 | 767-plan-play-war-results-ticker-jumbotron.md | see git log | War results reach the ticker and jumbotron through one onResult hook with matchKey dedupe, unit-tested; owner runs a live two-browser war to eyeball it.
-2026-11-04 | 775-plan-avatar-animation-identity.md | see git log | Saved animation identity, resolver, server validation, Studio Animation tab and runtime wiring shipped; order file deleted.
+
+- 982 (2026-11-04): glasses wearables lane code and docs landed; Mac build, Meta enrollment and hardware demo remain with the owner.

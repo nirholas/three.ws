@@ -57,6 +57,7 @@ class MainViewController: CAPBridgeViewController {
     /// hook Capacitor gives an app for exactly that case.
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(ThreeWsAppPlugin())
+        bridge?.registerPluginInstance(ThreeWsWearablesPlugin())
     }
 
     /// Navigates the WebView to a path on the product origin.

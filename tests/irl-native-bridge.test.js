@@ -179,6 +179,17 @@ describe('wearables lane', () => {
 		}
 	});
 
+	it('refuses to guess the camera field of view', async () => {
+		const close = vi.fn();
+		const plugin = {
+			getSession: async () => ({ state: 'connected' }),
+			capturePhoto: async () => ({ base64: btoa('x') }),
+		};
+		const l = createWearablesLane({ plugin, decode: async () => ({ bitmap: {}, w: 1, h: 1, close }), detectQr: async () => [] });
+		await expect(l.relocalize({ anchorRoomId: ROOM })).rejects.toMatchObject({ code: 'fov_unknown' });
+		expect(close).not.toHaveBeenCalled();
+	});
+
 	it('refuses to capture when not connected', async () => {
 		const { lane, plugin } = fakeLane({ state: 'connecting' });
 		await expect(lane.relocalize({ anchorRoomId: ROOM })).rejects.toMatchObject({ code: 'not_connected' });

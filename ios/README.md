@@ -22,6 +22,7 @@ ios/
 ├── src/native-bridge.js    # web-side half; ships with the SITE, not the .ipa
 ├── scripts/make-icons.mjs  # derives the icon + launch images from the brand mark
 ├── scripts/release.mjs     # archive + upload to TestFlight (npm run ios:release)
+├── native/WearablesKit/    # Swift package over the Meta Wearables toolkit, MockDeviceKit tests
 ├── native/App/             # the generated Xcode project (committed)
 │   ├── App.xcodeproj
 │   ├── App/SceneDelegate.swift       # roots MainViewController, quick actions, share pickup
@@ -29,6 +30,7 @@ ios/
 │   ├── App/MainViewController.swift  # swipe-back, dark chrome, edge-to-edge insets, open(path:)
 │   ├── App/QuickActions.swift        # home screen quick action types -> pages
 │   ├── App/ThreeWsAppPlugin.swift    # the app's own plugin: takeShare, setBadge, openInSafari
+│   ├── App/ThreeWsWearablesPlugin.swift # Meta glasses lane: session, audio route, one photo (docs/WEARABLES.md)
 │   ├── App/CarPlaySceneDelegate.swift # the car screen: templates + voice control
 │   ├── App/DriveLink.swift           # CarPlay <-> /drive channel + audio session
 │   ├── App/Info.plist                # usage strings, URL scheme, quick actions, .glb type, scenes
