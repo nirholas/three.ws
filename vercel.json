@@ -7969,6 +7969,10 @@
 			"schedule": "* * * * *"
 		},
 		{
+			"path": "/api/cron/event-markets-staking-reconcile",
+			"schedule": "*/10 * * * *"
+		},
+		{
 			"path": "/api/cron/event-markets-resolve",
 			"schedule": "*/5 * * * *"
 		},

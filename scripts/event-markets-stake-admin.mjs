@@ -11,10 +11,14 @@
 //   resolve       --market <slug|id>        (winner comes from the resolved market row)
 //   void          --market <slug|id>        (resolver void: everyone refunded)
 //   pause | resume                         (on-chain config pause: blocks new pools and stakes)
+//   buyback       [--amount <usdc>] [--max-slippage-bps 100] [--max-impact-pct 2]
+//                 swap the buyback wallet's USDC (the fee's buyback half) into $THREE via Jupiter;
+//                 needs EVENT_MARKETS_STAKE_BUYBACK_KEYPAIR, quotes mainnet liquidity only
 //   status        read-only: the config and every pool
 //
 // Env: EVENT_MARKETS_STAKE_PROGRAM_ID, EVENT_MARKETS_STAKE_CLUSTER,
-//      EVENT_MARKETS_STAKE_AUTHORITY_KEYPAIR, EVENT_MARKETS_STAKE_RESOLVER_KEYPAIR (file paths).
+//      EVENT_MARKETS_STAKE_AUTHORITY_KEYPAIR, EVENT_MARKETS_STAKE_RESOLVER_KEYPAIR,
+//      EVENT_MARKETS_STAKE_BUYBACK_KEYPAIR (file paths).
 // Guide: docs/event-markets-staking.md.
 
 import { readFileSync } from 'node:fs';
@@ -25,6 +29,8 @@ import { connection, readConfig, readPool, tokenProgramFor } from '../api/_lib/e
 import { getPoolByMarket, insertPool, listPools, markPoolStatus } from '../api/_lib/event-markets/staking/store.js';
 import { formatAmount } from '../api/_lib/event-markets/staking/limits.js';
 import { getMarket } from '../api/_lib/event-markets/index.js';
+import { BUYBACK_DEFAULTS, quoteBuybackSwap, buildBuybackSwap } from '../api/_lib/event-markets/staking/buyback.js';
+import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token';
 
 const [cmd, ...rest] = process.argv.slice(2);
 const flag = (name, dflt = null) => {
@@ -153,6 +159,38 @@ const commands = {
 		])) return;
 		const sig = await send([build.voidPool(programId(), { resolver: resolver.publicKey, poolId: Buffer.from(pool.poolIdHex, 'hex') })], resolver);
 		await markPoolStatus(market.id, 'void', sig);
+	},
+
+	async buyback() {
+		const cfg = stakingConfig();
+		const wallet = key('EVENT_MARKETS_STAKE_BUYBACK_KEYPAIR');
+		const config = await readConfig() || die('program config not initialized; run init first');
+		if (!config.buyback.equals(wallet.publicKey)) die('EVENT_MARKETS_STAKE_BUYBACK_KEYPAIR is not the buyback recipient set in the program config');
+		const usdcMint = mintFor('usdc', cfg.cluster);
+		const ata = await getAssociatedTokenAddress(new PublicKey(usdcMint), wallet.publicKey, false, await tokenProgramFor(usdcMint));
+		const account = await getAccount(connection(), ata, 'confirmed', await tokenProgramFor(usdcMint)).catch(() => null);
+		const balance = account ? account.amount : 0n;
+		const amountFlag = flag('amount');
+		const requested = amountFlag === null ? null : BigInt(Math.round(Number(amountFlag) * 10 ** TOKENS.usdc.decimals));
+		if (amountFlag !== null && !(Number(amountFlag) > 0)) die('--amount must be a positive USDC amount');
+		const maxSlippageBps = Number(flag('max-slippage-bps', BUYBACK_DEFAULTS.maxSlippageBps));
+		const maxPriceImpactPct = Number(flag('max-impact-pct', BUYBACK_DEFAULTS.maxPriceImpactPct));
+		const threeMint = mintFor('three', cfg.cluster);
+		const quoted = await quoteBuybackSwap({ network: cfg.cluster === 'mainnet' ? 'mainnet' : 'devnet', threeMint, balance, requested, maxSlippageBps, maxPriceImpactPct })
+			.catch((e) => die(`could not quote the swap: ${e.message}${cfg.cluster === 'mainnet' ? '' : ' (Jupiter routes mainnet liquidity only; run this against mainnet)'}`));
+		if (!quoted.ok) die(quoted.reason);
+		if (BigInt(quoted.quote.otherAmountThreshold ?? 0) < quoted.minOutRaw) die('the quote does not enforce the minimum out; refusing to build the swap');
+		if (!gate('Swap the staking buyback balance into $THREE', [
+			['signer (buyback wallet)', wallet.publicKey.toBase58()], ['input', `${formatAmount(quoted.spend, TOKENS.usdc.decimals)} USDC (wallet holds ${formatAmount(balance, TOKENS.usdc.decimals)})`],
+			['output token', `$THREE (${threeMint})`], ['expected out', `${formatAmount(quoted.expectedOutRaw, TOKENS.three.decimals)} $THREE`],
+			['minimum out (enforced)', `${formatAmount(quoted.minOutRaw, TOKENS.three.decimals)} $THREE`], ['slippage bound', `${maxSlippageBps / 100}%`],
+			['price impact', `${quoted.priceImpactPct}% (bound ${maxPriceImpactPct}%)`], ['received into', wallet.publicKey.toBase58()],
+		])) return;
+		const swap = await buildBuybackSwap({ quote: quoted.quote, owner: wallet.publicKey });
+		swap.sign([wallet]);
+		const sig = await connection().sendRawTransaction(swap.serialize(), { skipPreflight: false, maxRetries: 3 });
+		await connection().confirmTransaction(sig, 'confirmed');
+		console.log(`sent ${sig}`);
 	},
 
 	async pause() { await setPaused(true); },

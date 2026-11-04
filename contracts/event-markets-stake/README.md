@@ -25,6 +25,10 @@ PDAs: `["config"]`, `["pool", pool_id]`, `["position", pool, owner]`; the vault 
 
 `npm run test:stake-program` builds the program, boots `solana-test-validator` with it loaded, runs [tests/event-markets-staking.chain.test.js](../../tests/event-markets-staking.chain.test.js) (full cycle, every error path, double claim, wrong authority, payout parity with the JS math, Token-2022), and stops the validator by PID. Needs the Solana CLI (`cargo-build-sbf`).
 
+## Build hash
+
+Compare any deployed program against the audited build: `sha256sum target/deploy/event_markets_stake.so` locally, `solana program dump <id> dump.so --url <cluster> && sha256sum dump.so` on chain. Last local `cargo build-sbf` of this tree (2026-11-04): `389334d8121f0e4aecc137d8e701e8ddd9514b46e1bcb7e1365a2f840445148d`. Replace this line with the hash of the build the external auditor signs off on; `scripts/event-markets-stake-launch-plan.mjs` prints the live value in its preflight.
+
 ## Deploy
 
 Owner-gated, see the step list in the decision record. Never commit `target/deploy/*-keypair.json`; `contracts/*/target/` is gitignored.

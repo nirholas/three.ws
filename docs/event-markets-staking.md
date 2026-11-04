@@ -1,6 +1,6 @@
 # Staked Event Markets on Solana
 
-Status: built and tested on a local validator. Not deployed to any cluster. Off by default (`EVENT_MARKETS_STAKING_ENABLED` unset). The free-to-play picks remain the public product; staking is a second, separate panel that only appears for eligible viewers once the owner turns it on.
+Status: built and tested on a local validator. Not deployed to any cluster (the devnet run is scripted in `scripts/event-markets-stake-devnet-e2e.mjs` and waits on devnet SOL for the deployer; the mainnet path is `scripts/event-markets-stake-launch-plan.mjs` and [docs/ops/event-markets-stake-launch.md](ops/event-markets-stake-launch.md)). Off by default (`EVENT_MARKETS_STAKING_ENABLED` unset). The free-to-play picks remain the public product; staking is a second, separate panel that only appears for eligible viewers once the owner turns it on.
 
 Legend: **[Rec]** is my recommended default, chosen so the owner is not interviewed. **[Owner]** is a decision only the owner (and counsel) can make. Every default lives in [api/_lib/event-markets/staking/config.js](../api/_lib/event-markets/staking/config.js) or on-chain config, so changing one is a one-line edit.
 
@@ -88,6 +88,8 @@ Defaults shipped [Rec], all editable by env: blocked regions `US,GB,FR,AU,SG,CN,
 I searched for an audited, reusable parimutuel or escrow program. The repo has [contracts/knock-escrow/](../contracts/knock-escrow/README.md), a two-party escrow that cannot express pools, per-outcome totals or proportional payouts. `solana-agent-sdk` and `agent-payments-sdk` build and send transfers but ship no on-chain program. I found no audited open-source parimutuel pool that supports both token programs and the void rules above, so the program is new and minimal (about 600 lines). It is **unaudited**.
 
 ## Owner steps (one command each)
+
+The live, value-filled version of this list is `node --env-file=.env scripts/event-markets-stake-launch-plan.mjs` (read-only, with a preflight table); the runbook is [docs/ops/event-markets-stake-launch.md](ops/event-markets-stake-launch.md). The $THREE buyback leg is `scripts/event-markets-stake-admin.mjs buyback`.
 
 Nothing below has been run. Fund-moving commands print recipient, amount, token and chain, and do nothing without `--yes` (and `--confirm-mainnet` on mainnet).
 
