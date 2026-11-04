@@ -433,3 +433,46 @@ describe('database_storage subsystem', () => {
 		expect(r.subsystems.find((s) => s.name === 'database_storage')?.status).toBe('unknown');
 	});
 });
+
+// Order 268: the rpc_lanes subsystem carries the 24h call ledger so healthz
+// answers "who is spending the quota" without a separate tool.
+describe('rpc_lanes call ledger', () => {
+	let spend;
+	beforeEach(async () => {
+		spend = await import('../api/_lib/solana/rpc-spend.js');
+		spend._resetRpcSpend();
+		// The ledger lives in the shared cache (memory here), so drop every hourly
+		// index the window could read; otherwise one case's shard leaks into the next.
+		const hour = spend.hourStart(Date.now());
+		for (let h = 0; h <= 25; h++) await cacheDel(`${spend.SPEND_PREFIX}:idx:${hour - h * 3_600_000}`);
+	});
+
+	it('adds calls_24h, saved_24h and the top caller to the detail, the metrics and each lane row', async () => {
+		const first = sub(await gatherSubsystemHealth({ probeDb: false }), 'rpc_lanes');
+		expect(first.lanes.length).toBeGreaterThan(0);
+		const host = new URL(first.lanes[0].url).host;
+		const now = Date.now();
+		for (let i = 0; i < 7; i++) spend.recordRpcSpend({ lane: host, methods: ['getAccountInfo'], caller: '/api/crypto/security', now });
+		for (let i = 0; i < 3; i++) spend.recordRpcSpend({ lane: host, methods: ['getBalance'], caller: '/api/wallet/balance', now });
+		for (let i = 0; i < 4; i++) spend.recordRpcSpend({ lane: 'cache', methods: ['getAccountInfo'], caller: '/api/crypto/holders', now });
+		await spend.flushRpcSpend(now);
+
+		const lanes = sub(await gatherSubsystemHealth({ probeDb: false }), 'rpc_lanes');
+		expect(lanes.metrics.calls_24h).toBe(10);
+		expect(lanes.metrics.saved_24h).toBe(4);
+		expect(lanes.metrics.top_caller).toBe('/api/crypto/security');
+		expect(lanes.metrics.top_caller_calls_24h).toBe(7);
+		expect(lanes.detail).toMatch(/; 10 calls\/24h, top \/api\/crypto\/security \(7\)$/);
+		expect(lanes.lanes[0].calls_24h).toBe(10);
+		expect(lanes.lanes.slice(1).every((l) => l.calls_24h === 0 || new URL(l.url).host === host)).toBe(true);
+		// The lane verdict itself does not depend on the ledger.
+		expect(lanes.status).toBe(first.status);
+	});
+
+	it('reports zero calls and no top caller on an empty ledger', async () => {
+		const lanes = sub(await gatherSubsystemHealth({ probeDb: false }), 'rpc_lanes');
+		expect(lanes.metrics.calls_24h).toBe(0);
+		expect(lanes.metrics.top_caller).toBeNull();
+		expect(lanes.detail).toMatch(/; 0 calls\/24h$/);
+	});
+});

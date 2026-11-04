@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Token holder and security checks now share their Solana reads, cutting RPC calls by about 43%",
+			"summary": "The holders and security panels read the same mint account and largest-holder list for a token, and a page that shows both used to pay for those reads twice, once per server instance it landed on. Those public reads are now shared across the whole fleet for 30 seconds, and the security verdict for a token is reused for 60 seconds, so a burst of lookups costs a fraction of the calls. If every data source is down, the security check now serves the last good verdict for up to 6 hours, clearly marked as stale, instead of failing. Operators also get a per-route RPC spend board at /api/ops/rpc-spend, a terminal report, and an optional daily budget per RPC lane that keeps the remaining quota for payments and settlements.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/docs/crypto-api"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "The /play share sheet and network errors behave on keyboards and bad connections",
 			"summary": "The build share sheet now uses the shared modal stack, so Escape closes only the sheet, Tab stays inside it and focus returns to where you were. Friends, NPC purchases and coin-buy sign-in show a plain network message instead of raw browser text when a connection drops. A new test pins the HUD text colors at WCAG AA contrast over bright and dark scenes.",
 			"tags": [
