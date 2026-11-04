@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T18:36:18.419Z",
+	"generated_at": "2026-11-04T18:39:23.172Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -575,6 +575,17 @@
 			"link": "/settings/mcp-tools",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Voice rooms and background jobs pick up new keys without a restart",
+			"summary": "The LiveKit voice-room token and the QStash background-job settings are now read through the same central configuration as every other credential, at request time and with stray whitespace trimmed. A key added to the running service now takes effect on the next request instead of waiting for a fresh instance, and a pasted secret with a trailing newline no longer signs voice-room tokens with the wrong bytes. The master wallet endpoint also stopped creating its own database table on the fly: that table is defined only by its reviewed migration now, so its shape can no longer drift.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

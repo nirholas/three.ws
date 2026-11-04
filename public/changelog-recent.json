@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T18:36:18.451Z",
+	"generated_at": "2026-11-04T18:39:23.282Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4361,
+	"total": 4362,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -578,6 +578,17 @@
 			"link": "/settings/mcp-tools",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Voice rooms and background jobs pick up new keys without a restart",
+			"summary": "The LiveKit voice-room token and the QStash background-job settings are now read through the same central configuration as every other credential, at request time and with stray whitespace trimmed. A key added to the running service now takes effect on the next request instead of waiting for a fresh instance, and a pasted secret with a trailing newline no longer signs voice-room tokens with the wrong bytes. The master wallet endpoint also stopped creating its own database table on the fly: that table is defined only by its reviewed migration now, so its shape can no longer drift.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1547,16 +1558,6 @@
 			"link": "/blog/ibm-user-group-meetup-3",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-10-30",
-			"type": "update",
-			"title": "Event souvenirs now reach players who were already in the world when the event starts",
-			"summary": "A live event's souvenir used to be granted only when a player joined the event world, so anyone who came early for doors and was already standing in the plaza at the start time never received it unless they rejoined. Each world now checks its seated players every 15 seconds while an event is live and grants the souvenir to anyone who does not have it yet, with the same one-time card and the wardrobe updated in place.",
-			"link": "/event",
-			"tags": [
-				"fix"
 			]
 		}
 	]

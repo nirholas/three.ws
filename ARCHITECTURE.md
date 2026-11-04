@@ -596,7 +596,7 @@ empty `200`, which would read as "no such service exists".
 | `GET /api/user/wallet/history` | On-chain Solana transaction history |
 | `POST /api/user/wallet/send` | USDC/SOL to any address |
 
-**Encryption:** AES-256-GCM for custodial keypair at rest (`WALLET_ENCRYPTION_KEY`, falls back to `JWT_SECRET` with warning if unset).
+**Encryption:** AES-256-GCM for custodial keypair at rest (`WALLET_ENCRYPTION_KEY`, required in production: `api/_lib/secret-box.js` fails closed on a missing or short key, writes a random per-record salt, and decrypts retired keys from `WALLET_ENCRYPTION_KEY_PREVIOUS`; the legacy `JWT_SECRET` path only decrypts old v1 records).
 
 #### Brain / LLM (`api/brain/chat.js`, `api/chat.js`, `api/llm/anthropic.js`)
 
@@ -1474,7 +1474,7 @@ Tiered memory architecture (Letta/MemGPT model):
 
 **Memory writes:** signed with agent's EVM wallet (ERC-191) for authorship provenance.
 
-**Reflection** (`api/agent/reflect.js`, `api/_lib/reflection.js`): LLM-powered consolidation of recent memories into higher-order "dreams". Rate-limited, daily-capped, uses `REFLECTION_MODEL = 'claude-opus-4-7'` preferentially → Groq/OpenRouter fallback. User-facing review at `api/agent/dreams.js` (accept/reject/answer with provenance); owner-only curation at `api/memory/curate.js` (edit/forget/merge with re-embedding) alongside `api/memory/{search,graph,context}.js`.
+**Reflection** (`api/agent/reflect.js`, `api/_lib/reflection.js`): LLM-powered consolidation of recent memories into higher-order "dreams". Rate-limited, daily-capped, uses `REFLECTION_MODEL = 'claude-opus-5'` preferentially → Groq/OpenRouter fallback. User-facing review at `api/agent/dreams.js` (accept/reject/answer with provenance); owner-only curation at `api/memory/curate.js` (edit/forget/merge with re-embedding) alongside `api/memory/{search,graph,context}.js`.
 
 **Brain format** (`api/_lib/brain-bundle.js`): portable `.brain` export — schema-versioned persona + signed memories + ERC-8004 anchor on Base.
 
@@ -1920,7 +1920,7 @@ Stores: GLBs · audio clips · thumbnails · manifests · OG images · validatio
 | `AIXTBT_API_KEY` | optional | aixbt market intelligence |
 | `OPENROUTER_API_KEY` | optional | Multi-model fallback routing |
 | `CRON_SECRET` | optional | Cron job auth (unauthenticated if unset) |
-| `AGENT_RELAYER_KEY` | declared req() | ERC-7710 delegation relayer (hard-required in env.js, breaks cold starts if unset) |
+| `AGENT_RELAYER_KEY` | required on use | ERC-7710 delegation relayer. A lazy getter: it throws only when the redeem path reads it, never at import time |
 | `SENTRY_DSN` | optional | Error reporting |
 | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHANGELOG_CHAT_ID` | optional | Alert delivery + changelog push |
 
@@ -2120,7 +2120,7 @@ flowchart TD
 
     subgraph Reflect["reflect-sweep cron (daily)"]
         R1["gatherReflectionContext\n(recent memories)"]
-        R2["llmComplete\n(claude-opus-4-7 → Groq fallback)"]
+        R2["llmComplete\n(claude-opus-5 → Groq fallback)"]
         R3["INSERT 'dream' memory\nwith provenance citations"]
         R1 --> R2 --> R3
     end
@@ -3007,60 +3007,55 @@ The codebase references **~260 distinct `process.env.*` keys** across `api/`; `a
 | **Indexing, attestations & infra** | `erc8004_agents_index` · `erc8004_crawl_cursor` · `solana_attestations` · `solana_attestations_cursor` · `solana_attest_event_claims` · `solana_agents_index` · `three_holder_snapshot` · `three_holder_snapshot_meta` · `three_rewards_distributions` · `usage_events` · `audit_log` · `bot_heartbeat` · `indexer_state` · `webhook_deliveries` · `developer_webhooks` · `referral_visits` · `decision_outcomes` · `agent_activations` · `agent_wallet_balance_log` · `app_flags` (runtime feature flags) |
 | **X (social) automation** | `x_posts` · `x_scheduled_posts` · `x_triggers` · `x_pending_reviews` |
 
-> Several tables (e.g. `master_wallets`) are bootstrapped at runtime via `CREATE TABLE IF NOT EXISTS` rather than a migration — see [Known Gaps](#known-gaps--in-progress).
+> Several tables are still bootstrapped at runtime via `CREATE TABLE IF NOT EXISTS` rather than a migration (`master_wallets` no longer is): see [Known Gaps](#known-gaps--in-progress).
 
 ---
 
 ## Known Gaps & In-Progress
 
+Every row below was re-measured against the code and the live `three-ws-api` Cloud Run service on **2026-11-04**; the last column is the evidence to re-check it. Rows that were fixed have been removed rather than left as warnings (a `WALLET_ENCRYPTION_KEY` that now fails closed in production in `api/_lib/secret-box.js`; a lazy `AGENT_RELAYER_KEY` getter that throws only on the ERC-7710 path; the deleted legacy studio pages; the reflection model id; the withdrawal executor, which is `process-withdrawals` in `api/cron/[name].js` over `api/_lib/withdrawal-payout.js`).
+
 ### Critical / Blocking
 
-| Item | Impact | File |
-|------|--------|------|
-| `AGENT_RELAYER_KEY` declared `req()` in `env.js` but only needed for ERC-7710 paths | Every cold start of any API function importing `env.js` will throw if unset | `api/_lib/env.js` |
-| `WALLET_ENCRYPTION_KEY` falls back to `JWT_SECRET` if unset | All custodial wallet confidentiality tied to session secret | `api/_lib/agent-wallet.js` |
-| `ValidationRegistry` not deployed on mainnet | GLB validation attestations cannot be written on mainnet | `contracts/src/ValidationRegistry.sol` |
-| `AgentPayments.sol` not deployed anywhere | All EVM agent payment addresses are `0x000…000` | `contracts/src/AgentPayments.sol`, `agent-payments-sdk/src/evm/addresses.ts` |
+| Item | Impact | Evidence |
+|------|--------|----------|
+| `THREE_TREASURY_WALLET` and `THREE_REWARDS_WALLET` unset in production | `/api/healthz` reports `three_token_rail` **down**, and every $THREE-priced purchase fails closed with a coded 503. Deliberate: a wrong address must never take real money, so the owner sets both addresses | `api/_lib/env.js` (`THREE_TREASURY_WALLET`), live `/api/healthz` subsystem `three_token_rail` |
+| `ValidationRegistry` not deployed on mainnet | GLB validation attestations cannot be written on mainnet; the Base Sepolia reference deployment is the only one | `contracts/DEPLOYMENTS.md` (ValidationRegistry rows), `src/erc8004/abi.js` (`MAINNET.validationRegistry` is `''`) |
+| `AgentPayments.sol` not deployed anywhere | Every `agentPayments` entry is the `UNDEPLOYED` zero address, so the EVM agent-payment leg cannot settle | `agent-payments-sdk/src/evm/addresses.ts`, `contracts/DEPLOYMENTS.md` (AgentPayments table) |
 
 ### In-Progress Features
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| ERC-7710 delegation redemption | Opt-in, disabled by default | `PERMISSIONS_RELAYER_ENABLED` flag; `POST /api/permissions/redeem` is the incomplete path |
-| `AgentPayments.sol` EVM deployment | Written, not deployed | All `agentPayments` addresses in `addresses.ts` are zero-address placeholders |
-| ValidationRegistry mainnet | Testnet only | No mainnet reference deployment; platform validator key `0x93Bc7EfB…` provisioned but not configured or funded |
-| Trading swarms UI | Backend + `/swarms` dashboard live; 3D Sniper Arena at `/play/arena` | `api/swarms/*`, `src/play/arena.js`, swarms tables |
-| Agora economy | **Launched** (Commons live at `/agora`; Arena/Guild migration 2026-07-02) | Agent + human citizens, professions, verifiable WORK supply chain — see [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) |
-| Self-hosted x402 facilitator | Shipped, **off by default** | `X402_SELF_FACILITATOR_ENABLED` + sponsor secret required; `api/x402-facilitator` returns 503 otherwise |
-| Autonomous coin launcher | Live (`launcher_config` defaults flipped to LIVE) | Real SOL, circuit-broken, storage-preflighted |
-| Agent-screen pool hosting | Deploy-ready, not yet deployed | `workers/agent-screen-pool/cloudbuild.yaml` builds + deploys it as an always-on Cloud Run service; until that submit runs, watched cards stay on the zero-cost activity view (`/api/agent/watch-status` gates warming/queued on pool liveness) |
+| Feature | Status | Evidence |
+|---------|--------|----------|
+| ERC-7710 delegation redemption | Implemented, **off in production**: `PERMISSIONS_RELAYER_ENABLED` and `AGENT_RELAYER_KEY` are both unset on Cloud Run, so `POST /api/permissions/redeem` answers 503 `feature_disabled` | `api/permissions/[action].js` (`handleRedeem`), `api/_lib/env.js` (`PERMISSIONS_RELAYER_ENABLED`) |
+| ValidationRegistry platform validator | Key `0x93Bc7EfB…` provisioned, not configured or funded: `VALIDATOR_PRIVATE_KEY` is unset on Cloud Run, so `/api/erc8004/validate` returns `validator_key_not_configured` | `contracts/DEPLOYMENTS.md` ("Platform validator") |
+| On-chain skill licenses | Anchor program written, **not deployed**: program `EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8` has no account on Solana mainnet or devnet, so `initialize_marketplace` has never run and no license can be minted on chain | `contracts/skill-license/`, `api/_lib/skill-license-onchain.js` (`isProgramDeployed`, `buildInitializeMarketplaceIx`) |
+| Trading swarms UI | Backend + `/swarms` dashboard live; 3D Sniper Arena at `/play/arena` | `api/swarms/*`, `pages/swarms.html`, `src/play/arena.js` |
+| Agora economy | **Launched** (Commons live at `/agora`; Arena/Guild migration 2026-07-02). Agent + human citizens, professions, verifiable WORK supply chain: see [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) | `pages/agora.html`, `docs/agora.md` |
+| Self-hosted x402 facilitator | Shipped; off by default in code, **on in production** (`X402_SELF_FACILITATOR_ENABLED=true` on Cloud Run) | `api/x402-facilitator/[action].js` (returns 503 when the flag or sponsor secret is missing) |
+| Autonomous coin launcher | Live (`launcher_config` defaults flipped to LIVE). Real SOL, circuit-broken, storage-preflighted | `api/_lib/migrations/20260629120000_launcher_live_default.sql` |
+| Agent-screen pool hosting | Deploy-ready, not deployed (no `agent-screen-pool` Cloud Run service exists). Until that submit runs, watched cards stay on the zero-cost activity view (`/api/agent/watch-status` gates warming/queued on pool liveness) | `workers/agent-screen-pool/cloudbuild.yaml` |
 
 ### Technical Debt
 
-| Item | Notes |
-|------|-------|
-| No GitHub Actions CI/CD | The project doesn't use `.github/workflows` for CI/deploy. Deploys run via Cloud Build (`npm run deploy:gcp`), schedules via Cloud Scheduler; the local `gate`/`audit`/`smoke` scripts are the push-time quality bar. Renovate handles dependency updates |
-| `master_wallets` table bootstrapped at runtime | `CREATE TABLE IF NOT EXISTS` inline rather than via migration — schema drift risk |
-| Two x402 payment protocols using HTTP 402 | CDP x402 v2 (`x402-spec.js`) and pump.fun agent-payments 402 (`x402.js`) coexist with no unified protocol guide |
-| `THREE_TREASURY_WALLET` / `THREE_REWARDS_WALLET` / `THREE_QUOTE_SECRET` | Required in production and still fail at first use, not at startup (deliberate: a wrong address must never silently take real money). Since 2026-09-20 the condition is no longer invisible: the `three_token_rail` subsystem in `/api/healthz` reports `down` and names the unset vars, and each one now fails with a typed, coded 503 instead of a sanitized 500 |
-| Upstash free-tier quota risk | June 2026 outage documented; quota guard requires optional env vars not guaranteed to be set |
-| Multiple OG image endpoints | `@sparticuz/chromium-min` one-time `/tmp` download per cold start, no persistent cache |
-| `MARKETPLACE_PLATFORM_FEE_BPS` defaults to 0 | Fee is inert unless explicitly set |
-| `x402-modal-sdk` vs `x402-payment-modal` | Two near-identical modal packages (v0.2.0 and v1.2.0) — consolidation opportunity |
-| `pumpfun-mcp` vendor copy in `src/tools.js` | Must be kept manually in sync with `api/pump/mcp-tools.js` |
-| `data/changelog-telegram-state.json` committed | Accumulates diffs on every push, exposes internal state in PRs |
-| Legacy `/studio` and `/dashboard-classic` | 301 to new dashboard but old pages not deleted from disk |
-| `apps-sdk/embodiment/` | No `package.json` or build script — raw JS helpers with no version path |
-| Withdrawal execution is async | `agent_withdrawals` rows created as 'pending'; actual on-chain transfer worker location unclear in `api/` tree |
-| Reflection model IDs | `claude-opus-4-7` model ID referenced in `api/_lib/reflection.js` — verify against Anthropic API |
-| LLM provider health | `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` noted as 'over quota' / '401s in prod' in `api/_lib/chat-models.js` — final fallback tier degraded |
-| `gRPC` runtime compatibility | `api/_lib/a2f-nvidia.js` and `api/_lib/asr-nvidia.js` require Node runtime (not Edge) — no explicit `runtime` declaration found |
-| `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` | Used in `api/agents/[id].js` but not declared in centralized `api/_lib/env.js` |
-| `QSTASH_TOKEN` | Read directly via `process.env` rather than `env.js` — inconsistent pattern |
-| Skill-license marketplace initialization | `initialize_marketplace` tx not confirmed as having run on mainnet |
-| animation-sources/ population pipeline | `scripts/download-mixamo-animations.js` / `fetch-animations.sh` not automated in CI |
-| Payment reconciliation is not a cron file | The daily revenue-reconciliation job is autonomous-registry entry `revenue-reconciliation` (self/027) executed inside `api/cron/x402-autonomous-loop.js` (`*/5`), not a standalone `api/cron/*` — do not confuse with `api/cron/reconcile-decisions.js` (oracle predictions) |
-| Trading Brain vs Sniper paths | `src/studio/money/trading-brain.js` shares the sniper compiler/backtester/DB but drives a partly separate discretionary path (`api/trading/*`, `api/strategies`, `api/agents/:id/strategies`) — two execution surfaces to keep in sync |
+| Item | Notes | Evidence |
+|------|-------|----------|
+| No GitHub Actions CI/CD | By decision. Deploys run via Cloud Build (`npm run deploy:gcp:full`), schedules via Cloud Scheduler; the local `gate`/`audit`/`smoke` scripts and the pre-push `check:rules` are the quality bar. Renovate handles dependency updates | `CLAUDE.md` ("No GitHub Actions"), `docs/ops/gcp-production.md` |
+| Runtime `CREATE TABLE IF NOT EXISTS` in request and cron paths | `master_wallets` is now migration-only (its migration is applied in production and `api/user/wallet/index.js` issues no DDL, pinned by `tests/api-user-wallet-x402-guards.test.js`). 76 other `api/` files still bootstrap their own tables at runtime, which is a schema-drift risk for each of them | `grep -rln "CREATE TABLE IF NOT EXISTS" api --include=*.js` |
+| Two protocols answer HTTP 402 | Coinbase x402 v2 (`api/_lib/x402-spec.js`) and the pump.fun agent-skill 402 manifest (`api/_lib/x402.js`) coexist. `docs/x402.md` documents the skill rail and `docs/ca2x402.md` the v2 rail; there is no single page comparing the two | `api/_lib/x402.js` (header comment), `docs/x402.md`, `docs/ca2x402.md` |
+| Upstash quota guard is unconfigured | No Upstash management credential is set on Cloud Run, so the 70%/90% quota alert in `api/cron/quota-check.js` skips (`management_api_not_configured`) and burn reporting reads `unknown`. The two readers also disagree on names: `quota-check.js` reads `UPSTASH_MANAGEMENT_API_EMAIL` / `UPSTASH_REDIS_DB_ID`, `api/_lib/redis-usage.js` reads `UPSTASH_EMAIL` / `UPSTASH_REDIS_STORE_ID` through `env.js` | `api/cron/quota-check.js`, `api/_lib/redis-usage.js`, `api/_lib/env.js` (`UPSTASH_EMAIL`) |
+| QStash and LiveKit unconfigured in production | Both are optional and now read only through `env.js` getters (`QSTASH_TOKEN`, `QSTASH_*_SIGNING_KEY`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, `LIVEKIT_SERVER_URL`). None is set on Cloud Run, so background jobs run synchronously, the DLQ check skips, and `/api/agents/:id/livekit-token` answers 503 `livekit_not_configured` | `api/_lib/env.js`, `api/_lib/qstash.js`, `api/agents/_id/livekit-token.js`, `tests/env-livekit-qstash.test.js` |
+| Headless chromium per instance | `@sparticuz/chromium-min` downloads its binary pack to `/tmp` on first use in each Cloud Run instance (the Dockerfile ships only the shared libraries), so the first render on a fresh instance pays the download | `Dockerfile` (chromium comment), `api/_lib/render-glb.js`, `api/_lib/avatar-render.js`, `api/_lib/render-clip.js` |
+| `MARKETPLACE_PLATFORM_FEE_BPS` defaults to 0 | Unset on Cloud Run, so the marketplace platform fee is inert | `api/_lib/env.js` |
+| Two x402 modal packages | `x402-modal-sdk/` (`@three-ws/x402-modal`, v0.3.0) and `x402-payment-modal/` (`@three-ws/x402-payment-modal`, v1.2.1) are both published; a decision, recorded here so nobody consolidates one without the other | `x402-modal-sdk/package.json`, `x402-payment-modal/package.json` |
+| Vendored pump.fun MCP tool list | `packages/pumpfun-mcp/src/tools.js` is an offline fallback copy of `src/pump/mcp-tools.js` and is kept in sync by hand | `packages/pumpfun-mcp/src/tools.js` (header comment) |
+| `data/changelog-telegram-state.json` committed | A decision: the changelog push cron needs durable state. It produces a diff on every changelog delivery | `git ls-files data/changelog-telegram-state.json` |
+| Classic dashboard HTML still on disk | `public/dashboard/*.html` (actions, delegation, embed-policy, memory, portfolio and others) is shadowed by `vercel.json` routes that redirect or rewrite to dashboard-next, e.g. `/dashboard/actions` 301 to `/dashboard/account` | `public/dashboard/`, `vercel.json` (`/dashboard/actions`, `/dashboard/portfolio`) |
+| `apps-sdk/embodiment/` | No `package.json` or build script: raw JS helpers with no version path | `apps-sdk/embodiment/README.md` |
+| LLM paid tiers | `ANTHROPIC_API_KEY` is unset on Cloud Run (Claude is served through Vertex AI and OpenRouter instead) and the operational note in `chat-models.js` still ranks the OpenAI key last as over quota, so the paid direct-API tiers are not a working fallback | `api/_lib/chat-models.js` (operational note), `api/_lib/reflection.js` (`REFLECTION_MODEL`) |
+| Animation source population | `scripts/download-mixamo-animations.js` and `scripts/fetch-animations.sh` run by hand; no cron or build step invokes them | `scripts/download-mixamo-animations.js` |
+| Payment reconciliation is not a cron file | The daily revenue-reconciliation job is autonomous-registry entry `revenue-reconciliation` (self/027) executed inside `api/cron/x402-autonomous-loop.js` (`*/5`), not a standalone `api/cron/*`. Do not confuse it with `api/cron/reconcile-decisions.js` (oracle predictions) | `api/_lib/x402/autonomous-registry.js`, `api/_lib/x402/revenue-reconciliation.js` |
+| Trading Brain vs Sniper paths | `src/studio/money/trading-brain.js` shares the sniper compiler/backtester/DB but drives a partly separate discretionary path (`api/trading/*`, `api/strategies.js`, `api/agents/:id/strategies`): two execution surfaces to keep in sync | `src/studio/money/trading-brain.js`, `api/strategies.js` |
 
 ---
 

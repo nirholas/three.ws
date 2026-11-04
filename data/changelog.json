@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Voice rooms and background jobs pick up new keys without a restart",
+			"summary": "The LiveKit voice-room token and the QStash background-job settings are now read through the same central configuration as every other credential, at request time and with stray whitespace trimmed. A key added to the running service now takes effect on the next request instead of waiting for a fresh instance, and a pasted secret with a trailing newline no longer signs voice-room tokens with the wrong bytes. The master wallet endpoint also stopped creating its own database table on the fly: that table is defined only by its reviewed migration now, so its shape can no longer drift.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Characters and Rankings now show real creators only",
 			"summary": "Accounts our own QA and end-to-end sweeps sign up were showing on /characters and /rankings as if they were creators, including dozens of \"QA squad\" agents. Those accounts are now marked as test accounts, from signup onward, and both boards leave them out, so ranks stay contiguous and every card belongs to a real person. Character cards also no longer show an agent wallet's dollar balance; the address chip is still there.",
 			"tags": [

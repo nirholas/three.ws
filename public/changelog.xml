@@ -447,6 +447,14 @@
 			<description>When an MCP server refuses a tool because it is switched off, the link in the refusal now opens a real page. Sign in and you see every tool group with its plain description. Set a group to on to unlock all of its tools, including financial ones such as swaps, transfers and launches, or to off to hide it from every connected client. Your choice is saved to your account and applies to every client within about 15 seconds, with no need to reconnect or send a header.</description>
 		</item>
 		<item>
+			<title>Voice rooms and background jobs pick up new keys without a restart</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Voice rooms and background jobs pick up new keys without a restart</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The LiveKit voice-room token and the QStash background-job settings are now read through the same central configuration as every other credential, at request time and with stray whitespace trimmed. A key added to the running service now takes effect on the next request instead of waiting for a fresh instance, and a pasted secret with a trailing newline no longer signs voice-room tokens with the wrong bytes. The master wallet endpoint also stopped creating its own database table on the fly: that table is defined only by its reviewed migration now, so its shape can no longer drift.</description>
+		</item>
+		<item>
 			<title>What three.ws builds with NVIDIA, and the poster we are taking to GTC 2027</title>
 			<link>https://three.ws/blog/three-ws-nvidia-inception-gtc-2027</link>
 			<guid isPermaLink="false">2026-11-04:What three.ws builds with NVIDIA, and the poster we are taking to GTC 2027</guid>

@@ -40,12 +40,10 @@ vi.mock('../api/_lib/auth.js', () => ({
 }));
 
 vi.mock('../api/_lib/db.js', () => ({
-	// The bootstrap DDL in wallet/index.js runs before the reads a case primes,
-	// so it must not eat a queued result. Everything else answers in order.
+	// Every statement answers from the queue in order.
 	sql: vi.fn(async (strings, ...values) => {
 		const text = Array.isArray(strings) ? strings.join(' ? ') : String(strings);
 		sqlState.calls.push({ text, values });
-		if (/CREATE TABLE/i.test(text)) return [];
 		return sqlState.queue.length ? sqlState.queue.shift() : [];
 	}),
 	isDbUnavailableError: () => false,
@@ -491,6 +489,24 @@ describe('wallet index: create and read', () => {
 		const { status, body } = await call(walletHandler, { method: 'GET', url: '/api/user/wallet' });
 		expect(status).toBe(200);
 		expect(body.wallet).toBeNull();
+	});
+
+	// master_wallets is owned by api/_lib/migrations/20260730040000_master_wallets.sql,
+	// applied in production. A request-path CREATE TABLE is a second, unreviewed
+	// definition of custody schema that can drift from the migration, so neither
+	// a read nor a create may issue DDL.
+	// A fresh module instance, so no per-process "already bootstrapped" flag left
+	// behind by an earlier case can hide a request-path DDL statement.
+	it('never issues schema DDL from the request path', async () => {
+		vi.resetModules();
+		const fresh = (await import('../api/user/wallet/index.js')).default;
+		sqlState.queue.push([]);
+		await call(fresh, { method: 'GET', url: '/api/user/wallet' });
+		sqlState.queue.push([]);
+		sqlState.queue.push([{ solana_address: MASTER_WALLET, evm_address: MASTER_EVM, created_at: '2026-08-15T00:00:00Z' }]);
+		await call(fresh, { method: 'POST', url: '/api/user/wallet', body: {} });
+		expect(sqlState.calls.length).toBeGreaterThan(0);
+		expect(sqlState.calls.filter((c) => /\b(CREATE|ALTER|DROP)\s+TABLE\b/i.test(c.text))).toEqual([]);
 	});
 });
 
