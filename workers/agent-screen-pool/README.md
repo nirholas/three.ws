@@ -116,6 +116,37 @@ dispatcher re-clamps coordinates and re-guards navigation as defense in depth. S
 [docs/agent-screen-control.md](../../docs/agent-screen-control.md) for the full
 channel and safety model.
 
+## Egress guard (SSRF)
+
+Owners can steer this browser and its pixels go to a public wall, so anything it
+can fetch is readable by whoever drives it. [`egress-guard.js`](./egress-guard.js)
+keeps it on the public internet:
+
+- **Forward proxy.** `startEgressProxy` listens on loopback and Chromium is
+  launched behind it (`proxy: { server }`; Playwright forces loopback through
+  it too). For every plain request, CONNECT tunnel and WebSocket upgrade it
+  resolves the hostname with `dns.promises.lookup({ all: true })`, refuses it
+  (403) if any address is non-public, and connects to the address it vetted.
+  That covers each redirect hop (Playwright never shows those to route
+  handlers), subresources, websockets, and DNS rebinding.
+- **Route hooks.** `guard.install(context)` re-checks every request and
+  WebSocket Playwright surfaces and aborts refused ones with
+  `ERR_BLOCKED_BY_CLIENT`, logged with the casting agent's id.
+- **Owner inputs.** The `homeUrl` in `resolveUrl` and every `nav` control
+  event pass the literal check (`isNavAllowed`) and then the resolved check.
+- **Policy.** `isAddressAllowed` blocks loopback, RFC 1918, link-local and
+  metadata, CGNAT, documentation, benchmarking, multicast and reserved IPv4,
+  and the IPv6 equivalents; mapped, NAT64 and 6to4 addresses are judged by
+  their embedded IPv4. The block is byte-identical to the API copy in
+  `src/shared/agent-screen-control.js`; `tests/agent-screen-egress-guard.test.js`
+  fails if they drift. Verdicts are cached per hostname for 5 seconds.
+- **Trusted host.** Only `BASE_URL`'s host is allowed without resolution, so a
+  local pool can cast `http://localhost:3000`.
+- **Service workers** are blocked in the context so no fetch bypasses the route
+  hooks.
+
+Proof against a real Chromium: `node scripts/agent-screen-egress-proof.mjs`.
+
 ## Liveness
 
 With `PORT` set the worker serves one JSON endpoint on `/`, which is both the

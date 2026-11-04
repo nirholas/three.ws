@@ -10,18 +10,22 @@
  *     NAT64 and 6to4 forms) shared by the worker and the API mirror.
  *   - assertResolvedPublic: a hostname is refused when ANY address it resolves
  *     to is non-public (DNS is stubbed at the module boundary).
- *   - createEgressGuard: the Playwright route / websocket / response hooks that
- *     re-check every request, every redirect hop, and the connected address.
+ *   - createEgressGuard: the cached verdicts and the Playwright route /
+ *     websocket hooks that abort refused requests early.
+ *   - startEgressProxy: the forward proxy Chromium runs behind, over real
+ *     sockets: every connection (each redirect hop, CONNECT tunnel) is resolved,
+ *     refused when non-public, and pinned to the vetted address.
  *   - drift: the worker copy and the API copy of the address policy are byte
  *     identical (the worker is deployed standalone and cannot import src/).
  *
- * The real-Chromium proof (a public page 302-redirecting to a loopback secret is
- * aborted, and a rebound connection kills the page) lives in
+ * The real-Chromium proof (a page 302-redirecting to a loopback secret never
+ * reaches it, nor do its subresources, fetches or websockets) lives in
  * scripts/agent-screen-egress-proof.mjs.
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createServer, request as httpRequest } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import {
@@ -29,6 +33,7 @@ import {
 	isNavAllowed,
 	assertResolvedPublic,
 	createEgressGuard,
+	startEgressProxy,
 	EgressBlockedError,
 } from '../workers/agent-screen-pool/egress-guard.js';
 import {
@@ -248,23 +253,95 @@ describe('createEgressGuard, request-level enforcement', () => {
 		expect(ok.calls).toEqual([['connect']]);
 	});
 
-	it('install() flags a response whose connected address is non-public (rebinding)', async () => {
-		const violations = [];
+	it('resolveTarget pins the vetted address so the connection never re-resolves', async () => {
 		const guard = createEgressGuard({ lookup: stubLookup(table) });
-		const ctx = fakeContext();
-		await guard.install(ctx, { onViolation: (v) => violations.push(v) });
-		const [onResponse] = ctx.listeners.response;
-		const res = (url, ipAddress) => ({
-			url: () => url,
-			serverAddr: async () => (ipAddress ? { ipAddress, port: 443 } : null),
-			frame: () => ({ page: () => 'PAGE' }),
+		await expect(guard.resolveTarget('public.example', 443, 443)).resolves.toMatchObject({ ok: true, address: PUBLIC_V4 });
+		await expect(guard.resolveTarget('internal.example', 443, 443)).resolves.toMatchObject({ ok: false, address: null });
+	});
+});
+
+// The forward proxy Chromium runs behind, exercised over real sockets. Only the
+// trusted host can be a reachable upstream on loopback here, so the allowed path
+// uses a trusted origin and every refusal uses a name the stub resolves to
+// private space (a rebinding resolver) or a private literal.
+describe('startEgressProxy, enforcement on every connection', () => {
+	const listen = (handler) => new Promise((r) => { const srv = createServer(handler); srv.listen(0, '127.0.0.1', () => r(srv)); });
+
+	async function setup() {
+		let secretHits = 0;
+		const secret = await listen((req, res) => { secretHits++; res.end('SECRET'); });
+		const origin = await listen((req, res) => {
+			if (req.url === '/hop') { res.writeHead(302, { location: `http://127.0.0.1:${secret.address().port}/` }); return res.end(); }
+			res.writeHead(200, { 'content-type': 'text/plain', 'x-seen-host': req.headers.host });
+			res.end(`origin ${req.method} ${req.url}`);
 		});
-		await onResponse(res('https://public.example/', PUBLIC_V4));
-		await onResponse(res('https://public.example/cached.css', null));
-		expect(violations).toEqual([]);
-		await onResponse(res('https://public.example/', '10.0.0.1'));
-		expect(violations).toHaveLength(1);
-		expect(violations[0]).toMatchObject({ kind: 'response', page: 'PAGE', address: '10.0.0.1' });
+		const originHost = `127.0.0.1:${origin.address().port}`;
+		const violations = [];
+		const guard = createEgressGuard({ lookup: stubLookup({ 'rebind.example': ['127.0.0.1'] }), trustedHosts: [originHost] });
+		const proxy = await startEgressProxy({ guard, onViolation: (v) => violations.push(v) });
+		const close = async () => { await proxy.close(); secret.close(); origin.close(); };
+		return { proxy, originHost, secretPort: secret.address().port, violations, hits: () => secretHits, close };
+	}
+
+	// One absolute-form request through the proxy, the way Chromium sends http://.
+	const viaProxy = (proxy, url, method = 'GET') => new Promise((r, j) => {
+		const req = httpRequest({ host: '127.0.0.1', port: proxy.port, method, path: url, headers: { host: new URL(url).host } }, (res) => {
+			let body = '';
+			res.on('data', (c) => { body += c; });
+			res.on('end', () => r({ status: res.statusCode, headers: res.headers, body }));
+		});
+		req.on('error', j);
+		req.end();
+	});
+	const connectVia = (proxy, authority) => new Promise((r, j) => {
+		const req = httpRequest({ host: '127.0.0.1', port: proxy.port, method: 'CONNECT', path: authority });
+		req.on('connect', (res, socket) => { socket.destroy(); r(res.statusCode); });
+		req.on('error', j);
+		req.end();
+	});
+
+	it('forwards an allowed origin and passes its redirect through untouched', async () => {
+		const t = await setup();
+		try {
+			const ok = await viaProxy(t.proxy, `http://${t.originHost}/page?q=1`);
+			expect(ok).toMatchObject({ status: 200, body: 'origin GET /page?q=1' });
+			expect(ok.headers['x-seen-host']).toBe(t.originHost);
+			const hop = await viaProxy(t.proxy, `http://${t.originHost}/hop`);
+			expect(hop.status).toBe(302);
+			expect(t.hits()).toBe(0);
+		} finally { await t.close(); }
+	});
+
+	it('refuses the redirect target when the browser follows it (the hop route() never sees)', async () => {
+		const t = await setup();
+		try {
+			const res = await viaProxy(t.proxy, `http://127.0.0.1:${t.secretPort}/`);
+			expect(res.status).toBe(403);
+			expect(res.body).toMatch(/egress guard/);
+			expect(t.hits()).toBe(0);
+			expect(t.violations[0]).toMatchObject({ kind: 'proxy' });
+		} finally { await t.close(); }
+	});
+
+	it('refuses a public-looking name that resolves to loopback (rebinding)', async () => {
+		const t = await setup();
+		try {
+			const res = await viaProxy(t.proxy, `http://rebind.example:${t.secretPort}/`);
+			expect(res.status).toBe(403);
+			expect(t.hits()).toBe(0);
+		} finally { await t.close(); }
+	});
+
+	it('refuses CONNECT tunnels to private targets and opens them to allowed ones', async () => {
+		const t = await setup();
+		try {
+			expect(await connectVia(t.proxy, `127.0.0.1:${t.secretPort}`)).toBe(403);
+			expect(await connectVia(t.proxy, `[::ffff:127.0.0.1]:${t.secretPort}`)).toBe(403);
+			expect(await connectVia(t.proxy, '169.254.169.254:80')).toBe(403);
+			expect(await connectVia(t.proxy, 'rebind.example:443')).toBe(403);
+			expect(await connectVia(t.proxy, t.originHost)).toBe(200);
+			expect(t.hits()).toBe(0);
+		} finally { await t.close(); }
 	});
 });
 

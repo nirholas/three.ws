@@ -7,24 +7,29 @@
 // http://169.254.169.254, a public hostname can resolve (or later rebind) to
 // 10.x, and any page can pull subresources or open websockets to internal hosts.
 //
-// This module closes those paths at the browser context:
-//   1. context.route('**/*') sees EVERY request Chromium makes (main frame,
-//      each redirect hop, iframes, subresources, fetch/XHR). The hostname is
-//      resolved with dns.promises.lookup({ all: true }) and the request is
-//      aborted if ANY returned address is non-public. Verdicts are cached per
-//      hostname for a few seconds to bound DNS cost.
-//   2. context.routeWebSocket applies the same check to websocket upgrades.
-//   3. Every response's connected address (response.serverAddr()) is checked.
-//      Chromium resolves names itself after our check, so a rebinding resolver
-//      could still steer the socket to a private address; when that happens the
-//      caller is told (onViolation, kind 'response') and tears the page down so
-//      no further frame of it is ever cast.
+// Two layers close those paths:
+//   1. startEgressProxy: an in-process forward proxy that ALL of Chromium's
+//      traffic goes through (loopback included). For every connection it
+//      resolves the hostname itself with dns.promises.lookup({ all: true }),
+//      refuses it when ANY returned address is non-public, and then connects to
+//      the exact address it vetted. Each redirect hop is a fresh proxy request,
+//      subresources, iframes, websockets and service-worker fetches all pass
+//      through it, and because Chromium does no DNS of its own behind a proxy a
+//      rebinding resolver has no second lookup to win.
+//   2. install(context): context.route('**/*') and routeWebSocket re-check
+//      every request Playwright surfaces and abort it early with
+//      ERR_BLOCKED_BY_CLIENT, so a refused navigation fails fast and is logged
+//      with the page that made it. (Playwright does not surface redirect hops to
+//      route handlers; the proxy is what enforces those.)
+// Verdicts are cached per hostname for a few seconds to bound DNS cost.
 //
 // The worker is deployed standalone and cannot import repo code, so the
 // address policy below is a byte-identical copy of the block in
 // src/shared/agent-screen-control.js (tests/agent-screen-egress-guard.test.js
 // fails on drift).
 
+import http from 'node:http';
+import net from 'node:net';
 import { lookup as dnsLookup } from 'node:dns/promises';
 
 // ── egress-guard:address-policy:start ──
@@ -178,7 +183,7 @@ const isIpLiteral = (host) => host.includes(':') || /^\d{1,3}(?:\.\d{1,3}){3}$/.
 
 // Resolve a hostname and require every address it maps to be public. Returns
 // the resolved addresses; throws EgressBlockedError otherwise (including when
-// the name does not resolve: fail closed, Chromium could not load it anyway).
+// the name does not resolve: fail closed, nothing could load it anyway).
 export async function assertResolvedPublic(hostname, { lookup = dnsLookup } = {}) {
 	const host = normalizeHost(hostname);
 	if (!host) throw new EgressBlockedError(String(hostname), 'empty host');
@@ -203,6 +208,7 @@ export async function assertResolvedPublic(hostname, { lookup = dnsLookup } = {}
 // Schemes that never leave the process: allowed without a network check.
 const INERT = new Set(['data:', 'blob:', 'about:']);
 const NETWORK = new Set(['http:', 'https:', 'ws:', 'wss:']);
+const DEFAULT_PORT = { 'http:': 80, 'ws:': 80, 'https:': 443, 'wss:': 443 };
 
 // Build a guard. trustedHosts are exact `host[:port]` values the operator
 // configured (the pool's own BASE_URL), allowed without resolution so a local
@@ -215,7 +221,7 @@ export function createEgressGuard({
 	maxEntries = 1_000,
 } = {}) {
 	const trusted = new Set(trustedHosts.map((h) => String(h).toLowerCase()));
-	const cache = new Map(); // host -> { at, verdict: Promise<{ok, reason}> }
+	const cache = new Map(); // host -> { at, verdict: Promise<{ ok, reason, addresses }> }
 
 	function verdictFor(host) {
 		const t = now();
@@ -223,11 +229,24 @@ export function createEgressGuard({
 		if (hit && t - hit.at < ttlMs) return hit.verdict;
 		if (cache.size >= maxEntries) cache.clear();
 		const verdict = assertResolvedPublic(host, { lookup }).then(
-			() => ({ ok: true, reason: null }),
-			(err) => ({ ok: false, reason: err?.message || String(err) }),
+			(addresses) => ({ ok: true, reason: null, addresses }),
+			(err) => ({ ok: false, reason: err?.message || String(err), addresses: [] }),
 		);
 		cache.set(host, { at: t, verdict });
 		return verdict;
+	}
+
+	const isTrusted = (hostname, port, defaultPort) => {
+		const h = String(hostname).toLowerCase();
+		return trusted.has(`${h}:${port}`) || (Number(port) === defaultPort && trusted.has(h));
+	};
+
+	// Vet one connection target. Trusted hosts connect by name; everything else
+	// connects to the first vetted address, never to a second resolution.
+	async function resolveTarget(hostname, port, defaultPort) {
+		if (isTrusted(hostname, port, defaultPort)) return { ok: true, reason: null, address: normalizeHost(hostname) };
+		const v = await verdictFor(normalizeHost(hostname));
+		return { ok: v.ok, reason: v.reason, address: v.addresses[0] || null };
 	}
 
 	async function checkUrl(rawUrl) {
@@ -235,16 +254,13 @@ export function createEgressGuard({
 		try { u = new URL(String(rawUrl)); } catch { return { ok: false, reason: 'unparseable url' }; }
 		if (INERT.has(u.protocol)) return { ok: true, reason: null };
 		if (!NETWORK.has(u.protocol)) return { ok: false, reason: `scheme ${u.protocol} not allowed` };
-		if (trusted.has(u.host.toLowerCase())) return { ok: true, reason: null };
-		return verdictFor(normalizeHost(u.hostname));
+		const def = DEFAULT_PORT[u.protocol];
+		const { ok, reason } = await resolveTarget(u.hostname, u.port || def, def);
+		return { ok, reason };
 	}
 
-	function isTrustedUrl(rawUrl) {
-		try { return trusted.has(new URL(String(rawUrl)).host.toLowerCase()); } catch { return false; }
-	}
-
-	const pageOf = (obj) => {
-		try { return obj.frame()?.page() ?? null; } catch { return null; }
+	const pageOf = (request) => {
+		try { return request.frame()?.page() ?? null; } catch { return null; }
 	};
 
 	async function install(context, { onViolation } = {}) {
@@ -274,16 +290,144 @@ export function createEgressGuard({
 				ws.connectToServer();
 			});
 		}
+	}
 
-		context.on('response', async (response) => {
-			const url = response.url();
-			if (isTrustedUrl(url)) return;
-			const addr = await response.serverAddr().catch(() => null);
-			if (!addr?.ipAddress) return; // served from cache or memory: no socket
-			if (isAddressAllowed(addr.ipAddress)) return;
-			report({ kind: 'response', url, address: addr.ipAddress, reason: 'connected to non-public address', page: pageOf(response) });
+	return { checkUrl, resolveTarget, install };
+}
+
+// "host:port" or "[v6]:port" from a CONNECT request line.
+function parseAuthority(authority) {
+	const m = /^\[([^\]]+)\]:(\d{1,5})$/.exec(authority) || /^([^:]+):(\d{1,5})$/.exec(authority);
+	if (!m) return null;
+	const port = Number(m[2]);
+	return port > 0 && port < 65536 ? { hostname: m[1], port } : null;
+}
+
+const BLOCKED_BODY = 'Blocked by the three.ws egress guard: this address is not on the public internet.\n';
+const HOP_BY_HOP = new Set(['proxy-connection', 'proxy-authorization', 'keep-alive', 'connection', 'te', 'trailer', 'transfer-encoding', 'upgrade']);
+
+// Start the forward proxy Chromium is launched behind. Returns { url, port, close }.
+// It listens on loopback only and serves nothing but proxied traffic.
+export function startEgressProxy({ guard, host = '127.0.0.1', port = 0, onViolation, connectTimeoutMs = 15_000 } = {}) {
+	if (!guard) throw new TypeError('startEgressProxy needs a guard from createEgressGuard()');
+	const report = (v) => { try { onViolation?.(v); } catch { /* never let logging break the proxy */ } };
+	const sockets = new Set();
+
+	// Plain http:// requests arrive in absolute form (GET http://host/path).
+	async function onRequest(req, res) {
+		let u;
+		try { u = new URL(req.url); } catch { u = null; }
+		if (!u || u.protocol !== 'http:') {
+			res.writeHead(400, { 'content-type': 'text/plain' });
+			res.end('This proxy only forwards absolute http:// requests.\n');
+			return;
+		}
+		const t = await guard.resolveTarget(u.hostname, u.port || 80, 80);
+		if (!t.ok) {
+			report({ kind: 'proxy', url: u.href, reason: t.reason });
+			res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' });
+			res.end(BLOCKED_BODY);
+			return;
+		}
+		const headers = {};
+		for (let i = 0; i < req.rawHeaders.length; i += 2) {
+			const k = req.rawHeaders[i];
+			if (!HOP_BY_HOP.has(k.toLowerCase())) headers[k] = req.rawHeaders[i + 1];
+		}
+		const upstream = http.request({
+			host: t.address,
+			port: Number(u.port) || 80,
+			method: req.method,
+			path: `${u.pathname}${u.search}`,
+			headers,
+			setHost: false,
+			timeout: connectTimeoutMs,
+		});
+		upstream.on('response', (up) => {
+			const out = [];
+			for (let i = 0; i < up.rawHeaders.length; i += 2) {
+				if (!HOP_BY_HOP.has(up.rawHeaders[i].toLowerCase())) out.push(up.rawHeaders[i], up.rawHeaders[i + 1]);
+			}
+			res.writeHead(up.statusCode || 502, up.statusMessage, out);
+			up.pipe(res);
+		});
+		upstream.on('timeout', () => upstream.destroy(new Error('upstream timeout')));
+		upstream.on('error', () => {
+			if (!res.headersSent) res.writeHead(502, { 'content-type': 'text/plain' });
+			res.end();
+		});
+		req.pipe(upstream);
+	}
+
+	// Open a vetted TCP tunnel, then splice the two sockets together.
+	function tunnel(clientSocket, address, targetPort, onOpen) {
+		const upstream = net.connect({ host: address, port: targetPort, timeout: connectTimeoutMs });
+		upstream.once('connect', () => {
+			upstream.setTimeout(0);
+			onOpen(upstream);
+			upstream.pipe(clientSocket);
+			clientSocket.pipe(upstream);
+		});
+		upstream.on('timeout', () => upstream.destroy());
+		upstream.on('error', () => clientSocket.destroy());
+		clientSocket.on('error', () => upstream.destroy());
+		clientSocket.on('close', () => upstream.destroy());
+	}
+
+	// https:// and ws(s):// go through CONNECT host:port.
+	async function onConnect(req, clientSocket, head) {
+		const a = parseAuthority(req.url);
+		const t = a ? await guard.resolveTarget(a.hostname, a.port, 443) : { ok: false, reason: 'bad CONNECT authority' };
+		if (!t.ok) {
+			report({ kind: 'proxy', url: `connect://${req.url}`, reason: t.reason });
+			clientSocket.end('HTTP/1.1 403 Forbidden\r\ncontent-length: 0\r\n\r\n');
+			return;
+		}
+		tunnel(clientSocket, t.address, a.port, (upstream) => {
+			clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+			if (head?.length) upstream.write(head);
 		});
 	}
 
-	return { checkUrl, install, isTrustedUrl };
+	// A plain ws:// upgrade sent in absolute form instead of via CONNECT.
+	async function onUpgrade(req, clientSocket, head) {
+		let u;
+		try { u = new URL(req.url); } catch { u = null; }
+		const t = u ? await guard.resolveTarget(u.hostname, u.port || 80, 80) : { ok: false, reason: 'bad upgrade url' };
+		if (!t.ok) {
+			report({ kind: 'proxy', url: req.url, reason: t.reason });
+			clientSocket.end('HTTP/1.1 403 Forbidden\r\ncontent-length: 0\r\n\r\n');
+			return;
+		}
+		tunnel(clientSocket, t.address, Number(u.port) || 80, (upstream) => {
+			const lines = [`${req.method} ${u.pathname}${u.search} HTTP/1.1`];
+			for (let i = 0; i < req.rawHeaders.length; i += 2) {
+				const k = req.rawHeaders[i].toLowerCase();
+				if (k !== 'proxy-connection' && k !== 'proxy-authorization') lines.push(`${req.rawHeaders[i]}: ${req.rawHeaders[i + 1]}`);
+			}
+			upstream.write(`${lines.join('\r\n')}\r\n\r\n`);
+			if (head?.length) upstream.write(head);
+		});
+	}
+
+	const server = http.createServer((req, res) => { onRequest(req, res).catch(() => { try { res.destroy(); } catch { /* */ } }); });
+	server.on('connect', (req, sock, head) => { onConnect(req, sock, head).catch(() => sock.destroy()); });
+	server.on('upgrade', (req, sock, head) => { onUpgrade(req, sock, head).catch(() => sock.destroy()); });
+	server.on('connection', (s) => { sockets.add(s); s.on('close', () => sockets.delete(s)); });
+
+	return new Promise((resolveStart, rejectStart) => {
+		server.once('error', rejectStart);
+		server.listen(port, host, () => {
+			server.off('error', rejectStart);
+			const bound = server.address().port;
+			resolveStart({
+				port: bound,
+				url: `http://${host}:${bound}`,
+				close: () => new Promise((r) => {
+					for (const s of sockets) s.destroy();
+					server.close(() => r());
+				}),
+			});
+		});
+	});
 }
