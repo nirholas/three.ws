@@ -8,31 +8,20 @@ Terms used below are Play's, not ours. **Collected** means the data leaves the d
 servers. **Shared** means it is transferred to a third party. **Processed ephemerally** means
 it is used to service the request and not retained.
 
-## Blocking issue before this form can be submitted
+## Photos and the privacy policy (resolved)
 
-**The live privacy policy does not mention photo or camera data at all.** It documents account
-identifiers, uploaded 3D models, on-chain data, usage data, session data and legal acceptance
-records (version 2, effective July 16, 2026), and the selfie capture flow predates none of
-that: it is simply missing. The declaration below says photos are collected and retained,
-because `api/_lib/likeness-store.js` reads capture URLs back out of the stored generation
-params, so they persist. A Data safety form that declares photo collection against a privacy
-policy that is silent on photos is exactly the mismatch Google rejects.
+The declaration below says photos are collected and retained, because
+`api/_lib/likeness-store.js` reads capture URLs back out of the stored generation params, so
+they persist. Google rejects a Data safety form that declares photo collection against a
+privacy policy that is silent on photos. Version 3 of the policy (effective September 11,
+2026) closes that gap: <https://three.ws/legal/privacy> now has a "Photos you capture or
+upload" clause stating that selfie photos are stored with the generation record, visible only
+to the account, deleted with the generation or the account, never used for training or shared
+with advertisers, and never turned into a face template or other biometric identifier.
 
-Draft clause for the owner to review and publish before either store submission. It states
-what the code already does and adds no new commitment:
-
-> **Photos you capture or upload.** If you use the selfie flow, the photos you capture (one
-> frontal image and up to two optional side angles) are uploaded to our reconstruction service
-> and used to build your 3D avatar. They are stored with the generation record so the result
-> can be reproduced, re-rigged and re-scored for quality, and they are visible only to your
-> account. They are deleted when you delete the generation or your account, subject to the
-> retention windows in Section 5. We do not use them to train models, we do not share them
-> with advertisers, and we do not derive or store a face template or any other biometric
-> identifier from them.
-
-The last sentence is verifiable in code: `api/_lib/likeness-score.js` computes face embeddings
-in memory to score likeness and files only the resulting 1 to 5 number, never the embedding,
-the crop, or the capture URL.
+That last commitment is verifiable in code: `api/_lib/likeness-score.js` computes face
+embeddings in memory to score likeness and files only the resulting 1 to 5 number, never the
+embedding, the crop, or the capture URL. Keep this form and that clause in step.
 
 ## Data types
 
