@@ -21,9 +21,29 @@ This file is excluded from the `.vsix` by `.vscodeignore`.
   into a real VS Code 1.138.0 server build with
   `code-server --install-extension`, and `--list-extensions` reports
   `threews.vscode-3d@0.2.0`.
+- **Release is one command.** `npm run release` (see below) wraps the preflight,
+  both publishes and the post-publish listing check. Re-verified 2026-11-04: 71
+  extension tests plus 7 release-preflight tests pass, the packaged file list
+  matches exactly, and the gallery query for `threews.vscode-3d` still returns
+  no listing.
 - **What only the owner has:** a Marketplace token for the `threews` publisher
   and an Open VSX token for the `threews` namespace. Neither is stored on this
   machine.
+
+## Fast path: `npm run release`
+
+Set the two tokens and run one command. It runs the tests, packages, asserts the
+file list below exactly, checks the `CHANGELOG.md` section and that the version
+is greater than anything on the Marketplace, publishes to each registry whose
+token is set (`VSCE_PAT` for the Marketplace, `OVSX_PAT` for Open VSX; an unset
+token skips that registry with a message), then polls the gallery until the new
+version is listed. With no tokens it only runs the preflight and exits 0. Token
+values are never printed. The manual steps below remain the fallback.
+
+```bash
+cd packages/vscode-3d
+VSCE_PAT=<marketplace token> OVSX_PAT=<open vsx token> npm run release
+```
 
 ## 0. Preflight (one minute)
 

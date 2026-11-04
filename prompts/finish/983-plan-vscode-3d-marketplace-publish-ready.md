@@ -1,5 +1,7 @@
 # three.ws 3D extension verified and staged so publishing to the VS Code Marketplace and Open VSX is one command
 
+Status (2026-11-04): `npm run release` shipped in `packages/vscode-3d` (preflight with exact file-list, CHANGELOG and version checks, per-token publishes, gallery polling) with 7 passing tests. Verified with no tokens: preflight passes, both publishes skipped, exit 0. Not published. Owner step: set `VSCE_PAT` and `OVSX_PAT`, run `npm run release`.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/983-plan-vscode-3d-marketplace-publish-ready.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 26 of 100 inside the tier). **Area:** vscode. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

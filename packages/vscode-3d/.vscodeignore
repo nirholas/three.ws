@@ -2,6 +2,7 @@
 src/**
 webview/**
 test/**
+scripts/**
 build.mjs
 .gitignore
 **/*.map
