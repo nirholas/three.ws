@@ -378,7 +378,8 @@ pin this behaviour.
 
 ## Fewer calls: coalescing, the fresh-read cache, and spend accounting
 
-Four mechanisms in `connection.js` and [api/\_lib/solana/rpc-spend.js](../../api/_lib/solana/rpc-spend.js)
+Five mechanisms in `connection.js`, [api/\_lib/solana/shared-reads.js](../../api/_lib/solana/shared-reads.js)
+and [api/\_lib/solana/rpc-spend.js](../../api/_lib/solana/rpc-spend.js)
 cut and attribute quota spend before a lane is ever picked:
 
 - **Coalescing.** Identical concurrent reads (same method and params, commitment included,
@@ -391,15 +392,34 @@ cut and attribute quota spend before a lane is ever picked:
   `getSignatureStatuses` 30s). It is process-local on purpose. Writes, batches, errors,
   stale last-good answers and any caller passing `fresh: true` (settle, send and verify
   paths) bypass it, and a devnet connection is never handed a mainnet answer.
+- **Fleet-wide shared reads.** The fresh-read cache is per instance, so a client scanning
+  one mint across `/api/crypto/holders`, `/security`, `/bonding` and `/whales` within a few
+  seconds paid for the same reads once per Cloud Run instance it landed on.
+  `sharedRpcRead()` keeps public, non-money reads in the shared cache (`rpcshared:v1`,
+  keyed by method and params): the mint `getAccountInfo` and `getTokenLargestAccounts`
+  for 30s, the holder-owner `getMultipleAccounts` for 120s, the metadata PDA for 300s.
+  Only a live, error-free envelope is stored; a stale last-good answer is returned but
+  never republished. `/api/crypto/security` also keeps its whole verdict per mint
+  (`crypto:security:v1`): fresh for 60s, then served marked stale for up to 6h while
+  every source is down. Never route a balance a settle, send or verify acts on through it.
 - **Spend accounting.** Every upstream call is counted under (caller, method, lane) in
   hourly buckets in the shared cache (`rpcspend:v1`). The caller is the API route template
   or cron path (`script:<name>` outside the API server); `cache` and `coalesced` are
-  pseudo-lanes reported as saved, never as calls. Read it to find who spent a quota event.
+  pseudo-lanes reported as saved, never as calls. Readers that POST to a lane URL
+  directly instead of going through the rotating fetch (the Helius DAS walk in
+  `balances.js`, `getSplTokenBalance` in `embed-gate.js`) call `noteRpcSpend(url, body)`
+  first so their calls are counted too. Read it to find who spent a quota event:
+  `GET /api/ops/rpc-spend?hours=1..48&top=1..100` (ops secret or admin session) ranks
+  the (caller, method) pairs and lists per-lane totals and budgets, and
+  `node scripts/rpc-spend-report.mjs --base https://three.ws --hours 6` prints the same
+  board from a terminal with `OPS_SECRET`.
 - **Per-lane daily budget guard.** `RPC_LANE_BUDGETS` is a JSON object keyed by lane host
   whose value is the daily call quota or `{ "daily": n, "fraction": f }`. Once fleet calls
   for the UTC day cross `fraction x daily` (default `RPC_LANE_BUDGET_FRACTION`, else 0.8),
   non-money callers try that lane last so the remainder is kept for settles, sends and
-  verifies. Unset, the guard is off; invalid JSON logs a warning and disables it.
+  verifies. Unset, the guard is off; invalid JSON logs a warning and disables it. Saved
+  reads (`cache`, `coalesced`) never count against a lane. Pinned by the lane budget guard
+  suite in [tests/solana-rpc-priority-and-breaker.test.js](../../tests/solana-rpc-priority-and-breaker.test.js).
 
 ## Knock-on effects to expect
 
