@@ -298,3 +298,69 @@ describe('tool changes after approval', () => {
 		}
 	});
 });
+
+describe('autonomous runs', () => {
+	const run = (extra = {}) => ({ id: '44444444-4444-4444-8444-444444444444', user_id: USER, agent_id: AGENT, goal: 'read my notes', tools_allowed: null, ...extra });
+	let runs;
+
+	beforeAll(async () => {
+		runs = await import('../api/_lib/agents-v1/runs.js');
+	});
+
+	async function connectWith(selection) {
+		allowLoopback();
+		const conn = await service.createConnection({ agentId: AGENT, userId: USER, serverUrl: stub.url, label: 'Notes' });
+		const row = await store.getOwned(AGENT, conn.id, USER);
+		await service.updateSelection(row, { reviewed: true, ...selection });
+		return conn;
+	}
+
+	it('mounts the connected read tools and the call reaches the server', async () => {
+		await connectWith({ enabled_tools: ['get_note'] });
+		const tools = await runs.runToolset(run());
+		const name = tools.schemas.map((s) => s.function.name).find((n) => n.startsWith('ext_'));
+		expect(name).toMatch(/_get_note$/);
+		expect(tools.notes.join('\n')).toContain('tools start with ext_');
+		const out = await tools.handlers[name]({ id: '1' });
+		expect(out.untrusted_external_content).toContain('<external_tool_result');
+		expect(stub.state.calls).toEqual([expect.objectContaining({ name: 'get_note' })]);
+	});
+
+	it('withholds a financial tool, because nobody is there to approve it', async () => {
+		await connectWith({ tier_overrides: { delete_note: 'financial' }, enabled_tools: ['get_note', 'delete_note'], acknowledge: ['delete_note'] });
+		const chat = await runtime.mountExternalTools(AGENT);
+		expect(chat.tools.map((t) => t.tier).sort()).toEqual(['financial', 'read']);
+		const tools = await runs.runToolset(run());
+		const ext = tools.schemas.map((s) => s.function.name).filter((n) => n.startsWith('ext_'));
+		expect(ext).toHaveLength(1);
+		expect(ext[0]).toMatch(/_get_note$/);
+		expect(tools.notes.join('\n')).toMatch(/unattended/i);
+	});
+
+	it('honours the run allowlist for external tools too', async () => {
+		await connectWith({ enabled_tools: ['get_note', 'search_notes'] });
+		const all = (await runtime.mountExternalTools(AGENT)).tools.map((t) => t.name);
+		const pick = all.find((n) => n.endsWith('_search_notes'));
+		const tools = await runs.runToolset(run({ tools_allowed: [pick] }));
+		expect(tools.schemas.map((s) => s.function.name).filter((n) => n.startsWith('ext_'))).toEqual([pick]);
+		const none = await runs.runToolset(run({ tools_allowed: ['web_search'] }));
+		expect(none.schemas.some((s) => s.function.name.startsWith('ext_'))).toBe(false);
+	});
+
+	it('accepts an ext_ tool name in toolsAllowed and still refuses an unknown one', () => {
+		expect(() => runs.assertKnownTools(['ext_notes_get_note'])).not.toThrow();
+		expect(() => runs.assertKnownTools(['not_a_tool'])).toThrow(/Unknown tool/);
+	});
+
+	it('a broken connection read never stops the run from getting its own tools', async () => {
+		const saved = holder.db;
+		holder.db = { sql: () => Promise.reject(new Error('db down')) };
+		try {
+			const tools = await runs.runToolset(run());
+			expect(tools.schemas.length).toBeGreaterThan(0);
+			expect(tools.schemas.some((s) => s.function.name.startsWith('ext_'))).toBe(false);
+		} finally {
+			holder.db = saved;
+		}
+	});
+});

@@ -42,6 +42,13 @@ Page: [/mcp-integrations](https://three.ws/mcp-integrations)
    `ext_<name>_<tool>` (for example `ext_deepwiki_ask_question`). Results are
    capped at 12,000 characters and wrapped as untrusted external content, so text
    that a third-party server returns is treated as data, never as instructions.
+   This covers chat (`/api/agent/run`) and autonomous runs (`POST
+   /api/v1/agents/:id/runs`). In chat a financial tool needs the user's yes in the
+   conversation before the model may pass `confirm_action: true`. An autonomous run
+   has nobody to say yes, so it never mounts a financial tool and the agent reports
+   that the owner has to take that step. A run's `toolsAllowed` list can name
+   `ext_` tools, and when the list is set only the named ones are mounted. Each call
+   shows on the agent's **Runs** tab with its arguments, result and step cost.
 
 ### Custom servers
 
@@ -169,7 +176,7 @@ node scripts/vet-mcp-integrations.mjs     # network check: URL is live, package 
 | Tier classification | `api/_lib/mcp-connections/classify.js` |
 | OAuth (PKCE, dynamic registration, refresh) | `api/_lib/mcp-connections/oauth.js`, `api/mcp-connections/callback.js` |
 | MCP client and SSRF guard | `api/_lib/mcp-connections/client.js`, `safe-fetch.js` |
-| Runtime mounting (`ext_` tools) | `api/_lib/mcp-connections/runtime.js`, used by `api/agent/run.js` |
+| Runtime mounting (`ext_` tools) | `api/_lib/mcp-connections/runtime.js`, used by `api/agent/run.js` (chat) and `api/_lib/agents-v1/runs.js` (autonomous runs) |
 | Agent MCP tools | `api/_mcpagent/integrations-tools.js` |
 | CLI | `packages/three-ws-cli/src/commands/mcp.js` |
 | Tests | `tests/mcp-connections-lifecycle.test.js`, `packages/three-ws-cli/tests/mcp-install.test.js` |

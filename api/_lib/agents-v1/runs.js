@@ -25,6 +25,7 @@ import { resolveAgentBrain } from '../agent-brain.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { agentToolSchemas, agentToolHandlers } from '../agent-tools.js';
 import { SANDBOX_TOOL_NAMES, sandboxToolset } from '../sandbox/toolset.js';
+import { mountExternalTools } from '../mcp-connections/runtime.js';
 import { debitCredits } from '../credits.js';
 import { assertAgentBudget, InferenceBillingError } from '../inference-billing.js';
 import { settleTokenUsage } from '../token-budgets.js';
@@ -135,11 +136,7 @@ export async function createRun({
 	const credits = Math.max(0, Number(budgetCreditsUsd) || 0);
 	const usd = Math.max(0, Number(budgetUsd) || 0);
 
-	if (toolsAllowed != null) {
-		const known = new Set([...agentToolSchemas().map((t) => t.function.name), ...SANDBOX_TOOL_NAMES]);
-		const unknown = toolsAllowed.filter((t) => !known.has(t));
-		if (unknown.length) throw apiError(400, 'unknown_tool', `Unknown tool(s): ${unknown.join(', ')}.`, { known: [...known] });
-	}
+	if (toolsAllowed != null) assertKnownTools(toolsAllowed);
 
 	const [agent] = await sql`
 		SELECT id, user_id, status, deleted_at FROM agent_identities WHERE id = ${agentId} LIMIT 1
@@ -325,7 +322,25 @@ export async function chainFor(run) {
 	return chain.filter((p) => p.keySource === 'owner' || isFreeLane(p.name, p.catalogModel || p.model));
 }
 
-function toolsFor(run) {
+// A connected integration's tool (`ext_<connection>_<tool>`, see
+// mcp-connections/runtime.js). Connections change after a run is created, so
+// the name is checked for shape here and resolved when each step mounts them.
+const EXTERNAL_TOOL_RE = /^ext_[A-Za-z0-9_-]{1,60}$/;
+
+/** Throw 400 unknown_tool for any name that is neither a platform, sandbox nor integration tool. */
+export function assertKnownTools(toolsAllowed) {
+	const known = new Set([...agentToolSchemas().map((t) => t.function.name), ...SANDBOX_TOOL_NAMES]);
+	const unknown = toolsAllowed.filter((t) => !known.has(t) && !EXTERNAL_TOOL_RE.test(String(t)));
+	if (unknown.length) throw apiError(400, 'unknown_tool', `Unknown tool(s): ${unknown.join(', ')}.`, { known: [...known] });
+}
+
+/**
+ * The tools one run step may call: the platform tools, the sandbox, and the
+ * integrations the owner connected to the agent (minus anything that moves
+ * money, since no human is there to approve it), all narrowed by the run's
+ * allowlist. `notes` go into the system prompt.
+ */
+export async function runToolset(run) {
 	const allow = Array.isArray(run.tools_allowed) ? new Set(run.tools_allowed) : null;
 	const schemas = agentToolSchemas().filter((s) => !allow || allow.has(s.function.name));
 	const all = agentToolHandlers();
@@ -340,7 +355,18 @@ function toolsFor(run) {
 		toolsAllowed: allow ? [...allow] : null,
 		allow,
 	});
-	return { schemas: [...schemas, ...sandbox.schemas], handlers: { ...handlers, ...sandbox.handlers }, note: sandbox.note };
+	// Reading the connections must never cost the run its own tools.
+	const external = await mountExternalTools(run.agent_id, { unattended: true }).catch((err) => {
+		console.error('[agent-runs] mounting external tools failed:', err?.message || err);
+		return { schemas: [], handlers: {}, note: '' };
+	});
+	const extSchemas = external.schemas.filter((s) => !allow || allow.has(s.function.name));
+	const extHandlers = Object.fromEntries(extSchemas.map((s) => [s.function.name, external.handlers[s.function.name]]));
+	return {
+		schemas: [...schemas, ...sandbox.schemas, ...extSchemas],
+		handlers: { ...handlers, ...sandbox.handlers, ...extHandlers },
+		notes: [sandbox.note, extSchemas.length ? external.note : ''].filter(Boolean),
+	};
 }
 
 /**
@@ -372,7 +398,7 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 	}
 
 	const events = [];
-	const { schemas, handlers, note: sandboxNote } = toolsFor(run);
+	const { schemas, handlers, notes } = await runToolset(run);
 	const loop = createAgentLoop({
 		chain,
 		toolSchemas: schemas,
@@ -389,7 +415,7 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 			operationId: run.id,
 			maxSteps: run.max_steps * RUNTIME_STEPS_PER_STEP,
 			messages: [
-				{ role: 'system', content: await agentSystemPrompt(run.agent_id, { extraNotes: [sandboxNote] }) },
+				{ role: 'system', content: await agentSystemPrompt(run.agent_id, { extraNotes: notes }) },
 				{ role: 'user', content: run.goal },
 			],
 		});

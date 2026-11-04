@@ -183,6 +183,14 @@
 			<description>Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.</description>
 		</item>
 		<item>
+			<title>Autonomous agent runs can use the integrations you connected</title>
+			<link>https://three.ws/mcp-integrations</link>
+			<guid isPermaLink="false">2026-11-04:Autonomous agent runs can use the integrations you connected</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A run you start from the API or the Runs tab can now call the third-party MCP servers you connected to the agent on /mcp-integrations, the same ext_ tools chat already had. Every call shows on the Runs tab with its arguments, the server's answer and the step's cost. Tools that move money or cannot be undone stay out of autonomous runs, since nobody is there to approve them; the agent says in its report that you need to take that step. A run's toolsAllowed list can now name ext_ tools too.</description>
+		</item>
+		<item>
 			<title>Chain turnover never reads as zero, and coin signals say why they are blank</title>
 			<link>https://three.ws/chains</link>
 			<guid isPermaLink="false">2026-11-04:Chain turnover never reads as zero, and coin signals say why they are blank</guid>
