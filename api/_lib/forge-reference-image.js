@@ -8,8 +8,8 @@
 // background, evenly-lit image reconstructs into a real-looking mesh; a
 // cartoonish or cluttered one does not.
 //
-// This module generates that reference image on the Vertex Gemini 2.5 Flash
-// Image lane (GCP-credit funded, owner-approved spend), tuned specifically to
+// This module generates that reference image on the Vertex Gemini Flash Image
+// lane (model id in api/_lib/image-model.js; GCP-credit funded, owner-approved spend), tuned specifically to
 // produce the IDEAL reconstruction input:
 //   - a single centered subject on a plain seamless studio background,
 //   - soft even shadowless lighting,
@@ -56,6 +56,7 @@
 
 import { createHash } from 'node:crypto';
 import { getGcpAccessToken } from './gcp-auth.js';
+import { imageModelChain, isModelNotFound } from './image-model.js';
 import { persistImageBase64 } from './image-persist.js';
 import { subjectNegativePrompt } from '../forge-enhance.js';
 import { isProviderRefusal } from './ai-image-lanes.js';
@@ -110,9 +111,10 @@ async function putCachedReference(key, value) {
 	}
 }
 
-// Gemini image model on Vertex ("Nano Banana"): live, credit-billed, uses the
-// :generateContent shape. Overridable without a code change.
-const DEFAULT_MODEL = process.env.VERTEX_IMAGEN_MODEL || 'gemini-2.5-flash-image';
+// Gemini image model on Vertex: live, credit-billed, uses the :generateContent
+// shape. The id (and its not-found fallback) is resolved per call in
+// api/_lib/image-model.js, so VERTEX_IMAGEN_MODEL overrides it without a code
+// change and a model retirement is a one-line edit there.
 // The Gemini image lane is served on the un-prefixed global host by default; a
 // regional value ('us-central1') uses the region-prefixed host. Both verified
 // live 2026-07-16. Separate from the text lanes so the image lane can be pinned
@@ -190,10 +192,25 @@ const VERTEX_REQUEST_CEILING_MS = 60_000;
 function msLeft(deadline) {
 	return deadline ? deadline - Date.now() : VERTEX_REQUEST_CEILING_MS;
 }
+// Walks the model chain (primary, then the retired id) and moves on ONLY when
+// Vertex says the id is not served; any other failure is final for this lane.
 async function generateViaVertex({ instruction, aspectRatio, deadline = null }) {
+	const chain = imageModelChain();
+	for (let i = 0; i < chain.length; i++) {
+		try {
+			return await generateViaVertexModel({ instruction, aspectRatio, deadline, model: chain[i] });
+		} catch (err) {
+			const last = i === chain.length - 1;
+			if (last || !isModelNotFound(err?.providerStatus, err?.message) || msLeft(deadline) < 5_000) throw err;
+			console.warn(`[forge-reference-image] ${chain[i]} not served (${err.providerStatus}), trying ${chain[i + 1]}`);
+		}
+	}
+	throw new Error('Vertex reference image: empty model chain');
+}
+
+async function generateViaVertexModel({ instruction, aspectRatio, deadline, model }) {
 	const project = process.env.GOOGLE_CLOUD_PROJECT;
 	const location = DEFAULT_LOCATION;
-	const model = DEFAULT_MODEL;
 	const aspect = GEMINI_ASPECTS.has(aspectRatio) ? aspectRatio : '1:1';
 	const endpoint =
 		`${aiplatformHost(location)}/v1/projects/${project}` +

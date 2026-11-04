@@ -49,8 +49,8 @@ export function resolveImageModel(envName = 'VERTEX_IMAGEN_MODEL') {
  * @param {string} [message] error body or message
  */
 export function isModelNotFound(status, message = '') {
-	if (Number(status) === 404) return true;
-	return /\bmodel\b[^.]{0,80}\b(not found|does not exist|is not supported|was not found)\b|\bpublisher model\b[^.]{0,80}\bnot found\b/i.test(
-		String(message || ''),
-	) && Number(status) === 400;
+	const code = Number(status);
+	if (code === 404) return true;
+	// Vertex answers some unknown ids with 400 INVALID_ARGUMENT naming the model.
+	return code === 400 && /\bmodel\b[^.]{0,120}\b(not found|does not exist|is not supported)\b/i.test(String(message || ''));
 }
