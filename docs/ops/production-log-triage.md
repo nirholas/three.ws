@@ -1590,6 +1590,53 @@ By design (`api/social/sentiment-pulse.js`): a pump.fun outage with no caller-su
 
 ---
 
+## 🟡 `alerts_push` degraded, `[alerts] <channel> delivery failed`, `[alerts] digest email failed`
+
+- **Source:** [api/_lib/alerts.js](../../api/_lib/alerts.js) (routing and
+  transports), [api/_lib/alert-channels.js](../../api/_lib/alert-channels.js)
+  (channel config), the `alerts_push` row of `/api/healthz` `subsystems`, and
+  the hourly digest cron [api/cron/ops-alerts-digest.js](../../api/cron/ops-alerts-digest.js).
+- **How alerts travel:** every `sendOpsAlert()` upserts one `ops_alerts` row per
+  signature (always on). Push is by severity:
+
+  | Severity | Telegram | Email |
+  |---|---|---|
+  | `critical` (🚨, CRITICAL, LEAK, COMPROMISED, halted) | every time it fires | every time it fires |
+  | `warn` (everything else) | once per signature per hour | in the hourly digest only |
+  | `info` (ℹ️) | never | never |
+
+  Each channel has its own 20-per-hour ceiling, then one "throttled" notice, so
+  a Telegram storm never silences email. The digest runs at minute 7, groups
+  the last hour's unacknowledged warn rows by title with counts, and names the
+  oldest unresolved non-info row; it sends at most once per clock hour, and a
+  failed send is retried by the next tick.
+- **What `alerts_push` degraded means:** production has neither
+  `OPS_ALERT_EMAILS` (with `RESEND_API_KEY`) nor `TELEGRAM_BOT_TOKEN` +
+  `TELEGRAM_ALERTS_CHAT_ID`. Alerts are recorded but reach nobody until someone
+  queries `ops_alerts`. The row's `missing` lists the exact vars and `hint` the
+  exact command. Entries in `OPS_ALERT_EMAILS` that are not addresses are named
+  in the detail and dropped.
+- **What `[alerts] <channel> delivery failed: …` means:** the provider rejected
+  or never answered one push (Telegram after fetchUpstream's retry, or Resend's
+  error, e.g. `resend: API key is invalid`). The alert is still in
+  `ops_alerts`. `[alerts] digest email failed` is the same for the digest; the
+  cron answers `{ sent: false, reason: "send_failed" }` and retries next hour.
+- **Resolve:**
+
+  ```bash
+  gcloud run services update three-ws-api --region us-central1 \
+    --project aerial-vehicle-466722-p5 --update-env-vars OPS_ALERT_EMAILS=<ops address>[,<another>]
+  # then prove real delivery (fixed, labelled test title; nothing written to ops_alerts):
+  node --env-file=.env scripts/alerts-self-test.mjs            # every configured channel
+  node --env-file=.env scripts/alerts-self-test.mjs --dry-run  # config only
+  ```
+
+  Never `--set-env-vars`: it replaces the whole env set.
+- **Read the open alerts:**
+  `select title, severity, count, first_seen, last_seen from ops_alerts where acknowledged_at is null order by last_seen desc;`
+
+---
+
 ## The owner runbook — every fix as an exact command
 
 Everything red/yellow above, condensed to the actions only the owner can take,

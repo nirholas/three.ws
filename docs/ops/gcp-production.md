@@ -564,17 +564,28 @@ alert's stable signature so a recurring condition is one row with a growing
 `OPS_SECRET`, deliberately never `CRON_SECRET`, fail-closed in production).
 This is the primary sink and needs no third-party service.
 
-Telegram is now an **optional extra push**, off by default. When both
-`TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALERTS_CHAT_ID` are set, alerts also push to
-that private chat (deduped per signature for 1h, capped at 20/h). It is
-deliberately unset in production — the dashboard is the channel. `/api/healthz`
-reports `alerts.primary: "ops_alerts"` and `alerts.telegram_push:
-"disabled"|"enabled"`; a disabled push is expected, not a fault. The
-`@threewsbot` token remains in Secret Manager (`telegram-bot-token`) for
-user-facing bot use (e.g. changelog push to holders); it is **not** wired to ops
-alerts. To turn the extra push on, add `@threewsbot` to a private ops chat, read
-its id from `getUpdates`, and set `TELEGRAM_ALERTS_CHAT_ID` (+ point
-`TELEGRAM_BOT_TOKEN` at the secret).
+Two push channels sit on top of the table, routed by severity (critical on
+every channel every time, warn to Telegram once per signature per hour and to
+email only in the hourly digest at minute 7, info dashboard-only), each with its
+own 20/h ceiling:
+
+- **Email:** `OPS_ALERT_EMAILS` (comma-separated recipients) plus the existing
+  `RESEND_API_KEY`. This is the one to set first; Resend is already configured
+  on `three-ws-api`.
+- **Telegram:** `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALERTS_CHAT_ID`, a private ops
+  chat. The `@threewsbot` token lives in Secret Manager (`telegram-bot-token`)
+  for user-facing bot use (e.g. changelog push to holders) and is not wired to
+  ops alerts; to use it here, add `@threewsbot` to a private ops chat, read its
+  id from `getUpdates`, and set `TELEGRAM_ALERTS_CHAT_ID` (+ point
+  `TELEGRAM_BOT_TOKEN` at the secret).
+
+`/api/healthz` reports `alerts.channels` (`{ dashboard, telegram, email }`),
+`alerts.telegram_push` and `alerts.email_push`. With neither push channel wired
+the `alerts_push` subsystem reads `degraded`: a dashboard nobody is told to look
+at is how the 10-day Money Pulse flatline went unnoticed. After setting a
+channel, prove delivery with `node --env-file=.env scripts/alerts-self-test.mjs`.
+Signatures and the full routing table: the `alerts_push` entry in
+[production-log-triage.md](production-log-triage.md).
 
 ### Resolved: x402 sponsor co-signing key (2026-07-09)
 

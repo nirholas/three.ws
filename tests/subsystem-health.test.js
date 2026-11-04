@@ -596,3 +596,78 @@ describe('granite_guardian subsystem', () => {
 		expect(g.metrics.lanes).toEqual(['watsonx']);
 	});
 });
+
+// Order 726: with no Telegram chat and no alert recipients, every alert lands in
+// ops_alerts and nobody is told. alerts_push gives that state a signature and
+// names the exact vars, so a silent dashboard-only production reads as a gap.
+describe('alerts_push subsystem', () => {
+	const ALERT_KEYS = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID', 'OPS_ALERT_EMAILS', 'RESEND_API_KEY'];
+	let alertSaved;
+	beforeEach(() => {
+		alertSaved = {};
+		for (const k of ALERT_KEYS) {
+			alertSaved[k] = process.env[k];
+			delete process.env[k];
+		}
+	});
+	afterEach(() => {
+		for (const k of ALERT_KEYS) {
+			if (alertSaved[k] === undefined) delete process.env[k];
+			else process.env[k] = alertSaved[k];
+		}
+	});
+
+	it('is DEGRADED in production when neither push channel is wired, naming every var', async () => {
+		process.env.NODE_ENV = 'production';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		const a = sub(health, 'alerts_push');
+		expect(a.status).toBe('degraded');
+		expect(a.missing).toEqual(['OPS_ALERT_EMAILS', 'RESEND_API_KEY', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID']);
+		expect(a.hint).toMatch(/--update-env-vars OPS_ALERT_EMAILS=/);
+		expect(a.hint).not.toMatch(/--set-env-vars/);
+		expect(health.degraded).toContain('alerts_push');
+	});
+
+	it('names only the recipient list when Resend is already configured', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.RESEND_API_KEY = 're_test_key';
+		const a = sub(await gatherSubsystemHealth({ probeDb: false }), 'alerts_push');
+		expect(a.status).toBe('degraded');
+		expect(a.missing).toEqual(['OPS_ALERT_EMAILS', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID']);
+	});
+
+	it('flags addresses it had to drop', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.RESEND_API_KEY = 're_test_key';
+		process.env.OPS_ALERT_EMAILS = 'not-an-address';
+		const a = sub(await gatherSubsystemHealth({ probeDb: false }), 'alerts_push');
+		expect(a.status).toBe('degraded');
+		expect(a.detail).toMatch(/not-an-address/);
+	});
+
+	it('is OK once email is wired, and reports a half-set Telegram as a gap in the detail', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.RESEND_API_KEY = 're_test_key';
+		process.env.OPS_ALERT_EMAILS = 'ops@three.ws';
+		process.env.TELEGRAM_BOT_TOKEN = 'bot-token';
+		const a = sub(await gatherSubsystemHealth({ probeDb: false }), 'alerts_push');
+		expect(a.status).toBe('ok');
+		expect(a.metrics).toEqual({ telegram: false, email: true, email_recipients: 1 });
+		expect(a.detail).toMatch(/TELEGRAM_ALERTS_CHAT_ID/);
+	});
+
+	it('is OK with Telegram alone', async () => {
+		process.env.NODE_ENV = 'production';
+		process.env.TELEGRAM_BOT_TOKEN = 'bot-token';
+		process.env.TELEGRAM_ALERTS_CHAT_ID = '-1001234567890';
+		const a = sub(await gatherSubsystemHealth({ probeDb: false }), 'alerts_push');
+		expect(a.status).toBe('ok');
+	});
+
+	it('stays neutral outside production', async () => {
+		process.env.NODE_ENV = 'test';
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		expect(sub(health, 'alerts_push').status).toBe('unknown');
+		expect(health.degraded).not.toContain('alerts_push');
+	});
+});

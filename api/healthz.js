@@ -11,7 +11,7 @@ import { cors, json, method, wrap } from './_lib/http.js';
 import { countRecentPayments } from './_lib/x402/audit-log.js';
 import { gatherSubsystemHealth } from './_lib/ops/subsystem-health.js';
 import { ttsConfigured, nvidiaAsrConfigured } from './_lib/ai-speech.js';
-import { alertsConfigured } from './_lib/alerts.js';
+import { alertChannels } from './_lib/alert-channels.js';
 
 const STARTED_AT = Date.now();
 const VERSION = process.env.VERCEL_GIT_COMMIT_SHA || process.env.npm_package_version || 'dev';
@@ -363,13 +363,20 @@ export default wrap(async (req, res) => {
 		},
 		// Ops alerts (api/_lib/alerts.js). Every sendOpsAlert() ALWAYS persists to
 		// the ops_alerts table, so alerts are never silently dropped; read them via
-		// the ops-secret-gated /api/ops/health surface. Telegram is an OPTIONAL
-		// extra push for real-time notification; its absence is expected, not a fault.
-		alerts: {
-			primary: 'ops_alerts',
-			read_via: '/api/ops/health',
-			telegram_push: alertsConfigured() ? 'enabled' : 'disabled',
-			telegram_requires: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID'],
-		},
+		// the ops-secret-gated /api/ops/health surface. Telegram and email are the
+		// push channels; the alerts_push subsystem reports degraded when neither is
+		// wired in production.
+		alerts: (() => {
+			const channels = alertChannels();
+			return {
+				primary: 'ops_alerts',
+				read_via: '/api/ops/health',
+				channels,
+				telegram_push: channels.telegram ? 'enabled' : 'disabled',
+				telegram_requires: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID'],
+				email_push: channels.email ? 'enabled' : 'disabled',
+				email_requires: ['OPS_ALERT_EMAILS', 'RESEND_API_KEY'],
+			};
+		})(),
 	}, { 'cache-control': 'public, max-age=2, s-maxage=2' });
 });

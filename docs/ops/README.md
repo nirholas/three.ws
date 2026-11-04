@@ -46,4 +46,17 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | [forge-multiview-migration-handoff.md](forge-multiview-migration-handoff.md) | Historical hand-off for the forge multi-view migrations (June 2026); superseded by gcp-production.md. |
 | [examples-repo-export.md](examples-repo-export.md) | How the public `three-ws/examples` satellite repo is assembled and published from this monorepo. |
 
+## Ops alert channels
+
+Every `sendOpsAlert()` is recorded in the `ops_alerts` table; push channels are optional and configured on `three-ws-api` with `gcloud run services update --update-env-vars` (never `--set-env-vars`). Routing, digest and failure signatures: the `alerts_push` entry in [production-log-triage.md](production-log-triage.md).
+
+| Variable | Channel | Value |
+|---|---|---|
+| `OPS_ALERT_EMAILS` | email | Comma-separated recipients. Critical alerts are emailed as they fire; warn alerts arrive as one hourly digest (`/api/cron/ops-alerts-digest`). |
+| `RESEND_API_KEY` | email | The platform's existing Resend key (also used for account email). Both email vars are required. |
+| `TELEGRAM_BOT_TOKEN` | telegram | The platform bot token. |
+| `TELEGRAM_ALERTS_CHAT_ID` | telegram | A PRIVATE ops chat or DM, never a public channel: alerts carry stack traces, URLs and IPs. |
+
+`/api/healthz` reports `alerts.channels` and the `alerts_push` subsystem, which is `degraded` in production when neither channel is wired. `node --env-file=.env scripts/alerts-self-test.mjs` sends one labelled test message per configured channel and prints which delivered.
+
 Related, also private: the security review records in [../security/](../security/) ([SECURITY_AUDIT.md](../security/SECURITY_AUDIT.md), [SECURITY_REMEDIATION.md](../security/SECURITY_REMEDIATION.md), [review-2026-06-24.md](../security/review-2026-06-24.md)), all point-in-time records preserved as written.

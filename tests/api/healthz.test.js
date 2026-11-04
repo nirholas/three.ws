@@ -108,6 +108,32 @@ describe('GET /api/healthz', () => {
 			const { body } = await callHealthz();
 			expect(body.alerts.telegram_push).toBe('enabled');
 		});
+
+		it('lists every channel and reports email_push once recipients and the Resend key are set', async () => {
+			const saved = [process.env.OPS_ALERT_EMAILS, process.env.RESEND_API_KEY];
+			try {
+				delete process.env.TELEGRAM_BOT_TOKEN;
+				delete process.env.TELEGRAM_ALERTS_CHAT_ID;
+				delete process.env.OPS_ALERT_EMAILS;
+				delete process.env.RESEND_API_KEY;
+				let { body } = await callHealthz();
+				expect(body.alerts.channels).toEqual({ dashboard: true, telegram: false, email: false });
+				expect(body.alerts.email_push).toBe('disabled');
+				expect(body.alerts.email_requires).toEqual(['OPS_ALERT_EMAILS', 'RESEND_API_KEY']);
+
+				process.env.OPS_ALERT_EMAILS = 'ops@three.ws';
+				process.env.RESEND_API_KEY = 're_test_key';
+				globalThis.fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ data: [] }) }));
+				({ body } = await callHealthz());
+				expect(body.alerts.channels).toEqual({ dashboard: true, telegram: false, email: true });
+				expect(body.alerts.email_push).toBe('enabled');
+			} finally {
+				for (const [k, v] of [['OPS_ALERT_EMAILS', saved[0]], ['RESEND_API_KEY', saved[1]]]) {
+					if (v === undefined) delete process.env[k];
+					else process.env[k] = v;
+				}
+			}
+		});
 	});
 
 	it('rejects non-GET methods', async () => {

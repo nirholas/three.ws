@@ -51,6 +51,7 @@ import { describeSolvency } from '../sniper-solvency.js';
 import { isWorldRetired, WORLD_RETIRED_DETAIL, WORLD_RETIRED_ON } from '../world-retirement.js';
 import { treasuryWalletOrNull, rewardsWalletOrNull } from '../token/config.js';
 import { guardianConfig } from '../granite-guardian.js';
+import { alertChannels, alertChannelGaps, parseAlertRecipients } from '../alert-channels.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
 const DB_SLOW_MS = 1_000;
@@ -708,6 +709,43 @@ function checkThreeTokenRail() {
 // token on every health gather.
 const GUARDIAN_PROBE_TIMEOUT_MS = 2_500;
 
+// Ops alert push channels (api/_lib/alert-channels.js). Every alert always
+// lands in ops_alerts, but with no Telegram chat and no recipient list nobody is
+// told: a leak or a halted payer waits for someone to run a query. Pure config
+// read, no probe: delivery is proven by scripts/alerts-self-test.mjs.
+function checkAlertsPush() {
+	const base = { name: 'alerts_push', label: 'Ops alert push (Telegram, email)' };
+	const channels = alertChannels();
+	const gaps = alertChannelGaps();
+	const recipients = parseAlertRecipients(process.env.OPS_ALERT_EMAILS).valid.length;
+	const dropped = gaps.invalidEmails.length ? `; OPS_ALERT_EMAILS has entries that are not addresses: ${gaps.invalidEmails.join(', ')}` : '';
+	const metrics = { telegram: channels.telegram, email: channels.email, email_recipients: recipients };
+	if (channels.telegram || channels.email) {
+		const on = [channels.telegram && 'telegram', channels.email && `email (${recipients} recipient${recipients === 1 ? '' : 's'})`].filter(Boolean).join(' and ');
+		const half = [
+			!channels.telegram && gaps.telegram.length === 1 && `telegram is half-set, missing ${gaps.telegram[0]}`,
+			!channels.email && gaps.email.length === 1 && `email is half-set, missing ${gaps.email[0]}`,
+		].filter(Boolean);
+		return { ...base, status: 'ok', detail: `alerts push to ${on}${half.length ? `; ${half.join('; ')}` : ''}${dropped}`, metrics };
+	}
+	const missing = [...gaps.email, ...gaps.telegram];
+	if (process.env.NODE_ENV !== 'production') {
+		return { ...base, status: 'unknown', detail: `no push channel configured outside production${dropped}`, missing, metrics };
+	}
+	const setVars = [
+		'OPS_ALERT_EMAILS=<ops address>[,<another>]',
+		gaps.email.includes('RESEND_API_KEY') && 'RESEND_API_KEY=<resend key>',
+	].filter(Boolean).join(',');
+	return {
+		...base,
+		status: 'degraded',
+		detail: `no push channel configured: alerts are recorded in ops_alerts but reach nobody until someone queries the table${dropped}`,
+		missing,
+		hint: `gcloud run services update three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --update-env-vars ${setVars} (or set TELEGRAM_BOT_TOKEN and TELEGRAM_ALERTS_CHAT_ID for a private ops chat), then run node scripts/alerts-self-test.mjs.`,
+		metrics,
+	};
+}
+
 async function checkGraniteGuardian() {
 	const base = { name: 'granite_guardian', label: 'Granite Guardian (governance model)' };
 	try {
@@ -804,6 +842,7 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// once while leaving every reachability probe green.
 		Promise.resolve(checkThreeTokenRail()),
 		checkGraniteGuardian(),
+		Promise.resolve(checkAlertsPush()),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),
 		// The marketplace chat bot goes offline SILENTLY (expired wallet session =
 		// no XMTP delivery), and until it was hosted it had no health surface at
