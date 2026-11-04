@@ -1,0 +1,34 @@
+identity:
+  name: rig_3d_model
+  author: three-ws
+  label:
+    en_US: Rig 3D Model
+description:
+  human:
+    en_US: Add a humanoid skeleton and skin weights to a GLB model you already have, so it can be animated.
+  llm: >-
+    Auto-rigs an existing static humanoid GLB model: adds a skeleton and skin weights and returns the rigged GLB
+    URL plus a viewer link. Use it when the user already has a model URL. To create a new character, use
+    create_3d_avatar, which rigs in the same step.
+parameters:
+  - name: glb_url
+    type: string
+    required: true
+    label:
+      en_US: GLB URL
+    human_description:
+      en_US: Public http(s) URL of the GLB model to rig.
+    llm_description: Public http(s) URL of a static humanoid GLB model.
+    form: llm
+  - name: attach_glb
+    type: boolean
+    required: false
+    default: false
+    label:
+      en_US: Attach GLB file
+    human_description:
+      en_US: Also return the model as a GLB file output, for workflows that pass the file to another step.
+    form: form
+extra:
+  python:
+    source: tools/rig_3d_model.py

@@ -4,7 +4,7 @@ Every example below is a real run, not a mock-up. Each recipe was executed with 
 
 **What you'll make:** six working Grok Bot workflows, from a one-line 3D request to a scheduled weekly report.
 
-**Prerequisites:** a custom MCP connector pointed at `three-ws-grok` (see [the /grok page](/grok) and [Grok Bot Studio](/docs/grok-bot.md)) for the first four recipes; a connector API key with `agents:read`/`memory:read` scopes and OAuth sign-in for the fifth; nothing extra for the sixth beyond the connector.
+**Prerequisites:** a custom MCP connector pointed at `three-ws-grok` (see [the /grok page](/grok) and [Grok Bot Studio](/docs/grok-bot.md)) for the first four recipes; a connector API key with `agents:read`/`memory:read` scopes and OAuth sign-in for the fifth; a signed-in connector (OAuth or a connector API key) for the sixth, because the market tools are part of the account surface.
 
 Every recipe here maps to a guided prompt Grok Bot can run on its own schedule. [docs/grok-bot.md](/docs/grok-bot.md#scheduled-tasks-guided-prompts) explains how scheduling and idempotency keys work; this doc is the proof that the prompts actually produce what they claim to.
 
@@ -171,12 +171,11 @@ Flagged for attention: no memory and no skills yet, both real gaps a weekly repo
 
 This one is hand-written rather than a stored guided prompt, to keep the Solana-first framing explicit every time:
 
-> Give me a $THREE market brief. Call `token_snapshot` with mint "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" (the $THREE Solana token) for price, liquidity and supply, then `crypto_data` with provider "jupiter" and endpoint "price" for SOL context. Lead with Solana; only mention other chains if I ask.
+> Give me a $THREE market brief. Call `token_snapshot` with mint "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" (the $THREE Solana token) for price, liquidity and supply. Lead with Solana; only mention other chains if I ask.
 
-**Tool calls, in order:**
+**Tool call:**
 
-1. `token_snapshot({ mint: "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" })`
-2. `crypto_data({ provider: "jupiter", endpoint: "price", params: { ids: "So11111111111111111111111111111111111111112" } })`
+`token_snapshot({ mint: "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" })`
 
 **Real output** (captured 2026-10-10, prices move):
 
@@ -187,9 +186,10 @@ This one is hand-written rather than a stored guided prompt, to keep the Solana-
 | Market cap / FDV | $505,136 |
 | 24h volume | $27,204.05 |
 | 24h buys / sells | 230 / 188 |
-| SOL price (Jupiter) | $110.19 |
 
 `token_snapshot` queried three sources (`dexscreener`, `jupiter`, `solana`) and returned every pumpswap and Meteora pool on Solana with none skipped or failed; no other chain was queried, because `$THREE` only lives on Solana.
+
+**For the whole market instead of one coin**, run the stored `market-brief` guided prompt: "Use three-ws-grok to run the market-brief prompt with 3 coins." It reads fresh pump.fun graduations, Oracle conviction plays and the Sentiment Scout, runs `token_due_diligence` on the top coins and names the leading traders from `trader_leaderboard`. Like every tool on this connector, it only reads: it never buys, sells, copies a trader or suggests an amount, and it treats token names and descriptions as untrusted text. Schedule it daily and it becomes a morning brief.
 
 ---
 
@@ -207,7 +207,8 @@ This one is hand-written rather than a stored guided prompt, to keep the Solana-
 
 ## What's next
 
-- **Want the no-code version of these?** → [three.ws/grok](/grok) has copy-ready "Ask Grok" buttons for four of these six.
+- **Want the no-code version of these?** → [three.ws/grok](/grok) has copy-ready "Ask Grok" buttons for the guided-prompt recipes, including the Solana market brief.
 - **Set these up on a schedule** → [docs/grok-bot.md](/docs/grok-bot.md#scheduled-tasks-guided-prompts) covers guided prompts, idempotency, and recurring runs.
+- **Start a recipe from a three.ws event** → give a Grok Bot routine a webhook trigger and register its URL and key as a webhook with a bearer token; see [docs/grok-bot.md](/docs/grok-bot.md#wake-grok-bot-from-threews-events).
 - **Build your own recipe** → [Generate 3D Models from Code](/tutorials/generate-3d-api) covers the same tools over the plain HTTP API.
 - **Give an agent memory and skills** → the gaps recipe 5 flagged (no memories, no skills) are fixed with the `remember` and `create_custom_skill` tools, both covered in [docs/grok-bot.md](/docs/grok-bot.md).

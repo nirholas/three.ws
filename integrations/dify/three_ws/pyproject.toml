@@ -1,0 +1,7 @@
+[project]
+name = "three_ws"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "dify-plugin>=0.9.0,<0.10.0",
+]

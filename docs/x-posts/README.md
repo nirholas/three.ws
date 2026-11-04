@@ -28,6 +28,7 @@ explicit approval). Each file states what it's for and what has already been ver
 | File | What it announces |
 | --- | --- |
 | [`onchain-agent-wallets-x-post.md`](onchain-agent-wallets-x-post.md) | Agent wallets with an on-chain spending allowance instead of a private key: SPL Token delegation, guardrails, x402, revocable custody |
+| [`grok-bot-everything-x-post.md`](grok-bot-everything-x-post.md) | Grok Bot can use all of three.ws: signed-in agents and read-only Solana market intel, the scheduled `market-brief`, events waking Grok routines, and the Grok Build plugin |
 | [`mcp-registry-fleet-x-post.md`](mcp-registry-fleet-x-post.md) | The fleet as a whole: 72 MCP servers under one namespace in the official registry, all current |
 | [`metaplex-agent-mcp-launch.md`](metaplex-agent-mcp-launch.md) | The open-source agent infrastructure announcement covering `@three-ws/metaplex-agent-mcp` and `@three-ws/onchain-agent-wallets`, and why the integrations are bullish for $THREE |
 | [`metaplex-agent-mcp-x-post.md`](metaplex-agent-mcp-x-post.md) | The MCP server that mints an agent into the Metaplex Agent Registry with its own wallet and EIP-8004 identity |

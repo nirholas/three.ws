@@ -950,6 +950,7 @@ const appConfig = {
 				'agent-earnings': resolve(__dirname, 'pages/agent-earnings.html'),
 				'coin-control': resolve(__dirname, 'pages/coin-control.html'),
 				'agent-invoice': resolve(__dirname, 'pages/agent-invoice.html'),
+				'microsoft-activate': resolve(__dirname, 'pages/microsoft-activate.html'),
 				spend: resolve(__dirname, 'pages/spend.html'),
 				duels: resolve(__dirname, 'pages/duels.html'),
 				duel: resolve(__dirname, 'pages/duel.html'),
@@ -2539,6 +2540,10 @@ const appConfig = {
 						filePath = resolve(root, 'pages/commerce.html');
 					else if (!filePath && /^\/invoices\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-invoice.html');
+					// /microsoft/activate → the Microsoft Marketplace SaaS landing page.
+					// Mirrors vercel.json.
+					else if (!filePath && /^\/microsoft\/activate\/?$/.test(path))
+						filePath = resolve(root, 'pages/microsoft-activate.html');
 					// /earnings → the revenue ledger console; /agents/:id/earnings → the
 					// agent's public earnings page. Mirrors vercel.json.
 					else if (!filePath && /^\/earnings\/?$/.test(path))

@@ -57,6 +57,7 @@ A running Space that loads the avatars above in an interactive 3D viewer, so a r
 | Draft | Subject |
 |---|---|
 | [huggingface-agent-feedback-loop.md](./huggingface-agent-feedback-loop.md) | Closing the agentic-3D feedback loop: rendering results back into the model's own modality, a mechanical physics-readiness grade, structural glTF diffing, and retargeting with no rig allowlist |
+| [huggingface-audio2face-any-rig.md](./huggingface-audio2face-any-rig.md) | One Audio2Face-3D blendshape track driving avatars never authored for it: the direct and derived mapping, the suppression rule, and the coverage and latency numbers from the GTC 2027 poster (`docs/nvidia-gtc-2027`) |
 
 Written to the same house rule as the two published articles: AI-focused, with no coin, exchange, or listing content anywhere in the piece.
 

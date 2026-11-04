@@ -32,7 +32,7 @@ describe('/grok names only what /api/mcp-grok serves', () => {
 
 	it('every recipe links a guided prompt written for an unattended agent', () => {
 		const prompts = attrs('data-prompt');
-		expect(prompts).toHaveLength(3);
+		expect(prompts).toHaveLength(4);
 		expect(prompts.filter((name) => !AGENT_PROMPTS.has(name))).toEqual([]);
 	});
 

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "three-ws",
+  "version": "1.0.0",
+  "description": "Free text-to-3D for Hermes: generate textured GLB models and rigged avatars, auto-rig a GLB, render a model so the agent can see it, and search thousands of CC0 3D assets. No account, no API key.",
+  "author": {
+    "name": "three.ws",
+    "url": "https://three.ws"
+  },
+  "homepage": "https://three.ws",
+  "repository": "https://github.com/nirholas/three.ws",
+  "license": "Apache-2.0",
+  "keywords": ["3d", "glb", "text-to-3d", "avatar", "rigging", "assets", "mcp"]
+}

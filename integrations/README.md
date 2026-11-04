@@ -10,6 +10,16 @@ generated without leaving the DCC.
 | ComfyUI nodes | [`comfyui/three_ws_nodes/`](comfyui/three_ws_nodes/) | ComfyUI |
 | Modly extensions | [`modly/`](modly/) (`three-ws/` cloud nodes, `three-ws-publish/` publish node) | [Modly](https://github.com/lightningpixel/modly) |
 
+Agent harnesses get plugin folders of their own, which connect a hosted MCP
+server and bundle skills rather than calling `/api/forge` directly:
+
+| Plugin | Folder | Host |
+|---|---|---|
+| Grok Build plugin | [`grok/three-ws/`](grok/three-ws/) | [Grok Build](https://github.com/xai-org/grok-build) (xAI) |
+| Hermes plugin | [`hermes/three-ws/`](hermes/three-ws/) (Agent Plugins v1: `mcp.json` + four skills) | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Nous Research) |
+| Cursor plugin | [`cursor/three-ws/`](cursor/three-ws/) (Open Plugins: `.cursor-plugin/plugin.json`, `mcp.json`, four skills; mirrored to [nirholas/three-ws-cursor-plugin](https://github.com/nirholas/three-ws-cursor-plugin) for cursor.directory) | [Cursor](https://cursor.com) |
+| Dify tool plugin | [`dify/three_ws/`](dify/three_ws/) (four Python tools over the studio server; packaged with `dify-plugin plugin package`) | [Dify](https://github.com/langgenius/dify) |
+
 Driving Blender from an **agent** rather than by hand is a different job, and it
 has its own package: [`packages/blender-mcp/`](../packages/blender-mcp) is an MCP
 server that runs Blender headlessly (no GUI, no add-on) so an assistant can

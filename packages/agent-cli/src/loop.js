@@ -197,6 +197,12 @@ export async function runTurn({ model, toolset, messages, query, recentTools = [
 
 			case 'tool_result':
 			case 'tools_batch_result':
+				// AgentRuntime JSON-encodes whatever a handler returns, and ours already
+				// return the serialized text: decode that one layer so the model reads
+				// the result itself, not an escaped string literal of it.
+				for (const m of state.messages) {
+					if (m.role === 'tool' && typeof m.content === 'string' && m.content.startsWith('"')) m.content = JSON.parse(m.content);
+				}
 				return { type: 'call_llm', payload: { messages: state.messages } };
 
 			case 'error':

@@ -10,7 +10,7 @@
 			"sizes": ["any"]
 		}
 	],
-	"description": "Free text/image to 3D for Grok Bot, plus your three.ws agents once signed in. Never spends.",
+	"description": "Free 3D studio for Grok Bot; signed in: your agents and read-only Solana market intel. Never spends.",
 	"repository": {
 		"url": "https://github.com/nirholas/three.ws",
 		"source": "github"
@@ -49,6 +49,11 @@
 					"name": "agent-report",
 					"title": "Agent status report",
 					"arguments": ["agentId"]
+				},
+				{
+					"name": "market-brief",
+					"title": "Solana market brief",
+					"arguments": ["focus", "count"]
 				}
 			]
 		}

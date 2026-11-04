@@ -13,7 +13,7 @@
 		"silent": true
 	},
 	"functions": {
-		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,custody-attest,sniper-optimize,sniper-evolve,oracle-realized-labels,oracle-calibrate,arena-tick}.js": {
+		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,purge-deleted-accounts,custody-attest,sniper-optimize,sniper-evolve,oracle-realized-labels,oracle-calibrate,arena-tick}.js": {
 			"maxDuration": 120
 		},
 		"api/cron/{strategy-fanout,gmgn-seed}.js": {
@@ -2723,6 +2723,10 @@
 		{
 			"src": "/pricing/?",
 			"dest": "/pricing.html"
+		},
+		{
+			"src": "/microsoft/activate/?",
+			"dest": "/microsoft-activate.html"
 		},
 		{
 			"src": "/billing/?",
@@ -5957,6 +5961,22 @@
 			"dest": "/api/developer/webhooks"
 		},
 		{
+			"src": "/api/microsoft-teams/messages/?",
+			"dest": "/api/microsoft-teams/messages.js"
+		},
+		{
+			"src": "/api/microsoft-marketplace/sso/start/?",
+			"dest": "/api/microsoft-marketplace/[action]?action=sso-start"
+		},
+		{
+			"src": "/api/microsoft-marketplace/sso/callback/?",
+			"dest": "/api/microsoft-marketplace/[action]?action=sso-callback"
+		},
+		{
+			"src": "/api/microsoft-marketplace/(status|resolve|subscriptions|webhook)/?",
+			"dest": "/api/microsoft-marketplace/[action]?action=$1"
+		},
+		{
 			"src": "/agents",
 			"dest": "/agents/index.html"
 		},
@@ -7240,6 +7260,10 @@
 	],
 	"crons": [
 		{
+			"path": "/api/cron/microsoft-metering",
+			"schedule": "7 * * * *"
+		},
+		{
 			"path": "/api/cron/hood-portfolio-snapshot",
 			"schedule": "17 2 * * *"
 		},
@@ -7354,6 +7378,10 @@
 		{
 			"path": "/api/cron/db-retention",
 			"schedule": "*/15 * * * *"
+		},
+		{
+			"path": "/api/cron/purge-deleted-accounts",
+			"schedule": "17 4 * * *"
 		},
 		{
 			"path": "/api/cron/smart-money-graph",

@@ -1,0 +1,54 @@
+identity:
+  name: generate_3d_model
+  author: three-ws
+  label:
+    en_US: Generate 3D Model
+description:
+  human:
+    en_US: Turn a text description into a textured 3D model (GLB) with a browser viewer link. Free, no API key.
+  llm: >-
+    Generates a textured 3D model (GLB file) of an object, prop, creature or scene from a text description, and
+    returns the GLB URL plus a viewer link. Use it for static objects. For a character that should be posed or
+    animated, use create_3d_avatar instead. Before generating, consider search_3d_assets: a ready-made CC0 asset
+    may already exist. Takes about a minute on the draft tier.
+parameters:
+  - name: prompt
+    type: string
+    required: true
+    label:
+      en_US: Prompt
+    human_description:
+      en_US: What to build, for example "a brass telescope on a wooden tripod".
+    llm_description: A concrete visual description of one object (3 to 1000 characters). Name materials and colors.
+    form: llm
+  - name: tier
+    type: select
+    required: false
+    default: standard
+    options:
+      - value: draft
+        label:
+          en_US: Draft (fastest)
+      - value: standard
+        label:
+          en_US: Standard
+      - value: high
+        label:
+          en_US: High (slowest, most detail)
+    label:
+      en_US: Quality
+    human_description:
+      en_US: Detail level. High is slower and may fall back to standard when the service is busy.
+    form: form
+  - name: attach_glb
+    type: boolean
+    required: false
+    default: false
+    label:
+      en_US: Attach GLB file
+    human_description:
+      en_US: Also return the model as a GLB file output, for workflows that pass the file to another step.
+    form: form
+extra:
+  python:
+    source: tools/generate_3d_model.py

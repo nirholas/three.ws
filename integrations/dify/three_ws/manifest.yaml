@@ -1,0 +1,29 @@
+version: 0.1.0
+type: plugin
+author: three-ws
+name: three_ws
+label:
+  en_US: three.ws 3D Studio
+description:
+  en_US: Free text-to-3D. Generate textured GLB models and rigged avatars, auto-rig a GLB, and search CC0 3D assets. No API key.
+icon: icon.svg
+icon_dark: icon-dark.svg
+resource:
+  memory: 268435456
+  permission: {}
+plugins:
+  tools:
+    - provider/three_ws.yaml
+meta:
+  version: 0.0.1
+  arch:
+    - amd64
+    - arm64
+  runner:
+    language: python
+    version: "3.12"
+    entrypoint: main
+  minimum_dify_version: null
+created_at: 2026-11-04T16:47:55.92330993Z
+privacy: PRIVACY.md
+verified: false

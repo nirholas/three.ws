@@ -1,0 +1,15 @@
+{
+  "name": "three-ws",
+  "displayName": "three.ws 3D Studio",
+  "version": "1.0.0",
+  "description": "Free text-to-3D for Cursor: generate textured GLB models and rigged, animation-ready avatars, auto-rig a GLB, render a model so the agent can see it, and search thousands of CC0 props, characters and motion clips. No account and no API key.",
+  "author": {
+    "name": "three.ws",
+    "url": "https://three.ws"
+  },
+  "homepage": "https://three.ws/docs",
+  "repository": "https://github.com/nirholas/three.ws",
+  "license": "Apache-2.0",
+  "keywords": ["3d", "text-to-3d", "glb", "avatar", "rigging", "three.js", "mcp", "cc0"],
+  "logo": "assets/logo.svg"
+}

@@ -5,7 +5,11 @@ connectors and the xAI API turn text or an image into a textured 3D model, a
 rigged animation-ready avatar, or a named 3D persona that lip-syncs its replies.
 The studio is free: no account, no payment, no API key. Sign the same URL in
 to your three.ws account and it also manages your agents, their memory and
-skills, without ever being able to spend.
+skills, and reads the platform's Solana market intelligence (pump.fun,
+Oracle, token due diligence, the trader leaderboard), without ever being able
+to spend. A [three.ws webhook can start a Grok Bot routine](#wake-grok-bot-from-threews-events),
+and [Grok Build](#grok-build) picks the same server up from a project
+`.mcp.json`.
 
 **Live page and demo:** [three.ws/grok](/grok)
 
@@ -67,6 +71,17 @@ leave it on:
 | `list_skill_candidates` | Skills your agents drafted for themselves from runs that worked (read-only; you approve them on the dashboard). |
 | `list_my_avatars`, `get_avatar`, `get_embed_code`, `render_avatar_image` | Your avatars, their embed snippets and rendered images. |
 | `read_resource` | Read-only views of your account and agents (`three://me`, `three://agents`, and each agent's usage, runs, earnings and wallet state), which the `agent-report` prompt reads. Reading a balance moves nothing. |
+| `pumpfun_recent_graduations`, `pumpfun_recent_claims`, `pumpfun_token_intel`, `pumpfun_creator_intel` | Live pump.fun feeds and a read of one coin or creator. |
+| `oracle_top_plays`, `oracle_coin`, `sentiment_scout` | Oracle conviction scores and the Sentiment Scout, with the evidence behind each. |
+| `token_due_diligence`, `token_snapshot` | Holder concentration, insider share, liquidity and price for one Solana mint. |
+| `trader_leaderboard`, `trader_profile`, `trade_receipt` | Verified traders worth watching and a read of one trade. Copying a trader is not on this URL. |
+| `solana_agent_attestations`, `solana_agent_passport` | On-chain agent identity on Solana. |
+| `robinhood_chain_stats`, `robinhood_token_prices`, `robinhood_recent_launches`, `robinhood_wallet_holdings` | Robinhood Chain reads. |
+| `launch_lanes`, `domain_search`, `domain_check`, `domain_pricing` | Public lookups: launch venues and web domains. Registering a domain is not on this URL. |
+
+The market tools only read. Token names, symbols and descriptions are untrusted
+data that Grok reports and never follows as instructions, and the server's
+instructions say so. The `market-brief` prompt below strings them together.
 
 **It never spends.** No wallet, payment, card, trading, launch or delete tool is
 ever listed on this URL, whatever scopes the credential holds, and calling one by
@@ -131,6 +146,55 @@ Add `allowed_tools` (`allowed_tool_names` in the Python SDK) to expose only the
 tools a task needs, for example `["search_catalog", "forge_free", "get_job"]`.
 A complete, zero-dependency Node script that also collects slow renders lives in
 [examples/grok-remote-mcp](../examples/grok-remote-mcp/README.md).
+
+## Grok Build
+
+[Grok Build](https://github.com/xai-org/grok-build) is xAI's coding agent for
+the terminal (`curl -fsSL https://x.ai/cli/install.sh | bash`). Per
+[xAI's docs](https://docs.x.ai/build/features/skills-plugins-marketplaces) it
+reads Claude Code's MCP servers, plugins, skills and marketplaces with no extra
+setup, so the standard project file is all it needs:
+
+```json
+{
+  "mcpServers": {
+    "three-ws-grok": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-grok"
+    }
+  }
+}
+```
+
+Save it as `.mcp.json` at the project root, start `grok` there, and type
+`/mcps` to see the server connected.
+
+For the skills too, install the three.ws plugin for Grok Build,
+[integrations/grok/three-ws](../integrations/grok/three-ws/README.md). It
+bundles the same server with six skills (text to 3D, avatars, rigging, the
+asset catalog, 3D cutaways, embedding) and a `three-ws-tour` command, and it
+ships no hooks or scripts. Grok Build loads plugins from `~/.grok/plugins/`:
+
+```bash
+git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws three.ws-src
+git -C three.ws-src sparse-checkout set integrations/grok/three-ws
+mkdir -p ~/.grok/plugins && cp -r three.ws-src/integrations/grok/three-ws ~/.grok/plugins/three-ws
+```
+
+A three.ws plugin installed in Claude Code (`/plugin marketplace add
+nirholas/three.ws`, then `three-ws-3d`) is also read by Grok Build, per the
+compatibility note above.
+
+## Wake Grok Bot from three.ws events
+
+A Grok Bot routine can start from a webhook: Grok issues a URL and a key, and a
+POST carrying `Authorization: Bearer <key>` starts the routine with the JSON
+body as context. A three.ws developer webhook can carry that key, so an agent
+run finishing, an automation firing, a message arriving or an approval waiting
+wakes Grok Bot directly. Create the webhook at
+[Developers, Webhooks](/dashboard/developers#webhooks) with the routine URL and
+the key in **Bearer token**. Field reference and limits:
+[Grok Bot connector reference](./grok-bot.md#wake-grok-bot-from-threews-events).
 
 ## A skill file for Grok
 
@@ -197,11 +261,12 @@ stops to ask, and ends with the plain links Grok hands back.
 | `asset-pack` | `theme`, `count` | Takes ready-made catalog items first, generates only the gaps, and returns one row of links per asset. |
 | `avatar-from-photo` | `image_url` | A rigged, animation-ready avatar from a photo, its links, and a [pose studio](/pose) link. |
 | `agent-report` | `agentId` (optional) | Signed in only: a read-only status of your agents (activity, runs, cost, earnings, wallet state) and what needs attention. |
+| `market-brief` | `focus` (optional), `count` (1 to 5, default 3) | Signed in only: fresh pump.fun graduations, Oracle's top plays and the Sentiment Scout, due diligence on the strongest coins with insider-heavy ones flagged, and the verified trader leaderboard. Reads only; never trades or suggests an amount. |
 
 A schedule such as "every morning, run the `daily-3d-brief` prompt from
 three-ws-grok and send me the links" is all it takes. [three.ws/grok](/grok#gk-recipes-h)
-has three of these as copy-ready recipes, each with the calls it makes in order. Anonymous, the connector lists
-the first four; signed in, it adds `agent-report`. Each prompt is written out as
+has four of these as copy-ready recipes, each with the calls it makes in order. Anonymous, the connector lists
+the first four; signed in, it adds `agent-report` and `market-brief`. Each prompt is written out as
 its calls in [MCP use cases](./mcp.md#use-cases), and
 [`api/_mcp/prompts.js`](../api/_mcp/prompts.js) renders them against the
 caller's own `tools/list`, so a prompt never names a tool the connector cannot

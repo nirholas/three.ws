@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "three-ws": {
+      "url": "https://three.ws/api/mcp-studio"
+    }
+  }
+}

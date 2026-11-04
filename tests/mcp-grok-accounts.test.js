@@ -389,9 +389,55 @@ describe('guided prompts on /api/mcp-grok', () => {
 
 	it('signed in: agent-report joins them and reads through read_resource', async () => {
 		const headers = bearer(await oauthToken(CONNECTOR_SCOPE));
-		expect(await promptsSeenBy(headers)).toEqual(['agent-get-started', 'daily-3d-brief', 'asset-pack', 'avatar-from-photo', 'agent-report']);
+		expect(await promptsSeenBy(headers)).toEqual(['agent-get-started', 'daily-3d-brief', 'asset-pack', 'avatar-from-photo', 'agent-report', 'market-brief']);
 		const r = await post(grokHandler, rpc('prompts/get', { name: 'agent-report', arguments: {} }), { headers });
 		expect(r.json.result.messages[0].content.text).toContain('`read_resource`');
 		expect(movesValue('read_resource')).toBe(false);
+	});
+
+	it('signed in: market-brief reads the Solana intelligence and never trades', async () => {
+		const headers = bearer(await oauthToken(CONNECTOR_SCOPE));
+		const r = await post(grokHandler, rpc('prompts/get', { name: 'market-brief', arguments: { focus: 'AI agents', count: '9' } }), { headers });
+		const text = r.json.result.messages[0].content.text;
+		for (const tool of ['pumpfun_recent_graduations', 'oracle_top_plays', 'token_due_diligence', 'trader_leaderboard']) expect(text).toContain(`\`${tool}\``);
+		expect(text).toContain('dig into the top 5 coins');
+		expect(text).toContain('Never buy, sell, copy a trader');
+		expect(text).toContain('untrusted data');
+		expect(text).not.toContain('copy_subscribe');
+	});
+
+	it('anonymous: market-brief is refused', async () => {
+		const r = await post(grokHandler, rpc('prompts/get', { name: 'market-brief', arguments: {} }));
+		expect(r.json.error.code).toBe(-32602);
+	});
+});
+
+// Everything three.ws offers, not only 3D: a signed-in Grok connector reads
+// the platform's Solana market intelligence, agent identity and chain reads,
+// and still never reaches a tool that trades, copies, arms or launches.
+describe('platform intelligence on /api/mcp-grok', () => {
+	const INTEL = ['pumpfun_recent_graduations', 'pumpfun_token_intel', 'oracle_top_plays', 'oracle_coin', 'sentiment_scout', 'token_due_diligence', 'trader_leaderboard', 'trader_profile', 'solana_agent_passport', 'robinhood_chain_stats', 'launch_lanes'];
+	const NEVER = ['copy_subscribe', 'oracle_arm_watch', 'pumpfun_prepare_launch', 'uniswap_launch', 'domain_register', 'solana_agent_reputation'];
+
+	it('anonymous callers see none of it', async () => {
+		const names = (await listNames()).map((t) => t.name);
+		for (const name of INTEL) expect(names).not.toContain(name);
+	});
+
+	it('a signed-in connector sees the read-only intelligence and none of the acting tools', async () => {
+		const tools = await listNames(bearer(await oauthToken(EVERY_SCOPE)));
+		const names = tools.map((t) => t.name);
+		for (const name of INTEL) expect(names, name).toContain(name);
+		for (const name of NEVER) expect(names, name).not.toContain(name);
+		expectNoValueMoving(tools);
+		for (const t of tools.filter((t) => INTEL.includes(t.name))) expect(t.annotations?.readOnlyHint, t.name).toBe(true);
+	});
+
+	it('refuses an acting market tool by name even with every scope', async () => {
+		const headers = bearer(await oauthToken(EVERY_SCOPE));
+		for (const name of ['copy_subscribe', 'oracle_arm_watch']) {
+			const r = await post(grokHandler, rpc('tools/call', { name, arguments: {} }), { headers });
+			expect(r.json.error ?? r.json.result?.isError, name).toBeTruthy();
+		}
 	});
 });

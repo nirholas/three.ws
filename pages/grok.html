@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<title>three.ws for Grok Bot: a free 3D studio and a body for Grok · three.ws</title>
-	<meta name="description" content="One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Works in Grok Bot, Grok connectors and the xAI API. Free, no account, no key." />
+	<meta name="description" content="One sentence gives Grok Bot a 3D studio. Text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear. Signed in, Grok Bot also runs your agents, reads Solana market intel and wakes on your three.ws events. Works in Grok Bot, Grok connectors, Grok Build and the xAI API." />
 	<link rel="canonical" href="https://three.ws/grok" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -270,11 +270,11 @@
 	<main class="gk-wrap" id="main">
 		<section class="gk-hero">
 			<p class="gk-eyebrow">For Grok Bot, Grok and the xAI API</p>
-			<h1>Give Grok a 3D studio, and a body.</h1>
+			<h1>Give Grok a 3D studio, a body, and the Solana market.</h1>
 			<p>
-				Grok Bot routes every task to the best tool for it. For 3D, that is one sentence away:
+				Grok Bot routes every task to the best tool for it. One sentence connects all of three.ws:
 				<strong>text and images become textured 3D models, rigged avatars, and a talking 3D body Grok can wear.</strong>
-				Free, no account, no key.
+				Free, no account, no key. Sign the same URL in and Grok Bot also runs your agents, reads live pump.fun and Oracle market intel, and gets woken by your three.ws events. It never gets a tool that spends.
 			</p>
 
 			<div class="gk-say" role="group" aria-labelledby="gk-say-label">
@@ -293,7 +293,7 @@
 		<section class="gk-sec" aria-labelledby="gk-caps-h">
 			<div class="gk-sec-head">
 				<h2 id="gk-caps-h">What Grok Bot can do with three.ws</h2>
-				<p>Four jobs, one connector. Each card names the tools Grok Bot calls for it. Click an ask to copy it, then paste it into any Grok Bot task.</p>
+				<p>Five jobs, one connector. Each card names the tools Grok Bot calls for it. Click an ask to copy it, then paste it into any Grok Bot task.</p>
 			</div>
 			<div class="gk-caps">
 				<article class="gk-cap">
@@ -330,6 +330,15 @@
 					<button type="button" class="gk-ask" data-ask="Use three-ws-grok to run the agent-report prompt for all my agents and tell me what needs attention.">
 						<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
 						<span class="gk-ask-text">Run the agent-report prompt for all my agents and tell me what needs attention.</span>
+					</button>
+				</article>
+				<article class="gk-cap">
+					<h3>Read the Solana market <span class="gk-tag">Signed in</span></h3>
+					<p>Fresh pump.fun graduations, Oracle conviction plays, the Sentiment Scout, token due diligence with insider and holder checks, and the verified trader leaderboard. Read only: Grok reports, it never buys, sells or copies a trade.</p>
+					<p class="gk-chips" aria-label="Tools"><code data-tool="pumpfun_recent_graduations">pumpfun_recent_graduations</code><code data-tool="oracle_top_plays">oracle_top_plays</code><code data-tool="token_due_diligence">token_due_diligence</code><code data-tool="trader_leaderboard">trader_leaderboard</code><code data-tool="solana_agent_passport">solana_agent_passport</code></p>
+					<button type="button" class="gk-ask" data-ask="Run the market-brief prompt from three-ws-grok with 3 coins and give me the brief with every link.">
+						<span class="gk-ask-kind"><span>Ask</span><span>Copy</span></span>
+						<span class="gk-ask-text">Run the market-brief prompt from three-ws-grok with 3 coins and give me the brief with every link.</span>
 					</button>
 				</article>
 			</div>
@@ -439,6 +448,7 @@
 				<button type="button" class="gk-tab" role="tab" id="tab-bot" aria-controls="panel-bot" aria-selected="true" data-tab="bot">Grok Bot</button>
 				<button type="button" class="gk-tab" role="tab" id="tab-app" aria-controls="panel-app" aria-selected="false" tabindex="-1" data-tab="app">Grok connectors</button>
 				<button type="button" class="gk-tab" role="tab" id="tab-api" aria-controls="panel-api" aria-selected="false" tabindex="-1" data-tab="api">xAI API</button>
+				<button type="button" class="gk-tab" role="tab" id="tab-build" aria-controls="panel-build" aria-selected="false" tabindex="-1" data-tab="build">Grok Build</button>
 			</div>
 
 			<div class="gk-panel" role="tabpanel" id="panel-bot" aria-labelledby="tab-bot">
@@ -489,11 +499,52 @@ print(chat.sample().content)</pre>
 				</div>
 				<p class="gk-src-note">A full Node example, with the pending-job loop and an <code>allowed_tools</code> list, lives in <a href="https://github.com/nirholas/three.ws/tree/main/examples/grok-remote-mcp" target="_blank" rel="noopener">examples/grok-remote-mcp</a>. Request shape from <a href="https://docs.x.ai/developers/tools/remote-mcp" target="_blank" rel="noopener">xAI's Remote MCP docs</a>.</p>
 			</div>
+
+			<div class="gk-panel" role="tabpanel" id="panel-build" aria-labelledby="tab-build" hidden>
+				<p class="gk-panel-lede">Grok Build, xAI's coding agent for the terminal, reads Claude Code's MCP servers, plugins, skills and marketplaces with no extra setup. So a project <code>.mcp.json</code> gives Grok Build the same tools, and the three.ws plugin adds the skills.</p>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>.mcp.json in your project</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-build-mcp">Copy</button></div>
+					<pre id="gk-build-mcp">{
+  "mcpServers": {
+    "three-ws-grok": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-grok"
+    }
+  }
+}</pre>
+				</div>
+				<ol class="gk-list">
+					<li>Install Grok Build: <code>curl -fsSL https://x.ai/cli/install.sh | bash</code>, then <code>grok --version</code>.</li>
+					<li>Save the file above as <code>.mcp.json</code> at the root of your project, and start <code>grok</code> there.</li>
+					<li>Type <code>/mcps</code> to see <strong>three-ws-grok</strong> connected, then ask for a model, a rig or a catalog search.</li>
+					<li>For the skills too, install the <a href="https://github.com/nirholas/three.ws/tree/main/integrations/grok/three-ws" target="_blank" rel="noopener">three.ws plugin for Grok Build</a>: the same server plus six 3D skills and a <code>three-ws-tour</code> command, with no hooks or scripts. Copy its folder into <code>~/.grok/plugins/</code>; the commands are below.</li>
+				</ol>
+				<div class="gk-snippet">
+					<div class="gk-snippet-head"><span>Install the plugin</span><button type="button" class="gk-btn gk-btn-sm" data-copy-target="gk-build-plugin">Copy</button></div>
+					<pre id="gk-build-plugin">git clone --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws three.ws-src
+git -C three.ws-src sparse-checkout set integrations/grok/three-ws
+mkdir -p ~/.grok/plugins &amp;&amp; cp -r three.ws-src/integrations/grok/three-ws ~/.grok/plugins/three-ws</pre>
+				</div>
+				<p class="gk-src-note">Compatibility per xAI's <a href="https://docs.x.ai/build/features/skills-plugins-marketplaces" target="_blank" rel="noopener">Skills, Plugins and Marketplaces docs</a>. Source: <a href="https://github.com/xai-org/grok-build" target="_blank" rel="noopener">xai-org/grok-build</a>.</p>
+			</div>
+		</section>
+
+		<section class="gk-sec" aria-labelledby="gk-wake-h">
+			<div class="gk-sec-head">
+				<h2 id="gk-wake-h">Let three.ws wake your Grok Bot</h2>
+				<p>A Grok Bot routine can start from a webhook. Point a three.ws webhook at it and Grok Bot gets to work the moment something happens on your account: an agent run finishes, an automation fires, a message arrives, an approval is waiting, a model is forged. The event's JSON reaches the run as context.</p>
+			</div>
+			<ol class="gk-list">
+				<li>In Grok Bot, create a routine with a <strong>webhook trigger</strong> and an instruction, for example: <em>"Read the three.ws event in the body. If it is approval.needed, summarize what the agent wants to do and message me."</em> Grok gives you a URL and a key.</li>
+				<li>On <a href="/dashboard/developers#webhooks">Developers, Webhooks</a>, create a webhook with that URL, pick the events, and paste the key into <strong>Bearer token</strong>. It is stored encrypted and never shown again.</li>
+				<li>Press <strong>Send test</strong>. Every delivery carries <code>Authorization: Bearer &lt;key&gt;</code> plus the usual signature headers, retries with backoff, and shows up in the delivery log.</li>
+			</ol>
+			<p class="gk-src-note">Grok Bot allows up to 200 runs an hour per routine, so pick the events you actually want a run for. Trigger format from <a href="https://docs.x.ai/grok-bot/overview" target="_blank" rel="noopener">xAI's Grok Bot docs</a>. Full reference: <a href="/docs/grok-bot#wake-grok-bot-from-threews-events">docs/grok-bot.md</a>.</p>
 		</section>
 
 		<section class="gk-sec" aria-labelledby="gk-schedule-h">
 			<div class="gk-sec-head">
-				<h2 id="gk-schedule-h">Three recipes to schedule</h2>
+				<h2 id="gk-schedule-h">Four recipes to schedule</h2>
 				<p>Grok Bot runs tasks on a schedule with nobody watching. Each recipe is a guided MCP prompt the connector serves: it names the calls, never stops to ask, and ends with plain links. Copy the instruction into a Grok Bot task and set how often it runs.</p>
 			</div>
 			<div class="gk-recipes">
@@ -529,6 +580,17 @@ print(chat.sample().content)</pre>
 					</button>
 					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="forge_avatar">forge_avatar</code></li><li><code data-tool="get_job">get_job</code></li><li><code data-tool="look_at_model">look_at_model</code></li></ol>
 					<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="avatar-from-photo">How the avatar-from-photo prompt runs</a>
+				</article>
+				<article class="gk-recipe">
+					<p class="gk-recipe-kind">Every hour <span class="gk-tag">Signed in</span></p>
+					<h3>Solana market brief</h3>
+					<p>Reads fresh pump.fun graduations, Oracle's top plays and the Sentiment Scout, runs due diligence on the strongest coins, flags insider-heavy ones, and lists the verified traders worth watching. Never trades.</p>
+					<button type="button" class="gk-ask" data-ask="Every hour, run the market-brief prompt from three-ws-grok with 3 coins and send me the brief only if a coin passes due diligence.">
+						<span class="gk-ask-kind"><span>Instruction</span><span>Copy</span></span>
+						<span class="gk-ask-text">Every hour, run the market-brief prompt from three-ws-grok with 3 coins and send me the brief only if a coin passes due diligence.</span>
+					</button>
+					<ol class="gk-steps" aria-label="Calls, in order"><li><code data-tool="pumpfun_recent_graduations">pumpfun_recent_graduations</code></li><li><code data-tool="oracle_top_plays">oracle_top_plays</code></li><li><code data-tool="sentiment_scout">sentiment_scout</code></li><li><code data-tool="token_due_diligence">token_due_diligence</code></li><li><code data-tool="trader_leaderboard">trader_leaderboard</code></li></ol>
+					<a class="gk-recipe-link" href="/docs/grok#scheduled-tasks-guided-prompts" data-prompt="market-brief">How the market-brief prompt runs</a>
 				</article>
 			</div>
 			<p><a href="/docs/tutorials/grok-bot-recipes">Six Grok Bot recipes, run against production</a> walks through these three plus three more (an X post's image turned into a 3D model, a weekly agent report, a $THREE market brief) with the real output each one returned.</p>

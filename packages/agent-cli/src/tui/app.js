@@ -46,15 +46,16 @@ function TranscriptItem({ it }) {
 		case 'assistant':
 			return h(Box, { marginTop: 1 }, h(Text, null, it.text));
 		case 'tool':
+			// One Text, so a long preview wraps instead of squeezing the tool name.
 			return h(
-				Box,
+				Text,
 				null,
 				h(Text, { color: it.error ? 'red' : 'green' }, it.error ? '  x ' : '  + '),
 				h(Text, { bold: true }, it.name),
 				h(Text, { dimColor: true }, ` ${it.ms}ms  ${it.text}`),
 			);
 		case 'blocked':
-			return h(Box, null, h(Text, { color: 'yellow' }, '  - '), h(Text, { bold: true }, it.name), h(Text, { color: 'yellow' }, ` not run: ${it.text}`));
+			return h(Text, null, h(Text, { color: 'yellow' }, '  - '), h(Text, { bold: true }, it.name), h(Text, { color: 'yellow' }, ` not run: ${it.text}`));
 		case 'error':
 			return h(Box, { marginTop: 1 }, h(Text, { color: 'red' }, it.text));
 		default:
@@ -96,7 +97,10 @@ function InputLine({ value, busy, queued, approval }) {
 function StatusLine({ ctx, session, totals, busy, subagents, cwdLabel }) {
 	const running = subagents.filter((s) => s.status === 'running').length;
 	const queued = subagents.filter((s) => s.status === 'queued').length;
+	// The busy hint leads and the line truncates rather than wraps, so on a
+	// narrow terminal the part that tells you how to stop a turn stays visible.
 	const parts = [
+		...(busy ? ['Ctrl+C stops'] : []),
 		ctx.modelLabel,
 		`session ${session.id}`,
 		`${totals.prompt_tokens + totals.completion_tokens} tokens`,
@@ -104,8 +108,7 @@ function StatusLine({ ctx, session, totals, busy, subagents, cwdLabel }) {
 		cwdLabel,
 	];
 	if (running || queued) parts.push(`subagents ${running} running${queued ? `, ${queued} queued` : ''}`);
-	if (busy) parts.push('Ctrl+C stops');
-	return h(Text, { dimColor: true }, parts.join('  |  '));
+	return h(Text, { dimColor: true, wrap: 'truncate-end' }, parts.join('  |  '));
 }
 
 function AvatarPane({ mesh, snapshot, mood }) {

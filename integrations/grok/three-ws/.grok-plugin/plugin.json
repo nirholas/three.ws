@@ -1,0 +1,17 @@
+{
+  "name": "three-ws",
+  "version": "1.0.0",
+  "description": "three.ws for Grok Build: turn a sentence or a photo into a textured 3D model (GLB) or a rigged, animation-ready avatar, auto-rig a GLB, search thousands of CC0 props, characters and motion clips, explain a machine as an interactive 3D cutaway, and embed the result on a site. Free, with no account and no API key. No tool spends money.",
+  "author": {
+    "name": "three.ws",
+    "url": "https://three.ws"
+  },
+  "homepage": "https://three.ws/grok",
+  "repository": "https://github.com/nirholas/three.ws",
+  "license": "Apache-2.0",
+  "keywords": [
+    "three.ws",
+    "three-ws",
+    "threews"
+  ]
+}

@@ -33,6 +33,8 @@ bridge to the core is the gateway worker in [workers/agent-gateway](../agent-gat
 | `Dockerfile` | `FROM bbernhard/signal-cli-rest-api:0.100`, sets the bridge mode and state env, installs `persist.sh` as the entrypoint. |
 | `persist.sh` | Restores `signal-cli.tgz` from the state volume, starts a background snapshot loop, then `exec`s the upstream `/entrypoint.sh`. |
 | `cloudbuild.yaml` | Creates the Artifact Registry repo and the versioned state bucket if missing, builds, pushes, deploys to Cloud Run, and grants the runtime service account `run.invoker`. |
+| `cloudbuild.verify.yaml` | Builds the same image and runs `smoke.sh` against it. No push, no bucket, no deploy, no number registered. |
+| `smoke.sh` | Boots the image on an empty `/state` and asserts `/v1/health` 204, `/v1/about` in `json-rpc` mode, `/v1/accounts` `[]`, and the unregistered first-boot log line. Runs the same locally (`bash workers/signal-bridge/smoke.sh signal-bridge` after the local build) and in Cloud Build. |
 
 ## Configuration
 
@@ -109,6 +111,22 @@ in `json-rpc` mode; that is the socket a gateway Signal adapter consumes.
 
 ## Deploy
 
+**Status (2026-11-04): verified, not deployed.** Cloud Build
+`51832336-4a96-4c5a-8488-9055661cb8d1` built the image with
+`cloudbuild.verify.yaml` and the smoke test passed against it unregistered:
+`/v1/health` 204, `json-rpc` mode, no accounts. That run also caught a defect the
+deploy config shared: `COPY --chmod` needs BuildKit, which the Cloud Build docker
+step does not use by default (verify build `6ea2058c` failed on it). Both configs
+now set `DOCKER_BUILDKIT=1`. No number is registered; registering one is an owner
+step (see [Register the number](#register-the-number)).
+
+To prove the image again without deploying:
+
+```bash
+gcloud builds submit workers/signal-bridge --config workers/signal-bridge/cloudbuild.verify.yaml \
+  --region us-central1 --project aerial-vehicle-466722-p5
+```
+
 Production deploys are owner-gated (see CLAUDE.md). The command, from the repo root:
 
 ```bash
@@ -127,6 +145,9 @@ deploy flags are load-bearing:
 | `--no-allow-unauthenticated` | The upstream bridge has no auth of its own. Only the runtime service account (the gateway) may invoke it, with a Google ID token. |
 | `--add-volume ... bucket=three-ws-signal-bridge-state` | The versioned bucket holds `signal-cli.tgz`, so a new revision restores the registration instead of needing the number verified again. |
 | `--startup-probe=httpGet.path=/v1/health` | The JVM daemon takes a few seconds; traffic waits for it. |
+| `--execution-environment=gen2` | Cloud Storage volume mounts need the second-generation runtime. |
+| `--cpu=1`, `--memory=1Gi` | signal-cli runs as a resident JVM next to the REST server. Idle and unregistered it uses about 220 MiB (measured 2026-11-04); the headroom is for the JVM heap growing once a registered number syncs contacts and groups. |
+| `--timeout=3600` | The gateway's receive websocket is one long request; the default five minutes would cut it. |
 
 To register the number against the deployed service, call the same endpoints
 through an authenticated proxy:

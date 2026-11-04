@@ -1,0 +1,55 @@
+identity:
+  name: search_3d_assets
+  author: three-ws
+  label:
+    en_US: Search 3D Assets
+description:
+  human:
+    en_US: Search thousands of free CC0 3D props, rigged characters and motion clips, with GLB links and embed code.
+  llm: >-
+    Searches the three.ws catalog of ready-made, CC0-licensed 3D assets: props and objects, rigged humanoid
+    characters, and animation clips. Returns titles, GLB URLs, viewer links and paste-ready HTML embed code. Check
+    here before generating a model from scratch. Every word of the query must match, so start broad.
+parameters:
+  - name: query
+    type: string
+    required: false
+    label:
+      en_US: Search
+    human_description:
+      en_US: Words to search for, for example "wooden chair" or "wave".
+    llm_description: Short search words over titles, tags and categories, for example "chair" or "office lamp".
+    form: llm
+  - name: kind
+    type: select
+    required: false
+    options:
+      - value: object
+        label:
+          en_US: Objects and props
+      - value: character
+        label:
+          en_US: Rigged characters
+      - value: animation
+        label:
+          en_US: Animation clips
+    label:
+      en_US: Library
+    human_description:
+      en_US: Limit the search to one library.
+    llm_description: Optional. One of object, character or animation.
+    form: llm
+  - name: limit
+    type: number
+    required: false
+    default: 8
+    min: 1
+    max: 50
+    label:
+      en_US: Results
+    human_description:
+      en_US: How many results to return (1 to 50).
+    form: form
+extra:
+  python:
+    source: tools/search_3d_assets.py

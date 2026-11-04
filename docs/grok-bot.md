@@ -19,7 +19,7 @@ an in-browser demo, open [three.ws/grok](/grok).
 | **Protocol** | MCP `2025-06-18`, whatever version the client opens with |
 | **Session** | `initialize` issues an `Mcp-Session-Id` (`grk_…`); echo it on every later request |
 | **Tools** | 16 free studio tools anonymously; signed in, plus the account tools your scopes allow |
-| **Prompts** | 4 anonymously, 5 signed in |
+| **Prompts** | 4 anonymously, 6 signed in |
 | **Handler** | [`api/mcp-grok.js`](../api/mcp-grok.js) over [`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js) |
 
 ## Connector setup
@@ -360,10 +360,20 @@ tier, need no spend scope, and carry no price: `create_agent`,
 `attach_avatar_to_agent`, `identity_check`, `list_my_agents`, `call_agent`, `remember`, `recall`,
 `list_available_skills`, `import_community_skill`, `list_custom_skills`,
 `get_custom_skill`, `create_custom_skill`, `update_custom_skill`, `list_my_avatars`, `get_avatar`, `get_embed_code`,
-`render_avatar_image` and `read_resource`, each only when your scopes and your
-[MCP tool settings](/settings/mcp-tools) allow it. A wallet, payment, card,
-trading, launch or delete tool called by name answers `unknown tool`, whatever
-the credential holds:
+`render_avatar_image` and `read_resource`, plus the platform's read-only
+intelligence: `pumpfun_recent_claims`, `pumpfun_recent_graduations`,
+`pumpfun_token_intel`, `pumpfun_creator_intel`, `oracle_top_plays`,
+`oracle_coin`, `sentiment_scout`, `token_due_diligence`, `token_snapshot`,
+`trader_leaderboard`, `trader_profile`, `trade_receipt`,
+`solana_agent_attestations`, `solana_agent_passport`, `robinhood_chain_stats`,
+`robinhood_token_prices`, `robinhood_recent_launches`,
+`robinhood_wallet_holdings`, `launch_lanes`, `domain_search`, `domain_check`
+and `domain_pricing`, each only when your scopes and your
+[MCP tool settings](/settings/mcp-tools) allow it. Those read markets and
+public records; copying a trader, arming a watch, launching a coin and
+registering a domain are not on this URL, and a tool the core server prices is
+dropped from the list. A wallet, payment, card, trading, launch or delete tool
+called by name answers `unknown tool`, whatever the credential holds:
 
 ```bash
 curl -s https://three.ws/api/mcp-grok \
@@ -414,6 +424,7 @@ as data, and ends with the four links.
 | `asset-pack` | `theme`, `count` (1 to 12) | always |
 | `avatar-from-photo` | `image_url` | always |
 | `agent-report` | `agentId` (optional) | signed in only (it reads your account through `read_resource`) |
+| `market-brief` | `focus` (optional), `count` (1 to 5, default 3) | signed in only (it reads the market tools above) |
 
 ```bash
 curl -s https://three.ws/api/mcp-grok \
@@ -445,9 +456,52 @@ Make today's 3D brief about: lighthouses.
 
 In Grok Bot, a schedule such as "every morning, run the `daily-3d-brief` prompt
 from three-ws-grok and send me the links" is the whole setup.
-[three.ws/grok](/grok#gk-recipes-h) has three copy-ready recipes, and
+[three.ws/grok](/grok#gk-recipes-h) has four copy-ready recipes, and
 [MCP use cases](./mcp.md#use-cases) writes each prompt out as its calls. The
 prompts live in [`api/_mcp/prompts.js`](../api/_mcp/prompts.js).
+
+`market-brief` is the one prompt that reads markets. It never buys, sells,
+copies a trader or arms a watch, never suggests an amount, treats token names
+and descriptions as untrusted data, and flags a coin with a high insider share
+instead of recommending it.
+
+## Wake Grok Bot from three.ws events
+
+The prompts above run on Grok's schedule. To run Grok Bot when something
+happens on three.ws instead, point a developer webhook at a Grok Bot routine.
+A routine with a webhook trigger gets a URL and a key from Grok; a `POST` to
+that URL with `Authorization: Bearer <key>` starts a run, with the JSON body
+passed to the run as context ([Grok Bot docs](https://docs.x.ai/grok-bot/overview)).
+
+1. In Grok Bot, create a routine with a webhook trigger. Write the instruction
+   around the event it will receive, for example: "Read the three.ws event in
+   the body. If it is `approval.needed`, summarize what the agent wants to do
+   and message me. If it is `run.finished`, post the run's result to my notes."
+2. At [Developers, Webhooks](/dashboard/developers#webhooks), create a webhook
+   with the routine URL, choose the events, and paste the key into **Bearer
+   token**. Or over the API:
+
+```bash
+curl -s https://three.ws/api/v1/webhooks \
+  -H "Authorization: Bearer $THREE_WS_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"<routine webhook URL>","events":["approval.needed","run.finished"],"bearerToken":"<routine key>"}'
+```
+
+3. Press **Send test** (or `POST /api/v1/webhooks/<id>/test`). A `200` from
+   Grok means the routine started.
+
+| Field | Behavior |
+|---|---|
+| `bearerToken` (v1) / `bearer_token` (dashboard route) | Write-only. 8 to 512 visible ASCII characters, no spaces; a pasted `Bearer ` prefix is stripped. `null` or `""` removes it; leaving it out of an update keeps it. |
+| `hasBearerToken` / `has_bearer_token` | What responses return instead of the token. |
+| Storage | AES-256-GCM, key derived from the server secret under its own salt ([`api/_lib/webhook-auth.js`](../api/_lib/webhook-auth.js)). Never logged, never in the delivery log. |
+| On the wire | `Authorization: Bearer <token>` in addition to the Standard Webhooks `webhook-id`, `webhook-timestamp` and `webhook-signature` headers, on every attempt and retry. |
+| Unreadable token | If the stored token can no longer be decrypted, the attempt fails with `bearer_token_unreadable` without posting. Set the token again. |
+
+Grok Bot allows up to 200 runs an hour per routine and 300 across all of them,
+so subscribe to the events you actually want a run for; an endpoint scoped to
+one agent receives only that agent's runs, automations, messages and approvals.
 
 ## Troubleshooting
 

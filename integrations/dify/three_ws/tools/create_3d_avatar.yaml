@@ -1,0 +1,52 @@
+identity:
+  name: create_3d_avatar
+  author: three-ws
+  label:
+    en_US: Create 3D Avatar
+description:
+  human:
+    en_US: Turn a text description or a reference image into a rigged, animation-ready 3D character (GLB).
+  llm: >-
+    Generates a humanoid 3D character from a text description or a reference image URL and adds a skeleton with
+    skin weights in the same step, returning a rigged GLB that can be posed and animated, plus a viewer link. Use
+    it when the user wants a character or avatar. For a static object use generate_3d_model. Takes a few minutes.
+parameters:
+  - name: prompt
+    type: string
+    required: false
+    label:
+      en_US: Prompt
+    human_description:
+      en_US: The character to create, for example "a friendly astronaut in a white suit".
+    llm_description: A visual description of one humanoid character, up to 1000 characters. Required unless image_url is given.
+    form: llm
+  - name: image_url
+    type: string
+    required: false
+    label:
+      en_US: Reference image URL
+    human_description:
+      en_US: Optional public http(s) URL of an image of the character to reconstruct in 3D.
+    llm_description: Optional public http(s) URL of a reference image of the character.
+    form: llm
+  - name: allow_non_humanoid
+    type: boolean
+    required: false
+    default: false
+    label:
+      en_US: Allow non-humanoid
+    human_description:
+      en_US: Rig the subject even if it is not humanoid. Rigging assumes two arms and two legs.
+    form: form
+  - name: attach_glb
+    type: boolean
+    required: false
+    default: false
+    label:
+      en_US: Attach GLB file
+    human_description:
+      en_US: Also return the model as a GLB file output, for workflows that pass the file to another step.
+    form: form
+extra:
+  python:
+    source: tools/create_3d_avatar.py
