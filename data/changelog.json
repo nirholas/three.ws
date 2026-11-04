@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Announced surfaces defect sweep",
+			"summary": "Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Optional one-wallet-per-call payer for the x402 ring",
 			"tags": [
 				"improvement",
@@ -48,12 +57,12 @@
 			"link": "/play"
 		},
 		{
-			"date": "2026-11-03",
-			"title": "NVIDIA Inception startups can apply for free generation credit",
+			"date": "2026-11-04",
+			"title": "NVIDIA Inception startups can apply for free generation credit, and earn more for a shoutout",
 			"tags": [
 				"feature"
 			],
-			"summary": "If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application against your Inception profile or contact email before the credit lands in your balance. Goes live with the next owner-approved deploy, after its database migration is applied.",
+			"summary": "If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. Once approved you can post about what you made on X or LinkedIn, paste the link, and earn $10 more after we confirm the post is public. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application and each post. Goes live with the next owner-approved deploy, after its database migration is applied.",
 			"link": "/nvidia"
 		},
 		{

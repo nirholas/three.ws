@@ -43,7 +43,8 @@ surface, so from a script reuse the cookie from a logged-in browser session.
 ```bash
 # 0. Is the renderer up on this deployment? (No session needed.)
 curl 'https://three.ws/api/avatar/video-generate'
-# -> { "available": true, "reason": "ready", "free_generations": 1, "accepts": { … } }
+# -> { "available": true, "reason": "ready", ... } once the worker is deployed
+# -> { "available": false, "reason": "worker_unconfigured", ... } today (see Status)
 
 # 1. Presign an audio upload slot.
 curl -X POST 'https://three.ws/api/avatar/presign-audio' \
@@ -80,6 +81,7 @@ curl -H 'cookie: __Host-sid=<SESSION>' \
 - **SSRF guard.** `image_url` and `audio_url` must be https on the app origin or the S3 public domain, else `400 invalid_request`.
 - **Ownership.** `video-status` verifies the job belongs to you (`404` if unknown, `403` if another user's). Avatar image resolution enforces owner-or-public visibility.
 - **Timing and errors.** Renders take ~2 to 4 minutes; the client times out after 20 minutes. UI states cover idle (with a hint naming what is still missing), no avatars, avatar list failed, renderer offline, uploading audio, queuing, rendering with a percent and a clip count, done, and error (upload failed, could not start, renderer offline, lost contact with the job, failed on the server, timed out). Server errors include `502 worker_unreachable`/`worker_error`, `502 reference_image_failed` (no thumbnail and the portrait render did not succeed), and `503 worker_unconfigured`.
+- **Status (2026-11-04).** The LongCat worker is built but not deployed to production: `GET /api/avatar/video-generate` answers `available: false, reason: worker_unconfigured`, so the page shows the offline banner and every submission would answer `503`. Everything above describes the behaviour once the worker is live.
 - **Deployment requirement.** `LONGCAT_WORKER_URL` and `LONGCAT_WORKER_KEY` must both be set on the API service; without them `GET /api/avatar/video-generate` reports `available: false` and every submission answers `503 worker_unconfigured`.
 - **Output.** MP4, downloaded straight from the worker's `video_url`.
 
