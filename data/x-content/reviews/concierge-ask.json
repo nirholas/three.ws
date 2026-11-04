@@ -1,7 +1,7 @@
 {
 	"id": "concierge-ask",
-	"contentHash": "1ea75dfd26900f635fbc6f06d512687a3113b1cb7bae6505fd7e5796fe77751a",
-	"reviewedAt": "2026-10-13T18:43:36.609Z",
+	"contentHash": "689a721bf7e048e90d5a16a1004ab86bc6091f5678c51ed2ae84813d5abf6751",
+	"reviewedAt": "2026-11-04T21:45:37.630Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -39,7 +39,7 @@
 				"kind": "evidence:proof",
 				"target": "/api/concierge",
 				"ok": true,
-				"detail": "POST /api/concierge answered 200 in 3 s"
+				"detail": "POST /api/concierge answered 200 in 4.1 s"
 			},
 			{
 				"claim": "it answers from the page it is sitting on",
@@ -119,34 +119,21 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "accuracy",
-				"quote": "a script tag, a web component or an npm package",
-				"problem": "The passing check only confirms the page text 'Pick your flavor', which does not by itself enumerate the three install options. The reel's streamed answer does show a GitHub link to concierge-sdk, which supports 'open source' and the embed story, so the risk is low, but the enumerated list rests on thin evidence.",
-				"fix": "Optional: no change required since the check passed; if the page's 'Pick your flavor' section does not literally list script tag, web component and npm package, recapture that section of three.ws/concierge as evidence."
-			},
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "Reel frame at 14 s",
-				"problem": "The final frame is visually identical to the 10.1 s frame, so the reel ends on a static beat rather than a resolving moment.",
-				"fix": "Optional: trim the reel to end as the answer finishes streaming, around 12 to 13 seconds."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"A support chat with a face is one script tag away. Concierge puts a rigged 3D avatar in the corner of your page. A visitor asks, the answer streams in, and the avatar starts speaking the first sentence while the rest is still arriving.\n\nIn the reel it is asked how to install itself, and it answers from the page it is sitting on.",
 				"When a visitor asks, the widget reads the live page (title, headings, nav and content) plus any facts you curate, and the answer streams back from a free-first inference chain, with failover across providers. Whatever your page says today is what it knows today.\n\nthree.ws/concierge",
 				"No account, no crawler setup, no per-seat pricing. The widget is open source, and you can add it as a script tag, a web component or an npm package.\n\nVoice comes built in: push-to-talk speech input and browser-native speech output."
 			],
-			"altText": []
+			"altText": [
+				""
+			]
 		},
-		"summary": "All twelve claims verify against the live concierge page or the filmed run, the reel genuinely shows the widget answering an install question with a streamed, page-grounded answer, and the copy stands alone for readers who cannot see the video. Ship it; the only nits are a thin evidence match on the install-option list and a static final reel frame.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "All claims are verified against the live concierge page and the filmed production run. The post follows the house voice contract, leads with a checkable mechanism, and requires no changes.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",

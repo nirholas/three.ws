@@ -1,7 +1,7 @@
 {
 	"id": "parts-studio",
-	"contentHash": "c908a54f5fc785944b4c586cbf9c451002aa65356adf71552c4094991d804006",
-	"reviewedAt": "2026-10-13T18:57:58.621Z",
+	"contentHash": "5c2b16c5fda98814d09a799f2e493e35cb057a7f587079cb3ddd2dd0894ae3f7",
+	"reviewedAt": "2026-11-04T21:49:16.759Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -66,7 +66,7 @@
 				"kind": "evidence:proof",
 				"target": "/api/forge-segment",
 				"ok": true,
-				"detail": "POST /api/forge-segment answered 202 in 0.1 s"
+				"detail": "POST /api/forge-segment answered 202 in 0.4 s"
 			},
 			{
 				"claim": "The segmentation worker runs on Google Cloud Run",
@@ -105,7 +105,7 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 5,
+			"clarity": 4,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
@@ -114,19 +114,20 @@
 		"issues": [],
 		"rewrite": {
 			"posts": [
-				"Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.",
-				"Agents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
+				"Parts Studio is live on three.ws. Paste a link to a 3D model and it splits the mesh into named parts, cutting at disconnected shells and concave creases, so each piece can be isolated, hidden or exported on its own.\n\nThe mannequin in the reel came back as 24 parts, found from the geometry alone.\n\nAgents get the same tool: segment_model over MCP, and a plain REST endpoint at /api/forge-segment. The segmentation worker runs on Google Cloud Run.\n\nPaste a link and try it: three.ws/segment"
 			],
 			"altText": []
 		},
-		"summary": "Every claim checks out against the live page, the code file, and the filmed run, which read 24 parts off the screen and got a 202 from /api/forge-segment. The reel frames match the copy exactly (24 parts, mannequin, isolate/hide/export controls) and the voice contract is fully obeyed. Ship it.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "All claims are verified against the live page, the filmed run, and the server response. The post follows the house voice contract with no banned openers, hashtags, emoji, or dashes, and the reel captions match the copy.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": []
+		"rewriteFindings": [
+			"head: 2 links (three.ws, three.ws/segment); one post links one surface, and X reads a bare three.ws as a link"
+		]
 	},
 	"editorError": null
 }

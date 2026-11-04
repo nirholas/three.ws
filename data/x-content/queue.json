@@ -17916,7 +17916,7 @@
 		},
 		{
 			"id": "avatar-embed-moves",
-			"status": "approved",
+			"status": "review",
 			"kind": "post",
 			"tier": 2,
 			"lane": "community",
@@ -17984,7 +17984,7 @@
 			],
 			"posts": [
 				{
-					"text": "This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, a flex, a round of applause. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
+					"text": "This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, an arm flex, a brag and clap. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
 					"media": [
 						{
 							"path": "public/x-media/avatar-embed-moves/reel.mp4",
@@ -18016,7 +18016,7 @@
 					]
 				},
 				{
-					"says": "a boxer dance, a back flip, a flex, a round of applause",
+					"says": "a boxer dance, a back flip, an arm flex, a brag and clap",
 					"evidence": [
 						{
 							"type": "file",

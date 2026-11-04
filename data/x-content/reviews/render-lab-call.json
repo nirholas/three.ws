@@ -1,7 +1,7 @@
 {
 	"id": "render-lab-call",
-	"contentHash": "40459f8ee2e27380076cef1896182c4255fc263db1b4ffbd6bb82cb8e59e81c5",
-	"reviewedAt": "2026-10-13T19:03:44.856Z",
+	"contentHash": "e3e6bd942b104ce69e7e7cfeb71797aeaa8b5f529512c756a6f236f4cbb63094",
+	"reviewedAt": "2026-11-04T21:53:16.389Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -61,17 +61,9 @@
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
-			"visual": 4
+			"visual": 5
 		},
-		"issues": [
-			{
-				"severity": "minor",
-				"area": "visual",
-				"quote": "Or a live <agent-3d> tag",
-				"problem": "The frame this caption sits under (5.3 s) still shows the curl tab selected with the curl command visible; the cursor is only hovering the Web component tab. The caption is one beat ahead of the picture.",
-				"fix": "Recapture the reel so the 5.3 s frame shows the Web component tab selected and its snippet visible under the caption, or shift the caption cut by roughly a second so it lands after the tab switches."
-			}
-		],
+		"issues": [],
 		"rewrite": {
 			"posts": [
 				"Render Lab turns a framed, posed avatar into the call that makes it. Pick the avatar, scene and pose in the browser, and the code panel writes the same render as a curl command, a live web component or an MCP tool call. Every control on the page maps to one parameter of GET /api/avatar/render, so what you see is what the call returns.",
@@ -79,8 +71,8 @@
 			],
 			"altText": []
 		},
-		"summary": "All three claims are verified against the live page and the filmed run, the reel shows the real product doing exactly what the copy says, and the voice is clean. Only nit is a caption landing one frame before the Web component tab switches; fine to ship, recapture on the next pass.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "All claims are verified against the live product and page source. The post follows the voice contract with no banned openers, emoji, hashtags, or dashes, and the reel frames match the copy without contradiction.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",

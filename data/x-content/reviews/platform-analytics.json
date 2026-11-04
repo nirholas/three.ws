@@ -1,7 +1,7 @@
 {
 	"id": "platform-analytics",
-	"contentHash": "4eef574bc4f665436a892efafdafe45e86562c69d4e96374632dd9f4d9e837eb",
-	"reviewedAt": "2026-10-13T19:00:18.811Z",
+	"contentHash": "98a2512e28394b4502c37200c40cb960b7d9051d244eea5d19629ae9849ca847",
+	"reviewedAt": "2026-11-04T21:51:47.375Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -24,21 +24,21 @@
 				"kind": "evidence:proof",
 				"target": "agents",
 				"ok": true,
-				"detail": "the run read agents = \"4,392\", at least 4300"
+				"detail": "the run read agents = \"4,764\", at least 4300"
 			},
 			{
 				"claim": "more than 970 of them holding a wallet",
 				"kind": "evidence:proof",
 				"target": "wallets",
 				"ok": true,
-				"detail": "the run read wallets = \"977\", at least 970"
+				"detail": "the run read wallets = \"1,032\", at least 970"
 			},
 			{
 				"claim": "More than 47,000 finished 3D models",
 				"kind": "evidence:proof",
 				"target": "models",
 				"ok": true,
-				"detail": "the run read models = \"47,672\", at least 47000"
+				"detail": "the run read models = \"51,066\", at least 47000"
 			},
 			{
 				"claim": "each figure read live from the table that records the activity",
@@ -59,7 +59,7 @@
 				"kind": "evidence:proof",
 				"target": "/api/platform/analytics",
 				"ok": true,
-				"detail": "GET /api/platform/analytics answered 200 in 2.2 s"
+				"detail": "GET /api/platform/analytics answered 200 in 1.8 s"
 			},
 			{
 				"claim": "The note is written by the same code that computes the number, so it can never describe a different query than the one that ran",
@@ -121,7 +121,7 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "13 steps passed against the live product, every claimed fact still holds (agents 4,501, wallets 1,006, models 49,224)"
+				"detail": "13 steps passed against the live product, every claimed fact still holds (agents 4,766, wallets 1,032, models 51,105)"
 			},
 			{
 				"kind": "probe:api",
@@ -167,8 +167,8 @@
 			],
 			"altText": []
 		},
-		"summary": "Every claim traces to a passing page or proof check, and the conservative figures (more than 4,300 agents, 970 wallets, 47,000 models) are backed by numbers the filmed run read off the screen, with the later probe reading even higher. The reel frames match their captions, the voice contract is fully observed (no dashes, hashtags, or hype), and the link sits once in the reply as the contract allows.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "All claims are verified against the live product and passing checks. The post leads with specific, checkable numbers and follows the house voice contract exactly, with reel frames and captions that match the copy.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
