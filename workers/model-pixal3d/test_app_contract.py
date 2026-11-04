@@ -97,6 +97,29 @@ def main() -> int:
         else:
             check("pixal3d import chain resolves", False, f"{type(exc).__name__}: {exc}")
 
+    # The optional fill-other-sides rung imports MV-Adapter's own inference
+    # script lazily on the first fill request; resolve that exact path here so a
+    # missing dependency fails the build, not a paying caller.
+    mvadapter_src = os.environ.get("MVADAPTER_SRC", "/opt/mvadapter-src")
+    if os.path.isdir(mvadapter_src):
+        if mvadapter_src not in sys.path:
+            sys.path.insert(0, mvadapter_src)
+        try:
+            import scripts.inference_i2mv_sdxl  # noqa: F401
+
+            check("mv-adapter import chain resolves", True)
+        except ModuleNotFoundError as exc:
+            check("mv-adapter import chain resolves", False, str(exc))
+        except Exception as exc:  # noqa: BLE001 - classified below
+            if _is_gpu_driver_absence(exc):
+                print(f"skip  mv-adapter import chain (no GPU on this host): {type(exc).__name__}: {exc}")
+            else:
+                check("mv-adapter import chain resolves", False, f"{type(exc).__name__}: {exc}")
+        finally:
+            sys.path.remove(mvadapter_src)
+            for name in [m for m in sys.modules if m == "scripts" or m.startswith("scripts.")]:
+                del sys.modules[name]
+
     import main as app_module
     from fastapi.testclient import TestClient
 

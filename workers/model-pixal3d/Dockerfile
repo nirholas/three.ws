@@ -57,6 +57,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
+# Image-wide pip constraints, applied to every install below (PIP_CONSTRAINT).
+# Several upstreams declare loose deps that would otherwise move a pin set earlier
+# in this file: an unconstrained MoGe/gradio install pulled huggingface-hub 2.x,
+# diffusers then settled on 1.x, and transformers 4.57.1 refuses anything >=1.0,
+# so the import gate failed (build c90837ce, 2026-11-04). torch is pinned here
+# too so no later dependency can swap the build every extension compiled against.
+RUN printf '%s\n' 'torch==2.6.0' 'torchvision==0.21.0' 'huggingface-hub>=0.34.0,<1.0' \
+        > /etc/pip-constraints.txt
+ENV PIP_CONSTRAINT=/etc/pip-constraints.txt
+
 # 1. Torch first (own layer; every extension below links against it).
 RUN pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
 
@@ -93,8 +103,14 @@ RUN pip install --no-build-isolation /tmp/ext/TRELLIS.2/o-voxel
 RUN pip install natten==0.21.0 --no-build-isolation
 RUN rm -rf /tmp/ext
 
-# 5. MoGe-2 (microsoft/moge, MIT): the single-view camera estimator.
-RUN pip install git+https://github.com/microsoft/MoGe.git@74fbce054ebed49800de42d0ad0e83495065719a
+# 5. MoGe-2 (microsoft/moge, MIT): the single-view camera estimator. Installed
+# with --no-deps: its pyproject also pulls gradio (its demo UI, unused here) and
+# a second FlexGEMM build. The runtime deps it does import are listed explicitly,
+# at the commits its own pyproject pins.
+RUN pip install "click==8.3.1" "matplotlib==3.10.3" \
+        "utils3d_moge @ git+https://github.com/EasternJournalist/utils3d-moge.git@62f09d58509485564e24d5d9f6aac9ee9ebc0c37" \
+        "pipeline @ git+https://github.com/EasternJournalist/pipeline.git@1c511390d90226c00c101f34b84df26a0f8789b4" \
+    && pip install --no-deps git+https://github.com/microsoft/MoGe.git@74fbce054ebed49800de42d0ad0e83495065719a
 
 # 6. Pixal3D itself, pinned to a commit for the same reproducibility reason
 # TRELLIS.2 is pinned above: its own reference scripts (inference.py,
@@ -103,11 +119,17 @@ RUN git clone https://github.com/TencentARC/Pixal3D.git /opt/pixal3d-src \
     && git -C /opt/pixal3d-src checkout f7cf38429b0bd264f1995f0f8743a88b1c728b94
 
 # 7. MV-Adapter (huanngzh/MV-Adapter, Apache-2.0): the optional "fill in the
-# other sides" rung. diffusers/accelerate match its own requirements.txt.
-RUN pip install "diffusers==0.37.1" "accelerate==1.13.0"
+# other sides" rung. Its requirements.txt is not installed: it rebuilds
+# nvdiffrast from an unpinned git main (already built above at v0.4.0) and adds
+# training-only and texturing-only packages. The list below is every module-level
+# import of the i2mv SDXL inference path main.py loads (scripts.inference_i2mv_sdxl
+# and the mvadapter modules it pulls in); test_app_contract.py imports that path
+# at build time, so a missing one fails the build instead of the first fill request.
+RUN pip install "diffusers==0.37.1" "accelerate==1.13.0" \
+        "omegaconf==2.3.0" "jaxtyping==0.2.36" "typeguard==4.4.2" \
+        "pytorch-lightning==2.5.1" "pymeshlab==2023.12.post3" psutil
 RUN git clone https://github.com/huanngzh/MV-Adapter.git /opt/mvadapter-src \
-    && git -C /opt/mvadapter-src checkout 4277e0018232bac82bb2c103caf0893cedb711be \
-    && pip install --no-deps -r /opt/mvadapter-src/requirements.txt || true
+    && git -C /opt/mvadapter-src checkout 4277e0018232bac82bb2c103caf0893cedb711be
 
 # 8. Server deps. pytest is here for the build-time gate at the bottom of this
 # file: the pure-logic modules are unit tested during `docker build`, so a broken
