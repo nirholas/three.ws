@@ -10386,6 +10386,26 @@
 							"contains": "Nothing is uploaded"
 						}
 					]
+				},
+				{
+					"says": "three.ws is live on Microsoft Marketplace",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "three.ws is live on Microsoft Marketplace"
+						}
+					]
+				},
+				{
+					"says": "TRELLIS.2 from Microsoft Research powers the default image-to-3D lane on the platform",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "TRELLIS.2 from Microsoft Research already powers the default image-to-3D lane"
+						}
+					]
 				}
 			],
 			"probes": [
@@ -11528,7 +11548,7 @@
 					]
 				},
 				{
-					"says": "three.ws is listed as a strategic partner",
+					"says": "The partners page lists IBM as a Strategic partner",
 					"evidence": [
 						{
 							"type": "page",
@@ -11543,12 +11563,12 @@
 					]
 				},
 				{
-					"says": "Qwen models are lanes in the platform's model router",
+					"says": "it extends three.ws into APAC markets with Qwen model integration",
 					"evidence": [
 						{
 							"type": "page",
 							"url": "https://three.ws/partners",
-							"contains": "Qwen model integration"
+							"contains": "extends three.ws into APAC markets with Qwen model integration"
 						}
 					]
 				},
@@ -11719,6 +11739,16 @@
 							"type": "file",
 							"path": "src/holo.js",
 							"contains": "THREE.MathUtils.clamp(target.x, -1.1, 1.1);"
+						}
+					]
+				},
+				{
+					"says": "Every 3D generation lane already runs on NVIDIA silicon",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/partners",
+							"contains": "Every 3D generation lane already runs on NVIDIA silicon"
 						}
 					]
 				}
@@ -13959,16 +13989,6 @@
 					]
 				},
 				{
-					"says": "about 3,000 clips",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/animations.md",
-							"contains": "about 3,000 more"
-						}
-					]
-				},
-				{
 					"says": "It asks for a slot such as celebrate or bow",
 					"evidence": [
 						{
@@ -14050,31 +14070,6 @@
 							"type": "page",
 							"url": "https://model-rig-lp642k3kpa-uc.a.run.app/health",
 							"contains": "\"gpu_name\":\"NVIDIA L4\""
-						}
-					]
-				},
-				{
-					"says": "No account and no key",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| **Auth** | None"
-						}
-					]
-				},
-				{
-					"says": "it returns a rigged, animation-ready GLB in one call",
-					"evidence": [
-						{
-							"type": "file",
-							"path": "api/_mcp-studio/tools.js",
-							"contains": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, "
-						},
-						{
-							"type": "file",
-							"path": "docs/mcp-studio.md",
-							"contains": "| `forge_avatar` | Generate a rigged, animation-ready avatar |"
 						}
 					]
 				},
