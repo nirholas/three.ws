@@ -5733,6 +5733,14 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/a2a-agent",
+					"title": "Docs: The three.ws A2A agent",
+					"description": "The A2A endpoint any agent can call: the Agent Card, the generate-3d-model, validate-model and search-avatars skills, A2A 1.0 and 0.3 JSON-RPC methods, task lifetime, error codes, optional bearer auth, and curl calls that work today.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/agent-wallet-api",
 					"title": "Docs: Agent wallet control API",
 					"description": "Every three.ws agent owns one custodial Solana wallet. Seven owner-only HTTP surfaces hang off it, and this is their developer reference: exact routes, exact request and response JSON, exact error codes, and a working curl call for each.",
@@ -8229,7 +8237,7 @@
 				{
 					"path": "/.well-known/agent-card.json",
 					"title": ".well-known/agent-card.json",
-					"description": "A2A agent card: what three.ws is, what it can do, and where the paid-service catalog lives.",
+					"description": "A2A agent card: the JSON-RPC endpoint, supported A2A versions, optional bearer auth, and every skill the endpoint serves, generated from the skill registry.",
 					"indexable": false
 				},
 				{

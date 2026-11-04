@@ -39,7 +39,17 @@ vi.mock('../api/3d/inspect.js', () => ({
 		stats: { triangles: 1200, meshes: 2, materials: 1 },
 		sizeBytes: 4096,
 		recommendations: [],
-		validation: { valid: true, errors: 0, warnings: 1, infos: 0, hints: 0 },
+		// The real report shape (api/3d/inspect.js runValidator): counts are num*.
+		validation: {
+			valid: true,
+			validatorVersion: '2.0.0-dev.3.10',
+			numErrors: 0,
+			numWarnings: 15,
+			numInfos: 2,
+			numHints: 0,
+			issues: [],
+			truncated: false,
+		},
 		ts: new Date().toISOString(),
 	})),
 }));
@@ -152,7 +162,11 @@ describe('A2A service: 1.0 dialect', () => {
 		expect(task.status.state).toBe('TASK_STATE_COMPLETED');
 		expect(task.status.message.role).toBe('ROLE_AGENT');
 		expect(task.status.message.parts[0].text).toMatch(/^Valid glTF/);
-		expect(task.artifacts[0].parts[0].data.validation.errors).toBe(0);
+		// The summary reports the validator's counts; it must not claim the
+		// validator was unavailable when the report carries its result.
+		expect(task.status.message.parts[0].text).toContain('Validator: 0 errors, 15 warnings, 2 infos, 0 hints.');
+		expect(task.status.message.parts[0].text).not.toMatch(/unavailable/);
+		expect(task.artifacts[0].parts[0].data.validation.numErrors).toBe(0);
 
 		const got = await rpc('GetTask', { id: task.id, historyLength: 1 }, { 'a2a-version': '1.0' });
 		expect(got.json.result.id).toBe(task.id);

@@ -1,0 +1,221 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://three.ws/schemas/a2a-agent-card.schema.json",
+	"title": "A2A Agent Card (1.0, with the 0.3 compatibility fields)",
+	"description": "Encodes the AgentCard message of the A2A specification (a2a-protocol.org/dev/specification, specification/a2a.proto) as JSON Schema. The 1.0 fields are required. The 0.3 fields (url, preferredTransport, protocolVersion, security) are optional and, when present, typed, so a card can serve readers of both versions during the overlap period. Cross-field rules that JSON Schema cannot express live in scripts/lib/a2a-card-rules.mjs.",
+	"type": "object",
+	"required": [
+		"name",
+		"description",
+		"supportedInterfaces",
+		"version",
+		"capabilities",
+		"defaultInputModes",
+		"defaultOutputModes",
+		"skills"
+	],
+	"not": { "required": ["authentication"] },
+	"properties": {
+		"name": { "type": "string", "minLength": 1 },
+		"description": { "type": "string", "minLength": 20 },
+		"supportedInterfaces": {
+			"type": "array",
+			"minItems": 1,
+			"items": { "$ref": "#/$defs/agentInterface" }
+		},
+		"provider": {
+			"type": "object",
+			"required": ["url", "organization"],
+			"properties": {
+				"url": { "$ref": "#/$defs/httpsUrl" },
+				"organization": { "type": "string", "minLength": 1 }
+			}
+		},
+		"version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+][0-9A-Za-z.-]+)?$" },
+		"documentationUrl": { "$ref": "#/$defs/httpsUrl" },
+		"iconUrl": { "$ref": "#/$defs/httpsUrl" },
+		"capabilities": {
+			"type": "object",
+			"properties": {
+				"streaming": { "type": "boolean" },
+				"pushNotifications": { "type": "boolean" },
+				"extendedAgentCard": { "type": "boolean" },
+				"stateTransitionHistory": { "type": "boolean" },
+				"extensions": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["uri"],
+						"properties": {
+							"uri": { "type": "string", "format": "uri" },
+							"description": { "type": "string" },
+							"required": { "type": "boolean" },
+							"params": { "type": "object" }
+						}
+					}
+				}
+			}
+		},
+		"securitySchemes": {
+			"type": "object",
+			"minProperties": 1,
+			"additionalProperties": { "$ref": "#/$defs/securityScheme" }
+		},
+		"securityRequirements": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["schemes"],
+				"properties": {
+					"schemes": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "object",
+							"required": ["list"],
+							"properties": { "list": { "type": "array", "items": { "type": "string" } } }
+						}
+					}
+				}
+			}
+		},
+		"defaultInputModes": { "$ref": "#/$defs/mediaTypes" },
+		"defaultOutputModes": { "$ref": "#/$defs/mediaTypes" },
+		"skills": {
+			"type": "array",
+			"minItems": 1,
+			"items": { "$ref": "#/$defs/skill" }
+		},
+		"signatures": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["protected", "signature"],
+				"properties": {
+					"protected": { "type": "string" },
+					"signature": { "type": "string" },
+					"header": { "type": "object" }
+				}
+			}
+		},
+		"url": { "$ref": "#/$defs/httpsUrl" },
+		"preferredTransport": { "$ref": "#/$defs/protocolBinding" },
+		"protocolVersion": { "$ref": "#/$defs/protocolVersion" },
+		"additionalInterfaces": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["url", "transport"],
+				"properties": {
+					"url": { "$ref": "#/$defs/httpsUrl" },
+					"transport": { "$ref": "#/$defs/protocolBinding" }
+				}
+			}
+		},
+		"security": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"additionalProperties": { "type": "array", "items": { "type": "string" } }
+			}
+		}
+	},
+	"$defs": {
+		"httpsUrl": { "type": "string", "format": "uri", "pattern": "^https://" },
+		"protocolBinding": { "enum": ["JSONRPC", "GRPC", "HTTP+JSON"] },
+		"protocolVersion": { "type": "string", "pattern": "^\\d+\\.\\d+(?:\\.\\d+)?$" },
+		"mediaType": {
+			"type": "string",
+			"pattern": "^[a-z]+/[a-z0-9][a-z0-9.+-]*(?:\\s*;\\s*[a-z0-9-]+=[^;]+)*$"
+		},
+		"mediaTypes": {
+			"type": "array",
+			"minItems": 1,
+			"uniqueItems": true,
+			"items": { "$ref": "#/$defs/mediaType" }
+		},
+		"agentInterface": {
+			"type": "object",
+			"required": ["url", "protocolBinding", "protocolVersion"],
+			"properties": {
+				"url": { "$ref": "#/$defs/httpsUrl" },
+				"protocolBinding": { "$ref": "#/$defs/protocolBinding" },
+				"protocolVersion": { "$ref": "#/$defs/protocolVersion" },
+				"tenant": { "type": "string" }
+			}
+		},
+		"skill": {
+			"type": "object",
+			"required": ["id", "name", "description", "tags"],
+			"properties": {
+				"id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+				"name": { "type": "string", "minLength": 1 },
+				"description": { "type": "string", "minLength": 20 },
+				"tags": {
+					"type": "array",
+					"minItems": 1,
+					"uniqueItems": true,
+					"items": { "type": "string", "minLength": 1 }
+				},
+				"examples": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+				"inputModes": { "$ref": "#/$defs/mediaTypes" },
+				"outputModes": { "$ref": "#/$defs/mediaTypes" },
+				"securityRequirements": { "type": "array" }
+			}
+		},
+		"securityScheme": {
+			"description": "Either the 1.0 oneof wrapper (exactly one *SecurityScheme key) or the 0.3 OpenAPI-style object discriminated by type. The a2a SDKs convert the latter.",
+			"oneOf": [
+				{
+					"type": "object",
+					"minProperties": 1,
+					"maxProperties": 1,
+					"properties": {
+						"apiKeySecurityScheme": {
+							"type": "object",
+							"required": ["location", "name"],
+							"properties": {
+								"location": { "enum": ["query", "header", "cookie"] },
+								"name": { "type": "string" },
+								"description": { "type": "string" }
+							}
+						},
+						"httpAuthSecurityScheme": {
+							"type": "object",
+							"required": ["scheme"],
+							"properties": {
+								"scheme": { "type": "string", "minLength": 1 },
+								"bearerFormat": { "type": "string" },
+								"description": { "type": "string" }
+							}
+						},
+						"oauth2SecurityScheme": { "type": "object", "required": ["flows"] },
+						"openIdConnectSecurityScheme": {
+							"type": "object",
+							"required": ["openIdConnectUrl"],
+							"properties": { "openIdConnectUrl": { "type": "string", "format": "uri" } }
+						},
+						"mtlsSecurityScheme": { "type": "object" }
+					},
+					"additionalProperties": false
+				},
+				{
+					"type": "object",
+					"required": ["type"],
+					"properties": {
+						"type": { "enum": ["apiKey", "http", "oauth2", "openIdConnect", "mutualTLS"] }
+					},
+					"allOf": [
+						{
+							"if": { "properties": { "type": { "const": "http" } } },
+							"then": { "required": ["scheme"] }
+						},
+						{
+							"if": { "properties": { "type": { "const": "apiKey" } } },
+							"then": { "required": ["in", "name"] }
+						}
+					]
+				}
+			]
+		}
+	}
+}

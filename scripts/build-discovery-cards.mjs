@@ -12,9 +12,10 @@
 //     x402Endpoints list projected from the catalog (url, method, useCase,
 //     networks, scheme, priceUsdc). `registrations` (on-chain write-back,
 //     owned by scripts/erc8004-register-self.mjs) is left untouched.
-//   • public/.well-known/agent-card.json — description + one generated
-//     `x402-service-catalog` skill summarizing the paid catalog by category
-//     with live counts and the discovery-doc URL. Hand-written skills stay.
+//   • public/.well-known/agent-card.json: rebuilt whole as an A2A card (url,
+//     interfaces, version, securitySchemes, optional x402 extension) with the
+//     skills the endpoint routes, the `x402-service-catalog` one carrying live
+//     counts by category. Validated before it is written.
 //   • public/.well-known/ai-plugin.json: descriptions, brand logo, and legal
 //     URL from scripts/lib/discovery-copy.mjs (free 3D lane first, optional
 //     paid catalog second, with the live paid count).
@@ -28,9 +29,22 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 import { pluginDescriptions, PLUGIN_LOGO_URL, PLUGIN_LEGAL_URL } from './lib/discovery-copy.mjs';
+import {
+	A2A_CURRENT_PROTOCOL_VERSION,
+	A2A_ENDPOINT_PATH,
+	A2A_LEGACY_PROTOCOL_VERSION,
+	validateA2ACard,
+} from './lib/a2a-card-rules.mjs';
+import { A2A_SKILLS, A2A_SKILL_IDS, cardSkill, skillById } from '../api/_lib/a2a/skills.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { getCatalog } = await import(path.join(root, 'api/_lib/service-catalog/index.js'));
+const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+
+const SITE = 'https://three.ws';
+// The a2a-x402 extension URI the endpoint negotiates (api/_lib/x402/a2a-server.js).
+const A2A_X402_EXTENSION_URI = 'https://github.com/google-a2a/a2a-x402/v0.1';
+const A2A_DOCUMENTATION_URL = `${SITE}/docs/a2a-agent`;
 
 const DESCRIPTION =
 	'three.ws: the 3D agent economy. Generate, rig, and animate 3D avatars and worlds; ' +
@@ -71,9 +85,15 @@ if (paid.length < 40) {
 }
 
 // ── agent-card.json (A2A card with the a2a-x402 extension) ───────────────────
+// Rebuilt in full on every run, in A2A field order, so a stale hand edit (the
+// website as `url`, an old `version`, the pre-0.2 `authentication` block, a
+// required payment extension, skills the endpoint never routed) cannot survive
+// a build. Skills come from the registry the endpoint dispatches on
+// (api/_lib/a2a/skills.js); the card is checked by the same rules as
+// tests/a2a-agent-card.test.js before it is written.
 {
-	const card = readJson('public/.well-known/agent-card.json');
-	card.description = DESCRIPTION;
+	const previous = readJson('public/.well-known/agent-card.json');
+	const endpoint = `${SITE}${A2A_ENDPOINT_PATH}`;
 	const byCategory = new Map();
 	for (const e of paid) byCategory.set(e.category, (byCategory.get(e.category) || 0) + 1);
 	const categorySummary = [...byCategory.entries()]
@@ -81,22 +101,69 @@ if (paid.length < 40) {
 		.map(([cat, n]) => `${cat} (${n})`)
 		.join(', ');
 	const generated = {
-		id: 'x402-service-catalog',
-		name: 'Paid x402 Service Catalog',
+		...cardSkill(skillById('x402-service-catalog')),
 		description:
 			`${paid.length} pay-per-call services settled via x402 (USDC on Solana, Base, and Arbitrum): ` +
 			`${categorySummary}. Every service is listed with price, input schema, and output example ` +
 			'in the machine-readable discovery document: fetch it, pick a service, and pay the 402 challenge.',
-		tags: ['x402', 'paid', 'catalog', 'discovery'],
 		examples: [
 			'Fetch https://three.ws/.well-known/x402.json and list the market-data services',
 			'Pay the 402 challenge on /api/x402/token-intel to get a token signal',
 		],
-		url: 'https://three.ws/.well-known/x402.json',
 	};
-	const idx = card.skills.findIndex((s) => s.id === generated.id);
-	if (idx === -1) card.skills.push(generated);
-	else card.skills[idx] = generated;
+	const card = {
+		name: previous.name || 'three.ws',
+		description: DESCRIPTION,
+		url: endpoint,
+		preferredTransport: 'JSONRPC',
+		protocolVersion: A2A_LEGACY_PROTOCOL_VERSION,
+		supportedInterfaces: [
+			{ url: endpoint, protocolBinding: 'JSONRPC', protocolVersion: A2A_CURRENT_PROTOCOL_VERSION },
+			{ url: endpoint, protocolBinding: 'JSONRPC', protocolVersion: A2A_LEGACY_PROTOCOL_VERSION },
+		],
+		provider: { organization: 'three.ws', url: `${SITE}/` },
+		iconUrl: PLUGIN_LOGO_URL,
+		documentationUrl: A2A_DOCUMENTATION_URL,
+		version: pkg.version,
+		capabilities: {
+			streaming: false,
+			pushNotifications: false,
+			stateTransitionHistory: false,
+			extensions: [
+				{
+					uri: A2A_X402_EXTENSION_URI,
+					description:
+						'Optional. Activate it to call the pay-per-call skills: the first call returns the payment ' +
+						'requirements and the retry with a signed payment payload settles and runs. Free skills ' +
+						'never need it.',
+					required: false,
+				},
+			],
+		},
+		securitySchemes: {
+			bearer: {
+				type: 'http',
+				scheme: 'bearer',
+				description:
+					'Optional three.ws API key (sk_live_...) or session token. Anonymous calls work and are rate ' +
+					'limited per IP; a valid key is limited per account instead and raises the search result cap. ' +
+					'An invalid key is rejected with 401.',
+			},
+		},
+		security: [{}, { bearer: [] }],
+		securityRequirements: [{ schemes: {} }, { schemes: { bearer: { list: [] } } }],
+		defaultInputModes: ['text/plain', 'application/json'],
+		defaultOutputModes: ['application/json', 'text/plain'],
+		skills: A2A_SKILLS.map((entry) => (entry.id === generated.id ? generated : cardSkill(entry))),
+	};
+	const failures = validateA2ACard(card, { expectedVersion: pkg.version, reachableSkillIds: A2A_SKILL_IDS });
+	if (failures.length) {
+		throw new Error(
+			`public agent card fails the A2A rules, refusing to write it:\n${failures
+				.map((f) => `  ${f.id}: ${f.problem}`)
+				.join('\n')}`,
+		);
+	}
 	writeJson('public/.well-known/agent-card.json', card);
 }
 

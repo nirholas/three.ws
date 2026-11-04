@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Any A2A agent can now generate, validate and find 3D models on three.ws",
+			"summary": "three.ws answers the Agent-to-Agent protocol at one endpoint, in both A2A 1.0 and 0.3. Another agent can ask for a 3D model from a text description and follow the task until the GLB is ready. It can also run the Khronos validator on any public glTF or GLB file, or search the public avatar gallery. These skills are free and need no key. Tasks are kept for a day, so a caller can read one back from any server. The Agent Card at /.well-known/agent-card.json now points at that endpoint and lists only skills the endpoint actually serves. It also declares the optional bearer key in the current format and carries the platform's real version. A second card built for Google Cloud Marketplace lists the three free 3D skills and states the default Gemini model. Both cards are checked against the A2A rules on every build, so a broken card cannot ship.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/a2a-agent"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Token due diligence finishes its holder reads when the public RPC is throttling",
 			"summary": "With the keyed RPC providers at quota, the public cluster rate-limits per address over a ten second window, and the report's history reads used to give up inside one second, so most holder wallets went unread and the insider, sniper, bundler and fresh-wallet fields were withheld. History reads now back off across that window and space themselves out for a minute after a throttle, shared by every report on the server. A cold $THREE report now reads all 16 wallet holders with no failed reads and fills every field. Healthy lanes are never slowed.",
 			"tags": ["fix"],

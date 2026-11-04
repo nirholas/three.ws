@@ -219,9 +219,16 @@ async function runValidateModel({ message }) {
 		return { state: 'failed', text: `Could not validate ${url}: ${err?.message || 'the model could not be read'}` };
 	}
 	const v = report.validation || {};
-	const counts = ['errors', 'warnings', 'infos', 'hints']
-		.filter((k) => Number.isFinite(v[k]))
-		.map((k) => `${v[k]} ${k}`)
+	// api/3d/inspect.js reports the Khronos counts as numErrors, numWarnings,
+	// numInfos and numHints; no counts means the validator did not run.
+	const counts = [
+		['numErrors', 'errors'],
+		['numWarnings', 'warnings'],
+		['numInfos', 'infos'],
+		['numHints', 'hints'],
+	]
+		.filter(([key]) => Number.isFinite(v[key]))
+		.map(([key, label]) => `${v[key]} ${label}`)
 		.join(', ');
 	const s = report.stats || {};
 	const text =
