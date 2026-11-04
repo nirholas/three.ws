@@ -21,6 +21,8 @@
  * Backed by GET/PUT /api/agents/tokens/plan and POST /api/agents/tokens/plan-dry-run.
  */
 
+import { track, ANALYTICS_EVENTS } from './analytics.js';
+
 const API = '/api/agents/tokens';
 const STYLE_ID = 'tws-agent-token-plan-styles';
 
@@ -405,6 +407,7 @@ export function mountAgentTokenPlan(host, opts = {}) {
 			const j = await r.json().catch(() => ({}));
 			if (!r.ok) throw new Error(j.error_description || j.error || 'Save failed');
 			state.plan = j.plan || null;
+			track(ANALYTICS_EVENTS.PLAN_EDITED, { agent_id: agentId, network });
 			render();
 			setStatus(
 				state.plan?.readiness?.ready ? 'Saved. This plan is ready to launch.' : 'Saved as a draft.',

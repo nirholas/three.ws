@@ -3914,6 +3914,9 @@ const appConfig = {
 				display_override: ['window-controls-overlay', 'standalone', 'browser'],
 				orientation: 'natural',
 				scope: '/',
+				// Stable app identity for Windows and the Microsoft Store. Pinned to the
+				// resolved start_url so installs made before `id` existed keep their identity.
+				id: '/?source=pwa',
 				start_url: '/?source=pwa',
 				categories: ['productivity', 'entertainment', 'social', 'utilities'],
 				icons: [
@@ -4002,35 +4005,35 @@ const appConfig = {
 				screenshots: [
 					{
 						src: 'screenshots/landing.png',
-						sizes: '1280x800',
+						sizes: '1440x900',
 						type: 'image/png',
 						form_factor: 'wide',
 						label: 'three.ws home — Give Your AI a Body',
 					},
 					{
 						src: 'screenshots/create.png',
-						sizes: '1280x800',
+						sizes: '1440x900',
 						type: 'image/png',
 						form_factor: 'wide',
 						label: 'Create a 3D avatar',
 					},
 					{
 						src: 'screenshots/discover.png',
-						sizes: '1280x800',
+						sizes: '1440x900',
 						type: 'image/png',
 						form_factor: 'wide',
 						label: 'Discover AI agents on the marketplace',
 					},
 					{
 						src: 'screenshots/studio.png',
-						sizes: '1280x800',
+						sizes: '1440x900',
 						type: 'image/png',
 						form_factor: 'wide',
 						label: 'Agent studio and customization',
 					},
 					{
 						src: 'screenshots/features.png',
-						sizes: '1280x800',
+						sizes: '1400x900',
 						type: 'image/png',
 						form_factor: 'wide',
 						label: 'Platform features overview',

@@ -49,6 +49,20 @@ export const ANALYTICS_EVENTS = Object.freeze({
 	/** First embed/snippet generated for an agent. props: { agent_id?, embed_kind? } */
 	EMBED_GENERATED: 'embed_generated',
 
+	// ── Agent coin launch funnel (ordered - see FUNNELS.agentLaunch) ─────────
+	/** The owner saw the draft coin plan card. props: { agent_id?, auto_drafted? } */
+	PLAN_VIEWED: 'plan_viewed',
+	/** The owner saved a change to the coin plan. props: { agent_id?, network? } */
+	PLAN_EDITED: 'plan_edited',
+	/** The agent's launch wallet holds enough SOL for a launch. props: { agent_id? } */
+	WALLET_FUNDED: 'wallet_funded',
+	/** The launch confirmation screen opened. props: { agent_id?, source? } */
+	LAUNCH_CONFIRM_OPENED: 'launch_confirm_opened',
+	/** A launch transaction was submitted for signing. props: { agent_id?, network? } */
+	LAUNCH_SUBMITTED: 'launch_submitted',
+	/** The launch confirmed on chain. props: { agent_id?, network? } */
+	LAUNCH_SUCCEEDED: 'launch_succeeded',
+
 	// ── $THREE holder funnel (ordered — see FUNNELS.three) ───────────────────
 	/** $THREE token page viewed. props: { price_usd? } */
 	TOKEN_PAGE_VIEWED: 'token_page_viewed',
@@ -118,6 +132,14 @@ export const FUNNELS = Object.freeze({
 		ANALYTICS_EVENTS.WALLET_CONNECT_STARTED,
 		ANALYTICS_EVENTS.WALLET_CONNECT_SUCCEEDED,
 		ANALYTICS_EVENTS.AGENT_CREATED,
+	],
+	agentLaunch: [
+		ANALYTICS_EVENTS.PLAN_VIEWED,
+		ANALYTICS_EVENTS.PLAN_EDITED,
+		ANALYTICS_EVENTS.WALLET_FUNDED,
+		ANALYTICS_EVENTS.LAUNCH_CONFIRM_OPENED,
+		ANALYTICS_EVENTS.LAUNCH_SUBMITTED,
+		ANALYTICS_EVENTS.LAUNCH_SUCCEEDED,
 	],
 	three: [
 		ANALYTICS_EVENTS.TOKEN_PAGE_VIEWED,

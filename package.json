@@ -413,6 +413,7 @@
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
 		"build:extension": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs",
+		"package:edge": "node scripts/package-edge-addons.mjs",
 		"build:extension:prod": "node scripts/build-extension-icons.mjs && node scripts/build-extension.mjs --prod",
 		"optimize:glb": "node scripts/optimize-glb.mjs",
 		"validate:glb": "node scripts/validate-glb.mjs",

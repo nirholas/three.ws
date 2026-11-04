@@ -43,7 +43,8 @@ vi.mock('../api/_lib/db.js', () => ({
 
 // Funnel rows are covered by launch-funnel.test.js; here they would only consume
 // queued SQL results meant for the handler under test.
-vi.mock('../api/_lib/launch-funnel.js', () => ({
+vi.mock('../api/_lib/launch-funnel.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	recordFunnelStep: vi.fn(async () => true),
 }));
 

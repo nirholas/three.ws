@@ -13,6 +13,7 @@ import { log } from '../shared/log.js';
 import { ensureRiskAck } from '../shared/risk-ack.js';
 import { THREE_WS_MARK } from '../solana/vanity/brand.js';
 import { solToUsd } from '../shared/usd-price.js';
+import { track, ANALYTICS_EVENTS } from '../analytics.js';
 
 const _isDev =
 	typeof location !== 'undefined' &&
@@ -845,6 +846,7 @@ export class LaunchTokenModal {
 				return;
 			}
 
+			track(ANALYTICS_EVENTS.LAUNCH_SUBMITTED, { agent_id: this.agentId, network: prep.cluster });
 			this._msg('Confirming on-chain…');
 			const confirmResp = await fetch('/api/agents/tokens/launch-confirm', {
 				method: 'POST',
@@ -865,6 +867,7 @@ export class LaunchTokenModal {
 				return;
 			}
 
+			track(ANALYTICS_EVENTS.LAUNCH_SUCCEEDED, { agent_id: this.agentId, network: prep.cluster });
 			const mint = confirmed.agent?.token?.mint || prep.mint;
 			const pumpUrl =
 				prep.cluster === 'mainnet' ? `https://pump.fun/coin/${mint}` : null;

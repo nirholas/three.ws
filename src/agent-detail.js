@@ -39,6 +39,7 @@ import { mountViewSwitcher } from './view-switcher.js';
 import { mountCoinStatus } from './pump/coin-status-card.js';
 import { mountEarningsCard } from './shared/agent-earnings-card.js';
 import { mountAgentTokenPlan } from './agent-token-plan.js';
+import { mountAgentLaunchCard } from './agent-launch-card.js';
 import { consumeCsrfToken } from './api.js';
 import { countUp, updateValue, flashValue, ring, playRings, sparkline, enterStagger } from './ui-juice.js';
 import { shortAddress } from './shared/address.js';
@@ -338,7 +339,15 @@ export function destroyCoinStatus() {
 // down first to abort its in-flight fetch.
 let _tokenPlanHandle = null;
 
+let _launchCardHandle = null;
+
 function destroyTokenPlan() {
+	try {
+		_launchCardHandle?.destroy();
+	} catch {
+		/* idempotent */
+	}
+	_launchCardHandle = null;
 	try {
 		_tokenPlanHandle?.destroy();
 	} catch {
@@ -1595,6 +1604,18 @@ function render(agent) {
 	// as a quiet "coming: $TICKER" and never see a draft. A plan on a profile with
 	// no coin reveals the card the same way launch history does.
 	destroyTokenPlan();
+	if (!agent.token && agent.isOwner && tokenCard?.parentElement) {
+		// The coin is the owner's default next step: a card above the token card
+		// with the auto-drafted plan and one button to the confirmation screen.
+		const slot = document.createElement('div');
+		tokenCard.parentElement.insertBefore(slot, tokenCard);
+		_launchCardHandle = mountAgentLaunchCard(slot, {
+			agent,
+			onEditPlan: () => tokenCard.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+		});
+		const inner = _launchCardHandle;
+		_launchCardHandle = { destroy() { inner.destroy(); slot.remove(); } };
+	}
 	if (!agent.token) {
 		_tokenPlanHandle = mountAgentTokenPlan($('ad-token-body'), {
 			agentId: agent.id,
