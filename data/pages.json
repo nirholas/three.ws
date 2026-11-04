@@ -7699,6 +7699,14 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-10-10"
+				},
+				{
+					"path": "/nodes",
+					"title": "Inference Nodes",
+					"description": "The open inference network: community nodes that sell compute into the three.ws queue, their capabilities, uptime and verified earnings.",
+					"priority": 0.5,
+					"changefreq": "daily",
+					"added": "2026-11-04"
 				}
 			]
 		},

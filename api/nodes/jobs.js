@@ -12,7 +12,7 @@
 
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { claimJob, getNode, verifyNodeSignature } from '../_lib/inference-nodes.js';
+import { claimJob, getNode, touchNode, verifyNodeSignature } from '../_lib/inference-nodes.js';
 
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
@@ -48,6 +48,7 @@ export default wrap(async (req, res) => {
 		return error(res, 403, 'capability_not_registered', 'poll only for capabilities this node registered');
 	}
 
+	await touchNode({ publicKey: node, capability }).catch(() => {});
 	const job = await claimJob({ capability, publicKey: node });
 	return json(res, 200, { job: job || null });
 });

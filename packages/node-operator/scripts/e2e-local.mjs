@@ -142,12 +142,35 @@ async function main() {
 		while (loop.stats.completed === 0 && loop.stats.failed === 0 && Date.now() < deadline) {
 			await new Promise((r) => setTimeout(r, 500));
 		}
-		loop.stop();
-		await runP;
 		if (loop.stats.completed !== 1) {
+			loop.stop();
+			await runP;
 			throw new Error(`expected 1 completed job, got completed=${loop.stats.completed} failed=${loop.stats.failed}`);
 		}
 		log('client completed the job');
+
+		// 4b. Buyer path: the same library calls api/x402/node-inference.js makes
+		//     (liveNodesFor -> enqueueJob -> waitForJob -> verifyFinishedJob) against
+		//     the node that is still polling. Fails non-zero unless the receipt verifies.
+		process.env.UPSTASH_REDIS_REST_URL = redisUrl;
+		process.env.UPSTASH_REDIS_REST_TOKEN = 'local-shim-token';
+		const nodesLib = await import('../../../api/_lib/inference-nodes.js');
+		const live = await nodesLib.liveNodesFor('text-embedding');
+		if (!live.includes(identity.publicKey)) {
+			loop.stop();
+			await runP;
+			throw new Error('buyer path: the polling node is not listed as live');
+		}
+		const buyerPrompt = 'buyer path proof through the node-inference endpoint logic';
+		const queued = await nodesLib.enqueueJob({ capability: 'text-embedding', model: job.model, input: { text: buyerPrompt } });
+		const buyerJob = await nodesLib.waitForJob(queued.id, { timeoutMs: 120_000, intervalMs: 250 });
+		loop.stop();
+		await runP;
+		if (!buyerJob || buyerJob.status !== 'done') {
+			throw new Error(`buyer path: job ended as ${buyerJob?.status}${buyerJob?.timedOut ? ' (timed out)' : ''}`);
+		}
+		if (!(await nodesLib.verifyFinishedJob(buyerJob))) throw new Error('buyer path: receipt did not verify');
+		log('BUYER PATH VERIFIED: job', queued.id, 'run by', buyerJob.claimedBy);
 
 		// 5. Read the job back and verify the receipt cryptographically.
 		// The Upstash client deserializes on read, so a JSON value comes back as

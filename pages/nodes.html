@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Inference Nodes · three.ws</title>
+	<meta name="description" content="The open inference network: community nodes that sell compute into the three.ws queue, their capabilities, uptime and verified earnings." />
+	<link rel="canonical" href="https://three.ws/nodes" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.nd-wrap { max-width: 960px; margin: 0 auto; padding: 0 18px 96px; }
+		.nd-hero { padding: 34px 0 8px; }
+		.nd-hero h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.nd-hero p { margin: 0; max-width: 66ch; color: var(--ink-dim); line-height: 1.6; }
+		.nd-hero a, .nd-empty a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+		.nd-hero a:hover, .nd-empty a:hover { color: var(--accent); }
+		.nd-hero a:focus-visible, .nd-empty a:focus-visible, .nd-btn:focus-visible, .nd-node:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.nd-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 24px 0 12px; color: var(--ink-dim); font-size: 0.9rem; }
+		.nd-list { display: grid; gap: 10px; }
+		.nd-node { background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); padding: 14px 16px; display: grid; gap: 6px; }
+		.nd-node:hover { border-color: var(--accent); }
+		.nd-top { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: baseline; justify-content: space-between; }
+		.nd-name { font-weight: 600; color: var(--ink-bright, var(--ink)); overflow-wrap: anywhere; }
+		.nd-key { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.78rem; color: var(--ink-dim); overflow-wrap: anywhere; }
+		.nd-pill { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 0.75rem; border: 1px solid var(--stroke); color: var(--ink-dim); }
+		.nd-pill.on { color: var(--ok, #2fb170); border-color: color-mix(in srgb, var(--ok, #2fb170) 55%, var(--stroke)); }
+		.nd-caps { display: flex; flex-wrap: wrap; gap: 6px; }
+		.nd-cap { font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--stroke); }
+		.nd-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink-dim); font-size: 0.82rem; }
+		.nd-skel { height: 92px; border-radius: var(--radius-lg, 14px); background: linear-gradient(90deg, var(--surface-1) 25%, var(--surface-2) 50%, var(--surface-1) 75%); background-size: 200% 100%; animation: nd-shimmer 1.3s linear infinite; }
+		@keyframes nd-shimmer { to { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .nd-skel { animation: none; } }
+		.nd-empty, .nd-error { padding: 28px 20px; text-align: center; background: var(--surface-1); border: 1px dashed var(--stroke-strong, var(--stroke)); border-radius: var(--radius-lg, 14px); color: var(--ink-dim); line-height: 1.6; }
+		.nd-error { border-style: solid; }
+		.nd-btn { display: inline-flex; align-items: center; margin-top: 10px; padding: 7px 14px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; font: inherit; color: inherit; }
+		.nd-btn:hover { background: var(--surface-3); border-color: var(--accent); }
+		.nd-btn:active { transform: translateY(1px); }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="nd-wrap" id="main">
+		<section class="nd-hero">
+			<h1>Inference nodes</h1>
+			<p>Community machines that sell compute into the three.ws queue. Every result is signed by the node and verified by the platform before anyone is charged. <a href="/docs/inference-node-operator">Run a node</a> in about two minutes.</p>
+		</section>
+		<div class="nd-bar"><span id="nd-count" aria-live="polite">Loading nodes</span><button class="nd-btn" id="nd-refresh" type="button">Refresh</button></div>
+		<div class="nd-list" id="nd-list" aria-busy="true"><div class="nd-skel"></div><div class="nd-skel"></div><div class="nd-skel"></div></div>
+	</main>
+
+	<script>
+	(function () {
+		var list = document.getElementById('nd-list');
+		var count = document.getElementById('nd-count');
+		function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
+		function ago(iso) {
+			var s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
+			if (s < 90) return 'just now';
+			if (s < 5400) return Math.round(s / 60) + ' min ago';
+			if (s < 129600) return Math.round(s / 3600) + ' h ago';
+			return Math.round(s / 86400) + ' d ago';
+		}
+		function showError(message) {
+			list.replaceChildren();
+			var box = el('div', 'nd-error');
+			box.appendChild(el('div', '', message));
+			var retry = el('button', 'nd-btn', 'Retry');
+			retry.type = 'button';
+			retry.addEventListener('click', load);
+			box.appendChild(retry);
+			list.appendChild(box);
+			count.textContent = 'Could not load nodes';
+			list.setAttribute('aria-busy', 'false');
+		}
+		function render(data) {
+			list.replaceChildren();
+			var nodes = data.nodes || [];
+			if (!nodes.length) {
+				var empty = el('div', 'nd-empty');
+				empty.appendChild(document.createTextNode('No nodes online yet. '));
+				var a = el('a', '', 'Run one in two minutes');
+				a.href = '/docs/inference-node-operator';
+				empty.appendChild(a);
+				empty.appendChild(document.createTextNode(' and it will appear here after its first poll.'));
+				list.appendChild(empty);
+				count.textContent = '0 nodes';
+			} else {
+				nodes.forEach(function (n) {
+					var card = el('article', 'nd-node');
+					var top = el('div', 'nd-top');
+					top.appendChild(el('span', 'nd-name', n.label || 'Unnamed node'));
+					top.appendChild(el('span', 'nd-pill' + (n.online ? ' on' : ''), n.online ? 'online' : 'idle'));
+					card.appendChild(top);
+					card.appendChild(el('div', 'nd-key', n.publicKey));
+					var caps = el('div', 'nd-caps');
+					(n.capabilities || []).forEach(function (c) { caps.appendChild(el('span', 'nd-cap', c.model ? c.capability + ' · ' + c.model : c.capability)); });
+					card.appendChild(caps);
+					var meta = el('div', 'nd-meta');
+					meta.appendChild(el('span', '', 'Last seen ' + ago(n.lastSeenAt)));
+					meta.appendChild(el('span', '', n.jobsCompleted + ' completed'));
+					meta.appendChild(el('span', '', n.jobsFailed + ' failed'));
+					meta.appendChild(el('span', '', n.verifiedEarnings + ' paid jobs'));
+					card.appendChild(meta);
+					list.appendChild(card);
+				});
+				count.textContent = data.online + ' online of ' + nodes.length + ' registered';
+			}
+			list.setAttribute('aria-busy', 'false');
+		}
+		function load() {
+			list.setAttribute('aria-busy', 'true');
+			list.replaceChildren(el('div', 'nd-skel'), el('div', 'nd-skel'), el('div', 'nd-skel'));
+			count.textContent = 'Loading nodes';
+			fetch('/api/nodes/list', { headers: { accept: 'application/json' } })
+				.then(function (r) { return r.json().then(function (b) { if (!r.ok) throw new Error(b.error_description || b.message || 'The node registry is unreachable.'); return b; }); })
+				.then(render)
+				.catch(function (e) { showError(e.message || 'The node registry is unreachable.'); });
+		}
+		document.getElementById('nd-refresh').addEventListener('click', load);
+		load();
+	})();
+	</script>
+</body>
+</html>

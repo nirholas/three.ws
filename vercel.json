@@ -4570,6 +4570,22 @@
 			"dest": "/api/nodes/register.js"
 		},
 		{
+			"src": "/api/x402/node-inference",
+			"dest": "/api/x402/node-inference.js"
+		},
+		{
+			"src": "/nodes/?",
+			"dest": "/nodes.html"
+		},
+		{
+			"src": "/api/nodes/list",
+			"dest": "/api/nodes/list.js"
+		},
+		{
+			"src": "/api/nodes/earnings",
+			"dest": "/api/nodes/earnings.js"
+		},
+		{
 			"src": "/api/nodes/jobs",
 			"dest": "/api/nodes/jobs.js"
 		},

@@ -891,3 +891,7 @@ unsettleable while our ring's own memo-free transactions passed. Covered by
   "confirmed".
 ~~~~
 
+
+## Status (2026-11-04)
+
+Built: `POST /api/x402/node-inference` (flat price, handler verifies the node receipt before settlement), liveness tracking on poll, `expireJob`, earnings ledger and `GET /api/nodes/earnings`, `GET /api/nodes/list`, `/nodes` page, dry-run `scripts/inference-node-payouts.mjs`, e2e harness buyer step, spec and operator docs, vitest coverage. Remaining for the owner or a session with a browser and DB: apply migration `20261105050000_inference_node_earnings.sql` (`npm run db:status` first, then `db:migrate`; the code also creates the table lazily), run `node packages/node-operator/scripts/e2e-local.mjs` (downloads ~90MB of model weights), exercise `/nodes` in a browser, and run one real paid call. Order file kept.

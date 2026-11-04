@@ -224,3 +224,85 @@ describe('node signature verification', () => {
 		expect(nodes.verifyNodeSignature(createIdentity().publicKey, 'msg', 'not-base64!!')).toBe(false);
 	});
 });
+
+describe('buyer path', () => {
+	const CAP = 'text-embedding-buyer';
+
+	async function liveNode() {
+		const identity = createIdentity();
+		await nodes.registerNode({ publicKey: identity.publicKey, label: 'buyer-test', capabilities: [{ capability: CAP, model: 'm' }] });
+		await nodes.touchNode({ publicKey: identity.publicKey, capability: CAP });
+		return identity;
+	}
+
+	async function runJob(identity, input, { sign = true, tamper = false } = {}) {
+		const queued = await nodes.enqueueJob({ capability: CAP, model: 'm', input });
+		const claimed = await nodes.claimJob({ capability: CAP, publicKey: identity.publicKey });
+		expect(claimed.id).toBe(queued.id);
+		const facts = { jobId: queued.id, model: 'm', prompt: input.text, output: { v: 1 }, startedAt: 1, finishedAt: 2 };
+		const receipt = await signResult(identity, facts);
+		return { queued, facts, receipt, claimed, tamper };
+	}
+
+	it('reports no live node for a capability nobody polled', async () => {
+		expect(await nodes.liveNodesFor('capability-nobody-runs')).toEqual([]);
+	});
+
+	it('lists a node as live right after it polls', async () => {
+		const identity = await liveNode();
+		expect(await nodes.liveNodesFor(CAP)).toContain(identity.publicKey);
+	});
+
+	it('returns the verified output once a node posts a result', async () => {
+		const identity = await liveNode();
+		const { queued, facts, receipt } = await runJob(identity, { text: 'hello' });
+		const waiter = nodes.waitForJob(queued.id, { timeoutMs: 3000, intervalMs: 20 });
+		await nodes.completeJob(queued.id, { publicKey: identity.publicKey, output: facts.output, receipt, startedAt: 1, finishedAt: 2 });
+		const job = await waiter;
+		expect(job.status).toBe('done');
+		expect(await nodes.verifyFinishedJob(job)).toBe(true);
+	});
+
+	it('does not verify a finished job whose receipt was signed over other facts', async () => {
+		const identity = await liveNode();
+		const { queued, facts } = await runJob(identity, { text: 'hello' });
+		const forged = await signResult(identity, { ...facts, prompt: 'a different prompt' });
+		await nodes.completeJob(queued.id, { publicKey: identity.publicKey, output: facts.output, receipt: forged, startedAt: 1, finishedAt: 2 });
+		expect(await nodes.verifyFinishedJob(await nodes.getJob(queued.id))).toBe(false);
+	});
+
+	it('does not verify a job whose receipt key is not the claiming node', async () => {
+		const identity = await liveNode();
+		const other = createIdentity();
+		const { queued, facts } = await runJob(identity, { text: 'hello' });
+		const foreign = await signResult(other, facts);
+		await nodes.completeJob(queued.id, { publicKey: identity.publicKey, output: facts.output, receipt: foreign, startedAt: 1, finishedAt: 2 });
+		expect(await nodes.verifyFinishedJob(await nodes.getJob(queued.id))).toBe(false);
+	});
+
+	it('surfaces a node failure as a failed job that never verifies', async () => {
+		const identity = await liveNode();
+		const { queued } = await runJob(identity, { text: 'hello' });
+		await nodes.failJob(queued.id, { publicKey: identity.publicKey, error: 'out of memory' });
+		const job = await nodes.waitForJob(queued.id, { timeoutMs: 500, intervalMs: 20 });
+		expect(job.status).toBe('failed');
+		expect(await nodes.verifyFinishedJob(job)).toBe(false);
+	});
+
+	it('times out a job nobody returns, and a late result cannot be accepted', async () => {
+		const identity = await liveNode();
+		const { queued, facts, receipt } = await runJob(identity, { text: 'hello' });
+		const waited = await nodes.waitForJob(queued.id, { timeoutMs: 120, intervalMs: 30 });
+		expect(waited.timedOut).toBe(true);
+		await nodes.expireJob(queued.id);
+		const late = await nodes.completeJob(queued.id, { publicKey: identity.publicKey, output: facts.output, receipt, startedAt: 1, finishedAt: 2 });
+		expect(late.ok).toBe(false);
+		expect(late.error).toBe('job_not_running');
+		expect(await nodes.verifyFinishedJob(await nodes.getJob(queued.id))).toBe(false);
+	});
+
+	it('prices every known capability and falls back to the default', () => {
+		expect(nodes.priceForCapability('text-embedding')).toBe('1000');
+		expect(nodes.priceForCapability('something-new')).toBe(nodes.DEFAULT_CAPABILITY_PRICE_ATOMICS);
+	});
+});

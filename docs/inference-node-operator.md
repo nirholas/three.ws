@@ -209,6 +209,16 @@ verified        : true (recomputed payload + ed25519 against node key)
 E2E PASS
 ```
 
+## How you earn
+
+Buyers call `POST /api/x402/node-inference` and pay in USDC. When a job your node ran returns a receipt the platform verifies and the payment settles, one earning row accrues to your node key. A job that fails, times out or carries a bad receipt is never billed and never earns. Read your ledger with a signed request:
+
+```
+GET /api/nodes/earnings?node=<your public key>&ts=<ms>&sig=<ed25519 of threews-node-earnings:<key>:<ts>, base64>
+```
+
+The response lists `accrued` and `paid` job counts and USDC atomics (6 decimals) plus the last 30 days. The public roster of nodes is at [/nodes](/nodes) and `GET /api/nodes/list`. Payouts are batched by the operator of the platform; accrued earnings stay in the ledger until then.
+
 ## The open protocol (OIN), and when to use it instead
 
 The contract above is the coordinator's: the platform holds a queue and your

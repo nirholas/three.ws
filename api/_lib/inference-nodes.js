@@ -285,3 +285,198 @@ function bumpNodeCounter(publicKey, column) {
 		Promise.resolve(query).catch(() => {});
 	} catch { /* no database configured: the rollup is optional, the result is not */ }
 }
+
+// ── Liveness ─────────────────────────────────────────────────────────────────
+
+const LIVE_PREFIX = 'inode:live:';      // JSON { pubkey: lastPollMs } per capability
+const LIVE_WINDOW_MS = 60_000;
+
+/**
+ * Record that a node just polled for a capability. The roster is one small JSON
+ * value per capability; a racing write can drop an entry for one poll interval,
+ * which the node's next poll restores, so it is a liveness hint and never an
+ * authority on who may claim a job.
+ */
+export async function touchNode({ publicKey, capability }) {
+	const r = getRedis();
+	if (!r) return;
+	const key = `${LIVE_PREFIX}${capability}`;
+	const now = Date.now();
+	const roster = parseRecord(await r.get(key)) || {};
+	roster[publicKey] = now;
+	for (const [pk, ts] of Object.entries(roster)) {
+		if (now - ts > LIVE_WINDOW_MS) delete roster[pk];
+	}
+	await r.set(key, JSON.stringify(roster), { ex: 120 });
+}
+
+/** Public keys of nodes that polled for this capability within the last 60 seconds. */
+export async function liveNodesFor(capability) {
+	const r = getRedis();
+	if (!r) return [];
+	const roster = parseRecord(await r.get(`${LIVE_PREFIX}${capability}`)) || {};
+	const now = Date.now();
+	return Object.entries(roster)
+		.filter(([, ts]) => now - ts <= LIVE_WINDOW_MS)
+		.map(([pk]) => pk);
+}
+
+// ── Buyer path ───────────────────────────────────────────────────────────────
+
+/**
+ * Atomics of USDC (6 decimals) the buyer pays per job, by capability. The x402
+ * challenge is issued before the body is read, so the route advertises the
+ * highest of these and every capability is billed that flat rate.
+ */
+export const CAPABILITY_PRICES_ATOMICS = Object.freeze({
+	'text-embedding': '1000',
+	'text-generation': '5000',
+});
+export const DEFAULT_CAPABILITY_PRICE_ATOMICS = '5000';
+
+export function priceForCapability(capability) {
+	return CAPABILITY_PRICES_ATOMICS[capability] || DEFAULT_CAPABILITY_PRICE_ATOMICS;
+}
+
+/**
+ * Wait for a job to leave the queued/running states. Polls the Redis record on
+ * an interval (never a busy loop). Resolves to the final job record, or to the
+ * last seen record with `timedOut: true`.
+ */
+export async function waitForJob(jobId, { timeoutMs = 25_000, intervalMs = 400 } = {}) {
+	const deadline = Date.now() + timeoutMs;
+	let job = await getJob(jobId);
+	while (job && (job.status === 'queued' || job.status === 'running')) {
+		if (Date.now() >= deadline) return { ...job, timedOut: true };
+		await new Promise((resolve) => setTimeout(resolve, intervalMs));
+		job = await getJob(jobId);
+	}
+	return job;
+}
+
+/**
+ * Close a job the buyer stopped waiting for. A node that returns the result
+ * later gets 409 job_not_running from completeJob, so a late result can never
+ * become an earning.
+ */
+export async function expireJob(jobId) {
+	const r = getRedis();
+	if (!r) return null;
+	const job = await getJob(jobId);
+	if (!job || (job.status !== 'queued' && job.status !== 'running')) return job;
+	job.status = 'expired';
+	job.completedAt = Date.now();
+	await r.set(`${JOB_PREFIX}${jobId}`, JSON.stringify(job), { ex: JOB_TTL_S });
+	return job;
+}
+
+/** Re-verify a finished job's receipt against the server's own record of it. */
+export async function verifyFinishedJob(job) {
+	if (!job || job.status !== 'done' || !job.receipt) return false;
+	const prompt = typeof job.input === 'string' ? job.input : job.input?.text ?? '';
+	const model = job.output?.model || job.model;
+	return (
+		job.receipt.publicKey === job.claimedBy &&
+		(await verifyResultReceipt(
+			{ jobId: job.id, model, prompt, output: job.output, startedAt: job.startedAt, finishedAt: job.finishedAt },
+			job.receipt,
+		))
+	);
+}
+
+// ── Earnings ledger ──────────────────────────────────────────────────────────
+
+let _earningsEnsured = null;
+async function ensureEarningsTable() {
+	if (_earningsEnsured) return _earningsEnsured;
+	_earningsEnsured = (async () => {
+		await sql`
+			create table if not exists inference_node_earnings (
+				id bigserial primary key,
+				node_public_key text not null,
+				job_id text not null unique,
+				capability text not null,
+				model text,
+				amount_atomics bigint not null,
+				asset text,
+				payer_signature text,
+				verified_at timestamptz not null default now(),
+				payout_status text not null default 'accrued',
+				payout_signature text
+			)`;
+		await sql`create index if not exists inference_node_earnings_node_idx on inference_node_earnings (node_public_key, verified_at desc)`;
+	})().catch((err) => {
+		_earningsEnsured = null;
+		throw err;
+	});
+	return _earningsEnsured;
+}
+
+/**
+ * Accrue one earning for a verified, settled job. Idempotent on job_id, so a
+ * retried settle hook never double-credits. Returns the inserted row, or null
+ * when the job was already recorded.
+ */
+export async function recordNodeEarning({ nodePublicKey, jobId, capability, model, amountAtomics, asset, payerSignature }) {
+	await ensureEarningsTable();
+	const rows = await sql`
+		insert into inference_node_earnings (node_public_key, job_id, capability, model, amount_atomics, asset, payer_signature)
+		values (${nodePublicKey}, ${jobId}, ${capability}, ${model || null}, ${String(amountAtomics)}, ${asset || null}, ${payerSignature || null})
+		on conflict (job_id) do nothing
+		returning id, node_public_key, job_id, amount_atomics, payout_status`;
+	return rows[0] || null;
+}
+
+/** Accrued, paid and per-day totals for one node. */
+export async function getNodeEarnings(publicKey) {
+	await ensureEarningsTable();
+	const totals = await sql`
+		select payout_status, count(*)::int as jobs, coalesce(sum(amount_atomics), 0)::text as atomics
+		from inference_node_earnings where node_public_key = ${publicKey} group by payout_status`;
+	const daily = await sql`
+		select to_char(date_trunc('day', verified_at), 'YYYY-MM-DD') as day, count(*)::int as jobs, coalesce(sum(amount_atomics), 0)::text as atomics
+		from inference_node_earnings where node_public_key = ${publicKey}
+		group by 1 order by 1 desc limit 30`;
+	const pick = (status) => totals.find((t) => t.payout_status === status) || { jobs: 0, atomics: '0' };
+	return {
+		accrued: { jobs: pick('accrued').jobs, atomics: pick('accrued').atomics },
+		paid: { jobs: pick('paid').jobs, atomics: pick('paid').atomics },
+		daily,
+	};
+}
+
+/** Public node listing: no secrets, no network addresses. */
+export async function listNodes() {
+	await ensureNodeTable();
+	const rows = await sql`
+		select n.public_key, n.label, n.capabilities, n.registered_at, n.last_seen_at, n.jobs_completed, n.jobs_failed
+		from inference_nodes n order by n.last_seen_at desc limit 200`;
+	let earned = [];
+	try {
+		await ensureEarningsTable();
+		earned = await sql`select node_public_key, count(*)::int as jobs from inference_node_earnings group by 1`;
+	} catch { /* ledger not reachable: the listing still works */ }
+	const verified = new Map(earned.map((e) => [e.node_public_key, e.jobs]));
+	const now = Date.now();
+	return Promise.all(
+		rows.map(async (n) => {
+			const caps = Array.isArray(n.capabilities) ? n.capabilities.map((c) => c?.capability).filter(Boolean) : [];
+			let live = false;
+			for (const cap of caps) {
+				if ((await liveNodesFor(cap)).includes(n.public_key)) { live = true; break; }
+			}
+			return {
+				publicKey: n.public_key,
+				label: n.label,
+				capabilities: n.capabilities,
+				registeredAt: n.registered_at,
+				lastSeenAt: n.last_seen_at,
+				online: live,
+				jobsCompleted: n.jobs_completed,
+				jobsFailed: n.jobs_failed,
+				verifiedEarnings: verified.get(n.public_key) || 0,
+				ageMs: now - Date.parse(n.registered_at),
+			};
+		}),
+	);
+}

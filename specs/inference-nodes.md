@@ -240,6 +240,41 @@ not, which is the intent.
 | Claim a longer runtime than the work took | Out of scope for v1: `startedAt` / `finishedAt` are node-reported and only bind the receipt. Settlement prices work by job, not by reported wall clock. |
 | A malicious coordinator forging node results | Impossible: the coordinator never holds a node secret key. It can refuse work, not fabricate it. |
 
+## Buyer path and earnings
+
+`POST /api/x402/node-inference` is how demand reaches the queue. Body
+`{ capability, model?, input }`, paid in USDC on Solana first via x402. The
+platform requires a live node (one that polled for the capability within the
+last 60 seconds, tracked by `touchNode` on every poll), calls `enqueueJob`,
+waits up to 25 seconds, re-verifies the stored receipt (`verifyFinishedJob`:
+receipt key equals the claiming node, payload recomputed from the server's own
+job record) and only then lets the payment settle. Every failure throws before
+settlement, so the buyer is never billed for one.
+
+Price is a flat rate per job, the highest of `CAPABILITY_PRICES_ATOMICS` in
+`api/_lib/inference-nodes.js` (the x402 challenge is issued before the body is
+read), overridable with `X402_PRICE_NODE_INFERENCE`.
+
+| Code | Status | Meaning |
+| --- | --- | --- |
+| `invalid_json`, `missing_capability`, `missing_input`, `input_too_large` | 400 | Malformed request. |
+| `no_node_available` | 503 | No node polled for the capability in the last 60 seconds. |
+| `node_failed` | 502 | The node reported a failure, or the job ended without a result. |
+| `receipt_invalid` | 502 | The result's receipt did not verify. |
+| `node_timeout` | 504 | No result in 25 seconds. The job is marked `expired`; a late result gets `409 job_not_running` and never becomes an earning. |
+
+On a settled payment the `metered` hook inserts one row into
+`inference_node_earnings` (`job_id` unique, so a retry never double-credits)
+with `payout_status = 'accrued'`. Operators read their ledger with
+`GET /api/nodes/earnings?node=&ts=&sig=` where `sig` signs
+`threews-node-earnings:{node}:{ts}` (5 minute window); the response has
+`accrued`, `paid` and `daily` totals in USDC atomics. `GET /api/nodes/list` is
+the public, secret-free view (cached 15 seconds), rendered at `/nodes`.
+
+Payouts are not automatic. `scripts/inference-node-payouts.mjs --dry-run`
+prints the transfers a payout would make; sending requires the owner's
+approval of that table and is not wired into the script.
+
 ## Conformance
 
 A node implements `threews-node/v1` when, against a live coordinator:
