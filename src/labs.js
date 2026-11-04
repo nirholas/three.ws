@@ -5,6 +5,10 @@ const REGISTRY_URL = '/features.json';
 
 // Category metadata derived from path patterns in the registry
 const CATEGORIES = {
+	'/fact-checker': { label: 'x402',    cat: 'x402',   color: '#fbbf24', bg: 'rgba(251,191,36,.12)' },
+	'/tutor': { label: 'x402',    cat: 'x402',   color: '#fbbf24', bg: 'rgba(251,191,36,.12)' },
+	'/shopper': { label: 'x402',    cat: 'x402',   color: '#fbbf24', bg: 'rgba(251,191,36,.12)' },
+	'/arbitrage': { label: 'x402',    cat: 'x402',   color: '#fbbf24', bg: 'rgba(251,191,36,.12)' },
 	'/lipsync':      { label: 'Voice',    cat: 'voice',  color: '#a78bfa', bg: 'rgba(167,139,250,.12)' },
 	'/lipsync/mic':  { label: 'Voice',    cat: 'voice',  color: '#a78bfa', bg: 'rgba(167,139,250,.12)' },
 	'/voice':        { label: 'Voice',    cat: 'voice',  color: '#a78bfa', bg: 'rgba(167,139,250,.12)' },
@@ -13,6 +17,8 @@ const CATEGORIES = {
 	'/three-live':   { label: '3D Live',  cat: '3d',     color: '#34d399', bg: 'rgba(52,211,153,.12)'  },
 	'/diorama':      { label: '3D Live',  cat: '3d',     color: '#34d399', bg: 'rgba(52,211,153,.12)'  },
 	'/cad':          { label: '3D Live',  cat: '3d',     color: '#34d399', bg: 'rgba(52,211,153,.12)'  },
+	'/animations':   { label: '3D Live',  cat: '3d',     color: '#34d399', bg: 'rgba(52,211,153,.12)'  },
+	'/character-library': { label: '3D Live', cat: '3d',  color: '#34d399', bg: 'rgba(52,211,153,.12)'  },
 	'/mocap-studio': { label: '3D Live',  cat: '3d',     color: '#34d399', bg: 'rgba(52,211,153,.12)'  },
 	'/assembly':     { label: '3D Live',  cat: '3d',     color: '#34d399', bg: 'rgba(52,211,153,.12)'  },
 	'/agenc/embodied': { label: 'AI',     cat: 'ai',     color: '#60a5fa', bg: 'rgba(96,165,250,.12)'  },
@@ -21,15 +27,18 @@ const CATEGORIES = {
 	'/forever':      { label: 'Crypto',   cat: 'crypto', color: '#f97316', bg: 'rgba(249,115,22,.12)'  },
 };
 
+// A page with no explicit category is not an x402 service; it is just a lab.
+const OTHER = { label: 'Other', cat: 'other', color: '#9ca3af', bg: 'rgba(156,163,175,.12)' };
+
 function categorize(path) {
 	if (CATEGORIES[path]) return CATEGORIES[path];
-	return { label: 'x402', cat: 'x402', color: '#fbbf24', bg: 'rgba(251,191,36,.12)' };
+	return OTHER;
 }
 
 // Human-readable plain-language blurb (trimmed to ~120 chars max for cards)
 function blurb(description) {
 	if (!description) return '';
-	const stripped = description.replace(/ — .*$/, '').trim();
+	const stripped = description.replace(/ \u2014 .*$/, '').trim();
 	return stripped.length > 130 ? stripped.slice(0, 127) + '…' : stripped;
 }
 
