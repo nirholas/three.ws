@@ -18,6 +18,11 @@ export const NET_SERVER = 'three.ws is having trouble right now. Try again in a 
 const BROWSER_NETWORK = /failed to fetch|load failed|networkerror|network error|network request failed|err_internet|err_network/i;
 const RAW_STATUS = /^\s*http[\s_]?(\d{3})\b/i;
 const JARGON = /^(request failed|could not send|stream error|upstream error|thread \d{3}|poll failed)\b/i;
+// A server explanation written for people: a capitalised sentence with a space
+// and closing punctuation, naming no HTTP status. Codes ("rate_limited") and
+// status text ("Not Found") do not qualify.
+const SENTENCE = /^[A-Z][^\n]*\s[^\n]*[.!?]$/;
+const NAMES_HTTP = /\bhttp\b/i;
 
 /** Did this error come from the connection itself rather than from the server? */
 export function isNetworkFailure(err) {
@@ -43,6 +48,7 @@ export function netErrorMessage(err, fallback) {
 	const status = statusOf(err);
 	if (status >= 500) return t('play.net_server', NET_SERVER);
 	const msg = String(err?.message || '').trim();
-	if (!msg || status || JARGON.test(msg)) return fallback;
+	if (!msg || JARGON.test(msg)) return fallback;
+	if (status && (!SENTENCE.test(msg) || NAMES_HTTP.test(msg))) return fallback;
 	return msg;
 }

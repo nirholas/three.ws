@@ -14,6 +14,7 @@
 // the Player schema field every peer's RemotePlayer.setAvatar reacts to.
 
 import { log } from '../shared/log.js';
+import { netErrorMessage } from './net-error.js';
 
 function el(tag, attrs = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -274,7 +275,7 @@ export class AvatarSwitcher {
 			const url = await uploadGlb(file, (p) => this._setStatus('working', `Uploading… ${Math.round(p * 100)}%`));
 			await this._pick(url, file.name || 'your upload');
 		} catch (err) {
-			this._setStatus('error', err?.message || 'Upload failed.');
+			this._setStatus('error', netErrorMessage(err, 'Upload failed. Try again.'));
 		}
 	}
 

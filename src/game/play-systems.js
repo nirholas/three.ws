@@ -31,6 +31,7 @@ import {
 import { itemDisplay } from './items.js';
 import { announce } from './a11y.js';
 import { t } from './i18n-play.js';
+import { netErrorMessage } from './net-error.js';
 import {
 	COSMETICS, SLOTS, SLOT_LABELS, getCosmetic, DEFAULT_LOADOUT,
 } from '../../multiplayer/src/cosmetics-catalog.js';
@@ -775,7 +776,7 @@ export class PlaySystems {
 			});
 			this.ui?.toast?.(res.text || `Unlocked ${item.name}.`, 'success');
 		} catch (err) {
-			this.ui?.toast?.(err?.message || `Could not buy ${item.name}.`, 'warn');
+			this.ui?.toast?.(netErrorMessage(err, `Could not buy ${item.name}. Try again.`), 'warn');
 		} finally {
 			this._boutiqueBuyingId = null;
 			if (this._cosOpen) this._renderCosmetics();

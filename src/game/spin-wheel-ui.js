@@ -22,6 +22,7 @@ import './spin-wheel.css';
 import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 import { openModal, prefersReducedMotion } from './a11y.js';
 import { t } from './i18n-play.js';
+import { netErrorMessage } from './net-error.js';
 
 const NETWORK = 'mainnet';
 // How long a sent settle may go unanswered before it is resent. The server roll
@@ -493,7 +494,7 @@ class SpinWheel {
 		this._prep = null;
 		this._paymentLive = false;
 		const msg = err?.message || 'Payment failed.';
-		const friendly = /reject|denied|cancel|user/i.test(msg) ? 'Cancelled in wallet.' : msg;
+		const friendly = /reject|denied|cancel|user/i.test(msg) ? 'Cancelled in wallet.' : netErrorMessage(err, 'Payment failed. Try again.');
 		this._status(friendly, 'err');
 		if (this._headless) { this._pillDone(); return; }
 		this._sync();

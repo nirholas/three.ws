@@ -2260,7 +2260,7 @@ export class CoinCommunities {
 							// them into the open world instead.
 							state = 'unavailable'; data = { symbol };
 						}
-						else { state = 'error'; data = { symbol, error: err?.message || 'Could not verify your holdings.' }; }
+						else { state = 'error'; data = { symbol, error: netErrorMessage(err, 'Could not verify your holdings.') }; }
 						carryError = '';
 					}
 				}
@@ -2277,7 +2277,7 @@ export class CoinCommunities {
 				}
 				if (action === 'signin') {
 					this.ui.setHolderGate('working', { symbol, msg: 'Opening X sign-in…' });
-					try { await signInWithX(); } catch (e) { carryError = e?.message || 'Sign-in was cancelled.'; }
+					try { await signInWithX(); } catch (e) { carryError = netErrorMessage(e, 'Sign-in was cancelled.'); }
 					continue;
 				}
 				if (action === 'wallet') {
@@ -2285,7 +2285,7 @@ export class CoinCommunities {
 					try {
 						const session = await getSession();
 						await ensureSolanaWallet(session);
-					} catch (e) { carryError = e?.message || 'Could not link a wallet.'; }
+					} catch (e) { carryError = netErrorMessage(e, 'Could not link a wallet.'); }
 					continue;
 				}
 				if (action === 'switch') {
@@ -2294,7 +2294,7 @@ export class CoinCommunities {
 					this.ui.setHolderGate('working', { symbol, msg: 'Switching wallet…' });
 					try {
 						await relinkSolanaWallet();
-					} catch (e) { carryError = e?.message || 'Could not switch wallet.'; }
+					} catch (e) { carryError = netErrorMessage(e, 'Could not switch wallet.'); }
 					continue;
 				}
 				if (action === 'buy') { this._openBuy(coin); skipCheck = true; continue; }
@@ -4264,7 +4264,7 @@ export class CoinCommunities {
 				'info',
 			);
 		} catch (err) {
-			const message = err?.message || 'That model could not be uploaded.';
+			const message = netErrorMessage(err, 'That model could not be uploaded.');
 			this.ui.setPropUploadStatus(message, true);
 			this.ui.toast(message, 'warn');
 		} finally {

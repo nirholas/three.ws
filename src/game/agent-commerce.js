@@ -24,6 +24,7 @@ import { AnimationManager } from '../animation-manager.js';
 import { resolveAvatarUrl, buildAvatar, loadManifest, MANIFEST_URL, CLIP_IDLE } from './avatar-rig.js';
 import { createX402Jumbotron } from './x402-jumbotron.js';
 import { log } from '../shared/log.js';
+import { netErrorMessage } from './net-error.js';
 
 // Where the two agents stand, off to the right of the totem so a player
 // entering the town sees them but doesn't spawn on top of them.
@@ -58,6 +59,7 @@ const LINES = {
 		settled:   'Funds confirmed on-chain. Sending the list.',
 		done:      (summary) => `Catalog: ${summary}`,
 		error:     'Payment failed, no charge made.',
+		unsure:    'Settlement went quiet. Hold on before paying again.',
 	},
 	buyer: {
 		idle:      'I need alpha. Paying now.',
@@ -67,8 +69,28 @@ const LINES = {
 		settled:   'Settled. Collecting the catalog.',
 		done:      (count) => `Got it, ${count}. Indexing your services.`,
 		error:     'Transaction rolled back. Wallet unchanged.',
+		unsure:    'Paid, but nothing came back yet.',
 	},
 };
+
+// Once the payment reaches the settle stage, funds may have moved, so the
+// failure copy must stop promising that nothing was charged.
+function fundsMayHaveMoved({ active, settled }) {
+	return Boolean(settled) || active === 'settled' || active === 'done';
+}
+
+/**
+ * The line a player reads when a demo round fails.
+ * @param {unknown} err the caught error
+ * @param {{ active: string, settled: object|null }} round the stage reached and the settlement, if any
+ * @returns {string}
+ */
+export function commerceFailLine(err, { active, settled }) {
+	if (settled) return 'The payment settled, but its result did not come back.';
+	const reason = err?.code === 'incomplete' ? '' : netErrorMessage(err, '');
+	if (fundsMayHaveMoved({ active, settled })) return `${reason ? `${reason} ` : ''}The payment may still settle, so wait a moment before trying again.`;
+	return reason || 'Payment failed. No funds moved.';
+}
 
 // Summarize ORACLE's catalog from a tools/list result: how many priced skills it
 // offers and the cheapest price, so the agents can speak it and the receipt can
@@ -469,13 +491,13 @@ export class AgentCommerce {
 				} else if (event === 'result') {
 					intel = data;
 				} else if (event === 'error') {
-					throw new Error(data.error || 'payment failed');
+					throw new Error(data.error || '');
 				}
 				// 'dispatched' carries only timing, no UI beat needed.
 			}
 
 			if (this._disposed) return;
-			if (!intel || !settled) throw new Error('incomplete response from payment service');
+			if (!intel || !settled) throw Object.assign(new Error('incomplete response from payment service'), { code: 'incomplete' });
 
 			// The settlement is on-chain truth; payer/payee/amount live on the result's
 			// payment block. Surface ORACLE's catalog as the bought "intel".
@@ -498,11 +520,13 @@ export class AgentCommerce {
 		} catch (err) {
 			if (this._disposed) return; // torn down mid-round, nothing left to render
 			// `active` already points at the stage that failed.
-			this.seller.say(LINES.seller.error);
-			this.buyer.say(LINES.buyer.error);
+			const unsure = fundsMayHaveMoved({ active, settled });
+			this.seller.say(unsure ? LINES.seller.unsure : LINES.seller.error);
+			this.buyer.say(unsure ? LINES.buyer.unsure : LINES.buyer.error);
 			this._gesture(this.seller, 'facepalm');
-			this.jumbotron?.setError(active, err?.message);
-			this._renderError(active, err?.message);
+			const line = commerceFailLine(err, { active, settled });
+			this.jumbotron?.setError(active, line);
+			this._renderError(active, line);
 			this._scheduleHide(7000);
 		} finally {
 			this.busy = false;

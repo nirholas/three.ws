@@ -19,6 +19,7 @@ import { log } from '../shared/log.js';
 import { purchaseCosmetic, resolveShopAccount } from './cosmetics-purchase.js';
 import { openModal } from './a11y.js';
 import { t } from './i18n-play.js';
+import { netErrorMessage } from './net-error.js';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -383,7 +384,7 @@ export class CosmeticsShop {
 			this._status(
 				insufficient
 					? `Not enough USDC to buy ${item.name}. Top up your wallet and try again.`
-					: `Purchase failed: ${msg}`,
+					: netErrorMessage(err, `Could not buy ${item.name}. Try again.`),
 				'error',
 			);
 		}

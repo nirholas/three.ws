@@ -14,6 +14,7 @@
 
 import { fetchPlayConfig, signInToPlay, loadStoredPass, clearStoredPass, hasWallet, PlayAuthError } from './play-auth.js';
 import { log } from '../shared/log.js';
+import { netErrorMessage } from './net-error.js';
 
 const PHANTOM_INSTALL = 'https://phantom.app/download';
 
@@ -157,7 +158,7 @@ class Gate {
 				this._render({ state: 'connect', error: err.message, onConnect: () => this._attempt(), onSwitch: () => this._switchWallet() });
 				return;
 			}
-			this._render({ state: 'error', error: err?.message || 'Sign-in failed. Please try again.', onRetry: () => this._attempt(), onSwitch: () => this._switchWallet() });
+			this._render({ state: 'error', error: netErrorMessage(err, 'Sign-in failed. Please try again.'), onRetry: () => this._attempt(), onSwitch: () => this._switchWallet() });
 		}
 	}
 

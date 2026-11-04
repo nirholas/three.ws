@@ -38,6 +38,18 @@ describe('netErrorMessage', () => {
 		expect(netErrorMessage(new Error('thread 404'), 'Try again.')).toBe('Try again.');
 		expect(netErrorMessage(null, 'Try again.')).toBe('Try again.');
 	});
+
+	// Clients such as town-auth attach the HTTP status to every refusal. The
+	// server's own sentence ("This coin is not supported yet.") is the most useful
+	// thing a player can read, so a status alone must not discard it.
+	it('keeps a 4xx explanation that reads as a sentence, and drops codes and status text', () => {
+		const refused = (message, status) => Object.assign(new Error(message), { status });
+		expect(netErrorMessage(refused('This coin is not supported yet.', 400), 'fallback')).toBe('This coin is not supported yet.');
+		expect(netErrorMessage(refused('Too many requests. Wait a moment and try again.', 429), 'fallback')).toBe('Too many requests. Wait a moment and try again.');
+		expect(netErrorMessage(refused('rate_limited', 429), 'fallback')).toBe('fallback');
+		expect(netErrorMessage(refused('Not Found', 404), 'fallback')).toBe('fallback');
+		expect(netErrorMessage(refused('The request was refused (HTTP 403). Reload the page and try again.', 403), 'fallback')).toBe('fallback');
+	});
 });
 
 describe('friends client', () => {
