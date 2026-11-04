@@ -3,8 +3,8 @@
 UX Flow Atlas — Cluster 07. Read/monitor dashboards plus the interactive trading surfaces
 that sit on the pump.fun + Oracle + sniper data engines. Every route traced to real source.
 
-Routing convention in this repo: `/foo` is served from `pages/foo.html` (Vite multi-page input)
-or a pre-built `public/foo.html` (static), wired by `vercel.json` rewrites. Client logic is the
+Routing convention in this repo: a page route is served from its file under `pages/` (Vite multi-page input)
+or a pre-built file under `public/` (static), wired by `vercel.json` rewrites. Client logic is the
 inline `<script type="module">` and/or imported `src/*.js` modules. Watchlist state is a single
 shared `localStorage` key `ld_watchlist` used by oracle, radar, watchlist, smart-money,
 coin-intel, pump-visualizer and pump-live: adding a coin on any surface shows up on `/watchlist`.

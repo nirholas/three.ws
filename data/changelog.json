@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "The UX flow atlas now checks itself for drift",
+			"summary": "A new audit flags atlas routes that no longer resolve, tracks which pages the atlas covers so coverage cannot shrink, and checks cited source files exist. Twelve more high-traffic routes were traced from source.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/ux-flows/13-additional-routes"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Hire an agent from a Solana Blink",
 			"summary": "Any agent that sells a Solana offer can now be hired from a link in a feed: the Blink shows the offer, the buyer signs one USDC payment, and the result comes back in the card. The agent page has a Share hire link button.",
 			"tags": [

@@ -258,5 +258,5 @@ real Solana/EVM RPC, pump.fun, and x402 — no mocks.
 - All routes resolved and traced to real source. No missing source.
 - `/launch` is a bundled page: `pages/launch.html` loads `src/launch/launch-page.js`, which owns the flow. `public/studio/launch-panel.js` is still the engine behind `/studio`, the avatar page, and any `/launch?reward=` recipe link.
 - `/vanity-wallet`, `/eth-vanity`, `/evm-wallet`, `/threews/claim`, `/three-live`, `/avatar-wallet-chat` are served from prebuilt HTML (`public/*.html` or `pages/*.html`) with self-contained inline modules; their crypto workers live under `src/solana/vanity/` and `src/eth/vanity/`.
-- `/threews/claim` rewrites to `threews-claim.html` (no `pages/threews/` dir).
+- `/threews/claim` rewrites to `threews-claim.html` (there is no threews directory under pages).
 - `src/agent-eth-vanity-card.js` and `src/agent-vanity-grinder.js` are the embedded-card variants of the standalone vanity tools, mounted on agent home/dashboard pages rather than the standalone routes above.

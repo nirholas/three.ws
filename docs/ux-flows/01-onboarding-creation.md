@@ -209,7 +209,7 @@
 ---
 
 ### 3D Scanner (redirect) — `/scan`
-- **Source:** None. `pages/scan.html` has been deleted; `/scan` is now a pure routing rule in `vercel.json` (server-side `301` with `Location: /create/selfie`).
+- **Source:** None. the old scan page has been deleted; `/scan` is now a pure routing rule in `vercel.json` (server-side `301` with `Location: /create/selfie`).
 - **Entry point:** Legacy `/scan` links, direct links, marketing.
 - **Prerequisites / gates:** N/A. The redirect fires before any page loads.
 - **Steps (N):**
@@ -262,5 +262,5 @@
 - `/create/prompt` → `create-prompt.html`, `/create/selfie` → `create-selfie.html`.
 - `/create-review` → `create-review.html`, `/create/next` → `create-next.html`, `/create/video` → `create/video.html`, `/create/studio` → `avatar-studio.html` (the studio surface itself is documented in cluster 04).
 - `/agent/new` → **301 to `/create-agent`** (or a rewrite to `create-agent.html` when the URL carries `?avatar_id=`/`?avatar_glb=`); the existing-agent editor lives at `/agents/<uuid>/edit` → `agent-edit.html` (canonical; the legacy `/agent/<uuid>/edit` still rewrites there, while the bare `/agent/<uuid>` 301s to `/agents/<uuid>`).
-- `/scan` is a **route-level 301** to `/create/selfie` (`pages/scan.html` no longer exists; the 301 drops query params).
+- `/scan` is a **route-level 301** to `/create/selfie` (the old scan page no longer exists; the 301 drops query params).
 - `/features/scan` is a **static landing page** with no flow logic; its CTAs link straight to `/create/selfie`.
