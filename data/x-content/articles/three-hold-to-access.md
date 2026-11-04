@@ -1,8 +1,8 @@
-Most token designs ask you to spend. Every call burns a little, the balance drains, and the thing you bought access to keeps charging you for it. We went the other way on three.ws. Holding $THREE is what unlocks the expensive lanes, and the tokens stay in your wallet while it works.
+Most token designs ask you to spend. Each call burns a little, the balance drains, and the thing you bought access to keeps charging you for it. We went the other way on three.ws. Holding $THREE is what unlocks the expensive lanes, and the tokens stay in your wallet while it works.
 
 ## What holding actually turns on
 
-The ladder has five rungs, and the jump that matters most is the first one.
+The ladder has five rungs, from Member at nothing held up to Genesis, and the jump that matters most is the step from Member to Bronze.
 
 At Bronze, which is $25 held, two things switch on that are otherwise closed:
 
@@ -30,13 +30,14 @@ POST /api/forge  {"prompt": "a plain wooden stool", "tier": "high"}
 
 402  {"error": "three_hold_required",
       "feature": "forge.high",
-      "required": {"id": "bronze", "min_usd": 25}}
+      "required": {"id": "bronze", "min_usd": 25},
+      "pay_per_use": {"action": "forge.high", "usd": 0.5}}
 ```
 
-No key to buy, no subscription to cancel, no per-call meter running down. The check reads your on-chain balance, and if it clears, the job runs. Sell the tokens and the lane closes again. That symmetry is the point: you are not buying credits that evaporate, you are holding an asset that carries an entitlement for as long as you hold it.
+If you would rather not hold, the same 402 offers the job at $0.50 a generation. Hold Bronze and that meter is gone: no key to buy, no subscription to cancel, nothing running down per call. The check reads your on-chain balance, and if it clears, the job runs. Sell the tokens and the lane closes again. That symmetry is the point: you are not buying credits that evaporate, you are holding an asset that carries an entitlement for as long as you hold it.
 
 ## Why we think this is the honest version
 
-A spend-per-call token has a structural problem. The project wants you to transact, so the incentive is to make you transact more, which means the product quietly gets designed around consumption instead of around being good. A hold-to-access token inverts that. We make nothing when you use the high lane. We only benefit if holding the token is worth doing, which means the only lever we have is to keep shipping things worth unlocking.
+A spend-per-call token has a structural problem. The project wants you to transact, so the incentive is to make you transact more, which means the product quietly gets designed around consumption instead of around being good. A hold-to-access token inverts that. A holder pays nothing per call on the high lane. We benefit when holding the token is worth doing, so the lever we have is to keep shipping things worth unlocking.
 
 That is a harder promise to keep, and it is the one we would rather be measured on.

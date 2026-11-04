@@ -22524,8 +22524,7 @@
 			"covers": [
 				"/docs/agent-skills",
 				"/skill.md",
-				"public/skill.md",
-				".agents/skills"
+				"public/skill.md"
 			],
 			"scenario": {
 				"format": "square",
@@ -22845,8 +22844,7 @@
 			],
 			"posts": [
 				{
-					"text": "A timed-out 3D job on the free 3D Studio MCP no longer means a second generation. Pass an idempotency_key on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar or refine_model, and the same key with the same arguments within 24 hours gets the original job back, pending or finished, marked replayed: true. get_job answers with status alone (queued, running, done, failed, not_found or unknown) plus progress and eta_seconds, and it never starts work or consumes generation quota.",
-					"media": "reel"
+					"text": "A timed-out 3D job on the free 3D Studio MCP no longer means a second generation. Pass an idempotency_key on forge_free, text_to_avatar, mesh_forge, rig_mesh, forge_avatar or refine_model, and the same key with the same arguments within 24 hours gets the original job back, pending or finished, marked replayed: true. get_job answers with status alone (queued, running, done, failed, not_found or unknown) plus progress and eta_seconds, and it never starts work or consumes generation quota."
 				},
 				{
 					"text": "Send a progressToken and the call streams a notifications/progress event each time the job moves, a whole percent that only rises, then the final result. Clients that send no token get the single JSON response, unchanged. Docs, with the tools/list request you can run from the page: three.ws/docs/mcp-studio"
