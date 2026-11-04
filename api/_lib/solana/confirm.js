@@ -82,6 +82,18 @@ export function pollDelayMs(i, cadence = pollCadence()) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Status from the RPC's transaction history rather than its recent-status cache.
+// Returns the status, null when the ledger has no such tx, or undefined when the
+// lookup failed (so the caller never mistakes an RPC blip for "never landed").
+async function historyStatus(conn, signature) {
+	try {
+		const res = await conn.getSignatureStatuses([signature], { searchTransactionHistory: true });
+		return res?.value?.[0] ?? null;
+	} catch {
+		return undefined;
+	}
+}
+
 function txExpiredError(signature) {
 	return Object.assign(
 		new Error(`Transaction ${signature} expired: block height exceeded`),
@@ -118,6 +130,7 @@ export async function pollConfirmation(conn, strategy, commitment = 'confirmed',
 	const deadline = Date.now() + timeoutMs;
 	const cadence = pollCadence();
 
+	let landed = false;
 	for (let i = 0; ; i++) {
 		let st = null;
 		try {
@@ -127,6 +140,24 @@ export async function pollConfirmation(conn, strategy, commitment = 'confirmed',
 			// Transient RPC blip — the rotating fetch already failed over across
 			// providers; treat this poll as "not yet known" and retry.
 		}
+
+		// The plain lookup reads only the node's recent-status cache, which a lagging
+		// or rotated-to node can miss entirely. Before declaring the blockhash expired,
+		// ask the ledger itself: a tx found there landed, and calling it expired would
+		// invite the caller to rebroadcast (a double send on a transfer).
+		if (st == null && !landed && lastValidBlockHeight != null && i % BLOCKHEIGHT_CHECK_EVERY === 0) {
+			let height = null;
+			try { height = await conn.getBlockHeight(commitment); } catch { /* retry next poll */ }
+			if (height != null && height > lastValidBlockHeight) {
+				const found = await historyStatus(conn, signature);
+				// undefined = the lookup itself failed: unknown, so retry next poll.
+				if (found === null) throw txExpiredError(signature);
+				if (found) st = found;
+			}
+		}
+		// Once any status is seen the tx is in a block and climbs to the target
+		// commitment on its own, so the blockhash expiry no longer applies.
+		if (st) landed = true;
 
 		if (st) {
 			// A landed-but-reverted tx carries `err`; surface it (don't throw here) so
@@ -139,14 +170,6 @@ export async function pollConfirmation(conn, strategy, commitment = 'confirmed',
 					value: { err: null, confirmationStatus: st.confirmationStatus, slot: st.slot ?? null },
 				};
 			}
-		}
-
-		// Expiry only matters before the tx lands: once we've seen any status it will
-		// climb to the target commitment on its own. Checked periodically to save RPC.
-		if (lastValidBlockHeight != null && st == null && i % BLOCKHEIGHT_CHECK_EVERY === 0) {
-			let height = null;
-			try { height = await conn.getBlockHeight(commitment); } catch { /* retry next poll */ }
-			if (height != null && height > lastValidBlockHeight) throw txExpiredError(signature);
 		}
 
 		if (Date.now() >= deadline) throw confirmTimeoutError(signature, timeoutMs);

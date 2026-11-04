@@ -15,10 +15,13 @@ import { confirmOrThrow, pollConfirmation, sendAndConfirm } from '../api/_lib/so
 // A fake Connection whose getSignatureStatuses returns a scripted sequence of
 // per-signature statuses. `steps` is an array of status objects (or null) returned on
 // successive polls; the last entry sticks. blockHeight is a fixed value for expiry.
-function fakeConn({ steps = [], blockHeight = 0 } = {}) {
+// `history` is what a `searchTransactionHistory: true` lookup returns: the RPC's
+// ledger, not its recent-status cache.
+function fakeConn({ steps = [], blockHeight = 0, history = null } = {}) {
 	let i = 0;
 	return {
-		getSignatureStatuses: vi.fn(async () => {
+		getSignatureStatuses: vi.fn(async (_sigs, opts) => {
+			if (opts?.searchTransactionHistory) return { context: { slot: 1 }, value: [history] };
 			const st = steps[Math.min(i, steps.length - 1)];
 			i++;
 			return { context: { slot: 1 }, value: [st ?? null] };
@@ -70,6 +73,46 @@ describe('pollConfirmation / confirmOrThrow', () => {
 		await expect(
 			pollConfirmation(conn, { signature: 'gone', blockhash: 'bh', lastValidBlockHeight: 100 }, 'confirmed'),
 		).rejects.toMatchObject({ code: 'tx_expired', signature: 'gone' });
+	});
+
+	it('does not report a landed tx as expired when the recent-status cache missed it', async () => {
+		// Production, custody epochs 525-527 and 529: the polled node's status cache never
+		// showed the memo, block height passed lastValidBlockHeight, and the tx was
+		// recorded as expired while it sat finalized on mainnet. A caller that trusts
+		// tx_expired may rebroadcast, which double-sends a transfer.
+		const conn = fakeConn({
+			steps: [null],
+			blockHeight: 200,
+			history: { confirmationStatus: 'finalized', err: null, slot: 99 },
+		});
+		const out = await pollConfirmation(conn, { signature: 'landed', blockhash: 'bh', lastValidBlockHeight: 100 }, 'confirmed');
+		expect(out.value).toMatchObject({ err: null, confirmationStatus: 'finalized', slot: 99 });
+		expect(conn.getSignatureStatuses).toHaveBeenCalledWith(['landed'], { searchTransactionHistory: true });
+	});
+
+	it('surfaces a revert found in history at expiry instead of calling it expired', async () => {
+		const onChainErr = { InstructionError: [0, { Custom: 1 }] };
+		const conn = fakeConn({ steps: [null], blockHeight: 200, history: { confirmationStatus: 'confirmed', err: onChainErr, slot: 9 } });
+		await expect(
+			confirmOrThrow(conn, { signature: 'rev', blockhash: 'bh', lastValidBlockHeight: 100 }, 'confirmed'),
+		).rejects.toMatchObject({ code: 'tx_reverted', signature: 'rev', onChainErr });
+	});
+
+	it('keeps polling past expiry once history shows the tx in a block, rather than calling it expired', async () => {
+		// processed means it landed in a block; the blockhash no longer matters, so the
+		// loop waits for the target commitment (here it runs out of time instead).
+		const conn = fakeConn({ steps: [null], blockHeight: 200, history: { confirmationStatus: 'processed', err: null, slot: 4 } });
+		await expect(
+			pollConfirmation(conn, { signature: 'thin', blockhash: 'bh', lastValidBlockHeight: 100 }, 'confirmed', { timeoutMs: 0 }),
+		).rejects.toMatchObject({ code: 'tx_confirm_timeout', signature: 'thin' });
+	});
+
+	it('still throws tx_expired when neither the cache nor history has the tx', async () => {
+		const conn = fakeConn({ steps: [null], blockHeight: 200, history: null });
+		await expect(
+			pollConfirmation(conn, { signature: 'gone2', blockhash: 'bh', lastValidBlockHeight: 100 }, 'confirmed'),
+		).rejects.toMatchObject({ code: 'tx_expired', signature: 'gone2' });
+		expect(conn.getSignatureStatuses).toHaveBeenCalledWith(['gone2'], { searchTransactionHistory: true });
 	});
 
 	it('throws tx_confirm_timeout for a bare signature that never lands', async () => {
