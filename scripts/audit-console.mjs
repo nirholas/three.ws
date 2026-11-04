@@ -25,6 +25,11 @@
  * failures once the box is quiet, against a dev server you started yourself.
  * docs/audit/console-sweep-2026-09-09.md carries that comparison.
  *
+ * Exit status is judged against scripts/audit-console.baseline.json (accepted
+ * error counts per route and viewport; the target is empty). The sweep fails
+ * only when a route/viewport exceeds its baseline, and prints the diff.
+ * docs/audit/README.md carries the quiet-box rule for taking a trustworthy run.
+ *
  * Usage:
  *   node scripts/audit-console.mjs                  # every HTML route, both viewports
  *   node scripts/audit-console.mjs / /forge /play   # specific routes only
@@ -32,6 +37,8 @@
  *   node scripts/audit-console.mjs --mobile         # 390×844 only
  *   node scripts/audit-console.mjs --no-blog        # skip /blog/* content pages
  *   node scripts/audit-console.mjs --report         # write docs/audit/console-sweep-<date>.md
+ *   node scripts/audit-console.mjs --update-baseline  # rewrite scripts/audit-console.baseline.json
+ *                                                   # for the routes/viewports measured
  *   LOG_ALL=1 node scripts/audit-console.mjs        # stream every console line
  *   HEADFUL=1 node scripts/audit-console.mjs        # watch it run
  *   CONCURRENCY=6 node scripts/audit-console.mjs    # parallel tabs (default 5)
@@ -78,10 +85,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:net';
 import { spawn } from 'node:child_process';
+import { loadavg, cpus } from 'node:os';
 import { get as httpGet } from 'node:http';
 import { get as httpsGet } from 'node:https';
 import { chromium } from 'playwright';
 import { isIgnorableConsole, isDevOnlyAsset } from './lib/console-noise.mjs';
+import { loadBaseline, diffAgainstBaseline, mergeBaseline, saveBaseline } from './lib/console-baseline.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -418,6 +427,8 @@ const wantReport = args.includes('--report');
 const includeBlog = !args.includes('--no-blog');
 const onlyDesktop = args.includes('--desktop');
 const onlyMobile = args.includes('--mobile');
+const updateBaseline = args.includes('--update-baseline');
+const BASELINE_FILE = join(ROOT, 'scripts/audit-console.baseline.json');
 const CONCURRENCY = Number(process.env.CONCURRENCY || 5);
 
 const viewportKeys = onlyDesktop ? ['desktop'] : onlyMobile ? ['mobile'] : ['desktop', 'mobile'];
@@ -432,6 +443,14 @@ if (!routes.length) {
 console.log(C.b('\n╔══ Console Sweep (Playwright) ═══════════════════════════════╗'));
 console.log(`  ${routes.length} HTML routes × ${viewportKeys.length} viewport(s) — concurrency ${CONCURRENCY}`);
 console.log(C.b('╚═════════════════════════════════════════════════════════════╝\n'));
+
+// Load at sweep start, recorded in the report: a reading taken above the core
+// count is not evidence (see docs/audit/README.md).
+const loadAtStart = loadavg()[0];
+const coreCount = cpus().length;
+if (loadAtStart >= coreCount) {
+	console.log(C.y(`  load ${loadAtStart.toFixed(1)} is at or above ${coreCount} cores: treat failures as unproven and re-run on a quiet box\n`));
+}
 
 const { base, stop } = await startServer();
 
@@ -638,6 +657,31 @@ if (failing.length === 0) {
 	console.log('');
 }
 
+// ── Baseline diff ────────────────────────────────────────────────────────────
+const measured = {};
+for (const row of rows) {
+	measured[row.route.path] = Object.fromEntries(viewportKeys.map((k) => [k, totalErrors(row.vp[k])]));
+}
+const baseline = loadBaseline(BASELINE_FILE);
+const { regressions, improvements } = diffAgainstBaseline(baseline, measured);
+const baselineEntries = Object.keys(baseline.routes).length;
+console.log(C.b(`  Baseline (${baselineEntries} accepted route(s)):`));
+if (regressions.length === 0) {
+	console.log(C.g('  no new errors against scripts/audit-console.baseline.json'));
+} else {
+	for (const g of regressions) {
+		console.log(C.r(`  NEW ${g.route} [${g.viewport}]: ${g.was} accepted -> ${g.now} now`));
+	}
+}
+for (const g of improvements) {
+	console.log(C.g(`  fixed ${g.route} [${g.viewport}]: ${g.was} accepted -> ${g.now} now (run --update-baseline to ratchet)`));
+}
+console.log('');
+if (updateBaseline) {
+	saveBaseline(BASELINE_FILE, mergeBaseline(baseline, measured));
+	console.log(C.c('  baseline written -> scripts/audit-console.baseline.json\n'));
+}
+
 // Warnings never fail the sweep, but "our own warnings get fixed" is only
 // actionable if the text is visible, so every distinct warning is printed.
 if (warning.length) {
@@ -731,4 +775,4 @@ if (wantReport) {
 	console.log(C.c(`  report written → ${outFile.replace(ROOT + '/', '')}\n`));
 }
 
-process.exit(failing.length === 0 ? 0 : 1);
+process.exit(regressions.length === 0 ? 0 : 1);
