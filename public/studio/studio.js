@@ -8,6 +8,7 @@
 import { apiFetch } from '/src/api.js';
 import { mountLaunchPanel } from './launch-panel.js';
 import { mountKnowledgePanel } from './knowledge-panel.js';
+import { mountGatePanel } from './gate-panel.js';
 
 const WIDGET_TYPES = {
 	turntable: {
@@ -242,6 +243,7 @@ const generateBtn = $('#generate-btn');
 const toastEl = $('#toast');
 
 let launchPanel = null; // set in wireButtons, used in selectAvatar
+let gatePanel = null; // set in mountHolderGate, used in selectAvatar
 
 const state = {
 	user: null,
@@ -282,6 +284,7 @@ const embedSeed = editId ? null : hydrateFromEmbedParams(params);
 	wireButtons();
 
 	await loadAvatars();
+	mountHolderGate();
 
 	if (editId) await loadForEdit(editId);
 	else if (tplId) await cloneTemplate(tplId);
@@ -1486,6 +1489,30 @@ function walkBgField(name, label, value) {
 	return f;
 }
 
+// ── holders-only gate ────────────────────────────────────────────────────────
+// The gate endpoint only accepts an avatar the signed-in creator owns, so the
+// panel is handed the selected avatar only when it is one of theirs: never the
+// demo agent and never a public avatar from another account.
+function ownedAvatar() {
+	if (!state.user || !state.avatarId || state.avatarId === DEMO_AVATAR.id) return null;
+	return state.avatars.find((a) => a.id === state.avatarId && !a.is_demo) || null;
+}
+
+function mountHolderGate() {
+	const el = $('#gate-panel');
+	if (!el) return;
+	gatePanel = mountGatePanel(el, {
+		getAvatarId: () => state.avatarId,
+		getOwnedAvatar: ownedAvatar,
+		getUser: () => state.user,
+		onPickAvatar: () => {
+			const list = $('#avatar-list');
+			list?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			(list?.querySelector('.avatar-card:not(.is-demo)') || list?.querySelector('.avatar-card'))?.focus({ preventScroll: true });
+		},
+	});
+}
+
 // ── interaction ──────────────────────────────────────────────────────────────
 function selectAvatar(id) {
 	state.avatarId = id;
@@ -1494,6 +1521,7 @@ function selectAvatar(id) {
 	updatePreview(true);
 	captureBtn.disabled = false;
 	launchPanel?.avatarChanged();
+	gatePanel?.avatarChanged();
 }
 
 // Raw model URL as the avatar. A .glb or .vrm the user hosts themselves is a
