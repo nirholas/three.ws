@@ -19195,7 +19195,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"note": "Draft article, not reviewable yet: 986 words in 6 sections with 2 inline images. Needs 2,400+ words in 8+ sections, 3,000+ characters of runnable code and tables, 4+ real captures, a \"The partners behind ...\" section and a \"Try it\" section before review."
 		},
 		{
 			"id": "atlas-goal",
@@ -20857,7 +20858,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"note": "Draft, not reviewable yet: the head post has no media, and the proof failed at step 3 because the page no longer shows the \"None of the N source files this page documents\" line the scenario reads. Retarget that step or restore the line, re-prove, then attach the reel."
 		},
 		{
 			"id": "grok-studio",
@@ -22732,7 +22734,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"note": "Draft, not reviewable yet: covers must name backlog keys (a route such as /galaxy, a package or a worker), and the proof failed at step 3 because the page no longer shows the \"None of the N source files this page documents\" line the scenario reads."
 		},
 		{
 			"id": "studio-jobs",
@@ -22962,7 +22965,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"note": "Draft, not reviewable yet: the head post media is the string \"reel\" instead of a list of { path, alt } entries, and the proof failed at step 9 because no visible control reads \"Send POST\" on the page any more."
 		},
 		{
 			"id": "three-split",
@@ -23301,7 +23305,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"note": "Draft, not reviewable yet: its claims have no text field (each reads as \"undefined\"), and the copy states numbers (100, 70, 30, 90, 80, 50, 20, 5) and absolutes (\"every\") that no claim declares with evidence. Rewrite the claims to quote the post before review."
 		},
 		{
 			"id": "voice-article",
@@ -24041,7 +24046,8 @@
 					]
 				}
 			],
-			"mentions": {}
+			"mentions": {},
+			"note": "Draft article, not reviewable yet: 843 words in 5 sections with a 79-character title. Needs an 80 to 100 character title carrying the headline number, 2,400+ words in 8+ sections, 3,000+ characters of runnable code and tables, a \"The partners behind ...\" section and a \"Try it\" section."
 		},
 		{
 			"id": "gtc-2027-poster",

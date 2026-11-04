@@ -1,7 +1,7 @@
 {
 	"id": "restyle-presets",
-	"contentHash": "f54c06cfb730f6c5e543f59bf82a5e6b23431e54f8c0f01966a407e56c975a52",
-	"reviewedAt": "2026-10-13T18:07:18.408Z",
+	"contentHash": "494d9cb191bb9915cd9231648bd2e64eee1525aa5d48e023b6d3967ac89f5cd7",
+	"reviewedAt": "2026-11-04T22:09:28.870Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -204,10 +204,12 @@
 				"For a finish that is not on the list, describe it in plain words, like worn copper or glossy ceramic, and IBM Granite proposes the PBR values. They are applied live and saved as a new version, never over the one before it.\n\nThen fine-tune how metallic and how rough it is with sliders and export a validated GLB.",
 				"The reel loads a car model from a .glb file. Drop in your own, or paste a public link to one, and every finish works the same way on it."
 			],
-			"altText": []
+			"altText": [
+				"Reel showing Restyle Studio: a car model loaded from a .glb file, 18 material presets applied one click at a time including Gold and Holographic, real PBR lighting responses, and IBM Granite AI restyle interface."
+			]
 		},
-		"summary": "Every claim is verified against the live page, the code, and a passing filmed run; every reel caption is true of its frame and the frames show exactly what the posts say. Voice is clean, no tags, one link, ship it.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "Every claim is verified against the live page, module, or code. The post opens with the strongest true statement, follows house voice rules exactly, and the reel matches the copy frame for frame.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
