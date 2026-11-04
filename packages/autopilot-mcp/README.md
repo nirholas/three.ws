@@ -78,7 +78,7 @@ Every autopilot endpoint is **owner-only**, so this server is authenticated. Set
 | `list_proposals`          | read-only        | The proposal queue — ids, kinds, rationales, params, status, cited sources. Filter by status.                       |
 | `dryrun_proposal`         | read-only        | Preview what executing a proposal *would* do (scope / cap / balance checks), without taking any action.             |
 | `adjust_proposal`         | write · idempotent | Edit a pending proposal's params before executing (tune a threshold, amount, cadence). Validated server-side.       |
-| `execute_proposal`        | **write · destructive** | Take the real action. ⚠️ A `wallet_transfer` moves real SOL on mainnet, irreversible — needs `confirm:true`. Never sends $THREE. |
+| `execute_proposal`        | **write · destructive** | Take the real action. ⚠️ A `wallet_transfer` or `trade` moves real funds on mainnet, irreversible. needs `confirm:true`. Never sends or sells $THREE. |
 | `dismiss_proposal`        | write            | Drop a pending proposal; records a feedback memory so the agent stops proposing it.                                 |
 | `undo_action`             | write            | Reverse a reversible execution (delete the alert rule / briefing); records a feedback memory. SOL transfers can't be undone. |
 | `list_autopilot_activity` | read-only        | The append-only signed receipts log — every autonomous action, its outcome, provenance, and signature.             |
@@ -91,7 +91,7 @@ The five read tools reflect live state (proposals, receipts, trust move between 
 Every tool takes **`agentId`** (the UUID of an agent you own) except `list_autopilot_activity`, where it is optional (omit to aggregate across all your agents).
 
 - **`get_autopilot_config`** / **`compute_trust`** / **`generate_proposals`** — `agentId`.
-- **`set_autopilot_config`** — `agentId`, plus any of: `enabled` (bool), `scopes` (`{ create_alert?, briefing?, wallet_transfer? }`), `autoExecute` (`{ create_alert?, briefing? }`), `dailySpendSol` (number, SOL; 0 disables spending), `requireConfirm` (bool).
+- **`set_autopilot_config`**: `agentId`, plus any of: `enabled` (bool), `scopes` (`{ create_alert?, briefing?, wallet_transfer?, trade? }`), `autoExecute` (`{ create_alert?, briefing? }`), `dailySpendSol` (number, SOL; 0 disables spending), `requireConfirm` (bool).
 - **`list_proposals`** — `agentId`, `status` (`pending` | `executed` | `dismissed` | `undone` | `failed`), `limit` (1–200).
 - **`dryrun_proposal`** / **`dismiss_proposal`** / **`undo_action`** — `agentId`, `proposalId`.
 - **`adjust_proposal`** — `agentId`, `proposalId`, `params` (full replacement params for the proposal's kind).
@@ -104,7 +104,7 @@ Every tool takes **`agentId`** (the UUID of an agent you own) except `list_autop
 // 1. Grant the agent a reversible capability
 // set_autopilot_config
 > { "agentId": "…", "enabled": true, "scopes": { "create_alert": true } }
-{ "ok": true, "config": { "enabled": true, "scopes": { "create_alert": true, "briefing": false, "wallet_transfer": false }, "daily_spend_sol": 0, "require_confirm": true } }
+{ "ok": true, "config": { "enabled": true, "scopes": { "create_alert": true, "briefing": false, "wallet_transfer": false, "trade": false }, "daily_spend_sol": 0, "require_confirm": true } }
 
 // 2. Let the agent propose actions from its memory
 // generate_proposals
@@ -130,7 +130,7 @@ Every tool takes **`agentId`** (the UUID of an agent you own) except `list_autop
 { "ok": true, "proposal": { "status": "undone" } }
 ```
 
-Spending real SOL requires the owner to have granted `scopes.wallet_transfer`, set a positive `dailySpendSol`, and (unless pre-authorized) `execute_proposal` must be re-issued with `confirm:true`. All three are checked server-side. The agent spends SOL only — it never sells or sends $THREE.
+Spending real SOL requires the owner to have granted `scopes.wallet_transfer`, set a positive `dailySpendSol`, and (unless pre-authorized) `execute_proposal` must be re-issued with `confirm:true`. All three are checked server-side. A `trade` proposal (a buy with SOL or a sell of a non-$THREE token) needs `scopes.trade` and runs the same wallet guards as the wallet hub. Buys count against `dailySpendSol`. The agent spends SOL only, it never sells or sends $THREE; a $THREE sell is refused at proposal validation.
 
 ## Requirements
 

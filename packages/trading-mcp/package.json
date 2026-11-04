@@ -1,0 +1,42 @@
+{
+	"name": "@three-ws/trading-mcp",
+	"version": "0.1.0",
+	"mcpName": "io.github.nirholas/trading-mcp",
+	"description": "Quote and fill guarded Solana swaps from a three.ws agent wallet over MCP. Per-trade cap, daily budget, price-impact breaker, rug firewall and kill switch run server-side. The agent never sells $THREE.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/trading-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": ["mcp", "three.ws", "solana", "trading", "swap", "ai-agent", "agent-guardrails"],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": ["src", "server.json", "README.md", "LICENSE"],
+	"bin": {
+		"trading-mcp": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^4.6.7"
+	}
+}

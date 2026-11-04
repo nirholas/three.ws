@@ -44,7 +44,7 @@ describe('normalizeAutopilotConfig', () => {
 	it('returns safe defaults for empty input', () => {
 		const c = normalizeAutopilotConfig(undefined);
 		expect(c.enabled).toBe(false);
-		expect(c.scopes).toEqual({ create_alert: false, briefing: false, wallet_transfer: false });
+		expect(c.scopes).toEqual({ create_alert: false, briefing: false, wallet_transfer: false, trade: false });
 		expect(c.daily_spend_sol).toBe(0);
 		expect(c.require_confirm).toBe(true);
 	});

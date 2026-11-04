@@ -21,6 +21,8 @@ const KIND_META = {
 	create_alert: { label: 'Alert', icon: '🔔', reversible: true, blurb: 'Watches a token and notifies you.' },
 	briefing: { label: 'Briefing', icon: '📋', reversible: true, blurb: 'Authors a memory-grounded digest.' },
 	wallet_transfer: { label: 'Transfer', icon: '💸', reversible: false, blurb: 'Sends SOL from the agent wallet. Never sells or sends $THREE.' },
+	trade: { label: 'Trade', icon: '🔁', reversible: false, blurb: 'Swaps from the agent wallet. Never sells $THREE.' },
+	trade_executed: { label: 'Trade', icon: '🔁', reversible: false, blurb: 'A swap the agent filled after you confirmed it.' },
 };
 
 const esc = (s) =>
@@ -247,6 +249,7 @@ export function mountAutopilotMind(container, { agentId }) {
 			{ key: 'create_alert', name: '🔔 Create alerts', desc: 'Set up real price / graduation / whale alerts on $THREE and tokens it knows about.', auto: true },
 			{ key: 'briefing', name: '📋 Author briefings', desc: 'Write memory-grounded briefings and deliver them to your inbox.', auto: true },
 			{ key: 'wallet_transfer', name: '💸 Spend SOL', desc: 'Send SOL from the agent\'s custodial wallet. Always asks before each transfer. Never sells or sends $THREE.', auto: false },
+			{ key: 'trade', name: '🔁 Trade tokens', desc: 'Let the agent queue buys and sells from its wallet. Every trade waits for your confirmation and runs through the wallet guards (per-trade cap, daily budget, price-impact breaker, rug firewall) and the daily SOL limit above. It never sells $THREE.', auto: false },
 		];
 		$('apm-scopes').innerHTML = scopeDefs.map((s) => {
 			const on = c.scopes[s.key];
@@ -392,7 +395,7 @@ export function mountAutopilotMind(container, { agentId }) {
 		});
 
 		card.querySelector('[data-act="execute"]').addEventListener('click', async () => {
-			if (p.kind === 'wallet_transfer') {
+			if (p.kind === 'wallet_transfer' || p.kind === 'trade') {
 				const ok = await confirmTransfer(p);
 				if (!ok) return;
 				return runExecute(id, setStatus, true);
@@ -444,16 +447,26 @@ export function mountAutopilotMind(container, { agentId }) {
 	// ── Confirm modal (irreversible SOL transfer) ──────────────────────────
 	function confirmTransfer(p) {
 		return new Promise((resolve) => {
+			const isTrade = p.kind === 'trade';
+			const t = p.params;
+			const tokenName = t.mint === 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' ? '$THREE' : `${String(t.mint).slice(0, 6)}…${String(t.mint).slice(-4)}`;
+			const heading = isTrade ? `Confirm ${t.side === 'sell' ? 'sale' : 'purchase'}` : 'Confirm SOL transfer';
+			const line = isTrade
+				? (t.side === 'buy'
+					? `Your agent will buy <b>${esc(tokenName)}</b> with <b>${esc(t.amount_sol)} SOL</b>, up to ${esc(t.slippage_bps)} bps slippage.`
+					: `Your agent will sell <b>${esc(t.token_amount_raw)}</b> base units of <b>${esc(tokenName)}</b> for SOL, up to ${esc(t.slippage_bps)} bps slippage.`)
+				: `Your agent will send <b>${esc(t.amount_sol)} SOL</b> to <b>${esc(String(t.recipient).slice(0, 10))}…${esc(String(t.recipient).slice(-6))}</b>.`;
+			const okLabel = isTrade ? (t.side === 'buy' ? `Buy with ${t.amount_sol} SOL` : 'Sell') : `Send ${t.amount_sol} SOL`;
 			const back = document.createElement('div');
 			back.className = 'apm-modal-backdrop';
 			back.innerHTML = `
 				<div class="apm-modal" role="dialog" aria-modal="true" aria-labelledby="apm-confirm-h">
-					<h4 id="apm-confirm-h">Confirm SOL transfer</h4>
-					<p>Your agent will send <b>${esc(p.params.amount_sol)} SOL</b> to <b>${esc(String(p.params.recipient).slice(0, 10))}…${esc(String(p.params.recipient).slice(-6))}</b>.</p>
-					<p>This is real and <b>cannot be undone</b>. ${p.params.reason ? `Reason: ${esc(p.params.reason)}` : ''}</p>
+					<h4 id="apm-confirm-h">${esc(heading)}</h4>
+					<p>${line}</p>
+					<p>This is real and <b>cannot be undone</b>. ${t.reason ? `Reason: ${esc(t.reason)}` : ''}</p>
 					<div class="apm-modal-actions">
 						<button class="apm-btn" data-c="cancel">Cancel</button>
-						<button class="apm-btn primary" data-c="ok">Send ${esc(p.params.amount_sol)} SOL</button>
+						<button class="apm-btn primary" data-c="ok">${esc(okLabel)}</button>
 					</div>
 				</div>`;
 			document.body.appendChild(back);
@@ -601,6 +614,7 @@ export function receiptRow(rc, agentId, { undo = false, showAgent = false } = {}
 	if (rc.kind === 'alert_created') line = `Created a <b>${esc(String(result.rule_kind || 'alert').replace('_', ' '))}</b> alert${result.target_mint ? ` on ${esc(result.target_mint === 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' ? '$THREE' : String(result.target_mint).slice(0, 6) + '…')}` : ''}.`;
 	else if (rc.kind === 'briefing_authored') line = `Authored a briefing${result.body_preview ? `: "${esc(String(result.body_preview).slice(0, 90))}…"` : ''}.`;
 	else if (rc.kind === 'wallet_transfer') line = `Sent <b>${esc(result.amount_sol)} SOL</b>${result.recipient ? ` to ${esc(String(result.recipient).slice(0, 8))}…` : ''}.`;
+	else if (rc.kind === 'trade_executed') line = `${result.side === 'sell' ? 'Sold' : 'Bought'} <b>${esc(result.mint === 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump' ? '$THREE' : String(result.mint || '').slice(0, 6) + '…')}</b>${result.side === 'sell' ? '' : ` with ${esc(result.amount_sol)} SOL`}.`;
 	else line = esc(rc.type);
 
 	const sources = (rc.sources || []).slice(0, 3).map((s) => sourceChip(rc.agentId || agentId, s)).join('');

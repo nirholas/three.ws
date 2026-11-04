@@ -15,6 +15,7 @@ const scopeFlags = z
 		create_alert: z.boolean().optional().describe('Allow creating real price/event alert rules.'),
 		briefing: z.boolean().optional().describe('Allow authoring memory-grounded briefing notifications.'),
 		wallet_transfer: z.boolean().optional().describe('Allow sending real SOL from the agent wallet (irreversible). Never sells or sends $THREE.'),
+		trade: z.boolean().optional().describe('Allow queueing buys and sells from the agent wallet (irreversible, always confirmed, runs the wallet guards). Never sells $THREE.'),
 	})
 	.partial();
 
@@ -26,7 +27,7 @@ export const def = {
 	description:
 		"Update the agent's autopilot guardrails. A partial patch — only the fields you pass change; the " +
 		'rest are preserved. Set `enabled` to arm/disarm autopilot, `scopes` to grant/revoke each capability ' +
-		'(create_alert, briefing, wallet_transfer), `autoExecute` to let reversible scopes run without review, ' +
+		'(create_alert, briefing, wallet_transfer, trade), `autoExecute` to let reversible scopes run without review, ' +
 		'`dailySpendSol` for the daily SOL outflow ceiling (in SOL; 0 disables spending), and ' +
 		'`requireConfirm` to force explicit confirmation on irreversible actions. WRITE but idempotent: it ' +
 		'changes only the boundaries, takes no action, and re-applying the same values is a no-op. Returns the ' +

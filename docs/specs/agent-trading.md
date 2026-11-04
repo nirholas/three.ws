@@ -1,6 +1,6 @@
 # Spec — Agent trading capability (Feature B)
 
-Status: **proposed** · Author: three.ws · Depends on: autopilot v0.2.0 (SOL spend cap + $THREE buy-only guard)
+Status: **implemented 2026-11-05** (phases 1 to 4; implementation notes below) · Author: three.ws · Depends on: autopilot v0.2.0 (SOL spend cap + $THREE buy-only guard)
 
 ## Why
 
@@ -78,3 +78,13 @@ Trading proposals should cite real signals, never guess:
 ## Definition of done (per phase)
 
 Real routes (no mocks), server-side guards with tests (including the $THREE-sell refusal), confirm-gated irreversible actions, signed `agent_actions` receipts, MCP descriptions accurate, changelog entry, and `npm run test:mcp` green.
+
+## Implementation notes (2026-11-05)
+
+- `trade` is a first-class autopilot kind (`api/_lib/autopilot.js`: `validateTrade`, `executeTrade`, dry-run, dedupe, proposal generation). Migration `20261105030000_autopilot_trade_kind.sql` widens the kind CHECK; apply it before enabling the scope in production.
+- Param names follow the existing executor contract rather than the draft above: `slippage_bps` (1 to 500, default 100) and `token_amount_raw` (base units). Selling "all" is not offered; size a sell from `list_positions`.
+- Execution reuses `runAgentTrade`, so the kill switch, per-trade cap, daily budget, USD ceiling, price-impact breaker, rug firewall, SOL headroom, idempotent custody ledger and protected sender all apply. The proposal id is the idempotency key. Buys count against `daily_spend_sol`; sells do not.
+- `three_sell_forbidden` is enforced at validation and again at execution. Trades never auto-execute and always need confirmation, and the real-funds agreement is checked before the CSRF token is spent.
+- `@three-ws/trading-mcp` 0.1.0 ships `quote_trade`, `list_positions`, `execute_trade`. `@three-ws/autopilot-mcp` 0.3.0 adds the `trade` scope.
+- Memory-grounded generation: the LLM planner may emit `trade` for a memory with explicit buy or sell intent; the offline fallback only proposes a buy from an intel or pump.fun tagged memory that states the size and mint. Alert-fire to proposal wiring is not built.
+- Owner step: publishing `@three-ws/trading-mcp` to npm and the MCP registry.

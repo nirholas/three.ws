@@ -18,7 +18,7 @@ import { cors, json, method, wrap, error } from '../_lib/http.js';
 import { computeTrust, pageLimit, parseCursor } from '../_lib/autopilot.js';
 import { isUuid } from '../_lib/validate.js';
 
-const AUTOPILOT_TYPES = ['autopilot.alert.created', 'autopilot.briefing.authored', 'autopilot.wallet.transfer'];
+const AUTOPILOT_TYPES = ['autopilot.alert.created', 'autopilot.briefing.authored', 'autopilot.wallet.transfer', 'autopilot.trade.executed'];
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);

@@ -24,7 +24,7 @@ export const def = {
 		'EXECUTE a proposal for real, within the owner-granted scope. ⚠️ This is the funds-touching action: a ' +
 		'`wallet_transfer` proposal sends REAL SOL on Solana mainnet and is IRREVERSIBLE — you MUST pass ' +
 		'confirm:true for it (unless the owner durably pre-authorized that scope), and it is capped by the ' +
-		'daily SOL budget. It sends native SOL only — never $THREE. `create_alert` and `briefing` are real writes but reversible via undo_action. ' +
+		'daily SOL budget. It sends native SOL only. never $THREE. A `trade` proposal swaps from the agent wallet through the wallet guards (per-trade cap, price-impact breaker, rug firewall), is equally IRREVERSIBLE, needs confirm:true, and never sells $THREE. `create_alert` and `briefing` are real writes but reversible via undo_action. ' +
 		'Use this after dryrun_proposal shows no blocked check and, for a wallet_transfer, after the owner has explicitly confirmed it. Scope, confirmation, and spend caps are enforced SERVER-SIDE; this tool ' +
 		'cannot override them — an out-of-scope, over-budget, or unconfirmed call is denied (no action taken). ' +
 		'Returns the updated proposal, a human receipt, the signed action-log id, and updated trust.',
@@ -40,7 +40,7 @@ export const def = {
 		confirm: z
 			.boolean()
 			.optional()
-			.describe('Must be true to execute an irreversible SOL wallet_transfer (when require_confirm is on). Ignored for reversible kinds.'),
+			.describe('Must be true to execute an irreversible wallet_transfer or trade (when require_confirm is on). Ignored for reversible kinds.'),
 	},
 	async handler(args) {
 		const agentId = String(args?.agentId ?? '').trim();

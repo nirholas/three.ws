@@ -25,6 +25,7 @@ const PACKAGES = [
 	'packages/avatar-agent-mcp',
 	'packages/threews-avatar-mcp',
 	'packages/three-token-mcp',
+	'packages/trading-mcp',
 	'mcp-bridge',
 	// The worked example for paid MCP tools. It is not published, but it is a real
 	// MCP surface with a real test suite, and it breaks the same way the packages do.

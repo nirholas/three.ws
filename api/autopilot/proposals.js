@@ -127,11 +127,11 @@ async function handleAct(req, res, auth) {
 		proposal = decorateProposal(row);
 	}
 
-	// Executing a wallet_transfer sends real SOL from the agent's custodial wallet,
+	// Executing a wallet_transfer or trade moves real funds from the agent's custodial wallet,
 	// so it needs a signed real-funds agreement. Checked before CSRF so a refusal
 	// does not burn the owner's single-use token.
-	if (action === 'execute' && proposal.kind === 'wallet_transfer' &&
-		!(await requireRealFundsAgreement(req, res, { userId: auth.userId, context: 'autopilot-transfer' }))) return;
+	if (action === 'execute' && (proposal.kind === 'wallet_transfer' || proposal.kind === 'trade') &&
+		!(await requireRealFundsAgreement(req, res, { userId: auth.userId, context: proposal.kind === 'trade' ? 'autopilot-trade' : 'autopilot-transfer' }))) return;
 	if (!(await requireCsrf(req, res, auth.userId))) return;
 
 	if (action === 'generate') {

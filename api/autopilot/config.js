@@ -77,15 +77,14 @@ export default wrap(async (req, res) => {
 	if ('daily_spend_sol' in body) patch.daily_spend_sol = body.daily_spend_sol;
 	if ('require_confirm' in body) patch.require_confirm = body.require_confirm === true;
 
-	// A patch that leaves autopilot enabled with the wallet_transfer scope, while
+	// A patch that leaves autopilot enabled with the wallet_transfer or trade scope, while
 	// arming it or setting its SOL cap, lets the agent spend real SOL, so it needs a
 	// signed real-funds agreement. Turning autopilot off or revoking the scope never
 	// does. Checked before CSRF so a refusal does not burn the single-use token.
 	const current = getAutopilotConfig(agent.meta);
-	const armedAfter =
-		('enabled' in patch ? patch.enabled : current.enabled) &&
-		(patch.scopes && 'wallet_transfer' in patch.scopes ? patch.scopes.wallet_transfer === true : current.scopes.wallet_transfer);
-	const touchesSpend = 'enabled' in patch || 'daily_spend_sol' in patch || (patch.scopes && 'wallet_transfer' in patch.scopes);
+	const scopeAfter = (k) => (patch.scopes && k in patch.scopes ? patch.scopes[k] === true : current.scopes[k]);
+	const armedAfter = ('enabled' in patch ? patch.enabled : current.enabled) && (scopeAfter('wallet_transfer') || scopeAfter('trade'));
+	const touchesSpend = 'enabled' in patch || 'daily_spend_sol' in patch || (patch.scopes && ('wallet_transfer' in patch.scopes || 'trade' in patch.scopes));
 	if (armedAfter && touchesSpend && !(await requireRealFundsAgreement(req, res, { userId: auth.userId, context: 'autopilot-config' }))) return;
 	if (!(await requireCsrf(req, res, auth.userId))) return;
 

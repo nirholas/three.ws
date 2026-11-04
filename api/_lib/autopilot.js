@@ -36,7 +36,11 @@ export const THREE_DECIMALS = 6;
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const MAX_DAILY_SOL = 1000; // sane ceiling on the daily autonomous SOL spend cap
 
-export const AUTOPILOT_ACTION_KINDS = ['create_alert', 'briefing', 'wallet_transfer'];
+export const AUTOPILOT_ACTION_KINDS = ['create_alert', 'briefing', 'wallet_transfer', 'trade'];
+
+const MAX_TRADE_SLIPPAGE_BPS = 500;
+const DEFAULT_TRADE_SLIPPAGE_BPS = 100;
+const WSOL_MINT_ADDR = 'So11111111111111111111111111111111111111112';
 
 // The actions /api/autopilot/proposals accepts on a POST. Kept beside the engine
 // so the handler's allowlist and its error message can never drift apart.
@@ -71,6 +75,7 @@ const ACTION_TYPE = {
 	create_alert: 'autopilot.alert.created',
 	briefing: 'autopilot.briefing.authored',
 	wallet_transfer: 'autopilot.wallet.transfer',
+	trade: 'autopilot.trade.executed',
 };
 
 // ── Scope / permission model (stored on agent_identities.meta.autopilot) ──────
@@ -79,9 +84,9 @@ export const AUTOPILOT_DEFAULTS = Object.freeze({
 	enabled: false,
 	// Which capabilities the owner has granted. Nothing is granted by default —
 	// the agent can propose but not act until the owner opts in per capability.
-	scopes: Object.freeze({ create_alert: false, briefing: false, wallet_transfer: false }),
+	scopes: Object.freeze({ create_alert: false, briefing: false, wallet_transfer: false, trade: false }),
 	// Reversible actions may auto-execute within scope when the owner allows it;
-	// wallet_transfer is irreversible and can never auto-execute here.
+	// wallet_transfer and trade are irreversible and can never auto-execute here.
 	auto_execute: Object.freeze({ create_alert: false, briefing: false }),
 	// Daily ceiling on autonomous SOL outflow (in SOL). 0 ⇒ no spending. The agent
 	// spends SOL, never $THREE — $THREE is buy-and-hold/burn only.
@@ -105,6 +110,7 @@ export function normalizeAutopilotConfig(raw) {
 			create_alert: scopesIn.create_alert === true,
 			briefing: scopesIn.briefing === true,
 			wallet_transfer: scopesIn.wallet_transfer === true,
+			trade: scopesIn.trade === true,
 		},
 		auto_execute: {
 			create_alert: autoIn.create_alert === true,
@@ -205,6 +211,38 @@ function validateWalletTransfer(params) {
 	return { ok: true, params: { recipient, amount_sol: amount, reason } };
 }
 
+/**
+ * A discretionary swap from the agent wallet. Buys spend SOL; sells send token
+ * base units. Buy-only $THREE: a sell of the promoted coin is refused here, at
+ * the first boundary, and again in executeTrade.
+ */
+function validateTrade(params) {
+	const bad = (reason, code = 'invalid_trade') => ({ ok: false, reason, code });
+	const side = params?.side === 'sell' ? 'sell' : params?.side === 'buy' ? 'buy' : null;
+	if (!side) return bad('side must be "buy" or "sell"');
+	const mint = typeof params?.mint === 'string' ? params.mint.trim() : '';
+	if (!SOLANA_ADDR_RE.test(mint)) return bad('mint must be a valid Solana address');
+	if (mint === WSOL_MINT_ADDR) return bad('wrapped SOL cannot be traded as a token');
+	if (side === 'sell' && mint === THREE_CA) {
+		return bad('the agent never sells $THREE: it only accumulates and burns it', 'three_sell_forbidden');
+	}
+	let slippage = params?.slippage_bps == null ? DEFAULT_TRADE_SLIPPAGE_BPS : Number(params.slippage_bps);
+	if (!Number.isInteger(slippage) || slippage < 1 || slippage > MAX_TRADE_SLIPPAGE_BPS) {
+		return bad(`slippage_bps must be a whole number from 1 to ${MAX_TRADE_SLIPPAGE_BPS}`);
+	}
+	const reason = typeof params?.reason === 'string' ? params.reason.trim().slice(0, 200) : '';
+	if (side === 'buy') {
+		const amount = Number(params?.amount_sol);
+		if (!Number.isFinite(amount) || amount <= 0) return bad('amount_sol must be > 0');
+		return { ok: true, params: { side, mint, amount_sol: amount, slippage_bps: slippage, reason } };
+	}
+	const raw = params?.token_amount_raw;
+	if (raw == null || !/^\d{1,30}$/.test(String(raw)) || BigInt(String(raw)) <= 0n) {
+		return bad('token_amount_raw must be a positive base-unit integer');
+	}
+	return { ok: true, params: { side, mint, token_amount_raw: String(raw), amount_sol: 0, slippage_bps: slippage, reason } };
+}
+
 /** Validate + normalize a proposal of a given kind. Returns { ok, kind, params, rule? } | { ok:false, reason }. */
 export function validateProposal(kind, params) {
 	if (!AUTOPILOT_ACTION_KINDS.includes(kind)) return { ok: false, reason: `unknown action kind '${kind}'` };
@@ -216,6 +254,10 @@ export function validateProposal(kind, params) {
 		const r = validateBriefing(params);
 		return r.ok ? { ok: true, kind, params: r.params } : r;
 	}
+	if (kind === 'trade') {
+		const r = validateTrade(params);
+		return r.ok ? { ok: true, kind, params: r.params } : r;
+	}
 	const r = validateWalletTransfer(params);
 	return r.ok ? { ok: true, kind, params: r.params } : r;
 }
@@ -224,6 +266,7 @@ export function validateProposal(kind, params) {
 export function proposalDedupeKey(kind, params) {
 	if (kind === 'create_alert') return `create_alert:${params.condition}:${params.asset}:${params.threshold_usd ?? params.threshold_sol ?? params.threshold ?? ''}`;
 	if (kind === 'briefing') return `briefing:${params.cadence}:${(params.topic || params.summary || '').toLowerCase().slice(0, 60)}`;
+	if (kind === 'trade') return `trade:${params.side}:${params.mint}`;
 	return `wallet_transfer:${params.recipient}:${params.amount_sol}`;
 }
 
@@ -242,6 +285,9 @@ const PROPOSAL_SYSTEM = [
 	'      { summary: string, cadence: "once"|"daily"|"weekly", topic: string }',
 	'  • "wallet_transfer" — send native SOL from the agent\'s own wallet. params:',
 	'      { recipient: "<solana address>", amount_sol: number, reason: string }',
+	'  • "trade"        , swap from the agent\'s own wallet. params:',
+	'      { side: "buy"|"sell", mint: "<solana address>", amount_sol: number (buy),',
+	'        token_amount_raw: "<base units>" (sell), slippage_bps?: 1-500, reason: string }',
 	'',
 	'RULES:',
 	'1. PROVENANCE IS MANDATORY. Every proposal must cite "source_memory_ids" using',
@@ -253,7 +299,11 @@ const PROPOSAL_SYSTEM = [
 	'   is allowed only when a memory supplies one. NEVER sell or send $THREE.',
 	'4. wallet_transfer spends real SOL (never $THREE) — propose only when a memory',
 	'   explicitly asks the agent to pay/tip/fund a recipient, with amount_sol.',
-	'5. "rationale" is the receipt the user reads: one sentence, plain language,',
+	'5. trade spends or sells real funds. Propose it ONLY when a memory carries an',
+	'   explicit buy/sell intent for a specific mint (an intel or pump.fun memory the',
+	'   owner acted on), with a size. NEVER propose selling $THREE: the agent only',
+	'   accumulates and burns it. Buying $THREE is allowed.',
+	'6. "rationale" is the receipt the user reads: one sentence, plain language,',
 	'   explaining WHY (referencing what the memories show).',
 	'',
 	'Return ONLY a JSON object, no prose, no fences:',
@@ -321,6 +371,20 @@ export function heuristicProposals(memories) {
 					confidence: 0.55,
 					source_memory_ids: [m.id],
 					params: { asset: 'three', condition: 'price_above', threshold_usd: n },
+				});
+			}
+		}
+		const buyMatch = String(m.content || '').match(/\bbuy\s+([\d.]+)\s*sol\s+(?:of\s+)?([1-9A-HJ-NP-Za-km-z]{32,44})\b/i);
+		if (buyMatch && ['intel', 'pumpfun', 'pump_fun', 'feedback', 'instruction'].some((t) => (Array.isArray(m.tags) ? m.tags : []).includes(t) || m.type === t)) {
+			const amount = Number(buyMatch[1]);
+			if (Number.isFinite(amount) && amount > 0) {
+				out.push({
+					kind: 'trade',
+					title: `Buy ${buyMatch[2] === THREE_CA ? '$THREE' : `${buyMatch[2].slice(0, 6)}…`} with ${amount} SOL`,
+					rationale: `A memory records your intent to buy ${amount} SOL of this mint. Nothing is traded until you confirm.`,
+					confidence: 0.5,
+					source_memory_ids: [m.id],
+					params: { side: 'buy', mint: buyMatch[2], amount_sol: amount, slippage_bps: 100, reason: 'memory-recorded buy intent' },
 				});
 			}
 		}
@@ -483,8 +547,8 @@ export async function generateProposals({ agentId, userId, agent }) {
 			? c.rationale
 			: 'Grounded in your agent\'s memory.').slice(0, 600);
 		const confidence = clamp01(c.confidence, 0.6);
-		// wallet_transfer is irreversible → always requires confirmation here.
-		const requiresConfirmation = kind === 'wallet_transfer';
+		// wallet_transfer and trade are irreversible → always require confirmation here.
+		const requiresConfirmation = kind === 'wallet_transfer' || kind === 'trade';
 
 		try {
 			const [row] = await sql`
@@ -514,6 +578,11 @@ function defaultTitle(kind, v) {
 		return `Alert: ${m} ${v.rule.kind.replace('_', ' ')}`;
 	}
 	if (kind === 'briefing') return v.params.summary;
+	if (kind === 'trade') {
+		const t = v.params;
+		const sym = t.mint === THREE_CA ? '$THREE' : `${t.mint.slice(0, 6)}…`;
+		return t.side === 'buy' ? `Buy ${sym} with ${t.amount_sol} SOL` : `Sell ${sym} for SOL`;
+	}
 	return `Send ${v.params.amount_sol} SOL`;
 }
 
@@ -592,7 +661,7 @@ export async function dailySolSpent(agentId) {
 		SELECT COALESCE(SUM((payload->>'amount_sol')::numeric), 0) AS spent
 		FROM agent_actions
 		WHERE agent_id = ${agentId}
-		  AND type = ${ACTION_TYPE.wallet_transfer}
+		  AND type IN (${ACTION_TYPE.wallet_transfer}, ${ACTION_TYPE.trade})
 		  AND created_at > now() - interval '24 hours'
 	`;
 	return Number(row?.spent ?? 0);
@@ -631,6 +700,30 @@ export async function dryRunProposal({ proposal, agent, config }) {
 	} else if (kind === 'briefing') {
 		willDo = `Author a memory-grounded briefing ("${proposal.params.topic || proposal.params.summary}") and deliver it to your inbox. Reversible.`;
 		checks.push({ label: 'LLM available for synthesis', ok: llmConfigured(), detail: llmConfigured() ? 'ready' : 'will use a grounded summary fallback' });
+	} else if (kind === 'trade') {
+		const v = validateProposal(kind, proposal.params);
+		checks.push({ label: 'Trade parameters valid', ok: v.ok, detail: v.ok ? 'ok' : v.reason });
+		if (!v.ok) {
+			willDo = `Invalid: ${v.reason}`;
+		} else {
+			const t = v.params;
+			const sym = t.mint === THREE_CA ? '$THREE' : t.mint;
+			willDo = t.side === 'buy'
+				? `Buy ${sym} with ${t.amount_sol} SOL from the agent wallet at up to ${t.slippage_bps} bps slippage. IRREVERSIBLE. Always requires explicit confirmation. Every wallet guard still applies.`
+				: `Sell ${t.token_amount_raw} base units of ${sym} from the agent wallet for SOL at up to ${t.slippage_bps} bps slippage. IRREVERSIBLE. Always requires explicit confirmation.`;
+			if (t.side === 'buy') {
+				const cap = config.daily_spend_sol;
+				const spent = await dailySolSpent(proposal.agentId);
+				checks.push({ label: `Within daily SOL cap (${cap})`, ok: config.scopes.trade && cap > 0 && spent + t.amount_sol <= cap, detail: `${spent} spent in 24h + ${t.amount_sol} <= ${cap}` });
+				let bal = null;
+				try {
+					const { ensureAgentWallet } = await import('./agent-wallet.js');
+					const w = await ensureAgentWallet(proposal.agentId, agent.user_id, { reason: 'autopilot.dryrun' });
+					bal = await agentSolBalance(w.address);
+				} catch { /* balance is decoration on the preview */ }
+				checks.push({ label: 'Wallet SOL balance covers the buy', ok: bal == null ? false : bal >= t.amount_sol, detail: bal == null ? 'could not read balance' : `${bal} SOL available` });
+			}
+		}
 	} else {
 		const amt = Number(proposal.params.amount_sol) || 0;
 		willDo = `Send ${amt} SOL to ${proposal.params.recipient}. IRREVERSIBLE — always requires explicit confirmation. (Autopilot never sells or sends $THREE.)`;
@@ -667,9 +760,9 @@ export async function executeProposal({ proposal, agent, userId, meta, confirmed
 	if (!config.enabled) throw new AutopilotError('Autopilot is off — enable it to let the agent act.', { code: 'autopilot_disabled', status: 409 });
 	if (!config.scopes[kind]) throw new AutopilotError(`This agent isn't scoped to ${kind.replace('_', ' ')}.`, { code: 'scope_denied', status: 403 });
 
-	const irreversible = kind === 'wallet_transfer';
+	const irreversible = kind === 'wallet_transfer' || kind === 'trade';
 	if (irreversible && config.require_confirm && !confirmed) {
-		throw new AutopilotError('This action moves real SOL and needs explicit confirmation.', { code: 'confirmation_required', status: 428 });
+		throw new AutopilotError('This action moves real funds and needs explicit confirmation.', { code: 'confirmation_required', status: 428 });
 	}
 
 	const provenance = {
@@ -716,6 +809,9 @@ export async function executeProposal({ proposal, agent, userId, meta, confirmed
 		`;
 		result = { notification_id: notif.id, cadence: proposal.params.cadence, body_preview: body.slice(0, 140) };
 		action = await recordAction({ agentId: proposal.agentId, userId, meta, type: ACTION_TYPE.briefing, payload: { ...provenance, ...result } });
+	} else if (kind === 'trade') {
+		result = await executeTrade({ proposal, agent, userId, config });
+		action = await recordAction({ agentId: proposal.agentId, userId, meta, type: ACTION_TYPE.trade, payload: { ...provenance, ...result } });
 	} else {
 		// wallet_transfer — real, irreversible native SOL transfer (never $THREE).
 		result = await executeWalletTransfer({ proposal, agent, userId, config });
@@ -735,6 +831,63 @@ export async function executeProposal({ proposal, agent, userId, meta, confirmed
 		return { proposal: decorateProposal(cur), action, receipt: buildReceipt(kind, result) };
 	}
 	return { proposal: decorateProposal(row), action, receipt: buildReceipt(kind, result) };
+}
+
+/**
+ * Fill an approved trade proposal through the same guarded executor the wallet
+ * hub uses (kill switch, per-trade cap, daily budget, USD ceiling, price-impact
+ * breaker, rug firewall, SOL headroom, idempotent custody ledger, protected
+ * send). The proposal id is the idempotency key, so a retried approval can
+ * never fill twice. A SOL buy also counts against autopilot's own daily cap.
+ */
+async function executeTrade({ proposal, agent, userId, config }) {
+	const v = validateTrade(proposal.params);
+	if (!v.ok) throw new AutopilotError(`Invalid trade: ${v.reason}`, { code: v.code, status: 400 });
+	const p = v.params;
+
+	if (p.side === 'buy') {
+		const cap = config.daily_spend_sol;
+		if (!(cap > 0)) throw new AutopilotError('No daily SOL spend budget is set.', { code: 'no_budget', status: 403 });
+		const spent = await dailySolSpent(proposal.agentId);
+		if (spent + p.amount_sol > cap) {
+			throw new AutopilotError(`Daily SOL budget exceeded (${spent} + ${p.amount_sol} > ${cap}).`, { code: 'budget_exceeded', status: 403 });
+		}
+	}
+
+	const { currentSignatureFor } = await import('./real-funds-agreement.js');
+	let signed;
+	try { signed = await currentSignatureFor(userId); } catch {
+		throw new AutopilotError('Could not verify your signed real-funds agreements, so nothing was traded.', { code: 'agreement_check_unavailable', status: 503 });
+	}
+	if (!signed) throw new AutopilotError('Sign the real-funds agreements before the agent trades from its wallet.', { code: 'risk_ack_required', status: 403 });
+
+	const { ensureAgentWallet } = await import('./agent-wallet.js');
+	await ensureAgentWallet(proposal.agentId, agent.user_id, { reason: 'autopilot.trade' });
+	const [row] = await sql`SELECT meta FROM agent_identities WHERE id = ${proposal.agentId}`;
+	const encryptedSecret = row?.meta?.encrypted_solana_secret;
+	const address = row?.meta?.solana_address;
+	if (!encryptedSecret || !address) throw new AutopilotError('Agent wallet not provisioned.', { code: 'no_wallet', status: 409 });
+
+	const { runAgentTrade, parseTradeRequest } = await import('../agents/solana-trade.js');
+	const parsed = parseTradeRequest({
+		side: p.side, mint: p.mint, network: 'mainnet', slippage_bps: p.slippage_bps,
+		...(p.side === 'buy' ? { sol_amount: p.amount_sol } : { token_amount_raw: p.token_amount_raw }),
+		idempotency_key: `autopilot:${proposal.id}`,
+	});
+	if (!parsed.ok) throw new AutopilotError(parsed.message, { code: parsed.code, status: parsed.status });
+
+	const out = await runAgentTrade({
+		agentId: proposal.agentId, userId, meta: row.meta, address, encryptedSecret, parsed,
+		ownerInitiated: true,
+	});
+	if (out.error) {
+		throw new AutopilotError(out.error.message, { code: out.error.code, status: out.status >= 400 && out.status < 600 ? out.status : 502 });
+	}
+	return {
+		signature: out.data.signature, side: p.side, mint: p.mint, amount_sol: p.side === 'buy' ? p.amount_sol : 0,
+		token_amount_raw: p.token_amount_raw || null, venue: out.data.venue, slippage_bps: p.slippage_bps,
+		custody_id: out.data.custody_event_id ?? null, replayed: out.data.replayed === true,
+	};
 }
 
 async function executeWalletTransfer({ proposal, agent, userId, config }) {
@@ -836,6 +989,7 @@ async function composeBriefing({ agentId, userId, agent, params }) {
 function buildReceipt(kind, result) {
 	if (kind === 'create_alert') return `Created a ${String(result.rule_kind).replace('_', ' ')} alert.`;
 	if (kind === 'briefing') return 'Authored a briefing and delivered it to your inbox.';
+	if (kind === 'trade') return `${result.side === 'buy' ? 'Bought' : 'Sold'} ${result.mint} (${result.signature}).`;
 	return `Sent ${result.amount_sol} SOL.`;
 }
 
@@ -847,6 +1001,9 @@ function buildReceipt(kind, result) {
  */
 export async function undoProposal({ proposal, agentId, userId }) {
 	if (proposal.status !== 'executed') throw new AutopilotError('Only an executed action can be undone.', { code: 'not_executed', status: 409 });
+	if (proposal.kind === 'trade') {
+		throw new AutopilotError('A swap is on-chain and cannot be undone.', { code: 'irreversible', status: 409 });
+	}
 	if (proposal.kind === 'wallet_transfer') {
 		throw new AutopilotError('A SOL transfer is on-chain and cannot be undone.', { code: 'irreversible', status: 409 });
 	}

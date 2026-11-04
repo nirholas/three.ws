@@ -80,7 +80,7 @@ export function buildServer() {
 				"three.ws Autopilot MCP — an agent's own execution control plane. The agent manages its OWN " +
 				'autonomy boundaries and acts within them, bounded by real, server-enforced scopes and spend ' +
 				'caps. Flow: get_autopilot_config to read scopes + daily SOL cap + trust; set_autopilot_config ' +
-				'to grant capabilities (create_alert, briefing, wallet_transfer), set auto-execute, and the daily ' +
+				'to grant capabilities (create_alert, briefing, wallet_transfer, trade), set auto-execute, and the daily ' +
 				'spend ceiling; generate_proposals to turn high-salience memories into real, provenance-cited ' +
 				'candidate actions; list_proposals to read the queue; dryrun_proposal to preview a proposal ' +
 				'(scope/cap/balance checks) without acting; adjust_proposal to tune a pending one; execute_proposal ' +

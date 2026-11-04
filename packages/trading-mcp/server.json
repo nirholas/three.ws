@@ -1,0 +1,56 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/trading-mcp",
+	"title": "three.ws Trading",
+	"description": "Quote and fill guarded Solana swaps from a three.ws agent wallet. Never sells $THREE.",
+	"websiteUrl": "https://three.ws",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/trading-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/trading-mcp",
+			"version": "0.1.0",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "THREE_WS_API_KEY",
+					"description": "REQUIRED. The agent owner's three.ws credential (API key or OAuth access token), sent as Authorization: Bearer. Filling a trade needs the wallet:trade grant and the owner's signed real-funds agreement. This credential can move real funds via execute_trade: treat it like a password. THREE_WS_TOKEN / THREE_WS_BEARER are accepted aliases.",
+					"format": "string",
+					"isRequired": true,
+					"isSecret": true
+				},
+				{
+					"name": "THREE_WS_BASE",
+					"description": "Base URL of the three.ws API. Override only when self-hosting or targeting a preview deployment.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws"
+				},
+				{
+					"name": "THREE_WS_TIMEOUT_MS",
+					"description": "Per-request timeout in milliseconds.",
+					"format": "number",
+					"isRequired": false,
+					"default": "60000"
+				}
+			]
+		}
+	]
+}

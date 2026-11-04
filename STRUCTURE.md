@@ -551,6 +551,7 @@ packages/x402-mcp/            → @three-ws/x402-mcp          (MCP server — se
 packages/metaplex-agent-mcp/  → @three-ws/metaplex-agent-mcp (MCP server: mint + register on-chain agents in the Metaplex Agent Registry, self-custody or Phantom/Solflare)
 packages/onchain-agent-wallets/ → @three-ws/onchain-agent-wallets (MCP server: agent wallets with an SPL-Token-enforced spending allowance, guardrails, x402, revocable custody)
 packages/autopilot-mcp/       → @three-ws/autopilot-mcp     (MCP server — agent execution control: scopes, SOL spend caps, propose/execute/undo)
+packages/trading-mcp/         → @three-ws/trading-mcp       (MCP server: quote and fill guarded Solana swaps from an agent wallet; never sells $THREE)
 packages/portfolio-mcp/       → @three-ws/portfolio-mcp     (MCP server — portfolio, PnL, balances, trade feed, signed transfers)
 packages/hood-portfolios-sdk/ → @three-ws/hood-portfolios-sdk (Robinhood Chain portfolios: universe, generate, backtest, canonical manifest hashing)
 packages/provenance-mcp/      → @three-ws/provenance-mcp    (MCP server — append-only, signed, on-chain-verifiable agent action log)
