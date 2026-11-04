@@ -86,6 +86,29 @@ by the `three_token_rail` subsystem in `/api/healthz`.
 No platform split routes to the burn sink. Supply is never destroyed; the
 treasury funds buybacks instead ([token/config.js](../api/_lib/token/config.js)).
 
+#### Receiver rollout
+
+1. Preflight (read-only, signs and sends nothing):
+
+       npm run token:preflight -- --treasury <treasury> --rewards <rewards>
+
+   It validates both addresses, reads mainnet to confirm each is an ordinary
+   system-owned wallet and shows any existing $THREE token account, flags a
+   rewards/signer conflict against the loaded buyback and micro-buy signers, and
+   prints the exact `--update-env-vars` command (never `--set-env-vars`, which
+   replaces the whole env set). Exit code 0 means safe to apply.
+2. Apply the printed command once the owner has confirmed both addresses.
+3. Verify: `/api/healthz` reports `three_token_rail` `ok`, and a signed-in
+   `POST /api/token/quote` returns a quote carrying both destinations.
+4. Buyback decision: separate the buyback signer from the rewards wallet before
+   arming either lane. This is now enforced in code. `planBuyback`,
+   `executeBuyback`, `sweepStrandedThree`, `planMicrobuy`, `executeMicrobuy` and
+   `sweepMicrobuyThree` refuse with `rewards_wallet_is_signer` (before any RPC
+   spend) when the signer equals `THREE_REWARDS_WALLET`
+   ([assertRewardsNotSwept](../api/_lib/token/config.js)), and the
+   `three_token_rail` health check reports `down` with
+   `conflict: rewards_wallet_is_signer` when an armed lane has that signer.
+
 ### Payout treasuries (outbound - pay third parties out-of-band)
 | Env var (secret) | Pays | Network |
 | ---------------- | ---- | ------- |

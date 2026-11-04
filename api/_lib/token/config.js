@@ -109,6 +109,25 @@ export function rewardsWalletOrNull() {
 }
 
 /**
+ * Refuse any lane whose signer is the holder-rewards wallet. The buyback and
+ * micro-buy lanes sweep every $THREE their signer holds into the treasury, so a
+ * signer that equals the rewards wallet would drain the whole rewards pool. Call
+ * this before any RPC spend or sweep instruction is built.
+ * @param {string} signerPubkey base58 public key of the lane's signer
+ */
+export function assertRewardsNotSwept(signerPubkey) {
+	const rewards = rewardsWalletOrNull();
+	if (rewards && signerPubkey && rewards === String(signerPubkey)) {
+		throw Object.assign(
+			new Error(
+				'[token] THREE_REWARDS_WALLET is the buyback/micro-buy signer: the treasury sweep would move the entire holder-rewards pool. Give the lane its own signer wallet.',
+			),
+			{ code: 'rewards_wallet_is_signer', status: 503 },
+		);
+	}
+}
+
+/**
  * The burn sink (Solana incinerator, unspendable ATA). Retained ONLY for the
  * user-invoked burn primitive (three_burn) and as the dev fallback for unset
  * fund-routing wallets. NO platform split policy routes here — see the economy

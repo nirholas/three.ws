@@ -38,7 +38,7 @@ import { submitProtected } from '../execution-engine.js';
 import { getRedis } from '../redis.js';
 import { sql } from '../db.js';
 import { SOLANA_USDC_MINT } from '../../payments/_config.js';
-import { TOKEN_MINT, TOKEN_DECIMALS, treasuryWallet, treasuryWalletOrNull } from './config.js';
+import { TOKEN_MINT, TOKEN_DECIMALS, treasuryWallet, treasuryWalletOrNull, assertRewardsNotSwept } from './config.js';
 import { tokenProgramIdForMint } from './token-program.js';
 import { jupiterQuote, jupiterSwapTx } from './jupiter.js';
 import {
@@ -313,6 +313,11 @@ async function confirmBounded(connection, sig) {
  * quote?, expectedThreeAtomics?, priceUsd? }.
  */
 export async function planMicrobuy(signerPubkey) {
+	try {
+		assertRewardsNotSwept(signerPubkey);
+	} catch (e) {
+		return { ok: false, reason: e.code, walletUsdcAtomics: 0n, spendUsdcAtomics: 0n };
+	}
 	if (!treasuryWalletOrNull()) {
 		return { ok: false, reason: 'treasury_unavailable', walletUsdcAtomics: 0n, spendUsdcAtomics: 0n };
 	}
@@ -364,6 +369,7 @@ export async function planMicrobuy(signerPubkey) {
  * @returns {Promise<{ status:'submitted'|'confirmed', buySignature:string, spendUsdcAtomics:bigint, boughtAtomics:bigint, priceUsd:number|null }>}
  */
 export async function executeMicrobuy(signer, plan) {
+	assertRewardsNotSwept(signer.publicKey.toBase58());
 	const { VersionedTransaction } = await import('@solana/web3.js');
 	const connection = getConnection({ network: 'mainnet' });
 	const payer = signer.publicKey;
@@ -462,6 +468,7 @@ export async function executeMicrobuy(signer, plan) {
  * estimate, blockhash-refresh rebroadcast, hard throw on revert).
  */
 export async function sweepMicrobuyThree(signer) {
+	assertRewardsNotSwept(signer.publicKey.toBase58());
 	const treasury = treasuryWalletOrNull();
 	if (!treasury || treasury === signer.publicKey.toBase58()) return null;
 	const { TransactionInstruction, PublicKey } = await import('@solana/web3.js');

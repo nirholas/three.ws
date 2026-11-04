@@ -3,9 +3,9 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
-			"title": "Forge and Marketplace buttons now share the platform button system",
-			"summary": "The Forge page and the Marketplace now use the same button component as the rest of the site, so hover, pressed, keyboard-focus, disabled and loading states look and behave the same on both. Forge no longer carries its own copy of the button styles, and four unused button and badge style families were deleted. A new audit, npm run audit:buttons, lists the remaining legacy button families and fails if a finished one comes back.",
-			"tags": ["improvement"]
+			"title": "$THREE buyback lanes can no longer sweep the holder-rewards pool",
+			"summary": "If the rewards wallet is ever the same wallet as the buyback or micro-buy signer, those lanes now refuse to run instead of sweeping the whole rewards pool into the treasury, and the ops health check flags it. A new read-only preflight, npm run token:preflight, validates the treasury and rewards addresses against mainnet and prints the one command that applies them.",
+			"tags": ["security", "infra"]
 		},
 		{
 			"date": "2026-11-04",

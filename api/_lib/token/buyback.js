@@ -29,7 +29,7 @@ import { confirmOrThrow } from '../solana/confirm.js';
 import { submitProtected } from '../execution-engine.js';
 import { SOLANA_USDC_MINT } from '../../payments/_config.js';
 import { TOKEN_MINT, TOKEN_DECIMALS } from './config.js';
-import { treasuryWallet, treasuryWalletOrNull } from './config.js';
+import { treasuryWallet, treasuryWalletOrNull, assertRewardsNotSwept } from './config.js';
 import { tokenProgramIdForMint } from './token-program.js';
 import { jupiterQuote as jupQuote, jupiterSwapTx as jupSwapTx } from './jupiter.js';
 import {
@@ -138,6 +138,11 @@ async function jupiterSwapTx(quote, userPublicKey) {
  * @returns {Promise<object>} { ok, reason?, spendUsdcAtomics, walletUsdcAtomics, quote?, expectedThreeAtomics?, priceUsd? }
  */
 export async function planBuyback(signerPubkey) {
+	try {
+		assertRewardsNotSwept(signerPubkey);
+	} catch (e) {
+		return { ok: false, reason: e.code, walletUsdcAtomics: 0n, spendUsdcAtomics: 0n };
+	}
 	// Fail BEFORE spending if the treasury sink is unconfigured — otherwise a buy
 	// could succeed with nowhere policy-correct to route the bought $THREE.
 	if (!treasuryWalletOrNull()) {
@@ -181,6 +186,7 @@ export async function planBuyback(signerPubkey) {
  * with a `.code` on hard failure so the caller records the precise reason.
  */
 export async function executeBuyback(signer, plan) {
+	assertRewardsNotSwept(signer.publicKey.toBase58());
 	const { VersionedTransaction, TransactionInstruction, PublicKey } = await import('@solana/web3.js');
 	const connection = getConnection({ network: 'mainnet' });
 	const payer = signer.publicKey;
@@ -252,6 +258,7 @@ export async function executeBuyback(signer, plan) {
  * sweep signature, or null when there's nothing to sweep / wallet is the treasury.
  */
 export async function sweepStrandedThree(signer) {
+	assertRewardsNotSwept(signer.publicKey.toBase58());
 	const treasury = treasuryWalletOrNull();
 	if (!treasury || treasury === signer.publicKey.toBase58()) return null;
 	const { TransactionInstruction, PublicKey } = await import('@solana/web3.js');

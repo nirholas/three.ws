@@ -34,6 +34,7 @@
 // `counts`.
 
 import { createHash } from 'node:crypto';
+import { rewardsSignerConflicts } from '../token/signer-conflict.js';
 import { cacheHealth, cacheGet } from '../cache.js';
 import { heliusHealth } from '../balances.js';
 import { rpcLaneHealth } from '../solana/connection.js';
@@ -668,7 +669,7 @@ function checkX402Config() {
 // the buyback cron records `treasury_unavailable` skips, and the reflections cron
 // reports "no pool to distribute". Production ran exactly that way, invisibly,
 // until 2026-09-20. This check gives the condition the signature it never had.
-function checkThreeTokenRail() {
+async function checkThreeTokenRail() {
 	const base = { name: 'three_token_rail', label: '$THREE payment rail config' };
 	try {
 		const missing = [];
@@ -691,6 +692,20 @@ function checkThreeTokenRail() {
 				detail: `${missing.join(', ')} unset, every $THREE-priced purchase fails closed`,
 				missing,
 				hint: 'Set them on the Cloud Run service (wallets as literals, the quote key as a Secret Manager reference). Until then /api/token/quote answers 503 and the buyback + reflections crons are inert.',
+			};
+		}
+		// The buyback and micro-buy lanes sweep their signer's $THREE into the
+		// treasury; a signer equal to the rewards wallet would sweep the whole pool.
+		const conflicts = await rewardsSignerConflicts();
+		if (conflicts.length) {
+			const lanes = conflicts.map((c) => c.lane);
+			return {
+				...base,
+				status: 'down',
+				detail: `THREE_REWARDS_WALLET is the ${lanes.join(' and ')} signer: the treasury sweep would move the entire holder-rewards pool`,
+				conflict: 'rewards_wallet_is_signer',
+				lanes,
+				hint: 'Give the lane its own wallet (THREE_BUYBACK_SECRET_KEY_B64 / THREE_MICROBUY_SECRET_KEY_B64) or disarm it (THREE_BUYBACK_ENABLED / THREE_MICROBUY_ENABLED). The lanes already refuse to run in this state.',
 			};
 		}
 		return { ...base, status: 'ok', detail: 'receivers + quote signing key configured' };
@@ -840,7 +855,7 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		// Same shape as checkX402Config: a pure config read, no probe. It sits here
 		// because an unset $THREE receiver takes down every paid $THREE surface at
 		// once while leaving every reachability probe green.
-		Promise.resolve(checkThreeTokenRail()),
+		checkThreeTokenRail(),
 		checkGraniteGuardian(),
 		Promise.resolve(checkAlertsPush()),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),

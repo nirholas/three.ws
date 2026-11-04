@@ -1,5 +1,7 @@
 # $THREE receiver wallets preflight, signer-conflict guard and one-command wiring
 
+**Status (2026-11-04):** Tasks 1 to 5 shipped: `assertRewardsNotSwept` guard in all six lane entry points, `three_token_rail` conflict signature, `npm run token:preflight`, money-map rollout section. Remaining, owner only: name the treasury and rewards addresses, then run the one command `npm run token:preflight -- --treasury <t> --rewards <r>` prints (config-only `gcloud run services update --update-env-vars`).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/966-plan-token-rail-receiver-wallets-preflight.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 92 of 100 inside the tier). **Area:** token. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

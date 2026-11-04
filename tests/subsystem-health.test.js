@@ -14,6 +14,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { gatherSubsystemHealth, classifySniperBeat } from '../api/_lib/ops/subsystem-health.js';
 import { cacheSet, cacheDel } from '../api/_lib/cache.js';
+import { Keypair } from '@solana/web3.js';
 
 // Durable ops_alerts rows the world fallback reads. Default empty so every other
 // case behaves as before; the world-fallback cases set it per test.
@@ -41,6 +42,10 @@ const ENV_KEYS = [
 	'THREE_TREASURY_WALLET',
 	'THREE_REWARDS_WALLET',
 	'THREE_QUOTE_SECRET',
+	'THREE_BUYBACK_ENABLED',
+	'THREE_BUYBACK_SECRET_KEY_B64',
+	'THREE_MICROBUY_ENABLED',
+	'THREE_MICROBUY_SECRET_KEY_B64',
 	'NODE_ENV',
 	'UPSTASH_CACHE_REST_URL',
 	'UPSTASH_CACHE_REST_TOKEN',
@@ -154,6 +159,47 @@ describe('gatherSubsystemHealth', () => {
 		process.env.THREE_QUOTE_SECRET = 'test-quote-signing-key';
 		const health = await gatherSubsystemHealth({ probeDb: false });
 		expect(sub(health, 'three_token_rail').status).toBe('ok');
+	});
+
+	it('flags the $THREE rail as DOWN when the rewards wallet is an armed buyback signer', async () => {
+		const signer = Keypair.generate();
+		process.env.NODE_ENV = 'production';
+		process.env.THREE_TREASURY_WALLET = 'THREEsynthetic1111111111111111111111Treasury';
+		process.env.THREE_REWARDS_WALLET = signer.publicKey.toBase58();
+		process.env.THREE_QUOTE_SECRET = 'test-quote-signing-key';
+		process.env.THREE_BUYBACK_ENABLED = '1';
+		process.env.THREE_BUYBACK_SECRET_KEY_B64 = Buffer.from(signer.secretKey).toString('base64');
+		const health = await gatherSubsystemHealth({ probeDb: false });
+		const rail = sub(health, 'three_token_rail');
+		expect(rail.status).toBe('down');
+		expect(rail.conflict).toBe('rewards_wallet_is_signer');
+		expect(rail.lanes).toEqual(['buyback']);
+		expect(health.degraded).toContain('three_token_rail');
+	});
+
+	it('flags the micro-buy lane when it falls back to a buyback key equal to the rewards wallet', async () => {
+		const signer = Keypair.generate();
+		process.env.NODE_ENV = 'production';
+		process.env.THREE_TREASURY_WALLET = 'THREEsynthetic1111111111111111111111Treasury';
+		process.env.THREE_REWARDS_WALLET = signer.publicKey.toBase58();
+		process.env.THREE_QUOTE_SECRET = 'test-quote-signing-key';
+		process.env.THREE_MICROBUY_ENABLED = 'true';
+		process.env.THREE_BUYBACK_SECRET_KEY_B64 = Buffer.from(signer.secretKey).toString('base64');
+		const rail = sub(await gatherSubsystemHealth({ probeDb: false }), 'three_token_rail');
+		expect(rail.conflict).toBe('rewards_wallet_is_signer');
+		expect(rail.lanes).toEqual(['microbuy']);
+	});
+
+	it('stays OK when the rewards wallet matches a signer whose lane is not enabled', async () => {
+		const signer = Keypair.generate();
+		process.env.NODE_ENV = 'production';
+		process.env.THREE_TREASURY_WALLET = 'THREEsynthetic1111111111111111111111Treasury';
+		process.env.THREE_REWARDS_WALLET = signer.publicKey.toBase58();
+		process.env.THREE_QUOTE_SECRET = 'test-quote-signing-key';
+		process.env.THREE_BUYBACK_SECRET_KEY_B64 = Buffer.from(signer.secretKey).toString('base64');
+		const rail = sub(await gatherSubsystemHealth({ probeDb: false }), 'three_token_rail');
+		expect(rail.status).toBe('ok');
+		expect(rail.conflict).toBeUndefined();
 	});
 
 	it('stays neutral outside production, where the $THREE dev fallbacks apply', async () => {
