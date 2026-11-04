@@ -1,11 +1,11 @@
 import { PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
 import { solanaConnection } from './solana/connection.js';
-import { ataExists } from './solana/read-guards.js';
+import { ataExists, mintDecimals } from './solana/read-guards.js';
 import { submitProtected } from './execution-engine.js';
 import {
 	getAssociatedTokenAddress,
+	getAssociatedTokenAddressSync,
 	createAssociatedTokenAccountIdempotentInstruction,
-	createTransferInstruction,
 	createTransferCheckedInstruction,
 } from '@solana/spl-token';
 import bs58 from 'bs58';
@@ -14,7 +14,13 @@ import { tokenProgramIdForMint } from './token/token-program.js';
 const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
 /**
- * Transfer SPL tokens from the platform treasury to a recipient address.
+ * Transfer SPL tokens from the platform treasury to a recipient address. This is
+ * the mint-generic payout rail (tournament prizes in $THREE, cosmetics creator
+ * splits, remix royalties, vanity bounties), so it resolves which token program
+ * owns the mint before deriving anything: $THREE is a Token-2022 mint, and an ATA
+ * or transfer built on the default classic program does not exist for it and is
+ * rejected on-chain. The transfer is a TransferChecked, so the chain validates
+ * the amount against the mint's decimals.
  * @param {object} opts
  * @param {string} opts.fromWallet   base58-encoded treasury keypair (64 bytes)
  * @param {string} opts.toAddress    recipient Solana address
@@ -31,9 +37,11 @@ export async function transferSolanaUSDC({ fromWallet, toAddress, amount, mint, 
 	const recipientPubkey = new PublicKey(toAddress);
 
 	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
+	const programId = await tokenProgramIdForMint(connection, mintPubkey);
+	const decimals = await mintDecimals(connection, mintPubkey, { programId });
 
-	const senderATA = await getAssociatedTokenAddress(mintPubkey, kp.publicKey);
-	const recipientATA = await getAssociatedTokenAddress(mintPubkey, recipientPubkey);
+	const senderATA = getAssociatedTokenAddressSync(mintPubkey, kp.publicKey, false, programId);
+	const recipientATA = getAssociatedTokenAddressSync(mintPubkey, recipientPubkey, false, programId);
 
 	const instructions = [];
 	// Idempotent create paired with the fail-open probe: when the chain cannot be
@@ -41,12 +49,16 @@ export async function transferSolanaUSDC({ fromWallet, toAddress, amount, mint, 
 	// rather than a transaction-killing error. It also closes the race where the
 	// ATA appears between the probe and the submit.
 	if (!(await ataExists(connection, recipientATA))) {
-		instructions.push(createAssociatedTokenAccountIdempotentInstruction(kp.publicKey, recipientATA, recipientPubkey, mintPubkey));
+		instructions.push(
+			createAssociatedTokenAccountIdempotentInstruction(kp.publicKey, recipientATA, recipientPubkey, mintPubkey, programId),
+		);
 	}
-	instructions.push(createTransferInstruction(senderATA, recipientATA, kp.publicKey, BigInt(amount)));
+	instructions.push(
+		createTransferCheckedInstruction(senderATA, mintPubkey, recipientATA, kp.publicKey, BigInt(amount), decimals, [], programId),
+	);
 
 	// Protected send: data-driven priority fee + CU, rebroadcast with blockhash
-	// refresh until it lands, and a hard throw on an on-chain revert — replaces the
+	// refresh until it lands, and a hard throw on an on-chain revert, replacing the
 	// previous send-once-and-confirm, which dropped silently under congestion.
 	const { signature } = await submitProtected({
 		network: 'mainnet',
@@ -60,10 +72,8 @@ export async function transferSolanaUSDC({ fromWallet, toAddress, amount, mint, 
 
 /**
  * Transfer an SPL token from a platform key to a recipient, resolving which
- * token program owns the mint first. transferSolanaUSDC above assumes the
- * legacy token program, which is right for legacy mints and wrong for $THREE:
- * $THREE is a Token-2022 mint, so the legacy associated-token address it derives
- * does not exist and the transfer is rejected on-chain. This variant reads the mint's
+ * token program owns the mint first, for a caller that already knows the mint's
+ * decimals and does not need the onSigned persistence hook. It reads the mint's
  * owner (memoized, api/_lib/token/token-program.js), derives both ATAs under
  * that program, and sends a TransferChecked so the amount is validated against
  * the mint's decimals by the chain itself.
