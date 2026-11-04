@@ -13,6 +13,24 @@
 		},
 		{
 			"date": "2026-11-04",
+			"title": "What three.ws builds with NVIDIA, and the poster we are taking to GTC 2027",
+			"tags": [
+				"docs"
+			],
+			"summary": "A new blog post lays out everything three.ws runs on NVIDIA: thirteen L4 and Blackwell GPU deployments that generated 19,270 3D models in a month, Nemotron, Riva and Magpie through NIM, and an Audio2Face-3D digital human that talks in a browser tab with nothing installed. It explains what NVIDIA Inception membership adds, and previews our application to the GTC 2027 call for posters: one facial animation track that drives 98.1% of real user avatars that have face morphs, from text to a speaking face in a median 3.8 seconds. Inception startups can also claim $25 of three.ws credit on the NVIDIA page.",
+			"link": "/blog/three-ws-nvidia-inception-gtc-2027"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Grok Bot gets the Solana market, and three.ws events can wake it",
+			"tags": [
+				"feature"
+			],
+			"summary": "The three.ws connector for Grok Bot now covers more than 3D. Signed in, Grok can read live pump.fun graduations and token intel, Oracle conviction plays, the Sentiment Scout, token due diligence, the trader leaderboard and Solana agent passports, and a new market-brief prompt turns them into a scheduled daily brief. None of these tools can trade or spend. Developer webhooks can now carry a bearer token, so a three.ws event such as a finished generation or agent run can start a Grok Bot routine. The token is stored encrypted and never shown again. The /grok page and docs also cover Grok Build, xAI's coding CLI, which picks up the three.ws MCP config and plugin marketplace with no extra setup.",
+			"link": "/grok"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Every page of the docs re-checked against the code it describes",
 			"tags": [
 				"docs"
