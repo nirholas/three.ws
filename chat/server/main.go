@@ -14,7 +14,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/byte-sat/three.ws-chat-tools/schema"
+	"github.com/byte-sat/llum-tools/schema"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -47,17 +47,7 @@ func main() {
 		}
 	}
 
-	r := chi.NewRouter()
-	r.Use(cors.Handler(cors.Options{
-		AllowOriginFunc: func(_ *http.Request, origin string) bool { return guard.OriginAllowed(allowedOrigins, origin) },
-		AllowedMethods:  []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:  []string{"Authorization", "Content-Type"},
-	}))
-	r.Use(guard.Auth(*password))
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r := newRouter(allowedOrigins, *password)
 
 	th := &ToolHandler{Groups: toolfns.ToolGroups}
 	r.Get("/tool_schema", th.ToolSchema)
@@ -86,6 +76,24 @@ func main() {
 	if err := httpServer.Shutdown(context.Background()); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// newRouter builds the shared middleware stack. The server only listens on
+// loopback with no proxy in front, so the peer address is the truth: no
+// header-trusting IP middleware (chi's deprecated RealIP let any caller spoof
+// RemoteAddr through X-Forwarded-For, GHSA-3fxj-6jh8-hvhx).
+func newRouter(allowedOrigins []string, password string) chi.Router {
+	r := chi.NewRouter()
+	r.Use(cors.Handler(cors.Options{
+		AllowOriginFunc: func(_ *http.Request, origin string) bool { return guard.OriginAllowed(allowedOrigins, origin) },
+		AllowedMethods:  []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders:  []string{"Authorization", "Content-Type"},
+	}))
+	r.Use(guard.Auth(password))
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	return r
 }
 
 func TTSHandler(w http.ResponseWriter, r *http.Request) {
