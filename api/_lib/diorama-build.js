@@ -27,7 +27,8 @@ import { randomUUID } from 'node:crypto';
 import { llmComplete, llmConfigured } from './llm.js';
 import { putObject, publicUrl } from './r2.js';
 import { composeSceneGlb } from './scene-graph-compose.js';
-import { normalizeDiorama, MIN_OBJECTS, MAX_OBJECTS, MAX_PROMPT_LEN, ISLAND_RADIUS } from '../../src/diorama/schema.js';
+import { MIN_OBJECTS, MAX_OBJECTS, MAX_PROMPT_LEN, ISLAND_RADIUS } from '../../src/diorama/schema.js';
+import { GAME_PROMPT_RULES, normalizePlanWithGame } from './diorama-game.js';
 import { fetchUpstream } from './upstream-fetch.js';
 
 const SITE = process.env.PUBLIC_BASE_URL || 'https://three.ws';
@@ -74,7 +75,8 @@ Return ONLY a JSON object (no prose, no markdown fence) with exactly this shape:
   "ground": one of "grass" | "sand" | "snow" | "stone" | "water" | "meadow" | "void",
   "island": one of "round" | "craggy" | "plateau",
   "palette": { "sky": ["#RRGGBB","#RRGGBB"], "ground": "#RRGGBB", "fog": "#RRGGBB", "accent": "#RRGGBB" },
-  "objects": [ { "label": "short", "prompt": "ONE physical object: subject + key material + color", "position": [x, 0, z], "scale": 0.5-2.5, "rotationY": radians } ]
+  "objects": [ { "label": "short", "prompt": "ONE physical object: subject + key material + color", "position": [x, 0, z], "scale": 0.5-2.5, "rotationY": radians } ],
+  "game": optional, see the Games rule
 }
 
 Rules:
@@ -82,6 +84,7 @@ Rules:
 - Spread objects across the island: x and z each between -${ISLAND_RADIUS - 1} and ${ISLAND_RADIUS - 1}, keep at least 1.5 between any two, never stack them. y is always 0. One object may sit near the center as a focal point.
 - "palette" sky is a 2-stop vertical gradient (top, horizon). Pick colors that match the mood and the scene. "accent" is the warm/cool glow color.
 - Choose mood + ground that fit the sentence (a beach → sand/day, a haunted forest → night/grass).
+${GAME_PROMPT_RULES}
 - Output MUST be valid JSON. No trailing commas. No comments.`;
 
 /** @returns {Promise<object>} a normalized, pending (no meshes yet) diorama plan. */
@@ -119,14 +122,13 @@ export async function composePlanFromPrompt(prompt) {
 		});
 	}
 	plan.prompt = sentence;
-	const { ok, diorama, errors } = normalizeDiorama(plan);
+	const { ok, diorama, errors } = normalizePlanWithGame(plan);
 	if (!ok || diorama.objects.length < 1) {
 		throw Object.assign(new Error('The composer could not place that world. Try a more concrete sentence.'), {
 			code: 'compose_invalid',
 			detail: errors,
 		});
 	}
-	diorama.objects = diorama.objects.map((o, i) => ({ ...o, id: `obj-${i}`, status: 'pending', glbUrl: null }));
 	return diorama;
 }
 

@@ -7,6 +7,7 @@
 // again for a new world; handlers are re-pointed, not stacked.
 
 import { beaconShareEvent } from '../shared/share-beacon.js';
+import { objectiveText } from './game-rules.js';
 
 /** Resolve a possibly-relative permalink to an absolute URL for sharing/embedding. */
 function absolute(url) {
@@ -69,14 +70,15 @@ function embedSnippet(url) {
 }
 
 /**
- * @param {{ diorama?: { title?: string, prompt?: string }, url: string }} opts
+ * @param {{ diorama?: { title?: string, prompt?: string }, url: string, playable?: boolean }} opts
  */
-export function openShare({ diorama = {}, url } = {}) {
+export function openShare({ diorama = {}, url, playable = false } = {}) {
 	const href = absolute(url);
 	const link = document.getElementById('share-link');
 	const copyBtn = document.getElementById('share-copy');
 	const xBtn = document.getElementById('share-x');
 	const embedBtn = document.getElementById('share-embed');
+	const playBtn = document.getElementById('share-play');
 
 	if (link) {
 		link.value = href;
@@ -111,4 +113,34 @@ export function openShare({ diorama = {}, url } = {}) {
 			flash(embedBtn, await copyText(embedSnippet(href)));
 		};
 	}
+
+	if (playBtn) {
+		playBtn.hidden = !playable;
+		playBtn.onclick = async () => {
+			beaconShareEvent('diorama_share', 'action');
+			const playUrl = playLink(href);
+			const ok = await copyText(playUrl);
+			flash(playBtn, ok);
+		};
+	}
+	if (xBtn && playable) {
+		xBtn.onclick = () => {
+			beaconShareEvent('diorama_share', 'action');
+			const goal = objectiveText(diorama);
+			const text = `I made a tiny 3D game on three.ws${goal ? `: ${goal}` : ''}. Can you beat it?`;
+			const intent =
+				'https://twitter.com/intent/tweet?text=' +
+				encodeURIComponent(text) +
+				'&url=' +
+				encodeURIComponent(playLink(href));
+			window.open(intent, '_blank', 'noopener,noreferrer');
+		};
+	}
+}
+
+/** The permalink with play mode on: opens the world straight into its game. */
+export function playLink(href) {
+	const u = new URL(href, window.location.origin);
+	u.searchParams.set('play', '1');
+	return u.href;
 }

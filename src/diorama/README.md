@@ -33,7 +33,9 @@ src/diorama/
 ├── compose.js     Orchestration: compose plan via /api/diorama, forge each object via /api/forge
 ├── renderer.js    Three.js stage: island, sky, mood lighting, seeds, GLB materialization, thumbnails
 ├── gallery.js     Public wall of saved worlds (GET /api/diorama?list=recent)
-├── share.js       Share sheet: permalink copy, X intent, iframe embed snippet
+├── share.js       Share sheet: permalink copy, X intent, iframe embed snippet, play link
+├── game-rules.js  Pure microgame rules: playability, pickups, hazards, timer, walker collision (no DOM/Three)
+├── play.js        Play mode: walker, chase camera, keyboard/joystick/tap input, HUD, win and lose cards
 ├── main.js        Page controller (the only script entry); wires the DOM contract in pages/diorama.html
 └── diorama.css    Page styles
 ```
@@ -83,7 +85,10 @@ a populated world second (each object gains a `glbUrl` once forged).
 
 | Export | What it is |
 | --- | --- |
-| `openShare({ diorama, url })` | Populate the share sheet (`#share-panel` in the page) with the saved permalink; wires copy, X intent, and iframe-embed actions. Idempotent |
+| `openShare({ diorama, url, playable })` | Populate the share sheet (`#share-panel` in the page) with the saved permalink; wires copy, X intent, and iframe-embed actions, plus "Share as a game" (`?play=1`) when `playable`. Idempotent |
+| `playLink(href)` | The permalink with `play=1` set |
+
+`game-rules.js` (pure): `playability`, `objectiveText`, `createGameState`, `startGame`, `stepGame`, `hudFor`, `formatClock`, `resolveWalker`. `play.js`: `createPlay({ stage, renderer, getDiorama, onExit })` returns `{ start, close, isOpen, dispose }`.
 
 `main.js` exports nothing; it is the page entry that wires all of the above to
 the DOM contract documented in [pages/diorama.html](../../pages/diorama.html).

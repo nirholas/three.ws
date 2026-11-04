@@ -33,6 +33,18 @@
 // @property {('pending'|'forging'|'ready'|'failed')} status
 // @property {string|null} glbUrl       durable GLB once forged
 //
+// @typedef {'collect'|'reach'|'survive'} DioramaGoal
+//
+// @typedef {Object} DioramaGame
+// @property {DioramaGoal} goal         collect: pick up `count` of the targets.
+//                                      reach: walk to the first target.
+//                                      survive: stay clear of every target (they
+//                                      are hazards) until the timer runs out.
+// @property {string[]} targetIds       object ids the goal refers to
+// @property {number} count             pickups needed (collect); 1 otherwise
+// @property {number|null} timeLimitSec null = untimed (survive always has one)
+// @property {{x:number,z:number,heading:number}} spawn  where the walker starts
+//
 // @typedef {Object} Diorama
 // @property {string} id
 // @property {string} prompt            the original sentence
@@ -42,6 +54,7 @@
 // @property {DioramaGround} ground
 // @property {IslandShape} island
 // @property {DioramaObject[]} objects
+// @property {DioramaGame|null} game    optional goal; null = exploration only
 // @property {{handle?:string, wallet?:string}|null} author
 // @property {string} createdAt         ISO 8601
 // @property {number} views
@@ -66,6 +79,12 @@ export const MAX_OBJECTS = 8;
 export const MIN_OBJECTS = 3;
 export const MAX_PROMPT_LEN = 240;
 export const ISLAND_RADIUS = 6.2; // metres; placement must stay inside this
+export const GOALS = /** @type {const} */ (['collect', 'reach', 'survive']);
+export const MIN_TIME_LIMIT_SEC = 10;
+export const MAX_TIME_LIMIT_SEC = 600;
+export const DEFAULT_SURVIVE_SEC = 45;
+// Spawns are kept a little inside the rim so the walker never starts on the edge.
+export const SPAWN_RADIUS = ISLAND_RADIUS - 0.8;
 
 // Per-mood lighting presets the renderer reads so sky, sun, and fog stay
 // coherent with the palette the composer chose. Pure data — no Three.js here.
@@ -136,6 +155,8 @@ export function normalizeDiorama(input) {
 
 	const title = String(src.title ?? '').slice(0, 80).trim() || titleFromPrompt(prompt);
 
+	const { game, warnings } = normalizeGame(src.game, objects);
+
 	const diorama = {
 		id: typeof src.id === 'string' ? src.id : '',
 		prompt,
@@ -145,13 +166,90 @@ export function normalizeDiorama(input) {
 		ground,
 		island,
 		objects,
+		game,
 		author: normalizeAuthor(src.author),
 		createdAt: typeof src.createdAt === 'string' ? src.createdAt : '',
 		views: isFiniteNum(src.views) ? Math.max(0, Math.floor(src.views)) : 0,
 		featured: Boolean(src.featured),
 	};
 
-	return { ok: errors.length === 0, diorama, errors };
+	return { ok: errors.length === 0, diorama, errors, warnings };
+}
+
+/**
+ * Validate + normalize an untrusted `game` block against the world's objects.
+ * Returns { game, warnings }. `game` is null when the input is absent or cannot
+ * be played (unknown goal, no surviving targets); an old diorama with no game
+ * block is simply exploration only and produces no warning. Unknown target ids
+ * are dropped (never fatal) and reported, so a model that names an object the
+ * plan does not have loses the bad reference instead of failing the world.
+ * Idempotent: normalizing a normalized game returns an equal game.
+ */
+export function normalizeGame(input, objects) {
+	const warnings = [];
+	if (input === undefined || input === null) return { game: null, warnings };
+	if (typeof input !== 'object' || Array.isArray(input)) {
+		return { game: null, warnings: ['game must be an object'] };
+	}
+	const goal = input.goal;
+	if (!GOALS.includes(goal)) {
+		return { game: null, warnings: [`unknown goal "${String(goal).slice(0, 24)}"`] };
+	}
+	const known = new Set((objects || []).map((o) => o.id));
+	const seen = new Set();
+	const targetIds = [];
+	for (const id of Array.isArray(input.targetIds) ? input.targetIds : []) {
+		if (typeof id !== 'string') continue;
+		if (!known.has(id)) {
+			warnings.push(`unknown target id "${id.slice(0, 48)}" dropped`);
+			continue;
+		}
+		if (!seen.has(id)) {
+			seen.add(id);
+			targetIds.push(id);
+		}
+	}
+	if (targetIds.length === 0) {
+		warnings.push('game has no valid targets');
+		return { game: null, warnings };
+	}
+
+	let count = 1;
+	if (goal === 'collect') {
+		const asked = Math.floor(Number(input.count));
+		count = clamp(Number.isFinite(asked) && asked > 0 ? asked : targetIds.length, 1, targetIds.length);
+	}
+	const reach = goal === 'reach' ? [targetIds[0]] : targetIds;
+
+	let timeLimitSec = null;
+	const limit = Number(input.timeLimitSec);
+	if (input.timeLimitSec !== null && input.timeLimitSec !== undefined && Number.isFinite(limit) && limit > 0) {
+		timeLimitSec = Math.round(clamp(limit, MIN_TIME_LIMIT_SEC, MAX_TIME_LIMIT_SEC));
+	}
+	if (goal === 'survive' && timeLimitSec === null) timeLimitSec = DEFAULT_SURVIVE_SEC;
+
+	return {
+		game: { goal, targetIds: reach, count, timeLimitSec, spawn: normalizeSpawn(input.spawn) },
+		warnings,
+	};
+}
+
+function normalizeSpawn(sp) {
+	const src = sp && typeof sp === 'object' ? sp : {};
+	let x = Number(src.x);
+	let z = Number(src.z);
+	if (!Number.isFinite(x) || !Number.isFinite(z)) {
+		x = 0;
+		z = SPAWN_RADIUS * 0.75;
+	}
+	const r = Math.hypot(x, z);
+	if (r > SPAWN_RADIUS) {
+		const k = SPAWN_RADIUS / r;
+		x *= k;
+		z *= k;
+	}
+	const heading = Number.isFinite(Number(src.heading)) ? Number(src.heading) : Math.PI;
+	return { x: round2(x), z: round2(z), heading: round3(heading) };
 }
 
 function normalizeObject(o, i) {

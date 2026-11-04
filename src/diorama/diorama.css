@@ -642,3 +642,151 @@
 	color: var(--ink-bright);
 	text-decoration-thickness: 2px;
 }
+
+/* Play mode: a walker, a goal, a HUD and result cards over the live stage */
+.dio-play {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	display: grid;
+	place-items: center;
+	pointer-events: none;
+	outline: none;
+}
+.dio-play[hidden] {
+	display: none;
+}
+.dio-play__hud {
+	position: absolute;
+	inset: 0 0 auto 0;
+	display: none;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	padding: 0.7rem 0.9rem;
+	background: linear-gradient(180deg, rgba(5, 6, 12, 0.7), transparent);
+	color: var(--dio-ink);
+}
+.dio-play__hud.is-live {
+	display: flex;
+	pointer-events: auto;
+}
+.dio-play__objective {
+	margin: 0;
+	flex: 1 1 14rem;
+	font-weight: 600;
+}
+.dio-play__stats {
+	margin: 0;
+	display: flex;
+	gap: 0.9rem;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+}
+.dio-play__stats [hidden] {
+	display: none;
+}
+.dio-play__exit,
+.dio-play__cta,
+.dio-play__alt {
+	min-height: 44px;
+	min-width: 44px;
+	padding: 0 1.1rem;
+	border-radius: var(--radius-md, 0.7rem);
+	border: 1px solid var(--dio-stroke-strong);
+	background: var(--dio-panel);
+	color: var(--dio-ink);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.dio-play__cta {
+	background: var(--dio-glow);
+	border-color: transparent;
+	color: #05060c;
+}
+.dio-play__exit:hover,
+.dio-play__alt:hover {
+	background: color-mix(in srgb, var(--dio-glow) 18%, transparent);
+	border-color: var(--dio-glow);
+}
+.dio-play__cta:hover:not(:disabled) {
+	filter: brightness(1.1);
+}
+.dio-play__exit:active,
+.dio-play__cta:active:not(:disabled),
+.dio-play__alt:active {
+	transform: translateY(1px) scale(0.98);
+}
+.dio-play__exit:focus-visible,
+.dio-play__cta:focus-visible,
+.dio-play__alt:focus-visible {
+	outline: 2px solid var(--dio-glow);
+	outline-offset: 2px;
+}
+.dio-play__cta:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+.dio-play__card {
+	pointer-events: auto;
+	max-width: min(26rem, calc(100% - 2rem));
+	padding: 1.25rem 1.4rem;
+	border-radius: var(--radius-card, 1rem);
+	border: 1px solid var(--dio-stroke-strong);
+	background: rgba(8, 10, 18, 0.88);
+	backdrop-filter: blur(8px);
+	color: var(--dio-ink);
+	text-align: center;
+	animation: dio-rise 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dio-play__card[hidden] {
+	display: none;
+}
+.dio-play__title {
+	margin: 0 0 0.4rem;
+	font-size: 1.3rem;
+}
+.dio-play__body {
+	margin: 0 0 1rem;
+	color: var(--dio-dim);
+	line-height: 1.45;
+}
+.dio-play__actions {
+	display: flex;
+	gap: 0.6rem;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+.dio-play__stick {
+	position: absolute;
+	left: 1rem;
+	bottom: 1rem;
+	width: 112px;
+	height: 112px;
+	border-radius: 50%;
+	border: 1px solid var(--dio-stroke-strong);
+	background: rgba(255, 255, 255, 0.06);
+	display: none;
+	place-items: center;
+	pointer-events: auto;
+	touch-action: none;
+}
+.dio-play__knob {
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--dio-glow) 70%, transparent);
+	pointer-events: none;
+}
+@media (pointer: coarse) {
+	.dio-play:has(.dio-play__hud.is-live) .dio-play__stick {
+		display: grid;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.dio-play__card {
+		animation: none;
+	}
+}

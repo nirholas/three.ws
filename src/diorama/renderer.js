@@ -1022,6 +1022,50 @@ export function createDioramaRenderer(container, opts = {}) {
 		return api;
 	}
 
+	// --- play mode: a walker moves on the island and the camera chases it ---
+	// The renderer only hosts the session (hides orbit controls, calls back every
+	// frame, shows or hides objects); the rules and the walker live in play.js.
+	let playSession = null;
+
+	function surfaceHeight(x, z) {
+		return surfaceHeightAt(noise, current ? current.island : 'round', x, z);
+	}
+
+	function enterPlay({ onFrame }) {
+		if (playSession) exitPlay();
+		playSession = {
+			onFrame,
+			camPos: camera.position.clone(),
+			camTarget: controls.target.clone(),
+			wasAutoOrbit: autoOrbit,
+		};
+		autoOrbit = false;
+		controls.enabled = false;
+		needsRender = true;
+		return api;
+	}
+
+	function exitPlay() {
+		if (!playSession) return api;
+		camera.position.copy(playSession.camPos);
+		controls.target.copy(playSession.camTarget);
+		controls.enabled = true;
+		autoOrbit = playSession.wasAutoOrbit;
+		playSession = null;
+		controls.update();
+		needsRender = true;
+		return api;
+	}
+
+	/** Show or hide one world object (a collected pickup) without disposing it. */
+	function setObjectVisible(id, on) {
+		const placedEntry = placed.get(id);
+		if (placedEntry) placedEntry.group.visible = Boolean(on);
+		const seed = seeds.get(id);
+		if (seed) seed.visible = Boolean(on);
+		needsRender = true;
+	}
+
 	// --- render loop, gated by visibility ---
 	let rafId = 0;
 	let running = false;
@@ -1094,7 +1138,12 @@ export function createDioramaRenderer(container, opts = {}) {
 			active = true;
 		}
 
-		const damped = controls.update();
+		if (playSession) {
+			playSession.onFrame(dt / 1000, now);
+			active = true;
+		}
+
+		const damped = playSession ? false : controls.update();
 		if (damped || active || needsRender) {
 			renderer.render(scene, camera);
 			needsRender = false;
@@ -1208,6 +1257,10 @@ export function createDioramaRenderer(container, opts = {}) {
 		markFailed,
 		frame,
 		startAutoOrbit,
+		surfaceHeight,
+		enterPlay,
+		exitPlay,
+		setObjectVisible,
 		getActiveGlbUrls,
 		resize,
 		dispose,

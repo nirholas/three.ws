@@ -33,6 +33,7 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { llmComplete, llmConfigured } from './_lib/llm.js';
 import { saveDiorama, getDiorama, listDioramas, bumpViews, dioramaStoreEnabled } from './_lib/diorama-store.js';
 import { getSessionUser } from './_lib/auth.js';
+import { GAME_PROMPT_RULES, normalizePlanWithGame } from './_lib/diorama-game.js';
 import {
 	exportDioramaGlb,
 	dioramaExportStoreEnabled,
@@ -58,7 +59,8 @@ Return ONLY a JSON object (no prose, no markdown fence) with exactly this shape:
   "ground": one of "grass" | "sand" | "snow" | "stone" | "water" | "meadow" | "void",
   "island": one of "round" | "craggy" | "plateau",
   "palette": { "sky": ["#RRGGBB","#RRGGBB"], "ground": "#RRGGBB", "fog": "#RRGGBB", "accent": "#RRGGBB" },
-  "objects": [ { "label": "short", "prompt": "ONE physical object: subject + key material + color", "position": [x, 0, z], "scale": 0.5-2.5, "rotationY": radians } ]
+  "objects": [ { "label": "short", "prompt": "ONE physical object: subject + key material + color", "position": [x, 0, z], "scale": 0.5-2.5, "rotationY": radians } ],
+  "game": optional, see the Games rule
 }
 
 Rules:
@@ -66,6 +68,7 @@ Rules:
 - Spread objects across the island: x and z each between -${ISLAND_RADIUS - 1} and ${ISLAND_RADIUS - 1}, keep at least 1.5 between any two, never stack them. y is always 0. One object may sit near the center as a focal point.
 - "palette" sky is a 2-stop vertical gradient (top, horizon). Pick colors that match the mood and the scene. "accent" is the warm/cool glow color.
 - Choose mood + ground that fit the sentence (a beach → sand/day, a haunted forest → night/grass).
+${GAME_PROMPT_RULES}
 - Output MUST be valid JSON. No trailing commas. No comments.`;
 
 export default wrap(async (req, res) => {
@@ -173,7 +176,7 @@ async function handleCompose(req, res, body) {
 
 	plan.prompt = prompt;
 	plan.objects = declump(Array.isArray(plan.objects) ? plan.objects : []);
-	const { ok, diorama, errors } = normalizeDiorama(plan);
+	const { ok, diorama, errors } = normalizePlanWithGame(plan);
 	if (!ok || diorama.objects.length < 1) {
 		return json(res, 502, {
 			error: 'compose_invalid',
@@ -181,13 +184,6 @@ async function handleCompose(req, res, body) {
 			detail: errors,
 		});
 	}
-	// Force a clean pending plan: never trust model-supplied ids/meshes here.
-	diorama.objects = diorama.objects.map((o, i) => ({
-		...o,
-		id: `obj-${i}`,
-		status: 'pending',
-		glbUrl: null,
-	}));
 
 	return json(res, 200, { diorama });
 }

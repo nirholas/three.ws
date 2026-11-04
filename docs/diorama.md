@@ -84,6 +84,20 @@ until the world is saved:
 }
 ```
 
+## Playing a world
+
+A world can carry a small game. When the prompt names a goal ("collect the three lanterns", "reach the lighthouse", "survive 45 seconds and keep clear of the dragon"), the composer adds a `game` block that points at some of the placed objects by index. The server maps those to object ids and the schema normalizes the block (`normalizeGame` in `src/diorama/schema.js`), so a bad plan degrades to a world with no goal, never a broken one.
+
+| Goal | Rule |
+| --- | --- |
+| `collect` | Walk into `count` of the target objects. Each one disappears when picked up. Optional timer. |
+| `reach` | Walk to the first target. Optional timer. |
+| `survive` | Targets are hazards. Touching one loses; outlasting the timer wins. A timer is required (10 to 600 seconds). |
+
+The world page shows **Play this world** for any world with a goal. It stays disabled, with the reason as its tooltip, until the goal objects have forged (`playability()` in `game-rules.js`). Decorations that failed to forge do not block play. Controls: WASD or arrow keys, a drag pad on touch screens, or tap the ground. Escape exits. The walker is your own walk avatar, loaded through walk-sdk; if it fails to load you get a Retry card.
+
+The game block is stored inside the saved world document, so no migration is needed. **Share as a game** (in the share sheet after saving) copies the permalink with `?play=1`, which opens the world straight into its game; the X post carries the objective text. Opening a `?play=1` link for a world with no goal or unforged goal objects shows the normal world view.
+
 ## States and limits
 
 - **Object count** is bounded (the plan enforces a minimum and maximum), and objects are spaced so they never stack.

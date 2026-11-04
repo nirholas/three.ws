@@ -24,6 +24,7 @@ import {
 	MOODS,
 } from './schema.js';
 import { shortAddress } from '../shared/address.js';
+import { playability } from './game-rules.js';
 
 const MOOD_LABEL = { dawn: 'Dawn', day: 'Daytime', dusk: 'Dusk', night: 'Night' };
 
@@ -42,6 +43,54 @@ function init() {
 		busy: false, // compose/forge in progress
 		readOnly: false, // a deep-linked saved world (no live forging)
 	};
+
+	// Play mode loads lazily: it pulls in the walk avatar stack, which a visitor
+	// who only wants to look at the world never needs.
+	let playController = null;
+	async function openPlay() {
+		const btn = actBtn('play');
+		if (btn) btn.setAttribute('aria-busy', 'true');
+		try {
+			if (!playController) {
+				const { createPlay } = await import('./play.js');
+				playController = createPlay({
+					stage: el.stage,
+					renderer,
+					getDiorama: () => state.diorama,
+					onExit: () => {
+						renderer.startAutoOrbit(true);
+						btn?.focus({ preventScroll: true });
+					},
+				});
+			}
+			await playController.start();
+		} catch (err) {
+			showShareNote(
+				err instanceof TypeError
+					? 'Could not load play mode. Check your connection and try again.'
+					: 'Play mode failed to start. Try again in a moment.',
+				true,
+			);
+		} finally {
+			btn?.removeAttribute('aria-busy');
+		}
+	}
+
+	// The Play button appears only for worlds that have a goal. It stays disabled
+	// (with the reason as its title) until the goal objects are forged.
+	function syncPlayButton() {
+		const btn = actBtn('play');
+		if (!btn) return;
+		const d = state.diorama;
+		if (!d || !d.game) {
+			hide(btn);
+			return;
+		}
+		const verdict = playability(d);
+		show(btn);
+		btn.disabled = !verdict.ok;
+		btn.title = verdict.ok ? '' : verdict.reason;
+	}
 
 	const gallery = mountGallery({
 		listEl: el.galleryList,
@@ -257,6 +306,7 @@ function init() {
 		}
 		if (patch.status === 'ready' && patch.glbUrl) {
 			obj.glbUrl = patch.glbUrl;
+			queueMicrotask(syncPlayButton);
 			// Materialize the mesh into the scene, then flip the chip to ready.
 			try {
 				await renderer.materializeObject(id, patch.glbUrl);
@@ -313,6 +363,7 @@ function init() {
 			show(el.worldActions);
 			renderer.startAutoOrbit(true);
 			wireWorldActions();
+			syncPlayButton();
 		}
 		if (allSettled && isComplete(d) && el.statusLabel) {
 			el.statusLabel.textContent = 'Your world is ready ✨';
@@ -361,6 +412,7 @@ function init() {
 		else if (act === 'save') saveWorld(btn);
 		else if (act === 'ar') openInRoom();
 		else if (act === 'download') downloadWorld();
+		else if (act === 'play') openPlay();
 	}
 
 	function remixWorld() {
@@ -432,7 +484,7 @@ function init() {
 
 			d.id = data.id;
 			d.createdAt = data.createdAt || d.createdAt;
-			openShare({ diorama: d, url: data.url });
+			openShare({ diorama: d, url: data.url, playable: Boolean(d.game) });
 			show(el.sharePanel);
 			try {
 				history.replaceState(null, '', `?id=${encodeURIComponent(data.id)}`);
@@ -532,7 +584,12 @@ function init() {
 
 			renderer.startAutoOrbit(true);
 			showRemixAffordance(diorama);
+			syncPlayButton();
 			gallery.reload();
+			if (autoPlay && diorama.game && playability(diorama).ok) {
+				autoPlay = false;
+				openPlay();
+			}
 		} catch (err) {
 			showError(
 				err instanceof TypeError
@@ -680,7 +737,9 @@ function init() {
 
 	// ── Boot: deep link or idle composer ───────────────────────────────────────
 
-	const deepId = new URLSearchParams(location.search).get('id');
+	const deepParams = new URLSearchParams(location.search);
+	const deepId = deepParams.get('id');
+	let autoPlay = deepParams.get('play') === '1';
 	if (deepId) {
 		openSavedWorld(deepId, { scroll: false });
 	} else {
