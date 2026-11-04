@@ -643,3 +643,4 @@ No xAI key exists in `process.env`, `.env`, `.env.local` or the `three-ws-api` s
 ## 2026-11-04: order 039 (xAI remote MCP e2e) re-verified, live line open
 - Step 0: no GROK_API_KEY/XAI_API_KEY in env, `.env`, `.env.local` or the `three-ws-api` service. Dry run matches docs.x.ai remote-mcp fields; production `/api/mcp-grok` tools/list serves. Unit suite not runnable here (vitest absent from node_modules).
 - Open: live `npm run e2e:xai-mcp` against production. Owner: order 927 (xAI key). Then delete the order file.
+2026-11-04 | 930-x-grok-49-launch-announcement.md | drafts queued as grok-bot-mention-bot (post, 3 parts) and grok-bot-mention-bot-article in data/x-content/queue.json; remaining: owner media, review, approval, posting (owner gate). Order file kept.

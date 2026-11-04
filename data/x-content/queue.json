@@ -24172,6 +24172,130 @@
 					}
 				}
 			]
+		},
+		{
+			"id": "grok-bot-mention-bot",
+			"status": "draft",
+			"kind": "post",
+			"tier": 1,
+			"lane": "labs",
+			"pattern": "walkthrough",
+			"notBefore": "2026-11-06T00:00:00Z",
+			"covers": [
+				"/grok",
+				"/api/mcp-grok",
+				"docs/x-mention-bot.md"
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Grok connector answers an anonymous initialize",
+					"url": "https://three.ws/api/mcp-grok",
+					"method": "POST",
+					"headers": {
+						"content-type": "application/json",
+						"accept": "application/json, text/event-stream"
+					},
+					"body": {
+						"jsonrpc": "2.0",
+						"id": 1,
+						"method": "initialize",
+						"params": {
+							"protocolVersion": "2025-06-18",
+							"capabilities": {},
+							"clientInfo": {
+								"name": "story-probe",
+								"version": "0"
+							}
+						}
+					},
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"posts": [
+				{
+					"text": "Ask Grok Bot for a 3D model and get one back. Add three.ws as a connector with one URL, say \"make a red vintage scooter\", and the reply carries a viewer link, the GLB and an AR link. The free studio needs no account and no key."
+				},
+				{
+					"text": "Prefer to stay on X? Mention @trythreews with what you want. It replies once, to you, with a model you can spin in the browser. It never spends anything and never acts on text inside a post. Setup for the connector is at three.ws/grok"
+				},
+				{
+					"text": "Six recipes, each run against production with the real output pasted in, are at three.ws/tutorials/grok-bot-recipes"
+				}
+			],
+			"claims": [
+				{
+					"says": "the connector URL is a single address and needs no key for the free studio",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "api/mcp-grok"
+						}
+					]
+				},
+				{
+					"says": "Six recipes",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/tutorials/grok-bot-recipes",
+							"contains": "recipe"
+						}
+					]
+				}
+			],
+			"mentions": {
+				"trythreews": "the account that replies"
+			},
+			"note": "Owner approval required before posting. Third post links the recipes tutorial; confirm the page is live first."
+		},
+		{
+			"id": "grok-bot-mention-bot-article",
+			"status": "draft",
+			"kind": "article",
+			"tier": 1,
+			"lane": "article",
+			"pattern": "longform",
+			"notBefore": "2026-11-07T19:00:00Z",
+			"covers": [
+				"/grok",
+				"docs/x-mention-bot.md"
+			],
+			"article": {
+				"title": "Two ways to ask for a 3D model: Grok Bot and a mention on X",
+				"body": "data/x-content/articles/grok-bot-mention-bot-article.md",
+				"cover": {
+					"path": "public/x-media/grok-bot-mention-bot-article/cover.png",
+					"alt": "The three.ws Grok Bot connector page showing the connector address and the Streamable HTTP transport"
+				}
+			},
+			"claims": [
+				{
+					"says": "the connector address is api/mcp-grok",
+					"evidence": [
+						{
+							"type": "page",
+							"url": "https://three.ws/grok",
+							"contains": "api/mcp-grok"
+						}
+					]
+				}
+			],
+			"probes": [
+				{
+					"type": "api",
+					"name": "the Grok page is served",
+					"url": "https://three.ws/grok",
+					"expect": {
+						"status": 200
+					}
+				}
+			],
+			"mentions": {},
+			"note": "Draft article. Needs the cover image, 4 inline images, partners section and 2,400 words before review."
 		}
 	]
 }
