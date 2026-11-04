@@ -57,7 +57,7 @@ const PAY_PER_USE = {
 	'names.first_dibs': 'name.auction',
 };
 // forge.high (High-tier Forge gate), forge.gameready (engine-ready export gate) and
-// worlds.private (private worlds, api/world/[action].js) are WIRED today. The restare planned, registered so the UI can show them, but
+// worlds.private (private worlds, api/world/[action].js) are WIRED today. The rest are planned, registered so the UI can show them, but
 // not yet enforced anywhere. /three reads this flag to mark each perk "Live" vs
 // "Planned"; pinning it here makes flipping a feature to enforced a deliberate,
 // tested change rather than a silent one.
