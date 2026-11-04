@@ -91,6 +91,25 @@ describe('scoreGlbQuality', () => {
 		expect(shouldRetryForQuality(q)).toBe(true);
 	});
 
+	it('reports bounds in world units for a quantized (meshopt-style) mesh', () => {
+		// Raw uint16 positions span 0..65535; the node scale and translation map
+		// them to a 2 x 1 x 0.5 metre object. The diagonal must be the world one.
+		const gltf = healthyGltf();
+		gltf.accessors[0] = { componentType: 5123, count: 10_000, type: 'VEC3', min: [0, 0, 0], max: [65535, 65535, 65535] };
+		gltf.nodes = [{ mesh: 0, scale: [2 / 65535, 1 / 65535, 0.5 / 65535], translation: [-1, 0, -0.25] }];
+		gltf.scenes = [{ nodes: [0] }];
+		gltf.scene = 0;
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.metrics.bboxDiagonal).toBeCloseTo(Math.sqrt(4 + 1 + 0.25), 4);
+	});
+
+	it('scales a normalized-integer position accessor to its real range', () => {
+		const gltf = healthyGltf();
+		gltf.accessors[0] = { componentType: 5122, normalized: true, count: 10_000, type: 'VEC3', min: [-32767, -32767, -32767], max: [32767, 32767, 32767] };
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.metrics.bboxDiagonal).toBeCloseTo(Math.sqrt(12), 4);
+	});
+
 	it('flags a sub-threshold triangle count as degenerate', () => {
 		const gltf = healthyGltf();
 		const tris = Math.max(1, QUALITY_THRESHOLDS.degenerateTriangles - 10);

@@ -52,6 +52,89 @@ export const QUALITY_THRESHOLDS = Object.freeze({
 	sliverFlatness: ratioEnv('FORGE_QUALITY_SLIVER_FLATNESS', 0.05),
 });
 
+// Largest representable value per integer component type, used to undo
+// `normalized: true` (glTF 2.0 section 3.11).
+const NORMALIZE_DIVISOR = { 5120: 127, 5121: 255, 5122: 32767, 5123: 65535 };
+
+// POSITION min/max in the accessor's own element space, with normalized
+// integers mapped back to their real [-1, 1] / [0, 1] range.
+function positionRange(pos) {
+	if (!Array.isArray(pos.min) || !Array.isArray(pos.max) || pos.min.length < 3 || pos.max.length < 3) return null;
+	const div = pos.normalized ? NORMALIZE_DIVISOR[pos.componentType] : null;
+	if (!div) return { min: pos.min.slice(0, 3), max: pos.max.slice(0, 3) };
+	const lo = (v) => Math.max(v / div, -1);
+	return { min: pos.min.slice(0, 3).map(lo), max: pos.max.slice(0, 3).map(lo) };
+}
+
+function identity() {
+	return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+}
+
+// Column-major 4x4 multiply: a * b.
+function mul(a, b) {
+	const out = new Array(16).fill(0);
+	for (let c = 0; c < 4; c++) {
+		for (let r = 0; r < 4; r++) {
+			for (let k = 0; k < 4; k++) out[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k];
+		}
+	}
+	return out;
+}
+
+function nodeMatrix(node) {
+	if (Array.isArray(node.matrix) && node.matrix.length === 16 && node.matrix.every(Number.isFinite)) return node.matrix;
+	const [tx, ty, tz] = Array.isArray(node.translation) ? node.translation : [0, 0, 0];
+	const [sx, sy, sz] = Array.isArray(node.scale) ? node.scale : [1, 1, 1];
+	const [x, y, z, w] = Array.isArray(node.rotation) ? node.rotation : [0, 0, 0, 1];
+	return [
+		(1 - 2 * (y * y + z * z)) * sx, 2 * (x * y + z * w) * sx, 2 * (x * z - y * w) * sx, 0,
+		2 * (x * y - z * w) * sy, (1 - 2 * (x * x + z * z)) * sy, 2 * (y * z + x * w) * sy, 0,
+		2 * (x * z + y * w) * sz, 2 * (y * z - x * w) * sz, (1 - 2 * (x * x + y * y)) * sz, 0,
+		tx, ty, tz, 1,
+	];
+}
+
+// Union of every mesh's box after its node's world transform. Returns null when
+// no node places a mesh (a bare mesh table), so the caller keeps the local box.
+function worldBounds(gltf, meshes, meshLocal) {
+	const nodes = Array.isArray(gltf.nodes) ? gltf.nodes : [];
+	if (!nodes.length) return null;
+	const scenes = Array.isArray(gltf.scenes) ? gltf.scenes : [];
+	const scene = scenes[Number.isInteger(gltf.scene) ? gltf.scene : 0];
+	let roots = Array.isArray(scene?.nodes) ? scene.nodes : null;
+	if (!roots) {
+		const children = new Set(nodes.flatMap((n) => (Array.isArray(n?.children) ? n.children : [])));
+		roots = nodes.map((_, i) => i).filter((i) => !children.has(i));
+	}
+	const min = [Infinity, Infinity, Infinity];
+	const max = [-Infinity, -Infinity, -Infinity];
+	let found = false;
+	const walk = (index, parent, depth) => {
+		const node = nodes[index];
+		if (!node || depth > 256) return;
+		const world = mul(parent, nodeMatrix(node));
+		const local = Number.isInteger(node.mesh) ? meshLocal.get(meshes[node.mesh]) : null;
+		if (local) {
+			for (let corner = 0; corner < 8; corner++) {
+				const px = corner & 1 ? local.max[0] : local.min[0];
+				const py = corner & 2 ? local.max[1] : local.min[1];
+				const pz = corner & 4 ? local.max[2] : local.min[2];
+				for (let i = 0; i < 3; i++) {
+					const v = world[i] * px + world[4 + i] * py + world[8 + i] * pz + world[12 + i];
+					if (!Number.isFinite(v)) continue;
+					min[i] = Math.min(min[i], v);
+					max[i] = Math.max(max[i], v);
+				}
+			}
+			found = true;
+		}
+		if (Array.isArray(node.children)) for (const child of node.children) walk(child, world, depth + 1);
+	};
+	for (const root of roots) walk(root, identity(), 0);
+	return found && min.every(Number.isFinite) && max.every(Number.isFinite) ? { min, max } : null;
+}
+
+
 // Pull the per-attribute vertex count and union the POSITION bounding box across
 // every primitive of every mesh. glTF accessors carry `count` (element count)
 // and, for POSITION, `min`/`max` (3-vectors) — enough to measure geometry
@@ -67,6 +150,7 @@ function summarizeGeometry(gltf) {
 	let min = [Infinity, Infinity, Infinity];
 	let max = [-Infinity, -Infinity, -Infinity];
 	let haveBounds = false;
+	const meshLocal = new Map();
 
 	for (const mesh of meshes) {
 		const prims = Array.isArray(mesh.primitives) ? mesh.primitives : [];
@@ -80,11 +164,20 @@ function summarizeGeometry(gltf) {
 			const pos = Number.isInteger(posIdx) ? accessors[posIdx] : null;
 			if (pos && Number.isFinite(pos.count)) {
 				vertexCount += pos.count;
-				if (Array.isArray(pos.min) && Array.isArray(pos.max) && pos.min.length >= 3) {
+				const range = positionRange(pos);
+				if (range) {
+					const local = meshLocal.get(mesh) || { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
 					for (let i = 0; i < 3; i++) {
-						if (Number.isFinite(pos.min[i])) min[i] = Math.min(min[i], pos.min[i]);
-						if (Number.isFinite(pos.max[i])) max[i] = Math.max(max[i], pos.max[i]);
+						if (Number.isFinite(range.min[i])) {
+							min[i] = Math.min(min[i], range.min[i]);
+							local.min[i] = Math.min(local.min[i], range.min[i]);
+						}
+						if (Number.isFinite(range.max[i])) {
+							max[i] = Math.max(max[i], range.max[i]);
+							local.max[i] = Math.max(local.max[i], range.max[i]);
+						}
 					}
+					meshLocal.set(mesh, local);
 					haveBounds = true;
 				}
 			}
@@ -98,6 +191,17 @@ function summarizeGeometry(gltf) {
 			}
 			triangleCount += primTris;
 			if (Number.isInteger(prim.material)) texturedPrimitives++;
+		}
+	}
+
+	// Local accessor bounds are not world bounds: a meshopt/KHR_mesh_quantization
+	// file stores integer positions and relies on the node transform to scale
+	// them back to metres, so the raw min/max can be off by orders of magnitude.
+	if (haveBounds) {
+		const world = worldBounds(gltf, meshes, meshLocal);
+		if (world) {
+			min = world.min;
+			max = world.max;
 		}
 	}
 
