@@ -625,3 +625,94 @@ describe('helpers', () => {
 		expect(html).not.toMatch(/content-security-policy/i);
 	});
 });
+
+describe('analyze: the four canonical correct embeds', () => {
+	const V1 = 'https://three.ws/embed/v1.js';
+	const PINNED = 'https://three.ws/agent-3d/1.4.0/agent-3d.js';
+	// A decoder fetch the runtime cancels itself once the model needs no
+	// compressed geometry is not a failure of the page.
+	const decoderAbort = {
+		url: 'https://three.ws/three/draco/gltf/draco_decoder.wasm',
+		status: null,
+		ok: false,
+		failure: 'net::ERR_ABORTED',
+	};
+	const loaderNet = (url) => [{ url, status: 200, ok: true, bytes: 4214540 }];
+
+	const variants = [
+		{ name: 'agent-id floating embed', overrides: {} },
+		{
+			name: 'plain GLB src embed that aborts its decoder fetch',
+			overrides: {
+				network: [...loaderNet(LOADER), decoderAbort],
+				agent: null,
+				element: {
+					...healthyObservations().element,
+					attributes: { src: 'https://example.com/model.glb' },
+				},
+			},
+		},
+		{
+			name: 'v1 loader <three-agent> embed',
+			overrides: {
+				scripts: [{ src: V1, type: 'module' }],
+				network: loaderNet(V1),
+				element: { ...healthyObservations().element, tag: 'three-agent' },
+			},
+		},
+		{
+			name: 'version-pinned loader embed',
+			overrides: { scripts: [{ src: PINNED, type: 'module' }], network: loaderNet(PINNED) },
+		},
+	];
+
+	it.each(variants)('reports a $name as healthy', ({ overrides }) => {
+		const report = analyze(healthyObservations(overrides));
+		expect(failed(report).map((f) => f.id)).toEqual([]);
+		expect(report.verdict).toBe('healthy');
+	});
+
+	it('still fails a decoder request that returned an HTTP error', () => {
+		const report = analyze(
+			healthyObservations({
+				network: [
+					...loaderNet(LOADER),
+					{ url: 'https://three.ws/three/draco/gltf/draco_decoder.wasm', status: 404, ok: false },
+				],
+			}),
+		);
+		expect(idsOf(report)).toContain('asset_requests_failed');
+	});
+
+	it('still fails an aborted request for the model itself', () => {
+		const report = analyze(
+			healthyObservations({
+				network: [
+					...loaderNet(LOADER),
+					{ url: 'https://three.ws/api/agents/abc123', status: null, ok: false, failure: 'net::ERR_ABORTED' },
+				],
+			}),
+		);
+		expect(idsOf(report)).toContain('asset_requests_failed');
+	});
+});
+
+describe('analyze: fix text points at findings by name, never by position', () => {
+	it('does not tell the reader the failed-request finding is below when it ranks above', () => {
+		const report = analyze(
+			healthyObservations({
+				network: [
+					{ url: LOADER, status: 200, ok: true },
+					{ url: 'https://three.ws/api/agents/abc123', status: 404, ok: false },
+				],
+				element: {
+					...healthyObservations().element,
+					canvas: { present: true, width: 640, height: 840, blank: true },
+				},
+			}),
+		);
+		const ids = idsOf(report);
+		expect(ids.indexOf('asset_requests_failed')).toBeLessThan(ids.indexOf('canvas_blank'));
+		expect(byId(report, 'canvas_blank').fix).not.toMatch(/finding below/i);
+	});
+});

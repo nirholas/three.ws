@@ -74,6 +74,15 @@ function verdictFor(findings) {
 	return 'healthy';
 }
 
+/** The runtime cancels in-flight geometry/texture decoder fetches (Draco, KTX2,
+ *  Basis, meshopt) itself once it has what it needs, which Chromium reports as
+ *  `net::ERR_ABORTED`. That is not a failed request. An HTTP error status on the
+ *  same URL, or an abort on the model or manifest, still counts. */
+const DECODER_URL = /(draco|basis|ktx2|meshopt)[^?#]*\.(wasm|js)(\?|#|$)|decoder[^?#]*\.(wasm|js)(\?|#|$)/i;
+function isBenignDecoderAbort(r) {
+	return r.status == null && /ERR_ABORTED/i.test(r.failure || '') && DECODER_URL.test(String(r.url || ''));
+}
+
 function isLoaderUrl(url) {
 	if (!url) return false;
 	return LOADER_PATTERNS.some((re) => re.test(String(url)));
@@ -524,7 +533,7 @@ export function analyze(obs) {
 				'fail',
 				'The canvas is present but still blank',
 				'The runtime created its drawing surface but had not painted a frame when we looked. On a slow connection the model may simply still be downloading; if it stays blank, the model bytes failed.',
-				'Re-run the check. If it stays blank, look at the failed-request finding below — a 404 or CORS failure on the model is the usual cause.',
+				'Re-run the check. If it stays blank, look at the "embed requests failed" finding. A 404 or CORS failure on the model is the usual cause.',
 				{ width: canvas.width, height: canvas.height },
 			),
 		);
@@ -561,7 +570,7 @@ export function analyze(obs) {
 	}
 
 	const failedEmbedRequests = net.filter(
-		(r) => !r.ok && isEmbedRelated(r.url) && !isLoaderUrl(r.url),
+		(r) => !r.ok && isEmbedRelated(r.url) && !isLoaderUrl(r.url) && !isBenignDecoderAbort(r),
 	);
 	if (failedEmbedRequests.length) {
 		findings.push(
@@ -1036,7 +1045,15 @@ async function harvest(page, { recorders, response, bootMs, platformOrigin, scre
 		: null;
 
 	if (probe.element?.canvas?.present) {
-		const painted = await measurePainted(page, EMBED_SELECTOR, left(PAINT_MAX_MS));
+		// The element upgrades long before its model has downloaded and drawn,
+		// so one look right after boot reads a healthy embed as blank. Look
+		// again until pixels land or the paint budget is spent.
+		const paintDeadline = Date.now() + left(PAINT_MAX_MS);
+		let painted = await measurePainted(page, EMBED_SELECTOR, Math.max(1000, paintDeadline - Date.now()));
+		while (painted === false && Date.now() + 1500 < paintDeadline) {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			painted = await measurePainted(page, EMBED_SELECTOR, Math.max(1000, paintDeadline - Date.now()));
+		}
 		probe.element.canvas.blank = painted === null ? null : !painted;
 	}
 
