@@ -34,12 +34,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # top, and merge.sh backgrounds that python process and exits 0 regardless.
 # Without it every merge died on ImportError and the fox QA run (2026-11-04)
 # reported only "unirig-merge reported success but wrote no output file".
+# libegl1 is the other one: libOpen3D.so (open3d 0.20.0) links libEGL.so.1 as
+# well, which the build-time `import open3d` below caught (build f5ecf13a,
+# 2026-11-04). The full NEEDED set of libOpen3D.so, read from the wheel and
+# resolved with ldd on ubuntu:22.04 against this list, has nothing missing.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-dev python3.11-venv python3-pip \
         git curl build-essential \
         libgl1 libglib2.0-0 \
         libx11-6 libxext6 libxrender1 libxfixes3 libxi6 libxxf86vm1 \
-        libxkbcommon0 libsm6 libice6 libgomp1 libusb-1.0-0 \
+        libxkbcommon0 libsm6 libice6 libgomp1 libusb-1.0-0 libegl1 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
     && ln -sf /usr/bin/python3.11 /usr/bin/python \
