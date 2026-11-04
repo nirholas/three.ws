@@ -98,6 +98,16 @@ The Passport widget pulls live on-chain data. You'll need:
 
 The other widget types reveal their own fields in the right column when you select them — clip playback options for Animation Gallery, LLM, skill, and voice settings for Talking Agent, and a hotspot editor for Hotspot Tour.
 
+### Holders only (token-gated embed)
+
+Below **Save draft** and **Generate embed** sits the **Holders only** panel. It turns the selected avatar into an embed that only renders for wallets holding enough of a Solana token. The token defaults to $THREE, and three.ws checks the visitor's real balance on Solana every time the embed loads.
+
+- Pick one of your own avatars first. The demo agent and public avatars belong to other accounts, so the panel shows **Go to your avatars** instead of the form, and signed-out visitors see a **Sign in** link.
+- Flip the switch, set the minimum a viewer must hold (or click a $THREE holder tier shortcut, priced live), and click **Create gated embed**. The result is a separate snippet with its own Copy button and a link to the gated preview; it does not replace the widget embed above.
+- Picking a gated avatar later shows **Gate active** with the same snippet, plus **Change requirement** and **Remove gate**.
+
+The full gating model (what visitors see, how the balance check works, the REST and MCP equivalents) is in [Token-gated 3D embeds](./token-gated-3d-embeds.md).
+
 ### Capture current camera view
 
 While viewing the live preview, you can orbit the model to the angle you want visitors to see first. Click **Use current view** (above the preview) to save that camera position into the widget config. This sets the `cameraPosition` field.

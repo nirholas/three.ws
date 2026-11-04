@@ -18,6 +18,18 @@ A private/unlisted embed link keeps a scene off search and off the marketplace, 
 
 You need to already own the asset you're gating (an avatar you uploaded, or an on-chain agent registered to your linked wallet).
 
+### In Widget Studio (no code)
+
+Open [/studio](https://three.ws/studio), sign in, and pick one of your own avatars in step 1. The **Holders only** panel sits under the right column:
+
+1. Flip the switch. The token defaults to $THREE (`FeMb...pump`, Solana). To gate with another SPL token, open **Use another Solana token** and paste its mint address.
+2. Type the minimum a viewer must hold, or click a **holder tier** shortcut. The shortcuts are the $THREE tier ladder (Bronze $25, Silver $100, Gold $500, Genesis $2,500) converted to a whole token count at the live price, rounded up so no tier lands below its USD bar. When the live price is unavailable the shortcuts are hidden and you can still type an amount.
+3. Click **Create gated embed**. The panel shows the paste-ready snippet with a Copy button and an **Open the gated preview** link.
+
+The panel reads the avatar's gate from the server every time you pick it, so it always shows what the embed actually enforces. From there you can **Change requirement** (which replaces the gate) or **Remove gate** (which turns the embed back into an open one after an inline confirm). The demo agent and public avatars belong to other accounts, so the panel asks you to pick one of yours instead.
+
+![Widget Studio Holders only panel with an active $THREE gate](./img/studio-holder-gate.png)
+
 ### Via the MCP tool (Claude / any MCP client)
 
 ```
@@ -62,6 +74,21 @@ Gating with a community's own token instead of $THREE — pass a `mint`:
 ```
 
 Setting a new requirement on an already-gated asset replaces the old gate — every access token issued against the old requirement stops working immediately.
+
+Read the active gate, or remove it, with the same auth. Both are owner-only and answer 401, 403 `not_owner` or 404 exactly like create:
+
+```bash
+# The asset's active gate, or "gate": null when it is open
+curl "https://three.ws/api/embed/gate-create?assetId=avatar:8e3c9b1a-0000-4000-8000-000000000001" \
+  -H "authorization: Bearer $YOUR_API_KEY"
+
+# Remove the gate; every access token minted against it stops verifying at once
+curl -X DELETE "https://three.ws/api/embed/gate-create?assetId=avatar:8e3c9b1a-0000-4000-8000-000000000001" \
+  -H "authorization: Bearer $YOUR_API_KEY"
+# {"assetId":"avatar:8e3c9b1a-...","revoked":true}
+```
+
+The read returns the same `gateId`, `gate` and `embed` fields as create, plus `createdAt`.
 
 ---
 

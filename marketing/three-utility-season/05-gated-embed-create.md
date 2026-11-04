@@ -9,6 +9,7 @@
 | Campaign anchor (campaigns.csv) | https://three.ws/studio |
 | Surface used in this pack | /docs/token-gated-3d-embeds |
 | Verified status (2026-09-16) | **Live (API and MCP). No creation UI in `/studio`.** |
+| Anchor update (2026-11-04) | **`/studio` now has the Holders only panel** (in `main`, live after the next deploy). Point the anchor and the post links back at `/studio` once `https://three.ws/studio` shows it. |
 
 ## Verification
 
@@ -17,11 +18,11 @@
 - Handlers: `api/embed/gate-create.js` and `api/embed/gate-verify.js`. An unauthenticated create returned `401 sign in required to gate an embed` (the expected guard) on 2026-09-16.
 - Verify path: `POST /api/embed/gate-verify` for the existing demo gate returned a SIWS message with a nonce and `gate: { mint: FeMb...pump, minAmount: 1 }` on 2026-09-16.
 - Doc: `/docs/token-gated-3d-embeds` answered 200 and shows "Verified against the code".
-- Gap: `src/studio/` contains no gate-create control, so the campaign anchor `/studio` cannot perform the action.
+- Gap (closed 2026-11-04): Widget Studio (`public/studio/`) had no gate-create control. The Holders only panel (`public/studio/gate-panel.js`) now creates, reads and removes the gate from `/studio`, so the campaign anchor can perform the action once it is deployed.
 
 ## The three questions
 
-- **What can a holder do now?** Sign in, pick an owned avatar, `POST /api/embed/gate-create` with `{ assetId, gate: { minAmount, chain: "solana" } }`, and paste the returned snippet on a page.
+- **What can a holder do now?** Sign in at `/studio`, pick an owned avatar, flip **Holders only**, set the minimum (or click a tier) and copy the snippet. Without the UI: `POST /api/embed/gate-create` with `{ assetId, gate: { minAmount, chain: "solana" } }`, and paste the returned snippet on a page.
 - **Where does $THREE enter?** Held, by the viewer. The server issues a single-use signed-message nonce, reads the wallet's live $THREE balance, and only then returns a short-lived access token for the scene.
 - **What verifiable result comes out?** Below the bar, a designed locked teaser ("Hold N $THREE to unlock"). Above it, the interactive 3D scene. Raising the minimum invalidates earlier access tokens.
 
