@@ -69,7 +69,7 @@ export function decideRigMode(info = {}) {
 	if (gate.why === 'low-coverage') {
 		return out(
 			'fallback',
-			`${gate.canonicalCount} canonical bones map ${gate.matched} of ${gate.total} clip tracks, under the ${Math.round(MIN_COVERAGE * 100)}% the retargeter binds (finger joints are most of a clip).`,
+			`${gate.canonicalCount} canonical bones map ${gate.bodyMatched} of ${gate.bodyTotal} body clip tracks and ${gate.matched} of ${gate.total} overall, both under the ${Math.round(MIN_COVERAGE * 100)}% the retargeter binds.`,
 		);
 	}
 	return out('canonical', `${gate.canonicalCount} canonical bones mapped, which drives the baked clip library.`);

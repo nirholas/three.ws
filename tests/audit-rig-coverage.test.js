@@ -9,6 +9,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { parseGlbJsonChunk, glbJsonChunkEnd, scoreRig } from '../scripts/audit-rig-coverage.mjs';
+import { CANONICAL_BONES } from '../src/glb-canonicalize.js';
+import { canonicalClipGate } from '../src/canonical-clip-gate.js';
 
 const GLB_MAGIC = 0x46546c67;
 const CHUNK_TYPE_JSON = 0x4e4f534a;
@@ -35,16 +37,22 @@ function buildHead(jsonObj, { magic = GLB_MAGIC, version = 2, chunkType = CHUNK_
 	return ab;
 }
 
-// A skeleton with the given joint names, wired as one skin.
+// A skeleton with the given joint names, wired as one skin, with a mesh node
+// bound to it (the runtime's SkinnedMesh check).
 function rigJson(names, extra = {}) {
 	return {
 		asset: { version: '2.0', ...(extra.generator ? { generator: extra.generator } : {}) },
-		nodes: names.map((name) => ({ name })),
+		nodes: [...names.map((name) => ({ name })), { name: 'Body', mesh: 0, skin: 0 }],
+		meshes: [{ primitives: [{ attributes: {} }] }],
 		skins: [{ joints: names.map((_, i) => i) }],
 	};
 }
 
-// A complete canonical humanoid — the shape every ingest lane should produce.
+// The full canonical skeleton, fingers included: what the clip library is baked on.
+const CANONICAL_RIG = [...CANONICAL_BONES];
+
+// A full body with no finger joints. Every body track of a library clip binds;
+// fingers never count toward the floor, so it animates with its own mesh.
 const FULL_RIG = [
 	'Hips', 'Spine', 'Spine1', 'Neck', 'Head',
 	'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand',
@@ -104,13 +112,57 @@ describe('glbJsonChunkEnd', () => {
 
 describe('scoreRig', () => {
 	it('scores a complete canonical humanoid as animating with full legs', () => {
-		const s = scoreRig(rigJson(FULL_RIG, { generator: 'three.ws rig worker' }));
+		const s = scoreRig(rigJson(CANONICAL_RIG, { generator: 'three.ws rig worker' }));
 		expect(s.skinned).toBe(true);
 		expect(s.animates).toBe(true);
+		expect(s.why).toBe('ok');
 		expect(s.legs).toBe(6);
 		expect(s.core).toBe(9);
 		expect(s.unmapped).toEqual([]);
 		expect(s.generator).toBe('three.ws rig worker');
+	});
+
+	it('counts a fingerless full body as animating, as the runtime does', () => {
+		const s = scoreRig(rigJson(FULL_RIG));
+		expect(s.core).toBe(9);
+		expect(s.animates).toBe(true);
+		expect(s.why).toBe('ok');
+	});
+
+	it('counts a rig short of the clip floor on both measures as falling back', () => {
+		// Arms and legs on a torso missing its spine, shoulders and feet: 11 of 23
+		// body tracks and 11 of 53 overall.
+		const s = scoreRig(rigJson(['Hips', 'Spine', 'Neck', 'Head', 'LeftArm', 'RightArm',
+			'LeftForeArm', 'RightForeArm', 'LeftUpLeg', 'RightUpLeg']));
+		expect(s.animates).toBe(false);
+		expect(s.why).toBe('low-coverage');
+		expect(s.coverage).toBeLessThan(0.5);
+	});
+
+	it('counts a half-body with full hands as animating, as the runtime plays it', () => {
+		const fingers = CANONICAL_RIG.filter((b) => /Hand(Thumb|Index|Middle|Ring|Pinky)\d$/.test(b));
+		const s = scoreRig(rigJson(['Hips', 'Spine', 'Neck', 'Head', 'LeftHand', 'RightHand', ...fingers]));
+		expect(s.animates).toBe(true);
+		expect(s.coverage).toBeGreaterThanOrEqual(0.5);
+	});
+
+	it('requires a mesh bound to the skin, like the runtime SkinnedMesh check', () => {
+		const json = rigJson(CANONICAL_RIG);
+		json.nodes = json.nodes.filter((n) => n.mesh == null);
+		const s = scoreRig(json);
+		expect(s.animates).toBe(false);
+		expect(s.why).toBe('no-skin');
+	});
+
+	it('resolves a Rigify clavicle and upper arm to separate bones, as Rig Doctor does', () => {
+		// DEF-shoulder.L and DEF-upper_arm.L both read as an arm on their own;
+		// the shared resolver gives the parent the shoulder.
+		const names = ['DEF-hips', 'DEF-shoulder.L', 'DEF-upper_arm.L'];
+		const json = rigJson(names);
+		json.nodes[1].children = [2];
+		const s = scoreRig(json);
+		expect(s.canonical).toContain('LeftShoulder');
+		expect(s.canonical).toContain('LeftArm');
 	});
 
 	it('reports an unskinned model rather than throwing', () => {
@@ -120,13 +172,19 @@ describe('scoreRig', () => {
 		expect(s.joints).toBe(0);
 	});
 
-	it('does not count a rig with no Hips as animating', () => {
-		// The Advanced Skeleton failure exactly: arms and legs resolve, but with no
-		// root the retargeter has nothing to anchor to and the avatar never moves.
+	it('scores a rig with no Hips the way the runtime plays it', () => {
+		// The audit used to require Hips on its own say-so while the retargeter
+		// binds limb tracks without one (the clip loses only its root motion), so
+		// the audit reported failures creators never saw. It now asks the runtime
+		// gate, and a missing root costs exactly the two Hips tracks.
 		const noHips = FULL_RIG.filter((b) => b !== 'Hips');
 		const s = scoreRig(rigJson(noHips));
+		const gate = canonicalClipGate({ hasSkinnedMesh: true, canonical: s.canonical });
 		expect(s.canonical).not.toContain('Hips');
-		expect(s.animates).toBe(false);
+		expect(s.animates).toBe(gate.ok);
+		expect(s.why).toBe(gate.why);
+		const full = canonicalClipGate({ hasSkinnedMesh: true, canonical: scoreRig(rigJson(FULL_RIG)).canonical });
+		expect(gate.bodyMatched).toBe(full.bodyMatched - 2);
 	});
 
 	it('collects unmapped joint names for the alias-candidate report', () => {
@@ -153,13 +211,15 @@ describe('scoreRig', () => {
 		expect(sketchfab.canonical).toContain('LeftUpLeg');
 		expect(sketchfab.canonical).toContain('RightLeg');
 
-		// Advanced Skeleton: had limbs but no root, so it never animated.
+		// Advanced Skeleton: had limbs but no root, so it never animated. The root
+		// now resolves and the whole core maps.
 		const advSkel = scoreRig(rigJson([
 			'Root_M_03', 'Spine1_M_04', 'Neck_M', 'Head_M',
 			'Shoulder_L', 'Elbow_L', 'Wrist_L', 'Shoulder_R', 'Elbow_R', 'Wrist_R',
 			'Hip_L', 'Knee_L', 'Ankle_L', 'Hip_R', 'Knee_R', 'Ankle_R',
 		]));
 		expect(advSkel.canonical).toContain('Hips');
+		expect(advSkel.core).toBe(9);
 		expect(advSkel.animates).toBe(true);
 	});
 

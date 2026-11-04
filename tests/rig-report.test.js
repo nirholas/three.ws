@@ -19,6 +19,7 @@ import {
 	LIMB_GROUPS,
 	CONVENTIONS,
 } from '../src/rig-report.js';
+import { canonicalClipGate } from '../src/canonical-clip-gate.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -246,11 +247,12 @@ describe('analyzeGlb verdicts', () => {
 		expect(r.skeleton.groups.find((g) => g.id === 'hands').driven).toBe(true);
 	});
 
-	it('mirrors the runtime gate: skinned plus MIN_CANONICAL_BONES decides drivability', () => {
+	it('mirrors the runtime gate on every shipped avatar', () => {
 		for (const name of ['cz', 'michelle', 'fox', 'mannequin', 'realistic-halfbody']) {
 			const r = report(name);
-			const expected = r.skeleton.skinned && r.skeleton.mapped >= MIN_CANONICAL_BONES;
-			expect(r.verdict.drivable).toBe(expected);
+			const gate = canonicalClipGate({ hasSkinnedMesh: r.skeleton.skinned, canonical: Object.keys(r.skeleton.mappedNames) });
+			expect(r.verdict.drivable, name).toBe(gate.ok);
+			expect(r.skeleton.mapped >= MIN_CANONICAL_BONES || !gate.ok, name).toBe(true);
 		}
 	});
 });

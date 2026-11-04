@@ -99,9 +99,12 @@ describe('AnimationManager.supportsCanonicalClips', () => {
 
 	it('is true for a Mixamo-prefixed humanoid (names canonicalize)', () => {
 		const mgr = new AnimationManager();
-		// GLTFLoader sanitizes `mixamorig:Hips` to `mixamorigHips`; mirror it.
+		// GLTFLoader sanitizes `mixamorig:Hips` to `mixamorigHips`; mirror it. A
+		// Mixamo export without finger joints is a complete body: the clip floor
+		// counts body tracks, so it must still play the library.
 		const rename = (b) => PropertyBinding.sanitizeNodeName(`mixamorig:${b}`);
-		mgr.attach(humanoid(CANONICAL_BONES.slice(0, 12), { rename }));
+		const body = CANONICAL_BONES.filter((b) => !/Hand(Thumb|Index|Middle|Ring|Pinky)\d$/.test(b));
+		mgr.attach(humanoid(body, { rename }));
 		expect(mgr.supportsCanonicalClips()).toBe(true);
 	});
 

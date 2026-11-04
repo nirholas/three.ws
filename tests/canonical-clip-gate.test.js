@@ -1,8 +1,12 @@
 // The bone-count gate and the retargeter's coverage floor must give the same
-// answer. A full-body rig with no finger joints maps 23 of a library clip's 53
-// tracks: the retargeter builds no action for it, so every surface that decides
-// "does this rig animate" has to say no and fall back to the default body,
-// instead of keeping the creator's mesh frozen in its bind pose.
+// answer. A library clip carries 53 retargetable tracks, 30 of them finger
+// joints. Counting only all 53 put every complete fingerless body (a Meshy AI
+// biped, a Mixamo export without hands) at 23 of 53, under the 50% floor: the
+// retargeter built no action and the creator's avatar stood in its bind pose.
+// The floor now passes on all tracks or on the 23 body tracks, whichever is
+// higher, so that body animates and a Ready Player Me half-body (head, spine and
+// fingered hands, no arms or legs) keeps the coverage it always had. A rig short
+// on both measures still falls back.
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -13,6 +17,7 @@ import {
 	MIN_CANONICAL_BONES,
 	MIN_COVERAGE,
 	canonicalClipGate,
+	clearsCoverageFloor,
 	predictLibraryCoverage,
 } from '../src/canonical-clip-gate.js';
 import { MIN_COVERAGE as RETARGET_MIN_COVERAGE, parseClipJSON, retargetClipToObject } from '../src/animation-retarget.js';
@@ -23,8 +28,21 @@ import { analyzeGlb } from '../src/rig-report.js';
 const FINGER = /Hand(Index|Middle|Ring|Pinky|Thumb)\d$/;
 const FULL = [...CANONICAL_BONES];
 const NO_FINGERS = CANONICAL_BONES.filter((b) => !FINGER.test(b));
-// Body plus the index and middle chains: enough tracks to clear the floor.
+// Body plus the index and middle chains.
 const PARTIAL_FINGERS = CANONICAL_BONES.filter((b) => !FINGER.test(b) || /Hand(Index|Middle)\d$/.test(b));
+// A Ready Player Me half-body, the shape public/avatars/realistic-halfbody.glb
+// ships: 7 of 23 body tracks, but 37 of 53 with its fingers. It has always
+// animated (head, torso and hands) and must keep doing so.
+const HALF_BODY = [
+	'Hips', 'Spine', 'Neck', 'Head', 'LeftHand', 'RightHand',
+	...CANONICAL_BONES.filter((b) => FINGER.test(b)),
+];
+// Arms and legs on a torso missing its spine, shoulders and feet: 11 of 23 body
+// tracks and 11 of 53 overall, under the floor either way.
+const ARMS_AND_LEGS = [
+	'Hips', 'Spine', 'Neck', 'Head', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm',
+	'LeftUpLeg', 'RightUpLeg',
+];
 
 const loadClip = (name) =>
 	parseClipJSON(
@@ -91,12 +109,15 @@ function managerSupports(names) {
 
 describe('predictLibraryCoverage', () => {
 	it('is the coverage the retargeter actually reports for a library clip', () => {
-		for (const names of [FULL, NO_FINGERS, PARTIAL_FINGERS, NO_FINGERS.slice(0, 10)]) {
+		for (const names of [FULL, NO_FINGERS, PARTIAL_FINGERS, HALF_BODY, ARMS_AND_LEGS]) {
 			for (const clipName of ['idle', 'walk']) {
 				const real = retargetClipToObject(loadClip(clipName), threeRig(names), { minCoverage: 0 });
 				const predicted = predictLibraryCoverage(names);
 				expect(predicted.total, clipName).toBe(real.total);
 				expect(predicted.matched, clipName).toBe(real.matched);
+				expect(predicted.bodyTotal, clipName).toBe(real.bodyTotal);
+				expect(predicted.bodyMatched, clipName).toBe(real.bodyMatched);
+				expect(predicted.bodyCoverage, clipName).toBeCloseTo(real.bodyCoverage, 10);
 			}
 		}
 	});
@@ -109,8 +130,10 @@ describe('predictLibraryCoverage', () => {
 describe('every "does this rig animate" surface agrees with the retargeter', () => {
 	const cases = [
 		['a full canonical skeleton', FULL, true],
-		['a full body with no finger joints', NO_FINGERS, false],
+		['a full body with no finger joints', NO_FINGERS, true],
 		['a body with index and middle fingers', PARTIAL_FINGERS, true],
+		['a half-body avatar: head, torso and fingered hands', HALF_BODY, true],
+		['arms and legs on a torso missing its spine and feet', ARMS_AND_LEGS, false],
 	];
 
 	it.each(cases)('%s', (_label, names, animates) => {
@@ -124,14 +147,31 @@ describe('every "does this rig animate" surface agrees with the retargeter', () 
 		expect(analyzeGlb(glbRig(names)).verdict.drivable, 'Rig Doctor').toBe(animates);
 	});
 
-	it('names the coverage shortfall rather than the bone count when that is the reason', () => {
-		const gate = canonicalClipGate({ hasSkinnedMesh: true, canonical: NO_FINGERS });
+	it('binds the finger tracks a rig has and animates the body of one that has none', () => {
+		const bare = retargetClipToObject(loadClip('idle'), threeRig(NO_FINGERS));
+		expect(bare.bodyCoverage).toBe(1);
+		expect(bare.clip.tracks.some((t) => /HandIndex/.test(t.name))).toBe(false);
+		const partial = retargetClipToObject(loadClip('idle'), threeRig(PARTIAL_FINGERS));
+		expect(partial.clip.tracks.some((t) => /HandIndex1\.quaternion$/.test(t.name))).toBe(true);
+		expect(partial.matched).toBeGreaterThan(bare.matched);
+	});
+
+	it('names both shortfalls when that is the reason a rig falls back', () => {
+		const gate = canonicalClipGate({ hasSkinnedMesh: true, canonical: ARMS_AND_LEGS });
 		expect(gate.why).toBe('low-coverage');
-		expect(decideRigMode(inspectRig(threeRig(NO_FINGERS))).reason).toMatch(/23 of 53/);
-		const verdict = analyzeGlb(glbRig(NO_FINGERS)).verdict;
+		expect([gate.bodyMatched, gate.bodyTotal, gate.matched, gate.total]).toEqual([11, 23, 11, 53]);
+		expect(decideRigMode(inspectRig(threeRig(ARMS_AND_LEGS))).reason).toMatch(/11 of 23 body clip tracks and 11 of 53 overall/);
+		const verdict = analyzeGlb(glbRig(ARMS_AND_LEGS)).verdict;
 		expect(verdict.level).toBe('fail');
-		expect(verdict.headline).toMatch(/23 of 53/);
-		expect(verdict.notes.join(' ')).toMatch(/finger/i);
+		expect(verdict.headline).toMatch(/11 of 23 body tracks \(11 of 53 with fingers\)/);
+	});
+
+	it('passes a half-body on its finger tracks without needing body ones', () => {
+		const gate = canonicalClipGate({ hasSkinnedMesh: true, canonical: HALF_BODY });
+		expect(gate.bodyCoverage).toBeLessThan(MIN_COVERAGE);
+		expect(gate.coverage).toBeGreaterThanOrEqual(MIN_COVERAGE);
+		expect(clearsCoverageFloor(gate)).toBe(true);
+		expect(clearsCoverageFloor({ coverage: 0.49, bodyCoverage: 0.49 })).toBe(false);
 	});
 
 	it('still refuses a skinless model and a near-empty rig for their own reasons', () => {

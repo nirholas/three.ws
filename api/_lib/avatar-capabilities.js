@@ -16,8 +16,9 @@
 //
 // Because it is the same mapping, the report is not an estimate. A morph this
 // module reports as supported is a morph the renderer will drive, and a rig it
-// reports as animatable is one src/animation-retarget.js will retarget onto
-// (its MIN_COVERAGE gate is applied here by name).
+// reports as animatable is one src/animation-retarget.js will retarget onto:
+// the decision is canonicalClipGate (src/canonical-clip-gate.js), the same call
+// the viewer, Rig Doctor and the embodiment stage make.
 //
 // Consumed by GET /api/avatar/capabilities and the /render-lab composer, which
 // disables controls an avatar cannot honor instead of letting you request them
@@ -28,7 +29,7 @@ import { disposeAgent, resolvePublicHost, pinnedAgent, pinnedFetch, validatePubl
 import { inspectGlb, glbJsonChunkEnd } from './glb-inspect.js';
 import { conformanceFromNames, ARKIT_52 } from '../../src/runtime/arkit52.js';
 import { canonicalizeBoneName, CANONICAL_BONES } from '../../src/glb-canonicalize.js';
-import { MIN_COVERAGE } from '../../src/animation-retarget.js';
+import { MIN_CANONICAL_BONES, MIN_COVERAGE, canonicalClipGate } from '../../src/canonical-clip-gate.js';
 import { fetchUpstream } from './upstream-fetch.js';
 
 // 256 KB covers the JSON chunk of essentially every real avatar in one read.
@@ -45,9 +46,9 @@ const EXTERNAL_TIMEOUT_MS = 12_000;
 // a rig with only visemes can lipsync but cannot emote.
 const EXPRESSION_MIN_SHAPES = 4;
 
-// Bones the retargeter must have to drive a full-body clip. Fingers are graded
-// separately: a rig can walk convincingly with no finger joints at all, so
-// missing hands lower the grade without disqualifying the rig.
+// The joints a full-body clip moves visibly. Reported so a caller can say which
+// parts of a supported rig stay in their rest pose (a half-body has no legs);
+// they never decide support, which is the clip gate's call alone.
 const CORE_BONES = Object.freeze([
 	'Hips', 'Spine', 'Neck', 'Head',
 	'LeftArm', 'LeftForeArm', 'RightArm', 'RightForeArm',
@@ -134,7 +135,7 @@ function detectRig(boneNames, generator) {
 	return { id: 'unknown', label: boneNames.length ? 'Unrecognized humanoid' : 'No skeleton' };
 }
 
-function gradeSkeleton(boneNames) {
+function gradeSkeleton(boneNames, isRigged) {
 	const mapped = new Map();
 	const unmapped = [];
 	for (const raw of boneNames) {
@@ -153,9 +154,8 @@ function gradeSkeleton(boneNames) {
 		unmapped,
 		coreMissing,
 		fingerCoverage: FINGER_BONES.length ? fingersMapped / FINGER_BONES.length : 0,
-		// The retargeter's own gate, applied by name so this answer and the
-		// runtime's answer cannot drift apart.
-		retargetable: coverage >= MIN_COVERAGE && coreMissing.length === 0,
+		// The runtime's own gate, so this answer and the viewer's cannot drift.
+		gate: canonicalClipGate({ hasSkinnedMesh: isRigged, canonical: mappedNames }),
 	};
 }
 
@@ -170,21 +170,25 @@ function poseVerdict(skeleton, isRigged) {
 			reason: 'This model has no skeleton, so poses and animation clips cannot drive it. Rig it first (POST /api/rig) and every pose preset becomes available.',
 		};
 	}
-	if (skeleton.retargetable) {
+	const { gate } = skeleton;
+	if (gate.ok) {
+		const frozen = skeleton.coreMissing.length
+			? ` This rig has no ${skeleton.coreMissing.join(', ')}, so those stay in their rest pose.`
+			: '';
 		return {
 			supported: true,
-			reason: `${skeleton.mapped.length} of ${CANONICAL_BONES.length} canonical bones mapped; every pose preset and animation clip retargets onto this rig.`,
+			reason: `${skeleton.mapped.length} of ${CANONICAL_BONES.length} canonical bones mapped; every pose preset and animation clip retargets onto this rig.${frozen}`,
 		};
 	}
-	if (skeleton.coreMissing.length) {
+	if (gate.why === 'too-few-bones') {
 		return {
 			supported: false,
-			reason: `Core bones did not map (${skeleton.coreMissing.slice(0, 6).join(', ')}). Renders fall back to the default rig rather than showing a broken pose.`,
+			reason: `Only ${gate.canonicalCount} canonical bone(s) mapped, below the ${MIN_CANONICAL_BONES} the baked clips need. Renders fall back to the default rig rather than showing a broken pose.`,
 		};
 	}
 	return {
 		supported: false,
-		reason: `Only ${Math.round(skeleton.coverage * 100)}% of the canonical skeleton mapped, below the ${Math.round(MIN_COVERAGE * 100)}% retarget floor. Renders fall back to the default rig.`,
+		reason: `${gate.canonicalCount} canonical bones map ${gate.bodyMatched} of ${gate.bodyTotal} body clip tracks and ${gate.matched} of ${gate.total} overall, both under the ${Math.round(MIN_COVERAGE * 100)}% the retargeter binds. Renders fall back to the default rig.`,
 	};
 }
 
@@ -234,7 +238,7 @@ export async function inspectGlbCapabilities(storageKey, opts = {}) {
 	if (!info) return null;
 
 	const morphs = conformanceFromNames(info.morphTargetNames);
-	const skeleton = gradeSkeleton(info.boneNames);
+	const skeleton = gradeSkeleton(info.boneNames, info.isRigged);
 	const rig = detectRig(info.boneNames, info.generator);
 
 	const pose = poseVerdict(skeleton, info.isRigged);

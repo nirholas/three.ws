@@ -98,13 +98,19 @@ const THREE = await import('three');
 
 const ARKIT_MORPHS = ['jawOpen', 'mouthSmileLeft', 'mouthSmileRight', 'mouthFunnel', 'browInnerUp', 'eyeBlinkLeft'];
 
-/** A humanoid rig the canonicalizer can map: enough mixamo bones + ARKit face morphs. */
+/**
+ * A humanoid rig the canonicalizer can map: a complete Mixamo body (no finger
+ * joints, which never count toward the clip floor) plus ARKit face morphs.
+ */
 function humanoidModel() {
 	const root = new THREE.Group();
 	const boneNames = [
-		'mixamorig:Hips', 'mixamorig:Spine', 'mixamorig:Head', 'mixamorig:Neck',
-		'mixamorig:LeftArm', 'mixamorig:RightArm', 'mixamorig:LeftUpLeg', 'mixamorig:RightUpLeg',
-		'mixamorig:LeftFoot', 'mixamorig:RightFoot', 'mixamorig:Jaw',
+		'mixamorig:Hips', 'mixamorig:Spine', 'mixamorig:Spine1', 'mixamorig:Spine2',
+		'mixamorig:Neck', 'mixamorig:Head', 'mixamorig:Jaw',
+		...['Left', 'Right'].flatMap((side) => [
+			`mixamorig:${side}Shoulder`, `mixamorig:${side}Arm`, `mixamorig:${side}ForeArm`, `mixamorig:${side}Hand`,
+			`mixamorig:${side}UpLeg`, `mixamorig:${side}Leg`, `mixamorig:${side}Foot`, `mixamorig:${side}ToeBase`,
+		]),
 	];
 	const bones = boneNames.map((name) => {
 		const bone = new THREE.Bone();

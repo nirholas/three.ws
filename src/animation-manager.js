@@ -143,8 +143,8 @@ export class AnimationManager {
 		this._failed = new Set();
 		/** @type {Map<string,string>|null} canonical bone → actual node name on the attached model. */
 		this._canonicalToNode = null;
-		/** @type {boolean} Whether the attached model's rig can play the canonical clip library. */
-		this._canonicalClipsSupported = false;
+		/** @type {ReturnType<typeof canonicalClipGate>|null} The clip gate's verdict on the attached rig. */
+		this._clipGate = null;
 		/** @type {object|null} The attached model's VRM instance (vrm-loader.js), if any. */
 		this._vrm = null;
 		/** @type {{ avatarId?: string, avatarUrl?: string }} Context for the fallen-pose guard's reports. */
@@ -230,7 +230,7 @@ export class AnimationManager {
 		// ground-native export). The retarget adds it to the hip track so the
 		// clip's ground lands on the model's actual ground.
 		this._hipGroundLocalY = hipGroundLocalY(model);
-		this._canonicalClipsSupported = _modelSupportsCanonicalClips(model, this._canonicalToNode);
+		this._clipGate = _canonicalClipGateFor(model, this._canonicalToNode);
 		// A VRM's spring bones, look-at and expressionManager all live on the vrm
 		// instance stashed by src/game/vrm-loader.js's prepareVrmModel(), not on
 		// any node the mixer touches, so they need their own per-frame tick below.
@@ -403,7 +403,7 @@ export class AnimationManager {
 		this._morphTargets = null;
 		this._hipTargetLocalY = 0;
 		this._hipGroundLocalY = 0;
-		this._canonicalClipsSupported = false;
+		this._clipGate = null;
 		this._vrm = null;
 		this.actions.clear();
 		this.currentAction = null;
@@ -464,7 +464,19 @@ export class AnimationManager {
 	 * @returns {boolean}
 	 */
 	supportsCanonicalClips() {
-		return this._canonicalClipsSupported;
+		return this._clipGate?.ok === true;
+	}
+
+	/**
+	 * The reason behind supportsCanonicalClips(): canonicalClipGate's full verdict
+	 * for the attached rig, or null when nothing is attached. `why` separates a
+	 * model that is not a humanoid rig ('no-skin', 'too-few-bones') from a
+	 * humanoid the library cannot bind ('low-coverage'), which still has arms a
+	 * caller can lower geometrically.
+	 * @returns {ReturnType<typeof canonicalClipGate>|null}
+	 */
+	clipGate() {
+		return this._clipGate;
 	}
 
 	/**
@@ -1026,16 +1038,15 @@ export class AnimationManager {
 // A pre-baked clip only deforms the mesh when its tracks address real skeleton
 // bones AND enough of them bind to clear the retargeter's coverage floor. The
 // decision reads the same canonical-to-node map every clip is retargeted
-// through, so "supported" means the library's clips actually bind: a skinned
-// body with no finger joints has plenty of canonical bones but maps 23 of a
-// clip's 53 tracks, builds no action, and must be reported as unanimated so the
-// caller falls back to the default body instead of showing a bind pose.
-function _modelSupportsCanonicalClips(model, canonicalToNode) {
+// through, so "supported" means the library's clips actually bind; a rig under
+// the floor builds no action and is reported as unanimated so the caller falls
+// back to the default body instead of showing a bind pose.
+function _canonicalClipGateFor(model, canonicalToNode) {
 	let hasSkinnedMesh = false;
 	model.traverse((node) => {
 		if (node.isSkinnedMesh) hasSkinnedMesh = true;
 	});
-	return canonicalClipGate({ hasSkinnedMesh, canonical: canonicalToNode?.keys() }).ok;
+	return canonicalClipGate({ hasSkinnedMesh, canonical: canonicalToNode?.keys() });
 }
 
 // Surface a fallen-pose retarget through the existing client-error pipeline

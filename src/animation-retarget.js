@@ -19,7 +19,7 @@
 
 import { AnimationClip, Box3, Quaternion, Vector3 } from 'three';
 import { canonicalizeBoneName, resolveArmShoulderCollisions } from './glb-canonicalize.js';
-import { MIN_COVERAGE } from './canonical-clip-gate.js';
+import { MIN_COVERAGE, clearsCoverageFloor, isFingerBone } from './canonical-clip-gate.js';
 import {
 	CANONICAL_PARENT,
 	CANONICAL_REST,
@@ -27,9 +27,12 @@ import {
 	CANONICAL_REST_WORLD,
 } from './animation-canonical-rest.js';
 
-// A clip retargets cleanly only when enough of its tracks find a home on the
-// target rig. Below this the motion would read as a few twitching joints rather
-// than a performance, so callers surface an actionable "can't retarget" error.
+// A clip retargets cleanly only when enough of its body tracks find a home on
+// the target rig. Below this the motion would read as a few twitching joints
+// rather than a performance, so callers surface an actionable "can't retarget"
+// error. The floor passes on all tracks or on the body tracks alone, whichever
+// is higher: a complete body with no fingers performs every clip, and a
+// half-body avatar with full hands keeps the coverage it always had.
 // Defined beside the rig gate (src/canonical-clip-gate.js) so the "does this rig
 // animate" answer and this floor are one number.
 export { MIN_COVERAGE };
@@ -137,10 +140,15 @@ const _q = new Quaternion();
 /**
  * @typedef {Object} RetargetResult
  * @property {AnimationClip|null} clip   Retargeted clip (track names rewritten to
- *   the target's bone names), or null when coverage is below MIN_COVERAGE.
+ *   the target's bone names), or null when coverage and bodyCoverage are both
+ *   below MIN_COVERAGE.
  * @property {number} matched   Tracks successfully mapped onto the target.
- * @property {number} total     Tracks in the source clip.
- * @property {number} coverage  matched / total (0–1).
+ * @property {number} total     Retargetable tracks in the source clip.
+ * @property {number} coverage  matched / total (0 to 1), fingers included.
+ * @property {number} bodyMatched  Non-finger tracks mapped onto the target.
+ * @property {number} bodyTotal    Non-finger retargetable tracks in the clip.
+ * @property {number} bodyCoverage bodyMatched / bodyTotal (the overall coverage
+ *   when a clip addresses only fingers).
  * @property {string[]} dropped Canonical bone names the target rig lacks.
  * @property {number} hipScale  Factor applied to hip translation (1 = none).
  * @property {number} face      Blendshape lanes bound on the target (0 = no face).
@@ -721,6 +729,8 @@ export function retargetClip(clip, canonicalToNode, opts = {}) {
 	// Denominator counts only *retargetable* tracks (see below), so a clip baked
 	// with per-bone position/scale channels still reports honest coverage.
 	let total = 0;
+	let bodyTotal = 0;
+	let bodyMatched = 0;
 
 	for (const track of clip.tracks) {
 		const dot = track.name.indexOf('.');
@@ -768,11 +778,14 @@ export function retargetClip(clip, canonicalToNode, opts = {}) {
 		if (!retargetable) continue;
 
 		total++;
+		const body = !isFingerBone(canonical);
+		if (body) bodyTotal++;
 		const nodeName = canonicalToNode.get(canonical);
 		if (!nodeName) {
 			dropped.push(canonical);
 			continue;
 		}
+		if (body) bodyMatched++;
 		const next = track.clone();
 		next.name = `${nodeName}.${property}`;
 		if (property === 'quaternion') {
@@ -805,12 +818,16 @@ export function retargetClip(clip, canonicalToNode, opts = {}) {
 
 	const matched = tracks.length;
 	const coverage = total > 0 ? matched / total : 0;
-	if (coverage < minCoverage) {
-		return { clip: null, matched, total, coverage, dropped, hipScale, face: 0 };
+	// A hand-only clip (a fingerspelling handshape) has no body tracks to judge;
+	// its own coverage is the honest measure there.
+	const bodyCoverage = bodyTotal > 0 ? bodyMatched / bodyTotal : coverage;
+	const counts = { matched, total, coverage, bodyMatched, bodyTotal, bodyCoverage };
+	if (!clearsCoverageFloor(counts, minCoverage)) {
+		return { clip: null, ...counts, dropped, hipScale, face: 0 };
 	}
 	const out = clip.clone();
 	out.tracks = [...tracks, ...faceTracks];
-	return { clip: out, matched, total, coverage, dropped, hipScale, face: faceTracks.length };
+	return { clip: out, ...counts, dropped, hipScale, face: faceTracks.length };
 }
 
 /**

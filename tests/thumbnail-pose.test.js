@@ -193,10 +193,23 @@ describe('applyThumbnailPose', () => {
 		expect(armDropY(root, 'J_Bip_R_UpperArm', 'J_Bip_R_LowerArm')).toBeLessThan(-0.8);
 	});
 
-	it('still lowers the arms of a rig too sparse for the clip (no finger bones)', async () => {
-		// Without fingers fewer than half the clip's joints map, so the retarget
-		// declines; the geometric fallback must still take the arms out of the T.
+	it('poses a complete body with no finger joints from the clip itself', async () => {
+		// Fingers never count toward the retarget floor, so a fingerless Mixamo
+		// export takes the real clip pose rather than the geometric fallback.
 		const root = makeHumanoid(MIXAMO, { fingers: false });
+		const result = await applyThumbnailPose(root, poseClip);
+		expect(result).toMatchObject({ posed: true, mode: 'rest' });
+		expect(armDropY(root, 'mixamorigLeftArm', 'mixamorigLeftForeArm')).toBeLessThan(-0.8);
+		expect(armDropY(root, 'mixamorigRightArm', 'mixamorigRightForeArm')).toBeLessThan(-0.8);
+	});
+
+	it('still lowers the arms of a rig too sparse for the clip', async () => {
+		// Only the hips and the arm chains resolve (10 of a clip's 23 body tracks,
+		// 10 of 53 overall), so the clip cannot bind; the geometric fallback must
+		// still take the arms out of the T.
+		const armsOnly = (key) =>
+			/^(Hips|(Left|Right)(Shoulder|Arm|ForeArm|Hand))$/.test(key) ? MIXAMO(key) : `ctrl_${key}`;
+		const root = makeHumanoid(armsOnly, { fingers: false });
 		const result = await applyThumbnailPose(root, poseClip);
 		expect(result).toMatchObject({ posed: true, mode: 'arms-relaxed' });
 		expect(armDropY(root, 'mixamorigLeftArm', 'mixamorigLeftForeArm')).toBeLessThan(-0.8);

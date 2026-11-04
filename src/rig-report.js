@@ -20,7 +20,9 @@
 // this file is wrong: the runtime is the product.
 
 import { canonicalizeBoneName, CANONICAL_BONES, resolveArmShoulderCollisions } from './glb-canonicalize.js';
-import { MIN_CANONICAL_BONES, MIN_COVERAGE, canonicalClipGate } from './canonical-clip-gate.js';
+import { MIN_CANONICAL_BONES, MIN_COVERAGE, canonicalClipGate, isFingerBone } from './canonical-clip-gate.js';
+
+const BODY_BONES = CANONICAL_BONES.filter((b) => !isFingerBone(b));
 
 const GLB_MAGIC = 0x46546c67; // 'glTF' little-endian
 const CHUNK_TYPE_JSON = 0x4e4f534a; // 'JSON'
@@ -219,6 +221,65 @@ function jointNodeIndices(json) {
 		for (const j of skin.joints || []) set.add(j);
 	}
 	return set;
+}
+
+/**
+ * Resolve a glTF skeleton's joint names to canonical bones exactly as the
+ * runtime does (canonicalBoneEntries in src/animation-retarget.js): canonicalize
+ * every joint, settle the clavicle/upper-arm collision against the real node
+ * hierarchy with the shared resolver, then let the first joint claim each
+ * canonical name. Only what is still contested after that is a collision; a
+ * Rigify rig whose `shoulder.L` / `upper_arm.L` the runtime separates is
+ * reported as resolved, not as an authoring bug. Shared by analyzeGlb and the
+ * production rig-coverage audit (scripts/audit-rig-coverage.mjs) so the two
+ * can never count a skeleton differently.
+ *
+ * @param {object} json parsed glTF JSON
+ * @param {Set<number>} [jointIdx] skin joint node indices (derived when omitted)
+ * @returns {{ mapped: Map<string, string>, unmapped: string[],
+ *   collisions: {canonical: string, names: string[]}[],
+ *   renames: {from: string, to: string}[],
+ *   resolved: {name: string, from: string, to: string}[] }}
+ */
+export function resolveGltfJoints(json, jointIdx = jointNodeIndices(json || {})) {
+	const nodes = json?.nodes || [];
+	const parentOf = new Map();
+	nodes.forEach((n, i) => {
+		for (const c of n?.children || []) parentOf.set(c, i);
+	});
+	const isAncestor = (a, b) => {
+		const seen = new Set([b.index]);
+		for (let cur = parentOf.get(b.index); cur != null && !seen.has(cur); cur = parentOf.get(cur)) {
+			if (cur === a.index) return true;
+			seen.add(cur);
+		}
+		return false;
+	};
+	const entries = [];
+	const unmapped = [];
+	for (const index of jointIdx) {
+		const name = nodes[index]?.name;
+		if (typeof name !== 'string' || !name) continue;
+		const canonical = canonicalizeBoneName(name);
+		if (canonical) entries.push({ index, raw: name, canonical, initial: canonical });
+		else unmapped.push(name);
+	}
+	resolveArmShoulderCollisions(entries, { isAncestor });
+
+	// canonical -> the first source joint that claimed it. Later duplicates are
+	// recorded as collisions rather than silently overwriting, because a rig
+	// with two nodes both mapping to `Hips` is a real authoring bug worth naming.
+	const mapped = new Map();
+	const collisions = [];
+	const renames = [];
+	const resolved = [];
+	for (const e of entries) {
+		if (e.canonical !== e.initial) resolved.push({ name: e.raw, from: e.initial, to: e.canonical });
+		if (mapped.has(e.canonical)) collisions.push({ canonical: e.canonical, names: [mapped.get(e.canonical), e.raw] });
+		else mapped.set(e.canonical, e.raw);
+		if (e.raw !== e.canonical) renames.push({ from: e.raw, to: e.canonical });
+	}
+	return { mapped, unmapped, collisions, renames, resolved };
 }
 
 // Slice the BIN chunk out of a GLB ArrayBuffer, the same chunk-1 offset math
@@ -429,49 +490,7 @@ export function analyzeGlb(buffer, opts = {}) {
 	const joints = [...jointIdx].map((i) => nodes[i]?.name || '').filter(Boolean);
 	const meshNames = nodes.filter((n) => n.mesh != null).map((n) => n.name || '');
 
-	// Resolve exactly as the runtime does (canonicalBoneEntries in
-	// src/animation-retarget.js): canonicalize every joint, settle the
-	// clavicle/upper-arm collision against the real hierarchy with the shared
-	// resolver, then let the first joint claim each canonical name. Only what is
-	// still contested after that is a collision; a Rigify rig whose
-	// `shoulder.L` / `upper_arm.L` the runtime separates is reported as resolved,
-	// not as an authoring bug.
-	const parentOf = new Map();
-	nodes.forEach((n, i) => {
-		for (const c of n.children || []) parentOf.set(c, i);
-	});
-	const isAncestor = (a, b) => {
-		const seen = new Set([b.index]);
-		for (let cur = parentOf.get(b.index); cur != null && !seen.has(cur); cur = parentOf.get(cur)) {
-			if (cur === a.index) return true;
-			seen.add(cur);
-		}
-		return false;
-	};
-	const entries = [];
-	const unmapped = [];
-	for (const index of jointIdx) {
-		const name = nodes[index]?.name || '';
-		if (!name) continue;
-		const canonical = canonicalizeBoneName(name);
-		if (canonical) entries.push({ index, raw: name, canonical, initial: canonical });
-		else unmapped.push(name);
-	}
-	resolveArmShoulderCollisions(entries, { isAncestor });
-
-	// canonical -> the first source joint that claimed it. Later duplicates are
-	// recorded as collisions rather than silently overwriting, because a rig
-	// with two nodes both mapping to `Hips` is a real authoring bug worth naming.
-	const mapped = new Map();
-	const collisions = [];
-	const renames = [];
-	const resolved = [];
-	for (const e of entries) {
-		if (e.canonical !== e.initial) resolved.push({ name: e.raw, from: e.initial, to: e.canonical });
-		if (mapped.has(e.canonical)) collisions.push({ canonical: e.canonical, names: [mapped.get(e.canonical), e.raw] });
-		else mapped.set(e.canonical, e.raw);
-		if (e.raw !== e.canonical) renames.push({ from: e.raw, to: e.canonical });
-	}
+	const { mapped, unmapped, collisions, renames, resolved } = resolveGltfJoints(json, jointIdx);
 
 	const convention = detectConvention({ joints, meshNames, json });
 	const groups = LIMB_GROUPS.map((g) => {
@@ -535,7 +554,15 @@ export function analyzeGlb(buffer, opts = {}) {
 			collisions,
 			resolvedCollisions: resolved,
 			renames,
-			clipCoverage: { matched: gate.matched, total: gate.total, coverage: gate.coverage, floor: MIN_COVERAGE },
+			clipCoverage: {
+				matched: gate.matched,
+				total: gate.total,
+				coverage: gate.coverage,
+				bodyMatched: gate.bodyMatched,
+				bodyTotal: gate.bodyTotal,
+				bodyCoverage: gate.bodyCoverage,
+				floor: MIN_COVERAGE,
+			},
 			groups,
 			maxInfluences: skinWeights.maxInfluences,
 			unweightedVertices: skinWeights.unweightedVertices,
@@ -566,27 +593,26 @@ function buildVerdict(report, drivable, gate) {
 	}
 
 	if (!drivable && gate.why === 'low-coverage') {
-		// Enough canonical joints to look like a humanoid, too few for a clip to
-		// bind: the retargeter builds no action under its coverage floor, so the
-		// runtime falls back to the default body. Almost always missing fingers,
-		// which are 30 of a library clip's 53 tracks.
-		const hands = s.groups.find((g) => g.id === 'hands');
+		// Enough canonical joints to look like a humanoid, too little for a clip
+		// to bind: the retargeter builds no action when under half of a clip's
+		// tracks land, counted over all of them or over the body alone, so the
+		// runtime falls back to the default body. Body joints raise both counts,
+		// so they are always the fix.
+		const missingBody = BODY_BONES.filter((b) => !s.mappedNames[b]);
 		const lowNotes = [
 			`Detected convention: ${s.convention.label} (${s.convention.evidence}).`,
-			`${s.mapped} canonical joints mapped, but a library clip addresses ${gate.total} tracks and only ${gate.matched} land on this rig (${Math.round(gate.coverage * 100)}%, the retargeter needs ${Math.round(MIN_COVERAGE * 100)}%).`,
+			`${s.mapped} canonical joints mapped, but only ${gate.bodyMatched} of a clip's ${gate.bodyTotal} body tracks land on this rig (${Math.round(gate.bodyCoverage * 100)}%), and ${gate.matched} of all ${gate.total} with fingers (${Math.round(gate.coverage * 100)}%). The retargeter needs ${Math.round(MIN_COVERAGE * 100)}% of either.`,
+			`Body joints with no match: ${missingBody.join(', ')}.`,
 		];
-		if (hands && hands.have < hands.total) {
-			lowNotes.push(`Hands: ${hands.have}/${hands.total} finger joints mapped. Finger joints are most of every clip, so a rig without them cannot clear the floor.`);
-		}
 		if (s.unmapped.length) lowNotes.push(`${s.unmapped.length} joint names were not recognised, including ${s.unmapped.slice(0, 3).join(', ')}.`);
 		return {
 			level: 'fail',
-			headline: `Clips bind only ${gate.matched} of ${gate.total} tracks on this rig, under the ${Math.round(MIN_COVERAGE * 100)}% the retargeter needs, so it will not animate.`,
+			headline: `Clips bind only ${gate.bodyMatched} of ${gate.bodyTotal} body tracks (${gate.matched} of ${gate.total} with fingers) on this rig, under the ${Math.round(MIN_COVERAGE * 100)}% the retargeter needs, so it will not animate.`,
 			detail: 'three.ws falls back to the default rig for models like this rather than leaving them in a T-pose, so your own mesh will not be the one moving.',
 			notes: lowNotes,
 			fixes: [
-				'Add finger joints (thumb, index, middle, ring and pinky, three per finger) and name them to the canonical set below, or let the auto-rigger rebuild the skeleton (POST /api/forge?action=rig).',
-				'If the rig has finger joints under a naming we do not recognise yet, the unmapped names below are exactly what belongs in src/glb-canonicalize.js.',
+				'Add or rename the body joints listed above to the canonical set below, or let the auto-rigger rebuild the skeleton (POST /api/forge?action=rig).',
+				'If the rig has those joints under a naming we do not recognise yet, the unmapped names below are exactly what belongs in src/glb-canonicalize.js.',
 			],
 			drivable: false,
 		};

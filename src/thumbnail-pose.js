@@ -218,7 +218,11 @@ export async function applyThumbnailPose(root, poseClipJson) {
 	// attach() measures the rest frames, so the rig must read its bind pose here.
 	refreshSkinning(root);
 	manager.attach(root);
-	if (!manager.supportsCanonicalClips()) {
+	// A model that is not a humanoid rig is left alone. A humanoid the library
+	// cannot bind (under the coverage floor) still has a T to fix, so it skips
+	// the clip and goes straight to the geometric arms-down fallback below.
+	const gate = manager.clipGate();
+	if (!gate || gate.why === 'no-skin' || gate.why === 'too-few-bones') {
 		restore();
 		return { posed: false, mode: 'not-humanoid', restore };
 	}
@@ -227,10 +231,13 @@ export async function applyThumbnailPose(root, poseClipJson) {
 		return { posed: false, mode: 'authored-rest', restore };
 	}
 
-	// Same order the viewer uses: relax arms the clip cannot reach, then play.
-	manager.relaxUndrivenArms();
-	manager.injectClip(POSE_CLIP_NAME, poseClipJson);
-	const playing = await manager.play(POSE_CLIP_NAME);
+	let playing = false;
+	if (gate.ok) {
+		// Same order the viewer uses: relax arms the clip cannot reach, then play.
+		manager.relaxUndrivenArms();
+		manager.injectClip(POSE_CLIP_NAME, poseClipJson);
+		playing = await manager.play(POSE_CLIP_NAME);
+	}
 	if (playing) {
 		manager.update(SETTLE_SECONDS);
 		refreshSkinning(root);

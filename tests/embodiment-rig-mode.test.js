@@ -8,11 +8,14 @@ import { describe, it, expect } from 'vitest';
 import { decideRigMode, inspectRig, MIN_CANONICAL_BONES } from '../src/embodiment/rig-mode.js';
 import { CANONICAL_BONES } from '../src/glb-canonicalize.js';
 
-// A real humanoid carries finger joints: they are 30 of a library clip's 53
-// tracks, so a body without them never clears the retargeter's coverage floor.
+// The retargeter's floor passes on a clip's 53 tracks or its 23 body tracks,
+// whichever is higher. A complete body with no fingers (a Meshy AI or fingerless
+// Mixamo export) animates; arms and legs on a torso missing its spine and feet
+// clear neither measure and fall back.
 const HUMANOID_BONES = [...CANONICAL_BONES];
-const FINGERLESS_BONES = [
-	'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftArm', 'RightArm',
+const FINGERLESS_BODY = CANONICAL_BONES.filter((b) => !/Hand(Thumb|Index|Middle|Ring|Pinky)\d$/.test(b));
+const ARMS_AND_LEGS = [
+	'Hips', 'Spine', 'Neck', 'Head', 'LeftArm', 'RightArm',
 	'LeftForeArm', 'RightForeArm', 'LeftUpLeg', 'RightUpLeg',
 ];
 
@@ -35,11 +38,16 @@ describe('decideRigMode', () => {
 		expect(r.canonicalCount).toBeGreaterThanOrEqual(MIN_CANONICAL_BONES);
 	});
 
+	it('drives the canonical library for a complete body with no finger joints', () => {
+		const r = decideRigMode({ hasSkinnedMesh: true, boneNames: FINGERLESS_BODY });
+		expect(r.mode).toBe('canonical');
+	});
+
 	it('falls back when enough bones map but a clip would not clear the coverage floor', () => {
-		const r = decideRigMode({ hasSkinnedMesh: true, boneNames: FINGERLESS_BONES });
+		const r = decideRigMode({ hasSkinnedMesh: true, boneNames: ARMS_AND_LEGS });
 		expect(r.canonicalCount).toBeGreaterThanOrEqual(MIN_CANONICAL_BONES);
 		expect(r.mode).toBe('fallback');
-		expect(r.reason).toMatch(/13 of 53 clip tracks/);
+		expect(r.reason).toMatch(/11 of 23 body clip tracks and 11 of 53 overall/);
 	});
 
 	it('handles missing / empty input without throwing', () => {

@@ -26,11 +26,13 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { canonicalizeBoneName, CANONICAL_BONES } from '../src/glb-canonicalize.js';
+import { CANONICAL_BONES } from '../src/glb-canonicalize.js';
+import { canonicalClipGate } from '../src/canonical-clip-gate.js';
+import { resolveGltfJoints } from '../src/rig-report.js';
 
-// Bones a clip needs before a performance reads as "the character is moving"
-// rather than "a limb twitches on a statue". Mirrors the intent of
-// AnimationManager.supportsCanonicalClips(): a torso anchor, both arms, both legs.
+// The torso anchor, both arms and both legs: reported per rig so a failing
+// skeleton's shortfall is readable. Whether it animates is the runtime's own
+// gate (src/canonical-clip-gate.js), not a count of these.
 const CORE_BONES = [
 	'Hips',
 	'LeftArm', 'LeftForeArm', 'RightArm', 'RightForeArm',
@@ -123,9 +125,16 @@ export function parseGlbJsonChunk(head) {
 /**
  * Score one parsed glTF's skeleton against the canonical bone set.
  *
+ * `animates` is the decision AnimationManager.supportsCanonicalClips() makes at
+ * runtime (canonicalClipGate over the joints as Rig Doctor resolves them), so
+ * the audit's "animate" rate is the rate creators actually see. `why` names the
+ * reason a rig falls back and `coverage` the share of a library clip the
+ * floor judges: the higher of all-track and body-track coverage.
+ *
  * @param {object} json parsed glTF JSON
  * @returns {{skinned:boolean, joints:number, mapped:number, canonical:string[],
- *   unmapped:string[], core:number, legs:number, animates:boolean, generator:string|null}}
+ *   unmapped:string[], core:number, legs:number, animates:boolean,
+ *   why:string, coverage:number, generator:string|null}}
  */
 export function scoreRig(json) {
 	const generator = json?.asset?.generator || null;
@@ -136,20 +145,16 @@ export function scoreRig(json) {
 	if (jointIdx.size === 0) {
 		return {
 			skinned: false, joints: 0, mapped: 0, canonical: [], unmapped: [],
-			core: 0, legs: 0, animates: false, generator,
+			core: 0, legs: 0, animates: false, why: 'no-skin', coverage: 0, generator,
 		};
 	}
-	const canonical = new Set();
-	const unmapped = [];
-	for (const idx of jointIdx) {
-		const name = json.nodes?.[idx]?.name;
-		if (typeof name !== 'string' || !name) continue;
-		const c = canonicalizeBoneName(name);
-		if (c) canonical.add(c);
-		else unmapped.push(name);
-	}
+	const { mapped, unmapped } = resolveGltfJoints(json, jointIdx);
+	const canonical = new Set(mapped.keys());
 	const core = CORE_BONES.filter((b) => canonical.has(b)).length;
 	const legs = LEG_BONES.filter((b) => canonical.has(b)).length;
+	// The runtime's SkinnedMesh check: a mesh node bound to a skin.
+	const hasSkinnedMesh = (json.nodes || []).some((n) => n?.skin != null && n?.mesh != null);
+	const gate = canonicalClipGate({ hasSkinnedMesh, canonical });
 	return {
 		skinned: true,
 		joints: jointIdx.size,
@@ -158,9 +163,9 @@ export function scoreRig(json) {
 		unmapped,
 		core,
 		legs,
-		// The retargeter needs the torso anchor plus at least one full limb pair
-		// to produce a readable performance; below that it falls back.
-		animates: canonical.has('Hips') && core >= 5,
+		animates: gate.ok,
+		why: gate.why,
+		coverage: Math.max(gate.coverage, gate.bodyCoverage),
 		generator,
 	};
 }
@@ -296,6 +301,13 @@ async function main() {
 	console.log(`skinned rigs     ${skinned.length}   (${pct(skinned.length, ok.length)} of fetched)`);
 	console.log(`animate          ${animating.length}   (${pct(animating.length, skinned.length)} of skinned)`);
 	console.log(`full leg chain   ${fullLegs.length}   (${pct(fullLegs.length, skinned.length)} of skinned)`);
+	const fallbackWhy = new Map();
+	for (const r of skinned) {
+		if (!r.score.animates) fallbackWhy.set(r.score.why, (fallbackWhy.get(r.score.why) || 0) + 1);
+	}
+	for (const [why, n] of [...fallbackWhy.entries()].sort((a, b) => b[1] - a[1])) {
+		console.log(`  falls back: ${why.padEnd(14)} ${n}   (${pct(n, skinned.length)} of skinned)`);
+	}
 
 	console.log('\n── by ingest source ───────────────────────────────────────');
 	console.table(
@@ -332,7 +344,8 @@ async function main() {
 			const s = r.score;
 			console.log(
 				`\n${r.row.slug || r.row.id}  [${r.row.source}]  ` +
-				`${s.joints} joints, ${s.mapped} mapped, core ${s.core}/${CORE_BONES.length}` +
+				`${s.joints} joints, ${s.mapped} mapped, core ${s.core}/${CORE_BONES.length}, ` +
+				`${s.why} (clip coverage ${Math.round(s.coverage * 100)}%)` +
 				(s.generator ? `  — ${s.generator}` : ''),
 			);
 			console.log(`  mapped:   ${s.canonical.sort().join(', ') || '(none)'}`);
