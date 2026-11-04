@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Agent payment mandates are pinned to USDC and refuse any other currency",
+			"summary": "An Intent Mandate lets your agent pay other agents without asking you each time, within a budget. Issuing one with an empty or non-USDC currency used to succeed and quietly turned off the currency check, so a payment in an asset the spend guard cannot price could bypass your per-payment, daily and per-recipient dollar limits. Mandates now accept USDC only, refuse anything else with unsupported_currency, and any mandate signed with a bad currency before this fix is refused when the agent tries to spend under it.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/docs/a2a-payments"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "3D generation workers accept PNG, JPEG and WEBP only, and say so when an image is refused",
 			"summary": "Every photo you hand Forge, avatar reconstruction or scene decomposition is now decoded only as PNG, JPEG or WEBP, so a file in any other format never reaches an image parser on the GPU workers. A refused or corrupt image now fails with a clear message naming the three formats instead of a generic worker error. The image library is pinned exactly on every worker, the talking-avatar worker moves to transformers 4.57.6 with bit-identical output, and oversized EXIF blocks are ignored rather than parsed. Takes effect as each worker image is rebuilt.",
 			"tags": [

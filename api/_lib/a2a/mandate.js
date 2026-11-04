@@ -50,6 +50,20 @@ export const DEFAULT_NETWORK = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 // short-lived; 90 days is the ceiling, callers pick shorter.
 export const MAX_TTL_SECONDS = 90 * 24 * 60 * 60;
 
+// Currencies the A2A rails settle in. USDC is the only one: the platform payer
+// holds it, and the agent spend guard prices only USDC in dollars, so a mandate
+// pinned to anything else would authorize payments outside the owner's USD caps.
+export const SUPPORTED_CURRENCIES = Object.freeze(['USDC']);
+
+function assertSupportedCurrency(currency) {
+	if (typeof currency !== 'string' || !SUPPORTED_CURRENCIES.includes(currency)) {
+		throw new MandateError(
+			'unsupported_currency',
+			`mandate currency must be one of ${SUPPORTED_CURRENCIES.join(', ')}`,
+		);
+	}
+}
+
 export class MandateError extends Error {
 	constructor(code, message, status = 400) {
 		super(message);
@@ -114,6 +128,7 @@ export async function issueIntentMandate({
 }) {
 	if (!ownerUserId) throw new MandateError('invalid_owner', 'ownerUserId is required');
 	if (!subjectAgentId) throw new MandateError('invalid_subject', 'subjectAgentId is required');
+	assertSupportedCurrency(currency);
 
 	const max = toPositiveAtomics(maxAtomics, 'maxAtomics');
 	const perCall = toPositiveAtomics(perCallAtomics, 'perCallAtomics');
@@ -289,7 +304,10 @@ export function assertMandateAllows({ mandate, amountAtomics, network, resource,
 		);
 	}
 
-	if (currency && mandate.currency && currency !== mandate.currency) {
+	// A mandate signed before issuance validated its currency can carry an empty
+	// or arbitrary pin; spending under it would skip the currency check below.
+	assertSupportedCurrency(mandate.currency);
+	if (currency && currency !== mandate.currency) {
 		throw new MandateError(
 			'currency_mismatch',
 			`mandate authorizes ${mandate.currency}, payment is ${currency}`,

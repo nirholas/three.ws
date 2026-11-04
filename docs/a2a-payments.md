@@ -49,7 +49,7 @@ token moves.
 | 1 | Mandate signature + ownership | Is this a real mandate, issued to this user, still unexpired? | `invalid_mandate`, `mandate_expired`, `mandate_not_yours` |
 | 2 | Subject agent | Does the agent the mandate names still exist, and is it still this user's? | `agent_not_found`, `agent_not_yours` |
 | 3 | Kill switch | Is the agent halted? Checked before the peer is even quoted | `wallet_frozen` |
-| 4 | Mandate per-call policy | Is this amount, network, currency and resource inside what was authorized? | `amount_over_per_call`, `currency_mismatch`, `network_not_allowed`, `resource_not_allowed` |
+| 4 | Mandate per-call policy | Is this amount, network, currency and resource inside what was authorized? | `amount_over_per_call`, `unsupported_currency`, `currency_mismatch`, `network_not_allowed`, `resource_not_allowed` |
 | 5 | Peer reputation (opt-in) | Does the peer clear the caller's ERC-8004 trust bar? | `reputation_too_low`, `reputation_too_few_reviews`, `reputation_unavailable` |
 | 6 | Mandate cumulative budget | Would lifetime spend under this mandate exceed its total cap? | `budget_exceeded` |
 | 6b | Platform ceilings | Is this inside the limits the platform sets and no mandate can widen? Per call $25, per user per day $50, whole payer wallet per day $500 (overridable by `A2A_PLATFORM_PER_CALL_ATOMICS`, `A2A_PLATFORM_USER_DAILY_ATOMICS`, `A2A_PLATFORM_DAILY_ATOMICS`) | `platform_per_call_exceeded`, `platform_user_daily_exceeded`, `platform_daily_exceeded` (all 403) |
@@ -195,7 +195,12 @@ contracts), never from the peer's free-text label, so a worthless token cannot
 call itself USDC; an accept entry that names no asset is refused with
 `no_supported_accept`, and any other asset is recorded unpriced rather
 than guessed, and the unpriceable spend is governed by the allowlist and the
-mandate rather than by a USD ceiling the guard cannot compute.
+mandate rather than by a USD ceiling the guard cannot compute. The mandate
+itself is pinned to USDC: issuing one with any other `currency`, including an
+empty string, is refused with `unsupported_currency`, and a mandate signed
+before that check (with an empty or non-USDC pin) is refused at spend time with
+the same code. So a non-USDC accept entry always fails gate 4 with
+`currency_mismatch` instead of slipping past the USD ceilings.
 
 ## Proving it still holds
 
