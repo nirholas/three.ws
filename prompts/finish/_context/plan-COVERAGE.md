@@ -11,7 +11,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | not-a-plan | 269 | Content, rules, or configuration rather than work to do. |
 | owner-only | 95 | Open, but only the owner can do it (no agent-doable part). |
 | retired-by-owner | 16 | The owner retired this work on 2026-09-09 (finish/_context/00-RETIRED-BY-OWNER.md). |
-| excluded | 1288 | Not reviewed for tasks by category (vendored code, skill bundles, published content, existing orders). |
+| excluded | 1287 | Not reviewed for tasks by category (vendored code, skill bundles, published content, existing orders). |
 
 | File | Disposition | Detail |
 |---|---|---|
@@ -1321,7 +1321,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/prompts/20-local-agent-runtime-tui.md` | covered-by-existing:961-desktop-agent-runtime.md | desktop runtime order |
 | `docs/prompts/21-agent-memory-and-self-improvement.md` | order | [261](../261-plan-agent-memory-settings-page-and-api.md). library wired in run.js, no owner surface |
 | `docs/prompts/22-external-mcp-integrations-for-agents.md` | order | [266](../266-plan-mcp-external-integrations-agent-connections.md). catalog and client built, no routes or runtime |
-| `docs/prompts/23-distribution-into-agent-frameworks.md` | covered-by-existing:093-partners-10-agent-tool-packages.md | tool packages order |
+| `docs/prompts/23-distribution-into-agent-frameworks.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | tool packages order |
 | `docs/prompts/24-more-gateways-and-voice.md` | order | [708](../708-plan-gateway-slack-whatsapp-voice-adapters.md). adapters missing |
 | `docs/prompts/25-sandboxed-code-execution.md` | order | [701](../701-plan-agent-sandbox-code-execution-tools-runner.md). lib built, no runner or tools |
 | `docs/prompts/26-tool-gateway-bundle.md` | order | [703](../703-plan-mcp-tool-gateway-metered-routes-tools.md). lib built, no routes |
@@ -1617,7 +1617,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/viewer.md` | no-open-work | viewer reference; unsupported formats are stated limits not tasks |
 | `docs/voice-framework-integrations.md` | no-open-work | reference doc, verified against code, no outstanding items |
 | `docs/voice-lab.md` | no-open-work | reference doc, verified against code, no outstanding items |
-| `docs/vroid-hub-import.md` | covered-by-existing:092-partners-09-vroid-hub-import.md | code shipped (api/vroid); remaining step is owner app registration tracked in 092 |
+| `docs/vroid-hub-import.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 55 | code shipped (api/vroid); remaining step is owner app registration, tracked in owner-actions row 55 (order 092 closed 2026-11-04) |
 | `docs/vscode.md` | owner-only | extension built (packages/vscode-3d, PUBLISHING.md); Marketplace publish needs owner publisher account |
 | `docs/walk-leaderboard.md` | no-open-work | shipped page and /api/walk/leaderboard |
 | `docs/web-component.md` | order | [769](../769-plan-agent-skill-trust-allowlist-attributes.md). skill-trust=whitelist cannot admit anything because element has no allowlist attributes |
@@ -1845,12 +1845,12 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `marketing/growth/proof/README.md` | not-a-plan | generated proof-asset regeneration notes |
 | `marketing/growth/README.md` | no-open-work | program index and rules, no outstanding engineering |
 | `marketing/growth/submissions/adobe-mixamo-permission.md` | covered-by-existing:085-partners-02-animation-library-license.md | permission request text for animation library licensing |
-| `marketing/growth/submissions/agent-registries/cursor-directory.md` | covered-by-existing:093-partners-10-agent-tool-packages.md | agent framework registry entry prepared as text |
-| `marketing/growth/submissions/agent-registries/dify.md` | covered-by-existing:093-partners-10-agent-tool-packages.md | agent framework registry entry prepared as text |
-| `marketing/growth/submissions/agent-registries/hermes-agent.md` | covered-by-existing:093-partners-10-agent-tool-packages.md | agent framework registry entry prepared as text |
-| `marketing/growth/submissions/agent-registries/kilo-code.md` | covered-by-existing:093-partners-10-agent-tool-packages.md | agent framework registry entry prepared as text |
-| `marketing/growth/submissions/agent-registries/opencode.md` | covered-by-existing:093-partners-10-agent-tool-packages.md | agent framework registry entry prepared as text |
-| `marketing/growth/submissions/agent-registries/openhands.md` | covered-by-existing:093-partners-10-agent-tool-packages.md | agent framework registry entry prepared as text |
+| `marketing/growth/submissions/agent-registries/cursor-directory.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | agent framework registry entry prepared as text |
+| `marketing/growth/submissions/agent-registries/dify.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | agent framework registry entry prepared as text |
+| `marketing/growth/submissions/agent-registries/hermes-agent.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | agent framework registry entry prepared as text |
+| `marketing/growth/submissions/agent-registries/kilo-code.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | agent framework registry entry prepared as text |
+| `marketing/growth/submissions/agent-registries/opencode.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | agent framework registry entry prepared as text |
+| `marketing/growth/submissions/agent-registries/openhands.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | agent framework registry entry prepared as text |
 | `marketing/growth/submissions/awesome-blender.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/awesome-generative-ai.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/awesome-mcp-servers.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
@@ -1860,7 +1860,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `marketing/growth/submissions/awesome-threejs.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/awesome-web-components.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/awesome-webxr.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
-| `marketing/growth/submissions/discord-activity.md` | covered-by-existing:088-partners-05-discord-activity.md | Discord Activity submission |
+| `marketing/growth/submissions/discord-activity.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 52 | Discord Activity submission (order 088 closed 2026-11-04) |
 | `marketing/growth/submissions/e2b-awesome-ai-agents.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/home-assistant.md` | covered-by-existing:095-partners-12-home-assistant-hacs.md | HACS submission |
 | `marketing/growth/submissions/khronos-gltf-project-explorer.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
@@ -1888,7 +1888,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `marketing/growth/submissions/site-builders.md` | covered-by-existing:production-100-OWNER-ACTIONS.md | WordPress/Framer/Webflow embeds and listings |
 | `marketing/growth/submissions/slicer-trusted-hosts.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/tripo-launch-post.md` | covered-by-existing:936-partners-13-tripo-reply-and-house-key.md | Tripo launch post and reply |
-| `marketing/growth/submissions/vroid-hub-app.md` | covered-by-existing:092-partners-09-vroid-hub-import.md | VRoid Hub app submission |
+| `marketing/growth/submissions/vroid-hub-app.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 55 | VRoid Hub app submission |
 | `marketing/growth/sweep-2026-09-18.md` | order | [772](../772-plan-growth-credibility-files-translations-credits.md), [762](../762-plan-growth-zed-raycast-gradio-poe-listing-packages.md), [729](../729-plan-a2a-agent-card-compliance-marketplace.md). code-change rows X2/X3, credibility files, locale gaps, unbuilt store packages; OpenRouter attribution and CITATION.cff already shipped |
 | `marketing/growth/templates.md` | not-a-plan | outreach message templates |
 | `marketing/huggingface-article/post.md` | not-a-plan | published article copy |
@@ -2034,7 +2034,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `packages/knock-sdk/README.md` | no-open-work | reference README; relative links and /api routes verified, bin/main files present |
 | `packages/kol-mcp/examples/README.md` | no-open-work | reference README; relative links and /api routes verified, bin/main files present |
 | `packages/kol-mcp/README.md` | no-open-work | reference README; relative links and /api routes verified, bin/main files present |
-| `packages/langchain/INTEGRATION_ISSUE.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | issue text for owner to file after npm publish; also 093-partners-10-agent-tool-packages.md |
+| `packages/langchain/INTEGRATION_ISSUE.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | issue text for owner to file after npm publish |
 | `packages/langchain/README.md` | no-open-work | reference README; relative links and /api routes verified, bin/main files present |
 | `packages/loom-mcp/examples/README.md` | no-open-work | reference README; relative links and /api routes verified, bin/main files present |
 | `packages/loom-mcp/README.md` | no-open-work | reference README; relative links and /api routes verified, bin/main files present |
@@ -2184,9 +2184,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/081-best3d-15-splat-parity.md` | excluded | already a work order in the queue |
 | `prompts/finish/085-partners-02-animation-library-license.md` | excluded | already a work order in the queue |
 | `prompts/finish/087-partners-04-livekit-pipecat-avatar.md` | excluded | already a work order in the queue |
-| `prompts/finish/088-partners-05-discord-activity.md` | excluded | already a work order in the queue |
-| `prompts/finish/092-partners-09-vroid-hub-import.md` | excluded | already a work order in the queue |
-| `prompts/finish/093-partners-10-agent-tool-packages.md` | excluded | already a work order in the queue |
+| `prompts/finish/093-partners-10-agent-tool-packages.md` | excluded | work order closed 2026-11-04; remaining owner steps are order 938 |
 | `prompts/finish/094-partners-11-site-builder-embeds.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 57 |
 | `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | already a work order in the queue |
 | `prompts/finish/401-auto-restore-green-vitest.md` | excluded | already a work order in the queue |

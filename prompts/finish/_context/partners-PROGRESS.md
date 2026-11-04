@@ -833,3 +833,26 @@ file now point at that row.
 ## 2026-11-04: order 094 closed
 
 Owner instruction: delete the order now that the agent-side work is done. Commits: `a80ce225d` (WordPress plugin), `a722c6017` (Webflow component), `860ee4b73` (React 18/19 support), `9c6dcdb78` (live render check in the plugin-check script), `cc731d38d` (re-check docs). The only steps left are owner action row 57 in [production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md): the WordPress.org, Framer and Webflow signups and submissions, with step-by-step instructions in `marketing/growth/submissions/site-builders.md`.
+
+## 2026-11-04: order 092 closed (VRoid Hub import)
+
+Order file deleted at the owner's instruction. Everything buildable is shipped
+(`05fdde784`, `6bb7c0d6a`, `b6330e2ff`; migration applied in production, re-measure `65b5ed019`).
+The remaining owner steps (register the hub.vroid.com application, set
+`VROID_HUB_CLIENT_ID`/`VROID_HUB_CLIENT_SECRET` with `--update-env-vars`, live verification)
+are tracked only in row 55 of [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md)
+and Step 4 of `marketing/growth/submissions/vroid-hub-app.md`.
+
+## 2026-11-04: order 093 closed
+
+- Owner directed the order file deleted. Every agent-buildable line was verified on 2026-11-03 (entry above, fixes in `2b46da6b0`). The three remaining owner steps (npm publish of both packages, the LangChain listing issue, the six registry submissions) are owned by order 938 and owner-actions row 56, whose links now point at order 938.
+
+## 2026-11-04: order 088 closed by the owner (Discord Activity)
+
+The owner directed the order file be deleted. Everything buildable in code shipped (see the
+2026-10-13 entry above; re-checked 2026-11-03 in `80b1656e3`: 14/14 tests, live `invalid_client`
+from Discord's token endpoint, the `discord_activity_rooms` migration applied in production).
+The Discord application registration, `DISCORD_*` env vars, the two-account check in a real
+Discord client, and the Discovery submission are tracked in row 52 of
+[_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md), which now holds
+the only copy of the remaining work. `plan-COVERAGE.md` now points at that row.
