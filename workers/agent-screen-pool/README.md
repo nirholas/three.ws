@@ -207,3 +207,7 @@ from real Chromium, narration leading the screenshot that lands after it, the
 control drain, the liveness endpoint, and teardown once nobody is watching. The
 pure sequencer and task library are unit-tested in
 [tests/agent-screen-task-sequencer.test.js](../../tests/agent-screen-task-sequencer.test.js).
+
+## Browse jobs
+
+`browse-runner.js` polls `POST /api/agent-screen-browse {op:'claim'}` every `BROWSE_POLL_MS` (default 4000) and runs up to `BROWSE_MAX` (default 2) goal-driven browsing jobs on their own pages. Each step is chosen by the model from a closed action schema, checked by `tasks/browse-policy.js` (public http(s) only, domain allowlist, no financial pages, no credential entry, step/time/token caps), and reported back. The loop yields within one step when the owner takes the control lease. See [docs/agent-screen-control.md](../../docs/agent-screen-control.md#send-the-agent-browsing-browse_web).

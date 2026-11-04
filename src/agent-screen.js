@@ -71,6 +71,7 @@ import { createPnlHud } from './agent-screen-pnl-hud.js';
 import { createAmbientWorld, phaseLabel } from './agent-screen-world.js';
 import { createDjScript } from './agent-screen-dj.js';
 import { mountScreenControl } from './agent-screen-control.js';
+import { mountBrowsePanel } from './agent-screen-browse.js';
 import { LipSyncAnalyser } from './lip-sync-analyser.js';
 import { createVisemeDriver } from './runtime/lipsync.js';
 import { classifyTaskInput, ensureSessionId } from './shared/ask-routing.js';
@@ -1901,6 +1902,19 @@ async function boot(id) {
 			onStatus: (kind, msg) => {
 				if (kind === 'error' && msg) toast(msg);
 				else if (kind === 'driving') toast('You have the wheel, drive the agent live');
+			},
+		});
+	}
+
+	// Owner-only: send the agent browsing a public site toward a goal. Take over
+	// reuses the control toggle above so there is a single lease flow.
+	if (isOwner && screenStageEl) {
+		mountBrowsePanel({
+			stage: screenStageEl,
+			agentId: id,
+			takeOver: () => {
+				const t = screenStageEl.querySelector('.asc-ctl-toggle');
+				if (t && t.getAttribute('aria-pressed') !== 'true') t.click();
 			},
 		});
 	}

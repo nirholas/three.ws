@@ -111,6 +111,21 @@ The frame stream (the caster pool in [workers/agent-screen-pool](../workers/agen
 
 ---
 
+## Send the agent browsing (browse_web)
+
+The same pool also runs goal-driven browsing. An owner opens the **Browse** panel on their agent's screen page (or an MCP client calls the `browse_web` write-tier tool), gives a goal and a public start page, and a pool worker claims the job from `POST /api/agent-screen-browse`. Each step the worker observes the page (an accessibility snapshot plus a numbered list of the visible controls), asks `/api/brain/chat` for one action from a closed schema (`click`, `type`, `scroll`, `goto`, `extract`, `done`), checks it against the policy, performs it and streams a screenshot. The panel shows the steps as they land.
+
+The policy lives in [`browse-policy.js`](../workers/agent-screen-pool/tasks/browse-policy.js) and is enforced before every action:
+
+- Navigation is http(s) only, to public addresses only (`file:`, loopback, private and metadata hosts are refused), and inside the run's domain allowlist. The default allowlist is the start URL's site. A click that lands outside it is reverted.
+- Financial pages are never entered (banking, payment and checkout hosts and paths).
+- Credential fields (passwords, one-time codes, card numbers, secrets) are never typed into. The pool holds no vault, so there is no override.
+- Caps: 12 steps by default and 30 at most, 3 minutes of wall clock (10 at most), and a token budget. Three refused actions in a row end the run.
+
+**Take over.** The panel's Take over button uses the same control lease as Take control. The loop checks the lease before every action and again after the model answers, so it stops within one step. The page then stays open for the owner to drive until they release.
+
+Every step, including each refusal, is recorded on the job (`steps`) and logged by the worker.
+
 ## Limits and what is next
 
 - **Latency** is a few hundred milliseconds (a queued, polled channel), which feels like a responsive remote desktop for browsing, not like a local mouse. A future WebRTC transport will tighten it for a full desktop.

@@ -85,7 +85,7 @@ export function generateNarration(task, { baseUrl, fetchImpl = fetch, provider =
 // /api/brain/chat streams SSE: `data: <json-encoded-text-chunk>` lines plus
 // event lines (meta/first/done/error). Concatenate the data chunks into the full
 // model output.
-async function drainBrainStream(body) {
+export async function drainBrainStream(body) {
 	const reader = body.getReader();
 	const decoder = new TextDecoder();
 	let buf = '';

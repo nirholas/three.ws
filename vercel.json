@@ -4534,6 +4534,10 @@
 			"dest": "/api/agent-screen-control-drain.js"
 		},
 		{
+			"src": "/api/agent-screen-browse",
+			"dest": "/api/agent-screen-browse.js"
+		},
+		{
 			"src": "/api/agent-screen-active",
 			"dest": "/api/agent-screen-active.js"
 		},

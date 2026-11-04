@@ -32,6 +32,7 @@ import http from 'node:http';
 import { chromium } from 'playwright';
 import { pickTask } from './tasks/index.js';
 import { generateNarration, runTaskSteps } from './task-runner.js';
+import { createBrowseRunner } from './browse-runner.js';
 import { applyEvents, isNavAllowed } from './control.js';
 import { createEgressGuard, startEgressProxy } from './egress-guard.js';
 
@@ -128,6 +129,14 @@ let stopping = false;
 // See egress-guard.js.
 const egress = createEgressGuard({ trustedHosts: [new URL(BASE_URL).host] });
 let egressProxy = null;
+const BROWSE_URL = process.env.BROWSE_URL || `${BASE_URL}/api/agent-screen-browse`;
+const BROWSE_POLL_MS = Number(process.env.BROWSE_POLL_MS) || 4000;
+const browseRunner = createBrowseRunner({
+	baseUrl: BASE_URL, browseUrl: BROWSE_URL, secret: SECRET, egress, log, sleep,
+	maxConcurrent: Number(process.env.BROWSE_MAX) || 2,
+	newPage: async () => { await ensureBrowser(); return context.newPage(); },
+	pushTaskFrame: (entry, opts) => pushTaskFrame(entry, opts),
+});
 const BOOT_AT = new Date().toISOString();
 
 // Cloud Run requires a service to answer a startup probe on $PORT, and this
@@ -225,10 +234,10 @@ function isManual(entry) {
 // a slow round can't stack on the next tick.
 let controlPolling = false;
 async function drainControl() {
-	if (controlPolling || stopping || pool.size === 0) return;
+	if (controlPolling || stopping || (pool.size === 0 && browseRunner.active.size === 0)) return;
 	controlPolling = true;
 	try {
-		const ids = [...pool.keys()];
+		const ids = [...new Set([...pool.keys(), ...browseRunner.active.keys()])];
 		const res = await fetch(CONTROL_URL, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', authorization: `Bearer ${SECRET}` },
@@ -238,7 +247,7 @@ async function drainControl() {
 		const body = await res.json().catch(() => null);
 		const agents = body?.agents || {};
 		await Promise.all(ids.map(async (id) => {
-			const entry = pool.get(id);
+			const entry = browseRunner.active.get(id) || pool.get(id);
 			if (!entry || !entry.page || entry.page.isClosed()) return;
 			const info = agents[id];
 			if (!info) return;
@@ -564,7 +573,7 @@ async function reconcile() {
 	// first (watch-wanted returns them in recency order).
 	for (const agent of wanted) {
 		if (pool.size >= MAX_BROWSERS) break;
-		if (!pool.has(agent.agentId)) {
+		if (!pool.has(agent.agentId) && !browseRunner.active.has(agent.agentId)) {
 			try { await startCasting(agent); }
 			catch (err) { log('startCasting failed', agent.agentId, err?.message || err); }
 		}
@@ -589,3 +598,4 @@ startHealthServer();
 await reconcile();
 setInterval(reconcile, POLL_MS);
 setInterval(drainControl, CONTROL_POLL_MS);
+setInterval(() => browseRunner.poll(), BROWSE_POLL_MS);

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Agents can browse the web toward a goal",
+			"summary": "Give an agent a goal and a public page and it browses in a real browser you can watch, one validated step at a time. It stays on the allowed sites, never enters passwords or payment details, stops at its step limit, and hands the browser to you the moment you take over. Available in the Browse panel on the agent screen and as the browse_web tool.",
+			"tags": [
+				"feature",
+				"agents"
+			],
+			"link": "/agent-screen"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Diorama worlds can be played as microgames",
 			"summary": "A world prompt can now name a goal (collect, reach, or survive). The world page shows Play this world, you walk your own avatar around the island with keys, a touch pad or taps, and the share sheet copies a play link that opens straight into the game.",
 			"tags": [

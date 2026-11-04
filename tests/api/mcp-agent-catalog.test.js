@@ -187,6 +187,8 @@ describe('agent-wallet MCP catalog', () => {
 			// Bounty feed and Build program (api/_mcpagent/bounties-tools.js)
 			'list_bounties',
 			'submit_build_entry',
+			// Autonomous browsing (api/_mcpagent/browse-tools.js)
+			'browse_web',
 		]);
 	});
 

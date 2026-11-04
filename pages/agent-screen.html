@@ -2285,6 +2285,40 @@
 			.asc-pose-chip-ico { font-size: 0.82rem; }
 			.asc-pose-hint { font-size: 0.68rem; color: rgba(255,255,255,0.4); letter-spacing: 0.01em; min-height: 0.9em; }
 			.asc-panel--cam.minimized .asc-pose { display: none; }
+		
+			/* ── Browse panel (owner-only): goal form, step strip, Take over ──── */
+			.asc-brw { position: absolute; left: 12px; bottom: 12px; z-index: 8; width: min(340px, calc(100% - 24px)); font-size: 0.8rem; color: #fff; }
+			body.asc-zen .asc-brw { opacity: 0; pointer-events: none; }
+			.asc-brw-toggle, .asc-brw-go, .asc-brw-take {
+				min-height: 36px; padding: 6px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14);
+				background: rgba(10,10,14,0.72); backdrop-filter: blur(10px); color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+				transition: background var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+			}
+			.asc-brw-toggle:hover, .asc-brw-take:hover { background: rgba(255,255,255,0.14); }
+			.asc-brw-toggle:active, .asc-brw-go:active, .asc-brw-take:active { transform: scale(0.96); }
+			.asc-brw-toggle:focus-visible, .asc-brw-go:focus-visible, .asc-brw-take:focus-visible, .asc-brw-field input:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
+			.asc-brw-go { background: var(--screen-accent); color: var(--screen-on-accent, #0a0a0e); border-color: transparent; }
+			.asc-brw-go:hover:not(:disabled) { opacity: 0.88; }
+			.asc-brw-go:disabled { opacity: 0.45; cursor: not-allowed; }
+			.asc-brw-body { margin-top: 8px; padding: 12px; border-radius: 14px; background: rgba(10,10,14,0.82); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); display: grid; gap: 10px; max-height: 55vh; overflow-y: auto; }
+			.asc-brw-form { display: grid; gap: 8px; }
+			.asc-brw-field { display: grid; gap: 3px; }
+			.asc-brw-field span { color: rgba(255,255,255,0.6); font-size: 0.7rem; }
+			.asc-brw-field input { min-height: 36px; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.06); color: #fff; font: inherit; }
+			.asc-brw-field input:hover { border-color: rgba(255,255,255,0.3); }
+			.asc-brw-empty { margin: 0; color: rgba(255,255,255,0.6); line-height: 1.45; }
+			.asc-brw-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+			.asc-brw-chip { padding: 3px 10px; border-radius: 999px; background: rgba(255,255,255,0.1); font-weight: 600; }
+			.asc-brw-chip[data-state="live"] { background: rgba(255,255,255,0.9); color: #0a0a0e; }
+			.asc-brw-chip[data-state="stop"] { background: rgba(253,164,175,0.2); color: #fda4af; }
+			.asc-brw-steps { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+			.asc-brw-steps li { padding: 6px 9px; border-radius: 8px; background: rgba(255,255,255,0.06); line-height: 1.35; overflow-wrap: anywhere; }
+			.asc-brw-steps li.is-warn { color: #fda4af; }
+			.asc-brw-skel { height: 28px; background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.12), rgba(255,255,255,0.05)) !important; background-size: 200% 100% !important; animation: asc-brw-shimmer 1.2s linear infinite; }
+			@keyframes asc-brw-shimmer { to { background-position: -200% 0; } }
+			.asc-brw-result { margin: 8px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+			.asc-brw-err { margin: 0; color: #fda4af; }
+			@media (prefers-reduced-motion: reduce) { .asc-brw-skel { animation: none; } }
 		</style>
 	</head>
 	<body>

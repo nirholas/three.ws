@@ -451,6 +451,10 @@ export const POLICY = {
 		list_scheduled_posts: r('integrations'),
 		read_file: r('runs'),
 		write_file: w('runs'),
+		// Autonomous browsing on the agent-screen pool (api/_mcpagent/browse-tools.js).
+		// Write tier: opens pages and may submit forms on allowed public sites;
+		// never enters credentials or payment pages and cannot move funds.
+		browse_web: w('agents'),
 	},
 
 	// /api/mcp-3d
