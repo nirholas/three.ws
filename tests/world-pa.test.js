@@ -2,12 +2,17 @@
 // are validated, and the coin-wide relay through presence pub/sub, exercised
 // against the real Colyseus LocalPresence the single-instance server runs on.
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalPresence } from '../multiplayer/node_modules/@colyseus/core/build/presence/LocalPresence.js';
+import { createRequire } from 'node:module';
 import {
 	hostRole, hostKeyMatches, parseHostWallets, validateChunk, cleanCaption, RateWindow,
 	registerPaHandlers, paSyncJoiner, paOnLeave, paOnDispose, paLockKey,
 	PA_MAX_FRAMES, PA_MAX_FRAME_BYTES,
 } from '../multiplayer/src/world-pa.js';
+
+// Resolve Colyseus the way multiplayer/src does: from the multiplayer package.
+// The root workspace install hoists it to node_modules/, the standalone image
+// install nests it under multiplayer/node_modules/; either layout must work.
+const { LocalPresence } = createRequire(new URL('../multiplayer/package.json', import.meta.url))('@colyseus/core');
 
 const MINT = 'THREEsynthetic1111111111111111111111111111';
 const WALLET = 'THREEhostWa11et11111111111111111111111111';
