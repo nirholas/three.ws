@@ -19,6 +19,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hasMatches } from '../server/route-resolve.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(path.join(ROOT, rel), 'utf8');
@@ -113,8 +114,13 @@ describe('/mcp content negotiation', () => {
 		const html = routes.find((r) => r.dest === '/mcp.html');
 		expect(html).toBeTruthy();
 		expect(html.has).toEqual([{ type: 'header', key: 'accept', value: '(?i).*text/html.*' }]);
-		expect(new RegExp(html.has[0].value).test('text/html,application/xhtml+xml,*/*;q=0.8')).toBe(true);
-		expect(new RegExp(html.has[0].value).test('application/json, text/event-stream')).toBe(false);
+		// Evaluate the rule the way server/index.mjs does: the leading (?i) is a
+		// Vercel inline flag that native RegExp rejects, so a bare new RegExp()
+		// cannot stand in for the server here.
+		const accepts = (accept) => hasMatches(html, { headers: { accept } }, new URL('https://three.ws/mcp'));
+		expect(accepts('text/html,application/xhtml+xml,*/*;q=0.8')).toBe(true);
+		expect(accepts('TEXT/HTML')).toBe(true);
+		expect(accepts('application/json, text/event-stream')).toBe(false);
 	});
 
 	it('leaves everything else on the unified JSON-RPC endpoint, after the html rule', () => {
