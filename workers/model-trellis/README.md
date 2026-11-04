@@ -92,6 +92,13 @@ linearly with them; `max` runs both at the sampler ceiling. Cost is not the
 constraint here (the L4 runs one job at a time against the platform's GCP credit
 budget) — realism is.
 
+`simplify` is a floor, not an exact value: when the raw extraction is so large
+that the requested fraction would still leave more than `MAX_BAKE_FACES`
+(150,000) triangles, the worker raises it just enough to land on that budget and
+logs `simplify X -> Y to stay within the bake budget`. xatlas's UV unwrap holds
+the GIL, so a bigger mesh freezes `/health` long enough for the liveness probe
+to kill the instance mid-job (see `docs/ops/forge-error-triage.md`).
+
 ### Image → 3D from a real user photo
 
 The MAX tier is built for turning a real photo of an object or a person into a
