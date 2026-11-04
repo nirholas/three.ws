@@ -5,13 +5,37 @@ lip-synced talking-avatar MP4, using
 [meituan-longcat/LongCat-Video-Avatar-1.5](https://huggingface.co/meituan-longcat/LongCat-Video-Avatar-1.5)
 (MIT license). Output videos land in Cloud Storage; job state lives in Firestore.
 
-**Status: built and tested, not deployed.** No `longcat-video-avatar` Cloud Run
-service exists, `LONGCAT_WORKER_URL` is not set on `three-ws-api`, and the
-weights are not staged. The site handles that cleanly: `/api/avatar/video-generate`
-answers `503 worker_unconfigured` and burns no free-trial quota
-([api/avatar/video-generate.js](../../api/avatar/video-generate.js)). See
-[Why this is not on Cloud Run](#why-this-is-not-on-cloud-run) for the blocker
-and [Running it](#running-it) for the hardware that does work.
+**Status: host bring-up scripted, not yet live.** The code, the GPU host scripts
+and the weights staging job are built and tested. Three things stay with the
+owner: the A100-80GB quota grant from Google (requested), the weights staging
+run, and the final deploy that sets `LONGCAT_WORKER_URL` on `three-ws-api`. Until
+then `/api/avatar/video-generate` answers `503 worker_unconfigured` and burns no
+free-trial quota ([api/avatar/video-generate.js](../../api/avatar/video-generate.js)).
+See [Bring-up](#bring-up-on-an-80-gb-gpu-host) for the exact order and
+[Why this is not on Cloud Run](#why-this-is-not-on-cloud-run) for the reason.
+
+## Bring-up on an 80 GB GPU host
+
+The host is one Compute Engine VM (`a2-ultragpu-1g`, A100-80GB), started on
+demand and halted by itself after an idle window, under a hard daily GPU-hour
+cap (default 6, `LONGCAT_GPU_HOURS_PER_DAY`). Expected burn while running: about
+$5 per GPU hour on demand, so at most about $30 per day, and $0 stopped (the
+static IP and boot disk cost cents). Covered by the Google for Startups credits.
+
+1. **Quota** (a request to Google, not a spend): `workers/longcat/scripts/request-quota.sh --submit`.
+   It files four idempotent preferences: on-demand and Spot A100-80GB in
+   us-central1, Spot H100 in us-central1, on-demand A100-80GB in us-east4.
+2. **Weights** (CPU only, about 45 GB): `gcloud builds submit workers/longcat --config workers/longcat/cloudbuild-stage-weights.yaml --region us-central1 --project aerial-vehicle-466722-p5 --async`.
+   Then `workers/longcat/scripts/verify-weights.sh` compares the bucket with the
+   committed `weights.sha256`.
+3. **Host** (needs the quota): `workers/longcat/deploy-gce.sh --wait` creates or
+   converges the VM, the static IP and the TLS front, and prints the
+   `https://<ip>.sslip.io` URL. Then set `LONGCAT_WORKER_URL` and the worker key
+   on `three-ws-api` with `gcloud run services update --update-env-vars`.
+
+Day to day: `node workers/longcat/scripts/host.mjs status|ensure|stop|reap`.
+`ensure` is what the API calls on a request, bounded by the `longcatWake*` rate
+limits; a refused wake or a cap hit surfaces as a `503` with `Retry-After`.
 
 ## API
 

@@ -18,7 +18,7 @@ steps:
       - -c
       - |
         set -euo pipefail
-        pip install --quiet 'huggingface_hub[cli]>=0.30' hf_transfer
+        pip install --quiet 'huggingface_hub[cli]>=0.30,<1.0' hf_transfer
         bash stage-weights.sh --local-only
   - id: upload
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim

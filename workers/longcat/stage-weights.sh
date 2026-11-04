@@ -129,7 +129,7 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 
 if ! command -v huggingface-cli >/dev/null 2>&1; then
-  echo "huggingface-cli not found. Install it with: pip install 'huggingface_hub>=0.30'" >&2
+  echo "huggingface-cli not found. Install it with: pip install 'huggingface_hub[cli]>=0.30,<1.0'" >&2
   exit 1
 fi
 

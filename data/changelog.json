@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Talking-avatar video gets a scripted GPU host",
+			"summary": "The LongCat video worker now has an on-demand 80 GB GPU host with TLS, idle self-shutdown, a daily GPU-hour cap and a quota request script. When no host is up, video requests answer a clear capacity error and keep the free trial.",
+			"tags": ["infra"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Shared creations now say who wants to make their own",
 			"summary": "Every creation page has a Make your own button that carries you into the Forge, and the Forge funnel report now counts AR opens, unfurls, shared-link page loads and how many shares turn into a new generation. Counts are aggregate only: no IP, account or creation id is stored.",
 			"tags": [

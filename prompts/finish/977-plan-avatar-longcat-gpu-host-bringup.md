@@ -1,5 +1,7 @@
 # LongCat video avatar worker runs on an 80GB GPU host with staged weights, an idle-stop lifecycle and API wiring
 
+**Status (2026-11-04):** Shipped and committed: GCE host script with TLS front, startup, idle shutdown, GPU-hour ledger and cap, host.mjs lifecycle, quota request script (4 preferences filed, pending Google), weights staging job, API wake path with rate limits and 503 capacity handling, README bring-up. Remaining: A100-80GB quota grant (Google), weights staging build a7a81ea6-a398-4193-bf49-59f7dffcdadf (first attempt failed on huggingface-cli, fixed) then commit workers/longcat/weights.sha256 from the bucket, then owner runs deploy-gce.sh --wait and sets LONGCAT_WORKER_URL (production deploy gate).
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/977-plan-avatar-longcat-gpu-host-bringup.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 40 of 100 inside the tier). **Area:** avatar. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
