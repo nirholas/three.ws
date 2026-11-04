@@ -126,3 +126,7 @@ We ship prompt, model and tool changes with no way to know whether agents got be
 - `npm test` green.
 ~~~~
 
+
+## Status (2026-11-04)
+
+Shipped: eval service, REST routes with SSE progress, replay and NDJSON trajectory export, CLI `evals` and `runs export|replay`, Evaluate tab, `evals:gate`, docs/agent-evals.md. Tests: 200 passing across the eval and CLI suites. Pending owner: apply migration `20261105071500_agent_evals.sql` (`npm run db:migrate`, 9 pending migrations queue ahead of it, so apply with `apply-migrations.mjs --apply --file`), and a browser pass of the Evaluate tab on a live deploy.

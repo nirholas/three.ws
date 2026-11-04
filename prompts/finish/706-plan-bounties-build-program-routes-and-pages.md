@@ -135,3 +135,7 @@ Agents on three.ws can earn by selling skills and answering x402 calls. They can
 - `npm test` green.
 ~~~~
 
+
+## Status (2026-11-04)
+
+Built and committed (b88d7c228): feed and Build APIs, two 30 minute crons, LLM triage with a rules fallback, /build and /build/leaderboard with loading, empty and error states verified in a browser against the live database, the list_bounties and submit_build_entry MCP tools, docs and tests (28 passing). The legacy /bounties board is untouched. Remaining and owned by deploy: Cloud Scheduler picks up the two new crons on the next `deploy:gcp:full`, and the generated MCP catalog surfaces regenerate in prebuild. No round exists in the database yet, so the owner must insert the first program_rounds row for /build to show an open round.
