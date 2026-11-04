@@ -16,7 +16,7 @@
 
 import { openChat } from './npc-chat.js';
 import { openAixbtTerminal } from './npc-aixbt.js';
-import { openZauthScanner, prewarmZauthChallenge } from './npc-zauth.js';
+import { openZauthScanner, zauthScannerRetired } from './npc-zauth.js';
 import { spawnsOfType } from '../world-zones.js';
 
 const AVATAR_A = '/avatars/default.glb';
@@ -63,12 +63,12 @@ export function npcCatalogFor() {
 		},
 	});
 
-	// zauth, the security agent (zauth.inc). Walking up only greets you and
-	// warms their real x402 RepoScan challenge (the unpaid 402 probe) in the
-	// background; the scanner opens on E or a click, never on proximity, so
-	// walking past never seizes the screen. The panel shows the price from
-	// that live challenge; the scan itself is $0.05 USDC from the player's
-	// wallet, paid straight to zauth (npc-zauth.js).
+	// zauth, the security agent (zauth.inc). Walking up only greets you; the
+	// scanner opens on E or a click, never on proximity, and only then probes
+	// their real x402 RepoScan challenge (the unpaid 402) for the live price.
+	// The scan is paid from the player's wallet straight to zauth. Once a probe
+	// has returned 410 (zauth retired the endpoint) the greeting says so
+	// instead of offering a scan (npc-zauth.js).
 	list.push({
 		id: 'npc-zauth',
 		name: 'zauth · Security',
@@ -79,9 +79,12 @@ export function npcCatalogFor() {
 		range: 5,
 		prompt: 'Run a security scan',
 		onApproach: ({ npc }) => {
-			npc.say('I scan repos before agents trust them. Press E and name one, five cents, I tear it apart.');
+			if (zauthScannerRetired()) {
+				npc.say('My scanner is closed: zauth retired the pay-per-scan endpoint. Nothing to buy here today.');
+				return;
+			}
+			npc.say('I scan repos before agents trust them. Press E and name one, I tear it apart.');
 			npc.emote('av-call-me');
-			prewarmZauthChallenge();
 		},
 		onInteract: ({ npc, ui }) => {
 			npc.say('Provenance, contributors, vulnerabilities. One scan, one score.');

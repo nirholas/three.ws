@@ -135,11 +135,18 @@ function scoreBadge(score) {
 	return badge;
 }
 
-// ── live challenge probe, the x402 call warmed on walk-up ────────────────────
+// ── live challenge probe, run when the scanner opens ─────────────────────────
 // An unpaid POST draws the real 402 payment challenge from zauth (via the
 // pass-through), so the price, rails, and terms on the counter are theirs,
-// live — never hardcoded copy.
+// live, never hardcoded copy. Walking past is not a request, so approach never
+// probes. A 410 means zauth retired the endpoint: that answer is final for the
+// session, so it is kept and never re-probed.
 let challengePromise = null;
+let retiredReason = null;
+
+export function zauthScannerRetired() {
+	return retiredReason;
+}
 
 function probeChallenge() {
 	if (!challengePromise) {
@@ -157,24 +164,22 @@ function probeChallenge() {
 			if (!envelope?.accepts?.length) {
 				envelope = await res.json().catch(() => null);
 			}
+			if (res.status === 410) {
+				retiredReason = String(envelope?.error || 'zauth retired this scanner.');
+				const gone = new Error(retiredReason);
+				gone.retired = true;
+				throw gone;
+			}
 			if (res.status !== 402 || !envelope?.accepts?.length) {
 				throw new Error(`scanner unreachable (HTTP ${res.status})`);
 			}
 			return envelope;
 		})().catch((err) => {
-			challengePromise = null; // transient failure — re-probe next open
+			if (!err?.retired) challengePromise = null; // transient failure: re-probe next open
 			throw err;
 		});
 	}
 	return challengePromise;
-}
-
-// Warm the challenge on walk-up without opening anything. The result is cached
-// in `challengePromise`, so the panel the player later opens renders the live
-// price immediately instead of flashing a skeleton. A failed probe is silent
-// here: nothing is on screen to report it to, and opening re-probes.
-export function prewarmZauthChallenge() {
-	probeChallenge().catch((err) => log.warn('[npc-zauth] challenge prewarm failed:', err?.message));
 }
 
 function challengePrice(envelope) {
@@ -359,6 +364,16 @@ export function openZauthScanner(npc, { ui } = {}) {
 		}
 	}
 
+	function viewRetired() {
+		const chip = card.querySelector('.zauth-live');
+		if (chip) chip.textContent = 'CLOSED';
+		body.appendChild(el('div', { class: 'zauth-error zauth-retired', role: 'status' }, [
+			el('strong', { text: 'Scanner closed. ' }),
+			`zauth answered: "${retiredReason}" No scan can be bought here, and nothing was charged.`,
+		]));
+		body.appendChild(el('button', { class: 'zauth-go', type: 'button', text: 'Close', onclick: closePanel }));
+	}
+
 	function viewOffer() {
 		body.appendChild(el('p', {
 			class: 'zauth-ask',
@@ -397,6 +412,7 @@ export function openZauthScanner(npc, { ui } = {}) {
 			meta.appendChild(el('span', { class: 'zauth-chip', text: 'pays zauth directly' }));
 		}).catch((err) => {
 			if (!openPanel || openPanel.overlay !== overlay) return;
+			if (err?.retired) { render(); return; }
 			meta.textContent = '';
 			meta.appendChild(el('span', { class: 'zauth-chip', text: 'price check failed — retry in a moment' }));
 			log.warn('[npc-zauth] challenge probe failed:', err?.message);
@@ -448,6 +464,7 @@ export function openZauthScanner(npc, { ui } = {}) {
 		if (activeScan?.status === 'scanning') viewScanning(activeScan);
 		else if (activeScan?.status === 'completed') viewReport(activeScan);
 		else if (activeScan?.status === 'failed') viewFailed(activeScan);
+		else if (retiredReason) viewRetired();
 		else viewOffer();
 	}
 

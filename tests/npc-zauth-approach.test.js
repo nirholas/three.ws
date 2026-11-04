@@ -54,21 +54,60 @@ describe('zauth NPC walk-up', () => {
 		expect(document.querySelector('.npc-svc-card.is-zauth')).toBeNull();
 	});
 
-	it('warms the live x402 challenge on approach so the panel opens priced', async () => {
+	// Walking past is not a request. The probe used to fire on approach, so a
+	// player crossing the plaza drew a network call (and, once zauth retired the
+	// endpoint, a 410 console error) without ever asking for a scan.
+	it('makes no network call on approach', async () => {
 		zauth.onApproach({ npc: fakeNpc(), ui: {} });
-		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+		await Promise.resolve();
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+	});
+
+	it('probes the live x402 challenge once when the scanner opens', async () => {
+		zauth.onInteract({ npc: fakeNpc(), ui: {} });
+		expect(document.querySelector('.npc-svc-card.is-zauth')).toBeTruthy();
+		await vi.waitFor(() => expect(globalThis.fetch).toHaveBeenCalledTimes(1));
 		const [url, init] = globalThis.fetch.mock.calls[0];
 		expect(url).toBe('/api/zauth-reposcan');
 		expect(init.method).toBe('POST');
 	});
+});
 
-	it('opens the scanner only on interact, reusing the warmed challenge', async () => {
-		zauth.onApproach({ npc: fakeNpc(), ui: {} });
-		expect(document.querySelector('.npc-svc-overlay')).toBeNull();
+// zauth answered the unpaid probe with 410 on 2026-11-03: they retired the
+// pay-per-scan endpoint. The panel used to read "price check failed, retry in
+// a moment" over a live repo input, an offer that can never be paid.
+describe('zauth scanner after the upstream retired', () => {
+	const RETIRED = 'The x402 pay-per-scan endpoint has been retired.';
 
+	beforeEach(() => {
+		globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ error: RETIRED }), {
+			status: 410,
+			headers: { 'content-type': 'application/json' },
+		}));
+	});
+
+	it('shows a closed scanner with no repo input and does not keep probing', async () => {
 		zauth.onInteract({ npc: fakeNpc(), ui: {} });
-		expect(document.querySelector('.npc-svc-card.is-zauth')).toBeTruthy();
-		// The probe is cached, so opening does not re-hit the endpoint.
+		const card = document.querySelector('.npc-svc-card.is-zauth');
+		await vi.waitFor(() => expect(card.querySelector('.zauth-retired')).toBeTruthy());
+		expect(card.querySelector('.zauth-retired').textContent).toContain(RETIRED);
+		expect(card.querySelector('.npc-svc-input')).toBeNull();
+		expect(card.textContent).not.toMatch(/retry in a moment/i);
+		expect(card.querySelector('.zauth-live').textContent).toBe('CLOSED');
+
+		document.querySelector('.npc-svc-close').click();
+		await new Promise((r) => setTimeout(r, 200));
+		zauth.onInteract({ npc: fakeNpc(), ui: {} });
+		await vi.waitFor(() => expect(document.querySelector('.zauth-retired')).toBeTruthy());
 		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+	});
+
+	it('says the scanner is closed on approach once the retirement is known', async () => {
+		zauth.onInteract({ npc: fakeNpc(), ui: {} });
+		await vi.waitFor(() => expect(document.querySelector('.zauth-retired')).toBeTruthy());
+		const npc = fakeNpc();
+		zauth.onApproach({ npc, ui: {} });
+		expect(npc.say.mock.calls[0][0]).toMatch(/closed/i);
+		expect(npc.say.mock.calls[0][0]).not.toMatch(/five cents/i);
 	});
 });
