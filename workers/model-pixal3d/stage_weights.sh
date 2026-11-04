@@ -17,6 +17,9 @@
 #                                           matte. Replaces upstream's default,
 #                                           RMBG-2.0, whose CC BY-NC licence excludes
 #                                           commercial use.
+#   gs://<bucket>/pixal3d/moge/            Ruicheng/moge-2-vitl (MIT), the MoGe-2 camera
+#                                           estimator every request runs on its first
+#                                           view (model.pt, about 1.3 GB).
 #   gs://<bucket>/pixal3d-mvadapter/       the optional "fill in the other sides"
 #     sdxl-base/                           rung (mv_adapter_fill.py), only read when
 #     sdxl-vae-fix/                        a caller sets fill_other_sides=true:
@@ -86,6 +89,7 @@ mirror_repo() { # <repo> <dest prefix> [include regex] [exclude regex]
 mirror_repo TencentARC/Pixal3D "${DEST}"
 mirror_repo camenduru/dinov3-vitl16-pretrain-lvd1689m "${DEST}/dinov3"
 mirror_repo ZhengPeng7/BiRefNet "${DEST}/birefnet"
+mirror_repo Ruicheng/moge-2-vitl "${DEST}/moge" '^model\.pt$'
 echo "pixal3d weights staged at ${DEST}"
 
 # The optional MV-Adapter rung. Set SKIP_MVADAPTER=1 to stage only the core

@@ -164,7 +164,7 @@ extensions `model-trellis2` does plus `natten`, and takes most of an hour on
 the 32-vCPU builder; the config pins the `three-ws-build@` service account.
 
 ```bash
-# 1. One time: mirror the weights (idempotent, skips what is already there).
+# 1. Mirror the weights. Idempotent: re-run after any new weight lands, it skips what is already staged.
 workers/model-pixal3d/stage_weights.sh
 
 # 2. Build, push and deploy.
@@ -202,6 +202,13 @@ non-local dependencies:
 `inference.py`'s and `inference_mv.py`'s own hardcoded `IMAGE_COND_CONFIGS`
 dict to the same local copy, since those scripts rebuild their four per-stage
 conditioners from that dict rather than from the pipeline config's own key.
+- **Camera estimator: MoGe-2 (`Ruicheng/moge-2-vitl`, MIT), staged, never
+  fetched.** Every request runs it on the first view. Upstream's
+  `load_moge_model` passes a Hub repo id, which `HF_HUB_OFFLINE=1` refuses, so
+  the first production three-view job failed until `stage_weights.sh` mirrored
+  `model.pt` into `pixal3d/moge/` and `main.py` began loading that staged file.
+  `pipeline_config.REQUIRED_PATHS` lists it, so an instance missing it refuses
+  to go ready instead of failing a paid job.
 
 **MV-Adapter** (the optional `fill_other_sides` rung) is Apache-2.0, as are
 its published adapter weights. Its SDXL base,

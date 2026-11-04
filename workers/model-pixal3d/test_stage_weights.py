@@ -36,3 +36,20 @@ def test_failed_listing_exits_nonzero_and_never_claims_success():
         )
     assert result.returncode != 0, result.stdout + result.stderr
     assert "staged" not in result.stdout
+
+
+def test_stages_the_moge_camera_estimator_beside_the_other_aux_weights():
+    # Stub a Hub that lists one file per repo and a bucket that already holds
+    # every object at the listed size, so the run is a pure dry walk of which
+    # repo lands under which prefix.
+    with tempfile.TemporaryDirectory() as tmp:
+        bin_dir = pathlib.Path(tmp)
+        _stub(bin_dir, "curl", 'echo \'{"siblings":[{"rfilename":"model.pt","size":7}]}\'')
+        _stub(bin_dir, "gcloud", "echo 7")
+        env = dict(os.environ, PATH=f"{bin_dir}:{os.environ['PATH']}", SKIP_MVADAPTER="1")
+        env.pop("HF_TOKEN", None)
+        result = subprocess.run(
+            ["bash", str(SCRIPT)], env=env, capture_output=True, text=True, timeout=60
+        )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "skip  gs://three-ws-model-weights/pixal3d/moge/model.pt" in result.stdout

@@ -107,3 +107,15 @@ def test_write_local_config_and_link_tree(tmp_path):
     assert not (out_dir / "pipeline_mv.json").is_symlink()
     # Idempotent: a load retry re-links without raising.
     pipeline_config.link_weight_tree(root, out_dir)
+
+
+def test_moge_camera_estimator_is_a_required_staged_weight():
+    # Every request runs MoGe-2 to recover the camera from the first view. The
+    # worker serves with HF_HUB_OFFLINE=1, so an unstaged checkpoint is not a
+    # slow first request but a failed one (2026-11-04: the first production
+    # three-view job died on LocalEntryNotFoundError for Ruicheng/moge-2-vitl).
+    # Listing it here makes the startup completeness check refuse to go ready.
+    assert pipeline_config.MOGE_CHECKPOINT == "moge/model.pt"
+    assert pipeline_config.MOGE_CHECKPOINT in pipeline_config.REQUIRED_PATHS
+    present = set(pipeline_config.REQUIRED_PATHS) - {pipeline_config.MOGE_CHECKPOINT}
+    assert pipeline_config.missing_weights(present) == [pipeline_config.MOGE_CHECKPOINT]

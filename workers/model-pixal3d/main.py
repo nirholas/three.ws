@@ -198,7 +198,7 @@ def _download_blob(blob, dest: str) -> None:
 
 
 def _stage_aux_weights(client: storage.Client, bucket_name: str, prefix: str) -> None:
-    """Copy the DINOv3 conditioner and BiRefNet matte to local disk.
+    """Copy the DINOv3 conditioner, BiRefNet matte and MoGe-2 estimator to local disk.
 
     They stay resident for the instance's life, unlike the per-stage flow
     checkpoints, which stream through on demand.
@@ -207,7 +207,7 @@ def _stage_aux_weights(client: storage.Client, bucket_name: str, prefix: str) ->
 
     wanted = [
         b
-        for sub in (pipeline_config.DINOV3_DIR, pipeline_config.BIREFNET_DIR)
+        for sub in (pipeline_config.DINOV3_DIR, pipeline_config.BIREFNET_DIR, pipeline_config.MOGE_DIR)
         for b in client.list_blobs(bucket_name, prefix=f"{prefix}/{sub}/")
         if not b.name.endswith("/")
     ]
@@ -589,6 +589,22 @@ def _get_mv_pipeline():
     return _mv_pipeline
 
 
+def _moge_checkpoint_path() -> str:
+    """The staged MoGe-2 checkpoint: the local aux copy, else the mounted tree.
+
+    MoGe's from_pretrained loads a path that exists and otherwise treats the
+    argument as a Hub repo id, which HF_HUB_OFFLINE refuses; resolving the
+    file here keeps a missing checkpoint a clear error, not a Hub lookup.
+    """
+    for root in (AUX_DIR, WEIGHTS_DIR):
+        candidate = os.path.join(root, pipeline_config.MOGE_CHECKPOINT)
+        if os.path.isfile(candidate):
+            return candidate
+    raise FileNotFoundError(
+        f"MoGe-2 checkpoint {pipeline_config.MOGE_CHECKPOINT} is not staged under {AUX_DIR} or {WEIGHTS_DIR}"
+    )
+
+
 def _get_moge_model():
     """Lazily load the MoGe-2 camera estimator, shared by both pipelines."""
     global _moge_model
@@ -596,8 +612,11 @@ def _get_moge_model():
         return _moge_model
     import inference as sv_ref
 
-    log.info("Loading MoGe-2 camera estimator")
-    _moge_model = sv_ref.load_moge_model(device="cuda" if torch.cuda.is_available() else "cpu")
+    checkpoint = _moge_checkpoint_path()
+    log.info("Loading MoGe-2 camera estimator from %s", checkpoint)
+    _moge_model = sv_ref.load_moge_model(
+        device="cuda" if torch.cuda.is_available() else "cpu", model_name=checkpoint
+    )
     log.info("MoGe-2 ready")
     return _moge_model
 

@@ -29,6 +29,12 @@ from typing import Iterable
 # Sub-trees of the staged weights, written by stage_weights.sh.
 DINOV3_DIR = "dinov3"
 BIREFNET_DIR = "birefnet"
+# MoGe-2 (Ruicheng/moge-2-vitl, MIT): the monocular camera estimator every
+# request runs on its first view. Staged like the conditioner and matte because
+# the worker serves with HF_HUB_OFFLINE=1, where an unstaged checkpoint fails
+# the job outright instead of downloading.
+MOGE_DIR = "moge"
+MOGE_CHECKPOINT = f"{MOGE_DIR}/model.pt"
 
 # ckpts/ filenames exactly as published on TencentARC/Pixal3D. The *_mv
 # variants are the multi-view flow models; the two decoders and the
@@ -57,6 +63,7 @@ REQUIRED_PATHS = (
     f"{DINOV3_DIR}/config.json",
     f"{BIREFNET_DIR}/model.safetensors",
     f"{BIREFNET_DIR}/config.json",
+    MOGE_CHECKPOINT,
 )
 
 
