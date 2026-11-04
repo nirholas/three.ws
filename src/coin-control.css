@@ -26,7 +26,7 @@
 .cc-chip {
 	display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px;
 	font-size: var(--text-xs); color: var(--ink); background: var(--surface-2); border: 1px solid var(--stroke-strong);
-	text-decoration: none; transition: border-color .15s, background .15s;
+	text-decoration: none; transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 a.cc-chip:hover { border-color: var(--ink-dim); background: var(--surface-3); }
 a.cc-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -75,6 +75,7 @@ a.cc-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px;
 .cc-recips { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; font-size: var(--text-xs); }
 .cc-lottery { margin-top: 6px; font-size: var(--text-xs); }
 .cc-lottery summary { cursor: pointer; color: var(--accent); }
+.cc-lottery summary:hover { color: var(--ink-bright); text-decoration: underline; text-underline-offset: 2px; }
 .cc-lottery .ac-mono { word-break: break-all; }
 
 .cc-holders { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: var(--text-sm); }

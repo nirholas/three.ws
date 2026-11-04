@@ -38,7 +38,7 @@
 		.mx-stat span { color: var(--ink-dim); font-size: .85rem; }
 		h2 { font-size: 1.25rem; margin: 36px 0 12px; color: var(--ink-bright, var(--ink)); }
 		.mx-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-		.mx-tab, .mx-copy, .mx-retry { font: inherit; color: var(--ink); background: var(--bg-1, transparent); border: 1px solid var(--line, rgba(255,255,255,.18)); border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background .15s, border-color .15s, transform .05s; }
+		.mx-tab, .mx-copy, .mx-retry { font: inherit; color: var(--ink); background: var(--bg-1, transparent); border: 1px solid var(--line, rgba(255,255,255,.18)); border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant); }
 		.mx-tab:hover, .mx-copy:hover, .mx-retry:hover { border-color: var(--ink-dim); background: color-mix(in srgb, var(--ink) 8%, transparent); }
 		.mx-tab:active, .mx-copy:active, .mx-retry:active { transform: translateY(1px); }
 		.mx-tab[aria-selected="true"] { border-color: var(--accent, #7c9cff); color: var(--ink-bright, var(--ink)); }
@@ -48,7 +48,7 @@
 		.mx-note { color: var(--ink-dim); font-size: .9rem; line-height: 1.55; margin: 10px 0 0; }
 		.mx-search { width: 100%; max-width: 420px; font: inherit; color: var(--ink); background: var(--bg-1, transparent); border: 1px solid var(--line, rgba(255,255,255,.18)); border-radius: 8px; padding: 9px 12px; margin-bottom: 14px; }
 		.mx-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
-		.mx-group { padding: 14px 16px; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 12px; background: var(--bg-1, transparent); transition: border-color .15s; }
+		.mx-group { padding: 14px 16px; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 12px; background: var(--bg-1, transparent); transition: border-color var(--duration-fast); }
 		.mx-group:hover { border-color: var(--ink-dim); }
 		.mx-group h3 { margin: 0 0 4px; font-size: 1rem; display: flex; justify-content: space-between; gap: 8px; color: var(--ink-bright, var(--ink)); }
 		.mx-group p { margin: 0 0 10px; color: var(--ink-dim); font-size: .88rem; line-height: 1.5; }

@@ -34,7 +34,7 @@
 		.mm-sub { margin: 0; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.5; max-width: 62ch; }
 
 		button, select, input, textarea { font: inherit; color: inherit; }
-		.mm-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; transition: background var(--duration-fast, 120ms) var(--ease-standard, ease), border-color var(--duration-fast, 120ms) var(--ease-standard, ease), transform var(--duration-fast, 120ms) var(--ease-standard, ease); }
+		.mm-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 		.mm-btn:hover { background: var(--surface-3); border-color: var(--accent); }
 		.mm-btn:active { transform: translateY(1px); }
 		.mm-btn:focus-visible, .mm-input:focus-visible, .mm-switch input:focus-visible + .mm-track, .mm-chip:focus-visible, .mm-ico:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -43,14 +43,14 @@
 		.mm-btn.danger { color: var(--mm-danger); border-color: color-mix(in srgb, var(--mm-danger) 50%, var(--stroke)); }
 		.mm-btn.danger:hover { background: color-mix(in srgb, var(--mm-danger) 14%, var(--surface-2)); border-color: var(--mm-danger); }
 		.mm-ico { width: 30px; height: 30px; padding: 0; justify-content: center; }
-		.mm-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--bg-0); transition: border-color var(--duration-fast, 120ms) ease; }
+		.mm-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--bg-0); transition: border-color var(--duration-fast) var(--ease-standard); }
 		.mm-input:hover { border-color: var(--accent); }
 		textarea.mm-input { resize: vertical; min-height: 64px; line-height: 1.5; }
 
 		.mm-switch { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; }
 		.mm-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-		.mm-track { width: 46px; height: 26px; border-radius: 13px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); position: relative; transition: background var(--duration-fast, 120ms) ease; flex: none; }
-		.mm-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); transition: transform var(--duration-fast, 120ms) var(--ease-standard, ease); }
+		.mm-track { width: 46px; height: 26px; border-radius: 13px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); position: relative; transition: background var(--duration-fast) var(--ease-standard); flex: none; }
+		.mm-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); transition: transform var(--duration-fast) var(--ease-standard); }
 		.mm-switch input:checked + .mm-track { background: var(--accent); }
 		.mm-switch input:checked + .mm-track::after { transform: translateX(20px); background: #fff; }
 		.mm-switch:hover .mm-track { border-color: var(--accent); }
@@ -66,7 +66,7 @@
 		.mm-group h3 { margin: 0 0 2px; font-size: 0.95rem; color: var(--ink-bright, var(--ink)); }
 		.mm-group .mm-hint { margin: 0 0 8px; color: var(--ink-faint, var(--ink-dim)); font-size: 0.82rem; }
 		.mm-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-		.mm-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 8px); background: var(--surface-2); transition: border-color var(--duration-fast, 120ms) ease, opacity 180ms ease, transform 180ms ease; }
+		.mm-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 8px); background: var(--surface-2); transition: border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 		.mm-item:hover, .mm-item:focus-within { border-color: var(--stroke-strong, var(--accent)); }
 		.mm-item.leaving { opacity: 0; transform: translateX(-8px); }
 		.mm-item .body { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.5; }
@@ -81,7 +81,7 @@
 		.mm-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
 		.mm-toolbar .mm-input { flex: 1 1 200px; max-width: 360px; }
 		.mm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-		.mm-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; font-size: 0.85rem; transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease; }
+		.mm-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; font-size: 0.85rem; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 		.mm-chip:hover { border-color: var(--accent); }
 		.mm-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
 		.mm-chip small { opacity: 0.75; margin-left: 4px; }

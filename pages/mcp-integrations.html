@@ -49,7 +49,7 @@
 		.mi-sub { margin: 0; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.5; max-width: 66ch; }
 
 		button, select, input { font: inherit; color: inherit; }
-		.mi-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 13px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease; }
+		.mi-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 13px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 		.mi-btn:hover { background: var(--surface-3); border-color: var(--accent); }
 		.mi-btn:active { transform: translateY(1px); }
 		.mi-btn:focus-visible, .mi-input:focus-visible, .mi-chip:focus-visible, .mi-switch input:focus-visible + .mi-track, .mi-conn > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -59,7 +59,7 @@
 		.mi-btn.danger { color: var(--mi-financial); border-color: color-mix(in srgb, var(--mi-financial) 50%, var(--stroke)); }
 		.mi-btn.danger:hover { background: color-mix(in srgb, var(--mi-financial) 14%, var(--surface-2)); border-color: var(--mi-financial); }
 		.mi-btn.small { padding: 4px 10px; font-size: 0.85rem; }
-		.mi-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--bg-0); transition: border-color var(--duration-fast, 120ms) ease; }
+		.mi-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--bg-0); transition: border-color var(--duration-fast) var(--ease-standard); }
 		.mi-input:hover { border-color: var(--accent); }
 		.mi-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -69,14 +69,14 @@
 
 		/* connections */
 		.mi-conns { display: grid; gap: 10px; }
-		.mi-conn { border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-2); transition: border-color var(--duration-fast, 120ms) ease; }
+		.mi-conn { border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-2); transition: border-color var(--duration-fast) var(--ease-standard); }
 		.mi-conn:hover, .mi-conn[open] { border-color: var(--stroke-strong, var(--accent)); }
 		.mi-conn > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border-radius: inherit; }
 		.mi-conn > summary::-webkit-details-marker { display: none; }
 		.mi-conn > summary .title { flex: 1 1 200px; min-width: 0; }
 		.mi-conn > summary strong { color: var(--ink-bright, var(--ink)); overflow-wrap: anywhere; }
 		.mi-conn > summary .meta { display: block; font-size: 0.8rem; color: var(--ink-faint, var(--ink-dim)); margin-top: 2px; }
-		.mi-conn > summary .chev { transition: transform var(--duration-fast, 120ms) ease; color: var(--ink-dim); }
+		.mi-conn > summary .chev { transition: transform var(--duration-fast) var(--ease-standard); color: var(--ink-dim); }
 		.mi-conn[open] > summary .chev { transform: rotate(90deg); }
 		.mi-conn .body { padding: 0 14px 14px; display: grid; gap: 12px; }
 		.mi-status { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.75rem; border: 1px solid currentColor; }
@@ -101,8 +101,8 @@
 		.mi-tool .t p { margin: 2px 0 0; font-size: 0.82rem; color: var(--ink-dim); line-height: 1.45; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 		.mi-switch { display: inline-flex; align-items: center; cursor: pointer; flex: none; padding-top: 2px; }
 		.mi-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-		.mi-track { width: 40px; height: 22px; border-radius: 11px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); position: relative; transition: background var(--duration-fast, 120ms) ease; }
-		.mi-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); transition: transform var(--duration-fast, 120ms) ease; }
+		.mi-track { width: 40px; height: 22px; border-radius: 11px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); position: relative; transition: background var(--duration-fast) var(--ease-standard); }
+		.mi-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); transition: transform var(--duration-fast) var(--ease-standard); }
 		.mi-switch input:checked + .mi-track { background: var(--accent); }
 		.mi-switch input:checked + .mi-track::after { transform: translateX(18px); background: #fff; }
 		.mi-switch:hover .mi-track { border-color: var(--accent); }
@@ -118,13 +118,13 @@
 		.mi-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
 		.mi-toolbar .mi-input { flex: 1 1 240px; max-width: 420px; }
 		.mi-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-		.mi-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; font-size: 0.85rem; transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease; }
+		.mi-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; font-size: 0.85rem; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 		.mi-chip:hover { border-color: var(--accent); }
 		.mi-chip:active { transform: translateY(1px); }
 		.mi-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
 		.mi-chip small { opacity: 0.75; margin-left: 4px; }
 		.mi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-		.mi-srv { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-2); transition: border-color var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease; }
+		.mi-srv { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-2); transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 		.mi-srv:hover, .mi-srv:focus-within { border-color: var(--stroke-strong, var(--accent)); transform: translateY(-1px); }
 		.mi-srv h3 { margin: 0; font-size: 1rem; color: var(--ink-bright, var(--ink)); }
 		.mi-srv .vendor { font-size: 0.8rem; color: var(--ink-faint, var(--ink-dim)); }
