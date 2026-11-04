@@ -87,8 +87,20 @@ async function main() {
 
 	const split = await revenueSplit({ since });
 
+	// Leading indicators beside the external figure. Best effort: a missing
+	// counter table or a read failure prints a note and never changes the
+	// exit code or the external revenue rules above.
+	let leading = null;
+	let leadingError = null;
+	try {
+		const { gatherShareFunnel } = await import('../api/_lib/forge-funnel.js');
+		leading = await gatherShareFunnel(seconds == null ? 365 : Math.max(1, Math.ceil(seconds / 86_400)));
+	} catch (err) {
+		leadingError = String(err?.message || err).slice(0, 120);
+	}
+
 	if (JSON_OUT) {
-		console.log(JSON.stringify({ window: WINDOW, ...split }, null, 2));
+		console.log(JSON.stringify({ window: WINDOW, ...split, leading_indicators: leading }, null, 2));
 		return split.confident ? 0 : 2;
 	}
 
@@ -112,6 +124,17 @@ async function main() {
 		'',
 	];
 
+	if (leading) {
+		const ratio = leading.share_to_forge.value == null ? 'n/a' : `${(leading.share_to_forge.value * 100).toFixed(1)}%`;
+		lines.push(
+			leading.empty
+				? '  leading indicators: no shares recorded in this window'
+				: `  leading indicators: AR launches ${leading.ar_launches}   unfurls ${leading.unfurls} (cards rendered, not people)   share-to-forge ${ratio} (${leading.share_to_forge.n} forges / ${leading.share_to_forge.of} page loads)`,
+		);
+	} else {
+		lines.push(`  leading indicators: unavailable (${leadingError})`);
+	}
+	lines.push('');
 	lines.push(...renderRoutes('external revenue by route:', external, ROUTE_LIMIT));
 	if (!external.routes.length) {
 		lines.push('  external revenue by route: none in this window');

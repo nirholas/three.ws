@@ -77,7 +77,7 @@ if (JSON_OUT) {
 	process.exit(report.ok ? 0 : 1);
 }
 
-const { output: o, new_actors: a, retention: r, destinations: d, lanes, revenue: v } = report;
+const { output: o, new_actors: a, retention: r, destinations: d, lanes, share: sh, revenue: v } = report;
 
 console.log(`\nForge funnel, last ${report.window_days} days  (rates under ${report.min_sample} rows are flagged low sample)\n`);
 
@@ -116,6 +116,16 @@ if (lanes.length) {
 	);
 } else {
 	console.log('  no terminal attempts in this window');
+}
+
+console.log('\nShares (aggregate counters, no identifiers; unfurls are cards rendered, not human views)');
+if (sh.empty) {
+	console.log('  no shares recorded in this window');
+} else {
+	console.log(`  unfurls ${sh.unfurls}   creation page loads ${sh.page_loads}   AR launches ${sh.ar_launches}   share-sheet actions ${sh.share_actions}   "make your own" clicks ${sh.cta_clicks}`);
+	console.log(`  creations started from a share ${sh.from_share.started}   done ${sh.from_share.done}   useful ${sh.from_share.useful}`);
+	line('Useful rate (from a share)', sh.from_share.useful_output_rate);
+	line('Share to forge (starts per page load)', sh.share_to_forge);
 }
 
 console.log(`\nRevenue (${v.rail} only: the one rail whose price is recorded on the row)`);

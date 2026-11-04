@@ -3,16 +3,21 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
-			"title": "Put a drop on Solana from its collection page",
-			"summary": "Drop creators can now create the drop's Metaplex Core collection and mint revealed items into it, one at a time or all at once. Devnet is free, mainnet is confirmation-gated, retries never double-mint, and minted items show a badge and Solscan link and appear in /minted.",
-			"tags": ["feature"],
-			"link": "/drop-collection"
+			"title": "Shared creations now say who wants to make their own",
+			"summary": "Every creation page has a Make your own button that carries you into the Forge, and the Forge funnel report now counts AR opens, unfurls, shared-link page loads and how many shares turn into a new generation. Counts are aggregate only: no IP, account or creation id is stored.",
+			"tags": [
+				"feature"
+			],
+			"link": "/creations"
 		},
 		{
 			"date": "2026-11-04",
-			"title": "Served Parametric avatars drop 306 identity sliders from GPU memory",
-			"summary": "Avatar bakes now fold the saved identity morphs into the mesh and keep only the expression targets, cutting about 68 MB of morph memory per viewer on Parametric bodies. The editor keeps live sliders, and scripts/rebake-avatars.mjs migrates older bakes.",
-			"tags": ["improvement", "infra"]
+			"title": "Launch a coin about an animation, an avatar or an agent, on four chains",
+			"summary": "The new multichain launchpad at /launch/multichain launches a coin about one animation, an avatar, a 3D agent, or all of them together, on Solana through pump.fun, on BNB Chain through four.meme or flap.sh, and on Base and Robinhood Chain through flap.sh. Your agent's wallet or your own wallet signs it after a live fee quote and a confirmation table. Every coin gets a showcase page at /l/:id that plays its avatar and links to the coin on its venue, and Pose Studio has a Launch a coin button that carries the clip you are watching.",
+			"tags": [
+				"feature"
+			],
+			"link": "/launch/multichain"
 		},
 		{
 			"date": "2026-11-04",

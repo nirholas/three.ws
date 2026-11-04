@@ -67,7 +67,13 @@ const API_ROOT = path.join(ROOT, 'api');
 const DIST_ROOT = path.join(ROOT, 'dist');
 // Per-creation head for /m/:id, reading the creation straight from the
 // database with the same visibility rules as GET /api/forge-creation.
-const renderCreationHead = createCreationHeadRenderer({ loadCreation: loadPublicCreation, origin: CANONICAL_ORIGIN });
+const renderCreationHead = createCreationHeadRenderer({
+	loadCreation: loadPublicCreation,
+	origin: CANONICAL_ORIGIN,
+	onView: () => {
+		import('../api/_lib/share-funnel.js').then((m) => m.recordShareEvent('creation_page', 'view'));
+	},
+});
 const PORT = Number(process.env.PORT) || 8080;
 // 8 MB fits the 6 M-char base64 token image build-metadata's schema accepts
 // (base64 inflates raw bytes by 4/3, so the old Vercel-era 4.5 MB limit

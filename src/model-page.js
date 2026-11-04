@@ -25,6 +25,7 @@ import {
 	chipsFor,
 } from './model-lib.js';
 import { markNoindex, setCanonical } from './seo-meta.js';
+import { beaconShareEvent } from './shared/share-beacon.js';
 
 const log = createLogger('model-page');
 const $ = (id) => document.getElementById(id);
@@ -169,8 +170,12 @@ function renderViewer() {
 		<div class="mp-viewer-actions">
 			<a class="mp-viewer-btn" href="/api/ar?src=${encodeURIComponent(c.glb_url)}" target="_blank" rel="noopener">View in AR</a>
 			<a class="mp-viewer-btn" href="/viewer?src=${encodeURIComponent(c.glb_url)}&title=${encodeURIComponent(titleFromPrompt(c.prompt))}" target="_blank" rel="noopener">Open viewer</a>
+			<a class="mp-viewer-btn mp-viewer-btn--cta" id="mp-make-your-own" href="/forge?from=share">Make your own</a>
 			<button class="mp-viewer-btn" id="mp-fullscreen" type="button" aria-label="Fullscreen">⛶ Fullscreen</button>
 		</div>`;
+	// Share funnel: the "make your own" call to action. The link carries
+	// ?from=share so the Forge page can attribute the generation it leads to.
+	$('mp-make-your-own')?.addEventListener('click', () => beaconShareEvent('creation_page', 'cta_click'));
 	$('mp-fullscreen')?.addEventListener('click', () => {
 		const mv = host.querySelector('model-viewer');
 		if (!document.fullscreenElement) (mv || host).requestFullscreen?.().catch(() => {});

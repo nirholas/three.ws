@@ -1140,7 +1140,7 @@ async function runHfImageLane({
 async function startJob(req, res) {
 	const body = await readJson(req, 8_000).catch(() => null);
 	return runWithCreationContext(
-		{ destination: body?.destination, internal: isInternalSeedRequest(req) },
+		{ destination: body?.destination, internal: isInternalSeedRequest(req), source: body?.source },
 		() => startJobWithBody(req, res, body),
 	);
 }

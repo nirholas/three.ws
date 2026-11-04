@@ -551,3 +551,7 @@ const glb = Buffer.from(await (await fetch(glbUrl)).arrayBuffer());
 - [x402 endpoints](../x402-endpoints.md): every paid endpoint on the platform.
 ~~~~
 
+
+## Status (2026-11-04)
+
+DONE-PENDING-OWNER (apply migration `20261105070000_share_funnel_daily.sql` with the other pending migrations after `npm run db:status`, then deploy; until applied the report's share panel names itself degraded and the revenue readout prints "leading indicators: unavailable" with its exit code unchanged). Counter table, fail-open helper, beacon endpoint, unfurl/AR/page/share-sheet wiring, `?from=share` attribution into `forge_creations.source`, the funnel and readout surfaces, docs and tests are complete. Make your own button verified in a real browser at desktop and phone width. The Forge result card and the model page already carried a View in AR action; the diorama and avatar saves have no GLB route for planArLaunch, so no AR action was added there. Migration SQL could not be executed locally (no local Postgres; the only database is production).

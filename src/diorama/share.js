@@ -6,6 +6,8 @@
 // panel; this module owns its contents and handlers. Idempotent — safe to call
 // again for a new world; handlers are re-pointed, not stacked.
 
+import { beaconShareEvent } from '../shared/share-beacon.js';
+
 /** Resolve a possibly-relative permalink to an absolute URL for sharing/embedding. */
 function absolute(url) {
 	try {
@@ -83,11 +85,15 @@ export function openShare({ diorama = {}, url } = {}) {
 	}
 
 	if (copyBtn) {
-		copyBtn.onclick = async () => flash(copyBtn, await copyText(href));
+		copyBtn.onclick = async () => {
+			beaconShareEvent('diorama_share', 'action');
+			flash(copyBtn, await copyText(href));
+		};
 	}
 
 	if (xBtn) {
 		xBtn.onclick = () => {
+			beaconShareEvent('diorama_share', 'action');
 			const what = diorama.title || diorama.prompt || 'a little 3D world';
 			const text = `I spoke a little world into being on three.ws — “${what}”. Explore it in 3D:`;
 			const intent =
@@ -100,6 +106,9 @@ export function openShare({ diorama = {}, url } = {}) {
 	}
 
 	if (embedBtn) {
-		embedBtn.onclick = async () => flash(embedBtn, await copyText(embedSnippet(href)));
+		embedBtn.onclick = async () => {
+			beaconShareEvent('diorama_share', 'action');
+			flash(embedBtn, await copyText(embedSnippet(href)));
+		};
 	}
 }

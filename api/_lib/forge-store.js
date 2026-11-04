@@ -143,6 +143,17 @@ export async function attachX402Provenance({ replicateJobId, clientKey, payer, t
 	}
 }
 
+/**
+ * Where a generation was started from. Today only 'share': the maker arrived
+ * from a shared creation's "make your own" call to action (/forge?from=share).
+ * Anything else is null so the column cannot be filled with free text.
+ * @param {unknown} value
+ * @returns {'share'|null}
+ */
+export function validCreationSource(value) {
+	return value === 'share' ? 'share' : null;
+}
+
 // Request-scoped facts every row written during one request should carry.
 //
 // A single /api/forge request can insert a row from any of a dozen branches
@@ -157,13 +168,17 @@ const creationContext = new AsyncLocalStorage();
  * so callers pass the raw request value. `internal` marks platform-generated
  * rows (catalog seeder, quality benchmark) so the funnel report can leave them out.
  * @template T
- * @param {{ destination?: unknown, internal?: boolean }} facts
+ * @param {{ destination?: unknown, internal?: boolean, source?: unknown }} facts
  * @param {() => T} fn
  * @returns {T}
  */
-export function runWithCreationContext({ destination, internal = false } = {}, fn) {
+export function runWithCreationContext({ destination, internal = false, source } = {}, fn) {
 	return creationContext.run(
-		{ destination: validForgeDestination(destination), internal: internal === true },
+		{
+			destination: validForgeDestination(destination),
+			internal: internal === true,
+			source: validCreationSource(source),
+		},
 		fn,
 	);
 }
@@ -217,7 +232,7 @@ export async function createCreation({
 				(id, client_key, ip_hash, prompt, aspect, preview_image_url,
 				 replicate_job_id, text_to_image_model, views_requested, views_used,
 				 multiview, backend, tier, path, status, outcome, model_category, user_id,
-				 source_image_keys, destination, internal, source_image_urls)
+				 source_image_keys, destination, internal, source_image_urls, source)
 			values
 				(${id}, ${clientKey}, ${ipHash ?? null}, ${prompt}, ${aspect ?? null},
 				 ${previewImageUrl ?? null}, ${replicateJobId ?? null},
@@ -225,7 +240,7 @@ export async function createCreation({
 				 ${typeof multiview === 'boolean' ? multiview : null}, ${backend ?? null},
 				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null},
 				 ${sourceKeys ? JSON.stringify(sourceKeys) : null}, ${nextDestination}, ${isInternal},
-				 ${sourceUrls ? JSON.stringify(sourceUrls) : null})
+				 ${sourceUrls ? JSON.stringify(sourceUrls) : null}, ${ctx?.source ?? null})
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.

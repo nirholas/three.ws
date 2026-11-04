@@ -28,6 +28,7 @@ import { generateForgePrompt } from './forge-prompt-gen.js';
 import { createForgeTimeline } from './forge-timeline.js';
 import { createCompare } from './forge-compare.js';
 import { initForgeDestinationPicker, storedForgeDestination } from './shared/forge-destination-picker.js';
+import { openedFromShare } from './shared/share-beacon.js';
 import { generateWithModly, defaultModlyParams } from './modly-local.js';
 import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
 ensureStateKitStyles();
@@ -1836,6 +1837,10 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 	// model. Absent until they answer once; the server ignores an unknown value.
 	const destination = storedForgeDestination();
 	if (destination) body.destination = destination;
+	// Share funnel: this visit began at a shared creation's "make your own"
+	// button (/forge?from=share). Remembered for the tab so the first
+	// generation is attributed even after the query string is gone.
+	if (cameFromShare()) body.source = 'share';
 	// Reproducibility: see mintSeed(). Absent on a job replayed from the gallery,
 	// where the original seed was never recorded, so that path stays as it was.
 	if (Number.isInteger(seed)) body.seed = seed;
@@ -2164,6 +2169,18 @@ function resetVerdict() {
 		b.setAttribute('aria-pressed', 'false');
 	}
 }
+
+// Whether this tab arrived from a shared link. The flag lives in sessionStorage
+// (per tab, cleared on close) and is read back on later submits.
+function cameFromShare() {
+	try {
+		if (openedFromShare()) sessionStorage.setItem('forge:from-share', '1');
+		return sessionStorage.getItem('forge:from-share') === '1';
+	} catch {
+		return openedFromShare();
+	}
+}
+cameFromShare();
 
 // "Making this for" chips (src/shared/forge-destination-picker.js). The answer is
 // written onto the model on screen and remembered for later generations.

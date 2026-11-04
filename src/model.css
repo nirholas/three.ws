@@ -87,6 +87,10 @@ body {
 }
 .mp-viewer-btn:hover, .mp-viewer-btn:focus-visible { border-color: var(--stroke-strong); color: var(--ink-bright); transform: translateY(-1px); }
 .mp-viewer-btn:active { transform: translateY(0); }
+.mp-viewer-btn--cta { border-color: var(--accent); color: var(--ink-bright); }
+.mp-viewer-btn--cta:hover, .mp-viewer-btn--cta:focus-visible { background: color-mix(in srgb, var(--accent) 24%, var(--bg-0)); border-color: var(--accent); }
+.mp-viewer-btn--cta:active { background: color-mix(in srgb, var(--accent) 38%, var(--bg-0)); }
+.mp-viewer-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ── Columns under the viewer ────────────────────────────────────────────── */
 

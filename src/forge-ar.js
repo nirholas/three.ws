@@ -14,6 +14,7 @@
 
 import { Modal } from './shared/modal.js';
 import { renderQRToSVG } from './erc8004/qr.js';
+import { beaconShareEvent } from './shared/share-beacon.js';
 
 const ORIGIN = 'https://three.ws';
 const STYLE_ID = 'tws-forge-ar-styles';
@@ -157,6 +158,8 @@ function wire() {
 		const glbUrl = document.getElementById('download')?.getAttribute('href') || '';
 		const title = document.getElementById('result-label')?.textContent || '';
 		if (!glbUrl) return;
+		// Share funnel: the AR button was pressed (aggregate count, no identifiers).
+		beaconShareEvent('ar', 'action');
 		showARPanel({ glbUrl, title }, btn);
 	});
 }

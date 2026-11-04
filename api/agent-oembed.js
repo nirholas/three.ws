@@ -14,6 +14,7 @@ import { env } from './_lib/env.js';
 import { cors, method, wrap, error } from './_lib/http.js';
 import { resolveOnChainAgent, SERVER_CHAIN_META } from './_lib/onchain.js';
 import { isUuid } from './_lib/validate.js';
+import { recordShareEvent } from './_lib/share-funnel.js';
 import {
 	buildEmbedIframe,
 	clampEmbedDim,
@@ -40,6 +41,10 @@ export default wrap(async (req, res) => {
 	const height = clampEmbedDim(url.searchParams.get('maxheight'), DEFAULT_HEIGHT, 100, 2000);
 
 	if (!target) return error(res, 400, 'invalid_request', 'url parameter required');
+
+	// An unfurl, not a human view: oEmbed consumers (Discord, Notion, editors)
+	// fetch this to render a card. Counted aggregate-only, labelled "unfurls".
+	void recordShareEvent('oembed_agent', 'view');
 
 	const onchain = extractOnChain(target);
 	if (onchain) return sendOnChain(res, format, { ...onchain, width, height });

@@ -171,6 +171,7 @@ export function rewriteCreationHead(html, creation, origin = ORIGIN) {
  * @param {number} [o.ttlMs]
  * @param {number} [o.max]
  * @param {number} [o.timeoutMs]
+ * @param {() => void} [o.onView] called once per creation page served
  * @returns {(pathname:string, html:string)=>Promise<string|null>}
  */
 export function createCreationHeadRenderer({
@@ -179,6 +180,7 @@ export function createCreationHeadRenderer({
 	ttlMs = CACHE_TTL_MS,
 	max = CACHE_MAX,
 	timeoutMs = LOOKUP_TIMEOUT_MS,
+	onView = null,
 }) {
 	const cache = new Map();
 
@@ -210,6 +212,11 @@ export function createCreationHeadRenderer({
 		try {
 			const creation = await lookup(id);
 			if (!creation) return null;
+			// Aggregate share-funnel hook: a creation page was served. Crawlers and
+			// unfurl bots land here too, so reports label it "page loads".
+			if (typeof onView === 'function') {
+				try { onView(); } catch { /* a counter must never break a page */ }
+			}
 			return rewriteCreationHead(html, creation, origin);
 		} catch (err) {
 			console.error(`[creation-head] ${pathname} fell back to the static shell:`, err?.message);

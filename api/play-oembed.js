@@ -12,6 +12,7 @@
 
 import { cors, error, method, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
+import { recordShareEvent } from './_lib/share-funnel.js';
 
 // The embed target is ALWAYS the canonical app origin, never the request's Host
 // header. A crawler-supplied Host (or X-Forwarded-Host) used to be echoed
@@ -124,6 +125,8 @@ export default wrap(async (req, res) => {
   if (!world) return error(res, 404, 'not_found', 'url is not a three.ws coin world url');
 
   const payload = buildPayload(world.mint, maxwidth, maxheight);
+  // An unfurl, not a human view (see api/_lib/share-funnel.js).
+  void recordShareEvent('oembed_play', 'view');
 
   res.statusCode = 200;
   res.setHeader('cache-control', 'public, max-age=300');

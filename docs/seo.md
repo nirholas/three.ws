@@ -71,6 +71,23 @@ It reads the live origin on purpose. Only the served response proves what a craw
 
 Errors are things a search engine acts on immediately; warnings are quality signals. A title over 65 characters or a description over 165 is truncated in results rather than dropped, so those are reported as warnings, not failures.
 
+## Share funnel counters
+
+Distribution is built (AR launch, oEmbed, the `/m/:id` creation card, the share sheet). Whether it converts is measured by one aggregate table, `share_funnel_daily (day, surface, kind, count)`, written by `api/_lib/share-funnel.js` and read by `npm run forge:funnel`, `GET /api/ops/forge-funnel` and the leading-indicator line of `node scripts/x402-revenue-readout.mjs`.
+
+| surface | kind | counted where | meaning |
+|---|---|---|---|
+| `ar` | `action` | `api/ar.js` (route planned), the Forge "View in AR" button (beacon) | AR opened |
+| `oembed_agent`, `oembed_play` | `view` | `api/agent-oembed.js`, `api/play-oembed.js` | an unfurl: a card was requested by a chat app or editor. Not a human view |
+| `creation_page` | `view` | `server/creation-head.mjs` via `onView` | a `/m/:id` page was served. Includes crawlers |
+| `creation_page` | `cta_click` | "Make your own" on `/m/:id` (beacon) | someone chose to start their own |
+| `diorama_share` | `action` | share sheet copy, X and embed buttons (beacon) | a share action was used |
+| `og_image` | `view` | reserved for OG image endpoints | an unfurl image fetch |
+
+Privacy stance: the table has no IP, user id, creation id or URL path column, and the helper accepts only an allowlisted surface and kind, so none can be stored. Counts only. A counter outage never breaks an unfurl: the write fails open with a logged warning. The browser beacon is `POST /api/share-funnel` (rate limited, accepts only `ar`, `creation_page` and `diorama_share` with `action` or `cta_click`).
+
+Conversion: the `/m/:id` call to action links to `/forge?from=share`. The Forge page remembers it for the tab and sends `source: "share"`, stored on `forge_creations.source` (the only value accepted). The funnel report's Shares section gives creations started from a share, their useful rate, and share-to-forge (starts per creation page load).
+
 ## Related
 
 - [docs/guards.md](./guards.md): the full guard registry, including `audit:seo` and `audit:pages`

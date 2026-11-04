@@ -31,6 +31,7 @@
 import { cors, method, wrap } from './_lib/http.js';
 import { planArLaunch } from './_lib/ar-launch.js';
 import { scriptJson } from './_lib/safe-text.js';
+import { recordShareEvent } from './_lib/share-funnel.js';
 
 function esc(s) {
 	return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -107,6 +108,9 @@ export default wrap(async (req, res) => {
 		res.end(errorPage(err.arUserMessage ? err.message : 'That model link could not be opened.'));
 		return;
 	}
+
+	// A valid AR launch route was planned: count it (aggregate, no identifiers).
+	void recordShareEvent('ar', 'action');
 
 	// Every branch here is device-specific (Android gets Scene Viewer, everyone
 	// else gets /ar/view), so a shared CDN cache must never serve one device's

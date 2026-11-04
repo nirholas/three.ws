@@ -22,6 +22,12 @@
 //   internal   Platform-generated rows (catalog seeder, quality benchmark).
 //              Excluded everywhere: by the `internal` flag going forward and by
 //              forge_seed_jobs.creation_id for seeder rows that predate it.
+//   from a share  A creation whose maker arrived from a shared link's "make
+//              your own" call to action (forge_creations.source = 'share').
+//              The share section reports aggregate counters from
+//              share_funnel_daily beside it. oEmbed counts are UNFURLS (a card
+//              rendered in a chat or editor), not human views; page loads
+//              include crawlers. Neither is ever called a view of a person.
 //   superseded An attempt that failed over to another lane. The successor row
 //              carries the request to its real outcome, so request-level metrics
 //              skip the superseded attempt. The per-lane table keeps it, because
@@ -32,6 +38,7 @@
 import { sql } from './db.js';
 import { backendCostClass } from './forge-tiers.js';
 import { FORGE_DESTINATIONS } from '../../src/shared/forge-destinations.js';
+import { readShareFunnel } from './share-funnel.js';
 
 export const FUNNEL_MIN_DAYS = 1;
 export const FUNNEL_MAX_DAYS = 365;
@@ -215,7 +222,72 @@ export function summarizeRevenue(r = {}, { useful = 0 } = {}) {
 	};
 }
 
-// ── Queries ─────────────────────────────────────────────────────────────────
+/**
+ * Share section. `counters` is the share_funnel_daily rollup for the window,
+ * `from` the forge_creations rows whose source is 'share'. `share_to_forge` is
+ * creations started from a share per creation-page load: the honest answer to
+ * "does a share convert". Empty window returns zeros and `empty: true` so
+ * callers print "no shares recorded in this window".
+ * @param {Array<Record<string, unknown>>} counters
+ * @param {Record<string, unknown>|undefined} from
+ */
+export function summarizeShare(counters = [], from = {}) {
+	const get = (surface, kind) =>
+		counters
+			.filter((c) => c.surface === surface && c.kind === kind)
+			.reduce((n, c) => n + int(c.count), 0);
+	const unfurls = get('oembed_agent', 'view') + get('oembed_play', 'view') + get('og_image', 'view');
+	const pageLoads = get('creation_page', 'view');
+	const arLaunches = get('ar', 'action');
+	const ctaClicks = get('creation_page', 'cta_click');
+	const shareActions = get('diorama_share', 'action');
+	const started = int(from.started);
+	const total = unfurls + pageLoads + arLaunches + ctaClicks + shareActions + started;
+	return {
+		empty: total === 0,
+		unfurls,
+		page_loads: pageLoads,
+		ar_launches: arLaunches,
+		cta_clicks: ctaClicks,
+		share_actions: shareActions,
+		from_share: {
+			started,
+			done: int(from.done),
+			useful: int(from.useful),
+			useful_output_rate: measured(from.useful, from.done),
+		},
+		share_to_forge: measured(started, pageLoads),
+		surfaces: counters.map((c) => ({ surface: String(c.surface), kind: String(c.kind), count: int(c.count) })),
+	};
+}
+
+
+/**
+ * Share counters plus the creations started from a share, over a window. Shared
+ * by the funnel report and the revenue readout's leading-indicator line.
+ * @param {number} windowDays whole days
+ */
+export async function gatherShareFunnel(windowDays) {
+	const days = clampFunnelDays(windowDays);
+	const [counters, fromRows] = await Promise.all([
+		readShareFunnel(days),
+		sql`
+			select
+				count(*)::int                                              as started,
+				count(*) filter (where fc.status = 'done')::int            as done,
+				count(*) filter (where fc.status = 'done'
+					and (fc.outcome = 'accepted' or fc.downloaded))::int   as useful
+			from forge_creations fc
+			where fc.source = 'share'
+			  and fc.created_at > now() - make_interval(days => ${days})
+			  and fc.internal = false
+			  and fc.superseded_by is null
+		`,
+	]);
+	return summarizeShare(counters, fromRows[0]);
+}
+
+// ── Queries ────────────────────────────────────────────────────────────────
 
 /**
  * Build the whole report. The panels are read independently: one failing query
@@ -376,6 +448,8 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 		[],
 	);
 
+	const sharePending = panel('share', () => gatherShareFunnel(windowDays), summarizeShare());
+
 	const revenueRawPending = panel(
 		'revenue',
 		async () => {
@@ -411,12 +485,13 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 
 	// Independent reads, so they run together. Revenue per useful asset needs the
 	// useful count from the output panel, so it is summarized once both are in.
-	const [output, newActors, retention, destinations, lanes, revenueRaw] = await Promise.all([
+	const [output, newActors, retention, destinations, lanes, share, revenueRaw] = await Promise.all([
 		outputPending,
 		newActorsPending,
 		retentionPending,
 		destinationsPending,
 		lanesPending,
+		sharePending,
 		revenueRawPending,
 	]);
 	const revenue = summarizeRevenue(revenueRaw, { useful: output.useful_output_rate.n });
@@ -432,6 +507,7 @@ export async function gatherForgeFunnel({ days = FUNNEL_DEFAULT_DAYS } = {}) {
 		retention,
 		destinations,
 		lanes,
+		share,
 		revenue,
 	};
 }

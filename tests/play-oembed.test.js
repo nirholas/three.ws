@@ -17,7 +17,10 @@
 // Driven end to end against the real default export; the handler needs no
 // database, chain read, or network, so there is nothing to stub.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+const { recordShareEvent } = vi.hoisted(() => ({ recordShareEvent: vi.fn(async () => true) }));
+vi.mock('../api/_lib/share-funnel.js', () => ({ recordShareEvent }));
 
 import handler from '../api/play-oembed.js';
 import { env } from '../api/_lib/env.js';
@@ -132,5 +135,14 @@ describe('play oEmbed provider', () => {
 		const r = await invoke(oembedUrl(`${env.APP_ORIGIN}/play`), { method: 'POST' });
 		expect(r.statusCode).toBe(405);
 		expect(r.json().error).toBe('method_not_allowed');
+	});
+
+	it('counts an answered unfurl in the share funnel and a refused one not at all', async () => {
+		recordShareEvent.mockClear();
+		await invoke(oembedUrl(`${env.APP_ORIGIN}/play`));
+		expect(recordShareEvent).toHaveBeenCalledWith('oembed_play', 'view');
+		recordShareEvent.mockClear();
+		await invoke(oembedUrl('https://example.com/elsewhere'));
+		expect(recordShareEvent).not.toHaveBeenCalled();
 	});
 });

@@ -9,6 +9,7 @@ import {
 	summarizeDestinations,
 	summarizeLanes,
 	summarizeRevenue,
+	summarizeShare,
 	MIN_SAMPLE,
 	FUNNEL_DEFAULT_DAYS,
 } from '../api/_lib/forge-funnel.js';
@@ -157,6 +158,46 @@ describe('summarizeDestinations', () => {
 		const row = d.rows.find((x) => x.destination === 'holodeck');
 		expect(row).toMatchObject({ label: 'holodeck', done: 4 });
 		expect(d.rows.at(-1).destination).toBeNull();
+	});
+});
+
+describe('summarizeShare', () => {
+	it('reports a designed empty state when nothing was shared', () => {
+		const sh = summarizeShare();
+		expect(sh.empty).toBe(true);
+		expect(sh).toMatchObject({ unfurls: 0, page_loads: 0, ar_launches: 0, cta_clicks: 0 });
+		expect(sh.share_to_forge.value).toBeNull();
+	});
+
+	it('sums unfurls across oEmbed and OG surfaces and keeps page loads apart', () => {
+		const sh = summarizeShare(
+			[
+				{ surface: 'oembed_agent', kind: 'view', count: '7' },
+				{ surface: 'oembed_play', kind: 'view', count: 3 },
+				{ surface: 'og_image', kind: 'view', count: 2 },
+				{ surface: 'creation_page', kind: 'view', count: 200 },
+				{ surface: 'creation_page', kind: 'cta_click', count: 40 },
+				{ surface: 'ar', kind: 'action', count: 9 },
+				{ surface: 'diorama_share', kind: 'action', count: 5 },
+			],
+			{ started: 10, done: 8, useful: 4 },
+		);
+		expect(sh).toMatchObject({ empty: false, unfurls: 12, page_loads: 200, ar_launches: 9, cta_clicks: 40, share_actions: 5 });
+		expect(sh.from_share).toMatchObject({ started: 10, done: 8, useful: 4 });
+		expect(sh.from_share.useful_output_rate).toMatchObject({ value: 0.5, low_sample: true });
+		expect(sh.share_to_forge).toMatchObject({ value: 0.05, n: 10, of: 200 });
+	});
+
+	it('is not empty when only forge starts from a share exist', () => {
+		expect(summarizeShare([], { started: 1, done: 0, useful: 0 }).empty).toBe(false);
+	});
+});
+
+describe('creation source', () => {
+	it('accepts only "share" so the column cannot hold free text', async () => {
+		const { validCreationSource } = await import('../api/_lib/forge-store.js');
+		expect(validCreationSource('share')).toBe('share');
+		for (const v of ['Share', 'twitter', '', null, undefined, 3, {}]) expect(validCreationSource(v)).toBeNull();
 	});
 });
 
