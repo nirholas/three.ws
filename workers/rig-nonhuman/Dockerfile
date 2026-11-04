@@ -107,12 +107,16 @@ RUN python3 /app/test_pipeline.py && python3 /app/test_gltf_meshopt.py
 # positive from pip's wheel-tag check (the installed wheel is
 # manylinux_2_28_x86_64 and this Ubuntu 22.04 base has glibc 2.35), and the
 # `import bpy` below proves bpy loads here. Any other line fails the build.
+# SkinTokens' demo asks torch.cuda.get_device_name(0) at import (its
+# FlashAttention-3 probe looks for an H100), and the builder has no GPU, so the
+# gate answers that one probe; on the L4 the real call runs. Every other import
+# in its graph still has to resolve for the build to pass.
 RUN { pip check > /tmp/pip-check.txt 2>&1 || true; } \
     && cat /tmp/pip-check.txt \
     && ! grep -vxE 'No broken requirements found\.|bpy 4\.2\.0 is not supported on this platform' /tmp/pip-check.txt \
     && python3 -c "import bpy; print('bpy', bpy.app.version_string)" \
     && cd /app/unirig && python3 -c "import run" \
-    && cd /app/skintokens && python3 -c "import demo" \
+    && cd /app/skintokens && python3 -c "import torch; torch.cuda.get_device_name = lambda *a, **k: 'build-host-no-gpu'; import demo" \
     && python3 -c "import numpy, pandas; print('numpy', numpy.__version__, 'pandas', pandas.__version__)"
 
 # Checkpoints are staged in GCS (stage-assets.sh) and mounted at /weights by
