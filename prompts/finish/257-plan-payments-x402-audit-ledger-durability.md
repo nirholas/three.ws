@@ -1,5 +1,8 @@
 # x402 payment audit ledger becomes durable, unique per transaction, and dead-lettered
 
+**Status (2026-11-04):** All code, the migration (`20261103010000_x402_audit_durability.sql`), the drain cron, retention env var, docs and changelog already landed in commits 229a55725 and 93f1a838b. Not yet verified this session because `node_modules` is missing (parent reinstalling): `npx vitest run tests/x402-audit-log-durability.test.js` (fail-before/pass-after), the full-suite baseline compare, `npm run db:status` proof that `ux_x402_audit_tx_event` is applied, and `npm run check:rules`. Owner: whoever next has a working install; run those four, then `git rm` this file.
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/257-plan-payments-x402-audit-ledger-durability.md`.
 
 **Priority:** P0, live defect, security, or broken money rail (score 80 of 100 inside the tier). **Area:** payments. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
