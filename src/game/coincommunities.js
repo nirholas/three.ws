@@ -82,6 +82,7 @@ import { AgentCommerce } from './agent-commerce.js';
 import { IntelKiosk } from './intel-kiosk.js';
 import { WorldLife } from './npc/world-life.js';
 import { isChatPanelOpen } from './npc/npc-chat.js';
+import { mountConcierge } from './npc/concierge.js';
 import { isServicePanelOpen } from './npc/npc-services.js';
 import { isAixbtPanelOpen } from './npc/npc-aixbt.js';
 import { isZauthPanelOpen } from './npc/npc-zauth.js';
@@ -2115,6 +2116,12 @@ export class CoinCommunities {
 			// in the shared inspector (with a Talk action) instead of doing nothing.
 			onInspectNpc: (npc) => this._inspectNpc(npc),
 		});
+		// The welcome concierge greets first-timers and leads the tour. Idle cost
+		// is one 500 ms proximity check; null when the NPC layer is off (?npcs=0).
+		this._concierge = mountConcierge({
+			scene: this.scene, camera: this.camera, renderer: this.renderer,
+			getPlayer: () => this.localPos, ui: this.ui, world: this.worldLife.world,
+		});
 		// Everything visual is up; now settle the join. Voice needs the live
 		// sessionId, and the profile re-request needs an open socket (it is a
 		// silent no-op otherwise), so both wait for the connect started above.
@@ -2424,6 +2431,7 @@ export class CoinCommunities {
 		this._disposeAvatarPanel();
 		if (this.agentCommerce) { this.agentCommerce.dispose(); this.agentCommerce = null; }
 		if (this.intelKiosk) { this.intelKiosk.dispose(); this.intelKiosk = null; }
+		if (this._concierge) { this._concierge.dispose(); this._concierge = null; }
 		if (this.worldLife) { this.worldLife.dispose(); this.worldLife = null; }
 		if (this._onboard) { this._onboard.dispose(); this._onboard = null; }
 		// Close the shop + wardrobe and drop the rig binding, the next world rebuilds both.

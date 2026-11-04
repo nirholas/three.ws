@@ -192,7 +192,10 @@ function closeChat() {
 //   greeting   the line already spoken in-world (seeds the log + prompt)
 //   role       header sub-label override (defaults to the townsperson label)
 //   onClose    called once when the panel closes, however it closes
-export function openChat(npc, { ui, serviceId, persona, greeting, world, role, onClose } = {}) {
+// `pinProvider` starts the conversation on a specific model instead of the
+// player's remembered one. The concierge pins the free default so a signed-out
+// first-timer is never routed to a paid model that answers 401.
+export function openChat(npc, { ui, serviceId, persona, greeting, world, role, onClose, pinProvider } = {}) {
 	closeChat();
 	const svc = serviceId ? SERVICES[serviceId] : null;
 
@@ -200,7 +203,7 @@ export function openChat(npc, { ui, serviceId, persona, greeting, world, role, o
 	// kept out of the payload so the history always opens on a user turn).
 	const history = [];
 	const system = buildSystemPrompt({ npc, svc, persona, greeting, world });
-	let provider = 'gpt-oss-120b';
+	let provider = pinProvider || 'gpt-oss-120b';
 	let streaming = false;
 	const abort = new AbortController();
 
@@ -337,7 +340,9 @@ export function openChat(npc, { ui, serviceId, persona, greeting, world, role, o
 	// Populate the model picker from the live roster.
 	loadProviders().then((providers) => {
 		if (openPanel?.overlay !== overlay) return; // panel closed before list arrived
-		provider = preferredProvider(providers);
+		provider = pinProvider && providers.some((p) => p.key === pinProvider && p.available)
+			? pinProvider
+			: preferredProvider(providers);
 		modelSelect.textContent = '';
 		const opts = providers.length ? providers : [{ key: provider, label: provider, network: '', available: true }];
 		for (const p of opts) {

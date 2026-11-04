@@ -319,3 +319,29 @@ Point it at another origin with `--base https://three.ws`.
 - **Reusing the schedule elsewhere.** `meetup-schedule.js` imports neither the
   DOM nor three.js, so a landing page or jumbotron can render the same countdown
   from the same config.
+
+## The welcome concierge
+
+A concierge NPC (`src/game/npc/concierge.js`, pure logic in
+`src/game/npc/concierge-logic.js`) stands a few steps from spawn. It is mounted
+by `coincommunities.js` right after the world-life manager and disposed with it.
+
+- **Greeting.** Once per browser (`cc-concierge-greeted-v1`), after the control
+  overlay is dismissed and the player is within 14 m, the concierge walks over,
+  stops 3 m away and offers "Show me around", "Ask a question" or "Not now". It
+  never blocks movement and never repeats. Reduced motion skips the walk.
+- **Chat.** Opens the shared NPC chat pinned to the free default model
+  (`gpt-oss-120b`) so a signed-out visitor never hits the paid-model 401. The
+  persona is built from `LANDMARKS`, whose positions come from the modules that
+  place the real stations; `tests/play-concierge.test.js` fails if one moves or
+  disappears.
+- **Tour.** Four stops ordered nearest-first (Intel Kiosk, Signature Wall, wheel,
+  War Portal) with a ground marker at the current stop. The plaza is open ground,
+  so the route is a straight line. Skip per stop with the button, end with
+  Escape or "End tour", or walk 40 m away. The card never captures the joystick.
+- **Event line.** From one hour before `public/event.json` starts until it ends
+  the opening line states the event name and tagline from the config; outside
+  that window the line does not exist.
+- **Idle cost.** One 500 ms proximity check until the player is within 22 m; the
+  per-frame loop only runs while awake. `?npcs=0` disables the NPC layer and the
+  concierge never mounts or touches the network.

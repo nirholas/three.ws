@@ -19,7 +19,7 @@
 //
 // Never frames /play as single-player. Connecting/offline states use correct copy.
 
-const ONBOARD_KEY = 'cc-onboarded-v1';
+export const ONBOARD_KEY = 'cc-onboarded-v1';
 
 // ── Real controls sourced from coincommunities.js _bindInput() / _stepLocal() ─
 

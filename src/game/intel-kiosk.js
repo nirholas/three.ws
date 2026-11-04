@@ -28,7 +28,9 @@ import { log } from '../shared/log.js';
 import { ensureX402 } from '../shared/x402-loader.js';
 import { netErrorMessage } from './net-error.js';
 
-const KIOSK_POS = new Vector3(-8, 0, -7);
+// Exported so the concierge tour walks to the real kiosk position.
+export const KIOSK_SPOT = Object.freeze({ x: -8, z: -7 });
+const KIOSK_POS = new Vector3(KIOSK_SPOT.x, 0, KIOSK_SPOT.z);
 const INTERACT_RANGE = 5.5;
 const SCREEN_W = 512, SCREEN_H = 320; // logical layout grid; backed at 2x
 const ACCENT = '#9945ff';

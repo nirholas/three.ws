@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "A concierge greets new visitors in the world",
+			"summary": "A well-dressed concierge near spawn welcomes first-time players once, answers questions about the stations that really exist through the free chat model, and leads a skippable tour of the Intel Kiosk, Signature Wall, wheel and War Portal. During a live event it opens with what is happening.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Smaller Forge thumbnails and a lighter marketplace hero",
 			"summary": "Forge previews are now 512 px WebP instead of 768 px PNG, the marketplace hero shares one model-size budget across its slides, the brand mark is less than half its old size, and /forge paints its engine lanes on the first frame for repeat visitors.",
 			"tags": [
