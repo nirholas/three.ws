@@ -630,3 +630,7 @@ Added `agent-get-started`, `daily-3d-brief`, `asset-pack`, `avatar-from-photo` t
 ## 2026-11-03: order 023 (x-grok 01) retired
 
 Production probe 8 of 8 PASS, local probe 8 of 8 PASS, audit:docs clean, vitest down to the Chromium-dependent screen-caster test (passes alone) after the server listen-log fix `0ef6d970c`.
+
+## 2026-11-04: order 039 (x-grok 17) re-verified, still open on order 927
+
+No xAI key exists in `process.env`, `.env`, `.env.local` or the `three-ws-api` service. `npm run e2e:xai-mcp -- --dry-run` prints the request matching `docs.x.ai/developers/tools/remote-mcp`, 13 of 13 unit tests pass under vitest, and production `https://three.ws/api/mcp-grok` answers `tools/list` with 200. The live run against production is the only Definition of done line left. Owner: order 927 supplies the key; then `npm run e2e:xai-mcp` must exit 0 and the order file is retired.
