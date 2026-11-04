@@ -125,8 +125,8 @@ npm test
 - `tests/criteria.test.mjs`: unit tests for every inclusion rule (age, holders, liquidity,
   identity, spoofing, collision resolution).
 - `tests/version.test.mjs`: version-bump semantics.
-- `tests/live.test.mjs`: live re-verification of a deterministic sample (base assets, first and
-  last stock token, every memecoin) against mainnet RPC and Blockscout on every test run.
+- `tests/live/live.test.mjs` (opt-in, `npm run test:live`): live re-verification of a deterministic sample (base assets, first and
+  last stock token, every memecoin) against mainnet RPC and Blockscout.
 
 ## Docs site (GitHub Pages)
 
@@ -158,7 +158,7 @@ logos/                    self-hosted logo assets, keyed by checksummed address
 docs/                     GitHub Pages site + stable-URL mirror of the list
 data/robinhood-docs-registry.json   official-registry cross-check fixture
 data/refresh-report.json  stats + per-token exclusion reasons from the last refresh
-tests/                    schema, integrity, criteria, version, live suites
+tests/                    schema, integrity, criteria, version suites; tests/live is the opt-in network suite
 ```
 
 ## License

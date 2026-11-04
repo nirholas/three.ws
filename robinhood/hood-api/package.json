@@ -35,7 +35,8 @@
     "openapi": "tsx scripts/emit-openapi.ts",
     "capture-samples": "tsx scripts/capture-samples.ts",
     "smoke": "bash scripts/smoke.sh",
-    "test": "vitest run",
+    "test": "vitest run --exclude 'test/live/**'",
+    "test:live": "vitest run test/live",
     "test:x402": "vitest run test/x402.test.ts"
   },
   "dependencies": {

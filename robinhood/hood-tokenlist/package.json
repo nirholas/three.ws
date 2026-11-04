@@ -23,7 +23,8 @@
   "sideEffects": false,
   "scripts": {
     "refresh": "node scripts/refresh.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:live": "node --test tests/live/*.test.mjs"
   },
   "keywords": [
     "robinhood-chain",

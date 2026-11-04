@@ -11,7 +11,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const RPC = 'https://rpc.mainnet.chain.robinhood.com'
 const list = JSON.parse(await readFile(path.join(ROOT, 'tokenlist.json'), 'utf8'))
 

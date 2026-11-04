@@ -64,6 +64,16 @@ own README with install and usage.
 | [hood-launcher](hood-launcher/) | Token launcher |
 | [erc8056](erc8056/) | Reference implementation of ERC-8056 (Scaled UI amounts) |
 
+## Verify everything
+
+`npm run verify:robinhood` (from the repo root) installs each package from its
+own lockfile, builds it, runs its offline test suite, and probes the live
+`eth_chainId` of the mainnet (4663) and testnet (46630) RPC endpoints. It
+prints one row per package and exits non-zero on any failure. Add `-- --live`
+to also run each package's opt-in `test:live` suite against the real network
+(a suite that fails only because the public Blockscout explorer is behind a
+Cloudflare challenge from your machine is reported as `blocked`, not `FAIL`).
+
 The platform's Robinhood feed worker lives separately at
 [workers/robinhood-feed/](../workers/robinhood-feed/); chain-priority rules
 for the whole workspace are in [CLAUDE.md](../CLAUDE.md).
