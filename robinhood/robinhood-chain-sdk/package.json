@@ -67,11 +67,15 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/ws": "^8.18.0",
+    "minimatch": "file:vendor/minimatch",
     "tsup": "^9.0.0",
     "typedoc": "^0.28.0",
     "typescript": "^6.0.3",
     "viem": "^2.55.0",
     "vitest": "^5.0.5",
     "ws": "^8.18.0"
+  },
+  "overrides": {
+    "minimatch@>=7.0.0 <11.0.1": "$minimatch"
   }
 }
