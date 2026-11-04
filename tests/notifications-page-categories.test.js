@@ -1,43 +1,110 @@
-// The /notifications page must follow the server category list instead of a
-// hand-copied type map (bug: knock, mail and event-market rows landed under
-// Account and had no tab).
+// /notifications filters by category. The type to category map and the
+// category list are owned by api/_lib/notify-prefs.js and served on
+// GET /api/notifications/preferences; the page used to keep a hand-copied
+// TYPE_CATEGORY table that drifted (knock, mail and event-market rows landed
+// under Account, and four categories had no tab at all). These tests hold the
+// page to the server's list.
 
-import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { CATEGORIES, typeCategoryMap } from '../api/_lib/notify-prefs.js';
+import {
+	categoryOf,
+	visibleTabs,
+	FALLBACK_CATEGORIES,
+} from '../src/notification-categories.js';
 
-const pageSrc = readFileSync(new URL('../src/notifications-page.js', import.meta.url), 'utf8');
+const pageSource = readFileSync(new URL('../src/notifications-page.js', import.meta.url), 'utf8');
 const pageHtml = readFileSync(new URL('../pages/notifications.html', import.meta.url), 'utf8');
 
-describe('notifications page category parity', () => {
-	it('does not keep a literal TYPE_CATEGORY table', () => {
-		expect(pageSrc).not.toMatch(/TYPE_CATEGORY\s*=/);
-	});
+describe('categoryOf', () => {
+	const map = typeCategoryMap();
 
-	it('does not hard-code category tabs in the html', () => {
-		for (const c of CATEGORIES) {
-			expect(pageHtml).not.toContain(`data-type="${c.key}"`);
-		}
-	});
-
-	it('resolves every server type to its server category and unknown types to account', async () => {
-		const { categoryOf, tabsFor } = await import('../src/notifications-page.js');
-		const map = typeCategoryMap();
-		for (const [type, cat] of Object.entries(map)) expect(categoryOf(type, map)).toBe(cat);
+	it('resolves types the old client table never knew to their own category', () => {
 		expect(categoryOf('knock_received', map)).toBe('knock');
 		expect(categoryOf('mail_received', map)).toBe('mail');
 		expect(categoryOf('event_market_entrant', map)).toBe('markets');
-		expect(categoryOf('totally_unknown_type', map)).toBe('account');
-		expect(categoryOf('knock_received', null)).toBe('account');
+		expect(categoryOf('order_update', map)).toBe('orders');
 	});
 
-	it('builds a tab for every populated category plus the active one, in server order', async () => {
-		const { tabsFor } = await import('../src/notifications-page.js');
-		const map = typeCategoryMap();
-		const rows = [{ type: 'mail_received' }, { type: 'knock_received' }, { type: 'event_market_entrant' }];
-		const tabs = tabsFor(CATEGORIES, map, rows, 'sales');
-		expect(tabs.map((t) => t.key)).toEqual(['sales', 'markets', 'knock', 'mail']);
-		expect(tabs.find((t) => t.key === 'knock').label).toBe(CATEGORIES.find((c) => c.key === 'knock').label);
-		expect(tabsFor(CATEGORIES, map, [], '').length).toBe(0);
+	it('falls back to account for a type the server map does not name', () => {
+		expect(categoryOf('a_type_from_the_future', map)).toBe('account');
+	});
+
+	it('falls back to account when there is no map at all (preferences fetch failed)', () => {
+		expect(categoryOf('knock_received', null)).toBe('account');
+		expect(categoryOf('knock_received', undefined)).toBe('account');
+	});
+
+	it('does not resolve inherited object keys as categories', () => {
+		expect(categoryOf('constructor', map)).toBe('account');
+		expect(categoryOf('__proto__', map)).toBe('account');
+	});
+
+	it('agrees with the server for every type the server maps', () => {
+		for (const [type, category] of Object.entries(map)) {
+			expect(categoryOf(type, map)).toBe(category);
+		}
+	});
+});
+
+describe('visibleTabs', () => {
+	const map = typeCategoryMap();
+	const rows = [
+		{ type: 'knock_received' },
+		{ type: 'mail_received' },
+		{ type: 'event_market_entrant' },
+		{ type: 'sale' },
+	];
+
+	it('every server category is reachable as a tab once it has a row', () => {
+		const typeFor = {};
+		for (const [type, category] of Object.entries(map)) typeFor[category] ??= type;
+		for (const c of CATEGORIES) {
+			const sample = typeFor[c.key] ? [{ type: typeFor[c.key] }] : [];
+			// account is the fallback, so it is reachable through any unknown type
+			if (!sample.length && c.key === 'account') sample.push({ type: 'unmapped_type' });
+			expect(sample.length, `no type maps to category ${c.key}`).toBeGreaterThan(0);
+			const keys = visibleTabs(CATEGORIES, sample, '', map).map((t) => t.key);
+			expect(keys).toContain(c.key);
+		}
+	});
+
+	it('lists only categories with rows, in server order, plus the active one', () => {
+		const keys = visibleTabs(CATEGORIES, rows, 'approvals', map).map((t) => t.key);
+		expect(keys).toEqual(['sales', 'markets', 'knock', 'mail', 'approvals']);
+	});
+
+	it('carries the server label and description on each tab', () => {
+		const knock = visibleTabs(CATEGORIES, rows, '', map).find((t) => t.key === 'knock');
+		const server = CATEGORIES.find((c) => c.key === 'knock');
+		expect(knock.label).toBe(server.label);
+		expect(knock.description).toBe(server.description);
+	});
+
+	it('keeps an active category that no longer has rows, so the selection never vanishes', () => {
+		const keys = visibleTabs(CATEGORIES, [], 'mail', map).map((t) => t.key);
+		expect(keys).toEqual(['mail']);
+	});
+
+	it('the fallback list (preferences unreachable) is Account only and always shown', () => {
+		expect(FALLBACK_CATEGORIES.map((c) => c.key)).toEqual(['account']);
+		const keys = visibleTabs(FALLBACK_CATEGORIES, [], '', null, { always: ['account'] }).map((t) => t.key);
+		expect(keys).toEqual(['account']);
+	});
+});
+
+describe('the page keeps no copy of the server map', () => {
+	it('src/notifications-page.js has no hand-written TYPE_CATEGORY table', () => {
+		expect(pageSource).not.toMatch(/TYPE_CATEGORY/);
+	});
+
+	it('pages/notifications.html hard-codes no category tab buttons', () => {
+		expect(pageHtml).not.toMatch(/class="n-tab[^"]*"[^>]*data-type="(?!")/);
+	});
+
+	it('the page reads type_categories and categories from the preferences endpoint', () => {
+		expect(pageSource).toMatch(/\/api\/notifications\/preferences/);
+		expect(pageSource).toMatch(/type_categories/);
 	});
 });

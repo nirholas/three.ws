@@ -155,8 +155,11 @@ async function loadContent(host) {
 	host.appendChild(renderPrefs(prefs));
 	host.appendChild(renderDataExport());
 	host.appendChild(renderAbout(versionResp));
-	// The OAuth consent screen and three.ws Desktop link here to revoke an app.
-	if (location.hash === '#connected-apps') document.getElementById('connected-apps')?.scrollIntoView({ block: 'start' });
+	// The OAuth consent screen and three.ws Desktop link here to revoke an app,
+	// and the /notifications empty states link to the notification matrix.
+	if (location.hash === '#connected-apps' || location.hash === '#notification-preferences') {
+		document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
+	}
 }
 
 // Returns { ok, data } so callers can tell a genuine fetch failure (show an
@@ -724,6 +727,7 @@ const CHANNEL_HINT = {
 function renderNotificationPrefs(resp, onRetry) {
 	const panel = document.createElement('div');
 	panel.className = 'dn-panel';
+	panel.id = 'notification-preferences';
 	panel.setAttribute('aria-label', 'Notification preferences');
 
 	if (!resp.ok) {

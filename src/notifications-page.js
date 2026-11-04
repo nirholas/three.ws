@@ -1,41 +1,19 @@
 // Dedicated notification-center page (pages/notifications.html) — the full
 // history view the nav bell dropdown (src/notifications.js) can't hold. Reuses
 // the dropdown's icon/label/link/escaping helpers so the two surfaces always
-// read identically; adds category tabs, delete, and cursor pagination for the
+// read identically; adds category tabs (built from the server's category list,
+// see src/notification-categories.js), delete, and cursor pagination for the
 // "hundreds of items" overflow case the dropdown never has to handle.
 
 import { TYPE_ICON, notifLabel, notifLink, escNotif, relTime, trackInApp } from './notifications.js';
 import { apiFetch } from './api.js';
+import { categoryOf, visibleTabs, FALLBACK_CATEGORIES, FALLBACK_CATEGORY } from './notification-categories.js';
+
+export { categoryOf };
 
 const AUTH_HINT_KEY = '3dagent:auth-hint';
 const PAGE_SIZE = 30;
-
-// Mirrors api/_lib/notify-prefs.js TYPE_CATEGORY — kept small and in sync by
-// hand since it only drives client-side tab filtering, not delivery gating.
-const TYPE_CATEGORY = {
-	skill_purchased: 'sales', asset_purchased: 'sales', sale: 'sales', 'payment-earned': 'sales',
-	payment_received: 'sales', referral_earned: 'sales', referral_signup: 'sales', referral_reward: 'sales',
-	pump_launch_filled: 'sales', royalty_paid: 'sales',
-	skill_purchase_confirmed: 'purchases', asset_purchase_confirmed: 'purchases',
-	skill_gift_received: 'purchases', skill_gift_sent: 'purchases',
-	print_update: 'purchases',
-	remix: 'social', reply: 'social', comment: 'social', embed: 'social', mention: 'social',
-	fork: 'social', follow: 'social', dm_received: 'social', agent_review: 'social',
-	quest_complete: 'social', duel_challenge: 'social',
-	irl_interaction: 'irl', irl_reply: 'irl',
-	pump_alert: 'alerts', perps_alert: 'alerts',
-	companion_delivery: 'companion',
-	forge_complete: 'creations', forge_failed: 'creations',
-	withdrawal_completed: 'account', withdrawal_failed: 'account', payment_mismatch: 'account',
-	labor_escrow_update: 'account', labor_deadline_soon: 'account', labor_payout_delayed: 'account',
-	asset_payment_mismatch: 'account', skill_payment_mismatch: 'account', security_alert: 'account',
-	wallet_anomaly_frozen: 'account',
-	inference_topup: 'account', inference_budget_exhausted: 'account',
-	token_budget_paused: 'account', spend_cap_alert: 'account',
-	approval_requested: 'approvals',
-	order_update: 'orders',
-};
-function categoryOf(type) { return TYPE_CATEGORY[type] || 'account'; }
+const PREFS_ANCHOR = '/dashboard/settings#notification-preferences';
 
 function isAuthed() {
 	try {
@@ -50,6 +28,12 @@ let activeTab = '';  // '' = all
 let unread = 0;
 let hasMore = true;
 let loading = false;
+// Category model served by GET /api/notifications/preferences. Until it
+// arrives (or if it fails) every row resolves to the fallback category.
+let typeMap = null;
+let categories = FALLBACK_CATEGORIES;
+let categoriesState = 'loading'; // 'loading' | 'ready' | 'failed'
+let tabSignature = '';
 
 function q(id) { return document.getElementById(id); }
 
@@ -65,21 +49,73 @@ function renderSkeleton() {
 	`).join('');
 }
 
+function activeCategory() {
+	return categories.find((c) => c.key === activeTab) || null;
+}
+
 function renderEmpty() {
+	const cat = activeCategory();
+	const heading = cat ? `Nothing under ${tabLabel(cat.key, cat.label)} yet` : 'No notifications yet';
+	const body = cat?.description
+		|| 'When your agent earns, sells, gets remixed, followed, or finishes a quest, you will see it here.';
 	els.list.innerHTML = `
 		<div class="n-empty">
 			<div class="n-empty-icon" aria-hidden="true">🔔</div>
-			<h3>No notifications ${activeTab ? 'in this category ' : ''}yet</h3>
-			<p>When your agent earns, sells, gets remixed, followed, or finishes a quest, you'll see it here.</p>
+			<h3>${escNotif(heading)}</h3>
+			<p>${escNotif(body)}</p>
+			<a class="n-btn n-empty-link" href="${PREFS_ANCHOR}">Choose how ${cat ? 'these reach' : 'notifications reach'} you</a>
 		</div>
 	`;
+	els.loadMoreWrap.hidden = !hasMore;
 }
 
 function filtered() {
-	return activeTab ? all.filter((n) => categoryOf(n.type) === activeTab) : all;
+	return activeTab ? all.filter((n) => categoryOf(n.type, typeMap) === activeTab) : all;
+}
+
+// Tab labels live in pages/notifications.html (#n-tab-labels) so the i18n
+// runtime translates them like any other copy; a category the page has no
+// string for yet uses the server's own label.
+function tabLabel(key, serverLabel) {
+	const el = els.tabLabels?.querySelector(`[data-cat="${CSS.escape(key)}"]`);
+	const text = el?.textContent?.trim();
+	return text || serverLabel || key;
+}
+
+function renderTabs() {
+	const tabs = visibleTabs(categories, all, activeTab, typeMap, {
+		always: categoriesState === 'failed' ? [FALLBACK_CATEGORY] : [],
+	});
+	const entries = [{ key: '', label: tabLabel('', 'All'), description: '' }]
+		.concat(tabs.map((t) => ({ ...t, label: tabLabel(t.key, t.label) })));
+	const signature = JSON.stringify([activeTab, entries.map((e) => [e.key, e.label])]);
+	if (signature === tabSignature) return;
+	tabSignature = signature;
+
+	const focusedKey = els.tabs.contains(document.activeElement) ? document.activeElement.dataset.type : null;
+	els.tabs.innerHTML = entries.map((e) => {
+		const selected = e.key === activeTab;
+		return `<button type="button" class="n-tab${selected ? ' active' : ''}" role="tab"
+			id="n-tab-${escNotif(e.key || 'all')}" aria-controls="n-list"
+			aria-selected="${selected}" tabindex="${selected ? 0 : -1}"
+			data-type="${escNotif(e.key)}"${e.description ? ` title="${escNotif(e.description)}"` : ''}>${escNotif(e.label)}</button>`;
+	}).join('');
+	els.list.setAttribute('aria-labelledby', `n-tab-${activeTab || 'all'}`);
+	if (focusedKey !== null && focusedKey !== undefined) {
+		els.tabs.querySelector(`.n-tab[data-type="${CSS.escape(focusedKey)}"]`)?.focus();
+	}
+}
+
+function selectTab(key, { focus = false } = {}) {
+	activeTab = key;
+	render();
+	const tab = els.tabs.querySelector(`.n-tab[data-type="${CSS.escape(key)}"]`);
+	if (focus) tab?.focus();
+	tab?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
 }
 
 function render() {
+	renderTabs();
 	const list = filtered();
 	if (!list.length) return renderEmpty();
 
@@ -158,6 +194,7 @@ function deleteOne(id) {
 	const wasUnread = all.find((n) => n.id === id && !n.read_at);
 	all = all.filter((n) => n.id !== id);
 	if (wasUnread) unread = Math.max(0, unread - 1);
+	renderTabs();
 	if (!filtered().length) renderEmpty();
 	apiFetch(`/api/notifications/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include', allowAnonymous: true }).catch(() => {});
 }
@@ -194,15 +231,61 @@ async function loadPage(before) {
 }
 
 function wireTabs() {
-	els.tabs.querySelectorAll('.n-tab').forEach((tab) => {
-		tab.addEventListener('click', () => {
-			els.tabs.querySelectorAll('.n-tab').forEach((t) => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-			tab.classList.add('active');
-			tab.setAttribute('aria-selected', 'true');
-			activeTab = tab.dataset.type || '';
-			render();
-		});
+	els.tabs.addEventListener('click', (e) => {
+		const tab = e.target.closest('.n-tab');
+		if (tab) selectTab(tab.dataset.type || '');
 	});
+	// WAI-ARIA tabs pattern: arrows move between tabs and select (automatic
+	// activation, the list filters instantly), Home and End jump to the ends.
+	els.tabs.addEventListener('keydown', (e) => {
+		const tabs = [...els.tabs.querySelectorAll('.n-tab')];
+		const i = tabs.indexOf(e.target.closest('.n-tab'));
+		if (i < 0) return;
+		let next = -1;
+		if (e.key === 'ArrowRight') next = (i + 1) % tabs.length;
+		else if (e.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length;
+		else if (e.key === 'Home') next = 0;
+		else if (e.key === 'End') next = tabs.length - 1;
+		if (next < 0) return;
+		e.preventDefault();
+		selectTab(tabs[next].dataset.type || '', { focus: true });
+	});
+	// A locale switch rewrites #n-tab-labels; rebuild the strip from it.
+	window.addEventListener('i18n:change', () => {
+		tabSignature = '';
+		if (!loading) render();
+	});
+}
+
+// GET /api/notifications/preferences carries the authoritative category list
+// and type map. A failure never blocks the list: rows stay visible under All
+// and Account, and the notice offers a retry.
+async function loadCategories() {
+	categoriesState = 'loading';
+	els.catNotice.hidden = true;
+	els.catRetry.disabled = true;
+	try {
+		const resp = await fetch('/api/notifications/preferences', { credentials: 'include' });
+		if (resp.status === 401) return; // loadPage() shows the sign-in wall
+		if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+		const data = await resp.json();
+		if (!Array.isArray(data.categories) || !data.type_categories || typeof data.type_categories !== 'object') {
+			throw new Error('preferences response has no category model');
+		}
+		categories = data.categories;
+		typeMap = data.type_categories;
+		categoriesState = 'ready';
+	} catch {
+		categories = FALLBACK_CATEGORIES;
+		typeMap = null;
+		categoriesState = 'failed';
+		if (activeTab && activeTab !== FALLBACK_CATEGORY) activeTab = '';
+		els.catNotice.hidden = false;
+	} finally {
+		els.catRetry.disabled = false;
+		tabSignature = '';
+		if (!loading && !els.main.hidden) render();
+	}
 }
 
 async function init() {
@@ -210,6 +293,9 @@ async function init() {
 	els.error = q('n-error');
 	els.main = q('n-main');
 	els.tabs = q('n-tabs');
+	els.tabLabels = q('n-tab-labels');
+	els.catNotice = q('n-cat-notice');
+	els.catRetry = q('n-cat-retry');
 	els.list = q('n-list');
 	els.markAll = q('n-mark-all');
 	els.loadMoreWrap = q('n-load-more');
@@ -223,13 +309,14 @@ async function init() {
 	els.main.hidden = false;
 	renderSkeleton();
 	wireTabs();
+	els.catRetry.addEventListener('click', () => loadCategories());
 	els.markAll.addEventListener('click', markAllRead);
 	els.loadMoreBtn.addEventListener('click', () => {
 		const last = all[all.length - 1];
 		if (last) loadPage(last.created_at);
 	});
 
-	await loadPage(null);
+	await Promise.all([loadCategories(), loadPage(null)]);
 }
 
 if (document.readyState === 'loading') {

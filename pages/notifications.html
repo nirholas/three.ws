@@ -57,10 +57,15 @@
 			.n-btn:disabled{opacity:.45;cursor:default;}
 			.n-btn:focus-visible{outline:2px solid var(--blue);outline-offset:1px;}
 			/* Filter tabs */
-			.n-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line-2);margin-bottom:8px;overflow-x:auto;}
-			.n-tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;background:none;border-top:none;border-left:none;border-right:none;white-space:nowrap;font-family:inherit;}
-			.n-tab:hover{color:var(--text);}
+			.n-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line-2);margin-bottom:8px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;min-height:41px;}
+			.n-tab{flex-shrink:0;padding:10px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s,background .15s;background:none;border-top:none;border-left:none;border-right:none;border-radius:6px 6px 0 0;white-space:nowrap;font-family:inherit;}
+			.n-tab:hover{color:var(--text);background:var(--bg-2);}
+			.n-tab:active{background:var(--line-2);}
+			.n-tab:focus-visible{outline:2px solid var(--blue);outline-offset:-2px;color:var(--text);}
 			.n-tab.active{color:var(--text);border-bottom-color:var(--blue);}
+			.n-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);margin-bottom:12px;}
+			.n-empty-link{margin-top:18px;}
+			.n-empty-link:active,.n-btn:active{background:var(--bg-2);}
 			/* List */
 			.n-list{display:flex;flex-direction:column;}
 			.n-row{display:flex;align-items:flex-start;gap:14px;padding:16px 4px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s;border-radius:8px;}
@@ -144,19 +149,29 @@
 			<div id="n-error" class="n-error" hidden></div>
 
 			<div id="n-main" hidden>
-				<div class="n-tabs" id="n-tabs" role="tablist">
-					<button class="n-tab active" role="tab" aria-selected="true" data-type="" data-i18n="notifications.all">All</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="sales" data-i18n="notifications.sales_earnings">Sales & earnings</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="purchases" data-i18n="notifications.purchases">Purchases</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="social" data-i18n="notifications.social">Social</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="irl" data-i18n="notifications.in_person">In person</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="alerts" data-i18n="notifications.market_alerts">Market alerts</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="creations" data-i18n="notifications.creations">Creations</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="companion" data-i18n="notifications.companion">Companion</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="approvals">Approvals</button>
-					<button class="n-tab" role="tab" aria-selected="false" data-type="account" data-i18n="notifications.account">Account</button>
+				<div id="n-cat-notice" class="n-notice" role="status" hidden>
+					<span data-i18n="notifications.categories_unavailable">Categories could not be loaded, so every notification is listed under Account for now.</span>
+					<button type="button" id="n-cat-retry" class="n-btn" data-i18n="notifications.retry">Retry</button>
 				</div>
-				<div id="n-list" class="n-list"></div>
+				<div class="n-tabs" id="n-tabs" role="tablist" aria-label="Filter notifications by category" data-i18n-attr="aria-label:notifications.filter_by_category_arialabel"></div>
+				<!-- Tab labels for the server's categories (GET /api/notifications/preferences); the i18n runtime translates them in place. -->
+				<div id="n-tab-labels" hidden>
+					<span data-cat="" data-i18n="notifications.all">All</span>
+					<span data-cat="sales" data-i18n="notifications.sales_earnings">Sales & earnings</span>
+					<span data-cat="purchases" data-i18n="notifications.purchases">Purchases</span>
+					<span data-cat="social" data-i18n="notifications.social">Social</span>
+					<span data-cat="irl" data-i18n="notifications.in_person">In person</span>
+					<span data-cat="alerts" data-i18n="notifications.market_alerts">Market alerts</span>
+					<span data-cat="markets" data-i18n="notifications.event_markets">Event markets</span>
+					<span data-cat="creations" data-i18n="notifications.creations">Creations</span>
+					<span data-cat="companion" data-i18n="notifications.companion">Companion</span>
+					<span data-cat="knock" data-i18n="notifications.knocks">Knocks</span>
+					<span data-cat="mail" data-i18n="notifications.agent_mail">Agent mail</span>
+					<span data-cat="orders" data-i18n="notifications.orders">Orders</span>
+					<span data-cat="approvals" data-i18n="notifications.approvals">Approvals</span>
+					<span data-cat="account" data-i18n="notifications.account">Account</span>
+				</div>
+				<div id="n-list" class="n-list" role="tabpanel" aria-live="polite"></div>
 				<div id="n-load-more" class="n-load-more" hidden>
 					<button type="button" id="n-load-more-btn" class="n-btn" data-i18n="notifications.load_more">Load more</button>
 				</div>

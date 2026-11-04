@@ -104,6 +104,9 @@ export const TYPE_ICON = {
 	invoice_expired:          '⌛',
 	commerce_order_delivered: '📦',
 	order_update:             '📊',
+	knock_received:           '🚪',
+	mail_received:            '✉️',
+	event_market_entrant:     '🎟️',
 };
 
 export function notifLabel(n) {
@@ -219,6 +222,15 @@ export function notifLabel(n) {
 				: p.sol
 					? `${p.actor || 'A fork of your avatar'} paid you ${Number(p.sol).toFixed(4)} SOL in royalties`
 					: `${p.actor || 'A fork of your avatar'} paid you a royalty`;
+		case 'knock_received':
+			// The sender already composed the title (api/_lib/knock/policy.js titleFor).
+			return p.title || `${p.sender || 'Someone'} knocked on your door`;
+		case 'mail_received': {
+			const from = p.from_name || p.from || 'someone';
+			return `${p.agent_name || 'Your agent'} got mail from ${from}${p.subject ? `: "${p.subject}"` : ''}`;
+		}
+		case 'event_market_entrant':
+			return `You are entered in "${p.title || 'an event market'}"${p.outcome_label ? ` as ${p.outcome_label}` : ''}`;
 		default:
 			return n.type.replace(/_/g, ' ');
 	}
@@ -241,6 +253,7 @@ function irlPayLabel(amount, mint) {
 export function notifLink(n) {
 	const p = n.payload || {};
 	const raw = p.link
+		|| p.url
 		|| (p.tx_signature ? `https://solscan.io/tx/${encodeURIComponent(p.tx_signature)}` : null)
 		|| (p.agent_id ? `/agents/${encodeURIComponent(p.agent_id)}` : null);
 	return safeNavUrl(raw);

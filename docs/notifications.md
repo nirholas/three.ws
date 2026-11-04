@@ -56,44 +56,57 @@ than naming a coin.
 
 ## Categories: how the filter tabs group types
 
-The `/notifications` page has nine tabs: **All**, **Sales & earnings**,
-**Purchases**, **Social**, **In person**, **Market alerts**, **Creations**,
-**Companion**, and **Account**. Each notification type maps to exactly one
-category; the mapping (`TYPE_CATEGORY`) lives in
-[api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js) and is mirrored in
-[src/notifications-page.js](../src/notifications-page.js) for tab filtering.
+Each notification type maps to exactly one category. The category list
+(`CATEGORIES`) and the type map (`TYPE_CATEGORY`) live in one place,
+[api/_lib/notify-prefs.js](../api/_lib/notify-prefs.js), and
+`GET /api/notifications/preferences` serves both (`categories`,
+`type_categories`). The `/notifications` page fetches them at load and builds
+its tab strip from them, so it keeps no copy of the map that can drift. The
+resolution rules are pure functions in
+[src/notification-categories.js](../src/notification-categories.js), held to
+the server map by `tests/notifications-page-categories.test.js`.
 
 | Category (tab) | Key | Notification types |
 |---|---|---|
-| Sales & earnings | `sales` | `skill_purchased`, `asset_purchased`, `sale`, `payment-earned`, `payment_received`, `referral_earned`, `referral_signup`, `referral_reward`, `pump_launch_filled`, `royalty_paid` |
-| Purchases | `purchases` | `skill_purchase_confirmed`, `asset_purchase_confirmed`, `skill_gift_received`, `skill_gift_sent`, `print_update` |
-| Social | `social` | `remix`, `reply`, `comment`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete`, `duel_challenge` (another owner challenged your agent to a duel, or answered your challenge) |
+| Sales & earnings | `sales` | `skill_purchased`, `asset_purchased`, `sale`, `payment-earned`, `payment_received`, `referral_earned`, `creator_payout_sent`, `creator_payout_held`, `referral_signup`, `referral_reward`, `pump_launch_filled`, `royalty_paid`, `invoice_paid`, `invoice_underpaid`, `invoice_expired`, `revenue_milestone`, `reinvest_run` |
+| Purchases | `purchases` | `skill_purchase_confirmed`, `asset_purchase_confirmed`, `skill_gift_received`, `skill_gift_sent`, `print_update`, `commerce_order_delivered` |
+| Social | `social` | `remix`, `reply`, `comment`, `embed`, `mention`, `fork`, `follow`, `dm_received`, `agent_review`, `quest_complete`, `duel_challenge` (another owner challenged your agent to a duel, or answered your challenge), `event_market_agent_pick` |
 | In person | `irl` | `irl_interaction`, `irl_reply` |
-| Market alerts | `alerts` | `pump_alert` |
+| Market alerts | `alerts` | `reinvest_rule_failed`, `revenue_reconcile_drift`, `pump_alert`, `perps_alert` |
+| Event markets | `markets` | `event_market_entrant` (you were entered in a market; links to its kit) |
 | Creations | `creations` | `forge_complete`, `forge_failed` |
 | Companion | `companion` | `companion_delivery` |
-| Approvals | `approvals` | `approval_requested` (see [Approvals](./approvals.md)) |
-| (no tab yet) | `knock` | `knock_received` |
-| (no tab yet) | `mail` | `mail_received` |
-| Account | `account` | `withdrawal_completed`, `withdrawal_failed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, plus any type not in the map (the agent-inference `inference_topup` and `inference_budget_exhausted` land here this way), `token_budget_paused` and `spend_cap_alert` (the [spend page](./inference-billing.md) caps) |
+| Knocks | `knock` | `knock_received` (links to `/knock`) |
+| Agent mail | `mail` | `mail_received` (links to the message in the agent's mailbox) |
+| Orders | `orders` | `order_update` |
+| Approvals | `approvals` | `approval_requested`, `commerce_limits_request` (see [Approvals](./approvals.md)) |
+| Account | `account` | `creator_payout_wallet`, `withdrawal_completed`, `withdrawal_failed`, `labor_escrow_update`, `labor_deadline_soon`, `labor_payout_delayed`, `payment_mismatch`, `asset_payment_mismatch`, `skill_payment_mismatch`, `security_alert`, `wallet_anomaly_frozen`, `token_budget_paused`, `spend_cap_alert` (the [spend page](./inference-billing.md) caps), the `whitelist_*` types, plus any type not in the map (the agent-inference `inference_topup` and `inference_budget_exhausted` land here this way) |
 
 `print_update` is the single type Materialize uses for a physical order's whole
 lifecycle, quoted through delivered, and it sits with purchases because the
 order is the buyer's own.
 
-Three details worth knowing:
+Details worth knowing:
 
+- **Only categories you have notifications in get a tab**, in the server's
+  order, after **All**. A selected tab stays visible after its last row is
+  deleted, so the selection never jumps. Tabs are a WAI-ARIA tablist: arrow
+  keys, Home and End move between them, and each tab's tooltip is the
+  category description from the server.
+- **Tab names are localized** through the `notifications.*` keys in
+  `public/locales/`; a category added on the server before it has a key shows
+  the server's label.
 - **Unmapped types fall back to `account`**, so a newly added notification
   type is never silently undeliverable or unfilterable.
+- **If the preferences request fails**, the list still renders, every row sits
+  under **Account**, and a notice explains why with a **Retry** button that
+  refetches the categories without reloading the page.
+- **The empty state of a tab** describes the category and links to its
+  delivery settings at `/dashboard/settings#notification-preferences`.
 - **Tab filtering is client-side** over the pages already fetched. The API's
   own `?type=` parameter filters server-side by a single exact type (e.g.
   `?type=pump_alert`), not by category.
-- **`knock` and `mail` are preference categories without a tab.** The
-  preference center lists them ("Knocks at your door", "Agent mail") and the
-  server gates delivery on them, but the page's own copy of the map has no
-  entry for `knock_received` or `mail_received`, so on `/notifications` both
-  are filtered under **Account** rather than a tab of their own. Mail the spam
-  filter holds back never notifies at all.
+- Mail the spam filter holds back never notifies at all.
 
 ## The avatar channel: delivered in person
 
