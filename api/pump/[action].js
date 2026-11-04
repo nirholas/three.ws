@@ -3564,11 +3564,23 @@ async function handleGovernancePrep(req, res) {
 		return error(res, 403, 'forbidden', 'authority does not match');
 	}
 
-	const { offline } = await getPumpAgentOffline({ network: body.network, mint: body.mint });
-	const ix = await offline.updateBuybackBps(
-		{ authority, buybackBps: body.new_buyback_bps },
-		{}, // UpdateBuybackBpsOptions — empty default
-	);
+	// The instruction lists every supported currency's payment vault, each
+	// derived on that currency's own token program ($THREE is Token-2022). The
+	// online agent reads GlobalConfig and the mint owners to supply them; the
+	// offline builder has no way to know them.
+	const { agent } = await getPumpAgent({ network: body.network, mint: body.mint });
+	let ix;
+	try {
+		ix = await agent.updateBuybackBps({ authority, buybackBps: body.new_buyback_bps });
+	} catch (err) {
+		if (isRpcOutageError(err)) {
+			return error(res, 503, 'rpc_unavailable', 'Solana RPC is temporarily unavailable, retry shortly', { retry_after: 15 });
+		}
+		if (/account does not exist|has no data/i.test(err?.message || '')) {
+			return error(res, 502, 'payments_config_missing', `The agent payments program has no GlobalConfig on ${body.network}, so the buyback split cannot be changed there.`);
+		}
+		throw err;
+	}
 
 	const txBase64 = await buildUnsignedTxBase64({
 		network: body.network,
