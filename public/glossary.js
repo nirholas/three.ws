@@ -123,7 +123,10 @@
 		// Hover bridge: keep the popover open while the pointer is inside it so a
 		// user can travel from the term into the "Full glossary" link without it
 		// closing mid-move. Leaving the popover hides it like leaving the term.
-		_popEl.addEventListener('mouseenter', function () { clearTimeout(_popTimer); });
+		// Only a tip with a link inside is reachable: a plain tip takes no pointer
+		// events (style.css), so it can never sit over the next control and catch
+		// the click meant for it.
+		_popEl.addEventListener('mouseenter', function () { if (_popEl.classList.contains('is-interactive')) clearTimeout(_popTimer); });
 		_popEl.addEventListener('mouseleave', function () { hidePop(_curTrigger); });
 		document.body.appendChild(_popEl);
 		return _popEl;
@@ -135,17 +138,18 @@
 		// Glossary terms get a "deeper link" to the full /glossary entry; generic
 		// tips (attachTip) intentionally don't, so this lives only on this path.
 		var more = '<a class="tws-tt-more" href="/glossary#' + slug(key) + '">Full glossary &rarr;</a>';
-		showPopContent(triggerEl, '<strong>' + esc(label) + '</strong><span class="tws-tt-def">' + esc(def) + '</span>' + more);
+		showPopContent(triggerEl, '<strong>' + esc(label) + '</strong><span class="tws-tt-def">' + esc(def) + '</span>' + more, { interactive: true });
 	}
 
 	// Render arbitrary (caller-escaped) content in the shared popover singleton.
 	// Lets sibling layers (e.g. feature-discovery) reuse this one tooltip
 	// primitive for non-glossary hints instead of spawning a second popover.
-	function showPopContent(triggerEl, html) {
+	function showPopContent(triggerEl, html, opts) {
 		clearTimeout(_popTimer);
 		var pop = getPop();
 		_curTrigger = triggerEl;
 		pop.innerHTML = html;
+		pop.classList.toggle('is-interactive', !!(opts && opts.interactive));
 		triggerEl.setAttribute('aria-describedby', _popPid);
 
 		// Measure + position (fixed, viewport-aware)
@@ -175,6 +179,12 @@
 		pop.style.top = top + 'px';
 		pop.style.left = left + 'px';
 		pop.classList.add('is-on');
+	}
+
+	function closePop(triggerEl) {
+		clearTimeout(_popTimer);
+		if (_popEl && _curTrigger === triggerEl) _popEl.classList.remove('is-on');
+		if (triggerEl) triggerEl.removeAttribute('aria-describedby');
 	}
 
 	function hidePop(triggerEl) {
@@ -238,6 +248,9 @@
 		el.addEventListener('mouseleave', function () { hidePop(el); });
 		el.addEventListener('focus',      function () { showPopContent(el, html); });
 		el.addEventListener('blur',       function () { hidePop(el); });
+		// Pressing the control is the action the tip described; the tip has done
+		// its job and must not linger over whatever the press opens.
+		el.addEventListener('pointerdown', function () { closePop(el); });
 		el.addEventListener('keydown',    function (e) {
 			if (e.key === 'Escape') {
 				// Closing the tip shouldn't also dismiss an enclosing card/dialog.

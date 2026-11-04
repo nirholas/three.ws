@@ -10439,9 +10439,11 @@ a.pill--devnet:hover {
 #tws-tt-pop {
 	position: fixed;
 	z-index: 10000;
-	/* Interactive: the popover carries a "Full glossary" deeper-link, and a
-	 * hover bridge (glossary.js) keeps it open while the pointer travels in. */
-	pointer-events: auto;
+	/* Never between a pointer and the control under it. Only a showing
+	 * glossary-term tip (.is-interactive, it carries the "Full glossary" link)
+	 * takes pointer events, and the hover bridge in glossary.js keeps that one
+	 * open while the pointer travels in. A plain tip or a hidden one is inert. */
+	pointer-events: none;
 	background: rgba(18, 19, 26, 0.97);
 	border: 1px solid rgba(255, 255, 255, 0.13);
 	border-radius: 12px;
@@ -10462,6 +10464,10 @@ a.pill--devnet:hover {
 #tws-tt-pop.is-on {
 	opacity: 1;
 	transform: translateY(0) scale(1);
+}
+
+#tws-tt-pop.is-on.is-interactive {
+	pointer-events: auto;
 }
 
 #tws-tt-pop strong {
