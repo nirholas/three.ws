@@ -42,6 +42,7 @@ import { getSessionUser, extractBearer, authenticateBearer } from '../_lib/auth.
 import { thumbnailUrl } from '../_lib/r2.js';
 import { getStreak, listBadges } from '../_lib/streaks.js';
 import { launchCountsByUser } from '../_lib/launch-counts.js';
+import { testUserIds } from '../_lib/test-accounts.js';
 
 export const maxDuration = 10;
 
@@ -149,11 +150,13 @@ export default wrap(async (req, res) => {
 	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 50, 1), 100);
 	const offset = Math.max(Number(url.searchParams.get('offset')) || 0, 0);
 
-	const rows = await rankingRows(metric);
+	// QA and e2e accounts (users.is_test) are dropped before ranking so the
+	// ranks real creators see stay contiguous.
+	const [rows, testIds] = await Promise.all([rankingRows(metric), testUserIds()]);
 
 	const ranked = rows
 		.map((r) => ({ userId: r.user_id, value: Number(r.value) || 0 }))
-		.filter((r) => r.value > 0)
+		.filter((r) => r.value > 0 && !testIds.has(String(r.userId)))
 		.sort((a, b) => (b.value !== a.value ? b.value - a.value : a.userId < b.userId ? -1 : 1));
 
 	const total = ranked.length;

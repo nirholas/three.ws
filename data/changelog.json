@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Characters and Rankings now show real creators only",
+			"summary": "Accounts our own QA and end-to-end sweeps sign up were showing on /characters and /rankings as if they were creators, including dozens of \"QA squad\" agents. Those accounts are now marked as test accounts, from signup onward, and both boards leave them out, so ranks stay contiguous and every card belongs to a real person. Character cards also no longer show an agent wallet's dollar balance; the address chip is still there.",
+			"tags": [
+				"fix"
+			],
+			"link": "/characters"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Seeded catalog assets can now be judged on how they look, not just their structure",
 			"summary": "Platform-seeded models in /characters and /objects were gated on mesh structure only, because rendering and judging an asset did not fit inside the seed cron's time limit. A new per-minute vision cron now takes assets that pass the mesh check, renders each one and asks the vision judge whether it is realistic, on-prompt and complete, then publishes it or sets it aside with the full verdict for tuning. A judge that is down is retried and never blocks a sound asset for more than 30 minutes. The judge also now falls back across every vision provider instead of depending on one. It switches on with SEED_VISION_PHASE=1 after deploy.",
 			"tags": [

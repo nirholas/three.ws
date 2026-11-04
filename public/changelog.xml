@@ -159,6 +159,14 @@
 			<description>Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.</description>
 		</item>
 		<item>
+			<title>Characters and Rankings now show real creators only</title>
+			<link>https://three.ws/characters</link>
+			<guid isPermaLink="false">2026-11-04:Characters and Rankings now show real creators only</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Accounts our own QA and end-to-end sweeps sign up were showing on /characters and /rankings as if they were creators, including dozens of &quot;QA squad&quot; agents. Those accounts are now marked as test accounts, from signup onward, and both boards leave them out, so ranks stay contiguous and every card belongs to a real person. Character cards also no longer show an agent wallet's dollar balance; the address chip is still there.</description>
+		</item>
+		<item>
 			<title>Connect your agent to third-party MCP servers</title>
 			<link>https://three.ws/mcp-integrations</link>
 			<guid isPermaLink="false">2026-11-04:Connect your agent to third-party MCP servers</guid>

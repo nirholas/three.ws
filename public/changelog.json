@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T18:35:36.603Z",
+	"generated_at": "2026-11-04T18:36:18.419Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -199,6 +199,16 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Characters and Rankings now show real creators only",
+			"summary": "Accounts our own QA and end-to-end sweeps sign up were showing on /characters and /rankings as if they were creators, including dozens of \"QA squad\" agents. Those accounts are now marked as test accounts, from signup onward, and both boards leave them out, so ranks stay contiguous and every card belongs to a real person. Character cards also no longer show an agent wallet's dollar balance; the address chip is still there.",
+			"link": "/characters",
+			"tags": [
+				"fix"
 			]
 		},
 		{

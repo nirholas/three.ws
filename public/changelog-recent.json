@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T18:35:36.642Z",
+	"generated_at": "2026-11-04T18:36:18.451Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4360,
+	"total": 4361,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -202,6 +202,16 @@
 			"tags": [
 				"fix",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Characters and Rankings now show real creators only",
+			"summary": "Accounts our own QA and end-to-end sweeps sign up were showing on /characters and /rankings as if they were creators, including dozens of \"QA squad\" agents. Those accounts are now marked as test accounts, from signup onward, and both boards leave them out, so ranks stay contiguous and every card belongs to a real person. Character cards also no longer show an agent wallet's dollar balance; the address chip is still there.",
+			"link": "/characters",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1547,18 +1557,6 @@
 			"link": "/event",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-30",
-			"type": "update",
-			"title": "Link preview cards render again, Game-ready refine works, and the embed script is a third smaller",
-			"summary": "Since October 27 every three.ws link preview image (pages, agents, leaderboards) failed to render after an image library update that cannot load on our servers. Previews are back on the last working release, with the broken one blocked from returning. The Game-ready preset in Forge refine now reduces triangle count again instead of failing. The agent-3d embed script drops from 6.9 MB to 4.3 MB by loading 3D decoders only when a model needs them. Webhooks, payment probes and paid API relays that route through the network safety guard no longer fail with \"fetch failed\". The chat app, Forge desktop and the Robinhood Chain, SDK and example projects now run on current releases of their frameworks and build tools.",
-			"link": "/changelog",
-			"tags": [
-				"fix",
-				"improvement",
-				"infra"
 			]
 		}
 	]

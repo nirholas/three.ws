@@ -82,6 +82,7 @@ export default wrap(async (req, res) => {
 		AND i.is_published = true
 		AND i.description IS NOT NULL
 		AND length(trim(i.name)) > 0
+		AND (u.id IS NULL OR u.is_test IS NOT TRUE)
 		AND (${qLike}::text IS NULL OR (i.name ILIKE ${qLike} OR i.description ILIKE ${qLike}))
 	`;
 
