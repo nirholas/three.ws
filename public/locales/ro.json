@@ -19291,7 +19291,10 @@
 		"photo": "Foto",
 		"photo_aria": "Fă o fotografie",
 		"photo_title": "Mod foto: surprinde această lume pe un card de distribuit (P)",
-		"hud_region": "Comenzile lumii"
+		"hud_region": "Comenzile lumii",
+		"hero_links_aria": "Începe",
+		"hero_tour": "Ce este three.ws?",
+		"hero_launch": "Lansează o monedă cu propria ei lume"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

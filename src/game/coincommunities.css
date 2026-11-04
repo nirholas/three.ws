@@ -432,6 +432,22 @@ html[data-bg="transparent"] #cc-lobby {
 	font-size: 14.5px; line-height: 1.6;
 }
 .cc-hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+/* Funnel links: the product tour and the launchpad, one click from the lobby.
+   44px tall so they are a real touch target, quiet until hovered. */
+.cc-hero-links { display: flex; flex-wrap: wrap; gap: 0 22px; margin-top: 10px; }
+.cc-hero-link {
+	display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+	color: var(--cc-dim); font-size: 13.5px; font-weight: 600; text-decoration: none;
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+.cc-hero-link::after {
+	content: '\2192'; display: inline-block;
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+.cc-hero-link:hover { color: var(--cc-text); }
+.cc-hero-link:hover::after { transform: translateX(3px); }
+.cc-hero-link:active { color: var(--cc-accent); }
+.cc-hero-link:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; border-radius: var(--cc-radius-sm); color: var(--cc-text); }
 
 /* Live counters. Tabular figures so a count ticking 9 → 10 never shifts the
    layout, and hairline rules instead of boxes to keep the hero calm. */

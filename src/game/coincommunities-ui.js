@@ -398,6 +398,12 @@ export class CommunityUI {
 					// per browser; this brings it back for anyone who skipped it.
 					makeIntroReopener(() => this.h.onDropIn?.()),
 				]),
+				// The two questions an event visitor arrives with, one click each:
+				// what is this place, and how does my own coin get a world.
+				el('nav', { class: 'cc-hero-links', 'aria-label': 'Get started', 'data-i18n-attr': 'aria-label:play.hero_links_aria' }, [
+					el('a', { class: 'cc-hero-link', href: '/features', text: 'What is three.ws?', 'data-i18n': 'play.hero_tour' }),
+					el('a', { class: 'cc-hero-link', href: '/launch', text: 'Launch a coin with its own world', 'data-i18n': 'play.hero_launch' }),
+				]),
 			]),
 			el('dl', { class: 'cc-stats' }, [
 				stat('communities live', this.statWorlds, 'Coin worlds you can enter from this page right now'),
@@ -553,6 +559,7 @@ export class CommunityUI {
 				['/create', 'Create agent', 'Avatar + brain wizard'],
 				['/create/selfie', 'Selfie to avatar', 'One photo → rigged 3D avatar', 'New'],
 				['/worlds', 'Worlds', 'Every coin is a 3D world, drop in & hang out', 'New'],
+				['/launch', 'Launch a coin', 'Mint a coin that comes with its own 3D world'],
 				['/app', 'Viewer', 'Drag-and-drop GLB'],
 				['/playground', 'Playground', 'Viewer + environment + embed code'],
 				['/voice', 'Voice Lab', 'Clone your voice · TTS playground', 'New'],

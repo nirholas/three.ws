@@ -19291,7 +19291,10 @@
 		"photo": "Foto",
 		"photo_aria": "Foto aufnehmen",
 		"photo_title": "Fotomodus: Halte diese Welt als Teilkarte fest (P)",
-		"hud_region": "Weltsteuerung"
+		"hud_region": "Weltsteuerung",
+		"hero_links_aria": "Loslegen",
+		"hero_tour": "Was ist three.ws?",
+		"hero_launch": "Starte einen Coin mit eigener Welt"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

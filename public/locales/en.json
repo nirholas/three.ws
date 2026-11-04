@@ -19540,7 +19540,10 @@
 		"photo": "Photo",
 		"photo_aria": "Take a photo",
 		"photo_title": "Photo mode: capture this world as a share card (P)",
-		"hud_region": "World controls"
+		"hud_region": "World controls",
+		"hero_links_aria": "Get started",
+		"hero_tour": "What is three.ws?",
+		"hero_launch": "Launch a coin with its own world"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",
