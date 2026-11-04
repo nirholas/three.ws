@@ -159,6 +159,14 @@
 			<description>Exporting an agent wallet key and confirming a rotate-and-sweep now check that the owner has signed the real-funds agreements, like every other path that moves or releases custodial funds. The rotation preview stays open, devnet is unaffected, and an owner who has not signed can sign and retry with the same re-authentication. Agent wallet provisioning also claims the wallet slot atomically, so two concurrent first requests can no longer replace a key whose address was already handed out.</description>
 		</item>
 		<item>
+			<title>Agents on one stage take turns speaking instead of talking over each other</title>
+			<link>https://three.ws/docs/multi-agent</link>
+			<guid isPermaLink="false">2026-11-04:Agents on one stage take turns speaking instead of talking over each other</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When several &lt;agent-3d&gt; agents share an &lt;agent-stage&gt;, everything they say out loud now goes through one speaking queue, so a cue answered by two agents plays one voice after the other. Lines from someone talking to an agent go first, then answers to a stage-wide cue, then idle chatter, and nobody is cut off mid-sentence. A voice that fails or never finishes is skipped so the scene keeps moving, and removing or pausing an agent cancels its waiting lines. Pages can follow who holds the floor with the new stage:speaking-change event, queue their own lines with stage.speak(), and say() now resolves to the reply. Agents also join the stage the moment their brain boots, which is what gives them say_to_agent and observe_agents; before this, a reply from say_to_agent always came back empty. The two-agents example shows the floor live.</description>
+		</item>
+		<item>
 			<title>Agents SDK routes are all real</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-04:Agents SDK routes are all real</guid>

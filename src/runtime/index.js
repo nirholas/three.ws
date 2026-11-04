@@ -6,6 +6,7 @@ import { createTTS, createSTT } from './speech.js';
 import { BUILTIN_TOOLS, BUILTIN_HANDLERS, STAGE_TOOLS } from './tools.js';
 import { protocol } from '../agent-protocol.js';
 import { PaymentRequiredError, alwaysAllow } from './skill-access.js';
+import { SPEECH_PRIORITIES } from '../stage-speech-queue.js';
 
 export { PaymentRequiredError, alwaysAllow } from './skill-access.js';
 export {
@@ -25,6 +26,7 @@ export class Runtime extends EventTarget {
 		providerConfig = {},
 		voiceConfig = {},
 		stage = null,
+		stageAgentId = null,
 		agentId = null,
 		skillAccess = null,
 	} = {}) {
@@ -34,6 +36,11 @@ export class Runtime extends EventTarget {
 		this.memory = memory;
 		this.skills = skills;
 		this.stage = stage;
+		// The name this agent goes by on its <agent-stage> (unique per stage, and
+		// distinct from agentId, the backend record id the TTS proxy needs).
+		this.stageAgentId = stage ? stageAgentId : null;
+		// Speech priority of the turn in flight; stage speech inherits it.
+		this._speechPriority = null;
 		this.agentId = agentId;
 		// The three.ws origin skills call back to (an embed on another site
 		// passes it in providerConfig); '' keeps calls relative.
@@ -95,11 +102,33 @@ export class Runtime extends EventTarget {
 		this._abortController?.abort();
 	}
 
-	async send(userText, { voice = false } = {}) {
+	/**
+	 * Join an <agent-stage>: stage tools become available and every line this
+	 * runtime speaks waits for the floor in the stage's speaking queue.
+	 * @param {{ speak: Function, cancelSpeech?: Function, getAgents: Function }} stage
+	 * @param {string} stageAgentId the id the stage assigned at registration
+	 */
+	attachStage(stage, stageAgentId) {
+		this.stage = stage || null;
+		this.stageAgentId = stage ? stageAgentId : null;
+	}
+
+	detachStage() {
+		this.stage = null;
+		this.stageAgentId = null;
+	}
+
+	/**
+	 * Run one turn. `priority` ranks this turn's speech on a stage: 'user' (the
+	 * default; someone spoke to this agent), 'broadcast' (a stage cue every agent
+	 * answers) or 'ambient'. Solo runtimes ignore it.
+	 */
+	async send(userText, { voice = false, priority = 'user' } = {}) {
 		if (this._busy) {
 			throw new Error('Runtime busy — wait for current turn to finish');
 		}
 		this._busy = true;
+		this._speechPriority = SPEECH_PRIORITIES.includes(priority) ? priority : 'user';
 		this._abortController = new AbortController();
 		try {
 			this.memory?.note('user_said', { text: userText });
@@ -113,17 +142,44 @@ export class Runtime extends EventTarget {
 			const reply = await this._loop(this._abortController.signal);
 
 			if (voice && reply.text && this.tts) {
-				this.dispatchEvent(
-					new CustomEvent('voice:speech-start', { detail: { text: reply.text } }),
-				);
-				await this.tts.speak(reply.text, { scene: this.viewer?.content });
-				this.dispatchEvent(new CustomEvent('voice:speech-end', {}));
+				await this._voice(reply.text, this._speechPriority);
 			}
 
 			return reply;
 		} finally {
 			this._busy = false;
+			this._speechPriority = null;
 			this._abortController = null;
+		}
+	}
+
+	/**
+	 * Speak one line. On a stage the line queues for the floor so two agents
+	 * never talk over each other; the stage calls speakNow() when it is this
+	 * agent's turn. Solo, it plays at once.
+	 */
+	async _voice(text, priority = 'user') {
+		if (!text || !this.tts) return;
+		if (this.stage && this.stageAgentId && typeof this.stage.speak === 'function') {
+			await this.stage.speak(this.stageAgentId, text, { priority });
+			return;
+		}
+		await this.speakNow(text);
+	}
+
+	/**
+	 * Play a line through this agent's own TTS immediately, bracketed by the
+	 * voice:speech-start / voice:speech-end events that drive lip-sync and the
+	 * caption bubble. Resolves when playback ends. The stage's speaking queue
+	 * calls this; everything else should go through _voice().
+	 */
+	async speakNow(text) {
+		if (!text || !this.tts) return;
+		this.dispatchEvent(new CustomEvent('voice:speech-start', { detail: { text } }));
+		try {
+			await this.tts.speak(text, { scene: this.viewer?.content });
+		} finally {
+			this.dispatchEvent(new CustomEvent('voice:speech-end', {}));
 		}
 	}
 
@@ -279,12 +335,7 @@ export class Runtime extends EventTarget {
 						tools: opts?.tools,
 					}),
 			},
-			speak: async (text) => {
-				if (!this.tts) return;
-				this.dispatchEvent(new CustomEvent('voice:speech-start', { detail: { text } }));
-				await this.tts.speak(text, { scene: this.viewer?.content });
-				this.dispatchEvent(new CustomEvent('voice:speech-end', {}));
-			},
+			speak: (text) => this._voice(text, this._speechPriority || 'ambient'),
 			listen: (opts) => this.stt?.listen(opts),
 			fetch: (url, opts) => fetch(url, opts),
 			loadGLB: async (uri) => {
@@ -295,6 +346,8 @@ export class Runtime extends EventTarget {
 			loadJSON: async (uri) => (await fetch(uri)).json(),
 			call: async (toolName, args) => this._dispatchTool({ name: toolName, input: args }),
 			stage: this.stage,
+			stageAgentId: this.stageAgentId,
+			speechPriority: this._speechPriority || 'user',
 			agentId: this.agentId,
 			apiOrigin: this.apiOrigin,
 		};
@@ -337,6 +390,9 @@ export class Runtime extends EventTarget {
 	}
 
 	pause() {
+		// Lines still waiting for the stage floor are part of what is being
+		// interrupted; without this they would play after the user said stop.
+		if (this.stage && this.stageAgentId) this.stage.cancelSpeech?.(this.stageAgentId);
 		this.tts?.cancel(protocol);
 		this.stt?.stop();
 	}

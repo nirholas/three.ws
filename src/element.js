@@ -807,6 +807,10 @@ class Agent3DElement extends HTMLElement {
 		this._streamingChatRafPending = false;
 		this._chatAutoScroll = true;
 		this._pendingSay = null;
+		this._sayDraining = false;
+		// The <agent-stage> this agent registered with, and its id there.
+		this._stageHost = null;
+		this._stageAgentId = null;
 		// WebGL context budget bookkeeping.
 		this._inViewport = false;
 		this._lastVisibleAt = 0;
@@ -2174,6 +2178,7 @@ class Agent3DElement extends HTMLElement {
 				agentId: _backendId || undefined,
 				skillAccess: _skillAccess,
 			});
+			this._joinStage(manifest);
 			this._ensureOnDeviceMic();
 
 			// ── Empathy + lipsync layer ───────────────────────────────────────
@@ -3404,11 +3409,19 @@ class Agent3DElement extends HTMLElement {
 		this._streamingChatBuffer = '';
 		this._streamingChatRafPending = false;
 		this._chatAutoScroll = true;
+		this._pendingSay?.resolve(null);
 		this._pendingSay = null;
 		try {
 			this._runtime?.cancel();
 			this._runtime?.destroy();
 		} catch {}
+		if (this._stageHost) {
+			try {
+				this._stageHost.unregisterAgent(this);
+			} catch {}
+			this._stageHost = null;
+			this._stageAgentId = null;
+		}
 		try {
 			this._stopSpokenAudio();
 		} catch {}
@@ -3493,56 +3506,105 @@ class Agent3DElement extends HTMLElement {
 		else this.removeAttribute('variant-name');
 	}
 
+	/**
+	 * Send `text` to the agent's brain as a user turn. Resolves with the reply
+	 * (`{ text }`) once the turn, and its speech if voice is on, has finished;
+	 * resolves with null if the turn failed or a newer say() replaced this one
+	 * before it started (only the latest waiting message is kept).
+	 * `opts.voice` speaks the reply (defaults to the `voice` attribute);
+	 * `opts.priority` ranks that speech on an <agent-stage> ('user' by default).
+	 * @param {string} text
+	 * @param {{ voice?: boolean, priority?: 'user' | 'broadcast' | 'ambient' }} [opts]
+	 * @returns {Promise<{ text: string } | null>}
+	 */
 	say(text, opts = {}) {
-		if (this._pendingSay) {
-			this._pendingSay = { text, opts };
-			return;
-		}
-		this._pendingSay = { text, opts };
-		this._drainSayQueue();
+		return new Promise((resolve) => {
+			this._pendingSay?.resolve(null);
+			this._pendingSay = { text, opts, resolve };
+			if (!this._sayDraining) this._drainSayQueue();
+		});
 	}
 
 	async _drainSayQueue() {
-		while (this._pendingSay) {
-			const { text, opts } = this._pendingSay;
-			this._pendingSay = null;
-			try {
-				if (!this._runtime) await this._waitForReady();
-				this._onStreamChunk();
-				protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
-				protocol.emit({
-					type: ACTION_TYPES.EMOTE,
-					payload: { trigger: 'curiosity', weight: 0.6 },
-				});
-				protocol.emit({
-					type: ACTION_TYPES.THINK,
-					payload: { thought: 'processing your message...' },
-				});
-				protocol.emit({
-					type: ACTION_TYPES.EMOTE,
-					payload: { trigger: 'patience', weight: 0.5 },
-				});
-				await this._runtime.send(text, { voice: opts.voice ?? this.hasAttribute('voice') });
-			} catch (err) {
-				this._stopWalkAnimation();
-				const msg = err?.message?.includes('429')
-					? 'Too many requests — try again'
-					: err?.message?.includes('busy')
-						? 'Still thinking…'
-						: 'Connection error';
-				this._showBubbleError(msg);
-				this._setBusy(false);
-				protocol.emit({
-					type: ACTION_TYPES.EMOTE,
-					payload: { trigger: 'concern', weight: 0.8 },
-				});
-				this._emit(
-					'agent:error',
-					{ phase: 'send', error: err },
-					{ bubbles: true, composed: true },
-				);
+		this._sayDraining = true;
+		try {
+			while (this._pendingSay) {
+				await this._runSay(this._pendingSay);
 			}
+		} finally {
+			this._sayDraining = false;
 		}
+	}
+
+	async _runSay({ text, opts, resolve }) {
+		this._pendingSay = null;
+		try {
+			if (!this._runtime) await this._waitForReady();
+			this._onStreamChunk();
+			protocol.emit({ type: ACTION_TYPES.LOOK_AT, payload: { target: 'user' } });
+			protocol.emit({
+				type: ACTION_TYPES.EMOTE,
+				payload: { trigger: 'curiosity', weight: 0.6 },
+			});
+			protocol.emit({
+				type: ACTION_TYPES.THINK,
+				payload: { thought: 'processing your message...' },
+			});
+			protocol.emit({
+				type: ACTION_TYPES.EMOTE,
+				payload: { trigger: 'patience', weight: 0.5 },
+			});
+			const reply = await this._runtime.send(text, {
+				voice: opts.voice ?? this.hasAttribute('voice'),
+				priority: opts.priority,
+			});
+			resolve(reply ?? null);
+		} catch (err) {
+			resolve(null);
+			this._stopWalkAnimation();
+			const msg = err?.message?.includes('429')
+				? 'Too many requests. Try again in a moment.'
+				: err?.message?.includes('busy')
+					? 'Still thinking…'
+					: 'Connection error';
+			this._showBubbleError(msg);
+			this._setBusy(false);
+			protocol.emit({
+				type: ACTION_TYPES.EMOTE,
+				payload: { trigger: 'concern', weight: 0.8 },
+			});
+			this._emit(
+				'agent:error',
+				{ phase: 'send', error: err },
+				{ bubbles: true, composed: true },
+			);
+		}
+	}
+
+	/**
+	 * @private Register with an enclosing <agent-stage>, if any. The stage then
+	 * owns when this agent speaks (its speaking queue gives one agent the floor
+	 * at a time) and the runtime gains the stage tools (observe_agents,
+	 * say_to_agent). The body still renders in this element's own viewer.
+	 */
+	_joinStage(manifest) {
+		const stage = this.parentElement?.closest('agent-stage');
+		if (!stage || typeof stage.registerAgent !== 'function') return;
+		const runtime = this._runtime;
+		const stageAgentId = stage.registerAgent(this, {
+			id: this.id || manifest?.name,
+			manifest,
+			speak: (text) => runtime.speakNow(text),
+			stopSpeaking: () => runtime.tts?.cancel(),
+		});
+		runtime.attachStage(stage, stageAgentId);
+		this._stageHost = stage;
+		this._stageAgentId = stageAgentId;
+	}
+
+	/** This agent's id on its <agent-stage>, or null when it is not on one. */
+	get stageAgentId() {
+		return this._stageAgentId ?? null;
 	}
 
 	// Play speak animation — tries 'talk', falls back to 'yes', then 'wave'.
@@ -3672,6 +3734,7 @@ class Agent3DElement extends HTMLElement {
 		try {
 			const reply = await this._runtime.send(text, {
 				voice: opts.voice ?? this.hasAttribute('voice'),
+				priority: opts.priority,
 			});
 			return reply?.text || '';
 		} catch (err) {

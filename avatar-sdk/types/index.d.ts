@@ -37,8 +37,16 @@ export interface Routine {
  * HTML) to set them; the methods below are the imperative API.
  */
 export class Agent3DElement extends HTMLElement {
-	/** Send a message through the agent's brain and speak the reply. */
-	say(text: string, opts?: Record<string, unknown>): void;
+	/**
+	 * Send a message through the agent's brain and speak the reply. Resolves
+	 * with the reply once the turn (and its speech) has finished, or null when
+	 * the turn failed or a newer `say` replaced it before it started.
+	 * `opts.priority` ranks the reply's speech inside an `<agent-stage>`.
+	 */
+	say(
+		text: string,
+		opts?: { voice?: boolean; priority?: 'user' | 'broadcast' | 'ambient' } & Record<string, unknown>,
+	): Promise<{ text: string } | null>;
 	/** Like `say`, but resolves once the reply has been produced. */
 	ask(text: string, opts?: Record<string, unknown>): Promise<unknown>;
 	/** Play a talking animation sized to `text` without calling the brain. */

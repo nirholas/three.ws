@@ -241,8 +241,11 @@ await el.say('Tell me about this product.', { voice: true });
 |-----------|------|-------------|
 | `text` | string | The user message to send. |
 | `opts.voice` | boolean | Force voice output for this turn, overriding the `voice` attribute. |
+| `opts.priority` | `'user'` \| `'broadcast'` \| `'ambient'` | Inside an `<agent-stage>`, the speaking-queue priority for the spoken reply. Defaults to `'user'`. Ignored outside a stage. |
 
-Returns a Promise that resolves when the agent's reply is complete.
+Returns `Promise<{ text: string } | null>`: the reply once the turn completes. A call made while a turn is running waits for it; if a newer call arrives before it starts, the older waiting call resolves `null`. A turn that fails (rate limit, network) also resolves `null` and shows the error in the chat pane.
+
+Inside an `<agent-stage>`, the spoken reply waits its turn in the stage's speaking queue, so two agents never talk over each other. See [Multi-agent scenes](/docs/multi-agent#one-voice-at-a-time-the-speaking-queue).
 
 ---
 

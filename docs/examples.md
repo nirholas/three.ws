@@ -187,9 +187,9 @@ A full AI-powered agent with a text input. The agent reads your messages, reason
 
 ## 4. Two agents on a shared stage
 
-Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own brain, memory, and conversation. Click "Send to Leo" to message one agent; click "Broadcast" to send to all.
+Two agents on one `<agent-stage>`. Each keeps its own brain, memory, voice, and conversation; the stage gives them shared tools and one speaking queue. Click "Send to Leo" to message one agent. Click "Broadcast" to cue both: they answer one after the other, and the "On the floor" bar shows who is speaking and who is waiting.
 
-**Demonstrates:** `<agent-stage>`, multi-agent formation, `stage.broadcast()`, `leo.say()`, event logging.
+**Demonstrates:** `<agent-stage>`, multi-agent formation, `stage.broadcast()`, `stage.speak()` with priorities, the `stage:speaking-change` event, `leo.say()`, event logging.
 
 **[View source →](https://github.com/nirholas/three.ws/blob/main/examples/two-agents.html)**, run it with `npm run dev`, then open `http://localhost:3000/examples/two-agents.html`.
 
@@ -198,19 +198,20 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Two agents, one canvas</title>
+  <title>Two agents, one stage</title>
   <style>
     body { margin: 0; background: #0f0f0f; color: #e9e9e9; font-family: system-ui, sans-serif; padding: 24px; }
     agent-stage { display: block; width: 100%; height: 540px; background: #1a1a1a; border-radius: 8px; }
     .row { display: flex; gap: 8px; margin-top: 16px; }
     .row input { flex: 1; padding: 10px 14px; border-radius: 999px; border: 1px solid #333; background: #111; color: #eee; font: 14px system-ui; }
     .row button { padding: 10px 18px; border-radius: 999px; border: 0; background: #3b82f6; color: white; cursor: pointer; font: 14px system-ui; }
+    .floor { margin-top: 12px; padding: 10px 14px; border: 1px solid #2a2a2a; border-radius: 8px; background: #161616; font-size: 14px; }
     .log { font: 12px/1.5 ui-monospace, monospace; color: #8fd4a4; background: #111; border-radius: 6px; padding: 12px; margin-top: 16px; max-height: 180px; overflow-y: auto; }
   </style>
 </head>
 <body>
   <!--
-    agent-stage hosts both agents in one WebGL context.
+    agent-stage gives both agents shared tools and one speaking queue.
     formation="row" places them side by side.
   -->
   <agent-stage id="stage" formation="row">
@@ -218,8 +219,9 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
       id="leo"
       name="Coach Leo"
       body="https://three.ws/avatars/cz.glb"
-      instructions="You are Coach Leo. Friendly, short answers. When another agent says hi, wave and greet them back by name."
+      instructions="You are Coach Leo. Friendly, short answers. When asked to talk to Mira, use say_to_agent, then tell the user what she said."
       brain="claude-opus-4-7"
+      voice
       eager
     ></agent-3d>
     <agent-3d
@@ -228,10 +230,12 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
       body="https://three.ws/avatars/cz.glb"
       instructions="You are Mira, a quiet observer who only speaks when spoken to."
       brain="claude-opus-4-7"
+      voice
       eager
     ></agent-3d>
   </agent-stage>
 
+  <div class="floor" id="floor" aria-live="polite">Nobody is speaking</div>
   <div class="row">
     <input id="prompt" value="Say hi to Mira and ask her how she's doing." placeholder="Message for Leo...">
     <button id="send">Send to Leo</button>
@@ -259,8 +263,20 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
     stage.addEventListener('stage:agent-left', e => line(`left: ${e.detail.agentId}`));
     stage.addEventListener('stage:message', e => line(`stage msg from ${e.detail.from}: ${JSON.stringify(e.detail.event)}`));
 
-    // Per-agent brain events
+    // Who holds the floor: fires each time a line starts, and once when the stage falls silent
+    stage.addEventListener('stage:speaking-change', e => {
+      const now = e.detail.speaking;
+      document.getElementById('floor').textContent = now ? `${now.agentId}: "${now.text}"` : 'Nobody is speaking';
+    });
+
+    // Per-agent events
     for (const el of [leo, mira]) {
+      // A broadcast cue: both agents answer at once, the stage plays them one after the other
+      el.addEventListener('stage:message', async e => {
+        if (e.detail.event?.kind !== 'cue') return;
+        const outcome = await stage.speak(el.stageAgentId, `${el.getAttribute('name')} here. Cue: ${e.detail.event.text}`, { priority: 'broadcast' });
+        if (outcome.status !== 'spoken') line(`[${el.id}] line ${outcome.status}`);
+      });
       el.addEventListener('brain:message', e =>
         line(`[${el.id}/${e.detail.role}] ${e.detail.content || ''}`)
       );
@@ -271,12 +287,12 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
 
     document.getElementById('send').addEventListener('click', () => {
       const text = document.getElementById('prompt').value.trim();
-      if (text) leo.say(text);
+      if (text) leo.say(text, { voice: true });
     });
 
     document.getElementById('broadcast').addEventListener('click', () => {
-      // Broadcasts a raw event to every agent in the stage
-      stage.broadcast('host', { kind: 'hello', text: 'hello from the page!' });
+      // Delivers a stage:message event to every agent on the stage
+      stage.broadcast('director', { kind: 'cue', text: 'places everyone' });
     });
   </script>
 </body>
@@ -284,9 +300,11 @@ Two agents sharing a single WebGL canvas via `<agent-stage>`. Each keeps its own
 ```
 
 **Key parts:**
-- `<agent-stage formation="row">`: hosts both agents in one shared canvas. `formation` controls layout (`row`, `circle`, `freeform`).
-- `leo.say(text)`: sends a message directly into Leo's brain.
-- `stage.broadcast(fromId, event)`, delivers a `stage:message` event to every agent in the stage.
+- `<agent-stage formation="row">`: hosts both agents. `formation` controls layout (`row`, `circle`, `freeform`).
+- `leo.say(text, { voice: true })`: sends a message directly into Leo's brain and speaks the reply. It resolves to `{ text }`.
+- `stage.broadcast(fromId, event)`: delivers a `stage:message` event to every agent in the stage.
+- `stage.speak(agentId, text, { priority })`: asks for the floor. Lines play one at a time; `user` beats `broadcast` beats `ambient`.
+- `stage:speaking-change` fires with `{ speaking, previous }` whenever the floor changes hands.
 - `brain:message` fires for every turn: `{ role: 'user'|'assistant', content: '...' }`.
 - `stage:agent-joined` fires when each `<agent-3d>` child finishes booting.
 
@@ -791,7 +809,7 @@ The repo ships 50 examples: 12 web component demos, 12 end-to-end projects, and 
 |---|---|---|
 | [`examples/agent-wallet-embed.html`](../examples/agent-wallet-embed.html) | The wallet is portable on its own too - mount it into any element (here, a light-DOM card; it also works inside a closed shadow root). | `http://localhost:3000/examples/agent-wallet-embed.html` |
 | [`examples/agent-presence.html`](../examples/agent-presence.html) | Standalone test for the global presence element - all three modes + live market reactions, on real data. | `http://localhost:3000/examples/agent-presence.html` |
-| [`examples/two-agents.html`](../examples/two-agents.html) | Both agents render in a single WebGL context. Each keeps its own brain, memory, and chat chrome. | `http://localhost:3000/examples/two-agents.html` |
+| [`examples/two-agents.html`](../examples/two-agents.html) | Two agents on one stage. Each keeps its own brain, memory, and voice; a broadcast cue is answered one voice at a time. | `http://localhost:3000/examples/two-agents.html` |
 | [`examples/web-component.html`](../examples/web-component.html) | Minimal, auto-rotate, and poster/reveal variants of the Custom Element wrapper. | `http://localhost:3000/examples/web-component.html` |
 | [`examples/bare-avatar.html`](../examples/bare-avatar.html) | JUST the avatar - the default. No chat, no input, no debug GUI, no name-plate, transparent background. Add the `chat` attribute to opt into the conversational UI. | `http://localhost:3000/examples/bare-avatar.html` |
 | [`examples/sonar-hand-control.html`](../examples/sonar-hand-control.html) | No camera. The speakers play a tone you cannot hear, your hand bends it on the way back, and the microphone reads the shift. Left: the built-in response. Right: the same gestures, taken over by this page. | `http://localhost:3000/examples/sonar-hand-control.html` |

@@ -223,9 +223,10 @@ export const BUILTIN_HANDLERS = {
 
 	async observe_agents(args, ctx) {
 		if (!ctx.stage) return { ok: false, error: 'not on a stage' };
+		const self = ctx.stageAgentId || ctx.agentId;
 		const others = ctx.stage
 			.getAgents()
-			.filter((a) => a.agentId !== ctx.agentId)
+			.filter((a) => a.agentId !== self)
 			.map(({ agentId, name, position }) => ({ agentId, name, position }));
 		return { ok: true, agents: others };
 	},
@@ -234,8 +235,10 @@ export const BUILTIN_HANDLERS = {
 		if (!ctx.stage) return { ok: false, error: 'not on a stage' };
 		const { agentId, text } = args;
 		if (!agentId || !text) return { ok: false, error: 'agentId and text required' };
-		const from = ctx.agentId || 'anon';
+		const from = ctx.stageAgentId || ctx.agentId || 'anon';
 		ctx.stage.broadcast(from, { kind: 'direct', to: agentId, text });
-		return ctx.stage.routeMessage(from, agentId, text);
+		// The reply inherits this turn's speech priority, so on the stage's
+		// speaking queue it waits behind whatever the caller is already saying.
+		return ctx.stage.routeMessage(from, agentId, text, { priority: ctx.speechPriority });
 	},
 };

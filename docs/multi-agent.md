@@ -1,6 +1,6 @@
 # Multi-Agent Scenes
 
-A multi-agent scene loads two or more `<agent-3d>` characters simultaneously — each with its own brain, memory, and persona — sharing a common stage. Use cases include:
+A multi-agent scene loads two or more `<agent-3d>` characters simultaneously, each with its own brain, memory, and persona, sharing a common stage. Use cases include:
 
 - A debate between two AI characters
 - A customer support agent paired with a product expert
@@ -8,13 +8,15 @@ A multi-agent scene loads two or more `<agent-3d>` characters simultaneously —
 - A marketplace with multiple vendor agents
 - An interview panel
 
-This guide covers the two main approaches — a **shared stage** (one WebGL context, recommended) and **side-by-side embeds** (independent contexts) — plus agent communication, turn-based conversations, orchestration patterns, memory sharing, and performance limits.
+This guide covers the two main approaches, a **shared stage** (one coordinated scene, recommended) and **side-by-side embeds** (independent elements), plus agent communication, one-voice-at-a-time speech, turn-based conversations, orchestration patterns, memory sharing, and performance limits.
 
 ---
 
 ## The simplest setup: `<agent-stage>`
 
-The `<agent-stage>` element is a shared scene host. All `<agent-3d>` children render inside a single WebGL canvas — one renderer, one context, positioned automatically in a named formation.
+The `<agent-stage>` element is a shared scene host. Every `<agent-3d>` child registers with it as soon as its brain boots, which gives the agents a common address book (`observe_agents`, `say_to_agent`), a shared event bus (`broadcast`), and a single speaking queue so only one of them talks at a time.
+
+> **Rendering today:** each child still draws its own body in its own canvas, laid out by the stage's formation. Sharing one WebGL context across the children's bodies is specified in [specs/STAGE_SPEC.md](https://github.com/nirholas/three.ws/blob/main/specs/STAGE_SPEC.md) but not yet wired, so count one context per child when you plan a page (see [WebGL context limits](#webgl-context-limits)).
 
 ```html
 <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
@@ -45,9 +47,9 @@ The `formation` attribute controls avatar placement:
 |---|---|
 | `row` | Side by side, evenly spaced |
 | `circle` | Equidistant around a centre point |
-| `freeform` | All overlapping at origin — position manually |
+| `freeform` | All overlapping at origin; position manually |
 
-Each `<agent-3d>` child keeps its own brain, memory, and chat chrome. Setting `brain="none"` gives an agent a live avatar with animations and emotions but no LLM — useful for characters that only react, or that you drive programmatically.
+Each `<agent-3d>` child keeps its own brain, memory, and chat chrome. Setting `brain="none"` gives an agent a live avatar with animations and emotions but no LLM, useful for characters that only react, or that you drive programmatically.
 
 See the full working example:
 [`examples/two-agents.html`](https://github.com/nirholas/three.ws/blob/main/examples/two-agents.html).
@@ -106,7 +108,7 @@ leo.addEventListener('brain:message', async (e) => {
 });
 ```
 
-`routeMessage(fromId, toId, text)` prefixes the message with `[from leo]` so the receiving agent knows who is speaking. It returns `{ ok: true, reply: '...' }` on success, or `{ ok: false, error: '...' }` if the target agent ID wasn't found.
+`routeMessage(fromId, toId, text, { priority })` prefixes the message with `[from leo]` so the receiving agent knows who is speaking. The target's spoken reply goes through the stage's speaking queue at `priority` (default `'user'`), so it plays after whatever Leo is saying instead of over it. It returns `{ ok: true, reply: '...' }` on success, `{ ok: false, error: 'No agent "x" on stage' }` for an unknown id, or `{ ok: false, error: 'Agent "x" did not reply' }` when the target produced no text.
 
 ### Using `stage.broadcast()`
 
@@ -123,7 +125,7 @@ leo.addEventListener('stage:message', (e) => {
 });
 ```
 
-`broadcast` is useful for scene cues that every agent should react to — a director's "action" call, a timed stage event, or a user interaction that should affect all characters simultaneously.
+`broadcast` is useful for scene cues that every agent should react to: a director's "action" call, a timed stage event, or a user interaction that should affect all characters simultaneously.
 
 ### Bridging side-by-side embeds manually
 
@@ -137,7 +139,7 @@ host.addEventListener('brain:message', async (e) => {
   if (e.detail.role !== 'assistant') return;
 
   // Pass the host's reply into the guest's context
-  await guest.say(`Host said: "${e.detail.content}" — How do you respond?`);
+  await guest.say(`Host said: "${e.detail.content}". How do you respond?`);
 });
 ```
 
@@ -147,7 +149,7 @@ The `brain:message` event fires for both `role: "user"` and `role: "assistant"` 
 
 ## Turn-based conversation
 
-To automate a full back-and-forth between two agents, use `ask()` — which sends a message and returns the reply text — inside a recursive turn loop:
+To automate a full back-and-forth between two agents, use `ask()`, which sends a message and returns the reply text, inside a recursive turn loop:
 
 ```js
 const agents = [leo, mira];
@@ -178,7 +180,7 @@ for (const el of [leo, mira]) {
 }
 ```
 
-`ask(text)` is a convenience wrapper around `say(text)` that resolves to the assistant's reply string. If the runtime is still processing a previous turn, `say()` throws — add a `try/catch` in production loops to recover gracefully instead of crashing the conversation.
+`ask(text)` is a convenience wrapper around `say(text)` that resolves to the assistant's reply string. `say()` itself resolves to `{ text }` when the turn completes. Calls made while a turn is running are queued: the newest waiting call replaces any older waiting one (the replaced call resolves `null`), so a loop never stacks up stale prompts. A turn that fails (rate limit, network) also resolves `null` and shows the error in the agent's chat pane; check for `null` in production loops.
 
 ---
 
@@ -201,19 +203,67 @@ stage.addEventListener('stage:message', (e) => {
 });
 ```
 
+`stage:speaking-change` fires every time the floor changes hands. `detail.speaking` is the line now playing (or `null` when the stage falls silent) and `detail.previous` is the line that just ended:
+
+```js
+stage.addEventListener('stage:speaking-change', (e) => {
+  const { speaking, previous } = e.detail;
+  // speaking: { agentId, text, priority, startedAt } | null
+  spotlight(speaking?.agentId ?? null);
+});
+```
+
 You can inspect and modify the agent lineup at runtime:
 
 ```js
 // Query who's on stage
 stage.getAgents();
-// → [{ agentId: 'Coach Leo', name: 'Coach Leo', position: [-0.55, 0, 0], element }, ...]
+// → [{ agentId: 'leo', name: 'Coach Leo', position: [-0.55, 0, 0], element }, ...]
+// agentId is the element's id attribute, or the manifest name when it has none.
 
 // Add a new agent dynamically
 const el = await stage.addAgent({ name: 'Extra', body: { uri: 'https://three.ws/avatars/mannequin.glb' } });
 
 // Remove by agentId
-stage.removeAgent('Coach Leo');
+stage.removeAgent('leo');
 ```
+
+---
+
+## One voice at a time: the speaking queue
+
+Every agent has its own text-to-speech engine, and browsers will happily play two at once. Inside an `<agent-stage>` that never happens: everything an agent says out loud (its replies when `voice` is on, the `speak` skill, a `say_to_agent` reply, or your own `stage.speak()` call) waits in one queue and plays when the line in front of it ends.
+
+```js
+// Both agents answer a cue. Both lines are requested at the same instant;
+// the stage plays them one after the other.
+for (const el of [leo, mira]) {
+  el.addEventListener('stage:message', async (e) => {
+    if (e.detail.event?.kind !== 'cue') return;
+    const outcome = await stage.speak(el.stageAgentId, `Ready for ${e.detail.event.text}.`, {
+      priority: 'broadcast',
+    });
+    // outcome.status: 'spoken' | 'dropped' | 'cancelled' | 'error' | 'timeout'
+  });
+}
+stage.broadcast('director', { kind: 'cue', text: 'scene two' });
+```
+
+| Priority | Use for | Order |
+|---|---|---|
+| `user` | A person spoke to this agent, or another agent did through `say_to_agent` | Plays first |
+| `broadcast` | A cue every agent answers | After waiting `user` lines |
+| `ambient` | Idle chatter, scripted asides, the `speak` skill | Last; first to be evicted when the queue is full |
+
+The rules that matter in practice:
+
+- A higher priority line jumps the waiting lines, never the agent already talking.
+- The same agent asking to say the same line twice gets one utterance (the second request shares the first one's outcome).
+- At most 8 lines wait. When full, the oldest `ambient` line is dropped to make room, then a `user` line may bump the oldest `broadcast` line; otherwise the new line resolves `dropped`.
+- A voice that errors or never finishes is settled (`error` or `timeout`) and the queue moves on, so one broken engine cannot silence the scene.
+- Removing an agent, or calling `el.pause()`, cancels its waiting lines and stops its current one.
+
+Read the floor at any time with `stage.speaking` (the current line) and `stage.speechQueue` (waiting lines in play order), and cancel an agent's lines with `stage.cancelSpeech(agentId)`. The full contract is in [specs/STAGE_SPEC.md](https://github.com/nirholas/three.ws/blob/main/specs/STAGE_SPEC.md#speaking-queue).
 
 ---
 
@@ -221,7 +271,7 @@ stage.removeAgent('Coach Leo');
 
 Three patterns cover most multi-agent scenes:
 
-**Pattern A — Parallel (independent)**
+**Pattern A: parallel (independent)**
 
 Both agents receive the same user message and respond independently. Good for showing different perspectives or running an agent comparison side by side.
 
@@ -231,7 +281,7 @@ User message → broadcast to both → both respond concurrently
 
 Implementation: call `leo.say(text)` and `mira.say(text)` without waiting for either to finish. Both brains run in parallel.
 
-**Pattern B — Sequential (turn-based)**
+**Pattern B: sequential (turn-based)**
 
 Agents alternate, each responding to what the other said. Good for debates, interviews, or structured storytelling. The turn-loop above implements this pattern.
 
@@ -239,9 +289,9 @@ Agents alternate, each responding to what the other said. Good for debates, inte
 User → Agent 1 → Agent 2 → Agent 1 → ...
 ```
 
-**Pattern C — Hierarchical (manager + specialists)**
+**Pattern C: hierarchical (manager + specialists)**
 
-One manager agent receives all user input, decides which specialist to involve, and synthesizes the result. Good for complex domains where no single agent has complete knowledge — for example, a triage agent routing medical questions to a pharmacology specialist and a symptoms specialist separately.
+One manager agent receives all user input, decides which specialist to involve, and synthesizes the result. Good for complex domains where no single agent has complete knowledge: for example, a triage agent routing medical questions to a pharmacology specialist and a symptoms specialist separately.
 
 ```
 User → Manager (routes) → Specialist → Manager (synthesizes) → User
@@ -281,11 +331,11 @@ Both agents then load the same memory bundle at boot. Runtime writes stay in eac
 
 ## WebGL context limits
 
-Browsers cap the number of active WebGL contexts per page. The typical limit is **8–16 on desktop**, and as low as **4 on mobile**. Exceeding it causes older contexts to be silently lost — avatars freeze or disappear without an error.
+Browsers cap the number of active WebGL contexts per page. The typical limit is **8 to 16 on desktop**, and as low as **4 on mobile**. Exceeding it causes older contexts to be silently lost: avatars freeze or disappear without an error.
 
-**`<agent-stage>` uses one context for all children.** Two agents inside an `<agent-stage>` consume one context total. This is its primary advantage over side-by-side embeds.
+**Count one context per rendered agent today, stage or not.** Children of an `<agent-stage>` still render their own bodies (sharing one context is specified but not yet wired), so the stage's advantage over side-by-side embeds is coordination (shared tools, broadcast, one voice at a time), not context count.
 
-Two standalone `<agent-3d>` elements each consume their own context. Keep the total count low (≤ 3–4) on pages that also use other WebGL libraries such as maps, data visualizations, or other 3D widgets.
+Every rendered `<agent-3d>` consumes its own context. Keep the total count low (3 or 4 at most) on pages that also use other WebGL libraries such as maps, data visualizations, or other 3D widgets.
 
 To release a context when an agent is no longer needed:
 
@@ -306,9 +356,9 @@ Running multiple LLM connections simultaneously is expensive, especially when mo
 
 - Set `brain="none"` on agents that only react (animations, emotion blends) rather than generate text. The avatar and empathy layers are cheap; the LLM layer is not.
 - Call `el.pause()` on agents waiting for their turn in a sequential scene. This cancels any in-progress TTS and STT. Call `el.say()` to resume when it's their turn again.
-- Avoid turn loops that fire without a delay. Add at least 1–1.5 seconds between turns so TTS and animations finish before the next prompt starts.
-- On mobile, prefer `formation="row"` with two agents maximum. The shared-stage approach keeps GPU work to a single draw pass per frame regardless of how many agents are loaded.
-- If you need more than four agents on the same page, use `<agent-stage>` for all of them rather than standalone elements. One shared context handles any number of agents without hitting browser limits.
+- Avoid turn loops that fire without a delay. On a stage you do not need a delay for speech: the speaking queue already holds each line until the previous one ends. Without a stage, add at least 1 to 1.5 seconds between turns so TTS and animations finish before the next prompt starts.
+- On mobile, prefer `formation="row"` with two agents maximum. Each child currently renders its own body, so GPU work grows with the number of agents on screen.
+- Past four agents on one page, give the extra characters `brain="none"` and keep them off screen until needed, because each rendered child holds its own WebGL context today (see [WebGL context limits](#webgl-context-limits)).
 
 ---
 
@@ -318,13 +368,13 @@ Run `npm run dev` and open `http://localhost:3000/examples/two-agents.html`
 ([source](https://github.com/nirholas/three.ws/blob/main/examples/two-agents.html))
 to see a complete, runnable scene with real avatar files. Key things to notice:
 
-1. **Single `<agent-stage>` with `formation="row"`** — both agents share one canvas and one WebGL context. No separate renderers.
-2. **Leo has a brain; Mira has `brain="none"`** — Leo drives the conversation; Mira is an avatar waiting to be spoken to. Her animations and emotions still run; her LLM does not.
-3. **"Send to Leo" button calls `leo.say(text)`** — the user's message goes only to Leo's brain.
-4. **"Broadcast" button calls `stage.broadcast('test-harness', {...})`** — demonstrates the stage's event bus. Both Leo and Mira receive the `stage:message` event.
-5. **The log panel subscribes to `brain:message` and `skill:tool-called`** — shows how to observe what each agent is thinking and doing in real time without touching their internals.
+1. **Single `<agent-stage>` with `formation="row"`**: both agents register with the stage as soon as their brains boot. The log shows each `joined` event.
+2. **Both agents have `brain="free"` and `voice`**: each has its own persona and its own voice, and Leo's instructions tell him to use `say_to_agent` when asked to talk to Mira.
+3. **"Send to Leo" calls `leo.say(text, { voice: true })`**: only Leo hears you. Ask him to say hi to Mira and the log shows the `say_to_agent` tool call, Mira's reply, and Leo relaying it, with Mira's spoken line queued behind Leo's.
+4. **"Broadcast" calls `stage.broadcast('director', { kind: 'cue', text })`**: both agents receive `stage:message` and both answer with `stage.speak(..., { priority: 'broadcast' })` at the same instant. The "On the floor" bar and the log's `floor:` lines show the stage playing them one after the other.
+5. **The floor bar subscribes to `stage:speaking-change`**: it names the agent holding the floor and lists who is waiting, and every change is timestamped in the log.
 
-To extend this into a full turn-based scene, add a `brain` attribute to Mira with a model name (e.g., `brain="claude-haiku-4-5"`), then wire the `brain:message` listener to call `stage.routeMessage('leo', 'mira', said)` after each of Leo's replies. That is the minimal diff between a one-active-agent demo and a full dialogue scene.
+To turn this into a full dialogue scene, wire Leo's `brain:message` listener to call `stage.routeMessage('leo', 'mira', said)` after each of his replies. Speech ordering is already handled by the stage.
 
 ---
 

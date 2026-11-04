@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T19:05:57.367Z",
+	"generated_at": "2026-11-04T19:16:48.720Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4369,
+	"total": 4370,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -200,6 +200,17 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Agents on one stage take turns speaking instead of talking over each other",
+			"summary": "When several <agent-3d> agents share an <agent-stage>, everything they say out loud now goes through one speaking queue, so a cue answered by two agents plays one voice after the other. Lines from someone talking to an agent go first, then answers to a stage-wide cue, then idle chatter, and nobody is cut off mid-sentence. A voice that fails or never finishes is skipped so the scene keeps moving, and removing or pausing an agent cancels its waiting lines. Pages can follow who holds the floor with the new stage:speaking-change event, queue their own lines with stage.speak(), and say() now resolves to the reply. Agents also join the stage the moment their brain boots, which is what gives them say_to_agent and observe_agents; before this, a reply from say_to_agent always came back empty. The two-agents example shows the floor live.",
+			"link": "/docs/multi-agent",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1546,17 +1557,6 @@
 			"tags": [
 				"fix",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "The desktop no longer drops your keyboard into the Weather widget",
-			"summary": "Before you picked a weather city, opening the web desktop put keyboard focus in the Weather widget's city search, so typing and keyboard shortcuts started inside a widget. Focus now stays with the desktop until you click the search or choose Change city. A half-typed city also survives the widget's background refresh instead of being cleared.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"fix"
 			]
 		}
 	]

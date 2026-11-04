@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Agents on one stage take turns speaking instead of talking over each other",
+			"summary": "When several <agent-3d> agents share an <agent-stage>, everything they say out loud now goes through one speaking queue, so a cue answered by two agents plays one voice after the other. Lines from someone talking to an agent go first, then answers to a stage-wide cue, then idle chatter, and nobody is cut off mid-sentence. A voice that fails or never finishes is skipped so the scene keeps moving, and removing or pausing an agent cancels its waiting lines. Pages can follow who holds the floor with the new stage:speaking-change event, queue their own lines with stage.speak(), and say() now resolves to the reply. Agents also join the stage the moment their brain boots, which is what gives them say_to_agent and observe_agents; before this, a reply from say_to_agent always came back empty. The two-agents example shows the floor live.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/multi-agent"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Paying in $THREE from your own wallet works on the marketplace, copy trading and launch funding",
 			"summary": "When the platform cannot cover the network fee, a marketplace or skill purchase falls back to a transaction your wallet signs and pays for. For a $THREE price that transaction was built for the older token program, so your wallet's safety check refused it before you could approve. The same mistake affected settling a copy-trading fee and funding a launch quoted in $THREE. All of them now read the token program and decimals from the coin itself, open the recipient's $THREE account when it is missing, and send a checked transfer. The agent payment tools fix a run of separate faults. Reading vault balances and changing the buyback split always failed. Distributing payments could not build. Paying an invoice called a method that does not exist. Withdrawing $THREE went to the wrong account. Changing the buyback split from the coin dashboard also failed for every owner. All of these work now, with $THREE vaults read and paid on its own token program.",
 			"tags": [
