@@ -7,7 +7,7 @@
 // S3 presigned URL that serves the actual VRM/GLB bytes. Both calls live in
 // api/_lib/vroid/client.js.
 //
-// License enforcement (task 3 of 092-partners-09-vroid-hub-import.md): the
+// License enforcement (see docs/vroid-hub-import.md): the
 // import itself is always allowed (a creator's own download license already
 // cleared that), but what three.ws lets the *imported avatar* do afterward
 // (become a public agent, be exported again, be modified, be monetized) is
