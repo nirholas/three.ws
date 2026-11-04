@@ -205,7 +205,7 @@
 							 data-i18n-html="pricing.usdc_49_stable_pay_the_sticker_price">
 								<span class="pc-asset-name">USDC</span>
 								<span class="pc-asset-price" data-asset-price="USDC">$49</span>
-								<span class="pc-asset-note">Stable — pay the sticker price</span>
+								<span class="pc-asset-note">Stable, pays the sticker price</span>
 							</button>
 							<button
 								class="pc-asset"
@@ -228,7 +228,7 @@
 								<span class="pc-asset-badge" data-three-badge>20% off</span>
 								<span class="pc-asset-name">$THREE</span>
 								<span class="pc-asset-price" data-asset-price="THREE">$39.20</span>
-								<span class="pc-asset-note">The platform coin — discounted</span>
+								<span class="pc-asset-note">The platform coin, discounted</span>
 							</button>
 						</div>
 						<button class="pricing-cta primary pc-continue" id="pc-continue" type="button" data-i18n="pricing.continue">
@@ -1324,6 +1324,8 @@
 				// reaches the buyer as a typed message.
 				let ready = null;
 				const isReady = (a) => !ready || ready[a] === true;
+				// Pro prices from /api/payments/solana/plans; null until it loads.
+				let pricing = null;
 				let intent = null;
 				let countdownTimer = null;
 				let pollTimer = null;
@@ -1354,25 +1356,11 @@
 							}
 						}
 						ready = plans.checkout_ready || null;
-						const pct = (plans.three_discount_bps / 100).toFixed(0);
-						const discountEl = $('pro-three-discount');
-						// The discount is only a claim worth making when $THREE checkout
-						// is switched on.
-						if (discountEl && plans.three_discount_bps > 0 && isReady('THREE')) {
-							discountEl.textContent = `, ${pct}% off in $THREE`;
-							discountEl.hidden = false;
-						}
-						document.querySelector('[data-asset-price="USDC"]').textContent =
-							fmtUsd(pro.price_usd);
-						document.querySelector('[data-asset-price="SOL"]').textContent =
-							fmtUsd(pro.price_usd);
-						document.querySelector('[data-asset-price="THREE"]').textContent =
-							fmtUsd(pro.three_price_usd);
-						const badge = document.querySelector('[data-three-badge]');
-						if (badge) {
-							badge.textContent = `${pct}% off`;
-							badge.hidden = !isReady('THREE') || !(plans.three_discount_bps > 0);
-						}
+						pricing = {
+							usd: pro.price_usd,
+							threeUsd: pro.three_price_usd,
+							discountBps: Number(plans.three_discount_bps) || 0,
+						};
 						applyReadiness();
 					} catch (err) {
 						console.warn('[pricing] plan config load failed:', err?.message);
@@ -1390,9 +1378,38 @@
 					}
 				}
 
+				// Prices and the $THREE discount claim follow the live config, and
+				// the discount is only claimed while $THREE checkout is switched on.
+				// Runs on every modal open because the asset buttons are
+				// data-i18n-html, so a locale pass can rewrite their markup.
+				function renderAssetPrices() {
+					if (!pricing) return;
+					const discounted = pricing.discountBps > 0 && isReady('THREE');
+					const pct = (pricing.discountBps / 100).toFixed(0);
+					const priceEl = (a) => overlay.querySelector(`[data-asset-price="${a}"]`);
+					if (priceEl('USDC')) priceEl('USDC').textContent = fmtUsd(pricing.usd);
+					if (priceEl('SOL')) priceEl('SOL').textContent = fmtUsd(pricing.usd);
+					if (priceEl('THREE')) priceEl('THREE').textContent = fmtUsd(discounted ? pricing.threeUsd : pricing.usd);
+					// The note's translated text says "discounted"; hide it rather
+					// than rewrite it in English when no discount applies.
+					const note = overlay.querySelector('[data-asset="THREE"] .pc-asset-note');
+					if (note) note.hidden = !discounted;
+					const badge = overlay.querySelector('[data-three-badge]');
+					if (badge) {
+						badge.textContent = `${pct}% off`;
+						badge.hidden = !discounted;
+					}
+					const discountEl = $('pro-three-discount');
+					if (discountEl) {
+						discountEl.textContent = discounted ? `, ${pct}% off in $THREE` : '';
+						discountEl.hidden = !discounted;
+					}
+				}
+
 				// Mark every asset checkout will refuse, move the selection onto one
 				// it accepts, and say so plainly when none is switched on yet.
 				function applyReadiness() {
+					renderAssetPrices();
 					const buttons = [...overlay.querySelectorAll('.pc-asset')];
 					for (const btn of buttons) {
 						const on = isReady(btn.dataset.asset);
@@ -1504,6 +1521,12 @@
 					lastFocus?.focus?.();
 				}
 
+				// A locale switch rewrites the asset buttons' markup; put the live
+				// prices and the readiness marks back on top of it.
+				window.addEventListener('i18n:change', () => {
+					if (pricing || ready) applyReadiness();
+				});
+
 				proCta.addEventListener('click', (e) => {
 					// Signed out (or already upgraded) → let the link navigate.
 					if (!user || ['pro', 'team', 'enterprise'].includes(user.plan)) return;
@@ -1518,7 +1541,28 @@
 					if (e.target === overlay) closeModal();
 				});
 				document.addEventListener('keydown', (e) => {
-					if (e.key === 'Escape' && !overlay.hidden) closeModal();
+					if (overlay.hidden) return;
+					if (e.key === 'Escape') {
+						closeModal();
+						return;
+					}
+					if (e.key !== 'Tab') return;
+					// aria-modal dialog: keep keyboard focus inside it, skipping the
+					// disabled assets and any step that is not showing.
+					const focusable = [
+						...$('pc-dialog').querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+					].filter((el) => !el.disabled && el.getClientRects().length > 0);
+					if (!focusable.length) return;
+					const first = focusable[0];
+					const last = focusable[focusable.length - 1];
+					const inside = $('pc-dialog').contains(document.activeElement);
+					if (e.shiftKey && (!inside || document.activeElement === first || document.activeElement === $('pc-dialog'))) {
+						e.preventDefault();
+						last.focus();
+					} else if (!e.shiftKey && (!inside || document.activeElement === last)) {
+						e.preventDefault();
+						first.focus();
+					}
 				});
 
 				for (const btn of overlay.querySelectorAll('.pc-asset')) {
@@ -1570,7 +1614,14 @@
 							if (d.error === 'not_configured') {
 								// Checkout knows better than the cached plans: mark the asset
 								// off so the picker moves to one that can still be paid.
-								ready = { ...(ready || {}), [selectedAsset]: false };
+								// Only this asset was refused: an API without checkout_ready
+								// leaves the others assumed on until checkout says otherwise.
+								const known =
+									ready ||
+									Object.fromEntries(
+										[...overlay.querySelectorAll('.pc-asset')].map((b) => [b.dataset.asset, !b.disabled]),
+									);
+								ready = { ...known, [selectedAsset]: false };
 								applyReadiness();
 								if (!overlay.querySelector('.pc-asset:not(:disabled)')) return;
 							}
