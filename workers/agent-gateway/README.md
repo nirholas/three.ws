@@ -231,7 +231,7 @@ registering, set the interactions endpoint in the Discord developer portal to
 cd workers/agent-gateway && npm test
 ```
 
-Five suites, 87 tests, about eight seconds. They run against a real Postgres:
+Nine suites, 138 tests, about eleven seconds (2026-11-04). They run against a real Postgres:
 PGlite carrying the gateway tables built from the two shipped migrations
 (`api/_lib/migrations/20260922180000_chat_gateways.sql` and
 `20260922190000_more_chat_gateways.sql`) executed verbatim
@@ -246,7 +246,11 @@ group-start updates; Discord commands, buttons and mentions).
 | `telegram-adapter.test.js` | Command parsing (including `/cmd@otherbot` in groups), update normalization, voice notes through `getFile`, the largest photo size, long replies split across messages, inline buttons added and removed, photos versus documents, late button presses, spoken replies, error mapping, and the polling guard that refuses to run while a webhook is set. |
 | `discord-adapter.test.js` | `/three` subcommands and top-level commands, button presses, mentions, audio and image attachments, the deferred reply filled first and then followups with mentions disabled, the "thinking..." placeholder removed when a command produced nothing, expired interaction tokens falling back to the channel API, notifications, audio uploads, and error mapping. |
 | `approval-buttons.test.js` | Approval requests end to end through the real inbox library ([api/_lib/approvals.js](../../api/_lib/approvals.js)) and its migration: callback data within 64 bytes and refused on any changed character, link, presser, deadline or verb; fan-out queueing and the drain sending the full table with two signed buttons; Approve executing once and editing the message; a replayed press never re-running; Deny; a payload rewritten after delivery, a payload edited under an unchanged hash, a forged button, an expired request, a stranger's press, a button replayed into another chat and an unpaired chat all failing closed; forwarded commands and a forwarded `/link` ignored; `/approvals`, `/positions`, `/pause` and `/kill` against real rows. The transfer executor is the one stub: it records each call so the replay cases can prove it ran once. |
-| `registry-setup.test.js` | Adapter selection by credentials and `GATEWAY_PLATFORMS`, the retry policy, config defaults and the malformed-number refusal, and the Discord and Telegram command sets `setup.js` registers. |
+| `registry-setup.test.js` | Adapter selection by credentials and `GATEWAY_PLATFORMS` (each skipped platform with its reason), the retry policy, config defaults and the malformed-number refusal, and the Discord and Telegram command sets `setup.js` registers. |
+| `trade-commands.test.js` | `/buy`, `/sell`, `/snipe`, `/orders` and `/cancel` from chat: a quote card that signs nothing, RugCheck and trade-guard refusals, hostile token names escaped, execution only on the exact word `yes` and only once, a late or superseded `yes` sending nothing, buttons unable to run a typed quote, sells resolved against held tokens, linked take-profit and stop-loss exits, and the P&L share card. |
+| `healthz.test.js` | `/healthz` and `/` on a booted worker: `200` with the Telegram adapter and the open backlog read from the inbox; `503` with no adapters, each skipped platform carrying its reason; `GATEWAY_PLATFORMS` exclusions listed; a `null` backlog (not a failed probe) when the database read throws; `404` for any other path or method; importing `src/index.js` does not boot the worker. |
+| `backlog.test.js` | The backlog TTL: defaults, `0` and malformed values; a row one second under the TTL answered normally and one second over it given only the offline reply; four rows in one chat (three stale) producing one apology then the fresh answer, with no pairing code minted; stale group chatter and forwards closed silently; a stale notification left queued; TTL `0` answering everything. |
+| `e2e-drain.test.js` | One production-shaped Telegram update POSTed to the real receiver (`api/gateway/telegram.js`) with the derived secret header, stored in the inbox exactly as production stores it, and answered once by the drain with the lease released; a redelivered `update_id`, before or after the reply, adds no row and no second answer; a wrong secret is refused `401` and queues nothing. |
 
 ## Deploy
 
