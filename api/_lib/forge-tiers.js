@@ -895,6 +895,29 @@ export const PIXAL3D_RESOLUTIONS = Object.freeze([1024, 1536]);
 // one of these, or leaves it null to let the worker infer the front view.
 export const PIXAL3D_VIEW_LABELS = Object.freeze(['front', 'back', 'left', 'right']);
 
+// Texture worker selection. Two workers speak the same /texture contract:
+// the SDXL worker (mode "retex", GCP_TEXTURE_URL) and the UltraTex worker
+// (mode "retex_ultratex", GCP_TEXTURE_ULTRATEX_URL). UltraTex is OFF unless
+// FORGE_TEXTURE_ULTRATEX is "1" AND its URL is configured, because its FLUX
+// base models are non-commercial (workers/texture-ultratex/README.md). When a
+// tier is passed it must also be listed in FORGE_TEXTURE_ULTRATEX_TIERS
+// (default "high"); with no tier the flag alone decides.
+export const TEXTURE_MODE_DEFAULT = 'retex';
+export const TEXTURE_MODE_ULTRATEX = 'retex_ultratex';
+
+export function textureModeFor({ tier = null, env = process.env } = {}) {
+	if (env.FORGE_TEXTURE_ULTRATEX !== '1') return TEXTURE_MODE_DEFAULT;
+	if (!env.GCP_TEXTURE_ULTRATEX_URL) return TEXTURE_MODE_DEFAULT;
+	if (tier) {
+		const allowed = String(env.FORGE_TEXTURE_ULTRATEX_TIERS || 'high')
+			.split(',')
+			.map((t) => t.trim())
+			.filter(Boolean);
+		if (!allowed.includes(tier)) return TEXTURE_MODE_DEFAULT;
+	}
+	return TEXTURE_MODE_ULTRATEX;
+}
+
 export function selfhostQualityForTier(tierId) {
 	return SELFHOST_TRELLIS_QUALITY[tierId] || SELFHOST_TRELLIS_QUALITY[DEFAULT_TIER];
 }

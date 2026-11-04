@@ -45,6 +45,7 @@
 //                  `remesh` job as the failover.
 //   stylize      → GCP_STYLIZE_URL          (workers/stylize)
 //   retex        → GCP_TEXTURE_URL          (workers/texture)
+//   retex_ultratex → GCP_TEXTURE_ULTRATEX_URL (workers/texture-ultratex, off by default)
 //   rembg        → GCP_REMBG_URL            (workers/rembg)
 //   segment      → GCP_SEGMENT_URL          (workers/segment)
 //   sketch       → GCP_TRIPOSG_URL          (workers/model-triposg, scribble mode)
@@ -129,6 +130,8 @@ function serviceUrlForMode(mode) {
 		case 'retex_region':
 			// Region (magic-brush) edits run on the same texture worker.
 			return readEnv('GCP_TEXTURE_URL');
+		case 'retex_ultratex':
+			return readEnv('GCP_TEXTURE_ULTRATEX_URL');
 		case 'rembg':
 			return readEnv('GCP_REMBG_URL');
 		case 'segment':
@@ -458,7 +461,7 @@ function buildWorkerRequest(request) {
 		};
 	}
 
-	if (mode === 'retex') {
+	if (mode === 'retex' || mode === 'retex_ultratex') {
 		return {
 			path: '/texture',
 			resultKey: 'result_url',
@@ -711,6 +714,7 @@ const MODE_ETA = {
 	lato2: 60,
 	stylize: 25,
 	retex: 180,
+	retex_ultratex: 240,
 	retex_region: 60,
 	rembg: 5,
 	segment: 45,

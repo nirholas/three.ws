@@ -101,3 +101,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 - 984 EVM AgentPayments CREATE2 readiness done 2026-11-04 (fork-proven, Basescan verified); owner broadcasts per chain after choosing the owner and funding the deployer.
 765 | DONE-PENDING-OWNER (apply migration 20261105110000, deploy, then open a tagged link to verify browser flow) | 2026-11-04 | first-party campaign touch ledger, conversions, report, link helper
 2026-11-04 | 741-plan-play-world-moderation-mute-kick-report.md | 5944e12c5 | Mute, kick, ban, report and muted strip built and verified live; owner redeploys the multiplayer service and sets Upstash env for ban persistence.
+2026-11-04 | 721-plan-forge-ultratex-texture-rung.md | see git log | License-gated texture-ultratex worker, tier routing and A/B harness built and tested; owner decides the FLUX base license (BFL commercial or train on Apache 4B), then runs the 20-mesh GPU A/B.

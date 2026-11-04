@@ -36,6 +36,7 @@ import {
 	estimateCredits,
 	isSelfHostBackend,
 	coldStartSecondsFor,
+	textureModeFor,
 } from '../../_lib/forge-tiers.js';
 import { laneHealthSnapshot } from '../../_lib/forge-lane-health.js';
 import { resolveProviderKey } from '../../_lib/forge-provider-key.js';
@@ -1579,9 +1580,10 @@ export const toolDefs = [
 					isError: true,
 				};
 			}
-			const provider = regenProvider('retex');
+			const texMode = textureModeFor();
+			const provider = regenProvider(texMode);
 			const job = await provider.submit({
-				mode: 'retex',
+				mode: texMode,
 				sourceUrl: args.mesh_url,
 				params: {
 					prompt: args.prompt,
