@@ -25,6 +25,7 @@ import { explorerTxUrl, formatUsd } from '../util.js';
 
 const STYLE_ID = 'awh-custody-style';
 const STYLE = `
+#awh-panel-custody { display: flex; flex-direction: column; gap: var(--awh-gap, 16px); }
 .awh-cu-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:var(--space-3,12px); }
 .awh-cu-head h3 { margin:0; font-size:var(--text-md,.8125rem); color:var(--ink-bright,#fff); }
 .awh-cu-modes { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:0 0 var(--space-3,12px); }
