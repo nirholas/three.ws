@@ -179,6 +179,13 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 		'.tws-atlas-hint button:hover{color:var(--ink,#ececec)}',
 		'.tws-atlas-hint .tws-atlas-hint-open{display:flex;align-items:center;gap:9px;padding:0;font-size:12px;color:inherit}',
 		'.tws-atlas-hint .tws-atlas-hint-open:hover{color:var(--ink,#ececec)}',
+		'.tws-atlas-hint .tws-atlas-hint-x{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;margin:-4px -6px -4px 0;border-radius:999px}',
+		'.tws-atlas-hint .tws-atlas-hint-x:hover{background:var(--surface-2,rgba(128,128,160,.18))}',
+		'.tws-atlas-hint .tws-atlas-hint-x:active{transform:scale(.92)}',
+		'.tws-atlas-hint .tws-atlas-hint-x:focus-visible{outline:2px solid var(--accent,#8ea2ff);outline-offset:2px}',
+		'.tws-atlas-tip{position:absolute;bottom:calc(100% + 8px);right:0;padding:4px 8px;border-radius:6px;font-size:12px;',
+		'line-height:1.3;white-space:nowrap;color:#f2f0ff;background:#16161f;opacity:0;pointer-events:none;transition:opacity .12s}',
+		'.tws-atlas-hint-x:hover>.tws-atlas-tip,.tws-atlas-hint-x:focus-visible>.tws-atlas-tip{opacity:1}',
 		'@keyframes tws-atlas-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}',
 
 		/* Light theme. The site flips [data-theme] on <html>. */
@@ -750,9 +757,18 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 		open.appendChild(el('kbd', null, MOD_LABEL + ' K'));
 		open.appendChild(el('span', null, 'search anything on three.ws'));
 		chip.appendChild(open);
-		var dismiss = el('button', null, '×');
+		// An icon, not a "×" text glyph: a glyph joins the tooltip words in the visible
+		// label, which then no longer matches the accessible name.
+		var dismiss = el('button', 'tws-atlas-hint-x');
 		dismiss.type = 'button';
-		dismiss.setAttribute('aria-label', 'Dismiss');
+		dismiss.setAttribute('aria-label', 'Dismiss search hint');
+		dismiss.setAttribute('aria-describedby', 'tws-atlas-hint-x-tip');
+		dismiss.innerHTML =
+			'<svg aria-hidden="true" focusable="false" width="12" height="12" viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
+		var tip = el('span', 'tws-atlas-tip', 'Dismiss search hint');
+		tip.id = 'tws-atlas-hint-x-tip';
+		tip.setAttribute('role', 'tooltip');
+		dismiss.appendChild(tip);
 		chip.appendChild(dismiss);
 
 		var seen = function () {
