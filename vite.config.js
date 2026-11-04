@@ -983,6 +983,7 @@ const appConfig = {
 				'likeness-bench': resolve(__dirname, 'pages/likeness-bench.html'),
 				'payment-outcomes': resolve(__dirname, 'pages/payment-outcomes.html'),
 				'forge-funnel': resolve(__dirname, 'pages/forge-funnel.html'),
+				'forge-off': resolve(__dirname, 'pages/forge-off.html'),
 				'mcp-clients': resolve(__dirname, 'pages/mcp-clients.html'),
 				'event-markets-admin': resolve(__dirname, 'pages/event-markets-admin.html'),
 				search: resolve(__dirname, 'pages/search.html'),
@@ -2232,6 +2233,8 @@ const appConfig = {
 					'/payment-outcomes/': resolve(root, 'pages/payment-outcomes.html'),
 					'/forge-funnel': resolve(root, 'pages/forge-funnel.html'),
 					'/forge-funnel/': resolve(root, 'pages/forge-funnel.html'),
+					'/forge-off': resolve(root, 'pages/forge-off.html'),
+					'/forge-off/': resolve(root, 'pages/forge-off.html'),
 					'/mcp-clients': resolve(root, 'pages/mcp-clients.html'),
 					'/mcp-clients/': resolve(root, 'pages/mcp-clients.html'),
 					'/admin/event-markets': resolve(root, 'pages/event-markets-admin.html'),
@@ -2409,6 +2412,10 @@ const appConfig = {
 						return res.end();
 					}
 					if (!filePath) filePath = fileMap[path];
+					// /forge-off/<event-slug>  → the same themed-event landing page
+					if (!filePath && /^\/forge-off\/[a-z0-9][a-z0-9-]{1,63}\/?$/.test(path)) {
+						filePath = resolve(root, 'pages/forge-off.html');
+					}
 					// /blog/<slug>  → resolves to blog/<slug>.html on disk
 					if (!filePath && /^\/blog\/[a-z0-9-]+\/?$/.test(path)) {
 						const slug = path.replace(/^\/blog\//, '').replace(/\/$/, '');

@@ -1,0 +1,45 @@
+{
+	"$comment": "Forge-Off themed events. Each event is a run of daily boards over the same auth-free vote pipeline as the weekly Forge-Off. Add an event by adding an object here: api/_lib/forge-off-events.js validates it at load and the /forge-off page, /api/forge-off/event, /api/forge-gallery?event= and the crown cron all read it. Dates are UTC. `days` must be consecutive calendar dates starting on starts_at's date. The first event uses the proposed week for the IBM community event; move the dates here when they are confirmed.",
+	"events": [
+		{
+			"slug": "ibm-forge-off-open",
+			"title": "The Forge-Off Open",
+			"summary": "Five days, five themes, one board and one small prize per day. Describe a thing in one sentence, get a real textured 3D model, publish it, and vote. No account.",
+			"starts_at": "2026-11-09T00:00:00Z",
+			"ends_at": "2026-11-14T00:00:00Z",
+			"days": [
+				{
+					"date": "2026-11-09",
+					"theme": "The object your job wishes existed",
+					"surface": "Forge",
+					"surface_href": "/forge?prompt=The%20object%20my%20job%20wishes%20existed%3A%20"
+				},
+				{
+					"date": "2026-11-10",
+					"theme": "Give it a face and a name",
+					"surface": "Create",
+					"surface_href": "/create"
+				},
+				{
+					"date": "2026-11-11",
+					"theme": "Make it move",
+					"surface": "Choreographer",
+					"surface_href": "/choreograph"
+				},
+				{
+					"date": "2026-11-12",
+					"theme": "Put it in your actual room",
+					"surface": "IRL",
+					"surface_href": "/irl"
+				},
+				{
+					"date": "2026-11-13",
+					"theme": "Bring it to the party",
+					"surface": "Play",
+					"surface_href": "/play"
+				}
+			],
+			"prizes_note": "One small prize per daily board and one for the overall winner. Prizes are set by the organizers of the event."
+		}
+	]
+}

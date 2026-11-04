@@ -21,6 +21,7 @@
 import { cors, json, method, wrap, rateLimited, varyOn } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { hashClient, listCreations, listShowcase, countShowcase, forgeStoreEnabled } from './_lib/forge-store.js';
+import { currentDayWindow, getEvent, isValidSlug } from './_lib/forge-off-events.js';
 
 export default wrap(async (req, res) => {
 	// Open CORS: this is a public, keyless, read-only feed of models people chose
@@ -46,7 +47,35 @@ export default wrap(async (req, res) => {
 		// Fresh (newest, visual-first) vs Top (Forge-Off board, most-voted). The
 		// `window=week` narrows Top to the current Forge-Off week.
 		const sort = (url.searchParams.get('sort') || '').trim() === 'top' ? 'top' : 'fresh';
-		const window = (url.searchParams.get('window') || '').trim() === 'week' ? 'week' : 'all';
+		const windowParam = (url.searchParams.get('window') || '').trim();
+		let window = windowParam === 'week' || windowParam === 'day' ? windowParam : 'all';
+		// Explicit [from, to) bounds for window=day (the current UTC day) and for
+		// an event board (event=<slug>, optionally &day=<n>). Absent for all/week
+		// so those outputs stay exactly as before.
+		let bounds = {};
+		const eventSlug = (url.searchParams.get('event') || '').trim();
+		if (eventSlug) {
+			if (!isValidSlug(eventSlug)) {
+				return json(res, 400, { error: 'invalid_event', message: 'event must be a lowercase slug.' });
+			}
+			const event = getEvent(eventSlug);
+			if (!event) return json(res, 404, { error: 'unknown_event', message: 'No such Forge-Off event.' });
+			const dayParam = url.searchParams.get('day');
+			if (dayParam !== null && dayParam !== '') {
+				const n = /^\d{1,2}$/.test(dayParam) ? Number(dayParam) : NaN;
+				const day = event.days.find((d) => d.index === n);
+				if (!day) {
+					return json(res, 400, { error: 'invalid_day', message: `day must be 1 to ${event.days.length}.` });
+				}
+				bounds = { from: day.start, to: day.end };
+				window = 'event-day';
+			} else {
+				bounds = { from: event.start, to: event.end };
+				window = 'event';
+			}
+		} else if (window === 'day') {
+			bounds = currentDayWindow();
+		}
 		// Resolve the caller's own voted-state per card when they send their
 		// forge id — the community feed carries no other identifying data, and a
 		// missing header just yields voted=false everywhere (anonymous read).
@@ -56,7 +85,7 @@ export default wrap(async (req, res) => {
 		// `total` is the full community-model count (social proof), independent of
 		// the paginated slice. Cheap enough to run alongside the feed read.
 		const [creations, total] = await Promise.all([
-			listShowcase({ limit, sort, window, voterKey }),
+			listShowcase({ limit, sort, window, voterKey, ...bounds }),
 			countShowcase(),
 		]);
 		// Per-voter reads can't be shared across browsers, so only the anonymous

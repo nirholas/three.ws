@@ -118,3 +118,58 @@ reference cleared, so the hall of fame never loses a week.
 
 Backfill a past week's winner (owner): `GET /api/cron/forge-off-crown?week=YYYY-MM-DD`
 (add `&dry_run=1` to preview). Authorized with `CRON_SECRET`.
+
+## Themed events and daily windows
+
+Beyond the weekly board, Forge-Off can run a themed event: a run of consecutive
+UTC days, each with a theme, its own board and its own winner, plus an overall
+winner. Events are config, not code: add an object to
+[data/forge-off-events.json](../data/forge-off-events.json)
+(`slug`, `title`, `summary`, `starts_at`, `ends_at`, `days[]` of
+`{ date, theme, surface, surface_href }`, `prizes_note`). The loader in
+`api/_lib/forge-off-events.js` validates it at boot: slugs are lowercase,
+days must be consecutive UTC dates from `starts_at`, `ends_at` must be the end
+of the last day, and `surface_href` must be a same-site path. Day boundaries are
+UTC midnights built from epoch milliseconds, so they never shift with DST.
+
+The shipped event, `ibm-forge-off-open`, uses the proposed week of 2026-11-09 to
+2026-11-13. Move the dates in the config when the organizers confirm them.
+
+### Windows on the board read
+
+```
+GET /api/forge-gallery?scope=community&sort=top&window=day
+GET /api/forge-gallery?scope=community&sort=top&event=<slug>
+GET /api/forge-gallery?scope=community&sort=top&event=<slug>&day=<n>
+```
+
+`window=day` is the current UTC day. `event` alone is the whole event window,
+`event` plus `day` is one day. An unknown slug is `404`, a malformed slug or
+day is `400`. `window=all` and `window=week` are unchanged.
+
+### Event endpoint
+
+`GET /api/forge-off/event?slug=<slug>` (slug optional: the live event, else the
+next upcoming, else the latest ended) returns the config, `phase`
+(`upcoming`, `live`, `ended`), `live_day`, each started day's top 3, and the
+overall leader with event-wide `total_votes` and `entries`. The overall winner
+is the creation with the most votes made anywhere in the event window (there is
+no login, so there is no per-person sum).
+
+### Landing page
+
+[/forge-off](/forge-off) and `/forge-off/<slug>`: the live day's theme with a
+countdown to the day's close, a make-one button to the day's surface (the Forge
+day prefills the prompt), the day's board with the same vote endpoint, overall
+standings, collapsed past days, and share buttons. With no live or upcoming
+event it shows the standing weekly board.
+
+### Crowning
+
+`api/cron/forge-off-event-crown` runs daily at 00:07 UTC. A closed day is
+crowned into `forge_event_winners` (migration
+`20261105020000_forge_event_winners.sql`, apply with `npm run db:migrate` after
+`npm run db:status`) with the day's theme, and the overall winner is crowned
+once the event has ended. First crowning wins and is never rewritten. The weekly
+crown cron is untouched. `?dry_run=1` previews; `?now=<ISO UTC>` replays a
+moment.

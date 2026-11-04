@@ -1426,14 +1426,20 @@ export async function countCreationsByUser({ userId } = {}) {
 // `voted` flag so the UI can render the caller's own upvotes without a second
 // round-trip. voterKey is the hashed browser id (hashClient); pass null for an
 // anonymous read (voted is then false for every row).
-export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh', window = 'all' } = {}) {
+export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh', window = 'all', from = null, to = null } = {}) {
 	if (!forgeStoreEnabled()) return [];
 	const capped = Math.min(Math.max(Number(limit) || 12, 1), 24);
 	// Empty string never matches a real voter_key (hashClient collapses missing
 	// ids to 'anon', a non-empty hash), so an anonymous read yields voted=false.
 	const vk = typeof voterKey === 'string' && voterKey ? voterKey : '';
 	const top = sort === 'top';
+	// Half-open [from, to) bounds. `week` keeps its historical meaning (Top only,
+	// open-ended on the right); explicit bounds (window=day, event boards) apply
+	// to both sorts.
 	const weekStart = top && window === 'week' ? forgeOffWeekStart().toISOString() : null;
+	const explicitFrom = from instanceof Date ? from.toISOString() : null;
+	const boundFrom = explicitFrom ?? weekStart;
+	const boundTo = to instanceof Date ? to.toISOString() : null;
 	try {
 		const rows = top
 			? await sql`
@@ -1447,7 +1453,8 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 				where fc.status = 'done' and fc.glb_url is not null
 					and (fc.outcome is null or fc.outcome != 'rejected')
 					and (fc.visibility is null or fc.visibility = 'public')
-					and (${weekStart}::timestamptz is null or fc.created_at >= ${weekStart}::timestamptz)
+					and (${boundFrom}::timestamptz is null or fc.created_at >= ${boundFrom}::timestamptz)
+					and (${boundTo}::timestamptz is null or fc.created_at < ${boundTo}::timestamptz)
 				order by fc.vote_count desc, fc.created_at desc
 				limit ${capped}
 			`
@@ -1462,6 +1469,8 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 				where fc.status = 'done' and fc.glb_url is not null
 					and (fc.outcome is null or fc.outcome != 'rejected')
 					and (fc.visibility is null or fc.visibility = 'public')
+					and (${explicitFrom}::timestamptz is null or fc.created_at >= ${explicitFrom}::timestamptz)
+					and (${boundTo}::timestamptz is null or fc.created_at < ${boundTo}::timestamptz)
 				order by (fc.preview_image_url is not null) desc, fc.created_at desc
 				limit ${capped}
 			`;

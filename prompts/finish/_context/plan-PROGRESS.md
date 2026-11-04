@@ -71,3 +71,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 966-plan-token-rail-receiver-wallets-preflight.md | pending commit | guard, health signature and preflight shipped; owner must name receiver addresses and run the printed apply command
 2026-11-04 | 976-plan-x402-paid-intel-sniper-arm.md | pending commit | paid-intel arm built and tested; owner must apply the migration, fund the arm wallet (explicit yes), enable it and deploy the sniper worker
 2026-11-04 | 723-plan-play-concierge-greeter-tour.md | see git log (feat(play): concierge) | Welcome concierge NPC with one-time greeting, free-model chat, skippable 4-stop tour and event line.
+2026-11-04 771-plan-forge-off-themed-event-boards-landing.md: shipped themed Forge-Off events (config, day windows, event endpoint, event crown cron, /forge-off page); migration unapplied.

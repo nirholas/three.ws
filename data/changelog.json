@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Forge-Off themed events: a board for every day and a landing page",
+			"summary": "The Forge-Off can now run a themed event with one board per UTC day and an overall winner, all on the same no-login, one-vote-per-browser voting. The new /forge-off page shows the live day's theme with a countdown to its close, a button to make an entry on the right surface, that day's board, the overall standings and past days. Between events it shows the standing weekly board. Events are entries in a config file, so a partner or community contest needs no code. The first event is the proposed five-day Forge-Off Open.",
+			"tags": ["feature"],
+			"link": "/forge-off"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "A concierge greets new visitors in the world",
 			"summary": "A well-dressed concierge near spawn welcomes first-time players once, answers questions about the stations that really exist through the free chat model, and leads a skippable tour of the Intel Kiosk, Signature Wall, wheel and War Portal. During a live event it opens with what is happening.",
 			"tags": [

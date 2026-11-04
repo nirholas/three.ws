@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Forge-Off | three.ws</title>
+	<meta name="description" content="A daily-themed 3D creation contest with no account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day and an overall winner." />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<style>
+		:root { --fo-accent: #7c5cff; --fo-line: rgba(255,255,255,0.1); --fo-fg-dim: rgba(255,255,255,0.6); --fo-card: rgba(255,255,255,0.04); }
+		:root[data-theme="light"] { --fo-line: rgba(0,0,0,0.12); --fo-fg-dim: rgba(0,0,0,0.6); --fo-card: rgba(0,0,0,0.035); }
+		body { background: var(--bg-0, #0a0a0f); color: var(--ink, #e2e8f0); min-height: 100vh; }
+		.fo-wrap { width: 100%; min-width: 0; box-sizing: border-box; max-width: 1100px; margin: 0 auto; padding: clamp(1.25rem, 4vw, 3rem) 1rem 5rem; }
+		.fo-eyebrow { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--fo-accent); margin: 0 0 .5rem; }
+		.fo-title { font-size: clamp(1.8rem, 5vw, 3rem); font-weight: 800; letter-spacing: -.03em; margin: 0 0 .6rem; line-height: 1.1; }
+		.fo-sub { color: var(--fo-fg-dim); font-size: 15px; line-height: 1.65; max-width: 62ch; margin: 0 0 1.25rem; }
+		.fo-theme { padding: 1.1rem 1.25rem; border: 1px solid var(--fo-line); border-radius: 14px; background: var(--fo-card); display: flex; flex-direction: column; gap: .5rem; }
+		.fo-theme-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--fo-fg-dim); }
+		.fo-theme-text { font-size: clamp(1.1rem, 3vw, 1.5rem); letter-spacing: -.01em; }
+		.fo-cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; margin-top: .4rem; }
+		.fo-countdown { font-variant-numeric: tabular-nums; font-size: 13px; color: var(--fo-fg-dim); }
+		.fo-prizes { font-size: 12.5px; color: var(--fo-fg-dim); margin: .9rem 0 0; }
+		.fo-btn { display: inline-flex; align-items: center; justify-content: center; font: inherit; font-size: 13.5px; font-weight: 600; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--fo-line); background: var(--fo-card); color: inherit; text-decoration: none; cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+		.fo-btn:hover { border-color: var(--fo-accent); background: rgba(124,92,255,.12); }
+		.fo-btn:active { transform: translateY(1px); }
+		.fo-btn:focus-visible, .fo-tab:focus-visible, .fo-vote:focus-visible, .fo-share-btn:focus-visible, .fo-card-link:focus-visible, .fo-past-day summary:focus-visible { outline: 2px solid var(--fo-accent); outline-offset: 2px; }
+		.fo-btn-primary { background: var(--fo-accent); border-color: var(--fo-accent); color: #fff; }
+		.fo-btn-primary:hover { background: #6a49f0; border-color: #6a49f0; }
+		.fo-tabs { display: flex; gap: .5rem; overflow-x: auto; padding: .25rem 0 .5rem; margin: 2rem 0 1rem; scrollbar-width: thin; }
+		.fo-tab { flex: 0 0 auto; display: inline-flex; flex-direction: column; gap: 2px; align-items: flex-start; font: inherit; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--fo-line); background: var(--fo-card); color: inherit; cursor: pointer; transition: border-color .15s, background .15s; text-align: left; }
+		.fo-tab:hover { border-color: var(--fo-accent); }
+		.fo-tab:active { background: rgba(124,92,255,.2); }
+		.fo-tab[aria-selected="true"] { border-color: var(--fo-accent); background: rgba(124,92,255,.16); }
+		.fo-tab-n { font-weight: 700; font-size: 13px; }
+		.fo-tab-d { font-size: 11px; color: var(--fo-fg-dim); }
+		.fo-live-dot { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #22c55e; }
+		.fo-h2 { font-size: 1.15rem; margin: 2.5rem 0 .6rem; letter-spacing: -.01em; }
+		.fo-board-title { font-size: 1.15rem; margin: 0 0 .9rem; }
+		.fo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: .9rem; }
+		.fo-grid-one { grid-template-columns: minmax(0, 320px); }
+		.fo-card { position: relative; display: flex; flex-direction: column; border: 1px solid var(--fo-line); border-radius: 14px; background: var(--fo-card); overflow: hidden; transition: border-color .15s, transform .15s; }
+		.fo-card:hover { border-color: rgba(124,92,255,.6); transform: translateY(-2px); }
+		.fo-card-link { display: block; color: inherit; text-decoration: none; }
+		.fo-thumb { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: rgba(255,255,255,.04); }
+		.fo-thumb-ph { display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--fo-fg-dim); }
+		.fo-card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 12px; }
+		.fo-card-meta { display: flex; align-items: baseline; gap: 6px; min-width: 0; flex: 1 1 100px; }
+		.fo-rank { font-size: 11px; font-weight: 700; color: var(--fo-accent); }
+		.fo-prompt { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.fo-card-actions { display: inline-flex; gap: 6px; }
+		.fo-vote, .fo-share-btn { display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 12px; line-height: 1; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--fo-line); background: transparent; color: var(--fo-fg-dim); cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+		.fo-vote:hover, .fo-share-btn:hover { color: inherit; border-color: var(--fo-accent); }
+		.fo-vote:active, .fo-share-btn:active { background: rgba(124,92,255,.2); }
+		.fo-vote svg { width: 12px; height: 12px; }
+		.fo-vote.is-voted { background: var(--fo-accent); border-color: var(--fo-accent); color: #fff; }
+		.fo-vote[data-busy] { opacity: .6; pointer-events: none; }
+		.fo-vote-count { font-variant-numeric: tabular-nums; }
+		.fo-note { padding: 2rem 1.25rem; border: 1px dashed var(--fo-line); border-radius: 14px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: .4rem; }
+		.fo-note p { margin: 0 0 .6rem; color: var(--fo-fg-dim); max-width: 48ch; }
+		.fo-note-bad { border-style: solid; border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.06); }
+		.fo-muted, .fo-stats { color: var(--fo-fg-dim); font-size: 13px; margin: 0 0 .8rem; }
+		.fo-past-day { border: 1px solid var(--fo-line); border-radius: 12px; padding: .7rem 1rem; margin-bottom: .6rem; background: var(--fo-card); }
+		.fo-past-day summary { cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 6px; }
+		.fo-past-day .fo-grid { margin-top: .9rem; }
+		.fo-share { margin-top: 2rem; }
+		.fo-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)); background: #1c1c26; color: #fff; border: 1px solid var(--fo-line); padding: 10px 16px; border-radius: 10px; font-size: 13px; max-width: calc(100vw - 2rem); z-index: 50; }
+		.fo-skel .fo-thumb { animation: fo-pulse 1.4s ease-in-out infinite; }
+		.fo-skel-line { height: 12px; margin: 12px; border-radius: 6px; background: rgba(255,255,255,.06); animation: fo-pulse 1.4s ease-in-out infinite; }
+		@keyframes fo-pulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+		@media (prefers-reduced-motion: reduce) { .fo-skel .fo-thumb, .fo-skel-line { animation: none; } .fo-card, .fo-btn, .fo-tab { transition: none; } .fo-card:hover { transform: none; } }
+	</style>
+</head>
+<body>
+	<main class="fo-wrap">
+		<section id="fo-hero" aria-live="polite"></section>
+		<div id="fo-days" class="fo-tabs"></div>
+		<section aria-labelledby="fo-board-title">
+			<h2 id="fo-board-title" class="fo-board-title">Today's board</h2>
+			<div id="fo-board" aria-live="polite" aria-busy="true"></div>
+		</section>
+		<section id="fo-overall"></section>
+		<section id="fo-past" hidden></section>
+		<div id="fo-share" class="fo-share"></div>
+	</main>
+	<div id="fo-toast" class="fo-toast" role="status" hidden></div>
+	<script src="/nav.js"></script>
+	<script type="module" src="/src/forge-off-event.js"></script>
+</body>
+</html>
