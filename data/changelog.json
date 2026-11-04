@@ -3,6 +3,33 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Campaign links are now measured first-party",
+			"summary": "A page opened from a tagged campaign link records the visitor's first touch in our own ledger, and signups, agents, forge generations and paid calls are credited to it. Admins get a per-campaign report; no IP or referrer is stored.",
+			"tags": [
+				"growth",
+				"analytics"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Sniper reports now price the judge and measure trailing-stop giveback",
+			"summary": "The sniper judge records tokens and cost per verdict, and a read-only experiment report prints per-arm net P&L after model cost plus how much of each peak a trailing stop gave back (median 43.2% over the last 30 days).",
+			"tags": [
+				"sniper",
+				"experiments"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Forge text-to-3D in Zed, Raycast, Poe, Hugging Face and n8n",
+			"summary": "Five new packages put the free three.ws Forge lane inside Zed's Agent Panel, a Raycast command, a Poe bot, a Gradio Space that is also an MCP server, and an n8n node. The shared Python client now also accepts Forge's cache-hit reply.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Coin war results echo into the ticker and jumbotron",
 			"summary": "A finished Coin Wars battle now adds a row to the world's activity ticker and, on a win for your community, flashes on the chart-screen jumbotron, once per battle.",
 			"tags": ["play", "coin-wars"],
