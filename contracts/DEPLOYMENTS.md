@@ -142,11 +142,7 @@ re-checked on-chain against live Base RPC:
   (1243 bytes runtime, vs BSC's 1278, differs only because each chain's USDC enters the
   constructor as an immutable.)
 
-**Basescan verification: PENDING (not yet verified).** Source + exact settings are
-captured in-repo; run `scripts/verify-threews-payments-base.mjs` with a
-`BASESCAN_API_KEY` set to publish (constructor args:
-`(0x4022de2D…, 0x833589fCD6…)`). The script prints the Standard JSON Input bundle for
-manual UI verification when no key is present.
+**Basescan verification: VERIFIED 2026-11-04.** [Source on Basescan](https://basescan.org/address/0x31B13cDe47431EfcC8616C8495204e6E6C2Ded34#code), submitted with `scripts/verify-threews-payments-base.mjs` (constructor args `(0x4022de2D..., 0x833589fCD6...)`). The first attempt failed with "bytecode does NOT match" because the script read the working-tree `contracts/ThreeWSPayments.sol`, which has been edited since the 2026-06-15 deploy (1357 bytes of runtime code now, against 1243 on chain). The script now submits the file exactly as of commit `3310379e1` (read with `git show`), which compiles to exactly the on-chain 1243 bytes. The Etherscan V2 `chainid` also belongs in the query string, not the POST body; both are fixed in the script.
 
 ### Base payment routing — EOA `payTo` is intentional (no redeploy / no redirect)
 
@@ -187,14 +183,22 @@ immutable), so a CREATE2 deploy via `ThreeWSFactory` with a shared salt yields t
 
 | Chain | Chain ID | AgentPayments | Owner | Routers allow-listed | Tx |
 | --- | --- | --- | --- | --- | --- |
-| Ethereum | 1 | TODO: fill after deployment | TODO | TODO | TODO |
-| Base | 8453 | TODO: fill after deployment | TODO | TODO | TODO |
-| Arbitrum One | 42161 | TODO: fill after deployment | TODO | TODO | TODO |
-| Polygon | 137 | TODO: fill after deployment | TODO | TODO | TODO |
-| BNB Smart Chain | 56 | TODO: fill after deployment | TODO | TODO | TODO |
-| Avalanche | 43114 | TODO: fill after deployment | TODO | TODO | TODO |
+| Ethereum | 1 | pending owner broadcast: predicted `0xAbBDbF3DAe1d35208D8B0C1e50453C70DD4307C9` (ThreeWSFactory not deployed on this chain yet) | `0x4022de2D...f402` (deployer EOA) | none yet | none yet |
+| Base | 8453 | pending owner broadcast: predicted `0xAbBDbF3DAe1d35208D8B0C1e50453C70DD4307C9` | `0x4022de2D...f402` (deployer EOA) | none yet | none yet |
+| Arbitrum One | 42161 | pending owner broadcast: predicted `0xAbBDbF3DAe1d35208D8B0C1e50453C70DD4307C9` | `0x4022de2D...f402` (deployer EOA) | none yet | none yet |
+| Polygon | 137 | pending owner broadcast: predicted `0xAbBDbF3DAe1d35208D8B0C1e50453C70DD4307C9` (ThreeWSFactory not deployed on this chain yet) | `0x4022de2D...f402` (deployer EOA) | none yet | none yet |
+| BNB Smart Chain | 56 | pending owner broadcast: predicted `0xAbBDbF3DAe1d35208D8B0C1e50453C70DD4307C9` | `0x4022de2D...f402` (deployer EOA) | none yet | none yet |
+| Avalanche | 43114 | pending owner broadcast: predicted `0xAbBDbF3DAe1d35208D8B0C1e50453C70DD4307C9` (ThreeWSFactory not deployed on this chain yet) | `0x4022de2D...f402` (deployer EOA) | none yet | none yet |
 
-After filling a row, set the matching `agentPayments` address in
+### CREATE2 deploy and fork proof (2026-11-04)
+
+One address on every chain: `ThreeWSFactory` `0x00000000D49195AE81759cd247cFeDD9D0B479df`, salt `keccak256("three.ws/AgentPayments/v1")`, init code `AgentPayments` creation bytecode plus `abi.encode(owner)`. With the default owner (the deployer EOA) the address is `0xAbBDbF3DAe1d35208D8B0C1e50453C70DD4307C9`. The owner is part of the init code, so choosing the platform multisig as owner gives a different address, still identical on every chain. Decide the owner before the broadcast.
+
+- Deploy script: `contracts/script/DeployAgentPaymentsCreate2.s.sol` (asserts its prediction equals the factory's `predict`, reverts if code already exists). Foundry parity test `contracts/test/AgentPaymentsCreate2.t.sol` deploys under six chain ids and gets one address.
+- Plan and broadcast: `node scripts/deploy-agent-payments-evm.mjs` prints the six-chain table and signs nothing. Broadcast needs `--chain <id> --yes --confirm-mainnet` and `DEPLOYER_PK`. Plan on 2026-11-04: factory present on Base, Arbitrum and BSC (estimated cost 0.00001 ETH, 0.000033 ETH, 0.000083 BNB at read time); absent on Ethereum, Polygon and Avalanche, so those three need the factory deployed first.
+- Fork proof: `node scripts/prove-agent-payments-fork.mjs --chain <id> --rpc <anvil fork> --router <router>` against `anvil --fork-url` forks of Base and BSC. Each run: deploy through the live factory (7097 bytes at the predicted address), `createAgent` (2000 bps buyback), `setRouterAllowed` for the chain's canonical DEX router, then through the SDK's `EvmAgent`: `acceptPayment` of 100 USDC, `distributePayments` (20% buyback vault, 80% withdraw vault, payment vault empty), `withdraw` (receiver holds exactly the 80%). Both forks produced the same address, `0xAAd35977753757071e019F548FcF803196380421` (owner was anvil's public test account), which is the parity property on real chain state. The deploy script's broadcast path was also run against the BSC fork.
+
+After a live deploy, run `node scripts/wire-agent-payments-addresses.mjs --chain <id>=<address> --owner <owner> --tx <id>=<hash>` to fill the row and `agent-payments-sdk/src/evm/addresses.ts` in one pass, only after `eth_getCode` shows code at the address. By hand instead: after filling a row, set the matching `agentPayments` address in
 [`agent-payments-sdk/src/evm/addresses.ts`](../agent-payments-sdk/src/evm/addresses.ts)
 and run `npm run build` in `agent-payments-sdk/`.
 

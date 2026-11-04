@@ -23,7 +23,7 @@
 // Input + ABI-encoded constructor args) so it can be pasted into the Basescan
 // "Verify & Publish" UI manually.
 
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { encodeAbiParameters } from 'viem';
@@ -34,6 +34,7 @@ const ADDRESS = '0x31B13cDe47431EfcC8616C8495204e6E6C2Ded34';
 const CHAIN_ID = 8453;
 const OWNER = '0x4022de2D36C334E73C7a108805Cea11C0564f402';
 const BASE_USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const DEPLOYED_SOURCE_COMMIT = '3310379e1';
 const COMPILER = 'v0.8.35+commit.47b9dedd';
 const CONTRACT_NAME = 'contracts/ThreeWSPayments.sol:ThreeWSPayments';
 
@@ -47,7 +48,10 @@ const standardJson = {
 	language: 'Solidity',
 	sources: {
 		'contracts/ThreeWSPayments.sol': {
-			content: readFileSync(resolve(root, 'contracts/ThreeWSPayments.sol'), 'utf8'),
+			// The exact source compiled for the live deploy: the file as of commit
+			// 3310379e1 (2026-06-15). The working-tree file has changed since, so it
+			// no longer compiles to the on-chain bytecode. Read from git, byte for byte.
+			content: execFileSync('git', ['show', `${DEPLOYED_SOURCE_COMMIT}:contracts/ThreeWSPayments.sol`], { cwd: root, encoding: 'utf8' }),
 		},
 	},
 	settings: {
@@ -72,7 +76,8 @@ async function submit() {
 		sourceCode: JSON.stringify(standardJson),
 		constructorArguements: constructorArgs,
 	});
-	const res = await fetch(API, { method: 'POST', body });
+	// Etherscan V2 reads chainid from the query string, even on POST.
+	const res = await fetch(`${API}?chainid=${CHAIN_ID}`, { method: 'POST', body });
 	const json = await res.json();
 	if (json.status !== '1') throw new Error(`verify submit failed: ${json.result || json.message}`);
 	return json.result; // GUID

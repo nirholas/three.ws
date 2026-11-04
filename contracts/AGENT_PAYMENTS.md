@@ -88,8 +88,7 @@ forge script script/DeployAgentPayments.s.sol:DeployAgentPayments \
 
 ### 3. Deploy to each mainnet chain
 
-Run once per chain the SDK supports, swapping `--rpc-url`. The deployed address
-differs per chain (no CREATE2 here — addresses depend on deployer nonce):
+Run once per chain the SDK supports, swapping `--rpc-url`. Prefer the CREATE2 route below so the address is the same everywhere.
 
 | Chain | Chain ID | RPC env |
 | --- | --- | --- |
@@ -105,13 +104,25 @@ forge script script/DeployAgentPayments.s.sol:DeployAgentPayments \
   --rpc-url $BASE_RPC_URL --private-key $DEPLOYER_PK --broadcast --verify
 ```
 
-> Want one identical address across all chains (like `ThreeWSPayments`)? Deploy
-> through the existing `ThreeWSFactory` CREATE2 deployer at
-> `0x00000000d49195ae81759cd247cfedd9d0b479df` with a shared salt. Because the
-> constructor takes only `owner` (no chain-specific immutable), the same salt +
-> init code yields the **same** address on every chain — unlike `ThreeWSPayments`,
-> whose per-chain USDC immutable broke address parity. See
-> [`DEPLOYMENTS.md`](DEPLOYMENTS.md) for the factory ABI and salt workflow.
+#### One address on every chain (CREATE2, preferred)
+
+`script/DeployAgentPaymentsCreate2.s.sol` deploys through the existing `ThreeWSFactory`
+(`0x00000000D49195AE81759cd247cFeDD9D0B479df`) with the fixed salt
+`keccak256("three.ws/AgentPayments/v1")`. The constructor takes only `owner` (no
+chain-specific immutable), so the same owner gives the same address on every chain.
+The script checks its local prediction against the factory's `predict`, and reverts if
+code already exists there.
+
+```bash
+node scripts/deploy-agent-payments-evm.mjs                       # plan: six-chain table, signs nothing
+AGENT_PAYMENTS_OWNER=<multisig> forge script \
+  script/DeployAgentPaymentsCreate2.s.sol:DeployAgentPaymentsCreate2 \
+  --rpc-url $BASE_RPC_URL --private-key $DEPLOYER_PK --broadcast
+```
+
+The factory exists today on Base, Arbitrum One and BSC only. Ethereum, Polygon and
+Avalanche need it deployed first. The plan table and fork proof are recorded in
+[`DEPLOYMENTS.md`](DEPLOYMENTS.md).
 
 ### 4. Allow-list buyback routers (per chain)
 

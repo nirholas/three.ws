@@ -25,7 +25,7 @@ contracts are additional surfaces.
 | `IdentityRegistry` | [`src/IdentityRegistry.sol`](./src/IdentityRegistry.sol) | ERC-8004 agents as ERC-721, EIP-712 delegated wallet, key/value metadata | Canonical ERC-8004 address live everywhere; not deployed from this tree |
 | `ReputationRegistry` | [`src/ReputationRegistry.sol`](./src/ReputationRegistry.sol) | One signed score per reviewer per agent, aggregated on-chain | Same as above |
 | `ValidationRegistry` | [`src/ValidationRegistry.sol`](./src/ValidationRegistry.sol) | Allow-listed validators attest to off-chain proofs (for example glTF-Validator reports) | Not deployed from this tree; the platform uses the ERC-8004 reference registry |
-| `AgentPayments` | [`src/AgentPayments.sol`](./src/AgentPayments.sol) | Payments in, split into authority and buyback shares, buyback swaps and burns | Not deployed. See [`AGENT_PAYMENTS.md`](./AGENT_PAYMENTS.md) |
+| `AgentPayments` | [`src/AgentPayments.sol`](./src/AgentPayments.sol) | Payments in, split into authority and buyback shares, buyback swaps and burns | CREATE2 deploy script, parity test and fork proof done; live broadcast pending the owner. See [`AGENT_PAYMENTS.md`](./AGENT_PAYMENTS.md) |
 | `GreenfieldVault` | [`src/GreenfieldVault.sol`](./src/GreenfieldVault.sol) | Pay-to-unlock marketplace over a real BNB Greenfield cross-chain permission grant | Not deployed to a public chain; proven on an anvil fork |
 | `WorldMoves` | [`src/WorldMoves.sol`](./src/WorldMoves.sol) | Event-only move stream for the Agora world. No value, no admin | Not deployed to a public chain |
 | `SkinHook` | [`v4-hooks/src/SkinHook.sol`](./v4-hooks/src/SkinHook.sol) | Uniswap v4 hook: wearable 3D items as fixed-supply coins, wear-to-lock, in-swap creator royalty, referrer share | Not deployed. See [`v4-hooks/README.md`](./v4-hooks/README.md) |
@@ -56,7 +56,8 @@ forge test
 
 | Suite | Tests |
 | --- | --- |
-| `AgentPaymentsTest` | 57 |
+| `AgentPaymentsTest` | 58 |
+| `AgentPaymentsCreate2Test` | 6 |
 | `GreenfieldVaultTest` | 41 |
 | `IdentityRegistryTest` | 37 |
 | `ReputationRegistryTest` | 31 |
