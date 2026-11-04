@@ -17,6 +17,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Readable } from 'node:stream';
+import { _resetReadCache } from '../../api/_lib/solana/connection.js';
 
 // $THREE — the only mint that ever appears in these fixtures (per the $THREE rule).
 const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -39,6 +40,8 @@ const ORIGINAL_FETCH = globalThis.fetch;
 
 beforeEach(() => {
 	quotaOk = true;
+	// The RPC fresh-read cache is process-local: forget it so one case's answer is never served to the next.
+	_resetReadCache();
 });
 afterEach(() => {
 	globalThis.fetch = ORIGINAL_FETCH;

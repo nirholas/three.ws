@@ -57,6 +57,7 @@ vi.stubGlobal('fetch', (url, opts) => {
 
 import { getBalances, __resetBalancesBreaker } from '../../api/_lib/balances.js';
 import { invalidateBalances } from '../../api/_lib/balances.js';
+import { _resetReadCache } from '../../api/_lib/solana/connection.js';
 
 const ADDR_A = 'AaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAaAa';
 const ADDR_B = 'BbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBbBb';
@@ -70,6 +71,7 @@ beforeEach(async () => {
 	fallbackToken2022Accounts = [];
 	process.env.HELIUS_API_KEY = 'test-key';
 	__resetBalancesBreaker();
+	_resetReadCache();
 	// Distinct addresses per case dodge the 60s balance cache; clear to be safe.
 	await invalidateBalances({ chain: 'solana', address: ADDR_A });
 	await invalidateBalances({ chain: 'solana', address: ADDR_B });
