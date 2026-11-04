@@ -856,3 +856,12 @@ The Discord application registration, `DISCORD_*` env vars, the two-account chec
 Discord client, and the Discovery submission are tracked in row 52 of
 [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md), which now holds
 the only copy of the remaining work. `plan-COVERAGE.md` now points at that row.
+
+## 2026-11-04: order 095-partners-12 (Home Assistant HACS) closed
+
+Closed and deleted at the owner's instruction. All agent work was verified in the 2026-10-13 and
+2026-11-03 entries above. What remains is owner-only (order 938, owner-actions row 58): create
+`nirholas/three-ws-home-assistant` from `node scripts/export-hacs-repo.mjs`, cut `v1.0.1`, and open
+the `hacs/default` PR using the text in `marketing/growth/submissions/home-assistant.md`. Links to the
+deleted order now point at row 58 and order 938, and RUN-ORDER's partners row lists only the
+orders still on disk.

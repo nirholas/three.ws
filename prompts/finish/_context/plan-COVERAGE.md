@@ -1730,8 +1730,8 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `extensions/walk-avatar/TERMS.md` | no-open-work | served at /extension/terms (200) |
 | `herald-sdk/examples/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
 | `herald-sdk/README.md` | no-open-work | reference doc for shipped behavior; no open-work markers found |
-| `home-assistant-integration/info.md` | covered-by-existing:095-partners-12-home-assistant-hacs.md | HACS info page |
-| `home-assistant-integration/README.md` | covered-by-existing:095-partners-12-home-assistant-hacs.md | HACS default store submission |
+| `home-assistant-integration/info.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | HACS info page |
+| `home-assistant-integration/README.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | HACS default store submission |
 | `hubs/awesome-agent-data-apis/.github/ISSUE_TEMPLATE/add-project.md` | excluded | published curated list |
 | `hubs/awesome-agent-data-apis/.github/PULL_REQUEST_TEMPLATE.md` | excluded | published curated list |
 | `hubs/awesome-agent-data-apis/CONTRIBUTING.md` | excluded | published curated list |
@@ -1862,7 +1862,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `marketing/growth/submissions/awesome-webxr.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/discord-activity.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 52 | Discord Activity submission (order 088 closed 2026-11-04) |
 | `marketing/growth/submissions/e2b-awesome-ai-agents.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
-| `marketing/growth/submissions/home-assistant.md` | covered-by-existing:095-partners-12-home-assistant-hacs.md | HACS submission |
+| `marketing/growth/submissions/home-assistant.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | HACS submission |
 | `marketing/growth/submissions/khronos-gltf-project-explorer.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/livekit-avatar-plugin.md` | covered-by-existing:087-partners-04-livekit-pipecat-avatar.md | LiveKit avatar plugin submission |
 | `marketing/growth/submissions/mcpservers-org.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
@@ -2186,7 +2186,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/087-partners-04-livekit-pipecat-avatar.md` | excluded | already a work order in the queue |
 | `prompts/finish/093-partners-10-agent-tool-packages.md` | excluded | work order closed 2026-11-04; remaining owner steps are order 938 |
 | `prompts/finish/094-partners-11-site-builder-embeds.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 57 |
-| `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | already a work order in the queue |
+| `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 58 |
 | `prompts/finish/401-auto-restore-green-vitest.md` | excluded | already a work order in the queue |
 | `prompts/finish/403-auto-drain-docs-freshness.md` | excluded | already a work order in the queue |
 | `prompts/finish/456-auto-mcp-tools-settings-page.md` | excluded | already a work order in the queue |

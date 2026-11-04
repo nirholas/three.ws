@@ -35,7 +35,7 @@ Send in this order, one tracker row per item, logging the outcome in `status` an
 
 1. **Agent registries** (order 093): npm publish of `packages/ai-sdk` and `packages/langchain`; the LangChain integration issue; Hermes, Kilo, OpenHands, OpenCode, Dify and cursor.directory entries; the Composio toolkit form; the GitHub MCP registry entry.
 2. **LiveKit and Pipecat** (order 087): the avatar plugin pull request to livekit/agents and the community-integration pull request to Pipecat's docs.
-3. **Home Assistant** (order 095): create the standalone repository from the export script, then the `home-assistant/brands` and `hacs/default` pull requests.
+3. **Home Assistant** (order 095, closed 2026-11-04): create the standalone repository from the export script, cut `v1.0.1`, then open the `hacs/default` pull request. No `home-assistant/brands` PR is needed; the integration ships its own `brand/` folder. Steps: [marketing/growth/submissions/home-assistant.md](../../marketing/growth/submissions/home-assistant.md), owner-actions row 58.
 4. **Slicers** (order 089): the PrusaSlicer trusted-hosts pull request and the Bambu Studio issue.
 5. **Site builders** (order 094): WordPress plugin directory, Framer marketplace, Webflow Apps.
 6. **Animation licensing** (order 085): the Adobe permission email, if order 085 kept anything that needs it.
