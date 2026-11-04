@@ -141,10 +141,10 @@ Before building the next lane, instrument the ones that exist.
    `pages/splat.html`) runs Spark 2.3.1 with worker-built LoD trees on large
    scenes and saved camera hotspots with in-browser video export
    (`src/splat-hotspots.js`). `POST /api/forge-splat` turns one image into a
-   splat (`workers/model-triposplat`), and the AR Studio "From a photo" tab
+   splat (`workers/model-triposplat`; `num_gaussians` is validated between 32768 and the cap before the GPU is touched). The Splat Viewer has a "Generate from a photo" panel on the same lane, so the photo-to-splat half of the loop is live in the viewer. The AR Studio "From a photo" tab
    (`/api/forge-scene-objects`, `workers/model-sam3d-objects`) is built but off
    until the gated weights are staged. The open half is the product loop: photo
-   or video to splat to embeddable scene, on the same monetization rails as Forge. All REUSE-MAP
+   or video to splat to embeddable scene (the video leg is still open), on the same monetization rails as Forge. All REUSE-MAP
    splatting picks in the allowed column are permissively licensed; the
    non-commercial rasterizers are a hard no regardless of demo quality.
 7. **WebGPU/TSL migration, flag-gated.** three.js ships a WebGPU renderer;

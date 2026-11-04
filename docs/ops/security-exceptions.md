@@ -4,13 +4,12 @@ Durable, citable answers for advisories that `npm audit` at the repo root keeps 
 
 Scope: the ROOT `node_modules` tree only. Vendored worker dependencies are tracked by their own fix orders and must stay byte-identical across workers (`npm run check:vendored`).
 
-## Measured 2026-10-25
+## Measured 2026-11-04
 
 | Advisory | Package | Chain | Patched release | Status |
 |---|---|---|---|---|
 | GHSA-3gc7-fjrx-p6mg (CVSS 7.5, buffer overflow in `toBigIntLE` / `toBufferLE`) | `bigint-buffer@1.1.5` | `@solana/spl-token` -> `@solana/buffer-layout-utils` -> `bigint-buffer` (also via `@solana/spl-stake-pool` under `@kamino-finance/klend-sdk`) | None. `1.1.5` is the only and latest version. | Accepted, unreachable |
 | GHSA-p6mc-m468-83gw (CVSS 7.4, prototype pollution in `lodash.set`) | `lodash.set@4.3.2` | `@bnb-chain/greenfield-js-sdk@2.2.2` -> `lodash.set` | None. `4.3.2` is the latest; the SDK is at its latest `2.2.2`. | Accepted, unreachable |
-| GHSA-86w9-cpqp-85rv (CVSS 7.5, RSA PKCS#1 v1.5 signature verification) | `node-forge@1.4.0` | `agent0-sdk@1.7.1` -> `helia` -> `@ipshipyard/libp2p-auto-tls` -> `acme-client` -> `node-forge` | None. `1.4.0` is the registry latest. | Accepted, unreachable |
 
 ### bigint-buffer
 
@@ -20,12 +19,14 @@ Reachability: `grep -rn "bigint-buffer\|toBigIntLE\|toBufferLE" api src scripts`
 
 Reachability: `@bnb-chain/greenfield-js-sdk` is a live dependency (`api/_lib/bnb/greenfield.js`, `greenfield-write.js`, `vault-store.js` and the vault endpoints), so it is not dead code. `lodash.set` is called inside the SDK on SDK-owned object paths while building its own request structures. three.ws passes bucket names, object names and byte payloads, never an attacker-chosen property path, so no request field becomes a `set` key. Mitigation if this changes: never pass user-controlled strings as path arguments to SDK message builders, and allowlist keys.
 
-### node-forge
+### helia / libp2p (via agent0-sdk)
 
-Reachability: `grep -rn "agent0-sdk" api src scripts` shows only `api/agents/8004/agent.js` and `api/agents/8004/search.js`, and both import only the constants `DEFAULT_SUBGRAPH_URLS` and `DEFAULT_REGISTRIES`. No `Helia`, libp2p node, or auto-TLS (ACME certificate ordering) is ever constructed, and `grep -rn "helia\|auto-tls" api src scripts` is empty. The vulnerable RSA signature verification therefore never runs. The same dormant chain accounts for the other `helia` / `libp2p` / `@libp2p/kad-dht` / `@libp2p/peer-store` findings in the audit. Mitigation if this changes: do not start a libp2p node inside a request handler.
+The `node-forge` RSA advisory (GHSA-86w9-cpqp-85rv) that used to sit in this chain is closed: the lockfile now resolves a patched release and `npm audit` no longer reports it. The `helia` / `libp2p` findings below remain.
 
-## `@solana/pay` stays on 0.2.6 at the root
+Reachability: `grep -rn "agent0-sdk" api src scripts` shows only `api/agents/8004/agent.js` and `api/agents/8004/search.js`, and both import only the constants `DEFAULT_SUBGRAPH_URLS` and `DEFAULT_REGISTRIES`. No `Helia`, libp2p node, or auto-TLS (ACME certificate ordering) is ever constructed, and `grep -rn "helia\|auto-tls" api src scripts` is empty. The vulnerable code therefore never runs. This dormant chain accounts for the `@helia/bitswap` / `@helia/block-brokers` / `@helia/utils` / `helia` / `libp2p` / `@libp2p/kad-dht` / `@libp2p/peer-store` findings in the audit. Mitigation if this changes: do not start a libp2p node inside a request handler.
 
-The root pin `^0.2.6` is intentional. `@solana/pay` 1.x (used by `multiplayer/` and `character-studio/` at `1.0.16`, registry latest `1.0.26`) is a rewrite on `@solana/kit`: `findReference` takes a kit `Rpc<GetSignaturesForAddressApi>` and a kit `Address`, and `validateTransfer` takes `Rpc<GetTransactionApi>`, a kit `Signature`, and bigint-based `TransferFields`. The root call sites (`api/_lib/purchase-confirm.js`, `api/_lib/subscription-checkout.js`, `api/marketplace/buy-asset.js`, `api/print/orders/[id]/confirm.js`, `api/_lib/circulation.js`) pass a `@solana/web3.js` `Connection`, `PublicKey` and `BigNumber`, and `findReference(conn, key, { finality })` uses an option name 1.x renamed to `commitment`. A bump swaps in an incompatible API on the payment-verification path. 0.2.6 is the last release of the web3.js API.
+## `@solana/pay` is on 1.x at the root
 
-Migration, when taken, must move those five verifiers (and their RPC fallback wrapper) to kit together, behind the existing purchase and checkout tests. It is a payments-path rewrite, not a version bump, and is not required to close any advisory above.
+The root dependency is `@solana/pay` `^1.0.26` (the same 1.x line `multiplayer/` and `character-studio/` use). 1.x is built on `@solana/kit`: `findReference` takes a kit `Rpc` and `Address`, `validateTransfer` takes a kit `Rpc`, `Signature` and plain-number amounts, and the commitment option is `commitment`. The platform's payment flows still hold `@solana/web3.js` `PublicKey` and `BigNumber` values, so `api/_lib/solana/solana-pay-verify.js` converts once at that boundary over the rotating-RPC kit client in `api/_lib/solana/kit-rpc.js`. The skill, subscription, marketplace (`api/marketplace/buy-asset.js`), print-order (`api/print/orders/[id]/confirm.js`) and circulation (`api/_lib/circulation.js`) verifiers all go through it, behind `tests/solana-pay-verify.test.js`. The earlier pin to 0.2.6 was removed with that migration (commit `058ac75f7`); the `^0.2.6` rationale no longer applies.
+
+`validateTransfer` inspects only the last instruction for the transfer and its reference keys, so any builder that wants a payment found must put the reference-bound leg last.

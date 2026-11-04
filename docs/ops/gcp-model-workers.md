@@ -21,14 +21,21 @@ result_* }` — and authenticate with one shared bearer secret.
 
 | Lane (`backend` id) | Worker dir            | Cloud Run service  | Path served | What it does |
 |---------------------|-----------------------|--------------------|-------------|--------------|
-| `trellis2`          | `workers/model-trellis2` | `model-trellis2` | `image`  | Default image→3D lane. TRELLIS.2 (MIT): PBR GLB with alpha, `resolution` 512/1024/1536, meshopt packed. Weights staged by `workers/model-trellis2/stage_weights.sh`. |
+| `trellis2`          | `workers/model-trellis2` | `model-trellis2` | `image`  | Default image→3D lane. TRELLIS.2 (MIT): PBR GLB with alpha, `resolution` 512/1024/1536, meshopt packed. Weights staged by `workers/model-trellis2/stage_weights.sh`. The pixal3d and trellis2 stagers abort on an empty repo file listing instead of reporting success after staging nothing (`test_stage_weights.py` in each worker). |
 | `trellis_selfhost`  | `workers/model-trellis`  | `model-trellis`  | `image`  | Native single-hop image→3D (Microsoft TRELLIS). Accepts user photos and the FLUX-synthesized view for text prompts. Textured GLB. |
 | `hunyuan3d`         | `workers/model-hunyuan3d`| `model-hunyuan3d`| `image`  | High-poly image-conditioned reconstruction (Tencent Hunyuan3D). Poly-budget aware. |
 | `modly`             | `workers/modly`          | `model-modly`    | `image`  | TripoSG through Modly's headless backend (MIT). Single photo to untextured GLB, repaired and decimated to the tier's face budget. Weights staged by `workers/modly/stage_weights.sh`. |
 | `modly_hunyuan`     | `workers/modly`          | `model-modly`    | `image`  | Hunyuan3D 2 Mini Turbo on the same worker. Untextured. A Tencent lane: never routed to a restricted or unknown territory (`api/_lib/forge-territory.js`). |
 | `triposg`           | `workers/model-triposg`  | `model-triposg`  | `sketch` | Sketch→3D (TripoSG-scribble): a drawing + a prompt naming it → untextured geometry. |
+| `pixal3d`           | `workers/model-pixal3d`  | `model-pixal3d`  | `image`  | Opt-in "Match my photo" lane: 1 to 4 labeled photos fused pixel-aligned into one PBR GLB (TencentARC Pixal3D on the TRELLIS.2 backbone). Weights staged by `workers/model-pixal3d/stage_weights.sh`. |
+| `anigen`            | `workers/model-anigen`   | `model-anigen`   | `image`  | Opt-in pre-rigged lane: mesh, skeleton and skin weights in one pass from one photo (VAST-AI-Research AniGen). |
+| `partcrafter`       | `workers/model-partcrafter` | `model-partcrafter` | `image` | Opt-in editable-parts lane: one photo decoded into N individually named part meshes (PartCrafter). |
 
-All three are `provider: 'gcp'`, `free: true`. `model-trellis` pins one
+`pixal3d`, `anigen` and `partcrafter` are opt-in only: never a named free default or a
+failover target, so a plain request never lands on them and a caller asks for them
+explicitly. All three are scale-to-zero and sit in the keepwarm registry unwarmed by default.
+
+All of these lanes are `provider: 'gcp'`, `free: true`. `model-trellis` pins one
 always-warm instance and bursts to three under load (`_MIN_INSTANCES: "1"`,
 `_MAX_INSTANCES: "3"`): a cold FUSE-mounted weight load can stall for many
 minutes, and the GCP credit budget covers the standing GPU-hour.
@@ -66,6 +73,13 @@ left text2motion a single slot to burst into; it now scales to zero, as does the
 day, since each 10-minute ping cold-booted an L4 for a lane with no traffic).
 Re-pinning either one is a quota decision: name the lane giving up the slot.
 
+In-world forge submits (`POST /api/forge` with a `world` id from /play) are also held to
+a per-player cooldown (one per 20 s) and a per-world admission cap (4 per 90 s), both
+constants in `api/_lib/rate-limit.js` (`FORGE_WORLD_*`), answering 429 with `scope`
+(`player` or `world`) and `retry_after`; a malformed `world` is a 400 `invalid_world`
+(`api/_lib/forge-world-limits.js`). This bounds how many generations a crowded world
+can queue onto the shared L4 pool.
+
 Wire shapes: `model-trellis` and `model-hunyuan3d` both speak the standard task
 shape (`POST /infer` → `{ task_id }`, `GET /tasks/:id` → `result_gcs_url`);
 the gcp provider drives them with modes `trellis` and `hunyuan` respectively.
@@ -92,6 +106,9 @@ faked.
 | `MODEL_TRELLIS_URL`     | `trellis_selfhost`     | Cloud Run URL of `model-trellis`. |
 | `GCP_HUNYUAN3D_URL`     | `hunyuan3d`            | Cloud Run URL of `model-hunyuan3d`. **Not** `GCP_RECONSTRUCTION_URL` — that is the avatar face pipeline, which rejects non-face images. |
 | `MODEL_MODLY_URL`       | `modly`, `modly_hunyuan` | Cloud Run URL of `model-modly`. Unset means both Modly lanes are skipped. |
+| `MODEL_PIXAL3D_URL`     | `pixal3d`              | Cloud Run URL of `model-pixal3d`. Unset means the lane is skipped. |
+| `MODEL_ANIGEN_URL`      | `anigen`               | Cloud Run URL of `model-anigen`. |
+| `MODEL_PARTCRAFTER_URL` | `partcrafter`          | Cloud Run URL of `model-partcrafter`. |
 | `GCP_TRIPOSG_URL`       | `sketch`, `triposg`    | Cloud Run URL of `model-triposg`. Serves the sketch lane and the last-resort, untextured photo rung of the poll-time failover. |
 | `GCP_UNIRIG_URL`        | auto-rig (`rerig`)     | Cloud Run URL of `model-rig` (the env name predates the engine swap that retired the old `unirig` service). Required for rigging: it is the only `rerig` backend, so without it the provider reports the mode unsupported rather than submitting anywhere. The provider speaks the worker's native schema (`mesh_gcs_url` in, `rigged_gcs_url` out) when this is set. |
 | `GCP_RECONSTRUCTION_KEY`| all of the above       | Shared bearer secret every worker checks (`avatar-reconstruction-key` in Secret Manager; `model-rig`'s `API_KEY` references the same secret). |
@@ -184,7 +201,9 @@ Everything below runs on GCP credits; no third-party API is involved.
    (`api/_lib/forge-director-prompts.js`). Fail-soft: a dead LLM lane keeps
    the raw prompt.
 2. **Reference image.** `textToImage()` leads with the Vertex Gemini image
-   model (`gemini-2.5-flash-image`) when `GOOGLE_CLOUD_PROJECT` is set,
+   model (`gemini-3.1-flash-image`, with the retired `gemini-2.5-flash-image`
+   tried only on a model-not-found answer; both ids live in
+   `api/_lib/image-model.js`) when `GOOGLE_CLOUD_PROJECT` is set,
    materially more photoreal than 4-step distilled FLUX. `VERTEX_IMAGEN_FIRST=0`
    restores the legacy NIM-first order. `enhanceFluxPrompt()` appends realism +
    isolation cues unless the caller named an art style or composition.

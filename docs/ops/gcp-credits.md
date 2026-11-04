@@ -432,7 +432,15 @@ Google is shutting down the entire Imagen `:predict` family.
 | `imagen-4.0-generate-001` / `-fast` / `-ultra` | `:predict` | Deprecated; discontinued **2026-06-30…2026-08-17** |
 | **`gemini-2.5-flash-image`** ("Nano Banana") | `:generateContent` | **GA, recommended** — bills to the same GCP credits |
 
-So the client now **defaults to `gemini-2.5-flash-image`** and routes on the model id:
+The model id is resolved in one place, `api/_lib/image-model.js`, for every Vertex
+image lane (forge reference images, the text-to-image ladder, the MCP edit lane and
+the lane health probe). Google deprecated `gemini-2.5-flash-image` with a shutdown of
+2026-10-02, so the primary is now **`gemini-3.1-flash-image`**
+(`IMAGE_MODEL_PRIMARY`) and `gemini-2.5-flash-image` is a one-step fallback
+(`IMAGE_MODEL_FALLBACK`). The fallback is tried only when Vertex says the primary
+does not exist (`isModelNotFound()`: a 404, or a 400 naming the model); a 429, a 403
+billing hold or a 5xx is a real answer and is never retried on the other id. The
+client routes on the model id:
 `gemini*` → `:generateContent`; `imagen*` → legacy `:predict` (for an explicit
 override while any Imagen endpoint is still callable). It also handles the `global`
 location (un-prefixed host).
@@ -442,8 +450,8 @@ location (un-prefixed host).
 | Env var | Default | Meaning |
 |---|---|---|
 | `VERTEX_IMAGEN_ENABLED` | unset ⇒ **on when `GOOGLE_CLOUD_PROJECT` set** | Explicit lane switch, decoupled from the shared project var (which Vertex Claude + workers also need). Set `0`/`false`/`no`/`off` to force the image lane off without unsetting the project. |
-| `VERTEX_IMAGEN_MODEL` | `gemini-2.5-flash-image` | Generation model. An `imagen-*` value uses the legacy `:predict` path. |
-| `VERTEX_IMAGEN_EDIT_MODEL` | `gemini-2.5-flash-image` | Edit model (`editImage()`); `imagen-*` routes to `:predict` inpainting. |
+| `VERTEX_IMAGEN_MODEL` | `gemini-3.1-flash-image` (falls back to `gemini-2.5-flash-image` on model-not-found) | Generation model. An `imagen-*` value uses the legacy `:predict` path and has no fallback. |
+| `VERTEX_IMAGEN_EDIT_MODEL` | `gemini-3.1-flash-image` (same fallback) | Edit model (`editImage()`); `imagen-*` routes to `:predict` inpainting. |
 
 The ladder today (`textToImage()` in `api/_mcp3d/text-to-image.js`): **Vertex
 Gemini first when the lane is configured** (`VERTEX_IMAGEN_FIRST=0` restores the

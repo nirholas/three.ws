@@ -359,6 +359,14 @@ The same plugin now also runs as a post-build sweep over every HTML file in
 went through `transformIndexHtml` is unchanged by the second pass. The build
 prints how many static pages it patched; on the first run that was **210**.
 
+Since that run the floor has widened to cover what a class-keyed rule misses. On
+2026-11-03 `public/mobile.css` gained `:where(a[href]:not([class]))`, which gives
+class-less anchors that a flex or grid parent or `display: block` turns into boxes
+(header and footer navs, crumbs, card footers, about 260 links on 92 pages) the
+same 44px floor; inline links in running text are unaffected because `min-height`
+does not apply to inline boxes. `scripts/mobile-touch-audit.mjs` is still the
+check, and it now also flags clipped content (an element straddling the viewport edge, which `overflow-x: clip` would otherwise hide) and text under 11px, and `--all` sweeps every HTML route in `data/pages.json`.
+
 **When you add something that must be true of every page, check `dist/`, not
 `pages/`.** A grep over the source directory that produced the page you were
 thinking of will agree with you and be wrong.

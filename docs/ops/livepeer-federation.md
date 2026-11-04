@@ -25,7 +25,8 @@ routes exactly that class:
   must carry a real PNG/JPEG signature and clear a 1 KB floor. Dark unless
   `LIVEPEER_FEDERATION_ENABLED` is truthy.
 - Chain position in `api/_mcp3d/text-to-image.js`: after the first-party
-  lanes (Vertex/NIM) and the HF-routed FLUX rungs (fal-ai, then nscale, when
+  lanes (Vertex, which leads by default when configured unless
+  `VERTEX_IMAGEN_FIRST=0`, then NIM) and the HF-routed FLUX rungs (fal-ai, then nscale, when
   `HF_TOKEN` is set), before the keyless Pollinations rung and the paid
   Replicate backstop ($0.003/image). Like every rung, it runs under the
   ladder's one shared budget (`TEXT_TO_IMAGE_BUDGET_MS`, default 60s), so its
@@ -96,6 +97,11 @@ prompt text to whoever now answers for that hostname, and production is still
 doing that on every run of the demo until the deploy lands. Point
 `LIVEPEER_GATEWAY_URL` at the host to dial it again if the record is ever
 repointed at a real gateway.
+
+Since 2026-11-03 the anonymous `/api/inference/livepeer` endpoint also answers
+with codes only: a failed leg reports `upstream_error` or `no_provider_configured`
+(and `leg_failed` with a fixed message), and the provider's own failure text is
+logged server-side instead of returned in `upstream_body` / `error_message`.
 
 ## Measured comparison (full 20-job run, 2026-08-13)
 

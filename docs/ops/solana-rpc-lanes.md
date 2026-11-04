@@ -70,7 +70,7 @@ classifies on:
 
 | Provider | Signature | Window |
 |---|---|---|
-| Helius | `{"code":-32429,"message":"max usage reached"}` | plan, until topped up |
+| Helius | HTTP 429 `max usage reached` (also `{"code":-32429,...}`) | plan, until topped up (see the probe note below) |
 | QuickNode | HTTP 429 + `{"code":-32003,"daily request limit reached"}` | daily, resets |
 | Alchemy | HTTP 429 + `{"code":429,"Monthly capacity limit exceeded"}` | monthly, until the billing month rolls |
 
@@ -206,7 +206,12 @@ Three real phrasings sat on the wrong side of that split until 2026-07-30, each 
    why the matcher keys on text and a real invalid-params error still refuses to rotate.
 
 Cooldown windows are asymmetric and worth knowing: quota 6h, rate limit 10m, auth 30m,
-5xx 2m. One quota trip removes a premium lane for six hours. Verdicts are published to
+5xx 2m. One quota trip removes a premium lane for six hours. The one exception is the bare
+429 `max usage reached`: Helius words a per-second burst and a spent plan identically, so
+the first sighting parks the lane for a 30s probe only, and the 6h quota window applies
+when the lane fails with the same body again before it has served a request
+(`markEndpointCooldown`, `clearEndpointStreak`). A burst no longer takes the whole
+Solana tier offline for six hours. Verdicts are published to
 the shared cache (`rpccool:v1`) so a cold Cloud Run instance inherits them instead of
 re-burning a request against a provider already over its cap.
 
@@ -370,6 +375,31 @@ too wide to split rotates to a lane that takes it whole.
 [tests/solana-rpc-transport-fallback.test.js](../../tests/solana-rpc-transport-fallback.test.js)
 and [tests/solana-rpc-rotating-fetch.test.js](../../tests/solana-rpc-rotating-fetch.test.js)
 pin this behaviour.
+
+## Fewer calls: coalescing, the fresh-read cache, and spend accounting
+
+Four mechanisms in `connection.js` and [api/\_lib/solana/rpc-spend.js](../../api/_lib/solana/rpc-spend.js)
+cut and attribute quota spend before a lane is ever picked:
+
+- **Coalescing.** Identical concurrent reads (same method and params, commitment included,
+  JSON-RPC id excluded) share one upstream promise, so a burst of page loads reading the
+  same balance costs one call.
+- **Fresh-read cache.** A successful live answer to a hot read is reused for a few seconds
+  per method (`getLatestBlockhash` 2s, `getBalance` / `getAccountInfo` /
+  `getMultipleAccounts` / `getTokenAccountsByOwner` / `getTokenAccountBalance` 4s,
+  `getTokenSupply` / `getTokenLargestAccounts` 5s, network constants 60s; finalized
+  `getSignatureStatuses` 30s). It is process-local on purpose. Writes, batches, errors,
+  stale last-good answers and any caller passing `fresh: true` (settle, send and verify
+  paths) bypass it, and a devnet connection is never handed a mainnet answer.
+- **Spend accounting.** Every upstream call is counted under (caller, method, lane) in
+  hourly buckets in the shared cache (`rpcspend:v1`). The caller is the API route template
+  or cron path (`script:<name>` outside the API server); `cache` and `coalesced` are
+  pseudo-lanes reported as saved, never as calls. Read it to find who spent a quota event.
+- **Per-lane daily budget guard.** `RPC_LANE_BUDGETS` is a JSON object keyed by lane host
+  whose value is the daily call quota or `{ "daily": n, "fraction": f }`. Once fleet calls
+  for the UTC day cross `fraction x daily` (default `RPC_LANE_BUDGET_FRACTION`, else 0.8),
+  non-money callers try that lane last so the remainder is kept for settles, sends and
+  verifies. Unset, the guard is off; invalid JSON logs a warning and disables it.
 
 ## Knock-on effects to expect
 

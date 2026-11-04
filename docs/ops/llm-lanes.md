@@ -33,7 +33,7 @@ production are routinely dead and a chain that depends on them fails:
 | 8c | Kilo Code `nvidia/nemotron-3-ultra-550b-a55b:free`, then `nvidia/nemotron-3-super-120b-a12b:free` | none (keyless) | free | **serving** (200, Ultra 2.0s and Super 0.6s through `llmComplete`, 2026-10-08). Added 2026-10-08. About 200 req/hr anonymously, on Kilo's own NVIDIA capacity. Sends `reasoning: {enabled: false}`. |
 | 9 | OVH AI Endpoints `Meta-Llama-3_3-70B-Instruct` | none (keyless) | free | **serving** (200, ~1.2s, 2026-08-02) |
 | 10 | Gemini Flash-Lite (AI Studio) | `GEMINI_API_KEY` | free | not configured in prod |
-| 11 | **Vertex Gemini Flash** | GCP service account | GCP credits | **dead**: 403 `Lightning dunning decision is deny for project` since 2026-08-27, re-measured 2026-09-04. A billing hold on the whole GCP project, not IAM. This is the chain's designed anchor, so while it is down the free rungs above it are load-bearing rather than best-effort. |
+| 11 | **Vertex Gemini Flash** | GCP service account | GCP credits | **dead**: 403 `Lightning dunning decision is deny for project` since 2026-08-27, re-measured 2026-09-04. A billing hold on the whole GCP project, not IAM (from 2026-11-01 the 403 text changed to "There are issues with your billing account, please resolve / pay your outstanding balance": same hold, an unpaid balance only the owner can clear). This is the chain's designed anchor, so while it is down the free rungs above it are load-bearing rather than best-effort. |
 | 12 | Pollinations `openai-fast` | none (keyless) | free | **serving** (200, ~3.7s, 2026-08-02) |
 | 13 | LLM7.io `gemma4:31b` | none (keyless); `LLM7_API_KEY` optional | free | **serving keyless** (200, 1.1s through `llmComplete`, 2026-10-08). The anonymous tier answered 401 on 2026-09-02 and reopened for LLM7's `turbo` models; the old pin `gemini-3.1-flash-lite` moved to the paid `pro` tier. Keyless again since 2026-10-08. |
 | 14 | SiliconFlow `Qwen/Qwen3-8B` | `SILICONFLOW_API_KEY` | free | added 2026-08-05; skipped when the key is unset |
@@ -74,6 +74,13 @@ instead of inlining header values.
 model → OpenRouter mirror of that model → free safety net (Groq → OpenRouter
 `:free` per key → NVIDIA → SambaNova → Mistral → Z.AI) → the Vertex Gemini
 anchor.
+
+`/api/chat/proxy` (the client-side agent chat) is not a rung of this chain: it relays to
+OpenRouter's shared free tier, which is capped per day across every visitor. On a 429
+it now falls back to Vertex Gemini (`vertexFallback`, keeps the client's tools and
+stream format), and if Vertex is unconfigured or also failing it hands the request to
+the agent loop's own provider chain (`runAgentCompletion`, the rungs above) before
+surfacing the original 429.
 
 ### Why the paid rungs are out
 

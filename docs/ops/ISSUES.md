@@ -44,9 +44,13 @@ this repo:
    is set on the service but the account returns `billing_not_active` 429s, so
    every OpenAI paid backstop is out. The OpenRouter platform key burned its
    credit on paid-model routing (invisible in metering: llm-pricing records
-   OpenRouter as $0). Traffic survives on the free lanes (Groq/NIM plus the
-   vertex-gemini credits anchor). Action: reactivate OpenAI billing and/or
-   fund the OpenRouter key, or accept free-lane-only service.
+   OpenRouter as $0). The vertex-gemini credits anchor is also down: the GCP
+   project has been under a billing hold since 2026-08-27 (403 `Lightning
+   dunning decision is deny`, reworded on 2026-11-01 to an unpaid-balance
+   message), so traffic survives on the free lanes only
+   ([llm-lanes.md](llm-lanes.md) has the live rung table). Action: clear the GCP
+   billing balance, reactivate OpenAI billing and/or fund the OpenRouter key, or
+   accept free-lane-only service.
 2. **Every paid Solana RPC lane is over quota at once** (owner action: money).
    Re-probed 2026-07-30 with a metered `getBalance` (never `getHealth`, which is
    unmetered and returns ok on an exhausted endpoint): Helius `-32429 max usage
@@ -58,7 +62,8 @@ this repo:
    Mitigated in config on 2026-07-30 (current revision `three-ws-api-00346-x9m`):
    `SOLANA_RPC_URL` points at `https://rpc.magicblock.app/mainnet`, with
    `api.mainnet-beta.solana.com`, PublicNode and Leo RPC as the fallbacks.
-   **Pick the primary by call SHAPE, not by a `getBalance` probe.** All the free
+   (Current lane order, cooldown rules and the 30s Helius `max usage reached`
+   probe: [solana-rpc-lanes.md](solana-rpc-lanes.md).) **Pick the primary by call SHAPE, not by a `getBalance` probe.** All the free
    lanes pass `getBalance`, `getLatestBlockhash` and `getSignatureStatuses`
    12/12, which makes them look interchangeable. They are not: on
    `getTokenAccountsByOwner` filtered by `programId`, the call every token and
@@ -117,8 +122,10 @@ closed 2026-07-28; full history in git):
    `UPSTASH_REDIS_REST_URL` points at a self-hosted SRH proxy on the VPC, and the
    ASR quota counter decrementing proves the store is live. Only
    `REPLICATE_API_TOKEN` is genuinely absent, and `api/_lib/ai-image-lanes.js`
-   treats Replicate as one of three lanes with Vertex serving the traffic, so
-   nothing is degraded. Fund it only if a third image lane is wanted.
+   treats Replicate as the paid backstop behind the NIM, Vertex, Hugging Face and
+   keyless Pollinations lanes, so image generation is not blocked by it. (Vertex
+   is itself under the GCP billing hold in item 1, so the free lanes carry the
+   traffic.) Fund it only if a paid backstop is wanted.
 5. **BSC testnet contracts are code-complete but never publicly deployed**
    (owner action; re-homed here 2026-07-30 when the BNB Chain campaign's work
    orders were retired). Every contract proof in that campaign ran against an
