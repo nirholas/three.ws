@@ -153,6 +153,40 @@ For a while two learning systems ran without talking to each other. The Oracle/i
 
 The direction of every bridge is the same: real, realized money is the ground truth, and every layer of judgment is pulled toward what actually paid.
 
+## Paid-intel arm
+
+`decision_mode = 'paid_intel'` is an experiment arm that buys its entry signals over x402 from the platform's own storefront, with USDC from the arm's own wallet, and writes the payment signature behind every decision. Code: `workers/agent-sniper/paid-intel.js`. The `rules` and `llm` paths are unchanged; the new-mint and intel loops skip paid-intel arms before any other logic.
+
+**Each cycle** (default every 300 seconds, `SNIPER_PAID_INTEL_CYCLE_MS`) the arm pays for three signals through `payX402`:
+
+| Signal | Endpoint | Role |
+|---|---|---|
+| Recent launches | `GET /api/x402/pump-agent-audit?limit=10&sort=newest` | Launch quality: young, at least the cohort's average initial liquidity, inside the strategy's market cap band |
+| Volume anomaly | `POST /api/x402/crypto-intel {topic:'pump_volume_anomaly'}` | Positive-side anomaly on the candidate mint |
+| Trending score | `POST /api/x402/crypto-intel {topic:'pump_trending'}` | Candidate mint appears in the trending set |
+
+Prices are read from the live 402 challenge at call time, never hardcoded.
+
+**Entry rule.** Launch quality must pass and at least two signals must agree. At most one entry per cycle (concurrency one), a mint is never bought twice, and the usual safety rails (Mayhem exclusion, firewall round trip, budgets, headroom) still apply at `executeBuy`.
+
+**Skip semantics.** If any purchase fails (endpoint down, wallet dry, 402 mismatch, spend cap reached), the cycle is skipped and the reason is recorded. The arm never falls back to the unpaid version of the same data; an answer that did not settle a payment with a transaction signature counts as a failed purchase.
+
+**Ledger.** Every candidate evaluated, buy or pass, and every skipped cycle is a row in `sniper_paid_intel_decisions` with `intel_signal_receipts` (endpoint, atomic price, transaction signature) and `intel_spend_atomic`. The reasoning-ledger entry of a resulting trade carries the same receipts under `inputs.paid_intel`.
+
+**Budgets.** Trading budget is the smallest `daily_budget_lamports` in the enabled fleet, halved, with the fleet's smallest position size. The signal spend cap is `agent_sniper_strategies.intel_daily_cap_atomic` (USDC atomics, NULL means no signal budget and every cycle skips). Both are set by `scripts/sniper-paid-intel-arm.mjs`, which derives them from the live fleet.
+
+**Operating it.**
+
+```bash
+node scripts/sniper-paid-intel-arm.mjs                          # plan: funding table, live 402 prices, no writes
+node scripts/sniper-paid-intel-arm.mjs --apply --intel-cap-usdc 2   # create agent + wallet + DISABLED strategy
+node scripts/sniper-paid-intel-arm.mjs --enable                 # arm it after the wallet is funded
+```
+
+Funding the wallet (SOL and USDC) is an on-chain spend that needs an explicit owner yes. Apply `api/_lib/migrations/20261105021000_sniper_paid_intel.sql` first.
+
+**Graduation benchmarks, first 76 hours.** Net PnL above +0.0147 SOL per equal budget (the best cohort in the published experiment), zero firewall violations, zero premature-sell audit failures, and 100 percent of ledger entries carrying a valid x402 transaction signature. The arm is its own cohort (`paid-intel`) on `/api/sniper/experiments`, and the optimizer gives it only the generic exit and sizing proposals, never entry-rule tuning.
+
 ## Try it
 
 - Arm your first strategy: [the sniper tutorial](/tutorials/arm-an-agent-sniper)

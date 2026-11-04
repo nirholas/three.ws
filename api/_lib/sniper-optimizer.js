@@ -132,6 +132,9 @@ export function proposeAdjustments(stats, config, opts = {}) {
 	const claimed = new Set();
 	const notes = [];
 	const sample = Number(stats?.closed) || 0;
+	// 'rules' and 'llm' each have their own entry-tuning rules below; 'paid_intel'
+	// has neither (its entry rule is the agreement of purchased signals), so it
+	// gets only the generic exit and sizing proposals.
 	const mode = (config?.decision_mode || 'rules');
 
 	// Tier decides how far, how fast, and which fields at all.

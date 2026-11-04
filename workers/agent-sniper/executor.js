@@ -85,6 +85,8 @@ async function recordSnipeDecision({ strat, network, mint, posId, sig, mode, pri
 				mode,
 				symbol: mint.symbol || null,
 				llm: mint.llm ? { model: mint.llm.model, confidence: mint.llm.confidence, thesis: mint.llm.thesis } : null,
+				// x402 receipts that paid for a paid-intel entry (null for every other arm).
+				paid_intel: mint.paidIntel || null,
 				// The adversarial second opinion, when one was ENFORCED on this trade.
 				// A shadow-mode review is a counterfactual, not part of the decision,
 				// so it lives in sniper_risk_reviews and never in the ledger's inputs.

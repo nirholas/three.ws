@@ -18,6 +18,7 @@ import { scoreMint, scoreIntel } from './scorer.js';
 import { executeBuy } from './executor.js';
 import { oracleGate } from './oracle-gate.js';
 import { judgeLaunch, llmVerdictGate } from './llm-judge.js';
+import { isPaidIntel, startPaidIntelWatch } from './paid-intel.js';
 import { runPositionSweep } from './positions.js';
 import { runSwarmConsensus, runSwarmSettlement } from './swarm.js';
 import { startFirstClaimWatch } from './first-claim-watch.js';
@@ -165,6 +166,9 @@ async function main() {
 			// The new-mint feed only drives new_mint strategies; first_claim
 			// strategies are driven by the on-chain claim poll loop below.
 			if ((strat.trigger || 'new_mint') !== 'new_mint') continue;
+			// Paid-intel arms buy their signals on their own cycle (paid-intel.js),
+			// never per launch, and never fall through to the rules scorer.
+			if (isPaidIntel(strat)) continue;
 
 			// LLM-judged experiment arm: no rule shields, no oracle gate: a model
 			// reads the launch and decides. The executeBuy chokepoint still enforces
@@ -254,6 +258,7 @@ async function main() {
 			for (const strat of strategies) {
 				const trigger = strat.trigger || 'new_mint';
 				if (strat.network !== cfg.network) continue;
+				if (isPaidIntel(strat)) continue;
 
 				// LLM arms on the intel trigger judge the coin AFTER observation, so the
 				// model sees the market SHAPE (buyer/seller diversity, concentration,
@@ -391,6 +396,12 @@ async function main() {
 		log.info('market-maker armed', { network: cfg.network, intervalMs: cfg.marketMakerIntervalMs });
 	}
 
+	// Paid-intel arm: buys its entry signals over x402 each cycle, then enters
+	// through the same queue + executeBuy chokepoint as every other arm.
+	const stopPaidIntel = startPaidIntelWatch({
+		cfg, queue, throttle, isHalted: () => draining || cfg.globalKill,
+	});
+
 	// Pre-launch creator-wallet radar: watches proven creator + smart-money wallets
 	// on-chain, detects launch precursors (funding a fresh deploy wallet / a pump
 	// create) at block-0, and pre-arms a snipe through the SAME executor as the feed
@@ -504,6 +515,7 @@ async function main() {
 		try { stopHeartbeat?.(); } catch {}
 		try { stopClaimWatch?.(); } catch {}
 		try { stopCrossingWatch?.(); } catch {}
+		try { stopPaidIntel?.(); } catch {}
 		try { radar?.stop?.(); } catch {}
 		try { stopFeed?.(); } catch {}
 		try { stopIntel?.(); } catch {}

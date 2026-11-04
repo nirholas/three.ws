@@ -121,7 +121,7 @@ export const STRATEGY_SCHEMA = z.object({
 	telegram_chat_id: z.string().regex(/^-?[0-9]+$/).nullable().optional(),
 	// Experiment identity + decision mode. 'llm' replaces the rule shields with a
 	// model verdict per launch (safety rails still enforced at executeBuy).
-	decision_mode: z.enum(['rules', 'llm']).optional(),
+	decision_mode: z.enum(['rules', 'llm', 'paid_intel']).optional(),
 	llm_model: z.string().max(120).nullable().optional(),
 	llm_min_confidence: z.union([z.string(), z.number()]).nullable().optional(),
 	llm_max_confidence: z.union([z.string(), z.number()]).nullable().optional(),

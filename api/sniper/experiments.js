@@ -62,9 +62,18 @@ function lamportsToSol(v) {
 	return v == null ? null : Number((Number(BigInt(v)) / 1e9).toFixed(6));
 }
 
+// Cohort label for an arm with no explicit label: its decision mode, with
+// anything unrecognised treated as the default rules cohort.
+function modeLabel(mode) {
+	return mode === 'llm' || mode === 'paid_intel' ? mode.replace('_', '-') : 'rules';
+}
+
 // One-line human fingerprint of a strategy's entry conditions, so the
 // scoreboard reads as "what rules produced this record" without a schema tour.
 function conditionSummary(s) {
+	if ((s.decision_mode || 'rules') === 'paid_intel') {
+		return 'Paid intel: buys recent-launch, volume-anomaly and trending signals over x402, enters on two agreeing signals, one entry per cycle';
+	}
 	if ((s.decision_mode || 'rules') === 'llm') {
 		const conf = s.llm_min_confidence != null ? ` ≥${Math.round(Number(s.llm_min_confidence) * 100)}%` : '';
 		const scout = s.llm_scout_context === true ? ', reads the Sentiment Scout' : '';
@@ -153,7 +162,7 @@ export default wrap(async (req, res) => {
 		});
 		return {
 			strategy_id: r.strategy_id,
-			label: r.label || `${(r.decision_mode || 'rules') === 'llm' ? 'llm' : 'rules'}:${String(r.strategy_id).slice(0, 8)}`,
+			label: r.label || `${modeLabel(r.decision_mode)}:${String(r.strategy_id).slice(0, 8)}`,
 			experiment_group: r.experiment_group || null,
 			agent_id: r.agent_id,
 			agent_name: r.agent_name,
