@@ -76,20 +76,29 @@ function resolveTreasury() {
 
 async function findHolder(connection, mint, tokenProgram, minAtomics) {
 	const { value: largest } = await connection.getTokenLargestAccounts(mint, 'confirmed');
+	// A provider error on one candidate's read skips that candidate rather than
+	// ending the search: public lanes intermittently refuse single reads.
+	let lastReadError = null;
 	for (const acct of largest) {
 		if (BigInt(acct.amount) < minAtomics) continue;
-		const info = await connection.getParsedAccountInfo(acct.address, 'confirmed');
-		const owner = info.value?.data?.parsed?.info?.owner;
-		if (!owner) continue;
-		const ownerKey = new PublicKey(owner);
-		if (!PublicKey.isOnCurve(ownerKey.toBytes())) continue;
-		if (!ataFor(mint, ownerKey, tokenProgram).equals(acct.address)) continue;
-		const lamports = await connection.getBalance(ownerKey, 'confirmed');
-		if (lamports < MIN_PAYER_LAMPORTS) continue;
-		return { owner: ownerKey, ata: acct.address, atomics: BigInt(acct.amount), lamports };
+		try {
+			const info = await connection.getParsedAccountInfo(acct.address, 'confirmed');
+			const owner = info.value?.data?.parsed?.info?.owner;
+			if (!owner) continue;
+			const ownerKey = new PublicKey(owner);
+			if (!PublicKey.isOnCurve(ownerKey.toBytes())) continue;
+			if (!ataFor(mint, ownerKey, tokenProgram).equals(acct.address)) continue;
+			const lamports = await connection.getBalance(ownerKey, 'confirmed');
+			if (lamports < MIN_PAYER_LAMPORTS) continue;
+			return { owner: ownerKey, ata: acct.address, atomics: BigInt(acct.amount), lamports };
+		} catch (err) {
+			lastReadError = err;
+			console.warn(`skipping ${acct.address.toBase58()}: ${err?.message || err}`);
+		}
 	}
 	throw new Error(
-		`no on-curve holder of ${mint.toBase58()} among the largest accounts has a canonical ATA holding >= ${minAtomics} atomics and >= ${MIN_PAYER_LAMPORTS} lamports`,
+		`no on-curve holder of ${mint.toBase58()} among the largest accounts has a canonical ATA holding >= ${minAtomics} atomics and >= ${MIN_PAYER_LAMPORTS} lamports` +
+			(lastReadError ? ` (last read error: ${lastReadError?.message || lastReadError}; retry with --rpc <url>)` : ''),
 	);
 }
 
