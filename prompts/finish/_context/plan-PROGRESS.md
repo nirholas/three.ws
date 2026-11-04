@@ -92,3 +92,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 980-plan-sniper-moonbag-manager-and-latency-telemetry.md | see git log | Moon-bag manager, price ticks, stage latency stamps and report shipped; migration unapplied, worker redeploy pending owner.
 2026-11-04 | 728-plan-three-hold-activate-early-drops-and-name-dibs.md | see git log (drops early window) | drops.early and names.first_dibs enforced with tests, countdown UI and docs; migration unapplied and browser check pending owner.
 2026-11-04 | 706-plan-bounties-build-program-routes-and-pages.md | b88d7c228 | Feed and Build APIs, crons, /build and /build/leaderboard, MCP tools shipped; scheduler sync on next deploy, first program round row still to insert.
+2026-11-04 | 737-plan-hq-agent-defi-tools-and-context-bridge.md | 678adff27 | Bridge, agent-tools, risk, compound alerts, Autopilot hand-off and hq-mcp shipped; HQ deploy and browser check pending.
