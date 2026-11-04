@@ -22,6 +22,13 @@ of fitting one fixed template.
    `generate_skin.sh`: it is the newer, better-performing model for exactly
    this sub-task (98-133% skinning-accuracy improvement per its README).
 
+Between the two, `skeleton_roots.py` gives the merged skeleton exactly one
+root. UniRig can emit a forest (on the fox QA mesh, 2026-11-04: `bone_1`
+plus a stray `neutral_bone`), and SkinTokens refuses any skeleton with
+"multiple roots found". Extra roots are reparented under the first one with
+their world transforms preserved (max world delta 2.2e-16 on the fox), and
+the GLB's binary chunk is left untouched.
+
 Both are subprocess CLIs, not importable Python packages; `pipeline.py`
 chains them exactly per their own documented command contracts (verified
 against their live READMEs 2026-10-09/2026-10-11, not assumed from memory).
@@ -98,9 +105,19 @@ deploying does not change behavior on its own.
 
 ```bash
 cd workers/rig-nonhuman
-python3 test_pipeline.py      # command contracts + subprocess chaining/errors
-python3 test_gltf_meshopt.py  # the meshopt decode every input GLB passes through
+python3 test_pipeline.py        # command contracts + subprocess chaining/errors
+python3 test_gltf_meshopt.py    # the meshopt decode every input GLB passes through
+python3 test_skeleton_roots.py  # single-root normalization between merge and skinning
 ```
+
+The Docker build also imports `bpy`, UniRig's `run` and merge module
+(which imports `open3d` at the top), and SkinTokens' `demo`, so a missing
+native library fails the build instead of the first request. Two such links
+are runtime-only and not pulled in by pip: open3d 0.20.0's `libOpen3D.so`
+needs `libusb-1.0.so.0` and `libEGL.so.1` (apt `libusb-1.0-0`, `libegl1`).
+Without them `merge.sh` backgrounds a python process that dies on
+ImportError and still exits 0, which surfaces only as `unirig-merge
+reported success but wrote no output file`.
 
 `test_pipeline.py` checks the three command builders against UniRig's and
 SkinTokens' real CLI contracts, then exercises `run_pipeline`'s chaining and
@@ -135,6 +152,6 @@ own `download.py`. No research-only license terms in this rigging path.
 | `input is not a binary glTF...` | `mesh_gcs_url` returned something that is not a `.glb` | fix the URL; rejected before touching the GPU |
 | `input GLB contains no triangles...` | a point cloud or curves-only export | rig a surface mesh |
 | `unirig-skeleton failed (exit ...)` / `unirig-merge failed (...)` / `skintokens-skin failed (...)` | the named stage's subprocess exited nonzero | the error carries a stderr tail; grep service logs for the full capture |
-| `... reported success but wrote no output file` | the named stage crashed without a nonzero exit | same as above, treat as that stage's failure |
+| `... reported success but wrote no output file` | the named stage crashed without a nonzero exit | same as above, treat as that stage's failure; for `unirig-merge`, check the image still imports `open3d` (native libs above) |
 | `rigging timed out after 900s` | `TASK_TIMEOUT_S` elapsed | retry, or raise the timeout for very dense/complex meshes |
 | `internal error (ref <id>)` | anything unexpected | grep the service logs for the correlation id |
