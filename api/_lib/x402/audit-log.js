@@ -464,7 +464,7 @@ export async function getAuditDeadLetterStats() {
 	}
 	let parked = null;
 	try {
-		const rows = await sql(`SELECT count(*)::int AS n FROM ${DEAD_TABLE} WHERE reason <> 'dedupe'`);
+		const rows = await sql(`SELECT count(*)::int AS n FROM ${DEAD_TABLE} WHERE reason <> 'dedupe' AND resolved_at IS NULL`);
 		parked = rows?.[0]?.n ?? 0;
 	} catch { parked = null; }
 	return { depth, oldestFailedAt, parked, bufferDepth };

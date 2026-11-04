@@ -209,7 +209,7 @@ fires one deduped `db:retention-pressure` alert.
 | `DB_COMPACT_ENABLED` | `1` | Set `0` to disable the `VACUUM FULL` compaction step entirely. |
 | `DB_COMPACT_MIN_FREE_MB` | `25` | Only rewrite a table holding at least this much reclaimable space (and at least 30% of its file). |
 | `DB_COMPACT_MAX_TABLES` | `3` | Most tables one tick may rewrite. |
-| `X402_AUDIT_RETENTION_DAYS` | `90` | x402 audit ledger window (`x402_autonomous_log` and the audit log). Clamped `[7, 3650]`. |
+| `X402_AUDIT_RETENTION_DAYS` | `365` | x402 audit ledger window (`x402_autonomous_log` and the audit log). Clamped `[7, 3650]`. `x402_audit_log` rows are archived to object storage (gzip JSONL, read back and verified) before they are deleted; with storage unconfigured nothing is deleted. |
 | `X402_AUDIT_MIN_RETENTION_DAYS` | `30` | Floor the valve tightens the audit window to. Clamped `[1, audit retention]`. |
 | `X402_SPENT_RETENTION_DAYS` | `90` | Fixed window for `x402_spent_payments` replay proofs. Clamped `[30, 3650]` so a typo cannot shrink the guard to hours; never tightened by the valve. |
 

@@ -84,6 +84,7 @@ import { cacheSet } from '../_lib/cache.js';
 import { LAST_RUN_CACHE_KEY } from '../_lib/ops/database-storage-health.js';
 import { createGcsStore, archiveSlice } from '../_lib/db-archive.js';
 import { ARCHIVED_TABLES } from '../_lib/db-archive-tables.js';
+import { archiveAndPruneAuditLog } from '../_lib/x402/audit-archive.js';
 
 // Mint-keyed satellites of pump_coin_intel, deleted before the master so no run
 // orphans a satellite row. Every name here is a fixed constant (never user input),
@@ -357,29 +358,13 @@ async function topRelationsBySize(limit = 15) {
 // which the table's (event_type, created_at) indexes make cheap. Kept far longer
 // than the intel firehose because these are money records, not churn; it tightens
 // to a floor only under storage pressure via the shared valve.
-const AUDIT_BATCH = 5000;
-const AUDIT_MAX_PER_RUN = 100_000;
 
 async function pruneAuditLog(cutoffDays) {
-	if (!(await tableExists('x402_audit_log'))) return { deleted: 0 };
-
-	let deleted = 0;
-	const maxBatches = Math.ceil(AUDIT_MAX_PER_RUN / AUDIT_BATCH);
-	for (let i = 0; i < maxBatches; i++) {
-		// DELETE settles xmax in place (no file extension), so it works even at the
-		// cap. Bounded subselect so a single statement never scans the whole table.
-		const del = await sql`
-			DELETE FROM x402_audit_log
-			WHERE id IN (
-				SELECT id FROM x402_audit_log
-				WHERE created_at < now() - ${cutoffDays} * interval '1 day'
-				LIMIT ${AUDIT_BATCH}
-			) RETURNING id
-		`;
-		deleted += del.length;
-		if (del.length < AUDIT_BATCH) break;
-	}
-	return { deleted };
+	if (!(await tableExists('x402_audit_log'))) return { deleted: 0, archived: 0, objects: [] };
+	// Archive-before-delete: a batch is written to object storage as gzip JSONL,
+	// read back and verified before its rows are deleted, and a batch that cannot
+	// be archived is left in the table. See api/_lib/x402/audit-archive.js.
+	return archiveAndPruneAuditLog(cutoffDays);
 }
 
 // B2b. Pending-settlement rows (x402_pending_settlements).
@@ -626,9 +611,9 @@ export default wrapCron(async (req, res) => {
 	const retentionDays = clampInt(process.env.PUMP_INTEL_RETENTION_DAYS, 2, 365, 14);
 	const minDays = clampInt(process.env.PUMP_INTEL_MIN_RETENTION_DAYS, 1, retentionDays, 3);
 	const highWaterMb = clampInt(process.env.DB_RETENTION_HIGH_WATER_MB, 128, 100_000, 470);
-	// Audit ledger keeps its own, longer window (money records): default 90 days,
+	// Audit ledger keeps its own, longer window (money records): default 365 days,
 	// tightening to a 30-day floor while the branch is over the high-water mark.
-	const auditDays = clampInt(process.env.X402_AUDIT_RETENTION_DAYS, 7, 3650, 90);
+	const auditDays = clampInt(process.env.X402_AUDIT_RETENTION_DAYS, 7, 3650, 365);
 	const auditMinDays = clampInt(process.env.X402_AUDIT_MIN_RETENTION_DAYS, 1, auditDays, 30);
 	// Spent-payment proofs: 90 days, FIXED. No pressure-tightened floor — a
 	// shorter window is a shorter replay-protection window, and the rows are too
