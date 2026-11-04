@@ -5,8 +5,9 @@
 //   node scripts/probe-mcp-install-tokens.mjs --base https://three.ws
 //
 // Mints two install tokens from this machine's IP (POST /api/mcp-studio/install),
-// spends token A's per-minute generation burst with real look_at_model renders of
-// a catalog GLB, shows token A refused with the JSON-RPC denial, then shows token
+// spends token A's per-minute generation burst with five concurrent real
+// look_at_model renders of a catalog GLB (four admitted, one refused with the
+// JSON-RPC denial), then shows token
 // B, same IP, still admitted. Spends 5 generation-quota units and 2 of this IP's
 // 10 hourly mints. Exits non-zero when the server does not behave that way.
 
@@ -74,19 +75,19 @@ console.log(`minted token A ${a.token.slice(0, 16)}... and token B ${b.token.sli
 console.log(`connector URL A: ${a.connector_url.replace(a.token, a.token.slice(0, 16) + '...')}`);
 console.log(`GLB: ${glb}`);
 
+// Token A's five calls go out together. The burst is a 1-minute sliding window
+// and one render can take 15 s or more, so sequential calls would let the first
+// hit expire before the fifth arrives and the cap would never show. Every call
+// passes the limiter before it renders, so exactly four are admitted.
 let failed = false;
-for (let i = 1; i <= 5; i++) {
-	const r = await look(a.token, glb);
-	console.log(`token A call ${i}: ${outcome(r)}`);
-	if (i <= 4 && r.body?.error) failed = true;
-	if (i === 5) {
-		if (!r.body?.error) failed = true;
-		else {
-			console.log(`  denial message: ${r.body.error.message}`);
-			console.log(`  denial data: ${JSON.stringify(r.body.error.data)}`);
-			console.log(`  HTTP ${r.status}, retry-after ${r.retryAfter}`);
-		}
-	}
+const results = await Promise.all(Array.from({ length: 5 }, () => look(a.token, glb)));
+results.forEach((r, i) => console.log(`token A call ${i + 1}: ${outcome(r)}`));
+const refused = results.filter((r) => r.body?.error);
+if (refused.length !== 1) failed = true;
+for (const r of refused) {
+	console.log(`  denial message: ${r.body.error.message}`);
+	console.log(`  denial data: ${JSON.stringify(r.body.error.data)}`);
+	console.log(`  HTTP ${r.status}, retry-after ${r.retryAfter}`);
 }
 const rb = await look(b.token, glb);
 console.log(`token B call 1: ${outcome(rb)}`);
