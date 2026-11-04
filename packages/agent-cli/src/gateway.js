@@ -11,7 +11,7 @@
 // does not want to keep a machine on.
 
 import { randomBytes } from 'node:crypto';
-import { createSession, runHeadless } from './session.js';
+import { createSession } from './session.js';
 import { readStoreFile, writeStoreFile } from './credentials.js';
 import { financialFacts } from './approval.js';
 
@@ -267,4 +267,3 @@ export async function startTelegramGateway({ ctx, token, allow, apiBase = TELEGR
 	};
 }
 
-export { runHeadless };
