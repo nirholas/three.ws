@@ -64,9 +64,14 @@ from, under `gs://three-ws-model-weights/rig-nonhuman/`):
 bash workers/rig-nonhuman/stage-assets.sh
 ```
 
-Build + deploy (Cloud Build pins the `three-ws-build@` service account):
+Build + deploy (Cloud Build pins the `three-ws-build@` service account). The
+image pushes to an Artifact Registry repo of the same name, which must exist
+first (created 2026-11-04; the command is a no-op guard on a fresh project):
 
 ```bash
+gcloud artifacts repositories describe model-rig-nonhuman --location us-central1 \
+  || gcloud artifacts repositories create model-rig-nonhuman \
+       --repository-format=docker --location us-central1
 gcloud builds submit --config workers/rig-nonhuman/cloudbuild.yaml \
   --substitutions=SHORT_SHA=manual$(date +%s) .
 ```
