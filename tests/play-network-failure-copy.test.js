@@ -163,3 +163,29 @@ describe('aixbt pay demo failure copy', () => {
 		expect(late.text).not.toContain('Failed to fetch');
 	});
 });
+
+describe('aixbt feed read failure', () => {
+	afterEach(() => document.body.replaceChildren());
+	const readFirst = async () => {
+		const { openAixbtTerminal } = await import('../src/game/npc/npc-aixbt.js');
+		openAixbtTerminal(null, { ui: { toast() {} } });
+		await vi.waitFor(() => expect(document.querySelector('.aixbt-choice')).not.toBeNull());
+		document.querySelector('.aixbt-choice').click();
+		await vi.waitFor(() => expect(document.querySelector('.aixbt-error')).not.toBeNull());
+		return document.querySelector('.aixbt-error').textContent;
+	};
+
+	it('explains a dropped connection instead of printing "Failed to fetch"', async () => {
+		globalThis.fetch = vi.fn(async () => { throw offline(); });
+		const line = await readFirst();
+		expect(line).toContain(NET_UNREACHABLE);
+		expect(line).not.toMatch(/Failed to fetch/);
+	});
+
+	it('reads a 5xx as the server having trouble, not "request failed (502)"', async () => {
+		globalThis.fetch = vi.fn(async () => new Response('<html>bad gateway</html>', { status: 502 }));
+		const line = await readFirst();
+		expect(line).toContain(NET_SERVER);
+		expect(line).not.toMatch(/request failed|502/);
+	});
+});

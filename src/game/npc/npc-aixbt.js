@@ -274,6 +274,7 @@ async function fetchJson(path, { timeout = 8000 } = {}) {
 	if (!res.ok || !body || body.error) {
 		const err = new Error(body?.error_description || `request failed (${res.status})`);
 		err.code = body?.error || `http_${res.status}`;
+		err.status = res.status;
 		err.setup = body?.setup;
 		throw err;
 	}
@@ -593,7 +594,7 @@ export function openAixbtTerminal(npc, { ui } = {}) {
 			body.appendChild(
 				el('div', {
 					class: 'aixbt-error',
-					text: `Couldn't reach the aixbt feed: ${err.message}`,
+					text: netErrorMessage(err, "Couldn't read the feed. Try again."),
 				}),
 			);
 			if (retry)
