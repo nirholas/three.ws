@@ -126,6 +126,23 @@ hold: the octree expansion runs on a CPU tensor, the part-decode handler
 logs instead of discarding, and the patcher refuses a tree whose target
 lines moved.
 
+## End-to-end check on Cloud Build (no GPU, no deploy)
+
+```bash
+workers/model-partcrafter/verify/submit.sh [image] [num_parts]
+```
+
+Builds this image on Cloud Build, runs one real image (default: the CC0
+chair in `data/quality-bench/refs/`, 4 parts) through the worker's own
+`run_partcrafter` on CPU with the default steps and decode depth, and uploads
+`parts.glb`, `manifest.json` and `run.log` to
+`gs://three-ws-avatar-reconstructions/verify/partcrafter-<timestamp>/`. The
+only deviation from production is CPU fp32 instead of CUDA fp16 (`verify/run.py`
+seeds the pipeline cache). It takes about two hours and never pushes or
+deploys. Then prove part-scoped editing on the result with
+`node scripts/verify-restyle-parts.mjs parts.glb` against a running
+`npm run dev`.
+
 ## Licensing
 
 PartCrafter code and weights are MIT (LICENSE read 2026-10-11; model card

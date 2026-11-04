@@ -1,0 +1,44 @@
+# Verify-only Cloud Build: builds the worker image, runs one real image
+# through run_partcrafter on CPU, and uploads the GLB and manifest. It never
+# pushes an image or deploys. Submit with verify/submit.sh, which stages the
+# build context.
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+substitutions:
+  _IMAGE: chair.jpg
+  _PARTS: "4"
+  _OUT: gs://three-ws-avatar-reconstructions/verify/partcrafter-manual
+
+steps:
+  - id: weights
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args: ["-c", "mkdir -p weights out && gcloud storage cp -r gs://three-ws-model-weights/partcrafter/PartCrafter weights/"]
+
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: worker
+    args: ["build", "-t", "partcrafter-verify", "."]
+
+  # Progress bars are carriage-return redraws; drop them so the log stays readable.
+  - id: run
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - >-
+        set -o pipefail;
+        docker run --rm -v /workspace:/ws partcrafter-verify python3 /ws/run.py /ws/${_IMAGE} ${_PARTS} 2>&1
+        | tr '\r' '\n' | grep -v 'Denoising\|Decoding' | tee out/run.log
+
+  - id: upload
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args: ["-c", "gcloud storage cp out/* ${_OUT}/"]
+
+options:
+  machineType: E2_HIGHCPU_32
+  diskSizeGb: 200
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 21600s
