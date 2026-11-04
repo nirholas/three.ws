@@ -1622,6 +1622,10 @@ export const limits = {
 	// the callers fail CLOSED on it without inventing an availability risk.
 	// See docs/irl/THREAT-MODEL.md.
 	irlNearbyIp: (ip) => getLimiter('irl:nearby:ip', { limit: 60, window: '1 m', local: true }).limit(ip),
+	// /glass lens-to-phone handoff and pairing codes. Minting and resolving are both
+	// per IP: a six-character code space is small, so a guessing sweep has to trip
+	// this long before it could enumerate live codes.
+	glassHandoffIp: (ip) => getLimiter('glass:handoff:ip', { limit: 20, window: '1 m', local: true }).limit(ip),
 	// Agent profile reads (networth, patronage, achievements, reputation, tiers).
 	// One profile view fans out to 7-8 of these; isolate them so opening a few
 	// profiles can't drain the budget shared with markets/home/oracle surfaces.
