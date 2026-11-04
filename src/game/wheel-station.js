@@ -110,7 +110,11 @@ export class WheelStation {
 	}
 
 	_buildPrompt() {
-		this.btn = el('button', { class: 'ps-action wh-action', hidden: true, text: '🎡 Spin the Wheel', onclick: () => this.interact() });
+		this.btn = el('button', { class: 'ps-action wh-action', hidden: true, onclick: () => this.interact() });
+		this.btn.append(
+			el('span', { 'aria-hidden': 'true', text: '🎡 ' }),
+			el('span', { 'data-i18n': 'play.wheel_spin', text: 'Spin the Wheel' }),
+		);
 		document.body.appendChild(this.btn);
 	}
 

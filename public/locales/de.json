@@ -19274,7 +19274,20 @@
 		"jobs_offline_action": "Keine Verbindung zur Welt. Verbindung wird wiederhergestellt, versuche es gleich noch einmal.",
 		"jobs_offline": "Verbindung zur Welt wird wiederhergestellt… das Brett lädt, sobald du zurück bist.",
 		"cash_changed": "{{delta}} Bargeld, {{total}} insgesamt",
-		"party_offline": "Verbindung zur Welt wird wiederhergestellt, deine Gruppe hat das nicht erhalten. Versuche es gleich noch einmal."
+		"party_offline": "Verbindung zur Welt wird wiederhergestellt, deine Gruppe hat das nicht erhalten. Versuche es gleich noch einmal.",
+		"net_unreachable": "three.ws ist nicht erreichbar. Prüfe deine Verbindung und versuche es erneut.",
+		"net_server": "three.ws hat gerade Probleme. Versuche es gleich noch einmal.",
+		"loader_joining": "Community wird betreten…",
+		"loader_label": "Wird geladen",
+		"boot_fail_title": "Die Welt konnte nicht geladen werden",
+		"boot_fail_file": "Eine Datei konnte nicht geladen werden. Ein Neuladen behebt das meist; die Seite wurde eventuell gerade aktualisiert.",
+		"boot_fail_generic": "Beim Start von Coin Communities ist etwas schiefgelaufen. Lade neu, um es erneut zu versuchen.",
+		"boot_slow_title": "Das Laden dauert zu lange",
+		"boot_slow_body": "Die Welt ist noch nicht fertig geladen. Prüfe deine Verbindung und versuche es erneut.",
+		"boot_retry": "Erneut versuchen",
+		"boot_home": "Zurück zu three.ws",
+		"wheel_spin": "Glücksrad drehen",
+		"stage_enter": "Zur Show"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

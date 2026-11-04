@@ -93,8 +93,8 @@
 					<canvas id="kx-boot-avatar" aria-hidden="true"></canvas>
 					<div class="kx-boot-fallback" aria-hidden="true"></div>
 				</div>
-				<div class="kx-loading-sub">Joining the community…</div>
-				<div class="kx-boot-bar" role="status" aria-label="Loading"><span></span></div>
+				<div class="kx-loading-sub" data-i18n="play.loader_joining">Joining the community…</div>
+				<div class="kx-boot-bar" role="status" aria-label="Loading" data-i18n-attr="aria-label:play.loader_label"><span></span></div>
 			</div>
 		</div>
 
@@ -145,7 +145,11 @@
 				document.querySelector('.kx-loading-card').classList.add('kx-has-coin');
 
 				var label = sym ? '$' + sym : name;
-				document.querySelector('.kx-loading-sub').textContent = 'Entering ' + (name || label) + '…';
+				/* Owned: the i18n runtime must not swap this live line back to the
+				   generic "Joining the community…" label it carries in markup. */
+				var sub = document.querySelector('.kx-loading-sub');
+				sub.setAttribute('data-i18n-owned', '1');
+				sub.textContent = 'Entering ' + (name || label) + '…';
 				/* Stash the untouched title so leaving the world can restore it verbatim
 				   (coincommunities.js _setTabTitle) instead of re-spelling it. */
 				if (label) {
@@ -180,6 +184,13 @@
 		   (the app adds .kx-hidden or removes the node) the watchdog disarms. */
 		(function () {
 			var fired = false;
+			/* The catalog is usually loaded by the time a failure shows; when it is
+			   not (or /i18n.js itself was blocked) the English source stands. */
+			function tr(key, fallback) {
+				var rt = window.threewsI18n;
+				var hit = rt && rt.t ? rt.t(key) : '';
+				return hit && hit !== key ? hit : fallback;
+			}
 			function bootPending() {
 				var l = document.getElementById('kx-loading');
 				return l && !l.classList.contains('kx-hidden') && !l.querySelector('.kx-boot-error');
@@ -215,7 +226,7 @@
 				var retry = document.createElement('button');
 				retry.type = 'button';
 				retry.className = 'kx-boot-error-btn';
-				retry.textContent = 'Try again';
+				retry.textContent = tr('play.boot_retry', 'Try again');
 				retry.style.cssText = 'min-height:44px;padding:12px 22px;border-radius:8px;border:1px solid #555;background:#191a1c;color:#fff;cursor:pointer;font-size:14px;';
 				retry.addEventListener('click', function () {
 					/* Hard reload: a stale cached HTML referencing dead chunks needs a
@@ -225,7 +236,7 @@
 				var home = document.createElement('a');
 				home.className = 'kx-boot-error-link';
 				home.href = '/';
-				home.textContent = 'Back to three.ws';
+				home.textContent = tr('play.boot_home', 'Back to three.ws');
 				home.style.cssText = 'display:inline-flex;align-items:center;min-height:44px;padding:0 10px;margin-left:14px;color:#9ab;font-size:14px;';
 				actions.appendChild(retry);
 				actions.appendChild(home);
@@ -261,8 +272,14 @@
 				var s = (v && (v.message || v.name)) || String(v || '');
 				return /Failed to fetch|NetworkError|Load failed|ERR_BLOCKED|ERR_FAILED|AbortError|network error|WebSocket/i.test(s);
 			}
-			function failSoon(title, body) {
-				setTimeout(function () { fail(title, body); }, 20000);
+			/* Keys, not strings: the copy is resolved when the card shows, by which
+			   point the catalog has had 20 seconds to arrive. */
+			var BOOT_COPY = {
+				'play.boot_fail_title': 'Couldn’t load the world',
+				'play.boot_fail_generic': 'Something went wrong while starting Coin Communities. Reload to try again.',
+			};
+			function failSoon(titleKey, bodyKey) {
+				setTimeout(function () { fail(tr(titleKey, BOOT_COPY[titleKey]), tr(bodyKey, BOOT_COPY[bodyKey])); }, 20000);
 			}
 			window.addEventListener('error', function (e) {
 				var t = e && e.target;
@@ -272,18 +289,18 @@
 					   design; the world does not depend on any of them. */
 					if (url && url.indexOf(location.origin) !== 0) return;
 					if (OPTIONAL_SCRIPTS.test(url)) return;
-					fail('Couldn’t load the world', 'A file failed to load. This usually fixes itself on a reload; the site may have just been updated.');
+					fail(tr('play.boot_fail_title', 'Couldn’t load the world'), tr('play.boot_fail_file', 'A file failed to load. This usually fixes itself on a reload; the site may have just been updated.'));
 				} else if (e && (e.error || e.message)) {
 					if (isNetworkNoise(e.error || e.message)) return;
-					failSoon('Couldn’t load the world', 'Something went wrong while starting Coin Communities. Reload to try again.');
+					failSoon('play.boot_fail_title', 'play.boot_fail_generic');
 				}
 			}, true);
 			window.addEventListener('unhandledrejection', function (e) {
 				if (isNetworkNoise(e && e.reason)) return;
-				failSoon('Couldn’t load the world', 'Something went wrong while starting Coin Communities. Reload to try again.');
+				failSoon('play.boot_fail_title', 'play.boot_fail_generic');
 			});
 			setTimeout(function () {
-				fail('Taking too long to load', 'The world hasn’t finished loading. Check your connection and try again.');
+				fail(tr('play.boot_slow_title', 'Taking too long to load'), tr('play.boot_slow_body', 'The world hasn’t finished loading. Check your connection and try again.'));
 			}, 45000);
 		})();
 		</script>

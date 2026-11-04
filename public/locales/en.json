@@ -19521,7 +19521,20 @@
 		"jobs_offline_action": "Not connected to the world. Reconnecting, try again in a moment.",
 		"jobs_offline": "Reconnecting to the world… the board loads as soon as you are back.",
 		"cash_changed": "{{delta}} cash, {{total}} total",
-		"party_offline": "Reconnecting to the world, so the party did not get that. Try again in a moment."
+		"party_offline": "Reconnecting to the world, so the party did not get that. Try again in a moment.",
+		"net_unreachable": "Could not reach three.ws. Check your connection and try again.",
+		"net_server": "three.ws is having trouble right now. Try again in a moment.",
+		"loader_joining": "Joining the community…",
+		"loader_label": "Loading",
+		"boot_fail_title": "Couldn’t load the world",
+		"boot_fail_file": "A file failed to load. This usually fixes itself on a reload; the site may have just been updated.",
+		"boot_fail_generic": "Something went wrong while starting Coin Communities. Reload to try again.",
+		"boot_slow_title": "Taking too long to load",
+		"boot_slow_body": "The world hasn’t finished loading. Check your connection and try again.",
+		"boot_retry": "Try again",
+		"boot_home": "Back to three.ws",
+		"wheel_spin": "Spin the Wheel",
+		"stage_enter": "Enter the show"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",

@@ -199,7 +199,13 @@ export class PlazaStage {
 		this.btn = document.createElement('button');
 		this.btn.className = 'ps-action pz-action';
 		this.btn.hidden = true;
-		this.btn.textContent = '🎤 Enter the show';
+		const icon = document.createElement('span');
+		icon.setAttribute('aria-hidden', 'true');
+		icon.textContent = '🎤 ';
+		const label = document.createElement('span');
+		label.setAttribute('data-i18n', 'play.stage_enter');
+		label.textContent = 'Enter the show';
+		this.btn.append(icon, label);
 		this.btn.addEventListener('click', () => this.interact());
 		document.body.appendChild(this.btn);
 	}

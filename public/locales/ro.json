@@ -19274,7 +19274,20 @@
 		"jobs_offline_action": "Nu ești conectat la lume. Ne reconectăm, încearcă din nou într-o clipă.",
 		"jobs_offline": "Ne reconectăm la lume… panoul se încarcă imediat ce revii.",
 		"cash_changed": "{{delta}} numerar, {{total}} în total",
-		"party_offline": "Se reconectează la lume, așa că grupul nu a primit asta. Încearcă din nou peste un moment."
+		"party_offline": "Se reconectează la lume, așa că grupul nu a primit asta. Încearcă din nou peste un moment.",
+		"net_unreachable": "Nu ne-am putut conecta la three.ws. Verifică conexiunea și încearcă din nou.",
+		"net_server": "three.ws are probleme momentan. Încearcă din nou peste un moment.",
+		"loader_joining": "Intri în comunitate…",
+		"loader_label": "Se încarcă",
+		"boot_fail_title": "Lumea nu s-a putut încărca",
+		"boot_fail_file": "Un fișier nu s-a încărcat. De obicei se rezolvă la reîncărcare; site-ul poate tocmai a fost actualizat.",
+		"boot_fail_generic": "Ceva nu a mers la pornirea Coin Communities. Reîncarcă pentru a încerca din nou.",
+		"boot_slow_title": "Încărcarea durează prea mult",
+		"boot_slow_body": "Lumea nu s-a terminat de încărcat. Verifică conexiunea și încearcă din nou.",
+		"boot_retry": "Încearcă din nou",
+		"boot_home": "Înapoi la three.ws",
+		"wheel_spin": "Învârte roata",
+		"stage_enter": "Intră în spectacol"
 	},
 	"play_agent_wallet": {
 		"0_00usd": "<span class=\"skel\">$0.00</span><small>USD</small>",
