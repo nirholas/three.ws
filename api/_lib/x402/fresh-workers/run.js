@@ -73,7 +73,7 @@ const PAY_CONFIRM_MS = 15_000;
 let _memTickSeq = 0;
 let _memCursor = 0;
 
-function loadFunder(secret, label) {
+export function loadFunder(secret, label) {
 	const bytes = decodeSeedSecret(secret);
 	if (!bytes) throw new Error(`${label}_undecodable`);
 	return Keypair.fromSecretKey(bytes);
@@ -137,7 +137,7 @@ async function recordLedger(sql, { kind, from, to, amountAtomic, txSig, runId })
  * Empty and close one wallet, booking the outcome. Shared by the sweep stage
  * and the reclaim pass. Returns the state it left the row in.
  */
-async function settleWallet({ sql, conn, wallet, keypair, funders, mint, decimals, runId, confirmMs }) {
+export async function settleWallet({ sql, conn, wallet, keypair, funders, mint, decimals, runId, confirmMs }) {
 	const res = await sweepWallet({
 		conn, wallet: keypair, solFunder: funders.solFunder.publicKey, treasury: funders.treasury.publicKey,
 		mint, decimals, confirmMs,

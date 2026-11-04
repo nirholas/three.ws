@@ -240,9 +240,18 @@ export async function settleAndRecord({
 			blockhash: ctx.blockhash,
 			mintInfo: ctx.mintInfo,
 			remainingCap: remaining,
+			...(ctx.selfPay ? { selfPay: true } : {}),
 		});
 	} catch (err) {
 		result = { success: false, paid: false, amountAtomic: 0, txSig: null, status: 0, responseBody: null, errorMsg: err?.message || 'fetch_failed' };
+	}
+
+	// Per-call payer teardown: a one-shot payer (the fresh-wallet lane) is emptied
+	// and closed here, once its payment has a result. Never fatal to the call.
+	if (typeof ctx.afterPay === 'function') {
+		try { await ctx.afterPay(buyer, result); } catch (err) {
+			log?.warn?.('volume_after_pay_failed', { endpoint: ep.key, message: err?.message });
+		}
 	}
 
 	// Only PAID amounts count toward spend accounting; a skipped/failed call

@@ -52,6 +52,8 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { loadSeedKeypair, payX402, USDC_MINT, SOLANA_RPC } from '../_lib/x402/pay.js';
 import { ringPoolEnabled, claimNextPayer } from '../_lib/x402/pool.js';
+import { freshPayerEnabled, loadFreshFunders, createFreshCallPayer } from '../_lib/x402/fresh-workers/per-call.js';
+import { ensureFreshSchema } from '../_lib/x402/fresh-workers/wallets.js';
 import { validateRingConfig } from '../_lib/x402/ring-config.js';
 import { assertRingSpendInvariants } from '../_lib/x402/ring-allowlist.js';
 import {
@@ -447,11 +449,47 @@ export default wrapCron(async (req, res) => {
 	// payer stays the fallback whenever the pool is empty/unavailable, so the ring
 	// never stalls. Pool wallets are inside ringAllowedAddresses(), so the onAccept
 	// allowlist gate and the leak scanner classify them internal.
-	const usePool = ringPoolEnabled();
+	// Fresh payer (X402_RING_FRESH_PAYER=true): every call is paid by a wallet
+	// minted for that call alone, funded with exactly its price, then emptied and
+	// closed, so each settlement has its own buyer for accounting. Takes
+	// precedence over the pool; any mint/fund failure falls through to the seed
+	// payer so the ring never stalls.
+	let fresh = null;
+	let freshFallbacks = 0;
+	let freshOff = null;
+	if (freshPayerEnabled()) {
+		const loaded = loadFreshFunders();
+		if (!loaded.funders) {
+			freshOff = loaded.reason;
+			log.warn('ring_tick_fresh_payer_unavailable', { reason: loaded.reason });
+		} else {
+			try {
+				await ensureFreshSchema(sql);
+				fresh = await createFreshCallPayer({ sql, conn, funders: loaded.funders, runId, mintInfo });
+			} catch (err) {
+				freshOff = `init_failed: ${err?.message}`;
+				log.warn('ring_tick_fresh_payer_unavailable', { reason: freshOff });
+			}
+		}
+	}
+	const usePool = !fresh && ringPoolEnabled();
 	let poolClaims = 0;
 	let poolFallbacks = 0;
 	const payCtx = {
 		buyer: payer, conn, blockhash, mintInfo,
+		...(fresh
+			? {
+				selfPay: true,
+				buyerFor: async (ep) => {
+					const price = ep === RING_SETTLE_ENDPOINT ? ringSettlePriceAtomic : CHEAP_RESERVATION_ATOMIC;
+					const kp = await fresh.buyerFor(ep, price).catch(() => null);
+					if (kp) return kp;
+					freshFallbacks += 1;
+					return payer;
+				},
+				afterPay: fresh.afterPay,
+			}
+			: {}),
 		...(usePool
 			? {
 				buyerFor: async (ep) => {
@@ -506,6 +544,7 @@ export default wrapCron(async (req, res) => {
 		degraded: pbp.degraded, calls, paid, errors, spent_usdc: (spent / 1e6).toFixed(4),
 		payer: payer.publicKey.toBase58(),
 		pool_enabled: usePool, pool_claims: poolClaims, pool_fallbacks: poolFallbacks,
+		fresh_payer: !!fresh, fresh_fallbacks: freshFallbacks, fresh_stats: fresh?.stats || null,
 	});
 
 	return json(res, 200, {
@@ -513,6 +552,7 @@ export default wrapCron(async (req, res) => {
 		run_id: runId,
 		tick_seq: tickSeq,
 		pool: { enabled: usePool, claims: poolClaims, fallbacks: poolFallbacks },
+		fresh_payer: { enabled: !!fresh, fallbacks: freshFallbacks, ...(freshOff ? { unavailable: freshOff } : {}), ...(fresh?.stats || {}) },
 		settle_tick: plan.isSettleTick,
 		...(pbp.degraded ? { degraded: true, reason: 'settle_unaffordable' } : {}),
 		calls,

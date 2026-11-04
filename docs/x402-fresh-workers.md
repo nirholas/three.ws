@@ -208,3 +208,29 @@ in code for a tick that runs first).
   hourly forge pipeline whose sink this lane shares
 - [Economy wallet rotation](./ops/economy-wallet-rotation.md): the funders
 - [STRUCTURE.md](../STRUCTURE.md): surface map
+
+
+## One fresh buyer for every ring call (`X402_RING_FRESH_PAYER`)
+
+The lane above buys its own jobs. To account for every buyer in the ring tick
+too, set `X402_RING_FRESH_PAYER=true` and each paid ring call (the $1
+`ring-settle` carrier and every cheap call) is signed by a wallet minted for
+that call alone. The per-call lifecycle is the same mint, fund, pay, sweep and
+close described above, driven from
+[api/_lib/x402/fresh-workers/per-call.js](../api/_lib/x402/fresh-workers/per-call.js):
+`buyerFor` mints and funds (that call's price, or the $0.02 cheap-call
+reservation, plus its own fees), and `afterPay` books the result and sweeps the
+wallet to zero. Rows live in `x402_fresh_wallets` with `job_kind='ring'`, so
+reclaim, the controlled-wallet set and the leak scanner cover them unchanged.
+
+- Takes precedence over the payer pool (`X402_RING_POOL_ENABLED`).
+- Requires `X402_TREASURY_SECRET_BASE58`, `WALLET_ENCRYPTION_KEY` and the SOL
+  funder (`X402_FEE_PAYER_SECRET_BASE58`). With any missing, or when a single
+  mint or fund fails, the call falls back to the seed payer and the tick
+  response reports `fresh_payer.unavailable` / `fresh_payer.fallbacks`.
+- Cost: each call adds a funding and a sweep transaction (about 15,000 lamports
+  of fees); ATA rent and USDC return to the funder and treasury. Throughput per
+  tick is lower than the shared payer, so watch the tick duration after turning
+  it on.
+- Turn on (config-only): `gcloud run services update three-ws-api --region
+  us-central1 --update-env-vars X402_RING_FRESH_PAYER=true`.
