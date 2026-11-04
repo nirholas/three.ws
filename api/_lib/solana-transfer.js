@@ -30,7 +30,7 @@ export async function transferSolanaUSDC({ fromWallet, toAddress, amount, mint, 
 	const mintPubkey = new PublicKey(mint);
 	const recipientPubkey = new PublicKey(toAddress);
 
-	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
 
 	const senderATA = await getAssociatedTokenAddress(mintPubkey, kp.publicKey);
 	const recipientATA = await getAssociatedTokenAddress(mintPubkey, recipientPubkey);
@@ -83,7 +83,7 @@ export async function transferSplTokenChecked({ fromWallet, toAddress, amount, m
 	const mintPubkey = new PublicKey(mint);
 	const recipientPubkey = new PublicKey(toAddress);
 
-	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
 	const programId = await tokenProgramIdForMint(connection, mintPubkey);
 
 	const senderATA = await getAssociatedTokenAddress(mintPubkey, kp.publicKey, false, programId);
@@ -126,7 +126,7 @@ export async function transferNativeSol({ fromKeypair, toAddress, lamports, netw
 	const amount = BigInt(lamports);
 	if (amount <= 0n) throw new Error('transferNativeSol: lamports must be > 0');
 	const recipient = new PublicKey(toAddress);
-	const connection = solanaConnection({ network, commitment: 'confirmed' });
+	const connection = solanaConnection({ network, commitment: 'confirmed', fresh: true });
 
 	const instructions = [
 		SystemProgram.transfer({

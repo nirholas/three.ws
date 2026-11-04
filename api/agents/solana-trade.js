@@ -47,6 +47,7 @@ import { getAmmPoolState } from '../_lib/pump.js';
 import { assessTradeSafety, recordFirewallDecision } from '../_lib/trade-firewall.js';
 import { submitProtected } from '../_lib/execution-engine.js';
 import { buildAgentTradeFee } from '../_lib/pump-platform-fee.js';
+import { feeEventFromDisclosure } from '../_lib/platform-fee-events.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -626,8 +627,9 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 
 	let instructions;
 	let addressLookupTables = [];
+	let feeDisclosure = null;
 	try {
-		const buildArgs = { userId: auth.userId, side, conn: readConn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw };
+		const buildArgs = { userId: auth.userId, side, conn: readConn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw, onFee: (d) => { feeDisclosure = d; } };
 		if (executor) ({ instructions, addressLookupTables } = await buildVenueTradeInstructions({ executor, ...buildArgs }));
 		else instructions = await buildTradeInstructions(buildArgs);
 	} catch (e) {
@@ -671,7 +673,22 @@ export async function runAgentTrade({ agentId, userId, meta, address, encryptedS
 		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed; check the explorer link before retrying', { signature, explorer: explorerTxUrl(signature, network), custody_event_id: claimId });
 	}
 
-	await updateCustodyEvent(claimId, { status: 'confirmed', signature, usd: side === 'buy' ? usdValue ?? null : null, meta: execTelemetry ? { exec: execTelemetry } : undefined }).catch(() => {});
+	await updateCustodyEvent(claimId, {
+		status: 'confirmed',
+		signature,
+		usd: side === 'buy' ? usdValue ?? null : null,
+		meta: execTelemetry ? { exec: execTelemetry } : undefined,
+		platformFee: feeEventFromDisclosure({
+			disclosure: feeDisclosure,
+			signature,
+			source: 'agent_trade',
+			network,
+			payer: address,
+			userId: auth.userId,
+			agentId: id,
+			meta: { mint: mintStr, side, venue: quote.venue, custody_event_id: claimId, source: 'solana_trade' },
+		}),
+	}).catch(() => {});
 	logAudit({ userId: auth.userId, action: 'custody.trade', resourceId: id, meta: { side, mint: mintStr, venue: quote.venue, usd: usdValue, signature, network, exec_route: execTelemetry?.route }, req });
 
 	// Mirror into pump_agent_trades for cross-feature analytics when the mint is a
@@ -738,13 +755,18 @@ async function simulateAgentTrade({ executor, userId, side, readConn, network, m
 // three.ws trade fee appended for customer-owned agents. Every server-signed
 // caller (the trade endpoint, strategies, mirror trading) builds here, so the
 // fee cannot be skipped by picking a different entry point. `userId` is the
-// agent owner; platform-owned accounts are never billed.
-export async function buildTradeInstructions({ userId = null, ...args }) {
+// agent owner; platform-owned accounts are never billed. `onFee` receives the
+// fee disclosure so the caller can record it (platform_fee_events) once the
+// transaction confirms.
+export async function buildTradeInstructions({ userId = null, onFee = null, ...args }) {
 	const swap = await buildSwapInstructions(args);
 	const instructions = Array.isArray(swap) ? [...swap] : [swap];
 	const lamports = args.side === 'buy' ? args.quote.inAtomics : args.quote.minOutAtomics;
 	const fee = await buildAgentTradeFee({ network: args.network, payer: args.ownerPk, userId, side: args.side, lamports });
-	if (fee) instructions.push(...fee.instructions);
+	if (fee) {
+		instructions.push(...fee.instructions);
+		onFee?.(fee.disclosure);
+	}
 	return instructions;
 }
 
@@ -754,12 +776,15 @@ export async function buildTradeInstructions({ userId = null, ...args }) {
  * fee is appended, so no venue can skip it.
  * @returns {Promise<{ instructions: object[], addressLookupTables: object[] }>}
  */
-export async function buildVenueTradeInstructions({ executor, userId = null, ...args }) {
+export async function buildVenueTradeInstructions({ executor, userId = null, onFee = null, ...args }) {
 	const built = await executor.build(args);
 	const instructions = [...built.instructions];
 	const lamports = args.side === 'buy' ? args.quote.inAtomics : args.quote.minOutAtomics;
 	const fee = await buildAgentTradeFee({ network: args.network, payer: args.ownerPk, userId, side: args.side, lamports });
-	if (fee) instructions.push(...fee.instructions);
+	if (fee) {
+		instructions.push(...fee.instructions);
+		onFee?.(fee.disclosure);
+	}
 	return { instructions, addressLookupTables: built.addressLookupTables || [] };
 }
 

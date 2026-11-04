@@ -29,6 +29,7 @@
 
 import { Keypair, PublicKey, TransactionMessage, VersionedTransaction } from '@solana/web3.js';
 import { sql } from './db.js';
+import { withPlatformFee, feeEventFromDisclosure } from './platform-fee-events.js';
 import { env } from './env.js';
 import { randomToken, sha256, constantTimeEquals } from './crypto.js';
 import { encryptSecret, decryptSecret } from './secret-box.js';
@@ -643,6 +644,7 @@ export async function executeApprovedFundedLaunch(approval) {
 	const send = (ixs) => submitProtected({ network: row.network, connection, payer, instructions: ixs, opts: { extraSigners: [mintKeypair], addressLookupTables: lookupTables } });
 	let signature;
 	let feeSettlement = launchFee ? 'bundled' : null;
+	let feeSignature = null;
 	try {
 		try {
 			({ signature } = await send(launchFee ? [...instructions, ...launchFee.instructions] : instructions));
@@ -651,7 +653,7 @@ export async function executeApprovedFundedLaunch(approval) {
 			({ signature } = await send(instructions));
 			feeSettlement = 'separate';
 			try {
-				await submitProtected({ network: row.network, connection, payer, instructions: launchFee.instructions });
+				({ signature: feeSignature } = await submitProtected({ network: row.network, connection, payer, instructions: launchFee.instructions }));
 			} catch (feeErr) {
 				feeSettlement = 'failed';
 				log.error('separate_fee_failed', { intent: row.id, err: feeErr?.message });
@@ -671,12 +673,29 @@ export async function executeApprovedFundedLaunch(approval) {
 		platform_fee: launchFee ? { ...launchFee.disclosure, settlement: feeSettlement } : null,
 		approval_id: approval.id,
 	};
-	await sql`
+	if (feeSettlement === 'bundled') feeSignature = signature;
+	// The launch fee row commits with the stage flip; a 'failed' separate
+	// transfer charged nothing and records nothing.
+	const launchFeeEvent = feeSignature
+		? feeEventFromDisclosure({
+				disclosure: launchFee.disclosure,
+				signature: feeSignature,
+				sourceRef: signature,
+				source: 'pump_launch',
+				network: row.network,
+				quoteMint: isSolPair ? null : row.quote_mint,
+				payer: payer.publicKey.toBase58(),
+				userId: row.user_id,
+				agentId: row.agent_id,
+				meta: { mint: row.mint, signer: 'agent_wallet', intent_id: row.id, settlement: feeSettlement },
+			})
+		: null;
+	await withPlatformFee(sql, sql`
 		update pump_funded_launch_intents
 		set stage = 'submitted', launch_signature = ${signature}, submitted_at = now(), result = ${JSON.stringify(result)}::jsonb,
 		    mint_secret = null, error = null, updated_at = now()
 		where id = ${row.id}
-	`;
+	`, launchFeeEvent);
 	await sql`
 		insert into pump_agent_mints (agent_id, user_id, network, mint, name, symbol, metadata_uri, agent_authority, buyback_bps, quote_mint)
 		values (${row.agent_id}, ${row.user_id}, ${row.network}, ${row.mint}, ${row.name}, ${row.symbol}, ${row.metadata_uri}, ${row.funding_address}, 0, ${row.quote_mint})

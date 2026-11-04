@@ -230,7 +230,7 @@ async function getAgentsForUser(userId) {
 		WHERE i.user_id = ${userId} AND i.deleted_at IS NULL
 		ORDER BY i.created_at ASC
 	`;
-	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
 	return Promise.all(rows.map(async (row) => {
 		const address = row.meta?.solana_address || null;
 		const source = row.meta?.solana_wallet_source || null;
@@ -565,7 +565,7 @@ function resourceSummary(probe, fallbackUrl) {
 // the internal flow uses (challenge → built → settled → result) so the client can
 // render one progress timeline. `buyer` is the agent's recovered keypair.
 async function runExternalFlow({ url, method, body, emit, buyer, spendGuard, serviceLabel }) {
-	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
 
 	const probe = await probeExternalRequirements({ url, method, body });
 	if (probe.free) {
@@ -712,7 +712,7 @@ async function runExternalFlow({ url, method, body, emit, buyer, spendGuard, ser
 
 async function getAgentBalance() {
 	const buyer = loadAgentKeypair();
-	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
 	const sol = await conn.getBalance(buyer.publicKey);
 	let usdc = 0;
 	try {
@@ -751,7 +751,7 @@ function sseSend(res, event, data) {
 
 async function runFlow({ tool, args, emit, buyer: buyerOverride, resourceUrl, spendGuard = null }) {
 	const buyer = buyerOverride ?? loadAgentKeypair();
-	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	const conn = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
 
 	const requirements = paymentRequirements();
 	const accept = requirements.find((r) => r.network === NETWORK_SOLANA_MAINNET);

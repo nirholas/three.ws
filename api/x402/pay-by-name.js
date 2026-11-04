@@ -221,7 +221,7 @@ async function resolveName(rawName) {
 		}
 		try {
 			const sns = await import('@bonfida/spl-name-service');
-			const conn = solanaConnection('mainnet');
+			const conn = solanaConnection({ network: 'mainnet', fresh: true });
 			const pk = await sns.resolve(conn, bare);
 			return {
 				address: pk.toBase58(),
@@ -330,7 +330,7 @@ async function handlePrep(req, res, body) {
 	if (payer.equals(recipient)) {
 		return error(res, 400, 'self_pay', 'payer and recipient resolve to the same wallet');
 	}
-	const conn = solanaConnection('mainnet');
+	const conn = solanaConnection({ network: 'mainnet', fresh: true });
 	const ixs = await buildTransferIxs({ payer, recipient, amountAtoms });
 	const { blockhash, lastValidBlockHeight } = await getRecentBlockhashInfo(conn, blockhashKey({ network: 'mainnet' }));
 	const msg = new TransactionMessage({
@@ -405,7 +405,7 @@ async function handleSend(req, res, auth, body) {
 		return error(res, 400, 'self_pay', 'agent and recipient resolve to the same wallet');
 	}
 
-	const conn = solanaConnection('mainnet');
+	const conn = solanaConnection({ network: 'mainnet', fresh: true });
 	const ixs = await buildTransferIxs({
 		payer: keypair.publicKey,
 		recipient,

@@ -114,7 +114,7 @@ export async function buildSessionGrantTransaction({ connection, owner, delegate
 export async function beginSessionGrant({ agentId, userId, owner, body, connection = null }) {
 	const ownerKey = requirePubkey(owner, 'pubkey');
 	const { capUi, hours, network, mint } = parseSessionGrant(body);
-	const conn = connection || solanaConnection({ network, commitment: 'confirmed' });
+	const conn = connection || solanaConnection({ network, commitment: 'confirmed', fresh: true });
 
 	const current = await getAgentSigner(agentId);
 	if (current.mode === 'session' && current.session_status === 'active' && new Date(current.session_expires_at).getTime() > Date.now()) {
@@ -206,7 +206,7 @@ export async function endSession({ agentId, userId, connection = null }) {
 	const row = await getAgentSigner(agentId);
 	if (!row.session_pubkey || !row.session_secret_enc || !row.external_pubkey) return null;
 	const network = row.session_network || 'mainnet';
-	const conn = connection || solanaConnection({ network, commitment: 'confirmed' });
+	const conn = connection || solanaConnection({ network, commitment: 'confirmed', fresh: true });
 
 	// Stop the key server-side first: whatever happens on chain next, the
 	// platform will not sign with it again.
@@ -284,7 +284,7 @@ export async function sendSessionTransfer({ agentId, userId, destination, amount
 	const amountRaw = toRawUnits(amount, decimals);
 
 	const claim = await reserveSessionSpend(agentId, { mint: assetMint, amountRaw, network: net });
-	const conn = connection || solanaConnection({ network: net, commitment: 'confirmed' });
+	const conn = connection || solanaConnection({ network: net, commitment: 'confirmed', fresh: true });
 	// Once broadcast, an unknown outcome keeps the headroom claimed: releasing
 	// it for a transfer that later lands would let the session overspend.
 	let broadcast = false;

@@ -104,7 +104,7 @@ async function handleCreatePrep(req, res) {
 		return error(res, 403, 'forbidden', 'wallet does not match agent owner');
 	}
 
-	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
 	const mint = new PublicKey(tokenMint);
 	const owner = new PublicKey(body.wallet_address);
 	const offline = PumpAgentOffline.load(mint, conn);
@@ -194,7 +194,7 @@ async function handleCreateConfirm(req, res) {
 		return error(res, 400, 'validation_error', 'wallet mismatch with prep');
 	}
 
-	const conn = solanaConnection({ url: rpcUrl(prep.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(prep.cluster), commitment: 'confirmed', fresh: true });
 	const deadline = Date.now() + 30_000;
 	let tx;
 	while (Date.now() < deadline) {
@@ -303,7 +303,7 @@ async function handlePayPrep(req, res) {
 	}
 	const tokenMint = agent.meta.payments.mint;
 
-	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
 	const pumpAgent = new PumpAgent(
 		new PublicKey(tokenMint),
 		body.cluster === 'devnet' ? 'devnet' : 'mainnet',
@@ -402,7 +402,7 @@ async function handlePayConfirm(req, res) {
 		return error(res, 400, 'validation_error', 'wallet mismatch');
 	}
 
-	const conn = solanaConnection({ url: rpcUrl(intent.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(intent.cluster), commitment: 'confirmed', fresh: true });
 	const pumpAgent = new PumpAgent(
 		new PublicKey(intent.payload.token_mint),
 		intent.cluster === 'devnet' ? 'devnet' : 'mainnet',
@@ -477,7 +477,7 @@ async function handleBalances(req, res) {
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 	const body = parse(balancesSchema, { ...req.query });
-	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
 	const agent = new PumpAgent(new PublicKey(body.mint), body.cluster, conn);
 	const balances = await agent.getBalances(new PublicKey(body.currency_mint));
 	return json(res, 200, {
@@ -530,7 +530,7 @@ async function handleDistributePrep(req, res) {
 	const agent = await resolveAgentByPaymentsMint(body.mint);
 	if (!agent) return error(res, 404, 'not_found', 'no payments-enabled agent for this mint');
 	if (agent.user_id !== user.id) return error(res, 404, 'not_found', 'agent not found');
-	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
 	const wallet = new PublicKey(body.wallet_address);
 	const offline = PumpAgentOffline.load(new PublicKey(body.mint), conn);
 	const ix = await offline.distributePayments({
@@ -569,7 +569,7 @@ async function handleDistributeConfirm(req, res) {
 	const [prep] =
 		await sql`select * from payment_configs_pending where id = ${body.prep_id} and user_id = ${user.id} and expires_at > now() limit 1`;
 	if (!prep) return error(res, 404, 'not_found', 'prep expired');
-	const conn = solanaConnection({ url: rpcUrl(prep.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(prep.cluster), commitment: 'confirmed', fresh: true });
 	let tx;
 	const deadline = Date.now() + 20_000;
 	while (Date.now() < deadline) {
@@ -607,7 +607,7 @@ async function handleWithdrawPrep(req, res) {
 	const agent = await resolveAgentByPaymentsMint(body.mint);
 	if (!agent) return error(res, 404, 'not_found', 'no payments-enabled agent for this mint');
 	if (agent.user_id !== user.id) return error(res, 404, 'not_found', 'agent not found');
-	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(body.cluster), commitment: 'confirmed', fresh: true });
 	const spl = await import('@solana/spl-token');
 	const authority = new PublicKey(body.wallet_address);
 	const currency = new PublicKey(body.currency_mint);
@@ -648,7 +648,7 @@ async function handleWithdrawConfirm(req, res) {
 	const [prep] =
 		await sql`select * from payment_configs_pending where id = ${body.prep_id} and user_id = ${user.id} and expires_at > now() limit 1`;
 	if (!prep) return error(res, 404, 'not_found', 'prep expired');
-	const conn = solanaConnection({ url: rpcUrl(prep.cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(prep.cluster), commitment: 'confirmed', fresh: true });
 	let tx;
 	const deadline = Date.now() + 20_000;
 	while (Date.now() < deadline) {
@@ -680,7 +680,7 @@ async function handleCheckWhitelist(req, res) {
 	const rl = await limits.publicIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 	const { cluster } = parse(checkWhitelistSchema, { ...req.query });
-	const conn = solanaConnection({ url: rpcUrl(cluster), commitment: 'confirmed' });
+	const conn = solanaConnection({ url: rpcUrl(cluster), commitment: 'confirmed', fresh: true });
 	const global = await new OnlinePumpSdk(conn).fetchGlobal();
 	const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 	const mints = (global.whitelistedQuoteMints || []).map((k) => k.toBase58?.() ?? k.toString());

@@ -303,7 +303,7 @@ async function handleCreate(req, res) {
 	let gaslessBlock = {};
 	if (buyerPublicKey && row.chain === 'solana') {
 		try {
-			const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+			const connection = solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true });
 			const prepared = await buildGaslessPurchaseTx({
 				connection,
 				buyerPublicKey,
@@ -387,7 +387,7 @@ async function payAsAgent({ res, auth, agent, row, decimals, payoutAddress, item
 	let txSignature;
 	try {
 		txSignature = await sendAgentPurchaseTransfer({
-			connection: solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' }),
+			connection: solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed', fresh: true }),
 			keypair: buyer.keypair,
 			currencyMint: row.currency_mint,
 			recipient: payoutAddress,

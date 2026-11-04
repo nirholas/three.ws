@@ -49,6 +49,7 @@ import { createApprovalRequest, approvalPath, publicApproval } from '../_lib/app
 import { currentSignatureFor, agreementRequirement } from '../_lib/real-funds-agreement.js';
 import { assessTradeSafety, recordFirewallDecision, firewallGuardResponse } from '../_lib/trade-firewall.js';
 import { submitProtected } from '../_lib/execution-engine.js';
+import { feeEventFromDisclosure } from '../_lib/platform-fee-events.js';
 import { buildAgentTradeFee } from '../_lib/pump-platform-fee.js';
 
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
@@ -648,7 +649,21 @@ export async function executeAgentTrade({ id, userId, meta, input, req = null, s
 		return fail(202, 'trade_unconfirmed', 'the trade was submitted but not yet confirmed — check the explorer link before retrying', { signature: result.signature, explorer: explorerTxUrl(result.signature, network) });
 	}
 
-	await updateCustodyEvent(claimId, { status: 'confirmed', signature: result.signature, meta: result.exec ? { exec: result.exec } : undefined }).catch(() => {});
+	await updateCustodyEvent(claimId, {
+		status: 'confirmed',
+		signature: result.signature,
+		meta: result.exec ? { exec: result.exec } : undefined,
+		platformFee: feeEventFromDisclosure({
+			disclosure: tradeFee?.disclosure,
+			signature: result.signature,
+			source: 'agent_trade',
+			network,
+			payer: ownerPk.toBase58(),
+			userId,
+			agentId: id,
+			meta: { mint: input.mint, side, venue: prep.venue, custody_event_id: claimId, source: source ?? null },
+		}),
+	}).catch(() => {});
 	logAudit({ userId, action: isStrategy ? 'custody.trade_strategy' : 'custody.trade', resourceId: id, meta: { side, mint: input.mint, venue: prep.venue, network, signature: result.signature, usd: prep.usdValue, exec_route: result.exec?.route, source }, req });
 
 	// Re-read the SOL balance for the response.

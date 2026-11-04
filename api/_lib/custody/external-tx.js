@@ -186,7 +186,7 @@ export async function simulateUnsigned(connection, transaction) {
  */
 export async function prepareExternalTx({ userId, agentId = null, kind, network, signer, transaction, summary, lastValidBlockHeight = null, simulate = true, connection = null }) {
 	if (!LEDGER[kind]) throw new Error(`unknown external tx kind: ${kind}`);
-	const conn = connection || solanaConnection({ network, commitment: 'confirmed' });
+	const conn = connection || solanaConnection({ network, commitment: 'confirmed', fresh: true });
 	const required = transaction.message.staticAccountKeys
 		.slice(0, transaction.message.header.numRequiredSignatures)
 		.map((k) => k.toBase58());
@@ -336,7 +336,7 @@ export async function submitExternalTx({ userId, txId, signedTransaction, connec
 		throw clientError('in_flight', 'This transaction is already being submitted.', 409);
 	}
 
-	const conn = connection || solanaConnection({ network: row.network, commitment: 'confirmed' });
+	const conn = connection || solanaConnection({ network: row.network, commitment: 'confirmed', fresh: true });
 	const raw = Buffer.from(tx.serialize());
 	try {
 		await conn.sendRawTransaction(raw, { skipPreflight: false, preflightCommitment: 'confirmed', maxRetries: 3 });
@@ -394,7 +394,7 @@ export async function refreshSubmittedTx(txId, userId, { connection = null } = {
 	const row = await getExternalTx(txId, userId);
 	if (!row) return null;
 	if (row.status !== 'submitted' || !row.signature) return publicExternalTx(row);
-	const conn = connection || solanaConnection({ network: row.network, commitment: 'confirmed' });
+	const conn = connection || solanaConnection({ network: row.network, commitment: 'confirmed', fresh: true });
 	let status = null;
 	try {
 		const res = await conn.getSignatureStatuses([row.signature], { searchTransactionHistory: true });

@@ -1674,9 +1674,14 @@ export async function recordCustodyEvent(e) {
 	return row?.id ?? null;
 }
 
-/** Update a custody row by id (e.g. flip a pending withdraw to confirmed/failed). */
+/**
+ * Update a custody row by id (e.g. flip a pending withdraw to confirmed/failed).
+ * `patch.platformFee` (a platform_fee_events event) is written in the same
+ * database transaction as the update, so a confirmed trade and the fee it paid
+ * are recorded together or not at all.
+ */
 export async function updateCustodyEvent(id, patch) {
-	await sql`
+	const statement = sql`
 		UPDATE agent_custody_events
 		SET status = COALESCE(${patch.status ?? null}, status),
 		    signature = COALESCE(${patch.signature ?? null}, signature),
@@ -1687,6 +1692,19 @@ export async function updateCustodyEvent(id, patch) {
 		    updated_at = now()
 		WHERE id = ${id}
 	`;
+	if (!patch.platformFee) {
+		await statement;
+		return;
+	}
+	const { withPlatformFee, reportRecordFailure } = await import('./platform-fee-events.js');
+	try {
+		await withPlatformFee(sql, statement, patch.platformFee);
+	} catch (e) {
+		// Callers swallow custody-update errors after an on-chain confirm, so the
+		// lost fee row is paged here before the error goes back up.
+		await reportRecordFailure(patch.platformFee, e);
+		throw e;
+	}
 }
 
 /** Convenience wrapper for the common case: record one outbound 'spend'. */

@@ -159,7 +159,7 @@ async function handleBuildTransfer(req, res) {
 			return respondExternal(res, {
 				principal, agentId: input.agent_id, kind: 'transfer', network, sender,
 				build: async () => buildTransferTransaction({
-					connection: solanaConnection({ network, commitment: 'confirmed' }),
+					connection: solanaConnection({ network, commitment: 'confirmed', fresh: true }),
 					sender, recipient, amount, token, memo: memo ?? null, network,
 				}),
 			});
@@ -171,7 +171,7 @@ async function handleBuildTransfer(req, res) {
 	// pinning the public mainnet node: it is the most aggressively rate-limited
 	// lane and passing it as an explicit url put it at the HEAD of the failover
 	// order, ahead of every keyed provider.
-	const connection = solanaConnection({ network, commitment: 'confirmed' });
+	const connection = solanaConnection({ network, commitment: 'confirmed', fresh: true });
 	const senderPubkey    = new PublicKey(sender);
 	const recipientPubkey = new PublicKey(recipient);
 
@@ -290,7 +290,7 @@ async function handleBuildSwap(req, res) {
 			return respondExternal(res, {
 				principal, agentId: input.agent_id, kind: 'swap', network: 'mainnet', sender,
 				build: async () => buildSwapTransaction({
-					connection: solanaConnection({ network: 'mainnet', commitment: 'confirmed' }),
+					connection: solanaConnection({ network: 'mainnet', commitment: 'confirmed', fresh: true }),
 					sender, inputMint, outputMint, amount, slippageBps,
 				}),
 			});
@@ -301,7 +301,7 @@ async function handleBuildSwap(req, res) {
 		return error(res, 400, 'invalid_route', 'inputMint and outputMint must differ');
 	}
 
-	const connection = solanaConnection({ network: 'mainnet', commitment: 'confirmed' });
+	const connection = solanaConnection({ network: 'mainnet', commitment: 'confirmed', fresh: true });
 	const { decimals: inputDecimals } = await resolveMint(connection, new PublicKey(inputMint));
 	const { decimals: outputDecimals } = await resolveMint(connection, new PublicKey(outputMint));
 
