@@ -93,6 +93,7 @@ Every directory with a non-private `package.json`: what `npm run publish:package
 | [three-ws](three-ws/README.md) | The unscoped `npx three-ws setup` command: a thin launcher for `@three-ws/cli`. |
 | [three-ws-cli](three-ws-cli/README.md) | One command to connect any MCP client to three.ws: sign in with OAuth or an API key, write the hosted servers into Claude Code, Cursor, VS Code and more, and verify each with a live `tools/list`. |
 | [threews-avatar-mcp](threews-avatar-mcp/README.md) | MCP server that renders a live rotatable avatar inline, plus embed iframe and metadata. |
+| [trading-mcp](trading-mcp/README.md) | Quote and fill guarded Solana swaps from a three.ws agent wallet, from any MCP client. The agent never sells $THREE. |
 | [tty-3d](tty-3d/README.md) | The terminal 3D renderer core: GLB in, skinned and animated ANSI frames out, plus the `three-tty` CLI. |
 | [tty-avatar](tty-avatar/README.md) | A live 3D avatar in the terminal: any GLB or three.ws avatar/agent rendered to truecolor half-blocks or braille, with moods, and Claude Code hooks that make it your coding agent's face. |
 | [tutor-mcp](tutor-mcp/README.md) | MCP server for the Pay-As-You-Learn tutor ledger: itemized running tab and attested invoice. |
