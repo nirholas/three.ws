@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  three.ws Drive on Android Automotive OS (solana-mobile/android-overlay).
+
+  The `automotive` product flavor's manifest, merged over the main one only when
+  that flavor is built (app/build.gradle, see build.gradle.fragment). The phone
+  APK never sees this file.
+
+  On AAOS the app runs on the head unit itself. The car screen is the same four
+  Car App Library templates Android Auto shows (DriveCarAppService, DriveSession,
+  DriveScreen), hosted by the system Templates Host through CarAppActivity, and
+  the conversation runs in DriveWebService's windowless web view exactly as it
+  does on a phone. Google's rule is that a templated app artifact cannot also be
+  a mobile app, so this flavor removes the phone entry points (the Trusted Web
+  Activity launcher, its site-settings launcher, the home screen widget) rather
+  than shipping them to a car that cannot run them.
+
+  Docs: solana-mobile/docs/ANDROID-AUTO.md, section "Android Automotive OS".
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Play distributes this APK to cars only, and only to cars with a
+         templates host to render it. -->
+    <uses-feature
+        android:name="android.hardware.type.automotive"
+        android:required="true" />
+    <uses-feature
+        android:name="android.software.car.templates_host"
+        android:required="true" />
+
+    <!-- Cars are fixed-orientation in either direction, and many have no
+         Wi-Fi or camera. Any of these left required (explicitly or implied)
+         hides the app from otherwise compatible vehicles. -->
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.screen.landscape"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <application>
+        <!-- AAOS reads com.android.automotive. The Android Auto descriptor must
+             not be present in an AAOS artifact at all. -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            tools:node="remove" />
+        <meta-data
+            android:name="com.android.automotive"
+            android:resource="@xml/drive_aaos_app_desc" />
+
+        <!-- The one launcher entry: the library's CarAppActivity, which finds
+             DriveCarAppService in this package and asks the templates host to
+             draw it. distractionOptimized is allowed on this activity and on no
+             other; the templates are what make it safe while moving. -->
+        <activity
+            android:name="androidx.car.app.activity.CarAppActivity"
+            android:exported="true"
+            android:label="@string/drive_car_title"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
+        </activity>
+
+        <!-- Phone entry points. A Trusted Web Activity needs a TWA browser, and
+             an AAOS head unit has none; a widget needs a home screen that hosts
+             widgets, and most cars have none. -->
+        <activity
+            android:name="ws.three.app.LauncherActivity"
+            tools:node="remove" />
+        <activity
+            android:name="com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity"
+            tools:node="remove" />
+        <receiver
+            android:name="ws.three.app.glance.GlanceWidget"
+            tools:node="remove" />
+        <activity
+            android:name="ws.three.app.glance.GlanceLinkActivity"
+            tools:node="remove" />
+    </application>
+</manifest>

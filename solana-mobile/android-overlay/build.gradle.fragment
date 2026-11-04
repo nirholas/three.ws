@@ -5,9 +5,45 @@ dependencies {
 
 // three.ws Drive (solana-mobile/android-overlay): the Android Auto car app.
 // app-projected is what makes the templates render on a phone-projected head
-// unit; app-automotive (a separate AAOS build with its own CarAppActivity) is
-// deliberately not here yet, see docs/carplay.md.
+// unit.
 dependencies {
     implementation 'androidx.car.app:app:1.4.0'
     implementation 'androidx.car.app:app-projected:1.4.0'
+}
+
+// three.ws Drive on Android Automotive OS: the `automotive` product flavor.
+//
+// Google requires a templated car app to ship to Android Automotive OS as its
+// own artifact, so this is a flavor with its own manifest
+// (app/src/automotive/AndroidManifest.xml) and its own dependency,
+// app-automotive, which carries CarAppActivity. The flavor is declared only
+// when an automotive build is asked for, either by a task name that mentions
+// it (./gradlew assembleAutomotiveDebug) or by -Pthreews.automotive=true.
+// Declaring it unconditionally would rename every phone variant
+// (app-release.apk becomes app-phone-release.apk) and break the APK path
+// bubblewrap build and build-apk.sh read, so the phone build stays exactly
+// what it was.
+def threeWsAutomotive = (project.findProperty('threews.automotive') ?: 'false').toString().toBoolean() ||
+        gradle.startParameter.taskNames.any { it.toLowerCase(Locale.ROOT).contains('automotive') }
+if (threeWsAutomotive) {
+    android {
+        flavorDimensions 'platform'
+        productFlavors {
+            automotive {
+                dimension 'platform'
+                // Every car that runs Car App Library apps on AAOS is API 29+.
+                minSdkVersion 29
+            }
+        }
+    }
+    dependencies {
+        automotiveImplementation 'androidx.car.app:app-automotive:1.4.0'
+    }
+    // app-projected is the phone half of the library: it registers
+    // ProjectedCarHardwareManager under the same manifest key app-automotive
+    // registers AutomotiveCarHardwareManager under, so the two cannot share an
+    // artifact. The head unit build takes the automotive half only.
+    configurations.matching { it.name.startsWith('automotive') }.configureEach {
+        exclude group: 'androidx.car.app', module: 'app-projected'
+    }
 }

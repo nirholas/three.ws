@@ -3,21 +3,25 @@
 //
 // `bubblewrap update` regenerates the whole Android project from
 // twa/twa-manifest.json on every build, so anything native (the glance home
-// screen widget, the Android Auto car app) has to be laid on top AFTER update
-// and BEFORE build. This
-// script is that step, and build-apk.sh runs it in exactly that slot.
+// screen widget, the Android Auto car app, the Android Automotive OS flavor)
+// has to be laid on top AFTER update and BEFORE build. This script is that
+// step, and build-apk.sh runs it in exactly that slot.
 //
 //   node scripts/apply-overlay.mjs --project build [--overlay android-overlay]
 //
 // What it does:
 //   1. copies every file under <overlay>/app/ into <project>/app/ (sources,
-//      layouts, drawables, values, xml), refusing to clobber a generated file
-//      it does not own;
+//      layouts, drawables, values, xml, and the app/src/automotive flavor
+//      source set), refusing to clobber a generated file it does not own;
 //   2. splices AndroidManifest.permissions.xml after the <manifest> opening
 //      tag and AndroidManifest.application.xml before </application>;
-//   3. appends build.gradle.fragment to app/build.gradle.
+//   3. appends build.gradle.fragment to app/build.gradle, which declares the
+//      `automotive` flavor only when an automotive build is asked for, so the
+//      phone APK is byte for byte the build it was.
 //
-// It is idempotent (a marker comment guards each splice) and it fails loudly
+// It is idempotent (a fenced marker guards each splice, and a second run leaves
+// the tree byte for byte as the first did; tests/solana-mobile-apply-overlay.test.js
+// proves it against a real generated project) and it fails loudly
 // on a missing overlay or a manifest it cannot parse: the listing says the app
 // has a widget, so a build that silently dropped it would ship a lie.
 
@@ -50,6 +54,8 @@ const REQUIRED = [
 	'app/src/main/res/xml/glance_widget_info.xml',
 	'app/src/main/java/ws/three/app/drive/DriveCarAppService.java',
 	'app/src/main/res/xml/drive_automotive_app_desc.xml',
+	'app/src/automotive/AndroidManifest.xml',
+	'app/src/automotive/res/xml/drive_aaos_app_desc.xml',
 ];
 for (const rel of REQUIRED) {
 	if (!fs.existsSync(path.join(overlayDir, rel))) fail(`overlay is missing ${rel} (${overlayDir})`);
@@ -64,19 +70,30 @@ if (!fs.existsSync(gradlePath)) fail(`no generated build.gradle at ${gradlePath}
 // a collision with a generated file means the generator changed under us.
 // Re-applying the overlay over its own previous output is normal and must not
 // trip that check, which is why ownership is by name and not by "does it exist".
+// The one exception to naming is the automotive flavor's source set: its
+// manifest has to be called AndroidManifest.xml, and Bubblewrap never generates
+// a flavor source set, so everything under app/src/automotive/ is ours by path.
 const OWNED = ['glance', 'drive'];
-const isOurs = (name) => OWNED.some((prefix) => name.includes(prefix));
+const OWNED_SOURCE_SETS = ['src/automotive/'];
+// Case-insensitive: Java classes are capitalized (DriveWebService.java,
+// GlanceWidget.java) while resources are lowercase (drive.xml), and both are
+// ours. A case-sensitive check treated every edited class as a generated file
+// and aborted the re-apply.
+const isOurs = (rel) =>
+	OWNED.some((prefix) => path.basename(rel).toLowerCase().includes(prefix)) ||
+	OWNED_SOURCE_SETS.some((dir) => rel.split(path.sep).join('/').startsWith(dir));
 let copied = 0;
-function copyTree(from, to) {
+function copyTree(from, to, rel = '') {
 	for (const entry of fs.readdirSync(from, { withFileTypes: true })) {
 		const src = path.join(from, entry.name);
 		const dst = path.join(to, entry.name);
+		const relPath = path.join(rel, entry.name);
 		if (entry.isDirectory()) {
 			fs.mkdirSync(dst, { recursive: true });
-			copyTree(src, dst);
+			copyTree(src, dst, relPath);
 			continue;
 		}
-		if (fs.existsSync(dst) && fs.readFileSync(dst).equals(fs.readFileSync(src)) === false && !isOurs(entry.name)) {
+		if (fs.existsSync(dst) && fs.readFileSync(dst).equals(fs.readFileSync(src)) === false && !isOurs(relPath)) {
 			fail(`refusing to overwrite generated file ${dst}`);
 		}
 		fs.copyFileSync(src, dst);
@@ -154,9 +171,30 @@ gradle = gFrom >= 0 && gTo > gFrom
 	? `${gradle.slice(0, gFrom)}${gradleBlock}${gradle.slice(gTo + GRADLE_END.length + 1)}`
 	: `${gradle.trimEnd()}\n\n${gradleBlock}`;
 fs.writeFileSync(gradlePath, gradle);
-for (const dep of ['androidx.work:work-runtime', 'androidx.car.app:app:', 'androidx.car.app:app-projected:']) {
+for (const dep of [
+	'androidx.work:work-runtime',
+	'androidx.car.app:app:',
+	'androidx.car.app:app-projected:',
+	'androidx.car.app:app-automotive:',
+	"productFlavors {",
+]) {
 	if (!gradle.includes(dep)) fail(`build.gradle merge lost ${dep}`);
 }
-log('appended the WorkManager and Car App Library dependencies to app/build.gradle');
+log('appended the WorkManager and Car App Library dependencies and the automotive flavor to app/build.gradle');
+
+// 4. The automotive flavor's manifest arrived with the copy in step 1; check
+// the declarations AAOS will not run without, so a bad edit fails here rather
+// than at Play review.
+const aaosManifest = fs.readFileSync(path.join(projectDir, 'app/src/automotive/AndroidManifest.xml'), 'utf8');
+for (const needle of [
+	'androidx.car.app.activity.CarAppActivity',
+	'android.hardware.type.automotive',
+	'android.software.car.templates_host',
+	'com.android.automotive',
+	'@xml/drive_aaos_app_desc',
+]) {
+	if (!aaosManifest.includes(needle)) fail(`automotive flavor manifest lost ${needle}`);
+}
+log('automotive flavor source set in place (CarAppActivity, AAOS descriptor, feature declarations)');
 
 log('overlay applied');

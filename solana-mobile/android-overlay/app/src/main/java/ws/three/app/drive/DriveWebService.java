@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Build;
@@ -28,6 +29,12 @@ import ws.three.app.R;
  * told so with {@code ?surface=androidauto}: src/drive/surface.js turns off the
  * 3D stage for that surface, because a windowless web view gets no animation
  * frames. Audio, fetch and timers all keep running, which is the whole loop.
+ *
+ * Android Automotive OS (the {@code automotive} build flavor) runs this same
+ * service on the head unit, with the same preset: the car screen there is also
+ * the templates host's, the web view is just as windowless, and a confirmation
+ * the driver cannot see is refused for the same reason. Only the device holding
+ * the microphone changes, from the phone to the car.
  *
  * A foreground service is not optional here. The phone screen belongs to Android
  * Auto during a drive, so this process is background by definition, and a
@@ -184,14 +191,28 @@ public final class DriveWebService extends Service implements DriveLink.CommandS
         }
     }
 
+    /**
+     * Where a tap on the session notification goes. On a phone that is /drive,
+     * which the app's own Trusted Web Activity handles. On Android Automotive OS
+     * there is no TWA browser and the automotive flavor declares no web
+     * launcher, so the tap opens the car app itself (its only launcher entry,
+     * CarAppActivity) instead of a link nothing on the head unit can open.
+     */
+    private Intent openIntent() {
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Intent launch = getPackageManager().getLaunchIntentForPackage(getPackageName());
+            if (launch != null) return launch;
+        }
+        return new Intent(Intent.ACTION_VIEW, Uri.parse("https://three.ws/drive"));
+    }
+
     private Notification buildNotification() {
         Intent stop = new Intent(this, DriveWebService.class).setAction(ACTION_STOP);
         int flags = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) flags |= PendingIntent.FLAG_IMMUTABLE;
         PendingIntent stopIntent = PendingIntent.getService(this, 1, stop, flags);
 
-        Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse("https://three.ws/drive"));
-        PendingIntent openIntent = PendingIntent.getActivity(this, 2, open, flags);
+        PendingIntent openIntent = PendingIntent.getActivity(this, 2, openIntent(), flags);
 
         Notification.Builder builder = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? new Notification.Builder(this, CHANNEL_ID)

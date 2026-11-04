@@ -13,7 +13,7 @@ it is checkable against this repository.
 > Android experience: I build and ship the Android app for three.ws
 > (https://three.ws), an open-source platform for creating, animating and
 > embedding 3D AI avatars. The app, package `ws.three.app`, is a Trusted Web
-> Activity built with Bubblewrap: signed release APK and AAB, minSdk 23,
+> Activity built with Bubblewrap: signed release APK and AAB, minSdk 24,
 > targetSdk 36.
 >
 > I set up the release keystore and a non-interactive signing pipeline, Digital

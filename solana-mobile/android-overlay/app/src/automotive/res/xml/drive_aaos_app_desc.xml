@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Automotive OS descriptor, read from the com.android.automotive
+  meta-data in the automotive flavor's manifest. `template` tells the head unit
+  this is a Car App Library app, rendered by its templates host through
+  CarAppActivity. (The Android Auto build uses drive_automotive_app_desc.xml
+  under com.google.android.gms.car.application instead; despite its name that
+  file is Android Auto's.)
+-->
+<automotiveApp>
+    <uses name="template" />
+</automotiveApp>

@@ -84,7 +84,7 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://three.ws/",
-  "minSdkVersion": 23,
+  "minSdkVersion": 24,
   "orientationFlag": "portrait",
   "splashScreenFadeOutDuration": 300,
   "additionalTrustedOrigins": [],

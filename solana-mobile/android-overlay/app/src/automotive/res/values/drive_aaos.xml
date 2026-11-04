@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- three.ws Drive on Android Automotive OS: the copy that differs from the
+     phone build. On a head unit the permission prompt appears on the car
+     screen itself, so "on your phone" would send the driver looking for a
+     device that is not involved. Overrides res/values/drive.xml. -->
+<resources>
+    <string name="drive_mic_needed">three.ws Drive is a voice assistant, so it needs the microphone. Grant it on this screen while parked and it will start listening.</string>
+</resources>
