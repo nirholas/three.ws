@@ -139,7 +139,7 @@
 				<span class="pill" data-i18n="3d.free">Free</span>
 				<span class="pill" data-i18n="3d.keyless">Keyless</span>
 				<span class="pill" data-i18n="3d.openapi_3_1">OpenAPI 3.1</span>
-				<span class="pill live" id="liveBadge" title="Live status of the API" data-i18n-html="3d.checking" data-i18n-attr="title:3d.live_status_of_the_api_title"><span class="dot"></span><span id="liveText">checking…</span></span>
+				<span class="pill live" id="liveBadge" title="Live status of the API" data-i18n-attr="title:3d.live_status_of_the_api_title"><span class="dot"></span><span id="liveText" data-i18n="3d.status_checking">checking…</span></span>
 			</div>
 			<h1 data-i18n="3d.three_ws_3d_api">three.ws 3D API</h1>
 			<p class="lede" data-i18n-html="3d.give_your_ai_agent_a_3d_toolchain">Give your AI agent a 3D toolchain. Turn a text prompt into a real textured GLB, validate and optimize any glTF/GLB — <strong>free, keyless, no account</strong>. When a draft isn't enough, the same API graduates to production Forge Pro tiers and animation-ready Rigged Avatars.</p>
@@ -334,7 +334,10 @@ curl https://three.ws/api/3d/openapi.json</code></pre>
 			const b = $('#liveBadge');
 			b.classList.toggle('up', up);
 			b.classList.toggle('down', !up);
-			$('#liveText').textContent = up ? 'live' : 'offline';
+			const text = $('#liveText');
+			// The script owns this text from here on; the locale pass must not put "checking" back.
+			text.dataset.i18nOwned = '1';
+			text.textContent = up ? 'live' : 'offline';
 		}
 
 		// 1) Discover the catalog for the endpoint table + stat.

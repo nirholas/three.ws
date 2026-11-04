@@ -36,6 +36,7 @@
 		"assembled_live_from_the_api_catalog_every": "Assembled live from the API catalog. Every row is free and keyless.",
 		"auto_skeleton_skin_weights": "Auto skeleton + skin weights",
 		"checking": "<span class=\"dot\"></span><span id=\"liveText\">checking…</span>",
+		"status_checking": "checking…",
 		"copy_run_done_no_key_no_header": "Copy, run, done. No key, no header, no account. These call the live production API.",
 		"draft_inspect": "Draft + Inspect",
 		"draft_standard_high_quality_tiers": "draft / standard / high quality tiers",
