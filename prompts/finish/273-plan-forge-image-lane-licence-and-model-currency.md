@@ -1,5 +1,7 @@
 # Forge image lanes drop the non-commercial RMBG-1.4 matte and move off the retired Gemini image model
 
+
+**Status (2026-11-04):** All seven tasks are already landed on main (image-model.js resolver with 404-only fallback, TripoSG matte via rembg BiRefNet, input endpoints deleted, scan copy fixed, model-trellis unpinned, xatlas face cap, triage doc). Re-verified: vitest forge-reference-image and vertex-imagen 22/22, TripoSG python suites pass. Remaining, owner of the lead session: a browser look at /features/scan (not run here, no dev server in this worktree) and a decision whether the literal `grep -rln RMBG workers/model-triposg` line is satisfied (remaining hits are only the tests, README and comments that state RMBG is no longer used).
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/273-plan-forge-image-lane-licence-and-model-currency.md`.
 
 **Priority:** P1, unshipped fix or half-built user-visible feature (score 66 of 100 inside the tier). **Area:** forge. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
