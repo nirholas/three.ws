@@ -5,7 +5,7 @@
 // Problems are reported per item: one broken draft never blocks an approved
 // item behind it.
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { copyProblems, copySimilarity, hasUrl, maxLengthOf, weightedLength } from './quality.js';
 import { attachmentProblems, mediaProblems, mediaType } from './media.js';
@@ -74,6 +74,18 @@ function articleDepthProblems(root, title, blocks, converted) {
 
 export function loadQueue(root, path = QUEUE_PATH) {
 	return JSON.parse(readFileSync(resolve(root, path), 'utf8'));
+}
+
+// Write one item back into the queue as it stands on disk now, not into the copy
+// a long command loaded minutes ago: a whole-queue save from a stale snapshot
+// reverts every change other authors committed in between.
+export function saveQueueItem(root, item, path = QUEUE_PATH) {
+	const queue = loadQueue(root, path);
+	const index = queue.items.findIndex((row) => row.id === item.id);
+	if (index === -1) throw new Error(`${item.id} is no longer in ${path}; it was not saved`);
+	queue.items[index] = item;
+	writeFileSync(resolve(root, path), `${JSON.stringify(queue, null, '\t')}\n`);
+	return queue;
 }
 
 export const EXTERNAL_PATH = 'data/x-content/external.json';

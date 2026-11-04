@@ -1,7 +1,7 @@
 {
 	"id": "changelog-feed",
-	"contentHash": "a44f8787cd65d302509ea0faeb3e1cb96a6d4f92f8d792f73a23c6acbc76f1e0",
-	"reviewedAt": "2026-10-13T19:13:14.827Z",
+	"contentHash": "0bac0ef75d39f5e36abf58e2e20f2038a43fb17048917a24f77178b68ed79158",
+	"reviewedAt": "2026-11-04T22:22:52.809Z",
 	"passed": true,
 	"blockers": [],
 	"texts": [
@@ -17,7 +17,7 @@
 				"kind": "evidence:proof",
 				"target": "total",
 				"ok": true,
-				"detail": "the run read total = \"4007\", at least 3800"
+				"detail": "the run read total = \"4274\", at least 3800"
 			},
 			{
 				"claim": "newest first",
@@ -142,7 +142,7 @@
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
 				"ok": true,
-				"detail": "9 steps passed against the live product, every claimed fact still holds (total 4007)"
+				"detail": "9 steps passed against the live product, every claimed fact still holds (total 4274)"
 			},
 			{
 				"kind": "probe:api",
@@ -174,7 +174,7 @@
 		"verdict": "publish",
 		"scores": {
 			"accuracy": 5,
-			"clarity": 4,
+			"clarity": 5,
 			"specificity": 5,
 			"voice": 5,
 			"professionalism": 5,
@@ -186,10 +186,12 @@
 				"More than 3,800 entries sit in the public changelog, newest first, each tagged launch, feature, improvement, fix, sdk, security, infra or docs, and each with its own permalink.\n\nNew pages add themselves: the launch date a page carries in the site index becomes an entry with no one writing one. Everything else a user would notice gets a written entry with a plain-language summary.\n\nDelivery is automatic too. A job runs every 20 minutes, reads the feed baked into the running build, and posts anything new to the community Telegram channel, so an entry goes out shortly after the deploy that shipped it.",
 				"Follow it by RSS, JSON feed or llms.txt, or filter the page by the kind of change.\n\nthree.ws/changelog"
 			],
-			"altText": []
+			"altText": [
+				"Screen recording of the three.ws changelog page showing entries sorted newest first, filter buttons for launch, feature, improvement, fix, sdk, security, infra, and docs, individual entry permalinks, and follow links for RSS, JSON feed, and llms.txt."
+			]
 		},
-		"summary": "Every claim passed verification against the live product and repo files, and the filmed reel shows exactly the tagged entries, filters, permalinks, and feeds the post describes. The voice matches the contract with a number lead, no hype, one link, and the post stands alone for readers who cannot see the reel.",
-		"model": "nvidia:moonshotai/kimi-k3",
+		"summary": "Every claim is verified against the live product, code, or cron configuration, including the 4,274 total read off screen. The post opens with a strong number lead, follows the house voice with no hashtags, emoji, dashes, or hype openers, and the reel captions match the copy. No issues found.",
+		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
