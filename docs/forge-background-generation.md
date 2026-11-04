@@ -52,14 +52,25 @@ Three cooperating pieces:
    past the attended polling window (13 minutes, so a live browser's own
    failover is never raced) is redispatched unattended to the next healthy
    lane under the same hop cap as the attended path, and an expired NVCF
-   request is resubmitted from the inputs stored on the row. A redispatched
+   request is resubmitted from the inputs stored on the row. NVIDIA NIM is the
+   only text-to-3D lane, so a stalled NVCF poll has nowhere to fail over to:
+   once the row is past the same 13-minute window it gets exactly one unattended
+   resubmit (`decideNvidiaStall`), and an in-flight marker is written before the
+   paid submission so a tick cut off mid-flight is never re-fired. A failed
+   resubmit raises an ops alert (`console.warn` from this handler never reached
+   Cloud Logging). A redispatched
    attempt is linked to its successor row (`forge_creations.superseded_by`,
    migration `20260814200000_forge_failover_supersede.sql`), so the outcome
    ledger records a recovery rather than a loss. Only a job with nothing left
    to try is marked failed, and the finalizer logs that it declined the
    failover (every alternative lane already attempted or cooling) rather than
    failing silently. Anything non-terminal after 45 minutes is marked failed
-   as timed out, so no row can be orphaned at `generating` again.
+   as timed out, so no row can be orphaned at `generating` again. That reap
+   (`reapExpiredRows`) is one bulk update that runs first on every tick,
+   independent of the live-poll batch, so a batch filled by one unhealthy lane
+   cannot keep other lanes' rows from being reaped. Reaping an NVIDIA row also
+   cools the NIM submit breaker, so new text requests skip the lane that just
+   timed out.
 
 3. **Notifications** ([api/_lib/forge-notify.js](../api/_lib/forge-notify.js)):
    the finalizer, and only the finalizer, notifies. `forge_complete` and
@@ -138,11 +149,16 @@ first, because that shape is a shared dependency rather than a lane fault.
   `api/_lib/cron-auth.js`), `DATABASE_URL`, the
   R2 `S3_*` storage vars, and `GCP_RECONSTRUCTION_KEY` to poll workers. With
   no worker key it still reaps timed-out rows.
-- Batch size is 25 per tick (`FORGE_FINALIZE_BATCH` overrides). Ticks are
-  idempotent and safe to overlap.
-- The response body reports `{ swept, done, failed, failed_over, resubmitted,
-  timed_out, still_running, unpollable }` per tick, so a quick manual hit
-  shows queue health at a glance.
+- Batch size is 25 per tick (`FORGE_FINALIZE_BATCH` overrides), swept 8 rows at
+  a time (`FORGE_FINALIZE_CONCURRENCY`) so one slow lane costs the tick its
+  slowest poll, not the sum of them. Ticks are idempotent and safe to overlap.
+- Cron handlers run under `wrapCron`'s time budget (60 s here, 120 s for the
+  web-variant cron): past it the request answers `503 { reason: 'cron_timeout' }`,
+  writes the heartbeat as timed out and raises one deduplicated ops alert,
+  instead of hanging until Cloud Run's 900 s kill.
+- The response body reports `{ enabled, reaped, swept, done, failed, failed_over,
+  resubmitted, timed_out, still_running, unpollable, elapsed_ms }` per tick, so a
+  quick manual hit shows queue health at a glance.
 - A finished mesh also gets a phone-sized delivery variant (`buildWebVariant`,
   meshopt geometry plus WebP textures capped at 2048 px) written straight after
   materialization, to a second key, so the stored original is never touched and

@@ -45,7 +45,7 @@ Ports are typed: **text**, **image** and **mesh**. A link can only join an outpu
 | Auto-rig | mesh | mesh | `POST /api/forge?action=rig` | Adds a humanoid skeleton and skin weights. |
 | Segment | mesh | mesh | `POST /api/forge-segment` | Splits the model into parts (auto, connected pieces or sharp creases). |
 | Stylize | mesh | mesh | `POST /api/forge-stylize` | Voxel, brick, Voronoi or low-poly restyle. |
-| Game-ready | mesh | mesh | `POST /api/forge-gameready` | Retopology to a poly budget and a texture bake, with GLB and FBX output. |
+| Game-ready | mesh | mesh | `POST /api/forge-gameready` | Retopology to a poly budget and a texture bake, with GLB and FBX output. The node offers quads or triangles; the Artist mesh (LATO.2) option is on the Game-ready panel in [Forge](./forge.md), not in this node. |
 | Preview | mesh | | Nothing (local) | An inline 3D viewer on the card. Generate 3D and Auto-rig cards also link to the model page when the engine saved one. |
 | Export | mesh | | Nothing for GLB; the browser converts STL, OBJ and PLY | Downloads the model as GLB, FBX (from Game-ready), STL, OBJ or PLY. |
 | Save | mesh | | `POST /api/avatars/from-forge` or `POST /api/creations` | Saves to your library (sign-in required) or publishes to the public creations gallery. |

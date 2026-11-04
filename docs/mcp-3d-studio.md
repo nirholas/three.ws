@@ -8,7 +8,8 @@ MCP server, registered separately as **`io.github.nirholas/threews-3d-studio`**.
 - **Endpoint:** `https://three.ws/api/mcp-3d`
 - **Transport:** Streamable HTTP (MCP `2025-06-18`, JSON-RPC 2.0)
 - **Auth:** OAuth 2.1 (same three.ws authorization server as `/api/mcp`) or x402. The server is its own OAuth resource, `https://three.ws/api/mcp-3d`, described at `https://three.ws/.well-known/oauth-protected-resource/api/mcp-3d`, so stock MCP SDK connectors can sign in; tokens minted for `/api/mcp` are accepted here too
-- **Backends:** image→3D on the self-hosted GCP reconstruction worker when configured, else Microsoft TRELLIS on Replicate; text→image on the free lanes first (FLUX on NVIDIA NIM, Vertex AI Imagen) with Replicate FLUX as the paid backstop; Meshy / Tripo / Rodin / Stability native geometry (BYOK); Make-It-Animatable auto-rig (self-hosted GPU worker); IBM Granite (watsonx.ai) for prompt direction + material generation
+- **Unified endpoint:** the same tools are also served through the combined server at `https://three.ws/mcp` (`/api/mcp/all`), for clients that want one connection.
+- **Backends:** image→3D on the self-hosted GCP reconstruction worker when configured, else Microsoft TRELLIS on Replicate; text→image on the free lanes first (FLUX on NVIDIA NIM, Vertex Gemini Flash Image) with Replicate FLUX as the paid backstop; Meshy / Tripo / Rodin / Stability native geometry (BYOK); Make-It-Animatable auto-rig (self-hosted GPU worker); IBM Granite (watsonx.ai) for prompt direction + material generation
 
 ## The pipeline
 
@@ -163,7 +164,8 @@ timestamp.
 | `three-geometry-pro` | Tripo     | geometry, image | **BYOK** | Cleanest quad topology.                       |
 | `three-sculpt`       | Rodin     | geometry, image | **BYOK** | High-poly detail.                             |
 | `three-instant`      | Stability | image           | **BYOK** | Fast single-image.                            |
-| `three-detail`       | platform  | image           | platform | Poly-aware; reconstructs on the platform lane. |
+| `three-detail`       | Hunyuan3D | image           | platform | Poly-aware; runs on the self-hosted Hunyuan3D GCP worker (`GCP_HUNYUAN3D_URL` + `GCP_RECONSTRUCTION_KEY`). |
+| `three-sketch`       | TripoSG   | sketch          | platform | Sketch→mesh.                                  |
 
 The image path on this server always reconstructs on the platform provider: the
 self-hosted GCP reconstruction worker when `GCP_RECONSTRUCTION_KEY` and
@@ -252,7 +254,7 @@ as a live orbitable artifact, then `auto_rig_model` → `apply_animation(animati
 | --------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------- |
 | `REPLICATE_API_TOKEN`                               | Replicate lane for reconstruction, rigging, remesh, retexture, and the paid text→image backstop. Required for any mode with no GCP worker configured. | unset |
 | `REPLICATE_RECONSTRUCT_MODEL`                       | image→3D model.                                                                       | `firtoz/trellis`                 |
-| `REPLICATE_TXT2IMG_MODEL`                           | Replicate text→image model for `text_to_3d`, used only after the free lanes (`NVIDIA_API_KEY` for NIM FLUX, `GOOGLE_CLOUD_PROJECT` for Vertex Imagen). | `black-forest-labs/flux-schnell` |
+| `REPLICATE_TXT2IMG_MODEL`                           | Replicate text→image model for `text_to_3d`, used only after the free lanes (`NVIDIA_API_KEY` for NIM FLUX, `GOOGLE_CLOUD_PROJECT` for Vertex Gemini Flash Image). | `black-forest-labs/flux-schnell` |
 | `REPLICATE_RERIG_MODEL`                             | Replicate auto-rig model, used when no GCP rig worker is configured. Without either, `auto_rig_model` reports "not configured". | unset |
 | `GCP_RECONSTRUCTION_KEY` + per-mode worker URLs     | Self-hosted GCP workers, preferred over Replicate for every mode whose URL is set: `GCP_RECONSTRUCTION_URL` (reconstruct), `GCP_UNIRIG_URL` (rig), `GCP_REMESH_URL`, `GCP_STYLIZE_URL`, `GCP_SEGMENT_URL`, `GCP_TEXTURE_URL` (retexture; required for `retexture_region`), `GCP_REMBG_URL`, `GCP_VIDEO2SCENE_URL` (`capture_scene`). | unset |
 | `WATSONX_API_KEY` / `WATSONX_PROJECT_ID`            | Enable `direct_prompt` + `generate_material`.                                         | —                                |

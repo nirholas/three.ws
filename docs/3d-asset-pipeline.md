@@ -89,13 +89,14 @@ After converting, always optimize before shipping (see [GLB optimization](#glb-o
 
 ### FBX → clip JSON: a reusable animation
 
-This is how a motion enters the **shared animation library** that every agent and avatar draws from. The build script reads Mixamo FBX (or GLB) clips, **retargets** them to the canonical three.ws skeleton (`public/avatars/cz.glb`), validates that retargeting succeeded, and writes one JSON clip per motion plus a manifest entry.
+This is how a motion enters the **shared animation library** that every agent and avatar draws from. The build script reads FBX or GLB clips (Mixamo, and the CC0 Quaternius and Mesh2Motion packs), **retargets** them to the canonical three.ws skeleton (`public/avatars/cz.glb`), validates that retargeting succeeded, and writes one JSON clip per motion plus a manifest entry.
 
 ```bash
 # 1. Drop the FBX into animation-sources/  (build-time input, not shipped)
 # 2. Add an entry to scripts/animations.config.json
 # 3. Build:
 npm run build:animations
+#    (a clip inside a multi-clip GLB pack is picked with `sourceClip` in the config entry)
 #   → builds the project-authored clips first (build-original-animations.mjs,
 #     keyframe choreography with no third-party source file), then retargets to
 #     cz.glb, writes public/animations/clips/<name>.json, rewrites
@@ -104,7 +105,7 @@ npm run build:animations
 #     rebuilds public/animations/signatures.json (build-motion-signatures.mjs)
 ```
 
-Source: [scripts/build-animations.mjs](../scripts/build-animations.mjs). The config entry shape:
+Source: [scripts/build-animations.mjs](../scripts/build-animations.mjs). A source authored on a non-Mixamo skeleton (the CC0 packs use Unreal mannequin bone names) is mapped through the same bone-name table as uploaded avatars ([src/glb-canonicalize.js](../src/glb-canonicalize.js)) when stripping the `mixamorig` prefix is not enough, and each decoded multi-clip GLB is parsed once per build. The config entry shape:
 
 ```json
 { "name": "idle", "source": "Idle.fbx", "label": "Idle", "icon": "🧍", "loop": true }
@@ -115,6 +116,8 @@ Source: [scripts/build-animations.mjs](../scripts/build-animations.mjs). The con
 - On-chain agents must animate without runtime retargeting fragility.
 - Browser cold-loads should never re-parse FBX or guess bone names.
 - Build-time validation means clips that *don't* survive retargeting are dropped here, loudly, instead of silently breaking in production. The build requires >60% bone-match coverage.
+
+The bulk CC0 library is baked by [scripts/cc0-animation-library.mjs](../scripts/cc0-animation-library.mjs) (`npm run cc0-library:fetch`, `:enumerate`, `:build`, `:upload`, or `cc0-library:all`); its committed config [scripts/cc0-library.config.json](../scripts/cc0-library.config.json) records the source pack and CC0 license of every clip.
 
 A GLB that already has a baked animation can be turned into a library clip too — [scripts/extract-glb-animations.mjs](../scripts/extract-glb-animations.mjs) pulls the clip out and feeds it into the same build (`npm run extract:animations`).
 
@@ -175,9 +178,9 @@ The build pipeline produces GLB + JSON; the browser stitches them back together.
 |---|---|---|
 | Load a GLB | [src/viewer.js](../src/viewer.js) | `GLTFLoader` (with DRACO/KTX2/meshopt support) loads the model, frames the camera in front of the rig's face (`estimateFacingYaw` in `src/viewer/facing.js` reads which way the skeleton was authored to face, so a -Z or +X rig is not framed from behind), builds raycasting BVH, emits the scene to the animation panel. |
 | Normalize an uploaded rig | [src/glb-canonicalize.js](../src/glb-canonicalize.js) | Rewrites bone names in the GLB JSON chunk to canonical form (see [the supported conventions](#supported-rig-conventions) below), folds the Mixamo +90°X armature rotation into children, repacks the GLB. |
-| Load a clip | [src/animation-manager.js](../src/animation-manager.js) | Fetches clip JSON, `AnimationClip.parse`, drives playback through a `THREE.AnimationMixer` with crossfades (0.35s default), one-shot + settle, and a "fallen pose" safety guard. |
+| Load a clip | [src/animation-manager.js](../src/animation-manager.js) | Fetches clip JSON, `AnimationClip.parse`, drives playback through a `THREE.AnimationMixer` with crossfades (0.35s default), one-shot + settle, and a "fallen pose" safety guard. A VRM model (loaded by `src/game/vrm-loader.js` with `@pixiv/three-vrm`) keeps its spring bones and expressions updating alongside the clip, and `.vrma` (VRM Animation) files load as ordinary clips. |
 | Retarget a clip to the loaded rig | [src/animation-retarget.js](../src/animation-retarget.js) | Renames canonical tracks to the rig's actual bone names, applies per-bone bind-pose correction (`C = targetRest · sourceRest⁻¹`), rescales hip translation by height ratio, drops the clip if coverage < 50%. |
-| The pose/animation studio | `/pose` ([src/animation-library.js](../src/animation-library.js)) | Gallery of preset clips, live preview on the loaded rig, text-to-motion generation, and **export animated GLB**. |
+| The pose/animation studio | `/pose` ([src/animation-library.js](../src/animation-library.js)) | Gallery of preset clips, live preview on the loaded rig, text-to-motion generation, trim, loop-blend and loop controls, **save to library** (`POST /api/animations/clips`, stored in the canonical pre-retarget form so it plays on any rig), and **export animated GLB**. |
 | Export an animated GLB | `GLTFExporter` | Bakes a retargeted clip onto the current rig and downloads `<rig>-<clip>.glb` — closing the loop back to a self-contained GLB. |
 
 Validation gates worth knowing: a rig needs **≥8 canonical bones** to be playable, a retarget must map **≥50%** of a clip's tracks to land, and a hips tilt past **45°** off vertical rejects the retarget and falls back to the bind pose (catches genuinely broken rigs without tripping on dance poses).
@@ -300,7 +303,7 @@ text/image ──► mesh_forge ──► static GLB ──► rig_mesh ──�
 
 - **Don't ship raw converted GLBs.** A Mixamo character converts to 50+ MB; always run `optimize:glb`. The site streams these to every visitor.
 - **`trimesh` (the Python script) silently drops rigs.** It is for static geometry only. For anything animated, use `convert:fbx`.
-- **No Draco/meshopt in optimized output.** The main viewer and the studios wire Draco/KTX2/meshopt decoders (`getDecoders` in `src/viewer/internal.js`, which serves the decoder binaries from our own origin under `public/three/`, vendored by `scripts/copy-three-decoders.mjs` on every install and checked by `scripts/audit-deploy-artifacts.mjs` at deploy, with unpkg only as the backstop when a HEAD probe of the local copy comes back *not ok*; a probe that is merely slow loses the 1.5 s race and the load starts on the same-origin copy anyway, and a probe that errors is retried on the next load rather than demoting the whole session), but many lighter surfaces load GLBs with a bare `GLTFLoader` and no decoder. `optimize:glb` deliberately stays within plain glTF 2.0 so its output loads everywhere; WebP textures do the heavy lifting.
+- **No Draco/meshopt in optimized output.** The main viewer and the studios wire Draco/KTX2/meshopt decoders (`getDecoders` in `src/viewer/internal.js`, which serves the decoder binaries from our own origin under `public/three/`, vendored by `scripts/copy-three-decoders.mjs` on every install (together with the Draco encoder in `vendor/three-draco/`, which three r186 no longer ships and Scene Studio needs to compress exports) and checked by `scripts/audit-deploy-artifacts.mjs` at deploy, with unpkg only as the backstop when a HEAD probe of the local copy comes back *not ok*; a probe that is merely slow loses the 1.5 s race and the load starts on the same-origin copy anyway, and a probe that errors is retried on the next load rather than demoting the whole session), but many lighter surfaces load GLBs with a bare `GLTFLoader` and no decoder. `optimize:glb` deliberately stays within plain glTF 2.0 so its output loads everywhere; WebP textures do the heavy lifting.
 - **FBX is build-time only.** Keep source FBX in `animation-sources/` (gitignored) so it never ships in the deploy bundle. `public/animations/` holds no FBX anymore; the six formerly-orphaned clips are built into the manifest (see `resolved_issues` in [public/animations/registry.json](../public/animations/registry.json)).
 - **Bone names matter.** A non-humanoid or oddly-named rig may fall below the 8-bone / 50%-coverage thresholds and refuse to animate. The canonicalizer handles the common conventions; truly custom skeletons need their bones renamed to the canonical set first.
 - **`.bak` files.** `optimize:glb` writes a `<name>.glb.bak` alongside its output — delete it before committing.

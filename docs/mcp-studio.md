@@ -23,6 +23,8 @@ answers every request synchronously over `POST`. `OPTIONS` is handled for CORS.
 
 ### ChatGPT (Apps SDK)
 
+To add the studio to your own ChatGPT, follow [three.ws/chatgpt](https://three.ws/chatgpt): turn on developer mode (Settings, Apps, Advanced settings), create an app with the URL `https://three.ws/api/mcp-chatgpt` and **No authentication**, then pick it from the **+** menu in a chat.
+
 Three front doors serve the same tools over one handler
 ([`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js)) and share one
 generation quota:
@@ -30,7 +32,7 @@ generation quota:
 | URL | Serves | Use it for |
 |---|---|---|
 | `https://three.ws/api/mcp-studio` | all fifteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
-| `https://three.ws/api/mcp-chatgpt` | the nine 3D tools and the model viewer | the ChatGPT plugin directory listing |
+| `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | adding three.ws to your own ChatGPT (step-by-step at [three.ws/chatgpt](https://three.ws/chatgpt)), and the ChatGPT plugin directory listing |
 | `https://three.ws/api/mcp-grok` | all fifteen tools, every call answered within 40 s, quota per MCP session | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
 
 The ChatGPT surface leaves out the three catalog tools, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
@@ -107,7 +109,7 @@ How it behaves:
   or payment; it is only a rate-limit identity, and request logs redact it.
 
 `node scripts/probe-mcp-install-tokens.mjs --base <origin>` mints two tokens,
-caps the first and shows the second still admitted, end to end.
+spends the first token's per-minute burst with concurrent renders and shows the second still admitted, end to end.
 
 ### ChatGPT custom GPT (Actions)
 
@@ -317,7 +319,7 @@ Which tools carry them:
 - **Personas**: `create_agent_persona`, `get_agent_persona` and `persona_say`,
   for the persona's body (alongside its `embed_url`, the living-body embed).
 
-A catalog character larger than the renderer's 10 MB ceiling gets its published
+A catalog character larger than the renderer's 25 MB ceiling gets its published
 PNG thumbnail as `poster_png_url`, so the link always answers with an image. The
 links are built by [`api/_mcp-studio/asset-links.js`](../api/_mcp-studio/asset-links.js),
 and the embed markup is the same code `get_item_source` emits
