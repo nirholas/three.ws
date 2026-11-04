@@ -5,6 +5,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // resolution here, not rendering.
 vi.mock('../../src/viewer.js', () => ({
 	Viewer: class {
+		// element.js boots through the async factory (WebGPU opt-in), so the stub needs it too.
+		static async create(stage, options) {
+			return new this(stage, options);
+		}
 		constructor(stage) {
 			this.stage = stage;
 			this.scene = { background: null };
