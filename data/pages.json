@@ -6917,6 +6917,14 @@
 					"added": "2026-11-03"
 				},
 				{
+					"path": "/settings/sandbox",
+					"title": "Agent Sandbox Settings",
+					"description": "See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.",
+					"priority": 0.3,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/settings/mcp-tools",
 					"title": "MCP Tool Access Settings",
 					"description": "Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.",

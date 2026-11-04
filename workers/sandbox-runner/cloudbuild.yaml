@@ -1,0 +1,62 @@
+# Build and deploy the sandbox runner. Submit from the repository root (the
+# image copies api/_lib/sandbox/exec-core.js, so the context is the whole repo):
+#
+#   gcloud builds submit --config workers/sandbox-runner/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5 .
+#
+# Builds run as the pinned three-ws-build service account (the project's default
+# compute service account was deleted).
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: sandbox-runner
+  _REPO: sandbox-runner
+  _RUN_SA: three-ws-sandbox@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _TOKEN_SECRET: sandbox-runner-token
+  _MAX_INSTANCES: "20"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=workers/sandbox-runner/Dockerfile
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server"]
+
+  # gen2 is required: the program's network and PID namespaces need the full
+  # Linux syscall surface. Concurrency 1 keeps two customers off one instance.
+  # No unauthenticated access: the API calls with a Google identity token and
+  # the shared SANDBOX_RUNNER_TOKEN.
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --service-account=${_RUN_SA}
+      - --execution-environment=gen2
+      - --concurrency=1
+      - --cpu=1
+      - --memory=2Gi
+      - --timeout=3600
+      - --min-instances=0
+      - --max-instances=${_MAX_INSTANCES}
+      - --no-allow-unauthenticated
+      - --port=8080
+      - --set-secrets=SANDBOX_RUNNER_TOKEN=${_TOKEN_SECRET}:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA

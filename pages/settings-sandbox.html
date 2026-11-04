@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Agent Sandbox Settings · three.ws</title>
+	<meta name="description" content="See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace, and choose which hosts sandboxed code may call." />
+	<link rel="canonical" href="https://three.ws/settings/sandbox" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta name="robots" content="noindex" />
+	<style>
+		:root { --sb-danger: var(--danger, #e5484d); }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.sb-wrap { max-width: 960px; margin: 0 auto; padding: 0 18px 96px; }
+		.sb-hero { padding: 34px 0 8px; }
+		.sb-hero h1 { font-size: clamp(1.6rem, 4vw, 2.3rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.sb-hero p { margin: 0; max-width: 66ch; color: var(--ink-dim); line-height: 1.6; }
+		.sb-hero a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+		.sb-card { margin-top: 22px; background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); padding: 20px; }
+		.sb-card h2 { font-size: 1.1rem; margin: 0 0 4px; color: var(--ink-bright, var(--ink)); }
+		.sb-sub { margin: 0 0 14px; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.5; max-width: 66ch; }
+		button, select, input, textarea { font: inherit; color: inherit; }
+		.sb-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+		.sb-btn:hover { background: var(--surface-3); border-color: var(--accent); }
+		.sb-btn:active { transform: translateY(1px); }
+		.sb-btn:focus-visible, .sb-input:focus-visible, .sb-run:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.sb-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+		.sb-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+		.sb-btn.danger { color: var(--sb-danger); border-color: color-mix(in srgb, var(--sb-danger) 50%, var(--stroke)); }
+		.sb-btn.danger:hover { background: color-mix(in srgb, var(--sb-danger) 14%, var(--surface-2)); border-color: var(--sb-danger); }
+		.sb-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--bg-0); transition: border-color var(--duration-fast) var(--ease-standard); }
+		.sb-input:hover { border-color: var(--accent); }
+		textarea.sb-input { resize: vertical; min-height: 96px; line-height: 1.5; font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.85rem; }
+		.sb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+		.sb-stat { background: var(--surface-2); border: 1px solid var(--stroke); border-radius: 10px; padding: 10px 12px; }
+		.sb-stat b { display: block; font-size: 1.05rem; color: var(--ink-bright, var(--ink)); }
+		.sb-stat span { font-size: 0.8rem; color: var(--ink-dim); }
+		.sb-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
+		.sb-run { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; justify-content: space-between; width: 100%; text-align: left; padding: 11px 12px; margin-top: 8px; border-radius: 10px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
+		.sb-run:hover, .sb-run[aria-expanded="true"] { border-color: var(--accent); background: var(--surface-3); }
+		.sb-run small { color: var(--ink-dim); }
+		.sb-pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.75rem; border: 1px solid var(--stroke-strong, var(--stroke)); }
+		.sb-pill.ok { color: var(--ok, #2fb170); } .sb-pill.bad { color: var(--sb-danger); } .sb-pill.warn { color: var(--warn, #d9a22b); }
+		.sb-detail { margin: 4px 0 0; padding: 12px; border: 1px solid var(--stroke); border-top: 0; border-radius: 0 0 10px 10px; }
+		.sb-exec { padding: 10px 0; border-top: 1px solid var(--hairline, var(--stroke)); }
+		.sb-exec:first-child { border-top: 0; }
+		pre.sb-out { margin: 6px 0 0; padding: 10px; max-height: 260px; overflow: auto; background: var(--bg-0); border: 1px solid var(--stroke); border-radius: 8px; font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; }
+		.sb-files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+		.sb-file { text-decoration: none; color: inherit; padding: 5px 10px; border: 1px solid var(--stroke-strong, var(--stroke)); border-radius: 8px; font-size: 0.85rem; }
+		.sb-file:hover { border-color: var(--accent); }
+		.sb-file:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.sb-skel { height: 44px; margin-top: 8px; border-radius: 10px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: sb-shimmer 1.3s linear infinite; }
+		@keyframes sb-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+		.sb-empty, .sb-error { padding: 18px; border: 1px dashed var(--stroke-strong, var(--stroke)); border-radius: 10px; color: var(--ink-dim); line-height: 1.55; }
+		.sb-error { border-style: solid; border-color: var(--sb-danger); color: var(--ink); }
+		#toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-standard); max-width: 92vw; }
+		#toast.show { opacity: 1; }
+		@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="sb-wrap" id="main">
+		<section class="sb-hero">
+			<h1>Agent sandbox</h1>
+			<p>When an agent runs code, a terminal command or edits files in its workspace, the work happens in an isolated sandbox with no network of its own. Every program it ran is listed here with its output, its files and its cost. <a href="/docs/agent-sandbox">How it works</a></p>
+		</section>
+
+		<div id="page-error" role="alert"></div>
+
+		<section class="sb-card" aria-labelledby="h-limits">
+			<h2 id="h-limits">Your limits</h2>
+			<p class="sb-sub">Set by your plan. A program that passes any of these is stopped.</p>
+			<div id="limits-body"><div class="sb-skel"></div></div>
+		</section>
+
+		<section class="sb-card" aria-labelledby="h-hosts">
+			<h2 id="h-hosts">Allowed hosts</h2>
+			<p class="sb-sub">Sandboxed programs have no direct network. They can only reach the hosts listed here, through the sandbox bridge, plus the platform tools their agent owns. One host per line; <code>*.example.com</code> allows every subdomain.</p>
+			<label for="hosts-input" class="sb-sub">Hostnames</label>
+			<textarea class="sb-input" id="hosts-input" spellcheck="false" autocomplete="off" placeholder="api.example.com&#10;*.cdn.example.com"></textarea>
+			<div class="sb-row">
+				<button type="button" class="sb-btn primary" id="hosts-save">Save hosts</button>
+				<span class="sb-sub" id="hosts-note" style="margin:0" aria-live="polite"></span>
+			</div>
+		</section>
+
+		<section class="sb-card" aria-labelledby="h-runs">
+			<h2 id="h-runs">Workspaces and runs</h2>
+			<p class="sb-sub">Each agent run gets one persistent workspace. Open one to read what every program printed and to download the files it wrote.</p>
+			<div id="runs-body" aria-live="polite"><div class="sb-skel"></div><div class="sb-skel"></div><div class="sb-skel"></div></div>
+		</section>
+	</main>
+	<div id="toast" role="status"></div>
+	<script type="module" src="/src/settings-sandbox.js"></script>
+</body>
+</html>
