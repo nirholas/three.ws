@@ -11,6 +11,8 @@ import { createAgentContext } from '../src/session.js';
 import { tempEnv } from './helpers.js';
 
 const KEY = process.env.THREE_WS_API_KEY || '';
+// Each check makes several round trips to production.
+const LIVE_TIMEOUT_MS = 60_000;
 const SKIP_REASON = 'live smoke test skipped: set THREE_WS_API_KEY to a three.ws API key to run it';
 if (!KEY) console.info(SKIP_REASON);
 
@@ -28,7 +30,7 @@ describe.skipIf(!KEY)('live three.ws platform', () => {
 		expect(r.userId).toBeTruthy();
 		expect(r.key).not.toBe(KEY);
 		expect(r.source).toBe('env THREE_WS_API_KEY');
-	});
+	}, LIVE_TIMEOUT_MS);
 
 	it('creates, reads back and deletes a server-mode schedule on an owned agent', async () => {
 		const agents = await ctx.platform.listAgents({ limit: 5 });
@@ -50,5 +52,5 @@ describe.skipIf(!KEY)('live three.ws platform', () => {
 		}
 		const after = await ctx.platform.listAutomations();
 		expect(after.some((a) => a.id === cron.server_automation_id)).toBe(false);
-	});
+	}, LIVE_TIMEOUT_MS);
 });

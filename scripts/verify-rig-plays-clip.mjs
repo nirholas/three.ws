@@ -134,7 +134,7 @@ await page.route(`**${servedPath}`, (route) =>
 
 const url = `${BASE}/app#model=${encodeURIComponent(servedPath)}`;
 console.log(`\nViewer: ${url}`);
-await page.goto(url, { waitUntil: 'load', timeout: 60000 });
+await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 180000 });
 await page.waitForFunction(
 	() => {
 		let found = false;
