@@ -631,6 +631,17 @@
 			"powers": "The x402 payment protocol implementation for pay-per-call APIs."
 		},
 		{
+			"id": "npm:@colyseus/core",
+			"kind": "npm",
+			"name": "@colyseus/core",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/colyseus/colyseus",
+			"funding": "https://github.com/sponsors/endel",
+			"version": "0.16.26",
+			"powers": null
+		},
+		{
 			"id": "npm:@colyseus/schema",
 			"kind": "npm",
 			"name": "@colyseus/schema",
@@ -1313,17 +1324,6 @@
 			"powers": null
 		},
 		{
-			"id": "npm:@vercel/og",
-			"kind": "npm",
-			"name": "@vercel/og",
-			"area": "infrastructure",
-			"license": "MPL-2.0",
-			"repo": null,
-			"funding": null,
-			"version": "0.11.1",
-			"powers": null
-		},
-		{
 			"id": "npm:@wallet-standard/app",
 			"kind": "npm",
 			"name": "@wallet-standard/app",
@@ -1555,6 +1555,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:bigint-buffer",
+			"kind": "npm",
+			"name": "bigint-buffer",
+			"area": "infrastructure",
+			"license": "Apache-2.0",
+			"repo": "https://github.com/no2chem/bigint-buffer",
+			"funding": null,
+			"version": "1.1.5",
+			"powers": null
+		},
+		{
 			"id": "npm:bignumber.js",
 			"kind": "npm",
 			"name": "bignumber.js",
@@ -1687,6 +1698,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:deepmerge",
+			"kind": "npm",
+			"name": "deepmerge",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/TehShrike/deepmerge",
+			"funding": null,
+			"version": "4.3.1",
+			"powers": null
+		},
+		{
 			"id": "npm:diff",
 			"kind": "npm",
 			"name": "diff",
@@ -1717,6 +1739,17 @@
 			"repo": "https://github.com/motdotla/dotenv",
 			"funding": "https://dotenvx.com",
 			"version": "18.0.9",
+			"powers": null
+		},
+		{
+			"id": "npm:elliptic",
+			"kind": "npm",
+			"name": "elliptic",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/indutny/elliptic",
+			"funding": null,
+			"version": "6.6.1",
 			"powers": null
 		},
 		{
@@ -1951,6 +1984,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:lodash.set",
+			"kind": "npm",
+			"name": "lodash.set",
+			"area": "infrastructure",
+			"license": "MIT",
+			"repo": "https://github.com/lodash/lodash",
+			"funding": null,
+			"version": "4.3.2",
+			"powers": null
+		},
+		{
 			"id": "npm:lru-cache",
 			"kind": "npm",
 			"name": "lru-cache",
@@ -1981,6 +2025,17 @@
 			"repo": "https://github.com/markedjs/marked",
 			"funding": null,
 			"version": "18.1.2",
+			"powers": null
+		},
+		{
+			"id": "npm:minimatch",
+			"kind": "npm",
+			"name": "minimatch",
+			"area": "infrastructure",
+			"license": "BlueOak-1.0.0",
+			"repo": "https://github.com/isaacs/minimatch",
+			"funding": null,
+			"version": "10.2.6",
 			"powers": null
 		},
 		{
@@ -2160,17 +2215,6 @@
 			"powers": null
 		},
 		{
-			"id": "npm:qwen-ai-provider",
-			"kind": "npm",
-			"name": "qwen-ai-provider",
-			"area": "infrastructure",
-			"license": "Apache-2.0",
-			"repo": "https://github.com/Younis-Ahmed/qwen-ai-provider",
-			"funding": null,
-			"version": "0.1.1",
-			"powers": null
-		},
-		{
 			"id": "npm:resend",
 			"kind": "npm",
 			"name": "resend",
@@ -2190,6 +2234,17 @@
 			"repo": "https://github.com/solana-foundation/solana-attestation-service",
 			"funding": null,
 			"version": "1.0.10",
+			"powers": null
+		},
+		{
+			"id": "npm:satori",
+			"kind": "npm",
+			"name": "satori",
+			"area": "infrastructure",
+			"license": "MPL-2.0",
+			"repo": "https://github.com/vercel/satori",
+			"funding": null,
+			"version": "0.33.5",
 			"powers": null
 		},
 		{

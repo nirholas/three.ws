@@ -1,6 +1,6 @@
 // api/vanity/og.js — dynamic 1200×630 PNG rarity share card for a ground vanity
-// address. Real ImageResponse (@vercel/og) on the Node runtime — the same proven
-// path as api/og-leaderboard.js — because X/Facebook/LinkedIn/iMessage do not
+// address. Real ImageResponse (api/_lib/og-image.js) on the Node runtime, the
+// same path as api/og-leaderboard.js, because X/Facebook/LinkedIn/iMessage do not
 // preview SVG cards.
 //
 //   /api/vanity/og?address=<base58>
@@ -12,7 +12,7 @@
 //
 // No secrets are read or rendered — only the public address + rarity math.
 
-import { ImageResponse } from '@vercel/og';
+import { ImageResponse } from '../_lib/og-image.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getEntry } from '../_lib/vanity-gallery-store.js';
 import { appraiseAddress, RARITY_TIERS } from '../../src/solana/vanity/rarity.js';

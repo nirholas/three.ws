@@ -13,7 +13,6 @@
 import { streamText } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
-import { createQwen } from 'qwen-ai-provider';
 import { env } from '../_lib/env.js';
 import { cors, method, readJson, error, wrap, rateLimited } from '../_lib/http.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
@@ -293,7 +292,12 @@ const PROVIDERS = {
 		tier: 'balanced',
 		maxOutput: 8192,
 		description: 'Qwen Plus on DashScope. Strong multilingual.',
-		native: () => (env.DASHSCOPE_API_KEY ? createQwen({ apiKey: env.DASHSCOPE_API_KEY })('qwen-plus') : null),
+		// DashScope's OpenAI-compatible endpoint, driven by the same provider as
+		// every other OpenAI-shaped lane here (ai@7 rejects qwen-ai-provider's v1 models).
+		native: () =>
+			env.DASHSCOPE_API_KEY
+				? createOpenAI({ apiKey: env.DASHSCOPE_API_KEY, baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1' }).chat('qwen-plus')
+				: null,
 		openrouterModel: 'qwen/qwen-2.5-72b-instruct',
 	},
 	'modelscope-qwen': {

@@ -5,11 +5,7 @@
 			"date": "2026-11-04",
 			"title": "Gold holders get early access to drops, Genesis gets first dibs on rare names",
 			"summary": "Generative drops now open with a holder-only window set by the creator (15 minutes by default, 0 to skip): during it, revealing an item needs Gold or higher in $THREE, and the drop page shows a live countdown to public opening. Rare *.threews.sol names can be put behind a Genesis-only window. Both windows end on their own.",
-			"tags": [
-				"three",
-				"drops",
-				"names"
-			],
+			"tags": ["feature"],
 			"link": "/three"
 		},
 		{

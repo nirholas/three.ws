@@ -21,9 +21,9 @@
 // the art cannot be had, the card draws a monogram disc in the biome's colours,
 // a designed state rather than a hole. `x-play-og-art: coin|monogram` says which.
 //
-// Rendered via @vercel/og's ImageResponse on the Node runtime, bridged from the
+// Rendered via the shared ImageResponse (api/_lib/og-image.js) on the Node runtime, bridged from the
 // Web Response to the Node ServerResponse.
-import { ImageResponse } from '@vercel/og';
+import { ImageResponse } from './_lib/og-image.js';
 import { method } from './_lib/http.js';
 import { selfOrigin } from './_lib/self-origin.js';
 import { seedFromString, biomeForSeed, biomeById } from '../src/game/world-biomes.js';
@@ -257,7 +257,7 @@ function imageResponse(node) {
 	});
 }
 
-// Web Response (from @vercel/og) to Node ServerResponse. Headers first, then body.
+// Web Response (from ImageResponse) to Node ServerResponse. Headers first, then body.
 async function sendImage(res, response, artKind) {
 	for (const [key, value] of response.headers.entries()) res.setHeader(key, value);
 	res.setHeader('x-play-og-art', artKind);

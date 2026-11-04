@@ -8,12 +8,13 @@
 // The SEO injector (scripts/inject-seo-meta.mjs) stamps these straight from the
 // page catalog, so the card a crawler sees always matches the sitemap copy.
 //
-// Rendered as a real PNG via @vercel/og's ImageResponse on the NODE runtime
-// (not Edge — Edge returns FUNCTION_INVOCATION_FAILED in this deployment), the
+// Rendered as a real PNG via the shared ImageResponse (api/_lib/og-image.js,
+// satori + sharp) on the Node runtime (not Edge, which returned
+// FUNCTION_INVOCATION_FAILED in this deployment), the
 // same pattern proven in api/play-og.js. PNG (not SVG) so X, Facebook,
 // LinkedIn, and iMessage — none of which render image/svg+xml OG cards — all
 // show the preview.
-import { ImageResponse } from '@vercel/og';
+import { ImageResponse } from './_lib/og-image.js';
 import { readFileSync } from 'node:fs';
 import { method } from './_lib/http.js';
 
@@ -420,7 +421,7 @@ function imageResponse(node, fonts) {
   });
 }
 
-// Web Response (from @vercel/og) → Node ServerResponse. Headers first, then body.
+// Web Response (from ImageResponse) to Node ServerResponse. Headers first, then body.
 async function sendImage(res, response) {
   for (const [key, value] of response.headers.entries()) res.setHeader(key, value);
   const ab = await response.arrayBuffer();

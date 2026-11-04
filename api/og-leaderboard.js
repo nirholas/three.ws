@@ -1,7 +1,7 @@
 // api/og-leaderboard.js — dynamic Open Graph / share image for the $THREE
 // holder leaderboard. Renders a real 1200×630 PNG (not SVG: X, Facebook,
-// LinkedIn and iMessage do not preview image/svg+xml cards) via @vercel/og's
-// ImageResponse on the Node runtime — the same proven path as api/page-og.js.
+// LinkedIn and iMessage do not preview image/svg+xml cards) via the shared
+// ImageResponse (api/_lib/og-image.js) on the Node runtime, the same path as api/page-og.js.
 //
 // Two modes, both fed by real data:
 //   • Board card   /api/og-leaderboard
@@ -17,7 +17,7 @@
 // Cached aggressively (s-maxage=1h) so the card is generated at most once per
 // hour per variant rather than per crawl.
 
-import { ImageResponse } from '@vercel/og';
+import { ImageResponse } from './_lib/og-image.js';
 import { method } from './_lib/http.js';
 import { TOKEN_MINT as THREE_MINT } from './_lib/token/config.js';
 import { fetchTokenMarketData } from './_lib/market/token-market.js';

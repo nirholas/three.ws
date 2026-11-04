@@ -7,7 +7,7 @@
 //
 // Signature text is untrusted. It is only ever placed in satori text nodes, which
 // draw glyphs and never parse markup, so "<script>" renders as the literal characters.
-import { ImageResponse } from '@vercel/og';
+import { ImageResponse } from '../_lib/og-image.js';
 import { method } from '../_lib/http.js';
 import { listByOffset, getSignature, countSignatures } from '../_lib/signature-wall-store.js';
 import { styleFor, rng, hashString } from '../../src/game/signature-wall-style.js';

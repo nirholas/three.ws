@@ -109,11 +109,6 @@ const EXTERNALS = [
 	// require('url') — same ESM-bundling incompatibility as @x402/extensions.
 	// Marking it external lets Node.js load it natively as CJS.
 	'gltf-validator',
-	// @vercel/og reads its bundled fonts from a path relative to its own package
-	// dir. Inlining it rewrites that path to the route's output location, so the
-	// font read ENOENTs at load. External keeps the package (and its font assets)
-	// resolvable from node_modules at runtime.
-	'@vercel/og',
 	// jsdom removed: api/_lib/text-extract.js now uses node-html-parser, so
 	// no API route imports jsdom. Keeping it external caused NFT to bundle the
 	// jsdom→html-encoding-sniffer@6→@exodus/bytes (ESM-only) chain into every

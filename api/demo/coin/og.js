@@ -6,15 +6,15 @@
 //   • ?mint only    → state card (live pot, eligible holders, next draw eta)
 //   • no params     → generic branding card
 //
-// Rendered via @vercel/og's ImageResponse. The node-runtime entry point is used
-// (this file is a plain Vercel function, not an Edge function), so the worker
-// runs inside the same lambda as other /api/demo/coin/* handlers.
+// Rendered via the shared ImageResponse (api/_lib/og-image.js, satori + sharp)
+// on the Node runtime, inside the same process as the other /api/demo/coin/*
+// handlers.
 //
 // Caching: PNGs are deterministic for resolved draws (status ∈ {resolved, paid}),
 // so we set a long-lived cache header for those. State-only cards are short-lived
 // so they pick up new pot values.
 
-import { ImageResponse } from '@vercel/og';
+import { ImageResponse } from '../../_lib/og-image.js';
 
 import { sql } from '../../_lib/db.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
