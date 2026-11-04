@@ -4,6 +4,7 @@
 // the same everywhere.
 //
 //   materialize(dir, files)     write the workspace to disk
+//   collectFiles(dir, paths)    read back what the program wrote, symlink-safe
 //   snapshot(dir) / changed()   find what the program created or modified
 //   programFor(job, paths)      the argv for code in a language, or a terminal command
 //   runProcess(opts)            spawn under resource limits, capture capped
@@ -19,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 
-import { STATE_DIR } from './paths.js';
+import { STATE_DIR, SandboxPathError, normalizeWorkspacePath } from './paths.js';
 
 const CLOCK_TICKS = 100;
 const SAMPLE_MS = 200;
@@ -28,15 +29,75 @@ const SAMPLE_MS = 200;
 const FLOOD_FACTOR = 8;
 const MAX_BRIDGE_LINE = 8 * 1024 * 1024;
 
-/** Write `[{ path, data }]` under dir. */
+/**
+ * Write `[{ path, data }]` under dir. Every path goes through the workspace
+ * rules first, so `/workspace/x` lands at `x` and an absolute or `..` path is
+ * refused rather than rehomed somewhere the caller did not mean.
+ */
 export async function materialize(dir, files) {
-	await fs.mkdir(dir, { recursive: true });
+	const root = path.resolve(dir);
+	await fs.mkdir(root, { recursive: true });
 	for (const f of files) {
-		const abs = path.join(dir, f.path);
-		if (!abs.startsWith(dir + path.sep)) throw new Error(`refusing to write outside the workspace: ${f.path}`);
+		const rel = normalizeWorkspacePath(f.path);
+		const abs = path.join(root, rel);
+		if (!abs.startsWith(root + path.sep)) throw new SandboxPathError(`refusing to write outside the workspace: ${f.path}`);
 		await fs.mkdir(path.dirname(abs), { recursive: true });
 		await fs.writeFile(abs, f.data);
 	}
+}
+
+/**
+ * Read files a program left behind, by workspace path. The program is gone by
+ * the time this runs but it may have planted symlinks, so each file must be a
+ * regular file whose real location is still inside the workspace.
+ *
+ * @param {string} dir
+ * @param {string[]} paths
+ * @param {{ maxFileBytes?: number }} [o]
+ * @returns {Promise<{ files: { path: string, data: Buffer }[], skipped: { path: string, reason: string, size?: number }[] }>}
+ */
+export async function collectFiles(dir, paths, { maxFileBytes = Infinity } = {}) {
+	const root = await fs.realpath(dir);
+	const files = [];
+	const skipped = [];
+	for (const p of paths) {
+		let rel;
+		try {
+			rel = normalizeWorkspacePath(p);
+		} catch {
+			skipped.push({ path: p, reason: 'bad_path' });
+			continue;
+		}
+		const abs = path.join(root, rel);
+		let real;
+		try {
+			real = await fs.realpath(path.dirname(abs));
+		} catch {
+			skipped.push({ path: rel, reason: 'missing' });
+			continue;
+		}
+		if (real !== root && !real.startsWith(root + path.sep)) {
+			skipped.push({ path: rel, reason: 'outside_workspace' });
+			continue;
+		}
+		let st;
+		try {
+			st = await fs.lstat(path.join(real, path.basename(abs)));
+		} catch {
+			skipped.push({ path: rel, reason: 'missing' });
+			continue;
+		}
+		if (!st.isFile()) {
+			skipped.push({ path: rel, reason: 'not_a_regular_file' });
+			continue;
+		}
+		if (st.size > maxFileBytes) {
+			skipped.push({ path: rel, reason: 'too_large', size: st.size });
+			continue;
+		}
+		files.push({ path: rel, data: await fs.readFile(path.join(real, path.basename(abs))) });
+	}
+	return { files, skipped };
 }
 
 /** Map of relative path → { size, hash } for every regular file under dir. Symlinks are skipped. */
@@ -218,10 +279,11 @@ export class CappedBuffer {
  * @param {number} [o.gid]
  * @param {number} [o.nproc]
  * @param {AbortSignal} [o.signal]               kill switch
+ * @param {(stream: 'stdout'|'stderr', chunk: Buffer) => void} [o.onOutput]  live output, uncapped by the buffers
  * @returns {Promise<{ exitCode: number|null, signal: string|null, stdout: object, stderr: object,
  *   timedOut: boolean, killed: boolean, outputFlood: boolean, wallMs: number, cpuMs: number|null, peakMemoryMb: number|null }>}
  */
-export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, signal, hostLimits = true, onKill = null }) {
+export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, signal, hostLimits = true, onKill = null, onOutput = null }) {
 	// hostLimits=false: the argv is a launcher (the docker CLI) whose own limits
 	// are enforced elsewhere; kernel rlimits on the launcher would only break it.
 	const wrapped = hostLimits ? withLimits(argv, { limits, nproc, language }) : argv;
@@ -262,12 +324,22 @@ export function runProcess({ argv, cwd, env, limits, language, uid, gid, nproc, 
 				killTree();
 			}
 		};
+		const emit = (stream, c) => {
+			if (!onOutput || outputFlood) return;
+			try {
+				onOutput(stream, c);
+			} catch {
+				/* a listener that throws must not take the run down with it */
+			}
+		};
 		child.stdout.on('data', (c) => {
 			out.push(c);
+			emit('stdout', c);
 			floodCheck();
 		});
 		child.stderr.on('data', (c) => {
 			err.push(c);
+			emit('stderr', c);
 			floodCheck();
 		});
 

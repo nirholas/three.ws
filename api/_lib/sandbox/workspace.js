@@ -176,3 +176,51 @@ export function _setWorkspaceStore(store) {
 export function workspaceBytes(listing) {
 	return listing.reduce((n, f) => n + (Number(f.size) || 0), 0);
 }
+
+export class WorkspaceQuotaError extends Error {
+	constructor(message, detail) {
+		super(message);
+		this.status = 413;
+		this.code = 'workspace_full';
+		this.detail = detail;
+		this.expose = true;
+	}
+}
+
+/**
+ * Refuse a set of workspace changes that would take the run past its plan's
+ * workspace size, or any one file past the plan's file size. A write to a path
+ * that already exists replaces it, and deletes are credited first, so the
+ * check is on the workspace as it would be after the change.
+ *
+ * @param {{ listing: { path: string, size: number }[], writes?: { path: string, size: number }[],
+ *   deletes?: string[], limits: { workspaceBytes: number, fileBytes: number } }} o
+ * @returns {{ usedBytes: number, afterBytes: number, limitBytes: number }}
+ */
+export function assertWorkspaceQuota({ listing, writes = [], deletes = [], limits }) {
+	const sizes = new Map(listing.map((f) => [f.path, Number(f.size) || 0]));
+	const usedBytes = workspaceBytes(listing);
+	for (const d of deletes) sizes.delete(d);
+	for (const w of writes) {
+		const size = Number(w.size) || 0;
+		if (size > limits.fileBytes) {
+			throw new WorkspaceQuotaError(`${w.path} is ${size} bytes, larger than the ${limits.fileBytes} bytes one file may be on this plan.`, {
+				path: w.path,
+				size,
+				fileBytes: limits.fileBytes,
+			});
+		}
+		sizes.set(w.path, size);
+	}
+	let afterBytes = 0;
+	for (const n of sizes.values()) afterBytes += n;
+	const limitBytes = limits.workspaceBytes;
+	if (afterBytes > limitBytes) {
+		throw new WorkspaceQuotaError(`The workspace would hold ${afterBytes} bytes, over the ${limitBytes} bytes this plan allows. Delete files to make room.`, {
+			usedBytes,
+			afterBytes,
+			limitBytes,
+		});
+	}
+	return { usedBytes, afterBytes, limitBytes };
+}
