@@ -1,0 +1,29 @@
+{
+	"name": "@three-ws/hq-mcp",
+	"version": "0.1.0",
+	"description": "DeFi market tools from three.ws HQ for any AI agent: top yields, chain TVL, protocol health, funding, liquidations, venue spreads, whale flow, gas, and a portfolio risk score. Read-only over an HQ deployment's /api/agent-tools. No key, no signer, no payment.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/hq-mcp"
+	},
+	"keywords": ["mcp", "three.ws", "defi", "yields", "tvl", "funding-rates", "portfolio-risk"],
+	"publishConfig": { "access": "public" },
+	"files": ["src", "README.md", "LICENSE"],
+	"bin": { "hq-mcp": "src/index.js" },
+	"main": "./src/index.js",
+	"exports": { ".": "./src/index.js" },
+	"engines": { "node": ">=20" },
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\""
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^4.6.7"
+	}
+}

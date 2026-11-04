@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "HQ talks to your agent: data bridge, alert hand-off and MCP tools",
+			"summary": "HQ now answers host-page data queries, scores portfolio risk, turns opted-in compound alerts into reversible Autopilot proposals, and exposes its DeFi tools through a new hq-mcp server. The bridge no longer trusts every vercel.app origin.",
+			"tags": [
+				"hq",
+				"agents",
+				"mcp"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Build program rounds and one bounty feed for every hackathon",
 			"summary": "/build now shows the open Build round with its prize pool, tracks and countdown, takes agent entries, and lists open hackathons and bounties from four sources with a notice when one is stale. /build/leaderboard ranks agents on real paid calls, USDC volume and coins launched. Agents get list_bounties and submit_build_entry over MCP.",
 			"tags": ["feature"],
@@ -10,34 +20,51 @@
 		},
 		{
 			"date": "2026-11-04",
+			"title": "Run your own x402 facilitator, and attack it before you trust it",
+			"summary": "@three-ws/x402-server 0.2.0 ships the Solana facilitator three.ws runs in production as a package: verify, settle, the anti-drain transaction gate, sponsor SOL floor and fee budget, and settlement that survives a lost confirmation. A new command, npx @three-ws/x402-server attack, fires 27 hostile transactions at any devnet or local facilitator. The facilitator index now reports the package version and a public metrics endpoint splits our own canary traffic from external payers.",
+			"tags": ["feature", "sdk"],
+			"link": "/docs/x402-server-facilitator-release"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Gold holders get early access to drops, Genesis gets first dibs on rare names",
 			"summary": "Generative drops now open with a holder-only window set by the creator (15 minutes by default, 0 to skip): during it, revealing an item needs Gold or higher in $THREE, and the drop page shows a live countdown to public opening. Rare *.threews.sol names can be put behind a Genesis-only window. Both windows end on their own.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/three"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Dependency security sweep: patched OG renderer, chat server and vendored fixes",
 			"summary": "Social share cards now render through a patched satori pipeline instead of an outdated bundled renderer. The self-hosted chat server ignores spoofed X-Forwarded-For and X-Real-IP headers. Vulnerable transitive packages (deepmerge, elliptic, bigint-buffer, lodash.set, minimatch, nanoid, helia) are pinned to patched releases or patched vendored copies, and the Qwen Plus brain runs on the maintained OpenAI-compatible route.",
-			"tags": ["security"]
+			"tags": [
+				"security"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Account status, dashboard links and X posting tools for connected assistants",
 			"summary": "GET /api/v1/me/status and the get_account_status tool answer what plan you are on, what is left and what is waiting for approval in one call. get_dashboard_urls returns the canonical page links. Agents can now be connected to X, given a posting policy and asked to post through MCP, with review-before-post queuing instead of publishing. Settings shows account status and each agent's X posting state.",
-			"tags": ["feature"]
+			"tags": [
+				"feature"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Sniper manages the free moon bags it keeps and records entry latency",
 			"summary": "Retained moon bags are now re-quoted every minute, sold whole on a 40 percent trailing stop from their own peak, and written off when dead instead of sitting unwatched. Per-second price ticks and per-stage entry latency are recorded for backtests, with a p50 and p90 report script.",
-			"tags": ["improvement"]
+			"tags": [
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Avatar reconstruction: gated synthesised views for the scalp and far side of the head",
 			"summary": "The avatar worker can now ask Vertex AI for extra camera views of a selfie, reject any that do not look like the same person or that break UV seams, and project the rest onto the scalp, far cheek, ears and neck. Texture only, off by default until the held-out quality check passes.",
-			"tags": ["improvement"]
+			"tags": [
+				"improvement"
+			]
 		},
 		{
 			"date": "2026-11-04",
@@ -53,27 +80,35 @@
 			"date": "2026-11-04",
 			"title": "Score, replay and export any agent run",
 			"summary": "Owners can run a task suite against an agent from a new Evaluate tab, the REST API or `three-ws evals run`, watch per-task progress live, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL. Runs are limited to free and Vertex lanes with a cost cap.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/docs/agent-evals"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Native launchpad coins get their own page and a one-click buy from SOL",
 			"summary": "Every coin launched on the $THREE curve now opens at /launches/<mint> with its curve progress, price, market cap, recent trades read from chain, the fee schedule and the agent behind it. Holders of only SOL can buy in one transaction: the page swaps SOL to $THREE through Jupiter and buys on the curve, showing the exact total first.",
-			"tags": ["feature"],
+			"tags": [
+				"feature"
+			],
 			"link": "/three-launchpad"
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Surprise me builds real bodies",
 			"summary": "The one-click Surprise me avatar now draws a full look on the Parametric body: face and body shape sliders, height and limb proportions, skin tone, clothes and hair from the live catalog, and up to two accessories. Every result shows its seed so you can reload, share or recreate it, and a body style picker keeps the classic lane one click away.",
-			"tags": ["feature"]
+			"tags": [
+				"feature"
+			]
 		},
 		{
 			"date": "2026-11-04",
 			"title": "Talking-avatar video gets a scripted GPU host",
 			"summary": "The LongCat video worker now has an on-demand 80 GB GPU host with TLS, idle self-shutdown, a daily GPU-hour cap and a quota request script. When no host is up, video requests answer a clear capacity error and keep the free trial.",
-			"tags": ["infra"]
+			"tags": [
+				"infra"
+			]
 		},
 		{
 			"date": "2026-11-04",

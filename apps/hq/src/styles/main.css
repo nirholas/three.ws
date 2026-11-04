@@ -19218,3 +19218,13 @@ body.has-critical-banner .panels-grid {
 .three-retry { cursor: pointer; font: inherit; font-size: 12px; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.06); color: inherit; }
 .three-retry:hover { background: rgba(255, 255, 255, 0.14); }
 .three-retry:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Compound alert rule builder */
+.pa-clause { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.pa-clause-symbol { width: 80px; }
+.pa-clause-value { width: 90px; }
+.pa-handoff-label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-dim); cursor: pointer; }
+.pa-handoff-label:hover { color: var(--text); }
+.pa-form-error { font-size: 11px; color: var(--red, #ef4444); }
+.pa-alert-rule { font-size: 12px; }
+.pa-cond-btn:focus-visible, .pa-handoff-label input:focus-visible, .pa-clause .pa-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

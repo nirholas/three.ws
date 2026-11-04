@@ -1,30 +1,40 @@
 import { Panel } from './Panel';
 import { escapeHtml } from '@/utils/sanitize';
-
-// =============================================================================
-// Types
-// =============================================================================
-
-interface PriceAlert {
-  id: string;
-  symbol: string;
-  targetPrice: number;
-  condition: 'above' | 'below';
-  enabled: boolean;
-  triggered: boolean;
-  currentPrice: number | null;
-  createdAt: string;
-}
+import { hqBridge } from '@/services/hq-bridge';
+import {
+  MAX_CLAUSES,
+  describeClause,
+  describeRule,
+  evaluateRule,
+  migrateLegacyAlerts,
+  neededFeeds,
+  proposalForRule,
+  readingKey,
+  validateRule,
+  type AlertRule,
+  type Join,
+  type Metric,
+  type Operator,
+  type Readings,
+} from '@/services/alert-rules';
 
 interface CoinGeckoPrice {
   [coinId: string]: { usd: number };
+}
+
+interface FormClause {
+  metric: Metric;
+  symbol: string;
+  op: Operator;
+  value: string;
 }
 
 // =============================================================================
 // Constants
 // =============================================================================
 
-const STORAGE_KEY = 'hq-price-alerts';
+const STORAGE_KEY = 'hq-alert-rules-v1';
+const LEGACY_STORAGE_KEY = 'hq-price-alerts';
 const CHECK_INTERVAL = 60_000; // 1 minute
 
 // Simple mapping of common symbols to CoinGecko IDs
@@ -46,18 +56,49 @@ const SYMBOL_TO_COINGECKO: Record<string, string> = {
 // Helpers
 // =============================================================================
 
-function loadAlerts(): PriceAlert[] {
+function newId(): string {
+  return crypto.randomUUID();
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+/** Load rules; on first run migrate the legacy single-condition alerts. The legacy key is left untouched as a backup. */
+function loadRules(): AlertRule[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as PriceAlert[]) : [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed)
+        ? parsed.map(r => validateRule(r, newId, nowIso)).filter((r): r is AlertRule => r !== null)
+        : [];
+    }
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const migrated = migrateLegacyAlerts(JSON.parse(legacy), newId, nowIso);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+      return migrated;
+    }
   } catch {
-    return [];
+    // corrupt storage: start clean rather than crash the panel
+  }
+  return [];
+}
+
+function saveRules(rules: AlertRule[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
+  } catch {
+    // storage full or blocked: alerts keep working for this session
   }
 }
 
-function saveAlerts(alerts: PriceAlert[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(alerts));
+function blankClause(): FormClause {
+  return { metric: 'price', symbol: '', op: 'above', value: '' };
 }
+
+const METRIC_LABEL: Record<Metric, string> = { price: 'Price ($)', funding: 'Funding (%)', gas: 'ETH gas (gwei)' };
 
 function formatPrice(price: number): string {
   if (price < 0.01) return price.toFixed(6);
@@ -66,24 +107,25 @@ function formatPrice(price: number): string {
   return price.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
 }
 
-// =============================================================================
-// PriceAlertsPanel
-// =============================================================================
+/** PriceAlertsPanel: compound alert rules. */
 
 export class PriceAlertsPanel extends Panel {
-  private alerts: PriceAlert[] = [];
+  private rules: AlertRule[] = [];
+  private readings: Readings = {};
   private showForm = false;
-  private formSymbol = '';
-  private formPrice = '';
-  private formCondition: 'above' | 'below' = 'above';
+  private formName = '';
+  private formJoin: Join = 'all';
+  private formHandoff = false;
+  private formClauses: FormClause[] = [blankClause()];
+  private formError = '';
   private checkTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    super({ id: 'price-alerts', title: 'Price Alerts', showCount: true });
-    this.alerts = loadAlerts();
+    super({ id: 'price-alerts', title: 'Alerts', showCount: true });
+    this.rules = loadRules();
     this.render();
-    void this.checkPrices();
-    this.checkTimer = setInterval(() => this.checkPrices(), CHECK_INTERVAL);
+    void this.checkRules();
+    this.checkTimer = setInterval(() => this.checkRules(), CHECK_INTERVAL);
   }
 
   public destroy(): void {
@@ -91,237 +133,278 @@ export class PriceAlertsPanel extends Panel {
     if (this.checkTimer) { clearInterval(this.checkTimer); this.checkTimer = null; }
   }
 
-  // ---- Price checking ----
+  // ---- Live readings ----
 
-  private async checkPrices(): Promise<void> {
-    const enabledAlerts = this.alerts.filter(a => a.enabled && !a.triggered);
-    if (enabledAlerts.length === 0) return;
-
-    // Collect unique symbols and their CoinGecko IDs
-    const symbolSet = new Set(enabledAlerts.map(a => a.symbol));
-    const coinIds: string[] = [];
+  private async fetchPrices(symbols: string[]): Promise<void> {
     const symbolToId: Record<string, string> = {};
-
-    for (const sym of symbolSet) {
-      const id = SYMBOL_TO_COINGECKO[sym] || sym.toLowerCase();
-      coinIds.push(id);
-      symbolToId[sym] = id;
-    }
-
-    try {
-      const idsParam = coinIds.join(',');
-      const res = await fetch(`/api/coingecko?endpoint=simple/price&ids=${encodeURIComponent(idsParam)}&vs_currencies=usd`);
-      if (!res.ok) return;
-
-      const prices: CoinGeckoPrice = await res.json();
-      let changed = false;
-
-      for (const alert of this.alerts) {
-        const id = symbolToId[alert.symbol];
-        if (!id) continue;
-        const priceData = prices[id];
-        if (!priceData) continue;
-
-        alert.currentPrice = priceData.usd;
-
-        if (alert.enabled && !alert.triggered) {
-          const met = alert.condition === 'above'
-            ? priceData.usd >= alert.targetPrice
-            : priceData.usd <= alert.targetPrice;
-          if (met) {
-            alert.triggered = true;
-            changed = true;
-          }
-        }
-      }
-
-      if (changed) {
-        saveAlerts(this.alerts);
-      }
-      this.render();
-    } catch {
-      // silently fail on price check
+    for (const sym of symbols) symbolToId[sym] = SYMBOL_TO_COINGECKO[sym] || sym.toLowerCase();
+    const ids = [...new Set(Object.values(symbolToId))].join(',');
+    const res = await fetch(`/api/coingecko?endpoint=simple/price&ids=${encodeURIComponent(ids)}&vs_currencies=usd`);
+    if (!res.ok) return;
+    const prices: CoinGeckoPrice = await res.json();
+    for (const sym of symbols) {
+      const coinId = symbolToId[sym];
+      const usd = coinId ? prices[coinId]?.usd : undefined;
+      if (typeof usd === 'number') this.readings[readingKey('price', sym)] = usd;
     }
   }
 
-  // ---- Alert operations ----
+  private async fetchFunding(): Promise<void> {
+    const res = await fetch('/api/funding-rates');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data.rates)) return;
+    for (const r of data.rates as Array<{ symbol: string; avgFunding: number }>) {
+      this.readings[readingKey('funding', r.symbol)] = r.avgFunding;
+    }
+  }
 
-  private addAlert(): void {
-    const symbol = this.formSymbol.trim().toUpperCase();
-    const price = parseFloat(this.formPrice);
-    if (!symbol || !price || price <= 0) return;
+  private async fetchGas(): Promise<void> {
+    const res = await fetch('/api/gas-tracker');
+    if (!res.ok) return;
+    const data = await res.json();
+    const gwei = data?.summary?.ethGas;
+    if (typeof gwei === 'number') this.readings[readingKey('gas', 'ETH')] = gwei;
+  }
 
-    const alert: PriceAlert = {
-      id: crypto.randomUUID(),
-      symbol,
-      targetPrice: price,
-      condition: this.formCondition,
-      enabled: true,
-      triggered: false,
-      currentPrice: null,
-      createdAt: new Date().toISOString(),
-    };
+  private async checkRules(): Promise<void> {
+    const feeds = neededFeeds(this.rules);
+    if (feeds.prices.length === 0 && !feeds.funding && !feeds.gas) return;
 
-    this.alerts.push(alert);
-    saveAlerts(this.alerts);
-    this.formSymbol = '';
-    this.formPrice = '';
+    await Promise.allSettled([
+      feeds.prices.length > 0 ? this.fetchPrices(feeds.prices) : Promise.resolve(),
+      feeds.funding ? this.fetchFunding() : Promise.resolve(),
+      feeds.gas ? this.fetchGas() : Promise.resolve(),
+    ]);
+
+    let changed = false;
+    for (const rule of this.rules) {
+      if (!rule.enabled || rule.triggered) continue;
+      if (evaluateRule(rule, this.readings) === true) {
+        rule.triggered = true;
+        changed = true;
+        this.announce(rule);
+      }
+    }
+    if (changed) saveRules(this.rules);
+    this.render();
+  }
+
+  /** Tell an embedding host the rule fired; the host decides what (if anything) to do with it. */
+  private announce(rule: AlertRule): void {
+    const proposal = proposalForRule(rule);
+    hqBridge.emit('hq:alert-triggered', {
+      ruleId: rule.id,
+      name: rule.name,
+      description: describeRule(rule),
+      handoff: rule.handoff,
+      proposal,
+    });
+    hqBridge.emitNotification({ title: rule.name || 'HQ alert', body: describeRule(rule), level: 'info' });
+  }
+
+  // ---- Rule operations ----
+
+  private addRule(): void {
+    const clauses = this.formClauses.map(c => ({
+      metric: c.metric,
+      symbol: c.symbol,
+      op: c.op,
+      value: Number.parseFloat(c.value),
+    }));
+    const rule = validateRule(
+      { name: this.formName, join: this.formJoin, clauses, handoff: this.formHandoff },
+      newId,
+      nowIso,
+    );
+    if (!rule) {
+      this.formError = 'Each condition needs a valid symbol and a number. Price and gas must be above zero.';
+      this.render();
+      return;
+    }
+    this.rules.push(rule);
+    saveRules(this.rules);
+    this.formName = '';
+    this.formJoin = 'all';
+    this.formHandoff = false;
+    this.formClauses = [blankClause()];
+    this.formError = '';
     this.showForm = false;
     this.render();
-    void this.checkPrices();
+    void this.checkRules();
   }
 
-  private removeAlert(id: string): void {
-    this.alerts = this.alerts.filter(a => a.id !== id);
-    saveAlerts(this.alerts);
+  private removeRule(id: string): void {
+    this.rules = this.rules.filter(r => r.id !== id);
+    saveRules(this.rules);
     this.render();
   }
 
-  private toggleAlert(id: string, enabled: boolean): void {
-    const alert = this.alerts.find(a => a.id === id);
-    if (alert) {
-      alert.enabled = enabled;
-      if (enabled) alert.triggered = false; // re-arm
-      saveAlerts(this.alerts);
-      this.render();
-    }
+  private toggleRule(id: string, enabled: boolean): void {
+    const rule = this.rules.find(r => r.id === id);
+    if (!rule) return;
+    rule.enabled = enabled;
+    if (enabled) rule.triggered = false; // re-arm
+    saveRules(this.rules);
+    this.render();
+  }
+
+  private toggleHandoff(id: string, handoff: boolean): void {
+    const rule = this.rules.find(r => r.id === id);
+    if (!rule) return;
+    rule.handoff = handoff;
+    saveRules(this.rules);
+    this.render();
   }
 
   // ---- Render ----
 
+  private clauseFormHtml(c: FormClause, i: number): string {
+    const sym = c.metric === 'gas' ? '' : `<input class="pa-input pa-clause-symbol" data-ci="${i}" data-f="symbol" type="text" placeholder="Symbol" value="${escapeHtml(c.symbol)}" aria-label="Symbol" />`;
+    return `
+      <div class="pa-clause">
+        <select class="pa-input pa-clause-metric" data-ci="${i}" data-f="metric" aria-label="Metric">
+          ${(Object.keys(METRIC_LABEL) as Metric[]).map(m => `<option value="${m}"${m === c.metric ? ' selected' : ''}>${METRIC_LABEL[m]}</option>`).join('')}
+        </select>
+        ${sym}
+        <select class="pa-input pa-clause-op" data-ci="${i}" data-f="op" aria-label="Condition">
+          <option value="above"${c.op === 'above' ? ' selected' : ''}>at or above</option>
+          <option value="below"${c.op === 'below' ? ' selected' : ''}>at or below</option>
+        </select>
+        <input class="pa-input pa-clause-value" data-ci="${i}" data-f="value" type="number" step="any" placeholder="Value" value="${escapeHtml(c.value)}" aria-label="Threshold" />
+        ${this.formClauses.length > 1 ? `<button class="pa-delete-btn" data-clause-remove="${i}" title="Remove condition" aria-label="Remove condition">✕</button>` : ''}
+      </div>`;
+  }
+
   private render(): void {
-    const triggeredCount = this.alerts.filter(a => a.triggered).length;
-    this.setCount(this.alerts.length);
-    if (triggeredCount > 0) {
-      this.setNewBadge(triggeredCount, true);
-    } else {
-      this.clearNewBadge();
-    }
+    const triggeredCount = this.rules.filter(r => r.triggered).length;
+    this.setCount(this.rules.length);
+    if (triggeredCount > 0) this.setNewBadge(triggeredCount, true);
+    else this.clearNewBadge();
 
     const formHtml = this.showForm ? `
       <div class="pa-form">
-        <input class="pa-input" type="text" placeholder="Symbol (e.g. BTC, ETH)" id="pa-symbol" value="${escapeHtml(this.formSymbol)}" />
+        <input class="pa-input" type="text" maxlength="60" placeholder="Name (optional)" id="pa-name" value="${escapeHtml(this.formName)}" />
+        ${this.formClauses.map((c, i) => this.clauseFormHtml(c, i)).join('')}
         <div class="pa-form-row">
-          <div class="pa-price-wrap">
-            <span class="pa-price-prefix">$</span>
-            <input class="pa-input pa-input-price" type="number" placeholder="Target price" id="pa-price" min="0" step="0.01" value="${escapeHtml(this.formPrice)}" />
-          </div>
-          <div class="pa-condition-toggle">
-            <button class="pa-cond-btn${this.formCondition === 'above' ? ' active' : ''}" data-cond="above">Above</button>
-            <button class="pa-cond-btn${this.formCondition === 'below' ? ' active' : ''}" data-cond="below">Below</button>
-          </div>
+          ${this.formClauses.length < MAX_CLAUSES ? '<button class="pa-cond-btn" id="pa-add-clause">+ Condition</button>' : ''}
+          ${this.formClauses.length > 1 ? `
+            <div class="pa-condition-toggle" role="group" aria-label="Combine conditions">
+              <button class="pa-cond-btn${this.formJoin === 'all' ? ' active' : ''}" data-join="all">All</button>
+              <button class="pa-cond-btn${this.formJoin === 'any' ? ' active' : ''}" data-join="any">Any</button>
+            </div>` : ''}
         </div>
+        <label class="pa-handoff-label">
+          <input type="checkbox" id="pa-handoff" ${this.formHandoff ? 'checked' : ''} />
+          Offer to my agent when this fires (opt-in)
+        </label>
+        ${this.formError ? `<div class="pa-form-error" role="alert">${escapeHtml(this.formError)}</div>` : ''}
         <button class="pa-submit-btn" id="pa-submit">Create Alert</button>
       </div>
     ` : '';
 
-    const alertRows = this.alerts.map(alert => {
-      const isAbove = alert.condition === 'above';
-      return `
-        <div class="pa-alert-row${alert.triggered ? ' pa-triggered' : ''}${!alert.enabled ? ' pa-disabled' : ''}">
-          <div class="pa-alert-left">
-            <span class="pa-alert-icon">${alert.triggered ? '🔔' : alert.enabled ? '🔔' : '🔕'}</span>
-            <span class="pa-alert-symbol">${escapeHtml(alert.symbol)}</span>
-            <span class="pa-alert-cond ${isAbove ? 'pa-cond-above' : 'pa-cond-below'}">
-              ${isAbove ? '↑' : '↓'} ${isAbove ? 'Above' : 'Below'}
-            </span>
-            <span class="pa-alert-target">$${formatPrice(alert.targetPrice)}</span>
-          </div>
-          <div class="pa-alert-right">
-            ${alert.currentPrice != null && alert.currentPrice > 0 ? `
-              <span class="pa-alert-current">Now $${formatPrice(alert.currentPrice)}</span>
-            ` : ''}
-            ${!alert.triggered ? `
-              <label class="pa-toggle-wrap">
-                <input type="checkbox" class="pa-toggle" data-toggle="${alert.id}" ${alert.enabled ? 'checked' : ''} />
-                <span class="pa-toggle-slider"></span>
-              </label>
-            ` : '<span class="pa-triggered-badge">Triggered!</span>'}
-            <button class="pa-delete-btn" data-delete="${alert.id}" title="Delete">✕</button>
-          </div>
+    const ruleRows = this.rules.map(rule => `
+      <div class="pa-alert-row${rule.triggered ? ' pa-triggered' : ''}${!rule.enabled ? ' pa-disabled' : ''}">
+        <div class="pa-alert-left">
+          <span class="pa-alert-icon">${rule.enabled || rule.triggered ? '🔔' : '🔕'}</span>
+          <span class="pa-alert-rule">
+            ${rule.name ? `<strong>${escapeHtml(rule.name)}</strong> ` : ''}
+            ${escapeHtml(rule.clauses.map(describeClause).join(rule.join === 'all' ? ' AND ' : ' OR '))}
+          </span>
         </div>
-      `;
-    }).join('');
+        <div class="pa-alert-right">
+          ${rule.clauses.map(c => {
+            const v = this.readings[readingKey(c.metric, c.symbol)];
+            return typeof v === 'number' ? `<span class="pa-alert-current">${escapeHtml(c.symbol)} ${formatPrice(v)}</span>` : '';
+          }).join('')}
+          <label class="pa-handoff-label" title="Offer this alert to your agent when it fires">
+            <input type="checkbox" data-handoff="${rule.id}" ${rule.handoff ? 'checked' : ''} /> Agent
+          </label>
+          ${!rule.triggered ? `
+            <label class="pa-toggle-wrap">
+              <input type="checkbox" class="pa-toggle" data-toggle="${rule.id}" ${rule.enabled ? 'checked' : ''} aria-label="Enabled" />
+              <span class="pa-toggle-slider"></span>
+            </label>
+          ` : `<button class="pa-cond-btn" data-rearm="${rule.id}">Re-arm</button><span class="pa-triggered-badge">Triggered!</span>`}
+          <button class="pa-delete-btn" data-delete="${rule.id}" title="Delete" aria-label="Delete alert">✕</button>
+        </div>
+      </div>
+    `).join('');
 
-    const html = `
+    this.setContent(`
       <div class="pa-container">
         <div class="pa-header-row">
           <span class="pa-triggered-count">${triggeredCount > 0 ? `${triggeredCount} triggered` : ''}</span>
           <button class="pa-add-btn" id="pa-toggle-form">${this.showForm ? 'Cancel' : '+ Add'}</button>
         </div>
         ${formHtml}
-        ${this.alerts.length === 0 ? `
+        ${this.rules.length === 0 ? `
           <div class="pa-empty">
             <span class="pa-empty-icon">🔔</span>
-            <div>No price alerts yet</div>
-            <div style="font-size:11px;color:var(--text-dim)">Create alerts to get notified when prices hit your targets</div>
+            <div>No alerts yet</div>
+            <div style="font-size:11px;color:var(--text-dim)">Combine price, funding and gas conditions, for example BTC above a level AND funding crowded. Press + Add to start.</div>
           </div>
-        ` : `
-          <div class="pa-alert-list">${alertRows}</div>
-        `}
+        ` : `<div class="pa-alert-list">${ruleRows}</div>`}
       </div>
-    `;
-
-    this.setContent(html);
+    `);
     this.bindEvents();
   }
 
   private bindEvents(): void {
-    // Toggle form
-    this.content.querySelector('#pa-toggle-form')?.addEventListener('click', () => {
+    const q = (sel: string) => this.content.querySelector(sel);
+    const qa = (sel: string) => this.content.querySelectorAll(sel);
+
+    q('#pa-toggle-form')?.addEventListener('click', () => {
       this.showForm = !this.showForm;
+      this.formError = '';
       this.render();
     });
 
-    // Condition toggle
-    this.content.querySelectorAll('[data-cond]').forEach(btn => {
+    (q('#pa-name') as HTMLInputElement | null)?.addEventListener('input', e => { this.formName = (e.target as HTMLInputElement).value; });
+    (q('#pa-handoff') as HTMLInputElement | null)?.addEventListener('change', e => { this.formHandoff = (e.target as HTMLInputElement).checked; });
+
+    qa('[data-ci]').forEach(el => {
+      const input = el as HTMLInputElement | HTMLSelectElement;
+      const i = Number(input.dataset.ci);
+      const field = input.dataset.f as keyof FormClause;
+      if (!field) return;
+      const apply = () => {
+        const clause = this.formClauses[i];
+        if (!clause) return;
+        (clause as unknown as Record<string, string>)[field] = input.value;
+      };
+      input.addEventListener('input', apply);
+      input.addEventListener('change', () => { apply(); if (field === 'metric') this.render(); });
+      input.addEventListener('keydown', e => { if ((e as KeyboardEvent).key === 'Enter') { apply(); this.addRule(); } });
+    });
+
+    q('#pa-add-clause')?.addEventListener('click', () => {
+      if (this.formClauses.length < MAX_CLAUSES) this.formClauses.push(blankClause());
+      this.render();
+    });
+    qa('[data-clause-remove]').forEach(btn => {
       btn.addEventListener('click', () => {
-        this.formCondition = (btn as HTMLElement).dataset.cond as 'above' | 'below';
+        this.formClauses.splice(Number((btn as HTMLElement).dataset.clauseRemove), 1);
         this.render();
       });
     });
-
-    // Capture form values before submit
-    const symbolInput = this.content.querySelector('#pa-symbol') as HTMLInputElement | null;
-    const priceInput = this.content.querySelector('#pa-price') as HTMLInputElement | null;
-
-    symbolInput?.addEventListener('input', () => { this.formSymbol = symbolInput.value; });
-    priceInput?.addEventListener('input', () => { this.formPrice = priceInput.value; });
-
-    // Submit
-    this.content.querySelector('#pa-submit')?.addEventListener('click', () => {
-      // Re-read values in case 'input' event didn't fire
-      if (symbolInput) this.formSymbol = symbolInput.value;
-      if (priceInput) this.formPrice = priceInput.value;
-      this.addAlert();
+    qa('[data-join]').forEach(btn => {
+      btn.addEventListener('click', () => { this.formJoin = (btn as HTMLElement).dataset.join as Join; this.render(); });
     });
 
-    // Enter key
-    const handleEnter = (e: Event) => {
-      if ((e as KeyboardEvent).key === 'Enter') {
-        if (symbolInput) this.formSymbol = symbolInput.value;
-        if (priceInput) this.formPrice = priceInput.value;
-        this.addAlert();
-      }
-    };
-    symbolInput?.addEventListener('keydown', handleEnter);
-    priceInput?.addEventListener('keydown', handleEnter);
+    q('#pa-submit')?.addEventListener('click', () => this.addRule());
 
-    // Toggle alerts
-    this.content.querySelectorAll('[data-toggle]').forEach(input => {
-      input.addEventListener('change', () => {
-        const id = (input as HTMLElement).dataset.toggle!;
-        const checked = (input as HTMLInputElement).checked;
-        this.toggleAlert(id, checked);
-      });
+    qa('[data-toggle]').forEach(input => {
+      input.addEventListener('change', () => this.toggleRule((input as HTMLElement).dataset.toggle!, (input as HTMLInputElement).checked));
     });
-
-    // Delete alerts
-    this.content.querySelectorAll('[data-delete]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = (btn as HTMLElement).dataset.delete!;
-        this.removeAlert(id);
-      });
+    qa('[data-handoff]').forEach(input => {
+      input.addEventListener('change', () => this.toggleHandoff((input as HTMLElement).dataset.handoff!, (input as HTMLInputElement).checked));
+    });
+    qa('[data-rearm]').forEach(btn => {
+      btn.addEventListener('click', () => this.toggleRule((btn as HTMLElement).dataset.rearm!, true));
+    });
+    qa('[data-delete]').forEach(btn => {
+      btn.addEventListener('click', () => this.removeRule((btn as HTMLElement).dataset.delete!));
     });
   }
 }

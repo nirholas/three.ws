@@ -88,6 +88,7 @@ import { TECH_HQS, ACCELERATORS } from '@/config/tech-geo';
 import { isDesktopRuntime } from '@/services/runtime';
 import { getCountryAtCoordinates, hasCountryGeometry, isCoordinateInCountry, preloadCountryGeometry } from '@/services/country-geometry';
 import { hqBridge } from '@/services/hq-bridge';
+import { registerPanelData } from '@/services/panel-data-registry';
 import type { HQCommandType, ApplyTemplatePayload, TogglePanelPayload, FlyToCountryPayload, ShowPanelPayload } from '@/services/hq-bridge';
 
 import type { PredictionMarket, MarketData, ClusteredEvent } from '@/types';
@@ -358,6 +359,19 @@ export class App {
 
     // Register the command handler
     hqBridge.onCommand((type, payload) => this.handleBridgeCommand(type, payload));
+
+    // Data a host page can pull with host:get-panel-data
+    registerPanelData('markets', () => this.latestMarkets.map(m => ({
+      symbol: m.symbol, name: m.name, price: m.price, change: m.change,
+    })));
+    registerPanelData('polymarket', () => this.latestPredictions);
+    registerPanelData('news-clusters', () => this.latestClusters.slice(0, 50).map(c => ({
+      id: c.id, title: c.primaryTitle, source: c.primarySource, link: c.primaryLink,
+      sourceCount: c.sourceCount, isAlert: c.isAlert, lastUpdated: c.lastUpdated,
+    })));
+    registerPanelData('panels', () => Object.fromEntries(
+      Object.entries(this.panelSettings).map(([key, cfg]) => [key, cfg.enabled]),
+    ));
   }
 
   private handleBridgeCommand(type: HQCommandType, payload: unknown): void {

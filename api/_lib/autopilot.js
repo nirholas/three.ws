@@ -45,8 +45,20 @@ const WSOL_MINT_ADDR = 'So11111111111111111111111111111111111111112';
 // The actions /api/autopilot/proposals accepts on a POST. Kept beside the engine
 // so the handler's allowlist and its error message can never drift apart.
 export const AUTOPILOT_PROPOSAL_ACTIONS = Object.freeze([
-	'generate', 'dryrun', 'execute', 'dismiss', 'undo', 'adjust',
+	'generate', 'dryrun', 'execute', 'dismiss', 'undo', 'adjust', 'propose',
 ]);
+
+// Kinds an owner (or a surface acting for the owner, such as an HQ alert) may
+// enqueue directly. Only reversible kinds: wallet_transfer and trade move funds
+// and are only ever created by the agent's own memory-grounded mind.
+export const OWNER_PROPOSABLE_KINDS = Object.freeze(['create_alert', 'briefing']);
+
+export function validateOwnerProposal(kind, params) {
+	if (!OWNER_PROPOSABLE_KINDS.includes(kind)) {
+		return { ok: false, reason: `only reversible kinds can be proposed directly (${OWNER_PROPOSABLE_KINDS.join(', ')})` };
+	}
+	return validateProposal(kind, params);
+}
 
 // ── Request-input guards for the autopilot read surfaces ─────────────────────
 // Every autopilot endpoint takes the same two user-supplied paging inputs. Both
@@ -570,6 +582,44 @@ export async function generateProposals({ agentId, userId, agent }) {
 	}
 
 	return { created, source, scanned: { memories: memories.length, dreams: dreams.length } };
+}
+
+/**
+ * Enqueue an owner-originated proposal (reversible kinds only). The triggering
+ * context is stored as a grounding memory first so the proposal keeps the same
+ * provenance guarantee as a generated one. Never executes anything.
+ */
+export async function createOwnerProposal({ agentId, userId, kind, params, context, title, rationale }) {
+	const v = validateOwnerProposal(kind, params);
+	if (!v.ok) return { ok: false, code: 'invalid', reason: v.reason };
+
+	const key = proposalDedupeKey(kind, v.params);
+	const pending = await sql`
+		SELECT id, kind, params FROM agent_autopilot_proposals WHERE agent_id = ${agentId} AND status = 'pending' AND kind = ${kind}
+	`;
+	if (pending.some((p) => proposalDedupeKey(p.kind, p.params || {}) === key)) {
+		return { ok: false, code: 'duplicate', reason: 'an identical proposal is already pending' };
+	}
+
+	const note = truncate(String(context || '').trim() || 'Owner raised this from a connected surface.', 400);
+	const [memory] = await sql`
+		INSERT INTO agent_memories (agent_id, type, content, tags, context, salience, tier, pinned)
+		VALUES (${agentId}, 'user', ${note}, ${['autopilot', 'owner_proposal']},
+			${JSON.stringify({ source: 'owner_proposal', kind })}::jsonb, 0.7, 'recall', false)
+		RETURNING id
+	`;
+	const [row] = await sql`
+		INSERT INTO agent_autopilot_proposals
+			(agent_id, user_id, kind, title, rationale, params, source_memory_ids, confidence, requires_confirmation)
+		VALUES (
+			${agentId}, ${userId}, ${kind},
+			${truncate(title || defaultTitle(kind, v), 160)},
+			${truncate(rationale || 'Raised by you from a connected surface.', 600)},
+			${JSON.stringify(v.params)}::jsonb, ${[memory.id]}::uuid[], 1, false
+		)
+		RETURNING *
+	`;
+	return { ok: true, proposal: decorateProposal(row) };
 }
 
 function defaultTitle(kind, v) {

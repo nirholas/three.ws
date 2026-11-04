@@ -33,6 +33,9 @@ const {
 	decorateProposal,
 	AUTOPILOT_DEFAULTS,
 	AUTOPILOT_PROPOSAL_ACTIONS,
+	OWNER_PROPOSABLE_KINDS,
+	validateOwnerProposal,
+	createOwnerProposal,
 	pageLimit,
 	parseCursor,
 } = await import('../api/_lib/autopilot.js');
@@ -248,8 +251,49 @@ describe('parseCursor', () => {
 
 describe('AUTOPILOT_PROPOSAL_ACTIONS', () => {
 	it('is the frozen allowlist the proposals handler validates against', () => {
-		expect(AUTOPILOT_PROPOSAL_ACTIONS).toEqual(['generate', 'dryrun', 'execute', 'dismiss', 'undo', 'adjust']);
+		expect(AUTOPILOT_PROPOSAL_ACTIONS).toEqual(['generate', 'dryrun', 'execute', 'dismiss', 'undo', 'adjust', 'propose']);
 		expect(Object.isFrozen(AUTOPILOT_PROPOSAL_ACTIONS)).toBe(true);
 		expect(AUTOPILOT_PROPOSAL_ACTIONS.includes('nope')).toBe(false);
+	});
+});
+
+describe('owner-submitted proposals (HQ alert to action)', () => {
+	beforeEach(() => sqlMock.mockReset());
+	const AGENT = '22222222-2222-2222-2222-222222222222';
+	const USER = '33333333-3333-3333-3333-333333333333';
+
+	it('offers only the reversible kinds', () => {
+		expect(OWNER_PROPOSABLE_KINDS).toEqual(['create_alert', 'briefing']);
+	});
+
+	it('refuses wallet_transfer and trade even with valid params', () => {
+		const transfer = validateOwnerProposal('wallet_transfer', { recipient: SYNTH_ADDR, amount_sol: 1, reason: 'x' });
+		expect(transfer.ok).toBe(false);
+		expect(transfer.reason).toMatch(/reversible/);
+		expect(validateOwnerProposal('trade', { side: 'buy', mint: SYNTH_ADDR, amount_sol: 1, reason: 'x' }).ok).toBe(false);
+	});
+
+	it('accepts a briefing and normalizes it through the shared validator', () => {
+		const v = validateOwnerProposal('briefing', { summary: 'BTC crossed 100k and funding is crowded', cadence: 'once' });
+		expect(v.ok).toBe(true);
+		expect(v.kind).toBe('briefing');
+	});
+
+	it('stores a grounding memory first, then a pending proposal that cites it', async () => {
+		sqlMock.mockResolvedValueOnce([]); // no duplicate pending proposal
+		sqlMock.mockResolvedValueOnce([{ id: MEM_A }]); // grounding memory
+		sqlMock.mockResolvedValueOnce([{ id: 'p1', agent_id: AGENT, user_id: USER, kind: 'briefing', title: 't', rationale: 'r', params: {}, source_memory_ids: [MEM_A], status: 'pending', requires_confirmation: false }]);
+		const out = await createOwnerProposal({ agentId: AGENT, userId: USER, kind: 'briefing', params: { summary: 'BTC crossed 100k', cadence: 'once' }, context: 'HQ alert: BTC above 100000' });
+		expect(out.ok).toBe(true);
+		expect(out.proposal.sourceMemoryIds).toEqual([MEM_A]);
+		expect(out.proposal.status).toBe('pending');
+		expect(sqlMock).toHaveBeenCalledTimes(3);
+	});
+
+	it('does not enqueue a duplicate of a live pending proposal', async () => {
+		sqlMock.mockResolvedValueOnce([{ id: 'existing', kind: 'briefing', params: { summary: 'BTC crossed 100k', cadence: 'once', topic: 'BTC crossed 100k' } }]);
+		const out = await createOwnerProposal({ agentId: AGENT, userId: USER, kind: 'briefing', params: { summary: 'BTC crossed 100k', cadence: 'once' }, context: 'dup' });
+		expect(out).toMatchObject({ ok: false, code: 'duplicate' });
+		expect(sqlMock).toHaveBeenCalledTimes(1);
 	});
 });

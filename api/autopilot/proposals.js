@@ -14,6 +14,9 @@
 //   action = 'undo'      → { proposalId } reverse a reversible executed action;
 //                          records a feedback memory (the agent learns the boundary).
 //   action = 'adjust'    → { proposalId, params } edit a pending proposal's params.
+//   action = 'propose'   → { kind, params, context?, title?, rationale? } enqueue a pending
+//                          proposal from the owner (e.g. an HQ alert). Reversible kinds only
+//                          (create_alert, briefing); never executes. → { proposal }
 
 import { sql } from '../_lib/db.js';
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
@@ -25,7 +28,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import {
 	generateProposals, executeProposal, dismissProposal, undoProposal, dryRunProposal,
 	computeTrust, getAutopilotConfig, decorateProposal, validateProposal, AutopilotError,
-	AUTOPILOT_PROPOSAL_ACTIONS, pageLimit,
+	AUTOPILOT_PROPOSAL_ACTIONS, pageLimit, createOwnerProposal, validateOwnerProposal,
 } from '../_lib/autopilot.js';
 import { isUuid } from '../_lib/validate.js';
 
@@ -118,7 +121,7 @@ async function handleAct(req, res, auth) {
 	// Every action other than 'generate' operates on a specific proposal.
 	let proposalId = null;
 	let proposal = null;
-	if (action !== 'generate') {
+	if (action !== 'generate' && action !== 'propose') {
 		proposalId = body.proposalId || body.proposal_id;
 		if (!proposalId) return error(res, 400, 'validation_error', 'proposalId required');
 		if (!isUuid(proposalId)) return error(res, 400, 'validation_error', 'proposalId must be a uuid');
@@ -133,6 +136,20 @@ async function handleAct(req, res, auth) {
 	if (action === 'execute' && (proposal.kind === 'wallet_transfer' || proposal.kind === 'trade') &&
 		!(await requireRealFundsAgreement(req, res, { userId: auth.userId, context: proposal.kind === 'trade' ? 'autopilot-trade' : 'autopilot-transfer' }))) return;
 	if (!(await requireCsrf(req, res, auth.userId))) return;
+
+	if (action === 'propose') {
+		const kind = String(body.kind || '');
+		const checked = validateOwnerProposal(kind, body.params || {});
+		if (!checked.ok) return error(res, 400, 'validation_error', checked.reason);
+		const made = await createOwnerProposal({
+			agentId, userId: auth.userId, kind, params: body.params || {},
+			context: typeof body.context === 'string' ? body.context : '',
+			title: typeof body.title === 'string' ? body.title : '',
+			rationale: typeof body.rationale === 'string' ? body.rationale : '',
+		});
+		if (!made.ok) return error(res, made.code === 'duplicate' ? 409 : 400, made.code === 'duplicate' ? 'duplicate' : 'validation_error', made.reason);
+		return json(res, 201, { proposal: made.proposal });
+	}
 
 	if (action === 'generate') {
 		const rl = await limits.authIp(clientIp(req));

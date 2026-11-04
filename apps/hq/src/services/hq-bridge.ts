@@ -5,30 +5,18 @@
  * When running standalone the bridge is a no-op with zero overhead.
  */
 
-// ---------------------------------------------------------------------------
-// Allowed origins - must match frame-ancestors in vercel.json
-// ---------------------------------------------------------------------------
-const ALLOWED_ORIGINS: readonly string[] = [
-  'https://three.ws',
-  'https://www.three.ws',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3210',
-];
-
-/**
- * Check if an origin matches any allowed origin.
- * Supports exact matches plus wildcard *.vercel.app for preview deployments.
- */
-function isAllowedOrigin(origin: string): boolean {
-  if (ALLOWED_ORIGINS.includes(origin)) return true;
-  try {
-    const url = new URL(origin);
-    return url.protocol === 'https:' && url.hostname.endsWith('.vercel.app');
-  } catch {
-    return false;
-  }
-}
+import { ALLOWED_ORIGINS, isAllowedOrigin } from './hq-bridge-origins';
+import {
+  isDataCommand,
+  validateDataCommand,
+  sizeCheck,
+  type DataError,
+  type DataCommandType,
+  type PanelDataRequest,
+  type QueryRequest,
+  type PortfolioRiskRequest,
+} from './hq-bridge-protocol';
+import { readPanelData, hasPanelData } from './panel-data-registry';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,7 +30,11 @@ export type HQEventType =
   | 'hq:country-selected'
   | 'hq:signal-detected'
   | 'hq:market-update'
-  | 'hq:notification';
+  | 'hq:notification'
+  | 'hq:panel-data'
+  | 'hq:query-result'
+  | 'hq:error'
+  | 'hq:alert-triggered';
 
 /** Commands received by HQ ← the host */
 export type HQCommandType =
@@ -51,7 +43,8 @@ export type HQCommandType =
   | 'host:fly-to-country'
   | 'host:set-theme'
   | 'host:request-state'
-  | 'host:show-panel';
+  | 'host:show-panel'
+  | DataCommandType;
 
 export interface HQMessage<T = unknown> {
   type: HQEventType;
@@ -323,13 +316,82 @@ class HQBridge {
 
     console.log('[HQBridge] Received command:', type, payload);
 
-    // 7. Dispatch to handler
+    // 7. Data commands are answered by the bridge itself with correlated replies
+    if (isDataCommand(type)) {
+      void this.handleDataCommand(type, payload);
+      return;
+    }
+
+    // 8. Dispatch to handler
     if (this.commandHandler) {
       try {
         this.commandHandler(type, payload);
       } catch (err) {
         console.error('[HQBridge] Command handler error:', err);
       }
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Data commands (request/response with correlation ids)
+  // -----------------------------------------------------------------------
+
+  private emitError(error: DataError): void {
+    this.emit('hq:error', error);
+  }
+
+  private async callAgentTool(body: Record<string, unknown>): Promise<unknown> {
+    const res = await fetch('/api/agent-tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(20000),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof json?.error === 'string' ? json.error : `agent-tools HTTP ${res.status}`);
+    return json;
+  }
+
+  private async handleDataCommand(type: DataCommandType, payload: unknown): Promise<void> {
+    const checked = validateDataCommand(type, payload);
+    if (!checked.ok) {
+      this.emitError(checked.error);
+      return;
+    }
+    const req = checked.value;
+    try {
+      if (type === 'host:get-panel-data') {
+        const { id, key } = req as PanelDataRequest;
+        if (!hasPanelData(key)) {
+          this.emitError({ id, code: 'unknown_panel', message: `No data provider for panel "${key}"` });
+          return;
+        }
+        const data = readPanelData(key);
+        const size = sizeCheck(data, id);
+        if (!size.ok) return this.emitError(size.error);
+        this.emit('hq:panel-data', { id, key, data });
+        return;
+      }
+
+      const { id } = req as { id: string };
+      const result =
+        type === 'host:run-query'
+          ? await this.callAgentTool(
+              (req as QueryRequest).tool
+                ? { tool: (req as QueryRequest).tool, args: (req as QueryRequest).args ?? {} }
+                : { question: (req as QueryRequest).question, narrate: true },
+            )
+          : await this.callAgentTool({ tool: 'portfolio_risk', args: { positions: (req as PortfolioRiskRequest).positions } });
+      const size = sizeCheck(result, id);
+      if (!size.ok) return this.emitError(size.error);
+      this.emit('hq:query-result', { id, result });
+    } catch (err) {
+      const timedOut = err instanceof DOMException && err.name === 'TimeoutError';
+      this.emitError({
+        id: (req as { id: string }).id,
+        code: timedOut ? 'timeout' : 'upstream_failed',
+        message: timedOut ? 'Query timed out' : err instanceof Error ? err.message : 'Query failed',
+      });
     }
   }
 
