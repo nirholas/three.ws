@@ -554,6 +554,8 @@ packages/assistant-mcp/       → @three-ws/assistant-mcp     (MCP server — ge
 packages/vanity-mcp/          → @three-ws/vanity-mcp        (MCP server — Solana vanity bounty market + rarity gallery)
 packages/naming-mcp/          → @three-ws/naming-mcp        (MCP server — .sol resolve + *.threews.sol identity availability)
 packages/intel-mcp/           → @three-ws/intel-mcp         (MCP server — smart-money, signals, KOL, copy-trade intel)
+packages/oracle-mcp/          → @three-ws/oracle-mcp        (MCP server: Oracle conviction feed, verdicts, wins, backtest; read-only, no key)
+packages/agent-trader-mcp/    → @three-ws/agent-trader-mcp  (MCP server: arm/disarm agents on Oracle calls; can move real SOL, simulate by default)
 packages/wallet-linkage/      → @three-ws/wallet-linkage    (Solana wallet-linkage scorer: shared fee payer, first-funder, token-account control, direct transfer, funding burst; noisy-OR, 0-100 score; ported from wallet-sleuth)
 packages/marketplace-mcp/     → @three-ws/marketplace-mcp   (MCP server — agent marketplace + skills catalog browse)
 packages/x402-mcp/            → @three-ws/x402-mcp          (MCP server — self-custodial x402 buyer: find/inspect/pay any service in USDC)

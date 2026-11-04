@@ -1,0 +1,42 @@
+{
+	"name": "@three-ws/oracle-mcp",
+	"version": "1.0.0",
+	"mcpName": "io.github.nirholas/threews-oracle-mcp",
+	"description": "Read the three.ws Oracle from any AI agent over stdio: live pump.fun conviction feed, scored coins, resolved wins, backtests, calibration, agent leaderboard and wallet intelligence. Read-only, no key, no payment.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws/oracle",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/oracle-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": ["mcp", "three.ws", "solana", "pump.fun", "oracle", "conviction", "market-data", "ai-agent"],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": ["src", "server.json", "README.md", "LICENSE"],
+	"bin": {
+		"oracle-mcp": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^4.6.7"
+	}
+}

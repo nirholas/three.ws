@@ -1,0 +1,47 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/threews-oracle-mcp",
+	"title": "three.ws Oracle (stdio)",
+	"description": "Read-only Oracle for pump.fun: conviction feed, coin verdicts, wins, backtest, calibration. No key.",
+	"websiteUrl": "https://three.ws/oracle",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": ["any"]
+		}
+	],
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/oracle-mcp"
+	},
+	"version": "1.0.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/oracle-mcp",
+			"version": "1.0.0",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "THREE_WS_BASE",
+					"description": "Base URL of the three.ws API. Override only when self-hosting or targeting a preview deployment.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws"
+				},
+				{
+					"name": "THREE_WS_TIMEOUT_MS",
+					"description": "Per-request timeout in milliseconds.",
+					"format": "number",
+					"isRequired": false,
+					"default": "20000"
+				}
+			]
+		}
+	]
+}

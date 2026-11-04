@@ -4875,6 +4875,12 @@
 					"added": "2026-11-04"
 				},
 				{
+					"path": "/docs/agent-trading-mcp",
+					"title": "Docs · Agent trading over MCP",
+					"description": "Arm an agent on Oracle calls, watch it, set its guardrails and stop it from any MCP client. Can move real SOL; simulate by default.",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/mcp",
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",

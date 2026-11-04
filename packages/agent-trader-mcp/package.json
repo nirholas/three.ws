@@ -1,0 +1,56 @@
+{
+	"name": "@three-ws/agent-trader-mcp",
+	"version": "1.0.0",
+	"mcpName": "io.github.nirholas/threews-agent-trader",
+	"description": "WARNING: can move real SOL. Arm a three.ws agent on Oracle conviction calls, watch what it did, and stop it. Defaults to simulate; live spend is explicit and gated server-side by a signed real-funds agreement.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/agent-trader-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"three.ws",
+		"solana",
+		"pump.fun",
+		"oracle",
+		"agent-trading",
+		"guardrails",
+		"ai-agent"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"agent-trader-mcp": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^4.6.7"
+	}
+}

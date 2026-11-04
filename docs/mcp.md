@@ -116,6 +116,7 @@ npx -y @three-ws/metaplex-agent-mcp # mint + register on-chain agents in the Met
 
 # Market data, intel & discovery
 npx -y @three-ws/intel-mcp        # smart-money, signal feeds, KOL & copy-trade intel
+npx -y @three-ws/oracle-mcp       # Oracle conviction scores, wins, backtest, calibration (read-only, no key)
 npx -y @three-ws/pumpfun-mcp      # free pump.fun + Solana token discovery
 npx -y @three-ws/vanity-mcp       # Solana vanity-address bounty market + rarity gallery
 npx -y @three-ws/marketplace-mcp  # browse the agent marketplace + skills catalog
@@ -125,6 +126,7 @@ npx -y @three-ws/naming-mcp       # resolve .sol names + check *.threews.sol ide
 npx -y @three-ws/ibm-watsonx-mcp  # IBM watsonx.ai on your own account
 
 # Autonomous agent control plane
+npx -y @three-ws/agent-trader-mcp  # WARNING moves real SOL: arm agents on Oracle calls (simulate by default), kill switch
 npx -y @three-ws/autopilot-mcp     # set scopes + daily $THREE spend caps, then propose/execute/undo
 npx -y @three-ws/portfolio-mcp     # portfolio value, PnL, balances, trade feed & signed transfers
 npx -y @three-ws/provenance-mcp    # append-only, signed, on-chain-verifiable agent action log
@@ -181,7 +183,7 @@ Ready-to-submit listing packages for each directory, plus the canonical metadata
 
 Deep dives — every tool, argument, env var, and example:
 
-- **Hosted remote:** [3D Studio (free)](./mcp-studio.md) · [Grok Bot connector](./grok-bot.md) · [3D Studio (paid)](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
+- **Hosted remote:** [Oracle (free)](./oracle.md#oracle-over-mcp) · [Agent trading](./agent-trading-mcp.md) · [3D Studio (free)](./mcp-studio.md) · [Grok Bot connector](./grok-bot.md) · [3D Studio (paid)](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
 - **Runs against your machine:** [Blender MCP](./blender-mcp.md) drives the Blender installed on your own computer, headless: inspect, convert, render and script 3D files, plus text-to-3D straight into a scene.
 - **Install-and-run:** each npm server ships its usage guide (tools, arguments, env vars, examples) in its package README on [npmjs.com/org/three-ws](https://www.npmjs.com/org/three-ws). The [MCP Tools Catalog](./mcp-tools.md) maps every tool to its server and price.
 - **Solana Memo Media:** [full guide](./mcp-solana-memo-media.md) for validating and rendering data URI images embedded in SPL Memo instructions.

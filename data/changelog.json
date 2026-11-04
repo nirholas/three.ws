@@ -12,6 +12,16 @@
 		},
 		{
 			"date": "2026-11-04",
+			"title": "Oracle and agent trading as MCP servers",
+			"summary": "The Oracle now has its own free MCP server at /api/mcp-oracle (14 read tools, no account), plus @three-ws/oracle-mcp and @three-ws/agent-trader-mcp for stdio. Agent trading arms in simulate mode by default, needs a signed real-funds agreement to go live, and has a one-argument kill switch. A wallet-profile database outage now answers 503 instead of an empty leaderboard.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/oracle"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Score, replay and export any agent run",
 			"summary": "Owners can run a task suite against an agent from a new Evaluate tab, the REST API or `three-ws evals run`, watch per-task progress live, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL. Runs are limited to free and Vertex lanes with a cost cap.",
 			"tags": ["feature"],
