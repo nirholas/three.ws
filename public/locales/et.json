@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Kõik funktsioonid",
-		"all_you_need_is_a_camera_and": "Kõik, mida vajad, on kaamera ja korralik valgustus. Proovimiseks pole kontot vaja.",
 		"ar_passthrough": "AR läbivaade",
 		"camera_in_3d_avatar_out": "Kaamera sisse, 3D-avatar välja",
 		"features": "Funktsioonid",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Üks foto → rigitud 3D-avatar. Tasuta, sinu brauseris, ilma rakenduseta.",
 		"meta_twitter_title": "Skanni – Muuda oma selfie rigitud 3D-avatariks · three.ws",
 		"multi_angle_capture": "Mitmenurkne jäädvustamine",
-		"no_account_for_first_scan": "Esimeseks skannimiseks pole kontot vaja",
 		"open_the_scanner_on_any_phone_or": "Ava skanner mis tahes telefonis või lauaarvuti brauseris, millel on kaamera ligipääs. Aseta oma nägu juhtraami sisse – hea valgustus, neutraalne ilme, kaamera silmade kõrgusel.",
 		"point_your_camera": "Suuna kaamera",
 		"point_your_phone_camera_at_your_face": "Suuna oma telefoni kaamera näole, püsi paigal ja lahku rigitud 3D-avatariga, mida saad animeerida, manustada ja kõikjal kasutada. Tasuta, täielikult sinu brauseris – allalaadimist ega rakendust pole vaja.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Luustik järgib standardset Mixamo humanoid-rig konventsiooni, nii et tuhanded tasuta animatsiooniklipid töötavad ilma uuesti rigimata.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Proovige hoopis Forge",
-		"try_the_scanner_without_signing_up_create": "Proovige skannerit registreerimata. Looge konto, et salvestada, alla laadida ja jagada oma avatari.",
 		"what_you_get": "Mida saad",
 		"your_face_in_3d_in_60_seconds": "Teie nägu 3D-s.<br>60 sekundiga."
 	},

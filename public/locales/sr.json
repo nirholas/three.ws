@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Sve funkcije",
-		"all_you_need_is_a_camera_and": "Sve što vam treba je kamera i pristojno osvetljenje. Nije potreban nalog za probu.",
 		"ar_passthrough": "AR propusnost",
 		"camera_in_3d_avatar_out": "Kamera ulazi, 3D avatar izlazi",
 		"features": "Funkcije",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Jedna fotografija → rigovan 3D avatar. Besplatno, u vašem pretraživaču, bez aplikacije.",
 		"meta_twitter_title": "Skeniraj — Pretvorite svoj selfi u rigovan 3D avatar · three.ws",
 		"multi_angle_capture": "Višeugaono snimanje",
-		"no_account_for_first_scan": "Nije potreban nalog za prvo skeniranje",
 		"open_the_scanner_on_any_phone_or": "Otvorite skener na bilo kom telefonu ili desktop pretraživaču sa pristupom kameri. Postavite svoje lice u okvir za vođenje — dobro svetlo, neutralan izraz, kamera u visini očiju.",
 		"point_your_camera": "Uperite kameru",
 		"point_your_phone_camera_at_your_face": "Uperite kameru telefona u svoje lice, držite mirno i odnesite rigovan 3D avatar koji možete animirati, ugraditi i koristiti bilo gde. Besplatno, u potpunosti u vašem pretraživaču — bez preuzimanja, bez aplikacije.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skelet prati standardnu Mixamo konvenciju za humanoidne rigove tako da hiljade besplatnih animacionih klipova radi bez ponovnog rigovanja.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Probajte Forge umesto toga",
-		"try_the_scanner_without_signing_up_create": "Isprobajte skener bez registracije. Kreirajte nalog da biste sačuvali, preuzeli i podelili svoj avatar.",
 		"what_you_get": "Šta dobijate",
 		"your_face_in_3d_in_60_seconds": "Vaše lice u 3D.<br>Za 60 sekundi."
 	},

@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Minden funkció",
-		"all_you_need_is_a_camera_and": "Csak egy kamera és megfelelő világítás szükséges. Fiók létrehozása nem szükséges a kipróbáláshoz.",
 		"ar_passthrough": "AR átkonvertálás",
 		"camera_in_3d_avatar_out": "Kamera be, 3D avatar ki",
 		"features": "Funkciók",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Egy fénykép → riggelt 3D avatar. Ingyenes, a böngésződben, nincs alkalmazás.",
 		"meta_twitter_title": "Scan — Fordítsd a Selfie-d egy Riggelt 3D Avatarrá · three.ws",
 		"multi_angle_capture": "Több szögből történő rögzítés",
-		"no_account_for_first_scan": "Nincs fiók az első beolvasáshoz",
 		"open_the_scanner_on_any_phone_or": "Nyisd meg a szkennert bármely telefonon vagy asztali böngészőben kamerás hozzáféréssel. Helyezd az arcodat az útmutató keretbe — jó fény, semleges kifejezés, kamera szemmagasságban.",
 		"point_your_camera": "Irányítsd a kamerádat",
 		"point_your_phone_camera_at_your_face": "Irányítsd a telefonod kameráját az arcodra, tartsd mozdulatlanul, és sétálj el egy riggelt 3D avatárral, amelyet animálhatsz, beágyazhatsz és bárhol használhatsz. Ingyenes, teljesen a böngésződben — nincs letöltés, nincs alkalmazás.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "A váz a standard Mixamo humanoid-rig konvenciót követi, így ezrek ingyenes animációs klipje működik újra-riggelés nélkül.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Próbáld ki inkább a Forge-t",
-		"try_the_scanner_without_signing_up_create": "Próbáld ki a szkennert regisztráció nélkül. Hozz létre egy fiókot, hogy elmentsd, letöltsd és megoszd az avatarodat.",
 		"what_you_get": "Amit kapsz",
 		"your_face_in_3d_in_60_seconds": "Az arcod 3D-ben.<br>60 másodperc alatt."
 	},

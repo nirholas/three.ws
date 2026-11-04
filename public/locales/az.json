@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Bütün xüsusiyyətlər",
-		"all_you_need_is_a_camera_and": "Sizə lazım olan tək şey bir kamera və yaxşı işıqlandırmadır. Sınaq üçün hesab tələb olunmur.",
 		"ar_passthrough": "AR keçidi",
 		"camera_in_3d_avatar_out": "Kamera daxil, 3D avatar xaric",
 		"features": "Xüsusiyyətlər",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Bir foto → riglənmiş 3D avatar. Pulsuz, brauzerinizdə, tətbiqsiz.",
 		"meta_twitter_title": "Skan — Selfienizi Riglənmiş 3D Avatara çevirin · three.ws",
 		"multi_angle_capture": "Çoxbucaqlı çəkiliş",
-		"no_account_for_first_scan": "İlk skan üçün hesab tələb olunmur",
 		"open_the_scanner_on_any_phone_or": "Skaneri kamera girişi olan istənilən telefon və ya masaüstü brauzerdə açın. Üzünüzü bələdçi çərçivəsinə yerləşdirin — yaxşı işıq, neytral ifadə, kamera göz səviyyəsində.",
 		"point_your_camera": "Kameranızı tuşlayın",
 		"point_your_phone_camera_at_your_face": "Telefon kameranızı üzünüzə tuşlayın, hərəkətsiz qalın və animasiya edə, yerləşdirə və istənilən yerdə istifadə edə biləcəyiniz riglənmiş 3D avatarla ayrılın. Pulsuz, tamamilə brauzerinizdə — yükləmə yox, tətbiq yox.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skelet standart Mixamo humanoid-rig konvensiyasına uyğundur, beləliklə, minlərlə pulsuz animasiya klipi yenidən rig etmədən işləyir.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Forge əvəzinə sınayın",
-		"try_the_scanner_without_signing_up_create": "Qeydiyyatdan keçmədən skaneri sınayın. Avatarınızı saxlamaq, yükləmək və paylaşmaq üçün hesab yaradın.",
 		"what_you_get": "Nə əldə edirsiniz",
 		"your_face_in_3d_in_60_seconds": "Üzünüz 3D-də.<br>60 saniyəyə."
 	},

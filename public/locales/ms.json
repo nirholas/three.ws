@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Semua ciri",
-		"all_you_need_is_a_camera_and": "Apa yang anda perlukan hanyalah kamera dan pencahayaan yang baik. Tiada akaun diperlukan untuk mencuba.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Kamera masuk, avatar 3D keluar",
 		"features": "Ciri-ciri",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Satu foto → avatar 3D yang sudah dipasang. Percuma, dalam pelayar anda, tiada aplikasi.",
 		"meta_twitter_title": "Imbas — Tukar Selfie Anda kepada Avatar 3D yang Sudah Dipasang · three.ws",
 		"multi_angle_capture": "Tangkap pelbagai sudut",
-		"no_account_for_first_scan": "Tiada akaun untuk imbasan pertama",
 		"open_the_scanner_on_any_phone_or": "Buka pemindai pada mana-mana telefon atau pelayar desktop dengan akses kamera. Posisi wajah anda dalam bingkai panduan — cahaya yang baik, ekspresi neutral, kamera pada paras mata.",
 		"point_your_camera": "Arahkan kamera anda",
 		"point_your_phone_camera_at_your_face": "Arahkan kamera telefon anda ke wajah anda, pegang diam, dan pergi dengan avatar 3D yang sudah dipasang yang boleh anda animasikan, sematkan, dan gunakan di mana sahaja. Percuma, sepenuhnya dalam pelayar anda — tiada muat turun, tiada aplikasi.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Rangka mengikuti konvensyen rig humanoid standard Mixamo, jadi ribuan klip animasi percuma berfungsi tanpa perlu rig semula.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Cuba Forge sebagai ganti",
-		"try_the_scanner_without_signing_up_create": "Cuba pemindai tanpa mendaftar. Buat akaun untuk menyimpan, memuat turun, dan berkongsi avatar anda.",
 		"what_you_get": "Apa yang anda dapat",
 		"your_face_in_3d_in_60_seconds": "Muka anda dalam 3D.<br>Dalam 60 saat."
 	},

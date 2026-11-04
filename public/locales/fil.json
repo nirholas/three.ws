@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Lahat ng tampok",
-		"all_you_need_is_a_camera_and": "Lahat ng kailangan mo ay isang camera at disenteng ilaw. Walang account na kinakailangan para subukan.",
 		"ar_passthrough": "AR Passthrough",
 		"camera_in_3d_avatar_out": "Camera pasok, 3D avatar labas",
 		"features": "Mga Tampok",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Isang larawan → rigged 3D avatar. Libre, sa iyong browser, walang app.",
 		"meta_twitter_title": "Scan — I-convert ang Iyong Selfie sa isang Rigged 3D Avatar · three.ws",
 		"multi_angle_capture": "Multi-angle na pagkuha",
-		"no_account_for_first_scan": "Walang account para sa unang scan",
 		"open_the_scanner_on_any_phone_or": "Buksan ang scanner sa anumang telepono o desktop browser na may access sa camera. Ilagay ang iyong mukha sa guide frame — magandang ilaw, neutral na ekspresyon, camera sa antas ng mata.",
 		"point_your_camera": "Itutok ang iyong camera",
 		"point_your_phone_camera_at_your_face": "Itutok ang camera ng iyong telepono sa iyong mukha, huminto, at umalis na may rigged 3D avatar na maaari mong i-animate, i-embed, at gamitin kahit saan. Libre, buong-buo sa iyong browser — walang download, walang app.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Ang skeleton ay sumusunod sa pamantayan ng Mixamo humanoid-rig convention kaya't libu-libong libreng animation clips ang gumagana nang walang re-rigging.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Subukan ang Forge sa halip",
-		"try_the_scanner_without_signing_up_create": "Subukan ang scanner nang hindi nag-sign up. Gumawa ng account para mag-save, mag-download, at mag-share ng iyong avatar.",
 		"what_you_get": "Ano ang makukuha mo",
 		"your_face_in_3d_in_60_seconds": "Ang iyong mukha sa 3D.<br>Sa loob ng 60 segundo."
 	},

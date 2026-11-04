@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Alle functies",
-		"all_you_need_is_a_camera_and": "Alles wat je nodig hebt is een camera en goede verlichting. Geen account vereist om het uit te proberen.",
 		"ar_passthrough": "AR-passthrough",
 		"camera_in_3d_avatar_out": "Camera in, 3D-avatar uit",
 		"features": "Functies",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Één foto → gerigged 3D-avatar. Gratis, in je browser, geen app.",
 		"meta_twitter_title": "Scan — Zet je selfie om in een gerigged 3D-avatar · three.ws",
 		"multi_angle_capture": "Opname vanuit meerdere hoeken",
-		"no_account_for_first_scan": "Geen account voor eerste scan",
 		"open_the_scanner_on_any_phone_or": "Open de scanner op elke telefoon of desktopbrowser met camera-toegang. Positioneer je gezicht in het gidsframe — goed licht, neutrale uitdrukking, camera op ooghoogte.",
 		"point_your_camera": "Richt je camera",
 		"point_your_phone_camera_at_your_face": "Richt je telefooncamera op je gezicht, houd stil, en loop weg met een gerigged 3D-avatar die je kunt animeren, insluiten en overal gebruiken. Gratis, volledig in je browser — geen download, geen app.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Het skelet volgt de standaard Mixamo humanoïde rig-conventie, zodat duizenden gratis animatieclips werken zonder opnieuw te riggen.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Probeer Forge in plaats daarvan",
-		"try_the_scanner_without_signing_up_create": "Probeer de scanner zonder je aan te melden. Maak een account aan om je avatar op te slaan, te downloaden en te delen.",
 		"what_you_get": "Wat je krijgt",
 		"your_face_in_3d_in_60_seconds": "Jouw gezicht in 3D.<br>In 60 seconden."
 	},

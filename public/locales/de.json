@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Alle Funktionen",
-		"all_you_need_is_a_camera_and": "Alles, was du brauchst, ist eine Kamera und gute Beleuchtung. Kein Konto zum Ausprobieren erforderlich.",
 		"ar_passthrough": "AR-Passthrough",
 		"camera_in_3d_avatar_out": "Kamera rein, 3D-Avatar raus",
 		"features": "Funktionen",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Ein Foto → geriggter 3D-Avatar. Kostenlos, im Browser, keine App.",
 		"meta_twitter_title": "Scan — Verwandle dein Selfie in einen geriggten 3D-Avatar · three.ws",
 		"multi_angle_capture": "Mehrwinkel-Erfassung",
-		"no_account_for_first_scan": "Kein Konto für den ersten Scan",
 		"open_the_scanner_on_any_phone_or": "Öffne den Scanner auf jedem Telefon oder Desktop-Browser mit Kamerazugriff. Platziere dein Gesicht im Führungsrahmen — gutes Licht, neutraler Ausdruck, Kamera auf Augenhöhe.",
 		"point_your_camera": "Richte deine Kamera",
 		"point_your_phone_camera_at_your_face": "Richte deine Handykamera auf dein Gesicht, halte still und erhalte einen geriggten 3D-Avatar, den du animieren, einbetten und überall verwenden kannst. Kostenlos, komplett in deinem Browser — kein Download, keine App.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Das Skelett folgt der Standard-Mixamo-Humanoid-Rig-Konvention, sodass Tausende kostenloser Animationsclips ohne erneutes Rigging funktionieren.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Probiere stattdessen Forge",
-		"try_the_scanner_without_signing_up_create": "Probiere den Scanner ohne Registrierung aus. Erstelle ein Konto, um deinen Avatar zu speichern, herunterzuladen und zu teilen.",
 		"what_you_get": "Was du bekommst",
 		"your_face_in_3d_in_60_seconds": "Dein Gesicht in 3D.<br>In 60 Sekunden."
 	},

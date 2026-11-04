@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "すべての機能",
-		"all_you_need_is_a_camera_and": "必要なのはカメラと適切な照明だけ。試すのにアカウントは不要です。",
 		"ar_passthrough": "ARパススルー",
 		"camera_in_3d_avatar_out": "カメラ入力、3Dアバター出力",
 		"features": "機能",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "1枚の写真 → リグ付き3Dアバター。無料で、ブラウザで、アプリ不要。",
 		"meta_twitter_title": "Scan — 自撮り写真をリグ付き3Dアバターに変換・ three.ws",
 		"multi_angle_capture": "多角度キャプチャ",
-		"no_account_for_first_scan": "初回スキャンにアカウント不要",
 		"open_the_scanner_on_any_phone_or": "カメラアクセス可能なスマートフォンまたはデスクトップブラウザでスキャナーを開きます。ガイドフレームに顔を合わせます — 良い照明、無表情、カメラは目の高さに。",
 		"point_your_camera": "カメラを向ける",
 		"point_your_phone_camera_at_your_face": "スマートフォンのカメラを顔に向け、静止するだけで、アニメーション、埋め込み、あらゆる場所で使えるリグ付き3Dアバターが手に入ります。無料で、完全にブラウザ内で完結 — ダウンロードもアプリも不要です。",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "スケルトンは標準のMixamoヒューマノイドリグの慣例に従っているため、何千もの無料アニメーションクリップがリギングなしで機能します。",
 		"three_ws": "three.ws",
 		"try_forge_instead": "代わりにForgeをお試しください",
-		"try_the_scanner_without_signing_up_create": "サインアップなしでスキャナーをお試しください。アバターを保存、ダウンロード、共有するにはアカウントを作成してください。",
 		"what_you_get": "得られるもの",
 		"your_face_in_3d_in_60_seconds": "あなたの顔を3Dで。<br>60秒で。"
 	},

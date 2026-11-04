@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Imikorere yose",
-		"all_you_need_is_a_camera_and": "Icyo ukeneye gusa ni kamera n'urumuri ruhagije. Nta konti ikenewe kugira ngo ugerageze.",
 		"ar_passthrough": "AR Passthrough",
 		"camera_in_3d_avatar_out": "Kamera yinjira, avatar ya 3D isohoka.",
 		"features": "Imikorere",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Ifoto imwe → avatar ya 3D yateguwe. Ubuntu, muri browser yawe, nta app.",
 		"meta_twitter_title": "Scan — Hindura Selfie yawe Avatar ya 3D Yateguwe · three.ws",
 		"multi_angle_capture": "Gufata amashusho mu mpande nyinshi",
-		"no_account_for_first_scan": "Nta konti ikenewe kuri scan ya mbere.",
 		"open_the_scanner_on_any_phone_or": "Fungura scanner kuri telefoni iyo ari yo yose cyangwa browser ya desktop ifite uburenganzira bwo gukoresha kamera. Shyira isura yawe mu karango kayobora — urumuri rwiza, isura isanzwe, kamera ku rwego rw'amaso.",
 		"point_your_camera": "Hagarika kamera yawe",
 		"point_your_phone_camera_at_your_face": "Hagarika kamera ya telefoni yawe ku maso yawe, ugume utanyeganyega, maze ugende ufite avatar ya 3D yateguwe ushobora gukoresha, gushyiramo, no gukoresha ahantu hose. Ubuntu, byose muri browser yawe — nta kintu ukeneye gukuramo, nta app.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Igikanka gikurikiza amategeko asanzwe ya Mixamo humanoid-rig ku buryo ibihumbi bya animation clips z'ubuntu zikora nta kongera kuzitegura.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Gerageza Forge aho",
-		"try_the_scanner_without_signing_up_create": "Gerageza scanner utiyandikishije. Fungura konti kugirango ubike, upakure, kandi usangize avatar yawe.",
 		"what_you_get": "Ibyo ubona",
 		"your_face_in_3d_in_60_seconds": "Isura yawe muri 3D.<br>Mu masegonda 60."
 	},

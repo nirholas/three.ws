@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Visos funkcijos",
-		"all_you_need_is_a_camera_and": "Viskas, ko jums reikia, yra kamera ir geras apšvietimas. Nereikia jokios paskyros, kad išbandytumėte.",
 		"ar_passthrough": "AR pralaidumas",
 		"camera_in_3d_avatar_out": "Kamera įeina, 3D avataras išeina",
 		"features": "Funkcijos",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Viena nuotrauka → rigintas 3D avataras. Nemokamai, jūsų naršyklėje, be programėlės.",
 		"meta_twitter_title": "Skenuoti — Paverskite savo asmenukę rigintu 3D avataro modeliu · three.ws",
 		"multi_angle_capture": "Daugiakampis fiksavimas",
-		"no_account_for_first_scan": "Nereikia paskyros pirmajam skenavimui",
 		"open_the_scanner_on_any_phone_or": "Atidarykite skenerį bet kuriame telefone ar darbalaukio naršyklėje su kameros prieiga. Padėkite savo veidą į gido rėmelį — geras apšvietimas, neutrali išraiška, kamera akių lygyje.",
 		"point_your_camera": "Nukreipkite kamerą",
 		"point_your_phone_camera_at_your_face": "Nukreipkite telefono kamerą į savo veidą, išbūkite nejudėdami ir išeikite su rigintu 3D avataro modeliu, kurį galite animuoti, įterpti ir naudoti bet kur. Nemokamai, visiškai jūsų naršyklėje — be atsisiuntimo, be programėlės.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skeletas atitinka standartinę Mixamo humanoido riginimo konvenciją, todėl tūkstančiai nemokamų animacijos klipų veikia be pakartotinio riginimo.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Išbandykite Forge vietoj to",
-		"try_the_scanner_without_signing_up_create": "Išbandykite skenerį neprisiregistravę. Sukurkite paskyrą, kad išsaugotumėte, atsisiųstumėte ir bendrintumėte savo avatarą.",
 		"what_you_get": "Ką gaunate",
 		"your_face_in_3d_in_60_seconds": "Jūsų veidas 3D formatu.<br>Per 60 sekundžių."
 	},

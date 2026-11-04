@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "כל הפיצ'רים",
-		"all_you_need_is_a_camera_and": "כל מה שאתה צריך זה מצלמה ותאורה טובה. אין צורך בחשבון כדי לנסות.",
 		"ar_passthrough": "מעבר AR",
 		"camera_in_3d_avatar_out": "מצלמה פנימה, דמות 3D החוצה",
 		"features": "פיצ'רים",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "תמונה אחת → דמות 3D מוכנה. חינם, בדפדפן שלך, אין אפליקציה.",
 		"meta_twitter_title": "סרוק — הפוך את הסלפי שלך לדמות 3D מוכנה · three.ws",
 		"multi_angle_capture": "תפיסה בזוויות מרובות",
-		"no_account_for_first_scan": "אין צורך בחשבון לסריקה הראשונה",
 		"open_the_scanner_on_any_phone_or": "פתח את הסורק בכל טלפון או דפדפן שולחני עם גישה למצלמה. מיקום את הפנים שלך במסגרת המדריך — אור טוב, הבעה נייטרלית, מצלמה בגובה העיניים.",
 		"point_your_camera": "כוון את המצלמה שלך",
 		"point_your_phone_camera_at_your_face": "כוון את מצלמת הטלפון שלך לפנים שלך, החזק את עצמך, וצא עם דמות 3D מוכנה לאנימציה, הטמעה ושימוש בכל מקום. חינם, לגמרי בדפדפן שלך — אין הורדה, אין אפליקציה.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "השלד עוקב אחרי תקן Mixamo לריגוד אנושי כך שאלפי קטעי אנימציה חינמיים עובדים ללא צורך בריגוד מחדש.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "נסה את Forge במקום",
-		"try_the_scanner_without_signing_up_create": "נסה את הסורק ללא הרשמה. צור חשבון כדי לשמור, להוריד ולשתף את האווטאר שלך.",
 		"what_you_get": "מה שאתה מקבל",
 		"your_face_in_3d_in_60_seconds": "הפנים שלך ב-3D.<br>ב-60 שניות."
 	},

@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Të gjitha veçoritë",
-		"all_you_need_is_a_camera_and": "Gjithçka që të duhet është një kamerë dhe ndriçim i mirë. Nuk kërkohet llogari për të provuar.",
 		"ar_passthrough": "Kalim AR",
 		"camera_in_3d_avatar_out": "Kamera brenda, Avatar 3D jashtë",
 		"features": "Veçoritë",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Një foto → avatar 3D i rig-uar. Falas, në shfletuesin tënd, pa aplikacion.",
 		"meta_twitter_title": "Skano — Kthe Selfie-n Tënde në një Avatar 3D të Rig-uar · three.ws",
 		"multi_angle_capture": "Kapje me shumë kënde",
-		"no_account_for_first_scan": "Nuk kërkohet llogari për skanimin e parë",
 		"open_the_scanner_on_any_phone_or": "Hap skanerin në çdo telefon ose shfletues desktopi me akses në kamerë. Poziciono fytyrën tënde në kornizën udhëzuese — dritë e mirë, shprehje neutrale, kamera në nivelin e syve.",
 		"point_your_camera": "Drejto kamerën tënde",
 		"point_your_phone_camera_at_your_face": "Drejto kamerën e telefonit drejt fytyrës tënde, qëndro pa lëvizur, dhe largohesh me një avatar 3D të rig-uar që mund ta animosh, ngulmosh dhe përdorësh kudo. Falas, tërësisht në shfletuesin tënd — pa shkarkim, pa aplikacion.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skeleti ndjek konvencionin standard të rig-ut humanoid Mixamo në mënyrë që mijëra klipe animacioni falas të funksionojnë pa ri-rig-im.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Provo Forge në vend të kësaj",
-		"try_the_scanner_without_signing_up_create": "Provo skanerin pa u regjistruar. Krijo një llogari për të ruajtur, shkarkuar dhe ndarë avatarin tënd.",
 		"what_you_get": "Çfarë merr",
 		"your_face_in_3d_in_60_seconds": "Fytyra jote në 3D.<br>Në 60 sekonda."
 	},

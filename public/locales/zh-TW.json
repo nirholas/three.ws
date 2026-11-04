@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "所有功能",
-		"all_you_need_is_a_camera_and": "你只需要一台相機和良好的光線。無需帳戶即可試用。",
 		"ar_passthrough": "AR透視",
 		"camera_in_3d_avatar_out": "相機進，3D化身出",
 		"features": "功能",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "一張照片→已裝配的3D化身。免費，在你的瀏覽器中，無需應用。",
 		"meta_twitter_title": "掃描 — 將你的自拍轉換為已裝配的3D化身 · three.ws",
 		"multi_angle_capture": "多角度捕捉",
-		"no_account_for_first_scan": "首次掃描無需帳戶",
 		"open_the_scanner_on_any_phone_or": "在任何具有相機訪問權限的手機或桌面瀏覽器上打開掃描器。將你的臉放在指導框內——良好的光線，中性表情，相機在眼平線上。",
 		"point_your_camera": "對準你的相機",
 		"point_your_phone_camera_at_your_face": "將手機相機對準你的臉，保持靜止，然後帶著一個可以動畫、嵌入並隨處使用的已裝配3D化身走開。免費，完全在你的瀏覽器中——無需下載，無需應用。",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "骨架遵循標準的 Mixamo 人形裝配規範，因此數千個免費動畫片段無需重新裝配即可使用。",
 		"three_ws": "three.ws",
 		"try_forge_instead": "試試 Forge",
-		"try_the_scanner_without_signing_up_create": "無需註冊即可試用掃描器。創建帳戶以保存、下載和分享您的虛擬形象。",
 		"what_you_get": "您獲得的",
 		"your_face_in_3d_in_60_seconds": "您的臉在 3D 中。<br> 60 秒內完成。"
 	},

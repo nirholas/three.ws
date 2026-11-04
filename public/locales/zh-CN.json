@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "所有功能",
-		"all_you_need_is_a_camera_and": "你只需一台相机和良好的光线。无需账户即可试用。",
 		"ar_passthrough": "AR 透视",
 		"camera_in_3d_avatar_out": "相机输入，3D虚拟形象输出",
 		"features": "功能",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "一张照片 → 绑定3D虚拟形象。免费，浏览器内完成，无需应用。",
 		"meta_twitter_title": "扫描 — 将你的自拍变成绑定3D虚拟形象 · three.ws",
 		"multi_angle_capture": "多角度捕捉",
-		"no_account_for_first_scan": "首次扫描无需账户",
 		"open_the_scanner_on_any_phone_or": "在任何支持摄像头访问的手机或桌面浏览器上打开扫描器。将你的脸置于引导框内——确保光线良好，表情自然，摄像头与视线齐平。",
 		"point_your_camera": "对准摄像头",
 		"point_your_phone_camera_at_your_face": "将手机摄像头对准你的脸，保持不动，即可获得一个可动画、可嵌入、可随处使用的绑定3D虚拟形象。免费，完全在浏览器中完成——无需下载，无需应用。",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "骨骼遵循标准的Mixamo人形绑定约定，因此数千个免费动画片段无需重新绑定即可使用。",
 		"three_ws": "three.ws",
 		"try_forge_instead": "试试Forge吧",
-		"try_the_scanner_without_signing_up_create": "无需注册即可试用扫描仪。创建账户即可保存、下载和分享您的虚拟形象。",
 		"what_you_get": "您将获得什么",
 		"your_face_in_3d_in_60_seconds": "您的3D面孔。<br>60秒内完成。"
 	},

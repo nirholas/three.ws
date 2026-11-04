@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Gbogbo awọn ẹya",
-		"all_you_need_is_a_camera_and": "Gbogbo ohun ti o nilo ni kamẹra ati imọlẹ to peye. Ko si akọọlẹ ti o nilo lati gbiyanju.",
 		"ar_passthrough": "AR kọjá lọ",
 		"camera_in_3d_avatar_out": "Kamẹra wọle, avatar 3D jade",
 		"features": "Awọn ẹya",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Fọto kan → avatar 3D ti a ti ṣeto silẹ. Ọfẹ, ninu aṣawakiri rẹ, ko si ohun elo.",
 		"meta_twitter_title": "Ṣayẹwo — Yi Selfie Rẹ pada si Avatar 3D ti a ti Ṣeto Silẹ · three.ws",
 		"multi_angle_capture": "Yiya lati awọn igun pupọ",
-		"no_account_for_first_scan": "Ko si akọọlẹ fun ayẹwo akọkọ",
 		"open_the_scanner_on_any_phone_or": "Ṣi ẹrọ ayẹwo lori foonu tabi aṣawakiri kọmputa eyikeyi ti o ni iwọle si kamẹra. Fi oju rẹ si inu fireemu itọsọna — imọlẹ to dara, oju ti ko ni ikunsinu, kamẹra ni ipele oju.",
 		"point_your_camera": "Fi kamẹra rẹ kọju",
 		"point_your_phone_camera_at_your_face": "Fi kamẹra foonu rẹ kọju si oju rẹ, duro jẹ, ki o si lọ pẹlu avatar 3D ti a ti ṣeto silẹ ti o le ṣe ere, fi sii, ati lo nibikibi. Ọfẹ, patapata ninu aṣawakiri rẹ — ko si igbasilẹ, ko si ohun elo.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Egungun náà tẹ̀lé àṣà ìwọ̀nba Mixamo fún ríìgì ènìyàn nítorí náà, ẹgbẹẹgbẹ̀rún àwọn fídíò eré ìdárayá ọ̀fẹ́ máa ń ṣiṣẹ́ láìsí pé a tún ríìgì wọn.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Gbìyànjú Forge dípò bẹ́ẹ̀",
-		"try_the_scanner_without_signing_up_create": "Gbìyànjú ẹ̀rọ tí ń ṣàyẹ̀wò náà láìforúkọsílẹ̀. Ṣe àkọọ́lẹ̀ láti fi pamọ́, ṣe ìgbàsílẹ̀, àti láti pín àwòrán rẹ.",
 		"what_you_get": "Ohun tí o máa rí",
 		"your_face_in_3d_in_60_seconds": "Ojú rẹ ní 3D.<br>Láàárín ìṣẹ́jú àáyá 60."
 	},

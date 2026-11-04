@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Totes les funcions",
-		"all_you_need_is_a_camera_and": "Tot el que necessites és una càmera i una il·luminació decent. No cal compte per provar-ho.",
 		"ar_passthrough": "Passthrough de RA",
 		"camera_in_3d_avatar_out": "Càmera dins, avatar 3D fora",
 		"features": "Funcions",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Una foto → avatar 3D riggejat. Gratuït, al teu navegador, sense aplicació.",
 		"meta_twitter_title": "Escaneja — Converteix el teu selfie en un avatar 3D riggejat · three.ws",
 		"multi_angle_capture": "Captura multiangle",
-		"no_account_for_first_scan": "No cal compte per al primer escaneig",
 		"open_the_scanner_on_any_phone_or": "Obre l'escàner en qualsevol telèfon o navegador d'escriptori amb accés a la càmera. Col·loca la teva cara al marc de guia — bona llum, expressió neutra, càmera a l'altura dels ulls.",
 		"point_your_camera": "Apunta la càmera",
 		"point_your_phone_camera_at_your_face": "Apunta la càmera del teu telèfon a la teva cara, mantén-te quiet i emporta't un avatar 3D riggejat que pots animar, incrustar i utilitzar a qualsevol lloc. Gratuït, completament al teu navegador — sense descàrrega, sense aplicació.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "L'esquelet segueix la convenció estàndard de rig humanoide de Mixamo perquè milers de clips d'animació gratuïts funcionin sense haver de fer un nou rigging.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Prova Forge en canvi",
-		"try_the_scanner_without_signing_up_create": "Prova l'escàner sense registrar-te. Crea un compte per desar, descarregar i compartir el teu avatar.",
 		"what_you_get": "Què obtens",
 		"your_face_in_3d_in_60_seconds": "La teva cara en 3D.<br>En 60 segons."
 	},

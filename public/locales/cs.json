@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Všechny funkce",
-		"all_you_need_is_a_camera_and": "Vše, co potřebujete, je kamera a slušné osvětlení. K vyzkoušení není potřeba účet.",
 		"ar_passthrough": "AR průchod",
 		"camera_in_3d_avatar_out": "Kamera dovnitř, 3D avatar ven",
 		"features": "Funkce",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Jedna fotografie → rigovaný 3D avatar. Zdarma, ve vašem prohlížeči, žádná aplikace.",
 		"meta_twitter_title": "Skenování — Přetvořte svůj selfie na rigovaný 3D avatar · three.ws",
 		"multi_angle_capture": "Víceúhlové snímání",
-		"no_account_for_first_scan": "Žádný účet pro první sken",
 		"open_the_scanner_on_any_phone_or": "Otevřete skener na jakémkoli telefonu nebo desktopovém prohlížeči s přístupem ke kameře. Umístěte svou tvář do vodicího rámu — dobré světlo, neutrální výraz, kamera v úrovni očí.",
 		"point_your_camera": "Namířte svou kameru",
 		"point_your_phone_camera_at_your_face": "Namířte kameru telefonu na svou tvář, držte se v klidu a odcházejte s rigovaným 3D avatarem, kterého můžete animovat, vložit a používat kdekoli. Zdarma, zcela ve vašem prohlížeči — žádné stahování, žádná aplikace.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skeleton následuje standardní Mixamo humanoidní rig konvenci, takže tisíce bezplatných animačních klipů fungují bez nutnosti nového riggingu.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Zkuste místo toho Forge",
-		"try_the_scanner_without_signing_up_create": "Vyzkoušejte skener bez registrace. Vytvořte účet pro ukládání, stahování a sdílení vašeho avatara.",
 		"what_you_get": "Co získáte",
 		"your_face_in_3d_in_60_seconds": "Vaše tvář ve 3D.<br>Za 60 sekund."
 	},

@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Alle funksjoner",
-		"all_you_need_is_a_camera_and": "Alt du trenger er et kamera og decent belysning. Ingen konto kreves for å prøve.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Kamera inn, 3D-avatar ut",
 		"features": "Funksjoner",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Én foto → rigget 3D-avatar. Gratis, i nettleseren din, ingen app.",
 		"meta_twitter_title": "Scan — Gjør ditt selfie til en rigget 3D-avatar · three.ws",
 		"multi_angle_capture": "Multi-vinkel opptak",
-		"no_account_for_first_scan": "Ingen konto for første skanning",
 		"open_the_scanner_on_any_phone_or": "Åpne skanneren på hvilken som helst telefon eller desktop nettleser med kamera tilgang. Plasser ansiktet ditt i guide-rammen — godt lys, nøytral uttrykk, kamera i øyehøyde.",
 		"point_your_camera": "Pek kameraet ditt",
 		"point_your_phone_camera_at_your_face": "Pek telefonkameraet mot ansiktet ditt, hold deg stille, og gå bort med en rigget 3D-avatar du kan animere, embedde og bruke hvor som helst. Gratis, helt i nettleseren din — ingen nedlasting, ingen app.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skelettet følger den standard Mixamo humanoid-rig-konvensjonen, så tusenvis av gratis animasjonsklipp fungerer uten omrigging.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Prøv Forge i stedet",
-		"try_the_scanner_without_signing_up_create": "Prøv skanneren uten å registrere deg. Opprett en konto for å lagre, laste ned og dele avataren din.",
 		"what_you_get": "Det du får",
 		"your_face_in_3d_in_60_seconds": "Ansiktet ditt i 3D.<br>På 60 sekunder."
 	},

@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Dhammaan astaamaha",
-		"all_you_need_is_a_camera_and": "Wax kasta oo aad u baahan tahay waa kamarad iyo iftiin wanaagsan. Looma baahna akoon si loo tijaabiyo.",
 		"ar_passthrough": "AR gudbin",
 		"camera_in_3d_avatar_out": "Kamarad gudaha, avatar 3D dibadda",
 		"features": "Astaamaha",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Hal sawir → avatar 3D ah oo la diyaariyay. Bilaash, biraawsarkaaga, ma jiro app.",
 		"meta_twitter_title": "Sawir — Iska dhig Selfie-gaaga Avatar 3D ah oo la diyaariyay · three.ws",
 		"multi_angle_capture": "Qabasho xaglo badan leh",
-		"no_account_for_first_scan": "Ma jiro akoon loogu talagalay sawirka koowaad",
 		"open_the_scanner_on_any_phone_or": "Fur scanner-ka taleefan kasta ama biraawsar desktop ah oo leh marin kamarad. Wejigaaga dhig qaabka hagaha — iftiin wanaagsan, muujin dhexdhexaad ah, kamarad heerka indhaha ah.",
 		"point_your_camera": "Kamaradaada u jeedi",
 		"point_your_phone_camera_at_your_face": "Kamarada taleefankaaga wejigaaga u jeedi, ha dhaqaaqin, oo la tag avatar 3D ah oo la diyaariyay oo aad dhaqaajin karto, ku dhejin karto, oo aad meel kasta ka isticmaali karto. Bilaash, gebi ahaanba biraawsarkaaga — ma jirto soo dejin, ma jiro app.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Lafaha ayaa raacaya habka caadiga ah ee Mixamo ee rig-ga bini'aadamka si kumanaan clips animation oo bilaash ah ay u shaqeeyaan iyada oo aan dib loo hagaajin.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Ku tijaabi Forge beddelkeeda",
-		"try_the_scanner_without_signing_up_create": "Ku tijaabi scanner-ka adigoon isdiiwaangelin. Abuur akoon si aad u kaydsato, u soo degsato, oo aad u wadaagto avatar-kaaga.",
 		"what_you_get": "Waxa aad helayso",
 		"your_face_in_3d_in_60_seconds": "Wajigaaga oo 3D ah.<br>60 ilbiriqsi gudahood."
 	},

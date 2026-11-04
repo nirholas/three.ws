@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Visas funkcijas",
-		"all_you_need_is_a_camera_and": "Viss, kas jums nepieciešams, ir kamera un pienācīgs apgaismojums. Nav nepieciešams konts, lai izmēģinātu.",
 		"ar_passthrough": "AR caurlaide",
 		"camera_in_3d_avatar_out": "Kamera iekšā, 3D iemiesojums ārā",
 		"features": "Funkcijas",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Viena fotogrāfija → sagatavots 3D iemiesojums. Bezmaksas, jūsu pārlūkprogrammā, bez lietotnes.",
 		"meta_twitter_title": "Skenēt — Pārvērtiet savu pašbildi par sagatavotu 3D iemiesojumu · three.ws",
 		"multi_angle_capture": "Vairāku leņķu uzņemšana",
-		"no_account_for_first_scan": "Nav nepieciešams konts pirmajai skenēšanai",
 		"open_the_scanner_on_any_phone_or": "Atveriet skeneri jebkurā tālrunī vai galddatora pārlūkprogrammā ar kameras piekļuvi. Novietojiet seju vadlīnijas rāmī — labs apgaismojums, neitrāla izteiksme, kamera acu līmenī.",
 		"point_your_camera": "Pavērsiet kameru",
 		"point_your_phone_camera_at_your_face": "Pavērsiet tālruņa kameru pret savu seju, turiet nekustīgi un iegūstiet sagatavotu 3D iemiesojumu, ko varat animēt, iegult un izmantot jebkur. Bezmaksas, pilnībā jūsu pārlūkprogrammā — nav lejupielādes, nav lietotnes.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skelets atbilst standarta Mixamo humanoīda-riga konvencijai, lai tūkstošiem bezmaksas animācijas klipu darbotos bez atkārtotas rigēšanas.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Izmēģiniet Forge tā vietā",
-		"try_the_scanner_without_signing_up_create": "Izmēģiniet skeneri bez reģistrācijas. Izveidojiet kontu, lai saglabātu, lejupielādētu un kopīgotu savu avatāru.",
 		"what_you_get": "Ko saņemsiet",
 		"your_face_in_3d_in_60_seconds": "Jūsu seja 3D.<br>60 sekundēs."
 	},

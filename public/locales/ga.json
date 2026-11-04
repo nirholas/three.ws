@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Gach gné",
-		"all_you_need_is_a_camera_and": "Níl uait ach ceamara agus soilsiú maith. Níl cuntas ag teastáil chun triail a bhaint as.",
 		"ar_passthrough": "Pas-trí AR",
 		"camera_in_3d_avatar_out": "Ceamara isteach, avatar 3D amach",
 		"features": "Gnéithe",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Grianghraf amháin → avatar 3D rigáilte. Saor in aisce, i do bhrabhsálaí, gan aon aip.",
 		"meta_twitter_title": "Scan — Déan Avatar 3D Rigáilte de do Selfie · three.ws",
 		"multi_angle_capture": "Gabháil il-uillinne",
-		"no_account_for_first_scan": "Níl cuntas ag teastáil don chéad scanadh",
 		"open_the_scanner_on_any_phone_or": "Oscail an scanóir ar aon ghuthán nó brabhsálaí deisce le rochtain ceamara. Suigh d'aghaidh sa fhráma treorach — solas maith, léiriú neodrach, ceamara ag leibhéal na súl.",
 		"point_your_camera": "Dírigh do cheamara",
 		"point_your_phone_camera_at_your_face": "Dírigh ceamara do ghutháin ar d'aghaidh, coinnigh socair, agus siúil amach le avatar 3D rigáilte is féidir leat a bheochan, a leabú, agus a úsáid áit ar bith. Saor in aisce, go hiomlán i do bhrabhsálaí — gan íoslódáil, gan aip.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Leanann an cnámharlach coinbhinsiún caighdeánach rig daonna Mixamo ionas go n-oibríonn na mílte gearrthóg beochana saor in aisce gan ath-rigáil.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Bain triail as Forge ina ionad",
-		"try_the_scanner_without_signing_up_create": "Bain triail as an scanóir gan síniú suas. Cruthaigh cuntas chun d'avatar a shábháil, a íoslódáil agus a roinnt.",
 		"what_you_get": "Cad a fhaigheann tú",
 		"your_face_in_3d_in_60_seconds": "D'aghaidh i 3D.<br>I 60 soicind."
 	},

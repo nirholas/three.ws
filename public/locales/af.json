@@ -8839,7 +8839,6 @@
 	},
 	"features_scan": {
 		"all_features": "Alle kenmerke",
-		"all_you_need_is_a_camera_and": "Al wat jy nodig het, is 'n kamera en ordentlike beligting. Geen rekening nodig om te probeer nie.",
 		"ar_passthrough": "AR-deurgang",
 		"camera_in_3d_avatar_out": "Kamera in, 3D-avatar uit",
 		"features": "Kenmerke",
@@ -8854,7 +8853,6 @@
 		"meta_twitter_description": "Een foto → gerigde 3D-avatar. Gratis, in jou blaaier, geen app.",
 		"meta_twitter_title": "Skandeer — Verander Jou Selfie in 'n Gerigde 3D-Avatar · three.ws",
 		"multi_angle_capture": "Multihoek-opname",
-		"no_account_for_first_scan": "Geen rekening vir eerste skandering",
 		"open_the_scanner_on_any_phone_or": "Maak die skandeerder oop op enige foon of rekenaarblaaier met kamera-toegang. Plaas jou gesig in die gidsraam — goeie lig, neutrale uitdrukking, kamera op ooghoogte.",
 		"point_your_camera": "Rig jou kamera",
 		"point_your_phone_camera_at_your_face": "Rig jou foonkamera op jou gesig, hou stil, en loop weg met 'n gerigde 3D-avatar wat jy kan animeer, inbed en enige plek gebruik. Gratis, heeltemal in jou blaaier — geen aflaai, geen app.",
@@ -8873,7 +8871,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Die skelet volg die standaard Mixamo mensagtige-rig-konvensie sodat duisende gratis animasiegrepe sonder her-rigging werk.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Probeer eerder Forge",
-		"try_the_scanner_without_signing_up_create": "Probeer die skandeerder sonder om aan te meld. Skep 'n rekening om jou avatar te stoor, af te laai en te deel.",
 		"what_you_get": "Wat jy kry",
 		"your_face_in_3d_in_60_seconds": "Jou gesig in 3D.<br>In 60 sekondes."
 	},

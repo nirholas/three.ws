@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Allir eiginleikar",
-		"all_you_need_is_a_camera_and": "Allt sem þú þarft er myndavél og góð lýsing. Enginn reikningur nauðsynlegur til að prófa.",
 		"ar_passthrough": "AR gegnumstreymi",
 		"camera_in_3d_avatar_out": "Myndavél inn, 3D avatar út",
 		"features": "Eiginleikar",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Ein mynd → búinn 3D avatar. Ókeypis, í vafranum þínum, ekkert forrit.",
 		"meta_twitter_title": "Skanna — Breyttu sjálfsmyndinni þinni í búinn 3D avatar · three.ws",
 		"multi_angle_capture": "Fjölhorna upptaka",
-		"no_account_for_first_scan": "Enginn reikningur fyrir fyrstu skönnun",
 		"open_the_scanner_on_any_phone_or": "Opnaðu skannann í hvaða síma eða skjáborðsvafra sem er með aðgang að myndavél. Settu andlitið þitt í leiðarrammann — góð lýsing, hlutlaus svipur, myndavél í augnhæð.",
 		"point_your_camera": "Beindu myndavélinni þinni",
 		"point_your_phone_camera_at_your_face": "Beindu myndavél símans þíns að andlitinu þínu, haltu kyrru fyrir og farðu með búinn 3D avatar sem þú getur hreyft, fellt inn og notað hvar sem er. Ókeypis, algjörlega í vafranum þínum — ekkert niðurhal, ekkert forrit.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Beinagrindin fylgir hefðbundinni Mixamo manngerðar-búnaðarhefð svo þúsundir ókeypis hreyfimyndabúta virka án endurbúnaðar.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Prófaðu Forge í staðinn",
-		"try_the_scanner_without_signing_up_create": "Prófaðu skannann án þess að skrá þig. Búðu til reikning til að vista, sækja og deila líkaninu þínu.",
 		"what_you_get": "Hvað þú færð",
 		"your_face_in_3d_in_60_seconds": "Andlitið þitt í 3D.<br>Á 60 sekúndum."
 	},

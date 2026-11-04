@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Barcha funksiyalar",
-		"all_you_need_is_a_camera_and": "Sizga faqat kamera va yaxshi yorugʻlik kerak. Sinab koʻrish uchun akkaunt talab qilinmaydi.",
 		"ar_passthrough": "AR oʻtish",
 		"camera_in_3d_avatar_out": "Kamera kiritasiz, 3D avatar olasiz",
 		"features": "Funksiyalar",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Bir rasm → rigged 3D avatar. Bepul, brauzeringizda, ilovasiz.",
 		"meta_twitter_title": "Skan — Selfiyingizni Rigged 3D Avatarga aylantiring · three.ws",
 		"multi_angle_capture": "Koʻp burchakli suratga olish",
-		"no_account_for_first_scan": "Birinchi skanerlash uchun akkaunt kerak emas",
 		"open_the_scanner_on_any_phone_or": "Skanerni kamera kirishiga ega istalgan telefon yoki ish stoli brauzerida oching. Yuzingizni yoʻnaltiruvchi ramkaga joylashtiring — yaxshi yorugʻlik, neytral ifoda, kamera koʻz darajasida.",
 		"point_your_camera": "Kamerangizni yoʻnaltiring",
 		"point_your_phone_camera_at_your_face": "Telefon kamerangizni yuzingizga qarating, qimirlamay turing va animatsiya qilish, joylashtirish va istalgan joyda ishlatish mumkin boʻlgan rigged 3D avatar bilan keting. Bepul, butunlay brauzeringizda — yuklab olishsiz, ilovasiz.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Skelet standart Mixamo gumanoid-rig konvensiyasiga amal qiladi, shuning uchun minglab bepul animatsiya kliplari qayta riglashsiz ishlaydi.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Buning oʻrniga Forge ni sinab koʻring",
-		"try_the_scanner_without_signing_up_create": "Roʻyxatdan oʻtmasdan skanerni sinab koʻring. Avataringizni saqlash, yuklab olish va ulashish uchun akkaunt yarating.",
 		"what_you_get": "Nima olasiz",
 		"your_face_in_3d_in_60_seconds": "Yuzingiz 3D formatda.<br>60 soniyada."
 	},

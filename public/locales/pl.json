@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Wszystkie funkcje",
-		"all_you_need_is_a_camera_and": "Wszystko, czego potrzebujesz, to kamera i dobre oświetlenie. Nie jest wymagane konto, aby spróbować.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Kamera w, 3D awatar na zewnątrz",
 		"features": "Funkcje",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Jedno zdjęcie → gotowy 3D awatar. Darmowe, w przeglądarce, bez aplikacji.",
 		"meta_twitter_title": "Skanuj — Przekształć swoje selfie w gotowego 3D awatara · three.ws",
 		"multi_angle_capture": "Wielokątne uchwycenie",
-		"no_account_for_first_scan": "Brak konta dla pierwszego skanu",
 		"open_the_scanner_on_any_phone_or": "Otwórz skaner na dowolnym telefonie lub przeglądarce desktopowej z dostępem do kamery. Ustaw swoją twarz w ramce prowadzącej — dobre światło, neutralny wyraz, kamera na poziomie oczu.",
 		"point_your_camera": "Skieruj swoją kamerę",
 		"point_your_phone_camera_at_your_face": "Skieruj kamerę swojego telefonu na swoją twarz, trzymaj nieruchomo i odejdź z gotowym do animacji 3D awatarem, który możesz używać wszędzie. Darmowe, całkowicie w przeglądarce — bez pobierania, bez aplikacji.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Szkielet podąża za standardową konwencją humanoidalnego rigowania Mixamo, dzięki czemu tysiące darmowych klipów animacyjnych działają bez potrzeby ponownego rigowania.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Spróbuj Forge zamiast tego",
-		"try_the_scanner_without_signing_up_create": "Wypróbuj skaner bez rejestracji. Stwórz konto, aby zapisać, pobrać i udostępnić swojego awatara.",
 		"what_you_get": "Co otrzymujesz",
 		"your_face_in_3d_in_60_seconds": "Twoja twarz w 3D.<br>W 60 sekund."
 	},

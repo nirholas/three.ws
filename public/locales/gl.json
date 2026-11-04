@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Todas as características",
-		"all_you_need_is_a_camera_and": "Todo o que necesitas é unha cámara e boa iluminación. Non se precisa conta para probalo.",
 		"ar_passthrough": "Passthrough AR",
 		"camera_in_3d_avatar_out": "Cámara dentro, avatar 3D fóra",
 		"features": "Características",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Unha foto → avatar 3D ríxido. Gratis, no teu navegador, sen aplicación.",
 		"meta_twitter_title": "Escanear — Converte o Teu Selfie nun Avatar 3D Ríxido · three.ws",
 		"multi_angle_capture": "Captura multiángulo",
-		"no_account_for_first_scan": "Non se precisa conta para a primeira exploración",
 		"open_the_scanner_on_any_phone_or": "Abre o escáner en calquera teléfono ou navegador de escritorio con acceso á cámara. Coloca a túa cara no marco guía — boa luz, expresión neutra, cámara á altura dos ollos.",
 		"point_your_camera": "Aponta a túa cámara",
 		"point_your_phone_camera_at_your_face": "Aponta a cámara do teu teléfono á túa cara, mantente quieto e leva contigo un avatar 3D ríxido que podes animar, incrustar e usar en calquera lugar. Gratis, completamente no teu navegador — sen descarga, sen aplicación.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "O esqueleto segue a convención estándar de manipulación humanoide de Mixamo polo que miles de clips de animación gratuítos funcionan sen necesidade de remanipulación.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Proba Forge no seu lugar",
-		"try_the_scanner_without_signing_up_create": "Proba o escáner sen rexistrarte. Crea unha conta para gardar, descargar e compartir o teu avatar.",
 		"what_you_get": "O que obtés",
 		"your_face_in_3d_in_60_seconds": "A túa cara en 3D.<br>En 60 segundos."
 	},

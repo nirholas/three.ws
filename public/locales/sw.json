@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Vipengele vyote",
-		"all_you_need_is_a_camera_and": "Unachohitaji ni kamera na mwangaza mzuri. Hakuna akaunti inayohitajika kujaribu.",
 		"ar_passthrough": "Kupitisha AR",
 		"camera_in_3d_avatar_out": "Kamera ndani, avatar ya 3D nje",
 		"features": "Vipengele",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Picha moja → avatar ya 3D iliyowekwa tayari. Bure, kwenye kivinjari chako, hakuna programu.",
 		"meta_twitter_title": "Scan — Geuza Selfie Yako kuwa Avatar ya 3D Iliyoandaliwa · three.ws",
 		"multi_angle_capture": "Upigaji picha wa pembe nyingi",
-		"no_account_for_first_scan": "Huna haja ya akaunti kwa skani ya kwanza",
 		"open_the_scanner_on_any_phone_or": "Fungua skana kwenye simu yoyote au kivinjari cha desktop chenye ufikiaji wa kamera. Weka uso wako kwenye fremu ya mwongozo — mwangaza mzuri, uso wa kawaida, kamera kwenye kiwango cha jicho.",
 		"point_your_camera": "Elekeza kamera yako",
 		"point_your_phone_camera_at_your_face": "Elekeza kamera ya simu yako kwenye uso wako, simama bila kusonga, na tembea mbali na avatar ya 3D iliyowekwa tayari kuhamasishwa, kuingizwa, na kutumika popote. Bure, kabisa kwenye kivinjari chako — hakuna upakuaji, hakuna programu.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Mfupa unafuata kiwango cha Mixamo cha humanoid-rig hivyo maelfu ya klipu za uhuishaji za bure zinafanya kazi bila kuanzisha upya rig.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Jaribu Forge badala yake",
-		"try_the_scanner_without_signing_up_create": "Jaribu skana bila kujiandikisha. Unda akaunti ili kuhifadhi, kupakua, na kushiriki avatar yako.",
 		"what_you_get": "Unachopata",
 		"your_face_in_3d_in_60_seconds": "Uso wako katika 3D.<br>Katika sekunde 60."
 	},

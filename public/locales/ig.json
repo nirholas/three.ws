@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Njirimara niile",
-		"all_you_need_is_a_camera_and": "Ihe niile ị chọrọ bụ igwefoto na ọkụ dị mma. Ọ dịghị akaụntụ achọrọ iji gbalịa.",
 		"ar_passthrough": "AR gafere",
 		"camera_in_3d_avatar_out": "Igwefoto banye, Avatar 3D pụta",
 		"features": "Njirimara",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Otu foto → avatar 3D e mere eme. N'efu, na ihe nchọgharị gị, enweghị ngwa.",
 		"meta_twitter_title": "Nyocha — Gbanwee Selfie Gị Ka Ọ Bụrụ Avatar 3D E Mere Eme · three.ws",
 		"multi_angle_capture": "Nnweta ọtụtụ akụkụ",
-		"no_account_for_first_scan": "Ọ dịghị akaụntụ maka nyocha mbụ",
 		"open_the_scanner_on_any_phone_or": "Mepee ihe nyocha ahụ na ekwentị ma ọ bụ ihe nchọgharị desktọpụ ọ bụla nwere ohere igwefoto. Debe ihu gị n'ime etiti nduzi — ọkụ dị mma, ngosipụta na-anọpụ iche, igwefoto n'ogo anya.",
 		"point_your_camera": "Tụọ igwefoto gị",
 		"point_your_phone_camera_at_your_face": "Tụọ igwefoto ekwentị gị n'ihu gị, jide nwayọ, ma jiri avatar 3D e mere eme nke ị nwere ike imegharị, tinye, ma jiri ebe ọ bụla pụọ. N'efu, kpamkpam na ihe nchọgharị gị — enweghị nbudata, enweghị ngwa.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Ọkpụkpụ ahụ na-agbaso usoro Mixamo humanoid-rig ọkọlọtọ ka puku kwuru puku vidiyo ngosi n'efu wee rụọ ọrụ na-enweghị nrụgharị ọzọ.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Gbalịa Forge kama",
-		"try_the_scanner_without_signing_up_create": "Gbalịa igwe nyocha ahụ na-edebanyeghị aha. Mepụta akaụntụ iji chekwaa, budata, ma kesaa avatar gị.",
 		"what_you_get": "Ihe ị ga-enweta",
 		"your_face_in_3d_in_60_seconds": "Ihu gị na 3D.<br>N'ime sekọnd 60."
 	},

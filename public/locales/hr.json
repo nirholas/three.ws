@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Sve značajke",
-		"all_you_need_is_a_camera_and": "Sve što trebate je kamera i dobro osvjetljenje. Nema potrebe za računom za isprobavanje.",
 		"ar_passthrough": "AR prolaz",
 		"camera_in_3d_avatar_out": "Kamera unutra, 3D avatar van",
 		"features": "Značajke",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Jedna fotografija → rigged 3D avatar. Besplatno, u vašem pregledniku, bez aplikacije.",
 		"meta_twitter_title": "Skener — Pretvorite svoju selfie u rigged 3D avatar · three.ws",
 		"multi_angle_capture": "Višekutna snimka",
-		"no_account_for_first_scan": "Nema računa za prvo skeniranje",
 		"open_the_scanner_on_any_phone_or": "Otvorite skener na bilo kojem telefonu ili desktop pregledniku s pristupom kameri. Postavite svoje lice u vodič — dobro svjetlo, neutralan izraz, kamera u razini očiju.",
 		"point_your_camera": "Usmjerite svoju kameru",
 		"point_your_phone_camera_at_your_face": "Usmjerite kameru telefona na svoje lice, zadržite se i otiđite s rigged 3D avatarom kojeg možete animirati, ugraditi i koristiti bilo gdje. Besplatno, potpuno u vašem pregledniku — bez preuzimanja, bez aplikacije.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Kostur slijedi standardnu Mixamo humanoidnu rig konvenciju, tako da tisuće besplatnih animacijskih isječaka rade bez ponovnog rigginga.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Isprobajte Forge umjesto toga",
-		"try_the_scanner_without_signing_up_create": "Isprobajte skener bez registracije. Kreirajte račun za spremanje, preuzimanje i dijeljenje vašeg avatara.",
 		"what_you_get": "Što dobivate",
 		"your_face_in_3d_in_60_seconds": "Vaše lice u 3D.<br>Za 60 sekundi."
 	},

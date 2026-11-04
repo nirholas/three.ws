@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Semua fitur",
-		"all_you_need_is_a_camera_and": "Yang Anda butuhkan hanyalah kamera dan pencahayaan yang baik. Tidak perlu akun untuk mencoba.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Kamera masuk, avatar 3D keluar",
 		"features": "Fitur",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Satu foto → avatar 3D yang sudah dirig. Gratis, di browser Anda, tanpa aplikasi.",
 		"meta_twitter_title": "Scan — Ubah Selfie Anda menjadi Avatar 3D yang Sudah Dirig · three.ws",
 		"multi_angle_capture": "Pengambilan multi- sudut",
-		"no_account_for_first_scan": "Tidak perlu akun untuk pemindaian pertama",
 		"open_the_scanner_on_any_phone_or": "Buka pemindai di ponsel atau browser desktop mana pun dengan akses kamera. Posisi wajah Anda di dalam bingkai panduan — cahaya baik, ekspresi netral, kamera setinggi mata.",
 		"point_your_camera": "Arahkan kamera Anda",
 		"point_your_phone_camera_at_your_face": "Arahkan kamera ponsel Anda ke wajah Anda, tahan diam, dan pergi dengan avatar 3D yang sudah dirig yang dapat Anda animasikan, sematkan, dan gunakan di mana saja. Gratis, sepenuhnya di browser Anda — tidak ada unduhan, tidak ada aplikasi.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Kerangka mengikuti konvensi rig humanoid standar Mixamo sehingga ribuan klip animasi gratis dapat digunakan tanpa perlu merigging ulang.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Coba Forge sebagai gantinya",
-		"try_the_scanner_without_signing_up_create": "Coba pemindai tanpa mendaftar. Buat akun untuk menyimpan, mengunduh, dan membagikan avatar Anda.",
 		"what_you_get": "Apa yang Anda dapatkan",
 		"your_face_in_3d_in_60_seconds": "Wajah Anda dalam 3D.<br>Dalam 60 detik."
 	},

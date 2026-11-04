@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Toate caracteristicile",
-		"all_you_need_is_a_camera_and": "Tot ce ai nevoie este o cameră și iluminare decentă. Nu este necesar un cont pentru a încerca.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Cameră în, avatar 3D afară",
 		"features": "Caracteristici",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "O fotografie → avatar 3D riggat. Gratuit, în browserul tău, fără aplicație.",
 		"meta_twitter_title": "Scan — Transformă-ți Selfie-ul într-un Avatar 3D Riggat · three.ws",
 		"multi_angle_capture": "Captură multi-unghi",
-		"no_account_for_first_scan": "Fără cont pentru prima scanare",
 		"open_the_scanner_on_any_phone_or": "Deschide scannerul pe orice telefon sau browser desktop cu acces la cameră. Poziționează-ți fața în cadrul de ghidare — lumină bună, expresie neutră, cameră la nivelul ochilor.",
 		"point_your_camera": "Îndreaptă-ți camera",
 		"point_your_phone_camera_at_your_face": "Îndreaptă camera telefonului tău spre fața ta, stai nemișcat și pleacă cu un avatar 3D riggat pe care îl poți anima, încorpora și folosi oriunde. Gratuit, complet în browserul tău — fără descărcare, fără aplicație.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Scheletul urmează convenția standard Mixamo pentru rigging umanoid, astfel încât mii de clipuri de animație gratuite funcționează fără a necesita re-rigging.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Încearcă Forge în schimb",
-		"try_the_scanner_without_signing_up_create": "Încearcă scannerul fără a te înscrie. Creează un cont pentru a salva, descărca și partaja avatarul tău.",
 		"what_you_get": "Ce primești",
 		"your_face_in_3d_in_60_seconds": "Fața ta în 3D.<br>În 60 de secunde."
 	},

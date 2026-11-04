@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "លក្ខណៈពិសេសទាំងអស់",
-		"all_you_need_is_a_camera_and": "អ្វីដែលអ្នកត្រូវការគឺកាមេរ៉ា និងពន្លឺគ្រប់គ្រាន់។ មិនចាំបាច់មានគណនីដើម្បីសាកល្បងទេ។",
 		"ar_passthrough": "AR Passthrough",
 		"camera_in_3d_avatar_out": "បញ្ចូលកាមេរ៉ា, បញ្ចេញ Avatar 3D",
 		"features": "លក្ខណៈពិសេស",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "រូបថតមួយសន្លឹក → Avatar 3D ដែលបាន Rig។ ឥតគិតថ្លៃ នៅក្នុង Browser របស់អ្នក គ្មានកម្មវិធី។",
 		"meta_twitter_title": "Scan — បំប្លែង Selfie របស់អ្នកទៅជា Avatar 3D ដែលបាន Rig · three.ws",
 		"multi_angle_capture": "ការចាប់យករូបភាពច្រើនមុំ",
-		"no_account_for_first_scan": "មិនចាំបាច់មានគណនីសម្រាប់ការ Scan លើកដំបូង",
 		"open_the_scanner_on_any_phone_or": "បើក Scanner នៅលើទូរស័ព្ទ ឬ Desktop Browser ណាមួយដែលមានសិទ្ធិចូលប្រើកាមេរ៉ា។ ដាក់មុខរបស់អ្នកក្នុងស៊ុមណែនាំ — ពន្លឺល្អ ទឹកមុខធម្មតា កាមេរ៉ានៅកម្រិតភ្នែក។",
 		"point_your_camera": "ចង្អុលកាមេរ៉ារបស់អ្នក",
 		"point_your_phone_camera_at_your_face": "ចង្អុលកាមេរ៉ាទូរស័ព្ទរបស់អ្នកទៅមុខរបស់អ្នក ឈរស្ងៀម ហើយទទួលបាន Avatar 3D ដែលបាន Rig ដែលអ្នកអាចធ្វើចលនា បញ្ចូល និងប្រើប្រាស់បានគ្រប់ទីកន្លែង។ ឥតគិតថ្លៃ ទាំងស្រុងនៅក្នុង Browser របស់អ្នក — មិនចាំបាច់ទាញយក គ្មានកម្មវិធី។",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "គ្រោងឆ្អឹងអនុវត្តតាមស្តង់ដារ Mixamo humanoid-rig ដូច្នេះឈុតចលនាឥតគិតថ្លៃរាប់ពាន់អាចប្រើបានដោយមិនចាំបាច់រៀបចំឡើងវិញ។",
 		"three_ws": "three.ws",
 		"try_forge_instead": "សាកល្បង Forge ជំនួសវិញ",
-		"try_the_scanner_without_signing_up_create": "សាកល្បងម៉ាស៊ីនស្កេនដោយមិនចាំបាច់ចុះឈ្មោះ។ បង្កើតគណនីដើម្បីរក្សាទុក ទាញយក និងចែករំលែកអវតាររបស់អ្នក។",
 		"what_you_get": "អ្វីដែលអ្នកទទួលបាន",
 		"your_face_in_3d_in_60_seconds": "មុខរបស់អ្នកជា 3D។<br>ក្នុងរយៈពេល 60 វិនាទី។"
 	},

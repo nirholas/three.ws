@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Tất cả các tính năng",
-		"all_you_need_is_a_camera_and": "Tất cả những gì bạn cần là một camera và ánh sáng tốt. Không cần tài khoản để thử nghiệm.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Camera vào, hình đại diện 3D ra",
 		"features": "Tính năng",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Một bức ảnh → hình đại diện 3D đã được rig. Miễn phí, trong trình duyệt của bạn, không cần ứng dụng.",
 		"meta_twitter_title": "Quét — Biến Selfie của Bạn thành Hình Đại Diện 3D Đã Được Rig · three.ws",
 		"multi_angle_capture": "Quay nhiều góc",
-		"no_account_for_first_scan": "Không cần tài khoản cho lần quét đầu tiên",
 		"open_the_scanner_on_any_phone_or": "Mở máy quét trên bất kỳ điện thoại hoặc trình duyệt máy tính để bàn nào có quyền truy cập camera. Đặt mặt bạn trong khung hướng dẫn — ánh sáng tốt, biểu cảm trung tính, camera ở mức mắt.",
 		"point_your_camera": "Hướng camera của bạn",
 		"point_your_phone_camera_at_your_face": "Hướng camera điện thoại vào mặt bạn, giữ yên, và bước ra với một hình đại diện 3D đã được rig mà bạn có thể hoạt hình, nhúng và sử dụng ở bất kỳ đâu. Miễn phí, hoàn toàn trong trình duyệt của bạn — không cần tải xuống, không cần ứng dụng.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Bộ khung theo tiêu chuẩn rig người Mixamo, vì vậy hàng ngàn clip hoạt hình miễn phí hoạt động mà không cần rig lại.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Thử Forge thay thế",
-		"try_the_scanner_without_signing_up_create": "Thử máy quét mà không cần đăng ký. Tạo tài khoản để lưu, tải xuống và chia sẻ avatar của bạn.",
 		"what_you_get": "Những gì bạn nhận được",
 		"your_face_in_3d_in_60_seconds": "Khuôn mặt của bạn trong 3D.<br>Trong 60 giây."
 	},

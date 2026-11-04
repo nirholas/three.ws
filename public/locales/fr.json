@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Toutes les fonctionnalités",
-		"all_you_need_is_a_camera_and": "Tout ce dont vous avez besoin, c'est d'une caméra et d'un bon éclairage. Aucun compte requis pour essayer.",
 		"ar_passthrough": "Pass-through AR",
 		"camera_in_3d_avatar_out": "Caméra → Avatar 3D",
 		"features": "Fonctionnalités",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Une photo → avatar 3D riggé. Gratuit, dans votre navigateur, sans application.",
 		"meta_twitter_title": "Scan — Transformez votre selfie en avatar 3D riggé · three.ws",
 		"multi_angle_capture": "Capture multi-angle",
-		"no_account_for_first_scan": "Aucun compte requis pour le premier scan",
 		"open_the_scanner_on_any_phone_or": "Ouvrez le scanner sur n'importe quel téléphone ou navigateur de bureau avec accès à la caméra. Positionnez votre visage dans le cadre de guidage — bonne lumière, expression neutre, caméra à hauteur des yeux.",
 		"point_your_camera": "Pointez votre caméra",
 		"point_your_phone_camera_at_your_face": "Pointez la caméra de votre téléphone sur votre visage, restez immobile, et repartez avec un avatar 3D riggé que vous pouvez animer, intégrer et utiliser partout. Gratuit, entièrement dans votre navigateur — sans téléchargement, sans application.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Le squelette suit la convention de rig humanoïde Mixamo standard afin que des milliers de clips d'animation gratuits fonctionnent sans re-rigging.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Essayez Forge à la place",
-		"try_the_scanner_without_signing_up_create": "Essayez le scanner sans vous inscrire. Créez un compte pour sauvegarder, télécharger et partager votre avatar.",
 		"what_you_get": "Ce que vous obtenez",
 		"your_face_in_3d_in_60_seconds": "Votre visage en 3D.<br>En 60 secondes."
 	},

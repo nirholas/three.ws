@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "모든 기능",
-		"all_you_need_is_a_camera_and": "필요한 것은 카메라와 적절한 조명뿐입니다. 시도하는 데 계정은 필요 없습니다.",
 		"ar_passthrough": "AR 패스스루",
 		"camera_in_3d_avatar_out": "카메라 입력, 3D 아바타 출력",
 		"features": "기능",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "사진 한 장 → 리깅된 3D 아바타. 무료, 브라우저에서, 앱 없음.",
 		"meta_twitter_title": "스캔 — 셀카를 리깅된 3D 아바타로 변환 · three.ws",
 		"multi_angle_capture": "다각도 캡처",
-		"no_account_for_first_scan": "첫 스캔 시 계정 불필요",
 		"open_the_scanner_on_any_phone_or": "카메라 접근이 가능한 모든 휴대폰 또는 데스크톱 브라우저에서 스캐너를 여세요. 가이드 프레임 안에 얼굴을 위치시키세요 — 좋은 조명, 무표정, 눈높이 카메라.",
 		"point_your_camera": "카메라를 향하게 하세요.",
 		"point_your_phone_camera_at_your_face": "휴대폰 카메라를 얼굴에 대고 가만히 있으면, 애니메이션, 임베딩, 어디든 사용 가능한 리깅된 3D 아바타를 얻을 수 있습니다. 무료이며, 브라우저에서만 가능하며, 다운로드나 앱은 필요 없습니다.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "스켈레톤은 표준 Mixamo 휴머노이드 리깅 규칙을 따르므로, 수천 개의 무료 애니메이션 클립을 다시 리깅할 필요 없이 사용할 수 있습니다.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "대신 Forge를 사용해 보세요.",
-		"try_the_scanner_without_signing_up_create": "가입 없이 스캐너를 사용해 보세요. 아바타를 저장, 다운로드, 공유하려면 계정을 만드세요.",
 		"what_you_get": "얻게 되는 것",
 		"your_face_in_3d_in_60_seconds": "3D 얼굴.<br> 60초 만에."
 	},

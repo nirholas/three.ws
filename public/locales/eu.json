@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Ezaugarri guztiak",
-		"all_you_need_is_a_camera_and": "Kamera bat eta argiztapen duina besterik ez duzu behar. Ez da konturik behar probatzeko.",
 		"ar_passthrough": "AR pasatzea",
 		"camera_in_3d_avatar_out": "Kamera sartu, 3D avatar atera",
 		"features": "Ezaugarriak",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Argazki bat → rigged 3D avatarra. Doan, zure nabigatzailean, aplikaziorik gabe.",
 		"meta_twitter_title": "Eskaneatu — Bihurtu zure selfie-a rigged 3D avatar batean · three.ws",
 		"multi_angle_capture": "Angelu anitzeko harrapaketa",
-		"no_account_for_first_scan": "Ez da konturik behar lehen eskaneatzerako",
 		"open_the_scanner_on_any_phone_or": "Ireki eskanerra edozein telefono edo mahaigaineko nabigatzailetan, kamera sarbidearekin. Kokatu zure aurpegia gida-markoan — argi ona, espresio neutroa, kamera begi-mailan.",
 		"point_your_camera": "Zuzendu zure kamera",
 		"point_your_phone_camera_at_your_face": "Zuzendu telefonoaren kamera zure aurpegira, egon geldirik, eta alde egin animatu, txertatu eta edonon erabil dezakezun rigged 3D avatar batekin. Doan, guztiz zure nabigatzailean — ez deskargurik, ez aplikaziorik.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Eskeletoak Mixamo humanoide-rig konbentzio estandarra jarraitzen du, beraz, milaka animazio-klip doakoek funtzionatzen dute berriro rig-atu gabe.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Probatu Forge horren ordez",
-		"try_the_scanner_without_signing_up_create": "Probatu eskanerra erregistratu gabe. Sortu kontu bat zure avatara gorde, deskargatu eta partekatzeko.",
 		"what_you_get": "Zer lortzen duzun",
 		"your_face_in_3d_in_60_seconds": "Zure aurpegia 3Dn.<br>60 segundotan."
 	},

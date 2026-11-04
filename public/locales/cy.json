@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Pob nodwedd",
-		"all_you_need_is_a_camera_and": "Y cyfan sydd ei angen arnoch yw camera a goleuadau gweddus. Dim angen cyfrif i roi cynnig arni.",
 		"ar_passthrough": "Pasio drwodd AR",
 		"camera_in_3d_avatar_out": "Camera i mewn, afatar 3D allan",
 		"features": "Nodweddion",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Un llun → afatar 3D rigiedig. Am ddim, yn eich porwr, dim ap.",
 		"meta_twitter_title": "Sganio — Trowch Eich Hunlun yn Afatar 3D Rigiedig · three.ws",
 		"multi_angle_capture": "Dal aml-ongl",
-		"no_account_for_first_scan": "Dim cyfrif ar gyfer y sgan cyntaf",
 		"open_the_scanner_on_any_phone_or": "Agorwch y sganiwr ar unrhyw ffôn neu borwr bwrdd gwaith gyda mynediad camera. Gosodwch eich wyneb yn y ffrâm dywys — golau da, mynegiant niwtral, camera ar lefel llygad.",
 		"point_your_camera": "Pwyntiwch eich camera",
 		"point_your_phone_camera_at_your_face": "Pwyntiwch gamera eich ffôn at eich wyneb, daliwch yn llonydd, a cherddwch i ffwrdd gydag afatar 3D rigiedig y gallwch ei animeiddio, ei fewnosod, a'i ddefnyddio unrhyw le. Am ddim, yn gyfan gwbl yn eich porwr — dim lawrlwythiad, dim ap.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Mae'r sgerbwd yn dilyn confensiwn rig-ddynol Mixamo safonol felly mae miloedd o glipiau animeiddio am ddim yn gweithio heb ail-rigio.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Rhowch gynnig ar Forge yn lle hynny",
-		"try_the_scanner_without_signing_up_create": "Rhowch gynnig ar y sganiwr heb gofrestru. Creu cyfrif i arbed, lawrlwytho, a rhannu eich avatar.",
 		"what_you_get": "Beth rydych chi'n ei gael",
 		"your_face_in_3d_in_60_seconds": "Eich wyneb mewn 3D.<br>Mewn 60 eiliad."
 	},

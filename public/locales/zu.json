@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Zonke izici",
-		"all_you_need_is_a_camera_and": "Konke okudingayo ikhamera nokukhanya okuhle. Akukho-akhawunti edingekayo ukuze uzame.",
 		"ar_passthrough": "Ukudlula kwe-AR",
 		"camera_in_3d_avatar_out": "Ikhamera ingena, i-avatar ye-3D iphuma",
 		"features": "Izici",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Isithombe esisodwa → i-avatar ye-3D elungisiwe. Mahhala, esipheqululini sakho, akukho hlelo lokusebenza.",
 		"meta_twitter_title": "Skena — Guqula i-Selfie Yakho Ibe I-Avatar Ye-3D Elungisiwe · three.ws",
 		"multi_angle_capture": "Ukuthwebula okunezinhlangothi eziningi",
-		"no_account_for_first_scan": "Akukho-akhawunti yeskena sokuqala",
 		"open_the_scanner_on_any_phone_or": "Vula iskena kunoma iyiphi ifoni noma isiphequluli sedeskithophu esinokufinyelela kukhamera. Beka ubuso bakho kuhlaka oluqondisayo — ukukhanya okuhle, ukubonakala okungathathi hlangothi, ikhamera ezingeni lamehlo.",
 		"point_your_camera": "Khomba ikhamera yakho",
 		"point_your_phone_camera_at_your_face": "Khomba ikhamera yefoni yakho ebusweni bakho, unganyakazi, bese uhamba ne-avatar ye-3D elungisiwe ongayigqwayiza, uyifake, futhi uyisebenzise noma kuphi. Mahhala, ngokuphelele esipheqululini sakho — akukho ukulanda, akukho hlelo lokusebenza.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Uhlaka lwamathambo lulandela umgomo ojwayelekile we-Mixamo humanoid-rig ukuze izinkulungwane zezithombe zamahhala zisebenze ngaphandle kokuhlela kabusha.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Zama i-Forge esikhundleni salokho",
-		"try_the_scanner_without_signing_up_create": "Zama iskena ngaphandle kokubhalisa. Dala i-akhawunti ukuze ulondoloze, ulande, futhi wabelane nge-avatar yakho.",
 		"what_you_get": "Okutholayo",
 		"your_face_in_3d_in_60_seconds": "Ubuso bakho ku-3D.<br>Ngemizuzwana engu-60."
 	},

@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Il-karatteristiċi kollha",
-		"all_you_need_is_a_camera_and": "Kull ma għandek bżonn huwa kamera u dawl deċenti. M'hemmx bżonn kont biex tipprova.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Kamera ġewwa, avatar 3D barra",
 		"features": "Karatteristiċi",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Ritratt wieħed → avatar 3D irranġat. B'xejn, fil-browser tiegħek, l-ebda app.",
 		"meta_twitter_title": "Skennja — Ibdel is-Selfie Tiegħek f'Avatar 3D Irranġat · three.ws",
 		"multi_angle_capture": "Qbid b'ħafna angoli",
-		"no_account_for_first_scan": "L-ebda kont għall-ewwel skannjar",
 		"open_the_scanner_on_any_phone_or": "Iftaħ l-iskanner fuq kwalunkwe telefon jew browser tad-desktop b'aċċess għall-kamera. Poġġi wiċċek fil-qafas tal-gwida — dawl tajjeb, espressjoni newtrali, kamera fil-livell tal-għajnejn.",
 		"point_your_camera": "Ipponta l-kamera tiegħek",
 		"point_your_phone_camera_at_your_face": "Ipponta l-kamera tat-telefon tiegħek lejn wiċċek, żomm kwiet, u ħu avatar 3D irranġat li tista' animat, inkorpora, u tuża kullimkien. B'xejn, kompletament fil-browser tiegħek — l-ebda tniżżil, l-ebda app.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "L-iskeletru jsegwi l-konvenzjoni standard ta' rig umanojde Mixamo b'tali mod li eluf ta' clips ta' animazzjoni b'xejn jaħdmu mingħajr re-rigging.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Ipprova Forge minflok",
-		"try_the_scanner_without_signing_up_create": "Ipprova l-iskanner mingħajr ma tirreġistra. Oħloq kont biex issalva, tniżżel, u taqsam l-avatar tiegħek.",
 		"what_you_get": "Dak li tikseb",
 		"your_face_in_3d_in_60_seconds": "Wiċċek fi 3D.<br>F'60 sekonda."
 	},

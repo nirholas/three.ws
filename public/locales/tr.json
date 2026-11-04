@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Tüm özellikler",
-		"all_you_need_is_a_camera_and": "Tek ihtiyacınız olan bir kamera ve iyi bir aydınlatma. Denemek için hesap gerekmez.",
 		"ar_passthrough": "AR geçişi",
 		"camera_in_3d_avatar_out": "Kamera içeri, 3D avatar dışarı",
 		"features": "Özellikler",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Bir fotoğraf → riglenmiş 3D avatar. Ücretsiz, tarayıcınızda, uygulama yok.",
 		"meta_twitter_title": "Tarama — Selfie'nizi Riglenmiş 3D Avatara Dönüştürün · three.ws",
 		"multi_angle_capture": "Çok açılı yakalama",
-		"no_account_for_first_scan": "İlk tarama için hesap gerekmez",
 		"open_the_scanner_on_any_phone_or": "Kameraya erişimi olan herhangi bir telefon veya masaüstü tarayıcıda tarayıcıyı açın. Yüzünüzü kılavuz çerçeveye yerleştirin — iyi ışık, nötr ifade, kamera göz seviyesinde.",
 		"point_your_camera": "Kameranızı doğrultun",
 		"point_your_phone_camera_at_your_face": "Telefon kameranızı yüzünüze doğrultun, sabit durun ve animasyon yapabileceğiniz, gömebileceğiniz ve her yerde kullanabileceğiniz riglenmiş 3D avatarla çıkın. Ücretsiz, tamamen tarayıcınızda — indirme yok, uygulama yok.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "İskelet, standart Mixamo insansı rigleme kuralına uyar, böylece binlerce ücretsiz animasyon klibi yeniden rigleme yapmadan çalışır.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Bunun yerine Forge deneyin",
-		"try_the_scanner_without_signing_up_create": "Kaydolmadan tarayıcıyı deneyin. Avatarınızı kaydetmek, indirmek ve paylaşmak için bir hesap oluşturun.",
 		"what_you_get": "Ne elde edersiniz",
 		"your_face_in_3d_in_60_seconds": "Yüzünüz 3D'de. <br> 60 saniyede."
 	},

@@ -8839,7 +8839,6 @@
 	},
 	"features_scan": {
 		"all_features": "ሁሉም ባህሪያት",
-		"all_you_need_is_a_camera_and": "የሚያስፈልግህ ካሜራ እና ጥሩ ብርሃን ብቻ ነው። ለመሞከር አካውንት አያስፈልግም።",
 		"ar_passthrough": "AR ማለፊያ",
 		"camera_in_3d_avatar_out": "ካሜራ ገብቶ፣ 3D አምሳያ ወጥቶ",
 		"features": "ባህሪያት",
@@ -8854,7 +8853,6 @@
 		"meta_twitter_description": "አንድ ፎቶ → የተገጠመ 3D አምሳያ። ነጻ፣ በአሳሽዎ ውስጥ፣ ምንም መተግበሪያ የለም።",
 		"meta_twitter_title": "ስካን — የራስ ፎቶዎን ወደ የተገጠመ 3D አምሳያ ይለውጡ · three.ws",
 		"multi_angle_capture": "ባለብዙ አንግል መቅረጽ",
-		"no_account_for_first_scan": "ለመጀመሪያው ስካን አካውንት አያስፈልግም",
 		"open_the_scanner_on_any_phone_or": "ስካነሩን በማንኛውም ስልክ ወይም የዴስክቶፕ አሳሽ በካሜራ መዳረሻ ይክፈቱ። ፊትዎን በመመሪያው ፍሬም ውስጥ ያስቀምጡ — ጥሩ ብርሃን፣ ገለልተኛ አገላለጽ፣ ካሜራ በአይን ደረጃ።",
 		"point_your_camera": "ካሜራዎን ያመልክቱ",
 		"point_your_phone_camera_at_your_face": "የስልክ ካሜራዎን ወደ ፊትዎ ያመልክቱ፣ ሳይንቀሳቀሱ ይቆዩ እና ማነቃቃት፣ መክተት እና በየትኛውም ቦታ መጠቀም የሚችሉትን የተገጠመ 3D አምሳያ ይዘው ይሂዱ። ነጻ፣ ሙሉ በሙሉ በአሳሽዎ ውስጥ — ምንም ማውረድ የለም፣ ምንም መተግበሪያ የለም።",
@@ -8873,7 +8871,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "አጽሙ መደበኛውን የMixamo humanoid-rig ስምምነት ይከተላል ስለዚህ በሺዎች የሚቆጠሩ ነፃ የአኒሜሽን ክሊፖች እንደገና ሪግ ሳያስፈልጋቸው ይሰራሉ።",
 		"three_ws": "three.ws",
 		"try_forge_instead": "በምትኩ Forgeን ይሞክሩ",
-		"try_the_scanner_without_signing_up_create": "ሳይመዘገቡ ስካነሩን ይሞክሩ። አምሳያዎን ለማስቀመጥ፣ ለማውረድ እና ለማጋራት አካውንት ይፍጠሩ።",
 		"what_you_get": "የሚያገኙት",
 		"your_face_in_3d_in_60_seconds": "ፊትዎ በ3D።<br>በ60 ሰከንዶች ውስጥ።"
 	},

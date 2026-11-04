@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Duk fasalulluka",
-		"all_you_need_is_a_camera_and": "Abin da kake buƙata shine kyamara da haske mai kyau. Ba a buƙatar asusu don gwadawa.",
 		"ar_passthrough": "AR mai wucewa",
 		"camera_in_3d_avatar_out": "Kyamara ciki, Avatar 3D waje",
 		"features": "Fasalulluka",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Hoto ɗaya → avatar 3D mai shirye. Kyauta, a cikin burauzarka, babu app.",
 		"meta_twitter_title": "Duba — Mayar da Selfie ɗinka zuwa Avatar 3D Mai Shirye · three.ws",
 		"multi_angle_capture": "Kama hoto daga kusurwoyi daban-daban",
-		"no_account_for_first_scan": "Ba a buƙatar asusu don dubawa na farko",
 		"open_the_scanner_on_any_phone_or": "Bude na'urar dubawa a kowace waya ko burauzar kwamfuta mai damar shiga kyamara. Sanya fuskarka a cikin firam ɗin jagora — haske mai kyau, fuska mai nutsuwa, kyamara a matakin ido.",
 		"point_your_camera": "Nuna kyamararka",
 		"point_your_phone_camera_at_your_face": "Nuna kyamarar wayarka a fuskarka, ka riƙe tsaye, kuma ka tafi da avatar 3D mai shirye wanda zaka iya motsawa, sakawa, da amfani dashi ko'ina. Kyauta, gaba ɗaya a cikin burauzarka — babu saukewa, babu app.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Kwarangwal ɗin yana bin ka'idar Mixamo humanoid-rig ta yau da kullun don haka dubban shirye-shiryen motsi kyauta suna aiki ba tare da sake shirye-shirye ba.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Gwada Forge maimakon",
-		"try_the_scanner_without_signing_up_create": "Gwada na'urar dubawa ba tare da yin rajista ba. Ƙirƙiri asusu don adanawa, zazzagewa, da raba avatar ɗinka.",
 		"what_you_get": "Abin da za ka samu",
 		"your_face_in_3d_in_60_seconds": "Fuskarka a 3D.<br>Cikin dakika 60."
 	},

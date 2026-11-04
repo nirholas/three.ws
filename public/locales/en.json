@@ -8840,7 +8840,7 @@
 	},
 	"features_scan": {
 		"all_features": "All features",
-		"all_you_need_is_a_camera_and": "All you need is a camera and decent lighting. No account required to try.",
+		"all_you_need_is_a_camera_lighting_account": "All you need is a camera, decent lighting, and a free three.ws account.",
 		"ar_passthrough": "AR passthrough",
 		"camera_in_3d_avatar_out": "Camera in, 3D avatar out",
 		"features": "Features",
@@ -8855,7 +8855,7 @@
 		"meta_twitter_description": "One photo → rigged 3D avatar. Free, in your browser, no app.",
 		"meta_twitter_title": "Scan — Turn Your Selfie into a Rigged 3D Avatar · three.ws",
 		"multi_angle_capture": "Multi-angle capture",
-		"no_account_for_first_scan": "No account for first scan",
+		"free_account_sign_in_to_generate": "Free account, sign in to generate",
 		"open_the_scanner_on_any_phone_or": "Open the scanner on any phone or desktop browser with camera access. Position your face in the guide frame — good light, neutral expression, camera at eye level.",
 		"point_your_camera": "Point your camera",
 		"point_your_phone_camera_at_your_face": "Point your phone camera at your face, hold still, and walk away with a rigged 3D avatar you can animate, embed, and use anywhere. Free, entirely in your browser — no download, no app.",
@@ -8874,7 +8874,7 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "The skeleton follows the standard Mixamo humanoid-rig convention so thousands of free animation clips work without re-rigging.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Try Forge instead",
-		"try_the_scanner_without_signing_up_create": "Try the scanner without signing up. Create an account to save, download, and share your avatar.",
+		"the_camera_runs_in_your_browser_sign_in": "The camera runs in your browser with nothing to install. Sign in with a free account when you generate: your scan resumes where you left off, and the avatar is saved to your account to download and share.",
 		"what_you_get": "What you get",
 		"your_face_in_3d_in_60_seconds": "Your face in 3D.<br>In 60 seconds."
 	},

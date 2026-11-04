@@ -8668,7 +8668,6 @@
 	},
 	"features_scan": {
 		"all_features": "Kaikki ominaisuudet",
-		"all_you_need_is_a_camera_and": "Kaikki mitä tarvitset on kamera ja hyvä valaistus. Tiliä ei vaadita kokeiluun.",
 		"ar_passthrough": "AR läpivienti",
 		"camera_in_3d_avatar_out": "Kamera sisään, 3D-avatar ulos",
 		"features": "Ominaisuudet",
@@ -8683,7 +8682,6 @@
 		"meta_twitter_description": "Yksi valokuva → rigattu 3D-avatar. Ilmainen, selaimessasi, ei sovellusta.",
 		"meta_twitter_title": "Skannaa — Muuta selfie 3D-avatariksi · three.ws",
 		"multi_angle_capture": "Monikulmainen taltiointi",
-		"no_account_for_first_scan": "Ei tiliä ensimmäiseen skannaukseen",
 		"open_the_scanner_on_any_phone_or": "Avaa skanneri millä tahansa puhelimella tai työpöytäselaimella, jossa on kameran pääsy. Aseta kasvosi ohjeen kehykseen — hyvä valo, neutraali ilme, kamera silmien tasolla.",
 		"point_your_camera": "Suuntaa kameraasi",
 		"point_your_phone_camera_at_your_face": "Suuntaa puhelimesi kamera kasvosi kohti, pidä paikallasi ja kävele pois rigatulla 3D-avatarilla, jota voit animoida, upottaa ja käyttää missä tahansa. Ilmainen, täysin selaimessasi — ei latausta, ei sovellusta.",
@@ -8702,7 +8700,6 @@
 		"the_skeleton_follows_the_standard_mixamo_hum": "Luuranko seuraa standardin Mixamo humanoid-rig -konventiota, joten tuhannet ilmaiset animaatioklipit toimivat ilman uudelleenriggausta.",
 		"three_ws": "three.ws",
 		"try_forge_instead": "Kokeile Forge sen sijaan",
-		"try_the_scanner_without_signing_up_create": "Kokeile skanneria ilman rekisteröitymistä. Luo tili tallentaaksesi, ladataksesi ja jakaaksesi avatarisi.",
 		"what_you_get": "Mitä saat",
 		"your_face_in_3d_in_60_seconds": "Kasvosi 3D:ssä.<br>60 sekunnissa."
 	},
