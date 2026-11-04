@@ -161,7 +161,7 @@
 
 			<div class="cmd">
 				<span class="prompt" aria-hidden="true">$</span>
-				<code id="curl-cmd">curl three.ws/tty</code>
+				<code id="curl-cmd">curl -L three.ws/tty</code>
 				<button class="copy" type="button" data-copy-target="curl-cmd" data-i18n="tty.copy_btn">Copy</button>
 			</div>
 			<p style="font-size:13.5px;margin-top:0" data-i18n="tty.cmd_note">
@@ -181,7 +181,7 @@
 					<span class="dot" aria-hidden="true"></span>
 					<span class="dot" aria-hidden="true"></span>
 					<span class="dot" aria-hidden="true"></span>
-					<span class="title">curl three.ws/tty</span>
+					<span class="title">curl -L three.ws/tty</span>
 					<span class="status" id="stream-status" role="status" aria-live="polite" data-i18n="tty.status_idle">idle</span>
 				</div>
 				<pre id="screen" tabindex="0" aria-label="Live terminal render of a 3D agent" data-i18n-attr="aria-label:tty.screen_aria"></pre>
@@ -249,10 +249,10 @@ process.stdout.write(renderer.frame(1.25));</code></pre>
 				</tbody>
 			</table>
 			<pre class="block"><code># your own avatar, wider, held still
-curl 'three.ws/tty/&lt;avatar-id&gt;?w=110&amp;spin=0'
+curl -L 'three.ws/tty/&lt;avatar-id&gt;?w=110&amp;spin=0'
 
 # a single frame in plain ASCII, for a README or a commit hook
-curl 'three.ws/tty?frames=1&amp;color=mono&amp;w=60'</code></pre>
+curl -L 'three.ws/tty?frames=1&amp;color=mono&amp;w=60'</code></pre>
 			<p class="note" data-i18n-html="tty.note">
 				A browser asking for this URL is redirected here instead, because a browser would
 				show the escape codes as literal garbage. Pass

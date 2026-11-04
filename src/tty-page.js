@@ -176,7 +176,7 @@ async function run() {
 	} catch (err) {
 		if (err.name === 'AbortError') return;
 		setStatus('unavailable');
-		screen.textContent = `Could not reach the render stream: ${err.message}\n\nThe command still works from a terminal:\n\n  $ curl three.ws/tty`;
+		screen.textContent = `Could not reach the render stream: ${err.message}\n\nThe command still works from a terminal:\n\n  $ curl -L three.ws/tty`;
 	} finally {
 		if (state.controller === controller) {
 			state.controller = null;
@@ -245,5 +245,5 @@ if (wantsMotion && window.innerWidth >= 720) {
 	run();
 } else {
 	setStatus('press run');
-	screen.textContent = '  $ curl three.ws/tty';
+	screen.textContent = '  $ curl -L three.ws/tty';
 }

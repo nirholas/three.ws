@@ -1798,10 +1798,17 @@
 					"value": "(?i).*text/html.*"
 				}
 			],
+			"headers": {
+				"Vary": "Accept",
+				"Cache-Control": "private, no-cache"
+			},
 			"dest": "/tty.html"
 		},
 		{
 			"src": "/tty/?",
+			"headers": {
+				"Vary": "Accept"
+			},
 			"dest": "/api/tty"
 		},
 		{
