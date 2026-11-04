@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Opening the spin wheel no longer drops everyone in the world",
+			"tags": [
+				"fix"
+			],
+			"summary": "Opening the spin wheel in /play could crash the game server and disconnect every player in the world at once. The wheel now opens normally, and when paid spins are unavailable it says so instead of failing. The server also stays up through any single bad message from one player, so one fault costs that player one action rather than costing everyone their session.",
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Large 3D generations stop dropping mid-job, and photo cutouts move to a commercially licensed model",
 			"tags": [
 				"fix",
