@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "three-ws": {
+      "type": "http",
+      "url": "https://three.ws/api/mcp-grok",
+      "note": "three.ws hosted MCP server for Grok. Free and anonymous: no account, no API key, no payment. Tools: text or image to a textured GLB, a rigged avatar, auto-rigging, catalog search, render checks and job polling. Signing in at https://three.ws/api/mcp-grok?auth=oauth adds your three.ws agents and read-only Solana market intel; no tool on this server moves value."
+    }
+  }
+}
