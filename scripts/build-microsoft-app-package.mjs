@@ -11,6 +11,8 @@
 //   MS_APP_ID          the app GUID Partner Center assigns to the offer
 //   MS_DEVELOPER_NAME  the legal entity name (32 characters or fewer)
 //   MS_KEYVAULT_URL    the Azure Key Vault URL that holds the OAuth client details
+//   MS_TEAMS_BOT_APP_ID  the Azure Bot registration app id behind the Agents search command
+//                        (the same value the API reads to verify Bot Framework tokens)
 // --check substitutes clearly marked check-only values so the structure, the schema,
 // the icons and the tool file are still validated, and writes no zip.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -27,11 +29,12 @@ const outFile = join(root, 'dist', 'microsoft', 'three-ws-m365-app.zip');
 const MCP_URL = 'https://three.ws/api/mcp-studio';
 const LOGO = join(root, 'public', 'logo.png');
 
-const OWNER_VARS = ['MS_APP_ID', 'MS_DEVELOPER_NAME', 'MS_KEYVAULT_URL'];
+const OWNER_VARS = ['MS_APP_ID', 'MS_DEVELOPER_NAME', 'MS_KEYVAULT_URL', 'MS_TEAMS_BOT_APP_ID'];
 const CHECK_ONLY = {
 	MS_APP_ID: '00000000-0000-4000-8000-000000000000',
 	MS_DEVELOPER_NAME: 'Check Only Developer',
 	MS_KEYVAULT_URL: 'https://check-only.vault.azure.net/',
+	MS_TEAMS_BOT_APP_ID: '00000000-0000-4000-8000-0000000000b0',
 };
 const GUID_RE = /^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/;
 const PACKAGE_FILES = ['manifest.json', 'mcptools.json', 'intro.md', 'color.png', 'outline.png'];
@@ -99,6 +102,7 @@ export function buildManifest(values) {
 	if (!/^https:\/\/[^\s/]+\.vault\.azure\.net\/?$/i.test(values.MS_KEYVAULT_URL)) {
 		problems.push('MS_KEYVAULT_URL must look like https://<vault-name>.vault.azure.net/');
 	}
+	if (!GUID_RE.test(values.MS_TEAMS_BOT_APP_ID || '')) problems.push(`MS_TEAMS_BOT_APP_ID must be a GUID, got "${values.MS_TEAMS_BOT_APP_ID}"`);
 	if (values.MS_KEYVAULT_URL.length > 128) problems.push('MS_KEYVAULT_URL must be 128 characters or fewer (schema limit on referenceId)');
 
 	const ajv = new Ajv({ strict: false, allErrors: true });
@@ -258,7 +262,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 	if (missing.length) {
 		console.error(`Missing owner-only environment variable${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}.`);
 		console.error('MS_APP_ID is the app GUID from Partner Center, MS_DEVELOPER_NAME the legal entity name (32 characters or fewer),');
-		console.error('MS_KEYVAULT_URL the Azure Key Vault URL. Run with --check to validate everything else without them.');
+		console.error('MS_KEYVAULT_URL the Azure Key Vault URL, MS_TEAMS_BOT_APP_ID the Azure Bot app id. Run with --check to validate everything else without them.');
 		return 2;
 	}
 	const { problems, files } = await assemble(values);

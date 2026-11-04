@@ -6,8 +6,12 @@
 
 import { describe, it, expect } from 'vitest';
 import { decideRigMode, inspectRig, MIN_CANONICAL_BONES } from '../src/embodiment/rig-mode.js';
+import { CANONICAL_BONES } from '../src/glb-canonicalize.js';
 
-const HUMANOID_BONES = [
+// A real humanoid carries finger joints: they are 30 of a library clip's 53
+// tracks, so a body without them never clears the retargeter's coverage floor.
+const HUMANOID_BONES = [...CANONICAL_BONES];
+const FINGERLESS_BONES = [
 	'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'LeftArm', 'RightArm',
 	'LeftForeArm', 'RightForeArm', 'LeftUpLeg', 'RightUpLeg',
 ];
@@ -29,6 +33,13 @@ describe('decideRigMode', () => {
 		const r = decideRigMode({ hasSkinnedMesh: true, boneNames: HUMANOID_BONES });
 		expect(r.mode).toBe('canonical');
 		expect(r.canonicalCount).toBeGreaterThanOrEqual(MIN_CANONICAL_BONES);
+	});
+
+	it('falls back when enough bones map but a clip would not clear the coverage floor', () => {
+		const r = decideRigMode({ hasSkinnedMesh: true, boneNames: FINGERLESS_BONES });
+		expect(r.canonicalCount).toBeGreaterThanOrEqual(MIN_CANONICAL_BONES);
+		expect(r.mode).toBe('fallback');
+		expect(r.reason).toMatch(/13 of 53 clip tracks/);
 	});
 
 	it('handles missing / empty input without throwing', () => {
