@@ -1,8 +1,10 @@
 # MKT-2026-11-QUICKNODE: how the production RPC path fails over without losing the user
 
-**Kit status:** copy complete, verified 2026-09-17. Not blocked on engineering. campaigns.csv status
-`awaiting_outreach`: the spotlight email and field note are ready and unsent, and the program contact's
-name is not recorded in the repo.
+**Kit status:** copy complete, verified 2026-09-17 and re-verified 2026-11-04 (table at the end). Not
+blocked on engineering. campaigns.csv status `awaiting_outreach`: the spotlight email and field note are
+ready and unsent, and the program contact's name is not recorded in the repo. One fact changed since the
+copy was written: no Quicknode lane has been configured in production since 2026-10-08 (see "Quicknode
+is no longer a live rung" below).
 
 ## At a glance
 
@@ -25,15 +27,24 @@ name is not recorded in the repo.
 | Channel | Existing asset | State | How this kit uses it |
 |---|---|---|---|
 | Partner ask (primary route) | [marketing/partner-packets/quicknode-spotlight-ask.md](../../partner-packets/quicknode-spotlight-ask.md) | Ready | Is the partner message, with one refresh below |
-| Field note | [marketing/partner-packets/quicknode-rpc-failover-field-note.md](../../partner-packets/quicknode-rpc-failover-field-note.md) | Ready; one sentence now stale (below) | Attachment and the source for every post |
+| Field note | [marketing/partner-packets/quicknode-rpc-failover-field-note.md](../../partner-packets/quicknode-rpc-failover-field-note.md) | Ready; stale sentences corrected 2026-11-04 | Attachment and the source for every post |
 | Program membership graphics | [marketing/quicknode/](../../quicknode/) | Exist | Not used; this is a technical beat, not a membership beat |
 | Media | [partner-packets/images/docs-solana-failover.png](../../partner-packets/images/docs-solana-failover.png) | Exists | Anchor image |
 | X, GitHub Discussions, news | none | Missing | Written below |
 
-**Stale sentence to fix before sending the field note:** it says the recovery-probe change from commit
-`ac1ba86ad` is "not yet deployed". On 2026-09-17 that commit is an ancestor of the live commit
-`477eb6f8c` from `/api/version`, so it has shipped. Change the sentence to "deployed" with the date of the
-deploy that carried it.
+**Stale sentence, fixed 2026-11-04:** the field note said the recovery-probe change from commit
+`ac1ba86ad` was "not yet deployed". That commit is an ancestor of the 2026-09-17 live commit `477eb6f8c`
+and of the 2026-11-04 live commit `0a913e8a7`, so the note now says it was live in production by
+2026-09-17.
+
+**Quicknode is no longer a live rung (found 2026-11-04):** the Quicknode endpoint sat in
+`SOLANA_RPC_LAST_RESORT_URLS` from revision `three-ws-api-00325-pc6` (2026-07-28) until revision
+`three-ws-api-00477-grl` (2026-10-08), which removed it after the endpoint began refusing every TLS
+handshake ([docs/ops/solana-rpc-lanes.md](../../../docs/ops/solana-rpc-lanes.md)). A `getHealth` call to
+that endpoint still fails with `tlsv1 alert internal error` on 2026-11-04, and `SOLANA_RPC_URL`,
+`QUICKNODE_RPC_URL` and `SOLANA_RPC_LAST_RESORT_URLS` are all unset on the service. The field note and
+email now describe the reserve in the past tense. If the owner restores a working endpoint from the
+program credits before sending, return them to the present tense and record the restore date.
 
 ## X
 
@@ -47,8 +58,9 @@ followed by the cooldown table for failing RPC endpoints.
 We once set our metered @Quicknode reserve as the Solana RPC primary too. The chain keeps the first copy of a URL, so the reserve took every call: https://three.ws/docs/solana?utm_source=x&utm_medium=social&utm_campaign=mkt-2026-11-quicknode&utm_content=anchor
 ```
 
-This is a correction lead (voice contract pattern 3). The tag is defensible: the Quicknode endpoint is a
-real rung in the production chain. The post does not blame Quicknode; the misconfiguration was ours.
+This is a correction lead (voice contract pattern 3). The tag is defensible: the Quicknode endpoint was
+the production reserve from 2026-07-28 to 2026-10-08, and the post describes that past configuration. It
+does not blame Quicknode; the misconfiguration was ours.
 
 **Thread (optional):**
 
@@ -100,9 +112,9 @@ as a reply in the existing Quicknode Startup Program thread, with the field note
 sending:
 
 1. Fill `[program contact first name]` and `[Owner name]` from the real thread; neither is in the repo.
-2. Its two proposed Fridays (2026-10-16, 2026-10-23) precede this campaign's date. Replace them with two
-   Fridays after sending, for example 2026-11-20 and 2026-12-04, and confirm both are free.
-3. Fix the stale "not yet deployed" sentence in the field note (above).
+2. Its two proposed Fridays were moved on 2026-11-04 from 2026-10-16 and 2026-10-23 (both passed) to
+   2026-11-20 and 2026-12-04. Confirm both are free.
+3. The stale "not yet deployed" sentence in the field note was fixed on 2026-11-04 (above).
 4. Swap the docs link in the email for the tracked
    `https://three.ws/docs/solana?utm_source=quicknode&utm_medium=email&utm_campaign=mkt-2026-11-quicknode&utm_content=field-note`.
 
@@ -126,9 +138,9 @@ If no thread exists in the owner's inbox, the packet names the public routes:
 | Chain dedupes by URL and keeps the first occurrence | same doc; `solanaRpcEndpoints()` in `api/_lib/solana/connection.js` | 2026-09-17 |
 | Cooldowns 6h, 30m, 10m, 2m, 30s | `QUOTA_COOLDOWN_MS`, `AUTH_COOLDOWN_MS`, `RATE_LIMIT_COOLDOWN_MS`, `SERVER_COOLDOWN_MS`, `NETWORK_COOLDOWN_MS` in `connection.js` | 2026-09-17 |
 | Per-method demotion for 15 minutes | `METHOD_DEMOTION_MS = 15 * 60_000` in `connection.js` | 2026-09-17 |
-| Last good answer served with `x-solana-rpc-stale` | `connection.js` around line 340 | 2026-09-17 |
+| Last good answer served with `x-solana-rpc-stale` | `serveLastGood()` in `connection.js` (line 361 on 2026-11-04) | 2026-09-17 |
 | Fleet-wide breakers | field note source table; `rpcLaneHealth()` comment in `connection.js` | repo |
-| Member of the Quicknode Startup Program; Quicknode is a rung, not the whole chain | [docs/partners.md](../../../docs/partners.md) | repo |
+| Member of the Quicknode Startup Program; Quicknode is a rung, not the whole chain | [docs/partners.md](../../../docs/partners.md); no Quicknode lane configured in production since 2026-10-08 | repo |
 | Recovery-probe commit `ac1ba86ad` is deployed | `git merge-base --is-ancestor ac1ba86ad 477eb6f8c` succeeds; `/api/version` commit `477eb6f8c` | 2026-09-17 |
 
 Dropped: the point-in-time "all lanes cooling" health reading from 2026-09-16 (a snapshot, not a claim to
@@ -138,3 +150,22 @@ repeat publicly), and request volume through Quicknode (not measured in the repo
 
 Reply in the existing Quicknode Startup Program thread with the refreshed email and field note, then post
 the X anchor with the docs image.
+
+## Re-verification
+
+Re-measured 2026-11-04. Run `node scripts/check-kit-links.mjs` on this kit and both partner packets again on
+the send day; it exits 0 only when every link answers.
+
+| Claim | Evidence command | Result on 2026-11-04 |
+|---|---|---|
+| Metered reserve was named as primary until 2026-07-28; `-32003` | `sed -n 71p docs/solana.md` | Holds |
+| Dedupe keeps the first occurrence | `grep -n "dedupe(\[" api/_lib/solana/connection.js` and docs/solana.md line 71 | Holds |
+| Cooldowns 6h, 30m, 10m, 2m, 30s | `grep -n "COOLDOWN_MS = " api/_lib/solana/connection.js` | Holds (lines 200 to 209) |
+| Per-method demotion for 15 minutes | `grep -n "METHOD_DEMOTION_MS = " api/_lib/solana/connection.js` | Holds (line 400) |
+| `x-solana-rpc-stale` last-good serve | `grep -n "function serveLastGood" api/_lib/solana/connection.js` | Holds; the line moved from about 340 to 361 (claims table updated) |
+| Fleet-wide breakers | `grep -n "COOLDOWN_CACHE_KEY" api/_lib/solana/connection.js` | Holds |
+| Quicknode endpoint is a real rung in the production chain | `gcloud run revisions list` and `gcloud run services describe three-ws-api`, host names only | **Stale, corrected.** No Quicknode lane since revision `three-ws-api-00477-grl` (2026-10-08); the removed endpoint still fails TLS |
+| Recovery-probe commit deployed | `git merge-base --is-ancestor ac1ba86ad 0a913e8a7`; live commit from `curl -s https://three.ws/api/version` | Holds; field note sentence fixed |
+| X anchor 170, post 2 210, post 3 192 weighted characters | URLs counted as 23 characters, every other character as 1 | 170, 210, 192 (unchanged) |
+| Proposed Fridays | `date -d 2026-11-20 +%A; date -d 2026-12-04 +%A` | Both Friday; applied to the spotlight ask |
+| Every link in this kit | `node scripts/check-kit-links.mjs marketing/growth/kits/MKT-2026-11-QUICKNODE.md` | 14 links, 0 dead |

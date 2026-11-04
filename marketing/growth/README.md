@@ -27,6 +27,10 @@ This directory is the operational layer above the repo's deeper source material:
 - [Anchor campaign proof](./proof/README.md): desktop, X, and mobile stills plus 15-second
   clips of every anchor campaign's three.ws surface, captured from production by
   `scripts/capture-campaign-proof.mjs`, with the defects seen at capture.
+- Send-day link check: `node scripts/check-kit-links.mjs <kit.md> [<packet.md> ...]` fetches
+  every http(s) link in a campaign kit or partner packet with a plain GET (root-relative links
+  against `--site`, default `https://three.ws`) and confirms every relative link resolves to a
+  repo file. It exits 0 only when nothing is dead, so run it before the owner sends a kit.
 - [Wide sweep of 2026-09-18](./sweep-2026-09-18.md): every launch platform, directory,
   newsletter, app store, event, standards body, and crypto-ecosystem route found that day,
   with evidence and the dropped lists.
