@@ -102,4 +102,15 @@ describe('autopilot scripts', () => {
 		expect(src).toContain('FATAL');
 		expect(src.indexOf('daemon-reload')).toBeLessThan(src.indexOf('enable --now autopilot.timer'));
 	});
+
+	it('bootstrap.sh installs git-lfs, because the repo pre-push hook refuses to run without it', () => {
+		expect(read('bootstrap.sh')).toMatch(/apt-get install[^\n]*\bgit-lfs\b/);
+	});
+
+	it('run.sh jq filters avoid reserved words and null signatures, and the studio install tolerates peer ranges', () => {
+		const src = read('run.sh');
+		expect(src).not.toMatch(/as \$def\b/);
+		expect(src).toContain('.signature | select(. != null)');
+		expect(src).toContain('npm ci --prefix character-studio --legacy-peer-deps');
+	});
 });

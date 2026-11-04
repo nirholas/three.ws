@@ -99,10 +99,10 @@ actionable_signatures() {
 	local deferred="$BASE_DIR/deferred.json"
 	[ -f "$deferred" ] || echo '{}' >"$deferred"
 	jq -r --slurpfile d "$deferred" --argjson h "$DEFER_HOURS" '
-		($d[0] // {}) as $def
-		| [.findings[]? | select(.class == "env-action" or .class == "investigate") | .signature]
+		($d[0] // {}) as $dfr
+		| [.findings[]? | select(.class == "env-action" or .class == "investigate") | .signature | select(. != null)]
 		| unique[]
-		| select(($def[.] // null) == null or ((now - ($def[.] | fromdateiso8601)) > ($h * 3600)))
+		| select(($dfr[.] // null) == null or ((now - ($dfr[.] | fromdateiso8601)) > ($h * 3600)))
 	' "$AUTOPILOT_RUN_DIR/triage.json"
 }
 

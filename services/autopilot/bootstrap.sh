@@ -15,7 +15,7 @@ PROJECT=aerial-vehicle-466722-p5
 as_user() { sudo -u "$USER_NAME" -H bash -lc "$1"; }
 
 apt-get update -q
-apt-get install -y -q git jq curl ca-certificates gettext-base build-essential python3 xz-utils
+apt-get install -y -q git git-lfs jq curl ca-certificates gettext-base build-essential python3 xz-utils
 
 if ! command -v gcloud >/dev/null; then
 	curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
