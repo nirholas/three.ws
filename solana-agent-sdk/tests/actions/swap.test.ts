@@ -79,7 +79,7 @@ function makeMetaWallet(): MetaAwareWallet {
 const connection = {} as never;
 
 /** A connection whose mint accounts carry real SPL mint data under their owning program. */
-function mintConnection(mints: Record<string, { program: PublicKey; decimals: number }>) {
+function mintConnection(mints: Record<string, { program: InstanceType<typeof PublicKey>; decimals: number }>) {
   const getAccountInfo = jest.fn(async (key: InstanceType<typeof PublicKey>) => {
     const m = mints[key.toBase58()];
     if (!m) return null;

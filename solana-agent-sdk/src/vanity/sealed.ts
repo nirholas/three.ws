@@ -42,6 +42,8 @@ function fromBase64url(str: string): Uint8Array {
 
 const KEY_DECODERS: Record<string, (s: string) => Uint8Array> = {
   hex: (s) => {
+    // Internal signal only: parseX25519Key catches every decoder failure and
+    // reports it to the caller as an InvalidInputError.
     if (!/^[0-9a-fA-F]+$/.test(s) || s.length % 2) throw new Error("not hex");
     return Uint8Array.from(s.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
   },

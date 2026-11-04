@@ -36,21 +36,26 @@ export async function transferSpl(
   const to = typeof params.to === "string" ? new PublicKey(params.to) : params.to;
 
   // Resolve classic SPL vs Token-2022 from the mint owner so $THREE and other
-  // Token-2022 mints get the correct ATA derivation and program — not the
+  // Token-2022 mints get the correct ATA derivation and program, not the
   // classic-only default, which derives the wrong address and fails.
   const tokenProgramId = await resolveTokenProgramId(connection, mint);
   const mintInfo = await getMint(connection, mint, undefined, tokenProgramId);
   const instructions: TransactionInstruction[] = [];
 
   const senderAta = getAssociatedTokenAddressSync(mint, wallet.publicKey, false, tokenProgramId, ASSOCIATED_TOKEN_PROGRAM_ID);
-  const receiverAta = getAssociatedTokenAddressSync(mint, to, false, tokenProgramId, ASSOCIATED_TOKEN_PROGRAM_ID);
+  // The recipient may be a program-derived address (an escrow, vault or
+  // multisig), which is off-curve. Its ATA derives the same way; only the
+  // on-curve guard has to be lifted.
+  const receiverAta = getAssociatedTokenAddressSync(mint, to, true, tokenProgramId, ASSOCIATED_TOKEN_PROGRAM_ID);
 
-  const senderInfo = await connection.getAccountInfo(senderAta);
+  const [senderInfo, receiverInfo] = await Promise.all([
+    connection.getAccountInfo(senderAta),
+    connection.getAccountInfo(receiverAta),
+  ]);
   if (!senderInfo) {
     throw new MissingTokenAccountError(mint.toBase58(), wallet.publicKey.toBase58());
   }
 
-  const receiverInfo = await connection.getAccountInfo(receiverAta);
   if (!receiverInfo) {
     instructions.push(
       createAssociatedTokenAccountInstruction(

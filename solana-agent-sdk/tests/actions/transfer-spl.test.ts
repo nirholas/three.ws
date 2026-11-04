@@ -16,7 +16,7 @@ jest.unstable_mockModule("@solana/spl-token", () => {
 });
 
 const { transferSpl } = await import("../../src/actions/transfer-spl.js");
-const { Keypair } = await import("@solana/web3.js") as typeof import("@solana/web3.js");
+const { Keypair, PublicKey: PublicKeyCtor } = await import("@solana/web3.js") as typeof import("@solana/web3.js");
 const { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } =
   await import("@solana/spl-token") as typeof import("@solana/spl-token");
 
@@ -46,11 +46,12 @@ function makeConnection(
   receiverExists: boolean,
   mintProgram: PublicKey = TOKEN_PROGRAM_ID,
   mint: PublicKey = MINT_PUBKEY,
+  recipient: PublicKey = RECIPIENT_PUBKEY,
 ) {
   // ATAs are derived with whichever program owns the mint, so a Token-2022 test
   // must look its accounts up under the Token-2022 program.
   const senderAta = getAssociatedTokenAddressSync(mint, WALLET_PUBKEY, false, mintProgram, ASSOCIATED_TOKEN_PROGRAM_ID);
-  const receiverAta = getAssociatedTokenAddressSync(mint, RECIPIENT_PUBKEY, false, mintProgram, ASSOCIATED_TOKEN_PROGRAM_ID);
+  const receiverAta = getAssociatedTokenAddressSync(mint, recipient, true, mintProgram, ASSOCIATED_TOKEN_PROGRAM_ID);
   const getAccountInfo = jest.fn<(pubkey: PublicKey) => Promise<AccountInfo<Buffer> | null>>();
   getAccountInfo.mockImplementation(async (pubkey) => {
     // resolveTokenProgramId reads the mint account's owner to pick the program.
@@ -152,5 +153,25 @@ describe("transferSpl", () => {
       MINT_2022_PUBKEY, WALLET_PUBKEY, false, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
     );
     expect(transferIx.keys[0]!.pubkey.equals(expectedSenderAta)).toBe(true);
+  });
+
+  it("pays a program-owned (PDA) recipient, creating its token account", async () => {
+    // Escrows, vaults and multisigs hold tokens at an off-curve PDA. Deriving
+    // their ATA must not throw TokenOwnerOffCurveError.
+    const [pda] = PublicKeyCtor.findProgramAddressSync([Buffer.from("vault")], TOKEN_2022_PROGRAM_ID);
+    expect(PublicKeyCtor.isOnCurve(pda.toBytes())).toBe(false);
+
+    await transferSpl(makeWallet(), makeConnection(true, false, TOKEN_PROGRAM_ID, MINT_PUBKEY, pda), {
+      mint: MINT_PUBKEY, to: pda, amount: 1_000_000n,
+    });
+
+    const pdaAta = getAssociatedTokenAddressSync(MINT_PUBKEY, pda, true, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+    const [, , instructions] = mockBuildAndSendFn.mock.calls[0]!;
+    expect(instructions).toHaveLength(2);
+    const [createIx, transferIx] = instructions;
+    expect(createIx!.programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)).toBe(true);
+    expect(createIx!.keys[1]!.pubkey.equals(pdaAta)).toBe(true);
+    expect(createIx!.keys[2]!.pubkey.equals(pda)).toBe(true);
+    expect(transferIx!.keys[2]!.pubkey.equals(pdaAta)).toBe(true);
   });
 });

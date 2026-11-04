@@ -115,7 +115,7 @@ describe("assertSwapMatchesQuote", () => {
         addresses: [ata(INPUT_MINT, pool), ata(THREE_MINT, pool, TOKEN_2022_PROGRAM_ID), new PublicKey(THREE_MINT)],
       },
     });
-    const getAddressLookupTable = jest.fn(async () => ({ context: { slot: 1 }, value: table }));
+    const getAddressLookupTable = jest.fn(async (_key: unknown) => ({ context: { slot: 1 }, value: table }));
     const connection = { getAddressLookupTable } as unknown as Connection;
     const tx = v0([spend(1_000_000n), creditThree()], [table]);
     expect(tx.message.addressTableLookups).toHaveLength(1);

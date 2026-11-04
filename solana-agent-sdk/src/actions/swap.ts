@@ -3,11 +3,12 @@ import {
   VersionedTransaction,
   type Connection,
 } from "@solana/web3.js";
-import { getMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getMint } from "@solana/spl-token";
 import { isMetaAware, type WalletProvider } from "../wallet/types.js";
 import { SwapError } from "../errors.js";
 import { toUiAmount } from "../utils/format.js";
 import { assertSwapMatchesQuote } from "./swap-guard.js";
+import { resolveTokenProgramId } from "../utils/token-program.js";
 
 const JUPITER_QUOTE_API = "https://quote-api.jup.ag/v6";
 
@@ -141,15 +142,24 @@ function shortMint(mint: string): string {
 
 const decimalsCache = new Map<string, number>();
 
+/**
+ * Read a mint's decimals from chain under whichever token program owns it.
+ *
+ * There is deliberately no guessed fallback: the result sizes the amounts shown
+ * in the wallet's approval prompt, and a wrong guess (6 for a 9-decimal mint)
+ * misstates the swap by orders of magnitude. If the mint cannot be read, the
+ * swap's own RPC calls moments later would not succeed either, so failing here
+ * costs nothing and keeps a wrong figure out of the signing prompt.
+ *
+ * @throws MintNotFoundError / NotATokenMintError from resolveTokenProgramId.
+ */
 async function fetchDecimals(connection: Connection, mint: string): Promise<number> {
   if (mint === SOL_MINT) return 9;
   const cached = decimalsCache.get(mint);
   if (cached !== undefined) return cached;
-  try {
-    const info = await getMint(connection, new PublicKey(mint), "confirmed", TOKEN_PROGRAM_ID);
-    decimalsCache.set(mint, info.decimals);
-    return info.decimals;
-  } catch {
-    return 6;
-  }
+  const key = new PublicKey(mint);
+  const programId = await resolveTokenProgramId(connection, key);
+  const info = await getMint(connection, key, "confirmed", programId);
+  decimalsCache.set(mint, info.decimals);
+  return info.decimals;
 }

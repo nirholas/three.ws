@@ -76,7 +76,7 @@ describe("KeypairWalletProvider", () => {
         void raw;
         return "sentSig";
       });
-      const getSignatureStatuses = jest.fn(async () => ({ context: { slot: 1 }, value: [status] }));
+      const getSignatureStatuses = jest.fn(async (_signatures: string[]) => ({ context: { slot: 1 }, value: [status] }));
       const getBlockHeight = jest.fn(async () => 1);
       const connection = { sendRawTransaction, getSignatureStatuses, getBlockHeight } as unknown as Connection;
       return { connection, sendRawTransaction, getSignatureStatuses };

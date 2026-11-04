@@ -14,7 +14,7 @@ function connectionWith(statuses: Status[], blockHeights: number[] = []) {
     poll++;
     return { context: { slot: 1 }, value: [value] };
   });
-  const getBlockHeight = jest.fn(async () => {
+  const getBlockHeight = jest.fn(async (_commitment?: string) => {
     const h = blockHeights[Math.min(heightPoll, blockHeights.length - 1)] ?? 0;
     heightPoll++;
     return h;

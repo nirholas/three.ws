@@ -18,7 +18,7 @@ const syntheticMint = (seed: number) => Keypair.fromSeed(new Uint8Array(32).fill
  */
 function connectionFor(mintOwner: PublicKey | null, balance: () => Promise<unknown>) {
   const getAccountInfo = jest.fn(async () => (mintOwner ? { owner: mintOwner, data: Buffer.alloc(82), lamports: 1, executable: false } : null));
-  const getTokenAccountBalance = jest.fn(balance);
+  const getTokenAccountBalance = jest.fn((_ata: PublicKey) => balance());
   return {
     connection: { getAccountInfo, getTokenAccountBalance } as unknown as Connection,
     getAccountInfo,
