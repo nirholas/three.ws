@@ -15,6 +15,14 @@
 			<description>A new agent gets a private coin plan drafted from its own name and persona, and its Solana wallet is set up at creation if that step had failed. Owners see a Next step card on the agent page with the drafted name and ticker, whether the launch wallet can cover launch costs, and one Review and launch button that opens the confirmation screen, where nothing is signed or spent until you approve it. Each step from plan viewed to launch succeeded is now recorded so the launch drop-off can be measured.</description>
 		</item>
 		<item>
+			<title>Optional one-wallet-per-call payer for the x402 ring</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Optional one-wallet-per-call payer for the x402 ring</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting.</description>
+		</item>
+		<item>
 			<title>Agent Memory Settings</title>
 			<link>https://three.ws/settings/memory</link>
 			<guid isPermaLink="false">2026-11-03:Agent Memory Settings</guid>

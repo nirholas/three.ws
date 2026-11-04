@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T06:55:39.337Z",
+	"generated_at": "2026-11-04T16:08:31.830Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4307,
+	"total": 4308,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -17,6 +17,17 @@
 			"link": "/docs/experiments-agent-launch-funnel",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Optional one-wallet-per-call payer for the x402 ring",
+			"summary": "With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{
@@ -1541,16 +1552,6 @@
 			"title": "Docs · MPP on Solana",
 			"summary": "Serve and pay MPP Payment challenges on Solana beside x402 on the same URL: the challenge and credential wire format, the mpp option on paid endpoints, the agent payer with spending caps and a dry-run quote, and how to verify it.",
 			"link": "/docs/mpp-solana",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-23",
-			"type": "launch",
-			"title": "Docs · One paid skill, four rails",
-			"summary": "Price a marketplace skill once and serve it over x402, MPP, A2A and AP2 with the same author and platform split, one agent card and one receipt. Includes the dry-run quote, rail toggles and 404 on a disabled rail.",
-			"link": "/docs/skill-rails",
 			"tags": [
 				"launch"
 			]

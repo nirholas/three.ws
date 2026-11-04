@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-11-04
 
 - **Every new agent now starts with a drafted coin**: A new agent gets a private coin plan drafted from its own name and persona, and its Solana wallet is set up at creation if that step had failed. Owners see a Next step card on the agent page with the drafted name and ticker, whether the launch wallet can cover launch costs, and one Review and launch button that opens the confirmation screen, where nothing is signed or spent until you approve it. Each step from plan viewed to launch succeeded is now recorded so the launch drop-off can be measured. (`/docs/experiments-agent-launch-funnel`) `[feature]`
+- **Optional one-wallet-per-call payer for the x402 ring**: With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting. `[improvement, infra]`
 
 ## 2026-11-03
 
