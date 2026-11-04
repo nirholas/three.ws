@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Catalog and reconstructed avatars load again in embeds and the walk companion",
+			"summary": "Avatars whose model lives outside the main bucket, such as the built-in catalog characters and avatars rebuilt from a photo, answered 404 on their embed-friendly GLB link, so embeds and the walk companion showed the robot placeholder instead. That link now serves those models, with the same open cross-origin access as every other avatar.",
+			"tags": ["fix"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Hover tips no longer swallow the click on the button underneath",
 			"summary": "A hover tip that opened over a neighbouring control used to catch the click meant for it, and stayed open while the pointer sat on it. On /render-lab the Contact sheet tip covered the Poses button, so clicking Poses did nothing. Plain hover tips now let clicks pass straight through and close the moment you press their control. Glossary term tips keep their Full glossary link reachable while they are showing.",
 			"tags": ["fix"],
