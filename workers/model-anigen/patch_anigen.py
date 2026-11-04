@@ -16,13 +16,14 @@ ONLY two Python files under `anigen/` (excluding the optional, unused
 `anigen/4drecon/` video add-on) that reference nvdiffrast:
 
   1. anigen/utils/postprocessing_utils.py: `import nvdiffrast.torch as dr` at
-     module top. Used only inside `_fill_holes`, `bake_vertex_colors_to_texture`,
-     `bake_texture`, `render_multiview_mesh_colors`, `to_glb`, `simplify_gs` -
-     none of which this worker ever calls (it always runs the pipeline with
-     fill_holes=False, texture_size=0; see pipeline.py). Deleting the
-     module-level import is enough: Python resolves `dr.*` lazily inside
-     those function bodies, so the module still imports cleanly, and only an
-     accidental call to one of those unused functions would raise NameError.
+     module top. At the pinned commit `dr` is used only inside the two
+     raster-bake functions, `bake_vertex_colors_to_texture` (no caller
+     anywhere upstream) and `bake_texture` (reached only when the pipeline
+     runs with texture_size > 0; this worker always passes 0, see
+     pipeline.py). The import is replaced by a sentinel `dr` that raises a
+     RuntimeError naming the fix if anything ever touches it, and an AST
+     check proves `dr` is still confined to exactly those two functions, so
+     upstream adding nvdiffrast to any other function fails the build.
   2. anigen/renderers/mesh_renderer.py: same import, consumed only by
      MeshRenderer.__init__/.render. Moved into __init__ as a local import (the
      lazy-import pattern anigen/renderers/__init__.py's own __getattr__
@@ -40,10 +41,47 @@ broken, or secretly dependent on a restricted-license package).
 """
 from __future__ import annotations
 
+import ast
 import sys
 from pathlib import Path
 
 POSTPROCESSING_UTILS_IMPORT = "import nvdiffrast.torch as dr\n"
+
+# The only top-level functions in postprocessing_utils.py allowed to use `dr`
+# (both raster texture bakes, unreachable from this worker; see above).
+POSTPROCESSING_DR_FUNCTIONS = ("bake_vertex_colors_to_texture", "bake_texture")
+
+# Bound in place of the import. Kept a module-level constant so the unit test
+# can execute the exact text the build writes.
+NVDIFFRAST_SENTINEL = (
+    "class _NvdiffrastUnavailable:\n"
+    "    def __getattr__(self, name):\n"
+    "        raise RuntimeError(\n"
+    "            'nvdiffrast is not installed in the three.ws AniGen worker (its '\n"
+    "            'license forbids commercial use), so AniGen\\'s raster texture '\n"
+    "            'bake is unavailable; run the pipeline with texture_size=0'\n"
+    "        )\n"
+    "\n"
+    "\n"
+    "dr = _NvdiffrastUnavailable()\n"
+)
+
+
+def _imports_nvdiffrast(tree: ast.AST) -> bool:
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import) and any(a.name.split(".")[0] == "nvdiffrast" for a in node.names):
+            return True
+        if isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] == "nvdiffrast":
+            return True
+    return False
+
+
+def _top_level_dr_users(tree: ast.Module) -> set[str]:
+    users = set()
+    for node in tree.body:
+        if any(isinstance(n, ast.Name) and n.id == "dr" for n in ast.walk(node)):
+            users.add(getattr(node, "name", type(node).__name__))
+    return users
 
 MESH_RENDERER_MODULE_IMPORT = "import nvdiffrast.torch as dr\n"
 MESH_RENDERER_INIT_MARKER = "    def __init__(self, rendering_options={}, device='cuda'):\n"
@@ -58,14 +96,37 @@ def patch_postprocessing_utils(path: Path) -> None:
             "not found; AniGen's postprocessing_utils.py has changed, re-check "
             "the nvdiffrast surface before patching blind"
         )
-    patched = text.replace(POSTPROCESSING_UTILS_IMPORT, "", 1)
-    if "nvdiffrast" in patched:
+    without_import = text.replace(POSTPROCESSING_UTILS_IMPORT, "", 1)
+    tree = ast.parse(without_import)
+    if _imports_nvdiffrast(tree):
         raise AssertionError(
-            f"{path}: nvdiffrast is still referenced after removing the import; "
-            "a new module-level usage appeared, re-check before patching blind"
+            f"{path}: another nvdiffrast import remains after removing the "
+            "top-level one; re-check the nvdiffrast surface before patching blind"
         )
+    users = _top_level_dr_users(tree)
+    unexpected = users - set(POSTPROCESSING_DR_FUNCTIONS)
+    if unexpected:
+        raise AssertionError(
+            f"{path}: nvdiffrast (`dr`) is now used outside the known raster-bake "
+            f"functions, in {sorted(unexpected)}; re-check whether this worker's "
+            "call path reaches it before patching blind"
+        )
+    patched = _insert_after_imports(without_import, tree, NVDIFFRAST_SENTINEL)
     path.write_text(patched)
-    print(f"patched {path}: removed module-level nvdiffrast import")
+    print(f"patched {path}: replaced the nvdiffrast import with a fail-loud sentinel "
+          f"(dr used only in {sorted(users)})")
+
+
+def _insert_after_imports(source: str, tree: ast.Module, block: str) -> str:
+    """Insert `block` right after the module's leading import statements."""
+    last_import_end = 0
+    for node in tree.body:
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            last_import_end = node.end_lineno
+        elif not (isinstance(node, ast.Expr) and isinstance(getattr(node, "value", None), ast.Constant)):
+            break
+    lines = source.splitlines(keepends=True)
+    return "".join(lines[:last_import_end]) + "\n\n" + block + "".join(lines[last_import_end:])
 
 
 def patch_mesh_renderer(path: Path) -> None:
