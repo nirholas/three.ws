@@ -834,10 +834,12 @@ export function paidEndpoint(spec) {
 		// payment alternatives and the request carries a valid Authorization
 		// Bearer or SIGN-IN-WITH-X header, bypass the payment dance entirely.
 		// Runs BEFORE the generic access-control hook so the auth-hints
-		// principal is what reaches the handler. The SIWX path here does NOT
+		// principal is what reaches the handler. Gated on the route's declared
+		// authHints, not on the advertisement (X402_AUTH_HINT_ACCEPTS), so the
+		// free path keeps working when the 402 stays validator-clean. The SIWX path here does NOT
 		// require a prior on-chain payment (unlike the USE-16 returning-buyer
 		// SIWX flow further down).
-		if (authHintsExtension) {
+		if (authHints && (authHints.oauth2 || authHints.siwx)) {
 			const result = await authenticateAuthHintsRequest(req, {
 				audience: env.MCP_RESOURCE,
 				requiredScope: authHints?.oauth2?.requiredScope || requiredScope || null,

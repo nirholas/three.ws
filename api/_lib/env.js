@@ -1111,13 +1111,14 @@ export const env = {
 	// the auth-hints extension so buyer clients can discover the free auth
 	// alternative. External x402 directory validators (402index confirmed;
 	// likely other amount-must-be-positive crawlers) reject any challenge that
-	// contains amount="0" entries as "no valid x402 challenge" — set 'false' to
-	// suppress the advertisement on a deployment that prioritizes directory
-	// listability. Auth bypass itself is unaffected either way: the
+	// contains amount="0" entries as "no valid x402 challenge", so the default
+	// is 'false' (validator-clean). Set 'true' to opt in to the advertisement;
+	// the supported auth methods are published in /openapi.json and
+	// /.well-known/x402.json either way. Auth bypass itself is unaffected either way: the
 	// access-control hook honors Bearer/SIWX headers before the payment dance
 	// regardless of what the 402 advertises.
 	get X402_AUTH_HINT_ACCEPTS() {
-		return opt('X402_AUTH_HINT_ACCEPTS', 'true') === 'true';
+		return opt('X402_AUTH_HINT_ACCEPTS', 'false') === 'true';
 	},
 	// Flat THREE price per paid call, in atomic THREE units (6 decimals).
 	// 10_000_000 = 10 $THREE. A single flat amount for every endpoint regardless
