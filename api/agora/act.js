@@ -237,9 +237,14 @@ async function postTaskCore({ user, body, requestedCluster, hire }) {
 		};
 
 		if (cluster === 'mainnet') {
-			const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
-			createArgs.rewardMint = new PublicKey(TOKEN_MINT);
-			createArgs.creatorTokenAccount = getAssociatedTokenAddressSync(new PublicKey(TOKEN_MINT), reg.signer.publicKey, false);
+			const { ataFor, tokenProgramForMint } = await import('../_lib/solana-token-program.js');
+			const rewardMint = new PublicKey(TOKEN_MINT);
+			createArgs.rewardMint = rewardMint;
+			createArgs.creatorTokenAccount = ataFor(
+				rewardMint,
+				reg.signer.publicKey,
+				await tokenProgramForMint(reg.client.connection, rewardMint),
+			);
 			// Real money: check the $THREE the escrow will actually debit before we
 			// sign, so "you don't hold enough $THREE" is a designed state and not an
 			// SPL transfer failure surfaced as a 502.

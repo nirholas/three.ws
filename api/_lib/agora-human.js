@@ -473,11 +473,12 @@ export async function citizenBalances(citizen, cluster) {
 
 async function readThreeBalance(address) {
 	const { PublicKey } = await import('@solana/web3.js');
-	const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
+	const { ataFor, tokenProgramForMint } = await import('./solana-token-program.js');
 	const { solanaConnection } = await import('./agent-pumpfun.js');
 	const conn = solanaConnection('mainnet');
-	const owner = new PublicKey(address);
-	const ata = getAssociatedTokenAddressSync(new PublicKey(TOKEN_MINT), owner, false);
+	const mint = new PublicKey(TOKEN_MINT);
+	// $THREE is Token-2022: the balance lives in the ATA its own program derives.
+	const ata = ataFor(mint, new PublicKey(address), await tokenProgramForMint(conn, mint));
 	try {
 		const bal = await conn.getTokenAccountBalance(ata);
 		return bal?.value?.uiAmount ?? 0;
