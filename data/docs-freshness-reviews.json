@@ -129,10 +129,10 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/agent-skills.md": {
-			"commit": "9c9d80bcc",
+			"commit": "bfcfb19c3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "3f5f58ff7 only adds market-brief to the published prompt lists in mcp.json; the doc reads server URLs from that file and names asset-pack as an example, neither changed"
 		},
 		"docs/agent-symphony.md": {
 			"commit": "53f2a200f",
