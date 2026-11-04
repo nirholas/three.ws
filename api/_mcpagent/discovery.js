@@ -58,6 +58,8 @@ export const RESOURCE_DESCRIPTION =
 	'news_wire_search, news_wire_poll_quote and news_wire_poll, transit_plan_quote and transit_plan, ' +
 	'transit_delays_quote and transit_delays, places_search_quote and places_search, and ' +
 	'places_detail_quote and places_detail. ' +
+	'Agent memory: get_learning_status reports whether memory is on, what agents remember and which ' +
+	'learned skills wait for review (read only). ' +
 	'Third-party MCP servers on your agents: list_integrations, install_integration and remove_integration. ' +
 	'Every money-moving tool needs its preview first and an explicit confirm flag. ' +
 	'Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no ' +
