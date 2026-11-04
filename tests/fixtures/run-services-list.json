@@ -1,0 +1,324 @@
+[
+ {
+  "metadata": {
+   "name": "agent-sniper",
+   "labels": {
+    "cloud.googleapis.com/location": "us-central1"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "1",
+      "autoscaling.knative.dev/minScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "1",
+         "memory": "1Gi"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://agent-sniper-lp642k3kpa-uc.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-09-29T07:07:15.963959Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ },
+ {
+  "metadata": {
+   "name": "model-hunyuan3d",
+   "labels": {
+    "cloud.googleapis.com/location": "us-central1"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "8",
+         "memory": "32Gi",
+         "nvidia.com/gpu": "1"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://model-hunyuan3d-lp642k3kpa-uc.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-11-04T07:25:33.470026Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ },
+ {
+  "metadata": {
+   "name": "model-hunyuan3d",
+   "labels": {
+    "cloud.googleapis.com/location": "us-east4"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "8",
+         "memory": "32Gi",
+         "nvidia.com/gpu": "1"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://model-hunyuan3d-lp642k3kpa-uk.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-08-11T01:25:07.159458Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ },
+ {
+  "metadata": {
+   "name": "model-rig",
+   "labels": {
+    "cloud.googleapis.com/location": "us-central1"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "1",
+      "autoscaling.knative.dev/minScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "4",
+         "memory": "16Gi",
+         "nvidia.com/gpu": "1"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://model-rig-lp642k3kpa-uc.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-11-04T18:19:43.925975Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ },
+ {
+  "metadata": {
+   "name": "model-trellis",
+   "labels": {
+    "cloud.googleapis.com/location": "us-central1"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "3",
+      "autoscaling.knative.dev/minScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "8",
+         "memory": "32Gi",
+         "nvidia.com/gpu": "1"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://model-trellis-lp642k3kpa-uc.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-11-04T06:49:36.252913Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ },
+ {
+  "metadata": {
+   "name": "model-trellis",
+   "labels": {
+    "cloud.googleapis.com/location": "us-east4"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "8",
+         "memory": "32Gi",
+         "nvidia.com/gpu": "1"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://model-trellis-lp642k3kpa-uk.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-11-04T06:53:22.281423Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ },
+ {
+  "metadata": {
+   "name": "okx-chat-bot",
+   "labels": {
+    "cloud.googleapis.com/location": "us-central1"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "1",
+      "autoscaling.knative.dev/minScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "2",
+         "memory": "4Gi"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://okx-chat-bot-lp642k3kpa-uc.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-09-29T06:41:10.695701Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ },
+ {
+  "metadata": {
+   "name": "rembg-service",
+   "labels": {
+    "cloud.googleapis.com/location": "us-central1"
+   }
+  },
+  "spec": {
+   "template": {
+    "metadata": {
+     "annotations": {
+      "autoscaling.knative.dev/maxScale": "4",
+      "autoscaling.knative.dev/minScale": "1"
+     }
+    },
+    "spec": {
+     "containers": [
+      {
+       "resources": {
+        "limits": {
+         "cpu": "4",
+         "memory": "8Gi"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "status": {
+   "url": "https://rembg-service-lp642k3kpa-uc.a.run.app",
+   "conditions": [
+    {
+     "lastTransitionTime": "2026-07-16T21:15:40.636175Z",
+     "status": "True",
+     "type": "Ready"
+    }
+   ]
+  }
+ }
+]

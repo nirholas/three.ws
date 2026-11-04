@@ -292,3 +292,5 @@ curl -sS -o /dev/null -w '%{http_code}\n' \
 > Quota approval can take hours — request it before a first deploy. The shared
 > A100 workbench used for experiments is separate from these serving workers and
 > may be stopped without affecting them.
+
+Fleet-wide deployed state, ship commands and build-only verify configs for every worker (not just the forge lanes): [workers-fleet.md](./workers-fleet.md), refreshed with `npm run workers:fleet -- --markdown`.

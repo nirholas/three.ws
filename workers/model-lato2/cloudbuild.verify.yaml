@@ -1,0 +1,21 @@
+# Build-only verification for the model-lato2 image. Builds the same Dockerfile the real
+# cloudbuild.yaml builds and stops before push and deploy: nothing is tagged in
+# Artifact Registry and no service changes. Owner-gated deploys stay untouched.
+#
+#   gcloud builds submit workers/model-lato2 --config workers/model-lato2/cloudbuild.verify.yaml --region us-central1 --project aerial-vehicle-466722-p5
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - model-lato2:verify
+      - .
+    timeout: 1800s
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8

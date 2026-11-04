@@ -1,0 +1,23 @@
+# Build-only verification for the agora-citizens image. Builds the same Dockerfile the real
+# cloudbuild.yaml builds and stops before push and deploy: nothing is tagged in
+# Artifact Registry and no service changes. Owner-gated deploys stay untouched.
+#
+#   gcloud builds submit . --config workers/agora-citizens/cloudbuild.verify.yaml --ignore-file workers/agora-citizens/verify.gcloudignore --region us-central1 --project aerial-vehicle-466722-p5
+
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - workers/agora-citizens/Dockerfile
+      - --tag
+      - agora-citizens:verify
+      - .
+    timeout: 1800s
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8

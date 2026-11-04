@@ -5,6 +5,8 @@ Out-of-process compute for three.ws — the heavy and edge work that does not be
 - **Cloud Run services** — Python FastAPI apps (GPU or CPU) with a `Dockerfile` + `cloudbuild.yaml`, deployed to Google Cloud Run. These run the avatar reconstruction / rigging models and the talking-avatar video model.
 - **Cloudflare Worker** — one JavaScript worker (`wrangler.toml`) deployed with `wrangler deploy`: the remote MCP server.
 
+**Which workers are live?** Run `npm run workers:fleet` (table), `npm run workers:fleet -- --check` (fails when a README status line disagrees with Cloud Run) or read the generated [docs/ops/workers-fleet.md](../docs/ops/workers-fleet.md). The "not deployed" notes below are descriptions; that command is the source of truth.
+
 ## Avatar pipeline (Cloud Run)
 
 The avatar pipeline turns a photo into a rigged, blendshape-ready 3D GLB by fanning out to single-purpose GPU services, coordinated by a CPU controller. The controller keeps the same HTTP contract as the original reconstruction service so `api/_providers/gcp.js` needs no changes.

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "One command shows which workers are live",
+			"summary": "npm run workers:fleet lists every worker as live or built-only with instances, GPU, last deploy and test coverage, fails when a README disagrees with Cloud Run, and 11 undeployed workers gained build-only verify configs. Includes a MoMask benchmark script.",
+			"tags": [
+				"workers",
+				"tooling"
+			],
+			"link": "/docs/ops/workers-fleet.md"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Mobile performance budget gate and coin chart layout fix",
 			"summary": "mobile-perf.mjs gains a --budget mode that fails when LCP, CLS or blocking time exceed budget on six key pages, and the coin page reserves its chart height so the page no longer jumps when the chart loads.",
 			"tags": [

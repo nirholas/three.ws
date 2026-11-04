@@ -1,0 +1,12 @@
+# Upload allowlist for cloudbuild.verify.yaml (gitignore syntax; last match wins).
+# Only the trees workers/agora-citizens/Dockerfile COPYs. /workers/ is re-included whole
+# because gitignore cannot re-include a child of an excluded directory.
+/*
+!/workers/
+!/solana-agent-sdk/
+!/api/
+!/packages/
+!/package.json
+!/package-lock.json
+!/.npmrc
+!/.dockerignore

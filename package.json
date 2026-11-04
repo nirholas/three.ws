@@ -491,6 +491,7 @@
 		"check:pages": "node scripts/check-pages.mjs",
 		"check:tutorials": "node scripts/sync-tutorial-pages.mjs",
 		"tutorials:sync": "node scripts/sync-tutorial-pages.mjs --write",
+		"workers:fleet": "node scripts/workers-fleet-status.mjs",
 		"check:claude": "node scripts/check-claude-md.mjs",
 		"verify:erc8004-validation": "node scripts/erc8004/verify-validation-registry.mjs",
 		"evals": "node scripts/evals.mjs",
