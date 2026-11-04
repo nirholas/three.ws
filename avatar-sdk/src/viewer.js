@@ -22,6 +22,8 @@ import {
 	PMREMGenerator,
 	ACESFilmicToneMapping,
 	SRGBColorSpace,
+	AnimationMixer,
+	LoopRepeat,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -119,7 +121,7 @@ function prefersReducedMotion() {
 
 class ThreeWsViewerElement extends HTMLElement {
 	static get observedAttributes() {
-		return ['src', 'alt', 'background', 'wallet', 'agent-id', 'api-base', 'ar', 'auto-rotate'];
+		return ['src', 'alt', 'background', 'wallet', 'agent-id', 'api-base', 'ar', 'auto-rotate', 'autoplay', 'animation-name'];
 	}
 
 	// Property accessors that reflect to the attributes above. Setting an
@@ -142,6 +144,15 @@ class ThreeWsViewerElement extends HTMLElement {
 
 	get autoRotate() { return this.hasAttribute('auto-rotate'); }
 	set autoRotate(value) { this._reflectBoolean('auto-rotate', value); }
+
+	get autoplay() { return this.hasAttribute('autoplay'); }
+	set autoplay(value) { this._reflectBoolean('autoplay', value); }
+
+	get animationName() { return this.getAttribute('animation-name'); }
+	set animationName(value) { this._reflect('animation-name', value); }
+
+	/** Names of the clips the loaded model carries, in file order. */
+	get availableAnimations() { return this._clips.map((c) => c.name); }
 
 	_reflect(name, value) {
 		if (value == null || value === '') this.removeAttribute(name);
@@ -242,6 +253,9 @@ class ThreeWsViewerElement extends HTMLElement {
 		this._renderer = null;
 		this._controls = null;
 		this._model = null;
+		this._clips = [];
+		this._mixer = null;
+		this._lastAnimTime = 0;
 		this._raf = 0;
 		this._resizeObs = null;
 		this._loadToken = 0;
@@ -257,7 +271,7 @@ class ThreeWsViewerElement extends HTMLElement {
 	}
 
 	connectedCallback() {
-		for (const prop of ['src', 'alt', 'background', 'ar', 'autoRotate']) this._upgradeProperty(prop);
+		for (const prop of ['src', 'alt', 'background', 'ar', 'autoRotate', 'autoplay', 'animationName']) this._upgradeProperty(prop);
 		this._init();
 		this._render = this._render.bind(this);
 		this._raf = requestAnimationFrame(this._render);
@@ -296,6 +310,7 @@ class ThreeWsViewerElement extends HTMLElement {
 		this._envTex?.dispose();
 		this._envTex = null;
 		if (this._wallet) { try { this._wallet.destroy(); } catch { /* gone */ } this._wallet = null; }
+		this._stopAnimation();
 		if (this._model) { this._disposeModel(this._model); this._model = null; }
 		this._scene = null;
 		this._camera = null;
@@ -312,6 +327,7 @@ class ThreeWsViewerElement extends HTMLElement {
 		else if (name === 'wallet' || name === 'agent-id' || name === 'api-base') this._applyWallet();
 		else if (name === 'ar') this._applyAr();
 		else if (name === 'auto-rotate') this._applyAutoRotate();
+		else if (name === 'autoplay' || name === 'animation-name') this._applyAnimation();
 	}
 
 	_init() {
@@ -451,10 +467,15 @@ class ThreeWsViewerElement extends HTMLElement {
 				);
 			});
 			if (token !== this._loadToken || !this._scene) return;
+			this._stopAnimation();
 			if (this._model) { this._scene.remove(this._model); this._disposeModel(this._model); }
 			this._model = gltf.scene;
+			this._clips = gltf.animations || [];
 			this._scene.add(this._model);
+			// Frame the bind pose before any clip moves the bones, so the camera
+			// fits the model the same way whether or not it animates.
 			this._frameModel(this._model);
+			this._applyAnimation();
 			this._setState('ready');
 			this.dispatchEvent(new CustomEvent('load', { detail: { url } }));
 		} catch (err) {
@@ -557,6 +578,32 @@ class ThreeWsViewerElement extends HTMLElement {
 		if (!this._controls) return;
 		this._controls.autoRotate = this.hasAttribute('auto-rotate') && !this._reducedMotion;
 		this._controls.autoRotateSpeed = 1.0;
+	}
+
+	// Opt-in clip playback (`autoplay` boolean attribute, same name and meaning as
+	// <model-viewer>). Plays the clip named by `animation-name`, else the model's
+	// first clip, on a loop. Off by default so existing embeds are unchanged.
+	// Under prefers-reduced-motion the clip is posed at its first frame and held:
+	// the model still shows its authored pose instead of a bind-pose T, but
+	// nothing moves.
+	_applyAnimation() {
+		this._stopAnimation();
+		if (!this._model || !this.hasAttribute('autoplay') || !this._clips.length) return;
+		const wanted = this.getAttribute('animation-name');
+		const clip = (wanted && this._clips.find((c) => c.name === wanted)) || this._clips[0];
+		this._mixer = new AnimationMixer(this._model);
+		const action = this._mixer.clipAction(clip);
+		action.setLoop(LoopRepeat, Infinity);
+		action.play();
+		this._mixer.update(0);
+		this._lastAnimTime = 0;
+	}
+
+	_stopAnimation() {
+		if (!this._mixer) return;
+		this._mixer.stopAllAction();
+		if (this._model) this._mixer.uncacheRoot(this._model);
+		this._mixer = null;
 	}
 
 	_frameModel(obj) {
@@ -692,6 +739,14 @@ class ThreeWsViewerElement extends HTMLElement {
 		if (!this._renderer) return;
 		this._raf = requestAnimationFrame(this._render);
 		this._controls?.update();
+		if (this._mixer && !this._reducedMotion) {
+			const t = now || performance.now();
+			// Clamp the step so a tab that slept for minutes resumes mid-loop
+			// instead of fast-forwarding through one huge delta.
+			const dt = this._lastAnimTime ? Math.min((t - this._lastAnimTime) / 1000, 0.1) : 0;
+			this._lastAnimTime = t;
+			this._mixer.update(dt);
+		}
 		this._renderer.render(this._scene, this._camera);
 		this._sampleFps(now || performance.now());
 	}

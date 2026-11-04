@@ -124,7 +124,8 @@
 						<div class="sdk-hero-viewer-glow" aria-hidden="true"></div>
 						<div class="sdk-hero-viewer-frame">
 							<three-ws-viewer
-								src="/avatars/default.glb"
+								src="/avatars/default-idle.glb"
+								autoplay
 								alt="Default three.ws avatar"
 								background="transparent"
 							></three-ws-viewer>
@@ -201,7 +202,8 @@
 								<span class="sdk-playground-stage-label" data-i18n="avatar_sdk.preview">Preview</span>
 								<three-ws-viewer
 									id="pg-viewer"
-									src="/avatars/default.glb"
+									src="/avatars/default-idle.glb"
+									autoplay
 									background="#090909"
 									alt="Playground avatar preview"
 									style="width:100%;height:100%"
@@ -216,8 +218,9 @@
 									<div class="sdk-pg-field">
 										<label for="pg-avatar" data-i18n="avatar_sdk.avatar">Avatar</label>
 										<select id="pg-avatar">
-											<option value="/avatars/default.glb" data-i18n="avatar_sdk.default_avatar">Default avatar</option>
-											<option value="/avatars/cz.glb" data-i18n="avatar_sdk.cz_avatar">CZ avatar</option>
+											<option value="/avatars/default-idle.glb" data-i18n="avatar_sdk.default_avatar">Default avatar</option>
+											<option value="/avatars/michelle.glb" data-animation="SambaDance" data-i18n="avatar_sdk.michelle_avatar">Michelle (dancing)</option>
+											<option value="/avatars/xbot.glb" data-animation="idle" data-i18n="avatar_sdk.xbot_avatar">X Bot (idle)</option>
 										</select>
 									</div>
 									<div class="sdk-pg-field">
@@ -382,7 +385,8 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 <span class="t-tag">&lt;/script&gt;</span>
 
 <span class="t-tag">&lt;three-ws-viewer</span>
-  <span class="t-attr">src</span>=<span class="t-str">"/avatars/default.glb"</span>
+  <span class="t-attr">src</span>=<span class="t-str">"/avatars/default-idle.glb"</span>
+  <span class="t-attr">autoplay</span>
   <span class="t-attr">background</span>=<span class="t-str">"#0e0e0e"</span>
   <span class="t-attr">alt</span>=<span class="t-str">"Hero avatar"</span>
   <span class="t-attr">style</span>=<span class="t-str">"width:400px;height:560px"</span>
@@ -392,7 +396,8 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 						<div class="sdk-reveal" style="display:flex;flex-direction:column;gap:16px">
 							<div style="background:var(--surface-1);border:1.5px solid var(--stroke);border-radius:var(--radius-card);overflow:hidden;aspect-ratio:3/4;max-height:420px">
 								<three-ws-viewer
-									src="/avatars/default.glb"
+									src="/avatars/default-idle.glb"
+									autoplay
 									background="#060606"
 									alt="Lightweight viewer demo"
 									style="width:100%;height:100%"

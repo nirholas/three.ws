@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Kūrėjo Iframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ avataras",
 		"dark_090909": "Tamsus (#090909)",
 		"default_avatar": "Numatytasis avataras",
 		"drop_in_web_component_react_bindings_iframe": "Įdiegiamas <strong>žiniatinklio komponentas</strong>, React sąsajos, iframe kūrėjas ir įkėlimas į debesį – išsamus <strong>atvirojo kodo avataro SDK</strong>, savaime talpinamas, be priklausomybės nuo tiekėjo.",

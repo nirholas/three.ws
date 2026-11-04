@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "ဖန်တီးသူ Iframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ avatar",
 		"dark_090909": "Dark (#090909)",
 		"default_avatar": "ပုံမှန် avatar",
 		"drop_in_web_component_react_bindings_iframe": "ထည့်သွင်းအသုံးပြုနိုင်သော <strong>web component</strong>၊ React bindings၊ iframe ဖန်တီးသူနှင့် cloud upload — ပြည့်စုံသော <strong>open avatar SDK</strong> တစ်ခုဖြစ်ပြီး ကိုယ်တိုင် host လုပ်နိုင်ကာ vendor lock-in မရှိပါ။",

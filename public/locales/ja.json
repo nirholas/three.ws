@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "クリエイターIframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZアバター",
 		"dark_090909": "ダーク (#090909)",
 		"default_avatar": "デフォルトアバター",
 		"drop_in_web_component_react_bindings_iframe": "ドロップイン<strong>ウェブコンポーネント</strong>、Reactバインディング、iframeクリエイター、クラウドアップロード — 完全な<strong>オープンアバターSDK</strong>。セルフホスト可能で、ベンダーロックインなし。",

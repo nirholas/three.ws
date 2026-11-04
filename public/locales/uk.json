@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe творця",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ аватар",
 		"dark_090909": "Темний (#090909)",
 		"default_avatar": "Аватар за замовчуванням",
 		"drop_in_web_component_react_bindings_iframe": "Вставте <strong>веб-компонент</strong>, React прив'язки, iframe творець та завантаження в хмару — повний <strong>відкритий SDK аватара</strong>, самостійно хостинг, без прив'язки до постачальника.",

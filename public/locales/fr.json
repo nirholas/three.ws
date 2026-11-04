@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe du créateur",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "Avatar CZ",
 		"dark_090909": "Foncé (#090909)",
 		"default_avatar": "Avatar par défaut",
 		"drop_in_web_component_react_bindings_iframe": "Composant web <strong>drop-in</strong>, bindings React, créateur d'iframe et téléchargement cloud — un <strong>SDK d'avatar ouvert</strong> complet, auto-hébergeable, sans verrouillage fournisseur.",

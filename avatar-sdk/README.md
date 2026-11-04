@@ -116,6 +116,8 @@ lazy-loaded on first use).
 | `alt` | Accessibility label; also rendered as an on-canvas caption. Defaults to `"3D model viewer"` when unset. |
 | `background` | CSS color, or `transparent` (default) for an alpha canvas. |
 | `auto-rotate` | Opt-in boolean. Slowly spins the model when idle, which also signals it's interactive. Absent by default; ignored under `prefers-reduced-motion: reduce`. |
+| `autoplay` | Opt-in boolean. Loops the model's own animation clip, like `<model-viewer autoplay>`, so a rigged model idles instead of standing in bind pose. Under `prefers-reduced-motion: reduce` the clip is held at its first frame. `el.availableAnimations` lists the clips. |
+| `animation-name` | Which embedded clip `autoplay` plays. Defaults to the first clip. |
 | `ar` | Opt-in boolean. Adds a "View in AR" button that opens `three.ws/api/ar` in a new tab (device-aware AR: Android Scene Viewer / iOS Quick Look / desktop viewer fallback). Absent by default. |
 
 **Built-in states.** The viewer ships its own designed load lifecycle so the host

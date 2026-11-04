@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe на създателя",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ аватар",
 		"dark_090909": "Тъмен (#090909)",
 		"default_avatar": "Стандартен аватар",
 		"drop_in_web_component_react_bindings_iframe": "Вмъкнете <strong>web component</strong>, React bindings, iframe creator и качване в облака — пълен <strong>open avatar SDK</strong>, самостоятелно хостван, без зависимост от доставчик.",

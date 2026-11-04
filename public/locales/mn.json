@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Үүсгэгч Iframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ аватар",
 		"dark_090909": "Хар (#090909)",
 		"default_avatar": "Анхдагч аватар",
 		"drop_in_web_component_react_bindings_iframe": "Шууд ашиглах <strong>веб компонент</strong>, React холболтууд, iframe үүсгэгч, үүлэн байршуулалт — нийлүүлэгчийн хамааралгүй, өөрөө хостлох боломжтой, бүрэн хэмжээний <strong>нээлттэй аватар SDK</strong>.",

@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "创建器Iframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ 虚拟形象",
 		"dark_090909": "深色 (#090909)",
 		"default_avatar": "默认虚拟形象",
 		"drop_in_web_component_react_bindings_iframe": "即插即用<strong>Web组件</strong>、React绑定、iframe创建器和云端上传——一个完整的<strong>开放虚拟形象SDK</strong>，支持自托管，无厂商锁定。",

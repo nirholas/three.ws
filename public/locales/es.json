@@ -2256,7 +2256,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe del creador",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "Avatar CZ",
 		"dark_090909": "Oscuro (#090909)",
 		"default_avatar": "Avatar predeterminado",
 		"drop_in_web_component_react_bindings_iframe": "<strong>web component</strong> de fácil integración, bindings de React, creador de iframe y subida a la nube — un <strong>SDK de avatares abierto</strong> completo, autoalojable y sin dependencia de proveedor.",

@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Készítő Iframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ avatar",
 		"dark_090909": "Sötét (#090909)",
 		"default_avatar": "Alapértelmezett avatar",
 		"drop_in_web_component_react_bindings_iframe": "Beilleszthető <strong>web komponens</strong>, React kötődések, iframe készítő és felhőfeltöltés — egy teljes <strong>nyílt avatar SDK</strong>, önállóan hosztolható, vendor lock-in nélkül.",

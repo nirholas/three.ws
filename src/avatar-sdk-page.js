@@ -207,13 +207,23 @@ document.addEventListener('DOMContentLoaded', () => {
 		'<code>auto-rotate</code> is a <code>&lt;three-ws-viewer&gt;</code> attribute. The full runtime drives its own camera.';
 	const restingNote = () => setNote(pgRotate.disabled ? AUTOROTATE_NOTE : '');
 
-	function renderCode(tag, avatarSrc, bg, rotate) {
+	// The lightweight viewer only plays a model's own clips, so the preview and
+	// the snippet both carry `autoplay` (plus the clip the chosen avatar should
+	// loop); without it a rigged model stands in bind pose. <agent-3d> runs its
+	// own idle and needs neither.
+	const selectedAnimation = () => pgAvatar.selectedOptions[0]?.dataset.animation || '';
+
+	function renderCode(tag, avatarSrc, bg, rotate, animation) {
 		if (!pgCodeOutput) return;
 		const importPath = tag === VIEWER_TAG ? '@three-ws/avatar/viewer' : '@three-ws/avatar';
 
 		const attrs = [`  <span class="t-attr">src</span>=<span class="t-str">"${escapeHtml(avatarSrc)}"</span>`];
 		if (bg !== 'transparent') {
 			attrs.push(`  <span class="t-attr">background</span>=<span class="t-str">"${escapeHtml(bg)}"</span>`);
+		}
+		if (tag === VIEWER_TAG) {
+			attrs.push(`  <span class="t-attr">autoplay</span>`);
+			if (animation) attrs.push(`  <span class="t-attr">animation-name</span>=<span class="t-str">"${escapeHtml(animation)}"</span>`);
 		}
 		attrs.push(`  <span class="t-attr">alt</span>=<span class="t-str">"My avatar"</span>`);
 		if (rotate && supportsAutoRotate(tag)) {
@@ -242,8 +252,9 @@ document.addEventListener('DOMContentLoaded', () => {
 		const bg = pgBg.value;
 		const tag = pgComponent.value;
 		const rotate = pgRotate.classList.contains('active');
+		const animation = selectedAnimation();
 
-		renderCode(tag, avatarSrc, bg, rotate);
+		renderCode(tag, avatarSrc, bg, rotate, animation);
 
 		pgRotate.disabled = !supportsAutoRotate(tag);
 		pgRotate.setAttribute('aria-disabled', String(pgRotate.disabled));
@@ -282,16 +293,23 @@ document.addEventListener('DOMContentLoaded', () => {
 			// on an <agent-3d> that is already in the document instead starts a
 			// second boot on top of the first one's in-flight load, and the loser
 			// calls back into a viewer the winner already disposed.
-			applyPreviewAttributes(next, tag, avatarSrc, bg, rotate);
+			applyPreviewAttributes(next, tag, avatarSrc, bg, rotate, animation);
 			host.replaceWith(next);
 			restingNote();
 			return;
 		}
 
-		applyPreviewAttributes(host, tag, avatarSrc, bg, rotate);
+		applyPreviewAttributes(host, tag, avatarSrc, bg, rotate, animation);
 	}
 
-	function applyPreviewAttributes(el, tag, avatarSrc, bg, rotate) {
+	function applyPreviewAttributes(el, tag, avatarSrc, bg, rotate, animation) {
+		// animation-name before src: a new model picks its clip on load from the
+		// attributes already present.
+		if (tag === VIEWER_TAG) {
+			el.setAttribute('autoplay', '');
+			if (animation) el.setAttribute('animation-name', animation);
+			else el.removeAttribute('animation-name');
+		}
 		el.setAttribute('src', avatarSrc);
 		el.setAttribute('background', bg);
 		if (rotate && supportsAutoRotate(tag)) el.setAttribute('auto-rotate', '');

@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Creator-Iframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ-Avatar",
 		"dark_090909": "Dunkel (#090909)",
 		"default_avatar": "Standard-Avatar",
 		"drop_in_web_component_react_bindings_iframe": "Drop-in <strong>Web-Komponente</strong>, React-Bindings, Iframe-Creator und Cloud-Upload — ein komplettes <strong>offenes Avatar-SDK</strong>, selbst hostbar, ohne Vendor Lock-in.",

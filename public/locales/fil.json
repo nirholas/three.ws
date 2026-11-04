@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe ng Creator",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ avatar",
 		"dark_090909": "Madilim (#090909)",
 		"default_avatar": "Default na avatar",
 		"drop_in_web_component_react_bindings_iframe": "I-drop ang <strong>web component</strong>, React bindings, iframe creator, at cloud upload — isang kumpletong <strong>open avatar SDK</strong>, self-hostable, na walang vendor lock-in.",

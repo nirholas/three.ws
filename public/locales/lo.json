@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe ຜູ້ສ້າງ",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "ອະວາຕາ CZ",
 		"dark_090909": "ສີເຂັ້ມ (#090909)",
 		"default_avatar": "avatar ເລີ່ມຕົ້ນ",
 		"drop_in_web_component_react_bindings_iframe": "<strong>web component</strong> ແບບ drop-in, React bindings, iframe creator, ແລະ ການອັບໂຫຼດຂຶ້ນຄລາວ — ເປັນ <strong>open avatar SDK</strong> ທີ່ສົມບູນແບບ, ສາມາດໂຮສເອງໄດ້, ໂດຍບໍ່ມີ vendor lock-in.",

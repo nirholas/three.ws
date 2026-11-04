@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe-конструктор",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ аватар",
 		"dark_090909": "Темный (#090909)",
 		"default_avatar": "Аватар по умолчанию",
 		"drop_in_web_component_react_bindings_iframe": "Встраиваемый <strong>веб-компонент</strong>, привязки React, iframe-конструктор и загрузка в облако — полноценный <strong>открытый SDK для аватаров</strong>, с возможностью самостоятельного размещения, без привязки к поставщику.",

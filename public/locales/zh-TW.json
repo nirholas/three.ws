@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "創作者 Iframe",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "CZ 頭像",
 		"dark_090909": "深色 (#090909)",
 		"default_avatar": "預設頭像",
 		"drop_in_web_component_react_bindings_iframe": "即插即用 <strong>網頁組件</strong>、React 綁定、iframe 創建器和雲端上傳 — 完整的 <strong>開放頭像 SDK</strong>，可自我託管，無供應商鎖定。",

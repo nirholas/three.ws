@@ -808,7 +808,7 @@
 
 					<model-viewer
 						id="viewer"
-						src="/avatars/default.glb"
+						src="/avatars/default-idle.glb"
 						alt="A 3D avatar"
 						ar
 						ar-modes="webxr scene-viewer quick-look"
@@ -1045,8 +1045,10 @@
 				const exposureSlider = document.getElementById('exposure-slider');
 				const exposureVal = document.getElementById('exposure-val');
 
-				const DEFAULT_SRC = '/avatars/default.glb';
-				const DEFAULT_NAME = 'default.glb';
+				// The house default with its idle clip baked in (src/default-stage-avatar.js),
+				// so `autoplay` idles it instead of showing bind pose.
+				const DEFAULT_SRC = '/avatars/default-idle.glb';
+				const DEFAULT_NAME = 'default-idle.glb';
 				// A cold model-viewer on a slow link needs a while; past this the
 				// spinner is lying and the visitor gets a way out instead.
 				const LOAD_TIMEOUT_MS = 25000;

@@ -2130,7 +2130,6 @@
 		"creator_flow_js": "creator-flow.js",
 		"creator_iframe": "Iframe twórcy",
 		"creator_minimal_js": "creator-minimal.js",
-		"cz_avatar": "Awatar CZ",
 		"dark_090909": "Czarny (#090909)",
 		"default_avatar": "Domyślny awatar",
 		"drop_in_web_component_react_bindings_iframe": "Wstaw <strong>komponent webowy</strong>, powiązania React, twórca iframe i przesyłanie do chmury — kompletny <strong>otwarty SDK awatarów</strong>, samodzielnie hostowany, bez blokady dostawcy.",
