@@ -25,6 +25,8 @@ The guidelines page (`register.nvidia.com/flow/nvidia/gtc27/cfsresources/page/po
 client-side, so its field limits could not be read in advance. Each abstract is therefore given
 at up to three lengths. Use the longest one the form accepts.
 
+**The finished poster for A is built:** [`nvidia-gtc-2027/poster.pdf`](./nvidia-gtc-2027/poster.pdf) (43 x 24 in landscape, 1 in margin, no NVIDIA branding, per the guidelines read 2026-11-04), with the paste-ready title, takeaways, audience and technology fields in [`nvidia-gtc-2027/README.md`](./nvidia-gtc-2027/README.md) and the data behind every number under `nvidia-gtc-2027/data`. Rebuild with `npm run poster:gtc:rigs` then `npm run poster:gtc`.
+
 Submit **A** first. It is the stronger fit: original method, NVIDIA ACE technology at its center,
 and a coverage result nobody else has published. **B** is a valid second submission if the form
 allows more than one per author.

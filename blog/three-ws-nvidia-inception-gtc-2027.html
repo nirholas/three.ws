@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster</title>
+    <meta name="description" content="What three.ws runs on NVIDIA today: an NVIDIA Inception member since July 2026, a self-hosted fleet of L4 and Blackwell GPUs, NIM-hosted Nemotron, Riva and Audio2Face-3D, and the research poster we are submitting to the NVIDIA GTC 2027 call for posters.">
+    <meta name="keywords" content="three.ws, NVIDIA, NVIDIA Inception, GTC 2027, Audio2Face-3D, Riva, Magpie TTS, Nemotron, NVIDIA NIM, NVIDIA L4, RTX PRO 6000 Blackwell, TRELLIS, digital humans, 3D AI agents, text to 3D">
+    <link rel="canonical" href="https://three.ws/blog/three-ws-nvidia-inception-gtc-2027">
+
+    <meta property="og:title" content="three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster">
+    <meta property="og:description" content="An NVIDIA Inception member since July 2026. Thirteen NVIDIA GPU deployments, NIM-hosted models across chat, vision and speech, a browser-native Audio2Face-3D digital human, and our GTC 2027 poster application.">
+    <meta property="og:url" content="https://three.ws/blog/three-ws-nvidia-inception-gtc-2027">
+    <meta property="og:type" content="article">
+    <meta property="og:image" content="https://three.ws/blog/three-ws-nvidia-inception-gtc-2027-og.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="The three.ws GTC 2027 poster: One Blendshape Track, Any Avatar Rig: Real-Time Speech-Driven Faces in the Browser">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster">
+    <meta name="twitter:description" content="What we run on NVIDIA, what Inception membership adds, and the research poster we are taking to the GTC 2027 call for posters.">
+    <meta name="twitter:image" content="https://three.ws/blog/three-ws-nvidia-inception-gtc-2027-og.jpg">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 760px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 22px; font-weight: 600; margin: 48px 0 12px; letter-spacing: -0.01em; }
+        h3 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; color: #dcdcf0; letter-spacing: -0.005em; }
+        p { color: #c8c8e0; line-height: 1.75; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.75; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 8px; }
+        a { color: #9ad4ff; text-decoration: none; border-radius: 3px; }
+        a:hover { text-decoration: underline; }
+        a:active { color: #c4e6ff; }
+        a:focus-visible { outline: 2px solid #9ad4ff; outline-offset: 2px; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 48px 0; }
+
+        .lede { font-size: 18px; color: #d6d6ea; line-height: 1.7; }
+
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 36px; padding: 0; list-style: none; }
+        .stats li { margin: 0; padding: 16px 18px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.015); }
+        .stat-num { display: block; font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -0.02em; line-height: 1.2; }
+        .stat-label { display: block; font-size: 13px; color: #9aa3c4; line-height: 1.45; margin-top: 4px; }
+
+        .callout { border: 1px solid rgba(150,170,255,.22); background: rgba(120,140,255,.05); border-radius: 14px; padding: 20px 22px; margin: 0 0 32px; }
+        .callout h3 { margin-top: 0; color: #9ad4ff; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+        .callout ul { margin-bottom: 0; }
+        .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+
+        .table-scroll { overflow-x: auto; margin: 0 0 24px; -webkit-overflow-scrolling: touch; }
+        table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 480px; }
+        th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.07); vertical-align: top; }
+        th { color: #9aa3c4; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; border-bottom-color: rgba(255,255,255,.14); }
+        td { color: #c8c8e0; line-height: 1.55; }
+        tbody tr:hover td { background: rgba(255,255,255,.02); }
+        td code { font-size: 12px; }
+
+        figure { margin: 8px 0 28px; }
+        figure a { display: block; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; overflow: hidden; background: #fff; transition: border-color .15s, transform .15s; }
+        figure a:hover { border-color: rgba(150,170,255,.4); transform: translateY(-1px); text-decoration: none; }
+        figure img { display: block; width: 100%; height: auto; }
+        figcaption { color: #7a85a8; font-size: 13px; line-height: 1.6; margin-top: 10px; }
+
+        .fine { font-size: 13px; color: #7a85a8; line-height: 1.65; }
+
+        @media (max-width: 600px) {
+            .post-wrap { padding: 80px 18px 64px; }
+            h2 { font-size: 20px; }
+            .stat-num { font-size: 22px; }
+        }
+    </style>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster","description":"What three.ws runs on NVIDIA today: an NVIDIA Inception member since July 2026, a self-hosted fleet of L4 and Blackwell GPUs, NIM-hosted Nemotron, Riva and Audio2Face-3D, and the research poster we are submitting to the NVIDIA GTC 2027 call for posters.","image":"https://three.ws/blog/three-ws-nvidia-inception-gtc-2027-og.jpg","datePublished":"2026-11-04T12:00:00.000Z","dateModified":"2026-11-04T12:00:00.000Z","author":{"@type":"Organization","name":"three.ws","url":"https://three.ws"},"publisher":{"@type":"Organization","name":"three.ws","url":"https://three.ws","logo":{"@type":"ImageObject","url":"https://three.ws/og-image.png"}},"mainEntityOfPage":{"@type":"WebPage","@id":"https://three.ws/blog/three-ws-nvidia-inception-gtc-2027"},"keywords":"three.ws, NVIDIA, NVIDIA Inception, GTC 2027, Audio2Face-3D, Riva, Magpie TTS, Nemotron, NVIDIA NIM, NVIDIA L4, RTX PRO 6000 Blackwell, TRELLIS, digital humans, 3D AI agents, text to 3D"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://three.ws/blog"},{"@type":"ListItem","position":3,"name":"three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster","item":"https://three.ws/blog/three-ws-nvidia-inception-gtc-2027"}]}</script>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main id="main-content" class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-11-04</span>
+            <span class="post-tag">NVIDIA</span>
+            <span class="post-tag">Inception</span>
+            <span class="post-tag">GTC 2027</span>
+            <span class="post-tag">Digital Humans</span>
+        </div>
+        <h1>three.ws and NVIDIA: Inception, the GPU Fleet, and Our GTC 2027 Poster</h1>
+
+        <p class="lede">three.ws turns a sentence into a rigged, animated 3D agent that talks, lip-syncs, and embeds on any website. Almost every step of that runs on NVIDIA. In July 2026 we were accepted into <strong>NVIDIA Inception</strong>, and now we are applying to present a research poster at <strong>NVIDIA GTC 2027</strong>. This post is the full picture: what we build on NVIDIA, what the membership adds, and what we want to show at GTC.</p>
+
+        <ul class="stats" aria-label="three.ws on NVIDIA at a glance">
+            <li><span class="stat-num">13</span><span class="stat-label">NVIDIA GPU deployments in production (12 L4, 1 RTX PRO 6000 Blackwell)</span></li>
+            <li><span class="stat-num">19,270</span><span class="stat-label">3D meshes generated on our own GPUs in 31 days</span></li>
+            <li><span class="stat-num">98.1%</span><span class="stat-label">of morphed user rigs driven by one Audio2Face-3D track</span></li>
+            <li><span class="stat-num">3.8 s</span><span class="stat-label">median from text to a speaking, animated face</span></li>
+        </ul>
+
+        <h2>What NVIDIA Inception is, and what it is not</h2>
+        <p><a href="https://www.nvidia.com/en-us/startups/" rel="noopener">NVIDIA Inception</a> is NVIDIA's global program for startups building on accelerated computing. NVIDIA reviews applicants and admits companies doing serious work on its platform. three.ws was accepted in July 2026 and announced it in the <a href="/changelog">changelog</a> on July 21.</p>
+        <p>It is a startup program. It is not a partnership, an investment, or an endorsement, and we describe it that way everywhere. What it gives a company like ours is practical:</p>
+        <ul>
+            <li><strong>Compute.</strong> GPU credits and preferred hardware access, which matters because GPU capacity is the single hardest limit on how fast and how detailed generation can be.</li>
+            <li><strong>Engineering guidance.</strong> A line to NVIDIA's teams as we move more of the digital-human stack onto NVIDIA ACE and evaluate TensorRT and Triton for our self-hosted models.</li>
+            <li><strong>The ecosystem.</strong> Co-marketing assets, member events, the NVIDIA VC Alliance, and the wider network of Inception startups.</li>
+        </ul>
+
+        <h2>What we run on NVIDIA today</h2>
+        <p>There are two NVIDIA layers under three.ws, and both are in production right now.</p>
+
+        <h3>1. A self-hosted GPU fleet</h3>
+        <p>Every 3D generation lane on the platform runs on NVIDIA silicon we operate ourselves: FastAPI workers, one model per service, autoscaled on Google Cloud Run GPUs. As of today the fleet is thirteen GPU deployments across <code>us-central1</code> and <code>us-east4</code>. Twelve run on <strong>NVIDIA L4</strong>. One runs on an <strong>NVIDIA RTX PRO 6000 Blackwell</strong>, which carries our highest-fidelity image-to-3D lane.</p>
+        <div class="table-scroll">
+            <table>
+                <thead><tr><th>Lane</th><th>Model</th><th>GPU</th></tr></thead>
+                <tbody>
+                    <tr><td>Text to 3D</td><td>TRELLIS</td><td>L4, two regions</td></tr>
+                    <tr><td>Image to 3D with PBR materials</td><td>Hunyuan3D 2.1</td><td>RTX PRO 6000 Blackwell</td></tr>
+                    <tr><td>Image to 3D (fallback and fast lanes)</td><td>Hunyuan3D 2.0 and 2.1, TripoSG, TripoSR, TripoSplat</td><td>L4</td></tr>
+                    <tr><td>Auto-rigging</td><td>Rigging worker</td><td>L4</td></tr>
+                    <tr><td>Text to motion</td><td>Motion worker</td><td>L4, two regions</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p>Between August 31 and September 30, 2026, that fleet produced <strong>19,270 successful meshes</strong>: 11,247 from TRELLIS on L4, 5,355 from Hunyuan3D on Blackwell, and 2,578 auto-rigs, among others. When a lane failed, automatic failover to another lane recovered <strong>810 attempts</strong> before the person waiting ever saw an error.</p>
+        <p>Getting Hunyuan3D 2.1 onto Blackwell taught us a few things the model card does not mention, including the fact that CUDA 12.4 wheels ship no <code>sm_120</code> kernels at all. We wrote the whole port up in <a href="/blog/image-to-3d-on-nvidia-l4-and-blackwell">Image-to-3D on NVIDIA L4 and Blackwell</a>.</p>
+
+        <h3>2. NVIDIA-hosted models through NIM</h3>
+        <p>On top of our own GPUs, a single NVIDIA API key reaches a catalog of hosted models, and we use them across the product:</p>
+        <ul>
+            <li><strong>Reasoning:</strong> Nemotron 3 Super 120B, Nemotron 3 Ultra 550B, and Nemotron 3.5 Lightning 30B as separate rungs of our chat chain, so one model throttling never takes the lane down.</li>
+            <li><strong>Generation:</strong> TRELLIS for the free text-to-3D lane on <a href="/forge">/forge</a>, and FLUX for text to image.</li>
+            <li><strong>Understanding and retrieval:</strong> vision models for image QA, Nemotron embeddings for agent memory, and NemoGuard content safety on outbound publishing.</li>
+            <li><strong>Voice and face:</strong> Riva speech recognition, Magpie text-to-speech, and Audio2Face-3D, all over NVIDIA Cloud Functions gRPC.</li>
+        </ul>
+        <p>The model-by-model map, with the source file each one is wired into, is public: <a href="/docs/nvidia-models">NVIDIA models on three.ws</a>.</p>
+
+        <h3>3. A digital human in a browser tab</h3>
+        <p>The piece we are proudest of puts those voice and face models together. You speak or type to an agent. <strong>Riva</strong> transcribes you, <strong>Nemotron</strong> writes the reply, <strong>Magpie</strong> speaks it, and <strong>Audio2Face-3D</strong> turns the speech into 55 facial blendshape weights at 30 frames per second. The browser plays the audio and drives the avatar's face from it, with nothing installed.</p>
+        <p>Audio2Face-3D is usually shown on characters built for it inside a game engine. Ours has to animate whatever face a visitor brings: avatars generated from a prompt, reconstructed from a selfie, exported from another creator, or uploaded from anywhere. Try it on the <a href="/demos/audio2face">live Audio2Face demo</a>, including with your own glTF.</p>
+
+        <h2>Building in public with NVIDIA's developer community</h2>
+        <p>We write up what we learn on the NVIDIA Developer Forums, with real numbers and the source behind every claim. Four posts are live there:</p>
+        <ul>
+            <li><a href="https://forums.developer.nvidia.com/t/how-nemotron-made-three-ws-text-to-3d-pipeline-usable/376445" rel="noopener">How Nemotron made the three.ws text-to-3D pipeline usable</a></li>
+            <li><a href="https://forums.developer.nvidia.com/t/how-three-ws-translates-a-web-app-into-100-languages-with-nvidia-nim-an-llm-powered-i18n-pipeline/377379" rel="noopener">How three.ws translates a web app into 100 languages with NVIDIA NIM</a></li>
+            <li><a href="https://forums.developer.nvidia.com/t/nvidia-nim-model-retirements-what-a-410-gone-does-to-a-fallback-chain-and-how-we-survive-it-now/383950" rel="noopener">NVIDIA NIM model retirements: what a 410 Gone does to a fallback chain</a></li>
+            <li><a href="https://forums.developer.nvidia.com/t/a-digital-human-in-a-browser-tab-streaming-audio2face-3d-onto-whatever-rig-the-visitor-brought/383953" rel="noopener">A digital human in a browser tab: streaming Audio2Face-3D onto whatever rig the visitor brought</a></li>
+        </ul>
+        <p>On October 25 we also filed our Inception product record, <strong>three.ws 3D AI Studio</strong>, as Shipping and GPU accelerated. It lists the NVIDIA technology we run in production (CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, Kaolin, Riva, Audio2Face) separately from what we are still evaluating (TensorRT, Triton Inference Server, Omniverse Kit). That record is what NVIDIA reviews for its Accelerated Application Catalog. NVIDIA curates that catalog, so three.ws is not listed there yet; we will post in the changelog if and when it is.</p>
+
+        <h2>Applying to GTC 2027</h2>
+        <p><a href="https://www.nvidia.com/gtc/" rel="noopener">NVIDIA GTC</a> runs in San Jose from <strong>March 15 to 18, 2027</strong>. Its call for posters closes on November 10, 2026, and it sets a clear bar: original technical or research work, judged on proven results, innovation enabled by accelerated computing, and a real research frame of problem, method, benchmark, and results. Promotional work is excluded by name. We wrote our poster to that bar, and we are submitting it before the deadline.</p>
+
+        <figure>
+            <a href="/blog/three-ws-nvidia-inception-gtc-2027-poster.jpg" aria-label="Open the full-size poster image">
+                <img src="/blog/three-ws-nvidia-inception-gtc-2027-poster.jpg" width="2064" height="1152" loading="lazy" decoding="async" alt="Research poster titled One Blendshape Track, Any Avatar Rig: Real-Time Speech-Driven Faces in the Browser, with sections on the problem, the NVIDIA pipeline, the direct and derived mapping method, benchmarking, results charts, an ablation, and lessons.">
+            </a>
+            <figcaption>The poster we are submitting to GTC 2027, 43 by 24 inches. Every number and chart on it is generated from measured production data. Select the image for full size.</figcaption>
+        </figure>
+
+        <h3>One Blendshape Track, Any Avatar Rig</h3>
+        <p>The poster is about the problem in the section above. Audio2Face-3D emits ARKit blendshape weights, but avatars on the open web expose ARKit names in many spellings, VRM vowel expressions, Oculus visemes, or no face morphs at all. Our player maps one Audio2Face-3D track onto all of them, in two ways:</p>
+        <ul>
+            <li><strong>A direct path</strong> normalizes every ARKit spelling to the canonical 52 shapes and drives them straight from the track.</li>
+            <li><strong>A derived path</strong> reconstructs vowel and viseme expressions from the ARKit weights, so a VRM or Oculus-style rig still gets a usable mouth. It switches off on any mesh that already has direct mouth shapes, because running both at once saturates the mouth in 23% of voiced frames.</li>
+        </ul>
+        <p>Measured on production, across 468 real user avatar files, that one mapping drove <strong>98.1% of the 211 rigs that carry any morph targets</strong>, with no per-rig code and no allowlist. Text in to synchronized speech and animation out completed in a <strong>median 3.8 seconds for 7.3 seconds of speech</strong>, and 8 of 10 consecutive calls finished faster than the speech they produced. The poster is equally plain about the limit: 55% of uploaded files have no facial morphs at all, and those fall back to amplitude lipsync so no face is ever frozen.</p>
+        <p>Everything behind it is open: the poster source, the raw coverage and latency data, and the scripts that rebuild the sheet from that data are in <a href="https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027" rel="noopener">docs/nvidia-gtc-2027</a> on GitHub.</p>
+
+        <div class="callout">
+            <h3>What happens next</h3>
+            <p>NVIDIA notifies poster authors on a rolling basis from mid-December 2026. If ours is accepted, we will be at the GTC poster reception in San Jose answering questions in person, and we will announce it here and in the changelog. GTC's Inception Startup Pavilion is a separate, invite-only track: NVIDIA picks those startups from member profiles and demos rather than from applications.</p>
+        </div>
+
+        <h2>For other Inception startups</h2>
+        <p>If your company is in NVIDIA Inception too, you can claim <strong>$25 of prepaid three.ws credit</strong> for the metered lanes (high-quality generation, game-ready export, rigging, motion), plus $10 more for a public post about what you made. Apply on the <a href="/nvidia#inception-perk">NVIDIA page</a>. The free text-to-3D lane on <a href="/forge">/forge</a> stays open to everyone, no account needed.</p>
+
+        <h2>What's next</h2>
+        <ul>
+            <li><strong>Deeper ACE.</strong> Today we consume Riva, Magpie, and Audio2Face-3D as hosted microservices. The next step is taking more of the digital-human pipeline onto NVIDIA ACE.</li>
+            <li><strong>Inference optimization.</strong> TensorRT and Triton are under evaluation for the self-hosted 3D models, where cold-start weight loads dominate latency.</li>
+            <li><strong>NGC.</strong> We are preparing our TRELLIS worker container for the NVIDIA NGC catalog, so other teams can run the same text-to-3D service on their own GPUs.</li>
+        </ul>
+        <p>See it all in one place on <a href="/nvidia">three.ws/nvidia</a>, or start generating on <a href="/forge">/forge</a>.</p>
+
+        <h2>Links</h2>
+        <ul>
+            <li><a href="/nvidia">three.ws on NVIDIA</a> and the <a href="/docs/nvidia-inception">Inception membership doc</a></li>
+            <li><a href="/docs/nvidia-models">NVIDIA models on three.ws</a>, model by model</li>
+            <li><a href="/demos/audio2face">Live Audio2Face-3D demo</a></li>
+            <li><a href="https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027" rel="noopener">GTC 2027 poster, data, and build scripts</a></li>
+            <li>Open source: <a href="https://github.com/nirholas/three.ws" rel="noopener">github.com/nirholas/three.ws</a></li>
+        </ul>
+
+        <hr>
+        <p class="fine">three.ws is an independent company and a member of the NVIDIA Inception program. NVIDIA, NVIDIA Inception, GTC, Audio2Face, Riva, Nemotron, and related marks are trademarks of NVIDIA Corporation. Membership in the program does not imply endorsement by NVIDIA. GPU counts were taken from the live Cloud Run fleet on 2026-11-04; generation totals cover 2026-08-31 to 2026-09-30.</p>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <div id="footer-container"></div>
+    <script src="/nav.js"></script>
+    <script src="/footer.js"></script>
+</body>
+</html>

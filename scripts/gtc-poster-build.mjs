@@ -120,7 +120,7 @@ function coverageChart() {
 }
 
 function latencyChart() {
-	const W = 940, H = 270, left = 90, right = 20, top = 16, bottom = 52;
+	const W = 940, H = 246, left = 90, right = 20, top = 16, bottom = 52;
 	const plotW = W - left - right, plotH = H - top - bottom;
 	const yMax = 14;
 	const y = (s) => top + plotH - (s / yMax) * plotH;
@@ -149,7 +149,7 @@ function latencyChart() {
 }
 
 function overshootChart() {
-	const W = 940, H = 320, left = 90, right = 20, top = 16, bottom = 52;
+	const W = 940, H = 270, left = 90, right = 20, top = 16, bottom = 52;
 	const plotW = W - left - right, plotH = H - top - bottom;
 	const tMax = series[series.length - 1].t, yMax = 2.0;
 	const x = (t) => left + (t / tMax) * plotW;
@@ -162,7 +162,7 @@ function overshootChart() {
 	}
 	// Saturation band above 1.0.
 	out += `<rect x="${left}" y="${y(yMax)}" width="${plotW}" height="${y(1) - y(yMax)}" fill="${C.derived}" opacity="0.08"/>`;
-	out += `<text x="${W - right - 8}" y="${y(yMax) + 26}" text-anchor="end" fill="${C.ink2}" font-size="21">morph saturates above 1.0</text>`;
+	out += `<text x="${left + 10}" y="${y(yMax) + 26}" fill="${C.ink2}" font-size="21">morph saturates above 1.0</text>`;
 	for (const tick of [0, 2, 4, 6]) {
 		out += `<text x="${x(tick)}" y="${H - 22}" text-anchor="middle" fill="${C.muted}">${tick}</text>`;
 	}
@@ -171,18 +171,18 @@ function overshootChart() {
 	out += `<path d="${pathOf('direct')}" fill="none" stroke="${C.direct}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
 	// Mark the frame used in the rig figures.
 	out += `<line x1="${x(peak.t)}" y1="${top}" x2="${x(peak.t)}" y2="${y(0)}" stroke="${C.axis}" stroke-width="1"/>`;
-	out += `<text x="${x(peak.t) + 8}" y="${y(0) - 12}" fill="${C.ink2}" font-size="20">frame ${peak.i} (figures)</text>`;
+	out += `<text x="${x(peak.t) - 8}" y="${y(yMax) + 26}" text-anchor="end" fill="${C.ink2}" font-size="20">frame ${peak.i}, shown in the figures</text>`;
 	return out + '</svg>';
 }
 
 function pipelineSvg() {
-	const W = 940, H = 300;
+	const W = 960, H = 300;
 	const boxes = [
 		['Microphone', 'browser', C.muted],
 		['Riva ASR', 'NVCF gRPC', C.direct],
 		['Nemotron', 'NIM, tool calls', C.direct],
 		['Magpie TTS', '44.1 kHz WAV', C.direct],
-		['Downmix + resample', '16 kHz mono, server', C.muted],
+		['Resample', '16 kHz mono, on the server', C.muted],
 		['Audio2Face-3D', 'NVCF stream, 30 fps', C.direct],
 		['A2FPlayer', 'browser, per morph', C.derived],
 	];
@@ -212,7 +212,8 @@ function pipelineSvg() {
 	});
 	// The audio the browser plays bypasses inference: original WAV + JSON track.
 	const tts = pos[3], player = pos[6];
-	out += `<path d="M${tts.x + bw / 2 + 40},${tts.y + bh} C${tts.x + bw / 2 + 40},${player.y + bh + 30} ${player.x + bw / 2},${player.y + bh + 50} ${player.x + bw / 2},${player.y + bh}" fill="none" stroke="${C.derived}" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arr)"/>`;
+	const sx = tts.x + bw - 24, midY = tts.y + bh + gy / 2, railX = W - 6, lowY = player.y + bh + 26, ex = player.x + bw / 2;
+	out += `<path d="M${sx},${tts.y + bh} L${sx},${midY} L${railX},${midY} L${railX},${lowY} L${ex},${lowY} L${ex},${player.y + bh + 2}" fill="none" stroke="${C.derived}" stroke-width="2" stroke-linejoin="round" stroke-dasharray="7 7" marker-end="url(#arr)"/>`;
 	out += `<text x="${(tts.x + player.x + bw) / 2}" y="${H - 8}" text-anchor="middle" fill="${C.ink2}" font-size="21">original audio plays in the browser; its clock samples the track</text>`;
 	return out + '</svg>';
 }

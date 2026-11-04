@@ -26,7 +26,7 @@ h1 { margin: 0; font-size: 92px; line-height: 1.02; font-weight: 700; letter-spa
 .authors .name { font-size: 36px; font-weight: 600; color: var(--ink); }
 .authors .mono { font-family: 'JetBrains Mono', 'JetBrains Mono Fallback', monospace; font-size: 23px; }
 .columns { display: grid; grid-template-columns: repeat(4, 1fr); column-gap: 0.5in; min-height: 0; }
-.col { display: flex; flex-direction: column; gap: 0.22in; min-height: 0; }
+.col { display: flex; flex-direction: column; gap: 0.2in; min-height: 0; }
 section { break-inside: avoid; }
 h2 { margin: 0 0 0.1in; font-size: 38px; line-height: 1.1; font-weight: 700; padding: 8px 16px; background: var(--ink); color: #fff; border-radius: 6px; }
 h2 .n { display: inline-block; min-width: 1.1em; opacity: 0.72; font-weight: 500; }
@@ -48,7 +48,7 @@ pre { margin: 0 0 0.09in; padding: 0.1in 0.14in; background: var(--panel); borde
 pre .c { color: var(--muted); }
 pre .d { color: var(--direct); font-weight: 600; }
 pre .e { color: var(--derived); font-weight: 600; }
-figure { margin: 0 0 0.09in; }
+figure { margin: 0 0 0.07in; }
 figcaption { font-size: 22px; line-height: 1.3; color: var(--ink-2); margin-top: 0.05in; }
 figcaption b { color: var(--ink); }
 .chart svg { display: block; width: 100%; height: auto; }
@@ -171,7 +171,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 	<h2><span class="n">4</span> Benchmarking method</h2>
 	<ul>
 		<li><b>Rig coverage.</b> {{files}} distinct avatar files from human accounts, at most 60 per creation source (seeded, QA and synthetic accounts excluded). Each glTF's JSON chunk is read by HTTP range request and its morph dictionaries are classified by the <i>shipping</i> <code>A2FPlayer.attach()</code>, not a reimplementation.</li>
-		<li><b>Latency.</b> Ten consecutive production calls with the same 22-word sentence; wall clock from request start to the full JSON response (TTS, resample, Audio2Face-3D stream). Rate-limited calls are excluded, not retried.</li>
+		<li><b>Latency.</b> Ten consecutive production calls with the same 22-word sentence; wall clock from request start to the full JSON response (TTS, resample, Audio2Face-3D stream). Rate-limited calls excluded, not retried.</li>
 		<li><b>Overshoot.</b> The real 228-frame track replayed through the composition tables, with and without the suppression rule.</li>
 	</ul>
 </section>
@@ -193,7 +193,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 		<h3 style="margin-top:0">Latency per call versus the speech it produced</h3>
 		<div class="legend"><span style="--sw:#2a78d6">Wall-clock latency</span><span style="--sw:#eb6834">Duration of the generated speech</span></div>
 		{{latency_svg}}
-		<figcaption>{{fast_calls}} of 10 calls finished in 2.7 to 4.3 s for 6.9 to 7.6 s of speech (real-time ratio {{ratio_min}} to {{ratio_max}}); two hit upstream tail latency at 11.0 and 13.7 s. Earlier runs: median 2.96 s (2026-10-08, six calls); 1.29 to 2.19 s with audio supplied directly, skipping TTS (2026-09-22).</figcaption>
+		<figcaption>{{fast_calls}} of 10 calls finished in 2.7 to 4.3 s for 6.9 to 7.6 s of speech (real-time ratio {{ratio_min}} to {{ratio_max}}); two hit upstream tail latency at 11.0 and 13.7 s. Earlier runs: median 2.96 s (2026-10-08); 1.29 to 2.19 s with audio supplied directly, skipping TTS (2026-09-22).</figcaption>
 	</figure>
 </section>
 </div>
@@ -212,7 +212,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 			<div class="rig"><img src="figures/rig-default-derived-only.png" alt=""><div class="tag"><span class="k derived"></span>Derived only ({{expr_default}} viseme morphs)</div></div>
 			<div class="rig"><img src="figures/rig-default-both.png" alt=""><div class="tag"><span class="k both"></span>Both paths: overshoot</div></div>
 		</div>
-		<figcaption>Same rig, same frame. <b>Derived only</b> (the rig's ARKit mouth shapes hidden from the player) is what a VRM or Oculus-style rig receives: a usable mouth from visemes alone. <b>Both</b> is the failure the rule prevents.</figcaption>
+		<figcaption>Same rig, same frame. <b>Derived only</b> (ARKit mouth shapes hidden from the player) is what a VRM or Oculus-style rig receives: a usable mouth from visemes alone. <b>Both</b> is the failure the rule prevents.</figcaption>
 	</figure>
 </section>
 
@@ -220,7 +220,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 	<h2><span class="n">7</span> Lessons and limitations</h2>
 	<ul>
 		<li><b>Name canonicalization beats allowlists.</b> One normalization function covered vendor spellings (<code>ARKit_jawOpen</code>, <code>jaw_open</code>, <code>JawOpen</code>) that an explicit rig list would have missed.</li>
-		<li><b>Clock the face from the audio element</b>, not from <code>requestAnimationFrame</code>. Drift was the first bug users noticed and the cheapest to remove.</li>
+		<li><b>Clock the face from the audio element</b>, not <code>requestAnimationFrame</code>. Drift was the first bug users noticed and the cheapest to remove.</li>
 		<li><b>Latency is dominated by upstream tails</b>, not retargeting (sub-millisecond per frame). Streaming the first frames before TTS completes is the next step.</li>
 		<li><b>Limits.</b> Derived weights are a linear inverse of hand-authored compositions; shapes with no vowel analogue (<code>mouthRollUpper</code>) are lost on viseme-only rigs. {{no_morph_pct}} of uploaded files have no facial morphs, which no mapping can fix.</li>
 	</ul>
