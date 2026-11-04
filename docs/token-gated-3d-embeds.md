@@ -28,7 +28,7 @@ Open [/studio](https://three.ws/studio), sign in, and pick one of your own avata
 
 The panel reads the avatar's gate from the server every time you pick it, so it always shows what the embed actually enforces. From there you can **Change requirement** (which replaces the gate) or **Remove gate** (which turns the embed back into an open one after an inline confirm). The demo agent and public avatars belong to other accounts, so the panel asks you to pick one of yours instead.
 
-![Widget Studio Holders only panel with an active $THREE gate](./img/studio-holder-gate.png)
+![Widget Studio Holders only panel with the $THREE holder tiers](./images/studio-holder-gate.png)
 
 ### Via the MCP tool (Claude / any MCP client)
 
