@@ -529,3 +529,7 @@ place to be wrong.
 - Anything about the agent being unsupervised. Simulate is the default and the limits are real.
 ~~~~
 
+
+## Status (2026-11-04)
+
+Built and verified locally: hosted `/api/mcp-oracle`, `@three-ws/oracle-mcp`, `@three-ws/agent-trader-mcp`, registry wiring, docs, changelog. Remaining owner steps (gate 2): deploy, `npm publish` of both packages, `npm run publish:mcp`, the X post, then `npm run smoke:mcp` against production.
