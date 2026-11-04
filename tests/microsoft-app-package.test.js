@@ -15,6 +15,7 @@ const OWNER = {
 	MS_APP_ID: '11111111-1111-4111-8111-111111111111',
 	MS_DEVELOPER_NAME: 'Test Co',
 	MS_KEYVAULT_URL: 'https://kv-test.vault.azure.net/',
+	MS_TEAMS_BOT_APP_ID: '22222222-2222-4222-8222-222222222222',
 };
 
 describe('microsoft app package', () => {
@@ -37,7 +38,7 @@ describe('microsoft app package', () => {
 		} finally {
 			console.error = err;
 		}
-		expect(lines[0]).toContain('MS_DEVELOPER_NAME, MS_KEYVAULT_URL');
+		expect(lines[0]).toContain('MS_DEVELOPER_NAME, MS_KEYVAULT_URL, MS_TEAMS_BOT_APP_ID');
 		expect(lines[0]).not.toContain('MS_APP_ID,');
 	});
 
@@ -49,19 +50,21 @@ describe('microsoft app package', () => {
 		expect(server.mcpServerUrl).toBe('https://three.ws/api/mcp-studio');
 		expect(server.authorization).toEqual({ type: 'AzureKeyVault', referenceId: OWNER.MS_KEYVAULT_URL });
 		expect(manifest.staticTabs[0].contentUrl).toBe('https://three.ws/viewer');
+		expect(manifest.composeExtensions[0].botId).toBe(OWNER.MS_TEAMS_BOT_APP_ID);
 	});
 
 	it('rejects a bad GUID, an over-long developer name and a non-vault URL', () => {
-		const { problems } = buildManifest({ MS_APP_ID: 'nope', MS_DEVELOPER_NAME: 'x'.repeat(40), MS_KEYVAULT_URL: 'https://example.com/' });
+		const { problems } = buildManifest({ MS_APP_ID: 'nope', MS_DEVELOPER_NAME: 'x'.repeat(40), MS_KEYVAULT_URL: 'https://example.com/', MS_TEAMS_BOT_APP_ID: 'bot' });
 		const text = problems.join('\n');
 		expect(text).toContain('MS_APP_ID must be a GUID');
+		expect(text).toContain('MS_TEAMS_BOT_APP_ID must be a GUID');
 		expect(text).toContain('MS_DEVELOPER_NAME');
 		expect(text).toContain('MS_KEYVAULT_URL must look like');
 		expect(text).toContain('manifest schema');
 	});
 
 	it('resolveOwnerValues reports missing variables outside check mode only', () => {
-		expect(resolveOwnerValues({}, { check: false }).missing).toHaveLength(3);
+		expect(resolveOwnerValues({}, { check: false }).missing).toHaveLength(4);
 		expect(resolveOwnerValues({}, { check: true }).missing).toHaveLength(0);
 	});
 
