@@ -1,7 +1,20 @@
-# LIVE-OPS: $THREE Community Day
+# LIVE-OPS: $THREE Community Meetup #3
 
 One page. Everything an operator needs while the event is running, and nothing else.
-Prepared 2026-08-08. Project `aerial-vehicle-466722-p5`, region `us-central1`.
+Prepared 2026-11-03. Project `aerial-vehicle-466722-p5`, region `us-central1`.
+Freshness is machine-checked: `npm run check:live-ops` fails when the three lines
+below disagree with `public/event.json` or with what `/api/version` serves.
+
+**Event id:** `three-community-meetup-3`
+**Starts:** `2026-11-06T16:00:00Z` (ends `2026-11-06T17:00:00Z`, one hour)
+**Live release:** `0a913e8a7` on revision `three-ws-api-00521-hxr`
+
+"The Three.ws User Group on IBM Community, meeting inside the world." Virtual: every
+attendee joins from their own network, so there is no shared venue NAT to plan for.
+
+| Pacific | Eastern | London | Berlin |
+|---|---|---|---|
+| 08:00 | 11:00 | 16:00 | 17:00 |
 
 ---
 
@@ -13,14 +26,17 @@ Prepared 2026-08-08. Project `aerial-vehicle-466722-p5`, region `us-central1`.
 https://three.ws/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three&image=%2Fapi%2Fimg%3Furl%3Dhttps%253A%252F%252Fipfs.io%252Fipfs%252Fbafybeihe22b5sxr3ihnxt7pregfieyteqvubqhik3j3y4bbx243xlqjw3q%26seed%3DFeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
 ```
 
-**Live release as of this writing:** `c1e600a04` on revision `three-ws-api-00364-n65`.
-The world server runs an image built 2026-08-06 (revision `three-ws-multiplayer-00010-g89`).
+The live API build is `0a913e8a7` (built 2026-11-03 05:04 UTC). Revisions `00520`
+and `00521` are config-only revisions of that same image (min-instances raise, one
+env var). The world server runs `three-ws-multiplayer-00012-fhl`, built 2026-10-30
+21:52 UTC.
 
-> The release SHA above is NOT the event build. The event features (quest line,
-> photo mode, live event board, `/event` landing page, operator announce, the
-> `/population` endpoints) are committed but unshipped. See
-> [Ship the release](#ship-the-release-owner-gated) at the bottom. Confirm the SHA
-> with `curl -s https://three.ws/api/version` after the deploy and update this line.
+> Neither is the event build. Well over 100 API commits and 19 world-server commits
+> are committed but unshipped, including the reconnect-position fix, the chat-draft
+> fix, the event-config override endpoint, the forge breaker isolation fix, the
+> bonding 503 fix, dance-off, parties, signature wall and presenter PA. See
+> [Ship the release](#ship-the-release-owner-gated). After the deploy, update the
+> **Live release** line and the rollback table, then run `npm run check:live-ops`.
 
 ---
 
@@ -30,8 +46,9 @@ The world server runs an image built 2026-08-06 (revision `three-ws-multiplayer-
 # 1. API alive, and which build is actually serving
 curl -s https://three.ws/api/version
 
-# 2. API subsystems (x402, monitor, speech, alerts) - status must be "ok"
-curl -s https://three.ws/api/healthz | head -c 400
+# 2. API subsystems. "status":"ok" is the gate; read the known-down list below
+#    before reacting to an individual subsystem.
+curl -s https://three.ws/api/healthz | head -c 600
 
 # 3. The world server itself. If this is not {"ok":true}, /play is dead
 #    no matter what the site says.
@@ -46,10 +63,10 @@ npm run event:watch -- --interval 15 # tighter during the opening rush
 npm run event:watch -- --once        # single sweep; exit 1 if anything is down
 ```
 
-It watches the API, the live release SHA, the `/play` page (including that the
-game bootstrap is still in the HTML), the world server, and the live player
-count. It is plain HTTPS on purpose: it keeps working when `gcloud` auth has
-expired, which it does on its own schedule in this environment.
+Subsystems `/api/healthz` reported as not-ok on 2026-11-03, all known and none on
+the /play path: `rpc_lanes` degraded (paid Solana RPC quotas spent, see failure
+modes), `world.three.ws` 404 (the Hyperfy world, not /play), `three_token_rail` down
+(treasury and rewards wallets unset), `sniper` starved, `telegram_push` disabled.
 
 ---
 
@@ -61,7 +78,7 @@ export PATH="$HOME/google-cloud-sdk/bin:$PATH"
 # Errors across the whole fleet, last 6h
 npm run logs:errors
 
-# The world server specifically - join refusals, origin rejections, room churn
+# The world server specifically: join refusals, origin rejections, room churn
 gcloud logging read 'resource.type="cloud_run_revision"
   resource.labels.service_name="three-ws-multiplayer" severity>=WARNING' \
   --freshness=1h --limit=50 --project aerial-vehicle-466722-p5
@@ -69,13 +86,24 @@ gcloud logging read 'resource.type="cloud_run_revision"
 
 Deeper sweep when the cause is not obvious: `npm run triage:gcp:deep`.
 
+Recurring 5xx in the 24h before 2026-11-03 19:00 UTC, so they are not mistaken for
+event breakage: `/api/crypto/bonding` 503 (3,953, fixed in `a5879f4bc`, unshipped:
+pollers retried non-pump mints forever), `/api/pump/trending` and `/api/pump/coin`
+502 (pump.fun upstream), `/api/crypto/holders` 503 (RPC quota), `/api/x402-pay` and
+`/api/x402/forge` 503 (sponsor fee floor), `/api/tts/synthesize` 502 (bursty).
+
 ---
 
 ## Rollback: pre-filled, per service
 
-**These three revisions are the known-good pre-event state.** They are live right
-now and all report Ready. After tomorrow's release deploy creates new revisions,
-these are what you roll back TO.
+The revisions currently serving 100% are the known-good pre-event state. After the
+release deploy creates new revisions, these are what you roll back TO.
+
+| Service | current (roll back to this after the deploy) | previous |
+|---|---|---|
+| `three-ws-api` | `three-ws-api-00521-hxr` | `three-ws-api-00519-79c` (same image, min 6) |
+| `three-ws-multiplayer` | `three-ws-multiplayer-00012-fhl` | `three-ws-multiplayer-00011-qjv` |
+| `three-ws-redis-proxy` | `three-ws-redis-proxy-00005-8d6` | `three-ws-redis-proxy-00004-bwk` (min 3 / max 10) |
 
 ```bash
 export PATH="$HOME/google-cloud-sdk/bin:$PATH"
@@ -83,15 +111,15 @@ R="--region us-central1 --project aerial-vehicle-466722-p5"
 
 # API + frontend
 gcloud run services update-traffic three-ws-api $R \
-  --to-revisions=three-ws-api-00364-n65=100
+  --to-revisions=three-ws-api-00521-hxr=100
 
 # The /play world server (kicks everyone in-world; they auto-reconnect)
 gcloud run services update-traffic three-ws-multiplayer $R \
-  --to-revisions=three-ws-multiplayer-00010-g89=100
+  --to-revisions=three-ws-multiplayer-00012-fhl=100
 
 # Redis proxy (presence, durable builds)
 gcloud run services update-traffic three-ws-redis-proxy $R \
-  --to-revisions=three-ws-redis-proxy-00004-bwk=100
+  --to-revisions=three-ws-redis-proxy-00005-8d6=100
 ```
 
 Then purge the edge or the CDN keeps serving the bad build:
@@ -102,135 +130,148 @@ npm run deploy:gcp:purge-cdn
 
 Return to normal afterwards with `--to-latest` instead of `--to-revisions`.
 
-**Rehearsal result (2026-08-08):** every target above exists and reports
-`Ready=True` with 100% of traffic. Traffic was not actually shifted, because
-shifting it and back is itself two world-server restarts on the eve of the event;
-the commands are the same `update-traffic` calls that created the current
-routing, and the revisions are the ones already serving.
+**Rehearsal (2026-11-03):** every revision above reports `Ready=True`. The API's
+previous revision was proven routable without shifting traffic: it was tagged
+`rollback` at 0%, `https://rollback---three-ws-api-lp642k3kpa-uc.a.run.app/api/version`
+answered 200 in 0.39s with commit `0a913e8a7`, and the tag was removed. Re-run the
+same probe against any target before a real rollback:
+
+```bash
+gcloud run services update-traffic three-ws-api $R --update-tags=rollback=<revision>
+curl -s https://rollback---three-ws-api-lp642k3kpa-uc.a.run.app/api/version
+gcloud run services update-traffic three-ws-api $R --remove-tags=rollback
+```
 
 ---
 
 ## Scale: what is set, and how to raise it
 
-Pre-scaled 2026-08-08 (config-only, pre-approved per
+Pre-scaled 2026-11-03 (config-only, pre-approved per
 [docs/ops/gcp-credits-plan.md](../ops/gcp-credits-plan.md)):
 
 | Service | min | max | concurrency | CPU / memory | changed from |
 |---|---|---|---|---|---|
-| `three-ws-api` | **6** | 100 | 160 | 2 / 4Gi | min was 2 |
-| `three-ws-multiplayer` | 1 | **1 (hard)** | 1000 | **4 / 8Gi** | was 2 CPU / 4Gi |
-| `three-ws-redis-proxy` | **3** | **10** | 80 | default | was min 2 / max 4 |
+| `three-ws-api` | **12** | 100 | 160 | 2 / 8Gi | min was 6 |
+| `three-ws-multiplayer` | 1 | **1 (hard)** | 1000 | 4 / 8Gi | unchanged |
+| `three-ws-redis-proxy` | **4** | **20** | 80 | 1 / 1Gi | was min 3 / max 10 |
+
+A full API deploy keeps these: `server/cloudbuild.yaml` pins memory, CPU and the VPC
+connector but not min or max instances, and `gcloud run deploy` keeps unpinned
+scaling settings.
 
 ```bash
 export PATH="$HOME/google-cloud-sdk/bin:$PATH"
 R="--region us-central1 --project aerial-vehicle-466722-p5"
 
 # More API headroom (safe, instant)
-gcloud run services update three-ws-api $R --min-instances=12 --max-instances=200
+gcloud run services update three-ws-api $R --min-instances=20 --max-instances=200
 
-# More world-server headroom. NOTE: raise CPU/RAM or concurrency, never max-instances.
+# More world-server headroom. Raise CPU/RAM or concurrency, never max-instances.
 gcloud run services update three-ws-multiplayer $R --cpu=8 --memory=16Gi
 gcloud run services update three-ws-multiplayer $R --concurrency=2000
+
+# After the event, return the API floor
+gcloud run services update three-ws-api $R --min-instances=6
 ```
 
 **`three-ws-multiplayer` max-instances must stay 1.** Colyseus rooms live in one
-process. A second instance is only correct when the room registry and presence
-are shared through Redis *and* each instance is individually addressable so a
-seat reservation lands on the box hosting the room. Cloud Run gives every
-instance the same URL, so instance 2 would silently split players in the same
-world into two invisible crowds. A Memorystore Redis exists
-(`three-ws-redis`, `10.234.231.139:6379`) and `REDIS_URI` would switch the driver
-on, but the addressability half is not solved and the eve of an event is not when
-to find out. Use CPU, memory, and concurrency instead.
+process. A second instance only works when the room registry and presence are
+shared through Redis *and* each instance is individually addressable. Cloud Run
+gives every instance the same URL, so instance 2 would silently split players in
+the same world into two crowds that cannot see each other. Use CPU, memory and
+concurrency instead.
 
 ---
 
 ## Capacity: measured, not assumed
 
-`npm run event:capacity -- --n 400 --ramp 45 --hold 150` against live production,
-2026-08-08:
+**Assumed peak: 200 concurrent players.** Source: there is no attendance record for
+the previous meetups (`/api/play/population` reads 0 between events), and this is a
+one-hour virtual user-group session. 200 is a deliberately generous ceiling, and
+the test below drove 2x that.
+
+`node scripts/play-capacity-smoke.mjs --n 400 --ramp 60 --hold 120` against live
+production, 2026-11-03 19:25 UTC:
 
 | | |
 |---|---|
 | requested / joined | 400 / 400 (100%) |
-| held for the full 150s | 400 |
-| join latency | p50 155ms · p95 219ms · max 388ms |
-| mid-run drops | 0 |
-| moves sent / state patches | 269,633 / 415,418 |
-| verdict | PASS on all four thresholds |
+| held to the end | 400 (server population read 400) |
+| mid-run drops / silent sessions | 0% / 0% |
+| join latency | p50 981ms, p95 15,950ms (harness-bound, see below) |
+| moves sent / state patches | 121,682 / 254,114 |
+| world server | 1 instance, CPU p99 peak 8%, memory p99 2% |
+| API | up to 20 instances |
 
-The single world instance carried 400 concurrent players walking at 8 Hz with
-zero drops. The known cliff is the concurrency ceiling: at 1000 simultaneous
-connections Cloud Run wants a second instance and `max-instances=1` refuses it.
-If the count approaches that, raise `--concurrency`, not `--max-instances`.
+The join p95 threshold failed, but the cause was the load generator, not the
+server: this box ran at load average ~140 and the harness's own event loop stalled
+up to 3.8s. A 5-player probe from the same box immediately after joined at
+p95 418ms, and the world server never exceeded 8% CPU. The single instance carries
+400 walking players with headroom to spare. The known cliff is concurrency 1000,
+where Cloud Run wants a second instance that `max-instances=1` refuses: raise
+`--concurrency` if the count approaches it.
 
-One caveat baked into the harness: at 400 clients its own event loop stalls, so
-the page-latency figure it prints measures the machine running it, not the
-origin. It now prints its own loop lag next to that number and says so. An idle
-`curl` during the same run measured `/play` at a steady 420-490ms.
+---
+
+## Third-party failover (proven 2026-11-03)
+
+| Dependency | Primary today | Failover proof |
+|---|---|---|
+| Solana RPC | Helius and Alchemy both 429 (monthly quota spent, parked 6h by design) | `npm run event:failover`: 4 of 6 free rungs live, the $THREE supply read served through them; stale-serve covers gaps |
+| Pump.fun | frontend API intermittently 403/502 | `getBondingStatus` falls back to last-known-good, then the on-chain curve reader |
+| IPFS images | ipfs.io | `api/img.js` races five gateways; event:failover served the $THREE CID |
+| LLM | free-first chain | event:failover answered through the chain |
+| TTS | NVIDIA Magpie, OpenAI backstop | `/api/tts/speak` 200 audio/wav in 2.1s; `/api/tts/synthesize` 200 audio/mpeg in 1.4s |
+| Multiplayer Redis | Memorystore via `three-ws-redis-proxy` | min 4 warm siblings; the API cache has a circuit breaker and memory fallback |
+| Text-to-3D (`forge_free`) | NVIDIA NIM 504, Vertex reference image 403 (unpaid GCP balance) | The image ladder still produced a reference image and TRELLIS delivered a GLB on production: `https://three.ws/cdn/forge/anon/90fd5e22-b5fe-4968-921a-b01447095f6d.glb`. Fragile until the release ships, see failure modes |
 
 ---
 
 ## Known failure modes and what to do
 
-Audits 1-9 did not leave an accepted-risk register, so this is derived from the
-code's own documented landmines plus what was measured on 2026-08-08.
-
 | If this happens | Why | Do this |
 |---|---|---|
 | `/play` loads but nobody sees anyone else | World server restarted or a second instance appeared | `curl .../health`; confirm `max-instances=1`; rollback command above |
-| Players kicked seconds after joining, phones only | Mobile memory kill, not a network fault | `node scripts/play-mobile-repro.mjs` reproduces it; it reads as bytes, not as a networking bug |
-| `/walk` looks completely offline while `/play` works | Someone set `PLAY_GATE_MINT`/`THREE_MINT` on the world server. `/walk` sends no play pass, so every join throws `play_pass_required` (landmine documented in `multiplayer/src/rooms/WalkRoom.js`) | Unset it: `gcloud run services update three-ws-multiplayer $R --remove-env-vars=PLAY_GATE_MINT,THREE_MINT` |
-| NPC / concierge replies slow or absent | Paid LLM tier is degraded today: OpenRouter `402 Payment Required`, OpenAI `429`. Vertex Gemini is healthy and the free-first chain leads, so players still get answers (measured 8-16s first token after live demotions) | Nothing during the event. Topping up OpenRouter is an owner spend decision |
-| Wallet balances read as zero / holder tier collapses to Member | Helius and Alchemy are both `429` today. 6 free rungs plus the QuickNode reserve carry it (proven by poisoning the primary) | `npm run event:failover` to see which rungs are live now |
-| Coin image missing on the event link or OG card | `4everland.io` gateway times out, `gateway.pinata.cloud` is slow (~4s). `api/img.js` races five gateways and takes the first valid one | Nothing. 4 of 5 gateways served the CID on 2026-08-08 |
-| An x402 / boutique payment does not settle | `/api/healthz` shows 50,442 settle failures with `fee_runway_exhausted`. This is settle-floor starvation, which looks identical to "the wallets are dry" and has a different fix | Run the `x402-economy-triage` agent BEFORE concluding anything about wallet balances |
-| A deploy dies at `npm ci` with "package.json and package-lock.json are not in sync" | Almost certainly NOT a dependency mistake. `FROM node:24-slim` floats, so a newer bundled npm resolves the tree differently and rejects an untouched lockfile. This took the 2026-08-08 release build down | The Dockerfile now pins `ARG NPM_VERSION`. If it recurs, compare `npm --version` locally against `docker run --rm node:24-slim npm --version` and set the pin to the version that produced the lockfile |
-| Something breaks and nobody is told | Push alerting is thin. `TELEGRAM_ALERTS_CHAT_ID` is unset in production, so `/api/healthz` reports `telegram_push: "disabled"` and platform alerts land only in the `ops_alerts` table | Email now works: two uptime checks (site + world server) and two alert policies (uptime failure, `three-ws-api` 5xx rate) were created 2026-08-08 and page `nich@sperax.io`. Email is slow, so also keep `npm run event:watch` open on a screen |
+| Players kicked seconds after joining, phones only | Mobile memory kill, not a network fault | `node scripts/play-mobile-repro.mjs` reproduces it |
+| `/walk` offline while `/play` works | Someone set `PLAY_GATE_MINT`/`THREE_MINT` on the world server (both unset today) | `gcloud run services update three-ws-multiplayer $R --remove-env-vars=PLAY_GATE_MINT,THREE_MINT` |
+| Wallet balances read zero, holder tier collapses to Member | Helius and Alchemy quotas spent | `npm run event:failover`; the owner tops up either plan |
+| `/forge` or the "one sentence to a rigged agent" beat fails with "1 stage missed (Mesh)" | The TRELLIS worker's event loop freezes 30-140s while post-processing a mesh; on the live build, five timed-out status polls trip one breaker shared by every GPU worker and every submit then fails as `provider_unreachable`. The Hunyuan3D and HF fallbacks fail closed because the load balancer sends no client-region header | Ship the release (per-worker breakers, `0cc3627d0`). Add the region header (owner): `gcloud compute backend-services update three-ws-backend --global --project aerial-vehicle-466722-p5 --custom-request-header='X-Client-Region:{client_region}'`. On stage, leave 2 minutes between generations and keep a pre-built GLB as the fallback |
+| An x402 payment, the Agent Exchange beat, or `/api/x402-pay` 503s | Sponsor fee wallet `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` holds 0.00093 SOL, under the 0.002 SOL settle floor; self-heal blocked by 2 undecryptable agent wallet secrets | Run the `x402-economy-triage` agent first. Fix: owner sends 0.05 SOL to the sponsor wallet |
+| Coin image missing on the link or OG card | One IPFS gateway slow | Nothing: `api/img.js` takes the first of five |
+| Something breaks and nobody is told | `TELEGRAM_ALERTS_CHAT_ID` unset | Email alerting is live (uptime checks on the site and world server, a 5xx-rate policy). Keep `npm run event:watch` on a screen |
+| `gcloud` stops working mid-event | Auth expires on its own schedule here | `gcloud auth login --no-launch-browser`; verify with a real `gcloud run services describe`, never `gcloud auth list` |
 
 ---
 
 ## Talk to the whole world mid-event
 
-`scripts/announce-play.mjs` pushes a message to every player standing in a live
-world, right now. It is the host's microphone: use it to call each agenda beat,
-to tell people where to go, and to say anything that cannot wait for chat to
-scroll. Requires the world server to be running the event build (the endpoint is
-`/internal/announce`; a 404 means the deploy below has not happened yet).
+`scripts/announce-play.mjs` pushes a message to every player in a live world. Use
+it to call each agenda beat. It is HMAC-signed with `MULTIPLAYER_SHARED_SECRET`
+(falling back to `HOLDER_PASS_SECRET`, in `.env`).
 
 ```bash
-# Every live world, toast only
-node scripts/announce-play.mjs "Totem showdown starts in 2 minutes. Get to the plaza."
-
-# With a title: also raises the centre-screen banner for 12s
-node scripts/announce-play.mjs \
-  --title "Wheel hour" \
-  --detail "Free spin at Fortune's Folly, prizes on every wedge" \
-  "Wheel hour is open. Head to the plaza wheel."
-
-# Only the $THREE world, and hold the banner 30s
+# Agenda beats (minutes after 16:00 UTC)
+node scripts/announce-play.mjs --title "Doors open" "Welcome to the meetup. Gather in the plaza."
+node scripts/announce-play.mjs --title "Live build" "One sentence to a rigged agent. Watch the stage."      # +6
+node scripts/announce-play.mjs --title "Forge" "Type /forge in chat to make something."                     # +20
+node scripts/announce-play.mjs --title "Agent Exchange" "An agent pays for a tool. Head to the Exchange."    # +27
+node scripts/announce-play.mjs --title "Dance-off" "Step onto the dance floor, vote with a reaction."       # +49
 node scripts/announce-play.mjs --coin FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump \
-  --duration-ms 30000 --title "Fireworks" "Look up."
+  --duration-ms 30000 --title "Group photo" "Gather at the totem. Shutter at minute 58."                     # +55
 ```
 
-It prints how many rooms and players it reached, so `0 player(s)` is your cue
-that nobody is in the world yet (or that you targeted the wrong coin). The
-request is HMAC-signed with `MULTIPLAYER_SHARED_SECRET` (falling back to
-`HOLDER_PASS_SECRET`, which is in `.env`), and the server rejects an unsigned or
-stale call, so the endpoint is safe to leave exposed. Announcements ride the same
-`notice` channel the game already uses, so they reach every connected client
-regardless of which build the player loaded.
+It prints how many rooms and players it reached; `0 player(s)` means nobody is in
+the world yet or the coin is wrong.
 
 ---
 
 ## Change the event window live (no deploy)
 
-`public/event.json` is baked into the image, so the window used to need a deploy to
-move. An operator override now sits on top of it (`app_settings` key
-`event_override`, served by `GET /api/event-config`). The browser, the leaderboard
-API and the game server's quest gate all read the merged result and converge within
-about a minute (API 15 s, game server poll 60 s). Writes need an admin session or
-`OPS_SECRET` (`node scripts/read-service-env.mjs` shows it).
+`public/event.json` is baked into the image. An operator override sits on top of it
+(`app_settings` key `event_override`, served by `GET /api/event-config`). The browser,
+the leaderboard API and the game server's quest gate converge within about a minute.
+Writes need an admin session or `OPS_SECRET` (`node scripts/read-service-env.mjs`
+shows it).
 
 ```bash
 export OPS_SECRET=<from the Cloud Run service env>
@@ -247,91 +288,73 @@ curl -X POST https://three.ws/api/event-config \
   -d '{"endsAt":"2026-11-06T17:30:00Z"}'          # or {"end":true} or {"clear":true}
 ```
 
-Rules: the id can never change (the leaderboard is keyed by it), the same checks as
-`npm run check:event` apply (end after start, window of at most 24 hours), a rejected
-write returns 422 with the reasons, and an override written for a previous event id is
-ignored after the next deploy. Every write is audit-logged (`event_override`, with the
-actor, before and after). If the API is down the browser and game server fall back to
-the static file, so the override is lost for that window and the file's times apply.
-`npm run check:event` warns when production serves an override that differs from the
-file.
+The id can never change (the leaderboard is keyed by it); the `npm run check:event`
+rules apply and a rejected write returns 422. **The endpoint ships with the release
+below**: on the live build `0a913e8a7` it does not exist yet.
+
+---
 
 ## Escalation: which tool for which subsystem
 
 | Subsystem | Tool |
 |---|---|
-| x402 payments, settles, the ring, "wallets are dry" | `x402-economy-triage` agent. Do not diagnose by hand; settle-floor starvation and capital dispersion look the same from outside |
-| Cloud Run, crons, logs, DB migrations, TLS, fleet readiness | `gcp-triage` skill, or `npm run triage:gcp:deep` |
+| x402 payments, settles, "wallets are dry" | `x402-economy-triage` agent |
+| Cloud Run, crons, logs, DB migrations, TLS | `gcp-triage` skill, or `npm run triage:gcp:deep` |
 | Phones dropping out of the world | `node scripts/play-mobile-repro.mjs` |
 | Any page 404/500 across the site | `npm run smoke:prod` |
 | A third-party provider suspected down | `npm run event:failover` |
 | World capacity under a crowd | `npm run event:capacity -- --n <2x current peak>` |
+| Is this sheet still true? | `npm run check:live-ops` |
 
 ---
 
 ## Ship the release (owner-gated)
 
-Two services, two commands. Both need explicit owner approval.
-
 ```bash
-# 1. API + frontend (26+ commits ahead of what is live)
+git push threews main
+
+# 1. API + frontend. The one pending migration
+#    (20261103130000_agent_mcp_connections_reshape.sql) belongs to this release:
+#    read `npm run db:status`, then apply it alongside the deploy.
 npm run deploy:gcp:full
 
-# 2. The world server - required for the event features and /population.
-#    Its image predates every event commit.
+# 2. The world server: reconnect-position, chat-draft, prop-budget and event-config
+#    fixes are in multiplayer/ commits after its 2026-10-30 image.
 cd multiplayer && ./deploy-cloudrun.sh
 ```
 
-`deploy-cloudrun.sh` now defaults to `CPU=4 MEMORY=8Gi` so a redeploy cannot
-silently undo the pre-scaling above. `gcloud run deploy` replaces resource limits
-on every run, so a hotfix deploy with the old defaults would have halved the
-world server's CPU mid-event.
-
-After either deploy: `curl -s https://three.ws/api/version`, then
-`npm run event:watch -- --once`, then update the release SHA at the top of this
-page.
+After either deploy: `curl -s https://three.ws/api/version`, `npm run smoke:prod`,
+`npm run event:watch -- --once`, then update the **Live release** line and the
+rollback table, and run `npm run check:live-ops`.
 
 ---
 
-## Open items
+## T-minus checklist (UTC)
 
-1. **`TELEGRAM_ALERTS_CHAT_ID` exists nowhere** (not `.env`, not `.env.local`, not
-   the Cloud Run service). Every alerting path in `api/_lib/alerts.js` is already
-   wired behind it; it needs one private chat/DM id, which only the owner can
-   create. Then:
-   `gcloud run services update three-ws-api --region us-central1 --project aerial-vehicle-466722-p5 --update-env-vars=TELEGRAM_ALERTS_CHAT_ID=<id>`
-   (`--update-env-vars`, never `--set-env-vars`.) It must be a private chat: alerts
-   carry stack traces, URLs, and IPs.
-2. **Email alerting now exists; it did not before 2026-08-08.** Created that day
-   and wired to the existing verified `nich@sperax.io` channel:
+**2026-11-05 (T-1 day)**
+- [ ] Owner-approved deploy of API and world server (above); `smoke:prod` clean.
+- [ ] Owner: add the `X-Client-Region` header on `three-ws-backend` (command in failure modes).
+- [ ] Owner: pay the GCP billing balance; confirm `forge_free` delivers a GLB twice in a row.
+- [ ] Owner: 0.05 SOL to the sponsor fee wallet; rerun `x402-economy-triage`.
+- [ ] Owner: top up Helius or Alchemy.
+- [ ] Update the release line and rollback table; `npm run check:live-ops` and `npm run check:event` pass.
+- [ ] Rehearse every agenda beat once in the $THREE world.
 
-   - uptime check `three.ws API healthz` on `https://three.ws/api/healthz`
-   - uptime check `three.ws world server` on the world server's `/health`
-   - policy "Event: three.ws or the /play world server is DOWN" (uptime failing
-     from more than 2 probe locations)
-   - policy "Event: three-ws-api 5xx rate elevated" (5xx above 5/s for 5 minutes)
+**2026-11-06**
+- [ ] 14:00: `npm run event:watch -- --once`, `npm run event:failover`.
+- [ ] 15:00: `npm run event:capacity -- --n 50 --hold 30` (a quick join check, not a load test).
+- [ ] 15:30: `npm run event:watch -- --interval 15` on a screen; logs terminal open.
+- [ ] 16:00: "Doors open" announce; follow the agenda beats.
+- [ ] 16:58: group photo; 17:00 window ends (extend with `event:override` if needed).
+- [ ] After: `gcloud run services update three-ws-api $R --min-instances=6`.
 
-   Both policies link back to this page. Email is minutes-slow by nature, so it is
-   the backstop, not the primary: `npm run event:watch` is the primary.
-
-3. **The release build failed once on 2026-08-08** at the `npm ci` layer, root
-   caused to the floating base image (see the failure-modes table). The Dockerfile
-   pin is committed; the build has not been re-run since, so the release still
-   needs a green build before the deploy commands above are known good.
-
-4. **`gcloud` auth expires on its own schedule here.** It died mid-session
-   (`invalid_grant: reauth related error (invalid_rapt)`) and was restored with
-   `gcloud auth login --no-launch-browser`. Verify with a real call
-   (`gcloud run services describe three-ws-api --region us-central1`), never with
-   `gcloud auth list`, which reports an expired account as ACTIVE.
+---
 
 ## Removing a signature from the wall
 
-The signature wall (`docs/signature-wall.md`) filters slurs and links on the way in,
-but a human can still sign something that should come down. Removal is owner-only
-(Bearer `CRON_SECRET`) and by signature id. Find the id in the wall's public read
-(`curl "https://three.ws/api/play/signature-wall?limit=50"`, each record has `id`
-and `no`) or in a share link (`/api/play/signature-wall-og?id=<id>`).
+Removal is owner-only (Bearer `CRON_SECRET`) and by signature id. Find the id in the
+wall's public read (`curl "https://three.ws/api/play/signature-wall?limit=50"`) or a
+share link (`/api/play/signature-wall-og?id=<id>`). Ships with the release above.
 
 ```bash
 curl -X DELETE -H "Authorization: Bearer $CRON_SECRET" \
@@ -339,6 +362,3 @@ curl -X DELETE -H "Authorization: Bearer $CRON_SECRET" \
 ```
 
 Returns `{ "ok": true, "removed": "<id>", "total": N }`, or 404 for an unknown id.
-Players in the world drop the tile at their next full reload (within 5 minutes). The
-signer's one-signature claim is kept on purpose, so removal cannot be used to
-re-sign the same thing.

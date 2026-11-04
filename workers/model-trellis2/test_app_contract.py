@@ -29,6 +29,7 @@ from __future__ import annotations
 import base64
 import io
 import os
+import re
 import sys
 
 os.environ.setdefault("API_KEY", "smoke-test-key")
@@ -62,8 +63,16 @@ def png_data_uri(color=(20, 20, 20, 255), size=(24, 24)) -> str:
 _GPU_DRIVER_LIBS = ("libcuda.so", "libnvidia", "libnvrtc")
 
 
+# Triton's driver discovery (pulled in by flex_gemm) reports how many GPU
+# backends it found. Zero is the CPU-only builder; any other count is a real fault.
+_TRITON_DRIVER_COUNT = re.compile(r"^(\d+) active drivers \(.*\)\. There should only be one\.$")
+
+
 def _is_gpu_driver_absence(exc: BaseException) -> bool:
     text = str(exc)
+    triton = _TRITON_DRIVER_COUNT.match(text.strip())
+    if triton:
+        return triton.group(1) == "0"
     if "cannot open shared object file" in text:
         return any(lib in text for lib in _GPU_DRIVER_LIBS)
     lowered = text.lower()
