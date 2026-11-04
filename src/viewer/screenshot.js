@@ -1,5 +1,5 @@
 import { log } from '../shared/log.js';
-const WATERMARK_URL = '/three.svg';
+const WATERMARK_URL = '/favicon.svg';
 let watermarkImage = null;
 
 // Fetched on first screenshot, not on import. Eagerly warming it cost every

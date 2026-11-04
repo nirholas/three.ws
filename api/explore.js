@@ -124,7 +124,7 @@ export default wrap(async (req, res) => {
 		includeAvatars
 			? sql`
 		SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
-		       a.tags, a.created_at, a.source, a.model_category,
+		       a.size_bytes, a.tags, a.created_at, a.source, a.model_category,
 		       coalesce(a.featured, false)   AS featured,
 		       coalesce(a.view_count, 0)     AS view_count,
 		       u.username AS owner_username,
@@ -303,6 +303,7 @@ export default wrap(async (req, res) => {
 			description: r.description || '',
 			image: thumbnailUrl(r.thumbnail_key),
 			glbUrl: glb,
+			sizeBytes: r.size_bytes == null ? null : Number(r.size_bytes),
 			has3d: true,
 			tags: r.tags || [],
 			source: r.source || null,

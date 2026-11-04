@@ -1,3 +1,4 @@
+import { HERO_GLB_BUDGET_BYTES } from './shared/hero-glb-budget.js';
 	// ── Boot live <agent-3d> instances ─────────────────────────────
 	const AVATAR_ID  = 'bacff13e-b64b-4ac0-860d-44f0168ad23b';
 	const AGENT_ATTRS = {
@@ -80,7 +81,6 @@
 	// desktop measured 29.7 s of total blocking time, against 9.6 s for the same
 	// page with the GLB withheld. Two and a half megabytes still buys a rigged,
 	// textured, animated humanoid; it does not buy a raw photogrammetry capture.
-	const HERO_GLB_BUDGET_BYTES = 2_500_000;
 
 	// The curated hero avatar can disappear (deleted, or a fresh deploy whose
 	// DB row hasn't been seeded yet) — fall back to a real featured avatar so

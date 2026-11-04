@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Smaller Forge thumbnails and a lighter marketplace hero",
+			"summary": "Forge previews are now 512 px WebP instead of 768 px PNG, the marketplace hero shares one model-size budget across its slides, the brand mark is less than half its old size, and /forge paints its engine lanes on the first frame for repeat visitors.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "$THREE buyback lanes can no longer sweep the holder-rewards pool",
 			"summary": "If the rewards wallet is ever the same wallet as the buyback or micro-buy signer, those lanes now refuse to run instead of sweeping the whole rewards pool into the treasury, and the ops health check flags it. A new read-only preflight, npm run token:preflight, validates the treasury and rewards addresses against mainnet and prints the one command that applies them.",
 			"tags": ["security", "infra"]

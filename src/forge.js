@@ -1,4 +1,5 @@
 // Forge — text / image / multi-view → 3D generator (browser client).
+import { readCachedCatalog, writeCachedCatalog } from './forge-catalog-cache.js';
 import { ensureModelViewerOrFallback } from './shared/model-viewer-loader.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
@@ -780,10 +781,25 @@ function updateAspectVisibility() {
 // Fetch the tier/backend/cost catalog once, then build the engine selector from
 // the backends that are live (platform-configured) or BYOK (always selectable).
 async function loadCatalog() {
+	// Repeat visit: paint the lanes from the last-seen catalog on this frame so
+	// the composer is already its settled height when the live answer lands.
+	const cached = readCachedCatalog();
+	if (cached) {
+		catalog = cached;
+		buildEngineButtons();
+	}
+	const cachedJson = cached ? JSON.stringify(cached) : null;
+	let live = null;
 	try {
 		const res = await fetch('/api/forge?catalog=1', { headers: CLIENT_HEADERS });
-		catalog = await res.json().catch(() => null);
+		live = await res.json().catch(() => null);
 	} catch {
+		live = null;
+	}
+	if (live && Array.isArray(live.backends)) {
+		writeCachedCatalog(live);
+		catalog = live;
+	} else if (!cached) {
 		catalog = null;
 	}
 	if (!catalog || !Array.isArray(catalog.backends)) {
@@ -791,7 +807,7 @@ async function loadCatalog() {
 		els.engine?.closest('#forge-quality')?.classList.add('is-hidden');
 		return;
 	}
-	buildEngineButtons();
+	if (!cached || cachedJson !== JSON.stringify(catalog)) buildEngineButtons();
 	selectTier(selectedTier);
 	revealSketchMode();
 	loadHealth();
