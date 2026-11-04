@@ -383,6 +383,22 @@ Ranked by accounting/regulatory risk. Each is a tracked remediation item.
 
 ---
 
+## Accounting export
+
+Admins can pull one flat ledger for a bookkeeper across the money the platform moves.
+
+- **Sources:** `agent_withdrawals` (owner withdrawals), `agent_revenue_events` (gross, platform fee and net per paid skill call), and `vanity_bounties` (escrow, winner payout and expiry refund for grind bounties).
+- **Columns (fixed order):** `kind, id, occurred_at, agent_id, user_id, chain, asset, amount_atomics, fee_atomics, net_atomics, counterparty, status, tx_signature, tx_url, note`. Timestamps are UTC ISO-8601, amounts are integer atomics, `tx_url` is an explorer link.
+- **HTTP:** `GET /api/admin/accounting-export?from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv|json`. Both dates are inclusive UTC, at most 366 days apart. 401 without a session, 403 for a non-admin.
+- **CLI:** `node scripts/export-accounting.mjs --from 2026-10-01 --to 2026-10-31 --format csv` (read-only, needs `DATABASE_URL`).
+- **CSV safety:** cells starting with `=`, `+`, `-` or `@` are prefixed with an apostrophe so counterparty text cannot run as a spreadsheet formula.
+
+### Durable bounty ledger
+
+Grind-bounty records used to live only in Redis, so an eviction could lose escrow, payout and refund history. Postgres is now the source of truth (`vanity_bounties` plus the append-only `vanity_bounty_events`, migration `20261105120000_vanity_bounties.sql`). Every transition is one guarded `UPDATE ... WHERE status = <expected>`, so a bounty can never both pay and refund. After applying the migration, copy legacy records once with `node scripts/backfill-vanity-bounties.mjs` (dry run by default, `--apply` to write, idempotent).
+
+---
+
 ## Related
 
 - [Money map](money-map.md) — who receives each payment.
