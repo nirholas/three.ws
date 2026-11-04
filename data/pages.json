@@ -6883,6 +6883,14 @@
 					"added": "2026-11-04"
 				},
 				{
+					"path": "/mcp",
+					"title": "Connect to every three.ws tool",
+					"description": "One MCP endpoint and one sign-in for every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, with the live tool count and tool groups read from the same registry the endpoint serves.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/mcp-tools",
 					"title": "MCP Tool Catalog",
 					"description": "Every MCP tool three.ws publishes, searchable and filterable by category: what it does, which server hosts it, what it costs in USDC, and whether an AI client can run it unattended. Open any tool for its schema, an example call and a try-it for the free read-only ones. Totals are computed from the live servers, with a note on how, and a release diff shows which tools were added when.",

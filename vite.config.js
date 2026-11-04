@@ -734,6 +734,7 @@ const appConfig = {
 				'voice-home': resolve(__dirname, 'pages/voice-home.html'),
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
+				mcp: resolve(__dirname, 'pages/mcp.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
 				'mcp-integrations': resolve(__dirname, 'pages/mcp-integrations.html'),
 				'settings-memory': resolve(__dirname, 'pages/settings-memory.html'),

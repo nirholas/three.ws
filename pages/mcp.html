@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Connect to every three.ws tool · three.ws</title>
+	<meta name="description" content="One MCP endpoint, one sign-in, every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, plus the live list of tool groups." />
+	<link rel="canonical" href="https://three.ws/mcp" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Connect to every three.ws tool" />
+	<meta property="og:description" content="One MCP endpoint, one sign-in, every three.ws tool." />
+	<meta property="og:url" content="https://three.ws/mcp" />
+	<meta name="twitter:card" content="summary" />
+	<meta name="robots" content="index, follow" />
+	<style>
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.mx-wrap { max-width: 1040px; margin: 0 auto; padding: 0 18px 96px; }
+		.mx-hero { padding: 34px 0 8px; }
+		.mx-hero h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.mx-hero p { margin: 0; max-width: 68ch; color: var(--ink-dim); line-height: 1.6; }
+		a { color: inherit; text-underline-offset: 3px; }
+		a:hover { color: var(--ink-bright, var(--ink)); }
+		a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent, #7c9cff); outline-offset: 2px; }
+		.mx-stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 8px; }
+		.mx-stat { min-width: 150px; padding: 14px 18px; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 12px; background: var(--bg-1, transparent); }
+		.mx-stat b { display: block; font-size: 1.7rem; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.mx-stat span { color: var(--ink-dim); font-size: .85rem; }
+		h2 { font-size: 1.25rem; margin: 36px 0 12px; color: var(--ink-bright, var(--ink)); }
+		.mx-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+		.mx-tab, .mx-copy, .mx-retry { font: inherit; color: var(--ink); background: var(--bg-1, transparent); border: 1px solid var(--line, rgba(255,255,255,.18)); border-radius: 8px; padding: 8px 14px; cursor: pointer; transition: background .15s, border-color .15s, transform .05s; }
+		.mx-tab:hover, .mx-copy:hover, .mx-retry:hover { border-color: var(--ink-dim); background: color-mix(in srgb, var(--ink) 8%, transparent); }
+		.mx-tab:active, .mx-copy:active, .mx-retry:active { transform: translateY(1px); }
+		.mx-tab[aria-selected="true"] { border-color: var(--accent, #7c9cff); color: var(--ink-bright, var(--ink)); }
+		.mx-snippet { position: relative; }
+		.mx-snippet pre { margin: 0; padding: 16px; padding-right: 90px; overflow-x: auto; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 12px; background: var(--bg-1, rgba(0,0,0,.25)); font-size: .85rem; line-height: 1.55; }
+		.mx-snippet .mx-copy { position: absolute; top: 10px; right: 10px; padding: 5px 10px; font-size: .8rem; }
+		.mx-note { color: var(--ink-dim); font-size: .9rem; line-height: 1.55; margin: 10px 0 0; }
+		.mx-search { width: 100%; max-width: 420px; font: inherit; color: var(--ink); background: var(--bg-1, transparent); border: 1px solid var(--line, rgba(255,255,255,.18)); border-radius: 8px; padding: 9px 12px; margin-bottom: 14px; }
+		.mx-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+		.mx-group { padding: 14px 16px; border: 1px solid var(--line, rgba(255,255,255,.12)); border-radius: 12px; background: var(--bg-1, transparent); transition: border-color .15s; }
+		.mx-group:hover { border-color: var(--ink-dim); }
+		.mx-group h3 { margin: 0 0 4px; font-size: 1rem; display: flex; justify-content: space-between; gap: 8px; color: var(--ink-bright, var(--ink)); }
+		.mx-group p { margin: 0 0 10px; color: var(--ink-dim); font-size: .88rem; line-height: 1.5; }
+		.mx-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+		.mx-badge { font-size: .75rem; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
+		.mx-read { color: #15803d; } .mx-write { color: #a16207; } .mx-financial { color: #b91c1c; }
+		:root[data-theme="dark"] .mx-read { color: #4ade80; } :root[data-theme="dark"] .mx-write { color: #facc15; } :root[data-theme="dark"] .mx-financial { color: #f87171; }
+		.mx-skel { height: 118px; border-radius: 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--ink) 6%, transparent), color-mix(in srgb, var(--ink) 14%, transparent), color-mix(in srgb, var(--ink) 6%, transparent)); background-size: 200% 100%; animation: mx-shimmer 1.2s infinite linear; }
+		@keyframes mx-shimmer { to { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .mx-skel { animation: none; } }
+		.mx-state { padding: 24px; border: 1px dashed var(--line, rgba(255,255,255,.2)); border-radius: 12px; color: var(--ink-dim); }
+		.mx-state p { margin: 0 0 12px; }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="mx-wrap">
+		<div class="mx-hero">
+			<h1>One endpoint, every three.ws tool</h1>
+			<p>Add <code>https://three.ws/mcp</code> to your AI client and sign in once. Every tool from every three.ws server shows up behind that one URL. Financial tools stay off until you turn them on. The full per-tool catalog is at <a href="/mcp-tools">/mcp-tools</a>.</p>
+		</div>
+
+		<div class="mx-stats" id="stats" aria-live="polite">
+			<div class="mx-stat"><b id="stat-tools">-</b><span>tools</span></div>
+			<div class="mx-stat"><b id="stat-default">-</b><span>on by default</span></div>
+			<div class="mx-stat"><b id="stat-groups">-</b><span>groups</span></div>
+		</div>
+
+		<h2>Install</h2>
+		<div class="mx-tabs" role="tablist" aria-label="Client">
+			<button class="mx-tab" role="tab" id="tab-code" aria-selected="true" data-tab="code">Claude Code</button>
+			<button class="mx-tab" role="tab" id="tab-desktop" aria-selected="false" data-tab="desktop">Claude Desktop</button>
+			<button class="mx-tab" role="tab" id="tab-stdio" aria-selected="false" data-tab="stdio">Stdio proxy (Cursor and others)</button>
+		</div>
+		<div class="mx-snippet">
+			<pre id="snippet" tabindex="0" role="tabpanel" aria-live="polite"></pre>
+			<button class="mx-copy" id="copy" type="button">Copy</button>
+		</div>
+		<p class="mx-note" id="snippet-note"></p>
+
+		<h2>Tool groups</h2>
+		<input class="mx-search" id="search" type="search" placeholder="Filter groups" aria-label="Filter groups" />
+		<div class="mx-groups" id="groups" aria-busy="true">
+			<div class="mx-skel"></div><div class="mx-skel"></div><div class="mx-skel"></div>
+		</div>
+	</main>
+
+	<script src="/brand.js" defer></script>
+	<script type="module">
+		const SNIPPETS = {
+			code: {
+				text: (url) => `claude mcp add --transport http three-ws ${url}`,
+				note: 'Run this once, then use /mcp inside Claude Code to sign in.',
+			},
+			desktop: {
+				text: (url) => JSON.stringify({ mcpServers: { 'three-ws': { command: 'npx', args: ['-y', 'mcp-remote', url] } } }, null, 2),
+				note: 'Paste into claude_desktop_config.json, restart Claude Desktop, and sign in when the browser opens.',
+			},
+			stdio: {
+				text: () => JSON.stringify({ mcpServers: { 'three-ws': { command: 'npx', args: ['-y', '@three-ws/mcp'], env: { THREE_WS_API_KEY: 'your key' } } } }, null, 2),
+				note: 'For clients that only speak stdio. Create a key at /dashboard/api-keys. Without a key only public tools are listed.',
+			},
+		};
+		let endpoint = 'https://three.ws/mcp';
+		let tab = 'code';
+		let groups = [];
+
+		const $ = (id) => document.getElementById(id);
+		const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+		function renderSnippet() {
+			const s = SNIPPETS[tab];
+			$('snippet').textContent = s.text(endpoint);
+			$('snippet-note').textContent = s.note;
+			document.querySelectorAll('.mx-tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+		}
+
+		function renderGroups() {
+			const q = $('search').value.trim().toLowerCase();
+			const list = groups.filter((g) => !q || `${g.id} ${g.label} ${g.summary}`.toLowerCase().includes(q));
+			const box = $('groups');
+			if (!list.length) {
+				box.innerHTML = `<div class="mx-state"><p>No group matches "${esc(q)}".</p><button class="mx-retry" type="button" id="clear">Clear filter</button></div>`;
+				$('clear').addEventListener('click', () => { $('search').value = ''; renderGroups(); });
+				return;
+			}
+			box.innerHTML = list.map((g) => `<article class="mx-group"><h3><span>${esc(g.label)}</span><span>${g.tools}</span></h3><p>${esc(g.summary)}</p><div class="mx-badges">${['read', 'write', 'financial'].filter((t) => g.tiers?.[t]).map((t) => `<span class="mx-badge mx-${t}">${t} ${g.tiers[t]}</span>`).join('')}</div></article>`).join('');
+		}
+
+		async function load() {
+			const box = $('groups');
+			box.setAttribute('aria-busy', 'true');
+			box.innerHTML = '<div class="mx-skel"></div><div class="mx-skel"></div><div class="mx-skel"></div>';
+			try {
+				const res = await fetch('/tools.json', { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const u = (await res.json()).unified;
+				if (!u) throw new Error('the catalog has no unified section');
+				endpoint = u.endpoint || endpoint;
+				groups = u.groups || [];
+				$('stat-tools').textContent = u.tool_count;
+				$('stat-default').textContent = u.default_tool_count;
+				$('stat-groups').textContent = groups.length;
+				renderSnippet();
+				renderGroups();
+			} catch (err) {
+				box.innerHTML = `<div class="mx-state" role="alert"><p>Could not load the live tool list (${esc(err.message)}). Check your connection and try again.</p><button class="mx-retry" type="button" id="retry">Retry</button></div>`;
+				$('retry').addEventListener('click', load);
+			} finally {
+				box.setAttribute('aria-busy', 'false');
+			}
+		}
+
+		document.querySelectorAll('.mx-tab').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; renderSnippet(); }));
+		$('search').addEventListener('input', renderGroups);
+		$('copy').addEventListener('click', async () => {
+			const btn = $('copy');
+			try {
+				await navigator.clipboard.writeText($('snippet').textContent);
+				btn.textContent = 'Copied';
+			} catch {
+				const r = document.createRange();
+				r.selectNodeContents($('snippet'));
+				getSelection().removeAllRanges();
+				getSelection().addRange(r);
+				btn.textContent = 'Press Ctrl+C';
+			}
+			setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+		});
+		renderSnippet();
+		load();
+	</script>
+</body>
+</html>

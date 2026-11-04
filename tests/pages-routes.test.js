@@ -102,3 +102,25 @@ describe('vercel.json html rewrites point at a real page source', () => {
 		expect(missing).toEqual([]);
 	});
 });
+
+// /mcp serves two audiences from one URL: browsers get the install page,
+// MCP clients get the JSON-RPC endpoint. The html rule must come first and be
+// gated on the Accept header so a POST from a client never lands on the page.
+describe('/mcp content negotiation', () => {
+	const routes = (vercelConfig.routes || []).filter((r) => r.src === '/mcp/?');
+
+	it('sends Accept: text/html to the install page', () => {
+		const html = routes.find((r) => r.dest === '/mcp.html');
+		expect(html).toBeTruthy();
+		expect(html.has).toEqual([{ type: 'header', key: 'accept', value: '(?i).*text/html.*' }]);
+		expect(new RegExp(html.has[0].value).test('text/html,application/xhtml+xml,*/*;q=0.8')).toBe(true);
+		expect(new RegExp(html.has[0].value).test('application/json, text/event-stream')).toBe(false);
+	});
+
+	it('leaves everything else on the unified JSON-RPC endpoint, after the html rule', () => {
+		const rpc = routes.find((r) => r.dest === '/api/mcp/all');
+		expect(rpc).toBeTruthy();
+		expect(rpc.has).toBeUndefined();
+		expect(routes.indexOf(rpc)).toBeGreaterThan(routes.findIndex((r) => r.dest === '/mcp.html'));
+	});
+});

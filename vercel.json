@@ -724,7 +724,7 @@
 		{
 			"src": "/mcp/?",
 			"has": [{ "type": "header", "key": "accept", "value": "(?i).*text/html.*" }],
-			"dest": "/mcp-tools.html"
+			"dest": "/mcp.html"
 		},
 		{
 			"src": "/mcp/?",
