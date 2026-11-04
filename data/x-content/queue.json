@@ -2247,6 +2247,161 @@
 							"contains": "three_hold_required"
 						}
 					]
+				},
+				{
+					"says": "The ladder has five rungs, from Member at nothing held up to Genesis",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "label: 'Member'"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "minUsd: 0"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "label: 'Genesis'"
+						}
+					]
+				},
+				{
+					"says": "You also take 5% off all compute priced in the token, and your free generation quota doubles",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "5% off all $THREE compute"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "2× free generation quota"
+						}
+					]
+				},
+				{
+					"says": "Silver at $100 held is 10% off and triple quota",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "minUsd: 100"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "10% off all $THREE compute"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "3× free generation quota"
+						}
+					]
+				},
+				{
+					"says": "Gold at $500 held is 20% off and five times the quota",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "minUsd: 500"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "20% off all $THREE compute"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "5× free generation quota"
+						}
+					]
+				},
+				{
+					"says": "Genesis at $2,500 held is 30% off and ten times the quota",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "minUsd: 2500"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "30% off all $THREE compute"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-tier.js",
+							"contains": "10× free generation quota"
+						}
+					]
+				},
+				{
+					"says": "Some perks further up the ladder are still marked planned on the page: private invite-only worlds, priority MCP routing, branded environments",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/three-access.js",
+							"contains": "label: 'Private, invite-only worlds'"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-access.js",
+							"contains": "label: 'Priority MCP routing'"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/three-access.js",
+							"contains": "label: 'Branded worlds + custom environments'"
+						}
+					]
+				},
+				{
+					"says": "A 200k-poly generation with 4K PBR textures",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/three-access.js",
+							"contains": "label: 'High-quality generation (200k poly + PBR)'"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-tiers.js",
+							"contains": "texture_size: 4096"
+						}
+					]
+				},
+				{
+					"says": "the same 402 offers the job at $0.50 a generation",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/pricing/catalog.js",
+							"contains": "const FORGE_HIGH_USD = Number(priceUsdcForTier(TIERS.high)); // 0.50"
+						},
+						{
+							"type": "file",
+							"path": "api/_lib/forge-quote.js",
+							"contains": "model = 'hold_or_pay';"
+						}
+					]
+				},
+				{
+					"says": "A holder pays nothing per call on the high lane",
+					"evidence": [
+						{
+							"type": "file",
+							"path": "api/_lib/forge-quote.js",
+							"contains": "generate High for free. Everyone else pays once per generation."
+						}
+					]
 				}
 			],
 			"probes": [
