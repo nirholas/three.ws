@@ -3,8 +3,8 @@
 //
 // Order is cost and quality, strongest first: Claude on Vertex AI (Google
 // credits, the standing approval in the operating rules), gpt-oss-120b on Groq
-// (funded, fast, text-only), Claude through OpenRouter, OpenAI, then Kimi K3 on
-// NVIDIA NIM (free, multimodal, slow). A rung with no credentials is skipped; a
+// (funded, fast, text-only), Claude through OpenRouter, OpenAI, then Nemotron 3.5
+// Super VL on NVIDIA NIM (free, multimodal, slow). A rung with no credentials is skipped; a
 // rung that errors, or that answers with something the caller cannot parse,
 // falls through to the next one. Falling through on a parse failure is
 // deliberate: a model that returns prose where JSON was asked for has failed the
@@ -38,7 +38,7 @@ async function viaVertex({ system, parts, maxTokens = 6000 }) {
 // through to the next rung at once.
 export const RUNG_ATTEMPTS = 3;
 export const RUNG_RETRY_MS = 4000;
-// The answer budget the reasoning rung asks for. Kimi K3 spends part of it
+// The answer budget the reasoning rung asks for. The NVIDIA model spends part of it
 // thinking before it writes, and with no limit sent the provider's default ran
 // out mid-thought: the reply came back with no content at all and the review
 // failed as if no model had answered. This leaves room for both. Only that rung
