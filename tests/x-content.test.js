@@ -48,6 +48,12 @@ describe('quality', () => {
 		expect(copyProblems('$THREE holders get GLTF exports over HTTP on three.ws/pay', { minimum: 1 })).toEqual([]);
 	});
 
+	it('reads a capitalised file name such as SKILL.md or README.md as a name, not shouting', () => {
+		expect(copyProblems('Each skill is one SKILL.md, linked from the index next to the README.md on three.ws/skill.md', { minimum: 1 })).toEqual([]);
+		expect(copyProblems('Read the SKILL.md and the SKILL.md index on three.ws/skill.md', { minimum: 1 })).toEqual([]);
+		expect(copyProblems('SKILL.md is GREAT and AMAZING on three.ws/skill.md', { minimum: 1 })).toEqual(['more than one all-caps word reads as shouting']);
+	});
+
 	it('does not require a link when the item links elsewhere', () => {
 		expect(copyProblems('The rig runs on our own GPU workers.', { minimum: 1, requireUrl: false })).toEqual([]);
 	});

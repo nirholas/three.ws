@@ -113,7 +113,9 @@ export function copyProblems(text, { minimum = 100, maximum = STANDARD_MAX_LENGT
 	if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(copy)) problems.push('emoji are outside the @trythreews voice');
 	if (/[\u2013\u2014]/.test(copy)) problems.push('en-dashes and em-dashes are banned');
 	if (/!{2,}|(?:!.*){3,}/s.test(copy)) problems.push('stacked exclamation marks read as automated hype');
-	if ((copy.match(/\b[A-Z]{4,}\b/g) || []).filter((word) => !ALLCAPS_TERMS.has(word)).length > 1) {
+	// A capitalised word followed by an extension is a file name (SKILL.md,
+	// README.md), which the copy has to spell the way the file is spelled.
+	if ((copy.match(/\b[A-Z]{4,}\b(?!\.[a-z0-9]{1,5}\b)/g) || []).filter((word) => !ALLCAPS_TERMS.has(word)).length > 1) {
 		problems.push('more than one all-caps word reads as shouting');
 	}
 	// X rejects a post carrying more than one cashtag outright (403, "Posts are
