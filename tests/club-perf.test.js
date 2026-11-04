@@ -12,6 +12,7 @@ import {
 	nextLowerTier,
 	nextHigherTier,
 	createFrameWatchdog,
+	watchdogFrameSec,
 } from '../src/club-perf.js';
 
 function envFor({ ua = 'Mozilla/5.0', mem, cores, coarse = false } = {}) {
@@ -288,5 +289,44 @@ describe('createFrameWatchdog', () => {
 		expect(() => wd.tick(-1)).not.toThrow();
 		expect(() => wd.tick(0)).not.toThrow();
 		expect(wd.tier).toBe('high');
+	});
+});
+
+// The render loops clamp their simulation dt (0.05 to 0.1 s) so physics stays
+// stable. The watchdog has to judge the real wall-clock interval instead: fed
+// the clamped value, a phone drawing 2 fps looked like one drawing 20 and took
+// about 27 s of wall time to leave each tier (minutes below 1 fps), so the
+// weakest devices sat on the heaviest settings long after entering the world.
+describe('watchdogFrameSec (what a render loop feeds the watchdog)', () => {
+	function runAt(fps, wallSec, initialTier = 'high') {
+		const seen = [];
+		const wd = createFrameWatchdog({ initialTier, onDowngrade: (t) => seen.push(t) });
+		const raw = 1 / fps;
+		for (let t = 0; t < wallSec; t += raw) wd.tick(watchdogFrameSec(raw));
+		return { tier: wd.tier, seen };
+	}
+
+	it('steps a 2 fps device from high to low within 5 s of wall time', () => {
+		const { tier, seen } = runAt(2, 5);
+		expect(seen).toEqual(['medium', 'low']);
+		expect(tier).toBe('low');
+	});
+
+	it('steps a device stalled below 1 fps down in seconds, not minutes', () => {
+		const { tier } = runAt(0.2, 40);
+		expect(tier).toBe('low');
+	});
+
+	it('does not downgrade a healthy 60 fps device over one long resume gap', () => {
+		const wd = createFrameWatchdog({ initialTier: 'high', onDowngrade: () => {} });
+		for (let i = 0; i < 120; i++) wd.tick(watchdogFrameSec(1 / 60));
+		wd.tick(watchdogFrameSec(45)); // back from a hidden tab
+		for (let i = 0; i < 600; i++) wd.tick(watchdogFrameSec(1 / 60));
+		expect(wd.tier).toBe('high');
+	});
+
+	it('passes ordinary frame intervals through unchanged', () => {
+		expect(watchdogFrameSec(1 / 60)).toBeCloseTo(1 / 60, 10);
+		expect(watchdogFrameSec(0.1)).toBeCloseTo(0.1, 10);
 	});
 });

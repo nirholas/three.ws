@@ -21,7 +21,6 @@
 
 import { ensureX402 } from '../../shared/x402-loader.js';
 import { shortAddress as shortAddr } from '../../shared/address.js';
-import { netErrorMessage } from '../net-error.js';
 
 // ── tiny DOM helper (self-contained; mirrors the app's el() conventions) ──────
 function el(tag, attrs, kids) {
@@ -548,7 +547,7 @@ export function openService(serviceId, { npc, ui } = {}) {
 			if (err?.code === 'cancelled' || /cancel|reject|denied|closed/i.test(msg)) {
 				showError('Payment cancelled — no charge.');
 			} else {
-				showError(netErrorMessage(err, msg));
+				showError(msg);
 			}
 			ui?.toast?.(svc.title + ' — ' + (/(cancel|reject)/i.test(msg) ? 'cancelled' : 'payment failed'), 'warn');
 		} finally {

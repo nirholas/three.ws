@@ -10,7 +10,6 @@
 
 import { friendsClient } from '../friends.js';
 import panelCss from '../friends-panel.css?inline';
-import { netErrorMessage } from './net-error.js';
 
 // Inject the standalone friends-panel CSS once per document. The .wf-friends
 // class on the panel root defines the --kg-* token layer (resolving to the
@@ -123,7 +122,7 @@ export class FriendsPanel {
 		try {
 			await fn();
 		} catch (err) {
-			this._error = netErrorMessage(err, 'Something went wrong.');
+			this._error = err?.message || 'Something went wrong.';
 		} finally {
 			this._busy.delete(userId);
 			this.render();
@@ -538,7 +537,7 @@ export class FriendsPanel {
 				await this.client.sendDM(id, text);
 			} catch (err) {
 				this._draft = text;
-				this._error = netErrorMessage(err, 'Could not send.');
+				this._error = err?.message || 'Could not send.';
 				this.render();
 			}
 		};

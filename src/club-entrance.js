@@ -60,7 +60,7 @@ import { AnimationManager } from './animation-manager.js';
 import { ClubCrowd } from './club-crowd.js';
 import { ClubDoorLine } from './club-queue.js';
 import { ClubBouncer, BOUNCER_AVATAR_URL } from './club-bouncer.js';
-import { detectProfile, PROFILES, createFrameWatchdog } from './club-perf.js';
+import { detectProfile, PROFILES, createFrameWatchdog, watchdogFrameSec } from './club-perf.js';
 import { getPowerSaver } from './shared/frame-governor.js';
 import { log } from './shared/log.js';
 import { scaleToHeight, groundFeet } from './shared/avatar-fit.js';
@@ -1026,9 +1026,9 @@ async function start(canvasEl) {
 		// shouldn't keep rendering a club nobody is looking at. Simulation above
 		// already ran this frame; here we only decide whether to paint it.
 		if (!document.hidden && now - lastDraw >= FRAME_BUDGET_MS()) {
-			// Clamp like the sim dt so the first draw after a hidden tab (interval
-			// of seconds) can't single-handedly trip the slow-frame watchdog.
-			const drawDt = Math.min((now - lastDraw) / 1000, 0.1);
+			// The real draw interval, capped by watchdogFrameSec so the first draw
+			// after a hidden tab can't single-handedly trip the slow-frame watchdog.
+			const drawDt = watchdogFrameSec((now - lastDraw) / 1000);
 			lastDraw = now;
 			composer.render(dt);
 			watchdog.tick(drawDt);

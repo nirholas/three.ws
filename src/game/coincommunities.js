@@ -27,7 +27,7 @@ import { createWorldEnvironment, seedFromString } from './world-env.js';
 import { createDistrict } from './district.js';
 import { DISTRICT, clampToBounds } from './world-zones.js';
 import { PhysicsWorld } from '../physics/physics-world.js';
-import { detectProfile, createFrameWatchdog } from '../club-perf.js';
+import { detectProfile, createFrameWatchdog, watchdogFrameSec } from '../club-perf.js';
 import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-render.js';
 import {
 	createFrameGovernor, trackWindowFocus, getPowerSaver, onPowerSaverChange,
@@ -5285,7 +5285,8 @@ export class CoinCommunities {
 			: FPS_IDLE;
 		if (this._powerSaver) fpsCap = Math.min(fpsCap, FPS_SAVER);
 		if (!this._governor.shouldRun(now, fpsCap)) return;
-		const dt = Math.min(0.05, (now - this._last) / 1000);
+		const frameSec = (now - this._last) / 1000;
+		const dt = Math.min(0.05, frameSec);
 		this._last = now;
 		// Only judge frame health at the full-rate cap, a deliberately
 		// throttled frame (blur, lobby, saver) is slow by design, not a
@@ -5299,7 +5300,7 @@ export class CoinCommunities {
 		// and the tier only climbs back after six sustained fast seconds: the player
 		// spent their first ten seconds looking at a needlessly soft world.
 		if (this.phase === 'world' && fpsCap >= FPS_ACTIVE && now - this._worldSince > WATCHDOG_GRACE_MS) {
-			this._watchdog.tick(dt);
+			this._watchdog.tick(watchdogFrameSec(frameSec));
 		}
 
 		if (this.phase === 'world') {

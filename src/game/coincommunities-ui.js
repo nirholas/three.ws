@@ -23,7 +23,7 @@ import { proxiedImageURL } from '../ipfs.js';
 import { log } from '../shared/log.js';
 import { netErrorMessage } from './net-error.js';
 import { t, onLocaleChange } from './i18n-play.js';
-import { announce, openModal } from './a11y.js';
+import { announce } from './a11y.js';
 import { countUp } from '../ui-juice.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
@@ -2797,16 +2797,17 @@ export class CommunityUI {
 			status,
 		]);
 		this.shareSheet = el('div', { id: 'cc-share', onclick: () => this.closeShareSheet() }, [card]);
+		// Capture phase + stop: Escape closes this sheet only, never the drawer or
+		// panel stack behind it (the world's own Escape handling runs on bubble).
+		this._shareKeydown = (e) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); this.closeShareSheet(); } };
+		document.addEventListener('keydown', this._shareKeydown, true);
 		document.body.appendChild(this.shareSheet);
 		requestAnimationFrame(() => this.shareSheet?.classList.add('cc-on'));
-		this._shareRelease = openModal(card, {
-			close: () => this.closeShareSheet(),
-			initialFocus: canPublish ? titleInput : copyBtn,
-		});
+		(canPublish ? titleInput : copyBtn).focus();
 	}
 
 	closeShareSheet() {
-		if (this._shareRelease) { this._shareRelease(); this._shareRelease = null; }
+		if (this._shareKeydown) { document.removeEventListener('keydown', this._shareKeydown, true); this._shareKeydown = null; }
 		if (this.shareSheet) { this.shareSheet.remove(); this.shareSheet = null; }
 	}
 

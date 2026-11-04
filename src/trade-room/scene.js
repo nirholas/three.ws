@@ -47,7 +47,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 import { AVATAR_DEFAULT, buildAvatar, getAllEmoteDefs, newAnim, releaseAvatar } from '../game/avatar-rig.js';
-import { detectProfile, createFrameWatchdog } from '../club-perf.js';
+import { detectProfile, createFrameWatchdog, watchdogFrameSec } from '../club-perf.js';
 import {
 	createFrameGovernor, trackWindowFocus, getPowerSaver, FPS_ACTIVE, FPS_IDLE, FPS_SAVER,
 } from '../shared/frame-governor.js';
@@ -595,9 +595,10 @@ export class TradeRoomScene {
 		const cap = getPowerSaver() ? FPS_SAVER : this.focus.focused ? FPS_ACTIVE : FPS_IDLE;
 		if (!this.governor.shouldRun(now, cap)) return;
 		this.timer.update(now);
-		const dt = Math.min(0.1, this.timer.getDelta());
+		const frameSec = this.timer.getDelta();
+		const dt = Math.min(0.1, frameSec);
 
-		this.watchdog.tick(dt);
+		this.watchdog.tick(watchdogFrameSec(frameSec));
 		if (this.tier === 'low' && this.leaderReady) {
 			this._slowOnLow = this.watchdog.getFrameAvg() > GIVE_UP_FRAME_SEC ? this._slowOnLow + dt : 0;
 			if (this._slowOnLow > GIVE_UP_AFTER_SEC) {

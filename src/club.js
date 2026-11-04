@@ -57,7 +57,7 @@ import { playSequence, ticketSteps } from './club-sequence.js';
 import { ClubMoney } from './club-money.js';
 import { ClubFloorCrowd } from './club-floor-crowd.js';
 import { ClubTipHud } from './club-tip-hud.js';
-import { detectProfile, PROFILES, createFrameWatchdog, isMobileLayout } from './club-perf.js';
+import { detectProfile, PROFILES, createFrameWatchdog, isMobileLayout, watchdogFrameSec } from './club-perf.js';
 import {
 	createFrameGovernor, trackWindowFocus, getPowerSaver, setPowerSaver, onPowerSaverChange,
 	FPS_ACTIVE, FPS_IDLE, FPS_SAVER,
@@ -2672,13 +2672,14 @@ function animate(frameNow) {
 	const fpsCap = powerSaver ? FPS_SAVER : (focusState.focused && !covered ? FPS_ACTIVE : FPS_IDLE);
 	if (!governor.shouldRun(frameNow ?? performance.now(), fpsCap)) return;
 	clock.update();
-	const dt = Math.min(clock.getDelta(), 0.066);
+	const frameSec = clock.getDelta();
+	const dt = Math.min(frameSec, 0.066);
 	const t = clock.getElapsed();
 
 	// Only judge frame health at the full-rate cap — a deliberately throttled
 	// frame (blur, power saver) is slow by design, not a struggling GPU, and
 	// the watchdog never upgrades back.
-	if (fpsCap >= FPS_ACTIVE) watchdog.tick(dt);
+	if (fpsCap >= FPS_ACTIVE) watchdog.tick(watchdogFrameSec(frameSec));
 
 	// Beat level — drives both the bloom and the volumetric beams this frame.
 	const peak = audio.getPeak();

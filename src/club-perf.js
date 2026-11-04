@@ -168,6 +168,27 @@ export function nextHigherTier(tier) {
 	return PROFILE_TIERS[Math.max(i - 1, 0)];
 }
 
+// Longest single frame the watchdog credits. See watchdogFrameSec.
+export const WATCHDOG_MAX_FRAME_SEC = 0.5;
+
+/**
+ * The frame time to feed the watchdog, from the raw interval between two
+ * drawn frames in seconds.
+ *
+ * Render loops clamp their simulation dt (0.05 to 0.1 s) so physics stays
+ * stable, and that clamped value must NOT reach the watchdog: its hold window
+ * is wall-clock seconds, so a phone drawing 2 fps fed 0.05 per frame looked
+ * like one drawing 20 and took about 27 s to leave each tier (minutes below
+ * 1 fps). The real interval goes through, capped only so one resume from a
+ * hidden tab cannot fill a whole hold window by itself.
+ *
+ * @param {number} rawSec
+ * @returns {number}
+ */
+export function watchdogFrameSec(rawSec) {
+	return Math.min(WATCHDOG_MAX_FRAME_SEC, rawSec);
+}
+
 /**
  * Frame-budget watchdog. Feed it `dt` once per frame; when the EMA of
  * frame time stays above the slow-frame threshold for `holdSec`

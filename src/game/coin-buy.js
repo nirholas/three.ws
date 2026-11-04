@@ -25,7 +25,6 @@ import { createSmartMoneyPanel } from '../shared/smart-money-panel.js';
 import { proxiedImageURL } from '../ipfs.js';
 import { leaveAppForPayment } from '../shared/native-handoff.js';
 import { shortAddress as shortAddr } from '../shared/address.js';
-import { netErrorMessage } from './net-error.js';
 
 const WSOL = 'So11111111111111111111111111111111111111112';
 const USDC_MINT = {
@@ -945,7 +944,7 @@ class TradeModal {
 				await this._refreshBalances();
 			}
 		} catch (err) {
-			this._setStatus(netErrorMessage(err, 'Could not open the funding flow.'), 'err');
+			this._setStatus(err?.message || 'Could not open the funding flow.', 'err');
 		}
 	}
 
@@ -1090,7 +1089,7 @@ class TradeModal {
 			this._setStatus('Signed in. Retrying…', 'ok');
 			(retry || (() => this._buy()))();
 		} catch (err) {
-			this._setStatus(netErrorMessage(err, 'Sign-in failed.'), 'err');
+			this._setStatus(err?.message || 'Sign-in failed.', 'err');
 		}
 	}
 
