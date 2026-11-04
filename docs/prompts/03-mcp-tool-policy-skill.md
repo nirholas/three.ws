@@ -2,11 +2,11 @@
 
 Read `docs/prompts/README.md` first.
 
-## Status (2026-10-23)
+## Status (2026-11-04)
 
-Delivered: the policy module. The table (groups, tiers, confirm flags, preview tools, bound arguments) and the enablement grammar live in [`packages/mcp-policy`](../../packages/mcp-policy/README.md) so the hosted servers and the stdio packages enforce one table. [`api/_mcp/policy.js`](../../api/_mcp/policy.js) binds it to the hosted side (Redis preview store, saved settings in `mcp_tool_settings`) and every dispatcher built on [`api/_lib/mcp-dispatch.js`](../../api/_lib/mcp-dispatch.js), plus `api/_mcp-studio` and `api/pump-fun-mcp`, calls `listForRequest`, `gateCall` and `finishCall`. `npx three-ws tools` chooses groups. [`docs/mcp.md`](../mcp.md) already explains turning the tools on.
+Delivered: the policy module. The table (groups, tiers, confirm flags, preview tools, bound arguments) and the enablement grammar live in [`packages/mcp-policy`](../../packages/mcp-policy/README.md) so the hosted servers and the stdio packages enforce one table. [`api/_mcp/policy.js`](../../api/_mcp/policy.js) binds it to the hosted side (Redis preview store, saved settings in `mcp_tool_settings`) and every dispatcher built on [`api/_lib/mcp-dispatch.js`](../../api/_lib/mcp-dispatch.js), plus `api/_mcp-studio` and `api/pump-fun-mcp`, calls `listForRequest`, `gateCall` and `finishCall`. `npx three-ws tools` chooses groups. [`docs/mcp.md`](../mcp.md) already explains turning the tools on. The settings surface also shipped (2026-10-25): [`api/mcp-tools.js`](../../api/mcp-tools.js) (`GET` and `PUT /api/mcp-tools`, the account-wide writer for `mcp_tool_settings`) and the page at `/settings/mcp-tools` ([`public/settings/mcp-tools/index.html`](../../public/settings/mcp-tools/index.html)), covered by [`tests/api/mcp-tools.test.js`](../../tests/api/mcp-tools.test.js). Per-key overrides are not part of the page yet (`key` is `null` in the GET response).
 
-Still open: the `/settings/mcp-tools` page and the `/api/mcp-tools` writer for `mcp_tool_settings` (nothing writes the table yet, so saved settings only take effect once they exist), the generated model-facing skill (`.agents/skills/three-ws/SKILL.md`, `scripts/build-mcp-skill.mjs`, and its byte-for-byte test; the entry-point skill today is `public/skill.md`, rendered by `scripts/build-skills-pack.mjs` from `data/skill-md.template.md`), and a test that walks every server's tool list against the table. The sections below remain the brief for those parts; where they name the original design, the shipped names are given in brackets.
+Still open: the generated model-facing skill (`.agents/skills/three-ws/SKILL.md`, `scripts/build-mcp-skill.mjs`, and its byte-for-byte test; the entry-point skill today is `public/skill.md`, rendered by `scripts/build-skills-pack.mjs` from `data/skill-md.template.md`), and a test that walks every server's tool list against the whole table (`tests/mcp-confirm-flag-tier.test.js` walks the server catalogs only for the spend-confirm-flag-on-financial-tier rule). The sections below remain the brief for those parts; where they name the original design, the shipped names are given in brackets.
 
 ## The problem
 
@@ -25,7 +25,7 @@ Before the policy module, our fund-moving safeguards were real but scattered: sp
 
 Enforcement: `tools/list` returns only enabled tools for the session. Enablement comes from, in order: the client's allowed-tools list (`X-Three-Allowed-Tools`) when present, an `X-Three-Tools` header, the `tools` query the CLI from prompt 01 sets, the per-key override and then the account setting in `mcp_tool_settings`, then the default (read plus write). A disabled tool called anyway returns `reason: "tool_disabled"` with an error that says how to enable it (`npx three-ws tools`, or the settings page). Separately, a connector-preset API key (the "For an AI agent" key) never sees or calls a value-moving tool on any server (`movesValue` in `api/_mcp/policy.js`).
 
-Settings page: `/settings/mcp-tools` lists every group with its tier, a toggle per group, and per-key overrides. Every state designed. Add to `data/pages.json`.
+Settings page: `/settings/mcp-tools` lists every group with a toggle per group (shipped; per-key overrides remain open). Every state designed.
 
 ### Audit the existing tools
 
@@ -46,7 +46,7 @@ Walk every tool in every server and package and assign group, tier, confirm flag
 
 ## Docs and wiring
 
-- `docs/mcp.md`: the "Turning the tools on" guidance exists; add a "Tool policy" section explaining tiers, defaults and how to enable groups once the settings page ships.
+- `docs/mcp.md`: the "Turning the tools on" guidance exists; add a "Tool policy" section explaining tiers, defaults and how to enable groups, now that the settings page has shipped.
 - `docs/agent-skills.md`: register the new skill.
 - `data/changelog.json` entry tagged `security, improvement`.
 
