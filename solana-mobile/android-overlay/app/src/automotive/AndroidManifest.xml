@@ -45,7 +45,10 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
-    <application>
+    <!-- manageSpaceActivity points at the TWA's site-settings launcher, which
+         this flavor removes below; leaving the attribute would hand Settings a
+         class that is not declared. -->
+    <application tools:remove="android:manageSpaceActivity">
         <!-- AAOS reads com.android.automotive. The Android Auto descriptor must
              not be present in an AAOS artifact at all. -->
         <meta-data
