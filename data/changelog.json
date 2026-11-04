@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Drive builds for Android Automotive OS",
+			"summary": "The Android overlay now has an automotive product flavor that puts the same four-control Drive templates on a car's own screen through CarAppActivity. It compiles alongside the unchanged phone build; running it on a head unit is the remaining check.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Multiplayer worlds can run on more than one server",
 			"summary": "The multiplayer server now reports whether it shares state with its peers on /health, refuses to boot single-instance when its Redis is configured but unreachable, and forwards friend messages, stage tips and event announcements to whichever instance holds the target. A two-process test and a real-socket load test back it. Turning it on in production needs the Memorystore steps in multiplayer/README.md.",
 			"tags": [
