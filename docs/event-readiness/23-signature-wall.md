@@ -1,5 +1,7 @@
 # Feature 23: the signature wall, a permanent artifact of the event
 
+Status: shipped (`d564eb8bc`, 2026-10-31). Store, rules, API, overflow design and files are in [docs/signature-wall.md](../signature-wall.md): Upstash Redis zset, `api/play/signature-wall.js`, share card `api/play/signature-wall-og.js`, client `src/game/signature-wall*.js`; the owner-only removal curl is in [LIVE-OPS.md](LIVE-OPS.md). The brief below is what was built to; a fresh session should audit and extend it, not rebuild it.
+
 Events end; walls remember. Give the $THREE world a signature wall near spawn where every attendee can leave their name and a short line, rendered as graffiti everyone sees, persisted forever. It costs visitors ten seconds, gives them ownership of the space, and becomes the artifact the community links back to after the event.
 
 ## Where the code lives

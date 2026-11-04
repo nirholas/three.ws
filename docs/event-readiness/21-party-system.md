@@ -1,6 +1,8 @@
 # Feature 21: party system, because nobody attends an event alone
 
-Friends exist (drawer, presence, DMs) but group play does not: two friends in the same world cannot find each other without describing scenery over chat, and there is no way to move through the event as a crew. Build parties: form one, see your people, get to them, and talk to them.
+Status: shipped 2026-11-01 (`6992553d6`), with the offline-send fixes of 2026-11-03. The player-facing behavior, state keys and TTLs, and teleport validation are in [docs/play-parties.md](../play-parties.md); client code is `src/game/party.js`, server code is `multiplayer/src/party-store.js` and `multiplayer/src/party-service.js`, tested in `tests/party-store.test.js`, `tests/party-service.test.js` and `tests/party-offline-send.test.js`. The brief below is what was built to; a fresh session should audit and extend it, not rebuild it. Not shipped: the event glue in item 5 (no invite sheet from Feature 16 exists yet).
+
+Friends exist (drawer, presence, DMs) but group play did not: two friends in the same world cannot find each other without describing scenery over chat, and there is no way to move through the event as a crew. The feature lets you form a party, see your people, get to them, and talk to them.
 
 ## Where the code lives
 

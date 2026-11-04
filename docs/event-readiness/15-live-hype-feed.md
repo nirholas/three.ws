@@ -1,6 +1,8 @@
 # Feature 15: live activity ticker and hype moments
 
-A live world should feel alive even when you just stand there. The market already drives world FX (`market-reactor.js`) and the chart jumbotron streams real trades; what is missing is a human-readable pulse: who joined, who bought, what just happened. Build the ticker and the hype moments on top of the feeds we already have.
+Status: shipped 2026-10-31 (`671abdf66`). The collapsible ticker lives in `src/game/activity-ticker.js` with its feeds in `src/game/activity-feeds.js`, and the per-coin threshold tuner is `src/game/hype-threshold.js` (max of p95 and 4x median buy size, 60 s cooldown, tested in `tests/hype-threshold.test.js`); see `docs/play-activity-ticker.md`. The brief below is what was built to; a fresh session should audit and extend that code, not rebuild it.
+
+A live world should feel alive even when you just stand there. The market already drives world FX (`market-reactor.js`) and the chart jumbotron streams real trades; the gap this feature closed was a human-readable pulse: who joined, who bought, what just happened. Build the ticker and the hype moments on top of the feeds we already have.
 
 ## Where the code lives
 

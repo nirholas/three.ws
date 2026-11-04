@@ -12,7 +12,7 @@ Run these against production first to find real user-facing breakage, then again
 - `npm run audit:console`: console errors per page. `npm run audit:overlays`, `npm run audit:inline-handlers`, `npm run audit:routes`, `npm run audit:route-shadowing`: overlay/handler/route health.
 - `npm run audit:docs`: dead doc links and commands naming scripts that no longer exist.
 
-`audit:console` drives a real browser per route, so a machine already busy with
+`audit:console` exits non-zero only when a route and viewport exceed `scripts/audit-console.baseline.json` (accepted error counts, currently empty), so a new console error fails it and a fixed one is reported as an improvement; `--update-baseline` rewrites the file and `docs/audit/README.md` carries the quiet-box rule for a trustworthy run. `AUDIT_BASE=https://three.ws` sweeps production directly (http and https bases both work). It drives a real browser per route, so a machine already busy with
 other browser fleets or test workers distorts it: navigations blow the 30s
 budget and the dev server itself can miss its boot window, and both land in the
 report as page failures they are not. It reuses a dev server already answering

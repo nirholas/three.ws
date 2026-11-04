@@ -7,11 +7,11 @@ The world must load fast on event wifi and hold 60fps on a mid-range laptop. Mea
 - Main world: `src/game/coincommunities.js` (5k+ lines; check what it imports eagerly vs lazily)
 - Population and props: `src/game/ambient-crowd.js`, `src/game/world-objects.js`, `src/game/terrain.js`, `src/game/build-voxels.js`, `src/game/static-batch.js`
 - Shaders and environment: `src/game/water-shader.js`, `src/game/day-night.js`, `src/game/world-env.js`
-- Avatar pipeline: `src/game/boot-avatar.js`, `src/glb-canonicalize.js`, `src/animation-retarget.js`
+- Avatar pipeline: `src/game/boot-avatar.js`, `src/game/avatar-rig.js` (shared parsed-template cache and the one-flight animation manifest load), `src/glb-canonicalize.js`, `src/animation-retarget.js`
 
 ## What to measure (before touching anything)
 
-1. **Network.** With devtools on the canonical $THREE URL (see `docs/event-readiness/README.md`): total transferred bytes to interactive, largest individual assets, any asset fetched more than once. `scripts/play-mobile-repro.mjs` (chromium engine) prints transfer totals and attributes duplicate GLB/clip fetches to their call stacks.
+1. **Network.** With devtools on the canonical $THREE URL (see `docs/event-readiness/README.md`): total transferred bytes to interactive, largest individual assets, any asset fetched more than once. `scripts/play-mobile-repro.mjs` (chromium engine) prints transfer totals and attributes duplicate GLB/clip fetches to their call stacks. `npm run audit:event-client` (see the README) wraps it with committed ceilings and is the repeatable form of this step; the avatar GLB and `/animations/manifest.json` are now fetched once per load, so a new duplicate is a regression.
 2. **Frame rate.** Performance panel recording of 30s of walking through the busiest area. Note long tasks, GC spikes, and the main-loop cost breakdown.
 3. **Memory.** Heap snapshot after 5 minutes idle in the world. Growth means a leak (event listeners, geometries/materials not disposed on despawn, chat log unbounded).
 

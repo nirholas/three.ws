@@ -67,10 +67,12 @@ npm run audit:event-client -- --json docs/event-readiness/results/2026-11-06.jso
 | `mobile:chromium` | `scripts/play-mobile-repro.mjs` in an emulated iPhone | over a limit in the baseline (time to a visible world, transfer MB, peak heap, heap growth, worst frame while walking), a duplicate GLB or clip download, a page error, a console error from our code, or a socket that dropped and never came back |
 | `mobile:webkit` | the same harness in WebKit | the same checks; WebKit reproduces the iOS Safari memory kills |
 | `touch` | `scripts/mobile-touch-audit.mjs` on /play | a visible control under 44 px, a canvas without `touch-action`, a fixed bar ignoring the safe-area inset, sideways overflow |
-| `console` | `scripts/audit-console.mjs /play` | any console error or warning on desktop or phone |
+| `console` | `scripts/audit-console.mjs /play` | any console error or warning on desktop or phone beyond the accepted ones in `scripts/audit-console.baseline.json` (currently none; a new error fails, an improvement is reported) |
 | `failures` | `scripts/audit-play-failure-modes.mjs` | a broken state with no session, blocked IPFS or GLB, hostile query strings, or an expired pass |
 
 The limits live in `scripts/audit-event-client.baseline.json`, one block per engine. They describe the production bundle, so they are judged only against a built deploy (`--base https://three.ws`). Against a Vite dev server, which serves every module unbundled, the run still fails on duplicate downloads, page errors, console errors and dropped sockets, and says it skipped the ceilings. Each run prints the folder holding every harness summary and full log (GLB call stacks, failed requests). The limits are set from measured production runs with headroom for a shared machine; tighten them when a performance fix lands and note the new numbers in the commit. The verdict logic is `scripts/lib/event-client-verdict.mjs`, unit-tested in `tests/audit-event-client-verdict.test.js`.
+
+A page error, boot error card or main-thread hang still fails a run, but when an engine's software renderer starves `requestAnimationFrame` and freezes the page (WebKit on a host without a GPU), the walk, heap and frame numbers are reported as unmeasured, not as a pass or a failure. Those need a GPU-backed run (a real device, or `--base` from a GPU host).
 
 Exit codes: `0` every step passed, `1` a real regression, `3` a step never got a fair reading (a navigation timeout or `net::ERR_NETWORK_CHANGED` on a busy box) even after one automatic retry. `3` means "rerun when the machine is quiet", never "fine".
 
