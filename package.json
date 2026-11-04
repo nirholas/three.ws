@@ -45,9 +45,6 @@
 		},
 		"protobufjs": "^7.6.5",
 		"proxy-addr": "^2.0.8",
-		"@vercel/og": {
-			"sharp": "^0.35.5"
-		},
 		"adm-zip@~0.4": "~0.6.1",
 		"js-yaml@^4": "^4.3.2",
 		"jayson@^4": "^5.0.0",
@@ -60,7 +57,42 @@
 		"fast-xml-parser": "^5.11.2",
 		"decode-uri-component": "^0.5.1",
 		"follow-redirects": "^1.16.2",
-		"node-forge": "^1.4.2"
+		"node-forge": "^1.4.2",
+		"minimatch@^9": "^11.0.4",
+		"minimatch@^10": "^11.0.4",
+		"helia@^5": "^7.1.16",
+		"@helia/unixfs@^4": "^7",
+		"@solana/buffer-layout-utils": {
+			"bigint-buffer": "file:multiplayer/vendor/bigint-buffer"
+		},
+		"@rollup/plugin-node-resolve": {
+			"deepmerge": "file:multiplayer/vendor/deepmerge"
+		},
+		"jest-config": {
+			"deepmerge": "file:multiplayer/vendor/deepmerge"
+		},
+		"@ethersproject/signing-key": {
+			"elliptic": "file:multiplayer/vendor/elliptic"
+		},
+		"ethereumjs-util": {
+			"elliptic": "file:multiplayer/vendor/elliptic"
+		},
+		"create-ecdh": {
+			"elliptic": "file:multiplayer/vendor/elliptic"
+		},
+		"@cosmjs/crypto": {
+			"elliptic": "file:multiplayer/vendor/elliptic"
+		},
+		"secp256k1": {
+			"elliptic": "file:multiplayer/vendor/elliptic"
+		},
+		"browserify-sign": {
+			"elliptic": "file:multiplayer/vendor/elliptic"
+		},
+		"lodash.set": "$lodash.set",
+		"@colyseus/core": {
+			"nanoid": "file:../../../multiplayer/vendor/nanoid"
+		}
 	},
 	"engines": {
 		"node": "24.x"
@@ -169,7 +201,7 @@
 		]
 	},
 	"scripts": {
-		"postinstall": "(node scripts/build-cache.mjs check agent-payments-sdk agent-payments-sdk/src agent-payments-sdk/package.json || (npm run build --prefix agent-payments-sdk && node scripts/build-cache.mjs stamp agent-payments-sdk agent-payments-sdk/src agent-payments-sdk/package.json)) && (node scripts/build-cache.mjs check solana-agent-sdk solana-agent-sdk/src solana-agent-sdk/package.json || (npm run build:dist --prefix solana-agent-sdk && node scripts/build-cache.mjs stamp solana-agent-sdk solana-agent-sdk/src solana-agent-sdk/package.json)) && (node scripts/build-cache.mjs check walk-sdk walk-sdk/src walk-sdk/package.json || (npm run build --prefix walk-sdk && node scripts/build-cache.mjs stamp walk-sdk walk-sdk/src walk-sdk/package.json)) && (node scripts/fix-pump-sdk-esm.mjs & node scripts/fix-x402-extensions-esm.mjs & node scripts/fix-zauth-sdk-solana-esm.mjs & node scripts/fix-8004-solana-esm.mjs & node scripts/fix-colyseus-storage.mjs & node scripts/fix-colyseus-send.mjs & node scripts/fix-rapier-init-warning.mjs & node scripts/copy-three-decoders.mjs & node scripts/copy-voice-models.mjs & node scripts/setup-claude-skills.mjs & node scripts/setup-git-hooks.mjs & node scripts/build-docs-search-index.mjs & wait)",
+		"postinstall": "(node scripts/build-cache.mjs check agent-payments-sdk agent-payments-sdk/src agent-payments-sdk/package.json || (npm run build --prefix agent-payments-sdk && node scripts/build-cache.mjs stamp agent-payments-sdk agent-payments-sdk/src agent-payments-sdk/package.json)) && (node scripts/build-cache.mjs check solana-agent-sdk solana-agent-sdk/src solana-agent-sdk/package.json || (npm run build:dist --prefix solana-agent-sdk && node scripts/build-cache.mjs stamp solana-agent-sdk solana-agent-sdk/src solana-agent-sdk/package.json)) && (node scripts/build-cache.mjs check walk-sdk walk-sdk/src walk-sdk/package.json || (npm run build --prefix walk-sdk && node scripts/build-cache.mjs stamp walk-sdk walk-sdk/src walk-sdk/package.json)) && (node scripts/fix-pump-sdk-esm.mjs & node scripts/fix-x402-extensions-esm.mjs & node scripts/fix-vercel-og-esm.mjs & node scripts/fix-zauth-sdk-solana-esm.mjs & node scripts/fix-8004-solana-esm.mjs & node scripts/fix-colyseus-storage.mjs & node scripts/fix-colyseus-send.mjs & node scripts/fix-rapier-init-warning.mjs & node scripts/copy-three-decoders.mjs & node scripts/copy-voice-models.mjs & node scripts/setup-claude-skills.mjs & node scripts/setup-git-hooks.mjs & node scripts/build-docs-search-index.mjs & wait)",
 		"setup": "node scripts/setup-dev.mjs",
 		"dev": "vite --port 3000",
 		"dev:multi": "npm run dev --prefix multiplayer",
@@ -710,7 +742,7 @@
 		"@upstash/qstash": "^2.12.0",
 		"@upstash/ratelimit": "2.0.8",
 		"@upstash/redis": "^1.40.0",
-		"@vercel/og": "0.11.1",
+		"@vercel/og": "1.0.3",
 		"@wallet-standard/app": "^1.1.1",
 		"@walletconnect/ethereum-provider": "^2.24.0",
 		"@x402/axios": "^2.29.0",
@@ -763,6 +795,7 @@
 		"lightweight-charts": "^5.2.0",
 		"livekit-client": "^2.22.3",
 		"livepeer": "^3.5.0",
+		"lodash.set": "file:vendor/lodash.set",
 		"lru-cache": "^11.5.3",
 		"mammoth": "^1.12.0",
 		"manifold-3d": "^3.5.4",
@@ -781,7 +814,7 @@
 		"postprocessing": "^6.39.5",
 		"puppeteer-core": "^25.1.0",
 		"qrcode": "^1.5.4",
-		"qwen-ai-provider": "^0.1.1",
+		"qwen-ai-provider": "^1.0.0",
 		"resend": "^6.37.0",
 		"sas-lib": "^1.0.10",
 		"sharp": "^0.35.5",

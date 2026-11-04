@@ -1,0 +1,10 @@
+{
+  "name": "lodash.set",
+  "version": "4.3.2",
+  "description": "lodash.set 4.3.2 API backed by lodash/set from a maintained lodash release (GHSA-p6mc-m468-83gw; the standalone module is unmaintained)",
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "lodash": "^4.18.1"
+  }
+}
