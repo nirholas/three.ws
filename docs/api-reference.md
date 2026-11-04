@@ -256,7 +256,7 @@ The endpoint allows cross-origin `GET` and `POST` requests and requires no authe
 curl -s https://three.ws/api/mcp-census | jq '.totals.all, .matchesBuild'
 ```
 
-Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->719<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
+Response fields: `totals` (`all`, `hosted`, `stdio`, each with `servers`, `tools`, `uniqueTools`, `resources`, `templates`, `prompts`), `servers` (one row per server with a `source` of `live` or `build`), `method` (how each number is calculated), `matchesBuild` (false when the build ran on different code than is serving) and `drift` (the per-server differences). Today the build counts <!-- mcp-count:all.tools -->725<!-- /mcp-count --> tools on <!-- mcp-count:all.servers -->51<!-- /mcp-count --> servers. Browse them at [/mcp-tools](https://three.ws/mcp-tools); see [MCP Tools Catalog](mcp-tools.md#how-the-totals-are-calculated) for the method.
 
 ## Asset Catalog API
 
@@ -2938,6 +2938,10 @@ as its own real, validated GLB**, not just a live preview swap.
 curl -s https://three.ws/api/cad -H 'content-type: application/json' \
   -d '{"action":"generate","prompt":"L bracket, 90 degrees, 3 mm thick, four M4 holes"}' | jq '.design.files'
 ```
+
+## Tool gateway API
+
+`GET /api/v1/tools` lists the metered tools (`web_search`, `web_fetch`, `parse_document`, `tts`, `transcribe`, `image_generate`) with prices and input schemas. `POST /api/v1/tools/{tool}` runs one, billed to account credits and refunded if it fails; send `Idempotency-Key` to make retries free. Full contract, errors and safety notes: [Tool gateway](./tool-gateway.md).
 
 ## AI API — text→image
 

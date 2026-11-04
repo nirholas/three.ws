@@ -6933,6 +6933,14 @@
 					"added": "2026-11-04"
 				},
 				{
+					"path": "/docs/tool-gateway",
+					"title": "Docs · Tool gateway",
+					"description": "Metered web search, page fetch, document parsing, speech and image tools on one credit balance: prices, the REST and MCP contracts, refunds, idempotency and the SSRF guard.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/mcp-integrations",
 					"title": "Docs · MCP integrations",
 					"description": "How an agent connects third-party MCP servers: the catalog, OAuth and token sign-in, tool tiers and acknowledgements, custom-server review, the HTTP API, the three-ws mcp install CLI, and how to add a server to the catalog.",

@@ -77,6 +77,15 @@ export const POLICY = {
 		crypto_data: r('intelligence'),
 		search_docs: r('utility'),
 		expand: r('utility'),
+		// Tool gateway (api/_mcp/tools/gateway.js). Each call spends a few cents of
+		// account credits (the price is in the description) and is refunded when it
+		// fails, so they are write tier; none moves funds out of the account.
+		web_search: w('gateway'),
+		web_fetch: w('gateway'),
+		parse_document: w('gateway'),
+		tts: w('gateway'),
+		transcribe: w('gateway'),
+		image_generate: w('gateway'),
 		delete_avatar: f('assets', 'confirm_delete', 'get_avatar', ['id']),
 		diff_models: r('assets'),
 		forget: f('agents', 'confirm_delete', 'recall', ['agent_id']),

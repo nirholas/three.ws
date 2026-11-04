@@ -35,6 +35,7 @@ import { toolDefs as robinhoodDefs } from './tools/robinhood.js';
 import { toolDefs as tokenDueDiligenceDefs } from './tools/token-due-diligence.js';
 import { toolDefs as docsDefs } from './tools/docs.js';
 import { toolDefs as expandDefs } from './tools/expand.js';
+import { toolDefs as gatewayDefs } from './tools/gateway.js';
 
 const baseDefs = [
 	...libraryDefs,
@@ -69,6 +70,7 @@ const baseDefs = [
 	...tokenDueDiligenceDefs,
 	...docsDefs,
 	...expandDefs,
+	...gatewayDefs,
 ];
 
 // Free, public entry point — listed first so discovery clients see it up top.

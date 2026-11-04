@@ -9,7 +9,7 @@
 // books a real ledger row and a budget always converges.
 //
 // Prices sit at or above the platform's own cost on the lane that serves the
-// call (Vertex grounding, Imagen, Veo, Gemini, the NIM speech lanes), never
+// call (Vertex grounding, Imagen, Gemini, the NIM speech lanes), never
 // below it, so the gateway can never quietly run at a loss per call.
 
 export const GATEWAY_ACTION_PREFIX = 'gateway.';
@@ -29,26 +29,12 @@ export const GATEWAY_PRICES = Object.freeze({
 		min_usd: 0.002,
 		summary: 'Fetch one public URL and return its readable text, title, description and links.',
 	},
-	browser: {
-		label: 'Browser',
-		unit: 'step',
-		usd_per_unit: 0.003,
-		min_usd: 0.003,
-		summary: 'Headless Chromium: navigate, click, type, scroll, extract and screenshot, with sessions that keep cookies between calls.',
-	},
 	image_generate: {
 		label: 'Image generation',
 		unit: 'image',
 		usd_per_unit: 0.02,
 		min_usd: 0.02,
 		summary: 'Text to image on the forge lanes, Vertex Imagen first, with automatic failover.',
-	},
-	video_generate: {
-		label: 'Video generation',
-		unit: 'second',
-		usd_per_unit: 0.2,
-		min_usd: 0.8,
-		summary: 'Text to video with Veo on Vertex AI, 4 to 8 seconds per clip, refunded if the clip is filtered or fails.',
 	},
 	tts: {
 		label: 'Text to speech',

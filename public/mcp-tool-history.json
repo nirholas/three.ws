@@ -1152,13 +1152,21 @@
 					"read_file",
 					"terminal",
 					"write_file"
+				],
+				"mcp": [
+					"image_generate",
+					"parse_document",
+					"transcribe",
+					"tts",
+					"web_fetch",
+					"web_search"
 				]
 			},
 			"removed": {},
 			"counts": {
-				"added": 5,
+				"added": 11,
 				"removed": 0,
-				"total": 719
+				"total": 725
 			}
 		}
 	]

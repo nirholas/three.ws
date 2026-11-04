@@ -980,7 +980,7 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 
 | Server | Endpoint | Tools | Auth | Registry ID |
 |--------|----------|-------|------|-------------|
-| Main | `/api/mcp` | <!-- mcp-count:mcp.tools -->152<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/three.ws` |
+| Main | `/api/mcp` | <!-- mcp-count:mcp.tools -->158<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/three.ws` |
 | 3D Studio | `/api/mcp-3d` | <!-- mcp-count:mcp-3d.tools -->40<!-- /mcp-count --> | OAuth or x402 USDC | `io.github.nirholas/threews-3d-studio` |
 | Free Studio | `/api/mcp-studio` |<!-- mcp-count:mcp-studio.tools -->16<!-- /mcp-count --> | None (operator-funded) | `io.github.nirholas/threews-3d-studio-free` |
 | Agent Wallet | `/api/mcp-agent` | <!-- mcp-count:mcp-agent.tools -->154<!-- /mcp-count --> | OAuth | `io.github.nirholas/threews-agent` |
@@ -989,7 +989,7 @@ All remote servers implement **MCP 2025-06-18 Streamable HTTP transport** (JSON-
 | pump.fun | `/api/pump-fun-mcp` | <!-- mcp-count:pump-fun-mcp.tools -->25<!-- /mcp-count --> | None (open CORS) | `io.github.nirholas/threews-pumpfun` |
 | Viewer Control | `/api/chat/mcp` | <!-- mcp-count:chat-mcp.tools -->11<!-- /mcp-count --> | None | (unlisted) |
 
-#### `/api/mcp`: Main Server Tools (<!-- mcp-count:mcp.tools -->152<!-- /mcp-count --> tools)
+#### `/api/mcp`: Main Server Tools (<!-- mcp-count:mcp.tools -->158<!-- /mcp-count --> tools)
 
 Highlights below. Every tool on every server, with its schema, hints and price, is listed on [/mcp-tools](https://three.ws/mcp-tools) and in [/tools.json](https://three.ws/tools.json); the counts in this section are checked against that census by `npm run check:mcp-counts`.
 

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Tool gateway: web search, fetch, documents, speech and images on one balance",
+			"summary": "Agents and developers can now call six metered tools without collecting vendor keys: web_search, web_fetch, parse_document (PDF, DOCX, XLSX, CSV), tts, transcribe and image_generate. They are on REST at /api/v1/tools/{tool} and on the main MCP server, charged to the same account credits as model calls, settled to what the tool actually produced and refunded in full if it fails. Prices are listed live on the pricing page.",
+			"tags": ["feature", "sdk"],
+			"link": "/pricing"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Forge-Off themed events: a board for every day and a landing page",
 			"summary": "The Forge-Off can now run a themed event with one board per UTC day and an overall winner, all on the same no-login, one-vote-per-browser voting. The new /forge-off page shows the live day's theme with a countdown to its close, a button to make an entry on the right surface, that day's board, the overall standings and past days. Between events it shows the standing weekly board. Events are entries in a config file, so a partner or community contest needs no code. The first event is the proposed five-day Forge-Off Open.",
 			"tags": ["feature"],

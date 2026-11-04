@@ -102,6 +102,23 @@ export const CATALOG = [
 		},
 	},
 	{
+		id: 'v1.tools.list',
+		method: 'GET',
+		path: '/api/v1/tools',
+		auth: 'public',
+		summary: 'The tool gateway price list and input schemas: web_search, web_fetch, parse_document, tts, transcribe, image_generate.',
+		params: {},
+	},
+	{
+		id: 'v1.tools.call',
+		method: 'POST',
+		path: '/api/v1/tools/{tool}',
+		auth: 'required',
+		scope: 'inference',
+		summary: 'Run one gateway tool, billed to account credits and refunded if it fails. Send Idempotency-Key to make a retry free.',
+		params: { tool: 'path: web_search | web_fetch | parse_document | tts | transcribe | image_generate', body: 'JSON: the tool inputs, see GET /api/v1/tools' },
+	},
+	{
 		id: 'v1.sentiment',
 		method: 'POST',
 		path: '/api/v1/sentiment',
