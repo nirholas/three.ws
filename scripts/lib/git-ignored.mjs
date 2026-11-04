@@ -1,7 +1,7 @@
 // Filter a list of repo-relative paths down to the ones git does not ignore.
 //
 // Audits that walk the disk (scripts/audit-docs.mjs) otherwise pick up local,
-// gitignored output such as the root-level three-ws-notebooklm*.md bundles and
+// gitignored output such as the reports/notebooklm/ bundles and
 // report findings that no commit can fix. One `git check-ignore --stdin` call
 // classifies the whole list. Outside a git checkout (a tarball, a CI cache)
 // nothing is treated as ignored, so the audit stays conservative.

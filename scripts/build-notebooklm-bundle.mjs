@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Builds a single Markdown source for Google NotebookLM (one file, under its
-// 500,000-word per-source limit) plus a zip of it in the repo root.
+// 500,000-word per-source limit) plus a zip of it in reports/notebooklm/ (gitignored).
 //
 //   node scripts/build-notebooklm-bundle.mjs
 //
@@ -9,11 +9,12 @@
 // word budget is spent. Generated and vendored files are skipped.
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, rmSync, mkdirSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const OUT_DIR = resolve(ROOT, 'reports/notebooklm');
 const OUT_MD = 'three-ws-notebooklm.md';
 const OUT_ZIP = 'three-ws-notebooklm.zip';
 const WORD_BUDGET = 485_000; // NotebookLM limit is 500,000 words per source.
@@ -103,7 +104,9 @@ for (const x of rest) add(x.p, x.t, 'Documentation');
 const date = new Date().toISOString().slice(0, 10);
 const clean = (s) => s.replace(/\s?[\u2014\u2013]\s?/g, ' - ');
 const outFiles = [];
-const write = (name, s) => { writeFileSync(resolve(ROOT, name), s); outFiles.push(name); return words(s); };
+mkdirSync(OUT_DIR, { recursive: true });
+for (const f of readdirSync(OUT_DIR)) if (f.startsWith('three-ws-notebooklm')) rmSync(resolve(OUT_DIR, f));
+const write = (name, s) => { writeFileSync(resolve(OUT_DIR, name), s); outFiles.push(name); return words(s); };
 
 // Part 1: prompt + priority material.
 const toc = sections.map((s) => `- ${s.path} (${s.label})`).join('\n');
@@ -144,7 +147,6 @@ const flush = () => {
 for (const c of chunks) { if (curN + c.n > PART_BUDGET) flush(); cur.push(c); curN += c.n; }
 flush();
 
-if (existsSync(resolve(ROOT, OUT_ZIP))) rmSync(resolve(ROOT, OUT_ZIP));
-execFileSync('zip', ['-9', '-q', OUT_ZIP, ...outFiles], { cwd: ROOT });
+execFileSync('zip', ['-9', '-q', OUT_ZIP, ...outFiles], { cwd: OUT_DIR });
 console.log(`${outFiles.length} files, main file ${n1.toLocaleString('en-US')} words, ${chunks.length} overflow chunks`);
-console.log(`${OUT_ZIP} written to repo root`);
+console.log(`${OUT_ZIP} written to reports/notebooklm/`);
