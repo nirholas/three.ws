@@ -1,74 +1,63 @@
-// Browser launch shared by the renderer benches (scripts/renderer-bench.mjs,
-// scripts/viewer-renderer-bench.mjs). Two adapters:
-//
-//   swiftshader  software WebGL2 + WebGPU; runs anywhere, compares code paths
-//   hardware     the machine's GPU through Vulkan; gives hardware numbers
-//
-// Linux hardware runs need the vendor Vulkan driver plus GLVND libEGL
-// (`vulkaninfo --summary` must list the GPU). On a Google Cloud GPU VM from the
-// deeplearning-platform-release images that means installing the
-// `libnvidia-gl-<driver>-server` package and `libegl1`; the compute-only driver
-// those images ship has no Vulkan ICD.
+// Shared Chromium launcher for the renderer benches.
+// `swiftshader` (default) forces the software adapter so runs are reproducible on
+// any machine. `hardware` drives the machine's real GPU: it needs a GPU-capable
+// host (Vulkan drivers on Linux) and runs headed or with the new headless mode.
 
 import { chromium } from 'playwright';
 
-export const ADAPTERS = ['swiftshader', 'hardware'];
+const SWIFTSHADER_ARGS = [
+	'--enable-unsafe-webgpu',
+	'--enable-features=Vulkan,WebGPU',
+	'--use-angle=swiftshader',
+	'--use-webgpu-adapter=swiftshader',
+	'--ignore-gpu-blocklist',
+];
 
-const ARGS = {
-	swiftshader: [
-		'--enable-unsafe-webgpu',
-		'--enable-features=Vulkan,WebGPU',
-		'--use-angle=swiftshader',
-		'--use-webgpu-adapter=swiftshader',
-		'--ignore-gpu-blocklist',
-	],
-	// Headless has no window surface; without --disable-vulkan-surface the GPU
-	// process cannot create its Vulkan instance and WebGPU silently falls back
-	// to the SwiftShader adapter.
-	hardware: [
-		'--enable-unsafe-webgpu',
-		'--enable-features=Vulkan',
-		'--use-angle=vulkan',
-		'--use-vulkan=native',
-		'--disable-vulkan-surface',
-		'--ignore-gpu-blocklist',
-	],
-};
+const HARDWARE_ARGS = [
+	'--enable-unsafe-webgpu',
+	'--enable-features=Vulkan,WebGPU',
+	'--use-angle=vulkan',
+	'--ignore-gpu-blocklist',
+	'--enable-gpu-rasterization',
+];
 
 export async function launchBenchBrowser({ adapter = 'swiftshader', headed = false } = {}) {
-	if (!ADAPTERS.includes(adapter)) throw new Error(`--adapter must be one of ${ADAPTERS.join(', ')}, got ${adapter}`);
-	// The full Chromium build (not the headless shell) on hardware, so GPU
-	// access matches a desktop browser.
-	return chromium.launch({
-		args: ARGS[adapter],
-		headless: !headed,
-		...(adapter === 'hardware' ? { channel: 'chromium' } : {}),
-	});
+	if (adapter !== 'swiftshader' && adapter !== 'hardware') {
+		throw new Error(`--adapter must be "swiftshader" or "hardware", got "${adapter}"`);
+	}
+	const args = adapter === 'hardware' ? HARDWARE_ARGS : SWIFTSHADER_ARGS;
+	return chromium.launch({ args, headless: !headed });
 }
 
-// Names the adapters Chromium actually picked, so a hardware run that quietly
-// landed on a software device is visible in the output.
+// Reports which WebGPU and WebGL2 adapters Chromium actually picked.
 export async function probeAdapters(browser, base) {
 	const page = await browser.newPage();
-	// WebGPU needs a secure origin, not about:blank. Answer a blank page on the
-	// bench origin from here so the probe does not depend on what the server has.
-	await page.route(`${base}/__adapter-probe`, (route) => route.fulfill({ contentType: 'text/html', body: '<!doctype html>' }));
-	await page.goto(`${base}/__adapter-probe`, { waitUntil: 'domcontentloaded' });
-	const info = await page.evaluate(async () => {
-		// A freshly launched headless browser can answer the first request with
-		// null while its GPU process starts; ask a few times before calling it none.
-		let gpu = null;
-		for (let i = 0; i < 4 && navigator.gpu && !gpu; i++) {
-			gpu = await navigator.gpu.requestAdapter().catch(() => null);
-			if (!gpu) await new Promise((r) => setTimeout(r, 500));
-		}
-		const gl = document.createElement('canvas').getContext('webgl2');
-		const ext = gl?.getExtension('WEBGL_debug_renderer_info');
-		return {
-			webgpu: gpu ? [gpu.info?.vendor, gpu.info?.architecture, gpu.info?.description].filter(Boolean).join(' ') || 'available' : 'none',
-			webgl2: gl ? gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) : 'none',
-		};
-	});
-	await page.close();
-	return info;
+	try {
+		await page.goto(base, { waitUntil: 'domcontentloaded' });
+		return await page.evaluate(async () => {
+			let webgpu = 'unavailable';
+			try {
+				const a = navigator.gpu && (await navigator.gpu.requestAdapter());
+				if (a) {
+					const i = a.info || (a.requestAdapterInfo && (await a.requestAdapterInfo())) || {};
+					webgpu = [i.vendor, i.architecture, i.description].filter(Boolean).join(' ') || 'unknown';
+				}
+			} catch (e) {
+				webgpu = `error: ${e.message}`;
+			}
+			let webgl2 = 'unavailable';
+			try {
+				const gl = document.createElement('canvas').getContext('webgl2');
+				if (gl) {
+					const ext = gl.getExtension('WEBGL_debug_renderer_info');
+					webgl2 = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+				}
+			} catch (e) {
+				webgl2 = `error: ${e.message}`;
+			}
+			return { webgpu, webgl2 };
+		});
+	} finally {
+		await page.close();
+	}
 }
