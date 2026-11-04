@@ -123,7 +123,18 @@ vi.mock('../../api/_lib/oracle/store.js', async () => {
 	};
 });
 
-vi.mock('../../api/_lib/oracle/sources.js', () => ({ recentMints: async () => [] }));
+// walletProfile issues its reads through the stubbed db.js sql, so the wallet
+// endpoint sees the same transport failure a real read would.
+vi.mock('../../api/_lib/oracle/sources.js', async () => {
+	const { sql } = await import('../../api/_lib/db.js');
+	return {
+		recentMints: async () => [],
+		walletProfile: async () => {
+			await sql`select 1`;
+			return { rep: null, recent: [] };
+		},
+	};
+});
 
 import { isDbUnavailableError } from '../../api/_lib/db.js';
 import feed from '../../api/oracle/feed.js';
@@ -131,6 +142,7 @@ import categories from '../../api/oracle/categories.js';
 import agentStats from '../../api/oracle/agent-stats.js';
 import follow from '../../api/oracle/follow.js';
 import movers from '../../api/oracle/movers.js';
+import wallet from '../../api/oracle/wallet.js';
 import signal from '../../api/oracle/signal.js';
 import social from '../../api/oracle/social.js';
 import stats from '../../api/oracle/stats.js';
@@ -269,6 +281,27 @@ describe('GET /api/oracle/movers', () => {
 		expect(res._json.status).toBe(200);
 		expect(res._json.body.items).toEqual([]);
 		expect(res._json.body.count).toBe(0);
+	});
+});
+
+describe('GET /api/oracle/wallet', () => {
+	const WALLET = 'So11111111111111111111111111111111111111112';
+
+	it('propagates a connectivity failure on the leaderboard instead of an empty ranking', async () => {
+		nextDbError = CONN_ERROR;
+		await expect(wallet(fakeReq('/api/oracle/wallet?leaderboard=1'), fakeRes())).rejects.toThrow(/connecting to database/);
+	});
+
+	it('propagates a connectivity failure on a profile instead of calling the wallet unknown', async () => {
+		nextDbError = CONN_ERROR;
+		await expect(wallet(fakeReq(`/api/oracle/wallet?address=${WALLET}`), fakeRes())).rejects.toThrow(/connecting to database/);
+	});
+
+	it('still answers a wallet the brain has never seen with an unproven profile', async () => {
+		const res = fakeRes();
+		await wallet(fakeReq(`/api/oracle/wallet?address=${WALLET}`), res);
+		expect(res._json.status).toBe(200);
+		expect(res._json.body.known).toBe(false);
 	});
 });
 

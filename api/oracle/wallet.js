@@ -13,6 +13,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { readLeaderboard, readWallet } from '../_lib/oracle/store.js';
+import { isDbUnavailableError } from '../_lib/db.js';
 import { archetypeFor } from '../_lib/oracle/archetype.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
@@ -34,7 +35,7 @@ export default wrap(async (req, res) => {
 	if (p.get('leaderboard') === '1' || p.get('leaderboard') === 'true') {
 		const label = LABELS.has(p.get('label')) ? p.get('label') : null;
 		const limit = Math.min(200, Math.max(1, Number(p.get('limit')) || 50));
-		const rows = await readLeaderboard({ network, limit, label }).catch(() => []);
+		const rows = await readLeaderboard({ network, limit, label });
 		const items = rows.map((r) => ({ ...r, archetype: archetypeFor(r.label) }));
 		return json(res, 200, { network, count: items.length, items }, {
 			'Cache-Control': 'public, max-age=10, stale-while-revalidate=60',
@@ -45,7 +46,14 @@ export default wrap(async (req, res) => {
 	const address = (p.get('address') || '').trim();
 	if (!WALLET_RE.test(address)) return error(res, 400, 'validation_error', 'a valid wallet address or leaderboard=1 is required');
 
-	const { rep, recent } = await readWallet(address, network).catch(() => ({ rep: null, recent: [] }));
+	// A connectivity failure is not "this wallet has no record": answering it as an
+	// unproven profile told callers a known smart-money wallet was a stranger.
+	// Rethrow so wrap() answers 503 + Retry-After; a statement fault keeps the
+	// documented unproven answer.
+	const { rep, recent } = await readWallet(address, network).catch((err) => {
+		if (isDbUnavailableError(err)) throw err;
+		return { rep: null, recent: [] };
+	});
 	if (!rep) {
 		// Unknown wallet — still return a well-formed unproven profile.
 		return json(res, 200, {

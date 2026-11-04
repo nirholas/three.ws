@@ -350,7 +350,11 @@ export async function readLeaderboard({ network = 'mainnet', limit = 50, label =
 		  and (${label}::text is null or label = ${label})
 		order by smart_money_score desc nulls last
 		limit ${Math.min(200, Math.max(1, limit))}
-	`.catch(() => []);
+	`.catch((err) => {
+		// An outage must not read as an empty ranking; a statement fault degrades.
+		if (isDbUnavailableError(err)) throw err;
+		return [];
+	});
 	return rows.map((r) => ({
 		wallet: r.wallet, label: r.label, score: Number(r.smart_money_score || 0),
 		win_rate: Number(r.win_rate || 0), early_win_rate: Number(r.early_win_rate || 0),
