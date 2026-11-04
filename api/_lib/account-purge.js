@@ -605,14 +605,19 @@ export async function purgeDeletedAccounts({ olderThanDays = PURGE_AFTER_DAYS, l
 		} catch (err) {
 			const code = errorCode(err).slice(0, 200);
 			result.failed.push({ ref: userRef(user.id).slice(0, 12), code });
-			await sql`
-				insert into account_purge_failures (user_id, last_error)
-				values (${user.id}, ${code})
-				on conflict (user_id) do update
-					set attempts = account_purge_failures.attempts + 1,
-						last_error = excluded.last_error,
-						last_attempt_at = now()
-			`.catch(() => {});
+			try {
+				await sql`
+					insert into account_purge_failures (user_id, last_error)
+					values (${user.id}, ${code})
+					on conflict (user_id) do update
+						set attempts = account_purge_failures.attempts + 1,
+							last_error = excluded.last_error,
+							last_attempt_at = now()
+				`;
+			} catch {
+				// The failure is already in this run's result; the retry queue
+				// row is best effort and the account is retried either way.
+			}
 		}
 	}
 	return result;

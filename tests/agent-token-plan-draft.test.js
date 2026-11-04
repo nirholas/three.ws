@@ -76,8 +76,8 @@ describe('deriveDraftPlan', () => {
 	});
 
 	it('only carries an image the agent has already made public', () => {
-		expect(deriveDraftPlan({ name: 'Ada' }, { imageUrl: 'https://cdn.three.ws/a.png' }).image_url).toBe(
-			'https://cdn.three.ws/a.png',
+		expect(deriveDraftPlan({ name: 'Ada' }, { imageUrl: 'https://three.ws/cdn/a.png' }).image_url).toBe(
+			'https://three.ws/cdn/a.png',
 		);
 		expect(deriveDraftPlan({ name: 'Ada' }).image_url).toBeNull();
 	});

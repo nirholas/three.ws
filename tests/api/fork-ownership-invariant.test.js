@@ -42,9 +42,9 @@ const { provisionAgentWallets } = await import('../../api/_lib/agent-wallet.js')
 // EVM SELECT, EVM UPDATE, Solana SELECT, Solana UPDATE.
 function queueProvision(agentId) {
 	sqlState.queue.push([{ id: agentId, wallet_address: null, meta: {} }]); // EVM select
-	sqlState.queue.push([]); // EVM update
+	sqlState.queue.push([{ wallet_address: 'claimed' }]); // EVM atomic claim (update ... returning)
 	sqlState.queue.push([{ id: agentId, meta: {} }]); // Solana select
-	sqlState.queue.push([]); // Solana update
+	sqlState.queue.push([{ id: agentId }]); // Solana atomic claim (update ... returning)
 }
 
 // Pull the persisted address + encrypted secret back out of the UPDATE writes.

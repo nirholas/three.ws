@@ -344,13 +344,14 @@ describe('the directory entry', () => {
 		expect(entry.signIn).toBe(`${ORIGIN}/api/mcp-grok?auth=oauth`);
 	});
 
-	// `npx three-ws setup` pre-selects every keyless server. This door repeats
-	// the free studio's fifteen tools for Grok, so a Claude or Cursor setup that
+	// `npx three-ws setup` pre-selects only the unified /mcp endpoint once the
+	// directory publishes it (it already carries the free studio's tools). This
+	// door repeats those tools for Grok, so a Claude or Cursor setup that
 	// pre-selected it would list each of them twice; it stays opt-in there.
-	it('is not pre-selected by the setup CLI, which already adds the free studio', () => {
+	it('is not pre-selected by the setup CLI, which already adds the unified endpoint', () => {
 		const servers = hostedServers(directory, ORIGIN);
 		expect(servers.find((s) => s.path === '/api/mcp-grok').defaultSelected).toBe(false);
-		expect(servers.find((s) => s.path === '/api/mcp-studio').defaultSelected).toBe(true);
+		expect(servers.find((s) => s.path === '/mcp').defaultSelected).toBe(true);
 	});
 });
 
