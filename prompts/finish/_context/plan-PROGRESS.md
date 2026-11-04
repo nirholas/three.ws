@@ -108,3 +108,8 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 768-plan-sign-asl-word-level-recognition.md (kept) | see git log | Word-level signs endpoint, proxy, client and training pipeline built; owner supplies Kaggle token, GPU training, 80% eval, weights and deploy.
 2026-11-04 | 770-plan-agora-cartographer-profession-reactivation.md (kept) | see git log | Cartographer runner re-enabled with measured compose budget, typed errors, roster citizen and patron tier; owner runs a funded devnet loop and diorama permalink receipts remain.
 2026-11-04 | 743 | 1fed88375 | editor attribute, export fidelity, texture replace done; build:pages, full vitest baseline and /viewer reopen not run
+2026-11-04 | 761-plan-avatar-parametric-identity-morph-fold.md (kept) | 24b9e6545 | Applied identity morphs fold into vertex positions at bake time.
+2026-11-04 | 763-plan-sniper-experiment-judge-cost-and-exit-giveback.md (kept) | e8abd8182 | Judge verdict cost and net P&L reporting built and unit-tested; pending migrations are owner-applied.
+2026-11-04 | 765-plan-growth-campaign-attribution-ledger.md (kept) | 0178f3554 | Campaign first-touch attribution ledger built and unit-tested; pending migrations are owner-applied.
+2026-11-04 | 766-plan-play-generative-npc-loop.md (kept) | 12969cead | Citizen memory stream, reflection and planning loop shipped with passport mind panel.
+2026-11-04 | 767-plan-play-war-results-ticker-jumbotron.md | de8dd176e | Finished coin wars echo into the activity ticker and jumbotron.
