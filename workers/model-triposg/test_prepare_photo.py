@@ -194,6 +194,22 @@ def _data_uri() -> str:
     return "data:image/png;base64," + base64.b64encode(b"irrelevant-bytes").decode()
 
 
+def _identity_matte(fn):
+    """These cases are about upstream's prepare_image, so the rembg-service
+    matte (matte.py, covered by test_matte.py) passes the image through."""
+
+    def run():
+        original = main._matte
+        main._matte = lambda img: img
+        try:
+            return fn()
+        finally:
+            main._matte = original
+
+    run.__name__ = fn.__name__
+    return run
+
+
 def _with_stub_prepare_image(prepare_image_fn):
     """Install a fake `image_process.prepare_image` for the duration of the
     call, then restore whatever (if anything) was there before."""
@@ -210,6 +226,7 @@ def _with_stub_prepare_image(prepare_image_fn):
             sys.modules["image_process"] = previous
 
 
+@_identity_matte
 def test_blank_image_raises_InputImageError_not_AttributeError():
     """Upstream's prepare_image raises AttributeError (via its own `.permute()`
     call on a string) for a blank/black/transparent input. _prepare_photo must
@@ -232,6 +249,7 @@ def test_blank_image_raises_InputImageError_not_AttributeError():
         ) from exc
 
 
+@_identity_matte
 def test_usable_image_passes_through():
     """The success path still returns prepare_image's PIL.Image untouched."""
 

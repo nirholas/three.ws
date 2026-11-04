@@ -11,7 +11,7 @@ Two modes share the one `/infer` endpoint:
 
 | Mode | Input | Pipeline | Settings |
 |---|---|---|---|
-| `image` (default) | one photo | `TripoSGPipeline` | 50 steps, guidance 7.0; RMBG-1.4 background removal in-process |
+| `image` (default) | one photo | `TripoSGPipeline` | 50 steps, guidance 7.0; background matted by [rembg](../rembg/) (BiRefNet) |
 | `scribble` | sketch + text prompt | `TripoSGScribblePipeline` | CFG-distilled, 16 steps, guidance 0; `scribble_confidence` sets the sketch-adherence cross-attention scale |
 
 The scribble pipeline loads lazily on the first scribble request, so an
@@ -63,8 +63,15 @@ Request (`InferRequest`):
 - `target_polycount` — optional `100`–`1000000` face budget for decimation.
 - `body_type`, `job_id` — optional.
 
-Image mode strips the photographic background in-process with RMBG-1.4, so callers
-do not need to pre-run [rembg](../rembg/). Scribble mode flattens alpha onto white
+Image mode strips the photographic background by sending the photo to the sibling
+[rembg](../rembg/) service (`birefnet-general-lite`, BiRefNet, MIT licence) and
+handing the cutout to upstream's `prepare_image`, which uses a usable alpha as-is
+and never calls its own remover. A photo that already carries a usable alpha (a
+cutout the caller made) skips the service call. The worker used to load
+briaai/RMBG-1.4 in process; those weights are licensed for non-commercial use
+only, so they are no longer staged, loaded, or deployed (see [`matte.py`](matte.py)).
+A matte that finds no subject fails the task as `input image unusable`; a matte
+service fault is a worker fault, so the platform fails over to the next lane. Scribble mode flattens alpha onto white
 (no background removal — a sketch has none).
 
 Response (the persisted task record, `updated_at` in epoch seconds):
@@ -134,25 +141,26 @@ root and treat any status under 500 as "up").
 | `GCS_BUCKET` | yes | — | Output bucket (`three-ws-avatar-reconstructions`) |
 | `WEIGHTS_DIR` | no | `/weights/triposg` | Image-mode weights |
 | `SCRIBBLE_WEIGHTS_DIR` | no | `/weights/triposg-scribble` | Scribble-mode weights |
-| `RMBG_WEIGHTS_DIR` | no | `/weights/rmbg-1.4` | In-process background remover |
 | `MAX_CONCURRENT` | no | `1` | One L4 fits one inference |
 | `WEIGHTS_GCS_URI` | no | unset | `gs://` prefix of the image-mode tree, staged to local disk before loading |
 | `SCRIBBLE_WEIGHTS_GCS_URI` | no | unset | Same, for the scribble tree |
-| `RMBG_WEIGHTS_GCS_URI` | no | unset | Same, for RMBG-1.4 |
 | `WEIGHTS_LOCAL_ROOT` | no | `/tmp/triposg-weights` | Where the staged copies land |
+| `REMBG_SERVICE_URL` | image mode | unset | rembg-service base URL for the image-mode matte; image tasks fail as a worker fault without it |
+| `REMBG_MODEL` | no | `birefnet-general-lite` | Matting model the service runs |
+| `REMBG_TIMEOUT_S` | no | `120` | Matte round-trip budget |
 
-All three weight sets live in the `three-ws-model-weights` bucket, mounted at
+Both weight sets live in the `three-ws-model-weights` bucket, mounted at
 `/weights` (see [`workers/deploy/stage-weights.sh`](../deploy/stage-weights.sh)):
-`VAST-AI/TripoSG`, `VAST-AI/TripoSG-scribble`, and `briaai/RMBG-1.4`.
+`VAST-AI/TripoSG` and `VAST-AI/TripoSG-scribble`.
 
 **Weight staging.** Reading a multi-GiB tree through the GCS FUSE mount stalls a
 cold instance for many minutes (revision 00006 sat in `from_pretrained` for over
-10 minutes streaming 7.4 GiB), so when the three `*_GCS_URI` vars are set the
+10 minutes streaming 7.4 GiB), so when the `*_GCS_URI` vars are set the
 loader downloads each tree to `WEIGHTS_LOCAL_ROOT` with an 8-way parallel
 storage client first and loads from there. Measured on the live service: 11.78
-GiB in 208 s for the image tree, 0.78 GiB in 15 s for RMBG. Staging never fails a
+GiB in 208 s for the image tree. Staging never fails a
 boot; if it cannot run, loading falls back to the FUSE mount exactly as before.
-The cloudbuild config sets all four vars, so a normal deploy gets the fast path.
+The cloudbuild config sets them, so a normal deploy gets the fast path.
 
 ## Run locally
 
@@ -178,7 +186,7 @@ With the TripoSG environment already on `PYTHONPATH` you can run the server dire
 ```bash
 API_KEY=dev-secret GCS_BUCKET=your-dev-bucket \
 	WEIGHTS_DIR=/path/to/triposg SCRIBBLE_WEIGHTS_DIR=/path/to/triposg-scribble \
-	RMBG_WEIGHTS_DIR=/path/to/rmbg-1.4 \
+	REMBG_SERVICE_URL=https://your-rembg-service \
 	uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
@@ -191,6 +199,11 @@ Two layers, both free of GPU, weights, and credentials:
 # Pure python, runs anywhere.
 python3 workers/model-triposg/test_request_policy.py
 
+# The rembg-service matte (request/poll/fetch contract, alpha rule, failures),
+# and that startup stages and loads no RMBG weights.
+python3 workers/model-triposg/test_matte.py
+python3 workers/model-triposg/test_startup_no_rmbg.py
+
 # The served contract against the real dependency set. Ships in the image.
 docker run --rm model-triposg python3 test_app_contract.py
 ```
@@ -199,7 +212,7 @@ The second one is the regression gate that matters most here: revisions 00001
 and 00002 of this service died at import time on a bad transitive resolve of
 `transformers` / `diffusers` / `peft`, before the container could bind `$PORT`,
 which surfaces only as an opaque Cloud Run startup-probe failure. It imports
-both pipelines and both preprocessing helpers, so that failure becomes a red
+both pipelines and the preprocessing helper, so that failure becomes a red
 test instead of a dead revision.
 
 ## Deploy

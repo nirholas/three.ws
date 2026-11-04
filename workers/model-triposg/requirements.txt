@@ -1,8 +1,8 @@
 # ── TripoSG (VAST-AI Research) ────────────────────────────────────────────────
 # The `triposg` package is NOT pip-installable (no setup.py/pyproject); the
 # Dockerfile clones the repo to /opt/triposg and puts it (plus its scripts/ dir,
-# for image_process + briarmbg helpers) on PYTHONPATH. Its own deps — diffusers,
-# transformers, diso (CUDA-compiled), pymeshlab, etc. — come from
+# for the image_process helper) on PYTHONPATH. Its own deps (diffusers,
+# transformers, diso (CUDA-compiled), pymeshlab, etc.) come from
 # /opt/triposg/requirements.txt, which pins neither transformers nor diffusers.
 # This file installs AFTER that one (see Dockerfile), so the pins below reinstall
 # both to the torch-2.3.1-compatible releases already proven on model-trellis and

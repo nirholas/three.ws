@@ -57,8 +57,8 @@ FORCE="${FORCE:-0}"
 # (WEIGHTS_DIR / WEIGHTS_GCS_URI / DINO_DIR); tests/workers-deploy-fleet.test.js
 # asserts that, because a mismatch only shows up as a cold-start 503 in prod.
 # Two services need more than one repo, and stage_one handles the multi-repo
-# case: `triposg` (image pipeline + scribble pipeline + RMBG-1.4 for its
-# image-mode background removal) and `hunyuan3d21` (2.1 weights + the DINOv2
+# case: `triposg` (image pipeline + scribble pipeline; its image-mode background
+# matte runs on rembg-service, so the non-commercial RMBG-1.4 is not staged) and `hunyuan3d21` (2.1 weights + the DINOv2
 # reference encoder its PBR paint pass loads).
 #
 # hunyuan3d and hunyuan3d21 are DIFFERENT models in different bucket prefixes:
@@ -71,7 +71,7 @@ weight_source() {
     hunyuan3d21) echo "tencent/Hunyuan3D-2.1|hunyuan3d-2.1 facebook/dinov2-giant|dinov2-giant" ;;
     trellis)     echo "microsoft/TRELLIS-image-large|trellis-large" ;;
     triposr)     echo "stabilityai/TripoSR|triposr" ;;
-    triposg)     echo "VAST-AI/TripoSG|triposg VAST-AI/TripoSG-scribble|triposg-scribble briaai/RMBG-1.4|rmbg-1.4" ;;
+    triposg)     echo "VAST-AI/TripoSG|triposg VAST-AI/TripoSG-scribble|triposg-scribble" ;;
     *)           echo "" ;;
   esac
 }

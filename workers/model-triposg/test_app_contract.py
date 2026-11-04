@@ -60,14 +60,13 @@ def main() -> int:
     # 1. Import chain: the pipelines and preprocessing helpers the loader uses.
     from triposg.pipelines.pipeline_triposg import TripoSGPipeline
     from triposg.pipelines.pipeline_triposg_scribble import TripoSGScribblePipeline
-    from briarmbg import BriaRMBG
     from image_process import prepare_image
 
     check("triposg pipelines import", all(
         callable(getattr(cls, "from_pretrained", None))
         for cls in (TripoSGPipeline, TripoSGScribblePipeline)
     ))
-    check("preprocessing helpers import", callable(prepare_image) and BriaRMBG is not None)
+    check("preprocessing helper imports", callable(prepare_image))
 
     import main as service
     from fastapi.testclient import TestClient

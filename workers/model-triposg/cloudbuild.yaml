@@ -7,6 +7,9 @@ substitutions:
   _WEIGHTS_BUCKET: three-ws-model-weights
   _MIN_INSTANCES: "0"
   _MAX_INSTANCES: "2"
+  # Image mode mattes the photo here (BiRefNet, MIT) instead of loading the
+  # non-commercial RMBG-1.4 weights in process. Same service model-trellis uses.
+  _REMBG_SERVICE_URL: https://rembg-service-lp642k3kpa-uc.a.run.app
 
 steps:
   - id: build
@@ -53,7 +56,7 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/triposg,SCRIBBLE_WEIGHTS_DIR=/weights/triposg-scribble,RMBG_WEIGHTS_DIR=/weights/rmbg-1.4,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/triposg,SCRIBBLE_WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/triposg-scribble,RMBG_WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/rmbg-1.4,WEIGHTS_LOCAL_ROOT=/tmp/triposg-weights
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/triposg,SCRIBBLE_WEIGHTS_DIR=/weights/triposg-scribble,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/triposg,SCRIBBLE_WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/triposg-scribble,WEIGHTS_LOCAL_ROOT=/tmp/triposg-weights,REMBG_SERVICE_URL=${_REMBG_SERVICE_URL},REMBG_MODEL=birefnet-general-lite
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

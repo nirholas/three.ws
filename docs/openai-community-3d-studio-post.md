@@ -129,7 +129,7 @@ Generation runs on a fleet of single-purpose Python FastAPI services on Google C
 - **Hunyuan3D-2.1** (Tencent): single image to textured mesh.
 - **TRELLIS** (Microsoft, MIT): single image to textured mesh via structured latent representations. This is the default text-to-3D lane behind ChatGPT: FLUX makes the reference image, TRELLIS reconstructs it.
 - **TripoSR** (VAST-AI, MIT): fast single-image reconstruction, 5 to 15 seconds with a baked texture. Used as the fast path and as a fallback.
-- **TripoSG** (VAST-AI Research, MIT): a 1.5B-parameter rectified-flow transformer for high-fidelity geometry. Two modes on one contract: `image` (RMBG-1.4 background removal, recenter, 50 steps) and `scribble` (the CFG-distilled TripoSG-scribble pipeline, 16 steps), which is what powers sketch-to-3D.
+- **TripoSG** (VAST-AI Research, MIT): a 1.5B-parameter rectified-flow transformer for high-fidelity geometry. Two modes on one contract: `image` (BiRefNet background matte, recenter, 50 steps) and `scribble` (the CFG-distilled TripoSG-scribble pipeline, 16 steps), which is what powers sketch-to-3D.
 - **Bring-your-own-key lanes** for Meshy and Tripo when someone wants native quad topology; the key stays in the browser and never touches my server.
 
 Around the mesh generators sit the processing workers:

@@ -36,15 +36,17 @@ tasks/{task_id}.json blob in GCS, exactly as in workers/model-trellis.
 Model weights pre-population (see workers/deploy/stage-weights.sh):
   VAST-AI/TripoSG           → gs://<weights-bucket>/triposg/
   VAST-AI/TripoSG-scribble  → gs://<weights-bucket>/triposg-scribble/
-  briaai/RMBG-1.4           → gs://<weights-bucket>/rmbg-1.4/
 
 Environment variables:
   API_KEY               — shared bearer secret
   GCS_BUCKET            — Cloud Storage bucket for output meshes
   WEIGHTS_DIR           — TripoSG weights (default: /weights/triposg)
   SCRIBBLE_WEIGHTS_DIR  — TripoSG-scribble weights (default: /weights/triposg-scribble)
-  RMBG_WEIGHTS_DIR      — RMBG-1.4 weights for image-mode bg removal
-                          (default: /weights/rmbg-1.4)
+  REMBG_SERVICE_URL     : rembg-service base URL; image mode mattes the photo
+                          there (BiRefNet, MIT) instead of loading the
+                          non-commercial RMBG-1.4 in process (see matte.py)
+  REMBG_MODEL           : matting model (default: birefnet-general-lite)
+  REMBG_TIMEOUT_S       : matte budget in seconds (default: 120)
   MAX_CONCURRENT        — max parallel inferences (default: 1)
 """
 
@@ -83,6 +85,12 @@ from request_policy import (
     resolve_prompt,
     should_decimate,
 )
+from matte import (
+    DEFAULT_MATTE_MODEL,
+    DEFAULT_MATTE_TIMEOUT_S,
+    NoSubjectFound,
+    matte_photo,
+)
 from worker_security import (
     UnsafeUrlError,
     fetch_remote_bytes,
@@ -100,7 +108,9 @@ API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
 WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/triposg")
 SCRIBBLE_WEIGHTS_DIR = os.environ.get("SCRIBBLE_WEIGHTS_DIR", "/weights/triposg-scribble")
-RMBG_WEIGHTS_DIR = os.environ.get("RMBG_WEIGHTS_DIR", "/weights/rmbg-1.4")
+REMBG_SERVICE_URL = os.environ.get("REMBG_SERVICE_URL", "")
+REMBG_MODEL = os.environ.get("REMBG_MODEL", DEFAULT_MATTE_MODEL)
+REMBG_TIMEOUT_S = float(os.environ.get("REMBG_TIMEOUT_S", str(DEFAULT_MATTE_TIMEOUT_S)))
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 
 # Weight staging (same pattern as model-trellis): reading multi-GiB weight trees
@@ -111,7 +121,6 @@ MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 # the FUSE mount path exactly as before.
 WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")
 SCRIBBLE_WEIGHTS_GCS_URI = os.environ.get("SCRIBBLE_WEIGHTS_GCS_URI", "")
-RMBG_WEIGHTS_GCS_URI = os.environ.get("RMBG_WEIGHTS_GCS_URI", "")
 WEIGHTS_LOCAL_ROOT = os.environ.get("WEIGHTS_LOCAL_ROOT", "/tmp/triposg-weights")
 
 DTYPE = torch.float16
@@ -122,7 +131,6 @@ DTYPE = torch.float16
 
 _pipe = None
 _scribble_pipe = None
-_rmbg_net = None
 _scribble_lock = threading.Lock()
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
@@ -184,19 +192,15 @@ def _stage_tree(gcs_uri: str, name: str, fuse_dir: str) -> str:
 
 
 def _load_models():
-    """Load the image pipeline + RMBG at startup. The scribble pipeline is
-    loaded lazily on the first scribble task so cold start pays for one model."""
-    global _pipe, _rmbg_net
+    """Load the image pipeline at startup. The scribble pipeline is loaded
+    lazily on the first scribble task so cold start pays for one model. No
+    background remover is loaded: image mode mattes through rembg-service."""
+    global _pipe
     from triposg.pipelines.pipeline_triposg import TripoSGPipeline
-    from briarmbg import BriaRMBG
 
     weights_path = _stage_tree(WEIGHTS_GCS_URI, "triposg", WEIGHTS_DIR)
     log.info("Loading TripoSG pipeline from %s", weights_path)
     _pipe = TripoSGPipeline.from_pretrained(weights_path).to("cuda", DTYPE)
-    rmbg_path = _stage_tree(RMBG_WEIGHTS_GCS_URI, "rmbg-1.4", RMBG_WEIGHTS_DIR)
-    log.info("Loading RMBG-1.4 from %s", rmbg_path)
-    _rmbg_net = BriaRMBG.from_pretrained(rmbg_path).to("cuda")
-    _rmbg_net.eval()
     log.info("TripoSG ready")
 
 
@@ -241,7 +245,7 @@ async def lifespan(app: FastAPI):
     _ready = asyncio.Event()
     # Load the pipelines in the BACKGROUND and yield immediately. uvicorn runs
     # the ASGI lifespan BEFORE it binds the socket, and the full load (TripoSG
-    # pipeline + RMBG from the GCS FUSE mount, then the CUDA transfer) runs
+    # pipeline from the GCS FUSE mount, then the CUDA transfer) runs
     # well past Cloud Run's 240s startup TCP-probe window on a cold instance:
     # revision 00002 died exactly this way (DEADLINE_EXCEEDED mid-load).
     # Backgrounding opens the port at once; tasks that arrive before the load
@@ -289,15 +293,37 @@ def _decode_image_bytes(src: str) -> bytes:
     raise InputImageError("unsupported image source: expected https or data:image")
 
 
+def _matte(img: Image.Image) -> Image.Image:
+    """Background matte via rembg-service. A cutout the caller already made
+    passes through untouched; an empty matte is the caller's input problem; a
+    service fault stays a worker fault so the platform fails over."""
+    try:
+        return matte_photo(
+            img,
+            service_url=REMBG_SERVICE_URL,
+            api_key=API_KEY,
+            fetch_bytes=lambda url: fetch_remote_bytes(url, timeout=30),
+            model=REMBG_MODEL,
+            timeout_s=REMBG_TIMEOUT_S,
+        )
+    except NoSubjectFound:
+        raise InputImageError(
+            "image has no visible subject (the background matte found nothing to keep)"
+        ) from None
+
+
 def _prepare_photo(src: str) -> Image.Image:
-    """Image mode preprocessing — upstream's prepare_image: RMBG background
-    removal, bbox crop, recenter, composite over white. Takes a file path, so
-    the decoded bytes go through a temp file."""
+    """Image mode preprocessing: matte the photo through rembg-service, then
+    upstream's prepare_image (bbox crop, recenter, composite over white) with no
+    in-process remover. Upstream uses a usable alpha as-is and never calls the
+    remover, and the matte guarantees one. Takes a file path, so the image goes
+    through a temp file."""
     from image_process import prepare_image
 
     data = _decode_image_bytes(src)
+    matted = _matte(Image.open(io.BytesIO(data)))
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-        Image.open(io.BytesIO(data)).convert("RGBA").save(tmp, format="PNG")
+        matted.convert("RGBA").save(tmp, format="PNG")
         tmp_path = tmp.name
     # Upstream's load_image reports an unusable input by RETURNING a string
     # ("invalid image: pure black image", ...) which prepare_image then calls
@@ -307,7 +333,7 @@ def _prepare_photo(src: str) -> Image.Image:
     # opaque internal error in the three days to 2026-10-09, then 2 more after
     # the isinstance-only guard below shipped and didn't catch it.)
     try:
-        prepared = prepare_image(tmp_path, bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=_rmbg_net)
+        prepared = prepare_image(tmp_path, bg_color=np.array([1.0, 1.0, 1.0]), rmbg_net=None)
     except AttributeError:
         raise InputImageError(
             "image has no visible subject (blank, black, or fully transparent)"

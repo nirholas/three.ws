@@ -4,7 +4,8 @@ FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 # extraction), which compiles a CUDA extension at install time and needs nvcc.
 # TORCH_CUDA_ARCH_LIST targets the Cloud Run L4 (compute capability 8.9).
 # PYTHONPATH carries both the package root (triposg.pipelines.*) and scripts/
-# (image_process + briarmbg preprocessing helpers used by main.py).
+# (the image_process preprocessing helper used by main.py). No background
+# remover weights are loaded: image mode mattes through rembg-service (matte.py).
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -41,11 +42,12 @@ RUN pip install -r /app/requirements.txt
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY request_policy.py /app/request_policy.py
+COPY matte.py /app/matte.py
 COPY main.py /app/main.py
 # The tests ship in the image so the served contract can be smoke-tested against
 # the exact dependency set that will run in production:
 #   docker run --rm model-triposg python3 test_app_contract.py
-COPY test_request_policy.py test_app_contract.py /app/
+COPY test_request_policy.py test_matte.py test_app_contract.py /app/
 
 EXPOSE 8080
 

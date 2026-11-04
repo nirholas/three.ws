@@ -31,7 +31,7 @@ Every 3D worker is a Cloud Run service with an NVIDIA GPU, scaling to zero when 
 - TRELLIS-image-large, self-hosted on an L4, for the image path and the standard tier.
 - Tencent Hunyuan3D 2.1, `hy3dshape` plus `hy3dpaint`, the named engine of the high tier because it produces PBR materials. More on where it actually runs below.
 - TripoSR on an L4 as the fast fallback, roughly 5 to 15 seconds.
-- TripoSG and TripoSG-scribble, a 1.5B rectified-flow transformer, for the sketch path, with RMBG-1.4 in front for background removal.
+- TripoSG and TripoSG-scribble, a 1.5B rectified-flow transformer, for the sketch path, with a BiRefNet matte in front for background removal.
 
 **Rigging.** Make-It-Animatable on an L4: a 52-bone Mixamo-compatible skeleton, skin weights, and ARKit-52 blendshapes from the ICT-FaceKit set. Any generated humanoid goes through it, so every character that comes out of the pipeline can walk, emote, and lip-sync.
 
