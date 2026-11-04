@@ -82,7 +82,7 @@ Everything is optional except `HOLDER_PASS_SECRET` in production, which the proc
 | --- | --- | --- |
 | `WORLD_API_BASE` | `https://three.ws` | three.ws API this process calls for persistence, quest notifications, event scores, and the event window |
 | `THREE_WS_API_BASE` / `THREEWS_API_BASE` / `MULTIPLAYER_API_BASE` | `https://three.ws` | Same, for the war report and the Living Stages room |
-| `EVENT_CONFIG_URL` | `${WORLD_API_BASE}/event.json` | Event window + souvenir config the join-time grant reads |
+| `EVENT_CONFIG_URL` | `${WORLD_API_BASE}/api/event-config`, then `/event.json` | Pins one source for the event window + souvenir config the join-time grant reads (default reads the live override first, the static file as fallback) |
 | `EVENT_CONFIG_TTL_MS` | `120000` | How long that config is cached (floor 1000) |
 
 ## Endpoints

@@ -1,4 +1,4 @@
-// Event souvenir drop, the server's read of /event.json.
+// Event souvenir drop, the server's read of the event config (/api/event-config, then /event.json).
 //
 // A live community event (the countdown pill, the in-world agenda, the fireworks
 // finale) is configured in ONE file: public/event.json on three.ws. This module
@@ -51,6 +51,7 @@ const ERROR_TTL_MS = Math.min(30_000, TTL_MS);
 // treated as "no config yet"; the background refresh still completes and warms
 // the cache for the next arrival.
 const FETCH_TIMEOUT_MS = 3000;
+const PRIMARY_SHARE = 2 / 3;
 
 // Pull the coin mint out of the config's `link` (e.g.
 // "/play?coin=<mint>&name=…"). The link is what the countdown's CTA sends
@@ -116,25 +117,33 @@ export function dropClaimable(drop, coin, now) {
 let _cache = { drop: null, at: 0, ok: false };
 let _inflight = null;
 
-async function readConfigFrom(url) {
+async function readConfigFrom(url, timeoutMs) {
 	const res = await fetch(url, {
 		headers: { accept: 'application/json' },
-		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+		signal: AbortSignal.timeout(timeoutMs),
 	});
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);
 	return res.json();
 }
 
+// Both sources share one FETCH_TIMEOUT_MS budget so a hung API cannot double
+// the join-path wait. The primary gets at most PRIMARY_SHARE of it, leaving the
+// static file time to answer when the API stalls rather than refusing outright.
 async function readConfig() {
+	const deadline = Date.now() + FETCH_TIMEOUT_MS;
 	let lastErr;
-	for (const url of CONFIG_URLS) {
+	for (let i = 0; i < CONFIG_URLS.length; i++) {
+		const remaining = deadline - Date.now();
+		if (remaining <= 0) break;
+		const last = i === CONFIG_URLS.length - 1;
+		const budget = last ? remaining : Math.min(remaining, Math.round(FETCH_TIMEOUT_MS * PRIMARY_SHARE));
 		try {
-			return await readConfigFrom(url);
+			return await readConfigFrom(CONFIG_URLS[i], budget);
 		} catch (err) {
 			lastErr = err;
 		}
 	}
-	throw lastErr;
+	throw lastErr || new Error('event config timed out');
 }
 
 async function fetchDrop() {
@@ -149,8 +158,6 @@ async function fetchDrop() {
 		_cache = { ..._cache, at: Date.now() - (TTL_MS - ERROR_TTL_MS), ok: false };
 		if (!_cache.drop) console.warn('[event-drop] config unavailable:', err?.message);
 		return _cache.drop;
-	} finally {
-		clearTimeout(timer);
 	}
 }
 
