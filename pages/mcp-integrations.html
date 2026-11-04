@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Agent Integrations · three.ws</title>
+	<meta name="description" content="Connect your three.ws agent to third-party MCP servers: GitHub, Linear, Notion, Sentry, documentation and search servers, or any public MCP server by URL. Read tools start on, anything that changes data stays off until you approve it." />
+	<link rel="canonical" href="https://three.ws/mcp-integrations" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Agent Integrations · three.ws" />
+	<meta property="og:description" content="Give your agent the tools of GitHub, Linear, Notion, Sentry and 80 more vetted MCP servers. Read tools on by default; writes only after you approve them." />
+	<meta property="og:url" content="https://three.ws/mcp-integrations" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Agent+Integrations&amp;d=Connect+your+agent+to+GitHub%2C+Linear%2C+Notion+and+80+more+vetted+MCP+servers.&amp;p=%2Fmcp-integrations" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large" />
+	<style>
+		:root {
+			--mi-maxw: 1200px;
+			--mi-read: var(--success, #2fa86b);
+			--mi-write: var(--warn, #d9a000);
+			--mi-financial: var(--danger, #e5484d);
+		}
+		:root[data-theme="light"] { --mi-read: #15803d; --mi-write: #a16207; --mi-financial: #b91c1c; }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		.mi-wrap { max-width: var(--mi-maxw); margin: 0 auto; padding: 0 18px 96px; }
+		.mi-hero { padding: 34px 0 6px; }
+		.mi-hero h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; color: var(--ink-bright, var(--ink)); }
+		.mi-hero p { margin: 0; max-width: 70ch; color: var(--ink-dim); line-height: 1.6; }
+		a.mi-link, .mi-hero a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+		a.mi-link:hover, .mi-hero a:hover { color: var(--ink-bright, var(--ink)); }
+		a.mi-link:focus-visible, .mi-hero a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+		code { font: 0.85em var(--font-mono, ui-monospace, monospace); background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+
+		.mi-card { margin-top: 22px; background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px); padding: 20px; }
+		.mi-card > header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+		.mi-card h2 { font-size: 1.1rem; margin: 0 0 4px; color: var(--ink-bright, var(--ink)); }
+		.mi-sub { margin: 0; color: var(--ink-dim); font-size: 0.9rem; line-height: 1.5; max-width: 66ch; }
+
+		button, select, input { font: inherit; color: inherit; }
+		.mi-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 13px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--surface-2); cursor: pointer; text-decoration: none; white-space: nowrap; transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease; }
+		.mi-btn:hover { background: var(--surface-3); border-color: var(--accent); }
+		.mi-btn:active { transform: translateY(1px); }
+		.mi-btn:focus-visible, .mi-input:focus-visible, .mi-chip:focus-visible, .mi-switch input:focus-visible + .mi-track, .mi-conn > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.mi-btn[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
+		.mi-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+		.mi-btn.primary:hover { filter: brightness(1.08); }
+		.mi-btn.danger { color: var(--mi-financial); border-color: color-mix(in srgb, var(--mi-financial) 50%, var(--stroke)); }
+		.mi-btn.danger:hover { background: color-mix(in srgb, var(--mi-financial) 14%, var(--surface-2)); border-color: var(--mi-financial); }
+		.mi-btn.small { padding: 4px 10px; font-size: 0.85rem; }
+		.mi-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-md, 8px); border: 1px solid var(--stroke-strong, var(--stroke)); background: var(--bg-0); transition: border-color var(--duration-fast, 120ms) ease; }
+		.mi-input:hover { border-color: var(--accent); }
+		.mi-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+		/* agent bar */
+		.mi-agentbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+		.mi-agentbar select { width: auto; min-width: 220px; max-width: 100%; }
+
+		/* connections */
+		.mi-conns { display: grid; gap: 10px; }
+		.mi-conn { border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-2); transition: border-color var(--duration-fast, 120ms) ease; }
+		.mi-conn:hover, .mi-conn[open] { border-color: var(--stroke-strong, var(--accent)); }
+		.mi-conn > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border-radius: inherit; }
+		.mi-conn > summary::-webkit-details-marker { display: none; }
+		.mi-conn > summary .title { flex: 1 1 200px; min-width: 0; }
+		.mi-conn > summary strong { color: var(--ink-bright, var(--ink)); overflow-wrap: anywhere; }
+		.mi-conn > summary .meta { display: block; font-size: 0.8rem; color: var(--ink-faint, var(--ink-dim)); margin-top: 2px; }
+		.mi-conn > summary .chev { transition: transform var(--duration-fast, 120ms) ease; color: var(--ink-dim); }
+		.mi-conn[open] > summary .chev { transform: rotate(90deg); }
+		.mi-conn .body { padding: 0 14px 14px; display: grid; gap: 12px; }
+		.mi-status { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.75rem; border: 1px solid currentColor; }
+		.mi-status.active { color: var(--mi-read); }
+		.mi-status.pending_auth, .mi-status.pending_review, .mi-status.needs_auth { color: var(--mi-write); }
+		.mi-status.error { color: var(--mi-financial); }
+		.mi-status.disabled { color: var(--ink-dim); }
+		.mi-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md, 8px); border: 1px solid color-mix(in srgb, var(--mi-write) 55%, var(--stroke)); background: color-mix(in srgb, var(--mi-write) 10%, var(--surface-1)); font-size: 0.9rem; line-height: 1.5; }
+		.mi-banner.err { border-color: var(--mi-financial); background: color-mix(in srgb, var(--mi-financial) 10%, var(--surface-1)); }
+		.mi-banner.ok { border-color: var(--mi-read); background: color-mix(in srgb, var(--mi-read) 10%, var(--surface-1)); }
+		.mi-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+		.mi-tier h3 { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; font-size: 0.92rem; color: var(--ink-bright, var(--ink)); }
+		.mi-tier .hint { margin: 0 0 6px; font-size: 0.8rem; color: var(--ink-faint, var(--ink-dim)); }
+		.mi-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+		.mi-dot.read { background: var(--mi-read); } .mi-dot.write { background: var(--mi-write); } .mi-dot.financial { background: var(--mi-financial); }
+		.mi-tools { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+		.mi-tool { display: flex; align-items: flex-start; gap: 12px; padding: 8px 10px; border: 1px solid var(--stroke); border-radius: 8px; background: var(--surface-1); }
+		.mi-tool:hover, .mi-tool:focus-within { border-color: var(--stroke-strong, var(--accent)); }
+		.mi-tool .t { flex: 1; min-width: 0; }
+		.mi-tool .t code { background: none; padding: 0; color: var(--ink-bright, var(--ink)); overflow-wrap: anywhere; }
+		.mi-tool .t p { margin: 2px 0 0; font-size: 0.82rem; color: var(--ink-dim); line-height: 1.45; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+		.mi-switch { display: inline-flex; align-items: center; cursor: pointer; flex: none; padding-top: 2px; }
+		.mi-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+		.mi-track { width: 40px; height: 22px; border-radius: 11px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); position: relative; transition: background var(--duration-fast, 120ms) ease; }
+		.mi-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--ink); transition: transform var(--duration-fast, 120ms) ease; }
+		.mi-switch input:checked + .mi-track { background: var(--accent); }
+		.mi-switch input:checked + .mi-track::after { transform: translateX(18px); background: #fff; }
+		.mi-switch:hover .mi-track { border-color: var(--accent); }
+		.mi-switch input:disabled + .mi-track { opacity: 0.5; cursor: not-allowed; }
+
+		.mi-review { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+		.mi-review-wrap { overflow-x: auto; border: 1px solid var(--stroke); border-radius: 8px; }
+		.mi-review th, .mi-review td { text-align: left; padding: 7px 10px; border-top: 1px solid var(--hairline, var(--stroke)); vertical-align: top; }
+		.mi-review thead th { border-top: 0; color: var(--ink-dim); font-weight: 600; background: var(--surface-1); }
+		.mi-review td.d { color: var(--ink-dim); min-width: 220px; }
+
+		/* catalog */
+		.mi-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+		.mi-toolbar .mi-input { flex: 1 1 240px; max-width: 420px; }
+		.mi-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+		.mi-chip { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--stroke); background: var(--surface-2); cursor: pointer; font-size: 0.85rem; transition: background var(--duration-fast, 120ms) ease, border-color var(--duration-fast, 120ms) ease; }
+		.mi-chip:hover { border-color: var(--accent); }
+		.mi-chip:active { transform: translateY(1px); }
+		.mi-chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+		.mi-chip small { opacity: 0.75; margin-left: 4px; }
+		.mi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+		.mi-srv { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px); background: var(--surface-2); transition: border-color var(--duration-fast, 120ms) ease, transform var(--duration-fast, 120ms) ease; }
+		.mi-srv:hover, .mi-srv:focus-within { border-color: var(--stroke-strong, var(--accent)); transform: translateY(-1px); }
+		.mi-srv h3 { margin: 0; font-size: 1rem; color: var(--ink-bright, var(--ink)); }
+		.mi-srv .vendor { font-size: 0.8rem; color: var(--ink-faint, var(--ink-dim)); }
+		.mi-srv p { margin: 0; flex: 1; font-size: 0.88rem; color: var(--ink-dim); line-height: 1.5; }
+		.mi-badges { display: flex; flex-wrap: wrap; gap: 5px; }
+		.mi-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; border: 1px solid var(--stroke-strong, var(--stroke)); color: var(--ink-dim); }
+		.mi-badge.ok { color: var(--mi-read); border-color: currentColor; }
+		.mi-badge.on { color: var(--accent); border-color: currentColor; }
+		.mi-srv .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+		.mi-srv .row a { font-size: 0.82rem; }
+
+		.mi-empty { padding: 22px 16px; text-align: center; color: var(--ink-dim); border: 1px dashed var(--stroke-strong, var(--stroke)); border-radius: var(--radius-md, 8px); line-height: 1.6; grid-column: 1 / -1; }
+		.mi-empty strong { display: block; color: var(--ink-bright, var(--ink)); margin-bottom: 4px; }
+		.mi-empty .mi-acts { justify-content: center; margin-top: 10px; }
+		.mi-skel { border-radius: 10px; background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: mi-shimmer 1.4s ease infinite; }
+		.mi-skel.card { height: 168px; }
+		.mi-skel.line { height: 54px; }
+		@keyframes mi-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+		.mi-toasts { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: grid; gap: 8px; z-index: 200; width: min(92vw, 440px); }
+		.mi-toast { padding: 10px 14px; border-radius: 10px; background: var(--surface-3); border: 1px solid var(--stroke-strong, var(--stroke)); box-shadow: 0 8px 28px rgba(0,0,0,0.35); animation: mi-in 160ms ease; line-height: 1.45; }
+		.mi-toast.err { border-color: var(--mi-financial); }
+		@keyframes mi-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+		dialog.mi-dialog { border: 1px solid var(--stroke-strong, var(--stroke)); border-radius: 14px; background: var(--surface-1); color: var(--ink); padding: 22px; width: min(92vw, 480px); }
+		dialog.mi-dialog::backdrop { background: rgba(0,0,0,0.55); }
+		dialog.mi-dialog h2 { margin: 0 0 8px; font-size: 1.15rem; color: var(--ink-bright, var(--ink)); }
+		dialog.mi-dialog p { margin: 0 0 12px; color: var(--ink-dim); line-height: 1.55; font-size: 0.92rem; }
+		dialog.mi-dialog form { display: grid; gap: 10px; }
+		dialog.mi-dialog label { font-size: 0.85rem; color: var(--ink-dim); display: grid; gap: 4px; }
+		dialog.mi-dialog .acts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+		dialog.mi-dialog .or { text-align: center; font-size: 0.8rem; color: var(--ink-faint, var(--ink-dim)); }
+		dialog.mi-dialog .derr { color: var(--mi-financial); font-size: 0.88rem; margin: 0; }
+
+		@media (max-width: 520px) {
+			.mi-card { padding: 14px; }
+			.mi-agentbar select { min-width: 0; width: 100%; }
+			.mi-grid { grid-template-columns: 1fr; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			*, *::before, *::after { animation: none !important; transition: none !important; }
+		}
+	</style>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Agent Integrations","description":"Connect a three.ws agent to vetted third-party MCP servers or any public MCP server by URL.","url":"https://three.ws/mcp-integrations","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="mi-wrap" id="main">
+		<section class="mi-hero">
+			<h1>Agent integrations</h1>
+			<p>Give your agent the tools of the services you already use: GitHub, Linear, Notion, Sentry, documentation and search servers, or any public MCP server by URL. Read tools start on. Anything that changes data stays off until you look at it and turn it on. <a href="/docs/mcp-integrations">How it works</a></p>
+		</section>
+
+		<div id="flash" role="status" aria-live="polite"></div>
+
+		<section class="mi-card" aria-labelledby="h-conns">
+			<header>
+				<div>
+					<h2 id="h-conns">Connected to this agent</h2>
+					<p class="mi-sub">The agent sees each tool as <code>ext_&lt;name&gt;_&lt;tool&gt;</code>. Results from these servers are treated as untrusted data, never as instructions.</p>
+				</div>
+				<div class="mi-agentbar" id="agent-bar">
+					<label class="mi-sr" for="agent-select">Agent</label>
+					<select class="mi-input" id="agent-select" aria-label="Agent" disabled><option>Loading agents</option></select>
+					<button type="button" class="mi-btn" id="custom-open" disabled>Add by URL</button>
+				</div>
+			</header>
+			<div id="conns" aria-live="polite"><div class="mi-conns"><div class="mi-skel line"></div><div class="mi-skel line"></div></div></div>
+		</section>
+
+		<section class="mi-card" aria-labelledby="h-catalog">
+			<header>
+				<div>
+					<h2 id="h-catalog">Catalog</h2>
+					<p class="mi-sub" id="catalog-sub">Vetted MCP servers, checked against their published endpoints.</p>
+				</div>
+			</header>
+			<div class="mi-toolbar">
+				<label class="mi-sr" for="catalog-search">Search servers</label>
+				<input class="mi-input" id="catalog-search" type="search" placeholder="Search by name, vendor or what it does" autocomplete="off" />
+			</div>
+			<div class="mi-chips" role="group" aria-label="Filter by category" id="catalog-cats"></div>
+			<div class="mi-grid" id="catalog" aria-live="polite">
+				<div class="mi-skel card"></div><div class="mi-skel card"></div><div class="mi-skel card"></div><div class="mi-skel card"></div><div class="mi-skel card"></div><div class="mi-skel card"></div>
+			</div>
+		</section>
+	</main>
+
+	<div class="mi-toasts" id="toasts" role="status" aria-live="polite"></div>
+	<dialog class="mi-dialog" id="dialog" aria-labelledby="dialog-title">
+		<h2 id="dialog-title"></h2>
+		<div id="dialog-body"></div>
+	</dialog>
+
+	<script src="/brand.js" defer></script>
+	<script type="module" src="/src/mcp-integrations.js"></script>
+</body>
+</html>
