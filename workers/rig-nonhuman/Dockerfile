@@ -37,6 +37,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=gltfpack /usr/local/bin/gltfpack /usr/local/bin/gltfpack
 
+# One constraints file for every requirements install below. bpy 4.2 needs
+# numpy 1.x, and the unpinned upstream requirement sets otherwise drift to
+# numpy 2 and pandas 3 (which refuses numpy 1). SkinTokens' demo.py imports
+# gradio, which imports pandas, so that mismatch crashed skinning at import
+# time; the import gate at the end of this file now fails the build instead.
+RUN printf 'numpy==1.26.4\npandas==2.2.3\n' > /app-constraints.txt
+
 # torch first, as its own cached layer, matching SkinTokens' documented
 # install (the newer and more exacting of the two dependency sets; UniRig
 # only requires torch>=2.3.1, so this satisfies both).
@@ -59,11 +66,10 @@ ARG FLASH_ATTN_WHEEL=https://github.com/Dao-AILab/flash-attention/releases/downl
 RUN python3 -c "import torch, sys; sys.exit(0 if torch._C._GLIBCXX_USE_CXX11_ABI else 'torch is not built with the CXX11 ABI; switch FLASH_ATTN_WHEEL to the cxx11abiFALSE wheel')" \
     && pip install "${FLASH_ATTN_WHEEL}"
 RUN grep -viE '^flash[-_]attn' /app/unirig/requirements.txt > /tmp/unirig-requirements.txt \
-    && pip install -r /tmp/unirig-requirements.txt \
-    && pip install spconv-cu120 \
-    && pip install torch_scatter torch_cluster \
-        -f https://data.pyg.org/whl/torch-2.7.0+cu128.html --no-cache-dir \
-    && pip install numpy==1.26.4
+    && pip install -c /app-constraints.txt -r /tmp/unirig-requirements.txt \
+    && pip install -c /app-constraints.txt spconv-cu120 \
+    && pip install -c /app-constraints.txt torch_scatter torch_cluster \
+        -f https://data.pyg.org/whl/torch-2.7.0+cu128.html --no-cache-dir
 
 # SkinTokens, pinned to the main HEAD read on 2026-10-11
 # (https://github.com/VAST-AI-Research/SkinTokens/commit/273b691d35989d71cd17ff2895fdc735097b92d1).
@@ -73,12 +79,12 @@ RUN git clone https://github.com/VAST-AI-Research/SkinTokens.git /app/skintokens
     && git -C /app/skintokens checkout ${SKINTOKENS_COMMIT} \
     && rm -rf /app/skintokens/.git
 RUN grep -viE '^flash[-_]attn' /app/skintokens/requirements.txt > /tmp/skintokens-requirements.txt \
-    && pip install -r /tmp/skintokens-requirements.txt \
+    && pip install -c /app-constraints.txt -r /tmp/skintokens-requirements.txt \
     && python3 -c "import importlib.metadata as m; v = m.version('flash_attn'); assert v == '2.8.3', v; print('flash_attn', v)"
 
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt
-RUN pip install -r /app/requirements.txt
+RUN pip install -c /app-constraints.txt -r /app/requirements.txt
 
 COPY worker_security.py gltf_meshopt.py pipeline.py main.py entrypoint.sh /app/
 COPY test_gltf_meshopt.py test_pipeline.py /app/
@@ -87,6 +93,15 @@ RUN chmod +x /app/entrypoint.sh
 # Build-time guard: the chaining/error-handling logic needs no GPU and no
 # checkout, so it runs here and the image does not ship if it broke.
 RUN python3 /app/test_pipeline.py && python3 /app/test_gltf_meshopt.py
+
+# Import gate: load the exact entry modules pipeline.py runs (UniRig's run.py,
+# SkinTokens' demo.py; both guard their CLI behind __main__) so a dependency
+# that cannot import fails the build, not the first rig request. pip check
+# catches resolver conflicts the installs above only warn about.
+RUN pip check \
+    && cd /app/unirig && python3 -c "import run" \
+    && cd /app/skintokens && python3 -c "import demo" \
+    && python3 -c "import numpy, pandas; print('numpy', numpy.__version__, 'pandas', pandas.__version__)"
 
 # Checkpoints are staged in GCS (stage-assets.sh) and mounted at /weights by
 # Cloud Run; entrypoint.sh copies them into the literal relative paths UniRig
