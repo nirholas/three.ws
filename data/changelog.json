@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Hair and clothes now follow your avatar's body sliders",
+			"summary": "On the Parametric base, worn hair, tops, bottoms and other skinned wearables now conform to the chest, jaw, hip and sculpt sliders instead of clipping through skin or floating. The editor re-fits as you drag and the saved GLB carries the same fit.",
+			"tags": ["feature"],
+			"link": "/avatar-studio"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Sniper reports now price the judge and measure trailing-stop giveback",
 			"summary": "The sniper judge records tokens and cost per verdict, and a read-only experiment report prints per-arm net P&L after model cost plus how much of each peak a trailing stop gave back (median 43.2% over the last 30 days).",
 			"tags": ["sniper", "experiments"]

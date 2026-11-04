@@ -29,6 +29,12 @@ import {
 	clampOccludes,
 } from '../../src/garment-taxonomy.js';
 import { sanitizeCatalog } from '../../src/garment-catalog.js';
+import {
+	buildConformBinding,
+	conformPositions,
+	morphedBodyPositions,
+	shouldConform,
+} from '../../src/garment-conform.js';
 
 import { fetchUpstream } from './upstream-fetch.js';
 export const GARMENT_CATALOG_URL =
@@ -69,6 +75,77 @@ export function findPrimarySkin(doc) {
 		if (!best || count > best.count) best = { skin, node, mesh, count };
 	}
 	return best;
+}
+
+/* ── morph conform ───────────────────────────────────────────────────────── */
+
+// Body rest positions captured before any morph, sculpt or fold touches the
+// document, keyed by document. bakeAppearance calls snapshotBodyRest right
+// after reading the base GLB; the identity-morph fold later bakes the deltas
+// into POSITION, so without the snapshot the rest silhouette a garment was
+// authored against would be lost.
+const BODY_REST = new WeakMap();
+
+/** The primitive with the most vertices on the primary skin's mesh. */
+function bodyPrimitive(mesh) {
+	let best = null;
+	for (const prim of mesh.listPrimitives()) {
+		const n = prim.getAttribute('POSITION')?.getCount() || 0;
+		if (prim.getIndices() && (!best || n > best.n)) best = { prim, n };
+	}
+	return best?.prim || null;
+}
+
+/** Remember the body's unmorphed positions for this document. No-op without a skinned body. */
+export function snapshotBodyRest(doc) {
+	const primary = findPrimarySkin(doc);
+	const prim = primary && bodyPrimitive(primary.mesh);
+	if (!prim) return;
+	BODY_REST.set(doc, { prim, rest: Float32Array.from(prim.getAttribute('POSITION').getArray()) });
+}
+
+/**
+ * Body rest, morphed positions and index for the primary skinned mesh, or null
+ * when the document has no usable body. Morph weights come from the body node
+ * (where bakeAppearance writes them), falling back to the mesh defaults.
+ */
+function bodyConformState(doc, primary) {
+	const prim = bodyPrimitive(primary.mesh);
+	if (!prim) return null;
+	const snap = BODY_REST.get(doc);
+	const current = prim.getAttribute('POSITION').getArray();
+	const rest = snap && snap.prim === prim && snap.rest.length === current.length ? snap.rest : Float32Array.from(current);
+	const targets = prim.listTargets().map((t) => t.getAttribute('POSITION')?.getArray() || null);
+	const nodeWeights = primary.node.getWeights();
+	const weights = nodeWeights.length ? nodeWeights : primary.mesh.getWeights();
+	const morphed = new Float32Array(current.length);
+	morphedBodyPositions(current, targets, weights, morphed);
+	return { rest, morphed, index: prim.getIndices().getArray() };
+}
+
+/**
+ * Move the garment's vertices to follow the morphed body. Returns the number of
+ * vertices that were bound to the body (0 when nothing needed to move).
+ */
+function conformGarmentMesh(mesh, state, manifest) {
+	let moved = 0;
+	for (const prim of mesh.listPrimitives()) {
+		const acc = prim.getAttribute('POSITION');
+		if (!acc) continue;
+		const restPos = Float32Array.from(acc.getArray());
+		const binding = buildConformBinding(state.rest, state.index, restPos, conformOptions(manifest));
+		const out = new Float32Array(restPos.length);
+		conformPositions(binding, state.index, state.rest, state.morphed, restPos, out);
+		acc.setArray(out);
+		moved += binding.bound;
+	}
+	return moved;
+}
+
+/** Looseness of the cloth decides how far its pull fades (manifest fit metadata when present). */
+export function conformOptions(manifest) {
+	const loose = Number(manifest?.fit?.looseness);
+	return Number.isFinite(loose) && loose > 0 ? { falloff: 0.05 + Math.min(loose, 1) * 0.1 } : {};
 }
 
 /** canonical bone name → joint index for a skin. First occurrence wins. */
@@ -292,6 +369,7 @@ export async function applyGarments(io, doc, garmentRefs, mergeDocumentsFn, opts
 
 	const scene = doc.getRoot().getDefaultScene() || doc.getRoot().listScenes()[0];
 	const occludeRegions = new Set();
+	const conformState = opts.conform === false ? null : bodyConformState(doc, primary);
 
 	for (const ref of garmentRefs) {
 		const manifest = byKey.get(`${ref.slot}/${ref.id}`);
@@ -348,6 +426,9 @@ export async function applyGarments(io, doc, garmentRefs, mergeDocumentsFn, opts
 					continue;
 				}
 				remapMeshSkinAttributes(node.getMesh(), remap);
+				if (conformState && shouldConform({ skinned: true, slot: manifest.slot })) {
+					conformGarmentMesh(node.getMesh(), conformState, manifest);
+				}
 				node.setSkin(buildReboundSkin(doc, gSkin, primary.skin, remap, `garment:${ref.id}`));
 				// Per glTF 2.0 the transform of a skinned mesh node is ignored —
 				// parking it at the scene root is spec-correct.

@@ -43,6 +43,12 @@ import {
 } from 'three';
 import { canonicalizeBoneName } from './glb-canonicalize.js';
 import {
+	buildConformBinding,
+	conformPositions,
+	morphedBodyPositions,
+	shouldConform,
+} from './garment-conform.js';
+import {
 	GARMENT_SLOTS,
 	BODY_REGIONS,
 	REGION_BONES,
@@ -350,6 +356,7 @@ export function attachGarment(avatarRoot, garmentRoot, opts = {}) {
 		mesh.scale.copy(avatarMesh.scale);
 		mesh.updateMatrixWorld(true);
 		mesh.bind(new Skeleton(avatarSkeleton.bones, inverses), avatarMesh.bindMatrix.clone());
+		prepareConform(mesh, avatarMesh, opts.conformOptions);
 		attached.push(mesh);
 	}
 
@@ -368,6 +375,8 @@ export function attachGarment(avatarRoot, garmentRoot, opts = {}) {
 
 	if (!attached.length) return fail('no mesh in the garment could be bound');
 
+	conformGarments(avatarRoot);
+
 	return {
 		ok: true,
 		slot,
@@ -376,6 +385,100 @@ export function attachGarment(avatarRoot, garmentRoot, opts = {}) {
 		unresolved: [...allUnresolved],
 		detach: () => { for (const m of attached) m.parent?.remove(m); },
 	};
+}
+
+/* ── morph conform ───────────────────────────────────────────────────────── */
+
+/** Dense float triples for a BufferAttribute, de-interleaving when needed. */
+function denseArray(attr) {
+	if (!attr.isInterleavedBufferAttribute) return attr.array;
+	const out = new Float32Array(attr.count * 3);
+	for (let i = 0; i < attr.count; i++) {
+		out[i * 3] = attr.getX(i);
+		out[i * 3 + 1] = attr.getY(i);
+		out[i * 3 + 2] = attr.getZ(i);
+	}
+	return out;
+}
+
+/**
+ * Anchor a freshly attached garment to the body surface so it can follow the
+ * body's identity morphs. The binding is computed once and cached on the mesh
+ * (userData.conform); rigid pieces and bodies without a position index or
+ * relative morph targets are left alone.
+ */
+function prepareConform(mesh, bodyMesh, options) {
+	const geo = bodyMesh.geometry;
+	const targets = geo?.morphAttributes?.position;
+	if (!shouldConform({ skinned: true }) || !targets?.length || !geo.index || !geo.morphTargetsRelative) return;
+	const bodyRest = denseArray(geo.attributes.position);
+	const rest = Float32Array.from(mesh.geometry.attributes.position.array);
+	const binding = buildConformBinding(bodyRest, geo.index.array, rest, options);
+	if (!binding.bound) return;
+	mesh.userData.conform = { binding, rest, applied: null };
+}
+
+const conformScratch = new WeakMap();
+
+/**
+ * Re-pose every conformable garment on `avatarRoot` to the body's current morph
+ * influences. Cheap when nothing changed (influences are compared against the
+ * last applied set) and allocation-free after the first call per body.
+ * @returns {number} garment meshes that moved
+ */
+export function conformGarments(avatarRoot) {
+	const found = findAvatarSkeleton(avatarRoot);
+	if (!found) return 0;
+	const body = found.mesh;
+	const geo = body.geometry;
+	const infl = body.morphTargetInfluences;
+	const attrs = geo?.morphAttributes?.position;
+	if (!infl || !attrs?.length) return 0;
+
+	const garments = [];
+	avatarRoot.traverse((obj) => { if (obj.userData?.conform) garments.push(obj); });
+	if (!garments.length) return 0;
+
+	let state = conformScratch.get(body);
+	if (!state || state.targets.length !== attrs.length) {
+		state = {
+			rest: denseArray(geo.attributes.position),
+			targets: attrs.map(denseArray),
+			morphed: new Float32Array(geo.attributes.position.count * 3),
+			index: geo.index.array,
+		};
+		conformScratch.set(body, state);
+	}
+	let moved = 0;
+	let morphedReady = false;
+	for (const mesh of garments) {
+		const c = mesh.userData.conform;
+		if (c.applied && c.applied.length === infl.length && c.applied.every((w, i) => w === infl[i])) continue;
+		if (!morphedReady) {
+			morphedBodyPositions(state.rest, state.targets, infl, state.morphed);
+			morphedReady = true;
+		}
+		const attr = mesh.geometry.attributes.position;
+		conformPositions(c.binding, state.index, state.rest, state.morphed, c.rest, attr.array);
+		attr.needsUpdate = true;
+		c.applied = c.applied && c.applied.length === infl.length ? c.applied : new Float32Array(infl.length);
+		for (let i = 0; i < infl.length; i++) c.applied[i] = infl[i];
+		moved++;
+	}
+	return moved;
+}
+
+const pendingConform = new Set();
+
+/** Coalesce slider drags into one conform per animation frame. */
+export function scheduleConform(avatarRoot) {
+	if (!avatarRoot || typeof requestAnimationFrame !== 'function') return;
+	if (pendingConform.has(avatarRoot)) return;
+	pendingConform.add(avatarRoot);
+	requestAnimationFrame(() => {
+		pendingConform.delete(avatarRoot);
+		conformGarments(avatarRoot);
+	});
 }
 
 /** Remove every mesh previously attached into `slot`. Safe to call on an empty

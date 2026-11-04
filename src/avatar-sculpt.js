@@ -23,6 +23,7 @@
  */
 
 import { detectFaceAll } from './avatar-face-capture.js';
+import { scheduleConform } from './avatar-garment.js';
 import {
 	applyProportionsToRoot,
 	availableProportionParams,
@@ -322,6 +323,7 @@ export function applyMorphsToRoot(root, morphs) {
 			node.morphTargetInfluences[idx] = Math.max(-1, Math.min(1, weight));
 		}
 	});
+	scheduleConform(root);
 }
 
 /**

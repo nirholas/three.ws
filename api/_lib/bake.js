@@ -94,6 +94,15 @@ export async function bakeAppearance(baseGlbBytes, appearance, opts = {}) {
 		});
 	const doc = await io.readBinary(toUint8(baseGlbBytes));
 
+	// Catalog garments conform to the body's morphs (bake-garments.js), which
+	// needs the unmorphed silhouette they were authored against. Capture it
+	// before sculpt, morphs or the identity fold change the geometry.
+	if (Array.isArray(appearance?.garments) && appearance.garments.length > 0) {
+		const { snapshotBodyRest } = await import('./bake-garments.js');
+		snapshotBodyRest(doc);
+	}
+
+
 	const presets = await loadPresets();
 	const byId = new Map(presets.map((p) => [p.id, p]));
 

@@ -39,7 +39,7 @@ Every field is optional. An absent field means "default", and a document with no
 | `sculpt` | delta document | Free-brush vertex deltas, sparse and quantised | `specs/PARAMETRIC_AVATAR.md` |
 | `colors` | slot → hex | Per-slot material tint | `src/avatar-studio.js` |
 | `hidden` | slot[] | Garment layers to drop | `src/avatar-wardrobe.js` |
-| `garments` | {slot, id}[] | Additive catalog wearables | `specs/GARMENT_MANIFEST.md` |
+| `garments` | {slot, id}[] | Additive catalog wearables. Skinned pieces conform to `morphs` and `sculpt` (`src/garment-conform.js`); rigid pieces ride a bone | `specs/GARMENT_MANIFEST.md` |
 | `attachments` | {bone, url, name?}[] | Custom bone-mounted props that are in no catalog | `src/agent-accessories.js` |
 
 ## `morphs`: shape
