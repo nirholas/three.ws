@@ -35,6 +35,8 @@ from scipy.interpolate import RBFInterpolator
 import glb_ops
 import face_geometry
 import face_projection
+import view_synthesis
+import view_texture
 import pygltflib
 from worker_security import UnsafeUrlError, UnsupportedImageError, fetch_remote_bytes, open_caller_image
 
@@ -285,6 +287,49 @@ def _get_landmarks_small_face(img: Image.Image) -> Optional[list]:
 
 
 # ── background removal ─────────────────────────────────────────────────────────
+
+
+def _detect_landmarks_array(img: Image.Image) -> Optional[np.ndarray]:
+    """Landmarks of a synthesised view as an isotropic (N,3) array, or None."""
+    lm = _get_landmarks(img)
+    if lm is None:
+        return None
+    return face_geometry.landmarks_to_array(lm, *img.size)
+
+
+def _enrich_with_synthesized_views(job_id, t0, best_img, fg_img, fg_alpha, detected, lm_idx,
+                                   positions, normals, uvs, faces, projected,
+                                   pre_projection_skin, face_mask_uv, current_skin):
+    """Request, gate and project synthesised views; returns the new skin image."""
+    camera = face_projection.solve_camera(detected, lm_idx, positions, *best_img.size)
+    if camera is None:
+        return current_skin
+    report = view_synthesis.synthesize_views(best_img)
+    log.info("[%s] view synthesis: %s", job_id, report.summary())
+    if not report.views:
+        return current_skin
+    result = view_texture.enrich_with_views(
+        report=report,
+        selfie_rgb=np.array(best_img.convert("RGB"), dtype=np.uint8),
+        selfie_mask=fg_alpha,
+        selfie_landmarks_3d=detected,
+        primary_camera=camera,
+        primary=projected,
+        base_skin_rgb=pre_projection_skin,
+        protect=face_mask_uv,
+        positions=positions, normals=normals, uvs=uvs, faces=faces,
+        landmark_vertex_indices=lm_idx,
+        detect_landmarks=_detect_landmarks_array,
+        remove_background=_remove_background,
+    )
+    log.info("[%s] synthesised views accepted=%s rejected=%s coverage %.1f%% -> %.1f%% "
+             "seam %s -> %s (%.1fs)", job_id, result.accepted, result.rejected,
+             result.coverage_before * 100.0, result.coverage_after * 100.0,
+             result.seam_before, result.seam_after, time.time() - t0)
+    if not result.accepted:
+        return current_skin
+    return Image.fromarray(result.skin_rgb, "RGB")
+
 
 def _remove_background(img: Image.Image) -> Image.Image:
     """Return RGBA image with background removed."""
@@ -712,6 +757,7 @@ def process(
                 if projected is not None:
                     proj_rgb, proj_weight, proj_covered = projected
                     coverage = face_projection.coverage_fraction(proj_weight, proj_covered)
+                    pre_projection_skin = np.array(new_skin.convert("RGB"), dtype=np.uint8)
                     blended = face_projection.blend_projection(
                         np.array(new_skin.convert("RGB"), dtype=np.uint8),
                         proj_rgb,
@@ -724,6 +770,20 @@ def process(
                         "(face-oval warp alone reaches ~10%%) (%.1fs)",
                         job_id, coverage * 100.0, time.time() - t0,
                     )
+
+                    # 10d. Synthesised views (RECON_VIEW_SYNTHESIS, default off):
+                    # texture only, gated on identity, pose and seams. Any failure
+                    # keeps the single-photo skin just computed.
+                    if view_synthesis.enabled():
+                        try:
+                            new_skin = _enrich_with_synthesized_views(
+                                job_id, t0, best_img, fg_img, fg_alpha, detected, lm_idx,
+                                positions, normals, mesh_uvs, mesh_faces,
+                                projected, pre_projection_skin, face_mask_uv, new_skin,
+                            )
+                        except Exception as exc:  # noqa: BLE001 - synthesis never fails a job
+                            log.warning("[%s] view synthesis failed (%s) - keeping single-photo skin",
+                                        job_id, exc)
                 else:
                     log.info("[%s] projective texturing skipped: camera fit rejected", job_id)
         except Exception as exc:  # noqa: BLE001 — enrichment must never fail the job

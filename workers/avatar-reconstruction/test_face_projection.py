@@ -258,6 +258,31 @@ def test_uv_raster_cache_is_result_identical():
     print("ok  UV raster cache is result-identical and not stale on a morph")
 
 
+def test_multi_camera_path_uses_the_supplied_camera_and_blend_ceiling():
+    """A synthesised view arrives with its own camera and a lower blend ceiling:
+    the landmark fit is skipped, the four gates still apply, and no texel exceeds
+    the ceiling."""
+    pos, nrm, uv, faces = _sphere()
+    idx = np.arange(len(pos))
+    pts, _, _ = _synthetic_landmarks(pos, idx)
+    photo = np.zeros((800, 800, 3), dtype=np.uint8)
+    photo[:, :] = (200, 100, 50)
+    cam = fp.solve_camera(pts, idx, pos, 800, 800)
+    turned = fp.WeakPerspectiveCamera(cam.s, fp._rot_y(60.0) @ cam.R, cam.t, 800, 800)
+
+    out = fp.project_photo_to_uv(photo, None, pos, nrm, uv, faces, np.zeros((0, 3)), idx,
+                                 128, 128, camera=turned, max_blend=fp.SYNTH_MAX_BLEND)
+    assert out is not None, "a supplied camera must not need landmarks"
+    _, weight, covered = out
+    assert 0.0 < weight.max() <= fp.SYNTH_MAX_BLEND + 1e-6
+
+    base = fp.project_photo_to_uv(photo, None, pos, nrm, uv, faces, pts, idx, 128, 128)
+    assert base[1].max() > fp.SYNTH_MAX_BLEND, "selfie ceiling must stay higher than a synthesised view's"
+    far = covered & (fp._rasterize_uv(pos, uv, faces, nrm, 128, 128)[1] @ turned.view_direction() < -0.3)
+    assert weight[far].max() < 0.01, "occlusion/facing gates must still hold for a supplied camera"
+    print("ok  multi-camera path honours the supplied camera, ceiling and gates")
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     try:

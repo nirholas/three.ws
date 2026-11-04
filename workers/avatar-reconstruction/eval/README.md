@@ -188,6 +188,19 @@ distortion than any genuine face and is a problem; *below* it means the result s
 closer to the untouched template, which is the same safe place a non-detection
 lands.
 
+## Texture fidelity (the synthesised-view track)
+
+ISE cannot move when only texture changes, so `texture_eval.py` scores texture
+against held-out views instead: masked SSIM, a Lab colour-histogram distance and the
+UV seam-continuity score, before and after synthesised views. LPIPS is not used until
+a commercially clean weight set is chosen; the report says so. `make_refs` builds the
+faces, `python -m eval.texture_eval --make-heldout` generates the held-out yaws, and
+`python -m eval.texture_eval` prints the verdict (`enable by default`). Coverage
+including synthesised views: `python -m eval.measure_projection_coverage --views`.
+Both need live Vertex access. The held-out views come from the same generator as the
+references, so the numbers are agreement with the generator, not with a real person's
+back of head.
+
 ## The reference set
 
 `--photos` is a directory of frontal faces, one file per sample, spanning what

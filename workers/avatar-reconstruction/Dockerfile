@@ -43,6 +43,8 @@ COPY main.py          /app/main.py
 COPY face_pipeline.py /app/face_pipeline.py
 COPY face_geometry.py /app/face_geometry.py
 COPY face_projection.py /app/face_projection.py
+COPY view_synthesis.py /app/view_synthesis.py
+COPY view_texture.py  /app/view_texture.py
 COPY glb_ops.py       /app/glb_ops.py
 COPY precompute_uv.py /app/precompute_uv.py
 COPY test_face_geometry.py /app/test_face_geometry.py

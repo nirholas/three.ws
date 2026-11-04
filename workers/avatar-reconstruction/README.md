@@ -77,6 +77,12 @@ its own.
 | `GEOMETRY_MORPH` | no (`1`) | `0` skips the identity morph (texture only). |
 | `MAX_MORPH_YAW_DEG` | no (35) | Above this head yaw the morph is skipped: a single view cannot constrain the occluded half of a turned face. |
 | `PROJECTIVE_TEXTURE` | no (`1`) | `0` falls back to warp-only skin. |
+| `RECON_VIEW_SYNTHESIS` | no (`0`) | `1` enables synthesised views for the scalp, far cheek, ears and neck (see below). Off until `eval.texture_eval` passes. |
+| `RECON_VIEW_MODEL` | no (`gemini-2.5-flash-image`) | Vertex image model. A 404 retries once on `RECON_VIEW_FALLBACK_MODEL` (`gemini-3.1-flash-image`). |
+| `RECON_VIEW_BUDGET_S` | no (45) | Hard wall-clock cap for the whole batch of view requests. |
+| `RECON_VIEW_REQUEST_TIMEOUT_S` / `RECON_VIEW_MAX` / `RECON_VIEW_LOCATION` | no (30 / 5 / `us-central1`) | Per-request timeout, views per job, Vertex region. |
+
+`GOOGLE_CLOUD_PROJECT` (or `GCP_PROJECT`) is read only when `RECON_VIEW_SYNTHESIS` is on.
 
 The service reads no others. (Cloud Run also carries `DEVICE=cpu`, which predates
 the GPU removal and is inert.)
@@ -223,7 +229,57 @@ Unauthenticated, and what the Cloud Run startup probe hits.
 `pipeline` is `face_texture_transfer_v2` when the geometry morph is live and
 `face_texture_transfer_v1` when it is off or its map is missing.
 
+## View synthesis (texture only, default off)
+
+`view_synthesis.py` asks Vertex AI for extra camera views of the selfie (yaw plus or
+minus 35 and 65 degrees, and a high pitch for the scalp). `view_texture.py` gates
+each one and projects the survivors through the same camera-and-mesh path as the
+selfie (`face_projection.py`), at a lower blend ceiling (`SYNTH_MAX_BLEND` 0.5 against
+0.85) and only where the selfie has not already claimed the texel. It is texture
+only: geometry is never read for writing, and the tests assert it is untouched.
+Synthesised views never go through the landmark TPS warp, because there are no scalp
+landmarks.
+
+A view is dropped, individually and silently, when it fails any of:
+
+1. **Identity gate.** Median Lab skin colour within a bound of the selfie's and,
+   when MediaPipe finds a face in the view, eye, nose and mouth proportions within a
+   bound of the selfie's.
+2. **Pose.** The camera solved from the view's landmarks must match the requested
+   turn; views with no landmarks (profile, scalp) get a camera from the requested
+   yaw and pitch, and their rendered silhouette must overlap the person mask
+   (the left/right sign is chosen by that overlap).
+3. **Seam continuity.** Painting the view must not raise the mean colour step across
+   UV island boundaries by more than `SEAM_DELTA_E_MAX`.
+
+Zero surviving views is exactly the shipped single-photo result. Failure handling:
+a 429 backs off once then stops the batch, a 401/403 (billing hold, missing role)
+stops it at once, a timeout or safety block drops that view, and
+`RECON_VIEW_BUDGET_S` caps the whole thing. None of these can fail a job. Each job
+logs views requested/accepted/rejected-with-reason, latency, token counts (the cost
+signal) and coverage before and after.
+
+**Credentials.** Application Default Credentials of the Cloud Run runtime service
+account, `avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com`,
+which already holds `roles/aiplatform.user` (config-only; verify with
+`gcloud projects get-iam-policy aerial-vehicle-466722-p5 --flatten=bindings[].members --filter=bindings.members:avatar-reconstruction-sa@`).
+To turn it on in production, a config-only change:
+`gcloud run services update avatar-reconstruction --region us-central1 --update-env-vars RECON_VIEW_SYNTHESIS=1,GOOGLE_CLOUD_PROJECT=aerial-vehicle-466722-p5`
+(never `--set-env-vars`, which replaces the whole set).
+
+**Gate thresholds are provisional.** They are bounds on drift set from first
+principles (the same-pose control floor is 0.0069 divergence; a turned view
+legitimately sits above it) and must be calibrated on the 40-face reference set with
+live Vertex output before the flag defaults on. Evidence and the enable decision come
+from `python -m eval.texture_eval` ([`eval/`](eval/README.md)).
+
 ## Tests
+
+`pytest test_view_synthesis.py eval/test_texture_eval.py` covers the Vertex client at
+the HTTP boundary (`httpx.MockTransport`), the gate, the multi-view projection and the
+metrics. `fixtures/vertex_view_response.json` is the recorded real response
+(`python -m eval.capture_vertex_fixture <face.png>`); the test that reads it skips
+until it exists.
 
 The image build runs all four, so a broken pipeline fails the build:
 

@@ -296,10 +296,29 @@ decides between them.
 generative image model conditioned on one will produce photographically plausible
 but UV-incoherent content, and the seams land exactly where the head turns.
 
-**Do synthesise additional camera views and warp them through the existing path.**
-Each view goes through the same landmark-driven TPS warp as the frontal
-(`_warp_face_to_uv`), so coverage of cheeks, ears and jawline is UV-coherent by
-construction rather than by hoping the model understood the atlas.
+**Do synthesise additional camera views and project them through the camera-and-mesh
+path. BUILT, DEFAULT OFF (2026-11-04).** An earlier revision of this track said to
+warp each view through the landmark TPS (`_warp_face_to_uv`). That cannot reach the
+scalp: there are no scalp landmarks to warp with. So views are solved to a camera
+(landmark Umeyama fit when MediaPipe finds a face, otherwise the selfie camera
+rotated by the requested yaw and pitch, with the left/right sign chosen by
+silhouette overlap) and projected through `face_projection` under the same four
+gates, at a lower ceiling (`SYNTH_MAX_BLEND` 0.5) and only where the selfie has not
+claimed the texel. Code: `view_synthesis.py`, `view_texture.py`; operator notes in
+the worker README.
+
+**Status and what is measured.** Built and unit-tested (Vertex client at the HTTP
+boundary, identity gate, pose gate, seam gate, multi-view composite, geometry
+untouched). Not yet measured: the before/after held-out SSIM, histogram distance and
+seam numbers for the 40-face set, because Vertex returns `403 billing account issues`
+on the project as of 2026-11-04 (see the GCP billing note in the ops docs), so no
+real synthesised view could be generated, and the gate thresholds are provisional.
+After billing is restored the whole loop is three commands from
+`workers/avatar-reconstruction`: `python -m eval.make_refs --out eval/refs`,
+`python -m eval.texture_eval --make-heldout`, `python -m eval.texture_eval`. The
+flag defaults on only if held-out SSIM and the histogram distance both improve and
+seams pass on all 40 references. LPIPS is not used (no vetted commercially clean
+weight set); masked SSIM plus a Lab histogram distance stand in.
 
 Crucially, the finding that kills multi-view for *geometry* (Track 3) does not
 kill it for *texture*. Rotated synthesised views measure as a different person
@@ -309,11 +328,11 @@ landmarks. A 3/4 view that is 0.03 off in face shape still carries the correct
 complexion, beard, hairline and ear into the regions a frontal cannot see. The
 severity of the error differs by an order of magnitude between the two uses.
 
-ISE will not move — it is a geometry metric, texture-blind by design. This track
-must bring its own: masked SSIM / LPIPS against held-out views, plus a
-seam-continuity check across the UV boundary. Gate the synthesised view on the
-same-pose identity check before compositing, so a bad generation is rejected
-rather than painted on.
+ISE will not move: it is a geometry metric, texture-blind by design. This track
+brings its own (`eval/texture_eval.py`): masked SSIM and a colour-histogram
+distance against held-out views, plus a seam-continuity check across UV island
+boundaries. Each synthesised view is gated on identity before compositing, so a bad
+generation is rejected rather than painted on.
 
 ### Track 3 — Dense identity geometry by per-subject optimisation
 

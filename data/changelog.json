@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Avatar reconstruction: gated synthesised views for the scalp and far side of the head",
+			"summary": "The avatar worker can now ask Vertex AI for extra camera views of a selfie, reject any that do not look like the same person or that break UV seams, and project the rest onto the scalp, far cheek, ears and neck. Texture only, off by default until the held-out quality check passes.",
+			"tags": [
+				"avatars",
+				"reconstruction"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Score, replay and export any agent run",
 			"summary": "Owners can run a task suite against an agent from a new Evaluate tab, the REST API or `three-ws evals run`, watch per-task progress live, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL. Runs are limited to free and Vertex lanes with a cost cap.",
 			"tags": ["feature"],

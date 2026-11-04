@@ -10,7 +10,7 @@ unless it is measured on the real template mesh with a real face, so this script
 does exactly that and prints the split.
 
 Usage:
-    python3 -m eval.measure_projection_coverage [image.png ...]
+    python3 -m eval.measure_projection_coverage [--views] [image.png ...]
 
 With no arguments it sweeps the reference face set in eval/refs/. Requires the
 worker's runtime deps (cv2, mediapipe, pygltflib) and the template GLBs.
@@ -30,8 +30,13 @@ import face_projection as fpr  # noqa: E402
 import glb_ops  # noqa: E402
 
 
-def measure(image_path: str) -> dict | None:
-    """Run the texture stages for one photo and report UV coverage."""
+def measure(image_path: str, with_views: bool = False) -> dict | None:
+    """Run the texture stages for one photo and report UV coverage.
+
+    `with_views` also requests synthesised views (needs Vertex), runs them through
+    the identity, pose and seam gates, and reports photographic-plus-synthesised
+    coverage alongside the selfie-only figure.
+    """
     img = Image.open(image_path).convert("RGB")
     landmarks = fp._get_landmarks(img)
     if landmarks is None:
@@ -79,7 +84,7 @@ def measure(image_path: str) -> dict | None:
         return None
     oval = (face_mask_uv > 0.5) & covered
     painted = (weight > 0.01) & covered
-    return {
+    row = {
         "name": os.path.basename(image_path),
         "pose": True,
         "head_texels": head_texels,
@@ -88,10 +93,27 @@ def measure(image_path: str) -> dict | None:
         "new": (painted & ~oval).sum() / head_texels,
         "mean_weight": float(weight[painted].mean()) if painted.any() else 0.0,
     }
+    if with_views:
+        import view_synthesis
+        import view_texture
+
+        camera = fpr.solve_camera(detected, lm_idx, positions, img_w, img_h)
+        report = view_synthesis.synthesize_views(img)
+        base = np.array(tex.convert("RGB"), dtype=np.uint8)
+        res = view_texture.enrich_with_views(
+            report=report, selfie_rgb=np.array(img, dtype=np.uint8), selfie_mask=fg_alpha,
+            selfie_landmarks_3d=detected, primary_camera=camera, primary=out, base_skin_rgb=base,
+            protect=face_mask_uv, positions=positions, normals=normals, uvs=uvs, faces=faces,
+            landmark_vertex_indices=lm_idx, detect_landmarks=fp._detect_landmarks_array,
+            remove_background=fp._remove_background)
+        row.update(views_requested=report.requested, views_accepted=len(res.accepted),
+                   with_views=res.coverage_after, seam_before=res.seam_before, seam_after=res.seam_after)
+    return row
 
 
 def main(argv: list[str]) -> int:
-    paths = argv[1:]
+    with_views = "--views" in argv
+    paths = [a for a in argv[1:] if a != "--views"]
     if not paths:
         refs = os.path.join(os.path.dirname(os.path.abspath(__file__)), "refs")
         if not os.path.isdir(refs):
@@ -103,7 +125,7 @@ def main(argv: list[str]) -> int:
     rows = []
     for p in paths:
         try:
-            r = measure(p)
+            r = measure(p, with_views)
         except Exception as exc:  # noqa: BLE001 — one bad face must not stop the sweep
             print(f"  {os.path.basename(p)}: FAILED ({exc})")
             continue
@@ -118,6 +140,7 @@ def main(argv: list[str]) -> int:
             f"  {r['name'][:42]:42s} oval {r['oval']:6.1%}  "
             f"projected {r['projected']:6.1%}  new {r['new']:6.1%}  "
             f"mean w {r['mean_weight']:.2f}"
+            + (f"  +views {r['with_views']:6.1%} ({r['views_accepted']}/{r['views_requested']})" if with_views else "")
         )
 
     if not rows:
@@ -133,6 +156,12 @@ def main(argv: list[str]) -> int:
     print(f"  NEW surface from projection: {new:.1%}")
     print(f"  total photographic coverage: {oval + new:.1%} "
           f"(was {oval:.1%}, a {((oval + new) / oval):.1f}x increase)")
+    if with_views:
+        wv = np.mean([r["with_views"] for r in rows])
+        acc = sum(r["views_accepted"] for r in rows)
+        req = sum(r["views_requested"] for r in rows)
+        print(f"  with synthesised views     : {wv:.1%} of the head atlas "
+              f"({acc}/{req} views passed the gates)")
     return 0
 
 

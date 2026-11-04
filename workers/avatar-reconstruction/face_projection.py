@@ -483,6 +483,8 @@ def project_photo_to_uv(
     vertex_indices: np.ndarray,
     tex_w: int,
     tex_h: int,
+    camera: Optional["WeakPerspectiveCamera"] = None,
+    max_blend: float = MAX_BLEND,
 ) -> Optional[tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """
     Paint the photo onto the whole visible head in UV space.
@@ -497,6 +499,12 @@ def project_photo_to_uv(
         landmarks_3d:      (L, 3) MediaPipe landmarks in an isotropic pixel
                            frame (`face_geometry.landmarks_to_array` with size).
         vertex_indices:    (L,) head vertex each landmark corresponds to.
+        camera:            a pre-solved camera. A synthesised view whose pose is
+                           known by construction (or fitted elsewhere) passes it
+                           here and the landmark fit is skipped; the four gates
+                           below still apply unchanged.
+        max_blend:         ceiling on per-texel confidence. The authoritative
+                           selfie uses MAX_BLEND; synthesised views use less.
 
     Returns:
         (rgb_uv, weight_uv, covered), the projected colour in UV space, its
@@ -510,7 +518,8 @@ def project_photo_to_uv(
     """
     img_h, img_w = photo_rgb.shape[:2]
 
-    camera = solve_camera(landmarks_3d, vertex_indices, positions, img_w, img_h)
+    if camera is None:
+        camera = solve_camera(landmarks_3d, vertex_indices, positions, img_w, img_h)
     if camera is None:
         log.info("projective texturing skipped: camera fit rejected")
         return None
@@ -558,7 +567,7 @@ def project_photo_to_uv(
         fg = _sample_bilinear(foreground_mask.astype(np.float32), map_x, map_y).reshape(-1)
         confidence *= np.clip(fg, 0.0, 1.0)
 
-    confidence = np.where(confidence < MIN_CONFIDENCE, 0.0, confidence) * MAX_BLEND
+    confidence = np.where(confidence < MIN_CONFIDENCE, 0.0, confidence) * float(max_blend)
 
     rgb_uv = np.zeros((tex_h, tex_w, 3), dtype=np.float32)
     weight_uv = np.zeros((tex_h, tex_w), dtype=np.float32)
@@ -612,3 +621,285 @@ def coverage_fraction(weight: np.ndarray, covered: Optional[np.ndarray] = None) 
         total = int(covered.sum())
         return float(mask.sum()) / total if total else 0.0
     return float(mask.mean())
+
+
+# ══ Multi-view projection (synthesised views) ═════════════════════════════════
+#
+# The selfie stays authoritative. Extra views (see view_synthesis.py) are TEXTURE
+# only: they never touch geometry and never go through the landmark TPS warp,
+# because there are no scalp landmarks to warp with. They enter through the same
+# camera-and-mesh projection path, under the same four gates, at a lower blend
+# ceiling, and only fill texels the selfie did not already claim.
+
+# Ceiling on a synthesised view's per-texel confidence. Lower than MAX_BLEND on
+# purpose: a generated view is plausible, not measured.
+SYNTH_MAX_BLEND = 0.5
+
+# Overlap needed before a view's colour is matched to the selfie from the
+# overlap itself; below it the match uses each view's whole painted region.
+MIN_OVERLAP_TEXELS = 400
+OVERLAP_WEIGHT = 0.15
+
+
+def _rot_x(deg: float) -> np.ndarray:
+    a = np.deg2rad(deg)
+    c, s = np.cos(a), np.sin(a)
+    return np.array([[1, 0, 0], [0, c, -s], [0, s, c]], dtype=np.float64)
+
+
+def _rot_y(deg: float) -> np.ndarray:
+    a = np.deg2rad(deg)
+    c, s = np.cos(a), np.sin(a)
+    return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]], dtype=np.float64)
+
+
+def view_angle_deg(a: WeakPerspectiveCamera, b: WeakPerspectiveCamera) -> float:
+    """Angle in degrees between two cameras' viewing axes on the same head."""
+    d = float(np.clip(a.view_direction() @ b.view_direction(), -1.0, 1.0))
+    return float(np.degrees(np.arccos(d)))
+
+
+def _silhouette(positions: np.ndarray, faces: np.ndarray, camera: WeakPerspectiveCamera) -> np.ndarray:
+    depth, _ = _render_depth(positions, faces, camera)
+    return np.isfinite(depth)
+
+
+def _mask_to_buffer(mask: np.ndarray, camera: WeakPerspectiveCamera) -> np.ndarray:
+    scale = DEPTH_BUFFER_SIZE / max(camera.img_w, camera.img_h)
+    h = max(1, int(round(camera.img_h * scale)))
+    w = max(1, int(round(camera.img_w * scale)))
+    small = cv2.resize(mask.astype(np.float32), (w, h), interpolation=cv2.INTER_AREA) > 0.5
+    out = np.zeros((DEPTH_BUFFER_SIZE, DEPTH_BUFFER_SIZE), dtype=bool)
+    out[:min(h, DEPTH_BUFFER_SIZE), :min(w, DEPTH_BUFFER_SIZE)] = small[:DEPTH_BUFFER_SIZE, :DEPTH_BUFFER_SIZE]
+    return out
+
+
+def _head_iou(sil: np.ndarray, mask: np.ndarray) -> float:
+    """IoU inside the rows the rendered head spans, so shoulders do not count."""
+    rows = np.where(sil.any(axis=1))[0]
+    if len(rows) == 0:
+        return 0.0
+    band = slice(int(rows[0]), int(rows[-1]) + 1)
+    s, m = sil[band], mask[band]
+    union = float((s | m).sum())
+    return float((s & m).sum()) / union if union else 0.0
+
+
+def camera_from_pose_prior(
+    primary: WeakPerspectiveCamera,
+    view_w: int,
+    view_h: int,
+    yaw_deg: float,
+    pitch_deg: float,
+    foreground_mask: np.ndarray,
+    positions: np.ndarray,
+    faces: np.ndarray,
+) -> Optional[tuple[WeakPerspectiveCamera, float]]:
+    """
+    Camera for a synthesised view that has no detectable landmarks (profile and
+    scalp views, where MediaPipe returns nothing).
+
+    The selfie camera is rotated by the REQUESTED yaw and pitch, keeping its
+    scale (the prompt asks the generator to hold framing). Left and right are
+    ambiguous in a prompt, so both signs are tried and the one whose rendered
+    silhouette best matches the view's person mask wins. That makes the silhouette
+    IoU the pose evidence: the caller drops the view when it is low.
+
+    Returns (camera, head_iou), or None when no candidate renders at all.
+    """
+    ratio = view_h / float(primary.img_h)
+    mask_buf_cam = WeakPerspectiveCamera(primary.s * ratio, primary.R, primary.t * ratio, view_w, view_h)
+    mask = _mask_to_buffer(foreground_mask, mask_buf_cam)
+    mrows = np.where(mask.any(axis=1))[0]
+    if len(mrows) == 0:
+        return None
+    m_top = float(mrows[0])
+    scale_px = DEPTH_BUFFER_SIZE / max(view_w, view_h)
+
+    def build(sy: float, sp: float, k: float, shift: tuple[float, float] = (0.0, 0.0)):
+        R = _rot_x(sp * pitch_deg) @ _rot_y(sy * yaw_deg) @ primary.R
+        t = primary.t * ratio
+        t = t + np.array([shift[0], -shift[1], 0.0])
+        return WeakPerspectiveCamera(primary.s * ratio * k, R, t, view_w, view_h)
+
+    def align(cam: WeakPerspectiveCamera) -> WeakPerspectiveCamera:
+        sil = _silhouette(positions, faces, cam)
+        rows = np.where(sil.any(axis=1))[0]
+        if len(rows) == 0:
+            return cam
+        band = slice(int(rows[0]), int(rows[-1]) + 1)
+        mcols = np.where(mask[band].any(axis=0))[0]
+        scols = np.where(sil.any(axis=0))[0]
+        if len(mcols) == 0 or len(scols) == 0:
+            return cam
+        dy = (m_top - rows[0]) / scale_px
+        dx = (np.mean(mcols) - np.mean(scols)) / scale_px
+        return build_from(cam, dx, dy)
+
+    def build_from(cam: WeakPerspectiveCamera, dx: float, dy: float):
+        t = cam.t + np.array([dx, -dy, 0.0])
+        return WeakPerspectiveCamera(cam.s, cam.R, t, view_w, view_h)
+
+    best: Optional[tuple[WeakPerspectiveCamera, float]] = None
+    signs_p = (1.0, -1.0) if abs(pitch_deg) > 1e-6 else (1.0,)
+    signs_y = (1.0, -1.0) if abs(yaw_deg) > 1e-6 else (1.0,)
+    for sy in signs_y:
+        for sp in signs_p:
+            cam = align(build(sy, sp, 1.0))
+            iou = _head_iou(_silhouette(positions, faces, cam), mask)
+            if best is None or iou > best[1]:
+                best = (cam, iou)
+    if best is None:
+        return None
+    cam = best[0]
+    for k in (0.9, 1.1):
+        trial = WeakPerspectiveCamera(cam.s * k, cam.R, cam.t, view_w, view_h)
+        trial = align(trial)
+        iou = _head_iou(_silhouette(positions, faces, trial), mask)
+        if iou > best[1]:
+            best = (trial, iou)
+    return best
+
+
+def _to_lab(rgb: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(np.clip(rgb, 0, 255).astype(np.uint8).reshape(-1, 1, 3), cv2.COLOR_RGB2LAB).reshape(-1, 3).astype(np.float32)
+
+
+def _from_lab(lab: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(np.clip(lab, 0, 255).astype(np.uint8).reshape(-1, 1, 3), cv2.COLOR_LAB2RGB).reshape(-1, 3)
+
+
+def match_skin_statistics(
+    view_rgb: np.ndarray,
+    view_weight: np.ndarray,
+    ref_rgb: np.ndarray,
+    ref_weight: np.ndarray,
+) -> np.ndarray:
+    """
+    Reinhard colour transfer of a synthesised view's UV colour onto the selfie's
+    skin statistics, in Lab, estimated on the texels both have painted. A
+    generator re-lights the face; without this the seam between the selfie's
+    colour and the view's is a visible step.
+
+    Falls back to each layer's own painted region when the overlap is too small to
+    trust. The transfer is clamped (scale 0.6..1.6) so a degenerate overlap cannot
+    blow the colours out.
+    """
+    both = (view_weight > OVERLAP_WEIGHT) & (ref_weight > OVERLAP_WEIGHT)
+    if int(both.sum()) >= MIN_OVERLAP_TEXELS:
+        src_sel, dst_sel = both, both
+    else:
+        src_sel = view_weight > OVERLAP_WEIGHT
+        dst_sel = ref_weight > OVERLAP_WEIGHT
+    if int(src_sel.sum()) < 16 or int(dst_sel.sum()) < 16:
+        return view_rgb
+    src = _to_lab(view_rgb[src_sel])
+    dst = _to_lab(ref_rgb[dst_sel])
+    s_mu, s_sd = src.mean(axis=0), src.std(axis=0) + 1e-3
+    d_mu, d_sd = dst.mean(axis=0), dst.std(axis=0) + 1e-3
+    gain = np.clip(d_sd / s_sd, 0.6, 1.6)
+    h, w = view_rgb.shape[:2]
+    lab = _to_lab(view_rgb.reshape(-1, 3)).reshape(h, w, 3)
+    lab = (lab - s_mu) * gain + d_mu
+    return _from_lab(lab.reshape(-1, 3)).reshape(h, w, 3).astype(np.float32)
+
+
+def composite_views(
+    primary_rgb: np.ndarray,
+    primary_weight: np.ndarray,
+    views: list[tuple[np.ndarray, np.ndarray]],
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Fold synthesised views into the selfie's projection (rgb_uv, weight_uv).
+
+    A view's weight is scaled by how little the selfie already claims there
+    (1 - w_primary / MAX_BLEND), so the original photo stays authoritative where it
+    applies. Overlapping views are averaged by weight. The combined weight is a
+    noisy-or, so it never exceeds MAX_BLEND.
+    """
+    prim_w = np.clip(primary_weight / MAX_BLEND, 0.0, 1.0)
+    num = primary_rgb.astype(np.float32) * primary_weight[..., None]
+    den = primary_weight.copy()
+    keep = 1.0 - primary_weight
+    for rgb, w in views:
+        eff = w * (1.0 - prim_w)
+        num += rgb.astype(np.float32) * eff[..., None]
+        den += eff
+        keep *= (1.0 - eff)
+    out_w = np.minimum(1.0 - keep, MAX_BLEND).astype(np.float32)
+    safe = np.where(den > 1e-6, den, 1.0)
+    out_rgb = np.where((den > 1e-6)[..., None], num / safe[..., None], primary_rgb).astype(np.float32)
+    return out_rgb, out_w
+
+
+def uv_seams(positions: np.ndarray, uvs: np.ndarray, faces: np.ndarray) -> np.ndarray:
+    """
+    Island boundaries of the UV atlas: edges the mesh shares in 3D whose two faces
+    place them at different UV positions. Returns (S, 2, 2, 2) float32, i.e. per
+    seam two UV segments [(u0,v0),(u1,v1)] that must show the same colour.
+    """
+    pos = np.asarray(positions, dtype=np.float64)
+    extent = float(np.linalg.norm(pos.max(axis=0) - pos.min(axis=0))) or 1.0
+    q = np.round(pos / (extent * 1e-5)).astype(np.int64)
+    _, weld = np.unique(q, axis=0, return_inverse=True)
+    weld = weld.reshape(-1)
+    n = int(weld.max()) + 1
+    tri = np.asarray(faces, dtype=np.int64)
+    ea = np.concatenate([tri[:, 0], tri[:, 1], tri[:, 2]])
+    eb = np.concatenate([tri[:, 1], tri[:, 2], tri[:, 0]])
+    a, b = weld[ea], weld[eb]
+    ua, ub = uvs[ea], uvs[eb]
+    swap = a > b
+    lo = np.where(swap, b, a)
+    hi = np.where(swap, a, b)
+    u_lo = np.where(swap[:, None], ub, ua)
+    u_hi = np.where(swap[:, None], ua, ub)
+    key = lo * n + hi
+    order = np.argsort(key, kind="stable")
+    key, u_lo, u_hi = key[order], u_lo[order], u_hi[order]
+    same = key[1:] == key[:-1]
+    # Only edges with exactly two incident faces; a key seen 3+ times is skipped.
+    triple = np.zeros(len(key), dtype=bool)
+    if len(key) > 2:
+        triple[1:-1] = (key[2:] == key[1:-1]) & (key[1:-1] == key[:-2])
+    idx = np.where(same & ~triple[:-1] & ~triple[1:])[0]
+    differ = (np.abs(u_lo[idx] - u_lo[idx + 1]).max(axis=1) > 1e-6) | (np.abs(u_hi[idx] - u_hi[idx + 1]).max(axis=1) > 1e-6)
+    idx = idx[differ]
+    out = np.zeros((len(idx), 2, 2, 2), dtype=np.float32)
+    if len(idx):
+        out[:, 0, 0], out[:, 0, 1] = u_lo[idx], u_hi[idx]
+        out[:, 1, 0], out[:, 1, 1] = u_lo[idx + 1], u_hi[idx + 1]
+    return out
+
+
+SEAM_SAMPLES = 6
+
+
+def seam_discontinuity(
+    texture_rgb: np.ndarray,
+    weight: np.ndarray,
+    seams: np.ndarray,
+    min_weight: float = 0.05,
+) -> Optional[float]:
+    """
+    Mean Lab colour distance across UV island boundaries, over seam samples where
+    both sides carry painted colour. None when no seam sample qualifies.
+
+    This is the seam-continuity score: the template's own seams are already
+    continuous, so what a synthesised view can do is raise this number by painting
+    one side of an island edge in a colour the other side does not share.
+    """
+    if len(seams) == 0:
+        return None
+    h, w = texture_rgb.shape[:2]
+    t = np.linspace(0.0, 1.0, SEAM_SAMPLES, dtype=np.float32)[None, None, :, None]
+    seg = seams[:, :, 0][:, :, None, :] * (1 - t) + seams[:, :, 1][:, :, None, :] * t  # (S,2,K,2)
+    xs = np.clip(np.rint(seg[..., 0] * (w - 1)).astype(np.int64), 0, w - 1)
+    ys = np.clip(np.rint(seg[..., 1] * (h - 1)).astype(np.int64), 0, h - 1)
+    ys0, xs0, ys1, xs1 = ys[:, 0], xs[:, 0], ys[:, 1], xs[:, 1]
+    ok = (weight[ys0, xs0] > min_weight) & (weight[ys1, xs1] > min_weight)
+    if not ok.any():
+        return None
+    a = _to_lab(texture_rgb[ys0, xs0][ok])
+    b = _to_lab(texture_rgb[ys1, xs1][ok])
+    return float(np.linalg.norm(a - b, axis=1).mean())
