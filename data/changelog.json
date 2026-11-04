@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Diorama worlds can be played as microgames",
+			"summary": "A world prompt can now name a goal (collect, reach, or survive). The world page shows Play this world, you walk your own avatar around the island with keys, a touch pad or taps, and the share sheet copies a play link that opens straight into the game.",
+			"tags": [
+				"feature",
+				"diorama"
+			],
+			"link": "/diorama"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Double-clicking Deploy on-chain no longer starts two deploys",
 			"summary": "The agent Deploy on-chain button now ignores a second click while a deploy is already starting, so a fast double click can no longer ask your wallet to sign twice. The deploy and token-launch buttons also have browser tests that run them end to end against devnet.",
 			"tags": [
