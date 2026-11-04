@@ -119,6 +119,7 @@ export class OnchainDeployButton {
 		this._refCaip2 = preferredChain;
 		this._reveal = reveal;
 		this._root = null;
+		this._starting = false;
 	}
 
 	mount() {
@@ -245,6 +246,19 @@ export class OnchainDeployButton {
 	// ── Drive ──────────────────────────────────────────────────────────────
 
 	async _start() {
+		// One deploy at a time. The wallet primer is awaited before any progress
+		// strip replaces the button, so a second click in that window used to
+		// start a second prep and a second wallet prompt for the same agent.
+		if (this._starting) return;
+		this._starting = true;
+		try {
+			await this._runDeploy();
+		} finally {
+			this._starting = false;
+		}
+	}
+
+	async _runDeploy() {
 		// First-time deployers get the plain-language wallet/fees explainer before
 		// any wallet prompt; returning users pass straight through. Lazy-loaded.
 		try {

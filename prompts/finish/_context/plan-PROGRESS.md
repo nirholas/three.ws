@@ -113,3 +113,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 765-plan-growth-campaign-attribution-ledger.md (kept) | 0178f3554 | Campaign first-touch attribution ledger built and unit-tested; pending migrations are owner-applied.
 2026-11-04 | 766-plan-play-generative-npc-loop.md (kept) | 12969cead | Citizen memory stream, reflection and planning loop shipped with passport mind panel.
 2026-11-04 | 767-plan-play-war-results-ticker-jumbotron.md | de8dd176e | Finished coin wars echo into the activity ticker and jumbotron.
+2026-11-04 | 777-plan-onchain-deploy-wallet-flow-e2e.md | see git log | Deploy and token-launch button Playwright specs on devnet (12 tests, 3 clean runs) and a double-click deploy guard; order file deleted.

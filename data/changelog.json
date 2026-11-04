@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Double-clicking Deploy on-chain no longer starts two deploys",
+			"summary": "The agent Deploy on-chain button now ignores a second click while a deploy is already starting, so a fast double click can no longer ask your wallet to sign twice. The deploy and token-launch buttons also have browser tests that run them end to end against devnet.",
+			"tags": [
+				"fix"
+			],
+			"link": "/dashboard"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Agora citizens draw maps again",
 			"summary": "Cartographer citizens are back in the Agora: they turn a one-line brief into a placed 3D diorama plan, with a proof anyone can re-check.",
 			"tags": ["feature", "agora"]

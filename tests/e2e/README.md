@@ -183,6 +183,16 @@ fidelity contract as `galaxy.spec.js`:
    link, pump.fun link), asserting real `launch-prep` + `launch-confirm` fire
 5. a broadcast failure surfaces specific, actionable copy (no generic catch-all)
 
+### `onchain-deploy-wallet.spec.js` and `onchain-token-launch.spec.js` - the agent on-chain buttons
+
+Run the real `OnchainDeployButton` and `LaunchTokenButton` on Solana devnet with
+an injected throwaway wallet. Deploy: idle, no wallet (install action and a way
+back), happy path (pending steps then success chip), wallet rejection, prep
+failure with recovery, and double click starting only one deploy. Launch:
+disabled for a non-deployed or EVM agent, chip once a token exists, live cost
+estimate and re-quote, quote outage, and Cancel or overlay click sending no
+launch traffic. Neither spec signs or broadcasts anything real.
+
 ### `coin-buy-trade.spec.js` — the buy/sell trade widget
 
 1. wallet gating (connect → buy CTA)

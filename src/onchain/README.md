@@ -155,8 +155,13 @@ No UI changes required.
 ## Tests
 
 `tests/src/onchain.test.js` — pure-logic coverage of `chain-ref` + adapter
-factory dispatch. Wallet I/O is integration-tested via Playwright (not yet
-written for this module — TODO).
+factory dispatch. Wallet I/O is covered in a real browser by
+`tests/e2e/onchain-deploy-wallet.spec.js` (`OnchainDeployButton`: idle, no
+wallet, happy path, wallet rejection, prep failure, double click) and
+`tests/e2e/onchain-token-launch.spec.js` (`LaunchTokenButton`: disabled and
+chip states, cost estimate, cancel). Both pin Solana devnet, use a throwaway
+keypair per run, and stub only the injected wallet and the backend and RPC
+routes.
 
 ## Token launches (Pump.fun, …)
 
