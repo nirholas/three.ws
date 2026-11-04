@@ -15,7 +15,7 @@ google-cloud-storage==2.18.0
 # ships MarigoldNormalsPipeline and supports torch 2.4; AniGen leaves
 # transformers unbounded (>=4.40), so pin a release known to work with both
 # (the Marigold text encoder is CLIP). accelerate gives low-memory loading.
-diffusers==0.32.2
+diffusers==0.38.0
 transformers==4.46.3
 accelerate==1.1.1
 huggingface_hub>=0.23.2,<1
