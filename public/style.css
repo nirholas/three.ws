@@ -563,8 +563,12 @@ body.is-dragover .dropzone {
  * <header class="gx-head"> hero) carry a class or the container. The previous
  * :not(.nav) scope leaked this fixed-height, overflow-x:auto strip onto every
  * classed page header, squashing it to 55px and creating a keyboard-
- * unreachable scroll region (axe scrollable-region-focusable on /genesis). */
-header:not([class]):not(:has(#nav-container)) {
+ * unreachable scroll region (axe scrollable-region-focusable on /genesis).
+ * A bare <header> inside main, section, article, aside or dialog is a card or
+ * section heading, never the chrome, so it is left alone too: the strip used to
+ * clip the agent picker on /mcp-integrations and the card subtitles on
+ * /settings/memory (tests/style-legacy-header-scope.test.js). */
+header:not([class]):not(:has(#nav-container)):not(:is(main, section, article, aside, dialog) header) {
 	display: flex;
 	flex-shrink: 0;
 	background: rgba(0, 0, 0, 0.8);
@@ -1024,7 +1028,7 @@ header .site-wordmark .wordmark-logo {
 
 @media screen and (max-width: 700px) {
 	/* Same classless-header scope as the desktop rule above. */
-	header:not([class]):not(:has(#nav-container)) {
+	header:not([class]):not(:has(#nav-container)):not(:is(main, section, article, aside, dialog) header) {
 		padding: 0 1em;
 		height: 3rem;
 		line-height: 3rem;

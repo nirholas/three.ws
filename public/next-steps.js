@@ -161,7 +161,7 @@
 			'html[data-theme=light] #tws-next-steps .tn-box{background:#fff;border-color:rgba(10,10,40,.14);color:#1d1d2b}' +
 			'#tws-next-steps .tn-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}' +
 			'#tws-next-steps .tn-lead{margin:0;font-size:15px;font-weight:600}' +
-			'#tws-next-steps .tn-x{width:32px;height:32px;font-size:18px;line-height:1;color:inherit;opacity:.6;background:none;border:0;border-radius:8px;cursor:pointer}' +
+			'#tws-next-steps .tn-x{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;color:inherit;opacity:.6;background:none;border:0;border-radius:8px;cursor:pointer}' +
 			'#tws-next-steps .tn-x{position:relative}' +
 			'#tws-next-steps .tn-x>.ui-tip{position:absolute;bottom:calc(100% + 6px);right:0;padding:4px 8px;border-radius:6px;font-size:12px;white-space:nowrap;color:#f2f0ff;background:#16161f;opacity:0;pointer-events:none;transition:opacity .12s}' +
 			'#tws-next-steps .tn-x:hover>.ui-tip,#tws-next-steps .tn-x:focus-visible>.ui-tip{opacity:1}' +
@@ -196,7 +196,10 @@
 		close.className = 'tn-x';
 		close.setAttribute('aria-label', 'Dismiss suggestions');
 		close.setAttribute('aria-describedby', 'tn-x-tip');
-		close.innerHTML = '<span aria-hidden="true">×</span>';
+		// An icon, not a "×" text glyph: a glyph joins the tooltip words in the visible label,
+		// which then no longer matches the accessible name.
+		close.innerHTML =
+			'<svg aria-hidden="true" focusable="false" width="14" height="14" viewBox="0 0 14 14"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
 		var tip = document.createElement('span');
 		tip.className = 'ui-tip';
 		tip.id = 'tn-x-tip';

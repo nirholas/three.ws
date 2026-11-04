@@ -1,59 +1,22 @@
 {
   "fonts": [
     "Inter",
-    "system-ui",
-    "-apple-system",
-    "BlinkMacSystemFont",
-    "SF Pro Text",
-    "SF Pro Display"
+    "Space Grotesk",
+    "JetBrains Mono"
   ],
   "fontSizes": [
-    12,
+    9.888,
+    11,
+    12.224,
+    13,
     14,
     16,
-    18,
-    20,
-    24,
-    32,
-    40,
-    48,
-    64
+    19.776,
+    25.888,
+    41.888,
+    67.776
   ],
-  "typeRules": [
-    {
-      "selector": "h1",
-      "sizes": [
-        24,
-        32,
-        40,
-        48,
-        64
-      ]
-    },
-    {
-      "selector": "h2",
-      "sizes": [
-        20,
-        24,
-        32
-      ]
-    },
-    {
-      "selector": "h3",
-      "sizes": [
-        18,
-        20,
-        24
-      ]
-    },
-    {
-      "selector": "button, [role=button]",
-      "sizes": [
-        14,
-        16
-      ]
-    }
-  ],
+  "typeRules": [],
   "minControlSize": 15,
   "controlSizeRules": [],
   "minControlGap": 8,
