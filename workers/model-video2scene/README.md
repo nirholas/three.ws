@@ -145,7 +145,16 @@ NVIDIA L4 with the weights bucket mounted at `/weights`. Afterwards set
 `GCP_VIDEO2SCENE_URL` to the service URL on the three.ws API service
 (`gcloud run services update three-ws-api --region us-central1
 --update-env-vars GCP_VIDEO2SCENE_URL=...`). `GCP_RECONSTRUCTION_KEY` is already
-shared across the model workers. Until then `/capture` returns its designed
+shared across the model workers. The `model-video2scene` Artifact Registry
+repository in us-central1 already exists (created 2026-11-04), so the build's
+push step has a target.
+
+GPU quota: the project's us-central1 L4 quota is 3, and the services pinned at
+one minimum instance (`model-rig`, `model-rig-nonhuman`, `model-trellis`) hold
+all three while idle. Request a quota increase for
+`NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion` in us-central1 before
+relying on this worker; keep the region, since the weights bucket lives there.
+Until then `/capture` returns its designed
 `503` unconfigured state and renders its built-in sample cloud.
 
 ## Hardware
