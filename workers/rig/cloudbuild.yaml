@@ -18,6 +18,12 @@ substitutions:
   # no throughput anyway. main.py and the README both document this invariant.
   _MIN_INSTANCES: "1"
   _MAX_INSTANCES: "1"
+  # Non-humanoid meshes (quadrupeds, creatures, props) forward to the
+  # UniRig + SkinTokens worker (workers/rig-nonhuman). It is set here rather
+  # than by a separate `services update`, because --set-env-vars below replaces
+  # the whole env set on every deploy. Override with an empty value to keep
+  # every mesh on Make-It-Animatable.
+  _RIG_NONHUMAN_URL: https://model-rig-nonhuman-lp642k3kpa-uc.a.run.app
 
 steps:
   - id: build
@@ -68,8 +74,9 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MAX_CONCURRENT=1,TASK_TIMEOUT_S=420
-      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MAX_CONCURRENT=1,TASK_TIMEOUT_S=420,RIG_NONHUMAN_URL=${_RIG_NONHUMAN_URL}
+      # Both rig services authenticate with the same Secret Manager key.
+      - --set-secrets=API_KEY=avatar-reconstruction-key:latest,RIG_NONHUMAN_API_KEY=avatar-reconstruction-key:latest
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA

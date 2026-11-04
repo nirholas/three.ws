@@ -43,8 +43,12 @@ the input mesh. A mesh it calls non-humanoid is forwarded to
 `RIG_NONHUMAN_URL` is configured; this worker then polls that service's
 `/tasks/:id` on the caller's behalf and surfaces the same `task_id`/poll
 contract regardless of which engine actually rigged the mesh. If
-`RIG_NONHUMAN_URL` is unset (the default), every mesh stays on this
-humanoid-only path, matching behavior before this branch existed.
+`RIG_NONHUMAN_URL` is unset, every mesh stays on this humanoid-only path,
+matching behavior before this branch existed. Production sets it from
+`cloudbuild.yaml` (`_RIG_NONHUMAN_URL`, the `model-rig-nonhuman` service URL)
+on every deploy, because that file's `--set-env-vars` replaces the whole env
+set; a value added by hand with `gcloud run services update` would be wiped by
+the next build. `GET /health` reports `nonhuman_worker_configured`.
 
 ## API
 
@@ -162,8 +166,8 @@ licenses, no Hunyuan territory carve-outs, in the rigging path.
 | `MAX_CONCURRENT` | `1` | parallel rig jobs per instance |
 | `TASK_TIMEOUT_S` | `420` | per-task hard timeout |
 | `WEIGHTS_ROOT` | `/weights/make-it-animatable` | staged assets, read by `entrypoint.sh` |
-| `RIG_NONHUMAN_URL` | (unset) | `workers/rig-nonhuman` service URL; non-humanoid meshes forward here when set, stay on this worker when unset |
-| `RIG_NONHUMAN_API_KEY` | (secret) | bearer secret for the non-humanoid worker, if different from `API_KEY` |
+| `RIG_NONHUMAN_URL` | (unset; `cloudbuild.yaml` sets it) | `workers/rig-nonhuman` service URL; non-humanoid meshes forward here when set, stay on this worker when unset |
+| `RIG_NONHUMAN_API_KEY` | (secret) | bearer secret for the non-humanoid worker; deployed from the same `avatar-reconstruction-key` as `API_KEY` |
 | `RIG_NONHUMAN_TIMEOUT_S` | `900` | hard timeout for a forwarded (non-humanoid) task |
 
 `entrypoint.sh` copies the checkpoints and Mixamo templates from `WEIGHTS_ROOT`
