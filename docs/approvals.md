@@ -309,6 +309,23 @@ is appended to the agent's tamper-evident decision trail as a `burner_gate`
 decision. Tests: [tests/burner-tier.test.js](../tests/burner-tier.test.js),
 [tests/burner-approvals.test.js](../tests/burner-approvals.test.js).
 
+To see every path on a real chain, run
+[scripts/burner-devnet-proof.mjs](../scripts/burner-devnet-proof.mjs)
+(`node scripts/burner-devnet-proof.mjs`). Funding asks every devnet endpoint the
+repo knows (Helius, Alchemy and dRPC when their keys are set, then the public
+cluster, whose RPC faucet is closed) for an airdrop; when all decline, fund any
+devnet keypair once at https://faucet.solana.com and pass it with
+`--funder <keypair json>`. It loads the production schema into an
+in-process Postgres, generates a fresh custodial agent wallet, funds it on
+devnet and drives the production modules through all five cases: an auto spend,
+a spend above the per-spend cap approved with a tap, a daily total that flips a
+later in-cap spend to pending, a spend above `confirmAboveUsd` that refuses a
+tap and an unlinked wallet's signature but runs on the owner's, and a request
+left past its window that can never execute. It refuses any RPC whose genesis
+hash is not devnet and never reads a production secret or database. Path 5
+waits out the real two-minute minimum window, so a run takes about three
+minutes.
+
 ## Adding a new kind of request
 
 A source registers an executor in the `EXECUTORS` map in

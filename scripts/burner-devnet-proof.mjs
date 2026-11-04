@@ -26,6 +26,13 @@
 //   node scripts/burner-devnet-proof.mjs
 //   node scripts/burner-devnet-proof.mjs --funder ~/.config/solana/devnet.json
 //   SOLANA_RPC_URL_DEVNET=https://... node scripts/burner-devnet-proof.mjs
+//
+// Funding walks the repo's devnet endpoint chain (SOLANA_RPC_URL_DEVNET,
+// QUICKNODE_RPC_URL_DEVNET, then Helius, Alchemy and dRPC when HELIUS_API_KEY,
+// ALCHEMY_API_KEY or DRPC_API_KEY are set, then the public cluster) because the
+// public cluster's RPC faucet is closed. Those are RPC read keys, the only
+// secrets the scrubbed run inherits. When every faucet declines, fund any devnet
+// keypair once at https://faucet.solana.com and pass it with --funder.
 
 import { spawnSync } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -33,7 +40,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 if (process.env.BURNER_PROOF_SCRUBBED !== '1') {
-	const keep = ['PATH', 'HOME', 'TMPDIR', 'NODE_OPTIONS', 'SOLANA_RPC_URL_DEVNET'];
+	const keep = ['PATH', 'HOME', 'TMPDIR', 'NODE_OPTIONS', 'SOLANA_RPC_URL_DEVNET', 'QUICKNODE_RPC_URL_DEVNET', 'HELIUS_API_KEY', 'ALCHEMY_API_KEY', 'DRPC_API_KEY'];
 	const env = Object.fromEntries(keep.filter((k) => process.env[k]).map((k) => [k, process.env[k]]));
 	Object.assign(env, {
 		BURNER_PROOF_SCRUBBED: '1',
@@ -48,8 +55,6 @@ if (process.env.BURNER_PROOF_SCRUBBED !== '1') {
 
 const args = process.argv.slice(2);
 const flag = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : null);
-const RPC = process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com';
-process.env.SOLANA_RPC_URL_DEVNET = RPC;
 const DEVNET_GENESIS = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG';
 const NETWORK = 'devnet';
 
@@ -81,10 +86,14 @@ const approvals = await import('../api/_lib/approvals.js');
 const { getOrCreateAgentSolanaWallet } = await import('../api/_lib/agent-wallet.js');
 const { solUsdPrice } = await import('../api/_lib/avatar-wallet.js');
 
+const { solanaRpcEndpoints } = await import('../api/_lib/solana/connection.js');
+const ENDPOINTS = solanaRpcEndpoints('devnet');
+const RPC = ENDPOINTS[0];
+const hostOf = (url) => new URL(url).host;
 const conn = new Connection(RPC, 'confirmed');
 const genesis = await conn.getGenesisHash();
 if (genesis !== DEVNET_GENESIS) {
-	console.error(`refusing to run: ${RPC} has genesis ${genesis}, which is not devnet`);
+	console.error(`refusing to run: ${hostOf(RPC)} has genesis ${genesis}, which is not devnet`);
 	process.exit(2);
 }
 
@@ -101,19 +110,27 @@ const wallet = await getOrCreateAgentSolanaWallet(agentId);
 console.log(`   owner ${ownerId}, linked wallet ${ownerWallet.publicKey.toBase58()}`);
 console.log(`   agent ${agentId}, custodial devnet wallet ${wallet.address} (generated and encrypted by agent-wallet.js)`);
 
+// Any single faucet is throttled per IP or closed outright, so walk every devnet
+// endpoint, with backoff between rounds, until one grants the airdrop.
 async function airdrop(to, sol) {
-	for (let attempt = 0; attempt < 4; attempt++) {
-		try {
-			const sig = await conn.requestAirdrop(new PublicKey(to), Math.round(sol * LAMPORTS_PER_SOL));
-			const bh = await conn.getLatestBlockhash();
-			await conn.confirmTransaction({ signature: sig, ...bh }, 'confirmed');
-			return sig;
-		} catch (e) {
-			if (attempt === 3) throw e;
-			await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
+	const declined = [];
+	for (let round = 0; round < 3; round++) {
+		for (const url of ENDPOINTS) {
+			const c = new Connection(url, 'confirmed');
+			try {
+				if ((await c.getGenesisHash()) !== DEVNET_GENESIS) continue;
+				const sig = await c.requestAirdrop(new PublicKey(to), Math.round(sol * LAMPORTS_PER_SOL));
+				const bh = await c.getLatestBlockhash();
+				await c.confirmTransaction({ signature: sig, ...bh }, 'confirmed');
+				console.log(`   airdrop granted by ${hostOf(url)}`);
+				return sig;
+			} catch (e) {
+				declined.push(`${hostOf(url)}: ${String(e?.message || e).replace(/\s+/g, ' ').slice(0, 90)}`);
+			}
 		}
+		await new Promise((r) => setTimeout(r, 4000 * (round + 1)));
 	}
-	return null;
+	throw new Error(`every devnet faucet declined:\n      ${declined.slice(-ENDPOINTS.length).join('\n      ')}`);
 }
 
 const FUND_SOL = 0.15;
@@ -127,7 +144,7 @@ if (funderPath) {
 	try {
 		fundSig = await airdrop(wallet.address, FUND_SOL);
 	} catch (e) {
-		console.error(`devnet airdrop failed (${e?.message}). Rerun with --funder <devnet keypair json> to fund from a devnet wallet instead.`);
+		console.error(`devnet airdrop failed: ${e?.message}\nFund any devnet keypair once at https://faucet.solana.com, then rerun with --funder <keypair json>.`);
 		process.exit(3);
 	}
 }
@@ -296,6 +313,6 @@ console.table(spends.map((s) => ({ status: s.status, usd: Number(s.usd).toFixed(
 
 heading('summary');
 console.table(results);
-console.log(`\n${results.length - failed}/${results.length} checks passed on Solana devnet (${RPC}).`);
+console.log(`\n${results.length - failed}/${results.length} checks passed on Solana devnet (${hostOf(RPC)}).`);
 await pg.close().catch(() => {});
 process.exit(failed ? 1 : 0);

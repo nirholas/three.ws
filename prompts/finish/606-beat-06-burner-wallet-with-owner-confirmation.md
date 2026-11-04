@@ -1,6 +1,6 @@
 # beat 06: a capped burner wallet per agent that needs the owner's main wallet to confirm anything above the cap
 
-**Status (2026-11-04):** In progress in an interactive session. Do not start it in parallel.
+**Status (2026-11-04):** Everything is built and tested except one Definition of done line, the live devnet run of all four paths. The proof script is ready: `node scripts/burner-devnet-proof.mjs --funder <devnet keypair json>`. It is blocked on devnet SOL: the public cluster's RPC faucet is closed (410), and the Helius and Alchemy devnet faucets returned 429 "max usage reached". Owner: fund any devnet keypair with 0.2 SOL at https://faucet.solana.com, run the command, paste the summary table into this order, then close it. Unit suites burner-tier and burner-approvals (expiry included) pass, and so does `npm run audit:docs`.
 
 How to run: paste this file's repo path into a fresh Claude Code chat in this repository and say "run this work order". Runnable now; gated steps, if any, are named below.
 
