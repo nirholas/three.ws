@@ -220,7 +220,13 @@ Graduated token (left the curve for an AMM):
   `/api/crypto/launches`.
 - **Missing / non-base58 `mint`** → `400 missing_mint` / `400 invalid_mint` with a
   clear message.
-- **pump.fun feed unavailable** → `503 upstream_unavailable` + `Retry-After`. Never `500`.
+- **pump.fun feed unavailable** → the last known good copy for that mint (kept for 6 hours,
+  `PUMP_BONDING_LKG_TTL_S`) served as `200` with an `x-pump-stale: 1` header and a short
+  `max-age=10` cache; with none, the bonding-curve account is read straight off Solana RPC
+  and returned as `200` with `source: "onchain"` (graduated mints report `migratedTo:
+  "pumpswap"` because the account cannot say which AMM, and an on-curve `marketCapUsd` is
+  `null`). Only when that read is also empty: `503 upstream_unavailable` + `Retry-After`.
+  Never `500`.
 - **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers.
 
 ### Examples
@@ -742,7 +748,11 @@ which conditions fired, in plain language.
 - **A source is down** → `200`; only that source's checks are `null`, `sources[]` names what answered.
 - **Missing/EVM/invalid `address`** → `400` with a clear message + example.
 - **Valid mint no live source knows** → `400 token_not_found`.
-- **Every source unreachable** → `503` + `Retry-After` — no verdict is ever fabricated during an outage.
+- **Every source unreachable** → the previous verdict for that `address` (kept for 6 hours)
+  served as `200` with `stale: true`, `as_of` (when it was computed), and an
+  `x-security-stale: 1` header; with no previous verdict, `503` + `Retry-After`. No verdict
+  is ever fabricated during an outage. A repeat check inside 60 seconds is answered from a
+  per-mint cache (`x-security-cache: hit`).
 - **Rate-limited** → `429` with `RateLimit-*` + `Retry-After` headers.
 
 ### Examples

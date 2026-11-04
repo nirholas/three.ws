@@ -452,6 +452,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/crypto-api.md": {
+			"commit": "9e63a890b",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Bonding outage path corrected: last-known-good copy (x-pump-stale) then a direct on-chain curve read before 503 (1e1607397, 0aea53297, f286c1626); security outage serves the previous verdict as stale (x-security-stale) with a 60s per-mint cache (7a39eee75)."
+		},
 		"docs/daily-forge.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
