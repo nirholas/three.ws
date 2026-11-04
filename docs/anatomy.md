@@ -17,9 +17,12 @@ The page writes the machine as a spec, draws it while it is being written, and s
 | Key | Action |
 | --- | --- |
 | Left / Right | Previous / next tour step |
-| Esc | Leave the tour |
+| Esc | Leave the tour, or clear the selected part |
 | E | Explode or collapse |
 | X | X-ray |
+| L | Labels on or off |
+| R | Reset the view |
+| F | Fullscreen |
 | Space | Pause motion |
 | Drag, scroll | Rotate, zoom |
 
@@ -49,12 +52,12 @@ Errors are JSON `{ error, message, detail? }`:
 | --- | --- | --- |
 | `prompt_required` | 400 | The prompt is missing or shorter than 3 characters. |
 | `invalid_spec` | 400 | The spec has no renderable parts. |
-| `spec_too_large` | 413 | The spec is over 400 KB. |
+| `spec_too_large` | 413 | The spec is over 400 KB. (`generate` answers 422 when the writer's output is too large to save.) |
 | `rate_limited` | 429 | Too many requests from this client. |
 | `writer_unavailable` | 503 | No model answered. |
 | `storage_unavailable` | 503 | The database is not available. |
 
-Generation is rate limited per IP and globally (`limits.anatomyIp`, `limits.anatomyGlobal`).
+Generation is rate limited per IP and globally (`limits.anatomyIp`, `limits.anatomyGlobal`), and publishing per IP (`limits.anatomyPublishIp`).
 
 ## How it is built
 

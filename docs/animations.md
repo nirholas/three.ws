@@ -154,7 +154,12 @@ publishes CC0-only content instead:
   human base/addon/mocap animation packs, both licensed CC0 1.0 Universal.
   Fetched by `node scripts/cc0-animation-library.mjs --fetch` into
   `animation-sources/cc0/` (see
-  [animation-sources/README.md](../animation-sources/README.md)).
+  [animation-sources/README.md](../animation-sources/README.md)). The
+  Mesh2Motion packs are pinned to a full upstream commit SHA, never `main`:
+  upstream split its bundled human GLBs into one file per clip on 2026-10-31,
+  which 404'd the branch URLs, and the pin keeps the clip names recorded in
+  `scripts/cc0-library.config.json` valid. Zip-hosted packs resolve their GLB
+  through `scripts/lib/zip-member.mjs`.
 - **Provenance per clip**: `scripts/cc0-animation-library.mjs --enumerate`
   records every clip's `source_name`, `license`, and `license_url` in the
   committed [`scripts/cc0-library.config.json`](../scripts/cc0-library.config.json).

@@ -50,7 +50,7 @@ thumbnailUrl('thumb/abc.png')                       // → https://three.ws/cdn/
 The URL is a same-origin `/cdn/<key>` address (`cdnUrlOrNull()` in the same file),
 not the raw public `r2.dev` domain. The first-party proxy in `api/cdn-object.js`
 streams the object and fails over by itself when the public domain is blocked or
-storage is unhealthy, so every API consumer gets that for free. Upload-side code
+storage is unhealthy, so every API consumer gets that for free. If both the signed read and the public domain fail with the same storage-infrastructure fault, an image key is answered with a bundled flat 64x64 PNG (HTTP 200, `cache-control: public, max-age=30, s-maxage=30`) instead of a 502, so pages show a neutral tile rather than a broken-image icon and real content returns within 30 s of storage recovering. Non-image keys such as `.glb` still get the 502. Upload-side code
 that needs the raw bucket address still uses `publicUrl()`.
 
 The helper is built on the `OrNull` variants rather than bare `cdnUrl()` or
@@ -98,7 +98,7 @@ The browser renders a PNG and uploads it. Stored at `thumb/<avatarId>.png` with
 (`src/account.js`) and the `/app` agent editor (`src/app.js`) render that poster
 offscreen with `glbFileToThumbnail()` in
 [`src/erc8004/thumbnail.js`](../src/erc8004/thumbnail.js), which poses the
-avatar exactly like the server does (see [The rest pose](#the-rest-pose)).
+avatar exactly like the server does (see [The rest pose](#the-rest-pose)). It lights the poster with the shared studio look (`applyStudioLook()` from `src/render/index.js`: ACES tone mapping, the studio environment at intensity 0.7) so PBR materials do not render flat, and undoes that look when the renderer is disposed.
 
 ### 3. Server render (CPU rasterizer, chromium failover)
 
@@ -113,7 +113,10 @@ running a three.js viewer only for the models the CPU lane cannot decode on its
 own (Draco-compressed geometry, KTX2/Basis textures). A CPU miss is logged as
 `[render] cpu lane fell back to chromium` and costs latency, never a failed
 thumbnail. Set `RENDER_CPU_LANE=off` on the service to pin every render back onto
-chromium without a deploy. A chromium render costs 3-15 s per model, so rendering
+chromium without a deploy. The chromium page is locked down:
+`lockDownPageRequests()` aborts every request except `data:`/`blob:` payloads and the
+pinned three.js CDN modules, so a GLB with an `http(s)` image or buffer URI cannot make
+the renderer fetch from inside our network. A chromium render costs 3-15 s per model, so rendering
 always runs in bounded batches.
 
 All of this lives in [`api/_lib/avatar-thumbs.js`](../api/_lib/avatar-thumbs.js),

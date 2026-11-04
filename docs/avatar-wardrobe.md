@@ -13,6 +13,13 @@ headwear, glasses, accessories). Click a piece to wear it, click again or "Take
 off" to remove it. Saving the avatar persists what it wears, and the baked GLB
 served to embeds, AR, and external engines includes the garments.
 
+An avatar imported from VRoid Hub carries the creator's license
+(`avatar.vroid_license`, see [vroid-hub-import.md](vroid-hub-import.md)). When that
+license does not permit modification the editor does not open: it shows the
+creator's credit line and a link to the license conditions instead of the
+Wardrobe, so outfits and edits are off for that character (the server enforces
+the same gate through `api/_lib/vroid/license-gate.js`).
+
 The catalog also has a standalone public surface: `/wardrobe`
 ([`src/wardrobe-page.js`](../src/wardrobe-page.js)) browses every published
 wearable (search, per-slot filter, inline 3D inspection, jump into the editor

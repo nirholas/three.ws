@@ -20,7 +20,7 @@ that is easy to get catastrophically wrong.
 | `api/_lib/generated-clip-market.js` | The generated collection as a marketplace product line: listing rows, price, and the weekly free rotation. |
 | `scripts/gcp/seed-motion.mjs` | The resumable bulk runner: generate, re-derive, publish, list for sale. |
 | `api/animations/library.js` | Serves the clip manifest that generated clips are merged into. Drops any entry with no `license`, or whose `source` names Mixamo, before the response serializes (`isPublishable()`). |
-| `scripts/cc0-animation-library.mjs` | Builds the rest of the bulk library from CC0 packs, with per-clip provenance in `scripts/cc0-library.config.json`. |
+| `scripts/cc0-animation-library.mjs` | Builds the rest of the bulk library from CC0 packs, with per-clip provenance in `scripts/cc0-library.config.json`. The Mesh2Motion packs are pinned to a full upstream commit SHA (not `main`) so the recorded clip names and license URLs stay valid. |
 
 Generated clips are named `gen-<prompt id>-<hash>`, so they are distinguishable from
 the other bulk-library clips everywhere: in the manifest, the gallery, and any report.
@@ -471,7 +471,10 @@ Both are flat in the catalog size, which is the point.
   knows which page holds the name, so both used to download the whole manifest for
   a single 3 KB entry: on every embed load carrying `?animation=`. They now ask
   `?name=`, measured in a real browser at 365 B and 474 B against the live catalog,
-  a 3,190x smaller response for the same answer.
+  a 3,190x smaller response for the same answer. With no `?animation=` the embed
+  now starts in its `idle` clip (`startRestingPose` in `src/avatar-embed-options.js`)
+  instead of the rig's authored T-pose; if the idle clip fails to load the authored
+  pose stays.
 - `src/animations-gallery.js` (the `/animations` gallery) loads **one page** plus
   `?facets=1` and stops. Further pages are fetched when a reader actually reaches
   the end of the grid. It used to fetch every page on load: 3 requests at 3,007

@@ -57,11 +57,13 @@ npm run dev                      # or any server on another port
 node scripts/renderer-bench.mjs --base http://localhost:3000 --frames 200
 ```
 
+Both harnesses take `--adapter swiftshader|hardware`. `swiftshader` (the default) forces Chromium's software adapter so runs are reproducible anywhere. `hardware` drives the machine's real GPU through Vulkan and needs a GPU-capable host. Every run prints the WebGPU and WebGL2 adapters Chromium actually picked (`adapter=... webgpu="..." webgl2="..."`) and the `--json` output carries them as `adapter` and `adapterInfo`. The launcher lives in [scripts/lib/bench-browser.mjs](../scripts/lib/bench-browser.mjs).
+
 The harness loads `/restyle?bench` three ways (default, `?renderer=webgpu`, `?renderer=webgpu` with `navigator.gpu` removed) and reports backend, console errors, offscreen render time per frame, pixel difference and silhouette overlap against the default, and the rim effect. It exits non-zero on any console error or wrong fallback. Parity and timing use an offscreen render target with readback because headless software WebGPU cannot present to a canvas.
 
 ### Results (2026-10-24, software adapter)
 
-Headless Chromium with SwiftShader, 384x512 target, 200 frames, same model. This is a software rasterizer, so it compares the two code paths and is not GPU hardware data. Run the command above on a machine with a GPU for hardware numbers.
+Headless Chromium with SwiftShader, 384x512 target, 200 frames, same model. This is a software rasterizer, so it compares the two code paths and is not GPU hardware data. Run the command above with `--adapter hardware` on a machine with a GPU for hardware numbers.
 
 | Case | Backend | Render ms/frame (2 runs) | Mean diff vs default | Silhouette overlap | Console errors |
 | --- | --- | --- | --- | --- | --- |
@@ -91,4 +93,4 @@ Headless Chromium with SwiftShader, 384x512 target, 60 frames, `/avatars/cz.glb`
 | `<agent-3d renderer="webgpu">` | WebGPU | 270.8 | 115.2 | n/a | n/a | 0 |
 | `<agent-3d renderer="webgl">` + `?renderer=webgpu` | WebGL2 | 174.2 | 802.8 | n/a | n/a | 0 |
 
-An earlier 30-frame run of the same build measured the WebGPU case at 0.05 / 255 mean diff and 0.9986 silhouette overlap; the residual difference is a sub-pixel camera offset between page loads, not shading. The TSL cinematic chain is consistently several times cheaper than the WebGL2 EffectComposer chain on the software adapter. Hardware GPU numbers need a run of the command above on a machine with a GPU.
+An earlier 30-frame run of the same build measured the WebGPU case at 0.05 / 255 mean diff and 0.9986 silhouette overlap; the residual difference is a sub-pixel camera offset between page loads, not shading. The TSL cinematic chain is consistently several times cheaper than the WebGL2 EffectComposer chain on the software adapter. Hardware GPU numbers need a run of the command above with `--adapter hardware` on a machine with a GPU.

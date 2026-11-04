@@ -194,9 +194,11 @@ Call `viewer.updateBackground()` after changing these values programmatically.
 
 ### Cinematic FX (GUI → Cinematic FX folder)
 
-`src/viewer/cinematic.js` owns the post chain: RenderPass, ambient occlusion, depth of field, bloom, then one merged grade pass (saturation, contrast, brightness, chromatic aberration, film grain, vignette). Pick a look with `viewer.state.cinematicPreset` (`Off`, `Studio`, `Cinematic`, `Portrait`, `Vivid`, `Neon`, `Noir`) or the preset picker; every slider writes straight into the live pipeline. `Studio` is the default and reproduces the historical look exactly.
+`src/viewer/cinematic.js` owns the post chain (the preset table lives in `src/viewer/cinematic-presets.js`, shared with the WebGPU twin; switching presets keeps every slider bound to the live parameters): RenderPass, ambient occlusion, depth of field, bloom, then one merged grade pass (saturation, contrast, brightness, chromatic aberration, film grain, vignette). Pick a look with `viewer.state.cinematicPreset` (`Off`, `Studio`, `Cinematic`, `Portrait`, `Vivid`, `Neon`, `Noir`) or the preset picker; every slider writes straight into the live pipeline. `Studio` is the default and reproduces the historical look exactly.
 
 Ambient occlusion is [N8AO](https://github.com/N8python/n8ao), the denoised screen-space AO the `/play` world also uses. It reconstructs normals from depth, so there is no separate normal pass, and the module downloads only the first time a look turns AO on (`Cinematic` and `Portrait` do), so `Studio` embeds never pay for it. The AO radius is a fraction of the model's bounding diagonal, set on every load, so a 20 cm figurine and a 2 m avatar shade alike. Low-power devices get N8AO's `Low` quality at half resolution.
+
+On the opt-in WebGPU backend (`?renderer=webgpu` or `<agent-3d renderer="webgpu">`, otherwise WebGL2) the same presets drive `CinematicPipelineTSL` in `src/viewer/cinematic-tsl.js` instead. See [webgpu-renderer.md](./webgpu-renderer.md) for how the backend is chosen, the fallback rules and what stays WebGL (WebXR AR).
 
 ---
 
@@ -295,7 +297,7 @@ const blob = await viewer.renderPhotoreal({ samples: 256, bounces: 6, onProgress
 await viewer.takePhotorealScreenshot(); // the same, with the progress panel and download
 ```
 
-`src/viewer/photoreal.js` does the work. It suspends the live render loop and locks orbit controls, swaps the scene's PMREM environment for an equirectangular twin the path tracer can importance-sample (the built-in Neutral studio room is re-captured into a float equirect on the GPU; HDR environments reload as EXR), hides the raster-only shadow catcher, and accumulates samples with [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer). The module is imported on first use. `Shift+P` is not bound in kiosk or embed mode; embeds use the `<agent-3d>` [`renderPhotoreal()`](./web-component.md#renderphotorealopts) method or the iframe `renderPhotoreal` bridge action instead.
+`src/viewer/photoreal.js` does the work. It suspends the live render loop and locks orbit controls, swaps the scene's PMREM environment for an equirectangular twin the path tracer can importance-sample (the built-in Neutral studio room is re-captured into a float equirect on the GPU; HDR environments reload as EXR), hides the raster-only shadow catcher, and accumulates samples with [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer). The module is imported on first use. On the WebGPU backend the tracer runs on its own offscreen WebGL2 renderer (three-gpu-pathtracer is WebGL2-only) that is disposed when the still finishes. `Shift+P` is not bound in kiosk or embed mode; embeds use the `<agent-3d>` [`renderPhotoreal()`](./web-component.md#renderphotorealopts) method or the iframe `renderPhotoreal` bridge action instead.
 
 ---
 
