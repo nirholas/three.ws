@@ -10,7 +10,7 @@ This document covers the MCP server's tools, authentication, client configuratio
 
 ## One endpoint for every tool
 
-`https://three.ws/mcp` is the default install target: one Streamable HTTP server, one sign-in, <!-- mcp-count:unified.tools -->370<!-- /mcp-count --> tools in <!-- mcp-count:unified.groups -->19<!-- /mcp-count --> groups. It merges the main, 3D, studio, agent, bazaar, partner and launch servers. A key or session lists the read and write tiers of every group by default (<!-- mcp-count:unified.defaultTools -->306<!-- /mcp-count --> tools); financial tiers are opt-in. The route behind it is `/api/mcp/all`, and the seven per-server endpoints below keep working unchanged.
+`https://three.ws/mcp` is the default install target: one Streamable HTTP server, one sign-in, <!-- mcp-count:unified.tools -->371<!-- /mcp-count --> tools in <!-- mcp-count:unified.groups -->19<!-- /mcp-count --> groups. It merges the main, 3D, studio, agent, bazaar, partner and launch servers. A key or session lists the read and write tiers of every group by default (<!-- mcp-count:unified.defaultTools -->307<!-- /mcp-count --> tools); financial tiers are opt-in. The route behind it is `/api/mcp/all`, and the seven per-server endpoints below keep working unchanged.
 
 For a stdio client, `npx -y @three-ws/mcp` proxies to the same endpoint using `THREE_WS_API_KEY` ([packages/mcp](../packages/mcp)). The live tool and group list is on [/mcp-tools](/mcp-tools).
 
