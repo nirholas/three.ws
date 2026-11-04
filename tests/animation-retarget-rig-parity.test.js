@@ -11,6 +11,7 @@ import { resolve } from 'node:path';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { parseClipJSON, retargetClipToObject, retargetClipToRig } from '../src/animation-retarget.js';
 import { makeGltfRig } from '../src/pose-rig.js';
+import { AnimationManager } from '../src/animation-manager.js';
 
 // MakeHuman-derived: rests in an A-pose with bent elbows, the case the re-aim exists for.
 const GLB_PATH = resolve(process.cwd(), 'public/avatars/parametric-base.glb');
@@ -37,10 +38,33 @@ const LIMBS = ['LeftArm', 'LeftForeArm', 'RightArm', 'RightForeArm', 'LeftUpLeg'
 
 let objectScene;
 let rigScene;
+let managerScene;
 
 beforeAll(async () => {
-	[objectScene, rigScene] = await Promise.all([loadScene(), loadScene()]);
+	[objectScene, rigScene, managerScene] = await Promise.all([loadScene(), loadScene(), loadScene()]);
 });
+
+// q and -q are the same rotation; compare limb tracks by |dot| per keyframe.
+function expectLimbTracksAgree(a, b) {
+	const byName = (clip) => new Map(clip.tracks.map((t) => [t.name, t]));
+	const left = byName(a);
+	const right = byName(b);
+	let compared = 0;
+	for (const [name, track] of left) {
+		if (!name.endsWith('.quaternion')) continue;
+		if (!LIMBS.some((bone) => name.toLowerCase().includes(bone.toLowerCase()))) continue;
+		const other = right.get(name);
+		expect(other, name).toBeDefined();
+		expect(other.values.length).toBe(track.values.length);
+		for (let i = 0; i < track.values.length; i += 4) {
+			let dot = 0;
+			for (let k = 0; k < 4; k++) dot += track.values[i + k] * other.values[i + k];
+			expect(Math.abs(dot), `${name} key ${i / 4}`).toBeGreaterThan(0.9999);
+		}
+		compared++;
+	}
+	expect(compared).toBeGreaterThanOrEqual(LIMBS.length);
+}
 
 describe('retargetClipToRig matches the viewer path on an A-posed rig', () => {
 	for (const clipName of ['idle', 'walk']) {
@@ -71,6 +95,29 @@ describe('retargetClipToRig matches the viewer path on an A-posed rig', () => {
 				compared++;
 			}
 			expect(compared).toBeGreaterThanOrEqual(LIMBS.length);
+		});
+	}
+});
+
+// The live viewer builds every action through AnimationManager._retarget, which
+// assembles its rest inputs once at attach. It must hand the retargeter the same
+// rest directions the other two entry points do, or an A-posed rig animates on
+// one surface and drives its arms through its torso on another.
+describe('AnimationManager matches the viewer path on an A-posed rig', () => {
+	for (const clipName of ['idle', 'walk']) {
+		it(`${clipName}: limb tracks agree`, () => {
+			const viaObject = retargetClipToObject(loadClip(clipName), objectScene).clip;
+			const mgr = new AnimationManager();
+			mgr.attach(managerScene);
+			try {
+				expect(mgr.supportsCanonicalClips()).toBe(true);
+				const viaManager = mgr._retarget(loadClip(clipName));
+				expect(viaObject).not.toBeNull();
+				expect(viaManager).not.toBeNull();
+				expectLimbTracksAgree(viaObject, viaManager);
+			} finally {
+				mgr.detach();
+			}
 		});
 	}
 });
