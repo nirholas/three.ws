@@ -14,7 +14,13 @@
 //        generated → run the catalog quality gate (api/_lib/seed-quality.js).
 //                    A reject is quarantined under forge/rejected/ and never
 //                    published; a keeper either goes to `rigging` or straight
-//                    to publish.
+//                    to publish. With SEED_VISION_PHASE=1 the gate here is the
+//                    mesh stage only and a keeper is parked in `mesh_passed`.
+//        mesh_passed → judged on appearance by api/cron/forge-seed-vision-cron.js,
+//                    which publishes, rigs or quarantines it through the same
+//                    path (api/_lib/seed-publish.js). This cron only sweeps rows
+//                    that waited past the 30 minute bound: they publish on the
+//                    mesh verdict, marked vision_unavailable.
 //        rigging    → poll the auto-rig job; publish the rigged mesh when it
 //                    lands, and publish the static keeper if the rig failed
 //                    (a gated keeper is never thrown away over a rig fault).
@@ -38,8 +44,13 @@
 //                          time: submitting a whole batch at once is how the
 //                          garment-forge runs used to silently drop jobs.
 //   SEED_CRON_MAX_PENDING  in-flight ceiling (default 3 × batch).
-//   SEED_CRON_VISION       '1' enables the render + Vertex judge stage of the
-//                          quality gate inside the cron. Off by default: the
+//   SEED_VISION_PHASE      '1' moves the render + Vertex judge stage of the
+//                          quality gate to forge-seed-vision-cron, which has a
+//                          wall of its own. Off by default: unset, this cron
+//                          publishes on its own verdict exactly as before, so a
+//                          rollback is one env var.
+//   SEED_CRON_VISION       '1' runs the judge stage inline in THIS cron instead
+//                          (ignored while SEED_VISION_PHASE is on). Off: the
 //                          function has a hard 70 s wall (vercel.json) and a
 //                          history of 504s when a phase overruns, while a render
 //                          plus two judge calls costs 10-20 s. The mesh stage of
@@ -63,44 +74,32 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { SEED_PROMPTS, OG_USERNAMES, composeSeedPrompt } from '../_lib/seed-prompts.js';
-import { evaluateSeedAsset, inProcessTransport, quarantineReject } from '../_lib/seed-quality.js';
-import { getObjectBuffer, publicUrl } from '../_lib/r2.js';
+import { evaluateSeedAsset, inProcessTransport } from '../_lib/seed-quality.js';
+import {
+	GATE_MAX_ATTEMPTS,
+	MESH_PASSED_MAX_WAIT_MS,
+	boolEnv,
+	fetchJson,
+	gateFaultOutcome,
+	intEnv,
+	loadGlbBytes,
+	markVisionUnavailable,
+	publishSeedAvatar,
+	rejectSeedJob,
+	rigStageEnabled,
+	riggableShape,
+	routeSeedKeeper,
+	visionGateBudgetMs,
+	visionPhaseEnabled,
+	withDeadline,
+} from '../_lib/seed-publish.js';
 import { isFreeBackend } from '../_lib/forge-tiers.js';
 import { circuitState, circuitRecordFailure, circuitRecordSuccess } from '../_lib/forge-scale.js';
 import { randomUUID } from 'node:crypto';
 import { requireCron } from '../_lib/cron-auth.js';
-import { fetchUpstream } from '../_lib/upstream-fetch.js';
 
 const ORIGIN = () => env.APP_ORIGIN || 'https://three.ws';
-// Must be comfortably shorter than the function's maxDuration (70 s in vercel.json)
-// so fetchJson's AbortSignal.timeout fires and is caught BEFORE Vercel's hard kill
-// fires its own DOMException[TimeoutError]. When the timeout fires, fetchJson returns
-// { timedOut: true } — startNextJob treats that as a soft failure and rolls back
-// the pending user so the next tick can retry cleanly.
-//
-// poll + submit run in parallel and each can hold a fetch for this long, with the
-// per-job DB work (avatar insert, job upserts, user rollback) stacked on top inside
-// the same 70 s window. At 48 s a worst-case fetch left too little headroom for that
-// tail and the cron occasionally tipped past 70 s → a hard 504. The free NVIDIA
-// draft lane returns inline in ~13–22 s, so 35 s still covers a healthy generation
-// with wide margin while keeping the whole tick comfortably under the ceiling; a
-// genuinely degraded lane simply rolls back and retries next minute.
-const FETCH_TIMEOUT_MS = 35_000;
 const MIN_JOB_AGE_SECONDS = 20;
-
-// Env knobs. Read per call (never at module load) so a Cloud Run env update
-// takes effect on the next tick without a redeploy, and so tests can set them.
-function intEnv(name, fallback, { min = 1, max = 50 } = {}) {
-	const raw = process.env[name];
-	const n = raw == null || raw === '' ? NaN : Number(raw);
-	if (!Number.isFinite(n)) return fallback;
-	return Math.max(min, Math.min(max, Math.floor(n)));
-}
-function boolEnv(name, fallback = false) {
-	const raw = String(process.env[name] ?? '').trim().toLowerCase();
-	if (!raw) return fallback;
-	return raw === '1' || raw === 'true' || raw === 'yes';
-}
 
 // Jobs started per tick. 1 is the historical behaviour, so an unset env is a
 // no-op. Capped at 12: beyond that a single tick's DB tail stops fitting in the
@@ -113,49 +112,10 @@ export const maxPending = () => intEnv('SEED_CRON_MAX_PENDING', seedBatchSize() 
 // jobs (garment-forge incident) — the lane accepts the submits and drops work.
 const SUBMIT_CONCURRENCY = 2;
 
+// Inline stage 2, the pre-vision-phase knob. Ignored while SEED_VISION_PHASE is
+// on: the vision cron owns stage 2 then, and this cron never judges inline.
 const visionGateEnabled = () => boolEnv('SEED_CRON_VISION');
-const visionGateBudgetMs = () => intEnv('SEED_CRON_VISION_MS', 20_000, { min: 5_000, max: 45_000 });
-// On by default since 2026-09-09. A catalog avatar that cannot be skeleton
-// driven is half an asset, and the audit that turned the default around found
-// ZERO of 17,349 published seed avatars had ever been rigged. The lane was
-// verified live the same day (a seeded mesh came back with a 52-joint
-// mixamorig skeleton, which is exactly what src/glb-canonicalize.js maps), and
-// every failure path here publishes the static keeper instead of losing it, so
-// the worst case of leaving it on is the asset the old default always shipped.
-// Set SEED_CRON_RIG=0 to go back to publishing static meshes.
-export const rigStageEnabled = () => boolEnv('SEED_CRON_RIG', true);
 
-/**
- * Can a humanoid skeleton drive this mesh at all?
- *
- * The gate asks whether an asset is worth publishing. This asks a different
- * question: whether binding a humanoid rig to it makes it better or worse. It
- * can make it much worse. A text-to-3D lane routinely returns a figure standing
- * on a wide base slab, and the auto-rigger skins the slab along with the
- * figure, so the first clip that moves the legs tears the slab across the
- * scene. Measured on the real thing: a seeded "sky pirate" mesh (1.99 x 0.69 x
- * 1.99) rigged cleanly by every structural measure (52-joint mixamorig
- * skeleton, unit inverse binds) and then shredded on screen the moment the idle
- * clip played, while the same mesh published static rendered correctly.
- *
- * `thinAxis` is the signal, and the gate already stores it: glTF is Y-up, so a
- * mesh whose THINNEST extent is Y is lying down or sitting in a slab, while an
- * upright figure is always thinnest front-to-back or side-to-side. Over a
- * 12-mesh sample of what the cron actually published, the ten proper humanoids
- * ran 1.47 to 2.63 in height over width and none was thin in Y; the two that
- * were (the pirate, a rearing horse statuette) are exactly the two that must
- * not be rigged. `planar` catches the other end, a mesh with no depth at all.
- *
- * A mesh that fails this is published static, which is what every seed avatar
- * before 2026-09-09 was anyway.
- *
- * @param {{ thinAxis?: string | null, planar?: boolean } | null | undefined} metrics
- */
-export function riggableShape(metrics) {
-	if (!metrics) return true; // no measurement is not evidence against rigging
-	if (metrics.planar === true) return false;
-	return metrics.thinAxis !== 'y';
-}
 // A rig job that never answers must not hold a row forever. advanceRigs polls
 // the ten oldest 'rigging' rows per tick, so a permanently stuck row would sit
 // at the front of that queue and starve the ones behind it. Past this age the
@@ -187,124 +147,20 @@ const CIRCUIT_BASE_MS = 10 * 60_000; // 10 min × consecutive failures
 const noteCircuitFailure = () =>
 	circuitRecordFailure(CIRCUIT_NAME, { threshold: CIRCUIT_THRESHOLD, baseMs: CIRCUIT_BASE_MS });
 
-async function fetchJson(url, options = {}) {
-	let res;
-	try {
-		res = await fetch(url, {
-			...options,
-			headers: { 'user-agent': 'threews-forge-seed/1.0', ...options.headers },
-			signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-		});
-	} catch (err) {
-		// AbortSignal.timeout fires a DOMException[TimeoutError]; treat it as a soft
-		// failure so the cron can clean up and return 200 instead of propagating a
-		// 500. Other network errors (DNS, ECONNREFUSED) are real failures — rethrow.
-		if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
-			return { status: 0, body: null, timedOut: true };
-		}
-		throw err;
-	}
-	let body = null;
-	try { body = await res.json(); } catch { /* non-JSON — status is enough */ }
-	return { status: res.status, body };
-}
-
-// Insert a public avatar row for a finished seed creation, attributed to the
-// synthetic user. Reads the stored GLB straight from forge_creations and is
-// idempotent (`on conflict do nothing`) so a re-poll never double-inserts.
-// Bypasses plan quota — this is platform-seeded content, not a user upload.
-//
-// `creationId` is the row the mesh comes from — after the optional rig stage
-// that is the rig creation, whose preview_key is null, so `previewCreationId`
-// keeps pointing at the original generation's rendered preview.
-//
-// Returns the new avatars.id, or null when the creation row was not publishable
-// (no glb_key / not done) and nothing was inserted.
-async function insertSeedAvatar({
-	userId,
-	prompt,
-	modelCategory,
-	creationId,
-	previewCreationId = null,
-	gate = null,
-	rigged = false,
-}) {
-	if (!creationId) return null;
-	const previewId = previewCreationId || creationId;
-	const meta = {
-		forge_creation_id: creationId,
-		prompt,
-		seed: true,
-		rigged,
-		...(gate ? { quality_gate: gate } : {}),
-	};
-	const inserted = await sql`
-		insert into avatars
-			(owner_id, slug, name, description, storage_key, size_bytes,
-			 content_type, source, source_meta, thumbnail_key, visibility, tags,
-			 model_category, created_at, updated_at)
-		select
-			${userId},
-			${toSlug(prompt)},
-			${toTitle(prompt)},
-			${'AI-generated ' + modelCategory + ', forged on three.ws'},
-			fc.glb_key,
-			coalesce(fc.size_bytes, 0),
-			'model/gltf-binary',
-			'forge',
-			${JSON.stringify(meta)}::jsonb,
-			-- The creation's preview image is already in the bucket with a correct
-			-- Content-Type (it is what /forge's own gallery renders). Adopt it as the
-			-- avatar's thumbnail for free, rather than leaving thumbnail_key NULL and
-			-- making the backfill cron pay chromium to re-render the same model.
-			-- Relative keys only: an absolute URL in thumbnail_key resolves against an
-			-- origin where no object lives (see api/_lib/avatar-thumbs.js).
-			(select case when p.preview_key !~ '^https?://' then p.preview_key end
-			   from forge_creations p where p.id = ${previewId}),
-			'public',
-			array[${modelCategory}]::text[],
-			${modelCategory},
-			now(), now()
-		from forge_creations fc
-		where fc.id = ${creationId}
-		  and fc.glb_key is not null
-		  and fc.status = 'done'
-		on conflict do nothing
-		returning id
-	`;
-	return inserted[0]?.id || null;
-}
+// The publish, rig and quarantine path lives in api/_lib/seed-publish.js, shared
+// with the vision cron. Re-exported so callers of this module keep one import.
+export { publishSeedAvatar, rigStageEnabled, riggableShape, gateFaultOutcome };
 
 // ── Quality gate ──────────────────────────────────────────────────────────────
 
-// Pull the finished mesh bytes. Prefer the bucket key (no egress, no redirect
-// chain); fall back to the public URL for lanes that hand back an absolute URL.
-async function loadGlbBytes({ creationId, glbUrl }) {
-	if (creationId) {
-		const [row] = await sql`select glb_key from forge_creations where id = ${creationId} limit 1`;
-		const key = row?.glb_key;
-		if (key && !/^https?:\/\//i.test(key)) {
-			return { buf: await getObjectBuffer(key), key };
-		}
-		// An absolute key is a lane's public URL, so it is read like one: bounded,
-		// and rejected on a non-2xx. Unbounded and unchecked, a slow host stalled
-		// the gate for the rest of the tick and an error page was handed to the GLB
-		// parser as if it were mesh bytes.
-		if (key) {
-			const res = await fetchUpstream(key, {}, { name: 'lane:glb-read', timeoutMs: 30_000, attempts: 2 });
-			return { buf: Buffer.from(await res.arrayBuffer()), key: null };
-		}
-	}
-	if (!glbUrl) throw new Error('no glb key or url to gate');
-	const res = await fetchUpstream(glbUrl, {}, { name: 'lane:glb-read', timeoutMs: 30_000, attempts: 2 });
-	return { buf: Buffer.from(await res.arrayBuffer()), key: null };
-}
-
 // Run the catalog gate on a finished generation. Returns the verdict plus the
 // storage key, so a reject can be quarantined without re-reading the row.
-async function gateCreation({ creationId, glbUrl, prompt, category, allowVision }) {
+// Stage 2 runs inline only in the legacy mode (SEED_CRON_VISION=1 with the
+// vision phase off); otherwise this is the mesh stage alone.
+async function gateCreation({ creationId, glbUrl, prompt, category }) {
 	const { buf, key } = await loadGlbBytes({ creationId, glbUrl });
-	const transport = allowVision && visionGateEnabled() ? withDeadline(inProcessTransport(), visionGateBudgetMs()) : null;
+	const inline = visionGateEnabled() && !visionPhaseEnabled();
+	const transport = inline ? withDeadline(inProcessTransport(), visionGateBudgetMs()) : null;
 	const verdict = await evaluateSeedAsset({
 		glbBuffer: buf,
 		glbUrl: glbUrl || null,
@@ -313,27 +169,6 @@ async function gateCreation({ creationId, glbUrl, prompt, category, allowVision 
 		transport,
 	});
 	return { verdict, glbKey: key };
-}
-
-// Wrap a transport so the whole vision stage shares one wall-clock budget. The
-// cron's 70 s ceiling is hard; overrunning it costs a 504 and a lost tick, which
-// is strictly worse than publishing on the mesh verdict alone.
-function withDeadline(transport, budgetMs) {
-	const deadline = Date.now() + budgetMs;
-	const guard = async (fn, args) => {
-		const left = deadline - Date.now();
-		if (left <= 0) throw new Error('vision gate budget exhausted');
-		return Promise.race([
-			fn(args),
-			new Promise((_, reject) => setTimeout(() => reject(new Error('vision gate budget exhausted')), left).unref?.()),
-		]);
-	};
-	return {
-		name: `${transport.name}+deadline`,
-		render: (a) => guard(transport.render, a),
-		judgeRealism: (a) => guard(transport.judgeRealism, a),
-		judgeRigReadiness: (a) => guard(transport.judgeRigReadiness, a),
-	};
 }
 
 // Seed generations must never leave the free lanes: this cron runs unattended
@@ -430,28 +265,7 @@ export async function pollPending(origin) {
 
 // ── Phase 1b: gate finished generations, then publish or quarantine ──────────
 
-// How many times a generation may fail the gate on infrastructure before it is
-// given up on. A gate fault is a storage read, a renderer, or a judge transport
-// blipping, and every one of those is transient far more often than not, so the
-// first fault must not be fatal. Three keeps a genuinely ungateable mesh from
-// occupying a gate slot indefinitely: it burns three ticks (three minutes) and
-// then goes terminal.
-const GATE_MAX_ATTEMPTS = 3;
-
-/**
- * What a gate fault means for the row, given how many gate attempts it has
- * already burned. Pure so the retry-vs-bury decision is testable without a
- * database: getting it wrong in either direction is expensive (never retrying
- * throws finished meshes away, never burying starves the gate batch).
- * @param {number | null | undefined} priorAttempts
- * @returns {{ attempt: number, terminal: boolean }}
- */
-export function gateFaultOutcome(priorAttempts) {
-	const attempt = Number(priorAttempts || 0) + 1;
-	return { attempt, terminal: attempt >= GATE_MAX_ATTEMPTS };
-}
-
-async function advanceGates(origin) {
+export async function advanceGates(origin) {
 	const rows = await sql`
 		select id, user_id, raw_client_id, prompt, model_category, creation_id, glb_url, backend,
 		       gate_attempts
@@ -462,6 +276,7 @@ async function advanceGates(origin) {
 	`;
 	if (!rows.length) return [];
 
+	const twoPhase = visionPhaseEnabled();
 	const results = [];
 	for (const job of rows) {
 		try {
@@ -470,70 +285,39 @@ async function advanceGates(origin) {
 				glbUrl: job.glb_url,
 				prompt: job.prompt,
 				category: job.model_category,
-				allowVision: true,
 			});
 
 			if (!verdict.accepted) {
-				const quarantine = await quarantineReject({
-					id: job.creation_id || job.id,
-					glbKey,
-					glbUrl: job.glb_url,
-					prompt: job.prompt,
-					category: job.model_category,
+				results.push(await rejectSeedJob({
+					job,
 					verdict,
-					extra: { source: 'forge-seed-cron', backend: job.backend },
-				});
-				await sql`
-					update forge_seed_jobs
-					set status = 'rejected',
-					    gate = ${JSON.stringify(verdict)}::jsonb,
-					    gate_reasons = ${verdict.reasons}::text[],
-					    error = ${verdict.reasons.join(',').slice(0, 500)},
-					    finished_at = now()
-					where id = ${job.id}
-				`;
-				results.push({
-					job_id: job.id,
-					status: 'rejected',
-					reasons: verdict.reasons,
-					quarantined: quarantine.modelCopied,
-					prompt: job.prompt,
-				});
+					glbKey,
+					source: 'forge-seed-cron',
+					fromStatus: 'generated',
+				}));
 				continue;
 			}
 
-			// A keeper. Rig first when the stage is on, the mesh is not already
-			// skinned, and its shape is one a humanoid rig can actually drive;
-			// otherwise publish straight away.
-			if (
-				rigStageEnabled()
-				&& !verdict.mesh.rigged
-				&& job.model_category !== 'accessory'
-				&& riggableShape(verdict.mesh?.metrics)
-			) {
-				const rig = await startRigStage({ origin, job });
-				if (rig.jobId) {
-					await sql`
-						update forge_seed_jobs
-						set status = 'rigging',
-						    gate = ${JSON.stringify(verdict)}::jsonb,
-						    rig_job_id = ${rig.jobId},
-						    rig_creation_id = ${rig.creationId}
-						where id = ${job.id}
-					`;
-					results.push({ job_id: job.id, status: 'rigging', prompt: job.prompt });
-					continue;
-				}
-				// Rigger unavailable: publish the static keeper rather than stall it.
+			// A mesh keeper. Under the vision phase it waits in 'mesh_passed' for
+			// forge-seed-vision-cron to judge its appearance; gate_attempts restarts
+			// there because the vision phase counts its own faults.
+			if (twoPhase) {
+				const [parked] = await sql`
+					update forge_seed_jobs
+					set status = 'mesh_passed',
+					    gate = ${JSON.stringify(verdict)}::jsonb,
+					    mesh_passed_at = now(),
+					    gate_attempts = 0,
+					    vision_lease_until = null
+					where id = ${job.id}
+					  and status = 'generated'
+					returning id
+				`;
+				results.push({ job_id: job.id, status: parked ? 'mesh_passed' : 'already_advanced', prompt: job.prompt });
+				continue;
 			}
 
-			const avatarId = await publishSeedAvatar({ job, verdict, rigged: false });
-			results.push({
-				job_id: job.id,
-				status: avatarId ? 'published' : 'already_published',
-				avatar_id: avatarId,
-				prompt: job.prompt,
-			});
+			results.push(await routeSeedKeeper({ origin, job, verdict, fromStatus: 'generated' }));
 
 		} catch (err) {
 			// The gate itself broke (storage read, renderer, judge transport). That is
@@ -572,100 +356,42 @@ async function advanceGates(origin) {
 	return results;
 }
 
-// Publish a gated keeper and close the job out. Shared by the direct path and
-// the post-rig path so the avatar row is written in exactly one place.
+// ── Phase 1b': the vision phase's failsafe ───────────────────────────────────
 //
-// The close-out is a compare-and-set, and it runs BEFORE the avatar insert: the
-// gate and rig phases select their rows by status with no lock, so two ticks
-// overlapping (a Cloud Scheduler retry, a manual run alongside the schedule) can
-// both hand the same row here. The avatar insert cannot dedupe on its own since
-// every call mints a fresh random slug, so the loser would publish a second
-// public avatar for one creation. Only the tick that wins the transition writes.
-// Returns null when this tick lost, so the caller reports that instead of
-// claiming a publish it did not do.
-export async function publishSeedAvatar({ job, verdict, rigged, rigCreationId = null }) {
-	// The verdict is written on the keeper as well as on the reject. Only the
-	// rejects used to carry one, which made the live accept rate unmeasurable
-	// from this table (every accepted row looked like a row that was never
-	// gated) and left nothing to tune a threshold against except the failures.
-	const [won] = await sql`
-		update forge_seed_jobs
-		set status = 'done',
-		    gate = ${verdict ? JSON.stringify(verdict) : null}::jsonb,
-		    gate_reasons = ${verdict?.reasons?.length ? verdict.reasons : null}::text[],
-		    finished_at = now()
-		where id = ${job.id}
-		  and status <> 'done'
-		returning id
+// A keeper waits in 'mesh_passed' for forge-seed-vision-cron. If that cron is
+// not running at all (unscheduled, crashing on import, its route missing from a
+// deploy), nothing it does can enforce the wait bound, so this cron does: a row
+// parked past MESH_PASSED_MAX_WAIT_MS that no vision tick holds a lease on is
+// published on its mesh verdict, marked vision_unavailable. Runs whatever the
+// flag says, so turning SEED_VISION_PHASE off never strands parked rows either.
+export async function sweepStaleMeshPassed(origin) {
+	const cutoff = new Date(Date.now() - MESH_PASSED_MAX_WAIT_MS).toISOString();
+	const rows = await sql`
+		select id, user_id, raw_client_id, prompt, model_category, creation_id, glb_url, backend, gate
+		from forge_seed_jobs
+		where status = 'mesh_passed'
+		  and mesh_passed_at < ${cutoff}
+		  and (vision_lease_until is null or vision_lease_until < now())
+		order by mesh_passed_at asc
+		limit 5
 	`;
-	if (!won) return null;
+	if (!rows.length) return [];
 
-	const avatarId = await insertSeedAvatar({
-		userId: job.user_id,
-		prompt: job.prompt,
-		modelCategory: job.model_category,
-		creationId: rigged && rigCreationId ? rigCreationId : job.creation_id,
-		previewCreationId: job.creation_id,
-		gate: gateSummary(verdict),
-		rigged,
-	});
-	await sql`update forge_seed_jobs set avatar_id = ${avatarId} where id = ${job.id}`;
-	return avatarId;
-}
-
-// The slice of the verdict worth carrying on the avatar row forever. The full
-// object (every judge score, every render note) stays on forge_seed_jobs.gate,
-// for the keepers as well as the rejects.
-// source_meta is read on every avatar detail render, so it gets the summary.
-function gateSummary(verdict) {
-	if (!verdict) return null;
-	return {
-		version: verdict.gateVersion,
-		accepted: verdict.accepted,
-		mesh_flag: verdict.mesh?.flag ?? null,
-		mesh_score: verdict.mesh?.score ?? null,
-		vision: verdict.vision?.status ?? 'skipped',
-		...(verdict.vision?.mean != null ? { vision_mean: verdict.vision.mean } : {}),
-	};
+	const waited = `vision phase did not run within ${Math.round(MESH_PASSED_MAX_WAIT_MS / 60000)}m`;
+	const results = [];
+	for (const job of rows) {
+		try {
+			const verdict = markVisionUnavailable(job.gate, waited);
+			const routed = await routeSeedKeeper({ origin, job, verdict, fromStatus: 'mesh_passed' });
+			results.push({ ...routed, vision: 'unavailable' });
+		} catch (err) {
+			results.push({ job_id: job.id, status: 'sweep_error', error: String(err?.message || err).slice(0, 200) });
+		}
+	}
+	return results;
 }
 
 // ── Phase 1c: rig stage ──────────────────────────────────────────────────────
-
-// Submit the accepted mesh to the auto-rigger. Returns { jobId, creationId } on
-// a successful submit, or { jobId: null } when no rig lane is live, the caller
-// publishes the static keeper in that case rather than stalling it.
-async function startRigStage({ origin, job }) {
-	const cronSecret = process.env.CRON_SECRET || env.CRON_SECRET || '';
-	const glbUrl = await publishableGlbUrl(job);
-	if (!glbUrl) return { jobId: null, reason: 'no public glb url' };
-
-	const submit = await fetchJson(`${origin}/api/forge?action=rig`, {
-		method: 'POST',
-		headers: {
-			'content-type': 'application/json',
-			'x-forge-client': job.raw_client_id,
-			'x-forge-seed': cronSecret,
-		},
-		body: JSON.stringify({ glb_url: glbUrl }),
-	});
-	if (submit.status !== 200 || !submit.body?.job_id) {
-		console.warn(`[forge-seed] rig submit ${submit.status}: ${submit.body?.error || 'no job id'}`);
-		return { jobId: null, reason: `rig submit ${submit.status}` };
-	}
-	return { jobId: submit.body.job_id, creationId: submit.body.creation_id ?? null };
-}
-
-// The rigger fetches the mesh over HTTPS, so a bucket-relative glb_key has to be
-// resolved to its CDN URL first. Lanes that already hand back an absolute URL
-// pass straight through.
-async function publishableGlbUrl(job) {
-	if (job.glb_url && /^https?:\/\//i.test(job.glb_url)) return job.glb_url;
-	if (!job.creation_id) return null;
-	const [row] = await sql`select glb_key from forge_creations where id = ${job.creation_id} limit 1`;
-	const key = row?.glb_key;
-	if (!key) return null;
-	return /^https?:\/\//i.test(key) ? key : publicUrl(key);
-}
 
 async function advanceRigs(origin) {
 	const rows = await sql`
@@ -981,27 +707,10 @@ async function claimSeedUser(word) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function toSlug(prompt) {
-	const base = prompt
-		.toLowerCase()
-		.replace(/^(a|an|the)\s+/i, '')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 48);
-	return `${base}-${randomUUID().slice(0, 6)}`;
-}
-
 // A uniformly random uint32, the range every provider RNG accepts
 // (api/_lib/forge-options.js SEED_MAX).
 function freshSeed() {
 	return Math.floor(Math.random() * 4_294_967_296);
-}
-
-function toTitle(prompt) {
-	const trimmed = prompt.replace(/^(a|an|the)\s+/i, '');
-	const firstComma = trimmed.indexOf(',');
-	const base = firstComma > 0 ? trimmed.slice(0, firstComma) : trimmed;
-	return base.replace(/\b\w/g, c => c.toUpperCase()).slice(0, 80);
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -1012,7 +721,7 @@ export default wrapCron(async (req, res) => {
 
 	const origin = ORIGIN();
 	// Every phase advances a different set of rows, so they are safe to run
-	// together and the tick costs one phase's wall-clock, not four in series.
+	// together and the tick costs one phase's wall-clock, not five in series.
 	//
 	// Isolated per phase, not a bare Promise.all: each phase opens with its own
 	// row query, and a fault there (a schema change mid-rollout, a pooler blip)
@@ -1021,10 +730,11 @@ export default wrapCron(async (req, res) => {
 	// and cost the minute entirely, including the start phase, which is the one
 	// that keeps the gallery growing. A broken phase now reports itself and the
 	// rest of the tick still runs.
-	const [polled, gated, rigged, started] = await Promise.all(
+	const [polled, gated, swept, rigged, started] = await Promise.all(
 		[
 			['poll', () => pollPending(origin)],
 			['gate', () => advanceGates(origin)],
+			['vision_sweep', () => sweepStaleMeshPassed(origin)],
 			['rig', () => advanceRigs(origin)],
 			['start', () => startBatch(origin)],
 		].map(([name, run]) =>
@@ -1035,9 +745,9 @@ export default wrapCron(async (req, res) => {
 			}),
 		),
 	);
-	const phaseErrors = [...polled, ...gated, ...rigged, ...started].filter((r) => r?.status === 'phase_error');
+	const phaseErrors = [...polled, ...gated, ...swept, ...rigged, ...started].filter((r) => r?.status === 'phase_error');
 
-	const advanced = [...gated, ...rigged];
+	const advanced = [...gated, ...swept, ...rigged];
 	const published = advanced.filter(j => j.status === 'published').length;
 	const rejected = advanced.filter(j => j.status === 'rejected').length;
 	const failed = polled.filter(j => j.status === 'failed').length;
@@ -1052,10 +762,12 @@ export default wrapCron(async (req, res) => {
 		rejected,
 		failed,
 		gate_retries: gateRetries,
+		mesh_passed: gated.filter(j => j.status === 'mesh_passed').length,
 		phase_errors: phaseErrors,
 		accept_rate: await recentAcceptRate(),
 		poll_results: polled,
 		gate_results: gated,
+		vision_sweep_results: swept,
 		rig_results: rigged,
 		new_jobs: started,
 	});

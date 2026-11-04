@@ -28,8 +28,10 @@ function compile(fragment, params) {
 	return text;
 }
 
-export function createPgliteSql() {
-	const state = { pg: new PGlite(), calls: [] };
+// Pass `{ pg }` to wrap an existing instance (for example the full production
+// schema from pglite-full-schema.js); with no argument a fresh empty one is used.
+export function createPgliteSql({ pg = null } = {}) {
+	const state = { pg: pg || new PGlite(), calls: [] };
 	const run = async (fragment) => {
 		const params = [];
 		const text = compile(fragment, params);
@@ -38,6 +40,11 @@ export function createPgliteSql() {
 		return out.rows;
 	};
 	const sql = (strings, ...values) => {
+		// The function form `sql(text, params)`, which api/_lib/db.js also accepts.
+		if (typeof strings === 'string') {
+			state.calls.push(strings);
+			return state.pg.query(strings, values[0] || []).then((r) => r.rows);
+		}
 		const fragment = { [FRAGMENT]: true, strings, values };
 		let promise = null;
 		const settle = () => (promise ??= run(fragment));

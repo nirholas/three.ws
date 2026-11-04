@@ -127,6 +127,7 @@ export const CRONS = [
 	{ id: 'flush-usage-events', label: 'Flush usage events' },
 	{ id: 'reflect-sweep', label: 'Reflect sweep' },
 	{ id: 'forge-seed-cron', label: 'Forge seed' },
+	{ id: 'forge-seed-vision-cron', label: 'Forge seed vision gate' },
 	{ id: 'avaturn-seed-cron', label: 'Avaturn seed' },
 	{ id: 'smart-money-rollup', label: 'Smart money rollup' },
 	{ id: 'smart-money-graph', label: 'Smart money graph' },

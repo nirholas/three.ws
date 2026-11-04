@@ -18,20 +18,18 @@
 //      vertex-count floor/ceiling and "must carry a texture". A degenerate blob
 //      never reaches a vision model — it is rejected here for a tenth of a cent.
 //
-//   2. VISION JUDGE (Vertex Gemini). Renders the mesh and asks the judge two
-//      questions: the realism/geometry scoring from the realism eval harness
-//      (judgeOnce, api/_lib/quality-bench.js — imported, never forked, so the
-//      catalog gate and the regression bench can never disagree about what a
-//      score means) plus a catalog-specific rig-readiness check ("is this one
+//   2. VISION JUDGE (vision.js provider chain, Vertex Gemini as its anchor).
+//      Renders the mesh and asks the judge two questions: the realism/geometry
+//      scoring from the realism eval harness (buildJudgePrompt,
+//      api/_lib/quality-bench.js, imported, never forked, so the catalog gate
+//      and the regression bench can never disagree about what a score means) plus a catalog-specific rig-readiness check ("is this one
 //      complete humanoid with separated limbs, or a bust / a blob / a crowd?").
 //
 // Rejects are never published. They are copied to the `forge/rejected/` prefix
 // with a JSON sidecar carrying the full verdict, so prompt and threshold tuning
 // works off real failures instead of guesses.
 
-import { judgeOnce, JUDGE_MODEL, RENDER_BACKGROUND } from './quality-bench.js';
-import { vertexGeminiAvailable, vertexGeminiChatUrl, vertexGeminiHeaders } from './vertex-gemini.js';
-import { fetchUpstream } from './upstream-fetch.js';
+import { RENDER_BACKGROUND } from './quality-bench.js';
 import { copyObject, putObject } from './r2.js';
 
 // Stage 1 lives in its own module because it is the only part of this gate that
@@ -110,44 +108,32 @@ function normalizeRigReadiness(parsed) {
 	};
 }
 
-// In-process rig-readiness call against the same Vertex Gemini client the
-// realism bench uses (vertex-gemini.js) — one client, one auth path, one place
-// a Vertex change has to be made.
-async function rigReadinessVertex({ png, prompt, category }) {
-	if (!vertexGeminiAvailable()) {
-		throw Object.assign(new Error('Vertex Gemini unavailable: GOOGLE_CLOUD_PROJECT is not set'), {
-			code: 'judge_unconfigured',
-		});
-	}
-	const headers = await vertexGeminiHeaders();
-	const body = {
-		model: JUDGE_MODEL,
-		temperature: 0,
-		max_tokens: 300,
-		messages: [
-			{
-				role: 'user',
-				content: [
-					{ type: 'text', text: buildRigReadinessPrompt({ prompt, category }) },
-					{ type: 'image_url', image_url: { url: `data:image/png;base64,${png.toString('base64')}` } },
-				],
-			},
-		],
-	};
-	const res = await fetchUpstream(vertexGeminiChatUrl(), { method: 'POST', headers, body: JSON.stringify(body) }, { name: 'vertex-gemini', timeoutMs: 45_000, attempts: 1, okWhen: () => true });
-	const data = await res.json().catch(() => ({}));
-	if (!res.ok) throw new Error(`rig-readiness call ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
-	return normalizeRigReadiness(parseJsonReply(data?.choices?.[0]?.message?.content || ''));
-}
-
 /**
- * In-process transport: render with the shared headless renderer, judge with
- * Vertex. Used by the cron (and by anything else running with GCP credentials).
+ * In-process transport: render with the shared headless renderer in this
+ * process, judge through api/_lib/vision.js's provider chain. This is what the
+ * catalog vision cron (api/cron/forge-seed-vision-cron.js) judges with.
+ *
+ * It used to call Vertex Gemini directly for both questions, with nothing
+ * behind it. On 2026-11-01 Vertex began refusing the project (a billing 403),
+ * and from then on every in-process verdict was "unavailable" while the remote
+ * and local-judge transports, which go through the chain, kept judging. Now all
+ * three share buildTransport's prompts, parser and verdict maths and differ only
+ * in where the render happens and which process calls the model, so a cron
+ * verdict and a measured one (scripts/gcp/seed-vision-measure.mjs) mean the
+ * same thing, and one provider going down never takes the gate with it.
+ *
+ * `timeoutMs` bounds each provider attempt (vision.js's own default), so one
+ * hung rung falls through to the next well inside the vision cron's per-asset
+ * budget instead of spending all of it.
+ *
+ * @param {{ timeoutMs?: number }} [opts]
  */
-export function inProcessTransport() {
-	return {
+export function inProcessTransport({ timeoutMs = 20_000 } = {}) {
+	return buildTransport({
 		name: 'in-process',
-		async render({ glbUrl, width = 768, height = 768, theta = 0, phi = 78 }) {
+		timeoutMs,
+		visionAsk: chainVisionAsk(timeoutMs),
+		async render({ glbUrl, width, height, theta, phi }) {
 			const { renderClip } = await import('./render-clip.js');
 			const { png } = await renderClip({
 				glbUrl,
@@ -158,21 +144,36 @@ export function inProcessTransport() {
 			});
 			return png;
 		},
-		async judgeRealism({ png, prompt, viewLabel }) {
-			return judgeOnce({
-				png,
-				promptEntry: { prompt, subjectClass: 'catalog-seed', watch: SEED_WATCHLIST },
-				viewLabel,
-			});
-		},
-		async judgeRigReadiness({ png, prompt, category }) {
-			return rigReadinessVertex({ png, prompt, category });
-		},
+	});
+}
+
+// The rung the seed judge asks first. Both judge questions demand a bare JSON
+// object, and on 2026-09-30 Workers AI's Llama 4 Scout returned the forge gate's
+// JSON verdict 8 times in 8 while the NIM lane narrated half the time (see
+// QUALITY_GATE_VISION_LEAD in api/_lib/forge-quality-gate.js). On 2026-11-04 the
+// rest of the chain was down at once (NIM 404, the free OpenRouter routes 429,
+// Vertex and OpenAI on billing holds), so without the lead an in-process judge
+// had nothing to answer it. The other rungs stay behind it as fallback.
+const SEED_JUDGE_VISION_LEAD = Object.freeze(['cloudflare']);
+
+// One judge question through vision.js's provider chain, in this process.
+function chainVisionAsk(timeoutMs) {
+	return async ({ png, prompt }) => {
+		const { describeImage } = await import('./vision.js');
+		const out = await describeImage({
+			imageBase64: png.toString('base64'),
+			mimeType: 'image/png',
+			prompt,
+			maxTokens: 700,
+			timeoutMs,
+			lead: SEED_JUDGE_VISION_LEAD,
+		});
+		return String(out?.text || '');
 	};
 }
 
 // Failure modes the realism judge should look for on generated catalog content.
-// Passed through judgeOnce's `watch` slot (the bench's own subject watchlists
+// Passed through buildJudgePrompt's `watch` slot (the bench's own subject watchlists
 // live in data/quality-bench; this is the seeding-specific one).
 export const SEED_WATCHLIST = Object.freeze([
 	'fused or melted limbs, arms welded to the torso',
@@ -230,17 +231,7 @@ export function remoteTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000
  * @param {{ origin: string, fetchImpl?: typeof fetch, timeoutMs?: number }} opts
  */
 export function localJudgeTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000 }) {
-	async function visionAsk({ png, prompt }) {
-		const { describeImage } = await import('./vision.js');
-		const out = await describeImage({
-			imageBase64: png.toString('base64'),
-			prompt,
-			maxTokens: 700,
-			timeoutMs,
-		});
-		return String(out?.text || '');
-	}
-	return buildTransport({ name: 'local-judge', origin, fetchImpl, timeoutMs, visionAsk });
+	return buildTransport({ name: 'local-judge', origin, fetchImpl, timeoutMs, visionAsk: chainVisionAsk(timeoutMs) });
 }
 
 /**
@@ -249,7 +240,7 @@ export function localJudgeTransport({ origin, fetchImpl = fetch, timeoutMs = 120
  * prompts and parsing must stay identical between them or their accept rates
  * stop being comparable, which is why they are written once here.
  */
-function buildTransport({ name, origin, fetchImpl, timeoutMs, visionAsk }) {
+function buildTransport({ name, origin = null, fetchImpl = fetch, timeoutMs, visionAsk, render = null }) {
 	const base = String(origin || '').replace(/\/+$/, '');
 
 	/**
@@ -284,6 +275,7 @@ function buildTransport({ name, origin, fetchImpl, timeoutMs, visionAsk }) {
 	return {
 		name,
 		async render({ glbUrl, width = 768, height = 768, theta = 0, phi = 78 }) {
+			if (render) return render({ glbUrl, width, height, theta, phi });
 			const res = await fetchImpl(`${base}/api/render/avatar-clip`, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },

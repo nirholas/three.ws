@@ -124,7 +124,9 @@ describe('write paths confirm the object exists before persisting a key', () => 
 	});
 
 	it('forge-seed adopts only a relative preview_key', () => {
-		const src = read('api/cron/forge-seed-cron.js');
+		// The avatar insert moved from api/cron/forge-seed-cron.js into the publish
+		// module both seed crons share (the vision phase publishes through it too).
+		const src = read('api/_lib/seed-publish.js');
 		// Alias-agnostic on purpose: the preview row moved behind a subselect when
 		// the rig stage landed (the rig creation has no preview of its own), and it
 		// may move again. What must never move is the `!~ '^https?://'` filter.
