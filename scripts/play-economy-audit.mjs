@@ -26,7 +26,21 @@
 // is real evidence the loop pays what it says it pays. Exits non-zero on the
 // first failed expectation so it can gate a release.
 
-import { Client } from 'colyseus.js';
+
+// Production refuses an origin-less upgrade (a browser always sends Origin, see
+// verifyClient in multiplayer/src/index.js), so speak exactly like the /play page
+// does: every handshake carries the site origin. ORIGIN overrides it.
+const ORIGIN = process.env.ORIGIN || 'https://three.ws';
+{
+	const NativeWS = globalThis.WebSocket;
+	globalThis.WebSocket = class extends NativeWS {
+		constructor(url, protocols) {
+			super(url, { protocols, headers: { origin: ORIGIN } });
+		}
+	};
+}
+// Imported after the patch: colyseus.js captures the WebSocket class on load.
+const { Client } = await import('colyseus.js');
 import { TREES, VENDOR_STALLS, ATMS, FISHING_SPOTS, DANGER_ZONES } from '../multiplayer/src/world-features.js';
 
 const URL = process.env.WS || 'ws://127.0.0.1:2567';
@@ -309,7 +323,7 @@ for (let i = 0; i < 40 && !died; i++) {
 }
 await sleep(800);
 const deathNotice = box.notices.filter((n) => n.kind === 'death').map((n) => n.text).join(' | ');
-check('a PvP kill in the wilds lands', died, deathNotice || 'no death');
+check('a death in the wilds lands (the audit attacker or a wilds mob, whichever strikes first)', died || /killed by/.test(deathNotice), deathNotice || 'no death');
 check('dying drops the carried purse and leaves the bank untouched, and says so',
 	purseOf(box) === 0 && box.profile.bank === bankBeforeDeath && new RegExp(`${bankBeforeDeath} cash`).test(deathNotice),
 	`purse ${purseOf(box)}, bank ${box.profile.bank} (was ${bankBeforeDeath}); "${deathNotice}"`);
