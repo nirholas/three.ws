@@ -1108,7 +1108,7 @@ The wallet core is `wallet_status` · `find_services` · `pay_and_call` · `prov
 | `@three-ws/guardian` | 0.1.0 | IBM Granite Guardian: `check()`, `govern()`, `moderate()` (12-risk taxonomy) |
 | `@three-ws/glb-tools` | 0.1.0 | GLB inspection, token-themed mesh synthesis, avatar baking; paid lanes via x402 |
 | `@three-ws/agent-guards` | 0.1.0 | Trading safety rails: `policy()`, `guard(tx, policy)` (client-side spend policy) |
-| `@three-ws/skill-license` | 0.1.0 | On-chain skill license verify + mint (Anchor `EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`) |
+| `@three-ws/skill-license` | 0.1.0 | On-chain skill license verify + mint (Anchor `9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj`) |
 | `@three-ws/mocap` | 0.1.0 | Mocap recording persistence: `saveClip()`, `getClip()`, `listClips()` |
 | `@three-ws/strategies` | 0.1.0 | DCA, copy-trade, mirror, Strategy Objects via three.ws API |
 | `@three-ws/pumpfun-skills` | 0.1.0 | pump.fun launch + trade as composable agent tools |
@@ -1133,7 +1133,7 @@ The wallet core is `wallet_status` · `find_services` · `pay_and_call` · `prov
 
 ### Solana Programs (Anchor)
 
-#### `skill_license` — Program ID: `EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`
+#### `skill_license` - Program ID: `9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj`
 
 **Path:** `contracts/skill-license/src/lib.rs`
 
@@ -1147,7 +1147,7 @@ Mint/burn/revoke 1-of-1 SPL NFT access keys for skill purchases.
 | `burn_skill_license` | Burn and mark revoked |
 | `revoke_skill_license` | Admin revoke |
 
-#### `agent_invocation` — Program ID: `AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo`
+#### `agent_invocation` - Program ID: `FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv`
 
 **Path:** `contracts/agent-invocation/src/lib.rs`
 
@@ -2784,8 +2784,8 @@ External / vendored MCP (own repo, not a `@three-ws/*` workspace):
 
 | Artifact | Version | Chain |
 |---------|---------|-------|
-| `skill_license` Anchor program | 0.1.0, not deployed | Solana (`EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8` is the `declare_id!`; the account is absent on mainnet and devnet as of 2026-08-11) |
-| `agent_invocation` Anchor program | 0.2.0, not deployed | Solana (`AgEntJDMi1A7UadCoYcx6Fm3gusNk8SHLCi7vSUa4Zfo` is the `declare_id!`; the account is absent on mainnet and devnet as of 2026-08-11) |
+| `skill_license` Anchor program | 0.1.0, not deployed | Solana (`9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj` is the `declare_id!`; the account is absent on mainnet and devnet as of 2026-08-11) |
+| `agent_invocation` Anchor program | 0.2.0, not deployed | Solana (`FGFr3ueSCLjBTcqbXsvcuU6fihDEgNbUnmStCb2FtWPv` is the `declare_id!`; the account is absent on mainnet and devnet as of 2026-08-11) |
 | `ThreeWSFactory` | deployed-2026-05 | BSC, Base, Arbitrum |
 | `ThreeWSPayments` | deployed-2026-05 | BSC, Arbitrum, Base |
 | `IdentityRegistry` (ERC-8004) | deployed, 12 mainnets | Base, Arbitrum, ETH, Polygon, BNB, Optimism, Avalanche, Gnosis, Fantom, Celo, Linea, Scroll |
@@ -3029,7 +3029,7 @@ Every row below was re-measured against the code and the live `three-ws-api` Clo
 |---------|--------|----------|
 | ERC-7710 delegation redemption | Implemented, **off in production**: `PERMISSIONS_RELAYER_ENABLED` and `AGENT_RELAYER_KEY` are both unset on Cloud Run, so `POST /api/permissions/redeem` answers 503 `feature_disabled` | `api/permissions/[action].js` (`handleRedeem`), `api/_lib/env.js` (`PERMISSIONS_RELAYER_ENABLED`) |
 | ValidationRegistry platform validator | Key `0x93Bc7EfB…` provisioned, not configured or funded: `VALIDATOR_PRIVATE_KEY` is unset on Cloud Run, so `/api/erc8004/validate` returns `validator_key_not_configured` | `contracts/DEPLOYMENTS.md` ("Platform validator") |
-| On-chain skill licenses | Anchor program written, **not deployed**: program `EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8` has no account on Solana mainnet or devnet, so `initialize_marketplace` has never run and no license can be minted on chain | `contracts/skill-license/`, `api/_lib/skill-license-onchain.js` (`isProgramDeployed`, `buildInitializeMarketplaceIx`) |
+| On-chain skill licenses | Anchor program written, **not deployed**: program `9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj` has no account on Solana mainnet or devnet, so `initialize_marketplace` has never run and no license can be minted on chain | `contracts/skill-license/`, `api/_lib/skill-license-onchain.js` (`isProgramDeployed`, `buildInitializeMarketplaceIx`) |
 | Trading swarms UI | Backend + `/swarms` dashboard live; 3D Sniper Arena at `/play/arena` | `api/swarms/*`, `pages/swarms.html`, `src/play/arena.js` |
 | Agora economy | **Launched** (Commons live at `/agora`; Arena/Guild migration 2026-07-02). Agent + human citizens, professions, verifiable WORK supply chain: see [Agora](#agora--living-agent--human-economy-verifiable-work-supply-chain) | `pages/agora.html`, `docs/agora.md` |
 | Self-hosted x402 facilitator | Shipped; off by default in code, **on in production** (`X402_SELF_FACILITATOR_ENABLED=true` on Cloud Run) | `api/x402-facilitator/[action].js` (returns 503 when the flag or sponsor secret is missing) |

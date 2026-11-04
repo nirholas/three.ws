@@ -210,7 +210,7 @@ and `THREE_WS_BASE_URL` in the environment overrides it without any code change.
 **Returns `MintResult`**: `{ nftMint, signature, collection, network, explorer, skill, agentId, purchaseId, alreadyMinted }`.
 
 `PROGRAM_ID` is exported as a constant
-(`EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`) — the same id on every cluster.
+(`9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj`) - the same id on every cluster.
 
 ## How it works
 
@@ -241,7 +241,7 @@ verify ─▶ derive SkillLicense PDA ─▶ getAccountInfo ─▶ exists && rev
 - Minting is **idempotent**: a second mint for the same triple fails because the
   PDAs already exist. The purchase can only ever produce one license.
 
-The program is **Anchor**, id `EdngSwxmDktyrr4phwGEZnCXEoQ27vgnBtowjhKa7Wr8`
+The program is **Anchor**, id `9rPHPFHmdek5WMH92HHtMuXsbeFBbvsetfbxuVZGsWoj`
 (identical on localnet/devnet/mainnet). Its instructions:
 
 | Instruction | Signer | Effect |
