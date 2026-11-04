@@ -86,7 +86,7 @@ function scannerHtml(scan) {
 			<td>${o.fill.contracts ? `${usd(o.fill.profit_usd, true)} on ${usd(o.fill.cost_usd)}` : '-'}</td></tr>`,
 		)
 		.join('');
-	return `<p class="apd-note">${scan.books_read} order books read (${scan.books_scored ?? scan.books_read} two-sided${scan.books_failed ? `, ${scan.books_failed} unavailable` : ''}) of ${scan.scanned_markets} open markets nearest par, ${esc(new Date(scan.scanned_at).toLocaleTimeString())}. Edge is what buying both YES and NO locks in per contract after the venue and provider fees in the fee model. Negative is the normal state of an efficient market.</p>
+	return `<p class="apd-note">${scan.books_read} order books read for the markets nearest par (${scan.books_scored ?? scan.books_read} two-sided${scan.books_failed ? `, ${scan.books_failed} unavailable` : ''}) out of ${scan.scanned_markets} open markets, ${esc(new Date(scan.scanned_at).toLocaleTimeString())}. Edge is what buying both YES and NO locks in per contract after the venue and provider fees in the fee model. Negative is the normal state of an efficient market.</p>
 	<div class="apd-table-wrap"><table class="apd-table"><thead><tr><th>Market</th><th>YES ask</th><th>NO ask</th><th>Gross edge</th><th>Net edge</th><th>Net %</th><th>Fillable profit</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
