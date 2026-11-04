@@ -179,6 +179,11 @@ describe('agent-wallet MCP catalog', () => {
 			'remove_integration',
 			// Agent learning loop status (api/_mcpagent/learning-tools.js)
 			'get_learning_status',
+			// Network-less code sandbox (api/_mcpagent/sandbox-tools.js)
+			'execute_code',
+			'terminal',
+			'read_file',
+			'write_file',
 		]);
 	});
 
