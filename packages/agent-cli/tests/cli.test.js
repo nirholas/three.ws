@@ -7,7 +7,7 @@ import { HELP, main, parseCli, UsageError } from '../src/cli.js';
 import { VERSION } from '../src/http.js';
 import { openStore } from '../src/store.js';
 import { databasePath } from '../src/paths.js';
-import { tempEnv } from './helpers.js';
+import { listen, tempEnv } from './helpers.js';
 
 function capture() {
 	const s = new PassThrough();
@@ -141,5 +141,27 @@ describe('sessions command', () => {
 
 		const missing = await run(['sessions', 'export'], t.env);
 		expect(missing.code).toBe(2);
+	});
+});
+
+describe('a rejected key', () => {
+	it('tells the person to sign in again instead of printing the raw 401', async () => {
+		// What three.ws answers once a key is revoked.
+		const srv = await listen((req, res) => {
+			res.writeHead(401, { 'content-type': 'application/json' });
+			res.end(JSON.stringify({ error: 'unauthorized', error_description: 'Authenticate with a three.ws API key or sign in.' }));
+		});
+		try {
+			const t = tempEnv({ THREE_WS_ORIGIN: srv.url, THREE_WS_API_KEY: 'sk_live_THREEsyntheticRevokedKey000' });
+			temps.push(t);
+			const r = await run(['whoami'], t.env);
+			expect(r.code).toBe(1);
+			expect(r.err).toContain('three.ws rejected the API key from env THREE_WS_API_KEY');
+			expect(r.err).toContain('update THREE_WS_API_KEY');
+			expect(r.err).not.toContain('sk_live_THREEsyntheticRevokedKey000');
+			expect(r.err).not.toMatch(/^401 /);
+		} finally {
+			await srv.close();
+		}
 	});
 });
