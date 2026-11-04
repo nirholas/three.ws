@@ -70,8 +70,8 @@ export const TIERS = Object.freeze([
 		minUsd: 500,
 		discountBps: 2000, // 20%
 		rateMultiplier: 5,
-		perks: Object.freeze(['20% off all $THREE compute', '5× free generation quota']),
-		planned: Object.freeze(['Branded worlds + custom environments', 'Early access to drops']),
+		perks: Object.freeze(['20% off all $THREE compute', '5× free generation quota', 'Early access to drops']),
+		planned: Object.freeze(['Branded worlds + custom environments']),
 	}),
 	Object.freeze({
 		level: 4,
@@ -80,8 +80,8 @@ export const TIERS = Object.freeze([
 		minUsd: 2500,
 		discountBps: 3000, // 30%
 		rateMultiplier: 10,
-		perks: Object.freeze(['30% off all $THREE compute', '10× free generation quota']),
-		planned: Object.freeze(['First dibs on rare names + collectibles', 'Genesis-only cosmetics']),
+		perks: Object.freeze(['30% off all $THREE compute', '10× free generation quota', 'First dibs on rare names']),
+		planned: Object.freeze(['First dibs on collectibles', 'Genesis-only cosmetics']),
 	}),
 ]);
 

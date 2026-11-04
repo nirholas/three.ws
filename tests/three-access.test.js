@@ -68,8 +68,8 @@ const ENFORCED = {
 	'worlds.private': true,
 	'mcp.priority': false,
 	'worlds.branded': false,
-	'drops.early': false,
-	'names.first_dibs': false,
+	'drops.early': true,
+	'names.first_dibs': true,
 };
 const TIER_ID_BY_LEVEL = ['member', 'bronze', 'silver', 'gold', 'genesis'];
 const FEATURE_IDS = Object.keys(MIN_LEVEL);
@@ -113,7 +113,13 @@ describe('registry shape', () => {
 
 	it('marks the wired gates enforced today: the rest are planned', () => {
 		const enforced = FEATURE_IDS.filter((id) => GATED_FEATURES[id].enforced);
-		expect(enforced).toEqual(['forge.high', 'forge.gameready', 'worlds.private']);
+		expect(enforced).toEqual([
+			'forge.high',
+			'forge.gameready',
+			'worlds.private',
+			'drops.early',
+			'names.first_dibs',
+		]);
 	});
 
 	it('references no coin other than $THREE in its copy', () => {

@@ -45,6 +45,8 @@ const LIVE_GATES = [
 	{ feature: 'forge.high', required: 'bronze' },
 	{ feature: 'forge.gameready', required: 'bronze' },
 	{ feature: 'worlds.private', required: 'silver' },
+	{ feature: 'drops.early', required: 'gold' },
+	{ feature: 'names.first_dibs', required: 'genesis' },
 ];
 
 let failures = 0;

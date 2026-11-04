@@ -1,5 +1,8 @@
 # Gold holders enter drops early and Genesis holders get first dibs on rare threews.sol names
 
+Status 2026-11-04: built and tested. `drops.early` (Gold, reveal endpoint, per-drop early window with live countdown) and `names.first_dibs` (Genesis, rare-name claims while `THREEWS_RARE_NAMES_PUBLIC_AT` is in the future) are enforced; gate tests, registry and tier-copy tests pass. Remaining, owner: apply migration `20261105090000_drops_early_window.sql` with `npm run db:migrate` at deploy (not applied here), set `THREEWS_RARE_NAMES_PUBLIC_AT` when a rare-name window should start, and run the browser check of the countdown and 402 states after deploy (not run in this session).
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/728-plan-three-hold-activate-early-drops-and-name-dibs.md`.
 
 **Priority:** P2, new capability with clear value (score 54 of 100 inside the tier). **Area:** three. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

@@ -15,6 +15,7 @@
 import { randomUUID } from 'node:crypto';
 import { sql, sqlValues } from './db.js';
 import { databaseConfigured } from './env.js';
+import { clampEarlyMinutes, defaultEarlyMinutes } from './early-window.js';
 import {
 	assertSupply,
 	normalizeLayers,
@@ -53,8 +54,10 @@ export async function createDrop({
 	layers,
 	seed,
 	visibility = 'public',
+	earlyMinutes = defaultEarlyMinutes(),
 }) {
 	const size = assertSupply(supply);
+	const early = clampEarlyMinutes(earlyMinutes, defaultEarlyMinutes());
 	const normalizedLayers = normalizeLayers(layers);
 	const rollSeed = String(seed || randomUUID()).slice(0, 64);
 	const hash = provenanceHash({ seed: rollSeed, supply: size, style, layers: normalizedLayers });
@@ -64,9 +67,9 @@ export async function createDrop({
 
 	const [drop] = await sql`
 		insert into drops (owner_id, slug, name, symbol, description, style, supply, seed,
-		                   provenance_hash, layers, visibility)
+		                   provenance_hash, layers, visibility, early_minutes)
 		values (${ownerId}, ${slug}, ${name}, ${symbol}, ${description || null}, ${style},
-		        ${size}, ${rollSeed}, ${hash}, ${JSON.stringify(normalizedLayers)}, ${visibility})
+		        ${size}, ${rollSeed}, ${hash}, ${JSON.stringify(normalizedLayers)}, ${visibility}, ${early})
 		returning *
 	`;
 
@@ -235,7 +238,8 @@ export async function dropStats(dropId) {
  */
 export async function publishDrop(dropId, ownerId) {
 	const rows = await sql`
-		update drops set status = 'live'
+		update drops set status = 'live',
+			public_opens_at = now() + make_interval(mins => coalesce(early_minutes, 0))
 		where id = ${dropId} and owner_id = ${ownerId} and status = 'draft' and deleted_at is null
 		returning *
 	`;
@@ -434,6 +438,8 @@ export function publicDrop(row, { includeSeed = false, isOwner = false } = {}) {
 		cover_item_index: row.cover_item_index,
 		revealed_count: Number(row.revealed_count ?? 0),
 		minted_count: Number(row.minted_count ?? 0),
+		early_minutes: row.early_minutes ?? null,
+		public_opens_at: row.public_opens_at ?? null,
 		created_at: row.created_at,
 		is_owner: isOwner,
 	};

@@ -173,8 +173,8 @@ how an unbuilt feature ends up reading as a benefit, so when a gate ships, flip 
 | `worlds.private`: Private, invite-only worlds | Silver | **Live** | no (hold-only) | [`api/world/[action].js`](../api/world/[action].js), [`api/_lib/world-store.js`](../api/_lib/world-store.js) |
 | `mcp.priority` — Priority MCP routing | Silver | Planned | — | not built (no shared queue) |
 | `worlds.branded` — Branded worlds + custom environments | Gold | Planned | — | not built |
-| `drops.early` — Early access to drops | Gold | Planned | — | drop endpoints exist |
-| `names.first_dibs` — First dibs on rare `*.threews.sol` | Genesis | Planned | `name.auction` | SNS exists |
+| `drops.early`: Early access to drops | Gold | **Live** | no (hold-only) | [`api/drops/[action].js`](../api/drops/[action].js), [`api/_lib/early-window.js`](../api/_lib/early-window.js) |
+| `names.first_dibs`: First dibs on rare `*.threews.sol` | Genesis | **Live** (while `THREEWS_RARE_NAMES_PUBLIC_AT` is in the future) | `name.auction` | [`api/threews/subdomain.js`](../api/threews/subdomain.js) |
 
 ### Pay-to-keep (`forge.keep`)
 
@@ -263,11 +263,8 @@ Priority order by demand value × backend readiness:
 
 1. **`worlds.private` (Silver)** — strongest *standing-hold* lever: a persistent private
    space you keep only while you hold Silver. Backend closest to ready. **Spec below.**
-2. **`names.first_dibs` (Genesis)** — window-gate the `*.threews.sol` auction so Genesis
-   holders get a head start. SNS backend exists ([`api/sns.js`](../api/sns.js)).
-3. **`drops.early` (Gold)** — time-gate the existing drop endpoints
-   ([`api/irl/drops.js`](../api/irl/drops.js), [`api/vanity/drops.js`](../api/vanity/drops.js))
-   so Gold holders enter the window early.
+2. **`names.first_dibs` (Genesis)**: live. See "How the early windows work" below.
+3. **`drops.early` (Gold)**: live. See the same section.
 4. **`mcp.priority`, `worlds.branded`** — deferred: no backend (shared MCP queue / custom
    environments) exists to gate. Build the feature first, then the gate.
 
@@ -300,6 +297,29 @@ up to 50 user ids, stored on `world_docs` by the unapplied-until-deploy migratio
   read, stranger 404, public unaffected).
 - **Known limit**: the realtime room server reads worlds with a service token, so
   room-level join gating of private worlds is not enforced yet. Document loads are.
+
+---
+
+## How the early windows work (live)
+
+Both windows are time-boxed and end by themselves, so a perk never turns into a
+permanent paywall on scarce supply.
+
+- **Drops (`drops.early`, Gold).** Generative drops (`api/drops/[action].js`) carry
+  `early_minutes` (the creator's choice, 0 to 10080, default `DROPS_EARLY_DEFAULT_MINUTES`
+  or 15) and `public_opens_at`, stamped at publish as now + `early_minutes`. Until that
+  instant `POST /api/drops/reveal` returns `402 three_hold_required` unless the caller
+  holds Gold or higher (signed tier pass or on-chain tier). The creator is never locked out
+  of their own drop. Drops published before the migration have a null `public_opens_at`
+  and stay open to everyone. Pass `early_minutes: 0` at create for no window.
+  Migration: `api/_lib/migrations/20261105090000_drops_early_window.sql` (apply with
+  `npm run db:migrate` at deploy; read `npm run db:status` first).
+- **Names (`names.first_dibs`, Genesis).** While `THREEWS_RARE_NAMES_PUBLIC_AT` (an ISO
+  instant) is in the future, `POST /api/threews/subdomain` for any label above Common
+  rarity (`priceName(label).free === false`) needs Genesis. Common labels are never gated.
+  Unset the variable, or let the instant pass, and rare names are open to all.
+- **Window logic** lives in `api/_lib/early-window.js` (pure, injectable clock).
+- **Tests**: `tests/drops-early-gate.test.js`, `tests/names-first-dibs-gate.test.js`.
 
 ---
 

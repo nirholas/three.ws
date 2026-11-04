@@ -21,6 +21,9 @@ import { sql } from '../_lib/db.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
+import { requireFeatureAccess } from '../_lib/require-three.js';
+import { rareNameWindowOpen } from '../_lib/early-window.js';
+import { priceName } from '../_lib/pricing/name-rarity.js';
 import {
 	PARENT_LABEL,
 	fullDomain,
@@ -112,6 +115,13 @@ async function handleMint(req, res, auth) {
 	const label = normalizeLabel(body?.label);
 	if (!label) {
 		return error(res, 400, 'validation_error', 'label must match [a-z0-9-]{1,63} and not be reserved');
+	}
+
+	// Genesis holders get first dibs: while the rare-name window is open, any
+	// label above Common rarity needs a Genesis-tier $THREE hold.
+	if (rareNameWindowOpen() && !priceName(label).free) {
+		const gate = await requireFeatureAccess(req, res, 'names.first_dibs', { body });
+		if (!gate.ok) return;
 	}
 
 	const [user] = await sql`

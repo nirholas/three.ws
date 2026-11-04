@@ -26,6 +26,8 @@ import { originFromReq, startForge } from '../_mcp-studio/forge-client.js';
 import { getUserSolanaWallets } from '../_lib/nft-gate.js';
 import { DropMintError, createDropCollection, mintDropItem } from '../_lib/drop-mint.js';
 import { resolveNetwork, assetExplorerUrl } from '../_lib/tokenize-3d.js';
+import { requireFeatureAccess } from '../_lib/require-three.js';
+import { clampEarlyMinutes, dropEarlyWindowOpen } from '../_lib/early-window.js';
 import {
 	DropSpecError,
 	itemPrompt,
@@ -269,6 +271,7 @@ async function handleCreate(req, res) {
 		layers: body?.layers,
 		seed: typeof body?.seed === 'string' ? body.seed.trim() : null,
 		visibility,
+		earlyMinutes: body?.early_minutes === undefined ? undefined : clampEarlyMinutes(body.early_minutes),
 	});
 
 	return json(res, 201, { drop });
@@ -315,6 +318,13 @@ async function handleReveal(req, res) {
 
 	if (drop.status === 'draft') {
 		return error(res, 409, 'not_published', 'publish the drop before revealing items');
+	}
+
+	// Inside the creator's early window only Gold+ $THREE holders may reveal.
+	// The creator is never locked out of their own drop.
+	if (dropEarlyWindowOpen(drop) && !drop.is_owner) {
+		const gate = await requireFeatureAccess(req, res, 'drops.early', { body });
+		if (!gate.ok) return;
 	}
 
 	const claimed = await claimForReveal(drop.id, index);

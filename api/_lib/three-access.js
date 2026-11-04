@@ -91,14 +91,14 @@ export const GATED_FEATURES = Object.freeze({
 	}),
 	'drops.early': Object.freeze({
 		minLevel: 3,
-		enforced: false,
+		enforced: true,
 		label: 'Early access to drops',
 		why: 'Early windows on scarce drops reward the largest holders.',
 		payPerUse: null,
 	}),
 	'names.first_dibs': Object.freeze({
 		minLevel: 4,
-		enforced: false,
+		enforced: true,
 		label: 'First dibs on rare *.threews.sol names',
 		why: 'Genesis holders get the first window on the rarest names.',
 		payPerUse: 'name.auction',

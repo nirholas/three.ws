@@ -144,11 +144,31 @@ function fail(message) {
 
 /* ── header and panels ────────────────────────────────────────────────── */
 
+let earlyTimer = null;
+
+/** Status chip: the draft/closed state, or a live countdown through the holder-only window. */
+function renderStatus() {
+	clearTimeout(earlyTimer);
+	const drop = state.drop;
+	const opens = drop.public_opens_at ? new Date(drop.public_opens_at).getTime() : 0;
+	const remaining = opens - Date.now();
+	if (drop.status === 'live' && remaining > 0) {
+		const mins = Math.floor(remaining / 60000);
+		const secs = Math.floor((remaining % 60000) / 1000);
+		el.status.textContent = `Gold holders reveal first. Opens to everyone in ${mins}:${String(secs).padStart(2, '0')}`;
+		el.status.title = 'Hold Gold or higher in $THREE to reveal during the early window. See three.ws/three.';
+		earlyTimer = setTimeout(renderStatus, 1000);
+		return;
+	}
+	el.status.title = '';
+	el.status.textContent = drop.status === 'live' ? '' : drop.status;
+}
+
 function renderHeader() {
 	el.name.textContent = state.drop.name;
 	el.symbol.textContent = state.drop.symbol;
 	el.description.textContent = state.drop.description || state.drop.style;
-	el.status.textContent = state.drop.status === 'live' ? '' : state.drop.status;
+	renderStatus();
 	el.hash.textContent = `provenance ${state.drop.provenance_hash}`;
 	el.seed.textContent = state.drop.seed ? `seed ${state.drop.seed}` : 'seed sealed until launch';
 }
@@ -458,6 +478,15 @@ async function startReveal(item, button) {
 
 		if (res.status === 401) {
 			note(el.itemNote, 'Sign in to reveal an item.', 'error');
+			button.disabled = false;
+			return;
+		}
+		if (res.status === 402 && data?.error === 'three_hold_required') {
+			note(
+				el.itemNote,
+				`${data.message || 'This drop is in its holder early window.'} It opens to everyone when the countdown ends.`,
+				'error',
+			);
 			button.disabled = false;
 			return;
 		}
