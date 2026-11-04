@@ -690,7 +690,7 @@ body.market-page > header {
 	transition: opacity var(--duration-fast);
 }
 .market-avatar-detail-cta:hover { opacity: 0.88; }
-.market-avatar-detail .btn-secondary {
+.market-avatar-detail .btn.btn--secondary {
 	display: block;
 	background: var(--surface-1);
 	color: var(--ink-dim);
@@ -704,7 +704,7 @@ body.market-page > header {
 	cursor: pointer;
 	transition: background var(--duration-fast), color var(--duration-fast);
 }
-.market-avatar-detail .btn-secondary:hover { background: var(--surface-2); color: var(--ink); }
+.market-avatar-detail .btn.btn--secondary:hover { background: var(--surface-2); color: var(--ink); }
 
 /* Similar avatars */
 .market-avatar-detail-similar { margin-top: 12px; }
@@ -882,7 +882,7 @@ body.market-page > header {
 	outline-offset: 2px;
 }
 .skill-detail-next-cta:active { opacity: 0.8; }
-.market-tool-detail .btn-secondary {
+.market-tool-detail .btn.btn--secondary {
 	display: inline-flex;
 	align-items: center;
 	background: var(--surface-1);
@@ -896,8 +896,8 @@ body.market-page > header {
 	cursor: pointer;
 	transition: background var(--duration-fast), color var(--duration-fast);
 }
-.market-tool-detail .btn-secondary:hover { background: var(--surface-2); color: var(--ink); }
-.market-tool-detail .btn-secondary.copied { color: #3fb950; border-color: rgba(63,185,80,0.4); }
+.market-tool-detail .btn.btn--secondary:hover { background: var(--surface-2); color: var(--ink); }
+.market-tool-detail .btn.btn--secondary.copied { color: #3fb950; border-color: rgba(63,185,80,0.4); }
 
 /* Content blocks */
 .tool-detail-block { margin-top: 34px; }
@@ -4974,9 +4974,9 @@ body.market-page > header {
 .market-hero-cta:focus-visible,
 .market-hero-secondary:focus-visible,
 .market-avatar-detail-cta:focus-visible,
-.market-avatar-detail .btn-secondary:focus-visible,
+.market-avatar-detail .btn.btn--secondary:focus-visible,
 .tool-detail-cta:focus-visible,
-.market-tool-detail .btn-secondary:focus-visible,
+.market-tool-detail .btn.btn--secondary:focus-visible,
 .tool-detail-pills button.tag-pill:focus-visible,
 .purchase-btn:focus-visible,
 .trial-btn:focus-visible,

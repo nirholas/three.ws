@@ -345,9 +345,9 @@ if (resultPanel && viewer) {
 					<output id="refine-slider-val" for="refine-slider"></output>
 				</div>
 				<div class="refine-actions">
-					<button class="btn btn-ghost" type="button" id="refine-apply">Re-apply</button>
-					<a class="btn btn-ghost" id="refine-download" download hidden>Download refined GLB</a>
-					<button class="btn btn-ghost" type="button" id="refine-revert" hidden>Revert to original</button>
+					<button class="btn btn--ghost" type="button" id="refine-apply">Re-apply</button>
+					<a class="btn btn--ghost" id="refine-download" download hidden>Download refined GLB</a>
+					<button class="btn btn--ghost" type="button" id="refine-revert" hidden>Revert to original</button>
 				</div>
 			</div>
 			<div class="refine-stats" id="refine-stats" hidden></div>

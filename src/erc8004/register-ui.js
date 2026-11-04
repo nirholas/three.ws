@@ -996,7 +996,7 @@ export class RegisterUI {
 				<dt>Chain</dt><dd>${esc(chainLabel)}</dd>
 				<dt>Standard</dt><dd>${standard}</dd>
 				<dt>Avatar</dt><dd>${avatarLine}</dd>
-				<dt>Services</dt><dd>${services.length ? services.map((s) => `<span class="deploy-svc-pill">${esc(s.type)}</span>`).join(' ') : '<span class="deploy-preview-dim">none</span>'}</dd>
+				<dt>Services</dt><dd>${services.length ? services.map((s) => `<span class="pill">${esc(s.type)}</span>`).join(' ') : '<span class="deploy-preview-dim">none</span>'}</dd>
 				<dt>Cost</dt><dd>${esc(costLabel)}</dd>
 			</dl>
 			<div class="deploy-preview-checklist">

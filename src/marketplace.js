@@ -27,6 +27,7 @@ import { coinChipHTML } from './shared/agent-coin.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 import { debounce, syncStateToUrl } from './shared/list-controls.js';
 import { log } from './shared/log.js';
+import { pickHeroSet } from './shared/hero-glb-budget.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
 import { resizedImageUrl } from './shared/image-url.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
@@ -917,12 +918,15 @@ async function loadFeatured() {
 				!isAutoNamedAvatar(it.name) &&
 				String(it.name).trim().length > 1,
 		);
-		state.featured = named.slice(0, 3);
+		// The carousel loads every slide's GLB, so the byte budget is shared across
+		// the whole set rather than applied per model.
+		state.featured = pickHeroSet(named, { max: 3 });
 		if (!state.featured.length) {
-			// Fall back to any 3 avatars with a GLB so the hero never shows blank.
-			state.featured = (j?.items || [])
-				.filter((it) => it.kind === 'avatar' && it.glbUrl)
-				.slice(0, 3);
+			// Fall back to any avatars with a GLB so the hero never shows blank.
+			state.featured = pickHeroSet(
+				(j?.items || []).filter((it) => it.kind === 'avatar' && it.glbUrl),
+				{ max: 3 },
+			);
 		}
 		state.heroIndex = 0;
 		renderHero();
@@ -2536,8 +2540,8 @@ function renderSkillsGrid() {
 					<h3>No skills found</h3>
 					<p>${bits.length ? `Nothing published matches ${bits.join(' and ')} yet. Clear the filters, or publish the skill yourself.` : 'Nothing is published here yet. Be the first to publish a skill.'}</p>
 					<div class="market-empty-cta-actions">
-						${bits.length ? '<button type="button" class="market-empty-cta-btn" id="skills-empty-clear">Clear filters</button>' : ''}
-						<button type="button" class="market-empty-cta-btn primary" id="skills-empty-publish">Publish a Skill</button>
+						${bits.length ? '<button type="button" class="btn btn--secondary market-empty-cta-btn" id="skills-empty-clear">Clear filters</button>' : ''}
+						<button type="button" class="btn btn--primary market-empty-cta-btn" id="skills-empty-publish">Publish a Skill</button>
 					</div>
 				</div>`
 			: '<div class="market-empty">No skills match your free/paid filter.</div>';
@@ -3059,7 +3063,7 @@ function renderPurchaseCard(p) {
 			<span class="stat-pill">${escapeHtml(date)}</span>
 		</div>
 		<div class="footer" style="justify-content:flex-end">
-			${hasReceipt ? `<button class="btn-secondary receipt-btn" data-purchase-id="${escapeHtml(p.id)}" style="font-size:11px;padding:4px 10px">Receipt</button>` : ''}
+			${hasReceipt ? `<button class="btn btn--secondary receipt-btn" data-purchase-id="${escapeHtml(p.id)}" style="font-size:11px;padding:4px 10px">Receipt</button>` : ''}
 			<span class="open-cta">View agent →</span>
 		</div>
 	</div>`;
@@ -3989,7 +3993,7 @@ async function openAnimationPurchase(id) {
 				</div>
 				${(item.tags || []).length ? `<div class="anim-buy-tags">${item.tags.slice(0, 6).map((t) => `<span class="anim-cat-pill">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
 				<div class="anim-buy-actions">
-					<button class="btn-primary anim-buy-go" type="button">${item.free ? 'Download GLB' : `Buy for ${escapeHtml(priceLabel)}`}</button>
+					<button class="btn btn--primary anim-buy-go" type="button">${item.free ? 'Download GLB' : `Buy for ${escapeHtml(priceLabel)}`}</button>
 				</div>
 				<p class="anim-buy-note" id="anim-buy-note">${item.free_rotation
 					? escapeHtml(rotationNote(item))
@@ -6891,7 +6895,7 @@ function updateWalletUI() {
 		const pk = connectedWallet.publicKey.toBase58();
 		walletArea.innerHTML = `
 			<p>Connected via <strong>${escapeHtml(connectedWallet.name)}</strong>: ${pk.slice(0, 4)}…${pk.slice(-4)}</p>
-			<button class="btn-secondary" id="payment-disconnect-btn">Disconnect</button>
+			<button class="btn btn--secondary" id="payment-disconnect-btn">Disconnect</button>
 		`;
 		$('payment-disconnect-btn').addEventListener('click', disconnectWallet);
 		if (confirmBtn) confirmBtn.disabled = false;
@@ -6902,18 +6906,18 @@ function updateWalletUI() {
 	if (!available.length) {
 		walletArea.innerHTML = `
 			<p class="muted">No browser wallet detected.</p>
-			<button class="btn-primary" id="payment-show-qr">Use a mobile wallet (QR)</button>
+			<button class="btn btn--primary" id="payment-show-qr">Use a mobile wallet (QR)</button>
 			<p class="muted small">Install <a href="https://phantom.app" target="_blank" rel="noopener">Phantom</a>,
 			<a href="https://solflare.com" target="_blank" rel="noopener">Solflare</a>, or
 			<a href="https://backpack.app" target="_blank" rel="noopener">Backpack</a>.</p>
 		`;
 	} else {
 		const btns = available.map((w) =>
-			`<button class="btn-primary wallet-pick" data-wallet="${w.key}">Connect ${escapeHtml(w.name)}</button>`
+			`<button class="btn btn--primary wallet-pick" data-wallet="${w.key}">Connect ${escapeHtml(w.name)}</button>`
 		).join('');
 		walletArea.innerHTML = `
 			${btns}
-			<button class="btn-secondary" id="payment-show-qr">Use a mobile wallet (QR)</button>
+			<button class="btn btn--secondary" id="payment-show-qr">Use a mobile wallet (QR)</button>
 		`;
 		walletArea.querySelectorAll('.wallet-pick').forEach((btn) => {
 			btn.addEventListener('click', async () => {
@@ -7294,7 +7298,7 @@ function renderPaymentSuccess({ title, message, primaryHref, primaryLabel, secon
 	if (!body || !success) return;
 	body.hidden = true;
 	const primary = primaryHref
-		? `<a class="btn-primary" href="${escapeHtml(primaryHref)}" data-success-primary>${escapeHtml(primaryLabel || 'View')}</a>`
+		? `<a class="btn btn--primary" href="${escapeHtml(primaryHref)}" data-success-primary>${escapeHtml(primaryLabel || 'View')}</a>`
 		: '';
 	success.innerHTML = `
 		<div class="ps-check" aria-hidden="true">✓</div>
@@ -7302,7 +7306,7 @@ function renderPaymentSuccess({ title, message, primaryHref, primaryLabel, secon
 		${message ? `<p class="ps-sub">${escapeHtml(message)}</p>` : ''}
 		<div class="ps-actions">
 			${primary}
-			<button type="button" class="btn-secondary" data-success-close>${escapeHtml(secondaryLabel)}</button>
+			<button type="button" class="btn btn--secondary" data-success-close>${escapeHtml(secondaryLabel)}</button>
 		</div>`;
 	success.hidden = false;
 	success.querySelector('[data-success-close]')?.addEventListener('click', closePaymentModal);

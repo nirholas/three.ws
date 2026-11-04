@@ -352,47 +352,19 @@
 				opacity: 0.7;
 			}
 			.aspect button:focus-visible,
-			.chip:focus-visible,
-			.btn:focus-visible {
+			.chip:focus-visible {
 				outline: 2px solid var(--accent);
 				outline-offset: 2px;
 			}
-			.btn {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.5rem;
+			.forge-stage .btn {
 				font-family: var(--font-display);
 				font-weight: 600;
 				font-size: var(--text-base);
-				color: #0b0b0b;
-				background: var(--accent);
-				border: 1px solid var(--accent);
-				border-radius: var(--radius-md);
 				padding: 0.6rem 1.2rem;
-				cursor: pointer;
-				transition:
-					transform var(--duration-fast) var(--ease-standard),
-					opacity var(--duration-fast),
-					box-shadow var(--duration-fast);
+				border-radius: var(--radius-md);
 			}
-			.btn:hover {
+			.forge-stage .btn.btn--primary:hover:not(:disabled) {
 				box-shadow: 0 0 0 4px var(--accent-soft);
-			}
-			.btn:active {
-				transform: translateY(1px);
-			}
-			.btn[disabled] {
-				opacity: 0.45;
-				cursor: not-allowed;
-			}
-			.btn-ghost {
-				background: transparent;
-				color: var(--ink);
-				border: 1px solid var(--stroke-strong);
-			}
-			.btn-ghost:hover {
-				background: var(--surface-2);
-				box-shadow: none;
 			}
 			/* Primary action — full-width, monochrome fill. */
 			#generate {
@@ -4118,7 +4090,7 @@
 						<button type="button" data-aspect="16:9" aria-pressed="false">16:9</button>
 					</div>
 				</div>
-				<button class="btn" id="generate" type="submit" title="Generate (Enter). Shift+Enter for a new line." data-i18n-html="forge.generate" data-i18n-attr="title:forge.generate_enter_shift_enter_f_title">
+				<button class="btn btn--primary" id="generate" type="submit" title="Generate (Enter). Shift+Enter for a new line." data-i18n-html="forge.generate" data-i18n-attr="title:forge.generate_enter_shift_enter_f_title">
 					<span id="generate-label">Generate</span>
 					<kbd class="gen-kbd" aria-hidden="true">↵</kbd>
 				</button>
@@ -4200,7 +4172,7 @@
 						</svg>
 					</div>
 					<p class="forge-empty-label" data-i18n="forge.enter_a_prompt_to_generate">Enter a prompt to generate</p>
-					<button class="btn forge-roll" type="button" id="roll-forge" aria-label="Roll &amp; Forge: forge a random model, no prompt needed" data-i18n-attr="aria-label:forge.forge_a_random_model_no_prom_arialabel">
+					<button class="btn btn--primary forge-roll" type="button" id="roll-forge" aria-label="Roll &amp; Forge: forge a random model, no prompt needed" data-i18n-attr="aria-label:forge.forge_a_random_model_no_prom_arialabel">
 						<svg class="roll-die" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<rect x="3" y="3" width="18" height="18" rx="4" />
 							<circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none" />
@@ -4266,7 +4238,7 @@
 						</p>
 						<div class="gen-note is-hidden" id="gen-note" role="status" aria-live="polite"></div>
 						<div style="margin-top: var(--space-sm)">
-							<button class="btn btn-ghost" type="button" id="cancel" data-i18n="forge.cancel">Cancel</button>
+							<button class="btn btn--ghost" type="button" id="cancel" data-i18n="forge.cancel">Cancel</button>
 						</div>
 					</div>
 				</div>
@@ -4298,7 +4270,7 @@
 						<div class="viewer-load-error" id="viewer-load-error" role="alert" aria-live="polite">
 							<span class="viewer-load-error-icon" aria-hidden="true">⚠</span>
 							<p data-i18n="forge.model_failed_to_load_often_a_brief">Model failed to load. That is usually a brief network hiccup on the file: retry, or use the download button below to save it directly.</p>
-							<button type="button" class="btn ghost" id="viewer-retry" data-i18n="forge.retry_loading">Retry loading</button>
+							<button type="button" class="btn btn--ghost" id="viewer-retry" data-i18n="forge.retry_loading">Retry loading</button>
 						</div>
 					</div>
 					<div class="result-bar">
@@ -4317,7 +4289,7 @@
 						 data-i18n-attr="title:forge.automated_quality_check_title"></span>
 						<div class="actions">
 							<button
-								class="btn btn-ghost"
+								class="btn btn--ghost"
 								type="button"
 								id="cinema"
 								aria-pressed="false"
@@ -4365,7 +4337,7 @@
 								</button>
 							</div>
 							<button
-								class="btn btn-ghost"
+								class="btn btn--ghost"
 								type="button"
 								id="forge-share-btn"
 								aria-label="Share this creation"
@@ -4390,13 +4362,13 @@
 								Share
 							</button>
 							<a
-								class="btn btn-ghost"
+								class="btn btn--ghost"
 								id="forge-segment-btn"
 								title="Split this model into selectable parts"
 								 data-i18n="forge.split_into_parts" data-i18n-attr="title:forge.split_this_model_into_select_title">Split into parts</a
 							>
 							<button
-								class="btn btn-ghost"
+								class="btn btn--ghost"
 								type="button"
 								id="forge-gameready-btn"
 								aria-expanded="false"
@@ -4420,7 +4392,7 @@
 								Game-Ready
 							</button>
 							<button
-								class="btn btn-ghost"
+								class="btn btn--ghost"
 								type="button"
 								id="forge-embed-btn"
 								title="Embed this model on any website"
@@ -4442,7 +4414,7 @@
 								Embed
 							</button>
 							<button
-								class="btn btn-ghost"
+								class="btn btn--ghost"
 								type="button"
 								id="forge-ar-btn"
 								title="View this model in AR, placed in your room"
@@ -4465,7 +4437,7 @@
 								View in AR
 							</button>
 							<a
-								class="btn btn-ghost"
+								class="btn btn--ghost"
 								id="forge-irl-btn"
 								href="/irl"
 								title="Place this model in your real room, anchored and shareable (IRL)"
@@ -4494,7 +4466,7 @@
 								Place IRL
 							</a>
 							<button
-								class="btn btn-refine is-hidden"
+								class="btn btn--primary btn-refine is-hidden"
 								type="button"
 								id="refine"
 								title="Re-run this exact prompt at a higher quality tier"
@@ -4516,10 +4488,10 @@
 								</svg>
 								<span id="refine-label">Refine</span>
 							</button>
-							<a class="btn btn-ghost" id="open-in-composer" href="/compose" title="Open this model in Scene Composer to attach it to an avatar or place it in a scene" data-i18n="forge.compose" data-i18n-attr="title:forge.open_this_model_in_scene_com_title">Compose</a>
-							<a class="btn btn-ghost" id="download" download data-i18n="forge.download_glb">Download GLB</a>
-							<a class="btn btn-ghost" id="materialize-it" href="/materialize" title="Order this model as a real, high-precision physical print, shipped to you">Materialize</a>
-							<button class="btn" type="button" id="again" data-i18n="forge.make_another">Make another</button>
+							<a class="btn btn--ghost" id="open-in-composer" href="/compose" title="Open this model in Scene Composer to attach it to an avatar or place it in a scene" data-i18n="forge.compose" data-i18n-attr="title:forge.open_this_model_in_scene_com_title">Compose</a>
+							<a class="btn btn--ghost" id="download" download data-i18n="forge.download_glb">Download GLB</a>
+							<a class="btn btn--ghost" id="materialize-it" href="/materialize" title="Order this model as a real, high-precision physical print, shipped to you">Materialize</a>
+							<button class="btn btn--primary" type="button" id="again" data-i18n="forge.make_another">Make another</button>
 						</div>
 					</div>
 					<!-- Shown only for a result generated on the user's GPU (Modly): it is
@@ -4560,9 +4532,9 @@
 								<p class="directed-text directed-text--enhanced" id="forge-directed-text"></p>
 							</div>
 							<div class="directed-actions">
-								<button class="btn" type="button" id="forge-directed-vary" title="Run this brief again right now: the director and the reference painter resolve it differently every time">Try a variation</button>
-								<button class="btn btn-ghost" type="button" id="forge-directed-copy">Copy prompt</button>
-								<button class="btn btn-ghost" type="button" id="forge-directed-use">Use as my prompt</button>
+								<button class="btn btn--primary" type="button" id="forge-directed-vary" title="Run this brief again right now: the director and the reference painter resolve it differently every time">Try a variation</button>
+								<button class="btn btn--ghost" type="button" id="forge-directed-copy">Copy prompt</button>
+								<button class="btn btn--ghost" type="button" id="forge-directed-use">Use as my prompt</button>
 								<span class="directed-status" id="forge-directed-status" role="status" aria-live="polite"></span>
 							</div>
 						</div>
@@ -4631,14 +4603,14 @@
 								<output id="stylize-res-val" for="stylize-res">32</output>
 							</div>
 							<div class="stylize-actions">
-								<button class="btn btn-ghost" type="button" id="stylize-apply" data-i18n="forge.re_apply">
+								<button class="btn btn--ghost" type="button" id="stylize-apply" data-i18n="forge.re_apply">
 									Re-apply
 								</button>
-								<a class="btn btn-ghost" id="stylize-download" download hidden
+								<a class="btn btn--ghost" id="stylize-download" download hidden
 									 data-i18n="forge.download_stylized_glb">Download stylized GLB</a
 								>
 								<button
-									class="btn btn-ghost"
+									class="btn btn--ghost"
 									type="button"
 									id="stylize-revert"
 									hidden
@@ -4667,9 +4639,9 @@
 					     other configured engines can still serve the same request. -->
 					<div class="actions is-hidden" id="error-lanes" role="group" aria-label="Retry on another engine"></div>
 					<div class="actions">
-						<button class="btn" type="button" id="retry" data-i18n="forge.try_again">Try again</button>
-						<button class="btn btn-ghost is-hidden" type="button" id="refine-locally" data-i18n="forge.refine_current_model_instead">Refine current model instead</button>
-						<button class="btn btn-ghost is-hidden" type="button" id="generate-anyway" data-i18n="forge.generate_anyway">Generate anyway</button>
+						<button class="btn btn--primary" type="button" id="retry" data-i18n="forge.try_again">Try again</button>
+						<button class="btn btn--ghost is-hidden" type="button" id="refine-locally" data-i18n="forge.refine_current_model_instead">Refine current model instead</button>
+						<button class="btn btn--ghost is-hidden" type="button" id="generate-anyway" data-i18n="forge.generate_anyway">Generate anyway</button>
 					</div>
 				</div>
 
@@ -4712,8 +4684,8 @@
 				<div class="compare-tray is-hidden" id="compare-tray" role="status">
 					<span class="compare-tray-label" id="compare-tray-label"></span>
 					<div class="compare-tray-actions">
-						<button type="button" class="btn btn-ghost" id="compare-clear">Clear</button>
-						<button type="button" class="btn compare-go" id="compare-open" disabled>
+						<button type="button" class="btn btn--ghost" id="compare-clear">Clear</button>
+						<button type="button" class="btn btn--primary compare-go" id="compare-open" disabled>
 							Compare
 						</button>
 					</div>

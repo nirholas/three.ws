@@ -50,6 +50,9 @@ Linked pills: use `<a class="pill pill--onchain">` — gets hover/focus states a
 | Pump launch modal (launch-token-modal.js) | `ltm-btn`, `ltm-btn-primary` | Added `btn btn--secondary/--primary` alongside |
 | Homepage pump launcher (homepage-launcher.js) | `ltm-btn`, `ltm-btn-primary` | Added `btn btn--secondary/--primary` alongside |
 | Nav drawer (public/nav.js renders it into the empty `nav-drawer` element in nav.html) | `btn primary` | Added `btn--primary` BEM modifier |
+| Forge page and `src/forge-*.js` panels | inline `.btn` / `.btn-ghost`, `btn-sm` | `btn btn--primary/--ghost/--sm`; forge sizing lives in a scoped `.forge-stage .btn` block |
+| Marketplace (`pages/marketplace.html`, `src/marketplace.js`, `public/marketplace.css`) | `btn-primary`, `btn-secondary`, `market-empty-cta-btn.primary` | `btn btn--primary/--secondary`; scoped overrides rewritten as `.btn.btn--primary/--secondary` |
+| Dead families removed from `public/style.css` | `explore-btn*`, `explore-chain-badge*`, `erc8004-brand-badge` | none (no markup used them); `deploy-svc-pill` became `.pill` in `register-ui.js` |
 | On-chain badge (onchain-badge.js) | `tws-ocb`, `tws-ocb--md`, `tws-ocb--devnet` | Added `pill pill--onchain/--devnet pill--md` |
 
 ---
@@ -100,7 +103,11 @@ These classes are defined across the codebase. Follow-up agents should replace t
 
 ---
 
-## Forge page note
+## Audit and keep-list
+
+`npm run audit:buttons` (`scripts/audit-button-families.mjs`) prints every family with file counts and exits 1 if a migrated family reappears. Kept on purpose: `anim-btn` (bespoke animation tile), `ltm-toggle-btn` (segmented toggle), `nav-pill-sm` (nav badge tones), `price-badge`, `back-btn` (JS selectors), `market-empty-cta-btn` (sizing hook). Still open: `ad-btn`, `as-btn`, `br-btn`, `ar-btn`, `fm-btn`, `bento-action-btn`, `pay-btn`.
+
+## Forge page note (done)
 
 `pages/forge.html` defines its own inline `.btn` and `.btn-ghost` styles that shadow the canonical system within that page. To fully migrate:
 
@@ -108,7 +115,7 @@ These classes are defined across the codebase. Follow-up agents should replace t
 2. Update forge buttons: `class="btn"` → `class="btn btn--primary"`, `class="btn btn-ghost"` → `class="btn btn--ghost"`.
 3. Retain any forge-specific sizing overrides in a scoped `.forge-stage .btn { ... }` block.
 
-## Marketplace page note
+## Marketplace page note (done)
 
 The page's bare inline `.btn-primary` / `.btn-secondary` definitions are gone; what remains are two scoped overrides in its `<style>` block (`.avatar-modal-actions .btn-primary/.btn-secondary` and `.payment-modal-success .ps-actions .btn-primary/.btn-secondary`) plus the detail-panel rules in `public/marketplace.css` (`.market-avatar-detail .btn-secondary`, `.market-tool-detail .btn-secondary`). The markup still uses the old names throughout. Migration:
 

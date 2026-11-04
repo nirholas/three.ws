@@ -161,15 +161,15 @@ if (resultPanel && viewer) {
 				</label>
 			</div>
 			<div class="seg-actions">
-				<button class="btn seg-run" type="button"><span class="seg-run-label">Split into parts</span></button>
+				<button class="btn btn--primary seg-run" type="button"><span class="seg-run-label">Split into parts</span></button>
 				<span class="seg-status" role="status" aria-live="polite"></span>
 			</div>
 			<p class="seg-summary is-hidden"></p>
 			<ul class="seg-parts is-hidden" aria-label="Detected parts"></ul>
 			<div class="seg-after is-hidden">
-				<a class="btn btn-ghost seg-download" download>Download parts GLB</a>
-				<a class="btn btn-ghost seg-manifest" target="_blank" rel="noopener">Part manifest</a>
-				<button class="btn btn-ghost seg-revert" type="button">Revert to original</button>
+				<a class="btn btn--ghost seg-download" download>Download parts GLB</a>
+				<a class="btn btn--ghost seg-manifest" target="_blank" rel="noopener">Part manifest</a>
+				<button class="btn btn--ghost seg-revert" type="button">Revert to original</button>
 			</div>
 		</div>
 	`;

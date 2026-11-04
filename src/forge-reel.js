@@ -416,7 +416,7 @@ function mountForgeReel() {
 
 	const trigger = document.createElement('button');
 	trigger.type = 'button';
-	trigger.className = 'btn btn-ghost reel-trigger';
+	trigger.className = 'btn btn--ghost reel-trigger';
 	trigger.id = 'reel-open';
 	trigger.title = 'Reel: render a cinematic video and stills of this model (R)';
 	trigger.setAttribute('aria-haspopup', 'dialog');
@@ -894,7 +894,7 @@ function dialogMarkup() {
 			<h3 class="reel-legend">Length</h3>
 			<div class="reel-durations reel-row is-tight"></div>
 			<p class="reel-summary"></p>
-			<button type="button" class="btn btn-primary reel-start">Render reel</button>
+			<button type="button" class="btn btn--primary reel-start">Render reel</button>
 		</section>
 
 		<section class="reel-working" hidden>
@@ -904,18 +904,18 @@ function dialogMarkup() {
 				<span class="reel-bar-fill"></span>
 			</div>
 			<p class="reel-clock" aria-live="polite">Working</p>
-			<button type="button" class="btn btn-ghost reel-cancel">Cancel</button>
+			<button type="button" class="btn btn--ghost reel-cancel">Cancel</button>
 		</section>
 
 		<section class="reel-done" hidden>
 			<video class="reel-video" playsinline muted loop controls></video>
 			<div class="reel-files"></div>
-			<button type="button" class="btn btn-ghost reel-again">Render another</button>
+			<button type="button" class="btn btn--ghost reel-again">Render another</button>
 		</section>
 
 		<section class="reel-error-panel" hidden role="alert">
 			<p class="reel-error-text"></p>
-			<button type="button" class="btn btn-ghost reel-again">Back</button>
+			<button type="button" class="btn btn--ghost reel-again">Back</button>
 		</section>
 	</div>`;
 }

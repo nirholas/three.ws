@@ -168,7 +168,7 @@ vi.mock('../api/_lib/db.js', () => ({
 
 vi.mock('../api/_lib/r2.js', () => ({
 	getObjectBuffer: async () => healthyGlb(),
-	publicUrl: (key) => `https://cdn.three.ws/${key}`,
+	publicUrl: (key) => `https://three.ws/cdn/${key}`,
 	putObject: async ({ key, body }) => {
 		storage.puts.push({ key, body: body.toString('utf8') });
 	},

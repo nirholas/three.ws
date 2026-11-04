@@ -2274,25 +2274,6 @@ body.deploy-page {
 	font-size: 2.4rem;
 	opacity: 0.35;
 }
-.explore-chain-badge {
-	position: absolute;
-	top: var(--space-2xs);
-	left: var(--space-2xs);
-	padding: 2px var(--space-xs);
-	background: rgba(8, 8, 20, 0.75);
-	border: 1px solid rgba(255, 255, 255, 0.15);
-	border-radius: var(--radius-pill);
-	color: #fff;
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.04em;
-	backdrop-filter: blur(6px);
-	-webkit-backdrop-filter: blur(6px);
-}
-.explore-chain-badge--testnet {
-	color: rgba(253, 186, 116, 0.95);
-	border-color: rgba(253, 186, 116, 0.35);
-}
 .explore-card-3dpill {
 	position: absolute;
 	right: var(--space-2xs);
@@ -2397,58 +2378,6 @@ body.deploy-page {
 }
 
 /* Buttons (explore-scoped, not the erc8004 ones) */
-.explore-btn {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--space-2xs);
-	padding: var(--space-sm) var(--space-lg);
-	background: rgba(255, 255, 255, 0.08);
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	border-radius: var(--radius-md);
-	color: #fff;
-	font-family: inherit;
-	font-size: var(--text-sm);
-	font-weight: 500;
-	cursor: pointer;
-	text-decoration: none;
-	transition:
-		background var(--duration-fast) var(--ease-standard),
-		border-color var(--duration-fast) var(--ease-standard),
-		transform var(--duration-instant) var(--ease-standard);
-}
-.explore-btn:hover {
-	background: rgba(255, 255, 255, 0.14);
-	border-color: rgba(255, 255, 255, 0.2);
-}
-.explore-btn:active {
-	transform: scale(0.98);
-}
-.explore-btn--sm {
-	padding: 4px var(--space-sm);
-	font-size: var(--text-xs);
-	border-radius: var(--radius-sm);
-}
-.explore-btn--primary {
-	background: linear-gradient(135deg, #7b61ff 0%, #5e42ff 100%);
-	border-color: rgba(123, 97, 255, 0.7);
-	color: #fff;
-	box-shadow: 0 4px 14px rgba(123, 97, 255, 0.35);
-}
-.explore-btn--primary:hover {
-	background: linear-gradient(135deg, #8a73ff 0%, #6f56ff 100%);
-	border-color: rgba(158, 138, 255, 0.9);
-}
-.explore-btn--ghost {
-	background: transparent;
-	border-color: rgba(255, 255, 255, 0.1);
-	color: rgba(255, 255, 255, 0.65);
-}
-.explore-btn--ghost:hover {
-	color: #fff;
-	background: rgba(255, 255, 255, 0.05);
-}
-
 /* Loading skeletons are provided by the shared state-kit (.tws-sk-*); /discover
    renders them via skeletonHTML() so it matches /marketplace exactly. The old
    bespoke .explore-card--skel shimmer was removed when the toolkit was adopted. */
@@ -2513,9 +2442,6 @@ body.deploy-page {
 	.explore-grid {
 		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 		gap: var(--space-sm);
-	}
-	.explore-card-thumb .explore-chain-badge {
-		font-size: 9px;
 	}
 }
 
@@ -2847,17 +2773,6 @@ body.deploy-page {
 	margin: 0;
 	color: rgba(255, 255, 255, 0.85);
 	word-break: break-word;
-}
-
-.deploy-svc-pill {
-	display: inline-block;
-	padding: 2px 8px;
-	margin-right: 4px;
-	background: var(--surface-2);
-	border: 1px solid var(--stroke-strong);
-	border-radius: var(--radius-pill);
-	font-size: 11px;
-	color: rgba(255, 255, 255, 0.8);
 }
 
 .deploy-preview-checklist {
@@ -3601,19 +3516,6 @@ body.deploy-page {
 	gap: var(--space-xs);
 	font-size: var(--text-sm);
 	color: rgba(255, 255, 255, 0.85);
-}
-
-.erc8004-brand-badge {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	padding: 2px 8px;
-	border-radius: var(--radius-pill);
-	background: var(--accent);
-	color: #000;
-	font-size: var(--text-xs);
-	font-weight: 600;
-	letter-spacing: 0.04em;
 }
 
 .erc8004-brand-title b {

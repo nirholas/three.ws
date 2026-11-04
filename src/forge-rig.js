@@ -24,7 +24,7 @@ if (actions && resultBar && viewer) {
 
 	const btn = document.createElement('button');
 	btn.type = 'button';
-	btn.className = 'btn btn-ghost';
+	btn.className = 'btn btn--ghost';
 	btn.id = 'forge-rig-btn';
 	btn.title = 'Add a humanoid skeleton so this model can be posed and animated';
 	btn.innerHTML = `
@@ -150,9 +150,9 @@ if (actions && resultBar && viewer) {
 			<span class="rig-check" aria-hidden="true">✓</span>
 			<span>Rigged — ready to pose and animate.</span>
 			<div class="rig-actions">
-				<a class="btn btn-ghost" href="${riggedUrl}" download="${safeLabel}-rigged.glb">Download rigged GLB</a>
-				<a class="btn btn-ghost" href="/pose?src=${encodeURIComponent(riggedUrl)}">Animate in Pose Studio</a>
-				<a class="btn btn-ghost" href="/irl?avatar=${encodeURIComponent(riggedUrl)}">Place IRL</a>
+				<a class="btn btn--ghost" href="${riggedUrl}" download="${safeLabel}-rigged.glb">Download rigged GLB</a>
+				<a class="btn btn--ghost" href="/pose?src=${encodeURIComponent(riggedUrl)}">Animate in Pose Studio</a>
+				<a class="btn btn--ghost" href="/irl?avatar=${encodeURIComponent(riggedUrl)}">Place IRL</a>
 			</div>
 		`);
 	}
@@ -183,7 +183,7 @@ if (actions && resultBar && viewer) {
 			}
 			setPanel(
 				`<span class="rig-warn" aria-hidden="true">⚠</span><span>${err.message}</span> ` +
-					`<button type="button" class="btn btn-ghost btn-sm" id="rig-retry">Retry</button>`,
+					`<button type="button" class="btn btn--ghost btn--sm" id="rig-retry">Retry</button>`,
 			);
 			document.getElementById('rig-retry')?.addEventListener('click', runRig);
 		} finally {

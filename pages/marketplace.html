@@ -1365,20 +1365,20 @@
 					transform var(--duration-fast) var(--ease-standard),
 					background var(--duration-fast) var(--ease-standard);
 			}
-			.avatar-modal-actions .btn-primary {
+			.avatar-modal-actions .btn.btn--primary {
 				background: #fafafa;
 				color: #000000;
 				border-color: #fafafa;
 			}
-			.avatar-modal-actions .btn-primary:hover {
+			.avatar-modal-actions .btn.btn--primary:hover {
 				transform: translateY(-1px);
 			}
-			.avatar-modal-actions .btn-secondary {
+			.avatar-modal-actions .btn.btn--secondary {
 				background: transparent;
 				color: #fafafa;
 				border-color: #2a2a2a;
 			}
-			.avatar-modal-actions .btn-secondary:hover {
+			.avatar-modal-actions .btn.btn--secondary:hover {
 				background: rgba(255, 255, 255, 0.05);
 			}
 			.avatar-modal-close {
@@ -1825,35 +1825,8 @@
 				justify-content: center;
 			}
 			.market-empty-cta-btn {
-				background: rgba(255, 255, 255, 0.04);
-				color: #fafafa;
-				border: 1px solid #2a2a2a;
 				padding: 10px 18px;
-				border-radius: 10px;
-				font-weight: 500;
 				font-size: 13px;
-				cursor: pointer;
-				transition:
-					background var(--duration-fast) var(--ease-standard),
-					border-color var(--duration-fast) var(--ease-standard);
-				font-family: inherit;
-			}
-			.market-empty-cta-btn:hover {
-				background: rgba(255, 255, 255, 0.08);
-				border-color: #3a3a3a;
-			}
-			.market-empty-cta-btn.primary {
-				background: #fafafa;
-				color: #000000;
-				border-color: #fafafa;
-				font-weight: 600;
-			}
-			.market-empty-cta-btn.primary:hover {
-				background: #ffffff;
-			}
-			.market-empty-cta-btn:focus-visible {
-				outline: 2px solid var(--focus-ring-color);
-				outline-offset: 2px;
 			}
 
 			.price-badge {
@@ -2090,8 +2063,8 @@
 				width: 100%;
 				margin-top: 6px;
 			}
-			.payment-modal-success .ps-actions .btn-primary,
-			.payment-modal-success .ps-actions .btn-secondary {
+			.payment-modal-success .ps-actions .btn.btn--primary,
+			.payment-modal-success .ps-actions .btn.btn--secondary {
 				flex: 1;
 				padding: 11px 14px;
 				font-size: 14px;
@@ -2102,19 +2075,19 @@
 				border: 1px solid transparent;
 				cursor: pointer;
 			}
-			.payment-modal-success .ps-actions .btn-primary {
+			.payment-modal-success .ps-actions .btn.btn--primary {
 				background: #ffffff;
 				color: #fff;
 			}
-			.payment-modal-success .ps-actions .btn-primary:hover {
+			.payment-modal-success .ps-actions .btn.btn--primary:hover {
 				background: #4f46e5;
 			}
-			.payment-modal-success .ps-actions .btn-secondary {
+			.payment-modal-success .ps-actions .btn.btn--secondary {
 				background: transparent;
 				color: rgba(255, 255, 255, 0.78);
 				border-color: rgba(255, 255, 255, 0.18);
 			}
-			.payment-modal-success .ps-actions .btn-secondary:hover {
+			.payment-modal-success .ps-actions .btn.btn--secondary:hover {
 				background: rgba(255, 255, 255, 0.06);
 				color: #fff;
 			}
@@ -3863,7 +3836,7 @@
 						<div data-panel="embed" class="market-panel">
 							<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px">
 								<h2 style="margin:0" data-i18n="marketplace.embed_this_agent">Embed this Agent</h2>
-								<a id="d-embed-wizard-link" href="/studio" class="btn-secondary" style="font-size:12px;padding:5px 12px;white-space:nowrap" target="_blank" rel="noopener" data-i18n="marketplace.configure_in_wizard">
+								<a id="d-embed-wizard-link" href="/studio" class="btn btn--secondary" style="font-size:12px;padding:5px 12px;white-space:nowrap" target="_blank" rel="noopener" data-i18n="marketplace.configure_in_wizard">
 									Configure in wizard ↗
 								</a>
 							</div>
@@ -4148,7 +4121,7 @@
 									This avatar may have been removed or the link is wrong.
 								</p>
 								<a
-									class="btn-secondary avatar-detail-empty-cta"
+									class="btn btn--secondary avatar-detail-empty-cta"
 									href="/marketplace?tab=avatars"
 									 data-i18n="marketplace.browse_avatars">Browse avatars</a
 								>
@@ -4163,25 +4136,25 @@
 							<div class="market-avatar-detail-pills" id="avatar-detail-pills"></div>
 							<div class="market-avatar-detail-actions">
 								<button
-									class="btn-primary market-avatar-detail-cta"
+									class="btn btn--primary market-avatar-detail-cta"
 									id="avatar-detail-use"
 								 data-i18n="marketplace.start_agent_with_this_avatar">
 									Start agent with this avatar →
 								</button>
 								<a
-									class="btn-secondary"
+									class="btn btn--secondary"
 									id="avatar-detail-view"
 									target="_blank"
 									rel="noopener"
 								 data-i18n="marketplace.open_in_3d_viewer">
 									Open in 3D viewer ↗
 								</a>
-								<a class="btn-secondary" id="avatar-detail-download" data-i18n="marketplace.download_glb_2">
+								<a class="btn btn--secondary" id="avatar-detail-download" data-i18n="marketplace.download_glb_2">
 									Download GLB
 								</a>
 								<button
 									type="button"
-									class="btn-secondary"
+									class="btn btn--secondary"
 									id="avatar-detail-share"
 								 data-i18n="marketplace.share">
 									Share
@@ -4234,7 +4207,7 @@
 						<p class="tool-detail-empty-msg" data-i18n="marketplace.this_plugin_may_have_been_removed_or">
 							This plugin may have been removed or the link is wrong.
 						</p>
-						<a class="btn-secondary tool-detail-empty-cta" href="/marketplace?tab=tools"
+						<a class="btn btn--secondary tool-detail-empty-cta" href="/marketplace?tab=tools"
 							 data-i18n="marketplace.browse_plugins">Browse plugins</a
 						>
 					</div>
@@ -4261,14 +4234,14 @@
 						<p class="tool-detail-desc" id="tool-detail-desc"></p>
 
 						<div class="tool-detail-actions" id="tool-detail-actions">
-							<button class="btn-primary tool-detail-cta" id="tool-detail-install" data-i18n="marketplace.add_to_agent">
+							<button class="btn btn--primary tool-detail-cta" id="tool-detail-install" data-i18n="marketplace.add_to_agent">
 								Add to Agent
 							</button>
-							<button type="button" class="btn-secondary" id="tool-detail-share" data-i18n="marketplace.share_2">
+							<button type="button" class="btn btn--secondary" id="tool-detail-share" data-i18n="marketplace.share_2">
 								Share
 							</button>
 							<a
-								class="btn-secondary"
+								class="btn btn--secondary"
 								id="tool-detail-homepage"
 								target="_blank"
 								rel="noopener"
@@ -4276,7 +4249,7 @@
 								 data-i18n="marketplace.homepage">Homepage ↗</a
 							>
 							<a
-								class="btn-secondary"
+								class="btn btn--secondary"
 								id="tool-detail-manifest"
 								target="_blank"
 								rel="noopener"
@@ -4335,7 +4308,7 @@
 							This skill may have been removed or the link is wrong.
 						</p>
 						<a
-							class="btn-secondary tool-detail-empty-cta"
+							class="btn btn--secondary tool-detail-empty-cta"
 							href="/marketplace?tab=skills"
 							 data-i18n="marketplace.browse_skills">Browse skills</a
 						>
@@ -4357,15 +4330,15 @@
 						<div class="tool-detail-pills" id="skill-detail-pills"></div>
 						<p class="tool-detail-desc" id="skill-detail-desc"></p>
 						<div class="tool-detail-actions" id="skill-detail-actions">
-							<button class="btn-primary tool-detail-cta" id="skill-detail-install" data-i18n="marketplace.install">
+							<button class="btn btn--primary tool-detail-cta" id="skill-detail-install" data-i18n="marketplace.install">
 								Install
 							</button>
-							<button type="button" class="btn-secondary" id="skill-detail-share" data-i18n="marketplace.share_3">
+							<button type="button" class="btn btn--secondary" id="skill-detail-share" data-i18n="marketplace.share_3">
 								Share
 							</button>
 							<button
 								type="button"
-								class="btn-secondary"
+								class="btn btn--secondary"
 								id="skill-detail-author-btn"
 								hidden
 							></button>
@@ -4427,7 +4400,7 @@
 								<code id="skill-detail-x402-url"></code>
 								<button
 									type="button"
-									class="btn-secondary skill-x402-copy"
+									class="btn btn--secondary skill-x402-copy"
 									id="skill-detail-x402-copy-url"
 									aria-label="Copy endpoint URL"
 								 data-i18n="marketplace.copy_4" data-i18n-attr="aria-label:marketplace.copy_endpoint_url_arialabel">
@@ -4439,7 +4412,7 @@
 									<span data-i18n="marketplace.call_with_x402_fetch_pay_per_call">Call with x402-fetch (pay-per-call client)</span>
 									<button
 										type="button"
-										class="btn-secondary skill-x402-copy"
+										class="btn btn--secondary skill-x402-copy"
 										id="skill-detail-x402-copy-code"
 										aria-label="Copy code snippet"
 									 data-i18n="marketplace.copy_code" data-i18n-attr="aria-label:marketplace.copy_code_snippet_arialabel">
@@ -4478,7 +4451,7 @@
 							This clip may have been renamed or removed.
 						</p>
 						<a
-							class="btn-secondary tool-detail-empty-cta"
+							class="btn btn--secondary tool-detail-empty-cta"
 							href="/marketplace?tab=animations"
 							 data-i18n="marketplace.browse_animations">Browse animations</a
 						>
@@ -4501,17 +4474,17 @@
 						</header>
 						<div class="tool-detail-pills" id="anim-detail-pills"></div>
 						<div class="tool-detail-actions" id="anim-detail-actions">
-							<button class="btn-primary tool-detail-cta" id="anim-detail-replay" data-i18n="marketplace.replay">
+							<button class="btn btn--primary tool-detail-cta" id="anim-detail-replay" data-i18n="marketplace.replay">
 								Replay
 							</button>
-							<button type="button" class="btn-secondary" id="anim-detail-copy" data-i18n="marketplace.copy_clip_name">
+							<button type="button" class="btn btn--secondary" id="anim-detail-copy" data-i18n="marketplace.copy_clip_name">
 								Copy clip name
 							</button>
-							<button type="button" class="btn-secondary" id="anim-detail-share" data-i18n="marketplace.share_4">
+							<button type="button" class="btn btn--secondary" id="anim-detail-share" data-i18n="marketplace.share_4">
 								Share
 							</button>
 							<a
-								class="btn-secondary"
+								class="btn btn--secondary"
 								id="anim-detail-raw"
 								target="_blank"
 								rel="noopener"
@@ -4560,7 +4533,7 @@
 							This onchain agent is no longer indexed, or the link is wrong.
 						</p>
 						<a
-							class="btn-secondary tool-detail-empty-cta"
+							class="btn btn--secondary tool-detail-empty-cta"
 							href="/marketplace?tab=onchain"
 							 data-i18n="marketplace.browse_onchain_agents">Browse onchain agents</a
 						>
@@ -4584,24 +4557,24 @@
 						<div class="tool-detail-pills" id="onchain-detail-pills"></div>
 						<p class="tool-detail-desc" id="onchain-detail-desc"></p>
 						<div class="tool-detail-actions" id="onchain-detail-actions">
-							<a class="btn-primary tool-detail-cta" id="onchain-detail-view"
+							<a class="btn btn--primary tool-detail-cta" id="onchain-detail-view"
 								 data-i18n="marketplace.open_in_3d_viewer_2">Open in 3D viewer ↗</a
 							>
 							<a
-								class="btn-secondary"
+								class="btn btn--secondary"
 								id="onchain-detail-token"
 								target="_blank"
 								rel="noopener"
 								 data-i18n="marketplace.view_token_on_explorer">View token on explorer ↗</a
 							>
 							<a
-								class="btn-secondary"
+								class="btn btn--secondary"
 								id="onchain-detail-owner-link"
 								target="_blank"
 								rel="noopener"
 								 data-i18n="marketplace.view_owner">View owner ↗</a
 							>
-							<button type="button" class="btn-secondary" id="onchain-detail-share" data-i18n="marketplace.share_5">
+							<button type="button" class="btn btn--secondary" id="onchain-detail-share" data-i18n="marketplace.share_5">
 								Share
 							</button>
 						</div>
@@ -5116,17 +5089,17 @@
 					<div class="avatar-modal-meta" id="avatar-modal-meta"></div>
 					<div class="avatar-modal-sale" id="avatar-modal-sale" hidden></div>
 					<div class="avatar-modal-actions">
-						<button class="btn-primary" id="avatar-modal-use" data-i18n="marketplace.start_an_agent_with_this_avatar">
+						<button class="btn btn--primary" id="avatar-modal-use" data-i18n="marketplace.start_an_agent_with_this_avatar">
 							Start an agent with this avatar
 						</button>
 						<a
-							class="btn-secondary"
+							class="btn btn--secondary"
 							id="avatar-modal-view"
 							target="_blank"
 							rel="noopener"
 							 data-i18n="marketplace.open_in_3d_viewer_3">Open in 3D viewer</a
 						>
-						<a class="btn-secondary" id="avatar-modal-download" download
+						<a class="btn btn--secondary" id="avatar-modal-download" download
 							 data-i18n="marketplace.download_glb_3">Download GLB</a
 						>
 						<button id="avatar-modal-bookmark" aria-pressed="false" data-i18n="marketplace.bookmark">Bookmark</button>
@@ -5224,13 +5197,13 @@
 
 					<div class="payment-wallet-area" id="payment-wallet-area">
 						<!-- Wallet connection status and button will be rendered here by JS -->
-						<button class="btn-primary" id="payment-connect-wallet-btn" data-i18n="marketplace.connect_wallet">
+						<button class="btn btn--primary" id="payment-connect-wallet-btn" data-i18n="marketplace.connect_wallet">
 							Connect Wallet
 						</button>
 					</div>
 
 					<button
-						class="btn-primary payment-confirm-btn"
+						class="btn btn--primary payment-confirm-btn"
 						id="payment-confirm-btn"
 						disabled
 					 data-i18n="marketplace.confirm_purchase">

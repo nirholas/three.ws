@@ -28,7 +28,7 @@ if (actions && resultBar && viewer) {
 
 	const btn = document.createElement('button');
 	btn.type = 'button';
-	btn.className = 'btn btn-ghost';
+	btn.className = 'btn btn--ghost';
 	btn.id = 'forge-materials-btn';
 	btn.setAttribute('aria-expanded', 'false');
 	btn.title = 'Restyle this model’s materials (AI PBR re-skin, keeps the same shape)';
@@ -67,11 +67,11 @@ if (actions && resultBar && viewer) {
 				placeholder="Describe a material, e.g. &quot;make it iridescent soap-bubble glass&quot;"
 				aria-label="Describe a material"
 			/>
-			<button type="submit" class="btn" id="materials-apply">Apply</button>
+			<button type="submit" class="btn btn--primary" id="materials-apply">Apply</button>
 		</form>
 		<div class="materials-actions is-hidden" id="materials-result-actions">
-			<a class="btn btn-ghost" id="materials-download" download>Download restyled GLB</a>
-			<button type="button" class="btn btn-ghost" id="materials-revert">Revert to original</button>
+			<a class="btn btn--ghost" id="materials-download" download>Download restyled GLB</a>
+			<button type="button" class="btn btn--ghost" id="materials-revert">Revert to original</button>
 		</div>
 		<div class="materials-status" id="materials-status" role="status" aria-live="polite"></div>
 	`;

@@ -176,8 +176,8 @@ if (resultPanel && viewer && triggerBtn) {
 		<label class="gr-check gr-rig-toggle"><input type="checkbox" class="gr-rig-check" /> Preserve rig on FBX</label>
 		<p class="gr-rig is-hidden">Retopology rebuilds geometry, so a retopologized FBX is a clean re-riggable mesh. Tick this only if your source is skinned and you need the existing skeleton kept — the FBX is then exported at the original topology.</p>
 		<div class="gr-actions">
-			<button class="btn gr-run" type="button"><span class="gr-run-label">Export game-ready</span></button>
-			<button class="btn btn-ghost gr-wire-toggle" type="button" aria-pressed="false" hidden title="Show the retopologized wireframe">Wireframe</button>
+			<button class="btn btn--primary gr-run" type="button"><span class="gr-run-label">Export game-ready</span></button>
+			<button class="btn btn--ghost gr-wire-toggle" type="button" aria-pressed="false" hidden title="Show the retopologized wireframe">Wireframe</button>
 			<span class="gr-status" role="status" aria-live="polite"></span>
 		</div>
 		<p class="gr-pay-note">$THREE holders export free — others pay once per export in $THREE. <a href="/three-token">Hold $THREE →</a></p>
@@ -355,7 +355,7 @@ if (resultPanel && viewer && triggerBtn) {
 			const out = outputs[fmt];
 			if (!out?.url) continue;
 			const a = document.createElement('a');
-			a.className = 'btn';
+			a.className = 'btn btn--primary';
 			a.href = out.url;
 			a.setAttribute('download', `${safeLabel()}-${state.topology}-${fmtCount(budget)}.${fmt}`);
 			a.textContent = `Download ${fmt.toUpperCase()}`;

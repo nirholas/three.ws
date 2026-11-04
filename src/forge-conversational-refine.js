@@ -49,7 +49,7 @@ if (actions && resultBar && viewer) {
 
 	const btn = document.createElement('button');
 	btn.type = 'button';
-	btn.className = 'btn btn-ghost';
+	btn.className = 'btn btn--ghost';
 	btn.id = 'forge-iterate-btn';
 	btn.setAttribute('aria-expanded', 'false');
 	btn.title = 'Describe a change to iterate on this exact model ("make it metallic", "add a hat")';
@@ -85,7 +85,7 @@ if (actions && resultBar && viewer) {
 				placeholder="e.g. &quot;make the helmet red&quot;, &quot;add a small backpack&quot;"
 				aria-label="Describe a change"
 			/>
-			<button type="submit" class="btn" id="iterate-apply">Iterate</button>
+			<button type="submit" class="btn btn--primary" id="iterate-apply">Iterate</button>
 		</form>
 		<div class="iterate-status" id="iterate-status" role="status" aria-live="polite"></div>
 	`;
