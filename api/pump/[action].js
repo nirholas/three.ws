@@ -73,6 +73,7 @@ import { publishFeedEvent } from '../_lib/feed.js';
 import { recordDailyActivity } from '../_lib/streaks.js';
 import { recordQuestTrade } from '../_lib/trading-quests.js';
 import { recordCopyPathStep } from '../_lib/copy-path.js';
+import { withPlatformFee, recordPlatformFee, pumpFeeEventFromTx, feeEventFromDisclosure } from '../_lib/platform-fee-events.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { buildTokenMetadata } from '../_lib/three-brand.js';
 import {
@@ -656,6 +657,21 @@ async function handleBuyConfirm(req, res) {
 	if (!accountKeys.includes(body.wallet_address))
 		return error(res, 422, 'wallet_not_in_tx', 'wallet not in tx');
 
+	// The 1% fee rode inside the transaction buy-prep built. Record what the fee
+	// wallet actually received in this confirmed tx, in the same database
+	// transaction as the trade row (platform_fee_events, keyed on the signature).
+	const feeEvent = await pumpFeeEventFromTx({
+		tx,
+		signature: body.tx_signature,
+		source: 'pump_trade',
+		network: body.network,
+		quoteMint: feeQuoteMint(mintRow, body.network),
+		basis: 'buy',
+		payer: body.wallet_address,
+		userId: user.id,
+		meta: { mint: body.mint, route: body.route, signer: 'wallet' },
+	});
+
 	if (mintId) {
 		// Resolve the quote asset authoritatively from the coin's recorded pairing
 		// mint (NULL = SOL-paired), so a USDC buy never lands in the lamports
@@ -680,7 +696,7 @@ async function handleBuyConfirm(req, res) {
 							quoteSymbol: quote_symbol,
 							quoteMint: quote_mint,
 						});
-		await sql`
+		await withPlatformFee(sql, sql`
 			insert into pump_agent_trades
 				(mint_id, user_id, wallet, direction, route, sol_amount,
 				 quote_mint, quote_symbol, quote_amount, slippage_bps, tx_signature, network)
@@ -689,13 +705,15 @@ async function handleBuyConfirm(req, res) {
 				 ${lamports}, ${quote_mint}, ${quote_symbol}, ${quoteAmount},
 				 ${body.slippage_bps ?? null}, ${body.tx_signature}, ${body.network})
 			on conflict (tx_signature, network) do nothing
-		`;
+		`, feeEvent);
 		// A confirmed on-chain trade is the most real thing a user does here, and
 		// the cross-surface streak counted logins, forges, worlds and walks but not
 		// this. Fire-and-forget and idempotent per UTC day, exactly like every other
 		// call site: it can never delay or fail the buy that earned it.
 		recordDailyActivity(user.id).catch(() => {});
 	} else {
+		// No trade row for a coin launched elsewhere, but the fee is still ours.
+		await recordPlatformFee(feeEvent, { bestEffort: true });
 		// A coin launched elsewhere has no pump_agent_trades row, so this verified
 		// buy is the proof of step 3 of the first-copy path (api/_lib/copy-path.js).
 		recordCopyPathStep(user.id, 'trade', { signature: body.tx_signature }).catch(() => {});
@@ -733,6 +751,16 @@ async function handleBuyConfirm(req, res) {
 		network: body.network,
 		tx_signature: body.tx_signature,
 	});
+}
+
+// The quote mint a confirmed trade's platform fee was paid in: null for a
+// SOL-paired coin, the USDC mint for a USDC-paired one, and undefined when the
+// coin was launched elsewhere (no pump_agent_mints row), which makes
+// pumpFeeEventFromTx read the pairing from the transaction itself.
+function feeQuoteMint(mintRow, network) {
+	if (!mintRow) return undefined;
+	const { quote_mint, quote_symbol } = tradeQuoteColumns({ quoteMint: mintRow.quote_mint, network });
+	return quote_symbol === 'SOL' ? null : quote_mint;
 }
 
 // Truncate a base58 address for public display: "AbCd…WxYz". The feed is world-
@@ -990,6 +1018,19 @@ async function handleSellConfirm(req, res) {
 	if (!accountKeys.includes(body.wallet_address))
 		return error(res, 422, 'wallet_not_in_tx', 'wallet not in tx');
 
+	// The fee sell-prep appended, as the fee wallet received it in this tx.
+	const feeEvent = await pumpFeeEventFromTx({
+		tx,
+		signature: body.tx_signature,
+		source: 'pump_trade',
+		network: body.network,
+		quoteMint: feeQuoteMint(mintRow, body.network),
+		basis: 'sell',
+		payer: body.wallet_address,
+		userId: user.id,
+		meta: { mint: body.mint, route: body.route, signer: 'wallet' },
+	});
+
 	if (mintId) {
 		// The sell-confirm payload only carries the token quantity, so derive the
 		// proceeds (quote received) from the verified tx's on-chain balance delta
@@ -1006,7 +1047,7 @@ async function handleSellConfirm(req, res) {
 		});
 		// Keep sol_amount in sync for SOL sells so legacy readers see proceeds too.
 		const lamports = quote_symbol === 'SOL' ? quoteAmount : null;
-		await sql`
+		await withPlatformFee(sql, sql`
 			insert into pump_agent_trades
 				(mint_id, user_id, wallet, direction, route, sol_amount, token_amount,
 				 quote_mint, quote_symbol, quote_amount, slippage_bps, tx_signature, network)
@@ -1015,8 +1056,10 @@ async function handleSellConfirm(req, res) {
 				 ${lamports}, ${body.tokens}, ${quote_mint}, ${quote_symbol}, ${quoteAmount},
 				 ${body.slippage_bps ?? null}, ${body.tx_signature}, ${body.network})
 			on conflict (tx_signature, network) do nothing
-		`;
+		`, feeEvent);
 		recordDailyActivity(user.id).catch(() => {});
+	} else {
+		await recordPlatformFee(feeEvent, { bestEffort: true });
 	}
 
 	recordQuestTrade({
@@ -1898,14 +1941,31 @@ async function handleLaunchConfirm(req, res) {
 	// authority), not the signer. p.creator_address is set by launch-prep;
 	// fall back to wallet_address for prep rows written before the split landed.
 	const agentAuthority = p.creator_address || p.wallet_address;
-	const [row] = await sql`
+	// The launch fee (verified paid above) and the launch row commit together.
+	const launchFeeEvent = p.platform_fee
+		? await pumpFeeEventFromTx({
+				tx,
+				signature: txSignature,
+				source: 'pump_launch',
+				network: p.network,
+				quoteMint: p.platform_fee.asset === 'SOL' ? null : (p.quote_mint || undefined),
+				basis: 'launch',
+				bps: p.platform_fee.bps ?? null,
+				recipient: p.platform_fee.recipient,
+				payer: p.wallet_address,
+				userId: user.id,
+				agentId: p.agent_id || null,
+				meta: { mint: p.mint, signer: 'wallet' },
+			})
+		: null;
+	const { rows: [row] } = await withPlatformFee(sql, sql`
 		insert into pump_agent_mints
 			(agent_id, user_id, network, mint, name, symbol, metadata_uri, agent_authority, buyback_bps, quote_mint)
 		values
 			(${p.agent_id}, ${user.id}, ${p.network}, ${p.mint},
 			 ${p.name}, ${p.symbol}, ${metadataUri}, ${agentAuthority}, ${p.buyback_bps}, ${p.quote_mint ?? null})
 		returning id, mint, network, buyback_bps, quote_mint, created_at
-	`;
+	`, launchFeeEvent);
 
 	await sql`delete from agent_registrations_pending where id=${pending.id}`;
 
@@ -2328,6 +2388,9 @@ async function handleLaunchAgent(req, res) {
 	// own transaction after the launch lands: 'separate' on success, 'failed' if
 	// that follow-up transfer did not land.
 	let feeSettlement = launchFee ? 'bundled' : null;
+	// The transaction that carried the fee: the launch itself when bundled, the
+	// follow-up transfer when it settled separately.
+	let feeSignature = null;
 	const lookupTables = await getPumpLookupTables({ network: body.network });
 	const sendLaunch = (ixs) =>
 		submitProtected({
@@ -2351,12 +2414,12 @@ async function handleLaunchAgent(req, res) {
 			({ signature } = await sendLaunch(instructions));
 			feeSettlement = 'separate';
 			try {
-				await submitProtected({
+				({ signature: feeSignature } = await submitProtected({
 					network: body.network,
 					connection: conn,
 					payer: agentKeypair,
 					instructions: launchFee.instructions,
-				});
+				}));
 			} catch (feeErr) {
 				feeSettlement = 'failed';
 				console.error('[pump/launch-agent] separate launch-fee transfer failed', mint.toBase58(), feeErr?.message);
@@ -2377,7 +2440,24 @@ async function handleLaunchAgent(req, res) {
 	const onchainCreator = body.holder_reward
 		? (await import('@pump-fun/pump-sdk')).holderRewardsPda(mint)
 		: creator;
-	const [row] = await sql`
+	if (feeSettlement === 'bundled') feeSignature = signature;
+	// A 'failed' separate transfer charged nothing, so it records nothing. The
+	// source_ref is the launch signature either way, so one launch is one fee.
+	const launchFeeEvent = feeSignature
+		? feeEventFromDisclosure({
+				disclosure: launchFee.disclosure,
+				signature: feeSignature,
+				sourceRef: signature,
+				source: 'pump_launch',
+				network: body.network,
+				quoteMint: quote.quoteMint ?? null,
+				payer: creator.toBase58(),
+				userId: user.id,
+				agentId: resolvedAgentId,
+				meta: { mint: mint.toBase58(), signer: 'agent_wallet', settlement: feeSettlement },
+			})
+		: null;
+	const { rows: [row] } = await withPlatformFee(sql, sql`
 		insert into pump_agent_mints
 			(agent_id, user_id, network, mint, name, symbol, metadata_uri, agent_authority, buyback_bps, quote_mint)
 		values
@@ -2385,7 +2465,7 @@ async function handleLaunchAgent(req, res) {
 			 ${body.name}, ${body.symbol}, ${body.uri}, ${onchainCreator.toBase58()}, ${effBuyback}, ${quote.quoteMint ?? null})
 		on conflict (mint, network) do nothing
 		returning id, mint, network, buyback_bps, quote_mint, created_at
-	`;
+	`, launchFeeEvent);
 
 	// Finalize the spend reservation in place: merge the launch metadata + tx
 	// signature into the reserved row and mark it confirmed. This replaces the
