@@ -208,7 +208,7 @@ export function openInviteSheet({ coin, toast, onClose }) {
 	const xLink = el('a', { class: 'cc-invite-intent', target: '_blank', rel: 'noopener noreferrer' },
 		[el('span', { 'aria-hidden': 'true', text: '𝕏' }), el('span', { text: t('play.invite_post_x', 'Post on X') })]);
 	const tgLink = el('a', { class: 'cc-invite-intent', target: '_blank', rel: 'noopener noreferrer' },
-		[el('span', { 'aria-hidden': 'true', text: '✈' }), el('span', { text: t('play.invite_send_tg', 'Send on Telegram') })]);
+		[el('span', { 'aria-hidden': 'true', text: '✈' }), el('span', { text: t('play.invite_send_tg', 'Telegram') })]);
 	const paintIntents = () => {
 		const text = shareTextFor(model);
 		xLink.href = 'https://x.com/intent/post?' + new URLSearchParams({ text, url: model.link });

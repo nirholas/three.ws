@@ -133,7 +133,7 @@
 	flex: 1 1 120px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
 	padding: 8px 12px; border-radius: var(--cc-radius, 4px);
 	border: 1px solid var(--cc-edge-soft, rgba(255, 255, 255, 0.07));
-	color: var(--cc-dim, #8c8c92); font-size: 12.5px; font-weight: 600; text-decoration: none;
+	color: var(--cc-dim, #8c8c92); font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap;
 	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-invite-intent:hover { color: var(--cc-text, #f5f5f6); border-color: var(--cc-edge, rgba(255, 255, 255, 0.12)); background: rgba(255, 255, 255, 0.05); }

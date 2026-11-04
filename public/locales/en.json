@@ -19577,7 +19577,7 @@
 		"invite_share_live": "{{name}} is live right now in {{label}}. Come join me on three.ws",
 		"invite_share_event": "Join me at {{name}} in {{label}} on three.ws",
 		"invite_post_x": "Post on X",
-		"invite_send_tg": "Send on Telegram",
+		"invite_send_tg": "Telegram",
 		"invite_close": "Close invite",
 		"invite_close_title": "Close (Esc)",
 		"invite_load_failed": "Couldn’t open the invite sheet. Check your connection and try again."
