@@ -2,7 +2,8 @@
 //
 // The Imagen `:predict` family is being retired (imagen-3.0-* shut down
 // 2026-06-30; imagen-4.0-* by 2026-08-17), so the client now defaults to the
-// live Gemini image model `gemini-2.5-flash-image` via `:generateContent`, and
+// live Gemini image model (IMAGE_MODEL_PRIMARY in api/_lib/image-model.js, the
+// one place that id is resolved) via `:generateContent`, and
 // only takes the legacy `:predict` shape for an explicit `imagen-*` override.
 //
 // These tests pin BOTH request/response shapes against the documented Vertex
@@ -24,6 +25,7 @@ const { safeFetch } = vi.hoisted(() => ({ safeFetch: vi.fn() }));
 vi.mock('../../api/_lib/ssrf-guard.js', () => ({ fetchSafePublicUrl: safeFetch }));
 
 import { generateImage, editImage, isConfigured } from '../../api/_mcp3d/vertex-imagen.js';
+import { IMAGE_MODEL_PRIMARY } from '../../api/_lib/image-model.js';
 
 const ORIGINAL_FETCH = globalThis.fetch;
 const ENV_KEYS = ['GOOGLE_CLOUD_PROJECT', 'GOOGLE_CLOUD_LOCATION', 'VERTEX_IMAGEN_MODEL', 'VERTEX_IMAGEN_EDIT_MODEL'];
@@ -39,7 +41,7 @@ function stubFetch(responder) {
 	return calls;
 }
 
-// A gemini-2.5-flash-image generateContent success: the image rides back as an
+// A Gemini image generateContent success: the image rides back as an
 // inlineData part (base64 + mimeType), same as the live API.
 function geminiImageResponse(b64 = Buffer.from('gemini-png').toString('base64'), mime = 'image/png') {
 	return new Response(
@@ -82,7 +84,7 @@ describe('vertex-imagen — default Gemini image path', () => {
 		// Endpoint: regional host + publisher model + :generateContent (NOT :predict).
 		expect(url).toBe(
 			'https://us-central1-aiplatform.googleapis.com/v1/projects/demo-project' +
-				'/locations/us-central1/publishers/google/models/gemini-2.5-flash-image:generateContent',
+				`/locations/us-central1/publishers/google/models/${IMAGE_MODEL_PRIMARY}:generateContent`,
 		);
 		expect(headers.authorization).toBe('Bearer fake-access-token');
 		// Request shape: text prompt + IMAGE modality + aspect ratio in imageConfig.
@@ -92,7 +94,7 @@ describe('vertex-imagen — default Gemini image path', () => {
 
 		// Response parse: inlineData → data URI carrying the real mime type + model tag.
 		expect(result.imageUrl).toBe(`data:image/png;base64,${Buffer.from('gemini-png').toString('base64')}`);
-		expect(result.model).toBe('vertex-ai/gemini-2.5-flash-image');
+		expect(result.model).toBe(`vertex-ai/${IMAGE_MODEL_PRIMARY}`);
 	});
 
 	it('preserves the response mime type in the data URI', async () => {
@@ -186,10 +188,10 @@ describe('vertex-imagen — editImage routing', () => {
 		const result = await editImage(src, 'make it blue');
 
 		const { url, body } = calls[0];
-		expect(url).toContain('/models/gemini-2.5-flash-image:generateContent');
+		expect(url).toContain(`/models/${IMAGE_MODEL_PRIMARY}:generateContent`);
 		expect(body.contents[0].parts[0].text).toBe('make it blue');
 		expect(body.contents[0].parts[1].inlineData.data).toBe(Buffer.from('source').toString('base64'));
-		expect(result.model).toBe('vertex-ai/gemini-2.5-flash-image');
+		expect(result.model).toBe(`vertex-ai/${IMAGE_MODEL_PRIMARY}`);
 	});
 
 	it('declares the source image its real mime type, not a hardcoded PNG', async () => {
