@@ -5871,6 +5871,13 @@
 			"dest": "/settings/index.html"
 		},
 		{
+			"src": "/settings/connections/?",
+			"headers": {
+				"Location": "/dashboard/settings#x-posting"
+			},
+			"status": 302
+		},
+		{
 			"src": "/settings/",
 			"dest": "/settings/index.html"
 		},

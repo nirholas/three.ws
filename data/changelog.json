@@ -3,6 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Account status, dashboard links and X posting tools for connected assistants",
+			"summary": "GET /api/v1/me/status and the get_account_status tool answer what plan you are on, what is left and what is waiting for approval in one call. get_dashboard_urls returns the canonical page links. Agents can now be connected to X, given a posting policy and asked to post through MCP, with review-before-post queuing instead of publishing. Settings shows account status and each agent's X posting state.",
+			"tags": ["mcp", "agents"]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Sniper manages the free moon bags it keeps and records entry latency",
 			"summary": "Retained moon bags are now re-quoted every minute, sold whole on a 40 percent trailing stop from their own peak, and written off when dead instead of sitting unwatched. Per-second price ticks and per-stage entry latency are recorded for backtests, with a p50 and p90 report script.",
 			"tags": ["sniper", "trading"]

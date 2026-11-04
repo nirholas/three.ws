@@ -364,6 +364,10 @@ GOOGLE_OAUTH_CLIENT_SECRET=
 
 Both unset: `GET /api/config` reports `googleEnabled: false`, the login page shows no Google button, `/api/auth/google/start` sends a browser to `/login?error=google_unavailable` and answers an API caller `501 not_configured`. Nothing else changes.
 
+### Checking what a credential can see
+
+`GET /api/v1/me/status` (scope `profile`; a browser session is the owner) answers "what plan am I on, what is left, what is waiting for me" in one object: `plan`, `limits`, `remaining`, `agents`, `approvals`, and a `wallet` block that is `null` unless the credential carries `wallet:read` or `wallet:write`. The MCP tool `get_account_status` returns the same object, and `get_dashboard_urls` returns the canonical page links (billing, wallet, runs, approvals, connections) so an assistant never guesses a URL. Linking and unlinking Google, and the re-authentication that unlinking needs, live under [Sign in with Google](#sign-in-with-google); the settings page shows both next to the X accounts your agents post through (`/settings/connections` redirects to `/dashboard/settings#x-posting`).
+
 ## Sign in with Telegram, link codes and external wallets
 
 Telegram sign-in (widget and deep-link magic link), one-time link codes for phones, desktop apps, the CLI and Telegram chats, and signed-message external wallets are documented in [account-linking.md](./account-linking.md).

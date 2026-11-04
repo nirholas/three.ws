@@ -151,6 +151,21 @@ generation lane**; the rest are paid and quote their price in the
 > quoted in each tool's `PaymentRequired` response at call time (and are tunable by
 > the operator), so always read the challenge rather than assuming a figure.
 
+## Account status, dashboard links and X posting
+
+On the `threews-agent` server ([api/_mcpagent/account-tools.js](../api/_mcpagent/account-tools.js)):
+
+| Tool | Tier | What it does |
+| --- | --- | --- |
+| `get_account_status` | read | Plan, limits, what is left, agent count, wallet summary (needs `wallet:read`), approvals waiting. Same data as `GET /api/v1/me/status`. |
+| `get_dashboard_urls` | read | Canonical same-origin page links. Pass `page` for one. |
+| `connect_twitter` | write | The link the owner opens to connect an X account to an agent. Connects nothing itself. |
+| `configure_twitter_posting` | write | An agent's posting policy: kinds, daily cap, minimum gap, tone rules, review-before-post. |
+| `post_to_x` | write | Requests a post through the agent's policy. With review-before-post on, the post is queued and nothing is published. A refusal (paused, kind not allowed, tone, daily cap, queue full, not connected) comes back with its reason code. |
+| `list_scheduled_posts` | read | Posts waiting for review and posts scheduled or recently sent. |
+
+All X tools call `requestAgentPost` and the policy helpers in [api/_lib/x-agent-policy.js](../api/_lib/x-agent-policy.js), so the tools, `/api/x/agents` and the settings page enforce one policy.
+
 ## Other MCP servers
 
 | Server | File | Surface |

@@ -66,6 +66,7 @@ import {
 import { getStrategy, listStrategies } from '../_lib/agents-v1/strategies.js';
 import { freeTierStatus } from '../_lib/agents-v1/billing.js';
 import { ROUTES as SKILL_ROUTES } from '../_lib/agents-v1/routes/skills.js';
+import { buildAccountStatus } from '../_lib/account-status.js';
 import { ROUTES as ME_ROUTES } from '../_lib/agents-v1/routes/me.js';
 import { ROUTES as INTEL_ROUTES } from '../_lib/agents-v1/routes/intel.js';
 import { ROUTES as WALLET_ROUTES } from '../_lib/agents-v1/routes/wallet.js';
@@ -213,6 +214,14 @@ async function meRoute({ principal }) {
 		},
 		freeTier: await freeTierStatus(principal.userId),
 	};
+}
+
+// One-call account status: plan, limits, what is left, agents, wallet, approvals.
+// The wallet block (address and balances) needs a wallet grant; a session is the owner.
+async function meStatusRoute({ principal }) {
+	const scopes = principal.source === 'session' ? ['all'] : String(principal.scope || '').split(/\s+/);
+	const includeWallet = scopes.includes('all') || scopes.includes('wallet:read') || scopes.includes('wallet:write') || scopes.includes('wallet');
+	return buildAccountStatus(principal.userId, { includeWallet });
 }
 
 // ── route table ──────────────────────────────────────────────────────────────
@@ -365,6 +374,7 @@ export const ROUTES = [
 	...INTEL_ROUTES,
 	...WALLET_READ_ROUTES,
 	R('GET', '/me', 'me.get', null, meRoute),
+	R('GET', '/me/status', 'me.status', 'profile', meStatusRoute),
 ];
 
 export default defineRouter({ base: '/api/v1', routes: ROUTES });

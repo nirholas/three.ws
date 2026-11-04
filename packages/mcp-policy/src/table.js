@@ -439,6 +439,13 @@ export const POLICY = {
 		// rewritten or deleted by the next call.
 		execute_code: w('runs'),
 		terminal: w('runs'),
+		// Account status, dashboard links and per-agent X posting (api/_mcpagent/account-tools.js).
+		get_account_status: r('account'),
+		get_dashboard_urls: r('account'),
+		connect_twitter: w('integrations'),
+		configure_twitter_posting: w('integrations'),
+		post_to_x: w('integrations'),
+		list_scheduled_posts: r('integrations'),
 		read_file: r('runs'),
 		write_file: w('runs'),
 	},

@@ -34,6 +34,7 @@ import { mountShell } from '../shell.js';
 import { requireUser, get, post, put, del, patch, esc, relTime, ApiError } from '../api.js';
 import { emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
+import { renderAccountStatus, renderXPosting } from './settings-account-status.js';
 import { IPFS_GATEWAYS } from '../../ipfs.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -118,7 +119,7 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, grantsResp, googleResp, telegramResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp] =
+	const [sessionsResp, grantsResp, googleResp, telegramResp, notifResp, notifPrefsResp, avatarsResp, summaryResp, usageResp, prefsResp, versionResp, statusResp, xResp] =
 		await Promise.all([
 			safeGet('/api/auth/sessions'),
 			safeGet('/api/oauth/grants'),
@@ -131,6 +132,8 @@ async function loadContent(host) {
 			safeGet('/api/usage/summary'),
 			safeGet('/api/dashboard/prefs'),
 			safeGet('/api/version'),
+			safeGet('/api/v1/me/status'),
+			safeGet('/api/x/agents'),
 		]);
 
 	const prefs = prefsResp.data?.prefs || prefsResp.data || {};
@@ -142,9 +145,11 @@ async function loadContent(host) {
 
 	host.innerHTML = '';
 	host.appendChild(renderTheme());
+	host.appendChild(renderAccountStatus(statusResp, retry));
 	host.appendChild(renderSessions(sessionsResp, retry));
 	host.appendChild(renderSignInMethods(signInResp, retry));
 	host.appendChild(renderConnectedApps(grantsResp, retry));
+	host.appendChild(renderXPosting(xResp, retry));
 	host.appendChild(renderNotifications(notifResp, retry));
 	host.appendChild(renderNotificationPrefs(notifPrefsResp, retry));
 	host.appendChild(renderDefaultNetwork(prefs));
@@ -157,7 +162,7 @@ async function loadContent(host) {
 	host.appendChild(renderAbout(versionResp));
 	// The OAuth consent screen and three.ws Desktop link here to revoke an app,
 	// and the /notifications empty states link to the notification matrix.
-	if (location.hash === '#connected-apps' || location.hash === '#notification-preferences') {
+	if (location.hash === '#connected-apps' || location.hash === '#x-posting' || location.hash === '#account-status' || location.hash === '#notification-preferences') {
 		document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'start' });
 	}
 }

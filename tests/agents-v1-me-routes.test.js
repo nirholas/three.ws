@@ -21,6 +21,15 @@ describe('me routes are mounted', () => {
 	});
 });
 
+describe('GET /me/status', () => {
+	it('is mounted behind the profile scope', () => {
+		const r = REST.find((x) => x.method === 'GET' && x.path === '/me/status');
+		expect(r).toBeTruthy();
+		expect(r.scope).toBe('profile');
+		expect(r.auth).toBe('required');
+	});
+});
+
 describe('me route validation (no database needed)', () => {
 	const principal = { userId: 'u1', source: 'api_key', scope: 'profile' };
 
