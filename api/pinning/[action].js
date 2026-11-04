@@ -279,9 +279,13 @@ export default wrap(async (req, res) => {
 			if (commaIdx === -1) return error(res, 400, 'validation_error', 'invalid data: URL');
 			const meta = sourceUrl.slice(0, commaIdx);
 			const payload = sourceUrl.slice(commaIdx + 1);
-			buf = meta.includes('base64')
-				? Buffer.from(payload, 'base64')
-				: Buffer.from(decodeURIComponent(payload));
+			try {
+				buf = meta.includes('base64')
+					? Buffer.from(payload, 'base64')
+					: Buffer.from(decodeURIComponent(payload));
+			} catch {
+				return error(res, 400, 'validation_error', 'invalid data: URL (malformed percent-encoding)');
+			}
 			if (buf.byteLength > MAX_DATA_URL_BYTES) {
 				return error(
 					res,
@@ -344,27 +348,51 @@ export default wrap(async (req, res) => {
 		}
 
 		await ensurePinsTable();
-		const [usage] = await sql`
-			select coalesce(sum(byte_length), 0)::bigint as used
-			from pins
-			where user_id = ${userId} and created_at > now() - interval '24 hours'
-		`;
-		if (Number(usage?.used ?? 0) + buf.byteLength > DAILY_PIN_BYTES) {
-			return error(
-				res,
-				429,
-				'pin_quota_exceeded',
-				`daily pinning quota of ${DAILY_PIN_BYTES / (1024 * 1024)} MB reached; try again later`,
-			);
-		}
 
-		const pinned = await pinToIPFS(buf, filename);
+		// Reserve the bytes BEFORE calling the provider, then re-check the cap
+		// against a sum that includes the reservation. A read-then-pin-then-insert
+		// sequence lets N concurrent requests each read the same "used" total and
+		// all pass. With insert-first, two overlapping requests cannot both miss
+		// each other: whichever sums last sees the other's committed row, so the
+		// cap holds (at worst both are refused, never both accepted past it).
+		const [reservation] = await sql`
+			insert into pins (user_id, source_url, cid, provider, kind, byte_length)
+			values (${userId}, ${sourceUrlForRecord(sourceUrl, buf.byteLength)}, 'pending', 'pending', ${kind}, ${buf.byteLength})
+			returning id
+		`;
+		const releaseReservation = async () => {
+			if (!reservation?.id) return;
+			await sql`delete from pins where id = ${reservation.id}`.catch((err) => {
+				console.warn('[pinning] failed to release quota reservation:', err?.message);
+			});
+		};
+
+		let pinned;
+		try {
+			const [usage] = await sql`
+				select coalesce(sum(byte_length), 0)::bigint as used
+				from pins
+				where user_id = ${userId} and created_at > now() - interval '24 hours'
+			`;
+			if (Number(usage?.used ?? 0) > DAILY_PIN_BYTES) {
+				await releaseReservation();
+				return error(
+					res,
+					429,
+					'pin_quota_exceeded',
+					`daily pinning quota of ${DAILY_PIN_BYTES / (1024 * 1024)} MB reached; try again later`,
+				);
+			}
+			pinned = await pinToIPFS(buf, filename);
+		} catch (err) {
+			await releaseReservation();
+			throw err;
+		}
 		const { cid, provider } = pinned;
 
-		await sql`
-			insert into pins (user_id, source_url, cid, provider, kind, byte_length)
-			values (${userId}, ${sourceUrlForRecord(sourceUrl, buf.byteLength)}, ${cid}, ${provider}, ${kind}, ${buf.byteLength})
-		`;
+		if (reservation?.id) {
+			await sql`update pins set cid = ${cid}, provider = ${provider} where id = ${reservation.id}`;
+		}
 
 		return json(res, 200, {
 			ok: true,

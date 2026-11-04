@@ -221,13 +221,62 @@ describe('POST /api/pinning/pin', () => {
 	it('refuses a pin that would exceed the per-user daily byte quota', async () => {
 		sqlMock.mockImplementation(async (strings) => {
 			const q = Array.isArray(strings) ? strings.join('?') : '';
-			return q.includes('sum(byte_length)') ? [{ used: String(100 * 1024 * 1024) }] : [];
+			if (q.includes('insert into pins') && q.includes('returning')) return [{ id: 1 }];
+			return q.includes('sum(byte_length)') ? [{ used: String(100 * 1024 * 1024 + 1024) }] : [];
 		});
 		const res = mkRes();
 		await handler(mkReq({ body: { sourceUrl: inlineGlb(1024), kind: 'glb' } }), res);
 		sqlMock.mockImplementation(async () => []);
 		expect(res.statusCode).toBe(429);
 		expect(parse(res).error).toBe('pin_quota_exceeded');
+		expect(pinataCalls).toHaveLength(0);
+	});
+
+	it('reserves quota before pinning so concurrent requests cannot both pass the check', async () => {
+		// Two requests that each read "0 used" and then pin would together exceed
+		// the cap. The reservation row must be written BEFORE the provider call and
+		// the cap re-checked against a sum that includes it.
+		const order = [];
+		sqlMock.mockImplementation(async (strings) => {
+			const q = Array.isArray(strings) ? strings.join('?') : '';
+			if (q.includes('insert into pins')) order.push('insert');
+			if (q.includes('sum(byte_length)')) order.push('sum');
+			if (q.includes('insert into pins') && q.includes('returning')) return [{ id: 7 }];
+			if (q.includes('sum(byte_length)')) return [{ used: String(100 * 1024 * 1024 + 1024) }];
+			if (q.includes('delete from pins')) order.push('release');
+			return [];
+		});
+		const res = mkRes();
+		await handler(mkReq({ body: { sourceUrl: inlineGlb(1024), kind: 'glb' } }), res);
+		sqlMock.mockImplementation(async () => []);
+		expect(res.statusCode).toBe(429);
+		expect(parse(res).error).toBe('pin_quota_exceeded');
+		expect(pinataCalls).toHaveLength(0);
+		expect(order).toEqual(['insert', 'sum', 'release']);
+	});
+
+	it('releases the reservation when the provider pin fails', async () => {
+		const queries = [];
+		sqlMock.mockImplementation(async (strings) => {
+			const q = Array.isArray(strings) ? strings.join('?') : '';
+			queries.push(q);
+			if (q.includes('insert into pins') && q.includes('returning')) return [{ id: 9 }];
+			if (q.includes('sum(byte_length)')) return [{ used: '1024' }];
+			return [];
+		});
+		globalThis.fetch = vi.fn(async () => new Response('boom', { status: 500 }));
+		const res = mkRes();
+		await handler(mkReq({ body: { sourceUrl: inlineGlb(1024), kind: 'glb' } }), res);
+		sqlMock.mockImplementation(async () => []);
+		expect(res.statusCode).toBeGreaterThanOrEqual(500);
+		expect(queries.some((q) => q.includes('delete from pins'))).toBe(true);
+	});
+
+	it('answers 400, not 500, for a malformed percent-encoded data: URL', async () => {
+		const res = mkRes();
+		await handler(mkReq({ body: { sourceUrl: 'data:application/json,%E0%A4%A', kind: 'manifest' } }), res);
+		expect(res.statusCode).toBe(400);
+		expect(parse(res).error).toBe('validation_error');
 		expect(pinataCalls).toHaveLength(0);
 	});
 
