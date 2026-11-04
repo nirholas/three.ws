@@ -25,7 +25,7 @@ huggingface_hub==0.36.2
 
 torch>=2.3.0
 trimesh>=4.4.0
-Pillow==12.3.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
+Pillow==13.0.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
 
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0
