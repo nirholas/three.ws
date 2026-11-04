@@ -5841,6 +5841,10 @@
 			"dest": "/settings/mcp-tools/index.html"
 		},
 		{
+			"src": "/settings/memory/?",
+			"dest": "/settings-memory.html"
+		},
+		{
 			"src": "/settings/(.*)",
 			"dest": "/settings/index.html"
 		},
