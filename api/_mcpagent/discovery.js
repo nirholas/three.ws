@@ -26,7 +26,7 @@ export const RESOURCE_DESCRIPTION =
 	'get_listing, get_marketplace_history, preview_marketplace_action, create_marketplace_listing, ' +
 	'delist_marketplace_listing, place_bid, buy_now, get_my_bids, get_received_bids, ' +
 	'accept_marketplace_bid, reject_marketplace_bid, withdraw_marketplace_bid, get_agent_transfer and ' +
-	'resume_agent_transfer. Prediction markets settled in USDC on Solana: predictions_events, ' +
+	'resume_agent_transfer. A human-task escrow board (real-world jobs paid in USDC from escrow on Solana): human_task_list, human_task_status, human_task_quote, human_task_post, human_task_approve_preview, human_task_approve, human_task_cancel and human_task_dispute. Prediction markets settled in USDC on Solana: predictions_events, ' +
 	'predictions_event, predictions_positions, predictions_open_preview, predictions_open, ' +
 	'predictions_close_preview, predictions_close, predictions_redeem_preview, predictions_redeem and ' +
 	'predictions_watch. Perpetual futures with USDC collateral on Solana, paper or live: perps_markets, ' +

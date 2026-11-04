@@ -570,6 +570,16 @@ export const POLICY = {
 		cancel_payment_session: f('x402', 'confirm_delete', 'check_payment_session', ['session_id']),
 	},
 	'agora-mcp': {
+		// Human-task escrow marketplace (api/_mcpagent/human-task-tools.js). The
+		// service verifies each quote and preview itself.
+		human_task_list: r('marketplace'),
+		human_task_status: r('marketplace'),
+		human_task_quote: r('marketplace'),
+		human_task_post: own('marketplace', 'confirm_spend', 'human_task_quote'),
+		human_task_approve_preview: w('marketplace'),
+		human_task_approve: own('marketplace', 'confirm_release', 'human_task_approve_preview'),
+		human_task_cancel: own('marketplace', 'confirm_cancel', 'human_task_status'),
+		human_task_dispute: w('marketplace'),
 		agora_board: r('marketplace'),
 		agora_pulse: r('marketplace'),
 		agora_citizens: r('marketplace'),

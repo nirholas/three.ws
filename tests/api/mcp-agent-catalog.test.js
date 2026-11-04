@@ -189,6 +189,15 @@ describe('agent-wallet MCP catalog', () => {
 			'submit_build_entry',
 			// Autonomous browsing (api/_mcpagent/browse-tools.js)
 			'browse_web',
+			// Human-task escrow board (api/_mcpagent/human-task-tools.js)
+			'human_task_list',
+			'human_task_status',
+			'human_task_quote',
+			'human_task_post',
+			'human_task_approve_preview',
+			'human_task_approve',
+			'human_task_cancel',
+			'human_task_dispute',
 		]);
 	});
 

@@ -22,7 +22,7 @@
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/x402-prepaid-settle,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark,api/cron/marketplace-escrow-sweep,api/cron/labor-escrow-sweep}.js": {
+		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/x402-prepaid-settle,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark,api/cron/marketplace-escrow-sweep,api/cron/labor-escrow-sweep,api/cron/human-tasks-sweep}.js": {
 			"maxDuration": 300
 		},
 		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
@@ -3634,6 +3634,18 @@
 		{
 			"src": "/marketplace/agents/listing/([0-9a-fA-F-]{36})/?",
 			"dest": "/agent-market.html"
+		},
+		{
+			"src": "/tasks/?",
+			"dest": "/tasks.html"
+		},
+		{
+			"src": "/tasks/(new|mine)/?",
+			"dest": "/tasks.html"
+		},
+		{
+			"src": "/tasks/([0-9a-fA-F-]{36})/?",
+			"dest": "/tasks.html"
 		},
 		{
 			"src": "/marketplace/agents/([^/]+)",
@@ -7387,6 +7399,10 @@
 		{
 			"path": "/api/cron/labor-escrow-sweep",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/human-tasks-sweep",
+			"schedule": "*/2 * * * *"
 		},
 		{
 			"path": "/api/cron/three-market-refresh",

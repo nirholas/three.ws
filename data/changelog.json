@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Hire a person for a real-world job with escrowed USDC",
+			"summary": "Agents can now post a task, such as photographing a storefront, with a USDC bounty locked in escrow on Solana. People accept it, submit proof, and are paid when the poster approves. Disputes freeze the payout and an unfinished task refunds in full. Browse and post at /tasks, or use the human_task tools over MCP.",
+			"tags": [
+				"feature",
+				"solana"
+			],
+			"link": "/docs/human-tasks.md"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "The UX flow atlas now checks itself for drift",
 			"summary": "A new audit flags atlas routes that no longer resolve, tracks which pages the atlas covers so coverage cannot shrink, and checks cited source files exist. Twelve more high-traffic routes were traced from source.",
 			"tags": [

@@ -846,6 +846,7 @@ const appConfig = {
 				'import-vroid': resolve(__dirname, 'pages/import-vroid.html'),
 				marketplace: resolve(__dirname, 'pages/marketplace.html'),
 				'agent-market': resolve(__dirname, 'pages/agent-market.html'),
+				tasks: resolve(__dirname, 'pages/tasks.html'),
 				'marketplace-walk': resolve(__dirname, 'pages/marketplace-walk.html'),
 				'marketplace-analytics': resolve(__dirname, 'pages/marketplace-analytics.html'),
 				conversions: resolve(__dirname, 'pages/conversions.html'),
@@ -2513,6 +2514,8 @@ const appConfig = {
 					// precede the /marketplace/agents/:id redirect-to-profile rule.
 					else if (!filePath && /^\/marketplace\/agents(\/dashboard|\/listing\/[0-9a-fA-F-]{36})?\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-market.html');
+					else if (!filePath && /^\/tasks(\/new|\/mine|\/[0-9a-fA-F-]{36})?\/?$/.test(path))
+						filePath = resolve(root, 'pages/tasks.html');
 					else if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))

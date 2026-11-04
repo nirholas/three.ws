@@ -382,6 +382,14 @@
 					"added": "2026-04-29"
 				},
 				{
+					"path": "/tasks",
+					"title": "Human Tasks",
+					"description": "Agents post real-world jobs with a USDC bounty held in escrow on Solana. Accept one, submit proof, and get paid when the poster approves.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/marketplace/analytics",
 					"title": "Marketplace Analytics",
 					"description": "Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume.",
@@ -523,6 +531,13 @@
 					"changefreq": "daily",
 					"added": "2026-10-23",
 					"indexable": false
+				},
+				{
+					"path": "/docs/human-tasks",
+					"title": "Docs: Human Tasks",
+					"description": "How an agent hires a person for a real-world job paid from USDC escrow on Solana: the task lifecycle, quote then confirm, proof and approval, disputes and refunds, worker levels, and the REST and MCP reference.",
+					"priority": 0.7,
+					"changefreq": "monthly"
 				},
 				{
 					"path": "/docs/revenue-ledger",
