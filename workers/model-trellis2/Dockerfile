@@ -75,6 +75,9 @@ RUN pip install \
 RUN pip install xformers==0.0.29.post2 --index-url https://download.pytorch.org/whl/cu124
 
 # 4. Compiled CUDA extensions (setup.sh --nvdiffrast --cumesh --flexgemm --o-voxel).
+# MAX_JOBS caps ninja's parallel nvcc processes. Uncapped, ninja runs one per core
+# (34 on E2_HIGHCPU_32) and CuMesh's atlas.cu alone needs gigabytes per process,
+# so the 32 GB build machine OOM-killed the compile (exit 137, 2026-11-04).
 # --no-build-isolation is REQUIRED: each setup.py imports torch at build time and
 # PEP517 isolation hides the torch from step 1.
 # TRELLIS.2 is pinned to a commit: a moving `main` has broken a worker rebuild
@@ -82,6 +85,7 @@ RUN pip install xformers==0.0.29.post2 --index-url https://download.pytorch.org/
 RUN git clone --recursive https://github.com/microsoft/TRELLIS.2.git /app/TRELLIS.2 \
     && git -C /app/TRELLIS.2 checkout 75fbf0183001ed9876c8dbb35de6b68552ee08bd \
     && git -C /app/TRELLIS.2 submodule update --init --recursive
+ENV MAX_JOBS=8
 RUN git clone -b v0.4.0 --depth 1 https://github.com/NVlabs/nvdiffrast.git /tmp/ext/nvdiffrast \
     && pip install --no-build-isolation /tmp/ext/nvdiffrast
 RUN git clone --recursive https://github.com/JeffreyXiang/CuMesh.git /tmp/ext/CuMesh \
