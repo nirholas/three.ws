@@ -114,3 +114,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 766-plan-play-generative-npc-loop.md (kept) | 12969cead | Citizen memory stream, reflection and planning loop shipped with passport mind panel.
 2026-11-04 | 767-plan-play-war-results-ticker-jumbotron.md | de8dd176e | Finished coin wars echo into the activity ticker and jumbotron.
 2026-11-04 | 777-plan-onchain-deploy-wallet-flow-e2e.md | see git log | Deploy and token-launch button Playwright specs on devnet (12 tests, 3 clean runs) and a double-click deploy guard; order file deleted.
+2026-11-04 | 731 | 242be8471 | diorama microgames shipped and e2e-verified locally; owner: live compose-with-goal check on the deployed API, device touch check, deploy

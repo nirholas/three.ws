@@ -1,5 +1,8 @@
 # Turn a diorama sentence into a shareable microgame with win conditions, spawn rules and the walk controller
 
+Status (2026-11-04): built and committed (242be8471): goal schema and rules, compose prompt and server mapping, renderer play hooks, play mode (keys, touch pad, tap-to-move, HUD, win/lose cards, retry on avatar load failure), `?play=1` permalink and Share as a game. Verified: vitest (29 tests) and the Playwright spec (win path, locked Start while goal objects forge, Escape exit) in real Chromium with the real walk avatar. Remaining, owner or live-stack: (1) compose a real prompt with a goal against the production composer and forge on the free lane (needs the deployed API, not available locally), (2) play-to-timeout and 390x844 touch checks on a real device, (3) deploy. No dynamic OG card exists for dioramas, so the "Play this world" card text was not added.
+
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/731-plan-diorama-text-to-microgame-win-rules.md`.
 
 **Priority:** P2, new capability with clear value (score 52 of 100 inside the tier). **Area:** diorama. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
