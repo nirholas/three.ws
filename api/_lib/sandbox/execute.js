@@ -35,7 +35,7 @@ import {
 	recordRunTotals,
 	setExecutionCost,
 } from './store.js';
-import { WorkspaceQuotaError, assertWorkspaceQuota, workspaceStore } from './workspace.js';
+import { WorkspaceQuotaError, assertRunId, assertWorkspaceQuota, workspaceStore } from './workspace.js';
 
 export const MAX_CODE_BYTES = 200 * 1024;
 export const MAX_COMMAND_BYTES = 20 * 1024;
@@ -126,6 +126,7 @@ export function fileUrl(runId, p) {
  */
 export async function executeInSandbox({ userId, agentId = null, runId, title = null, job: rawJob, files: rawFiles = [], timeoutSeconds, toolsAllowed = null, onOutput = null, signal = null }) {
 	if (!userId) throw new SandboxError(401, 'unauthorized', 'code execution needs a signed-in account');
+	assertRunId(runId);
 	const job = normalizeJob(rawJob);
 	const inputFiles = decodeInputFiles(rawFiles);
 	const [plan, settings, existing] = await Promise.all([getUserPlan(userId), getSandboxSettings(userId), getSandboxRun(runId)]);
@@ -329,6 +330,7 @@ export async function readWorkspaceFile({ userId, runId, path: p, maxBytes = 256
 
 /** Write one workspace file for a tool call, under the plan quota. */
 export async function writeWorkspaceFile({ userId, agentId = null, runId, title = null, path: p, content, contentBase64 = null }) {
+	assertRunId(runId);
 	const [file] = decodeInputFiles([{ path: p, ...(contentBase64 != null ? { content_base64: contentBase64 } : { content }) }]);
 	const [plan, settings, existing] = await Promise.all([getUserPlan(userId), getSandboxSettings(userId), getSandboxRun(runId)]);
 	if (existing && String(existing.user_id) !== String(userId)) throw new SandboxError(403, 'forbidden', 'this run belongs to another account');

@@ -424,6 +424,14 @@ export const POLICY = {
 		remove_integration: f('integrations', 'confirm_delete', 'list_integrations', ['agent_id', 'connection_id']),
 		// Agent learning loop status (api/_mcpagent/learning-tools.js). Read only.
 		get_learning_status: r('agents'),
+		// Sandboxed code execution (api/_mcpagent/sandbox-tools.js). Write tier:
+		// the program runs isolated with no network and cannot move funds (the
+		// bridge refuses every financial tool), and a workspace file can be
+		// rewritten or deleted by the next call.
+		execute_code: w('runs'),
+		terminal: w('runs'),
+		read_file: r('runs'),
+		write_file: w('runs'),
 	},
 
 	// /api/mcp-3d

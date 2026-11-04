@@ -34,6 +34,11 @@ vi.mock('../api/_lib/agent-tools.js', () => ({
 	],
 	agentToolHandlers: () => ({ token_price: (...a) => priceHandler(...a) }),
 }));
+// The sandbox tools are offered only to a signed-in agent owner; these
+// requests are anonymous, so the module's real credit/plan imports stay out.
+vi.mock('../api/_lib/sandbox/toolset.js', () => ({
+	sandboxToolset: () => ({ schemas: [], handlers: {}, note: '', names: [] }),
+}));
 
 const { default: runHandler } = await import('../api/agent/run.js');
 

@@ -24,6 +24,7 @@ import { apiError } from './http.js';
 import { resolveAgentBrain } from '../agent-brain.js';
 import { isFreeLane } from '../llm-pricing.js';
 import { agentToolSchemas, agentToolHandlers } from '../agent-tools.js';
+import { SANDBOX_TOOL_NAMES, sandboxToolset } from '../sandbox/toolset.js';
 import { debitCredits } from '../credits.js';
 import { assertAgentBudget, InferenceBillingError } from '../inference-billing.js';
 import { settleTokenUsage } from '../token-budgets.js';
@@ -135,7 +136,7 @@ export async function createRun({
 	const usd = Math.max(0, Number(budgetUsd) || 0);
 
 	if (toolsAllowed != null) {
-		const known = new Set(agentToolSchemas().map((t) => t.function.name));
+		const known = new Set([...agentToolSchemas().map((t) => t.function.name), ...SANDBOX_TOOL_NAMES]);
 		const unknown = toolsAllowed.filter((t) => !known.has(t));
 		if (unknown.length) throw apiError(400, 'unknown_tool', `Unknown tool(s): ${unknown.join(', ')}.`, { known: [...known] });
 	}
@@ -301,12 +302,13 @@ async function acquireLease(runId, owner) {
 }
 
 /** The system prompt a run speaks with; a replay rebuilds it for a run that never checkpointed. */
-export async function agentSystemPrompt(agentId) {
+export async function agentSystemPrompt(agentId, { extraNotes = [] } = {}) {
 	const [a] = await sql`SELECT name, description, persona_prompt FROM agent_identities WHERE id = ${agentId} LIMIT 1`;
 	const parts = [`You are ${a?.name || 'a three.ws agent'}, running an autonomous task on three.ws.`];
 	if (a?.persona_prompt) parts.push(String(a.persona_prompt).slice(0, 4000));
 	else if (a?.description) parts.push(String(a.description).slice(0, 1000));
 	parts.push(AGENT_SYSTEM_NOTE);
+	for (const note of extraNotes) if (note) parts.push(note);
 	parts.push('Work the goal step by step. When you are done, answer with a concise report of what you found, what you produced, and what the human must do next.');
 	return parts.join('\n\n');
 }
@@ -328,7 +330,17 @@ function toolsFor(run) {
 	const schemas = agentToolSchemas().filter((s) => !allow || allow.has(s.function.name));
 	const all = agentToolHandlers();
 	const handlers = Object.fromEntries(schemas.map((s) => [s.function.name, all[s.function.name]]));
-	return { schemas, handlers };
+	// Code execution, keyed by the run so its workspace and terminal persist
+	// across steps; scripts may call over the bridge only what the run allows.
+	const sandbox = sandboxToolset({
+		userId: run.user_id,
+		agentId: run.agent_id,
+		runId: run.id,
+		title: String(run.goal || '').slice(0, 200),
+		toolsAllowed: allow ? [...allow] : null,
+		allow,
+	});
+	return { schemas: [...schemas, ...sandbox.schemas], handlers: { ...handlers, ...sandbox.handlers }, note: sandbox.note };
 }
 
 /**
@@ -360,7 +372,7 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 	}
 
 	const events = [];
-	const { schemas, handlers } = toolsFor(run);
+	const { schemas, handlers, note: sandboxNote } = toolsFor(run);
 	const loop = createAgentLoop({
 		chain,
 		toolSchemas: schemas,
@@ -377,7 +389,7 @@ export async function stepRun(runId, { owner = `step:${randomUUID()}` } = {}) {
 			operationId: run.id,
 			maxSteps: run.max_steps * RUNTIME_STEPS_PER_STEP,
 			messages: [
-				{ role: 'system', content: await agentSystemPrompt(run.agent_id) },
+				{ role: 'system', content: await agentSystemPrompt(run.agent_id, { extraNotes: [sandboxNote] }) },
 				{ role: 'user', content: run.goal },
 			],
 		});

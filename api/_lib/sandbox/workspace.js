@@ -24,10 +24,17 @@ import { contentTypeFor, normalizeWorkspacePath } from './paths.js';
 const GCS_API = 'https://storage.googleapis.com/storage/v1';
 const GCS_UPLOAD = 'https://storage.googleapis.com/upload/storage/v1';
 
-function runPrefix(runId) {
+/** A run id usable as a storage prefix: agent_runs uuids, chat completion ids, MCP workspace ids. */
+export const RUN_ID_RE = /^[A-Za-z0-9_-]{6,80}$/;
+
+export function assertRunId(runId) {
 	const id = String(runId || '');
-	if (!/^[A-Za-z0-9_-]{6,80}$/.test(id)) throw Object.assign(new Error('invalid run id'), { status: 400, code: 'bad_run', expose: true });
-	return `runs/${id}/`;
+	if (!RUN_ID_RE.test(id)) throw Object.assign(new Error('invalid run id'), { status: 400, code: 'bad_run', expose: true });
+	return id;
+}
+
+function runPrefix(runId) {
+	return `runs/${assertRunId(runId)}/`;
 }
 
 async function gcsFetch(url, init = {}) {

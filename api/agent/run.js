@@ -35,6 +35,7 @@ import { providerChain } from '../_lib/llm-tool-chain.js';
 import { agentToolSchemas, agentToolHandlers } from '../_lib/agent-tools.js';
 import { installedCandidateTools } from '../_lib/skill-candidates.js';
 import { mountExternalTools } from '../_lib/mcp-connections/runtime.js';
+import { sandboxToolset } from '../_lib/sandbox/toolset.js';
 import {
 	AGENT_SYSTEM_NOTE,
 	createAgentLoop,
@@ -48,6 +49,7 @@ export const AGENT_MODEL_ID = 'three-ws/agent';
 const MAX_TOOL_ROUNDS = 4;
 const MAX_MESSAGES = 40;
 const MAX_BODY_BYTES = 512_000;
+const SANDBOX_RUN_RE = /^[A-Za-z0-9_-]{8,80}$/;
 
 function sanitizeMessages(raw) {
 	if (!Array.isArray(raw)) return null;
@@ -191,6 +193,16 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		: { schemas: [], handlers: {}, note: '' };
 	if (external.note) messages.splice(sysIdx + 1, 0, { role: 'system', content: external.note });
 
+	// Code execution (docs/agent-sandbox.md), for a signed-in owner on a server
+	// with a sandbox backend. The workspace is keyed by this completion unless
+	// the client continues an earlier one with `sandbox_run`; the store checks
+	// the run belongs to this account before anything runs in it.
+	const sandboxRun = typeof body?.sandbox_run === 'string' && SANDBOX_RUN_RE.test(body.sandbox_run) ? body.sandbox_run : completionId;
+	const sandbox = binding
+		? sandboxToolset({ userId: binding.userId, agentId: binding.agentId, runId: sandboxRun, title: goal })
+		: { schemas: [], handlers: {}, note: '' };
+	if (sandbox.note) messages.splice(sysIdx + 1, 0, { role: 'system', content: sandbox.note });
+
 	const stream = body?.stream !== false;
 
 	let sseOpen = false;
@@ -207,14 +219,15 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 	};
 
 	let streamedAny = false;
+	let usedSandbox = false;
 	const toolTrace = [];
 	// Platform cost rides along (null when any round hit an unpriced lane) so a
 	// metered caller can record honest spend next to what it billed.
 	const usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0, estimated: false, cost_micro_usd: 0, lanes: [] };
 	const loop = createAgentLoop({
 		chain,
-		toolSchemas: [...agentToolSchemas(), ...(learning?.schemas || []), ...learnedSkills.schemas, ...external.schemas],
-		toolHandlers: { ...agentToolHandlers(), ...(learning?.handlers || {}), ...learnedSkills.handlers, ...external.handlers },
+		toolSchemas: [...agentToolSchemas(), ...(learning?.schemas || []), ...learnedSkills.schemas, ...external.schemas, ...sandbox.schemas],
+		toolHandlers: { ...agentToolHandlers(), ...(learning?.handlers || {}), ...learnedSkills.handlers, ...external.handlers, ...sandbox.handlers },
 		maxToolRounds: MAX_TOOL_ROUNDS,
 		onContent: (delta) => {
 			streamedAny = true;
@@ -235,6 +248,11 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 			}
 			if (event.kind === 'tool_call' || event.kind === 'tool_blocked') toolTrace.push({ kind: event.kind, tool: event.tool, input: event.args });
 			if (stream && event.kind === 'tool_call') sse(`: tool ${event.tool}\n\n`);
+			// The workspace id rides along once, so the client can continue it next turn (`sandbox_run`).
+			if (event.kind === 'tool_call' && sandbox.handlers[event.tool] && !usedSandbox) {
+				usedSandbox = true;
+				if (stream) sse(`: sandbox ${sandboxRun}\n\n`);
+			}
 		},
 	});
 
@@ -315,6 +333,7 @@ export async function runAgentCompletion(req, res, body, opts = {}) {
 		],
 		usage: openAiUsage,
 		...(billed ? { billing: billed } : {}),
+		...(usedSandbox ? { sandbox_run: sandboxRun } : {}),
 	});
 }
 
