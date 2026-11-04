@@ -9,14 +9,16 @@
 // is exactly why this is centralized rather than repeated per call site.
 //
 // The mint account's owner is canonical and fixed for the life of the mint, so the
-// lookup is memoized per process. resolveTokenProgramForMintOwner does the
-// classification (and throws a typed 422 for a non-SPL owner).
+// lookup is memoized per process in the one cache every payment builder shares
+// (api/_lib/solana-token-program.js, which also seeds USDC and $THREE).
+// resolveTokenProgramForMintOwner does the classification (and throws a typed
+// 422 for a non-SPL owner); this variant adds the typed 503 for an unreadable
+// chain, for callers that answer HTTP directly.
 
 import { PublicKey } from '@solana/web3.js';
 import { readAccountInfoOrNull, rpcUnavailableError } from '../solana/read-guards.js';
 import { resolveTokenProgramForMintOwner } from '../pump-trade-args.js';
-
-const cache = new Map();
+import { knownTokenProgramForMint, seedTokenProgramForMint } from '../solana-token-program.js';
 
 /**
  * @param {import('@solana/web3.js').Connection} connection
@@ -27,7 +29,7 @@ const cache = new Map();
 export async function tokenProgramIdForMint(connection, mint) {
 	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
 	const key = mintPk.toBase58();
-	const cached = cache.get(key);
+	const cached = knownTokenProgramForMint(key);
 	if (cached) return cached;
 
 	// An unreadable chain is NOT a missing mint. Reporting it as 422
@@ -44,7 +46,5 @@ export async function tokenProgramIdForMint(connection, mint) {
 		throw e;
 	}
 
-	const programId = resolveTokenProgramForMintOwner(info.owner);
-	cache.set(key, programId);
-	return programId;
+	return seedTokenProgramForMint(key, resolveTokenProgramForMintOwner(info.owner));
 }
