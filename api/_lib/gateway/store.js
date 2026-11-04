@@ -286,8 +286,9 @@ export async function renewInboxLease(id, leaseSeconds = 120) {
 	return rows.length > 0;
 }
 
-export async function completeInbox(id) {
-	await sql`UPDATE gateway_inbox SET status = 'done', finished_at = now(), locked_until = NULL WHERE id = ${id}`;
+/** Mark a delivery handled. `note` records why it closed without a normal answer (an aged-out backlog row). */
+export async function completeInbox(id, note = null) {
+	await sql`UPDATE gateway_inbox SET status = 'done', finished_at = now(), locked_until = NULL, last_error = COALESCE(${note}, last_error) WHERE id = ${id}`;
 }
 
 /**
@@ -324,6 +325,25 @@ export async function requeueInbox(id) {
 		WHERE id = ${id} AND status = 'failed'
 		RETURNING id, platform, chat_key`;
 	return row || null;
+}
+
+/**
+ * Close every inbound delivery of one chat that has waited longer than
+ * `olderThanSeconds` (the backlog left while no worker ran), except `exceptId`,
+ * the row the caller is answering for all of them. Notification and approval
+ * rows keep their own expiry and are left alone. Returns how many were closed.
+ */
+export async function ageOutChatInbox({ chatKey, olderThanSeconds, exceptId, note = 'aged_out' }) {
+	const rows = await sql`
+		UPDATE gateway_inbox
+		SET status = 'done', finished_at = now(), locked_until = NULL, last_error = ${String(note).slice(0, 500)}
+		WHERE chat_key = ${String(chatKey)}
+		  AND id <> ${exceptId}
+		  AND status = 'queued'
+		  AND created_at < now() - make_interval(secs => ${olderThanSeconds})
+		  AND COALESCE(payload->>'kind', '') NOT IN ('notify', 'approval')
+		RETURNING id`;
+	return rows.length;
 }
 
 export async function pruneInbox({ keepDays = 7 } = {}) {

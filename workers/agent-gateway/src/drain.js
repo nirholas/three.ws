@@ -27,6 +27,10 @@ const DELIVERY_METHODS = ['sendText', 'sendChoice', 'sendMedia', 'sendVoice', 'e
 const EXPIRED_PREVIEW_LINE = 'Expired. Ask your agent again for a fresh quote.';
 const APOLOGY = 'Something went wrong on our side while answering that. Please send it again in a minute.';
 const PRUNE_EVERY_MS = 60 * 60 * 1000;
+// Sent once per chat in place of answering a backlog that waited longer than
+// GATEWAY_BACKLOG_TTL_SECONDS (the worker was not running). Answering a stale
+// "/balance" or a day-old question as if it just arrived would be wrong.
+export const OFFLINE_REPLY = 'Sorry, I was offline when you sent this and missed it. I am back now: send it again and I will answer.';
 
 class TurnTimeout extends Error {
 	constructor(ms) {
@@ -90,6 +94,7 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 		approvalsSent: 0,
 		approvalsSkipped: 0,
 		previewsExpired: 0,
+		agedOut: 0,
 	};
 	let stopping = false;
 	let wakeUp = null;
@@ -157,6 +162,36 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 		stats.approvalsSent += 1;
 	}
 
+	function isStale(row) {
+		const ttl = config.backlogTtlSeconds;
+		if (!ttl || !row.created_at) return false;
+		const at = new Date(row.created_at).getTime();
+		return Number.isFinite(at) && Date.now() - at > ttl * 1000;
+	}
+
+	/**
+	 * The backlog policy for one stale inbound row: close it and every other
+	 * stale row of its chat, and tell the chat once that it was missed. Only a
+	 * chat that was actually talking to the bot hears it (a private chat, a
+	 * command, a button press); group chatter is closed in silence, and a
+	 * forwarded message never gets a reply.
+	 */
+	async function ageOut(row, adapter, event) {
+		const ageSeconds = Math.round((Date.now() - new Date(row.created_at).getTime()) / 1000);
+		const note = `aged_out: waited ${ageSeconds}s, over the ${config.backlogTtlSeconds}s backlog TTL`;
+		const closed = await store.ageOutChatInbox({ chatKey: row.chat_key, olderThanSeconds: config.backlogTtlSeconds, exceptId: row.id, note });
+		row.note = note;
+		stats.agedOut += 1 + closed;
+		const addressed = !event.forwarded
+			&& (event.chatType === 'private' || event.chatType === 'dm' || Boolean(event.command || event.action || event.approvalAction));
+		log.info('stale backlog aged out', { id: row.id, platform: row.platform, ageSeconds, alsoClosed: closed, replied: addressed });
+		if (!addressed) return;
+		const { gw, counter } = trackDeliveries(adapter.gateway(event));
+		row.counter = counter;
+		await gw.sendText(String(event.chatId), OFFLINE_REPLY);
+		if (typeof adapter.finish === 'function') await adapter.finish(event, gw, counter);
+	}
+
 	async function runEvent(row, adapter) {
 		const event = adapter.normalize(row.payload);
 		if (!event) {
@@ -164,6 +199,7 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 			log.info('row ignored: nothing to handle', { id: row.id, platform: row.platform });
 			return;
 		}
+		if (isStale(row)) return ageOut(row, adapter, event);
 		const { gw, counter } = trackDeliveries(adapter.gateway(event));
 		row.counter = counter;
 		row.event = event;
@@ -203,7 +239,7 @@ export function createDrainer({ adapters, config, store = inboxStore, defaultHan
 				: kind === 'approval' ? deliverApprovalRequest(row, adapter)
 					: runEvent(row, adapter);
 			await withTimeout(work, config.turnTimeoutMs);
-			await store.completeInbox(row.id);
+			await store.completeInbox(row.id, row.note);
 			stats.completed += 1;
 			log.info('row done', { id: row.id, platform: row.platform, ms: Date.now() - started, delivered: row.counter?.delivered ?? 0 });
 		} catch (err) {

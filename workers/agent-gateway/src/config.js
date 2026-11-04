@@ -27,6 +27,7 @@ function list(env, name) {
  * @property {number} sweepMs         preview expiry sweep and inbox prune interval
  * @property {number} pruneKeepDays   finished rows older than this are deleted
  * @property {number} shutdownGraceMs how long SIGTERM waits for in-flight rows
+ * @property {number} backlogTtlSeconds  an inbound delivery older than this gets one "I was offline" reply per chat instead of an answer (0 answers everything)
  * @property {string[]|null} platforms   restrict the adapters that load (default: every configured one)
  * @property {string[]|null} chatKeys    drain only these chats (debugging one chat)
  * @property {boolean} telegramPolling   pull Telegram updates with getUpdates instead of the webhook (local development)
@@ -47,6 +48,7 @@ export function loadConfig(env = process.env) {
 		sweepMs: int(env, 'GATEWAY_SWEEP_MS', 60_000, { min: 1000 }),
 		pruneKeepDays: int(env, 'GATEWAY_PRUNE_KEEP_DAYS', 7, { min: 1 }),
 		shutdownGraceMs: int(env, 'GATEWAY_SHUTDOWN_GRACE_MS', 8000, { min: 0 }),
+		backlogTtlSeconds: int(env, 'GATEWAY_BACKLOG_TTL_SECONDS', 21_600, { min: 0 }),
 		platforms: list(env, 'GATEWAY_PLATFORMS'),
 		chatKeys: list(env, 'GATEWAY_CHAT_KEYS'),
 		telegramPolling: env.GATEWAY_TELEGRAM_POLLING === '1',
