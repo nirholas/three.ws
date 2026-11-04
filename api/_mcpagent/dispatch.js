@@ -40,6 +40,7 @@ const INSTRUCTIONS = [
 	'Portfolio: get_portfolio values an agent wallet (SOL and SPL, FIFO cost basis, risk flags),',
 	'get_balance_history reads its hourly snapshots and get_pnl splits realized and unrealized P&L by source.',
 	'get_private_wallet_balance reads the owner\'s own linked wallet and get_wallet_summaries totals every wallet on the account.',
+	'get_learning_status says whether agent memory is on, what it holds and which learned skills wait for review; changes happen on /settings/memory.',
 	'Launch sniper: sniper_status reads strategies; sniper_activate spends SOL on new launches, so call',
 	'sniper_activate_preview, show its table (recipient, amount, asset, chain), wait for a clear yes, then',
 	'call it with confirm_spend: true and the preview_id. sniper_deactivate disarms at once. sniper_subscribe',

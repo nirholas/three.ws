@@ -177,6 +177,8 @@ describe('agent-wallet MCP catalog', () => {
 			'list_integrations',
 			'install_integration',
 			'remove_integration',
+			// Agent learning loop status (api/_mcpagent/learning-tools.js)
+			'get_learning_status',
 		]);
 	});
 

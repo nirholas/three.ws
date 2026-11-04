@@ -346,3 +346,20 @@ export async function ownerEditSkill({ agentId, userId, skillId, name, descripti
 	const version = await recordVersion({ skill: updated, author: 'owner', note });
 	return { skill: updated, version };
 }
+
+/**
+ * Account-wide tally of skills learned from experience on the caller's live
+ * agents: how many drafts still wait for the owner's review, how many are
+ * enabled, and the total. Feeds the learning-status read tool.
+ */
+export async function learnedSkillCounts(userId) {
+	const [row] = await sql`
+		SELECT count(*) FILTER (WHERE s.reviewed_at IS NULL)::int AS awaiting_review,
+		       count(*) FILTER (WHERE s.enabled)::int AS enabled,
+		       count(*)::int AS total
+		FROM agent_custom_skills s
+		JOIN agent_identities a ON a.id = s.agent_id
+		WHERE a.user_id = ${userId} AND a.deleted_at IS NULL AND s.source = 'experience'
+	`;
+	return { awaiting_review: row?.awaiting_review ?? 0, enabled: row?.enabled ?? 0, total: row?.total ?? 0 };
+}
