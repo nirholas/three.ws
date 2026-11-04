@@ -6,7 +6,7 @@
 // or a signed-in session), per-route scopes, the `{ data, meta }` envelope, the
 // error table, rate limits, metering and Idempotency-Key replay on writes.
 // vercel.json rewrites /api/v1/{agents,runs,automations,webhooks,skills,
-// strategies,me} here; UUID agent ids only, so the CAIP-10 resolver at
+// strategies,me,intel} here; UUID agent ids only, so the CAIP-10 resolver at
 // api/v1/agents/[...caip].js and /api/v1/agents/{signup,claim} keep their paths.
 //
 //   Agents        GET/POST /agents · GET/PATCH/DELETE /agents/:id
@@ -21,10 +21,14 @@
 //   Webhooks      GET /webhooks/events · GET/POST /webhooks · GET/PATCH/DELETE /webhooks/:id
 //                 POST /webhooks/:id/{rotate-secret,test} · GET /webhooks/:id/deliveries
 //                 GET /webhooks/deliveries/:id · POST /webhooks/deliveries/:id/replay
-//   Account       GET /me
+//   Account       GET /me · GET /me/{usage,budget,transactions} · GET/PUT/DELETE /me/integrations[/:provider]
+//                 POST /me/link-code[/redeem]   (api/_lib/agents-v1/routes/me.js)
+//   Intel         GET /intel/{price,top-movers,indicators,signals,anomalies,macro}
+//   Wallet        GET /agents/:id/wallet[/history]   (read only, scope wallet:read)
 //
-// The models list stays at GET /api/v1/models (api/v1/models.js). Wallet and
-// swap routes move funds and are not mounted here. The vercel.json rewrite
+// The models list stays at GET /api/v1/models (api/v1/models.js). Wallet transfers
+// and swap execution move funds and are not mounted here; only the read side of
+// the wallet is. Swap quotes live at POST /api/v1/trading/swap/quote. The vercel.json rewrite
 // sends only the agent sub-resources listed above to this file, so
 // /agents/:id/{loop,predictions,perps,cards,mail} keep their own handlers.
 // Reference: docs/api-reference.md "Agents API (v1)".
@@ -62,6 +66,9 @@ import {
 import { getStrategy, listStrategies } from '../_lib/agents-v1/strategies.js';
 import { freeTierStatus } from '../_lib/agents-v1/billing.js';
 import { ROUTES as SKILL_ROUTES } from '../_lib/agents-v1/routes/skills.js';
+import { ROUTES as ME_ROUTES } from '../_lib/agents-v1/routes/me.js';
+import { ROUTES as INTEL_ROUTES } from '../_lib/agents-v1/routes/intel.js';
+import { ROUTES as WALLET_ROUTES } from '../_lib/agents-v1/routes/wallet.js';
 import { lifecycleRoutes } from '../_lib/strategy-loop/routes.js';
 
 const SPEND_ACTIONS = new Set(['swap', 'transfer']);
@@ -340,6 +347,10 @@ const webhookRoutes = [
 	),
 ];
 
+// Read-only wallet routes. Transfers, external-wallet changes and swap execution
+// move funds and stay off this router (MCP wallet tools and the dashboard).
+const WALLET_READ_ROUTES = WALLET_ROUTES.filter((r) => r.method === 'GET');
+
 export const ROUTES = [
 	...agentRoutes,
 	...messageRoutes,
@@ -348,6 +359,9 @@ export const ROUTES = [
 	...SKILL_ROUTES,
 	...strategyRoutes,
 	...webhookRoutes,
+	...ME_ROUTES,
+	...INTEL_ROUTES,
+	...WALLET_READ_ROUTES,
 	R('GET', '/me', 'me.get', null, meRoute),
 ];
 
