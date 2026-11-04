@@ -122,11 +122,16 @@ function debounce(fn, ms) {
 	};
 }
 
-// Mirror every tooltip into title= so touch and screen-reader users get the
-// same explanation the hover card carries.
+// Hover cards come from the CSS ::after on [data-tip], so a native title= on a
+// wide screen would stack a second tooltip on top. Screen readers get the text
+// as aria-description. Below 640px the CSS card is hidden, so touch users get
+// the native title instead.
+const NARROW = typeof matchMedia === 'function' ? matchMedia('(max-width: 640px)') : null;
 function mirrorTips(root = document) {
-	for (const el of root.querySelectorAll('[data-tip]:not([title])')) {
-		el.setAttribute('title', el.getAttribute('data-tip'));
+	for (const el of root.querySelectorAll('[data-tip]')) {
+		const tip = el.getAttribute('data-tip');
+		if (!el.hasAttribute('aria-description')) el.setAttribute('aria-description', tip);
+		if (NARROW?.matches && !el.hasAttribute('title')) el.setAttribute('title', tip);
 	}
 }
 
@@ -1165,7 +1170,15 @@ async function loadFeatured() {
 		const res = await fetch('/api/avatars/featured?limit=12');
 		const data = await res.json();
 		if (!res.ok || !Array.isArray(data?.avatars)) throw new Error('feed unavailable');
-		avatars = data.avatars.filter((a) => a.thumb_url);
+		// One chip per model: the feed can list the same avatar under two rows.
+		const seen = new Set();
+		avatars = data.avatars.filter((a) => {
+			if (!a.thumb_url) return false;
+			const keys = [a.id, a.thumb_url, a.model_url || a.glb_url].filter(Boolean);
+			if (keys.some((k) => seen.has(k))) return false;
+			for (const k of keys) seen.add(k);
+			return true;
+		});
 		featuredFailed = false;
 	} catch {
 		avatars = [];

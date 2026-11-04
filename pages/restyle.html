@@ -25,6 +25,8 @@
 			.rs-head p { color: var(--text-2); margin: 4px 0 0; max-width: 62ch; }
 			.rs-layout { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; align-items: start; }
 			@media (max-width: 900px) { .rs-layout { grid-template-columns: 1fr; } }
+			/* The 3D view follows the scroll beside the long control column, so presets and Reset always act on a model you can see. */
+			@media (min-width: 901px) { .rs-layout > .rs-stage { position: sticky; top: 76px; } }
 
 			.rs-stage { position: relative; aspect-ratio: 4 / 3; border-radius: 16px; overflow: hidden;
 				background: radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--text) 6%, transparent), transparent 60%), var(--bg-2, #0c0d12);

@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Demo pages stop defaulting to a real person's likeness",
+			"summary": "The animation gallery previews now play on the house default avatar instead of a real person's likeness. The avatar-engines filter bar is fully opaque so headings no longer show through it, Render Lab shows one chip per model and no longer stacks two tooltips on its buttons, and Restyle Studio keeps the 3D view beside the presets and Reset while you scroll.",
+			"tags": ["improvement", "fix"],
+			"link": "/animations"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Tool gateway: web search, fetch, documents, speech and images on one balance",
 			"summary": "Agents and developers can now call six metered tools without collecting vendor keys: web_search, web_fetch, parse_document (PDF, DOCX, XLSX, CSV), tts, transcribe and image_generate. They are on REST at /api/v1/tools/{tool} and on the main MCP server, charged to the same account credits as model calls, settled to what the tool actually produced and refunded in full if it fails. Prices are listed live on the pricing page.",
 			"tags": ["feature", "sdk"],

@@ -12,7 +12,9 @@
 // all. Clip JSONs and retargeted clips are cached by name, so re-hovering a
 // card replays instantly.
 
-const MODEL_URL = '/avatars/cz.glb';
+import { DEFAULT_STAGE_RIG_URL } from './default-stage-avatar.js';
+
+const MODEL_URL = DEFAULT_STAGE_RIG_URL;
 
 export class AnimationLivePreview {
 	constructor() {
