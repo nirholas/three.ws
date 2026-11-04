@@ -1,6 +1,6 @@
-# pump-fun-mcp — Cloudflare Workers edge deployment
+# pump-fun-mcp: Cloudflare Workers edge deployment
 
-Mirror of the primary `/api/pump-fun-mcp` endpoint (served by the Cloud Run app in [`server/index.mjs`](../server/index.mjs)), deployable to Cloudflare Workers for sub-50 ms cold starts and region-local edge execution.
+Mirror of the primary `/api/pump-fun-mcp` endpoint (served by the Cloud Run app in [`server/index.mjs`](../server/index.mjs)), deployable to Cloudflare Workers for sub-50 ms cold starts and region-local edge execution. It is not deployed by three.ws today (no Cloudflare account is wired up); the production endpoint is `https://three.ws/api/pump-fun-mcp`, and this worker is for running the read-only surface on your own Cloudflare account.
 
 ## Files
 
@@ -48,10 +48,11 @@ curl -s http://localhost:8787 \
 
 ## Tool parity
 
-Both runtimes import `TOOLS` from `src/pump/mcp-tools.js`, so the tool list exposed by `tools/list` is identical by construction. The test `tests/pump-mcp-tools.test.js` asserts this guarantee.
+Both runtimes import the tool definitions and name aliases from `src/pump/mcp-tools.js`, so a tool's name, schema and description are identical wherever it is served. The worker serves only a subset of that catalog: the on-chain and indexer data tools (`get_bonding_curve`, `get_token_details`, `get_token_holders`, `search_tokens`, `get_token_trades`, `get_trending_tokens`, `get_new_tokens`, `get_graduated_tokens`, `get_king_of_the_hill`, `get_creator_profile`, `pumpfun_bot_status`), and its `tools/list` advertises exactly that subset. Indexer-backed tools are hidden until `PUMPFUN_BOT_URL` is set. The full catalog is served only by the Cloud Run handler. `tests/pump-mcp-tools.test.js` covers the shared registry and `tests/workers/pump-fun-mcp-worker.test.js` the worker subset.
 
 ## Differences from the primary handler
 
 - No IP rate limiting (handled at the Cloudflare edge layer instead).
 - Env vars come from Workers secrets (`env` binding) rather than `process.env`.
-- `kol_radar` and `kol_leaderboard` are not wired in the Worker (they depend on server-side infrastructure not available at the edge).
+- Only the tool subset above. The `kol_*`, SNS, social, claims, vanity and other auth-gated tools depend on three.ws backend modules (bearer auth, x402 settlement, the per-tool enablement policy in `api/_mcp/policy.js`, per-client call tracking) that live in the Cloud Run deployment, so none of that plumbing exists in the worker.
+- `get_token_trades` is indexer-only here; the Cloud Run handler can also decode trades from chain.

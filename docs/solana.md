@@ -72,6 +72,12 @@ The viewer supports version-1 transactions by requesting `maxSupportedTransactio
 
 Two safeguards back this up. A bare public-cluster URL passed as the caller's explicit endpoint no longer wins priority 1: roughly 35 call sites spell their default as ``process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'``, so an unset `SOLANA_RPC_URL` used to pin the most-throttled endpoint in the chain ahead of every paid lane. It is still tried, just at its natural position. And the cooldown breaker is fleet-wide, mirrored through the shared cache: when one instance parks a provider for an exhausted quota, siblings inherit that verdict on their first call instead of each re-burning a doomed request against a cap that is already full.
 
+### Spending less quota: shared reads and call accounting
+
+Two layers in [api/_lib/solana/connection.js](../api/_lib/solana/connection.js) sit in front of the lanes to make fewer upstream calls. Identical concurrent reads (same method and params) share one upstream promise, and a successful answer to a hot read is reused for a few seconds per method (for example `getBalance` and `getAccountInfo` for 4 s, `getLatestBlockhash` for 2 s, and `getSignatureStatuses` for 30 s once every status is finalized). Both are process-local, apply only to `get*` reads, and never to writes (`sendTransaction`, `simulateTransaction`), batches, or a caller that asks for `fresh: true` (settle, send and verify paths), which always goes upstream. Errors are never cached.
+
+Every call that does leave for a provider is counted by caller (the API route template or cron path), method and lane in [api/_lib/solana/rpc-spend.js](../api/_lib/solana/rpc-spend.js), in hourly buckets kept in the shared cache. Reads served from the cache or coalesced are reported as saved, not as calls. Optionally, `RPC_LANE_BUDGETS` (a JSON object keyed by lane host, each value a daily call quota or `{ "daily", "fraction" }`; default fraction `RPC_LANE_BUDGET_FRACTION`, else 0.8) makes a paid lane that has crossed its share of the day's quota move to the back of the chain for non-money callers, so the remainder serves settles, sends and verifies first. Nothing is removed from the chain.
+
 ### How long a failing endpoint is parked
 
 Failing over is only half the contract. The other half is *how long* a lane stays benched, and getting that wrong is expensive in both directions: park a healthy lane too long and you throw away capacity you are paying for, park a dead one too briefly and every caller keeps rediscovering it the hard way. `cooldownMsFor()` sizes the window to the failure class.
@@ -79,6 +85,7 @@ Failing over is only half the contract. The other half is *how long* a lane stay
 | Failure | Window | Why |
 |---|---|---|
 | Quota exhausted (`max usage reached`, `daily request limit reached`, `Monthly capacity limit exceeded`) | 6 h | The plan is dead for the billing window. Re-probing cannot revive it. |
+| Bare `max usage reached` 429 (Helius words a per-second burst and a spent plan identically) | 30 s on the first sighting, then 6 h | The first hit is a probe, so one burst cannot bench every lane for a quarter of a day. A lane that fails with the same wording again before it has served a request is treated as out of credits. A successful request clears the streak. |
 | Plain rate limit (429, no quota wording) | 10 min | Transient burst throttling; the lane recovers on its own. |
 | Bad or expired key (401, 403) | 30 min | An endpoint-wide credential problem. |
 | Dead or misrouted URL (404, 410) | 30 min | Persistent misconfiguration, not a blip. |
@@ -287,10 +294,11 @@ Returned as `{ error, error_description }` from the prep / confirm endpoints.
 | `SOLANA_RPC_URL_DEVNET` | Devnet RPC. Defaults to public devnet. |
 | `SOLANA_RPC_FALLBACK_URLS` | Comma-separated extra mainnet endpoints rotated into the failover chain after the primary. |
 | `SOLANA_RPC_LAST_RESORT_URLS` | Comma-separated paid/metered endpoints tried only after every free endpoint fails. Must not repeat a URL already named as the primary, or it is the primary and the reserve is a no-op. |
+| `RPC_LANE_BUDGETS` | Optional JSON of per-lane daily call quotas (see "Spending less quota"). Unset disables the budget guard. |
 | `SOLANA_AGENT_COLLECTION_MAINNET` / `_DEVNET` | Address of the three.ws Agents collection; when set, registrations mint into it. |
 | `PUBLIC_APP_ORIGIN` | Canonical origin (exposed to code as `env.APP_ORIGIN`); used to synthesize a default `metadata_uri` if the caller didn't provide one. |
 
-SIWS-related env vars live in [api/_lib/env.js](../api/_lib/env.js) and [api/_lib/siws.js](../api/_lib/siws.js).
+SIWS-related env vars live in [api/_lib/env.js](../api/_lib/env.js) and [api/_lib/siws.js](../api/_lib/siws.js). `parseSiwsMessage` rejects a message whose Issued At, Expiration Time or Not Before does not parse as a date, so a garbage Expiration Time cannot read as never expiring.
 
 ---
 

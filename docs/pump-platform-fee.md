@@ -51,6 +51,19 @@ nothing.
   and the custody ledger row records it.
 - Section 8 of the [Terms](https://three.ws/legal/tos) discloses platform fees on Real-Funds Features.
 
+## Fee ledger
+
+Every fee three.ws takes is also booked in `platform_fee_events`, an append-only table
+(migration `api/_lib/migrations/20261104150000_platform_fee_events.sql`, helpers in
+`api/_lib/platform-fee-events.js`). The row is written in the same database transaction as the
+trade, position or custody row it belongs to, so it commits or rolls back with it. Idempotency is
+`UNIQUE (source, source_ref)`: a replayed confirm or retried pass leaves one row. Sources are
+`pump_trade`, `pump_launch`, `agent_trade`, `skill_purchase`, `skill_bundle`, `subscription` and
+`x402_skill_split`. Trade fees from the agent trade endpoints, strategies, mirror trading and the
+sniper (live mode only) are booked under `agent_trade` once the transaction confirms. For fees that
+ride inside a wallet-signed transaction the amount is read from the confirmed transaction's balance
+meta, never trusted from the client.
+
 ## Launch fee (on by default)
 
 Coins launched through three.ws (`/launch`, `/api/pump/launch-prep`, `/api/pump/launch-agent`)

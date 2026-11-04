@@ -104,6 +104,8 @@ Reactions are computed by the shared dispatcher in [src/widgets/pumpfun-reaction
 | `claim_fake` | fake claim detected | `concern` 0.85 | `shake` (1.8s) | -0.6 |
 | `claim_tier_mega` / `_influencer` | verified repeat claim by tier | `celebration` 0.7 / `curiosity` 0.55 | short taunt/reaction | +0.5 / +0.3 |
 
+Whale-trade reactions (a trade of $1,000 or more) read the side from `is_buy` / `isBuy`, then falls back to `txType` or `type` equal to `buy`; an event carrying none of them is treated as a sell.
+
 These are continuous-blend stimuli, not discrete states — they decay according to the per-second rates in [agent-system.md](agent-system.md#5-the-avatar-emotion-system-empathy-layer).
 
 ---
@@ -147,7 +149,7 @@ These are **off-chain** signals — flagged as such, not on-chain attestations. 
 
 ## Widget
 
-The `pumpfun-feed` widget renders a stack of cards (claim or graduation) as an absolutely-positioned overlay on top of the 3D viewer. With `autoNarrate: true`, the avatar narrates each event through the protocol bus. Each card's trading-terminal links come from the shared builder in [src/shared/trading-terminals.js](../src/shared/trading-terminals.js) (`terminalLinks(mint, { from })` and `referralOffers()`), the same one the copy pages use, so adding or re-pointing a terminal is one change. DEXTools leads the list and its link goes through the counted `/api/coin/dextools` redirect, attributed to the `pumpfun-feed` surface. The overlay carries no inline event handlers (a broken token image hides through the `data-fallback="hide"` hook), which is what keeps it inside the site's CSP.
+The `pumpfun-feed` widget renders a stack of cards (claim or graduation) as an absolutely-positioned overlay on top of the 3D viewer. With `autoNarrate: true`, the avatar narrates each event through the protocol bus. Each card's trading-terminal links come from the shared builder in [src/shared/trading-terminals.js](../src/shared/trading-terminals.js) (`terminalLinks(mint, { from })` and `referralOffers()`), the same one the copy pages use, so adding or re-pointing a terminal is one change. DEXTools leads the list and its link goes through the counted `/api/coin/dextools` redirect, attributed to the `pumpfun-feed` surface. The overlay carries no inline event handlers (a broken token image hides through the `data-fallback="hide"` hook), which is what keeps it inside the site's CSP. Website and Telegram links on a graduation card come from on-chain token metadata, so they pass through `safeUrl` ([src/safe-url.js](../src/safe-url.js)) before they become an `href`.
 
 Studio config schema (validated in `widget-types.js`):
 

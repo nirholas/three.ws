@@ -15,7 +15,7 @@ Coin Control is where a creator runs the coin their agent launched through three
 | Bounties | Posted from Coin Control, paid from the agent wallet when the owner picks a winner | The bounty on the public board and its payout transaction |
 | Verified X | The owner connects X once (`/api/auth/x/connect?scope=read&return_to=/coin-control`) | A badge with the creator's handle on the proof page |
 
-The page also shows the fee split for the coin (100% to the creator on a standard launch, the published gasless split on a sponsored launch), the agent's revenue from the [revenue ledger](revenue-ledger.md), the agent wallet balance, and the agent's 3D body, which reacts when the engine acts.
+The page also shows the fee split for the coin (100% to the creator on a standard launch, the published gasless split on a sponsored launch), the agent's revenue from the [revenue ledger](revenue-ledger.md), the agent wallet balance, and the agent's 3D body, which reacts when the engine acts. The body panel stays collapsed until the model has loaded, so a coin with no loadable body shows no empty box. Token decimals for amounts are read from the mint once per server process and cached (a failed read is not cached and falls back to 6).
 
 ## Rules: nothing moves without a confirm
 

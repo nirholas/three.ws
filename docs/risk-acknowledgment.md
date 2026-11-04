@@ -103,6 +103,12 @@ its own context slug: strategies and DCA (`strategy`, `dca-create`,
 registration, and the Uniswap, Robinhood Chain (Pons) and paired-quote launches.
 Pausing an order, like every other way of turning spending off, is not gated.
 
+Custody operations that expose or move a whole wallet are gated too: exporting
+an agent wallet's key (`key_export`) and confirming a rotate-and-sweep
+(`key_rotate`) in `api/agents/wallet-custody.js`. The export check runs before
+the single-use reauth grant is spent, so an unsigned owner can sign and retry
+with the same grant. The rotate preview moves nothing and is not gated.
+
 Self-funded inference moves USDC out of the agent wallet into model credits, so
 it is gated at both ends: a credit top-up (`inference-topup`, `POST
 /api/agents/:id/credits/topup`), enabling the automatic top-up rule
@@ -124,7 +130,12 @@ decrypts a custodial key or imports a library that does. Each one must either
 call `requireRealFundsAgreement` (or `currentSignatureFor` in MCP tool handlers
 that have no HTTP response), delegate to an `api/_lib` service that does (the
 perps tools), or appear in the test's exemption list with a written reason. A
-new money endpoint that forgets the gate fails `npm test`.
+new money endpoint that forgets the gate fails `npm test`. Exemptions are for
+routes that only build transactions the caller's own wallet signs (for example
+`api/tx/solana/[action].js` and the owner-signed launch routes in
+`api/agents/tokens/[action].js`, whose custodial launch lives elsewhere), and
+the test also fails on a stale exemption for a route that no longer touches a
+custodial key or is now gated.
 
 ## The record
 

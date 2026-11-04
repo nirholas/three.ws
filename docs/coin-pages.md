@@ -236,6 +236,15 @@ Every fallback is free and keyless (Binance, Bybit and OKX are excluded — they
 geo-block US datacenter IPs, so from Cloud Run they would be permanently dead
 rungs).
 
+The exchange chart rungs (`fetchExchangeChart`) and the SOL price chain
+(`api/_lib/sol-price.js`) are ordered by a source-health canary. A cron
+(`api/cron/data-canary.js`) probes each source against a value known to be true
+and stores the verdict in
+[`api/_lib/data-canary-health.js`](../api/_lib/data-canary-health.js);
+`orderByCanary` then tries sources that just passed first, keeps never-probed
+sources at their configured position, and sinks failing ones to the back without
+removing them. A verdict older than 3 hours counts as unknown, not healthy.
+
 ### Budgeting the CoinPaprika rungs
 
 **CoinPaprika's free tier allows 60 requests per hour** (25k/month) and returns
@@ -716,7 +725,7 @@ text before they reach the client.
 | News engine + sources       | [`api/_lib/news.js`](../api/_lib/news.js) + [`api/_lib/news-sources.js`](../api/_lib/news-sources.js), endpoints in [`api/news/`](../api/news) |
 | Shared news renderers       | [`src/shared/news-render.js`](../src/shared/news-render.js); table primitives in [`src/shared/market-table.js`](../src/shared/market-table.js) |
 | Shared chart embeds         | [`src/shared/chart-embeds.js`](../src/shared/chart-embeds.js): the third-party embed URLs every chart surface builds from; [`src/shared/chart-switcher.js`](../src/shared/chart-switcher.js): the compact source switcher `/trades` and Mission Control mount |
-| Shared design system        | [`src/coin-pages.css`](../src/coin-pages.css) (Inter, Space Grotesk, JetBrains Mono self-hosted in `public/fonts/`). Colour pairs that clear WCAG AA live here as tokens: `--cv-green` / `--cv-red` are the chart and fill hues, `--cv-green-text` / `--cv-red-text` the darker shades for body copy on the page surface, and `--cv-green-on-tint` / `--cv-red-on-tint` the darker-still shades for text drawn ON a tinted badge fill, where the tint lifts the background. Dark maps every pair to one value; only light needs the split. Use the text or on-tint token whenever the colour is carrying words. |
+| Shared design system        | [`src/coin-pages.css`](../src/coin-pages.css) (Inter, Space Grotesk, JetBrains Mono self-hosted in `public/fonts/`). Colour pairs that clear WCAG AA live here as tokens: `--cv-green` / `--cv-red` are the chart and fill hues, `--cv-green-text` / `--cv-red-text` the darker shades for body copy on the page surface, and `--cv-green-on-tint` / `--cv-red-on-tint` the darker-still shades for text drawn ON a tinted badge fill, where the tint lifts the background. Dark maps every pair to one value; only light needs the split. Use the text or on-tint token whenever the colour is carrying words. On phones, content grids are sized with `minmax(0, 1fr)` and market tables scroll inside their own container, so no page stretches past the screen edge, and links in touch rows keep a 44px floor with their labels centred. |
 | Shared formatters           | [`src/shared/coin-format.js`](../src/shared/coin-format.js) — unit-tested in [`tests/coin-format.test.js`](../tests/coin-format.test.js) |
 | API proxies                 | [`api/coin/`](../api/coin): one file per `/api/coin/*` endpoint in the table above (`detail.js`, `ohlc.js`, `pool.js`, `markets.js`, `tickers.js`, `categories.js`, `category.js`, `exchanges.js`, `exchange.js`, `derivatives.js`, `derivative.js`, `rates.js`, `trending.js`, `global.js`, `fear-greed.js`, `gas.js`, `news.js`, `liquidations.js`) |
 | Liquidations collector      | [`services/liquidation-collector/`](../services/liquidation-collector) — standalone always-on Node service (not a Vercel function)      |
