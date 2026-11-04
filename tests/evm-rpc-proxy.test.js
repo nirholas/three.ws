@@ -97,6 +97,13 @@ describe('/api/evm-rpc read cost bounds', () => {
 		expect(rejectReason(logs({ blockHash: '0x' + 'ab'.repeat(32) }))).toBeNull();
 	});
 
+	it('refuses eth_estimateGas with state-override params, like eth_call', () => {
+		const est = { jsonrpc: '2.0', id: 1, method: 'eth_estimateGas', params: [{ to: ADDR }, 'latest', {}] };
+		expect(rejectReason(est)).toBe('params_not_allowed');
+		expect(rejectReason({ ...est, params: [{ to: ADDR }, 'latest'] })).toBeNull();
+		expect(rejectReason({ ...est, params: [{ to: ADDR }] })).toBeNull();
+	});
+
 	it('refuses eth_call with state-override params', () => {
 		const call = { jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: ADDR }, 'latest', {}] };
 		expect(rejectReason(call)).toBe('params_not_allowed');

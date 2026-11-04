@@ -81,7 +81,7 @@ export function rejectReason(body) {
 			const r = logsReason(e.params);
 			if (r) return r;
 		}
-		if (e.method === 'eth_call' && Array.isArray(e.params) && e.params.length > MAX_CALL_PARAMS) {
+		if ((e.method === 'eth_call' || e.method === 'eth_estimateGas') && Array.isArray(e.params) && e.params.length > MAX_CALL_PARAMS) {
 			return 'params_not_allowed';
 		}
 	}
