@@ -13,7 +13,7 @@
 // generated headlessly (MCP, API, agents) or closed quickly never heals.
 //
 // This module is the server-side healer: it claims finished, previewless models
-// and renders each GLB to a 768² PNG with the shared headless-chromium renderer
+// and renders each GLB to a 512² WebP with the shared headless-chromium renderer
 // (the exact pipeline avatar thumbnails already use in production), uploads it,
 // and fills the row's preview slot — object confirmed in R2 *before* the key is
 // committed, so a card never points at a missing image.
@@ -24,13 +24,15 @@
 // and a batch runner that aborts (refunding untouched claims) if chromium dies.
 
 import { sql } from './db.js';
-import { putObject, cdnUrl } from './r2.js';
+import sharp from 'sharp';
+import { putObject, cdnUrl, getObjectBuffer } from './r2.js';
 import { thumbBackdropFor } from './avatar-thumbs.js';
 
-// 768² matches the avatar thumbnail size — crisp on retina cards, one PNG the
-// whole grid reuses instead of every visitor loading a multi-MB GLB to capture
-// a frame client-side.
-export const THUMB_SIZE = 768;
+// 512² WebP: the largest card box is 293 CSS px (/discover), so 512 is crisp at
+// 2x while a 768² PNG (~520 KB) was ~10x the bytes for pixels nobody saw. One
+// asset serves every grid so no visitor loads a multi-MB GLB to capture a frame.
+export const THUMB_SIZE = 512;
+export const THUMB_WEBP_QUALITY = 82;
 export const THUMB_BACKGROUND = '#0a0a0a';
 
 // A GLB that fails to render this many times is almost certainly structurally
@@ -40,7 +42,15 @@ export const MAX_ATTEMPTS = 3;
 export const LEASE_MINUTES = 15;
 
 export function forgeThumbKeyFor(creationId) {
-	return `forge/thumb/${creationId}.png`;
+	return `forge/thumb/${creationId}.webp`;
+}
+
+// Re-encode a rendered or stored PNG to the display-sized WebP the grids serve.
+export async function encodeThumbWebp(png) {
+	return sharp(png)
+		.resize(THUMB_SIZE, THUMB_SIZE, { fit: 'cover' })
+		.webp({ quality: THUMB_WEBP_QUALITY, effort: 5 })
+		.toBuffer();
 }
 
 let schemaReady = false;
@@ -168,8 +178,9 @@ export async function renderThumbnail({ id, glb_url: glbUrl }) {
 	});
 	if (!png?.length) throw new Error('renderer returned no bytes');
 
+	const webp = await encodeThumbWebp(png);
 	const key = forgeThumbKeyFor(id);
-	await putObject({ key, body: png, contentType: 'image/png', metadata: { 'forge-creation': String(id) } });
+	await putObject({ key, body: webp, contentType: 'image/webp', metadata: { 'forge-creation': String(id) } });
 
 	// Fill-only: only claim the preview slot if it is still empty, so a poster the
 	// maker captured in the meantime always wins over a headless render.
@@ -183,7 +194,7 @@ export async function renderThumbnail({ id, glb_url: glbUrl }) {
 		 RETURNING id
 	`;
 	await releaseClaim(id);
-	return { id, key, url, bytes: png.length, ms: Date.now() - t0, filled: updated.length > 0 };
+	return { id, key, url, bytes: webp.length, ms: Date.now() - t0, filled: updated.length > 0 };
 }
 
 // Drain `limit` claimed models, `concurrency` at a time, sharing one chromium
@@ -236,4 +247,40 @@ export async function renderBatch({ limit = 8, concurrency = 2, onResult } = {})
 		aborted: aborted || false,
 		results,
 	};
+}
+
+// Heal rows that still point at the original 768² PNG: read the stored object,
+// re-encode it to the display-sized WebP, upload, then swap the row's keys.
+// Idempotent and bounded: a row whose preview_key already ends in .webp never
+// matches, so the cron can run this every tick until the backlog is empty. The
+// old PNG object is left in place so a cached page that still names it works.
+export async function upgradeLegacyBatch({ limit = 20 } = {}) {
+	const rows = await sql`
+		SELECT id, preview_key
+		  FROM forge_creations
+		 WHERE preview_key LIKE 'forge/thumb/%.png'
+		 ORDER BY created_at DESC
+		 LIMIT ${limit}
+	`;
+	let upgraded = 0;
+	let failed = 0;
+	for (const row of rows) {
+		try {
+			const png = await getObjectBuffer(row.preview_key);
+			const webp = await encodeThumbWebp(png);
+			const key = forgeThumbKeyFor(row.id);
+			await putObject({ key, body: webp, contentType: 'image/webp', metadata: { 'forge-creation': String(row.id) } });
+			const url = cdnUrl(key);
+			const done = await sql`
+				UPDATE forge_creations
+				   SET preview_image_url = ${url}, preview_key = ${key}, updated_at = now()
+				 WHERE id = ${row.id} AND preview_key = ${row.preview_key}
+				 RETURNING id
+			`;
+			if (done.length) upgraded++;
+		} catch {
+			failed++;
+		}
+	}
+	return { scanned: rows.length, upgraded, failed };
 }

@@ -11,7 +11,7 @@
 // loop that brings people back looks broken because most of it is empty squares.
 //
 // Each tick claims the most-recent previewless models, renders each GLB to a
-// 768² PNG with the shared headless-chromium renderer, uploads it, and fills the
+// 512² WebP with the shared headless-chromium renderer, uploads it, and fills the
 // preview slot — object confirmed in R2 before the key is committed, so a card
 // never points at a missing image. Fill-only: a poster the maker captured in the
 // meantime always wins.
@@ -30,7 +30,7 @@
 import { json, method, wrapCron } from '../_lib/http.js';
 import { logger } from '../_lib/usage.js';
 import { forgeStoreEnabled } from '../_lib/forge-store.js';
-import { renderBatch, coverage } from '../_lib/forge-thumbs.js';
+import { renderBatch, coverage, upgradeLegacyBatch } from '../_lib/forge-thumbs.js';
 import { requireCron } from '../_lib/cron-auth.js';
 
 export const maxDuration = 120;
@@ -57,8 +57,16 @@ export default wrapCron(async (req, res) => {
 		return json(res, 200, { ok: true, dry_run: true, coverage: cov, render_batch: RENDER_BATCH });
 	}
 
+	const UPGRADE_BATCH = Math.max(0, Number(process.env.FORGE_THUMBNAIL_UPGRADE_BATCH || 25));
+
 	if (RENDER_BATCH === 0 || cov.missing === 0) {
-		return json(res, 200, { ok: true, coverage: cov, rendered: 0, note: 'nothing to render' });
+		const upgrade = UPGRADE_BATCH
+			? await upgradeLegacyBatch({ limit: UPGRADE_BATCH }).catch((err) => {
+					log.warn('upgrade_failed', { message: err?.message });
+					return null;
+				})
+			: null;
+		return json(res, 200, { ok: true, coverage: cov, rendered: 0, upgrade, note: 'nothing to render' });
 	}
 
 	let result;
