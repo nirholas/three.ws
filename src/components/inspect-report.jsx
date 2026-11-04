@@ -110,11 +110,11 @@ export function InspectReport({ inspect, suggestions, reportJSON }) {
 			</div>
 
 			{inspect.extensionsUsed.length > 0 && (
-				<>
+				[
 					<h2 class="report-section-heading" style="border-left-color:#888">
 						Extensions used{' '}
 						<span class="report-count">({inspect.extensionsUsed.length})</span>
-					</h2>
+					</h2>,
 					<ul class="inspect-ext-list">
 						{inspect.extensionsUsed.map((ext) => (
 							<li>
@@ -125,14 +125,14 @@ export function InspectReport({ inspect, suggestions, reportJSON }) {
 							</li>
 						))}
 					</ul>
-				</>
+				]
 			)}
 
 			{inspect.textures.length > 0 && (
-				<>
+				[
 					<h2 class="report-section-heading" style="border-left-color:#888">
 						Textures <span class="report-count">({inspect.textures.length})</span>
-					</h2>
+					</h2>,
 					<div class="report-table-wrap">
 						<table class="report-table">
 							<thead>
@@ -159,7 +159,7 @@ export function InspectReport({ inspect, suggestions, reportJSON }) {
 							</tbody>
 						</table>
 					</div>
-				</>
+				]
 			)}
 		</div>
 	);
