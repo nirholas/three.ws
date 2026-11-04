@@ -150,6 +150,9 @@ export function terminalScript(command) {
 		`mkdir -p "$WS/${STATE_DIR}"`,
 		`if [ -f "$WS/${STATE_DIR}/terminal.env" ]; then . "$WS/${STATE_DIR}/terminal.env" 2>/dev/null; fi`,
 		`__cwd=$(cat "$WS/${STATE_DIR}/terminal.cwd" 2>/dev/null || true)`,
+		// The workspace keeps files only (an object store has no empty
+		// directories), so an empty working directory is recreated on restore.
+		'if [ -n "$__cwd" ] && [ "$__cwd" != . ]; then mkdir -p "$WS/$__cwd" 2>/dev/null; fi',
 		'cd "$WS/${__cwd:-.}" 2>/dev/null || cd "$WS"',
 		'__three_ws_save() {',
 		'  __rc=$?',
