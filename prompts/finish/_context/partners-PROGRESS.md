@@ -820,3 +820,16 @@ Remaining, owner-owned: register the Discord application, set `DISCORD_CLIENT_ID
 - **E2E**: both specs pass against a local `livekit/livekit-server` 1.13.11 started with `--keys "devkey: devsecret"` (the plain `--dev` default secret is `secret`, which the specs reject with a 401; the documented command in `docs/voice-framework-integrations.md` is correct) and an `espeak-ng` 1.51 extracted from the Ubuntu package. The LiveKit spec needed its one retry each run because the box was at load average 300 to 700 from concurrent agents; the Pipecat spec passed first try.
 - **Defect fixed in `2a9e358c5`** (test-first, `tests/livekit-voice.test.js`, 3 tests failing before and passing after): `LiveKitVoice.connect()` let a `NotFoundError`/`NotAllowedError` from `setMicrophoneEnabled()` reject after the room was already joined, so every visitor without a microphone, or who declined the prompt, got "LiveKit connect failed" while the avatar was in fact lip-syncing. It now joins in listen-only mode and exposes `micEnabled`/`micError`. LiveKit E2E rerun after the fix: passes, with no connect-failed warning.
 - **Remaining (owner, row 51)**: PyPI publishes of both packages, the `livekit/agents` plugin PR plus the LiveKit Startups application, and the `pipecat-ai/pipecat` docs PR. The order file stays open.
+
+## 2026-11-04: order 091 closed by the owner (Shopify product media)
+
+The owner directed the order file be deleted. Everything buildable in code shipped in
+`7b52431a9`; the live store checks (storefront screenshot, test-mode Billing charge, webhook
+test deliveries) still need a registered Shopify Partner app. Those steps are tracked in row 54
+of [_context/production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md), which now
+holds the only copy of the remaining work. `plan-COVERAGE.md` rows that pointed at the order
+file now point at that row.
+
+## 2026-11-04: order 094 closed
+
+Owner instruction: delete the order now that the agent-side work is done. Commits: `a80ce225d` (WordPress plugin), `a722c6017` (Webflow component), `860ee4b73` (React 18/19 support), `9c6dcdb78` (live render check in the plugin-check script), `cc731d38d` (re-check docs). The only steps left are owner action row 57 in [production-100-OWNER-ACTIONS.md](production-100-OWNER-ACTIONS.md): the WordPress.org, Framer and Webflow signups and submissions, with step-by-step instructions in `marketing/growth/submissions/site-builders.md`.

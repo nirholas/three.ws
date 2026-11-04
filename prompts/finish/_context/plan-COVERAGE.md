@@ -1446,7 +1446,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/share-and-embed.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/shared-utilities.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/shipfeed.md` | no-open-work | known limits are deliberate |
-| `docs/shopify-app.md` | covered-by-existing:091-partners-08-shopify-product-media.md | app shipped; remaining is Partner account setup in owner actions |
+| `docs/shopify-app.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 54 | app shipped (order 091 closed 2026-11-04); remaining is Partner account setup in owner actions |
 | `docs/short-form-venue-kit-2026-09.md` | not-a-plan | paste-ready posting copy, needs owner approval to post |
 | `docs/showcase.md` | no-open-work | shipped feature doc, referenced files exist, no open work |
 | `docs/sign-language.md` | order | [768](../768-plan-sign-asl-word-level-recognition.md). roadmap item 2 unbuilt; item 4 shipped (@three-ws/sign-language 0.1.1 on npm); items 1 and 3 need signers |
@@ -1626,7 +1626,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/widget-studio.md` | no-open-work | user guide for shipped /studio; next steps are links |
 | `docs/widgets.md` | no-open-work | widget reference; xr-spatial-tracking row is a note not a task |
 | `docs/witness.md` | no-open-work | feature doc for shipped witness bug-report tool |
-| `docs/wordpress-embed.md` | covered-by-existing:094-partners-11-site-builder-embeds.md | plugin built and checked; WordPress.org submission is owner action tracked in 094 |
+| `docs/wordpress-embed.md` | covered-by-existing:production-100-OWNER-ACTIONS.md | plugin built and checked; WordPress.org submission is owner action row 57 (order 094 closed 2026-11-04) |
 | `docs/workbench.md` | no-open-work | shipped /workbench reference |
 | `docs/world-lines.md` | no-open-work | reference doc, verified against code, no outstanding items |
 | `docs/x-account-appeal.md` | owner-only | appeal must be filed by the account owner |
@@ -1884,8 +1884,8 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `marketing/growth/submissions/programs/uthana-partner.md` | covered-by-existing:939-partners-16-program-applications.md | partner/startup program application |
 | `marketing/growth/submissions/programs/vroid-hub-approval.md` | covered-by-existing:939-partners-16-program-applications.md | partner/startup program application |
 | `marketing/growth/submissions/README.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
-| `marketing/growth/submissions/shopify-app.md` | covered-by-existing:091-partners-08-shopify-product-media.md | Shopify app submission |
-| `marketing/growth/submissions/site-builders.md` | covered-by-existing:094-partners-11-site-builder-embeds.md | WordPress/Framer/Webflow embeds and listings |
+| `marketing/growth/submissions/shopify-app.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 54 | Shopify app submission (order 091 closed 2026-11-04) |
+| `marketing/growth/submissions/site-builders.md` | covered-by-existing:production-100-OWNER-ACTIONS.md | WordPress/Framer/Webflow embeds and listings |
 | `marketing/growth/submissions/slicer-trusted-hosts.md` | covered-by-existing:938-partners-15-listings-prs-and-sends.md | prepared listing/PR text, owner sends |
 | `marketing/growth/submissions/tripo-launch-post.md` | covered-by-existing:936-partners-13-tripo-reply-and-house-key.md | Tripo launch post and reply |
 | `marketing/growth/submissions/vroid-hub-app.md` | covered-by-existing:092-partners-09-vroid-hub-import.md | VRoid Hub app submission |
@@ -2185,10 +2185,9 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `prompts/finish/085-partners-02-animation-library-license.md` | excluded | already a work order in the queue |
 | `prompts/finish/087-partners-04-livekit-pipecat-avatar.md` | excluded | already a work order in the queue |
 | `prompts/finish/088-partners-05-discord-activity.md` | excluded | already a work order in the queue |
-| `prompts/finish/091-partners-08-shopify-product-media.md` | excluded | already a work order in the queue |
 | `prompts/finish/092-partners-09-vroid-hub-import.md` | excluded | already a work order in the queue |
 | `prompts/finish/093-partners-10-agent-tool-packages.md` | excluded | already a work order in the queue |
-| `prompts/finish/094-partners-11-site-builder-embeds.md` | excluded | already a work order in the queue |
+| `prompts/finish/094-partners-11-site-builder-embeds.md` | excluded | work order closed and deleted 2026-11-04; remaining owner steps are row 57 |
 | `prompts/finish/095-partners-12-home-assistant-hacs.md` | excluded | already a work order in the queue |
 | `prompts/finish/401-auto-restore-green-vitest.md` | excluded | already a work order in the queue |
 | `prompts/finish/403-auto-drain-docs-freshness.md` | excluded | already a work order in the queue |
