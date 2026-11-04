@@ -4,7 +4,7 @@
 // normalized server-side. Mirrors the /coins markets-table pattern: stat cards,
 // sortable cv-table, designed loading / empty / error states.
 
-import { formatUsd, escapeHtml as esc } from './shared/coin-format.js';
+import { formatUsd, formatTurnover, escapeHtml as esc } from './shared/coin-format.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -86,6 +86,11 @@ function statsSkeleton() {
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────
+
+// Drawn, not typed: the circled-i character is missing from many system font
+// stacks and renders as an empty box there.
+const INFO_ICON =
+	'<svg class="tip" aria-hidden="true" viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.95" fill="currentColor"/></svg>';
 
 const COLUMNS = [
 	{ key: 'rank', label: '#', left: true, hide: 'hide-sm', num: true },
@@ -169,7 +174,7 @@ function renderTable() {
 		const active = col.key === state.sortKey;
 		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
 		const sort = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}"${col.tip ? ` title="${esc(col.tip)}"` : ''} class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}${col.tip ? '<span class="tip" aria-hidden="true"> ⓘ</span>' : ''}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
+		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}"${col.tip ? ` title="${esc(col.tip)}"` : ''} class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}${col.tip ? INFO_ICON : ''}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
 	const body = sortedChains()
@@ -189,7 +194,7 @@ function renderTable() {
 				<td class="rank hide-sm cv-mono">${c.__rank}</td>
 				<td class="left name-cell">${href ? `<a href="${esc(href)}">${inner}</a>` : inner}</td>
 				<td class="price">${esc(formatUsd(c.tvl))}</td>
-				<td class="pct hide-sm cv-mono"${c.dex_volume_24h ? ` title="24h DEX volume ${esc(formatUsd(c.dex_volume_24h))}"` : ''}>${c.turnover == null ? 'n/a' : `${c.turnover.toFixed(c.turnover < 0.1 ? 3 : 2)}x`}</td>
+				<td class="pct hide-sm cv-mono"${c.dex_volume_24h ? ` title="24h DEX volume ${esc(formatUsd(c.dex_volume_24h))}"` : ''}>${formatTurnover(c.turnover)}</td>
 				<td class="pct cv-mono">${(c.share_pct || 0).toFixed(2)}%</td>
 				<td class="left hide-md chains-bar-cell">
 					<span class="chains-bar" aria-hidden="true">

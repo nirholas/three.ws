@@ -511,6 +511,14 @@ function seedingText(s) {
 	return `${share(s.seeded_share)}${s.partial ? ' (partial)' : ''}`;
 }
 
+// A holder signal the server could not compute renders as '-'. Its tooltip
+// then carries the server's reason, so a dash reads as "not knowable here,
+// and why" instead of looking like a broken cell.
+function signalTitle(base, signal) {
+	if (signal?.available || !signal?.reason) return base;
+	return `${base} Unavailable for this coin: ${signal.reason}.`;
+}
+
 function statCell(label, value, { cls = '', title = null } = {}) {
 	return el('div', { class: 'ld-ts-cell', title }, [
 		el('span', { class: 'ld-ts-k', text: label }),
@@ -596,11 +604,11 @@ function factsGrid(stats) {
 			title: `How unevenly the top ${h?.gini_n ?? 50} holders split their combined balance: 0 is perfectly even, 1 is one wallet holding everything.`,
 		}),
 		statCell('Seeded by one funder', seedingText(stats.seeding), {
-			title: 'Share of the first buyers whose wallets were first funded by the same address. High values suggest one actor behind many wallets.',
+			title: signalTitle('Share of the first buyers whose wallets were first funded by the same address. High values suggest one actor behind many wallets.', stats.seeding),
 		}),
 		statCell('Launch tx', stats.launch_version?.available ? (stats.launch_version.is_v1 ? 'v1 launch' : stats.launch_version.version_label || 'legacy') : '-', {
 			cls: stats.launch_version?.is_v1 ? 'is-good' : '',
-			title: 'Whether the creation transaction used Solana transaction v1, a cheap signal of launch sophistication.',
+			title: signalTitle('Whether the creation transaction used Solana transaction v1, a cheap signal of launch sophistication.', stats.launch_version),
 		}),
 		statCell('Mint authority', a ? authorityText(a.mint_authority) : '-', { title: 'Whether any account can still mint new supply.' }),
 		statCell('Freeze authority', a ? authorityText(a.freeze_authority) : '-', { title: 'Whether any account can still freeze token accounts.' }),

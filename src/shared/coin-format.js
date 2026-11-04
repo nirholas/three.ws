@@ -46,6 +46,19 @@ export function formatSupply(n) {
 	return n.toLocaleString('en-US');
 }
 
+/**
+ * Chain turnover (24h DEX volume / TVL): 4.80x at 0.1x and up, 0.040x below.
+ * A positive value under 0.001 prints as <0.001x, never 0.000x, because a
+ * chain that trades a little must not read as one that does not trade at all.
+ * Missing input is n/a: the chain reports no TVL or no DEX volume.
+ */
+export function formatTurnover(n) {
+	if (n == null || !Number.isFinite(n)) return 'n/a';
+	if (n === 0) return '0x';
+	if (n > 0 && n < 0.0005) return '<0.001x';
+	return `${n.toFixed(n < 0.1 ? 3 : 2)}x`;
+}
+
 /** Short date: "Mar 14, 2024". Returns — for unparseable input. */
 export function formatDateShort(iso) {
 	if (!iso) return '—';

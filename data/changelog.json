@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Chain turnover never reads as zero, and coin signals say why they are blank",
+			"summary": "On /chains, a chain whose 24h DEX volume is tiny next to its TVL now shows <0.001x instead of 0.000x, which looked like no trading at all, and the Turnover header's info icon is drawn so it no longer shows as an empty box on systems without that character. On a coin's launch page, the \"Seeded by one funder\" and \"Launch tx\" cells still show a dash when the signal cannot be computed, but hovering now tells you why, for example when a coin has too much trade history to reach its creation transaction.",
+			"tags": [
+				"fix"
+			],
+			"link": "/chains"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Pricing and the Forge pay sheet say when a payment option is not switched on yet",
 			"summary": "The pricing page now asks the server which assets checkout can actually take. Any asset that cannot be paid yet is shown disabled with \"Not switched on yet\", the $THREE discount is only claimed while $THREE can be paid, and a refused checkout names the asset instead of failing with a generic error. The Forge pay sheet checks the $THREE rail before it opens: when it is not switched on, it says so plainly, asks for no wallet approval and offers no retry loop. Paid Wheel of Fortune spins say the same and point at your free spin. Nothing is charged in any of these states.",
 			"tags": [

@@ -766,6 +766,16 @@ html.cv-page,
 	opacity: 0.4;
 	font-size: 0.6875rem;
 }
+.cv-table th .tip {
+	display: inline-block;
+	margin-left: 0.3rem;
+	vertical-align: -0.1em;
+	opacity: 0.55;
+}
+.cv-table th:hover .tip,
+.cv-table th:focus-visible .tip {
+	opacity: 1;
+}
 /* A sortable-but-inactive header carries aria-sort="none" so screen readers
    announce it as sortable; only the column actually sorted gets the bright
    arrow, so exclude "none" rather than matching the attribute's presence. */

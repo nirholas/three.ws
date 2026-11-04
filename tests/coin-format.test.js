@@ -9,6 +9,7 @@ import {
 	formatPrice,
 	formatPercent,
 	formatSupply,
+	formatTurnover,
 	formatDateShort,
 	formatChartTick,
 	timeAgo,
@@ -70,6 +71,29 @@ describe('formatSupply', () => {
 		expect(formatSupply(1.5e12)).toBe('1.50T');
 		expect(formatSupply(42)).toBe('42');
 		expect(formatSupply(null)).toBe('—');
+	});
+});
+
+describe('formatTurnover', () => {
+	it('says n/a when a chain reports no TVL or no DEX volume', () => {
+		expect(formatTurnover(null)).toBe('n/a');
+		expect(formatTurnover(undefined)).toBe('n/a');
+		expect(formatTurnover(Number.NaN)).toBe('n/a');
+	});
+	it('keeps two decimals at 0.1x and above, three below', () => {
+		expect(formatTurnover(4.8)).toBe('4.80x');
+		expect(formatTurnover(0.1)).toBe('0.10x');
+		expect(formatTurnover(0.0404)).toBe('0.040x');
+		expect(formatTurnover(0.001)).toBe('0.001x');
+	});
+	it('never rounds a trading chain down to a zero reading', () => {
+		// Bitcoin: about $4.27B TVL against a few hundred thousand dollars of
+		// 24h DEX volume. toFixed(3) printed 0.000x, which reads as no trading.
+		expect(formatTurnover(0.00007)).toBe('<0.001x');
+		expect(formatTurnover(0.00049)).toBe('<0.001x');
+	});
+	it('prints a true zero as zero', () => {
+		expect(formatTurnover(0)).toBe('0x');
 	});
 });
 
