@@ -26,10 +26,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     HF_HUB_DISABLE_TELEMETRY=1 \
     DO_NOT_TRACK=1
 
+# The X11 client libraries are what the bpy 4.2 wheel links against even when
+# Blender runs headless (UniRig's merge step imports bpy to write the skinned
+# GLB); without libXrender the import fails at runtime, not at pip install.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-dev python3.11-venv python3-pip \
         git curl build-essential \
         libgl1 libglib2.0-0 \
+        libx11-6 libxext6 libxrender1 libxfixes3 libxi6 libxxf86vm1 \
+        libxkbcommon0 libsm6 libice6 libgomp1 \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
     && ln -sf /usr/bin/python3.11 /usr/bin/python \

@@ -60,9 +60,13 @@ RUN python3 /app/test_patch_anigen.py && python3 /app/patch_anigen.py /app/anige
 # silently compile CPU-only kernels, failing the first request on the L4 with
 # "Not compiled with GPU support". FORCE_CUDA builds the CUDA kernels anyway,
 # for sm_89 (L4) only, which also keeps the compile inside the build timeout.
+# MAX_JOBS caps ninja's parallelism: left alone it starts one cc1plus/nvcc per
+# vCPU (32 on E2_HIGHCPU_32, which has 32 GB), each torch-extension unit needs
+# 1.5 to 3 GB, and the kernel OOM-killed cc1plus mid-build. 8 jobs fit.
 ARG PYTORCH3D_COMMIT=75ebeeaea0908c5527e7b1e305fbc7681382db47
 ENV FORCE_CUDA=1 \
-    TORCH_CUDA_ARCH_LIST=8.9
+    TORCH_CUDA_ARCH_LIST=8.9 \
+    MAX_JOBS=8
 RUN pip install -r /app/anigen-src/requirements.txt \
     && pip install spconv-cu120 \
     && pip install "fvcore>=0.1.5" iopath \
