@@ -250,6 +250,20 @@ Indexable: no (excluded from sitemap)
 
 A shared Forge room that runs embedded inside a Discord voice channel: everyone in the call prompts, watches the same 3D model generate, and votes together.
 
+### three.ws agents (Microsoft Teams tab)
+
+URL: https://three.ws/microsoft/teams-tab
+Indexable: no (excluded from sitemap)
+
+The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.
+
+### Activate a Microsoft Marketplace purchase
+
+URL: https://three.ws/microsoft/activate
+Indexable: no (excluded from sitemap)
+
+Where a Microsoft Marketplace buyer lands after purchasing a three.ws plan: sign in with Microsoft Entra ID to link the subscription to a three.ws account and switch the plan on.
+
 ### Photo to 3D product media (Shopify app)
 
 URL: https://three.ws/apps/shopify
@@ -4058,6 +4072,12 @@ URL: https://three.ws/docs/microsoft-marketplace-offer-plan
 
 How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.
 
+### Docs · Microsoft Marketplace SaaS offer
+
+URL: https://three.ws/docs/microsoft-marketplace-saas
+
+How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.
+
 ### Docs · NVIDIA Inception membership
 
 URL: https://three.ws/docs/nvidia-inception
@@ -5306,6 +5326,12 @@ URL: https://three.ws/settings/memory
 
 See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.
 
+### MCP Tool Access Settings
+
+URL: https://three.ws/settings/mcp-tools
+
+Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.
+
 ### MCP Integrations
 
 URL: https://three.ws/mcp-integrations
@@ -5317,6 +5343,12 @@ Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (
 URL: https://three.ws/docs/mcp-integrations
 
 How an agent connects third-party MCP servers: the catalog, OAuth and token sign-in, tool tiers and acknowledgements, custom-server review, the HTTP API, the three-ws mcp install CLI, and how to add a server to the catalog.
+
+### Connect to every three.ws tool
+
+URL: https://three.ws/mcp
+
+One MCP endpoint and one sign-in for every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, with the live tool count and tool groups read from the same registry the endpoint serves.
 
 ### MCP Tool Catalog
 
@@ -7755,9 +7787,32 @@ cannot both run. If the skill then fails, the intent flips back to `paid`
 (`releaseIntent`), so retrying with the same `x-payment-intent` works and the
 buyer is not charged for a call that never delivered.
 
-For idempotency (don't double-charge on network retry), pass an
-`Idempotency-Key` header - implementations are free to dedupe before
-consuming the intent. Not yet enforced server-side.
+A delivered call can be collected again. If the response is lost after the
+skill ran (a timeout, a dropped mobile connection), repeat the identical request:
+the server returns the stored result with `replayed: true` (and the header
+`idempotent-replayed: true`) for 24 hours, runs nothing a second time and credits
+no second revenue row. The replay is keyed per account on:
+
+- the `Idempotency-Key` header, when sent (it wins, so an SDK can pick one key
+  per logical call; at most 200 characters, longer is `400 invalid_idempotency_key`);
+- otherwise the `x-payment-intent` value.
+
+Only the account that paid the intent can collect its result: another account
+sending the same intent id gets the ordinary `402`. A first response carries
+`replayed: false`. The manifest and the `402` advertise the contract:
+
+```json
+"idempotency": { "header": "Idempotency-Key", "ttl_seconds": 86400, "replay_field": "replayed" }
+```
+
+| Response | Meaning | What to do |
+| --- | --- | --- |
+| `200` with `replayed: true` | The call already ran; this is its stored result. | Use it. Nothing was charged again. |
+| `409 idempotency_conflict` | The key or intent was already used with different `agent_id`, `skill` or `args`. | Send a new key (and a new payment) for a new request. |
+| `409 idempotency_in_progress` (`retry: true`, `retry-after: 2`) | The first call with this payment is still running. | Wait and repeat the same request to collect its result. |
+
+A call that fails stores nothing: the intent goes back to `paid` and the same
+request runs again on retry.
 
 ## A paid call that fails never asks the buyer to pay twice
 

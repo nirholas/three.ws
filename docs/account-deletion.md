@@ -59,6 +59,14 @@ by anyone and is not affected.
   the accounts that have never been attempted, and the cron sends an ops alert
   with counts and codes only.
 
+Money in flight is never purged out from under someone. If the purge would
+delete or unlink a bid that still holds a bidder's escrow (`awaiting_funds` or
+`open`), a bid whose refund is still `pending` or `failed`, or a sale of the
+account's agent that is not yet `completed`, the account waits with
+`in_flight:agent_listing_bids` or `in_flight:agent_transfers`. The marketplace
+escrow sweep (`api/_lib/agent-market/sweep.js`) settles those rows, and a later
+tick purges the account. The list is `IN_FLIGHT` in `api/_lib/account-purge.js`.
+
 A new foreign key to `users` (or to anything that cascades from it) that is not
 `CASCADE` or `SET NULL` must get an entry in `EDGE_POLICY`. Until it does, a
 `NOT NULL` one fails the affected accounts closed with `unclassified_fk:...`
@@ -66,10 +74,18 @@ rather than guessing, and a nullable one is unlinked as `SET NULL` would.
 
 ## Operating it
 
-- Schema: `api/_lib/migrations/20261104180000_account_purge.sql`.
+- Schema: `api/_lib/migrations/20261104180000_account_purge.sql` and
+  `20261104220000_account_purge_transfer_links.sql` (a retained sale outlives
+  the deleted listing and bid it came from).
 - Read-only count of what the next run would take:
   `countPurgeable({ olderThanDays: 30 })` from `api/_lib/account-purge.js`
   returns `{ purgeable, pending }`.
+- Read-only dry run: `previewPurge({ olderThanDays: 30 })` builds the plan from
+  the live catalog and runs only its guard query for each account past the
+  window. It returns the counts, how many accounts are `ready`, every `blocked`
+  account with its code (hashed reference only), and the plan's statement
+  count and guard codes. It deletes and writes nothing. Run it after any schema
+  change that adds a foreign key to `users` or to anything below it.
 - Tests: `tests/api/purge-deleted-accounts.test.js` (the purge against a real
   Postgres) and `tests/api/wallet-signin-deleted-account.test.js` (SIWS and SIWE
   sign-in on both sides of the purge).

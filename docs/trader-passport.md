@@ -6,7 +6,7 @@ That distinction is the whole point. A leaderboard you have to trust is marketin
 
 ## The credential
 
-Kind: `threews.tradescore.v1`. Subject: the trader's Solana trading wallet. Issuer: the three.ws attester key, which signs the memo transaction.
+Kind: `threews.tradescore.v1`. Subject: the trader's Solana trading wallet. Issuer: the three.ws attester key, which signs the memo transaction. The wallet is listed in the transaction as a read-only account on a ComputeBudget instruction (SPL Memo v2 rejects non-signer accounts on the memo itself), which is what lets the verifier below confirm the committed subject is an account of the transaction.
 
 The memo commits the headline numbers **and** the provenance behind them, so a consumer sees what was excluded, not only what was credited:
 

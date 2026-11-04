@@ -24,9 +24,9 @@
 
 ---
 
-> A typed Solana SDK for AI agents. Give an agent a wallet — its own keypair for
-> autonomous signing, or a browser wallet that defers signing to the user — then
-> transfer SOL and SPL tokens, swap via Jupiter, stake, pay x402 invoices in USDC,
+> A typed Solana SDK for AI agents. Give an agent a wallet (its own keypair for
+> autonomous signing, or a browser wallet that defers signing to the user), then
+> transfer SOL and SPL tokens, swap via Jupiter, stake, pay x402 invoices,
 > and plug into solana-agent-kit. Dual ESM/CJS, fully typed.
 
 ## Install
@@ -45,13 +45,13 @@ The package exposes these subpath exports (each dual ESM/CJS with type declarati
 | --- | --- |
 | `@three-ws/solana-agent` | the `SolanaAgent` class, all wallet providers, action functions, tx utilities, and error classes |
 | `@three-ws/solana-agent/wallet` | the wallet providers (re-exported from the root) |
-| `@three-ws/solana-agent/x402-exact` | the x402 "exact" USDC payment scheme (payer + facilitator) |
+| `@three-ws/solana-agent/x402-exact` | the x402 "exact" payment scheme for SPL Token and Token-2022 assets (payer + facilitator) |
 | `@three-ws/solana-agent/solana-agent-kit` | a `solana-agent-kit` plugin and tool-call `Action` definitions |
 | `@three-ws/solana-agent/vanity` | provably-fair vanity wallet grinding: one-call client, receipt verifier, sealed-envelope opener |
 
 ## Quick start
 
-`SolanaAgent` is the main entry. Use the static factories — `fromKeypair` (the agent holds the key and signs autonomously) or `fromBrowserWallet` (signing is deferred to the user's wallet).
+`SolanaAgent` is the main entry. Use the static factories: `fromKeypair` (the agent holds the key and signs autonomously) or `fromBrowserWallet` (signing is deferred to the user's wallet).
 
 ```js
 import { SolanaAgent } from '@three-ws/solana-agent';
@@ -78,9 +78,9 @@ await agent.transferSpl('<mint>', '<recipient>', 1_000_000n);
 const quote = await agent.getSwapQuote({ inputMint, outputMint, amount });
 await agent.swap({ inputMint, outputMint, amount });
 
-// Token balances / accounts.
-const bal = await agent.getTokenBalance('<mint>');   // null if no account for that mint
-const accounts = await agent.getTokenAccounts();      // non-zero balances only
+// Token balances / accounts (classic SPL Token and Token-2022, e.g. $THREE).
+const bal = await agent.getTokenBalance('<mint>');   // null if the mint or the account does not exist
+const accounts = await agent.getTokenAccounts();      // non-zero balances only, both programs
 
 // Associated token account.
 const { address, created } = await agent.getOrCreateAta({ mint: '<mint>' });
@@ -91,22 +91,37 @@ await agent.unstakeSOL('<stakeAccount>');             // withdrawable after ~1 e
 const stakes = await agent.getStakeAccounts();
 ```
 
+Every result carries `programId` (which token program owns the mint) and `uiAmount` as an exact decimal string. RPC failures reject rather than reading as "no balance".
+
 The underlying functions (`transferSol`, `transferSpl`, `jupiterSwap`, `getSwapQuote`, `getTokenBalance`, `getTokenAccounts`, `getOrCreateAta`, `stakeSOL`, `unstakeSOL`, `getStakeAccounts`) and the `SOL_MINT` constant are also exported from the root for functional use.
 
 ## Wallet providers
 
 All implement the same `WalletProvider` interface, so they are interchangeable in `new SolanaAgent({ wallet, connection })`:
 
-- `KeypairWalletProvider` — server-side keypair. `new KeypairWalletProvider(privateKey)` accepts a base58 string, `Uint8Array`, or `number[]`.
-- `BrowserWalletProvider` — server half of a split browser-signing flow (`createHandler()` mounts on your HTTP server).
-- `BrowserWalletClient` — browser half; signs via a user-supplied `SignerFn` with an `ApprovalHandler`.
-- `WalletAdapterProvider` — wraps a `@solana/wallet-adapter` wallet.
+- `KeypairWalletProvider`: server-side keypair. `new KeypairWalletProvider(privateKey, { commitment, confirmTimeoutMs })` accepts a base58 string, `Uint8Array`, or `number[]`. It adds its signature without clearing co-signers already on the transaction.
+- `BrowserWalletProvider`: server half of a split browser-signing flow (`createHandler()` mounts on your HTTP server). Options include `commitment` and `confirmTimeoutMs`. `POST /sign/:id` answers with a `SignOutcome` (`{ ok, signature?, error? }`) once the transaction confirms or fails.
+- `BrowserWalletClient`: browser half; signs via a user-supplied `SignerFn` with an `ApprovalHandler`. `onConfirmed(pending, signature)` fires when the transaction lands; `onFailed(pending, error, signature?)` fires when the agent refuses it or it fails on-chain, so the UI never shows a failed payment as sent.
+- `WalletAdapterProvider`: wraps a `@solana/wallet-adapter` wallet.
+
+### Confirmation
+
+`signAndSendTransaction(tx, connection, confirm?)` resolves only once the transaction reached the requested commitment **and executed without error**. A transaction that lands but fails throws `TransactionFailedError` instead of returning its signature. The optional `confirm` argument (`ConfirmOptions`):
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `commitment` | `"confirmed"` | `"processed"`, `"confirmed"`, or `"finalized"` |
+| `timeoutMs` | `90000` (`DEFAULT_CONFIRM_TIMEOUT_MS`) | give up with `ConfirmationTimeoutError` |
+| `lastValidBlockHeight` | the tx's own, when it has one | stop as soon as the blockhash expires instead of waiting out the timeout |
+| `pollIntervalMs` | `500` | delay between status polls |
+
+`confirmSignature(connection, signature, opts)` is exported for confirming a signature you sent yourself. `buildAndSend` (used by every action) takes `signers` for extra keypairs such as a new stake account, plus `commitment`, `confirmTimeoutMs`, and `maxRetries`: it rebuilds with a fresh blockhash only when the previous one expired, and throws `RetriesExhaustedError` when every attempt expired. Swaps pass Jupiter's `lastValidBlockHeight` through, so an expired swap fails fast.
 
 `isMetaAware()` plus the `TxMetadata` / `MetaAwareWallet` types support attaching memo/metadata to transactions.
 
 ## x402 exact payments
 
-The `exact` scheme transfers a fixed USDC amount via an SPL `TransferChecked` and returns the tx signature as the proof for an x402 `X-PAYMENT` header. Compatible with x402 v2.
+The `exact` scheme transfers a fixed token amount via an SPL `TransferChecked` and returns the tx signature as the proof for an x402 `X-PAYMENT` header. Compatible with x402 v2. The asset can be a classic SPL Token mint (USDC) or a Token-2022 mint such as $THREE, and the payee can be a wallet or a program-derived vault: both the payer and the facilitator resolve the right token program. Every payment carries the server-issued challenge nonce as a memo, so it cannot be replayed against another request.
 
 ```js
 import { payExact, buildExactPaymentPayload, USDC_MAINNET, SOLANA_MAINNET } from '@three-ws/solana-agent/x402-exact';
@@ -118,9 +133,12 @@ const requirements = {
   amount: '1000000',              // 1 USDC, base units
   payTo: '<recipient address>',
   maxTimeoutSeconds: 60,
+  extra: { nonce: '<nonce from the 402 response>' }, // required; issued by the facilitator
 };
 
 // Payer side: build + sign + send the transfer, get the proof.
+// Throws InvalidInputError (nothing sent) without a nonce or with a non-integer amount,
+// and MissingTokenAccountError when the wallet holds none of the asset.
 const proof = await payExact(agent.wallet, agent.connection, requirements);
 
 // Wrap it into an x402 v2 PaymentPayload for the X-PAYMENT header retry.
@@ -133,6 +151,8 @@ Receiver / facilitator side:
 import { ExactFacilitator } from '@three-ws/solana-agent/x402-exact';
 
 const facilitator = new ExactFacilitator('https://api.mainnet-beta.solana.com'); // RPC URL
+const { nonce } = await facilitator.issueChallenge({ resource: '/api/thing', asset, amount, payTo });
+// ...send `nonce` in requirements.extra.nonce with the 402, then on the retry:
 const verify = await facilitator.verify(proof, requirements);  // VerifyResponse { isValid, ... }
 const settle = await facilitator.settle(proof, requirements);  // SettleResponse { success, ... }
 ```
@@ -191,7 +211,9 @@ Also exported: `getAgenCAgent`, `deriveAgenCAgentPda`, the task lifecycle helper
 `grindVerifiedVanity` requests a vanity address from the three.ws
 `/api/x402/vanity-verifiable` endpoint, opens the ECIES-sealed secret locally,
 and independently verifies every claim in the signed receipt before handing
-you the key. It throws instead of returning a key that fails verification.
+you the key. It throws `ReceiptVerificationError` (with one entry per failed
+check in `failures`) instead of returning a key that fails verification, and
+`RequestFailedError` when the paid request itself is refused.
 
 ```js
 import { grindVerifiedVanity, verifyVanityReceipt } from '@three-ws/solana-agent/vanity';
@@ -209,7 +231,43 @@ Also exported: the verifier internals (`verifyVanityReceipt`, `verifyReceiptSign
 
 ## Errors
 
-Typed error classes (exported from the root) for boundary handling: `SolanaAgentError`, `TransactionRejectedError`, `WalletNotConnectedError`, `WalletCapabilityError`, `MissingTokenAccountError`, `SwapError`, `SimulationError`, `ConfirmationTimeoutError`.
+Everything the SDK throws on purpose is a `SolanaAgentError` subclass, exported from the root. Branch on the class, not the message:
+
+```js
+import { TransactionFailedError, RetriesExhaustedError, InvalidInputError } from '@three-ws/solana-agent';
+
+try {
+  await agent.transferSpl(mint, to, amount);
+} catch (err) {
+  if (err instanceof InvalidInputError) showFieldError(err.param, err.message);
+  else if (err instanceof TransactionFailedError) reportOnChainFailure(err.signature, err.transactionError);
+  else if (err instanceof RetriesExhaustedError) offerRetry();
+  else throw err;
+}
+```
+
+| Class | Thrown when | Fields |
+| --- | --- | --- |
+| `SolanaAgentError` | base class of every error below | |
+| `TransactionRejectedError` | the user rejected a browser-wallet prompt, or approval timed out | `reason` |
+| `WalletNotConnectedError` | a wallet adapter has no `publicKey` | |
+| `WalletCapabilityError` | a wallet adapter lacks `signTransaction` or `sendTransaction` | `capability` |
+| `MissingTokenAccountError` | the sender holds no token account for the mint | `mint`, `owner` |
+| `SwapError` | a Jupiter quote or swap request failed, or the swap transaction does not match its quote | `inputMint`, `outputMint` |
+| `SimulationError` | preflight simulation failed before sending | `simulationError` |
+| `ConfirmationTimeoutError` | the signature did not reach the commitment within `timeoutMs` | `signature`, `timeoutMs` |
+| `TransactionFailedError` | the transaction landed but its execution failed | `signature`, `transactionError` |
+| `RetriesExhaustedError` | every attempt's blockhash expired before it landed | `attempts`, `lastBlockhash`, `lastError` |
+| `LookupTableNotFoundError` | a referenced address lookup table does not exist | `address` |
+| `MintNotFoundError` | a mint account does not exist | `mint` |
+| `NotATokenMintError` | an account passed as a mint is owned by neither SPL token program | `mint`, `owner` |
+| `InvalidInputError` | a caller-supplied argument is malformed or out of range; nothing was sent | `param` |
+| `RequestFailedError` | a three.ws HTTP endpoint returned a non-2xx status | `url`, `status`, `detail` |
+| `ReceiptVerificationError` | a vanity receipt failed independent verification | `failures` |
+
+A blockhash that expired mid-confirmation surfaces as web3.js's own `TransactionExpiredBlockheightExceededError`; `buildAndSend` catches it and retries, so callers of the actions see `RetriesExhaustedError` instead.
+
+`err.name` is the class name even in the minified build, and `instanceof` holds across the separately bundled entry points (`/wallet`, `/x402-exact`, `/vanity`), so an error thrown inside one subpath matches the class imported from the root. A plain `Error` that merely copies a `name` never matches. Your own subclasses of `SolanaAgentError` keep their own name.
 
 ## Requirements
 
@@ -232,7 +290,7 @@ Typed error classes (exported from the root) for boundary handling: `SolanaAgent
 
 <p align="center">
   <sub>
-    Part of the <a href="https://three.ws">three.ws</a> SDK suite — 3D AI agents, on-chain identity, and agent payments.<br/>
+    Part of the <a href="https://three.ws">three.ws</a> SDK suite: 3D AI agents, on-chain identity, and agent payments.<br/>
     <a href="https://three.ws">Website</a> · <a href="https://three.ws/changelog">Changelog</a> · <a href="https://github.com/nirholas/three.ws">GitHub</a>
   </sub>
 </p>

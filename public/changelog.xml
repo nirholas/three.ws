@@ -7,12 +7,28 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Activate a Microsoft Marketplace purchase</title>
+			<link>https://three.ws/microsoft/activate</link>
+			<guid isPermaLink="false">2026-11-04:Activate a Microsoft Marketplace purchase</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Where a Microsoft Marketplace buyer lands after purchasing a three.ws plan: sign in with Microsoft Entra ID to link the subscription to a three.ws account and switch the plan on.</description>
+		</item>
+		<item>
 			<title>Add three.ws to ChatGPT: free 3D models and avatars inside your chats</title>
 			<link>https://three.ws/chatgpt</link>
 			<guid isPermaLink="false">2026-11-04:Add three.ws to ChatGPT: free 3D models and avatars inside your chats</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.</description>
+		</item>
+		<item>
+			<title>Connect to every three.ws tool</title>
+			<link>https://three.ws/mcp</link>
+			<guid isPermaLink="false">2026-11-04:Connect to every three.ws tool</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One MCP endpoint and one sign-in for every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, with the live tool count and tool groups read from the same registry the endpoint serves.</description>
 		</item>
 		<item>
 			<title>Docs · Account deletion and the 30-day purge</title>
@@ -39,6 +55,14 @@
 			<description>How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.</description>
 		</item>
 		<item>
+			<title>Docs · Microsoft Marketplace SaaS offer</title>
+			<link>https://three.ws/docs/microsoft-marketplace-saas</link>
+			<guid isPermaLink="false">2026-11-04:Docs · Microsoft Marketplace SaaS offer</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.</description>
+		</item>
+		<item>
 			<title>Docs · Partner shoutout playbook</title>
 			<link>https://three.ws/docs/partner-shoutout-playbook</link>
 			<guid isPermaLink="false">2026-11-04:Docs · Partner shoutout playbook</guid>
@@ -61,6 +85,30 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_&lt;name&gt;_&lt;tool&gt;.</description>
+		</item>
+		<item>
+			<title>MCP Tool Access Settings</title>
+			<link>https://three.ws/settings/mcp-tools</link>
+			<guid isPermaLink="false">2026-11-04:MCP Tool Access Settings</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.</description>
+		</item>
+		<item>
+			<title>three.ws agents (Microsoft Teams tab)</title>
+			<link>https://three.ws/microsoft/teams-tab</link>
+			<guid isPermaLink="false">2026-11-04:three.ws agents (Microsoft Teams tab)</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.</description>
+		</item>
+		<item>
+			<title>A paid agent skill call whose response was lost can now be collected again without paying twice</title>
+			<link>https://three.ws/docs/x402</link>
+			<guid isPermaLink="false">2026-11-04:A paid agent skill call whose response was lost can now be collected again without paying twice</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you pay for an agent skill and the connection drops before the answer arrives, asking again with the same Idempotency-Key (or the same payment intent) now returns the stored result, marked replayed, instead of a payment_in_flight error or a second charge. The skill runs once and the author is credited once. A retry with different arguments is refused with idempotency_conflict, a retry while the first call is still running gets idempotency_in_progress with a retry-after, and a call that fails stores nothing so the paid intent can be retried. The 402 challenge and the manifest now advertise the header, the 24 hour window and the replayed field, and the browser x402 client sends one key per call and retries a dropped paid request once on its own.</description>
 		</item>
 		<item>
 			<title>Add three.ws to your own ChatGPT in about a minute</title>
@@ -108,7 +156,7 @@
 			<guid isPermaLink="false">2026-11-04:Deleted accounts are now permanently purged after 30 days</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
-			<description>The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.</description>
+			<description>The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. If a marketplace bid or sale involving your agent is still settling, the purge waits until the other person has been paid or refunded. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.</description>
 		</item>
 		<item>
 			<title>Every new agent now starts with a drafted coin</title>
@@ -127,6 +175,14 @@
 			<description>All 158 docs that had fallen behind the code were reread against the changes that moved under them. 123 were corrected (endpoints, defaults, counts, limits, file paths, and features that have since shipped), 21 were confirmed still accurate, and 14 dated records such as event write-ups were marked as historical so they are no longer flagged. The freshness check now tracks each review, and its allowed stale count drops from 121 to 13, so drift shows up as soon as code changes.</description>
 		</item>
 		<item>
+			<title>Every platform fee now has its own ledger, and bundle and subscription earnings are booked correctly</title>
+			<link>https://three.ws/docs/financial-controls</link>
+			<guid isPermaLink="false">2026-11-04:Every platform fee now has its own ledger, and bundle and subscription earnings are booked correctly</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Each fee three.ws takes (pump.fun trades and launches, agent trades, skill sales, bundles, subscriptions and the x402 skill split) is now recorded once in an append-only fee ledger, in the same database write as the purchase or trade it belongs to, and replays never record it twice. A daily reconciler checks every recorded fee against what the fee wallet actually received on Solana. Bundle and subscription confirmations also stopped booking a platform fee when the buyer paid the full price straight to the creator, so creators now see their full earnings for those sales.</description>
+		</item>
+		<item>
 			<title>Grok Bot gets the Solana market, and three.ws events can wake it</title>
 			<link>https://three.ws/grok</link>
 			<guid isPermaLink="false">2026-11-04:Grok Bot gets the Solana market, and three.ws events can wake it</guid>
@@ -135,12 +191,36 @@
 			<description>The three.ws connector for Grok Bot now covers more than 3D. Signed in, Grok can read live pump.fun graduations and token intel, Oracle conviction plays, the Sentiment Scout, token due diligence, the trader leaderboard and Solana agent passports, and a new market-brief prompt turns them into a scheduled daily brief. None of these tools can trade or spend. Developer webhooks can now carry a bearer token, so a three.ws event such as a finished generation or agent run can start a Grok Bot routine. The token is stored encrypted and never shown again. The /grok page and docs also cover Grok Build, xAI's coding CLI, which picks up the three.ws MCP config and plugin marketplace with no extra setup.</description>
 		</item>
 		<item>
+			<title>Health checks now show when the Granite Guardian governance model is not serving</title>
+			<link>https://three.ws/docs/ibm</link>
+			<guid isPermaLink="false">2026-11-04:Health checks now show when the Granite Guardian governance model is not serving</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Granite Guardian screens agent messages, identities and autonomous sends for risks like jailbreaks and harm. When no Guardian lane was configured, the assess endpoint answered 503 and the identity check let everything through, yet every health probe stayed green. /api/healthz now carries a granite_guardian subsystem: down in production while no lane is set, ok once the self-hosted GPU worker answers its health probe or the watsonx lane is configured, and degraded when the self-hosted worker fails but watsonx can still answer. The worker deploy config was also corrected for the pinned vLLM release, which no longer accepts one of its old flags.</description>
+		</item>
+		<item>
+			<title>HumanIK avatars and complete bodies without finger joints now animate</title>
+			<link>https://three.ws/rig-doctor</link>
+			<guid isPermaLink="false">2026-11-04:HumanIK avatars and complete bodies without finger joints now animate</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two kinds of avatar used to pass every check and then stand still in their bind pose. HumanIK and MotionBuilder rigs name their joints Character1:Hips, which three.js turns into Character1Hips when it loads the model, and that spelling mapped to nothing. Both spellings now resolve, and so does Character1_LeftArm. A complete body with no finger joints, such as a Meshy biped or a handless Mixamo export, fell under the clip coverage floor because 30 of a clip's 53 tracks are fingers; clips now bind when half of either all tracks or the 23 body tracks map, so fingers are optional and the shipped half-body avatar keeps animating. The live viewer, Rig Doctor, avatar thumbnails and the avatar capabilities API now all ask one gate, so a rig cannot be called animatable on one surface and fail on another. Across uploaded avatars in production, 333 of 350 skinned rigs now animate, up from 306.</description>
+		</item>
+		<item>
 			<title>Install three.ws for Home Assistant through HACS</title>
 			<link>https://three.ws/docs/home-relay</link>
 			<guid isPermaLink="false">2026-11-04:Install three.ws for Home Assistant through HACS</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The three.ws Home Assistant integration now has its own public repository, github.com/nirholas/three-ws-home-assistant, with a 1.0.2 release. In HACS, add it under Custom repositories (category Integration), install three.ws, restart, and paste the pairing code from three.ws/smart-home. Your house opens one outgoing connection, nothing on your network is exposed, and no Home Assistant token ever leaves the house. It passes the real HACS and hassfest validation checks, ships its own brand icon, and is listed under AI and voice assistants. A HACS default-store listing, which removes the custom repository step, is prepared.</description>
+		</item>
+		<item>
+			<title>Knocks, agent mail and event markets get their own tabs on /notifications</title>
+			<link>https://three.ws/notifications</link>
+			<guid isPermaLink="false">2026-11-04:Knocks, agent mail and event markets get their own tabs on /notifications</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The notifications page now builds its filter tabs from the same category list as your notification preferences, so it can no longer fall out of step with them. Knocks, agent mail, event-market entries, orders and approvals each get their own tab instead of landing under Account, and those rows now read as sentences (&quot;Scout got mail from Bob&quot;) with their own icon. A knock now opens your knock inbox when clicked. Only categories you have notifications in are shown, the tabs work with arrow keys, each empty tab links to that category's delivery settings, and if the category list cannot load the page still shows everything with a Retry.</description>
 		</item>
 		<item>
 			<title>Large 3D generations stop dropping mid-job, and photo cutouts move to a commercially licensed model</title>
@@ -191,6 +271,22 @@
 			<description>When the connection drops in Play, you now get a plain explanation and a way forward instead of a raw error code. Builds that fail to save retry on their own until they land, and a world whose saved builds did not load tries again before telling you. A dropped matchmaking poll keeps your community in the war queue. A message thread that fails to load shows a Retry button, and a chat reply that drops shows why instead of &quot;They went quiet&quot;. The pay demo only says no funds moved when that is certain. Escape now closes only the top panel, and the loading and error screens, the wheel and the stage prompt follow your language.</description>
 		</item>
 		<item>
+			<title>Slow phones and laptops now drop to lighter graphics in /play within seconds</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-04:Slow phones and laptops now drop to lighter graphics in /play within seconds</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>/play, the club and the trade room lower their graphics settings when a device can't keep up, but they were measuring frame time in a way that made a device drawing 2 frames a second look like one drawing 20. A struggling phone or older laptop could spend half a minute or more on the heaviest settings before anything changed, and a device below 1 frame a second could stay there for minutes. They now measure the real time between frames, so a device that can't keep up steps down to lighter settings within a couple of seconds, while a healthy device coming back from a hidden tab is left alone.</description>
+		</item>
+		<item>
+			<title>The /play share sheet and network errors behave on keyboards and bad connections</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-04:The /play share sheet and network errors behave on keyboards and bad connections</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The build share sheet now uses the shared modal stack, so Escape closes only the sheet, Tab stays inside it and focus returns to where you were. Friends, NPC purchases and coin-buy sign-in show a plain network message instead of raw browser text when a connection drops. A new test pins the HUD text colors at WCAG AA contrast over bright and dark scenes.</description>
+		</item>
+		<item>
 			<title>The GTC 2027 poster, its data and its build scripts are in the repository</title>
 			<link>https://three.wshttps://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027</link>
 			<guid isPermaLink="false">2026-11-04:The GTC 2027 poster, its data and its build scripts are in the repository</guid>
@@ -213,6 +309,38 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Three more agent platforms can now make 3D models for free. The Hermes and Cursor plugins connect the agent to the studio MCP server and bundle the generate, avatar, rig and catalog skills. The Dify plugin adds four native tools to Dify agents and workflows: Generate 3D Model, Create 3D Avatar, Rig 3D Model and Search 3D Assets, each returning the GLB link, a viewer link and optionally the GLB file itself. Neither needs a key or an account.</description>
+		</item>
+		<item>
+			<title>three.ws can now be bought through Microsoft Marketplace, Copilot, Teams, Power Platform and the Microsoft Store</title>
+			<link>https://three.ws/docs/microsoft-marketplace-saas</link>
+			<guid isPermaLink="false">2026-11-04:three.ws can now be bought through Microsoft Marketplace, Copilot, Teams, Power Platform and the Microsoft Store</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The groundwork for selling three.ws through Microsoft is in place. A team that buys a three.ws plan on Microsoft Marketplace lands on /microsoft/activate, signs in with their work account, and gets the same plan a card purchase gives, billed on their Microsoft invoice. Plan changes, suspension and cancellation flow back automatically, and tool calls and agent messages are reported to Microsoft every hour, with Microsoft-side hiccups retried rather than dropped. Alongside it: a Microsoft 365 Copilot agent and Teams app with a bot and a tab, a Power Platform connector with five actions for Power Automate, Power Apps, Logic Apps and Copilot Studio, and a Windows app package for the Microsoft Store, each with a validator. Each one goes live after its Microsoft review.</description>
+		</item>
+		<item>
+			<title>Token holder and security checks now share their Solana reads, cutting RPC calls by about 43%</title>
+			<link>https://three.ws/docs/crypto-api</link>
+			<guid isPermaLink="false">2026-11-04:Token holder and security checks now share their Solana reads, cutting RPC calls by about 43%</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The holders and security panels read the same mint account and largest-holder list for a token, and a page that shows both used to pay for those reads twice, once per server instance it landed on. Those public reads are now shared across the whole fleet for 30 seconds, and the security verdict for a token is reused for 60 seconds, so a burst of lookups costs a fraction of the calls. If every data source is down, the security check now serves the last good verdict for up to 6 hours, clearly marked as stale, instead of failing. Operators also get a per-route RPC spend board at /api/ops/rpc-spend, a terminal report, and an optional daily budget per RPC lane that keeps the remaining quota for payments and settlements.</description>
+		</item>
+		<item>
+			<title>Trader scores, reviews, model checks and tournament results now land on Solana</title>
+			<link>https://three.ws/docs/trader-passport</link>
+			<guid isPermaLink="false">2026-11-04:Trader scores, reviews, model checks and tournament results now land on Solana</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Five kinds of on-chain record had been failing on every attempt. The daily trader-score credential, review attestations, GLB validation attestations, tournament podiums and hire attestations each named their subject (the trader wallet or the agent) on the memo instruction without that account signing, and Solana's memo program rejects any account that did not sign. No trader score had ever been recorded on mainnet. The subject now sits on a separate read-only instruction, so each record lands and still shows up under the subject's own transaction history, which is what Trader Passport verification and the reputation crawler rely on. The same fix applies to feedback, task and dispute attestations sent through the @three-ws/sdk browser helpers, which had the same flaw.</description>
+		</item>
+		<item>
+			<title>Turn MCP tool groups on or off yourself at /settings/mcp-tools</title>
+			<link>https://three.ws/settings/mcp-tools</link>
+			<guid isPermaLink="false">2026-11-04:Turn MCP tool groups on or off yourself at /settings/mcp-tools</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an MCP server refuses a tool because it is switched off, the link in the refusal now opens a real page. Sign in and you see every tool group with its plain description. Set a group to on to unlock all of its tools, including financial ones such as swaps, transfers and launches, or to off to hide it from every connected client. Your choice is saved to your account and applies to every client within about 15 seconds, with no need to reconnect or send a header.</description>
 		</item>
 		<item>
 			<title>What three.ws builds with NVIDIA, and the poster we are taking to GTC 2027</title>

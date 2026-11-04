@@ -17,6 +17,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import { rewriteHead } from './server/seo-head.mjs';
 import { keepEntryExports } from './scripts/vite/keep-entry-exports.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, apiCreationLoader } from './server/creation-head.mjs';
+import { isPlayPath, rewritePlayHead } from './server/play-head.mjs';
 import { presentDevRequestsAsSameSite } from './server/dev-proxy-origin.mjs';
 
 // Dev parity for production's per-request <head> rewrite (server/seo-head.mjs).
@@ -3027,8 +3028,13 @@ const appConfig = {
 						const creationHtml = creationIdFromPath(path)
 							? await renderDevCreationHead(path, transformed)
 							: null;
+						// /play?coin=<mint> names the coin in its head too
+						// (server/play-head.mjs), so invite unfurls can be checked locally.
+						const playHtml = isPlayPath(path)
+							? rewritePlayHead(transformed, new URLSearchParams(url.slice(path.length)))
+							: null;
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
-						res.end(creationHtml || rewriteSeoHead(path, transformed));
+						res.end(creationHtml || playHtml || rewriteSeoHead(path, transformed));
 					} catch {
 						next();
 					}

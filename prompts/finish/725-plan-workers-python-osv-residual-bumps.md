@@ -1,5 +1,7 @@
 # Clear the last 84 OSV advisories in the Python worker pins (transformers, diffusers, rembg, basicsr)
 
+**Status (2026-11-04):** In progress in an interactive session (rembg, transformers, Pillow, basicsr triage). Do not start it in parallel.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/725-plan-workers-python-osv-residual-bumps.md`.
 
 **Priority:** P2, new capability with clear value (score 55 of 100 inside the tier). **Area:** workers. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

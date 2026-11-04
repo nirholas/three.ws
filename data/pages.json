@@ -427,6 +427,24 @@
 					"indexable": false
 				},
 				{
+					"path": "/microsoft/teams-tab",
+					"title": "three.ws agents (Microsoft Teams tab)",
+					"description": "The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.",
+					"priority": 0.2,
+					"changefreq": "monthly",
+					"added": "2026-11-04",
+					"indexable": false
+				},
+				{
+					"path": "/microsoft/activate",
+					"title": "Activate a Microsoft Marketplace purchase",
+					"description": "Where a Microsoft Marketplace buyer lands after purchasing a three.ws plan: sign in with Microsoft Entra ID to link the subscription to a three.ws account and switch the plan on.",
+					"priority": 0.2,
+					"changefreq": "monthly",
+					"added": "2026-11-04",
+					"indexable": false
+				},
+				{
 					"path": "/apps/shopify",
 					"title": "Photo to 3D product media (Shopify app)",
 					"description": "An embedded Shopify admin app that turns a product photo into a real GLB and attaches it to the product, so the storefront shows a 3D viewer on desktop and AR Quick Look on iPhone.",
@@ -5344,6 +5362,14 @@
 					"path": "/docs/microsoft-marketplace-offer-plan",
 					"title": "Docs · Microsoft distribution and offer plan",
 					"description": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
+					"path": "/docs/microsoft-marketplace-saas",
+					"title": "Docs · Microsoft Marketplace SaaS offer",
+					"description": "How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.",
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-11-04"

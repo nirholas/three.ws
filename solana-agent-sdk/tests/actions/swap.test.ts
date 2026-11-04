@@ -10,7 +10,10 @@ const { Keypair, PublicKey, TransactionMessage, VersionedTransaction } =
 const {
   getAssociatedTokenAddressSync,
   createTransferCheckedInstruction,
+  MintLayout,
+  MINT_SIZE,
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } = await import("@solana/spl-token") as typeof import("@solana/spl-token");
 
@@ -20,16 +23,20 @@ const INPUT_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; // USDC
 const OUTPUT_MINT = "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"; // $THREE
 const COUNTERPARTY = Keypair.fromSeed(new Uint8Array(32).fill(2)).publicKey;
 
-function ata(mint: string, owner = WALLET_PUBKEY) {
+// A synthetic Token-2022 mint with 9 decimals: the case a classic-only decimals
+// lookup gets wrong by 1000x in the approval prompt.
+const T22_NINE_MINT = Keypair.fromSeed(new Uint8Array(32).fill(9)).publicKey.toBase58();
+
+function ata(mint: string, owner = WALLET_PUBKEY, program = TOKEN_PROGRAM_ID) {
   return getAssociatedTokenAddressSync(
-    new PublicKey(mint), owner, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+    new PublicKey(mint), owner, false, program, ASSOCIATED_TOKEN_PROGRAM_ID,
   );
 }
 
 // A realistic Jupiter swap tx: spend INPUT from the wallet's ATA, credit OUTPUT
 // back to the wallet's ATA. The new swap-guard validates exactly this shape.
-function buildSwapTx(inAmount: bigint): string {
-  const counterpartyOut = ata(OUTPUT_MINT, COUNTERPARTY);
+function buildSwapTx(inAmount: bigint, outputMint = OUTPUT_MINT, outputProgram = TOKEN_PROGRAM_ID): string {
+  const counterpartyOut = ata(outputMint, COUNTERPARTY, outputProgram);
   const msg = new TransactionMessage({
     payerKey: WALLET_PUBKEY,
     recentBlockhash: "11111111111111111111111111111111",
@@ -39,8 +46,8 @@ function buildSwapTx(inAmount: bigint): string {
         WALLET_PUBKEY, inAmount, 6, [], TOKEN_PROGRAM_ID,
       ),
       createTransferCheckedInstruction(
-        counterpartyOut, new PublicKey(OUTPUT_MINT), ata(OUTPUT_MINT),
-        COUNTERPARTY, 990_000_000n, 6, [], TOKEN_PROGRAM_ID,
+        counterpartyOut, new PublicKey(outputMint), ata(outputMint, WALLET_PUBKEY, outputProgram),
+        COUNTERPARTY, 990_000_000n, 6, [], outputProgram,
       ),
     ],
   }).compileToV0Message();
@@ -70,6 +77,35 @@ function makeMetaWallet(): MetaAwareWallet {
 }
 
 const connection = {} as never;
+
+/** A connection whose mint accounts carry real SPL mint data under their owning program. */
+function mintConnection(mints: Record<string, { program: PublicKey; decimals: number }>) {
+  const getAccountInfo = jest.fn(async (key: InstanceType<typeof PublicKey>) => {
+    const m = mints[key.toBase58()];
+    if (!m) return null;
+    const data = Buffer.alloc(MINT_SIZE);
+    MintLayout.encode(
+      {
+        mintAuthorityOption: 0,
+        mintAuthority: PublicKey.default,
+        supply: 0n,
+        decimals: m.decimals,
+        isInitialized: true,
+        freezeAuthorityOption: 0,
+        freezeAuthority: PublicKey.default,
+      },
+      data,
+    );
+    return { data, owner: m.program, lamports: 1, executable: false };
+  });
+  return { getAccountInfo } as never;
+}
+
+const KNOWN_MINTS = {
+  [INPUT_MINT]: { program: TOKEN_PROGRAM_ID, decimals: 6 },
+  [OUTPUT_MINT]: { program: TOKEN_2022_PROGRAM_ID, decimals: 6 },
+  [T22_NINE_MINT]: { program: TOKEN_2022_PROGRAM_ID, decimals: 9 },
+};
 
 beforeEach(() => {
   mockFetch = jest.fn<(url: RequestInfo | URL, init?: RequestInit) => Promise<Response>>();
@@ -184,7 +220,7 @@ describe("jupiterSwap", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) } as unknown as Response);
 
     const w = makeMetaWallet();
-    await jupiterSwap(w, connection, {
+    await jupiterSwap(w, mintConnection(KNOWN_MINTS), {
       inputMint: INPUT_MINT, outputMint: OUTPUT_MINT, amount: 1_000_000_000n,
     });
 
@@ -193,6 +229,40 @@ describe("jupiterSwap", () => {
     expect(meta["kind"]).toBe("swap");
     expect(meta["amountIn"]).toBeDefined();
     expect(meta["amountOut"]).toBeDefined();
+  });
+
+  it("shows a Token-2022 output amount with the mint's real decimals", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...MOCK_QUOTE, outputMint: T22_NINE_MINT }) } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ swapTransaction: buildSwapTx(1_000_000_000n, T22_NINE_MINT, TOKEN_2022_PROGRAM_ID) }),
+      } as unknown as Response);
+
+    const w = makeMetaWallet();
+    await jupiterSwap(w, mintConnection(KNOWN_MINTS), {
+      inputMint: INPUT_MINT, outputMint: T22_NINE_MINT, amount: 1_000_000_000n,
+    });
+
+    const meta = (w.setNextMeta as jest.Mock).mock.calls[0]![0] as {
+      amountIn: { uiAmount: string };
+      amountOut: { uiAmount: string };
+    };
+    expect(meta.amountIn.uiAmount).toBe("1000");
+    expect(meta.amountOut.uiAmount).toBe("0.99");
+  });
+
+  it("refuses to describe a swap with guessed decimals when the mint cannot be read", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response);
+    const unreadable = { getAccountInfo: jest.fn(async () => { throw new Error("429 Too Many Requests"); }) } as never;
+    const freshInput = Keypair.fromSeed(new Uint8Array(32).fill(11)).publicKey.toBase58();
+
+    const w = makeMetaWallet();
+    await expect(
+      jupiterSwap(w, unreadable, { inputMint: freshInput, outputMint: OUTPUT_MINT, amount: 1n }),
+    ).rejects.toThrow("429");
+    expect(w.setNextMeta).not.toHaveBeenCalled();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it("does not throw when wallet does not implement setNextMeta", async () => {

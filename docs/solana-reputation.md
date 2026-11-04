@@ -29,7 +29,7 @@ This is the three.ws-native layer: anyone can leave a permanent, on-chain vouch 
 
 There's no custom contract — a vouch is an **SPL Memo** transaction. The reviewer signs a transaction that:
 
-1. Writes a JSON memo via the Memo program (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`), with the agent's asset pubkey attached as a read-only key so the memo is discoverable by `getSignaturesForAddress(asset)`:
+1. Writes a JSON memo via the Memo program (`MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr`), with the agent's asset pubkey in the transaction's account keys so the memo is discoverable by `getSignaturesForAddress(asset)`. The asset rides as a read-only account on a ComputeBudget `SetComputeUnitLimit` instruction, never on the memo instruction itself: SPL Memo v2 requires every account passed to it to sign, so a non-signer asset there fails the transaction with `MissingRequiredSignature`. The SDK (`@three-ws/sdk` `attestFeedback` and friends) and every server-signed lane (`api/_lib/solana/memo-attest.js`) build it this way:
 
    ```jsonc
    {
