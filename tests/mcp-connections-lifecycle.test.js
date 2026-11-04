@@ -354,7 +354,13 @@ describe('autonomous runs', () => {
 
 	it('a broken connection read never stops the run from getting its own tools', async () => {
 		const saved = holder.db;
-		holder.db = { sql: () => Promise.reject(new Error('db down')) };
+		holder.db = {
+			sql: () => {
+				const down = Promise.reject(new Error('db down'));
+				down.catch(() => {});
+				return down;
+			},
+		};
 		try {
 			const tools = await runs.runToolset(run());
 			expect(tools.schemas.length).toBeGreaterThan(0);
