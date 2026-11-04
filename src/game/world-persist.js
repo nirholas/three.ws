@@ -30,6 +30,10 @@ import { log } from '../shared/log.js';
 // Matches SAVE_DEBOUNCE_MS in multiplayer/src/persistence.js: a burst of
 // placements coalesces into one write, exactly like the server's.
 export const WORLD_SAVE_DEBOUNCE_MS = 4000;
+// Backoff between retries of a write that failed on the network or a 5xx. The
+// last step repeats until the save lands, the player leaves, or the room takes
+// over: a build is never dropped because one request did not get through.
+export const WORLD_SAVE_RETRY_MS = [5000, 15000, 45000, 60000];
 
 /**
  * The store key for a coin world. Mirrors WalkRoom's `worldKey` byte-for-byte
@@ -108,6 +112,7 @@ export class WorldBuildStore {
 		this.lastError = null;
 		this._produce = null;
 		this._timer = null;
+		this._retries = 0;           // consecutive failed writes, indexes WORLD_SAVE_RETRY_MS
 		this._inFlight = null;
 		this._disposed = false;
 		// Armed = this client is the writer. Disarmed the moment an authoritative
@@ -189,8 +194,20 @@ export class WorldBuildStore {
 		if (this._timer) { clearTimeout(this._timer); this._timer = null; }
 		if (this._disposed || this.denied || !this._armed || !this._produce) return 'idle';
 		if (this._inFlight) return this._inFlight;
-		this._inFlight = this._flushOnce().finally(() => { this._inFlight = null; });
+		this._inFlight = this._flushOnce()
+			.then((outcome) => { this._afterFlush(outcome); return outcome; })
+			.finally(() => { this._inFlight = null; });
 		return this._inFlight;
+	}
+
+	// A network failure or 5xx keeps the edit pending and re-arms the timer on the
+	// backoff schedule; anything else (saved, refused, too large) ends the cycle.
+	_afterFlush(outcome) {
+		if (outcome !== 'error') { this._retries = 0; return; }
+		if (this._disposed || this.denied || !this._armed || this._timer) return;
+		const delay = WORLD_SAVE_RETRY_MS[Math.min(this._retries, WORLD_SAVE_RETRY_MS.length - 1)];
+		this._retries += 1;
+		this._timer = setTimeout(() => { this._timer = null; this.flush().catch(() => {}); }, delay);
 	}
 
 	async _flushOnce() {

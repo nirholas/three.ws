@@ -200,6 +200,8 @@ const REMOTE_LERP = 0.18;
 // out of the way (_loop). See each for why.
 const WARM_TIMEOUT_MS = 1200;
 const WATCHDOG_GRACE_MS = 3000;
+// Delays before re-reading a world's saved build after a failed read.
+const WORLD_LOAD_RETRY_MS = [5000, 15000];
 // Past this ground distance a peer's nameplate is a couple of unreadable pixels,
 // so it isn't projected or written to the DOM at all. Bounds the per-frame label
 // cost by how many people are NEAR you, not by how many are in the world.
@@ -4714,18 +4716,33 @@ export class CoinCommunities {
 		// and bfcache evictions alike, which `beforeunload` does not.
 		this._worldStoreUnload = () => { if (store.pending) store.flush().catch(() => {}); };
 		addEventListener('pagehide', this._worldStoreUnload);
-		const epoch = this._enterEpoch;
+		this._loadWorldStore(store, this._enterEpoch, 0);
+	}
+
+	// Read the persisted build, retrying a failed read with backoff. A room that
+	// syncs in the meantime restores the same doc itself, so retries stop there;
+	// only when every attempt failed and no room has it is the player told.
+	_loadWorldStore(store, epoch, attempt) {
 		store.load().then(({ doc, error }) => {
 			// The player may have left (or hopped coins) while the read was in flight.
 			if (this._worldStore !== store || epoch !== this._enterEpoch) return;
-			if (error) {
-				// Designed degradation: the world opens without its persisted props
-				// and the store keeps serving saves, so this is expected-path
-				// telemetry rather than a warning, matching _loadCoins above.
-				log.info('[coincommunities] world build load failed:', error);
+			if (!error) { this._restorePersistedBuild(doc); return; }
+			// Designed degradation: the world opens without its persisted props and
+			// the store keeps serving saves, so this is expected-path telemetry
+			// rather than a warning, matching _loadCoins above.
+			log.info('[coincommunities] world build load failed:', error);
+			if (this._roomSynced) return;
+			if (attempt < WORLD_LOAD_RETRY_MS.length) {
+				clearTimeout(this._worldLoadRetry);
+				this._worldLoadRetry = setTimeout(() => {
+					this._worldLoadRetry = null;
+					if (this._worldStore === store && epoch === this._enterEpoch && !this._roomSynced) {
+						this._loadWorldStore(store, epoch, attempt + 1);
+					}
+				}, WORLD_LOAD_RETRY_MS[attempt]);
 				return;
 			}
-			this._restorePersistedBuild(doc);
+			this.ui?.toast('Couldn’t load this world’s saved builds. What you build now still saves; reload to see the rest.', 'warn');
 		});
 	}
 
@@ -4819,6 +4836,8 @@ export class CoinCommunities {
 	// Flush anything pending and tear the store down (leaving a world / a coin hop).
 	_closeWorldStore() {
 		const store = this._worldStore;
+		clearTimeout(this._worldLoadRetry);
+		this._worldLoadRetry = null;
 		this._worldStore = null;
 		this._roomSynced = false;
 		this._offlineBuilt = null;

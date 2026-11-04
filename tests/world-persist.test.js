@@ -7,7 +7,7 @@
 // silent retry loop that tells the player their work is saved when it isn't).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { WorldBuildStore, worldIdForCoin, docObjects, WORLD_SAVE_DEBOUNCE_MS } from '../src/game/world-persist.js';
+import { WorldBuildStore, worldIdForCoin, docObjects, WORLD_SAVE_DEBOUNCE_MS, WORLD_SAVE_RETRY_MS } from '../src/game/world-persist.js';
 
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump'; // $THREE
 
@@ -193,6 +193,49 @@ describe('WorldBuildStore', () => {
 		const [a, b] = await Promise.all([store.flush(), store.flush()]);
 		expect([a, b]).toEqual(['ok', 'ok']);
 		expect(fetchImpl).toHaveBeenCalledTimes(1);
+	});
+
+	// A dropped connection must not silently lose the build: the edit stays
+	// pending and the store tries again on its own with backoff until it lands.
+	it('retries a write that failed on the network, with backoff, until it saves', async () => {
+		const fetchImpl = fakeFetch([
+			new TypeError('Failed to fetch'),
+			jsonResponse(503, { message: 'unavailable' }),
+			jsonResponse(200, { etag: 'v3', version: 5 }),
+		]);
+		const onSaved = vi.fn();
+		const store = new WorldBuildStore({ worldId: MINT, fetchImpl, onSaved });
+		store.queueSave(() => ({ objects: [{ id: 'a' }] }));
+		await vi.advanceTimersByTimeAsync(WORLD_SAVE_DEBOUNCE_MS + 1);
+		expect(fetchImpl).toHaveBeenCalledTimes(1);
+		expect(store.pending).toBe(true);
+		await vi.advanceTimersByTimeAsync(WORLD_SAVE_RETRY_MS[0] + 1);
+		expect(fetchImpl).toHaveBeenCalledTimes(2);
+		expect(store.pending).toBe(true);
+		await vi.advanceTimersByTimeAsync(WORLD_SAVE_RETRY_MS[1] + 1);
+		expect(fetchImpl).toHaveBeenCalledTimes(3);
+		expect(onSaved).toHaveBeenCalledTimes(1);
+		expect(store.etag).toBe('v3');
+		expect(store.pending).toBe(false);
+		await vi.advanceTimersByTimeAsync(WORLD_SAVE_RETRY_MS.at(-1) * 2);
+		expect(fetchImpl).toHaveBeenCalledTimes(3);
+	});
+
+	it('does not retry a refusal, and a dispose cancels a scheduled retry', async () => {
+		const denied = fakeFetch([jsonResponse(403, { message: 'not yours' })]);
+		const a = new WorldBuildStore({ worldId: MINT, fetchImpl: denied });
+		a.queueSave(() => ({ objects: [] }));
+		await vi.advanceTimersByTimeAsync(WORLD_SAVE_DEBOUNCE_MS + WORLD_SAVE_RETRY_MS.at(-1) * 2);
+		expect(denied).toHaveBeenCalledTimes(1);
+
+		const offline = fakeFetch([new TypeError('Failed to fetch')]);
+		const b = new WorldBuildStore({ worldId: MINT, fetchImpl: offline });
+		b.queueSave(() => ({ objects: [] }));
+		await vi.advanceTimersByTimeAsync(WORLD_SAVE_DEBOUNCE_MS + 1);
+		expect(offline).toHaveBeenCalledTimes(1);
+		b.dispose();
+		await vi.advanceTimersByTimeAsync(WORLD_SAVE_RETRY_MS.at(-1) * 2);
+		expect(offline).toHaveBeenCalledTimes(1);
 	});
 
 	it('stops writing after dispose', async () => {
