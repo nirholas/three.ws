@@ -69,7 +69,7 @@ itself the decision being recorded.
 
 **Deferrals.** The ledger is rebuilt from the repository on every run, so it cannot remember a
 judgement someone made by looking at a captured frame. `data/announce-deferred.json` is where that
-judgement lives, with the reason, and it is committed for exactly that reason.
+judgement lives, with the reason, and it is committed for exactly that reason. It also records a surface the owner withdrew because the account already posted it (`/genesis`, 2026-11-04), so the sequencer does not propose it again.
 
 **Pins.** The same problem in the other direction: the ledger scores a surface on what it can
 measure from a description, a route and a directory, so a surface can be worth posting this week

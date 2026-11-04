@@ -194,9 +194,13 @@ URL becomes a socket:
    check-then-connect window rather than narrowing it.
 5. Follow redirects by hand, re-validating and re-pinning every hop.
 
-All three channels take the pin. Node's global `WebSocket` is undici's and honours a
-`dispatcher`, which is what makes pinning the state channel possible at all; the pinned socket
-factory is verified against a real Home Assistant rather than assumed to work.
+All three channels take the pin. undici's `WebSocket` honours a `dispatcher`, which is what makes
+pinning the state channel possible at all; the pinned socket factory is verified against a real
+Home Assistant rather than assumed to work. The pin is sent through undici's own `fetch` and
+`WebSocket` (`pinnedFetch` in `api/_lib/ssrf.js`, `UndiciWebSocket` in `home-url-guard.js`), not
+Node's globals: the global ones are the runtime's bundled undici, which rejects an `Agent` from our
+undici dependency with `UND_ERR_INVALID_ARG` and surfaced as a plain "fetch failed" on every
+guarded call after the undici 8 upgrade.
 
 **There is exactly one way a private address is ever dialable**, and it is the local-instance
 seam: `HOME_ALLOW_LOCAL_INSTANCE=1` on a process that is not a Cloud Run revision. It exists

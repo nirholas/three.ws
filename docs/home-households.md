@@ -124,6 +124,18 @@ that falls outside the scope. Pass it the RESOLVED entities, not the raw argumen
 a device id in a request expands to the entities it actually touches, and that expansion is the
 only form that answers "did it open the front door".
 
+A scoped member is also held to what the call can reach, because Home Assistant expands selectors
+against its own registries and this server cannot always see inside them. `scopedCallRefusal` in
+`members.js` refuses a domain outside `SCOPED_CALL_DOMAINS` (`light`, `switch`, `fan`, `cover`,
+`lock`, `climate`, `media_player`, `vacuum`, `humidifier`, `water_heater`, `valve`, `siren`,
+`input_boolean`, `alarm_control_panel`) as `service_not_scopable`, since `scene`, `script`,
+`automation`, `notify` and the rest run content this check never sees. A call that resolves to no
+named entity ("every light") is refused as `no_named_entity`. On the MCP and chat path
+(`api/_lib/home/tools.js`) the same refusal runs before the scope comparison and adds three more:
+`floor_id` is never allowed, an `area_id` must be an area the scope names, and a `device_id` must
+resolve to at least one entity. Each refusal is a 403 `out_of_scope` and is written to the home log
+with outcome `refused`.
+
 ## Where it is enforced
 
 Membership resolution replaced `user_id` equality in the store, so every surface above it became

@@ -383,7 +383,7 @@ The live product is the source of truth. When a screenshot disagrees with the li
 
 For a reel the editor is given four frames from it, its captions, and the record of the run, since it cannot watch video. It is calibrated against the account's best posts as the X API measured them.
 
-The editor tries Claude on Vertex AI first, then gpt-oss-120b on Groq (skipped when the request carries an image, so a review that must see its media routes to a multimodal rung), then Claude through OpenRouter, then OpenAI, then Kimi K3 on NVIDIA NIM, falling through on any provider or billing error; each record names the model that reviewed it. The CLI reads missing credentials from the Cloud Run service and uses the signed-in `gh` session for GitHub checks.
+The editor tries Claude on Vertex AI first, then gpt-oss-120b on Groq (skipped when the request carries an image, so a review that must see its media routes to a multimodal rung), then Claude through OpenRouter, then OpenAI, then Nemotron 3.5 Super VL on NVIDIA NIM (`nvidia/nemotron-3.5-super-vl-120b-a12b`; Kimi K3 was retired there), falling through on any provider or billing error; each record names the model that reviewed it. The CLI reads missing credentials from the Cloud Run service and uses the signed-in `gh` session for GitHub checks.
 
 This bar caught real errors in the first three queued posts. The Rig Doctor post said the tool knew 11 rig conventions while the live page and code said 15, called a merged fix "an open first issue" when no such issue was open, and shipped a screenshot from before the change. The AWS post was 94 characters and stated no mechanism, and an AI rewrite of it upgraded "an AWS Partner" to "a verified AWS Partner", which no evidence supports.
 

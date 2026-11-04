@@ -524,7 +524,7 @@ npm run e2e:xai-mcp -- --server mcp-studio       # the free studio surface inste
 npm run e2e:xai-mcp -- --dry-run                 # print the exact request, send nothing
 ```
 
-The run asks "Find a ready-made chair in the three.ws catalog and give me its viewer link." and exits non-zero unless the response records an MCP call to `search_catalog` and the final text carries a three.ws viewer URL. The key is `GROK_API_KEY` or `XAI_API_KEY` from the environment, `.env.local`/`.env` (via the npm script's `--env-file`), or the `three-ws-api` Cloud Run service; without one the script exits 1 and prints the request it would have sent. If the model answers without calling the tool, fix the tool descriptions (every agent client reads them), not the prompt.
+The run asks "Find a ready-made chair in the three.ws catalog and give me its viewer link." and exits non-zero unless the response records an MCP call to `search_catalog` and the final text carries a three.ws viewer URL. When it fails it prints the `response.output` item types xAI returned (for example `mcp_call:search_catalog`), because xAI's docs do not name the item type of an MCP call. The key is `GROK_API_KEY` or `XAI_API_KEY` from the environment, `.env.local`/`.env` (via the npm script's `--env-file`), or the `three-ws-api` Cloud Run service; without one the script exits 1 and prints the request it would have sent. If the model answers without calling the tool, fix the tool descriptions (every agent client reads them), not the prompt.
 
 ## Keeping this page true
 

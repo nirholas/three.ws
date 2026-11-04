@@ -105,7 +105,7 @@ curl https://api.x.ai/v1/responses \
     "tools": [{
       "type": "mcp",
       "server_url": "https://three.ws/api/mcp-grok",
-      "server_label": "three-ws"
+      "server_label": "three-ws-grok"
     }]
   }'
 ```
@@ -121,7 +121,7 @@ from xai_sdk.tools import mcp
 client = Client(api_key=os.environ["XAI_API_KEY"])
 chat = client.chat.create(
     model="grok-4.7",
-    tools=[mcp(server_url="https://three.ws/api/mcp-grok", server_label="three-ws")],
+    tools=[mcp(server_url="https://three.ws/api/mcp-grok", server_label="three-ws-grok")],
 )
 chat.append(user("Make a 3D model of a lunar lander and give me the viewer link."))
 print(chat.sample().content)
@@ -173,6 +173,7 @@ handler. A renamed tool fails the build rather than shipping a file that names i
 | `get_job` | Status of a render that outlived one call: `status`, `progress`, `eta_seconds`, then the model and its links. `check_job` does the same and stays for older clients. |
 | `look_at_model` | Render a GLB from several angles so Grok can see what it made. |
 | `search_catalog`, `get_catalog_item`, `get_item_source` | Thousands of ready-made CC0 props, rigged characters and motion clips, plus paste-ready embed code. |
+| `search_docs` | Plain-words search of the three.ws documentation, for how-to questions about the platform itself. Free, never counts against the generation quota. |
 | `create_agent_persona`, `get_agent_persona`, `persona_say` | Save a rigged model as a named body, bring it back later, and make it speak a reply with lip-sync and emotion. |
 
 Every finished model comes back with a `viewer_url` (an interactive viewer that

@@ -33,6 +33,9 @@ Widgets sit on a grid along the right edge of the desktop.
 
 - **Move:** drag a widget by its header. A ghost shows the cell it will land in;
   drops onto an occupied cell are refused.
+- **Move with the keyboard:** in edit mode each widget card is focusable. With
+  the card focused, an arrow key moves it one cell, hopping over neighbours, and
+  the result is announced to screen readers.
 - **Resize, refresh, open, remove:** right-click a widget or use its `...` button.
 - **Edit mode:** right-click the desktop, **Edit widgets**. Every widget shows a
   remove button and a bar offers **Add widget** and **Done** (Escape also exits).

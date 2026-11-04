@@ -250,10 +250,10 @@ below exists, and anything that does not exist says so.
 | The connection store: schema, encrypted credentials, lifecycle | [`api/_lib/home/store.js`](../api/_lib/home/store.js), 11 migrations under `api/_lib/migrations/*_home_*.sql` |
 | The bridge runtime: pooled per-home connections, refcounting, breaker, backpressure ladder | [`api/_lib/home/runtime.js`](../api/_lib/home/runtime.js), [`admission.js`](../api/_lib/home/admission.js) |
 | The `/api/home/*` surface: REST, SSE stream, the error contract | [`api/home/`](../api/home) |
-| Agent tools and the confirmation protocol | [`api/_lib/home/tools.js`](../api/_lib/home/tools.js), [`confirm.js`](../api/_lib/home/confirm.js), wired into `api/chat.js` and `api/_mcp/tools/home.js` |
+| Agent tools and the confirmation protocol | [`api/_lib/home/tools.js`](../api/_lib/home/tools.js), [`confirm.js`](../api/_lib/home/confirm.js), wired into `api/chat.js` (which withholds every home tool when a visitor chats with an agent they do not own) and `api/_mcp/tools/home.js` |
 | The connect flow and the household page | `/smart-home` ([`pages/smart-home.html`](../pages/smart-home.html), [`src/home/`](../src/home)) |
 | The live 3D home, with the visitor's own agent standing in it (the platform body until their active-agent record arrives, and again if they have no published avatar) | [`src/home/scene-render.js`](../src/home/scene-render.js), [`scene-model.js`](../src/home/scene-model.js), [docs/home-scene.md](home-scene.md) |
-| Households: roles, per-member scopes, invites | [`api/_lib/home/members.js`](../api/_lib/home/members.js), [docs/home-households.md](home-households.md) |
+| Households: roles, per-member scopes (a scoped member may only call device domains on named entities or granted areas), invites | [`api/_lib/home/members.js`](../api/_lib/home/members.js), [docs/home-households.md](home-households.md) |
 | Privacy, retention, export and deletion | [`api/_lib/home/privacy.js`](../api/_lib/home/privacy.js), [docs/home-privacy.md](home-privacy.md) |
 | The dial-out relay for LAN-only houses | [`services/home-relay/`](../services/home-relay/README.md) plus [`home-assistant-integration/`](../home-assistant-integration) |
 | The browser voice loop: wake word, barge-in, a confirmation grammar speech cannot satisfy | [`src/voice/home-voice.js`](../src/voice/home-voice.js), [`home-voice-ui.js`](../src/voice/home-voice-ui.js), surfaced at `/voice/home` |
