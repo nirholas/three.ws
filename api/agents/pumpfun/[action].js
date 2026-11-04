@@ -31,6 +31,7 @@ import { requireRealFundsAgreement } from '../../_lib/real-funds-agreement.js';
 import { loadAgentForSigning, solanaConnection } from '../../_lib/agent-pumpfun.js';
 import { submitProtected } from '../../_lib/execution-engine.js';
 import { buildAgentTradeFee } from '../../_lib/pump-platform-fee.js';
+import { feeEventFromDisclosure, withPlatformFee, reportRecordFailure } from '../../_lib/platform-fee-events.js';
 import { reserveSpend, finalizeSpend, releaseSpend } from '../../_lib/agent-spend-policy.js';
 import { grindMintKeypair } from '../../_lib/pump-vanity.js';
 import { isRpcOutageError } from '../../_lib/rpc-degrade.js';
@@ -42,6 +43,18 @@ const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 // `kind` names the grade of value movement the action performs (spend-scope.js):
 // buy, sell and swap are trades, launch is a launch, pay sends funds out.
+// Record an agent action row and, when the trade carried a platform fee, its
+// platform_fee_events row in one transaction. A logging failure never fails a
+// trade that already landed; a lost fee row raises an ops alert.
+async function logActionWithFee(tag, feeEvent, statement) {
+	try {
+		await withPlatformFee(sql, statement, feeEvent);
+	} catch (e) {
+		console.error(`[${tag}] log failed`, e);
+		if (feeEvent) await reportRecordFailure(feeEvent, e);
+	}
+}
+
 async function resolveAuth(req, { kind = 'spend' } = {}) {
 	const session = await getSessionUser(req);
 	if (session) {
@@ -340,6 +353,12 @@ async function handleBuy(req, res, id) {
 		return serverError(res, 502, 'rpc_error', err);
 	}
 
+	const feeEvent = feeEventFromDisclosure({
+		disclosure: tradeFee?.disclosure, signature, source: 'agent_trade', network: body.network,
+		quoteMint: quote.isSol ? null : quote.quoteMint, payer: keypair.publicKey.toBase58(),
+		userId: auth.userId, agentId: id, meta: { mint: body.mint, side: 'buy', source: 'pumpfun_buy' },
+	});
+
 	if (reservation) {
 		await finalizeSpend(reservation.reservationId, {
 			mint: body.mint,
@@ -347,11 +366,11 @@ async function handleBuy(req, res, id) {
 			slippageBps: body.slippageBps,
 			signature,
 			network: body.network,
-		});
+		}, { platformFee: feeEvent });
 	} else {
 		// USDC buy: no SOL reservation row to finalize — record the action directly
 		// so it still appears in the agent's activity/audit trail.
-		await sql`
+		await logActionWithFee('pumpfun/buy', feeEvent, sql`
 			INSERT INTO agent_actions (agent_id, type, payload, source_skill)
 			VALUES (
 				${id},
@@ -367,7 +386,7 @@ async function handleBuy(req, res, id) {
 				})}::jsonb,
 				${'pumpfun'}
 			)
-		`.catch((e) => console.error('[pumpfun/buy] log failed', e));
+		`);
 	}
 
 	// Mirror into pump_agent_trades for cross-feature analytics (reputation,
@@ -1217,7 +1236,13 @@ async function handleSell(req, res, id) {
 		return serverError(res, 502, 'rpc_error', err);
 	}
 
-	await sql`
+	const feeEvent = feeEventFromDisclosure({
+		disclosure: tradeFee?.disclosure, signature, source: 'agent_trade', network: body.network,
+		quoteMint: quote.isSol ? null : quote.quoteMint, payer: keypair.publicKey.toBase58(),
+		userId: auth.userId, agentId: id, meta: { mint: body.mint, side: 'sell', source: 'pumpfun_sell' },
+	});
+
+	await logActionWithFee('pumpfun/sell', feeEvent, sql`
 		INSERT INTO agent_actions (agent_id, type, payload, source_skill)
 		VALUES (
 			${id},
@@ -1234,7 +1259,7 @@ async function handleSell(req, res, id) {
 			})}::jsonb,
 			${'pumpfun'}
 		)
-	`.catch((e) => console.error('[pumpfun/sell] log failed', e));
+	`);
 
 	try {
 		const [m] = await sql`
@@ -1518,6 +1543,12 @@ async function handleSwap(req, res, id) {
 		return serverError(res, 502, 'rpc_error', err);
 	}
 
+	const feeEvent = feeEventFromDisclosure({
+		disclosure: tradeFee?.disclosure, signature, source: 'agent_trade', network: body.network,
+		quoteMint: quote.isSol ? null : quote.quoteMint, payer: keypair.publicKey.toBase58(),
+		userId: auth.userId, agentId: id, meta: { mint: body.mint, side: body.side, source: 'pumpfun_swap' },
+	});
+
 	if (reservation) {
 		await finalizeSpend(reservation.reservationId, {
 			mint: body.mint,
@@ -1528,9 +1559,9 @@ async function handleSwap(req, res, id) {
 			network: body.network,
 			venue: 'amm',
 			...quotedAmount,
-		});
+		}, { platformFee: feeEvent });
 	} else {
-		await sql`
+		await logActionWithFee('pumpfun/swap', feeEvent, sql`
 			INSERT INTO agent_actions (agent_id, type, payload, source_skill)
 			VALUES (
 				${id},
@@ -1549,7 +1580,7 @@ async function handleSwap(req, res, id) {
 				})}::jsonb,
 				${'pumpfun'}
 			)
-		`.catch((e) => console.error('[pumpfun/swap] log failed', e));
+		`);
 	}
 
 	return json(res, 200, {

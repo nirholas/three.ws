@@ -1,7 +1,7 @@
 // /api/v1/agents/:id/mcp routes: connect an agent to external MCP servers.
 // Declared as defineRouter rows (api/_lib/agents-v1/http.js), so they share the
 // v1 envelope, auth, scopes, CSRF and rate limits. Mounted by api/v1/agent-mcp.js.
-// Guide: docs/integrations.md.
+// Guide: docs/mcp-integrations.md.
 //
 //   GET    /agents/:id/mcp                  connections with status, tool counts, last error
 //   POST   /agents/:id/mcp                  { catalog_id } or { server_url, transport, label }, optional bearer_token

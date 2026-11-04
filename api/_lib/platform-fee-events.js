@@ -21,6 +21,7 @@
 // Reconciler: scripts/reconcile-platform-fees.mjs (npm run audit:platform-fees).
 
 import { sql as defaultSql } from './db.js';
+import { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET } from '../payments/_config.js';
 
 export const PLATFORM_FEE_SOURCES = Object.freeze([
 	'pump_trade',
@@ -147,6 +148,26 @@ export async function withPlatformFee(db, statement, ev) {
 }
 
 /**
+ * withPlatformFee for a writer whose state row must land even if the fee row
+ * cannot (a worker booking a position after its trade already confirmed):
+ * the pair runs as one transaction, and only if that transaction fails is the
+ * state statement retried alone, with the lost fee paged to ops. `makeStatement`
+ * builds a fresh query each call because a tagged-template query runs once.
+ *
+ * @returns {Promise<{ rows: any[], feeRecorded: boolean }>}
+ */
+export async function withPlatformFeeOrAlert(db, makeStatement, ev) {
+	try {
+		return await withPlatformFee(db, makeStatement(), ev);
+	} catch (e) {
+		if (!ev) throw e;
+		const rows = await makeStatement();
+		await reportRecordFailure(ev, e);
+		return { rows, feeRecorded: false };
+	}
+}
+
+/**
  * Record one fee on its own. `bestEffort` is for a path where the money has
  * already moved on-chain and the response must not fail over the ledger write:
  * the failure is logged and paged to ops, and the reconciler lists the fee as
@@ -242,7 +263,6 @@ export async function pumpFeeEventFromTx({ tx, signature, source, network, quote
 		const solFee = feeReceivedInTx(tx, { recipient: to, asset: 'SOL' });
 		if (solFee > 0n) quoteMint = null;
 		else {
-			const { SOLANA_USDC_MINT, SOLANA_USDC_MINT_DEVNET } = await import('../payments/_config.js');
 			quoteMint = network === 'devnet' ? SOLANA_USDC_MINT_DEVNET : SOLANA_USDC_MINT;
 		}
 	}
@@ -294,7 +314,8 @@ export function feeEventFromDisclosure({ disclosure, signature, sourceRef = null
 		chain: 'solana',
 		network,
 		asset: disclosure.asset,
-		assetMint: isSol ? null : quoteMint || null,
+		// A USDC fee built without an explicit quote mint used the network's USDC.
+		assetMint: isSol ? null : quoteMint || (network === 'devnet' ? SOLANA_USDC_MINT_DEVNET : SOLANA_USDC_MINT),
 		amountAtomics: disclosure.amount,
 		decimals: isSol ? 9 : 6,
 		bps: disclosure.bps ?? null,

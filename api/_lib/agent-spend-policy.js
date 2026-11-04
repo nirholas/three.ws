@@ -154,13 +154,27 @@ export async function reserveSpend({ agentId, meta, mint, solAmount, type, paylo
 
 // Finalize a reservation after the on-chain send succeeds: merge the real tx
 // details (signature, network, …) into the reserved row and mark it confirmed.
-export async function finalizeSpend(reservationId, payload = {}) {
+// `platformFee` (a platform_fee_events event) is written in the same database
+// transaction as the confirmation, so a confirmed spend and its fee row land
+// together or not at all.
+export async function finalizeSpend(reservationId, payload = {}, { platformFee = null } = {}) {
 	if (!reservationId) return;
-	await sql`
+	const statement = sql`
 		UPDATE agent_actions
 		SET payload = payload || ${JSON.stringify({ ...payload, status: 'confirmed' })}::jsonb
 		WHERE id = ${reservationId}
-	`.catch((e) => console.error('[spend-policy] finalize failed', e));
+	`;
+	if (!platformFee) {
+		await statement.catch((e) => console.error('[spend-policy] finalize failed', e));
+		return;
+	}
+	const { withPlatformFee, reportRecordFailure } = await import('./platform-fee-events.js');
+	try {
+		await withPlatformFee(sql, statement, platformFee);
+	} catch (e) {
+		console.error('[spend-policy] finalize failed', e);
+		await reportRecordFailure(platformFee, e);
+	}
 }
 
 // Release a reservation when the send never lands (build/sign/send failure) so a

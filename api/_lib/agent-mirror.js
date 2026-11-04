@@ -24,6 +24,7 @@ import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
 import { planMirror } from './mirror-engine.js';
 import { quoteTrade, buildTradeInstructions } from '../agents/solana-trade.js';
+import { feeEventFromDisclosure } from './platform-fee-events.js';
 import { recoverSolanaAgentKeypair } from './agent-wallet.js';
 import { solanaConnection, solanaPublicConnection } from './agent-pumpfun.js';
 import { submitProtected } from './execution-engine.js';
@@ -275,8 +276,9 @@ export async function runFollowerTrade({
 	}
 
 	let instructions;
+	let feeDisclosure = null;
 	try {
-		instructions = await buildTradeInstructions({ userId: ownerId, side, conn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw });
+		instructions = await buildTradeInstructions({ userId: ownerId, side, conn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw, onFee: (d) => { feeDisclosure = d; } });
 	} catch (e) {
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'build_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
 		return { status: 'failed', code: 'build_failed' };
@@ -307,7 +309,22 @@ export async function runFollowerTrade({
 		return { status: 'unconfirmed', signature, custodyEventId: claimId, usd: usdValue, priceImpact: quote.priceImpactPct };
 	}
 
-	await updateCustodyEvent(claimId, { status: 'confirmed', signature, usd: side === 'buy' ? usdValue ?? null : null, meta: execTelemetry ? { exec: execTelemetry } : undefined }).catch(() => {});
+	await updateCustodyEvent(claimId, {
+		status: 'confirmed',
+		signature,
+		usd: side === 'buy' ? usdValue ?? null : null,
+		meta: execTelemetry ? { exec: execTelemetry } : undefined,
+		platformFee: feeEventFromDisclosure({
+			disclosure: feeDisclosure,
+			signature,
+			source: 'agent_trade',
+			network,
+			payer: address,
+			userId: ownerId,
+			agentId: id,
+			meta: { mint, side, venue: quote.venue, custody_event_id: claimId, source: 'agent_mirror', leader_agent_id: leaderRef?.leader_agent_id || null },
+		}),
+	}).catch(() => {});
 	logAudit({ userId: ownerId, action: 'custody.trade', resourceId: id, meta: { side, mint, venue: quote.venue, usd: usdValue, signature, network, reason: 'mirror', leader: leaderRef, exec_route: execTelemetry?.route } });
 	await cacheSet(`sol:bal:${address}:${network}`, null, 1).catch(() => {});
 

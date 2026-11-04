@@ -25,6 +25,7 @@ import { PublicKey } from '@solana/web3.js';
 import { sql } from './db.js';
 import { recordFromActionLog } from './skill-candidates.js';
 import { quoteTrade, buildTradeInstructions } from '../agents/solana-trade.js';
+import { feeEventFromDisclosure } from './platform-fee-events.js';
 import { recoverSolanaAgentKeypair } from './agent-wallet.js';
 import { solanaConnection } from './agent-pumpfun.js';
 import { submitProtected } from './execution-engine.js';
@@ -276,8 +277,9 @@ export async function runStrategyTrade({
 	}
 
 	let instructions;
+	let feeDisclosure = null;
 	try {
-		instructions = await buildTradeInstructions({ userId: ownerId, side, conn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw });
+		instructions = await buildTradeInstructions({ userId: ownerId, side, conn, network, mintPk, ownerPk: keypair.publicKey, quote, slippageBps, solAmount, tokenAmountRaw, onFee: (d) => { feeDisclosure = d; } });
 	} catch (e) {
 		await updateCustodyEvent(claimId, { status: 'failed', meta: { error: 'build_failed', message: (e?.message || '').slice(0, 200) } }).catch(() => {});
 		return { status: 'failed', code: 'build_failed' };
@@ -308,7 +310,22 @@ export async function runStrategyTrade({
 		return { status: 'unconfirmed', signature, custodyEventId: claimId, usd: usdValue, priceImpact: quote.priceImpactPct, quote };
 	}
 
-	await updateCustodyEvent(claimId, { status: 'confirmed', signature, usd: side === 'buy' ? usdValue ?? null : null, meta: execTelemetry ? { exec: execTelemetry } : undefined }).catch(() => {});
+	await updateCustodyEvent(claimId, {
+		status: 'confirmed',
+		signature,
+		usd: side === 'buy' ? usdValue ?? null : null,
+		meta: execTelemetry ? { exec: execTelemetry } : undefined,
+		platformFee: feeEventFromDisclosure({
+			disclosure: feeDisclosure,
+			signature,
+			source: 'agent_trade',
+			network,
+			payer: address,
+			userId: ownerId,
+			agentId: id,
+			meta: { mint, side, venue: quote.venue, custody_event_id: claimId, source: 'agent_strategy', strategy_id: strategyRef?.strategy_id || null },
+		}),
+	}).catch(() => {});
 	logAudit({ userId: ownerId, action: 'custody.trade', resourceId: id, meta: { side, mint, venue: quote.venue, usd: usdValue, signature, network, reason, strategy: strategyRef, exec_route: execTelemetry?.route } });
 	await cacheSet(`sol:bal:${address}:${network}`, null, 1).catch(() => {});
 

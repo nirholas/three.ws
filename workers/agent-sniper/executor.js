@@ -29,6 +29,7 @@ import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
 import { searchMemories } from '../../api/_lib/memory-store.js';
 import { screenPush } from './screen-push.js';
 import { buildAgentTradeFee } from '../../api/_lib/pump-platform-fee.js';
+import { feeEventFromDisclosure, withPlatformFeeOrAlert } from '../../api/_lib/platform-fee-events.js';
 import { reclaimMintRent } from './rent-reclaim.js';
 
 // Self-rated conviction for a snipe entry, 0..1. Lower price impact and a clean
@@ -589,7 +590,13 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			// An AMM entry is born graduated: flag it exactly like a curve position
 			// that graduated mid-hold, so the sweep re-quotes it off the AMM and
 			// executeSell routes the exit there instead of the dead curve.
-			await sql`
+			// A live entry's fee is a real transfer: book it with the position.
+			const buyFeeEvent = cfg.mode === 'live' ? feeEventFromDisclosure({
+				disclosure: buyFee?.disclosure, signature: sig, source: 'agent_trade', network: cfg.network,
+				payer: keypair.publicKey.toBase58(), userId: strat.user_id, agentId: strat.agent_id,
+				meta: { mint: mint.mint, side: 'buy', venue: ammEntry ? 'amm' : 'bonding_curve', position_id: posId, source: 'agent_sniper' },
+			}) : null;
+			await withPlatformFeeOrAlert(sql, () => sql`
 				UPDATE agent_sniper_positions SET
 					status = 'open', buy_sig = ${sig},
 					error = ${ammEntry ? 'graduated:amm_entry' : null},
@@ -606,7 +613,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 					landed_ms = ${exec.landedMs},
 					last_quoted_at = now()
 				WHERE id = ${posId}
-			`;
+			`, buyFeeEvent);
 			log.trade('buy', { ...tag, mode: cfg.mode, sig, sol: lamportsToSol(perTrade), base: baseAmount.toString(), impact: Number(quote.priceImpactPct).toFixed(2) });
 			// Journal the entry WITH its reasoning — the learn-what-works surface.
 			await journalEntry({
@@ -776,6 +783,11 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 			// remainder keeps its own proportional basis.
 			const soldCostBasis = partial ? (entryFull * ppm) / 1_000_000n : entryFull;
 			const legPnl = expectedOut - sellFeeLamports - soldCostBasis;
+			const sellFeeEvent = cfg.mode === 'live' ? feeEventFromDisclosure({
+				disclosure: sellFee?.disclosure, signature: sig, source: 'agent_trade', network: cfg.network,
+				payer: keypair.publicKey.toBase58(), userId: position.user_id, agentId: position.agent_id,
+				meta: { mint: position.mint, side: 'sell', venue, position_id: position.id, reason, source: 'agent_sniper' },
+			}) : null;
 			const priorRealized = BigInt(position.realized_pnl_lamports || '0');
 			const cumRealized = priorRealized + legPnl;
 
@@ -788,7 +800,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 				const remainingBase = fullBase - sellBaseBig;
 				const remainingEntry = entryFull - soldCostBasis;
 				const remainingValueEst = Math.round((Number(expectedOut) * Number(remainingBase)) / Number(sellBaseBig));
-				await sql`
+				await withPlatformFeeOrAlert(sql, () => sql`
 					UPDATE agent_sniper_positions SET
 						status = 'open',
 						base_amount = ${remainingBase.toString()},
@@ -800,7 +812,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 						error = ${null},
 						last_quoted_at = now()
 					WHERE id = ${position.id}
-				`;
+				`, sellFeeEvent);
 				const legSol = lamportsToSol(legPnl);
 				log.trade('take-initials', { ...tag, venue, mode: cfg.mode, sig, sold_fraction: f, leg_pnl_sol: legSol, kept_moonbag_base: remainingBase.toString() });
 				await recordJournal({ position, cfg, event: 'take_initials', reason, sig, venue, soldFraction: f, legPnlLamports: legPnl, remainingBase });
@@ -829,7 +841,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 			const keptValueEst = retainsMoonbag && sellBaseBig > 0n
 				? Math.round((Number(expectedOut) * Number(keptBase)) / Number(sellBaseBig))
 				: 0;
-			await sql`
+			await withPlatformFeeOrAlert(sql, () => sql`
 				UPDATE agent_sniper_positions SET
 					status = 'closed', exit_reason = ${reason}, sell_sig = ${sig},
 					exit_quote_lamports = ${expectedOut.toString()},
@@ -843,7 +855,7 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 					reconcile_pending_since = NULL,
 					closed_at = now()
 				WHERE id = ${position.id}
-			`;
+			`, sellFeeEvent);
 			await recordJournal({
 				position, cfg, event: retainsMoonbag ? 'exit_moonbag' : 'exit', reason, sig, venue,
 				soldFraction: retainsMoonbag ? f : 1, legPnlLamports: legPnl,

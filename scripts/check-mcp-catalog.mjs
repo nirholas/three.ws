@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Offline build check for data/mcp-catalog.json, the vetted list of external
-// MCP servers an agent owner can connect on /integrations/mcp.
+// MCP servers an agent owner can connect on /mcp-integrations.
 //
 // Runs the same validateCatalog() the API uses at runtime, so a malformed entry
 // fails `npm run build` (it runs from `prebuild`) and `npm run gate` instead of
-// a 500 on /api/integrations/mcp. It also rejects a tier glob listed under two
+// a 500 on /api/mcp-connections/catalog. It also rejects a tier glob listed under two
 // tiers of one entry, since first-match-wins would silently hide the second.
 //
 // Network checks (is the URL live, is the npm package real) live in
