@@ -396,132 +396,46 @@ export interface WalletHistoryParams {
   category?: string;
 }
 
-export interface TransferQuoteParams {
-  destination: string;
-  /** Whole units (SOL, or the token's UI amount), or `"max"`. */
-  amount: number | "max";
-  /** `"SOL"` (default) or an SPL mint. */
-  asset?: string;
-  network?: Network;
-}
-
-export interface TransferQuote {
-  quoteId: string;
-  expiresAt: string;
-  preview: {
-    asset: string;
-    network: Network;
-    destination: string;
-    amount: number;
-    lamports: string | null;
-    amountRaw: string | null;
-    usd: number | null;
-    note: string | null;
-    simulation: { ok: boolean; error: unknown; unitsConsumed: number | null };
-  };
-}
-
-export interface TransferParams {
-  quoteId: string;
-  /** Must be `true`. The client refuses to send without it. */
-  confirm: true;
-}
-
-export interface TransferResult {
-  status: "confirmed" | "submitted";
-  confirmed: boolean;
-  replayed: boolean;
-  signature: string | null;
-  explorer: string | null;
-  asset: string;
-  network: Network;
-  destination: string;
-  amount: number;
-  usd: number | null;
-  newBalanceSol: number | null;
-  newTokenBalance: number | null;
-}
-
 // ── swap ────────────────────────────────────────────────────────────────────
 
 export interface SwapQuoteParams {
-  /** Mint to sell, or `"SOL"`. */
+  /** Mint, symbol, or `"SOL"` / `"USDC"` to sell. */
   inputMint: string;
-  /** Mint to buy, or `"SOL"`. */
+  /** Mint, symbol, or `"SOL"` / `"USDC"` to buy. */
   outputMint: string;
-  /** Input amount in the smallest unit (lamports for SOL), as an integer string. */
-  amount: string;
+  /** Input amount in whole units (0.5 = half a SOL). */
+  amount?: number;
+  /** Input amount in base units, for exact sizing, instead of `amount`. */
+  amountRaw?: string;
+  /** `auto` compares every aggregator, or `dex:<label>` for one venue. */
+  dex?: string;
+  /** Worst price accepted, in basis points (100 = 1%). */
   slippageBps?: number;
-  /** Swap from this agent's custodial wallet. Omit for a non-custodial swap. */
+  /** Also run the trade guard chain against this agent's wallet. */
   agentId?: string;
-  /** Your wallet for a non-custodial swap (can also be given to swapExecute). */
-  userPublicKey?: string;
 }
-
-export interface SwapQuote {
-  quoteId: string;
-  expiresAt: string;
-  mode: "custodial" | "non_custodial";
-  agentId: string | null;
-  inputMint: string;
-  outputMint: string;
-  inAmount: string;
-  outAmount: string | null;
-  minOutAmount: string | null;
-  priceImpactPct: number | null;
-  slippageBps: number;
-  venue: string | null;
-  route: string[];
-  usd: number | null;
-  platformFeeBps: number | null;
-  warnings: Array<{ code: string; message: string }>;
-  firewall: unknown;
-}
-
-export interface SwapExecuteParams {
-  quoteId: string;
-  /** Required (`true`) for an agent-wallet swap. */
-  confirm?: boolean;
-  /** Signer for a non-custodial swap, when not given at quote time. */
-  userPublicKey?: string;
-}
-
-export interface UnsignedSwap extends Omit<SwapQuote, "quoteId" | "expiresAt"> {
-  mode: "non_custodial";
-  status: "unsigned";
-  /** Base64 VersionedTransaction. Deserialize, sign with `signer`, send. */
-  transaction: string;
-  encoding: "base64";
-  signer: string;
-}
-
-export interface CustodialSwap extends Omit<SwapQuote, "quoteId" | "expiresAt"> {
-  mode: "custodial";
-  status: "confirmed";
-  replayed: boolean;
-  signature: string | null;
-  explorer: string | null;
-  newBalanceSol: number | null;
-}
-
-export type SwapResult = UnsignedSwap | CustodialSwap;
 
 // ── catalog, intel and account ──────────────────────────────────────────────
 
 /** Loosely typed server objects whose full shape is documented in docs/api-reference.md. */
 export type Json = Record<string, unknown>;
 
-export interface TopMoversParams {
-  timeframe?: string;
-  sortBy?: string;
-  minLiquidity?: number;
+export interface WindowParams {
+  /** `15m`, `1h` (default), `6h` or `24h`. */
+  window?: "15m" | "1h" | "6h" | "24h";
+}
+
+export interface TopMoversParams extends WindowParams {
+  /** One board: `launch_inflow`, `smart_money`, `high_conviction` or `graduations`. */
+  board?: "launch_inflow" | "smart_money" | "high_conviction" | "graduations";
+  /** Items per board, 1 to 50 (default 10). */
   limit?: number;
 }
 
 export interface IndicatorsParams {
   mint: string;
-  /** Any of `rsi`, `ema`, `sma`, `macd`. */
-  indicators?: Array<"rsi" | "ema" | "sma" | "macd"> | string;
+  /** Any of `rsi`, `ema`, `sma`, `macd`, `bbands`. */
+  indicators?: Array<"rsi" | "ema" | "sma" | "macd" | "bbands"> | string;
   interval?: string;
 }
 
@@ -530,17 +444,10 @@ export interface IntegrationParams {
 }
 
 export interface LinkCodeParams {
-  /** Pair the code to one agent. */
-  agentId?: string;
+  /** What is being paired, one of `phone`, `desktop`, `cli`. */
+  deviceKind: string;
   /** A label for the device or gateway, shown in your account. */
   label?: string;
   /** Space-separated scopes the paired device receives. */
   scopes?: string;
-}
-
-export interface ExternalWalletParams {
-  /** Solana address withdrawals may be sent to. */
-  address: string;
-  /** Must be `true`: this changes where funds can leave to. */
-  confirm: true;
 }

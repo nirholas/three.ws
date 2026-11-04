@@ -1,6 +1,6 @@
 // ThreeAgents: the typed client for the three.ws v1 agents API.
 
-import { ConfirmationRequiredError, ThreeAgentsError, ValidationError } from "./errors";
+import { ThreeAgentsError, ValidationError } from "./errors";
 import { parseSse } from "./sse";
 import { Transport, type FetchLike, type RequestSpec } from "./transport";
 import { VERSION } from "./version";
@@ -20,7 +20,6 @@ import type {
   CustomSkillResult,
   DeletedAutomation,
   DeletedResource,
-  ExternalWalletParams,
   GetMessagesParams,
   IndicatorsParams,
   IntegrationParams,
@@ -35,15 +34,9 @@ import type {
   RunEvent,
   RunStep,
   SendMessageParams,
-  SwapExecuteParams,
-  SwapQuote,
   SwapQuoteParams,
-  SwapResult,
   TopMoversParams,
-  TransferParams,
-  TransferQuote,
-  TransferQuoteParams,
-  TransferResult,
+  WindowParams,
   UpdateAgentParams,
   UpdateCustomSkillParams,
   UpdateRunParams,
@@ -83,16 +76,6 @@ function seg(value: string, name = "id"): string {
     });
   }
   return encodeURIComponent(value);
-}
-
-/** Refuse a fund-moving call client-side unless its confirm flag is literally `true`. */
-function requireConfirm(params: unknown, flag: string, previewMethod: string, method: string): void {
-  const value = params && typeof params === "object" ? (params as Record<string, unknown>)[flag] : undefined;
-  if (value === true) return;
-  throw new ConfirmationRequiredError(
-    `${method}() moves funds or changes where they can go, so it needs { ${flag}: true }. Call ${previewMethod}() first and review the result.`,
-    { confirmFlag: flag, previewMethod },
-  );
 }
 
 export class ThreeAgents {
@@ -383,10 +366,10 @@ export class ThreeAgents {
   }
 
   getTopMovers(params: TopMoversParams = {}, opts?: RequestOptions): Promise<Json> {
-    return this.call("GET", "/intel/top-movers", { query: { ...params }, opts });
+    return this.call("GET", "/intel/top-movers", { query: { window: params.window, board: params.board, limit: params.limit }, opts });
   }
 
-  /** RSI, EMA, SMA and MACD computed server-side from OHLCV. */
+  /** RSI, EMA, SMA, MACD and Bollinger bands computed server-side from OHLCV. */
   getIndicators(params: IndicatorsParams, opts?: RequestOptions): Promise<Json> {
     return this.call("GET", "/intel/indicators", {
       query: { mint: seg(params?.mint, "mint") && params.mint, indicators: params.indicators, interval: params.interval },
@@ -398,12 +381,12 @@ export class ThreeAgents {
     return this.call("GET", "/intel/signals", { query: { mint: seg(mint, "mint") && mint }, opts });
   }
 
-  getAnomalies(opts?: RequestOptions): Promise<Json> {
-    return this.call("GET", "/intel/anomalies", { opts });
+  getAnomalies(params: WindowParams = {}, opts?: RequestOptions): Promise<Json> {
+    return this.call("GET", "/intel/anomalies", { query: { window: params.window }, opts });
   }
 
-  getMacro(opts?: RequestOptions): Promise<Json> {
-    return this.call("GET", "/intel/macro", { opts });
+  getMacro(params: WindowParams = {}, opts?: RequestOptions): Promise<Json> {
+    return this.call("GET", "/intel/macro", { query: { window: params.window }, opts });
   }
 
   // ── catalog and account ───────────────────────────────────────────────────
@@ -443,18 +426,12 @@ export class ThreeAgents {
   }
 
   /** An eight-character code that pairs a device or chat gateway to your account for ten minutes. */
-  generateLinkCode(params: LinkCodeParams = {}, opts?: RequestOptions): Promise<Json> {
+  generateLinkCode(params: LinkCodeParams, opts?: RequestOptions): Promise<Json> {
     return this.call("POST", "/me/link-code", { body: params, opts });
   }
 
   redeemLinkCode(params: { code: string; [key: string]: unknown }, opts?: RequestOptions): Promise<Json> {
     return this.call("POST", "/me/link-code/redeem", { body: params, opts });
-  }
-
-  /** Set the address withdrawals from this agent may go to. Requires `confirm: true`. */
-  setExternalWallet(agentId: string, params: ExternalWalletParams, opts?: RequestOptions): Promise<Json> {
-    requireConfirm(params, "confirm", "getWallet", "setExternalWallet");
-    return this.call("PUT", `/agents/${seg(agentId, "agentId")}/external-wallet`, { body: params, opts });
   }
 
   // ── wallet ────────────────────────────────────────────────────────────────
@@ -472,37 +449,26 @@ export class ThreeAgents {
     );
   }
 
-  /** Simulate a transfer out of the agent wallet. Returns a quoteId valid for five minutes. */
-  transferQuote(agentId: string, params: TransferQuoteParams, opts?: RequestOptions): Promise<TransferQuote> {
-    return this.call("POST", `/agents/${seg(agentId, "agentId")}/wallet/transfer/quote`, { body: params, opts });
-  }
-
-  /**
-   * Send a quoted transfer. Refuses before any request unless `confirm` is
-   * literally `true`: call transferQuote() first and show the preview.
-   */
-  transfer(agentId: string, params: TransferParams, opts?: RequestOptions): Promise<TransferResult> {
-    requireConfirm(params, "confirm", "transferQuote", "transfer");
-    return this.call("POST", `/agents/${seg(agentId, "agentId")}/wallet/transfer`, {
-      body: { quoteId: params.quoteId, confirm: true },
-      opts,
-    });
-  }
-
   // ── swap ──────────────────────────────────────────────────────────────────
 
-  /** Price a swap. With `agentId` it trades from the agent wallet; without, it builds for your own wallet. */
-  swapQuote(params: SwapQuoteParams, opts?: RequestOptions): Promise<SwapQuote> {
-    return this.call("POST", "/swap/quote", { body: params, opts });
-  }
-
   /**
-   * Act on a swap quote. A non-custodial quote returns an unsigned base64
-   * transaction for you to sign. An agent-wallet quote needs `confirm: true`
-   * and is signed and sent server-side.
+   * Compare swap routes across every aggregator and return the winner with its
+   * net output. With `agentId` it also runs the trade guard chain against that
+   * agent wallet. Read only: executing a swap and moving funds out of a wallet
+   * are not part of this API. They live in the MCP wallet tools and the
+   * dashboard, behind an explicit confirmation.
    */
-  swapExecute(params: SwapExecuteParams, opts?: RequestOptions): Promise<SwapResult> {
-    return this.call("POST", "/swap/execute", { body: params, opts });
+  swapQuote(params: SwapQuoteParams, opts?: RequestOptions): Promise<Json> {
+    const body = {
+      input_mint: params.inputMint,
+      output_mint: params.outputMint,
+      amount: params.amount,
+      amount_raw: params.amountRaw,
+      dex: params.dex,
+      slippage_bps: params.slippageBps,
+      agent_id: params.agentId,
+    };
+    return this.call("POST", "/trading/swap/quote", { body, opts });
   }
 }
 
