@@ -5285,6 +5285,14 @@
 					"added": "2026-10-30"
 				},
 				{
+					"path": "/docs/microsoft-marketplace-offer-plan",
+					"title": "Docs · Microsoft distribution and offer plan",
+					"description": "How three.ws turns its live Microsoft Marketplace publisher profile into offers: a transactable SaaS listing, Copilot MCP certification, professional services, a Power Platform connector, a Teams app, and the VS Code and Edge stores.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/nvidia-inception",
 					"title": "Docs · NVIDIA Inception membership",
 					"description": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
