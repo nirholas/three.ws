@@ -21,6 +21,7 @@
 
 import { BACKENDS, backendIsConfigured } from './forge-tiers.js';
 import { env } from './env.js';
+import { isWorldRetired, WORLD_RETIRED_DETAIL } from './world-retirement.js';
 import { getRedisBurn } from './redis-usage.js';
 import { probeLlmHealth } from './llm-health.js';
 import { readGenerationMetrics } from './forge-events.js';
@@ -372,6 +373,7 @@ const WORLD_ASSET_SAMPLE = 12;
 
 async function probeWorld() {
 	const id = 'world';
+	if (await isWorldRetired()) return result(id, 'retired', WORLD_RETIRED_DETAIL);
 	const started = Date.now();
 	const res = await probeFetch(WORLD_STATUS_URL, {
 		headers: { accept: 'application/json', 'user-agent': 'threews-forge-health/1.0' },

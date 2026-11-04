@@ -27,8 +27,11 @@
 //   down      — not functional (a hard dependency is unreachable).
 //   paused    — intentionally off (an operator switch), not a fault.
 //   unknown   — no signal yet (a cron hasn't reported, a probe was skipped).
-// Only `degraded` and `down` count against the overall roll-up; `paused` and
-// `unknown` are surfaced but neutral.
+//   retired   - formally decommissioned on purpose (see world-retirement.js). Listed
+//               so the history is visible, but never counted, rolled up or alerted.
+// Only `degraded` and `down` count against the overall roll-up; `paused`,
+// `unknown` and `retired` are surfaced but neutral. `retired` is also left out of
+// `counts`.
 
 import { createHash } from 'node:crypto';
 import { cacheHealth, cacheGet } from '../cache.js';
@@ -45,6 +48,7 @@ import { gatherIndexLagHealth } from './index-lag.js';
 import { gatherHomeHealth } from './home-health.js';
 import { gatherMentionBotHealth } from '../x-mention-health.js';
 import { describeSolvency } from '../sniper-solvency.js';
+import { isWorldRetired, WORLD_RETIRED_DETAIL, WORLD_RETIRED_ON } from '../world-retirement.js';
 import { treasuryWalletOrNull, rewardsWalletOrNull } from '../token/config.js';
 import { guardianConfig } from '../granite-guardian.js';
 
@@ -423,6 +427,11 @@ function checkRing() {
 async function checkWorld() {
 	const base = { name: 'world', label: 'world.three.ws (Hyperfy)' };
 	try {
+		// A retired surface short-circuits before the parked outcome and the alert
+		// fallback, so stale rows from before retirement can never resurrect "down".
+		if (await isWorldRetired()) {
+			return { ...base, status: 'retired', detail: WORLD_RETIRED_DETAIL, retiredOn: WORLD_RETIRED_ON };
+		}
 		const parked = await cacheGet(WORLD_HEALTH_CACHE_KEY);
 		if (!parked || typeof parked !== 'object') {
 			const alert = await recentWorldDownAlert();
@@ -807,6 +816,7 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 	const subsystems = await Promise.all(checks);
 
 	const counts = subsystems.reduce((acc, s) => {
+		if (s.status === 'retired') return acc;
 		acc[s.status] = (acc[s.status] || 0) + 1;
 		return acc;
 	}, /** @type {Record<string, number>} */ ({}));

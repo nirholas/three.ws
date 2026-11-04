@@ -23,6 +23,8 @@
  *   6. The mirror of 5: every /docs/<slug> declared in data/pages.json has an
  *      article to serve. A declared slug with no Markdown behind it answers 404
  *      while the sitemap, llms.txt and the changelog all advertise it.
+ *   7. packages/README.md lists every packages/* directory, in the table that
+ *      matches whether it publishes (scripts/lib/packages-index.mjs).
  *
  * Usage:
  *   node scripts/audit-docs.mjs              # audit the whole repo, exit 1 on findings
@@ -43,6 +45,7 @@ import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dropGitIgnored } from './lib/git-ignored.mjs';
+import { packagesIndexGaps } from './lib/packages-index.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -270,6 +273,9 @@ if (!explicitFiles.length) {
 				});
 			}
 		}
+	}
+	for (const gap of packagesIndexGaps(resolve(root, 'packages'))) {
+		findings.push({ file: 'packages/README.md', line: gap.line, kind: 'packages-index', detail: `${gap.name}: ${gap.detail}` });
 	}
 }
 
@@ -506,6 +512,7 @@ const LABEL = {
 	'dead-route': 'Site links pointing at routes that do not resolve',
 	'dead-script': 'Commands naming scripts that do not exist',
 	'missing-readme': 'Directories required to carry a README.md',
+	'packages-index': 'packages/README.md out of step with packages/',
 	'unregistered-doc': 'Public docs missing from data/pages.json (live but undiscoverable)',
 	'declared-doc-without-article': 'Docs pages declared in data/pages.json with no article to serve (404)',
 };

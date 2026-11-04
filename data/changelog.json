@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Status page shows the retired world as retired, not down",
+			"summary": "The deleted world.three.ws service now carries an explicit, reversible retired state: the health rollup, alerts and status page no longer report a permanent false outage, so a red status always means something real.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/status"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Paid endpoint 402 challenges validate on external x402 directories",
 			"summary": "The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.",
 			"tags": [

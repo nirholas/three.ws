@@ -35,8 +35,8 @@ required. `npm run db:status` reports all migrations already applied.
 Re-verified against the live Cloud Run services on 2026-07-22. The 2026-07-04
 log-export batch is now mostly closed: `JWT_SECRET` and `WALLET_ENCRYPTION_KEY`
 are set on `three-ws-api` (wallet sign-in and custodial provisioning work),
-`ADMIN_CODE` is set on `hyperfy-world` (world.three.ws build rights are gated
-again), and the reconstruct lane has a real fallback via
+`ADMIN_CODE` was set on `hyperfy-world` (world.three.ws build rights were gated;
+the service was later deleted and the surface retired 2026-10-23), and the reconstruct lane has a real fallback via
 `GCP_RECONSTRUCTION_URL`. What remains requires owner/operator action outside
 this repo:
 

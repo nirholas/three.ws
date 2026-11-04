@@ -963,7 +963,7 @@ function certDaysLeft(host) {
 async function probeTls() {
 	const findings = [];
 	const notes = [];
-	for (const host of ['three.ws', 'world.three.ws']) {
+	for (const host of ['three.ws']) {
 		try {
 			const days = Math.floor(await certDaysLeft(host));
 			notes.push(`${host} ${days}d`);

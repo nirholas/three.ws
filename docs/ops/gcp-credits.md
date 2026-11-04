@@ -1431,7 +1431,7 @@ Live progress after the 2026-07-07 reauth:
 - **Attribution labels: applied** (`label-resources.sh --apply`): all 9 Cloud Run
   services + both buckets carry `program=gcp-credits` and a lane
   (`forge-gpu` for the model/editing workers, `platform` for agent-sniper /
-  hyperfy-world / three-ws-multiplayer).
+  hyperfy-world (deleted 2026-10-23) / three-ws-multiplayer).
 - **Findings from the label sweep:** (a) `model-triposr` has **no healthy revision** —
   container crashes on boot with `ImportError: cannot import name 'TSR' from 'tsr'`;
   the image itself is broken, fix in the prompt-04 fleet deploy. (b) `agent-sniper`

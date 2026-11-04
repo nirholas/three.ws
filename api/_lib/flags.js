@@ -27,6 +27,11 @@ const _cache = new Map();
 // Known flags: lets listFlags() enumerate switches (with their effective state)
 // even before a row exists, and documents which env var each one falls back to.
 export const KNOWN_FLAGS = {
+	world_retired: {
+		env: 'WORLD_RETIRED',
+		description:
+			'world.three.ws (Hyperfy) is formally retired (service deleted 2026-10-23): healthz reports it as "retired" and the world-health cron and forge probe make no network call and raise no alert. Turn off after redeploying the world.',
+	},
 	avaturn_seed: {
 		env: 'AVATURN_SEED_ENABLED',
 		description:

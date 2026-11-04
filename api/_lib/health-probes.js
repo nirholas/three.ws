@@ -9,7 +9,7 @@
 import { gatherSubsystemHealth } from './ops/subsystem-health.js';
 import { encryptSecret, decryptSecret } from './secret-box.js';
 
-const RANK = { ok: 0, unknown: 0, paused: 0, degraded: 1, down: 2 };
+const RANK = { ok: 0, unknown: 0, paused: 0, retired: 0, degraded: 1, down: 2 };
 
 export function worstStatus(statuses) {
 	let worst = 'ok';

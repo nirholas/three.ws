@@ -169,7 +169,7 @@ Every top-level directory in the monorepo, what it is, and where to look. File c
 | `animation-sources/` | ~58 | Mixamo FBX source library (120+ clips) consumed by `scripts/build-animations.mjs`. |
 | `data/snapshots/` | ~3 | Daily visual page-snapshot record (`current/`) for pre-redesign comparison. |
 | `infra/` | ~11 | AWS CDK (TypeScript) — Lambda Function URL (Forge), S3 avatar bucket, CloudWatch. |
-| `deploy/` | ~12 | Cloud Run + Docker configs (`deploy/world/cloudrun.yaml` — Hyperfy `world.three.ws`; `deploy/sniper/` — hosted sniper worker). |
+| `deploy/` | ~12 | Cloud Run + Docker configs (`deploy/world/cloudrun.yaml`, Hyperfy `world.three.ws`, retired 2026-10-23 and restorable, see `deploy/world/README.md`; `deploy/sniper/`: hosted sniper worker). |
 | `.agents/` | ~133 | `three-ws-core` Claude Code plugin + skills bundle (`.claude-plugin/plugin.json` v1.0.0) — natural-language wallet + x402 skills over the three.ws wallet API, plus bundled 3D and third-party (`okx-*`, `metamask-agent-*`) skills. Installed via the plugin marketplace. |
 
 
@@ -671,7 +671,7 @@ empty `200`, which would read as "no such service exists".
 | `wallet-intents` | frequent | Agent wallet intent execution |
 | `quota-check` | hourly | Upstash Redis quota monitoring |
 | `uptime-check` | frequent | Platform endpoint health check |
-| `world-health` | frequent | Multiplayer world health check |
+| `world-health` | frequent | Multiplayer world health check (no-op while the `world_retired` flag is on, since 2026-10-23) |
 | `flush-usage-events` | frequent | Usage event batch flush to billing |
 
 ---
@@ -1878,7 +1878,7 @@ Stores: GLBs · audio clips · thumbnails · manifests · OG images · validatio
 | Service | Config | Description |
 |---------|--------|-------------|
 | AWS CDK | `infra/lib/three-ws-stack.ts` | Account `155407237916`, `us-east-1`. `ThreeWsStack`: S3 bucket `3d-agent-avatars` (RETAIN, `tmp/` 1-day lifecycle, CORS), Forge Lambda `three-ws-forge` (NODEJS_22_X, ARM_64, 1536 MB, 20s, public Function URL GET-only), log groups `/three-ws/api` + `/aws/lambda/three-ws-forge`, AppRegistry MyApplications association. CfnOutputs: `ForgeUrl`, `AvatarBucketName`, `AvatarBucketArn`. |
-| GCP Cloud Run (world) | `deploy/world/cloudrun.yaml` | Hyperfy world (`world.three.ws`), SQLite + GCS volume. SA `hyperfy-world-sa@…`, secret `hyperfy-admin-code` (in-world `/admin <code>` claims build rights). Project `aerial-vehicle-466722-p5`, us-central1. |
+| GCP Cloud Run (world) | `deploy/world/cloudrun.yaml` | RETIRED 2026-10-23 (service deleted, restore kit kept). Hyperfy world (`world.three.ws`), SQLite + GCS volume. SA `hyperfy-world-sa@…`, secret `hyperfy-admin-code` (in-world `/admin <code>` claims build rights). Project `aerial-vehicle-466722-p5`, us-central1. |
 | GCP Cloud Run (sniper) | `deploy/sniper/cloudrun.yaml` | `agent-sniper` long-lived worker. **`minScale=maxScale=1` is load-bearing** — the in-process per-agent spend lock (`executor.js`) makes a second instance double-spend. `SNIPER_MODE` defaults to `simulate` (real quotes, no broadcast); `live` is a deliberate separate cutover. SA `agent-sniper-sa@…`, deploy via `scripts/deploy-sniper.mjs`, status at `/api/sniper/status`. |
 | GCP Cloud Run (GPU/CPU fleet) | `workers/*/cloudbuild.yaml` + `workers/deploy/` | Avatar pipeline (controller + mesh models + the `model-rig` rigging worker + reconstruction/longcat/texture/etc.) on NVIDIA L4. Quota `nvidia_l4_gpu_allocation_no_zonal_redundancy`. Buckets `gs://three-ws-avatar-reconstructions`, `gs://three-ws-avatar-videos`; job state in Firestore. |
 | Colyseus | `multiplayer/` | Authoritative real-time room server (:2567), 4 rooms, HMAC-gated — see [Multiplayer / Networked 3D](#multiplayer--networked-3d-multiplayer). Deploys to Fly.io + Cloud Run |

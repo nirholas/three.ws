@@ -18,6 +18,7 @@ import { json, method, wrapCron } from '../_lib/http.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { cacheSet } from '../_lib/cache.js';
 import { requireCron } from '../_lib/cron-auth.js';
+import { isWorldRetired, WORLD_RETIRED_DETAIL } from '../_lib/world-retirement.js';
 
 // Where this cron parks its last outcome so the platform health gatherer
 // (api/_lib/ops/subsystem-health.js → /healthz + /status) can read it without
@@ -81,6 +82,19 @@ async function headAll(urls, concurrency) {
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
+
+	// 0. Retired surface: no probe, no alert. Park a `retired` outcome so the
+	//    gatherer reads the lifecycle state instead of falling back to stale alerts.
+	//    The route stays so the Scheduler job keeps succeeding; un-retiring needs
+	//    only the flag, never a schedule change.
+	if (await isWorldRetired()) {
+		await cacheSet(
+			WORLD_HEALTH_CACHE_KEY,
+			{ status: 'retired', protected: null, problems: [], missingCount: 0, checkedAt: Date.now() },
+			WORLD_HEALTH_TTL_S,
+		).catch(() => {});
+		return json(res, 200, { status: 'retired', detail: WORLD_RETIRED_DETAIL });
+	}
 
 	// 1. Pull /status. A timeout or non-2xx means the world is down outright.
 	let status;

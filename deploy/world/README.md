@@ -2,11 +2,22 @@
 
 Build and deploy config for the multiplayer 3D world at **https://world.three.ws**.
 
-> **Status as of 2026-10-25 (order 453): not deployed.** The `hyperfy-world` Cloud Run service
-> was deleted on 2026-10-23 (owner action, confirmed in the Cloud Run audit log), so
-> `https://world.three.ws` currently returns 404. The world-health cron keeps alerting and
-> `/healthz` reports `world` as `down`. Everything below describes the config to use if the
-> owner redeploys; nothing here is live today.
+> **Status: RETIRED 2026-10-23.** The `hyperfy-world` Cloud Run service was deleted on purpose
+> (owner action, confirmed in the Cloud Run audit log) and the dangling `world.three.ws` domain
+> mapping was removed on 2026-11-04. The surface carries the `world_retired` runtime flag
+> (env fallback `WORLD_RETIRED=1`), so `/healthz` and the status page report `world` as
+> `retired` (neutral, never `down`), and the world-health cron and the forge-health probe make
+> no network call and raise no alert. Everything below is the restore kit: nothing here is live.
+>
+> **Un-retire (if the world comes back):**
+> 1. Redeploy the service: `bash deploy/world/apply-hardening.sh`.
+> 2. Re-create the domain mapping: `gcloud beta run domain-mappings create --service hyperfy-world --domain world.three.ws --region us-central1`.
+> 3. Turn the flag off (an explicit row beats the env var):
+>    `insert into app_flags (key, enabled) values ('world_retired', false) on conflict (key) do update set enabled = false, updated_at = now();`
+>    and unset the env fallback: `gcloud run services update three-ws-api --region us-central1 --remove-env-vars WORLD_RETIRED`.
+>
+> The cron route `api/cron/world-health.js` and its Scheduler job stay in place, so un-retiring
+> needs no schedule change. See [docs/ops/runtime-flags.md](../../docs/ops/runtime-flags.md).
 
 The world is a [Hyperfy](https://github.com/hyperfy-xyz/hyperfy) server pinned to an exact
 upstream commit and rebuilt with three local patches. When deployed it runs as its own Cloud Run service

@@ -195,6 +195,8 @@ export default wrap(async (req, res) => {
 							status: s.status,
 							detail: s.detail ?? null,
 							hint: s.hint ?? null,
+							// Set only on a formally retired subsystem (YYYY-MM-DD).
+							...(s.retiredOn ? { retiredOn: s.retiredOn } : {}),
 							// Structured numbers for the checks that carry them (agent
 							// index lag). Integrators reading this feed should not have
 							// to parse a human sentence to get the lag in minutes.

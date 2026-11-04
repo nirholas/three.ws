@@ -306,6 +306,7 @@
 				opacity: 0.4;
 			}
 			.st-dot[data-state='paused'],
+			.st-dot[data-state='retired'],
 			.st-dot[data-state='unknown'] {
 				background: transparent;
 				box-shadow: inset 0 0 0 1.5px var(--ink-dim);
@@ -556,6 +557,7 @@
 				degraded: 'degraded',
 				down: 'down',
 				paused: 'paused',
+				retired: 'retired',
 				unknown: 'no data',
 			};
 			const esc = (s) =>
@@ -599,7 +601,10 @@
 				subsList.innerHTML = subs.items
 					.map((it) => {
 						const state = it.status || 'unknown';
-						const word = SUB_STATE_WORD[state] || state;
+						const word =
+							state === 'retired' && it.retiredOn
+								? `Retired ${it.retiredOn}`
+								: SUB_STATE_WORD[state] || state;
 						// Hint only earns screen space when there's an action to take.
 						const showHint = it.hint && (state === 'degraded' || state === 'down');
 						return `<div class="st-sub" data-state="${esc(state)}">
