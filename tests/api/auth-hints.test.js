@@ -302,9 +302,10 @@ describe('authenticateAuthHintsRequest — SIWX (EOA)', () => {
 //
 // Builds a paidEndpoint(spec) with authHints enabled, then drives it through
 // fake req/res objects to confirm:
-//   1) The 402 challenge carries the `auth-hints` extension AND zero-amount
-//      free entries mapping to each declared method.
-//   2) An OAuth Bearer with the required scope bypasses payment.
+//   1) By default the 402 challenge carries only payable accepts; with
+//      X402_AUTH_HINT_ACCEPTS=true it adds the `auth-hints` extension AND
+//      zero-amount free entries mapping to each declared method.
+//   2) An OAuth Bearer with the required scope bypasses payment either way.
 //   3) A request without auth + without payment header returns the 402 again.
 
 describe('paidEndpoint authHints integration', () => {
@@ -367,8 +368,10 @@ describe('paidEndpoint authHints integration', () => {
 		},
 	};
 
-	it('declares auth-hints + free entries in the 402 challenge', async () => {
-		const handler = paidEndpoint({
+	// Free amount-0 accepts are opt-in (X402_AUTH_HINT_ACCEPTS=true) because
+	// external x402 directory validators reject a challenge that carries them.
+	function authHintsEndpoint() {
+		return paidEndpoint({
 			route: '/api/x402/test',
 			method: 'GET',
 			priceAtomics: '10000',
@@ -384,26 +387,51 @@ describe('paidEndpoint authHints integration', () => {
 				return { ok: true };
 			},
 		});
+	}
 
+	function challengeOf(res) {
+		return JSON.parse(Buffer.from(String(res.headers['payment-required']), 'base64').toString('utf8'));
+	}
+
+	it('advertises only payable accepts by default, with no auth-hints extension', async () => {
+		delete process.env.X402_AUTH_HINT_ACCEPTS;
 		const { req, res } = makeReqRes();
-		await handler(req, res);
+		await authHintsEndpoint()(req, res);
 
 		expect(res.statusCode).toBe(402);
-		const body = JSON.parse(
-			Buffer.from(String(res.headers['payment-required']), 'base64').toString('utf8'),
-		);
-		const hints = body.extensions['auth-hints'];
-		expect(hints).toBeDefined();
-		expect(hints.info.authRequirements).toHaveLength(2);
-		const [oauthReq, siwxReq] = hints.info.authRequirements;
-		expect(oauthReq.methods[0].type).toBe('oauth2');
-		expect(siwxReq.methods[0].type).toBe('sign-in-with-x');
-		const oauthIdx = oauthReq.acceptIndexes[0];
-		const siwxIdx = siwxReq.acceptIndexes[0];
-		expect(body.accepts[oauthIdx].amount).toBe('0');
-		expect(body.accepts[siwxIdx].amount).toBe('0');
-		expect(body.accepts[oauthIdx].extra.authRequired).toBe('oauth2');
-		expect(body.accepts[siwxIdx].extra.authRequired).toBe('sign-in-with-x');
+		for (const challenge of [challengeOf(res), JSON.parse(res.body)]) {
+			expect(challenge.extensions['auth-hints']).toBeUndefined();
+			expect(challenge.accepts.length).toBeGreaterThan(0);
+			for (const accept of challenge.accepts) {
+				expect(accept.amount).not.toBe('0');
+				expect(accept.extra?.authRequired).toBeUndefined();
+			}
+		}
+	});
+
+	it('declares auth-hints + free entries in the 402 challenge when X402_AUTH_HINT_ACCEPTS=true', async () => {
+		process.env.X402_AUTH_HINT_ACCEPTS = 'true';
+		try {
+			const { req, res } = makeReqRes();
+			await authHintsEndpoint()(req, res);
+
+			expect(res.statusCode).toBe(402);
+			const body = challengeOf(res);
+			const hints = body.extensions['auth-hints'];
+			expect(hints).toBeDefined();
+			expect(hints.info.authRequirements).toHaveLength(2);
+			const [oauthReq, siwxReq] = hints.info.authRequirements;
+			expect(oauthReq.methods[0].type).toBe('oauth2');
+			expect(siwxReq.methods[0].type).toBe('sign-in-with-x');
+			const oauthIdx = oauthReq.acceptIndexes[0];
+			const siwxIdx = siwxReq.acceptIndexes[0];
+			expect(body.accepts[oauthIdx].amount).toBe('0');
+			expect(body.accepts[siwxIdx].amount).toBe('0');
+			expect(body.accepts[oauthIdx].extra.authRequired).toBe('oauth2');
+			expect(body.accepts[siwxIdx].extra.authRequired).toBe('sign-in-with-x');
+		} finally {
+			delete process.env.X402_AUTH_HINT_ACCEPTS;
+		}
 	});
 
 	it('bypasses payment when a valid OAuth Bearer is presented', async () => {
