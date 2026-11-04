@@ -8,8 +8,8 @@
  *      the mix);
  *   2. pay-per-call with your x402-capable fetch and pull back the signed receipt;
  *   3. open the sealed envelope locally with the X25519 secret;
- *   4. independently verify every protocol claim — including that the key you
- *      just opened IS the ground key — before handing you the secret.
+ *   4. independently verify every protocol claim (including that the key you
+ *      just opened IS the ground key) before handing you the secret.
  *
  * If verification fails, it THROWS rather than return an unverified key: the
  * whole point is that you never accept a key you couldn't prove was honest.
@@ -28,6 +28,7 @@ import {
   type VerifyResult,
 } from "./verify.js";
 import { openSealedJson, generateRecipientKeypair, type SealedEnvelope } from "./sealed.js";
+import { ReceiptVerificationError, RequestFailedError } from "../errors.js";
 
 export interface SealedBundle {
   format: string;
@@ -43,7 +44,7 @@ export interface GrindVerifiedResult {
   secretKey: Uint8Array;
   /** Base58 secret key. */
   secretKeyBase58: string;
-  /** The full signed receipt — keep it; anyone can re-verify it later. */
+  /** The full signed receipt. Keep it; anyone can re-verify it later. */
   receipt: VanityReceipt;
   /** The per-check verification audit (all passed, or this would have thrown). */
   verification: VerifyResult;
@@ -71,7 +72,7 @@ export interface GrindVerifiedOptions {
 function randomClientSeedHex(): string {
   const b = new Uint8Array(32);
   (globalThis.crypto as Crypto).getRandomValues(b);
-  return bs58.encode(b); // Base58 — the endpoint accepts hex or Base58.
+  return bs58.encode(b); // Base58; the endpoint accepts hex or Base58.
 }
 
 /**
@@ -84,7 +85,7 @@ export async function grindVerifiedVanity(
   const doFetch = opts.fetchImpl ?? fetch;
   const endpoint = opts.endpoint ?? THREE_VANITY_ENDPOINT;
 
-  // 1. Fresh X25519 recipient + clientSeed — the buyer contributes entropy and
+  // 1. Fresh X25519 recipient + clientSeed: the buyer contributes entropy and
   //    the secret is sealed to a key only the buyer holds.
   const recipient = generateRecipientKeypair();
   const clientSeed = opts.clientSeed ?? randomClientSeedHex();
@@ -100,7 +101,7 @@ export async function grindVerifiedVanity(
   const res = await doFetch(url.toString(), { headers: { accept: "application/json" } });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`vanity-verifiable request failed: ${res.status} ${text.slice(0, 300)}`);
+    throw new RequestFailedError(url.toString(), res.status, text.slice(0, 300));
   }
   const receipt = (await res.json()) as VanityReceipt & {
     sealedSecret?: SealedEnvelope;
@@ -123,10 +124,10 @@ export async function grindVerifiedVanity(
     secretKey = Uint8Array.from(receipt.secretKey ?? bs58.decode(receipt.secretKeyBase58));
     openedSeed = secretKey.slice(0, 32);
   } else {
-    throw new Error("receipt carried neither a sealed envelope nor a plaintext secret");
+    throw new ReceiptVerificationError(["secret: receipt carried neither a sealed envelope nor a plaintext secret"]);
   }
 
-  // 4. Independently verify EVERY claim — including custody of THIS key.
+  // 4. Independently verify EVERY claim, including custody of THIS key.
   //    Pin against the LIVE well-known key by default (so a stale SDK constant
   //    never causes a false negative or a false positive); callers can override
   //    with an explicit key or `false` to use the built-in pin.
@@ -145,7 +146,7 @@ export async function grindVerifiedVanity(
   });
   if (!verification.valid) {
     const failed = verification.checks.filter((c) => !c.pass).map((c) => `${c.id}: ${c.detail}`);
-    throw new Error(`receipt failed verification — ${failed.join("; ")}`);
+    throw new ReceiptVerificationError(failed);
   }
 
   return {

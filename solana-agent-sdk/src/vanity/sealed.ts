@@ -12,6 +12,7 @@ import { x25519 } from "@noble/curves/ed25519.js";
 import { hkdf } from "@noble/hashes/hkdf.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { gcm } from "@noble/ciphers/aes.js";
+import { InvalidInputError } from "../errors.js";
 
 export const SEALED_ENVELOPE_SCHEME = "x25519-hkdf-sha256-aes256gcm/v1";
 
@@ -89,10 +90,11 @@ function parseX25519Key(key: Uint8Array | string, label: string): Uint8Array {
       if (found.size === 1) {
         bytes = [...found.values()][0]!.bytes;
       } else if (found.size === 0) {
-        throw new Error(`${label} is not a valid Base58/Base64url/hex 32-byte key`);
+        throw new InvalidInputError(label, `${label} is not a valid Base58/Base64url/hex 32-byte key`);
       } else {
         const names = [...found.values()].map((v) => v.name).sort();
-        throw new Error(
+        throw new InvalidInputError(
+          label,
           `${label} is ambiguous: it is a valid ${names.join(" and ")} encoding of two different ` +
             `32-byte keys. Prefix it to be explicit, e.g. "base58:${s}" or "base64url:${s}".`,
         );
@@ -100,7 +102,7 @@ function parseX25519Key(key: Uint8Array | string, label: string): Uint8Array {
     }
   }
   if (bytes.length !== X25519_KEY_BYTES) {
-    throw new Error(`${label} must be a 32-byte X25519 key (got ${bytes.length})`);
+    throw new InvalidInputError(label, `${label} must be a 32-byte X25519 key (got ${bytes.length})`);
   }
   return bytes;
 }
@@ -111,7 +113,7 @@ export function openSealed(
   recipientSecretKey: Uint8Array | string,
 ): Uint8Array {
   if (!envelope || envelope.scheme !== SEALED_ENVELOPE_SCHEME) {
-    throw new Error(`unsupported sealed-envelope scheme: ${envelope?.scheme}`);
+    throw new InvalidInputError("envelope", `unsupported sealed-envelope scheme: ${envelope?.scheme}`);
   }
   const secret = parseX25519Key(recipientSecretKey, "recipient secret key");
   const epk = parseX25519Key(envelope.epk, "ephemeral public key");

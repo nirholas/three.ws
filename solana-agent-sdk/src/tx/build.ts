@@ -5,6 +5,7 @@ import {
   TransactionMessage,
   type AddressLookupTableAccount,
   type Connection,
+  type Signer,
   type TransactionInstruction,
 } from "@solana/web3.js";
 import { isMetaAware, type WalletProvider, type TxMetadata } from "../wallet/types.js";
@@ -15,13 +16,19 @@ import {
   priorityFeeIx,
 } from "./fees.js";
 import { memoInstruction } from "../utils/memo.js";
+import { LookupTableNotFoundError, RetriesExhaustedError } from "../errors.js";
+import type { ConfirmCommitment, ConfirmOptions } from "./confirm.js";
 
 export interface BuildAndSendOptions {
-  /** microLamports per CU — omit to auto-estimate from recent fees */
+  /** microLamports per CU; omit to auto-estimate from recent fees */
   priorityFee?: number;
-  /** Compute unit limit — omit to simulate and auto-set */
+  /** Compute unit limit; omit to simulate and auto-set */
   cuLimit?: number;
-  /** Max times to retry on blockhash expiry (default 3) */
+  /**
+   * Total send attempts when the blockhash expires before the transaction
+   * lands (default 3; values below 1 mean a single attempt). Each attempt
+   * rebuilds with a fresh blockhash.
+   */
   maxRetries?: number;
   /**
    * Human-readable description attached to the pending tx.
@@ -40,15 +47,43 @@ export interface BuildAndSendOptions {
    * reference more than 32 accounts.
    */
   lookupTables?: AddressLookupTableAccount[];
+  /**
+   * Additional keypairs that must sign, such as a freshly generated stake or
+   * mint account. They partially sign every attempt before the wallet signs.
+   */
+  signers?: Signer[];
+  /** Commitment to wait for before resolving (default "confirmed"). */
+  commitment?: ConfirmCommitment;
+  /** Confirmation timeout per attempt in milliseconds (default 90 000). */
+  confirmTimeoutMs?: number;
 }
 
+function isBlockhashExpiry(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (err.message.includes("Blockhash not found") || err.message.includes("block height exceeded"))
+  );
+}
+
+/**
+ * Build, sign, send, and confirm a transaction from instructions.
+ *
+ * Prepends compute-budget instructions (estimated unless given), appends the
+ * memo, and rebuilds with a fresh blockhash when the previous one expired
+ * before the transaction landed.
+ *
+ * @throws RetriesExhaustedError when every attempt's blockhash expired.
+ * @throws SimulationError when compute-unit estimation fails simulation.
+ * @throws TransactionFailedError, ConfirmationTimeoutError, or any wallet error
+ *   (for example TransactionRejectedError) unchanged and without retrying.
+ */
 export async function buildAndSend(
   wallet: WalletProvider,
   connection: Connection,
   instructions: TransactionInstruction[],
   opts: BuildAndSendOptions = {},
 ): Promise<string> {
-  const { maxRetries = 3 } = opts;
+  const attempts = Math.max(1, Math.floor(opts.maxRetries ?? 3));
 
   if (opts.meta && isMetaAware(wallet)) {
     wallet.setNextMeta(opts.meta);
@@ -71,9 +106,13 @@ export async function buildAndSend(
     priorityFeeIx(fee),
     computeUnitIx(cuLimit),
   ];
+  const signers = opts.signers ?? [];
 
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  let lastBlockhash = "";
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    lastBlockhash = blockhash;
 
     let tx: Transaction | VersionedTransaction;
 
@@ -83,35 +122,42 @@ export async function buildAndSend(
         recentBlockhash: blockhash,
         instructions: [...budgetIxs, ...allInstructions],
       }).compileToV0Message(opts.lookupTables);
-      tx = new VersionedTransaction(msg);
+      const versioned = new VersionedTransaction(msg);
+      if (signers.length) versioned.sign(signers);
+      tx = versioned;
     } else {
       const legacyTx = new Transaction();
       legacyTx.recentBlockhash = blockhash;
       legacyTx.lastValidBlockHeight = lastValidBlockHeight;
       legacyTx.feePayer = wallet.publicKey;
       legacyTx.add(...budgetIxs, ...allInstructions);
+      if (signers.length) legacyTx.partialSign(...signers);
       tx = legacyTx;
     }
 
+    const confirm: ConfirmOptions = { lastValidBlockHeight };
+    if (opts.commitment !== undefined) confirm.commitment = opts.commitment;
+    if (opts.confirmTimeoutMs !== undefined) confirm.timeoutMs = opts.confirmTimeoutMs;
+
     try {
-      return await wallet.signAndSendTransaction(tx, connection);
+      return await wallet.signAndSendTransaction(tx, connection, confirm);
     } catch (err) {
-      const isExpired =
-        err instanceof Error &&
-        (err.message.includes("Blockhash not found") ||
-          err.message.includes("block height exceeded"));
+      if (!isBlockhashExpiry(err)) throw err;
+      lastError = err;
+      if (attempt === attempts) break;
 
-      if (!isExpired || attempt === maxRetries - 1) throw err;
-
+      // A lagging RPC can report "Blockhash not found" for a blockhash that is
+      // still valid. Resending then could land the transaction twice, so only
+      // rebuild once the chain is provably past the blockhash's last valid height.
       const blockHeight = await connection.getBlockHeight();
-      if (blockHeight > lastValidBlockHeight) continue;
-      throw err;
+      if (blockHeight <= lastValidBlockHeight) throw err;
     }
   }
 
-  throw new Error("buildAndSend: exhausted retries");
+  throw new RetriesExhaustedError(attempts, lastBlockhash, lastError);
 }
 
+/** @throws LookupTableNotFoundError naming the first address that has no lookup table account. */
 export async function fetchLookupTables(
   connection: Connection,
   addresses: string[],
@@ -119,7 +165,7 @@ export async function fetchLookupTables(
   return Promise.all(
     addresses.map(async (addr) => {
       const res = await connection.getAddressLookupTable(new PublicKey(addr));
-      if (!res.value) throw new Error(`Lookup table not found: ${addr}`);
+      if (!res.value) throw new LookupTableNotFoundError(addr);
       return res.value;
     }),
   );

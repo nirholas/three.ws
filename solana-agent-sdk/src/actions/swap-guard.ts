@@ -6,7 +6,7 @@
  *   - it spends no more than `quote.inAmount` of the input from the wallet, and
  *   - it credits the output mint to an account owned by the wallet.
  *
- * This is a deterministic, offline check — no RPC trust beyond resolving the
+ * This is a deterministic, offline check: no RPC trust beyond resolving the
  * address-lookup tables the transaction itself references.
  */
 import {
@@ -51,7 +51,7 @@ export async function assertSwapMatchesQuote(
   tx: VersionedTransaction,
   params: SwapGuardParams,
 ): Promise<void> {
-  const lookupTables = await resolveLookupTables(connection, tx);
+  const lookupTables = await resolveLookupTables(connection, tx, params);
 
   let instructions: TransactionInstruction[];
   try {
@@ -77,7 +77,7 @@ export async function assertSwapMatchesQuote(
     const programId = ix.programId.toBase58();
 
     // Native SOL inputs are wrapped via a SystemProgram transfer out of the
-    // wallet into a temporary WSOL account — count those lamports as input spend.
+    // wallet into a temporary WSOL account; count those lamports as input spend.
     if (params.inputMint === NATIVE_MINT && programId === SystemProgram.programId.toBase58()) {
       const lamports = decodeSystemTransferFromOwner(ix, params.owner);
       if (lamports !== null) spentFromWallet += lamports;
@@ -125,6 +125,7 @@ export async function assertSwapMatchesQuote(
 async function resolveLookupTables(
   connection: Connection,
   tx: VersionedTransaction,
+  params: SwapGuardParams,
 ): Promise<AddressLookupTableAccount[]> {
   const lookups =
     "addressTableLookups" in tx.message ? tx.message.addressTableLookups : [];
@@ -136,7 +137,11 @@ async function resolveLookupTables(
   const resolved: AddressLookupTableAccount[] = [];
   for (const res of accounts) {
     if (!res.value) {
-      throw new SwapError("Swap transaction references an unresolvable address lookup table");
+      throw new SwapError(
+        "Swap transaction references an unresolvable address lookup table",
+        params.inputMint,
+        params.outputMint,
+      );
     }
     resolved.push(res.value);
   }

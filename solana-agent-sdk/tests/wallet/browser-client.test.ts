@@ -151,6 +151,41 @@ describe("BrowserWalletClient", () => {
     );
   });
 
+  it("onFailed fires with the agent's reason and signature when the transaction did not confirm", async () => {
+    const { pending, signer } = makePending();
+    (globalThis as Record<string, unknown>)["fetch"] = jest.fn().mockImplementation(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ ok: false, error: "Transaction sig failed on-chain", signature: "sig" }),
+      }),
+    ) as unknown as typeof fetch;
+    const onConfirmed = jest.fn();
+    const onFailed = jest.fn();
+    const client = new BrowserWalletClient(baseUrl, signer, { onConfirmed, onFailed });
+    client.connect();
+
+    mockEs.onmessage!({ data: JSON.stringify(pending) });
+    await flushPromises();
+
+    expect(onFailed).toHaveBeenCalledWith(expect.objectContaining({ id: pending.id }), "Transaction sig failed on-chain", "sig");
+    expect(onConfirmed).not.toHaveBeenCalled();
+  });
+
+  it("onFailed fires when the agent answers the sign POST with an HTTP error", async () => {
+    const { pending, signer } = makePending();
+    (globalThis as Record<string, unknown>)["fetch"] = jest
+      .fn()
+      .mockImplementation(() => Promise.resolve({ ok: false, status: 404 })) as unknown as typeof fetch;
+    const onFailed = jest.fn();
+    const client = new BrowserWalletClient(baseUrl, signer, { onFailed });
+    client.connect();
+
+    mockEs.onmessage!({ data: JSON.stringify(pending) });
+    await flushPromises();
+
+    expect(onFailed).toHaveBeenCalledWith(expect.objectContaining({ id: pending.id }), expect.stringContaining("404"));
+  });
+
   it("reconnects on error: new EventSource created after reconnectMs", () => {
     jest.useFakeTimers();
     const client = new BrowserWalletClient(baseUrl, noopSigner(), { reconnectMs: 100 });

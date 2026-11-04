@@ -139,6 +139,33 @@ describe("jupiterSwap", () => {
     expect(body["prioritizationFeeLamports"]).toBe("auto");
   });
 
+  it("hands Jupiter's lastValidBlockHeight to the wallet so confirmation stops at blockhash expiry", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ swapTransaction: MOCK_TX_BASE64, lastValidBlockHeight: 279_000_123 }),
+      } as unknown as Response);
+
+    const w = makeWallet();
+    await jupiterSwap(w, connection, { inputMint: INPUT_MINT, outputMint: OUTPUT_MINT, amount: 1n });
+
+    const call = (w.signAndSendTransaction as jest.Mock).mock.calls[0]!;
+    expect(call[2]).toEqual({ lastValidBlockHeight: 279_000_123 });
+  });
+
+  it("omits the expiry height when Jupiter does not return one", async () => {
+    mockFetch
+      .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ swapTransaction: MOCK_TX_BASE64 }) } as unknown as Response);
+
+    const w = makeWallet();
+    await jupiterSwap(w, connection, { inputMint: INPUT_MINT, outputMint: OUTPUT_MINT, amount: 1n });
+
+    const call = (w.signAndSendTransaction as jest.Mock).mock.calls[0]!;
+    expect(call[2]).toEqual({});
+  });
+
   it("throws SwapError when swap API returns non-200", async () => {
     mockFetch
       .mockResolvedValueOnce({ ok: true, json: async () => MOCK_QUOTE } as unknown as Response)

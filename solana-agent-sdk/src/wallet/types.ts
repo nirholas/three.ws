@@ -1,12 +1,23 @@
 import type { Connection, PublicKey, Transaction, VersionedTransaction } from "@solana/web3.js";
+import type { ConfirmOptions } from "../tx/confirm.js";
 
 export interface WalletProvider {
   readonly publicKey: PublicKey;
   signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T>;
-  signAndSendTransaction(tx: Transaction | VersionedTransaction, connection: Connection): Promise<string>;
+  /**
+   * Sign, submit, and wait for confirmation. Resolves with the signature only
+   * once the transaction reached the requested commitment without an on-chain
+   * error; rejects with TransactionFailedError, ConfirmationTimeoutError, or a
+   * "block height exceeded" error when `confirm.lastValidBlockHeight` passed.
+   */
+  signAndSendTransaction(
+    tx: Transaction | VersionedTransaction,
+    connection: Connection,
+    confirm?: ConfirmOptions,
+  ): Promise<string>;
 }
 
-/** Human-readable description of what a transaction does — shown before the wallet prompt. */
+/** Human-readable description of what a transaction does, shown before the wallet prompt. */
 export interface TxMetadata {
   /** Short label for the action: "Swap SOL → USDC", "Send 0.5 SOL" */
   label: string;
@@ -16,7 +27,7 @@ export interface TxMetadata {
   kind: "transfer" | "swap" | "create" | "custom";
   /** Token/SOL being sent */
   amountIn?: { amount: string; symbol: string; uiAmount: string };
-  /** Token/SOL being received — set for swaps */
+  /** Token/SOL being received; set for swaps */
   amountOut?: { amount: string; symbol: string; uiAmount: string };
   /** Recipient display string (shortened address or domain name) */
   recipient?: string;

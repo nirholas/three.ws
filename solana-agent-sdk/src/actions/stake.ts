@@ -6,16 +6,11 @@ import {
   StakeProgram,
   Authorized,
   Lockup,
-  Transaction,
 } from "@solana/web3.js";
-import { isMetaAware, type WalletProvider } from "../wallet/types.js";
-import {
-  estimatePriorityFee,
-  estimateComputeUnits,
-  priorityFeeIx,
-  computeUnitIx,
-} from "../tx/fees.js";
+import type { WalletProvider } from "../wallet/types.js";
 import { buildAndSend, type BuildAndSendOptions } from "../tx/build.js";
+import { InvalidInputError } from "../errors.js";
+import { toUiAmount } from "../utils/format.js";
 
 const U64_MAX = BigInt("18446744073709551615");
 
@@ -32,22 +27,48 @@ export interface StakeSolResult {
   stakeAccount: string;
 }
 
+/**
+ * Create a stake account funded with `amount` SOL (plus its rent-exempt
+ * reserve) and delegate it to `voteAccount`, in one transaction co-signed by
+ * the new stake account.
+ *
+ * @throws InvalidInputError("amount") when the amount is not a positive, finite
+ *   number or is below the cluster's minimum delegation.
+ * @throws RetriesExhaustedError, TransactionFailedError, ConfirmationTimeoutError
+ *   from {@link buildAndSend}.
+ */
 export async function stakeSOL(
   wallet: WalletProvider,
   connection: Connection,
   params: StakeSolParams,
   opts?: BuildAndSendOptions,
 ): Promise<StakeSolResult> {
+  if (typeof params.amount !== "number" || !Number.isFinite(params.amount) || params.amount <= 0) {
+    throw new InvalidInputError("amount", `Stake amount must be a positive number of SOL (got ${params.amount})`);
+  }
+  const lamports = Math.round(params.amount * LAMPORTS_PER_SOL);
+  if (lamports < 1) {
+    throw new InvalidInputError("amount", `Stake amount ${params.amount} SOL is less than one lamport`);
+  }
+
   const voteAccount =
     typeof params.voteAccount === "string"
       ? new PublicKey(params.voteAccount)
       : params.voteAccount;
 
-  const stakeKp = Keypair.generate();
-  const lamports = Math.round(params.amount * LAMPORTS_PER_SOL);
-  const rentExempt = await connection.getMinimumBalanceForRentExemption(StakeProgram.space);
+  const [rentExempt, minimumDelegation] = await Promise.all([
+    connection.getMinimumBalanceForRentExemption(StakeProgram.space),
+    fetchMinimumDelegation(connection),
+  ]);
+  if (minimumDelegation !== null && lamports < minimumDelegation) {
+    throw new InvalidInputError(
+      "amount",
+      `Stake amount ${params.amount} SOL is below the cluster's minimum delegation of ${toUiAmount(String(minimumDelegation), 9)} SOL`,
+    );
+  }
   const totalLamports = lamports + rentExempt;
 
+  const stakeKp = Keypair.generate();
   const createAccountTx = StakeProgram.createAccount({
     fromPubkey: wallet.publicKey,
     stakePubkey: stakeKp.publicKey,
@@ -62,66 +83,40 @@ export async function stakeSOL(
     votePubkey: voteAccount,
   });
 
-  const allInstructions = [
-    ...createAccountTx.instructions,
-    ...delegateTx.instructions,
-  ];
-
-  if (isMetaAware(wallet)) {
-    wallet.setNextMeta({
-      label: `Stake ${params.amount} SOL`,
-      kind: "custom",
-      amountIn: {
-        amount: totalLamports.toString(),
-        symbol: "SOL",
-        uiAmount: params.amount.toString(),
+  const signature = await buildAndSend(
+    wallet,
+    connection,
+    [...createAccountTx.instructions, ...delegateTx.instructions],
+    {
+      ...opts,
+      // The stake account must co-sign its own creation on every attempt.
+      signers: [...(opts?.signers ?? []), stakeKp],
+      meta: opts?.meta ?? {
+        label: `Stake ${params.amount} SOL`,
+        kind: "custom",
+        amountIn: {
+          amount: totalLamports.toString(),
+          symbol: "SOL",
+          uiAmount: params.amount.toString(),
+        },
       },
-    });
+    },
+  );
+  return { signature, stakeAccount: stakeKp.publicKey.toBase58() };
+}
+
+/**
+ * The cluster's minimum stake delegation in lamports, or null when the RPC does
+ * not serve getStakeMinimumDelegation (older nodes and some providers). The
+ * stake program still enforces the minimum on-chain; this only fails fast.
+ */
+async function fetchMinimumDelegation(connection: Connection): Promise<number | null> {
+  try {
+    const { value } = await connection.getStakeMinimumDelegation();
+    return value;
+  } catch {
+    return null;
   }
-
-  const [fee, cuLimit] = await Promise.all([
-    opts?.priorityFee !== undefined
-      ? Promise.resolve(opts.priorityFee)
-      : estimatePriorityFee(connection),
-    opts?.cuLimit !== undefined
-      ? Promise.resolve(opts.cuLimit)
-      : estimateComputeUnits(connection, allInstructions, wallet.publicKey),
-  ]);
-
-  const budgetIxs = [priorityFeeIx(fee), computeUnitIx(cuLimit)];
-  const maxRetries = opts?.maxRetries ?? 3;
-
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-
-    const tx = new Transaction();
-    tx.recentBlockhash = blockhash;
-    tx.feePayer = wallet.publicKey;
-    tx.add(...budgetIxs, ...allInstructions);
-
-    // Stake account must co-sign its own creation
-    tx.partialSign(stakeKp);
-
-    try {
-      const signature = await wallet.signAndSendTransaction(tx, connection);
-      return { signature, stakeAccount: stakeKp.publicKey.toBase58() };
-    } catch (err) {
-      const isExpired =
-        err instanceof Error &&
-        (err.message.includes("Blockhash not found") ||
-          err.message.includes("block height exceeded"));
-
-      if (!isExpired || attempt === maxRetries - 1) throw err;
-
-      // Compare block HEIGHT to lastValidBlockHeight — not getSlot(), whose slot
-      // counter runs ahead of block height (skipped slots) and isn't comparable.
-      const blockHeight = await connection.getBlockHeight();
-      if (blockHeight > lastValidBlockHeight) continue;
-      throw err;
-    }
-  }
-
-  throw new Error("stakeSOL: exhausted retries");
 }
 
 export interface UnstakeSolParams {
@@ -204,7 +199,9 @@ export async function getStakeAccounts(
         let state: StakeAccountInfo["state"];
         if (deactivationEpoch === U64_MAX) {
           state = "delegated";
-        } else if (deactivationEpoch > currentEpoch) {
+        } else if (deactivationEpoch >= currentEpoch) {
+          // Deactivation takes effect at the end of deactivation_epoch, so the
+          // stake is still cooling down (not withdrawable) during that epoch.
           state = "deactivating";
         } else {
           state = "inactive";

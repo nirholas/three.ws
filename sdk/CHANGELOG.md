@@ -4,6 +4,12 @@ All notable changes to `@three-ws/sdk` are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Every Solana attestation helper (`attestFeedback`, `attestValidation`, `createTask`, `acceptTask`, `attestRevoke`, `attestDispute`) built a memo instruction listing the agent asset as a non-signer account. SPL Memo v2 requires every account passed to it to sign, so each of these transactions failed with `MissingRequiredSignature`. The asset now rides as a read-only account on a ComputeBudget `SetComputeUnitLimit` instruction (400k units, no priority fee, so the fee is unchanged), which keeps the attestation discoverable by `getSignaturesForAddress(agent)`.
+
 ## [0.2.3] - 2026-08-13
 
 ### Fixed

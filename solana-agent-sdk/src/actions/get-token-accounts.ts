@@ -1,42 +1,50 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { toUiAmount } from "../utils/format.js";
 
 export interface TokenAccount {
   mint: string;
   ata: string;
+  /** Raw balance in base units. */
   amount: string;
   decimals: number;
+  /** Exact decimal string (no floating-point rounding). */
   uiAmount: string;
+  /** Owning token program: SPL Token or Token-2022. */
+  programId: string;
 }
 
-function formatUiAmount(rawAmount: string, decimals: number): string {
-  const big = BigInt(rawAmount);
-  const divisor = BigInt(10 ** decimals);
-  const whole = big / divisor;
-  const frac = big % divisor;
-  if (frac === 0n) return whole.toString();
-  const fracStr = frac.toString().padStart(decimals, "0").replace(/0+$/, "");
-  return `${whole}.${fracStr}`;
-}
-
+/**
+ * List every non-empty token account `owner` holds, across both SPL Token and
+ * Token-2022 (where $THREE lives). Classic accounts come first, then
+ * Token-2022, each in RPC order. Rejects if either program query fails, so a
+ * partial list is never mistaken for the full portfolio.
+ */
 export async function getTokenAccounts(
   connection: Connection,
   owner: PublicKey,
 ): Promise<TokenAccount[]> {
-  const { value } = await connection.getParsedTokenAccountsByOwner(owner, { programId: TOKEN_PROGRAM_ID });
+  const programs = [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID];
+  const responses = await Promise.all(
+    programs.map((programId) => connection.getParsedTokenAccountsByOwner(owner, { programId })),
+  );
 
-  return value
-    .map((acc) => {
-      const info = acc.account.data.parsed.info;
-      const { mint, tokenAmount } = info;
-      const { amount, decimals } = tokenAmount as { amount: string; decimals: number };
-      return {
-        mint: mint as string,
-        ata: acc.pubkey.toBase58(),
-        amount,
-        decimals,
-        uiAmount: formatUiAmount(amount, decimals),
-      };
-    })
-    .filter((acc) => acc.amount !== "0");
+  return responses.flatMap(({ value }, i) =>
+    value
+      .map((acc) => {
+        const { mint, tokenAmount } = acc.account.data.parsed.info as {
+          mint: string;
+          tokenAmount: { amount: string; decimals: number };
+        };
+        return {
+          mint,
+          ata: acc.pubkey.toBase58(),
+          amount: tokenAmount.amount,
+          decimals: tokenAmount.decimals,
+          uiAmount: toUiAmount(tokenAmount.amount, tokenAmount.decimals),
+          programId: programs[i]!.toBase58(),
+        };
+      })
+      .filter((acc) => acc.amount !== "0"),
+  );
 }

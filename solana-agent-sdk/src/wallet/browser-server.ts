@@ -1,12 +1,12 @@
 /**
- * BrowserWalletProvider — server-side half of the browser wallet bridge.
+ * BrowserWalletProvider: server-side half of the browser wallet bridge.
  *
  * The agent calls signAndSendTransaction() as normal. Internally this creates a
  * pending request that the browser can pick up, sign with Phantom/Solflare, and
  * submit back. The Promise resolves once the browser returns the signed tx.
  *
  * Call setNextMeta() before any action to attach a human-readable description
- * to the pending tx — the browser can show a confirmation card before the
+ * to the pending tx, so the browser can show a confirmation card before the
  * wallet prompt appears.
  *
  * Mount createHandler() on any HTTP path (e.g. GET/POST /api/wallet/...).
@@ -22,6 +22,13 @@ import {
 } from "@solana/web3.js";
 import type { MetaAwareWallet, TxMetadata } from "./types.js";
 import { TransactionRejectedError } from "../errors.js";
+import {
+  DEFAULT_CONFIRM_TIMEOUT_MS,
+  confirmSignature,
+  lastValidBlockHeightOf,
+  type ConfirmCommitment,
+  type ConfirmOptions,
+} from "../tx/confirm.js";
 
 export interface PendingTx {
   id: string;
@@ -29,6 +36,16 @@ export interface PendingTx {
   versioned: boolean;
   createdAt: number;
   meta?: TxMetadata;
+}
+
+/**
+ * Body of the POST {base}/sign/:id response: whether the transaction the
+ * browser signed was confirmed (with its signature), or why it was not.
+ */
+export interface SignOutcome {
+  ok: boolean;
+  signature?: string;
+  error?: string;
 }
 
 /** Internal record: the public PendingTx plus the original message bytes we issued. */
@@ -40,13 +57,20 @@ interface PendingEntry extends PendingTx {
 export interface BrowserWalletOptions {
   publicKey: PublicKey | string;
   sessionId?: string;
+  /** How long to wait for the user to approve in the browser (default 120 000ms). */
   timeoutMs?: number;
+  /** Default commitment signAndSendTransaction waits for after submitting (default "confirmed"). */
+  commitment?: ConfirmCommitment;
+  /** Default confirmation timeout after submitting, in milliseconds (default 90 000). */
+  confirmTimeoutMs?: number;
 }
 
 export class BrowserWalletProvider implements MetaAwareWallet {
   readonly publicKey: PublicKey;
   readonly sessionId: string;
   private readonly timeoutMs: number;
+  private readonly confirmDefaults: Pick<ConfirmOptions, "commitment" | "timeoutMs">;
+  private readonly settleCapMs: number;
   private readonly pending = new Map<string, PendingEntry>();
   private readonly emitter = new EventEmitter();
   private nextMeta: TxMetadata | null = null;
@@ -58,11 +82,13 @@ export class BrowserWalletProvider implements MetaAwareWallet {
         : opts.publicKey;
     this.sessionId = opts.sessionId ?? crypto.randomUUID();
     this.timeoutMs = opts.timeoutMs ?? 120_000;
+    this.confirmDefaults = { commitment: opts.commitment, timeoutMs: opts.confirmTimeoutMs };
+    this.settleCapMs = (opts.confirmTimeoutMs ?? DEFAULT_CONFIRM_TIMEOUT_MS) + 15_000;
   }
 
   /**
    * Attach metadata to the next transaction this provider signs.
-   * Consumed once — subsequent calls without setting it again won't carry metadata.
+   * Consumed once; subsequent calls without setting it again won't carry metadata.
    *
    * Call this immediately before the action that triggers a transaction:
    *   walletProvider.setNextMeta({ label: "Swap SOL → USDC", kind: "swap", ... });
@@ -116,7 +142,7 @@ export class BrowserWalletProvider implements MetaAwareWallet {
         }
 
         // The browser must return a signature over the EXACT transaction we
-        // asked it to sign — not a substituted one. Compare compiled message
+        // asked it to sign, not a substituted one. Compare compiled message
         // bytes and verify the expected signer's signature over them.
         const returnedBytes = compiledMessageBytes(signed);
         if (!buffersEqual(returnedBytes, messageBytes)) {
@@ -169,15 +195,56 @@ export class BrowserWalletProvider implements MetaAwareWallet {
   }
 
   async signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T> {
-    return this._sign(tx, crypto.randomUUID());
+    const id = crypto.randomUUID();
+    try {
+      const signed = await this._sign(tx, id);
+      // Sign-only: nothing is submitted, so the browser's POST is answered as
+      // soon as the signature is accepted.
+      this.emitter.emit(`settled:${id}`, { ok: true } satisfies SignOutcome);
+      return signed;
+    } catch (err) {
+      this.emitter.emit(`settled:${id}`, {
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      } satisfies SignOutcome);
+      throw err;
+    }
   }
 
-  async signAndSendTransaction(tx: Transaction | VersionedTransaction, connection: Connection): Promise<string> {
+  /**
+   * Queue the transaction for browser approval, submit the signed result, and
+   * wait for confirmation.
+   *
+   * @throws TransactionRejectedError when the user rejects, approval times out,
+   *   or the browser returns a different or unsigned transaction.
+   * @throws TransactionFailedError, ConfirmationTimeoutError, or "block height
+   *   exceeded" once submitted.
+   */
+  async signAndSendTransaction(
+    tx: Transaction | VersionedTransaction,
+    connection: Connection,
+    confirm: ConfirmOptions = {},
+  ): Promise<string> {
     const id = crypto.randomUUID();
-    const signed = await this._sign(tx, id);
-    const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
-    await connection.confirmTransaction(sig, "confirmed");
-    this.emitter.emit(`confirmed:${id}`, sig);
+    let sig: string | undefined;
+    try {
+      const signed = await this._sign(tx, id);
+      sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+      await confirmSignature(connection, sig, {
+        commitment: confirm.commitment ?? this.confirmDefaults.commitment,
+        timeoutMs: confirm.timeoutMs ?? this.confirmDefaults.timeoutMs,
+        pollIntervalMs: confirm.pollIntervalMs,
+        // The browser's copy is deserialized from wire bytes, which do not carry
+        // the expiry height, so read it from the transaction we were given.
+        lastValidBlockHeight: confirm.lastValidBlockHeight ?? lastValidBlockHeightOf(tx),
+      });
+    } catch (err) {
+      const failure: SignOutcome = { ok: false, error: err instanceof Error ? err.message : String(err) };
+      if (sig) failure.signature = sig;
+      this.emitter.emit(`settled:${id}`, failure);
+      throw err;
+    }
+    this.emitter.emit(`settled:${id}`, { ok: true, signature: sig } satisfies SignOutcome);
     return sig;
   }
 
@@ -205,7 +272,7 @@ export class BrowserWalletProvider implements MetaAwareWallet {
   /**
    * Validate that a request carries this provider's session id. The session id
    * is the shared secret that binds these endpoints to the legitimate wallet
-   * owner — without it, anyone who learns a (guessable) tx id could sign/reject.
+   * owner. Without it, anyone who learns a (guessable) tx id could sign/reject.
    * The id is read from the `x-wallet-session` header or, for EventSource which
    * cannot set headers, the `session` query parameter.
    */
@@ -237,12 +304,12 @@ export class BrowserWalletProvider implements MetaAwareWallet {
         return new Response("Unauthorized", { status: 401 });
       }
 
-      // GET /pending — snapshot of current queue
+      // GET /pending: snapshot of current queue
       if (req.method === "GET" && !action) {
         return Response.json({ pending: this.getPending() });
       }
 
-      // GET /stream — SSE push stream
+      // GET /stream: SSE push stream
       if (req.method === "GET" && action === "stream") {
         const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
         const writer = writable.getWriter();
@@ -284,16 +351,23 @@ export class BrowserWalletProvider implements MetaAwareWallet {
           return new Response("Unknown transaction", { status: 404 });
         }
         const body = (await req.json()) as { signedTransaction: string };
-        const sigPromise = new Promise<string | null>((resolve) => {
-          const t = setTimeout(() => resolve(null), 60_000);
-          this.emitter.once(`confirmed:${id}`, (sig: string) => {
-            clearTimeout(t);
-            resolve(sig);
-          });
+        // Answer once the agent side settles: confirmed, failed on-chain,
+        // rejected as tampered, or (sign-only) accepted. The cap only guards a
+        // caller that overrides the confirm timeout past the provider default.
+        const outcome = new Promise<SignOutcome>((resolve) => {
+          const event = `settled:${id}`;
+          const onSettled = (o: SignOutcome) => {
+            clearTimeout(timer);
+            resolve(o);
+          };
+          const timer = setTimeout(() => {
+            this.emitter.off(event, onSettled);
+            resolve({ ok: false, error: "Timed out waiting for the transaction to settle" });
+          }, this.settleCapMs);
+          this.emitter.once(event, onSettled);
         });
         this.submitSigned(id, body.signedTransaction);
-        const signature = await sigPromise;
-        return Response.json(signature ? { ok: true, signature } : { ok: false });
+        return Response.json(await outcome);
       }
 
       // POST /reject/:id

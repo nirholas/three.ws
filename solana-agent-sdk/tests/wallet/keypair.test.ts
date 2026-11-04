@@ -1,8 +1,9 @@
 import { describe, it, expect, jest } from "@jest/globals";
-import { Keypair, Transaction, VersionedTransaction, TransactionMessage } from "@solana/web3.js";
+import { Keypair, SystemProgram, Transaction, VersionedTransaction, TransactionMessage } from "@solana/web3.js";
 import type { Connection } from "@solana/web3.js";
 import bs58 from "bs58";
 import { KeypairWalletProvider } from "../../src/wallet/keypair.js";
+import { ConfirmationTimeoutError, TransactionFailedError } from "../../src/errors.js";
 
 describe("KeypairWalletProvider", () => {
   const keypair = Keypair.generate();
@@ -49,31 +50,102 @@ describe("KeypairWalletProvider", () => {
     expect(signed.signatures[0]!.some((b) => b !== 0)).toBe(true);
   });
 
-  it("signAndSendTransaction calls sendAndConfirmTransaction with the keypair", async () => {
+  it("signTransaction (legacy) keeps a co-signer's existing partial signature", async () => {
     const provider = new KeypairWalletProvider(keypair.secretKey);
-    const tx = new Transaction();
+    const coSigner = Keypair.generate();
+    const tx = new Transaction().add(
+      SystemProgram.createAccount({
+        fromPubkey: keypair.publicKey,
+        newAccountPubkey: coSigner.publicKey,
+        lamports: 1_000_000,
+        space: 0,
+        programId: SystemProgram.programId,
+      }),
+    );
     tx.recentBlockhash = "11111111111111111111111111111111";
     tx.feePayer = keypair.publicKey;
+    tx.partialSign(coSigner);
 
-    // Minimal connection mock: sendAndConfirmTransaction calls these two methods.
-    const fakeSig = "fakeSig";
-    const sendTransaction = jest.fn().mockImplementation(() => Promise.resolve(fakeSig));
-    const confirmTransaction = jest
-      .fn()
-      .mockImplementation(() => Promise.resolve({ value: { err: null } }));
-    const connection = { sendTransaction, confirmTransaction } as unknown as Connection;
+    const signed = await provider.signTransaction(tx);
+    expect(signed.verifySignatures()).toBe(true);
+  });
 
-    const result = await provider.signAndSendTransaction(tx, connection);
+  describe("signAndSendTransaction", () => {
+    function stubConnection(status: unknown) {
+      const sendRawTransaction = jest.fn(async (raw: Buffer | Uint8Array) => {
+        void raw;
+        return "sentSig";
+      });
+      const getSignatureStatuses = jest.fn(async () => ({ context: { slot: 1 }, value: [status] }));
+      const getBlockHeight = jest.fn(async () => 1);
+      const connection = { sendRawTransaction, getSignatureStatuses, getBlockHeight } as unknown as Connection;
+      return { connection, sendRawTransaction, getSignatureStatuses };
+    }
+    const confirmed = { slot: 5, confirmations: 1, err: null, confirmationStatus: "confirmed" };
+    const failed = { slot: 5, confirmations: 1, err: { InstructionError: [0, { Custom: 1 }] }, confirmationStatus: "confirmed" };
 
-    expect(result).toBe(fakeSig);
-    // Verify the keypair was included in the signers array passed to sendTransaction.
-    expect(sendTransaction).toHaveBeenCalledWith(
-      tx,
-      expect.arrayContaining([
-        expect.objectContaining({ publicKey: keypair.publicKey }),
-      ]),
-      // sendOptions is undefined when no ConfirmOptions are passed
-      undefined,
-    );
+    function legacyTx(): Transaction {
+      const tx = new Transaction().add(
+        SystemProgram.transfer({ fromPubkey: keypair.publicKey, toPubkey: Keypair.generate().publicKey, lamports: 1 }),
+      );
+      tx.recentBlockhash = "11111111111111111111111111111111";
+      tx.lastValidBlockHeight = 100;
+      tx.feePayer = keypair.publicKey;
+      return tx;
+    }
+
+    function versionedTx(): VersionedTransaction {
+      return new VersionedTransaction(
+        new TransactionMessage({
+          payerKey: keypair.publicKey,
+          recentBlockhash: "11111111111111111111111111111111",
+          instructions: [],
+        }).compileToV0Message(),
+      );
+    }
+
+    it("sends a fully signed legacy transaction and waits for confirmation", async () => {
+      const provider = new KeypairWalletProvider(keypair.secretKey);
+      const { connection, sendRawTransaction, getSignatureStatuses } = stubConnection(confirmed);
+      const tx = legacyTx();
+
+      await expect(provider.signAndSendTransaction(tx, connection)).resolves.toBe("sentSig");
+
+      const raw = sendRawTransaction.mock.calls[0]![0];
+      expect(Transaction.from(Buffer.from(raw)).verifySignatures()).toBe(true);
+      expect(getSignatureStatuses).toHaveBeenCalledWith(["sentSig"]);
+    });
+
+    it("throws TransactionFailedError when a legacy transaction fails on-chain", async () => {
+      const provider = new KeypairWalletProvider(keypair.secretKey);
+      const { connection } = stubConnection(failed);
+      await expect(provider.signAndSendTransaction(legacyTx(), connection)).rejects.toThrow(TransactionFailedError);
+    });
+
+    it("throws TransactionFailedError when a versioned transaction fails on-chain", async () => {
+      const provider = new KeypairWalletProvider(keypair.secretKey);
+      const { connection } = stubConnection(failed);
+      const err = await provider.signAndSendTransaction(versionedTx(), connection).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(TransactionFailedError);
+      expect((err as TransactionFailedError).signature).toBe("sentSig");
+    });
+
+    it("throws ConfirmationTimeoutError when confirmation does not land in time", async () => {
+      const provider = new KeypairWalletProvider(keypair.secretKey, { confirmTimeoutMs: 30 });
+      const { connection } = stubConnection(null);
+      const err = await provider.signAndSendTransaction(versionedTx(), connection).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ConfirmationTimeoutError);
+      expect((err as ConfirmationTimeoutError).timeoutMs).toBe(30);
+    });
+
+    it("lets per-call confirm options override the provider default", async () => {
+      const provider = new KeypairWalletProvider(keypair.secretKey, { confirmTimeoutMs: 60_000 });
+      const { connection } = stubConnection(null);
+      const err = await provider
+        .signAndSendTransaction(versionedTx(), connection, { timeoutMs: 20 })
+        .catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ConfirmationTimeoutError);
+      expect((err as ConfirmationTimeoutError).timeoutMs).toBe(20);
+    });
   });
 });

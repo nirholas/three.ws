@@ -6,3 +6,5 @@ export {
   priorityFeeIx,
   computeUnitIx,
 } from "./fees.js";
+export { confirmSignature, DEFAULT_CONFIRM_TIMEOUT_MS } from "./confirm.js";
+export type { ConfirmOptions, ConfirmCommitment } from "./confirm.js";

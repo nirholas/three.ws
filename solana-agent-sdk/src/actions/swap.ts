@@ -39,6 +39,8 @@ export interface JupiterQuote {
 
 interface JupiterSwapResponse {
   swapTransaction: string;
+  /** Last block height at which the swap transaction's blockhash is valid. */
+  lastValidBlockHeight?: number;
 }
 
 export async function jupiterSwap(
@@ -89,7 +91,7 @@ export async function jupiterSwap(
     throw new SwapError(`Jupiter swap failed: ${await swapRes.text()}`, inputMint, outputMint);
   }
 
-  const { swapTransaction } = (await swapRes.json()) as JupiterSwapResponse;
+  const { swapTransaction, lastValidBlockHeight } = (await swapRes.json()) as JupiterSwapResponse;
   const tx = VersionedTransaction.deserialize(
     Buffer.from(swapTransaction, "base64"),
   );
@@ -104,7 +106,13 @@ export async function jupiterSwap(
     owner: wallet.publicKey,
   });
 
-  return wallet.signAndSendTransaction(tx, connection);
+  // A versioned transaction carries no expiry height of its own, so Jupiter's
+  // is what lets confirmation stop at blockhash expiry instead of the timeout.
+  return wallet.signAndSendTransaction(
+    tx,
+    connection,
+    typeof lastValidBlockHeight === "number" ? { lastValidBlockHeight } : {},
+  );
 }
 
 export async function getSwapQuote(params: SwapParams): Promise<JupiterQuote> {

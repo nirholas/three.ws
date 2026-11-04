@@ -28,20 +28,32 @@ const RPC = {
 
 const MAX_MEMO_BYTES = 566; // SPL Memo per-tx upper bound; we stay well under.
 
-async function buildMemoIx(payload, agentAsset) {
+// SPL Memo v2 requires every account passed to it to sign, so the agent asset
+// cannot ride on the memo instruction as a read-only key (the tx would fail
+// with MissingRequiredSignature). It rides on a ComputeBudget
+// SetComputeUnitLimit instruction instead, which ignores extra accounts, so
+// the asset still lands in the message's account keys and
+// getSignaturesForAddress(agent) returns the attestation. The memo itself
+// carries no accounts: the fee payer's signature already covers the tx.
+// 400k CU covers Memo v2's per-byte cost at the payload ceiling; with no
+// priority fee the limit does not change what the user pays.
+const ATTEST_COMPUTE_UNIT_LIMIT = 400_000;
+
+async function buildMemoIxs(payload, agentAsset) {
 	const bytes = new TextEncoder().encode(payload);
 	if (bytes.length > MAX_MEMO_BYTES) throw new Error('attestation payload too large');
-	const { PublicKey, TransactionInstruction } = await loadSolanaWeb3('Solana attestations');
-	return new TransactionInstruction({
+	const { PublicKey, TransactionInstruction, ComputeBudgetProgram } = await loadSolanaWeb3('Solana attestations');
+	const carrier = ComputeBudgetProgram.setComputeUnitLimit({ units: ATTEST_COMPUTE_UNIT_LIMIT });
+	carrier.keys.push({ pubkey: new PublicKey(agentAsset), isSigner: false, isWritable: false });
+	const memo = new TransactionInstruction({
 		programId: new PublicKey(MEMO_PROGRAM_ADDRESS),
-		// Reference the agent asset pubkey as a (non-signer, read-only) key so
-		// it shows up under getSignaturesForAddress(agent).
-		keys: [{ pubkey: new PublicKey(agentAsset), isSigner: false, isWritable: false }],
+		keys: [],
 		data: Buffer.from(bytes),
 	});
+	return [carrier, memo];
 }
 
-async function signAndSend({ network, preferred, ix, feePayer }) {
+async function signAndSend({ network, preferred, ixs, feePayer }) {
 	const provider = detectSolanaProvider(preferred);
 	if (!provider) throw new Error('No Solana wallet detected');
 	if (!provider.publicKey) await provider.connect();
@@ -50,7 +62,7 @@ async function signAndSend({ network, preferred, ix, feePayer }) {
 	const conn = new Connection(RPC[network] || RPC.devnet, 'confirmed');
 	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
 
-	const tx = new Transaction({ feePayer, recentBlockhash: blockhash }).add(ix);
+	const tx = new Transaction({ feePayer, recentBlockhash: blockhash }).add(...ixs);
 	const { signature } = await provider.signAndSendTransaction(tx);
 	const conf = await conn.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
 	// A confirmed-but-reverted tx carries its error in value.err rather than
@@ -91,8 +103,8 @@ export async function attestFeedback({
 		...(uri ? { uri } : {}),
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
-	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	const ixs = await buildMemoIxs(JSON.stringify(memo), agentAsset);
+	const signature = await signAndSend({ network, preferred, ixs, feePayer: publicKey });
 	return { signature, memo };
 }
 
@@ -124,8 +136,8 @@ export async function attestValidation({
 		...(uri ? { uri } : {}),
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
-	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	const ixs = await buildMemoIxs(JSON.stringify(memo), agentAsset);
+	const signature = await signAndSend({ network, preferred, ixs, feePayer: publicKey });
 	return { signature, memo };
 }
 
@@ -145,8 +157,8 @@ export async function createTask({
 		task_id: taskId, scope_hash: scopeHash,
 		...(uri ? { uri } : {}), ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
-	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	const ixs = await buildMemoIxs(JSON.stringify(memo), agentAsset);
+	const signature = await signAndSend({ network, preferred, ixs, feePayer: publicKey });
 	return { signature, memo };
 }
 
@@ -166,8 +178,8 @@ export async function acceptTask({
 		v: 1, kind: 'threews.accept.v1', agent: agentAsset, task_id: taskId,
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
-	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	const ixs = await buildMemoIxs(JSON.stringify(memo), agentAsset);
+	const signature = await signAndSend({ network, preferred, ixs, feePayer: publicKey });
 	return { signature, memo };
 }
 
@@ -188,8 +200,8 @@ export async function attestRevoke({
 		target_signature: targetSignature,
 		...(reason ? { reason } : {}), ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
-	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	const ixs = await buildMemoIxs(JSON.stringify(memo), agentAsset);
+	const signature = await signAndSend({ network, preferred, ixs, feePayer: publicKey });
 	return { signature, memo };
 }
 
@@ -212,8 +224,8 @@ export async function attestDispute({
 		...(uri ? { uri } : {}),
 		ts: Math.floor(Date.now() / 1000),
 	};
-	const ix = await buildMemoIx(JSON.stringify(memo), agentAsset);
-	const signature = await signAndSend({ network, preferred, ix, feePayer: publicKey });
+	const ixs = await buildMemoIxs(JSON.stringify(memo), agentAsset);
+	const signature = await signAndSend({ network, preferred, ixs, feePayer: publicKey });
 	return { signature, memo };
 }
 

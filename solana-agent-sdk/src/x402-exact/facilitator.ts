@@ -1,5 +1,5 @@
 /**
- * x402 "exact" scheme facilitator — server-side challenge + verify + settle.
+ * x402 "exact" scheme facilitator: server-side challenge + verify + settle.
  *
  * Challenge: mint a single-use, server-issued nonce bound to one resource and
  *            its (asset, amount, payTo). The client must carry the nonce in the
@@ -7,7 +7,9 @@
  *            other request.
  * Verify:    confirm the tx exists, runs on the configured cluster, carries the
  *            issued nonce memo, and contains a TransferChecked with the correct
- *            mint, amount, and recipient.
+ *            mint, amount, and recipient. Classic SPL Token and Token-2022
+ *            assets (such as $THREE) are both accepted, and the payee may be
+ *            a program-derived vault.
  * Settle:    wait for finalization, then atomically consume the signature in a
  *            durable store so the same on-chain payment can never settle twice.
  *
@@ -18,6 +20,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { randomBytes } from "crypto";
@@ -180,7 +183,7 @@ export class ExactFacilitator {
         }
 
         // Atomically consume both the per-request challenge and the signature.
-        // Either failing means a concurrent/prior settle already claimed it —
+        // Either failing means a concurrent/prior settle already claimed it, so
         // reject rather than grant duplicate access.
         const nonce = extractNonce(requirements);
         if (!nonce || !(await this.challengeStore.consume(nonce))) {
@@ -308,16 +311,21 @@ function findTransferChecked(
     return { found: false, payer: "", reason: "No instructions in transaction" };
   }
 
-  const receiverAta = deriveAta(new PublicKey(req.payTo), new PublicKey(req.asset));
+  const payTo = new PublicKey(req.payTo);
+  const mint = new PublicKey(req.asset);
 
   for (const ix of instructions) {
-    if (ix.program !== "spl-token") continue;
+    const tokenProgram = TOKEN_PROGRAMS[ix.program];
+    if (!tokenProgram) continue;
     if (typeof ix.parsed !== "object" || !ix.parsed) continue;
     const { type, info } = ix.parsed;
     if (type !== "transferChecked" || !info) continue;
 
     if (info.mint !== req.asset) continue;
-    if (info.destination !== receiverAta.toBase58()) continue;
+    // The payee's account under the program that actually executed the
+    // transfer. A mint belongs to exactly one program, so a transfer through
+    // the other one cannot have succeeded for this mint.
+    if (info.destination !== deriveAta(payTo, mint, tokenProgram).toBase58()) continue;
     if (info.tokenAmount?.amount !== req.amount) continue;
 
     return { found: true, payer: info.authority ?? info.source ?? "", reason: "" };
@@ -330,8 +338,15 @@ function findTransferChecked(
   };
 }
 
-function deriveAta(owner: PublicKey, mint: PublicKey): PublicKey {
-  return getAssociatedTokenAddressSync(mint, owner, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+/** Parsed-instruction program names of the two SPL token programs. */
+const TOKEN_PROGRAMS: Record<string, PublicKey> = {
+  "spl-token": TOKEN_PROGRAM_ID,
+  "spl-token-2022": TOKEN_2022_PROGRAM_ID,
+};
+
+/** The payee's associated token account; off-curve owners (program vaults) are allowed. */
+function deriveAta(owner: PublicKey, mint: PublicKey, tokenProgram: PublicKey): PublicKey {
+  return getAssociatedTokenAddressSync(mint, owner, true, tokenProgram, ASSOCIATED_TOKEN_PROGRAM_ID);
 }
 
 function sleep(ms: number): Promise<void> {

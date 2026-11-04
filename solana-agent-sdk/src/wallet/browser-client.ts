@@ -1,11 +1,11 @@
 /**
- * BrowserWalletClient — browser-side half of the wallet bridge.
+ * BrowserWalletClient: browser-side half of the wallet bridge.
  *
  * Listens for pending transactions via SSE (instant push, no polling), then
  * either auto-signs or calls the optional `onApproval` handler first so your
  * UI can show a confirmation card before the wallet prompt appears.
  *
- * Works in any browser — no Node.js APIs, no React dependency.
+ * Works in any browser: no Node.js APIs, no React dependency.
  *
  * Quick start (auto-sign everything):
  *   const client = new BrowserWalletClient("/api/wallet", wallet.signTransaction.bind(wallet));
@@ -20,7 +20,7 @@
  *   client.connect();
  */
 import { Transaction, VersionedTransaction } from "@solana/web3.js";
-import type { PendingTx } from "./browser-server.js";
+import type { PendingTx, SignOutcome } from "./browser-server.js";
 
 export type SignerFn = (
   tx: Transaction | VersionedTransaction,
@@ -35,13 +35,13 @@ export type ApprovalHandler = (
 export interface BrowserWalletClientOptions {
   /**
    * Session id issued by the server-side BrowserWalletProvider. Required to
-   * authorize /stream, /sign and /reject — the server rejects requests without
+   * authorize /stream, /sign and /reject; the server rejects requests without
    * it. Pass the provider's `sessionId` through to the browser at page load.
    */
   sessionId?: string;
   /**
    * Called with each pending tx before the wallet prompt.
-   * Must call approve() or reject() — whichever the user chooses.
+   * Must call approve() or reject(), whichever the user chooses.
    * If omitted, all transactions are auto-approved (no confirmation UI).
    */
   onApproval?: ApprovalHandler;
@@ -54,6 +54,12 @@ export interface BrowserWalletClientOptions {
    * Called when a transaction is rejected by the user or the wallet.
    */
   onRejected?: (pending: PendingTx, reason: string) => void;
+  /**
+   * Called when the signed transaction was submitted but did not confirm: it
+   * failed on-chain, expired, timed out, or the agent refused the returned
+   * signature. `signature` is set when it reached the network.
+   */
+  onFailed?: (pending: PendingTx, error: string, signature?: string) => void;
   /**
    * Reconnect delay in ms after SSE drops (default 2000).
    */
@@ -164,9 +170,15 @@ export class BrowserWalletClient {
       body: JSON.stringify({ signedTransaction: serialized }),
     });
 
-    if (res.ok) {
-      const { signature } = (await res.json()) as { signature?: string };
-      if (signature) this.opts.onConfirmed?.(pending, signature);
+    if (!res.ok) {
+      this.opts.onFailed?.(pending, `Agent refused the signed transaction (HTTP ${res.status})`);
+      return;
+    }
+    const outcome = (await res.json()) as Partial<SignOutcome>;
+    if (outcome.ok === false) {
+      this.opts.onFailed?.(pending, outcome.error ?? "Transaction did not confirm", outcome.signature);
+    } else if (outcome.signature) {
+      this.opts.onConfirmed?.(pending, outcome.signature);
     }
   }
 
@@ -179,7 +191,7 @@ export class BrowserWalletClient {
   }
 }
 
-// ─── Base64 helpers (no Buffer — browser safe) ────────────────────────────────
+// ─── Base64 helpers (no Buffer, browser safe) ────────────────────────────────
 
 function base64ToUint8Array(b64: string): Uint8Array {
   const binary = atob(b64);

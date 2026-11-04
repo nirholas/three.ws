@@ -1,10 +1,10 @@
 /**
- * Provably-fair vanity grinding — client verifier + one-call grind client.
+ * Provably-fair vanity grinding: client verifier + one-call grind client.
  *
  * three.ws's verifiable vanity grinder (`/api/x402/vanity-verifiable`) returns a
- * signed receipt that proves the key was generated fresh under a commit–reveal
+ * signed receipt that proves the key was generated fresh under a commit-reveal
  * seed-mixing protocol and never kept. This module reproduces every protocol
- * check from first principles so a buyer trusts nothing in the receipt — it
+ * check from first principles so a buyer trusts nothing in the receipt; it
  * recomputes each claim. Real crypto only: @noble Ed25519 / SHA-256 / HMAC /
  * HKDF, the same primitives the server signs with.
  *
@@ -17,6 +17,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { hmac } from "@noble/hashes/hmac.js";
 import { hkdf } from "@noble/hashes/hkdf.js";
 import { bytesToHex, hexToBytes, concatBytes } from "@noble/hashes/utils.js";
+import { InvalidInputError, RequestFailedError, SolanaAgentError } from "../errors.js";
 
 export const VANITY_PROTOCOL_VERSION = "three-vanity/v1";
 
@@ -27,7 +28,7 @@ export const VANITY_PROTOCOL_VERSION = "three-vanity/v1";
  * IMPORTANT: this is a *bootstrap* pin. The authoritative key is always the one
  * published at `/.well-known/three-vanity.json` for the deployment that issued
  * your receipt. For production verification, resolve the live key with
- * `fetchServiceKey()` and pass it as `servicePublicKey` — the one-call client
+ * `fetchServiceKey()` and pass it as `servicePublicKey`; the one-call client
  * (`grindVerifiedVanity`) does this automatically. Update this constant whenever
  * the service key rotates so the offline default stays accurate.
  */
@@ -101,10 +102,10 @@ function asBytes(value: Uint8Array | string, label: string): Uint8Array {
     try {
       return bs58.decode(s);
     } catch {
-      throw new Error(`${label} is not valid hex or Base58`);
+      throw new InvalidInputError(label, `${label} is not valid hex or Base58`);
     }
   }
-  throw new Error(`${label} must be a Uint8Array, hex, or Base58 string`);
+  throw new InvalidInputError(label, `${label} must be a Uint8Array, hex, or Base58 string`);
 }
 
 function uint64be(n: number): Uint8Array {
@@ -120,7 +121,7 @@ function uint64be(n: number): Uint8Array {
 /** Commitment the server publishes before grinding. */
 export function commitToSeed(serverSeed: Uint8Array | string): string {
   const seed = asBytes(serverSeed, "serverSeed");
-  if (seed.length !== SEED_BYTES) throw new Error("serverSeed must be 32 bytes");
+  if (seed.length !== SEED_BYTES) throw new InvalidInputError("serverSeed", "serverSeed must be 32 bytes");
   return bytesToHex(sha256(concatBytes(TAG_SEED_COMMIT, seed)));
 }
 
@@ -361,7 +362,7 @@ function sameKey(a: string | Uint8Array, b: string | Uint8Array): boolean {
 }
 
 /**
- * Independently verify a vanity receipt. Recomputes every protocol claim — it
+ * Independently verify a vanity receipt. Recomputes every protocol claim; it
  * trusts nothing in the receipt. Returns a per-check audit plus an overall
  * verdict. Pins to THREE_VANITY_SERVICE_KEY unless `servicePublicKey` is given.
  */
@@ -393,7 +394,7 @@ export function verifyVanityReceipt(
       "serverSeed opens the commitment",
       ok,
       ok
-        ? "SHA-256(serverSeed) matches the committed value — the server could not have swapped seeds after grinding"
+        ? "SHA-256(serverSeed) matches the committed value, so the server could not have swapped seeds after grinding"
         : `SHA-256(serverSeed) = ${computed} ≠ committed ${receipt.commitment}`,
     );
   } catch (e) {
@@ -473,7 +474,7 @@ export function verifyVanityReceipt(
       pinned,
       pinned
         ? `receipt key ${receipt.servicePublicKey} matches the pinned key`
-        : `receipt key ${receipt.servicePublicKey} ≠ pinned key — possible impostor`,
+        : `receipt key ${receipt.servicePublicKey} does not match the pinned key (possible impostor)`,
     );
   }
 
@@ -490,7 +491,7 @@ export function verifyVanityReceipt(
         "Your recovered key is the ground key",
         ok && pubOk,
         ok && pubOk
-          ? "the secret you opened re-derives to the receipt address — you hold the one and only key"
+          ? "the secret you opened re-derives to the receipt address: you hold the one and only key"
           : "the opened secret does NOT match the protocol-derived key for this receipt",
       );
     } catch (e) {
@@ -510,9 +511,9 @@ export async function fetchServiceKey(
   wellKnownUrl: string = THREE_VANITY_WELL_KNOWN,
 ): Promise<string> {
   const res = await fetch(wellKnownUrl, { headers: { accept: "application/json" } });
-  if (!res.ok) throw new Error(`well-known fetch failed: ${res.status}`);
+  if (!res.ok) throw new RequestFailedError(wellKnownUrl, res.status, await res.text().catch(() => ""));
   const doc = (await res.json()) as { serviceKey?: { publicKeyBase58?: string } };
   const key = doc?.serviceKey?.publicKeyBase58;
-  if (!key) throw new Error("well-known document missing serviceKey.publicKeyBase58");
+  if (!key) throw new SolanaAgentError(`Well-known document at ${wellKnownUrl} is missing serviceKey.publicKeyBase58`);
   return key;
 }
