@@ -175,6 +175,14 @@
 			<description>Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.</description>
 		</item>
 		<item>
+			<title>Chain turnover never reads as zero, and coin signals say why they are blank</title>
+			<link>https://three.ws/chains</link>
+			<guid isPermaLink="false">2026-11-04:Chain turnover never reads as zero, and coin signals say why they are blank</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On /chains, a chain whose 24h DEX volume is tiny next to its TVL now shows &lt;0.001x instead of 0.000x, which looked like no trading at all, and the Turnover header's info icon is drawn so it no longer shows as an empty box on systems without that character. On a coin's launch page, the &quot;Seeded by one funder&quot; and &quot;Launch tx&quot; cells still show a dash when the signal cannot be computed, but hovering now tells you why, for example when a coin has too much trade history to reach its creation transaction.</description>
+		</item>
+		<item>
 			<title>Characters and Rankings now show real creators only</title>
 			<link>https://three.ws/characters</link>
 			<guid isPermaLink="false">2026-11-04:Characters and Rankings now show real creators only</guid>
@@ -303,6 +311,14 @@
 			<description>The browser behind an agent's live screen, the one an owner can take the wheel of, now enforces its address guard on every connection instead of only on the URL typed in. All of its traffic goes through a guard that looks up each hostname, refuses anything that lands on a loopback, private, link-local or cloud metadata address, and connects only to the address it checked. A public page that redirects to an internal host, an image or websocket pointed at one, or a name that resolves to one is now refused, so nothing internal can ever show up on the public wall.</description>
 		</item>
 		<item>
+			<title>Make a $THREE holders-only embed from Widget Studio, no code needed</title>
+			<link>https://three.ws/studio</link>
+			<guid isPermaLink="false">2026-11-04:Make a $THREE holders-only embed from Widget Studio, no code needed</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Widget Studio has a new Holders only panel. Pick one of your own avatars, flip the switch, set how much $THREE a viewer must hold (or click a holder tier, converted to tokens at the live price), and copy a snippet that only renders the 3D avatar for wallets that clear the bar. Every load checks the real balance on Solana. The panel reads the gate back from the server every time you pick the avatar, so it always shows what the embed enforces. From there you can change the requirement or remove the gate. Another Solana token can be used from the advanced field.</description>
+		</item>
+		<item>
 			<title>NVIDIA Inception startups can apply for free generation credit, and earn more for a shoutout</title>
 			<link>https://three.ws/nvidia</link>
 			<guid isPermaLink="false">2026-11-04:NVIDIA Inception startups can apply for free generation credit, and earn more for a shoutout</guid>
@@ -349,6 +365,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.</description>
+		</item>
+		<item>
+			<title>Paying in $THREE from your own wallet works on the marketplace, copy trading and launch funding</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-11-04:Paying in $THREE from your own wallet works on the marketplace, copy trading and launch funding</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the platform cannot cover the network fee, a marketplace or skill purchase falls back to a transaction your wallet signs and pays for. For a $THREE price that transaction was built for the older token program, so your wallet's safety check refused it before you could approve. The same mistake affected settling a copy-trading fee and funding a launch quoted in $THREE. All of them now read the token program and decimals from the coin itself, open the recipient's $THREE account when it is missing, and send a checked transfer. The agent payment tools fix a run of separate faults. Reading vault balances and changing the buyback split always failed. Distributing payments could not build. Paying an invoice called a method that does not exist. Withdrawing $THREE went to the wrong account. Changing the buyback split from the coin dashboard also failed for every owner. All of these work now, with $THREE vaults read and paid on its own token program.</description>
 		</item>
 		<item>
 			<title>Play holds up on a shaky connection</title>

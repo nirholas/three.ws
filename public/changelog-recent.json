@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-04T19:03:11.122Z",
+	"generated_at": "2026-11-04T19:05:57.367Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4366,
+	"total": 4369,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -227,6 +227,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Chain turnover never reads as zero, and coin signals say why they are blank",
+			"summary": "On /chains, a chain whose 24h DEX volume is tiny next to its TVL now shows <0.001x instead of 0.000x, which looked like no trading at all, and the Turnover header's info icon is drawn so it no longer shows as an empty box on systems without that character. On a coin's launch page, the \"Seeded by one funder\" and \"Launch tx\" cells still show a dash when the signal cannot be computed, but hovering now tells you why, for example when a coin has too much trade history to reach its creation transaction.",
+			"link": "/chains",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Characters and Rankings now show real creators only",
 			"summary": "Accounts our own QA and end-to-end sweeps sign up were showing on /characters and /rankings as if they were creators, including dozens of \"QA squad\" agents. Those accounts are now marked as test accounts, from signup onward, and both boards leave them out, so ranks stay contiguous and every card belongs to a real person. Character cards also no longer show an agent wallet's dollar balance; the address chip is still there.",
 			"link": "/characters",
@@ -395,6 +405,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Make a $THREE holders-only embed from Widget Studio, no code needed",
+			"summary": "Widget Studio has a new Holders only panel. Pick one of your own avatars, flip the switch, set how much $THREE a viewer must hold (or click a holder tier, converted to tokens at the live price), and copy a snippet that only renders the 3D avatar for wallets that clear the bar. Every load checks the real balance on Solana. The panel reads the gate back from the server every time you pick the avatar, so it always shows what the embed enforces. From there you can change the requirement or remove the gate. Another Solana token can be used from the advanced field.",
+			"link": "/studio",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "NVIDIA Inception startups can apply for free generation credit, and earn more for a shoutout",
 			"summary": "If your startup is in NVIDIA Inception, the NVIDIA page now has a short application for $25 of prepaid credit, usable on the high-quality, game-ready, rigging and motion lanes. Once approved you can post about what you made on X or LinkedIn, paste the link, and earn $10 more after we confirm the post is public. The free text-to-3D lane is unchanged and still needs no account. NVIDIA has no way to verify membership, so a person checks each application and each post. Goes live with the next owner-approved deploy, after its database migration is applied.",
 			"link": "/nvidia",
@@ -450,6 +470,16 @@
 			"title": "Paid endpoint 402 challenges validate on external x402 directories",
 			"summary": "The agent-reputation and agent-bouncer challenges no longer carry amount-0 placeholder entries that directory validators rejected. The free Bearer and Sign-In-With-X path still works and is now listed per route in the OpenAPI document and the x402 discovery document.",
 			"link": "/docs/x402-distribution",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Paying in $THREE from your own wallet works on the marketplace, copy trading and launch funding",
+			"summary": "When the platform cannot cover the network fee, a marketplace or skill purchase falls back to a transaction your wallet signs and pays for. For a $THREE price that transaction was built for the older token program, so your wallet's safety check refused it before you could approve. The same mistake affected settling a copy-trading fee and funding a launch quoted in $THREE. All of them now read the token program and decimals from the coin itself, open the recipient's $THREE account when it is missing, and send a checked transfer. The agent payment tools fix a run of separate faults. Reading vault balances and changing the buyback split always failed. Distributing payments could not build. Paying an invoice called a method that does not exist. Withdrawing $THREE went to the wrong account. Changing the buyback split from the coin dashboard also failed for every owner. All of these work now, with $THREE vaults read and paid on its own token program.",
+			"link": "/marketplace",
 			"tags": [
 				"fix"
 			]
@@ -1527,38 +1557,6 @@
 			"tags": [
 				"desktop",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "The web desktop looks like a clean, futuristic dark OS",
-			"summary": "The desktop now opens on the Aqua shell over a new Horizon wallpaper: a near-black field with a slowly drifting grid that runs toward a horizon line lit in your accent colour. App icons are glowing glyphs on dark glass tiles, the dock and widgets are deep glass with a lit edge, the app in front is marked by an accent bar, and the focused window gets a faint accent glow. This PC and Recycle Bin are now Computer and Trash (the old names still work in the File Explorer address bar). The Weather widget's city picker is redesigned with a clear header, a one-click Use my location button, and room for more search results. The File Explorer no longer draws a ring around its whole file list when it opens.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "The web desktop's Start button works on phones",
-			"summary": "On phones 390px wide or narrower, the taskbar tray slid over the Start button and left it too small to tap. Start now keeps its full size, the clock shows the time on one line, and the theme switch moves into Quick settings so everything fits from 360px up. A browser test checks the taskbar at three phone widths.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-30",
-			"type": "launch",
-			"title": "Docs · three.ws and Microsoft",
-			"summary": "The three.ws and Microsoft partnership and the Microsoft Marketplace listing: what buyers get, the Microsoft open source already in the stack (TRELLIS.2, ONNX Runtime Web, Adaptive Cards), and what is in flight.",
-			"link": "/docs/microsoft",
-			"tags": [
-				"launch"
 			]
 		}
 	]
