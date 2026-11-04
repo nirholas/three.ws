@@ -10,8 +10,9 @@
 //   SCROLLBACK_TTL_S 3 days. The Redis key expires 3 days after the last line,
 //                    and any line older than 3 days is dropped on read even in a
 //                    busy world, so nothing outlives the window.
-//   JOIN_TAIL        60 lines sent on join (about 10 KB), enough to read the
-//                    room's mood without stalling a phone on a slow link.
+//   JOIN_TAIL        60 lines sent on join: 16.2 KB at most (every line at the
+//                    200-char cap), about 5.6 KB for typical chat. Enough to
+//                    read the room's mood without stalling a phone on a slow link.
 //
 // Privacy: a stored line is { mid, name, text, ts } and nothing else. No session
 // id, account id, wallet address or IP is kept; a display name that is itself a

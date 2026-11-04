@@ -3802,6 +3802,14 @@
 					"added": "2026-11-01"
 				},
 				{
+					"path": "/docs/play-chat",
+					"title": "Docs · World chat in /play: scrollback and the community board",
+					"description": "How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/play-activity-ticker",
 					"title": "Docs · The /play activity ticker and hype moments",
 					"description": "What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.",

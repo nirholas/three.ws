@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Join a /play world late and catch up on what was said",
+			"summary": "Walking into a world mid-conversation no longer means an empty chat box. You now see the last 60 lines, stamped with when they were said, above a \"You're caught up\" divider, and new lines carry on below it. Reconnecting or refreshing never repeats a line, screen readers hear one short summary instead of the whole backlog, and an empty world offers a Say hi button. Lines are kept for at most three days and only name, text and time are stored. Worlds can also show the coin's community board in a read-only Board tab next to world chat.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Voice rooms and background jobs pick up new keys without a restart",
 			"summary": "The LiveKit voice-room token and the QStash background-job settings are now read through the same central configuration as every other credential, at request time and with stray whitespace trimmed. A key added to the running service now takes effect on the next request instead of waiting for a fresh instance, and a pasted secret with a trailing newline no longer signs voice-room tokens with the wrong bytes. The master wallet endpoint also stopped creating its own database table on the fly: that table is defined only by its reviewed migration now, so its shape can no longer drift.",
 			"tags": [
