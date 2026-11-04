@@ -125,3 +125,73 @@ the pin.
   including an assertion that every requirement line in the tree is classified.
   A parser that silently drops a line reports a package clean without ever
   looking at it, which is worse than not scanning.
+
+## Status 2026-11-03
+
+Work order 725 re-ran the scan on 2026-11-03 (84 advisories across 9 package
+versions) and closed what a pin edit can close. Measured on 2026-11-04 after the
+changes below, `node scripts/check-deps.mjs` reports **225 advisories across 13
+package versions**. The rise from 84 comes from visibility, not new exposure,
+and the like-for-like number fell:
+
+| Slice | Advisories |
+|---|---|
+| The 9 package versions the 2026-11-03 scan measured, after this pass | 40 (was 84) |
+| `model-partcrafter` pins added by another workstream since (`accelerate==1.7.0`, `diffusers==0.33.1`, `transformers==4.52.4`) | 33 |
+| Pillow, newly visible because every `Pillow>=` floor is now an exact pin | 152 (`12.3.0`: 59, `11.3.0`: 93) |
+
+Before the pins, those Pillow floors had already resolved to the same versions
+(resolver proof, Cloud Build `9dd3f39c`), so the 152 were shipping, unseen.
+
+### What changed
+
+- **LongCat `transformers` 4.41.0 to 4.57.6** (`workers/longcat`:
+  `requirements-model.txt`, `constraints.txt`, and the `check_pins.py` build
+  assertion). Clears 44 advisories, including every tokenizer ReDoS that a user
+  prompt could reach. Proof: a CPU probe (Cloud Build `99062071`) ran upstream's
+  own avatar-v1.5 text path (real tokenizer, real umT5 config at reduced depth,
+  seeded) and audio path (real `whisper-large-v3` weights, upstream's sample
+  speech) under both versions: token ids identical, text and audio embeddings
+  bit-identical (`max_abs_diff 0.0`). A second build (`f27e37d8`) installed the
+  worker's complete `requirements-model.txt` and `requirements.txt` under
+  `constraints.txt` for each version: `pip check` clean on both, and all 14
+  upstream `longcat_video` modules (DiT, attention, both pipelines) plus the
+  avatar script's `audio_separator` import load on both. avatar-v1.0's Wav2Vec2
+  wrapper breaks on 4.53+, which does not matter here because `main.py` always
+  passes `--model_type avatar-v1.5`.
+- **Every Pillow line is an exact pin** at the newest release the worker's
+  runtime can install, enforced by `tests/worker-pillow-pins.test.js`:
+  `13.0.0` (no open advisory) on Python 3.11+ (`garment-forge`); `12.3.0`, the
+  last line for Python 3.10, on `avatar-reconstruction`, `model-hunyuan3d`,
+  `model-triposg`, `model-triposplat`, `model-triposr`; `11.3.0` on
+  `model-sam3d-objects`, held by upstream's `gradio==5.49.0` (`pillow<12`).
+- **Caller images decode only as PNG, JPEG or WEBP.** `open_caller_image` in the
+  vendored `worker_security.py` passes `formats=` to `Image.open`, so TIFF, GIF,
+  BMP, PSD, MPO, DCX, MIC, FPX, SPIDER, XBM, EPS, WMF and every other plugin
+  never parse caller bytes. That removes most of the 12.3.0 and 11.3.0 decoder
+  advisories from reach. All six image-taking workers route through it, and an
+  undecodable image is the caller's error (`422` or an `input` job failure), not
+  a worker fault. `model-triposg` used to report it as an internal fault.
+- **sam3d EXIF guard.** `model-sam3d-objects` is the only one of these workers
+  that calls `ImageOps.exif_transpose`. It now skips an EXIF block over 64 KiB
+  (the JPEG APP1 ceiling, so no real camera exceeds it), which removes
+  PYSEC-2026-4342 / GHSA-g4qv-2jxx-769h (quadratic PNG eXIf parse) from reach on
+  11.3.0.
+
+### Accepted residue, with reasons
+
+| Package version | Where | Reason it stays |
+|---|---|---|
+| `Pillow==12.3.0` (59) | 5 Python 3.10 workers | 13.0.0 requires Python 3.11; clearing it needs each image's base move. Reachable residue after the format allowlist: the JPEG decoder overflow (GHSA-8g5g-8vmr-9782) and APNG canvas allocation (GHSA-5xm2-6676-qcp9). PYSEC-2026-4332 needs `draft()` or `thumbnail()`, which none of these workers call. |
+| `Pillow==11.3.0` (93) | `model-sam3d-objects` | Blocked by upstream `gradio==5.49.0` (`pillow<12`). Same JPEG/APNG residue; the eXIf one is guarded as above. |
+| `transformers==4.57.6` (11) | hunyuan3d, triposg, texture, modly, longcat | Every remaining advisory is fixed only in 5.x or not at all, and none is caller-reachable: all concern loading a malicious model repo or config (`trust_remote_code` bypasses, LightGlue, custom generate code, `_attn_implementation_internal`), `Trainer` checkpoints, X-CLIP conversion, or `save_pretrained`. These workers load only weights we stage ourselves and never train or save. 5.x is a major API change inside GPU images whose upstream model code targets 4.x. |
+| `diffusers` 0.30.0 / 0.31.0 / 0.35.1 (5 each) | hunyuan3d, triposg, texture, modly, longcat | All five are `trust_remote_code` / `custom_pipeline` bypasses in `DiffusionPipeline.from_pretrained` against an attacker's Hub repo. Not caller-reachable: pipelines load only staged weights, and the one `custom_pipeline` (`model-hunyuan3d/app21.py`) is the fixed, vendored `hy3dpaint/hunyuanpaintpbr` path. 0.38.0 is a cross-fleet upgrade to take with each image's next model refresh. |
+| `rembg` 2.0.59 / 2.0.65 / 2.0.69 (4 each) | triposr, avatar-reconstruction, hunyuan3d, modly | Every advisory is in rembg's HTTP server or custom-model loading (path traversal via `model_path`, SSRF/CORS, SAM model injection). These workers call the library `remove()` with fixed bundled models and never run the server. The fixed releases (2.0.75+) need Python >= 3.11, numpy >= 2.3 and onnxruntime >= 1.23.2, which the 3.10 images cannot take. |
+| `basicsr==1.4.2` (2) | hunyuan3d 2.1 image | No fixed release published. The command injection is in its SLURM distributed-init helper, which inference never calls. |
+| `accelerate==1.7.0`, `diffusers==0.33.1`, `transformers==4.52.4` (33) | `model-partcrafter` | Owned by the PartCrafter workstream; out of this pass's scope. |
+
+### Deploy note
+
+The pins and code above take effect when each worker image is rebuilt through
+the normal worker pipeline. Until then the deployed images run what they were
+built with.
