@@ -290,4 +290,42 @@ describe('/api/concierge', () => {
 		expect(res.headers['retry-after']).toBe('15');
 		expect(cooldownMock).toHaveBeenCalledWith('groq');
 	});
+	it('falls to the next rung when the first provider streams no content, and cools the empty one down', async () => {
+		providerChainMock.mockReturnValue([
+			{ name: 'openrouter', model: 'oss-120b', url: 'https://or.test/v1', headers: {} },
+			{ name: 'groq', model: 'llama-3.3-70b', url: 'https://groq.test/v1', headers: {} },
+		]);
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (url) => {
+				if (String(url).startsWith('https://or.test')) return { ok: true, body: fakeStreamBody([]) };
+				return { ok: true, body: fakeStreamBody(['A real answer.']) };
+			}),
+		);
+
+		for (let i = 0; i < 30; i++) {
+			const res = mkRes();
+			await handler(mkReq({ body: VALID_BODY }), res);
+			const events = sseEvents(res);
+			expect(res.statusCode).toBe(200);
+			expect(events.filter((e) => e.type === 'chunk').map((e) => e.text).join('')).toBe('A real answer.');
+			expect(events.at(-1)).toMatchObject({ type: 'done', provider: 'groq' });
+		}
+		vi.unstubAllGlobals();
+		expect(cooldownMock).toHaveBeenCalledWith('openrouter');
+	});
+
+	it('503s with a retry hint (never an empty done) when every rung streams nothing', async () => {
+		providerChainMock.mockReturnValue([
+			{ name: 'groq', model: 'm', url: 'https://groq.test/v1', headers: {} },
+		]);
+		vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, body: fakeStreamBody([]) })));
+
+		const res = mkRes();
+		await handler(mkReq({ body: VALID_BODY }), res);
+		vi.unstubAllGlobals();
+
+		expect(res.statusCode).toBe(503);
+		expect(res.body).not.toContain('"type":"done"');
+	});
 });
