@@ -94,3 +94,4 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 2026-11-04 | 706-plan-bounties-build-program-routes-and-pages.md | b88d7c228 | Feed and Build APIs, crons, /build and /build/leaderboard, MCP tools shipped; scheduler sync on next deploy, first program round row still to insert.
 2026-11-04 | 737-plan-hq-agent-defi-tools-and-context-bridge.md | 678adff27 | Bridge, agent-tools, risk, compound alerts, Autopilot hand-off and hq-mcp shipped; HQ deploy and browser check pending.
 - 983 vscode-3d publish-ready: release script + tests done 2026-11-04; owner sets VSCE_PAT/OVSX_PAT and runs npm run release.
+2026-11-04 | 700-plan-x402-self-hostable-solana-facilitator.md | 1d3496b3c, 353058202 | Facilitator extracted into @three-ws/x402-server/facilitator with attack suite, CLI, guards tests and metrics; npm publish, upstream issue, deploy and devnet settle remain with the owner.
