@@ -15,6 +15,8 @@ import {
 } from '../api/_lib/solana/connection.js';
 import { readRpcSpend, summarizeRpcSpend, _resetRpcSpend } from '../api/_lib/solana/rpc-spend.js';
 import { runWithRpcCaller } from '../api/_lib/request-context.js';
+import { sharedRpcRead, sharedReadKey } from '../api/_lib/solana/shared-reads.js';
+import { cacheDel } from '../api/_lib/cache.js';
 
 const OWNER = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const rpcBody = (method, params, id = 1) => JSON.stringify({ jsonrpc: '2.0', id, method, params });
@@ -285,5 +287,86 @@ describe('Solana RPC call accounting', () => {
 			rows.filter((r) => r.caller === 'cron:batch').map((r) => [r.method, r.calls]),
 		);
 		expect(byMethod).toEqual({ getBalance: 2, getAccountInfo: 1 });
+	});
+});
+
+// The fleet-wide tier (api/_lib/solana/shared-reads.js) behind /api/crypto/holders
+// and /api/crypto/security: one mint scanned on both routes, possibly on two
+// instances, must cost one getAccountInfo and one getTokenLargestAccounts.
+describe('shared mint reads across routes and instances', () => {
+	let origFetch;
+	const keys = [];
+	beforeEach(() => {
+		origFetch = global.fetch;
+		_resetReadCache();
+		_resetRpcSpend();
+	});
+	afterEach(async () => {
+		global.fetch = origFetch;
+		for (const k of keys.splice(0)) await cacheDel(k);
+	});
+	const track = (method, params) => {
+		const k = sharedReadKey(method, params);
+		keys.push(k);
+		return k;
+	};
+
+	it('serves the second caller from the shared cache, even through a different rotating fetch', async () => {
+		const params = [OWNER, { encoding: 'jsonParsed', commitment: 'confirmed' }];
+		track('getAccountInfo', params);
+		const fetchSpy = vi.fn(async () => ok({ context: { slot: 9 }, value: { lamports: 1 } }));
+		global.fetch = fetchSpy;
+		const eps = chain();
+		const a = await sharedRpcRead(makeRotatingFetch(eps), 'getAccountInfo', params, { ttlSeconds: 30 });
+		// A different instance has its own process cache; simulate it by clearing ours.
+		_resetReadCache();
+		const b = await sharedRpcRead(makeRotatingFetch(eps), 'getAccountInfo', params, { ttlSeconds: 30 });
+		expect(fetchSpy).toHaveBeenCalledTimes(1);
+		expect(b).toEqual(a);
+		const { rows } = await readRpcSpend({ hours: 1 });
+		expect(rows.find((r) => r.method === 'getAccountInfo' && r.lane === 'cache')?.calls).toBe(1);
+	});
+
+	it('never stores a JSON-RPC error, so the next caller retries upstream', async () => {
+		const params = ['THREEsynthetic11111111111111111111111111111', { commitment: 'confirmed' }];
+		track('getTokenLargestAccounts', params);
+		let n = 0;
+		global.fetch = vi.fn(async () => {
+			n += 1;
+			return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32602, message: 'Invalid param: not a Token mint' } }), {
+				status: 200,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		const rf = makeRotatingFetch(chain());
+		const first = await sharedRpcRead(rf, 'getTokenLargestAccounts', params, { ttlSeconds: 30 });
+		_resetReadCache();
+		await sharedRpcRead(rf, 'getTokenLargestAccounts', params, { ttlSeconds: 30 });
+		expect(first.error.code).toBe(-32602);
+		expect(n).toBe(2);
+	});
+
+	it('never republishes a stale last-good answer into the shared tier', async () => {
+		const params = [OWNER, { encoding: 'base64', commitment: 'confirmed' }];
+		track('getAccountInfo', params);
+		let n = 0;
+		const staleFetch = vi.fn(async () => {
+			n += 1;
+			return new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { value: null } }), {
+				status: 200,
+				headers: { 'content-type': 'application/json', 'x-solana-rpc-stale': '120000' },
+			});
+		});
+		await sharedRpcRead(staleFetch, 'getAccountInfo', params, { ttlSeconds: 30 });
+		await sharedRpcRead(staleFetch, 'getAccountInfo', params, { ttlSeconds: 30 });
+		expect(n).toBe(2);
+	});
+
+	it('keys on params, so a different mint or encoding is a different entry', () => {
+		const a = sharedReadKey('getAccountInfo', [OWNER, { encoding: 'jsonParsed' }]);
+		expect(sharedReadKey('getAccountInfo', [OWNER, { encoding: 'base64' }])).not.toBe(a);
+		expect(sharedReadKey('getAccountInfo', ['THREEsynthetic11111111111111111111111111111', { encoding: 'jsonParsed' }])).not.toBe(a);
+		expect(sharedReadKey('getTokenLargestAccounts', [OWNER, { encoding: 'jsonParsed' }])).not.toBe(a);
+		expect(sharedReadKey('getAccountInfo', [OWNER, { encoding: 'jsonParsed' }])).toBe(a);
 	});
 });

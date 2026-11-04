@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard: make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<script>/* Teams passes its theme in the tab URL (?theme={theme}: default, dark or contrast); outside Teams the saved site theme applies. */(function(){try{var t=new URLSearchParams(location.search).get('theme');var l;if(t==='default'||t==='light')l=true;else if(t==='dark'||t==='contrast')l=false;else{var m=localStorage.getItem('twx_theme');l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';}document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<title>Agents · three.ws for Microsoft Teams</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="Find a three.ws agent and meet it in live 3D inside Microsoft Teams: search every public agent, see what it did today, and open it on three.ws." />
+		<meta name="robots" content="noindex" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+	</head>
+	<body class="tt-body">
+		<main class="tt-wrap">
+			<header class="tt-head">
+				<a class="tt-brand" href="https://three.ws/agents" target="_blank" rel="noopener">three.ws</a>
+				<form class="tt-search" id="tt-search" role="search">
+					<label class="tt-sr" for="tt-q">Search agents</label>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" /><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+					<input id="tt-q" type="search" name="q" autocomplete="off" spellcheck="false" maxlength="100" placeholder="Search agents by name" />
+				</form>
+			</header>
+			<div id="tt-live" class="tt-sr" aria-live="polite"></div>
+
+			<div class="tt-grid">
+				<section class="tt-stage-col" aria-label="Selected agent">
+					<div class="tt-stage" id="tt-stage">
+						<div class="tt-skel tt-stage-skel" id="tt-stage-skel" aria-hidden="true"></div>
+						<div class="tt-stage-note" id="tt-stage-note" hidden></div>
+					</div>
+					<div class="tt-card" id="tt-card" aria-busy="true">
+						<div class="tt-skel is-line"></div>
+						<div class="tt-skel is-line is-short"></div>
+					</div>
+				</section>
+
+				<section class="tt-list-col" aria-labelledby="tt-list-title">
+					<h2 class="tt-list-title" id="tt-list-title">Popular agents</h2>
+					<ul class="tt-list" id="tt-list" aria-busy="true">
+						<li class="tt-skel is-row" aria-hidden="true"></li>
+						<li class="tt-skel is-row" aria-hidden="true"></li>
+						<li class="tt-skel is-row" aria-hidden="true"></li>
+						<li class="tt-skel is-row" aria-hidden="true"></li>
+					</ul>
+					<div class="tt-empty" id="tt-empty" hidden></div>
+				</section>
+			</div>
+		</main>
+
+		<script type="module" src="/src/microsoft-teams-tab.js"></script>
+	</body>
+</html>

@@ -13,7 +13,7 @@
 
 import { sql } from './db.js';
 import { matchedSlurStem } from './display-name-safety.js';
-import { solanaConnection, solanaRpcEndpoints } from './solana/connection.js';
+import { solanaConnection, solanaRpcEndpoints, noteRpcSpend } from './solana/connection.js';
 import { fetchSafePublicUrlPinned } from './ssrf-guard.js';
 import {
 	truncate,
@@ -203,11 +203,13 @@ async function dasGetAssetVia(rpcUrl, assetId) {
 	const ctrl = new AbortController();
 	const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
 	try {
+		const request = JSON.stringify({ jsonrpc: '2.0', id: 'das', method: 'getAsset', params: { id: assetId } });
+		noteRpcSpend(rpcUrl, request);
 		const r = await fetch(rpcUrl, {
 			method: 'POST',
 			signal: ctrl.signal,
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ jsonrpc: '2.0', id: 'das', method: 'getAsset', params: { id: assetId } }),
+			body: request,
 		});
 		if (r.status === 429 || r.status >= 500) return { outcome: 'throttled', asset: null };
 		if (!r.ok) return { outcome: 'unsupported', asset: null };

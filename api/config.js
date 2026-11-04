@@ -44,6 +44,10 @@ export default wrap(async (req, res) => {
 	// the button on /login and the choice on the MCP authorization screen
 	// appear only when a Google OAuth client is configured.
 	const googleEnabled = Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID && process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+	// Sign in with Microsoft (api/microsoft-marketplace/[action].js): the Entra
+	// multitenant app the Microsoft Marketplace landing page signs buyers in
+	// with. Drives the Microsoft button on /login.
+	const microsoftEnabled = Boolean(process.env.MS_ENTRA_SSO_CLIENT_ID && process.env.MS_ENTRA_SSO_CLIENT_SECRET);
 	// Sign in with Telegram (api/auth/telegram/[action].js) rides on the
 	// gateway bot: it is offered as soon as a bot token is configured.
 	const telegramEnabled = /^\d+:/.test(process.env.TELEGRAM_BOT_TOKEN || '');
@@ -54,6 +58,7 @@ export default wrap(async (req, res) => {
 		samlEnabled,
 		xLoginEnabled,
 		googleEnabled,
+		microsoftEnabled,
 		telegramEnabled,
 		// Web Push: the client needs the VAPID public key to subscribe. Empty
 		// string when push isn't configured, which the client reads as "hide the

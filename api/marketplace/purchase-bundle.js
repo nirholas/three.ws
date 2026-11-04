@@ -18,6 +18,8 @@ import { clientIp, limits } from '../_lib/rate-limit.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { resolveMarketplaceFee } from '../_lib/marketplace-platform-fee.js';
 import { verifyBundlePayment } from '../_lib/purchase-confirm.js';
+import { withPlatformFeeOrAlert } from '../_lib/platform-fee-events.js';
+import { mintSymbol } from '../_lib/x402/solana-settlement.js';
 import { isUuid } from '../_lib/validate.js';
 
 async function resolveAuth(req) {
@@ -225,21 +227,44 @@ async function handleConfirm(req, res, purchaseId) {
 	// Record ONE bundle-level revenue event (the skills are unlocked above without
 	// their own per-skill credit, so the creator is paid exactly once for the
 	// bundle price). Gated by the unique intent_id backstop.
-	const gross = Number(purchase.price_amount);
-	const platformFee = Number(purchase.platform_fee_amount ?? 0);
+	//
+	// The platform fee is what the verifier proved the fee wallet received, never
+	// the quote: a buyer who paid the full price to the seller (the no-fee
+	// fallback, and every EVM bundle) paid the platform nothing, so booking the
+	// quoted fee would claim revenue never taken and understate the creator's net.
+	const gross = BigInt(purchase.price_amount);
+	const platformFee = BigInt(verdict.feeTaken || '0');
 	const net = gross - platformFee;
+	const feeEvent = platformFee > 0n && verdict.feeWallet
+		? {
+			source: 'skill_bundle',
+			sourceRef: String(purchase.id),
+			chain: purchase.chain,
+			network: 'mainnet',
+			asset: mintSymbol(purchase.currency_mint) || 'SPL',
+			assetMint: purchase.currency_mint,
+			amountAtomics: platformFee,
+			decimals: purchase.mint_decimals ?? 6,
+			basis: 'gross',
+			txSignature,
+			beneficiary: verdict.feeWallet,
+			userId: auth.userId,
+			agentId: purchase.agent_id,
+			meta: { bundle_id: purchase.bundle_id, gross_atomics: gross.toString() },
+		}
+		: null;
 	// settled_to_wallet: the buyer paid the creator's payout wallet directly,
 	// so this is income already held, never a treasury-withdrawable balance.
-	await sql`
+	await withPlatformFeeOrAlert(sql, () => sql`
 		INSERT INTO agent_revenue_events
 			(agent_id, intent_id, skill, gross_amount, fee_amount, platform_fee_amount,
 			 net_amount, currency_mint, chain, payer_address, settled_to_wallet)
 		VALUES
 			(${purchase.agent_id}, ${'bundle_' + purchase.id}, ${'bundle'},
-			 ${gross}, ${0}, ${platformFee}, ${net},
+			 ${gross.toString()}, ${0}, ${platformFee.toString()}, ${net.toString()},
 			 ${purchase.currency_mint}, ${purchase.chain}, ${null}, true)
 		ON CONFLICT (intent_id) DO NOTHING
-	`;
+	`, feeEvent);
 
 	return json(res, 200, {
 		data: {

@@ -19,7 +19,7 @@ import { getMetadataForMints } from './token-metadata.js';
 import { solPriceUsd } from './sol-price.js';
 import { fetchTokenPriceUsd } from './market/token-market.js';
 import { fetchCoinPriceUsdOrNull } from './market-fallbacks.js';
-import { solanaRpcEndpoints, makeRotatingFetch, markEndpointCooldown } from './solana/connection.js';
+import { solanaRpcEndpoints, makeRotatingFetch, markEndpointCooldown, noteRpcSpend } from './solana/connection.js';
 
 const BALANCES_TTL_S = 60;
 // Last-known-good snapshot lifetime. A long horizon so a wallet that briefly
@@ -281,20 +281,22 @@ async function getSolanaBalancesViaDas(address) {
 	let page = 1;
 	// Helius paginates at 1000/page; loop until empty.
 	while (page < 6) {
+		const body = JSON.stringify({
+			jsonrpc: '2.0',
+			id: 'getAssetsByOwner',
+			method: 'getAssetsByOwner',
+			params: {
+				ownerAddress: address,
+				page,
+				limit: 1000,
+				displayOptions: { showFungible: true, showNativeBalance: true },
+			},
+		});
+		noteRpcSpend(helius, body);
 		const resp = await fetchJson(helius, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({
-				jsonrpc: '2.0',
-				id: 'getAssetsByOwner',
-				method: 'getAssetsByOwner',
-				params: {
-					ownerAddress: address,
-					page,
-					limit: 1000,
-					displayOptions: { showFungible: true, showNativeBalance: true },
-				},
-			}),
+			body,
 		});
 		// A 200-status JSON-RPC error envelope (how some gateways answer quota
 		// exhaustion) must throw, not read as "no assets", so the caller trips the

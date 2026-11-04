@@ -23,6 +23,7 @@ import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
 import { findReference, validateTransfer } from './solana/solana-pay-verify.js';
 import { insertNotification } from './notify.js';
 import { resolvePayoutAddress } from './purchase-confirm.js';
+import { withPlatformFeeOrAlert } from './platform-fee-events.js';
 import {
 	USDC_MAINNET_MINT,
 	USDC_DECIMALS,
@@ -104,7 +105,7 @@ async function feeLegSatisfied(txSignature, feeWallet, splTokenMint, minAtomics)
  * @param {object} checkout — a subscription_checkouts row.
  * @param {string|null} txSignature — the broadcast signature (preferred); when
  *        absent we locate the tx by reference.
- * @returns {Promise<{ status: 'confirmed'|'pending'|'mismatch', tx_signature?: string, message?: string }>}
+ * @returns {Promise<{ status: 'confirmed'|'pending'|'mismatch', tx_signature?: string, fee_taken?: string, fee_wallet?: string|null, message?: string }>}
  */
 export async function verifySubscriptionPayment(checkout, txSignature = null) {
 	const refKey = new PublicKey(checkout.reference);
@@ -151,7 +152,8 @@ export async function verifySubscriptionPayment(checkout, txSignature = null) {
 				const ok = await feeLegSatisfied(signature, a.feeWallet, splToken, BigInt(a.feeTaken.toFixed(0)));
 				if (!ok) throw new Error('platform fee leg missing or short');
 			}
-			return { status: 'confirmed', tx_signature: signature };
+			// fee_taken is the fee proven on-chain: '0' on the full-amount fallback.
+			return { status: 'confirmed', tx_signature: signature, fee_taken: a.feeTaken.toFixed(0), fee_wallet: a.feeWallet };
 		} catch (e) {
 			// A tx that simply isn't on-chain yet surfaces as a validation error too;
 			// treat "not found / not finalized" as still-pending so the client retries.
@@ -176,8 +178,11 @@ export async function verifySubscriptionPayment(checkout, txSignature = null) {
  *        user_id, agent_id, amount, currency_mint, chain, interval, reference).
  * @param {string} txSignature
  * @param {string|null} buyerWallet — the buyer's wallet address (for the record).
+ * @param {{ feeTaken?: string, feeWallet?: string|null }} [fee] - the platform fee
+ *        verifySubscriptionPayment proved on-chain; recorded in platform_fee_events
+ *        with the first-period payment row.
  */
-export async function activateSubscription(checkout, txSignature, buyerWallet = null) {
+export async function activateSubscription(checkout, txSignature, buyerWallet = null, { feeTaken = '0', feeWallet = null } = {}) {
 	// Claim the checkout exactly once.
 	const claimed = await sql`
 		UPDATE subscription_checkouts
@@ -237,11 +242,30 @@ export async function activateSubscription(checkout, txSignature, buyerWallet = 
 		`;
 	}
 
-	// 2. First-period payment ledger row.
-	await sql`
+	// 2. First-period payment ledger row, with the platform's fee leg of the
+	//    same payment beside it.
+	const fee = BigInt(feeTaken || '0');
+	const feeEvent = fee > 0n && feeWallet ? {
+		source: 'subscription',
+		sourceRef: String(checkout.id),
+		chain: checkout.chain || 'solana',
+		network: 'mainnet',
+		asset: 'USDC',
+		assetMint: checkout.currency_mint,
+		amountAtomics: fee,
+		decimals: USDC_DECIMALS,
+		basis: 'gross',
+		txSignature,
+		payer: buyerWallet,
+		beneficiary: feeWallet,
+		userId: checkout.user_id,
+		agentId: checkout.agent_id || null,
+		meta: { plan_id: checkout.plan_id, subscription_id: subscription.id, interval, gross_atomics: String(checkout.amount) },
+	} : null;
+	await withPlatformFeeOrAlert(sql, () => sql`
 		INSERT INTO subscription_payments (subscription_id, amount_usd, status, tx_hash, paid_at)
 		VALUES (${subscription.id}, ${priceUsd}, 'succeeded', ${txSignature}, now())
-	`;
+	`, feeEvent);
 
 	// 3. Open the access gate hasSkillAccess() reads. Agent-scoped only.
 	if (checkout.agent_id) {

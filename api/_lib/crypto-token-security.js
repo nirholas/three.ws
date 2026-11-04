@@ -27,6 +27,7 @@ import { fetchTokenMarket } from './token-market.js';
 import { fetchPumpCoin } from './pump-bonding.js';
 import { isGraduated } from './pump-launch-feed.js';
 import { solanaRpcEndpoints, makeRotatingFetch } from './solana/connection.js';
+import { sharedRpcRead } from './solana/shared-reads.js';
 
 const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 // Budget for ONE JSON-RPC read across the WHOLE failover chain, not per
@@ -37,6 +38,15 @@ const METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518
 // this request" and answered 503, while a retry seconds later succeeded. Sized
 // to cover a couple of real attempts, matching the wallet-activity lane.
 const RPC_TIMEOUT_MS = 25_000;
+
+// Fleet-wide TTLs for the mint-level reads /api/crypto/holders and
+// /api/crypto/security both make with identical params (see
+// api/_lib/solana/shared-reads.js). Authorities and the top-20 holder set move
+// slowly next to a scanner that hits both routes for one mint within seconds.
+export const MINT_ACCOUNT_SHARED_TTL_S = 30;
+export const LARGEST_ACCOUNTS_SHARED_TTL_S = 30;
+// A Metaplex metadata PDA changes only when the update authority rewrites it.
+const METADATA_SHARED_TTL_S = 300;
 
 // Concentration thresholds shared with the v1 reader's flags, so the two
 // security surfaces can never disagree about what "concentrated" means.
@@ -190,30 +200,29 @@ export function deriveRiskLevel(checks) {
 	return { riskLevel: 'unknown', reasons };
 }
 
-// One JSON-RPC call over the platform's failover chain (same envelope semantics
-// as the v1 reader: a JSON-RPC error is an answered-but-empty section, a
-// rejection means every endpoint is down).
-async function rpcCall(rpcFetch, method, params) {
-	const resp = await rpcFetch(null, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-		signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
-	});
-	return resp.json();
-}
-
-// Default network dependency bundle — split out so composeTokenSecurity can be
-// driven by synthetic fixtures in tests.
+// Default network dependency bundle, split out so composeTokenSecurity can be
+// driven by synthetic fixtures in tests. Each read keeps the v1 reader's
+// envelope semantics (a JSON-RPC error is an answered-but-empty section, a
+// rejection means every endpoint is down) and is served from the fleet-wide
+// shared-read cache while young.
 export function realSecurityDeps() {
 	const rpcFetch = makeRotatingFetch(solanaRpcEndpoints('mainnet'));
 	return {
 		fetchMintAccount: (address) =>
-			rpcCall(rpcFetch, 'getAccountInfo', [address, { encoding: 'jsonParsed', commitment: 'confirmed' }]),
+			sharedRpcRead(rpcFetch, 'getAccountInfo', [address, { encoding: 'jsonParsed', commitment: 'confirmed' }], {
+				ttlSeconds: MINT_ACCOUNT_SHARED_TTL_S,
+				timeoutMs: RPC_TIMEOUT_MS,
+			}),
 		fetchLargestAccounts: (address) =>
-			rpcCall(rpcFetch, 'getTokenLargestAccounts', [address, { commitment: 'confirmed' }]),
+			sharedRpcRead(rpcFetch, 'getTokenLargestAccounts', [address, { commitment: 'confirmed' }], {
+				ttlSeconds: LARGEST_ACCOUNTS_SHARED_TTL_S,
+				timeoutMs: RPC_TIMEOUT_MS,
+			}),
 		fetchMetadataAccount: (address) =>
-			rpcCall(rpcFetch, 'getAccountInfo', [metadataPdaFor(address), { encoding: 'base64', commitment: 'confirmed' }]),
+			sharedRpcRead(rpcFetch, 'getAccountInfo', [metadataPdaFor(address), { encoding: 'base64', commitment: 'confirmed' }], {
+				ttlSeconds: METADATA_SHARED_TTL_S,
+				timeoutMs: RPC_TIMEOUT_MS,
+			}),
 		fetchMarket: (address) => fetchTokenMarket(address),
 		fetchPump: (address) => fetchPumpCoin(address),
 	};

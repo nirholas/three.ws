@@ -109,7 +109,10 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const activation = await activateSubscription(checkout, result.tx_signature, checkout.buyer_public_key);
+	const activation = await activateSubscription(checkout, result.tx_signature, checkout.buyer_public_key, {
+		feeTaken: result.fee_taken,
+		feeWallet: result.fee_wallet,
+	});
 
 	return json(res, 200, {
 		data: {

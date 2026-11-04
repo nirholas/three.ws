@@ -26,6 +26,8 @@ import {
 	markEndpointCooldown,
 } from './solana/connection.js';
 import { withDeadline } from './rpc-degrade.js';
+import { sharedRpcRead } from './solana/shared-reads.js';
+import { MINT_ACCOUNT_SHARED_TTL_S, LARGEST_ACCOUNTS_SHARED_TTL_S } from './crypto-token-security.js';
 
 // Budget for ONE JSON-RPC read across the WHOLE failover chain, not per
 // endpoint. makeRotatingFetch bounds each attempt itself (10s) and composes the
@@ -35,6 +37,7 @@ import { withDeadline } from './rpc-degrade.js';
 // this request" and answered 503, while a retry seconds later succeeded. Sized
 // to cover a couple of real attempts, matching the wallet-activity lane.
 const RPC_TIMEOUT_MS = 25_000;
+const ACCOUNT_OWNERS_SHARED_TTL_S = 120;
 
 // Per-call wall clock for the keyless fan-out (largest accounts, then owner
 // resolution). Each read is bounded by RPC_TIMEOUT_MS, but two of them back to
@@ -122,16 +125,6 @@ export function deriveConcentration(top10Pct) {
 	if (top10Pct > CONCENTRATION_HIGH_PCT) return 'high';
 	if (top10Pct > CONCENTRATION_MEDIUM_PCT) return 'medium';
 	return 'low';
-}
-
-async function rpcCall(rpcFetch, method, params) {
-	const resp = await rpcFetch(null, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-		signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
-	});
-	return resp.json();
 }
 
 /**
@@ -224,12 +217,27 @@ async function heliusPage(url, mint, page, fetchImpl) {
 export function realHolderDeps({ heliusAllowed = async () => true } = {}) {
 	const rpcFetch = makeRotatingFetch(solanaRpcEndpoints('mainnet'));
 	return {
+		// Same params as the security reader's, so one fleet-wide entry serves
+		// both routes for a mint (api/_lib/solana/shared-reads.js).
 		fetchMintAccount: (address) =>
-			rpcCall(rpcFetch, 'getAccountInfo', [address, { encoding: 'jsonParsed', commitment: 'confirmed' }]),
+			sharedRpcRead(rpcFetch, 'getAccountInfo', [address, { encoding: 'jsonParsed', commitment: 'confirmed' }], {
+				ttlSeconds: MINT_ACCOUNT_SHARED_TTL_S,
+				timeoutMs: RPC_TIMEOUT_MS,
+			}),
 		fetchLargestAccounts: (address) =>
-			rpcCall(rpcFetch, 'getTokenLargestAccounts', [address, { commitment: 'confirmed' }]),
+			sharedRpcRead(rpcFetch, 'getTokenLargestAccounts', [address, { commitment: 'confirmed' }], {
+				ttlSeconds: LARGEST_ACCOUNTS_SHARED_TTL_S,
+				timeoutMs: RPC_TIMEOUT_MS,
+			}),
 		fetchAccountOwners: async (tokenAccounts) => {
-			const json = await rpcCall(rpcFetch, 'getMultipleAccounts', [tokenAccounts, { encoding: 'jsonParsed', commitment: 'confirmed' }]);
+			// A token account's owner changes only on an explicit SetAuthority,
+			// and the account list itself comes from the 30s largest-accounts read.
+			const json = await sharedRpcRead(
+				rpcFetch,
+				'getMultipleAccounts',
+				[tokenAccounts, { encoding: 'jsonParsed', commitment: 'confirmed' }],
+				{ ttlSeconds: ACCOUNT_OWNERS_SHARED_TTL_S, timeoutMs: RPC_TIMEOUT_MS },
+			);
 			const values = json?.result?.value;
 			if (!Array.isArray(values)) return new Map();
 			const owners = new Map();

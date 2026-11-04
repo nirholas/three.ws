@@ -26,6 +26,19 @@ import { cors, method, wrap, error, json, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { isValidSolanaAddress, isValidEvmAddress } from '../_lib/validate.js';
 import { composeTokenSecurity } from '../_lib/crypto-token-security.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
+import { staleEnvelope } from '../_lib/rpc-degrade.js';
+
+// One record per mint, two tiers (the same shape /api/crypto/holders uses):
+//  - fresh: a repeat check inside the 60s edge max-age is answered from it, so
+//    a scanner that misses the edge (every production request on 2026-11-04 did)
+//    never re-reads three accounts it was handed seconds ago.
+//  - last-good: the previous verdict, served marked stale while every source is
+//    down. Authorities change rarely; a stale verdict says how old it is, a 503
+//    says nothing.
+const SECURITY_FRESH_MS = 60_000;
+const SECURITY_LKG_TTL_S = 6 * 3600;
+const securityKey = (address) => `crypto:security:v1:${address}`;
 
 const EXAMPLE = '/api/crypto/security?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
@@ -62,6 +75,15 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	const key = securityKey(address);
+	const cached = await cacheGet(key).catch(() => null);
+	if (cached && cached.body && typeof cached.at === 'number' && Date.now() - cached.at < SECURITY_FRESH_MS) {
+		return json(res, 200, cached.body, {
+			'cache-control': 'public, s-maxage=60, stale-while-revalidate=30',
+			'x-security-cache': 'hit',
+		});
+	}
+
 	const result = await composeTokenSecurity({ address });
 	const ts = new Date().toISOString();
 
@@ -76,6 +98,12 @@ export default wrap(async (req, res) => {
 	// Every source unreachable: never 500, and never a fabricated verdict; 503 +
 	// Retry-After so the agent backs off and retries.
 	if (result.status === 'upstream_down') {
+		if (cached && cached.body && typeof cached.at === 'number') {
+			return json(res, 200, staleEnvelope(cached.body, cached.at), {
+				'cache-control': 'public, s-maxage=30, stale-while-revalidate=60',
+				'x-security-stale': '1',
+			});
+		}
 		return json(res, 503, {
 			error: 'upstream_unavailable',
 			error_description: 'security data sources are temporarily unreachable, retry shortly; no verdict is fabricated while sources are down',
@@ -85,9 +113,7 @@ export default wrap(async (req, res) => {
 		}, { 'cache-control': 'no-store', 'retry-after': '15' });
 	}
 
-	// Authorities/holders move rarely; 60s edge cache absorbs polling agents
-	// without staleness that matters for a pre-trade check.
-	return json(res, 200, {
+	const body = {
 		address,
 		chain: 'solana',
 		checks: result.checks,
@@ -95,5 +121,10 @@ export default wrap(async (req, res) => {
 		reasons: result.reasons,
 		ts,
 		sources: result.sources,
-	}, { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=30' });
+	};
+	cacheSet(key, { body, at: Date.now() }, SECURITY_LKG_TTL_S).catch(() => {});
+
+	// Authorities/holders move rarely; 60s edge cache absorbs polling agents
+	// without staleness that matters for a pre-trade check.
+	return json(res, 200, body, { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=30' });
 });

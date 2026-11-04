@@ -1274,10 +1274,11 @@ async function handleVersions(req, res, id) {
 	if (!rl.success) return rateLimited(res, rl);
 
 	const rows = await sql`
-		SELECT id, version, changelog, category, tags, created_at
-		FROM agent_versions
-		WHERE agent_id = ${id}
-		ORDER BY version DESC
+		SELECT v.id, v.version, v.changelog, v.category, v.tags, v.created_at
+		FROM agent_versions v
+		JOIN agent_identities a ON a.id = v.agent_id
+		WHERE v.agent_id = ${id} AND a.is_published = true AND a.deleted_at IS NULL
+		ORDER BY v.version DESC
 		LIMIT 50
 	`;
 	return json(res, 200, { data: { versions: rows } });

@@ -16,7 +16,7 @@
 // share one implementation instead of drifting.
 
 import { sql } from './db.js';
-import { solanaRpcEndpoints } from './solana/connection.js';
+import { solanaRpcEndpoints, noteRpcSpend } from './solana/connection.js';
 import { ONCHAIN_RE, AVATAR_RE } from './embed-asset.js';
 import { randomToken } from './crypto.js';
 
@@ -168,16 +168,18 @@ export async function getSplTokenBalance(walletAddress, mint) {
 	let lastErr = null;
 	for (const url of endpoints) {
 		try {
+			const body = JSON.stringify({
+				jsonrpc: '2.0',
+				id: 1,
+				method: 'getTokenAccountsByOwner',
+				params: [walletAddress, { mint }, { encoding: 'jsonParsed' }],
+			});
+			noteRpcSpend(url, body);
 			const resp = await fetch(url, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
-				body: JSON.stringify({
-					jsonrpc: '2.0',
-					id: 1,
-					method: 'getTokenAccountsByOwner',
-					params: [walletAddress, { mint }, { encoding: 'jsonParsed' }],
-				}),
+				body,
 			});
 			if (!resp.ok) {
 				lastErr = new Error(`solana rpc ${resp.status}`);

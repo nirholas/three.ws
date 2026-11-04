@@ -20,8 +20,8 @@
 //   X402_SEED_SOLANA_SECRET_BASE58     seeder keypair (preferred)
 //   X402_AGENT_SOLANA_SECRET_BASE58    fallback agent keypair
 //   X402_AUTONOMOUS_ENABLED            'false' to pause (default: enabled)
-//   X402_AUTONOMOUS_MAX_PER_TICK       max calls per cron tick (default: 8)
-//   X402_AUTONOMOUS_DAILY_CAP_ATOMIC   daily USDC cap in atomics (default: 5000000 = $5)
+//   X402_AUTONOMOUS_MAX_PER_TICK       max calls per cron tick (default: 12)
+//   X402_AUTONOMOUS_DAILY_CAP_ATOMIC   daily USDC cap in atomics (default: 15000000 = $15)
 //   CRON_SECRET                        required Vercel cron auth
 
 import { randomUUID } from 'node:crypto';

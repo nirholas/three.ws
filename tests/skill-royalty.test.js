@@ -6,7 +6,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const sqlMock = vi.fn(() => Promise.resolve([{ id: 'ledger-1' }]));
+// The accrual and its platform_fee_events row run as one sql.transaction batch
+// of the two queries the tagged template produced.
+sqlMock.transaction = vi.fn((queries) => Promise.all(queries));
 vi.mock('../api/_lib/db.js', () => ({ sql: sqlMock }));
+vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: async () => {} }));
 
 const {
 	computeSkillRoyaltySplit,
@@ -27,6 +31,7 @@ const { settleAllPendingRoyalties, settleRoyalties } = await import('../api/_lib
 beforeEach(() => {
 	sqlMock.mockClear();
 	sqlMock.mockResolvedValue([{ id: 'ledger-1' }]);
+	sqlMock.transaction.mockClear();
 	delete process.env.X402_SKILL_ROYALTY_PLATFORM_BPS;
 });
 
@@ -122,10 +127,18 @@ describe('accrueSkillCallRoyalty', () => {
 		expect(out.accrual.platformAtomics).toBe(250n);
 		expect(out.accrual.ledgerId).toBe('ledger-1');
 
-		expect(sqlMock).toHaveBeenCalledTimes(1);
+		// The accrual plus its platform fee event, committed together.
+		expect(sqlMock).toHaveBeenCalledTimes(2);
+		expect(sqlMock.transaction).toHaveBeenCalledTimes(1);
 		const [strings, ...values] = sqlMock.mock.calls[0];
 		const text = strings.join('?');
 		expect(text).toMatch(/INSERT INTO royalty_ledger/i);
+		const [feeStrings, ...feeValues] = sqlMock.mock.calls[1];
+		expect(feeStrings.join('?')).toMatch(/INSERT INTO platform_fee_events/i);
+		expect(feeValues).toContain('x402_skill_split');
+		expect(feeValues).toContain('ledger');
+		expect(feeValues).toContain('x402:sig-abc');
+		expect(feeValues).toContain('250');
 		// author share (0.00975) then platform fee (0.00025) land as USD values.
 		expect(values).toContain(base.skillId);
 		expect(values).toContain(null); // agent_id is null for x402 callers
@@ -152,8 +165,15 @@ describe('accrueSkillCallRoyalty', () => {
 		expect(sqlMock).not.toHaveBeenCalled();
 	});
 
+	it('keeps the accrual when only the fee event insert fails', async () => {
+		sqlMock.transaction.mockRejectedValueOnce(new Error('platform_fee_events missing'));
+		const out = await accrueSkillCallRoyalty({ ...base, priceAtomics: 10_000n });
+		expect(out.ok).toBe(true);
+		expect(out.accrual.ledgerId).toBe('ledger-1');
+	});
+
 	it('never throws when the insert fails (fire-and-forget contract)', async () => {
-		sqlMock.mockRejectedValueOnce(new Error('neon down'));
+		sqlMock.mockRejectedValue(new Error('neon down'));
 		const out = await accrueSkillCallRoyalty({ ...base, priceAtomics: 10_000n });
 		expect(out.ok).toBe(false);
 		expect(out.reason).toMatch(/neon down/);

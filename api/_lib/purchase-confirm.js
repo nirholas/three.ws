@@ -29,6 +29,8 @@ import { creditReferralCommission } from './referrals.js';
 import { resolveListingSplit, recordSplitDistribution } from './splits.js';
 import { recordOnchainLicenseForPurchase } from './skill-license-issue.js';
 import { resolveReceiptKey } from './receipt-key.js';
+import { withPlatformFeeOrAlert } from './platform-fee-events.js';
+import { mintSymbol } from './x402/solana-settlement.js';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
 
@@ -558,7 +560,25 @@ async function finalizeSkillConfirmation(pur, txSignature, payoutAddress, platfo
 		// split contract) directly, so the seller already holds this money. Left
 		// false, the withdrawal ledger counted it as a treasury liability and the
 		// payout cron paid it a second time from the treasury.
-		await sql`
+		// The platform's leg of the same payment: the fee transfer to the treasury
+		// that confirmSolanaSkill proved on-chain. Recorded with the revenue row.
+		const feeEvent = platformFee > 0n && pur.platform_fee_wallet ? {
+			source: 'skill_purchase',
+			sourceRef: String(pur.id),
+			chain: pur.chain,
+			network: 'mainnet',
+			asset: mintSymbol(pur.currency_mint) || 'SPL',
+			assetMint: pur.currency_mint,
+			amountAtomics: platformFee,
+			decimals: pur.mint_decimals ?? 6,
+			basis: 'gross',
+			txSignature,
+			beneficiary: pur.platform_fee_wallet,
+			userId: pur.user_id,
+			agentId: pur.agent_id,
+			meta: { skill: pur.skill, intent_id: intentId, gross_atomics: grossAmt.toString() },
+		} : null;
+		await withPlatformFeeOrAlert(sql, () => sql`
 			INSERT INTO agent_revenue_events
 				(agent_id, intent_id, skill, gross_amount, fee_amount, platform_fee_amount,
 				 net_amount, currency_mint, chain, payer_address, settled_to_wallet)
@@ -567,7 +587,7 @@ async function finalizeSkillConfirmation(pur, txSignature, payoutAddress, platfo
 				 ${grossAmt.toString()}, ${referralAmt.toString()}, ${platformFee.toString()},
 				 ${netAmt.toString()}, ${pur.currency_mint}, ${pur.chain}, ${payoutAddress}, true)
 			ON CONFLICT (intent_id) DO NOTHING
-		`;
+		`, feeEvent);
 
 		// 3a-bis. Multi-collaborator split: apportion the creator's net across the
 		// listing's recipients and record each one's exact share. Idempotent per
@@ -769,7 +789,9 @@ async function verifyBundleSolana(b, payoutAddress) {
 	}
 	if (!matched)
 		return { status: 'mismatch', message: lastErr?.message || 'on-chain transfer did not match expected' };
-	return { status: 'confirmed', txSignature };
+	// feeTaken is the fee proven on-chain: zero when the buyer paid the full
+	// price to the seller (the single-transfer fallback), never the quoted fee.
+	return { status: 'confirmed', txSignature, feeTaken: matched.feeTaken.toFixed(0), feeWallet: matched.feeWallet };
 }
 
 async function verifyBundleEvm(b, payoutAddress) {
@@ -802,7 +824,8 @@ async function verifyBundleEvm(b, payoutAddress) {
 
 	if (result.status !== 'match')
 		return { status: 'mismatch', message: result.message || 'amount mismatch' };
-	return { status: 'confirmed', txSignature: b.txHash };
+	// The EVM leg is one full-price transfer to the seller: no platform fee.
+	return { status: 'confirmed', txSignature: b.txHash, feeTaken: '0', feeWallet: null };
 }
 
 async function getSellerUserId(agentId) {

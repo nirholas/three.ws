@@ -35,6 +35,7 @@ export default wrap(async (req, res) => {
 			sp.currency_mint
 		FROM skill_purchases sp
 		JOIN agent_identities ai ON ai.id = sp.agent_id
+			AND ai.is_published = true AND ai.deleted_at IS NULL
 		WHERE sp.status IN ('confirmed', 'trial')
 		GROUP BY sp.skill, sp.agent_id, ai.name, ai.profile_image_url, sp.currency_mint
 		ORDER BY total_sales DESC, total_trials DESC
@@ -52,6 +53,7 @@ export default wrap(async (req, res) => {
 			are.currency_mint
 		FROM agent_revenue_events are
 		JOIN agent_identities ai ON ai.id = are.agent_id
+			AND ai.is_published = true AND ai.deleted_at IS NULL
 		GROUP BY are.agent_id, ai.name, ai.profile_image_url, are.currency_mint
 		ORDER BY net_revenue DESC
 		LIMIT 10
@@ -129,6 +131,7 @@ export default wrap(async (req, res) => {
 			sp.confirmed_at
 		FROM skill_purchases sp
 		JOIN agent_identities ai ON ai.id = sp.agent_id
+			AND ai.is_published = true AND ai.deleted_at IS NULL
 		WHERE sp.status IN ('confirmed', 'trial')
 		  AND sp.confirmed_at IS NOT NULL
 		ORDER BY sp.confirmed_at DESC

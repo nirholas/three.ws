@@ -17,7 +17,9 @@
 // provable in isolation; the writer is fire-and-forget from the paid-endpoint
 // settle hook so an accrual failure can never break a settled payment.
 
+import { randomUUID } from 'node:crypto';
 import { sql } from './db.js';
+import { withPlatformFeeOrAlert } from './platform-fee-events.js';
 
 // The platform's cut of a per-call skill payment, in basis points (default
 // 2.5%, matching the marketplace fee in api/_lib/fee.js). The author keeps the
@@ -84,6 +86,49 @@ export function computeSkillRoyaltySplit({ priceAtomics, platformBps }) {
 	};
 }
 
+// x402 networks arrive as CAIP-2 ids ('solana:<genesis>', 'eip155:8453') or
+// short names ('solana:mainnet', 'base'); the fee ledger keys on chain plus a
+// mainnet/devnet/testnet network.
+const SOLANA_DEVNET_GENESIS = 'EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
+const EVM_TESTNET_IDS = new Set(['84532', '11155111']);
+export function feeChainOf(network) {
+	const n = String(network || '').toLowerCase();
+	if (!n || n.startsWith('solana')) {
+		const devnet = n.includes('devnet') || n.includes(SOLANA_DEVNET_GENESIS.toLowerCase());
+		return { chain: 'solana', network: devnet ? 'devnet' : 'mainnet' };
+	}
+	if (n.startsWith('eip155:')) {
+		const id = n.slice('eip155:'.length);
+		return { chain: id === '8453' || id === '84532' ? 'base' : `eip155:${id}`, network: EVM_TESTNET_IDS.has(id) ? 'testnet' : 'mainnet' };
+	}
+	return { chain: n.replace(/-(sepolia|testnet)$/, ''), network: /sepolia|testnet/.test(n) ? 'testnet' : 'mainnet' };
+}
+
+// The platform's share of one x402 skill call. The rail settled the whole
+// payment in one transfer, so this is an accounting split ('ledger'), not a
+// separate on-chain fee transfer. Keyed by the settlement transaction so a
+// re-fired settle hook cannot book it twice.
+function skillSplitFeeEvent(opts, split) {
+	if (split.platformAtomics <= 0n) return null;
+	const rail = opts.source ?? 'x402';
+	const { chain, network } = feeChainOf(opts.network);
+	return {
+		source: 'x402_skill_split',
+		sourceRef: opts.txHash ? `${rail}:${opts.txHash}` : `${rail}:untracked:${randomUUID()}`,
+		settlement: 'ledger',
+		chain,
+		network,
+		asset: 'USDC',
+		amountAtomics: split.platformAtomics,
+		decimals: USDC_DECIMALS,
+		bps: split.platformBps,
+		basis: 'skill_call',
+		txSignature: opts.txHash ?? null,
+		payer: opts.payer ?? null,
+		meta: { skill_id: opts.skillId, author_user_id: opts.authorId, rail, x402_network: opts.network ?? null, price_atomics: split.priceAtomics.toString() },
+	};
+}
+
 /**
  * Record a royalty accrual for one settled x402 skill call. Called from the
  * paid-endpoint onSettled hook (fire-and-forget): NEVER throws, so a Neon
@@ -109,7 +154,7 @@ export async function accrueSkillCallRoyalty(opts) {
 		});
 		if (split.authorAtomics <= 0n) return { ok: false, reason: 'zero_price', accrual: split };
 
-		const [row] = await sql`
+		const { rows: [row] } = await withPlatformFeeOrAlert(sql, () => sql`
 			INSERT INTO royalty_ledger
 				(skill_id, agent_id, author_user_id, price_usd, status,
 				 settled_at, tx_hash, network, payer, source, platform_fee_usd)
@@ -118,7 +163,7 @@ export async function accrueSkillCallRoyalty(opts) {
 				 now(), ${opts.txHash ?? null}, ${opts.network ?? null},
 				 ${opts.payer ?? null}, ${opts.source ?? 'x402'}, ${split.platformUsd})
 			RETURNING id
-		`;
+		`, skillSplitFeeEvent(opts, split));
 		return { ok: true, accrual: { ...split, ledgerId: row?.id ?? null } };
 	} catch (e) {
 		console.error('[skill-royalty] accrual failed', e?.message);

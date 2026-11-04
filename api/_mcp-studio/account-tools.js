@@ -3,8 +3,11 @@
 //
 // Grok Bot holds its credential unattended (an OAuth 2.1 grant or a connector
 // API key stored as a Bot secret), so this surface lists only tools that read
-// or edit agent data: agents, their memory, their custom skills, the account's
-// avatars, and read-only three:// views of the account. Nothing here moves
+// or edit agent data (agents, their memory, their custom skills, the account's
+// avatars, read-only three:// views of the account) and the platform's
+// read-only intelligence: pump.fun and Oracle market reads, token due
+// diligence, the trader leaderboard, Solana agent reputation, Robinhood Chain
+// reads and the public domain and launch-lane lookups. Nothing here moves
 // value. A tool is admitted only when it is on GROK_ACCOUNT_TOOLS AND the
 // shared policy keeps it out of the financial tier AND its scope is not a
 // wallet, payment or trade scope AND the core server's own tools/list
@@ -53,6 +56,37 @@ export const GROK_ACCOUNT_TOOLS = Object.freeze([
 	// and each agent's usage, runs, earnings and wallet state), which the
 	// agent-report prompt reads. Reading a wallet's balance moves nothing.
 	'read_resource',
+	// Solana market intelligence: live pump.fun feeds, Oracle conviction and
+	// the Sentiment Scout, all read-tier in the shared policy. None of these
+	// trades; the market-brief prompt reads them.
+	'pumpfun_recent_claims',
+	'pumpfun_recent_graduations',
+	'pumpfun_token_intel',
+	'pumpfun_creator_intel',
+	'oracle_top_plays',
+	'oracle_coin',
+	'sentiment_scout',
+	'token_due_diligence',
+	'token_snapshot',
+	// Traders worth watching and a read of one trade. Copying a trader
+	// (copy_subscribe) is a separate, owner-approved step this surface omits.
+	'trader_leaderboard',
+	'trader_profile',
+	'trade_receipt',
+	// On-chain agent identity on Solana. solana_agent_reputation is priced on
+	// the core server, so the pricing filter below keeps it off this list.
+	'solana_agent_attestations',
+	'solana_agent_passport',
+	// Robinhood Chain reads.
+	'robinhood_chain_stats',
+	'robinhood_token_prices',
+	'robinhood_recent_launches',
+	'robinhood_wallet_holdings',
+	// Public lookups with no caller data: launch venues and web domains.
+	'launch_lanes',
+	'domain_search',
+	'domain_check',
+	'domain_pricing',
 ]);
 
 // Scopes that authorize moving value. A tool that needs one of these is a wallet,
