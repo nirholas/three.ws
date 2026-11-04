@@ -217,7 +217,7 @@ function renderSettings() {
 			el('div', {}, el('strong', { text: 'Review cadence' }), el('span', { class: 'mm-sub', id: 'nudge-help', text: 'Every how many turns an agent stops to decide what is worth remembering. Lower is more thorough, higher is quieter.' })),
 			el('div', { class: 'mm-range' }, nudge, out, el('span', { class: 'mm-sub', text: 'turns' })),
 		),
-		s.enabled ? null : el('div', { class: 'mm-off', role: 'note', text: 'Learning is off. Existing memories are still shown below and can be edited or deleted. They are not added to prompts while it is off.' }),
+		...(s.enabled ? [] : [el('div', { class: 'mm-off', role: 'note', text: 'Learning is off. Existing memories are still shown below and can be edited or deleted. They are not added to prompts while it is off.' })]),
 	);
 }
 
@@ -248,10 +248,11 @@ function renderModel() {
 		});
 		return el('div', { class: 'mm-group' }, el('h3', { text: sec.label }), el('p', { class: 'mm-hint', text: sec.hint }), list, add);
 	});
+	// replaceChildren() stringifies null, so the optional banner is spread in.
 	host.replaceChildren(
-		doc.count === 0
-			? el('div', { class: 'mm-empty' }, el('strong', { text: 'Your agent has not saved anything about you yet.' }), 'Tell it a preference in chat, like "keep answers short", or add a line below.')
-			: null,
+		...(doc.count === 0
+			? [el('div', { class: 'mm-empty' }, el('strong', { text: 'Your agent has not saved anything about you yet.' }), 'Tell it a preference in chat, like "keep answers short", or add a line below.')]
+			: []),
 		...groups,
 	);
 }
