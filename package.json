@@ -117,6 +117,7 @@
 		"packages/provenance-mcp",
 		"packages/autopilot-mcp",
 		"packages/portfolio-mcp",
+		"packages/trading-mcp",
 		"packages/copy-mcp",
 		"packages/signals-mcp",
 		"packages/alerts-mcp",

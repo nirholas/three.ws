@@ -76,6 +76,7 @@ import { listMembershipHomes } from './_lib/home/members.js';
 import { loadInstalledSkills, skillsPromptBlock } from './_lib/installed-skills.js';
 import { agentSkillsForPrompt } from './_lib/agent-custom-skills.js';
 import { holdSkillOriginatedSpend } from './_lib/skill-import-gate.js';
+import { suggestionsInstruction, splitSuggestions, createReplyFilter } from './_lib/chat-suggestions.js';
 import {
 	vertexClaudeEnabled,
 	vertexClaudePrimary,
@@ -248,6 +249,9 @@ const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
 	context: contextSchema,
 	system_prompt: z.string().trim().min(1).max(2000).optional(),
+	// Opt-in: ask for up to three short next-reply options in the same completion
+	// (the /glass lens answers with a d-pad). 0 or absent changes nothing.
+	suggestReplies: z.number().int().min(0).max(3).optional(),
 	// Owner-only candidate persona for the Brain Studio live preview: lets the
 	// owner audition an unsaved compiled persona against /api/chat even when the
 	// agent already has a stored persona. Ignored unless the caller owns agentId.
@@ -718,7 +722,9 @@ export default wrap(async (req, res) => {
 		installedSkills,
 		agentSkills.block,
 	);
-	const systemPrompt = sys.text;
+	const suggestCount = body.suggestReplies || 0;
+	const systemPrompt = suggestCount ? `${sys.text}\n\n${suggestionsInstruction(suggestCount)}` : sys.text;
+	const replyFilter = suggestCount ? createReplyFilter() : null;
 	const history = body.history.map((m) => ({ role: m.role, content: m.content }));
 	history.push({ role: 'user', content: body.message });
 
@@ -1077,6 +1083,11 @@ export default wrap(async (req, res) => {
 	});
 
 	function sendSSE(obj) {
+		if (replyFilter && obj.type === 'chunk') {
+			const text = replyFilter.push(obj.text);
+			if (!text) return;
+			obj = { ...obj, text };
+		}
 		res.write(`data: ${JSON.stringify(obj)}\n\n`);
 	}
 
@@ -1189,6 +1200,12 @@ export default wrap(async (req, res) => {
 		body.message,
 	);
 	let reply = result.reply.trim();
+	let suggestions = [];
+	if (replyFilter) {
+		const held = replyFilter.flush();
+		if (held) res.write(`data: ${JSON.stringify({ type: 'chunk', text: held })}\n\n`);
+		({ reply, suggestions } = splitSuggestions(reply, suggestCount));
+	}
 	if (governance?.decision === 'block') {
 		const why = governance.reasons?.[0]?.label || 'platform policy';
 		reply = `${reply}${reply ? '\n\n' : ''}(Held by the IBM Granite Guardian Trust Layer — ${why}.)`;
@@ -1206,6 +1223,7 @@ export default wrap(async (req, res) => {
 	sendSSE({
 		type: 'done',
 		reply,
+		...(replyFilter ? { suggestions } : {}),
 		actions: governedActions,
 		governance,
 		// What the home tools did this turn, for a client that only reads `done`.
