@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the three.ws production autopilot every two hours
+
+[Timer]
+OnBootSec=10min
+# Measured from the end of the previous tick, so ticks never overlap.
+OnUnitInactiveSec=2h
+Persistent=true
+Unit=autopilot.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,20 @@
+[Unit]
+Description=three.ws production autopilot tick
+Documentation=https://github.com/nirholas/three.ws/blob/main/services/autopilot/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=autopilot
+WorkingDirectory=/home/autopilot
+Environment=AUTOPILOT_HOME=/home/autopilot
+EnvironmentFile=-/etc/autopilot/env
+ExecStart=/bin/bash /home/autopilot/three.ws/services/autopilot/run.sh
+# A tick can run past an hour: up to a 100 minute Claude session, then tests,
+# a full build and the deploy.
+TimeoutStartSec=infinity
+Nice=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=autopilot

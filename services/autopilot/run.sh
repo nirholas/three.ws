@@ -70,7 +70,7 @@ install_deps() {
 	npm run --silent deps:chat || return 1
 	if [ ! -f character-studio/build/index.html ] || changed_since_prev character-studio; then
 		log "character-studio changed: rebuilding avatar studio"
-		npm ci --prefix character-studio --no-audit --no-fund || return 1
+		npm ci --prefix character-studio --legacy-peer-deps --no-audit --no-fund || return 1
 		npm run build:avatar-studio || return 1
 	fi
 }

@@ -19,34 +19,34 @@ ship its own fixes.
 
 ## Status
 
-**Written, not provisioned.** Checked on 2026-10-09:
+**Provisioned in no-ship mode, 2026-11-04.** `provision.sh --no-ship` created
+the pieces below. The loop tests Claude on real findings but never tests,
+pushes or deploys until the owner adds the push credential.
 
-- There is no Compute Engine instance with `autopilot` in its name in the project.
-- The report bucket `gs://three-ws-autopilot` does not exist.
-- The push credential secret `autopilot-github-token` does not exist.
-- `three-ws-api` carries no `TELEGRAM_ALERTS_CHAT_ID`, so notifications would
-  fall back to `message.txt` unless the VM metadata attribute below is set. The
-  `telegram-bot-token` secret does exist.
+- VM `three-ws-autopilot` (e2-standard-8, 200 GB pd-balanced, Debian 12, us-central1-a) running as `three-ws-autopilot@aerial-vehicle-466722-p5.iam.gserviceaccount.com`.
+- Report bucket `gs://three-ws-autopilot`, 90 day lifecycle on `runs/`.
+- The two systemd units are committed in this directory and also shipped to the VM as instance metadata, so it boots before they reach `threews/main`.
+- The push credential secret `autopilot-github-token` does **not** exist, on purpose. `run.sh` records `push: skipped` without it.
+- `three-ws-api` carries no `TELEGRAM_ALERTS_CHAT_ID`. Set the VM metadata attribute `autopilot-telegram-chat-id` to the private ops chat, else the report is only written to `message.txt` in the run directory.
 
-Three files the scripts refer to are not in the repository and never were (no
-commit in any branch has touched them):
+### Going live (owner)
 
-- `provision.sh`, which `bootstrap.sh` says installs it as the VM's
-  `startup-script` metadata. The VM, the bucket, the secret and the service
-  account bindings are therefore created by hand today; [Provisioning](#provisioning)
-  lists what that takes.
-- `autopilot.service` and `autopilot.timer`, which `bootstrap.sh` installs from
-  this directory into `/etc/systemd/system/`. As committed, `bootstrap.sh` stops
-  at that `install` step (`set -e`). The units have to exist before the loop can
-  run on its timer; [The systemd units](#the-systemd-units) states what they
-  must do.
+1. Add the push credential (a GitHub token that can push to `nirholas/three.ws`):
+   `gcloud secrets create autopilot-github-token --project aerial-vehicle-466722-p5 --replication-policy automatic --data-file=-` then
+   `gcloud secrets add-iam-policy-binding autopilot-github-token --project aerial-vehicle-466722-p5 --member serviceAccount:three-ws-autopilot@aerial-vehicle-466722-p5.iam.gserviceaccount.com --role roles/secretmanager.secretAccessor`
+2. Push the unit files so a rebuilt VM clones them: `git push threews main`.
+3. Leave no-ship mode: `gcloud compute ssh three-ws-autopilot --zone us-central1-a --command 'sudo sed -i /AUTOPILOT_NO_SHIP/d /etc/autopilot/env && sudo systemctl restart autopilot.timer'`.
+4. Optional: `AUTOPILOT_TELEGRAM_CHAT_ID=<private chat id> services/autopilot/provision.sh` to set the report destination.
 
 ## Files
 
 | File | Role |
 |---|---|
 | [run.sh](run.sh) | One tick, end to end. The whole body lives in `main()` so bash parses it before running it, because the tick resets this very file to the newest `main`. |
-| [bootstrap.sh](bootstrap.sh) | VM startup script, run as root on every boot. Idempotent. |
+| [provision.sh](provision.sh) | Creates the service account and its roles, the report bucket and the VM, all guarded by describe checks, never deleting anything. `--no-ship` keeps the VM from shipping; `--dry-run` prints the commands. |
+| [bootstrap.sh](bootstrap.sh) | VM startup script, run as root on every boot. Idempotent. Installs the units (from instance metadata, else the clone), writes `/etc/autopilot/env`, reloads systemd. Fails loudly if a unit is missing. |
+| [autopilot.service](autopilot.service) | `Type=oneshot` tick as the `autopilot` user. No timeout, reads `/etc/autopilot/env`. |
+| [autopilot.timer](autopilot.timer) | `OnBootSec=10min`, `OnUnitInactiveSec=2h`. |
 | [prompt.md](prompt.md) | The instructions the Claude session runs under: inputs, method, hard limits, and the required `result.json`. |
 | [claude-settings.json](claude-settings.json) | Copied to `~/.claude/settings.json` for the `autopilot` user before each session: a deny list for every ship, spend and destroy command, and the auto-updater and telemetry switched off. |
 | [notify.mjs](notify.mjs) | Composes and sends the Telegram report for one tick. |
@@ -223,30 +223,19 @@ What `bootstrap.sh` does, on every boot, as root:
 5. Installs `autopilot.service` and `autopilot.timer` into systemd and enables
    the timer.
 
-What has to exist around it, and is not scripted in this repository:
+`/etc/autopilot/env` is read by the service (`EnvironmentFile=-`), so the owner
+can set `AUTOPILOT_NO_SHIP=1` or `AUTOPILOT_MODEL=...` without editing a unit.
+`provision.sh --no-ship` writes `AUTOPILOT_NO_SHIP=1` there through the
+`autopilot-no-ship` metadata attribute.
 
-- The VM `three-ws-autopilot` with `bootstrap.sh` as its `startup-script`
-  metadata, a disk large enough for the clone, `node_modules` and a full
-  `build:gcp`, and optionally the `autopilot-telegram-chat-id` metadata
-  attribute.
-- A runtime service account for the VM that can read `three-ws-api`'s
-  configuration and logs, access the `telegram-bot-token` and
-  `autopilot-github-token` secrets, submit Cloud Build builds as the pinned
-  `three-ws-build@` account, update Cloud Run traffic and env vars, invalidate the
-  `three-ws-lb` CDN cache, create Cloud Scheduler jobs, call Vertex AI, and
-  write to the report bucket.
-- The bucket `gs://three-ws-autopilot`.
-- The secret `autopilot-github-token`: a GitHub token that can push to
-  `nirholas/three.ws`.
+`provision.sh` is the scripted half: runtime service account and roles (run
+admin, scheduler admin, Vertex user, logging viewer, Cloud Build editor, act-as on
+`three-ws-build@` and `three-ws@`, a one-permission custom role for CDN
+invalidation, secret access on `telegram-bot-token`, `DATABASE_URL` and
+`autopilot-github-token` only, object admin on the bucket only), the bucket and
+the VM. The one thing it will not do is create the push credential.
 
-### The systemd units
-
-`run.sh` and `bootstrap.sh` together define what the two missing units must
-do: `autopilot.service` runs `services/autopilot/run.sh` from the clone as the
-`autopilot` user (a oneshot; the script holds its own lock), and
-`autopilot.timer` starts it every two hours. The tick can take well over an hour
-(a 100-minute Claude session, then tests and a full build and deploy), so the
-service must not carry a shorter timeout.
+Tests: [tests/autopilot-service-files.test.js](../../tests/autopilot-service-files.test.js).
 
 ## Related
 

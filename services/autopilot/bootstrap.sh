@@ -51,8 +51,35 @@ fi
 (cd "$REPO" && npx --yes playwright install-deps chromium)
 as_user "cd $REPO && npx playwright install chromium"
 
-install -m 0644 "$REPO/services/autopilot/autopilot.service" /etc/systemd/system/autopilot.service
-install -m 0644 "$REPO/services/autopilot/autopilot.timer" /etc/systemd/system/autopilot.timer
+# Unit files: provision.sh ships the current ones as instance metadata so a VM
+# can come up before they reach threews/main; otherwise use the clone's copies.
+META=http://metadata.google.internal/computeMetadata/v1/instance/attributes
+meta_get() { curl -fsS -H 'Metadata-Flavor: Google' "$META/$1" 2>/dev/null || true; }
+for unit in autopilot.service autopilot.timer; do
+	key="autopilot-unit-${unit#autopilot.}"
+	tmp=$(mktemp)
+	meta_get "$key" >"$tmp"
+	if [ -s "$tmp" ]; then
+		install -m 0644 "$tmp" "/etc/systemd/system/$unit"
+	elif [ -f "$REPO/services/autopilot/$unit" ]; then
+		install -m 0644 "$REPO/services/autopilot/$unit" "/etc/systemd/system/$unit"
+	else
+		rm -f "$tmp"
+		echo "[bootstrap] FATAL: $unit is in neither instance metadata ($key) nor the clone at $REPO/services/autopilot/. Re-run provision.sh, or push the unit files." >&2
+		exit 1
+	fi
+	rm -f "$tmp"
+done
+
+# /etc/autopilot/env is read by autopilot.service. provision.sh --no-ship sets
+# the autopilot-no-ship metadata attribute, which writes AUTOPILOT_NO_SHIP=1.
+install -d -m 0755 /etc/autopilot
+[ -f /etc/autopilot/env ] || : >/etc/autopilot/env
+if [ "$(meta_get autopilot-no-ship)" = "1" ]; then
+	grep -q '^AUTOPILOT_NO_SHIP=' /etc/autopilot/env || echo 'AUTOPILOT_NO_SHIP=1' >>/etc/autopilot/env
+fi
+chmod 0644 /etc/autopilot/env
+
 systemctl daemon-reload
 systemctl enable --now autopilot.timer
 echo "[bootstrap] autopilot timer enabled: $(systemctl list-timers autopilot.timer --no-legend)"
