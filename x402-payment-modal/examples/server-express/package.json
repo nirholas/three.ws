@@ -11,10 +11,12 @@
     "@solana/spl-token": "*",
     "@solana/web3.js": "*",
     "@three-ws/x402-payment-modal": "*",
+    "bigint-buffer": "file:vendor/bigint-buffer",
     "express": "*"
   },
   "overrides": {
     "uuid@^8": "^11.1.1",
-    "jayson@^4": "^5.0.0"
+    "jayson@^4": "^5.0.0",
+    "bigint-buffer": "$bigint-buffer"
   }
 }
