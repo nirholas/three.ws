@@ -19,6 +19,7 @@ import {
 } from 'three';
 import { makeScreenTexture, screenMaterial } from './screen-texture.js';
 import { WallPainter } from './signature-wall-canvas.js';
+import { netErrorMessage } from './net-error.js';
 import {
 	SignatureWallData, WallClientError, rememberSigned, recallSigned,
 } from './signature-wall-data.js';
@@ -452,7 +453,7 @@ export class SignatureWall {
 			this._setStatus(`Too many signatures from this connection.${wait}`);
 			return;
 		}
-		this._setStatus(err.message || 'Could not sign the wall. Try again.');
+		this._setStatus(netErrorMessage(err, 'Could not sign the wall. Try again.'));
 	}
 
 	_addGuestFallback() {

@@ -40,6 +40,7 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead, CANONICAL_ORIGIN } from './seo-head.mjs';
 import { createCreationHeadRenderer, creationIdFromPath, loadPublicCreation } from './creation-head.mjs';
+import { isPlayPath, rewritePlayHead } from './play-head.mjs';
 import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag, hardenOnEnd } from './csp-hashes.mjs';
@@ -618,6 +619,21 @@ app.use(async (req, res) => {
 			// of server/creation-head.mjs. Any miss serves the plain shell.
 			if (req.method === 'GET' && file.endsWith('.html') && creationIdFromPath(url.pathname)) {
 				const html = await renderCreationHead(url.pathname, readFileSync(file, 'utf8'));
+				if (html) {
+					res.set(hardenHeaderBag(collected, html));
+					if (fileStatus) res.status(fileStatus);
+					res.set('content-type', 'text/html; charset=utf-8');
+					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.send(html);
+					return;
+				}
+			}
+			// /play?coin=<mint> is one shell for every coin world. Name the coin in
+			// the title and social card (an /api/play-og image of its art, ticker
+			// and biome) so a pasted invite link unfurls as that world, not the
+			// lobby: see server/play-head.mjs. No coin, or any miss, serves the shell.
+			if (req.method === 'GET' && file.endsWith('.html') && isPlayPath(url.pathname) && url.searchParams.has('coin')) {
+				const html = rewritePlayHead(readFileSync(file, 'utf8'), url.searchParams, CANONICAL_ORIGIN);
 				if (html) {
 					res.set(hardenHeaderBag(collected, html));
 					if (fileStatus) res.status(fileStatus);

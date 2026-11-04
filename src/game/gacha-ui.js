@@ -26,10 +26,11 @@ import { detectSolanaWallet, SOLANA_RPC, solanaTxExplorerUrl } from '../erc8004/
 import { openModal, prefersReducedMotion, announce } from './a11y.js';
 import { t } from './i18n-play.js';
 import {
-	gachaApi, gachaNet, cardImageUrl, TIERS, TIER_STYLE, usd, shortAddr, pickFeatured, COLLECTOR_CRYPT_CARD_URL,
+	gachaApi, GachaApiError, gachaNet, cardImageUrl, TIERS, TIER_STYLE, usd, shortAddr, pickFeatured, COLLECTOR_CRYPT_CARD_URL,
 } from './gacha-client.js';
 import { createCardStage } from './gacha-reveal3d.js';
 import { el } from './gacha-dom.js';
+import { netErrorMessage } from './net-error.js';
 
 const COLLECTOR_CRYPT_MARKET_URL = 'https://collectorcrypt.com/marketplace';
 const WALLET_INSTALL = [
@@ -97,6 +98,14 @@ function walletError(err) {
 	const msg = String(err?.message || err || '');
 	if (/reject|denied|cancel|declin|user/i.test(msg)) return 'Cancelled in your wallet. Nothing was charged.';
 	return msg || 'Your wallet could not sign the transaction.';
+}
+
+// A 4xx from the gacha API carries the server's own explanation ("This machine
+// is empty."), which is worth showing as written. A dropped connection or a 5xx
+// gets the shared /play line instead of "The gacha server answered 502."
+function gachaFailLine(err, fallback) {
+	if (err instanceof GachaApiError && err.status >= 400 && err.status < 500) return err.message;
+	return netErrorMessage(err, fallback);
 }
 
 // Collector Crypt builds legacy transactions for some flows and v0 for others.
@@ -412,7 +421,7 @@ class GachaUI {
 		} catch (err) {
 			// The player may have opened My cards while the list loaded; leave that view alone.
 			if (this._ac.signal.aborted || this.view !== 'loading') return;
-			this._setView('error', this._errorBlock(err.message || 'Could not load the machines.', 'Try again', () => this._loadMachines()));
+			this._setView('error', this._errorBlock(gachaFailLine(err, 'Could not load the machines.'), 'Try again', () => this._loadMachines()));
 			return;
 		}
 		if (this.view !== 'loading') return;
@@ -624,7 +633,7 @@ class GachaUI {
 				if (this.view === 'detail') this._renderWinners(winners || []);
 			} catch (err) {
 				if (this.view === 'detail' && !this.winnersBox.querySelector('.ga-win:not(.ga-win-skel)')) {
-					this.winnersBox.replaceChildren(el('p', { class: 'ga-dim ga-inline-err' }, err.message || 'Recent pulls are unavailable.'));
+					this.winnersBox.replaceChildren(el('p', { class: 'ga-dim ga-inline-err' }, gachaFailLine(err, 'Recent pulls are unavailable.')));
 				}
 			}
 			this._winnersTimer = setTimeout(run, WINNERS_EVERY_MS);
@@ -678,7 +687,7 @@ class GachaUI {
 		} catch (err) {
 			if (this._poolState !== st) return;
 			st.loading = false;
-			this.poolBox.replaceChildren(this._errorBlock(err.message || 'Could not load the cards.', 'Try again', () => this._loadPool(tier, true)));
+			this.poolBox.replaceChildren(this._errorBlock(gachaFailLine(err, 'Could not load the cards.'), 'Try again', () => this._loadPool(tier, true)));
 			return;
 		}
 		st.loading = false;
@@ -730,7 +739,7 @@ class GachaUI {
 			prep = await gachaApi('pull', { body: { player, code: m.code, turbo: this.turbo }, signal: this._ac.signal });
 		} catch (err) {
 			this._syncPull();
-			this.pullNote.textContent = err.message;
+			this.pullNote.textContent = gachaFailLine(err, 'Could not prepare your pack. Try again.');
 			this.pullNote.classList.add('is-warn');
 			if (err.code === 'machine_empty' || err.code === 'machine_closed') this._refreshMachineList();
 			return;
@@ -809,13 +818,13 @@ class GachaUI {
 			if (submitMayHaveSent(err)) {
 				// Keep the saved pack: the payment may be on its way, and the status
 				// check by memo finds it whether or not we ever saw a signature.
-				this._renderPullError(`${err.message} Your payment may still have gone out, so your pack is saved. Check it before pulling again.`, {
+				this._renderPullError(`${gachaFailLine(err, 'The payment could not be confirmed.')} Your payment may still have gone out, so your pack is saved. Check it before pulling again.`, {
 					retry: () => this._awaitPack(prep.memo, null), retryLabel: 'Check my pack',
 				});
 				return;
 			}
 			writePending(null);
-			this._renderPullError(err.message, { retry: () => this._renderDetail(this.machine), retryLabel: 'Back to the machine' });
+			this._renderPullError(gachaFailLine(err, 'Could not send your payment. Try again.'), { retry: () => this._renderDetail(this.machine), retryLabel: 'Back to the machine' });
 			return;
 		}
 		this.station?.playCrank?.();
@@ -1018,7 +1027,7 @@ class GachaUI {
 		} catch (err) {
 			if (this._ac.signal.aborted || !box.isConnected) return;
 			box.replaceChildren(
-				el('span', { class: 'ga-dim ga-small' }, err.message || 'The buyback offer is unavailable right now.'),
+				el('span', { class: 'ga-dim ga-small' }, gachaFailLine(err, 'The buyback offer is unavailable right now.')),
 				el('button', { class: 'ga-btn ga-btn-sm', type: 'button', onclick: () => this._loadBuyback(ctx) }, 'Check again'),
 			);
 		}
@@ -1031,7 +1040,7 @@ class GachaUI {
 		try {
 			prep = await gachaApi('buyback', { body: { player, nft }, signal: this._ac.signal });
 		} catch (err) {
-			box.replaceChildren(el('p', { class: 'ga-note is-warn' }, err.message), el('button', { class: 'ga-btn', type: 'button', onclick: () => this._loadBuyback(ctx) }, 'Try again'));
+			box.replaceChildren(el('p', { class: 'ga-note is-warn' }, gachaFailLine(err, 'The buyback offer could not be read. Try again.')), el('button', { class: 'ga-btn', type: 'button', onclick: () => this._loadBuyback(ctx) }, 'Try again'));
 			return;
 		}
 		const amount = prep.refundUsdc || quote.amountUsdc;
@@ -1083,7 +1092,7 @@ class GachaUI {
 		} catch (err) {
 			btn.disabled = false;
 			btn.textContent = 'Approve sale in wallet';
-			note.textContent = err.message;
+			note.textContent = gachaFailLine(err, 'Could not complete the sale. Try again.');
 			note.classList.add('is-warn');
 		}
 	}
@@ -1140,7 +1149,7 @@ class GachaUI {
 			data = await this._fetchCardsPage(owner, { offset: 0, fresh: this._cardsDirty });
 		} catch (err) {
 			if (this._ac.signal.aborted || stale()) return;
-			this._setView('cards', this._errorBlock(err.message || 'Your cards could not be read right now.', 'Try again', () => this._renderMyCards()), { back });
+			this._setView('cards', this._errorBlock(gachaFailLine(err, 'Your cards could not be read right now.'), 'Try again', () => this._renderMyCards()), { back });
 			return;
 		}
 		if (stale()) return;
@@ -1291,7 +1300,7 @@ class GachaUI {
 		} catch (err) {
 			this._cardsMoreBusy = false;
 			if (this._ac.signal.aborted || req !== this._cardsReq || this._cards !== st) return;
-			this._renderCardsMore(st, el('p', { class: 'ga-note is-warn', role: 'alert' }, `${err.message || 'More cards could not be read right now.'} Press Show more to try again.`));
+			this._renderCardsMore(st, el('p', { class: 'ga-note is-warn', role: 'alert' }, `${gachaFailLine(err, 'More cards could not be read right now.')} Press Show more to try again.`));
 			return;
 		}
 		this._cardsMoreBusy = false;
@@ -1358,7 +1367,7 @@ class GachaUI {
 		} catch (err) {
 			if (this._ac.signal.aborted || req !== this._cardsReq || this.view !== 'cards') return;
 			results.removeAttribute('aria-busy');
-			results.replaceChildren(this._errorBlock(err.message || 'The search could not run right now.', 'Try again', () => this._searchCards(q, { force: true })));
+			results.replaceChildren(this._errorBlock(gachaFailLine(err, 'The search could not run right now.'), 'Try again', () => this._searchCards(q, { force: true })));
 			return;
 		}
 		if (req !== this._cardsReq || this.view !== 'cards') return;

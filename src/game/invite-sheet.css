@@ -1,0 +1,163 @@
+/* Invite sheet (/play): QR, link, share.
+   Loaded with src/game/invite-sheet.js, which is imported lazily on the first
+   press, so none of this reaches a player who never invites anyone.
+   Tokens come from coincommunities.css; the fallbacks keep the sheet readable
+   if it ever mounts on a surface that has not loaded them. */
+
+#cc-invite {
+	position: fixed; inset: 0; z-index: 130;
+	display: grid; place-items: center; padding: 20px;
+	background: rgba(4, 4, 5, 0.5);
+	-webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+	opacity: 0; transition: opacity var(--duration-base) var(--ease-standard);
+}
+#cc-invite.cc-on { opacity: 1; }
+/* A sheet fading out must never catch the click meant for what is under it. */
+#cc-invite:not(.cc-on) { pointer-events: none; }
+
+.cc-invite-card {
+	position: relative; width: min(560px, 94vw); max-height: 90vh; overflow: auto;
+	background: var(--cc-panel-solid, #0c0c0c);
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	border-radius: var(--cc-radius, 4px);
+	box-shadow: var(--cc-shadow, 0 16px 50px rgba(0, 0, 0, 0.7));
+	padding: 20px; color: var(--cc-text, #f5f5f6);
+	transform: translateY(24px); transition: transform var(--duration-base) var(--ease-standard);
+}
+#cc-invite.cc-on .cc-invite-card { transform: none; }
+.cc-invite-card:focus { outline: none; }
+
+.cc-invite-close {
+	position: absolute; top: 12px; right: 12px; width: 30px; height: 30px;
+	display: grid; place-items: center; border-radius: var(--cc-radius-sm, 2px);
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	background: rgba(255, 255, 255, 0.04);
+	color: var(--cc-dim, #8c8c92); cursor: pointer; font-size: 14px; line-height: 1;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.cc-invite-close:hover { color: var(--cc-text, #f5f5f6); border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); background: rgba(255, 255, 255, 0.1); }
+.cc-invite-close:active { background: rgba(255, 255, 255, 0.16); }
+.cc-invite-close:focus-visible { outline: none; border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); box-shadow: 0 0 0 1px var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); }
+
+.cc-invite-kicker {
+	display: block; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+	color: var(--cc-dim, #8c8c92);
+}
+.cc-invite-h {
+	margin: 3px 40px 0 0; font-size: 17px; font-weight: 700; letter-spacing: 0.01em;
+	overflow-wrap: anywhere;
+}
+
+/* The event line: a quiet pill with a dot that pulses only while live. */
+.cc-invite-event {
+	display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 0;
+	padding: 5px 10px; border-radius: 999px;
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	background: rgba(255, 255, 255, 0.05);
+	font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--cc-text, #f5f5f6);
+}
+.cc-invite-event-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cc-dim, #8c8c92); }
+.cc-invite-event[data-state="live"] { border-color: rgba(120, 255, 170, 0.45); }
+.cc-invite-event[data-state="live"] .cc-invite-event-dot {
+	background: #6dffa6; box-shadow: 0 0 8px rgba(109, 255, 166, 0.7);
+	animation: cc-invite-live 1.6s ease-in-out infinite;
+}
+@keyframes cc-invite-live { 50% { opacity: 0.35; } }
+
+.cc-invite-body {
+	display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start;
+	margin-top: 16px;
+}
+
+/* QR: always on white (scanners need the contrast), square at every width. */
+.cc-invite-qr {
+	position: relative; width: 216px; aspect-ratio: 1; max-width: 100%;
+	border-radius: var(--cc-radius-sm, 2px); overflow: hidden;
+	background: #fff; display: grid; place-items: center;
+}
+.cc-invite-qr-canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.cc-invite-qr-skel {
+	position: absolute; inset: 0;
+	background: linear-gradient(100deg, #ececee 30%, #f8f8f9 50%, #ececee 70%);
+	background-size: 220% 100%; animation: cc-invite-shimmer 1.1s ease-in-out infinite;
+}
+@keyframes cc-invite-shimmer { from { background-position: 180% 0; } to { background-position: -80% 0; } }
+.cc-invite-qr[data-state="error"] {
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px dashed var(--cc-edge-hi, rgba(255, 255, 255, 0.55));
+	align-content: center; gap: 10px; padding: 18px; text-align: center;
+}
+.cc-invite-qr-err-ico {
+	width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+	border: 1px solid #ffd28a; color: #ffd28a; font-weight: 700;
+}
+.cc-invite-qr-err { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--cc-dim, #8c8c92); }
+
+.cc-invite-side { min-width: 0; display: flex; flex-direction: column; }
+.cc-invite-sub { margin: 0; font-size: 13px; line-height: 1.5; color: var(--cc-dim, #8c8c92); }
+.cc-invite-label {
+	margin-top: 14px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+	color: var(--cc-faint, #8f8f96);
+}
+.cc-invite-link {
+	margin-top: 6px; width: 100%; box-sizing: border-box; padding: 9px 10px;
+	border-radius: var(--cc-radius-sm, 2px);
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	background: rgba(255, 255, 255, 0.04); color: var(--cc-text, #f5f5f6);
+	font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	text-overflow: ellipsis;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.cc-invite-link:hover { border-color: rgba(255, 255, 255, 0.28); }
+.cc-invite-link:active { background: rgba(255, 255, 255, 0.07); }
+.cc-invite-link:focus-visible { outline: none; border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); box-shadow: 0 0 0 1px var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); }
+
+.cc-invite-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.cc-invite-btn {
+	flex: 1 1 120px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+	padding: 10px 14px; border-radius: var(--cc-radius, 4px); cursor: pointer;
+	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
+	background: rgba(255, 255, 255, 0.04); color: var(--cc-text, #f5f5f6);
+	font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.cc-invite-btn:hover { border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); background: rgba(255, 255, 255, 0.09); }
+.cc-invite-btn:active { transform: translateY(1px); }
+.cc-invite-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); box-shadow: 0 0 0 1px var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); }
+.cc-invite-primary { background: var(--cc-accent, #fff); color: var(--cc-ink, #060607); border-color: var(--cc-accent, #fff); }
+.cc-invite-primary:hover { background: #fff; box-shadow: var(--cc-glow, 0 0 14px rgba(255, 255, 255, 0.35)); }
+.cc-invite-primary:focus-visible { box-shadow: 0 0 0 2px var(--cc-panel-solid, #0c0c0c), 0 0 0 3px #fff; }
+
+.cc-invite-intents { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.cc-invite-intent {
+	flex: 1 1 120px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+	padding: 8px 12px; border-radius: var(--cc-radius, 4px);
+	border: 1px solid var(--cc-edge-soft, rgba(255, 255, 255, 0.07));
+	color: var(--cc-dim, #8c8c92); font-size: 12.5px; font-weight: 600; text-decoration: none;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.cc-invite-intent:hover { color: var(--cc-text, #f5f5f6); border-color: var(--cc-edge, rgba(255, 255, 255, 0.12)); background: rgba(255, 255, 255, 0.05); }
+.cc-invite-intent:active { background: rgba(255, 255, 255, 0.1); }
+.cc-invite-intent:focus-visible { outline: none; color: var(--cc-text, #f5f5f6); border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); box-shadow: 0 0 0 1px var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); }
+
+.cc-invite-status {
+	margin: 12px 0 0; min-height: 16px; font-size: 12px; line-height: 1.45;
+	color: var(--cc-dim, #8c8c92);
+}
+.cc-invite-status[data-kind="ok"] { color: #b8ffce; }
+.cc-invite-status[data-kind="warn"] { color: #ffd28a; }
+
+/* Phone: a bottom sheet with the QR centred on top, so it is the biggest thing
+   on screen when one phone is held up to another. */
+@media (max-width: 560px) {
+	#cc-invite { place-items: end center; padding: 12px; }
+	.cc-invite-card { width: 100%; padding: 16px; max-height: 88vh; }
+	.cc-invite-body { grid-template-columns: 1fr; gap: 14px; }
+	.cc-invite-qr { width: min(240px, 70vw); justify-self: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	#cc-invite, .cc-invite-card, .cc-invite-btn, .cc-invite-intent, .cc-invite-link, .cc-invite-close { transition: none; }
+	.cc-invite-card { transform: none; }
+	.cc-invite-qr-skel, .cc-invite-event[data-state="live"] .cc-invite-event-dot { animation: none; }
+}

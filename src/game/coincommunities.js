@@ -97,6 +97,7 @@ import { SignatureWall } from './signature-wall.js';
 import { WarPortal } from './war-portal.js';
 import { PlayOnboard } from './play-onboard.js';
 import { log } from '../shared/log.js';
+import { t } from './i18n-play.js';
 import { openAvatarInspector, isAvatarInspectorOpen, closeAvatarInspector } from '../shared/avatar-inspector.js';
 import { createAgentDesk } from './agent-desk.js';
 import { VehicleManager } from './vehicles.js';
@@ -717,6 +718,8 @@ export class CoinCommunities {
 			// Zen mode: strip every overlay for a clean view of the world.
 			// Photo mode: capture the world (never the chrome) onto a share card.
 			onPhoto: () => this._openPhotoMode(),
+			onInvite: () => this._openInvite(this.coin),
+			onInviteCoin: (coin) => this._openInvite(coin),
 			onZen: () => this._setZen(!this._zen),
 			onFeaturedClosed: () => { this._featuredOpen = false; },
 		});
@@ -5096,6 +5099,32 @@ export class CoinCommunities {
 		const shot = captureSceneCanvas(this.renderer, this.scene, this.camera, { maxWidth: maxW });
 		if (!shot) return null;
 		return { dataUrl: shot.canvas.toDataURL('image/jpeg', 0.72), width: shot.width, height: shot.height };
+	}
+
+	// ---------------------------------------------------------------- invite
+	// The invite sheet (QR, copyable link, share) for a coin world: the current
+	// one from the HUD, any lobby card's coin from the card's Invite action. The
+	// sheet and its CSS live in invite-sheet.js and load on the first press.
+	async _openInvite(coin) {
+		if (!coin?.mint || this._inviteLoading) return;
+		this._inviteLoading = true;
+		const btn = this.ui.inviteBtn;
+		btn?.setAttribute('aria-busy', 'true');
+		try {
+			const { openInviteSheet } = await import('./invite-sheet.js');
+			const shown = openInviteSheet({
+				coin,
+				toast: (msg, kind) => this.ui.toast(msg, kind),
+				onClose: () => btn?.setAttribute('aria-expanded', 'false'),
+			});
+			if (shown) btn?.setAttribute('aria-expanded', 'true');
+		} catch (err) {
+			log.warn('[coincommunities] invite sheet failed to load:', err?.message);
+			this.ui.toast(t('play.invite_load_failed', 'Couldn’t open the invite sheet. Check your connection and try again.'), 'warn');
+		} finally {
+			this._inviteLoading = false;
+			btn?.removeAttribute('aria-busy');
+		}
 	}
 
 	// ---------------------------------------------------------------- photo mode

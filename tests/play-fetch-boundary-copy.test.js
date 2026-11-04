@@ -26,4 +26,19 @@ describe('raw error text is replaced by netErrorMessage', () => {
 		expect(src).toContain("netErrorMessage(err, 'Could not open the funding flow.')");
 		expect(src).toContain("netErrorMessage(err, 'Sign-in failed.')");
 	});
+	// Each of these printed err.message straight into the panel, so a dropped
+	// connection read "Failed to fetch" and a gateway hiccup "http 502".
+	for (const [name, rel] of [
+		['gacha machine pull and sell-back', 'src/game/gacha-ui.js'],
+		['dance-off tip price', 'src/game/dance-off.js'],
+		['signature wall signing', 'src/game/signature-wall.js'],
+	]) {
+		it(name, () => {
+			const src = read(rel);
+			expect(src).toMatch(/import \{[^}]*netErrorMessage[^}]*\} from '\.\/net-error\.js'/);
+			expect(src).not.toMatch(/textContent = err\.message;/);
+			expect(src).not.toMatch(/\$\{err\.message\}/);
+			expect(src).not.toMatch(/\(err\.message \|\|/);
+		});
+	}
 });

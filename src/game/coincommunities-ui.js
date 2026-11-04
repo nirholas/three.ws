@@ -1449,7 +1449,23 @@ export class CommunityUI {
 						extra?.replies ? el('span', { class: 'cc-tag cc-tag-quiet', title: `${extra.replies} replies on this coin’s pump.fun board`, text: `${fmtCompact(extra.replies)} replies` }) : null,
 					])
 					: null,
-				el('div', { class: 'cc-card-cta', text: featured ? 'Enter home town →' : 'Enter community →' }),
+				el('div', { class: 'cc-card-foot' }, [
+					el('div', { class: 'cc-card-cta', text: featured ? 'Enter home town →' : 'Enter community →' }),
+					// Invite straight from the lobby: a player who already knows where
+					// they want their friend to land should not have to load the world
+					// first. A real button inside the card, so it stops the card's own
+					// enter action and is reachable by Tab.
+					c.mint ? el('button', {
+						type: 'button', class: 'cc-card-invite',
+						title: `Invite a friend to ${sym}`,
+						'aria-label': `Invite a friend to the ${cardName} world`,
+						onclick: (e) => { e.stopPropagation(); this.h.onInviteCoin?.(c); },
+						onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); },
+					}, [
+						el('span', { 'aria-hidden': 'true', html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="9" cy="8" r="3.4"/><path d="M3.2 19.4c.7-3.3 3-5.2 5.8-5.2s5.1 1.9 5.8 5.2"/><path d="M18.5 8.5v6M15.5 11.5h6"/></svg>' }),
+						el('span', { class: 'cc-card-invite-l', text: 'Invite', 'data-i18n': 'play.invite' }),
+					]) : null,
+				]),
 			]),
 			...(featured ? [liveBadge, holdersBadge, popPill] : []),
 		]);
@@ -1994,6 +2010,23 @@ export class CommunityUI {
 			el('span', { class: 'cc-photo-hud-label', text: 'Photo', 'data-i18n': 'play.photo' }),
 		]);
 
+		// Invite: the canonical world link as a QR, a copy field and a share
+		// sheet, so one player can pull the next one in from inside the world.
+		// The host lazy-loads src/game/invite-sheet.js on the first press.
+		this.inviteBtn = el('button', {
+			id: 'cc-invite-btn', class: 'cc-invite-hud-btn', type: 'button',
+			'aria-label': 'Invite a friend to this world', title: 'Invite a friend: link, QR code and share',
+			'data-i18n-attr': 'aria-label:play.invite_aria;title:play.invite_title',
+			'aria-haspopup': 'dialog',
+			onclick: () => this.h.onInvite?.(),
+		}, [
+			el('span', { class: 'cc-invite-hud-ico', 'aria-hidden': 'true', html:
+				'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+				+ '<circle cx="9" cy="8" r="3.4"/><path d="M3.2 19.4c.7-3.3 3-5.2 5.8-5.2s5.1 1.9 5.8 5.2"/><path d="M18.5 8.5v6M15.5 11.5h6"/>'
+				+ '</svg>' }),
+			el('span', { class: 'cc-invite-hud-label', text: 'Invite', 'data-i18n': 'play.invite' }),
+		]);
+
 		// Zen mode: hide every overlay so the world renders clean. Same
 		// body.is-zen contract as /walk; Z is the hotkey (wired by the host) and
 		// the floating exit pill below is the only control left on screen.
@@ -2048,7 +2081,7 @@ export class CommunityUI {
 		this._buildKingHud();
 		// A labelled landmark, so a screen reader can jump straight to the world
 		// controls instead of arrowing through the whole document.
-		this.hud = el('div', { id: 'cc-hud', hidden: true, role: 'region', 'aria-label': 'World controls', 'data-i18n-attr': 'aria-label:play.hud_region' }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.photoBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
+		this.hud = el('div', { id: 'cc-hud', hidden: true, role: 'region', 'aria-label': 'World controls', 'data-i18n-attr': 'aria-label:play.hud_region' }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.zenBtn, this.photoBtn, this.inviteBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
 		document.body.appendChild(this.hud);
 	}
 

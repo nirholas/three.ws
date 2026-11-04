@@ -21,6 +21,7 @@ import {
 	PerspectiveCamera, WebGLRenderTarget, Vector3,
 } from 'three';
 import { ensureX402 } from '../shared/x402-loader.js';
+import { netErrorMessage } from './net-error.js';
 
 const TIP_ENDPOINT = '/api/x402/dance-tip';
 const TIP_ROUTINES = [
@@ -770,7 +771,7 @@ export class DanceOffClient {
 				if (this._tip !== tip) return;
 				body.textContent = '';
 				body.append(
-					el('p', { class: 'dof-err', role: 'alert', text: `Could not read the price from the server: ${err.message}` }),
+					el('p', { class: 'dof-err', role: 'alert', text: netErrorMessage(err.code === 'bad_challenge' ? null : err, 'Could not read the tip price. Try again.') }),
 					el('button', { class: 'dof-btn', type: 'button', text: 'Try again', onclick: load }),
 				);
 			}
@@ -815,18 +816,19 @@ export class DanceOffClient {
 		try {
 			res = await fetch(`${TIP_ENDPOINT}?dancer=1&dance=${encodeURIComponent(dance)}`, { headers: { accept: 'application/json' } });
 		} catch {
-			throw new Error('network error. Check your connection.');
+			throw Object.assign(new Error('network error'), { code: 'network' });
 		}
-		if (res.status !== 402) throw new Error(`the tip service answered ${res.status}.`);
+		if (res.status !== 402) throw Object.assign(new Error(`the tip service answered ${res.status}`), { status: res.status });
+		const badChallenge = (why) => Object.assign(new Error(why), { code: 'bad_challenge' });
 		let json;
-		try { json = await res.json(); } catch { throw new Error('the payment challenge was unreadable.'); }
+		try { json = await res.json(); } catch { throw badChallenge('the payment challenge was unreadable'); }
 		const accepts = Array.isArray(json?.accepts) ? json.accepts : [];
 		const sol = accepts.find((a) => String(a.network || '').startsWith('solana') && a.payTo);
 		const a = sol || accepts.find((x) => x.payTo);
-		if (!a) throw new Error('the payment challenge named no recipient.');
+		if (!a) throw badChallenge('the payment challenge named no recipient');
 		const decimals = Number(a.extra?.decimals ?? 6);
 		const atomics = Number(a.amount ?? a.maxAmountRequired);
-		if (!Number.isFinite(atomics) || atomics <= 0) throw new Error('the payment challenge named no amount.');
+		if (!Number.isFinite(atomics) || atomics <= 0) throw badChallenge('the payment challenge named no amount');
 		const value = atomics / 10 ** decimals;
 		return {
 			payTo: String(a.payTo),

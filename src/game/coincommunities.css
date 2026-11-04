@@ -983,6 +983,21 @@ html[data-bg="transparent"] #cc-lobby {
    the only thing that told a mouse user the tile was clickable. Resting state
    is a quiet ghost button that fills the space and names the action; hover,
    keyboard focus, and any hover-less pointer promote it to solid white. */
+/* The card's foot: the call to action, plus a compact Invite beside it. */
+.cc-card-foot { margin-top: auto; display: flex; gap: 6px; align-items: stretch; }
+.cc-card-foot .cc-card-cta { flex: 1 1 auto; margin-top: 0; }
+.cc-card-invite {
+	flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
+	padding: 0 10px; border-radius: var(--cc-radius-sm); cursor: pointer;
+	background: rgba(255, 255, 255, 0.04); color: var(--cc-dim);
+	border: 1px solid var(--cc-edge-soft);
+	font: inherit; font-weight: 700; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.cc-card-invite svg { width: 15px; height: 15px; display: block; }
+.cc-card-invite:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.1); }
+.cc-card-invite:active { background: rgba(255, 255, 255, 0.16); }
+.cc-card-invite:focus-visible { outline: none; color: var(--cc-text); border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
 .cc-card-cta {
 	margin-top: auto; padding: 8px 0; text-align: center; border-radius: var(--cc-radius-sm);
 	background: rgba(255, 255, 255, 0.05); color: var(--cc-dim);
@@ -1026,6 +1041,9 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-card-featured .cc-card-name { font-size: 22px; white-space: normal; }
 .cc-card-featured .cc-card-meta { font-size: 13px; }
 .cc-card-featured .cc-card-cta { background: #fff; border-color: #fff; color: var(--cc-ink); align-self: flex-start; padding: 10px 22px; margin-top: 16px; }
+.cc-card-featured .cc-card-foot { margin-top: 16px; justify-content: flex-start; flex-wrap: wrap; }
+.cc-card-featured .cc-card-foot .cc-card-cta { flex: 0 0 auto; margin-top: 0; }
+.cc-card-featured .cc-card-invite { padding: 0 14px; }
 .cc-card-official {
 	position: absolute; top: 9px; left: 9px; z-index: 1;
 	display: inline-flex; align-items: center; gap: 6px;
@@ -1225,6 +1243,30 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-photo-hud-ico { display: inline-flex; }
 .cc-photo-hud-ico svg { width: 16px; height: 16px; display: block; }
 .cc-photo-hud-label { line-height: 1; }
+/* invite, under photo: the last of the top-right stack. The sheet it opens is
+   styled in src/game/invite-sheet.css, loaded with the lazy module. Zen hides
+   it with the rest of the HUD (a clean screen is for looking, not sharing). */
+.cc-invite-hud-btn {
+	position: fixed; top: 272px; right: 14px; z-index: 22;
+	display: inline-flex; align-items: center; gap: 8px;
+	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
+	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.cc-invite-hud-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
+.cc-invite-hud-btn:active { background: rgba(255, 255, 255, 0.12); }
+.cc-invite-hud-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+.cc-invite-hud-btn[aria-expanded="true"] { color: var(--cc-text); border-color: var(--cc-edge-hi); }
+.cc-invite-hud-btn[aria-busy="true"] { color: var(--cc-text); cursor: progress; }
+.cc-invite-hud-ico { display: inline-flex; }
+.cc-invite-hud-ico svg { width: 16px; height: 16px; display: block; }
+.cc-invite-hud-label { line-height: 1; }
+@media (prefers-reduced-motion: reduce) {
+	.cc-invite-hud-btn { transition: none; }
+}
+
 /* Zen keeps the camera: a world with no chrome on it is exactly the shot people
    want, and the capture is an offscreen render, so this button is never in it.
    It slides up under the "Show UI" pill once the rest of the stack is gone. */
@@ -3908,7 +3950,7 @@ summary:focus-visible,
 	/* World HUD bar and the fixed right-edge stack */
 	.cc-shop-btn, .cc-wardrobe-btn, .cc-avatarbtn, .cc-jobs-btn, .cc-friends-btn,
 	.cc-buy-btn, .cc-leave, .cc-voice, .cc-power-btn, .cc-zen-btn,
-	.cc-build-toggle, .cc-chat-head, #cc-status, .cc-photo-hud-btn {
+	.cc-build-toggle, .cc-chat-head, #cc-status, .cc-photo-hud-btn, .cc-invite-hud-btn, .cc-card-invite {
 		min-height: 40px;
 	}
 
