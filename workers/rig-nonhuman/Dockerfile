@@ -97,8 +97,15 @@ RUN python3 /app/test_pipeline.py && python3 /app/test_gltf_meshopt.py
 # Import gate: load the exact entry modules pipeline.py runs (UniRig's run.py,
 # SkinTokens' demo.py; both guard their CLI behind __main__) so a dependency
 # that cannot import fails the build, not the first rig request. pip check
-# catches resolver conflicts the installs above only warn about.
-RUN pip check \
+# catches resolver conflicts the installs above only warn about. Its one
+# tolerated line is "bpy 4.2.0 is not supported on this platform": a false
+# positive from pip's wheel-tag check (the installed wheel is
+# manylinux_2_28_x86_64 and this Ubuntu 22.04 base has glibc 2.35), and the
+# `import bpy` below proves bpy loads here. Any other line fails the build.
+RUN { pip check > /tmp/pip-check.txt 2>&1 || true; } \
+    && cat /tmp/pip-check.txt \
+    && ! grep -vxE 'No broken requirements found\.|bpy 4\.2\.0 is not supported on this platform' /tmp/pip-check.txt \
+    && python3 -c "import bpy; print('bpy', bpy.app.version_string)" \
     && cd /app/unirig && python3 -c "import run" \
     && cd /app/skintokens && python3 -c "import demo" \
     && python3 -c "import numpy, pandas; print('numpy', numpy.__version__, 'pandas', pandas.__version__)"
