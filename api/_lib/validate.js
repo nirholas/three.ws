@@ -24,6 +24,14 @@ export const avatarAppearance = z
 		outfit: z.string().min(1).max(64).nullable().optional(),
 		accessories: z.array(z.string().min(1).max(64)).max(8).optional(),
 		morphs: z.record(z.number().min(0).max(1)).optional(),
+		// Which base body the record was authored against. Written by the
+		// Avatar Composer's parametric mode so a shared record names its body;
+		// the baker ignores it (the base GLB is chosen by the caller).
+		base: z.enum(['parametric-base-v1']).optional(),
+		// Skeleton-space build ratios (src/avatar-proportions.js, baked by
+		// bake-proportions.js). Per-id ranges are clamped by the baker; the
+		// schema bounds them so a stored record cannot carry absurd scales.
+		proportions: z.record(z.number().min(0.5).max(2)).optional(),
 		// Garment layers: per-slot recolour (hex) + hidden slot ids. Slot-id and
 		// hex validity is enforced in validateAppearance() (accessories.js).
 		colors: z.record(z.string().regex(/^#[0-9a-fA-F]{6}$/)).optional(),

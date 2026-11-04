@@ -47,7 +47,7 @@ function makeRes() {
 describe('composeSurprise (pure, injected loader)', () => {
 	it('returns a valid, rigged GLB with a name and descriptor', async () => {
 		const { composeSurprise } = await import('../../api/avatars/surprise.js');
-		const r = await composeSurprise({ seed: 'unit-seed-1' }, { loadBase });
+		const r = await composeSurprise({ seed: 'unit-seed-1', base: 'rpm' }, { loadBase });
 		expect(r.seed).toBe('unit-seed-1');
 		expect(typeof r.name).toBe('string');
 		expect(r.name.split(' ').length).toBe(2); // "Adjective Noun"
@@ -59,17 +59,48 @@ describe('composeSurprise (pure, injected loader)', () => {
 
 	it('is deterministic on the seed', async () => {
 		const { composeSurprise } = await import('../../api/avatars/surprise.js');
-		const a = await composeSurprise({ seed: 'same-seed' }, { loadBase });
-		const b = await composeSurprise({ seed: 'same-seed' }, { loadBase });
+		const a = await composeSurprise({ seed: 'same-seed', base: 'rpm' }, { loadBase });
+		const b = await composeSurprise({ seed: 'same-seed', base: 'rpm' }, { loadBase });
 		expect(Buffer.from(a.bytes).equals(Buffer.from(b.bytes))).toBe(true);
 		expect(a.name).toBe(b.name);
 	}, 30_000);
 
 	it('honors a gender bias', async () => {
 		const { composeSurprise } = await import('../../api/avatars/surprise.js');
-		const m = await composeSurprise({ seed: 'g-seed', gender: 'male' }, { loadBase });
+		const m = await composeSurprise({ seed: 'g-seed', gender: 'male', base: 'rpm' }, { loadBase });
 		expect(m.descriptor.gender).toBe('male');
 	}, 30_000);
+});
+
+describe('composeSurprise, parametric base (default)', () => {
+	const noGarments = async () => [];
+
+	it('returns the appearance record and a baked GLB for the parametric base', async () => {
+		const { composeSurprise } = await import('../../api/avatars/surprise.js');
+		const r = await composeSurprise({ seed: 'param-unit' }, { loadBase, loadCatalog: noGarments });
+		expect(r.base).toBe('parametric-base-v1');
+		expect(r.appearance.base).toBe('parametric-base-v1');
+		expect(Object.keys(r.appearance.morphs).length).toBeGreaterThan(5);
+		const report = await gltfValidator.validateBytes(new Uint8Array(r.bytes));
+		expect(report.issues.messages.filter((m) => m.severity === 0)).toEqual([]);
+	}, 60_000);
+
+	it('skips the bake when asked for the record only, and is deterministic', async () => {
+		const { composeSurprise } = await import('../../api/avatars/surprise.js');
+		const a = await composeSurprise({ seed: 's1', bake: false }, { loadBase, loadCatalog: noGarments });
+		const b = await composeSurprise({ seed: 's1', bake: false }, { loadBase, loadCatalog: noGarments });
+		expect(a.bytes).toBeNull();
+		expect(a.appearance).toEqual(b.appearance);
+	});
+
+	it('composes without garments when the catalog is unreachable', async () => {
+		const { composeSurprise } = await import('../../api/avatars/surprise.js');
+		const r = await composeSurprise(
+			{ seed: 's2', bake: false },
+			{ loadBase, loadCatalog: async () => { throw new Error('offline'); } },
+		);
+		expect(r.appearance.garments).toEqual([]);
+	});
 });
 
 describe('handler wire contract', () => {

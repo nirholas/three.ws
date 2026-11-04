@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Surprise me builds real bodies",
+			"summary": "The one-click Surprise me avatar now draws a full look on the Parametric body: face and body shape sliders, height and limb proportions, skin tone, clothes and hair from the live catalog, and up to two accessories. Every result shows its seed so you can reload, share or recreate it, and a body style picker keeps the classic lane one click away.",
+			"tags": [
+				"feature",
+				"avatar"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Talking-avatar video gets a scripted GPU host",
 			"summary": "The LongCat video worker now has an on-demand 80 GB GPU host with TLS, idle self-shutdown, a daily GPU-hour cap and a quota request script. When no host is up, video requests answer a clear capacity error and keep the free trial.",
 			"tags": ["infra"]

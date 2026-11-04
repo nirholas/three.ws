@@ -39,7 +39,7 @@ export const GARMENT_CATALOG_URL =
 let _catalog = null; // { garments, expiresAt }
 const CATALOG_TTL_MS = 5 * 60_000;
 
-async function loadServerCatalog() {
+export async function loadServerCatalog() {
 	if (_catalog && _catalog.expiresAt > Date.now()) return _catalog.garments;
 	const res = await fetchUpstream(GARMENT_CATALOG_URL, { headers: { accept: 'application/json' } }, { name: 'gcs-garments', timeoutMs: 15_000, attempts: 2, okWhen: () => true });
 	if (!res.ok) throw new Error(`garment catalog fetch failed: ${res.status}`);

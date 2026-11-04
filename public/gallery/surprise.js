@@ -23,6 +23,7 @@ let modal = null;
 let currentBlobUrl = null;
 let currentMeta = null;
 let lastFocus = null;
+let currentBase = 'parametric';
 
 // Deterministic hue from the seed so the stage tint matches the avatar and a
 // reroll visibly changes the backdrop: a small, satisfying signal of "new one".
@@ -67,7 +68,19 @@ function buildModal() {
 			<div class="surprise-meta" data-meta hidden>
 				<span class="surprise-eyebrow">// your avatar</span>
 				<h2 class="surprise-name" data-name>-</h2>
-				<p class="surprise-tags">Rigged &amp; animation-ready · Yours to keep · No two alike</p>
+				<p class="surprise-tags" data-detail>Rigged &amp; animation-ready · Yours to keep · No two alike</p>
+				<form class="surprise-seed" data-seed-form autocomplete="off">
+					<label class="surprise-seed-label" for="surprise-seed-input">Seed</label>
+					<input class="surprise-seed-input" id="surprise-seed-input" data-seed-input type="text"
+						maxlength="100" spellcheck="false" placeholder="Paste a seed to recreate an avatar"
+						aria-describedby="surprise-seed-help" />
+					<select class="surprise-seed-base" data-base aria-label="Body style">
+						<option value="parametric">Parametric body</option>
+						<option value="rpm">Classic body</option>
+					</select>
+					<button class="surprise-btn surprise-btn--ghost surprise-seed-go" type="submit">Load</button>
+				</form>
+				<p class="surprise-seed-help" id="surprise-seed-help" data-seed-help>The same seed always gives the same avatar. Leave it empty to roll a new one.</p>
 			</div>
 			<div class="surprise-actions" data-actions hidden>
 				<button class="surprise-btn surprise-btn--ghost" data-again type="button">
@@ -84,6 +97,11 @@ function buildModal() {
 	el.querySelectorAll('[data-again]').forEach((n) => n.addEventListener('click', () => reveal()));
 	el.querySelector('[data-claim]').addEventListener('click', claim);
 	el.querySelector('[data-share]').addEventListener('click', copyShareLink);
+	el.querySelector('[data-seed-form]').addEventListener('submit', (e) => {
+		e.preventDefault();
+		const typed = el.querySelector('[data-seed-input]').value.trim();
+		reveal(typed || undefined, el.querySelector('[data-base]').value);
+	});
 	document.addEventListener('keydown', onKeydown);
 	return el;
 }
@@ -112,10 +130,24 @@ function revokeBlob() {
 	if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; }
 }
 
-async function reveal(seed) {
+// One line describing what the seed built, so the result is legible, not just a name.
+function describeMeta(meta) {
+	const d = meta.descriptor || {};
+	if (meta.base === 'rpm') return 'Classic body · Rigged & animation-ready · No two alike';
+	const worn = (d.garments?.length || 0) + (d.accessories?.length || 0);
+	const morphs = Object.keys(meta.appearance?.morphs || {}).length;
+	return `Parametric body · ${morphs} shape sliders · ${worn} worn ${worn === 1 ? 'piece' : 'pieces'} · Rigged & animation-ready`;
+}
+
+async function reveal(seed, base = currentBase) {
 	ensureModelViewer();
 	setState('loading');
-	const url = seed ? `${ENDPOINT}?seed=${encodeURIComponent(seed)}` : ENDPOINT;
+	currentBase = base === 'rpm' ? 'rpm' : 'parametric';
+	const params = new URLSearchParams();
+	if (seed) params.set('seed', seed);
+	if (currentBase === 'rpm') params.set('base', 'rpm');
+	const query = params.toString();
+	const url = query ? `${ENDPOINT}?${query}` : ENDPOINT;
 	try {
 		const res = await fetch(url, { method: 'POST', headers: { accept: 'model/gltf-binary' } });
 		if (!res.ok) {
@@ -134,12 +166,17 @@ async function reveal(seed) {
 		const hue = hueFromSeed(meta.seed);
 		modal.querySelector('[data-stage]').style.setProperty('--surprise-hue', String(hue));
 		modal.querySelector('[data-name]').textContent = meta.name || 'Your avatar';
+		modal.querySelector('[data-detail]').textContent = describeMeta(meta);
+		modal.querySelector('[data-seed-input]').value = meta.seed || '';
+		modal.querySelector('[data-base]').value = currentBase;
 
 		// Keep the URL shareable without a reload.
 		if (meta.seed) {
 			try {
 				const u = new URL(window.location.href);
 				u.searchParams.set('surprise', meta.seed);
+				if (currentBase === 'rpm') u.searchParams.set('base', 'rpm');
+				else u.searchParams.delete('base');
 				window.history.replaceState({}, '', u);
 			} catch { /* non-fatal */ }
 		}
@@ -172,7 +209,7 @@ async function claim() {
 
 async function copyShareLink() {
 	if (!currentMeta?.seed) return;
-	const link = `${window.location.origin}/gallery?surprise=${encodeURIComponent(currentMeta.seed)}`;
+	const link = `${window.location.origin}/gallery?surprise=${encodeURIComponent(currentMeta.seed)}${currentBase === 'rpm' ? '&base=rpm' : ''}`;
 	const btn = modal.querySelector('[data-share]');
 	try {
 		await navigator.clipboard.writeText(link);
@@ -184,14 +221,14 @@ async function copyShareLink() {
 	}
 }
 
-function open(seed) {
+function open(seed, base) {
 	if (!modal) modal = buildModal();
 	lastFocus = document.activeElement;
 	modal.hidden = false;
 	document.body.style.overflow = 'hidden';
 	requestAnimationFrame(() => modal.classList.add('is-open'));
 	modal.querySelector('.surprise-close').focus();
-	reveal(seed);
+	reveal(seed, base);
 }
 
 function close() {
@@ -213,8 +250,9 @@ function wire() {
 	});
 	// Deep-link: /gallery?surprise=<seed> opens straight into that avatar.
 	try {
-		const seed = new URL(window.location.href).searchParams.get('surprise');
-		if (seed) open(seed);
+		const params = new URL(window.location.href).searchParams;
+		const seed = params.get('surprise');
+		if (seed) open(seed, params.get('base') === 'rpm' ? 'rpm' : 'parametric');
 	} catch { /* non-fatal */ }
 }
 

@@ -15,16 +15,26 @@
 // Query / body params (all optional):
 //   seed    reproducible seed (any string). Omitted → a fresh random one.
 //   gender  'male' | 'female' bias for the identity body. Omitted → from the seed.
+//   base    'parametric' (default) | 'rpm'. Parametric draws a seeded appearance
+//           record (morphs, proportions, skin, garments, accessories) for the
+//           Parametric base and bakes it; 'rpm' is the legacy part-mixing lane
+//           across the Ready-Player-Me bases.
+//   format  'glb' (default) | 'json'. json skips the bake and returns the
+//           appearance record only (parametric base), which is cheap and lets a
+//           client or test inspect exactly what a seed means.
 //
 // Response: `model/gltf-binary` bytes, with an `x-avatar-meta` header carrying
-// `{ seed, name, descriptor }` (exposed via CORS).
+// `{ seed, name, base, descriptor, appearance? }` (exposed via CORS). The
+// appearance record is present for the parametric base and is the same shape
+// the avatar editor saves.
 
 import { cors, method, error, rateLimited, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { fetchModel } from '../_lib/fetch-model.js';
 import { env } from '../_lib/env.js';
 import { pickDiversityProfile } from '../_lib/avaturn-seed.js';
-import { composeStudioAvatar } from '../_lib/avatar-composer/index.js';
+import { composeStudioAvatar, composeParametricAvatar } from '../_lib/avatar-composer/index.js';
+import { loadServerCatalog } from '../_lib/bake-garments.js';
 import { randomUUID } from 'node:crypto';
 
 export const maxDuration = 30;
@@ -65,20 +75,30 @@ function nameFromSeed(seed) {
 }
 
 /**
- * Compose one surprise avatar. Pure aside from `loadBase`, so tests can inject a
- * disk loader and callers get the deployed fetch-from-origin loader by default.
+ * Compose one surprise avatar. Pure aside from `loadBase` / `loadCatalog`, so
+ * tests can inject a disk loader and callers get the deployed loaders by default.
  *
- * @param {{ seed?: string, gender?: 'male'|'female' }} [opts]
- * @param {{ loadBase?: (id: string) => Promise<Uint8Array> }} [deps]
- * @returns {Promise<{ bytes: Uint8Array, seed: string, name: string, descriptor: object }>}
+ * @param {{ seed?: string, gender?: 'male'|'female', base?: 'parametric'|'rpm', bake?: boolean }} [opts]
+ * @param {{ loadBase?: (id: string) => Promise<Uint8Array>, loadCatalog?: () => Promise<object[]> }} [deps]
+ * @returns {Promise<{ bytes: Uint8Array|null, seed: string, name: string, base: string, descriptor: object, appearance?: object }>}
  */
-export async function composeSurprise({ seed, gender } = {}, deps = {}) {
+export async function composeSurprise({ seed, gender, base = 'parametric', bake = true } = {}, deps = {}) {
 	const loadBase = deps.loadBase || defaultLoadBase;
 	const s = seed && String(seed).trim() ? String(seed).trim().slice(0, 100) : randomUUID();
 	const profile = pickDiversityProfile(s);
 	if (gender === 'male' || gender === 'female') profile.gender = gender;
-	const { bytes, descriptor } = await composeStudioAvatar({ profile, seed: s, loadBase });
-	return { bytes, seed: s, name: nameFromSeed(s), descriptor };
+	if (base === 'rpm') {
+		const { bytes, descriptor } = await composeStudioAvatar({ profile, seed: s, loadBase });
+		return { bytes, seed: s, name: nameFromSeed(s), base: 'rpm', descriptor };
+	}
+	const { bytes, appearance, descriptor } = await composeParametricAvatar({
+		profile,
+		seed: s,
+		loadBase,
+		loadCatalog: deps.loadCatalog || loadServerCatalog,
+		bake,
+	});
+	return { bytes, seed: s, name: nameFromSeed(s), base: appearance.base, descriptor, appearance };
 }
 
 export default wrap(async (req, res) => {
@@ -94,11 +114,26 @@ export default wrap(async (req, res) => {
 	const genderParam = url.searchParams.get('gender');
 	const gender = genderParam === 'male' || genderParam === 'female' ? genderParam : undefined;
 
+	const base = url.searchParams.get('base') === 'rpm' ? 'rpm' : 'parametric';
+	const json = url.searchParams.get('format') === 'json';
+	if (json && base === 'rpm') {
+		return error(res, 400, 'invalid_request', 'format=json is only available for the parametric base');
+	}
+
 	let result;
 	try {
-		result = await composeSurprise({ seed, gender });
+		result = await composeSurprise({ seed, gender, base, bake: !json });
 	} catch (err) {
 		return error(res, 502, 'compose_failed', `could not compose an avatar: ${err?.message || err}`);
+	}
+
+	const meta = { seed: result.seed, name: result.name, base: result.base, descriptor: result.descriptor, appearance: result.appearance };
+	if (json) {
+		res.statusCode = 200;
+		res.setHeader('content-type', 'application/json');
+		res.setHeader('cache-control', 'public, max-age=31536000, immutable');
+		res.end(JSON.stringify(meta));
+		return;
 	}
 
 	res.statusCode = 200;
@@ -106,7 +141,7 @@ export default wrap(async (req, res) => {
 	res.setHeader('content-disposition', `inline; filename="${result.name.replace(/\s+/g, '-').toLowerCase()}.glb"`);
 	// Deterministic on the seed → safe to cache hard. A reroll uses a new seed.
 	res.setHeader('cache-control', 'public, max-age=31536000, immutable');
-	res.setHeader('x-avatar-meta', JSON.stringify({ seed: result.seed, name: result.name, descriptor: result.descriptor }));
+	res.setHeader('x-avatar-meta', JSON.stringify(meta));
 	res.setHeader('access-control-expose-headers', 'x-avatar-meta');
 	res.end(Buffer.from(result.bytes));
 });

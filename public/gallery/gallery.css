@@ -1351,6 +1351,25 @@ body.gallery-page {
 	box-shadow: 0 6px 20px rgba(236, 72, 153, 0.28);
 }
 .surprise-btn--primary:hover:not(:disabled) { filter: brightness(1.06); }
+/* Seed row: reproduce or share a result by seed, pick the body style. */
+.surprise-seed { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.surprise-seed-label { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }
+.surprise-seed-input, .surprise-seed-base {
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 10px;
+	color: #eaeaf0;
+	font: inherit;
+	font-size: 0.82rem;
+	padding: 7px 10px;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.surprise-seed-input { flex: 1 1 160px; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.surprise-seed-input::placeholder { color: rgba(255, 255, 255, 0.38); }
+.surprise-seed-input:hover, .surprise-seed-base:hover { border-color: rgba(255, 255, 255, 0.28); }
+.surprise-seed-input:focus-visible, .surprise-seed-base:focus-visible { outline: 2px solid rgba(236, 72, 153, 0.7); outline-offset: 2px; }
+.surprise-seed-go { padding: 7px 14px; }
+.surprise-seed-help { margin: 6px 0 0; font-size: 0.74rem; color: rgba(255, 255, 255, 0.45); }
 .surprise-share {
 	align-self: center;
 	background: none;

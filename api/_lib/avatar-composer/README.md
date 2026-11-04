@@ -48,6 +48,34 @@ exact:
 
 Cross-group mixing (which needs true vertex rebinding) is the planned v2.
 
+## Parametric mode (default for new surprises)
+
+`api/_lib/avatar-composer/parametric.js` draws a seeded **appearance record** for
+`public/avatars/parametric-base.glb` instead of grafting parts between RPM bases,
+which is what gives real body and face variety (the RPM bases carry no body
+morphs). The record is the same format the avatar editor saves
+(`avatarAppearance` in `api/_lib/validate.js`) and bakes with `bakeAppearance()`:
+
+- `morphs`: 7 to 12 identity sliders. Groups come from the base's own morph names
+  (`deriveSliders`), so a rebuilt base needs no list edits. Opposing sliders
+  (`headWider`/`headNarrower`) are never taken together, left/right pairs move
+  together, and gender, ethnicity blend and age macros are placed first.
+- `proportions`: height plus 2 to 4 skeleton ratios, each at most 70% of the way
+  to its limit in `src/avatar-proportions.js`.
+- `colors.skin`: a tone along the profile's ethnicity range.
+- `garments`: top, bottom, footwear, hair and sometimes outerwear from the live
+  catalog.
+- `accessories`: 0 to 2 bone presets (one hat, glasses or earrings each).
+- `base`: `'parametric-base-v1'`.
+
+```js
+import { composeParametricAvatar } from './index.js';
+const { bytes, appearance } = await composeParametricAvatar({ profile, seed, loadBase, loadCatalog });
+```
+
+`/api/avatars/surprise` uses parametric by default; `?base=rpm` selects the
+legacy lane, and `?format=json` returns just the record.
+
 ## Public API
 
 ```js
@@ -96,17 +124,26 @@ console.log(descriptor.identity, descriptor.parts); // e.g. selfie-girl { hair:'
 
 ## Tests
 
+`tests/avatar-composer-parametric.test.js`: 200 seeds produce valid, bakeable,
+deterministic records with a real spread of builds, and 10 seeds bake end to end.
+
 `tests/avatar-composer.test.js`: selection determinism, the rest-pose-group
 rule, and a full compose validated with `gltf-validator` (0 errors) that checks
 the output is rigged and carries ARKit blendshapes.
 
-## Limits / roadmap
+## Limits
 
-- **Cross-group part mixing** needs vertex rebinding (deform a part to the target
-  rest pose); today it is restricted to same-group for an exact fit.
-- **Body-shape variety** (weight, height, proportions) needs real body morphs,
-  which the RPM bases don't carry: a parametric-body backbone (MakeHuman CC0 /
-  Google GHUM Apache-2.0) is the path.
-- **Bone-attached accessories** (`public/accessories/` hats, glasses, earrings)
-  ride a bone, not the skin, so they compose cross-base safely: a clean next add
-  via the existing `api/_lib/bake.js` merge.
+- **Part mixing across rest-pose groups** (legacy RPM mode) still needs vertex
+  rebinding, so it stays restricted to same-group. Parametric mode does not have
+  this limit: every garment binds to the one Parametric skeleton.
+- **Garments are not tintable.** The catalog's wearables carry baked palettes
+  (`materials.tintable: false`), so a parametric record varies skin tone but not
+  garment color.
+- **Hair is a garment.** Hair styles are the 8 catalog hair pieces, so hair colour
+  variety is whatever the catalog ships.
+- **Catalog outage degrades, not fails.** If the garment catalog cannot be
+  fetched, the avatar composes without garments (bare body plus morphs,
+  proportions, skin and accessories).
+- **Bake cost.** A parametric compose fetches up to five garment GLBs (2 to 4 MB
+  each, cached by the CDN) and runs the full bake, so it is slower than the
+  legacy path. `format=json` on the surprise endpoint skips the bake.

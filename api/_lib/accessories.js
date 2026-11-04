@@ -15,6 +15,11 @@ const PRESET_IDS = new Set([
 	'earrings-studs',
 ]);
 
+/** Every preset id, in declaration order (the composer draws accessories from it). */
+export function listPresetIds() {
+	return [...PRESET_IDS];
+}
+
 export function isValidPresetId(id) {
 	return PRESET_IDS.has(id);
 }

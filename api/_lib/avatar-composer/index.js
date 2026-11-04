@@ -9,10 +9,23 @@
 import { composeAvatar } from './compose.js';
 import { selectRecipe, basesNeeded } from './select.js';
 import { BASES } from './parts.js';
+import {
+	selectParametricAppearance,
+	readMorphNames,
+	PARAMETRIC_BASE_FILE,
+} from './parametric.js';
+import { bakeAppearance } from '../bake.js';
 
 export { composeAvatar } from './compose.js';
 export { selectRecipe, basesNeeded } from './select.js';
 export { BASES, BASE_BY_ID } from './parts.js';
+export {
+	selectParametricAppearance,
+	readMorphNames,
+	deriveSliders,
+	PARAMETRIC_BASE_ID,
+	PARAMETRIC_BASE_FILE,
+} from './parametric.js';
 
 /**
  * Compose one studio avatar end-to-end.
@@ -36,6 +49,44 @@ export async function composeStudioAvatar({ profile, seed, loadBase }) {
 	const { bytes, meshes, recolored } = await composeAvatar(recipe, bytesByBase);
 	const { descriptor, ...recipeCore } = recipe;
 	return { bytes, recipe: recipeCore, descriptor, meshes, recolored };
+}
+
+/**
+ * Compose one studio avatar in parametric mode: choose a seeded appearance record
+ * for the Parametric base and bake it into the base GLB.
+ *
+ * @param {Object} opts
+ * @param {object} opts.profile  diversity profile (see composeStudioAvatar)
+ * @param {string} opts.seed
+ * @param {(baseId: string) => Promise<Uint8Array>} opts.loadBase  loads a base GLB by file id
+ * @param {() => Promise<Array<{slot:string,id:string}>>} [opts.loadCatalog]  garment catalog
+ *        source; a rejection degrades to "no garments" so a catalog outage never fails a compose
+ * @param {boolean} [opts.bake]  false returns the record without baking (cheap, for sharing)
+ * @returns {Promise<{ bytes: Uint8Array|null, appearance: object, descriptor: object }>}
+ */
+export async function composeParametricAvatar({ profile, seed, loadBase, loadCatalog, bake = true }) {
+	const baseBytes = await loadBase(PARAMETRIC_BASE_FILE);
+	let catalog = [];
+	if (loadCatalog) {
+		try {
+			catalog = await loadCatalog();
+		} catch (err) {
+			console.warn(`[avatar-composer] garment catalog unavailable, composing without garments: ${err.message}`);
+		}
+	}
+	const appearance = selectParametricAppearance(profile, seed, {
+		morphNames: readMorphNames(baseBytes),
+		catalog,
+	});
+	const bytes = bake ? await bakeAppearance(baseBytes, appearance, { fold: true }) : null;
+	const descriptor = {
+		base: appearance.base,
+		gender: profile?.gender === 'male' ? 'male' : 'female',
+		garments: appearance.garments.map((g) => g.id),
+		accessories: appearance.accessories,
+		height: appearance.proportions.height ?? 1,
+	};
+	return { bytes, appearance, descriptor };
 }
 
 /**
