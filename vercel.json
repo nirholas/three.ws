@@ -663,6 +663,10 @@
 			"dest": "/api/web-bot-auth-directory"
 		},
 		{
+			"src": "/\\.well-known/http-message-signatures-directory",
+			"dest": "/api/web-bot-auth-directory"
+		},
+		{
 			"src": "/\\.well-known/chat-plugin\\.json",
 			"dest": "/api/wk?name=chat-plugin"
 		},

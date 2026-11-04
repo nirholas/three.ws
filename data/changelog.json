@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Agents sign their web requests",
+			"summary": "Fetches made by three.ws agents through the tool gateway and the screen caster now carry a Web Bot Auth signature, and the matching public key directory is served at /.well-known/http-message-signatures-directory, so sites can verify and rate-limit three.ws agents instead of blocking them.",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Drive builds for Android Automotive OS",
 			"summary": "The Android overlay now has an automotive product flavor that puts the same four-control Drive templates on a car's own screen through CarAppActivity. It compiles alongside the unchanged phone build; running it on a head unit is the remaining check.",
 			"tags": [
