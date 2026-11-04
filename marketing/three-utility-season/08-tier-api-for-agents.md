@@ -15,7 +15,7 @@
 **Substitute:** Paying x402 endpoints in $THREE cannot settle today. The substitute is the public tier endpoint any agent can call to read a wallet's $THREE standing before it serves or discounts a request.
 
 - Planned surface: a 402 challenge from `https://three.ws/api/x402/token-intel` lists a second `accepts` entry with the $THREE mint on Solana (`X402_ACCEPT_THREE_SOLANA` defaults to true in `api/_lib/env.js`).
-- Blocker: the configured facilitator is self-hosted (`X402_FACILITATOR_URL_SOLANA=https://three.ws/api/x402-facilitator`). `api/_lib/x402/self-facilitator.js` only accepts transfers under the legacy token program and rejects any other program with `program_not_allowed`. $THREE is a Token-2022 mint, so a $THREE payment cannot pass verification.
+- Blocker, cleared 2026-09-20: the configured facilitator is self-hosted (`X402_FACILITATOR_URL_SOLANA=https://three.ws/api/x402-facilitator`). On 2026-09-16 `api/_lib/x402/self-facilitator.js` only accepted transfers under the legacy token program and rejected any other with `program_not_allowed`, so a $THREE (Token-2022) payment could not pass verification. `624e1a6f8` pins the token program from the mint and is live in production. A real $THREE x402 settle has not been re-run since (it is a spend), so the substitute stays until the re-test below passes.
 - The `/x402` page itself says settlement is "in USDC".
 - Substitute: `GET https://three.ws/api/three/tier` answered 200 without auth on 2026-09-16 with `tier`, `next.usd_to_go`, and the ladder; `?wallet=<address>` returned a resolved tier for a mainnet holder.
 - Docs gap: this public endpoint is not documented in `docs/api-reference.md`.

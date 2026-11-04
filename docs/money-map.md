@@ -34,7 +34,12 @@ marketplace sales, scarcity mints, copy-trading performance fees) is split by a
 named policy in [token/config.js](../api/_lib/token/config.js) and paid straight
 to these two wallets by the buyer's own transaction. Both are **required in
 production and fail closed**: unset, `/api/token/quote` answers `503
-treasury_unavailable` and no purchase can be priced at all.
+treasury_unavailable` (or `rewards_unavailable`) and no purchase can be priced
+at all. The refusal says "Paying in $THREE is not switched on yet, so nothing
+was charged." with no retry hint, and the Forge pay sheet reads
+`treasury_configured` / `rewards_configured` from `/api/token/config` to show
+that state before a buyer reaches the wallet (see
+[x402.md](x402.md#three-is-a-token-2022-mint-never-pass-a-default-token-program)).
 
 | Env var | Role | Production state (2026-10-25) |
 | ------- | ---- | ----------------------------- |

@@ -29,16 +29,24 @@ production. Seven of the twelve scheduled stories could not be run as written (s
 spend paths are switched off or broken in production. Every hold-based utility checked out. The season
 was rebuilt around what works, and each substitution is recorded in its pack.
 
+Re-verified 2026-11-04: the Token-2022 code blockers that editions 03 and 08
+cited are fixed (rows marked below). What still keeps both substitutes in
+place is configuration and evidence, not code: `THREE_TREASURY_WALLET` and
+`THREE_REWARDS_WALLET` are still unset (owner action), the marketplace still
+has no confirmed sale, and no `$THREE` x402 payment has been re-run since the
+facilitator fix. In source, every refusal now reads "not switched on yet"
+instead of "try again" (ships with the next deploy).
+
 | Finding | Evidence | Editions affected |
 |---|---|---|
 | The `$THREE` token payment rail refuses every quote | Signed-in `POST /api/token/quote` returns `treasury_unavailable`; `GET /api/token/config` shows `treasury_configured: false`, `rewards_configured: false` (`THREE_TREASURY_WALLET` and `THREE_REWARDS_WALLET` unset) | 03, 04, 10 (pay-per-use, marketplace, holder rewards) |
 | Plan checkout cannot create an intent in any asset | Signed-in `POST /api/payments/solana/checkout` returns `503 not_configured` (`PAYMENT_RECIPIENT_SOLANA` unset) | 02 |
-| Marketplace has no confirmed sale, `$THREE` skill prices are not rendered, and the gasless purchase builder uses the legacy token program for a Token-2022 mint | `/api/marketplace/analytics`: `totalSales: 0`; `api/_lib/solana/gasless-tx.js` | 03, 10 |
+| Marketplace has no confirmed sale and `$THREE` skill prices are not rendered | `/api/marketplace/analytics`: `totalSales: 0` (re-read 2026-11-04: still 0, 79 sellers, 11,314 trials, 0 converted). The legacy-program gasless builder is fixed in source (`c5c2a76e9`, mainnet simulation `err: null` in `3632ff266`) and ships with the next deploy | 03, 10 |
 | Labor market escrow is offline | `/api/labor/feed`: `escrow_configured: false` (`LABOR_ESCROW_SECRET_BASE58` unset) | 04 |
 | `/play` token gate is off and boutique sales cannot settle | No `PLAY_GATE_MINT` or `THREE_MINT`; `three-ws-multiplayer` has no `GAME_TOKEN_TREASURY` | 07 |
-| x402 advertises `$THREE` but the self-hosted facilitator rejects Token-2022 transfers | `api/_lib/x402/self-facilitator.js` only allows the legacy token program | 08 |
+| Fixed: the self-hosted x402 facilitator accepts Token-2022 transfers | `624e1a6f8` (2026-09-20, live in production) pins the token program from the mint. A real `$THREE` x402 settle has not been re-run, because that is a spend | 08 (blocker cleared; re-test before restoring the story) |
 | Holder deploy discount exists only in the MCP server; the browser deployer charges no fee, and `/deploy` is the model viewer | `src/deploy-onchain.js`, `vercel.json` | 06 |
-| Premium Data API pass cannot quote `$THREE` and builds with the legacy token program | Signed-in `POST /api/premium/quote` returns `quote_failed` for THREE and USDC (SOL works) | not used |
+| Premium Data API pass quotes `$THREE` but production still builds it under the legacy token program | Re-read 2026-11-04: signed-in `POST /api/premium/quote` prices THREE, USDC and SOL, but the live THREE `tx_base64` invokes `Tokenkeg...` (legacy). Fixed in source (`c5c2a76e9`, simulation `err: null` in `3632ff266`); ships with the next deploy | not used |
 | Public "burned" figures are computed, not on-chain | `/api/three-token/burns` and `/three-live` report `agents x 1000`; the token config says the platform never burns | 09 (do not cite) |
 
 ## Schedule

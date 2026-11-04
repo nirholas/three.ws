@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T18:39:23.172Z",
+	"generated_at": "2026-11-04T19:03:10.805Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -99,6 +99,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "launch",
+			"title": "Docs · World chat in /play: scrollback and the community board",
+			"summary": "How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.",
+			"link": "/docs/play-chat",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
 			"title": "MCP Integrations",
 			"summary": "Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_<name>_<tool>.",
 			"link": "/mcp-integrations",
@@ -124,6 +134,16 @@
 			"link": "/microsoft/teams-tab",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "$THREE purchases and Premium pass payments build correctly for the Token-2022 mint",
+			"summary": "$THREE is a Token-2022 token, and several Solana payment builders were deriving token accounts under the older token program, which produces a transfer the network rejects. Skill purchases, agent purchases, subscriptions and the Premium data pass now read the token program from the mint and create any missing $THREE account in the same transaction. A new script simulates both the gasless purchase and the Premium payment for a real holder on mainnet without signing or sending anything, and both pass.",
+			"link": "/docs/x402",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -328,6 +348,17 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Join a /play world late and catch up on what was said",
+			"summary": "Walking into a world mid-conversation no longer means an empty chat box. You now see the last 60 lines, stamped with when they were said, above a \"You're caught up\" divider, and new lines carry on below it. Reconnecting or refreshing never repeats a line, screen readers hear one short summary instead of the whole backlog, and an empty world offers a Say hi button. Lines are kept for at most three days and only name, text and time are stored. Worlds can also show the coin's community board in a read-only Board tab next to world chat.",
+			"link": "/play",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Knocks, agent mail and event markets get their own tabs on /notifications",
 			"summary": "The notifications page now builds its filter tabs from the same category list as your notification preferences, so it can no longer fall out of step with them. Knocks, agent mail, event-market entries, orders and approvals each get their own tab instead of landing under Account, and those rows now read as sentences (\"Scout got mail from Bob\") with their own icon. A knock now opens your knock inbox when clicked. Only categories you have notifications in are shown, the tabs work with arrow keys, each empty tab links to that category's delivery settings, and if the category list cannot load the page still shows everything with a Retry.",
 			"link": "/notifications",
@@ -429,6 +460,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Pricing and the Forge pay sheet say when a payment option is not switched on yet",
+			"summary": "The pricing page now asks the server which assets checkout can actually take. Any asset that cannot be paid yet is shown disabled with \"Not switched on yet\", the $THREE discount is only claimed while $THREE can be paid, and a refused checkout names the asset instead of failing with a generic error. The Forge pay sheet checks the $THREE rail before it opens: when it is not switched on, it says so plainly, asks for no wallet approval and offers no retry loop. Paid Wheel of Fortune spins say the same and point at your free spin. Nothing is charged in any of these states.",
+			"link": "/pricing",
+			"tags": [
+				"fix"
 			]
 		},
 		{

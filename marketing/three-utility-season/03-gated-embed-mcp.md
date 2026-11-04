@@ -17,7 +17,7 @@
 - Planned surface: `GET https://three.ws/api/marketplace/analytics` on 2026-09-16 returned `totalSales: 0`, `uniqueBuyers: 0`, `totalTrials: 11312`, `trialFunnel.converted: 0`.
 - Payment rail: signed-in `POST /api/token/quote` (purposes `consumption` and `marketplace_sale`) returned `treasury_unavailable`; `GET /api/token/config` reports `treasury_configured: false`, `rewards_configured: false`.
 - Listing UI: an agent with $THREE `skill_prices` in `/api/marketplace/agents/<id>` does not render those prices on its marketplace page, and the Skills tab "Paid" entries are USDC x402 skills.
-- Code risk: `api/_lib/solana/gasless-tx.js` builds the purchase transfer with the legacy token program, while the $THREE mint is Token-2022 (confirmed with `getAccountInfo`: owner `spl-token-2022`).
+- Code risk, fixed 2026-11-04: `api/_lib/solana/gasless-tx.js` built the purchase transfer with the legacy token program, while the $THREE mint is Token-2022 (confirmed with `getAccountInfo`: owner `spl-token-2022`). It now resolves the program from the mint and creates any missing Token-2022 ATA (`c5c2a76e9`); `scripts/verify-token2022-purchase.mjs` simulated the purchase for a real holder on mainnet with `err: null` (`3632ff266`). It ships with the next deploy. The payment rail line above is unchanged: the treasury wallets are still unset, and the quote now says "not switched on yet".
 - Substitute: tool definition at `api/_mcp/tools/embed.js` line 227, backed by `api/embed/gate-create.js`; documented at `/docs/mcp` (section `create_gated_embed`, 200 on 2026-09-16). Calling the MCP endpoint requires sign-in (OAuth); an unauthenticated `tools/list` answered with a 402 challenge, so the tool call itself was not exercised in this pass.
 
 ## The three questions

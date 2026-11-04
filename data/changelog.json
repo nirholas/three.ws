@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Pricing and the Forge pay sheet say when a payment option is not switched on yet",
+			"summary": "The pricing page now asks the server which assets checkout can actually take. Any asset that cannot be paid yet is shown disabled with \"Not switched on yet\", the $THREE discount is only claimed while $THREE can be paid, and a refused checkout names the asset instead of failing with a generic error. The Forge pay sheet checks the $THREE rail before it opens: when it is not switched on, it says so plainly, asks for no wallet approval and offers no retry loop. Paid Wheel of Fortune spins say the same and point at your free spin. Nothing is charged in any of these states.",
+			"tags": [
+				"fix"
+			],
+			"link": "/pricing"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "$THREE purchases and Premium pass payments build correctly for the Token-2022 mint",
+			"summary": "$THREE is a Token-2022 token, and several Solana payment builders were deriving token accounts under the older token program, which produces a transfer the network rejects. Skill purchases, agent purchases, subscriptions and the Premium data pass now read the token program from the mint and create any missing $THREE account in the same transaction. A new script simulates both the gasless purchase and the Premium payment for a real holder on mainnet without signing or sending anything, and both pass.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/x402"
+		},
+		{
+			"date": "2026-11-04",
 			"title": "Join a /play world late and catch up on what was said",
 			"summary": "Walking into a world mid-conversation no longer means an empty chat box. You now see the last 60 lines, stamped with when they were said, above a \"You're caught up\" divider, and new lines carry on below it. Reconnecting or refreshing never repeats a line, screen readers hear one short summary instead of the whole backlog, and an empty world offers a Say hi button. Lines are kept for at most three days and only name, text and time are stored. Worlds can also show the coin's community board in a read-only Board tab next to world chat.",
 			"tags": [

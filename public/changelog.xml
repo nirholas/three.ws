@@ -79,6 +79,14 @@
 			<description>Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.</description>
 		</item>
 		<item>
+			<title>Docs · World chat in /play: scrollback and the community board</title>
+			<link>https://three.ws/docs/play-chat</link>
+			<guid isPermaLink="false">2026-11-04:Docs · World chat in /play: scrollback and the community board</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a late joiner sees a /play world's last 60 chat lines above a caught-up divider, the cap, expiry and privacy rules for stored lines, and the read-only Board tab that shows a coin's community posts in-world.</description>
+		</item>
+		<item>
 			<title>MCP Integrations</title>
 			<link>https://three.ws/mcp-integrations</link>
 			<guid isPermaLink="false">2026-11-04:MCP Integrations</guid>
@@ -101,6 +109,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.</description>
+		</item>
+		<item>
+			<title>$THREE purchases and Premium pass payments build correctly for the Token-2022 mint</title>
+			<link>https://three.ws/docs/x402</link>
+			<guid isPermaLink="false">2026-11-04:$THREE purchases and Premium pass payments build correctly for the Token-2022 mint</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>$THREE is a Token-2022 token, and several Solana payment builders were deriving token accounts under the older token program, which produces a transfer the network rejects. Skill purchases, agent purchases, subscriptions and the Premium data pass now read the token program from the mint and create any missing $THREE account in the same transaction. A new script simulates both the gasless purchase and the Premium payment for a real holder on mainnet without signing or sending anything, and both pass.</description>
 		</item>
 		<item>
 			<title>3D generation workers accept PNG, JPEG and WEBP only, and say so when an image is refused</title>
@@ -255,6 +271,14 @@
 			<description>A new Invite button in /play (and on every lobby card) opens a sheet with a live QR code, the world's link with one-click Copy, and Share, falling back to X and Telegram where the browser has no share sheet. During the week before an event and while it is live, the sheet leads with the event name and a countdown. Pasted links now unfurl as the coin's own world: its art, ticker, name and the biome it actually renders in, instead of a generic Play card. The card also used to name the wrong biome for most coins and showed no art for $THREE; both are fixed.</description>
 		</item>
 		<item>
+			<title>Join a /play world late and catch up on what was said</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-04:Join a /play world late and catch up on what was said</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Walking into a world mid-conversation no longer means an empty chat box. You now see the last 60 lines, stamped with when they were said, above a &quot;You're caught up&quot; divider, and new lines carry on below it. Reconnecting or refreshing never repeats a line, screen readers hear one short summary instead of the whole backlog, and an empty world offers a Say hi button. Lines are kept for at most three days and only name, text and time are stored. Worlds can also show the coin's community board in a read-only Board tab next to world chat.</description>
+		</item>
+		<item>
 			<title>Knocks, agent mail and event markets get their own tabs on /notifications</title>
 			<link>https://three.ws/notifications</link>
 			<guid isPermaLink="false">2026-11-04:Knocks, agent mail and event markets get their own tabs on /notifications</guid>
@@ -333,6 +357,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the connection drops in Play, you now get a plain explanation and a way forward instead of a raw error code. Builds that fail to save retry on their own until they land, and a world whose saved builds did not load tries again before telling you. A dropped matchmaking poll keeps your community in the war queue. A message thread that fails to load shows a Retry button, and a chat reply that drops shows why instead of &quot;They went quiet&quot;. The pay demo only says no funds moved when that is certain. Escape now closes only the top panel, and the loading and error screens, the wheel and the stage prompt follow your language.</description>
+		</item>
+		<item>
+			<title>Pricing and the Forge pay sheet say when a payment option is not switched on yet</title>
+			<link>https://three.ws/pricing</link>
+			<guid isPermaLink="false">2026-11-04:Pricing and the Forge pay sheet say when a payment option is not switched on yet</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The pricing page now asks the server which assets checkout can actually take. Any asset that cannot be paid yet is shown disabled with &quot;Not switched on yet&quot;, the $THREE discount is only claimed while $THREE can be paid, and a refused checkout names the asset instead of failing with a generic error. The Forge pay sheet checks the $THREE rail before it opens: when it is not switched on, it says so plainly, asks for no wallet approval and offers no retry loop. Paid Wheel of Fortune spins say the same and point at your free spin. Nothing is charged in any of these states.</description>
 		</item>
 		<item>
 			<title>Seeded catalog assets can now be judged on how they look, not just their structure</title>
