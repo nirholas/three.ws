@@ -4,8 +4,8 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 
 | Disposition | Files | Meaning |
 |---|---:|---|
-| order | 204 | Outstanding work was found; it is now the linked work order(s), with this file copied verbatim inside. |
-| shipped | 203 | The work it describes exists in the code today (the note names the evidence). |
+| order | 199 | Outstanding work was found; it is now the linked work order(s), with this file copied verbatim inside. |
+| shipped | 208 | The work it describes exists in the code today (the note names the evidence). |
 | covered-by-existing | 90 | An order that was already in the queue covers it. |
 | no-open-work | 803 | Reviewed: reference or descriptive doc with nothing outstanding. |
 | not-a-plan | 269 | Content, rules, or configuration rather than work to do. |
@@ -759,7 +759,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/agent-sniper.md` | no-open-work | operations reference for shipped sniper |
 | `docs/agent-studio.md` | no-open-work | shipped Agent Studio reference |
 | `docs/agent-symphony.md` | no-open-work | shipped /symphony reference |
-| `docs/agent-system.md` | order | [769](../769-plan-agent-skill-trust-allowlist-attributes.md). stale 'whitelist not wired' line; registry enforces it (src/skills/index.js) but element cannot pass lists |
+| `docs/agent-system.md` | shipped | order 769 retired 2026-11-04: the whitelist section now describes the wired allowlist (82444bac9) |
 | `docs/agent-tasks/fix-x402-502-bursts.md` | order | [267](../267-plan-x402-loop-failure-classes-remeasure-fix.md). July brief, post-fix distribution never measured. |
 | `docs/agent-tasks/fix-x402-caller-mismatches.md` | order | [267](../267-plan-x402-loop-failure-classes-remeasure-fix.md). July brief, caller mismatches need re-measure and a registry contract test. |
 | `docs/agent-tasks/fix-x402-wallet-health.md` | order | [267](../267-plan-x402-loop-failure-classes-remeasure-fix.md). July brief, wallet roster and floor classes need re-measure. |
@@ -1620,7 +1620,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/vroid-hub-import.md` | covered-by-existing:production-100-OWNER-ACTIONS.md row 55 | code shipped (api/vroid); remaining step is owner app registration, tracked in owner-actions row 55 (order 092 closed 2026-11-04) |
 | `docs/vscode.md` | owner-only | extension built (packages/vscode-3d, PUBLISHING.md); Marketplace publish needs owner publisher account |
 | `docs/walk-leaderboard.md` | no-open-work | shipped page and /api/walk/leaderboard |
-| `docs/web-component.md` | order | [769](../769-plan-agent-skill-trust-allowlist-attributes.md). skill-trust=whitelist cannot admit anything because element has no allowlist attributes |
+| `docs/web-component.md` | shipped | order 769 retired 2026-11-04: skill-trusted-authors, skill-trusted-origins, el.skillTrust and skill:error (82444bac9) |
 | `docs/webgpu-renderer.md` | covered-by-existing:074-best3d-08-webgpu-tsl-path.md | Not ported section (viewer CinematicPipeline to TSL) is the existing order |
 | `docs/widget-api.md` | no-open-work | JSON-RPC widget API reference |
 | `docs/widget-studio.md` | no-open-work | user guide for shipped /studio; next steps are links |
