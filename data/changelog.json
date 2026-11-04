@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-11-04",
+			"title": "Embeds can allowlist the skill authors and hosts they trust",
+			"summary": "The agent-3d element's whitelist skill policy now works: list the authors you trust with skill-trusted-authors and the hosts with skill-trusted-origins (or set el.skillTrust from script), and only skills from those authors or hosts install. Before this, whitelist mode had no way to receive the lists and refused every skill. A refused skill now fires a skill:error event so the page can tell the visitor, and a misspelled skill-trust value falls back to the safe owner-only default instead of installing everything unchecked.",
+			"tags": [
+				"security",
+				"sdk"
+			],
+			"link": "/docs/web-component"
+		},
+		{
+			"date": "2026-11-04",
+			"title": "Ops alerts can now reach an inbox, not only the dashboard",
+			"summary": "Operator alerts gain an email channel next to the private Telegram chat. Critical alerts (a leak, a halted payer, a compromised signer) are emailed and pushed every time they fire; warnings reach Telegram once an hour per signature and arrive by email as one hourly digest with counts and the oldest unresolved item, so an inbox is never flooded. Each channel has its own hourly ceiling, so a storm on one never silences the other. The health check now lists which alert channels are wired and flags production as degraded when no one would be told, and a self-test script proves real delivery on every configured channel.",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
 			"title": "The roadmap now shows where each phase really stands",
 			"summary": "ROADMAP.md renders correctly again (its status icons had been corrupted) and matches the README roadmap line for line. Phase 2 now says what has shipped: voice preview, the voice library and voice cloning, the persona interview and memory seeding all run in the main creation flow, not only on the demos hub, and the week-2 retention target is measured. Phase 3 notes the economy contracts and their audit pack are built with the external audit next, and Phase 5 shows the macOS and iOS widget is built and waits only on an Apple Developer account.",
 			"tags": [

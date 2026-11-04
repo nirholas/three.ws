@@ -89,7 +89,7 @@
 			"includeFiles": "data/pages.json",
 			"maxDuration": 300
 		},
-		"api/cron/{forge-seed-cron,x402-seed-cron}.js": {
+		"api/cron/{forge-seed-cron,forge-seed-vision-cron,x402-seed-cron}.js": {
 			"maxDuration": 70
 		},
 		"api/cron/avatar-thumbnail-render.js": {
@@ -7633,6 +7633,10 @@
 			"schedule": "* * * * *"
 		},
 		{
+			"path": "/api/cron/forge-seed-vision-cron",
+			"schedule": "* * * * *"
+		},
+		{
 			"path": "/api/cron/sketchfab-showcase",
 			"schedule": "0 15 * * 1,3,5"
 		},
@@ -7827,6 +7831,10 @@
 		{
 			"path": "/api/cron/home-health-alert",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/ops-alerts-digest",
+			"schedule": "7 * * * *"
 		},
 		{
 			"path": "/api/cron/home-relay-sweep",
