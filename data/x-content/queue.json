@@ -9349,7 +9349,7 @@
 						{
 							"type": "file",
 							"path": "src/restyle.js",
-							"contains": "applyMaterialPreset(THREE, state.root, name);"
+							"contains": "applyMaterialPreset(THREE, editRoot(), name);"
 						}
 					]
 				}
