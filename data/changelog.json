@@ -12,6 +12,15 @@
 		},
 		{
 			"date": "2026-11-05",
+			"title": "Coin Radar now keeps every launch it has ever observed",
+			"summary": "The launch intelligence behind /radar, /coin-intel and the Oracle coin pages used to be deleted after its retention window with no copy kept, so only the last few days of observed launches existed. Every coin past the window, with its wallet breakdown, outcome, smart-money read and conviction history, is now written to verified cold storage before it leaves the live database, and can be restored by date range.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/radar"
+		},
+		{
+			"date": "2026-11-05",
 			"title": "Auto-rigged legs no longer drag cloth between them",
 			"summary": "Rigging a character in wide trousers or a skirt used to blend both legs' influence on the cloth between them, so a step or a kick stretched a sheet of fabric from one leg to the other. The rigger now commits every vertex to the leg it actually sits on, with a narrow soft seam at the midline, so each trouser leg moves with its own leg.",
 			"tags": [

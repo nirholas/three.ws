@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-04T22:14:30.523Z",
+	"generated_at": "2026-11-05T01:54:27.080Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4430,
+	"total": 4449,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "Auto-rigged legs no longer drag cloth between them",
+			"summary": "Rigging a character in wide trousers or a skirt used to blend both legs' influence on the cloth between them, so a step or a kick stretched a sheet of fabric from one leg to the other. The rigger now commits every vertex to the leg it actually sits on, with a narrow soft seam at the midline, so each trouser leg moves with its own leg.",
+			"link": "/docs/3d-asset-pipeline.md",
+			"tags": [
+				"fix"
+			]
+		},
 		{
 			"date": "2026-11-05",
 			"type": "update",
@@ -18,6 +28,36 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "Coin Radar now keeps every launch it has ever observed",
+			"summary": "The launch intelligence behind /radar, /coin-intel and the Oracle coin pages used to be deleted after its retention window with no copy kept, so only the last few days of observed launches existed. Every coin past the window, with its wallet breakdown, outcome, smart-money read and conviction history, is now written to verified cold storage before it leaves the live database, and can be restored by date range.",
+			"link": "/radar",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "Every animation in the gallery plays again",
+			"summary": "Opening any of the 469 community clips on /animations showed \"Couldn't load this clip's preview\", and clips that did load froze in a T-pose at 0.0s once the detail view opened. Community clips now load in the gallery, the Animation Studio and every embed, and the detail view plays each clip from start to finish with a working scrubber.",
+			"link": "/animations",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "Sell everything an agent bought, or trade any coin by hand",
+			"summary": "Owners can now exit all of an agent's positions in one reviewed run. The wallet Trade tab has a Sell all that lists every coin the wallet holds, lets you untick what to keep, pick slippage and pause the sniper, then sells one coin at a time with live status, Stop and a retry for anything unsold. The sniper dashboard gets a Sell all for every open position across your agents, and links from each agent to manual trading. Clicking a holding in Trade or Portfolio now loads that coin ready to sell.",
+			"link": "/docs/agent-wallets.md",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -253,6 +293,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "launch",
+			"title": "Human Tasks",
+			"summary": "Agents post real-world jobs with a USDC bounty held in escrow on Solana. Accept one, submit proof, and get paid when the poster approves.",
+			"link": "/tasks",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
 			"title": "Inference Nodes",
 			"summary": "The open inference network: community nodes that sell compute into the three.ws queue, their capabilities, uptime and verified earnings.",
 			"link": "/nodes",
@@ -428,6 +478,26 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Agents can browse the web toward a goal",
+			"summary": "Give an agent a goal and a public page and it browses in a real browser you can watch, one validated step at a time. It stays on the allowed sites, never enters passwords or payment details, stops at its step limit, and hands the browser to you the moment you take over. Available in the Browse panel on the agent screen and as the browse_web tool.",
+			"link": "/agent-screen",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Agents can lend idle funds on Solana",
+			"summary": "A new Lend tab in the agent wallet, v1 lending routes and five MCP tools let an agent supply idle USDC to Kamino Lend, see its position, APY and health factor, and withdraw. Every move is simulated first and needs an explicit confirm; an owner-set earn rule keeps idle funds working.",
+			"link": "/docs/agent-lending",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Agents on one stage take turns speaking instead of talking over each other",
 			"summary": "When several <agent-3d> agents share an <agent-stage>, everything they say out loud now goes through one speaking queue, so a cue answered by two agents plays one voice after the other. Lines from someone talking to an agent go first, then answers to a stage-wide cue, then idle chatter, and nobody is cut off mid-sentence. A voice that fails or never finishes is skipped so the scene keeps moving, and removing or pausing an agent cancels its waiting lines. Pages can follow who holds the floor with the new stage:speaking-change event, queue their own lines with stage.speak(), and say() now resolves to the reply. Agents also join the stage the moment their brain boots, which is what gives them say_to_agent and observe_agents; before this, a reply from say_to_agent always came back empty. The two-agents example shows the floor live.",
 			"link": "/docs/multi-agent",
@@ -497,6 +567,16 @@
 			"title": "Autonomous agent runs can use the integrations you connected",
 			"summary": "A run you start from the API or the Runs tab can now call the third-party MCP servers you connected to the agent on /mcp-integrations, the same ext_ tools chat already had. Every call shows on the Runs tab with its arguments, the server's answer and the step's cost. Tools that move money or cannot be undone stay out of autonomous runs, since nobody is there to approve them; the agent says in its report that you need to take that step. A run's toolsAllowed list can now name ext_ tools too.",
 			"link": "/mcp-integrations",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Avatar editor exports what you see, and runs inside <agent-3d editor>",
+			"summary": "Emissive intensity, hidden nodes and duplicate-named materials now survive export (KHR_materials_emissive_strength, KHR_node_visibility, glTF-index matching with warnings), textures can be replaced from the inspector lightbox, and the editor attribute on <agent-3d> docks the editor with data-editor-version and editor:* events.",
+			"link": null,
 			"tags": [
 				"feature"
 			]
@@ -586,11 +666,31 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Dense photometric head fit (opt-in GPU path)",
+			"summary": "Avatar reconstruction can refine the morphed head against the user's own photo with a bounded, deterministic analysis-by-synthesis fit (PyTorch, optional PyTorch3D silhouette). It ships disabled: a GPU image and a RECONSTRUCT_DENSE_URL route exist, and the CPU service is unchanged.",
+			"link": "/docs/avatar-reconstruction",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Dependency security sweep: patched OG renderer, chat server and vendored fixes",
 			"summary": "Social share cards now render through a patched satori pipeline instead of an outdated bundled renderer. The self-hosted chat server ignores spoofed X-Forwarded-For and X-Real-IP headers. Vulnerable transitive packages (deepmerge, elliptic, bigint-buffer, lodash.set, minimatch, nanoid, helia) are pinned to patched releases or patched vendored copies, and the Qwen Plus brain runs on the maintained OpenAI-compatible route.",
 			"link": null,
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Diorama worlds can be played as microgames",
+			"summary": "A world prompt can now name a goal (collect, reach, or survive). The world page shows Play this world, you walk your own avatar around the island with keys, a touch pad or taps, and the share sheet copies a play link that opens straight into the game.",
+			"link": "/diorama",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -729,6 +829,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Hair and clothes now follow your avatar's body sliders",
+			"summary": "On the Parametric base, worn hair, tops, bottoms and other skinned wearables now conform to the chest, jaw, hip and sculpt sliders instead of clipping through skin or floating. The editor re-fits as you drag and the saved GLB carries the same fit.",
+			"link": "/avatar-studio",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Health checks now show when the Granite Guardian governance model is not serving",
 			"summary": "Granite Guardian screens agent messages, identities and autonomous sends for risks like jailbreaks and harm. When no Guardian lane was configured, the assess endpoint answered 503 and the identity check let everything through, yet every health probe stayed green. /api/healthz now carries a granite_guardian subsystem: down in production while no lane is set, ok once the self-hosted GPU worker answers its health probe or the watsonx lane is configured, and degraded when the self-hosted worker fails but watsonx can still answer. The worker deploy config was also corrected for the pinned vLLM release, which no longer accepts one of its old flags.",
 			"link": "/docs/ibm",
@@ -739,11 +849,41 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Hire a person for a real-world job with escrowed USDC",
+			"summary": "Agents can now post a task, such as photographing a storefront, with a USDC bounty locked in escrow on Solana. People accept it, submit proof, and are paid when the poster approves. Disputes freeze the payout and an unfinished task refunds in full. Browse and post at /tasks, or use the human_task tools over MCP.",
+			"link": "/docs/human-tasks.md",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Hire an agent from a Solana Blink",
+			"summary": "Any agent that sells a Solana offer can now be hired from a link in a feed: the Blink shows the offer, the buyer signs one USDC payment, and the result comes back in the card. The agent page has a Share hire link button.",
+			"link": "/docs/solana-actions.md",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Hover tips no longer swallow the click on the button underneath",
 			"summary": "A hover tip that opened over a neighbouring control used to catch the click meant for it, and stayed open while the pointer sat on it. On /render-lab the Contact sheet tip covered the Poses button, so clicking Poses did nothing. Plain hover tips now let clicks pass straight through and close the moment you press their control. Glossary term tips keep their Full glossary link reachable while they are showing.",
 			"link": "/render-lab",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "HQ talks to your agent: data bridge, alert hand-off and MCP tools",
+			"summary": "HQ now answers host-page data queries, scores portfolio risk, turns opted-in compound alerts into reversible Autopilot proposals, and exposes its DeFi tools through a new hq-mcp server. The bridge no longer trusts every vercel.app origin.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -855,6 +995,26 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Makeup, tattoos and decals for Parametric avatars",
+			"summary": "The Avatar Studio Skin tab layers complexion washes, makeup, tattoos and decals, or your own image, over the Parametric body. The preview matches the saved avatar.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Mobile performance budget gate and coin chart layout fix",
+			"summary": "mobile-perf.mjs gains a --budget mode that fails when LCP, CLS or blocking time exceed budget on six key pages, and the coin page reserves its chart height so the page no longer jumps when the chart loads.",
+			"link": "/docs/audit/mobile-perf-2026-11-03.md",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Multiplayer worlds can run on more than one server",
 			"summary": "The multiplayer server now reports whether it shares state with its peers on /health, refuses to boot single-instance when its Redis is configured but unreachable, and forwards friend messages, stage tips and event announcements to whichever instance holds the target. A two-process test and a real-socket load test back it. Turning it on in production needs the Memorystore steps in multiplayer/README.md.",
 			"link": null,
@@ -880,6 +1040,16 @@
 			"link": "/nvidia",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "One command shows which workers are live",
+			"summary": "npm run workers:fleet lists every worker as live or built-only with instances, GPU, last deploy and test coverage, fails when a README disagrees with Cloud Run, and 11 undeployed workers gained build-only verify configs. Includes a MoMask benchmark script.",
+			"link": "/docs/ops/workers-fleet.md",
+			"tags": [
+				"infra"
 			]
 		},
 		{
@@ -993,6 +1163,16 @@
 			"title": "Private, invite-only worlds for Silver holders",
 			"summary": "Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public, unlisted or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.",
 			"link": "/three",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Report and moderate players in /play",
+			"summary": "Players can report someone from their player card, and three distinct reports in five minutes mute that player for ten. Operators can list, mute, kick and ban players from a signed command, and a muted player sees how long is left above the chat box.",
+			"link": null,
 			"tags": [
 				"feature"
 			]
@@ -1127,6 +1307,16 @@
 			"title": "The $THREE Posts chart now runs to today and keeps every post it has ever measured",
 			"summary": "The Posts view on the $THREE coin page now plots @trythreews posts through November, with all 197 posts measured at +1h, +4h and +24h against the any-time baseline. The price source only serves the last 180 days, so every 15-minute bar read is now archived and merged on each refresh, and the oldest posts keep the returns measured for them earlier instead of going blank.",
 			"link": "/oracle/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The Agora Commons keeps its frame rate with the whole crowd",
+			"summary": "/agora used to advance every citizen animation every frame and slowed to about one frame per second once the full fleet loaded. Now only the nearest, on-screen and busy citizens animate at full rate, the rest tick at a reduced rate, and off-screen citizens are hidden.",
+			"link": "/agora",
 			"tags": [
 				"improvement"
 			]
@@ -1354,204 +1544,6 @@
 			"link": "/docs/nvidia-inception-perk",
 			"tags": [
 				"launch"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "3D scenes across the site now use studio lighting and come back on their own after a graphics driver reset",
-			"summary": "Nineteen 3D pages and previews that drew their own scenes, including the live agent economy, /stream, the haunted yard, the pumpkin carver, the pill, the timeline, the Agora model viewer and the motion tools, now light models with a soft studio environment. Metal, glossy plastic and skin pick up highlights instead of rendering flat or dark. Those scenes also pause when you scroll them offscreen or switch tabs, which saves battery. Every embedded avatar now lowers its resolution slightly when your device starts dropping frames, then raises it again when there is headroom. If the graphics driver resets, the scene shows a short notice and returns by itself, so you no longer need to reload the page.",
-			"link": "/live",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "A GitHub Release every week",
-			"summary": "The three.ws repository now gets a release every Monday, listing what shipped that week in plain language, so anyone watching or starring the repo sees steady progress in their GitHub feed.",
-			"link": "/changelog",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "A VRoid Hub character keeps its creator's license after you import it",
-			"summary": "Importing from VRoid Hub now records the creator's license on the avatar and enforces it everywhere: a character whose creator withholds public agents cannot be put on an agent, one that disallows redistribution cannot be made public, pinned to IPFS, sold or minted, and one that disallows modification cannot be restyled, replaced or regenerated. Each refusal names the creator. Forking cannot launder the license, the creator's credit and Hub link show on the avatar and agent pages, and the creator's own characters have every action open.",
-			"link": "/docs/vroid-hub-import",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "A withdrawal that fails after it was sent can no longer be paid twice",
-			"summary": "Payouts now record the signed transaction before it is broadcast. If the send errors or times out afterwards, the withdrawal shows as confirming and keeps your balance held instead of failing and freeing it, and the payout cron settles it from the chain: completed when it landed, failed only when it provably never can. Operators are paged if one stays unconfirmed for more than 30 minutes.",
-			"link": null,
-			"tags": [
-				"fix",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Add three.ws to your coding agent in one line, and read the README in Chinese, Japanese or Korean",
-			"summary": "The top of the three.ws GitHub page now shows a one-command install for Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI and OpenCode, plus live counts of models forged and agents created. Free text to 3D and rigged avatars work straight away, with no key and no account. The README also has a How it works diagram, a plain note on what is free and what costs money, Simplified Chinese, Japanese and Korean translations, and a place to show what you built. For just the 3D tools, the new three-ws-3d-skills repository packages six 3D skills you can install on their own.",
-			"link": "/changelog",
-			"tags": [
-				"docs",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "An open head unit: your agent beside CarPlay or Android Auto",
-			"summary": "A new open-source head unit app puts a real CarPlay or Android Auto session on one half of a car screen and the three.ws Drive agent on the other, on a Raspberry Pi or any Linux box with a Carlinkit CPC200 dongle. With no dongle plugged in it says so plainly and shows the USB ids it is looking for. It is built and tested up to the USB port; the first run on real hardware is next. Drive also stops asking for your own agents when you are signed out, so a fresh head unit or phone loads the public agents without an error.",
-			"link": "/drive",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Cinematic and Portrait looks get real contact shadows",
-			"summary": "The Cinematic and Portrait looks in the 3D viewer now use N8AO ambient occlusion, the same denoised technique the /play world runs. Creases, armpits, joints and the space between limbs pick up soft contact shading that the previous effect barely showed. The shading scales with the model, so tiny figurines and full-size avatars look equally grounded, and there is a new AO radius slider in the Cinematic FX panel. The default Studio look is unchanged and never downloads the extra code.",
-			"link": "/app",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Codespaces, a roadmap page, a support page and categorized release notes",
-			"summary": "One-click GitHub Codespaces (dev container), ROADMAP.md, SUPPORT.md and categorized GitHub release notes landed for contributors and new visitors. The README also gained copy-paste MCP install blocks for Claude Code, Claude Desktop, Cursor, VS Code, Codex CLI, Gemini CLI and Windsurf.",
-			"link": null,
-			"tags": [
-				"docs"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Coin Control: buy back, burn and reward holders with your coin's creator fees",
-			"summary": "Creators can now put the fees their agent's coin earns to work from one page. Set a rule to buy back and burn the coin each period (the burn uses exactly what the buy returned, read from the confirmed transaction), send SOL to the top holders split by size or by a lottery anyone can re-check, and post bounties paid from the agent wallet. Nothing runs until you confirm the exact terms, every send passes your spend limits, and every action appears with its Solana transaction on a public page holders can open, next to your verified X handle.",
-			"link": "/coin-control",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Coin intel, the launcher and reputation are updating again",
-			"summary": "For a stretch of 3 November the database sat past its storage mark, and the background jobs that refresh coin intel, the launcher feed, smart-money rollups and wallet reputation paused rather than risk filling it. They are running again. The real cause was seven big history tables (on-chain agent events, oracle training rows, the settlement log, firewall decisions, usage events, sniper verdicts and ops alerts) that nothing ever trimmed. Their older rows are now copied to cold storage on Google Cloud, checked against a fingerprint, and only then removed from the live database, so nothing is lost and any month can be restored. Rows that are still needed stay put: billing records, coins still waiting for a label, and alerts nobody has acknowledged. Lifetime settlement totals on the x402 ring keep counting pruned days through a daily rollup, so the published numbers never shrink. The platform health check now reports database storage and raises an alert at 75 percent of the mark, well before anything pauses.",
-			"link": null,
-			"tags": [
-				"infra",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Editable parts engines are ready to switch on, with a commercially licensed background cutter",
-			"summary": "The two engines behind Editable parts (PartCrafter, which turns one photo into separately named parts, and HoloPart, which fills in the hidden side of each part) now build cleanly with every self-check passing, and their model weights are already in place on our own storage. PartCrafter's original background-removal step relied on a model licensed for non-commercial use only, so it now uses BiRefNet (MIT) instead, running on the same GPU. A real photo has been turned into named parts end to end. Both engines go live with the next owner-approved deploy.",
-			"link": "/docs/forge",
-			"tags": [
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Every partner logo now sits in the site footer",
-			"summary": "The footer on every page carries a Partners and programs row with all nine partners from the partners page: OpenAI, IBM, Microsoft, AWS, Google Cloud, Alibaba Cloud, NVIDIA, HackerNoon and Quicknode. Each logo opens that partner's page, and an All partners link opens the full directory. The footer mascot now stands above the row instead of drifting over the logos on phones.",
-			"link": "/partners",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Exit fills show their reason again, and 3D workers refuse files that point off the payload",
-			"summary": "When a trailing-ratchet order sold on a lock tier or a drawdown, the fill in your agent wallet's order history lost the reason chip that says why it sold. It is back on every exit fill. The 3D mesh workers (remesh, rig, segment, stylize, texture and the others that decode compressed models) now reject a glTF whose buffers or images point at files outside the upload itself, before any decoder reads them. On the HQ events map, tech events in San Jose and Cambridge now land in California and Massachusetts instead of Costa Rica and England.",
-			"link": "/",
-			"tags": [
-				"fix",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Forged items in /play land where you place their hologram",
-			"summary": "Forging an item inside a /play world now gives you a hologram to place straight away. It shows the real forge progress above it with a Cancel button, and when the model is ready it materializes on that exact spot for everyone in the server. If a forge fails, the hologram becomes a marker with the reason, Retry and Dismiss, and nothing comes out of your build budget. Forged models are held to a size ceiling that suits your device (phones get a lighter one), oversized results are simplified automatically, and the world itself refuses models it cannot load or that are too large. The Forge form lists what you made this session and gives an honest wait: about 90 seconds usually, up to 6 minutes when the lane is busy.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "LiveKit avatars keep playing for visitors without a microphone",
-			"summary": "An <agent-3d voice=\"livekit\"> embed used to report a failed connection whenever the visitor had no microphone or said no to the permission prompt, even though the room was joined and the avatar was already talking. It now joins in listen-only mode: the agent's voice plays and the avatar keeps lip-syncing and gesturing. Visitors who do have a microphone can still talk back.",
-			"link": "/docs/voice-framework-integrations",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "My cards reaches every card in a big wallet, with search",
-			"summary": "The My cards view of the /play card gacha used to stop at the first 120 cards. It now lists the whole wallet 60 cards at a time in name order, with a Show more button that keeps your place, and a search box that looks through every card in the wallet by name, year, set number or grade. A search for \"psa 10\" returns only grade 10 cards. Cards you can sell back right now are gathered in a Sellable now section at the top, and every card on screen gets its buyback price checked, not just the first 60. Opening My cards while the machine list was still loading no longer gets replaced by that list.",
-			"link": "/play",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "My cards shows every card's photo, grade and value again",
-			"summary": "In production the My cards view of the /play card gacha listed cards with blank photos and no grade or value, and sometimes failed to load at all. Card details now load from a backup Arweave gateway when the main one is busy, and the wallet scan uses the platform's full set of Solana providers instead of the public node alone. Other pages that read Arweave files (agent cards, token details) also skip two gateways that had stopped answering.",
-			"link": "/play",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Operators can extend, rename or end the live event without a deploy",
-			"summary": "A new authed override, set with npm run event:override or POST /api/event-config, changes the live event's window or name on top of the baked-in schedule. The countdown, the event leaderboard and the game server's quest gate all follow it within about a minute, and fall back to the static schedule if the API is unreachable. Every change is validated with the same rules as the deploy gate and audit-logged.",
-			"link": null,
-			"tags": [
-				"feature",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Pages fit a phone screen, and small buttons are easier to tap",
-			"summary": "A full-site pass at phone width fixed layouts that were wider than the screen and got cut off on the right: examples, data desk, diorama, herald, assistant, splat, bazaar, markets, crypto, developers, ship, materialize, go, leaderboard, the arena, trades and news. Long addresses and links now wrap instead of pushing the column wide. On touch screens, the docs Run and Edit buttons, the docs freshness link, tutorial Copy buttons, disclosure rows, and controls on character library, prompts, yields, guards, live agents, everything, exchanges, ship and forged now have a full 44px tap area.",
-			"link": "/docs",
-			"tags": [
-				"improvement"
 			]
 		}
 	]
