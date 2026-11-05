@@ -437,7 +437,10 @@ export function createSellAll({ ctx, onSettled, onClose }) {
 				? `<span class="awh-sa-err">${esc(friendlyError(it))}</span>`
 				: it.note
 					? esc(it.note)
-					: `${esc(it.name || '')}${it.name ? ' · ' : ''}<span class="awh-mono">${esc(short(it.mint, 4, 4))}</span>`;
+					: it.symbol
+						? `${esc(it.name || '')}${it.name ? ' · ' : ''}<span class="awh-mono">${esc(short(it.mint, 4, 4))}</span>`
+						// The title already shows the short mint; don't print it twice.
+						: (it.name ? esc(it.name) : 'No token name on record');
 		const check = s.phase === 'review'
 			? `<input type="checkbox" data-sa-pick="${idx}" ${it.selected && !it.busy ? 'checked' : ''} ${editable ? '' : 'disabled'} aria-label="Sell ${esc(sym)}">`
 			: '';
