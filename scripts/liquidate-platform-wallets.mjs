@@ -15,7 +15,9 @@
 // (workers/agent-sniper/amm-exit.js), broadcast by the MEV-aware execution
 // engine, then `reclaimMintRent` closes the provably-empty account. A sniper
 // moon bag sold here is written off in `agent_sniper_positions` so the worker's
-// moon-bag manager does not chase tokens that are gone.
+// moon-bag manager does not chase tokens that are gone. Token accounts that were
+// already empty are closed too (rent back to the wallet), except the $THREE, USDC
+// and WSOL accounts the agent gets paid into.
 //
 // Usage:
 //   node scripts/liquidate-platform-wallets.mjs                  # dry run: quote + simulate every sell
@@ -62,6 +64,14 @@ const OUT = opt('--out', null);
 const NETWORK = 'mainnet';
 // Pinned, never read from env: an unset THREE_TOKEN_MINT must not turn the keep-$THREE guard off.
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+// Receive rails an agent is paid on (x402 settles USDC, swaps unwrap WSOL). An
+// empty account here is not litter: closing it makes the next inbound payment
+// fail or forces the payer to recreate it, so it stays open.
+const KEEP_OPEN = new Set([
+	THREE_MINT,
+	'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+	'So11111111111111111111111111111111111111112',
+]);
 const CONFIRM_TIMEOUT_MS = 60_000;
 // Below this the wallet cannot pay even a base fee, so no sell can land.
 const MIN_FEE_LAMPORTS = 20_000;
@@ -203,7 +213,12 @@ for (const agent of owned) {
 		report.push({ agent: agent.name, agentId: agent.id, wallet: agent.address, status: 'read_failed', error: err.message });
 		continue;
 	}
-	holdings = holdings.filter((h) => (INCLUDE_THREE || h.mint !== THREE_MINT) && (!ONLY_MINT || h.mint === ONLY_MINT));
+	holdings = holdings.filter(
+		(h) =>
+			(INCLUDE_THREE || h.mint !== THREE_MINT) &&
+			(!ONLY_MINT || h.mint === ONLY_MINT) &&
+			(h.amount > 0n || !KEEP_OPEN.has(h.mint)),
+	);
 	if (!holdings.length) continue;
 
 	const openPositions = new Set(
