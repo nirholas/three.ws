@@ -1108,6 +1108,8 @@ const appConfig = {
 				'paired-coin': resolve(__dirname, 'pages/paired-coin.html'),
 				'launch-paired': resolve(__dirname, 'pages/launch-paired.html'),
 				'launch-uniswap': resolve(__dirname, 'pages/launch-uniswap.html'),
+				'launch-multichain': resolve(__dirname, 'pages/launch-multichain.html'),
+				'launch-subject': resolve(__dirname, 'pages/launch-subject.html'),
 				'launch-intent': resolve(__dirname, 'pages/launch-intent.html'),
 				'creator-payouts': resolve(__dirname, 'pages/creator-payouts.html'),
 				credits: resolve(__dirname, 'pages/credits.html'),
@@ -1962,6 +1964,8 @@ const appConfig = {
 					'/launch/paired/': resolve(root, 'pages/launch-paired.html'),
 					'/launch/uniswap': resolve(root, 'pages/launch-uniswap.html'),
 					'/launch/uniswap/': resolve(root, 'pages/launch-uniswap.html'),
+					'/launch/multichain': resolve(root, 'pages/launch-multichain.html'),
+					'/launch/multichain/': resolve(root, 'pages/launch-multichain.html'),
 					'/launch/intents': resolve(root, 'pages/launch-intent.html'),
 					'/launch/intents/': resolve(root, 'pages/launch-intent.html'),
 					'/creator/payouts': resolve(root, 'pages/creator-payouts.html'),
@@ -2602,6 +2606,9 @@ const appConfig = {
 					// instead of being served the agent-detail HTML shell.
 					// /agent/:id/wallet and /agents/:id/wallet → Agent Wallet hub
 					// (must precede the /agent/:id and /agents/:id catch-alls below).
+					// /l/:id → a multichain launchpad coin's showcase page.
+					else if (!filePath && /^\/l\/[a-z0-9]{6,16}\/?$/.test(path))
+						filePath = resolve(root, 'pages/launch-subject.html');
 					else if (!filePath && /^\/agents?\/[^/.]+\/wallet\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-wallet.html');
 					// /agents/:id/cards and /agent-cards → Agent Cards (gift + prepaid cards).
