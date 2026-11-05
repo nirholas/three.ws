@@ -183,6 +183,13 @@ describe('agent-wallet MCP catalog', () => {
 			'list_integrations',
 			'install_integration',
 			'remove_integration',
+			// Account status, dashboard links and X posting (api/_mcpagent/account-tools.js)
+			'get_account_status',
+			'get_dashboard_urls',
+			'connect_twitter',
+			'configure_twitter_posting',
+			'post_to_x',
+			'list_scheduled_posts',
 			// Agent learning loop status (api/_mcpagent/learning-tools.js)
 			'get_learning_status',
 			// Network-less code sandbox (api/_mcpagent/sandbox-tools.js)

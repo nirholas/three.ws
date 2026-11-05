@@ -65,7 +65,10 @@ export const RESOURCE_DESCRIPTION =
 	'learned skills wait for review (read only). ' +
 	'Agent sandbox with no network: execute_code runs Python, JavaScript or bash, terminal keeps a shell, ' +
 	'and read_file and write_file move files in and out, billed per second of runtime. ' +
+	'Autonomous browsing: browse_web sends one of your agents to work toward a goal on the web under a safety policy, with owner take-over. ' +
 	'Third-party MCP servers on your agents: list_integrations, install_integration and remove_integration. ' +
+	'Account and X posting: get_account_status reports plan, limits and what is waiting, get_dashboard_urls returns canonical three.ws page links, ' +
+	'connect_twitter gives the owner the link to connect X, configure_twitter_posting sets an agent posting policy, post_to_x requests a post through that policy, and list_scheduled_posts shows the queue. ' +
 	'Every money-moving tool needs its preview first and an explicit confirm flag. ' +
 	'Connect with a three.ws account (OAuth) or pay per call in USDC on Base or Solana mainnet, no ' +
 	'API key. Operated by three.ws.';

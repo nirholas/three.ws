@@ -352,6 +352,16 @@ export const POLICY = {
 		perps_order_cancel: own('perps', 'confirm_trade', 'perps_action_preview'),
 		perps_flatten: own('perps', 'confirm_trade', 'perps_action_preview'),
 		perps_limits: w('perps'),
+		// Human-task escrow marketplace (api/_mcpagent/human-task-tools.js). The
+		// service verifies each quote and preview itself.
+		human_task_list: r('marketplace'),
+		human_task_status: r('marketplace'),
+		human_task_quote: r('marketplace'),
+		human_task_post: own('marketplace', 'confirm_spend', 'human_task_quote'),
+		human_task_approve_preview: w('marketplace'),
+		human_task_approve: own('marketplace', 'confirm_release', 'human_task_approve_preview'),
+		human_task_cancel: own('marketplace', 'confirm_cancel', 'human_task_status'),
+		human_task_dispute: w('marketplace'),
 		// Lending from the agent wallet (api/_mcpagent/lending-tools.js). The
 		// lending service simulates and checks its own previews; the policy layer
 		// enforces enablement and the confirm flag.
@@ -447,7 +457,7 @@ export const POLICY = {
 		post_to_x: w('integrations'),
 		list_scheduled_posts: r('integrations'),
 		// Bounty feed and Build program (api/_mcpagent/bounties-tools.js). No funds move.
-		list_bounties: r('discovery'),
+		list_bounties: r('marketplace'),
 		submit_build_entry: w('agents'),
 		// Agent learning loop status (api/_mcpagent/learning-tools.js). Read only.
 		get_learning_status: r('agents'),
@@ -578,16 +588,6 @@ export const POLICY = {
 		cancel_payment_session: f('x402', 'confirm_delete', 'check_payment_session', ['session_id']),
 	},
 	'agora-mcp': {
-		// Human-task escrow marketplace (api/_mcpagent/human-task-tools.js). The
-		// service verifies each quote and preview itself.
-		human_task_list: r('marketplace'),
-		human_task_status: r('marketplace'),
-		human_task_quote: r('marketplace'),
-		human_task_post: own('marketplace', 'confirm_spend', 'human_task_quote'),
-		human_task_approve_preview: w('marketplace'),
-		human_task_approve: own('marketplace', 'confirm_release', 'human_task_approve_preview'),
-		human_task_cancel: own('marketplace', 'confirm_cancel', 'human_task_status'),
-		human_task_dispute: w('marketplace'),
 		agora_board: r('marketplace'),
 		agora_pulse: r('marketplace'),
 		agora_citizens: r('marketplace'),

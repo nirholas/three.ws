@@ -106,7 +106,7 @@ export const accountToolDefs = [
 		group: 'account',
 		tier: 'read',
 		annotations: READ,
-		description: `Return the canonical three.ws page URLs (dashboard, billing, wallet, runs, approvals, connections, API keys and more) so you can link the user to the right place instead of guessing. Pass page to get one. Pages: ${DASHBOARD_PAGE_NAMES.join(', ')}.`,
+		description: `Return the canonical three.ws page URLs (dashboard, billing, wallet, runs, approvals, connections, API keys and more) so you can link the user to the right place instead of guessing. Pass page to get one. Pages: ${DASHBOARD_PAGE_NAMES.join(', ')}. Use this whenever you need to send the user to a three.ws page.`,
 		inputSchema: {
 			type: 'object',
 			properties: { page: { type: 'string', enum: DASHBOARD_PAGE_NAMES, description: 'Return only this page.' } },
@@ -147,7 +147,7 @@ export const accountToolDefs = [
 		group: 'integrations',
 		tier: 'write',
 		annotations: WRITE_IDEMPOTENT,
-		description: 'Set what an agent may post to X and how: turn posting on or off, which kinds of post are allowed, the daily cap and minimum gap, whether the owner approves each post first, and tone rules. Only the fields you pass change. Keep review_before_post on unless the owner has asked for hands-off posting.',
+		description: 'Set what an agent may post to X and how: turn posting on or off, which kinds of post are allowed, the daily cap and minimum gap, whether the owner approves each post first, and tone rules. Only the fields you pass change. Keep review_before_post on unless the owner has asked for hands-off posting. Use this to change what an agent may post to X before it posts.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -178,7 +178,7 @@ export const accountToolDefs = [
 		group: 'integrations',
 		tier: 'write',
 		annotations: WRITE,
-		description: 'Request a post to X for an agent. The agent\'s policy decides what happens: with review-before-post on (the default) the post is queued for the owner and NOTHING is published; otherwise it is scheduled or published, within the daily cap and tone rules. A refused post comes back with the reason. Use list_scheduled_posts to see the queue. For a reply, kind is "replies" and reply_to_tweet_id is required.',
+		description: 'Request a post to X for an agent. The agent\'s policy decides what happens: with review-before-post on (the default) the post is queued for the owner and NOTHING is published; otherwise it is scheduled or published, within the daily cap and tone rules. A refused post comes back with the reason. Use list_scheduled_posts to see the queue. For a reply, kind is "replies" and reply_to_tweet_id is required. Use this when the user wants an agent to post, thread or reply on X.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -221,7 +221,7 @@ export const accountToolDefs = [
 		group: 'integrations',
 		tier: 'read',
 		annotations: READ,
-		description: 'List X posts waiting for the owner to approve and posts scheduled to go out (plus the last week\'s sent or failed ones). Omit agent_id to list across all of the account\'s agents.',
+		description: 'List X posts waiting for the owner to approve and posts scheduled to go out (plus the last week\'s sent or failed ones). Omit agent_id to list across all of the account\'s agents. Use this to check what is queued or already sent on X.',
 		inputSchema: {
 			type: 'object',
 			properties: { agent_id: agentIdProp, limit: { type: 'integer', minimum: 1, maximum: 100 } },

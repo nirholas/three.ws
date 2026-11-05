@@ -124,7 +124,7 @@ export const humanTaskToolDefs = [
 		group: 'marketplace',
 		tier: 'read',
 		annotations: ann(false, false, false),
-		description: 'Price a task before posting it: returns the confirmation table (bounty, platform fee, total locked in escrow, refund terms, deadline) and a quote_id valid ten minutes. Moves no funds. Show the table to the user, then call human_task_post with confirm_spend: true and the quote_id only after a clear yes.',
+		description: 'Price a task before posting it: returns the confirmation table (bounty, platform fee, total locked in escrow, refund terms, deadline) and a quote_id valid ten minutes. Moves no funds. Use this before human_task_post to show the user the cost. Show the table to the user, then call human_task_post with confirm_spend: true and the quote_id only after a clear yes.',
 		inputSchema: { type: 'object', properties: postArgs, required: ['agent_id', 'title', 'instructions', 'bounty_usdc', 'deadline_hours'], additionalProperties: false },
 		async handler(args, auth) {
 			return run(auth, { scope: 'agents:read' }, async (user) => {
@@ -141,7 +141,7 @@ export const humanTaskToolDefs = [
 		confirmFlag: 'confirm_spend',
 		previewTool: 'human_task_quote',
 		annotations: ann(false, false, false),
-		description: 'Post the task and lock its bounty plus fee in escrow from your agent\'s Solana wallet. Spends real USDC. Refuses unless confirm_spend is exactly true and quote_id is a fresh id from human_task_quote that the user has seen and approved. The escrow refunds in full if nobody completes the task.',
+		description: 'Post the task and lock its bounty plus fee in escrow from your agent\'s Solana wallet. Spends real USDC. Refuses unless confirm_spend is exactly true and quote_id is a fresh id from human_task_quote that the user has seen and approved. The escrow refunds in full if nobody completes the task. Use this to hire a person for a real-world job once the user approved the human_task_quote table.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -167,7 +167,7 @@ export const humanTaskToolDefs = [
 		group: 'marketplace',
 		tier: 'write',
 		annotations: ann(false, false, false),
-		description: 'Show the payout table for a task whose proof was submitted: who gets the bounty, the platform fee, and the escrow it releases. Moves no funds. Issues a preview_id valid ten minutes. Show the table to the user, then call human_task_approve with confirm_release: true and that preview_id only after a clear yes.',
+		description: 'Show the payout table for a task whose proof was submitted: who gets the bounty, the platform fee, and the escrow it releases. Moves no funds. Use this before human_task_approve to show the user the payout. Issues a preview_id valid ten minutes. Show the table to the user, then call human_task_approve with confirm_release: true and that preview_id only after a clear yes.',
 		inputSchema: { type: 'object', properties: { task_id: uuid }, required: ['task_id'], additionalProperties: false },
 		async handler(args, auth) {
 			return run(auth, { scope: 'agents:write' }, async (user) => {
@@ -184,7 +184,7 @@ export const humanTaskToolDefs = [
 		confirmFlag: 'confirm_release',
 		previewTool: 'human_task_approve_preview',
 		annotations: ann(false, true, false),
-		description: 'Approve the submitted proof and pay the worker from escrow. Moves real USDC and cannot be undone. Refuses unless confirm_release is exactly true and preview_id is the fresh id human_task_approve_preview issued for this task. If the proof is wrong, call human_task_dispute instead.',
+		description: 'Approve the submitted proof and pay the worker from escrow. Moves real USDC and cannot be undone. Refuses unless confirm_release is exactly true and preview_id is the fresh id human_task_approve_preview issued for this task. If the proof is wrong, call human_task_dispute instead. Use this to release payment once the user approved the human_task_approve_preview table and the proof is right.',
 		inputSchema: {
 			type: 'object',
 			properties: { task_id: uuid, preview_id: { type: 'string' }, confirm_release: { type: 'boolean', description: 'Must be exactly true, only after the user approved the payout table.' } },
@@ -209,7 +209,7 @@ export const humanTaskToolDefs = [
 		confirmFlag: 'confirm_cancel',
 		previewTool: 'human_task_status',
 		annotations: ann(false, true, false),
-		description: 'Cancel a task nobody has accepted yet and refund the whole escrow (bounty plus fee) to the funding wallet. Moves real USDC. Refuses unless confirm_cancel is exactly true. A task someone already accepted cannot be cancelled: dispute it after proof is submitted instead.',
+		description: 'Cancel a task nobody has accepted yet and refund the whole escrow (bounty plus fee) to the funding wallet. Moves real USDC. Refuses unless confirm_cancel is exactly true. A task someone already accepted cannot be cancelled: dispute it after proof is submitted instead. Use this to withdraw an unclaimed task and recover its escrow.',
 		inputSchema: {
 			type: 'object',
 			properties: { task_id: uuid, confirm_cancel: { type: 'boolean', description: 'Must be exactly true, only after the user agreed to cancel.' } },

@@ -1219,6 +1219,47 @@
 				"removed": 0,
 				"total": 768
 			}
+		},
+		{
+			"date": "2026-11-05",
+			"added": {
+				"hq-mcp": [
+					"analyze_portfolio_risk",
+					"hq_ask",
+					"hq_chain_tvl",
+					"hq_funding_rates",
+					"hq_gas",
+					"hq_liquidations",
+					"hq_protocol_health",
+					"hq_top_yields",
+					"hq_venue_spread",
+					"hq_whale_activity"
+				],
+				"mcp-agent": [
+					"browse_web",
+					"human_task_approve",
+					"human_task_approve_preview",
+					"human_task_cancel",
+					"human_task_dispute",
+					"human_task_list",
+					"human_task_post",
+					"human_task_quote",
+					"human_task_status",
+					"lend_deposit",
+					"lend_markets",
+					"lend_positions",
+					"lend_preview",
+					"lend_withdraw",
+					"list_bounties",
+					"submit_build_entry"
+				]
+			},
+			"removed": {},
+			"counts": {
+				"added": 26,
+				"removed": 0,
+				"total": 794
+			}
 		}
 	]
 }

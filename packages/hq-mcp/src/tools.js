@@ -22,43 +22,43 @@ function remote(name, title, description, inputSchema) {
 }
 
 export const TOOLS = [
-	remote('hq_top_yields', 'Top DeFi yields', 'Highest-APY DeFi pools above a TVL floor, optionally for one chain or stablecoin pools only. Live DeFiLlama data via HQ.', {
+	remote('hq_top_yields', 'Top DeFi yields', 'Highest-APY DeFi pools above a TVL floor, optionally for one chain or stablecoin pools only. Live DeFiLlama data via HQ. Use this to find where stablecoin or chain-specific yield is highest before choosing a pool.', {
 		chain: z.string().optional().describe('Chain name, e.g. Ethereum, Solana.'),
 		minTvl: z.number().min(0).optional().describe('Minimum pool TVL in USD (default 1000000).'),
 		stablecoinOnly: z.boolean().optional(),
 		limit,
 	}),
-	remote('hq_chain_tvl', 'Chain TVL ranking', "Total value locked by chain, ranked, with each chain's share of the tracked total.", {
+	remote('hq_chain_tvl', 'Chain TVL ranking', "Total value locked by chain, ranked, with each chain's share of the tracked total. Use this to compare how much value each chain holds or to size one chain against the rest.", {
 		chain: z.string().optional().describe('Return just this chain.'),
 		limit,
 	}),
-	remote('hq_protocol_health', 'Protocol health scores', 'Composite 0-100 health score per DeFi protocol (TVL scale, momentum, stability, maturity). A heuristic, not financial advice.', {
+	remote('hq_protocol_health', 'Protocol health scores', 'Composite 0-100 health score per DeFi protocol (TVL scale, momentum, stability, maturity). A heuristic, not financial advice. Use this to vet a DeFi protocol before depositing or to find the weakest ones.', {
 		protocol: z.string().optional().describe('Name or slug filter.'),
 		category: z.string().optional().describe('Category filter, e.g. Lending, Dexes.'),
 		sort: z.enum(['score', 'tvl', 'weakest']).optional().describe('weakest lists the lowest scores first.'),
 		limit,
 	}),
-	remote('hq_funding_rates', 'Perp funding rates', 'Perpetual funding rates averaged across Binance, Hyperliquid and OKX. Positive means longs pay shorts.', {
+	remote('hq_funding_rates', 'Perp funding rates', 'Perpetual funding rates averaged across Binance, Hyperliquid and OKX. Positive means longs pay shorts. Use this to see which assets have crowded long or short leverage.', {
 		symbol: z.string().optional().describe('Base asset, e.g. BTC.'),
 		limit,
 	}),
-	remote('hq_liquidations', 'Recent liquidations', 'Perp liquidations over the last four hours: totals, long versus short pain, and the symbols hit hardest.', {
+	remote('hq_liquidations', 'Recent liquidations', 'Perp liquidations over the last four hours: totals, long versus short pain, and the symbols hit hardest. Use this to gauge current market stress or a liquidation cascade.', {
 		symbol: z.string().optional(),
 		limit,
 	}),
-	remote('hq_venue_spread', 'Cross-venue spreads', 'Cross-venue price spreads in basis points per asset, widest first.', {
+	remote('hq_venue_spread', 'Cross-venue spreads', 'Cross-venue price spreads in basis points per asset, widest first. Use this to spot arbitrage or thin liquidity across venues.', {
 		symbol: z.string().optional(),
 		limit,
 	}),
-	remote('hq_whale_activity', 'Whale transfers', 'Large ETH transfers (above $500K) in the last hour with exchange net flow.', { limit }),
-	remote('hq_gas', 'Gas prices', 'Current gas price per EVM chain with the cheapest chain highlighted.', {
+	remote('hq_whale_activity', 'Whale transfers', 'Large ETH transfers (above $500K) in the last hour with exchange net flow. Use this to watch large-holder movement into or out of exchanges.', { limit }),
+	remote('hq_gas', 'Gas prices', 'Current gas price per EVM chain with the cheapest chain highlighted. Use this to pick the cheapest EVM chain to transact on right now.', {
 		chain: z.string().optional(),
 	}),
 	{
 		name: 'analyze_portfolio_risk',
 		title: 'Portfolio risk score',
 		description:
-			'Score a portfolio 0-100 from positions you supply: concentration, exposure to weakly scored protocols, and crowded-leverage assets, using live HQ protocol health and funding data. Nothing is stored. A heuristic, not financial advice.',
+			'Score a portfolio 0-100 from positions you supply: concentration, exposure to weakly scored protocols, and crowded-leverage assets, using live HQ protocol health and funding data. Nothing is stored. A heuristic, not financial advice. Use this to check how risky a set of holdings is before rebalancing.',
 		inputSchema: {
 			positions: z
 				.array(
@@ -82,7 +82,7 @@ export const TOOLS = [
 		name: 'hq_ask',
 		title: 'Ask HQ a market question',
 		description:
-			'Ask a plain-language DeFi market question (yields, TVL, protocol safety, funding, liquidations, spreads, whales, gas). HQ routes it to the right tool and returns the data plus a short narrative when its summarizer is configured.',
+			'Ask a plain-language DeFi market question (yields, TVL, protocol safety, funding, liquidations, spreads, whales, gas). HQ routes it to the right tool and returns the data plus a short narrative when its summarizer is configured. Use this when you have a plain-language market question and do not know which hq_ tool answers it.',
 		inputSchema: { question: z.string().min(1).max(500) },
 		annotations: READ_ONLY,
 		async handler(args) {
