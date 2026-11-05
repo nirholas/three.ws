@@ -18,6 +18,11 @@ vi.mock('../../api/_lib/onchain.js', () => ({
 	SERVER_CHAIN_META: { 8453: { name: 'Base', short: 'BASE', testnet: false } },
 }));
 
+// The unfurl counter writes through the same sql tag; without this it would
+// consume the rows each test queues for the handler's own lookups.
+const recordShareEvent = vi.fn(async () => {});
+vi.mock('../../api/_lib/share-funnel.js', () => ({ recordShareEvent }));
+
 const { default: handler } = await import('../../api/agent-oembed.js');
 
 function makeReq(url) {
