@@ -1,8 +1,5 @@
 # Let an agent drive the screen browser autonomously with the owner lease as instant interrupt
 
-**Status (2026-11-04):** Built and committed in 478f431b2: the policy and loop with 13 passing tests (lease interrupt within one step, private IP and file: refusal, step, time and token caps, full action log), the pool runner, the `/api/agent-screen-browse` claim and report API, the owner Browse panel with a Take over button, and the write-tier `browse_web` MCP tool. Remaining owner steps, none doable from this session: deploy the API and pool image, then run one real-model example.com run through the Browse panel and watch a Take over stop the agent in a browser. Keep this order until that live run is observed.
-
-
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/732-plan-screen-autonomous-browser-agent-owner-lease.md`.
 
 **Priority:** P2, new capability with clear value (score 52 of 100 inside the tier). **Area:** screen. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
