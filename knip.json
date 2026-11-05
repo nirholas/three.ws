@@ -1,0 +1,23 @@
+{
+	"$schema": "https://unpkg.com/knip@6.44.1/schema.json",
+	"workspaces": {
+		".": {
+			"entry": [
+				"pages/**/*.html",
+				"api/**/*.{js,mjs}",
+				"server/index.mjs",
+				"src/main.js",
+				"scripts/**/*.{js,mjs}",
+				"tests/**/*.{test,spec}.{js,mjs}",
+				"vite.config*.js",
+				"vitest.config.js",
+				"playwright*.config.js"
+			],
+			"project": ["src/**/*.{js,mjs}", "api/**/*.{js,mjs}", "server/**/*.{js,mjs}", "scripts/**/*.{js,mjs}"],
+			"ignore": ["**/*.d.ts", "src/vendor/**"]
+		}
+	},
+	"ignoreWorkspaces": ["agent-payments-sdk", "agent-ui-sdk", "avatar-sdk", "page-agent-sdk", "character-studio", "mcp-bridge", "mcp-server", "multiplayer", "services/*", "packages/*", "walk-sdk", "tour-sdk"],
+	"ignoreExportsUsedInFile": true,
+	"include": ["files", "dependencies", "exports"]
+}
