@@ -145,4 +145,36 @@ describe('submitProtected', () => {
 		).rejects.toMatchObject({ code: 'SIM_FAILED' });
 		expect(conn.sendRawTransaction).not.toHaveBeenCalled();
 	});
+
+	it('returns an earlier attempt that landed late instead of reporting the trade as failed', async () => {
+		// Attempt 1 does not confirm inside its window, so the engine re-signs with a
+		// fresh blockhash. Meanwhile attempt 1 lands: the sell already happened, so the
+		// retry's preflight reverts (selling a bag that is now empty is the curve's
+		// overflow, 0x1787). The engine used to throw "not landed" for a trade that
+		// executed on-chain; it has to report the signature that actually landed.
+		const signed = [];
+		const landed = new Set();
+		const statusOf = (sig) => (landed.has(sig) ? { err: null, confirmationStatus: 'confirmed', slot: 9 } : null);
+		const conn = mockConnection({});
+		conn.getSignatureStatuses = vi.fn(async (sigs) => ({ value: sigs.map(statusOf), context: { slot: 9 } }));
+		conn.getSignatureStatus = vi.fn(async (sig) => ({ value: statusOf(sig) }));
+		conn.sendRawTransaction = vi.fn(async () => {
+			if (signed.length > 1) {
+				landed.add(signed[0]);
+				throw new Error('Simulation failed. Message: Transaction simulation failed: Error processing Instruction 2: custom program error: 0x1787.');
+			}
+			return 'sigSENT';
+		});
+		const payer = Keypair.generate();
+		const ix = SystemProgram.transfer({ fromPubkey: payer.publicKey, toPubkey: Keypair.generate().publicKey, lamports: 1 });
+		const res = await submitProtected({
+			network: 'mainnet',
+			connection: conn,
+			payer,
+			instructions: [ix],
+			opts: { confirmTimeoutMs: 50, onSigned: ({ signature }) => signed.push(signature) },
+		});
+		expect(signed.length).toBeGreaterThan(1);
+		expect(res.signature).toBe(signed[0]);
+	});
 });

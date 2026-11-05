@@ -508,8 +508,47 @@ export async function submitProtected({ network, connection, payer, instructions
 		? (jitoSkipped ? 'jito_failure_streak' : null)
 		: (network === 'devnet' ? 'devnet_no_jito' : (tipMode === 'off' ? 'tip_mode_off' : null));
 
+	// Every attempt broadcasts a DIFFERENT signed tx (fresh blockhash, higher fee),
+	// and an attempt that missed its confirm window stays valid until its blockhash
+	// expires, so it can still land while a later attempt is in flight. Each retry
+	// and every terminal error first asks the chain whether an earlier attempt
+	// landed: that trade happened, and a retry can only fail against the state it
+	// left (a sell of a bag that is now empty) or, for a buy, execute it twice.
+	const broadcast = [];
+	const landedEarlier = async () => {
+		if (!broadcast.length) return null;
+		const res = await connection
+			.getSignatureStatuses(broadcast.map((b) => b.signature), { searchTransactionHistory: true })
+			.catch(() => null);
+		const statuses = res?.value || [];
+		const i = statuses.findIndex((st) => st && !st.err && (st.confirmationStatus === 'confirmed' || st.confirmationStatus === 'finalized'));
+		if (i < 0) return null;
+		const b = broadcast[i];
+		return {
+			signature: b.signature,
+			slot: statuses[i].slot ?? null,
+			route: 'protected',
+			tipLamports: b.tipLamports,
+			priorityFeeMicroLamports: b.priorityFeeMicroLamports,
+			attempts,
+			landedMs: Date.now() - t0,
+			fallbackReason: fallbackReason || 'landed_late',
+			landedBy: 'late_confirm',
+			lanes: [],
+		};
+	};
+	const failUnlessLanded = async (err) => {
+		const late = await landedEarlier();
+		if (late) return late;
+		throw err;
+	};
+
 	for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
 		attempts = attempt + 1;
+		if (attempt > 0) {
+			const late = await landedEarlier();
+			if (late) return late;
+		}
 
 		// Escalate the priority fee on each retry; floor + ceiling clamp it. The
 		// ramp is steep on purpose (1x, 3x, 5x): a retry means the network outbid
@@ -623,6 +662,7 @@ export async function submitProtected({ network, connection, payer, instructions
 			}
 		}
 
+		broadcast.push({ signature, tipLamports: Number(tipLamports), priorityFeeMicroLamports });
 		try {
 			const lanes = [
 				{ name: 'rpc', run: () => sendProtected(tx, signature, connection, blockhashCtx, confirmTimeoutMs) },
@@ -683,14 +723,14 @@ export async function submitProtected({ network, connection, payer, instructions
 			lastErr = e;
 			// A hard on-chain failure (TX_ERR) is terminal — the instructions reverted,
 			// retrying the same trade would just revert again.
-			if (e?.code === 'TX_ERR' || e?.code === 'SIM_FAILED') throw e;
+			if (e?.code === 'TX_ERR' || e?.code === 'SIM_FAILED') return failUnlessLanded(e);
 			// Blockhash expiry / not-landed: refresh and retry.
 		}
 	}
 
 	const err = lastErr || new Error('execution engine exhausted retries without landing');
 	if (!err.code) err.code = 'EXEC_EXHAUSTED';
-	throw err;
+	return failUnlessLanded(err);
 }
 
 // Recover the base58 signature string from a signed VersionedTransaction without
