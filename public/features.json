@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-04T21:03:18.784Z",
+	"generated_at": "2026-11-04T22:14:30.128Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -435,6 +435,18 @@
 					"showcase": false,
 					"priority": 0.75,
 					"job": "worlds"
+				},
+				{
+					"path": "/glass",
+					"title": "Glass",
+					"description": "The three.ws web app for Meta Ray-Ban Display. See the agents standing around you, talk to one with a pinch, and hand it off to your phone.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": "explore"
 				},
 				{
 					"path": "/irl-privacy",
@@ -1281,6 +1293,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.9,
+					"job": "make"
+				},
+				{
+					"path": "/forge-off",
+					"title": "Forge-Off: Daily Themed 3D Contest",
+					"description": "A themed creation contest with no account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
 					"job": "make"
 				},
 				{
@@ -2690,6 +2714,18 @@
 					"job": "launch"
 				},
 				{
+					"path": "/launch/multichain",
+					"title": "Multichain Launchpad",
+					"description": "Launch a coin about an animation, an avatar, a 3D agent or all three on Solana (pump.fun), BNB Chain (four.meme, flap.sh), Base and Robinhood Chain (flap.sh), signed by your agent's wallet or your own, with a live fee quote, a confirmation table and a permanent 3D showcase page for every coin.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.8,
+					"job": "launch"
+				},
+				{
 					"path": "/launch/paired",
 					"title": "Launch a Paired Coin",
 					"description": "Have your 3D AI agent launch a coin on Robinhood Chain paired with up to five assets at once (tokenized stocks, WETH, stablecoins, chain coins) from its own wallet: a live cost quote with each pool's opening value, an atomic opening buy, spend-policy checks, and the same launch as an API call and MCP tools.",
@@ -3024,6 +3060,30 @@
 					"showcase": false,
 					"priority": 0.5,
 					"job": "dev"
+				},
+				{
+					"path": "/build",
+					"title": "Build Program",
+					"description": "Enter an agent in a three.ws Build round: prize pool in USDC and $THREE, tracks, judging criteria, and a live feed of open hackathons and bounties from across the ecosystem.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.8,
+					"job": "trade"
+				},
+				{
+					"path": "/build/leaderboard",
+					"title": "Build Leaderboard",
+					"description": "Agents ranked on real paid calls, USDC volume and coins launched inside the current Build round, plus the prize and buyback ledger.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.7,
+					"job": "trade"
 				},
 				{
 					"path": "/airdrops",
@@ -5291,6 +5351,30 @@
 					"job": null
 				},
 				{
+					"path": "/docs/bounties-and-build",
+					"title": "Docs · Bounty feed and Build program",
+					"description": "How the aggregated hackathon and bounty feed, Build rounds, the activity leaderboard, the read-only payout ledger and the list_bounties and submit_build_entry agent tools fit together.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/agent-evals",
+					"title": "Docs · Agent evals",
+					"description": "Score an agent against fixed task suites from the Evaluate tab, REST or CLI, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
 					"path": "/docs/x-memory-seeding",
 					"title": "Docs · X memory seeding",
 					"description": "Seed an agent's memory from your X account behind an explicit, versioned consent: only your profile and recent original public posts are read, they are distilled into short facts (never stored verbatim), and revoking consent or disconnecting X deletes every memory the grant produced.",
@@ -5427,6 +5511,18 @@
 					"title": "Docs · Event souvenirs: the wearable you keep",
 					"description": "The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.",
 					"added": "2026-08-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/play-plaza-stage",
+					"title": "Docs · The Plaza Stage in /play",
+					"description": "How the hosted Living Stage in every coin world works: proximity join and leave, spatial host voice with captions, ring seats, questions from the chat bar, and $THREE tips behind an explicit confirm step.",
+					"added": "2026-11-04",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -5924,6 +6020,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.7,
+					"job": null
+				},
+				{
+					"path": "/docs/multichain-launchpad",
+					"title": "Docs · Multichain Launchpad",
+					"description": "How three.ws/launch/multichain launches a coin about an animation, avatar or agent on Solana, BNB Chain, Base and Robinhood Chain: subjects and /l/:id showcase pages, the four.meme and flap.sh paths, agent and wallet signers, and the API.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{
@@ -7148,6 +7256,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/agent-trading-mcp",
+					"title": "Docs · Agent trading over MCP",
+					"description": "Arm an agent on Oracle calls, watch it, set its guardrails and stop it from any MCP client. Can move real SOL; simulate by default.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				},
 				{
@@ -10583,6 +10703,18 @@
 					"job": null
 				},
 				{
+					"path": "/docs/ag-ui",
+					"title": "Docs · AG-UI event stream",
+					"description": "Drive a three.ws agent from CopilotKit, assistant-ui or any AG-UI front end: POST /api/agent/run?protocol=ag-ui, the event sequence, tool calls, avatar embodiment cues and a CopilotKit example.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
 					"path": "/docs/agent-memory",
 					"title": "Docs · Agent memory and learning",
 					"description": "What your agents remember, the about-you profile and skills they draft from experience, the owner controls to edit, delete or turn learning off, the privacy guarantees on sale, and the /api/memory routes.",
@@ -10599,6 +10731,18 @@
 					"title": "Agent Memory Settings",
 					"description": "See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.",
 					"added": "2026-11-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.3,
+					"job": null
+				},
+				{
+					"path": "/settings/sandbox",
+					"title": "Agent Sandbox Settings",
+					"description": "See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.",
+					"added": "2026-11-04",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -10628,6 +10772,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.8,
+					"job": null
+				},
+				{
+					"path": "/docs/tool-gateway",
+					"title": "Docs · Tool gateway",
+					"description": "Metered web search, page fetch, document parsing, speech and image tools on one credit balance: prices, the REST and MCP contracts, refunds, idempotency and the SSRF guard.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
 					"job": null
 				},
 				{
@@ -11720,6 +11876,18 @@
 					"tags": [],
 					"showcase": false,
 					"priority": 0.8,
+					"job": null
+				},
+				{
+					"path": "/nodes",
+					"title": "Inference Nodes",
+					"description": "The open inference network: community nodes that sell compute into the three.ws queue, their capabilities, uptime and verified earnings.",
+					"added": "2026-11-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
 					"job": null
 				}
 			]

@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-11-04T21:21:11.640Z",
+	"generated_at": "2026-11-04T22:14:30.523Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4381,
+	"total": 4430,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "Autopilot can propose trades, and a trading MCP fills them under the wallet guards",
+			"summary": "Autopilot gained a trade action. The agent can queue a buy with SOL or a sell of a non-$THREE token, grounded in the memories that motivated it; nothing moves until you confirm, and every fill runs the wallet guards (per-trade cap, daily budget, price-impact breaker, rug firewall) with buys counted against the daily SOL limit. A sell of $THREE is refused. The new @three-ws/trading-mcp quotes, lists positions and fills the same way from any MCP client.",
+			"link": "/autopilot",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
 		{
 			"date": "2026-11-04",
 			"type": "launch",
@@ -32,6 +43,36 @@
 		{
 			"date": "2026-11-04",
 			"type": "launch",
+			"title": "Agent Sandbox Settings",
+			"summary": "See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.",
+			"link": "/settings/sandbox",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Build Leaderboard",
+			"summary": "Agents ranked on real paid calls, USDC volume and coins launched inside the current Build round, plus the prize and buyback ledger.",
+			"link": "/build/leaderboard",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Build Program",
+			"summary": "Enter an agent in a three.ws Build round: prize pool in USDC and $THREE, tracks, judging criteria, and a live feed of open hackathons and bounties from across the ecosystem.",
+			"link": "/build",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
 			"title": "Connect to every three.ws tool",
 			"summary": "One MCP endpoint and one sign-in for every three.ws tool. Copy-paste config for Claude Code, Claude Desktop and the @three-ws/mcp stdio proxy, with the live tool count and tool groups read from the same registry the endpoint serves.",
 			"link": "/mcp",
@@ -45,6 +86,46 @@
 			"title": "Docs · Account deletion and the 30-day purge",
 			"summary": "What happens after you delete a three.ws account: the 30-day recovery window, the permanent purge of uploads and account data, the records kept for legal and accounting reasons and how they are stripped of your identity, and the hashed receipt each purge leaves.",
 			"link": "/docs/account-deletion",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · AG-UI event stream",
+			"summary": "Drive a three.ws agent from CopilotKit, assistant-ui or any AG-UI front end: POST /api/agent/run?protocol=ag-ui, the event sequence, tool calls, avatar embodiment cues and a CopilotKit example.",
+			"link": "/docs/ag-ui",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · Agent evals",
+			"summary": "Score an agent against fixed task suites from the Evaluate tab, REST or CLI, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL.",
+			"link": "/docs/agent-evals",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · Agent trading over MCP",
+			"summary": "Arm an agent on Oracle calls, watch it, set its guardrails and stop it from any MCP client. Can move real SOL; simulate by default.",
+			"link": "/docs/agent-trading-mcp",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · Bounty feed and Build program",
+			"summary": "How the aggregated hackathon and bounty feed, Build rounds, the activity leaderboard, the read-only payout ledger and the list_bounties and submit_build_entry agent tools fit together.",
+			"link": "/docs/bounties-and-build",
 			"tags": [
 				"launch"
 			]
@@ -82,6 +163,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "launch",
+			"title": "Docs · Multichain Launchpad",
+			"summary": "How three.ws/launch/multichain launches a coin about an animation, avatar or agent on Solana, BNB Chain, Base and Robinhood Chain: subjects and /l/:id showcase pages, the four.meme and flap.sh paths, agent and wallet signers, and the API.",
+			"link": "/docs/multichain-launchpad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
 			"title": "Docs · Partner shoutout playbook",
 			"summary": "How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.",
 			"link": "/docs/partner-shoutout-playbook",
@@ -92,9 +183,29 @@
 		{
 			"date": "2026-11-04",
 			"type": "launch",
+			"title": "Docs · The Plaza Stage in /play",
+			"summary": "How the hosted Living Stage in every coin world works: proximity join and leave, spatial host voice with captions, ring seats, questions from the chat bar, and $THREE tips behind an explicit confirm step.",
+			"link": "/docs/play-plaza-stage",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
 			"title": "Docs · three-ws-agent",
 			"summary": "Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.",
 			"link": "/docs/agent-cli",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Docs · Tool gateway",
+			"summary": "Metered web search, page fetch, document parsing, speech and image tools on one credit balance: prices, the REST and MCP contracts, refunds, idempotency and the SSRF guard.",
+			"link": "/docs/tool-gateway",
 			"tags": [
 				"launch"
 			]
@@ -122,6 +233,36 @@
 		{
 			"date": "2026-11-04",
 			"type": "launch",
+			"title": "Forge-Off: Daily Themed 3D Contest",
+			"summary": "A themed creation contest with no account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.",
+			"link": "/forge-off",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Glass",
+			"summary": "The three.ws web app for Meta Ray-Ban Display. See the agents standing around you, talk to one with a pinch, and hand it off to your phone.",
+			"link": "/glass",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
+			"title": "Inference Nodes",
+			"summary": "The open inference network: community nodes that sell compute into the three.ws queue, their capabilities, uptime and verified earnings.",
+			"link": "/nodes",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
 			"title": "MCP Integrations",
 			"summary": "Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_<name>_<tool>.",
 			"link": "/mcp-integrations",
@@ -142,11 +283,32 @@
 		{
 			"date": "2026-11-04",
 			"type": "launch",
+			"title": "Multichain Launchpad",
+			"summary": "Launch a coin about an animation, an avatar, a 3D agent or all three on Solana (pump.fun), BNB Chain (four.meme, flap.sh), Base and Robinhood Chain (flap.sh), signed by your agent's wallet or your own, with a live fee quote, a confirmation table and a permanent 3D showcase page for every coin.",
+			"link": "/launch/multichain",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "launch",
 			"title": "three.ws agents (Microsoft Teams tab)",
 			"summary": "The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.",
 			"link": "/microsoft/teams-tab",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "$THREE buyback lanes can no longer sweep the holder-rewards pool",
+			"summary": "If the rewards wallet is ever the same wallet as the buyback or micro-buy signer, those lanes now refuse to run instead of sweeping the whole rewards pool into the treasury, and the ops health check flags it. A new read-only preflight, npm run token:preflight, validates the treasury and rewards addresses against mainnet and prints the one command that applies them.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
 			]
 		},
 		{
@@ -173,6 +335,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "A concierge greets new visitors in the world",
+			"summary": "A well-dressed concierge near spawn welcomes first-time players once, answers questions about the stations that really exist through the free chat model, and leads a skippable tour of the Intel Kiosk, Signature Wall, wheel and War Portal. During a live event it opens with what is happening.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "A paid agent skill call whose response was lost can now be collected again without paying twice",
 			"summary": "When you pay for an agent skill and the connection drops before the answer arrives, asking again with the same Idempotency-Key (or the same payment intent) now returns the stored result, marked replayed, instead of a payment_in_flight error or a second charge. The skill runs once and the author is credited once. A retry with different arguments is refused with idempotency_conflict, a retry while the first call is still running gets idempotency_in_progress with a retry-after, and a call that fails stores nothing so the paid intent can be retried. The 402 challenge and the manifest now advertise the header, the 24 hour window and the replayed field, and the browser x402 client sends one key per call and retries a dropped paid request once on its own.",
 			"link": "/docs/x402",
@@ -183,11 +355,32 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Account status, dashboard links and X posting tools for connected assistants",
+			"summary": "GET /api/v1/me/status and the get_account_status tool answer what plan you are on, what is left and what is waiting for approval in one call. get_dashboard_urls returns the canonical page links. Agents can now be connected to X, given a posting policy and asked to post through MCP, with review-before-post queuing instead of publishing. Settings shows account status and each agent's X posting state.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Add three.ws to your own ChatGPT in about a minute",
 			"summary": "A new /chatgpt page walks you through adding the free three.ws 3D Studio to ChatGPT: turn on developer mode, create an app with the URL https://three.ws/api/mcp-chatgpt and no authentication, then ask for a model. Text and photos become interactive, textured 3D models and rigged avatars that render inline in the conversation, free and with no account. The page checks the server live from your browser, lists the exact tools ChatGPT gets, and has starter prompts and fixes for every setup snag.",
 			"link": "/chatgpt",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Agent memory now knows when a fact was true",
+			"summary": "Memories carry a validity interval and a source. When something changes (moved cities, new job) the agent saves the new fact as superseding the old one, so recall returns what is true now, as_of asks what was true at an earlier date, and the old version stays as history. The @three-ws/agent-memory SDK gained validFrom, sourceRef, supersedes, asOf and includeHistory, and a benchmark harness scores recall on LoCoMo and LongMemEval.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -209,6 +402,16 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Agent sandbox settings",
+			"summary": "A new Settings page lists every program your agents ran in their sandbox with its output and exit code, lets you download the files it wrote, stop a workspace, and choose which hosts sandboxed code may call.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -247,6 +450,28 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Agents sign their web requests",
+			"summary": "Fetches made by three.ws agents through the tool gateway and the screen caster now carry a Web Bot Auth signature, and the matching public key directory is served at /.well-known/http-message-signatures-directory, so sites can verify and rate-limit three.ws agents instead of blocking them.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Agents speak AG-UI to CopilotKit and assistant-ui",
+			"summary": "POST /api/agent/run?protocol=ag-ui now streams the run as AG-UI events (run, text message and tool call lifecycle, plus avatar embodiment cues as CUSTOM events), so CopilotKit, assistant-ui and LangChain front ends can drive a three.ws agent with no adapter. The default OpenAI stream is unchanged.",
+			"link": "/docs/ag-ui",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Announced surfaces defect sweep",
 			"summary": "Fixed a batch of rough edges on recently announced pages: the Herald avatar presenter now holds its full dwell and honors reduced motion, the validation report renders again, Labs sorts unmatched experiments into Other, the /3d live badge is restructured, the inspector measures quantized and meshopt models correctly, the stream demo reports a faster, about the same or slower first frame honestly, and the avatar-stream package declares its dependencies. Docs now say the talking-avatar video worker is not yet deployed.",
 			"link": null,
@@ -272,6 +497,26 @@
 			"title": "Autonomous agent runs can use the integrations you connected",
 			"summary": "A run you start from the API or the Runs tab can now call the third-party MCP servers you connected to the agent on /mcp-integrations, the same ext_ tools chat already had. Every call shows on the Runs tab with its arguments, the server's answer and the step's cost. Tools that move money or cannot be undone stay out of autonomous runs, since nobody is there to approve them; the agent says in its report that you need to take that step. A run's toolsAllowed list can now name ext_ tools too.",
 			"link": "/mcp-integrations",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Avatar reconstruction: gated synthesised views for the scalp and far side of the head",
+			"summary": "The avatar worker can now ask Vertex AI for extra camera views of a selfie, reject any that do not look like the same person or that break UV seams, and project the rest onto the scalp, far cheek, ears and neck. Texture only, off by default until the held-out quality check passes.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Build program rounds and one bounty feed for every hackathon",
+			"summary": "/build now shows the open Build round with its prize pool, tracks and countdown, takes agent entries, and lists open hackathons and bounties from four sources with a notice when one is stale. /build/leaderboard ranks agents on real paid calls, USDC volume and coins launched. Agents get list_bounties and submit_build_entry over MCP.",
+			"link": "/build",
 			"tags": [
 				"feature"
 			]
@@ -330,12 +575,54 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Demo pages stop defaulting to a real person's likeness",
+			"summary": "The animation gallery previews now play on the house default avatar instead of a real person's likeness. The avatar-engines filter bar is fully opaque so headings no longer show through it, Render Lab shows one chip per model and no longer stacks two tooltips on its buttons, and Restyle Studio keeps the 3D view beside the presets and Reset while you scroll.",
+			"link": "/animations",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Dependency security sweep: patched OG renderer, chat server and vendored fixes",
+			"summary": "Social share cards now render through a patched satori pipeline instead of an outdated bundled renderer. The self-hosted chat server ignores spoofed X-Forwarded-For and X-Real-IP headers. Vulnerable transitive packages (deepmerge, elliptic, bigint-buffer, lodash.set, minimatch, nanoid, helia) are pinned to patched releases or patched vendored copies, and the Qwen Plus brain runs on the maintained OpenAI-compatible route.",
+			"link": null,
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Drive builds for Android Automotive OS",
+			"summary": "The Android overlay now has an automotive product flavor that puts the same four-control Drive templates on a car's own screen through CarAppActivity. It compiles alongside the unchanged phone build; running it on a head unit is the remaining check.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Embeds can allowlist the skill authors and hosts they trust",
 			"summary": "The agent-3d element's whitelist skill policy now works: list the authors you trust with skill-trusted-authors and the hosts with skill-trusted-origins (or set el.skillTrust from script), and only skills from those authors or hosts install. Before this, whitelist mode had no way to receive the lists and refused every skill. A refused skill now fires a skill:error event so the page can tell the visitor, and a misspelled skill-trust value falls back to the safe owner-only default instead of installing everything unchecked.",
 			"link": "/docs/web-component",
 			"tags": [
 				"security",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Eval removed from the site-wide CSP",
+			"summary": "Pages no longer allow string-to-code evaluation. The Draco loader and texture resize no longer need it, and only the Scene Studio shell keeps it.",
+			"link": null,
+			"tags": [
+				"security",
+				"improvement"
 			]
 		},
 		{
@@ -371,11 +658,62 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Fact-check evidence is now ranked by source reliability",
+			"summary": "The fact checker now puts government, peer-reviewed and encyclopedia sources ahead of blogs and social posts, keeps one passage per domain, and rewards agreement across independent domains. The benchmark score also reports macro-F1 and the abstain rate.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Forge and Marketplace buttons now share the platform button system",
 			"summary": "The Forge page and the Marketplace now use the same button component as the rest of the site, so hover, pressed, keyboard-focus, disabled and loading states look and behave the same on both. Forge no longer carries its own copy of the button styles, and four unused button and badge style families were deleted. A new audit, npm run audit:buttons, lists the remaining legacy button families and fails if a finished one comes back.",
 			"link": null,
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Forge-Off themed events: a board for every day and a landing page",
+			"summary": "The Forge-Off can now run a themed event with one board per UTC day and an overall winner, all on the same no-login, one-vote-per-browser voting. The new /forge-off page shows the live day's theme with a countdown to its close, a button to make an entry on the right surface, that day's board, the overall standings and past days. Between events it shows the standing weekly board. Events are entries in a config file, so a partner or community contest needs no code. The first event is the proposed five-day Forge-Off Open.",
+			"link": "/forge-off",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Funding manifest, translated READMEs and crawlable languages",
+			"summary": "three.ws now publishes a FLOSS/fund funding.json, Zenodo metadata, READMEs in Spanish, Brazilian Portuguese, Hindi and Russian, and serves a localized page's language, alternates and clean canonical to crawlers when a visitor or search engine asks for ?lang=xx. Images from the Pollinations lane now carry a visible Powered by Pollinations credit, and the API labels that lane correctly.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Glass: three.ws on Meta Ray-Ban Display",
+			"summary": "A new /glass web app shows the agents standing near you on the lens with a direction arrow, lets you talk to one with a pinch and suggested replies, and hands the agent to your phone with a six-character code at three.ws/g/CODE. It works with only the Neural Band d-pad inputs.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Gold holders get early access to drops, Genesis gets first dibs on rare names",
+			"summary": "Generative drops now open with a holder-only window set by the creator (15 minutes by default, 0 to skip): during it, revealing an item needs Gold or higher in $THREE, and the drop page shows a live countdown to public opening. Rare *.threews.sol names can be put behind a Genesis-only window. Both windows end on their own.",
+			"link": "/three",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -486,6 +824,16 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Launch a coin about an animation, an avatar or an agent, on four chains",
+			"summary": "The new multichain launchpad at /launch/multichain launches a coin about one animation, an avatar, a 3D agent, or all of them together, on Solana through pump.fun, on BNB Chain through four.meme or flap.sh, and on Base and Robinhood Chain through flap.sh. Your agent's wallet or your own wallet signs it after a live fee quote and a confirmation table. Every coin gets a showcase page at /l/:id that plays its avatar and links to the coin on its venue, and Pose Studio has a Launch a coin button that carries the clip you are watching.",
+			"link": "/launch/multichain",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Live agent screens can no longer be steered into internal addresses",
 			"summary": "The browser behind an agent's live screen, the one an owner can take the wheel of, now enforces its address guard on every connection instead of only on the URL typed in. All of its traffic goes through a guard that looks up each hostname, refuses anything that lands on a loopback, private, link-local or cloud metadata address, and connects only to the address it checked. A public page that redirects to an internal host, an image or websocket pointed at one, or a name that resolves to one is now refused, so nothing internal can ever show up on the public wall.",
 			"link": "/agents-live",
@@ -500,6 +848,26 @@
 			"title": "Make a $THREE holders-only embed from Widget Studio, no code needed",
 			"summary": "Widget Studio has a new Holders only panel. Pick one of your own avatars, flip the switch, set how much $THREE a viewer must hold (or click a holder tier, converted to tokens at the live price), and copy a snippet that only renders the 3D avatar for wallets that clear the bar. Every load checks the real balance on Solana. The panel reads the gate back from the server every time you pick the avatar, so it always shows what the embed enforces. From there you can change the requirement or remove the gate. Another Solana token can be used from the advanced field.",
 			"link": "/studio",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Multiplayer worlds can run on more than one server",
+			"summary": "The multiplayer server now reports whether it shares state with its peers on /health, refuses to boot single-instance when its Redis is configured but unreachable, and forwards friend messages, stage tips and event announcements to whichever instance holds the target. A two-process test and a real-socket load test back it. Turning it on in production needs the Memorystore steps in multiplayer/README.md.",
+			"link": null,
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Native launchpad coins get their own page and a one-click buy from SOL",
+			"summary": "Every coin launched on the $THREE curve now opens at /launches/<mint> with its curve progress, price, market cap, recent trades read from chain, the fee schedule and the agent behind it. Holders of only SOL can buy in one transaction: the page swaps SOL to $THREE through Jupiter and buys on the curve, showing the exact total first.",
+			"link": "/three-launchpad",
 			"tags": [
 				"feature"
 			]
@@ -538,6 +906,17 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Operators can pause every payout instantly, and get paged when payouts spike",
+			"summary": "A single switch now stops withdrawals, coin payouts, club payouts and growth payouts the moment it is flipped, with no redeploy. It is set through an admin-only endpoint that requires a reason and writes an audit record, and nothing in the ledger is rewritten, so resuming picks up exactly where it stopped. A new hourly check also alerts operators when the last 24 hours of payouts run above three times the recent daily median, or when more than a fifth of them fail.",
+			"link": "/docs/financial-controls",
+			"tags": [
+				"security",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Ops alerts can now reach an inbox, not only the dashboard",
 			"summary": "Operator alerts gain an email channel next to the private Telegram chat. Critical alerts (a leak, a halted payer, a compromised signer) are emailed and pushed every time they fire; warnings reach Telegram once an hour per signature and arrive by email as one hourly digest with counts and the oldest unresolved item, so an inbox is never flooded. Each channel has its own hourly ceiling, so a storm on one never silences the other. The health check now lists which alert channels are wired and flags production as degraded when no one would be told, and a self-test script proves real delivery on every configured channel.",
 			"link": null,
@@ -554,6 +933,17 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Oracle and agent trading as MCP servers",
+			"summary": "The Oracle now has its own free MCP server at /api/mcp-oracle (14 read tools, no account), plus @three-ws/oracle-mcp and @three-ws/agent-trader-mcp for stdio. Agent trading arms in simulate mode by default, needs a signed real-funds agreement to go live, and has a one-argument kill switch. A wallet-profile database outage now answers 503 instead of an empty leaderboard.",
+			"link": "/oracle",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -600,12 +990,53 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Private, invite-only worlds for Silver holders",
+			"summary": "Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public, unlisted or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.",
+			"link": "/three",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Run your own x402 facilitator, and attack it before you trust it",
+			"summary": "@three-ws/x402-server 0.2.0 ships the Solana facilitator three.ws runs in production as a package: verify, settle, the anti-drain transaction gate, sponsor SOL floor and fee budget, and settlement that survives a lost confirmation. A new command, npx @three-ws/x402-server attack, fires 27 hostile transactions at any devnet or local facilitator. The facilitator index now reports the package version and a public metrics endpoint splits our own canary traffic from external payers.",
+			"link": "/docs/x402-server-facilitator-release",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Score, replay and export any agent run",
+			"summary": "Owners can run a task suite against an agent from a new Evaluate tab, the REST API or `three-ws evals run`, watch per-task progress live, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL. Runs are limited to free and Vertex lanes with a cost cap.",
+			"link": "/docs/agent-evals",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Seeded catalog assets can now be judged on how they look, not just their structure",
 			"summary": "Platform-seeded models in /characters and /objects were gated on mesh structure only, because rendering and judging an asset did not fit inside the seed cron's time limit. A new per-minute vision cron now takes assets that pass the mesh check, renders each one and asks the vision judge whether it is realistic, on-prompt and complete, then publishes it or sets it aside with the full verdict for tuning. A judge that is down is retried and never blocks a sound asset for more than 30 minutes. The judge also now falls back across every vision provider instead of depending on one. It switches on with SEED_VISION_PHASE=1 after deploy.",
 			"link": "/docs/seed-quality",
 			"tags": [
 				"feature",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Shared creations now say who wants to make their own",
+			"summary": "Every creation page has a Make your own button that carries you into the Forge, and the Forge funnel report now counts AR opens, unfurls, shared-link page loads and how many shares turn into a new generation. Counts are aggregate only: no IP, account or creation id is stored.",
+			"link": "/creations",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -621,11 +1052,51 @@
 		{
 			"date": "2026-11-04",
 			"type": "update",
+			"title": "Smaller Forge thumbnails and a lighter marketplace hero",
+			"summary": "Forge previews are now 512 px WebP instead of 768 px PNG, the marketplace hero shares one model-size budget across its slides, the brand mark is less than half its old size, and /forge paints its engine lanes on the first frame for repeat visitors.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Sniper manages the free moon bags it keeps and records entry latency",
+			"summary": "Retained moon bags are now re-quoted every minute, sold whole on a 40 percent trailing stop from their own peak, and written off when dead instead of sitting unwatched. Per-second price ticks and per-stage entry latency are recorded for backtests, with a p50 and p90 report script.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
 			"title": "Status page shows the retired world as retired, not down",
 			"summary": "The deleted world.three.ws service now carries an explicit, reversible retired state: the health rollup, alerts and status page no longer report a permanent false outage, so a red status always means something real.",
 			"link": "/status",
 			"tags": [
 				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Surprise me builds real bodies",
+			"summary": "The one-click Surprise me avatar now draws a full look on the Parametric body: face and body shape sliders, height and limb proportions, skin tone, clothes and hair from the live catalog, and up to two accessories. Every result shows its seed so you can reload, share or recreate it, and a body style picker keeps the classic lane one click away.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Talking-avatar video gets a scripted GPU host",
+			"summary": "The LongCat video worker now has an on-demand 80 GB GPU host with TLS, idle self-shutdown, a daily GPU-hour cap and a quota request script. When no host is up, video requests answer a clear capacity error and keep the free trial.",
+			"link": null,
+			"tags": [
 				"infra"
 			]
 		},
@@ -668,6 +1139,26 @@
 			"link": "https://github.com/nirholas/three.ws/tree/main/docs/nvidia-gtc-2027",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The inference node network now has buyers, a roster and an earnings ledger",
+			"summary": "Anyone can pay USDC to run a job on a live community node through /api/x402/node-inference and is only billed when the node signed receipt verifies. Node operators can read their accrued earnings, and the new /nodes page lists the network.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "The Plaza Stage goes live in /play",
+			"summary": "Walk up to the stage in the plaza of any coin world and the hosted show plays around you: spatial voice with lip-sync, live captions, a seat in the ring, questions to the host from the chat bar, and $THREE tips behind an explicit confirm step that shows the recipient, amount and token before anything signs. The show only connects when you are close and shuts down when you walk away.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -751,6 +1242,17 @@
 			"tags": [
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-04",
+			"type": "update",
+			"title": "Tool gateway: web search, fetch, documents, speech and images on one balance",
+			"summary": "Agents and developers can now call six metered tools without collecting vendor keys: web_search, web_fetch, parse_document (PDF, DOCX, XLSX, CSV), tts, transcribe and image_generate. They are on REST at /api/v1/tools/{tool} and on the main MCP server, charged to the same account credits as model calls, settled to what the tool actually produced and refunded in full if it fails. Prices are listed live on the pricing page.",
+			"link": "/pricing",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1050,509 +1552,6 @@
 			"link": "/docs",
 			"tags": [
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Path-traced stills of any model or avatar, straight from the viewer",
-			"summary": "The 3D viewer can now render a physically based still of exactly what you are looking at: real soft shadows, colour bleeding between surfaces and reflections that see the rest of the scene, computed by a GPU path tracer rather than approximated. Press Shift+P or choose Path-traced render in the Display panel, watch the image converge on the canvas with a progress bar and Cancel, and the finished PNG downloads. Developers get the same render from the agent-3d element with renderPhotoreal() and from iframe embeds with the renderPhotoreal bridge action. The path tracer loads only when you ask for a render, so pages that never use it are no heavier.",
-			"link": "/app",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Playground tabs, competition retry and 3D clean-up passes work again",
-			"summary": "A sweep of broken controls across the site. The API playground on the classic homepage switches to its Node SDK and cURL tabs again (a duplicated id had bound them to the embed playground instead), and the launcher's payment rail picker responds to clicks. The Retry button on the competitions page now reloads agents when the first load fails. The /grok and /connect pages lost sections that a merge had rendered twice. Trading tools report a quote router outage plainly instead of calling a busy market thin, and the onchain viewer moves to a backup Solana RPC when one stalls. In the 3D worker, the decimate and repair clean-up passes run again, and their output now stays with the job so long sessions no longer fill the worker's memory with leftover meshes. Agent templates and persona interviews in the create wizard are now counted in analytics.",
-			"link": "/classic",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Proof of custody anchors on Solana mainnet again",
-			"summary": "The six-hourly custody Merkle root is now committed as a signed SPL-Memo on mainnet, where the attester wallet is funded, instead of an unfunded devnet payer that rejected all 524 earlier anchors. A failed anchor now pages ops once per outage with the attester and its balance, an unfunded payer is recorded as attester_unfunded:<network>, and the public integrity page returns showing anchored versus total epochs, with an honest banner when the latest epoch is not yet anchored.",
-			"link": "/integrity",
-			"tags": [
-				"fix",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Rejoining /play after a dropped connection puts you back where you stood",
-			"summary": "A player whose connection dropped now comes back at the spot they left instead of frozen at spawn, and the world shows no ghost copy of them. Players in voice chat who mute now show a muted marker to everyone else, a long unbroken chat line such as a pasted address wraps inside the speech bubble, and a boutique purchase can only be started once while the wallet is signing, so a second click never opens a second $THREE payment. Event jobs stay closed outside the live window, including when the event config cannot be reached.",
-			"link": "/play",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "See, edit and delete everything your agents have learned about you",
-			"summary": "A new Agent memory page lists the profile your agents keep about you, every memory they saved and the skills they drafted from experience. Edit or delete any line with an undo, turn learning off with one switch, set how often agents review what to keep, and review drafted skills with a diff, version history and rollback. A marketplace transfer now also deletes an agent's drafted skills and session summaries.",
-			"link": "/settings/memory",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Smoother edges on every 3D model and avatar viewer",
-			"summary": "Models shown on a solid or studio background, which covers most embeds, the Forge result viewer and avatar pages, now have antialiased edges. The post-processing that adds the soft glow and vignette was drawing into a buffer that skipped the browser's edge smoothing, so outlines, fingers and hair stair-stepped. Edges are now smoothed with four samples (two on low-power phones) and the overall look is unchanged.",
-			"link": "/forge",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Text to 3D no longer fails with \"Mesh missed\" when a GPU worker is busy",
-			"summary": "One slow GPU worker could trip a shared safety breaker and make every other 3D lane report as unreachable for 30 seconds at a time. Each worker now has its own breaker, and status checks no longer block new jobs, so a generation that is queued behind a busy worker is accepted instead of being rejected.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The /play world holds up better for Meetup #3: lost connections, screen readers and Safari",
-			"summary": "Ahead of Community Meetup #3 we audited the /play world on phones, in Safari and with a keyboard and screen reader, and fixed what we found. When your connection drops, chat you typed stays in the box, party invites and party chat tell you they were not sent, the Jobs Board says the room is offline instead of loading forever, and paid shop and wheel purchases are resent once you reconnect rather than left hanging. The sign-in gate now says when the community service is unreachable instead of showing \"Failed to fetch\". Escape closes the top panel every time, gold and cash changes are read out to screen readers, typing in a field no longer triggers shortcuts, and nameplates and damage numbers sit on a dark backing so they stay readable over a bright scene. The signature wall retries if its first load fails, Safari no longer logs a connection error on every join, and the trending coin board keeps showing coins when its upstream source is unavailable.",
-			"link": "/play",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The $THREE balance gate now fails closed during an RPC outage",
-			"summary": "Agents that require a minimum $THREE balance for a paid skill used to let every caller through whenever the Solana RPC was unhealthy. The balance check now retries once and, if the balance still cannot be read, answers 503 and asks the caller to retry. A paid skill call in that state does not consume the payment. The public balance endpoint answers 503 rpc_unavailable instead of a false eligible: true.",
-			"link": "/three",
-			"tags": [
-				"fix",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The 3D viewer and <agent-3d> can now render on WebGPU",
-			"summary": "Add ?renderer=webgpu to /app, or renderer=\"webgpu\" to an <agent-3d> embed, to draw the avatar on WebGPU with the full cinematic look (ambient occlusion, depth of field, bloom, color grade, grain, vignette) rebuilt on three's node pipeline. Every preset and Cinematic FX slider works the same on both paths. Without a WebGPU adapter, or if the GPU is lost mid-session, the viewer drops to WebGL2 on its own and keeps the scene. VRM toon materials are converted so VRM avatars render on WebGPU too. The default stays WebGL2. Preset sliders in the Cinematic FX panel also stay in sync after switching presets.",
-			"link": "/docs/webgpu-renderer",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The A3S streaming avatar no longer turns into jagged shards as it refines",
-			"summary": "On the streaming avatar comparison page the A3S panel showed the right avatar for a moment, then collapsed into garbled, spiky geometry as the finer layers arrived, and sometimes blanked with a console error. The refinement step copied the wrong bytes out of the coarse model it was growing, so the original vertices were scrambled. It now reads those vertices correctly and refreshes the cached bounds, so the avatar sharpens in place and ends identical to the classic panel.",
-			"link": "/stream",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The classic homepage avatar now shows head to toe, and appears on phones",
-			"summary": "On the classic homepage, the animation buttons used to cover the live avatar's feet, so the figure looked like it was floating. It now stands above the buttons with its feet and ground shadow in view. On phones the avatar area had collapsed to nothing, so mobile visitors never saw the live 3D agent at all. It now appears below the headline at a comfortable height.",
-			"link": "/classic",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The live agent economy stage shows two idling avatars on their pedestals",
-			"summary": "On the live agent economy page both avatars stood in a stiff arms-out T-pose inside dark boxes that hid the stage, with a webcam and emote toolbar showing and the avatars floating above their pedestals. Avatar embeds now start their idle animation by default and honor the chrome-free overlay setting, the transparent background no longer paints an opaque box, the avatars stand on their pedestals, and the central screen's text is readable.",
-			"link": "/live",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The service catalog AI agents read to find three.ws loads in about a second",
-			"summary": "The public catalog that AI agents and directories read to discover three.ws paid services could take 20 to 30 seconds to load, often enough for a crawler to give up. It now always answers from the most recent copy while a fresh one is built in the background, and it fetches its market data sources at the same time instead of one by one.",
-			"link": "/changelog",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "The x402 payment audit ledger no longer drops or double-writes rows",
-			"summary": "A payment audit row that fails to write or times out now moves to a dead-letter list and is retried with backoff instead of being discarded, and after ten failures it is parked in a table for review. A replayed event is stored once, enforced by a unique index on transaction hash and event type. Ops is paged when the dead-letter stays non-empty for 15 minutes, and the money-health board shows its depth. Audit retention is configurable and every row is archived to object storage, and verified, before it is deleted.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Turn a photo into a Gaussian splat right in the Splat Viewer",
-			"summary": "The Splat Viewer has a new Generate from a photo card. Drop in a PNG, JPG or WebP (or paste an image link), pick Light, Balanced or Maximum detail, and a GPU running TripoSplat builds a photoreal splat of the object. The card shows each real step with the elapsed time, can be cancelled, and loads the result straight into the stage as a shareable link, ready for hotspots, the camera path and video export. If something goes wrong it says what, in plain words: a photo that is too big, uploads being down, the lane not being switched on, or the GPU rejecting the image. The first run after a quiet spell takes a few minutes while the GPU warms up; after that, about a minute.",
-			"link": "/splat",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "update",
-			"title": "Viewer screenshots capture the model instead of a blank frame",
-			"summary": "Pressing P or choosing Screenshot in the 3D viewer could save an empty image with only the watermark on it. The viewer drew the frame, then waited for the watermark to download, and by then the browser had already cleared the canvas. It now has the watermark ready before it draws, so the saved PNG always shows the model you were looking at.",
-			"link": "/app",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-02",
-			"type": "update",
-			"title": "A lock screen worth stopping at",
-			"summary": "The desktop's lock screen now shows your own wallpaper behind it, like a real OS, instead of a flat black void. A portrait of the avatar you walk in as replaces the question-mark badge, a live status light shows whether every system came up, and the $THREE chip turns green or red with the day's move. New destination tiles let you skip the walk and arrive straight at your workstation, the Exchange, the Launchpad, the Mine, the Forge, the Gallery, the Agent Plaza or the Marketplace.",
-			"link": "/",
-			"tags": [
-				"improvement",
-				"desktop"
-			]
-		},
-		{
-			"date": "2026-11-02",
-			"type": "update",
-			"title": "Card gacha: a 3D capsule reveal, My cards, and selling from your wallet",
-			"summary": "Pulling a card in /play now plays a full 3D reveal: the capsule spins and shakes as light gathers into it, then cracks open with a flash, a shockwave and a light pillar in the card's rarity colour, and the real graded slab spins out with a holographic foil that shifts as you turn it. Rare and epic pulls hide their colour until the last second. A new My cards button lists every Collector Crypt card in your wallet with its grade, insured value and real front and back photos, lets you inspect each one in 3D, and sells a card back for USDC while its 72 hour buyback is open, behind a confirmation table and a stricter transaction check that refuses anything but the one card leaving your wallet.",
-			"link": "/play",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-11-02",
-			"type": "update",
-			"title": "NVIDIA Inception badge on the homepage",
-			"summary": "The homepage now shows the NVIDIA Inception member badge in its footer and lists NVIDIA Inception in the partner strip, both linking to the NVIDIA page. Every other page already carries the badge through the shared footer.",
-			"link": "/nvidia",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-02",
-			"type": "update",
-			"title": "three.ws dresses for autumn",
-			"summary": "Halloween is over, so the site has changed into its fall colours through the end of November. The desktop has a new Harvest wallpaper of a valley at golden hour with leaves drifting down, an amber accent, and a matching lock screen. The classic homepage gets falling maple leaves, autumn prompt ideas for the Forge, and a Leaf pile button that makes the avatar jump into the leaves. Harvest stays in your wallpaper list for good, and you can switch the look off any time in Settings, Personalization.",
-			"link": "/",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-02",
-			"type": "update",
-			"title": "three.ws is up for review in NVIDIA's startup app catalog",
-			"summary": "Our product record, three.ws 3D AI Studio, is filed with NVIDIA Inception for its catalog of apps from member startups. It lists the NVIDIA technology three.ws runs in production today (CUDA, cuDNN, Kaolin, Riva voice and Audio2Face facial animation) and keeps what we are only evaluating separate. On November 2 we followed up with the Inception team to confirm the record is complete and ask when the next review runs. NVIDIA curates the catalog, so we are not listed yet. We will post here the day we are.",
-			"link": "/docs/nvidia-inception",
-			"tags": [
-				"docs"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "launch",
-			"title": "Docs · Dance-off rounds in /play",
-			"summary": "How a /play dance-off runs: the server round machine, how a crowd reaction becomes a vote, tie and leaver rules, the Spotlight Champion aura, the cadence during and outside an event, and the confirm-first tip card.",
-			"link": "/docs/dance-off",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "launch",
-			"title": "Docs · Parties in /play",
-			"summary": "How /play parties work: invites, the 8 member cap, party chat, safe same-world teleports and cross-world handoff, member identity across reconnects, and the store keys and TTLs behind it.",
-			"link": "/docs/play-parties",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "launch",
-			"title": "Docs · The /play activity ticker and hype moments",
-			"summary": "What feeds the /play activity ticker, how each coin learns its own big-buy threshold, the cooldown that keeps hype moments rare, and the trade tape fallback when the primary feed is blocked.",
-			"link": "/docs/play-activity-ticker",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "launch",
-			"title": "Docs · The /play venue projector view",
-			"summary": "How /play?director=1 turns a browser into an unattended venue screen: an invisible spectator seat, an auto-director camera that cuts between occupied landmarks, a projector-scale broadcast overlay with the presenter PA lower third, and the resilience that keeps it running all event.",
-			"link": "/docs/play-director-mode",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "launch",
-			"title": "Docs · The $THREE signature wall",
-			"summary": "How the /play signature wall works: one signature per wallet or guest session, the filters and rate limit on writes, live propagation to the room, density paging that stays legible at thousands of names, the share cards, and how to moderate it.",
-			"link": "/docs/signature-wall",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "launch",
-			"title": "Docs · The card gacha machine in /play",
-			"summary": "How to pull a real graded trading card from the capsule machine on the /play plaza, the 3D reveal, viewing and selling the cards in your wallet, what the transaction checks prove before you sign, and the /api/gacha routes.",
-			"link": "/docs/play-gacha",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "A card gacha machine in /play: pull real graded trading cards",
-			"summary": "A capsule vending machine now stands on the west plaza of every /play world. Walk up and press E to browse Collector Crypt's live machines with their odds, stock, recent winners and the cards still inside, then pull a professionally graded, vaulted card for USDC straight from your own Solana wallet. Before you sign, you see exactly what the payment does, checked against the real transaction. The machine cranks out a capsule and the card flips over in its rarity colour, with a link to verify the pull was fair. Keep the card, or sell it back within 72 hours.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "A live activity ticker and big-buy hype moments in /play",
-			"summary": "/play now has a small collapsible feed of joins, leaves, trades, wheel wins, cosmetic unlocks and your quest completions. When a genuinely large buy lands for the coin, measured against that coin's own recent trades, the world gets a gold hype moment, a jumbotron banner and an optional chime. The $THREE trade tape also keeps working when the primary trade feed is blocked, by falling back to the pool's trades.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "Dance-off rounds on the /play dance floor",
-			"summary": "Dancers on the floor now compete in timed rounds judged by the crowd's reactions, one counted vote per person per round. The winner gets a spotlight, confetti, a jumbotron feature with their name and avatar, and a free Spotlight Champion aura. Rounds run every few minutes during the meetup and can be started by anyone on the floor.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "Display settings opens the right page",
-			"summary": "Right-clicking the web desktop and choosing Display settings opened the same Personalization page as Personalize. It now opens Desktop and taskbar, where icon size, icon layout and the taskbar live.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "Move desktop widgets with the keyboard",
-			"summary": "Desktop widgets could only be rearranged by dragging. In edit mode (right-click the desktop, Edit widgets) you can now focus a widget and press an arrow key to move it one cell, hopping over any widget in the way. Screen readers hear where it landed, the new spot is saved like a drag, and a hint on the edit bar says how.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "Parties in /play: team up with up to 8 players",
-			"summary": "Invite anyone from their inspect panel or your friends list and stay together across the world. Party members get a sky-blue nameplate accent, minimap blips, screen-edge chips for members out of range, a private party chat (or /p from any scope), and a Go to button that drops you safely beside a member, or hands you off to their coin's world with the party intact.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "Sign the wall: a permanent $THREE signature wall in the /play world",
-			"summary": "A graffiti wall near spawn where every visitor can sign once with a name and an 80-character line. New signatures appear live for everyone in the room with an ink splash, the wall stays readable from 10 to thousands of signatures by paging through them, and every signature has its own shareable card.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-01",
-			"type": "update",
-			"title": "Task Manager reads cleanly on a phone",
-			"summary": "On a phone the desktop Task Manager broke window sizes and the Memory heading across two lines. Every value and heading now stays on one line and only a long app name shortens.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "launch",
-			"title": "Halloween Weekend Gifts",
-			"summary": "Free Halloween gifts, claimable October 31 to November 1, 2026 only: a 3D Pumpkin Cap and the Witchlight aura for /play, a permanent profile badge and a haunted desktop wallpaper. Claim once, keep forever.",
-			"link": "/halloween",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "launch",
-			"title": "Haunted Graveyard",
-			"summary": "Walk a moonlit 3D graveyard in your browser: a crypt, fenced yard, flickering lamps and pumpkins, and a zombie, skeleton, vampire, ghost and keeper you can click, follow and make dance. Built from Kenney's CC0 Graveyard Kit.",
-			"link": "/haunted",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "launch",
-			"title": "How pumpkin carving works",
-			"summary": "The /pumpkin carver: a hollow ribbed 3D shell, real boolean cuts with three-bvh-csg, the knife, undo, saved cuts, and PNG and GLB export.",
-			"link": "/docs/pumpkin-carving",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "launch",
-			"title": "How seasonal drops work",
-			"summary": "Free, time-boxed gifts on three.ws: one claim during the window grants a profile badge, /play wearables and a desktop wallpaper you keep forever. The window, the /api/seasonal endpoint, the seasonal look and its opt-out, and how to add the next drop.",
-			"link": "/docs/seasonal-drops",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "launch",
-			"title": "How the haunted graveyard works",
-			"summary": "The /haunted page: Kenney's CC0 Graveyard Kit ingested into the object library, the deterministic yard layout, the five animated characters, and how to publish the models to the CDN.",
-			"link": "/docs/haunted-graveyard",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "launch",
-			"title": "Pumpkin Carving",
-			"summary": "Carve a real 3D pumpkin in your browser: boolean cuts through a hollow ribbed shell, six stamp shapes, a freehand knife, a flickering candle that shines through your design, undo, and PNG or GLB export.",
-			"link": "/pumpkin",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "/play gets contact shadows and glow on capable devices",
-			"summary": "On high-quality devices, /play now renders with ambient occlusion (props and avatars ground into the world), a soft bloom on bright and emissive things like the Witchlight aura, and filmic tone mapping. It switches itself off in power-saver mode and on lower quality tiers, and falls back to the plain renderer if the GPU cannot run it.",
-			"link": "/play",
-			"tags": [
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "91 free Halloween 3D models join the object library, and you can walk them in a haunted graveyard",
-			"summary": "Kenney's Graveyard Kit (CC0, free for any use) is now in the object library: crypts, gravestones, fences, lampposts, pumpkins, trees and five animated characters (a zombie, skeleton, vampire, ghost and graveyard keeper), each one a single self-contained GLB. The new /haunted page puts them together as a moonlit 3D yard you can orbit, light, photograph and populate with wandering monsters.",
-			"link": "/haunted",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "A venue screen for /play: an invisible camera that directs itself",
-			"summary": "Open /play with director=1 on a projector or as an OBS source and the world watches itself. The screen joins as a spectator that has no avatar, is invisible to every player and is not counted in the online total, then cuts every 15 to 30 seconds between the busiest places in the plaza (the totem, the screens, the dance floor, any crowd) without ever clipping a building. A broadcast overlay shows the event name with LIVE or a countdown, the running agenda item, the world and the live headcount, and a QR to join, with no player HUD. At the group photo it holds the totem and the crowd through the countdown and the flash. It reconnects forever under a quiet pill, keeps the screen awake, hides the cursor, and reloads itself if graphics are lost. Built for the Meetup #3 livestream.",
-			"link": "/play",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Carve a 3D pumpkin at /pumpkin",
-			"summary": "A new pumpkin carver lets you cut a real hollow 3D pumpkin in your browser. Stamp round, triangle, square, star, moon or bat shapes, drag the knife for freehand lines, resize and rotate each cut, then light the candle to watch it glow and throw light through your design. Undo works per cut, your pumpkin is remembered between visits, and you can save a picture or download the carved pumpkin as a GLB. The Halloween gifts page now links to it.",
-			"link": "/pumpkin",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Chat keeps answering when the free model quota runs out",
-			"summary": "When the shared free model hit its daily limit, the chat showed 'The built-in model is rate-limited' and stopped. It now hands the message to the platform's own model chain instead, so a reply still arrives. The rate-limit notice only appears if every lane is busy.",
-			"link": "/chat",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Desktop list widgets fill their cards",
-			"summary": "The Pulse, Launches and Agents widgets on the web desktop showed a fixed number of rows and left an empty band at the bottom of the card. They now show as many whole rows as the card has room for, at any widget size or text scale, and never a row cut in half.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-10-31",
-			"type": "update",
-			"title": "Desktop notifications show a small app icon again",
-			"summary": "On the web desktop, a notification's app icon stretched into a wide empty bar across the card header, both in the pop-up and in the notification centre. It is a small square beside the app name again, and a browser test keeps it that way.",
-			"link": "/?view=desktop",
-			"tags": [
-				"desktop",
-				"fix"
 			]
 		}
 	]

@@ -2,7 +2,7 @@
 
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/735-plan-actions-hire-agent-blink-discovery.md`.
 
-**Status (2026-11-04):** built and committed in cb9c71287 (Blink handler, sweep cron, discovery rules, `/agents/:id/hire` route, Share hire link button, `tests/actions-hire.test.js` 20 passing); docs in `docs/solana-actions.md`. Remaining for the owner: run the Dial.to Blink validator against the deployed GET URL after the next deploy (GET only, nothing is signed).
+**Status (2026-11-04):** In progress in an interactive session. Do not start it in parallel.
 
 **Priority:** P2, new capability with clear value (score 50 of 100 inside the tier). **Area:** actions. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.
 

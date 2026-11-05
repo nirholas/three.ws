@@ -533,13 +533,6 @@
 					"indexable": false
 				},
 				{
-					"path": "/docs/human-tasks",
-					"title": "Docs: Human Tasks",
-					"description": "How an agent hires a person for a real-world job paid from USDC escrow on Solana: the task lifecycle, quote then confirm, proof and approval, disputes and refunds, worker levels, and the REST and MCP reference.",
-					"priority": 0.7,
-					"changefreq": "monthly"
-				},
-				{
 					"path": "/docs/revenue-ledger",
 					"title": "Docs · Revenue ledger",
 					"description": "How the earnings ledger counts creator fees, skill sales, hires, royalties, invoices and trading PnL, reconciles them against the chain, and how confirmed reinvest rules spend a share of each period's income.",
@@ -1925,6 +1918,14 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-15"
+				},
+				{
+					"path": "/launch/multichain",
+					"title": "Multichain Launchpad",
+					"description": "Launch a coin about an animation, an avatar, a 3D agent or all three on Solana (pump.fun), BNB Chain (four.meme, flap.sh), Base and Robinhood Chain (flap.sh), signed by your agent's wallet or your own, with a live fee quote, a confirmation table and a permanent 3D showcase page for every coin.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-11-04"
 				},
 				{
 					"path": "/launch/paired",
@@ -4165,6 +4166,14 @@
 					"added": "2026-10-10"
 				},
 				{
+					"path": "/docs/multichain-launchpad",
+					"title": "Docs · Multichain Launchpad",
+					"description": "How three.ws/launch/multichain launches a coin about an animation, avatar or agent on Solana, BNB Chain, Base and Robinhood Chain: subjects and /l/:id showcase pages, the four.meme and flap.sh paths, agent and wallet signers, and the API.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-11-04"
+				},
+				{
 					"path": "/docs/materialize",
 					"title": "Docs · Materialize: turn a generation into a real object",
 					"description": "How to print any three.ws model for real: the printability report, preparation and repair, materials and how pricing is computed, USDC checkout on Solana, the x402 lane an AI agent uses to order manufacturing, on-chain certificates of authenticity, and the fabrication content policy.",
@@ -5854,6 +5863,20 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/human-tasks",
+					"title": "Docs: Human Tasks",
+					"description": "How an agent hires a person for a real-world job paid from USDC escrow on Solana: the task lifecycle, quote then confirm, proof and approval, disputes and refunds, worker levels, and the REST and MCP reference.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/agent-lending",
+					"title": "Docs: Agent Lending",
+					"description": "How an agent puts idle funds to work on Solana lending: markets and APY, positions and health factor, the simulated preview then explicit confirm for deposits and withdrawals, the owner-set earn rule, and the REST and MCP reference.",
+					"priority": 0.7,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/perps",
 					"title": "Docs: Agent Perps",
 					"description": "How an agent trades perpetual futures with USDC collateral from its own Solana wallet: paper and live modes, the mandatory leverage and margin caps, the preview and confirmed execute, the kill switch, the live tracker and alerts, and the REST and MCP reference.",
@@ -6665,13 +6688,6 @@
 					"title": "Docs · The agent labor market",
 					"description": "A market where agents post paid bounties and other agents bid, do the work, and get paid, settled on-chain through real escrow. How a bounty is scoped, claimed, delivered, and released.",
 					"priority": 0.6,
-					"changefreq": "monthly"
-				},
-				{
-					"path": "/docs/web-bot-auth",
-					"title": "Docs · Web Bot Auth",
-					"description": "three.ws agents sign their outbound web requests with Ed25519 HTTP Message Signatures (RFC 9421) and publish the key directory, so a site can verify and attribute the fetch instead of blocking it.",
-					"priority": 0.5,
 					"changefreq": "monthly"
 				},
 				{

@@ -1,7 +1,5 @@
 # Finished Coin Wars results echo into the world activity ticker and the chart-screen jumbotron
 
-**Status (2026-11-04):** Tasks 1 to 4 and 6 are built and unit-tested (`noteWarResult`, `onResult` hook, docs, changelog). Remaining, owned by the owner: the two-browser live war in task 5 (needs two funded holder wallets and a running ClashRoom) to watch the ticker row and jumbotron band once on a win and confirm a reload of the return link does not repeat them.
-
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/767-plan-play-war-results-ticker-jumbotron.md`.
 
 **Priority:** P3, polish, developer experience, or exploratory (score 32 of 100 inside the tier). **Area:** play. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

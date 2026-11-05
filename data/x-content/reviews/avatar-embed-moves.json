@@ -1,20 +1,18 @@
 {
 	"id": "avatar-embed-moves",
-	"contentHash": "15ea5efed93755ad60b81d556d6755afbfe73810f8841117fc8f9fd29237df82",
-	"reviewedAt": "2026-11-04T22:26:24.324Z",
+	"contentHash": "10902ef248bf86dda0e6285db9a6ff02f0f143f8aac48bb71f6ca0ced10862db",
+	"reviewedAt": "2026-11-04T22:44:00.332Z",
 	"passed": false,
 	"blockers": [
-		"probe:scenario the filmed scenario: step 9 (hold 2600): clock.runFor: Target page, context or browser has been closed",
-		"editor (accuracy): The reel frame shows the animation button labeled \"Brag & Clap\". Renaming a product feature misstates what is on screen and contradicts the manifest evidence.",
 		"editor verdict is revise"
 	],
 	"texts": [
-		"This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, a flex, a round of applause. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
+		"This three.ws avatar takes requests. One click plays a move: a boxer dance, a back flip, an arm flex, a brag and clap. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
 		"The embed is a real control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live motion capture.\n\nDrop one into your own page: three.ws/docs/embedding"
 	],
 	"lint": [],
 	"verification": {
-		"ok": false,
+		"ok": true,
 		"checks": [
 			{
 				"claim": "from a smile to a wink to surprise",
@@ -24,28 +22,28 @@
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"claim": "a boxer dance, a back flip, an arm flex, a brag and clap",
 				"kind": "evidence:file",
 				"target": "public/animations/manifest.json",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"claim": "a boxer dance, a back flip, an arm flex, a brag and clap",
 				"kind": "evidence:file",
 				"target": "public/animations/manifest.json",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"claim": "a boxer dance, a back flip, an arm flex, a brag and clap",
 				"kind": "evidence:file",
 				"target": "public/animations/manifest.json",
 				"ok": true,
 				"detail": "file supports the claim"
 			},
 			{
-				"claim": "a boxer dance, a back flip, a flex, a round of applause",
+				"claim": "a boxer dance, a back flip, an arm flex, a brag and clap",
 				"kind": "evidence:file",
 				"target": "public/animations/manifest.json",
 				"ok": true,
@@ -96,8 +94,8 @@
 			{
 				"kind": "probe:scenario",
 				"target": "the filmed scenario",
-				"ok": false,
-				"detail": "step 9 (hold 2600): clock.runFor: Target page, context or browser has been closed"
+				"ok": true,
+				"detail": "13 steps passed against the live product"
 			},
 			{
 				"kind": "link",
@@ -116,58 +114,46 @@
 	"editor": {
 		"verdict": "revise",
 		"scores": {
-			"accuracy": 3,
+			"accuracy": 4,
 			"clarity": 4,
 			"specificity": 4,
-			"voice": 4,
+			"voice": 3,
 			"professionalism": 4,
 			"visual": 4
 		},
 		"issues": [
 			{
-				"severity": "blocking",
-				"area": "accuracy",
-				"quote": "a round of applause",
-				"problem": "The reel frame shows the animation button labeled \"Brag & Clap\". Renaming a product feature misstates what is on screen and contradicts the manifest evidence.",
-				"fix": "Replace \"a round of applause\" with \"Brag & Clap\" to match the manifest label and on-screen button."
-			},
-			{
 				"severity": "major",
-				"area": "clarity",
+				"area": "voice",
 				"quote": "This three.ws avatar takes requests.",
-				"problem": "The opening is vague and does not carry the strongest checkable fact; \"takes requests\" is undefined until later sentences. The first line should lead with the specific mechanism.",
-				"fix": "Open with the concrete mechanism: \"One click plays a move on this three.ws avatar: Boxer Dance, Back Flip, Arm Flex, Brag & Clap.\""
+				"problem": "The opening is a vague feature statement, not a mechanism or number lead. \"takes requests\" also implies natural-language input that is not evidenced; the product shows button clicks.",
+				"fix": "Delete the first sentence and open with \"One click plays a move on this three.ws avatar\" so the post leads with the mechanism."
 			},
 			{
 				"severity": "minor",
 				"area": "professionalism",
-				"quote": "real control surface",
-				"problem": "\"real\" is a filler adjective that adds no checkable information.",
-				"fix": "Change to \"The embed is a control surface for your site.\""
+				"quote": "The embed is a real control surface for your site.",
+				"problem": "\"real\" is an uncheckable marketing adjective that reads as copywriting.",
+				"fix": "Remove \"real\": \"The embed is a control surface for your site.\""
 			}
 		],
 		"rewrite": {
 			"posts": [
-				"One click plays a move on this three.ws avatar: Boxer Dance, Back Flip, Arm Flex, Brag & Clap. The number keys set her face: 1 smile, 2 wink, 3 surprised.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
+				"One click plays a move on this three.ws avatar: a boxer dance, a back flip, an arm flex, a brag and clap. The number keys set her face, from a smile to a wink to surprise.\n\nEvery clip is retargeted onto her own skeleton live in the browser, so the same library plays on any humanoid avatar you bring.",
 				"The embed is a control surface for your site. Your page can make the avatar speak with lip sync, set any of the 52 ARKit face shapes, turn her head toward something, or hand her the webcam for live motion capture.\n\nDrop one into your own page: three.ws/docs/embedding"
 			],
 			"altText": [
-				"A 3D avatar in yellow pants and a grey top performs animations from an on-screen panel while number keys cycle through facial expressions on a live web embed."
+				"A three.ws avatar in an embed plays boxer dance, back flip, arm flex, and brag and clap animations; number keys set face expressions from smile to wink to surprise; the same animation library retargets onto any humanoid avatar rig."
 			]
 		},
-		"summary": "The post is accurate on all code-backed claims but renames the \"Brag & Clap\" animation as \"a round of applause,\" contradicting the on-screen label and manifest. The opening is also weak; leading with the specific, checkable moves strengthens clarity and voice compliance.",
+		"summary": "The post is factually supported but opens with a vague, non-mechanism line and one marketing adjective. Revise the opening to lead with the click-to-play mechanism and drop \"real.\" All claims remain verified and within length limits.",
 		"model": "nvidia:nvidia/nemotron-3.5-super-vl-120b-a12b",
 		"fallbacks": [
 			"Vertex 403: {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/goog",
 			"openrouter 402: {\"error\":{\"message\":\"Insufficient credits. Add more using https://openrouter.ai/settings/credits\",\"code\":402,\"metadata\":{\"limit_source\":\"openrouter_credits\",\"remedy_hint\":\"Add credits at https://openr",
 			"openai 429: {\n    \"error\": {\n        \"message\": \"Your account is not active, please check your billing details on our website.\",\n        \"type\": \"billing_not_active\",\n        \"param\": null,\n        \"code\": \"billi"
 		],
-		"rewriteFindings": [
-			"claims: claim \"from a smile to a wink to surprise\" does not appear in the copy; claims must quote the post",
-			"claims: claim \"a boxer dance, a back flip, a flex, a round of applause\" does not appear in the copy; claims must quote the post",
-			"claims: \"1\" is an unverified number; declare it in claims with evidence",
-			"claims: \"3\" is an unverified number; declare it in claims with evidence"
-		]
+		"rewriteFindings": []
 	},
 	"editorError": null
 }

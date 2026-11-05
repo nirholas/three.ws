@@ -1,0 +1,437 @@
+THREE.WS: FULL DESCRIPTION
+Revised 2026-11-04. Every fact below comes from the three.ws repository or a public listing it links.
+Figures marked with a date are snapshots; live numbers are on the public endpoints listed in section 14.
+
+
+1. IN ONE LINE
+
+three.ws is an open-source platform for 3D AI agents: it turns a text prompt into a rigged,
+animation-ready 3D character you can embed anywhere.
+
+Tagline: Give your AI a body.
+
+
+2. THE SHORT VERSION (ABOUT 50 WORDS)
+
+three.ws is an open-source platform for 3D AI agents. It turns a text prompt into a rigged,
+animation-ready 3D character, gives that character an on-chain identity and a payment rail, and
+embeds it into any website or assistant with a single tag. The free 3D generation lane requires no
+account, no API key, and no payment.
+
+
+3. THE FULL VERSION
+
+three.ws is an open-source platform that gives AI a body. It turns a text prompt, up to six photos,
+or a sketch into a textured, rigged, animation-ready 3D character; gives that character a mind, a
+voice, an on-chain identity, and a payment rail; and embeds the result into any website, app, or AI
+assistant with a single tag.
+
+Every avatar is a full agent, not a static model. The runtime wraps the character around an LLM
+brain that listens, speaks with real-time lip-sync, gestures, remembers, and expresses emotion
+through the model's face and posture, live in the browser with nothing to install. Any humanoid rig
+works: the animation system retargets a shared motion library onto whatever skeleton a model
+arrives with.
+
+Agents on three.ws are economic actors. Each one can hold an on-chain identity on Solana, the
+platform's home chain, carry a wallet and a human-readable name, and pay or get paid by other
+agents per API call over x402, the HTTP 402 payment standard. The platform coin, $THREE, lives on
+Solana.
+
+Distribution is the point. A finished agent ships as the <agent-3d> web component that drops into
+any page, and every generation and animation tool is reachable by AI assistants over MCP (Model
+Context Protocol). The goal: as the internet gains an agent-native, three-dimensional layer,
+three.ws is the infrastructure it runs on.
+
+
+4. OFFICIAL CHANNELS AND CONTACTS
+
+The only official website is https://three.ws. A site on any other domain presenting itself as
+three.ws is not affiliated.
+
+  Website ................ https://three.ws
+  X (Twitter) ............ https://x.com/trythreews  (@trythreews)
+  Telegram (announcements) https://t.me/three_ws  (@three_ws)
+  Telegram (community) ... https://t.me/three_ws_community
+  GitHub ................. https://github.com/nirholas/three.ws
+  Hugging Face ........... https://huggingface.co/three-ws
+  Press and partnerships . partnerships@three.ws
+  Partnership enquiries .. partners@three.ws
+  Press kit .............. https://three.ws/press  (zip: https://three.ws/brand/three-ws-press-kit.zip)
+  Changelog .............. https://three.ws/changelog  (RSS and JSON feeds)
+  Announcements RSS ...... https://three.ws/rss/announcements.xml
+  Blog / News ............ https://three.ws/blog  and  https://three.ws/news
+  Status ................. https://three.ws/status
+  Live build version ..... https://three.ws/api/version
+
+
+5. CONTRACT ADDRESSES (CAs) AND ON-CHAIN IDENTIFIERS
+
+5.1 $THREE, the platform coin (the only coin three.ws promotes)
+
+  Token .................. $THREE
+  Chain .................. Solana (Token-2022 mint, 6 decimals)
+  Contract address (mint)  FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
+  Token page ............. https://three.ws/three-token
+  pump.fun ............... https://pump.fun/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
+  DEXTools pair (three/SOL) CnK82s8exdsK9nwqQ55kd9wcxoA22NwTchZJCBdu8LDa
+  GeckoTerminal pool ..... 5ByL7MZoLABYnwMPZKPKjf4MGkZ7FeBzrAnos19Pre2z
+  CoinGecko id ........... three-ws
+
+This is the only official $THREE mint. Any other token using the name or ticker is an
+impersonation. Check the full address before buying.
+
+5.2 ERC-8004 agent identity registries (EVM)
+
+Deployed at the same address on every supported EVM chain via CREATE2.
+
+  Mainnet
+    IdentityRegistry ..... 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432
+    ReputationRegistry ... 0x8004BAa17C55a88189AE136b182e5fdA19dE9b63
+    ValidationRegistry ... not yet deployed on mainnet
+    Chains with confirmed bytecode: Ethereum (1), Optimism (10), BSC (56), Gnosis (100),
+    Polygon (137), Mantle (5000), Base (8453), Arbitrum One (42161), Celo (42220),
+    Avalanche (43114), Linea (59144), Scroll (534352). Listed for parity but without code yet:
+    Fantom (250), zkSync Era (324), Moonbeam (1284).
+
+  Testnet
+    IdentityRegistry ..... 0x8004A818BFB912233c491871b3d84c89A494BD9e
+    ReputationRegistry ... 0x8004B663056A597Dffe9eCcC1965A193B7388713
+    ValidationRegistry ... 0x8004Cb1BF31DAf7788923b405b754f57acEB4272
+    Chains: BSC Testnet (97), Ethereum Sepolia (11155111), Base Sepolia (84532),
+    Arbitrum Sepolia (421614), Optimism Sepolia (11155420), Polygon Amoy (80002),
+    Avalanche Fuji (43113).
+
+  ThreeWSFactory (vanity CREATE2 deployer)
+    0x00000000D49195AE81759cd247cFeDD9D0B479df on BSC (56), Base (8453), Arbitrum One (42161).
+    Verified on BscScan. Source: contracts/ThreeWSFactory.sol (MIT).
+
+  Note: the canonical registries are ERC-1967 proxies in front of the ERC-8004 reference
+  implementations. Always read addresses from the SDK (REGISTRY_DEPLOYMENTS in @three-ws/sdk).
+
+5.3 Solana identity and payment identifiers
+
+  Solana Agent Registry program (devnet) .. 8oo4J9tBB3Hna1jRQ3rWvJjojqM5DYTDJo5cejUuJy3C
+  Solana Agent Registry program (mainnet) . resolved at runtime from the SDK
+  ATOM trust-tier engine .................. AToMufS4QD6hEXvcvBDg9m1AHeCLpmZQsyfYa5h9MwAF
+  Agent identity on Solana ................ Metaplex Core asset (asset pubkey = agent ID), with
+                                            SPL Memo-anchored reputation and validation
+  x402 payment asset on Solana ............ USDC, mint EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+  x402 Solana network id (CAIP-2) ......... solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d
+  Names ................................... [username].threews.sol subdomains (SNS)
+  Launch brand mark ....................... every coin mint launched through three.ws starts
+                                            with "3ws", ground into the keypair itself
+
+
+6. WHAT THE PLATFORM DOES (THE FIVE CORE FUNCTIONS)
+
+1. Generate. Forge (three.ws/forge) turns a text prompt, up to six photos, or a sketch into a
+   textured, downloadable GLB. Free draft tier with no account. Auto-rigging, restyling,
+   retexturing, and remeshing in the same flow. Prompt-to-avatar produces a rigged, animatable
+   character in one step. Paid tiers add high-quality generation (200k polygons plus PBR) and
+   game-ready Unity/Unreal export.
+
+2. Render. glTF 2.0 / GLB in WebGL 2.0 on three.js r184, with Draco, KTX2, and Meshopt
+   decompression, Khronos-spec validation, HDR environments, PBR, skinned animation, and morph
+   targets. Zero server-side processing on the render path.
+
+3. Embody. An LLM brain with a tool loop of up to eight iterations per turn, built-in tools
+   (wave, lookAt, play_clip, setExpression, speak, remember), weighted emotion blending, talk mode
+   with ARKit-52 audio-driven lip-sync, browser speech-to-text (Web Speech, Moonshine, Whisper),
+   and production voice. Memory, skills, and persona.
+
+4. Register. On-chain identity as an ERC-8004 token on any EVM chain or a Metaplex Core asset on
+   Solana: stable agent ID, owner wallet, delegated signer, signed action log, and a reputation
+   score that cannot be forged.
+
+5. Embed. The <agent-3d> web component (one script tag, no framework), five widget types
+   (turntable, animation gallery, talking agent, passport card, hotspot tour), Widget Studio,
+   Open Graph and oEmbed previews, versioned CDN bundles at
+   https://three.ws/agent-3d/latest/agent-3d.js.
+
+
+7. PRODUCT SURFACES
+
+Creation and 3D
+  Forge (text/image/sketch to 3D), Image to 3D, Selfie to Avatar, Create an Agent wizard, Avatar
+  Studio, Character Studio, Scene Studio, Pose Studio, Animation Studio, Mocap Studio, Voice Lab,
+  Clip Director, Rig Doctor, Restyle, Materialize (physical prints), AR Studio and AR view,
+  Gaussian splats, Diorama, Anatomy (interactive machine cutaways), CAD forge, ready-made CC0
+  asset catalog, open motion library.
+
+Agents
+  Agents index, agent profiles with live chat, agent memory and brain, agent wallets, agent
+  studio, agent mail, agent screen control, agent sandbox, swarms and crews, Companion
+  (notifications delivered in person by a 3D character on web, phone, and desktop), Spotlight
+  community showcase, skill library and skill marketplace.
+
+Economy and money
+  x402 pay-per-call catalog and gateway, agent labor market (escrow plus skill-author royalties),
+  Agora (persistent agent-plus-human bounty economy built on AgenC), marketplace for skills,
+  avatars, animations and assets, agent hiring, USDC agent vaults, copy trading, credits, plans,
+  Premium Data API pass, domains, creator payouts, revenue ledger, platform analytics.
+
+Coins and markets
+  Launch a Coin (pump.fun launchpad for 3D agents), Agent Launches feed, $THREE Launchpad
+  (bonding curve priced in $THREE), vanity mint grinder, coin pages, Oracle, Radar, Sniper,
+  trading hub and terminals, signals, smart money, KOL tracker, event markets, predictions,
+  perps, portfolios, crypto news archive (660,000+ articles since 2017, 192 feeds, 18 languages),
+  DeFi pools (about 15,000 indexed).
+
+Social and play
+  /play multiplayer world with coin communities (every Solana token gets a live 3D world), The
+  Club, City, Walk, Coin Wars and Coin Clash, trader duels and arenas, friends, presence and DMs,
+  in-game economy with a strictly separate game currency and a $THREE cosmetics boutique.
+
+Apps and clients
+  Web app (installable PWA), iOS app, Android, Solana Mobile Seeker (dApp Store, seed-vault
+  signing), desktop companion and Forge Desktop, car head unit / CarPlay, Meta glasses lane
+  (voice and marker re-localization), smart home, VS Code extensions, Shopify app, Discord
+  Activity, Microsoft Teams tab, terminal agent CLI, tty avatars, Unity, Unreal, Godot and Blender
+  bridges.
+
+Developer platform
+  OAuth 2.1 authorization server (PKCE, dynamic registration, revocation, introspection,
+  discovery), developer API keys, OpenAPI 3.1 spec at /openapi.json, A2A agent-to-agent protocol
+  with agent card, MCP servers, npm SDKs, free keyless 3D API (three.ws/3d), free keyless Crypto
+  API (three.ws/crypto-api), prompt library, tutorials, runnable examples, llms.txt.
+
+
+8. MCP SERVERS (FOR CLAUDE, CHATGPT, GROK, CURSOR, VS CODE AND OTHERS)
+
+  three.ws (main) .......... https://three.ws/api/mcp       OAuth 2.1, API key, or x402
+  three.ws (unified) ....... https://three.ws/mcp           one sign-in for every tool
+  3D Studio (paid) ......... https://three.ws/api/mcp-3d    OAuth 2.1 or x402
+  3D Studio (free) ......... https://three.ws/api/mcp-studio  no auth at all
+  Grok ..................... https://three.ws/api/mcp-grok
+  Agent wallet ............. https://three.ws/api/mcp-agent  OAuth 2.1
+  x402 Bazaar .............. https://three.ws/api/mcp-bazaar
+  Oracle ................... https://three.ws/api/mcp-oracle
+  pump.fun ................. https://three.ws/api/pump-fun-mcp
+  IBM Granite x402 ......... https://three.ws/api/ibm-mcp   x402 pay-per-call
+
+  Full directory: https://three.ws/.well-known/mcp.json
+  One-command setup for every client: npx three-ws setup
+  72 servers are published in the official MCP Registry under io.github.nirholas/* and are
+  also listed on PulseMCP, Glama, and LobeHub.
+  Spatial MCP: an open CC0 response shape that makes a 3D scene a native MCP result; three.ws
+  is the reference implementation.
+
+
+9. PAYMENTS: X402 AND THE AGENT ECONOMY
+
+x402 is the HTTP 402 payment standard: a client calls an endpoint, receives a price challenge,
+pays per call in stablecoin, and gets the result. three.ws runs it as follows.
+
+  Solana (primary) ....... USDC through the platform's own self-hosted facilitator
+  Base ................... USDC through a facilitator, with Permit2 gas sponsoring
+  BSC .................... direct-scheme leg
+  $THREE ................. optional accept entry on endpoints
+
+  Pay-by-name resolves @username, *.sol names, or raw addresses to a recipient.
+  Discovery: https://three.ws/.well-known/x402.json and https://three.ws/x402
+  Listed on x402scan.
+  Snapshot (2026-08-25): 4,519 priced endpoints, 1,000,000+ individually priced datapoints at
+  $0.0005 each, 110,416 on-chain settlements through the self-hosted facilitator plus 803,483
+  payment verifications.
+
+
+10. THE $THREE TOKEN: UTILITY AND MECHANICS
+
+Utility is specified in code, and the open-source code itself needs no coin at all.
+
+Hold-to-access tiers (USD value held, never spent)
+  Member   $0      no discount   1x free quota
+  Bronze   $25     5% off        2x
+  Silver   $100    10% off       3x
+  Gold     $500    20% off       5x
+  Genesis  $2,500  30% off       10x
+  Live today: compute discount, free-quota multiplier, high-quality and game-ready Forge tiers.
+  Planned (flagged as not yet enforced): private worlds, priority MCP, branded worlds, early
+  drops, first pick of rare *.threews.sol names.
+
+Pay in $THREE for less
+  Plans (Pro $49/month, Team, Enterprise) are 20% off in $THREE. Premium Data API passes are 20%
+  off. Credits top up in SOL or $THREE. Per-call generation settles in $THREE at the live rate.
+
+$THREE-only or $THREE-default surfaces
+  Marketplace pricing, labor-market escrow, Agora bounties (default), $THREE Launchpad, game
+  cosmetics and paid wheel spins, token-gated 3D embeds (default mint).
+
+On-chain agent deploy fee by $THREE held
+  under 50,000 $THREE: 0.02 SOL / 50,000+: 0.01 SOL / 250,000+: free.
+  The fee is paid to the wallet the $THREE buyback lane spends from.
+
+Revenue routing (basis-point policies in code)
+  Consumption (Forge paid tiers, voice clone, 3D Studio, Granite, selfie-to-avatar):
+    70% treasury (funds buybacks), 30% holder rewards
+  Paid wheel spins: 50% treasury, 50% holder rewards
+  Marketplace sales: 90% seller, 5% treasury, 5% rewards
+  Scarcity mints and rare-name auctions: 80% treasury, 20% rewards
+  Copy-trading performance fee: 80% leader, 15% treasury, 5% rewards
+  Policy: no platform burns; the treasury funds market buybacks. Buyback commitment default:
+  50% of platform revenue. The buyback and micro-buy engines are built and operator-gated.
+
+Trust and verification
+  pump.fun verified project (read live, never hardcoded), Jupiter Verified, Phantom Verified,
+  fomo in-app verification, CoinGecko, CoinMarketCap (since 2026-05-17), Investing.com, DEXTools.
+  pump.fun published a feature article on the official coin page: "Three Builds With Tech Giants".
+  DEXTools Social Boost wins: daily 2026-06-04 ($2,190 buyback), daily 2026-06-06 ($3,649),
+  weekly 2026-06-08 ($5,543).
+
+Where $THREE trades (as of the 2026-08 review)
+  Centralized: MEXC (THREE/USDT, since 2026-06-02), LBank, KCEX, Bybit Alpha, KuCoin Alpha,
+  Binance Web3 wallet, Coinbase Wallet (visible since 2026-05-05).
+  Solana DEX: PumpSwap, Meteora, Orca.
+  Derivatives: leverage available on derp.trade.
+
+Risk disclosure
+  $THREE is a high-volatility utility and access token, not a governance token. three.ws is
+  experimental software; losses can be total. Nothing here is investment advice. The repository
+  does not publish a supply, allocation, or vesting table.
+
+
+11. PARTNERS AND PROGRAMS
+
+The nine partner cards on https://three.ws/partners, in page order. The chip is a category three.ws
+chose, not a rank. No endorsement is claimed by or for any partner.
+
+  OpenAI (Select Partner)
+    three.ws is an OpenAI Select Partner in the OpenAI Partner Network. The free 3D Studio
+    connector gives ChatGPT eleven keyless 3D tools (text to model, rigged avatars, refinement,
+    inspection, AR placement), rendered inline. Also: a paid 3D Studio server, a custom GPT in
+    the GPT Store, AR handoff, and Spatial MCP. Program benefits run through 2027-06-30.
+    Independence line: three.ws is an independent member at the Select tier, not an OpenAI
+    product and not endorsed by OpenAI beyond the partner designation.
+
+  IBM (Strategic)
+    three.ws is an IBM Business Partner. Agents can think on IBM Granite models served through
+    IBM watsonx.ai, with x402 pay-per-call Granite inference over MCP. Live pages:
+    three.ws/ibm/hello and three.ws/ibm/x402-demo. Caveat: the public /api/ibm tools are
+    independent developer tools built on publicly available Granite models, not official IBM
+    deliverables; the formal partnership work is not yet public.
+
+  Microsoft (Marketplace)
+    Partnership announced October 2026. three.ws is live on Microsoft Marketplace (publisher
+    profile d11c4453-6e12-499d-8dfe-48fcbaa22e2f). Microsoft Research's TRELLIS.2 powers the
+    default image-to-3D lane; ONNX Runtime Web runs on-device speech. Covered by two
+    CoinMarketCap articles. Copilot MCP certification in progress.
+
+  Amazon Web Services (Cloud)
+    three.ws is an AWS Partner (Software Path). The AWS Marketplace SaaS integration is built and
+    deployed; the public listing is coming. Page: three.ws/aws.
+
+  Google Cloud (Cloud)
+    Production runs entirely on Google Cloud: Cloud Run, Cloud Scheduler, a Cloud Run GPU fleet,
+    and Vertex AI (Gemini). Member of Google Cloud for Web3 Startups, with a credit grant of up to
+    $200k over two years.
+
+  Alibaba Cloud (Cloud)
+    Live on the Alibaba Cloud International Marketplace (product listing, storefront, and an
+    editorial feature on the Alibaba Cloud Marketplace blog). Qwen models are first-class lanes
+    in the agent brain router.
+
+  NVIDIA (Inception)
+    Member of NVIDIA Inception since July 2026. Every generation lane runs on NVIDIA: a
+    self-hosted Cloud Run GPU fleet (L4s plus an RTX PRO 6000 Blackwell) behind text-to-3D,
+    rigging, and motion, plus the hosted NIM lane behind chat, vision, embeddings, safety, and
+    speech. Page: three.ws/nvidia. NGC Catalog submission and Accelerated Apps Catalog request in
+    progress.
+
+  HackerNoon (Media)
+    Publishing partnership. Every announcement auto-imports from the three.ws RSS feed into
+    HackerNoon's drafts queue with canonical links back to three.ws. Author page:
+    hackernoon.com/u/three-ws.
+
+  Quicknode (Infrastructure)
+    Accepted into the Quicknode Startup Program (July 2026) with approved infrastructure credits.
+    Quicknode RPC is a rung in the Solana RPC failover chain behind agent wallets, x402
+    settlement verification, and market data.
+
+Other listings, directories, and media
+  BNB Chain Dappbay (live; AI Agent Launchpad, AI Data, AI Infra), official MCP Registry,
+  PulseMCP, Glama, LobeHub, x402scan, VS Code Marketplace and Open VSX (threews.vscode-x402),
+  Hugging Face (Avatar Viewer Space, avatars model repo, articles), IBM Community blog,
+  CoinMarketCap community articles, pump.fun coin-page article, DEXTools (chart widget and
+  Social Boost), OKX.AI agent #2632 "three.ws 3D Studio" (resubmission pending), OpenAI Plugin
+  Directory (eligible, submission open), OpenAI Cookbook PR #2874 (open), MetaMask (SIWE
+  sign-in, Agent Wallet early access), Solana Mobile dApp Store.
+
+Technical dependencies (used, not partnerships)
+  Anthropic Claude (agent brain), Groq, three.js, Khronos glTF, Tripo and Meshy (bring-your-own-key
+  generation lanes), Hunyuan and TRELLIS open-weight models, ElevenLabs, Avaturn, Privy,
+  Replicate, Livepeer, Colyseus, Neon Postgres, Cloudflare R2, Upstash Redis, Metaplex, SNS,
+  Jupiter, CoinGecko, DefiLlama, DexScreener. Full list: https://three.ws/open-source.
+
+Partnerships under discussion (internal; not announced, do not cite as partners)
+  Tripo (brief drafted 2026-10-09 after Tripo reached out), Sperax (proposal drafted),
+  DEXTools collaboration kit.
+
+
+12. ARCHITECTURE AND STACK
+
+  Frontend ......... vanilla JS modules plus Vite; Svelte chat app; three.js r184 WebGL 2.0
+  Backend .......... Node.js serverless-style handlers served by one Express container on
+                     Google Cloud Run (service three-ws-api, us-central1)
+  Scheduling ....... 163 Cloud Scheduler crons
+  Data ............. Neon Postgres, Cloudflare R2 (model storage), Upstash Redis (rate limits)
+  GPU .............. self-hosted Cloud Run GPU workers (L4 plus RTX PRO 6000 Blackwell), 50
+                     worker services in the repo
+  Multiplayer ...... Colyseus server on Cloud Run
+  Contracts ........ Solidity 0.8.24+, Foundry, OpenZeppelin; ERC-721, EIP-712, EIP-7710
+  Security ......... SSRF guard, CSRF gates, origin pinning, fail-closed crons, AES-256-GCM
+                     encrypted agent keys with HKDF-derived keys, one spend-policy module at the
+                     signing boundary for every spend path
+  Browsers ......... Chrome/Edge 113+, Safari 16.4+, Firefox 115+, iOS 16.4+, Android Chrome 113+
+
+
+13. OPEN SOURCE, SDKS AND SCALE
+
+  License .......... Apache 2.0. Fork it, self-host it, ship commercial work on it.
+  Repository ....... https://github.com/nirholas/three.ws (single canonical repo)
+  npm scope ........ @three-ws (for example @three-ws/sdk, @three-ws/avatar, @three-ws/agent-ui,
+                     @three-ws/solana-agent, @three-ws/mcp-server, @three-ws/companion);
+                     115 packages under packages/ in the repo
+  CLI .............. npx three-ws setup
+  Changelog ........ 3,574 entries from 2026-04-15 to 2026-11-04
+  Public pages ..... 1,093 indexed in llms-full.txt
+  Usage (production database, 2026-06-11 to 2026-09-04): 25,735 generations by 19,412 unique users
+  Creator-fee revenue: about $400K cumulative (non-recurring, volume-correlated)
+  Funding stage: pre-seed (raise under $1M), applied through NVIDIA Inception Capital Connect
+
+
+14. LIVE DATA ENDPOINTS (NUMBERS THAT OUTDATE THIS DOCUMENT)
+
+  $THREE stats and verification ..... https://three.ws/api/three-token/stats
+  $THREE revenue share .............. https://three.ws/api/three-token/revenue-share
+  Token economy config .............. https://three.ws/api/token/config
+  Platform analytics ................ https://three.ws/analytics
+  Live agent economy ................ https://three.ws/economy
+  x402 catalog ...................... https://three.ws/.well-known/x402.json
+  MCP directory ..................... https://three.ws/.well-known/mcp.json
+  A2A agent card .................... https://three.ws/.well-known/agent-card.json
+  OpenAPI ........................... https://three.ws/openapi.json
+  AI-agent index .................... https://three.ws/llms.txt and https://three.ws/llms-full.txt
+
+
+15. ROADMAP
+
+  Phase 0  Foundations (viewer, runtime, ERC-8004 and Metaplex Core identity, embeds): shipped
+  Phase 1  Selfie-to-avatar engine: wired end to end; likeness fidelity is the open track
+  Phase 2  Personalization and voice cloning: in the main flow; retention is the open track
+  Phase 3  On-chain economy (agent tokens, reputation markets, royalties): contracts and audit
+           pack built; external audit next
+  Phase 4  Open inference network (decentralized GPU): node-operator client and signed job
+           receipts shipped; Livepeer federation behind a flag
+
+  Vision: photo to avatar to agent to on-chain identity, in a single flow. One day, creating
+  your agent should be as simple as taking a selfie.
+
+
+16. HOW TO SAY IT CORRECTLY
+
+  - Write "three.ws" in lowercase. The coin is "$THREE".
+  - Write "OpenAI Select Partner", not "OpenAI partner" or any other tier.
+  - Write "member of NVIDIA Inception".
+  - Write "AWS Partner; Marketplace listing coming", not "available on AWS Marketplace".
+  - Never claim endorsement by any partner.
+  - Solana is the home chain. Other chains are additional surfaces.

@@ -104,23 +104,9 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 - 982 (2026-11-04): glasses wearables lane code and docs landed; Mac build, Meta enrollment and hardware demo remain with the owner.
 - 981 (2026-11-04): image hardening committed; scan/A100 validation pending the c4fb8f6d build; NGC push is owner-held.
 - 977 (2026-11-04): weights build a7a81ea6 failed on an incomplete HF download; rerun scripts for longcat weights, then commit weights.sha256.
-2026-11-04 | 772-plan-growth-credibility-files-translations-credits.md | bf9e1b38b | Credibility files, credit, locale heads and READMEs shipped; owner connects Zenodo, OpenSSF, FLOSS/fund accounts.
-2026-11-04 | 768-plan-sign-asl-word-level-recognition.md (kept) | see git log | Word-level signs endpoint, proxy, client and training pipeline built; owner supplies Kaggle token, GPU training, 80% eval, weights and deploy.
-2026-11-04 | 770-plan-agora-cartographer-profession-reactivation.md (kept) | see git log | Cartographer runner re-enabled with measured compose budget, typed errors, roster citizen and patron tier; owner runs a funded devnet loop and diorama permalink receipts remain.
-2026-11-04 | 743 | 1fed88375 | editor attribute, export fidelity, texture replace done; build:pages, full vitest baseline and /viewer reopen not run
-2026-11-04 | 761-plan-avatar-parametric-identity-morph-fold.md (kept) | 24b9e6545 | Applied identity morphs fold into vertex positions at bake time.
-2026-11-04 | 763-plan-sniper-experiment-judge-cost-and-exit-giveback.md (kept) | e8abd8182 | Judge verdict cost and net P&L reporting built and unit-tested; pending migrations are owner-applied.
-2026-11-04 | 765-plan-growth-campaign-attribution-ledger.md (kept) | 0178f3554 | Campaign first-touch attribution ledger built and unit-tested; pending migrations are owner-applied.
-2026-11-04 | 766-plan-play-generative-npc-loop.md (kept) | 12969cead | Citizen memory stream, reflection and planning loop shipped with passport mind panel.
-2026-11-04 | 767-plan-play-war-results-ticker-jumbotron.md | de8dd176e | Finished coin wars echo into the activity ticker and jumbotron.
-2026-11-04 | 777-plan-onchain-deploy-wallet-flow-e2e.md | see git log | Deploy and token-launch button Playwright specs on devnet (12 tests, 3 clean runs) and a double-click deploy guard; order file deleted.
+2026-11-04 | 971 | 181dd8f32, 400673414 | autopilot VM provisioned no-ship, dry-run tick verified; owner: push, github token secret, telegram chat id
 2026-11-04 | 731 | 242be8471 | diorama microgames shipped and e2e-verified locally; owner: live compose-with-goal check on the deployed API, device touch check, deploy
-2026-11-04 | 744 | b1057bd6a | dev-only workers/model-lhm shipped, SMPL-X licence blocks production wiring (tasks 4-6 intentionally unwired); owner: Meshcapade SMPL-X commercial licence, clear Sapiens, stage weights, deploy
-2026-11-04 | 732 | 478f431b2 | autonomous browse loop, policy, pool runner, API, Browse panel and browse_web tool shipped; owner: deploy, live example.com run, observed take-over
-2026-11-04 | 778-plan-robinhood-standalone-repos-reverify.md | see git log | verify:robinhood script (17 rows green, RPC probes ok), live suites split out of hood-api and hood-tokenlist default tests; order file deleted.
-2026-11-04 | 745 | a690ecfa7 | shipped avatar texture layers (schema, compositor, bake, catalog, Skin tab, upload); browser-verified; build:pages and storage-backed upload bake not run
-2026-11-04 | 779-plan-agent-ens-dns-claim-verification.md | see git log | resolver verifies ENS/DNS claims (4 states, 3s/4 names), schema v1.1 claims, badge chips; order file deleted.
-2026-11-04 | 733 | see git log | budget gate + coin chart CLS fix; owner: deploy then run mobile-perf --budget on prod, LCP/TBT work on marketplace/play/agent profile
-2026-11-04 | 734 | see git log | fleet status command, generated doc, 11 verify configs, MoMask benchmark; owner: deploy decisions, MoMask run
-2026-11-04 | 735 | cb9c71287 | hire Blink already built by an interactive session; docs and changelog added here; owner: Dial.to validator after deploy
-2026-11-04 | 781-plan-docs-ux-flows-atlas-route-coverage.md | see git log | audit:ux-flows drift check + baseline + test, cluster 13 with 12 routes; order file deleted.
+- 972 | DONE-PENDING-OWNER | ca8d16f8f | reseal tooling, tests (26 pass), runbook; owner runs --apply and key swap
+- 973 | DONE-PENDING-OWNER | beb1ab428 | buyback, launch-plan, e2e script, reconcile cron, runbook; devnet run waits on devnet SOL for G57Hd6u...
+
+- 974 | DONE-PENDING-OWNER | see git log human-tasks | routes, pages, MCP tools, cron, docs, 41 tests; owner: apply migrations, deploy, fund devnet wallet and run scripts/qa-human-task-devnet.mjs

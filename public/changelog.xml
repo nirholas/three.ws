@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Autopilot can propose trades, and a trading MCP fills them under the wallet guards</title>
+			<link>https://three.ws/autopilot</link>
+			<guid isPermaLink="false">2026-11-05:Autopilot can propose trades, and a trading MCP fills them under the wallet guards</guid>
+			<pubDate>Thu, 05 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Autopilot gained a trade action. The agent can queue a buy with SOL or a sell of a non-$THREE token, grounded in the memories that motivated it; nothing moves until you confirm, and every fill runs the wallet guards (per-trade cap, daily budget, price-impact breaker, rug firewall) with buys counted against the daily SOL limit. A sell of $THREE is refused. The new @three-ws/trading-mcp quotes, lists positions and fills the same way from any MCP client.</description>
+		</item>
+		<item>
 			<title>Activate a Microsoft Marketplace purchase</title>
 			<link>https://three.ws/microsoft/activate</link>
 			<guid isPermaLink="false">2026-11-04:Activate a Microsoft Marketplace purchase</guid>
@@ -23,6 +31,30 @@
 			<description>Add the free three.ws 3D Studio to your own ChatGPT in about a minute: the exact settings to paste, a live check of the server from your browser, prompts to try and fixes for every setup snag. Text and photos become interactive 3D models and rigged avatars inline in the conversation. No account, no key.</description>
 		</item>
 		<item>
+			<title>Agent Sandbox Settings</title>
+			<link>https://three.ws/settings/sandbox</link>
+			<guid isPermaLink="false">2026-11-04:Agent Sandbox Settings</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.</description>
+		</item>
+		<item>
+			<title>Build Leaderboard</title>
+			<link>https://three.ws/build/leaderboard</link>
+			<guid isPermaLink="false">2026-11-04:Build Leaderboard</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Agents ranked on real paid calls, USDC volume and coins launched inside the current Build round, plus the prize and buyback ledger.</description>
+		</item>
+		<item>
+			<title>Build Program</title>
+			<link>https://three.ws/build</link>
+			<guid isPermaLink="false">2026-11-04:Build Program</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Enter an agent in a three.ws Build round: prize pool in USDC and $THREE, tracks, judging criteria, and a live feed of open hackathons and bounties from across the ecosystem.</description>
+		</item>
+		<item>
 			<title>Connect to every three.ws tool</title>
 			<link>https://three.ws/mcp</link>
 			<guid isPermaLink="false">2026-11-04:Connect to every three.ws tool</guid>
@@ -37,6 +69,38 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>What happens after you delete a three.ws account: the 30-day recovery window, the permanent purge of uploads and account data, the records kept for legal and accounting reasons and how they are stripped of your identity, and the hashed receipt each purge leaves.</description>
+		</item>
+		<item>
+			<title>Docs · AG-UI event stream</title>
+			<link>https://three.ws/docs/ag-ui</link>
+			<guid isPermaLink="false">2026-11-04:Docs · AG-UI event stream</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Drive a three.ws agent from CopilotKit, assistant-ui or any AG-UI front end: POST /api/agent/run?protocol=ag-ui, the event sequence, tool calls, avatar embodiment cues and a CopilotKit example.</description>
+		</item>
+		<item>
+			<title>Docs · Agent evals</title>
+			<link>https://three.ws/docs/agent-evals</link>
+			<guid isPermaLink="false">2026-11-04:Docs · Agent evals</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Score an agent against fixed task suites from the Evaluate tab, REST or CLI, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL.</description>
+		</item>
+		<item>
+			<title>Docs · Agent trading over MCP</title>
+			<link>https://three.ws/docs/agent-trading-mcp</link>
+			<guid isPermaLink="false">2026-11-04:Docs · Agent trading over MCP</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Arm an agent on Oracle calls, watch it, set its guardrails and stop it from any MCP client. Can move real SOL; simulate by default.</description>
+		</item>
+		<item>
+			<title>Docs · Bounty feed and Build program</title>
+			<link>https://three.ws/docs/bounties-and-build</link>
+			<guid isPermaLink="false">2026-11-04:Docs · Bounty feed and Build program</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the aggregated hackathon and bounty feed, Build rounds, the activity leaderboard, the read-only payout ledger and the list_bounties and submit_build_entry agent tools fit together.</description>
 		</item>
 		<item>
 			<title>Docs · MCP integrations</title>
@@ -63,6 +127,14 @@
 			<description>How a Microsoft Marketplace purchase becomes a three.ws plan: the landing page, Entra sign-in, the fulfilment webhook, hourly metered billing and its retry rules, the env vars, and how to test against a preview offer.</description>
 		</item>
 		<item>
+			<title>Docs · Multichain Launchpad</title>
+			<link>https://three.ws/docs/multichain-launchpad</link>
+			<guid isPermaLink="false">2026-11-04:Docs · Multichain Launchpad</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws/launch/multichain launches a coin about an animation, avatar or agent on Solana, BNB Chain, Base and Robinhood Chain: subjects and /l/:id showcase pages, the four.meme and flap.sh paths, agent and wallet signers, and the API.</description>
+		</item>
+		<item>
 			<title>Docs · Partner shoutout playbook</title>
 			<link>https://three.ws/docs/partner-shoutout-playbook</link>
 			<guid isPermaLink="false">2026-11-04:Docs · Partner shoutout playbook</guid>
@@ -71,12 +143,28 @@
 			<description>How three.ws earns public mentions from partners and prospective partners: give real value first, make the post a byproduct, and never sell credit for a post.</description>
 		</item>
 		<item>
+			<title>Docs · The Plaza Stage in /play</title>
+			<link>https://three.ws/docs/play-plaza-stage</link>
+			<guid isPermaLink="false">2026-11-04:Docs · The Plaza Stage in /play</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the hosted Living Stage in every coin world works: proximity join and leave, spatial host voice with captions, ring seats, questions from the chat bar, and $THREE tips behind an explicit confirm step.</description>
+		</item>
+		<item>
 			<title>Docs · three-ws-agent</title>
 			<link>https://three.ws/docs/agent-cli</link>
 			<guid isPermaLink="false">2026-11-04:Docs · three-ws-agent</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.</description>
+		</item>
+		<item>
+			<title>Docs · Tool gateway</title>
+			<link>https://three.ws/docs/tool-gateway</link>
+			<guid isPermaLink="false">2026-11-04:Docs · Tool gateway</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Metered web search, page fetch, document parsing, speech and image tools on one credit balance: prices, the REST and MCP contracts, refunds, idempotency and the SSRF guard.</description>
 		</item>
 		<item>
 			<title>Docs · World chat in /play: scrollback and the community board</title>
@@ -95,6 +183,30 @@
 			<description>The A2A endpoint any agent can call: the Agent Card, the generate-3d-model, validate-model and search-avatars skills, A2A 1.0 and 0.3 JSON-RPC methods, task lifetime, error codes, optional bearer auth, and curl calls that work today.</description>
 		</item>
 		<item>
+			<title>Forge-Off: Daily Themed 3D Contest</title>
+			<link>https://three.ws/forge-off</link>
+			<guid isPermaLink="false">2026-11-04:Forge-Off: Daily Themed 3D Contest</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A themed creation contest with no account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.</description>
+		</item>
+		<item>
+			<title>Glass</title>
+			<link>https://three.ws/glass</link>
+			<guid isPermaLink="false">2026-11-04:Glass</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The three.ws web app for Meta Ray-Ban Display. See the agents standing around you, talk to one with a pinch, and hand it off to your phone.</description>
+		</item>
+		<item>
+			<title>Inference Nodes</title>
+			<link>https://three.ws/nodes</link>
+			<guid isPermaLink="false">2026-11-04:Inference Nodes</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The open inference network: community nodes that sell compute into the three.ws queue, their capabilities, uptime and verified earnings.</description>
+		</item>
+		<item>
 			<title>MCP Integrations</title>
 			<link>https://three.ws/mcp-integrations</link>
 			<guid isPermaLink="false">2026-11-04:MCP Integrations</guid>
@@ -111,12 +223,28 @@
 			<description>Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.</description>
 		</item>
 		<item>
+			<title>Multichain Launchpad</title>
+			<link>https://three.ws/launch/multichain</link>
+			<guid isPermaLink="false">2026-11-04:Multichain Launchpad</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch a coin about an animation, an avatar, a 3D agent or all three on Solana (pump.fun), BNB Chain (four.meme, flap.sh), Base and Robinhood Chain (flap.sh), signed by your agent's wallet or your own, with a live fee quote, a confirmation table and a permanent 3D showcase page for every coin.</description>
+		</item>
+		<item>
 			<title>three.ws agents (Microsoft Teams tab)</title>
 			<link>https://three.ws/microsoft/teams-tab</link>
 			<guid isPermaLink="false">2026-11-04:three.ws agents (Microsoft Teams tab)</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>The three.ws tab inside Microsoft Teams and Microsoft 365: pick one of your agents and talk to it, or generate a 3D model from a prompt, without leaving the meeting or chat.</description>
+		</item>
+		<item>
+			<title>$THREE buyback lanes can no longer sweep the holder-rewards pool</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:$THREE buyback lanes can no longer sweep the holder-rewards pool</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>If the rewards wallet is ever the same wallet as the buyback or micro-buy signer, those lanes now refuse to run instead of sweeping the whole rewards pool into the treasury, and the ops health check flags it. A new read-only preflight, npm run token:preflight, validates the treasury and rewards addresses against mainnet and prints the one command that applies them.</description>
 		</item>
 		<item>
 			<title>$THREE purchases and Premium pass payments build correctly for the Token-2022 mint</title>
@@ -135,6 +263,14 @@
 			<description>Every photo you hand Forge, avatar reconstruction or scene decomposition is now decoded only as PNG, JPEG or WEBP, so a file in any other format never reaches an image parser on the GPU workers. A refused or corrupt image now fails with a clear message naming the three formats instead of a generic worker error. The image library is pinned exactly on every worker, the talking-avatar worker moves to transformers 4.57.6 with bit-identical output, and oversized EXIF blocks are ignored rather than parsed. Takes effect as each worker image is rebuilt.</description>
 		</item>
 		<item>
+			<title>A concierge greets new visitors in the world</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-04:A concierge greets new visitors in the world</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A well-dressed concierge near spawn welcomes first-time players once, answers questions about the stations that really exist through the free chat model, and leads a skippable tour of the Intel Kiosk, Signature Wall, wheel and War Portal. During a live event it opens with what is happening.</description>
+		</item>
+		<item>
 			<title>A paid agent skill call whose response was lost can now be collected again without paying twice</title>
 			<link>https://three.ws/docs/x402</link>
 			<guid isPermaLink="false">2026-11-04:A paid agent skill call whose response was lost can now be collected again without paying twice</guid>
@@ -143,12 +279,28 @@
 			<description>When you pay for an agent skill and the connection drops before the answer arrives, asking again with the same Idempotency-Key (or the same payment intent) now returns the stored result, marked replayed, instead of a payment_in_flight error or a second charge. The skill runs once and the author is credited once. A retry with different arguments is refused with idempotency_conflict, a retry while the first call is still running gets idempotency_in_progress with a retry-after, and a call that fails stores nothing so the paid intent can be retried. The 402 challenge and the manifest now advertise the header, the 24 hour window and the replayed field, and the browser x402 client sends one key per call and retries a dropped paid request once on its own.</description>
 		</item>
 		<item>
+			<title>Account status, dashboard links and X posting tools for connected assistants</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Account status, dashboard links and X posting tools for connected assistants</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>GET /api/v1/me/status and the get_account_status tool answer what plan you are on, what is left and what is waiting for approval in one call. get_dashboard_urls returns the canonical page links. Agents can now be connected to X, given a posting policy and asked to post through MCP, with review-before-post queuing instead of publishing. Settings shows account status and each agent's X posting state.</description>
+		</item>
+		<item>
 			<title>Add three.ws to your own ChatGPT in about a minute</title>
 			<link>https://three.ws/chatgpt</link>
 			<guid isPermaLink="false">2026-11-04:Add three.ws to your own ChatGPT in about a minute</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A new /chatgpt page walks you through adding the free three.ws 3D Studio to ChatGPT: turn on developer mode, create an app with the URL https://three.ws/api/mcp-chatgpt and no authentication, then ask for a model. Text and photos become interactive, textured 3D models and rigged avatars that render inline in the conversation, free and with no account. The page checks the server live from your browser, lists the exact tools ChatGPT gets, and has starter prompts and fixes for every setup snag.</description>
+		</item>
+		<item>
+			<title>Agent memory now knows when a fact was true</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Agent memory now knows when a fact was true</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Memories carry a validity interval and a source. When something changes (moved cities, new job) the agent saves the new fact as superseding the old one, so recall returns what is true now, as_of asks what was true at an earlier date, and the old version stays as history. The @three-ws/agent-memory SDK gained validFrom, sourceRef, supersedes, asOf and includeHistory, and a benchmark harness scores recall on LoCoMo and LongMemEval.</description>
 		</item>
 		<item>
 			<title>Agent memory recall now understands meaning, not just exact words</title>
@@ -165,6 +317,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>An Intent Mandate lets your agent pay other agents without asking you each time, within a budget. Issuing one with an empty or non-USDC currency used to succeed and quietly turned off the currency check, so a payment in an asset the spend guard cannot price could bypass your per-payment, daily and per-recipient dollar limits. Mandates now accept USDC only, refuse anything else with unsupported_currency, and any mandate signed with a bad currency before this fix is refused when the agent tries to spend under it.</description>
+		</item>
+		<item>
+			<title>Agent sandbox settings</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Agent sandbox settings</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Settings page lists every program your agents ran in their sandbox with its output and exit code, lets you download the files it wrote, stop a workspace, and choose which hosts sandboxed code may call.</description>
 		</item>
 		<item>
 			<title>Agent wallet key export and rotation now require the real-funds agreements</title>
@@ -191,6 +351,22 @@
 			<description>Every @three-ws/agents method now calls a mounted /api/v1 route: account usage, budget, ledger, integrations and link codes, six market intel reads (price, top movers, RSI/EMA/MACD indicators, signals, anomalies, macro) and read-only agent wallet balance and history. Swap execution and transfers stay out of the API by design. The package ships a route-parity test, a full transport, error and SSE suite, and runnable examples.</description>
 		</item>
 		<item>
+			<title>Agents sign their web requests</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Agents sign their web requests</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Fetches made by three.ws agents through the tool gateway and the screen caster now carry a Web Bot Auth signature, and the matching public key directory is served at /.well-known/http-message-signatures-directory, so sites can verify and rate-limit three.ws agents instead of blocking them.</description>
+		</item>
+		<item>
+			<title>Agents speak AG-UI to CopilotKit and assistant-ui</title>
+			<link>https://three.ws/docs/ag-ui</link>
+			<guid isPermaLink="false">2026-11-04:Agents speak AG-UI to CopilotKit and assistant-ui</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>POST /api/agent/run?protocol=ag-ui now streams the run as AG-UI events (run, text message and tool call lifecycle, plus avatar embodiment cues as CUSTOM events), so CopilotKit, assistant-ui and LangChain front ends can drive a three.ws agent with no adapter. The default OpenAI stream is unchanged.</description>
+		</item>
+		<item>
 			<title>Announced surfaces defect sweep</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-04:Announced surfaces defect sweep</guid>
@@ -213,6 +389,22 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A run you start from the API or the Runs tab can now call the third-party MCP servers you connected to the agent on /mcp-integrations, the same ext_ tools chat already had. Every call shows on the Runs tab with its arguments, the server's answer and the step's cost. Tools that move money or cannot be undone stay out of autonomous runs, since nobody is there to approve them; the agent says in its report that you need to take that step. A run's toolsAllowed list can now name ext_ tools too.</description>
+		</item>
+		<item>
+			<title>Avatar reconstruction: gated synthesised views for the scalp and far side of the head</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Avatar reconstruction: gated synthesised views for the scalp and far side of the head</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The avatar worker can now ask Vertex AI for extra camera views of a selfie, reject any that do not look like the same person or that break UV seams, and project the rest onto the scalp, far cheek, ears and neck. Texture only, off by default until the held-out quality check passes.</description>
+		</item>
+		<item>
+			<title>Build program rounds and one bounty feed for every hackathon</title>
+			<link>https://three.ws/build</link>
+			<guid isPermaLink="false">2026-11-04:Build program rounds and one bounty feed for every hackathon</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>/build now shows the open Build round with its prize pool, tracks and countdown, takes agent entries, and lists open hackathons and bounties from four sources with a notice when one is stale. /build/leaderboard ranks agents on real paid calls, USDC volume and coins launched. Agents get list_bounties and submit_build_entry over MCP.</description>
 		</item>
 		<item>
 			<title>Catalog and reconstructed avatars load again in embeds and the walk companion</title>
@@ -255,12 +447,44 @@
 			<description>The privacy policy promises that a deleted account is kept for 30 days for recovery and then permanently purged. A daily job now does that purge: your uploads are removed from storage and your account data is deleted. Records the law requires us to keep, such as payment history and your acceptance of the Terms, stay but no longer link to you or show your wallet or email. If a marketplace bid or sale involving your agent is still settling, the purge waits until the other person has been paid or refunded. During the 30 days, signing in with the same wallet says the account was deleted; after the purge, that wallet can start a fresh account.</description>
 		</item>
 		<item>
+			<title>Demo pages stop defaulting to a real person's likeness</title>
+			<link>https://three.ws/animations</link>
+			<guid isPermaLink="false">2026-11-04:Demo pages stop defaulting to a real person's likeness</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The animation gallery previews now play on the house default avatar instead of a real person's likeness. The avatar-engines filter bar is fully opaque so headings no longer show through it, Render Lab shows one chip per model and no longer stacks two tooltips on its buttons, and Restyle Studio keeps the 3D view beside the presets and Reset while you scroll.</description>
+		</item>
+		<item>
+			<title>Dependency security sweep: patched OG renderer, chat server and vendored fixes</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Dependency security sweep: patched OG renderer, chat server and vendored fixes</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Social share cards now render through a patched satori pipeline instead of an outdated bundled renderer. The self-hosted chat server ignores spoofed X-Forwarded-For and X-Real-IP headers. Vulnerable transitive packages (deepmerge, elliptic, bigint-buffer, lodash.set, minimatch, nanoid, helia) are pinned to patched releases or patched vendored copies, and the Qwen Plus brain runs on the maintained OpenAI-compatible route.</description>
+		</item>
+		<item>
+			<title>Drive builds for Android Automotive OS</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Drive builds for Android Automotive OS</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Android overlay now has an automotive product flavor that puts the same four-control Drive templates on a car's own screen through CarAppActivity. It compiles alongside the unchanged phone build; running it on a head unit is the remaining check.</description>
+		</item>
+		<item>
 			<title>Embeds can allowlist the skill authors and hosts they trust</title>
 			<link>https://three.ws/docs/web-component</link>
 			<guid isPermaLink="false">2026-11-04:Embeds can allowlist the skill authors and hosts they trust</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>The agent-3d element's whitelist skill policy now works: list the authors you trust with skill-trusted-authors and the hosts with skill-trusted-origins (or set el.skillTrust from script), and only skills from those authors or hosts install. Before this, whitelist mode had no way to receive the lists and refused every skill. A refused skill now fires a skill:error event so the page can tell the visitor, and a misspelled skill-trust value falls back to the safe owner-only default instead of installing everything unchecked.</description>
+		</item>
+		<item>
+			<title>Eval removed from the site-wide CSP</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Eval removed from the site-wide CSP</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Pages no longer allow string-to-code evaluation. The Draco loader and texture resize no longer need it, and only the Scene Studio shell keeps it.</description>
 		</item>
 		<item>
 			<title>Every new agent now starts with a drafted coin</title>
@@ -287,12 +511,52 @@
 			<description>Each fee three.ws takes (pump.fun trades and launches, agent trades, skill sales, bundles, subscriptions and the x402 skill split) is now recorded once in an append-only fee ledger, in the same database write as the purchase or trade it belongs to, and replays never record it twice. A daily reconciler checks every recorded fee against what the fee wallet actually received on Solana. Bundle and subscription confirmations also stopped booking a platform fee when the buyer paid the full price straight to the creator, so creators now see their full earnings for those sales.</description>
 		</item>
 		<item>
+			<title>Fact-check evidence is now ranked by source reliability</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Fact-check evidence is now ranked by source reliability</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The fact checker now puts government, peer-reviewed and encyclopedia sources ahead of blogs and social posts, keeps one passage per domain, and rewards agreement across independent domains. The benchmark score also reports macro-F1 and the abstain rate.</description>
+		</item>
+		<item>
 			<title>Forge and Marketplace buttons now share the platform button system</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-04:Forge and Marketplace buttons now share the platform button system</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Forge page and the Marketplace now use the same button component as the rest of the site, so hover, pressed, keyboard-focus, disabled and loading states look and behave the same on both. Forge no longer carries its own copy of the button styles, and four unused button and badge style families were deleted. A new audit, npm run audit:buttons, lists the remaining legacy button families and fails if a finished one comes back.</description>
+		</item>
+		<item>
+			<title>Forge-Off themed events: a board for every day and a landing page</title>
+			<link>https://three.ws/forge-off</link>
+			<guid isPermaLink="false">2026-11-04:Forge-Off themed events: a board for every day and a landing page</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Forge-Off can now run a themed event with one board per UTC day and an overall winner, all on the same no-login, one-vote-per-browser voting. The new /forge-off page shows the live day's theme with a countdown to its close, a button to make an entry on the right surface, that day's board, the overall standings and past days. Between events it shows the standing weekly board. Events are entries in a config file, so a partner or community contest needs no code. The first event is the proposed five-day Forge-Off Open.</description>
+		</item>
+		<item>
+			<title>Funding manifest, translated READMEs and crawlable languages</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Funding manifest, translated READMEs and crawlable languages</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>three.ws now publishes a FLOSS/fund funding.json, Zenodo metadata, READMEs in Spanish, Brazilian Portuguese, Hindi and Russian, and serves a localized page's language, alternates and clean canonical to crawlers when a visitor or search engine asks for ?lang=xx. Images from the Pollinations lane now carry a visible Powered by Pollinations credit, and the API labels that lane correctly.</description>
+		</item>
+		<item>
+			<title>Glass: three.ws on Meta Ray-Ban Display</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Glass: three.ws on Meta Ray-Ban Display</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new /glass web app shows the agents standing near you on the lens with a direction arrow, lets you talk to one with a pinch and suggested replies, and hands the agent to your phone with a six-character code at three.ws/g/CODE. It works with only the Neural Band d-pad inputs.</description>
+		</item>
+		<item>
+			<title>Gold holders get early access to drops, Genesis gets first dibs on rare names</title>
+			<link>https://three.ws/three</link>
+			<guid isPermaLink="false">2026-11-04:Gold holders get early access to drops, Genesis gets first dibs on rare names</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Generative drops now open with a holder-only window set by the creator (15 minutes by default, 0 to skip): during it, revealing an item needs Gold or higher in $THREE, and the drop page shows a live countdown to public opening. Rare *.threews.sol names can be put behind a Genesis-only window. Both windows end on their own.</description>
 		</item>
 		<item>
 			<title>Grok Bot gets the Solana market, and three.ws events can wake it</title>
@@ -375,6 +639,14 @@
 			<description>Very detailed TRELLIS generations could stall the worker long enough for Cloud Run to restart it, so every job on that machine failed with a malformed response. The worker now keeps each bake within a measured face budget, which covers every model that already succeeded. The TripoSG photo lane cuts out your subject with BiRefNet through our own background-removal service instead of a non-commercial model. Image lanes move to Gemini 3.1 Flash Image, falling back to the previous model only where the new one is not served. The scan page now says plainly that generating needs a free account.</description>
 		</item>
 		<item>
+			<title>Launch a coin about an animation, an avatar or an agent, on four chains</title>
+			<link>https://three.ws/launch/multichain</link>
+			<guid isPermaLink="false">2026-11-04:Launch a coin about an animation, an avatar or an agent, on four chains</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The new multichain launchpad at /launch/multichain launches a coin about one animation, an avatar, a 3D agent, or all of them together, on Solana through pump.fun, on BNB Chain through four.meme or flap.sh, and on Base and Robinhood Chain through flap.sh. Your agent's wallet or your own wallet signs it after a live fee quote and a confirmation table. Every coin gets a showcase page at /l/:id that plays its avatar and links to the coin on its venue, and Pose Studio has a Launch a coin button that carries the clip you are watching.</description>
+		</item>
+		<item>
 			<title>Live agent screens can no longer be steered into internal addresses</title>
 			<link>https://three.ws/agents-live</link>
 			<guid isPermaLink="false">2026-11-04:Live agent screens can no longer be steered into internal addresses</guid>
@@ -389,6 +661,22 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Widget Studio has a new Holders only panel. Pick one of your own avatars, flip the switch, set how much $THREE a viewer must hold (or click a holder tier, converted to tokens at the live price), and copy a snippet that only renders the 3D avatar for wallets that clear the bar. Every load checks the real balance on Solana. The panel reads the gate back from the server every time you pick the avatar, so it always shows what the embed enforces. From there you can change the requirement or remove the gate. Another Solana token can be used from the advanced field.</description>
+		</item>
+		<item>
+			<title>Multiplayer worlds can run on more than one server</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Multiplayer worlds can run on more than one server</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The multiplayer server now reports whether it shares state with its peers on /health, refuses to boot single-instance when its Redis is configured but unreachable, and forwards friend messages, stage tips and event announcements to whichever instance holds the target. A two-process test and a real-socket load test back it. Turning it on in production needs the Memorystore steps in multiplayer/README.md.</description>
+		</item>
+		<item>
+			<title>Native launchpad coins get their own page and a one-click buy from SOL</title>
+			<link>https://three.ws/three-launchpad</link>
+			<guid isPermaLink="false">2026-11-04:Native launchpad coins get their own page and a one-click buy from SOL</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every coin launched on the $THREE curve now opens at /launches/&lt;mint&gt; with its curve progress, price, market cap, recent trades read from chain, the fee schedule and the agent behind it. Holders of only SOL can buy in one transaction: the page swaps SOL to $THREE through Jupiter and buys on the curve, showing the exact total first.</description>
 		</item>
 		<item>
 			<title>NVIDIA Inception startups can apply for free generation credit, and earn more for a shoutout</title>
@@ -415,6 +703,14 @@
 			<description>Opening the spin wheel in /play could crash the game server and disconnect every player in the world at once. The wheel now opens normally, and when paid spins are unavailable it says so instead of failing. The server also stays up through any single bad message from one player, so one fault costs that player one action rather than costing everyone their session.</description>
 		</item>
 		<item>
+			<title>Operators can pause every payout instantly, and get paged when payouts spike</title>
+			<link>https://three.ws/docs/financial-controls</link>
+			<guid isPermaLink="false">2026-11-04:Operators can pause every payout instantly, and get paged when payouts spike</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>A single switch now stops withdrawals, coin payouts, club payouts and growth payouts the moment it is flipped, with no redeploy. It is set through an admin-only endpoint that requires a reason and writes an audit record, and nothing in the ledger is rewritten, so resuming picks up exactly where it stopped. A new hourly check also alerts operators when the last 24 hours of payouts run above three times the recent daily median, or when more than a fifth of them fail.</description>
+		</item>
+		<item>
 			<title>Ops alerts can now reach an inbox, not only the dashboard</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-11-04:Ops alerts can now reach an inbox, not only the dashboard</guid>
@@ -429,6 +725,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>With X402_RING_FRESH_PAYER=true, every paid ring call is signed by a brand-new wallet that is funded for that call and swept to zero afterwards, so each settlement shows up as its own buyer on x402scan and in our accounting.</description>
+		</item>
+		<item>
+			<title>Oracle and agent trading as MCP servers</title>
+			<link>https://three.ws/oracle</link>
+			<guid isPermaLink="false">2026-11-04:Oracle and agent trading as MCP servers</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Oracle now has its own free MCP server at /api/mcp-oracle (14 read tools, no account), plus @three-ws/oracle-mcp and @three-ws/agent-trader-mcp for stdio. Agent trading arms in simulate mode by default, needs a signed real-funds agreement to go live, and has a one-argument kill switch. A wallet-profile database outage now answers 503 instead of an empty leaderboard.</description>
 		</item>
 		<item>
 			<title>Paid endpoint 402 challenges validate on external x402 directories</title>
@@ -463,12 +767,44 @@
 			<description>The pricing page now asks the server which assets checkout can actually take. Any asset that cannot be paid yet is shown disabled with &quot;Not switched on yet&quot;, the $THREE discount is only claimed while $THREE can be paid, and a refused checkout names the asset instead of failing with a generic error. The Forge pay sheet checks the $THREE rail before it opens: when it is not switched on, it says so plainly, asks for no wallet approval and offers no retry loop. Paid Wheel of Fortune spins say the same and point at your free spin. Nothing is charged in any of these states.</description>
 		</item>
 		<item>
+			<title>Private, invite-only worlds for Silver holders</title>
+			<link>https://three.ws/three</link>
+			<guid isPermaLink="false">2026-11-04:Private, invite-only worlds for Silver holders</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Holding $THREE at Silver now unlocks private worlds. Open a world's Visibility menu in the builder to make it public, unlisted or private and invite up to 50 people by username. Anyone else, including people with the link, sees the world as not found. Going back to public is always free.</description>
+		</item>
+		<item>
+			<title>Run your own x402 facilitator, and attack it before you trust it</title>
+			<link>https://three.ws/docs/x402-server-facilitator-release</link>
+			<guid isPermaLink="false">2026-11-04:Run your own x402 facilitator, and attack it before you trust it</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>@three-ws/x402-server 0.2.0 ships the Solana facilitator three.ws runs in production as a package: verify, settle, the anti-drain transaction gate, sponsor SOL floor and fee budget, and settlement that survives a lost confirmation. A new command, npx @three-ws/x402-server attack, fires 27 hostile transactions at any devnet or local facilitator. The facilitator index now reports the package version and a public metrics endpoint splits our own canary traffic from external payers.</description>
+		</item>
+		<item>
+			<title>Score, replay and export any agent run</title>
+			<link>https://three.ws/docs/agent-evals</link>
+			<guid isPermaLink="false">2026-11-04:Score, replay and export any agent run</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Owners can run a task suite against an agent from a new Evaluate tab, the REST API or `three-ws evals run`, watch per-task progress live, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL. Runs are limited to free and Vertex lanes with a cost cap.</description>
+		</item>
+		<item>
 			<title>Seeded catalog assets can now be judged on how they look, not just their structure</title>
 			<link>https://three.ws/docs/seed-quality</link>
 			<guid isPermaLink="false">2026-11-04:Seeded catalog assets can now be judged on how they look, not just their structure</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Platform-seeded models in /characters and /objects were gated on mesh structure only, because rendering and judging an asset did not fit inside the seed cron's time limit. A new per-minute vision cron now takes assets that pass the mesh check, renders each one and asks the vision judge whether it is realistic, on-prompt and complete, then publishes it or sets it aside with the full verdict for tuning. A judge that is down is retried and never blocks a sound asset for more than 30 minutes. The judge also now falls back across every vision provider instead of depending on one. It switches on with SEED_VISION_PHASE=1 after deploy.</description>
+		</item>
+		<item>
+			<title>Shared creations now say who wants to make their own</title>
+			<link>https://three.ws/creations</link>
+			<guid isPermaLink="false">2026-11-04:Shared creations now say who wants to make their own</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every creation page has a Make your own button that carries you into the Forge, and the Forge funnel report now counts AR opens, unfurls, shared-link page loads and how many shares turn into a new generation. Counts are aggregate only: no IP, account or creation id is stored.</description>
 		</item>
 		<item>
 			<title>Slow phones and laptops now drop to lighter graphics in /play within seconds</title>
@@ -479,12 +815,44 @@
 			<description>/play, the club and the trade room lower their graphics settings when a device can't keep up, but they were measuring frame time in a way that made a device drawing 2 frames a second look like one drawing 20. A struggling phone or older laptop could spend half a minute or more on the heaviest settings before anything changed, and a device below 1 frame a second could stay there for minutes. They now measure the real time between frames, so a device that can't keep up steps down to lighter settings within a couple of seconds, while a healthy device coming back from a hidden tab is left alone.</description>
 		</item>
 		<item>
+			<title>Smaller Forge thumbnails and a lighter marketplace hero</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-11-04:Smaller Forge thumbnails and a lighter marketplace hero</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Forge previews are now 512 px WebP instead of 768 px PNG, the marketplace hero shares one model-size budget across its slides, the brand mark is less than half its old size, and /forge paints its engine lanes on the first frame for repeat visitors.</description>
+		</item>
+		<item>
+			<title>Sniper manages the free moon bags it keeps and records entry latency</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Sniper manages the free moon bags it keeps and records entry latency</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Retained moon bags are now re-quoted every minute, sold whole on a 40 percent trailing stop from their own peak, and written off when dead instead of sitting unwatched. Per-second price ticks and per-stage entry latency are recorded for backtests, with a p50 and p90 report script.</description>
+		</item>
+		<item>
 			<title>Status page shows the retired world as retired, not down</title>
 			<link>https://three.ws/status</link>
 			<guid isPermaLink="false">2026-11-04:Status page shows the retired world as retired, not down</guid>
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The deleted world.three.ws service now carries an explicit, reversible retired state: the health rollup, alerts and status page no longer report a permanent false outage, so a red status always means something real.</description>
+		</item>
+		<item>
+			<title>Surprise me builds real bodies</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Surprise me builds real bodies</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The one-click Surprise me avatar now draws a full look on the Parametric body: face and body shape sliders, height and limb proportions, skin tone, clothes and hair from the live catalog, and up to two accessories. Every result shows its seed so you can reload, share or recreate it, and a body style picker keeps the classic lane one click away.</description>
+		</item>
+		<item>
+			<title>Talking-avatar video gets a scripted GPU host</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:Talking-avatar video gets a scripted GPU host</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The LongCat video worker now has an on-demand 80 GB GPU host with TLS, idle self-shutdown, a daily GPU-hour cap and a quota request script. When no host is up, video requests answer a clear capacity error and keep the free trial.</description>
 		</item>
 		<item>
 			<title>The /play lobby points newcomers somewhere, and its welcome card fits at any zoom</title>
@@ -517,6 +885,22 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>docs/nvidia-gtc-2027 holds the print-ready 43 by 24 inch poster PDF for the NVIDIA GTC 2027 call for posters, the measured coverage and latency data behind every number on it, the avatar frames rendered by the shipping Audio2Face player, and two npm scripts (poster:gtc:rigs, poster:gtc) that rebuild the sheet and refuse to print a column that overflows. The README carries the submission form copy, and a companion Hugging Face article draft explains the direct and derived blendshape mapping.</description>
+		</item>
+		<item>
+			<title>The inference node network now has buyers, a roster and an earnings ledger</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:The inference node network now has buyers, a roster and an earnings ledger</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Anyone can pay USDC to run a job on a live community node through /api/x402/node-inference and is only billed when the node signed receipt verifies. Node operators can read their accrued earnings, and the new /nodes page lists the network.</description>
+		</item>
+		<item>
+			<title>The Plaza Stage goes live in /play</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-04:The Plaza Stage goes live in /play</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Walk up to the stage in the plaza of any coin world and the hosted show plays around you: spatial voice with lip-sync, live captions, a seat in the ring, questions to the host from the chat bar, and $THREE tips behind an explicit confirm step that shows the recipient, amount and token before anything signs. The show only connects when you are close and shuts down when you walk away.</description>
 		</item>
 		<item>
 			<title>The predictions scanner reads the markets nearest par and names each one in full</title>
@@ -581,6 +965,14 @@
 			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The holders and security panels read the same mint account and largest-holder list for a token, and a page that shows both used to pay for those reads twice, once per server instance it landed on. Those public reads are now shared across the whole fleet for 30 seconds, and the security verdict for a token is reused for 60 seconds, so a burst of lookups costs a fraction of the calls. If every data source is down, the security check now serves the last good verdict for up to 6 hours, clearly marked as stale, instead of failing. Operators also get a per-route RPC spend board at /api/ops/rpc-spend, a terminal report, and an optional daily budget per RPC lane that keeps the remaining quota for payments and settlements.</description>
+		</item>
+		<item>
+			<title>Tool gateway: web search, fetch, documents, speech and images on one balance</title>
+			<link>https://three.ws/pricing</link>
+			<guid isPermaLink="false">2026-11-04:Tool gateway: web search, fetch, documents, speech and images on one balance</guid>
+			<pubDate>Wed, 04 Nov 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Agents and developers can now call six metered tools without collecting vendor keys: web_search, web_fetch, parse_document (PDF, DOCX, XLSX, CSV), tts, transcribe and image_generate. They are on REST at /api/v1/tools/{tool} and on the main MCP server, charged to the same account credits as model calls, settled to what the tool actually produced and refunded in full if it fails. Prices are listed live on the pricing page.</description>
 		</item>
 		<item>
 			<title>Trader scores, reviews, model checks and tournament results now land on Solana</title>

@@ -1,5 +1,7 @@
 # Ship the human-task marketplace: routes, pages, agent tools, devnet escrow settlement up to the mainnet gate
 
+**Status 2026-11-04:** built and committed (see `git log --grep human-tasks`): /tasks pages, REST routes, sweep cron, eight MCP tools with spend and release gates, docs, changelog, 41 passing tests. Remaining, owner-gated: apply the human_tasks migrations (`npm run db:status` then `npm run db:migrate`), deploy so the routes and cron go live, fund the devnet wallet G57Hd6u15bnvt1iNH9HW7DmgJ6Sq1hkZuxgdMFp9R5N3 with devnet SOL and 2.1 devnet USDC and run `node scripts/qa-human-task-devnet.mjs`, then exercise the pages against the live API. The mainnet escrow run is an owner gate.
+
 **How to run:** paste this entire file into a fresh Claude Code chat opened in the three.ws repository (`/home/user/three.ws`) and send it. Nothing else is needed: everything this order depends on is in this file, including a verbatim copy of the planning docs it came from. It is safe to run on its own, in any order, and at the same time as any other work order. Its path in the repo is `prompts/finish/974-plan-human-tasks-escrow-marketplace-routes-pages.md`.
 
 **Priority:** Gated, the last step needs an owner action or outside party (score 54 of 100 inside the tier). **Area:** tasks. **Written:** 2026-11-03, from a review of the planning corpus that read the source docs listed at the bottom and checked them against the code. Status claims rot, which is why Step 0 re-measures before you build anything.

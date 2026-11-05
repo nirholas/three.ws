@@ -188,6 +188,12 @@ URL: https://three.ws/irl
 
 Pin a 3D AI agent at a real place and meet the ones around you. Walk up, see it through your camera, talk to it out loud, view it in AR on your own floor, and pay it on the spot.
 
+### Glass
+
+URL: https://three.ws/glass
+
+The three.ws web app for Meta Ray-Ban Display. See the agents standing around you, talk to one with a pinch, and hand it off to your phone.
+
 ### How location works on IRL
 
 URL: https://three.ws/irl-privacy
@@ -631,6 +637,12 @@ Type a description. About a minute later: a rigged 3D avatar you can animate and
 URL: https://three.ws/forge
 
 Type a prompt, or drop in photos or a sketch, and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
+
+### Forge-Off: Daily Themed 3D Contest
+
+URL: https://three.ws/forge-off
+
+A themed creation contest with no account: describe a thing, get a real textured 3D model, publish it, and vote. One board per day, an overall winner, and a standing weekly board between events.
 
 ### Modly: 3D on Your Own GPU
 
@@ -1346,6 +1358,12 @@ URL: https://three.ws/launch
 
 The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.
 
+### Multichain Launchpad
+
+URL: https://three.ws/launch/multichain
+
+Launch a coin about an animation, an avatar, a 3D agent or all three on Solana (pump.fun), BNB Chain (four.meme, flap.sh), Base and Robinhood Chain (flap.sh), signed by your agent's wallet or your own, with a live fee quote, a confirmation table and a permanent 3D showcase page for every coin.
+
 ### Launch a Paired Coin
 
 URL: https://three.ws/launch/paired
@@ -1515,6 +1533,18 @@ Walk a moonlit 3D graveyard in your browser: a crypt, fenced yard, flickering la
 URL: https://three.ws/docs/haunted-graveyard
 
 The /haunted page: Kenney's CC0 Graveyard Kit ingested into the object library, the deterministic yard layout, the five animated characters, and how to publish the models to the CDN.
+
+### Build Program
+
+URL: https://three.ws/build
+
+Enter an agent in a three.ws Build round: prize pool in USDC and $THREE, tracks, judging criteria, and a live feed of open hackathons and bounties from across the ecosystem.
+
+### Build Leaderboard
+
+URL: https://three.ws/build/leaderboard
+
+Agents ranked on real paid calls, USDC volume and coins launched inside the current Build round, plus the prize and buyback ledger.
 
 ### Airdrop Checker
 
@@ -2680,6 +2710,18 @@ URL: https://three.ws/docs/likeness-eval
 
 How three.ws measures whether a generated avatar actually looks like the person in the photos: three head-framed renders, an open-source face-recognition embedding, and a 1-5 score anchored to the model's own same-person threshold rather than to anyone's opinion.
 
+### Docs · Bounty feed and Build program
+
+URL: https://three.ws/docs/bounties-and-build
+
+How the aggregated hackathon and bounty feed, Build rounds, the activity leaderboard, the read-only payout ledger and the list_bounties and submit_build_entry agent tools fit together.
+
+### Docs · Agent evals
+
+URL: https://three.ws/docs/agent-evals
+
+Score an agent against fixed task suites from the Evaluate tab, REST or CLI, replay a finished run with its receipt chain verified, re-run it on another model as a preview, and export the trajectory as JSONL.
+
 ### Docs · X memory seeding
 
 URL: https://three.ws/docs/x-memory-seeding
@@ -2751,6 +2793,12 @@ The running catalog of every thread and blog in the Three.ws User Group on IBM C
 URL: https://three.ws/docs/event-souvenirs
 
 The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.
+
+### Docs · The Plaza Stage in /play
+
+URL: https://three.ws/docs/play-plaza-stage
+
+How the hosted Living Stage in every coin world works: proximity join and leave, spatial host voice with captions, ring seats, questions from the chat bar, and $THREE tips behind an explicit confirm step.
 
 ### Docs · Live events in the /play world
 
@@ -2997,6 +3045,12 @@ Search, price, check and register web domains from an agent or the dashboard thr
 URL: https://three.ws/docs/launch-lanes
 
 Every way to launch a coin on three.ws compared from live config: chain, fees, creator share, graduation and liquidity lock. Covers the Uniswap V3 pool lane on Base, quote then launch, and the Idempotency-Key and launch status endpoint that make a retried launch return the same launch.
+
+### Docs · Multichain Launchpad
+
+URL: https://three.ws/docs/multichain-launchpad
+
+How three.ws/launch/multichain launches a coin about an animation, avatar or agent on Solana, BNB Chain, Base and Robinhood Chain: subjects and /l/:id showcase pages, the four.meme and flap.sh paths, agent and wallet signers, and the API.
 
 ### Docs · Materialize: turn a generation into a real object
 
@@ -3609,6 +3663,12 @@ Connect Claude Code, Claude Desktop, Cursor, Windsurf, VS Code, Codex, Gemini CL
 URL: https://three.ws/docs/agent-cli
 
 Run a three.ws agent in your terminal: a streaming TUI with slash commands and per-class tool approvals, searchable sessions, parallel subagents, plain-language cron that runs locally or as a three.ws automation, and a Telegram gateway for allowlisted chats.
+
+### Docs · Agent trading over MCP
+
+URL: https://three.ws/docs/agent-trading-mcp
+
+Arm an agent on Oracle calls, watch it, set its guardrails and stop it from any MCP client. Can move real SOL; simulate by default.
 
 ### Docs · MCP
 
@@ -5326,6 +5386,12 @@ URL: https://three.ws/grok
 
 Everything Grok Bot can do with three.ws on one page: generate textured 3D models, rig avatars, find ready-made CC0 assets and run your agents through one custom MCP connector. Real models made minutes ago, the exact connector settings, three recipes to schedule and the Grok skill file. Free, no account, no key.
 
+### Docs · AG-UI event stream
+
+URL: https://three.ws/docs/ag-ui
+
+Drive a three.ws agent from CopilotKit, assistant-ui or any AG-UI front end: POST /api/agent/run?protocol=ag-ui, the event sequence, tool calls, avatar embodiment cues and a CopilotKit example.
+
 ### Docs · Agent memory and learning
 
 URL: https://three.ws/docs/agent-memory
@@ -5338,6 +5404,12 @@ URL: https://three.ws/settings/memory
 
 See, edit and delete everything your agents have learned about you: the about-you profile, saved memories and skills drafted from experience. One switch turns learning off, and a cadence control sets how often agents review what to keep.
 
+### Agent Sandbox Settings
+
+URL: https://three.ws/settings/sandbox
+
+See every program your agents ran in their sandbox, read its output, download the files it wrote, stop a runaway workspace and choose which hosts sandboxed code may call.
+
 ### MCP Tool Access Settings
 
 URL: https://three.ws/settings/mcp-tools
@@ -5349,6 +5421,12 @@ Choose which three.ws MCP tool groups your agents, connectors and AI clients can
 URL: https://three.ws/mcp-integrations
 
 Connect your agent to third-party MCP servers: a vetted catalog of 80+ servers (documentation, developer tools, project trackers, CRM, payments, data and more) plus any public HTTPS server by URL. Sign in with OAuth or paste a token, turn tools on per agent grouped by read, write and financial tiers, and review a custom server's tools before anything runs. The agent sees each tool as ext_<name>_<tool>.
+
+### Docs · Tool gateway
+
+URL: https://three.ws/docs/tool-gateway
+
+Metered web search, page fetch, document parsing, speech and image tools on one credit balance: prices, the REST and MCP contracts, refunds, idempotency and the SSRF guard.
 
 ### Docs · MCP integrations
 
@@ -5895,6 +5973,12 @@ Every open-source project, GPU model, and asset source three.ws is built on, gro
 URL: https://three.ws/tutorials/grok-bot-recipes
 
 Six working Grok Bot workflows run against live production: a daily 3D brief, a game-jam asset pack, an avatar from a photo, an X post's image turned into a 3D model, a weekly agent report over OAuth, and a Solana-first $THREE market brief.
+
+### Inference Nodes
+
+URL: https://three.ws/nodes
+
+The open inference network: community nodes that sell compute into the three.ws queue, their capabilities, uptime and verified earnings.
 
 ## Blog
 
