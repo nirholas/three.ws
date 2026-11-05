@@ -17,6 +17,7 @@ Every directory with a non-private `package.json`: what `npm run publish:package
 | [agent-memory](agent-memory/README.md) | Persistent embeddings-backed memory for agents: store facts, recall semantically, surface working context. |
 | [agent-runtime](agent-runtime/README.md) | The three.ws agent engine: a plan and execute decision loop with human-approval gates and a seven-layer GuardChain. |
 | [agent-sniper](agent-sniper/README.md) | Embeddable pump.fun sniper engine: library, CLI, MCP server, and x402 paid API. |
+| [agent-trader-mcp](agent-trader-mcp/README.md) | MCP server to arm a three.ws agent on Oracle conviction calls, watch what it did, and stop it. Defaults to simulate; live spend is explicit and gated server-side. |
 | [agent-vitals](agent-vitals/README.md) | Capability attestation for agents: models an agent's preconditions as a causal graph and returns the root blocker plus the command that clears it. |
 | [agentcore-payments-mcp](agentcore-payments-mcp/README.md) | MCP server for platform-managed payment sessions: budgeted, governed x402 spending without private keys. |
 | [agents-sdk](agents-sdk/README.md) | Typed TypeScript client for the three.ws v1 Agents API: create, start and chat with agents, run goals, automate, and trade from Solana agent wallets. |
@@ -48,6 +49,7 @@ Every directory with a non-private `package.json`: what `npm run publish:package
 | [herald-mcp](herald-mcp/README.md) | MCP server that has a 3D character walk onto the browser tab a human already has open and say something out loud. |
 | [home-bridge](home-bridge/README.md) | Connects an agent to a real Home Assistant instance: live entity state, guarded service calls, and a room graph for the 3D scene. |
 | [home-mcp](home-mcp/README.md) | MCP server giving an assistant safe control of a real Home Assistant house, behind a gate that refuses anything which opens the building. |
+| [hq-mcp](hq-mcp/README.md) | Read-only MCP server for DeFi market tools from three.ws HQ: yields, chain TVL, funding, liquidations, whale flow, gas, and a portfolio risk score. |
 | [ibm-watsonx-mcp](ibm-watsonx-mcp/README.md) | MCP server for IBM watsonx.ai with Granite foundation models, using your own IBM Cloud credentials. |
 | [ibm-x402-mcp](ibm-x402-mcp/README.md) | x402 pay-per-use MCP server for IBM Granite AI, paid in USDC on Solana, no IBM account required. |
 | [intel](intel/README.md) | Intelligence SDK: sentiment pulse, narrative intel, momentum-ranked scans, and live Solana token snapshots. |
@@ -68,6 +70,7 @@ Every directory with a non-private `package.json`: what `npm run publish:package
 | [naming-mcp](naming-mcp/README.md) | MCP server to resolve .sol names and check threews.sol agent-handle availability. |
 | [notifications-mcp](notifications-mcp/README.md) | MCP server for the notification inbox: list events, mark read, tune delivery, register Web Push devices. |
 | [onchain-agent-wallets](onchain-agent-wallets/README.md) | Gives an agent a real Solana wallet with a spending allowance instead of your keys. |
+| [oracle-mcp](oracle-mcp/README.md) | Read-only MCP server for the three.ws Oracle: live pump.fun conviction feed, scored coins, resolved wins, backtests, and wallet intelligence. |
 | [oracle-model](oracle-model/README.md) | The three.ws Oracle conviction model running locally: score any pump.fun launch offline from the real bucket weights, no API key. |
 | [portal](portal/README.md) | Turns any website into a walkable 3D city: sections become buildings, links become doors, images become billboards. |
 | [portfolio-mcp](portfolio-mcp/README.md) | MCP server for an agent's trading state: portfolio, balances, PnL feed, and one signed Solana transfer. |
