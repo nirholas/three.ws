@@ -7030,7 +7030,8 @@
 					"description": "Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.",
 					"priority": 0.3,
 					"changefreq": "monthly",
-					"added": "2026-11-04"
+					"added": "2026-11-04",
+					"indexable": false
 				},
 				{
 					"path": "/mcp-integrations",
