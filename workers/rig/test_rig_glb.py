@@ -369,6 +369,82 @@ def test_meshopt_input_decoded():
     _check(len(mesh.faces) == len(source.faces), "decoded input keeps every face")
 
 
+_LEG_CHAIN = ("UpLeg", "Leg", "Foot", "ToeBase")
+
+
+def _make_legs_glb():
+    # Two thigh-to-ankle columns 0.2 apart with a 0.04 gap between their inner
+    # faces: the close-set legs where the predictor smears weight across sides.
+    scene = trimesh.Scene()
+    for side, x in (("left", 0.1), ("right", -0.1)):
+        leg = trimesh.creation.box(extents=(0.16, 0.9, 0.16)).subdivide().subdivide()
+        leg.apply_translation((x, 0.45, 0.0))
+        scene.add_geometry(leg, node_name=side, geom_name=side)
+    glb_bytes = scene.export(file_type="glb")
+    merged = trimesh.load(io.BytesIO(glb_bytes), file_type="glb", force="mesh")
+    return glb_bytes, merged
+
+
+def _legs_skeleton():
+    names = ["mixamorig:Hips"]
+    joints = [(0.0, 1.0, 0.0)]
+    parents = [-1]
+    for side, x in (("Left", 0.1), ("Right", -0.1)):
+        heights = (0.9, 0.5, 0.08, 0.02)
+        for k, (bone, y) in enumerate(zip(_LEG_CHAIN, heights)):
+            names.append(f"mixamorig:{side}{bone}")
+            joints.append((x, y, 0.06 if bone == "ToeBase" else 0.0))
+            parents.append(0 if k == 0 else len(names) - 2)
+    return np.array(joints, np.float32), np.array(parents, np.int64), names
+
+
+def test_legs_do_not_share_weight_across_sides():
+    """Regression: an auto-rigged character in wide trousers grew a curtain of
+    stretched cloth between the legs when one leg moved, because inner-thigh
+    vertices carried weight from BOTH leg chains (or wholly from the opposite
+    leg). Each vertex's leg weight must follow the leg it actually sits on."""
+    print("test_legs_do_not_share_weight_across_sides")
+    glb_bytes, mesh = _make_legs_glb()
+    joints, parents, names = _legs_skeleton()
+    idx = {n: i for i, n in enumerate(names)}
+    v = np.asarray(mesh.vertices)
+    weights = np.zeros((len(v), len(names)), np.float32)
+    own_left = v[:, 0] > 0
+    upper = v[:, 1] > 0.5
+    for i in range(len(v)):
+        bone = "UpLeg" if upper[i] else "Leg"
+        own = "Left" if own_left[i] else "Right"
+        other = "Right" if own_left[i] else "Left"
+        inner = abs(v[i, 0]) < 0.05
+        if inner and i % 2:
+            # Wholly on the wrong leg (bad nearest-point transfer).
+            weights[i, idx[f"mixamorig:{other}{bone}"]] = 1.0
+        elif inner:
+            # Smeared half and half across both legs.
+            weights[i, idx[f"mixamorig:{own}{bone}"]] = 0.5
+            weights[i, idx[f"mixamorig:{other}{bone}"]] = 0.5
+        else:
+            weights[i, idx[f"mixamorig:{own}{bone}"]] = 1.0
+
+    out = build_rigged_glb(glb_bytes, mesh, joints, parents, weights, None,
+                           joint_names=names)
+    glb = pygltflib.GLTF2.load_from_bytes(out)
+    blob = bytearray(glb.binary_blob())
+    left_ids = {idx[f"mixamorig:Left{b}"] for b in _LEG_CHAIN}
+    right_ids = {idx[f"mixamorig:Right{b}"] for b in _LEG_CHAIN}
+    worst = 0.0
+    for gmesh in glb.meshes:
+        for prim in gmesh.primitives:
+            pos = _decode(glb, blob, prim.attributes.POSITION)
+            jv = _decode(glb, blob, prim.attributes.JOINTS_0)
+            wv = _decode(glb, blob, prim.attributes.WEIGHTS_0)
+            for p, js, ws in zip(pos, jv, wv):
+                wrong = right_ids if p[0] > 0 else left_ids
+                worst = max(worst, sum(float(w) for j, w in zip(js, ws) if int(j) in wrong))
+            _check(np.allclose(wv.sum(1), 1.0, atol=1e-4), "leg weights still sum to 1")
+    _check(worst < 0.05, f"no leg vertex keeps weight on the opposite leg (worst {worst:.3f})")
+
+
 if __name__ == "__main__":
     try:
         test_skeleton_and_skinning()
@@ -379,6 +455,7 @@ if __name__ == "__main__":
         test_nonidentity_node_baked()
         test_divergent_instances_rejected()
         test_meshopt_input_decoded()
+        test_legs_do_not_share_weight_across_sides()
     except AssertionError:
         print("\nFAILED")
         sys.exit(1)

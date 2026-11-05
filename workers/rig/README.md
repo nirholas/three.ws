@@ -26,6 +26,13 @@ its historical name.
    set (proven by the `rig worker skeleton` cases in
    `tests/glb-canonicalize.test.js`) so a freshly rigged avatar drives the
    entire pre-baked clip library at 100% coverage.
+   Before the top-4 reduction, each vertex's leg weight is committed to the
+   leg it actually sits on (nearest leg bone chain, with a soft handover 1% of
+   leg length wide at the midline). MIA blends both legs on surfaces between
+   close-set legs (wide trousers, skirts, fused crotch geometry), and the
+   nearest-point transfer can give an inner-thigh vertex the other leg's
+   prediction; either way one leg moving used to stretch a sheet of cloth
+   between the legs. Pinned by `test_legs_do_not_share_weight_across_sides`.
 3. **Expressions**: `blendshapes.py` transfers the 52 ARKit expression shapes
    from the [ICT-FaceKit](https://github.com/ICT-VGL/ICT-FaceKit) template head
    (MIT) onto the avatar's head region (nearest-surface correspondence with

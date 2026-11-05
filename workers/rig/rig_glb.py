@@ -260,6 +260,70 @@ def _top_influences(weights, n_joints):
     return joint_idx, top
 
 
+# Leg chains in root-to-tip order, matched by the name after any "prefix:"
+# (Mixamo's "mixamorig:LeftUpLeg" and a bare "LeftUpLeg" both resolve).
+_LEG_BONES = ("UpLeg", "Leg", "Foot", "ToeBase", "Toe_End")
+# Width of the soft left/right handover at the body midline, as a fraction of
+# leg length. Narrow on purpose: wide enough that fused crotch geometry bends
+# without tearing, narrow enough that an inner-thigh surface commits fully to
+# its own leg.
+_LEG_SIDE_BAND = 0.01
+
+
+def _leg_chains(joint_names):
+    """Paired (left, right) joint-index lists for the leg chains, or None when
+    the skeleton has no recognizable two-leg chain."""
+    if joint_names is None:
+        return None
+    by_name = {str(n).rsplit(":", 1)[-1]: i for i, n in enumerate(joint_names)}
+    left, right = [], []
+    for bone in _LEG_BONES:
+        li, ri = by_name.get("Left" + bone), by_name.get("Right" + bone)
+        if li is not None and ri is not None:
+            left.append(li)
+            right.append(ri)
+    return (left, right) if len(left) >= 2 else None
+
+
+def _distance_to_polyline(points, chain):
+    """Distance from each of (M,3) points to the polyline through (K,3) chain."""
+    best = np.full(points.shape[0], np.inf, dtype=np.float64)
+    for a, b in zip(chain[:-1], chain[1:]):
+        ab = b - a
+        denom = float(ab @ ab)
+        t = np.zeros(points.shape[0]) if denom <= 0.0 else np.clip(((points - a) @ ab) / denom, 0.0, 1.0)
+        d = np.linalg.norm(points - (a + t[:, None] * ab), axis=1)
+        np.minimum(best, d, out=best)
+    return best
+
+
+def _separate_leg_weights(rows, positions, joints, chains):
+    """Commit each vertex's leg weight to the leg it actually sits on.
+
+    The predictor blends left- and right-leg influence on surfaces between
+    close-set legs (wide trousers, skirts, fused crotch geometry), and the
+    nearest-point transfer can hand an inner-thigh vertex the OTHER leg's
+    prediction outright. Either way, moving one leg drags those vertices along
+    and stretches a curtain of cloth between the legs. Here the total leg-chain
+    mass per chain level (thigh, shin, foot...) is kept, and redistributed by
+    which leg's bone chain the vertex is nearer to, with a narrow soft band at
+    the midline. Non-leg influences (hips, spine, hands) are untouched.
+    """
+    left, right = chains
+    lc = joints[left].astype(np.float64)
+    rc = joints[right].astype(np.float64)
+    leg_len = float(np.linalg.norm(np.diff(lc, axis=0), axis=1).sum())
+    if leg_len <= 0.0:
+        return rows
+    pts = np.asarray(positions, dtype=np.float64)
+    gap = _distance_to_polyline(pts, rc) - _distance_to_polyline(pts, lc)
+    to_left = (0.5 * (1.0 + np.tanh(gap / (_LEG_SIDE_BAND * leg_len)))).astype(np.float32)
+    mass = rows[:, left] + rows[:, right]
+    rows[:, left] = mass * to_left[:, None]
+    rows[:, right] = mass * (1.0 - to_left[:, None])
+    return rows
+
+
 class InvalidMeshError(ValueError):
     """The caller's mesh cannot be rigged: wrong container, or no surface.
 
@@ -399,7 +463,11 @@ def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
     else:
         raise RuntimeError(f"too many joints for glTF skinning: {n_joints}")
 
-    joint_idx, top_w = _top_influences(weights, n_joints)   # (V,4) over mesh vertex order
+    # Sanitized once here; the per-primitive top-4 reduction happens after the
+    # nearest-point transfer so leg separation can use each GLB vertex's own
+    # position rather than the predictor vertex it happened to land on.
+    weights = np.clip(np.nan_to_num(weights, nan=0.0, posinf=0.0, neginf=0.0), 0.0, None)
+    leg_chains = _leg_chains(joint_names)
     kdt = cKDTree(np.asarray(mesh.vertices, dtype=np.float32))
     blend = _normalize_blendshapes(blendshape_data) if blendshape_data is not None else None
     bs_deltas = blend[1] if blend else None
@@ -440,8 +508,12 @@ def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
             _, nearest = kdt.query(world_pos, k=1)                 # (M,) -> mesh vertex index
             nearest = np.asarray(nearest).reshape(-1)
 
-            j0 = np.ascontiguousarray(joint_idx[nearest].astype(joint_dtype))
-            w0 = np.ascontiguousarray(top_w[nearest].astype(np.float32))
+            rows = weights[nearest]                                # (M,J)
+            if leg_chains is not None:
+                rows = _separate_leg_weights(rows, world_pos, joints, leg_chains)
+            joint_idx, top_w = _top_influences(rows, n_joints)
+            j0 = np.ascontiguousarray(joint_idx.astype(joint_dtype))
+            w0 = np.ascontiguousarray(top_w.astype(np.float32))
             prim.attributes.JOINTS_0 = _add_accessor(
                 glb, _append_view(glb, blob, j0.tobytes(), _GLTF_ARRAY_BUFFER),
                 joint_comp, world_pos.shape[0], "VEC4")

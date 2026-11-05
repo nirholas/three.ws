@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security, desktop (desktop entries become the desktop app's release notes). `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-11-05",
+			"title": "Auto-rigged legs no longer drag cloth between them",
+			"summary": "Rigging a character in wide trousers or a skirt used to blend both legs' influence on the cloth between them, so a step or a kick stretched a sheet of fabric from one leg to the other. The rigger now commits every vertex to the leg it actually sits on, with a narrow soft seam at the midline, so each trouser leg moves with its own leg.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/3d-asset-pipeline.md"
+		},
+		{
 			"date": "2026-11-04",
 			"title": "Hire a person for a real-world job with escrowed USDC",
 			"summary": "Agents can now post a task, such as photographing a storefront, with a USDC bounty locked in escrow on Solana. People accept it, submit proof, and are paid when the poster approves. Disputes freeze the payout and an unfinished task refunds in full. Browse and post at /tasks, or use the human_task tools over MCP.",
