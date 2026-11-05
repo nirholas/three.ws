@@ -366,6 +366,20 @@ body.market-page > header {
 .market-card-agent.mv-loaded .thumb .mv-placeholder {
 	opacity: 0;
 }
+/* Stored thumbnail: the card's picture until the 3D model (loaded on hover)
+   fades in over it. */
+.market-card-agent .thumb > img,
+.market-card-agent .thumb > .card-img-fallback {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: opacity var(--duration-slow) var(--ease-standard);
+}
+.market-card-agent.mv-loaded .thumb > img {
+	opacity: 0;
+}
 
 /* hover border-color now handled by .card--interactive:hover in style.css */
 

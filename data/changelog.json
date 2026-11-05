@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-05",
+			"title": "Marketplace agent cards show their avatars again",
+			"summary": "Agent cards on /marketplace were showing only a letter where the avatar should be, because the stored picture was tied to the 3D viewer, which stays hidden until you hover a card. Every card now shows its avatar picture straight away, and hovering still swaps in the live, turning 3D model.",
+			"tags": [
+				"fix"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-11-05",
 			"title": "Every animation in the gallery plays again",
 			"summary": "Opening any of the 469 community clips on /animations showed \"Couldn't load this clip's preview\", and clips that did load froze in a T-pose at 0.0s once the detail view opened. Community clips now load in the gallery, the Animation Studio and every embed, and the detail view plays each clip from start to finish with a working scrubber.",
 			"tags": [

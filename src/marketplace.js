@@ -29,7 +29,7 @@ import { debounce, syncStateToUrl } from './shared/list-controls.js';
 import { log } from './shared/log.js';
 import { pickHeroSet } from './shared/hero-glb-budget.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
-import { resizedImageUrl } from './shared/image-url.js';
+import { placeholderHtml, cardThumbHtml, agentCardPreviewHtml } from './shared/marketplace-card-preview.js';
 import { leaveAppForPayment } from './shared/native-handoff.js';
 import { buildReferencedSplTransfer } from './shared/spl-token-program.js';
 import { withPayoutStepUp } from './payout-step-up.js';
@@ -1599,31 +1599,6 @@ function observeCardModelViewers() {
 		mv.dataset.observed = '1';
 		cardObserver.observe(mv);
 	});
-}
-
-// A grid card's thumbnail, fetched at the size the card actually paints.
-//
-// Avatar and forge thumbnails are stored full-size on R2 (768x768 renders, and
-// forge previews up to 344 KB each) and painted into a card 160-370 CSS px
-// wide. On 2026-09-08 a Pixel 5 over slow 4G pulled 2,488 KB of images across
-// 206 <img> elements opening /marketplace, which was 60% of the page's whole
-// 4,141 KB. /api/img re-encodes to WebP at a fixed width ladder and caches the
-// result immutably at the edge, so the same picture costs a tenth of that.
-//
-// srcset rather than one width because the card is 160px in a phone's two-up
-// grid and 370px in its one-up, and a DPR-2 screen wants twice either; the
-// browser is in a better position to choose than this function is. The `sizes`
-// list mirrors public/marketplace.css's own grid breakpoints.
-const CARD_THUMB_SIZES = '(max-width: 600px) 100vw, (max-width: 900px) 50vw, 300px';
-function cardThumbHtml(url, alt) {
-	const srcset = [320, 480, 960]
-		.map((w) => `${escapeHtml(resizedImageUrl(url, w))} ${w}w`)
-		.join(', ');
-	return (
-		`<img src="${escapeHtml(resizedImageUrl(url, 480))}" srcset="${srcset}" sizes="${CARD_THUMB_SIZES}"` +
-		` alt="${alt}" loading="lazy" decoding="async" data-fallback="element"` +
-		` data-fallback-class="card-img-fallback" />`
-	);
 }
 
 // ── Avatar detail modal ──────────────────────────────────────────────────
@@ -4756,14 +4731,6 @@ function bindEmptyStateActions() {
 	});
 }
 
-// Name-initial placeholder rendered behind every model-viewer preview. Stays
-// visible until model-viewer loads (then faded out via .mv-loaded), so cards
-// and the hero never show a blank black void while GLBs stream in.
-function placeholderHtml(name) {
-	const i = escapeHtml(initial(name || 'A'));
-	return `<div class="mv-placeholder" aria-hidden="true"><span class="mv-placeholder-initial">${i}</span></div>`;
-}
-
 function renderAvatarCard(a, spotlight = false) {
 	const name = escapeHtml(a.name || 'Untitled avatar');
 	const desc = escapeHtml(a.description || '');
@@ -4876,27 +4843,7 @@ function renderCard(a) {
 	const avatarBlock = a.thumbnail_url
 		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
 		: `<div class="avatar">${escapeHtml(initial(a.name))}</div>`;
-	// Preview strip: 3D model-viewer when the agent has a linked public avatar
-	// GLB, static thumbnail when only an image is available, placeholder otherwise.
-	const previewStrip = a.avatar_glb_url
-		? `<div class="thumb">${placeholderHtml(a.name)}<model-viewer
-				data-src="${escapeHtml(a.avatar_glb_url)}"
-				alt="${escapeHtml(a.name || 'Agent')}"
-				${a.thumbnail_url ? `poster="${escapeHtml(a.thumbnail_url)}"` : ''}
-				autoplay
-				rotation-per-second="14deg"
-				interaction-prompt="none"
-				disable-zoom
-				disable-pan
-				disable-tap
-				exposure="1"
-				shadow-intensity="0.4"
-				tone-mapping="aces"
-				loading="lazy"
-			></model-viewer></div>`
-		: a.thumbnail_url
-			? `<div class="thumb" style="background:url('${escapeHtml(a.thumbnail_url)}') center/cover no-repeat #0a0a0d"></div>`
-			: `<div class="thumb">${placeholderHtml(a.name)}</div>`;
+	const previewStrip = agentCardPreviewHtml(a);
 	const bmOn = bookmarkedAgents.has(a.id);
 	const starBtn = `<button type="button" class="card-star${bmOn ? ' on' : ''}" data-agent-bm="${escapeHtml(a.id)}" aria-label="Bookmark agent" aria-pressed="${bmOn}" title="${bmOn ? 'Remove bookmark' : 'Bookmark agent'}">${bmOn ? '★' : '☆'}</button>`;
 	const onchainBadge = onchainBadgeHTML(a);
