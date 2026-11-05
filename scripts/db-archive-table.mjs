@@ -7,6 +7,10 @@
 //   node scripts/db-archive-table.mjs <table|--all> --verify        re-read every part and check counts and hashes
 //   node scripts/db-archive-table.mjs <table> --restore --from 2026-08-01 --to 2026-09-01 [--apply]
 //
+// The Coin Intelligence firehose tables (pump_coin_intel and its satellites,
+// archived by the db-retention cron per mint batch) accept --verify and
+// --restore only; their archive path is api/_lib/firehose-archive.js.
+//
 // Options: --max-rows N (default 100000000), --days N (override the window).
 //
 // Environment: DATABASE_URL (node scripts/read-service-env.mjs '^DATABASE_URL$' --raw).
@@ -20,6 +24,7 @@ import { execFileSync } from 'node:child_process';
 import { gunzipSync } from 'node:zlib';
 import { neon } from '@neondatabase/serverless';
 import { ARCHIVED_TABLES } from '../api/_lib/db-archive-tables.js';
+import { FIREHOSE_TABLES } from '../api/_lib/firehose-archive.js';
 import { archiveSlice, createGcsStore, verifyTable, ARCHIVE_BUCKET } from '../api/_lib/db-archive.js';
 
 const args = process.argv.slice(2);
@@ -40,7 +45,16 @@ function token() {
 }
 const store = createGcsStore({ bucket: process.env.DB_ARCHIVE_BUCKET || ARCHIVE_BUCKET, getToken: async () => token() });
 
-const specs = flag('--all') ? ARCHIVED_TABLES : ARCHIVED_TABLES.filter((s) => s.table === target);
+const isFirehose = FIREHOSE_TABLES.includes(target);
+if (isFirehose && !flag('--verify') && !flag('--restore')) {
+	console.error(`${target} is archived by the db-retention cron per mint batch; only --verify and --restore apply`);
+	process.exit(2);
+}
+const specs = flag('--all')
+	? ARCHIVED_TABLES
+	: isFirehose
+		? [{ table: target }]
+		: ARCHIVED_TABLES.filter((s) => s.table === target);
 if (!specs.length) {
 	console.error(`usage: db-archive-table.mjs <${ARCHIVED_TABLES.map((s) => s.table).join('|')}|--all> [--prune|--verify|--restore]`);
 	process.exit(2);

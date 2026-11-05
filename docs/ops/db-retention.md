@@ -90,6 +90,41 @@ Old rows are never deleted until they are in cold storage and verified there.
   timestamp column (`*_archive_keyset` migrations from 2026-11-03). Without one,
   every 2,500-row page was a full scan of a multi-GB table.
 
+### Firehose archive
+
+`pump_coin_intel` and its mint-keyed satellites (`pump_coin_wallets`,
+`coin_smart_money`, `smart_money_scored`, `pump_coin_outcomes`,
+`oracle_conviction`, `oracle_conviction_history`) are archived by mint batch
+rather than by keyset (`api/_lib/firehose-archive.js`). Until 2026-11-05 the cron
+deleted these rows with no copy, so everything observed before 2026-10-31 is
+gone; from this change on nothing is lost.
+
+- **Per batch** of up to 1,000 mints, oldest `first_seen_at` first: every row of
+  every table for those mints is read with its `ctid`, each table becomes one
+  part + manifest under `<table>/<YYYY-MM-DD>/<runId>-b<seq>-<sha8>` (same object
+  layout and manifest shape as above, `key_columns: ["first_seen_at"]`), and only
+  after **all** parts of the batch have verified does it delete exactly the
+  archived rows by `ctid`. A row updated after it was read has a new `ctid`, so it
+  stays and is archived on the next tick.
+- **Satellites first, master last, guarded.** `pump_coin_outcomes` cascades from
+  `pump_coin_intel`, so the master delete skips any mint that still has a
+  satellite row (written between read and delete). Nothing leaves through the
+  cascade without being archived.
+- **Orphans** (satellite rows whose master is gone) are archived under
+  `<table>/<today>/<runId>-orphans-<sha8>` before the sweep deletes them.
+- **Failure:** an upload or checksum failure deletes nothing for the batch, stops
+  the pass, and raises the `db:firehose-archive-skipped` ops alert. The firehose
+  then grows until the bucket is reachable; that is the deliberate trade against
+  losing history. `DB_ARCHIVE_ENABLED=0` does not bypass this: with no archive
+  there is no firehose delete.
+- **Budget:** the firehose gets the first 35 s of the tick and the orphan sweep
+  runs until 45 s; at ~17k mints a day and a tick every 15 minutes a tick needs a
+  batch or two.
+- **Verify / restore:** `node scripts/db-archive-table.mjs pump_coin_intel --verify`
+  and `... --restore --from 2026-11-01 --to 2026-11-08 [--apply]` work on every
+  firehose table. Restore satellites after the master (the `pump_coin_outcomes`
+  FK needs its master row).
+
 ### Who archives
 
 - **The cron** (`/api/cron/db-retention`, every 15 minutes) archives and prunes
@@ -156,11 +191,14 @@ classified, write paths degrade instead of 500-storming:
 
 Bounded + idempotent. Each tick:
 
-- **Firehose retention** — deletes every mint older than the window (and cascades
-  its satellite rows) via `DELETE`, which settles `xmax` in place and therefore
-  works **even at the cap**, where an `UPDATE` would itself fail with 53100.
-  `wallet_reputation` (the durable, wallet-keyed output) and `pumpfun_graduations`
-  (win/loss ground truth) are **never** touched.
+- **Firehose retention** (archive, then delete). Every mint older than the window
+  is written to cold storage with all its satellite rows before anything is
+  deleted, so the full launch history behind `/radar`, `/coin-intel` and the
+  Oracle coin pages is kept even though the live tables only hold the window. See
+  "Firehose archive" below. The delete itself is still a `DELETE`, which settles
+  `xmax` in place and therefore works **even at the cap**, where an `UPDATE` would
+  itself fail with 53100. `wallet_reputation` (the durable, wallet-keyed output)
+  and `pumpfun_graduations` (win/loss ground truth) are **never** touched.
 - **Ledger windows with their own clocks.** The x402 audit ledger keeps a longer
   window (`X402_AUDIT_RETENTION_DAYS`, tightening to
   `X402_AUDIT_MIN_RETENTION_DAYS` under pressure), and `x402_spent_payments`, the

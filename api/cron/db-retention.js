@@ -25,8 +25,11 @@
 // Runs on a schedule and, idempotently + bounded so a single tick can never run
 // away past the function's maxDuration:
 //
-//   A. FIREHOSE RETENTION. Deletes every mint (and its satellite rows) older than
-//      the retention window. The window self-tunes: normally PUMP_INTEL_RETENTION_
+//   A. FIREHOSE RETENTION. Archives every mint (and its satellite rows) older
+//      than the retention window to the cold-storage bucket, verified, and only
+//      then deletes it (api/_lib/firehose-archive.js), so the full launch history
+//      behind /radar is kept even though the live tables hold a window. An
+//      archive failure deletes nothing and raises an ops alert. The window self-tunes: normally PUMP_INTEL_RETENTION_
 //      DAYS, but when the branch is over the high-water mark it tightens to
 //      PUMP_INTEL_MIN_RETENTION_DAYS so the cap is never actually hit. This is the
 //      self-healing valve — it sheds the oldest firehose data under storage
@@ -85,26 +88,15 @@ import { LAST_RUN_CACHE_KEY } from '../_lib/ops/database-storage-health.js';
 import { createGcsStore, archiveSlice } from '../_lib/db-archive.js';
 import { ARCHIVED_TABLES } from '../_lib/db-archive-tables.js';
 import { archiveAndPruneAuditLog } from '../_lib/x402/audit-archive.js';
+import { archiveAndPruneMints, archiveAndPruneOrphans, FIREHOSE_SATELLITES } from '../_lib/firehose-archive.js';
 
-// Mint-keyed satellites of pump_coin_intel, deleted before the master so no run
-// orphans a satellite row. Every name here is a fixed constant (never user input),
-// so splicing it into the DELETE text below is safe. Verified to carry a `mint`
-// column. Deliberately EXCLUDES: wallet_reputation / smart_wallet_reputation
-// (wallet-keyed accumulated output — the durable product value), and
-// pumpfun_graduations (small, slow-growing win/loss ground truth the judge reads).
-const FIREHOSE_SATELLITES = [
-	'pump_coin_wallets',
-	'coin_smart_money',
-	'smart_money_scored',
-	'pump_coin_outcomes',
-	'oracle_conviction',
-	'oracle_conviction_history',
-];
+// The mint-keyed satellites of pump_coin_intel live in api/_lib/firehose-archive.js
+// (shared with scripts/db-archive-table.mjs for verify and restore).
 
 // Bounds so a single tick stays well under the function's maxDuration. The cron
 // re-runs on its schedule, so a large backlog (the first prune once data crosses
 // the window, or a pressure-valve catch-up) is chewed through over several ticks.
-const MINT_BATCH = 2000; // mints per cascade batch
+const MINT_BATCH = 1000; // mints per archive + cascade batch (~17k mints/day observed)
 const MAX_MINTS_PER_RUN = 40_000; // ceiling per tick across all batches
 const REGEN_STRIP_BATCH = 200;
 const REGEN_DELETE_BATCH = 500;
@@ -210,66 +202,74 @@ async function tableExists(name) {
 	return reg != null;
 }
 
-// ── A. Firehose retention (cascade prune older than cutoffDays) ───────────────
-async function pruneFirehose(cutoffDays) {
-	if (!(await tableExists('pump_coin_intel'))) return { mints: 0, perTable: {}, liveSatellites: [] };
+// ── A. Firehose retention (archive, then cascade prune older than cutoffDays) ─
+// Every mint past the window is written to cold storage with all its satellite
+// rows before anything is deleted (api/_lib/firehose-archive.js). An archive
+// failure deletes nothing for that batch and stops the pass, so a bucket outage
+// degrades to "the firehose keeps growing", never to lost history.
+async function pruneFirehose(cutoffDays, { store, runId, deadlineMs }) {
+	const out = { mints: 0, perTable: {}, archived: {}, liveSatellites: [], skipped: null };
+	if (!(await tableExists('pump_coin_intel'))) return out;
 
 	// Resolve satellite existence once (a fresh deploy may not have every table).
-	const liveSatellites = [];
 	for (const t of FIREHOSE_SATELLITES) {
-		if (await tableExists(t)) liveSatellites.push(t);
+		if (await tableExists(t)) out.liveSatellites.push(t);
 	}
 
-	const perTable = {};
-	let totalMints = 0;
+	const cutoff = new Date(Date.now() - cutoffDays * 86_400_000).toISOString();
 	const maxBatches = Math.ceil(MAX_MINTS_PER_RUN / MINT_BATCH);
-	for (let i = 0; i < maxBatches; i++) {
-		const olds = await sql`
-			SELECT mint FROM pump_coin_intel
-			WHERE first_seen_at < now() - ${cutoffDays} * interval '1 day'
+	for (let i = 0; i < maxBatches && Date.now() < deadlineMs; i++) {
+		// Oldest first, so each archive part covers a tight first_seen_at range.
+		const batch = await sql`
+			SELECT mint, first_seen_at::text AS first_seen_at FROM pump_coin_intel
+			WHERE first_seen_at < ${cutoff}::timestamptz
+			ORDER BY first_seen_at
 			LIMIT ${MINT_BATCH}
 		`;
-		if (!olds.length) break;
-		const mints = olds.map((r) => r.mint);
-
-		for (const t of liveSatellites) {
-			// t is a fixed constant from FIREHOSE_SATELLITES — safe to splice; the
-			// mint list is bound as $1. DELETE settles xmax in place (no file
-			// extension), so it works even at the cap.
-			const del = await sql(`DELETE FROM ${t} WHERE mint = ANY($1) RETURNING mint`, [mints]);
-			perTable[t] = (perTable[t] || 0) + del.length;
+		if (!batch.length) break;
+		const r = await archiveAndPruneMints({
+			query: (text, params) => sql(text, params),
+			store,
+			satellites: out.liveSatellites,
+			batch,
+			runId,
+			batchIndex: i,
+			cutoff,
+		});
+		if (r.skipped) {
+			out.skipped = r.skipped;
+			break;
 		}
-		const delIntel = await sql`DELETE FROM pump_coin_intel WHERE mint = ANY(${mints}) RETURNING mint`;
-		perTable['pump_coin_intel'] = (perTable['pump_coin_intel'] || 0) + delIntel.length;
-
-		totalMints += mints.length;
-		if (olds.length < MINT_BATCH) break;
+		for (const [t, n] of Object.entries(r.deleted)) out.perTable[t] = (out.perTable[t] || 0) + n;
+		for (const [t, n] of Object.entries(r.archived)) out.archived[t] = (out.archived[t] || 0) + n;
+		out.mints += r.deleted.pump_coin_intel || 0;
+		if (batch.length < MINT_BATCH) break;
 	}
-	return { mints: totalMints, perTable, liveSatellites };
+	return out;
 }
 
 // ── A2. Orphaned-satellite sweep ──────────────────────────────────────────────
 // The cascade prune only deletes satellite rows for mints it selects FROM
 // pump_coin_intel — satellite rows whose master row is already gone (written
 // after the master was pruned, or from a partial historical run) leak forever.
-// Sweep them with a bounded anti-join per satellite. DELETE settles xmax in
-// place, so this too is safe at the cap.
-async function pruneOrphanedSatellites(liveSatellites) {
-	if (!(await tableExists('pump_coin_intel'))) return {};
+// Sweep them with a bounded anti-join per satellite, archiving each slice first.
+async function pruneOrphanedSatellites(liveSatellites, { store, runId, deadlineMs }) {
+	if (!(await tableExists('pump_coin_intel'))) return { perTable: {}, skipped: [] };
 	const perTable = {};
+	const skipped = [];
 	for (const t of liveSatellites) {
-		const del = await sql(
-			`DELETE FROM ${t} WHERE mint IN (
-				SELECT s.mint FROM ${t} s
-				LEFT JOIN pump_coin_intel p ON p.mint = s.mint
-				WHERE p.mint IS NULL
-				LIMIT $1
-			) RETURNING mint`,
-			[ORPHAN_BATCH],
-		);
-		if (del.length > 0) perTable[t] = del.length;
+		if (Date.now() >= deadlineMs) break;
+		const r = await archiveAndPruneOrphans({
+			query: (text, params) => sql(text, params),
+			store,
+			table: t,
+			limit: ORPHAN_BATCH,
+			runId,
+		});
+		if (r.skipped) skipped.push({ table: t, skipped: r.skipped });
+		if (r.deleted > 0) perTable[t] = r.deleted;
 	}
-	return perTable;
+	return { perTable, skipped };
 }
 
 // ── A3. Time-keyed series retention ───────────────────────────────────────────
@@ -460,6 +460,11 @@ const COMPACT_CANDIDATES = [
 ];
 
 const ARCHIVE_BUDGET_MS = 85_000; // wrapCron allows 120s; leave room for compaction and the response
+// The firehose archive runs first and gets the first slice of the tick. At ~17k
+// mints a day and a tick every 15 minutes it only needs a batch or two per tick;
+// the cap stops a backlog from starving the cold-table archive.
+const FIREHOSE_BUDGET_MS = 35_000;
+const ORPHAN_BUDGET_MS = 45_000;
 const ARCHIVE_MAX_ROWS_PER_TABLE = 50_000;
 
 /**
@@ -469,11 +474,10 @@ const ARCHIVE_MAX_ROWS_PER_TABLE = 50_000;
  * auth outage degrades to "table keeps growing", never to data loss.
  *
  * @param {number} startedMs when the tick began
+ * @param {{store: ReturnType<typeof createGcsStore>, runId: string}} ctx
  */
-async function archiveColdTables(startedMs) {
+async function archiveColdTables(startedMs, { store, runId }) {
 	if (process.env.DB_ARCHIVE_ENABLED === '0') return { enabled: false, tables: [] };
-	const store = createGcsStore({ getToken: getGcpAccessToken });
-	const runId = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
 	const deadlineMs = startedMs + ARCHIVE_BUDGET_MS;
 	const tables = [];
 	for (const spec of ARCHIVED_TABLES) {
@@ -629,8 +633,21 @@ export default wrapCron(async (req, res) => {
 	const cutoffDays = underPressure ? minDays : retentionDays;
 	const auditCutoffDays = underPressure ? auditMinDays : auditDays;
 
-	const firehose = await pruneFirehose(cutoffDays);
-	const orphans = await pruneOrphanedSatellites(firehose.liveSatellites);
+	// One cold-storage client for the whole tick: the firehose archive (A, A2)
+	// and the cold-table archive (G) write to the same bucket.
+	const store = createGcsStore({ getToken: getGcpAccessToken });
+	const runId = new Date(started).toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+	const firehose = await pruneFirehose(cutoffDays, { store, runId, deadlineMs: started + FIREHOSE_BUDGET_MS });
+	const orphanRun = await pruneOrphanedSatellites(firehose.liveSatellites, { store, runId, deadlineMs: started + ORPHAN_BUDGET_MS });
+	const orphans = orphanRun.perTable;
+	if (firehose.skipped || orphanRun.skipped.length) {
+		const why = [firehose.skipped, ...orphanRun.skipped.map((o) => `${o.table}: ${o.skipped}`)].filter(Boolean).join('; ');
+		sendOpsAlert(
+			'firehose archive skipped',
+			`Coin Intelligence rows past the ${cutoffDays}d window could not be archived to cold storage (${why.slice(0, 300)}). Nothing unarchived was deleted; pump_coin_intel and its satellites will keep growing until the archive bucket is reachable again.`,
+			{ signature: 'db:firehose-archive-skipped' },
+		);
+	}
 	const series = await pruneTimeSeries({
 		firehose: cutoffDays,
 		audit: auditCutoffDays,
@@ -664,7 +681,7 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
-	const archive = await archiveColdTables(started);
+	const archive = await archiveColdTables(started, { store, runId });
 	const archiveSkips = archive.tables.filter((t) => t.skipped && t.skipped !== 'time_budget');
 	if (archiveSkips.length) {
 		sendOpsAlert(
@@ -750,8 +767,9 @@ export default wrapCron(async (req, res) => {
 		audit_retention_days: auditDays,
 		audit_cutoff_days: auditCutoffDays,
 		spent_retention_days: spentDays,
-		firehose: { mints: firehose.mints, perTable: firehose.perTable },
+		firehose: { mints: firehose.mints, perTable: firehose.perTable, archived: firehose.archived, skipped: firehose.skipped },
 		orphans,
+		orphans_skipped: orphanRun.skipped,
 		series,
 		run_logs: runLogs,
 		audit,
