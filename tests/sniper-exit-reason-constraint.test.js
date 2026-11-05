@@ -73,12 +73,20 @@ function emittedReasons() {
 
 	// 2. exit-logic.js is a pure decision module: every reason literal in it is
 	//    an exit reason, assigned (`reason = 'x'`) or returned (`reason: 'x'`).
-	const logic = readFileSync(join(root, 'workers/agent-sniper/exit-logic.js'), 'utf8');
+	//    decideMoonbagAction is the exception: the moon-bag manager records its
+	//    verdicts in moonbag_exit_reason, an unconstrained column, so its reasons
+	//    (trailing_stop, written_off) never reach exit_reason and are excluded.
+	const logicFull = readFileSync(join(root, 'workers/agent-sniper/exit-logic.js'), 'utf8');
+	const moonbagAt = logicFull.indexOf('export function decideMoonbagAction');
+	const moonbagEnd = logicFull.indexOf('\n}\n', moonbagAt) + 3;
+	expect(moonbagAt, 'decideMoonbagAction not found in exit-logic.js').toBeGreaterThan(-1);
+	const logic = logicFull.slice(0, moonbagAt) + logicFull.slice(moonbagEnd);
 	for (const m of logic.matchAll(/\breason\s*[:=]\s*'([a-z_]+)'/g)) found.add(m[1]);
 
-	// 3. Literal exit_reason writes in the executor.
+	// 3. Literal exit_reason writes in the executor (moonbag_exit_reason is a
+	//    separate, unconstrained column and is skipped).
 	const exec = readFileSync(join(root, 'workers/agent-sniper/executor.js'), 'utf8');
-	for (const m of exec.matchAll(/exit_reason\s*=\s*'([a-z_]+)'/g)) found.add(m[1]);
+	for (const m of exec.matchAll(/(?<!moonbag_)exit_reason\s*=\s*'([a-z_]+)'/g)) found.add(m[1]);
 
 	return found;
 }
