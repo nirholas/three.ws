@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l = m === 'auto' ? window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches : m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Coin Showcase · three.ws</title>
+		<meta name="description" content="A coin launched on three.ws, linked to the 3D agent, avatar or animation it is about." />
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Coin showcase · three.ws" />
+		<meta property="og:description" content="A coin launched on three.ws, linked to the 3D agent, avatar or animation it is about." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Showcase&amp;d=A+coin+launched+on+three.ws%2C+linked+to+the+3D+agent%2C+avatar+or+animation+it+is+about&amp;p=%2Fl" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/chain-page.css" />
+		<link rel="stylesheet" href="/src/paired/paired.css" />
+		<link rel="stylesheet" href="/src/launch-multichain/launch-multichain.css" />
+		<link rel="stylesheet" href="/footer.css" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="main-content">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/launch/multichain">Launchpad</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here">Showcase</span>
+			</nav>
+			<div id="ls-app" aria-live="polite"></div>
+		</main>
+
+		<script type="module" src="/src/launch-multichain/subject-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

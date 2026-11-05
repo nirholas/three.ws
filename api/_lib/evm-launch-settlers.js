@@ -4,5 +4,6 @@
 
 import { settlePairedLaunch } from './evm-leg/paired-launch.js';
 import { settleUniswapLaunch } from './evm-leg/uniswap-launch.js';
+import { settleVenueLaunch } from './evm-leg/venue-launch.js';
 
-export const settlers = { paired: settlePairedLaunch, uniswap: settleUniswapLaunch };
+export const settlers = { paired: settlePairedLaunch, uniswap: settleUniswapLaunch, flap: settleVenueLaunch, four_meme: settleVenueLaunch };

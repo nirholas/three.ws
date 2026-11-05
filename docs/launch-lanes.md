@@ -21,6 +21,8 @@ The tables below are generated from that config. Do not edit between the markers
 | --- | --- | --- | --- | --- | --- | --- |
 | **pump.fun** (default) | Solana | Your wallet, or your agent's wallet | 1,000,000,000 | Creator rewards on every trade, claimable on three.ws | Trades on a bonding curve until it fills, then moves to an open AMM pool on Solana. | Held by pump.fun's program |
 | **three.ws launchpad** | Solana | Your wallet | 1,000,000,000 | 50%: Share of every trading fee and of the migration fee | Starts at a 4,000,000 $THREE market cap and graduates at 60,000,000 $THREE into a pool with 100% of liquidity permanently locked. | Permanently locked at graduation, half creator and half platform. Lock: Permanent lock |
+| **four.meme** | BNB Smart Chain (56) | Your agent's wallet, or your own wallet | 1,000,000,000 | n/a | Trades on a bonding curve until 24 BNB raised on the curve (80% of supply), then PancakeSwap. | Held by four.meme until graduation, then added to PancakeSwap |
+| **flap.sh** | BNB Smart Chain, Base, Robinhood Chain | Your agent's wallet, or your own wallet | 1,000,000,000 | The buy and sell tax you pick, on every trade | Trades on a bonding curve until 80% of supply sold on the curve, then moves to a DEX pool. | Held by the flap.sh portal until graduation |
 | **Uniswap V3 pool** | Base (8453) | Your agent's wallet | 1,000,000,000 | n/a | There is no graduation. The whole supply goes into one Uniswap V3 pool from the first block and trades openly against WETH. | One position holds the whole supply, single-sided. Lock: No lock, Timelock, Permanent lock |
 | **Paired coin** | Robinhood Chain (4663) | Your agent's wallet | 1,000,000,000 | 70%: Share of every swap fee, in every pool | There is no graduation. The coin trades on its bonding curves for good, up to five at once, and liquidity never migrates. | Held by the launchpad contract. Nobody can withdraw it.. Lock: Permanent (built in) |
 
@@ -39,6 +41,26 @@ The tables below are generated from that config. Do not edit between the markers
 | Trading fee | trade | traders | 1% | Paid in $THREE. |
 | Migration fee | graduation | raised liquidity | 1% | Taken from the quote raised when the coin graduates. |
 | Network fee | launch | creator | SOL, a fraction of a cent | Paid to Solana validators. |
+
+### four.meme: every fee
+
+| Fee | When | Paid by | Amount | Note |
+| --- | --- | --- | --- | --- |
+| four.meme launch fee | launch | creator | 0 BNB | Read live from four.meme's TokenManager2 contract. |
+| four.meme trading fee | trade | traders | 1% | Also charged on the creator's opening buy. |
+| three.ws launch fee | launch | creator | None | three.ws takes nothing from a four.meme launch. |
+| Gas | launch | creator | Estimated in the quote | Paid to BNB Chain validators, in BNB. |
+
+Contract: `0x5c952063c7fc8610FFDB798152D69F0B9550762b`
+
+### flap.sh: every fee
+
+| Fee | When | Paid by | Amount | Note |
+| --- | --- | --- | --- | --- |
+| Buy and sell tax to the creator | trade | traders | 1%, 2%, 3%, 5%, 10% | You pick it at launch (default 1%). It is paid to the signing wallet on every trade. |
+| flap.sh protocol fees | trade | traders | Set by flap.sh | Charged by the flap.sh curve on each trade. |
+| three.ws launch fee | launch | creator | None | three.ws takes nothing from a flap.sh launch. |
+| Gas | launch | creator | Estimated in the quote | Paid to the chain in its native coin. |
 
 ### Uniswap V3 pool: every fee
 

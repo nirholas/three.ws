@@ -14,8 +14,10 @@ import { formatEther } from 'viem';
 import { launchpadConfig, launchpadAddress, PAIRED_CHAIN_ID } from './paired-launchpad.js';
 import { NATIVE_LANE } from './native-launch/config.js';
 import { pumpLaunchFeeBps } from './pump-platform-fee.js';
-import { EVM_LEG_CHAINS } from './evm-leg/chains.js';
+import { EVM_LEG_CHAINS, evmLegPublicClient } from './evm-leg/chains.js';
 import { uniswapLaneConfig } from './evm-leg/uniswap-config.js';
+import { DEFAULT_FLAP_TAX_BPS, FLAP_CHAIN_SLUGS, FLAP_DEPLOYMENTS, FLAP_GRADUATION_LABEL, FLAP_TAX_OPTIONS_BPS, FLAP_TOTAL_SUPPLY_WHOLE } from './evm-leg/flap-config.js';
+import { FOUR_MEME_CHAIN, FOUR_MEME_GRADUATION_LABEL, FOUR_MEME_TOTAL_SUPPLY_WHOLE, TOKEN_MANAGER2, readFourMemeFees } from './evm-leg/four-meme-config.js';
 
 const bps = (value) => ({ kind: 'bps', value });
 const eth = (value) => ({ kind: 'eth', value });
@@ -153,10 +155,75 @@ async function uniswapLane() {
 	};
 }
 
+/** flap.sh on BNB Chain, Base and Robinhood Chain, through the multichain launchpad. */
+function flapLane() {
+	const chains = FLAP_CHAIN_SLUGS.map((slug) => EVM_LEG_CHAINS[slug]).filter(Boolean);
+	return {
+		id: 'flap',
+		label: 'flap.sh',
+		family: 'evm',
+		default: false,
+		available: chains.length > 0,
+		unavailable_reason: chains.length ? null : 'No flap.sh chain is configured.',
+		chain: { slug: chains[0]?.slug || 'bsc', name: chains.map((c) => c.name).join(', '), chain_id: null },
+		chains: chains.map((c) => ({ slug: c.slug, name: c.name, chain_id: c.chainId, contract: FLAP_DEPLOYMENTS[c.slug].portal })),
+		signer: 'Your agent\'s wallet, or your own wallet',
+		supply: FLAP_TOTAL_SUPPLY_WHOLE.toLocaleString('en-US'),
+		fees: [
+			{ id: 'tax', label: 'Buy and sell tax to the creator', when: 'trade', payer: 'traders', amount: text(FLAP_TAX_OPTIONS_BPS.map(pct).join(', ')), note: `You pick it at launch (default ${pct(DEFAULT_FLAP_TAX_BPS)}). It is paid to the signing wallet on every trade.` },
+			{ id: 'protocol', label: 'flap.sh protocol fees', when: 'trade', payer: 'traders', amount: text('Set by flap.sh'), note: 'Charged by the flap.sh curve on each trade.' },
+			{ id: 'platform_launch', label: 'three.ws launch fee', when: 'launch', payer: 'creator', amount: text('None'), note: 'three.ws takes nothing from a flap.sh launch.' },
+			{ id: 'gas', label: 'Gas', when: 'launch', payer: 'creator', amount: text('Estimated in the quote'), note: 'Paid to the chain in its native coin.' },
+		],
+		creator_share: { label: 'The buy and sell tax you pick, on every trade', bps: null, paid_in: 'the chain\'s native coin' },
+		graduation: `Trades on a bonding curve until ${FLAP_GRADUATION_LABEL}, then moves to a DEX pool.`,
+		liquidity: { custody: 'Held by the flap.sh portal until graduation', lock_options: [] },
+		idempotent: true,
+		cta: { href: '/launch/multichain?chain=bsc', label: 'Launch on flap.sh' },
+	};
+}
+
+/** four.meme on BNB Chain, with its launch and trading fees read from TokenManager2. */
+async function fourMemeLane() {
+	const chain = FOUR_MEME_CHAIN;
+	const base = {
+		id: 'four_meme',
+		label: 'four.meme',
+		family: 'evm',
+		default: false,
+		chain: { slug: chain.slug, name: chain.name, chain_id: chain.chainId },
+		contract: TOKEN_MANAGER2,
+		signer: 'Your agent\'s wallet, or your own wallet',
+		supply: FOUR_MEME_TOTAL_SUPPLY_WHOLE.toLocaleString('en-US'),
+		creator_share: null,
+		graduation: `Trades on a bonding curve until ${FOUR_MEME_GRADUATION_LABEL}.`,
+		liquidity: { custody: 'Held by four.meme until graduation, then added to PancakeSwap', lock_options: [] },
+		idempotent: true,
+		cta: { href: '/launch/multichain?chain=bsc', label: 'Launch on four.meme' },
+	};
+	let fees;
+	try {
+		fees = await readFourMemeFees(evmLegPublicClient(chain));
+	} catch (err) {
+		return { ...base, available: false, unavailable_reason: `four.meme's fees could not be read from BNB Chain (${err?.shortMessage || err?.message || 'RPC error'}). Try again shortly.`, fees: [] };
+	}
+	return {
+		...base,
+		available: true,
+		unavailable_reason: null,
+		fees: [
+			{ id: 'launch', label: 'four.meme launch fee', when: 'launch', payer: 'creator', amount: text(`${formatEther(fees.launchFeeWei)} BNB`), note: 'Read live from four.meme\'s TokenManager2 contract.' },
+			{ id: 'trade', label: 'four.meme trading fee', when: 'trade', payer: 'traders', amount: bps(fees.tradingFeeRateBps), note: 'Also charged on the creator\'s opening buy.' },
+			{ id: 'platform_launch', label: 'three.ws launch fee', when: 'launch', payer: 'creator', amount: text('None'), note: 'three.ws takes nothing from a four.meme launch.' },
+			{ id: 'gas', label: 'Gas', when: 'launch', payer: 'creator', amount: text('Estimated in the quote'), note: 'Paid to BNB Chain validators, in BNB.' },
+		],
+	};
+}
+
 /** Every lane, Solana first, from live config. */
 export async function launchLanes() {
-	const [paired, uniswap] = await Promise.all([pairedLane(), uniswapLane()]);
-	return [pumpLane(), nativeLane(), uniswap, paired];
+	const [paired, uniswap, fourMeme] = await Promise.all([pairedLane(), uniswapLane(), fourMemeLane()]);
+	return [pumpLane(), nativeLane(), fourMeme, flapLane(), uniswap, paired];
 }
 
 export function formatAmount(amount) {

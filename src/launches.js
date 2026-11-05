@@ -453,17 +453,29 @@ function agentChip(agent) {
 	);
 }
 
-// Coins an agent launched on an EVM chain (Robinhood Chain through Pons) carry
-// their venue in the row, not pump.fun: trade on the venue, verify on the
-// chain's explorer, and open the on-platform coin page for that chain.
+// Coins launched on an EVM chain (Robinhood Chain through Pons or flap.sh,
+// BNB Chain through four.meme or flap.sh, Base through flap.sh or a Uniswap
+// pool) carry their venue in the row, not pump.fun: trade on the venue, verify
+// on the chain's explorer, and open the on-platform coin page where the chain
+// has one (Robinhood Chain), otherwise the venue's own coin page.
 const EVM_LAUNCH_CHAINS = {
 	robinhood: {
 		label: 'Robinhood Chain',
 		explorer: (addr) => `https://robinhoodchain.blockscout.com/token/${addr}`,
 		coinPage: (addr) => `/markets/robinhood/coin/${addr}`,
 	},
+	bsc: {
+		label: 'BNB Chain',
+		explorer: (addr) => `https://bscscan.com/token/${addr}`,
+		coinPage: null,
+	},
+	base: {
+		label: 'Base',
+		explorer: (addr) => `https://basescan.org/token/${addr}`,
+		coinPage: null,
+	},
 };
-const VENUE_LABELS = { pons: 'Pons' };
+const VENUE_LABELS = { pons: 'Pons', flap: 'flap.sh', four_meme: 'four.meme', uniswap: 'Uniswap' };
 
 function launchCard(launch, index, { featured = false } = {}) {
 	const evm = EVM_LAUNCH_CHAINS[launch.chain] || null;
@@ -682,7 +694,12 @@ function evmLaunchCard(launch, index, chain, { featured = false } = {}) {
 	);
 
 	const card = el('article', { class: `lx-card${featured ? ' lx-card-featured' : ''}`, 'data-mint': launch.mint }, [
-		el('a', { class: 'lx-card-link', href: chain.coinPage(launch.mint), 'aria-label': `Open ${label} profile` }),
+		el('a', {
+			class: 'lx-card-link',
+			href: chain.coinPage ? chain.coinPage(launch.mint) : launch.fixed?.venue_url || chain.explorer(launch.mint),
+			...(chain.coinPage ? {} : { target: '_blank', rel: 'noopener noreferrer' }),
+			'aria-label': chain.coinPage ? `Open ${label} profile` : `Open ${label} on ${venue}`,
+		}),
 		featured ? el('span', { class: 'lx-feat-tag', text: 'Latest' }) : null,
 		featured && launch.symbol ? el('span', { class: 'lx-feat-ghost', 'aria-hidden': 'true', text: `$${launch.symbol}` }) : null,
 		market,

@@ -1,10 +1,13 @@
-// The EVM leg's chains: Base and Robinhood Chain.
+// The EVM leg's chains: Base, Robinhood Chain and BNB Chain.
 //
 // Solana is the home chain; this module describes the secondary leg every agent
 // also has. One custodial EVM address (agent_identities.wallet_address, key in
 // meta.encrypted_wallet_key, generated at agent creation exactly like the
 // Solana wallet) works on both chains, because an EVM address is the same on
 // every EVM chain.
+//
+// BNB Chain joined the leg for the multichain launchpad (flap.sh and four.meme
+// launches); it has no x402 rail here.
 //
 // Each chain entry carries what the wallet, transfer, launch and payment paths
 // need, and nothing is hardcoded that the libraries already know: the chain
@@ -18,7 +21,7 @@
 // balance and USDC is reported as not configured, never as zero.
 
 import { createPublicClient, createWalletClient, fallback, http } from 'viem';
-import { base } from 'viem/chains';
+import { base, bsc } from 'viem/chains';
 
 import { EVM_USDC } from '../../payments/_config.js';
 import { evmTransport } from '../evm/rpc.js';
@@ -65,6 +68,16 @@ export const EVM_LEG_CHAINS = Object.freeze({
 			const v = process.env.ROBINHOOD_CHAIN_USDC_ADDRESS;
 			return isAddressLike(v) ? v.trim() : null;
 		},
+		x402: false,
+	}),
+	bsc: Object.freeze({
+		slug: 'bsc',
+		chainId: bsc.id,
+		caip2: `eip155:${bsc.id}`,
+		name: bsc.name,
+		viemChain: bsc,
+		transport: () => evmTransport(bsc.id, { retryCount: 1, timeout: 12_000 }),
+		usdc: () => EVM_USDC[bsc.id] || null,
 		x402: false,
 	}),
 });
