@@ -2100,6 +2100,18 @@
 		{
 			"pattern": "scripts/check-kit-links.mjs",
 			"reason": "A send-day link checker run by hand on a marketing kit or partner packet before it goes out. It fetches live URLs and takes the files to check as arguments, so it belongs with the kit workflow rather than in a repository guard stage."
+		},
+		{
+			"pattern": "scripts/audit-secrets-history.mjs",
+			"reason": "A full-history gitleaks walk that downloads a pinned scanner binary on first use. Leaked keys are remedied by rotation, not by blocking a build, and check-secrets already guards what each push adds, so this is run by hand when auditing history rather than inside a repository guard stage."
+		},
+		{
+			"pattern": "scripts/audit-ux-flows.mjs",
+			"reason": "A drift report for the UX Flow Atlas docs (docs/ux-flows) with a coverage ratchet in audit-ux-flows.baseline.json. It is run by hand when those docs are edited and is not wired into a repository guard stage."
+		},
+		{
+			"pattern": "scripts/check-integrations.mjs",
+			"reason": "Verifies the listing packages under integrations/ with each package's own toolchain, and exits 2 when a toolchain is not installed. That makes it a per-machine check run by hand before submitting a listing, not a repository guard stage."
 		}
 	]
 }
