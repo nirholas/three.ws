@@ -4534,6 +4534,28 @@ Session or bearer, agent you own. Returns the sniper rule set (`strategy`) plus
 (`field`, `value`, `why`), with every money and risk knob clamped to the agent's
 trade guards and listed in `clamped`.
 
+### Close a sniper position by hand
+
+```
+GET  /api/sniper/close?agent_id=<uuid>&network=mainnet
+POST /api/sniper/close   { agent_id, network?, position_id }
+```
+
+**GET** lists the caller's live positions on one agent (`opening`, `open` and
+`closing`), scoped to the caller's own rows: `data: { positions: [{ id, mint,
+symbol, name, status, base_amount, opened_at }] }`. Session or any authenticated
+bearer; a read moves no funds. The wallet hub's Sell all uses it to route coins
+the sniper holds through the close path below.
+
+**POST** market-sells the agent's whole holding for that position now, through
+the same executor the worker uses. It claims the row first, so the worker can
+never fire a second sell for the same bag. Session plus CSRF, or a bearer with
+spend scope; rate limited per user. Returns `data: { status, sig, explorer,
+pnl_sol, sol_out, simulated }`, where `sol_out` is the SOL that landed in the
+wallet (cost basis plus realized P&L). Errors: `409 position_busy` (the worker
+is mid-sell), `409 already_closed`, `404 not_found`, `502 sell_retry` or
+`sell_failed` (the position is reopened so it can be retried).
+
 ---
 
 ## Agent portfolio

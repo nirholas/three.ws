@@ -11,12 +11,20 @@
 			"link": "/docs/3d-asset-pipeline.md"
 		},
 		{
+			"date": "2026-11-05",
+			"title": "Sell everything an agent bought, or trade any coin by hand",
+			"summary": "Owners can now exit all of an agent's positions in one reviewed run. The wallet Trade tab has a Sell all that lists every coin the wallet holds, lets you untick what to keep, pick slippage and pause the sniper, then sells one coin at a time with live status, Stop and a retry for anything unsold. The sniper dashboard gets a Sell all for every open position across your agents, and links from each agent to manual trading. Clicking a holding in Trade or Portfolio now loads that coin ready to sell.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/agent-wallets.md"
+		},
+		{
 			"date": "2026-11-04",
 			"title": "Hire a person for a real-world job with escrowed USDC",
 			"summary": "Agents can now post a task, such as photographing a storefront, with a USDC bounty locked in escrow on Solana. People accept it, submit proof, and are paid when the poster approves. Disputes freeze the payout and an unfinished task refunds in full. Browse and post at /tasks, or use the human_task tools over MCP.",
 			"tags": [
-				"feature",
-				"solana"
+				"feature"
 			],
 			"link": "/docs/human-tasks.md"
 		},
@@ -25,8 +33,7 @@
 			"title": "Hire an agent from a Solana Blink",
 			"summary": "Any agent that sells a Solana offer can now be hired from a link in a feed: the Blink shows the offer, the buyer signs one USDC payment, and the result comes back in the card. The agent page has a Share hire link button.",
 			"tags": [
-				"feature",
-				"solana"
+				"feature"
 			],
 			"link": "/docs/solana-actions.md"
 		},
@@ -35,8 +42,7 @@
 			"title": "One command shows which workers are live",
 			"summary": "npm run workers:fleet lists every worker as live or built-only with instances, GPU, last deploy and test coverage, fails when a README disagrees with Cloud Run, and 11 undeployed workers gained build-only verify configs. Includes a MoMask benchmark script.",
 			"tags": [
-				"workers",
-				"tooling"
+				"infra"
 			],
 			"link": "/docs/ops/workers-fleet.md"
 		},
@@ -45,8 +51,7 @@
 			"title": "Mobile performance budget gate and coin chart layout fix",
 			"summary": "mobile-perf.mjs gains a --budget mode that fails when LCP, CLS or blocking time exceed budget on six key pages, and the coin page reserves its chart height so the page no longer jumps when the chart loads.",
 			"tags": [
-				"perf",
-				"tooling"
+				"infra"
 			],
 			"link": "/docs/audit/mobile-perf-2026-11-03.md"
 		},
@@ -55,8 +60,7 @@
 			"title": "Makeup, tattoos and decals for Parametric avatars",
 			"summary": "The Avatar Studio Skin tab layers complexion washes, makeup, tattoos and decals, or your own image, over the Parametric body. The preview matches the saved avatar.",
 			"tags": [
-				"avatars",
-				"studio"
+				"feature"
 			]
 		},
 		{
@@ -64,8 +68,7 @@
 			"title": "Agents can browse the web toward a goal",
 			"summary": "Give an agent a goal and a public page and it browses in a real browser you can watch, one validated step at a time. It stays on the allowed sites, never enters passwords or payment details, stops at its step limit, and hands the browser to you the moment you take over. Available in the Browse panel on the agent screen and as the browse_web tool.",
 			"tags": [
-				"feature",
-				"agents"
+				"feature"
 			],
 			"link": "/agent-screen"
 		},
@@ -74,9 +77,7 @@
 			"title": "Avatar editor exports what you see, and runs inside <agent-3d editor>",
 			"summary": "Emissive intensity, hidden nodes and duplicate-named materials now survive export (KHR_materials_emissive_strength, KHR_node_visibility, glTF-index matching with warnings), textures can be replaced from the inspector lightbox, and the editor attribute on <agent-3d> docks the editor with data-editor-version and editor:* events.",
 			"tags": [
-				"editor",
-				"avatar",
-				"embed"
+				"feature"
 			]
 		},
 		{
@@ -84,8 +85,7 @@
 			"title": "Diorama worlds can be played as microgames",
 			"summary": "A world prompt can now name a goal (collect, reach, or survive). The world page shows Play this world, you walk your own avatar around the island with keys, a touch pad or taps, and the share sheet copies a play link that opens straight into the game.",
 			"tags": [
-				"feature",
-				"diorama"
+				"feature"
 			],
 			"link": "/diorama"
 		},
@@ -94,8 +94,7 @@
 			"title": "Dense photometric head fit (opt-in GPU path)",
 			"summary": "Avatar reconstruction can refine the morphed head against the user's own photo with a bounded, deterministic analysis-by-synthesis fit (PyTorch, optional PyTorch3D silhouette). It ships disabled: a GPU image and a RECONSTRUCT_DENSE_URL route exist, and the CPU service is unchanged.",
 			"tags": [
-				"avatar",
-				"reconstruction"
+				"feature"
 			],
 			"link": "/docs/avatar-reconstruction"
 		},
@@ -104,9 +103,7 @@
 			"title": "Report and moderate players in /play",
 			"summary": "Players can report someone from their player card, and three distinct reports in five minutes mute that player for ten. Operators can list, mute, kick and ban players from a signed command, and a muted player sees how long is left above the chat box.",
 			"tags": [
-				"play",
-				"moderation",
-				"multiplayer"
+				"feature"
 			]
 		},
 		{
@@ -141,9 +138,7 @@
 			"title": "HQ talks to your agent: data bridge, alert hand-off and MCP tools",
 			"summary": "HQ now answers host-page data queries, scores portfolio risk, turns opted-in compound alerts into reversible Autopilot proposals, and exposes its DeFi tools through a new hq-mcp server. The bridge no longer trusts every vercel.app origin.",
 			"tags": [
-				"hq",
-				"agents",
-				"mcp"
+				"feature"
 			]
 		},
 		{

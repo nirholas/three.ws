@@ -80,6 +80,15 @@ Key endpoints:
 
 Full request/response shapes are in the [REST API reference](api-reference.md).
 
+### Trading by hand and selling everything
+
+An agent that trades on its own can fill its wallet with coins, so the owner can always step in from the **Trade** tab:
+
+- **Buy or sell any coin by hand.** Paste a mint, or click a row under Holdings to load that coin on the sell side. Portfolio's Trade button does the same.
+- **Sell all.** The button in the Holdings header opens a review of every token the wallet holds, highest value first. Untick anything you want to keep, pick a max slippage, and optionally pause the agent's sniper first so it does not buy again while you exit. Coins the sniper still holds as open positions close through `POST /api/sniper/close` (so realized P&L is booked on the position and the worker cannot double-sell). Everything else sells as a normal wallet trade. Sells run one at a time with live per-coin status. A rate limit is waited out, Stop finishes the current sell and skips the rest, and anything left unsold can be retried in one click. SOL and stablecoins are never sold.
+
+Deep links: `/agents/:id/wallet#trade?mint=<mint>&side=sell` opens Trade with a coin loaded, and `/agents/:id/wallet#trade?sell=all` opens the Sell all review. The shared planner and runner live in [src/shared/liquidate.js](../src/shared/liquidate.js).
+
 ## Custody modes
 
 The platform key above is the default, not the only option. Owners choose who signs an agent's fund-moving transactions from the **Custody** tab of the wallet hub (owner only):

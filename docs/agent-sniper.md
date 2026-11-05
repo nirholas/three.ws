@@ -187,6 +187,10 @@ Funding the wallet (SOL and USDC) is an on-chain spend that needs an explicit ow
 
 **Graduation benchmarks, first 76 hours.** Net PnL above +0.0147 SOL per equal budget (the best cohort in the published experiment), zero firewall violations, zero premature-sell audit failures, and 100 percent of ledger entries carrying a valid x402 transaction signature. The arm is its own cohort (`paid-intel`) on `/api/sniper/experiments`, and the optimizer gives it only the generic exit and sizing proposals, never entry-rule tuning.
 
+## Exiting by hand
+
+The owner can always get out without waiting for an exit rule. On [/dashboard/sniper](/dashboard/sniper), **Sell now** on a live position market-sells that one bag, and **Sell all** in the Live Positions header closes every open position across your agents, one at a time, after an inline confirm. That confirm can disarm the affected agents first so they do not rebuy, and you re-arm them from their cards later. Each strategy card also links to **Trade manually** and **Sell all holdings** in the agent's wallet hub, which covers coins the agent holds outside the sniper too ([agent wallets](./agent-wallets.md#trading-by-hand-and-selling-everything)). Both paths use `POST /api/sniper/close` ([API reference](./api-reference.md#close-a-sniper-position-by-hand)).
+
 ## Try it
 
 - Arm your first strategy: [the sniper tutorial](/tutorials/arm-an-agent-sniper)
