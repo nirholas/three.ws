@@ -120,10 +120,11 @@ describe('GET /api/three/access — full matrix (anonymous)', () => {
 	it('surfaces the enforced flag so the page can mark Live vs Planned perks', async () => {
 		const res = await get('/api/three/access');
 		const byId = Object.fromEntries(res.json.features.map((f) => [f.feature, f]));
-		// Only the wired forge.high gate is enforced today; the rest are planned.
-	// forge.high and worlds.private are wired; the rest are planned.
+		// worlds.private and names.first_dibs (rare-name windows in
+		// api/threews/subdomain.js) are wired; worlds.branded is still planned.
 		expect(byId['worlds.private'].enforced).toBe(true);
-		expect(byId['names.first_dibs'].enforced).toBe(false);
+		expect(byId['names.first_dibs'].enforced).toBe(true);
+		expect(byId['worlds.branded'].enforced).toBe(false);
 	});
 });
 
