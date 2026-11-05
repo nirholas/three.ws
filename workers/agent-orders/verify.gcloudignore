@@ -40,5 +40,10 @@
 !/packages/avatar-agent-mcp/src/lib/
 /packages/avatar-agent-mcp/src/lib/*
 !/packages/avatar-agent-mcp/src/lib/jito-tip-accounts.js
+!/packages/x402-server/
+/packages/x402-server/*
+!/packages/x402-server/src/
+/packages/x402-server/src/*
+!/packages/x402-server/src/facilitator/
 **/node_modules/
 **/.git/
