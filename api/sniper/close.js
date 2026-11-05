@@ -1,5 +1,5 @@
 /**
- * Agent Sniper — manual position close (one-tap "Sell now").
+ * Agent Sniper: manual position close (one-tap "Sell now").
  *
  *   POST /api/sniper/close   → owner force-closes ONE open sniper position now.
  *   GET  /api/sniper/close?agent_id=&network=
@@ -17,14 +17,14 @@
  * agent sells its full holding of that mint immediately, at a real price, with a
  * real signature.
  *
- * It reuses the worker's own `executeSell` — the single module that signs and
- * broadcasts — so the manual exit takes the exact same path as an automated one:
+ * It reuses the worker's own `executeSell` (the single module that signs and
+ * broadcasts), so the manual exit takes the exact same path as an automated one:
  * fresh re-quote, graduation→AMM routing, the protected execution engine, the
  * realized-PnL write, and the custody/audit + Telegram notification. No trade
  * logic is duplicated, so manual and automatic exits can never drift apart.
  *
  * Owner-only (the position's user_id must equal the caller). Selling moves SOL
- * INWARD, so — like every sell path — it is deliberately not gated by the spend
+ * INWARD, so, like every sell path, it is deliberately not gated by the spend
  * ceilings or the wallet freeze: getting out is always the safe direction.
  *
  * Auth: session cookie OR bearer token. CSRF required on this fund-moving write.
@@ -187,7 +187,7 @@ export default async function handler(req, res) {
 			LIMIT 1
 		`;
 		if (existing?.status === 'closing') {
-			return error(res, 409, 'position_busy', 'this position is already being closed — give it a moment');
+			return error(res, 409, 'position_busy', 'this position is already being closed, give it a moment');
 		}
 		if (existing?.status === 'closed') {
 			return error(res, 409, 'already_closed', 'this position is already closed');
@@ -217,7 +217,7 @@ export default async function handler(req, res) {
 		// A position with no recorded token balance can't be sold; reopen it so the
 		// claim doesn't strand the row in 'closing'.
 		await sql`UPDATE agent_sniper_positions SET status = 'open' WHERE id = ${pos.id} AND status = 'closing'`.catch(() => {});
-		return error(res, 409, 'not_sellable', 'this position has no token balance to sell yet — try again in a moment');
+		return error(res, 409, 'not_sellable', 'this position has no token balance to sell yet, try again in a moment');
 	}
 
 	const cfg = {
@@ -235,12 +235,16 @@ export default async function handler(req, res) {
 		result = await executeSell({ cfg, position: pos, reason: 'manual' });
 	} catch (e) {
 		await sql`UPDATE agent_sniper_positions SET status = 'open', error = ${'manual_close_failed'} WHERE id = ${pos.id} AND status = 'closing'`.catch(() => {});
-		return error(res, 502, 'sell_failed', 'the sell could not be submitted and no funds were moved — try again');
+		return error(res, 502, 'sell_failed', 'the sell could not be submitted and no funds were moved, try again');
 	}
 
 	if (result.status === 'closed') {
 		const live = result.sig && result.sig !== 'SIMULATED';
 		const pnlSol = Number(BigInt(result.pnl || '0')) / 1e9;
+		// A manual close always sells the whole bag, and executeSell books
+		// pnl = proceeds - fee - cost basis, so the SOL that landed in the wallet is
+		// the cost basis plus the pnl. The Sell-all flow totals this per coin.
+		const solOut = Number(BigInt(result.pnl || '0') + BigInt(pos.entry_quote_lamports || '0')) / 1e9;
 		return json(res, 200, {
 			data: {
 				status: 'closed',
@@ -249,6 +253,7 @@ export default async function handler(req, res) {
 				symbol: pos.symbol || null,
 				venue: result.venue || null,
 				pnl_sol: pnlSol,
+				sol_out: solOut,
 				simulated: !live,
 				signature: live ? result.sig : null,
 				explorer: live ? explorerTxUrl(result.sig, network) : null,
@@ -258,7 +263,7 @@ export default async function handler(req, res) {
 
 	// executeSell already reopened the position on a retry/failure outcome.
 	if (result.status === 'retry') {
-		return error(res, 502, 'sell_retry', 'the sell did not land — the position is still open, try again in a moment', {
+		return error(res, 502, 'sell_retry', 'the sell did not land; the position is still open, try again in a moment', {
 			reason: result.reason || null,
 		});
 	}

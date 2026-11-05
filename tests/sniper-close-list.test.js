@@ -12,8 +12,13 @@ vi.mock('../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 
 const sqlCalls = [];
 let sqlRows = [];
+// Per-call results for the POST path (claim, then metadata); GET uses sqlRows.
+const sqlQueue = [];
 vi.mock('../api/_lib/db.js', () => ({
-	sql: vi.fn(async (strings, ...values) => { sqlCalls.push({ text: strings.join('?'), values }); return sqlRows; }),
+	sql: vi.fn(async (strings, ...values) => {
+		sqlCalls.push({ text: strings.join('?'), values });
+		return sqlQueue.length ? sqlQueue.shift() : sqlRows;
+	}),
 	isDbUnavailableError: () => false,
 	isDbCapacityError: () => false,
 	isStoragePressured: () => false,
@@ -33,6 +38,8 @@ vi.mock('../api/_lib/auth.js', () => ({
 	authenticateBearer: vi.fn(async () => principal.bearer),
 	extractBearer: vi.fn(() => (principal.bearer ? 'bearer-token' : null)),
 }));
+
+vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: vi.fn(async () => true) }));
 
 const executeSell = vi.fn();
 vi.mock('../workers/agent-sniper/executor.js', () => ({ executeSell: (...a) => executeSell(...a) }));
@@ -66,7 +73,8 @@ beforeEach(() => {
 	principal.bearer = null;
 	sqlCalls.length = 0;
 	sqlRows = [];
-	executeSell.mockClear();
+	sqlQueue.length = 0;
+	executeSell.mockReset();
 });
 
 describe('GET /api/sniper/close', () => {
@@ -106,5 +114,34 @@ describe('GET /api/sniper/close', () => {
 		const { status } = await get(`?agent_id=${AGENT}`);
 		expect(status).toBe(200);
 		expect(sqlCalls[0].values).toEqual(expect.arrayContaining(['user-2']));
+	});
+});
+
+describe('POST /api/sniper/close proceeds', () => {
+	it('reports the SOL that landed in the wallet (cost basis plus realized pnl)', async () => {
+		principal.session = { id: 'user-1' };
+		const claim = {
+			id: 'p1', agent_id: AGENT, user_id: 'user-1', network: 'mainnet',
+			mint: 'THREEsynthetic1111111111111111111111111111A', symbol: 'SYN', name: 'Syn',
+			base_amount: '1000', entry_quote_lamports: '100000000', error: null,
+		};
+		sqlQueue.push([claim], [{ agent_name: 'Agent', slippage_bps: 500, telegram_chat_id: null }]);
+		// Sold for 0.125 SOL net against a 0.1 SOL entry: pnl +0.025 SOL.
+		executeSell.mockResolvedValue({ status: 'closed', sig: 'SIMULATED', pnl: '25000000', venue: 'bonding_curve' });
+		const body = JSON.stringify({ agent_id: AGENT, network: 'mainnet', position_id: '11111111-2222-4333-8444-666666666666' });
+		const req = {
+			method: 'POST',
+			url: '/api/sniper/close',
+			headers: { origin: 'https://three.ws', 'content-type': 'application/json' },
+			socket: { remoteAddress: '127.0.0.1' },
+			rawBody: Buffer.from(body),
+		};
+		const res = makeRes();
+		await handler(req, res);
+		expect(res.statusCode).toBe(200);
+		const out = JSON.parse(res._b).data;
+		expect(out.pnl_sol).toBeCloseTo(0.025, 9);
+		expect(out.sol_out).toBeCloseTo(0.125, 9);
+		expect(executeSell).toHaveBeenCalledWith(expect.objectContaining({ reason: 'manual' }));
 	});
 });
