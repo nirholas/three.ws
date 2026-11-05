@@ -28,6 +28,7 @@ import { ensureRiskAck } from '../../shared/risk-ack.js';
 import { solToUsd } from '../../shared/usd-price.js';
 import { formatSol, timeAgo, explorerTxUrl, unsignableWalletCopy } from '../util.js';
 import { shortAddress as short } from '../../shared/address.js';
+import { createSellAll } from '../sell-all.js';
 
 const QUOTE_DEBOUNCE_MS = 450;
 const BUY_HEADROOM_SOL = 0.003; // keep fee+rent headroom out of "Max"
@@ -140,6 +141,14 @@ const STYLE = `
 .awh-tr-hold-amt { margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink,#e8e8e8); font-size: var(--text-sm,.764rem); }
 .awh-tr-hold-cta { margin-left: 8px; flex: none; font-size: var(--text-2xs,.6875rem); color: var(--ink-dim,#888); }
 
+.awh-tr-hold-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.awh-tr-hold-head .awh-card-h { margin: 0; }
+.awh-tr-hold-head + [data-host="holdings"] { margin-top: 10px; }
+.awh-tr-sellall { font-weight: 600; color: var(--danger,#f87171); border-color: color-mix(in srgb, var(--danger,#f87171) 40%, transparent); }
+.awh-tr-sellall:hover:not(:disabled), .awh-tr-sellall[aria-expanded="true"] { background: color-mix(in srgb, var(--danger,#f87171) 12%, transparent); border-color: var(--danger,#f87171); }
+.awh-tr-sellall:active:not(:disabled) { transform: translateY(1px); }
+.awh-tr-sellall:focus-visible { outline: var(--focus-ring-width,2px) solid var(--focus-ring-color,#fff); outline-offset: 2px; }
+
 .awh-tr-hist { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--stroke, rgba(255,255,255,.06)); font-size: var(--text-sm,.764rem); }
 .awh-tr-hist:last-child { border-bottom: none; }
 .awh-tr-hist-side { font-size: var(--text-2xs,.6875rem); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 7px; border-radius: var(--radius-pill,999px); flex: none; }
@@ -219,6 +228,21 @@ registerWalletTab({
 		let quoteTimer = null;
 		let quoteSeq = 0;
 		const safety = createSafetyPanel({ startExpanded: false });
+		// Owner-only "Sell all": a persistent element re-attached after every full
+		// re-render (like the Safety panel) so a running sell-all never loses its rows.
+		const sellAll = ctx.isOwner
+			? createSellAll({
+				ctx,
+				onSettled: async () => {
+					await Promise.all([loadHoldings(), loadHistory()]);
+					if (!destroyed) renderAll();
+				},
+				onClose: () => {
+					renderSellAllToggle();
+					panel.querySelector('[data-tr="sell-all"]')?.focus({ preventScroll: true });
+				},
+			})
+			: null;
 
 		const state = {
 			isOwner: ctx.isOwner,
@@ -475,6 +499,34 @@ registerWalletTab({
 				</div>`;
 			wireEvents();
 			renderSafety();
+			renderSellAll();
+		}
+
+		// Sell all is offered to the owner of a signable wallet that holds coins
+		// (or while the panel is open, so a run's rows stay reachable).
+		function canSellAll() {
+			if (!sellAll || state.signable === false) return false;
+			return sellAll.isOpen() || (state.holdingsLoaded && !state.holdingsError && (state.holdings || []).length > 0);
+		}
+		function sellAllToggleHtml() {
+			if (!canSellAll()) return '';
+			return `<button class="awh-btn awh-tr-sellall" type="button" data-tr="sell-all" aria-expanded="${sellAll.isOpen()}" aria-controls="awh-tr-sellall-host">Sell all</button>`;
+		}
+		function renderSellAllToggle() {
+			const slot = panel.querySelector('[data-host="sellall-toggle"]');
+			if (!slot) return;
+			slot.innerHTML = sellAllToggleHtml();
+			slot.querySelector('[data-tr="sell-all"]')?.addEventListener('click', openSellAll);
+		}
+		function renderSellAll() {
+			const host = panel.querySelector('[data-host="sellall"]');
+			if (!host || !sellAll) return;
+			if (sellAll.el.parentNode !== host) { host.innerHTML = ''; host.appendChild(sellAll.el); }
+		}
+		function openSellAll() {
+			if (!canSellAll()) return;
+			sellAll.open();
+			renderSellAllToggle();
 		}
 
 		function perpsLinkHtml() {
@@ -728,8 +780,12 @@ registerWalletTab({
 				inner = `<ul class="awh-tr-hold-list">${state.holdings.map(holdingRowHtml).join('')}</ul>`;
 			}
 			return `<div class="awh-card">
-				<h2 class="awh-card-h">Holdings${state.solBalance != null ? ` · ◎${formatSol(state.solBalance)} SOL` : ''}</h2>
+				<div class="awh-tr-hold-head">
+					<h2 class="awh-card-h">Holdings${state.solBalance != null ? ` · ◎${formatSol(state.solBalance)} SOL` : ''}</h2>
+					<span data-host="sellall-toggle">${sellAllToggleHtml()}</span>
+				</div>
 				<div data-host="holdings">${inner}</div>
+				${sellAll ? '<div data-host="sellall" id="awh-tr-sellall-host"></div>' : ''}
 			</div>`;
 		}
 		function holdingRowHtml(t) {
@@ -861,6 +917,7 @@ registerWalletTab({
 				scheduleQuote();
 			});
 
+			panel.querySelector('[data-tr="sell-all"]')?.addEventListener('click', openSellAll);
 			panel.querySelector('[data-tr="retry-holdings"]')?.addEventListener('click', async () => {
 				state.holdingsLoaded = false; renderAll(); await loadHoldings(); renderAll();
 			});
@@ -868,17 +925,7 @@ registerWalletTab({
 				state.historyLoaded = false; renderAll(); await loadHistory(); renderAll();
 			});
 			panel.querySelectorAll('[data-sell-mint]').forEach((b) => b.addEventListener('click', () => {
-				const mint = b.dataset.sellMint;
-				state.side = 'sell';
-				state.mintInput = mint;
-				state.sellDecimals = Number(b.dataset.sellDec) || 6;
-				const h = (state.holdings || []).find((t) => t.mint === mint);
-				state.sellRaw = h ? h.amount_raw : '0';
-				state.result = null;
-				state.confirming = false;
-				renderAll();
-				resolveCoin(mint);
-				panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+				loadCoin(b.dataset.sellMint, 'sell');
 			}));
 
 			wireActionEvents();
@@ -953,9 +1000,33 @@ registerWalletTab({
 			});
 		}
 
+		// Load a coin into the trade form, pre-sized to the full holding on a sell.
+		// Used by a holdings row tap and by deep links (Portfolio → Trade).
+		function loadCoin(mint, side) {
+			if (!state.isOwner || !MINT_RE.test(mint || '')) return;
+			state.side = side === 'buy' ? 'buy' : 'sell';
+			state.mintInput = mint;
+			const h = (state.holdings || []).find((t) => t.mint === mint);
+			state.sellDecimals = h?.decimals ?? 6;
+			state.sellRaw = state.side === 'sell' && h ? h.amount_raw : '0';
+			state.result = null;
+			state.confirming = false;
+			renderAll();
+			resolveCoin(mint);
+			panel.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+		}
+
+		function applyParams(params) {
+			if (!params || destroyed) return;
+			if (params.sellAll) openSellAll();
+			else if (params.mint) loadCoin(params.mint, params.side);
+		}
+
 		// ── lifecycle ─────────────────────────────────────────────────────────────
 		let firstShow = true;
+		let firstLoad = null;
 		detachNet = ctx.onNetworkChange(() => {
+			sellAll?.reset();
 			state.holdingsLoaded = false; state.historyLoaded = false;
 			state.coin = null; state.quote = null; state.result = null; state.mintInput = '';
 			renderAll();
@@ -965,19 +1036,25 @@ registerWalletTab({
 		renderAll();
 
 		return {
-			async onShow() {
+			async onShow(params) {
 				if (firstShow) {
 					firstShow = false;
 					loadSolPrice();
-					await Promise.all([loadHoldings(), loadHistory(), loadSignable()]);
-					if (!destroyed) renderAll();
+					firstLoad = Promise.all([loadHoldings(), loadHistory(), loadSignable()]).then(() => {
+						if (!destroyed) renderAll();
+					});
 				}
+				// Deep links act once holdings are known, so a sell is pre-sized and
+				// Sell all knows whether there is anything to sell.
+				await firstLoad;
+				applyParams(params);
 			},
 			onHide() { clearTimeout(quoteTimer); state.confirming = false; },
 			destroy() {
 				destroyed = true;
 				clearTimeout(quoteTimer);
 				safety?.destroy();
+				sellAll?.destroy();
 				detachNet?.();
 			},
 		};

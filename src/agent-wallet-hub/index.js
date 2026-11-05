@@ -154,8 +154,27 @@ function injectStyle() {
  * @param {object} opts.agent             — agent record (id, name, avatar_*, walletReady, solana_address, is_owner)
  * @param {string} [opts.initialTab]      — tab id to open first (defaults to URL hash or 'balance')
  * @param {(net: string) => void} [opts.onNetworkChange]
- * @returns {{ destroy: () => void, refresh: () => void, openTab: (id: string) => void }}
+ * @returns {{ destroy: () => void, refresh: () => void, openTab: (id: string, params?: object) => void }}
+ *
+ * Deep links: the hash may carry params for the tab, e.g. `#trade?mint=<mint>&side=sell`
+ * or `#trade?sell=all`. They reach the tab as `onShow(params)` once, on first show.
  */
+/**
+ * Parse the params half of a `#tab?k=v` deep link into the shape tabs accept.
+ * `sell=all` becomes `{ sellAll: true }`; `mint` and `side` pass through.
+ */
+export function parseHashParams(query) {
+	if (!query) return undefined;
+	const q = new URLSearchParams(query);
+	const out = {};
+	const mint = q.get('mint');
+	if (mint && /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)) out.mint = mint;
+	const side = q.get('side');
+	if (side === 'buy' || side === 'sell') out.side = side;
+	if (q.get('sell') === 'all') out.sellAll = true;
+	return Object.keys(out).length ? out : undefined;
+}
+
 export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange } = {}) {
 	if (!mount || !agent?.id) {
 		throw new Error('mountAgentWalletHub requires { mount, agent.id }');
@@ -180,8 +199,9 @@ export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange 
 			if (typeof fn === 'function') networkListeners.add(fn);
 			return () => networkListeners.delete(fn);
 		},
-		// Lets a tab hand off to another (e.g. Trade → Deposit on insufficient funds).
-		openTab: (id) => openTab(id),
+		// Lets a tab hand off to another (e.g. Trade → Deposit on insufficient funds,
+		// Portfolio → Trade with { mint, side } or { sellAll: true }).
+		openTab: (id, params) => openTab(id, params),
 		escapeHtml,
 		shortAddress,
 		copyToClipboard,
@@ -190,7 +210,8 @@ export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange 
 
 	const tabs = getVisibleTabs(isOwner);
 	const validIds = new Set(tabs.map((t) => t.id));
-	const hashTab = (location.hash || '').replace(/^#/, '');
+	const [hashTab, hashQuery = ''] = (location.hash || '').replace(/^#/, '').split('?');
+	const hashParams = parseHashParams(hashQuery);
 	let activeId =
 		(initialTab && validIds.has(initialTab) && initialTab) ||
 		(validIds.has(hashTab) && hashTab) ||
@@ -308,11 +329,11 @@ export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange 
 		return inst;
 	}
 
-	function openTab(id) {
+	function openTab(id, params) {
 		if (!validIds.has(id) || id === activeId) {
 			// still ensure the requested (or current) tab is mounted + shown
 			if (validIds.has(id)) {
-				ensureMounted(id)?.onShow?.();
+				ensureMounted(id)?.onShow?.(params);
 			}
 			return;
 		}
@@ -328,7 +349,7 @@ export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange 
 			if (panel) panel.hidden = t.id !== id;
 		}
 		if (prev && instances.has(prev)) instances.get(prev)?.onHide?.();
-		ensureMounted(id)?.onShow?.();
+		ensureMounted(id)?.onShow?.(params);
 		playPanelIn(panelFor(id));
 		try {
 			history.replaceState(null, '', `#${id}`);
@@ -367,8 +388,17 @@ export function mountAgentWalletHub({ mount, agent, initialTab, onNetworkChange 
 		}
 	});
 
-	// Mount + show the initial tab.
-	if (activeId) ensureMounted(activeId)?.onShow?.();
+	// Mount + show the initial tab, handing it any deep-link params from the hash.
+	if (activeId) {
+		ensureMounted(activeId)?.onShow?.(activeId === hashTab ? hashParams : undefined);
+		if (hashQuery && activeId === hashTab) {
+			try {
+				history.replaceState(null, '', `#${activeId}`);
+			} catch {
+				/* hash update best-effort */
+			}
+		}
+	}
 
 	function destroy() {
 		for (const inst of instances.values()) {

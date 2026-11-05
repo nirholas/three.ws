@@ -79,6 +79,11 @@ const PORT_STYLE = `
 .awh-port-sub { color: var(--ink-faint,#666); font-size: var(--text-2xs,.6875rem); }
 .awh-port-warn { display: inline-block; margin-left: 6px; font-size: var(--text-2xs,.6875rem); color: var(--warn,#fbbf24); border: 1px solid color-mix(in srgb, var(--warn,#fbbf24) 40%, transparent); border-radius: var(--radius-pill,999px); padding: 1px 7px; vertical-align: middle; }
 .awh-port-trade { font-size: var(--text-2xs,.6875rem); padding: 5px 10px; }
+.awh-port-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: var(--space-3, 12px); }
+.awh-port-head .awh-card-h { margin-bottom: 0; }
+.awh-port-sellall { font-size: var(--text-2xs,.6875rem); padding: 5px 12px; color: var(--danger,#ff6b6b); border-color: color-mix(in srgb, var(--danger,#ff6b6b) 40%, transparent); }
+.awh-port-sellall:hover { background: color-mix(in srgb, var(--danger,#ff6b6b) 12%, transparent); }
+.awh-port-sellall:focus-visible { outline: 2px solid var(--danger,#ff6b6b); outline-offset: 2px; }
 .awh-muted { color: var(--ink-faint,#666); }
 
 .awh-attr { display: flex; flex-direction: column; gap: 2px; }
@@ -205,7 +210,7 @@ registerWalletTab({
 	ownerOnly: true,
 	mount({ panel, ctx }) {
 		injectStyle();
-		const { escapeHtml, toast, copyToClipboard } = ctx;
+		const { escapeHtml } = ctx;
 
 		let destroyed = false;
 		let visible = false;
@@ -365,7 +370,7 @@ registerWalletTab({
 			const rows = d.holdings || [];
 			if (!rows.length) {
 				return `<div class="awh-card"><h2 class="awh-card-h">Holdings</h2>
-					<div class="awh-empty">No holdings yet — deposits and buys appear here.</div></div>`;
+					<div class="awh-empty">No holdings yet. Deposits, buys and the agent's own trades appear here.</div></div>`;
 			}
 			const body = rows.map((h) => {
 				const sym = escapeHtml(h.symbol || '?');
@@ -401,8 +406,15 @@ registerWalletTab({
 					<td>${tradeBtn}</td>
 				</tr>`;
 			}).join('');
+			const coins = rows.filter((h) => !h.isNative && !h.stable && h.mint).length;
+			const sellAllBtn = coins && state.signable !== false
+				? `<button class="awh-btn awh-port-sellall" type="button" data-sell-all aria-label="Sell all ${coins} coin${coins === 1 ? '' : 's'} back to SOL">Sell all</button>`
+				: '';
 			return `<div class="awh-card">
-				<h2 class="awh-card-h">Holdings <span class="awh-port-sub">${rows.length}</span></h2>
+				<div class="awh-port-head">
+					<h2 class="awh-card-h">Holdings <span class="awh-port-sub">${rows.length}</span></h2>
+					${sellAllBtn}
+				</div>
 				<div style="overflow-x:auto;">
 				<table class="awh-port-table">
 					<thead><tr>
@@ -493,13 +505,11 @@ registerWalletTab({
 				reload();
 			});
 			panel.querySelectorAll('[data-trade]').forEach((b) => {
-				b.addEventListener('click', async () => {
-					const mint = b.dataset.trade;
-					if (mint) await copyToClipboard(mint);
-					ctx.openTab('trade');
-					toast('Mint copied — paste it into Trade to load this coin.');
+				b.addEventListener('click', () => {
+					ctx.openTab('trade', { mint: b.dataset.trade, side: 'sell' });
 				});
 			});
+			panel.querySelector('[data-sell-all]')?.addEventListener('click', () => ctx.openTab('trade', { sellAll: true }));
 		}
 
 		async function fetchSnapshot() {
