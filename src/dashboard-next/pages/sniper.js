@@ -19,6 +19,7 @@ import { mountMoneyStudio } from '../../studio/money/money-studio.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 import { toast } from '../../shared/toast.js';
 import { mountRugSoftenerBanner } from '../rug-softener-banner.js';
+import { runLiquidation, summarizeLiquidation } from '../../shared/liquidate.js';
 
 const SOL = 1_000_000_000n;
 const lamportsToSol = (l) => Number(BigInt(l || '0')) / 1e9;
@@ -152,6 +153,28 @@ const STYLE = `<style>
 .sn-pos-sell:hover { background: color-mix(in srgb, var(--nxt-danger, #f87171) 16%, transparent); transform: translateY(-1px); }
 .sn-pos-sell:focus-visible { outline: 2px solid var(--nxt-danger, #f87171); outline-offset: 2px; }
 .sn-pos-sell:disabled { opacity: .5; cursor: progress; transform: none; }
+.sn-pos-err { font-size: 11px; color: var(--nxt-danger, #f87171); max-width: 220px; text-align: right; }
+.sn-sellall-btn { font: inherit; font-size: 12px; padding: 5px 12px; border-radius: var(--nxt-radius-sm); cursor: pointer; white-space: nowrap; color: var(--nxt-danger, #f87171); border: 1px solid color-mix(in srgb, var(--nxt-danger, #f87171) 45%, transparent); background: color-mix(in srgb, var(--nxt-danger, #f87171) 8%, transparent); transition: background .12s, transform .12s; }
+.sn-sellall-btn:hover { background: color-mix(in srgb, var(--nxt-danger, #f87171) 16%, transparent); transform: translateY(-1px); }
+.sn-sellall-btn:active { transform: translateY(0); }
+.sn-sellall-btn:focus-visible { outline: 2px solid var(--nxt-danger, #f87171); outline-offset: 2px; }
+.sn-sa { padding: 14px 16px; border-bottom: 1px solid var(--nxt-line); background: color-mix(in srgb, var(--nxt-danger, #f87171) 5%, transparent); display: grid; gap: 10px; animation: sn-sa-in .16s ease-out; }
+.sn-sa.done { background: color-mix(in srgb, var(--nxt-accent) 5%, transparent); }
+@keyframes sn-sa-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.sn-sa-title { margin: 0; font-size: 14px; font-weight: 600; }
+.sn-sa-body { margin: 0; font-size: 12.5px; color: var(--nxt-ink-dim); line-height: 1.5; }
+.sn-sa-err { margin: 0; font-size: 12.5px; color: var(--nxt-danger, #f87171); }
+.sn-sa-check { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--nxt-ink); cursor: pointer; }
+.sn-sa-check input { margin-top: 2px; accent-color: var(--nxt-danger, #f87171); }
+.sn-sa-check input:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
+.sn-sa-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sn-sa-go { font: inherit; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: var(--nxt-radius-sm); cursor: pointer; border: 1px solid transparent; background: var(--nxt-danger, #f87171); color: #1a0606; transition: opacity .14s, transform .14s; }
+.sn-sa-go:hover { opacity: .9; transform: translateY(-1px); }
+.sn-sa-go:active { transform: translateY(0); }
+.sn-sa-go:focus-visible { outline: 2px solid var(--nxt-ink); outline-offset: 2px; }
+.sn-sa-go:disabled { opacity: .5; cursor: progress; transform: none; }
+.sn-sa-bar { height: 4px; border-radius: 2px; background: var(--nxt-line); overflow: hidden; }
+.sn-sa-bar > span { display: block; height: 100%; background: var(--nxt-danger, #f87171); transition: width .25s ease; }
 .sn-pos-oracle { display: inline-flex; }
 .sn-ob { display: inline-flex; align-items: center; gap: 3px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 3px 7px; text-decoration: none; transition: border-color .12s; }
 .sn-ob:hover { border-color: rgba(255,255,255,0.22); }
@@ -235,7 +258,9 @@ const STYLE = `<style>
 	.sn-live-dot { animation: none; }
 	.sn-chevron { transition: none; }
 	.sn-kpi:hover, .sn-btn:hover, .sn-toggle-btn:hover, .sn-pos-sell:hover,
-	.sn-pos-link:hover, .sn-card:hover { transform: none; }
+	.sn-pos-link:hover, .sn-card:hover, .sn-sellall-btn:hover, .sn-sa-go:hover { transform: none; }
+	.sn-sa { animation: none; }
+	.sn-sa-bar > span { transition: none; }
 }
 </style>`;
 
@@ -392,6 +417,8 @@ function stratCard(s) {
 					<button class="sn-toggle-btn ${s.kill_switch ? 'active danger' : 'danger'}" data-action="toggle-kill" data-agent="${esc(s.agent_id)}" aria-label="${s.kill_switch ? 'Clear the kill switch and allow trading to resume' : 'Trip the kill switch — immediately halt all trading for this agent'}">
 						${s.kill_switch ? 'Clear kill switch' : 'Kill switch'}
 					</button>
+					<a class="sn-toggle-btn" href="/agents/${encodeURIComponent(s.agent_id)}/wallet#trade" title="Buy or sell any coin by hand from this agent's wallet">Trade manually</a>
+					<a class="sn-toggle-btn danger" href="/agents/${encodeURIComponent(s.agent_id)}/wallet#trade?sell=all" title="Review and sell every coin this agent's wallet holds, not just sniper positions">Sell all holdings</a>
 					<a class="sn-toggle-btn" href="/trader/${esc(s.agent_id)}" target="_blank" rel="noopener">Track record ↗</a>
 					${s.wallet_address ? `<a class="sn-toggle-btn" href="https://solscan.io/account/${esc(s.wallet_address)}" target="_blank" rel="noopener">Wallet ↗</a>` : ''}
 				</div>
@@ -698,8 +725,10 @@ function livePositionsSection() {
 				<a class="sn-btn ghost" style="${ghostBtn}" href="/dashboard/tokens" title="Pump.fun trading desk — watchlists, scanner, charts">Trading desk</a>
 				<a class="sn-btn ghost" style="${ghostBtn}" href="/leaderboard" target="_blank" rel="noopener">Leaderboard ↗</a>
 				<a class="sn-btn ghost" style="${ghostBtn}" href="/play/arena" target="_blank" rel="noopener">Sniper Arena ↗</a>
+				<button type="button" class="sn-sellall-btn" id="sn-sellall-btn" data-action="sell-all-open" aria-controls="sn-sellall" hidden>Sell all</button>
 			</div>
 		</div>
+		<div id="sn-sellall">${sellAllPanelHtml()}</div>
 		<div id="sn-positions" class="sn-pos-list">
 			<p class="sn-empty">Connecting…</p>
 		</div>
@@ -736,8 +765,12 @@ function posRow(p) {
 	// One-tap manual exit: sell the agent's full holding of this mint now, at a
 	// real price, via /api/sniper/close (the same executeSell the worker uses).
 	// Only a fully-open position with a known id can be force-closed.
+	const run = p.id ? _rowSell.get(p.id) : null;
+	const runLabel = run && { queued: 'Queued', selling: 'Selling…', waiting: `Waiting ${run.waitSeconds || ''}s`, sold: 'Sold' }[run.state];
 	const sellBtn = (p.id && p.status === 'open')
-		? `<button class="sn-pos-sell" data-action="sell-now" data-pos="${esc(p.id)}" data-agent="${esc(p.agent_id || '')}" data-mint="${esc(p.mint || '')}" data-net="${esc(p.network || 'mainnet')}" data-sym="${esc(sym)}" title="Sell this position now from the agent wallet">Sell now</button>`
+		? (runLabel
+			? `<button class="sn-pos-sell" type="button" disabled aria-label="${esc(sym)}: ${esc(runLabel)}">${esc(runLabel)}</button>`
+			: `${run?.state === 'failed' ? `<span class="sn-pos-err" role="note">${esc(run.error || 'Sell failed.')}</span>` : ''}<button class="sn-pos-sell" data-action="sell-now" data-pos="${esc(p.id)}" data-agent="${esc(p.agent_id || '')}" data-mint="${esc(p.mint || '')}" data-net="${esc(p.network || 'mainnet')}" data-sym="${esc(sym)}" title="Sell this position now from the agent wallet">${run?.state === 'failed' ? 'Retry sell' : 'Sell now'}</button>`)
 		: '';
 	const mintAttr = p.mint ? ` data-oracle-mint="${esc(p.mint)}"` : '';
 	// The symbol itself deep-links to the coin detail page (score, holders, trade
@@ -1051,6 +1084,10 @@ function wireEvents(root) {
 		const sellBtn = e.target.closest('[data-action="sell-now"]');
 		if (sellBtn) { sellNow(sellBtn, root); return; }
 
+		// Sell all open positions: open the inline confirm, run, stop, retry, dismiss
+		const sa = e.target.closest('[data-action^="sell-all-"]');
+		if (sa) { onSellAllAction(sa.dataset.action, root); return; }
+
 		// Arm btn
 		if (e.target.id === 'sn-arm-btn') { openArmModal(root); return; }
 	});
@@ -1159,6 +1196,256 @@ async function toggleKill_(btn, root) {
 		toast(err.message || 'Failed to update kill switch');
 	} finally {
 		btn.disabled = false;
+	}
+}
+
+// ── Sell all open positions ───────────────────────────────────────────────────
+// One action to exit every live sniper position across the owner's agents. Each
+// position closes through POST /api/sniper/close (the same claim-guarded path as
+// "Sell now", so the worker can never double-sell a bag), one at a time through
+// the shared liquidation runner: 429s are waited out, Stop finishes the current
+// sell and skips the rest, and anything left unsold can be retried. Coins an
+// agent holds outside the sniper are sold from the wallet hub's Sell all, which
+// each strategy card links to.
+
+/** @type {null | { phase: 'confirm'|'running'|'done', items: object[], pause: boolean, disarmed: string[], error: string|null, ctl: AbortController|null }} */
+let _sellAll = null;
+/** positionId -> the run item, so rows rendered from the live stream show its state. */
+const _rowSell = new Map();
+
+function sellableOpenPositions() {
+	const owned = ownedAgentIds();
+	return [..._positionsMap.values()]
+		.filter((p) => p.id && p.agent_id && owned.has(p.agent_id) && p.status === 'open')
+		.sort((a, b) => (b.unrealized_pnl_sol ?? 0) - (a.unrealized_pnl_sol ?? 0));
+}
+
+function armedStrategiesFor(items) {
+	const ids = new Set(items.map((it) => it.agentId));
+	return _strategies.filter((s) => ids.has(s.agent_id) && s.enabled && !s.kill_switch);
+}
+
+function plural(n, one, many) { return n === 1 ? one : many; }
+
+function renderSellAllButton() {
+	const btn = document.getElementById('sn-sellall-btn');
+	if (!btn) return;
+	const n = sellableOpenPositions().length;
+	const idle = !_sellAll || _sellAll.phase === 'done';
+	btn.hidden = !(n > 0 && idle);
+	btn.textContent = `Sell all ${n}`;
+	btn.setAttribute('aria-label', `Sell all ${n} open ${plural(n, 'position', 'positions')}`);
+	btn.setAttribute('aria-expanded', _sellAll && _sellAll.phase !== 'done' ? 'true' : 'false');
+}
+
+function renderSellAll() {
+	const host = document.getElementById('sn-sellall');
+	if (host) host.innerHTML = sellAllPanelHtml();
+	renderSellAllButton();
+}
+
+function sellAllPanelHtml() {
+	const run = _sellAll;
+	if (!run) return '';
+	const total = run.items.filter((it) => it.selected).length;
+
+	if (run.phase === 'confirm') {
+		const armed = armedStrategiesFor(run.items);
+		const names = armed.map((s) => s.agent_name || 'agent').join(', ');
+		return `<div class="sn-sa" role="region" aria-label="Sell all open positions">
+			<p class="sn-sa-title">Sell all ${total} open ${plural(total, 'position', 'positions')}?</p>
+			<p class="sn-sa-body">Each one is market-sold from its agent's wallet at the current price, one after another, and the SOL lands back in that wallet. This can't be undone.</p>
+			${armed.length ? `<label class="sn-sa-check"><input type="checkbox" data-sa-pause ${run.pause ? 'checked' : ''} /> <span>Disarm ${esc(names)} first so ${plural(armed.length, 'it does', 'they do')} not buy again while you exit. You can re-arm from ${plural(armed.length, 'its card', 'each card')} later.</span></label>` : ''}
+			${run.error ? `<p class="sn-sa-err" role="alert">${esc(run.error)}</p>` : ''}
+			<div class="sn-sa-actions">
+				<button type="button" class="sn-sa-go" data-action="sell-all-confirm">Sell ${total}</button>
+				<button type="button" class="sn-btn ghost" data-action="sell-all-cancel">Cancel</button>
+			</div>
+		</div>`;
+	}
+
+	const sum = summarizeLiquidation(run.items);
+	const settled = sum.sold + sum.failed + sum.skipped;
+	const solLine = sum.solOut != null ? ` · ${fmtSol(sum.solOut).trim()} back in the wallets` : '';
+
+	if (run.phase === 'running') {
+		const current = run.items.find((it) => it.state === 'selling' || it.state === 'waiting');
+		const label = current
+			? (current.state === 'waiting'
+				? `Rate limited, retrying ${esc(current.symbol)} in ${current.waitSeconds}s`
+				: `Selling ${esc(current.symbol)} (${Math.min(settled + 1, total)} of ${total})`)
+			: `Finishing (${settled} of ${total})`;
+		const pct = total ? Math.round((settled / total) * 100) : 0;
+		return `<div class="sn-sa" role="region" aria-label="Selling all open positions">
+			<p class="sn-sa-title" role="status" aria-live="polite">${label}</p>
+			<div class="sn-sa-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${settled}"><span style="width:${pct}%"></span></div>
+			<p class="sn-sa-body">${sum.sold} sold${sum.failed ? ` · ${sum.failed} failed` : ''}${solLine}. Keep this tab open until it finishes.</p>
+			<div class="sn-sa-actions">
+				<button type="button" class="sn-btn ghost" data-action="sell-all-stop" ${run.ctl?.signal.aborted ? 'disabled' : ''}>${run.ctl?.signal.aborted ? 'Stopping after this sell…' : 'Stop'}</button>
+			</div>
+		</div>`;
+	}
+
+	const unsold = run.items.filter((it) => it.selected && (it.state === 'failed' || it.state === 'skipped')).length;
+	const head = sum.sold === total
+		? `Sold all ${total} ${plural(total, 'position', 'positions')}${solLine}.`
+		: `Sold ${sum.sold} of ${total}${solLine}.`;
+	const paper = run.items.some((it) => it.state === 'sold' && it.simulated);
+	const failures = run.items.filter((it) => it.state === 'failed')
+		.map((it) => `<li>${esc(it.symbol)}: ${esc(it.error || 'the sell did not complete')}</li>`).join('');
+	return `<div class="sn-sa done" role="region" aria-label="Sell all result">
+		<p class="sn-sa-title" role="status">${head}</p>
+		${failures ? `<ul class="sn-sa-body" style="margin:0;padding-left:18px">${failures}</ul>` : ''}
+		${unsold && !failures ? `<p class="sn-sa-body">${unsold} not sold because you stopped the run.</p>` : ''}
+		${paper ? '<p class="sn-sa-body">Paper-mode agents simulated their sells; no real SOL moved for them.</p>' : ''}
+		${run.disarmed.length ? `<p class="sn-sa-body">Disarmed ${run.disarmed.length} ${plural(run.disarmed.length, 'agent', 'agents')}. Re-arm from the strategy cards above when you are ready.</p>` : ''}
+		<div class="sn-sa-actions">
+			${unsold ? `<button type="button" class="sn-sa-go" data-action="sell-all-retry">Sell the ${unsold} unsold</button>` : ''}
+			<button type="button" class="sn-btn ghost" data-action="sell-all-dismiss">Done</button>
+		</div>
+	</div>`;
+}
+
+function sellAllItem(p) {
+	return {
+		positionId: p.id,
+		agentId: p.agent_id,
+		agentName: p.agent_name || '',
+		network: p.network || 'mainnet',
+		mint: p.mint,
+		symbol: p.symbol || p.mint?.slice(0, 8) || 'position',
+		route: 'sniper',
+		selected: true,
+		busy: false,
+		state: 'queued',
+		solOut: null,
+		simulated: false,
+		error: null,
+		errorCode: null,
+		waitSeconds: null,
+	};
+}
+
+async function sellAllOne(item) {
+	try {
+		const res = await post('/api/sniper/close', { agent_id: item.agentId, network: item.network, position_id: item.positionId });
+		const d = (res && res.data) || {};
+		return { solOut: Number.isFinite(d.sol_out) ? d.sol_out : null, explorer: d.explorer || null, simulated: !!d.simulated };
+	} catch (err) {
+		// The worker closed it between the plan and this sell (take-profit, stop,
+		// timeout): the owner wanted out and is out, so it counts as sold.
+		if (err?.code === 'already_closed' || err?.code === 'not_found') return { solOut: null };
+		if (err?.status === 429) {
+			throw Object.assign(new Error(err.message || 'Too many sells at once'), { code: 'rate_limited', retryAfter: err.body?.retry_after });
+		}
+		const friendly = {
+			position_busy: 'The agent is already selling this one.',
+			sell_retry: 'The sell did not land. The position is still open.',
+			sell_failed: 'The sell failed. The position is still open.',
+		}[err?.code];
+		throw Object.assign(new Error(friendly || err?.message || 'The sell did not complete.'), { code: err?.code || 'error' });
+	}
+}
+
+async function disarmForSellAll(run) {
+	for (const s of armedStrategiesFor(run.items)) {
+		await post('/api/sniper/strategy', { agent_id: s.agent_id, network: s.network, enabled: false });
+		run.disarmed.push(s.agent_id);
+		s.enabled = false;
+	}
+}
+
+async function startSellAll(root, items) {
+	const run = _sellAll;
+	run.items = items;
+	run.error = null;
+	if (run.pause) {
+		try {
+			await disarmForSellAll(run);
+		} catch (err) {
+			run.phase = 'confirm';
+			run.error = `Could not disarm every agent (${err?.message || 'request failed'}), so nothing was sold. Try again, or untick disarm to sell anyway.`;
+			renderSellAll();
+			return;
+		}
+	}
+	run.phase = 'running';
+	run.ctl = new AbortController();
+	for (const it of items) if (it.selected && it.state !== 'sold') _rowSell.set(it.positionId, it);
+	renderSellAll();
+	renderOwnedPositions();
+
+	await runLiquidation({
+		items,
+		sellOne: sellAllOne,
+		signal: run.ctl.signal,
+		onUpdate: (it) => {
+			if (it.state === 'sold') {
+				_rowSell.delete(it.positionId);
+				_positionsMap.delete(it.positionId);
+			}
+			renderOwnedPositions();
+			renderSellAll();
+		},
+	});
+
+	run.phase = 'done';
+	run.ctl = null;
+	// Queued rows the Stop skipped go back to a plain "Sell now".
+	for (const it of items) if (it.state === 'skipped') _rowSell.delete(it.positionId);
+	const sum = summarizeLiquidation(items);
+	toast(sum.failed ? `Sold ${sum.sold}, ${sum.failed} failed` : `Sold ${sum.sold} ${plural(sum.sold, 'position', 'positions')}`);
+	// Reconcile KPIs, strategy summaries, armed badges and trade history with the
+	// server. refresh() re-renders the page; the result panel renders from state.
+	const sn_root = root || document.getElementById('sn-root');
+	if (sn_root) await refresh(sn_root);
+	else renderSellAll();
+}
+
+function onSellAllAction(action, root) {
+	if (action === 'sell-all-open') {
+		const items = sellableOpenPositions().map(sellAllItem);
+		if (!items.length) { toast('No open positions to sell'); return; }
+		_rowSell.clear();
+		_sellAll = { phase: 'confirm', items, pause: true, disarmed: [], error: null, ctl: null };
+		renderSellAll();
+		document.querySelector('#sn-sellall [data-action="sell-all-confirm"]')?.focus();
+		return;
+	}
+	if (!_sellAll) return;
+	if (action === 'sell-all-cancel' || action === 'sell-all-dismiss') {
+		if (_sellAll.phase === 'running') return;
+		_sellAll = null;
+		_rowSell.clear();
+		renderSellAll();
+		renderOwnedPositions();
+		document.getElementById('sn-sellall-btn')?.focus();
+		return;
+	}
+	if (action === 'sell-all-confirm' && _sellAll.phase === 'confirm') {
+		const box = document.querySelector('#sn-sellall [data-sa-pause]');
+		_sellAll.pause = box ? box.checked : false;
+		// Re-plan at the moment of the click: the live stream may have closed or
+		// opened positions while the confirm sat on screen.
+		const fresh = sellableOpenPositions().map(sellAllItem);
+		if (!fresh.length) { _sellAll = null; renderSellAll(); toast('Those positions already closed'); return; }
+		startSellAll(root, fresh);
+		return;
+	}
+	if (action === 'sell-all-stop' && _sellAll.phase === 'running') {
+		_sellAll.ctl?.abort();
+		renderSellAll();
+		return;
+	}
+	if (action === 'sell-all-retry' && _sellAll.phase === 'done') {
+		// Only positions that are still open on the live map are retried.
+		const open = new Set(sellableOpenPositions().map((p) => p.id));
+		const again = _sellAll.items
+			.filter((it) => (it.state === 'failed' || it.state === 'skipped') && open.has(it.positionId))
+			.map((it) => ({ ...it, state: 'queued', error: null, errorCode: null, waitSeconds: null }));
+		if (!again.length) { toast('Nothing left to sell'); _sellAll = null; _rowSell.clear(); renderSellAll(); renderOwnedPositions(); return; }
+		_sellAll.pause = false;
+		startSellAll(root, again);
 	}
 }
 
@@ -1442,6 +1729,7 @@ function renderOwnedPositions() {
 	renderAgentCardPositions(list);
 	const kpiOpen = document.querySelector('[data-kpi-open]');
 	if (kpiOpen) kpiOpen.textContent = String(list.length);
+	renderSellAllButton();
 }
 
 // Mirror each agent's slice of the live stream into its strategy card: the
