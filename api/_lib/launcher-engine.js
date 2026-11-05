@@ -291,6 +291,9 @@ async function postAs(ownerUserId, path, body, timeoutMs = 55_000) {
 			headers: {
 				'content-type': 'application/json',
 				cookie: `__Host-sid=${token}`,
+				// The pump handlers CSRF-guard cookie sessions (isSameSiteOrigin); a server-side
+				// caller has no browser to add Origin, so state it explicitly.
+				origin: ORIGIN,
 				'user-agent': 'threews-launcher/1.0',
 			},
 			body: JSON.stringify(body),

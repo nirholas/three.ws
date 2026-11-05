@@ -167,6 +167,25 @@ describe('runLauncherTick — live', () => {
 		vi.unstubAllGlobals();
 	});
 
+	it('sends a same-site Origin on its internal POSTs so the pump CSRF guard accepts them', async () => {
+		H.configs = [makeConfig({ dry_run: false })];
+		const fetchMock = vi.fn(async (url) => {
+			if (String(url).includes('/api/pump/build-metadata')) {
+				return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
+			}
+			return { status: 200, json: async () => ({ mint: 'MINTxyz', signature: 'launch-sig' }) };
+		});
+		vi.stubGlobal('fetch', fetchMock);
+
+		await runLauncherTick();
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		for (const [url, opts] of fetchMock.mock.calls) {
+			expect(opts.headers.origin, String(url)).toBe(new URL(String(url)).origin);
+		}
+
+		vi.unstubAllGlobals();
+	});
+
 	it('forwards the dev buy and the agent socials into the real launch', async () => {
 		H.configs = [makeConfig({ dry_run: false, dev_buy_sol: 0.01, per_launch_sol: 0.04 })];
 
