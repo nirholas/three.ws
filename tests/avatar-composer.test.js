@@ -70,6 +70,30 @@ describe('selectRecipe', () => {
 		}
 	});
 
+	// The gallery shipped "Southeast Asian man" cards with a woman's face and long
+	// hair: `default.glb` has a female head but was catalogued male, and donor
+	// parts were drawn regardless of gender. Clothing and hair must come from a
+	// base of the identity's gender (glasses are unisex).
+	it("never dresses an identity in another gender's hair or clothes", () => {
+		for (let i = 0; i < 80; i++) {
+			const gender = i % 2 ? 'male' : 'female';
+			const r = selectRecipe({ gender }, `gender-${i}`);
+			expect(BASE_BY_ID[r.identity].gender).toBe(gender);
+			for (const slot of ['hair', 'top', 'bottom', 'footwear']) {
+				const src = r.slots[slot];
+				if (src) expect(BASE_BY_ID[src].gender, `${slot} from ${src}`).toBe(gender);
+			}
+		}
+	});
+
+	it('never offers the selfie-girl novelty reindeer piece as glasses', () => {
+		expect(BASE_BY_ID['selfie-girl'].provides).not.toContain('glasses');
+	});
+
+	it('catalogues the default base by its actual (female) face', () => {
+		expect(BASE_BY_ID.default.gender).toBe('female');
+	});
+
 	it('basesNeeded lists the identity and every distinct donor', () => {
 		const r = selectRecipe({ gender: 'female' }, 'need-1');
 		const ids = basesNeeded(r);
@@ -131,6 +155,26 @@ describe('composeStudioAvatar', () => {
 		// the rest of the suite is competing for the box. A tighter-than-global
 		// ceiling on it asserts nothing about the composer and fails on scheduling,
 		// so this inherits the configured testTimeout instead.
+	});
+
+	// Every RPM base ships Wolf3D_Body (hands, neck) UNTEXTURED, with its skin
+	// tone held in baseColorFactor. Overwriting that factor with the colorway
+	// tint (instead of multiplying it, as the head's textured factor is) left
+	// pale profiles with flat white hands that did not match the face.
+	it('tints the untextured body skin by multiplying, so hands match the face', async () => {
+		const profile = { gender: 'female', ethnicityKey: 'nordic', ageKey: 'senior', grayBias: 0, build: 'athletic' };
+		const recipe = selectRecipe(profile, 'hands-1');
+		const { bytes } = await composeStudioAvatar({ profile, seed: 'hands-1', loadBase });
+		const doc = await (await io()).readBinary(bytes);
+		const body = doc.getRoot().listMaterials().find((m) => m.getName() === 'Wolf3D_Body');
+		expect(body.getBaseColorTexture()).toBeNull();
+
+		const baseDoc = await (await io()).readBinary(await loadBase(recipe.identity));
+		const baseBody = baseDoc.getRoot().listMaterials().find((m) => m.getName() === 'Wolf3D_Body');
+		const original = baseBody.getBaseColorFactor();
+		const skin = recipe.colorway.skin;
+		const got = body.getBaseColorFactor();
+		for (let c = 0; c < 3; c++) expect(got[c]).toBeCloseTo(original[c] * skin[c], 4);
 	});
 
 	it('is deterministic: the same seed composes byte-identical output', async () => {

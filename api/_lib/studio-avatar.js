@@ -23,7 +23,7 @@ export const BASE_BODIES = /** @type {BaseBody[]} */ ([
 	},
 	{ id: 'selfie-girl', file: 'selfie-girl.glb', gender: 'female', label: 'Selfie girl' },
 	{ id: 'michelle', file: 'michelle.glb', gender: 'female', label: 'Michelle' },
-	{ id: 'default', file: 'default.glb', gender: 'male', label: 'Default' },
+	{ id: 'default', file: 'default.glb', gender: 'female', label: 'Default' },
 ]);
 
 // Complexion multipliers by ethnicity key. glTF caps factors at 1, so the base
@@ -193,8 +193,11 @@ export function recolorGlb(glb, colorway, scale = 1) {
 		if (!channel || !colorway[channel]) continue;
 		const [r, g, b] = colorway[channel];
 		mat.pbrMetallicRoughness = mat.pbrMetallicRoughness || {};
-		const a = mat.pbrMetallicRoughness.baseColorFactor?.[3] ?? 1;
-		mat.pbrMetallicRoughness.baseColorFactor = [r, g, b, a];
+		// Skin multiplies the base's own tone (the untextured hands keep it in
+		// this factor); other channels are absolute colors. See compose.js.
+		const [fr, fg, fb, a] = mat.pbrMetallicRoughness.baseColorFactor || [1, 1, 1, 1];
+		mat.pbrMetallicRoughness.baseColorFactor =
+			channel === 'skin' ? [fr * r, fg * g, fb * b, a] : [r, g, b, a];
 		recolored.push(mat.name);
 	}
 

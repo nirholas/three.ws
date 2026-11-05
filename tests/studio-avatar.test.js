@@ -95,8 +95,14 @@ describe('recolorGlb', () => {
 		const gltf = JSON.parse(buffer.slice(20, 20 + buffer.readUInt32LE(12)).toString('utf8'));
 		const skin = gltf.materials.find((m) => m.name === 'Wolf3D_Skin');
 		const bodyMat = gltf.materials.find((m) => m.name === 'Wolf3D_Body');
+		// The face's tone lives in its texture (white factor); the untextured
+		// body keeps its tone in the factor. The complexion multiplies both, so
+		// hands match the face. Overwriting the body factor gave flat white hands.
+		const orig = JSON.parse(glb.slice(20, 20 + glb.readUInt32LE(12)).toString('utf8'));
+		const origBody = orig.materials.find((m) => m.name === 'Wolf3D_Body').pbrMetallicRoughness.baseColorFactor;
 		expect(skin.pbrMetallicRoughness.baseColorFactor.slice(0, 3)).toEqual(cw.skin);
-		expect(bodyMat.pbrMetallicRoughness.baseColorFactor.slice(0, 3)).toEqual(cw.skin);
+		const got = bodyMat.pbrMetallicRoughness.baseColorFactor;
+		for (let c = 0; c < 3; c++) expect(got[c]).toBeCloseTo(origBody[c] * cw.skin[c], 6);
 	});
 	it('applies a uniform scale to the scene roots', () => {
 		const glb = readFileSync(AV('realistic-female.glb'));

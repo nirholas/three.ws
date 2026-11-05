@@ -88,8 +88,10 @@ export const SLOT_CHANNEL = {
 export const BASES = [
 	{ id: 'realistic-male', file: 'realistic-male.glb', gender: 'male', label: 'Realistic male', restGroup: 'a', provides: ['hair', 'top', 'bottom', 'footwear', 'glasses'] },
 	{ id: 'realistic-female', file: 'realistic-female.glb', gender: 'female', label: 'Realistic female', restGroup: 'a', provides: ['hair', 'top', 'bottom', 'footwear'] },
-	{ id: 'default', file: 'default.glb', gender: 'male', label: 'Default', restGroup: 'b', provides: ['hair', 'top', 'bottom', 'footwear', 'glasses'] },
-	{ id: 'selfie-girl', file: 'selfie-girl.glb', gender: 'female', label: 'Selfie girl', restGroup: 'b', provides: ['hair', 'top', 'bottom', 'footwear', 'glasses'] },
+	{ id: 'default', file: 'default.glb', gender: 'female', label: 'Default', restGroup: 'b', provides: ['hair', 'top', 'bottom', 'footwear', 'glasses'] },
+	// selfie-girl's Wolf3D_Glasses mesh is a novelty reindeer set (antlers + red
+	// nose), not eyewear, so it is never offered as glasses.
+	{ id: 'selfie-girl', file: 'selfie-girl.glb', gender: 'female', label: 'Selfie girl', restGroup: 'b', provides: ['hair', 'top', 'bottom', 'footwear'] },
 ];
 
 export const BASE_BY_ID = Object.fromEntries(BASES.map((b) => [b.id, b]));
@@ -99,13 +101,24 @@ export function basesForGender(gender) {
 	return BASES.filter((b) => b.gender === gender);
 }
 
+/** Slots that are cut and styled for one gender's body, so they never cross. */
+export const GENDERED_SLOTS = new Set(['hair', 'top', 'bottom', 'footwear']);
+
 /**
  * Bases that can donate a given slot to `identity` with an exact fit: the
  * identity itself plus any base in the same rest-pose group. Restricting to the
  * group is what keeps grafted parts from floating (see restGroup note above).
+ * Hair and clothing must also come from a base of the identity's gender: a
+ * woman's hair or blouse on a man's identity is what made the gallery's "man"
+ * cards read as women. Glasses are unisex and only need the rest-pose match.
  * @param {string} slot
  * @param {BaseBody} identity
  */
 export function compatibleProviders(slot, identity) {
-	return BASES.filter((b) => b.provides.includes(slot) && b.restGroup === identity.restGroup);
+	return BASES.filter(
+		(b) =>
+			b.provides.includes(slot) &&
+			b.restGroup === identity.restGroup &&
+			(!GENDERED_SLOTS.has(slot) || b.gender === identity.gender),
+	);
 }

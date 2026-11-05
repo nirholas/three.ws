@@ -28,8 +28,17 @@ now yields tens of thousands of genuinely distinct avatars.
    A borrowed part keeps its **own** inverse-bind matrices (the only ones correct
    for that part's region) but has its skin's joints remapped onto the identity
    skeleton, so the whole avatar animates as one rig.
-3. **Recolor**: each part's material `baseColorFactor` is multiplied by the
-   colorway channel (skin / hair / top / bottom / footwear).
+3. **Recolor**: skin is a complexion multiplier over the base's own tone (the
+   head keeps it in a texture, the untextured `Wolf3D_Body` hands and neck keep
+   it in `baseColorFactor`, so multiplying both keeps the hands matching the
+   face). Hair, top, bottom and footwear take the colorway color outright: the
+   bases' hair is untextured near-black, so a multiply would make every draw
+   black-haired.
+   Hair and clothing only come from bases of the identity's gender; glasses are
+   unisex. `default` has a female face and is catalogued female, so male
+   avatars draw every part from `realistic-male` and vary by colorway, glasses
+   and height. `selfie-girl`'s glasses mesh is a novelty reindeer set and is not
+   offered.
 4. **Scale**: a uniform height multiplier on the rig root.
 5. **Optimize**: `dedup` → `prune` → `meshopt`, written as a single-buffer GLB.
 

@@ -202,9 +202,16 @@ export async function composeAvatar(recipe, bytesByBase) {
 		const channel = slot && SLOT_CHANNEL[slot];
 		const color = channel && cw[channel];
 		if (!color) continue;
-		const [r, g, b] = color;
-		const a = mat.getBaseColorFactor()?.[3] ?? 1;
-		mat.setBaseColorFactor([r, g, b, a]);
+		// Skin is a complexion MULTIPLIER over the base's own tone: Wolf3D_Body
+		// (hands, neck) is untextured and keeps that tone in this factor, while
+		// the head keeps it in a texture under a white factor. Overwriting turned
+		// pale profiles' hands into flat white plastic. Every other channel is an
+		// absolute color (hair is untextured and near-black in the bases, so a
+		// multiply would make every draw black-haired).
+		const [fr, fg, fb, fa] = mat.getBaseColorFactor() || [1, 1, 1, 1];
+		mat.setBaseColorFactor(
+			channel === 'skin' ? [fr * color[0], fg * color[1], fb * color[2], fa] : [color[0], color[1], color[2], fa],
+		);
 		recolored.push(mat.getName());
 	}
 
