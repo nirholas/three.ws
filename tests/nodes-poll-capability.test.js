@@ -5,9 +5,11 @@ import { describe, it, expect, vi } from 'vitest';
 
 const claim = vi.fn(async () => null);
 const getNode = vi.fn();
+const touchNode = vi.fn(async () => {});
 vi.mock('../api/_lib/inference-nodes.js', () => ({
 	claimJob: (...a) => claim(...a),
 	getNode: (...a) => getNode(...a),
+	touchNode: (...a) => touchNode(...a),
 	verifyNodeSignature: () => true,
 }));
 vi.mock('../api/_lib/rate-limit.js', async (importOriginal) => {
@@ -37,11 +39,13 @@ describe('GET /api/nodes/jobs capability scope', () => {
 		const out = await call('image-gen');
 		expect(out.status).toBe(403);
 		expect(claim).not.toHaveBeenCalled();
+		expect(touchNode).not.toHaveBeenCalled();
 	});
 	it('serves a registered capability', async () => {
 		getNode.mockResolvedValue({ public_key: 'N1', capabilities: [{ capability: 'text-embedding', model: 'm' }] });
 		const out = await call('text-embedding');
 		expect(out.status).toBe(200);
 		expect(claim).toHaveBeenCalledOnce();
+		expect(touchNode).toHaveBeenCalledWith({ publicKey: 'N1', capability: 'text-embedding' });
 	});
 });
