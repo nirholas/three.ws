@@ -104,10 +104,15 @@ describe('client handling of region_restricted', () => {
 		expect(parseTerritory({ restricted_backends: 'hunyuan3d' })).toEqual(new Set());
 	});
 
-	it('is wired into the /forge composer', async () => {
+	it('is wired into both forge composers', async () => {
 		const { readFileSync } = await import('node:fs');
-		const src = readFileSync(new URL('../src/forge.js', import.meta.url), 'utf8');
-		expect(src).toContain('regionRestrictedError(data)');
-		expect(src).toContain('/api/forge?territory=1');
+		for (const file of ['../src/forge.js', '../src/forge-studio/forge.js']) {
+			const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+			expect(src).toContain('regionRestrictedError(data)');
+			expect(src).toContain('fetchRestrictedEngines(CLIENT_HEADERS)');
+			expect(src).toContain('restrictedEngines.has(btn.dataset.backend)');
+		}
+		const helper = readFileSync(new URL('../src/forge-region.js', import.meta.url), 'utf8');
+		expect(helper).toContain('/api/forge?territory=1');
 	});
 });
