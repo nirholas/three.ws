@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-05T01:54:27.080Z",
+	"generated_at": "2026-11-05T02:09:02.800Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4449,
+	"total": 4451,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -46,6 +46,26 @@
 			"title": "Every animation in the gallery plays again",
 			"summary": "Opening any of the 469 community clips on /animations showed \"Couldn't load this clip's preview\", and clips that did load froze in a T-pose at 0.0s once the detail view opened. Community clips now load in the gallery, the Animation Studio and every embed, and the detail view plays each clip from start to finish with a working scrubber.",
 			"link": "/animations",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "Forge stops dead-ending on engines your region can't use",
+			"summary": "Picking Hunyuan3D or the free Hunyuan3D / TRELLIS lane on /forge could fail with a bare error, and every retry hit the same wall, because those engines' model licence excludes some regions. Forge now greys those engines out up front with the reason, and if one is still picked it switches to an engine that can take your prompt and says so, with no action needed.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-05",
+			"type": "update",
+			"title": "Marketplace agent cards show their avatars again",
+			"summary": "Agent cards on /marketplace were showing only a letter where the avatar should be, because the stored picture was tied to the 3D viewer, which stays hidden until you hover a card. Every card now shows its avatar picture straight away, and hovering still swaps in the live, turning 3D model.",
+			"link": "/marketplace",
 			"tags": [
 				"fix"
 			]
@@ -1522,26 +1542,6 @@
 			"title": "Docs · Agent memory and learning",
 			"summary": "What your agents remember, the about-you profile and skills they draft from experience, the owner controls to edit, delete or turn learning off, the privacy guarantees on sale, and the /api/memory routes.",
 			"link": "/docs/agent-memory",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "launch",
-			"title": "Docs · Coin Control",
-			"summary": "How Coin Control turns an agent coin's creator fees into confirmed buybacks, on-chain burns, SOL rewards to holders and bounties, and publishes each with its Solana transaction.",
-			"link": "/docs/coin-control",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "launch",
-			"title": "Docs · NVIDIA Inception member perk",
-			"summary": "How NVIDIA Inception startups apply for $25 of prepaid three.ws credit and earn $10 more for a public shoutout, why a person reviews each one, and how both grants flow through the credit ledger.",
-			"link": "/docs/nvidia-inception-perk",
 			"tags": [
 				"launch"
 			]

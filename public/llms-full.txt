@@ -5431,6 +5431,7 @@ See every program your agents ran in their sandbox, read its output, download th
 ### MCP Tool Access Settings
 
 URL: https://three.ws/settings/mcp-tools
+Indexable: no (excluded from sitemap)
 
 Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.
 

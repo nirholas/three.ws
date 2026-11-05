@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-05T01:54:27.015Z",
+	"generated_at": "2026-11-05T02:09:02.729Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -10792,7 +10792,7 @@
 					"description": "Choose which three.ws MCP tool groups your agents, connectors and AI clients can call. Turn a group on to unlock its financial tools such as swaps, transfers and launches, or off to hide it everywhere. Every disabled-tool refusal links here.",
 					"added": "2026-11-04",
 					"auth": null,
-					"indexable": true,
+					"indexable": false,
 					"tags": [],
 					"showcase": false,
 					"priority": 0.3,
