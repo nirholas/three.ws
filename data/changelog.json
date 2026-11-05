@@ -12,6 +12,15 @@
 		},
 		{
 			"date": "2026-11-05",
+			"title": "Forge stops dead-ending on engines your region can't use",
+			"summary": "Picking Hunyuan3D or the free Hunyuan3D / TRELLIS lane on /forge could fail with a bare error, and every retry hit the same wall, because those engines' model licence excludes some regions. Forge now greys those engines out up front with the reason, and if one is still picked it switches to an engine that can take your prompt and says so, with no action needed.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-05",
 			"title": "Every animation in the gallery plays again",
 			"summary": "Opening any of the 469 community clips on /animations showed \"Couldn't load this clip's preview\", and clips that did load froze in a T-pose at 0.0s once the detail view opened. Community clips now load in the gallery, the Animation Studio and every embed, and the detail view plays each clip from start to finish with a working scrubber.",
 			"tags": [

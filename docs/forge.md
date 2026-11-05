@@ -430,6 +430,14 @@ curl 'https://three.ws/api/forge?catalog=1'
 # Probe live backend health (which lanes are up right now).
 curl 'https://three.ws/api/forge?health=1'
 
+# Which engines this caller's region excludes. Some model licences (the
+# Hunyuan3D community licences) exclude the EU, the UK and South Korea; an
+# unresolved country is treated as excluded. Per request, never edge-cached.
+# Picking an excluded engine explicitly answers 403 region_restricted with
+# retry_backends naming engines that serve the same request.
+curl 'https://three.ws/api/forge?territory=1'
+# {"country_resolved":false,"restricted_backends":["hunyuan3d","huggingface","modly_hunyuan"]}
+
 # Start a free text-to-3D generation. A lane that finishes inside the request
 # (and any cache hit) answers with status "done", a glb_url, and a null job_id;
 # slower lanes answer with a job_id to poll instead.

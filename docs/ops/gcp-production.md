@@ -942,7 +942,14 @@ from widget_views where created_at > now() - interval '1 day';
 ```
 
 Until that header exists the code degrades to null rather than guessing, which
-is the intended behavior. Note the LB does not strip an inbound copy of these
+is the intended behavior for analytics. It is **not** harmless for Forge: the
+territory rule (`api/_lib/forge-territory.js`) fails closed on an unknown
+country, so without this header every visitor worldwide is refused the
+Tencent-model lanes (`hunyuan3d`, `huggingface`, `modly_hunyuan`). The composer
+disables them via `GET /api/forge?territory` and hops a stale pick to an
+allowed engine, but they stay unusable for everyone until the header is set.
+Verify after the change: `curl https://three.ws/api/forge?territory=1` from a
+non-restricted country returns `"country_resolved":true`. Note the LB does not strip an inbound copy of these
 headers, so a client can forge one; `clientCountry` validates every value down
 to two ASCII letters so the worst case is a visitor mislabeling its own row.
 
