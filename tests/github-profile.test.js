@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ABOUT_LINKS, buildProfile } from '../scripts/build-github-profile.mjs';
+import { ABOUT_LINKS, buildProfile, onlyStampChanged } from '../scripts/build-github-profile.mjs';
 import { renderVisuals, renderActivityVisuals, shortTitle } from '../scripts/lib/profile-visuals.mjs';
 import { summarizeActivity, BULK_LINES } from '../scripts/lib/profile-activity.mjs';
 
@@ -169,5 +169,27 @@ describe('github profile', () => {
 			expect(without.readme).toContain('## About');
 			expect(without.readme).not.toContain('## How I build');
 		});
+	});
+
+	describe('scheduled refresh', () => {
+		const page = (date, streak) => `## How I build\n\nPulled from the GitHub API on ${date}. Commit counts follow.\n\n- Current streak: ${streak} days.\n`;
+
+		it('treats a rebuild that only moves the pulled-on date as no change', () => {
+			expect(onlyStampChanged(page('November 3, 2026', 15), page('November 5, 2026', 15))).toBe(true);
+		});
+
+		it('commits a rebuild whose numbers moved along with the date', () => {
+			expect(onlyStampChanged(page('November 3, 2026', 15), page('November 5, 2026', 17))).toBe(false);
+		});
+
+		it('reports identical text as no stamp change so the caller sees no diff at all', () => {
+			expect(onlyStampChanged(page('November 3, 2026', 15), page('November 3, 2026', 15))).toBe(false);
+		});
+	});
+
+	it('reports the star total so the refresh commit can name it', () => {
+		const out = buildProfile(repos);
+		expect(out.stars).toBe(952);
+		expect(out.readme).toContain(`${out.count} repositories, 952 stars`);
 	});
 });

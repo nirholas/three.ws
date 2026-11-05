@@ -41,7 +41,7 @@ node scripts/build-github-profile.mjs --out /tmp/profile             # generate 
 node scripts/build-github-profile.mjs --out /tmp/profile --publish   # create the repo if missing, commit, push
 ```
 
-The catalog is built from the live GitHub listing, so it cannot drift from what is actually public. Re-run it after adding or renaming repos.
+The catalog is built from the live GitHub listing, so it cannot drift from what is actually public. It also rebuilds itself: Cloud Scheduler job `github-profile-refresh` runs it with `--publish` every day at 09:17 UTC through Cloud Build ([deploy/github-profile/](../deploy/github-profile/README.md), setup `node scripts/schedule-github-profile.mjs`). A rebuild where only the "Pulled from" date changed is not committed. Never edit the profile README on github.com; the next run overwrites it.
 
 It is the owner's personal profile, so the copy stays personal: three.ws appears as one section and in its own repo listings, never as the header, badges, contact or author. The boost sweep skips the profile repo for the same reason (its generic block plugs the platform). The generator owns `README.md`, `assets/`, `llms.txt`, `llms-full.txt`, `CITATION.cff`, `AGENTS.md` and `repos.json` there.
 

@@ -17,7 +17,7 @@
 //
 // Auth: gh must be authenticated as the owner.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { collectActivity, summarizeActivity } from './lib/profile-activity.mjs';
 import { renderActivityVisuals, renderVisuals } from './lib/profile-visuals.mjs';
@@ -53,6 +53,14 @@ const CATEGORIES = [
 	['On-chain experiments and collectibles', 'Small, shippable ideas that live fully on-chain: receipts, postcards, mints and byte-level curiosities.', (r) => has(r, ['solana', 'onchain', 'on-chain', 'nft', 'calldata', 'evm', 'meme'])],
 	['Developer tools and everything else', 'Utilities, data tools and side projects.', () => true],
 ];
+
+// The "Pulled from the GitHub API on <date>" stamp changes every day. A rebuild
+// whose only difference is that stamp carries no news, so it is not committed.
+const STAMP = /^Pulled from the GitHub API on [A-Z][a-z]+ \d{1,2}, \d{4}\./gm;
+const DATED = ['README.md', 'llms-full.txt'];
+export function onlyStampChanged(before, after) {
+	return before !== after && before.replace(STAMP, '') === after.replace(STAMP, '');
+}
 
 function has(r, topics) {
 	return (r.topics || []).some((t) => topics.includes(t));
@@ -258,7 +266,7 @@ authors:
 		stars: r.stargazerCount,
 		homepage: r.homepageUrl || null,
 	}));
-	return { readme, llms, llmsFull, citation, agents, assets, json: `${JSON.stringify(json, null, '\t')}\n`, count: repos.length, groups };
+	return { readme, llms, llmsFull, citation, agents, assets, json: `${JSON.stringify(json, null, '\t')}\n`, count: repos.length, stars: totalStars, groups };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
@@ -306,11 +314,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 		mkdirSync(assetDir, { recursive: true });
 		for (const f of Object.keys(out.assets)) copyFileSync(join(OUT, 'assets', f), join(assetDir, f));
 		run(clone, 'add', '-A', '--', ...owned, 'assets');
-		if (!run(clone, 'status', '--porcelain').trim()) {
+		const changed = run(clone, 'diff', '--cached', '--name-only').trim().split('\n').filter(Boolean);
+		const unchanged = changed.every((f) => DATED.includes(f) && onlyStampChanged(run(clone, 'show', `HEAD:${f}`), readFileSync(join(clone, f), 'utf8')));
+		if (unchanged) {
 			console.log('profile repo already up to date');
 			process.exit(0);
 		}
-		run(clone, 'commit', '--quiet', '-m', `docs: rebuild the profile with animated charts and the catalog of ${out.count} public repositories`, '-m', 'Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>');
+		run(clone, 'commit', '--quiet', '-m', `docs: refresh the profile catalog and charts from the live GitHub listing (${out.count} public repositories, ${out.stars} stars)`);
 		run(clone, 'push', '--quiet', 'origin', 'HEAD');
 		console.log(`published https://github.com/${OWNER}/${OWNER}`);
 	}

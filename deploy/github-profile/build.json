@@ -1,0 +1,33 @@
+{
+	"steps": [
+		{
+			"id": "refresh-profile",
+			"name": "node:22-bookworm",
+			"entrypoint": "bash",
+			"args": [
+				"-c",
+				"set -euo pipefail\nGH_VERSION=2.103.3\ncurl -fsSL \"https://github.com/cli/cli/releases/download/v$${GH_VERSION}/gh_$${GH_VERSION}_linux_amd64.tar.gz\" | tar xz -C /tmp\nexport PATH=\"/tmp/gh_$${GH_VERSION}_linux_amd64/bin:$$PATH\"\nmkdir -p \"$$TMPDIR\"\ngit clone --quiet --depth 1 --filter=blob:none --sparse https://github.com/nirholas/three.ws.git /workspace/src\ncd /workspace/src\ngit sparse-checkout set scripts\nnode scripts/build-github-profile.mjs --out /workspace/profile --publish"
+			],
+			"env": [
+				"TMPDIR=/workspace/tmp",
+				"GIT_AUTHOR_NAME=nirholas",
+				"GIT_AUTHOR_EMAIL=22895867+nirholas@users.noreply.github.com",
+				"GIT_COMMITTER_NAME=nirholas",
+				"GIT_COMMITTER_EMAIL=22895867+nirholas@users.noreply.github.com"
+			],
+			"secretEnv": ["GH_TOKEN"]
+		}
+	],
+	"availableSecrets": {
+		"secretManager": [
+			{
+				"versionName": "projects/aerial-vehicle-466722-p5/secrets/github-profile-token/versions/latest",
+				"env": "GH_TOKEN"
+			}
+		]
+	},
+	"serviceAccount": "projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com",
+	"options": { "logging": "CLOUD_LOGGING_ONLY" },
+	"timeout": "3600s",
+	"tags": ["github-profile-refresh"]
+}
