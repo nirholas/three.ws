@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-05",
+			"title": "Every animation in the gallery plays again",
+			"summary": "Opening any of the 469 community clips on /animations showed \"Couldn't load this clip's preview\", and clips that did load froze in a T-pose at 0.0s once the detail view opened. Community clips now load in the gallery, the Animation Studio and every embed, and the detail view plays each clip from start to finish with a working scrubber.",
+			"tags": [
+				"fix"
+			],
+			"link": "/animations"
+		},
+		{
+			"date": "2026-11-05",
 			"title": "Auto-rigged legs no longer drag cloth between them",
 			"summary": "Rigging a character in wide trousers or a skirt used to blend both legs' influence on the cloth between them, so a step or a kick stretched a sheet of fabric from one leg to the other. The rigger now commits every vertex to the leg it actually sits on, with a narrow soft seam at the midline, so each trouser leg moves with its own leg.",
 			"tags": [

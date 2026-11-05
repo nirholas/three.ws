@@ -936,14 +936,34 @@ export function scaleClipSpeed(clip, factor) {
  * Convenience: parse a clip from its three.js JSON (the on-disk clip format),
  * naming it. Centralised so browser and server load clips identically.
  *
+ * AnimationClip.parse runs JSON.parse on `userData`, the string form
+ * AnimationClip.toJSON writes. Clips from the motion seed pipeline
+ * (toLibraryClip in api/_lib/motion-seed.js) carry it as an object instead, and
+ * parse() throws `"[object Object]" is not valid JSON` on those, so this hands
+ * parse() the clip without userData and attaches it afterwards in either form.
+ * userData is provenance only; an unreadable one never costs the motion.
+ *
  * @param {object} json
  * @param {string} name
  * @returns {AnimationClip}
  */
 export function parseClipJSON(json, name) {
-	const clip = AnimationClip.parse(json);
+	const { userData, ...rest } = json;
+	const clip = AnimationClip.parse(rest);
+	clip.userData = readClipUserData(userData);
 	if (name) clip.name = name;
 	return clip;
+}
+
+function readClipUserData(userData) {
+	if (userData && typeof userData === 'object') return { ...userData };
+	if (typeof userData !== 'string' || !userData) return {};
+	try {
+		const parsed = JSON.parse(userData);
+		return parsed && typeof parsed === 'object' ? parsed : {};
+	} catch {
+		return {};
+	}
 }
 
 /**

@@ -15,7 +15,13 @@ import { sql } from '../_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { getObjectBuffer, thumbnailUrl } from '../_lib/r2.js';
 import { isUuid } from '../_lib/validate.js';
-import { clipSchema, editorDocSchema, validateClipTrackStrides, materializeClip } from './clips.js';
+import {
+	clipSchema,
+	editorDocSchema,
+	validateClipTrackStrides,
+	materializeClip,
+	toThreeClipJSON,
+} from './clips.js';
 import { z } from 'zod';
 
 const patchSchema = z.object({
@@ -123,7 +129,7 @@ async function handleGet(req, res, auth, id) {
 			frame_count: row.frame_count,
 			fps: row.fps,
 			loop: row.loop,
-			clip, // baked THREE.AnimationClip.toJSON(); null behind the paywall
+			clip: toThreeClipJSON(clip), // baked THREE.AnimationClip.toJSON(); null behind the paywall
 			paywalled,
 			download_url: paywalled ? `/api/x402/animation-download?id=${row.id}` : null,
 			editor_doc: ownerView ? row.editor_doc || null : null, // editing source is owner-only

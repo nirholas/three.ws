@@ -19,6 +19,7 @@ import {
 	hipRestLocalHeight,
 	hipsParentWorldQuat,
 	morphTargetMapFromObject,
+	parseClipJSON,
 	retargetClip,
 } from './animation-retarget.js';
 import { relaxUndrivenArms } from './animation-arm-relax.js';
@@ -572,9 +573,7 @@ export class AnimationManager {
 			throw new Error(`animation ${name} is a paid clip, unlock it at ${json.clip.download_url}`);
 		}
 		if (!clipJson) throw new Error(`clip payload missing from ${url}`);
-		const clip = AnimationClip.parse(clipJson);
-		clip.name = name;
-		return clip;
+		return parseClipJSON(clipJson, name);
 	}
 
 	/**
@@ -588,8 +587,7 @@ export class AnimationManager {
 	injectClip(name, clipJson, opts = {}) {
 		if (!clipJson || this.clips.has(name)) return;
 		try {
-			const clip = AnimationClip.parse(clipJson);
-			clip.name = name;
+			const clip = parseClipJSON(clipJson, name);
 			this._registerParsedClip(name, clip, opts);
 		} catch (err) {
 			log.warn(`[AnimationManager] injectClip "${name}" parse error:`, err.message);

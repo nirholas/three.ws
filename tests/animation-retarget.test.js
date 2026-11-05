@@ -39,6 +39,7 @@ import {
 	hipsParentWorldQuat,
 	retargetClip,
 	retargetClipToObject,
+	parseClipJSON,
 	scaleClipSpeed,
 	trimClip,
 	blendClipLoop,
@@ -476,6 +477,46 @@ describe('retargetClipToObject', () => {
 		const r = retargetClipToObject(clip, rig, { minCoverage: 0.5 });
 		expect(r.clip).not.toBeNull();
 		expect(r.clip.tracks.some((t) => t.name === 'mixamorig:LeftArm.quaternion')).toBe(true);
+	});
+});
+
+describe('parseClipJSON', () => {
+	// A clip in the stored shape of a published community clip: toLibraryClip
+	// (api/_lib/motion-seed.js) writes userData as an object, while three's
+	// AnimationClip.toJSON writes it as a JSON string.
+	const storedClip = (userData) => ({
+		name: 'gen-wave-hello',
+		duration: 1,
+		tracks: [
+			{ name: 'Hips.quaternion', type: 'quaternion', times: [0, 1], values: [0, 0, 0, 1, 0, 0, 0, 1] },
+		],
+		uuid: 'c0ffee00-0000-4000-8000-000000000000',
+		blendMode: 2500,
+		...(userData === undefined ? {} : { userData }),
+	});
+
+	it('parses a clip whose userData is an object (every published community clip)', () => {
+		const clip = parseClipJSON(storedClip({ source: 'text2motion', prompt_id: 'wave-hello' }), 'wave');
+		expect(clip.name).toBe('wave');
+		expect(clip.tracks).toHaveLength(1);
+		expect(clip.userData).toEqual({ source: 'text2motion', prompt_id: 'wave-hello' });
+	});
+
+	it('still parses the AnimationClip.toJSON string form', () => {
+		const clip = parseClipJSON(storedClip(JSON.stringify({ basis: 'canonical-rest-v2' })));
+		expect(clip.userData).toEqual({ basis: 'canonical-rest-v2' });
+	});
+
+	it('does not let malformed or missing userData stop the clip from playing', () => {
+		expect(parseClipJSON(storedClip('{not json')).userData).toEqual({});
+		expect(parseClipJSON(storedClip(undefined)).userData).toEqual({});
+		expect(parseClipJSON(storedClip(null)).userData).toEqual({});
+	});
+
+	it('does not mutate the caller\'s JSON', () => {
+		const json = storedClip({ source: 'text2motion' });
+		parseClipJSON(json);
+		expect(json.userData).toEqual({ source: 'text2motion' });
 	});
 });
 

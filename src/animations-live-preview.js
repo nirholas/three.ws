@@ -179,7 +179,25 @@ export class AnimationLivePreview {
 
 	_restoreRestPose() {
 		this._mixer.stopAllAction();
-		for (const [node, t] of this._restPose) {
+		this._applyPose(this._restPose);
+	}
+
+	/** Every node's current transform, keyed like _restPose. */
+	_snapshotPose() {
+		const pose = new Map();
+		for (const node of this._restPose.keys()) {
+			pose.set(node, {
+				p: node.position.clone(),
+				q: node.quaternion.clone(),
+				s: node.scale.clone(),
+			});
+		}
+		return pose;
+	}
+
+	/** Write a pose map back onto the model without touching the mixer. */
+	_applyPose(pose) {
+		for (const [node, t] of pose) {
 			node.position.copy(t.p);
 			node.quaternion.copy(t.q);
 			node.scale.copy(t.s);
@@ -229,22 +247,34 @@ export class AnimationLivePreview {
 		const box = new THREE.Box3();
 		const v = new THREE.Vector3();
 		const samples = [0.05, 0.3, 0.55, 0.8];
+		// Sample on a throwaway mixer. The live mixer's clipAction(clip) is the
+		// very action that may be playing (refit() frames mid-playback), and
+		// probing through it would stop the preview it is framing.
+		const playing = this._action?.isRunning() || this._fading.length > 0;
+		const shown = playing ? this._snapshotPose() : null;
+		const probeMixer = new THREE.AnimationMixer(this._model);
 		for (const clip of clips) {
-			this._mixer.stopAllAction();
-			const probe = this._mixer.clipAction(clip);
+			probeMixer.stopAllAction();
+			const probe = probeMixer.clipAction(clip);
 			probe.play();
 			for (const s of samples) {
-				this._mixer.setTime(clip.duration * s);
+				probeMixer.setTime(clip.duration * s);
 				this._model.updateMatrixWorld(true);
 				for (const b of this._bones) box.expandByPoint(b.getWorldPosition(v));
 			}
-			probe.stop();
 		}
-		// Sampling drove the skeleton; put it back before the caller starts the
-		// real action, so a clip that animates only the upper body does not
-		// inherit a probe's legs.
-		this._mixer.setTime(0);
-		this._restoreRestPose();
+		probeMixer.stopAllAction();
+		probeMixer.uncacheRoot(this._model);
+		// Sampling drove the skeleton; put it back. A stage that is already
+		// playing gets back the exact frame it was showing (the live mixer only
+		// rewrites a property whose value changed, so it would not repair the
+		// probe's pose on its own); an idle one returns to rest so a clip that
+		// animates only the upper body does not inherit a probe's legs.
+		if (shown) {
+			this._applyPose(shown);
+		} else {
+			this._restoreRestPose();
+		}
 		box.expandByVector(new THREE.Vector3(0.24, 0.15, 0.24));
 		box.min.y = Math.min(box.min.y, 0);
 		const center = box.getCenter(new THREE.Vector3());

@@ -282,6 +282,17 @@ export function validateClipTrackStrides(clip) {
 	return null;
 }
 
+// The served clip is THREE.AnimationClip.toJSON() output, so any caller can
+// hand it straight to THREE.AnimationClip.parse(), which JSON.parses
+// `userData`. Clips published by the motion seed pipeline (scripts/gcp/
+// seed-motion.mjs via toLibraryClip) were stored with userData as an object,
+// so it is re-serialized here rather than shipped in a shape parse() rejects.
+// Returns the input untouched when there is nothing to convert.
+export function toThreeClipJSON(clip) {
+	if (!clip || !clip.userData || typeof clip.userData !== 'object') return clip;
+	return { ...clip, userData: JSON.stringify(clip.userData) };
+}
+
 // Inline small clips as JSONB; offload large ones to R2 and return the pointer.
 // On R2 failure returns { error } so callers can surface a 502 without throwing.
 export async function materializeClip(clip, { userId, slug }) {
