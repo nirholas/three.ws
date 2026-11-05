@@ -2,6 +2,14 @@
  * Agent Sniper — manual position close (one-tap "Sell now").
  *
  *   POST /api/sniper/close   → owner force-closes ONE open sniper position now.
+ *   GET  /api/sniper/close?agent_id=&network=
+ *                            → the caller's sniper positions on that agent that
+ *                              are still holding (open) or mid-flight (opening /
+ *                              closing). This is what a POST could close, read in
+ *                              one call, so "Sell all" in the wallet hub can route
+ *                              each sniper-held coin through this endpoint (correct
+ *                              realized-PnL booking, row claim against the worker)
+ *                              instead of a plain wallet sell.
  *
  * The autonomous worker already exits on take-profit / stop-loss / trailing /
  * timeout, and the kill switch exits EVERY position. This endpoint is the missing
@@ -43,6 +51,62 @@ const BODY = z.object({
 	mint: z.string().min(32).max(44).optional(),
 });
 
+const LIST_QUERY = z.object({
+	agent_id: z.string().uuid(),
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+// Reads move nothing, so any authenticated bearer may list; only the POST that
+// sells needs a spend-scoped bearer.
+async function resolveReaderId(req) {
+	const session = await getSessionUser(req);
+	if (session) return session.id;
+	const bearer = await authenticateBearer(extractBearer(req));
+	return bearer?.userId || null;
+}
+
+async function listClosable(req, res) {
+	const userId = await resolveReaderId(req);
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in to manage the sniper');
+	const rl = await limits.authedReadIp(clientIp(req));
+	if (!rl.success) return rateLimited(res, rl);
+
+	const url = new URL(req.url, 'http://x');
+	const parsed = LIST_QUERY.safeParse({
+		agent_id: url.searchParams.get('agent_id') || undefined,
+		network: url.searchParams.get('network') || undefined,
+	});
+	if (!parsed.success) {
+		return error(res, 400, 'bad_request', parsed.error.issues[0]?.message || 'invalid request');
+	}
+	const { agent_id, network } = parsed.data;
+
+	// Owner-scoped by user_id: another user's agent simply has no rows here.
+	const rows = await sql`
+		SELECT id, mint, symbol, name, status, base_amount, opened_at
+		FROM agent_sniper_positions
+		WHERE agent_id = ${agent_id} AND user_id = ${userId} AND network = ${network}
+		  AND status IN ('opening', 'open', 'closing')
+		ORDER BY opened_at DESC NULLS LAST
+		LIMIT 200
+	`;
+	return json(res, 200, {
+		data: {
+			agent_id,
+			network,
+			positions: rows.map((r) => ({
+				id: r.id,
+				mint: r.mint,
+				symbol: r.symbol || null,
+				name: r.name || null,
+				status: r.status,
+				base_amount: r.base_amount != null ? String(r.base_amount) : null,
+				opened_at: r.opened_at || null,
+			})),
+		},
+	});
+}
+
 async function resolveUserId(req) {
 	const session = await getSessionUser(req);
 	if (session) return session.id;
@@ -52,8 +116,9 @@ async function resolveUserId(req) {
 }
 
 export default async function handler(req, res) {
-	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['POST'])) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
+	if (req.method === 'GET') return listClosable(req, res);
 
 	// Not behind wrap(): answer a bearer without wallet:write here.
 	let userId;
