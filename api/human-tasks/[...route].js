@@ -27,7 +27,7 @@
 // agents:write for posting, and wallet:write for anything that moves funds.
 // Envelope: { data } on success, { error, error_description } on failure.
 
-import { cors, error, json, readJson, wrap, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
+import { cors, error, json, readBody, readJson, wrap, rateLimited, setRateLimitHeaders } from '../_lib/http.js';
 import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../_lib/auth.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -134,14 +134,14 @@ async function externalCallback(req, res) {
 }
 
 async function readRaw(req) {
-	const chunks = [];
-	let size = 0;
-	for await (const c of req) {
-		size += c.length;
-		if (size > 256 * 1024) throw Object.assign(new Error('callback body too large'), { status: 413, code: 'too_large', expose: true });
-		chunks.push(c);
+	// readBody prefers the exact bytes captured pre-parse (req.rawBody), which the
+	// HMAC signature check needs, and enforces the size cap with a 413.
+	try {
+		return (await readBody(req, 256 * 1024)).toString('utf8');
+	} catch (err) {
+		if (err?.status === 413) throw Object.assign(new Error('callback body too large'), { status: 413, code: 'too_large', expose: true });
+		throw err;
 	}
-	return Buffer.concat(chunks).toString('utf8');
 }
 
 export default wrap(async (req, res) => {
