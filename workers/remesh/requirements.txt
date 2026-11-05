@@ -6,7 +6,7 @@ numpy==1.26.4
 # Quad/low-poly UV atlas generation (re-unwrap before texture re-bake). MIT.
 xatlas==0.0.9
 # Texture atlas read/write for the re-bake step.
-# Pillow 12.3.0, not 11.x: every 11.x release carries open advisories, several of
+# Pillow 13.0.0: every 11.x and 12.x release carries open advisories, several of
 # them heap out-of-bounds writes reachable from a decoded image. `npm run
 # audit:deps` surfaces the next one.
 Pillow==13.0.0

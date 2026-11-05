@@ -1,7 +1,7 @@
 # TripoSplat's own deps (numpy, safetensors, pillow, tqdm) plus torch from the Dockerfile.
 numpy
 safetensors
-Pillow==12.3.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
+Pillow==13.0.0  # first release clear of the 12.x decoder advisories; needs Python 3.11
 tqdm
 
 fastapi==0.115.0

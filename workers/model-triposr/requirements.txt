@@ -5,14 +5,12 @@
 
 torch>=2.3.0
 trimesh>=4.4.0
-Pillow==12.3.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
+Pillow==13.0.0  # first release clear of the 12.x decoder advisories; needs Python 3.11
 
 # Background removal (TripoSR works best with isolated subject).
-# 2.0.69 is the newest release that installs on Python 3.10 (2.0.75 and later
-# need Python 3.11 and numpy 2.3; this image is 3.10). The advisories fixed only
-# in 2.0.75 and 2.0.82 live in rembg's own HTTP server and its custom-model
-# loader, neither of which this worker starts or exposes.
-rembg[gpu]==2.0.69
+# 2.0.86 is the first rembg that accepts Pillow 13 and clears every published
+# rembg advisory; it needs Python 3.11 and numpy 2.3+ (hence torch 2.5.1).
+rembg[gpu]==2.0.86
 
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0

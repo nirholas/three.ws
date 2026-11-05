@@ -3,7 +3,12 @@
 # this file (upstream is installed from its pinned checkout).
 trimesh>=4.4.0,<5
 numpy>=1.24,<2
-Pillow==11.3.0  # newest under the pillow<12 cap of upstream gradio==5.49.0
+# Overrides the pillow<12 cap of upstream's gradio==5.49.0: 13.0.0 is the
+# first release that fixes the decoder advisories still open in 11.x/12.x.
+# upstream's notebook/inference.py imports gradio at module load but only calls
+# it from a visualisation helper this worker never runs; gradio 5.49.0 imports
+# and builds Blocks under Pillow 13.0.0.
+Pillow==13.0.0
 
 fastapi>=0.115,<1
 uvicorn[standard]>=0.32,<1

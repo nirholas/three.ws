@@ -8,11 +8,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive \
     TRIPOSPLAT_REPO=/opt/triposplat
 
+# Python 3.11, not jammy's default 3.10: Pillow 13 (which fixes the decoder
+# advisories still open in 12.x, and this service decodes caller images) ships
+# no 3.10 build. workers/texture and workers/modly run the same 3.11-on-jammy layout.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.10 python3-pip git curl libgl1 libglib2.0-0 \
+        python3.11 python3-pip git curl libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python \
     && pip install --upgrade pip setuptools wheel
 
 RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121

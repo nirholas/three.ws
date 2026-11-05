@@ -10,19 +10,24 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBIAN_FRONTEND=noninteractive \
     TORCH_CUDA_ARCH_LIST="8.9+PTX"
 
+# Python 3.11, not jammy's default 3.10: Pillow 13 (which fixes the decoder
+# advisories still open in 12.x, and this service decodes caller images) ships
+# no 3.10 build. workers/texture and workers/modly run the same 3.11-on-jammy layout.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.10 python3.10-dev python3-pip \
+        python3.11 python3.11-dev python3-pip \
         git curl wget build-essential ninja-build \
         libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python \
     && pip install --upgrade pip setuptools wheel
 
 # torch first (cached layer), matching the CUDA 12.1 base. torchvision is a hard
 # dependency of hy3dgen's shape + paint pipelines (image backbones / transforms)
-# and is not pulled in transitively, so it's pinned alongside torch here.
-RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.pytorch.org/whl/cu121
+# and is not pulled in transitively, so it's pinned alongside torch here. 2.5.1,
+# not 2.3.x: transformers 5 needs torch>=2.4 and rembg 2.0.86 needs numpy 2.3,
+# which torch builds before 2.4 cannot load (numpy-1 ABI).
+RUN pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
@@ -35,9 +40,9 @@ RUN pip install -r /app/requirements.txt
 # at build time and PEP517 isolation would hide the one installed above.
 # --no-deps is EQUALLY required: hy3dgen's own install_requires resolves
 # unpinned transformers/diffusers releases that silently REPLACE the pinned,
-# torch-2.3-compatible stack from requirements.txt (the first deploy shipped a
-# transformers that demands torch>=2.4 and a diffusers whose FLAX imports it
-# breaks — the paint pipeline import died at model load). Every runtime dep the
+# torch-compatible stack from requirements.txt (the first deploy shipped a
+# transformers that demanded a newer torch than the image had and a diffusers
+# whose FLAX imports it broke, the paint pipeline import died at model load). Every runtime dep the
 # package needs is already pinned in requirements.txt.
 RUN git clone https://github.com/Tencent/Hunyuan3D-2.git /tmp/hy3d \
     && cd /tmp/hy3d \

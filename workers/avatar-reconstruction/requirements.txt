@@ -1,5 +1,8 @@
 # ── Face detection & landmarks ────────────────────────────────────────────────
-mediapipe==0.10.14
+# 0.10.21 is the last release that ships the legacy `mp.solutions` FaceMesh /
+# FaceDetection API face_pipeline.py is built on (0.10.30 removed it), and it
+# caps numpy below 2.
+mediapipe==0.10.21
 
 # ── GLB manipulation ──────────────────────────────────────────────────────────
 pygltflib==1.16.2
@@ -8,16 +11,17 @@ pygltflib==1.16.2
 scipy>=1.11.0
 
 # ── Image processing ──────────────────────────────────────────────────────────
-Pillow==12.3.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
+Pillow==13.0.0  # clears every 11.x/12.x decoder advisory; needs Python 3.11 (see Dockerfile)
 numpy<2.0
 opencv-python-headless>=4.9.0
 
 # ── Background removal ────────────────────────────────────────────────────────
 # [gpu] pulls in onnxruntime-gpu so rembg uses CUDA when the L4 is present.
-# 2.0.59 clears the 2.0.57-and-earlier CORS/SSRF advisories. The fixes for the
-# rest landed in 2.0.75, which needs Python 3.11 and numpy 2.3; this image is
-# Python 3.10 with mediapipe holding numpy<2. All of them live in rembg's own
-# HTTP server (`rembg s`), which this worker never starts: it calls rembg.remove.
+# 2.0.69 is the newest rembg that runs on numpy 1.x: 2.0.75+ needs numpy 2.3,
+# and mediapipe 0.10.21 (above) holds numpy<2. The advisories fixed after 2.0.69
+# live in rembg's own HTTP server (`rembg s`) and its custom-model session
+# loader, neither of which this worker reaches: it only calls rembg.remove with
+# the bundled default model.
 rembg[gpu]==2.0.69
 
 # ── Mesh operations (UV pre-computation, runs once at build time) ─────────────

@@ -103,9 +103,8 @@ def test_empty_and_corrupt_masks_are_rejected():
 
 
 def test_mask_in_a_format_outside_png_jpeg_webp_is_rejected():
-    # Pillow 11.3.0 (held there by upstream's gradio==5.49.0) carries open
-    # advisories in its TIFF, GIF and BMP decoders, so a caller's mask never
-    # reaches one.
+    # Defence in depth: TIFF, GIF and BMP are the Pillow decoders with the
+    # longest advisory history, so a caller's mask never reaches one.
     for fmt in ("TIFF", "GIF", "BMP"):
         buf = io.BytesIO()
         Image.fromarray(np.full((4, 4), 255, np.uint8), "L").save(buf, format=fmt)

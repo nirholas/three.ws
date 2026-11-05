@@ -4,27 +4,26 @@
 # torchvision 0.21.0 (cu124) install first in the Dockerfile; hy3dgen installs
 # from a pinned Tencent/Hunyuan3D-2 commit with --no-deps (shape pipeline only:
 # the paint pipeline is never invoked, see README.md).
-diffusers==0.31.0
-transformers==4.57.6
+diffusers==0.38.0
+transformers==5.10.1
 accelerate==1.15.0
-huggingface_hub==0.36.2
-safetensors==0.5.3
+huggingface_hub==1.33.0
+safetensors==0.8.0
 einops==0.8.0
 omegaconf==2.3.0
 PyYAML==6.0.2
-numpy==1.26.4
-scipy==1.13.1
+numpy==2.3.5
+scipy==1.16.3
 Pillow==13.0.0
 trimesh==4.5.3
-pymeshlab==2023.12.post2
-scikit-image==0.24.0
-opencv-python-headless==4.10.0.84
-# rembg 2.0.70+ requires numpy>=2.3, which this venv cannot take: numpy stays
-# on 1.26 for the pinned diffusers/pymeshlab builds. 2.0.69 is the newest release
-# that resolves here. GHSA-3wqj-33cg-xc48 (path traversal via custom model
-# loading, fixed in 2.0.75) is not reachable: the extensions call rembg's
-# built-in u2net session, never a caller-supplied model path.
-rembg==2.0.69
+pymeshlab==2025.7.post1
+scikit-image==0.26.0
+opencv-python-headless==4.13.0.92
+# rembg 2.0.86 clears every published rembg advisory and accepts Pillow 13; it
+# needs numpy>=2.3, scipy>=1.16.3 and scikit-image 0.26, hence the numpy-2
+# builds of pymeshlab (2025.7) and opencv above. diffusers 0.38.0 and
+# transformers 5.10.1 are the first releases clear of their advisories.
+rembg==2.0.86
 onnxruntime-gpu==1.20.0
 pybind11==2.13.6
 ninja==1.11.1.1

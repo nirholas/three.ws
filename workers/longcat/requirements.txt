@@ -5,7 +5,7 @@
 # for an in-process weights download that no longer exists (weights are staged
 # once by stage-weights.sh on the operator's machine, never by the container).
 # Because this file installs last, that pin silently downgraded the hub below
-# diffusers 0.35.1's huggingface-hub>=0.34.0 floor, and pip reported the conflict
+# transformers' huggingface-hub floor, and pip reported the conflict
 # as a non-fatal warning the build gates could not catch. Let diffusers and
 # transformers resolve it, with the floor enforced in constraints.txt.
 fastapi==0.115.12

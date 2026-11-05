@@ -5,33 +5,31 @@
 # outage proved an unpinned transformers resolves a torch-2.5-era release
 # (DTensor import) that fails to load on the torch pinned below.
 
-# ── Model stack (torch 2.3.1/cu121 era, matching the Dockerfile pin) ─────────
-# transformers 4.57.6 and accelerate 1.15.0 are the newest releases that clear
-# their advisories (ReDoS, model-file deserialization, sharded-checkpoint path
-# traversal) and still run on torch 2.3.1: transformers only imports DTensor on
-# torch>=2.5 and only disables itself below torch 2.1. Tiny seeded Dinov2, CLIP
-# and UNet models give bit-identical outputs against 4.46.3/0.34.2 on torch 2.3.1.
-# diffusers stays on 0.31.0: its open advisories need 0.38 and are reachable only
-# by loading an attacker-chosen repo or custom_pipeline, and this worker loads the
-# operator-staged weights plus hy3dgen's own in-image pipeline code.
-diffusers==0.31.0
-transformers==4.57.6
+# ── Model stack (torch 2.5.1/cu121, matching the Dockerfile pin) ─────────────
+# diffusers 0.38.0 + transformers 5.10.1 clear every open advisory on both
+# (ReDoS, model-file deserialization, custom_pipeline code loading) and are the
+# pair workers/model-partcrafter and workers/modly already run. transformers 5
+# needs huggingface_hub 1.x and torch>=2.4; accelerate 1.15.0 clears the
+# sharded-checkpoint path traversal.
+diffusers==0.38.0
+transformers==5.10.1
 accelerate==1.15.0
-safetensors>=0.4.0
+safetensors==0.8.0
+huggingface_hub==1.33.0
 einops==0.8.0
 omegaconf==2.3.0
-numpy==1.26.4
+numpy==2.3.5
 
 # ── Geometry / texture processing (hy3dgen shapegen + texgen runtime deps) ───
 trimesh==4.5.3
-pymeshlab==2023.12.post2
+pymeshlab==2025.7.post1
 pygltflib==1.16.2
 xatlas==0.0.9
-opencv-python-headless==4.10.0.84
+opencv-python-headless==4.13.0.92
 # hy3dgen's surface extractor does `from skimage import measure` at module
 # import time (marching cubes), so scikit-image is a hard runtime dep even
 # though the upstream requirements file comments it out.
-scikit-image==0.24.0
+scikit-image==0.26.0
 # The in-tree extension builds run with --no-build-isolation (see Dockerfile),
 # so their build-time imports must already be installed: differentiable_renderer
 # imports pybind11 in setup.py; ninja parallelizes the CUDA compile.
@@ -39,11 +37,11 @@ pybind11==2.13.6
 ninja==1.11.1.1
 
 # ── Input preprocessing (hy3dgen.rembg background removal) ───────────────────
-rembg==2.0.69
-onnxruntime==1.20.1
+rembg==2.0.86
+onnxruntime==1.23.2
 
 # ── Image processing ──────────────────────────────────────────────────────────
-Pillow==12.3.0  # newest Pillow for Python 3.10; 13.0.0 (no open advisories) needs 3.11
+Pillow==13.0.0  # clears every 11.x/12.x decoder advisory; needs Python 3.11 (see Dockerfile)
 
 # ── Server ────────────────────────────────────────────────────────────────────
 fastapi==0.115.0

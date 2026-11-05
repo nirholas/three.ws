@@ -1,21 +1,10 @@
 {
   "name": "lodash.set",
   "version": "4.3.2",
-<<<<<<< HEAD
-  "description": "lodash.set 4.3.2 API served by lodash/set from the maintained lodash release, fixing GHSA-p6mc-m468-83gw (vendored; upstream has no patched release)",
-=======
   "description": "lodash.set 4.3.2 API backed by lodash/set from a maintained lodash release (GHSA-p6mc-m468-83gw; the standalone module is unmaintained)",
->>>>>>> threews/main
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
     "lodash": "^4.18.1"
-<<<<<<< HEAD
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/lodash/lodash.git"
-=======
->>>>>>> threews/main
   }
 }
