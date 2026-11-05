@@ -32,7 +32,7 @@
     "@n8n/node-cli": "*",
     "eslint": "9.32.0",
     "prettier": "3.6.2",
-    "release-it": "^19.0.4",
+    "release-it": "^21.1.2",
     "typescript": "5.9.2",
     "vitest": "^3.0.0"
   },
