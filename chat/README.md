@@ -121,6 +121,24 @@ route table from [../vercel.json](../vercel.json): `/chat` and `/chat/` rewrite 
 `/chat/index.html`, `/chat/(.*)` serves the built assets. The page is declared in
 `../data/pages.json` (path `/chat`), which feeds the sitemap and changelog.
 
+## The standalone repository
+
+[github.com/nirholas/three.ws-chat](https://github.com/nirholas/three.ws-chat) holds this
+app and nothing else. Never create or push to it from the monorepo root (that is how it
+once ended up carrying the whole monorepo and its history). Generate it instead:
+
+```bash
+node scripts/export-chat-repo.mjs --verify   # from the repo root; writes dist/three.ws-chat
+```
+
+The exporter takes the tracked `chat/` files at `HEAD`, vendors the two things this app
+imports from outside `chat/` (the portable wallet in `src/shared/` and `public/nav-data.js`,
+with their full import closure) into `src/vendor/three-ws/`, rewrites those imports and
+`vite.config.js` so nothing points at a parent directory, declares the vendored code's npm
+dependencies, and commits the result as a single orphan commit. `--verify` installs and
+builds the export on its own before committing. Publishing replaces the remote history,
+so it is a deliberate `git push --force` the exporter prints but never runs.
+
 ## Environment variables
 
 The built client ships no secrets and reads no runtime env vars.
