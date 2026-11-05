@@ -30,7 +30,7 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: () => '127.0.0.1',
 }));
 
-vi.mock('../../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'https://three.ws' } }));
+vi.mock('../../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'https://three.ws', THREE_TOKEN_DECIMALS: 6 } }));
 
 const hasOwnerKeyMock = vi.fn(() => true);
 const getSubdomainOwnerMock = vi.fn(async () => null);

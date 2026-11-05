@@ -18,7 +18,7 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 }));
 
 vi.mock('../../api/_lib/env.js', () => ({
-	env: { APP_ORIGIN: 'https://three.ws' },
+	env: { APP_ORIGIN: 'https://three.ws', THREE_TOKEN_DECIMALS: 6 },
 }));
 
 beforeAll(() => {
