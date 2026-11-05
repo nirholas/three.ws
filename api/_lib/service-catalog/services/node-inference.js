@@ -31,5 +31,13 @@ export default {
 			input: { description: 'Capability-specific input payload (up to 20000 characters serialized).' },
 		},
 	},
+	outputExample: {
+		output: { embedding: [0.0132, -0.0478, 0.0911], dimensions: 384 },
+		jobId: '7f3c2a9e-5b1d-4e8a-9c6f-2d4b8e1a0f37',
+		node: 'THREEsyntheticNode1111111111111111111111111',
+		receipt: { version: 'threews-node/v1', algorithm: 'ed25519', signature: '3kTzP9…' },
+		capability: 'text-embedding',
+		model: 'Xenova/all-MiniLM-L6-v2',
+	},
 	storefronts: ['x402scan'],
 };
