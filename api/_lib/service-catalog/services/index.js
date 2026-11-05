@@ -58,6 +58,7 @@ import crossChain from './cross-chain.js';
 import did from './did.js';
 import feedHealth from './feed-health.js';
 import llmProxy from './llm-proxy.js';
+import nodeInference from './node-inference.js';
 import mcpToolCatalog from './mcp-tool-catalog.js';
 import modelValidationSweep from './model-validation-sweep.js';
 import notify from './notify.js';
@@ -141,6 +142,7 @@ export const PAID_SERVICES = Object.freeze([
 	did,
 	feedHealth,
 	llmProxy,
+	nodeInference,
 	mcpToolCatalog,
 	modelValidationSweep,
 	notify,

@@ -149,13 +149,14 @@ describe('preflight and CORS', () => {
 });
 
 describe('GET / (index discovery document)', () => {
-	it('describes the service, its four endpoints, and the exact/solana kind', async () => {
+	it('describes the service, its five endpoints, and the exact/solana kind', async () => {
 		const { status, json } = await call({ action: 'index', url: '/api/x402-facilitator' });
 		expect(status).toBe(200);
 		expect(json.service).toContain('facilitator');
 		expect(json.x402Version).toBe(2);
 		expect(json.kinds).toEqual([{ x402Version: 2, scheme: 'exact', network: SOLANA }]);
-		expect(Object.keys(json.endpoints).sort()).toEqual(['discovery', 'settle', 'supported', 'verify']);
+		expect(Object.keys(json.endpoints).sort()).toEqual(['discovery', 'metrics', 'settle', 'supported', 'verify'])
+		expect(json.endpoints.metrics).toEqual({ method: 'GET', path: '/api/x402-facilitator/metrics' });
 		expect(json.endpoints.verify).toEqual({ method: 'POST', path: '/api/x402-facilitator/verify' });
 		expect(json.endpoints.discovery.path).toBe('/api/x402-facilitator/discovery/resources');
 	});
