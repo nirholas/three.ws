@@ -139,7 +139,7 @@ export const lendingToolDefs = [
 		group: 'lending',
 		tier: 'read',
 		annotations: READ,
-		description: 'Preview supplying to, or withdrawing from, the Solana lending market. Builds the real transaction and simulates it against current mainnet state, then shows from, to, amount, token, program, expected yield, compute units and every guard check. Signs and sends nothing. Show the table to the owner, then call lend_deposit or lend_withdraw only after a clear yes.',
+		description: 'Preview supplying to, or withdrawing from, the Solana lending market. Builds the real transaction and simulates it against current mainnet state, then shows from, to, amount, token, program, expected yield, compute units and every guard check. Signs and sends nothing. Use this before lend_deposit or lend_withdraw to show the owner the exact terms. Show the table to the owner, then call lend_deposit or lend_withdraw only after a clear yes.',
 		inputSchema: {
 			type: 'object',
 			properties: { ...previewSchema('withdraw').properties, action: { type: 'string', enum: ['deposit', 'withdraw'] } },
@@ -159,7 +159,7 @@ export const lendingToolDefs = [
 		confirmFlag: 'confirm_lend',
 		previewTool: 'lend_preview',
 		annotations: FINANCIAL,
-		description: 'Supply tokens from the agent wallet to the Solana lending market so idle funds earn interest, signed by the agent wallet under the wallet spend caps. The transaction is simulated first and refused if it would move more than the confirmed amount. Call lend_preview first, show the owner the table, and pass confirm_lend: true only after a clear yes.',
+		description: 'Supply tokens from the agent wallet to the Solana lending market so idle funds earn interest, signed by the agent wallet under the wallet spend caps. The transaction is simulated first and refused if it would move more than the confirmed amount. Call lend_preview first, show the owner the table, and pass confirm_lend: true only after a clear yes. Use this to put idle agent-wallet funds to work earning interest.',
 		inputSchema: financialSchema('deposit'),
 		handler: (a, auth) => run(auth, { scope: 'wallet:trade' }, async () => {
 			if (a.confirm_lend !== true) return refusal('Not sent: confirm_lend must be true. Call lend_preview, show the owner the table, and ask for a clear yes.', 'confirmation_required');
@@ -175,7 +175,7 @@ export const lendingToolDefs = [
 		confirmFlag: 'confirm_lend',
 		previewTool: 'lend_preview',
 		annotations: FINANCIAL,
-		description: 'Withdraw supplied tokens from the Solana lending market back to the agent wallet, or everything with all: true. A withdraw larger than the position is refused before any transaction is built. Call lend_preview first, show the owner the table, and pass confirm_lend: true only after a clear yes.',
+		description: 'Withdraw supplied tokens from the Solana lending market back to the agent wallet, or everything with all: true. A withdraw larger than the position is refused before any transaction is built. Call lend_preview first, show the owner the table, and pass confirm_lend: true only after a clear yes. Use this to pull funds back out of lending into the agent wallet.',
 		inputSchema: financialSchema('withdraw'),
 		handler: (a, auth) => run(auth, { scope: 'wallet:trade' }, async () => {
 			if (a.confirm_lend !== true) return refusal('Not sent: confirm_lend must be true. Call lend_preview, show the owner the table, and ask for a clear yes.', 'confirmation_required');

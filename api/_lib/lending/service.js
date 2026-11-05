@@ -25,6 +25,7 @@ import { logAudit } from '../audit.js';
 import { ensureAgentWallet, recoverSolanaAgentKeypair } from '../agent-wallet.js';
 import { confirmOrThrow } from '../solana/confirm.js';
 import { getSpendLimits, reserveSpendUsd, releaseSpendReservation, updateCustodyEvent, SpendLimitError } from '../agent-trade-guards.js';
+import { currentSignatureFor, agreementRequirement } from '../real-funds-agreement.js';
 import { LendingError } from './errors.js';
 import { getVenue, listVenues, DEFAULT_VENUE } from './index.js';
 import { lendingConnection, ataFor, decodeTokenAmount, liquidBalanceRaw, WSOL_MINT } from './rpc.js';
@@ -252,6 +253,21 @@ async function agentKeypair(agentId, userId, reason, meta) {
 	return recoverSolanaAgentKeypair(secret, { agentId, userId, reason, meta });
 }
 
+// Lending signs with the platform-held agent key, so it is a real-funds action:
+// the owner must have signed the current agreements. Previews move nothing and
+// are not gated. A database failure fails closed.
+async function requireSignedAgreements(userId) {
+	let signed;
+	try {
+		signed = await currentSignatureFor(userId);
+	} catch {
+		throw new LendingError('agreement_check_unavailable', 'Could not verify your signed real-funds agreements, so nothing was sent. Try again in a moment.', 503);
+	}
+	if (!signed) {
+		throw new LendingError('risk_ack_required', 'Sign the real-funds agreements (Terms of Service, Risk Disclosure, and Agent Wallet Agreement) before lending from an agent wallet. Nothing was sent.', 403, agreementRequirement());
+	}
+}
+
 const num = (n) => (n == null || !Number.isFinite(Number(n)) ? null : Number(n));
 
 /**
@@ -339,6 +355,7 @@ async function act(kind, { agentId, userId, venueId, token, amount, all = false,
 	};
 	if (confirm !== true) return preview;
 
+	await requireSignedAgreements(userId);
 	const failing = checks.find((c) => !c.ok);
 	if (failing) throw new LendingError('check_failed', `Not sent: ${failing.label}.`, 422, { check: failing.id, checks, simulation: preview.simulation });
 	return execute({ kind, agent, userId, venue, row, wallet, conn, built, tables, preview, amountUsd, req, source });

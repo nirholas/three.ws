@@ -11,7 +11,7 @@ const usdcRow = {
 	supply_apy: 0.05, deposit_capacity_remaining: 1_000_000, risk: { liquidation_threshold: 0.85 },
 };
 
-const state = { agentOwner: OWNER, spend: { frozen: false, per_tx_usd: 50 }, position: null, simOk: true };
+const state = { signed: true, agentOwner: OWNER, spend: { frozen: false, per_tx_usd: 50 }, position: null, simOk: true };
 const venue = {
 	id: 'kamino', name: 'Test Venue', market: 'M', program: 'P',
 	listMarkets: vi.fn(async () => ({ markets: [usdcRow] })),
@@ -40,6 +40,10 @@ let liquid = 500_000_000n;
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async () => [{ id: '11111111-1111-4111-8111-111111111111', user_id: state.agentOwner, name: 'A', meta: {} }]),
 }));
+vi.mock('../api/_lib/real-funds-agreement.js', () => ({
+	currentSignatureFor: vi.fn(async () => (state.signed ? { signedAt: '2026-01-01T00:00:00.000Z', signatureName: 'Owner', context: null } : null)),
+	agreementRequirement: vi.fn(() => ({ version: 1, sign_url: 'https://three.ws/sign', documents: [] })),
+}));
 vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn() }));
 vi.mock('../api/_lib/agent-wallet.js', () => ({ ensureAgentWallet: vi.fn(async () => ({ address: WALLET })), recoverSolanaAgentKeypair: vi.fn() }));
 vi.mock('../api/_lib/solana/confirm.js', () => ({ confirmOrThrow: vi.fn() }));
@@ -63,6 +67,7 @@ const call = (name, extra = {}) => route(name).handler({ params: { id: AGENT }, 
 beforeEach(() => {
 	vi.clearAllMocks();
 	state.agentOwner = OWNER;
+	state.signed = true;
 	state.spend = { frozen: false, per_tx_usd: 50 };
 	state.position = null;
 	state.simOk = true;
@@ -114,6 +119,11 @@ describe('deposit', () => {
 		const preview = await call('lending.deposit', { body: { token: 'USDC', amount: '10' } });
 		expect(preview.simulation.ok).toBe(false);
 		await expect(call('lending.deposit', { body: { token: 'USDC', amount: '10', confirm: true } })).rejects.toMatchObject({ code: 'check_failed' });
+	});
+	it('refuses to sign before the owner has signed the real-funds agreements', async () => {
+		state.signed = false;
+		await expect(call('lending.deposit', { body: { token: 'USDC', amount: '5', confirm: true } })).rejects.toMatchObject({ code: 'risk_ack_required' });
+		expect(conn.sendRawTransaction).not.toHaveBeenCalled();
 	});
 	it('refuses a frozen wallet', async () => {
 		state.spend = { frozen: true, per_tx_usd: null };

@@ -55,6 +55,7 @@ const EXEMPT = {
 // checks the named module really calls the gate.
 const DELEGATED = {
 	'api/_mcpagent/perps-tools.js': 'api/_lib/perps/service.js',
+	'api/_mcpagent/lending-tools.js': 'api/_lib/lending/service.js',
 	'api/_mcpagent/named-services-tools.js': 'api/_mcpagent/tools.js',
 };
 
