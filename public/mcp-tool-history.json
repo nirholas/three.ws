@@ -1146,12 +1146,44 @@
 		{
 			"date": "2026-11-04",
 			"added": {
+				"agent-trader-mcp": [
+					"agent_actions",
+					"agent_arm",
+					"agent_disarm",
+					"agent_guardrails",
+					"agent_performance",
+					"agent_positions",
+					"agent_status",
+					"trader_getting_started"
+				],
 				"mcp-agent": [
+					"configure_twitter_posting",
+					"connect_twitter",
 					"execute_code",
+					"get_account_status",
+					"get_dashboard_urls",
 					"get_learning_status",
+					"list_scheduled_posts",
+					"post_to_x",
 					"read_file",
 					"terminal",
 					"write_file"
+				],
+				"mcp-oracle": [
+					"oracle_arm_watch",
+					"oracle_backtest",
+					"oracle_calibration",
+					"oracle_coin",
+					"oracle_feed",
+					"oracle_getting_started",
+					"oracle_leaderboard",
+					"oracle_movers",
+					"oracle_search",
+					"oracle_stats",
+					"oracle_top_plays",
+					"oracle_wallet",
+					"oracle_watch_status",
+					"oracle_wins"
 				],
 				"mcp": [
 					"image_generate",
@@ -1160,13 +1192,32 @@
 					"tts",
 					"web_fetch",
 					"web_search"
+				],
+				"oracle-mcp": [
+					"oracle_backtest",
+					"oracle_calibration",
+					"oracle_coin",
+					"oracle_feed",
+					"oracle_getting_started",
+					"oracle_leaderboard",
+					"oracle_movers",
+					"oracle_search",
+					"oracle_stats",
+					"oracle_top_plays",
+					"oracle_wallet",
+					"oracle_wins"
+				],
+				"trading-mcp": [
+					"execute_trade",
+					"list_positions",
+					"quote_trade"
 				]
 			},
 			"removed": {},
 			"counts": {
-				"added": 11,
+				"added": 54,
 				"removed": 0,
-				"total": 725
+				"total": 768
 			}
 		}
 	]

@@ -7,6 +7,7 @@ import { marketplaceToolDefs } from './marketplace-tools.js';
 import { predictionToolDefs } from './predictions-tools.js';
 import { orderToolDefs } from './orders-tools.js';
 import { perpsToolDefs } from './perps-tools.js';
+import { lendingToolDefs } from './lending-tools.js';
 import { papertradeToolDefs } from './papertrade-tools.js';
 import { tradingToolDefs } from './trading-tools.js';
 import { portfolioToolDefs } from './portfolio-tools.js';
@@ -18,14 +19,14 @@ import { eventMarketToolDefs } from './event-markets-tools.js';
 import { eventMarketForecastToolDefs } from './event-market-forecast-tools.js';
 import { namedServiceToolDefs } from './named-services-tools.js';
 import { integrationToolDefs } from './integrations-tools.js';
-import { learningToolDefs } from './learning-tools.js';
 import { accountToolDefs } from './account-tools.js';
+import { learningToolDefs } from './learning-tools.js';
 import { sandboxToolDefs } from './sandbox-tools.js';
 import { bountiesToolDefs } from './bounties-tools.js';
 import { browseToolDefs } from './browse-tools.js';
 import { humanTaskToolDefs } from './human-task-tools.js';
 
-const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs, ...perpsToolDefs, ...papertradeToolDefs, ...tradingToolDefs,
+const toolDefs = [...walletToolDefs, ...marketplaceToolDefs, ...predictionToolDefs, ...perpsToolDefs, ...lendingToolDefs, ...papertradeToolDefs, ...tradingToolDefs,
 	...portfolioToolDefs, ...privateWalletToolDefs, ...sniperAlertToolDefs, ...duelToolDefs, ...commerceToolDefs, ...orderToolDefs, ...eventMarketToolDefs, ...eventMarketForecastToolDefs,
 	...namedServiceToolDefs, ...integrationToolDefs, ...accountToolDefs, ...learningToolDefs, ...sandboxToolDefs, ...bountiesToolDefs, ...browseToolDefs, ...humanTaskToolDefs];
 

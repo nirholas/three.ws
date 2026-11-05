@@ -352,6 +352,14 @@ export const POLICY = {
 		perps_order_cancel: own('perps', 'confirm_trade', 'perps_action_preview'),
 		perps_flatten: own('perps', 'confirm_trade', 'perps_action_preview'),
 		perps_limits: w('perps'),
+		// Lending from the agent wallet (api/_mcpagent/lending-tools.js). The
+		// lending service simulates and checks its own previews; the policy layer
+		// enforces enablement and the confirm flag.
+		lend_markets: r('lending'),
+		lend_positions: r('lending'),
+		lend_preview: r('lending'),
+		lend_deposit: own('lending', 'confirm_lend', 'lend_preview'),
+		lend_withdraw: own('lending', 'confirm_lend', 'lend_preview'),
 		// Papertrade synthetic perps on HyperEVM (api/_mcpagent/papertrade-tools.js).
 		// Reads only: they price and report, nothing signs or trades.
 		papertrade_markets: r('perps'),
@@ -431,6 +439,13 @@ export const POLICY = {
 		list_integrations: r('integrations'),
 		install_integration: w('integrations'),
 		remove_integration: f('integrations', 'confirm_delete', 'list_integrations', ['agent_id', 'connection_id']),
+		// Account status, dashboard links and per-agent X posting (api/_mcpagent/account-tools.js).
+		get_account_status: r('account'),
+		get_dashboard_urls: r('account'),
+		connect_twitter: w('integrations'),
+		configure_twitter_posting: w('integrations'),
+		post_to_x: w('integrations'),
+		list_scheduled_posts: r('integrations'),
 		// Bounty feed and Build program (api/_mcpagent/bounties-tools.js). No funds move.
 		list_bounties: r('discovery'),
 		submit_build_entry: w('agents'),
@@ -442,13 +457,6 @@ export const POLICY = {
 		// rewritten or deleted by the next call.
 		execute_code: w('runs'),
 		terminal: w('runs'),
-		// Account status, dashboard links and per-agent X posting (api/_mcpagent/account-tools.js).
-		get_account_status: r('account'),
-		get_dashboard_urls: r('account'),
-		connect_twitter: w('integrations'),
-		configure_twitter_posting: w('integrations'),
-		post_to_x: w('integrations'),
-		list_scheduled_posts: r('integrations'),
 		read_file: r('runs'),
 		write_file: w('runs'),
 		// Autonomous browsing on the agent-screen pool (api/_mcpagent/browse-tools.js).

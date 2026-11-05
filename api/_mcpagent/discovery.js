@@ -33,7 +33,8 @@ export const RESOURCE_DESCRIPTION =
 	'perps_market_data, perps_account, perps_positions, perps_order_preview, perps_action_preview, ' +
 	'perps_order_execute, perps_collateral_deposit, perps_collateral_withdraw, perps_order_cancel, ' +
 	'perps_flatten and perps_limits. Synthetic perps on HyperEVM, paper money only: papertrade_markets, ' +
-	'papertrade_quote, papertrade_account and papertrade_protocol. ' +
+	'papertrade_quote, papertrade_account and papertrade_protocol. Lending that puts idle agent funds to work on ' +
+	'Solana: lend_markets, lend_positions, lend_preview, lend_deposit and lend_withdraw. ' +
 	'Resting orders and DCA on any SPL token: order_preview, limit_order_create, ' +
 	'stop_order_create, trailing_order_create, ladder_order_create, oco_order_create, limit_order_list, ' +
 	'limit_order_cancel, limit_order_history, order_book, dca_preview, dca_create, dca_list and dca_cancel. ' +

@@ -64,6 +64,12 @@ describe('agent-wallet MCP catalog', () => {
 			'perps_order_cancel',
 			'perps_flatten',
 			'perps_limits',
+			// Lending from the agent wallet (api/_mcpagent/lending-tools.js)
+			'lend_markets',
+			'lend_positions',
+			'lend_preview',
+			'lend_deposit',
+			'lend_withdraw',
 			// Papertrade synthetic perps on HyperEVM (api/_mcpagent/papertrade-tools.js)
 			'papertrade_markets',
 			'papertrade_quote',

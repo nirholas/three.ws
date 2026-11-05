@@ -307,6 +307,19 @@ export function buildWithdraw({ owner, reserve, amountRaw, refreshOracles }) {
 	return buildAction('withdraw', { owner, reserve, amountRaw, refreshOracles });
 }
 
+/**
+ * Collateral tokens credited per unit of liquidity supplied to a reserve:
+ * collateral mint supply over the reserve's total liquidity (both base units).
+ */
+export async function collateralExchangeRate(reserveAddress) {
+	const market = await freshMarket(READ_MAX_AGE_MS);
+	const reserve = market.getReserveByAddress(reserveAddress);
+	if (!reserve) throw new LendingError('unsupported_token', 'That reserve is not part of the lending market.', 404, { reserve: String(reserveAddress) });
+	const collateral = Number(reserve.state.collateral.mintTotalSupply.toString());
+	const liquidity = dec(reserve.getTotalSupply()) ?? 0;
+	return liquidity > 0 ? collateral / liquidity : 1;
+}
+
 /** Drop the cached market so the next read reloads it (after a landed action). */
 export function invalidateMarket() {
 	marketCache.loadedAt = 0;
@@ -326,5 +339,6 @@ export const venue = {
 	getPosition,
 	buildDeposit,
 	buildWithdraw,
+	collateralExchangeRate,
 	invalidateMarket,
 };

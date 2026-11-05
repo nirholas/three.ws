@@ -64,6 +64,8 @@ const CATALOGS = [
 //   perps_order_execute, perps_collateral_deposit, perps_collateral_withdraw,
 //   perps_order_cancel, perps_flatten - trade perpetual futures or move USDC
 //                         collateral
+//   lend_deposit, lend_withdraw - supply agent-wallet funds to a lending
+//                         market or pull them back
 //   limit_order_create, stop_order_create, trailing_order_create,
 //   ladder_order_create, oco_order_create, dca_create - arm a standing order
 //                         or recurring buy that spends from the agent wallet
@@ -113,6 +115,7 @@ const DESTRUCTIVE_TOOLS = new Set([
 	'predictions_open', 'predictions_close', 'predictions_redeem',
 	'sniper_activate', 'alert_rule_delete',
 	'perps_order_execute', 'perps_collateral_deposit', 'perps_collateral_withdraw', 'perps_order_cancel', 'perps_flatten',
+	'lend_deposit', 'lend_withdraw',
 	'limit_order_create', 'stop_order_create', 'trailing_order_create', 'ladder_order_create', 'oco_order_create', 'dca_create',
 	'home_activate', 'home_call',
 	'agent_mail_create', 'agent_mail_send', 'agent_mail_reply',

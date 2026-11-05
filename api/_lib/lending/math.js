@@ -108,6 +108,23 @@ export function healthFactor({ unhealthyBorrowValue, borrowedValueAdjusted }) {
 	return Number.isFinite(limit) ? limit / debt : null;
 }
 
+/** A rule-driven withdraw never leaves an obligation with debt under this health factor. */
+export const HEALTH_FLOOR = 1.25;
+
+/**
+ * Whether withdrawing `withdrawUsd` of collateral keeps an obligation with debt
+ * at or above the health floor. Removing collateral lowers the liquidation
+ * limit by its value times the reserve's liquidation threshold. With no debt
+ * the obligation cannot be liquidated, so any withdraw is safe.
+ * @returns {{ ok: boolean, healthAfter: number|null }}
+ */
+export function withdrawKeepsHealth({ liquidationLimitUsd, debtAdjustedUsd, liquidationThreshold, withdrawUsd, floor = HEALTH_FLOOR }) {
+	const debt = Number(debtAdjustedUsd);
+	if (!(debt > 0)) return { ok: true, healthAfter: null };
+	const after = (Number(liquidationLimitUsd) - Number(withdrawUsd) * Number(liquidationThreshold)) / debt;
+	return { ok: after >= floor, healthAfter: after };
+}
+
 /**
  * Interest earned on one token: what the position is worth now minus what the
  * ledger says went in net of what came out. Ledger amounts are base units.
