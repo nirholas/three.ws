@@ -10,8 +10,9 @@
 // - Python 3.11+ workers: 13.0.0, the only release with no open advisory.
 // - Python 3.10 workers: 12.3.0, the last line that still supports 3.10
 //   (13.0.0 requires Python >= 3.11). Clearing the rest needs the 3.11 move.
-// - model-sam3d-objects: 11.3.0, because upstream SAM 3D Objects installs
-//   gradio==5.49.0, which declares pillow<12.
+// - model-sam3d-objects: 13.0.0 too. Upstream SAM 3D Objects installs
+//   gradio==5.49.0, which declares pillow<12, but the worker overrides that cap
+//   (see its requirements.txt) because gradio 5.49.0 builds Blocks under 13.0.0.
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
@@ -22,7 +23,7 @@ const WORKERS = join(ROOT, 'workers');
 
 const NEWEST = '13.0.0';
 const NEWEST_FOR_PY310 = '12.3.0';
-const HELD = { 'model-sam3d-objects': '11.3.0' };
+const HELD = {};
 
 function pillowLines() {
 	const out = [];

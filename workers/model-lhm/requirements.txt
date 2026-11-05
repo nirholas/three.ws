@@ -1,6 +1,6 @@
 # LHM's own deps are installed from the upstream requirements.txt in the Dockerfile.
 numpy
-Pillow==13.0.0  # newest Pillow for Python 3.10
+Pillow==12.3.0  # newest Pillow for Python 3.10 (13.0.0 requires Python >= 3.11)
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 pydantic>=2.0.0
