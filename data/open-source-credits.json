@@ -226,7 +226,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/hyparam/hyparquet-compressors",
 			"funding": null,
-			"version": "1.1.2",
+			"version": "1.1.3",
 			"powers": "Compression codecs for the hyparquet Parquet reader."
 		},
 		{
@@ -473,7 +473,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.94",
+			"version": "4.0.96",
 			"powers": null
 		},
 		{
@@ -484,7 +484,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "4.0.106",
+			"version": "4.0.108",
 			"powers": null
 		},
 		{
@@ -495,7 +495,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1161.0",
+			"version": "3.1162.0",
 			"powers": null
 		},
 		{
@@ -506,7 +506,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1161.0",
+			"version": "3.1162.0",
 			"powers": null
 		},
 		{
@@ -517,7 +517,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1159.0",
+			"version": "3.1162.0",
 			"powers": null
 		},
 		{
@@ -528,7 +528,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/aws/aws-sdk-js-v3",
 			"funding": null,
-			"version": "3.1159.0",
+			"version": "3.1162.0",
 			"powers": null
 		},
 		{
@@ -631,17 +631,6 @@
 			"powers": "The x402 payment protocol implementation for pay-per-call APIs."
 		},
 		{
-			"id": "npm:@colyseus/core",
-			"kind": "npm",
-			"name": "@colyseus/core",
-			"area": "infrastructure",
-			"license": "MIT",
-			"repo": "https://github.com/colyseus/colyseus",
-			"funding": "https://github.com/sponsors/endel",
-			"version": "0.16.26",
-			"powers": null
-		},
-		{
 			"id": "npm:@colyseus/schema",
 			"kind": "npm",
 			"name": "@colyseus/schema",
@@ -682,7 +671,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/electric-sql/pglite",
 			"funding": null,
-			"version": "0.5.14",
+			"version": "0.5.15",
 			"powers": null
 		},
 		{
@@ -1012,7 +1001,7 @@
 			"license": "Apache-2.0",
 			"repo": null,
 			"funding": null,
-			"version": "0.79.1",
+			"version": "0.79.3",
 			"powers": null
 		},
 		{
@@ -1144,7 +1133,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/solana-program/token-2022",
 			"funding": null,
-			"version": "0.20.0",
+			"version": "0.20.1",
 			"powers": null
 		},
 		{
@@ -1320,7 +1309,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/upstash/redis-js",
 			"funding": null,
-			"version": "1.40.0",
+			"version": "1.41.0",
 			"powers": null
 		},
 		{
@@ -1353,7 +1342,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.29.0",
+			"version": "2.30.0",
 			"powers": null
 		},
 		{
@@ -1364,7 +1353,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.29.0",
+			"version": "2.30.0",
 			"powers": null
 		},
 		{
@@ -1375,7 +1364,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.29.0",
+			"version": "2.30.0",
 			"powers": null
 		},
 		{
@@ -1386,7 +1375,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.29.0",
+			"version": "2.30.0",
 			"powers": null
 		},
 		{
@@ -1397,7 +1386,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.29.0",
+			"version": "2.30.0",
 			"powers": null
 		},
 		{
@@ -1408,7 +1397,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.29.0",
+			"version": "2.30.0",
 			"powers": null
 		},
 		{
@@ -1419,7 +1408,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/x402-foundation/x402",
 			"funding": null,
-			"version": "2.29.0",
+			"version": "2.30.0",
 			"powers": null
 		},
 		{
@@ -1496,7 +1485,7 @@
 			"license": "Apache-2.0",
 			"repo": "https://github.com/vercel/ai",
 			"funding": null,
-			"version": "7.0.159",
+			"version": "7.0.162",
 			"powers": "The Vercel AI SDK powering agent chat streaming and tool calls."
 		},
 		{
@@ -1540,7 +1529,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/axios/axios",
 			"funding": null,
-			"version": "1.20.0",
+			"version": "1.21.0",
 			"powers": null
 		},
 		{
@@ -1552,17 +1541,6 @@
 			"repo": "https://github.com/dcodeIO/bcrypt.js",
 			"funding": null,
 			"version": "3.0.3",
-			"powers": null
-		},
-		{
-			"id": "npm:bigint-buffer",
-			"kind": "npm",
-			"name": "bigint-buffer",
-			"area": "infrastructure",
-			"license": "Apache-2.0",
-			"repo": "https://github.com/no2chem/bigint-buffer",
-			"funding": null,
-			"version": "1.1.5",
 			"powers": null
 		},
 		{
@@ -1672,7 +1650,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/harrisiirak/cron-parser",
 			"funding": null,
-			"version": "5.10.2",
+			"version": "5.10.3",
 			"powers": null
 		},
 		{
@@ -1695,17 +1673,6 @@
 			"repo": "https://github.com/vasturiano/d3-force-3d",
 			"funding": null,
 			"version": "3.0.6",
-			"powers": null
-		},
-		{
-			"id": "npm:deepmerge",
-			"kind": "npm",
-			"name": "deepmerge",
-			"area": "infrastructure",
-			"license": "MIT",
-			"repo": "https://github.com/TehShrike/deepmerge",
-			"funding": null,
-			"version": "4.3.1",
 			"powers": null
 		},
 		{
@@ -1739,17 +1706,6 @@
 			"repo": "https://github.com/motdotla/dotenv",
 			"funding": "https://dotenvx.com",
 			"version": "18.0.9",
-			"powers": null
-		},
-		{
-			"id": "npm:elliptic",
-			"kind": "npm",
-			"name": "elliptic",
-			"area": "infrastructure",
-			"license": "MIT",
-			"repo": "https://github.com/indutny/elliptic",
-			"funding": null,
-			"version": "6.6.1",
 			"powers": null
 		},
 		{
@@ -1826,7 +1782,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/NaturalIntelligence/fast-xml-parser",
 			"funding": "https://github.com/sponsors/NaturalIntelligence",
-			"version": "5.11.2",
+			"version": "5.12.0",
 			"powers": null
 		},
 		{
@@ -1903,7 +1859,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/postalsys/imapflow",
 			"funding": null,
-			"version": "2.10.0",
+			"version": "2.10.2",
 			"powers": null
 		},
 		{
@@ -1914,7 +1870,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/panva/jose",
 			"funding": "https://github.com/sponsors/panva",
-			"version": "6.2.14",
+			"version": "6.2.15",
 			"powers": null
 		},
 		{
@@ -1989,7 +1945,7 @@
 			"name": "lodash.set",
 			"area": "infrastructure",
 			"license": "MIT",
-			"repo": "https://github.com/lodash/lodash",
+			"repo": null,
 			"funding": null,
 			"version": "4.3.2",
 			"powers": null
@@ -2024,18 +1980,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/markedjs/marked",
 			"funding": null,
-			"version": "18.1.2",
-			"powers": null
-		},
-		{
-			"id": "npm:minimatch",
-			"kind": "npm",
-			"name": "minimatch",
-			"area": "infrastructure",
-			"license": "BlueOak-1.0.0",
-			"repo": "https://github.com/isaacs/minimatch",
-			"funding": null,
-			"version": "10.2.6",
+			"version": "18.1.3",
 			"powers": null
 		},
 		{
@@ -2057,7 +2002,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/wevm/mppx",
 			"funding": null,
-			"version": "0.17.0",
+			"version": "0.17.1",
 			"powers": null
 		},
 		{
@@ -2101,7 +2046,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/taoqf/node-fast-html-parser",
 			"funding": null,
-			"version": "9.0.5",
+			"version": "9.0.6",
 			"powers": null
 		},
 		{
@@ -2215,6 +2160,17 @@
 			"powers": null
 		},
 		{
+			"id": "npm:qwen-ai-provider",
+			"kind": "npm",
+			"name": "qwen-ai-provider",
+			"area": "infrastructure",
+			"license": "Apache-2.0",
+			"repo": "https://github.com/Younis-Ahmed/qwen-ai-provider",
+			"funding": null,
+			"version": "1.0.0",
+			"powers": null
+		},
+		{
 			"id": "npm:resend",
 			"kind": "npm",
 			"name": "resend",
@@ -2288,7 +2244,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/mixmark-io/turndown",
 			"funding": null,
-			"version": "7.2.4",
+			"version": "7.2.5",
 			"powers": null
 		},
 		{
@@ -2409,7 +2365,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/vitest-dev/vitest",
 			"funding": "https://opencollective.com/vitest",
-			"version": "5.0.5",
+			"version": "5.1.0",
 			"powers": null
 		},
 		{
@@ -2464,7 +2420,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/websockets/ws",
 			"funding": null,
-			"version": "8.22.0",
+			"version": "8.22.1",
 			"powers": "WebSocket transport for live agent and multiplayer connections."
 		},
 		{
@@ -2519,7 +2475,7 @@
 			"license": "Apache-2.0",
 			"repo": "http://mediapipe.dev",
 			"funding": null,
-			"version": "1.2.0",
+			"version": "1.2.2",
 			"powers": "Pose, hand, and face landmark detection behind video-to-motion capture and the home voice camera lane."
 		},
 		{
@@ -2802,7 +2758,7 @@
 			"license": "Zlib",
 			"repo": "https://github.com/pmndrs/postprocessing",
 			"funding": null,
-			"version": "6.39.5",
+			"version": "6.39.6",
 			"powers": "Bloom, depth of field, and color grading passes on top of the three.js render."
 		},
 		{
@@ -2890,7 +2846,7 @@
 			"license": "MIT",
 			"repo": "https://github.com/elevenlabs/elevenlabs-js",
 			"funding": null,
-			"version": "2.75.0",
+			"version": "2.76.0",
 			"powers": "The agent's text-to-speech voice in chat, calls, and the home voice loop."
 		},
 		{
