@@ -83,10 +83,10 @@ MAX_MASK_BYTES = 16 * 1024 * 1024
 # The model works at a fixed internal resolution; a larger photo only costs memory.
 MAX_PHOTO_SIDE = 2048
 MAX_PHOTO_PIXELS = 40_000_000
-# Real camera EXIF fits one 64 KiB JPEG APP1 segment. The Pillow this image is
-# held to (11.3.0, see requirements.txt) parses a larger crafted blob in
-# quadratic time (PYSEC-2026-4342), so an oversized one is ignored instead of
-# handed to the EXIF parser; the photo is then used as stored.
+# Real camera EXIF fits one 64 KiB JPEG APP1 segment. Pillow before 13 parsed a
+# larger crafted blob in quadratic time (PYSEC-2026-4342). requirements.txt now
+# pins 13.0.0, and an oversized blob is still ignored instead of handed to the
+# EXIF parser as defense in depth; the photo is then used as stored.
 MAX_EXIF_BYTES = 65535
 
 _bucket: Optional[storage.Bucket] = None

@@ -45,7 +45,7 @@ returns 503 once a model load failure latches).
 
 | Field | Meaning |
 |---|---|
-| `image_url` | Public https photo (SSRF-checked). PNG, JPEG or WEBP only; other formats are refused. EXIF orientation is applied unless the EXIF block exceeds 64 KiB (the JPEG APP1 ceiling), which is ignored rather than parsed (PYSEC-2026-4342 on the Pillow 11.3.0 this image is held to). |
+| `image_url` | Public https photo (SSRF-checked). PNG, JPEG or WEBP only; other formats are refused. EXIF orientation is applied unless the EXIF block exceeds 64 KiB (the JPEG APP1 ceiling), which is ignored rather than parsed (defense in depth against PYSEC-2026-4342, the quadratic EXIF parse fixed in the Pillow 13.0.0 this image pins). |
 | `mask_urls` or `boxes` | Exactly one. Masks are https PNGs (JPEG and WEBP also decode), white is the object. Boxes are `[x0, y0, x1, y1]` fractions of the frame, origin top-left, turned into masks with GrabCut. |
 | `max_objects` | 1 to 12, default 8. Slivers (under 4% of a side or 0.2% of the frame) are rejected. |
 | `seed` | 0 to 4294967295. |
