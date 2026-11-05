@@ -213,6 +213,9 @@
 					background var(--duration-fast) var(--ease-standard),
 					border-color var(--duration-fast) var(--ease-standard);
 			}
+			a.pose-btn {
+				text-decoration: none;
+			}
 			.pose-btn:hover {
 				background: rgba(255, 255, 255, 0.08);
 				border-color: var(--border-strong);
@@ -2159,6 +2162,16 @@
 				 data-i18n="pose.save" data-i18n-attr="title:pose.save_this_animation_to_your_title">
 					Save
 				</button>
+				<a
+					id="pose-launch-coin"
+					class="pose-btn"
+					href="/launch/multichain"
+					title="Launch a coin off this avatar or the animation it is playing"
+					data-i18n="pose.launch_coin"
+					data-i18n-attr="title:pose.launch_a_coin_off_this_avatar_title"
+				>
+					Launch a coin
+				</a>
 				<span class="sep"></span>
 
 				<button

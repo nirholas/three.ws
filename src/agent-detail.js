@@ -582,22 +582,38 @@ function launchTimeAgo(iso) {
 	return new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-// A coin the agent launched on Robinhood Chain (through Pons). There is no
-// pump.fun market to stream, so the row names the chain and venue and opens
-// the on-platform Robinhood coin page, which reads the chain directly.
-function robinhoodLaunchRow(coin) {
-	const venue = coin.venue === 'pons' ? 'Pons' : coin.venue || 'launchpad';
+// A coin the agent launched on an EVM chain: Robinhood Chain (Pons, flap.sh),
+// BNB Chain (four.meme, flap.sh) or Base (flap.sh, Uniswap). There is no
+// pump.fun market to stream, so the row names the chain and venue. Robinhood
+// coins open the on-platform coin page, which reads the chain directly; the
+// others open the coin on its venue, or on the explorer when no venue page
+// was recorded.
+const EVM_LAUNCH_CHAINS = {
+	robinhood: { label: 'Robinhood Chain', explorer: (a) => `https://robinhoodchain.blockscout.com/token/${a}` },
+	bsc: { label: 'BNB Chain', explorer: (a) => `https://bscscan.com/token/${a}` },
+	base: { label: 'Base', explorer: (a) => `https://basescan.org/token/${a}` },
+};
+const EVM_VENUE_LABELS = { pons: 'Pons', flap: 'flap.sh', four_meme: 'four.meme', uniswap: 'Uniswap' };
+
+function evmLaunchRow(coin) {
+	const venue = EVM_VENUE_LABELS[coin.venue] || coin.venue || 'launchpad';
+	const chain = EVM_LAUNCH_CHAINS[coin.chain];
+	const chainLabel = chain?.label || coin.chain;
 	const label = coin.symbol ? `$${coin.symbol}` : coin.name || 'coin';
+	const onPlatform = coin.chain === 'robinhood';
+	const venueUrl = typeof coin.venue_url === 'string' && coin.venue_url.startsWith('https://') ? coin.venue_url : null;
+	const href = onPlatform ? `/markets/robinhood/coin/${coin.mint}` : venueUrl || chain?.explorer(coin.mint) || `/launches`;
 	return el(
 		'a',
 		{
 			class: 'ad-launch-row',
-			href: `/markets/robinhood/coin/${coin.mint}`,
-			'aria-label': `${label} on Robinhood Chain`,
+			href,
+			...(onPlatform ? {} : { target: '_blank', rel: 'noopener noreferrer' }),
+			'aria-label': `${label} on ${chainLabel}`,
 		},
 		[
 			el('span', { class: 'ad-launch-symbol', text: label }),
-			el('span', { class: 'ad-launch-mint', text: `Robinhood Chain · ${venue}` }),
+			el('span', { class: 'ad-launch-mint', text: `${chainLabel} · ${venue}` }),
 			el('span', { class: 'ad-launch-time', text: coin.created_at ? launchTimeAgo(coin.created_at) : '' }),
 		],
 	);
@@ -638,8 +654,8 @@ export async function renderLaunchHistory(container, agent) {
 			el('div', { class: 'ad-launch-history-head', text: `Launched coins (${coins.length})` }),
 		);
 		for (const coin of coins) {
-			if (coin.chain === 'robinhood') {
-				box.appendChild(robinhoodLaunchRow(coin));
+			if (coin.chain && coin.chain !== 'solana') {
+				box.appendChild(evmLaunchRow(coin));
 				continue;
 			}
 			const isDevnet = coin.network === 'devnet';

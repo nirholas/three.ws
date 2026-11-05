@@ -1303,6 +1303,22 @@ function boot() {
 		animLibrary.mount();
 	}
 
+	// "Launch a coin" carries the avatar on stage and the clip it is playing to
+	// the multichain launchpad, so a coin can launch off one dance.
+	const launchCoin = $('#pose-launch-coin');
+	if (launchCoin) {
+		const syncLaunchHref = () => {
+			const q = new URLSearchParams();
+			if (state.avatar?.id) q.set('avatar', state.avatar.id);
+			const clip = state.animLibrary?.activeName;
+			if (clip) q.set('anim', clip);
+			const qs = q.toString();
+			launchCoin.href = `/launch/multichain${qs ? `?${qs}` : ''}`;
+		};
+		['pointerenter', 'focus', 'pointerdown', 'keydown'].forEach((ev) => launchCoin.addEventListener(ev, syncLaunchHref));
+		syncLaunchHref();
+	}
+
 	function setupTimeline() {
 		const doc = createDocument();
 		const anim = { doc, playing: false, playhead: 0, selectedId: null };
