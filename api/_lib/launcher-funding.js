@@ -44,6 +44,12 @@ const MASTER_FALLBACK_ENV = 'PUMP_X402_LAUNCHER_SECRET_KEY_B64';
 // The floor is deliberately well above 0.02 so a burst of settles between two
 // funding runs can never cross it. Override per-environment if the roles are
 // ever split onto separate keypairs.
+//
+// They are split for the sniper since 2026-11-05: the agent-sniper Cloud Run
+// service loads LAUNCHER_MASTER_SECRET_KEY_B64 from the dedicated secret
+// `wallet-sniper-funder-b64` (its own keypair, not the ring payer) with
+// LAUNCHER_MASTER_RESERVE_SOL=0.005, so arm top-ups and ring settle fees no
+// longer drain one shared balance. The API service keeps the shared keypair.
 const DEFAULT_MASTER_RESERVE_SOL = 0.05;
 export function masterReserveSol() {
 	const n = Number(process.env.LAUNCHER_MASTER_RESERVE_SOL);
