@@ -16,7 +16,8 @@ export type RuntimeSecretKey =
   | 'OPENSKY_CLIENT_SECRET'
   | 'AISSTREAM_API_KEY'
   | 'FINNHUB_API_KEY'
-  | 'NASA_FIRMS_API_KEY';
+  | 'NASA_FIRMS_API_KEY'
+  | 'DUNE_API_KEY';
 
 export type RuntimeFeatureId =
   | 'aiGroq'
@@ -31,6 +32,7 @@ export type RuntimeFeatureId =
   | 'openskyRelay'
   | 'finnhubMarkets'
   | 'nasaFirms'
+  | 'duneAnalytics'
   | 'economicFred'
   | 'energyEia';
 
@@ -70,6 +72,7 @@ const defaultToggles: Record<RuntimeFeatureId, boolean> = {
   openskyRelay: true,
   finnhubMarkets: true,
   nasaFirms: true,
+  duneAnalytics: true,
   economicFred: true,
   energyEia: true,
 };
@@ -160,6 +163,13 @@ export const RUNTIME_FEATURES: RuntimeFeatureDefinition[] = [
     description: 'Fire Information for Resource Management System satellite data.',
     requiredSecrets: ['NASA_FIRMS_API_KEY'],
     fallback: 'FIRMS fire layer uses public VIIRS feed.',
+  },
+  {
+    id: 'duneAnalytics',
+    name: 'Dune query results',
+    description: 'Run-free reads of saved Dune queries through the Dune Analytics panel.',
+    requiredSecrets: ['DUNE_API_KEY'],
+    fallback: 'The Dune panel stays disabled. Every other panel uses keyless sources.',
   },
 ];
 

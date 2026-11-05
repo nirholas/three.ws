@@ -75,6 +75,7 @@ export default async function handler(req) {
         change24h: p.change_1d != null ? Number(p.change_1d) : null,
         change7d: p.change_7d != null ? Number(p.change_7d) : null,
         chains: Array.isArray(p.chains) ? p.chains.slice(0, 10).map(String) : [],
+        solanaTvl: Number(p.chainTvls?.Solana) > 0 ? Number(p.chainTvls.Solana) : 0,
         logo: typeof p.logo === 'string' && p.logo.startsWith('http') ? p.logo : '',
       }));
 

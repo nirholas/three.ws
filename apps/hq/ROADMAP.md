@@ -1,6 +1,6 @@
 # HQ - DeFi Dashboard Roadmap
 
-> Last updated: February 2026
+> Last updated: 2026-11-04
 
 ## Vision
 
@@ -54,33 +54,33 @@ HQ is the world's first **spatial DeFi intelligence platform** - combining a 3D 
 
 ### DeFi Globe Layers (Q1 2025)
 Transform the 3D globe into DeFi's only spatial intelligence platform:
-- [ ] Validator/node geographic distribution layer
-- [ ] TVL heatmap by region (protocol HQ-based)
+- [x] Validator/node geographic distribution layer (`api/validator-nodes.js`)
+- [x] TVL heatmap by region (protocol HQ-based) (`api/tvl-geo.js`)
 - [ ] Exchange & regulatory map layer
-- [ ] Cross-chain bridge flow arcs
-- [ ] Whale activity pulse layer
+- [x] Cross-chain bridge flow arcs (`api/bridge-flows.js`)
+- [x] Whale activity pulse layer (`src/components/WhaleMonitorPanel.ts`)
 
 ### On-Chain Data Integration (Q1 2025)
 Move from aggregator-only to direct protocol data:
-- [ ] The Graph subgraph integration (Uniswap, Aave, Compound)
-- [ ] Lending rate comparison panel (cross-protocol)
+- [x] The Graph subgraph integration (Uniswap, Aave, Compound) (`api/subgraph-uniswap.js`, `api/subgraph-aave.js`, `api/subgraph-compound.js`)
+- [x] Lending rate comparison panel (cross-protocol) (`src/components/LendingRatesPanel.ts`)
 - [ ] On-chain activity metrics (daily active addresses, tx count by chain)
 
 ### Real-Time Data (Q1 2025)
-- [ ] WebSocket real-time price feeds (Binance streams)
+- [x] WebSocket real-time price feeds (`src/services/websocket-prices.ts`)
 - [ ] Live price flash animations
 - [ ] Connection status indicator
 
 ## Planned 📋
 
 ### Q2 2025 - Advanced Analytics
-- [ ] MEV & mempool monitoring panel
-- [ ] Token unlock & vesting schedules
-- [ ] Cross-chain bridge health monitor
-- [ ] Historical time-series charts for all DeFi metrics (d3)
-- [ ] Whale alert & large transaction monitor
-- [ ] Governance & DAO proposal tracker (Snapshot + Tally)
-- [ ] Airdrop eligibility tracker
+- [x] MEV & mempool monitoring panel (`src/components/MevMonitorPanel.ts`)
+- [x] Token unlock & vesting schedules (`src/components/TokenUnlocksPanel.ts`)
+- [x] Cross-chain bridge health monitor (`src/components/BridgeMonitorPanel.ts`)
+- [x] Historical time-series charts for DeFi metrics (d3) (`api/historical-tvl.js`; not yet every metric)
+- [x] Whale alert & large transaction monitor (`src/components/WhaleMonitorPanel.ts`)
+- [x] Governance & DAO proposal tracker (`src/components/GovernancePanel.ts`; Snapshot, no Tally yet)
+- [x] Airdrop eligibility tracker (`src/components/AirdropTrackerPanel.ts`)
 - [ ] NFT floor price tracker (optional layer)
 
 ### Q3 2025 - AI Agent Integration
@@ -91,12 +91,12 @@ Move from aggregator-only to direct protocol data:
 - [ ] Automated alert-to-action workflows
 
 ### Q4 2025 - Protocol-Specific Dashboards
-- [ ] Uniswap deep analytics (pool depth, fee revenue, LP profitability)
-- [ ] Aave utilization dashboard (real-time supply/borrow rates, health factors)
-- [ ] Maker/Sky ecosystem dashboard
-- [ ] Lido staking analytics
-- [ ] Eigenlayer restaking monitor
-- [ ] Hyperliquid derivatives analytics
+- [x] Uniswap deep analytics (pool depth, fee revenue, LP profitability) (`api/protocol-dashboard.js`, `uniswap-lp` block)
+- [x] Aave utilization dashboard: supply/borrow rates and utilization (`lending-rates` block). Health factors are not shown: they need per-account positions that no free public source exposes
+- [x] Maker/Sky ecosystem dashboard (`api/_protocol-dashboards.js`, slug `sky-lending`)
+- [x] Lido staking analytics (`lido-staking` block)
+- [x] Eigenlayer restaking monitor: TVL, fees and token breakdown only (generic blocks plus `token-breakdown`)
+- [x] Hyperliquid derivatives analytics (`hyperliquid-markets` block)
 
 ### Future - Advanced Features
 - [ ] DEX aggregator integration (swap execution from HQ)
@@ -144,3 +144,14 @@ These layers are gated behind the `full` variant and can be toggled off. They ma
 4. **Integration**: Full three.ws agent tool coverage for all HQ data
 5. **Reliability**: <1% error rate on API routes, graceful degradation on failures
 
+## Open (as of 2026-11-04)
+
+Shipped with the protocol dashboards work: `ProtocolDashboardPanel`, `OracleMonitorPanel`, `RiskHeatmapPanel`, `DuneQueryPanel` (opt-in, needs `DUNE_API_KEY`). Still open:
+
+- [ ] Aave account health factors (needs per-account positions, no free public source)
+- [ ] Governance proposal data from Tally, and live proposal counts feeding the risk heatmap governance column
+- [ ] Oracle monitor feeds beyond Pyth SOL/BTC/ETH and Chainlink ETH/BTC/LINK on Ethereum
+- [ ] NFT floor price tracker
+- [ ] Deep three.ws agent context sharing, NL DeFi queries, trade signals, portfolio risk agent tool, alert-to-action workflows
+- [ ] DEX aggregator swap execution from HQ, multi-chain portfolio via agent wallets, custom alert rule builder
+- [ ] Time-series charts for every DeFi metric (only TVL history is charted)

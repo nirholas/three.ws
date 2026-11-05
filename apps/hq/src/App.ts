@@ -2221,6 +2221,22 @@ export class App {
       const { ProtocolHealthPanel } = await import('@/components/ProtocolHealthPanel');
       return new ProtocolHealthPanel();
     });
+    this.lazyFactories.set('protocol-dashboard', async () => {
+      const { ProtocolDashboardPanel } = await import('@/components/ProtocolDashboardPanel');
+      return new ProtocolDashboardPanel();
+    });
+    this.lazyFactories.set('oracle-monitor', async () => {
+      const { OracleMonitorPanel } = await import('@/components/OracleMonitorPanel');
+      return new OracleMonitorPanel();
+    });
+    this.lazyFactories.set('risk-heatmap', async () => {
+      const { RiskHeatmapPanel } = await import('@/components/RiskHeatmapPanel');
+      return new RiskHeatmapPanel();
+    });
+    this.lazyFactories.set('dune-query', async () => {
+      const { DuneQueryPanel } = await import('@/components/DuneQueryPanel');
+      return new DuneQueryPanel();
+    });
     this.lazyFactories.set('btc-network', async () => {
       const { BtcNetworkPanel } = await import('@/components/BtcNetworkPanel');
       return new BtcNetworkPanel();

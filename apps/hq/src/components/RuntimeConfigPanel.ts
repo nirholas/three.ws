@@ -32,6 +32,7 @@ const SIGNUP_URLS: Partial<Record<RuntimeSecretKey, string>> = {
   OPENSKY_CLIENT_SECRET: 'https://opensky-network.org/login?view=registration',
   FINNHUB_API_KEY: 'https://finnhub.io/register',
   NASA_FIRMS_API_KEY: 'https://firms.modaps.eosdis.nasa.gov/api/area/',
+  DUNE_API_KEY: 'https://dune.com/settings/api',
 };
 
 const MASKED_SENTINEL = '__WM_MASKED__';
@@ -42,6 +43,7 @@ const SECRET_HELP_TEXT: Partial<Record<RuntimeSecretKey, string>> = {
   ABUSEIPDB_API_KEY: 'Optional enrichment source for malicious IP reputation.',
   FINNHUB_API_KEY: 'Real-time stock quotes and market data.',
   NASA_FIRMS_API_KEY: 'Fire Information for Resource Management System.',
+  DUNE_API_KEY: 'Opt-in. Reads saved Dune queries; free keys have a monthly credit budget.',
 };
 
 interface RuntimeConfigPanelOptions {

@@ -253,6 +253,38 @@ const INTEL_PANELS: IntelPanelDef[] = [
     },
   },
   {
+    id: 'protocol-dashboard',
+    priority: 2,
+    load: async () => {
+      const { ProtocolDashboardPanel } = await import('@/components/ProtocolDashboardPanel');
+      return new ProtocolDashboardPanel();
+    },
+  },
+  {
+    id: 'oracle-monitor',
+    priority: 2,
+    load: async () => {
+      const { OracleMonitorPanel } = await import('@/components/OracleMonitorPanel');
+      return new OracleMonitorPanel();
+    },
+  },
+  {
+    id: 'risk-heatmap',
+    priority: 2,
+    load: async () => {
+      const { RiskHeatmapPanel } = await import('@/components/RiskHeatmapPanel');
+      return new RiskHeatmapPanel();
+    },
+  },
+  {
+    id: 'dune-query',
+    priority: 2,
+    load: async () => {
+      const { DuneQueryPanel } = await import('@/components/DuneQueryPanel');
+      return new DuneQueryPanel();
+    },
+  },
+  {
     id: 'venue-spread',
     priority: 2,
     load: async () => {

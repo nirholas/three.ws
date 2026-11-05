@@ -4,8 +4,17 @@ All notable changes to HQ are documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Protocol Dashboards panel**: pick any protocol (Solana first, ranked by Solana TVL) for TVL history, per-chain split, fees, yields and protocol-specific views: Uniswap LP fees vs impermanent loss over 7/30/90 days, lending utilization and rates, Lido staking, Hyperliquid perp markets. Each block settles on its own and says why when a source has no data (`/api/protocol-dashboard`)
+- **Oracle Monitor panel**: Pyth prices read from Solana price accounts and Chainlink `latestRoundData` over Ethereum RPC, compared with Coinbase and Kraken mids in basis points, with heartbeat-based stale detection and a configurable threshold (`/api/oracle-deviation`)
+- **Protocol Risk Heatmap panel**: contract, oracle, governance, liquidity and market risk per protocol from public data, with unknown cells shown as unknown (`/api/risk-heatmap`)
+- **Dune Analytics panel (opt-in)**: latest saved result of a Dune query by id, disabled until `DUNE_API_KEY` is set in Settings (`/api/dune-query`)
+- `/api/top-protocols` now carries `solanaTvl`
+
 ### Changed
 
+- ROADMAP reconciled with what is shipped, with a dated Open list
 - **Now a three.ws app**: rebranded to HQ for three.ws (titles, metadata, manifest, header, story cards), package renamed to `three-ws-hq`
 - **$THREE panel**: replaces the previous single-protocol panel with a live $THREE market signal from the three.ws API (`/api/three-signal`, origin configurable with `VITE_THREE_API_ORIGIN`)
 - **Storage keys**: browser storage keys and the IndexedDB name now use the `hq` prefix

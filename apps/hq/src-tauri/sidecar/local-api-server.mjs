@@ -85,7 +85,7 @@ const ALLOWED_ENV_KEYS = new Set([
   'CLOUDFLARE_API_TOKEN', 'ACLED_ACCESS_TOKEN', 'URLHAUS_AUTH_KEY',
   'OTX_API_KEY', 'ABUSEIPDB_API_KEY', 'WINGBITS_API_KEY', 'WS_RELAY_URL',
   'VITE_OPENSKY_RELAY_URL', 'OPENSKY_CLIENT_ID', 'OPENSKY_CLIENT_SECRET',
-  'AISSTREAM_API_KEY', 'VITE_WS_RELAY_URL', 'FINNHUB_API_KEY', 'NASA_FIRMS_API_KEY',
+  'AISSTREAM_API_KEY', 'VITE_WS_RELAY_URL', 'FINNHUB_API_KEY', 'NASA_FIRMS_API_KEY', 'DUNE_API_KEY',
 ]);
 
 function json(data, status = 200, extraHeaders = {}) {
@@ -587,6 +587,13 @@ async function validateSecretAgainstProvider(key, rawValue, context = {}) {
       if (!response.ok) return fail(`NASA FIRMS probe failed (${response.status})`);
       if (/invalid api key|not authorized|forbidden/i.test(text)) return fail('NASA FIRMS rejected this key');
       return ok('NASA FIRMS key verified');
+    }
+
+    case 'DUNE_API_KEY': {
+      const response = await fetchWithTimeout('https://api.dune.com/api/v1/query/1/results?limit=1', { headers: { 'X-Dune-API-Key': value, Accept: 'application/json' } });
+      if (response.status === 401 || response.status === 403) return fail('Dune rejected this key');
+      if (response.status >= 500) return fail(`Dune probe failed (${response.status})`);
+      return ok('Dune key verified');
     }
 
     case 'WS_RELAY_URL':
