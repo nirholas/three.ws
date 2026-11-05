@@ -1922,6 +1922,7 @@ export class CoinCommunities {
 			ui: this.ui,
 			ensureHolderPass: () => this._passHolderGate(this.coin),
 			returningMatchKey: this._urlWar,
+			onResult: (battle, outcome) => this._activity?.noteWarResult(battle, outcome),
 		});
 		// F17: the Plaza Stage, a hosted Living Stage in the plaza. Only worlds with a
 		// coin mint can derive a stage id. The landmark is geometry + a marquee + one

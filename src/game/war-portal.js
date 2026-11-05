@@ -119,16 +119,19 @@ export class WarPortal {
 	 *   rather than imported so the portal reuses the world's existing gate overlay
 	 *   instead of growing a second one.
 	 * @param {string} [opts.network]
+	 * @param {(battle: object, outcome: {mint: string}) => void} [opts.onResult]  called once
+	 *   per finished battle that involves this coin, from the single detection point
 	 * @param {string} [opts.returningMatchKey]  the ?war= key a player carries back from
 	 *   the arena, captured before enter() canonicalises the URL
 	 */
-	constructor({ scene, getPlayer, coin, ui, ensureHolderPass, network = 'mainnet', returningMatchKey = '' }) {
+	constructor({ scene, getPlayer, coin, ui, ensureHolderPass, network = 'mainnet', returningMatchKey = '', onResult = null }) {
 		this.scene = scene;
 		this.getPlayer = getPlayer;
 		this.coin = coin || {};
 		this.ui = ui;
 		this.ensureHolderPass = ensureHolderPass;
 		this.network = network;
+		this.onResult = onResult;
 
 		this._t = 0;
 		this._near = false;          // inside interaction reach
@@ -422,6 +425,7 @@ export class WarPortal {
 				? `⚔ ${label(us)} won the war against ${label(them)}: ${us.score}:${them.score}`
 				: `⚔ ${label(them)} took the war: ${them.score}:${us.score}`;
 		this.ui?.toast?.(line, won ? 'success' : drew ? 'info' : 'warn');
+		try { this.onResult?.(battle, { mint }); } catch { /* a ticker failure must not break the toast or takeover */ }
 		if (won) {
 			this._hype = { until: Date.now() + HYPE_MS, battle, us, them };
 			this._paint();

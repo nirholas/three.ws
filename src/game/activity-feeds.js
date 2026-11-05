@@ -92,6 +92,8 @@ export function createActivityHub({ ticker, coin, flash = null, director = creat
 
 	const nameOf = (id) => (id != null && id === selfId ? 'You' : cleanLabel(names.get(id), 24) || 'A player');
 	const symbol = cleanLabel(coin?.symbol, 12);
+	const warsSeen = new Set();  // matchKeys already echoed, bounded
+	const WARS_SEEN_MAX = 200;
 
 	function bindNet(net) {
 		const on = (event, fn) => offs.push(net.on(event, fn));
@@ -153,6 +155,36 @@ export function createActivityHub({ ticker, coin, flash = null, director = creat
 		noteLocalPurchase(itemName) {
 			const label = cleanLabel(itemName, 40);
 			if (label) ticker.push({ kind: 'cosmetic', text: `You unlocked ${label}` });
+		},
+
+		/**
+		 * A finished coin war from the war portal's single detection point. Posts one
+		 * ticker row per matchKey; a win for this coin is highlighted and flashes the
+		 * jumbotron once. Coin names come from the ledger, so they are cleaned.
+		 */
+		noteWarResult(battle, { mint } = {}) {
+			const key = battle?.matchKey;
+			if (!key || !mint || !battle.a || !battle.b || warsSeen.has(key)) return;
+			warsSeen.add(key);
+			if (warsSeen.size > WARS_SEEN_MAX) warsSeen.delete(warsSeen.values().next().value);
+			const usSide = battle.a.mint === mint ? battle.a : battle.b;
+			const themSide = battle.a.mint === mint ? battle.b : battle.a;
+			const tag = (side) => {
+				const sym = cleanLabel(side.symbol, 12);
+				return sym ? `$${sym}` : cleanLabel(side.name, 24) || 'A rival coin';
+			};
+			const us = tag(usSide);
+			const them = tag(themSide);
+			const ours = Number(usSide.score) || 0;
+			const theirs = Number(themSide.score) || 0;
+			if (battle.winner === 'draw') {
+				ticker.push({ kind: 'war', tone: 'info', text: `${us} drew the war with ${them}: ${ours}:${theirs}`, key: `war:${key}` });
+			} else if (battle.winner === mint) {
+				ticker.push({ kind: 'war', tone: 'up', highlight: true, text: `${us} won the war against ${them}: ${ours}:${theirs}`, key: `war:${key}` });
+				flash?.(`WAR WON ${ours}:${theirs} vs ${them}`.slice(0, 60));
+			} else {
+				ticker.push({ kind: 'war', tone: 'down', text: `${them} took the war: ${theirs}:${ours}`, key: `war:${key}` });
+			}
 		},
 
 		dispose() {
