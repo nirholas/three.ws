@@ -170,9 +170,9 @@ git checkout package.json package-lock.json   # revert to the published ^0.1.1 r
 ```
 
 ```bash
-npm test              # vitest â€” paid-route gate tests (offline)
-npm run test:live     # vitest â€” real upstream integration tests, no mocks/fixtures
-npm run test:x402      # the 402 â†’ pay â†’ 200 flow against the real base-sepolia facilitator
+npm test              # vitest: paid-route gate tests (offline)
+npm run test:live     # vitest: real upstream integration tests, no mocks/fixtures
+npm run test:x402      # the 402 -†’ pay -†’ 200 flow against the real base-sepolia facilitator
 npm run build          # tsc -> dist/
 npm run openapi        # regenerate openapi.json from the live route definitions
 npm run capture-samples  # regenerate docs/samples.js from a running instance
@@ -180,7 +180,7 @@ npm run capture-samples  # regenerate docs/samples.js from a running instance
 
 ## Testing
 
-`npm run test:live` hits a real, in-process instance of this server â€” real RPC calls, real
+`npm run test:live` hits a real, in-process instance of this server: real RPC calls, real
 Blockscout/DefiLlama/CoinGecko requests, zero mocks or recorded fixtures. Assertions check
 shapes and invariants (types, known addresses, provenance fields) since live values change
 between runs.

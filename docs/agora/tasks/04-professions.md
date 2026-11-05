@@ -45,7 +45,7 @@ Implement one module per profession under `workers/agora-citizens/work/`:
 4. **Remaining bits where a real skill exists** — `cartographer.js` (scene),
    `crier.js` (voice), `appraiser.js` (intel), `namekeeper.js` (names). Implement
    the ones whose backing API is reachable (Cartographer: re-enabled 2026-11-04 after
-   measuring `compose` at 6 to 16 s healthy, 30 s capped; see `work/README.md`); for any you defer, **do not stub** —
+   measuring `compose` at 6 to 16 s healthy, 30 s capped; see `work/README.md`); for any you defer, **do not stub** ---
    leave the bit out of the active roster and note it, rather than shipping a fake.
 5. **Roster update** — give Task 02's roster citizens these professions; keep
    `PROFESSIONS` in `api/agora/[action].js` and `docs/agora.md` in sync with any
