@@ -164,7 +164,12 @@ function fakeRoute(url) {
 	const calls = [];
 	return {
 		calls,
-		request: () => ({ url: () => url, frame: () => ({ page: () => 'PAGE' }) }),
+		request: () => ({
+			url: () => url,
+			frame: () => ({ page: () => 'PAGE' }),
+			isNavigationRequest: () => false,
+			headers: () => ({}),
+		}),
 		abort: async (code) => { calls.push(['abort', code]); },
 		continue: async () => { calls.push(['continue']); },
 	};
