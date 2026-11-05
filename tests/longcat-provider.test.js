@@ -18,8 +18,8 @@ vi.mock('../api/_lib/http.js', () => ({
 		res._send(status, { error: code, error_description: message, ...extra }),
 }));
 vi.mock('../api/_lib/auth.js', () => ({ getSessionUser: vi.fn(async () => ({ id: 'user-1' })) }));
-vi.mock('../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'https://three.ws', S3_PUBLIC_DOMAIN: 'https://cdn.three.ws' } }));
-vi.mock('../api/_lib/r2.js', () => ({ publicUrl: (k) => `https://cdn.three.ws/${k}`, thumbnailUrl: () => null }));
+vi.mock('../api/_lib/env.js', () => ({ env: { APP_ORIGIN: 'https://three.ws', S3_PUBLIC_DOMAIN: 'https://three.ws/cdn' } }));
+vi.mock('../api/_lib/r2.js', () => ({ publicUrl: (k) => `https://three.ws/cdn/${k}`, thumbnailUrl: () => null }));
 vi.mock('../api/_lib/avatar-render.js', () => ({
 	resolveRenderParams: () => ({ params: {} }),
 	renderAvatarImage: vi.fn(),
@@ -66,7 +66,7 @@ function makeRes() {
 	return res;
 }
 
-const postBody = { image_url: 'https://cdn.three.ws/a.png', audio_url: 'https://cdn.three.ws/a.wav' };
+const postBody = { image_url: 'https://three.ws/cdn/a.png', audio_url: 'https://three.ws/cdn/a.wav' };
 const post = () => ({ method: 'POST', url: '/api/avatar/video-generate', body: postBody, headers: {} });
 const poll = () => ({ method: 'GET', url: '/api/avatar/video-status?job_id=job-1', headers: {} });
 
