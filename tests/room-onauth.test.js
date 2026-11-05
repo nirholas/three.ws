@@ -21,15 +21,18 @@
 
 import { describe, it, expect } from 'vitest';
 import { WalkRoom } from '../multiplayer/src/rooms/WalkRoom.js';
+import { ModerationStore } from '../multiplayer/src/moderation.js';
 import { ClashRoom } from '../multiplayer/src/rooms/ClashRoom.js';
 import { signHolderPass } from '../api/_lib/holder-pass.js';
 
 const MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const WALLET = 'So11111111111111111111111111111111111111112';
 
-// onAuth never reads `this`, so bind a bare object: no need to boot a full
-// Colyseus room (schema, clock, presence) just to exercise admission.
-const walkAuth = (client, options) => WalkRoom.prototype.onAuth.call({}, client, options);
+// WalkRoom.onAuth only reads the room's moderation store and its own ban check, so
+// bind a bare room carrying those: no need to boot a full Colyseus room (schema,
+// clock, presence) just to exercise admission.
+const walkRoom = () => Object.assign(Object.create(WalkRoom.prototype), { _moderation: new ModerationStore() });
+const walkAuth = (client, options) => walkRoom().onAuth(client, options);
 const clashAuth = (client, options) => ClashRoom.prototype.onAuth.call({}, client, options);
 
 describe('onAuth declaration shape', () => {

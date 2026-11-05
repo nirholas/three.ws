@@ -15,6 +15,7 @@ import {
 	SCROLLBACK_TTL_S,
 	JOIN_TAIL,
 } from '../multiplayer/src/chat-scrollback.js';
+import { ModerationStore } from '../multiplayer/src/moderation.js';
 
 const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const WORLD = scrollbackKey(THREE);
@@ -157,6 +158,7 @@ describe('WalkRoom wiring', () => {
 			state: { players: new Map() },
 			_chatCooldowns: new Map(),
 			_chatHistorySent: new Set(),
+			_moderation: new ModerationStore(),
 			_chatStore: new ChatScrollback({ store: createMemoryStore() }),
 			broadcast: (type, msg) => broadcasts.push({ type, msg }),
 		});

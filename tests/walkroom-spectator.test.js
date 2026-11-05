@@ -8,6 +8,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { WalkRoom } from '../multiplayer/src/rooms/WalkRoom.js';
+import { ModerationStore } from '../multiplayer/src/moderation.js';
 import {
 	wantsSpectator, isSpectator, countSpectators, seatSpectator, guardSpectatorMessages,
 	publishSpectatorCount, MAX_SPECTATORS_PER_ROOM,
@@ -24,6 +25,7 @@ function bareRoom() {
 	const room = Object.create(WalkRoom.prototype);
 	Object.defineProperty(room, 'state', { value: { players: new Map() }, writable: true, configurable: true });
 	room.clients = [];
+	room._moderation = new ModerationStore();
 	Object.defineProperty(room, 'roomId', { value: 'room-test', configurable: true });
 	room.metadataSet = [];
 	room.setMetadata = (m) => { room.metadataSet.push(m); return Promise.resolve(); };

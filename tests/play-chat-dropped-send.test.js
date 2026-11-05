@@ -37,6 +37,6 @@ describe('chat send on a dropped socket', () => {
 describe('game wiring', () => {
 	it('passes the CommunityNet delivery result back to the chat box', async () => {
 		const src = (await import('node:fs')).readFileSync('src/game/coincommunities.js', 'utf8');
-		expect(src).toMatch(/_sendChat\(text\) \{ return this\.net\?\.sendChat\(text\) \?\? false; \}/);
+		expect(src).toMatch(/_sendChat\(text\) \{[^}]*return this\.net\?\.sendChat\(text\) \?\? false;\s*\}/);
 	});
 });

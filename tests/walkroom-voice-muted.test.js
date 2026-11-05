@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { Encoder, Reflection } from '@colyseus/schema';
 import { WalkRoom } from '../multiplayer/src/rooms/WalkRoom.js';
 import { Player, WalkState } from '../multiplayer/src/schemas.js';
+import { ModerationStore } from '../multiplayer/src/moderation.js';
 
 function makeRoom() {
 	const room = Object.create(WalkRoom.prototype);
@@ -18,6 +19,7 @@ function makeRoom() {
 		configurable: true,
 	});
 	room._actionOk = () => true;
+	room._moderation = new ModerationStore();
 	return { room, player, client: { sessionId: 's1' } };
 }
 
