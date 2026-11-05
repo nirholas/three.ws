@@ -58,3 +58,16 @@ export function filterLanesForTerritory(laneIds, country) {
 export function requestTerritory(req) {
 	return clientCountry(req);
 }
+
+/**
+ * What this requester may not use, for GET /api/forge?territory. The answer is
+ * per visitor, so it must never share the catalog's edge cache. The country
+ * itself is not echoed back, only whether one resolved.
+ */
+export function territoryReport(req) {
+	const country = requestTerritory(req);
+	return {
+		country_resolved: country != null,
+		restricted_backends: TENCENT_LANES.filter((id) => !laneAllowedInTerritory(id, country)),
+	};
+}

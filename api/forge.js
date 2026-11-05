@@ -7,6 +7,7 @@
  *   POST /api/forge?action=rig  { glb_url }                              → auto-rig
  *   GET  /api/forge?job=<id>                                             → poll a job
  *   GET  /api/forge?catalog                                              → tier/backend/cost matrix
+ *   GET  /api/forge?territory                                            → engines this visitor's region excludes
  *
  * Two request axes select how a mesh is produced (see api/_lib/forge-tiers.js):
  *   • path : "image" (image-intermediate: text→image→mesh via FLUX + TRELLIS,
@@ -164,6 +165,7 @@ import {
 	laneAllowedInTerritory,
 	requestTerritory,
 	isTencentLane,
+	territoryReport,
 } from './_lib/forge-territory.js';
 import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
@@ -3555,6 +3557,14 @@ export default wrap(async (req, res) => {
 		return json(res, 200, buildCatalog(), {
 			'cache-control': 'public, max-age=60, s-maxage=600, stale-while-revalidate=86400',
 		});
+	}
+
+	// ?territory: the engines this visitor may not use because a model licence
+	// excludes their region (or their region could not be resolved). Per
+	// request, so it never shares the catalog's edge cache; the composer uses it
+	// to disable those engines before anyone clicks Generate.
+	if (url.searchParams.has('territory')) {
+		return json(res, 200, territoryReport(req), { 'cache-control': 'private, no-store' });
 	}
 
 	// ?health: live-probes every platform backend's upstream (auth + quota

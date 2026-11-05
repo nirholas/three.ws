@@ -31,6 +31,7 @@ import { initForgeDestinationPicker, storedForgeDestination } from './shared/for
 import { openedFromShare } from './shared/share-beacon.js';
 import { generateWithModly, defaultModlyParams } from './modly-local.js';
 import { createModlyPanel, promoteModlyGlb, saveModlyResultToLibrary } from './forge-modly.js';
+import { regionRestrictedError, fetchRestrictedEngines } from './forge-region.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -238,6 +239,9 @@ let catalog = null;
 // just env presence. Null until the probe returns; the buttons render
 // optimistically from the catalog and tighten when health lands.
 let health = null;
+// Engines the server refuses for this visitor's region (GET /api/forge?territory,
+// plus any lane a region_restricted 403 named). Disabled in the picker.
+let restrictedEngines = new Set();
 let selectedTier = 'standard';
 // What the composer submits before the catalog has rendered an engine button.
 const DEFAULT_ENGINE = Object.freeze({
@@ -812,6 +816,15 @@ async function loadCatalog() {
 	selectTier(selectedTier);
 	revealSketchMode();
 	loadHealth();
+	loadTerritory();
+}
+
+// Ask which engines this visitor's region excludes, so the picker disables them
+// up front instead of letting a Generate click end in a 403.
+async function loadTerritory() {
+	const restricted = await fetchRestrictedEngines(CLIENT_HEADERS);
+	for (const id of restricted) restrictedEngines.add(id);
+	if (restrictedEngines.size) updateEngineAvailability();
 }
 
 // Sketch→3D needs the self-host TripoSG worker — the tab stays hidden unless
@@ -930,11 +943,14 @@ function updateEngineAvailability() {
 		// Boolean-coerce: before health loads, `lane` is undefined and a raw
 		// `(false) || undefined` would write aria-disabled="undefined" — an
 		// invalid ARIA token value (axe aria-valid-attr-value, WCAG 4.1.2).
-		const blocked = Boolean((textOnly && hasPhotos) || laneDown);
+		const regionBlocked = restrictedEngines.has(btn.dataset.backend);
+		const blocked = Boolean((textOnly && hasPhotos) || laneDown || regionBlocked);
 		btn.disabled = blocked;
 		btn.setAttribute('aria-disabled', String(blocked));
 		btn.dataset.health = lane ? lane.status : '';
-		if (laneDown) {
+		if (regionBlocked) {
+			btn.title = `${b?.label || btn.dataset.backend}: not available in your region because its model licence excludes it.`;
+		} else if (laneDown) {
 			btn.title = `${b?.label || btn.dataset.backend} — temporarily unavailable: ${lane.message}`;
 		} else if (blocked) {
 			btn.title =
@@ -1873,6 +1889,14 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed, prog
 		body: JSON.stringify(body),
 	});
 	const data = await res.json().catch(() => ({}));
+	// The picked engine's model licence excludes this visitor's region (403
+	// region_restricted). Remember it so the picker disables it, and hand the
+	// catch the engines the server named so it hops instead of dead-ending.
+	const regionErr = regionRestrictedError(data);
+	if (regionErr) {
+		if (regionErr.backend) restrictedEngines.add(regionErr.backend);
+		throw regionErr;
+	}
 	// An explicitly picked free engine that could not serve the request (503
 	// provider_busy). Checked before the generic 503 handling below, which would
 	// misfile it. When the server names configured engines that can take the
@@ -3207,12 +3231,24 @@ async function run(cfg) {
 					autoLaneHops += 1;
 					// Queue the switch notice for the re-run's generating panel, so the
 					// automatic hop is visible (picker flip + an in-panel line), never silent.
-					pendingLaneNote = `${engineLabel(failedId)} hit a snag. Retrying on ${engineLabel(err.retryBackends[0])}, no action needed.`;
+					pendingLaneNote = err.regionRestricted
+						? `${engineLabel(failedId)} is not available in your region. Generating on ${engineLabel(err.retryBackends[0])} instead, no action needed.`
+						: `${engineLabel(failedId)} hit a snag. Retrying on ${engineLabel(err.retryBackends[0])}, no action needed.`;
+					if (err.regionRestricted) updateEngineAvailability();
 					run(lastJob);
 					return;
 				}
 			}
+			if (err.regionRestricted) updateEngineAvailability();
 			showLaneFailed(err.message, err.retryBackends);
+			return;
+		}
+		// Region-restricted with no alternative named: disable the engine and say
+		// why, so the next Generate is not the same refusal.
+		if (err.kind === 'region') {
+			stopElapsed();
+			updateEngineAvailability();
+			showError(err.message);
 			return;
 		}
 		// A presented pay-per-use proof was already spent — drop the stale payment so
