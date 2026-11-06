@@ -60,7 +60,7 @@ The turn is **distributed across three joints**, and that is the whole point. A 
 | `maxPitchUp` / `maxPitchDown` | 30° / 35° | Vertical clamps, asymmetric because looking down is more natural than up. |
 | `damping` | 10 (1/s) | How fast the gaze converges. Higher snaps sooner. |
 | `fadeRate` | 5 (1/s) | How fast the whole layer fades in and out. |
-| `canonicalToNode` | — | Reuse an already-built canonical bone map instead of re-traversing the model. |
+| `canonicalNodes` | none | Reuse an already-built canonical bone-to-node `Map` instead of re-traversing the model. |
 
 Two behaviours worth knowing:
 

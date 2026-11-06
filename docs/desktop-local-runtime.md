@@ -41,6 +41,9 @@ and carries a sha256 of the canonical JSON of the action, byte-identical to
   runtime and checked again at decide time, so what you approve is exactly what
   was shown. If the stored action changed, nothing runs (`payload_changed`).
 - The renderer window can review or deny but has **no approve channel**.
+- Token names and symbols are attacker-chosen on-chain text, so before they
+  reach the dialog the runtime strips control and bidi characters, collapses
+  whitespace and caps them at 16 characters.
 - An approval expires after 15 minutes and runs nothing.
 - Killing an agent denies its pending approvals.
 

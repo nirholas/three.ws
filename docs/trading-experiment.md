@@ -63,7 +63,8 @@ the take-initials ladder above ever fired.
 worth zero at worst and uncapped at best. Selling that last slice to bank a few
 thousandths of a SOL trades away every possible outcome above it for a rounding
 error. So a terminal exit that is **in profit** sells down to the moon-bag floor
-(`moonbag_min_pct`, default 15%) and the retained tokens ride indefinitely.
+(`moonbag_min_pct`, default 15%) and the retained tokens ride on, watched by the
+moon-bag manager described below.
 
 | Situation | What happens |
 |---|---|
@@ -84,6 +85,18 @@ and its `max_concurrent_positions` slot is released immediately. Only the tokens
 stay behind, recorded on the position row (`moonbag_base_amount`,
 `moonbag_entry_lamports`) and surfaced on
 [/sniper/experiments](https://three.ws/sniper/experiments).
+
+**The retained bag is managed, not forgotten.** The bag is free, so it has no stop loss,
+but `workers/agent-sniper/moonbag-manager.js` sweeps every retained bag each
+`SNIPER_MOONBAG_SWEEP_MS` (60s). It re-quotes the bag (bonding curve, then the AMM after
+graduation), keeps a high-water mark, and sells the WHOLE bag once its value falls
+`SNIPER_MOONBAG_TRAIL_PCT` (default 40) below that peak. It never sells a bag worth less
+than `SNIPER_MOONBAG_DUST_LAMPORTS` (50000), where the sell fee would eat the proceeds; a
+dust bag whose value has not moved for `SNIPER_MOONBAG_WRITE_OFF_S` (600) is written off
+and dropped from the sweep. Those exits are recorded on `moonbag_exit_reason`
+(`trailing_stop` or `written_off`), not on the closed position's `exit_reason`. The rule
+is `decideMoonbagAction` in `workers/agent-sniper/exit-logic.js`; it needs migration
+`20261105080000_sniper_moonbag_manager_telemetry.sql`.
 
 Because loss exits still sell out completely, rugs close fully and only *winners*
 leave a bag behind. Every full exit now also closes the coin's token account, so
@@ -311,6 +324,17 @@ Read it at `GET /api/sniper/journal`. Because it captures the *why*, not just th
 PnL, you can compare what actually worked — which entry conditions led to winners,
 whether 2× initials was too early or too late, whether the 25% trail gave back too
 much — and tune the next run. That is the whole point of the experiment.
+
+## Measuring it
+
+Beyond the journal, two read-only scripts report on a run. `node scripts/sniper-experiment-report.mjs`
+prints per-arm net P&L after model cost (the judge stores input tokens, output tokens and the
+provider-reported cost on each verdict, migration `20261105100000_sniper_llm_verdict_cost.sql`)
+and how much of its peak a trailing stop gave back. `node scripts/sniper-latency-report.mjs --days 7`
+prints p50 and p90 entry latency per stage (signal, decision, sent, landed) per arm, from the stamps
+the executor writes on each live entry. The worker also records per-second price ticks
+(`agent_sniper_price_ticks`, 14-day retention). A separate paid-intel arm that buys its entry
+signals over x402 is documented in [agent-sniper.md](agent-sniper.md#paid-intel-arm).
 
 ## Files
 

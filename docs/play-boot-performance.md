@@ -82,6 +82,8 @@ The coin's artwork appears on the totem's two faces and on the jumbotron panel. 
 
 [src/club-perf.js](../src/club-perf.js) steps the render tier down after two sustained slow seconds and only climbs back after six sustained fast ones. World entry keeps working after the player takes control: agent desks arrive over the network, the NPC crowd builds, the HDRI upgrade convolves. Judged live, that burst downgraded the pixel ratio of machines that had no trouble drawing the world at all, and the asymmetric recovery window meant the player spent their first ten seconds looking at a needlessly soft image.
 
+The loops feed the watchdog the real frame interval through `watchdogFrameSec()` (capped at `WATCHDOG_MAX_FRAME_SEC`, 0.5 s), not the clamped physics `dt`, so a device drawing 2 fps steps down in seconds rather than minutes. When the watchdog bottoms out on a struggling device, `/play` offers a switch to the lite client ([src/game/lite-offer.js](../src/game/lite-offer.js)).
+
 Frames during entry are slow because the world is still assembling, not because the device cannot draw it. The grace period is not a way to hide a real performance problem; it is a refusal to draw a conclusion from unrepresentative data.
 
 ---

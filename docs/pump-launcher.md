@@ -61,6 +61,7 @@ or `imageUrl`.
 | `description` | — | Coin description. Used only on the `imageUrl` (we-pin) path. |
 | `twitter` / `telegram` / `website` | — | Socials embedded in the pinned metadata (`imageUrl` path). |
 | `creator` | — | Solana pubkey (base58) to receive pump.fun creator rewards. Defaults to the launcher. |
+| `holderReward` | none | Create a pump.fun holder-reward coin: creator fees accrue to holders through the protocol holder-rewards PDA. Default `false`. |
 | `vanityPrefix` / `vanitySuffix` | — | Base58 affix (≤5 chars each) to brand the mint address. When a matching address is already sitting in the [pre-ground inventory](vanity.md#tier-3--premium-inventory), it's claimed and used instantly instead of grinding — same $5 flat price either way. Longer patterns with no inventory match grind live and get exponentially slower. |
 | `vanityIgnoreCase` | — | Match the vanity affixes case-insensitively (faster). Default `false`. |
 
@@ -105,6 +106,7 @@ code.
   "mint": "HEL1oXyz…",
   "signature": "5xY…sig",
   "creator": "wwwPqsM4N7T9J69tB82nLyzxqsH159j4orftLTQfUGV",
+  "holderReward": false,
   "name": "Helios",
   "symbol": "HELIO",
   "metadataUri": "https://ipfs.io/ipfs/Qm…",
@@ -128,7 +130,7 @@ both `0`), `"ground"` when mined fresh for this launch, or `null` when no
 
 ## Networks & settlement
 
-Pay in **USDC on Base or Solana mainnet** (the 402 challenge advertises both). The
+Pay in **USDC on Solana or Base mainnet** (the 402 challenge advertises both, Solana first). The
 token itself always deploys on **Solana mainnet** — pump.fun is mainnet-only.
 
 ## Correctness guarantees

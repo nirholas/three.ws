@@ -31,11 +31,11 @@ generation quota:
 
 | URL | Serves | Use it for |
 |---|---|---|
-| `https://three.ws/api/mcp-studio` | all fifteen tools (the 3D tools, the asset catalog, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
+| `https://three.ws/api/mcp-studio` | all sixteen tools (the 3D tools, the asset catalog, docs search, the persona tools), both widgets | any MCP host, including a ChatGPT developer-mode connector |
 | `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | adding three.ws to your own ChatGPT (step-by-step at [three.ws/chatgpt](https://three.ws/chatgpt)), and the ChatGPT plugin directory listing |
-| `https://three.ws/api/mcp-grok` | all fifteen tools, every call answered within 40 s, quota per MCP session | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
+| `https://three.ws/api/mcp-grok` | all sixteen tools, every call answered within 40 s, quota per MCP session; signed in, also the account's agent tools | Grok Bot, Grok connectors and the xAI Responses API ([guide](./grok.md)) |
 
-The ChatGPT surface leaves out the three catalog tools, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
+The ChatGPT surface leaves out the three catalog tools and `search_docs`, which keeps that listing's reviewed tool set unchanged, and the three persona tools, because their widget
 frames the hosted embodiment page, which needs `frameDomains`. OpenAI's app
 guidelines reserve frame domains for embedding an essential third-party
 experience and say those apps "are often not approved for broad distribution";
@@ -129,7 +129,7 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
-`tools/list` returns exactly **fifteen** tools, and they split six ways:
+`tools/list` on the studio door returns exactly **sixteen** tools, and they split seven ways:
 
 - **Six generation tools** (`forge_free`, `text_to_avatar`, `mesh_forge`,
   `rig_mesh`, `forge_avatar`, `refine_model`), in the table below. Each takes an
@@ -139,12 +139,13 @@ launcher, living avatars, link unfurls) is documented end to end in
 - **One inspector**, `look_at_model`, also in the table below.
 - **Three asset catalog reads** (`search_catalog`, `get_catalog_item`,
   `get_item_source`), in **Ready-made assets** below.
+- **One documentation search** (`search_docs`), in **Documentation search** below.
 - **Three persona/embodiment tools** (`create_agent_persona`,
   `get_agent_persona`, `persona_say`), in the **Embodiment** section further down.
 
-All fifteen are free and keyless. `/api/mcp-chatgpt` lists eight of them: the
+All sixteen are free and keyless. `/api/mcp-chatgpt` lists eight of them: the
 six generation tools, `check_job` and `look_at_model`, without `get_job`, the
-catalog reads or the persona tools.
+catalog reads, `search_docs` or the persona tools.
 
 The six generation tools run operator-funded on the platform's own generation
 pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,

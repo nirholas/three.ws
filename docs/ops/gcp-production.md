@@ -35,7 +35,7 @@ Cloud Run service "three-ws-api" (us-central1, min 0, 2 vCPU / 2 Gi, timeout 900
 allow-unauthenticated, runtime SA three-ws@…)
   └─ one Express container (server/index.mjs) serving:
        • static frontend from dist/ (baked into the image)
-       • the vercel.json route table (1,285 rules as of 2026-09-01:
+       • the vercel.json route table (1,633 rules as of 2026-11-06:
          headers/rewrites/redirects/404)
        • all api/** handlers with Vercel-parity filesystem routing
         │
@@ -120,7 +120,7 @@ aerial-vehicle-466722-p5 --filter="bindings.members:three-ws-build@"`.
 ```bash
 # Frontend changed? Build first — dist/ ships from the local build.
 # build:gcp = check:conflicts -> check:browser-graph -> check:tdz-bootstrap
-# -> ensure:avatar-studio -> build:info:snapshot -> build:lib:full (the agent-3d
+# -> ensure:avatar-studio -> build:info:snapshot -> docs:freshness -> build:lib:full (the agent-3d
 # UMD lib) -> build:avatar-sdk -> build:chat -> build (the site `vite build`)
 # -> publish:lib -> build:info -> check:dist -> check:pages, IN THAT ORDER. The
 # order is load-bearing: build:lib:full and build:avatar-sdk must run BEFORE the
@@ -133,8 +133,9 @@ aerial-vehicle-466722-p5 --filter="bindings.members:three-ws-build@"`.
 npm run build:gcp
 
 # Build image on Cloud Build (32-vCPU + BuildKit layer cache) + push + deploy.
-# Gated on check:dist, check:pages AND db:check so an incomplete dist/, an
-# unreachable page, or an out-of-date database can no longer ship. After the
+# Gated on check:dist and check:pages, and the submit step on db:check,
+# check:gcloudignore, audit:deploy and check:api-imports, so an incomplete dist/,
+# an unreachable page, or an out-of-date database can no longer ship. After the
 # submit it runs deploy:gcp:sync-crons, which creates a Cloud Scheduler job for
 # any cron declared in vercel.json that has none yet (existing jobs are never
 # touched), so a new cron starts firing with the code that serves it. Ends with
@@ -210,7 +211,10 @@ rollout and needs owner approval like any other deploy. Logic and its tests:
 > `cp -al`, which is what a machine that has never deployed hits first. It copies
 > both env files rather than hardlinking them, and it rejects a `--path` on
 > another filesystem up front, because `cp -al` cannot hardlink across a device
-> boundary and leaves the tree half-staged when it tries. The equivalent by hand,
+> boundary and leaves the tree half-staged when it tries. The source tree is live,
+> so a test run can delete a cache file under `node_modules` while `cp -al` walks
+> it; a copy whose only errors are source files that no longer exist succeeds
+> with a note, and every other `cp` failure still aborts. The equivalent by hand,
 > for reference:
 >
 > ```bash
@@ -275,7 +279,7 @@ rollout and needs owner approval like any other deploy. Logic and its tests:
 > is a hard 404 at `/<slug>` unless `vercel.json` carries a rewrite. That
 > shipped twice in three days: `/timeline` (fixed by `5688277bd`, "page shipped
 > without a route entry") and `/tracker` (advertised 2026-07-23, 404 until a
-> route landed two days later). `check:pages` resolves all ~760 declared paths
+> route landed two days later). `check:pages` resolves every declared path
 > through the real route table and fails the build on any that dead-end. When it
 > fires it tells you which of the two causes applies: a missing `vercel.json`
 > rewrite, or a page that was never built (missing `vite.config.js` input entry).
@@ -317,6 +321,12 @@ npm run audit:deploy        # includes: installed node_modules must match packag
 npm run check:api-imports   # imports every module under api/, fails on any that throws while loading
 ```
 
+- `audit:deploy` also dry-runs `npm ci` with the npm the Dockerfile pins
+  (`ARG NPM_VERSION`, currently 11.19.1), because npm releases resolve the same
+  manifests differently: on 2026-11-06 a lockfile regenerated with 11.19.1 was
+  refused by the image's pinned 11.9.0 and Cloud Build died at `npm ci`. When it
+  fails, set `ARG NPM_VERSION` to the output of `npm -v` on the machine that
+  regenerated the lockfile.
 - The image installs from `package-lock.json`, but local tests and every deploy
   worktree (which hardlinks `node_modules`) run whatever is on disk. If the two
   differ, a green `npm test` says nothing about what production will boot. When
@@ -559,6 +569,11 @@ failure read as `0`, one blip would silently halt the ring; if an empty wallet
 read as `null`, the doomed-payment storm returns. Emptiness is detected
 structurally (`getAccountInfo` → `null` ⇒ no token account ⇒ no USDC), not by
 pattern-matching an RPC error string, whose wording varies by provider.
+
+Separately, the loop stops *starting* paid calls once a worst-case call (three
+20s fetches: probe, pay, refresh reprobe) could overrun the 120s cron budget
+(`api/_lib/x402/tick-budget.js`, cutoff at 60s elapsed). Entries not reached stay
+ready for the next tick, so a slow tick no longer ends as a 503 `cron_timeout`.
 
 To resume autonomous spend, fund the payer's USDC float. The loop self-recovers
 on the next tick — no redeploy, no flag flip.
@@ -988,7 +1003,7 @@ is the verified re-seal in [wallet-key-migration.md](wallet-key-migration.md).
 - The project + its env vars (plaintexts unreadable, but delete only after the
   ring secrets question is settled — the dashboard may still be useful to a
   human with owner access).
-- `@vercel/og` remains a code dependency (runs fine on Cloud Run — plain Node).
+- The OG image renderer uses `satori`; the unused `@vercel/og` dependency was dropped on 2026-11-06.
 - `vercel.json` is now a **live config file consumed by server/index.mjs**
   (routes + crons) — do NOT delete it as "Vercel leftovers".
 - The `deploy` npm script still points at Vercel; superseded by `deploy:gcp`.

@@ -77,6 +77,11 @@ and position size. Reaching `trusted` unlocks five more (`TIER_UNLOCKS` in
 `autonomous` adds `max_creator_launches`, so a proven arm can test whether a
 prolific creator is really a bad one.
 
+An arm in `paid_intel` decision mode (it buys launch, anomaly and trending signals
+over x402, see [Agent Sniper](./agent-sniper.md)) has no entry-tuning rules of its
+own, so the optimizer proposes only the generic exit and sizing changes for it.
+Tiers still scale those bounds the same way.
+
 ### 3. How much of the fleet budget an arm concentrates
 
 The evolution loop multiplies each arm's fitness by its tier weight (0.6 on

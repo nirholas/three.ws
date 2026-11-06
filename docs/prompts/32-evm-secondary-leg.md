@@ -4,7 +4,7 @@ Read `docs/prompts/README.md` first. Solana is the home chain; this brief adds a
 
 ## The problem
 
-Agent wallets, launches and the flywheel are Solana. EVM surfaces exist in pieces (`@three-ws/agent-payments` has an `/evm` subpath, some x402 EVM work), but an agent has no EVM address, cannot hold or spend USDC on Base or Robinhood Chain, and cannot launch a token there. Some attention and revenue live on those chains.
+Agent wallets, launches and the flywheel are Solana. EVM surfaces exist in pieces (`@three-ws/agent-payments` has an `/evm` subpath, some x402 EVM work, and `api/_lib/agent-wallet.js` already provisions a custodial EVM key per agent), but the leg is incomplete: read that module first, then close the gaps in holding and spending USDC on Base or Robinhood Chain and launching a token there. Some attention and revenue live on those chains.
 
 ## Build
 

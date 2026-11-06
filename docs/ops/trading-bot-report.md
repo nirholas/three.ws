@@ -89,6 +89,9 @@ an RPC blip must not report a healthy fleet as starved.
 - `submitProtected()` accepts an `onSigned` hook awaited before each broadcast; a hook
   failure aborts the send with `PRESEND_RECORD_FAILED` and nothing leaves the process
   (229a55725). It does not change the `SIM_FAILED` behavior above.
+- `submitProtected()` now checks the chain for an earlier attempt that landed late before each
+  retry and before surfacing any terminal error, and returns that trade as landed (`landedBy:
+  late_confirm`) instead of failing it (26be79cbc). The `SIM_FAILED` behavior above is unchanged.
 - `getAssetsByOwner` wallet reads in `api/_lib/balances.js` now count toward RPC spend
   accounting (7a39eee75). Report output is unchanged.
 

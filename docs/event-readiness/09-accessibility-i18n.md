@@ -5,7 +5,7 @@ The event audience is international and diverse. Keyboard users, screen-reader u
 ## Where the code lives
 
 - /play HUD and panels: `src/game/coincommunities-ui.js`, `src/game/hud/`, `src/game/coincommunities.css`
-- i18n runtime: `i18n.js` (loaded by `pages/play.html`); play strings use `data-i18n` / `data-i18n-attr` attributes (see the meta tags in `pages/play.html` for the pattern)
+- i18n runtime: `src/i18n.js`, served as `/i18n.js` and loaded by `pages/play.html`; HUD strings go through `src/game/i18n-play.js` (`t()`), and static markup uses `data-i18n` / `data-i18n-attr` attributes (see the meta tags in `pages/play.html` for the pattern)
 - Motion audit: `npm run audit:motion`; design tokens: `docs/DESIGN-TOKENS.md`
 
 ## What to audit

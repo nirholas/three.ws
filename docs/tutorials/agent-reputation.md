@@ -199,9 +199,9 @@ Feedback entries are what people *said*. For a three.ws agent you can also read 
 GET /api/x402/agent-reputation?subject=<identifier>
 ```
 
-`subject` accepts any identifier (a three.ws agent UUID, a wallet, or a mint); the type is auto-detected. Called without payment it answers `402` with the payment requirements, which is the handshake an x402 client completes automatically.
+`subject` accepts any identifier (a three.ws agent UUID, a Solana wallet or mint, an EVM address, or an ERC-8004 agent id; `chain` sets the EVM chain, default Base) and the type is auto-detected. Called without payment it answers `402` with the payment requirements, which is the handshake an x402 client completes automatically. A caller holding an OAuth2 token with the `read:agent-reputation` scope, or a wallet presenting a fresh Sign-In-With-X proof, skips payment.
 
-It returns confirmed payment count and distinct payers, payout and distribution success rates, failure rates, and attestation counts: reputation derived from behavior rather than from opinion. It is the same data the Agent Passport's A-D grade is built from.
+It returns a deterministic 0-100 `score` and a `tier` (`unknown`, `low`, `medium`, `high`, `elite`), plus the `signals.dimensions` behind them (activity, age, distinct counterparties, holdings, settlement reliability, attestations), the `evidence` links, and `caveats`. An unscannable subject returns `score: null` and tier `unknown` rather than an invented number. It is reputation derived from behavior rather than from opinion, and the same data the Agent Passport's A-D grade is built from.
 
 ---
 

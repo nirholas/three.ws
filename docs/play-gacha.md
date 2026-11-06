@@ -24,7 +24,7 @@ The platform never holds or moves player funds. Collector Crypt builds each tran
 
 If WebGL is unavailable, or the browser drops the GPU context, the stage falls back to a flat flip card with the same photos. Reduced-motion settings skip the capsule sequence and the idle motion.
 
-Closing the screen never cancels a pull in progress. The pull keeps running and a small pill in the corner reopens it. The pack memo is also saved in `localStorage` (`threews:gacha:pending`). If the tab closes after paying, reopening the machine resumes that pack instead of starting a new one.
+Closing the screen never cancels a pull in progress. The pull keeps running and a small pill in the corner reopens it. The pack memo is also saved in `localStorage` (`threews:gacha:pending`). If the tab closes after paying, reopening the machine resumes that pack instead of starting a new one. The saved pack is erased only when the server clearly refused the submit (a 4xx, proof the payment never went out). A dropped connection, timeout or 5xx keeps it and offers **Check my pack**, because the payment may still have been broadcast.
 
 ## Why the transaction checks exist
 

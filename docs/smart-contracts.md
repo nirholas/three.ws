@@ -402,12 +402,14 @@ struct Feedback {
 
 ### Reading from ethers.js
 
+To read an agent's score from the canonical registries, call `readAgentReputation({ address, runner, agentId })` from `src/erc8004/reputation-read.js`. It detects whether the address speaks the reference dialect (`getSummary` over `getClients`) or the legacy shape below and returns `{ average, count, reviewers, dialect }`. The direct calls below work only against your own deploy of `contracts/src`, because `REPUTATION_REGISTRY_ABI` is the legacy dialect and reverts on the canonical addresses (`REPUTATION_REFERENCE_ABI` mirrors what they run).
+
 ```js
 import { ethers } from 'ethers';
-import { REPUTATION_REGISTRY_ABI, REGISTRY_DEPLOYMENTS } from './src/erc8004/abi.js';
+import { REPUTATION_REGISTRY_ABI } from './src/erc8004/abi.js';
 
 const repRegistry = new ethers.Contract(
-  REGISTRY_DEPLOYMENTS[8453].reputationRegistry,
+  MY_REPUTATION_REGISTRY_ADDRESS, // your own deploy of contracts/src
   REPUTATION_REGISTRY_ABI,
   provider
 );

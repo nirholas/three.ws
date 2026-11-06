@@ -31,13 +31,13 @@ The fastest route from zero to running is the same container three.ws runs in pr
 git clone https://github.com/nirholas/three.ws.git
 cd three.ws
 npm install
-cp .env.example .env.local   # fill in DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY at minimum
+cp .env.example .env.local   # fill in DATABASE_URL, JWT_SECRET and one chat provider key (for example ANTHROPIC_API_KEY) at minimum
 npm run db:bootstrap          # provision the schema
 npm run build                 # build the frontend into dist/
 node server/index.mjs         # serves everything on PORT (defaults to 8080)
 ```
 
-Point a reverse proxy / load balancer at the container, add your domain and TLS, and you have a live instance. On Google Cloud Run, `npm run deploy:gcp` builds the image with [`server/cloudbuild.yaml`](../server/cloudbuild.yaml) and ships it — the [ops runbook](ops/gcp-production.md) covers the load balancer, DNS, and TLS wiring end to end.
+Point a reverse proxy / load balancer at the container, add your domain and TLS, and you have a live instance. On Google Cloud Run, `npm run deploy:gcp:full` runs the `build:gcp` chain and then `deploy:gcp`, which submits [`server/cloudbuild.yaml`](../server/cloudbuild.yaml), syncs the Cloud Scheduler jobs, purges the CDN, and smoke-tests production. The [ops runbook](ops/gcp-production.md) covers the load balancer, DNS, and TLS wiring end to end.
 
 ---
 
@@ -69,7 +69,7 @@ JWT_KID=k1
 PASSWORD_ROUNDS=11
 ```
 
-### LLM (required for agent conversations)
+### LLM (at least one provider key, required for agent conversations)
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-xxxxx
@@ -78,7 +78,7 @@ CHAT_MODEL=claude-sonnet-5
 CHAT_MAX_TOKENS=1024
 ```
 
-Without `ANTHROPIC_API_KEY`, the chat API falls back to client-side pattern matching — agents still respond, but without the full LLM backend.
+`POST /api/chat` routes to whichever provider has a key configured. The free lanes lead the order (`GROQ_API_KEY`, `OPENROUTER_API_KEY`, `NVIDIA_API_KEY`, `SAMBANOVA_API_KEY`, `MISTRAL_API_KEY`, `ZAI_API_KEY`), with `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as paid backstops; the full order is in the header of [`api/chat.js`](../api/chat.js). With no provider key at all, the endpoint answers `503 chat_unavailable`, so set at least one.
 
 ### Object storage (required for GLB/asset uploads)
 
@@ -291,7 +291,7 @@ npm install
 
 # Copy and fill in env vars
 cp .env.example .env.local
-# Edit .env.local — minimum: DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
+# Edit .env.local: minimum: DATABASE_URL, JWT_SECRET, and one chat provider key (for example ANTHROPIC_API_KEY)
 
 # Apply the full schema (core + indexer + delegations + migrations)
 npm run db:bootstrap
@@ -311,7 +311,7 @@ The dev server runs on **port 3000** with Vite HMR. Changes to any source file r
 | `npm run dev` | Dev server with HMR on port 3000 |
 | `npm run build` | Production build to `dist/` |
 | `npm run clean` | Remove `dist/` and `dist-lib/` |
-| `npm run deploy:gcp` | Build the image via `server/cloudbuild.yaml` and deploy to Cloud Run (how three.ws production ships) |
+| `npm run deploy:gcp:full` | Build the frontend and libraries (`build:gcp`), then submit `server/cloudbuild.yaml` to Cloud Build, sync crons, purge the CDN and smoke-test (how three.ws production ships; needs the three.ws GCP project and owner approval) |
 | `npm run verify` | Prettier check + `vite build` (exits non-zero on formatting drift or a broken build) |
 | `npm run format` | Auto-format all files with Prettier |
 | `npm run test` | Run the test suite — `vitest run` then `playwright test` |
@@ -347,7 +347,7 @@ The Vite config handles multi-page routing, asset hashing, and the PWA manifest.
 /agent/:id/edit      → /agent-edit.html    (legacy spelling, still served)
 /agent/:id/embed     → /agent-embed.html   (legacy spelling, same headers)
 /agent/:id           → 301 → /agents/:id
-/agents/:id          → /agent-detail.html  (bot user-agents get the OG render)
+/agents/:id          → /avatar-page.html   (bot user-agents get the OG render)
 /dashboard           → /dashboard-next/index.html
 /w/:id               → /api/widgets/page?id=:id (server-rendered widget page)
 /a/:chainId/:id      → on-chain agent page (/api/a-page)
@@ -502,7 +502,7 @@ Neon's dashboard has query monitoring, connection graphs, and slow query logs. F
 
 ### Error tracking
 
-Add Sentry by setting `SENTRY_DSN` in your environment and importing the Sentry SDK in your API entrypoints.
+Set `SENTRY_DSN` in your environment. [`api/_lib/sentry.js`](../api/_lib/sentry.js) reports captured API errors to Sentry over HTTP, so no Sentry SDK import is needed.
 
 ### Key rotation
 

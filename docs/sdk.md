@@ -387,7 +387,7 @@ This copies the current build (`dist-lib/agent-3d.js` and `dist-lib/agent-3d.umd
 
 To release new code under a pinned URL, bump `package.json` and run `npm run release:lib`: it builds the library, archives the bytes once, and records their hashes. See [CDN versioning](./web-component.md#cdn-versioning) for the guarantees.
 
-Requires the library bundle to have been built first. It's also wired as the `npm run publish:lib` script, and runs automatically inside the production build: `npm run build:gcp` chains `build:lib:full` (which emits both the ES and UMD formats) straight into `publish:lib`, then verifies the result with `check:dist`.
+Requires the library bundle to have been built first. It's also wired as the `npm run publish:lib` script, and runs automatically inside the production build: `npm run build:gcp` runs `build:lib:full` (which emits both the ES and UMD formats) early in its chain, then `publish:lib` after the platform build, then verifies the result with `check:dist`.
 
 ### Versioning
 

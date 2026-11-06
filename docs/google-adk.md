@@ -15,7 +15,7 @@ key, no payment, no wallet.
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
 | **Auth** | None for the studio tools |
 | **Protocol** | MCP `2025-06-18` |
-| **Tools** | The full free studio: the same fifteen tools as [`/api/mcp-studio`](./mcp-studio.md) |
+| **Tools** | The full free studio: the same sixteen tools as [`/api/mcp-studio`](./mcp-studio.md) |
 
 ## Use with an agent
 
@@ -38,7 +38,7 @@ const agent = new LlmAgent({
 `MCPToolset.getTools()` discovers the live tool catalog (`forge_free`,
 `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`,
 `look_at_model`, `search_catalog`, `get_catalog_item`, `get_item_source`,
-`create_agent_persona`, `get_agent_persona`, `persona_say`, and the job tools
+`search_docs`, `create_agent_persona`, `get_agent_persona`, `persona_say`, and the job tools
 `check_job`/`get_job`) and wraps each as an ADK `BaseTool` the model can call
 during a conversation; ADK manages the MCP session underneath.
 

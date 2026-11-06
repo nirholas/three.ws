@@ -25,7 +25,7 @@ result_* }` — and authenticate with one shared bearer secret.
 | `trellis_selfhost`  | `workers/model-trellis`  | `model-trellis`  | `image`  | Native single-hop image→3D (Microsoft TRELLIS). Accepts user photos and the FLUX-synthesized view for text prompts. Textured GLB. |
 | `hunyuan3d`         | `workers/model-hunyuan3d`| `model-hunyuan3d`| `image`  | High-poly image-conditioned reconstruction (Tencent Hunyuan3D). Poly-budget aware. |
 | `modly`             | `workers/modly`          | `model-modly`    | `image`  | TripoSG through Modly's headless backend (MIT). Single photo to untextured GLB, repaired and decimated to the tier's face budget. Weights staged by `workers/modly/stage_weights.sh`. |
-| `modly_hunyuan`     | `workers/modly`          | `model-modly`    | `image`  | Hunyuan3D 2 Mini Turbo on the same worker. Untextured. A Tencent lane: never routed to a restricted or unknown territory (`api/_lib/forge-territory.js`). |
+| `modly_hunyuan`     | `workers/modly`          | `model-modly`    | `image`  | Hunyuan3D 2 Mini Turbo on the same worker. Untextured. A Tencent lane: never routed to a restricted or unknown territory (`api/_lib/forge-territory.js`); `GET /api/forge?territory` reports which engines the caller's region excludes so the composer can disable them. |
 | `triposg`           | `workers/model-triposg`  | `model-triposg`  | `sketch` | Sketch→3D (TripoSG-scribble): a drawing + a prompt naming it → untextured geometry. |
 | `pixal3d`           | `workers/model-pixal3d`  | `model-pixal3d`  | `image`  | Opt-in "Match my photo" lane: 1 to 4 labeled photos fused pixel-aligned into one PBR GLB (TencentARC Pixal3D on the TRELLIS.2 backbone). Weights staged by `workers/model-pixal3d/stage_weights.sh`. |
 | `anigen`            | `workers/model-anigen`   | `model-anigen`   | `image`  | Opt-in pre-rigged lane: mesh, skeleton and skin weights in one pass from one photo (VAST-AI-Research AniGen). |
@@ -39,10 +39,13 @@ All of these lanes are `provider: 'gcp'`, `free: true`. `model-trellis` pins one
 always-warm instance and bursts to three under load (`_MIN_INSTANCES: "1"`,
 `_MAX_INSTANCES: "3"`): a cold FUSE-mounted weight load can stall for many
 minutes, and the GCP credit budget covers the standing GPU-hour.
-`model-hunyuan3d`'s cloudbuild default is also min 1, but the live service was
-set to `--min-instances=0` on 2026-07-26 to free the shared us-central1 L4 pool
-(3 granted; see the `gpu-quota-starved` signature in
-`docs/ops/production-log-triage.md`); `model-triposg` scales to zero. A
+`model-hunyuan3d` ran at min 1 until it was set to `--min-instances=0` on
+2026-07-26 to free the shared us-central1 L4 pool, and its cloudbuild now
+defaults to min 0, max 1 (3 L4s granted; see the `gpu-quota-starved` signature in
+`docs/ops/production-log-triage.md`); `model-triposg` scales to zero. `model-trellis`'s liveness probe is
+`periodSeconds=120,timeoutSeconds=90,failureThreshold=5` because xatlas holds the
+GIL and can freeze `/health` for minutes mid-job (142 s on 2026-11-05, which
+killed the instance under the old 10 s x 3 probe). A
 **cold start** on a scale-to-zero worker pays a one-time model-load before the
 job runs. We surface that honestly (see *Cold start*), never as a fake timer,
 and the `gpu-keepwarm` cron (`api/cron/gpu-keepwarm.js`, every 10 min during

@@ -58,6 +58,7 @@ happen).
 - **Self-healing ledger.** The loop and endpoint create `three_microbuy_runs` on
   first use, so the DB cap fallback and the records always work even on a fresh or
   behind database — the migration owns it in a real deploy, this is the backstop.
+- **Never the rewards wallet.** Both lanes sweep every `$THREE` their signer holds into the treasury, so a signer equal to `THREE_REWARDS_WALLET` would drain the holder-rewards pool. The plan, execute and sweep entry points of both lanes refuse with `rewards_wallet_is_signer` before any RPC spend (`assertRewardsNotSwept` in [config.js](../api/_lib/token/config.js)). Give the lane its own `THREE_MICROBUY_SECRET_KEY_B64`, and run `npm run token:preflight` to check candidate receivers read-only.
 - **Kill switches.** `X402_AUTONOMOUS_ENABLED=false` (global) or
   `THREE_MICROBUY_ENABLED` unset stops everything; `THREE_MICROBUY_LOOP_ENABLED=false`
   pauses only the driver while leaving the endpoint payable.

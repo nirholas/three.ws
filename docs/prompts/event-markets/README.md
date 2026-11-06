@@ -6,7 +6,7 @@ Read `CLAUDE.md` and `docs/prompts/README.md` first. Every brief here is a compl
 
 Every event on the platform (a hackathon, a launch cohort, a tournament, an agent competition, a leaderboard season) gets a market: "who wins this?", with the entrants as outcomes. The market is the content. It is quoted, shared and argued over for the whole event, every entrant has a reason to promote it to their own audience, and it is opened and announced automatically the moment an event exists.
 
-Today we run the events but have no layer that turns "an event is happening" into "here is a market to call it, and a post announcing it".
+The core layer now exists (`api/_lib/event-markets/`, `api/event-markets/`, `/event-markets`), and briefs 03 and 04 are archived as verified. The remaining briefs extend it.
 
 ## Name and collisions
 
@@ -23,7 +23,7 @@ All briefs agree on one seam. The first brief to run creates it; every later bri
   - `event_market_picks`: `id`, `market_id`, `outcome_id`, `account_id`, `points` (free-to-play weight), `created_at`; one live pick per account per market, changeable until lock.
 - Free-to-play first. Picks carry points, not funds. Nothing in this seam signs, escrows or moves anything. The staked leg is its own brief and is owner-gated.
 - Odds: `impliedOdds` is the pick-weighted share per outcome with a stated smoothing prior, never a fabricated number. Zero picks yields an even prior and the UI says so.
-- Routes: public reads under `api/event-markets.js` (router style of `api/predictions/[...path].js`); writes require a session.
+- Routes: public reads under `api/event-markets/[...path].js` (router style of `api/predictions/[...path].js`); writes require a session.
 
 ## Rules that apply to every brief
 

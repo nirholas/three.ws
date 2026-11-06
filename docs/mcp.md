@@ -53,7 +53,7 @@ The MCP server configuration is at `.mcp.json` in the project root, which Claude
 
 ## The full three.ws MCP ecosystem
 
-This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **50 three.ws MCP servers** (eight hosted, forty-two on npm, listed below), and the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) carries 80 `io.github.nirholas` entries for them as of 2026-11-04, so any MCP-compatible client can discover them by name.
+This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **55 three.ws MCP servers** (nine hosted, forty-six on npm, listed below), and the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) carries 80 `io.github.nirholas` entries for them as of 2026-11-04, so any MCP-compatible client can discover them by name.
 
 The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) is a machine-readable directory of every hosted endpoint with its transport, auth model, and a one-line description, so an agent can enumerate all of them with a single fetch. Its `clients` block adds per-client setup (recommended server, auth mode, exact connector settings); see [Setup an agent can read](#setup-an-agent-can-read-the-clients-block).
 
@@ -77,7 +77,7 @@ Keys are `claude`, `chatgpt`, `cursor`, `vscode`, `grok-bot` and `ibm-bob`. Each
 
 There are two kinds. **Hosted remote servers** run over Streamable HTTP with nothing to install — add them by URL. **Install-and-run servers** are published on npm under the `@three-ws` scope and run locally over stdio — add them in one line with `npx`.
 
-**Eight hosted remote servers** (Streamable HTTP, no install):
+**Nine hosted remote servers** (Streamable HTTP, no install):
 
 | Server | Endpoint | What it does |
 |--------|----------|--------------|
@@ -87,12 +87,13 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | Grok | `/api/mcp-grok` | One connector URL for Grok Bot and the xAI API: the free studio with no widgets, plus your agents, memory and skills once signed in (OAuth 2.1 or a connector key). Never lists a value-moving tool. See [three.ws for Grok](./grok.md) |
 | Agent wallet | `/api/mcp-agent` | The agent's custodial wallet: balance, find + pay services, and `monetize_endpoint` |
 | x402 Bazaar | `/api/mcp-bazaar` | Discover and price paid agent services across the facilitator network |
+| Oracle | `/api/mcp-oracle` | Free Oracle conviction signal: scores, wins, backtest and calibration reads with no key; `oracle_arm_watch` and `oracle_watch_status` need OAuth 2.1 |
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
 The free studio also has two client-tuned doors on the same tools and quota: `/api/mcp-chatgpt` for the ChatGPT plugin directory, and `/api/mcp-grok` for Grok Bot, Grok connectors and the xAI API, where no call hangs, the quota follows your MCP session and, with OAuth 2.1 or an API key (`/api/mcp-grok?auth=oauth`), the account's agent, memory, skill and avatar tools are added. It never lists a wallet or payment tool. See [three.ws for Grok](./grok.md) and the [Grok Bot connector reference](./grok-bot.md).
 
-**Forty-two install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
+**Forty-six install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
 ```bash
 # 3D & avatars
@@ -142,6 +143,8 @@ npx -y @three-ws/agent-sniper mcp   # arm pump.fun snipe strategies, fire manual
 npx -y @three-ws/agent-sniper serve # the same engine as an x402-paid HTTP API (POST /strategies, /snipe)
 
 # Account, inbox & discovery
+npx -y @three-ws/hq-mcp            # DeFi market tools from three.ws HQ: yields, TVL, funding, liquidations, whale flow, risk score (read-only)
+npx -y @three-ws/knock-mcp         # reach a real person: read prices, browse open doors, knock, read the reply (never auto-pays)
 npx -y @three-ws/notifications-mcp # inbox, read state, delivery prefs & Web Push devices
 npx -y @three-ws/herald-mcp        # tell your human in person: your avatar walks on and says it
 npx -y @three-ws/billing-mcp       # plan quotas, metered usage, invoices & receipts

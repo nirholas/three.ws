@@ -68,6 +68,9 @@ GET  /api/motion-swap?job=<id>
 `size_bytes` must be between 1 byte and 256 MB. Start the PUT within
 `expires_in` seconds of getting the URL: the signature is minted for exactly
 that window, and storage rejects a late upload with a bare 403.
+The 256 MB ceiling is also enforced after the fact: presigning cannot sign a
+length, so an hourly sweeper deletes anything under `motion-swap/uploads/` that
+is larger than that, whatever size the caller declared.
 
 `clip_url` is a three.js `AnimationClip.toJSON()` document you can use
 anywhere the platform accepts a clip. `meta_url` carries `fps`, dimensions,

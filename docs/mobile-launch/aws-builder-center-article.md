@@ -298,7 +298,7 @@ three.ws is an AWS Partner, a member of NVIDIA Inception, an OpenAI Select Partn
 
 ## What is next
 
-The Android and Windows widgets exist; a shared WidgetKit extension brings the same card to the iPhone home screen and the macOS widget gallery against the same endpoint and token. Push notifications on iOS have the entitlement and background mode in place and are waiting on the APNs path, which is absent rather than stubbed. Likeness fidelity in the selfie engine is the open research track. Voice cloning moves from the demos hub into the main flow. And the open inference network, a node-operator client that returns signed receipts the coordinator recomputes, is the beginning of a GPU layer no single company runs.
+The Android and Windows widgets exist; a shared WidgetKit extension brings the same card to the iPhone home screen and the macOS widget gallery against the same endpoint and token. Push notifications on iOS are built end to end: the app registers its device at `/api/push/device` and the server fans every notification out over APNs through `api/_lib/apns.js`; what remains is the Apple signing key on the production service. Likeness fidelity in the selfie engine is the open research track. Voice cloning moves from the demos hub into the main flow. And the open inference network, a node-operator client that returns signed receipts the coordinator recomputes, is the beginning of a GPU layer no single company runs.
 
 If you have a WebGL product and a "when is the app coming" question, the whole answer is in the repository: the TWA packaging under `solana-mobile/`, the Capacitor shell under `ios/`, and the native bridge that ships with the site. Read it, run it, and tell us what we got wrong.
 

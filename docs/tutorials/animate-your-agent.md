@@ -29,7 +29,7 @@ Three names, one chain. Worth learning in this order, because each one only exis
 
 | | What it is | Example |
 |---|---|---|
-| **A clip** | A baked motion file. 112 of them ship with the platform | `av-offabean-dance`, `lookdown`, `wave` |
+| **A clip** | A baked motion file. 113 of them ship with the platform | `av-offabean-dance`, `lookdown`, `wave` |
 | **A slot** | A fixed name for an intention. Resolves to a clip, and you can re-point it | `dance`, `inspect`, `wave` |
 | **A hint** | What a skill declares when it starts. Resolves to a slot | `gesture`, `inspect`, `gesture-magic` |
 
@@ -110,7 +110,7 @@ Every field on that endpoint is optional and follows one rule: **present means r
 
 Two things the endpoint will reject rather than silently accept: a slot name outside the vocabulary (a typo would create a gesture nothing ever plays) and a clip name that is not a plain alphanumeric name.
 
-Any of the 112 clip names in [`/animations/manifest.json`](https://three.ws/animations/manifest.json) is valid. Browse them with previews at [three.ws/animations](https://three.ws/animations).
+Any of the 113 clip names in [`/animations/manifest.json`](https://three.ws/animations/manifest.json) is valid. Browse them with previews at [three.ws/animations](https://three.ws/animations).
 
 ---
 

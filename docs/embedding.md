@@ -393,29 +393,21 @@ Unknown message types must be silently ignored on both sides. Messages missing `
 
 ## Embed policy
 
-By default, any origin can embed any agent. To restrict which domains can embed yours, set an `embedPolicy` in the agent's on-chain manifest metadata:
+By default an agent has no embed policy and any origin can embed it. To restrict which domains can embed yours, save a policy for the agent (the dashboard, or `PUT /api/agents/{id}/embed-policy`); the embed page reads it from `GET /api/agents/{id}/embed-policy`. A flat policy looks like this:
 
 ```json
 {
-  "embedPolicy": {
-    "mode": "allowlist",
-    "hosts": [
-      "yourwebsite.com",
-      "*.yourwebsite.com"
-    ]
-  }
+  "mode": "allowlist",
+  "hosts": ["yourwebsite.com", "*.yourwebsite.com"]
 }
 ```
 
-| Mode | Behaviour |
+| `mode` | Behaviour |
 |------|-----------|
-| `open` (default) | Embeds from any origin are allowed |
 | `allowlist` | Only listed hosts can embed |
 | `denylist` | All hosts can embed except listed ones |
 
-Wildcard patterns (`*.example.com`) match all subdomains. When the iframe is blocked, it posts `{ type: 'agent:blocked', agentId }` to the parent and shows a link to open the agent directly on `three.ws`.
-
-You can also configure embed policy via Dashboard → Agent Settings → Embed Policy, or via `PUT /api/agents/{id}/embed-policy`.
+With no policy saved, embeds from any origin are allowed. A saved policy may also switch the iframe surface off (`surfaces.iframe: false`), which blocks cross-origin framing regardless of `mode`; the flat `{ mode, hosts }` form above is accepted and normalized to `origins: { mode, hosts }`. Wildcard patterns (`*.example.com`) match all subdomains. When the iframe is blocked, it posts `{ type: 'agent:blocked', agentId }` to the parent and shows a link to open the agent directly on `three.ws`.
 
 ---
 

@@ -1,4 +1,4 @@
-# three.ws — Paid API Provider
+# three.ws - Paid API Provider
 
 **Website:** https://three.ws  
 **Discovery:** https://three.ws/.well-known/x402.json  
@@ -25,7 +25,7 @@ are the source of truth and match what the 402 challenges advertise; verify with
 
 | Endpoint | Method | Price | Description |
 |---|---|---|---|
-| `/api/mcp` | POST | $0.001 | MCP 2025-06-18 Streamable HTTP — 3D model tools + Solana agent data as JSON-RPC 2.0 |
+| `/api/mcp` | POST | $0.001 | MCP 2025-06-18 Streamable HTTP - 3D model tools + Solana agent data as JSON-RPC 2.0 |
 | `/api/x402/model-check` | GET | $0.001 | Fetch a glTF/GLB from a URL, return vertex/triangle counts, materials, textures, animations, extensions, and optimization hints. CDP-Bazaar-cataloged. |
 | `/api/x402/mint-to-mesh` | GET | $0.001 | Pass a Solana SPL mint, get a binary glTF (GLB) cube themed for that token (color + texture derived from on-chain metadata: the Token-2022 metadata extension when the mint carries one, else the Metaplex PDA). CDP-Bazaar-cataloged. |
 | `/api/x402/symbol-availability` | GET | $0.001 | Pre-launch ticker collision check against three.ws's pump.fun mint index; returns exact and trigram-similar matches |
@@ -34,7 +34,7 @@ are the source of truth and match what the 402 challenges advertise; verify with
 | `/api/x402/onchain-identity-verify` | GET | $0.005 | Verify an agent's ownership of a Solana contract/mint from three.ws's on-chain identity index; returns tx_hash + wallet evidence |
 | `/api/x402/agent-reputation` | GET | $0.01 | Reputation snapshot for a three.ws agent: USDC paid in, distinct payers, deployed mints, distribution success rate, attestation count |
 | `/api/x402/fact-check` | POST | $0.10 | Sourced fact-check verdict (supported/contradicted/mixed/insufficient) with cited sources, authority weights, and a SHA-256 attestation |
-| `/api/x402/mint-to-mesh-batch` | POST | $0.05 | Resolve 1–10 Solana SPL mints to themed GLB cubes in one call; per-mint failures report individually |
+| `/api/x402/mint-to-mesh-batch` | POST | $0.05 | Resolve 1-10 Solana SPL mints to themed GLB cubes in one call; per-mint failures report individually |
 | `/api/x402/pump-launch` | POST | $5.00 | Deploy a brand-new pump.fun token in one paid call. Supply name + symbol + (metadataUri or imageUrl); the server fronts the SOL deploy cost and signs the create-coin tx. Creator rewards accrue to any Solana wallet you nominate, or pass `holderReward: true` to route creator fees to holders through the pump.fun holder-rewards PDA; optional vanity mint address. Returns mint + tx signature + pump.fun URL |
 
 All prices are in USDC with 6 decimals. `$0.001` = 1000 atomics.
@@ -98,4 +98,4 @@ are supported.
 - On Solana, `$THREE` is offered as a second accept alongside USDC on the same
   challenge.
 - No public key-generation endpoints. three.ws does not run any server-side vanity-key
-  or keypair-generation paid endpoint — wallet keys never leave the buyer's environment.
+  or keypair-generation paid endpoint - wallet keys never leave the buyer's environment.

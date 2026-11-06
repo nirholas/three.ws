@@ -48,7 +48,7 @@ curl "https://three.ws/api/search?q=robot&limit=3"
 ## Try it: a script
 
 ```js
-const res = await fetch('https://three.ws/api/coin/markets?limit=3');
+const res = await fetch('https://three.ws/api/coin/markets?per_page=10');
 const body = await res.json();
 console.log('status', res.status);
 console.log(body);
@@ -176,7 +176,7 @@ cached module.
 
 ## Related
 
-- [`<agent-3d>` Web Component API Reference](web-component.md) — the element most previews render
-- [API reference](api-reference.md) — the endpoints most `curl` samples call
-- [Embed and share](embedding.md) — putting an avatar on your own site
-- [MCP tool safety](mcp-safety.md) — the same read/write/irreversible split, applied to agent tools
+- [`<agent-3d>` Web Component API Reference](web-component.md): the element most previews render
+- [API reference](api-reference.md): the endpoints most `curl` samples call
+- [Embed and share](embedding.md): putting an avatar on your own site
+- [MCP tool safety](mcp-safety.md): the same read/write/irreversible split, applied to agent tools

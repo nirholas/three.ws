@@ -31,7 +31,7 @@ Build only one tree with `--target agent-starter`, `--target glb-quality-gate`, 
 
 ## Publish
 
-The destination repositories are:
+The destination repositories are (the exporter reads them from `data/standalone-mirrors.json`, entries with `exporter: growth-satellites`):
 
 - `https://github.com/nirholas/threews-agent-starter`
 - `https://github.com/nirholas/glb-quality-gate`

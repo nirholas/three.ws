@@ -753,7 +753,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 50 examples: 12 web component demos, 12 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 51 examples: 12 web component demos, 12 end-to-end projects, and 27 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -777,6 +777,7 @@ The repo ships 50 examples: 12 web component demos, 12 end-to-end projects, and 
 | Example | What it shows | Run it |
 |---|---|---|
 | [`packages/agentcore-payments-mcp/examples`](../packages/agentcore-payments-mcp/examples) | Two runnable examples. Neither one spends money, needs a wallet, or needs an account, so you can run both before deciding whether to fund anything. | `node packages/agentcore-payments-mcp/examples/list-tools.mjs` |
+| [`packages/agents-sdk/examples`](../packages/agents-sdk/examples) | The typed TypeScript client for the three.ws v1 Agents API. | `node packages/agents-sdk/examples/01-models-and-free-tier.mjs` |
 | [`assistant-sdk/examples`](../assistant-sdk/examples) | A 3D avatar assistant for any website, in one script tag. A floating launcher opens a real, animated 3D avatar in a panel, standing directly on your page (transparent), or against a color or gradient. It has two modes: | `npm run dev, then open /assistant-sdk/examples/index.html` |
 | [`avatar-sdk/examples`](../avatar-sdk/examples) | A self-contained page, no build step. It loads the SDK's @three-ws/avatar/agent entry from a CDN, awaits ensureAgent3D() to register the <agent-3d> element, and renders the real three.ws default avatar using the documented src and kiosk attributes. | `npm run dev, then open /avatar-sdk/examples/index.html` |
 | [`packages/avatar-schema/examples`](../packages/avatar-schema/examples) | JSON Schema and validator for three.ws on-chain avatar manifests - the canonical, hash-anchored format any cross-chain client can use to resolve an avatar. | Reference files, nothing to execute |

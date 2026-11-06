@@ -183,7 +183,7 @@ All routes live under `/api/v1/agents/:id/perps` in the standard v1 envelope (`{
 | POST | `/cancel/preview`, `/cancel` | `wallet:read`, `wallet:write` | Cancel a limit, take-profit or stop-loss (`order_id`, optional `kind`) |
 | POST | `/flatten/preview`, `/flatten` | `wallet:read`, `wallet:write` | The kill switch |
 
-Common error codes: `live_disabled`, `risk_ack_required`, `perps_halted`, `trade_kill_switch`, `wallet_frozen`, `leverage_cap_exceeded`, `position_margin_exceeded`, `insufficient_collateral`, `slippage_too_high`, `quote_moved`, `confirmation_required`, `idempotency_key_required`, `owner_session_required`, `max_notional_exceeded`, `liquidation_too_close`, `api_wallet_missing`, `mcp_not_enabled`, `not_supported_on_venue`, `unknown_venue`.
+Common error codes: `live_disabled`, `risk_ack_required`, `perps_halted`, `trade_kill_switch`, `wallet_frozen`, `leverage_cap_exceeded`, `position_margin_exceeded`, `insufficient_collateral`, `slippage_too_high`, `quote_moved`, `confirmation_required`, `idempotency_key_required`, `owner_session_required`, `max_notional_exceeded`, `liquidation_too_close`, `api_wallet_missing`, `mcp_not_enabled`, `not_supported_on_venue`, `unknown_venue`, `platform_signing_disabled` (409: the agent's signing mode is not the platform's, so a live order or deposit that needs the platform to sign is refused; see [custody](./custody.md)).
 
 ---
 

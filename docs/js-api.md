@@ -552,7 +552,7 @@ Columns: Code, Message, Pointer (JSON pointer into the glTF).
 
 **File:** `src/environments.js`
 
-Exports `environments` — an array of environment map definitions.
+Exports `environments`, an array of environment map definitions.
 
 ### Schema
 

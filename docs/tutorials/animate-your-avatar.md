@@ -48,7 +48,7 @@ Your avatar almost certainly names its bones differently, `mixamorig:Hips`, `DEF
 
 2. **Retargeting** ([src/animation-retarget.js](../../src/animation-retarget.js)) rewrites each track onto your rig's actual bone names, applies a per-bone bind-pose correction (so an A-pose clip plays right on a T-pose rig, and a hip baked at −90°X doesn't tip the body over), and rescales hip translation by your avatar's height so root motion lands where it should.
 
-**There is no rig allowlist.** Any humanoid avatar drives the library through this canonicalize-then-retarget path. The only gates are sanity thresholds: a rig needs **≥8** recognizable humanoid bones, and a clip must map **≥50%** of its tracks onto the rig to land. Below that the motion would read as a few twitching joints, so the Studio refuses it with an actionable message instead of playing garbage. If you hit a brand-new skeleton convention the canonicalizer doesn't know, the fix is to add its bone-name mapping to `glb-canonicalize.js`, never to hardcode a curated list of supported rigs.
+**There is no rig allowlist.** Any humanoid avatar drives the library through this canonicalize-then-retarget path. The only gates are sanity thresholds: a rig needs **≥8** recognizable humanoid bones, and a clip must map **≥50%** of its tracks onto the rig to land, counted either over all 53 tracks or over the 23 body tracks alone (so a complete body with no finger bones still animates). Below that the motion would read as a few twitching joints, so the Studio refuses it with an actionable message instead of playing garbage. If you hit a brand-new skeleton convention the canonicalizer doesn't know, the fix is to add its bone-name mapping to `glb-canonicalize.js`, never to hardcode a curated list of supported rigs.
 
 ---
 
@@ -104,7 +104,7 @@ The status line at the bottom of the stage confirms the retarget, e.g.:
 Playing "Cheering": 96% retargeted (51/53 bones matched).
 ```
 
-That percentage is the coverage: how many of the clip's tracks found a home on your rig. (The counter is tracks, which the status line labels "bones": a full library clip carries 53 of them, one rotation track per canonical bone plus the hips' position track.) A couple of dropped bones (often fingers a simpler rig lacks) is normal and fine. If coverage falls below 50%, the clip won't apply and the status explains why (see Troubleshooting).
+That percentage is the coverage: how many of the clip's tracks found a home on your rig (the clip lands when either that figure or the body-only figure, which ignores finger joints, reaches 50%). (The counter is tracks, which the status line labels "bones": a full library clip carries 53 of them, one rotation track per canonical bone plus the hips' position track.) A couple of dropped bones (often fingers a simpler rig lacks) is normal and fine. If coverage falls below 50%, the clip won't apply and the status explains why (see Troubleshooting).
 
 Clips marked **once** play a single shot and hold the final frame; **loop** clips cycle until you stop them or pick another.
 
@@ -192,7 +192,7 @@ The division of labor: **clips move the body, blendshapes move the face, slots c
 
 - **"This rig can't be retargeted: only N recognizable humanoid bones."** The model exposes fewer than 8 canonical bones. It's likely non-humanoid, a static prop, or a rig whose bone names the canonicalizer doesn't recognize. Re-export it as a standard humanoid (Mixamo, VRM, or any common avatar-platform export all work), or auto-rig a rig-less mesh first.
 
-- **A clip won't apply: "can't retarget to this rig: only X/Y tracks mapped."** Coverage fell below 50%. The rig is missing too many of the clip's bones (often a stripped-down skeleton with no spine subdivisions or no fingers). Try a clip that uses fewer bones, or use a more complete humanoid rig. The fix for a recurring convention is to add its bone-name mapping in [src/glb-canonicalize.js](../../src/glb-canonicalize.js), never a hardcoded allowlist.
+- **A clip won't apply: "can't retarget to this rig: only X/Y tracks mapped."** Coverage fell below 50% on both the all-track and body-only counts. The rig is missing too many of the clip's bones (often a stripped-down skeleton with no torso or spine subdivisions; missing fingers alone no longer block a clip). Try a clip that uses fewer bones, or use a more complete humanoid rig. The fix for a recurring convention is to add its bone-name mapping in [src/glb-canonicalize.js](../../src/glb-canonicalize.js), never a hardcoded allowlist.
 
 - **The motion plays but limbs look skewed or the body lies down.** This is the symptom the bind-pose correction exists to prevent, so it should be rare. It usually means the rig rests in an unusual pose the canonicalizer mapped but couldn't fully correct. Verify the avatar imports upright and T- or A-posed; re-export from the source tool if it doesn't.
 
@@ -210,7 +210,7 @@ The division of labor: **clips move the body, blendshapes move the face, slots c
 
 You learned the apply-and-remix workflow for motion on three.ws:
 
-- **The library is universal.** Motion is stored as canonical-skeleton clip JSON, separate from the avatar GLB. [glb-canonicalize.js](../../src/glb-canonicalize.js) maps any humanoid's bone names to canonical; [animation-retarget.js](../../src/animation-retarget.js) rewrites tracks, corrects the bind pose, and scales the hips so one clip drives every rig. No rig allowlist, only an 8-bone / 50%-coverage sanity gate.
+- **The library is universal.** Motion is stored as canonical-skeleton clip JSON, separate from the avatar GLB. [glb-canonicalize.js](../../src/glb-canonicalize.js) maps any humanoid's bone names to canonical; [animation-retarget.js](../../src/animation-retarget.js) rewrites tracks, corrects the bind pose, and scales the hips so one clip drives every rig. No rig allowlist, only an 8-bone / 50%-coverage sanity gate (src/canonical-clip-gate.js).
 - **[/pose](/pose) is where you apply.** Load a rigged avatar, browse or search the categorized gallery, click to retarget and preview live, tune speed (0.25×-2.5×) and loop in the transport bar, and **export an animated GLB** with the motion baked in.
 - **[/animations](/animations) is where you discover.** Browse public community clips with live hover-preview, then **Open in Studio** to apply any of them to your own avatar.
 - **Generate what doesn't exist.** Text-to-motion synthesizes a brand-new clip and runs it through the identical retarget-and-apply path as a preset.

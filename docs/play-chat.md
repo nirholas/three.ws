@@ -29,6 +29,8 @@ The values live at the top of the module; change them there only.
 
 **What gets stored.** Only lines that passed the room's chat cooldown (one line per 700 ms per player) and its hate-slur gate. The module re-checks the slur gate itself, so no caller can store one by mistake. Party chat is never stored: it is relayed by the party service, not world chat.
 
+**Muted players.** A muted identity's chat is dropped before it is relayed or stored (`_muteBlocked` in `WalkRoom`), so muted lines never reach the scrollback. Mutes come from the report dialog (three distinct reporters in five minutes) or an operator, and a muted player sees a strip above the chat box saying how long is left. See the moderation runbook in [LIVE-OPS](./event-readiness/LIVE-OPS.md).
+
 **Privacy.** A stored line is `{ mid, name, text, ts }` and nothing else: no session id, account id, wallet address or IP. A display name that is itself a wallet address is shortened (`FeMb…pump`, `0x5290…9ee7`). Text is capped at 200 characters and names at 24. This is not an archive: nothing outlives the cap or the 3-day window.
 
 **Storage.** The same Upstash Redis the activity feed uses (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`), as one list per world (`chat:scrollback:<coin>` or `chat:scrollback:<coin>#holders`), written with one `LPUSH` + `LTRIM` + `EXPIRE` pipeline so a write can never leave the list over the cap. Without Redis the server keeps the scrollback in process memory, per instance. Every call is best-effort: Redis down means no history, never a failed chat line or a thrown error in a room handler.

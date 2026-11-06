@@ -98,17 +98,17 @@ vercel env add ANTHROPIC_API_KEY production
 vercel env add OPENAI_API_KEY production
 vercel env add SOLANA_RPC_URL production
 vercel env add SESSION_SECRET production         # openssl rand -hex 32
-vercel env add CSRF_SECRET production            # openssl rand -hex 32
+vercel env add JWT_SECRET production             # openssl rand -hex 32
 vercel env add X402_PAY_TO_BASE production
 vercel env add X402_ASSET_ADDRESS_BASE production # 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 on Base mainnet
 vercel env add CDP_API_KEY_ID production
 vercel env add CDP_API_KEY_SECRET production
 # Object storage
-vercel env add R2_ENDPOINT production
-vercel env add R2_BUCKET production
-vercel env add R2_ACCESS_KEY_ID production
-vercel env add R2_SECRET_ACCESS_KEY production
-vercel env add R2_PUBLIC_BASE production
+vercel env add S3_ENDPOINT production
+vercel env add S3_BUCKET production
+vercel env add S3_ACCESS_KEY_ID production
+vercel env add S3_SECRET_ACCESS_KEY production
+vercel env add S3_PUBLIC_DOMAIN production
 # Optional but recommended once you have traffic
 vercel env add UPSTASH_REDIS_REST_URL production
 vercel env add UPSTASH_REDIS_REST_TOKEN production
@@ -119,12 +119,7 @@ The complete list is in `.env.example` in the repo. For an exhaustive walkthroug
 
 Repeat for the `preview` and `development` environments where you want different values. Most secrets you'll want **different per environment** — production must have its own `SESSION_SECRET`, its own `X402_PAY_TO_BASE` (so receipts are attributable to the right environment), and ideally its own `ANTHROPIC_API_KEY` (so a runaway preview deploy can't drain your production budget).
 
-For variables that have to be set at build time (not runtime), prefix them with `VITE_`:
-
-```bash
-vercel env add VITE_API_BASE production         # https://agent.yourcompany.com
-vercel env add VITE_CDN_BASE production         # https://agent.yourcompany.com
-```
+Variables the browser bundle reads at build time carry the `VITE_` prefix (for example `VITE_WALLETCONNECT_PROJECT_ID` and `VITE_PRIVY_APP_ID`; `.env.example` lists the rest). Set those in the same way, scoped to the environments that build the bundle. The frontend calls the API on its own origin, so no API base URL variable is needed.
 
 Triggering a fresh deploy picks up the new env:
 
@@ -290,7 +285,7 @@ For richer product analytics, options:
 
 - **Plausible (self-hosted or hosted).** Add the script tag to `index.html`.
 - **PostHog.** Same. PostHog's free tier covers most early-stage usage.
-- **Custom.** The platform has a `/api/usage` route used for internal telemetry; wire your own events there.
+- **Custom.** `/api/usage/summary` returns a signed-in user's plan quota and LLM usage for the dashboard. It is not an event sink, so wire your own events through a route you add.
 
 Don't try to instrument both Vercel Analytics and a heavy SDK like Segment without thinking about it — you'll double-count page views and confuse yourself. Pick one source of truth for product metrics. Vercel Analytics is the cheapest start.
 
@@ -308,34 +303,20 @@ Sentry has the cleanest Vercel integration. From the Vercel dashboard:
 2. Authorize, pick your Sentry project, finish
 3. Sentry's wizard generates env vars (`SENTRY_DSN`, etc.) and adds them to your Vercel project automatically
 
-Now add Sentry to the code. For the back-end functions:
-
-```bash
-npm install @sentry/node
-```
+The back-end already reports through `api/_lib/sentry.js`, which posts to Sentry's envelope API over plain HTTP so no `@sentry/node` SDK (and its OpenTelemetry tree) ships in every function. Set `SENTRY_DSN` (and optionally `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`) and call it from your error paths:
 
 ```js
-// api/_lib/sentry.js
-import * as Sentry from '@sentry/node';
+import { captureException } from './_lib/sentry.js';
 
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.VERCEL_ENV || 'production',
-    tracesSampleRate: 0.1,
-  });
-}
-
-export function captureError(err, extra = {}) {
-  if (process.env.SENTRY_DSN) {
-    Sentry.captureException(err, { extra });
-  } else {
-    console.error('captureError', err, extra);
-  }
+try {
+  await doWork();
+} catch (err) {
+  captureException(err, { route: 'my-route' });
+  throw err;
 }
 ```
 
-The platform already has a `_lib/sentry.js` you can extend. The pattern: every Vercel function's error path calls `captureError`. Don't sample those down — errors are rare and you want all of them.
+It is a no-op when `SENTRY_DSN` is unset. Don't sample those down: errors are rare and you want all of them.
 
 For the front-end:
 

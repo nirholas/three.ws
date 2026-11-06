@@ -18,7 +18,7 @@ sells ranking.
 | Single source of truth for paid services (descriptions, prices, tags, schemas) | `api/_lib/service-catalog/` — drift into the discovery doc is a red build via `tests/service-catalog.test.js` |
 | Public discovery doc | `/.well-known/x402.json` → `/api/wk?name=x402-discovery` (route in `vercel.json`) |
 | Canonical catalog of every paid endpoint (request contracts + prices) | `api/_lib/x402/ring-catalog.js` |
-| Facilitator endpoints we query/settle through | `api/_lib/x402/bazaar-client.js` — PayAI (Base default), CDP (`api.cdp.coinbase.com/platform/v2/x402`), self-facilitator for Solana (`api/_lib/x402/self-facilitator.js`) |
+| Facilitator endpoints we query/settle through | `api/_lib/x402/bazaar-client.js`: PayAI (Base default), CDP (`api.cdp.coinbase.com/platform/v2/x402`), self-facilitator for Solana (`api/_lib/x402/self-facilitator.js`, a thin platform adapter over the published `@three-ws/x402-server/facilitator`) |
 | Per-agent A2A agent cards | `/a/sol/:id/.well-known/agent-card.json` |
 | Env-overridable prices | `api/_lib/x402-prices.js` (`X402_PRICE_<SLUG>`) |
 | Preview of what an x402scan registration run would add or deprecate | `scripts/x402scan-registration-gap.mjs` (`npm run preview:x402scan-registration`) |
@@ -205,7 +205,7 @@ CDP/x402 team. Not ERC-8004-based. Burden: none beyond section 2.
 
 ## 6. The datapoint fabric: seeding settlements on ~4.4k granular URLs
 
-Most of our payable surface is not the 84 named endpoints in `ring-catalog.js`. It
+Most of our payable surface is not the 108 named endpoints in `ring-catalog.js`. It
 is the **datapoint fabric**: one route (`api/x402/d/[...path].js`) that fans out a
 per-metric paid URL for every entity in every family defined in
 `api/_lib/market-data/datapoints.js`, at $0.0005 a call. `/.well-known/x402.json`

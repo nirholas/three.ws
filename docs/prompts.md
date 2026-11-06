@@ -13,7 +13,7 @@ actually work.
 Everything in it is real. The endpoints are live, the tool names are the ones the
 servers advertise, and nothing in a prompt asks an assistant to pretend.
 
-## The three ways in
+## The four ways in
 
 Most prompts need nothing installed. The rest ask for one connection you make
 once and keep.

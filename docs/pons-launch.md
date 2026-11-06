@@ -188,7 +188,7 @@ A launched coin is recorded in three.ws's launch directory with chain `robinhood
 
 Every Pons launch, from three.ws or anywhere else, also appears in the Recent Launches feed on
 [/markets/robinhood](https://three.ws/markets/robinhood) and in
-`GET /api/v1/robinhood/launches`. That feed shows curve price, market cap and graduation progress.
+`GET /api/v1/robinhood/launches`. That feed shows curve price, market cap and graduation progress, plus the launch venue and a deployer grade (prior launches, prior dev exits, a dev-sold flag) from the Robinhood feed worker, which also lists launches from venues other than Pons.
 
 ## For developers
 

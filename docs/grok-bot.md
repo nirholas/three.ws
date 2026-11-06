@@ -517,7 +517,7 @@ npm run probe:mcp-clients -- --only mcp-grok
 ```
 
 ```text
-PASS | https://three.ws/api/mcp-grok | init 200 | GET 405 | anon ok tools=16 prompts=4 | key ok tools=34 prompts=5 | oauth ok | call search_catalog=ok 228ms
+PASS | https://three.ws/api/mcp-grok | init 200 | GET 405 | anon ok tools=16 prompts=4 | key ok tools=56 prompts=6 | oauth ok | call search_catalog=ok 228ms
 all 1 servers passed
 ```
 

@@ -9,7 +9,7 @@ A priced marketplace skill is defined once and served over every payment rail it
 | `a2a` | JSON-RPC `message/send` with the `x402` extension | x402 `exact` through the A2A task flow |
 | `ap2` | Present an `x-ap2-mandate` and `x-ap2-cart` | a signed mandate debited against its spend ledger |
 
-`rails` defaults to `["x402","a2a"]`. The author toggles the rest in the publish flow on `/marketplace` (the rail checkboxes next to the price), or sends `rails` to `POST /api/skills`. A skill with a price and no rail enabled is refused at publish.
+`rails` defaults to `["x402","a2a"]`. The author toggles the rest in the publish flow on `/marketplace` (the rail checkboxes next to the price), or sends `rails` to `POST /api/skills`. A skill with a price and no rail enabled is refused at publish. Publishing also runs the safety scan: a `blocked` skill is refused with `422 skill_blocked`, and one with `review` findings is saved private and held for an admin before it lists.
 
 ## One quote
 

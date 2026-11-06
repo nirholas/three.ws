@@ -12,15 +12,15 @@ The event's growth loop is screenshots. Photo mode has shipped as `src/game/phot
 
 ## What was built, against the spec
 
-1. **Photo mode toggle.** A HUD button (and `P` key) that hides all HUD chrome, unlocks a free orbit camera with slow smoothed movement, and shows a minimal capture bar: shutter, frame toggle, exit. Mobile: pinch to zoom, drag to orbit, big shutter button.
-2. **Branded frame.** Composite the capture on a canvas with a tasteful frame: coin image, name, symbol (from the live world state, the same values the HUD banner uses), the three.ws wordmark, and the deep link. No watermark spam; it should look like something a person wants to post.
-3. **One-tap share.** `navigator.share` with the image file where supported; fallback to download + copy-link with a confirmation toast. The copied link is the canonical `/play?coin=...` URL for the current world.
-4. **Quality details.** Capture at device-pixel-ratio resolution, not CSS pixels. Hide nameplates of other players in the shot unless they opted in (privacy default). Restore the exact camera and HUD state on exit.
-5. **Self-attach if possible.** Prefer the `ambient-crowd.js` / `event-countdown.js` pattern (own module, own styles, zero or minimal edits to the 190 KB core files).
+1. **Photo mode toggle.** Shipped: a HUD camera button and the `P` key (Ctrl+P still reaches the browser print dialog). It photographs the world where the player stands rather than opening a free orbit camera, so there is no capture bar, frame toggle or pinch/orbit control. Original spec: a mode that hides all HUD chrome, unlocks a free orbit camera with slow smoothed movement, and shows shutter, frame toggle and exit; on mobile, pinch to zoom, drag to orbit, a big shutter.
+2. **Branded frame.** Shipped in `composeCard`: a full-bleed world shot with a hairline and a signature bar carrying the three.ws mark, the coin and world labels, and the date, stamped with the event's name from `/event.json` during a live event. It does not draw the deep link.
+3. **Share.** Shipped as a preview sheet with Download (PNG) and Copy image (async clipboard, disabled with an explanation where the browser cannot put images on the clipboard). `navigator.share` of the image file and a copy-link action were not built; the invite sheet (`src/game/invite-sheet.js`) is the share-link path, and the canonical link is `/play?coin=...` from `coinWorldUrl()`.
+4. **Quality details.** Shipped: the capture is an offscreen render at up to a capped width (`MAX_CAPTURE_WIDTH`), so the HUD, chat and name tags are never in the frame and no camera or HUD state needs restoring. Name tags are always excluded rather than opt-in.
+5. **Self-attach.** Shipped: own module and stylesheet, imported on the first press so a session that never takes a photo pays nothing.
 
 ## Verify
 
-- Desktop and emulated-mobile passes on `npm run dev`: enter photo mode, capture, share/download, exit; zero console errors; HUD returns exactly as it was.
+- Desktop and emulated-mobile passes on `npm run dev`: press `P` or the camera button, check the card, download and copy, dismiss; zero console errors; the HUD is untouched throughout.
 - The shared deep link round-trips into the same world, and its OG preview (via `api/play-og.js`) shows the coin identity.
 - `npm test` green.
 

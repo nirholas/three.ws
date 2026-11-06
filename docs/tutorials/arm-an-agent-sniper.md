@@ -15,7 +15,8 @@ This is real trading with real SOL on Solana mainnet. The platform's own agent c
 
 - A three.ws account with at least one saved agent ([first-agent](/tutorials/first-agent) if you have none).
 - Your agent's custodial Solana wallet funded with SOL. Trades come out of this wallet, so fund it with an amount you are fully prepared to lose. 0.3 to 0.5 SOL is plenty for a first run at the sizes below.
-- A session or bearer token for the API calls (sign in at three.ws, or use an API bearer).
+- A session or bearer token for the API calls (sign in at three.ws, or use an API bearer). A bearer token needs the `wallet:trade` scope (or `wallet:write`, which implies it).
+- A signed Terms, Risk Disclosure and Agent Wallet Agreement on your account. Arming a mainnet strategy without them returns `403 risk_ack_required`; sign them once at three.ws/legal/agreements. Devnet is exempt.
 - The mindset for it: sniping brand-new tokens is the highest-risk trading there is. The system's gates exist to filter out provable rugs, not to make bad coins good.
 
 ---

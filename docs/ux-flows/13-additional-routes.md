@@ -125,7 +125,7 @@ UX Flow Atlas, cluster 13. Traced from real source. Covers twelve routes that cl
   1. With an id that is a valid UUID, `GET /api/agents/:id` loads the agent and mounts the hub.
   2. With no id, `GET /api/auth/me` is checked first (it answers 200 with a null user for anonymous visitors, which avoids a console 401), then `GET /api/agents` lists the caller's agents.
   3. One agent mounts its hub directly. Several show a picker, each with a Ready or Preparing state, plus Manage agents and Create an agent links.
-  4. The hub exposes one tab per module under `src/agent-wallet-hub/tabs`, for example balance, deposit, trade, withdraw, policy, custody and recovery.
+  4. The hub exposes one tab per module under `src/agent-wallet-hub/tabs`, for example balance, deposit, trade, withdraw, policy, custody and recovery. The trade tab has a Sell all panel (deep link `#trade?sell=all`): it plans every held coin, lets the owner untick coins, set slippage and pause the sniper first, then sells one by one with per-coin status and Stop.
 - **Decision points / branches:** Named or own wallets. One agent or many.
 - **External calls / dependencies:** `GET /api/agents/:id`, `GET /api/auth/me`, `GET /api/agents`, plus each tab's own endpoints.
 - **Success state:** The hub for the chosen agent, with the page title set to the agent name.

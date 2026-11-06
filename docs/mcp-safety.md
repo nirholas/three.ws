@@ -170,9 +170,10 @@ Refetch it rather than pinning a copy. Tools get added; a policy fetched at buil
 time goes stale, and a stale allowlist is how a new mutating tool ends up trusted
 by an old config.
 
-> Nine tool names are published by two different servers (`sns_resolve`,
+> Many tool names are published by more than one server (`getting_started`,
 > `find_services`, `pay_and_call`, `list_animations`, `render_avatar`,
-> `kol_leaderboard`, `create_agent_persona`, `get_agent_persona`, `persona_say`).
+> `create_agent_persona`, and the Oracle reads served by both the main and the
+> Oracle server, among others).
 > The namespaced `mcp__<server>__<tool>` id is the key, not
 > the bare name. The `<server>` segment is the name **you** gave that server in
 > your own client config; the policy uses the id three.ws publishes for it.

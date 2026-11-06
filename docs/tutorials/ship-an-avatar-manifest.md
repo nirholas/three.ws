@@ -93,7 +93,7 @@ three-ws-avatar init \
 
 Three flags carry real decisions:
 
-**`--owner`** takes a [CAIP-10](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md) account id, which is `chain:reference:address`. A bare `0x…` address is accepted as shorthand and expands to `eip155:1` (Ethereum mainnet). Spell out the chain when the avatar belongs anywhere else, so the manifest is unambiguous on its own.
+**`--owner`** takes a [CAIP-10](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-10.md) account id, which is `chain:reference:address`. A bare `0x…` address is accepted as shorthand and expands to `eip155:1` (Ethereum mainnet), and a bare Solana address expands to `solana:mainnet-beta`. Spell out the chain when the avatar belongs anywhere else, so the manifest is unambiguous on its own.
 
 **`--skeleton`** declares the rig convention, and it is the field that decides whether animation works. `mixamo` is correct for `michelle.glb`. The valid values are `avaturn`, `mixamo`, `rpm`, `vrm-humanoid`, and `custom`. Guessing here produces a manifest that validates and an avatar that moves wrong, which is worse than an error. If you did not rig the model yourself, check where it came from before choosing.
 

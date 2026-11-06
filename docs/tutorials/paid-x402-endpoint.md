@@ -57,9 +57,9 @@ Don't build a paid endpoint that has no point of existing. The endpoint needs to
 
 Good candidates in 2026, with concrete examples already running in production:
 
-- **Model inspection.** `/api/x402/model-check` — fetches a glTF URL, runs glTF-Transform's inspector, returns vertex counts, texture sizes, animation sets, and optimization recommendations.
-- **Reputation lookup.** `/api/x402/agent-reputation` — pulls an ERC-8004 agent's review history from on-chain and returns aggregate scores.
-- **Symbol availability.** `/api/x402/symbol-availability` — checks whether a Pump.fun ticker is already used by another agent in the registry.
+- **Model inspection.** `/api/x402/model-check`: fetches a glTF URL, runs glTF-Transform's inspector, returns vertex counts, texture sizes, animation sets, and optimization recommendations. (The platform now also serves this free at `/api/3d/inspect`; the paid route stays cataloged as a convenience and is the reference for this tutorial.)
+- **Reputation lookup.** `/api/x402/agent-reputation`: takes a Solana or EVM wallet, a pump.fun mint, an ERC-8004 agent id or a three.ws agent id, and returns a 0-100 trust score with the on-chain evidence behind it.
+- **Symbol availability.** `/api/x402/symbol-availability`: checks whether a Pump.fun ticker is already used by another agent in the registry. (Also served free, keyless, at `/api/crypto/symbol`.)
 
 This tutorial builds **a simplified model-check endpoint**. The full production version is at [`api/x402/model-check.js`](https://github.com/nirholas/three.ws/blob/main/api/x402/model-check.js) in the three.ws repo. Read it for reference. We'll build a leaner version end-to-end that's easier to follow.
 
@@ -656,7 +656,7 @@ Before you trust this in production:
 
 ## Step 14 — Going production with the three.ws platform
 
-If you'd rather not host the endpoint yourself, three.ws supports paid endpoints natively: drop a Vercel function under `api/x402/<your-route>.js` in your fork of the platform, following the patterns in `api/x402/model-check.js`. The platform handles facilitator routing, the `_lib/x402-spec.js` helpers, and the bazaar extension shape — you just supply the work function.
+If you'd rather not host the endpoint yourself, three.ws supports paid endpoints natively: drop a handler under `api/x402/<your-route>.js` in your fork of the platform (it runs as a serverless-style handler on Cloud Run), following the patterns in `api/x402/model-check.js` and the `paidEndpoint` helper in `api/_lib/x402-paid-endpoint.js`. The platform handles facilitator routing, the `_lib/x402-spec.js` helpers, and the bazaar extension shape, you just supply the work function.
 
 See [self-host-agent-backend](/tutorials/self-host-agent-backend) for the fork + deploy mechanics and [deploy-to-vercel-custom-domain](/tutorials/deploy-to-vercel-custom-domain) for moving it to your own domain.
 

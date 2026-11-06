@@ -504,9 +504,10 @@ What happens, in order:
    charged only the payment amount.
 6. **Record.** The execution lands in the session ledger with the settlement
    transaction hash (read from the endpoint's `x-payment-response` header)
-   and a Solscan explorer link. On a pre-settlement rejection (the endpoint
-   answers 402 again), the reservation is rolled back and your budget is
-   restored.
+   and a Solscan explorer link. If the endpoint answers 402 again
+   after the signed payment was submitted, the reservation stays spent
+   (`payment_rejected`), because a host that is also the fee payer can broadcast
+   the transfer and still answer 402.
 
 ```bash
 curl -s https://three.ws/api/pay/execute \
@@ -561,18 +562,19 @@ Free endpoint (no 402 challenge):
 | 402 | `per_tx_exceeded` | The endpoint's price exceeds `max_per_tx_usd`. `detail` carries `amount_usd` and `cap_usd`. | untouched |
 | 402 | `rail_daily_exceeded` | The call would exceed the rolling 24h `per_rail_daily_usd` cap for the session's settlement network. `detail` carries the would-spend, spent-so-far, and cap amounts. | untouched |
 | 402 | `insufficient_budget` | Remaining budget cannot cover the price. `detail` carries `need_usd` and `remaining_usd`. | untouched |
-| 402 | `payment_rejected` | The service rejected the payment before settlement. | rolled back |
-| 422 | `no_solana_accept`, `unsupported_asset`, `missing_fee_payer` | The challenge offers no payable Solana USDC option. | untouched |
+| 402 | `payment_rejected` | The service answered 402 after the signed payment was submitted. The transfer may still land. | kept reserved |
+| 422 | `no_solana_accept`, `unsupported_asset`, `missing_fee_payer`, `missing_pay_to`, `invalid_amount` | The challenge offers no payable Solana USDC option, or its recipient or amount is unusable. | untouched |
 | 502 | `endpoint_unreachable`, `invalid_challenge` | Could not reach the endpoint or parse its challenge. | untouched |
 | 502 | `endpoint_error` | The endpoint answered an error status with no payment challenge. Carries `upstream_status` and `upstream_body`. | untouched |
 | 502 | `build_failed` | Building the Solana transaction failed. | rolled back |
 | 502 | `settle_uncertain` | Network failure after signing: chain state unknown. Do not retry immediately; check the session executions and wallet activity first. | kept reserved |
 | 502 | `upstream_error` | The endpoint returned a non-402 error after payment. Check wallet activity before retrying. | kept reserved |
+| 503 | `rpc_unavailable` | Solana RPC is briefly down, so the payment was not built. Retry after the `retry-after` header. | rolled back |
 | 503 | `wallet_unconfigured` | The platform payer wallet is not configured. | rolled back |
 
-The two "kept reserved" cases are deliberate: funds may have moved on-chain,
+The three "kept reserved" cases are deliberate: funds may have moved on-chain,
 so the platform refuses to silently restore budget it cannot prove was
-unspent. Both are recorded as `failed` executions with the matching
+unspent. All are recorded as `failed` executions with the matching
 `error_code`.
 
 ---

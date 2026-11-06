@@ -41,6 +41,11 @@ explicit approval). Each file states what it's for and what has already been ver
 | [`news-archive-x-post.md`](news-archive-x-post.md) | The news archive |
 | [`proof-of-life-x-post.md`](proof-of-life-x-post.md) | A shipping-evidence post for the platform account: what landed this week, with public verification links. Names nothing about the personal account |
 | [`pumpfun-article-x-post.md`](pumpfun-article-x-post.md) | The pump.fun article |
+| [`android-app-launch.md`](android-app-launch.md) | The Android app: signed APK now, Solana dApp Store listing as a second beat once approved |
+| [`github-100-stars.md`](github-100-stars.md) | The 100-star GitHub milestone, in two versions with the banner images |
+| [`open-source-ecosystem.md`](open-source-ecosystem.md) | Copy to announce the "100 Stars" open-source ecosystem X Article |
+| [`the-first-19-weeks.md`](the-first-19-weeks.md) | Copy to announce the "three.ws: The First 19 Weeks" founding roundup |
+| [`nvidia-forum-audio2face-x-post.md`](nvidia-forum-audio2face-x-post.md) | The NVIDIA Developer Forums Audio2Face write-up, live since 2026-09-22 |
 
 ## Companion threads for the AWS Builder Center articles
 

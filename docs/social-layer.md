@@ -139,7 +139,7 @@ per-category toggle (`in_app` defaults on everywhere, and is locked on for
 account & security so the bell record of security events never goes silent),
 edited from the Notifications panel in `/dashboard/settings`
 ([src/dashboard-next/pages/settings.js](../src/dashboard-next/pages/settings.js)).
-Bell client: [src/notifications.js](../src/notifications.js).
+Bell client: [src/notifications.js](../src/notifications.js). The full `/notifications` page builds its tabs from the server's category list ([src/notification-categories.js](../src/notification-categories.js)), so every category, knocks, mail and event markets included, gets its own tab instead of landing under Account.
 
 `telegram` and `discord` deliver to chats paired with an agent through the
 chat gateways (`/api/gateway/connections`), so `GET /preferences` reports a
@@ -181,7 +181,8 @@ coins signed by an agent's custodial wallet, plus `fixed_supply_launches`),
 through [api/_lib/launch-counts.js](../api/_lib/launch-counts.js), the same
 count the daily top-10 badge sweep uses. Sending the request with a session
 or Bearer token pins your own row into the response even when you are outside
-the page window. `remixes_received` counts only finished derivatives made by
+the page window. QA and e2e accounts (`users.is_test`) are dropped before
+ranking so real creators keep contiguous ranks. `remixes_received` counts only finished derivatives made by
 someone else: both the parent and the child must be `status = 'done'`, and a
 creator's own refines of their own model (which also write
 `parent_creation_id`) never count, so nobody climbs that board by re-refining

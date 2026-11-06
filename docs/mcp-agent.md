@@ -142,6 +142,20 @@ the financial ones on with `X-Three-Tools: default,commerce`. Full guide:
 | `agent_buy_confirm` | financial | `wallet:write` | `preview_id` plus `confirm_payment: true`: pays the seller's invoice and returns the fulfillment once verified. |
 | `spending_check`, `spending_setup` | read, write | `wallet:read`, `agents:write` | Read limits and today's usage; propose a change that only the owner can approve, with a step-up. |
 
+### More tool groups
+
+The server carries further groups, each in the same policy table with its own tier
+per tool (`tools/list` shows exactly what a connection can see, and `npx three-ws tools`
+toggles groups). Money-moving tools in these groups keep the preview-then-confirm shape.
+
+- **Human tasks:** `human_task_list`, `human_task_status`, `human_task_quote`, `human_task_post` (locks the bounty and fee in USDC escrow from the agent's Solana wallet), `human_task_approve_preview`, `human_task_approve`, `human_task_cancel`, `human_task_dispute`.
+- **Orders and DCA:** `order_preview`, `order_book`, `limit_order_list`, `limit_order_cancel`, `limit_order_history`, `dca_preview`, `dca_create`, `dca_list`, `dca_cancel`.
+- **Lending:** `lend_markets`, `lend_positions`, `lend_preview`, `lend_deposit`, `lend_withdraw`.
+- **Event markets (free-play points):** `event_markets_list`, `event_market`, `event_market_pick`, `event_market_analyze`, `event_market_forecasters`, `event_market_agent_pick`.
+- **Agent screen and sandbox:** `browse_web` (an agent browses toward a goal under a safety policy, with owner take-over), `execute_code`, `terminal`, `read_file`, `write_file`.
+- **Integrations:** `list_integrations`, `install_integration`, `remove_integration` (vetted third-party MCP servers, read tools only until the owner enables more).
+- **Account, X posting and Build:** `get_account_status`, `get_dashboard_urls`, `get_linked_accounts`, `get_wallet_summaries`, `get_private_wallet_balance`, `set_external_wallet`, `get_learning_status`, `connect_twitter`, `configure_twitter_posting`, `post_to_x`, `list_scheduled_posts`, `list_bounties`, `submit_build_entry`.
+
 ### Resources and prompts
 
 This server also answers `resources/*` and `prompts/*`: the `three://` resources

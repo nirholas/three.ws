@@ -21,7 +21,7 @@ and [Grok Build](#grok-build) picks the same server up from a project
 | **Transport** | Streamable HTTP (JSON-RPC over `POST`) |
 | **Auth** | None for the studio. Optional: a connector API key, or OAuth 2.1 at `https://three.ws/api/mcp-grok?auth=oauth`, adds your agent tools |
 | **Protocol** | MCP `2025-06-18` |
-| **Tools** | The full free studio: the same fifteen tools as [`/api/mcp-studio`](./mcp-studio.md). Signed in, also your [account's agent tools](#your-account-on-the-same-url) |
+| **Tools** | The full free studio: the same sixteen tools as [`/api/mcp-studio`](./mcp-studio.md). Signed in, also your [account's agent tools](#your-account-on-the-same-url) |
 
 ## Grok Bot
 
@@ -58,17 +58,16 @@ same URL and give it a credential. Two ways:
 - **Connector key (recommended for Grok Bot).** At [three.ws/dashboard/api](/dashboard/api) choose **New key**, then **For an AI agent (Grok Bot, schedules, CI)**, name it, and copy the key it shows once. Ask Grok Bot to add a custom MCP server at `https://three.ws/api/mcp-grok` with API key authentication, and store the key as a Bot secret. It is sent as `Authorization: Bearer sk_live_…`.
 - **OAuth 2.1.** Use `https://three.ws/api/mcp-grok?auth=oauth` as the server URL with OAuth authentication. The `?auth=oauth` form answers an anonymous client with `401` and a `WWW-Authenticate` challenge, which is what makes an MCP client start sign-in; the plain URL serves anonymous clients and so never would. The connector registers itself, you approve the consent screen once, and every token it holds is refused the moment you revoke the app in [Connected apps](/dashboard/settings#connected-apps).
 
-Signed in, `tools/list` adds these to the fifteen studio tools, each only when
+Signed in, `tools/list` adds these to the sixteen studio tools, each only when
 the credential's scopes allow it and your [MCP tool settings](/settings/mcp-tools)
 leave it on:
 
 | Tool | What it does |
 |---|---|
-| `create_agent`, `attach_avatar_to_agent` | Create an agent on your account and give it a body you generated with `forge_avatar`. |
+| `create_agent`, `list_my_agents`, `attach_avatar_to_agent` | Create an agent on your account, list the agents you own, and give one a body you generated with `forge_avatar`. |
 | `identity_check`, `call_agent` | Screen an agent identity, or send another three.ws agent a message and get its reply. |
 | `remember`, `recall` | Your agents' long-term memory. |
 | `list_available_skills`, `import_community_skill`, `list_custom_skills`, `get_custom_skill`, `create_custom_skill`, `update_custom_skill` | Your agents' prompt-only skills. |
-| `list_skill_candidates` | Skills your agents drafted for themselves from runs that worked (read-only; you approve them on the dashboard). |
 | `list_my_avatars`, `get_avatar`, `get_embed_code`, `render_avatar_image` | Your avatars, their embed snippets and rendered images. |
 | `read_resource` | Read-only views of your account and agents (`three://me`, `three://agents`, and each agent's usage, runs, earnings and wallet state), which the `agent-report` prompt reads. Reading a balance moves nothing. |
 | `pumpfun_recent_graduations`, `pumpfun_recent_claims`, `pumpfun_token_intel`, `pumpfun_creator_intel` | Live pump.fun feeds and a read of one coin or creator. |

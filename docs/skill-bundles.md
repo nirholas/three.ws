@@ -159,7 +159,7 @@ POST /api/marketplace/purchase-bundle/:id/confirm  { "tx_signature": "0x..." }  
 ```
 
 `create` writes a `pending` row in `bundle_purchases` and returns Solana Pay
-parameters: recipient (the creator's payout wallet), `price_amount`,
+parameters: recipient (the creator's approved default payout wallet), `price_amount`,
 `currency_mint`, `chain`, a freshly minted `reference`, and the platform fee split.
 `confirm` proves the payment on-chain **before** anything unlocks: Solana is
 located by the reference the server minted (no client-supplied signature is
@@ -167,7 +167,10 @@ trusted), EVM by the submitted tx hash. On a confirmed verdict the handler write
 one `skill_purchases` row per skill with `kind = 'bundle'` and `amount = 0`, which
 is what [`hasSkillAccess()`](../api/_lib/skill-access.js) reads, and records a
 single bundle-level revenue event so one bundle sale is never counted as N skill
-sales in GMV. That event is marked `settled_to_wallet`: the buyer paid the
+sales in GMV. The platform fee booked on that event is what the verifier
+proved the fee wallet actually received, not the quoted split, so a payment that
+went wholly to the seller (the no-fee fallback, and every EVM bundle) books a zero
+platform fee. That event is marked `settled_to_wallet`: the buyer paid the
 creator's payout wallet directly, so the sale counts as income already held and
 never as a balance withdrawable from the platform treasury.
 

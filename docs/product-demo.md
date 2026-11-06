@@ -43,7 +43,7 @@ follow from that:
   plain-language sentences that feed the sitemap, `llms.txt`, and the changelog, so the film cannot
   drift into claiming something the platform does not do.
 
-Chapters are the curriculum's sections, in its order: Main, Build, Crypto, Labs, Agent Tools, Learn.
+Chapters are the curriculum's sections, in its order: Main, Build, Crypto, Labs, Agent Tools, Learn, Getting started.
 
 ## Flagship stops are performed, not just visited
 

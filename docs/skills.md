@@ -383,7 +383,7 @@ The `SkillRegistry` enforces a trust policy set per agent:
 | Mode | Behavior |
 |------|---------|
 | `owned-only` | Only run skills where `manifest.author` matches the agent owner's wallet (default) |
-| `whitelist` | Allow skills from a configured list of publisher wallets |
+| `whitelist` | Allow a skill only when its `manifest.author` or the origin serving it is on the configured lists. Empty lists admit nothing |
 | `any` | All skills from any URL are allowed — use for kiosks and demos |
 
 Trust is configured in the agent manifest or passed to `SkillRegistry`:
@@ -391,6 +391,8 @@ Trust is configured in the agent manifest or passed to `SkillRegistry`:
 ```js
 new SkillRegistry({ trust: 'owned-only', ownerAddress: '0xDeadBeef...' });
 ```
+
+On the `<agent-3d>` element, set the mode with the `skill-trust` attribute (`any`, `owned-only` or `whitelist`; an unknown value falls back to `owned-only`). Under `whitelist`, list publishers with `skill-trusted-authors` (comma-separated, case-insensitive) and `skill-trusted-origins` (comma-separated http(s) URLs, only the origin is kept), or assign `el.skillTrust = { authors: [...], origins: [...] }`. Attribute and property lists are merged, and a change applies to skills installed afterwards.
 
 If a skill's `author` field does not match `ownerAddress` under `owned-only` policy, `install()` throws before fetching any handler code. If `integrity` hashes are present in the manifest, they are verified before any handler executes.
 

@@ -38,10 +38,11 @@ curl -s 'https://three.ws/api/showcase?chain=8453'
 |---|---|---|---|
 | `sort` | `newest` | `newest`, `oldest` | Anything else is a `400 validation_error` |
 | `limit` | `24` | 1 to 60 | Values above 60 clamp to 60; unparseable values fall back to 24 |
-| `chain` | all mainnet chains | comma-separated numeric chain ids | An unknown id is a `400`, naming the offending value |
+| `net` | `mainnet` | `mainnet`, `testnet`, `all` | Picks which chains count when `chain` is omitted. Anything else is a `400` |
+| `chain` | all chains for the `net` value | comma-separated numeric chain ids | An unknown id is a `400`, naming the offending value. Overrides `net` |
 | `cursor` | none | opaque string from `next_cursor` | An unparseable cursor is a `400`, not a silent first page |
 
-Omitting `chain` selects every mainnet chain the crawler knows. Testnet chains are excluded unless you ask for them explicitly.
+Omitting `chain` selects every mainnet chain the crawler knows. Testnet chains are excluded unless you pass `net=testnet`, `net=all`, or a testnet id in `chain`. Registrations with no known registration time sort last under `newest` and first under `oldest`, and still page correctly.
 
 ### Pagination is keyset, not offset
 
@@ -59,7 +60,7 @@ Do not construct a cursor by hand. It encodes the sort key triple, and a malform
 
 ### Response
 
-Each agent carries its on-chain identity plus explorer links resolved from the chain's metadata: the chain id and name, the agent id, its owner and registry addresses, and its agent URI. Because every field is derived from indexed chain state, anything the showcase shows can be checked independently on that chain's explorer.
+The body is `{ agents, total, next_cursor }`, where `total` is the count of matching agents across all pages. Each agent carries its on-chain identity plus explorer links resolved from the chain's metadata: the chain id and name, the agent id, its owner and registry addresses, and its agent URI. Because every field is derived from indexed chain state, anything the showcase shows can be checked independently on that chain's explorer.
 
 ## Related
 

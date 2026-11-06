@@ -73,7 +73,10 @@ There is a single write path, `recordDecision`, and it is a chokepoint by design
 
 - **The [Agent Sniper](agent-sniper.md) executor** appends a `snipe` entry the moment a buy settles: trigger, firewall verdict, price impact, committed size, the buy signature, and (for LLM-judged arms) the model's thesis and confidence.
 - **The sniper optimizer cron** appends an `optimize` entry whenever it auto-tunes a strategy from realized outcomes, so the self-tuning loop's own decisions are auditable next to the trades that drove them.
-- **The reconcile cron** (`api/cron/reconcile-decisions`) writes no decisions; it closes the loop. When a linked position settles on-chain, it records the outcome against the sell signature (idempotently, so re-runs never double-count), then anchors each agent's advanced chain head, and raises an ops alert if a sizeable track record's hit rate collapses.
+- **The burner-gate trail** (`api/_lib/approvals.js`) appends a `burner_gate` entry for each event (requested, approved, denied, expired) on a spend the burner cap parked for owner approval.
+- **The reconcile cron** (`api/cron/reconcile-decisions`) writes no decisions; it closes the loop. When a linked position settles on-chain, it records the outcome against the sell signature (idempotently, so re-runs never double-count), stamps the realized result (win or loss, hold time, and USD P&L when a SOL price resolves, otherwise unpriced) onto every agent memory that was recalled into the decision, then anchors each agent's advanced chain head, and raises an ops alert if a sizeable track record's hit rate collapses.
+
+A caller may pass `recallIds`, the memories recalled into the decision. They are stored beside the row (`decision_recalls`), never inside the hashed entry, so the chain stays immutable while the outcome can still be written back onto each memory (`memory_outcomes`).
 
 Any subsystem that makes a consequential agent decision can adopt the same write path; the page's filters already anticipate more kinds than the sniper pipeline emits today.
 

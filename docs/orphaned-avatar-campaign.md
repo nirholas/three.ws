@@ -17,7 +17,7 @@ Every line below is shipped and covered by a test or a live page. Sources: [impo
 | VRM features work | MToon materials, spring-bone physics, node constraints, look-at and the 18 expression presets (`tests/vrm-real.test.js`). |
 | `.vrma` animation clips play | Loaded through `VRMAnimationLoaderPlugin` and retargeted, so one clip plays on a VRM and on a Mixamo-named humanoid. |
 | Voice and face capture drive VRM avatars | Expression presets map onto the ARKit-52 driver (`src/game/vrm-expressions.js`). |
-| Any humanoid rig animates | Bone names from Mixamo, Avaturn, Unreal, VRM/VRoid, Daz, MakeHuman, Blender and simple rigs map to one canonical set, then the idle and walk clip library applies. A rig that cannot be skeleton-driven falls back to the default rig, never a T-pose. |
+| Any humanoid rig animates | Bone names from Mixamo, Avaturn, Unreal, VRM/VRoid, Daz, MakeHuman, Maya HumanIK, Blender and simple rigs map to one canonical set, then the idle and walk clip library applies. A rig that cannot be skeleton-driven falls back to the default rig, never a T-pose. |
 | The avatar is yours | It is stored in your account as a `.glb`, ready to become an agent with a wallet, and embeds anywhere with `<agent-3d>`. |
 | Import reliability | A bug that made every import fail at the final save step was fixed with a regression test (`tests/import-rpm-source.test.js`). |
 

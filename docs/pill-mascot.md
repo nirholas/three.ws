@@ -124,7 +124,7 @@ The static input is kept beside it as `/avatars/pumpfun-pill-cupsey-static.glb` 
 
 The coverage number is the one that outlives this page. Because the skeleton uses the canonical bone names, [`src/glb-canonicalize.js`](https://github.com/nirholas/three.ws/blob/main/src/glb-canonicalize.js) maps every joint 1:1 and the whole three.ws clip library retargets onto the pill: it is not limited to the six clips it ships with. Load it in the [Animation Studio](https://three.ws/pose) and try any of them.
 
-Finger chains are part of that. Thirty of the 53 tracks in every baked clip address a finger joint, and [`src/animation-retarget.js`](https://github.com/nirholas/three.ws/blob/main/src/animation-retarget.js) drops any clip whose coverage falls under 50%. A mascot with mitts still needs finger bones inside those mitts, or it throws away the entire library. They also give the mitt a soft squish when a clip curls a hand, which is a nicer result than the alternative.
+Finger chains are part of that. Thirty of the 53 tracks in every baked clip address a finger joint. [`src/animation-retarget.js`](https://github.com/nirholas/three.ws/blob/main/src/animation-retarget.js) drops a clip unless at least 50% of its tracks bind, measured over all 53 tracks or over the 23 body tracks alone, whichever is higher (the floor lives in [`src/canonical-clip-gate.js`](https://github.com/nirholas/three.ws/blob/main/src/canonical-clip-gate.js)). A complete fingerless body now clears the floor on the body measure, so finger bones are no longer required for the library to play. The pill keeps its finger chains anyway: they give the mitt a soft squish when a clip curls a hand, and they keep coverage at 100% on both measures.
 
 ---
 

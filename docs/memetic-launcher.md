@@ -33,7 +33,7 @@ Every live coin is a genuine agent launch: the agent signs its own pump.fun crea
 
 - **Self-funded only.** Master/platform SOL never routes to a user launcher. The blast radius of Live is exactly the SOL you deposited into wallets you own.
 - **Preview is the default and the safe side.** A launcher only goes live on an explicit `dry_run: false`; every other patch keeps the current mode.
-- **Hard server-side clamps.** Dev buy ≤ 1 SOL, daily cap ≤ 10 SOL, cadence ≥ 60s, ≤ 60 launches/hour — whatever a client sends.
+- **Hard server-side limits.** Dev buy ≤ 1 SOL, daily cap ≤ 10 SOL, cadence ≥ 60s, ≤ 60 launches/hour. A value outside these ranges is rejected with a 400 naming the range, and nothing is written.
 - **Daily SOL cap.** Live spend per UTC day is summed across your runs; the launcher skips once the next launch would exceed it.
 - **Circuit breaker.** Five consecutive real launch failures pause the launcher (unfunded-wallet skips never count); resume with one click.
 - **Agent spend policy.** Each launch also passes the agent's own per-tx and rolling-24h spend caps, like any custodial signing.
