@@ -6,9 +6,9 @@ Nearly every partnership three.ws has today started with one question: *does thi
 
 It is the wide net. The narrower docs stay authoritative for what they cover: [partners.md](../partners.md) is what each live partnership **is** and how to describe it, [opportunities.md](./opportunities.md) is the stuck-item pipeline, [prospects.md](./prospects.md) scores the 3D and avatar ecosystem, and the [listings registry](../listings-registry.md) tracks directories and awesome-lists.
 
-Sibling pages: [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), and [who promotes partners](./promotion-programs.md) across every sector.
+Sibling pages: [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [global brand partner programs](./brand-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), plus [who promotes partners](./promotion-programs.md) and [moonshots](./moonshots.md) across every sector.
 
-**166 programs across 46 companies.** 13 member / live, 1 submitted, waiting, 10 in progress, 16 ready, one human step, 81 eligible, not started, 33 verify fit first, 2 decided not to pursue, 3 not eligible, 7 retired or closed. We hold at least one membership at 8 of the 46 companies, and 58 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
+**206 programs across 80 companies.** 13 member / live, 1 submitted, waiting, 10 in progress, 16 ready, one human step, 90 eligible, not started, 59 verify fit first, 2 decided not to pursue, 3 not eligible, 12 retired or closed. We hold at least one membership at 8 of the 80 companies, and 61 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 
 ## Using this page
 
@@ -92,24 +92,27 @@ The product, package, or application already exists. What is left is ours: a por
 
 ### Wave 2: apply this month
 
-Open, self-serve or near it, and a strong fit (score 11 or more). Each needs an application written, not a product built. 14 programs.
+Open, self-serve or near it, and a strong fit (score 11 or more). Each needs an application written, not a product built. 17 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
-| 1 | [Adobe Express Add-ons marketplace](https://developer.adobe.com/express/add-ons/) | Adobe | 12 | Apply: Build with Adobe Express CLI, package and submit |
-| 2 | [Autodesk Marketplace (App Store, apps, plugins, MCP servers)](https://aps.autodesk.com/marketplace/getting-started) | Autodesk | 12 | Apply: Publisher Center / Publisher Corner; questions appsubmissions@autodesk.com |
-| 3 | [Google Cloud Marketplace and Agent Finder](https://cloud.withgoogle.com/agentfinder/) | Google | 12 | Join the Google Cloud Partner Network first (the Marketplace prerequisite), then file the agent listing from the live A2A card |
-| 4 | [Meta Horizon Start developer program](https://developers.meta.com/horizon/resources/meta-start-developer-program/) | Meta | 12 | Apply: https://developers.meta.com/horizon/programs/start/apply/ (sign in with Meta developer account) |
-| 5 | [Meta Horizon Store (WebXR / PWA submissions)](https://developers.meta.com/horizon/) | Meta | 12 | Package the installable web app with the WebXR world and submit it through the Meta Horizon developer dashboard |
-| 6 | [NVIDIA ACE digital human ecosystem (NGC / build.nvidia.com / Developer forum)](https://developer.nvidia.com/ace) | NVIDIA | 12 | Apply: Self-serve via developer.nvidia.com (NVIDIA Developer Program); NIMs need AI Enterprise license for self-hosting |
-| 7 | [Alibaba Cloud AI Catalyst Program (startups)](https://www.alibabacloud.com/en/startup?_p_lc=1) | Alibaba | 11 | Apply now on the official page |
-| 8 | [Atlassian Marketplace + Forge (Rovo agents)](https://marketplace.atlassian.com/) | Atlassian | 11 | Apply: Enroll as Marketplace Partner, build on Forge, submit |
-| 9 | [Cloudflare Agents SDK, remote MCP and agent payments](https://developers.cloudflare.com/agents/tools/payments/) | Cloudflare | 11 | Port one paid three.ws MCP tool to the Agents SDK paid-tool helper, then pitch it to Cloudflare developer relations as a case study |
-| 10 | [GitHub Sponsors](https://github.com/sponsors) | GitHub | 11 | Enable GitHub Sponsors on the nirholas account and add it to .github/FUNDING.yml (today it holds only a custom link) |
-| 11 | [Qualcomm AI Hub](https://aihub.qualcomm.com/) | Qualcomm | 11 | Apply: Self-serve developer sign-up on Qualcomm AI Hub |
-| 12 | [Lens Studio and Lens Creator Rewards](https://ar.snap.com/lens-creator-rewards) | Snap | 11 | Apply: Opt-in toggle appears when submitting a Lens in eligible countries; Lens+ payouts need application |
-| 13 | [Unity Asset Store Publisher program](https://docs.unity.com/en-us/asset-store) | Unity | 11 | Apply: Create publisher profile in Publisher portal, submit package for vetting |
-| 14 | [2026 Meta VR Start Developer Competition](https://developers.meta.com/blog/meta-connect-recap/) | Meta | 10 | Decide by 2026-11-10 whether the WebXR /play build can enter as a Horizon Store web app; if yes, package and submit before 2026-11-18 |
+| 1 | [Canva Apps Marketplace (Apps inside Canva)](https://www.canva.dev/docs/apps/submitting-apps/) | Canva | 13 | Prototype a Canva app that imports a Forge-generated image or turntable render from a prompt, then submit it. |
+| 2 | [Figma Community plugins and widgets](https://help.figma.com/hc/en-us/articles/360042293394-Publish-classic-plugins-to-the-Figma-Community) | Figma | 13 | Ship a Figma plugin that sends a frame or sketch to Forge and returns a GLB turntable or image. |
+| 3 | [Adobe Express Add-ons marketplace](https://developer.adobe.com/express/add-ons/) | Adobe | 12 | Apply: Build with Adobe Express CLI, package and submit |
+| 4 | [Autodesk Marketplace (App Store, apps, plugins, MCP servers)](https://aps.autodesk.com/marketplace/getting-started) | Autodesk | 12 | Apply: Publisher Center / Publisher Corner; questions appsubmissions@autodesk.com |
+| 5 | [Google Cloud Marketplace and Agent Finder](https://cloud.withgoogle.com/agentfinder/) | Google | 12 | Join the Google Cloud Partner Network first (the Marketplace prerequisite), then file the agent listing from the live A2A card |
+| 6 | [Meta Horizon Start developer program](https://developers.meta.com/horizon/resources/meta-start-developer-program/) | Meta | 12 | Apply: https://developers.meta.com/horizon/programs/start/apply/ (sign in with Meta developer account) |
+| 7 | [Meta Horizon Store (WebXR / PWA submissions)](https://developers.meta.com/horizon/) | Meta | 12 | Package the installable web app with the WebXR world and submit it through the Meta Horizon developer dashboard |
+| 8 | [NVIDIA ACE digital human ecosystem (NGC / build.nvidia.com / Developer forum)](https://developer.nvidia.com/ace) | NVIDIA | 12 | Apply: Self-serve via developer.nvidia.com (NVIDIA Developer Program); NIMs need AI Enterprise license for self-hosting |
+| 9 | [Alibaba Cloud AI Catalyst Program (startups)](https://www.alibabacloud.com/en/startup?_p_lc=1) | Alibaba | 11 | Apply now on the official page |
+| 10 | [Atlassian Marketplace + Forge (Rovo agents)](https://marketplace.atlassian.com/) | Atlassian | 11 | Apply: Enroll as Marketplace Partner, build on Forge, submit |
+| 11 | [Cloudflare Agents SDK, remote MCP and agent payments](https://developers.cloudflare.com/agents/tools/payments/) | Cloudflare | 11 | Port one paid three.ws MCP tool to the Agents SDK paid-tool helper, then pitch it to Cloudflare developer relations as a case study |
+| 12 | [GitHub Sponsors](https://github.com/sponsors) | GitHub | 11 | Enable GitHub Sponsors on the nirholas account and add it to .github/FUNDING.yml (today it holds only a custom link) |
+| 13 | [Notion Marketplace connections listing](https://developers.notion.com/guides/connections-and-tokens/public-integrations/marketplace-listing) | Notion | 11 | Build a Notion connection that embeds an agent-3d avatar or Forge output into a page, and submit. |
+| 14 | [Qualcomm AI Hub](https://aihub.qualcomm.com/) | Qualcomm | 11 | Apply: Self-serve developer sign-up on Qualcomm AI Hub |
+| 15 | [Lens Studio and Lens Creator Rewards](https://ar.snap.com/lens-creator-rewards) | Snap | 11 | Apply: Opt-in toggle appears when submitting a Lens in eligible countries; Lens+ payouts need application |
+| 16 | [Unity Asset Store Publisher program](https://docs.unity.com/en-us/asset-store) | Unity | 11 | Apply: Create publisher profile in Publisher portal, submit package for vetting |
+| 17 | [2026 Meta VR Start Developer Competition](https://developers.meta.com/blog/meta-connect-recap/) | Meta | 10 | Decide by 2026-11-10 whether the WebXR /play build can enter as a Horizon Store web app; if yes, package and submit before 2026-11-18 |
 
 ### Wave 3: build, then apply
 
@@ -125,7 +128,7 @@ A real fit that needs an integration, package, or app shipped before the applica
 
 ### Wave 4: open, lower priority
 
-Open to us today but a weaker fit, a smaller audience, or more paperwork (score under 11). Cheap ones are worth an afternoon once waves 0 to 2 are clear. 36 programs.
+Open to us today but a weaker fit, a smaller audience, or more paperwork (score under 11). Cheap ones are worth an afternoon once waves 0 to 2 are clear. 39 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
@@ -138,96 +141,128 @@ Open to us today but a weaker fit, a smaller audience, or more paperwork (score 
 | 7 | [Fab marketplace seller](https://www.unrealengine.com/blog/fab-epics-new-unified-content-marketplace-launches-today) | Epic Games | 10 | Apply: Seller account on Fab |
 | 8 | [GitHub Secure Open Source Fund](https://github.com/open-source/github-secure-open-source-fund/projects) | GitHub | 10 | Apply: Rolling application through GitHub / Microsoft form |
 | 9 | [Google for Startups Gemini program](https://startup.google.com/gemini/) | Google | 10 | Apply: Via Google for Startups Cloud Program application |
-| 10 | [Codex for Open Source](https://developers.openai.com/community/codex-for-oss) | OpenAI | 10 | Apply: https://openai.com/form/codex-for-oss/ |
-| 11 | [Oracle PartnerNetwork + Oracle Marketplace (ISV listing, Level 0)](https://marketplace.oracle.com/partnerHome) | Oracle | 10 | Apply: https://marketplace.oracle.com/partnerHome; sign Oracle Cloud Marketplace Agreement |
-| 12 | [Reddit Developer Funds (H2 2026) for Devvit apps](https://developers.reddit.com/) | Reddit | 10 | Apply: Build a Devvit app, pass App Review, apply for recurring payouts at tier 1 |
-| 13 | [Samsung Galaxy Store (Seller Portal)](https://developer.samsung.com/galaxy-store) | Samsung | 10 | Apply: Register in Samsung Seller Office (separate from Samsung Developer Program signup) at seller.samsungapps.com |
-| 14 | [Zoom App Marketplace](https://developers.zoom.us/docs/distribute/) | Zoom | 10 | Apply: Build in Zoom App Dashboard, TDD, submit for review |
-| 15 | [Zoom Developer Platform / MCP (Zoomtopia 2026)](https://news.zoom.com/zoomtopia-2026-developer/) | Zoom | 10 | Apply: developers.zoom.us |
-| 16 | [Amazon Appstore (Fire OS / Vega OS)](https://www.developer.amazon.com/docs/app-submission/submitting-apps-to-amazon-appstore.html) | Amazon | 9 | Apply: Developer Console submission |
-| 17 | [AMD AI Developer Program (Developer Cloud credits)](https://www.amd.com/en/developer/resources/technical-articles/2026/how-to-claim-amd-cloud-credits.html) | AMD | 9 | Apply: Join at https://developer.amd.com/ then Member Perks > Request Cloud Credits |
-| 18 | [Autodesk Technology Centers Research Residency](https://www.autodesk.com/technology-centers/research-residency-program/apply) | Autodesk | 9 | Apply on page |
-| 19 | [TikTok Effect House - Effect Creator Rewards](https://www.tiktok.com/creator-academy/en/article/effect-creator-rewards) | ByteDance | 9 | Apply: Via Effect House Rewards Center |
-| 20 | [WhatsApp Business Tech Provider / Tech Partner (Meta Business Partners)](https://developers.facebook.com/documentation/business-messaging/whatsapp/solution-providers/get-started-for-solution-partners) | Meta | 9 | Apply: Meta App Dashboard > WhatsApp > Quickstart > Become a Partner; Business verification and App Review required |
-| 21 | [Microsoft for Startups Founders Hub](https://www.microsoft.com/en-us/startups) | Microsoft | 9 | Apply at microsoft.com/startups (page not fetched); higher tiers via investor network offer |
-| 22 | [AgentExchange ISV Track (AppExchange)](https://appexchange.salesforce.com/) | Salesforce | 9 | Apply: Sign up as partner (partnersignup.salesforce.com per a third-party guide), then Partner Console Listing Builder |
-| 23 | [Slack Marketplace (apps and AI agents)](https://docs.slack.dev/slack-marketplace/) | Salesforce | 9 | Apply: Submit via Slack app dashboard per submission guidelines |
-| 24 | [SAP PartnerEdge Open Ecosystem](https://community.sap.com/t5/additional-blog-posts-by-sap/announcing-the-new-open-ecosystem-build/ba-p/13350941) | SAP | 9 | Apply: Join via SAP PartnerEdge |
-| 25 | [ServiceNow Store + Build Partner Program](https://www.servicenow.com/partners.html) | ServiceNow | 9 | Apply: Enroll as Build Partner; publish via Store Publisher Portal |
-| 26 | [Camera Kit](https://ar.snap.com/download) | Snap | 9 | Apply: Self-serve SDK signup |
-| 27 | [Stripe App Marketplace (Stripe Apps)](https://docs.stripe.com/stripe-apps/publish-app) | Stripe | 9 | Apply: Upload app via Stripe CLI, submit for review, then publish from Dashboard |
-| 28 | [Adobe Technology Partner Program / Adobe Exchange](https://partners.adobe.com/digitalexperience/activation/guide/developing-with-adobe) | Adobe | 8 | Apply: Sign up on Technology Partner Portal |
-| 29 | [Oracle for Startups](https://www.oracle.com/cloud/oracle-for-startups/) | Oracle | 8 | Apply: Enrollment form on the program page (official page returned 403 to our fetch; details via third-party summaries) |
-| 30 | [Verified Solutions (ISV partner track)](https://unity.com/partners/verified-solutions) | Unity | 8 | Apply: Via Unity partner page, earned through Asset Store |
-| 31 | [Snowflake Marketplace (Native Apps)](https://docs.snowflake.com/en/collaboration/guidelines-reqs-for-listing-apps) | Snowflake | 7 | Apply: Provider Studio in Snowsight |
-| 32 | [Atlassian for Startups](https://www.atlassian.com/software/startups) | Atlassian | 6 | Apply on page |
-| 33 | [Atlassian Marketplace Partner Program](https://developer.atlassian.com/platform/marketplace/marketplace-partner-program/) | Atlassian | 6 | Apply: Automatic tiering from enrollment |
-| 34 | [Autodesk Foundation investments and grants](https://autodesk.org/) | Autodesk | 6 | Apply: Discovery Form on autodesk.org, rolling |
-| 35 | [Databricks Marketplace provider](https://docs.databricks.com/aws/en/marketplace/become-provider) | Databricks | 6 | Apply via Databricks Data Partner Program form (Data Provider) |
-| 36 | [Databricks Partner Program / Technology Partner (Partner Connect)](https://www.databricks.com/partners/partner-program) | Databricks | 6 | Apply now on Technology Partner page |
+| 10 | [MongoDB for Startups](https://www.mongodb.com/solutions/startups) | MongoDB | 10 | Apply directly as the Inspire tier and mention agent memory and RAG on Atlas. |
+| 11 | [Codex for Open Source](https://developers.openai.com/community/codex-for-oss) | OpenAI | 10 | Apply: https://openai.com/form/codex-for-oss/ |
+| 12 | [Oracle PartnerNetwork + Oracle Marketplace (ISV listing, Level 0)](https://marketplace.oracle.com/partnerHome) | Oracle | 10 | Apply: https://marketplace.oracle.com/partnerHome; sign Oracle Cloud Marketplace Agreement |
+| 13 | [Reddit Developer Funds (H2 2026) for Devvit apps](https://developers.reddit.com/) | Reddit | 10 | Apply: Build a Devvit app, pass App Review, apply for recurring payouts at tier 1 |
+| 14 | [Samsung Galaxy Store (Seller Portal)](https://developer.samsung.com/galaxy-store) | Samsung | 10 | Apply: Register in Samsung Seller Office (separate from Samsung Developer Program signup) at seller.samsungapps.com |
+| 15 | [Zoom App Marketplace](https://developers.zoom.us/docs/distribute/) | Zoom | 10 | Apply: Build in Zoom App Dashboard, TDD, submit for review |
+| 16 | [Zoom Developer Platform / MCP (Zoomtopia 2026)](https://news.zoom.com/zoomtopia-2026-developer/) | Zoom | 10 | Apply: developers.zoom.us |
+| 17 | [Amazon Appstore (Fire OS / Vega OS)](https://www.developer.amazon.com/docs/app-submission/submitting-apps-to-amazon-appstore.html) | Amazon | 9 | Apply: Developer Console submission |
+| 18 | [AMD AI Developer Program (Developer Cloud credits)](https://www.amd.com/en/developer/resources/technical-articles/2026/how-to-claim-amd-cloud-credits.html) | AMD | 9 | Apply: Join at https://developer.amd.com/ then Member Perks > Request Cloud Credits |
+| 19 | [Autodesk Technology Centers Research Residency](https://www.autodesk.com/technology-centers/research-residency-program/apply) | Autodesk | 9 | Apply on page |
+| 20 | [TikTok Effect House - Effect Creator Rewards](https://www.tiktok.com/creator-academy/en/article/effect-creator-rewards) | ByteDance | 9 | Apply: Via Effect House Rewards Center |
+| 21 | [Elastic Search AI Partner Program, Technology partners](https://www.elastic.co/partners/become-a-partner) | Elastic | 9 | Defer unless we adopt Elastic as a vector store. |
+| 22 | [WhatsApp Business Tech Provider / Tech Partner (Meta Business Partners)](https://developers.facebook.com/documentation/business-messaging/whatsapp/solution-providers/get-started-for-solution-partners) | Meta | 9 | Apply: Meta App Dashboard > WhatsApp > Quickstart > Become a Partner; Business verification and App Review required |
+| 23 | [Microsoft for Startups Founders Hub](https://www.microsoft.com/en-us/startups) | Microsoft | 9 | Apply at microsoft.com/startups (page not fetched); higher tiers via investor network offer |
+| 24 | [AgentExchange ISV Track (AppExchange)](https://appexchange.salesforce.com/) | Salesforce | 9 | Apply: Sign up as partner (partnersignup.salesforce.com per a third-party guide), then Partner Console Listing Builder |
+| 25 | [Slack Marketplace (apps and AI agents)](https://docs.slack.dev/slack-marketplace/) | Salesforce | 9 | Apply: Submit via Slack app dashboard per submission guidelines |
+| 26 | [SAP PartnerEdge Open Ecosystem](https://community.sap.com/t5/additional-blog-posts-by-sap/announcing-the-new-open-ecosystem-build/ba-p/13350941) | SAP | 9 | Apply: Join via SAP PartnerEdge |
+| 27 | [ServiceNow Store + Build Partner Program](https://www.servicenow.com/partners.html) | ServiceNow | 9 | Apply: Enroll as Build Partner; publish via Store Publisher Portal |
+| 28 | [Camera Kit](https://ar.snap.com/download) | Snap | 9 | Apply: Self-serve SDK signup |
+| 29 | [Stripe App Marketplace (Stripe Apps)](https://docs.stripe.com/stripe-apps/publish-app) | Stripe | 9 | Apply: Upload app via Stripe CLI, submit for review, then publish from Dashboard |
+| 30 | [Adobe Technology Partner Program / Adobe Exchange](https://partners.adobe.com/digitalexperience/activation/guide/developing-with-adobe) | Adobe | 8 | Apply: Sign up on Technology Partner Portal |
+| 31 | [Oracle for Startups](https://www.oracle.com/cloud/oracle-for-startups/) | Oracle | 8 | Apply: Enrollment form on the program page (official page returned 403 to our fetch; details via third-party summaries) |
+| 32 | [Verified Solutions (ISV partner track)](https://unity.com/partners/verified-solutions) | Unity | 8 | Apply: Via Unity partner page, earned through Asset Store |
+| 33 | [Workday Developer Program](https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html) | Workday | 8 | Skip unless an HR agent use case appears. |
+| 34 | [Snowflake Marketplace (Native Apps)](https://docs.snowflake.com/en/collaboration/guidelines-reqs-for-listing-apps) | Snowflake | 7 | Apply: Provider Studio in Snowsight |
+| 35 | [Atlassian for Startups](https://www.atlassian.com/software/startups) | Atlassian | 6 | Apply on page |
+| 36 | [Atlassian Marketplace Partner Program](https://developer.atlassian.com/platform/marketplace/marketplace-partner-program/) | Atlassian | 6 | Apply: Automatic tiering from enrollment |
+| 37 | [Autodesk Foundation investments and grants](https://autodesk.org/) | Autodesk | 6 | Apply: Discovery Form on autodesk.org, rolling |
+| 38 | [Databricks Marketplace provider](https://docs.databricks.com/aws/en/marketplace/become-provider) | Databricks | 6 | Apply via Databricks Data Partner Program form (Data Provider) |
+| 39 | [Databricks Partner Program / Technology Partner (Partner Connect)](https://www.databricks.com/partners/partner-program) | Databricks | 6 | Apply now on Technology Partner page |
 
 ### Wave 5: watch and verify
 
-Invite-only, a window that is not open yet, or eligibility we have not confirmed. Re-check on the cadence listed. 56 programs.
+Invite-only, a window that is not open yet, or eligibility we have not confirmed. Re-check on the cadence listed. 85 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
-| 1 | [IBM TechXchange call for speakers](https://community.ibm.com/community/user/blogs/christopher-vollmar/2026/04/14/ibm-techxchange-2026-call-for-speakers) | IBM | 11 | Watch for the TechXchange 2027 call for speakers (spring 2027) and submit a talk on agents with 3D bodies |
-| 2 | [Telegram Mini Apps and Mini App Store](https://core.telegram.org/bots/webapps) | Telegram | 11 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 3 | [Alexa+ for Builders](https://developer.amazon.com/alexaplus/) | Amazon | 10 | Watch for the next window (preview since Jul 27, 2026) and apply when it opens |
-| 4 | [AWS Generative AI Accelerator](https://aws.amazon.com/startups/generative-ai/accelerator) | Amazon | 10 | Watch for the next window (2026 window closed; official page still shows 2025 cohort) and apply when it opens |
-| 5 | [Claude Community Ambassadors](https://claude.com/community/ambassador) | Anthropic | 10 | Watch for the next window (rolling; launched March 2026) and apply when it opens |
-| 6 | [Claude for Startups](https://claude.com/programs/startups) | Anthropic | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 7 | [Kaggle / Google DeepMind hackathons](https://www.kaggle.com/competitions/gemma-4-good-hackathon) | Google | 10 | Watch for the next window (No open Gemini or Gemma competition found as of 2026-11-06; recurring several times per year) and apply when it opens |
-| 8 | [OpenAI DevDay](https://openai.com/index/devday-2026/) | OpenAI | 10 | Watch for the next window (DevDay 2026 held Sept 29, 2026 (past); 2027 date not announced) and apply when it opens |
-| 9 | [Shopify 3D services partner program](https://www.shopify.com/partners/blog/ar-vr) | Shopify | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 10 | [Inception Startup Pavilion at GTC](https://www.nvidia.com/gtc/) | NVIDIA | 9 | Ask in the existing Inception thread for a Pavilion invitation; NVIDIA confirmed 2026-09-14 that it is invite-only |
-| 11 | [PayPal Open / agentic commerce services (Store Sync, Agent Ready) and Dev Days](https://newsroom.paypal-corp.com/2025-10-28-PayPal-Launches-Agentic-Commerce-Services-to-Power-AI-Driven-Shopping) | PayPal | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 12 | [Spectacles / SPECS Developer Program](https://ar.snap.com/spectacles) | Snap | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 13 | [Agentic Commerce Suite / Agentic Commerce Protocol ecosystem](https://stripe.com/newsroom/news/agentic-commerce-suite) | Stripe | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 14 | [Visa Intelligent Commerce (VIC) partner program and sandbox](https://developer.visa.com/capabilities/visa-intelligent-commerce) | Visa | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 15 | [AMD Developer Hackathons (lablab.ai)](https://lablab.ai/ai-hackathons/amd-developer) | AMD | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 16 | [Epic MegaGrants](https://www.unrealengine.com/megagrants) | Epic Games | 8 | Watch for the next window (listing showed closed after a 2026-09-04 deadline; reopening date unknown) and apply when it opens |
-| 17 | [Google for Startups Accelerator (AI First / AI for Energy, North America)](https://startup.google.com/programs/accelerator/north-america/) | Google | 8 | Watch for the next window (2026 window closed (May 4 to Jun 30, 2026); next window not announced) and apply when it opens |
-| 18 | [Intel Liftoff for Startups](https://www.intel.com/content/www/us/en/developer/tools/oneapi/liftoff.html) | Intel | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 19 | [Agent Pay and Agent Pay for Machines (developer program)](https://developer.mastercard.com/) | Mastercard | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 20 | [Mastercard Start Path (agentic commerce track added 2026)](https://www.mastercard.com/us/en/innovation/partner-with-us/start-path.html) | Mastercard | 8 | Apply: Online application form on the Start Path page |
-| 21 | [Slack Agent Builder Challenge](https://slackhack.devpost.com/) | Salesforce | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 22 | [Android XR / Galaxy XR developer path (Android XR Developer Catalyst Program)](https://android-developers.googleblog.com/2026/06/what-is-new-android-xr.html) | Samsung | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 23 | [SAP PartnerEdge Build + SAP Store](https://community.sap.com/t5/technology-blog-posts-by-sap/building-on-sap-business-ai-platform-what-isv-partners-need-to-know/ba-p/14497714) | SAP | 8 | Apply: Join PartnerEdge Build, pass Application Readiness Check |
-| 24 | [Shopify Editions](https://www.shopify.com/editions) | Shopify | 8 | Watch for the next window (twice yearly) and apply when it opens |
-| 25 | [Hunyuan 3D (HY 3D) global platform and partner integrations](https://3d.hunyuan.tencent.com/) | Tencent | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 26 | [Grok for Startups](https://x.ai/startups) | xAI | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 27 | [Claude Partner Network](https://anthropic.com/news/claude-partner-network) | Anthropic | 7 | Apply: See Anthropic announcement; tiers Select, Preferred, Global Premier (per search summary) |
-| 28 | [Workers Launchpad](https://blog.cloudflare.com/expanding-startups-for-nonprofits/) | Cloudflare | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 29 | [Dell AI Ecosystem Program (ISV validation on Dell AI Factory)](https://www.dell.com/en-us/dt/corporate/newsroom/announcements/detailpage.press-releases~usa~2026~05~dell-technologies-closes-the-gap-between-ai-ambition-and-ai-outcomes.htm) | Dell | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 30 | [Android XR Developer Catalyst Program](https://developer.android.com/develop/xr/catalyst) | Google | 7 | Watch for the next window (Applications opened May 19, 2026, closed; notifications by Jul 15, 2026) and apply when it opens |
-| 31 | [Google Developer Experts (GDE)](https://developers.google.com/community/experts) | Google | 7 | Watch for the next window (rolling, no public dates) and apply when it opens |
-| 32 | [NVIDIA Partner Network (NPN) - ISV/Influencer partner type](https://www.nvidia.com/object/nvidia-partner-network.html) | NVIDIA | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 33 | [Incubator and Jumpstart (successors to retired Accelerator); Creator Fund](https://about.roblox.com/newsroom/2026/03/roblox-announces-incubator-jumpstart-creator-programs) | Roblox | 7 | Apply: Jumpstart pitches rolling; Incubator for experienced small teams; Creator Fund rolling |
-| 34 | [Adobe Substance 3D partner program](https://www.adobe.com/products/substance3d.html) | Adobe | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 35 | [BytePlus (ModelArk) free tier and AI Startups Accelerator](https://www.byteplus.com/en/) | ByteDance | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 36 | [Cisco DevNet / Month of Partner Innovation](https://blogs.cisco.com/developer/january-2026-month-of-partner-innovation) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 37 | [Cisco LaunchPad](https://startups.cisco.com/c/programs.html) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 38 | [GitHub Stars](https://stars.github.com/) | GitHub | 6 | Watch for the next window (rolling) and apply when it opens |
-| 39 | [HPE Partner Ready Vantage - Build Track / Unleash AI ISV program](https://www.hpe.com/us/en/newsroom/press-release/2026/06/hpe-fuels-partner-growth-with-new-incentives-partner-led-offers-and-unified-program.html) | HPE | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 40 | [Intel Partner Alliance (ISV role, 2-tier refresh)](https://www.intel.com/content/www/us/en/partner-alliance/overview.html) | Intel | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 41 | [Tencent Cloud Partner Ecosystem Program](https://www.tencentcloud.com/partners) | Tencent | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 42 | [Apple Design Awards / Swift Student Challenge / Entrepreneur Camp](https://www.apple.com/newsroom/2026/06/apple-reveals-winners-of-the-2026-apple-design-awards/) | Apple | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 43 | [Atlassian Ventures](https://www.atlassian.com/blog/developers/get-ready-to-grow-explore-a-world-of-possibility-in-the-atlassian-ecosystem) | Atlassian | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 44 | [Autodesk Technology Impact Program](https://www.autodesk.org/) | Autodesk | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 45 | [Microsoft MVP Award](https://mvp.microsoft.com/) | Microsoft | 5 | Watch for the next window (annual) and apply when it opens |
-| 46 | [Salesforce Launchpad (startups)](https://www.salesforce.com/startups/) | Salesforce | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 47 | [Salesforce Ventures](https://salesforceventures.com/) | Salesforce | 5 | Watch for the next window (n/a) and apply when it opens |
-| 48 | [Snowflake Startup Accelerator / Powered by Snowflake](https://snowflake.com/en/product/features/native-apps/native-app-accelerator) | Snowflake | 5 | Apply on page |
-| 49 | [WeChat Mini-Program Growth Plan](https://www.ainspiro.com/en/news/wechat-miniprogram-10-billion-token-hunyuan-hy3-july-2026/) | Tencent | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 50 | [Visa Accelerator Program (Africa) and Visa Inclusive Fintech Accelerator (US/Canada, with Plug and Play)](https://africa.visa.com/en_MW/visa-everywhere/innovation/visa-accelerator.html) | Visa | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 51 | [Zoom Ventures / Zoom Apps Fund](https://www.zoom.com/en/zoom-ventures/) | Zoom | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 52 | [Baidu AI Cloud Qianfan / ERNIE international partner programs](https://intl.cloud.baidu.com/) | Baidu | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 53 | [Cisco Investments](https://investments.cisco.com/) | Cisco | 4 | Watch for the next window (n/a) and apply when it opens |
-| 54 | [Databricks Ventures](https://www.databricks.com/databricks-ventures) | Databricks | 4 | Watch for the next window (n/a) and apply when it opens |
-| 55 | [Huawei Cloud Spark startup program](https://www.huaweicloud.com/intl/en-us/news/20200903090816755.html) | Huawei | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 56 | [Samsung NEXT / Samsung Catalyst Fund](https://samsungcatalyst.com/news/) | Samsung | 4 | Watch for the next window (rolling) and apply when it opens |
+| 1 | [Canva for AI Assistants (MCP) and Add your tool to Canva AI](https://www.canva.dev/docs/apps/mcp/) | Canva | 13 | Read the Add your tool to Canva AI docs and wire the keyless three.ws text-to-3D MCP server as a candidate connector. |
+| 2 | [Figma verified partner MCP connectors](https://help.figma.com/hc/en-us/articles/35440096186007-Use-verified-partner-MCP-connectors-with-the-Figma-agent-and-Figma-Make) | Figma | 11 | Confirm users can add the three.ws MCP as a custom connector in Figma Make, then ask for featured vetting. |
+| 3 | [IBM TechXchange call for speakers](https://community.ibm.com/community/user/blogs/christopher-vollmar/2026/04/14/ibm-techxchange-2026-call-for-speakers) | IBM | 11 | Watch for the TechXchange 2027 call for speakers (spring 2027) and submit a talk on agents with 3D bodies |
+| 4 | [PlayStation Partners](https://sonyinteractive.com/en/news/blog/showing-your-game-to-playstation/) | Sony Group | 11 | Skip until a console-ready title exists. |
+| 5 | [Telegram Mini Apps and Mini App Store](https://core.telegram.org/bots/webapps) | Telegram | 11 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 6 | [Alexa+ for Builders](https://developer.amazon.com/alexaplus/) | Amazon | 10 | Watch for the next window (preview since Jul 27, 2026) and apply when it opens |
+| 7 | [AWS Generative AI Accelerator](https://aws.amazon.com/startups/generative-ai/accelerator) | Amazon | 10 | Watch for the next window (2026 window closed; official page still shows 2025 cohort) and apply when it opens |
+| 8 | [Claude Community Ambassadors](https://claude.com/community/ambassador) | Anthropic | 10 | Watch for the next window (rolling; launched March 2026) and apply when it opens |
+| 9 | [Claude for Startups](https://claude.com/programs/startups) | Anthropic | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 10 | [Kaggle / Google DeepMind hackathons](https://www.kaggle.com/competitions/gemma-4-good-hackathon) | Google | 10 | Watch for the next window (No open Gemini or Gemma competition found as of 2026-11-06; recurring several times per year) and apply when it opens |
+| 11 | [LINE Mini App](https://www.lycorp.co.jp/ja/news/release/020852/) | LINE Yahoo | 10 | Skip until an Asia launch. |
+| 12 | [Notion Technology Partner Program](https://www.notion.com/partners/security-compliance-partner-program) | Notion | 10 | Ship the Marketplace connection first, then apply as a Technology Partner. |
+| 13 | [OpenAI DevDay](https://openai.com/index/devday-2026/) | OpenAI | 10 | Watch for the next window (DevDay 2026 held Sept 29, 2026 (past); 2027 date not announced) and apply when it opens |
+| 14 | [Shopify 3D services partner program](https://www.shopify.com/partners/blog/ar-vr) | Shopify | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 15 | [Sony Innovation Fund](https://www.sonyinnovationfund.com/) | Sony Group | 10 | Prepare a short strategic pitch (avatar, spatial, AI characters). |
+| 16 | [Canva Premium Apps Program](https://www.canva.com/developers/premium-apps-program/) | Canva | 9 | Revisit after the first Canva app is listed. |
+| 17 | [DigitalOcean Startups (formerly Hatch)](https://www.digitalocean.com/startups) | DigitalOcean | 9 | Create a company team account now and apply on relaunch. |
+| 18 | [Figma MCP server client catalog](https://help.figma.com/hc/en-us/articles/39216419318551-Get-started-with-the-Figma-MCP-server) | Figma | 9 | Join the waitlist as a client, and meanwhile use Figma REST API with a private OAuth app. |
+| 19 | [Inception Startup Pavilion at GTC](https://www.nvidia.com/gtc/) | NVIDIA | 9 | Ask in the existing Inception thread for a Pavilion invitation; NVIDIA confirmed 2026-09-14 that it is invite-only |
+| 20 | [PayPal Open / agentic commerce services (Store Sync, Agent Ready) and Dev Days](https://newsroom.paypal-corp.com/2025-10-28-PayPal-Launches-Agentic-Commerce-Services-to-Power-AI-Driven-Shopping) | PayPal | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 21 | [Spectacles / SPECS Developer Program](https://ar.snap.com/spectacles) | Snap | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 22 | [Agentic Commerce Suite / Agentic Commerce Protocol ecosystem](https://stripe.com/newsroom/news/agentic-commerce-suite) | Stripe | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 23 | [Visa Intelligent Commerce (VIC) partner program and sandbox](https://developer.visa.com/capabilities/visa-intelligent-commerce) | Visa | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 24 | [Akamai Cloud Rise Startup Program](https://www.linode.com/start-ups/rise) | Akamai | 8 | Apply only if we move a workload to Akamai Cloud. |
+| 25 | [AMD Developer Hackathons (lablab.ai)](https://lablab.ai/ai-hackathons/amd-developer) | AMD | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 26 | [Datadog Partner Network, Technology Partner track](https://www.datadoghq.com/partner/network/) | Datadog | 8 | Defer until fleet telemetry is worth a tile. |
+| 27 | [Dropbox App Console production approval](https://www.dropbox.com/developers/reference/developer-guide) | Dropbox | 8 | Skip unless users ask for Dropbox import. |
+| 28 | [Epic MegaGrants](https://www.unrealengine.com/megagrants) | Epic Games | 8 | Watch for the next window (listing showed closed after a 2026-09-04 deadline; reopening date unknown) and apply when it opens |
+| 29 | [Google for Startups Accelerator (AI First / AI for Energy, North America)](https://startup.google.com/programs/accelerator/north-america/) | Google | 8 | Watch for the next window (2026 window closed (May 4 to Jun 30, 2026); next window not announced) and apply when it opens |
+| 30 | [HubSpot App Marketplace listing](https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements) | HubSpot | 8 | Defer until there is a CRM-specific use case. |
+| 31 | [Intel Liftoff for Startups](https://www.intel.com/content/www/us/en/developer/tools/oneapi/liftoff.html) | Intel | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 32 | [LY Corporation Partner Program, Technology Partner](https://www.lycorp.co.jp/ja/news/release/008439/) | LINE Yahoo | 8 | Skip unless we target Japan. |
+| 33 | [Agent Pay and Agent Pay for Machines (developer program)](https://developer.mastercard.com/) | Mastercard | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 34 | [Mastercard Start Path (agentic commerce track added 2026)](https://www.mastercard.com/us/en/innovation/partner-with-us/start-path.html) | Mastercard | 8 | Apply: Online application form on the Start Path page |
+| 35 | [NAVER D2 Startup Factory](https://www.prodevs.io/accelerators/naver-d2-startup-factory) | Naver | 8 | Skip. |
+| 36 | [Palantir for Builders](https://www.palantir.com/offerings/palantir-for-builders/startups/) | Palantir | 8 | Skip for now. |
+| 37 | [Slack Agent Builder Challenge](https://slackhack.devpost.com/) | Salesforce | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 38 | [Android XR / Galaxy XR developer path (Android XR Developer Catalyst Program)](https://android-developers.googleblog.com/2026/06/what-is-new-android-xr.html) | Samsung | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 39 | [SAP PartnerEdge Build + SAP Store](https://community.sap.com/t5/technology-blog-posts-by-sap/building-on-sap-business-ai-platform-what-isv-partners-need-to-know/ba-p/14497714) | SAP | 8 | Apply: Join PartnerEdge Build, pass Application Readiness Check |
+| 40 | [Shopify Editions](https://www.shopify.com/editions) | Shopify | 8 | Watch for the next window (twice yearly) and apply when it opens |
+| 41 | [Hunyuan 3D (HY 3D) global platform and partner integrations](https://3d.hunyuan.tencent.com/) | Tencent | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 42 | [Grok for Startups](https://x.ai/startups) | xAI | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 43 | [Claude Partner Network](https://anthropic.com/news/claude-partner-network) | Anthropic | 7 | Apply: See Anthropic announcement; tiers Select, Preferred, Global Premier (per search summary) |
+| 44 | [Arm Flexible Access for Startups](https://www.arm.com/resources/program-reg/flexible-access-startup) | Arm | 7 | Skip unless we ever design a chip. |
+| 45 | [Workers Launchpad](https://blog.cloudflare.com/expanding-startups-for-nonprofits/) | Cloudflare | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 46 | [Dell AI Ecosystem Program (ISV validation on Dell AI Factory)](https://www.dell.com/en-us/dt/corporate/newsroom/announcements/detailpage.press-releases~usa~2026~05~dell-technologies-closes-the-gap-between-ai-ambition-and-ai-outcomes.htm) | Dell | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 47 | [Android XR Developer Catalyst Program](https://developer.android.com/develop/xr/catalyst) | Google | 7 | Watch for the next window (Applications opened May 19, 2026, closed; notifications by Jul 15, 2026) and apply when it opens |
+| 48 | [Google Developer Experts (GDE)](https://developers.google.com/community/experts) | Google | 7 | Watch for the next window (rolling, no public dates) and apply when it opens |
+| 49 | [Grab Ventures Velocity](https://ventures.grab.com/) | Grab | 7 | Skip. |
+| 50 | [Intuit App Partner Program](https://developer.intuit.com/partners/benefits) | Intuit | 7 | Skip. |
+| 51 | [LinkedIn Marketing Developer Program](https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program) | LinkedIn | 7 | Skip. |
+| 52 | [Miro Marketplace app submission](https://developers.miro.com/docs/miro-marketplace) | Miro | 7 | Ship a private Miro app first to build the user base. |
+| 53 | [NVIDIA Partner Network (NPN) - ISV/Influencer partner type](https://www.nvidia.com/object/nvidia-partner-network.html) | NVIDIA | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 54 | [Palantir Startup Fellowship](https://www.palantir.events/startup-fellowship-003-apply) | Palantir | 7 | Skip. |
+| 55 | [Incubator and Jumpstart (successors to retired Accelerator); Creator Fund](https://about.roblox.com/newsroom/2026/03/roblox-announces-incubator-jumpstart-creator-programs) | Roblox | 7 | Apply: Jumpstart pitches rolling; Incubator for experienced small teams; Creator Fund rolling |
+| 56 | [Uber Developer Platform](https://developer.uber.com/docs/) | Uber | 7 | Skip. |
+| 57 | [Adobe Substance 3D partner program](https://www.adobe.com/products/substance3d.html) | Adobe | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 58 | [Booking.com Connectivity Partner Programme](https://developers.booking.com/connectivity/docs) | Booking.com | 6 | Skip. |
+| 59 | [BytePlus (ModelArk) free tier and AI Startups Accelerator](https://www.byteplus.com/en/) | ByteDance | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 60 | [Cisco DevNet / Month of Partner Innovation](https://blogs.cisco.com/developer/january-2026-month-of-partner-innovation) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 61 | [Cisco LaunchPad](https://startups.cisco.com/c/programs.html) | Cisco | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 62 | [GitHub Stars](https://stars.github.com/) | GitHub | 6 | Watch for the next window (rolling) and apply when it opens |
+| 63 | [HPE Partner Ready Vantage - Build Track / Unleash AI ISV program](https://www.hpe.com/us/en/newsroom/press-release/2026/06/hpe-fuels-partner-growth-with-new-incentives-partner-led-offers-and-unified-program.html) | HPE | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 64 | [Intel Partner Alliance (ISV role, 2-tier refresh)](https://www.intel.com/content/www/us/en/partner-alliance/overview.html) | Intel | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 65 | [Okta Integration Network (OIN)](https://developer.okta.com/docs/guides/submit-app-overview/) | Okta | 6 | Defer until enterprise SSO is on the roadmap. |
+| 66 | [Tencent Cloud Partner Ecosystem Program](https://www.tencentcloud.com/partners) | Tencent | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 67 | [Akamai Qualified Compute Partner Program](https://www.akamai.com/cloud/start-ups/partner) | Akamai | 5 | Skip for now. |
+| 68 | [Apple Design Awards / Swift Student Challenge / Entrepreneur Camp](https://www.apple.com/newsroom/2026/06/apple-reveals-winners-of-the-2026-apple-design-awards/) | Apple | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 69 | [Atlassian Ventures](https://www.atlassian.com/blog/developers/get-ready-to-grow-explore-a-world-of-possibility-in-the-atlassian-ecosystem) | Atlassian | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 70 | [Autodesk Technology Impact Program](https://www.autodesk.org/) | Autodesk | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 71 | [HubSpot for Startups](https://www.hubspot.com/startups) | HubSpot | 5 | Low priority; use only when we need a CRM. |
+| 72 | [Microsoft MVP Award](https://mvp.microsoft.com/) | Microsoft | 5 | Watch for the next window (annual) and apply when it opens |
+| 73 | [Salesforce Launchpad (startups)](https://www.salesforce.com/startups/) | Salesforce | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 74 | [Salesforce Ventures](https://salesforceventures.com/) | Salesforce | 5 | Watch for the next window (n/a) and apply when it opens |
+| 75 | [Snowflake Startup Accelerator / Powered by Snowflake](https://snowflake.com/en/product/features/native-apps/native-app-accelerator) | Snowflake | 5 | Apply on page |
+| 76 | [WeChat Mini-Program Growth Plan](https://www.ainspiro.com/en/news/wechat-miniprogram-10-billion-token-hunyuan-hy3-july-2026/) | Tencent | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 77 | [Visa Accelerator Program (Africa) and Visa Inclusive Fintech Accelerator (US/Canada, with Plug and Play)](https://africa.visa.com/en_MW/visa-everywhere/innovation/visa-accelerator.html) | Visa | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 78 | [Workday Ventures](https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html) | Workday | 5 | Skip. |
+| 79 | [Zoom Ventures / Zoom Apps Fund](https://www.zoom.com/en/zoom-ventures/) | Zoom | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 80 | [Baidu AI Cloud Qianfan / ERNIE international partner programs](https://intl.cloud.baidu.com/) | Baidu | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 81 | [Cisco Investments](https://investments.cisco.com/) | Cisco | 4 | Watch for the next window (n/a) and apply when it opens |
+| 82 | [Databricks Ventures](https://www.databricks.com/databricks-ventures) | Databricks | 4 | Watch for the next window (n/a) and apply when it opens |
+| 83 | [Datadog for Startups](https://www.datadoghq.com/partner/datadog-for-startups/) | Datadog | 4 | Skip unless an accelerator referral arrives. |
+| 84 | [Huawei Cloud Spark startup program](https://www.huaweicloud.com/intl/en-us/news/20200903090816755.html) | Huawei | 4 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 85 | [Samsung NEXT / Samsung Catalyst Fund](https://samsungcatalyst.com/news/) | Samsung | 4 | Watch for the next window (rolling) and apply when it opens |
 
 ### Waiting on them
 
@@ -267,6 +302,7 @@ The open programs on this page that will put three.ws in front of their audience
 | [AWS Generative AI Accelerator](https://aws.amazon.com/startups/generative-ai/accelerator) | Amazon | Event or speaking slot, Featured placement | Cohort ends at AWS re:Invent with networking/visibility and AWS publicly announces and profiles each selected startup; requires selection. | Eligible, not started |
 | [Autodesk Developer Network (ADN)](https://aps.autodesk.com/adn) | Autodesk | Partner badge, Event or speaking slot | Join ADN at any tier for the Developer logo and ADN YouTube partner channel, plus event participation such as DevCon and Autodesk University. | Eligible, not started |
 | [Microsoft AI Cloud Partner Program (MAICPP)](https://learn.microsoft.com/en-us/partner-center/benefits/benefits-at-a-glance) | Microsoft | Co-marketing, Partner badge | Partner Center benefits include marketing benefits and partner designations/badges, unlocked by membership level and competency. | Member / live |
+| [Notion Technology Partner Program](https://www.notion.com/partners/security-compliance-partner-program) | Notion | Featured placement, Co-marketing | Notion docs say Technology Partners get Integration Gallery listing, in-product placement and marketing collateral. | Verify fit first |
 | [Epic MegaGrants](https://www.unrealengine.com/megagrants) | Epic Games | Blog post, Case study, Event or speaking slot | Receive a MegaGrant; Epic lists recipients in annual recap posts on the Unreal Engine blog, writes spotlight stories, and has featured recipients at its GDC booth (track record, not a stated guarantee). | Eligible, not started |
 | [Intel Liftoff for Startups](https://www.intel.com/content/www/us/en/developer/tools/oneapi/liftoff.html) | Intel | Co-marketing, Case study, Podcast or video | Join Intel Liftoff; Intel describes co-marketing and a documented track record of co-branded toolkits, case studies, interviews and podcasts (agency account, not an official promise). | Verify fit first |
 | [Verified Solutions (ISV partner track)](https://unity.com/partners/verified-solutions) | Unity | Partner badge, Featured placement, Co-marketing | Pass Unity's Verified Solutions review to get the badge, prioritized Asset Store collections and inclusion in Asset Store marketing campaigns. | Eligible, not started |
@@ -282,6 +318,7 @@ The open programs on this page that will put three.ws in front of their audience
 | [Claude Community Ambassadors](https://claude.com/community/ambassador) | Anthropic | Event or speaking slot | Anthropic promotes ambassadors' events through its own channels; apply on the ambassador page. | Eligible, not started |
 | [Webex App Hub](https://developer.webex.com/create/docs/app-hub-submission-process) | Cisco | Event or speaking slot | List on Webex App Hub; Cisco has showcased integration partners at Cisco Live (track record, not a stated benefit). | Eligible, not started |
 | [Fab marketplace seller](https://www.unrealengine.com/blog/fab-epics-new-unified-content-marketplace-launches-today) | Epic Games | Featured placement | Sell on Fab; Epic runs a featured sellers carousel and sponsored free-asset giveaways on a rotating schedule. | Eligible, not started |
+| [MongoDB for Startups](https://www.mongodb.com/solutions/startups) | MongoDB | Co-marketing | MongoDB states co-marketing opportunities as a program benefit; no specific showcase mechanism is documented on the page, so ask the startups team after acceptance. | Eligible, not started |
 | [GTC 2027 call for submissions (technical posters)](https://www.nvidia.com/gtc/call-for-submissions/) | NVIDIA | Event or speaking slot | Accepted poster submissions are presented at GTC. | Ready, one human step |
 | [Oracle PartnerNetwork + Oracle Marketplace (ISV listing, Level 0)](https://marketplace.oracle.com/partnerHome) | Oracle | Co-marketing | Join OPN at Level 1 or above and list on Oracle Marketplace to get foundational marketing resources and promotion of the offering to Oracle sellers. | Eligible, not started |
 | [Databricks Partner Program / Technology Partner (Partner Connect)](https://www.databricks.com/partners/partner-program) | Databricks | Co-marketing, Case study, Event or speaking slot | Apply to the Technology Partner program; Databricks lists joint marketing campaigns, partner success stories and flagship event presence, with MDF scaling by tier. | Eligible, not started |
@@ -291,6 +328,7 @@ The open programs on this page that will put three.ws in front of their audience
 | [Claude Partner Network](https://anthropic.com/news/claude-partner-network) | Anthropic | Co-marketing, Featured placement | Funding covers co-marketing for joint campaigns and events, co-marketing docs in the Partner Portal, and listing in the Services Partner Directory for qualified partners. | Eligible, not started |
 | [Dell AI Ecosystem Program (ISV validation on Dell AI Factory)](https://www.dell.com/en-us/dt/corporate/newsroom/announcements/detailpage.press-releases~usa~2026~05~dell-technologies-closes-the-gap-between-ai-ambition-and-ai-outcomes.htm) | Dell | Partner badge, Featured placement | Pass Dell's validation to earn the AI Ecosystem Certified badge and appearance in Dell's AI ecosystem catalogs. | Verify fit first |
 | [Incubator and Jumpstart (successors to retired Accelerator); Creator Fund](https://about.roblox.com/newsroom/2026/03/roblox-announces-incubator-jumpstart-creator-programs) | Roblox | Featured placement, Co-marketing | Get accepted into Incubator (guaranteed homepage placement) or Jumpstart (promotion and marketing support); Roblox also runs co-marketing for creator user acquisition. | Eligible, not started |
+| [Datadog Partner Network, Technology Partner track](https://www.datadoghq.com/partner/network/) | Datadog | Co-marketing | Datadog docs say Technology Partners can meet Partner Marketing to coordinate joint go-to-market once the tile is live. | Verify fit first |
 | [Google for Startups Accelerator (AI First / AI for Energy, North America)](https://startup.google.com/programs/accelerator/north-america/) | Google | Event or speaking slot | Demo Day is a mandatory part of the cohort; alumni may later be tapped for speaking roles (accepted cohort members only). | Eligible, not started |
 | [Atlassian Marketplace Partner Program](https://developer.atlassian.com/platform/marketplace/marketplace-partner-program/) | Atlassian | Co-marketing, Partner badge | Join the Marketplace Partner Program; all levels get a tier badge, and co-marketing for guest blogging and launch campaigns is prioritized by tier. | Eligible, not started |
 | [Cisco DevNet / Month of Partner Innovation](https://blogs.cisco.com/developer/january-2026-month-of-partner-innovation) | Cisco | Blog post, Podcast or video | Build on Cisco APIs; Cisco DevNet's Month of Partner Innovation featured named partners in a blog post and videos, but the page gives no application route. | Verify fit first |
@@ -338,7 +376,7 @@ Every application, form, email, and portal action, newest first. Add one with `n
 
 ## Company by company
 
-[Google](#google) · [Microsoft](#microsoft) · [GitHub](#github) · [Amazon](#amazon) · [Apple](#apple) · [Meta](#meta) · [NVIDIA](#nvidia) · [OpenAI](#openai) · [Anthropic](#anthropic) · [IBM](#ibm) · [Oracle](#oracle) · [Alibaba](#alibaba) · [Tencent](#tencent) · [ByteDance](#bytedance) · [Samsung](#samsung) · [Intel](#intel) · [AMD](#amd) · [Qualcomm](#qualcomm) · [Salesforce](#salesforce) · [Adobe](#adobe) · [SAP](#sap) · [Cloudflare](#cloudflare) · [Shopify](#shopify) · [Stripe](#stripe) · [Visa](#visa) · [Mastercard](#mastercard) · [PayPal](#paypal) · [Autodesk](#autodesk) · [Unity](#unity) · [Epic Games](#epic-games) · [Roblox](#roblox) · [Snap](#snap) · [Discord](#discord) · [Reddit](#reddit) · [Telegram](#telegram) · [xAI](#xai) · [Cisco](#cisco) · [Zoom](#zoom) · [Atlassian](#atlassian) · [ServiceNow](#servicenow) · [Snowflake](#snowflake) · [Databricks](#databricks) · [Dell](#dell) · [HPE](#hpe) · [Huawei](#huawei) · [Baidu](#baidu)
+[Google](#google) · [Microsoft](#microsoft) · [GitHub](#github) · [Amazon](#amazon) · [Apple](#apple) · [Meta](#meta) · [NVIDIA](#nvidia) · [OpenAI](#openai) · [Anthropic](#anthropic) · [IBM](#ibm) · [Oracle](#oracle) · [Alibaba](#alibaba) · [Tencent](#tencent) · [ByteDance](#bytedance) · [Samsung](#samsung) · [Intel](#intel) · [AMD](#amd) · [Qualcomm](#qualcomm) · [Salesforce](#salesforce) · [Adobe](#adobe) · [SAP](#sap) · [Cloudflare](#cloudflare) · [Shopify](#shopify) · [Stripe](#stripe) · [Visa](#visa) · [Mastercard](#mastercard) · [PayPal](#paypal) · [Autodesk](#autodesk) · [Unity](#unity) · [Epic Games](#epic-games) · [Roblox](#roblox) · [Snap](#snap) · [Discord](#discord) · [Reddit](#reddit) · [Telegram](#telegram) · [xAI](#xai) · [Cisco](#cisco) · [Zoom](#zoom) · [Atlassian](#atlassian) · [ServiceNow](#servicenow) · [Snowflake](#snowflake) · [Databricks](#databricks) · [Dell](#dell) · [HPE](#hpe) · [Huawei](#huawei) · [Baidu](#baidu) · [MongoDB](#mongodb) · [Canva](#canva) · [Figma](#figma) · [Notion](#notion) · [HubSpot](#hubspot) · [Twilio](#twilio) · [Okta](#okta) · [Datadog](#datadog) · [Elastic](#elastic) · [Akamai](#akamai) · [DigitalOcean](#digitalocean) · [Miro](#miro) · [Workday](#workday) · [Intuit](#intuit) · [Dropbox](#dropbox) · [LinkedIn](#linkedin) · [Uber](#uber) · [Airbnb](#airbnb) · [Booking.com](#bookingcom) · [Arm](#arm) · [TSMC](#tsmc) · [Broadcom](#broadcom) · [Sony Group](#sony-group) · [Palantir](#palantir) · [LINE Yahoo](#line-yahoo) · [Naver](#naver) · [Grab](#grab) · [Broadcom (VMware)](#broadcom-vmware) · [Booking Holdings](#booking-holdings) · [Netflix](#netflix) · [Rakuten](#rakuten) · [Kakao](#kakao) · [Sea Limited](#sea-limited) · [Mercado Libre](#mercado-libre)
 
 ### Google
 
@@ -1051,6 +1089,334 @@ Closed doors (do not re-research):
 | [Baidu AI Cloud Qianfan / ERNIE international partner programs](https://intl.cloud.baidu.com/) | Partner network | International Qianfan lists ERNIE 5.x models (per Sept 2026 article) |  | China-oriented; region and phone-number gating Cost: unclear. | Verify fit first | Read the live program page, confirm eligibility and terms, then set eligible or skip Apply: No overseas developer partner program found; Industry Partner Program (2025) is China-oriented. Cadence: unclear. | 1·2·1 = **4** |
 
 - **Baidu AI Cloud Qianfan / ERNIE international partner programs.** Not actionable for a US startup right now.
+
+### MongoDB
+
+**How we partner with MongoDB:** Easiest real door: MongoDB for Startups has a direct form. MAAP was refocused on strategic partnerships on 2025-09-26 and gives no credits.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [MongoDB for Startups](https://www.mongodb.com/solutions/startups) | Startup credits | Atlas credits and Voyage AI embedding tokens for agent memory and vector search, plus co-marketing access.; Atlas credits; Voyage AI tokens; one-on-one expert session; Developer Support plan payable with credits; co-marketing opportunities | Co-marketing | Under 7 years old, Series A or earlier, a single software product (no agencies), not previously accepted. Cost: free. | Eligible, not started | Apply directly as the Inspire tier and mention agent memory and RAG on Atlas. Apply: Submit the direct application form on the program page (company legal name, URL, LinkedIn, funding stage), or get referred by a VC or accelerator.. Cadence: rolling. | 3·3·4 = **10** |
+
+- **MongoDB for Startups.** Official page confirms a self-serve direct form with no VC needed, and an open Inspire tier for bootstrapped teams. Credit dollar amounts are not published. Agent memory and embeddings are a natural Atlas and Voyage workload.
+
+### Canva
+
+**How we partner with Canva:** Best distribution door: free Apps Marketplace listing, Premium Apps Program, and an MCP route to Canva AI.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Canva Apps Marketplace (Apps inside Canva)](https://www.canva.dev/docs/apps/submitting-apps/) | Marketplace | Distribution to Canva's very large design audience for 3D and avatar content created in three.ws.; free to build and list; public Marketplace listing; developer verification badge info |  | Any developer who passes developer verification and app review; the app must be unique in the Marketplace. Cost: free. | Eligible, not started | Prototype a Canva app that imports a Forge-generated image or turntable render from a prompt, then submit it. Apply: Build an app with the Canva Developers SDK, upload the bundle with the Canva CLI or Developer Portal, and submit for review.. Cadence: rolling. | 4·5·4 = **13** |
+| [Canva for AI Assistants (MCP) and Add your tool to Canva AI](https://www.canva.dev/docs/apps/mcp/) | Developer program | Puts three.ws 3D generation as a tool inside Canva AI, reaching Canva's users through an agent surface.; connector listing in Canva AI |  | Developers using the Canva Developers SDK. Cost: free. | Verify fit first | Read the Add your tool to Canva AI docs and wire the keyless three.ws text-to-3D MCP server as a candidate connector. Apply: Follow the Canva Developers SDK docs for the Add your tool to Canva AI and Connectors in Canva AI workflows.. Cadence: rolling. | 5·5·3 = **13** |
+| [Canva Premium Apps Program](https://www.canva.com/developers/premium-apps-program/) | Marketplace | Priority placement in the Apps Marketplace and a monetization route inside Canva.; priority Marketplace placement |  | App must be publicly listed on the Marketplace and built with the Canva Apps SDK. Cost: free. | Verify fit first | Revisit after the first Canva app is listed. Apply: Publicly list an Apps SDK app first, then apply to the Premium Apps Program (page blocked to our fetch; details from search result).. Cadence: rolling. | 3·4·2 = **9** |
+
+- **Canva Apps Marketplace (Apps inside Canva).** The SDK review flow is documented and cost free, and Canva has sole discretion over inclusion. Canva has no 3D-native editor, so a 3D asset and avatar app is a distinct listing.
+- **Canva for AI Assistants (MCP) and Add your tool to Canva AI.** We already ship MCP servers, so the integration cost is low. Docs list the workflows, but we did not verify the approval gate for third-party connectors.
+- **Canva Premium Apps Program.** Depends on a live listing first. The official page returned 403 to our fetch, so terms are from search results only.
+
+### Figma
+
+**How we partner with Figma:** Strongest door with Canva and Notion: self-serve Community plugins, MCP client catalog waitlist, and custom MCP connectors in Figma Make.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Figma Community plugins and widgets](https://help.figma.com/hc/en-us/articles/360042293394-Publish-classic-plugins-to-the-Figma-Community) | Marketplace | Listing in the Figma Community puts 3D asset and avatar generation in front of millions of designers.; Community listing; free to publish |  | Anyone with a Figma account; publishing from the desktop app. Cost: free. | Eligible, not started | Ship a Figma plugin that sends a frame or sketch to Forge and returns a GLB turntable or image. Apply: Build a plugin in the Figma desktop app and publish it via Plugins > Manage plugins > Publish, which submits it for review.. Cadence: rolling. | 4·4·5 = **13** |
+| [Figma verified partner MCP connectors](https://help.figma.com/hc/en-us/articles/35440096186007-Use-verified-partner-MCP-connectors-with-the-Figma-agent-and-Figma-Make) | Store or directory | A featured connector in Figma Make would put the three.ws text-to-3D MCP server in front of Make and agent users.; featured connector slot |  | Vetted by Figma; featured ones include Notion, Asana, Linear, GitHub, Atlassian. Cost: unknown. | Verify fit first | Confirm users can add the three.ws MCP as a custom connector in Figma Make, then ask for featured vetting. Apply: Not documented as an application; Figma vets featured connectors. Contact Figma partnerships after publishing a public MCP server.. Cadence: rolling. | 5·4·2 = **11** |
+| [Figma MCP server client catalog](https://help.figma.com/hc/en-us/articles/39216419318551-Get-started-with-the-Figma-MCP-server) | Store or directory | Lets a three.ws agent read Figma design context and be listed alongside Claude Code, Cursor and VS Code.; catalog listing; remote server access |  | Only catalog clients can connect; others join a waitlist. Cost: free. | Verify fit first | Join the waitlist as a client, and meanwhile use Figma REST API with a private OAuth app. Apply: Join the waitlist for connecting a new MCP client to the Figma MCP server (per Figma help center).. Cadence: rolling. | 3·4·2 = **9** |
+
+- **Figma Community plugins and widgets.** Self-serve and free. Forge already accepts sketches and images as input, which matches design-file workflows.
+- **Figma verified partner MCP connectors.** Custom connectors let any user add any MCP server, so a first working door exists with no approval. Featured status is the prize.
+- **Figma MCP server client catalog.** Figma gates MCP clients by catalog. A public OAuth app for the REST API is reviewed but open.
+
+### Notion
+
+**How we partner with Notion:** Self-serve Marketplace connection plus a Technology Partner Program form with in-product placement.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Notion Marketplace connections listing](https://developers.notion.com/guides/connections-and-tokens/public-integrations/marketplace-listing) | Marketplace | Distribution to Notion workspaces for agents that read and write pages.; Marketplace listing; Notion security review |  | Public connection with Any workspace scope that passes security review. Cost: free. | Eligible, not started | Build a Notion connection that embeds an agent-3d avatar or Forge output into a page, and submit. Apply: Create a public connection with Any workspace scope and submit the listing for review from the developer portal.. Cadence: rolling. | 3·4·4 = **11** |
+| [Notion Technology Partner Program](https://www.notion.com/partners/security-compliance-partner-program) | Partner network | Integration Gallery listing, in-product placement and marketing collateral.; Integration Gallery listing; in-product placement; marketing collateral | Featured placement, Co-marketing | Technology companies with a Notion integration. Cost: unknown. | Verify fit first | Ship the Marketplace connection first, then apply as a Technology Partner. Apply: Submit the Technology Partner Program form (per Notion docs); the Security and Compliance sibling is not accepting applications.. Cadence: rolling. | 3·4·3 = **10** |
+
+- **Notion Marketplace connections listing.** Official process is documented, free, and self-serve with a security review as the gate.
+- **Notion Technology Partner Program.** Benefits are stated by Notion in its developer docs. We did not fetch the form page itself.
+
+### HubSpot
+
+**How we partner with HubSpot:** HubSpot for Startups is a discount for our own use; App Marketplace needs 3 active installs. Weak fit.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [HubSpot for Startups](https://www.hubspot.com/startups) | Startup credits | Discount of 30 to 90 percent on HubSpot Professional or Enterprise for our own CRM and outreach.; 30 to 90 percent discount year one; founder community; training |  | Pre-seed to Series A with verified funding or partner affiliation, or an approved entrepreneurial organization for the 30 percent tier. Cost: annual commitment required. | Eligible, not started | Low priority; use only when we need a CRM. Apply: Check eligibility on the signup page; funding is verified through Crunchbase or Harmonic, or via an approved partner.. Cadence: rolling. | 1·2·2 = **5** |
+| [HubSpot App Marketplace listing](https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements) | Marketplace | Exposure to HubSpot's customer base for embedded agents on sites and landing pages.; Marketplace listing; optional certification at 60 installs |  | OAuth-only app on a supported platform version with live URLs and clear pricing. Cost: free. | Verify fit first | Defer until there is a CRM-specific use case. Apply: Build an OAuth app, reach at least 3 active installs, accept the Technology Partner Program Agreement, then submit the listing.. Cadence: rolling. | 2·3·3 = **8** |
+
+- **HubSpot for Startups.** A discount for our own use, not a distribution door. Funding verification likely blocks us unless we are in an accelerator.
+- **HubSpot App Marketplace listing.** Requirements are clear but need real installs first. Fit is weaker than design tools.
+
+### Twilio
+
+**How we partner with Twilio:** Official page says no extra startup credits. Closed.
+
+Closed doors (do not re-research):
+
+- [Twilio for Startups](https://www.twilio.com/en-us/solutions/startups): Retired or closed. Twilio's page states it does not offer additional credits to startups at this time. Third-party sites list amounts that conflict. (checked 2026-11-06)
+
+### Okta
+
+**How we partner with Okta:** Free OIN listing but needs enterprise SSO. Defer.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Okta Integration Network (OIN)](https://developer.okta.com/docs/guides/submit-app-overview/) | Store or directory | Listing makes agent-3d sign-in easy for enterprise customers.; free OIN catalog listing |  | Multi-tenant app with SSO or SCIM and a production test account. Cost: free. | Verify fit first | Defer until enterprise SSO is on the roadmap. Apply: Create an Integrator Free Plan org and submit through the OIN Wizard.. Cadence: rolling. | 1·2·3 = **6** |
+
+- **Okta Integration Network (OIN).** Free listing but needs enterprise SSO. Okta also published XAA support for agent access, which may be relevant later.
+
+### Datadog
+
+**How we partner with Datadog:** Technology Partner track is open but needs a tile; startup credits are referral-gated.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Datadog Partner Network, Technology Partner track](https://www.datadoghq.com/partner/network/) | Partner network | Observability integration for agent fleets with a Marketplace route and joint go-to-market after the tile ships.; integration tile; sandbox account; partner marketing meeting | Co-marketing | Companies building integrations that send metrics, logs, traces or events. Cost: free. | Verify fit first | Defer until fleet telemetry is worth a tile. Apply: Apply to the Technology Partner track on partners.datadoghq.com before building an integration.. Cadence: rolling. | 2·3·3 = **8** |
+| [Datadog for Startups](https://www.datadoghq.com/partner/datadog-for-startups/) | Startup credits | Up to USD 100k of Datadog credits per third-party listings.; credits for up to a year |  | Series A or earlier, new to Datadog, referred by an official partner. Cost: free. | Verify fit first | Skip unless an accelerator referral arrives. Apply: Application form, but access is referral-gated by a VC or accelerator partner (third-party summary).. Cadence: rolling. | 1·2·1 = **4** |
+
+- **Datadog Partner Network, Technology Partner track.** Official docs describe the track and the partner marketing step.
+- **Datadog for Startups.** Referral gate is the blocker. Terms are from aggregator sites.
+
+### Elastic
+
+**How we partner with Elastic:** Search AI Partner Program technology track is open to apply; fit depends on adopting Elastic.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Elastic Search AI Partner Program, Technology partners](https://www.elastic.co/partners/become-a-partner) | Partner network | Technology partner track for AI solutions on Elastic's vector database, with marketing and joint selling resources.; Partner Portal; certifications; marketing resources; joint selling |  | Companies building AI solutions on Elastic. Cost: free. | Eligible, not started | Defer unless we adopt Elastic as a vector store. Apply: Use the Apply here link, which goes to the registration form at partners.elastic.co.. Cadence: rolling. | 2·3·4 = **9** |
+
+- **Elastic Search AI Partner Program, Technology partners.** Page verified. Registration is open but meaningful only if our stack uses Elastic.
+
+### Akamai
+
+**How we partner with Akamai:** Rise credits only if Akamai Cloud is the primary provider. Qualified Compute Partner needs a deployment.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Akamai Cloud Rise Startup Program](https://www.linode.com/start-ups/rise) | Startup credits | Cloud credits (USD 500 to 120k reported by aggregators) and architecture guidance, including GPU-adjacent cloud.; first-year cloud credits; discounts years two and three; dedicated account manager |  | Under 7 years old with users or revenue, using Akamai Cloud as the primary provider. Cost: free. | Verify fit first | Apply only if we move a workload to Akamai Cloud. Apply: Apply online with a corporate email; an interview follows.. Cadence: rolling. | 2·3·3 = **8** |
+| [Akamai Qualified Compute Partner Program](https://www.akamai.com/cloud/start-ups/partner) | Partner network | Technology partner listing for solutions that run on Akamai Cloud.; partner listing |  | ISVs passing a qualification process. Cost: unknown. | Verify fit first | Skip for now. Apply: Contact Akamai about a qualification process; companies like Queue-it have joined.. Cadence: rolling. | 1·2·2 = **5** |
+
+- **Akamai Cloud Rise Startup Program.** Official page returned 404 to our fetch, so terms come from third-party aggregators. The primary-provider rule conflicts with our GCP base.
+- **Akamai Qualified Compute Partner Program.** Real program but needs a running Akamai deployment.
+
+### DigitalOcean
+
+**How we partner with DigitalOcean:** Startups program paused until early 2027. Create the account now.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [DigitalOcean Startups (formerly Hatch)](https://www.digitalocean.com/startups) | Startup credits | 12 months of credits plus 15 months Standard support; GPU needs a separate credit application.; credits; free Standard-tier support; Welcome Kit |  | AI-native priority, raised USD 10M or less, company domain, not previously on DO credits. Cost: free. | Eligible, not started | Create a company team account now and apply on relaunch. Apply: Apply directly or through a partner once the updated program relaunches in early 2027.. Cadence: paused now, relaunch early 2027. | 2·3·4 = **9** |
+
+- **DigitalOcean Startups (formerly Hatch).** Official page says applications are paused until the updated program launches in early 2027.
+
+### Miro
+
+**How we partner with Miro:** Marketplace is partner-gated at 50 monthly users for two months. Private app first.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Miro Marketplace app submission](https://developers.miro.com/docs/miro-marketplace) | Marketplace | Whiteboard distribution for 3D and avatar collaboration.; Marketplace listing |  | More than 50 monthly active users in each of the last two months and a deployed app. Cost: free. | Verify fit first | Ship a private Miro app first to build the user base. Apply: Apply through the Partner Interest Form, then submit listing assets once approved.. Cadence: rolling. | 2·3·2 = **7** |
+
+- **Miro Marketplace app submission.** Marketplace is now partner-gated by usage thresholds. An install-by-link route exists without a listing.
+
+### Workday
+
+**How we partner with Workday:** Open developer program and a Ventures arm with no open call. Off focus.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Workday Developer Program](https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html) | Developer program | APIs, MCP tools and agent tooling for enterprise HR agents.; APIs; MCP tools; dev tenant |  | Open to individuals and small teams. Cost: free. | Eligible, not started | Skip unless an HR agent use case appears. Apply: Join with a personal email and request a personal development tenant in the open beta.. Cadence: rolling. | 1·3·4 = **8** |
+| [Workday Ventures](https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html) | Accelerator | Strategic funding for startups that help Workday customers.; funding; strategic guidance |  | Early-stage companies aligned to Workday's platform. Cost: equity. | Verify fit first | Skip. Apply: Pitch the Ventures team; no open call found.. Cadence: rolling. | 1·3·1 = **5** |
+
+- **Workday Developer Program.** Open, but enterprise HR is off our core.
+- **Workday Ventures.** No public application route found as of 2026-11-06.
+
+### Intuit
+
+**How we partner with Intuit:** App Partner Program for QuickBooks apps in four countries. Off focus.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Intuit App Partner Program](https://developer.intuit.com/partners/benefits) | Partner network | QuickBooks app marketplace and tiers (Builder to Platinum).; marketplace listing; badges; case studies; demand generation |  | Partners in the US, UK, Australia and Canada. Cost: free Builder tier, fees above. | Verify fit first | Skip. Apply: Complete the app assessment and accept developer terms; paid tiers need a payment method.. Cadence: rolling. | 1·3·3 = **7** |
+
+- **Intuit App Partner Program.** Accounting integrations are off focus.
+
+### Dropbox
+
+**How we partner with Dropbox:** Only production approval at 50 linked users. No partner program found.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Dropbox App Console production approval](https://www.dropbox.com/developers/reference/developer-guide) | Developer program | Dropbox storage connector for 3D assets.; production API access |  | App must have linked at least 50 users before review. Cost: free. | Verify fit first | Skip unless users ask for Dropbox import. Apply: Click Apply for Production in the App Console once 50 users are linked.. Cadence: rolling. | 2·3·3 = **8** |
+
+- **Dropbox App Console production approval.** No formal partner program found. Only a production readiness review.
+
+### LinkedIn
+
+**How we partner with LinkedIn:** Marketing Developer Program is gated and for marketing tech. No startup door.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [LinkedIn Marketing Developer Program](https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program) | Developer program | API access for B2B marketing integrations.; Advertising API; partner manager at later tiers |  | Established business with real customers; four partner categories. Cost: free. | Verify fit first | Skip. Apply: Create an app, add Marketing Developer Platform as a product, and submit the access form.. Cadence: rolling. | 1·4·2 = **7** |
+
+- **LinkedIn Marketing Developer Program.** Approval is slow and aimed at marketing tech. Sign In with LinkedIn is self-serve and not a partner door.
+
+### Uber
+
+**How we partner with Uber:** Developer platform approval only. No Startups program or open call found.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Uber Developer Platform](https://developer.uber.com/docs/) | Developer program | Ride and delivery actions for agents.; API access |  | Uber approval. Cost: free. | Verify fit first | Skip. Apply: Request API access at the developer portal; approval is by Uber.. Cadence: rolling. | 1·5·1 = **7** |
+
+- **Uber Developer Platform.** No Uber Startups program or Ventures open call found. APIs are split by product (Uber for Business, Eats Marketplace, Driver, Ads APIs since 2026-06-02) and most need an approved scope or a partner manager.
+
+### Airbnb
+
+**How we partner with Airbnb:** API is invite-only through Preferred Software Partner. Closed.
+
+Closed doors (do not re-research):
+
+- [Airbnb API and Preferred Software Partner Program](https://developer.withairbnb.com): Retired or closed. Airbnb is not accepting new API requests and does not offer public access. (checked 2026-11-06)
+
+### Booking.com
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Booking.com Connectivity Partner Programme](https://developers.booking.com/connectivity/docs) | Partner network | Travel-tech integration.; tiered partner designation |  | Connectivity providers; a stale portal notice mentions a pause for new providers. Cost: free. | Verify fit first | Skip. Apply: Meet onboarding requirements for channel managers and property management systems.. Cadence: rolling. | 1·4·1 = **6** |
+
+- **Booking.com Connectivity Partner Programme.** Aimed at channel managers. Booking Holdings is funding in-house AI startups (Vayo, Lola) rather than an open call.
+
+### Arm
+
+**How we partner with Arm:** Moonshot with a hard no: Flexible Access for Startups needs an innovative semiconductor product. No software door; Silicon Catalyst is the only route and it is chips.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Arm Flexible Access for Startups](https://www.arm.com/resources/program-reg/flexible-access-startup) | Accelerator | Zero-cost Arm IP and tools for a semiconductor product.; zero license fee for prototypes; tools and support |  | Private semiconductor startup, up to USD 50M raised, up to USD 5M revenue. Cost: free. | Verify fit first | Skip unless we ever design a chip. Apply: Fill in the application form; Arm contacts you.. Cadence: rolling. | 1·5·1 = **7** |
+
+- **Arm Flexible Access for Startups.** Page verified. The eligibility requires an innovative semiconductor product, which we do not build.
+
+Closed doors (do not re-research):
+
+- [Arm Silicon Startups Contest via Silicon Catalyst](https://siliconcatalyst.com/silicon-catalyst-partners-with-arm-for-3rd-annual-arm-flexible-access-for-startups-contest): Retired or closed. Chips only. Arm and TSMC are in-kind partners of Silicon Catalyst, the only real startup route to either. (checked 2026-11-06)
+
+### TSMC
+
+**How we partner with TSMC:** No startup program; OIP is a foundry ecosystem. Not relevant to a software platform.
+
+Closed doors (do not re-research):
+
+- [TSMC Open Innovation Platform](https://www.tsmc.com/english/news-events/blog-article-20220418): Retired or closed. Not relevant to a software 3D agent platform. (checked 2026-11-06)
+
+### Broadcom
+
+Closed doors (do not re-research):
+
+- [Broadcom Advantage Partner Program (VMware)](https://partnerportal.broadcom.com/web/partner-portal): Retired or closed. Broadcom ended VMware's Partner Connect in 2024. No ISV track found for our profile. (checked 2026-11-06)
+
+### Sony Group
+
+**How we partner with Sony Group:** Two doors: PlayStation Partners (needs a game and legal entity) and Sony Innovation Fund (no application form, strategic pitch). AI character and avatar theme fits their CEATEC 2026 spotlight.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [PlayStation Partners](https://sonyinteractive.com/en/news/blog/showing-your-game-to-playstation/) | Developer program | Path to PlayStation platforms if a /play-derived game ever ships.; dev tools; publishing resources; documentation |  | Registered legal entity with a game project. Cost: free. | Verify fit first | Skip until a console-ready title exists. Apply: Register at PlayStation Partners with studio details and a short Project Plan, then sign the developer agreement.. Cadence: rolling. | 3·5·3 = **11** |
+| [Sony Innovation Fund](https://www.sonyinnovationfund.com/) | Accelerator | Corporate venture funding, reportedly USD 500k to 20M checks.; investment; strategic access |  | Seed to Series B startups strategically aligned to Sony. Cost: equity. | Verify fit first | Prepare a short strategic pitch (avatar, spatial, AI characters). Apply: No formal application form found; contact via the fund site.. Cadence: rolling. | 3·5·2 = **10** |
+
+- **PlayStation Partners.** Needs a legal entity and a game, not a platform.
+- **Sony Innovation Fund.** Fund 4 reportedly closed a first tranche of about USD 135M. Sony spotlighted AI-character startups at CEATEC 2026, a close theme.
+
+### Palantir
+
+**How we partner with Palantir:** Palantir for Builders is a paid contact-form route; the Startup Fellowship needs building on AIP. Low fit.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Palantir Startup Fellowship](https://www.palantir.events/startup-fellowship-003-apply) | Accelerator | 10-week program with forward deployed engineers.; FDE support |  | Series B or earlier startups committing to build on AIP with a full-time developer. Cost: free. | Eligible, not started | Skip. Apply: Apply for the next cohort when the window opens.. Cadence: cohort based; cohort 003 closed Sep 7 2026. | 1·5·1 = **7** |
+| [Palantir for Builders](https://www.palantir.com/offerings/palantir-for-builders/startups/) | Developer program | Access to AIP and Foundry for startups.; AIP and Foundry access |  | Startups and SMBs; pricing and eligibility are not published. Cost: not published. | Verify fit first | Skip for now. Apply: Use the contact form on the Builders pages.. Cadence: rolling. | 1·5·2 = **8** |
+
+- **Palantir Startup Fellowship.** Requires rebuilding on AIP.
+- **Palantir for Builders.** Third-party sources say it is a paid program. Little overlap with 3D agents.
+
+### LINE Yahoo
+
+**How we partner with LINE Yahoo:** LY Corporation Partner Program and LINE Mini App are real doors for an Asia launch.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [LINE Mini App](https://www.lycorp.co.jp/ja/news/release/020852/) | Developer program | Distribution inside LINE; revenue share rises to 80 percent via Apple's Mini Apps Partner Program.; mini app distribution |  | Businesses via LINE Developers. Cost: free. | Verify fit first | Skip until an Asia launch. Apply: Register through the LINE Developers console.. Cadence: rolling. | 3·4·3 = **10** |
+| [LY Corporation Partner Program, Technology Partner](https://www.lycorp.co.jp/ja/news/release/008439/) | Partner network | Certification for LINE Mini App builders.; partner certification |  | Companies that can support LINE services. Cost: unknown. | Verify fit first | Skip unless we target Japan. Apply: Apply as a Technology Partner (LINE MINIAPP category).. Cadence: annual. | 2·4·2 = **8** |
+
+- **LINE Mini App.** Verified from LY Corporation press release (Oct 2026).
+- **LY Corporation Partner Program, Technology Partner.** Our LINE Mini App fit is to be proved first.
+
+### Naver
+
+**How we partner with Naver:** D2SF early-stage investment, Korea focused; third-party description only.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [NAVER D2 Startup Factory](https://www.prodevs.io/accelerators/naver-d2-startup-factory) | Accelerator | Seed investments, reportedly USD 50k to 500k, and Naver cloud access.; investment; Naver infrastructure |  | Early-stage and seed startups, mostly in Korea. Cost: equity. | Verify fit first | Skip. Apply: Apply via the D2SF website with deck and team information (third-party description).. Cadence: rolling. | 2·4·2 = **8** |
+
+- **NAVER D2 Startup Factory.** Third-party source only; Korea focus.
+
+### Grab
+
+**How we partner with Grab:** Grab Ventures Velocity accelerator for post-seed Southeast Asia startups; batch based.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Grab Ventures Velocity](https://ventures.grab.com/) | Accelerator | Pilot market access across Grab's ecosystem.; mentoring; pilot access; investor exposure |  | Post-seed startups scaling in Southeast Asia. Cost: free. | Verify fit first | Skip. Apply: Apply when a batch opens on the Grab Ventures site.. Cadence: batch based. | 1·4·2 = **7** |
+
+- **Grab Ventures Velocity.** No current batch dates found.
+
+### Broadcom (VMware)
+
+**How we partner with Broadcom (VMware):** Partner Connect was replaced by the invitation-only Advantage Partner Program. No public ISV door found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Booking Holdings
+
+**How we partner with Booking Holdings:** Connectivity program is for travel software; Holdings funds in-house AI startups (Vayo, Lola). No open call found.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Netflix
+
+**How we partner with Netflix:** No public partner route for startups found as of 2026-11-06; Games Partner Portal is for studios Netflix works with.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Rakuten
+
+**How we partner with Rakuten:** Rakuten Ventures has no open call found; Rakuten RapidAPI info is from 2018. No door found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Kakao
+
+**How we partner with Kakao:** Kakao Ventures invests without a public application route we could verify. No door confirmed.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Sea Limited
+
+**How we partner with Sea Limited:** Each subsidiary runs its own developer platform (Shopee Open Platform, Garena); no startup route found.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Mercado Libre
+
+**How we partner with Mercado Libre:** Developer Partner Program is GMV gated and MeLi Fund invests in Latin American startups. No fit for a 3D platform.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
 
 ## Keeping it true
 

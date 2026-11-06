@@ -6,7 +6,7 @@ The same question, *does this company have a partner program?*, asked of the AI 
 
 It is the wide net. The narrower docs stay authoritative for what they cover: [partners.md](../partners.md) is what each live partnership **is** and how to describe it, [opportunities.md](./opportunities.md) is the stuck-item pipeline, [prospects.md](./prospects.md) scores the 3D and avatar ecosystem, and the [listings registry](../listings-registry.md) tracks directories and awesome-lists.
 
-Sibling pages: [big-tech partner programs](./big-tech-programs.md), [motion partner programs](./motion-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), and [who promotes partners](./promotion-programs.md) across every sector.
+Sibling pages: [big-tech partner programs](./big-tech-programs.md), [motion partner programs](./motion-programs.md), [global brand partner programs](./brand-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), plus [who promotes partners](./promotion-programs.md) and [moonshots](./moonshots.md) across every sector.
 
 **105 programs across 77 companies.** 4 member / live, 1 submitted, waiting, 56 eligible, not started, 40 verify fit first, 4 retired or closed. We hold at least one membership at 4 of the 77 companies, and 34 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 

@@ -4,7 +4,8 @@
 	"companies": [
 		{
 			"name": "Hugging Face",
-			"angle": "Already live with an org, Space and articles. Push the Avatar Viewer Space for Spaces of the Week and expose avatar tools as an MCP-enabled Space; ask about a 3D task for Inference Providers."
+			"angle": "Already live with an org, Space and articles. Push the Avatar Viewer Space for Spaces of the Week and expose avatar tools as an MCP-enabled Space; ask about a 3D task for Inference Providers.",
+			"moonshot": true
 		},
 		{
 			"name": "Cline",
@@ -12,7 +13,8 @@
 		},
 		{
 			"name": "Cursor (Anysphere)",
-			"angle": "Submit one open-source plugin bundling our MCP server, skills and CLI cursor client to both the Cursor Marketplace and Cursor Directory."
+			"angle": "Submit one open-source plugin bundling our MCP server, skills and CLI cursor client to both the Cursor Marketplace and Cursor Directory.",
+			"moonshot": true
 		},
 		{
 			"name": "Dify",
@@ -24,7 +26,8 @@
 		},
 		{
 			"name": "ElevenLabs",
-			"angle": "Apply to Startup Grants: avatars already speak through the ElevenLabs TTS lane."
+			"angle": "Apply to Startup Grants: avatars already speak through the ElevenLabs TTS lane.",
+			"moonshot": true
 		},
 		{
 			"name": "Glama",
@@ -60,7 +63,8 @@
 		},
 		{
 			"name": "Zapier",
-			"angle": "Ship a public Forge integration to enter the partner program, then request the Silver featured slot and newsletter spotlight."
+			"angle": "Ship a public Forge integration to enter the partner program, then request the Silver featured slot and newsletter spotlight.",
+			"moonshot": true
 		},
 		{
 			"name": "Composio",
@@ -92,7 +96,8 @@
 		},
 		{
 			"name": "Vercel (AI SDK)",
-			"angle": "List our AI SDK package on the community providers page; directory only, we never deploy on Vercel."
+			"angle": "List our AI SDK package on the community providers page; directory only, we never deploy on Vercel.",
+			"moonshot": true
 		},
 		{
 			"name": "Cartesia",
@@ -116,11 +121,13 @@
 		},
 		{
 			"name": "Mistral AI",
-			"angle": "Apply to the rolling Ambassadors program for credits for the Mistral rung in our LLM chain; publish an MCP plus avatar tutorial as the contribution."
+			"angle": "Apply to the rolling Ambassadors program for credits for the Mistral rung in our LLM chain; publish an MCP plus avatar tutorial as the contribution.",
+			"moonshot": true
 		},
 		{
 			"name": "Perplexity",
-			"angle": "Request an official connector for our OAuth 2.1 remote MCP by email and forum thread; startup program is VC-gated and appears folded."
+			"angle": "Request an official connector for our OAuth 2.1 remote MCP by email and forum thread; startup program is VC-gated and appears folded.",
+			"moonshot": true
 		},
 		{
 			"name": "RunPod",
@@ -128,7 +135,8 @@
 		},
 		{
 			"name": "Runway",
-			"angle": "Apply to Builders for API credits and early access to Runway Characters to test avatar interop with our MCP server."
+			"angle": "Apply to Builders for API credits and early access to Runway Characters to test avatar interop with our MCP server.",
+			"moonshot": true
 		},
 		{
 			"name": "CrewAI",
@@ -172,7 +180,8 @@
 		},
 		{
 			"name": "Supabase",
-			"angle": "Integration Partner listing for a Supabase-backed agent memory template; startup program is discontinued."
+			"angle": "Integration Partner listing for a Supabase-backed agent memory template; startup program is discontinued.",
+			"moonshot": true
 		},
 		{
 			"name": "Z.ai (Zhipu)",
@@ -196,7 +205,8 @@
 		},
 		{
 			"name": "Manus",
-			"angle": "The startup program is VC-referral only; the Fellow program is the only open route."
+			"angle": "The startup program is VC-referral only; the Fellow program is the only open route.",
+			"moonshot": true
 		},
 		{
 			"name": "Modal",
@@ -204,11 +214,13 @@
 		},
 		{
 			"name": "Replit",
-			"angle": "Lowest priority; an Add to Replit badge and tutorial is enough."
+			"angle": "Lowest priority; an Add to Replit badge and tutorial is enough.",
+			"moonshot": true
 		},
 		{
 			"name": "Stability AI",
-			"angle": "Email partners@stability.ai to confirm the Community License covers Forge use past USD 1M and ask for a listing; we already run SF3D-class models."
+			"angle": "Email partners@stability.ai to confirm the Community License covers Forge use past USD 1M and ask for a listing; we already run SF3D-class models.",
+			"moonshot": true
 		},
 		{
 			"name": "Weights & Biases (CoreWeave)",
@@ -220,7 +232,8 @@
 		},
 		{
 			"name": "CoreWeave",
-			"angle": "Only if we outgrow GCP GPUs; apply to Ventures for compute."
+			"angle": "Only if we outgrow GCP GPUs; apply to Ventures for compute.",
+			"moonshot": true
 		},
 		{
 			"name": "Genspark",
@@ -240,11 +253,13 @@
 		},
 		{
 			"name": "Character.AI",
-			"angle": "No route; skip."
+			"angle": "No route; skip.",
+			"moonshot": true
 		},
 		{
 			"name": "Cohere",
-			"angle": "Low priority: startup program is gone; only Catalyst Grants for a public-benefit avatar project."
+			"angle": "Low priority: startup program is gone; only Catalyst Grants for a public-benefit avatar project.",
+			"moonshot": true
 		},
 		{
 			"name": "HeyGen",
@@ -300,7 +315,8 @@
 		},
 		{
 			"name": "DeepSeek",
-			"angle": "No partner, startup or ecosystem program found. Use its open models through OpenRouter, HF or Together and attribute there."
+			"angle": "No partner, startup or ecosystem program found. Use its open models through OpenRouter, HF or Together and attribute there.",
+			"moonshot": true
 		},
 		{
 			"name": "Lovable",
@@ -308,7 +324,8 @@
 		},
 		{
 			"name": "Moonshot AI (Kimi)",
-			"angle": "No developer or partner program found beyond Kimi Code Beta; use Kimi via OpenRouter and HF, and watch platform.moonshot.ai."
+			"angle": "No developer or partner program found beyond Kimi Code Beta; use Kimi via OpenRouter and HF, and watch platform.moonshot.ai.",
+			"moonshot": true
 		}
 	],
 	"programs": [

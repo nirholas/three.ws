@@ -168,6 +168,8 @@ The page closes with four reasons, useful as the short pitch when someone asks: 
 
 - [Big-tech partner programs](./partners/big-tech-programs.md): every partner program at the largest tech companies, scored and waved into a plan, with our submissions log and the benefits we hold
 - [AI company partner programs](./partners/ai-programs.md) and [motion partner programs](./partners/motion-programs.md): the same tracker for AI labs, agent frameworks and MCP directories, and for motion capture, animation library and avatar companies
+- [Global brand partner programs](./partners/brand-programs.md): the same tracker for household names outside technology, from carmakers and space companies to studios, leagues and luxury houses
+- [Moonshots](./partners/moonshots.md): the easiest door into every household-name company we track, and the impossible-looking partnerships we already hold
 - [Who promotes partners](./partners/promotion-programs.md): every open program across the sector trackers that offers co-marketing, social posts, blog posts, case studies, featured placement or press, ranked by what it is worth to ask
 - [Partner prospects](./partners/prospects.md) and [the outreach plan](./partners/outreach-plan.md): who we approach next, and how
 - [Press kit](./press-kit.md): marks, announcement graphics, boilerplate, and the rules for all of it

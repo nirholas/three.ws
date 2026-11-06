@@ -6,7 +6,7 @@ Ecosystem grants, accelerators, hackathons, wallet and app directories, infrastr
 
 It is the wide net. The narrower docs stay authoritative for what they cover: [partners.md](../partners.md) is what each live partnership **is** and how to describe it, [opportunities.md](./opportunities.md) is the stuck-item pipeline, [prospects.md](./prospects.md) scores the 3D and avatar ecosystem, and the [listings registry](../listings-registry.md) tracks directories and awesome-lists.
 
-Sibling pages: [big-tech partner programs](./big-tech-programs.md), [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), and [who promotes partners](./promotion-programs.md) across every sector.
+Sibling pages: [big-tech partner programs](./big-tech-programs.md), [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [global brand partner programs](./brand-programs.md), plus [who promotes partners](./promotion-programs.md) and [moonshots](./moonshots.md) across every sector.
 
 **61 programs across 43 companies.** 3 member / live, 3 submitted, waiting, 27 eligible, not started, 21 verify fit first, 7 retired or closed. We hold at least one membership at 3 of the 43 companies, and 18 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 

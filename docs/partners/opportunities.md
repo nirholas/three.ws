@@ -15,8 +15,9 @@ does not restate the reference docs:
 - [Big-tech partner programs](./big-tech-programs.md) is the full catalogue of partner, startup,
   marketplace and developer programs at the largest tech companies, with the submissions log
   and benefits ledger, generated from `data/partner-programs.json`.
-  [AI company programs](./ai-programs.md) and [motion programs](./motion-programs.md) apply the
-  same format to those sectors, and [who promotes partners](./promotion-programs.md) indexes
+  [AI company programs](./ai-programs.md), [motion programs](./motion-programs.md) and
+  [global brand programs](./brand-programs.md) apply the same format to those sectors,
+  [moonshots](./moonshots.md) names the easiest door into every household name, and [who promotes partners](./promotion-programs.md) indexes
   every program that offers co-marketing, social posts, blog posts or featured placement.
 
 This page is the part those three do not answer: **what is actually stuck, on whom, and

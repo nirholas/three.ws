@@ -4,187 +4,401 @@
 	"companies": [
 		{
 			"name": "Google",
-			"angle": "We already hold the Web3 startup credits. The next moves are the Partner Network, which gates Cloud Marketplace and Agent Finder (our A2A card is already live), and shipping the browser extensions to the Chrome Web Store."
+			"angle": "We already hold the Web3 startup credits. The next moves are the Partner Network, which gates Cloud Marketplace and Agent Finder (our A2A card is already live), and shipping the browser extensions to the Chrome Web Store.",
+			"moonshot": true
 		},
 		{
 			"name": "Microsoft",
-			"angle": "We are a Marketplace publisher with a MAICPP ID, and five Microsoft surfaces are built in the repo. Each one goes live with a Partner Center step. Never claim Solutions Partner or co-sell."
+			"angle": "We are a Marketplace publisher with a MAICPP ID, and five Microsoft surfaces are built in the repo. Each one goes live with a Partner Center step. Never claim Solutions Partner or co-sell.",
+			"moonshot": true
 		},
 		{
 			"name": "GitHub",
-			"angle": "Our open-source footprint is the asset: 72 servers in the MCP Registry, an approved Open Source Friday slot, and a written Technology Partner kit."
+			"angle": "Our open-source footprint is the asset: 72 servers in the MCP Registry, an approved Open Source Friday slot, and a written Technology Partner kit.",
+			"moonshot": true
 		},
 		{
 			"name": "Amazon",
-			"angle": "We are an APN Software Path member, and AWS staff have written about us on Builder Center. The AWS Marketplace AI Agents listing is the step that unlocks ISV Accelerate and co-sell."
+			"angle": "We are an APN Software Path member, and AWS staff have written about us on Builder Center. The AWS Marketplace AI Agents listing is the step that unlocks ISV Accelerate and co-sell.",
+			"moonshot": true
 		},
 		{
 			"name": "Apple",
-			"angle": "A native visionOS build is the only route in, so Apple stays behind a build decision. Nothing here is a quick win."
+			"angle": "A native visionOS build is the only route in, so Apple stays behind a build decision. Nothing here is a quick win.",
+			"moonshot": true
 		},
 		{
 			"name": "Meta",
-			"angle": "Our WebXR world can reach Quest through the Horizon Store as a web app. The VR Start competition is a dated reason to try."
+			"angle": "Our WebXR world can reach Quest through the Horizon Store as a web app. The VR Start competition is a dated reason to try.",
+			"moonshot": true
 		},
 		{
 			"name": "NVIDIA",
-			"angle": "We are an Inception member, our catalog review runs through the portal, and the GTC 2027 poster call closes first. Lead with the 3D and digital-human product, because Inception excludes crypto-associated companies."
+			"angle": "We are an Inception member, our catalog review runs through the portal, and the GTC 2027 poster call closes first. Lead with the 3D and digital-human product, because Inception excludes crypto-associated companies.",
+			"moonshot": true
 		},
 		{
 			"name": "OpenAI",
-			"angle": "We are a Select Partner with two benefit invitations still unaccepted. The ChatGPT App Directory resubmission is the highest-payoff item on the board."
+			"angle": "We are a Select Partner with two benefit invitations still unaccepted. The ChatGPT App Directory resubmission is the highest-payoff item on the board.",
+			"moonshot": true
 		},
 		{
 			"name": "Anthropic",
-			"angle": "The platform's agent brain defaults to Claude, yet Anthropic is not on /partners. The two directories are ready to file today."
+			"angle": "The platform's agent brain defaults to Claude, yet Anthropic is not on /partners. The two directories are ready to file today.",
+			"moonshot": true
 		},
 		{
 			"name": "IBM",
-			"angle": "We are a Partner Plus Build member with an unclaimed marketing benefit. Agent Connect puts our agents in the watsonx Orchestrate catalog, and the Champions window is open now."
+			"angle": "We are a Partner Plus Build member with an unclaimed marketing benefit. Agent Connect puts our agents in the watsonx Orchestrate catalog, and the Champions window is open now.",
+			"moonshot": true
 		},
 		{
 			"name": "Oracle",
-			"angle": "Low priority. Oracle for Startups credits and an ISV Marketplace listing are easy but reach few of our users."
+			"angle": "Low priority. Oracle for Startups credits and an ISV Marketplace listing are easy but reach few of our users.",
+			"moonshot": true
 		},
 		{
 			"name": "Alibaba",
-			"angle": "We are already live on Alibaba Cloud Marketplace. AI Catalyst credits and the AI ISV framework are the next layer."
+			"angle": "We are already live on Alibaba Cloud Marketplace. AI Catalyst credits and the AI ISV framework are the next layer.",
+			"moonshot": true
 		},
 		{
 			"name": "Tencent",
-			"angle": "Hunyuan 3D overlaps our generation lanes, so treat Tencent as a model partner, not a channel."
+			"angle": "Hunyuan 3D overlaps our generation lanes, so treat Tencent as a model partner, not a channel.",
+			"moonshot": true
 		},
 		{
 			"name": "ByteDance",
-			"angle": "TikTok Effect House and BytePlus have reach but weak fit. Watch only."
+			"angle": "TikTok Effect House and BytePlus have reach but weak fit. Watch only.",
+			"moonshot": true
 		},
 		{
 			"name": "Samsung",
-			"angle": "Galaxy Store accepts web apps, and Galaxy XR runs Android XR. Ride the Google XR work rather than build twice."
+			"angle": "Galaxy Store accepts web apps, and Galaxy XR runs Android XR. Ride the Google XR work rather than build twice.",
+			"moonshot": true
 		},
 		{
 			"name": "Intel",
-			"angle": "Liftoff is an easy accelerator application, though it is light on reach."
+			"angle": "Liftoff is an easy accelerator application, though it is light on reach.",
+			"moonshot": true
 		},
 		{
 			"name": "AMD",
-			"angle": "Developer Cloud credits are a free GPU top-up for model experiments."
+			"angle": "Developer Cloud credits are a free GPU top-up for model experiments.",
+			"moonshot": true
 		},
 		{
 			"name": "Qualcomm",
-			"angle": "AI Hub suits on-device avatar models. The innovator program is APAC-only and already shortlisted."
+			"angle": "AI Hub suits on-device avatar models. The innovator program is APAC-only and already shortlisted.",
+			"moonshot": true
 		},
 		{
 			"name": "Salesforce",
-			"angle": "Slack Marketplace is the realistic surface: an avatar agent in Slack. AgentExchange is heavy for our stage."
+			"angle": "Slack Marketplace is the realistic surface: an avatar agent in Slack. AgentExchange is heavy for our stage.",
+			"moonshot": true
 		},
 		{
 			"name": "Adobe",
-			"angle": "The Express Add-ons marketplace has the reach, and the Fund for Design pays to build an add-on. Both suit a 3D asset add-on."
+			"angle": "The Express Add-ons marketplace has the reach, and the Fund for Design pays to build an add-on. Both suit a 3D asset add-on.",
+			"moonshot": true
 		},
 		{
 			"name": "SAP",
-			"angle": "Enterprise ERP is far from our users. Open Ecosystem is free, so register and move on."
+			"angle": "Enterprise ERP is far from our users. Open Ecosystem is free, so register and move on.",
+			"moonshot": true
 		},
 		{
 			"name": "Cloudflare",
-			"angle": "The startup application is already written. Cloudflare's agent-payments and remote-MCP work is the closest technical match on this page."
+			"angle": "The startup application is already written. Cloudflare's agent-payments and remote-MCP work is the closest technical match on this page.",
+			"moonshot": true
 		},
 		{
 			"name": "Shopify",
-			"angle": "The Photo to 3D product media app is built. It needs Partner app credentials and an App Store review."
+			"angle": "The Photo to 3D product media app is built. It needs Partner app credentials and an App Store review.",
+			"moonshot": true
 		},
 		{
 			"name": "Stripe",
-			"angle": "Stripe Apps and the agentic commerce suite are an EVM-neutral checkout surface for our skills marketplace."
+			"angle": "Stripe Apps and the agentic commerce suite are an EVM-neutral checkout surface for our skills marketplace.",
+			"moonshot": true
 		},
 		{
 			"name": "Visa",
-			"angle": "Intelligent Commerce is where agent payments meet card rails. Access is partner-gated, so research first."
+			"angle": "Intelligent Commerce is where agent payments meet card rails. Access is partner-gated, so research first.",
+			"moonshot": true
 		},
 		{
 			"name": "Mastercard",
-			"angle": "Start Path added an agentic commerce track in 2026, and Agent Pay is the related developer surface."
+			"angle": "Start Path added an agentic commerce track in 2026, and Agent Pay is the related developer surface.",
+			"moonshot": true
 		},
 		{
 			"name": "PayPal",
-			"angle": "Agent Ready and Store Sync put agent commerce on PayPal. This is a later integration."
+			"angle": "Agent Ready and Store Sync put agent commerce on PayPal. This is a later integration.",
+			"moonshot": true
 		},
 		{
 			"name": "Autodesk",
-			"angle": "The Autodesk Marketplace now accepts MCP servers, and our 3D generation and rigging tools fit Maya and 3ds Max users."
+			"angle": "The Autodesk Marketplace now accepts MCP servers, and our 3D generation and rigging tools fit Maya and 3ds Max users.",
+			"moonshot": true
 		},
 		{
 			"name": "Unity",
-			"angle": "An Asset Store package that loads three.ws avatars and generated GLBs is the natural entry."
+			"angle": "An Asset Store package that loads three.ws avatars and generated GLBs is the natural entry.",
+			"moonshot": true
 		},
 		{
 			"name": "Epic Games",
-			"angle": "Fab accepts the same assets. MegaGrants funds open-source 3D tooling when a round opens."
+			"angle": "Fab accepts the same assets. MegaGrants funds open-source 3D tooling when a round opens.",
+			"moonshot": true
 		},
 		{
 			"name": "Roblox",
-			"angle": "Weak fit: Roblox runs a closed asset pipeline. Watch only."
+			"angle": "Weak fit: Roblox runs a closed asset pipeline. Watch only.",
+			"moonshot": true
 		},
 		{
 			"name": "Snap",
-			"angle": "Lens Studio and Camera Kit fit avatar AR. Spectacles is the long bet."
+			"angle": "Lens Studio and Camera Kit fit avatar AR. Spectacles is the long bet.",
+			"moonshot": true
 		},
 		{
 			"name": "Discord",
-			"angle": "The Discord Activity is built. It needs application credentials, then verification and the App Directory."
+			"angle": "The Discord Activity is built. It needs application credentials, then verification and the App Directory.",
+			"moonshot": true
 		},
 		{
 			"name": "Reddit",
-			"angle": "Developer Funds pay Devvit apps by engagement. A 3D avatar Devvit app is a cheap experiment."
+			"angle": "Developer Funds pay Devvit apps by engagement. A 3D avatar Devvit app is a cheap experiment.",
+			"moonshot": true
 		},
 		{
 			"name": "Telegram",
-			"angle": "Mini Apps are a direct channel to a crypto-native audience. The Apps Center is the directory."
+			"angle": "Mini Apps are a direct channel to a crypto-native audience. The Apps Center is the directory.",
+			"moonshot": true
 		},
 		{
 			"name": "xAI",
-			"angle": "Grok is already one of our model lanes. The data-sharing credits are ruled out because they share user prompts."
+			"angle": "Grok is already one of our model lanes. The data-sharing credits are ruled out because they share user prompts.",
+			"moonshot": true
 		},
 		{
 			"name": "Cisco",
-			"angle": "Webex App Hub is a low-effort listing. Nothing else here fits."
+			"angle": "Webex App Hub is a low-effort listing. Nothing else here fits.",
+			"moonshot": true
 		},
 		{
 			"name": "Zoom",
-			"angle": "An avatar presenter in Zoom Apps is a plausible later product. List it after it exists."
+			"angle": "An avatar presenter in Zoom Apps is a plausible later product. List it after it exists.",
+			"moonshot": true
 		},
 		{
 			"name": "Atlassian",
-			"angle": "Forge Rovo agents could host a three.ws agent. The fit is weak today."
+			"angle": "Forge Rovo agents could host a three.ws agent. The fit is weak today.",
+			"moonshot": true
 		},
 		{
 			"name": "ServiceNow",
-			"angle": "Enterprise ITSM is far from our users. Skip unless a customer asks."
+			"angle": "Enterprise ITSM is far from our users. Skip unless a customer asks.",
+			"moonshot": true
 		},
 		{
 			"name": "Snowflake",
-			"angle": "Data marketplace with no fit for 3D or agents."
+			"angle": "Data marketplace with no fit for 3D or agents.",
+			"moonshot": true
 		},
 		{
 			"name": "Databricks",
-			"angle": "Data platform with no fit for 3D or agents."
+			"angle": "Data platform with no fit for 3D or agents.",
+			"moonshot": true
 		},
 		{
 			"name": "Dell",
-			"angle": "The AI Factory ISV validation is for on-prem enterprise AI. Revisit if self-hosted workers become a product."
+			"angle": "The AI Factory ISV validation is for on-prem enterprise AI. Revisit if self-hosted workers become a product.",
+			"moonshot": true
 		},
 		{
 			"name": "HPE",
-			"angle": "Same as Dell: the unified partner program took effect 2026-11-01 and targets enterprise deployments."
+			"angle": "Same as Dell: the unified partner program took effect 2026-11-01 and targets enterprise deployments.",
+			"moonshot": true
 		},
 		{
 			"name": "Huawei",
-			"angle": "Huawei Cloud Spark is China and region-gated. Watch only."
+			"angle": "Huawei Cloud Spark is China and region-gated. Watch only.",
+			"moonshot": true
 		},
 		{
 			"name": "Baidu",
-			"angle": "Qianfan and ERNIE partner programs are China-focused. Watch only."
+			"angle": "Qianfan and ERNIE partner programs are China-focused. Watch only.",
+			"moonshot": true
+		},
+		{
+			"name": "MongoDB",
+			"angle": "Easiest real door: MongoDB for Startups has a direct form. MAAP was refocused on strategic partnerships on 2025-09-26 and gives no credits.",
+			"moonshot": true
+		},
+		{
+			"name": "Canva",
+			"angle": "Best distribution door: free Apps Marketplace listing, Premium Apps Program, and an MCP route to Canva AI.",
+			"moonshot": true
+		},
+		{
+			"name": "Figma",
+			"angle": "Strongest door with Canva and Notion: self-serve Community plugins, MCP client catalog waitlist, and custom MCP connectors in Figma Make.",
+			"moonshot": true
+		},
+		{
+			"name": "Notion",
+			"angle": "Self-serve Marketplace connection plus a Technology Partner Program form with in-product placement.",
+			"moonshot": true
+		},
+		{
+			"name": "HubSpot",
+			"angle": "HubSpot for Startups is a discount for our own use; App Marketplace needs 3 active installs. Weak fit.",
+			"moonshot": true
+		},
+		{
+			"name": "Twilio",
+			"angle": "Official page says no extra startup credits. Closed.",
+			"moonshot": true
+		},
+		{
+			"name": "Okta",
+			"angle": "Free OIN listing but needs enterprise SSO. Defer.",
+			"moonshot": true
+		},
+		{
+			"name": "Datadog",
+			"angle": "Technology Partner track is open but needs a tile; startup credits are referral-gated.",
+			"moonshot": true
+		},
+		{
+			"name": "Elastic",
+			"angle": "Search AI Partner Program technology track is open to apply; fit depends on adopting Elastic.",
+			"moonshot": true
+		},
+		{
+			"name": "Akamai",
+			"angle": "Rise credits only if Akamai Cloud is the primary provider. Qualified Compute Partner needs a deployment.",
+			"moonshot": true
+		},
+		{
+			"name": "DigitalOcean",
+			"angle": "Startups program paused until early 2027. Create the account now.",
+			"moonshot": true
+		},
+		{
+			"name": "Miro",
+			"angle": "Marketplace is partner-gated at 50 monthly users for two months. Private app first.",
+			"moonshot": true
+		},
+		{
+			"name": "Workday",
+			"angle": "Open developer program and a Ventures arm with no open call. Off focus.",
+			"moonshot": true
+		},
+		{
+			"name": "Intuit",
+			"angle": "App Partner Program for QuickBooks apps in four countries. Off focus.",
+			"moonshot": true
+		},
+		{
+			"name": "Dropbox",
+			"angle": "Only production approval at 50 linked users. No partner program found.",
+			"moonshot": true
+		},
+		{
+			"name": "LinkedIn",
+			"angle": "Marketing Developer Program is gated and for marketing tech. No startup door.",
+			"moonshot": true
+		},
+		{
+			"name": "Uber",
+			"angle": "Developer platform approval only. No Startups program or open call found.",
+			"moonshot": true
+		},
+		{
+			"name": "Airbnb",
+			"angle": "API is invite-only through Preferred Software Partner. Closed.",
+			"moonshot": true
+		},
+		{
+			"name": "Booking.com",
+			"moonshot": true
+		},
+		{
+			"name": "Arm",
+			"angle": "Moonshot with a hard no: Flexible Access for Startups needs an innovative semiconductor product. No software door; Silicon Catalyst is the only route and it is chips.",
+			"moonshot": true
+		},
+		{
+			"name": "TSMC",
+			"angle": "No startup program; OIP is a foundry ecosystem. Not relevant to a software platform.",
+			"moonshot": true
+		},
+		{
+			"name": "Broadcom",
+			"moonshot": true
+		},
+		{
+			"name": "Sony Group",
+			"angle": "Two doors: PlayStation Partners (needs a game and legal entity) and Sony Innovation Fund (no application form, strategic pitch). AI character and avatar theme fits their CEATEC 2026 spotlight.",
+			"moonshot": true
+		},
+		{
+			"name": "Palantir",
+			"angle": "Palantir for Builders is a paid contact-form route; the Startup Fellowship needs building on AIP. Low fit.",
+			"moonshot": true
+		},
+		{
+			"name": "LINE Yahoo",
+			"angle": "LY Corporation Partner Program and LINE Mini App are real doors for an Asia launch.",
+			"moonshot": true
+		},
+		{
+			"name": "Naver",
+			"angle": "D2SF early-stage investment, Korea focused; third-party description only.",
+			"moonshot": true
+		},
+		{
+			"name": "Grab",
+			"angle": "Grab Ventures Velocity accelerator for post-seed Southeast Asia startups; batch based.",
+			"moonshot": true
+		},
+		{
+			"name": "Broadcom (VMware)",
+			"angle": "Partner Connect was replaced by the invitation-only Advantage Partner Program. No public ISV door found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "Booking Holdings",
+			"angle": "Connectivity program is for travel software; Holdings funds in-house AI startups (Vayo, Lola). No open call found.",
+			"moonshot": true
+		},
+		{
+			"name": "Netflix",
+			"angle": "No public partner route for startups found as of 2026-11-06; Games Partner Portal is for studios Netflix works with.",
+			"moonshot": true
+		},
+		{
+			"name": "Rakuten",
+			"angle": "Rakuten Ventures has no open call found; Rakuten RapidAPI info is from 2018. No door found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "Kakao",
+			"angle": "Kakao Ventures invests without a public application route we could verify. No door confirmed.",
+			"moonshot": true
+		},
+		{
+			"name": "Sea Limited",
+			"angle": "Each subsidiary runs its own developer platform (Shopee Open Platform, Garena); no startup route found.",
+			"moonshot": true
+		},
+		{
+			"name": "Mercado Libre",
+			"angle": "Developer Partner Program is GMV gated and MeLi Fund invests in Latin American startups. No fit for a 3D platform.",
+			"moonshot": true
 		}
 	],
 	"programs": [
@@ -4459,6 +4673,981 @@
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Not actionable for a US startup right now.",
 			"source": "https://aicnhub.com/en/products/baidu-qianfan-platform",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "mongodb-for-startups",
+			"company": "MongoDB",
+			"program": "MongoDB for Startups",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.mongodb.com/solutions/startups",
+			"apply": "Submit the direct application form on the program page (company legal name, URL, LinkedIn, funding stage), or get referred by a VC or accelerator.",
+			"value": "Atlas credits and Voyage AI embedding tokens for agent memory and vector search, plus co-marketing access.",
+			"benefits": [
+				"Atlas credits",
+				"Voyage AI tokens",
+				"one-on-one expert session",
+				"Developer Support plan payable with credits",
+				"co-marketing opportunities"
+			],
+			"eligibility": "Under 7 years old, Series A or earlier, a single software product (no agencies), not previously accepted.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Apply directly as the Inspire tier and mention agent memory and RAG on Atlas.",
+			"why": "Official page confirms a self-serve direct form with no VC needed, and an open Inspire tier for bootstrapped teams. Credit dollar amounts are not published. Agent memory and embeddings are a natural Atlas and Voyage workload.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "MongoDB states co-marketing opportunities as a program benefit; no specific showcase mechanism is documented on the page, so ask the startups team after acceptance.",
+			"source": "https://www.mongodb.com/solutions/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "canva-apps-marketplace",
+			"company": "Canva",
+			"program": "Canva Apps Marketplace (Apps inside Canva)",
+			"kind": "marketplace",
+			"status": "eligible",
+			"url": "https://www.canva.dev/docs/apps/submitting-apps/",
+			"apply": "Build an app with the Canva Developers SDK, upload the bundle with the Canva CLI or Developer Portal, and submit for review.",
+			"value": "Distribution to Canva's very large design audience for 3D and avatar content created in three.ws.",
+			"benefits": [
+				"free to build and list",
+				"public Marketplace listing",
+				"developer verification badge info"
+			],
+			"eligibility": "Any developer who passes developer verification and app review; the app must be unique in the Marketplace.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 5,
+			"access": 4,
+			"next": "Prototype a Canva app that imports a Forge-generated image or turntable render from a prompt, then submit it.",
+			"why": "The SDK review flow is documented and cost free, and Canva has sole discretion over inclusion. Canva has no 3D-native editor, so a 3D asset and avatar app is a distinct listing.",
+			"source": "https://www.canva.dev/docs/apps/submitting-apps/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "canva-premium-apps-program",
+			"company": "Canva",
+			"program": "Canva Premium Apps Program",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://www.canva.com/developers/premium-apps-program/",
+			"apply": "Publicly list an Apps SDK app first, then apply to the Premium Apps Program (page blocked to our fetch; details from search result).",
+			"value": "Priority placement in the Apps Marketplace and a monetization route inside Canva.",
+			"benefits": [
+				"priority Marketplace placement"
+			],
+			"eligibility": "App must be publicly listed on the Marketplace and built with the Canva Apps SDK.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Revisit after the first Canva app is listed.",
+			"why": "Depends on a live listing first. The official page returned 403 to our fetch, so terms are from search results only.",
+			"source": "https://www.canva.com/developers/premium-apps-program/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "canva-for-ai-assistants-mcp",
+			"company": "Canva",
+			"program": "Canva for AI Assistants (MCP) and Add your tool to Canva AI",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.canva.dev/docs/apps/mcp/",
+			"apply": "Follow the Canva Developers SDK docs for the Add your tool to Canva AI and Connectors in Canva AI workflows.",
+			"value": "Puts three.ws 3D generation as a tool inside Canva AI, reaching Canva's users through an agent surface.",
+			"benefits": [
+				"connector listing in Canva AI"
+			],
+			"eligibility": "Developers using the Canva Developers SDK.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 5,
+			"access": 3,
+			"next": "Read the Add your tool to Canva AI docs and wire the keyless three.ws text-to-3D MCP server as a candidate connector.",
+			"why": "We already ship MCP servers, so the integration cost is low. Docs list the workflows, but we did not verify the approval gate for third-party connectors.",
+			"source": "https://www.canva.dev/docs/apps/mcp/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "figma-community-plugins",
+			"company": "Figma",
+			"program": "Figma Community plugins and widgets",
+			"kind": "marketplace",
+			"status": "eligible",
+			"url": "https://help.figma.com/hc/en-us/articles/360042293394-Publish-classic-plugins-to-the-Figma-Community",
+			"apply": "Build a plugin in the Figma desktop app and publish it via Plugins > Manage plugins > Publish, which submits it for review.",
+			"value": "Listing in the Figma Community puts 3D asset and avatar generation in front of millions of designers.",
+			"benefits": [
+				"Community listing",
+				"free to publish"
+			],
+			"eligibility": "Anyone with a Figma account; publishing from the desktop app.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 5,
+			"next": "Ship a Figma plugin that sends a frame or sketch to Forge and returns a GLB turntable or image.",
+			"why": "Self-serve and free. Forge already accepts sketches and images as input, which matches design-file workflows.",
+			"source": "https://help.figma.com/hc/en-us/articles/360042293394-Publish-classic-plugins-to-the-Figma-Community",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "figma-mcp-client-catalog",
+			"company": "Figma",
+			"program": "Figma MCP server client catalog",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://help.figma.com/hc/en-us/articles/39216419318551-Get-started-with-the-Figma-MCP-server",
+			"apply": "Join the waitlist for connecting a new MCP client to the Figma MCP server (per Figma help center).",
+			"value": "Lets a three.ws agent read Figma design context and be listed alongside Claude Code, Cursor and VS Code.",
+			"benefits": [
+				"catalog listing",
+				"remote server access"
+			],
+			"eligibility": "Only catalog clients can connect; others join a waitlist.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Join the waitlist as a client, and meanwhile use Figma REST API with a private OAuth app.",
+			"why": "Figma gates MCP clients by catalog. A public OAuth app for the REST API is reviewed but open.",
+			"source": "https://help.figma.com/hc/en-us/articles/39216419318551-Get-started-with-the-Figma-MCP-server",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "figma-verified-mcp-connectors",
+			"company": "Figma",
+			"program": "Figma verified partner MCP connectors",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://help.figma.com/hc/en-us/articles/35440096186007-Use-verified-partner-MCP-connectors-with-the-Figma-agent-and-Figma-Make",
+			"apply": "Not documented as an application; Figma vets featured connectors. Contact Figma partnerships after publishing a public MCP server.",
+			"value": "A featured connector in Figma Make would put the three.ws text-to-3D MCP server in front of Make and agent users.",
+			"benefits": [
+				"featured connector slot"
+			],
+			"eligibility": "Vetted by Figma; featured ones include Notion, Asana, Linear, GitHub, Atlassian.",
+			"cost": "unknown",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 2,
+			"next": "Confirm users can add the three.ws MCP as a custom connector in Figma Make, then ask for featured vetting.",
+			"why": "Custom connectors let any user add any MCP server, so a first working door exists with no approval. Featured status is the prize.",
+			"source": "https://help.figma.com/hc/en-us/articles/35440096186007-Use-verified-partner-MCP-connectors-with-the-Figma-agent-and-Figma-Make",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "notion-marketplace-connections",
+			"company": "Notion",
+			"program": "Notion Marketplace connections listing",
+			"kind": "marketplace",
+			"status": "eligible",
+			"url": "https://developers.notion.com/guides/connections-and-tokens/public-integrations/marketplace-listing",
+			"apply": "Create a public connection with Any workspace scope and submit the listing for review from the developer portal.",
+			"value": "Distribution to Notion workspaces for agents that read and write pages.",
+			"benefits": [
+				"Marketplace listing",
+				"Notion security review"
+			],
+			"eligibility": "Public connection with Any workspace scope that passes security review.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 4,
+			"next": "Build a Notion connection that embeds an agent-3d avatar or Forge output into a page, and submit.",
+			"why": "Official process is documented, free, and self-serve with a security review as the gate.",
+			"source": "https://developers.notion.com/guides/connections-and-tokens/public-integrations/marketplace-listing",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "notion-technology-partner-program",
+			"company": "Notion",
+			"program": "Notion Technology Partner Program",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://www.notion.com/partners/security-compliance-partner-program",
+			"apply": "Submit the Technology Partner Program form (per Notion docs); the Security and Compliance sibling is not accepting applications.",
+			"value": "Integration Gallery listing, in-product placement and marketing collateral.",
+			"benefits": [
+				"Integration Gallery listing",
+				"in-product placement",
+				"marketing collateral"
+			],
+			"eligibility": "Technology companies with a Notion integration.",
+			"cost": "unknown",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Ship the Marketplace connection first, then apply as a Technology Partner.",
+			"why": "Benefits are stated by Notion in its developer docs. We did not fetch the form page itself.",
+			"promo": [
+				"showcase",
+				"co-marketing"
+			],
+			"promo_note": "Notion docs say Technology Partners get Integration Gallery listing, in-product placement and marketing collateral.",
+			"source": "https://www.notion.com/partners/security-compliance-partner-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hubspot-for-startups",
+			"company": "HubSpot",
+			"program": "HubSpot for Startups",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.hubspot.com/startups",
+			"apply": "Check eligibility on the signup page; funding is verified through Crunchbase or Harmonic, or via an approved partner.",
+			"value": "Discount of 30 to 90 percent on HubSpot Professional or Enterprise for our own CRM and outreach.",
+			"benefits": [
+				"30 to 90 percent discount year one",
+				"founder community",
+				"training"
+			],
+			"eligibility": "Pre-seed to Series A with verified funding or partner affiliation, or an approved entrepreneurial organization for the 30 percent tier.",
+			"cost": "annual commitment required",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Low priority; use only when we need a CRM.",
+			"why": "A discount for our own use, not a distribution door. Funding verification likely blocks us unless we are in an accelerator.",
+			"source": "https://www.hubspot.com/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hubspot-app-marketplace",
+			"company": "HubSpot",
+			"program": "HubSpot App Marketplace listing",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements",
+			"apply": "Build an OAuth app, reach at least 3 active installs, accept the Technology Partner Program Agreement, then submit the listing.",
+			"value": "Exposure to HubSpot's customer base for embedded agents on sites and landing pages.",
+			"benefits": [
+				"Marketplace listing",
+				"optional certification at 60 installs"
+			],
+			"eligibility": "OAuth-only app on a supported platform version with live URLs and clear pricing.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Defer until there is a CRM-specific use case.",
+			"why": "Requirements are clear but need real installs first. Fit is weaker than design tools.",
+			"source": "https://developers.hubspot.com/docs/apps/developer-platform/list-apps/listing-your-app/app-marketplace-listing-requirements",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "twilio-startups",
+			"company": "Twilio",
+			"program": "Twilio for Startups",
+			"kind": "credits",
+			"status": "closed",
+			"url": "https://www.twilio.com/en-us/solutions/startups",
+			"apply": "Official page offers only the standard trial credit.",
+			"value": "Not currently offering extra startup credits per Twilio's own page.",
+			"benefits": [
+				"education",
+				"community"
+			],
+			"eligibility": "n/a",
+			"cost": "free",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Twilio's page states it does not offer additional credits to startups at this time. Third-party sites list amounts that conflict.",
+			"source": "https://www.twilio.com/en-us/solutions/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "okta-integration-network",
+			"company": "Okta",
+			"program": "Okta Integration Network (OIN)",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://developer.okta.com/docs/guides/submit-app-overview/",
+			"apply": "Create an Integrator Free Plan org and submit through the OIN Wizard.",
+			"value": "Listing makes agent-3d sign-in easy for enterprise customers.",
+			"benefits": [
+				"free OIN catalog listing"
+			],
+			"eligibility": "Multi-tenant app with SSO or SCIM and a production test account.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 3,
+			"next": "Defer until enterprise SSO is on the roadmap.",
+			"why": "Free listing but needs enterprise SSO. Okta also published XAA support for agent access, which may be relevant later.",
+			"source": "https://developer.okta.com/docs/guides/submit-app-overview/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "datadog-partner-network-technology",
+			"company": "Datadog",
+			"program": "Datadog Partner Network, Technology Partner track",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://www.datadoghq.com/partner/network/",
+			"apply": "Apply to the Technology Partner track on partners.datadoghq.com before building an integration.",
+			"value": "Observability integration for agent fleets with a Marketplace route and joint go-to-market after the tile ships.",
+			"benefits": [
+				"integration tile",
+				"sandbox account",
+				"partner marketing meeting"
+			],
+			"eligibility": "Companies building integrations that send metrics, logs, traces or events.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Defer until fleet telemetry is worth a tile.",
+			"why": "Official docs describe the track and the partner marketing step.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Datadog docs say Technology Partners can meet Partner Marketing to coordinate joint go-to-market once the tile is live.",
+			"source": "https://www.datadoghq.com/partner/network/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "datadog-for-startups",
+			"company": "Datadog",
+			"program": "Datadog for Startups",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://www.datadoghq.com/partner/datadog-for-startups/",
+			"apply": "Application form, but access is referral-gated by a VC or accelerator partner (third-party summary).",
+			"value": "Up to USD 100k of Datadog credits per third-party listings.",
+			"benefits": [
+				"credits for up to a year"
+			],
+			"eligibility": "Series A or earlier, new to Datadog, referred by an official partner.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 1,
+			"next": "Skip unless an accelerator referral arrives.",
+			"why": "Referral gate is the blocker. Terms are from aggregator sites.",
+			"source": "https://www.datadoghq.com/partner/datadog-for-startups/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "elastic-search-ai-partner-program",
+			"company": "Elastic",
+			"program": "Elastic Search AI Partner Program, Technology partners",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://www.elastic.co/partners/become-a-partner",
+			"apply": "Use the Apply here link, which goes to the registration form at partners.elastic.co.",
+			"value": "Technology partner track for AI solutions on Elastic's vector database, with marketing and joint selling resources.",
+			"benefits": [
+				"Partner Portal",
+				"certifications",
+				"marketing resources",
+				"joint selling"
+			],
+			"eligibility": "Companies building AI solutions on Elastic.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"next": "Defer unless we adopt Elastic as a vector store.",
+			"why": "Page verified. Registration is open but meaningful only if our stack uses Elastic.",
+			"source": "https://www.elastic.co/partners/become-a-partner",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "akamai-rise-startup-program",
+			"company": "Akamai",
+			"program": "Akamai Cloud Rise Startup Program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://www.linode.com/start-ups/rise",
+			"apply": "Apply online with a corporate email; an interview follows.",
+			"value": "Cloud credits (USD 500 to 120k reported by aggregators) and architecture guidance, including GPU-adjacent cloud.",
+			"benefits": [
+				"first-year cloud credits",
+				"discounts years two and three",
+				"dedicated account manager"
+			],
+			"eligibility": "Under 7 years old with users or revenue, using Akamai Cloud as the primary provider.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Apply only if we move a workload to Akamai Cloud.",
+			"why": "Official page returned 404 to our fetch, so terms come from third-party aggregators. The primary-provider rule conflicts with our GCP base.",
+			"source": "https://www.linode.com/start-ups/rise",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "akamai-qualified-compute-partner",
+			"company": "Akamai",
+			"program": "Akamai Qualified Compute Partner Program",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://www.akamai.com/cloud/start-ups/partner",
+			"apply": "Contact Akamai about a qualification process; companies like Queue-it have joined.",
+			"value": "Technology partner listing for solutions that run on Akamai Cloud.",
+			"benefits": [
+				"partner listing"
+			],
+			"eligibility": "ISVs passing a qualification process.",
+			"cost": "unknown",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Skip for now.",
+			"why": "Real program but needs a running Akamai deployment.",
+			"source": "https://www.akamai.com/cloud/start-ups/partner",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "digitalocean-startups",
+			"company": "DigitalOcean",
+			"program": "DigitalOcean Startups (formerly Hatch)",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.digitalocean.com/startups",
+			"apply": "Apply directly or through a partner once the updated program relaunches in early 2027.",
+			"value": "12 months of credits plus 15 months Standard support; GPU needs a separate credit application.",
+			"benefits": [
+				"credits",
+				"free Standard-tier support",
+				"Welcome Kit"
+			],
+			"eligibility": "AI-native priority, raised USD 10M or less, company domain, not previously on DO credits.",
+			"cost": "free",
+			"cadence": "paused now, relaunch early 2027",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"wave": 5,
+			"next": "Create a company team account now and apply on relaunch.",
+			"why": "Official page says applications are paused until the updated program launches in early 2027.",
+			"source": "https://www.digitalocean.com/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "miro-marketplace-partner",
+			"company": "Miro",
+			"program": "Miro Marketplace app submission",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://developers.miro.com/docs/miro-marketplace",
+			"apply": "Apply through the Partner Interest Form, then submit listing assets once approved.",
+			"value": "Whiteboard distribution for 3D and avatar collaboration.",
+			"benefits": [
+				"Marketplace listing"
+			],
+			"eligibility": "More than 50 monthly active users in each of the last two months and a deployed app.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"next": "Ship a private Miro app first to build the user base.",
+			"why": "Marketplace is now partner-gated by usage thresholds. An install-by-link route exists without a listing.",
+			"source": "https://developers.miro.com/docs/miro-marketplace",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "workday-developer-program",
+			"company": "Workday",
+			"program": "Workday Developer Program",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html",
+			"apply": "Join with a personal email and request a personal development tenant in the open beta.",
+			"value": "APIs, MCP tools and agent tooling for enterprise HR agents.",
+			"benefits": [
+				"APIs",
+				"MCP tools",
+				"dev tenant"
+			],
+			"eligibility": "Open to individuals and small teams.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 4,
+			"next": "Skip unless an HR agent use case appears.",
+			"why": "Open, but enterprise HR is off our core.",
+			"source": "https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "workday-ventures",
+			"company": "Workday",
+			"program": "Workday Ventures",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html",
+			"apply": "Pitch the Ventures team; no open call found.",
+			"value": "Strategic funding for startups that help Workday customers.",
+			"benefits": [
+				"funding",
+				"strategic guidance"
+			],
+			"eligibility": "Early-stage companies aligned to Workday's platform.",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Skip.",
+			"why": "No public application route found as of 2026-11-06.",
+			"source": "https://blog.workday.com/en-us/workday-open-developer-platform-generally-available.html",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "intuit-app-partner-program",
+			"company": "Intuit",
+			"program": "Intuit App Partner Program",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://developer.intuit.com/partners/benefits",
+			"apply": "Complete the app assessment and accept developer terms; paid tiers need a payment method.",
+			"value": "QuickBooks app marketplace and tiers (Builder to Platinum).",
+			"benefits": [
+				"marketplace listing",
+				"badges",
+				"case studies",
+				"demand generation"
+			],
+			"eligibility": "Partners in the US, UK, Australia and Canada.",
+			"cost": "free Builder tier, fees above",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 3,
+			"next": "Skip.",
+			"why": "Accounting integrations are off focus.",
+			"source": "https://developer.intuit.com/partners/benefits",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "dropbox-api-production-approval",
+			"company": "Dropbox",
+			"program": "Dropbox App Console production approval",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.dropbox.com/developers/reference/developer-guide",
+			"apply": "Click Apply for Production in the App Console once 50 users are linked.",
+			"value": "Dropbox storage connector for 3D assets.",
+			"benefits": [
+				"production API access"
+			],
+			"eligibility": "App must have linked at least 50 users before review.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Skip unless users ask for Dropbox import.",
+			"why": "No formal partner program found. Only a production readiness review.",
+			"source": "https://www.dropbox.com/developers/reference/developer-guide",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "linkedin-marketing-developer-program",
+			"company": "LinkedIn",
+			"program": "LinkedIn Marketing Developer Program",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program",
+			"apply": "Create an app, add Marketing Developer Platform as a product, and submit the access form.",
+			"value": "API access for B2B marketing integrations.",
+			"benefits": [
+				"Advertising API",
+				"partner manager at later tiers"
+			],
+			"eligibility": "Established business with real customers; four partner categories.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 4,
+			"access": 2,
+			"next": "Skip.",
+			"why": "Approval is slow and aimed at marketing tech. Sign In with LinkedIn is self-serve and not a partner door.",
+			"source": "https://business.linkedin.com/marketing-solutions/marketing-partners/become-a-partner/marketing-developer-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "uber-developer-platform",
+			"company": "Uber",
+			"program": "Uber Developer Platform",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://developer.uber.com/docs/",
+			"apply": "Request API access at the developer portal; approval is by Uber.",
+			"value": "Ride and delivery actions for agents.",
+			"benefits": [
+				"API access"
+			],
+			"eligibility": "Uber approval.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 5,
+			"access": 1,
+			"next": "Skip.",
+			"why": "No Uber Startups program or Ventures open call found. APIs are split by product (Uber for Business, Eats Marketplace, Driver, Ads APIs since 2026-06-02) and most need an approved scope or a partner manager.",
+			"source": "https://developer.uber.com",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "airbnb-preferred-software-partner",
+			"company": "Airbnb",
+			"program": "Airbnb API and Preferred Software Partner Program",
+			"kind": "partner-network",
+			"status": "closed",
+			"url": "https://developer.withairbnb.com",
+			"apply": "Invite only; Airbnb partner managers find prospective partners.",
+			"value": "Hosting software integration.",
+			"benefits": [
+				"API access under NDA"
+			],
+			"eligibility": "Invited property or activity software providers with data security review.",
+			"cost": "free",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 5,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Airbnb is not accepting new API requests and does not offer public access.",
+			"source": "https://developer.withairbnb.com",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "booking-connectivity-partner-programme",
+			"company": "Booking.com",
+			"program": "Booking.com Connectivity Partner Programme",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://developers.booking.com/connectivity/docs",
+			"apply": "Meet onboarding requirements for channel managers and property management systems.",
+			"value": "Travel-tech integration.",
+			"benefits": [
+				"tiered partner designation"
+			],
+			"eligibility": "Connectivity providers; a stale portal notice mentions a pause for new providers.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Aimed at channel managers. Booking Holdings is funding in-house AI startups (Vayo, Lola) rather than an open call.",
+			"source": "https://developers.booking.com/connectivity/docs",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "arm-flexible-access-for-startups",
+			"company": "Arm",
+			"program": "Arm Flexible Access for Startups",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.arm.com/resources/program-reg/flexible-access-startup",
+			"apply": "Fill in the application form; Arm contacts you.",
+			"value": "Zero-cost Arm IP and tools for a semiconductor product.",
+			"benefits": [
+				"zero license fee for prototypes",
+				"tools and support"
+			],
+			"eligibility": "Private semiconductor startup, up to USD 50M raised, up to USD 5M revenue.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 5,
+			"access": 1,
+			"next": "Skip unless we ever design a chip.",
+			"why": "Page verified. The eligibility requires an innovative semiconductor product, which we do not build.",
+			"source": "https://www.arm.com/resources/program-reg/flexible-access-startup",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "silicon-catalyst-arm-startups-contest",
+			"company": "Arm",
+			"program": "Arm Silicon Startups Contest via Silicon Catalyst",
+			"kind": "event",
+			"status": "closed",
+			"url": "https://siliconcatalyst.com/silicon-catalyst-partners-with-arm-for-3rd-annual-arm-flexible-access-for-startups-contest",
+			"apply": "Enter the annual contest on the Silicon Catalyst site when open.",
+			"value": "Arm credit prize and a fast-track to the incubator.",
+			"benefits": [
+				"Arm credit worth USD 250k and 150k",
+				"incubator fast-track"
+			],
+			"eligibility": "Early-stage teams building an Arm-based SoC.",
+			"cost": "free",
+			"cadence": "annual, announced around March",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Chips only. Arm and TSMC are in-kind partners of Silicon Catalyst, the only real startup route to either.",
+			"source": "https://siliconcatalyst.com/silicon-catalyst-partners-with-arm-for-3rd-annual-arm-flexible-access-for-startups-contest",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "tsmc-open-innovation-platform",
+			"company": "TSMC",
+			"program": "TSMC Open Innovation Platform",
+			"kind": "partner-network",
+			"status": "closed",
+			"url": "https://www.tsmc.com/english/news-events/blog-article-20220418",
+			"apply": "No standalone startup program; startups reach TSMC via Silicon Catalyst or imec IC-Link.",
+			"value": "Foundry ecosystem.",
+			"benefits": [
+				"Emerging Technologies Alley at OIP forum"
+			],
+			"eligibility": "Semiconductor companies.",
+			"cost": "unknown",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 5,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Not relevant to a software 3D agent platform.",
+			"source": "https://www.tsmc.com/english/news-events/blog-article-20220418",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "broadcom-advantage-partner-program",
+			"company": "Broadcom",
+			"program": "Broadcom Advantage Partner Program (VMware)",
+			"kind": "partner-network",
+			"status": "closed",
+			"url": "https://partnerportal.broadcom.com/web/partner-portal",
+			"apply": "Invitation only.",
+			"value": "Reseller and services program.",
+			"benefits": [
+				"partner tiers"
+			],
+			"eligibility": "Invited resellers and service partners.",
+			"cost": "unknown",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Broadcom ended VMware's Partner Connect in 2024. No ISV track found for our profile.",
+			"source": "https://partnerportal.broadcom.com/web/partner-portal",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "playstation-partners-developer-program",
+			"company": "Sony Group",
+			"program": "PlayStation Partners",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://sonyinteractive.com/en/news/blog/showing-your-game-to-playstation/",
+			"apply": "Register at PlayStation Partners with studio details and a short Project Plan, then sign the developer agreement.",
+			"value": "Path to PlayStation platforms if a /play-derived game ever ships.",
+			"benefits": [
+				"dev tools",
+				"publishing resources",
+				"documentation"
+			],
+			"eligibility": "Registered legal entity with a game project.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 5,
+			"access": 3,
+			"next": "Skip until a console-ready title exists.",
+			"why": "Needs a legal entity and a game, not a platform.",
+			"source": "https://sonyinteractive.com/en/news/blog/showing-your-game-to-playstation/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "sony-innovation-fund",
+			"company": "Sony Group",
+			"program": "Sony Innovation Fund",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.sonyinnovationfund.com/",
+			"apply": "No formal application form found; contact via the fund site.",
+			"value": "Corporate venture funding, reportedly USD 500k to 20M checks.",
+			"benefits": [
+				"investment",
+				"strategic access"
+			],
+			"eligibility": "Seed to Series B startups strategically aligned to Sony.",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 5,
+			"access": 2,
+			"next": "Prepare a short strategic pitch (avatar, spatial, AI characters).",
+			"why": "Fund 4 reportedly closed a first tranche of about USD 135M. Sony spotlighted AI-character startups at CEATEC 2026, a close theme.",
+			"source": "https://www.sonyinnovationfund.com/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "palantir-for-builders",
+			"company": "Palantir",
+			"program": "Palantir for Builders",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.palantir.com/offerings/palantir-for-builders/startups/",
+			"apply": "Use the contact form on the Builders pages.",
+			"value": "Access to AIP and Foundry for startups.",
+			"benefits": [
+				"AIP and Foundry access"
+			],
+			"eligibility": "Startups and SMBs; pricing and eligibility are not published.",
+			"cost": "not published",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 5,
+			"access": 2,
+			"next": "Skip for now.",
+			"why": "Third-party sources say it is a paid program. Little overlap with 3D agents.",
+			"source": "https://www.palantir.com/offerings/palantir-for-builders/startups/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "palantir-startup-fellowship",
+			"company": "Palantir",
+			"program": "Palantir Startup Fellowship",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://www.palantir.events/startup-fellowship-003-apply",
+			"apply": "Apply for the next cohort when the window opens.",
+			"value": "10-week program with forward deployed engineers.",
+			"benefits": [
+				"FDE support"
+			],
+			"eligibility": "Series B or earlier startups committing to build on AIP with a full-time developer.",
+			"cost": "free",
+			"cadence": "cohort based; cohort 003 closed Sep 7 2026",
+			"fit": 1,
+			"reach": 5,
+			"access": 1,
+			"wave": 5,
+			"next": "Skip.",
+			"why": "Requires rebuilding on AIP.",
+			"source": "https://www.palantir.events/startup-fellowship-003-apply",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "ly-corporation-partner-program",
+			"company": "LINE Yahoo",
+			"program": "LY Corporation Partner Program, Technology Partner",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://www.lycorp.co.jp/ja/news/release/008439/",
+			"apply": "Apply as a Technology Partner (LINE MINIAPP category).",
+			"value": "Certification for LINE Mini App builders.",
+			"benefits": [
+				"partner certification"
+			],
+			"eligibility": "Companies that can support LINE services.",
+			"cost": "unknown",
+			"cadence": "annual",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"next": "Skip unless we target Japan.",
+			"why": "Our LINE Mini App fit is to be proved first.",
+			"source": "https://www.lycorp.co.jp/ja/news/release/008439/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "line-mini-app",
+			"company": "LINE Yahoo",
+			"program": "LINE Mini App",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.lycorp.co.jp/ja/news/release/020852/",
+			"apply": "Register through the LINE Developers console.",
+			"value": "Distribution inside LINE; revenue share rises to 80 percent via Apple's Mini Apps Partner Program.",
+			"benefits": [
+				"mini app distribution"
+			],
+			"eligibility": "Businesses via LINE Developers.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Skip until an Asia launch.",
+			"why": "Verified from LY Corporation press release (Oct 2026).",
+			"source": "https://www.lycorp.co.jp/ja/news/release/020852/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "naver-d2sf",
+			"company": "Naver",
+			"program": "NAVER D2 Startup Factory",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.prodevs.io/accelerators/naver-d2-startup-factory",
+			"apply": "Apply via the D2SF website with deck and team information (third-party description).",
+			"value": "Seed investments, reportedly USD 50k to 500k, and Naver cloud access.",
+			"benefits": [
+				"investment",
+				"Naver infrastructure"
+			],
+			"eligibility": "Early-stage and seed startups, mostly in Korea.",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"next": "Skip.",
+			"why": "Third-party source only; Korea focus.",
+			"source": "https://www.prodevs.io/accelerators/naver-d2-startup-factory",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "grab-ventures-velocity",
+			"company": "Grab",
+			"program": "Grab Ventures Velocity",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://ventures.grab.com/",
+			"apply": "Apply when a batch opens on the Grab Ventures site.",
+			"value": "Pilot market access across Grab's ecosystem.",
+			"benefits": [
+				"mentoring",
+				"pilot access",
+				"investor exposure"
+			],
+			"eligibility": "Post-seed startups scaling in Southeast Asia.",
+			"cost": "free",
+			"cadence": "batch based",
+			"fit": 1,
+			"reach": 4,
+			"access": 2,
+			"wave": 5,
+			"next": "Skip.",
+			"why": "No current batch dates found.",
+			"source": "https://ventures.grab.com/",
 			"checked": "2026-11-06"
 		}
 	]

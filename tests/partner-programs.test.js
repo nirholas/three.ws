@@ -14,11 +14,13 @@ import {
 	DATA,
 	DOC,
 	PROMO_DOC,
+	MOONSHOT_DOC,
 	SECTORS,
 	load,
 	loadAll,
 	validateAll,
 	renderPromo,
+	renderMoonshots,
 	outputs,
 	validate,
 	waveOf,
@@ -266,6 +268,34 @@ describe('sectors and the promotion index', () => {
 		expect(md).not.toContain('How to get dead');
 		expect(md).not.toMatch(/[\u2013\u2014]/);
 	});
+
+	it('names the most open door into each moonshot company and lists the ones we hold', () => {
+		const db = {
+			updated: '2026-11-06',
+			companies: [{ name: 'Giant', moonshot: true }, { name: 'Closed Giant', moonshot: true }, { name: 'Small' }],
+			programs: [
+				base({ id: 'giant-hard', company: 'Giant', program: 'Giant Strategic Alliance', access: 1, fit: 5, reach: 5 }),
+				base({ id: 'giant-easy', company: 'Giant', program: 'Giant Developer Store', access: 5, fit: 3, reach: 3 }),
+				base({ id: 'giant-held', company: 'Giant', program: 'Giant Startups', status: 'member' }),
+				base({ id: 'giant-gone', company: 'Closed Giant', program: 'Old Fund', status: 'closed', why: 'Retired' }),
+				base({ id: 'small-open', company: 'Small', program: 'Small Partners' }),
+			],
+		};
+		const md = renderMoonshots([{ sector: 'brands', db }]);
+		expect(md).toContain('**2 household names tracked.**');
+		expect(md).toMatch(/## Doors we already walked through[\s\S]*Giant Startups[\s\S]*## The easiest door/);
+		const doors = md.slice(md.indexOf('## The easiest door'), md.indexOf('## No public door yet'));
+		expect(doors).toMatch(/\| 1 \| Giant \(already a member elsewhere\) \| \[Brands\]\(\.\/brand-programs\.md\) \| \[Giant Developer Store\]/);
+		expect(doors).not.toContain('Strategic Alliance');
+		expect(doors).not.toContain('Small Partners');
+		expect(md).toMatch(/## No public door yet[\s\S]*\*\*Closed Giant\*\* \(Brands\)/);
+		expect(md).not.toMatch(/[\u2013\u2014]/);
+	});
+
+	it('rejects a moonshot flag that is not true', () => {
+		const db = { ...dbOf(base()), companies: [{ name: 'Acme', moonshot: 'yes' }] };
+		expect(validate(db).join('\n')).toMatch(/company Acme: moonshot must be true or absent/);
+	});
 });
 
 describe('committed tracker', () => {
@@ -278,6 +308,6 @@ describe('committed tracker', () => {
 			expect(existsSync(path), path).toBe(true);
 			expect(readFileSync(path, 'utf8'), path).toBe(content);
 		}
-		expect(outputs(all).map(([p]) => p)).toEqual(expect.arrayContaining([DOC, PROMO_DOC]));
+		expect(outputs(all).map(([p]) => p)).toEqual(expect.arrayContaining([DOC, PROMO_DOC, MOONSHOT_DOC]));
 	});
 });

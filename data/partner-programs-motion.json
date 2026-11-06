@@ -8,7 +8,8 @@
 		},
 		{
 			"name": "Blender",
-			"angle": "Submit the packaged three.ws Forge extension to Blender Extensions (free); the Development Fund is a paid, optional follow-up."
+			"angle": "Submit the packaged three.ws Forge extension to Blender Extensions (free); the Development Fund is a paid, optional follow-up.",
+			"moonshot": true
 		},
 		{
 			"name": "Mesh2Motion",
@@ -64,7 +65,8 @@
 		},
 		{
 			"name": "Sony",
-			"angle": "Build a mocopi BVH-over-UDP receiver bridge and email mocopi-support@sony.com for a commercial-use blessing and developer-event slot."
+			"angle": "Build a mocopi BVH-over-UDP receiver bridge and email mocopi-support@sony.com for a commercial-use blessing and developer-event slot.",
+			"moonshot": true
 		},
 		{
 			"name": "Genies",
@@ -76,7 +78,8 @@
 		},
 		{
 			"name": "Meta",
-			"angle": "Low fit; Unity and Unreal only."
+			"angle": "Low fit; Unity and Unreal only.",
+			"moonshot": true
 		},
 		{
 			"name": "Cascadeur",
@@ -104,7 +107,8 @@
 		},
 		{
 			"name": "Shutterstock",
-			"angle": "TurboSquid bans AI-generated content; skip for Forge output."
+			"angle": "TurboSquid bans AI-generated content; skip for Forge output.",
+			"moonshot": true
 		},
 		{
 			"name": "Vicon",
@@ -112,7 +116,8 @@
 		},
 		{
 			"name": "Adobe",
-			"angle": "Mixamo has no partner route; keep Mixamo clips out of the public library and ask Adobe for written permission only if needed."
+			"angle": "Mixamo has no partner route; keep Mixamo clips out of the public library and ask Adobe for written permission only if needed.",
+			"moonshot": true
 		},
 		{
 			"name": "Meshcapade",
