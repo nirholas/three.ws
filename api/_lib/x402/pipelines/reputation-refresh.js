@@ -249,6 +249,11 @@ export async function run(ctx = {}) {
 	let lastTxSig = null;
 
 	for (let i = 0; i < agents.length; i++) {
+		// The tick is out of time. The rest of the batch waits for the next run.
+		if (ctx.shouldStop?.()) {
+			log.info('reputation_refresh_tick_budget_spent', { done: i });
+			break;
+		}
 		const agent = agents[i];
 
 		// Stop before charging again if the next call would exceed the daily cap.

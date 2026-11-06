@@ -34,7 +34,7 @@ import {
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { getRedis } from '../_lib/redis.js';
-import { tickBudgetSpent } from '../_lib/x402/tick-budget.js';
+import { claimEntryRun, releaseEntryRun, tickBudgetSpent } from '../_lib/x402/tick-budget.js';
 import { sql } from '../_lib/db.js';
 import { solanaConnection } from '../_lib/solana/connection.js';
 import { logger } from '../_lib/usage.js';
@@ -450,11 +450,24 @@ export default wrapCron(async (req, res) => {
 		// inline call. A thrown run() never crashes the tick — it lands as a
 		// recorded failure with the cooldown still applied to avoid hot-looping.
 		if (typeof entry.run === 'function') {
+			// Another tick may still be inside this entry, or may have finished it
+			// after this tick read the cooldowns at startup.
+			if (!(await claimEntryRun(redis, entry))) {
+				results.push({ id: entry.id, status: 'skip', note: 'already_running' });
+				continue;
+			}
+			if (await isCoolingDown(redis, entry)) {
+				await releaseEntryRun(redis, entry);
+				continue;
+			}
 			let outcome = null;
 			try {
 				outcome = await entry.run({
 					origin, buyer, conn, blockhash, mintInfo,
 					redis, sql, log, runId,
+					// Pipelines check this between calls and stop STARTING new ones. A call
+					// in flight always finishes, so no payment is cut off and misreported.
+					shouldStop: () => tickBudgetSpent(tickStartedAt),
 					// A run() pipeline pays through the shared payX402 client, so it
 					// must see the payer's real float as its ceiling too — otherwise it
 					// happily attempts settles the daily cap permits but the wallet
@@ -480,6 +493,7 @@ export default wrapCron(async (req, res) => {
 				await incrementDailySpend(redis, amountAtomic);
 			}
 			await setCooldown(redis, entry);
+			await releaseEntryRun(redis, entry);
 
 			results.push({
 				id: entry.id,

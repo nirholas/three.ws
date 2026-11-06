@@ -60,9 +60,9 @@
 // row flips back to reconciled the moment volume returns, so the board self-heals.
 //
 // BOUNDS — read-only against the chain; getSignatureStatuses batched at 256; at
-// most MAX_PARSED_TX_PER_RUN (50) getParsedTransaction calls per run, sweeps
-// funded from that budget first (they are rare and each one moves the whole
-// float). Never mutates the logs it audits — verdicts in payment_reconciliation
+// most MAX_PARSED_TX_PER_RUN (50) getParsedTransaction calls per run, split so
+// sweeps (each one moves the whole float) and settle amounts both get sampled.
+// Never mutates the logs it audits: verdicts in payment_reconciliation
 // and one x402_autonomous_log summary row are the only writes.
 //
 // Wiring: run()-style entry (`ring-reconciliation`) in autonomous-registry.js,
@@ -138,31 +138,66 @@ async function ensureSchema(db) {
 	await db`ALTER TABLE x402_autonomous_log ADD COLUMN IF NOT EXISTS value_extracted jsonb`;
 }
 
-async function upsertVerdict(db, runId, { source, sourceRef, txSig, amountAtomic, dbStatus, chainStatus, reconciled, discrepancy, detail }) {
-	try {
-		await db`
-			INSERT INTO payment_reconciliation
-				(source, source_ref, tx_signature, network, amount_atomic,
-				 db_status, chain_status, reconciled, discrepancy, detail, run_id, checked_at)
-			VALUES
-				(${source}, ${sourceRef}, ${txSig || null}, ${'solana:mainnet'}, ${amountAtomic ?? null},
-				 ${dbStatus}, ${chainStatus}, ${reconciled}, ${discrepancy || null},
-				 ${detail ? JSON.stringify(detail) : null}, ${runId}, now())
-			ON CONFLICT (source, source_ref) DO UPDATE SET
-				tx_signature  = EXCLUDED.tx_signature,
-				network       = EXCLUDED.network,
-				amount_atomic = EXCLUDED.amount_atomic,
-				db_status     = EXCLUDED.db_status,
-				chain_status  = EXCLUDED.chain_status,
-				reconciled    = EXCLUDED.reconciled,
-				discrepancy   = EXCLUDED.discrepancy,
-				detail        = EXCLUDED.detail,
-				run_id        = EXCLUDED.run_id,
-				checked_at    = now()
-		`;
-	} catch (err) {
-		log.warn('ring_reconcile_upsert_failed', { ref: `${source}:${sourceRef}`, message: err?.message });
+// Verdicts are buffered and written VERDICT_BATCH at a time. One round trip per
+// verdict cost 380 to 590s on a full book (~5,500 rows, measured 2026-11-06), which
+// carried the autonomous tick past its 120s budget on every reconciliation. Keyed
+// by (source, source_ref) because Postgres refuses an upsert that touches one row
+// twice in a statement; the last verdict for a key wins, as it did row by row.
+const VERDICT_BATCH = 500;
+
+function verdictWriter(db, runId) {
+	const pending = new Map();
+
+	async function flush() {
+		if (!pending.size) return;
+		const rows = [...pending.values()];
+		pending.clear();
+		try {
+			await db`
+				INSERT INTO payment_reconciliation
+					(source, source_ref, tx_signature, network, amount_atomic,
+					 db_status, chain_status, reconciled, discrepancy, detail, run_id, checked_at)
+				SELECT v.source, v.source_ref, v.tx_signature, v.network, v.amount_atomic,
+				       v.db_status, v.chain_status, v.reconciled, v.discrepancy, v.detail, v.run_id, now()
+				FROM jsonb_to_recordset(${JSON.stringify(rows)}::jsonb) AS v(
+					source text, source_ref text, tx_signature text, network text, amount_atomic bigint,
+					db_status text, chain_status text, reconciled boolean, discrepancy text, detail jsonb, run_id uuid
+				)
+				ON CONFLICT (source, source_ref) DO UPDATE SET
+					tx_signature  = EXCLUDED.tx_signature,
+					network       = EXCLUDED.network,
+					amount_atomic = EXCLUDED.amount_atomic,
+					db_status     = EXCLUDED.db_status,
+					chain_status  = EXCLUDED.chain_status,
+					reconciled    = EXCLUDED.reconciled,
+					discrepancy   = EXCLUDED.discrepancy,
+					detail        = EXCLUDED.detail,
+					run_id        = EXCLUDED.run_id,
+					checked_at    = now()
+			`;
+		} catch (err) {
+			log.warn('ring_reconcile_upsert_failed', { rows: rows.length, message: err?.message });
+		}
 	}
+
+	async function add({ source, sourceRef, txSig, amountAtomic, dbStatus, chainStatus, reconciled, discrepancy, detail }) {
+		pending.set(`${source}\0${sourceRef}`, {
+			source,
+			source_ref: String(sourceRef),
+			tx_signature: txSig || null,
+			network: 'solana:mainnet',
+			amount_atomic: amountAtomic == null ? null : String(amountAtomic),
+			db_status: dbStatus,
+			chain_status: chainStatus,
+			reconciled,
+			discrepancy: discrepancy || null,
+			detail: detail ?? null,
+			run_id: runId,
+		});
+		if (pending.size >= VERDICT_BATCH) await flush();
+	}
+
+	return { add, flush };
 }
 
 // ── Book loaders — tables may not exist in a fresh env; that is "no book", not
@@ -395,6 +430,7 @@ export async function run(ctx = {}) {
 	}
 
 	const conn = ctx.conn || solanaConnection({ url: SOLANA_RPC, commitment: 'confirmed' });
+	const verdicts = verdictWriter(db, runId);
 
 	// One WARN alert per class per day; CRITICALs bypass this and page immediately.
 	async function warnThrottled(key, title, detail) {
@@ -442,9 +478,15 @@ export async function run(ctx = {}) {
 	])];
 	const statuses = allSigs.length ? await fetchOnChainStatuses(conn, allSigs) : new Map();
 
+	// Sweeps run first and usually outnumber the budget, so half is held back for
+	// settles. Without that reserve no settle amount was ever checked on-chain.
 	let parsedBudget = ctx.maxParsedTx ?? MAX_PARSED_TX_PER_RUN;
-	async function parseTx(sig) {
-		if (parsedBudget <= 0) return { budgetExhausted: true, tx: null };
+	const settleReserve = settles.length ? Math.floor(parsedBudget / 2) : 0;
+	async function parseTx(sig, { reserve = 0 } = {}) {
+		// The tick is out of time: what is not parsed stays signature-reconciled and
+		// is sampled on a later run, exactly as when the budget runs out.
+		if (ctx.shouldStop?.()) parsedBudget = 0;
+		if (parsedBudget <= reserve) return { budgetExhausted: true, tx: null };
 		parsedBudget -= 1;
 		summary.parsed_tx_used += 1;
 		try {
@@ -455,9 +497,8 @@ export async function run(ctx = {}) {
 		}
 	}
 
-	// ── Check 3 first: sweeps draw the parsed-tx budget before settle sampling —
-	//    each sweep moves the entire float, so full verification of every sweep
-	//    outranks sampling one more settle.
+	// ── Check 3 first: each sweep moves the entire float, so sweeps draw on the
+	//    parsed-tx budget ahead of settle sampling, down to the settle reserve.
 	const treasuryAddress = env.X402_PAY_TO_SOLANA || process.env.X402_PAY_TO_SOLANA || null;
 	// A split sweep (payer leg + master revshare leg) shares one tx_sig; the
 	// treasury's on-chain delta must match the SUM of its legs, not each row.
@@ -468,7 +509,7 @@ export async function run(ctx = {}) {
 		if (!row.tx_sig) {
 			summary.sweeps_missing += 1;
 			critical.push({ kind: 'x402_ring_sweep_missing', ref, sig: null });
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_ledger_sweep', sourceRef: ref, txSig: null,
 				amountAtomic: row.amount_atomic, dbStatus: 'sweep_recorded',
 				chainStatus: 'missing_signature', reconciled: false,
@@ -483,7 +524,7 @@ export async function run(ctx = {}) {
 			const kind = st.found ? 'x402_ring_sweep_failed' : 'x402_ring_sweep_missing';
 			summary[st.found ? 'sweeps_failed' : 'sweeps_missing'] += 1;
 			critical.push({ kind, ref, sig: row.tx_sig });
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_ledger_sweep', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'sweep_recorded',
 				chainStatus: st.found ? 'failed_onchain' : 'missing_onchain', reconciled: false,
@@ -492,12 +533,12 @@ export async function run(ctx = {}) {
 			continue;
 		}
 		// Confirmed — now prove amount + direction from the parsed tx.
-		const { budgetExhausted, tx } = await parseTx(row.tx_sig);
+		const { budgetExhausted, tx } = await parseTx(row.tx_sig, { reserve: settleReserve });
 		if (budgetExhausted || !tx) {
 			// Confirmed on-chain, movement unproven this run — reconciled with a
 			// note; the rolling window re-samples it next tick.
 			summary.sweeps_confirmed += 1;
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_ledger_sweep', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'sweep_recorded',
 				chainStatus: 'confirmed', reconciled: true, discrepancy: null,
@@ -509,7 +550,7 @@ export async function run(ctx = {}) {
 		if (!check.ok && !check.soft) {
 			summary.sweep_mismatches += 1;
 			critical.push({ kind: 'x402_ring_sweep_mismatch', ref, sig: row.tx_sig, reason: check.reason });
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_ledger_sweep', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'sweep_recorded',
 				chainStatus: 'amount_mismatch', reconciled: false,
@@ -518,7 +559,7 @@ export async function run(ctx = {}) {
 			});
 		} else {
 			summary.sweeps_confirmed += 1;
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_ledger_sweep', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'sweep_recorded',
 				chainStatus: 'confirmed', reconciled: true, discrepancy: null,
@@ -535,7 +576,7 @@ export async function run(ctx = {}) {
 		if (!row.tx_sig) {
 			summary.settles_no_signature += 1;
 			critical.push({ kind: 'x402_ring_settle_missing', ref, sig: null });
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_facilitator_settle', sourceRef: ref, txSig: null,
 				amountAtomic: row.amount_atomic, dbStatus: 'settle_ok',
 				chainStatus: 'missing_signature', reconciled: false,
@@ -550,7 +591,7 @@ export async function run(ctx = {}) {
 			const kind = st.found ? 'x402_ring_settle_failed' : 'x402_ring_settle_missing';
 			summary[st.found ? 'settles_failed' : 'settles_missing'] += 1;
 			critical.push({ kind, ref, sig: row.tx_sig });
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_facilitator_settle', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'settle_ok',
 				chainStatus: st.found ? 'failed_onchain' : 'missing_onchain', reconciled: false,
@@ -568,7 +609,7 @@ export async function run(ctx = {}) {
 		const { tx } = await parseTx(row.tx_sig);
 		if (!tx) {
 			// Signature confirmed; amount unproven this run — reconciled, resampled later.
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_facilitator_settle', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'settle_ok',
 				chainStatus: 'confirmed', reconciled: true, discrepancy: null,
@@ -581,7 +622,7 @@ export async function run(ctx = {}) {
 		if (!check.ok && !check.soft) {
 			summary.amount_mismatches += 1;
 			critical.push({ kind: 'x402_ring_amount_mismatch', ref, sig: row.tx_sig, reason: check.reason });
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_facilitator_settle', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'settle_ok',
 				chainStatus: 'amount_mismatch', reconciled: false,
@@ -589,7 +630,7 @@ export async function run(ctx = {}) {
 				detail: { reason: check.reason, payer: row.payer, pay_to: row.pay_to },
 			});
 		} else {
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_facilitator_settle', sourceRef: ref, txSig: row.tx_sig,
 				amountAtomic: row.amount_atomic, dbStatus: 'settle_ok',
 				chainStatus: 'confirmed', reconciled: true, discrepancy: null,
@@ -599,7 +640,7 @@ export async function run(ctx = {}) {
 	}
 	// Confirmed settles the budget did not reach are still signature-reconciled.
 	for (const row of confirmedSettles.slice(summary.settles_amount_sampled)) {
-		await upsertVerdict(db, runId, {
+		await verdicts.add({
 			source: 'ring_facilitator_settle', sourceRef: String(row.id), txSig: row.tx_sig,
 			amountAtomic: row.amount_atomic, dbStatus: 'settle_ok',
 			chainStatus: 'confirmed', reconciled: true, discrepancy: null,
@@ -616,7 +657,7 @@ export async function run(ctx = {}) {
 		if (!row.tx_sig || buyerSigs.has(row.tx_sig)) continue;
 		if (new Date(row.ts).getTime() > graceCutoff) continue;
 		summary.orphans_settle_side += 1;
-		await upsertVerdict(db, runId, {
+		await verdicts.add({
 			source: 'ring_log_coherence', sourceRef: `settle:${row.tx_sig}`, txSig: row.tx_sig,
 			amountAtomic: row.amount_atomic, dbStatus: 'settle_ok',
 			chainStatus: 'no_buyer_record', reconciled: false,
@@ -629,7 +670,7 @@ export async function run(ctx = {}) {
 		if (!row.tx_signature || settleSigs.has(row.tx_signature)) continue;
 		if (new Date(row.ts).getTime() > graceCutoff) continue;
 		summary.orphans_buyer_side += 1;
-		await upsertVerdict(db, runId, {
+		await verdicts.add({
 			source: 'ring_log_coherence', sourceRef: `buyer:${row.tx_signature}`, txSig: row.tx_signature,
 			amountAtomic: null, dbStatus: 'buyer_paid',
 			chainStatus: 'no_settle_record', reconciled: false,
@@ -675,7 +716,7 @@ export async function run(ctx = {}) {
 		const divergence = feeDivergence(logged?.total, auditTotal);
 		summary.fee_divergence = divergence;
 		if (divergence != null && divergence > FEE_DIVERGENCE_THRESHOLD) {
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_fee_coherence', sourceRef: day, txSig: null,
 				amountAtomic: Number(logged?.total || 0), dbStatus: 'fees_logged',
 				chainStatus: 'fee_divergence', reconciled: false,
@@ -688,7 +729,7 @@ export async function run(ctx = {}) {
 				`Facilitator log: ${logged?.total} lamports; fee-audit rollup: ${auditTotal} lamports. One of the two fee books is wrong — check x402_self_facilitator_log vs x402_fee_audit for ${day}.`,
 			);
 		} else if (divergence != null) {
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_fee_coherence', sourceRef: day, txSig: null,
 				amountAtomic: Number(logged?.total || 0), dbStatus: 'fees_logged',
 				chainStatus: 'confirmed', reconciled: true, discrepancy: null,
@@ -707,13 +748,14 @@ export async function run(ctx = {}) {
 		const recentSettles = settles.filter((r) => new Date(r.ts).getTime() >= windowCutoff).length;
 		if (recentSettles === 0) {
 			summary.tripwire_fired = true;
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_tripwire', sourceRef: 'ring-silent', txSig: null,
 				amountAtomic: null, dbStatus: 'ring_enabled',
 				chainStatus: 'no_volume', reconciled: false,
 				discrepancy: 'x402_ring_enabled_but_silent',
 				detail: { window_minutes: TRIPWIRE_WINDOW_MINUTES },
 			});
+			await verdicts.flush();
 			await alert(
 				'⚠️ x402 ring enabled but silent',
 				`The self-hosted facilitator is enabled and configured, but x402_self_facilitator_log shows ZERO successful settles in the last ${TRIPWIRE_WINDOW_MINUTES} minutes. The ring should tick continuously — check the autonomous loop, the payer's USDC/SOL balances, and /api/x402-ring.`,
@@ -721,7 +763,7 @@ export async function run(ctx = {}) {
 			).catch?.(() => {});
 		} else {
 			// Volume present — clear any standing tripwire verdict so the board self-heals.
-			await upsertVerdict(db, runId, {
+			await verdicts.add({
 				source: 'ring_tripwire', sourceRef: 'ring-silent', txSig: null,
 				amountAtomic: null, dbStatus: 'ring_enabled',
 				chainStatus: 'confirmed', reconciled: true, discrepancy: null,
@@ -729,6 +771,8 @@ export async function run(ctx = {}) {
 			});
 		}
 	}
+
+	await verdicts.flush();
 
 	// ── CRITICAL page: books disagree with the chain about ring money.
 	if (critical.length > 0) {
@@ -761,6 +805,7 @@ export async function run(ctx = {}) {
 
 	return {
 		success: true,
+		recorded: true, // recordLogRow above wrote this run's row; the loop must not add a second
 		amountAtomic: 0, // read-only audit — no payment owed
 		txSig: null,
 		errorMsg: null,

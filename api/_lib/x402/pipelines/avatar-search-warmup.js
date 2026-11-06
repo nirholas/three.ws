@@ -149,6 +149,11 @@ export async function run(ctx = {}) {
 	let lastTxSig = null;
 
 	for (let i = 0; i < WARMUP_QUERIES.length; i++) {
+		// The tick is out of time. The rest of the batch waits for the next run.
+		if (ctx.shouldStop?.()) {
+			log.info('avatar_warmup_tick_budget_spent', { done: i });
+			break;
+		}
 		const query = WARMUP_QUERIES[i];
 		if (remainingCap <= 0) {
 			log.info('avatar_warmup_cap_reached', { query, spent_atomic: spentAtomic });

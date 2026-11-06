@@ -295,6 +295,11 @@ export async function run(ctx = {}) {
 	const topicCache = new Map();
 
 	for (let i = 0; i < targets.length; i++) {
+		// The tick is out of time. The rest of the batch waits for the next run.
+		if (ctx.shouldStop?.()) {
+			log.info('sniper_intel_tick_budget_spent', { done: i });
+			break;
+		}
 		const { mint, symbol } = targets[i];
 		if (remainingCap <= 0) {
 			log.info('sniper_intel_cap_reached', { spent_atomic: spentAtomic, remaining_targets: targets.length - i });

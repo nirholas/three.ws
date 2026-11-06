@@ -220,7 +220,7 @@ describe('ring-reconciliation run() — settle integrity (check 1)', () => {
 		expect(out.responseData.discrepancies).toBe(0);
 		expect(ctx.alerts.length).toBe(0);
 		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text));
-		expect(v.values).toContain('ring_facilitator_settle');
+		expect(v.values[0]).toContain('ring_facilitator_settle');
 	});
 
 	it('settle whose tx is absent on-chain (null status) → CRITICAL x402_ring_settle_missing', async () => {
@@ -235,7 +235,7 @@ describe('ring-reconciliation run() — settle integrity (check 1)', () => {
 
 		expect(out.responseData.settles_missing).toBe(1);
 		expect(out.responseData.discrepancies).toBe(1);
-		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && c.values.includes('x402_ring_settle_missing'));
+		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && String(c.values[0]).includes('x402_ring_settle_missing'));
 		expect(v).toBeTruthy();
 	});
 
@@ -265,7 +265,7 @@ describe('ring-reconciliation run() — settle integrity (check 1)', () => {
 		const crit = ctx.alerts.find((a) => a.title.includes('ring reconciliation'));
 		expect(crit).toBeTruthy();
 		expect(crit.detail).toMatch(/x402_ring_settle_failed=1/);
-		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && c.values.includes('x402_ring_settle_failed'));
+		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && String(c.values[0]).includes('x402_ring_settle_failed'));
 		expect(v).toBeTruthy();
 	});
 
@@ -324,7 +324,7 @@ describe('ring-reconciliation run() — sweep integrity (check 3)', () => {
 		const ctx = baseCtx({ sql, conn });
 		const out = await run(ctx);
 		expect(out.responseData.sweep_mismatches).toBe(1);
-		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && c.values.includes('x402_ring_sweep_mismatch'));
+		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && String(c.values[0]).includes('x402_ring_sweep_mismatch'));
 		expect(v).toBeTruthy();
 		delete process.env.X402_PAY_TO_SOLANA;
 	});
@@ -402,7 +402,7 @@ describe('ring-reconciliation run() — fee coherence (check 5)', () => {
 		const out = await run(ctx);
 		expect(out.responseData.fee_divergence).toBeGreaterThan(FEE_DIVERGENCE_THRESHOLD);
 		expect(ctx.alerts.find((a) => a.title.includes('fee books diverge'))).toBeTruthy();
-		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && c.values.includes('x402_ring_fee_divergence'));
+		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && String(c.values[0]).includes('x402_ring_fee_divergence'));
 		expect(v).toBeTruthy();
 	});
 
@@ -425,7 +425,7 @@ describe('ring-reconciliation run() — zero-volume tripwire', () => {
 		expect(out.responseData.tripwire_fired).toBe(true);
 		const tw = ctx.alerts.find((a) => a.title.includes('enabled but silent'));
 		expect(tw).toBeTruthy();
-		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && c.values.includes('x402_ring_enabled_but_silent'));
+		const v = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && String(c.values[0]).includes('x402_ring_enabled_but_silent'));
 		expect(v).toBeTruthy();
 	});
 
@@ -439,7 +439,7 @@ describe('ring-reconciliation run() — zero-volume tripwire', () => {
 		const ctx = baseCtx({ sql, conn, ringEnabled: true });
 		const out = await run(ctx);
 		expect(out.responseData.tripwire_fired).toBe(false);
-		const heal = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && c.values.includes('ring_tripwire') && c.values.includes(true));
+		const heal = sql.calls.find((c) => /INSERT INTO payment_reconciliation/i.test(c.text) && String(c.values[0]).includes('ring_tripwire') && String(c.values[0]).includes(true));
 		expect(heal).toBeTruthy();
 	});
 
@@ -520,5 +520,85 @@ describe('ring-reconciliation run() — bounds & throttling', () => {
 		const logRow = sql.calls.find((c) => /INSERT INTO x402_autonomous_log/i.test(c.text));
 		expect(logRow).toBeTruthy();
 		expect(logRow.values).toContain('reconciliation');
+	});
+});
+
+// Measured 2026-11-06: every run took 380 to 590s, because each of ~5,500 verdicts
+// was its own serial round trip to Neon. That carried the autonomous tick past its
+// 120s budget (503 cron_timeout) on every reconciliation. Sweeps also spent the
+// whole parsed-tx budget, so settles_amount_sampled was 0 on every run and no
+// settle amount was ever checked against the chain.
+describe('ring-reconciliation run(): cost of a full book', () => {
+	const settleRows = (n) => Array.from({ length: n }, (_, i) => ({
+		id: i + 1, ts: iso(60_000), payer: PAYER, pay_to: TREASURY, mint: MINT, amount_atomic: 1_000_000, tx_sig: `sigS${i}`,
+	}));
+	const sweepRows = (n) => Array.from({ length: n }, (_, i) => ({
+		id: i + 1, ts: iso(60_000), from_wallet: TREASURY, to_wallet: PAYER, amount_atomic: 1_000_000, tx_sig: `sigW${i}`,
+	}));
+	const allConfirmed = (rows) => Object.fromEntries(rows.map((r) => [r.tx_sig, { found: true, err: null }]));
+	const inserts = (sql) => sql.calls.filter((c) => /INSERT INTO payment_reconciliation/i.test(c.text));
+
+	it('writes a full book in a handful of statements, not one per verdict', async () => {
+		const settle = settleRows(1200);
+		const sql = mockSql({ settle });
+		const conn = mockConn({ statuses: allConfirmed(settle) });
+		const out = await run(baseCtx({ sql, conn }));
+		expect(out.responseData.settles_confirmed).toBe(1200);
+		expect(inserts(sql).length).toBeLessThanOrEqual(5);
+		const written = inserts(sql).flatMap((c) => JSON.parse(c.values[0]));
+		expect(new Set(written.map((v) => v.source_ref)).size).toBe(1200);
+	});
+
+	it('never puts one verdict key twice in a statement (Postgres rejects that upsert)', async () => {
+		const settle = settleRows(3);
+		const sql = mockSql({ settle });
+		const conn = mockConn({ statuses: allConfirmed(settle), parsed: {} });
+		await run(baseCtx({ sql, conn }));
+		for (const c of inserts(sql)) {
+			const keys = JSON.parse(c.values[0]).map((v) => `${v.source}:${v.source_ref}`);
+			expect(new Set(keys).size).toBe(keys.length);
+		}
+	});
+
+	it('lands verdicts before the CRITICAL page that points the operator at them', async () => {
+		const settle = settleRows(1);
+		const sql = mockSql({ settle });
+		const conn = mockConn();
+		conn.getSignatureStatuses = async (sigs) => ({ value: sigs.map(() => null) });
+		let writtenWhenPaged = 0;
+		const ctx = baseCtx({ sql, conn });
+		ctx.sendAlert = async () => { writtenWhenPaged = inserts(sql).length; };
+		await run(ctx);
+		expect(writtenWhenPaged).toBeGreaterThan(0);
+	});
+
+	it('keeps part of the parsed budget for settles when sweeps outnumber it', async () => {
+		process.env.X402_PAY_TO_SOLANA = TREASURY;
+		const settle = settleRows(100);
+		const sweep = sweepRows(100);
+		const parsed = Object.fromEntries([...settle, ...sweep].map((r) => [r.tx_sig, parsedTransfer({ sender: PAYER, receiver: TREASURY, amount: 1_000_000 })]));
+		const sql = mockSql({ settle, sweep });
+		const conn = mockConn({ statuses: allConfirmed([...settle, ...sweep]), parsed });
+		const out = await run(baseCtx({ sql, conn }));
+		expect(out.responseData.parsed_tx_used).toBeLessThanOrEqual(MAX_PARSED_TX_PER_RUN);
+		expect(out.responseData.settles_amount_sampled).toBeGreaterThanOrEqual(MAX_PARSED_TX_PER_RUN / 2);
+		delete process.env.X402_PAY_TO_SOLANA;
+	});
+
+	it('stops parsing when the tick says stop and still reports what it proved', async () => {
+		const settle = settleRows(20);
+		const parsed = Object.fromEntries(settle.map((r) => [r.tx_sig, parsedTransfer({ sender: PAYER, receiver: TREASURY, amount: 1_000_000 })]));
+		const sql = mockSql({ settle });
+		const conn = mockConn({ statuses: allConfirmed(settle), parsed });
+		const out = await run(baseCtx({ sql, conn, shouldStop: () => conn.parsedCalls.length >= 3 }));
+		expect(conn.parsedCalls.length).toBe(3);
+		expect(out.success).toBe(true);
+		expect(out.responseData.settles_confirmed).toBe(20);
+	});
+
+	it('tells the loop the run already logged itself, so a run is one row and not two', async () => {
+		const sql = mockSql();
+		const out = await run(baseCtx({ sql, conn: mockConn() }));
+		expect(out.recorded).toBe(true);
 	});
 });

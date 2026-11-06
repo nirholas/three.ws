@@ -22,3 +22,43 @@ export const TICK_START_CUTOFF_MS = 120_000 - WORST_CASE_CALL_MS;
 export function tickBudgetSpent(startedAt, now = Date.now()) {
 	return now - startedAt >= TICK_START_CUTOFF_MS;
 }
+
+// A run() entry can outlive the tick that started it, and its cooldown is only
+// written when it finishes, so the next minute's tick would otherwise start it
+// again on top of itself (paid pipelines paying twice, Ring Reconciliation
+// overlapping its own runs). The lease is the guard; it expires on its own so an
+// instance killed mid-run cannot wedge an entry.
+const ENTRY_RUN_PREFIX = 'x402:autonomous:running:';
+
+/** Longest an entry stays claimed if its instance dies before releasing it. */
+export const ENTRY_RUN_LEASE_S = 600;
+
+/**
+ * Claim an entry for this tick. Redis being absent or failing never stops the
+ * ring: the cooldown path degrades the same way.
+ * @param {any} redis
+ * @param {{ id: string }} entry
+ * @returns {Promise<boolean>} false only when another tick holds the entry
+ */
+export async function claimEntryRun(redis, entry) {
+	if (!redis) return true;
+	try {
+		const claimed = await redis.set(`${ENTRY_RUN_PREFIX}${entry.id}`, '1', { nx: true, ex: ENTRY_RUN_LEASE_S });
+		return claimed !== null;
+	} catch {
+		return true;
+	}
+}
+
+/**
+ * @param {any} redis
+ * @param {{ id: string }} entry
+ */
+export async function releaseEntryRun(redis, entry) {
+	if (!redis) return;
+	try {
+		await redis.del(`${ENTRY_RUN_PREFIX}${entry.id}`);
+	} catch {
+		// The lease expires on its own.
+	}
+}
