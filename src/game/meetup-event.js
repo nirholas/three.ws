@@ -124,6 +124,8 @@ export class MeetupEvent {
 			if (e.key === 'Escape' && this.panel?.classList.contains('cc-meetup-panel--open')) this._closePanel();
 		};
 		window.addEventListener('keydown', this._onKey);
+		this._onResize = () => this._placeChip();
+		window.addEventListener('resize', this._onResize);
 		// Leaving the tab mid-countdown means missing the shared moment.
 		this._onVisibility = () => { if (document.hidden) this._photo.armed = false; };
 		document.addEventListener('visibilitychange', this._onVisibility);
@@ -208,17 +210,29 @@ export class MeetupEvent {
 	destroy() {
 		cancelAnimationFrame(this._raf);
 		window.removeEventListener('keydown', this._onKey);
+		window.removeEventListener('resize', this._onResize);
 		document.removeEventListener('visibilitychange', this._onVisibility);
 		this._unmount();
 	}
 
 	// ------------------------------------------------------------------ chip
+	// The chip sits under whatever HUD is already pinned to the top: the coin
+	// bar (identity, Friends, Shop, Buy) and the King of the Totem card when up.
+	// Centred at the very top it covered the Buy and Shop buttons.
+	_placeChip() {
+		if (!this.chip) return;
+		let top = 12;
+		for (const el of [document.querySelector('.cc-coin-banner'), document.getElementById('cc-king-hud')]) {
+			if (!el || el.hidden) continue;
+			const r = el.getBoundingClientRect();
+			if (r.height > 0) top = Math.max(top, Math.round(r.bottom) + 8);
+		}
+		this.chip.style.top = `${top}px`;
+	}
+
 	_refreshChip(state) {
 		if (!this.chip) return;
-		// Dock under the King of the Totem card when it is up; top slot otherwise.
-		const king = document.getElementById('cc-king-hud');
-		const kingVisible = king && !king.hidden && king.offsetParent !== null;
-		this.chip.style.top = kingVisible ? `${Math.round(king.getBoundingClientRect().bottom) + 8}px` : '12px';
+		this._placeChip();
 
 		this.chip.classList.toggle('cc-meetup-preshow', state.phase === PHASE.PRESHOW);
 		this.chip.classList.toggle('cc-meetup-islive', state.phase === PHASE.LIVE);

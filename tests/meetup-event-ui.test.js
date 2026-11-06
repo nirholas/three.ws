@@ -18,6 +18,15 @@ import { parseEvent, PRESHOW_MS, SOON_MS, PHOTO_GATHER_MS } from '../src/game/me
 // frame may ever launch, which is what the backlog clamp has to respect.
 const MAX_LIVE_BURSTS = 14;
 
+// photo-mode.js is lazy-imported by the app on the first photo press. The group
+// photo must have it loaded BEFORE the shutter, so the module's own load is
+// observable here.
+const photoModuleLoads = vi.hoisted(() => ({ count: 0 }));
+vi.mock('../src/game/photo-mode.js', () => {
+	photoModuleLoads.count += 1;
+	return { takePhoto: vi.fn() };
+});
+
 const HOME = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const OTHER = 'THREEsynthetic1111111111111111111111111111111';
 const START = Date.parse('2026-08-07T17:00:00Z');
@@ -84,6 +93,20 @@ afterEach(() => {
 	raf.mockRestore();
 	vi.useRealTimers();
 	vi.restoreAllMocks();
+});
+
+describe('chip placement', () => {
+	it('docks below the world HUD bar so it never covers the Shop and Buy buttons', () => {
+		const bar = document.createElement('div');
+		bar.className = 'cc-coin-banner';
+		bar.getBoundingClientRect = () => ({ top: 14, bottom: 76, left: 14, right: 909, width: 895, height: 62 });
+		document.body.appendChild(bar);
+		const m = mount();
+		step(m, START - PRESHOW_MS + 1000, 3);
+		const chip = document.getElementById('cc-meetup-chip');
+		expect(chip.style.top).toBe('84px');
+		m.destroy();
+	});
 });
 
 describe('mounting rules', () => {
@@ -294,6 +317,18 @@ describe('group photo', () => {
 		groupPhoto: { atMin: 58, emote: 'av-celebrating' },
 	});
 	const SHUTTER = START + 58 * 60_000;
+
+	it('loads photo mode during the gather minute so the shutter never waits on the network', async () => {
+		const cc = fakeCc();
+		const m = mount(cc, PHOTO_EVENT);
+		step(m, SHUTTER - PHOTO_GATHER_MS - 5000);
+		await Promise.resolve();
+		expect(photoModuleLoads.count).toBe(0);
+		step(m, SHUTTER - PHOTO_GATHER_MS + 1000);
+		await new Promise((r) => setTimeout(r, 0));
+		expect(photoModuleLoads.count).toBe(1);
+		m.destroy();
+	});
 
 	it('warns a minute out, counts down, poses, then fires the photo once', () => {
 		const cc = fakeCc();

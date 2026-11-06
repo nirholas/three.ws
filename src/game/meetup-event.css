@@ -169,6 +169,10 @@ body.is-zen #cc-meetup-panel,
 body.is-zen #cc-meetup-banner { display: none; }
 
 @media (max-width: 640px) {
+	/* The HUD's right-hand stack starts under the bar, so a centred chip would
+	   cover it; keep the chip on the left edge instead. */
+	#cc-meetup-chip { left: 14px; transform: none; max-width: calc(100vw - 150px); }
+	#cc-meetup-chip:active { transform: scale(0.98); }
 	.cc-meetup-title { max-width: 38vw; }
 	#cc-meetup-banner { padding: 14px 26px; }
 	.cc-meetup-banner-title { font-size: 17px; }
