@@ -193,6 +193,68 @@ describe('signature paging', () => {
 	});
 });
 
+describe('fleet-shared wallet profiles', () => {
+	// Measured 2026-11-06: /api/crypto/due-diligence was the largest Solana RPC
+	// caller (120,022 getSignaturesForAddress in 6h, 22% of all spend) because the
+	// profile memo lived in one process and the service runs ~30 instances. A
+	// wallet's first transaction and funder never change, so another instance
+	// must be able to reuse a read this one already paid for.
+	const fresh = async (store) => {
+		vi.resetModules();
+		vi.doMock('../api/_lib/cache.js', async (orig) => ({
+			...(await orig()),
+			cacheGet: async (k) => store.get(k) ?? null,
+			cacheSet: async (k, v) => { store.set(k, v); },
+		}));
+		return import('../api/_lib/token-due-diligence.js');
+	};
+	const page = [{ signature: 'first', slot: 10, blockTime: 1000 }];
+	const historyRpc = () => vi.fn(async (m) => (m === 'getSignaturesForAddress' ? page : null));
+
+	it('a second instance reads no RPC for a wallet another instance profiled', async () => {
+		const store = new Map();
+		const a = await fresh(store);
+		const rpcA = historyRpc();
+		const first = await a.cachedProfile(W[1], rpcA);
+		expect(rpcA).toHaveBeenCalled();
+
+		const b = await fresh(store);
+		const rpcB = historyRpc();
+		expect(await b.cachedProfile(W[1], rpcB)).toEqual(first);
+		expect(rpcB).not.toHaveBeenCalled();
+	});
+
+	it('never shares an empty history: a holder has signatures, so empty means a lane lied', async () => {
+		const store = new Map();
+		const a = await fresh(store);
+		const profile = await a.cachedProfile(W[2], vi.fn(async () => []));
+		expect(profile.sig_count).toBe(0);
+		expect(store.size).toBe(0);
+	});
+
+	it('does not remember a failed read', async () => {
+		const store = new Map();
+		const a = await fresh(store);
+		await expect(a.cachedProfile(W[3], vi.fn(async () => { throw new Error('all lanes exhausted'); }))).rejects.toThrow();
+		expect(store.size).toBe(0);
+		const rpc = historyRpc();
+		await a.cachedProfile(W[3], rpc);
+		expect(rpc).toHaveBeenCalled();
+	});
+
+	it('still reads the chain when the shared cache is down', async () => {
+		vi.resetModules();
+		vi.doMock('../api/_lib/cache.js', async (orig) => ({
+			...(await orig()),
+			cacheGet: async () => { throw new Error('redis down'); },
+			cacheSet: async () => { throw new Error('redis down'); },
+		}));
+		const a = await import('../api/_lib/token-due-diligence.js');
+		const rpc = historyRpc();
+		expect((await a.cachedProfile(W[4], rpc)).sig_count).toBe(1);
+	});
+});
+
 describe('traceFundingGraph', () => {
 	it('stops at a service funder whose history cannot be reached', async () => {
 		const rpc = vi.fn(async (method) => {

@@ -22,7 +22,7 @@ import { parseMintAccount } from '../v1/token/security.js';
 import { pctOfSupply } from './crypto-token-holders.js';
 import { parseFunderFromTransaction } from './pump-intel/enrich.js';
 import { mapPoolSettled } from './pool.js';
-import { cacheWrap } from './cache.js';
+import { cacheGet, cacheSet, cacheWrap } from './cache.js';
 
 const DOC_BASE = 'https://github.com/nirholas/three.ws/blob/main/docs/token-due-diligence.md';
 
@@ -566,13 +566,33 @@ export async function walletProfile(address, rpc) {
 	return { ...base, funder: parsed?.funder ?? null, funder_at: parsed ? base.first_time : null, funded_lamports: parsed?.lamports ?? null };
 }
 
+// Two tiers. The Map spares a Redis read for wallets this process just saw; the
+// shared cache is what actually saves RPC, because the service runs ~30 instances
+// and a per-process memo alone left /api/crypto/due-diligence the largest Solana
+// RPC caller (120,022 getSignaturesForAddress in 6h, measured 2026-11-06). A
+// wallet's first transaction and funder never change, so the entry can be shared.
 const profileMemo = new Map();
-async function cachedProfile(address, rpc) {
-	const hit = profileMemo.get(address);
-	if (hit && Date.now() - hit.at < FUNDING_TTL_SECONDS * 1000) return hit.value;
-	const value = await walletProfile(address, rpc);
+const profileKey = (address) => `token-dd:profile:v1:${address}`;
+
+function rememberProfile(address, value) {
 	profileMemo.set(address, { value, at: Date.now() });
 	if (profileMemo.size > 5000) profileMemo.delete(profileMemo.keys().next().value);
+}
+
+export async function cachedProfile(address, rpc) {
+	const hit = profileMemo.get(address);
+	if (hit && Date.now() - hit.at < FUNDING_TTL_SECONDS * 1000) return hit.value;
+	const shared = await cacheGet(profileKey(address)).catch(() => null);
+	if (shared) {
+		rememberProfile(address, shared);
+		return shared;
+	}
+	const value = await walletProfile(address, rpc);
+	rememberProfile(address, value);
+	// An empty history is not shared: every wallet profiled here holds or funded
+	// something, so zero signatures means a lane answered empty, and publishing
+	// that would show a false "brand new wallet" fleet-wide for six hours.
+	if (value.sig_count > 0) await cacheSet(profileKey(address), value, FUNDING_TTL_SECONDS).catch(() => {});
 	return value;
 }
 
