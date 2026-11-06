@@ -5098,6 +5098,30 @@ URL: https://three.ws/docs/solana
 
 Give your agent a real on-chain identity on Solana. Your wallet signs one transaction that mints an NFT representing the agent, which is what lets the identity outlive any single platform.
 
+### Docs · Solana Actions (Blinks)
+
+URL: https://three.ws/docs/solana-actions
+
+Every three.ws agent can be acted on from a link in a feed. The Blinks each agent serves, the handler behind each one, and exactly what the buyer signs.
+
+### Docs · Agent sandbox
+
+URL: https://three.ws/docs/agent-sandbox
+
+Agents run code, terminal commands and file edits in an isolated per-run workspace. The execute_code, terminal, read_file and write_file tools, and how the sandbox is kept apart from the API.
+
+### Docs · Web Bot Auth
+
+URL: https://three.ws/docs/web-bot-auth
+
+How three.ws agents sign their outbound web requests with HTTP Message Signatures (RFC 9421, Ed25519), so a site can verify who is fetching and attribute or rate-limit it.
+
+### Docs · HQ and agent integration
+
+URL: https://three.ws/docs/hq-agent-integration
+
+How host pages, agents and MCP clients drive HQ, the DeFi dashboard: the postMessage bridge, the origins it accepts, and the data commands it answers.
+
 ### Docs · Atomic Solana V1 inspector
 
 URL: https://three.ws/docs/atomic
@@ -8005,6 +8029,10 @@ nothing else:
   under that program.
 - `tokenTransfer(...)` and `createMissingAtas(...)` build `transferChecked` and
   idempotent ATA creates with the same program.
+- `splTransferInstructions(...)` and `tokenBalanceAtomics(...)` are the one-shot
+  send and balance-read pair used by sealed drops and IRL escrows (fund, release,
+  refund, reclaim). A balance read that fails for any reason other than a missing
+  account throws, so a sweep never records a drop as empty off an RPC blip.
 
 The gasless skill purchase, the agent purchase, the skill and subscription
 checkouts, the Premium pass quote, the self-hosted x402 facilitator and the
@@ -8046,6 +8074,10 @@ gasless purchase and the Premium quote transactions for that holder, and runs
 `replaceRecentBlockhash:true`. Nothing is signed or sent. It exits 0 only when
 both simulations return `err: null` (2026-11-04: gasless 24,300 compute units,
 Premium 7,432).
+
+A holder whose account read the RPC refuses is skipped with a warning rather than
+ending the search; if no candidate qualifies the error names the last read failure
+and suggests retrying with `--rpc <url>`.
 
 ### When a rail is not switched on
 

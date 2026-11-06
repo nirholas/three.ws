@@ -1,17 +1,17 @@
 {
 	"$generated": "npm run docs:freshness (scripts/doc-freshness.mjs)",
 	"$doc": "/docs/freshness",
-	"generatedAt": "2026-11-06T00:42:30.595Z",
-	"commit": "5c826cca9",
+	"generatedAt": "2026-11-06T02:48:42.359Z",
+	"commit": "4cf6b20f3",
 	"totals": {
-		"docs": 1055,
+		"docs": 1056,
 		"stale": 0,
-		"watch": 607,
-		"fresh": 258,
+		"watch": 604,
+		"fresh": 262,
 		"unverifiable": 150,
 		"snapshot": 40,
 		"reviewed": 266,
-		"trackedFiles": 5946
+		"trackedFiles": 5940
 	},
 	"docs": {
 		"docs/security/audit-2026-10-25/FINDINGS-DETAIL.md": {
@@ -22,10 +22,10 @@
 			"n": 35,
 			"v": "2026-10-25"
 		},
-		"docs/agora/tasks/05-commons-scaffold.md": {
+		"docs/agora/tasks/archive/05-commons-scaffold.md": {
 			"s": "snapshot",
 			"g": 2.739,
-			"d": "2026-09-01",
+			"d": null,
 			"f": 10,
 			"n": 16,
 			"v": "2026-09-17"
@@ -62,10 +62,10 @@
 			"n": 17,
 			"v": "2026-10-23"
 		},
-		"docs/agora/tasks/01-verify-foundation.md": {
+		"docs/agora/tasks/archive/01-verify-foundation.md": {
 			"s": "snapshot",
 			"g": 1.025,
-			"d": "2026-09-01",
+			"d": null,
 			"f": 2,
 			"n": 10,
 			"v": "2026-11-04"
@@ -142,14 +142,14 @@
 			"g": 0.95,
 			"d": "2026-11-05",
 			"f": 8,
-			"n": 80
+			"n": 79
 		},
 		"docs/announce-voice.md": {
 			"s": "watch",
 			"g": 0.945,
 			"d": "2026-09-29",
 			"f": 4,
-			"n": 9
+			"n": 8
 		},
 		"docs/event-readiness/08-api-production-health.md": {
 			"s": "watch",
@@ -578,10 +578,10 @@
 			"f": 2,
 			"n": 4
 		},
-		"docs/agora/tasks/08-humans-first-class.md": {
+		"docs/agora/tasks/archive/08-humans-first-class.md": {
 			"s": "snapshot",
 			"g": 0.7,
-			"d": "2026-09-01",
+			"d": null,
 			"f": 2,
 			"n": 7,
 			"v": "2026-11-04"
@@ -1788,7 +1788,7 @@
 			"g": 0.363,
 			"d": "2026-11-04",
 			"f": 4,
-			"n": 23,
+			"n": 22,
 			"v": "2026-11-04"
 		},
 		"docs/3d-vision.md": {
@@ -1920,13 +1920,6 @@
 			"f": 1,
 			"n": 7,
 			"v": "2026-09-17"
-		},
-		"docs/agora/tasks/07-verify-and-passport.md": {
-			"s": "watch",
-			"g": 0.333,
-			"d": "2026-09-01",
-			"f": 1,
-			"n": 4
 		},
 		"docs/bnb-world.md": {
 			"s": "watch",
@@ -3496,7 +3489,7 @@
 			"g": 0.058,
 			"d": "2026-10-11",
 			"f": 2,
-			"n": 10
+			"n": 9
 		},
 		"docs/pill-mascot.md": {
 			"s": "watch",
@@ -3580,7 +3573,7 @@
 			"g": 0.042,
 			"d": "2026-11-04",
 			"f": 2,
-			"n": 16
+			"n": 15
 		},
 		"docs/mocap-studio.md": {
 			"s": "watch",
@@ -3652,7 +3645,7 @@
 			"g": 0.037,
 			"d": "2026-11-06",
 			"f": 2,
-			"n": 3076,
+			"n": 3075,
 			"v": "2026-11-04"
 		},
 		"docs/agent-abilities/chapters/03-creation-studios.md": {
@@ -3856,7 +3849,7 @@
 			"g": 0.025,
 			"d": "2026-11-06",
 			"f": 1,
-			"n": 54
+			"n": 53
 		},
 		"docs/ops/forge-desktop-release.md": {
 			"s": "watch",
@@ -4252,7 +4245,7 @@
 			"g": 0.012,
 			"d": "2026-11-06",
 			"f": 1,
-			"n": 63,
+			"n": 62,
 			"v": "2026-11-04"
 		},
 		"docs/x-posts/github-100-stars.md": {
@@ -4329,20 +4322,6 @@
 			"n": 100
 		},
 		"docs/prompts/event-markets/01-core-markets-and-picks.md": {
-			"s": "watch",
-			"g": 0.01,
-			"d": "2026-10-10",
-			"f": 1,
-			"n": 2
-		},
-		"docs/prompts/event-markets/03-auto-resolution.md": {
-			"s": "watch",
-			"g": 0.01,
-			"d": "2026-10-10",
-			"f": 1,
-			"n": 3
-		},
-		"docs/prompts/event-markets/04-auto-open-for-every-event.md": {
 			"s": "watch",
 			"g": 0.01,
 			"d": "2026-10-10",
@@ -4834,19 +4813,33 @@
 			"f": 0,
 			"n": 5
 		},
-		"docs/agora/tasks/09-arena-and-guilds.md": {
-			"s": "fresh",
-			"g": 0,
-			"d": "2026-08-06",
-			"f": 0,
-			"n": 5
-		},
 		"docs/agora/tasks/12-fleet-render-performance.md": {
 			"s": "fresh",
 			"g": 0,
 			"d": "2026-11-04",
 			"f": 0,
 			"n": 5
+		},
+		"docs/agora/tasks/archive/07-verify-and-passport.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": null,
+			"f": 0,
+			"n": 4
+		},
+		"docs/agora/tasks/archive/09-arena-and-guilds.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": null,
+			"f": 0,
+			"n": 5
+		},
+		"docs/agora/tasks/archive/README.md": {
+			"s": "unverifiable",
+			"g": 0,
+			"d": null,
+			"f": 0,
+			"n": 0
 		},
 		"docs/anatomy.md": {
 			"s": "fresh",
@@ -5497,13 +5490,6 @@
 			"f": 0,
 			"n": 9
 		},
-		"docs/github-benchmark/data/analysis.md": {
-			"s": "unverifiable",
-			"g": 0,
-			"d": null,
-			"f": 0,
-			"n": 0
-		},
 		"docs/github-benchmark/dependency-fixes.md": {
 			"s": "unverifiable",
 			"g": 0,
@@ -6076,7 +6062,7 @@
 			"g": 0,
 			"d": "2026-11-06",
 			"f": 0,
-			"n": 42,
+			"n": 41,
 			"v": "2026-10-25"
 		},
 		"docs/ops/livepeer-federation.md": {
@@ -6398,6 +6384,27 @@
 			"d": "2026-10-10",
 			"f": 0,
 			"n": 0
+		},
+		"docs/prompts/event-markets/archive/03-auto-resolution.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": null,
+			"f": 0,
+			"n": 3
+		},
+		"docs/prompts/event-markets/archive/04-auto-open-for-every-event.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": null,
+			"f": 0,
+			"n": 2
+		},
+		"docs/prompts/event-markets/archive/README.md": {
+			"s": "fresh",
+			"g": 0,
+			"d": null,
+			"f": 0,
+			"n": 2
 		},
 		"docs/provenance.md": {
 			"s": "fresh",

@@ -2,41 +2,83 @@
 	"$doc": "/docs/freshness",
 	"$comment": "Review baselines for `npm run docs:freshness`. Without this file the only clock a doc has is its own last commit, so a page someone read end to end and found correct still measures as drifting, and the only way to clear it is a cosmetic edit that lies about what happened. A stamp here says a human or an agent checked this doc against the repo at that commit. Freshness is then measured from whichever is newer, the doc's last edit or its last review. Write stamps with `npm run docs:review -- <doc> [more docs] --note \"...\"`, never by hand: the tool resolves the commit, refuses a doc that does not exist, and keeps the ordering stable. kind `verified` means the prose was checked against the code and matched. kind `snapshot` means the doc is a dated record (an audit, an incident writeup, a finished work order) that documents a moment and must not be rewritten to match today's code, so it is never counted as drift.",
 	"reviews": {
-		"README.md": {
-			"commit": "9c9d80bcc",
+		"CLAUDE.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "npm run check:claude passes; cron count 165 matches vercel.json, remotes, skills, agents and workflows named all exist, and the drifted commits (play lite route, audit script, package.json scripts) touch nothing it states."
+		},
+		"README.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the /play/lite lite client row to the Coin Communities surface table (shipped 2026-11-06 with WebGL-less handoff); prep:worktree, build/deploy chain and npm run names checked against package.json and still correct."
 		},
 		"STRUCTURE.md": {
-			"commit": "f9c4ee423",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Rig Doctor row notes the runtime arm/shoulder collision pass (a12f2a3e1); memory settings row notes get_learning_status on /api/mcp-agent (6a78ba5bf); table.js drift is that tool's policy row."
+			"note": "Play lite row already present with real paths, all relative links resolve (after URL decoding), and the pages.json and package.json commits do not contradict any row."
 		},
 		"docs/3d-api.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Checked tier prices and tier table against api/_lib/forge-tiers.js, the 5-entry 3D catalog, 32 MiB inspect cap, generate error shapes and Solana-only x402 forge; drift commits (A2A, AR counters, region and world limits) do not change the documented behavior."
 		},
 		"docs/3d-asset-pipeline.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Clip loading now goes through parseClipJSON (userData tolerant) and retarget gate passes on overall or body coverage; updated both rows."
+		},
+		"docs/3d-pipeline.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Background removal options were missing the birefnet model added to pipeline-rembg; prices, options, env vars and poll budget re-checked against source."
+		},
+		"docs/3d-vision.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Views, angles, limits (6 views, 128 to 1024 px, 60 per 10 min), response shape and look_at_model tool match api/3d/look.js and api/_lib/3d-vision.js; drift commits do not alter them."
+		},
+		"docs/DESIGN-TOKENS.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Font family stacks now include the metric-matched Fallback faces and the doc notes the preload; other token values match public/tokens.css."
 		},
 		"docs/PROTOCOL-vanity.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Clarified that VANITY_SERVICE_KEY holds the seed, as a secret-box ciphertext in production, matching api/_lib/vanity-service-key.js; protocol tags and endpoints verified."
+		},
+		"docs/README.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Corrected the CLAUDE.md section name; all linked files and subdirectories resolve and the private-tree exclusion still matches vite.config.js and combine-docs.mjs."
+		},
+		"docs/a2a-agent.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked card url, version 1.5.2 from package.json, build:discovery and validate:a2a-card scripts still exist, 120 per minute limit and A2A_TASK_TTL_SECONDS unchanged."
 		},
 		"docs/a2a-payments.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "api/agents.js drift is only a campaign conversion hook on agent create; mandate, call, limits and approval threshold prose unaffected."
+		},
+		"docs/account-deletion.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "db-retention change only adds archive-before-delete for firehose tables; purge cron schedule 17 4, RETAINED_TABLES, EDGE_POLICY, IN_FLIGHT, migrations and tests all still match."
 		},
 		"docs/agent-abilities/ABILITIES.md": {
 			"commit": "9c9d80bcc",
@@ -56,29 +98,185 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/agent-abilities/chapters/03-creation-studios.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Chat provider chain (six free lanes, 503 with Retry-After), persona_override owner-only and POST /api/agents claims still match api/chat.js and api/agents.js; drift commits do not change them."
+		},
 		"docs/agent-abilities/chapters/04-the-mind.md": {
 			"commit": "0a10f48c2",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
-		"docs/agent-abilities/chapters/11-markets-intelligence.md": {
-			"commit": "53f2a200f",
+		"docs/agent-abilities/chapters/05-the-voice.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "a-me.js still calls exactly the endpoints the doc lists (auth/me, agents, avatars, memories, actions, reputation, billing/summary); drift commits are unrelated to those claims."
+		},
+		"docs/agent-abilities/chapters/06-identity-reputation.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the decision-trail/verify alias the ledger page now links to and the reconcile cron's stamping of outcomes onto recalled memories; reputation price, ceilings and anomaly thresholds confirmed."
+		},
+		"docs/agent-abilities/chapters/07-skills.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added that a2a-call now derives settlement currency from the on-chain asset and refuses accepts with no asset; platform ceilings and agent-payments skill claims confirmed."
+		},
+		"docs/agent-abilities/chapters/08-screens.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Clarified agent-ask memory is session-scoped with a 2 hour TTL and answers only published agents unless the owner asks; brain router lane list confirmed."
+		},
+		"docs/agent-abilities/chapters/09-the-agent-economy.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Noted purchase-as-agent now pays through the mint's token program (Token-2022 for THREE) and that withdrawals show a status label and pending_tx_hash; 10 per hour cap and 1 USDC minimum confirmed."
+		},
+		"docs/agent-abilities/chapters/11-markets-intelligence.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Launch feed now renders Robinhood Chain, BNB Chain and Base EVM launches with venue and explorer, not only Robinhood Chain through Pons; coin page change was layout only."
+		},
+		"docs/agent-abilities/chapters/13-agents-everywhere.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "AR and forge drift commits add aggregate share counters, attribution and a territory endpoint; the doc's User-Agent branching and forge client claims remain correct."
 		},
 		"docs/agent-abilities/chapters/14-the-developer-platform.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Only drift is growth first-touch attribution in api/agents.js, which the doc does not describe; reviewed 2026-11-04 and claims unchanged."
+		},
+		"docs/agent-abilities/chapters/15-appendix.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/ar.js change only adds a fail-open aggregate counter; the appendix's User-Agent AR routing description is still accurate."
+		},
+		"docs/agent-abilities/wallet/01-balance.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Routes, 60s cache, 30s poll and rate limit match source; added the Kraken rung the client SOL/USD chain now includes."
+		},
+		"docs/agent-abilities/wallet/02-go-live.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked api/agents/_id/activate.js and api/_lib/agent-activation.js: grant 0.004 SOL bounded 0.0001-0.05, daily cap 500, avatars:write bearer scope, GET/POST routes unchanged; api/agents.js drift is unrelated."
+		},
+		"docs/agent-abilities/wallet/03-portfolio.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Portfolio routes, 20s snapshot interval and 60/min walletRead limit confirmed in api/agents/portfolio.js and rate-limit.js; api/agents.js commits do not touch it."
+		},
+		"docs/agent-abilities/wallet/04-deposit.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Onramp description now says it mints a CDP session token, supports SOL as well as USDC, and falls back to the Coinbase price page without credentials."
+		},
+		"docs/agent-abilities/wallet/05-copilot.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Corrected the LLM provider chain (Vertex anchor, paid tail, agent model override) and voice output billing (owner BYOK key or credits, Magpie then Gemini TTS lanes) and removed dashes."
+		},
+		"docs/agent-abilities/wallet/06-trust.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Reputation, reserves, unlocks and reputation-batch routes all exist; the api/agents.js drift commits are unrelated to the tab."
 		},
 		"docs/agent-abilities/wallet/07-signals.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Added that POST /api/signals/subscribe needs the wallet:write spend scope for API keys; thresholds, clamps, risk_ack gate and 2-minute cron confirmed."
+		},
+		"docs/agent-abilities/wallet/08-trade.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the real-funds agreement gate (403 risk_ack_required) and wallet:write bearer scope on real trades, confirmed in api/agents/solana-trade.js."
+		},
+		"docs/agent-abilities/wallet/09-pulse.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/pulse.js type filters, agent-summary view, 60 row cap and pulse-visibility route confirmed; the event-markets commit only added a separate view."
+		},
+		"docs/agent-abilities/wallet/10-snipe.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the server-side real-funds agreement and wallet:write gates on arming, the Strategy Object v2 compile output with research gates in backtest, and the paid-intel decision mode."
+		},
+		"docs/agent-abilities/wallet/11-earn.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the Sell this agent as an API card (switch, price, endpoint, earnings, create-wallet fix) and the GET|PUT api-service route the Earn tab now ships; economy limits (40 receipts, 5 customers) and routes still match."
+		},
+		"docs/agent-abilities/wallet/12-orders.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/agents.js drift is unrelated agent CRUD and money-meta gating; the /api/agents/:id/orders route pattern still resolves in vercel.json and the worker not-yet-hosted rollout note still matches STRUCTURE.md."
+		},
+		"docs/agent-abilities/wallet/13-autopilot.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Autopilot and intents route patterns still exist in vercel.json and the treasury-autopilot cron is still hourly (23 * * * *); agents.js commits only touched CRUD, growth attribution and money-meta gating."
+		},
+		"docs/agent-abilities/wallet/14-intents.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Intents route pattern and the 10 minute wallet-intents cron (*/10) still match; agents.js drift does not touch intents behavior."
+		},
+		"docs/agent-abilities/wallet/15-pay.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked bazaar search (PayAI plus CDP default facilitators, GET only), x402-pay SSRF guard (https only, pinned sockets, redirect manual), USDC pin, pay tab 350ms debounce, Solana-only filter, 1500 char truncation and 25 activity rows; the self-pay fee and fresh-RPC commits do not change documented behavior."
+		},
+		"docs/agent-abilities/wallet/16-vanity.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Server grind caps (3 chars, 4M iterations, 30s) and the solana/vanity route still match solana-wallet.js; agents.js drift is unrelated."
+		},
+		"docs/agent-abilities/wallet/17-policy.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Policy rules cap (40), backtest window (60 days, 1000 spends), 8 synthetic probes and solana/policy route still match source; agents.js drift is unrelated."
+		},
+		"docs/agent-abilities/wallet/18-withdraw.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Withdrawal limit still 5 per day per user in rate-limit.js, solana withdraw/holdings/limits/custody routes resolve, sns route unchanged; agents.js drift is unrelated."
+		},
+		"docs/agent-abilities/wallet/19-give.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/sns.js change only added an opt-in domains=1 extra, so the documented name resolution, 5 minute cache and rate limit still hold; withdraw rail and 5 per day cap unchanged."
 		},
 		"docs/agent-abilities/wallet/20-proof-of-custody.md": {
 			"commit": "9c9d80bcc",
@@ -86,11 +284,29 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/agent-allowance-budgets.md": {
-			"commit": "9c9d80bcc",
+		"docs/agent-abilities/wallet/21-access.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Capability limits still match wallet-capabilities.js (50 targets, 60s to 1 year TTL, 24h default) and the capabilities routes resolve in vercel.json."
+		},
+		"docs/agent-abilities/wallet/22-recovery.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Guardian cap (10), recovery and requests routes, daily dead-man-switch cron (0 5 * * *) and recovery inbox still match; agents.js now guards the recovery meta key behind the spend scope but the documented owner flow is unchanged."
+		},
+		"docs/agent-abilities/wallet/23-self-defense.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Sensitivity thresholds (0.85, 0.7, 0.5), 200 counterparty cap and solana/guard routes still match wallet-anomaly.js; agents.js drift is unrelated."
+		},
+		"docs/agent-allowance-budgets.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/agents.js drift is unrelated to allowances; the solana-allowance routes and recurring flag still match api/agents/solana-allowance.js."
 		},
 		"docs/agent-commerce.md": {
 			"commit": "9c9d80bcc",
@@ -99,16 +315,22 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/agent-economy-volume.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Documented wallet hires from the hire Blink (null hirer agent, unique_hirers counts payer wallets, excluded from top_hirers, Wallet label in feed) and fixed profile urls to /agents/<uuid>."
+		},
+		"docs/agent-identities.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "View in 3D now loads model-viewer via the shared loader and shows a retry alert after errors or a 30 second timeout instead of a bare fallback link."
 		},
 		"docs/agent-index.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "healthz change only adds email alert channel info; the agent_index subsystem still comes from api/_lib/ops/index-lag.js as described."
 		},
 		"docs/agent-mail.md": {
 			"commit": "9c9d80bcc",
@@ -116,29 +338,71 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/agent-manifest.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/agents.js commits (avatar ownership check, bearer spend scope on money meta, learning routes, conversion hook) do not touch the manifest routes or fields the doc describes."
+		},
+		"docs/agent-reputation.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "x402 agent-reputation change only swaps authHints for shared ROUTE_AUTH_HINTS; $0.01 price and route unchanged, agents.js drift unrelated."
+		},
+		"docs/agent-runtime.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/agents.js drift is a campaign conversion hook on create; runtime prose unaffected."
+		},
 		"docs/agent-screen-control.md": {
 			"commit": "79b34d762",
 			"kind": "verified",
 			"by": "agent",
 			"note": "egress proof script landed; doc already describes it and its command"
 		},
-		"docs/agent-shell.md": {
-			"commit": "9c9d80bcc",
+		"docs/agent-self-onboarding.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Added the CLI --json and --non-interactive behavior that the script-friendly CLI commit introduced; routes, errors and the 500 daily cap still match the code."
+		},
+		"docs/agent-shell.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked the data-shell page list, nav.js auto-summon gates (skip regex, 1.2s quiet, 20s give-up, saveData, data-walk-auto), palette verbs and endpoints in public/search.js, and the vite view-transitions plugin; drift commits do not touch described behavior."
 		},
 		"docs/agent-skills.md": {
-			"commit": "bfcfb19c3",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "3f5f58ff7 only adds market-brief to the published prompt lists in mcp.json; the doc reads server URLs from that file and names asset-pack as an example, neither changed"
+			"note": "Checked the skill list in .agents/skills, build and check npm scripts, template and facts files, the 250 bps royalty default, and that the mcp.json drift (new oracle server) is covered by the doc pointing at the live directory."
+		},
+		"docs/agent-studio.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked studio shell, store and sub-studio files, the agents/:id pricing, payments and strategies sub-routes in api/agents/[id].js, /api/memory/* endpoints, not_confirmed refusal and the brain provider example; drift commits are unrelated to what the doc describes."
 		},
 		"docs/agent-symphony.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "The jackpot voice now also maps dance-off in TYPE_TO_CATEGORY, added to the table."
+		},
+		"docs/agent-system.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Documented the stage speaking queue (attachStage, priority, stage.speak and cancelSpeech) and the embedding-ranked Memory.recall through /api/memory/rank with substring fallback; agent-memory limits and validation still match."
+		},
+		"docs/agent-tasks/fix-x402-502-bursts.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Finished work order dated 2026-07-25 whose 502 burst is recorded as resolved in docs/ops/x402-loop-failure-baseline-2026-11-04.md, so its July figures are a historical record."
 		},
 		"docs/agent-tasks/fix-x402-caller-mismatches.md": {
 			"commit": "53f2a200f",
@@ -146,41 +410,125 @@
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
-		"docs/agent-wallet-api.md": {
-			"commit": "0a10f48c2",
+		"docs/agent-tasks/fix-x402-wallet-health.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Finished work order dated 2026-07-25 with funding figures from that day; wallet_unconfigured and floor failures are recorded as resolved in the 2026-11-04 baseline and the rebalance fixes shipped."
+		},
+		"docs/agent-tokens.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Checked plan, plan-dry-run (devnet default, verdict set), launch-prep use_plan, pump coin miss=empty and curve routes, solana holdings 204 flag, coin_type and symbol rules; drift commits only added analytics tracking and a shared import."
+		},
+		"docs/agent-trading-mcp.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked the eight tools, backing endpoints, simulate default, confirm_live refusal and two-network disarm in packages/agent-trader-mcp/src/tools.js; api/agents.js drift is unrelated."
+		},
+		"docs/agent-vitals.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked vital thresholds (30 min feed, 7 day image), llm=1 opt-in on /api/agents/vitals, authorizeOps gate, CLI flags and npm scripts, and that solvency still calls resolveEntrySize; the llm.js and solvency drift is JSDoc and provider chain only."
+		},
+		"docs/agent-wallet-api.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked the eight surface routes in the [id].js dispatcher, rate limit bucket description, guard policy fields and scope gate against drifted commits; they only exported a sweep helper, added fee-event recording and new unrelated wallet export and signer routes."
+		},
+		"docs/agents-vs-avatars.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Agent update now refuses an avatar the caller does not own (404, api/agents.js), so the avatar_id PATCH answer says so."
 		},
 		"docs/agora.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Cartographer still calls the compose action of /api/diorama and returns a plan; the new diorama goal feature does not change it, AGORA_CARTOGRAPHER_TIMEOUT_MS and the agora routes in vercel.json still match."
 		},
 		"docs/agora/tasks/00-INDEX.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Checked the thirteen agora-* feed types, the cited files, env flags, rate-limit helper and status rows against current source; vite and pages.json drift is unrelated to its claims, and another agent already re-pointed its archived links."
 		},
-		"docs/agora/tasks/01-verify-foundation.md": {
+		"docs/agora/tasks/02-life-engine.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Status note said signal-less agents skip the deferred Cartographer bit, but Cartographer was re-enabled 2026-11-04 and has a runner, so the note now says every bit with a runner is active."
+		},
+		"docs/agora/tasks/03-task-supply.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Mainnet switch, devnet-only refusal in config.js, cancelAgenCTask refund and signerFor reconcile claims all match current workers/agora-citizens code; memory-stream and Token-2022 balance commits change nothing the doc says."
+		},
+		"docs/agora/tasks/10-agora-mcp.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "All nine tools exist in packages/agora-mcp/src/tools, install line is in its README, and docs/mcp.md, STRUCTURE.md and root workspaces list it; server.json and package.json drift is registry and dependency churn only."
+		},
+		"docs/agora/tasks/11-production-hardening.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "npm test is still vitest run plus playwright, referenced tests and /agora pages.json entry exist, retry-after 429 handling is present; pages.json commits only added unrelated rows."
+		},
+		"docs/agora/tasks/archive/01-verify-foundation.md": {
 			"commit": "9c9d80bcc",
 			"kind": "snapshot",
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
-		"docs/agora/tasks/05-commons-scaffold.md": {
+		"docs/agora/tasks/archive/05-commons-scaffold.md": {
 			"commit": "53f2a200f",
 			"kind": "snapshot",
 			"by": "agent",
 			"note": "dated record, kept as written"
 		},
-		"docs/agora/tasks/08-humans-first-class.md": {
+		"docs/agora/tasks/archive/07-verify-and-passport.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the passport Mind section (reflections and plan from agora_citizens.meta.mind) shipped in 12969cead; the file now lives at docs/agora/tasks/archive/07-verify-and-passport.md after another agent moved it."
+		},
+		"docs/agora/tasks/archive/08-humans-first-class.md": {
 			"commit": "9c9d80bcc",
 			"kind": "snapshot",
 			"by": "agent",
 			"note": "dated record, kept as written"
+		},
+		"docs/airdrops.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added that a failed EVM explorer read now yields partial and unread_chains instead of counting as zero activity (wallet-activity.js)."
+		},
+		"docs/alpha-copilot.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Alpha routes still dispatch from api/agents/[id].js to api/agents/alpha.js with candidates and read actions, validateRead and hallucination_guard unchanged; api/agents.js drift is unrelated."
+		},
+		"docs/alpha-drip.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Creator-linkage guard is an extra skip inside the safety gate and does not alter the drip flow; 900s cap, 5-close half-life, 200-position window, 409 not_released and 30 minute act window all match source."
+		},
+		"docs/analytics-retention.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Content verified (owner visit hooks in agents.js and chat.js, cron 35 9 * * 1, admin gate, Redis dedupe lock); only replaced a banned em-dash."
 		},
 		"docs/anatomy.md": {
 			"commit": "9c9d80bcc",
@@ -189,22 +537,142 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/animation-seeding.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Drift in animation-library.js (activeName getter) and animation-retarget.js (body-track coverage floor, parseClipJSON userData) does not touch the basis, rebase, gate or ?name= claims; libraryReadyClip still stringifies userData and FREE_ROTATION is 12 per week."
+		},
+		"docs/animation-studio.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Clips API validation (min 1 track), paywalled behavior in animations/[id].js, deep-link params and forge-motion path match source; the community clip userData fix does not change documented behavior."
 		},
 		"docs/animations.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "113 manifest clips, slot defaults, PUT animations route, preview engine and gallery claims match source; the T-pose preview fix and fingerless coverage floor change no documented behavior."
+		},
+		"docs/announce-voice.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "check:announce only enforces the opening-clause check, not a lead-structure rotation, so the Uniqueness section now says the rotation is an authoring convention."
+		},
+		"docs/announcement-coverage.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Historical coverage audit as of the 2026-08-09 scrape, not to be rewritten."
 		},
 		"docs/announcement-factory.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Refreshed surface, announced, never-announced, documentation and planned-slot counts from data/announcements.json and the plan."
+		},
+		"docs/announcements/README.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Packs table listed 3 of 18 packs and the surface counts were stale; now lists every pack with queue status, uses the 409/47/285 audit numbers, and says per-pack stage lines are as-drafted."
+		},
+		"docs/announcements/activity-mcp.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Generated draft pack for a post the queue now marks posted; its Stage and Announced lines are as-drafted records and the README table now carries the queue status."
+		},
+		"docs/announcements/assistant.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Generated draft pack for a post the queue now marks posted; its Stage and Announced lines are as-drafted records and the README table now carries the queue status."
+		},
+		"docs/announcements/avatar-mcp.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Generated draft pack for a post the queue now marks posted; its Stage and Announced lines are as-drafted records and the README table now carries the queue status."
+		},
+		"docs/announcements/awesome.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Kit-generated draft whose slot was superseded by the posted 2026-10-12 queue item awesome; it records the 2026-09 drafting state."
+		},
+		"docs/announcements/aws-builder-center-authorization-spine.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Record of the AWS Builder Center article published 2026-09-11 and announced by hand 2026-09-10."
+		},
+		"docs/announcements/data-desk.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "It claimed a data-desk queue item at status draft but queue.json has none; page copy and fresh-wallet claims re-checked against pages/data-desk.html."
+		},
+		"docs/announcements/forge-max.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Generated draft pack for a post the queue now marks posted; its Stage and Announced lines are as-drafted records and the README table now carries the queue status."
+		},
+		"docs/announcements/forged.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "It claimed a queue item at status review but none exists; price 0.15 in forge-tiers.js, api/forged.js, pay.js and forged-gallery.js claims re-checked and still hold."
+		},
+		"docs/announcements/galaxy.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Generated draft pack for a post the queue now marks posted; its Stage and Announced lines are as-drafted records and the README table now carries the queue status."
+		},
+		"docs/announcements/genesis.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Pack said Genesis was never announced, but the owner withdrew it 2026-11-04 because it was posted several times; added the withdrawal and status. Endpoints and docs links re-checked in src/genesis.js and api/agents.js."
+		},
+		"docs/announcements/knock.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Generated draft pack for a post the queue now marks posted; its Stage and Announced lines are as-drafted records and the README table now carries the queue status."
+		},
+		"docs/announcements/materialize.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Generated draft pack for a post the queue now marks posted; its Stage and Announced lines are as-drafted records and the README table now carries the queue status."
+		},
+		"docs/announcements/open-source-friday.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Record of the Open Source Friday approval post, queue item rig-doctor posted 2026-09-17."
+		},
+		"docs/announcements/product-demo.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Film numbers (257 stops, 6 chapters) still match the committed run manifest, but added a note that the live tour curriculum now has 263 stops and a seventh Getting started chapter."
+		},
+		"docs/announcements/three-token-mcp.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Package claims verified (1.1.3 latest, confirm gate, 100 USD cap, treasury null live); corrected the queue status, which is now posted in data/x-content/queue.json versus the coverage ledger saying never announced."
+		},
+		"docs/announcements/walk.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Six environments, env param, iframe snippet and frame-ancestors header verified; added that undrivable rigs are swapped for the default body (avatar_not_animatable) and fixed the queue note since no walk queue item exists."
 		},
 		"docs/api-reference.md": {
 			"commit": "0a10f48c2",
@@ -212,11 +680,17 @@
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
-		"docs/approvals.md": {
-			"commit": "9c9d80bcc",
+		"docs/api/forge-x402.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Prices, schema and live challenge match; fixed the tier table to the pbr and hd flags and documented that extra.feePayer is dropped when the sponsor is self-pay-only."
+		},
+		"docs/approvals.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Read against the drifted commits and current source, behavior and routes unchanged."
 		},
 		"docs/apps.md": {
 			"commit": "a3524e6f6",
@@ -224,23 +698,59 @@
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
-		"docs/ar.md": {
-			"commit": "0a10f48c2",
+		"docs/ar-studio.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Drift commits were additive or mechanical and the described behavior still matches source."
+		},
+		"docs/ar.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked claims against current source and the drifted commits, all still accurate."
 		},
 		"docs/architecture.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Added the gesture tool, the per-stage speaking queue and the new runtime ctx fields."
 		},
 		"docs/assistant-widget.md": {
-			"commit": "53f2a200f",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Drift commits did not change the documented widget behavior."
+		},
+		"docs/atlas.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Documented routes and files still exist and match the drifted commits."
+		},
+		"docs/audit/README.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Gate, scripts, flags and env vars verified; the Reports list now includes mobile-perf-2026-11-03.md and python-deps-2026-09-07.md."
+		},
+		"docs/audit/console-sweep-2026-09-04.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated console sweep measurement of 2026-09-04, a record of that moment."
+		},
+		"docs/audit/console-sweep-2026-09-07.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated console sweep measurement of 2026-09-07, a record of that moment."
+		},
+		"docs/audit/console-sweep-2026-09-09.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated console sweep measurement of 2026-09-09 taken under load, a record of that moment."
 		},
 		"docs/audit/python-deps-2026-09-07.md": {
 			"commit": "5c826cca9",
@@ -248,10 +758,16 @@
 			"by": "agent"
 		},
 		"docs/authentication.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Auth rail description still matches current handlers and the drift commits."
+		},
+		"docs/autonomous-economy.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Sweepback destination is a module constant and wallets holding third-party owed money are never swept."
 		},
 		"docs/autonomous-x402.md": {
 			"commit": "9c9d80bcc",
@@ -259,17 +775,47 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/autopilot.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "API keys need the wallet:write scope to POST, otherwise 403 insufficient_scope."
+		},
+		"docs/avatar-artifact.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Allowlist sentence now matches what /api/artifact enforces plus *.r2.dev."
+		},
+		"docs/avatar-cli.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Version updated from 0.2.0 to 0.2.2 to match the package and --version output."
+		},
 		"docs/avatar-engines.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
-		"docs/avatar-reconstruction.md": {
-			"commit": "53f2a200f",
+		"docs/avatar-inspector.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "full sweep: read against the drifted commits and corrected where wrong"
+			"note": "Exports, endpoints, files and world behavior checked against src/shared/avatar-inspector.js and the drifted passport panel and agents API commits."
+		},
+		"docs/avatar-pipeline.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Coverage floor now passes on body tracks alone so fingerless bodies animate, replacing the stale frozen-avatar claim."
+		},
+		"docs/avatar-reconstruction.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added the default-off dense head fit phase and the RECONSTRUCT_DENSE_URL routing to the RTX service."
 		},
 		"docs/avatar-thumbnails.md": {
 			"commit": "9c9d80bcc",
@@ -282,6 +828,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/awesome-solana-ai-submission.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "A dated submission draft to an awesome list, a record of what was submitted rather than current behavior."
 		},
 		"docs/aws-builder-center-agent-commerce-spine.md": {
 			"commit": "9c9d80bcc",
@@ -306,22 +858,52 @@
 			"kind": "snapshot",
 			"by": "agent"
 		},
+		"docs/aws-builder-center-immutable-embed-releases.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The doc-scan root list now includes integrations to match PIN_ROOTS; the check-dist and embedReadCors excerpts and the 1.5.2 ledger state match source."
+		},
+		"docs/aws-builder-center-mcp-agents.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The example bearer key prefix was corrected from 3da_live_ to sk_live_ to match api/_lib/auth.js."
+		},
 		"docs/aws-builder-center-open-weight-3d-forge.md": {
 			"commit": "5c826cca9",
 			"kind": "snapshot",
 			"by": "agent"
 		},
-		"docs/aws-builder-center.md": {
-			"commit": "9c9d80bcc",
+		"docs/aws-builder-center-universal-retargeting.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Rewrote the clip gate, coverage floors, rig mapping history, convention and test counts to match src/canonical-clip-gate.js and the current suite."
+		},
+		"docs/aws-builder-center.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked its claims against the drifted files and current source and found nothing false."
+		},
+		"docs/aws-marketplace-listing-kit.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Registration, SNS endpoint-only verification and license ARN keying match api/aws-marketplace; the added IP rate limits do not contradict any claim."
 		},
 		"docs/aws-marketplace.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/backtest-integrity.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "data-canary cron still */30 in vercel.json, 400-check sampling, RESEARCH_MODULES and all named files exist; vercel.json commits are unrelated routes."
 		},
 		"docs/big-tech-recognition-week.md": {
 			"commit": "9c9d80bcc",
@@ -330,16 +912,40 @@
 			"note": "dated record, kept as written"
 		},
 		"docs/blender-mcp.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "blender_forge_import args, lanes and tiers match packages/blender-mcp source; forge commits only add a territory report and analytics, not the documented pipeline."
+		},
+		"docs/bnb-babt-findings.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "A dated 2026-07-08 on-chain verification record; the referenced babt.js, chains.js and babt-check endpoint still exist."
 		},
 		"docs/bnb-vault.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "All named files and contract functions exist, 41/41 and 1,711,362 gas still match DEPLOYMENTS.md; server/index.mjs commits are unrelated to the vault."
+		},
+		"docs/bnb-world.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Removed references to the deleted prompts/bnb-chain/00-CONTEXT.md and PROGRESS.md; onchain-presence.js change was a mechanical helper extraction."
+		},
+		"docs/brain.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Updated the stale provider roster, the free safety-net chain (Groq Qwen 3.8, OpenRouter Gemma 4, NVIDIA, SambaNova, Mistral, Z.AI, Vertex Gemini), the default model label, anon gating for free roster rows, and a nonexistent groq-llama example id."
+		},
+		"docs/brownout.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Fault kinds, chaos token and money-path gates, instrumented layers and header wiring in wrap() match api/_lib/brownout and the shared fetch layers; tracing and RPC counting commits do not change provenance behavior."
 		},
 		"docs/btn-pill-migration.md": {
 			"commit": "0a10f48c2",
@@ -347,11 +953,35 @@
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
-		"docs/ca2x402.md": {
-			"commit": "0a10f48c2",
+		"docs/build.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Updated build:gcp chain (tdz-bootstrap, docs:freshness, avatar-sdk), build script tail (inject-inline-behaviors), deploy:gcp gates (deploy:gcp:submit, cron sync) and audit:deploy's new pinned-npm ci dry-run."
+		},
+		"docs/ca2x402.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked x402-paid-endpoint auth-hints gating change, wk.js discovery changes, rate limiter publicIp, 15 minute market cache and token-intel price against current source; the 402 and bypass description is still correct."
+		},
+		"docs/cad-forge.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/ar.js drift is only a fail-open share-funnel counter and a redirect escape; the /api/ar usage and the cad API, limits and config described are unchanged."
+		},
+		"docs/changelog.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "SDK version corrected from 0.2.1 to 0.2.3 (sdk/package.json) and documented the GITHUB_RELEASE_EXCLUDE_TERMS filter the weekly release cron now applies."
+		},
+		"docs/character-library.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Only a sticky search bar style change and model-viewer pin bumps since baseline; deep links, card behavior, API params and manifest fields match src/character-library.js and the shared view module."
 		},
 		"docs/character-studio.md": {
 			"commit": "0a10f48c2",
@@ -359,17 +989,41 @@
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
 		},
-		"docs/chatgpt-ar.md": {
-			"commit": "0a10f48c2",
+		"docs/chart-companion.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "price-history change only touched pool resolver resilience; 15m interval, reactor thresholds, endpoints and URL params still match source."
+		},
+		"docs/chatgpt-3d-studio-gpt.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "api/ar.js changes are analytics and redirect escaping only; OpenAPI operations and fields (arUrl, watchUrl, previewImageUrl, etaSeconds, retry_after) and the 3 to 1000 char prompt limit still match."
+		},
+		"docs/chatgpt-ar.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "forge-tiers change adds an opt-in texture worker selector that does not touch free lane ordering; api/ar.js title limit 120 and gpt-forge-client 80 trim confirmed, routing description unchanged."
+		},
+		"docs/checkout-companion.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Auth line now says API key or OAuth callers need the profile scope (403 insufficient_scope otherwise), per the shared companionCaller helper; roles, limits and response shape verified."
 		},
 		"docs/choreography.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Drift commits added animationIdentity to the manifest and unrelated element.js features; routine limits, animations endpoint response, playRoutine API and file map match current source."
+		},
+		"docs/circulation-engine.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Action weights, amount constants, env var defaults and ranges, launch and deploy gates, and 120s pulse-tick maxDuration all match api/_lib/circulation.js and vercel.json; the Token-2022 transfer refactor does not change documented behavior."
 		},
 		"docs/clash.md": {
 			"commit": "1396077cf",
@@ -395,17 +1049,23 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
-		"docs/coinmarketcap-article-2026-10-radar-strategy-lab.md": {
-			"commit": "9c9d80bcc",
+		"docs/coinmarketcap-article-2026-10-copy-trading.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Claims checked against current copy-trading source and found accurate as written."
+		},
+		"docs/coinmarketcap-article-2026-10-radar-strategy-lab.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Claims checked against current radar and strategy lab source and found accurate as written."
 		},
 		"docs/coinmarketcap-article-2026-10-sniper-oracle.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Claims checked against current sniper oracle source and found accurate as written."
 		},
 		"docs/coinmarketcap-article-2026-10-solana-reputation.md": {
 			"commit": "5c826cca9",
@@ -418,10 +1078,22 @@
 			"by": "agent"
 		},
 		"docs/coinmarketcap-article-2026-10-x402-failure-paths.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "Accuracy notes now cite packages/x402-server/src/facilitator/core.js where the facilitator logic moved, with self-facilitator.js as a thin adapter."
+		},
+		"docs/coinmarketcap-article.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked against the drifted files and current source and found accurate as written."
+		},
+		"docs/coinmarketcap-live-article.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Copy of a published, dated CoinMarketCap article, a record rather than current behavior."
 		},
 		"docs/configuration.md": {
 			"commit": "53f2a200f",
@@ -482,6 +1154,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/devto-mcp-fleet-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Keyless tool count corrected from fourteen to sixteen and the npm package count is now dated to its 2026-08-25 audit."
 		},
 		"docs/diorama.md": {
 			"commit": "53f2a200f",
@@ -696,6 +1374,12 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/google-cloud-community-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Scheduled job count corrected from 125 to 165 to match the crons array in vercel.json; other claims (keep-warm cron every 10 minutes, build and submit gates) match package.json."
+		},
 		"docs/grok-bot.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
@@ -756,16 +1440,70 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/huggingface-3d-ai-agent-platform.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Motion library section now says 219 CC0 clips (the endpoint drops Mixamo and unlicensed clips) and drops Mixamo thumbnails; guard section notes the opt-in owner-signed delegation layer; stage prices, run rounds and MCP protocol checked against source."
+		},
+		"docs/ibm-community-any-skeleton-animation-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Library count updated to 219 CC0 clips, test count to 710, and the coverage gate now describes the all-tracks or 23-body-track floor shared via clearsCoverageFloor, plus the thumbnail fallback for humanoids under the floor."
+		},
+		"docs/ibm-community-defi-3d-sperax-publishing-kit.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "build-ibm-community-post.mjs writes four output files, not three; the lint-only drift commit changed no behavior."
+		},
+		"docs/ibm-community-defi-3d-sperax.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Publish note now lists all four files the build script writes (md, html, ibm fragment, ibm-hosted fragment) instead of two."
+		},
 		"docs/ibm-community-doc-freshness-post.md": {
 			"commit": "5c826cca9",
 			"kind": "snapshot",
 			"by": "agent"
 		},
-		"docs/ibm-community-long-running-mcp-tools-post.md": {
-			"commit": "ead445645",
+		"docs/ibm-community-doc-freshness-thread.md": {
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "Prompt count updated to seventeen for market-brief (7a39eee75), Grok connector prompt list noted, SURFACES listing shows widgets: true on full and chatgpt; studio four prompts and tool counts re-checked; framing_notes kept (no crypto content)."
+			"note": "Corpus size updated from about 800 docs in two seconds to over 1,000 docs in a few seconds; staleness threshold of 1.0 still matches scripts/doc-freshness.mjs."
+		},
+		"docs/ibm-community-governed-agents-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Published 2026-09-18 on IBM Community (status posted, URL recorded), so it is a record of the article as it went out."
+		},
+		"docs/ibm-community-governed-agents-thread.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Guardian now also has a self-hosted worker lane, so the 503 claim and model description were corrected and the hold note updated (production still returns 503 guardian_unconfigured on 2026-11-06)."
+		},
+		"docs/ibm-community-long-running-mcp-tools-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked page-og still serves v=carbon&f=group (200 image/png, CARBON_FOOTERS group footer) after the satori swap, and api/ar.js only gained a fail-open share counter with the ?src route unchanged."
+		},
+		"docs/ibm-community-long-running-mcp-tools-thread.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "check_job and get_job both still exist in api/_mcp-studio; added that generation tools now accept a caller idempotency_key with 24 hour replay (jobs.js)."
+		},
+		"docs/ibm-community.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Draft table row for the animation post said 3,343 library clips; updated to 219 CC0 clips; api/ar.js tutorial step unchanged and correct."
 		},
 		"docs/ibm-meetup-3/README.md": {
 			"commit": "5c826cca9",
@@ -773,10 +1511,16 @@
 			"by": "agent"
 		},
 		"docs/ibm-next-event.md": {
-			"commit": "9c9d80bcc",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+			"note": "The event landing page, daily theme config, and daily crown cron it listed as to-build shipped 2026-11-04 as /forge-off, data/forge-off-events.json and api/cron/forge-off-event-crown; plan items and the what-we-build line updated."
+		},
+		"docs/ibm-visibility-map.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated research note (researched and verified 2026-09-09) with time-gated findings; timeline.json additions since then do not make it wrong as a record."
 		},
 		"docs/ibm.md": {
 			"commit": "9c9d80bcc",
@@ -801,6 +1545,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/issue-resolution-2026-09-15.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated resolution record of the 2026-09-15 issue tracker audit."
 		},
 		"docs/labor-market.md": {
 			"commit": "0a10f48c2",
@@ -838,6 +1588,18 @@
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
+		"docs/microsoft-marketplace-offer-plan.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Paths, npm package scripts, routes in vercel.json, plan ids, dimensions, env vars, manifest share target and the Microsoft sign-in button all match current source."
+		},
+		"docs/microsoft-marketplace-saas.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Cron 7 * * * *, 23 hour lookback, batch size 25, error codes, statuses and tables all match the code."
+		},
 		"docs/money-feed.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
@@ -867,6 +1629,24 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/nvidia-forum-browser-digital-human.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Forum post already published 2026-09-22 with a live URL."
+		},
+		"docs/nvidia-forum-gpu-fleet-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added TRELLIS.2 as the default lane, made Hunyuan3D a fallback, and updated cold start seconds to 45, 60, 75 and 90."
+		},
+		"docs/nvidia-forum-model-retirement-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Forum post already published 2026-09-21."
 		},
 		"docs/nvidia-gtc-2027-poster.md": {
 			"commit": "79b34d762",
@@ -903,6 +1683,24 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/open-source-friday-plan.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The on-air pick moved to the Rigify spine issue because the HumanIK issue shipped 2026-11-04, and the timeline was updated."
+		},
+		"docs/openai-community-3d-studio-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Tool count corrected to fifteen with get_job and the other missing tools listed, TRELLIS.2 named as default, and the text input row corrected."
+		},
+		"docs/openai-community-physical-world-post.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Tool count changed to fifteen with a get_job row, and the high tier no longer claimed to run on Hunyuan3D."
 		},
 		"docs/ops/ISSUES.md": {
 			"commit": "9c9d80bcc",
@@ -1046,6 +1844,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/partner-shoutout-playbook.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Inception perk status changed from awaiting migration and deploy to live."
 		},
 		"docs/partners.md": {
 			"commit": "5c826cca9",
@@ -1250,6 +2054,12 @@
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
 		},
+		"docs/seeker-submission-day.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Added that v1.0.0 is live and that carousel.png is generated by npm run build:dapp-store-previews and gitignored."
+		},
 		"docs/shared-utilities.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
@@ -1261,6 +2071,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep: checked against the drifted commits"
+		},
+		"docs/short-form-venue-kit-2026-09.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Sampled claims on sim-readiness, print materials, tty-avatar and the Qwen lane in /api/brain/chat still hold."
 		},
 		"docs/simready-assets.md": {
 			"commit": "9c9d80bcc",
@@ -1345,6 +2161,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/the-first-19-weeks.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Founding roundup dated 2026-08-25 that records a moment."
 		},
 		"docs/timeline.md": {
 			"commit": "53f2a200f",
@@ -1526,11 +2348,23 @@
 			"by": "agent",
 			"note": "read against code drift; fixed where it differed"
 		},
+		"docs/x-account-appeal.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The trade-share claim still holds because api/trade-share.js builds an x.com intent URL from shareText with no account tag."
+		},
 		"docs/x-accounts.md": {
 			"commit": "53f2a200f",
 			"kind": "verified",
 			"by": "agent",
 			"note": "full sweep: read against the drifted commits and corrected where wrong"
+		},
+		"docs/x-article-author-brief.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Aligned the what good looks like limits with queue.js gates: title 80 to 100, 2,400 or more words, 8 or more sections, 4 or more images, 3,000 character code and table minimum."
 		},
 		"docs/x-content-pipeline.md": {
 			"commit": "9c9d80bcc",
@@ -1545,10 +2379,10 @@
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
 		},
 		"docs/x-partner-series.md": {
-			"commit": "0a10f48c2",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Slots live under cadence.slots in queue.json, not a top-level slots key; fixed both mentions. Job name, schedule, timeout, lint limits and rotation checked against code."
 		},
 		"docs/x-posts/claims-ledger-thread.md": {
 			"commit": "5c826cca9",
@@ -1566,6 +2400,24 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "freshness sweep 2026-11-04: checked against the drifted commits"
+		},
+		"docs/x-reply-playbook.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked queue.js validateItem and article gate references plus the how-we-render-3d-article path; saveQueueItem change does not alter the recipe."
+		},
+		"docs/x-story-author-brief.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked linked files, x-content.mjs scout/prove/adopt/advance commands, volume-model.json (313 moments), and the new saveQueueItem change which does not affect the author workflow."
+		},
+		"docs/x-story-authoring.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Step types, 90 char caption cap, probe types, evidence kinds and CLI commands match reel.js, queue.js and x-content.mjs; queue.json commits are data only."
 		},
 		"docs/x402-buyer.md": {
 			"commit": "9c9d80bcc",

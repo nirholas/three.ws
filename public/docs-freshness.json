@@ -1,17 +1,17 @@
 {
 	"$generated": "npm run docs:freshness (scripts/doc-freshness.mjs)",
 	"$doc": "/docs/freshness",
-	"generatedAt": "2026-11-06T00:42:30.595Z",
-	"commit": "5c826cca9",
+	"generatedAt": "2026-11-06T02:48:42.359Z",
+	"commit": "4cf6b20f3",
 	"totals": {
-		"docs": 1055,
+		"docs": 1056,
 		"stale": 0,
-		"watch": 607,
-		"fresh": 258,
+		"watch": 604,
+		"fresh": 262,
 		"unverifiable": 150,
 		"snapshot": 40,
 		"reviewed": 266,
-		"trackedFiles": 5946
+		"trackedFiles": 5940
 	},
 	"docs": [
 		{
@@ -262,14 +262,10 @@
 			]
 		},
 		{
-			"path": "docs/agora/tasks/05-commons-scaffold.md",
+			"path": "docs/agora/tasks/archive/05-commons-scaffold.md",
 			"title": "Task 05: The Commons (3D scaffold)",
-			"route": "/docs/#agora/tasks/05-commons-scaffold",
-			"lastTouched": {
-				"sha": "b6194ae82",
-				"date": "2026-09-01",
-				"ageDays": 65
-			},
+			"route": "/docs/#agora/tasks/archive/05-commons-scaffold",
+			"lastTouched": null,
 			"review": {
 				"sha": "53f2a200f",
 				"date": "2026-09-17",
@@ -1146,14 +1142,10 @@
 			]
 		},
 		{
-			"path": "docs/agora/tasks/01-verify-foundation.md",
+			"path": "docs/agora/tasks/archive/01-verify-foundation.md",
 			"title": "Task 01: Verify the Agora foundation",
-			"route": "/docs/#agora/tasks/01-verify-foundation",
-			"lastTouched": {
-				"sha": "b6194ae82",
-				"date": "2026-09-01",
-				"ageDays": 65
-			},
+			"route": "/docs/#agora/tasks/archive/01-verify-foundation",
+			"lastTouched": null,
 			"review": {
 				"sha": "9c9d80bcc",
 				"date": "2026-11-04",
@@ -2415,11 +2407,11 @@
 			"lastTouched": {
 				"sha": "7b48d6110",
 				"date": "2026-11-05",
-				"ageDays": 0
+				"ageDays": 1
 			},
 			"review": null,
 			"status": "watch",
-			"deps": 80,
+			"deps": 79,
 			"depFiles": [
 				"api/_lib/alerts.js",
 				"api/_lib/circulation.js",
@@ -2455,7 +2447,6 @@
 				"api/v1/ai/image.js",
 				"api/version.js",
 				"api/widgets/index.js",
-				"character-studio/build/index.html",
 				"chat/scripts/ensure-deps.mjs",
 				"data/domain-tlds.json",
 				"data/pages.json",
@@ -2659,11 +2650,10 @@
 			},
 			"review": null,
 			"status": "watch",
-			"deps": 9,
+			"deps": 8,
 			"depFiles": [
 				"api/_lib/x-content/outcomes.js",
 				"data/announce-media.json",
-				"data/announcements.json",
 				"data/x-archive/trythreews-2026-08-14.json",
 				"scripts/announce-rank.mjs",
 				"scripts/capture-doc-media.mjs",
@@ -6227,7 +6217,7 @@
 			"lastTouched": {
 				"sha": "6727e22c2",
 				"date": "2026-08-14",
-				"ageDays": 83
+				"ageDays": 84
 			},
 			"review": null,
 			"status": "watch",
@@ -9403,7 +9393,7 @@
 			"lastTouched": {
 				"sha": "07ebf85a8",
 				"date": "2026-10-14",
-				"ageDays": 22
+				"ageDays": 23
 			},
 			"review": null,
 			"status": "watch",
@@ -10602,14 +10592,10 @@
 			]
 		},
 		{
-			"path": "docs/agora/tasks/08-humans-first-class.md",
+			"path": "docs/agora/tasks/archive/08-humans-first-class.md",
 			"title": "Task 08: Humans as first-class citizens",
-			"route": "/docs/#agora/tasks/08-humans-first-class",
-			"lastTouched": {
-				"sha": "b6194ae82",
-				"date": "2026-09-01",
-				"ageDays": 65
-			},
+			"route": "/docs/#agora/tasks/archive/08-humans-first-class",
+			"lastTouched": null,
 			"review": {
 				"sha": "9c9d80bcc",
 				"date": "2026-11-04",
@@ -13668,7 +13654,7 @@
 			"lastTouched": {
 				"sha": "3b18627a5",
 				"date": "2026-08-17",
-				"ageDays": 80
+				"ageDays": 81
 			},
 			"review": {
 				"sha": "9c9d80bcc",
@@ -19926,7 +19912,7 @@
 			"lastTouched": {
 				"sha": "70beb5afa",
 				"date": "2026-07-08",
-				"ageDays": 120
+				"ageDays": 121
 			},
 			"review": null,
 			"status": "watch",
@@ -20685,7 +20671,7 @@
 			"lastTouched": {
 				"sha": "b7e29dafe",
 				"date": "2026-10-09",
-				"ageDays": 27
+				"ageDays": 28
 			},
 			"review": null,
 			"status": "watch",
@@ -24097,7 +24083,7 @@
 			"lastTouched": {
 				"sha": "8e0b94ce5",
 				"date": "2026-10-11",
-				"ageDays": 25
+				"ageDays": 26
 			},
 			"review": null,
 			"status": "watch",
@@ -24815,7 +24801,7 @@
 			"lastTouched": {
 				"sha": "3e8dd089b",
 				"date": "2026-09-18",
-				"ageDays": 48
+				"ageDays": 49
 			},
 			"review": null,
 			"status": "watch",
@@ -25183,7 +25169,7 @@
 			"lastTouched": {
 				"sha": "0bfa14b2c",
 				"date": "2026-08-19",
-				"ageDays": 78
+				"ageDays": 79
 			},
 			"review": null,
 			"status": "watch",
@@ -27408,7 +27394,7 @@
 				"ageDays": 1
 			},
 			"status": "watch",
-			"deps": 23,
+			"deps": 22,
 			"depFiles": [
 				"api/_lib/announce/brief.js",
 				"api/_lib/announce/card.js",
@@ -27422,7 +27408,6 @@
 				"data/announce-deferred.json",
 				"data/announce-gate-terms.json",
 				"data/announce-media.json",
-				"data/announce-plan/plan.json",
 				"data/announce-priority.json",
 				"data/pages.json",
 				"data/x-content/queue.json",
@@ -29113,7 +29098,7 @@
 			"lastTouched": {
 				"sha": "ddaa0b678",
 				"date": "2026-07-07",
-				"ageDays": 121
+				"ageDays": 122
 			},
 			"review": null,
 			"status": "watch",
@@ -29559,49 +29544,6 @@
 						}
 					],
 					"total": 1
-				}
-			]
-		},
-		{
-			"path": "docs/agora/tasks/07-verify-and-passport.md",
-			"title": "Task 07: Verify the work + the living passport",
-			"route": "/docs/#agora/tasks/07-verify-and-passport",
-			"lastTouched": {
-				"sha": "b6194ae82",
-				"date": "2026-09-01",
-				"ageDays": 65
-			},
-			"review": null,
-			"status": "watch",
-			"deps": 4,
-			"depFiles": [
-				"solana-agent-sdk/src/actions/agenc/identity-bridge.ts",
-				"src/agora/job-detail.js",
-				"src/agora/passport-panel.js",
-				"src/agora/verify.js"
-			],
-			"driftFiles": 1,
-			"driftCommits": 2,
-			"signal": 0.333,
-			"score": 0.333,
-			"drift": [
-				{
-					"file": "src/agora/passport-panel.js",
-					"sharedWith": 2,
-					"weight": 0.333,
-					"commits": [
-						{
-							"sha": "12969cead",
-							"date": "2026-11-04",
-							"subject": "feat(agora): give citizens a memory stream that reflects and plans off the world loop"
-						},
-						{
-							"sha": "22a5a1f49",
-							"date": "2026-10-23",
-							"subject": "feat(platform): ship the remaining in-flight work across api, src, tests, packages, docs and data (trade guards, approvals, oracle, skills import, create-agent templates, UFO runs, v4 hook catalog, robinhood launches, changelog and docs updates)"
-						}
-					],
-					"total": 2
 				}
 			]
 		},
@@ -30253,7 +30195,7 @@
 			"lastTouched": {
 				"sha": "5a6381d57",
 				"date": "2026-10-12",
-				"ageDays": 24
+				"ageDays": 25
 			},
 			"review": null,
 			"status": "watch",
@@ -33700,7 +33642,7 @@
 			"lastTouched": {
 				"sha": "ac02ba415",
 				"date": "2026-10-09",
-				"ageDays": 27
+				"ageDays": 28
 			},
 			"review": null,
 			"status": "watch",
@@ -35097,7 +35039,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -35241,7 +35183,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -35385,7 +35327,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -35529,7 +35471,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -35673,7 +35615,7 @@
 			"lastTouched": {
 				"sha": "b1e3fe103",
 				"date": "2026-09-28",
-				"ageDays": 38
+				"ageDays": 39
 			},
 			"review": null,
 			"status": "watch",
@@ -35817,7 +35759,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -35961,7 +35903,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -36105,7 +36047,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -36249,7 +36191,7 @@
 			"lastTouched": {
 				"sha": "9d65855a8",
 				"date": "2026-09-21",
-				"ageDays": 45
+				"ageDays": 46
 			},
 			"review": null,
 			"status": "watch",
@@ -46896,10 +46838,9 @@
 			},
 			"review": null,
 			"status": "watch",
-			"deps": 10,
+			"deps": 9,
 			"depFiles": [
 				"data/announce-media.json",
-				"data/announcements.json",
 				"data/pages.json",
 				"scripts/announce-kit.mjs",
 				"scripts/announce-plan.mjs",
@@ -47845,7 +47786,7 @@
 			},
 			"review": null,
 			"status": "watch",
-			"deps": 16,
+			"deps": 15,
 			"depFiles": [
 				"api/_lib/api-keys.js",
 				"api/api-keys.js",
@@ -47858,7 +47799,6 @@
 				"api/mcp.js",
 				"api/skills-manifest.js",
 				"api/tool_schema.js",
-				"data/_generated/skill-metadata.json",
 				"package.json",
 				"scripts/build-skill-metadata.mjs",
 				"src/dashboard-next/pages/api.js",
@@ -48671,7 +48611,7 @@
 				"ageDays": 1
 			},
 			"status": "watch",
-			"deps": 3076,
+			"deps": 3075,
 			"depFiles": [
 				".zenodo.json",
 				"api/3d/diff.js",
@@ -49794,7 +49734,6 @@
 				"data/airdrops.json",
 				"data/announce-deferred.json",
 				"data/announce-media.json",
-				"data/announcements.json",
 				"data/atlas-intents.json",
 				"data/awesome.json",
 				"data/competitions.json",
@@ -53366,7 +53305,7 @@
 			},
 			"review": null,
 			"status": "watch",
-			"deps": 54,
+			"deps": 53,
 			"depFiles": [
 				".mcp.json",
 				"api/_lib/agents-v1/agents.js",
@@ -53403,7 +53342,6 @@
 				"api/v1/x/index.js",
 				"glama.json",
 				"package.json",
-				"public/docs-search-index.json",
 				"public/docs-search.js",
 				"public/mcp-catalog.json",
 				"scripts/audit-mcp-safety.mjs",
@@ -54734,7 +54672,7 @@
 			"lastTouched": {
 				"sha": "40b30a5d0",
 				"date": "2026-10-12",
-				"ageDays": 24
+				"ageDays": 25
 			},
 			"review": null,
 			"status": "watch",
@@ -57036,7 +56974,7 @@
 				"ageDays": 1
 			},
 			"status": "watch",
-			"deps": 63,
+			"deps": 62,
 			"depFiles": [
 				"api/3d/openapi.js",
 				"api/avatars/featured.js",
@@ -57076,7 +57014,6 @@
 				"public/glossary.js",
 				"public/legal/agreements.js",
 				"public/legal/index.html",
-				"public/news/index.html",
 				"scripts/build-community-registry.mjs",
 				"scripts/build-page-index.mjs",
 				"scripts/i18n-annotate.mjs",
@@ -57908,129 +57845,6 @@
 			"deps": 2,
 			"depFiles": [
 				"api/event-markets/index.js",
-				"vercel.json"
-			],
-			"driftFiles": 1,
-			"driftCommits": 72,
-			"signal": 0.01,
-			"score": 0.01,
-			"drift": [
-				{
-					"file": "vercel.json",
-					"sharedWith": 95,
-					"weight": 0.01,
-					"commits": [
-						{
-							"sha": "9b984a7b7",
-							"date": "2026-11-06",
-							"subject": "feat(play): serve the lite client page at /play/lite with its stylesheet, Cloud Run route, Vite entry and sitemap row"
-						},
-						{
-							"sha": "45b4c9e38",
-							"date": "2026-11-04",
-							"subject": "feat(human-tasks): let agents hire people for real-world jobs paid from Solana USDC escrow"
-						},
-						{
-							"sha": "a690ecfa7",
-							"date": "2026-11-04",
-							"subject": "feat(avatar): layer makeup, tattoos and decals over the Parametric skin, previewed and baked by one compositor"
-						},
-						{
-							"sha": "beb1ab428",
-							"date": "2026-11-04",
-							"subject": "feat(event-markets): staking buyback command, mainnet launch-plan preflight, devnet e2e script, reconcile cron and runbook"
-						},
-						{
-							"sha": "478f431b2",
-							"date": "2026-11-04",
-							"subject": "feat(agent-screen): let an agent browse the web toward a goal under a safety policy, with owner take-over and a browse_web tool"
-						},
-						{
-							"sha": "41176bf35",
-							"date": "2026-11-04",
-							"subject": "feat(platform): update env template, cli, install guide, locale strings, route table and plan progress"
-						}
-					],
-					"total": 72
-				}
-			]
-		},
-		{
-			"path": "docs/prompts/event-markets/03-auto-resolution.md",
-			"title": "03. Auto-resolution from our own data",
-			"route": "/docs/#prompts/event-markets/03-auto-resolution",
-			"lastTouched": {
-				"sha": "d71ef96f4",
-				"date": "2026-10-10",
-				"ageDays": 26
-			},
-			"review": null,
-			"status": "watch",
-			"deps": 3,
-			"depFiles": [
-				"api/arena-og.js",
-				"api/play/event-leaderboard.js",
-				"vercel.json"
-			],
-			"driftFiles": 1,
-			"driftCommits": 72,
-			"signal": 0.01,
-			"score": 0.01,
-			"drift": [
-				{
-					"file": "vercel.json",
-					"sharedWith": 95,
-					"weight": 0.01,
-					"commits": [
-						{
-							"sha": "9b984a7b7",
-							"date": "2026-11-06",
-							"subject": "feat(play): serve the lite client page at /play/lite with its stylesheet, Cloud Run route, Vite entry and sitemap row"
-						},
-						{
-							"sha": "45b4c9e38",
-							"date": "2026-11-04",
-							"subject": "feat(human-tasks): let agents hire people for real-world jobs paid from Solana USDC escrow"
-						},
-						{
-							"sha": "a690ecfa7",
-							"date": "2026-11-04",
-							"subject": "feat(avatar): layer makeup, tattoos and decals over the Parametric skin, previewed and baked by one compositor"
-						},
-						{
-							"sha": "beb1ab428",
-							"date": "2026-11-04",
-							"subject": "feat(event-markets): staking buyback command, mainnet launch-plan preflight, devnet e2e script, reconcile cron and runbook"
-						},
-						{
-							"sha": "478f431b2",
-							"date": "2026-11-04",
-							"subject": "feat(agent-screen): let an agent browse the web toward a goal under a safety policy, with owner take-over and a browse_web tool"
-						},
-						{
-							"sha": "41176bf35",
-							"date": "2026-11-04",
-							"subject": "feat(platform): update env template, cli, install guide, locale strings, route table and plan progress"
-						}
-					],
-					"total": 72
-				}
-			]
-		},
-		{
-			"path": "docs/prompts/event-markets/04-auto-open-for-every-event.md",
-			"title": "04. Auto-open a market for every event",
-			"route": "/docs/#prompts/event-markets/04-auto-open-for-every-event",
-			"lastTouched": {
-				"sha": "d71ef96f4",
-				"date": "2026-10-10",
-				"ageDays": 26
-			},
-			"review": null,
-			"status": "watch",
-			"deps": 2,
-			"depFiles": [
-				"api/cron/event-markets-open.js",
 				"vercel.json"
 			],
 			"driftFiles": 1,
@@ -59616,7 +59430,7 @@
 			"lastTouched": {
 				"sha": "1bd84d715",
 				"date": "2026-08-19",
-				"ageDays": 78
+				"ageDays": 79
 			},
 			"review": null,
 			"status": "watch",
@@ -59676,7 +59490,7 @@
 			"lastTouched": {
 				"sha": "0901ede9e",
 				"date": "2026-07-18",
-				"ageDays": 110
+				"ageDays": 111
 			},
 			"review": null,
 			"status": "watch",
@@ -61241,7 +61055,7 @@
 			"lastTouched": {
 				"sha": "50d09b3ac",
 				"date": "2026-11-05",
-				"ageDays": 0
+				"ageDays": 1
 			},
 			"review": null,
 			"status": "fresh",
@@ -61325,7 +61139,7 @@
 			"lastTouched": {
 				"sha": "4b9be33c8",
 				"date": "2026-11-05",
-				"ageDays": 0
+				"ageDays": 1
 			},
 			"review": null,
 			"status": "fresh",
@@ -61417,31 +61231,6 @@
 			"drift": []
 		},
 		{
-			"path": "docs/agora/tasks/09-arena-and-guilds.md",
-			"title": "Task 09: Arena (competitive) + Guilds (collaborative)",
-			"route": "/docs/#agora/tasks/09-arena-and-guilds",
-			"lastTouched": {
-				"sha": "634632790",
-				"date": "2026-08-06",
-				"ageDays": 91
-			},
-			"review": null,
-			"status": "fresh",
-			"deps": 5,
-			"depFiles": [
-				"solana-agent-sdk/src/actions/agenc/tasks.ts",
-				"src/agora/arena.js",
-				"src/agora/guild.js",
-				"src/agora/job-board.js",
-				"tests/agora-arena-guild.test.js"
-			],
-			"driftFiles": 0,
-			"driftCommits": 0,
-			"signal": 0,
-			"score": 0,
-			"drift": []
-		},
-		{
 			"path": "docs/agora/tasks/12-fleet-render-performance.md",
 			"title": "Task 12: the Commons collapses to ~1fps once the full fleet loads",
 			"route": "/docs/#agora/tasks/12-fleet-render-performance",
@@ -61460,6 +61249,62 @@
 				"tests/agora-animation-budget.test.js",
 				"tests/e2e/agora-fleet-fps.spec.js"
 			],
+			"driftFiles": 0,
+			"driftCommits": 0,
+			"signal": 0,
+			"score": 0,
+			"drift": []
+		},
+		{
+			"path": "docs/agora/tasks/archive/07-verify-and-passport.md",
+			"title": "Task 07: Verify the work + the living passport",
+			"route": "/docs/#agora/tasks/archive/07-verify-and-passport",
+			"lastTouched": null,
+			"review": null,
+			"status": "fresh",
+			"deps": 4,
+			"depFiles": [
+				"solana-agent-sdk/src/actions/agenc/identity-bridge.ts",
+				"src/agora/job-detail.js",
+				"src/agora/passport-panel.js",
+				"src/agora/verify.js"
+			],
+			"driftFiles": 0,
+			"driftCommits": 0,
+			"signal": 0,
+			"score": 0,
+			"drift": []
+		},
+		{
+			"path": "docs/agora/tasks/archive/09-arena-and-guilds.md",
+			"title": "Task 09: Arena (competitive) + Guilds (collaborative)",
+			"route": "/docs/#agora/tasks/archive/09-arena-and-guilds",
+			"lastTouched": null,
+			"review": null,
+			"status": "fresh",
+			"deps": 5,
+			"depFiles": [
+				"solana-agent-sdk/src/actions/agenc/tasks.ts",
+				"src/agora/arena.js",
+				"src/agora/guild.js",
+				"src/agora/job-board.js",
+				"tests/agora-arena-guild.test.js"
+			],
+			"driftFiles": 0,
+			"driftCommits": 0,
+			"signal": 0,
+			"score": 0,
+			"drift": []
+		},
+		{
+			"path": "docs/agora/tasks/archive/README.md",
+			"title": "Agora tasks: archive",
+			"route": "/docs/#agora/tasks/archive/README",
+			"lastTouched": null,
+			"review": null,
+			"status": "unverifiable",
+			"deps": 0,
+			"depFiles": [],
 			"driftFiles": 0,
 			"driftCommits": 0,
 			"signal": 0,
@@ -62444,7 +62289,7 @@
 			"lastTouched": {
 				"sha": "ba05fde46",
 				"date": "2026-08-22",
-				"ageDays": 75
+				"ageDays": 76
 			},
 			"review": null,
 			"status": "unverifiable",
@@ -63558,7 +63403,7 @@
 			"lastTouched": {
 				"sha": "05c918b68",
 				"date": "2026-10-11",
-				"ageDays": 25
+				"ageDays": 26
 			},
 			"review": null,
 			"status": "fresh",
@@ -63622,7 +63467,7 @@
 			"lastTouched": {
 				"sha": "64df7ba89",
 				"date": "2026-10-12",
-				"ageDays": 24
+				"ageDays": 25
 			},
 			"review": null,
 			"status": "unverifiable",
@@ -64534,7 +64379,7 @@
 			"lastTouched": {
 				"sha": "7b48d6110",
 				"date": "2026-11-05",
-				"ageDays": 0
+				"ageDays": 1
 			},
 			"review": null,
 			"status": "fresh",
@@ -64688,21 +64533,6 @@
 			"drift": []
 		},
 		{
-			"path": "docs/github-benchmark/data/analysis.md",
-			"title": "analysis",
-			"route": "/docs/#github-benchmark/data/analysis",
-			"lastTouched": null,
-			"review": null,
-			"status": "unverifiable",
-			"deps": 0,
-			"depFiles": [],
-			"driftFiles": 0,
-			"driftCommits": 0,
-			"signal": 0,
-			"score": 0,
-			"drift": []
-		},
-		{
 			"path": "docs/github-benchmark/dependency-fixes.md",
 			"title": "Dependency security fixes (prepared locally, not pushed)",
 			"route": "/docs/#github-benchmark/dependency-fixes",
@@ -64766,7 +64596,7 @@
 			"lastTouched": {
 				"sha": "7c39e6dbe",
 				"date": "2026-11-05",
-				"ageDays": 0
+				"ageDays": 1
 			},
 			"review": {
 				"sha": "9c9d80bcc",
@@ -65295,7 +65125,7 @@
 			"lastTouched": {
 				"sha": "757b5a071",
 				"date": "2026-08-05",
-				"ageDays": 92
+				"ageDays": 93
 			},
 			"review": null,
 			"status": "unverifiable",
@@ -65443,7 +65273,7 @@
 			"lastTouched": {
 				"sha": "757b5a071",
 				"date": "2026-08-05",
-				"ageDays": 92
+				"ageDays": 93
 			},
 			"review": null,
 			"status": "unverifiable",
@@ -66202,7 +66032,7 @@
 			"lastTouched": {
 				"sha": "56250d200",
 				"date": "2026-10-09",
-				"ageDays": 27
+				"ageDays": 28
 			},
 			"review": null,
 			"status": "unverifiable",
@@ -66768,7 +66598,7 @@
 			"lastTouched": {
 				"sha": "06411bc80",
 				"date": "2026-11-05",
-				"ageDays": 0
+				"ageDays": 1
 			},
 			"review": null,
 			"status": "fresh",
@@ -67033,7 +66863,7 @@
 				"ageDays": 11
 			},
 			"status": "fresh",
-			"deps": 42,
+			"deps": 41,
 			"depFiles": [
 				"api/_lib/chat-models.js",
 				"api/agents.js",
@@ -67052,7 +66882,6 @@
 				"package-lock.json",
 				"package.json",
 				"public/animations/signatures.json",
-				"public/docs-search-index.json",
 				"public/event.json",
 				"public/guards.json",
 				"public/tour-builder/tour.global.js",
@@ -68388,6 +68217,61 @@
 			"drift": []
 		},
 		{
+			"path": "docs/prompts/event-markets/archive/03-auto-resolution.md",
+			"title": "03. Auto-resolution from our own data",
+			"route": "/docs/#prompts/event-markets/archive/03-auto-resolution",
+			"lastTouched": null,
+			"review": null,
+			"status": "fresh",
+			"deps": 3,
+			"depFiles": [
+				"api/arena-og.js",
+				"api/play/event-leaderboard.js",
+				"vercel.json"
+			],
+			"driftFiles": 0,
+			"driftCommits": 0,
+			"signal": 0,
+			"score": 0,
+			"drift": []
+		},
+		{
+			"path": "docs/prompts/event-markets/archive/04-auto-open-for-every-event.md",
+			"title": "04. Auto-open a market for every event",
+			"route": "/docs/#prompts/event-markets/archive/04-auto-open-for-every-event",
+			"lastTouched": null,
+			"review": null,
+			"status": "fresh",
+			"deps": 2,
+			"depFiles": [
+				"api/cron/event-markets-open.js",
+				"vercel.json"
+			],
+			"driftFiles": 0,
+			"driftCommits": 0,
+			"signal": 0,
+			"score": 0,
+			"drift": []
+		},
+		{
+			"path": "docs/prompts/event-markets/archive/README.md",
+			"title": "Event markets briefs: archive",
+			"route": "/docs/#prompts/event-markets/archive/README",
+			"lastTouched": null,
+			"review": null,
+			"status": "fresh",
+			"deps": 2,
+			"depFiles": [
+				"tests/event-market-resolvers.test.js",
+				"tests/event-markets-auto-open.test.js"
+			],
+			"driftFiles": 0,
+			"driftCommits": 0,
+			"signal": 0,
+			"score": 0,
+			"drift": []
+		},
+		{
 			"path": "docs/provenance.md",
 			"title": "Verifiable 3D provenance: content credentials for AI-generated models",
 			"route": "/docs/#provenance",
@@ -69559,7 +69443,7 @@
 			"lastTouched": {
 				"sha": "7d8806df4",
 				"date": "2026-09-08",
-				"ageDays": 58
+				"ageDays": 59
 			},
 			"review": null,
 			"status": "fresh",
@@ -69586,7 +69470,7 @@
 			"lastTouched": {
 				"sha": "3503381b1",
 				"date": "2026-10-11",
-				"ageDays": 25
+				"ageDays": 26
 			},
 			"review": null,
 			"status": "fresh",

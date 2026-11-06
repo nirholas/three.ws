@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T00:34:32.591Z",
+	"generated_at": "2026-11-06T02:43:06.617Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -10118,6 +10118,54 @@
 					"path": "/docs/solana",
 					"title": "Docs · Solana agents",
 					"description": "Give your agent a real on-chain identity on Solana. Your wallet signs one transaction that mints an NFT representing the agent, which is what lets the identity outlive any single platform.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/solana-actions",
+					"title": "Docs · Solana Actions (Blinks)",
+					"description": "Every three.ws agent can be acted on from a link in a feed. The Blinks each agent serves, the handler behind each one, and exactly what the buyer signs.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/agent-sandbox",
+					"title": "Docs · Agent sandbox",
+					"description": "Agents run code, terminal commands and file edits in an isolated per-run workspace. The execute_code, terminal, read_file and write_file tools, and how the sandbox is kept apart from the API.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/web-bot-auth",
+					"title": "Docs · Web Bot Auth",
+					"description": "How three.ws agents sign their outbound web requests with HTTP Message Signatures (RFC 9421, Ed25519), so a site can verify who is fetching and attribute or rate-limit it.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.6,
+					"job": null
+				},
+				{
+					"path": "/docs/hq-agent-integration",
+					"title": "Docs · HQ and agent integration",
+					"description": "How host pages, agents and MCP clients drive HQ, the DeFi dashboard: the postMessage bridge, the origins it accepts, and the data commands it answers.",
 					"added": null,
 					"auth": null,
 					"indexable": true,
