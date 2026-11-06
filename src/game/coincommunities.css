@@ -237,9 +237,10 @@ html[data-bg="transparent"] #cc-lobby {
 	margin: 0; color: var(--cc-dim); font-size: 13px; line-height: 1.55;
 	letter-spacing: 0.01em; text-wrap: balance;
 }
-.kx-boot-error-actions { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
+.kx-boot-error-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 16px; margin-top: 6px; }
 .kx-boot-error-btn {
 	appearance: none; cursor: pointer; font: inherit;
+	display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
 	background: var(--cc-accent); color: var(--cc-ink);
 	border: 0; border-radius: var(--cc-radius);
 	/* Thumb-sized: this is the recovery button on a screen that has already
@@ -251,6 +252,7 @@ html[data-bg="transparent"] #cc-lobby {
 .kx-boot-error-btn:active { transform: translateY(0); opacity: 0.9; }
 .kx-boot-error-btn:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
 .kx-boot-error-link {
+	appearance: none; background: none; border: 0; font: inherit; cursor: pointer;
 	display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px;
 	color: var(--cc-dim); font-size: 13px; text-decoration: none;
 	box-shadow: inset 0 -1px 0 var(--cc-edge-soft);
@@ -4144,3 +4146,33 @@ select.npc-svc-input:hover {
 .cc-report-btn:disabled { opacity: 0.6; cursor: progress; }
 .cc-report-primary { background: #fff; color: #111; border-color: #fff; }
 .cc-report-primary:hover { background: #e6e6e6; }
+
+/* "Switch to lite" offer (src/game/lite-offer.js): shown once the frame
+   watchdog has bottomed out on a device that still can't hold frame rate.
+   Sits above the toast lane and stays until the player picks. */
+.cc-lite-offer {
+	position: fixed; left: 50%; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+	width: min(420px, calc(100vw - 32px)); padding: 14px 16px; z-index: 61;
+	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge);
+	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
+	color: var(--cc-text); font-size: 13px; line-height: 1.45;
+	animation: cc-lite-offer-in var(--duration-fast) var(--ease-standard);
+}
+@keyframes cc-lite-offer-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.cc-lite-offer-text { margin: 0 0 10px; color: var(--cc-dim); }
+.cc-lite-offer-text strong { color: var(--cc-text); }
+.cc-lite-offer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cc-lite-offer-go, .cc-lite-offer-keep {
+	display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px;
+	border-radius: var(--cc-radius); font: inherit; font-weight: 700; text-decoration: none; cursor: pointer;
+	transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.cc-lite-offer-go { background: var(--cc-accent); color: var(--cc-ink); border: 0; }
+.cc-lite-offer-go:hover { box-shadow: var(--cc-glow); transform: translateY(-1px); }
+.cc-lite-offer-keep { background: transparent; color: var(--cc-text); border: 1px solid var(--cc-edge); }
+.cc-lite-offer-keep:hover { background: rgba(255, 255, 255, 0.06); }
+.cc-lite-offer-go:active, .cc-lite-offer-keep:active { transform: translateY(0); opacity: 0.9; }
+.cc-lite-offer-go:focus-visible, .cc-lite-offer-keep:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
+.cc-lite-offer-remember { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--cc-dim); cursor: pointer; }
+.cc-lite-offer-remember input:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .cc-lite-offer { animation: none; } }

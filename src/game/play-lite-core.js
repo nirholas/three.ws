@@ -49,13 +49,14 @@ export function fullUrlFrom(search) {
 /**
  * Should a /play visit open the lite client instead? Pure: the caller supplies the
  * query, the stored preference, and whether a WebGL context could be created.
- * `?full=1` always wins (the "Open in 3D" button), then `?lite=1`, then a missing
- * GPU, then the remembered choice.
+ * `?full=1` always wins (the "Open in 3D" button), and `?director=1` (the venue
+ * projector camera) is never redirected. Then `?lite=1`, then a missing GPU,
+ * then the remembered choice. pages/play.html inlines this same rule.
  * @returns {null | 'asked' | 'no-webgl' | 'preference'}
  */
 export function liteReason({ search = '', pref = null, webgl = true } = {}) {
 	const q = new URLSearchParams(search);
-	if (q.get('full') === '1') return null;
+	if (q.get('full') === '1' || q.get('director') === '1') return null;
 	if (q.get('lite') === '1') return 'asked';
 	if (!webgl) return 'no-webgl';
 	if (pref === '1') return 'preference';

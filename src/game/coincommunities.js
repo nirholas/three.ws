@@ -28,6 +28,8 @@ import { createDistrict } from './district.js';
 import { DISTRICT, clampToBounds } from './world-zones.js';
 import { PhysicsWorld } from '../physics/physics-world.js';
 import { detectProfile, createFrameWatchdog, watchdogFrameSec } from '../club-perf.js';
+import { createStruggleDetector, liteUrlFrom } from './play-lite-core.js';
+import { showLiteOffer } from './lite-offer.js';
 import { applyCinematicDefaults, loadEnvironment } from '../shared/cinematic-render.js';
 import {
 	createFrameGovernor, trackWindowFocus, getPowerSaver, onPowerSaverChange,
@@ -620,6 +622,10 @@ export class CoinCommunities {
 				log.info('[coincommunities] recovering render tier to', tier);
 			},
 		});
+		// Once the watchdog has hit the lowest tier and frames still crawl, offer
+		// the lite client (same room, 2D map) instead of leaving the player in a
+		// slideshow. Fires at most once per page.
+		this._struggle = createStruggleDetector();
 		onPowerSaverChange((on) => { this._powerSaver = on; this._applyPerfTier(); });
 
 		// W01: real Rapier collision. A single physics world + character controller
@@ -5419,6 +5425,7 @@ export class CoinCommunities {
 		// spent their first ten seconds looking at a needlessly soft world.
 		if (this.phase === 'world' && fpsCap >= FPS_ACTIVE && now - this._worldSince > WATCHDOG_GRACE_MS) {
 			this._watchdog.tick(watchdogFrameSec(frameSec));
+			if (this._struggle.tick(watchdogFrameSec(frameSec), this._perfTier)) showLiteOffer();
 		}
 
 		if (this.phase === 'world') {
@@ -5738,23 +5745,31 @@ function renderBootError(err) {
 
 	const mark = document.createElement('div');
 	mark.className = 'kx-loading-mark';
-	mark.textContent = noWebGL ? 'WebGL unavailable' : 'Couldn’t load the world';
+	mark.textContent = noWebGL ? 'This device can’t run the 3D world' : 'Couldn’t load the world';
 	card.appendChild(mark);
 
 	const msg = document.createElement('p');
 	msg.className = 'kx-boot-error-msg';
 	msg.textContent = noWebGL
-		? 'Your browser couldn’t start 3D graphics. Turn on hardware acceleration (or WebGL) and reload, on most browsers it’s under Settings › System.'
-		: 'Something went wrong starting Coin Communities. Reload to try again, if it keeps happening, your browser may be out of date.';
+		? 'Your browser couldn’t start 3D graphics. Join the lite world instead: the same live room, people and chat, drawn as a map. Or turn on hardware acceleration (Settings › System on most browsers) and try again.'
+		: 'Something went wrong starting Coin Communities. Join the lite world to get in right away, or try the 3D world again.';
 	card.appendChild(msg);
 
 	const actions = document.createElement('div');
 	actions.className = 'kx-boot-error-actions';
 
+	// Lite is the primary way out: it joins the same live room without WebGL,
+	// so a failed 3D boot still gets the player into the world.
+	const lite = document.createElement('a');
+	lite.className = 'kx-boot-error-btn';
+	lite.href = liteUrlFrom(location.search);
+	lite.textContent = 'Join the lite world';
+	actions.appendChild(lite);
+
 	const retry = document.createElement('button');
 	retry.type = 'button';
-	retry.className = 'kx-boot-error-btn';
-	retry.textContent = 'Try again';
+	retry.className = 'kx-boot-error-link';
+	retry.textContent = 'Try 3D again';
 	retry.addEventListener('click', () => location.reload());
 	actions.appendChild(retry);
 
@@ -5766,7 +5781,7 @@ function renderBootError(err) {
 
 	card.appendChild(actions);
 	overlay.appendChild(card);
-	retry.focus();
+	lite.focus();
 }
 
 const canvas = document.getElementById('kx-canvas') || document.getElementById('cc-canvas');
