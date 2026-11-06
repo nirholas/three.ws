@@ -295,6 +295,7 @@ if (!explicitFiles.length) {
 //               a commit, so registering one is a decision, never a default.
 const UNPUBLISHED_DOCS = new Map([
 	['orphaned-avatar-campaign', 'owner-gated: landing copy and post drafts awaiting owner wording approval before anything is published'],
+	['x402-server-facilitator-release', 'internal: owner-gated release checklist for the @three-ws/x402-server package, prepared but not executed'],
 	['x-mention-bot', 'internal: operator runbook for the dry-run X mention bot safety rules, public once the bot goes live'],
 	['x-mention-image3d', 'internal: operator notes for the dry-run X image-to-3D reply, public once the bot goes live'],
 	['agora', 'internal: strategy framing, not a reader-facing product doc'],
@@ -414,6 +415,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['trading-experiment', 'owner-gated: names a crypto project other than $THREE'],
 	['trading-hub', 'in-flight: landed mid-session, register with its /trading page'],
 	['x402-solana-july-roundup-response', 'internal: ready-to-paste X reply draft; posting is owner-gated'],
+	['x402-server-facilitator-release', 'internal: owner-gated release checklist for the @three-ws/x402-server package, prepared but not executed'],
 	['x-mention-bot', 'internal: operator runbook for the @-mention reply bot; public once the bot goes live (order 928)'],
 	['x-content-pipeline', 'internal: owner-gated @trythreews publishing queue runbook'],
 	['x-story-authoring', 'internal: how a post for the @trythreews queue is written and filmed, like x-content-pipeline'],

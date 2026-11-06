@@ -6623,6 +6623,34 @@
 					"changefreq": "monthly"
 				},
 				{
+					"path": "/docs/solana-actions",
+					"title": "Docs · Solana Actions (Blinks)",
+					"description": "Every three.ws agent can be acted on from a link in a feed. The Blinks each agent serves, the handler behind each one, and exactly what the buyer signs.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/agent-sandbox",
+					"title": "Docs · Agent sandbox",
+					"description": "Agents run code, terminal commands and file edits in an isolated per-run workspace. The execute_code, terminal, read_file and write_file tools, and how the sandbox is kept apart from the API.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/web-bot-auth",
+					"title": "Docs · Web Bot Auth",
+					"description": "How three.ws agents sign their outbound web requests with HTTP Message Signatures (RFC 9421, Ed25519), so a site can verify who is fetching and attribute or rate-limit it.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/hq-agent-integration",
+					"title": "Docs · HQ and agent integration",
+					"description": "How host pages, agents and MCP clients drive HQ, the DeFi dashboard: the postMessage bridge, the origins it accepts, and the data commands it answers.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
 					"path": "/docs/atomic",
 					"title": "Docs · Atomic Solana V1 inspector",
 					"description": "Inspect legacy, V0, and V1 Solana transactions by signature or raw wire bytes, including the V1 transactionConfig limits that sponsors and indexers must read.",
