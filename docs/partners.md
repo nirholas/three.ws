@@ -166,6 +166,7 @@ The page closes with four reasons, useful as the short pitch when someone asks: 
 
 ## Related
 
+- [Big-tech partner programs](./partners/big-tech-programs.md): every partner program at the largest tech companies, scored and waved into a plan, with our submissions log and the benefits we hold
 - [Partner prospects](./partners/prospects.md) and [the outreach plan](./partners/outreach-plan.md): who we approach next, and how
 - [Press kit](./press-kit.md): marks, announcement graphics, boilerplate, and the rules for all of it
 - [Listings and distribution](./listings.md): marketplaces, ecosystem directories, and media partners with per-listing status

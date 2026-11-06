@@ -12,6 +12,9 @@ does not restate the reference docs:
 - [Partner prospects](./prospects.md) is the scored list of new partners from the 2026-10-09
   sweep, and [the outreach plan](./outreach-plan.md) is how it is worked. A prospect moves
   onto this page when it gets its first action.
+- [Big-tech partner programs](./big-tech-programs.md) is the full catalogue of partner, startup,
+  marketplace and developer programs at the largest tech companies, with the submissions log
+  and benefits ledger, generated from `data/partner-programs.json`.
 
 This page is the part those three do not answer: **what is actually stuck, on whom, and
 what unblocks it.**
