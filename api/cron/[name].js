@@ -1691,11 +1691,14 @@ async function handlePumpAgentStats(req, res) {
 
 			consecutiveRateLimit = 0;
 
-			// Detect graduation flip false→true vs prior snapshot.
+			// Detect graduation flip false→true vs prior snapshot. Only a recent prior
+			// proves the flip is new: a long-stale row may hide a graduation from months
+			// ago, which is corrected below without being announced as news.
 			const [prior] = await sql`
-				select graduated from pump_agent_stats where mint_id=${m.id} limit 1
+				select graduated, refreshed_at > now() - interval '1 day' as recent
+				from pump_agent_stats where mint_id=${m.id} limit 1
 			`;
-			const justGraduated = stats.graduated && prior && !prior.graduated;
+			const justGraduated = stats.graduated && prior?.recent && !prior.graduated;
 
 			await sql`
 				insert into pump_agent_stats
