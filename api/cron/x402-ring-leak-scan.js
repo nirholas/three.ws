@@ -95,6 +95,13 @@ const SCAN_CONCURRENCY = 4;
 // oldest-checked first at this rate, so 2,006 wallets still all get checked
 // every ~17 leases (~2.6h).
 export const ROTATION_PER_RUN = 120;
+// Same day, second half: with every paid lane cooling, runs still burned the
+// whole 200s budget yet finished only 7 to 55 wallets, each call grinding
+// through failover onto the free lanes x402 settles fall back to (about 25k
+// calls an hour). The audit is cursor-based, so a deferred wallet loses
+// nothing: it is first in line next lease. So the ledger-active and rotation
+// tiers stop starting wallets while no paid lane is serving (see runScan's
+// shouldYield); the role tier, the few wallets with real balances, always runs.
 
 // ── Pure classification (exported for tests) ──────────────────────────────────
 
@@ -487,15 +494,22 @@ export function scanPlan(roles, ledgerActive, registry, rotationCap = ROTATION_P
  * prefix and `started` is where the next run picks up.
  * @param {string[]} queue
  * @param {(wallet: string) => Promise<any>} scanOne
- * @param {{ budgetMs: number, concurrency: number, now?: () => number }} opts
- * @returns {Promise<{ results: any[], started: number }>}
+ * `shouldYield` is asked before every start; once it answers true the queue
+ * stops there the same way an exhausted budget does.
+ * @param {{ budgetMs: number, concurrency: number, now?: () => number, shouldYield?: () => boolean }} opts
+ * @returns {Promise<{ results: any[], started: number, yielded: boolean }>}
  */
-export async function scanWithinBudget(queue, scanOne, { budgetMs, concurrency, now = Date.now }) {
+export async function scanWithinBudget(queue, scanOne, { budgetMs, concurrency, now = Date.now, shouldYield = () => false }) {
 	const deadline = now() + budgetMs;
 	const results = [];
 	let next = 0;
+	let yielded = false;
 	const worker = async () => {
 		while (next < queue.length && now() < deadline) {
+			if (shouldYield()) {
+				yielded = true;
+				break;
+			}
 			const wallet = queue[next++];
 			try {
 				results.push(await scanOne(wallet));
@@ -505,7 +519,7 @@ export async function scanWithinBudget(queue, scanOne, { budgetMs, concurrency, 
 		}
 	};
 	await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, queue.length)) }, worker));
-	return { results, started: next };
+	return { results, started: next, yielded };
 }
 
 /**
@@ -514,18 +528,20 @@ export async function scanWithinBudget(queue, scanOne, { budgetMs, concurrency, 
  * after the tiers before it. `partial` is true the moment any tier stops short
  * of its queue, which is the signal a caller needs to know cursors were saved
  * for a prefix only. Pure apart from `scanOne`/`now`, so it is testable with a
- * fake clock exactly like scanWithinBudget above.
+ * fake clock exactly like scanWithinBudget above. `shouldYield` gates the
+ * ledger-active and rotation tiers only (the role tier always runs); `yielded`
+ * says it stopped one of them.
  * @param {{ roles: string[], ledgerActive: string[], rotation: string[] }} plan
  * @param {(wallet: string) => Promise<any>} scanOne
- * @param {{ budgetMs?: number, concurrency?: number, now?: () => number }} [opts]
+ * @param {{ budgetMs?: number, concurrency?: number, now?: () => number, shouldYield?: () => boolean }} [opts]
  */
-export async function runScan(plan, scanOne, { budgetMs = RUN_BUDGET_MS, concurrency = SCAN_CONCURRENCY, now = Date.now } = {}) {
+export async function runScan(plan, scanOne, { budgetMs = RUN_BUDGET_MS, concurrency = SCAN_CONCURRENCY, now = Date.now, shouldYield = () => false } = {}) {
 	const startedAt = now();
 	const remaining = () => Math.max(0, budgetMs - (now() - startedAt));
 
 	const roleRun = await scanWithinBudget(plan.roles, scanOne, { budgetMs: remaining(), concurrency, now });
-	const ledgerRun = await scanWithinBudget(plan.ledgerActive, scanOne, { budgetMs: remaining(), concurrency, now });
-	const rotationRun = await scanWithinBudget(plan.rotation, scanOne, { budgetMs: remaining(), concurrency, now });
+	const ledgerRun = await scanWithinBudget(plan.ledgerActive, scanOne, { budgetMs: remaining(), concurrency, now, shouldYield });
+	const rotationRun = await scanWithinBudget(plan.rotation, scanOne, { budgetMs: remaining(), concurrency, now, shouldYield });
 
 	const partial = roleRun.started < plan.roles.length
 		|| ledgerRun.started < plan.ledgerActive.length
@@ -535,6 +551,7 @@ export async function runScan(plan, scanOne, { budgetMs = RUN_BUDGET_MS, concurr
 		results: [...roleRun.results, ...ledgerRun.results, ...rotationRun.results],
 		partial,
 		counts: { roles: roleRun.started, ledgerActive: ledgerRun.started, rotation: rotationRun.started },
+		yielded: ledgerRun.yielded || rotationRun.yielded,
 	};
 }
 
@@ -729,7 +746,8 @@ export default wrapCron(async (req, res) => {
 	await ensureSchema();
 
 	const { PublicKey } = await import('@solana/web3.js');
-	const { solanaConnection } = await import('../_lib/solana/connection.js');
+	const { solanaConnection, rpcLaneHealth, hydrateEndpointCooldowns } = await import('../_lib/solana/connection.js');
+	await hydrateEndpointCooldowns().catch(() => {});
 	const conn = solanaConnection({
 		url: process.env.SOLANA_RPC_URL || env.SOLANA_RPC_URL,
 		network: 'mainnet', commitment: 'confirmed',
@@ -749,7 +767,10 @@ export default wrapCron(async (req, res) => {
 
 	const feeByDay = new Map();
 	const scanOne = (wallet) => scanWallet(conn, PublicKey, wallet, { allowed, usdcMint, runId, feeByDay });
-	const { results, partial, counts } = await runScan(plan, scanOne, { budgetMs: RUN_BUDGET_MS, concurrency: SCAN_CONCURRENCY });
+	const lanesDry = () => rpcLaneHealth().allPaidCooling;
+	const { results, partial, counts, yielded } = await runScan(plan, scanOne, {
+		budgetMs: RUN_BUDGET_MS, concurrency: SCAN_CONCURRENCY, shouldYield: lanesDry,
+	});
 
 	let leaks = 0;
 	let delegations = 0;
@@ -770,6 +791,7 @@ export default wrapCron(async (req, res) => {
 		wallets: totalPlanned,
 		scanned_wallets: results.length,
 		partial,
+		yielded_to_rpc: yielded,
 		deferred_wallets: totalPlanned - results.length,
 		role_wallets: plan.roles.length,
 		ledger_active_wallets: plan.ledgerActive.length,

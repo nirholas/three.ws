@@ -127,6 +127,46 @@ describe('runScan - tiered budget with a fake clock', () => {
 		expect(counts).toEqual({ roles: 1, ledgerActive: 0, rotation: 2 });
 	});
 
+	// 2026-11-06: with every paid lane cooling, runs still burned the full 200s
+	// budget while finishing only 7 to 55 wallets (each call grinding through
+	// failover), 25k calls an hour on the free lanes x402 settles fall back to.
+	// The audit is cursor-based, so deferring a wallet loses nothing.
+	it('yields the ledger and rotation tiers while the paid RPC lanes are exhausted, never the role tier', async () => {
+		const plan = { roles: ['ROLE_A', 'ROLE_B'], ledgerActive: ['L1', 'L2'], rotation: ['R1'] };
+		const scanned = [];
+		const scanOne = async (w) => { scanned.push(w); return { wallet: w }; };
+		const { results, partial, counts, yielded } = await runScan(plan, scanOne, {
+			budgetMs: 10_000, concurrency: 1, shouldYield: () => true,
+		});
+		expect(scanned).toEqual(['ROLE_A', 'ROLE_B']);
+		expect(results.map((r) => r.wallet)).toEqual(['ROLE_A', 'ROLE_B']);
+		expect(partial).toBe(true);
+		expect(yielded).toBe(true);
+		expect(counts).toEqual({ roles: 2, ledgerActive: 0, rotation: 0 });
+	});
+
+	it('stops starting wallets the moment the lanes go dry mid-tier, keeping the finished prefix', async () => {
+		const plan = { roles: [], ledgerActive: ['L1', 'L2', 'L3'], rotation: ['R1'] };
+		let dry = false;
+		const scanOne = async (w) => { if (w === 'L1') dry = true; return { wallet: w }; };
+		const { results, partial, counts, yielded } = await runScan(plan, scanOne, {
+			budgetMs: 10_000, concurrency: 1, shouldYield: () => dry,
+		});
+		expect(results.map((r) => r.wallet)).toEqual(['L1']);
+		expect(partial).toBe(true);
+		expect(yielded).toBe(true);
+		expect(counts).toEqual({ roles: 0, ledgerActive: 1, rotation: 0 });
+	});
+
+	it('reports yielded:false when the lanes stay healthy', async () => {
+		const plan = { roles: ['ROLE_A'], ledgerActive: ['L1'], rotation: ['R1'] };
+		const { partial, yielded } = await runScan(plan, async (w) => ({ wallet: w }), {
+			budgetMs: 10_000, concurrency: 1, shouldYield: () => false,
+		});
+		expect(partial).toBe(false);
+		expect(yielded).toBe(false);
+	});
+
 	it('an exhausted budget still lets the role tier run in full before starving rotation', async () => {
 		const plan = { roles: ['ROLE_A', 'ROLE_B'], ledgerActive: ['L1'], rotation: ['R1'] };
 		let t = 0;
