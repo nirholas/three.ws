@@ -19,6 +19,7 @@
 import { llmComplete } from '../llm.js';
 import { OPENROUTER_ATTRIBUTION_HEADERS } from '../openrouter-attribution.js';
 import { recordEvent } from '../usage.js';
+import { costMicroUsd } from '../llm-pricing.js';
 
 export const ANATOMY_MODEL_DEFAULT = 'claude-opus-5';
 const FALLBACK_CLAUDE = 'claude-sonnet-5';
@@ -253,6 +254,12 @@ export async function streamSpec({ system, messages, onDelta = () => {}, onReset
 				model: rung.model,
 				inputTokens: out.usage.input,
 				outputTokens: out.usage.output,
+				costMicroUsd: costMicroUsd({
+					provider: rung.provider,
+					model: rung.model,
+					input: out.usage.input,
+					output: out.usage.output,
+				}),
 				latencyMs: Date.now() - started,
 				userId: track.userId ?? null,
 				tool: 'anatomy',
