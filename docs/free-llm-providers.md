@@ -56,7 +56,7 @@ All of these rungs are zero-marginal-cost, and the accounting knows it:
 
 ## Keeping the pins alive
 
-`/api/cron/free-model-audit` runs every 6 hours. It diffs the hardcoded OpenRouter `:free` ids against OpenRouter's live list, and the NVIDIA NIM pins (`NVIDIA_PINNED_MODELS`) and Kilo pins (`KILO_FREE_MODELS`) against their own catalogs. NIM's catalog lists models an account cannot call and Kilo's lags what it serves, so an id missing from those two listings is only reported dead after a live 1-token call answers 404 or 410. A dead id pages the ops channel with the constant to update.
+`/api/cron/free-model-audit` runs every 6 hours. It diffs the hardcoded OpenRouter `:free` ids against OpenRouter's live list, and the NVIDIA NIM pins (`NVIDIA_PINNED_MODELS`) and Kilo pins (`KILO_FREE_MODELS`) against their own catalogs. NIM's catalog lists models an account cannot call and Kilo's lags what it serves, so an id missing from those two listings is only reported dead after a live 1-token call answers 404 or 410. A dead id pages the ops channel with the constant to update. The same run also diffs the NIM catalog against the ids it saw last time and pages ops once (`llm:nim-new-release`) when NVIDIA lists a new model, so a release can be wired on day 0; see [nvidia-visibility-map.md](nvidia-visibility-map.md#day-0-adoption-the-route-to-an-nvidia-repost).
 
 ## Adding the next provider
 

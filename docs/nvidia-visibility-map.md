@@ -60,6 +60,46 @@ proof with it.
 
 ---
 
+## Day-0 adoption: the route to an NVIDIA repost
+
+What NVIDIA's own accounts actually post about partners follows one pattern. On
+2026-10-29 `@NVIDIAAI` congratulated Mistral on a model launch: the post named
+the NVIDIA hardware it was trained on and the NVIDIA formats and recipes that
+supported it "day 0". NVIDIA's social team reshares a partner when the partner's
+news is also NVIDIA's news. Membership alone is never the hook.
+
+Our size of that story is not "trained on 3,800 GPUs". It is **"this NVIDIA
+release is live in a product people can use, the day it shipped"**, posted with
+a clip and tagged to `@NVIDIAAIDev`, the account that promotes Nemotron, NIM and
+ACE adoption. That is the one co-marketing motion fully in our hands, because
+three.ws already runs on NIM with one key and a fallback chain, so wiring a new
+model is hours of work.
+
+**The trigger is automated.** [api/cron/free-model-audit.js](../api/cron/free-model-audit.js)
+diffs the NIM catalog against its last snapshot every 6 hours and pages ops
+(`llm:nim-new-release`) the first time a model id appears, NVIDIA's own
+`nvidia/*` ids listed first. The first run seeds silently and an unreachable
+catalog never counts as a release.
+
+**When the alert fires:**
+
+1. Pick the lane the model fits (chat garden, vision, embeddings, safety, voice) from [nvidia-models.md](./nvidia-models.md) and wire it as the lane's first rung with the current model kept behind it.
+2. Verify on production with a real request, and record one measured number (latency, quality delta, cost) for the post.
+3. Draft the post: what the model now does on three.ws, the number, a 10 to 15 second clip, `@NVIDIAAIDev`, `#NVIDIAInception`. Owner approves and posts (external-channel gate). Same day if at all possible: a day-3 post is just a changelog entry.
+4. Add the changelog entry and update [nvidia-models.md](./nvidia-models.md).
+
+**Backlog as of 2026-11-06** (releases already in the catalog that our user-facing lanes do not run yet, found by the first live run of the watch):
+
+| NVIDIA release | Our lane today | Story if adopted |
+|---|---|---|
+| `nvidia/nemotron-3.5-super-vl-120b-a12b` | Vision runs `meta/llama-3.2-11b-vision-instruct` ([api/_lib/vision.js](../api/_lib/vision.js)); Super VL is only a last-resort rung in the internal X-content editor | Agents that see: image understanding on Nemotron end to end, alongside Nemotron chat |
+| `nvidia/nemotron-3.5-embed-1b` (and `-8b`) | Embeddings run `nvidia/nemotron-3-embed-1b` ([api/_lib/embeddings.js](../api/_lib/embeddings.js)) | Agent memory on the newest Nemotron embedder. Needs a re-embed of stored vectors, so measure first |
+
+These are no longer day-0, so they carry a smaller post, but they are free to
+ship and they close the gap before the next release lands.
+
+---
+
 ## Tier 1: act now, no dependencies
 
 Everything here can be done today. Nothing waits on NVIDIA, a build, or a date.

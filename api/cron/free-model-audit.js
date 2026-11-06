@@ -22,8 +22,16 @@
 // models the account cannot call, Kilo's list lags what it serves), so an id
 // missing from a listing is only reported dead after a live 1-token call to
 // it answers 404 or 410.
+//
+// The NIM listing is also diffed in the other direction: a model id that was
+// not in the last snapshot is a fresh NVIDIA catalog release, and ops is paged
+// once so it can be wired on day 0. NVIDIA's social and DevRel accounts
+// amplify partners who ship its launches on release day; that is the only
+// reliable route from Inception membership to an NVIDIA repost
+// (docs/nvidia-visibility-map.md, "Day-0 adoption").
 
 import { json, method, wrapCron } from '../_lib/http.js';
+import { cacheGet, cacheSet } from '../_lib/cache.js';
 import { MODEL_CATALOG, DEFAULT_FREE_MODEL, OPENROUTER_SIBLINGS } from '../_lib/chat-models.js';
 import { listFreeModels } from '../_lib/openrouter-free.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
@@ -35,6 +43,10 @@ const NIM_BASE = 'https://integrate.api.nvidia.com/v1';
 const KILO_BASE = 'https://api.kilo.ai/api/gateway';
 const LISTING_TIMEOUT_MS = 15_000;
 const PROBE_TIMEOUT_MS = 30_000;
+const RELEASE_SNAPSHOT_KEY = 'free-model-audit:nim-catalog-seen';
+// Long enough that four missed 6-hourly runs in a row cannot expire the
+// snapshot and turn the next run into a silent re-seed that swallows a release.
+const RELEASE_SNAPSHOT_TTL_S = 90 * 24 * 3600;
 
 /**
  * Every OpenRouter `:free` id hardcoded in the codebase, with the constants
@@ -146,6 +158,67 @@ export async function auditCatalogLane({ lane, base, key, ids }) {
 	};
 }
 
+/**
+ * Pure diff of the NIM catalog against the ids seen on earlier runs. No
+ * previous snapshot seeds silently (a cold cache is not a release), and an
+ * empty listing is our outage, not NVIDIA retiring the catalog. `seen` is the
+ * union of both lists, so an id a listing briefly drops cannot re-alert when
+ * it comes back.
+ * @param {string[]|null} previous
+ * @param {string[]} liveIds
+ * @returns {{ status: 'seeded'|'unknown'|'new'|'none', added: string[], nvidiaAdded: string[], seen: string[] }}
+ */
+export function diffNvidiaReleases(previous, liveIds) {
+	const prior = Array.isArray(previous) ? previous : null;
+	if (!liveIds.length) return { status: 'unknown', added: [], nvidiaAdded: [], seen: prior ? [...prior].sort() : [] };
+	const seen = [...new Set([...(prior || []), ...liveIds])].sort();
+	if (!prior) return { status: 'seeded', added: [], nvidiaAdded: [], seen };
+	const priorSet = new Set(prior);
+	const added = [...new Set(liveIds)].filter((id) => !priorSet.has(id)).sort();
+	return {
+		status: added.length ? 'new' : 'none',
+		added,
+		nvidiaAdded: added.filter((id) => id.startsWith('nvidia/')),
+		seen,
+	};
+}
+
+/**
+ * Diff the live NIM catalog against the stored snapshot, page ops once per new
+ * id, and persist the union. The snapshot is untouched when the catalog is
+ * unreachable.
+ * @param {{ base: string, key: string|null, cacheKey?: string,
+ *   get?: (k: string) => Promise<any>, set?: (k: string, v: any, ttl: number) => Promise<any>,
+ *   alert?: typeof sendOpsAlert }} opts
+ */
+export async function watchNvidiaReleases({
+	base,
+	key,
+	cacheKey = RELEASE_SNAPSHOT_KEY,
+	get = cacheGet,
+	set = cacheSet,
+	alert = sendOpsAlert,
+}) {
+	const previous = await get(cacheKey);
+	const result = diffNvidiaReleases(previous, await listCatalogIds(base, key));
+	if (result.status === 'unknown') return result;
+	await set(cacheKey, result.seen, RELEASE_SNAPSHOT_TTL_S);
+	if (result.status === 'new') {
+		const others = result.added.filter((id) => !result.nvidiaAdded.includes(id));
+		const lines = [
+			...(result.nvidiaAdded.length ? ['NVIDIA releases:', ...result.nvidiaAdded.map((id) => `  ${id}`)] : []),
+			...(others.length ? ['Partner models newly hosted on NIM:', ...others.map((id) => `  ${id}`)] : []),
+		];
+		console.log(`[free-model-audit] new NIM catalog id(s): ${result.added.join(', ')}`);
+		await alert(
+			`🆕 ${result.added.length} new model(s) on NVIDIA NIM`,
+			`${lines.join('\n')}\nWire the relevant one today and post it tagging @NVIDIAAIDev: day-0 adoption is what NVIDIA reshares. Runbook: docs/nvidia-visibility-map.md#day-0-adoption-the-route-to-an-nvidia-repost`,
+			{ signature: 'llm:nim-new-release' },
+		);
+	}
+	return result;
+}
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET', 'POST'])) return;
 	if (!requireCron(req, res)) return;
@@ -192,11 +265,17 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
+	const releases = await watchNvidiaReleases({ base: NIM_BASE, key: env.NVIDIA_API_KEY || null });
+	if (releases.status === 'unknown') {
+		console.warn('[free-model-audit] NIM catalog unreachable; skipping the release watch this run');
+	}
+
 	return json(res, 200, {
 		checked: result.checked,
 		live: result.live,
 		dead,
 		status: result.status,
 		lanes,
+		nimReleases: { status: releases.status, added: releases.added, nvidiaAdded: releases.nvidiaAdded },
 	});
 });
