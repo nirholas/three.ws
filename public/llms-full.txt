@@ -1773,6 +1773,12 @@ URL: https://three.ws/sniper/experiments
 
 The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.
 
+### Play lite: join the live world from any device
+
+URL: https://three.ws/play/lite
+
+The same live /play world, people, chat, dance-off and signature wall as the 3D plaza, drawn as a live map that runs on any phone or laptop, no graphics card needed.
+
 ### Flappin UFO: thread the asteroids, climb the leaderboard
 
 URL: https://three.ws/play/ufo

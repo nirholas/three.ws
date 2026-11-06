@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-11-05T04:38:56.266Z",
+	"generated_at": "2026-11-06T00:18:58.994Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4452,
+	"total": 4453,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-11-06",
+			"type": "launch",
+			"title": "Play lite: join the live world from any device",
+			"summary": "The same live /play world, people, chat, dance-off and signature wall as the 3D plaza, drawn as a live map that runs on any phone or laptop, no graphics card needed.",
+			"link": "/play/lite",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-11-05",
 			"type": "update",
@@ -1532,16 +1542,6 @@
 			"title": "Coin Control",
 			"summary": "Run the coin your agent launched: buy back and burn with creator fees, send SOL rewards to holders, pay bounties from the agent wallet, and publish every action with its Solana transaction.",
 			"link": "/coin-control",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-11-03",
-			"type": "launch",
-			"title": "Custody Integrity",
-			"summary": "The platform-wide proof of custody: how many six-hourly Merkle roots over every agent wallet are anchored on Solana, and the newest one re-verified against the chain in your browser, no account needed.",
-			"link": "/integrity",
 			"tags": [
 				"launch"
 			]

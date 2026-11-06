@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Play lite: join the live world from any device</title>
+			<link>https://three.ws/play/lite</link>
+			<guid isPermaLink="false">2026-11-06:Play lite: join the live world from any device</guid>
+			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The same live /play world, people, chat, dance-off and signature wall as the 3D plaza, drawn as a live map that runs on any phone or laptop, no graphics card needed.</description>
+		</item>
+		<item>
 			<title>Auto-rigged legs no longer drag cloth between them</title>
 			<link>https://three.ws/docs/3d-asset-pipeline.md</link>
 			<guid isPermaLink="false">2026-11-05:Auto-rigged legs no longer drag cloth between them</guid>
