@@ -17,8 +17,10 @@ actions). This page — and the API behind it — is that missing layer.
 - **Coins**: a memecoin screener split into CoinGecko's "Robinhood Chain Meme" / "Robinhood
   Chain Stocks Ecosystem" / "Robinhood Ecosystem" categories, plus a live feed of recent launches
   read directly from on-chain logs: **Pons** (the chain's busiest launchpad, an ETH bonding curve
-  that graduates into a locked Uniswap V4 pool), **NOXA** (instant Uniswap v3) and **The
-  Odyssey** (bonding curve). Pons coins still on their curve show the curve's price, market cap
+  that graduates into a locked Uniswap V4 pool), **The Odyssey** (bonding curve) and every other
+  launch venue the feed worker observes on chain, each launch graded by its deployer (venue, prior
+  launches, prior dev exits, a dev-sold flag). NOXA shut down on 2026-07-13 and is no longer
+  watched. Pons coins still on their curve show the curve's price, market cap
   and graduation progress. To launch one from your own agent, see
   [Launch a coin on Robinhood Chain (Pons)](pons-launch.md).
 - **Chain** — block height, gas, transaction/address counts, and 90 days of chain TVL (DefiLlama).
@@ -94,7 +96,7 @@ Free, keyless, real data only:
 | `GET /api/v1/robinhood/stocks-detail?symbol=AAPL` | One Stock Token in depth: NAV history, all DEX pairs, holders, transfers, links |
 | `GET /api/v1/robinhood/coins?category=meme` | Memecoin screener (`category`: `meme` \| `stocks-ecosystem` \| `ecosystem`; `sort`: `market_cap` \| `volume` \| `gainers` \| `losers`) |
 | `GET /api/v1/robinhood/coins-detail?address=0x…` | One coin: pools, market stats, holders, transfers, links |
-| `GET /api/v1/robinhood/launches` | Recent launches from Pons, NOXA and The Odyssey, newest first. Pons curve-stage coins carry `priceUsd`, `marketCapUsd` and `graduationPct` read from the curve |
+| `GET /api/v1/robinhood/launches` | Recent launches from Pons, The Odyssey and other venues the feed worker observes, newest first. Each row carries `venue`, `deployerRecord`, `devSold`, `devSoldPct` and `flags` where the worker graded it. Pons curve-stage coins carry `priceUsd`, `marketCapUsd` and `graduationPct` read from the curve |
 | `GET /api/v1/robinhood/desk` | The desk's market side in one read: chain vitals, the premium ridge (bins, liquidity layers, percentiles), the widest tradeable dislocations, memecoin movers, recent launches |
 | `GET /api/v1/robinhood/wallet?address=0x…` | The desk's wallet side in one read: native balance, priced ERC-20 positions, book totals, balance history (daily + per-transaction, merged), the activity tape and counterparty flow |
 | `GET /api/v1/robinhood/paired-markets` | Every asset a [paired coin](paired-coins.md) can trade against, from the launchpad's on-chain quote registry, with class, live USD price and opening value, plus the launchpad's live terms |
@@ -133,8 +135,9 @@ math; Chainlink feed prices are already multiplier-adjusted, so they're never re
 - **Memecoin screener** — CoinGecko categories `robinhood-chain-meme`, `robinhood-chain-stocks-ecosystem`, `robinhood-ecosystem`.
 - **Recent launches**: Pons V2 from its factory's `TokenLaunched` logs over RPC (the last hour
   of blocks, inside the public RPC's range cap), with curve reserves, graduation progress and
-  supply from one multicall; NOXA and Odyssey from Blockscout's log API filtered by event topic.
-  Each source fails on its own, so one indexer outage never empties the feed.
+  supply from one multicall; Odyssey from Blockscout's log API filtered by event topic; every
+  other venue and the deployer grading from the robinhood-feed worker
+  (`api/_lib/robinhood-feed.js`). Each source fails on its own, so one indexer outage never empties the feed.
 
 ## Related surfaces
 

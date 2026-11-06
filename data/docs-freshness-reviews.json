@@ -2302,6 +2302,12 @@
 			"by": "agent",
 			"note": "Added the Kenney Graveyard Kit source (catalog, CC0 license, attribution courtesy credit, ingest script) that build-object-library.mjs now reads; doc said Poly Haven only."
 		},
+		"docs/okx-marketplace.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "Checked forge, AR and territory/cooldown commits against the doc: free poll via GET /api/forge?job= and prices in api/_lib/okx-catalog.js are unchanged, new work does not touch OKX rows."
+		},
 		"docs/onboarding-tier.md": {
 			"commit": "4cf6b20f3",
 			"kind": "verified",
@@ -2865,6 +2871,12 @@
 			"by": "agent",
 			"note": "Drift is CSS only; MAX_LEVELS 30, 1500 edges per level, 422 impossible_run, per-IP limiter and all listed files still exist."
 		},
+		"docs/pons-launch.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The launches feed now also carries venue and deployer grading from the robinhood-feed worker and other venues; contracts, routes, error codes and fields re-checked and unchanged."
+		},
 		"docs/portal.md": {
 			"commit": "9c9d80bcc",
 			"kind": "verified",
@@ -3260,6 +3272,12 @@
 			"by": "agent",
 			"note": "Dated research notes with star counts read on 2026-10-09."
 		},
+		"docs/research/solana-robinhood-playbook-2026-10.md": {
+			"commit": "4cf6b20f3",
+			"kind": "snapshot",
+			"by": "agent",
+			"note": "Dated research playbook (research date 2026-10-08) describing the market and our surface at that time."
+		},
 		"docs/resilience.md": {
 			"commit": "4cf6b20f3",
 			"kind": "verified",
@@ -3289,6 +3307,12 @@
 			"kind": "verified",
 			"by": "agent",
 			"note": "Endpoint params, errors, 60s cache and the strip match api/sniper/rivalries.js; the 8s fetch bound and leaderboard win_streak field do not contradict anything in the doc."
+		},
+		"docs/robinhood-chain-markets.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "NOXA shut down 2026-07-13 and was removed from launches; doc now lists Pons, The Odyssey and feed-worker venues with the new deployer grading fields on /launches."
 		},
 		"docs/run-receipts.md": {
 			"commit": "4cf6b20f3",
@@ -4016,6 +4040,12 @@
 			"by": "agent",
 			"note": "Scripts lint:ui and lint:ui:core, policy and test files exist and CORE_PAGES matches the doc list."
 		},
+		"docs/uniswap-v4-hooks.md": {
+			"commit": "4cf6b20f3",
+			"kind": "verified",
+			"by": "agent",
+			"note": "The only drifted reference is src/animation-retarget.js, which still exists and retargets canonical clips as described."
+		},
 		"docs/upstream/home-assistant-js-websocket-resubscribe-rejection.md": {
 			"commit": "53f2a200f",
 			"kind": "snapshot",
@@ -4071,10 +4101,10 @@
 			"note": "Drift is pages.json and vercel.json additions for other pages; audit-ux-flows passes and the cited trading and galaxy flows are untouched."
 		},
 		"docs/ux-flows/08-coin-launch-wallets.md": {
-			"commit": "a3524e6f6",
+			"commit": "4cf6b20f3",
 			"kind": "verified",
 			"by": "agent",
-			"note": "freshness sweep: checked against the drifted commits"
+			"note": "Launch feed section said EVM launches were Robinhood Chain via Pons only; src/launches.js now also badges BNB Chain and Base venues (flap.sh, four.meme, Uniswap) that open the venue page."
 		},
 		"docs/ux-flows/09-x402-agent-commerce.md": {
 			"commit": "4cf6b20f3",
