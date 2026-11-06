@@ -66,6 +66,7 @@ function injectStyles() {
 	.concierge-name { cursor: pointer; }
 	.concierge-name:hover { text-decoration: underline; }
 	.concierge-name:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+	@media (pointer: coarse) { .concierge-name { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; } }
 	`;
 	document.head.appendChild(s);
 }

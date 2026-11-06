@@ -607,9 +607,9 @@ body.po-onboarding #cc-joystick { z-index: 60; }
    player touches, and its skip cross was a 28px square. Desktop keeps the tight
    density it was drawn for. */
 @media (pointer: coarse) {
-  .po-close { min-width: 40px; min-height: 40px; }
-  .po-help-close { min-width: 40px; min-height: 40px; }
-  .po-btn, .po-ctrl-btn { min-height: 40px; }
+  .po-close { min-width: 44px; min-height: 44px; }
+  .po-help-close { min-width: 44px; min-height: 44px; }
+  .po-btn, .po-ctrl-btn { min-height: 44px; }
 }
 
 /* Reduced-motion overrides */

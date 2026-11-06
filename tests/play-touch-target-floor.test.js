@@ -30,3 +30,25 @@ describe('play HUD touch targets', () => {
 		for (const s of sizes) expect(s).toBeGreaterThanOrEqual(44);
 	});
 });
+
+describe('play onboarding, concierge and minimap on a touch screen', () => {
+	const onboard = readFileSync(join(ROOT, 'src/game/play-onboard.js'), 'utf8');
+	const concierge = readFileSync(join(ROOT, 'src/game/npc/concierge.js'), 'utf8');
+	const hud = readFileSync(join(ROOT, 'src/game/hud/world-hud.css'), 'utf8');
+
+	it('keeps the onboarding coarse-pointer targets at 44 px', () => {
+		const start = onboard.indexOf('Thumb-sized targets on a coarse pointer');
+		const block = onboard.slice(start, onboard.indexOf('Reduced-motion overrides', start));
+		const sizes = [...block.matchAll(/min-(?:height|width):\s*(\d+)px/g)].map((m) => Number(m[1]));
+		expect(sizes.length).toBeGreaterThan(2);
+		for (const s of sizes) expect(s).toBeGreaterThanOrEqual(44);
+	});
+
+	it('gives the clickable concierge name a 44 px target on a coarse pointer', () => {
+		expect(concierge).toMatch(/@media \(pointer: coarse\)\s*\{\s*\.concierge-name\s*\{[^}]*min-height:\s*44px/);
+	});
+
+	it('stops the minimap canvas from fighting the page gesture', () => {
+		expect(hud).toMatch(/\.wh-minimap-canvas\s*\{[^}]*touch-action:\s*none/);
+	});
+});

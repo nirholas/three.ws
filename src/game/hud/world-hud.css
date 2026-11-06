@@ -160,7 +160,7 @@
 	box-shadow: var(--cc-shadow, 0 16px 50px rgba(0, 0, 0, 0.7)), inset 0 0 0 4px rgba(0, 0, 0, 0.35);
 	background: rgba(6, 6, 8, 0.5);
 }
-.wh-minimap-canvas { width: 184px; height: 184px; border-radius: 50%; display: block; }
+.wh-minimap-canvas { width: 184px; height: 184px; border-radius: 50%; display: block; touch-action: none; }
 .wh-minimap-n {
 	position: absolute;
 	left: 50%;
