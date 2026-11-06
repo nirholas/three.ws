@@ -1639,9 +1639,14 @@ async function handlePumpAgentStats(req, res) {
 
 	if (!requireCron(req, res)) return;
 
+	// Stalest first, so 20 per run walks every coin instead of re-reading the same 20
+	// forever. A failed snapshot stamps refreshed_at too, so a bad mint rotates out.
 	const mints = await sql`
-		select id, mint, network, user_id, name from pump_agent_mints
-		order by id limit ${PUMP_STATS_MAX_PER_RUN}
+		select m.id, m.mint, m.network, m.user_id, m.name
+		from pump_agent_mints m
+		left join pump_agent_stats s on s.mint_id = m.id
+		order by s.refreshed_at asc nulls first, m.id
+		limit ${PUMP_STATS_MAX_PER_RUN}
 	`;
 
 	const DEADLINE = Date.now() + 22_000;
@@ -2539,6 +2544,9 @@ async function resolveCoinQuoteCurrency({ network, mint, dbQuoteMint = null }) {
 // its TTL IS the cadence and is never explicitly released.
 const BUYBACK_LEASE_KEY = 'cron:run-buyback:lease';
 const BUYBACK_LEASE_SECONDS = 55 * 60;
+// No new coin starts past this point. The route answers 503 at 300s while the handler
+// keeps running, and one coin can take a while, so the margin covers the coin in flight.
+const BUYBACK_SWEEP_BUDGET_MS = 240_000;
 
 async function handleRunBuyback(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', origins: '*' })) return;
@@ -2550,6 +2558,7 @@ async function handleRunBuyback(req, res) {
 		return json(res, 200, { ok: true, skipped: true, reason: 'lease_held' });
 	}
 
+	const sweepDeadline = Date.now() + BUYBACK_SWEEP_BUDGET_MS;
 	const relayer = await buybackLoadRelayer();
 
 	// Honor per-coin autopilot policy. A missing pump_autopilot row preserves the
@@ -2561,13 +2570,26 @@ async function handleRunBuyback(req, res) {
 		       coalesce(ap.buyback_min_atomics, 0)         as buyback_min_atomics
 		from pump_agent_mints m
 		left join pump_autopilot ap on ap.mint_id = m.id
+		left join lateral (
+			select max(r.created_at) as last_run_at
+			from pump_buyback_runs r
+			where r.mint_id = m.id
+		) lr on true
 		where coalesce(ap.enabled, true) = true
 		  and coalesce(ap.buyback_enabled, true) = true
+		order by lr.last_run_at asc nulls first, m.id
 		limit 200
 	`;
 
 	const results = [];
+	let deferred = 0;
 	for (const m of mints) {
+		// Checked only between coins, so a swap in flight is never interrupted. The
+		// longest-waiting coins lead the next run, so whatever stops here goes first.
+		if (Date.now() >= sweepDeadline) {
+			deferred = mints.length - results.length;
+			break;
+		}
 		// Operate in the coin's quote asset — the currency its vault holds and its
 		// curve swaps. USDC coins buy back with USDC, SOL coins with SOL. Anything
 		// the lane can't operate in still records a run row below (never a silent
@@ -2680,7 +2702,7 @@ async function handleRunBuyback(req, res) {
 		}
 	}
 
-	return json(res, 200, { ok: true, processed: results.length, results });
+	return json(res, 200, { ok: true, processed: results.length, deferred, results });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
