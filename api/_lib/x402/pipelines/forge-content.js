@@ -279,20 +279,21 @@ export async function resolveQueuedJobs(origin) {
 	return resolved;
 }
 
-// Per-call row into x402_autonomous_log including value_extracted. The loop also
-// records one aggregate summary row for the run() entry; this is the granular
-// row the pipeline owns (carrying the parsed prop value).
-async function recordCall(runId, { endpointUrl, amountAtomic, txSig, responseData, durationMs, success, errorMsg, valueExtracted }) {
+// The one x402_autonomous_log row for a call, carrying the parsed prop value. run()
+// returns recorded:true so the loop adds no second row: this table is read as
+// outbound spend, so a paid call logged twice is money counted twice.
+async function recordCall(runId, { endpointUrl, amountAtomic, txSig, responseData, durationMs, success, errorMsg, signalData, valueExtracted }) {
 	try {
 		await sql`
 			INSERT INTO x402_autonomous_log
 				(run_id, endpoint_type, service_name, endpoint_url,
 				 network, amount_atomic, asset, tx_signature,
-				 response_data, value_extracted, duration_ms, success, error_msg, pipeline)
+				 response_data, signal_data, value_extracted, duration_ms, success, error_msg, pipeline)
 			VALUES
 				(${runId}, ${'self'}, ${'3D Forge: procedural prop generation'}, ${endpointUrl},
 				 ${'solana:mainnet'}, ${amountAtomic || 0}, ${ASSET}, ${txSig || null},
 				 ${responseData ? JSON.stringify(responseData) : null},
+				 ${signalData ? JSON.stringify(signalData) : null},
 				 ${valueExtracted ? JSON.stringify(valueExtracted) : null},
 				 ${durationMs || 0}, ${success}, ${errorMsg || null}, ${'forge'})
 		`;
@@ -423,7 +424,7 @@ export async function run(ctx = {}) {
 			endpointUrl, amountAtomic: 0, txSig: null, responseData: null,
 			durationMs: Date.now() - t0, success: false, errorMsg, valueExtracted: null,
 		});
-		return { success: false, amountAtomic: 0, errorMsg, skipped: false, note: `forge ${category} fetch_failed` };
+		return { success: false, amountAtomic: 0, errorMsg, skipped: false, recorded: true, note: `forge ${category} fetch_failed` };
 	}
 
 	// Only extract + persist when the call actually produced a generation. A 402
@@ -439,9 +440,16 @@ export async function run(ctx = {}) {
 		});
 	}
 
+	// result.amountAtomic is the quote, present even when nothing settled.
+	const paidAtomic = result.paid ? result.amountAtomic : 0;
+	// The compact prop summary, the row's signal for downstream readers.
+	const signalData = value
+		? { category: value.category, status: value.status, novelty: value.novelty, cluster_id: value.cluster_id, glb_url: value.glb_url, job_id: value.job_id }
+		: null;
+
 	await recordCall(runId, {
 		endpointUrl,
-		amountAtomic: result.amountAtomic,
+		amountAtomic: paidAtomic,
 		txSig: result.txSig,
 		// Keep the response lean: the prop row in forge_autonomous_props holds the
 		// durable detail; log just the call status and key job pointers.
@@ -451,6 +459,7 @@ export async function run(ctx = {}) {
 		durationMs: Date.now() - t0,
 		success: result.success,
 		errorMsg: result.errorMsg,
+		signalData,
 		valueExtracted: value,
 	});
 
@@ -464,18 +473,15 @@ export async function run(ctx = {}) {
 		spent_usdc: (result.amountAtomic / 1e6).toFixed(4),
 	});
 
-	// Aggregate outcome for the loop's single summary row. signalData mirrors the
-	// compact prop summary so the loop's row is useful on its own too.
 	return {
 		success: result.success,
-		amountAtomic: result.paid ? result.amountAtomic : 0,
+		amountAtomic: paidAtomic,
 		txSig: result.txSig,
 		errorMsg: result.errorMsg,
 		skipped: result.skipped ?? false,
 		responseData: { category, status: result.responseBody?.status || result.status, stored: value?.stored ?? false },
-		signalData: value
-			? { category: value.category, status: value.status, novelty: value.novelty, cluster_id: value.cluster_id, glb_url: value.glb_url, job_id: value.job_id }
-			: null,
+		signalData,
+		recorded: true,
 		note: `forge ${category} ${value?.status || result.status}${value?.novelty != null ? ` novelty=${value.novelty}` : ''}`,
 	};
 }
