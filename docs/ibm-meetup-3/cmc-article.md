@@ -1,5 +1,7 @@
 # IBM Community Goes Back Inside three.ws: Meetup #3 Is Live Now on the $THREE Server
 
+_From Nicholas and Alli Resendez, three.ws_
+
 Right now, on [three.ws/play](https://three.ws/play), the Three.ws User Group on IBM Community is holding its third meetup, and its second inside the product itself. It is not a webinar or a call. It is a persistent 3D world that anyone can walk into from a browser tab, and this time IBM Community is sponsoring the session.
 
 **Friday, November 6, 2026, from 8 AM Pacific (11 AM ET, 16:00 UTC), in the $THREE home town, the flagship world pinned at the top of the /play lobby.**
@@ -82,6 +84,8 @@ The official event thread, with live help for anyone who gets stuck, is on IBM C
 - Our August coverage on CoinMarketCap: [Inside IBM's First In-World Community Meetup on three.ws](https://coinmarketcap.com/community/articles/6a764209be2055673e8e5c1f/)
 - The platform: [three.ws](https://three.ws), [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws), [@trythreews](https://x.com/trythreews) on X
 
-A full recap with today's headcount and the best moments follows once the doors close.
+A full recap with today's headcount and the best moments follows once the doors close. See you in the plaza.
+
+Nicholas and Alli Resendez
 
 _three.ws is an open-source, browser-native platform for 3D AI agents and on-chain communities. three.ws is an IBM Business Partner. IBM does not endorse three.ws, and three.ws is not an IBM product._
