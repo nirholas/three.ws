@@ -197,6 +197,33 @@ export function cpArgsFor(src, dest, destExists) {
 	return destExists ? ['-al', '--update=none', `${src}/.`, `${dest}/`] : ['-al', src, dest];
 }
 
+/**
+ * The source tree is shared and live: a test run in it creates and deletes
+ * temp files under node_modules (e.g. .vitest-cache/.tmp-*) while `cp -al`
+ * walks it, and cp exits non-zero for a file that vanished between readdir and
+ * link even though every other file was linked. That is not a staging failure.
+ * Returns the vanished paths when EVERY stderr line is such a file and none of
+ * them exists any more; null for anything else, which must still fail.
+ *
+ * @param {string} stderr cp's stderr
+ * @param {(p: string) => boolean} exists presence oracle (existsSync)
+ * @returns {string[] | null}
+ */
+export function vanishedDuringCopy(stderr, exists) {
+	const lines = String(stderr || '')
+		.split('\n')
+		.map((l) => l.trim())
+		.filter(Boolean);
+	if (!lines.length) return null;
+	const vanished = [];
+	for (const line of lines) {
+		const m = /^cp: cannot stat '(.+)': No such file or directory$/.exec(line);
+		if (!m || exists(m[1])) return null;
+		vanished.push(m[1]);
+	}
+	return vanished;
+}
+
 /** Env files copied (never hardlinked: a deploy tree must not share their inode). */
 const ENV_FILES = ['.env', '.env.local'];
 
@@ -313,7 +340,13 @@ function run() {
 		if (p.action === 'skip') continue;
 		const dest = path.join(TARGET, p.rel);
 		const merging = existsSync(dest);
-		execFileSync('cp', cpArgsFor(p.src, dest, merging), { cwd: ROOT, timeout: 900_000 });
+		try {
+			execFileSync('cp', cpArgsFor(p.src, dest, merging), { cwd: ROOT, timeout: 900_000, stdio: ['ignore', 'pipe', 'pipe'] });
+		} catch (err) {
+			const vanished = vanishedDuringCopy(err.stderr, existsSync);
+			if (!vanished) throw err;
+			console.log(`[prep:worktree] ${vanished.length} file(s) in ${p.rel} were deleted by a live process mid-copy and were skipped (e.g. ${path.relative(ROOT, vanished[0])})`);
+		}
 		console.log(`[prep:worktree] hardlinked ${merging ? `the untracked half of ${p.rel}` : p.rel}`);
 	}
 

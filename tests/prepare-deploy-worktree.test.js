@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ARTIFACTS, planArtifacts, cpArgsFor } from '../scripts/prepare-deploy-worktree.mjs';
+import { ARTIFACTS, planArtifacts, cpArgsFor, vanishedDuringCopy } from '../scripts/prepare-deploy-worktree.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = path.join(ROOT, 'scripts/prepare-deploy-worktree.mjs');
@@ -129,6 +129,35 @@ describe('cpArgsFor', () => {
 		// A tracked file hardlinked from the source tree would make an edit in the
 		// deploy tree rewrite the shared tree through the shared inode.
 		expect(cpArgsFor('/src/x', '/wt/x', true)).toContain('--update=none');
+	});
+});
+
+describe('vanishedDuringCopy', () => {
+	// 2026-11-06: a vitest run in the shared tree deleted its own
+	// node_modules/.vitest-cache temp file while `cp -al` walked node_modules,
+	// and prep:worktree died on a file nobody needed.
+	const gone = () => false;
+
+	it('accepts a copy whose only errors are source files deleted mid-walk', () => {
+		const stderr =
+			"cp: cannot stat '/r/node_modules/.vitest-cache/.tmp-1793924678541-p1u50spvi9': No such file or directory\n";
+		expect(vanishedDuringCopy(stderr, gone)).toEqual(['/r/node_modules/.vitest-cache/.tmp-1793924678541-p1u50spvi9']);
+	});
+
+	it('refuses when the "missing" file is actually still there', () => {
+		const stderr = "cp: cannot stat '/r/node_modules/a.js': No such file or directory\n";
+		expect(vanishedDuringCopy(stderr, () => true)).toBeNull();
+	});
+
+	it('refuses any other cp failure, alone or mixed with a vanished file', () => {
+		expect(vanishedDuringCopy("cp: cannot create hard link '/wt/x' to '/r/x': No space left on device\n", gone)).toBeNull();
+		const mixed =
+			"cp: cannot stat '/r/node_modules/.cache/t': No such file or directory\ncp: cannot create hard link '/wt/y' to '/r/y': Invalid cross-device link\n";
+		expect(vanishedDuringCopy(mixed, gone)).toBeNull();
+	});
+
+	it('refuses an empty stderr, since then the failure is unexplained', () => {
+		expect(vanishedDuringCopy('', gone)).toBeNull();
 	});
 });
 
