@@ -4047,23 +4047,23 @@ summary:focus-visible,
    `min-*` clamps a fixed `width`/`height`, so the square closers grow too. */
 @media (pointer: coarse) {
 	/* Lobby */
-	.cc-sort { min-height: 40px; }
+	.cc-sort { min-height: 44px; }
 
 	/* World HUD bar and the fixed right-edge stack */
 	.cc-shop-btn, .cc-wardrobe-btn, .cc-avatarbtn, .cc-jobs-btn, .cc-friends-btn,
 	.cc-buy-btn, .cc-leave, .cc-voice, .cc-power-btn, .cc-zen-btn,
 	.cc-build-toggle, .cc-chat-head, #cc-status, .cc-photo-hud-btn, .cc-invite-hud-btn, .cc-card-invite {
-		min-height: 40px;
+		min-height: 44px;
 	}
 
 	/* Emote and reaction trays: the reaction pills were the smallest of all. */
-	.cc-reaction { min-width: 40px; min-height: 40px; }
+	.cc-reaction { min-width: 44px; min-height: 44px; }
 
 	/* Panel chrome: closers, tabs, filter chips, primary actions. */
 	.cc-shop-close, .cc-ew-close, .cc-shop-flex, .cc-friends-panel-close {
-		min-width: 40px; min-height: 40px;
+		min-width: 44px; min-height: 44px;
 	}
-	.cc-shop-chip, .cc-shop-buy, .cc-friends-panel-crew { min-height: 40px; }
+	.cc-shop-chip, .cc-shop-buy, .cc-friends-panel-crew { min-height: 44px; }
 }
 
 /* ── Interactive states (QB-07) ────────────────────────────────────────────
