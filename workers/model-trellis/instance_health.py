@@ -244,3 +244,32 @@ def task_is_orphaned(
     if isinstance(updated_at, bool) or not isinstance(updated_at, (int, float)):
         return True
     return now - updated_at > orphan_after
+
+
+def freshest_view(
+    local: Optional[dict],
+    durable: dict,
+    runner_alive: bool,
+    now: float,
+) -> tuple[dict, bool]:
+    """Pick the record a poll should serve and whether it must be failed as orphaned.
+
+    `durable` is what the poll just read from storage; `local` is this
+    instance's in-memory copy; `runner_alive` is true only when this process is
+    still running or heartbeating the task. A storage read can lag the last
+    heartbeat (production served a 165 s old generation of a record that was 14 s
+    old), so a stale timestamp alone must never fail a task whose runner is
+    right here: the live local copy is authoritative for it. A terminal durable
+    record always wins, since a finished task never goes back. Only an instance
+    that does not own the task judges it by its timestamp.
+    """
+    if runner_alive and local is not None:
+        if durable.get("status") in ("done", "failed"):
+            return durable, False
+        local_at, durable_at = local.get("updated_at"), durable.get("updated_at")
+        if isinstance(local_at, (int, float)) and not (
+            isinstance(durable_at, (int, float)) and durable_at > local_at
+        ):
+            return local, False
+        return durable, False
+    return durable, task_is_orphaned(durable.get("status"), durable.get("updated_at"), now)

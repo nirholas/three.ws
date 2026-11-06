@@ -117,7 +117,7 @@ from instance_health import (
     MemorySample,
     read_memory,
     should_recycle,
-    task_is_orphaned,
+    freshest_view,
     trim_heap,
     vram_sample,
 )
@@ -628,10 +628,15 @@ async def _resolve_task(task_id: str) -> dict:
     if status in _TERMINAL_STATUSES:
         _tasks[task_id] = task
         return task
-    if task_is_orphaned(status, task.get("updated_at"), time.time()):
+    # A task this process is still running is alive by definition; a storage read
+    # that lags the heartbeat must not fail it (see instance_health.freshest_view).
+    view, orphaned = freshest_view(
+        _tasks.get(task_id), task, task_id in _live_tasks, time.time()
+    )
+    if orphaned:
         # Adopt the durable copy so the failure write keeps its fields rather
         # than whatever partial view this instance had cached.
-        _tasks[task_id] = task
+        _tasks[task_id] = view
         failed = await _update_task(
             task_id,
             status="failed",
@@ -640,7 +645,7 @@ async def _resolve_task(task_id: str) -> dict:
         )
         _task_locks.pop(task_id, None)
         return failed
-    return task
+    return view
 
 
 # Quality tiers, clamps, and the matte default live in request_policy.py so the

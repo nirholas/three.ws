@@ -198,3 +198,61 @@ def test_terminal_and_unknown_records_are_never_orphaned():
 
 def test_trim_heap_never_raises():
     assert trim_heap() in (True, False)
+
+
+# ---------------------------------------------------------------- freshest_view
+# Production, 2026-11-06: queued tasks on the single warm instance were failed as
+# "orphaned" three to six minutes after submit while that same instance was still
+# heartbeating them. A poll was served an old generation of the durable record
+# (a GET returned updated_at 165 s old while the object was 14 s old), the stale
+# timestamp tripped the orphan rule, and the verdict was persisted over a live
+# task. The instance that owns a task knows it is alive; no durable read may
+# overrule that.
+
+
+def test_a_task_this_instance_is_running_is_never_orphaned_by_a_stale_read():
+    from instance_health import freshest_view
+
+    stale = {"task_id": "t", "status": "queued", "updated_at": NOW - 600}
+    local = {"task_id": "t", "status": "queued", "updated_at": NOW - 3}
+    view, orphaned = freshest_view(local, stale, runner_alive=True, now=NOW)
+    assert not orphaned
+    assert view["updated_at"] == NOW - 3
+
+
+def test_a_live_task_keeps_a_status_the_durable_copy_has_not_caught_up_to():
+    from instance_health import freshest_view
+
+    durable = {"task_id": "t", "status": "queued", "updated_at": NOW - 40}
+    local = {"task_id": "t", "status": "running", "updated_at": NOW - 2}
+    view, orphaned = freshest_view(local, durable, runner_alive=True, now=NOW)
+    assert not orphaned
+    assert view["status"] == "running"
+
+
+def test_another_instances_view_of_a_silent_task_still_expires_it():
+    from instance_health import freshest_view
+
+    durable = {"task_id": "t", "status": "running", "updated_at": NOW - ORPHAN_AFTER_SECS - 5}
+    view, orphaned = freshest_view(None, durable, runner_alive=False, now=NOW)
+    assert orphaned
+    assert view is durable
+
+
+def test_a_fresh_durable_record_is_served_unchanged_to_a_non_runner():
+    from instance_health import freshest_view
+
+    durable = {"task_id": "t", "status": "queued", "updated_at": NOW - 5}
+    view, orphaned = freshest_view(None, durable, runner_alive=False, now=NOW)
+    assert not orphaned
+    assert view is durable
+
+
+def test_a_terminal_durable_record_wins_over_a_live_local_view():
+    from instance_health import freshest_view
+
+    durable = {"task_id": "t", "status": "done", "updated_at": NOW - 1}
+    local = {"task_id": "t", "status": "running", "updated_at": NOW - 2}
+    view, orphaned = freshest_view(local, durable, runner_alive=True, now=NOW)
+    assert not orphaned
+    assert view["status"] == "done"

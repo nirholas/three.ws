@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "Queued 3D and avatar jobs are no longer failed while they wait their turn",
+			"summary": "On the self-hosted text-to-3D worker, a job waiting behind another could be marked as orphaned a few minutes after submit even though its runner was still alive, which sent the request to a slower fallback or failed it. A worker now trusts its own live record over a lagging storage read, so queued jobs wait and then run.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-06",
 			"title": "The meetup group photo is stamped with the event name every time",
 			"summary": "The photo screen loaded only when the shutter fired, so on a slow connection the card could open without the event name or arrive late. It now loads during the minute before the shutter, so the group photo is ready the instant it fires.",
 			"tags": [
