@@ -1,13 +1,13 @@
 # LIVE-OPS: $THREE Community Meetup #3
 
 One page. Everything an operator needs while the event is running, and nothing else.
-Prepared 2026-11-03, re-verified 2026-11-04 17:30 UTC. Project `aerial-vehicle-466722-p5`, region `us-central1`.
+Prepared 2026-11-03, re-verified 2026-11-06 06:40 UTC after the release deploy. Project `aerial-vehicle-466722-p5`, region `us-central1`.
 Freshness is machine-checked: `npm run check:live-ops` fails when the three lines
 below disagree with `public/event.json` or with what `/api/version` serves.
 
 **Event id:** `three-community-meetup-3`
 **Starts:** `2026-11-06T16:00:00Z` (ends `2026-11-06T17:00:00Z`, one hour)
-**Live release:** `0a913e8a7` on revision `three-ws-api-00522-tsn`
+**Live release:** `449584c41` on revision `three-ws-api-00528-n5h`
 
 "The Three.ws User Group on IBM Community, meeting inside the world." Virtual: every
 attendee joins from their own network, so there is no shared venue NAT to plan for.
@@ -26,17 +26,22 @@ attendee joins from their own network, so there is no shared venue NAT to plan f
 https://three.ws/play?coin=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&name=three.ws&symbol=three&image=%2Fapi%2Fimg%3Furl%3Dhttps%253A%252F%252Fipfs.io%252Fipfs%252Fbafybeihe22b5sxr3ihnxt7pregfieyteqvubqhik3j3y4bbx243xlqjw3q%26seed%3DFeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump
 ```
 
-The live API build is `0a913e8a7` (built 2026-11-03 05:04 UTC). Revisions `00520`, `00521`
-and `00522` are config-only revisions of that same image (min-instances raise, one
-env var). The world server runs `three-ws-multiplayer-00012-fhl`, built 2026-10-30
-21:52 UTC.
+The event release is live. API build `449584c41` (built 2026-11-06 06:00 UTC) on
+`three-ws-api-00528-n5h`: every /play fix from the 2026-11-06 audit, the $THREE
+flagship card resolving its name and art, HTML kept off the CDN edge
+(`private, no-cache`, so a skipped purge can no longer strand /play on deleted
+chunks), and the leak scanner's idle-wallet rotation capped so it stops exhausting
+the paid Solana RPC lanes. `npm run smoke:prod` passed on all 1,058 pages.
 
-> Neither is the event build. Well over 100 API commits and 19 world-server commits
-> are committed but unshipped, including the reconnect-position fix, the chat-draft
-> fix, the event-config override endpoint, the forge breaker isolation fix, the
-> bonding 503 fix, dance-off, parties, signature wall and presenter PA. See
-> [Ship the release](#ship-the-release-owner-gated). After the deploy, update the
-> **Live release** line and the rollback table, then run `npm run check:live-ops`.
+The world server runs `three-ws-multiplayer-00013-qor` (tag `event`), built
+2026-11-06 from every unshipped multiplayer commit (dance-off, presenter PA,
+souvenir, moderation, parties, signature wall) with `WALK_ROOM_MAX_CLIENTS=250`.
+The TRELLIS text-to-3D worker runs `model-trellis-00032-gp2` with the queued-job
+orphan fix.
+
+> **Do not deploy the world server inside the event window.** A fresh revision
+> briefly runs two instances while it hands over, which expires seat reservations
+> and can split a crowd into two rooms.
 
 ---
 
@@ -96,13 +101,15 @@ pollers retried non-pump mints forever), `/api/pump/trending` and `/api/pump/coi
 
 ## Rollback: pre-filled, per service
 
-The revisions currently serving 100% are the known-good pre-event state. After the
-release deploy creates new revisions, these are what you roll back TO.
+The release revisions serve 100% now (`three-ws-api-00528-n5h`,
+`three-ws-multiplayer-00013-qor`, `model-trellis-00032-gp2`,
+`three-ws-redis-proxy-00005-8d6`). The table lists what to roll back TO.
 
 | Service | current (roll back to this after the deploy) | previous |
 |---|---|---|
-| `three-ws-api` | `three-ws-api-00522-tsn` | `three-ws-api-00521-hxr` (same image, previous config) |
-| `three-ws-multiplayer` | `three-ws-multiplayer-00012-fhl` | `three-ws-multiplayer-00011-qjv` |
+| `three-ws-api` | `three-ws-api-00527-gz9` (`b1d1eaf83`: the release without the CDN header and RPC cap) | `three-ws-api-00526-fvq` (`f3121e379`, pre-audit) |
+| `three-ws-multiplayer` | `three-ws-multiplayer-00012-fhl` (2026-10-30 image, 100 per room) | `three-ws-multiplayer-00011-qjv` |
+| `model-trellis` | `model-trellis-00031-5zm` (without the orphan fix) | `model-trellis-00030-nm2` |
 | `three-ws-redis-proxy` | `three-ws-redis-proxy-00005-8d6` | `three-ws-redis-proxy-00004-bwk` (min 3 / max 10) |
 
 ```bash
@@ -111,11 +118,15 @@ R="--region us-central1 --project aerial-vehicle-466722-p5"
 
 # API + frontend
 gcloud run services update-traffic three-ws-api $R \
-  --to-revisions=three-ws-api-00522-tsn=100
+  --to-revisions=three-ws-api-00527-gz9=100
 
 # The /play world server (kicks everyone in-world; they auto-reconnect)
 gcloud run services update-traffic three-ws-multiplayer $R \
   --to-revisions=three-ws-multiplayer-00012-fhl=100
+
+# Text-to-3D worker (the "one sentence to a rigged agent" beat)
+gcloud run services update-traffic model-trellis $R \
+  --to-revisions=model-trellis-00031-5zm=100
 
 # Redis proxy (presence, durable builds)
 gcloud run services update-traffic three-ws-redis-proxy $R \
@@ -211,6 +222,11 @@ p95 418ms, and the world server never exceeded 8% CPU. The single instance carri
 where Cloud Run wants a second instance that `max-instances=1` refuses: raise
 `--concurrency` if the count approaches it.
 
+World server at the event build, 2026-11-06 (`00013-qor`, `WALK_ROOM_MAX_CLIENTS=250`,
+run from Cloud Build so the load generator is not this box): 250 of 250 joined one
+room, 0 failures, 0 drops, join p50 233ms, p95 455ms, patch delivery 99.86%, CPU at
+most 7%. A 251st player opens a second room of the same world.
+
 Re-run 2026-11-04 17:10 UTC (`--n 400 --ramp 45 --hold 150`, same box, load average
 ~118): **PASS on all four thresholds.** 400 of 400 joined, 400 held to the end, 0%
 drops, 0% silent sessions, join p50 1,505ms, p95 3,518ms, max 6,131ms, 212,272 moves
@@ -241,8 +257,9 @@ sent, 413,882 state patches. An idle `curl` of `/play` straight after measured
 | Players kicked seconds after joining, phones only | Mobile memory kill, not a network fault | `node scripts/play-mobile-repro.mjs` reproduces it |
 | `/walk` offline while `/play` works | Someone set `PLAY_GATE_MINT`/`THREE_MINT` on the world server (both unset today) | `gcloud run services update three-ws-multiplayer $R --remove-env-vars=PLAY_GATE_MINT,THREE_MINT` |
 | Wallet balances read zero, holder tier collapses to Member | Helius and Alchemy quotas spent | `npm run event:failover`; the owner tops up either plan |
+| The minute-6 avatar beat takes too long on stage | Measured 2026-11-06 on the release: `forge_avatar` mesh on `trellis_selfhost` in about 6.5 minutes, rig in about 35 s | Start the generation at least 8 minutes before the beat. Fallback rigged GLB from that run: `https://three.ws/cdn/forge/anon/2bb633b0-cb2e-4d64-9eed-80d53d83ec7f.glb` |
 | `/forge` or the "one sentence to a rigged agent" beat fails with "1 stage missed (Mesh)" | The TRELLIS worker's event loop freezes 30-140s while post-processing a mesh; on the live build, five timed-out status polls trip one breaker shared by every GPU worker and every submit then fails as `provider_unreachable`. The Hunyuan3D and HF fallbacks fail closed because the load balancer sends no client-region header | Ship the release (per-worker breakers, `0cc3627d0`). Add the region header (owner): `gcloud compute backend-services update three-ws-backend --global --project aerial-vehicle-466722-p5 --custom-request-header='X-Client-Region:{client_region}'`. On stage, leave 2 minutes between generations and keep a pre-built GLB as the fallback |
-| An x402 payment, the Agent Exchange beat, or `/api/x402-pay` 503s | Sponsor fee wallet `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` holds 0.00093 SOL, under the 0.002 SOL settle floor; self-heal blocked by 2 undecryptable agent wallet secrets | Run the `x402-economy-triage` agent first. Fix: owner sends 0.05 SOL to the sponsor wallet |
+| An x402 payment, the Agent Exchange beat, or `/api/x402-pay` 503s | Sponsor fee wallet `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` held 0.036 SOL on 2026-11-06 06:30 UTC (over the 0.002 floor). The NOVA buyer is a platform wallet, so its settles share the sponsor's paced daily fee budget with the autonomous ring: about 5% of settles are refused `fee_runway_exhausted`, and a refusal is cached 60 s | Pause the ring for the event hour (checklist 15:40). Then run the `x402-economy-triage` agent. If the floor is the cause, the owner sends SOL to the sponsor wallet |
 | Coin image missing on the link or OG card | One IPFS gateway slow | Nothing: `api/img.js` takes the first of five |
 | Something breaks and nobody is told | `TELEGRAM_ALERTS_CHAT_ID` unset | Email alerting is live (uptime checks on the site and world server, a 5xx-rate policy). Keep `npm run event:watch` on a screen |
 | `gcloud` stops working mid-event | Auth expires on its own schedule here | `gcloud auth login --no-launch-browser`; verify with a real `gcloud run services describe`, never `gcloud auth list` |
@@ -370,9 +387,10 @@ rollback table, and run `npm run check:live-ops`.
 - [ ] 14:00: `npm run event:watch -- --once`, `npm run event:failover`.
 - [ ] 15:00: `npm run event:capacity -- --n 50 --hold 30` (a quick join check, not a load test).
 - [ ] 15:30: `npm run event:watch -- --interval 15` on a screen; logs terminal open.
+- [ ] 15:40: give the Agent Exchange beat the sponsor's fee budget by pausing the autonomous ring (config-only, reversible): `gcloud run services update three-ws-api $R --update-env-vars=X402_AUTONOMOUS_ENABLED=false`. Confirm `curl -s https://three.ws/api/healthz` shows `"ring":{"spend_enabled":false,"paused":true`. Update the **Live release** revision line, since this makes a new revision.
 - [ ] 16:00: "Doors open" announce; follow the agenda beats.
 - [ ] 16:58: group photo; 17:00 window ends (extend with `event:override` if needed).
-- [ ] After: `gcloud run services update three-ws-api $R --min-instances=6`.
+- [ ] After: `gcloud run services update three-ws-api $R --min-instances=6 --update-env-vars=X402_AUTONOMOUS_ENABLED=true` (lowers the floor and resumes the ring).
 
 ---
 
