@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T07:04:02.727Z",
+	"generated_at": "2026-11-06T18:23:26.541Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -49,6 +49,16 @@
 		{
 			"date": "2026-11-06",
 			"type": "update",
+			"title": "Every launched coin now gets fresh stats",
+			"summary": "Launch stats only ever refreshed for the first 20 coins, so most launches showed old numbers or none at all, and their owners never heard when a coin filled its curve. The refresh now works through every coin, oldest data first, and a full pass takes under an hour. Coins that filled long ago are corrected quietly and are not announced as new.",
+			"link": "/launches",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
 			"title": "Join any /play world from any phone or laptop with Play lite",
 			"summary": "Devices that can't run the 3D world (no graphics acceleration, an old phone, a locked-down work laptop) now land in Play lite: the same live room drawn as a top-down map. You walk by tapping, chat, react, emote, enter and vote in the dance-off, sign the wall and follow the meetup agenda, and everyone in 3D sees you arrive as an avatar. /play switches over automatically before the 3D engine downloads, a slow device is offered the switch, and Open in 3D takes you back.",
 			"link": "/play/lite",
@@ -75,6 +85,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Paid 3D generation keeps working when outside engines are down",
+			"summary": "When the outside 3D engines were busy, a paid Forge request could wait over a minute and then fail with a message saying generation was not configured. No one was charged, but no model came back either. Paid requests now fall through to our own GPU worker, the same one that powers the free Forge, and get a job to follow within seconds.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{

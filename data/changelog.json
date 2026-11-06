@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "Paid 3D generation keeps working when outside engines are down",
+			"summary": "When the outside 3D engines were busy, a paid Forge request could wait over a minute and then fail with a message saying generation was not configured. No one was charged, but no model came back either. Paid requests now fall through to our own GPU worker, the same one that powers the free Forge, and get a job to follow within seconds.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-11-06",
+			"title": "Every launched coin now gets fresh stats",
+			"summary": "Launch stats only ever refreshed for the first 20 coins, so most launches showed old numbers or none at all, and their owners never heard when a coin filled its curve. The refresh now works through every coin, oldest data first, and a full pass takes under an hour. Coins that filled long ago are corrected quietly and are not announced as new.",
+			"tags": [
+				"fix"
+			],
+			"link": "/launches"
+		},
+		{
+			"date": "2026-11-06",
 			"title": "Card gacha pulls work from wallets that hold SOL",
 			"summary": "Pulling a card in /play failed with \"could not verify\" for any wallet holding SOL, and nothing was charged. Collector Crypt has those wallets pay their own network fee, about 0.00001 SOL, and our safety check only allowed the case where Collector Crypt pays it. The check now accepts both while keeping every other rule, adds a cap so the fee can never be inflated, and the confirmation table shows who pays the fee and exactly how much.",
 			"tags": [

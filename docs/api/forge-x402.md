@@ -217,14 +217,17 @@ lane that ran.
 
 1. **NVIDIA NIM native text→mesh** (`nvidia`). Zero vendor cost, no intermediate
    image. Completes inline often enough that `draft` frequently skips polling.
-2. **HuggingFace Spaces reconstruct** (`huggingface`). Free. Synthesizes a
+2. **Self-hosted TRELLIS** (`trellis_selfhost`). Our own GPU worker. Synthesizes
+   a reference view and returns a `queued` job at once, so poll `poll_url` for
+   the GLB. Skipped while the lane reports `down` or is not configured.
+3. **HuggingFace Spaces reconstruct** (`huggingface`). Free. Synthesizes a
    reference view, reconstructs it, and the result is copied into three.ws
    storage so the url outlives the Space's ephemeral files. Preference is
    controlled by `FORGE_PREFER_FREE`.
-3. **FLUX→TRELLIS on Replicate** (`trellis`). The paid platform backstop.
+4. **FLUX→TRELLIS on Replicate** (`trellis`). The paid platform backstop.
 
 **Image→3D** skips step 1 (NVIDIA's hosted preview is text-only) and runs the
-reconstruct lanes on your supplied views.
+remaining lanes on your supplied views.
 
 Only the platform-keyed pipeline is sold here. The BYOK geometry backends
 (Meshy, Tripo) bill through the caller's own provider key on the free
