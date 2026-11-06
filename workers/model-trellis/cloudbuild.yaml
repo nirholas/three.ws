@@ -76,9 +76,13 @@ steps:
       # the 2026-09-02 outage. main.py answers /health with 503 only once the
       # whole retry budget is spent, so an ordinary cold load (200 while
       # loading) is never killed mid-load, and a genuinely dead container is
-      # replaced within ~3 minutes. Inference runs in a thread executor, so
-      # /health stays responsive while the GPU is busy.
-      - --liveness-probe=httpGet.path=/health,initialDelaySeconds=60,periodSeconds=60,timeoutSeconds=10,failureThreshold=3
+      # replaced within ~10 minutes. Inference runs in a thread executor, but
+      # xatlas UV unwrap and mesh simplification hold the GIL, which freezes
+      # /health for minutes mid-job (2026-11-05: /health took 142 s, then the
+      # 10 s x 3 probe killed the instance and its running tasks). A 90 s
+      # timeout and 5 misses at a 120 s period tolerate a long freeze yet
+      # still recycle a truly hung process.
+      - --liveness-probe=httpGet.path=/health,initialDelaySeconds=60,periodSeconds=120,timeoutSeconds=90,failureThreshold=5
 
 images:
   - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA

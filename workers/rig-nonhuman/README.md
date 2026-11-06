@@ -58,8 +58,10 @@ GET  /health     -> { ok, model, gpu_available, gpu_name, queued }
 Every task runs under a hard timeout (`TASK_TIMEOUT_S`, default 900s: three
 chained model passes need more headroom than the single-pass humanoid
 worker's 420s). Task state is in-memory, same invariant as `workers/rig`:
-run with `min-instances = max-instances` so pollers always reach the
-instance that owns the task.
+run with `max-instances = 1` so pollers always reach the instance that owns
+the task. `min-instances` is 0 (since 2026-11-06, about 4 jobs a day): a warm
+pin here held one of the three us-central1 L4s and blocked every other GPU
+rollout. The first job after idle pays a cold start.
 
 ## Deploy
 

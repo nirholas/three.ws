@@ -85,6 +85,7 @@ Six GPU services share those 3 GPUs:
 |---|---|---|---|
 | model-trellis | free text-to-3D lane (quality already maxed: steps 40, 4K textures) | 1 | 3 |
 | model-hunyuan3d | high-fidelity reconstruction + multi-view fusion (min 0 since 2026-07-26: zero jobs in 3 days while its warm L4 starved model-text2motion; see below) | 0 | 2 |
+| model-rig-nonhuman | non-human rigging (about 4 jobs/day; min 0 since 2026-11-06 to give GPU rollouts headroom, max 1) | 0 | 1 |
 | model-rig | auto-rigging lane (workers/rig; ~10 jobs/day) | 1 | 2 |
 | model-text2motion | text-to-motion clips for the animation library | 0 | 2 |
 | model-triposr | fast image-to-3D fallback (us-central1 copy stays min 0; the WARM copy runs in us-east4 since 2026-07-28) | 0 | 2 |

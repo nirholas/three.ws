@@ -97,7 +97,10 @@ that the requested fraction would still leave more than `MAX_BAKE_FACES`
 (150,000) triangles, the worker raises it just enough to land on that budget and
 logs `simplify X -> Y to stay within the bake budget`. xatlas's UV unwrap holds
 the GIL, so a bigger mesh freezes `/health` long enough for the liveness probe
-to kill the instance mid-job (see `docs/ops/forge-error-triage.md`).
+to kill the instance mid-job (see `docs/ops/forge-error-triage.md`). On
+2026-11-05 `/health` took 142 s and the old 10 s x 3 probe killed the instance
+twice, so the liveness probe is now `periodSeconds=120,timeoutSeconds=90,
+failureThreshold=5` (cloudbuild.yaml and the live service agree).
 
 ### Image → 3D from a real user photo
 
