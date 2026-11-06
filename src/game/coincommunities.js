@@ -74,6 +74,7 @@ import { PlayPostFx } from './post-fx.js';
 import { serializeLoadout, getCosmetic } from '../../multiplayer/src/cosmetics-catalog.js';
 import { AccessoryManager } from '../agent-accessories.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
+import { COIN_ART_WIDTH, liveHomeTown, mapCoins } from './coin-records.js';
 
 // A Robinhood Chain coin is an EVM address (pump.fun mints are Solana base58).
 // Every RH-chain world pins the 'hoodchain' biome (world-env.js) so the chain
@@ -228,25 +229,6 @@ const LONG_PRESS_MS = 420; // hold-to-break threshold for touch (no right-click 
 const TRENDING_URL = '/api/pump/trending?limit=30';
 const SEARCH_URL = '/api/pump/search';
 const COIN_URL = '/api/pump/coin';
-
-// Normalize a raw pump.fun coin (trending feed or search results, both share
-// the same upstream shape) into the compact record the lobby/world consume.
-// Delivered width for coin art fetched through the image proxy.
-const COIN_ART_WIDTH = 512;
-
-function mapCoins(raw) {
-	const list = Array.isArray(raw) ? raw : raw.data || raw.coins || raw.items || [];
-	return list.map((c) => ({
-		mint: c.mint || c.address,
-		name: (c.name || '').trim() || 'Unnamed coin',
-		symbol: (c.symbol || '').trim(),
-		// Coin art becomes a WebGL texture a few hundred pixels tall. 512 is
-		// generous for that and keeps a creator's full-size upload out of both
-		// the download and GPU memory.
-		image: proxiedImageURL(c.image_uri || c.image || c.imageUri || c.logo || '', c.mint || c.address || '', { width: COIN_ART_WIDTH }),
-		marketCap: c.usd_market_cap || c.market_cap_usd || c.marketCap || 0,
-	})).filter((c) => c.mint);
-}
 
 // How long a bare deep link waits for the coin's identity before it gives up and
 // builds the world anyway. Entry already has the sign-in gate, the manifest and
@@ -938,8 +920,8 @@ export class CoinCommunities {
 		try {
 			const r = await fetch(`${COIN_URL}?mint=${HOME_TOWN.mint}`, { headers: { accept: 'application/json' } });
 			if (!r.ok) throw new Error('HTTP ' + r.status);
-			const [coin] = mapCoins([await r.json()]);
-			if (coin?.mint) this.ui.setFeatured({ ...HOME_TOWN, ...coin, official: true });
+			const card = liveHomeTown(await r.json());
+			if (card) this.ui.setFeatured(card);
 		} catch (err) {
 			// Non-fatal: the static pin from above stands in until next load.
 			log.info('[coincommunities] home town refresh failed:', err?.message);

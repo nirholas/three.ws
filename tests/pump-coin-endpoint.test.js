@@ -43,6 +43,11 @@ vi.mock('../api/_lib/pump-curve-view.js', () => ({
 	getCurveView: vi.fn(),
 }));
 
+// Mint metadata resolver (token_metadata cache, Helius DAS, keyless Jupiter).
+// Defaults to the honest "no source knows this mint" answer.
+const getMetadataForMints = vi.fn();
+vi.mock('../api/_lib/token-metadata.js', () => ({ getMetadataForMints }));
+
 const pumpFetchJson = vi.fn();
 vi.mock('../api/_lib/pump-feed-fetch.js', () => ({ pumpFetchJson }));
 
@@ -146,6 +151,8 @@ beforeEach(() => {
 	cache.clear();
 	sql.mockReset().mockResolvedValue([]);
 	pumpFetchJson.mockReset();
+	getMetadataForMints.mockReset().mockImplementation(async (mints) =>
+		new Map(mints.map((m) => [m, { mint: m, symbol: null, name: null, logo: null, decimals: null }])));
 	getCurveView.mockReset().mockResolvedValue({
 		httpStatus: 404,
 		body: { error: 'no_curve', error_description: 'no bonding curve found for that mint' },
@@ -241,6 +248,87 @@ describe('handleCoin -- on-chain degrade (the new tier)', () => {
 		expect(res.json.creator).toBe('9wgvwps9qK5jNniC5RJdrYCfaV3CLKTnxYVqBjXwegEV');
 		expect(res.json.metadataSource).toBe('platform');
 		expect(res.json.usd_market_cap).toBeCloseTo(296832.55767706677, 3);
+	});
+});
+
+describe('handleCoin -- on-chain degrade names the coin from mint metadata', () => {
+	// Production 2026-11-06: pump.fun down, LKG expired, and $THREE is not a
+	// pump_agent_mints row (it was not launched through the platform's launcher),
+	// so the degrade body carried name/symbol/image all null and the /play lobby's
+	// flagship card rendered as "Unnamed coin". The token metadata resolver
+	// (Helius DAS, then keyless Jupiter) names every Solana mint.
+	it('fills name, symbol and art from the token metadata resolver when the registry has no row', async () => {
+		const mint = synthMint('F');
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 403 });
+		getCurveView.mockResolvedValue(onchainCurveBody(mint));
+		sql.mockResolvedValue([]);
+		getMetadataForMints.mockResolvedValue(new Map([[mint, {
+			mint, name: 'three.ws', symbol: 'three', logo: 'https://cf-ipfs.com/ipfs/bafy-three-art', decimals: 6,
+		}]]));
+
+		const res = mockRes();
+		await handleCoin(mockReq(mint), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res._headers['x-pump-degraded']).toBe('onchain');
+		expect(res.json.name).toBe('three.ws');
+		expect(res.json.symbol).toBe('three');
+		// Retired cf-ipfs gateway repaired the same way the live body is.
+		expect(res.json.image_uri).toContain('bafy-three-art');
+		expect(res.json.image_uri).not.toContain('cf-ipfs.com');
+		expect(res.json.image).toBe(res.json.image_uri);
+		expect(res.json.metadataSource).toBe('token-metadata');
+		expect(res.json.usd_market_cap).toBeCloseTo(296832.55767706677, 3);
+	});
+
+	it('names the coin even when the curve read fails', async () => {
+		const mint = synthMint('G');
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 403 });
+		getCurveView.mockRejectedValue(new Error('all RPC lanes failed'));
+		sql.mockResolvedValue([]);
+		getMetadataForMints.mockResolvedValue(new Map([[mint, {
+			mint, name: 'three.ws', symbol: 'three', logo: null, decimals: 6,
+		}]]));
+
+		const res = mockRes();
+		await handleCoin(mockReq(mint), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.json.name).toBe('three.ws');
+		expect(res.json.usd_market_cap).toBeNull();
+	});
+
+	it('the platform registry name still wins over resolver metadata', async () => {
+		const mint = synthMint('H');
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 403 });
+		getCurveView.mockResolvedValue(onchainCurveBody(mint));
+		sql.mockResolvedValue([{ name: 'Registry Name', symbol: 'REG', agent_authority: null }]);
+		getMetadataForMints.mockResolvedValue(new Map([[mint, {
+			mint, name: 'Resolver Name', symbol: 'RES', logo: 'https://ipfs.io/ipfs/bafy-art', decimals: 6,
+		}]]));
+
+		const res = mockRes();
+		await handleCoin(mockReq(mint), res);
+
+		expect(res.json.name).toBe('Registry Name');
+		expect(res.json.symbol).toBe('REG');
+		expect(res.json.image_uri).toContain('bafy-art');
+		expect(res.json.metadataSource).toBe('platform');
+	});
+
+	it('a throwing resolver degrades to the previous null identity, not a 5xx', async () => {
+		const mint = synthMint('J');
+		pumpFetchJson.mockResolvedValue({ ok: false, status: 403 });
+		getCurveView.mockResolvedValue(onchainCurveBody(mint));
+		sql.mockResolvedValue([]);
+		getMetadataForMints.mockRejectedValue(new Error('db down'));
+
+		const res = mockRes();
+		await handleCoin(mockReq(mint), res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.json.name).toBeNull();
+		expect(res.json.metadataSource).toBe('onchain');
 	});
 });
 

@@ -75,6 +75,7 @@ import { recordQuestTrade } from '../_lib/trading-quests.js';
 import { recordCopyPathStep } from '../_lib/copy-path.js';
 import { withPlatformFee, recordPlatformFee, pumpFeeEventFromTx, feeEventFromDisclosure } from '../_lib/platform-fee-events.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
+import { getMetadataForMints } from '../_lib/token-metadata.js';
 import { buildTokenMetadata } from '../_lib/three-brand.js';
 import {
 	buildPlatformFeeInstructions,
@@ -4290,10 +4291,9 @@ const coinLkgKey = (mint) => `pump:coin:lkg:${mint}`;
 // from the on-chain bonding-curve reader already proven live behind
 // /api/pump/curve (order 423); identity fields (name, symbol, creator) come
 // from pump_agent_mints, the platform's own launch registry, for any mint
-// three.ws itself launched. Neither source carries a stored image URL for a
-// curve launch, so `image`/`image_uri` stay null rather than guessing.
-// Returns null when neither source has anything, so the caller falls through
-// to the honest 502.
+// three.ws itself launched, then from the token metadata resolver for every
+// other mint, which also supplies the art. Returns null when no source has
+// anything, so the caller falls through to the honest 502.
 async function fetchOnchainCoinDegrade(mint) {
 	let curveBody = null;
 	try {
@@ -4315,15 +4315,28 @@ async function fetchOnchainCoinDegrade(mint) {
 		console.warn('[pump/coin] pump_agent_mints lookup failed: %s', String(err?.message || err).slice(0, 160));
 	}
 
-	if (!curveBody && !dbRow) return null;
+	// Identity for any Solana mint, not only ones three.ws launched: the token
+	// metadata resolver (token_metadata cache, Helius DAS, keyless Jupiter).
+	// Without it a coin outside pump_agent_mints, $THREE itself included, came
+	// back nameless and the /play lobby's flagship card read "Unnamed coin".
+	let meta = null;
+	try {
+		const found = (await getMetadataForMints([mint])).get(mint);
+		if (found && (found.name || found.symbol || found.logo)) meta = found;
+	} catch (err) {
+		console.warn('[pump/coin] token metadata lookup failed: %s', String(err?.message || err).slice(0, 160));
+	}
+
+	if (!curveBody && !dbRow && !meta) return null;
 
 	const curve = curveBody?.curve || null;
+	const image = meta?.logo ? normalizeGatewayURL(meta.logo) : null;
 	return {
 		mint,
-		name: dbRow?.name ?? null,
-		symbol: dbRow?.symbol ?? null,
-		image: null,
-		image_uri: null,
+		name: dbRow?.name || meta?.name || null,
+		symbol: dbRow?.symbol || meta?.symbol || null,
+		image,
+		image_uri: image,
 		description: null,
 		creator: curve?.creator ?? dbRow?.agent_authority ?? null,
 		complete: curve ? Boolean(curve.complete) : curveBody?.graduated === true ? true : null,
@@ -4333,7 +4346,7 @@ async function fetchOnchainCoinDegrade(mint) {
 		real_token_reserves: curve?.realTokenReserves ?? null,
 		real_sol_reserves: curve?.realSolReserves ?? null,
 		total_supply: curve?.tokenTotalSupply ?? null,
-		metadataSource: dbRow ? 'platform' : 'onchain',
+		metadataSource: dbRow ? 'platform' : meta ? 'token-metadata' : 'onchain',
 	};
 }
 
