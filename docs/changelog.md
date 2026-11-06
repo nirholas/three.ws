@@ -38,7 +38,7 @@ only when a reader filters or asks for older updates.
 
 Every Monday at 15:00 UTC the changelog also goes out as a [GitHub Release](https://github.com/nirholas/three.ws/releases),
 which reaches every watcher and stargazer of the repository through GitHub's own feed.
-`/api/cron/github-release` publishes a `vYYYY.MM.DD` release titled "Week of YYYY-MM-DD" with the entries dated after the previous `v*` release, at the commit production runs (`dist/build-info.json`, else `COMMIT_SHA`, else `main`). It skips when the token is missing, the tag exists, or nothing user-facing shipped. It needs `GITHUB_RELEASE_TOKEN` (fine-grained PAT, Contents read and write on `nirholas/three.ws`) on the Cloud Run service. Both it and `scripts/github-release.mjs` share [api/_lib/github-release.js](../api/_lib/github-release.js). The script is for previews, backfills and one-off windows; it builds the notes from `data/changelog.json` as it stood at the
+`/api/cron/github-release` publishes a `vYYYY.MM.DD` release titled "Week of YYYY-MM-DD" with the entries dated after the previous `v*` release, at the commit production runs (`dist/build-info.json`, else `COMMIT_SHA`, else `main`). It skips when the token is missing, the tag exists, or nothing user-facing shipped. Like the script, it drops entries naming a `$TICKER` other than `$THREE`, and it also drops entries naming any project listed (comma or newline separated) in `GITHUB_RELEASE_EXCLUDE_TERMS`, which lives on the Cloud Run service rather than in git. It needs `GITHUB_RELEASE_TOKEN` (fine-grained PAT, Contents read and write on `nirholas/three.ws`) on the Cloud Run service. Both it and `scripts/github-release.mjs` share [api/_lib/github-release.js](../api/_lib/github-release.js). The script is for previews, backfills and one-off windows; it builds the notes from `data/changelog.json` as it stood at the
 commit production runs (read `GET /api/version` for it), keeps only entries that pass the X
 lane's public filter (`data/changelog-x-filter.json`), and drops any entry naming a `$TICKER`
 other than `$THREE`:
@@ -66,7 +66,7 @@ three.ws follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`
 | **Patch** | Bug fixes with no API changes | `1.5.1` |
 
 **Current platform version:** `1.5.2`  
-**Current SDK version (`@three-ws/sdk`):** `0.2.1`
+**Current SDK version (`@three-ws/sdk`):** `0.2.3`
 
 The SDK is versioned independently from the platform. A platform patch release does not necessarily bump the SDK version if no public API changed.
 
@@ -320,7 +320,7 @@ Change the version number in the `src` attribute of your script tag. Before upgr
 ```js
 // From the SDK
 import { version } from '@three-ws/sdk';
-console.log(version); // "0.2.1"
+console.log(version); // "0.2.3"
 
 // From the CDN version index
 const { latest } = await fetch('https://three.ws/agent-3d/versions.json').then(r => r.json());

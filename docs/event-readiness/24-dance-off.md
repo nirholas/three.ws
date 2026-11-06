@@ -1,5 +1,7 @@
 # Feature 24: dance-off rounds on the synced floor
 
+Status: shipped 2026-10-31. The round machine is `multiplayer/src/dance-off.js` with room glue in `multiplayer/src/dance-off-room.js`, the client is `src/game/dance-off.js`, and timings (20 s join, 75 s performance, 4 s tally, 15 s winner), vote targeting, the `aura-spotlight-dance-champ` reward and tip card are documented in [docs/dance-off.md](../dance-off.md). The brief below is what was built to; a fresh session should audit and extend it, not rebuild it. Where it says "already" or "missing" below, it describes the state before the round machine shipped.
+
 The dance floor already syncs everyone to a server beat with rotating clips, and an x402 dance-tip endpoint already exists. What is missing is the game: scheduled dance-off rounds where the floor becomes a competition, the crowd votes, and the winner gets a spotlight moment. This is the recurring beat that gives an event crowd something to gather around every few minutes.
 
 ## Where the code lives

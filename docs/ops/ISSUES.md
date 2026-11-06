@@ -278,12 +278,12 @@ wrong version is what a future reader would otherwise trust.
   despite nothing being paid. Every aggregate now derives from one shared
   `paidRow` predicate, `series_7d` included. Do not re-file this as an
   observed inflation of a published number; it was never that.
-- **Oversized sources on `/api/avatar/optimize`.** See item 9.
+- **Oversized sources on `/api/avatar/optimize`.** See the `/api/avatar/optimize?draco=1` entry above.
 - **Neon storage pressure.** `isStoragePressured()` reports `pressured: false` at
   2768MB, and `SHOW neon.max_cluster_size` returns **16TB**, so the 8192MB
   high-water on the service is a deliberate runaway backstop rather than a cap
   being approached. Worth watching only because the branch grew ~230MB in a day.
-- **ASR and Redis.** See item 5: both were listed as unconfigured and both work.
+- **ASR and Redis.** See item 4: both were listed as unconfigured and both work.
 - **World blueprint assets.** The `world` subsystem reported "1 blueprint
   asset(s) missing" while all 17 distinct assets served 200 to an independent
   sweep. The sensor swept the blueprint list verbatim (136 entries for 17 files)

@@ -14,10 +14,12 @@ ChatGPT has two integration models with different strengths, so the 3D lane ship
 
 ### 1a. The ChatGPT app (Apps SDK / MCP connector)
 
-The connector is a Streamable HTTP MCP server at `https://three.ws/api/mcp-studio` (MCP protocol `2025-06-18`, JSON-RPC 2.0 over POST, no auth). It exposes exactly eleven tools, deliberately scoped to 3D generation only: no wallet, no payments, no token, nothing a store reviewer would need to think twice about.
+The connector is a Streamable HTTP MCP server at `https://three.ws/api/mcp-studio` (MCP protocol `2025-06-18`, JSON-RPC 2.0 over POST, no auth). It exposes exactly fifteen tools, deliberately scoped to 3D generation only: no wallet, no payments, no token, nothing a store reviewer would need to think twice about.
 
 - Six generation tools: `forge_free` (text to 3D), `text_to_avatar` (text to a rigged humanoid), `mesh_forge`, `rig_mesh` (add a skeleton to a static GLB you already have), `forge_avatar`, and `refine_model` (iterate on a previous result; every refinement is its own version with its own AR link).
-- One collector, `check_job`, which picks up a generation that outran the tool call.
+- One collector, `check_job`, which picks up a generation that outran the tool call, and `get_job`, the same status read written for agents (phase, progress, an ETA, and the finished model once it is done).
+- One inspector, `look_at_model`, which renders a model to images the assistant can look at.
+- Three read-only asset catalog tools, `search_catalog`, `get_catalog_item` and `get_item_source`, so the assistant can reuse a ready-made CC0 asset before spending GPU time.
 - Three persona/embodiment tools: `create_agent_persona`, `get_agent_persona`, `persona_say`, which give a rigged body a name, a voice line and a living-avatar page.
 
 Each generation tool renders inline through an Apps SDK widget (`ui://widget/three-studio-model.html`) that shows the rotatable model plus a **View in your space** button. If the result is rigged, the response also carries an `irlUrl` and the button becomes **Bring it to life**. The persona tools render in their own widget.
@@ -105,7 +107,7 @@ Forge ([three.ws/forge](https://three.ws/forge)) accepts three kinds of input:
 
 | Input | How it works | Typical time |
 |---|---|---|
-| Text | Prompt to reference image (FLUX) to reconstructed mesh | 30 to 90 s |
+| Text | Prompt to a photoreal reference image to reconstructed mesh | 30 to 90 s |
 | Image | 1 to 6 reference views (front/back/left/right/top/three-quarter); multi-view removes back-of-object hallucination | 30 to 90 s |
 | Sketch | A drawing plus a name; a scribble-conditioned rectified-flow model reconstructs the geometry | 30 to 90 s |
 
@@ -126,10 +128,10 @@ curl 'https://three.ws/api/forge?job=<job_id>'
 
 Generation runs on a fleet of single-purpose Python FastAPI services on Google Cloud Run, most of them on L4 GPUs, all scale-to-zero, all sharing one job contract (`POST /infer` returns `202 { task_id }`, `GET /tasks/:id` returns status and a result URL). A CPU controller fans out to them and picks a mesh backend per job. The open models in the pool:
 
-- **Hunyuan3D-2.1** (Tencent): single image to textured mesh.
-- **TRELLIS** (Microsoft, MIT): single image to textured mesh via structured latent representations. This is the default text-to-3D lane behind ChatGPT: FLUX makes the reference image, TRELLIS reconstructs it.
+- **Hunyuan3D-2.1** (Tencent): single image to textured mesh. It is a fallback lane now, and the router keeps it out of the regions its licence excludes.
+- **TRELLIS.2** (Microsoft, MIT): single image to a textured mesh with PBR materials, at a resolution the tier picks. This is the default lane at every tier: a reference image is generated from the prompt first, and TRELLIS.2 reconstructs it. The first-generation **TRELLIS** worker sits right behind it as the next rung.
 - **TripoSR** (VAST-AI, MIT): fast single-image reconstruction, 5 to 15 seconds with a baked texture. Used as the fast path and as a fallback.
-- **TripoSG** (VAST-AI Research, MIT): a 1.5B-parameter rectified-flow transformer for high-fidelity geometry. Two modes on one contract: `image` (BiRefNet background matte, recenter, 50 steps) and `scribble` (the CFG-distilled TripoSG-scribble pipeline, 16 steps), which is what powers sketch-to-3D.
+- **TripoSG** (VAST-AI Research, MIT): a 1.5B-parameter rectified-flow transformer for high-fidelity geometry. Two modes on one contract: `image` (BiRefNet background matte served by our rembg worker, recenter, 50 steps) and `scribble` (the CFG-distilled TripoSG-scribble pipeline, 16 steps), which is what powers sketch-to-3D.
 - **Bring-your-own-key lanes** for Meshy and Tripo when someone wants native quad topology; the key stays in the browser and never touches my server.
 
 Around the mesh generators sit the processing workers:
@@ -153,7 +155,7 @@ One practical detail that bit me more than once: most three.ws avatars ship with
 
 ### 2c. The 3D Studio MCP server (the paid, full-pipeline twin)
 
-Beyond the eleven free tools, the full pipeline is exposed as a second MCP server at `https://three.ws/api/mcp-3d` (OAuth 2.1 against the same authorization server as the main MCP endpoint, or x402 pay-per-call). The tools compose into one flow, each step's output feeding the next:
+Beyond the fifteen free tools, the full pipeline is exposed as a second MCP server at `https://three.ws/api/mcp-3d` (OAuth 2.1 against the same authorization server as the main MCP endpoint, or x402 pay-per-call). The tools compose into one flow, each step's output feeding the next:
 
 ```
 direct_prompt ─▶ text_to_3d ─┐

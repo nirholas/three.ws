@@ -18,8 +18,9 @@ accuracy_notes: |
   (4,356) was read live from https://three.ws/api/three-token/stats on 2026-10-08.
   Settlement, verification and receipt totals (110,416 / 803,483 / 58,907) come from the
   open-source audit dated 2026-08-25 and are labelled with that date. The 12 second
-  confirmation wait and 800 ms poll come from api/_lib/x402/self-facilitator.js
-  (settleConfirmTimeoutMs, CONFIRM_POLL_MS). The $THREE second accept on the Solana rail
+  confirmation wait and 800 ms poll come from packages/x402-server/src/facilitator/core.js
+  (settleConfirmTimeoutMs, CONFIRM_POLL_MS), the facilitator core that
+  api/_lib/x402/self-facilitator.js now wraps as a thin adapter. The $THREE second accept on the Solana rail
   is X402_ACCEPT_THREE_SOLANA, default true (api/_lib/env.js, api/_lib/x402-spec.js,
   docs/x402-endpoints.md). Preflight behaviour, TTLs, back-off hints, exit codes and the
   free MCP tool come from docs/x402-preflight.md and api/_mcp3d/tools/preflight.js.

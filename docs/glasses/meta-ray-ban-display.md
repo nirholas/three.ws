@@ -308,10 +308,10 @@ free, and the agent stands in the same doorway it was left in.
 
 ### Phase 7: ship it
 
-- [ ] `data/pages.json` entry for `/glass` (this is what feeds the changelog,
+- [x] `data/pages.json` entry for `/glass` (this is what feeds the changelog,
       the sitemap and `llms.txt`).
-- [ ] `data/changelog.json` entry, community language, `feature` tag.
-- [ ] A row in [STRUCTURE.md](../../STRUCTURE.md) for the glasses surfaces.
+- [x] `data/changelog.json` entry, community language, `feature` tag.
+- [x] A row in [STRUCTURE.md](../../STRUCTURE.md) for the glasses surfaces.
 - [ ] `npm run audit:docs` clean, `npm test` green, `npm run check:rules` clean
       on the touched paths.
 - [ ] Distribution when Meta opens publishing. Until then, the QR deeplink is

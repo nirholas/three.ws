@@ -43,8 +43,9 @@ id still answers the transport's `404`, "start a new session").
   headers are never stored, only the normalized client name, its version, the
   auth kind and tool names.
 
-Surfaces tracked: `mcp`, `mcp-3d`, `mcp-agent`, `mcp-bazaar`, `pump-fun-mcp` and
-the studio handler (`full`, `chatgpt`, `grok`).
+Surfaces tracked: `mcp`, `mcp-all`, `mcp-3d`, `mcp-agent`, `mcp-bazaar`,
+`mcp-oracle`, `ibm-mcp`, `pump-fun-mcp` and the studio handler (`full`,
+`chatgpt`, `grok`).
 
 A `tools/call` that carries no id this platform issued (a client that skipped
 `initialize`, a plain x402 agent, curl) still counts, under client `unknown`

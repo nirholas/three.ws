@@ -37,7 +37,11 @@ costs the headline number something:
 - **The sizing is the production engine.** Orders are sized by
   [`planCopyOrder`](../api/_lib/copy-engine.js), the exact function the live
   `copy-fanout` cron uses. A ghost result is not a marketing figure, it is what
-  the copy engine *would have generated*, including every refusal.
+  the copy engine *would have generated*, including every sizing and budget
+  refusal. The replay has no per-coin market context, so the live-only coin
+  checks (honeypot, market-cap floor, and the guard that skips a leader whose
+  wallet is linked to the coin's creator) are not replayed. A live copy can
+  refuse trades the ghost took.
 - **Real P&L, from exact lamports.** Each trade's percentage is derived from
   `realized_pnl_lamports / entry_quote_lamports`, not from a stored percentage
   column that could have drifted. Positions we cannot price from chain data are

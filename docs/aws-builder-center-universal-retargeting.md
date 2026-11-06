@@ -16,7 +16,7 @@ This is how that works, and where it stops. Mapping bone names is the part every
 
 Everything runs client-side in [three.js](https://threejs.org), and every code sample is an excerpt from [the repository](https://github.com/nirholas/three.ws) (Apache-2.0) with its file path, so you can check each claim in the same sitting.
 
-**Status, plainly, because AWS builders check.** three.ws is a verified AWS Partner. Nothing in this article runs on an AWS service: retargeting happens in the viewer's browser tab, and the platform's own runtime is on Google Cloud Run. We would rather say that than let a partner article imply a hosting story that is not ours. One more date matters: the A-pose limb re-aim described in section 7 merged on 3 October 2026. At the time of writing, production still runs an earlier commit (`curl -s https://three.ws/api/version` shows which commit is live), and the published npm package `@three-ws/retarget` 0.1.2 predates it too. Everything else described as shipped is live.
+**Status, plainly, because AWS builders check.** three.ws is a verified AWS Partner. Nothing in this article runs on an AWS service: retargeting happens in the viewer's browser tab, and the platform's own runtime is on Google Cloud Run. We would rather say that than let a partner article imply a hosting story that is not ours. One more date matters: the A-pose limb re-aim described in section 7 merged on 3 October 2026 and is live in production (`curl -s https://three.ws/api/version` shows which commit is running). The published npm package `@three-ws/retarget` 0.1.2 (September 2026) predates it. Everything else described as shipped is live.
 
 **Contents**
 
@@ -82,7 +82,7 @@ That ratio turns out to be load-bearing, because of a gate we will come back to 
 export const MIN_COVERAGE = 0.5;
 ```
 
-(`src/animation-retarget.js`.) A rig whose body maps perfectly but whose hands do not scores 23 of 53, about 43 percent, which is under the gate. So a missing finger convention does not cost you finger animation. It costs you **all** animation: the manager builds no action for that clip, and the avatar stands in its bind pose. We learned this the hard way. Unreal mannequins, VRM 1.0 avatars, Genesis figures, MakeHuman exports and Rigify characters were all doing exactly that until their finger spellings were added,
+(`src/canonical-clip-gate.js`, re-exported by `src/animation-retarget.js`.) The floor is measured two ways and passes on either: over all 53 tracks, or over the 23 body tracks alone (the 22 non-finger joints plus the hip translation). The all-tracks measure is what keeps a half-body avatar with fully fingered hands animating. The body measure is what lets a complete body with no finger joints animate; until 4 November 2026 only the first existed, so such a rig scored 23 of 53, about 43 percent, and stood in its bind pose. A rig whose body does not map, or maps fingers but not enough of anything else, still falls under the floor, and then the manager builds no action for that clip. Before the body measure existed, a missing finger convention cost you **all** animation, and we learned this the hard way. Unreal mannequins, VRM 1.0 avatars, Genesis figures, MakeHuman exports and Rigify characters were all doing exactly that until their finger spellings were added,
 
 ## 3. Reducing a name: prefixes, separators, alias tables, and their order
 
@@ -139,7 +139,7 @@ Halving the table halves the places a typo can hide, and the derivation rule is 
 
 **Non-Latin conventions get explicit entries.** MikuMikuDance names bones in Japanese with the side as a leading character (`左ひじ` is the left elbow), which the side-swap rule cannot reach, so both sides are listed. Its IK targets and twist bones stay unmapped on purpose: neither is a chain joint, and driving them fights the IK solve or tears the mesh.
 
-The header of the file lists the conventions it handles. Rig Doctor (section 13) fingerprints 15 of them by name and reports which one a file uses.
+The header of the file lists the conventions it handles. Rig Doctor (section 13) fingerprints 16 of them by name and reports which one a file uses.
 
 ## 4. When spelling cannot decide: the clavicle and the upper arm
 
@@ -270,26 +270,22 @@ One more consequence: when a gesture plays over a walk as an additive overlay, e
 
 The rule we hold is that the library should rather leave an avatar alone than animate it badly, and the next rule is that "alone" must not mean a frozen T-pose when anything better is available. That gives a ladder of gates, each cheaper than the one after it.
 
-**Rung 1: is this a drivable humanoid at all?** The manager's gate needs a skinned mesh and at least eight canonical bones:
+**Rung 1: is this a drivable humanoid at all?** The gate needs a skinned mesh and at least eight canonical bones, then checks that a library clip would clear the coverage floor of rung 2:
 
 ```js
-function _modelSupportsCanonicalClips(model) {
-	let hasSkinnedMesh = false;
-	const canonical = new Set();
-	model.traverse((node) => {
-		if (node.isSkinnedMesh) hasSkinnedMesh = true;
-		if (node.name) {
-			const c = canonicalizeBoneName(node.name);
-			if (c) canonical.add(c);
-		}
-	});
-	return hasSkinnedMesh && canonical.size >= MIN_CANONICAL_BONES;
+export function canonicalClipGate(info = {}) {
+	const canonical = info.canonical instanceof Set ? info.canonical : new Set(info.canonical || []);
+	const base = { canonicalCount: canonical.size, ...predictLibraryCoverage(canonical) };
+	if (!info.hasSkinnedMesh) return { ok: false, why: 'no-skin', ...base };
+	if (canonical.size < MIN_CANONICAL_BONES) return { ok: false, why: 'too-few-bones', ...base };
+	if (!clearsCoverageFloor(base)) return { ok: false, why: 'low-coverage', ...base };
+	return { ok: true, why: 'ok', ...base };
 }
 ```
 
-`supportsCanonicalClips()` returns that answer, and callers decide what "no" means. A shared scene substitutes a known-good performer: the theater stage tries the agent's own avatar, then an assigned fallback avatar, then the plain mannequin, and only one that passes this gate gets to perform. A personal view, like an agent's own screen, shows the model as authored. Non-humanoid skeletons fail this rung on purpose: there is no safe automatic mapping for them.
+(`src/canonical-clip-gate.js`.) The manager's `supportsCanonicalClips()` returns the `ok` of that verdict, and callers decide what "no" means. The live viewer, the embodiment rig mode, Rig Doctor and the capabilities API all ask this one function, so they cannot disagree. A shared scene substitutes a known-good performer: the theater stage tries the agent's own avatar, then an assigned fallback avatar, then the plain mannequin, and only one that passes this gate gets to perform. A personal view, like an agent's own screen, shows the model as authored. Non-humanoid skeletons fail this rung on purpose: there is no safe automatic mapping for them.
 
-**Rung 2: does this clip find enough of a home?** Coverage below `MIN_COVERAGE` returns `clip: null` with an honest breakdown of matched, total and dropped bones. No half-puppet plays.
+**Rung 2: does this clip find enough of a home?** Coverage below `MIN_COVERAGE`, on both the all-tracks and the body-only measure, returns `clip: null` with an honest breakdown of matched, total and dropped bones. No half-puppet plays.
 
 **Rung 3: would this clip knock the avatar over?** Before an action plays, the manager poses the hips at the clip's first keyframe and measures how far the bone's up-axis tilts from vertical, once per avatar and clip. Past 45 degrees the clip is disabled for that avatar, the rig keeps its authored pose, and one report goes to our client-error channel. Healthy rigs rest under about 18 degrees.
 
@@ -297,7 +293,7 @@ function _modelSupportsCanonicalClips(model) {
 
 **Deliberate refusals.** Blender control rigs of the "tracker" family export deform bones that hang off tracker nodes instead of forming a chain, and glTF cannot carry the trackers' constraints. Rotate one mapped deform bone and the next segment stays put: the arm comes apart. So the canonicalizer leaves that layer unmapped, a test pins the refusal, and those uploads need re-rigging, not renaming.
 
-**Where the ladder still has a hole.** Rung 1 counts bones and rung 2 counts tracks, and a rig can pass the first and fail the second. A 3ds Max Biped skeleton is the live example: its body maps (`Bip01 L UpperArm` resolves), its numbered finger chain (`Bip01 L Finger0`, `Finger01`) does not. We built that skeleton in a scratch test against the current code: the idle finds a home for 21 of its 53 tracks, about 40 percent, so no clip plays; and because the arms did map, rung 4 does not engage either. The avatar shows its bind pose. Biped fingers are written up as an open task in our contribution guide, alongside two other verified gaps: HumanIK names after three.js strips the colon from them on load (`Character1Hips` maps to nothing), and Source-engine `ValveBiped` skeletons.
+**Where the ladder used to have a hole.** Rung 1 once counted only bones and rung 2 counted tracks, so a rig could pass the first and fail the second. A 3ds Max Biped skeleton was the live example: its body mapped (`Bip01 L UpperArm` resolves), but its numbered finger chain (`Bip01 L Finger0`, `Finger01`) did not. Built in a scratch test, the idle found a home for 21 of its 53 tracks, about 40 percent, so no clip played; and because the arms did map, rung 4 did not engage either, and the avatar showed its bind pose. Three changes closed it. Biped fingers and toes, and Source-engine `ValveBiped` skeletons, gained alias entries on 10 October 2026. HumanIK names after three.js strips the colon from them on load (`Character1Hips`) resolve since 4 November 2026. And the gate now predicts the retargeter's own coverage, on both measures from section 2, so a rig the library cannot drive is refused up front instead of slipping between two proxies.
 
 **What no gate can see.** A rig can map all 52 joints and still move badly if its bones are oriented unusually, and the mesh follows whatever skin weights it shipped with: a sleeve weighted to the wrong bone bends with that bone. Retargeting moves skeletons; it cannot repair skinning.
 
@@ -317,7 +313,7 @@ Three layers of tests keep this honest, and each catches a failure the others ca
 		['hand_r',      'RightHand'],
 ```
 
-Around them sit tests that encode decisions rather than spellings: the Unreal spine stays unaliased, side derivation never crosses sides, control-rig bones stay unmapped, a full Unreal mannequin hand maps all 15 joints per side, the Rigify and SMPL collisions split correctly in either joint order, and no canonical name is assigned twice. Real fixtures cover both ends: `cz.glb` is a no-op, and `michelle.glb` is renamed, axis-folded, and asserted to keep every joint's world matrix, so the mesh cannot change. The file ran 477 tests green when we wrote this.
+Around them sit tests that encode decisions rather than spellings: the Unreal spine stays unaliased, side derivation never crosses sides, control-rig bones stay unmapped, a full Unreal mannequin hand maps all 15 joints per side, the Rigify and SMPL collisions split correctly in either joint order, and no canonical name is assigned twice. Real fixtures cover both ends: `cz.glb` is a no-op, and `michelle.glb` is renamed, axis-folded, and asserted to keep every joint's world matrix, so the mesh cannot change. The file ran 710 tests green when we last ran it.
 
 A new convention is always the same four parts: an alias entry, a table of its real spellings, a "never crosses sides" test, and a Rig Doctor fingerprint. That is what "no allowlist" means in practice: teach the canonicalizer once, and every surface that animates avatars learns it at the same moment.
 
@@ -336,7 +332,7 @@ A regression test that passes with or without the fix tests nothing.
 
 **A motion sweep, because names passing is not limbs moving.** A rig can map its hips and animate as a torso with four frozen sticks attached, and every name test stays green. `scripts/animation-dignity-sweep.mjs` drives the real idle and walk clips onto ten differently named rigs, down both production paths (canonicalize at ingest, then retarget; and retarget straight onto raw names at runtime), and measures per-limb rotation swing plus hand and foot travel through space in hip-heights, by composing world matrices. We ran it for this article: 10 of 10 conventions animate both arms and both legs on both paths, with coverage from 94 percent (the `shoulderL` hobby rig, 49 bones mapped) to 100 percent. On that hobby rig, the walk swings the legs by 50.7 and 54.4 degrees.
 
-One caveat: the ten rigs are one synthetic T-pose skeleton renamed ten ways, deliberately, so differences are about naming, never proportions. The sweep therefore says nothing about rest poses; the upright suite, the reference-rig test and the real Mixamo fixture cover those. The section 7 re-aim has no dedicated test yet.
+One caveat: the ten rigs are one synthetic T-pose skeleton renamed ten ways, deliberately, so differences are about naming, never proportions. The sweep therefore says nothing about rest poses; the upright suite, the reference-rig test and the real Mixamo fixture cover those, and the section 7 re-aim is pinned by the parity test described in section 11.
 
 ## 11. What we would build differently
 
@@ -346,7 +342,7 @@ One caveat: the ten rigs are one synthetic T-pose skeleton renamed ten ways, del
 
 **One retarget entry point, not three.** The runtime manager, `retargetClipToObject` and `retargetClipToRig` each assemble their own inputs. The re-aim reached the first two and missed the third: `retargetClipToRig`, used by the Animation Studio's preset gallery and its animated-GLB export, did not pass rest directions for five days, although the helper it needed (`canonicalRestDirectionMapFromRig`) shipped in the same commit. An A-posed body animated correctly on its own page and put its arms through its torso in the studio. The fix was four lines; the lesson is that entry points which assemble their own inputs drift, and a parity test is the cheapest guard against it.
 
-**Make the gates agree.** The bone-count gate and the coverage gate answer different questions, which is how the Biped case slips between them. Gate on what the library will actually do (would any clip clear coverage?), not on a proxy. Likewise Rig Doctor uses the same canonicalizer but not the clavicle/upper-arm resolver, so on a Rigify rig it reports a collision the runtime resolves. A diagnostic that disagrees with the runtime teaches the wrong thing.
+**Make the gates agree.** The bone-count gate and the coverage gate answered different questions, which is how the Biped case slipped between them, and the capabilities API ran a third, stricter rule. They now share one function, `canonicalClipGate`. Gate on what the library will actually do (would any clip clear coverage?), not on a proxy. Likewise Rig Doctor uses the same canonicalizer but not the clavicle/upper-arm resolver, so on a Rigify rig it reports a collision the runtime resolves. A diagnostic that disagrees with the runtime teaches the wrong thing.
 
 ## 12. What to lift from this
 
@@ -354,7 +350,7 @@ All Apache-2.0, none of it tied to our hosting:
 
 1. **`@three-ws/retarget`** on npm packages the canonicalizer, retargeter and `AnimationManager`, with `three` as a peer dependency. Its 0.1.2 release predates the A-pose re-aim; read that piece in `src/animation-retarget.js` until the next release.
 2. **The bind correction** (section 6) works for any two skeletons given their local and world rest rotations: about thirty lines of three.js quaternions.
-3. **Gate on coverage, not on a rig list.** A 50 percent coverage floor and a first-keyframe hips-tilt check are cheap, rig-agnostic, and catch the two failures that look worst on screen.
+3. **Gate on coverage, not on a rig list.** A 50 percent coverage floor (counting body tracks apart from fingers) and a first-keyframe hips-tilt check are cheap, rig-agnostic, and catch the two failures that look worst on screen.
 4. **Keep structure out of motion.** Skip per-bone position and scale tracks, and proportions survive.
 5. **Test the absence of the fix.** For every geometric correction, keep a test that runs without it and asserts the catastrophe.
 
@@ -384,7 +380,7 @@ npx vitest run tests/glb-canonicalize.test.js tests/animation-upright-invariant.
 node scripts/animation-dignity-sweep.mjs --verbose
 ```
 
-If your rig uses a naming convention the tables do not know, Rig Doctor lists the unrecognised names, and [the contribution guide](./first-contribution.md) walks through teaching the canonicalizer a new one, and lists the three open conventions from section 9 ready to pick up.
+If your rig uses a naming convention the tables do not know, Rig Doctor lists the unrecognised names, and [the contribution guide](./first-contribution.md) walks through teaching the canonicalizer a new one, and points at a convention still open to pick up.
 
 ---
 

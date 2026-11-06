@@ -351,7 +351,7 @@ const PINNED_SRC = /\bsrc\s*=\s*["']?[^"'\s>]*\/agent-3d\/(\d+\.\d+\.\d+(?:-[0-9
 const INTEGRITY = /\bintegrity\s*=\s*["'](sha384-[A-Za-z0-9+/]{64})["']/i;
 ```
 
-It walks `docs`, `specs`, `blog`, `examples`, the skill instructions for AI coding agents, the README, and `packages`. Two outcomes need different fixes. A pin whose hash disagrees with a released version is mechanically fixable: `npm run check:sri-pins -- --fix` rewrites the hash from the ledger. A pin on a version that was never released cannot be fixed by rewriting a hash, so it stays an error until a person points it at a real release.
+It walks `docs`, `specs`, `blog`, `examples`, the skill instructions for AI coding agents, the README, `packages`, and `integrations`. Two outcomes need different fixes. A pin whose hash disagrees with a released version is mechanically fixable: `npm run check:sri-pins -- --fix` rewrites the hash from the ledger. A pin on a version that was never released cannot be fixed by rewriting a hash, so it stays an error until a person points it at a real release.
 
 The check runs in three places: as `npm run check:sri-pins` on demand, inside `check:dist` on every production build, and under `npm test`, through a test named "pins every documented agent-3d SRI hash to its released bytes" in [`tests/agent-3d-releases.test.js`](https://github.com/nirholas/three.ws/blob/main/tests/agent-3d-releases.test.js). Test fixtures are deliberately excluded from the scan, because they pin wrong hashes on purpose to exercise the stale-pin detection.
 

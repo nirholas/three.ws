@@ -28,6 +28,8 @@ which the recorder writes at the end of the run:
 | The route is generated | Stops come from [`public/tour/curriculum.json`](../../public/tour/curriculum.json), which `scripts/build-tour.mjs` generates from `data/pages.json`. A page that ships tomorrow is in the next recording with nobody editing a script |
 | Six chapters | Main, Build, Crypto, Labs, Agent Tools, Learn, one mp4 each, listed in the manifest with per-chapter durations |
 
+The numbers above describe the 2026-09-05 film. The live tour curriculum (`public/tour/curriculum.json`) has since grown to 263 stops and a seventh Getting started chapter, so re-read the manifest and re-film before posting if the post should match today's tour.
+
 Full mechanism: [docs/product-demo.md](../product-demo.md).
 
 ## Media

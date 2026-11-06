@@ -13,8 +13,7 @@ endpoints; nothing is mocked.
 ## 1. Why this only works on BNB Chain
 
 A real-time on-chain presence layer needs two things at once, and BNB Chain
-is the only EVM chain (verified 2026-07-07, see
-`prompts/bnb-chain/00-CONTEXT.md`) that has shipped both:
+is the only EVM chain (verified 2026-07-07) that has shipped both:
 
 1. **Blocks fast enough that "on-chain" can mean "this frame."** BSC's Fermi
    hardfork (BEP-619/590, live 2026-01-14) produces a block roughly every
@@ -39,7 +38,7 @@ chain with 12s blocks still feels laggy. BNB Chain is the only place we've
 verified both are live simultaneously.
 
 **What this is not:** a claim of "20,000 TPS" or an on-chain game engine —
-those are refuted/roadmap claims (00-CONTEXT). This is one, specific,
+those are refuted/roadmap claims. This is one, specific,
 verifiable mechanism: an event-only move-commit contract, read back over a
 public RPC, at a real sub-second cadence.
 
@@ -92,7 +91,7 @@ control falls out of the "wait for the last one" rule alone.
 **`api/_lib/bnb/megafuel.js`**'s `sendGasless()` always tries the sponsored
 path first (`pm_isSponsorable`) and falls back to a normal gas-paying send if
 MegaFuel declines, times out, or is down — the mandatory self-pay fallback
-00-CONTEXT requires for every MegaFuel-dependent feature. The toggle labels
+for every MegaFuel-dependent feature. The toggle labels
 this honestly in the UI (`on` = sponsored, `on-selfpay` = self-pay with the
 decline reason as a tooltip) rather than pretending every send is free.
 
@@ -121,8 +120,8 @@ the toggle's label, and every other on-chain player nearby as a glowing
 ghost marker with a nameplate.
 
 **Reproduce the two-wallet proof locally** (the exact steps this doc's own
-verification used — see `prompts/bnb-chain/PROGRESS.md`'s prompt 18 entry for
-full output):
+verification used; full output is in `contracts/DEPLOYMENTS.md`'s "Prompt 18"
+subsection):
 
 ```bash
 # 1. A local chain that reproduces BSC's live measured cadence exactly
@@ -192,7 +191,7 @@ landed and paid its own gas.
 
 Full receipts, the finer-grained per-block timestamp sampling, and the exact
 reproduction commands are recorded in `contracts/DEPLOYMENTS.md`'s "Prompt
-18" subsection and `prompts/bnb-chain/PROGRESS.md`.
+18" subsection.
 
 ---
 
@@ -236,5 +235,3 @@ reproduction commands are recorded in `contracts/DEPLOYMENTS.md`'s "Prompt
 - `contracts/DEPLOYMENTS.md` — deploy status, bytecode, and every real
   broadcast proof for every BNB Chain contract in this repo.
 - `STRUCTURE.md`'s Agora row — the full on-chain-presence file map.
-- `prompts/bnb-chain/PROGRESS.md` — the full campaign trail, prompts 14
-  through 18.

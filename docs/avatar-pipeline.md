@@ -62,8 +62,9 @@ matters more than it sounds: see the coverage note below.
 
 `src/animation-retarget.js` retargets the pre-baked clip library (idle, walk,
 emotes — legs included) onto the canonicalized skeleton, using rest-pose and
-world-rest maps to transfer motion correctly. `MIN_COVERAGE` (0.5) requires at
-least half the canonical bones to be present before clips are driven.
+world-rest maps to transfer motion correctly. `MIN_COVERAGE` (0.5) is the floor: a
+clip is driven when at least half of all its tracks, or at least half of its
+non-finger body tracks (whichever is higher), find a bone on the rig.
 
 ## Universal animation — no rig allowlist
 
@@ -79,11 +80,13 @@ supported rigs**: support comes from the bone-name mapping in
 - **Hit a new skeleton convention?** Add its bone-name mapping to
   `glb-canonicalize.js` and cover it with a case in
   `tests/glb-canonicalize.test.js`. Do **not** hardcode a curated rig list.
-- **Fingers are load-bearing for coverage.** 30 of the 53 tracks in every clip
-  address a finger joint, so a rig whose hands do not name-map scores about 40%
-  coverage, drops under `MIN_COVERAGE`, and gets **no action built at all**: the
-  whole avatar stands frozen, arms and legs included. When you add a convention,
-  add its finger spellings too.
+- **Fingers still matter, but a fingerless body animates.** 30 of the 53 tracks in
+  every clip address a finger joint. The coverage floor passes on all tracks or on
+  the 23 body tracks alone, so a complete body with no finger joints (Meshy
+  bipeds, fingerless Mixamo exports) performs every clip, with still hands. A rig
+  whose body bones do not name-map scores low on both counts and gets **no action
+  built at all**. When you add a convention, add its finger spellings too, so
+  hands move as well.
 
 ### Proving it: the animation dignity sweep
 

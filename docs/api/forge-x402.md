@@ -25,11 +25,11 @@ Flat per-call retail price by tier. The single source of truth is
 the 402 challenge quotes the exact price for the tier you asked for, so an agent
 never has to hardcode a number from this page.
 
-| Tier | Price (USDC) | Geometry | Textures | Best for |
+| Tier | Price (USDC) | Geometry | PBR + HD textures | Best for |
 |---|---|---|---|---|
-| `draft` | **$0.05** | ~12k tris | none | Blockout, iteration, previews |
-| `standard` (default) | **$0.15** | ~30k tris | none | Most shippable assets |
-| `high` | **$0.50** | ~200k tris | PBR + HD | Hero assets, product and NFT renders |
+| `draft` | **$0.05** | ~12k tris | off | Blockout, iteration, previews |
+| `standard` (default) | **$0.15** | ~30k tris | off | Most shippable assets |
+| `high` | **$0.50** | ~200k tris | on | Hero assets, product and NFT renders |
 
 The price is per generation and does not vary with which engine lane serves it
 (see [Engine lanes](#engine-lanes)).
@@ -140,7 +140,10 @@ curl -s -X POST https://three.ws/api/x402/forge \
 ```
 
 **Solana mainnet USDC only.** Every quote on the live route is a Solana 402, and
-the fee payer is sponsored, so a buyer needs USDC but not SOL. A self-hosted or
+the fee payer is normally sponsored, so a buyer needs USDC but not SOL. If the
+sponsor is unavailable (no sponsor configured, or its balance is below the
+facilitator's floor) the platform drops `extra.feePayer` from the challenge and
+the buyer pays the network fee themselves, so read `extra` rather than assuming. A self-hosted or
 preview deploy that has not configured `X402_PAY_TO_SOLANA` falls back to
 quoting Base USDC (EIP-3009 plus a Permit2 variant) so the route never
 dead-ends with an empty challenge; production sets it, so that branch never runs

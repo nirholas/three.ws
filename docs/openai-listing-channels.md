@@ -8,7 +8,7 @@ Related docs: [listings.md](./listings.md) (every listing across all vendors), [
 
 ## Summary: the Cookbook was the weakest of five channels, and we led with it
 
-The Cookbook is a docs repo with no distribution guarantee. The **plugin directory** is a product listing inside ChatGPT and Codex with real installs. We have 37 MCP packages and a hosted OAuth 2.1 MCP server already shipping, which is the exact hard requirement most plugin submitters fail. That is the channel to lead with.
+The Cookbook is a docs repo with no distribution guarantee. The **plugin directory** is a product listing inside ChatGPT and Codex with real installs. We have 45 MCP packages and a hosted OAuth 2.1 MCP server already shipping, which is the exact hard requirement most plugin submitters fail. That is the channel to lead with.
 
 | Channel | Owner | Effort | What it gets us | Status |
 |---|---|---|---|---|
@@ -36,7 +36,7 @@ The gating requirement is a public, production MCP server. Most submitters have 
 | Auth | OAuth 2.1 end-user flow, with `api/mcp/.well-known/oauth-protected-resource` discovery already routed in `vercel.json` |
 | Verified website | three.ws, live on Cloud Run behind the production LB |
 | Privacy policy and terms | Live pages, already declared in `data/pages.json` |
-| Well-scoped tools | 37 MCP packages under `packages/*-mcp`, plus `mcp-server/` and `mcp-bridge/` |
+| Well-scoped tools | 45 MCP packages under `packages/*-mcp`, plus `mcp-server/` and `mcp-bridge/` |
 | Screenshots and UI | The avatar viewer and studio surfaces render inline already |
 
 ### Prerequisites before the form opens
@@ -50,9 +50,9 @@ Six sections: **Info** (name, short and long description, logo, category, URLs, 
 
 **The testing section is the one to budget for: at least five positive test cases and three negative ones.** Positive cases need a user prompt, expected behavior, result shape, and any required test data. Negative cases have to demonstrate an appropriate refusal or a safe fallback.
 
-### Scoping decision: submit one plugin, not thirty-seven
+### Scoping decision: submit one plugin, not forty-five
 
-The guidelines reject "overly generic single-word names unlinked to your brand" and reward apps that are "tightly scoped." Thirty-seven separate MCP servers submitted individually reads as directory spam and most would fail the tightly-scoped test on their own. Submit **one three.ws plugin whose tools are the text-to-3D and avatar pipeline**, which is the thing no one else in the directory does. The rest stay available as direct MCP connections documented in [mcp.md](./mcp.md).
+The guidelines reject "overly generic single-word names unlinked to your brand" and reward apps that are "tightly scoped." Forty-five separate MCP servers submitted individually reads as directory spam and most would fail the tightly-scoped test on their own. Submit **one three.ws plugin whose tools are the text-to-3D and avatar pipeline**, which is the thing no one else in the directory does. The rest stay available as direct MCP connections documented in [mcp.md](./mcp.md).
 
 ### Known rejection reasons to design against
 
@@ -70,7 +70,7 @@ Submit, OpenAI reviews, they approve, then **you** publish, then it appears in t
 
 Form: [openai.com/form/showcase-submission/](https://openai.com/form/showcase-submission/)
 
-OpenAI's Showcase Gallery takes submissions of apps, demos, and **open-source projects** built with OpenAI models, APIs, or Codex, to be featured as inspiration for the developer community. three.ws qualifies on all three counts: it is open source, it is a live app, and `api/chat.js`, `api/vision.js`, `api/concierge.js`, `api/agent-ask.js`, and the TTS lanes all call OpenAI in production.
+OpenAI's Showcase Gallery takes submissions of apps, demos, and **open-source projects** built with OpenAI models, APIs, or Codex, to be featured as inspiration for the developer community. three.ws qualifies on all three counts: it is open source, it is a live app, and the production LLM paths (`api/chat.js`, `api/vision.js`, `api/concierge.js`) all carry OpenAI as the paid backstop of a free-first provider chain.
 
 It is a plain web form with no repo gate, no CODEOWNERS review, and no merge conflict to lose to. Curation is still OpenAI's call, but the cost of asking is fifteen minutes. There is no reason this was not submitted before the Cookbook PR.
 

@@ -4,7 +4,7 @@ Everything the **Post to Blog** form asks for, in the order it asks. The article
 itself is [ibm-community-defi-3d-sperax.md](./ibm-community-defi-3d-sperax.md);
 these are only the form values and the sequence that puts it live cleanly.
 
-Rebuild the three output files after any edit to the draft:
+Rebuild the four output files after any edit to the draft:
 
 ```bash
 node scripts/build-ibm-community-post.mjs

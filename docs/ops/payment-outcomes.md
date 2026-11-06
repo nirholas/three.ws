@@ -309,7 +309,8 @@ surface.
   inbound panel reads), `api/_lib/economy-ledger.js` (`recordAgentReclaim`, the
   durable trail for every self-heal attempt).
 - `/api/ops/money-health` is the complementary board: open reconciliation
-  verdicts per money subsystem rather than live payment outcomes. It takes the
+  verdicts per money subsystem (plus an `audit_ledger` panel for the x402 audit
+  dead-letter: depth, parked rows, oldest failure) rather than live payment outcomes. It takes the
   same gate as this endpoint (admin session or `x-ops-secret`). Until
   2026-08-14 it ran its own gate that accepted a `CRON_SECRET` bearer, so an ops
   script pointed at it with the cron credential now gets a 401: send

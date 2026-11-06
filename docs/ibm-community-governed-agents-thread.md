@@ -3,7 +3,7 @@ title: "How are you gating AI agents that take real-world actions?"
 venue: IBM Community, Three.ws User Group (discussion thread)
 account: nich (nich8)
 companion_to: https://community.ibm.com/community/user/blogs/10058/2026/09/18/when-an-agent-can-open-your-front-door-governance
-status: draft, not yet posted. Hold until POST /api/guardian/assess returns a verdict on production (it answered 503 guardian_unconfigured on 2026-09-18 because WATSONX_API_KEY and WATSONX_PROJECT_ID are not set on three-ws-api)
+status: draft, not yet posted. Hold until POST /api/guardian/assess returns a verdict on production (it still answered 503 guardian_unconfigured on 2026-11-06: neither WATSONX_API_KEY and WATSONX_PROJECT_ID nor GRANITE_GUARDIAN_URL for the self-hosted lane are set on three-ws-api)
 framing_notes: |
   Short on purpose. The thread exists to pull digest readers into the blog post and to
   start a discussion, so it asks a real question and carries one runnable command. The
@@ -18,8 +18,8 @@ I wrote up what that did to our architecture on the group blog: **[When an agent
 
 The short version:
 
-- **Granite Guardian as a veto, not a filter.** `ibm/granite-guardian-3-8b` on watsonx.ai scores a proposed action across named risks and returns allow, review, or block. A block refuses the action; it does not annotate it.
-- **No failure path means "proceed".** With no watsonx credentials the endpoint returns `503`, never a fake `allow`.
+- **Granite Guardian as a veto, not a filter.** Granite Guardian (`ibm/granite-guardian-3-8b` on watsonx.ai, or the self-hosted worker when watsonx is absent or failing) scores a proposed action across named risks and returns allow, review, or block. A block refuses the action; it does not annotate it.
+- **No failure path means "proceed".** With neither the watsonx credentials nor the self-hosted lane configured, the endpoint returns `503`, never a fake `allow`.
 - **Every verdict lands in a hash-chained ledger** that anyone can re-verify with SHA-256.
 - **Over local stdio MCP, opening a door is refused outright,** because a server with no user-visible surface cannot prove a human approved anything.
 

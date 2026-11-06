@@ -15,7 +15,7 @@ Every number is read live from the Solana blockchain — there are no stored or 
 ## Every feature
 
 - Live SOL balance in large display type, read from the chain on every load
-- USD estimate under the balance from a live SOL/USD price feed (Jupiter primary, then CoinGecko, Coinbase, and DefiLlama fallbacks, 60s cache) with extra decimals for sub-$1 amounts
+- USD estimate under the balance from a live SOL/USD price feed (Jupiter primary, then CoinGecko, Coinbase, DefiLlama, and Kraken fallbacks, 60s cache) with extra decimals for sub-$1 amounts
 - Auto-refresh: balance re-polls every 30 seconds while the tab is visible, pauses when hidden
 - Manual Refresh button with spinning icon and disabled 'Refreshing…' state while in flight
 - Shortened wallet address with full-address tooltip on hover
@@ -67,7 +67,7 @@ The response carries the wallet address and live SOL balance. In the product, op
 - `GET /api/agents/:id/solana?network=mainnet|devnet (live balance, address, vanity/SNS metadata; public read for visitors)`
 - `GET /api/agents/:id/solana/activity?network=&limit=10 (owner-only parsed transaction feed)`
 - `https://lite-api.jup.ag/price/v3 (SOL/USD price, primary)`
-- `https://api.coingecko.com/api/v3/simple/price (SOL/USD price, first fallback; Coinbase and DefiLlama sit behind it)`
+- `https://api.coingecko.com/api/v3/simple/price (SOL/USD price, first fallback; Coinbase, DefiLlama and Kraken sit behind it)`
 
 ## Related
 

@@ -142,7 +142,7 @@ Which surfaces leave, and why, is in
   the sender, the fan-out, the in-app enrolment and tap routing. It stays
   dormant (`nativePush.ios: false` in `/api/config`, so the app never offers
   it) until a `.p8` key from the same Apple Developer account is set on the
-  Cloud Run service as `APNS_KEY_ID` and `APNS_AUTH_KEY`. Steps in
+  Cloud Run service as `APNS_KEY_ID` and `APNS_AUTH_KEY`, alongside `APPLE_TEAM_ID`. Steps in
   [`ios/docs/SUBMISSION.md`](../ios/docs/SUBMISSION.md).
 - **Listing screenshots**, which have to be captured on a real device. The icon
   and launch images are generated from the brand mark (`npm run ios:icons`) and

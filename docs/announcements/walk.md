@@ -13,13 +13,13 @@ pack. Written against [the announcement voice](../announce-voice.md).
 > Paste one iframe tag on any site and a rigged 3D avatar walks there, in one of six built-in
 > worlds chosen with a query parameter. There is no SDK to install and no build step.
 
-Verified by reading the code and the live page on 2026-09-17:
+Verified by reading the code and the live page on 2026-09-17 (rig fallback re-checked 2026-11-06):
 
 | Part of the claim | Where it is real |
 |---|---|
 | One iframe tag | The page's own snippet is a single `<iframe src="https://three.ws/walk-embed?env=void&autoplay=true">` ([`pages/walk-landing.html`](../../pages/walk-landing.html)); the live page reads "One tag. Any site." and "Paste the iframe". |
 | On any site | `vercel.json` serves `/walk-embed` with `content-security-policy: frame-ancestors *` and `cross-origin-resource-policy: cross-origin`; `curl -sI https://three.ws/walk-embed` returned that header on 2026-09-17. |
-| A rigged 3D avatar that walks | [`src/walk-embed.js`](../../src/walk-embed.js) loads a humanoid GLB (`/avatars/default.glb`, or `?avatar=`/`?agent=`) and drives it with real locomotion; any humanoid rig is retargeted through `src/glb-canonicalize.js` and `src/animation-retarget.js`. |
+| A rigged 3D avatar that walks | [`src/walk-embed.js`](../../src/walk-embed.js) loads a humanoid GLB (`/avatars/default.glb`, or `?avatar=`/`?agent=`) and drives it with real locomotion; any humanoid rig is retargeted through `src/glb-canonicalize.js` and `src/animation-retarget.js`, and a skinned rig the clips cannot drive is swapped for the default body (the embed emits `walk:error` with `avatar_not_animatable` and `fallback: true`) rather than sliding in a bind pose. |
 | Six live worlds | `ENVIRONMENTS` in [`src/walk-embed.js`](../../src/walk-embed.js) has exactly six entries: `studio`, `void`, `beach`, `sunset`, `night`, `grid`. The live page: "Six built-in environments" and "These are live, not videos." |
 | Picked by a query param | `const ENV_PARAM = (params.get('env') || 'studio')` in [`src/walk-embed.js`](../../src/walk-embed.js); the live page: "set the avatar and world with query params". |
 | No SDK, no build step | Literal on the live page ("No SDK, no build step."), and true of the snippet: a plain iframe with no script include. |
@@ -79,7 +79,7 @@ Walk is at three.ws/walk: a 3D avatar that walks on any website from one iframe 
 
 - Six built-in worlds (studio, void, beach, sunset, night, grid), picked with ?env=.
 - Bring your own avatar with ?avatar= or ?agent=. Any humanoid rig is retargeted, so it walks
-  rather than arriving in a T-pose.
+  rather than arriving in a T-pose, and a skeleton the walk clips cannot drive is replaced by the default body.
 - WASD or a touch joystick, tap the ground to walk there, and a postMessage API so your page can
   steer it.
 
@@ -99,9 +99,9 @@ changelog. This pack announces an existing surface and ships nothing new.
   sales totalling $2.50, the newest 60 days old, 2 fits tracked), `/labor-market` as empty (0 open
   bounties, 0 settled jobs, `escrow_configured: false` on the live feed), and `/oracle` because its
   live feed renders third-party launch tickers.
-- **Queue item:** status `review`, lane `developer`, pattern `number`, `notBefore` to be set by the
-  owner. The queue's last item before this batch is also lane `developer` (rig-doctor), so schedule
-  it with another lane in between.
+- **Queue item:** none yet. `walk` is not in `data/x-content/queue.json`; when it is added, use lane
+  `developer` and pattern `number`, with a `notBefore` set by the owner, and schedule it with another
+  lane in between since the neighbouring queue items are also `developer`.
 
 ## Posting
 

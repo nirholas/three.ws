@@ -113,7 +113,8 @@ Full disclosures:
 
 Auth: a three.ws session, or `Authorization: Bearer <companion bridge token>`
 (the same token as [`/api/companion/ingest`](./companion.md), rotatable from
-`/companion`). Rate limit: 40 per 10 minutes per account.
+`/companion`). An API key or OAuth token also works if it carries the `profile`
+scope; a narrower one gets `403 insufficient_scope`. Rate limit: 40 per 10 minutes per account.
 
 Request:
 

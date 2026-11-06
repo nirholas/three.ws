@@ -80,7 +80,10 @@ to the remaining bag, and `initials_recovered` flips.
 **Falling, from the peak to the final quote.** Whichever protective trigger sits
 highest is the one hit first on the way down. Whatever is still riding at the end
 is valued at the last price the fleet actually observed, never at a guess about
-what came after.
+what came after. That includes a moon bag a terminal exit left in the wallet: the live
+worker now trails such a bag in its own sweep after the position row closes, but
+the recorded path ends at the exit, so the replay does not model that later
+management.
 
 Every decision in both phases is made by calling `decideLadderedExit` with a
 position-like object using the live column names. The replay does not

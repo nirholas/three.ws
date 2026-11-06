@@ -26,8 +26,9 @@ Every generation lane runs as its own Cloud Run service on an **NVIDIA L4**, plu
 
 The lanes, and what each is for:
 
-- **TRELLIS** (`model-trellis`): native single-hop image to 3D. It accepts a user's photo, and also the view that our text lane synthesizes for a text prompt. Textured GLB out. This is the workhorse lane.
-- **Hunyuan3D** (`model-hunyuan3d`): high-poly image-conditioned reconstruction, poly-budget aware, and the default engine for our `high` image tier.
+- **TRELLIS.2** (`model-trellis2`): the default image lane at every tier. Native single-hop image to 3D with PBR materials and transparency, at a resolution the caller can pick. It is MIT licensed with no territory exclusions, which is why it replaced Hunyuan3D as the default.
+- **TRELLIS** (`model-trellis`): the first-generation native single-hop image to 3D lane. It accepts a user's photo, and also the view that our text lane synthesizes for a text prompt. Textured GLB out. It stays in the chain as the next rung behind TRELLIS.2.
+- **Hunyuan3D** (`model-hunyuan3d`): high-poly image-conditioned reconstruction, poly-budget aware. It is now a fallback lane rather than the default, because its licence excludes some regions and the router keeps it out of those.
 - **TripoSG** (`model-triposg`): sketch to 3D. A drawing plus a prompt naming it, untextured geometry out.
 - **TripoSR**, plus the mesh pipeline around all of them: rigging, remeshing, texturing, segmentation, stylization, background removal, garment generation, avatar reconstruction from photos, text to motion, video to motion, video to scene, and sign-language synthesis.
 
@@ -37,7 +38,7 @@ More than thirty workers in total, most of them Docker images you can build and 
 
 Container start time on Cloud Run is quick. Where the time goes is the **weight load**, and on a FUSE-mounted weight volume a cold load can take minutes before the first job begins.
 
-So each lane carries an explicit cold-start budget in the router's lane table (`api/_lib/forge-tiers.js`): 45 seconds for TripoSG, 60 for TRELLIS, and 75 for Hunyuan3D, the largest in the fleet. That budget feeds the time estimate a user sees, so a cold lane gets a longer, accurate estimate rather than a guess.
+So each lane carries an explicit cold-start budget in the router's lane table (`api/_lib/forge-tiers.js`): 45 seconds for TripoSG, 60 for TRELLIS, 75 for Hunyuan3D, and 90 for TRELLIS.2. That budget feeds the time estimate a user sees, so a cold lane gets a longer, accurate estimate rather than a guess.
 
 Three consequences shaped the product.
 

@@ -106,8 +106,11 @@ load-bearing work, and it is a far better responsible-AI story than a slide abou
 responsible AI. Winners also flow automatically to a public Sketchfab account with
 attribution, so the program's output stays visible long after the week ends.
 
-**What we build:** an event landing page, and the daily theme copy. The board, the voting,
-the tallying, the crowning and the distribution already run.
+**What we build:** the event landing page and the daily theme copy now exist too, as the
+config-driven `/forge-off` page (the event and its five themes live in
+`data/forge-off-events.json`, event slug `ibm-forge-off-open`, dates still the proposed week
+of 2026-11-09 until IBM confirms). The board, the voting, the tallying, the crowning and the
+distribution already run.
 
 **Risk:** vote brigading, and a thin first day. Votes are already one-per-browser with IP
 hashing and rate limits, and the daily reset means a brigade wins one small prize rather
@@ -220,20 +223,21 @@ page, the community posts and the social lane gets read against those rules befo
 
 Ordered so the event is runnable even if the last item never lands.
 
-1. **The event landing page** at `/events/<slug>`: countdown, the five themes with their
+1. **The event landing page** (shipped as `/forge-off` and `/forge-off/<slug>`, see [forge-off.md](./forge-off.md)): countdown, the five themes with their
    drop times in the visitor's local timezone, add-to-calendar, prize list, rules, a live
    entry count, and the current top-voted grid read from
    `/api/forge-gallery?scope=community&sort=top&window=week`. Follows the existing
    `pages/events/build-3d-agents-live.html` and reuses the countdown and timezone logic
-   already proven on `/event`. This is the only substantial build.
-2. **Daily theme copy and the drop schedule**, written once and read by the page, so a
-   theme going live needs no deploy.
+   already proven on `/event`. The page, `GET /api/forge-off/event` and the event config shipped 2026-11-04; what remains is confirming the dates.
+2. **Daily theme copy and the drop schedule**, written once in `data/forge-off-events.json` and read by the page, so a
+   theme going live needs no deploy. Shipped.
 3. **Ceremony config**: write the window, the agenda and the souvenir cosmetic id into
    `public/event.json` per [play-live-events.md](./play-live-events.md). A config change
    plus a deploy, and that is the entire in-world event. Once it is live, the window can be extended, renamed or ended without a deploy through the operator override (`GET`/`POST /api/event-config`, `npm run event:override`).
 4. **A daily crowning read** over the existing board so the evening winner is a query, not a
-   person scrolling. The weekly crowning already exists; this is the same window narrowed to
-   a day.
+   person scrolling. Shipped: `window=day` and `event`/`day` reads on `/api/forge-gallery`, and the
+   `api/cron/forge-off-event-crown` cron writing `forge_event_winners` (it needs migration
+   `20261105020000_forge_event_winners.sql`, so check `npm run db:status` first). The weekly crowning is unchanged.
 5. **Prize payout**, on-chain and owner-gated per the confirmation rules in
    [CLAUDE.md](../CLAUDE.md). Manual by design: a contest prize is not an automated transfer.
 6. **Optional, only if IBM confirms a room**: the `irl_world` to `walk_world` presence bridge

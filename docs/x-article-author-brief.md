@@ -85,7 +85,7 @@ Article that leaves X's limits unused. Every Article needs:
 
 Every bullet below is something the keeper article does; open it beside your draft and check each one.
 
-- **Title:** under 100 characters, a plain statement of what the reader learns, with the headline
+- **Title:** 80 to 100 characters, a plain statement of what the reader learns, with the headline
   number in it when there is one. Not a teaser. Keeper: "One sentence to a rigged, talking 3D
   character in 197 seconds: each stage, as it ran".
 - **Opening:** one real run, told as a short story, in plain words anyone can follow: what we sent,
@@ -98,12 +98,12 @@ Every bullet below is something the keeper article does; open it beside your dra
 - **Plain first, technical after:** each section opens with what the stage does and why it exists in
   a sentence a newcomer understands ("A mesh is a statue. To move, it needs joints"), then gives
   the mechanism, the model, the hardware and the measured numbers.
-- **Length:** expand. 1,800 to 2,800 words, as much relevant, verified information as the subject
+- **Length:** expand. 2,400 or more words, as much relevant, verified information as the subject
   holds. Never trim a draft for length; cut only what is untrue or unverifiable.
-- **Shape:** eight to twelve `##` sections, each named for what the reader learns in it. One or two
+- **Shape:** eight or more `##` sections, each named for what the reader learns in it. One or two
   short code blocks where they show the mechanism better than prose, ideally a request the reader
-  can paste and run unchanged (code and tables share a 10,000 character budget).
-- **Images:** three or four inline images, each a real capture of the live product or a frame from a
+  can paste and run unchanged (code and tables share a 10,000 character budget and must total at least 3,000).
+- **Images:** four or more inline images, each a real capture of the live product or a frame from a
   filmed run, each with a caption that says exactly what the reader is looking at. No stock art, no
   mockups, no generated illustrations of things that do not exist.
 - **Cover:** 1600x900, the product itself at its most striking (a real capture with site chrome

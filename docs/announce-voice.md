@@ -129,16 +129,16 @@ Three patterns for the opening, which is the part a reader sees before "Show mor
 
 ## Uniqueness, enforced
 
-Announcing 300 features means 300 posts that must not blur together. Two mechanical checks in
-`npm run check:announce`:
+Announcing 300 features means 300 posts that must not blur together. `npm run check:announce`
+enforces one mechanical check:
 
 - **No opening clause is reused.** The first eight words of every pack are compared against every
   other pack. A repeat fails.
-- **No pack reuses another pack's lead structure twice in a row.** The pattern (number lead,
-  mechanism lead, correction lead) rotates.
 
-Neither check can make a post good. Both stop the corpus from converging on one shape, which is
-what makes a run of announcements read as automated.
+The rotation between the three leads above (number, mechanism, correction) is an authoring
+convention, not a mechanical check: do not give two packs written back to back the same lead
+structure. The gate cannot make a post good. It stops the corpus from converging on one shape,
+which is what makes a run of announcements read as automated.
 
 ## The pack
 

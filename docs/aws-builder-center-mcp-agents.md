@@ -36,7 +36,7 @@ The OAuth flow is the textbook one: dynamic client registration (RFC 7591), PKCE
   "mcpServers": {
     "3d-agent": {
       "url": "https://three.ws/api/mcp",
-      "headers": { "Authorization": "Bearer 3da_live_xxxxx" }
+      "headers": { "Authorization": "Bearer sk_live_xxxxx" }
     }
   }
 }

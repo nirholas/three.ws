@@ -1,10 +1,12 @@
 # Feature 20: chat scrollback and a persistent world record
 
-In-world chat is a pure relay: the server broadcasts and forgets, so everyone who joins the event late sees an empty chat and no evidence anything is happening. Meanwhile `api/community/messages.js` persists a per-coin message stream that the 3D world never reads. Give the world a memory: late joiners get scrollback, and the room's page-level community feed and the in-world chat stop being strangers.
+Status: shipped 2026-11-04 (`eb20c70fb` server, `71573c802` client). The server side is `multiplayer/src/chat-scrollback.js` wired into `WalkRoom.js`: a capped Redis list per world (200 lines, 3 day TTL), one batched `chat_history` message of the last 60 lines on join (16.2 KB at most), stored lines carrying only `{ mid, name, text, ts }`. The client is `src/game/chat-log-view.js` (muted history, real send times, "You're caught up" divider, dedupe by `mid`) and `src/game/community-board.js` (a read-only Board tab over `/api/community/messages`, shown only when the deployment reports community boards configured). The bridge decision: world chat is never written into the persisted community stream, so ephemeral chat is not published to a permanent board. Behavior, values and tests are in [docs/play-chat.md](../play-chat.md). The brief below is what was built to; a fresh session should audit and extend it, not rebuild it. Where it says "today" below, it describes the state before this shipped.
+
+In-world chat was a pure relay: the server broadcasts and forgets, so everyone who joins the event late sees an empty chat and no evidence anything is happening. Meanwhile `api/community/messages.js` persists a per-coin message stream that the 3D world never reads. Give the world a memory: late joiners get scrollback, and the room's page-level community feed and the in-world chat stop being strangers.
 
 ## Where the code lives
 
-- The relay today: the chat handler in `multiplayer/src/rooms/WalkRoom.js` (700ms cooldown and slur gate already enforced there; keep both)
+- The relay: the chat handler in `multiplayer/src/rooms/WalkRoom.js` (700ms cooldown and slur gate already enforced there; keep both)
 - Persisted community chat (separate system): `api/community/messages.js` (public GET; POST as the signed-in user now refreshes the 1 h access token off the refresh cookie first via `withAuthRefresh`, and a genuinely dead session answers `401 auth_required` rather than the `posting_locked` the composer renders as "this world does not take posts"; a bridge that writes in-world chat into this stream inherits that contract)
 - Chat UI: the chat bar and message list in `src/game/coincommunities-ui.js` (it already sticks to the bottom only when the reader is near it, so a history tail must not fight that), styles in `src/game/coincommunities.css`
 - Name safety: `multiplayer/src/display-name-safety.js` (`containsHateSlur`, applied to names on join and to every chat line in the relay)

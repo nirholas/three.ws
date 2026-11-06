@@ -96,7 +96,7 @@ protocol.recent('speak', 5); // last 5 speak actions
 5. If Claude returns **tool calls**, each one is dispatched through `_dispatchTool()`. Skill-provided tools take priority over built-ins; unknown tool names throw.
 6. Tool results are appended to the conversation as a `user`-role `tool_result` message, and the loop iterates again.
 7. The loop runs for at most `MAX_TOOL_ITERATIONS = 8` iterations. If the model returns a plain text response with no tool calls, the loop ends.
-8. The final text is returned from `send()`. If `voice: true` was passed, TTS speaks it before resolving.
+8. The final text is returned from `send()`. If `voice: true` was passed, TTS speaks it before resolving. On an `<agent-stage>` the line waits for the stage's shared speaking queue instead of playing at once, so agents take turns (`send(text, { priority })` ranks the turn as `user`, `broadcast` or `ambient`; solo runtimes ignore it).
 
 **NullProvider:** When `brain.provider` is `"none"` in the manifest, `NullProvider` is used instead (any other value except `anthropic` throws). It always returns `{ text: '', toolCalls: [] }`. The agent still loads, the avatar still emotes, and skills still execute, but the LLM never generates responses. This is useful for testing avatar behavior without an API key.
 
@@ -193,7 +193,7 @@ Captures what is currently visible and describes it so the agent can react to wh
 
 ### Stage-scoped tools
 
-When the runtime is attached to an `<agent-stage>`, two extra tools are appended (see [multi-agent.md](./multi-agent.md)): `observe_agents` (list the other agents on stage with names and positions) and `say_to_agent` (send a message to a named stagemate).
+When the runtime is attached to an `<agent-stage>`, two extra tools are appended (see [multi-agent.md](./multi-agent.md)): `observe_agents` (list the other agents on stage with names and positions) and `say_to_agent` (send a message to a named stagemate). The runtime joins a stage through `attachStage(stage, stageAgentId)`; every line it speaks, and `pause()`, go through the stage's speaking queue (`stage.speak()` and `stage.cancelSpeech()`).
 
 ---
 
@@ -312,6 +312,8 @@ Each entry has an `id`, `type`, `content`, `tags`, `context`, `salience` (0–1)
 `memory.query()` sorts by `salience × recencyBoost`, where recency uses exponential decay with a 7-day half-life. `feedback` and `user` memories are inherently higher salience (they are the most stable and generalizable). Additional tags boost salience slightly.
 
 The memory context is injected into the LLM system prompt in a `<memory>` block, capped at `manifest.memory.maxTokens` (default 8192) tokens. In the file-based backend (`src/memory/index.js`) the `MEMORY.md` index is injected in full and bypasses that token budget by design, so it has its own ceiling: at injection time it is cut to the 200 lines `MEMORY_SPEC.md` allows, with a one-line note saying how many lines were dropped, so an oversized index on disk still yields a bounded prompt.
+
+File-layer recall (`Memory.recall(query, { limit, minScore })` in `src/memory/index.js`) ranks entries by embedding similarity through `POST /api/memory/rank` (default `minScore` 0.3, an exact phrase match always ranks first) and returns each hit with a `text` field. When the endpoint is unreachable or embeddings are not configured, or in `none` mode, it falls back to substring matching.
 
 ### Pruning
 

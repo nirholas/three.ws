@@ -194,7 +194,7 @@ deployments tune them to real unit economics. Detail, surfaces and disclosure:
 
 ## 4. Services catalog (what three.ws sells)
 
-- **x402 HTTP endpoints**: 88 paid routes in the
+- **x402 HTTP endpoints**: 97 priced routes in the
   [ring catalog](../api/_lib/x402/ring-catalog.js), the single source of truth,
   across intel/oracle, agent/reputation, generation/3D, launch/naming/utility,
   club, avatar shop, and bazaars. Full list and prices:

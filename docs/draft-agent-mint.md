@@ -24,7 +24,7 @@ durable avatar, and every terminal path in the pipeline funnels through it
 (rigged as-is, rigged after an auto-rig chain, and the unrigged fallback). In
 order, it:
 
-1. writes the GLB to the object store with `putObject()`;
+1. writes the GLB to the object store (`storeGlbOrKeepProviderUrl()`; if object storage refuses the write with an infrastructure fault, the avatar keeps the provider's HTTPS copy of the mesh instead of failing, and `source_meta` records `servedFrom: 'provider'`);
 2. creates the `avatars` row;
 3. marks the regen job `done`;
 4. dispatches the `avatar.created` webhook;
@@ -41,7 +41,7 @@ Solana leads. The draft identity is a **Metaplex Core asset** minted into the
 three.ws Agents collection, through the same `deployAgentOnce()` the batch
 deployer uses. That means a draft mint carries everything a normal platform
 mint carries: collection membership, the brand attribute set, the royalty
-plugin, and enrolment in the Metaplex Agent Registry (an Agent Identity PDA).
+plugin, and enrolment in the Metaplex Agent Registry (an Agent Identity PDA). On devnet it also enrols the agent in the open Solana 8004 agent registry (`api/_lib/solana-8004.js`); mainnet enrolment needs `SOLANA_8004_REGISTER_MAINNET=1`. A failed 8004 enrolment is logged and left for the back-fill, never unwinding the mint.
 
 Ownership resolves in this order:
 

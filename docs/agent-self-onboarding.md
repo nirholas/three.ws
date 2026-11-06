@@ -54,7 +54,7 @@ Authenticate with the account API key (`Authorization: Bearer ...`, scope `agent
 
 `three-ws signup --agent [--name <label>] [--storage auto|keychain|file] [--yes]`
 
-It creates the identity key if none exists (OS keychain, or an encrypted file behind a passphrase; see `three-ws wallet`), runs both calls, stores the API key owner-only in `~/.config/three-ws/credentials.json` and prints the account id. It refuses when already signed in unless `--yes` is passed. It never pays: the upgrade command is printed for you to run, and `three-ws pay --dry-run` previews it first.
+It creates the identity key if none exists (OS keychain, or an encrypted file behind a passphrase; see `three-ws wallet`), runs both calls, stores the API key owner-only in `~/.config/three-ws/credentials.json` and prints the account id. It refuses when already signed in unless `--yes` is passed. It never pays: the upgrade command is printed for you to run, and `three-ws pay --dry-run` previews it first. For scripts, `--json` prints one JSON document on stdout (the account, agent, wallets, credential prefix and scope, store path and `upgrade`, never the key itself) and `--non-interactive` never prompts or opens a browser.
 
 ## Safety properties
 

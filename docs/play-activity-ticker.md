@@ -13,6 +13,7 @@ Code: `src/game/activity-ticker.js` (DOM), `src/game/activity-ticker.css`, `src/
 | `Name won JACKPOT on the wheel` | Server broadcast `activity` from the spin wheel (`multiplayer/src/spin-wheel.js`). |
 | `Name unlocked <cosmetic>` | Server broadcast `activity` from the boutique settle path; your own x402 cosmetic buys are noted locally. |
 | `You completed <quest>` | Your own quest completions. The room does not broadcast other players' quests. |
+| `$SYM won the war against $OTHER: 3:1` / `drew` / `$OTHER took the war` | A finished coin war, from the war portal's single detection point (`noteWarResult` in `activity-feeds.js`). One row per match, a win for this coin is gold and flashes the jumbotron (`WAR WON 3:1 vs $OTHER`). Coin names come from the ledger and are cleaned. |
 | `Big buy $X of $SYM` (gold) | Hype moment, below. |
 
 Wallets are truncated, names are the nameplate names, rows never link anywhere, and every string is written with `textContent` after control, zero-width and bidi characters are stripped. The server `activity` message carries only `{kind, id, label}` where `label` is a server-side catalog or wheel label, never player text.

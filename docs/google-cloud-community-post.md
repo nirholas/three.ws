@@ -1,13 +1,13 @@
 ---
 venue: Google Cloud Community (Medium publication) / Google Cloud Community forums
 account: three.ws (official)
-suggested_title: "One container, 125 scheduled jobs, and a GPU fleet that sleeps: an AI platform on Cloud Run"
+suggested_title: "One container, 165 scheduled jobs, and a GPU fleet that sleeps: an AI platform on Cloud Run"
 description: "How three.ws serves a static frontend, a route table, every API handler, and a fleet of open 3D model GPUs from Cloud Run: the single-container decision, Cloud Scheduler as the cron plane, per-lane GPU floors and a keep-warm cron, Vertex AI as the reliability anchor in a free-first model chain, and the deploy gates that check every release before it ships."
 tags: [cloud-run, cloud-scheduler, vertex-ai, gpu, generative-ai]
 status: draft, owner approval required before posting (external-channel gate in CLAUDE.md)
 ---
 
-# One container, 125 scheduled jobs, and a GPU fleet that sleeps
+# One container, 165 scheduled jobs, and a GPU fleet that sleeps
 
 Hello, Google Cloud community! three.ws is an open-source platform where you describe a character in a sentence and get a rigged, animated 3D agent you can embed on any web page. It can talk, it can listen, and it runs entirely on Google Cloud. three.ws is a member of Google Cloud for Web3 Startups, which backs our compute and Vertex AI usage.
 
@@ -21,7 +21,7 @@ Everything is Apache-2.0 at [github.com/nirholas/three.ws](https://github.com/ni
 |---|---|---|
 | Edge | Global External Application Load Balancer with Cloud CDN | TLS, the domain, and cached static assets close to users |
 | App | One Cloud Run service (`three-ws-api`, `us-central1`) | The frontend, the route table, and every API handler |
-| Jobs | Cloud Scheduler | 125 scheduled jobs, declared in the repo |
+| Jobs | Cloud Scheduler | 165 scheduled jobs, declared in the repo |
 | GPUs | Cloud Run GPU services (NVIDIA L4, plus one RTX PRO 6000 Blackwell) | Open 3D model lanes, each its own service |
 | Models | Vertex AI | Gemini as the reliability anchor of the text chain, Imagen leading the image ladder |
 | Builds | Cloud Build | One gated pipeline from commit to revision |
@@ -43,7 +43,7 @@ For a product where the frontend and the API evolve together in almost every com
 
 ## Cloud Scheduler as the cron plane
 
-There are 125 scheduled jobs. They are declared in the same config file the server reads for routes, and a script syncs that declaration into Cloud Scheduler, so adding a job is a config change reviewed like any other.
+There are 165 scheduled jobs. They are declared in the same config file the server reads for routes, and a script syncs that declaration into Cloud Scheduler, so adding a job is a config change reviewed like any other.
 
 Two practices make that number easy to run:
 

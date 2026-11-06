@@ -18,7 +18,7 @@ Routing is free-first and health-aware, exactly as in Forge. Because the free NV
 
 1. **TRELLIS.2 (self-host)**, the configured default at every tier (MIT licensed, the tier picks its resolution). The lane is env-gated on `MODEL_TRELLIS2_URL` and is skipped wherever that worker is not deployed.
 2. **TRELLIS (self-host)**, our own Cloud Run GPU worker, a native single-hop image-to-3D lane (image to TRELLIS to GLB), zero vendor cost.
-3. **Hunyuan3D (self-host)**, our own high-poly reconstruction worker, strong on people and organic subjects. Its licence excludes the EU, the UK and South Korea, so requests from those countries (or an unknown country) skip it.
+3. **Hunyuan3D (self-host)**, our own high-poly reconstruction worker, strong on people and organic subjects. Its licence excludes the EU, the UK and South Korea, so requests from those countries (or an unknown country) skip it. The composer asks `GET /api/forge?territory` up front and disables the excluded engines before you click Generate; picking one explicitly answers 403 `region_restricted`.
 4. **Hunyuan3D / TRELLIS (free)** on Hugging Face Spaces, with automatic failover across Hunyuan3D 2.1, Hunyuan3D 2, TRELLIS, and TripoSR.
 5. **Modly TripoSG** and **Modly Hunyuan3D Mini Turbo (self-host)**, our Modly worker (`workers/modly/`). Both return clean, repaired geometry at the tier's face budget but no textures, so they sit below every textured lane. Pick one explicitly when you want shape only, for example to retexture or stylize afterwards. Mini Turbo follows the same territory rule as Hunyuan3D; Modly TripoSG serves every region. If the Modly worker is down when you submit, the same photo goes to TRELLIS.2, then TRELLIS.
 

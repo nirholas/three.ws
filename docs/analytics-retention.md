@@ -83,7 +83,7 @@ Nothing is stored relative to "now", so a row read six months later still means 
 GET /api/analytics/retention?metric=week2_converse&weeks=12
 ```
 
-Admin-only (`api/_lib/admin.js` — an admin wallet in `ADMIN_ADDRESSES`, the built-in owner address, or `users.is_admin`). These are platform-wide business metrics rather than the caller's own data, so a signed-in non-admin gets a `403`.
+Admin-only (`api/_lib/admin.js`: an admin wallet in `ADMIN_ADDRESSES`, the built-in owner address, or `users.is_admin`). These are platform-wide business metrics rather than the caller's own data, so a signed-in non-admin gets a `403`.
 
 | Param | Values |
 | --- | --- |

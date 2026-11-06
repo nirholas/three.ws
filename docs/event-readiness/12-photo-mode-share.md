@@ -1,16 +1,16 @@
 # Feature 12: photo mode with branded one-tap share
 
-The event's growth loop is screenshots. Right now only build mode has a screenshot + share sheet; the world itself has none. Build a photo mode so any player can capture a beautiful branded shot of their avatar in the $THREE world and share it in two taps.
+The event's growth loop is screenshots. Photo mode has shipped as `src/game/photo-mode.js`: the HUD camera button or `P` captures the world, composites it onto a branded share card, and offers it back as a download or a clipboard image, all in the browser. The list below records what exists against the original spec so a rerun builds only the gap (the free orbit camera, the frame toggle and `navigator.share` of the image file were not built; the shipped flow is an offscreen render rather than a live camera mode).
 
 ## Where the code lives
 
-- Camera: `src/game/camera-modes.js`; main loop + renderer: `src/game/coincommunities.js` (it already uses `toDataURL` and `navigator.share` for build shots; reuse those paths)
+- Photo mode: `src/game/photo-mode.js` and `src/game/photo-mode.css`, imported lazily on the first press from `src/game/coincommunities.js`; the offscreen world render is `src/game/scene-capture.js`, shared with the build screenshot. Camera: `src/game/camera-modes.js`
 - HUD mount points: `src/game/coincommunities-ui.js`, styles in `src/game/coincommunities.css`
-- Existing share-sheet precedent: the build screenshot flow in `src/game/world-persist.js` / build UI
+- Share-sheet precedent: the build screenshot flow in `src/game/coincommunities.js` and the invite sheet (`src/game/invite-sheet.js`), which does use `navigator.share`
 - OG card for shared links: `api/play-og.js` (verify the /play link preview actually renders the coin image and name; fix it if stale)
 - Deep-link contract: `coinWorldUrl()` covered by `tests/fits-lib.test.js`
 
-## What to build
+## What was built, against the spec
 
 1. **Photo mode toggle.** A HUD button (and `P` key) that hides all HUD chrome, unlocks a free orbit camera with slow smoothed movement, and shows a minimal capture bar: shutter, frame toggle, exit. Mobile: pinch to zoom, drag to orbit, big shutter button.
 2. **Branded frame.** Composite the capture on a canvas with a tasteful frame: coin image, name, symbol (from the live world state, the same values the HUD banner uses), the three.ws wordmark, and the deep link. No watermark spam; it should look like something a person wants to post.

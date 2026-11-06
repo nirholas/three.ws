@@ -6,6 +6,8 @@ The engineering runbook is [Publishing to the Solana dApp Store](./seeker-publis
 
 ## Before you start
 
+Update: v1.0.0 was submitted on 2026-08-28 and is live on the dApp Store ([status and release record](./seeker-publishing.md)). This page is the record of that first submission day. A later release, 1.1.0 (versionCode 2), is built and has its own checklist in [`solana-mobile/RELEASE-1.1.0.md`](../solana-mobile/RELEASE-1.1.0.md).
+
 Status as of 2026-08-28: publisher profile and KYB **Approved**, signed APK built, release key backed up, and the site verified so the app runs full-screen. What is left is this page.
 
 - [ ] A laptop with the Publisher Portal open: <https://publish.solanamobile.com>
@@ -154,7 +156,7 @@ No off-chain test accounts are required: auth is wallet-only.
 | dApp preview 4 | `screen-4.png` |
 | dApp preview 5 | `screen-5.png` |
 
-**Upload the five previews in numbered order.** They are one 5400x1920 picture cut into five, with four phones sitting on the creases, so out of order they stop lining up. The portal wants matching dimensions across previews, and all five are 1080x1920 portrait. Open `solana-mobile/publish/media/carousel.png` to see the whole strip at once.
+**Upload the five previews in numbered order.** They are one 5400x1920 picture cut into five, with four phones sitting on the creases, so out of order they stop lining up. The portal wants matching dimensions across previews, and all five are 1080x1920 portrait. Run `npm run build:dapp-store-previews` and open the `solana-mobile/publish/media/carousel.png` it writes (gitignored, so it is not in a fresh clone) to see the whole strip at once.
 
 - [ ] Every field above pasted
 - [ ] Four brand images and five previews uploaded, previews in order 1 to 5

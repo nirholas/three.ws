@@ -8,7 +8,7 @@ Nothing here is sent or posted automatically. Every outreach and every post is a
 
 | Lever | Who it reaches | Status |
 |---|---|---|
-| $25 credit for startup-program members, +$10 for a public post ([details](./nvidia-inception-perk.md)) | Members of NVIDIA Inception, and the programs added next | Built, awaiting migration and deploy |
+| $25 credit for startup-program members, +$10 for a public post ([details](./nvidia-inception-perk.md)) | Members of NVIDIA Inception, and the programs added next | Live: migrations applied and the apply and shoutout endpoints are deployed |
 | Pre-filled post with the partner's hashtag | Same | Built |
 
 ## Levers to build next, ranked by effort against payoff

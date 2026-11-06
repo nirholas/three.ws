@@ -304,6 +304,7 @@ the web page does this automatically). On key rotation, update the well-known
 document and the pinned SDK constant; receipts signed under the previous key
 remain verifiable against that key but new pins should track the current one.
 
-The signing **secret** is custodial: stored encrypted at rest via
-[`secret-box.js`](../api/_lib/secret-box.js) under `VANITY_SERVICE_KEY`, never
-logged, never returned.
+The signing **secret** is custodial: `VANITY_SERVICE_KEY` holds the seed, and
+production keeps it as a [`secret-box.js`](../api/_lib/secret-box.js) ciphertext
+(encrypted at rest under the wallet encryption key) rather than a raw seed. It is
+never logged and never returned.

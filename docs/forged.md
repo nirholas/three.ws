@@ -103,6 +103,7 @@ The response carries the props plus aggregate stats:
 			"price_usdc": 0.15,
 			"payer": "7sk…full base58 wallet…",
 			"payer_short": "7skQxs…9fWn",
+			"payer_kind": "agent",
 			"tx_sig": "5Yw…settlement signature…",
 			"explorer_url": "https://solscan.io/tx/5Yw…",
 			"viewer_url": "/app?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fnvidia%2F5ab878cd-513d-4fb6-94b8-d389f7d7e433.glb"
@@ -119,7 +120,9 @@ The response carries the props plus aggregate stats:
 }
 ```
 
-`price_usdc` is derived from the stored atomic amount (6 decimals), and
+`price_usdc` is derived from the stored atomic amount (6 decimals),
+`payer_kind` is `agent` by default and `fresh` when a never-used wallet from the
+fresh-wallet workers lane bought the prop, and
 `explorer_url` is the Solscan link for the settlement signature. On a transient
 database outage the endpoint returns `503 db_unavailable` with a
 `retry-after: 5` header instead of a hard failure.

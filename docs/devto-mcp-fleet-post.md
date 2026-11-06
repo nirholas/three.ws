@@ -14,7 +14,7 @@ Hi DEV! I work on [three.ws](https://three.ws), an open-source platform where AI
 
 If you have not met MCP yet, here is the one-line version. The Model Context Protocol is a standard way to hand an AI assistant a set of tools. You run (or connect to) an MCP server, and Claude, ChatGPT, Cursor, or your own agent can call its tools: "generate a 3D model", "rig this mesh", "turn on the kitchen light".
 
-Along the way we published **72 MCP servers in the official Model Context Protocol registry** under one namespace, and **91 npm packages**, 39 of them MCP servers in the main repo. Avatars, 3D generation, scenes, voice, vision, market data, notifications, billing, naming, provenance, home control, and more: every capability that felt independently useful became its own server, because publishing a server is quick and MCP lets each one stand alone.
+Along the way we published **72 MCP servers in the official Model Context Protocol registry** under one namespace, and (per a footprint audit on 2026-08-25) **91 npm packages**, 39 of them MCP servers in the main repo. Avatars, 3D generation, scenes, voice, vision, market data, notifications, billing, naming, provenance, home control, and more: every capability that felt independently useful became its own server, because publishing a server is quick and MCP lets each one stand alone.
 
 Running a fleet that size taught us a lot about making servers safe, clear, and easy to find. This post is everything I would hand to someone publishing their second, fifth, or fiftieth server.
 
@@ -67,7 +67,7 @@ We allow one deliberate crossover, and it runs in the generous direction: a few 
 
 **1. One tightly scoped server per audience.** Our ChatGPT-facing server (`https://three.ws/api/mcp-chatgpt`) is exactly eight 3D tools and the model viewer, nothing else: keyless, no wallet, no account. Directories reward tightly scoped apps, so we submit one focused server per directory and document the rest as direct connections.
 
-**2. One free studio server for every MCP client.** `https://three.ws/api/mcp-studio` carries fourteen keyless tools: the 3D tools, a ready-made asset catalog, and persona tools that turn a rigged model into a living agent body that speaks with lip-sync, emotion, and gesture.
+**2. One free studio server for every MCP client.** `https://three.ws/api/mcp-studio` carries sixteen keyless tools: the 3D tools, a ready-made asset catalog, and persona tools that turn a rigged model into a living agent body that speaks with lip-sync, emotion, and gesture.
 
 **3. One hosted server for clients that want everything**, behind real OAuth 2.1, with discovery metadata verified on every deploy (Principle 3).
 
@@ -107,7 +107,7 @@ These are programme designations; the views here are our own. The full map is at
 ## Try any of it
 
 ```bash
-# 14 keyless tools, no account
+# 16 keyless tools, no account
 curl -s https://three.ws/api/mcp-studio \
   -H 'content-type: application/json' \
   -H 'accept: application/json, text/event-stream' \

@@ -47,17 +47,17 @@ under `@three-ws/*`; `vscode-x402` targets the VS Code Marketplace.
 
 Versions move, so read this table as a snapshot and re-derive it before a
 release: `npm view <pkg> version` for the live column, the package's own
-`package.json` for the local one. Measured 2026-08-15.
+`package.json` for the local one. Versions re-measured 2026-11-06; test counts are from 2026-08-15.
 
 | Package | Monorepo path | npm (live) | Local ver | Build | Tests | Notes |
 |---|---|---|---|---|---|---|
-| `@three-ws/x402-fetch` | `packages/x402-fetch` | 1.0.2 | **1.0.3** | vite | 7 pass | buyer-side fetch wrapper |
-| `@three-ws/x402-server` | `packages/x402-server` | 0.1.2 | 0.1.2 | none | 24 pass | seller-side core |
-| `@three-ws/x402-mcp` | `packages/x402-mcp` | 0.2.1 | **0.2.2** | none | 10 pass | MCP server |
-| `@three-ws/ibm-x402-mcp` | `packages/ibm-x402-mcp` | 1.1.2 | **1.1.3** | none | 37 pass | IBM MCP variant |
-| `@three-ws/x402-modal` | `x402-modal-sdk` | 0.2.1 | **0.3.0** | esbuild | 24 pass | payment modal SDK |
-| `@three-ws/x402-payment-modal` | `x402-payment-modal` | 1.2.0 | **1.2.1** | esbuild | 20 pass, 2 skipped | deps fixed, see below |
-| `@three-ws/vscode-x402` | `packages/vscode-x402` | not published | 0.2.0 | esbuild | none | **Marketplace**, not npm; needs a name fix |
+| `@three-ws/x402-fetch` | `packages/x402-fetch` | 1.0.4 | 1.0.4 | vite | 7 pass | buyer-side fetch wrapper |
+| `@three-ws/x402-server` | `packages/x402-server` | 0.1.3 | **0.2.0** | none | 24 pass | seller-side core |
+| `@three-ws/x402-mcp` | `packages/x402-mcp` | 0.2.3 | 0.2.3 | none | 10 pass | MCP server |
+| `@three-ws/ibm-x402-mcp` | `packages/ibm-x402-mcp` | 1.1.4 | 1.1.4 | none | 37 pass | IBM MCP variant |
+| `@three-ws/x402-modal` | `x402-modal-sdk` | 0.3.0 | 0.3.0 | esbuild | 24 pass | payment modal SDK |
+| `@three-ws/x402-payment-modal` | `x402-payment-modal` | 1.2.1 | 1.2.1 | esbuild | 20 pass, 2 skipped | deps fixed, see below |
+| `@three-ws/vscode-x402` | `packages/vscode-x402` | 0.2.2 (scoped npm name) | 0.2.2 | esbuild | none | **Marketplace** target (an npm copy exists under the scoped name); needs a name fix |
 
 A bolded local version is ahead of npm and publishes on its next tag. The two
 MCP packages ship their sources directly and have no build step, so "none" in
@@ -112,8 +112,8 @@ steps need the owner's credentials and cannot run from a collaborator session:
 
 Already-published versions republish only after a version bump: the workflow tags
 and publishes the version in `package.json`, so bump it when there's something
-new to ship. Five of the six npm packages currently sit one version ahead of the
-registry (the bolded local versions above) and publish on their next tag.
+new to ship. Only `@three-ws/x402-server` currently sits ahead of the registry
+(the bolded local version above) and publishes on its next tag.
 
 ## After a package is extracted
 

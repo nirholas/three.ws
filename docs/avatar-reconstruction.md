@@ -233,6 +233,18 @@ single-photo result above. Not enabled by default until the held-out SSIM and
 histogram numbers pass (`eval/texture_eval.py`); that measurement is waiting on the
 Vertex billing hold. See [`workers/avatar-reconstruction/README.md`](../workers/avatar-reconstruction/README.md#view-synthesis-texture-only-default-off).
 
+#### Phase 4: dense head fit (default off, GPU service)
+
+`DENSE_FIT=1` adds an analysis-by-synthesis refinement of the morphed head against
+the same photo (`dense_fit.py`: photometric, landmark, smoothness and symmetry
+terms, displacement capped at `DENSE_FIT_MAX_DISP_FRAC`, 0.03 of head height). It
+never fails a job: a timeout or a fit that does not lower the loss keeps the morphed
+head. The CPU image ships no torch, so the step stays off there. When
+`RECONSTRUCT_DENSE_URL` is set, [`api/_providers/gcp.js`](../api/_providers/gcp.js)
+routes face jobs (those without a tier, path or polycount budget) to the RTX
+service built from `Dockerfile.rtx`; otherwise every job takes the CPU service. See
+[`workers/avatar-reconstruction/README.md`](../workers/avatar-reconstruction/README.md#dense-head-fit-default-off-dense_fit1).
+
 > **Every buffer read is stride-aware.** The head's vertex attributes share one
 > interleaved bufferView, so `precompute_uv.py` and `glb_ops` honour
 > `bufferView.byteStride` on every accessor read and write. A stride-unaware read

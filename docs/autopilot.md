@@ -28,7 +28,7 @@ Thresholds are shown in USDC and stored as atomic units (6 decimal places). The 
 
 `POST /api/pump/autopilot` upserts one coin's policy. It is a merge, not a replace: only the fields you send change, so toggling one switch never clobbers your thresholds. The write is validated (zod) and re-scoped to your ownership before it touches the table.
 
-Auth is a session cookie or a bearer token. Every read and write is rate-limited per authenticated IP.
+Auth is a session cookie or a bearer token. Because a policy drives buyback swaps and distributions from the creator wallet, a bearer API key can read freely but needs the `wallet:write` scope to POST; without it the write is refused with `403 insufficient_scope`. Every read and write is rate-limited per authenticated IP.
 
 ## Walkthrough
 

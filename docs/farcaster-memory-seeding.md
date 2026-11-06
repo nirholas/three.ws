@@ -32,7 +32,7 @@ the allowlist for consent.
         │
         ▼
  server issues a one-time challenge naming the agent, the fid, the wallet,
- the scope, and an expiry — and stores the exact text
+ the scope, and an expiry, and stores the exact text
         │
         ▼
  you sign it in Phantom (ed25519)              ← Solana leads; an EVM

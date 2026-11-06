@@ -91,7 +91,7 @@ unsupported.
 ### Lane B: canvas glass, for tiles
 
 Surfaces that already run three.js (`/gallery`, the entity studio stage, Restyle Studio, Scene
-Composer) get the real thing. We are on three.js r184, so every parameter the reference uses is
+Composer) get the real thing. We are on three.js r187, so every parameter the reference uses is
 available on `MeshPhysicalMaterial` under WebGL2. **WebGPU is not a prerequisite.** Do not port
 a renderer to chase this look.
 

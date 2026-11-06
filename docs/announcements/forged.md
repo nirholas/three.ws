@@ -110,8 +110,8 @@ nothing new.
   so the post stays true whether or not the buyers are running on the day. Still worth checking
   `latest_ts` on `/api/forged` before scheduling: a gallery that is growing on the day of the post
   is a better demo than one that has gone quiet.
-- **Queue item:** status `review`, lane `agent-economy`, pattern `mechanism`, `notBefore` to be set
-  by the owner.
+- **Queue item:** none yet. `data/x-content/queue.json` has no `forged` entry, so this pack is not
+  scheduled. Add one (lane `agent-economy`, pattern `mechanism`) when the owner picks a slot.
 
 ## Posting
 

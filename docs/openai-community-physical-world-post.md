@@ -4,7 +4,7 @@ venue: OpenAI Developer Community (community.openai.com)
 account: nichxbt
 category: API (Apps SDK / Actions / MCP)
 tags: [chatgpt, apps-sdk, mcp, actions, 3d, agents]
-description: "A long technical follow-up on the three.ws 3D Studio connector: the fourteen keyless MCP tools, the surfaces we built on top of them, the 72-server MCP fleet behind them, the partner programmes that power it, and the design principles we use for tools that spend money and touch physical objects."
+description: "A long technical follow-up on the three.ws 3D Studio connector: the fifteen keyless MCP tools, the surfaces we built on top of them, the 72-server MCP fleet behind them, the partner programmes that power it, and the design principles we use for tools that spend money and touch physical objects."
 status: draft, not yet posted
 ---
 
@@ -30,7 +30,7 @@ Here is the idea that ties it together. Once an assistant can call a tool that p
 
 We have shipped an answer to each of the five, and I want to write them down properly, because they generalise well beyond 3D. Everything below is open source (Apache-2.0) and readable at [github.com/nirholas/three.ws](https://github.com/nirholas/three.ws).
 
-**Short version:** the free connector has grown to fourteen tools and is still keyless. On top of it we added a vision tool so the model can look at its own output, a ready-made asset catalog so it can reuse before it generates, a physics grade so a simulator knows an asset is usable, a manufacturing API so an agent can order a physical print of what it just generated, a home-control MCP server whose physical actions are reserved for surfaces where a real person approves them, an open CC0 response shape for 3D results, and a set of health primitives that answer "can this agent act right now". Behind all of it sit 72 MCP servers in the official registry and 91 npm packages, and the partner programmes that power the stack get their own section near the end.
+**Short version:** the free connector has grown to fifteen tools and is still keyless. On top of it we added a vision tool so the model can look at its own output, a ready-made asset catalog so it can reuse before it generates, a physics grade so a simulator knows an asset is usable, a manufacturing API so an agent can order a physical print of what it just generated, a home-control MCP server whose physical actions are reserved for surfaces where a real person approves them, an open CC0 response shape for 3D results, and a set of health primitives that answer "can this agent act right now". Behind all of it sit 72 MCP servers in the official registry and 91 npm packages, and the partner programmes that power the stack get their own section near the end.
 
 **If you only have two minutes**, here is the friendliest way in:
 
@@ -71,7 +71,7 @@ curl -s https://three.ws/api/mcp-studio \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Fourteen tools, as of today, all free and keyless:
+Fifteen tools, as of today, all free and keyless:
 
 | Tool | What it does |
 |---|---|
@@ -82,6 +82,7 @@ Fourteen tools, as of today, all free and keyless:
 | `forge_avatar` | photo or prompt to a rigged, animation-ready avatar |
 | `refine_model` | iterate on a previous result by describing a change; every refinement is its own version with its own AR link and lineage |
 | `check_job` | collect a generation that outran the tool call |
+| `get_job` | read the status of a generation job by its `job_id`, built for agents: phase, progress, an ETA, and the finished model once it is done |
 | `look_at_model` | render a model to images the assistant can actually see (section 3) |
 | `search_catalog` | search the ready-made library: CC0 props, rigged characters, motion clips |
 | `get_catalog_item` | read one catalog entry |
@@ -92,7 +93,7 @@ Fourteen tools, as of today, all free and keyless:
 
 The three catalog tools are the newest addition and they change the shape of a conversation in a nice way: before spending a minute of GPU time, the assistant can check whether three.ws already publishes a lamp, a chair, or a waving animation, and hand back code that works immediately. They never count against the generation quota.
 
-The `high` tier runs on our own self-hosted Hunyuan3D GPU worker for denser geometry, and the default `standard` tier is served by whichever free engine the router picks for the prompt, typically our self-hosted TRELLIS worker. Every tier is platform-funded, so the caller stays anonymous and keyless at every level of quality.
+Image-conditioned generation at every tier runs on our own self-hosted TRELLIS.2 GPU worker by default, with the tier choosing the resolution, and the router falls back to our other self-hosted lanes (TRELLIS, Hunyuan3D) when it is busy or a region's licence rules apply. Every tier is platform-funded, so the caller stays anonymous and keyless at every level of quality.
 
 Each generation tool renders inline through an Apps SDK widget (`ui://widget/three-studio-model.html`) with a rotatable viewer and a **View in your space** button for AR. If the result is rigged, the response also carries an `irlUrl` and the button becomes **Bring it to life**. The persona tools render in their own widget (`ui://widget/three-studio-persona.html`).
 
@@ -373,7 +374,7 @@ An ambient face in a second pane turns out to be a wonderful progress indicator,
 
 | What | Endpoint |
 |---|---|
-| 3D Studio MCP, 14 tools | `POST https://three.ws/api/mcp-studio` |
+| 3D Studio MCP, 15 tools | `POST https://three.ws/api/mcp-studio` |
 | 3D Studio Actions | `POST https://three.ws/api/3d/studio` |
 | Look at a model | `POST https://three.ws/api/3d/look` |
 | Simulation readiness | `GET https://three.ws/api/sim-readiness?src=…` |

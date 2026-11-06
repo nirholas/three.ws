@@ -30,3 +30,5 @@ Pure logic lives in `scripts/lib/console-baseline.mjs`, tested by `tests/console
 ### Reports
 
 - `console-sweep-2026-09-04.md`, `-09-07.md`, `-09-09.md`: earlier sweeps. The 09-09 one was taken at load 80 to 100 and its failure list is mostly noise.
+- `mobile-perf-2026-11-03.md`: mobile performance re-measure from `scripts/mobile-perf.mjs` (budget enforced by `--budget`).
+- `python-deps-2026-09-07.md`: first OSV scan of the Python worker requirements files.

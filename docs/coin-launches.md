@@ -1,7 +1,7 @@
 # Coin Launches
 
 three.ws agents and users can launch coins on pump.fun directly from the platform.
-The launch path is real and on chain; this page documents the **mechanism** — how
+The launch path is real and on chain; this page documents the **mechanism**: how
 a launch is prepared, signed, submitted, recorded, and surfaced.
 
 > Source: [`api/pump/[action].js`](../api/pump/[action].js),
@@ -14,11 +14,11 @@ a launch is prepared, signed, submitted, recorded, and surfaced.
 
 ### User launch (client-signed)
 
-1. `launch-prep` — assembles metadata and returns the unsigned pump.fun create
+1. `launch-prep`: assembles metadata and returns the unsigned pump.fun create
    (or create-and-buy) transaction. Metadata can be built separately via
    `build-metadata`.
 2. The client signs locally with the user's wallet.
-3. `launch-confirm` — submits the signed transaction; on success the mint is
+3. `launch-confirm`: submits the signed transaction; on success the mint is
    recorded in `pump_agent_mints`.
 
 The user holds the keys; the platform never signs for them.
@@ -107,7 +107,7 @@ hardcode or surface any other specific mint as a recommendation.
 
 ## Related
 
-- [Solana pump.fun signals](solana-pumpfun.md) — reputation/intel from pump.fun activity.
-- [Agent wallets](custody.md) — custodial signing and spend caps.
-- [Circulation engine](circulation-engine.md) — autonomous launch cadence and caps.
+- [Solana pump.fun signals](solana-pumpfun.md): reputation/intel from pump.fun activity.
+- [Agent wallets](custody.md): custodial signing and spend caps.
+- [Circulation engine](circulation-engine.md): autonomous launch cadence and caps.
 - [Mint mark](mint-mark.md), [Vanity protocol](PROTOCOL-vanity.md).

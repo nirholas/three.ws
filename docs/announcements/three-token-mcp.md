@@ -121,8 +121,10 @@ for the first time; it ships nothing new.
 ## Posting
 
 Publishing to an external channel is owner-gated under the operating rules, every time. Nothing in
-this pipeline posts. The queue item is `three-token-mcp` (status `review`, lane `token`, pattern
-`mechanism`); preview with:
+this pipeline posts. The queue item is `three-token-mcp` (lane `token`, pattern `mechanism`). Its
+status in `data/x-content/queue.json` is now `posted` (marked in the 2026-10-13 shipped-posts
+sweep), while [the coverage ledger](../announcement-coverage.md) still lists the package as never
+announced, so confirm against the account before any re-send. Preview with:
 
 ```bash
 node scripts/post-tweet.mjs --file docs/announcements/three-token-mcp.post.txt --dry-run

@@ -40,7 +40,7 @@ The model URL must be `https:` on one of these hosts, or same-origin:
 - `*.blob.core.windows.net`
 - `three.ws`, `*.vercel.app`
 
-Anything else is refused with an explanation instead of rendered. This is the same allowlist `/api/artifact` enforces server-side, for the same reason: an indexed page on our origin must not become a renderer for arbitrary third-party payloads.
+Anything else is refused with an explanation instead of rendered. This is the allowlist `/api/artifact` enforces server-side (plus `*.r2.dev`, the public R2 domain avatars are served from), for the same reason: an indexed page on our origin must not become a renderer for arbitrary third-party payloads.
 
 ---
 

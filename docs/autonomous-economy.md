@@ -87,8 +87,10 @@ Two hard rules are enforced in code, not by convention:
   resolves from the signer registry (`SOLANA_SIGNERS`). An address not in that registry
   can never receive a topup — the transfer is rejected before it's built.
   ([`api/_lib/economy-master.js`](../api/_lib/economy-master.js))
-- **Sweepback is destination-locked.** The sweepback destination is hard-coded to the
-  funding-root address. No request parameter can redirect it.
+- **Sweepback is destination-locked.** The sweepback destination is a module constant
+  (the funding-root address, `ECONOMY_MASTER_ADDRESS`), never a request parameter, so
+  nothing a caller sends can redirect it. A wallet that holds money owed to third
+  parties (unpaid Fee Bridge recipients) is skipped in every mode and is never swept.
   ([`api/_lib/economy-sweepback.js`](../api/_lib/economy-sweepback.js))
 
 Together these mean money can only move **inside the set of wallets the platform owns.**

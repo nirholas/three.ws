@@ -1,6 +1,6 @@
 # Event Markets
 
-A free-to-play "who wins this?" market for every three.ws event, with the entrants as outcomes. Picks carry points, never funds. Build briefs: [docs/prompts/event-markets/](prompts/event-markets/README.md). Core module: `api/_lib/event-markets/`.
+A free-to-play "who wins this?" market for every three.ws event, with the entrants as outcomes. Picks carry points, never funds. Build briefs: [docs/prompts/event-markets/](prompts/event-markets/README.md). Core module: `api/_lib/event-markets/`. A separate, off-by-default staked variant on Solana is covered in [Staked Event Markets](./event-markets-staking.md); everything below is the free-to-play product.
 
 ## Markets, picks and odds (core)
 

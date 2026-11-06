@@ -23,9 +23,9 @@ Space-Grotesk-vs-Inter-vs-Inter-Tight split.
 
 | Token | Stack | Use for |
 |-------|-------|---------|
-| `--font-display` | `'Space Grotesk', 'Inter', system-ui, sans-serif` | Marketing headers, hero copy, brand, section titles |
-| `--font-body` | `'Inter', system-ui, sans-serif` | Everything else — product UI, body copy, controls, labels |
-| `--font-mono` | `'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace` | Code, wallet/contract addresses, numeric readouts, eyebrows |
+| `--font-display` | `'Space Grotesk', 'Space Grotesk Fallback', 'Inter', system-ui, sans-serif` | Marketing headers, hero copy, brand, section titles |
+| `--font-body` | `'Inter', 'Inter Fallback', system-ui, sans-serif` | Everything else: product UI, body copy, controls, labels |
+| `--font-mono` | `'JetBrains Mono', 'JetBrains Mono Fallback', 'SF Mono', 'Fira Code', ui-monospace, monospace` | Code, wallet/contract addresses, numeric readouts, eyebrows |
 
 - **One display family** (Space Grotesk) for headings; **Inter** for body/product; **JetBrains Mono** for code.
 - **`Inter Tight` is retired.** It was declared in eight places but never
@@ -36,7 +36,10 @@ Space-Grotesk-vs-Inter-vs-Inter-Tight split.
   (woff2, latin + latin-ext, variable, `font-display: swap`) and loaded **once**
   per page via `@import` in `style.css` or a single
   `<link rel="stylesheet" href="/fonts/fonts.css">`. Standalone pages must load
-  it or their display family falls back to Inter.
+  it or their display family falls back to Inter. The `* Fallback` names are
+  metric-matched local faces declared in the same file, so text does not reflow
+  when the webfont swaps in; high-traffic pages also `<link rel="preload">` the
+  latin woff2 files.
 
 ### Type scale
 

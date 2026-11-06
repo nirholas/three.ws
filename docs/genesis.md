@@ -142,7 +142,10 @@ curl -s -X POST "https://three.ws/api/agents/$AGENT_ID/wallet/provision" \
   figure for rigging, so a prompt for an object or a crowd will not produce a
   useful avatar. Use [/forge](https://three.ws/forge) for props and scenes.
 - **Ownership.** The agent, both wallets, and the identity are yours. Remix forks a
-  public avatar into a new agent you own; it never mutates the source.
+  public avatar into a new agent you own; it never mutates the source. A
+  VRoid Hub license travels with the fork: a license that bars public agents stays
+  attached, and the fork comes back as a private copy without an agent, so Genesis
+  cannot finish agent setup for that source.
 
 ## Related
 

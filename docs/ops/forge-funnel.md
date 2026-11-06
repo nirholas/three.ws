@@ -116,6 +116,15 @@ finished after the migration are timed; `timed_attempts` says how many that is.
 There is deliberately no dollar figure. Cost per generation is not recorded, and
 an always-on GPU bills idle time that a per-row estimate would hide.
 
+**`share`**: whether shared links convert. Counters come from the aggregate
+`share_funnel_daily` table (no identifiers stored): `unfurls` (oEmbed and OG
+image cards rendered in a chat or editor, not human views), `page_loads` of the
+shared creation page (crawlers included), `ar_launches`, `share_actions` from the
+share sheet and `cta_clicks` on "make your own". `from_share` is the creations
+whose `source` is `share` (started, done, useful, useful rate), and
+`share_to_forge` is starts per page load. An empty window returns zeros with
+`empty: true`.
+
 **`revenue`**: x402 only, because it is the one payment rail whose price is
 recorded on the row (`x402_price_atomic`). `usdc_per_useful_asset` divides that
 by every kept model in the window. `agent_weekly_retention` is distinct payer

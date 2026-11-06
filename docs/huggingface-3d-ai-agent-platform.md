@@ -80,15 +80,7 @@ There is a test for this that we are unreasonably fond of: the animation dignity
 
 ### 2.4 The motion library and where motion comes from
 
-The shared library holds about 3,000 motion-capture clips, browsable at [three.ws/animations](https://three.ws/animations) and served from `GET /api/animations/library`. Every clip carries a poster frame rendered from the canonical rig:
-
-<p>
-<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/thumbs/mx-afoxe-samba-reggae-dance-c9c6f519b96c.webp" alt="Afoxe samba reggae dance" width="160" />
-<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/thumbs/mx-ballet-dance-variation-one-c9c6eb62b96c.webp" alt="Ballet dance variation one" width="160" />
-<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/thumbs/mx-aiming-idle-with-bow-123cd5926ad3.webp" alt="Aiming idle with bow" width="160" />
-<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/thumbs/mx-backward-running-jump-c9ccec92b96c.webp" alt="Backward running jump" width="160" />
-<img src="https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/animations/library/thumbs/mx-aj-victory-idle-c9cd9927b96c.webp" alt="Victory idle" width="160" />
-</p> A full clip carries 53 tracks: 52 bone rotations plus hip position, and 30 of those tracks address finger joints, which is why hands on three.ws avatars do not look like mittens.
+The shared library holds 219 CC0 clips as of 6 November 2026 (Mesh2Motion and Quaternius packs, each carrying its source and license), browsable at [three.ws/animations](https://three.ws/animations) and served from `GET /api/animations/library`, which never serves a clip without a license field or one sourced from Mixamo. Alongside it, 113 curated clips drive agent gestures. A full clip carries 53 tracks: 52 bone rotations plus hip position, and 30 of those tracks address finger joints, which is why hands on three.ws avatars do not look like mittens.
 
 Motion also gets generated:
 
@@ -145,7 +137,7 @@ Agents also have screens. Each live agent casts a browser to `/agent-screen`, an
 
 ### 3.5 The guard chain: autonomy with a seatbelt
 
-This is the design we would defend hardest. Every fund-moving tool call passes `POST /api/agent/guard`, which runs seven independent enforcement layers and always runs all seven: security blacklist, human intervention, capability, permission, trade guard, spend envelope, x402 budget. The verdict is `allow`, `require_approval`, or `block`, and the response carries the layers that ran, warnings, blind spots, and a coverage score. A guard that failed to run is reported as a finding, not silently skipped. It ships as `@three-ws/agent-runtime` alongside a hash-chained `ActionLedger`.
+This is the design we would defend hardest. Every fund-moving tool call passes `POST /api/agent/guard`, which runs seven independent enforcement layers and always runs all seven: security blacklist, human intervention, capability, permission, trade guard, spend envelope, x402 budget. An owner can also sign a spend delegation, an opt-in eighth check that can only tighten the verdict and is measured against the agent's realized spend ledger. The verdict is `allow`, `require_approval`, or `block`, and the response carries the layers that ran, warnings, blind spots, and a coverage score. A guard that failed to run is reported as a finding, not silently skipped. It ships as `@three-ws/agent-runtime` alongside a hash-chained `ActionLedger`.
 
 ### 3.6 Skills
 

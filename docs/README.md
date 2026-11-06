@@ -13,4 +13,4 @@ Subdirectories: [tutorials/](tutorials/) (step-by-step guides served on-site), [
 
 Private trees, excluded from the public site build and from ALL.md by `vite.config.js` and `scripts/combine-docs.mjs`: [ops/](ops/README.md) (production runbooks), [security/](security/) (review records), [internal/](internal/). Do not link to them from public docs.
 
-Writing rules are in [CLAUDE.md](../CLAUDE.md) (Documentation section): every feature ships with its doc, every code sample runs, every link resolves, update rather than duplicate.
+Writing rules are in [CLAUDE.md](../CLAUDE.md) ("Changelog and documentation" section): every feature ships with its doc, every code sample runs, every link resolves, update rather than duplicate.

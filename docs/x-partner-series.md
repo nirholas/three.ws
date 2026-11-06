@@ -7,7 +7,7 @@ Every day @trythreews features one partner listed on [three.ws/partners](https:/
 | Registry: one file per partner, listing its designation, wording rules and features | [data/x-content/partners/](../data/x-content/partners/) |
 | Engine: rotation, brief, drafting, series lint, claims, item | [api/_lib/x-content/partners.js](../api/_lib/x-content/partners.js) |
 | CLI | [scripts/x-partners.mjs](../scripts/x-partners.mjs) (`npm run x:partners`) |
-| Slot and approval | `slots` and `approval.series` in [data/x-content/queue.json](../data/x-content/queue.json) |
+| Slot and approval | `cadence.slots` and `approval.series` in [data/x-content/queue.json](../data/x-content/queue.json) |
 | Scheduled runner: a Cloud Run Job image and its setup | [deploy/x-partners/](../deploy/x-partners/), [scripts/create-x-partners-job.mjs](../scripts/create-x-partners-job.mjs) |
 | Tests | [tests/x-content-partners.test.js](../tests/x-content-partners.test.js) |
 
@@ -95,7 +95,7 @@ Claims are never taken from the model. `claimsFor` builds them from the designat
 
 ## The slot
 
-The queue's tier 1 slot belongs to the series:
+The queue's tier 1 slot (under `cadence.slots`) belongs to the series:
 
 ```json
 "slots": [

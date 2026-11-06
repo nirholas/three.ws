@@ -50,7 +50,7 @@ visualization, and its own mute button in the legend.
 | `bell` | `agent-deploy`, `agent-onchain`, `member-join`, `agora-registered`, `agora-arena-lost` | An FM bell: sine carrier with an inharmonic partial at the classic 2.76 bell ratio, 1.4s ring. |
 | `arp` | `level-up`, `world-join`, `mission-complete`, `agora-task-posted`, `agora-hired`, `agora-task-claimed`, `agora-task-completed`, `agora-vouched`, `agora-arena-entered`, `agora-guild-joined`, `agora-guild-contributed` | The actor's stable three-note ascending motif, plucked at 90ms intervals. |
 | `alarm` | `agent-guard`, `agora-flagged` | Two short square waves a minor second apart: deliberate dissonance for safety refusals and flagged proofs. |
-| `jackpot` | `jackpot`, `agora-arena-won` | A sawtooth glissando through a resonant bandpass filter, rising two octaves, with sparkle plucks of the actor's motif on top. |
+| `jackpot` | `jackpot`, `dance-off`, `agora-arena-won` | A sawtooth glissando through a resonant bandpass filter, rising two octaves, with sparkle plucks of the actor's motif on top. |
 
 Any feed type without a mapping falls back to the `bell` voice, so a new
 `ALLOWED_TYPES` entry is audible on day one; give it a proper voice mapping in

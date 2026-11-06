@@ -1,11 +1,16 @@
 # Announcement pack: Instant Agent Genesis
 
-**Surface:** [`/genesis`](https://three.ws/genesis) · **Ledger key:** `/genesis` · **Stage:** drafted
-· **Shipped:** 2026-06-23 · **Announced externally:** never
+**Surface:** [`/genesis`](https://three.ws/genesis) · **Ledger key:** `/genesis` · **Stage:** withdrawn
+· **Shipped:** 2026-06-23 · **Announced externally:** several times on @trythreews before this pack was queued
 
 Ranked first of 320 never-announced surfaces by `npm run announce:rank` (score 106: sitemap
 priority 0.9, showcase, token topic, taggable partner, on the audit's shortlist, backed by a
 feature doc). Written against [the announcement voice](../announce-voice.md).
+
+**Withdrawn 2026-11-04 by the owner:** Agent Genesis had already been posted on @trythreews several times, so
+this post would repeat the account. It is not in the X queue and should not be sent unless Genesis ships
+something new worth its own post. The copy below is kept as the written record, and its "never announced" and
+"never been posted about" statements were wrong when written.
 
 ---
 

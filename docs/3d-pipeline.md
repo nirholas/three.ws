@@ -175,7 +175,7 @@ curl -s -X POST https://three.ws/api/x402/pipeline-rembg \
 Paid response: `{ "stage":"rembg", "output_url":
 "https://three.ws/cdn/x402-pipeline/rembg/….png" }`
 
-Options: `model` (`rmbg2` | `u2net` | `isnet` | `u2net_human_seg` | `silueta`).
+Options: `model` (`rmbg2` default | `birefnet` for the cleanest hair and thin edges, slower | `u2net` | `isnet` | `u2net_human_seg` | `silueta`).
 
 ## A full flow
 

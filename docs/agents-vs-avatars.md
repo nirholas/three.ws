@@ -86,7 +86,7 @@ Agents can exist before they wear anything. Their studio page still renders in f
 - **"My agent has no body."** → Open the agent in Studio and use `Change avatar` on the Body tab. You're choosing an avatar to attach.
 - **"I want to use this avatar."** → Open the avatar page, click `Start an agent`. You're creating an agent that wears it.
 - **"Can two agents share an avatar?"** → Yes. Avatars are reusable bodies; agents are unique minds.
-- **"Can one agent change its avatar?"** → Yes, in the editor or via `PATCH /api/agents/<id>` with a new `avatar_id`.
+- **"Can one agent change its avatar?"** → Yes, in the editor or via `PATCH /api/agents/<id>` with a new `avatar_id`. The avatar must be one you own; the API answers `404` for anyone else's.
 - **"Where does the wallet live?"** → On the agent. Avatars don't have wallets.
 
 ## Where to go next

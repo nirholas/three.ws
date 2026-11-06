@@ -1,5 +1,7 @@
 # Feature 22: projector mode, the world on the venue's big screen
 
+Status: shipped 2026-10-31 (`6bda98485`). `?director=1` is `src/game/director-mode.js` (auto-cutting camera over `src/game/director-shots.js`, broadcast overlay, unattended recovery) with a server-honored `spectator` join option (`multiplayer/src/spectator.js`, wired into `WalkRoom.js`); behavior, limits and checks are in [docs/play-director-mode.md](../play-director-mode.md). The brief below is what was built to; a fresh session should audit and extend it, not rebuild it. The text below describes the state before it shipped where it says there is no spectator option or no real broadcast view.
+
 Tomorrow there is a physical room with a big screen. The best thing that screen can show is the live world itself: the crowd, the stage, the jumbotrons, with event branding over it. Today the closest thing is zen mode plus the cinematic camera, which still spawns a visible player and shows player-grade UI. Build a real broadcast view.
 
 ## Where the code lives
@@ -7,7 +9,7 @@ Tomorrow there is a physical room with a big screen. The best thing that screen 
 - URL params: parsing in `src/game/coincommunities.js` and the canonicalisation in `enter()`, where the `history.replaceState` rewrite rebuilds the query from scratch with exactly `coin`, `name`, `symbol`, `image`, `tier` (holders worlds) and `ui`. Any new param MUST be added there or it is dropped on entry: this is the known trap
 - Cameras: `src/game/camera-modes.js` (cinematic mode exists) and `src/game/hud/camera-rig.js` (it now honors `prefers-reduced-motion`, suppressing shake and the speed FOV kick; the director rotation must respect the same switch, since a venue machine may have it set)
 - Zen and embed precedents: `ui=hidden` and `bg=transparent` handling in `src/game/coincommunities.js`
-- Server join: `multiplayer/src/rooms/WalkRoom.js` join options (there is no `spectator` option yet; every join spawns a visible player); the client sends them from `src/game/community-net.js`
+- Server join: `multiplayer/src/rooms/WalkRoom.js` join options (the `spectator` option is now honored via `multiplayer/src/spectator.js`; every other join spawns a visible player); the client sends them from `src/game/community-net.js`
 - Event state: `public/event.json` via `src/game/event-countdown.js` and the shared `src/shared/event-config.js` reader (between events the file holds an explicit no-event state, `id: null`, which must render as the no-event overlay, not as an error); the go-live moments in `src/game/meetup-event.js` and `fireworks.js` are the shots worth cutting to; live activity if Feature 15 lands; invite QR if Feature 16 lands (`qrcode` is already a dependency)
 
 ## What to build

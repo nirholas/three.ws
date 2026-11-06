@@ -50,6 +50,11 @@ Parses the URL hash with `URLSearchParams`. The load-bearing parameters:
 `src/app.js` reads more (embed overrides such as `noChat`, `noControls`,
 `accent`, `bg`); read the `this.options` block there for the full set.
 
+The renderer backend is chosen from the page query string, not the hash:
+`/app?renderer=webgpu` opts into WebGPU (`_prepareRenderer()` acquires it before
+the first `Viewer` is built). Without the opt-in, or when no WebGPU adapter is
+available, the viewer runs on WebGL2.
+
 ### Properties
 
 | Property            | Type              | Description                                   |
@@ -135,6 +140,13 @@ The Three.js rendering engine. Manages the WebGL scene, camera, renderer, contro
 new Viewer(el: Element, options: object)
 ```
 
+WebGPU is opt-in (`?renderer=webgpu`, or `rendererPreference: 'webgpu'` from the
+`<agent-3d renderer="webgpu">` attribute). Because the device handshake is
+async, opted-in callers build the viewer with `await Viewer.create(el, options)`,
+which resolves to a `Viewer` on WebGPU when an adapter exists and on WebGL2
+otherwise. `Viewer.prepareRenderer(options)` is the async half on its own.
+Without the opt-in, `Viewer.create()` is exactly `new Viewer(el, options)`.
+
 | Parameter | Type      | Description                                        |
 | --------- | --------- | -------------------------------------------------- |
 | `el`      | `Element` | Container element for the WebGL canvas             |
@@ -142,7 +154,7 @@ new Viewer(el: Element, options: object)
 
 The constructor:
 
-1. Creates `WebGLRenderer`, `PerspectiveCamera`, `Scene`, `OrbitControls`
+1. Creates the renderer (`WebGLRenderer`, or the prebuilt WebGPU renderer from `Viewer.create()`), `PerspectiveCamera`, `Scene`, `OrbitControls`
 2. Initializes `PMREMGenerator` for environment map processing
 3. Creates the neutral environment from `THREE.RoomEnvironment`
 4. Sets up the axes helper (mini viewport in bottom-left)
@@ -159,7 +171,8 @@ The constructor:
 | `scene`              | `THREE.Scene`                  | The Three.js scene                                          |
 | `defaultCamera`      | `THREE.PerspectiveCamera`      | Default orbit camera                                        |
 | `activeCamera`       | `THREE.Camera`                 | Currently active camera (default or embedded)               |
-| `renderer`           | `THREE.WebGLRenderer`          | WebGL renderer (also on `window.renderer`)                  |
+| `renderer`           | `THREE.WebGLRenderer`          | Renderer, WebGPU when opted in (also on `window.renderer`)  |
+| `backend`            | `'webgl' \| 'webgpu'`          | Backend actually in use (`rendererReason` says why)         |
 | `controls`           | `OrbitControls`                | Orbit controls instance                                     |
 | `content`            | `THREE.Object3D \| null`       | Currently loaded model root                                 |
 | `mixer`              | `THREE.AnimationMixer \| null` | Animation mixer                                             |
@@ -595,7 +608,7 @@ The app exports debugging state to `window.VIEWER`:
 When the agent layer is mounted, `App` also publishes `agent_protocol`,
 `agent_identity`, `agent_skills`, and `agent_runtime` on the same object.
 
-The WebGL renderer is also available at `window.renderer` (nulled on viewer
+The renderer is also available at `window.renderer` (nulled on viewer
 dispose).
 
 ### Console Usage Examples

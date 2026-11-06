@@ -1,6 +1,6 @@
 # The announcement factory
 
-three.ws has shipped 429 surfaces and posted about roughly 50. The other 322 are not a roadmap,
+three.ws has shipped 522 surfaces and announced 38 of them. The other 415 are not a roadmap,
 they are inventory that already works and that nobody outside the repository has ever been told
 about. This is the machinery that works that backlog down without a person writing each
 announcement from scratch, and without the output reading like 300 posts from one template.
@@ -79,7 +79,7 @@ table. Remove the entry once the surface is packed, since a packed surface leave
 
 **What counts as a surface.** The inventory is re-derived from `data/pages.json`, `packages/*`,
 `workers/*` and `services/*` on every run. Most of `data/pages.json` is content: the `learn`
-section alone holds 436 documentation and tutorial pages, and announcing each one would drown the
+section alone holds 572 documentation and tutorial pages, and announcing each one would drown the
 features. The five pages in there that carry `showcase: true` are products rather than documents
 (`/awesome`, `/3d`, `/crypto`, `/crypto-api`, `/docs/world`), so `showcase` is the admission rule:
 a content page carrying it is inventory, a content page without it is content. Two of those five
@@ -145,7 +145,7 @@ item as `posts[].media[]` with its own alt text. `npm run check:announce` accept
 still fails a pack whose image carries no alt text, because that is the artifact the publisher
 actually sends.
 
-A surface with no route (115 of the 316 planned announcements are a package, a worker, or a
+A surface with no route (124 of the 342 planned announcements are a package, a worker, or a
 service) gets a title card instead: [`api/_lib/announce/card.js`](../api/_lib/announce/card.js)
 typesets its real name, its real description, the command a developer really runs, and the tools it
 really exposes, in the site's own fonts, and the same capture engine renders it. A post with no

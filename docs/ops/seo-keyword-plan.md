@@ -10,7 +10,7 @@ Related: [page-audit.md](./page-audit.md) covers on-site quality and [search-ind
 
 ### three.ws (own domain)
 
-331 indexable pages across 10 sections (crypto 113, learn 68, build 47, blog 31, main 29, others 43). The blog at `/blog` already carries partnership and feature posts. Every page gets a per-page OG card from `/api/page-og` (the `?v=carbon` variant renders an IBM-adjacent light card for content shared into IBM contexts).
+987 indexable pages across the sections of `data/pages.json` as of 2026-11-06 (learn 571, crypto 170, build 87, main 67, blog 42, others 50; the planning pass on 2026-07-17 counted 331). The blog at `/blog` already carries partnership and feature posts. Every page gets a per-page OG card from `/api/page-og` (the `?v=carbon` variant renders an IBM-adjacent light card for content shared into IBM contexts).
 
 ### IBM Community user group
 

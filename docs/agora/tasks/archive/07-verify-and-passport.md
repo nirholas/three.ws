@@ -1,4 +1,4 @@
-# Task 07 — Verify the work + the living passport
+# Task 07: Verify the work + the living passport
 
 > **Status: shipped** (`src/agora/job-detail.js`, `verify.js`,
 > `passport-panel.js`, `handshake.js`, composed by `trust-surface.js`). Since
@@ -7,10 +7,13 @@
 > itself reports before it says "no proofHash recorded"; and the passport lists
 > the citizen's **primary craft first** (`primaryProfessionKey`,
 > `citizenProfessionLabel` from `citizen-avatar.js`) ahead of the rest of its
-> decoded capability bitmap, which always opens with the baseline Fetcher bit.
+> decoded capability bitmap, which always opens with the baseline Fetcher bit,
+> and it gained a **Mind** section (a citizen's latest reflections and next-step
+> plan from `agora_citizens.meta.mind`, written by `workers/agora-citizens/reflect.js`
+> and `plan.js`) between the cross-chain identity and the activity timeline.
 > Kept as the build record.
 
-**Goal:** Ship the **trust surface** — the thing that proves Agora isn't theater.
+**Goal:** Ship the **trust surface**, the thing that proves Agora isn't theater.
 Click a job → its on-chain lifecycle timeline + a **Verify deliverable** button
 that re-downloads the artifact, re-hashes it in the browser, and shows it matches
 (or doesn't) the on-chain `proofHash`. Click a citizen → the full **living
@@ -21,21 +24,21 @@ Solana MPL-Core identity via the bridge).
 **Depends on:** Task 06 (economy visuals + board markers to click).
 
 ## Context to read first
-- `docs/agora.md` (§ The 3D layer — Verify + passport).
+- `docs/agora.md` (§ The 3D layer, Verify + passport).
 - `api/agora/[action].js` `passport` (projection + live `onchain` + `activity`).
 - `api/agenc/[action].js` `get-task` (`&lifecycle=1` → timeline with actors + tx),
   `get-agent`, `link` (identity bridge: erc8004/mpl-core/handle → canonical id).
-- `solana-agent-sdk/src/actions/agenc/identity-bridge.ts` — how the cross-chain id
+- `solana-agent-sdk/src/actions/agenc/identity-bridge.ts`, how the cross-chain id
   is derived (for the handshake explainer).
 - Task 06's `src/agora/*`.
 
 ## Background
 Completion bound the deliverable: `proofHash = sha256(deliverable bytes)`, stored
 on-chain. So **anyone can verify** by re-fetching `deliverable_url` and hashing it
-client-side (`crypto.subtle.digest('SHA-256', …)`) — no trust required. The
+client-side (`crypto.subtle.digest('SHA-256', …)`), no trust required. The
 passport's `onchain` block is the live registry truth; `activity` is the full
 history; `link` resolves whether a three.ws identity (EVM/Solana/handle) maps to a
-registered AgenC agent — the basis of the handshake.
+registered AgenC agent, the basis of the handshake.
 
 ## Build (scope)
 1. **Job detail.** Clicking a board marker opens a panel that calls
@@ -49,7 +52,7 @@ registered AgenC agent — the basis of the handshake.
    CORS / large files gracefully (stream + size cap + honest error).
 3. **Living passport.** Clicking a citizen opens the full passport from
    `/api/agora/passport`: avatar, name, professions, status, **reputation** (with
-   an A–D-style grade if you derive one — reuse any existing trust-grade logic),
+   an A-D-style grade if you derive one, reuse any existing trust-grade logic),
    **stake**, tasks completed/posted, $THREE earned, and a scrollable activity
    timeline (each row links its tx / deliverable). Designed empty/loading/error.
 4. **Cross-chain handshake.** When a citizen's identity has both an EVM (ERC-8004)
@@ -61,7 +64,7 @@ registered AgenC agent — the basis of the handshake.
    clipboard on hashes/addresses, deep-linkable (`/agora?citizen=…` / `?task=…`).
 
 ## Out of scope
-Humans performing actions (posting/verifying as a logged-in user — Task 08; this
+Humans performing actions (posting/verifying as a logged-in user, Task 08; this
 task's Verify is a public, read-only re-hash anyone can do). Arena/guild views
 (Task 09).
 
@@ -95,7 +98,7 @@ against `/api/agenc/get-agent`. For the handshake, confirm the canonical id equa
 
 ## Guardrails
 - The Verify path must be **honest**: if a deliverable can't be fetched/hashed,
-  say "could not verify" — never show a green check you didn't compute.
+  say "could not verify", never show a green check you didn't compute.
 - No coin but $THREE in any label/explainer.
-- Push to `threews`; changelog: yes (user-visible — "verify any agent's on-chain
+- Push to `threews`; changelog: yes (user-visible, "verify any agent's on-chain
   work yourself; living passports with cross-chain identity").

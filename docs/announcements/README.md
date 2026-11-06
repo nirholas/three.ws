@@ -2,8 +2,9 @@
 
 One file per feature we are announcing, plus the exact bytes that get posted.
 
-three.ws has shipped 430 surfaces and posted about roughly 50. The other 320 are not a roadmap,
-they are inventory that already works, and the audit that established this lives in
+As of the 2026-08-09 scrape, three.ws had 409 inventoried surfaces, 47 announced on their own, 77 mentioned in
+passing and 285 never announced. The never-announced ones are not a roadmap, they are inventory that
+already works, and the historical audit that established this lives in
 [announcement-coverage.md](../announcement-coverage.md). Working that backlog down is what this
 directory is for.
 
@@ -80,8 +81,28 @@ the queue, `node scripts/post-tweet.mjs --file docs/announcements/<slug>.post.tx
 
 ## Packs
 
-| Pack | Surface | Stage |
+The `Stage` and `Announced externally` lines inside each pack are written by `announce:kit` at drafting time and are
+not updated when the post goes out. The queue item's `status` in
+[`data/x-content/queue.json`](../../data/x-content/queue.json) is the source of truth for what shipped, and
+this table mirrors it.
+
+| Pack | Surface | Queue status |
 |---|---|---|
-| [genesis.md](./genesis.md) | [`/genesis`](https://three.ws/genesis) | drafted, awaiting approval to post |
-| [open-source-friday.md](./open-source-friday.md) | [`/rig-doctor`](https://three.ws/rig-doctor) | drafted, awaiting approval to post |
-| [openai-partner-benefits.md](./openai-partner-benefits.md) | [`/openai`](https://three.ws/openai) | drafted, awaiting approval to post |
+| [activity-mcp.md](./activity-mcp.md) | `@three-ws/activity-mcp` | posted (slot 2026-09-21) |
+| [assistant.md](./assistant.md) | [`/assistant`](https://three.ws/assistant) | posted (slot 2026-09-22) |
+| [avatar-mcp.md](./avatar-mcp.md) | `@three-ws/avatar-mcp` | posted (slot 2026-09-21) |
+| [awesome.md](./awesome.md) | [`/awesome`](https://three.ws/awesome) | posted 2026-10-12 as queue item `awesome`, with copy rewritten after this pack |
+| [aws-builder-center-authorization-spine.md](./aws-builder-center-authorization-spine.md) | AWS Builder Center article | posted (sent by hand 2026-09-10, queue item `aws-authorization-spine` retired as posted) |
+| [data-desk.md](./data-desk.md) | [`/data-desk`](https://three.ws/data-desk) | drafted, no queue item yet |
+| [forge-max.md](./forge-max.md) | [`/forge-max`](https://three.ws/forge-max) | posted (slot 2026-09-18) |
+| [forged.md](./forged.md) | [`/forged`](https://three.ws/forged) | drafted, no queue item yet |
+| [galaxy.md](./galaxy.md) | [`/galaxy`](https://three.ws/galaxy) | posted (slot 2026-09-22) |
+| [genesis.md](./genesis.md) | [`/genesis`](https://three.ws/genesis) | withdrawn 2026-11-04: Genesis had already been posted several times |
+| [knock.md](./knock.md) | [`/knock`](https://three.ws/knock) | posted (by hand 2026-09-21) |
+| [materialize.md](./materialize.md) | [`/materialize`](https://three.ws/materialize) | posted (slot 2026-09-19) |
+| [open-source-friday.md](./open-source-friday.md) | [`/rig-doctor`](https://three.ws/rig-doctor) | posted (queue item `rig-doctor`) |
+| [openai-partner-benefits.md](./openai-partner-benefits.md) | [`/openai`](https://three.ws/openai) | queued, in `review`, awaiting approval to post |
+| [product-demo.md](./product-demo.md) | [`/tour`](https://three.ws/tour) | drafted, no queue item yet |
+| [text-to-3d.md](./text-to-3d.md) | free text-to-3D lane (test record) | posted (queue items `text-to-3d`, `free-characters`) |
+| [three-token-mcp.md](./three-token-mcp.md) | `@three-ws/three-token-mcp` | posted (slot 2026-09-18) |
+| [walk.md](./walk.md) | [`/walk`](https://three.ws/walk) | drafted, no queue item yet |

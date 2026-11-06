@@ -9775,6 +9775,7 @@ Every Solana token gets a **live 3D world**. Coin Communities ([three.ws/communi
 | Lobby             | `/communities`, `/worlds`   | Browse real pump.fun trending coins + search, pick an avatar, drop into a world                     |
 | Coin profile      | `/communities/[mint]`       | Deep-linkable coin page - metadata, bonding-curve price, graduation progress, recent trades         |
 | 3D world          | `/play`                     | The shared coin-keyed world - peer avatars, name labels, chat, emotes, voxel building, market screen |
+| Lite client       | `/play/lite`                | 2D top-down client in the same room, no three.js or WebGL needed; `/play` hands off to it automatically on devices without WebGL ([docs/play-lite.md](docs/play-lite.md)) |
 
 **How it works**
 

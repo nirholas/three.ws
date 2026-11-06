@@ -111,6 +111,11 @@ touches a blockchain.
    restart, and every instance. The quote is also sealed to the character that
    requested it, so it cannot be redeemed onto another profile.
 
+If the world socket drops after your payment confirms, the client waits for the
+reconnect and resends the same quote and signature until the quote expires. The
+replay guard makes a resend safe, and an "already settled" answer after a resend is
+read as the earlier send having landed. Paid wheel spins settle the same way.
+
 You are never granted an item on the strength of a client claiming it paid.
 
 ### Where the money goes

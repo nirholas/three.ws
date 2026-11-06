@@ -9,6 +9,13 @@ in the roadmap sentence is shorthand for the reconstruction compute lane; the
 capacity question is the same either way: can the lane hold 10,000 finished
 avatars per day?
 
+Since 2026-11-04 `api/_providers/gcp.js` can route plain face reconstructions
+(no `tier`, `path` or `target_polycount` param) to an optional GPU service that
+runs a dense photometric head fit (`workers/avatar-reconstruction/Dockerfile.rtx`),
+when `RECONSTRUCT_DENSE_URL` is set. Unset, every job takes the CPU service this
+note sizes. Every number below was measured on the CPU service and does not
+describe the dense lane.
+
 Short answer, measured 2026-08-12: **yes, with a config-only autoscaling
 change that is now live.** This note records the numbers, the change, and the
 one trap that made the old config incapable of the target no matter how much

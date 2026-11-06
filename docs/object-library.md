@@ -11,7 +11,7 @@ Source: [`pages/objects.html`](../pages/objects.html) · [`src/objects-library.j
 
 ## What is in the library
 
-Several hundred CC0 props staged as web-ready GLBs on the R2 CDN, currently sourced from Poly Haven (each entry's `source` field says where it came from). Every entry carries its categories (for the filter chips), free-text tags (searched along with the name), and its file size. The API's `total` field is the authoritative count.
+Several hundred CC0 props staged as web-ready GLBs on the R2 CDN, sourced from Poly Haven, the NVIDIA SimReady set and Kenney's Graveyard Kit (each entry's `source` field says where it came from: `polyhaven`, `simready`, `kenney-graveyard`). Every entry carries its categories (for the filter chips), free-text tags (searched along with the name), and its file size. The API's `total` field is the authoritative count.
 
 Objects are props, not agents: opening one in the viewer uses object mode, which shows view and modify affordances instead of the agent chat dock.
 
@@ -73,7 +73,7 @@ Each entry in `objects`:
 | `categories` | string[] | Categories, used by the gallery's filter chips |
 | `tags` | string[] | Free-text tags, searched by the gallery |
 | `license` | string | `"CC0"` or `"CC-BY-4.0"` |
-| `attribution` | string (optional) | Credit line to show wherever the model is used; present on every `CC-BY-4.0` entry |
+| `attribution` | string (optional) | Credit line to show wherever the model is used; present on every `CC-BY-4.0` entry and on the Kenney CC0 entries (a courtesy credit there) |
 | `source` | string | Origin catalog, e.g. `"polyhaven"` |
 
 Before the manifest is first uploaded, the endpoint returns `{ "objects": [], "total": 0 }` rather than an error, so consumers feature-detect by emptiness. A storage outage degrades the same way, but that response carries `Cache-Control: no-store` instead of the 300s edge cache, so the library reappears the moment storage recovers rather than staying empty for the rest of the cache window.
@@ -92,7 +92,7 @@ Returns the first two objects plus `total`, `offset`, and `next_offset`, each en
 
 Every manifest entry carries its own `license`, and there are two:
 
-- **`CC0`** (the Poly Haven props): public domain. Free for any use, personal or commercial, no attribution required (crediting the original authors is appreciated, never required), and you may download, modify and redistribute the GLB anywhere.
+- **`CC0`** (the Poly Haven props and the Kenney Graveyard Kit, ingested by `scripts/ingest-kenney-graveyard.mjs`): public domain. Free for any use, personal or commercial, no attribution required (crediting the original authors is appreciated, never required), and you may download, modify and redistribute the GLB anywhere.
 - **`CC-BY-4.0`** (the [NVIDIA SimReady assets](./simready-assets.md)): free for any use, personal or commercial, as long as you credit the author. These entries also carry an `attribution` string (`NVIDIA SimReady Assets, CC BY 4.0, <source url>`), and the gallery prints it on the card. The GLBs are converted and decimated derivatives of NVIDIA's OpenUSD originals, which CC BY 4.0 permits with attribution.
 
 Read `license` before redistributing; do not assume CC0 for the whole library.
@@ -104,7 +104,7 @@ The gallery and API are read-only consumers of a manifest built by a local pipel
 1. `scripts/fetch-polyhaven-objects.mjs` downloads and converts the source models and writes `public/objects/polyhaven/catalog.json`.
 2. `scripts/render-glb-thumbnails.mjs` renders the PNG thumbnails to R2.
    The NVIDIA SimReady set has its own ingest: see [SimReady assets](./simready-assets.md).
-3. `scripts/build-object-library.mjs` reads the catalogs (Poly Haven and SimReady), keeps only completed models, includes a `thumb` only for thumbnails that actually rendered, and PUTs `objects/library/manifest.json` to R2 (`--dry-run` prints without uploading).
+3. `scripts/build-object-library.mjs` reads the catalogs (Poly Haven, SimReady and Kenney Graveyard), keeps only completed models, includes a `thumb` only for thumbnails that actually rendered, and PUTs `objects/library/manifest.json` to R2 (`--dry-run` prints without uploading).
 
 ## Related
 

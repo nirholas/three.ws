@@ -8,8 +8,8 @@ every minute. When nothing hits them, the economy flat-lines while the site keep
 serving traffic.
 
 In production these endpoints are driven by **Google Cloud Scheduler** — one
-job per `vercel.json` cron entry (the `crons` array there is the count; 154 at
-the 2026-11-04 sync), each firing `GET /api/cron/<name>`
+job per `vercel.json` cron entry (the `crons` array there is the count; 165 as of
+2026-11-06), each firing `GET /api/cron/<name>`
 with the `Authorization: Bearer $CRON_SECRET` header. (We do **not** use GitHub
 Actions for any scheduling.)
 

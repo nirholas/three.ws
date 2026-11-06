@@ -49,6 +49,10 @@ Three layers behind it:
   excluded from the score. The score only ever claims what was measured.
 - **Capped scans say so.** Signature and transaction pagination is bounded; a
   wallet past the cap gets flagged totals that read as honest minimums.
+- **An unread chain is not a quiet chain.** If an EVM explorer fails for one
+  chain while others answer, the scan still returns, but `activity` carries
+  `partial: true` and `unread_chains` naming what could not be seen. A failed
+  read is never counted as zero activity.
 - **Estimated ranges are labeled speculation.** The hero sum only adds ranges
   from programs the wallet actually qualifies for, and the page repeats that
   these are public speculation, not promises. Nothing on the surface is an

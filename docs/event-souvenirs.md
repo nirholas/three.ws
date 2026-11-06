@@ -13,6 +13,11 @@ That constraint is the entire product. A cosmetic you can buy later says nothing
 about you. This one says exactly one thing, permanently, to every player who
 walks past you.
 
+Other event-tier items, such as the Halloween Weekend 2026 Pumpkin Cap and
+Witchlight aura, are not window drops: they are claimed on the site through
+[seasonal drops](seasonal-drops.md) and share only the `event` tier and the
+ownership rules below.
+
 The first one is the **Meetup Laurel**: a gold laurel circlet, open at the
 front, with three pearl berries in the gap. It was configured for the
 [`$THREE` First Holders Meetup](play-live-events.md) on 2026-08-09, but the
@@ -61,11 +66,13 @@ Everything lives in one file: `public/event.json`, the
 same config that drives the countdown pill, the agenda drawer, and the fireworks
 finale.
 
-**Between events that file carries an explicit no-event state (an all-null
+**Between events that file can carry an explicit no-event state (an all-null
 window), which is the platform's resting state.** The file itself always exists
-so `/event.json` answers 200 in every visitor console. No event is scheduled
-right now, so nothing is being granted. Running one starts by writing a real
-config into the file, souvenir block included:
+so `/event.json` answers 200 in every visitor console. Today it holds the
+Community Meetup #3 config (`orbit-crown-meetup-3`, 2026-11-06, 16:00 to 17:00
+UTC), so that window is the live drop. Running a new event starts by writing a
+real config into the file, souvenir block included (this example is the first
+meetup's shape):
 
 ```json
 {

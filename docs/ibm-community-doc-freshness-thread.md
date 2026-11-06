@@ -54,7 +54,7 @@ src/animation-retarget.js
 
 That is the reading list for refreshing the page: two commits, with their intent in the subject line. I read the first one. It added a two-minute cap per render, and the doc does not mention it. Nothing the doc says is wrong, but an operator would want that fact. That is the typical shape of drift: not a lie, a missing truth.
 
-Our production version (a Node script that runs over the whole corpus of a little over 800 docs in about two seconds) adds the parts that turn this from a curiosity into something a team can live with:
+Our production version (a Node script that runs over the whole corpus of a little over 1,000 docs in a few seconds) adds the parts that turn this from a curiosity into something a team can live with:
 
 - **Weight by exclusivity.** Our route config file is named by 72 docs. If all 72 went red every time a route changed, nobody would read the dashboard. So each drifted file counts 1/N, where N is how many docs name it, and a doc is "stale" when the total reaches 1.0: the equivalent of one file only this doc documents having changed.
 - **A second clock for reviews.** Reading a page and finding it correct is real work with no diff. Without a way to record it, people either make cosmetic edits (a lie in the history) or leave permanent false positives (which teach everyone to ignore the signal). A review stamp records who checked the page against which commit, and freshness is measured from the newer of the last edit and the last review. A stamp that names a commit the repository does not have fails the build, because a fictional baseline silently hides real drift.

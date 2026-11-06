@@ -32,7 +32,7 @@ scripts/lib/feature-jobs.mjs ─┘                       (pages[].job, jobs[])
 
 - **Nav**: "Browse by goal" leads Discover > Start here, and "Everything" is a top-level link. Both are in the lite tier (the lite menu stays at or under 30 links; `/pocket` moved to the advanced tier to make room).
 - **⌘K palette**: a "Browse by goal" quick action and suggestion, and every page result is labelled with its goal instead of its site section.
-- **What next? strip** (`public/next-steps.js`, loaded by `nav.js`): under a dozen tool pages (`/forge`, `/image-to-3d`, `/create/*`, `/animations`, `/widgets`, `/marketplace`, `/launch`, ...) a short strip suggests the natural next steps, dismissible per session. Opt a page out with `<html data-next-steps="off">`. `tests/next-steps.test.js` checks every link resolves to a real page. It complements `public/feature-discovery.js`, which fires its own card after a `tws:feature-done` event.
+- **What next? strip** (`public/next-steps.js`, loaded by `nav.js`): about a dozen tool pages (`/forge`, `/image-to-3d`, `/create/*`, `/animations`, `/widgets`, `/marketplace`, `/launch`, ...) a short strip suggests the natural next steps, dismissible per session. Opt a page out with `<html data-next-steps="off">`. `tests/next-steps.test.js` checks every link resolves to a real page. It complements `public/feature-discovery.js`, which fires its own card after a `tws:feature-done` event.
 - **/sitemap** links to `/everything` in its header.
 
 `/everything` used to be a guessable alias that 308'd to `/sitemap`; that alias was removed from `vercel.json` and `vite.config.js`.

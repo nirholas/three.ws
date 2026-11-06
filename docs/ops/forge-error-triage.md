@@ -145,10 +145,14 @@ recovery accounting above matters more than the raw count.
   worker's own logs for the same period ([gcp-logs.md](gcp-logs.md)).
 - **`lost_task`** means the poll asked the lane for a job it does not know about.
   On a self-hosted worker that is a restarted or scaled-to-zero instance losing
-  in-memory task state: the worker's reaper writes
-  `task orphaned: no progress within 30 minutes` after
-  `_PENDING_TTL_SECS` ([workers/model-trellis/main.py](../../workers/model-trellis/main.py),
-  and the same reaper in `model-hunyuan3d` and `model-triposg`). On NVIDIA it is
+  in-memory task state. `model-trellis` heartbeats each live task's durable
+  record every 30s and declares it orphaned after 180s without one, writing
+  `task orphaned: its runner instance stopped mid-job (restart or out of
+  memory); retry the request`
+  ([workers/model-trellis/instance_health.py](../../workers/model-trellis/instance_health.py)).
+  `model-hunyuan3d` and `model-triposg` still use the older reaper that writes
+  `task orphaned: no progress within 30 minutes` after `_PENDING_TTL_SECS`
+  (1800s) in their `main.py`. On NVIDIA it is
   `NVCF request not found or expired`. Check the recovered count before treating
   a spike as user-visible.
 - **`out_of_memory`** on a self-hosted lane is usually the GPU, not the prompt.

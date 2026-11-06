@@ -98,6 +98,11 @@ What it unlocks that lane 2 cannot: **spoken** conversation with a street agent
 for visual re-localisation, so an agent stands where it was placed to the
 centimetre rather than to the five metres GPS gives you.
 
+The web half is already written: [src/irl/glasses/native-bridge.js](../src/irl/glasses/native-bridge.js)
+feature-detects the `ThreeWsWearables` Capacitor plugin in the iOS shell
+([ios/docs/WEARABLES.md](../ios/docs/WEARABLES.md)) and routes voice and
+re-localisation through it, so the plain web build never loads native code.
+
 ---
 
 ## What every lane rides on

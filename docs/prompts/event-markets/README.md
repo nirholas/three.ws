@@ -39,8 +39,8 @@ All briefs agree on one seam. The first brief to run creates it; every later bri
 |---|---|---|
 | 01 | [Core markets and picks API](01-core-markets-and-picks.md) | The contract above, REST reads and writes, MCP tools |
 | 02 | [Market pages and share cards](02-market-pages-and-share-cards.md) | `/event-markets`, market detail, OG card |
-| 03 | [Auto-resolution from our own data](03-auto-resolution.md) | Resolvers per source kind, lock and settle cron |
-| 04 | [Auto-open a market for every event](04-auto-open-for-every-event.md) | Cron that creates and populates markets |
+| 03 | [Auto-resolution from our own data](archive/03-auto-resolution.md) | Resolvers per source kind, lock and settle cron |
+| 04 | [Auto-open a market for every event](archive/04-auto-open-for-every-event.md) | Cron that creates and populates markets |
 | 05 | [Announcement automation](05-announcement-automation.md) | Draft queue, entrant tagging, owner-approved posting |
 | 06 | [Entrant amplification kit](06-entrant-amplification-kit.md) | Per-entrant share kit, embed widget, notifications |
 | 07 | [Pick leaderboard, streaks and rewards](07-pick-leaderboard-and-rewards.md) | Forecaster rankings, streaks, reward rail |

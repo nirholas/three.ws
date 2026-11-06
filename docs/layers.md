@@ -38,7 +38,7 @@ The Viewer is pure three.js. It can be used as a standalone glTF inspector with 
 
 Concretely:
 
-- `WebGLRenderer` configured for `devicePixelRatio`, demand-rendered (`viewer.invalidate()`), idle frames skipped.
+- `WebGLRenderer` configured for `devicePixelRatio`, demand-rendered (`viewer.invalidate()`), idle frames skipped. WebGPU is opt-in (`?renderer=webgpu` or `renderer="webgpu"` on `<agent-3d>`) and falls back to WebGL2 when no adapter is available; `viewer.backend` reports which one is running.
 - `GLTFLoader` with `DRACOLoader`, `KTX2Loader`, and `MeshoptDecoder` attached. Decoder URLs are version-pinned to the bundled three.js.
 - `OrbitControls`, auto-disabled when an embedded glTF camera is selected.
 - `AnimationMixer` plus a per-clip action-state map.

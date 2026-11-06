@@ -153,9 +153,9 @@ everything the relay could ever ask for, directly, without us.
   except the user's own curated MCP tool list. Carrying it would widen the allowlist, so it needs
   its own review rather than an extension.
 - **The relay is one trust domain.** A single process holds every house. Sessions are keyed by a
-  random 12-byte id inside a per-install map and the routing is tested, but a bug that crossed
-  sessions would cross houses, and that should be said out loud rather than left implied by the
-  architecture diagram.
+  random 72-bit id (nine bytes, twelve characters) inside a per-install map and the routing is
+  tested, but a bug that crossed sessions would cross houses, and that should be said out loud
+  rather than left implied by the architecture diagram.
 - **The relay build is not attested.** Trusting relay mode includes trusting that the deployed
   relay is the code in this repository. Reproducible builds and image signing would close that gap
   and are not done.

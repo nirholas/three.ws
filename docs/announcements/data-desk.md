@@ -90,5 +90,5 @@ npm run x:content -- review data-desk               # lint, live fact checks, AI
 npm run x:content -- run --dry-run --id data-desk   # exactly what would be sent to X
 ```
 
-The queue item is `data-desk` in [`data/x-content/queue.json`](../../data/x-content/queue.json), at status `draft`. It becomes eligible to publish when a passing review record exists and the owner sets its status to `approved`; the Cloud Scheduler tick then sends it at its slot. Nothing here posts on its own.
+There is no `data-desk` item in [`data/x-content/queue.json`](../../data/x-content/queue.json) yet, so the pack is not scheduled. Once an item exists at status `draft`, it becomes eligible to publish when a passing review record exists and the owner sets its status to `approved`; the Cloud Scheduler tick then sends it at its slot. Nothing here posts on its own.
 

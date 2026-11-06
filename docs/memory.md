@@ -63,6 +63,8 @@ Configure the persistence mode in the agent's `manifest.json`:
 
 Custom backends can also be registered programmatically with `Memory.registerBackend(name, backend)` (a `backend` object with `load` / `persist` / optional `recall` hooks, see `specs/MEMORY_SPEC.md`); any unknown mode falls back to `local` with a warning.
 
+Server-side rows in `remote` mode are temporal: `POST /api/agent-memory` accepts `entry.validFrom`, `entry.sourceRef` and `entry.supersedes` (up to 10 current memory ids of the same agent), and superseded facts stay searchable as history. See [Facts over time](/docs/agent-memory) for `as_of` and `include_history` recall.
+
 ### Local mode (default)
 
 Memory is serialized to `localStorage` under a single namespaced key:

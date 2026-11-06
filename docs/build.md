@@ -8,16 +8,16 @@ touching the build pipeline.
 
 | Command | What it does |
 | --- | --- |
-| `npm run build` | The app build: `prebuild` lifecycle → `vite build` (`--max-old-space-size=6144`) → `scripts/strip-sw-from-embeds.mjs` → `scripts/inject-tour-boot.mjs` → `scripts/inject-atlas.mjs`. Output → `dist/`. |
-| `npm run build:gcp` | The **full pre-deploy build**, in the load-bearing order: `check:conflicts` → `check:browser-graph` → `ensure:avatar-studio` → build info snapshot → `build:chat` → `npm run build` (the vite build wipes `dist/`, so everything that writes into `dist/` comes after it) → UMD library build (`build:lib:full`) → `publish:lib` (mirrors the library into `dist/`) → `build:info` → `check:dist` → `check:pages`. Run this, not bare `npm run build`, before deploying: `check:dist` fails without the published library bundle. |
-| `npm run deploy:gcp` | The **production deploy**: `check:dist` + `check:pages` + `db:check` gates → `gcloud builds submit` (Docker image via `server/cloudbuild.yaml`) → Cloud Run (`three-ws-api`, `us-central1`) → CDN cache purge → `smoke:prod` sweep of the live site. Run `npm run build:gcp` first so `dist/` is complete (see [CI parity](#ci-parity)). |
+| `npm run build` | The app build: `prebuild` lifecycle → `vite build` (`--max-old-space-size=6144`) → `scripts/strip-sw-from-embeds.mjs` → `scripts/inject-tour-boot.mjs` → `scripts/inject-atlas.mjs` → `scripts/inject-inline-behaviors.mjs`. Output → `dist/`. |
+| `npm run build:gcp` | The **full pre-deploy build**, in the load-bearing order: `check:conflicts` → `check:browser-graph` → `check:tdz-bootstrap` → `ensure:avatar-studio` → build info snapshot → `docs:freshness` → UMD library build (`build:lib:full`) → `build:avatar-sdk` → `build:chat` → `npm run build` (the vite build wipes `dist/`, so everything that writes into `dist/` comes after it) → `publish:lib` (mirrors the library into `dist/`) → `build:info` → `check:dist` → `check:pages`. Run this, not bare `npm run build`, before deploying: `check:dist` fails without the published library bundle. |
+| `npm run deploy:gcp` | The **production deploy**: `check:dist` + `check:pages` gates → `deploy:gcp:submit` (`db:check`, `check:gcloudignore`, `audit:deploy` and `check:api-imports` gates, then `gcloud builds submit` of the Docker image via `server/cloudbuild.yaml`) → Cloud Run (`three-ws-api`, `us-central1`) → Cloud Scheduler cron sync (`deploy:gcp:sync-crons`) → CDN cache purge → `smoke:prod` sweep of the live site. Run `npm run build:gcp` first so `dist/` is complete (see [CI parity](#ci-parity)). |
 | `npm run deploy:gcp:full` | `build:gcp` + `deploy:gcp` in one command. |
 | `npm run deploy` | Provider-neutral production alias for `deploy:gcp:full`. It never invokes Vercel. |
 | `npm run build:production` | Full local reproduction build retained from the pre-GCP orchestrator. |
 | `npm run build:vercel` | Legacy full-build orchestrator (`scripts/build-vercel.mjs`) from the Vercel era — runs the gate suite, bundles the API with esbuild, and builds every sub-package. **Not on the Cloud Run deploy path**; kept for full local reproduction (see [the trap](#the-esbuild-overwrite-trap)). |
 | `npm run clean` | `rm -rf dist/* dist-lib/*`. |
 | `npm run check:dist` | Asserts the published `agent-3d` library bundle + `dist-lib` mirror exist, the version matches `package.json`, and a short list of critical static pages resolves in `dist/` (`scripts/check-dist.mjs`). The full page sweep against the `vercel.json` route table is `npm run check:pages` (`scripts/check-pages.mjs`). |
-| `npm run audit:deploy` | Pre-flight for the three 2026-06-11 outage classes: committed symlinks, unsatisfied peer deps, undeclared `api/` imports (`scripts/audit-deploy-artifacts.mjs`). |
+| `npm run audit:deploy` | Pre-flight for the three 2026-06-11 outage classes: committed symlinks, unsatisfied peer deps, undeclared `api/` imports, plus a dry-run `npm ci` with the exact npm the Dockerfile pins, so a lockfile that npm version refuses fails in seconds instead of minutes into Cloud Build (`scripts/audit-deploy-artifacts.mjs`). |
 | `npm run guard:esbuild` | esbuild-trap guard — blocks committing a bundled `api/*.js` (scans the git index). `:all` sweeps the working tree. |
 
 ## CI parity
@@ -35,10 +35,11 @@ npm run deploy:gcp   # build the image + deploy to Cloud Run
 only: the vite step wipes `dist/`, so without the follow-on `publish:lib`
 mirror the `check:dist` gate fails. `build:gcp` encodes the correct order.
 
-`deploy:gcp` runs `check:dist`, `check:pages`, and `db:check`, then `gcloud builds submit
+`deploy:gcp` runs `check:dist` and `check:pages`, then `deploy:gcp:submit`: the `db:check`,
+`check:gcloudignore`, `audit:deploy` and `check:api-imports` gates and `gcloud builds submit
 --config server/cloudbuild.yaml`. Cloud Build builds the root `Dockerfile` on a
 32-vCPU machine with BuildKit inline caching (an unchanged `package-lock.json`
-skips `npm ci`), pushes the image, deploys it to Cloud Run in one run, and the
+skips `npm ci`; the image pins npm to the version that produced the lockfile), pushes the image, deploys it to Cloud Run in one run, and the
 `deploy:gcp:purge-cdn` step invalidates the CDN cache, after which `smoke:prod`
 sweeps every registered page on the live site. The image copies the
 already-built `dist/` and runs `server/index.mjs`, which serves the static

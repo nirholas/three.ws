@@ -2,7 +2,7 @@
 
 The Brain lab sends a single prompt to many frontier models at once and streams
 their answers side by side, each with live latency and token stats. Claude, GPT,
-Qwen, ModelScope, Groq, and more respond in parallel so you can compare tone, speed,
+Qwen, ModelScope, Llama, and more respond in parallel so you can compare tone, speed,
 and cost before you wire a model into an agent. It is the fastest way to decide which
 brain an agent should carry.
 
@@ -39,20 +39,24 @@ key when present) and the OpenRouter model id that mirrors it. The proxy prefers
 native model and falls back to routing through OpenRouter, and if a native provider
 hits a quota, billing, or rate-limit error at request time it reroutes around the
 outage through the mirrored OpenRouter id. If the mirror fails too, a free-tier
-safety net answers before any error is surfaced: Groq Llama 3.3, then the OpenRouter
-`:free` route across every configured key, then NVIDIA NIM. A route only errors once
-no free provider can answer, and each handoff emits an `event: fallback` frame. The
-roster spans Anthropic (Claude Fable 5, Opus 5, Sonnet 5, Opus 4.7, Sonnet 4.6, Haiku 4.5),
-OpenAI (GPT-OSS 120B, the GPT-5.x family, o3 family), xAI (Grok 4.x), Groq (Llama
-3.3 70B), DashScope (Qwen Plus), ModelScope (Qwen3-Coder 480B), DeepSeek R1, IBM
-Granite on watsonx.ai, and a free NVIDIA NIM lineup (Nemotron 3 Super 120B,
-Llama-Nemotron Super 49B, Nemotron Nano 9B, DeepSeek V4 Pro, Kimi K2.6, Llama 4
-Maverick, MiniMax M2.7). In compare mode the page opens one streaming POST per
+safety net answers before any error is surfaced: Groq Qwen 3.8 27B, then the
+OpenRouter `:free` default (Gemma 4 31B) across every configured key, then NVIDIA NIM,
+then SambaNova, Mistral and Z.AI free lanes, with a credits-funded Vertex Gemini rung
+at the tail when the GCP project is set. A route only errors once no lane can answer,
+and each handoff emits an `event: fallback` frame. The roster spans Anthropic (Claude
+Fable 5, Opus 5, Sonnet 5, Opus 4.7, Sonnet 4.6, Haiku 4.5), OpenAI (the GPT-5.x family
+and o3 family), xAI (Grok 4.x), Gemma 4 31B as the free platform default (served under
+the historical key `gpt-oss-120b`), Qwen Plus on DashScope, Qwen3-Coder 480B on
+ModelScope, DeepSeek R1, IBM Granite on watsonx.ai, a free NVIDIA NIM lineup (the
+Nemotron rows), and the open-model roster in `api/_lib/model-roster.js` (Llama, DeepSeek,
+Kimi, Mistral, Qwen and Gemini). Claude via Vertex AI rows appear when Vertex is enabled.
+In compare mode the page opens one streaming POST per
 selected provider and renders them in a grid, so every model streams concurrently
 rather than in sequence.
 
 Anonymous callers are gated to the genuinely free tiers only (the OpenRouter-routed
-open-weight default and the free NVIDIA NIM models); every paid first-party model
+open-weight default, the free NVIDIA NIM models and the free open-model roster rows,
+which draw on the daily free-tier allowance); every paid first-party model
 requires sign-in so an unauthenticated script cannot drain the server's billed API
 keys.
 
@@ -99,7 +103,7 @@ To compare, open one POST per provider concurrently (this is exactly what Compar
 does in the browser):
 
 ```bash
-for p in claude-sonnet-4-6 gpt-oss-120b groq-llama modelscope-qwen; do
+for p in claude-sonnet-4-6 gpt-oss-120b llama-3.3-70b modelscope-qwen; do
   curl -N -s -X POST https://three.ws/api/brain/chat \
     -H 'content-type: application/json' \
     -H "authorization: Bearer $THREEWS_TOKEN" \
@@ -112,7 +116,7 @@ done; wait
 - **Availability gating.** A provider whose upstream key is absent shows as
   unavailable in the roster and is skipped rather than erroring mid-stream.
 - **Anonymous scope.** Signed-out users can only call the free tiers (the
-  OpenRouter-routed default and free NVIDIA NIM models). Paid first-party models
+  OpenRouter-routed default, free NVIDIA NIM models and free roster rows). Paid first-party models
   return an auth requirement.
 - **Automatic failover.** A native provider outage (quota, billing, rate limit) is
   rerouted through the mirrored OpenRouter model at request time, so a single upstream
