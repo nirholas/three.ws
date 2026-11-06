@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-06T04:11:15.137Z",
+	"generated_at": "2026-11-06T05:39:16.290Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4461,
+	"total": 4463,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -32,6 +32,16 @@
 		{
 			"date": "2026-11-06",
 			"type": "update",
+			"title": "Agent payments on Solana stop stalling on a starved RPC",
+			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
 			"title": "Join any /play world from any phone or laptop with Play lite",
 			"summary": "Devices that can't run the 3D world (no graphics acceleration, an old phone, a locked-down work laptop) now land in Play lite: the same live room drawn as a top-down map. You walk by tapping, chat, react, emote, enter and vote in the dance-off, sign the wall and follow the meetup agenda, and everyone in 3D sees you arrive as an avatar. /play switches over automatically before the 3D engine downloads, a slow device is offered the switch, and Open in 3D takes you back.",
 			"link": "/play/lite",
@@ -47,6 +57,17 @@
 			"link": "/play",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Pages keep working right after a site update",
+			"summary": "Right after an update, /play could stop on \"Couldn't load the world\" and other pages could fail the same way, because our network edge kept handing out an old copy of the page that pointed at files the update had removed. Reloading fetched the same old copy, so Try again could not help. Pages now always come fresh from the site, so an update can no longer strand visitors on a dead copy.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1521,26 +1542,6 @@
 			"link": null,
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "three.ws can now be bought through Microsoft Marketplace, Copilot, Teams, Power Platform and the Microsoft Store",
-			"summary": "The groundwork for selling three.ws through Microsoft is in place. A team that buys a three.ws plan on Microsoft Marketplace lands on /microsoft/activate, signs in with their work account, and gets the same plan a card purchase gives, billed on their Microsoft invoice. Plan changes, suspension and cancellation flow back automatically, and tool calls and agent messages are reported to Microsoft every hour, with Microsoft-side hiccups retried rather than dropped. Alongside it: a Microsoft 365 Copilot agent and Teams app with a bot and a tab, a Power Platform connector with five actions for Power Automate, Power Apps, Logic Apps and Copilot Studio, and a Windows app package for the Microsoft Store, each with a validator. Each one goes live after its Microsoft review.",
-			"link": "/docs/microsoft-marketplace-saas",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Token due diligence finishes its holder reads when the public RPC is throttling",
-			"summary": "With the keyed RPC providers at quota, the public cluster rate-limits per address over a ten second window, and the report's history reads used to give up inside one second, so most holder wallets went unread and the insider, sniper, bundler and fresh-wallet fields were withheld. History reads now back off across that window and space themselves out for a minute after a throttle, shared by every report on the server. A cold $THREE report now reads all 16 wallet holders with no failed reads and fills every field. Healthy lanes are never slowed.",
-			"link": "/docs/token-due-diligence",
-			"tags": [
-				"fix"
 			]
 		}
 	]
