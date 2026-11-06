@@ -85,16 +85,20 @@ const log = logger('x402-ring-reconciliation');
 
 const ASSET = USDC_MINT || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-// 72h rolling window on a 30-min cadence: every settle is re-verified ~144 times
-// before it ages out, so a transient RPC miss self-heals instead of latching.
+// 72h rolling window on a 30-min cadence, so a transient RPC miss self-heals
+// instead of latching.
 const LOOKBACK_HOURS = 72;
-// Per-minute ring cadence ⇒ ~4,320 settles per 72h window. The row cap sits above
-// that so normal volume is never silently truncated; if it ever is, the summary
-// says so (settle_rows_truncated).
+// The ring settles about 20,000 times per 72h (measured 2026-11-06), so this cap
+// binds and each run reads roughly the newest 15 hours of a book. Every settle
+// still passes through that window about 30 times before it leaves. The books fill
+// at different rates, which is why check 4 only compares the span both cover.
 const MAX_SETTLE_ROWS = 5000;
 const MAX_SWEEP_ROWS = 500;
 // getSignatureStatuses accepts up to 256 signatures per call.
 const STATUS_BATCH = 256;
+// Old open *_missing verdicts re-checked per run: one status call. They have left
+// the lookback, so nothing else would ever close them.
+const STALE_MISSING_BATCH = 256;
 // Shared parsed-transaction budget per run (the expensive RPC). Sweeps draw
 // first; settle amount-sampling gets the remainder.
 export const MAX_PARSED_TX_PER_RUN = 50;
@@ -239,6 +243,12 @@ async function loadSweepRows(db) {
 	}
 }
 
+// Oldest timestamp a capped book reaches; 0 when the book was read in full.
+function bookFloor(rows, tsOf) {
+	if (rows.length < MAX_SETTLE_ROWS) return 0;
+	return Math.min(...rows.map((r) => new Date(tsOf(r)).getTime()));
+}
+
 // Per-tx totals across ALL legs of every sweep signature, aggregated in SQL so
 // the MAX_SWEEP_ROWS page can never truncate one leg of a split sweep (payer +
 // revshare share a tx_sig) and hand verifySweepMovement a partial sum, which
@@ -285,11 +295,31 @@ async function loadBuyerRows(db) {
 	}
 }
 
+// Open *_missing verdicts, least recently checked first. Rows inside the lookback
+// are rewritten every run, so this order reaches the ones that have aged out.
+async function loadStaleMissing(db) {
+	try {
+		return await db`
+			SELECT source, source_ref, tx_signature, amount_atomic, db_status, discrepancy, detail
+			FROM payment_reconciliation
+			WHERE reconciled = false
+			  AND source IN ('ring_facilitator_settle', 'ring_ledger_sweep')
+			  AND discrepancy IN ('x402_ring_settle_missing', 'x402_ring_sweep_missing')
+			  AND tx_signature IS NOT NULL
+			ORDER BY checked_at ASC
+			LIMIT ${STALE_MISSING_BATCH}
+		`;
+	} catch (err) {
+		log.warn('ring_reconcile_stale_load_failed', { message: err?.message });
+		return [];
+	}
+}
+
 // ── Chain helpers
 
 // signature → { found, err } | absent on RPC failure (callers treat a missing
 // entry as unknown, never a discrepancy).
-async function fetchOnChainStatuses(conn, signatures) {
+async function readStatuses(conn, signatures) {
 	const out = new Map();
 	for (let i = 0; i < signatures.length; i += STATUS_BATCH) {
 		const batch = signatures.slice(i, i + STATUS_BATCH);
@@ -302,6 +332,24 @@ async function fetchOnChainStatuses(conn, signatures) {
 		} catch (err) {
 			log.warn('ring_reconcile_status_batch_failed', { from: i, message: err?.message });
 		}
+	}
+	return out;
+}
+
+// A null status only means the lane that answered does not hold that signature, and
+// the RPC chain rotates across lanes of uneven history. Taken at face value that
+// raised a CRITICAL for settlements that were on-chain all along (40 of 40 sampled
+// on 2026-11-06), so a miss must survive a second read. An unanswered second read
+// leaves the signature unknown, not missing.
+async function fetchOnChainStatuses(conn, signatures) {
+	const out = await readStatuses(conn, signatures);
+	const absent = signatures.filter((sig) => out.get(sig)?.found === false);
+	if (!absent.length) return out;
+	const second = await readStatuses(conn, absent);
+	for (const sig of absent) {
+		const st = second.get(sig);
+		if (st) out.set(sig, st);
+		else out.delete(sig);
 	}
 	return out;
 }
@@ -468,6 +516,8 @@ export async function run(ctx = {}) {
 		fee_divergence: null,
 		tripwire_fired: false,
 		parsed_tx_used: 0,
+		stale_missing_checked: 0,
+		stale_missing_cleared: 0,
 	};
 	const critical = [];
 
@@ -652,10 +702,14 @@ export async function run(ctx = {}) {
 	const graceCutoff = nowMs - ORPHAN_GRACE_MINUTES * 60_000;
 	const buyerSigs = new Set(buyers.map((b) => b.tx_signature).filter(Boolean));
 	const settleSigs = new Set(settles.map((s) => s.tx_sig).filter(Boolean));
+	// A capped book stops at its oldest loaded row. Anything older than that on the
+	// other side has no counterpart loaded, which says nothing about whether one exists.
+	const coverageFloor = Math.max(bookFloor(settles, (r) => r.ts), bookFloor(buyers, (r) => r.ts));
 
 	for (const row of settles) {
 		if (!row.tx_sig || buyerSigs.has(row.tx_sig)) continue;
-		if (new Date(row.ts).getTime() > graceCutoff) continue;
+		const settledAt = new Date(row.ts).getTime();
+		if (settledAt > graceCutoff || settledAt < coverageFloor) continue;
 		summary.orphans_settle_side += 1;
 		await verdicts.add({
 			source: 'ring_log_coherence', sourceRef: `settle:${row.tx_sig}`, txSig: row.tx_sig,
@@ -668,7 +722,8 @@ export async function run(ctx = {}) {
 	for (const row of buyers) {
 		if (!String(row.endpoint_url || '').includes('ring-settle')) continue;
 		if (!row.tx_signature || settleSigs.has(row.tx_signature)) continue;
-		if (new Date(row.ts).getTime() > graceCutoff) continue;
+		const paidAt = new Date(row.ts).getTime();
+		if (paidAt > graceCutoff || paidAt < coverageFloor) continue;
 		summary.orphans_buyer_side += 1;
 		await verdicts.add({
 			source: 'ring_log_coherence', sourceRef: `buyer:${row.tx_signature}`, txSig: row.tx_signature,
@@ -769,6 +824,44 @@ export async function run(ctx = {}) {
 				chainStatus: 'confirmed', reconciled: true, discrepancy: null,
 				detail: { window_minutes: TRIPWIRE_WINDOW_MINUTES, settles_in_window: recentSettles },
 			});
+		}
+	}
+
+	// ── Check 6: close out old *_missing verdicts the chain now answers for.
+	if (!ctx.shouldStop?.()) {
+		const inWindow = new Set(allSigs);
+		const stale = (await loadStaleMissing(db)).filter((r) => !inWindow.has(r.tx_signature));
+		const staleStatuses = stale.length
+			? await fetchOnChainStatuses(conn, stale.map((r) => r.tx_signature))
+			: new Map();
+		for (const row of stale) {
+			const st = staleStatuses.get(row.tx_signature);
+			if (!st) continue; // no answer: the row stays first in the queue for the next run
+			summary.stale_missing_checked += 1;
+			const base = {
+				source: row.source, sourceRef: row.source_ref, txSig: row.tx_signature,
+				amountAtomic: row.amount_atomic, dbStatus: row.db_status,
+			};
+			if (!st.found) {
+				// Still absent: stays open and moves to the back of the queue.
+				await verdicts.add({
+					...base, chainStatus: 'missing_onchain', reconciled: false,
+					discrepancy: row.discrepancy, detail: row.detail,
+				});
+			} else if (st.err != null) {
+				const kind = row.discrepancy.replace(/_missing$/, '_failed');
+				critical.push({ kind, ref: row.source_ref, sig: row.tx_signature });
+				await verdicts.add({
+					...base, chainStatus: 'failed_onchain', reconciled: false,
+					discrepancy: kind, detail: row.detail,
+				});
+			} else {
+				summary.stale_missing_cleared += 1;
+				await verdicts.add({
+					...base, chainStatus: 'confirmed', reconciled: true, discrepancy: null,
+					detail: { ...row.detail, cleared_from: row.discrepancy },
+				});
+			}
 		}
 	}
 

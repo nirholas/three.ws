@@ -21,11 +21,12 @@ const PAYER = 'PAYERxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 // every statement (text + values), and resolves [] for DDL / INSERT / UPSERT.
 // `settle`, `sweep`, `buyer` are the three book loads; `feeLogged` and `feeAudit`
 // answer the fee-coherence pair.
-function mockSql({ settle = [], sweep = [], buyer = [], feeLogged = 0, feeAudit = undefined } = {}) {
+function mockSql({ settle = [], sweep = [], buyer = [], feeLogged = 0, feeAudit = undefined, openMissing = [] } = {}) {
 	const calls = [];
 	const fn = (strings, ...values) => {
 		const text = strings.join('?').replace(/\s+/g, ' ').trim();
 		calls.push({ text, values });
+		if (/FROM payment_reconciliation/i.test(text)) return Promise.resolve(openMissing);
 		if (/FROM x402_self_facilitator_log[\s\S]*action = 'settle'[\s\S]*ORDER BY ts/i.test(text)) return Promise.resolve(settle);
 		if (/FROM x402_ring_ledger[\s\S]*GROUP BY tx_sig/i.test(text)) {
 			// The per-tx totals aggregate: derive from the same sweep fixtures.
@@ -600,5 +601,122 @@ describe('ring-reconciliation run(): cost of a full book', () => {
 		const sql = mockSql();
 		const out = await run(baseCtx({ sql, conn: mockConn() }));
 		expect(out.recorded).toBe(true);
+	});
+});
+
+// Measured 2026-11-06: 15,593 open x402_ring_settle_missing verdicts, and all 40 in
+// a random sample were confirmed on-chain. getSignatureStatuses answers null from a
+// lane without the history, and the RPC chain was rotating across exhausted lanes,
+// so one null became a CRITICAL "settlement missing from the chain". Those rows
+// then aged out of the 72h lookback and stayed open forever on the integrity board.
+describe('ring-reconciliation run(): a null status is not proof of absence', () => {
+	const settle = [{ id: 70, ts: iso(60_000), payer: PAYER, pay_to: TREASURY, mint: MINT, amount_atomic: 1_000_000, tx_sig: 'sigLAG' }];
+	const verdictsIn = (sql) => sql.calls
+		.filter((c) => /INSERT INTO payment_reconciliation/i.test(c.text))
+		.flatMap((c) => JSON.parse(c.values[0]));
+	const stale = (over = {}) => ({
+		source: 'ring_facilitator_settle', source_ref: '900', tx_signature: 'sigOLD', amount_atomic: '1000000',
+		db_status: 'settle_ok', chain_status: 'missing_onchain', discrepancy: 'x402_ring_settle_missing', detail: { payer: PAYER },
+		...over,
+	});
+
+	it('a signature one lane missed and the next lane confirms is confirmed, with no page', async () => {
+		const sql = mockSql({ settle });
+		const conn = mockConn();
+		let calls = 0;
+		conn.getSignatureStatuses = async (sigs) => {
+			calls += 1;
+			return { value: sigs.map(() => (calls === 1 ? null : { err: null })) };
+		};
+		const ctx = baseCtx({ sql, conn });
+		const out = await run(ctx);
+		expect(out.responseData.settles_missing).toBe(0);
+		expect(out.responseData.settles_confirmed).toBe(1);
+		expect(ctx.alerts.length).toBe(0);
+	});
+
+	it('an unanswered re-check is unknown, never missing', async () => {
+		const sql = mockSql({ settle });
+		const conn = mockConn();
+		let calls = 0;
+		conn.getSignatureStatuses = async (sigs) => {
+			calls += 1;
+			if (calls > 1) throw new Error('rpc_unreachable');
+			return { value: sigs.map(() => null) };
+		};
+		const ctx = baseCtx({ sql, conn });
+		const out = await run(ctx);
+		expect(out.responseData.settles_missing).toBe(0);
+		expect(out.responseData.settles_unknown).toBe(1);
+		expect(ctx.alerts.length).toBe(0);
+	});
+
+	it('closes an old open verdict once the chain confirms the signature', async () => {
+		const sql = mockSql({ openMissing: [stale()] });
+		const conn = mockConn({ statuses: { sigOLD: { found: true, err: null } } });
+		conn.getSignatureStatuses = async (sigs) => ({ value: sigs.map(() => ({ err: null })) });
+		const out = await run(baseCtx({ sql, conn }));
+		expect(out.responseData.stale_missing_cleared).toBe(1);
+		expect(verdictsIn(sql).find((v) => v.source_ref === '900')).toMatchObject({
+			source: 'ring_facilitator_settle', reconciled: true, discrepancy: null, chain_status: 'confirmed',
+		});
+	});
+
+	it('keeps a still-absent verdict open and refreshes it so the queue moves on', async () => {
+		const sql = mockSql({ openMissing: [stale()] });
+		const conn = mockConn();
+		conn.getSignatureStatuses = async (sigs) => ({ value: sigs.map(() => null) });
+		const out = await run(baseCtx({ sql, conn }));
+		expect(out.responseData.stale_missing_cleared).toBe(0);
+		expect(verdictsIn(sql).find((v) => v.source_ref === '900')).toMatchObject({
+			reconciled: false, discrepancy: 'x402_ring_settle_missing',
+		});
+	});
+
+	it('pages when an old verdict turns out to have failed on-chain', async () => {
+		const sql = mockSql({ openMissing: [stale()] });
+		const conn = mockConn();
+		conn.getSignatureStatuses = async (sigs) => ({ value: sigs.map(() => ({ err: { InstructionError: [0, 'Custom'] } })) });
+		const ctx = baseCtx({ sql, conn });
+		await run(ctx);
+		expect(verdictsIn(sql).find((v) => v.source_ref === '900')).toMatchObject({
+			reconciled: false, discrepancy: 'x402_ring_settle_failed', chain_status: 'failed_onchain',
+		});
+		expect(ctx.alerts.find((a) => a.title.includes('ring reconciliation')).detail).toMatch(/x402_ring_settle_failed=1/);
+	});
+
+	it('leaves an old verdict untouched when the RPC gives no answer', async () => {
+		const sql = mockSql({ openMissing: [stale()] });
+		const conn = mockConn();
+		conn.getSignatureStatuses = async () => { throw new Error('rpc_unreachable'); };
+		await run(baseCtx({ sql, conn }));
+		expect(verdictsIn(sql).find((v) => v.source_ref === '900')).toBeUndefined();
+	});
+});
+
+// Measured 2026-11-06: both books hit the 5,000-row cap, with the buyer book reaching
+// back two hours further than the settle book, so every ring buyer row in that gap
+// reported "no facilitator settle record" while the settle sat just past the cap.
+describe('ring-reconciliation run(): orphans only count where both books have coverage', () => {
+	const buyerRow = (i, ms) => ({ id: i, ts: iso(ms), tx_signature: `b${i}`, endpoint_url: 'https://three.ws/api/x402/ring-settle' });
+	const settleRow = (i, ms) => ({ id: i, ts: iso(ms), payer: PAYER, pay_to: TREASURY, mint: MINT, amount_atomic: 1, tx_sig: `b${i}` });
+
+	it('does not call a buyer row an orphan when the capped settle book stops short of it', async () => {
+		const hour = 3_600_000;
+		// 5,000 matched pairs, then one older buyer row the settle cap cut off.
+		const settle = Array.from({ length: 5000 }, (_, i) => settleRow(i, hour + i * 1000));
+		const buyer = [...settle.map((r) => buyerRow(r.id, hour + r.id * 1000)), buyerRow(9001, 10 * hour)];
+		const statuses = Object.fromEntries(settle.map((r) => [r.tx_sig, { err: null }]));
+		const out = await run(baseCtx({ sql: mockSql({ settle, buyer }), conn: mockConn({ statuses }) }));
+		expect(out.responseData.orphans_buyer_side).toBe(0);
+	});
+
+	it('still reports a real orphan inside the covered span', async () => {
+		const hour = 3_600_000;
+		const settle = [settleRow(1, hour)];
+		const buyer = [buyerRow(2, hour)];
+		const out = await run(baseCtx({ sql: mockSql({ settle, buyer }), conn: mockConn({ statuses: { b1: { err: null } } }) }));
+		expect(out.responseData.orphans_buyer_side).toBe(1);
+		expect(out.responseData.orphans_settle_side).toBe(1);
 	});
 });
