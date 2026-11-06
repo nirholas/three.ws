@@ -7,8 +7,9 @@
 // path the assertions don't cover.
 //
 // Every 10 min, for every role wallet, every registry wallet the platform's own
-// ledger shows had activity, and the next budget's worth of the rest of the
-// registry oldest-checked-first (see scanPlan / runScan / RUN_BUDGET_MS):
+// ledger shows had activity, and the next ROTATION_PER_RUN slice of the rest
+// of the registry oldest-checked-first, within the run budget (see scanPlan /
+// runScan / RUN_BUDGET_MS):
 //   1. getSignaturesForAddress(limit 100, until=<persisted cursor>) — only
 //      signatures newer than the last scan. Cursor persisted per wallet so RPC
 //      stays bounded and each tx is classified exactly once.
@@ -86,6 +87,14 @@ const LEASE_SECONDS = 9 * 60;
 export const maxDuration = 300;
 export const RUN_BUDGET_MS = 200_000;
 const SCAN_CONCURRENCY = 4;
+// Idle-rotation slice per run. 2026-11-06: an uncapped rotation tier swept
+// about 1,200 never-used registry wallets every lease (186,219 of 702,443
+// Solana RPC calls in 24h, the top caller), exhausting both paid lanes and
+// pushing x402 settles onto cooling free lanes. Role and ledger-active wallets
+// (where money actually moves) stay uncapped; the idle remainder rotates
+// oldest-checked first at this rate, so 2,006 wallets still all get checked
+// every ~17 leases (~2.6h).
+export const ROTATION_PER_RUN = 120;
 
 // ── Pure classification (exported for tests) ──────────────────────────────────
 
@@ -457,14 +466,17 @@ async function ringScanWallets() {
  * @param {string[]} roles
  * @param {string[]} ledgerActive
  * @param {string[]} registry  oldest-checked_at-first, includes ledgerActive members
+ * @param {number} [rotationCap]  most idle-rotation wallets to take this run
  * @returns {{ roles: string[], ledgerActive: string[], rotation: string[] }}
  */
-export function scanPlan(roles, ledgerActive, registry) {
+export function scanPlan(roles, ledgerActive, registry, rotationCap = ROTATION_PER_RUN) {
 	const roleList = [...new Set((roles || []).filter(Boolean))];
 	const roleSet = new Set(roleList);
 	const ledgerList = [...new Set((ledgerActive || []).filter(Boolean))].filter((w) => !roleSet.has(w));
 	const ledgerSet = new Set(ledgerList);
-	const rotation = [...new Set((registry || []).filter(Boolean))].filter((w) => !roleSet.has(w) && !ledgerSet.has(w));
+	const rotation = [...new Set((registry || []).filter(Boolean))]
+		.filter((w) => !roleSet.has(w) && !ledgerSet.has(w))
+		.slice(0, Math.max(0, rotationCap));
 	return { roles: roleList, ledgerActive: ledgerList, rotation };
 }
 
@@ -762,6 +774,7 @@ export default wrapCron(async (req, res) => {
 		role_wallets: plan.roles.length,
 		ledger_active_wallets: plan.ledgerActive.length,
 		rotation_wallets: plan.rotation.length,
+		registry_wallets: wallets.registry.length,
 		counts,
 		allowed_set_size: allowed.size,
 		leaks,

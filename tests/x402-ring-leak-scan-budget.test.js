@@ -40,7 +40,7 @@ vi.mock('../api/_lib/db.js', () => ({
 }));
 vi.mock('../api/_lib/alerts.js', () => ({ sendOpsAlert: vi.fn(async () => {}) }));
 
-const { scanPlan, runScan, scanWallet, accountKeyStrings, classifyWalletDebits } = await import('../api/cron/x402-ring-leak-scan.js');
+const { scanPlan, runScan, scanWallet, accountKeyStrings, classifyWalletDebits, ROTATION_PER_RUN } = await import('../api/cron/x402-ring-leak-scan.js');
 
 // Duck-typed PublicKey: has toBase58() like the real @solana/web3.js class,
 // without pulling the dependency into a unit test.
@@ -67,6 +67,34 @@ describe('scanPlan - three tiers, each deduped against the ones before it', () =
 		expect(plan.roles).toEqual([]);
 		expect(plan.ledgerActive).toEqual(['L1']);
 		expect(plan.rotation).toEqual(['R1']);
+	});
+
+	// 2026-11-06: the rotation tier swept about 1,200 idle registry wallets per
+	// run (186,219 of 702,443 Solana RPC calls in 24h, the top caller), which
+	// exhausted both paid lanes and left x402 settles on cooling free lanes.
+	// Idle wallets only need a bounded slice per run; role and ledger-active
+	// wallets (where real money moves) stay uncapped.
+	it('caps the idle rotation tier per run, oldest-checked first, never the active tiers', () => {
+		const registry = Array.from({ length: 2006 }, (_, i) => `R${i}`);
+		const ledger = Array.from({ length: 300 }, (_, i) => `R${i * 5}`);
+		const plan = scanPlan(['ROLE_A'], ledger, registry);
+		expect(plan.roles).toEqual(['ROLE_A']);
+		expect(plan.ledgerActive).toHaveLength(300);
+		expect(plan.rotation).toHaveLength(ROTATION_PER_RUN);
+		const expected = registry.filter((w) => !ledger.includes(w)).slice(0, ROTATION_PER_RUN);
+		expect(plan.rotation).toEqual(expected);
+	});
+
+	it('still rotates the whole idle registry within a few hours of leases', () => {
+		// 9 minute lease: every enabled wallet is checked at least every ~4h.
+		const runsPerRotation = Math.ceil(2006 / ROTATION_PER_RUN);
+		expect(runsPerRotation * 9).toBeLessThanOrEqual(4 * 60);
+		expect(ROTATION_PER_RUN).toBeLessThanOrEqual(150);
+	});
+
+	it('accepts an explicit rotation cap', () => {
+		const plan = scanPlan([], [], ['R1', 'R2', 'R3'], 2);
+		expect(plan.rotation).toEqual(['R1', 'R2']);
 	});
 });
 
