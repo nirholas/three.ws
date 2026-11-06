@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T06:55:37.677Z",
+	"generated_at": "2026-11-06T06:58:47.873Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -31,6 +31,16 @@
 			"type": "update",
 			"title": "Agent payments on Solana stop stalling on a starved RPC",
 			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Card gacha pulls work from wallets that hold SOL",
+			"summary": "Pulling a card in /play failed with \"could not verify\" for any wallet holding SOL, and nothing was charged. Collector Crypt has those wallets pay their own network fee, about 0.00001 SOL, and our safety check only allowed the case where Collector Crypt pays it. The check now accepts both while keeping every other rule, adds a cap so the fee can never be inflated, and the confirmation table shows who pays the fee and exactly how much.",
 			"link": "/play",
 			"tags": [
 				"fix"

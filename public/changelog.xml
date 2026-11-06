@@ -31,6 +31,14 @@
 			<description>The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.</description>
 		</item>
 		<item>
+			<title>Card gacha pulls work from wallets that hold SOL</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-06:Card gacha pulls work from wallets that hold SOL</guid>
+			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Pulling a card in /play failed with &quot;could not verify&quot; for any wallet holding SOL, and nothing was charged. Collector Crypt has those wallets pay their own network fee, about 0.00001 SOL, and our safety check only allowed the case where Collector Crypt pays it. The check now accepts both while keeping every other rule, adds a cap so the fee can never be inflated, and the confirmation table shows who pays the fee and exactly how much.</description>
+		</item>
+		<item>
 			<title>Join any /play world from any phone or laptop with Play lite</title>
 			<link>https://three.ws/play/lite</link>
 			<guid isPermaLink="false">2026-11-06:Join any /play world from any phone or laptop with Play lite</guid>

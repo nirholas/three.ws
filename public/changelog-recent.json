@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-06T06:55:37.735Z",
+	"generated_at": "2026-11-06T06:58:47.925Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4464,
+	"total": 4465,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -34,6 +34,16 @@
 			"type": "update",
 			"title": "Agent payments on Solana stop stalling on a starved RPC",
 			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Card gacha pulls work from wallets that hold SOL",
+			"summary": "Pulling a card in /play failed with \"could not verify\" for any wallet holding SOL, and nothing was charged. Collector Crypt has those wallets pay their own network fee, about 0.00001 SOL, and our safety check only allowed the case where Collector Crypt pays it. The check now accepts both while keeping every other rule, adds a cap so the fee can never be inflated, and the confirmation table shows who pays the fee and exactly how much.",
 			"link": "/play",
 			"tags": [
 				"fix"
@@ -1532,17 +1542,6 @@
 			"tags": [
 				"sdk",
 				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "three-ws-agent: run your three.ws agent from the terminal",
-			"summary": "A new command-line agent runs on your own machine or VPS. Sign in with a browser code, then chat in a terminal UI that streams replies, asks before every write, shell, network or wallet action (wallet actions always ask and show recipient, amount, token and chain), and lets you stop or redirect a turn mid-stream. Sessions are saved and searchable, /subagent runs side tasks in parallel, schedules accept plain language such as \"every weekday at 9am\" and can run on this machine or as a three.ws automation that runs while your computer is off, and gateway mode answers allowlisted Telegram chats. Install it from the repository, with Docker, Nix or the Windows installer.",
-			"link": "/docs/agent-cli",
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]
