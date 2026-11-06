@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import semver from 'semver';
 
 const lockPath = fileURLToPath(new URL('../multiplayer/package-lock.json', import.meta.url));
 const pkgPath = fileURLToPath(new URL('../multiplayer/package.json', import.meta.url));
@@ -18,15 +19,17 @@ const entries = lock.packages || {};
 
 // npm resolves a dependency by walking up node_modules directories from the
 // dependent's own path, so a peer counts as present if any ancestor level has it.
-function resolves(fromPath, name) {
+function resolvedEntry(fromPath, name) {
 	let base = fromPath;
 	for (;;) {
-		if (entries[`${base ? `${base}/` : ''}node_modules/${name}`]) return true;
-		if (!base) return false;
+		const entry = entries[`${base ? `${base}/` : ''}node_modules/${name}`];
+		if (entry) return entry;
+		if (!base) return null;
 		const cut = base.lastIndexOf('/node_modules/');
 		base = cut < 0 ? '' : base.slice(0, cut);
 	}
 }
+const resolves = (fromPath, name) => Boolean(resolvedEntry(fromPath, name));
 
 describe('multiplayer/package-lock.json (world server image)', () => {
 	it('is a standalone lock for the multiplayer package', () => {
@@ -44,5 +47,26 @@ describe('multiplayer/package-lock.json (world server image)', () => {
 			}
 		}
 		expect(missing).toEqual([]);
+	});
+
+	// An optional peer may be absent, but once npm places any copy within
+	// reach it must satisfy the range. npm 10 (the node:22-slim image) wants a
+	// nested in-range copy and refuses the lock without one, while npm 11
+	// accepts it, so this passes locally and fails only in Cloud Build. That is
+	// how 2410fc752 shipped a lock with utf-8-validate 6.0.6 hoisted under
+	// ws@7's ^5.0.2 peer, and the world server could not be built.
+	it('resolves every present peer, optional or not, to an in-range version', () => {
+		const outOfRange = [];
+		for (const [path, meta] of Object.entries(entries)) {
+			if (!path || meta.dev) continue;
+			for (const [name, range] of Object.entries(meta.peerDependencies || {})) {
+				const found = resolvedEntry(path, name);
+				if (!found?.version) continue;
+				if (!semver.satisfies(found.version, range, { includePrerelease: true })) {
+					outOfRange.push(`${path} -> ${name}@${range} (resolves ${found.version})`);
+				}
+			}
+		}
+		expect(outOfRange).toEqual([]);
 	});
 });
