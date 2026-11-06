@@ -25,9 +25,12 @@ ARG LHM_REF=main
 # Upstream pins numpy 1.23.0 and matplotlib 3.5.3, which publish no cp311 wheels.
 # Move each to the nearest release that does (same numpy minor, so the np.bool-era
 # API upstream relies on is unchanged).
+# chumpy and basicsr ship only legacy sdists whose setup.py imports pip, numpy and
+# torch, which pip's isolated build env hides; build them against this venv instead.
 RUN git clone https://github.com/aigc3d/LHM.git /opt/LHM && git -C /opt/LHM checkout ${LHM_REF} \
     && sed -i -e 's/^numpy==.*/numpy==1.23.5/' -e 's/^matplotlib==.*/matplotlib==3.6.3/' /opt/LHM/requirements.txt \
-    && pip install -r /opt/LHM/requirements.txt
+    && pip install numpy==1.23.5 \
+    && pip install --no-build-isolation -r /opt/LHM/requirements.txt
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
