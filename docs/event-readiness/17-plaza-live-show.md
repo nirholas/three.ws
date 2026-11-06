@@ -1,5 +1,7 @@
 # Feature 17: live hosted show on a plaza stage inside /play
 
+> Status: the work order below has shipped. `coincommunities.js` mounts the landmark and `src/game/plaza-stage-show.js` is the lazy show client. The current behavior is documented in [docs/play-plaza-stage.md](../play-plaza-stage.md); the text below is the original brief.
+
 The platform already has Living Stages: an embodied AI host runs a real-time show with spatial voice, lip-sync, synced captions, an audience question queue, and a verified on-chain $THREE tip leaderboard where a tip pre-empts the host's next line in about a second. All of it works, and none of it is reachable from the world yet. Half of this build has landed: `src/game/plaza-stage.js` is the landmark (platform, canvas marquee via `screen-texture.js`, a proximity gate, a 45 s show-state poll while a player is near), `multiplayer/src/plaza-stage.js` derives the stage id, `PLAZA_STAGE` in `multiplayer/src/world-features.js` is the server-validated footprint, and `api/stage/index.js` answers `GET /api/stage?coin=<mint>` and claims a plaza with `POST /api/stage { action: 'plaza', agentId, coinMint }`. But nothing imports `plaza-stage.js` (`coincommunities.js` never mounts it), and the show client it dynamically imports on first proximity, `src/game/plaza-stage-show.js`, does not exist. Finish it: mount the landmark and write the show client so the event crowd can attend a show without leaving /play.
 
 ## Where the code lives
