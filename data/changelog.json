@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "Agent payments on Solana stop stalling on a starved RPC",
+			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
+			"tags": ["fix"],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-06",
 			"title": "The Play world holds up on phones, blocked storage and blocked scripts",
 			"summary": "Every Play button on a touch screen now meets the 44 px target size, the meetup countdown chip sits under the top bar instead of covering Shop, Buy and Friends, the event countdown keeps running when the browser blocks local storage, a blocked locale script no longer stops the world from loading, and the agent exchange no longer downloads the animation list a second time.",
 			"tags": ["fix"],
