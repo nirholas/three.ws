@@ -425,6 +425,8 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   `fee_wallet_below_floor` and `insufficient_sol_surplus` mean the wallets are
   actually dry.
 
+  **Measured example, 2026-11-05 (6h window).** The triage flagged /api/x402-pay (12), /api/x402/forge (3) and one each on dance-tip, club-cover, crypto-intel, ring-settle and pump-agent-audit. `x402_self_facilitator_log` for the window showed 1,119 settles ok against 55 `fee_runway_exhausted` and 13 `broadcast_failed`; `x402_autonomous_log` failures were dominated by `fee_runway_exhausted` skips. So the 503s were the fee governor pacing (designed throttle) and the 502s were `broadcast_failed` while every paid Solana RPC lane was cooling (class 5 in the x402-economy-triage failure map). Wallets were not dry; no funding was needed. Read the reason split with a `GROUP BY split_part(reject_reason, ':', 1)` over the window before touching money.
+
   **It answers 503 `settlement_unavailable`, not 502.** Until 2026-08-06 this
   refusal was the one deliberate throttle the settle path's retryable branch
   missed, so it went out as `502 settle_failed` and read as an outage to every
