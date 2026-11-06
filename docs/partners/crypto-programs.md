@@ -8,7 +8,7 @@ It is the wide net. The narrower docs stay authoritative for what they cover: [p
 
 Sibling pages: [big-tech partner programs](./big-tech-programs.md), [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [global brand partner programs](./brand-programs.md), plus [who promotes partners](./promotion-programs.md) and [moonshots](./moonshots.md) across every sector.
 
-**61 programs across 43 companies.** 3 member / live, 3 submitted, waiting, 27 eligible, not started, 21 verify fit first, 7 retired or closed. We hold at least one membership at 3 of the 43 companies, and 18 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
+**115 programs across 107 companies.** 3 member / live, 3 submitted, waiting, 44 eligible, not started, 46 verify fit first, 19 retired or closed. We hold at least one membership at 3 of the 107 companies, and 31 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 
 ## Using this page
 
@@ -31,6 +31,7 @@ Dated within 90 days of the last sweep. Miss these and the opportunity is gone f
 
 | Deadline | Program | Company | Status | Next action |
 |---|---|---|---|---|
+| **2026-11-18** | [ALL19 accelerator](https://www.alliance.xyz/apply) | Alliance DAO | Eligible, not started | Owner decision: decide whether to take equity funding, then submit the ALL19 form by 2026-11-18 if yes. |
 | **2026-12-06** | [Arbitrum Mentorship Program Cohort 2 (with Robinhood Chain)](https://mentorship.arbitrum.io/) | Robinhood Chain | Eligible, not started | Apply at mentorship.arbitrum.io; applications close 2026-12-06 |
 | **2026-12-07** | [X Layer Build X / TapeOut Accelerate hackathon](https://web3.okx.com/en-us/xlayer/build-x-hackathon) | OKX | Eligible, not started | Google Form linked on the event page; Telegram channel for questions |
 
@@ -40,7 +41,7 @@ Every active program sits in exactly one wave. Work the waves in order; inside a
 
 ### Wave 2: apply this month
 
-Open, self-serve or near it, and a strong fit (score 11 or more). Each needs an application written, not a product built. 15 programs.
+Open, self-serve or near it, and a strong fit (score 11 or more). Each needs an application written, not a product built. 20 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
@@ -49,63 +50,105 @@ Open, self-serve or near it, and a strong fit (score 11 or more). Each needs an 
 | 3 | [Grants and Funding (milestone grants, convertible grants, RFPs)](https://solana.org/grants-funding) | Solana Foundation | 13 | Application form on solana.org/grants-funding (rolling); RFPs on an Airtable board |
 | 4 | [Builder Grants](https://solanamobile.com/grants) | Solana Mobile | 13 | Application form on solanamobile.com/grants, any time |
 | 5 | [x402 Foundation membership and dev-tools docs listings](https://x402.org/members) | x402 Foundation | 13 | Pull requests to docs/dev-tools/*.md in github.com/x402-foundation/x402; membership via the Linux Foundation |
-| 6 | [Accelerator and Eternal (rolling perpetual hackathon)](https://colosseum.com/accelerator) | Colosseum | 12 | Create a Colosseum account and submit a product via a hackathon or the rolling Eternal sprint; winners are interviewed |
-| 7 | [Agent Registry listing / ecosystem showcase](https://www.metaplex.com/docs/agents) | Metaplex | 12 | List your agent on metaplex.com/agents (per repo notes); developer Discord for showcase asks |
-| 8 | [Alchemy Solana Fund (credits)](https://www.alchemy.com/solana-20m-fund) | Alchemy | 11 | Form on alchemy.com/solana-20m-fund; Alchemy replies within 5 business days |
-| 9 | [Most Valuable Builder (MVB) accelerator](https://www.bnbchain.org/en/programs/mvb) | BNB Chain | 11 | Application form linked on bnbchain.org/en/programs/mvb (rolling) |
-| 10 | [Developer Grants Program (Arc and Circle Developer Platform)](https://www.circle.com/grant) | Circle | 11 | Circle Grants portal (circle.questbook.app) linked from circle.com/grant |
-| 11 | [Base Builder Grants (Season 2)](https://docs.base.org/get-started/builders) | Coinbase | 11 | Apply per docs.base.org; Builder Codes (ERC-8021) integration is the first eligibility step |
-| 12 | [Startup Launchpad](https://www.helius.dev/startup-launchpad) | Helius | 11 | Startup application form on helius.dev/startup-launchpad (rolling) |
-| 13 | [DAO Grants (MIP)](https://metaplex.foundation/grants) | Metaplex | 11 | Apply for a Grant at mip.metaplex.com; questions to grants@metaplex.foundation (per search) |
-| 14 | [Render Foundation Grants](https://rendernetwork.com/grants) | Render Network | 11 | Short pitch form on renderfoundation.com/grants, then formal proposal if invited |
-| 15 | [dApp Store publishing and hackathon featuring](https://solanamobile.com/blog/clock-in-the-solana-mobile-hackathon) | Solana Mobile | 11 | Publish via the dApp Store publisher flow; hackathons run with RadiantsDAO (CLOCK IN Sep 8 to Oct 8, 2026 closed) |
+| 6 | [ALL19 accelerator](https://www.alliance.xyz/apply) | Alliance DAO | 12 | Owner decision: decide whether to take equity funding, then submit the ALL19 form by 2026-11-18 if yes. |
+| 7 | [Accelerator and Eternal (rolling perpetual hackathon)](https://colosseum.com/accelerator) | Colosseum | 12 | Create a Colosseum account and submit a product via a hackathon or the rolling Eternal sprint; winners are interviewed |
+| 8 | [Agent Registry listing / ecosystem showcase](https://www.metaplex.com/docs/agents) | Metaplex | 12 | List your agent on metaplex.com/agents (per repo notes); developer Discord for showcase asks |
+| 9 | [Tether Developer Grants (WDK, QVAC, MDK, Pears)](https://tether.io/news/tether-launches-developer-grants-program-to-fund-local-first-ai-and-payments-infrastructure/) | Tether | 12 | Pick a WDK or QVAC task and build an agent wallet integration on the Wallet Development Kit. |
+| 10 | [Alchemy Solana Fund (credits)](https://www.alchemy.com/solana-20m-fund) | Alchemy | 11 | Form on alchemy.com/solana-20m-fund; Alchemy replies within 5 business days |
+| 11 | [Binance Square Creatorpad](https://www.binance.com/en/square) | Binance | 11 | Have the owner open a verified Square profile and post a three.ws agent demo thread before chasing any sponsored campaign. |
+| 12 | [Most Valuable Builder (MVB) accelerator](https://www.bnbchain.org/en/programs/mvb) | BNB Chain | 11 | Application form linked on bnbchain.org/en/programs/mvb (rolling) |
+| 13 | [Developer Grants Program (Arc and Circle Developer Platform)](https://www.circle.com/grant) | Circle | 11 | Circle Grants portal (circle.questbook.app) linked from circle.com/grant |
+| 14 | [Base Builder Grants (Season 2)](https://docs.base.org/get-started/builders) | Coinbase | 11 | Apply per docs.base.org; Builder Codes (ERC-8021) integration is the first eligibility step |
+| 15 | [CoinGecko Partner Platform](https://www.coingecko.com/learn/introducing-partner-platform) | CoinGecko | 11 | Owner decision: any new token or project listing request for $THREE. Do not file one. |
+| 16 | [Build On Cronos Ignition](https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m) | Crypto.com | 11 | Deploy the x402 agent payment demo to Cronos and file the proposal under AI agents. |
+| 17 | [Startup Launchpad](https://www.helius.dev/startup-launchpad) | Helius | 11 | Startup application form on helius.dev/startup-launchpad (rolling) |
+| 18 | [DAO Grants (MIP)](https://metaplex.foundation/grants) | Metaplex | 11 | Apply for a Grant at mip.metaplex.com; questions to grants@metaplex.foundation (per search) |
+| 19 | [Render Foundation Grants](https://rendernetwork.com/grants) | Render Network | 11 | Short pitch form on renderfoundation.com/grants, then formal proposal if invited |
+| 20 | [dApp Store publishing and hackathon featuring](https://solanamobile.com/blog/clock-in-the-solana-mobile-hackathon) | Solana Mobile | 11 | Publish via the dApp Store publisher flow; hackathons run with RadiantsDAO (CLOCK IN Sep 8 to Oct 8, 2026 closed) |
 
 ### Wave 4: open, lower priority
 
-Open to us today but a weaker fit, a smaller audience, or more paperwork (score under 11). Cheap ones are worth an afternoon once waves 0 to 2 are clear. 12 programs.
+Open to us today but a weaker fit, a smaller audience, or more paperwork (score under 11). Cheap ones are worth an afternoon once waves 0 to 2 are clear. 19 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
-| 1 | [Base Ecosystem Fund](https://www.base.org/ecosystem-fund/apply) | Coinbase | 10 | Application at base.org/ecosystem-fund/apply |
-| 2 | [Blinks Registry (dial.to/register)](https://dial.to/register) | Dialect | 10 | Apply for verification at dial.to/register; actions.json must be hosted at the domain root |
-| 3 | [Fetch.ai Innovation Lab accelerator, Deep Funding and Agentverse](https://superintelligence.io/grants/) | Fetch.ai / ASI Alliance | 10 | Apply via innovationlab.fetch.ai; Deep Funding via SingularityNET; hackathon tracks on Superteam Earn |
-| 4 | [Dynamic Bonding Curve launch-partner integration](https://docs.meteora.ag/developer-guides/dbc) | Meteora | 10 | Self-serve docs and SDK; discretionary infra grants for hackathon winners using DBC |
-| 5 | [Nosana Grants Program](https://grants.nosana.com/) | Nosana | 10 | Apply at grants.nosana.com; questions to grants@nosana.io |
-| 6 | [Marketplace add-on partner program](https://www.quicknode.com/docs/marketplace-addons) | Quicknode | 10 | Apply for a Marketplace Partner account; implement 4 provisioning routes plus healthcheck |
-| 7 | [Arbitrum Mentorship Program Cohort 2 (with Robinhood Chain)](https://mentorship.arbitrum.io/) | Robinhood Chain | 10 | Apply at mentorship.arbitrum.io; applications close 2026-12-06 |
-| 8 | [Ecosystem listing and Open House grants](https://docs.robinhood.com/chain) | Robinhood Chain | 10 | Email chain-developers-group@robinhood.com (per repo notes); Open House sign-up at openhouse.arbitrum.io |
-| 9 | [Agent Commerce Protocol (ACP) builders](https://app.virtuals.io/build) | Virtuals Protocol | 10 | Register agents via app.virtuals.io/build and ACP docs |
-| 10 | [Ecosystem Support Program (Wishlist and RFPs)](https://esp.ethereum.foundation/applicants) | Ethereum Foundation | 9 | Application per Wishlist or RFP item at esp.ethereum.foundation/applicants |
-| 11 | [X Layer Build X / TapeOut Accelerate hackathon](https://web3.okx.com/en-us/xlayer/build-x-hackathon) | OKX | 9 | Google Form linked on the event page; Telegram channel for questions |
-| 12 | [Team1 Builder Grants (Retro9000 wound down)](https://www.avalanche.com/build/developer-hub) | Avalanche | 7 | Mini grants have open applications; accelerator grants by committee |
+| 1 | [Bitget Wallet API Platform](https://web3.bitget.com/en/docs) | Bitget | 10 | Request API access and prototype a Bitget Wallet swap tool for agents. |
+| 2 | [Bitget Wallet Business dApp and token listing](https://web3.bitget.com/en/docs/reference/dapp/community/) | Bitget | 10 | Integrate Bitget Wallet in the agent wallet connect flow, then submit the three.ws dApp. Owner decision: any $THREE token listing request in the same Business module. |
+| 3 | [Base Ecosystem Fund](https://www.base.org/ecosystem-fund/apply) | Coinbase | 10 | Application at base.org/ecosystem-fund/apply |
+| 4 | [MetaMask Snaps Directory](https://docs.metamask.io/snaps/how-to/get-allowlisted/) | Consensys / MetaMask | 10 | Scope a read-only agent identity Snap that avoids key-management permissions, to skip the audit. |
+| 5 | [Blinks Registry (dial.to/register)](https://dial.to/register) | Dialect | 10 | Apply for verification at dial.to/register; actions.json must be hosted at the domain root |
+| 6 | [Fetch.ai Innovation Lab accelerator, Deep Funding and Agentverse](https://superintelligence.io/grants/) | Fetch.ai / ASI Alliance | 10 | Apply via innovationlab.fetch.ai; Deep Funding via SingularityNET; hackathon tracks on Superteam Earn |
+| 7 | [Dynamic Bonding Curve launch-partner integration](https://docs.meteora.ag/developer-guides/dbc) | Meteora | 10 | Self-serve docs and SDK; discretionary infra grants for hackathon winners using DBC |
+| 8 | [Nosana Grants Program](https://grants.nosana.com/) | Nosana | 10 | Apply at grants.nosana.com; questions to grants@nosana.io |
+| 9 | [Pyth Ecosystem Grants and Superteam Earn bounties](https://www.pyth.network/blog/pyth-ecosystem-grants-program) | Pyth Network | 10 | Integrate Pyth price feeds in agent trading tools and look for a matching open bounty on Superteam Earn. |
+| 10 | [Marketplace add-on partner program](https://www.quicknode.com/docs/marketplace-addons) | Quicknode | 10 | Apply for a Marketplace Partner account; implement 4 provisioning routes plus healthcheck |
+| 11 | [Robinhood Crypto Trading API](https://docs.robinhood.com/crypto/trading) | Robinhood | 10 | Wrap the API as an MCP tool, with owner confirmation gate for every order. |
+| 12 | [Arbitrum Mentorship Program Cohort 2 (with Robinhood Chain)](https://mentorship.arbitrum.io/) | Robinhood Chain | 10 | Apply at mentorship.arbitrum.io; applications close 2026-12-06 |
+| 13 | [Ecosystem listing and Open House grants](https://docs.robinhood.com/chain) | Robinhood Chain | 10 | Email chain-developers-group@robinhood.com (per repo notes); Open House sign-up at openhouse.arbitrum.io |
+| 14 | [Agent Commerce Protocol (ACP) builders](https://app.virtuals.io/build) | Virtuals Protocol | 10 | Register agents via app.virtuals.io/build and ACP docs |
+| 15 | [DefiLlama Adapters (TVL listing)](https://github.com/DefiLlama/DefiLlama-Adapters) | DefiLlama | 9 | Revisit only if a three.ws contract holds TVL; skip now. |
+| 16 | [Ecosystem Support Program (Wishlist and RFPs)](https://esp.ethereum.foundation/applicants) | Ethereum Foundation | 9 | Application per Wishlist or RFP item at esp.ethereum.foundation/applicants |
+| 17 | [X Layer Build X / TapeOut Accelerate hackathon](https://web3.okx.com/en-us/xlayer/build-x-hackathon) | OKX | 9 | Google Form linked on the event page; Telegram channel for questions |
+| 18 | [Milestone Circles](https://nasdaqcenter.org/milestone-circles/) | Nasdaq Entrepreneurial Center | 8 | Apply to Milestone Circles when the next cohort window opens. |
+| 19 | [Team1 Builder Grants (Retro9000 wound down)](https://www.avalanche.com/build/developer-hub) | Avalanche | 7 | Mini grants have open applications; accelerator grants by committee |
 
 ### Wave 5: watch and verify
 
-Invite-only, a window that is not open yet, or eligibility we have not confirmed. Re-check on the cadence listed. 21 programs.
+Invite-only, a window that is not open yet, or eligibility we have not confirmed. Re-check on the cadence listed. 51 programs.
 
 | # | Program | Company | Score | Next action |
 |---|---|---|---|---|
-| 1 | [CDP x402 Bazaar and AgentKit action provider](https://docs.cdp.coinbase.com/x402/bazaar) | Coinbase | 11 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 2 | [Privy (Stripe) partnership and case study](https://www.privy.io/) | Privy | 11 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 3 | [Solana Developer Platform / solana.com/ai ecosystem listing](https://solana.com/ai) | Solana Foundation | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 4 | [Ecosystem page and wallet SDK](https://www.solflare.com/ecosystem/) | Solflare | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 5 | [BNB Hack series and Kickstart package](https://www.bnbchain.org/en/blog/bnb-hack-tokenized-stocks-edition-with-binance-web3-wallet) | BNB Chain | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 6 | [CMC Labs Web3 Startup Accelerator](https://coinmarketcap.com/events/cmc-labs/) | CoinMarketCap | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 7 | [Solana Foundation Instagrants (regional, via Superteam Earn)](https://superteam.fun/earn/grants/solana-foundation-usa-grants) | Superteam | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 8 | [Build on Solana (Chainlink Build)](https://chain.link/economics/build-program/build-solana) | Chainlink | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 9 | [Customer/partner route (no formal program)](https://triton.one/testimonials) | Triton One | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 10 | [Domain Allocator grants (ex-Questbook) and Foundation grants](https://forum.arbitrum.foundation/t/arbitrum-d-a-o-grant-program-season-3-official-thread/28753) | Arbitrum | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 11 | [X Layer Ecosystem Fund (100M USD)](https://www.ccn.com/news/crypto/okx-100m-x-layer-ecosystem-fund-outspends-coinbase/) | OKX | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 12 | [Olas Accelerator and Pearl agent app store](https://olas.network/build) | Olas | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 13 | [Solana Ventures (Solana Labs venture arm) and Foundation investments](https://solanalabs.notion.site/Solana-Ventures-Public-ca82bdef271048918303d608460b3b3e) | Solana Foundation | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 14 | [Sui grants and Hydropower accelerator](https://grantedai.com/grants/sui-foundation-grant-program-sui-foundation-427bae80) | Sui Foundation | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 15 | [xGrant program](https://wormholecrypto.medium.com/wormhole-launches-the-xgrant-program-cc19aea8e04d) | Wormhole | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 16 | [Akash Developer Grants](https://akash.network/blog/akash-offers-up-to-100-000-in-grants-through-new-developer-grant-program/) | Akash Network | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 17 | [Aptos Ecosystem Grants](https://aptosfoundation.org/grants) | Aptos Foundation | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 18 | [Polygon Community Grants (Questbook)](https://polygon.questbook.xyz) | Polygon | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 19 | [Jito Improvement Proposals (treasury grants, NCN grants)](https://forum.jito.network/t/jip-7-node-consensus-network-ncn-grants-program/396) | Jito | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 20 | [Livepeer treasury SPEs and Dev Hub grants](https://docs.livepeer.org/v2/community/contribute/opportunities) | Livepeer | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
-| 21 | [NEAR AI Agent Fund and Agent Market](https://www.near.org/blog/ai-agent-fund-to-invest-in-innovative-agent-tokens) | NEAR Foundation | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 1 | [a16z speedrun](https://speedrun.a16z.com/) | a16z | 11 | Owner decision: decide whether to take a16z capital, then read the speedrun FAQ and apply if yes. |
+| 2 | [Crypto Startup School accelerator (CSX)](https://a16zcrypto.com/posts/article/apply-to-join-the-csx-04-cohort-in-san-francisco-this-spring/) | a16z | 11 | Owner decision: decide whether to take a16z crypto capital, then join the CSX update list and watch for CSX 05. |
+| 3 | [Animoca Ventures deck submission](https://animoca.ventures/) | Animoca Brands | 11 | Owner decision: decide whether to take Animoca capital, then send the deck. |
+| 4 | [Big Brain Holdings pitch](https://bigbrain.holdings) | Big Brain Holdings | 11 | Owner decision: decide whether to take Big Brain capital, then email the invest address with a Solana agent summary. |
+| 5 | [YZi Labs EASY Residency (includes MVB track)](https://www.yzilabs.com) | Binance | 11 | Draft a one-page agentic-payments plus 3D agents application and submit through the EASY Residency form. |
+| 6 | [CDP x402 Bazaar and AgentKit action provider](https://docs.cdp.coinbase.com/x402/bazaar) | Coinbase | 11 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 7 | [Multicoin contact form](https://multicoin.capital/contact/) | Multicoin Capital | 11 | Owner decision: decide whether to take Multicoin capital, then send a short agents on Solana note via the contact form. |
+| 8 | [Privy (Stripe) partnership and case study](https://www.privy.io/) | Privy | 11 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 9 | [Solana Ventures public page](https://solanalabs.notion.site/Solana-Ventures-Public-ca82bdef271048918303d608460b3b3e) | Solana Ventures | 11 | Owner decision: decide whether to take Solana Ventures capital, then read the public page for its pitch process. |
+| 10 | [Build On Cronos Apex (Crypto.com Capital pitch)](https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m) | Crypto.com | 10 | Enter Ignition first and revisit Apex once Cronos usage exists. |
+| 11 | [InkWorks Accelerator (Ink Foundation)](https://ink.works) | Kraken | 10 | Check ink.works for the next intake and note the Ink (EVM) requirement before applying. |
+| 12 | [Solana Developer Platform / solana.com/ai ecosystem listing](https://solana.com/ai) | Solana Foundation | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 13 | [Ecosystem page and wallet SDK](https://www.solflare.com/ecosystem/) | Solflare | 10 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 14 | [Binance Square Write to Earn](https://www.binance.com/en/square) | Binance | 9 | Skip until the owner decides whether to run a Binance referral channel at all. |
+| 15 | [BNB Hack series and Kickstart package](https://www.bnbchain.org/en/blog/bnb-hack-tokenized-stocks-edition-with-binance-web3-wallet) | BNB Chain | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 16 | [CMC Labs Web3 Startup Accelerator](https://coinmarketcap.com/events/cmc-labs/) | CoinMarketCap | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 17 | [Dragonfly Send Pitch](https://www.dragonfly.xyz) | Dragonfly | 9 | Owner decision: decide whether to take Dragonfly capital, then use Send Pitch. |
+| 18 | [Electric Capital founder contact](https://www.electriccapital.com/) | Electric Capital | 9 | Owner decision: decide whether to take Electric Capital funding, then email the info address. |
+| 19 | [Benji on Solana and Digital Assets](https://digitalassets.franklintempleton.com/benji/) | Franklin Templeton | 9 | Reference Benji as a real Solana RWA the agent wallet can hold; no application. |
+| 20 | [Galaxy Interactive and Galaxy Ventures](https://interactive.galaxy.com) | Galaxy | 9 | Add Galaxy Interactive to the investor target list for a later round. |
+| 21 | [Ledger Wallet Discover (Live Apps)](https://developers.ledger.com/docs/ledger-live/discover/getting-started) | Ledger | 9 | Build a Live App manifest in Developer mode, then send the intake form with a Solana signing demo. |
+| 22 | [Base Camp accelerators](https://outlierventures.io/article/launching-the-post-web-base-camp-accelerator-program/) | Outlier Ventures | 9 | Owner decision: decide whether to take equity and token terms, then check outlierventures.io for a live DeAI cohort. |
+| 23 | [Pantera pitch inbox](https://panteracapital.com) | Pantera Capital | 9 | Owner decision: decide whether to take Pantera capital, then verify the pitch address on its site. |
+| 24 | [Polychain application portal](https://polychain.capital) | Polychain Capital | 9 | Owner decision: decide whether to take Polychain capital, then confirm the portal on its site. |
+| 25 | [Solana Foundation Instagrants (regional, via Superteam Earn)](https://superteam.fun/earn/grants/solana-foundation-usa-grants) | Superteam | 9 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 26 | [Binance Wallet and Binance Alpha](https://www.binance.com/en/support/faq/what-is-binance-alpha-on-binance-wallet-43a46bb5c5ec4ba6a1be8bb9a98aa7f8) | Binance | 8 | Owner decision: whether to ever request Alpha or Binance listing for $THREE. Until then, do nothing. |
+| 27 | [Build on Solana (Chainlink Build)](https://chain.link/economics/build-program/build-solana) | Chainlink | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 28 | [Delphi pitch link](https://delphiventures.io) | Delphi Ventures | 8 | Owner decision: decide whether to take Delphi capital, then use the pitch link. |
+| 29 | [Innovate.DTCC AI Hackathon](https://communications.dtcc.com/dtcc-hackathon-registration-18146.html) | DTCC | 8 | Watch communications.dtcc.com for the 2027 Innovate.DTCC registration. |
+| 30 | [Ripple and Tenity XRPL Accelerator](https://ripple.com/ripple-press/ripple-and-tenity-to-launch-blockchain-accelerator/) | Ripple | 8 | Check ripple.com for the next intake; low priority. |
+| 31 | [XRPL Grants and Accelerator](https://xrplgrants.org) | Ripple | 8 | Skip unless the owner wants an XRPL payments agent; payments focus is the only overlap. |
+| 32 | [Customer/partner route (no formal program)](https://triton.one/testimonials) | Triton One | 8 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 33 | [Domain Allocator grants (ex-Questbook) and Foundation grants](https://forum.arbitrum.foundation/t/arbitrum-d-a-o-grant-program-season-3-official-thread/28753) | Arbitrum | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 34 | [Bybit Venture Studio](https://www.bybit.com) | Bybit | 7 | Watch Bybit announcements for an open call; no action now. |
+| 35 | [Citi Ventures](https://ventures.citi.com) | Citi | 7 | Owner decision: taking capital is implied; skip unless an enterprise banking agent use case forms. |
+| 36 | [KuCoin Ventures](https://www.kucoin.com/kucoin-ventures) | KuCoin | 7 | Hold until a fundraise is planned; then submit. |
+| 37 | [Nasdaq Ventures pitch form](https://www.nasdaq.com/nasdaq-ventures) | Nasdaq | 7 | Owner decision: taking capital is implied; skip unless a Nasdaq market tech tie emerges. |
+| 38 | [X Layer Ecosystem Fund (100M USD)](https://www.ccn.com/news/crypto/okx-100m-x-layer-ecosystem-fund-outspends-coinbase/) | OKX | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 39 | [Olas Accelerator and Pearl agent app store](https://olas.network/build) | Olas | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 40 | [Solana Ventures (Solana Labs venture arm) and Foundation investments](https://solanalabs.notion.site/Solana-Ventures-Public-ca82bdef271048918303d608460b3b3e) | Solana Foundation | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 41 | [Sui grants and Hydropower accelerator](https://grantedai.com/grants/sui-foundation-grant-program-sui-foundation-427bae80) | Sui Foundation | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 42 | [xGrant program](https://wormholecrypto.medium.com/wormhole-launches-the-xgrant-program-cc19aea8e04d) | Wormhole | 7 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 43 | [Akash Developer Grants](https://akash.network/blog/akash-offers-up-to-100-000-in-grants-through-new-developer-grant-program/) | Akash Network | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 44 | [Aptos Ecosystem Grants](https://aptosfoundation.org/grants) | Aptos Foundation | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 45 | [Gemini Frontier Fund](https://www.gemini.com/frontier-fund) | Gemini | 6 | Park until there is revenue to show; no action now. |
+| 46 | [HTX Ventures](https://www.htx.com/ventures) | HTX | 6 | Hold until a fundraise is planned. Owner decision: any HTX token listing for $THREE. |
+| 47 | [Polygon Community Grants (Questbook)](https://polygon.questbook.xyz) | Polygon | 6 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 48 | [Upbit and Bithumb foreign project listing](https://www.blockmm.ai/articles/static/upbit-bithumb-listing-guide-2026) | Upbit | 6 | Owner decision: whether to pursue any Korean exchange listing for $THREE. No action otherwise. |
+| 49 | [Jito Improvement Proposals (treasury grants, NCN grants)](https://forum.jito.network/t/jip-7-node-consensus-network-ncn-grants-program/396) | Jito | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 50 | [Livepeer treasury SPEs and Dev Hub grants](https://docs.livepeer.org/v2/community/contribute/opportunities) | Livepeer | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
+| 51 | [NEAR AI Agent Fund and Agent Market](https://www.near.org/blog/ai-agent-fund-to-invest-in-innovative-agent-tokens) | NEAR Foundation | 5 | Read the live program page, confirm eligibility and terms, then set eligible or skip |
 
 ### Waiting on them
 
@@ -125,22 +168,35 @@ The open programs on this page that will put three.ws in front of their audience
 |---|---|---|---|---|
 | [Developer Grants Program (Arc and Circle Developer Platform)](https://www.circle.com/grant) | Circle | Co-marketing, Blog post, Social posts, Event or speaking slot | circle.com/grant lists blog features, social amplification, event participation and co-marketing for grantees; ask in the application. | Eligible, not started |
 | [Hackathons (Frontier, Crypto World's Fair)](https://colosseum.com/hackathon) | Colosseum | Featured placement | Winners get hall-of-fame placement and ecosystem recognition (per colosseum.com/hackathon); win a track to get it. | Eligible, not started |
+| [Crypto Startup School accelerator (CSX)](https://a16zcrypto.com/posts/article/apply-to-join-the-csx-04-cohort-in-san-francisco-this-spring/) | a16z | Blog post, Featured placement, Event or speaking slot | a16z crypto publishes cohort announcements on its blog and holds a Demo Day in San Francisco (documented for CSX 04); cohort teams only. | Eligible, not started |
 | [awesome-solana-ai (Foundation-curated AI list)](https://github.com/solana-foundation/awesome-solana-ai) | Solana Foundation | Featured placement | Listed entries appear in the repo README that solana.com/ai points developers to; merge the open PR (no separate ask needed). | Submitted, waiting |
 | [Superteam Earn (bounties, agent-allowed listings, sponsor listings)](https://superteam.fun/earn/agents/) | Superteam | Social posts | Superteam chapters amplify sponsored bounties and winners (track record, not a stated benefit). | Eligible, not started |
+| [ALL19 accelerator](https://www.alliance.xyz/apply) | Alliance DAO | Featured placement, Event or speaking slot | Alliance runs a demo day and publishes cohort alumni on its site (documented practice); only accepted teams get it. | Eligible, not started |
 | [Accelerator and Eternal (rolling perpetual hackathon)](https://colosseum.com/accelerator) | Colosseum | Event or speaking slot, Featured placement | Accelerator teams pitch at a private VC Demo Day and are announced in the cohort blog post (track record on blog.colosseum.com); accepted teams only. | Eligible, not started |
 | [Builder Grants](https://solanamobile.com/grants) | Solana Mobile | Co-marketing | Page says co-marketing and launch support is sometimes provided alongside funding; mention it in the application. | Eligible, not started |
 | [x402 Foundation membership and dev-tools docs listings](https://x402.org/members) | x402 Foundation | Featured placement | Dev-tools doc entries are discovery listings only; no stated promotion. | Eligible, not started |
+| [YZi Labs EASY Residency (includes MVB track)](https://www.yzilabs.com) | Binance | Event or speaking slot, Podcast or video | Cohorts finish with a Demo Day with investors and industry leaders, and YZi Labs and BNB Chain publish cohort announcements. | Eligible, not started |
 | [Most Valuable Builder (MVB) accelerator](https://www.bnbchain.org/en/programs/mvb) | BNB Chain | Co-marketing, Event or speaking slot | CMC Labs provides campaigns, content and a live community event for accepted projects (per the MVB page). | Eligible, not started |
 | [Agent Registry listing / ecosystem showcase](https://www.metaplex.com/docs/agents) | Metaplex | Featured placement | Ask for a docs showcase and feature on metaplex.com/agents through their developer Discord (our plan, not a documented benefit). | Eligible, not started |
 | [Startup Program](https://www.quicknode.com/startup) | Quicknode | Co-marketing | Program lists co-promotion and marketing for startups (per quicknode.com/startup); ask the program contact for a joint post. | Member / live |
+| [Tether Developer Grants (WDK, QVAC, MDK, Pears)](https://tether.io/news/tether-launches-developer-grants-program-to-fund-local-first-ai-and-payments-infrastructure/) | Tether | Featured placement | Open source tools built on the stack are typically referenced by Tether; no promotion promised in the announcement. | Eligible, not started |
+| [a16z speedrun](https://speedrun.a16z.com/) | a16z | Featured placement | a16z publishes speedrun cohort companies on its site (documented record); accepted companies only. | Eligible, not started |
+| [Binance Square Creatorpad](https://www.binance.com/en/square) | Binance | Social posts | Square posts reach Binance users directly; high-performing creators get surfaced in feeds. No partner promotion is promised. | Eligible, not started |
 | [Base Builder Grants (Season 2)](https://docs.base.org/get-started/builders) | Coinbase | Co-marketing | Base offers go-to-market support to accepted teams (per Base coverage); no specific social or blog guarantee. | Eligible, not started |
+| [Build On Cronos Ignition](https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m) | Crypto.com | Co-marketing | Apex tier lists co-marketing; Ignition perks listed are grants and gas share only. | Eligible, not started |
+| [Multicoin contact form](https://multicoin.capital/contact/) | Multicoin Capital | Blog post | Multicoin writes theses and portfolio posts on its blog (documented practice); not a program benefit. | Verify fit first |
 | [Render Foundation Grants](https://rendernetwork.com/grants) | Render Network | Featured placement | Grantees may be featured in Render's showcase (per rendernetwork.com/grants). | Eligible, not started |
 | [dApp Store publishing and hackathon featuring](https://solanamobile.com/blog/clock-in-the-solana-mobile-hackathon) | Solana Mobile | Featured placement | Hackathon winners get featured dApp Store placement and marketing support (per Solana Mobile blog); win the next one. | Eligible, not started |
+| [Build On Cronos Apex (Crypto.com Capital pitch)](https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m) | Crypto.com | Co-marketing | Apex lists co-marketing and distribution to Crypto.com users as a stated benefit. | Verify fit first |
+| [InkWorks Accelerator (Ink Foundation)](https://ink.works) | Kraken | Event or speaking slot | Program ends in a Demo Day pitching to VCs, per search summary. | Verify fit first |
 | [Marketplace add-on partner program](https://www.quicknode.com/docs/marketplace-addons) | Quicknode | Featured placement | Add-ons are listed on marketplace.quicknode.com (a directory listing, not a spotlight). | Eligible, not started |
 | [Arbitrum Mentorship Program Cohort 2 (with Robinhood Chain)](https://mentorship.arbitrum.io/) | Robinhood Chain | Event or speaking slot | Cohort ends with a Demo Day to investors (per Arbitrum Foundation); no other promotion stated. | Eligible, not started |
 | [Solana Developer Platform / solana.com/ai ecosystem listing](https://solana.com/ai) | Solana Foundation | Featured placement | Ecosystem section on solana.com/ai is editorial; no documented ask, so reach it by landing the Foundation grant and list entry first (inferred, not a stated benefit). | Verify fit first |
+| [Delphi pitch link](https://delphiventures.io) | Delphi Ventures | Blog post, Podcast or video | Delphi Digital publishes research and podcasts covering portfolio projects (documented practice); not guaranteed. | Verify fit first |
 | [CMC Labs Web3 Startup Accelerator](https://coinmarketcap.com/events/cmc-labs/) | CoinMarketCap | Co-marketing | Campaigns and content are the program's core service (per CMC Labs page). | Verify fit first |
+| [Electric Capital founder contact](https://www.electriccapital.com/) | Electric Capital | Blog post | Electric Capital publishes the annual Developer Report and portfolio posts (documented); not a program benefit. | Verify fit first |
 | [X Layer Build X / TapeOut Accelerate hackathon](https://web3.okx.com/en-us/xlayer/build-x-hackathon) | OKX | Press release | Winners receive official X Layer PR support (per the event page); arranged separately and not cash. | Eligible, not started |
+| [Milestone Circles](https://nasdaqcenter.org/milestone-circles/) | Nasdaq Entrepreneurial Center | Partner badge | Alumni can cite program participation; no documented spotlight, treat as modest. | Eligible, not started |
 
 ## Benefits ledger
 
@@ -156,7 +212,7 @@ No submissions logged yet.
 
 ## Company by company
 
-[Colosseum](#colosseum) · [Jupiter](#jupiter) · [Solana Foundation](#solana-foundation) · [Superteam](#superteam) · [Solana Mobile](#solana-mobile) · [x402 Foundation](#x402-foundation) · [Metaplex](#metaplex) · [Quicknode](#quicknode) · [Alchemy](#alchemy) · [BNB Chain](#bnb-chain) · [Circle](#circle) · [Coinbase](#coinbase) · [Helius](#helius) · [OKX](#okx) · [Privy](#privy) · [Render Network](#render-network) · [Dialect](#dialect) · [Fetch.ai / ASI Alliance](#fetchai-asi-alliance) · [Meteora](#meteora) · [Nosana](#nosana) · [Phantom](#phantom) · [pump.fun](#pumpfun) · [Robinhood Chain](#robinhood-chain) · [Solflare](#solflare) · [Virtuals Protocol](#virtuals-protocol) · [CoinMarketCap](#coinmarketcap) · [Ethereum Foundation](#ethereum-foundation) · [Chainlink](#chainlink) · [Triton One](#triton-one) · [Arbitrum](#arbitrum) · [Avalanche](#avalanche) · [Olas](#olas) · [Sui Foundation](#sui-foundation) · [Wormhole](#wormhole) · [Akash Network](#akash-network) · [Aptos Foundation](#aptos-foundation) · [ElizaOS](#elizaos) · [Polygon](#polygon) · [AR.IO](#ario) · [Jito](#jito) · [Livepeer](#livepeer) · [NEAR Foundation](#near-foundation) · [Story Protocol (DATA Foundation)](#story-protocol-data-foundation)
+[Colosseum](#colosseum) · [Jupiter](#jupiter) · [Solana Foundation](#solana-foundation) · [Superteam](#superteam) · [Solana Mobile](#solana-mobile) · [x402 Foundation](#x402-foundation) · [Metaplex](#metaplex) · [Quicknode](#quicknode) · [Alchemy](#alchemy) · [BNB Chain](#bnb-chain) · [Circle](#circle) · [Coinbase](#coinbase) · [Helius](#helius) · [OKX](#okx) · [Privy](#privy) · [Render Network](#render-network) · [Dialect](#dialect) · [Fetch.ai / ASI Alliance](#fetchai-asi-alliance) · [Meteora](#meteora) · [Nosana](#nosana) · [Phantom](#phantom) · [pump.fun](#pumpfun) · [Robinhood Chain](#robinhood-chain) · [Solflare](#solflare) · [Virtuals Protocol](#virtuals-protocol) · [CoinMarketCap](#coinmarketcap) · [Ethereum Foundation](#ethereum-foundation) · [Chainlink](#chainlink) · [Triton One](#triton-one) · [Arbitrum](#arbitrum) · [Avalanche](#avalanche) · [Olas](#olas) · [Sui Foundation](#sui-foundation) · [Wormhole](#wormhole) · [Akash Network](#akash-network) · [Aptos Foundation](#aptos-foundation) · [ElizaOS](#elizaos) · [Polygon](#polygon) · [AR.IO](#ario) · [Jito](#jito) · [Livepeer](#livepeer) · [NEAR Foundation](#near-foundation) · [Story Protocol (DATA Foundation)](#story-protocol-data-foundation) · [Binance](#binance) · [Kraken](#kraken) · [Bybit](#bybit) · [Bitget](#bitget) · [Gemini](#gemini) · [Crypto.com](#cryptocom) · [Robinhood](#robinhood) · [KuCoin](#kucoin) · [HTX](#htx) · [Upbit](#upbit) · [Ledger](#ledger) · [Consensys / MetaMask](#consensys-metamask) · [CoinGecko](#coingecko) · [DefiLlama](#defillama) · [Tether](#tether) · [Ripple](#ripple) · [Galaxy](#galaxy) · [Pyth Network](#pyth-network) · [Bithumb](#bithumb) · [Gate](#gate) · [MEXC](#mexc) · [Trezor](#trezor) · [Messari](#messari) · [Dune](#dune) · [Nansen](#nansen) · [Kaito](#kaito) · [Magic Eden](#magic-eden) · [Tensor](#tensor) · [Backpack](#backpack) · [Raydium](#raydium) · [Orca](#orca) · [Drift](#drift) · [Alliance DAO](#alliance-dao) · [a16z](#a16z) · [Outlier Ventures](#outlier-ventures) · [Solana Ventures](#solana-ventures) · [Nasdaq](#nasdaq) · [Nasdaq Entrepreneurial Center](#nasdaq-entrepreneurial-center) · [Citi](#citi) · [Standard Chartered](#standard-chartered) · [Morgan Stanley](#morgan-stanley) · [Goldman Sachs](#goldman-sachs) · [JPMorgan](#jpmorgan) · [Bank of America](#bank-of-america) · [Franklin Templeton](#franklin-templeton) · [BlackRock](#blackrock) · [Polychain Capital](#polychain-capital) · [Pantera Capital](#pantera-capital) · [Multicoin Capital](#multicoin-capital) · [Dragonfly](#dragonfly) · [Delphi Ventures](#delphi-ventures) · [Electric Capital](#electric-capital) · [Big Brain Holdings](#big-brain-holdings) · [Animoca Brands](#animoca-brands) · [Shima Capital](#shima-capital) · [Jump Crypto and Framework](#jump-crypto-and-framework) · [Fidelity](#fidelity) · [VanEck and Grayscale](#vaneck-and-grayscale) · [DTCC](#dtcc) · [CME Group](#cme-group) · [ICE and NYSE](#ice-and-nyse) · [Strategy (MicroStrategy)](#strategy-microstrategy) · [Societe Generale FORGE](#societe-generale-forge) · [Paradigm](#paradigm)
 
 ### Colosseum
 
@@ -617,6 +673,570 @@ Closed doors (do not re-research):
 Closed doors (do not re-research):
 
 - [Builder grants and Story Academy](https://www.slope.agency/case-studies/story-protocol): Retired or closed. IP licensing for 3D assets is no longer the product direction; no program to apply to. (checked 2026-11-06)
+
+### Binance
+
+**How we partner with Binance:** Door is YZi Labs EASY Residency (rolling, agentic payments thesis) and Square Creatorpad for reach; Binance Alpha and spot listing are gated owner decisions for $THREE. Binance Labs is now YZi Labs and MVB sits inside EASY.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Binance Square Creatorpad](https://www.binance.com/en/square) | Co-marketing | Reach into Binance's largest creator audience with token-reward campaigns, useful for demo content on Solana agents and x402.; token rewards per campaign; Square distribution; creator profile reach | Social posts | Verified Binance account holders with a Square profile; each campaign has its own task list. Cost: free. | Eligible, not started | Have the owner open a verified Square profile and post a three.ws agent demo thread before chasing any sponsored campaign. Apply: Register and verify a Binance account, open Square Creatorpad, and complete the posted task campaigns.. Cadence: rolling, new campaigns run regularly. | 2·5·4 = **11** |
+| [YZi Labs EASY Residency (includes MVB track)](https://www.yzilabs.com) | Accelerator | Up to USD 500k in funding per Season 2 reporting, hubs in New York and the Bay Area, and Demo Days in front of Binance-ecosystem investors.; up to USD 500k via SAFE (Season 2 reporting); incubation hubs; Demo Days; BNB Chain MVB track | Event or speaking slot, Podcast or video | Long-term founders in Web3, AI, biotech and newer areas such as agentic payments, RWA and prediction markets. Cost: free (equity via SAFE). | Eligible, not started | Draft a one-page agentic-payments plus 3D agents application and submit through the EASY Residency form. Apply: Use the application form linked from the YZi Labs EASY Residency announcement (wkf.ms/3IA5iBk); applications are rolling.. Cadence: rolling, Demo Days roughly April, August and December 2026. | 4·5·2 = **11** |
+| [Binance Square Write to Earn](https://www.binance.com/en/square) | Recognition | Commission and incentive income plus a verified creator presence on Binance Square.; up to 30% trading fee commission from readers' trades (per third-party report); read-count incentives; tips |  | Verified account with an active Square profile; terms vary by region. Cost: free. | Verify fit first | Skip until the owner decides whether to run a Binance referral channel at all. Apply: Complete account verification, set up a Square profile, and join the creator program from Square.. Cadence: rolling. | 1·4·4 = **9** |
+| [Binance Wallet and Binance Alpha](https://www.binance.com/en/support/faq/what-is-binance-alpha-on-binance-wallet-43a46bb5c5ec4ba6a1be8bb9a98aa7f8) | Store or directory | Alpha exposure inside Binance Wallet, which supports Solana, for tokens Binance considers for future listing.; Binance Wallet visibility; pre-listing showcase |  | Selected by Binance using its own market and community signals. Cost: free per FAQ; third-party consultants charge fees, avoid them. | Verify fit first | Owner decision: whether to ever request Alpha or Binance listing for $THREE. Until then, do nothing. Apply: No open application found; the FAQ has a section on suggesting tokens, which is the only documented door.. Cadence: rolling, curated. | 2·5·1 = **8** |
+
+- **Binance Square Creatorpad.** Square rewards content, not product listings, so it fits as a distribution channel for Forge and /play clips. Campaign pools are paid by third-party projects, so this is organic reach only for us.
+- **YZi Labs EASY Residency (includes MVB track).** Binance Labs became YZi Labs and MVB now sits inside EASY Residency. AI agents with wallets paying over x402 match its stated agentic payments thesis, though it takes equity and BNB-side work is expected.
+- **Binance Square Write to Earn.** It is a referral income program, not a product partnership. Third-party source dates the commission claim, so confirm current terms before relying on it.
+- **Binance Wallet and Binance Alpha.** This is a token listing path, which only the owner may start. No product or dApp route is documented.
+
+### Kraken
+
+**How we partner with Kraken:** Only builder door is InkWorks on the EVM Ink chain (cohort based, next intake unconfirmed). No separate Kraken Ventures intake found. Kraken is a Solana Breakpoint 2026 sponsor, so meet them in person.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [InkWorks Accelerator (Ink Foundation)](https://ink.works) | Accelerator | Up to USD 30k milestone capital plus priority access to Kraken distribution and Superchain tooling.; up to USD 30k in milestones; Kraken distribution; tooling credits; Demo Day to VCs | Event or speaking slot | Teams building on Ink, an EVM L2; Cohort 00 started 2026-05-18. Cost: free. | Verify fit first | Check ink.works for the next intake and note the Ink (EVM) requirement before applying. Apply: Apply at ink.works when the next cohort opens.. Cadence: cohort based, next intake not confirmed. | 3·4·3 = **10** |
+
+- **InkWorks Accelerator (Ink Foundation).** Kraken's only builder program is on an EVM chain, so it is a secondary surface. Reported via search; I could not confirm the next intake.
+
+### Bybit
+
+**How we partner with Bybit:** Bybit Venture Studio incubates internally (Byreal is a Solana DEX from it); no open application found. ByBUIDLERs is a student ambassador program, not for companies.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Bybit Venture Studio](https://www.bybit.com) | Accelerator | Incubation and exchange platform support, with the Solana DEX Byreal as a product of the studio.; incubation; Bybit platform access |  | Not published; first project incubated was Printr. Cost: unknown. | Verify fit first | Watch Bybit announcements for an open call; no action now. Apply: No public form found; reach Bybit through its official announcements or business contact.. Cadence: unknown. | 2·4·1 = **7** |
+
+- **Bybit Venture Studio.** Byreal is Solana-native so the studio is aligned with our home chain, but it appears to be internally sourced. Bybit also narrowed its Web3 focus in April 2025.
+
+### Bitget
+
+**How we partner with Bitget:** Best self-serve exchange door: Bitget Wallet dApp listing and free API platform, plus past Solana hackathons with Superteam. Token listing there is an owner decision.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Bitget Wallet API Platform](https://web3.bitget.com/en/docs) | Developer program | Swap, market and wallet data APIs that agents can call across Solana and EVM chains.; free API access; OmniConnect SDK |  | Developers and builders. Cost: free. | Eligible, not started | Request API access and prototype a Bitget Wallet swap tool for agents. Apply: Apply for free API access through the Bitget Wallet developer docs.. Cadence: rolling. | 3·2·5 = **10** |
+| [Bitget Wallet Business dApp and token listing](https://web3.bitget.com/en/docs/reference/dapp/community/) | Store or directory | Placement in a wallet dApp store that Bitget says reaches 20M plus daily users, including Solana support.; dApp store placement; developer channels for onboarding; wallet SDK docs |  | Any dApp that connects via standard wallet adapters. Cost: free per guide. | Eligible, not started | Integrate Bitget Wallet in the agent wallet connect flow, then submit the three.ws dApp. Owner decision: any $THREE token listing request in the same Business module. Apply: Connect a wallet in the Business module, open Listing self-service and submit the dApp; the guide is old so verify the current UI.. Cadence: rolling, self-serve. | 3·3·4 = **10** |
+
+- **Bitget Wallet API Platform.** Real, self-serve, and gives a co-listing story with the dApp store. Reported via search; confirm the application page.
+- **Bitget Wallet Business dApp and token listing.** The only self-serve wallet dApp store in this set. The dApp submission is ours to do; token listing is a separate gated owner decision.
+
+Closed doors (do not re-research):
+
+- [Bitget x Solana Hackathon (with Superteam)](https://dorahacks.io/hackathon/bitget-solana-hackathon/detail): Retired or closed. Past edition only. Bitget Wallet is a Breakpoint 2026 sponsor, so another Solana event is plausible. (checked 2026-11-06)
+
+### Gemini
+
+**How we partner with Gemini:** Gemini Frontier Fund is an investment arm with no confirmed open intake. No developer program found.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Gemini Frontier Fund](https://www.gemini.com/frontier-fund) | Accelerator | Strategic early-stage investment from an exchange with a US regulated profile.; investment |  | Early-stage crypto startups. Cost: equity. | Verify fit first | Park until there is revenue to show; no action now. Apply: Contact the fund through its page; no open application confirmed.. Cadence: unknown. | 2·3·1 = **6** |
+
+- **Gemini Frontier Fund.** An investment arm, not a program. The page looks dated in search.
+
+### Crypto.com
+
+**How we partner with Crypto.com:** Build On Cronos (Ignition, Apex) has an AI agents track and an x402 hackathon; Crypto.com Capital is reached only via Apex pitch sessions. EVM, so secondary to Solana. Crypto.com Onchain had no separate program in search.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Build On Cronos Ignition](https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m) | Grant or fund | Up to USD 200k in support, USD 2k monthly microgrants for a year and a 50% gas revenue share.; up to USD 200k support; USD 2k monthly microgrants; 50% gas fee share | Co-marketing | Teams building on Cronos in tokenization, AI agents, DeFi or payments. Cost: free, no equity. | Eligible, not started | Deploy the x402 agent payment demo to Cronos and file the proposal under AI agents. Apply: Submit a proposal through the Build On Cronos form linked from the Cronos announcement.. Cadence: rolling. | 4·4·3 = **11** |
+| [Build On Cronos Apex (Crypto.com Capital pitch)](https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m) | Accelerator | Up to USD 500k in support, a success manager, co-marketing and pitch sessions to Crypto.com Capital.; up to USD 500k support; success manager; co-marketing; Crypto.com Capital pitch; distribution to 150M plus users | Co-marketing | Cronos projects with traction. Cost: free, no equity. | Verify fit first | Enter Ignition first and revisit Apex once Cronos usage exists. Apply: Apply through the same Build On Cronos form once the project has traction.. Cadence: rolling. | 4·5·1 = **10** |
+
+- **Build On Cronos Ignition.** Cronos has an explicit AI agents track and an x402 push. It is an EVM chain, so it is secondary to Solana, but it is the best Crypto.com door.
+- **Build On Cronos Apex (Crypto.com Capital pitch).** Apex needs traction we do not have on Cronos. Crypto.com Capital has no separate application.
+
+Closed doors (do not re-research):
+
+- [Cronos x402 Hackathon](https://blockchain.news/news/cronos-launches-x402-hackathon-advance-ai-driven-payment-systems): Retired or closed. Perfect fit for our x402 agent payments but this edition is over. Recurrence is unconfirmed. (checked 2026-11-06)
+
+### Robinhood
+
+**How we partner with Robinhood:** Robinhood Crypto only. Doors: Arbitrum Open House mentorship (deadline 2026-12-06), Robinhood Chain docs and contact, and the Crypto Trading API. Robinhood Ventures and a Robinhood Wallet dApp listing process: nothing public found as of 2026-11-06.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Robinhood Crypto Trading API](https://docs.robinhood.com/crypto/trading) | Developer program | Programmatic crypto account, market data and orders for an agent trading tool.; REST API; orders and holdings; market data |  | Robinhood Crypto account holders; crypto only. Cost: free. | Eligible, not started | Wrap the API as an MCP tool, with owner confirmation gate for every order. Apply: Create API credentials from a Robinhood Crypto account per the docs.. Cadence: rolling. | 3·3·4 = **10** |
+
+- **Robinhood Crypto Trading API.** A crypto venue integration that sits beside the Solana rail. Any live order is a gated owner action. Details come from a directory listing, not the docs page.
+
+### KuCoin
+
+**How we partner with KuCoin:** KuCoin Ventures has an Apply Now button; investment door tied to listing, hold until a raise.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [KuCoin Ventures](https://www.kucoin.com/kucoin-ventures) | Accelerator | Investment plus exchange network for DeFi, GameFi and Web3 infrastructure.; investment; KuCoin network |  | Not published. Cost: equity. | Verify fit first | Hold until a fundraise is planned; then submit. Apply: Use the Apply Now button on the KuCoin Ventures page.. Cadence: rolling. | 2·3·2 = **7** |
+
+- **KuCoin Ventures.** Open intake exists but is an investment door, with a listing implied. Any listing is an owner decision.
+
+### HTX
+
+**How we partner with HTX:** HTX Ventures has an Apply Now button; investment plus incubation, listing-driven. Low priority.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [HTX Ventures](https://www.htx.com/ventures) | Accelerator | Investment, incubation and research; HTX says 60% of its portfolio is listed on HTX.; investment; incubation; research |  | Not published. Cost: equity. | Verify fit first | Hold until a fundraise is planned. Owner decision: any HTX token listing for $THREE. Apply: Use the Apply Now button on the HTX Ventures page.. Cadence: rolling. | 2·2·2 = **6** |
+
+- **HTX Ventures.** Open intake, but the portfolio is listing-driven. The brand has a mixed reputation.
+
+### Upbit
+
+**How we partner with Upbit:** Dunamu is being absorbed by Naver Financial. No startup program found; only token listing, which is an owner decision.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Upbit and Bithumb foreign project listing](https://www.blockmm.ai/articles/static/upbit-bithumb-listing-guide-2026) | Store or directory | Korean retail liquidity and visibility for a listed token.; KRW market |  | Projects with a Korean community presence and compliance readiness, per a third-party guide. Cost: unknown. | Verify fit first | Owner decision: whether to pursue any Korean exchange listing for $THREE. No action otherwise. Apply: Korean exchanges review submissions case by case; most foreign projects use a Korean agency or law firm.. Cadence: 3 to 9 months per third-party guide. | 1·4·1 = **6** |
+
+- **Upbit and Bithumb foreign project listing.** Token listing only, no product route found. Upbit's operator is being absorbed by Naver Financial, so a partner route there may change.
+
+### Ledger
+
+**How we partner with Ledger:** Ledger Wallet Discover is invitation only through an intake form and discover@ledger.fr. Build a Solana Live App first. No Ledger Enterprise partner route found.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Ledger Wallet Discover (Live Apps)](https://developers.ledger.com/docs/ledger-live/discover/getting-started) | Marketplace | Placement in a curated app catalog inside Ledger Wallet, a household hardware wallet brand.; Discover section placement; Wallet API access |  | Invited by Ledger's business team; non-EVM chains discuss Clear Signing in the conversation. Cost: free. | Verify fit first | Build a Live App manifest in Developer mode, then send the intake form with a Solana signing demo. Apply: Fill in the partner intake form linked on the page and email discover@ledger.fr; listing is invitation only.. Cadence: rolling. | 3·5·1 = **9** |
+
+- **Ledger Wallet Discover (Live Apps).** Fetched page confirms invite-only curation. A working Live App on Solana gives the form something real to show.
+
+### Consensys / MetaMask
+
+**How we partner with Consensys / MetaMask:** MetaMask Snaps Directory is a clean open submission process (EVM). Consensys Mesh showed no partner route.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [MetaMask Snaps Directory](https://docs.metamask.io/snaps/how-to/get-allowlisted/) | Marketplace | Listing in the MetaMask extension's Snaps directory for an EVM-wallet agent integration.; directory listing; no publishing fee |  | Public source, npm package, no console logs or TODOs, Snapper scan, third-party audit for key-management methods. Cost: free (audits may cost). | Eligible, not started | Scope a read-only agent identity Snap that avoids key-management permissions, to skip the audit. Apply: Publish the Snap to npm and complete the Snaps Directory Information form.. Cadence: rolling, strict version resubmission. | 3·4·3 = **10** |
+
+- **MetaMask Snaps Directory.** Fetched page lists a clear open process. MetaMask is EVM-first, so this is a secondary surface. Consensys Mesh showed no partner route.
+
+### CoinGecko
+
+**How we partner with CoinGecko:** Partner Platform lists projects and sells ads; no startup or API credits program found. New listing is an owner decision.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [CoinGecko Partner Platform](https://www.coingecko.com/learn/introducing-partner-platform) | Store or directory | Listing management on CoinGecko and GeckoTerminal plus self-serve ads from USD 100.; token and project listing dashboard; Fast Pass review; self-serve ad campaigns; USD 50 ad credit for first 1000 projects |  | Projects meeting CoinGecko listing criteria. Cost: free to list; ads paid. | Eligible, not started | Owner decision: any new token or project listing request for $THREE. Do not file one. Apply: Create an account at partner.coingecko.com and submit a listing request; Fast Pass gives a 24 hour review.. Cadence: rolling. | 2·5·4 = **11** |
+
+- **CoinGecko Partner Platform.** No CoinGecko startup or API program was found. The platform is a listing and ads dashboard only.
+
+### DefiLlama
+
+**How we partner with DefiLlama:** Open adapter pull-request process, but we hold no TVL. Not useful today.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [DefiLlama Adapters (TVL listing)](https://github.com/DefiLlama/DefiLlama-Adapters) | Store or directory | Appears in DefiLlama and feeds CoinGecko chain TVL, a credibility signal for any protocol with locked value.; DefiLlama listing |  | Protocols with measurable on-chain TVL and an accurate adapter. Cost: free. | Eligible, not started | Revisit only if a three.ws contract holds TVL; skip now. Apply: Fork the DefiLlama-Adapters repo, add a TVL adapter and open a pull request.. Cadence: rolling. | 1·4·4 = **9** |
+
+- **DefiLlama Adapters (TVL listing).** We hold no TVL product today. Documented process is open and objective.
+
+### Tether
+
+**How we partner with Tether:** Developer Grants program (open since 2026-05-11) fits wallet and local AI work. Tether Evo and Hypha: no application process found.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Tether Developer Grants (WDK, QVAC, MDK, Pears)](https://tether.io/news/tether-launches-developer-grants-program-to-fund-local-first-ai-and-payments-infrastructure/) | Grant or fund | Task-based payouts of roughly USD 1,500 to 4,000 in USDT or Bitcoin, plus visibility in Tether's open stack.; fixed task payouts; Tether stack visibility | Featured placement | Developers building on Tether's open technology: core libraries, docs, apps, research. Cost: free. | Eligible, not started | Pick a WDK or QVAC task and build an agent wallet integration on the Wallet Development Kit. Apply: Pick an active task on Tether's grants page and apply to it.. Cadence: rolling since 2026-05-11. | 4·4·4 = **12** |
+
+- **Tether Developer Grants (WDK, QVAC, MDK, Pears).** Local-first AI and self-custodial wallets match our agent wallet and on-device agent story. USDT is on Solana too.
+
+### Ripple
+
+**How we partner with Ripple:** XRPL Grants and Tenity accelerator are open but outside Solana; low priority.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [XRPL Grants and Accelerator](https://xrplgrants.org) | Grant or fund | Accelerator grants of USD 50k to 200k, paid against milestones.; USD 50k to 200k grants; mentoring; FinTech Builder Program |  | Projects with an MVP in DeFi, RWA, payments or trade finance on XRPL. Cost: free. | Eligible, not started | Skip unless the owner wants an XRPL payments agent; payments focus is the only overlap. Apply: Submit the unified application on xrplgrants.org.. Cadence: rolling. | 2·4·2 = **8** |
+| [Ripple and Tenity XRPL Accelerator](https://ripple.com/ripple-press/ripple-and-tenity-to-launch-blockchain-accelerator/) | Accelerator | Structured accelerator with Ripple's network.; accelerator; Ripple network |  | XRPL builders. Cost: unknown. | Verify fit first | Check ripple.com for the next intake; low priority. Apply: Apply during the next intake; the programme runs twice a year in Singapore.. Cadence: twice yearly. | 2·4·2 = **8** |
+
+- **XRPL Grants and Accelerator.** Ripple moved to distributed funding in February 2026. XRPL is outside Solana first, so low priority.
+- **Ripple and Tenity XRPL Accelerator.** Duplicates XRPL Grants intake. Reported via press release.
+
+### Galaxy
+
+**How we partner with Galaxy:** Galaxy Interactive is the thematic investor for 3D worlds and games, but no intake page exists. Treat as a future raise target.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Galaxy Interactive and Galaxy Ventures](https://interactive.galaxy.com) | Accelerator | Galaxy Interactive invests in interactive tech and gaming, a direct match for /play and 3D worlds.; investment; Galaxy network |  | Seed to growth; a listing reports checks of USD 1M to 20M. Cost: equity. | Verify fit first | Add Galaxy Interactive to the investor target list for a later round. Apply: No public form found; cold intro through the Galaxy site or warm introduction.. Cadence: rolling. | 4·4·1 = **9** |
+
+- **Galaxy Interactive and Galaxy Ventures.** Best thematic investor match in this set, but no program or intake page, and we lack revenue.
+
+### Pyth Network
+
+**How we partner with Pyth Network:** Solana-native; ecosystem grants and Superteam Earn bounties are an open door for oracle integrations.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Pyth Ecosystem Grants and Superteam Earn bounties](https://www.pyth.network/blog/pyth-ecosystem-grants-program) | Grant or fund | Bounty pay in PYTH (for example 1,000 PYTH per chain for Entropy verification) and standing in the Solana oracle ecosystem.; PYTH bounties; developer grants; dev forum support |  | Community members shipping tools and integrations. Cost: free. | Eligible, not started | Integrate Pyth price feeds in agent trading tools and look for a matching open bounty on Superteam Earn. Apply: Take open Pyth bounties on Superteam Earn or the targeted grants on the Pyth dev forum.. Cadence: rolling bounties. | 3·3·4 = **10** |
+
+- **Pyth Ecosystem Grants and Superteam Earn bounties.** Solana-native and open. Pyth is already a core Solana data layer. Most coverage is 2024 to 2025, so confirm which bounties are open now.
+
+### Bithumb
+
+**How we partner with Bithumb:** No public partner route found as of 2026-11-06 beyond token listing, which is an owner decision.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Gate
+
+**How we partner with Gate:** Gate Ventures invests in early-stage Web3 and infrastructure; no application link found in search.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### MEXC
+
+**How we partner with MEXC:** MEXC Ventures and MEXC Labs incubator exist; no application link found.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Trezor
+
+**How we partner with Trezor:** No public partner route found as of 2026-11-06; Tether's WDK grants are the nearest hardware-wallet-adjacent door.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Messari
+
+**How we partner with Messari:** Galaxy portfolio company; no partner program surfaced in search. No public partner route found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Dune
+
+**How we partner with Dune:** No partner program surfaced in search; could use Dune dashboards for our x402 volume as a showcase, not a program.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Nansen
+
+**How we partner with Nansen:** No partner program surfaced in search. No public partner route found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Kaito
+
+**How we partner with Kaito:** Yaps was sunset in January 2026; Capital Launchpad is token fundraising on Base USDC. Not a product door, and any raise would be an owner decision.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Magic Eden
+
+**How we partner with Magic Eden:** Refocused on Solana marketplace and iGaming; no public developer or partner program found. 3D asset NFT angle only if they open a creator route.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Tensor
+
+**How we partner with Tensor:** No public partner route found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Backpack
+
+**How we partner with Backpack:** Solana wallet and exchange; no builder or xNFT program found. Reach through Discord or the Solana community.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Raydium
+
+**How we partner with Raydium:** No public partner route found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Orca
+
+**How we partner with Orca:** No public partner route found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Drift
+
+**How we partner with Drift:** Reported suspended after an April 2026 attack; not a viable sponsor now.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Alliance DAO
+
+**How we partner with Alliance DAO:** ALL19 regular deadline 2026-11-18. Best accelerator door; owner decision on equity.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [ALL19 accelerator](https://www.alliance.xyz/apply) | Accelerator | Crypto-native accelerator with a large Solana alumni base and a strong founder and investor network.; Pre-seed funding on a SAFE (third-party trackers cite about USD 400k for 10%); About 10 weeks, two in New York; Demo day; Investor and founder network | Featured placement, Event or speaking slot | Crypto founders of any vertical and stage, pre-product allowed. Cost: Equity and a token side letter (per third-party trackers). | Eligible, not started | Owner decision: decide whether to take equity funding, then submit the ALL19 form by 2026-11-18 if yes. Apply: Submit the application form on alliance.xyz before the regular admission date; interview invites go out within a week.. Cadence: cohort twice a year, rolling review. | 5·4·3 = **12** |
+
+- **ALL19 accelerator.** Direct match for an agent and x402 payments startup on Solana. Taking capital is an owner call; the form itself is free and quick.
+
+### a16z
+
+**How we partner with a16z:** CSX is closed; a16z speedrun is the live door. Owner decision on capital.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [a16z speedrun](https://speedrun.a16z.com/) | Accelerator | Fast a16z check (page says it targets a two week close) and brand halo; AI and games and interactive media are in its remit.; Up to about USD 1M per a third-party summary; Two week target close; a16z network | Featured placement | Early-stage startups; terms on the apply page. Cost: Equity (terms on the apply page). | Eligible, not started | Owner decision: decide whether to take a16z capital, then read the speedrun FAQ and apply if yes. Apply: Click Apply now on the speedrun page.. Cadence: rolling cohorts. | 4·5·2 = **11** |
+| [Crypto Startup School accelerator (CSX)](https://a16zcrypto.com/posts/article/apply-to-join-the-csx-04-cohort-in-san-francisco-this-spring/) | Accelerator | Most prestigious crypto accelerator; USD 500k minimum investment per company in past cohorts. | Blog post, Featured placement, Event or speaking slot | Crypto startups at the founding stage. Cost: Equity. | Eligible, not started | Owner decision: decide whether to take a16z crypto capital, then join the CSX update list and watch for CSX 05. Apply: Sign up for updates on the CSX site; no open application is listed for a new cohort.. Cadence: annual, past cohort applications closed in February. | 4·5·2 = **11** |
+
+- **a16z speedrun.** The 3D, interactive and AI agent angle fits the speedrun interactive media track. Highly competitive; speedrun is the live a16z door because CSX is closed.
+- **Crypto Startup School accelerator (CSX).** CSX 04 applications closed 2025-02-07 and no newer cohort was found, so this reopens only if a16z announces one.
+
+### Outlier Ventures
+
+**How we partner with Outlier Ventures:** Base Camp cohorts themed and none open found; equity plus token terms.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Base Camp accelerators](https://outlierventures.io/article/launching-the-post-web-base-camp-accelerator-program/) | Accelerator | 12 week remote accelerator with DeAI and agent themes and up to USD 200k. |  | MVP stage teams in the themed vertical. Cost: Equity plus tokens in past cohorts (6% and 6%). | Verify fit first | Owner decision: decide whether to take equity and token terms, then check outlierventures.io for a live DeAI cohort. Apply: Watch outlierventures.io for the next Base Camp call; the last found closed end of June 2025.. Cadence: themed cohorts, none open found. | 4·3·2 = **9** |
+
+- **Base Camp accelerators.** Past cohorts took equity and token supply, so terms need an owner call. No live cohort found as of 2026-11-06.
+
+### Solana Ventures
+
+**How we partner with Solana Ventures:** Public page exists per repo docs; not verified live.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Solana Ventures public page](https://solanalabs.notion.site/Solana-Ventures-Public-ca82bdef271048918303d608460b3b3e) | Grant or fund | Solana-native strategic capital and ecosystem introductions. |  | Early-stage Solana projects. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Solana Ventures capital, then read the public page for its pitch process. Apply: Read the Solana Ventures public page for the current pitch route.. Cadence: unknown. | 5·4·2 = **11** |
+
+- **Solana Ventures public page.** I could not verify a live intake; the URL comes from the repo's partner docs. Treat as research.
+
+### Nasdaq
+
+**How we partner with Nasdaq:** Nasdaq Ventures has a pitch form needing a strategic tie; the Entrepreneurial Center offers free Milestone Circles.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Nasdaq Ventures pitch form](https://www.nasdaq.com/nasdaq-ventures) | Accelerator | Corporate VC for financial services innovation; needs a strategic tie to a Nasdaq business unit. |  | Seed to Series B with a tie to Nasdaq units and an experienced team. Cost: Equity. | Verify fit first | Owner decision: taking capital is implied; skip unless a Nasdaq market tech tie emerges. Apply: Fill in the pitch form on the Nasdaq Ventures page.. Cadence: rolling. | 2·4·1 = **7** |
+
+- **Nasdaq Ventures pitch form.** A 3D agent platform has no clear Nasdaq business tie. Page fetch timed out; criteria are from a search result.
+
+### Nasdaq Entrepreneurial Center
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Milestone Circles](https://nasdaqcenter.org/milestone-circles/) | Accelerator | Free 12 week founder mentorship cohort from a Nasdaq-affiliated nonprofit. | Partner badge | US-based founders. Cost: free. | Eligible, not started | Apply to Milestone Circles when the next cohort window opens. Apply: Apply on nasdaqcenter.org/milestone-circles.. Cadence: periodic cohorts. | 2·3·3 = **8** |
+
+- **Milestone Circles.** Generic founder coaching, not crypto specific, but free with a Nasdaq name and low barrier.
+
+### Citi
+
+**How we partner with Citi:** Citi Ventures is the only startup route; Token Services is client only. No verified pitch form.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Citi Ventures](https://ventures.citi.com) | Accelerator | Corporate VC for financial services and enterprise tech. |  | Seed to growth startups relevant to Citi. Cost: Equity. | Verify fit first | Owner decision: taking capital is implied; skip unless an enterprise banking agent use case forms. Apply: Use the contact or pitch route on ventures.citi.com.. Cadence: rolling. | 2·4·1 = **7** |
+
+- **Citi Ventures.** No official submission page was verified. Citi Token Services is client facing, not an open developer program.
+
+### Standard Chartered
+
+**How we partner with Standard Chartered:** SC Ventures pitch competition needs a Singapore entity; Zodia is being absorbed. No open door.
+
+Closed doors (do not re-research):
+
+- [SC Ventures Pitch Competition](https://scventures.io/pitch-competition/): Retired or closed. Requires a Singapore registered entity, which we lack. Zodia Custody is being absorbed by Standard Chartered; no startup route found. (checked 2026-11-06)
+
+### Morgan Stanley
+
+**How we partner with Morgan Stanley:** Inclusive and Sustainable Ventures Lab is impact and revenue gated; closed until about March 2027.
+
+Closed doors (do not re-research):
+
+- [Inclusive and Sustainable Ventures Lab](https://www.morganstanley.com/about-us/inclusive-sustainable-ventures): Retired or closed. Requires impact focus and revenue; we are neither. Reopens likely early 2027 (inference). (checked 2026-11-06)
+
+### Goldman Sachs
+
+**How we partner with Goldman Sachs:** Launch With GS targets diverse founders and has no open cohort found. GS DAP is institutional.
+
+Closed doors (do not re-research):
+
+- [Launch With GS](https://www.goldmansachs.com/pressroom/press-releases/2021/announcement-18-mar-2021.html): Retired or closed. No 2026 intake found; GS DAP is institutional, not a startup route. (checked 2026-11-06)
+
+### JPMorgan
+
+**How we partner with JPMorgan:** Kinexys serves institutions; In-Residence is an old program. No open door found.
+
+Closed doors (do not re-research):
+
+- [In-Residence and Kinexys](https://www.jpmorgan.com/insights/payments/blockchain-digital-assets/introducing-kinexys): Retired or closed. No public startup route found as of 2026-11-06; Kinexys partners are banks and large fintechs. (checked 2026-11-06)
+
+### Bank of America
+
+**How we partner with Bank of America:** Breakthrough Lab last seen 2023 and not open. No door found.
+
+Closed doors (do not re-research):
+
+- [Breakthrough Lab](https://fintechnews.am/fintech-usa/49123/bank-of-america-launches-new-fintech-accelerator-program/): Retired or closed. No 2026 cohort found and it targets a different audience. (checked 2026-11-06)
+
+### Franklin Templeton
+
+**How we partner with Franklin Templeton:** Benji is live on Solana, a good agent-wallet RWA story, but no partner or startup route found.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Benji on Solana and Digital Assets](https://digitalassets.franklintempleton.com/benji/) | Store or directory | First TradFi tokenized fund on Solana (Feb 2025); a talking point for tokenized treasury agents. |  | Institutions. Cost: unknown. | Verify fit first | Reference Benji as a real Solana RWA the agent wallet can hold; no application. Apply: None; no startup or developer program found.. Cadence: none. | 3·5·1 = **9** |
+
+- **Benji on Solana and Digital Assets.** Benji is on Solana, so an agent demo holding tokenized treasuries is a credible integration idea, but no partner door exists.
+
+### BlackRock
+
+**How we partner with BlackRock:** BUIDL runs through Securitize and chain foundations. No public startup route found as of 2026-11-06.
+
+Closed doors (do not re-research):
+
+- [BUIDL ecosystem](https://www.prnewswire.com/news-releases/blackrock-launches-new-buidl-share-classes-across-multiple-blockchains-to-expand-access-and-potential-of-buidl-ecosystem-302304035.html): Retired or closed. BUIDL integrations run through Securitize and chain foundations, not startup programs. (checked 2026-11-06)
+
+### Polychain Capital
+
+**How we partner with Polychain Capital:** Reported application portal; unverified.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Polychain application portal](https://polychain.capital) | Accelerator | Large crypto fund investing Seed to Growth. |  | Crypto projects. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Polychain capital, then confirm the portal on its site. Apply: Use the proposal portal on Polychain's site (per a third-party guide).. Cadence: rolling. | 3·4·2 = **9** |
+
+- **Polychain application portal.** Portal reported only by a third-party guide; unverified. Warm intro advised.
+
+### Pantera Capital
+
+**How we partner with Pantera Capital:** Reported pitch inbox; warm intro preferred.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Pantera pitch inbox](https://panteracapital.com) | Accelerator | Large crypto fund with many Solana bets. |  | Crypto projects. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Pantera capital, then verify the pitch address on its site. Apply: Email the pitch address listed on panteracapital.com with plan, market and team.. Cadence: rolling. | 3·4·2 = **9** |
+
+- **Pantera pitch inbox.** Intake reported by a third-party site; warm introductions strongly preferred.
+
+### Multicoin Capital
+
+**How we partner with Multicoin Capital:** Solana focused fund with an agents thesis; contact form.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Multicoin contact form](https://multicoin.capital/contact/) | Accelerator | Solana focused fund with a thesis on agents and payments. | Blog post | Crypto projects. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Multicoin capital, then send a short agents on Solana note via the contact form. Apply: Use the contact form.. Cadence: rolling. | 5·4·2 = **11** |
+
+- **Multicoin contact form.** Thesis alignment is strong. Warm intro preferred. Contact URL from a third-party listing.
+
+### Dragonfly
+
+**How we partner with Dragonfly:** Send Pitch link; warm intro preferred.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Dragonfly Send Pitch](https://www.dragonfly.xyz) | Accelerator | Crypto fund open to direct applications. |  | Crypto projects. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Dragonfly capital, then use Send Pitch. Apply: Use the Send Pitch link on the website.. Cadence: rolling. | 3·4·2 = **9** |
+
+- **Dragonfly Send Pitch.** Third-party sources say direct pitches are accepted but warm intros are preferred.
+
+### Delphi Ventures
+
+**How we partner with Delphi Ventures:** Pitch link plus research coverage.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Delphi pitch link](https://delphiventures.io) | Accelerator | Research led crypto fund. | Blog post, Podcast or video | Crypto projects. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Delphi capital, then use the pitch link. Apply: Use the pitch link on the site with deck and Telegram handle.. Cadence: rolling. | 3·3·2 = **8** |
+
+- **Delphi pitch link.** Intake from a two year old guide; unverified. Delphi publishes research on portfolio teams.
+
+### Electric Capital
+
+**How we partner with Electric Capital:** Engineer led fund; email intake and publishes the Developer Report.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Electric Capital founder contact](https://www.electriccapital.com/) | Accelerator | Engineer led fund covering AI and distributed systems at pre-seed and seed. | Blog post | Pre-seed and seed crypto founders. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Electric Capital funding, then email the info address. Apply: Email the firm's info address listed on its site.. Cadence: rolling. | 3·4·2 = **9** |
+
+- **Electric Capital founder contact.** Strong developer reputation; publishes developer reports counting open source contributors.
+
+### Big Brain Holdings
+
+**How we partner with Big Brain Holdings:** Solana native seed fund with an email intake.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Big Brain Holdings pitch](https://bigbrain.holdings) | Accelerator | Solana focused pre-seed and seed fund with 126 portfolio companies. |  | Pre-seed and seed Solana teams. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Big Brain capital, then email the invest address with a Solana agent summary. Apply: Email the invest address listed on bigbrain.holdings.. Cadence: rolling. | 5·3·3 = **11** |
+
+- **Big Brain Holdings pitch.** Most Solana native investor reachable by email per a profile; verify the site.
+
+### Animoca Brands
+
+**How we partner with Animoca Brands:** Animoca Ventures accepts decks by email and replies within 72 hours per its site.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Animoca Ventures deck submission](https://animoca.ventures/) | Accelerator | Investor in AI, robotics and interactive worlds with ecosystem reach. |  | Builders in AI and physical AI. Cost: Equity. | Verify fit first | Owner decision: decide whether to take Animoca capital, then send the deck. Apply: Send your deck to the address on animoca.ventures; the site says it replies within 72 hours.. Cadence: rolling. | 4·4·3 = **11** |
+
+- **Animoca Ventures deck submission.** Interactive 3D and AI agents fit Animoca's AI and metaverse thesis.
+
+### Shima Capital
+
+**How we partner with Shima Capital:** Reported to have ceased operations December 2025.
+
+Closed doors (do not re-research):
+
+- [Shima Capital](https://www.shima.capital): Retired or closed. Sources conflict on whether it still operates; do not spend time. (checked 2026-11-06)
+
+### Jump Crypto and Framework
+
+**How we partner with Jump Crypto and Framework:** No public intake found. No public intake found.
+
+Closed doors (do not re-research):
+
+- [Jump Crypto and Framework Ventures](https://jumpcrypto.com): Retired or closed. Jump built Firedancer; no pitch route found. (checked 2026-11-06)
+
+### Fidelity
+
+**How we partner with Fidelity:** Fidelity Labs is an internal incubator and Digital Assets serves institutions. No public partner route found as of 2026-11-06.
+
+Closed doors (do not re-research):
+
+- [Fidelity Labs and Digital Assets](https://www.fidelity.com/about-fidelity/our-company/digital-assets): Retired or closed. No external startup or developer program found. (checked 2026-11-06)
+
+### VanEck and Grayscale
+
+**How we partner with VanEck and Grayscale:** Runs a Solana ETF (VSOL). Nothing startup facing found; VanEck Ventures not verified. GSOL is a Solana ETF product. No partner route found.
+
+Closed doors (do not re-research):
+
+- [Solana ETFs VSOL and GSOL](https://www.benzinga.com/etfs/new-etfs/25/11/48932646/vaneck-launches-zero-fee-solana-etf-vsol-lets-investors-cash-in-on-sol-and-staking-rewards): Retired or closed. Useful context for Solana institutional adoption stories only. (checked 2026-11-06)
+
+### DTCC
+
+**How we partner with DTCC:** Runs an annual AI hackathon each winter; registration reopens around January.
+
+| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |
+|---|---|---|---|---|---|---|---|
+| [Innovate.DTCC AI Hackathon](https://communications.dtcc.com/dtcc-hackathon-registration-18146.html) | Event or call | Industry AI hackathon with DTCC visibility. |  | Registrants of the hackathon. Cost: free. | Eligible, not started | Watch communications.dtcc.com for the 2027 Innovate.DTCC registration. Apply: Register when the next hackathon opens; the 2026 window closed 2026-01-30.. Cadence: annual, opens around January. | 2·4·2 = **8** |
+
+- **Innovate.DTCC AI Hackathon.** Audience is market infrastructure, tangential to 3D agents.
+
+### CME Group
+
+**How we partner with CME Group:** No startup program found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### ICE and NYSE
+
+**How we partner with ICE and NYSE:** Investor in crypto fintech; no startup program found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Strategy (MicroStrategy)
+
+**How we partner with Strategy (MicroStrategy):** Bitcoin treasury company; no partner program found as of 2026-11-06.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Societe Generale FORGE
+
+**How we partner with Societe Generale FORGE:** Issues EURCV and USDCV stablecoins; no startup or partner route found.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
+
+### Paradigm
+
+**How we partner with Paradigm:** No public intake found; warm intro only.
+
+No partner, startup, listing, or grant program found in the 2026-11-06 sweep. Re-check on the next quarterly sweep.
 
 ## Keeping it true
 

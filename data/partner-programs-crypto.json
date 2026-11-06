@@ -8,11 +8,13 @@
 		},
 		{
 			"name": "Jupiter",
-			"angle": "Verified already; pursue Ultra integrator fees and revisit DAO grants if they reopen."
+			"angle": "Verified already; pursue Ultra integrator fees and revisit DAO grants if they reopen.",
+			"moonshot": true
 		},
 		{
 			"name": "Solana Foundation",
-			"angle": "Lead with a milestone or convertible grant for open x402-on-Solana tooling plus the open awesome-solana-ai and pay-skills PRs; ask for placement on solana.com/ai once merged."
+			"angle": "Lead with a milestone or convertible grant for open x402-on-Solana tooling plus the open awesome-solana-ai and pay-skills PRs; ask for placement on solana.com/ai once merged.",
+			"moonshot": true
 		},
 		{
 			"name": "Superteam",
@@ -40,15 +42,18 @@
 		},
 		{
 			"name": "BNB Chain",
-			"angle": "DappBay done; apply to MVB for CoinMarketCap promotion if the owner wants a BNB push."
+			"angle": "DappBay done; apply to MVB for CoinMarketCap promotion if the owner wants a BNB push.",
+			"moonshot": true
 		},
 		{
 			"name": "Circle",
-			"angle": "Apply to Developer Grants citing USDC x402 settlement and agentic economy; must tie to Arc or Circle's platform."
+			"angle": "Apply to Developer Grants citing USDC x402 settlement and agentic economy; must tie to Arc or Circle's platform.",
+			"moonshot": true
 		},
 		{
 			"name": "Coinbase",
-			"angle": "Secondary surface: Base Builder Grants and Builder Codes for our Base x402 leg, and a CDP Bazaar listing as a nice-to-have."
+			"angle": "Secondary surface: Base Builder Grants and Builder Codes for our Base x402 leg, and a CDP Bazaar listing as a nice-to-have.",
+			"moonshot": true
 		},
 		{
 			"name": "Helius",
@@ -56,7 +61,8 @@
 		},
 		{
 			"name": "OKX",
-			"angle": "Resubmit OKX.AI agent #2632 after the fixed payment bug; treat the X Layer hackathon and fund as secondary."
+			"angle": "Resubmit OKX.AI agent #2632 after the fixed payment bug; treat the X Layer hackathon and fund as secondary.",
+			"moonshot": true
 		},
 		{
 			"name": "Privy",
@@ -84,15 +90,18 @@
 		},
 		{
 			"name": "Phantom",
-			"angle": "Door is closed (Portal paused); watch for reopening, since Phantom signs for our agent MCP."
+			"angle": "Door is closed (Portal paused); watch for reopening, since Phantom signs for our agent MCP.",
+			"moonshot": true
 		},
 		{
 			"name": "pump.fun",
-			"angle": "$THREE lives here; watch for later Pump Fund rounds and keep the builder-showcase ask to the pump.fun team."
+			"angle": "$THREE lives here; watch for later Pump Fund rounds and keep the builder-showcase ask to the pump.fun team.",
+			"moonshot": true
 		},
 		{
 			"name": "Robinhood Chain",
-			"angle": "Apply to Arbitrum Mentorship Cohort 2 (closes 2026-12-06) and email chain-developers-group for an ecosystem listing as AI-agent market tooling; crypto only."
+			"angle": "Apply to Arbitrum Mentorship Cohort 2 (closes 2026-12-06) and email chain-developers-group for an ecosystem listing as AI-agent market tooling; crypto only.",
+			"moonshot": true
 		},
 		{
 			"name": "Solflare",
@@ -104,15 +113,18 @@
 		},
 		{
 			"name": "CoinMarketCap",
-			"angle": "Pair with MVB; we already publish on CoinMarketCap Community."
+			"angle": "Pair with MVB; we already publish on CoinMarketCap Community.",
+			"moonshot": true
 		},
 		{
 			"name": "Ethereum Foundation",
-			"angle": "Check ESP Wishlist for agent identity (ERC-8004) items before applying."
+			"angle": "Check ESP Wishlist for agent identity (ERC-8004) items before applying.",
+			"moonshot": true
 		},
 		{
 			"name": "Chainlink",
-			"angle": "Low fit; we do not use Chainlink data."
+			"angle": "Low fit; we do not use Chainlink data.",
+			"moonshot": true
 		},
 		{
 			"name": "Triton One",
@@ -173,6 +185,292 @@
 		{
 			"name": "Story Protocol (DATA Foundation)",
 			"angle": "Closed: Story pivoted to AI data infrastructure in June 2026."
+		},
+		{
+			"name": "Binance",
+			"angle": "Door is YZi Labs EASY Residency (rolling, agentic payments thesis) and Square Creatorpad for reach; Binance Alpha and spot listing are gated owner decisions for $THREE. Binance Labs is now YZi Labs and MVB sits inside EASY.",
+			"moonshot": true
+		},
+		{
+			"name": "Kraken",
+			"angle": "Only builder door is InkWorks on the EVM Ink chain (cohort based, next intake unconfirmed). No separate Kraken Ventures intake found. Kraken is a Solana Breakpoint 2026 sponsor, so meet them in person.",
+			"moonshot": true
+		},
+		{
+			"name": "Bybit",
+			"angle": "Bybit Venture Studio incubates internally (Byreal is a Solana DEX from it); no open application found. ByBUIDLERs is a student ambassador program, not for companies.",
+			"moonshot": true
+		},
+		{
+			"name": "Bitget",
+			"angle": "Best self-serve exchange door: Bitget Wallet dApp listing and free API platform, plus past Solana hackathons with Superteam. Token listing there is an owner decision."
+		},
+		{
+			"name": "Gemini",
+			"angle": "Gemini Frontier Fund is an investment arm with no confirmed open intake. No developer program found.",
+			"moonshot": true
+		},
+		{
+			"name": "Crypto.com",
+			"angle": "Build On Cronos (Ignition, Apex) has an AI agents track and an x402 hackathon; Crypto.com Capital is reached only via Apex pitch sessions. EVM, so secondary to Solana. Crypto.com Onchain had no separate program in search.",
+			"moonshot": true
+		},
+		{
+			"name": "Robinhood",
+			"angle": "Robinhood Crypto only. Doors: Arbitrum Open House mentorship (deadline 2026-12-06), Robinhood Chain docs and contact, and the Crypto Trading API. Robinhood Ventures and a Robinhood Wallet dApp listing process: nothing public found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "KuCoin",
+			"angle": "KuCoin Ventures has an Apply Now button; investment door tied to listing, hold until a raise."
+		},
+		{
+			"name": "HTX",
+			"angle": "HTX Ventures has an Apply Now button; investment plus incubation, listing-driven. Low priority."
+		},
+		{
+			"name": "Upbit",
+			"angle": "Dunamu is being absorbed by Naver Financial. No startup program found; only token listing, which is an owner decision.",
+			"moonshot": true
+		},
+		{
+			"name": "Ledger",
+			"angle": "Ledger Wallet Discover is invitation only through an intake form and discover@ledger.fr. Build a Solana Live App first. No Ledger Enterprise partner route found.",
+			"moonshot": true
+		},
+		{
+			"name": "Consensys / MetaMask",
+			"angle": "MetaMask Snaps Directory is a clean open submission process (EVM). Consensys Mesh showed no partner route.",
+			"moonshot": true
+		},
+		{
+			"name": "CoinGecko",
+			"angle": "Partner Platform lists projects and sells ads; no startup or API credits program found. New listing is an owner decision.",
+			"moonshot": true
+		},
+		{
+			"name": "DefiLlama",
+			"angle": "Open adapter pull-request process, but we hold no TVL. Not useful today."
+		},
+		{
+			"name": "Tether",
+			"angle": "Developer Grants program (open since 2026-05-11) fits wallet and local AI work. Tether Evo and Hypha: no application process found.",
+			"moonshot": true
+		},
+		{
+			"name": "Ripple",
+			"angle": "XRPL Grants and Tenity accelerator are open but outside Solana; low priority.",
+			"moonshot": true
+		},
+		{
+			"name": "Galaxy",
+			"angle": "Galaxy Interactive is the thematic investor for 3D worlds and games, but no intake page exists. Treat as a future raise target.",
+			"moonshot": true
+		},
+		{
+			"name": "Pyth Network",
+			"angle": "Solana-native; ecosystem grants and Superteam Earn bounties are an open door for oracle integrations."
+		},
+		{
+			"name": "Bithumb",
+			"angle": "No public partner route found as of 2026-11-06 beyond token listing, which is an owner decision."
+		},
+		{
+			"name": "Gate",
+			"angle": "Gate Ventures invests in early-stage Web3 and infrastructure; no application link found in search."
+		},
+		{
+			"name": "MEXC",
+			"angle": "MEXC Ventures and MEXC Labs incubator exist; no application link found."
+		},
+		{
+			"name": "Trezor",
+			"angle": "No public partner route found as of 2026-11-06; Tether's WDK grants are the nearest hardware-wallet-adjacent door."
+		},
+		{
+			"name": "Messari",
+			"angle": "Galaxy portfolio company; no partner program surfaced in search. No public partner route found as of 2026-11-06."
+		},
+		{
+			"name": "Dune",
+			"angle": "No partner program surfaced in search; could use Dune dashboards for our x402 volume as a showcase, not a program."
+		},
+		{
+			"name": "Nansen",
+			"angle": "No partner program surfaced in search. No public partner route found as of 2026-11-06."
+		},
+		{
+			"name": "Kaito",
+			"angle": "Yaps was sunset in January 2026; Capital Launchpad is token fundraising on Base USDC. Not a product door, and any raise would be an owner decision."
+		},
+		{
+			"name": "Magic Eden",
+			"angle": "Refocused on Solana marketplace and iGaming; no public developer or partner program found. 3D asset NFT angle only if they open a creator route."
+		},
+		{
+			"name": "Tensor",
+			"angle": "No public partner route found as of 2026-11-06."
+		},
+		{
+			"name": "Backpack",
+			"angle": "Solana wallet and exchange; no builder or xNFT program found. Reach through Discord or the Solana community."
+		},
+		{
+			"name": "Raydium",
+			"angle": "No public partner route found as of 2026-11-06."
+		},
+		{
+			"name": "Orca",
+			"angle": "No public partner route found as of 2026-11-06."
+		},
+		{
+			"name": "Drift",
+			"angle": "Reported suspended after an April 2026 attack; not a viable sponsor now."
+		},
+		{
+			"name": "Alliance DAO",
+			"angle": "ALL19 regular deadline 2026-11-18. Best accelerator door; owner decision on equity."
+		},
+		{
+			"name": "a16z",
+			"angle": "CSX is closed; a16z speedrun is the live door. Owner decision on capital.",
+			"moonshot": true
+		},
+		{
+			"name": "Outlier Ventures",
+			"angle": "Base Camp cohorts themed and none open found; equity plus token terms."
+		},
+		{
+			"name": "Solana Ventures",
+			"angle": "Public page exists per repo docs; not verified live."
+		},
+		{
+			"name": "Nasdaq",
+			"angle": "Nasdaq Ventures has a pitch form needing a strategic tie; the Entrepreneurial Center offers free Milestone Circles.",
+			"moonshot": true
+		},
+		{
+			"name": "Nasdaq Entrepreneurial Center"
+		},
+		{
+			"name": "Citi",
+			"angle": "Citi Ventures is the only startup route; Token Services is client only. No verified pitch form.",
+			"moonshot": true
+		},
+		{
+			"name": "Standard Chartered",
+			"angle": "SC Ventures pitch competition needs a Singapore entity; Zodia is being absorbed. No open door.",
+			"moonshot": true
+		},
+		{
+			"name": "Morgan Stanley",
+			"angle": "Inclusive and Sustainable Ventures Lab is impact and revenue gated; closed until about March 2027.",
+			"moonshot": true
+		},
+		{
+			"name": "Goldman Sachs",
+			"angle": "Launch With GS targets diverse founders and has no open cohort found. GS DAP is institutional.",
+			"moonshot": true
+		},
+		{
+			"name": "JPMorgan",
+			"angle": "Kinexys serves institutions; In-Residence is an old program. No open door found.",
+			"moonshot": true
+		},
+		{
+			"name": "Bank of America",
+			"angle": "Breakthrough Lab last seen 2023 and not open. No door found.",
+			"moonshot": true
+		},
+		{
+			"name": "Franklin Templeton",
+			"angle": "Benji is live on Solana, a good agent-wallet RWA story, but no partner or startup route found.",
+			"moonshot": true
+		},
+		{
+			"name": "BlackRock",
+			"angle": "BUIDL runs through Securitize and chain foundations. No public startup route found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "Polychain Capital",
+			"angle": "Reported application portal; unverified."
+		},
+		{
+			"name": "Pantera Capital",
+			"angle": "Reported pitch inbox; warm intro preferred."
+		},
+		{
+			"name": "Multicoin Capital",
+			"angle": "Solana focused fund with an agents thesis; contact form."
+		},
+		{
+			"name": "Dragonfly",
+			"angle": "Send Pitch link; warm intro preferred."
+		},
+		{
+			"name": "Delphi Ventures",
+			"angle": "Pitch link plus research coverage."
+		},
+		{
+			"name": "Electric Capital",
+			"angle": "Engineer led fund; email intake and publishes the Developer Report."
+		},
+		{
+			"name": "Big Brain Holdings",
+			"angle": "Solana native seed fund with an email intake."
+		},
+		{
+			"name": "Animoca Brands",
+			"angle": "Animoca Ventures accepts decks by email and replies within 72 hours per its site."
+		},
+		{
+			"name": "Shima Capital",
+			"angle": "Reported to have ceased operations December 2025."
+		},
+		{
+			"name": "Jump Crypto and Framework",
+			"angle": "No public intake found. No public intake found."
+		},
+		{
+			"name": "Fidelity",
+			"angle": "Fidelity Labs is an internal incubator and Digital Assets serves institutions. No public partner route found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "VanEck and Grayscale",
+			"angle": "Runs a Solana ETF (VSOL). Nothing startup facing found; VanEck Ventures not verified. GSOL is a Solana ETF product. No partner route found.",
+			"moonshot": true
+		},
+		{
+			"name": "DTCC",
+			"angle": "Runs an annual AI hackathon each winter; registration reopens around January.",
+			"moonshot": true
+		},
+		{
+			"name": "CME Group",
+			"angle": "No startup program found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "ICE and NYSE",
+			"angle": "Investor in crypto fintech; no startup program found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "Strategy (MicroStrategy)",
+			"angle": "Bitcoin treasury company; no partner program found as of 2026-11-06.",
+			"moonshot": true
+		},
+		{
+			"name": "Societe Generale FORGE",
+			"angle": "Issues EURCV and USDCV stablecoins; no startup or partner route found.",
+			"moonshot": true
+		},
+		{
+			"name": "Paradigm",
+			"angle": "No public intake found; warm intro only.",
+			"moonshot": true
 		}
 	],
 	"programs": [
@@ -1720,6 +2018,1276 @@
 			"access": 1,
 			"why": "IP licensing for 3D assets is no longer the product direction; no program to apply to.",
 			"source": "https://crypto.news/story-protocol-swaps-ip-vision-for-ai-data-infrastructure/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "binance-square-creatorpad-campaigns",
+			"company": "Binance",
+			"program": "Binance Square Creatorpad",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://www.binance.com/en/square",
+			"apply": "Register and verify a Binance account, open Square Creatorpad, and complete the posted task campaigns.",
+			"value": "Reach into Binance's largest creator audience with token-reward campaigns, useful for demo content on Solana agents and x402.",
+			"benefits": [
+				"token rewards per campaign",
+				"Square distribution",
+				"creator profile reach"
+			],
+			"eligibility": "Verified Binance account holders with a Square profile; each campaign has its own task list.",
+			"cost": "free",
+			"cadence": "rolling, new campaigns run regularly",
+			"fit": 2,
+			"reach": 5,
+			"access": 4,
+			"next": "Have the owner open a verified Square profile and post a three.ws agent demo thread before chasing any sponsored campaign.",
+			"why": "Square rewards content, not product listings, so it fits as a distribution channel for Forge and /play clips. Campaign pools are paid by third-party projects, so this is organic reach only for us.",
+			"promo": [
+				"social"
+			],
+			"promo_note": "Square posts reach Binance users directly; high-performing creators get surfaced in feeds. No partner promotion is promised.",
+			"source": "https://tradersunion.com/news/brokers-news/show/2542291-binance-offers-1000000-newt-reward/ (search result; no official application page found)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "binance-square-write-to-earn",
+			"company": "Binance",
+			"program": "Binance Square Write to Earn",
+			"kind": "recognition",
+			"status": "research",
+			"url": "https://www.binance.com/en/square",
+			"apply": "Complete account verification, set up a Square profile, and join the creator program from Square.",
+			"value": "Commission and incentive income plus a verified creator presence on Binance Square.",
+			"benefits": [
+				"up to 30% trading fee commission from readers' trades (per third-party report)",
+				"read-count incentives",
+				"tips"
+			],
+			"eligibility": "Verified account with an active Square profile; terms vary by region.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 4,
+			"access": 4,
+			"next": "Skip until the owner decides whether to run a Binance referral channel at all.",
+			"why": "It is a referral income program, not a product partnership. Third-party source dates the commission claim, so confirm current terms before relying on it.",
+			"source": "https://j-binance.com/en/a/binance-square-posting/ (third-party, search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "yzi-labs-easy-residency",
+			"company": "Binance",
+			"program": "YZi Labs EASY Residency (includes MVB track)",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://www.yzilabs.com",
+			"apply": "Use the application form linked from the YZi Labs EASY Residency announcement (wkf.ms/3IA5iBk); applications are rolling.",
+			"value": "Up to USD 500k in funding per Season 2 reporting, hubs in New York and the Bay Area, and Demo Days in front of Binance-ecosystem investors.",
+			"benefits": [
+				"up to USD 500k via SAFE (Season 2 reporting)",
+				"incubation hubs",
+				"Demo Days",
+				"BNB Chain MVB track"
+			],
+			"eligibility": "Long-term founders in Web3, AI, biotech and newer areas such as agentic payments, RWA and prediction markets.",
+			"cost": "free (equity via SAFE)",
+			"cadence": "rolling, Demo Days roughly April, August and December 2026",
+			"fit": 4,
+			"reach": 5,
+			"access": 2,
+			"next": "Draft a one-page agentic-payments plus 3D agents application and submit through the EASY Residency form.",
+			"why": "Binance Labs became YZi Labs and MVB now sits inside EASY Residency. AI agents with wallets paying over x402 match its stated agentic payments thesis, though it takes equity and BNB-side work is expected.",
+			"promo": [
+				"event",
+				"media"
+			],
+			"promo_note": "Cohorts finish with a Demo Day with investors and industry leaders, and YZi Labs and BNB Chain publish cohort announcements.",
+			"source": "https://www.yzilabs.com/blog/from-binance-labs-incubator-to-easy-residency-seven-years-of-backing-long-term-builders",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "binance-alpha-wallet-listing",
+			"company": "Binance",
+			"program": "Binance Wallet and Binance Alpha",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://www.binance.com/en/support/faq/what-is-binance-alpha-on-binance-wallet-43a46bb5c5ec4ba6a1be8bb9a98aa7f8",
+			"apply": "No open application found; the FAQ has a section on suggesting tokens, which is the only documented door.",
+			"value": "Alpha exposure inside Binance Wallet, which supports Solana, for tokens Binance considers for future listing.",
+			"benefits": [
+				"Binance Wallet visibility",
+				"pre-listing showcase"
+			],
+			"eligibility": "Selected by Binance using its own market and community signals.",
+			"cost": "free per FAQ; third-party consultants charge fees, avoid them",
+			"cadence": "rolling, curated",
+			"fit": 2,
+			"reach": 5,
+			"access": 1,
+			"next": "Owner decision: whether to ever request Alpha or Binance listing for $THREE. Until then, do nothing.",
+			"why": "This is a token listing path, which only the owner may start. No product or dApp route is documented.",
+			"source": "https://www.financemagnates.com/trending/binance-alpha-launches-to-showcase-web3-tokens-in-early-development/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "kraken-inkworks-accelerator",
+			"company": "Kraken",
+			"program": "InkWorks Accelerator (Ink Foundation)",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://ink.works",
+			"apply": "Apply at ink.works when the next cohort opens.",
+			"value": "Up to USD 30k milestone capital plus priority access to Kraken distribution and Superchain tooling.",
+			"benefits": [
+				"up to USD 30k in milestones",
+				"Kraken distribution",
+				"tooling credits",
+				"Demo Day to VCs"
+			],
+			"eligibility": "Teams building on Ink, an EVM L2; Cohort 00 started 2026-05-18.",
+			"cost": "free",
+			"cadence": "cohort based, next intake not confirmed",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Check ink.works for the next intake and note the Ink (EVM) requirement before applying.",
+			"why": "Kraken's only builder program is on an EVM chain, so it is a secondary surface. Reported via search; I could not confirm the next intake.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Program ends in a Demo Day pitching to VCs, per search summary.",
+			"source": "https://eco.com/support/en/articles/15210565-kraken-ink-points-explained-2026-how-to-earn-and-redeem (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bybit-venture-studio",
+			"company": "Bybit",
+			"program": "Bybit Venture Studio",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.bybit.com",
+			"apply": "No public form found; reach Bybit through its official announcements or business contact.",
+			"value": "Incubation and exchange platform support, with the Solana DEX Byreal as a product of the studio.",
+			"benefits": [
+				"incubation",
+				"Bybit platform access"
+			],
+			"eligibility": "Not published; first project incubated was Printr.",
+			"cost": "unknown",
+			"cadence": "unknown",
+			"fit": 2,
+			"reach": 4,
+			"access": 1,
+			"next": "Watch Bybit announcements for an open call; no action now.",
+			"why": "Byreal is Solana-native so the studio is aligned with our home chain, but it appears to be internally sourced. Bybit also narrowed its Web3 focus in April 2025.",
+			"source": "https://www.prnewswire.com/in/news-releases/bybit-announces-strategic-evolution-of-web3-ecosystem-with-enhanced-focus-on-core-onchain-services-302430237.html (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bitget-wallet-dapp-listing",
+			"company": "Bitget",
+			"program": "Bitget Wallet Business dApp and token listing",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://web3.bitget.com/en/docs/reference/dapp/community/",
+			"apply": "Connect a wallet in the Business module, open Listing self-service and submit the dApp; the guide is old so verify the current UI.",
+			"value": "Placement in a wallet dApp store that Bitget says reaches 20M plus daily users, including Solana support.",
+			"benefits": [
+				"dApp store placement",
+				"developer channels for onboarding",
+				"wallet SDK docs"
+			],
+			"eligibility": "Any dApp that connects via standard wallet adapters.",
+			"cost": "free per guide",
+			"cadence": "rolling, self-serve",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Integrate Bitget Wallet in the agent wallet connect flow, then submit the three.ws dApp. Owner decision: any $THREE token listing request in the same Business module.",
+			"why": "The only self-serve wallet dApp store in this set. The dApp submission is ours to do; token listing is a separate gated owner decision.",
+			"source": "https://web3.bitget.com/en/blog/articles/how-to-apply-for-dapp-listing-with-bitkeep-business (search result, guide is old)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bitget-wallet-api-platform",
+			"company": "Bitget",
+			"program": "Bitget Wallet API Platform",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://web3.bitget.com/en/docs",
+			"apply": "Apply for free API access through the Bitget Wallet developer docs.",
+			"value": "Swap, market and wallet data APIs that agents can call across Solana and EVM chains.",
+			"benefits": [
+				"free API access",
+				"OmniConnect SDK"
+			],
+			"eligibility": "Developers and builders.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 2,
+			"access": 5,
+			"next": "Request API access and prototype a Bitget Wallet swap tool for agents.",
+			"why": "Real, self-serve, and gives a co-listing story with the dApp store. Reported via search; confirm the application page.",
+			"source": "https://blockchainreporter.net/bitget-wallet-launches-free-api-platform-for-web3-developers (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bitget-solana-hackathon",
+			"company": "Bitget",
+			"program": "Bitget x Solana Hackathon (with Superteam)",
+			"kind": "event",
+			"status": "closed",
+			"url": "https://dorahacks.io/hackathon/bitget-solana-hackathon/detail",
+			"apply": "Wait for the next Bitget and Superteam hackathon announcement.",
+			"value": "USD 30k prize pool and VC pitching for Solana plus Bitget Wallet builders.",
+			"benefits": [
+				"prizes",
+				"VC pitch slot"
+			],
+			"eligibility": "Teams building on Solana and integrating Bitget Wallet.",
+			"cost": "free",
+			"cadence": "irregular, no 2026 edition found",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Integrate Bitget Wallet now so we can enter the next edition quickly.",
+			"why": "Past edition only. Bitget Wallet is a Breakpoint 2026 sponsor, so another Solana event is plausible.",
+			"source": "https://dorahacks.io/hackathon/bitget-solana-hackathon/detail",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "gemini-frontier-fund",
+			"company": "Gemini",
+			"program": "Gemini Frontier Fund",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.gemini.com/frontier-fund",
+			"apply": "Contact the fund through its page; no open application confirmed.",
+			"value": "Strategic early-stage investment from an exchange with a US regulated profile.",
+			"benefits": [
+				"investment"
+			],
+			"eligibility": "Early-stage crypto startups.",
+			"cost": "equity",
+			"cadence": "unknown",
+			"fit": 2,
+			"reach": 3,
+			"access": 1,
+			"next": "Park until there is revenue to show; no action now.",
+			"why": "An investment arm, not a program. The page looks dated in search.",
+			"source": "https://www.gemini.com/frontier-fund",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cronos-build-on-cronos-ignition",
+			"company": "Crypto.com",
+			"program": "Build On Cronos Ignition",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m",
+			"apply": "Submit a proposal through the Build On Cronos form linked from the Cronos announcement.",
+			"value": "Up to USD 200k in support, USD 2k monthly microgrants for a year and a 50% gas revenue share.",
+			"benefits": [
+				"up to USD 200k support",
+				"USD 2k monthly microgrants",
+				"50% gas fee share"
+			],
+			"eligibility": "Teams building on Cronos in tokenization, AI agents, DeFi or payments.",
+			"cost": "free, no equity",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Deploy the x402 agent payment demo to Cronos and file the proposal under AI agents.",
+			"why": "Cronos has an explicit AI agents track and an x402 push. It is an EVM chain, so it is secondary to Solana, but it is the best Crypto.com door.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Apex tier lists co-marketing; Ignition perks listed are grants and gas share only.",
+			"source": "https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cronos-apex-crypto-com-capital",
+			"company": "Crypto.com",
+			"program": "Build On Cronos Apex (Crypto.com Capital pitch)",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://news.buildoncronos.com/p/cronos-launches-build-on-cronos-100m",
+			"apply": "Apply through the same Build On Cronos form once the project has traction.",
+			"value": "Up to USD 500k in support, a success manager, co-marketing and pitch sessions to Crypto.com Capital.",
+			"benefits": [
+				"up to USD 500k support",
+				"success manager",
+				"co-marketing",
+				"Crypto.com Capital pitch",
+				"distribution to 150M plus users"
+			],
+			"eligibility": "Cronos projects with traction.",
+			"cost": "free, no equity",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 5,
+			"access": 1,
+			"next": "Enter Ignition first and revisit Apex once Cronos usage exists.",
+			"why": "Apex needs traction we do not have on Cronos. Crypto.com Capital has no separate application.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Apex lists co-marketing and distribution to Crypto.com users as a stated benefit.",
+			"source": "https://opengrants.io/guides/crypto-grants/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cronos-x402-hackathon",
+			"company": "Crypto.com",
+			"program": "Cronos x402 Hackathon",
+			"kind": "event",
+			"status": "closed",
+			"url": "https://blockchain.news/news/cronos-launches-x402-hackathon-advance-ai-driven-payment-systems",
+			"apply": "Watch Cronos channels for the next x402 hackathon.",
+			"value": "Prizes up to USD 24k under Ignition for x402 agent payment apps.",
+			"benefits": [
+				"prizes",
+				"Ignition fast track"
+			],
+			"eligibility": "Builders of x402 AI payment apps on Cronos.",
+			"cost": "free",
+			"cadence": "irregular, no new edition confirmed",
+			"fit": 5,
+			"reach": 3,
+			"access": 4,
+			"next": "Keep the x402 demo Cronos-ready so we can enter within days of the next call.",
+			"why": "Perfect fit for our x402 agent payments but this edition is over. Recurrence is unconfirmed.",
+			"source": "https://blockchain.news/news/cronos-launches-x402-hackathon-advance-ai-driven-payment-systems (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "robinhood-crypto-trading-api",
+			"company": "Robinhood",
+			"program": "Robinhood Crypto Trading API",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://docs.robinhood.com/crypto/trading",
+			"apply": "Create API credentials from a Robinhood Crypto account per the docs.",
+			"value": "Programmatic crypto account, market data and orders for an agent trading tool.",
+			"benefits": [
+				"REST API",
+				"orders and holdings",
+				"market data"
+			],
+			"eligibility": "Robinhood Crypto account holders; crypto only.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Wrap the API as an MCP tool, with owner confirmation gate for every order.",
+			"why": "A crypto venue integration that sits beside the Solana rail. Any live order is a gated owner action. Details come from a directory listing, not the docs page.",
+			"source": "https://apis.io/providers/robinhood/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "kucoin-ventures-apply",
+			"company": "KuCoin",
+			"program": "KuCoin Ventures",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.kucoin.com/kucoin-ventures",
+			"apply": "Use the Apply Now button on the KuCoin Ventures page.",
+			"value": "Investment plus exchange network for DeFi, GameFi and Web3 infrastructure.",
+			"benefits": [
+				"investment",
+				"KuCoin network"
+			],
+			"eligibility": "Not published.",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"next": "Hold until a fundraise is planned; then submit.",
+			"why": "Open intake exists but is an investment door, with a listing implied. Any listing is an owner decision.",
+			"source": "https://www.kucoin.com/kucoin-ventures (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "htx-ventures-apply",
+			"company": "HTX",
+			"program": "HTX Ventures",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.htx.com/ventures",
+			"apply": "Use the Apply Now button on the HTX Ventures page.",
+			"value": "Investment, incubation and research; HTX says 60% of its portfolio is listed on HTX.",
+			"benefits": [
+				"investment",
+				"incubation",
+				"research"
+			],
+			"eligibility": "Not published.",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 2,
+			"access": 2,
+			"next": "Hold until a fundraise is planned. Owner decision: any HTX token listing for $THREE.",
+			"why": "Open intake, but the portfolio is listing-driven. The brand has a mixed reputation.",
+			"source": "https://www.htx.com/ventures (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "upbit-bithumb-listing",
+			"company": "Upbit",
+			"program": "Upbit and Bithumb foreign project listing",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://www.blockmm.ai/articles/static/upbit-bithumb-listing-guide-2026",
+			"apply": "Korean exchanges review submissions case by case; most foreign projects use a Korean agency or law firm.",
+			"value": "Korean retail liquidity and visibility for a listed token.",
+			"benefits": [
+				"KRW market"
+			],
+			"eligibility": "Projects with a Korean community presence and compliance readiness, per a third-party guide.",
+			"cost": "unknown",
+			"cadence": "3 to 9 months per third-party guide",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Owner decision: whether to pursue any Korean exchange listing for $THREE. No action otherwise.",
+			"why": "Token listing only, no product route found. Upbit's operator is being absorbed by Naver Financial, so a partner route there may change.",
+			"source": "https://www.blockmm.ai/articles/static/upbit-bithumb-listing-guide-2026 (third-party)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "ledger-wallet-discover-live-apps",
+			"company": "Ledger",
+			"program": "Ledger Wallet Discover (Live Apps)",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://developers.ledger.com/docs/ledger-live/discover/getting-started",
+			"apply": "Fill in the partner intake form linked on the page and email discover@ledger.fr; listing is invitation only.",
+			"value": "Placement in a curated app catalog inside Ledger Wallet, a household hardware wallet brand.",
+			"benefits": [
+				"Discover section placement",
+				"Wallet API access"
+			],
+			"eligibility": "Invited by Ledger's business team; non-EVM chains discuss Clear Signing in the conversation.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 5,
+			"access": 1,
+			"next": "Build a Live App manifest in Developer mode, then send the intake form with a Solana signing demo.",
+			"why": "Fetched page confirms invite-only curation. A working Live App on Solana gives the form something real to show.",
+			"source": "https://developers.ledger.com/docs/ledger-live/discover/getting-started",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "metamask-snaps-directory",
+			"company": "Consensys / MetaMask",
+			"program": "MetaMask Snaps Directory",
+			"kind": "marketplace",
+			"status": "eligible",
+			"url": "https://docs.metamask.io/snaps/how-to/get-allowlisted/",
+			"apply": "Publish the Snap to npm and complete the Snaps Directory Information form.",
+			"value": "Listing in the MetaMask extension's Snaps directory for an EVM-wallet agent integration.",
+			"benefits": [
+				"directory listing",
+				"no publishing fee"
+			],
+			"eligibility": "Public source, npm package, no console logs or TODOs, Snapper scan, third-party audit for key-management methods.",
+			"cost": "free (audits may cost)",
+			"cadence": "rolling, strict version resubmission",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Scope a read-only agent identity Snap that avoids key-management permissions, to skip the audit.",
+			"why": "Fetched page lists a clear open process. MetaMask is EVM-first, so this is a secondary surface. Consensys Mesh showed no partner route.",
+			"source": "https://docs.metamask.io/snaps/how-to/get-allowlisted/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "coingecko-partner-platform",
+			"company": "CoinGecko",
+			"program": "CoinGecko Partner Platform",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://www.coingecko.com/learn/introducing-partner-platform",
+			"apply": "Create an account at partner.coingecko.com and submit a listing request; Fast Pass gives a 24 hour review.",
+			"value": "Listing management on CoinGecko and GeckoTerminal plus self-serve ads from USD 100.",
+			"benefits": [
+				"token and project listing dashboard",
+				"Fast Pass review",
+				"self-serve ad campaigns",
+				"USD 50 ad credit for first 1000 projects"
+			],
+			"eligibility": "Projects meeting CoinGecko listing criteria.",
+			"cost": "free to list; ads paid",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 5,
+			"access": 4,
+			"next": "Owner decision: any new token or project listing request for $THREE. Do not file one.",
+			"why": "No CoinGecko startup or API program was found. The platform is a listing and ads dashboard only.",
+			"source": "https://www.coingecko.com/learn/introducing-partner-platform",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "defillama-adapters-listing",
+			"company": "DefiLlama",
+			"program": "DefiLlama Adapters (TVL listing)",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://github.com/DefiLlama/DefiLlama-Adapters",
+			"apply": "Fork the DefiLlama-Adapters repo, add a TVL adapter and open a pull request.",
+			"value": "Appears in DefiLlama and feeds CoinGecko chain TVL, a credibility signal for any protocol with locked value.",
+			"benefits": [
+				"DefiLlama listing"
+			],
+			"eligibility": "Protocols with measurable on-chain TVL and an accurate adapter.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 4,
+			"access": 4,
+			"next": "Revisit only if a three.ws contract holds TVL; skip now.",
+			"why": "We hold no TVL product today. Documented process is open and objective.",
+			"source": "https://www.lampros.tech/blogs/how-to-get-listed-on-defillama (third-party, search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "tether-developer-grants",
+			"company": "Tether",
+			"program": "Tether Developer Grants (WDK, QVAC, MDK, Pears)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://tether.io/news/tether-launches-developer-grants-program-to-fund-local-first-ai-and-payments-infrastructure/",
+			"apply": "Pick an active task on Tether's grants page and apply to it.",
+			"value": "Task-based payouts of roughly USD 1,500 to 4,000 in USDT or Bitcoin, plus visibility in Tether's open stack.",
+			"benefits": [
+				"fixed task payouts",
+				"Tether stack visibility"
+			],
+			"eligibility": "Developers building on Tether's open technology: core libraries, docs, apps, research.",
+			"cost": "free",
+			"cadence": "rolling since 2026-05-11",
+			"fit": 4,
+			"reach": 4,
+			"access": 4,
+			"next": "Pick a WDK or QVAC task and build an agent wallet integration on the Wallet Development Kit.",
+			"why": "Local-first AI and self-custodial wallets match our agent wallet and on-device agent story. USDT is on Solana too.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Open source tools built on the stack are typically referenced by Tether; no promotion promised in the announcement.",
+			"source": "https://tether.io/news/tether-launches-developer-grants-program-to-fund-local-first-ai-and-payments-infrastructure/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "ripple-xrpl-grants-accelerator",
+			"company": "Ripple",
+			"program": "XRPL Grants and Accelerator",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://xrplgrants.org",
+			"apply": "Submit the unified application on xrplgrants.org.",
+			"value": "Accelerator grants of USD 50k to 200k, paid against milestones.",
+			"benefits": [
+				"USD 50k to 200k grants",
+				"mentoring",
+				"FinTech Builder Program"
+			],
+			"eligibility": "Projects with an MVP in DeFi, RWA, payments or trade finance on XRPL.",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"next": "Skip unless the owner wants an XRPL payments agent; payments focus is the only overlap.",
+			"why": "Ripple moved to distributed funding in February 2026. XRPL is outside Solana first, so low priority.",
+			"source": "https://xrplgrants.org/faq (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "ripple-tenity-xrpl-accelerator",
+			"company": "Ripple",
+			"program": "Ripple and Tenity XRPL Accelerator",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://ripple.com/ripple-press/ripple-and-tenity-to-launch-blockchain-accelerator/",
+			"apply": "Apply during the next intake; the programme runs twice a year in Singapore.",
+			"value": "Structured accelerator with Ripple's network.",
+			"benefits": [
+				"accelerator",
+				"Ripple network"
+			],
+			"eligibility": "XRPL builders.",
+			"cost": "unknown",
+			"cadence": "twice yearly",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"next": "Check ripple.com for the next intake; low priority.",
+			"why": "Duplicates XRPL Grants intake. Reported via press release.",
+			"source": "https://ripple.com/ripple-press/ripple-and-tenity-to-launch-blockchain-accelerator/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "galaxy-interactive-pitch",
+			"company": "Galaxy",
+			"program": "Galaxy Interactive and Galaxy Ventures",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://interactive.galaxy.com",
+			"apply": "No public form found; cold intro through the Galaxy site or warm introduction.",
+			"value": "Galaxy Interactive invests in interactive tech and gaming, a direct match for /play and 3D worlds.",
+			"benefits": [
+				"investment",
+				"Galaxy network"
+			],
+			"eligibility": "Seed to growth; a listing reports checks of USD 1M to 20M.",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 1,
+			"next": "Add Galaxy Interactive to the investor target list for a later round.",
+			"why": "Best thematic investor match in this set, but no program or intake page, and we lack revenue.",
+			"source": "https://signal.nfx.com/firms/galaxy-interactive (third-party)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pyth-ecosystem-grants-superteam-earn",
+			"company": "Pyth Network",
+			"program": "Pyth Ecosystem Grants and Superteam Earn bounties",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://www.pyth.network/blog/pyth-ecosystem-grants-program",
+			"apply": "Take open Pyth bounties on Superteam Earn or the targeted grants on the Pyth dev forum.",
+			"value": "Bounty pay in PYTH (for example 1,000 PYTH per chain for Entropy verification) and standing in the Solana oracle ecosystem.",
+			"benefits": [
+				"PYTH bounties",
+				"developer grants",
+				"dev forum support"
+			],
+			"eligibility": "Community members shipping tools and integrations.",
+			"cost": "free",
+			"cadence": "rolling bounties",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Integrate Pyth price feeds in agent trading tools and look for a matching open bounty on Superteam Earn.",
+			"why": "Solana-native and open. Pyth is already a core Solana data layer. Most coverage is 2024 to 2025, so confirm which bounties are open now.",
+			"source": "https://www.pyth.network/blog/pyth-research-and-developer-bounties-on-superteam-earn (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "alliance-dao-all19-accelerator",
+			"company": "Alliance DAO",
+			"program": "ALL19 accelerator",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://www.alliance.xyz/apply",
+			"apply": "Submit the application form on alliance.xyz before the regular admission date; interview invites go out within a week.",
+			"value": "Crypto-native accelerator with a large Solana alumni base and a strong founder and investor network.",
+			"benefits": [
+				"Pre-seed funding on a SAFE (third-party trackers cite about USD 400k for 10%)",
+				"About 10 weeks, two in New York",
+				"Demo day",
+				"Investor and founder network"
+			],
+			"eligibility": "Crypto founders of any vertical and stage, pre-product allowed.",
+			"cost": "Equity and a token side letter (per third-party trackers)",
+			"cadence": "cohort twice a year, rolling review",
+			"deadline": "2026-11-18",
+			"fit": 5,
+			"reach": 4,
+			"access": 3,
+			"next": "Owner decision: decide whether to take equity funding, then submit the ALL19 form by 2026-11-18 if yes.",
+			"why": "Direct match for an agent and x402 payments startup on Solana. Taking capital is an owner call; the form itself is free and quick.",
+			"promo": [
+				"showcase",
+				"event"
+			],
+			"promo_note": "Alliance runs a demo day and publishes cohort alumni on its site (documented practice); only accepted teams get it.",
+			"source": "https://www.alliance.xyz/apply (fetched; terms from third-party trackers)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "a16z-speedrun-accelerator",
+			"company": "a16z",
+			"program": "a16z speedrun",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://speedrun.a16z.com/",
+			"apply": "Click Apply now on the speedrun page.",
+			"value": "Fast a16z check (page says it targets a two week close) and brand halo; AI and games and interactive media are in its remit.",
+			"benefits": [
+				"Up to about USD 1M per a third-party summary",
+				"Two week target close",
+				"a16z network"
+			],
+			"eligibility": "Early-stage startups; terms on the apply page.",
+			"cost": "Equity (terms on the apply page)",
+			"cadence": "rolling cohorts",
+			"fit": 4,
+			"reach": 5,
+			"access": 2,
+			"next": "Owner decision: decide whether to take a16z capital, then read the speedrun FAQ and apply if yes.",
+			"why": "The 3D, interactive and AI agent angle fits the speedrun interactive media track. Highly competitive; speedrun is the live a16z door because CSX is closed.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "a16z publishes speedrun cohort companies on its site (documented record); accepted companies only.",
+			"source": "https://speedrun.a16z.com/ (fetched; no deadline shown)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "a16z-crypto-csx",
+			"company": "a16z",
+			"program": "Crypto Startup School accelerator (CSX)",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://a16zcrypto.com/posts/article/apply-to-join-the-csx-04-cohort-in-san-francisco-this-spring/",
+			"apply": "Sign up for updates on the CSX site; no open application is listed for a new cohort.",
+			"value": "Most prestigious crypto accelerator; USD 500k minimum investment per company in past cohorts.",
+			"eligibility": "Crypto startups at the founding stage.",
+			"cost": "Equity",
+			"cadence": "annual, past cohort applications closed in February",
+			"fit": 4,
+			"reach": 5,
+			"access": 2,
+			"wave": 5,
+			"next": "Owner decision: decide whether to take a16z crypto capital, then join the CSX update list and watch for CSX 05.",
+			"why": "CSX 04 applications closed 2025-02-07 and no newer cohort was found, so this reopens only if a16z announces one.",
+			"promo": [
+				"blog",
+				"showcase",
+				"event"
+			],
+			"promo_note": "a16z crypto publishes cohort announcements on its blog and holds a Demo Day in San Francisco (documented for CSX 04); cohort teams only.",
+			"source": "https://a16zcrypto.com/posts/article/apply-to-join-the-csx-04-cohort-in-san-francisco-this-spring/ (search result; no 2026 cohort found)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "outlier-ventures-base-camp",
+			"company": "Outlier Ventures",
+			"program": "Base Camp accelerators",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://outlierventures.io/article/launching-the-post-web-base-camp-accelerator-program/",
+			"apply": "Watch outlierventures.io for the next Base Camp call; the last found closed end of June 2025.",
+			"value": "12 week remote accelerator with DeAI and agent themes and up to USD 200k.",
+			"eligibility": "MVP stage teams in the themed vertical.",
+			"cost": "Equity plus tokens in past cohorts (6% and 6%)",
+			"cadence": "themed cohorts, none open found",
+			"fit": 4,
+			"reach": 3,
+			"access": 2,
+			"wave": 5,
+			"next": "Owner decision: decide whether to take equity and token terms, then check outlierventures.io for a live DeAI cohort.",
+			"why": "Past cohorts took equity and token supply, so terms need an owner call. No live cohort found as of 2026-11-06.",
+			"source": "https://outlierventures.io/article/launching-the-post-web-base-camp-accelerator-program/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-ventures-foundation-investments",
+			"company": "Solana Ventures",
+			"program": "Solana Ventures public page",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://solanalabs.notion.site/Solana-Ventures-Public-ca82bdef271048918303d608460b3b3e",
+			"apply": "Read the Solana Ventures public page for the current pitch route.",
+			"value": "Solana-native strategic capital and ecosystem introductions.",
+			"eligibility": "Early-stage Solana projects.",
+			"cost": "Equity",
+			"cadence": "unknown",
+			"fit": 5,
+			"reach": 4,
+			"access": 2,
+			"next": "Owner decision: decide whether to take Solana Ventures capital, then read the public page for its pitch process.",
+			"why": "I could not verify a live intake; the URL comes from the repo's partner docs. Treat as research.",
+			"source": "docs/partners/crypto-programs.md in repo (not fetched live)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "nasdaq-ventures-pitch-form",
+			"company": "Nasdaq",
+			"program": "Nasdaq Ventures pitch form",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.nasdaq.com/nasdaq-ventures",
+			"apply": "Fill in the pitch form on the Nasdaq Ventures page.",
+			"value": "Corporate VC for financial services innovation; needs a strategic tie to a Nasdaq business unit.",
+			"eligibility": "Seed to Series B with a tie to Nasdaq units and an experienced team.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 1,
+			"next": "Owner decision: taking capital is implied; skip unless a Nasdaq market tech tie emerges.",
+			"why": "A 3D agent platform has no clear Nasdaq business tie. Page fetch timed out; criteria are from a search result.",
+			"source": "https://www.nasdaq.com/nasdaq-ventures (fetch timed out; search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "nasdaq-entrepreneurial-center-milestone",
+			"company": "Nasdaq Entrepreneurial Center",
+			"program": "Milestone Circles",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://nasdaqcenter.org/milestone-circles/",
+			"apply": "Apply on nasdaqcenter.org/milestone-circles.",
+			"value": "Free 12 week founder mentorship cohort from a Nasdaq-affiliated nonprofit.",
+			"eligibility": "US-based founders.",
+			"cost": "free",
+			"cadence": "periodic cohorts",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Apply to Milestone Circles when the next cohort window opens.",
+			"why": "Generic founder coaching, not crypto specific, but free with a Nasdaq name and low barrier.",
+			"promo": [
+				"badge"
+			],
+			"promo_note": "Alumni can cite program participation; no documented spotlight, treat as modest.",
+			"source": "https://nasdaqcenter.org/milestone-circles/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "citi-ventures-pitch",
+			"company": "Citi",
+			"program": "Citi Ventures",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://ventures.citi.com",
+			"apply": "Use the contact or pitch route on ventures.citi.com.",
+			"value": "Corporate VC for financial services and enterprise tech.",
+			"eligibility": "Seed to growth startups relevant to Citi.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 1,
+			"next": "Owner decision: taking capital is implied; skip unless an enterprise banking agent use case forms.",
+			"why": "No official submission page was verified. Citi Token Services is client facing, not an open developer program.",
+			"source": "search result only (ventures.citi.com not fetched)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "sc-ventures-pitch-competition",
+			"company": "Standard Chartered",
+			"program": "SC Ventures Pitch Competition",
+			"kind": "event",
+			"status": "closed",
+			"url": "https://scventures.io/pitch-competition/",
+			"apply": "Submit deck and short video in a future round; the 2026 Singapore round closed 2026-02-25.",
+			"value": "SGD 10,000 equity free grant and exposure to SC Ventures partners.",
+			"eligibility": "Singapore registered, under four years old, fintech and AI.",
+			"cost": "free",
+			"cadence": "annual in Singapore, 2026 round closed",
+			"fit": 2,
+			"reach": 3,
+			"access": 1,
+			"next": "Not applicable until a round opens and we have a Singapore entity.",
+			"why": "Requires a Singapore registered entity, which we lack. Zodia Custody is being absorbed by Standard Chartered; no startup route found.",
+			"source": "https://scventures.io/pitch-competition/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "morgan-stanley-inclusive-sustainable-ventures",
+			"company": "Morgan Stanley",
+			"program": "Inclusive and Sustainable Ventures Lab",
+			"kind": "accelerator",
+			"status": "closed",
+			"url": "https://www.morganstanley.com/about-us/inclusive-sustainable-ventures",
+			"apply": "Join the mailing list; the 2026 cycle closed 2026-03-31.",
+			"value": "Five month program with equity investment.",
+			"eligibility": "Impact startups with revenue at pre-seed to Series A.",
+			"cost": "Equity",
+			"cadence": "annual, typically closes in March",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Not a fit; skip.",
+			"why": "Requires impact focus and revenue; we are neither. Reopens likely early 2027 (inference).",
+			"source": "https://www.morganstanley.com/about-us/inclusive-sustainable-ventures (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "goldman-launch-with-gs",
+			"company": "Goldman Sachs",
+			"program": "Launch With GS",
+			"kind": "grant",
+			"status": "closed",
+			"url": "https://www.goldmansachs.com/pressroom/press-releases/2021/announcement-18-mar-2021.html",
+			"apply": "No current application found.",
+			"value": "USD 1B commitment to diverse led companies and fund managers.",
+			"eligibility": "Diverse led founders and funds.",
+			"cost": "free",
+			"cadence": "no open cohort found",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Skip.",
+			"why": "No 2026 intake found; GS DAP is institutional, not a startup route.",
+			"source": "search result",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "jpmorgan-in-residence-kinexys",
+			"company": "JPMorgan",
+			"program": "In-Residence and Kinexys",
+			"kind": "partner-network",
+			"status": "closed",
+			"url": "https://www.jpmorgan.com/insights/payments/blockchain-digital-assets/introducing-kinexys",
+			"apply": "None found; In-Residence coverage dates to 2016.",
+			"value": "Kinexys is blockchain payments for institutional clients.",
+			"eligibility": "Institutional clients and named partners.",
+			"cost": "unknown",
+			"cadence": "none",
+			"fit": 1,
+			"reach": 5,
+			"access": 1,
+			"next": "Skip.",
+			"why": "No public startup route found as of 2026-11-06; Kinexys partners are banks and large fintechs.",
+			"source": "search result",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bofa-breakthrough-lab",
+			"company": "Bank of America",
+			"program": "Breakthrough Lab",
+			"kind": "accelerator",
+			"status": "closed",
+			"url": "https://fintechnews.am/fintech-usa/49123/bank-of-america-launches-new-fintech-accelerator-program/",
+			"apply": "None found for 2026.",
+			"value": "Six month accelerator for early founders from underrepresented communities.",
+			"eligibility": "Founders from underrepresented communities.",
+			"cost": "free",
+			"cadence": "last cohort found 2023",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Skip.",
+			"why": "No 2026 cohort found and it targets a different audience.",
+			"source": "search result",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "franklin-templeton-benji-solana",
+			"company": "Franklin Templeton",
+			"program": "Benji on Solana and Digital Assets",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://digitalassets.franklintempleton.com/benji/",
+			"apply": "None; no startup or developer program found.",
+			"value": "First TradFi tokenized fund on Solana (Feb 2025); a talking point for tokenized treasury agents.",
+			"eligibility": "Institutions.",
+			"cost": "unknown",
+			"cadence": "none",
+			"fit": 3,
+			"reach": 5,
+			"access": 1,
+			"next": "Reference Benji as a real Solana RWA the agent wallet can hold; no application.",
+			"why": "Benji is on Solana, so an agent demo holding tokenized treasuries is a credible integration idea, but no partner door exists.",
+			"source": "https://digitalassets.franklintempleton.com/benji/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "blackrock-buidl-ecosystem",
+			"company": "BlackRock",
+			"program": "BUIDL ecosystem",
+			"kind": "directory",
+			"status": "closed",
+			"url": "https://www.prnewswire.com/news-releases/blackrock-launches-new-buidl-share-classes-across-multiple-blockchains-to-expand-access-and-potential-of-buidl-ecosystem-302304035.html",
+			"apply": "No startup route found; chain level fee arrangements only.",
+			"value": "Tokenized treasury fund via Securitize.",
+			"eligibility": "Chains and issuers.",
+			"cost": "unknown",
+			"cadence": "none",
+			"fit": 2,
+			"reach": 5,
+			"access": 1,
+			"next": "Skip.",
+			"why": "BUIDL integrations run through Securitize and chain foundations, not startup programs.",
+			"source": "search result",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "polychain-portal",
+			"company": "Polychain Capital",
+			"program": "Polychain application portal",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://polychain.capital",
+			"apply": "Use the proposal portal on Polychain's site (per a third-party guide).",
+			"value": "Large crypto fund investing Seed to Growth.",
+			"eligibility": "Crypto projects.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Owner decision: decide whether to take Polychain capital, then confirm the portal on its site.",
+			"why": "Portal reported only by a third-party guide; unverified. Warm intro advised.",
+			"source": "search result (superscout.co)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pantera-pitch-inbox",
+			"company": "Pantera Capital",
+			"program": "Pantera pitch inbox",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://panteracapital.com",
+			"apply": "Email the pitch address listed on panteracapital.com with plan, market and team.",
+			"value": "Large crypto fund with many Solana bets.",
+			"eligibility": "Crypto projects.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Owner decision: decide whether to take Pantera capital, then verify the pitch address on its site.",
+			"why": "Intake reported by a third-party site; warm introductions strongly preferred.",
+			"source": "search result (superscout.co)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "multicoin-contact",
+			"company": "Multicoin Capital",
+			"program": "Multicoin contact form",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://multicoin.capital/contact/",
+			"apply": "Use the contact form.",
+			"value": "Solana focused fund with a thesis on agents and payments.",
+			"eligibility": "Crypto projects.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 2,
+			"next": "Owner decision: decide whether to take Multicoin capital, then send a short agents on Solana note via the contact form.",
+			"why": "Thesis alignment is strong. Warm intro preferred. Contact URL from a third-party listing.",
+			"promo": [
+				"blog"
+			],
+			"promo_note": "Multicoin writes theses and portfolio posts on its blog (documented practice); not a program benefit.",
+			"source": "search result (vcsheet.com)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "dragonfly-pitch",
+			"company": "Dragonfly",
+			"program": "Dragonfly Send Pitch",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.dragonfly.xyz",
+			"apply": "Use the Send Pitch link on the website.",
+			"value": "Crypto fund open to direct applications.",
+			"eligibility": "Crypto projects.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Owner decision: decide whether to take Dragonfly capital, then use Send Pitch.",
+			"why": "Third-party sources say direct pitches are accepted but warm intros are preferred.",
+			"source": "search result (superscout.co, hashlock.com)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "delphi-ventures-pitch",
+			"company": "Delphi Ventures",
+			"program": "Delphi pitch link",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://delphiventures.io",
+			"apply": "Use the pitch link on the site with deck and Telegram handle.",
+			"value": "Research led crypto fund.",
+			"eligibility": "Crypto projects.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 2,
+			"next": "Owner decision: decide whether to take Delphi capital, then use the pitch link.",
+			"why": "Intake from a two year old guide; unverified. Delphi publishes research on portfolio teams.",
+			"promo": [
+				"blog",
+				"media"
+			],
+			"promo_note": "Delphi Digital publishes research and podcasts covering portfolio projects (documented practice); not guaranteed.",
+			"source": "search result (coingecko.com)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "electric-capital-intake",
+			"company": "Electric Capital",
+			"program": "Electric Capital founder contact",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://www.electriccapital.com/",
+			"apply": "Email the firm's info address listed on its site.",
+			"value": "Engineer led fund covering AI and distributed systems at pre-seed and seed.",
+			"eligibility": "Pre-seed and seed crypto founders.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Owner decision: decide whether to take Electric Capital funding, then email the info address.",
+			"why": "Strong developer reputation; publishes developer reports counting open source contributors.",
+			"promo": [
+				"blog"
+			],
+			"promo_note": "Electric Capital publishes the annual Developer Report and portfolio posts (documented); not a program benefit.",
+			"source": "https://www.electriccapital.com/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "big-brain-holdings-solana",
+			"company": "Big Brain Holdings",
+			"program": "Big Brain Holdings pitch",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://bigbrain.holdings",
+			"apply": "Email the invest address listed on bigbrain.holdings.",
+			"value": "Solana focused pre-seed and seed fund with 126 portfolio companies.",
+			"eligibility": "Pre-seed and seed Solana teams.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 3,
+			"next": "Owner decision: decide whether to take Big Brain capital, then email the invest address with a Solana agent summary.",
+			"why": "Most Solana native investor reachable by email per a profile; verify the site.",
+			"source": "search result (golden.com profile)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "animoca-ventures-deck",
+			"company": "Animoca Brands",
+			"program": "Animoca Ventures deck submission",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://animoca.ventures/",
+			"apply": "Send your deck to the address on animoca.ventures; the site says it replies within 72 hours.",
+			"value": "Investor in AI, robotics and interactive worlds with ecosystem reach.",
+			"eligibility": "Builders in AI and physical AI.",
+			"cost": "Equity",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Owner decision: decide whether to take Animoca capital, then send the deck.",
+			"why": "Interactive 3D and AI agents fit Animoca's AI and metaverse thesis.",
+			"source": "https://animoca.ventures/ (search result)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "shima-capital",
+			"company": "Shima Capital",
+			"program": "Shima Capital",
+			"kind": "accelerator",
+			"status": "closed",
+			"url": "https://www.shima.capital",
+			"apply": "None; CB Insights reports it ceased operations in December 2025.",
+			"value": "Former crypto fund.",
+			"eligibility": "n/a",
+			"cost": "n/a",
+			"cadence": "none",
+			"fit": 2,
+			"reach": 2,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Sources conflict on whether it still operates; do not spend time.",
+			"source": "search result (cbinsights.com)",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "jump-framework-no-intake",
+			"company": "Jump Crypto and Framework",
+			"program": "Jump Crypto and Framework Ventures",
+			"kind": "accelerator",
+			"status": "closed",
+			"url": "https://jumpcrypto.com",
+			"apply": "No public intake found.",
+			"value": "Large Solana infrastructure and DeFi investors.",
+			"eligibility": "Warm intro only.",
+			"cost": "n/a",
+			"cadence": "none",
+			"fit": 3,
+			"reach": 4,
+			"access": 1,
+			"next": "Skip until a warm intro appears.",
+			"why": "Jump built Firedancer; no pitch route found.",
+			"source": "search result",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "fidelity-labs-no-door",
+			"company": "Fidelity",
+			"program": "Fidelity Labs and Digital Assets",
+			"kind": "directory",
+			"status": "closed",
+			"url": "https://www.fidelity.com/about-fidelity/our-company/digital-assets",
+			"apply": "None; Fidelity Labs is an internal incubator.",
+			"value": "n/a",
+			"eligibility": "Institutions.",
+			"cost": "n/a",
+			"cadence": "none",
+			"fit": 1,
+			"reach": 5,
+			"access": 1,
+			"next": "Skip.",
+			"why": "No external startup or developer program found.",
+			"source": "search result",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-etf-issuers-vaneck-grayscale",
+			"company": "VanEck and Grayscale",
+			"program": "Solana ETFs VSOL and GSOL",
+			"kind": "directory",
+			"status": "closed",
+			"url": "https://www.benzinga.com/etfs/new-etfs/25/11/48932646/vaneck-launches-zero-fee-solana-etf-vsol-lets-investors-cash-in-on-sol-and-staking-rewards",
+			"apply": "None; products, not partner programs.",
+			"value": "Both launched US Solana ETFs in late 2025.",
+			"eligibility": "n/a",
+			"cost": "n/a",
+			"cadence": "none",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Skip.",
+			"why": "Useful context for Solana institutional adoption stories only.",
+			"source": "search result",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "dtcc-innovate-hackathon",
+			"company": "DTCC",
+			"program": "Innovate.DTCC AI Hackathon",
+			"kind": "event",
+			"status": "eligible",
+			"url": "https://communications.dtcc.com/dtcc-hackathon-registration-18146.html",
+			"apply": "Register when the next hackathon opens; the 2026 window closed 2026-01-30.",
+			"value": "Industry AI hackathon with DTCC visibility.",
+			"eligibility": "Registrants of the hackathon.",
+			"cost": "free",
+			"cadence": "annual, opens around January",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"wave": 5,
+			"next": "Watch communications.dtcc.com for the 2027 Innovate.DTCC registration.",
+			"why": "Audience is market infrastructure, tangential to 3D agents.",
+			"source": "https://communications.dtcc.com/dtcc-hackathon-registration-18146.html (search result)",
 			"checked": "2026-11-06"
 		}
 	]
