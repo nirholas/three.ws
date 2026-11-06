@@ -45,7 +45,11 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
 # context, 11.9.0 installs 3241 packages from it.
 #
 # When you regenerate package-lock.json with a newer npm, bump this to match.
-ARG NPM_VERSION=11.9.0
+# It happened again on 2026-11-06: the lockfile was regenerated with npm 11.19.1
+# and 11.9.0 refused it ("Missing: minimatch@10.2.6 from lock file"). Since then
+# `npm run audit:deploy` (and tests/deploy-artifacts.test.js) dry-runs npm ci
+# with this exact version, so the mismatch fails in seconds before submit.
+ARG NPM_VERSION=11.19.1
 RUN npm install -g npm@${NPM_VERSION}
 
 # 1. Manifests only → cacheable `npm ci` layer. --parents preserves the

@@ -26,6 +26,8 @@ import {
 	findUndeclaredApiImports,
 	findLockDrift,
 	findWorkspaceLockMismatch,
+	findImageNpmCiRejection,
+	readDockerNpmVersion,
 } from '../scripts/audit-deploy-artifacts.mjs';
 
 const scratchDirs = [];
@@ -57,6 +59,25 @@ describe('deploy artifacts', () => {
 
 	it('describes every workspace package.json in the lockfile, or npm ci in the image refuses to install', () => {
 		expect(findWorkspaceLockMismatch()).toEqual([]);
+	});
+
+	// 2026-11-06: the lockfile was regenerated with npm 11.19.1 while the
+	// Dockerfile still pinned 11.9.0, which refused it ("Missing:
+	// minimatch@10.2.6 from lock file") minutes into Cloud Build.
+	it('has a lockfile the npm version pinned in the Dockerfile accepts for npm ci', () => {
+		expect(findImageNpmCiRejection()).toEqual({ npmVersion: expect.any(String), problems: [] });
+	}, 180_000);
+});
+
+describe('readDockerNpmVersion', () => {
+	it('reads the ARG default the image installs', () => {
+		expect(readDockerNpmVersion('FROM node:24-slim\nARG NPM_VERSION=11.19.1\nRUN npm install -g npm@${NPM_VERSION}\n')).toBe(
+			'11.19.1',
+		);
+	});
+
+	it('returns null when the Dockerfile does not pin npm', () => {
+		expect(readDockerNpmVersion('FROM node:24-slim\nRUN npm ci\n')).toBeNull();
 	});
 });
 

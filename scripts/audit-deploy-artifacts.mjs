@@ -40,6 +40,12 @@
  *      2026-10-10 the rename of packages/three-ws-cli to @three-ws/cli failed
  *      the Docker step with "Missing: @three-ws/cli@0.1.1 from lock file".
  *
+ *   5. A lockfile the image's pinned npm refuses. The Dockerfile pins npm
+ *      (ARG NPM_VERSION) because npm releases resolve the same manifests
+ *      differently. On 2026-11-06 the lockfile was regenerated with npm 11.19.1
+ *      while the pin was 11.9.0, and Cloud Build died at npm ci with "Missing:
+ *      minimatch@10.2.6 from lock file". We dry-run npm ci with the pinned npm.
+ *
  * Runs standalone (`node scripts/audit-deploy-artifacts.mjs`), as phase 1 of
  * scripts/build-vercel.mjs, and via tests/deploy-artifacts.test.js.
  */
@@ -369,6 +375,42 @@ export function findWorkspaceLockMismatch({ lock, pkg, root = ROOT } = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// 7. The npm the image pins accepts the lockfile
+// ---------------------------------------------------------------------------
+
+/** The `ARG NPM_VERSION=<v>` default the Dockerfile installs, or null. */
+export function readDockerNpmVersion(dockerfileText) {
+	const m = /^\s*ARG\s+NPM_VERSION=([0-9][^\s]*)\s*$/m.exec(dockerfileText);
+	return m ? m[1] : null;
+}
+
+/**
+ * Dry-runs `npm ci` with the exact npm the Dockerfile installs and returns the
+ * reasons it refuses the lockfile. Different npm releases resolve the same
+ * package.json to different trees, so a lockfile regenerated with a newer local
+ * npm can be rejected by the image's older pinned one even though every local
+ * check passes. --dry-run validates the lockfile without touching node_modules,
+ * which keeps it safe in a deploy worktree whose node_modules is hardlinked.
+ */
+export function findImageNpmCiRejection({ root = ROOT } = {}) {
+	const dockerfile = resolve(root, 'Dockerfile');
+	const npmVersion = existsSync(dockerfile) ? readDockerNpmVersion(readFileSync(dockerfile, 'utf8')) : null;
+	if (!npmVersion) return { npmVersion: null, problems: [] };
+	try {
+		execFileSync(
+			'npx',
+			['-y', `npm@${npmVersion}`, 'ci', '--dry-run', '--ignore-scripts', '--no-audit', '--no-fund'],
+			{ cwd: root, stdio: 'pipe', encoding: 'utf8', timeout: 150_000 },
+		);
+		return { npmVersion, problems: [] };
+	} catch (err) {
+		const output = `${err.stdout || ''}\n${err.stderr || ''}`;
+		const reasons = [...new Set(output.split('\n').filter((l) => /\b(Missing|Invalid):/.test(l)).map((l) => l.replace(/^npm error\s*/, '').trim()))];
+		return { npmVersion, problems: reasons.length ? reasons : [output.trim().split('\n').slice(-5).join('\n') || String(err.message)] };
+	}
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 
@@ -447,12 +489,21 @@ if (isMain) {
 		}
 	}
 
+	const imageNpm = findImageNpmCiRejection();
+	if (imageNpm.problems.length) {
+		failed = true;
+		console.error(
+			`[audit:deploy] FAIL: npm ${imageNpm.npmVersion}, the version the Dockerfile pins, refuses package-lock.json, so npm ci in the image would fail minutes into Cloud Build. Set ARG NPM_VERSION in the Dockerfile to the npm that generated the lockfile (\`npm -v\`):`,
+		);
+		for (const p of imageNpm.problems) console.error(`  ${p}`);
+	}
+
 	const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 	if (failed) {
 		console.error(`\n[audit:deploy] failed in ${elapsed}s`);
 		process.exit(1);
 	}
 	console.log(
-		`[audit:deploy] clean in ${elapsed}s: no committed symlinks, no unsatisfied peers, no undeclared api imports, install tree and workspaces match the lockfile, decoder assets ${distAssets.skipped ? 'skipped (no dist/)' : 'present'}`,
+		`[audit:deploy] clean in ${elapsed}s: no committed symlinks, no unsatisfied peers, no undeclared api imports, install tree and workspaces match the lockfile, image npm ${imageNpm.npmVersion ?? '(unpinned)'} accepts the lockfile, decoder assets ${distAssets.skipped ? 'skipped (no dist/)' : 'present'}`,
 	);
 }
