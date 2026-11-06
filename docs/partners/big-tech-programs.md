@@ -6,7 +6,7 @@ Nearly every partnership three.ws has today started with one question: *does thi
 
 It is the wide net. The narrower docs stay authoritative for what they cover: [partners.md](../partners.md) is what each live partnership **is** and how to describe it, [opportunities.md](./opportunities.md) is the stuck-item pipeline, [prospects.md](./prospects.md) scores the 3D and avatar ecosystem, and the [listings registry](../listings-registry.md) tracks directories and awesome-lists.
 
-Sibling pages: [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), and [who promotes partners](./promotion-programs.md) across every sector.
+Sibling pages: [ai company partner programs](./ai-programs.md), [motion partner programs](./motion-programs.md), [crypto ecosystem partner programs](./crypto-programs.md), and [who promotes partners](./promotion-programs.md) across every sector.
 
 **166 programs across 46 companies.** 13 member / live, 1 submitted, waiting, 10 in progress, 16 ready, one human step, 81 eligible, not started, 33 verify fit first, 2 decided not to pursue, 3 not eligible, 7 retired or closed. We hold at least one membership at 8 of the 46 companies, and 58 of the open programs offer some form of promotion. Last full research sweep: 2026-11-06.
 

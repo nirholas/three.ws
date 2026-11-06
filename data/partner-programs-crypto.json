@@ -1,0 +1,1726 @@
+{
+	"$comment": "Source of truth for the crypto sector of the partner programs tracker (scripts/partner-programs.mjs). Record a submission with npm run programs -- --log <id> --action \"...\", a benefit with npm run programs -- --benefit <id> --name \"...\". Never set status member without proof. Never store organization, workspace, or account IDs here.",
+	"updated": "2026-11-06",
+	"companies": [
+		{
+			"name": "Colosseum",
+			"angle": "Submit to the next hackathon (expected Apr-May 2027) or the rolling Eternal sprint with the agent-with-wallet and x402 3D story; the accelerator is equity, so the owner decides."
+		},
+		{
+			"name": "Jupiter",
+			"angle": "Verified already; pursue Ultra integrator fees and revisit DAO grants if they reopen."
+		},
+		{
+			"name": "Solana Foundation",
+			"angle": "Lead with a milestone or convertible grant for open x402-on-Solana tooling plus the open awesome-solana-ai and pay-skills PRs; ask for placement on solana.com/ai once merged."
+		},
+		{
+			"name": "Superteam",
+			"angle": "Register three.ws agents on the Earn agent API to compete for agent bounties and consider a sponsored x402 tooling bounty (owner-approved spend)."
+		},
+		{
+			"name": "Solana Mobile",
+			"angle": "Apply for a Builder Grant citing the live Seeker app's Mobile Wallet Adapter and Seed Vault use, timed to Seeker v1.1.0, and target the next hackathon for dApp Store featuring."
+		},
+		{
+			"name": "x402 Foundation",
+			"angle": "Open pull requests listing x402-server, x402-fetch and x402-mcp in the dev-tools docs; consider General membership later."
+		},
+		{
+			"name": "Metaplex",
+			"angle": "Our metaplex-agent-mcp mints agents into their registry: ask for a docs showcase on metaplex.com/agents and a DAO grant for the tooling."
+		},
+		{
+			"name": "Quicknode",
+			"angle": "Already a member; request co-promotion and evaluate listing our paid x402 3D endpoints as a Marketplace add-on."
+		},
+		{
+			"name": "Alchemy",
+			"angle": "Take Solana Fund credits as a third RPC provider for redundancy."
+		},
+		{
+			"name": "BNB Chain",
+			"angle": "DappBay done; apply to MVB for CoinMarketCap promotion if the owner wants a BNB push."
+		},
+		{
+			"name": "Circle",
+			"angle": "Apply to Developer Grants citing USDC x402 settlement and agentic economy; must tie to Arc or Circle's platform."
+		},
+		{
+			"name": "Coinbase",
+			"angle": "Secondary surface: Base Builder Grants and Builder Codes for our Base x402 leg, and a CDP Bazaar listing as a nice-to-have."
+		},
+		{
+			"name": "Helius",
+			"angle": "Apply to the Startup Launchpad once a hackathon placement qualifies us; Helius is already in our RPC and market-data stack."
+		},
+		{
+			"name": "OKX",
+			"angle": "Resubmit OKX.AI agent #2632 after the fixed payment bug; treat the X Layer hackathon and fund as secondary."
+		},
+		{
+			"name": "Privy",
+			"angle": "Pitch a joint case study: Privy login in production plus agent wallets for x402."
+		},
+		{
+			"name": "Render Network",
+			"angle": "Pitch the Foundation grant: distributed GPU rendering for our text-to-3D and rigging pipeline, for a showcase feature."
+		},
+		{
+			"name": "Dialect",
+			"angle": "Serve actions.json, then register our avatar Blink at dial.to/register."
+		},
+		{
+			"name": "Fetch.ai / ASI Alliance",
+			"angle": "Register a three.ws agent on Agentverse with Chat Protocol for ASI:One discovery; apply to Deep Funding for open tooling."
+		},
+		{
+			"name": "Meteora",
+			"angle": "Offer our Dynamic Bonding Curve launch path as a launch-partner integration and ask for a listing."
+		},
+		{
+			"name": "Nosana",
+			"angle": "Apply for a milestone grant to run GPU inference on a Solana-native network as a second lane."
+		},
+		{
+			"name": "Phantom",
+			"angle": "Door is closed (Portal paused); watch for reopening, since Phantom signs for our agent MCP."
+		},
+		{
+			"name": "pump.fun",
+			"angle": "$THREE lives here; watch for later Pump Fund rounds and keep the builder-showcase ask to the pump.fun team."
+		},
+		{
+			"name": "Robinhood Chain",
+			"angle": "Apply to Arbitrum Mentorship Cohort 2 (closes 2026-12-06) and email chain-developers-group for an ecosystem listing as AI-agent market tooling; crypto only."
+		},
+		{
+			"name": "Solflare",
+			"angle": "Request an ecosystem listing through the contact form; Solflare signs for our agent MCP."
+		},
+		{
+			"name": "Virtuals Protocol",
+			"angle": "Competitor-adjacent; only if the owner wants an ACP presence on Base."
+		},
+		{
+			"name": "CoinMarketCap",
+			"angle": "Pair with MVB; we already publish on CoinMarketCap Community."
+		},
+		{
+			"name": "Ethereum Foundation",
+			"angle": "Check ESP Wishlist for agent identity (ERC-8004) items before applying."
+		},
+		{
+			"name": "Chainlink",
+			"angle": "Low fit; we do not use Chainlink data."
+		},
+		{
+			"name": "Triton One",
+			"angle": "Keep as an RPC option; ask for a customer testimonial route only if we want co-marketing."
+		},
+		{
+			"name": "Arbitrum",
+			"angle": "Secondary; only with Robinhood Chain."
+		},
+		{
+			"name": "Avalanche",
+			"angle": "Low priority."
+		},
+		{
+			"name": "Olas",
+			"angle": "Optional: Pearl agent app store if we build an Olas agent."
+		},
+		{
+			"name": "Sui Foundation",
+			"angle": "Low priority."
+		},
+		{
+			"name": "Wormhole",
+			"angle": "Only relevant if we add a Wormhole bridge leg; low priority."
+		},
+		{
+			"name": "Akash Network",
+			"angle": "Low priority; GCP credits cover GPUs."
+		},
+		{
+			"name": "Aptos Foundation",
+			"angle": "Low priority."
+		},
+		{
+			"name": "ElizaOS",
+			"angle": "Closed to third-party plugins; publish our own npm plugin."
+		},
+		{
+			"name": "Polygon",
+			"angle": "Low priority and unverified."
+		},
+		{
+			"name": "AR.IO",
+			"angle": "Watch for a second grants iteration to store avatar GLBs permanently."
+		},
+		{
+			"name": "Jito",
+			"angle": "Low priority; grants target restaking developers."
+		},
+		{
+			"name": "Livepeer",
+			"angle": "Low priority."
+		},
+		{
+			"name": "NEAR Foundation",
+			"angle": "Low priority behind Solana."
+		},
+		{
+			"name": "Story Protocol (DATA Foundation)",
+			"angle": "Closed: Story pivoted to AI data infrastructure in June 2026."
+		}
+	],
+	"programs": [
+		{
+			"id": "colosseum-hackathons",
+			"company": "Colosseum",
+			"program": "Hackathons (Frontier, Crypto World's Fair)",
+			"kind": "event",
+			"status": "eligible",
+			"url": "https://colosseum.com/hackathon",
+			"apply": "Sign up for a Colosseum account and submit a product during a hackathon window",
+			"benefits": [
+				"Non-dilutive prizes and dedicated ecosystem prize tracks",
+				"Winners interviewed for the Accelerator",
+				"Copilot research tool and builder events"
+			],
+			"eligibility": "Some Solana integration required; individuals and teams",
+			"cost": "free",
+			"cadence": "Two primary hackathons a year (Apr-May and Sep-Oct, about four weeks each). Crypto World's Fair (Sep 14 to Oct 12, 2026) is now in judging; next primary window expected Apr-May 2027, dates not announced",
+			"fit": 5,
+			"reach": 5,
+			"access": 5,
+			"next": "Sign up for a Colosseum account and submit a product during a hackathon window",
+			"why": "A hackathon submission around agent payments and 3D agents is the cheapest way into the Accelerator pipeline and into Solana ecosystem reach.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Winners get hall-of-fame placement and ecosystem recognition (per colosseum.com/hackathon); win a track to get it.",
+			"source": "https://colosseum.com/hackathon",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "colosseum-accelerator-and-eternal",
+			"company": "Colosseum",
+			"program": "Accelerator and Eternal (rolling perpetual hackathon)",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://colosseum.com/accelerator",
+			"apply": "Create a Colosseum account and submit a product via a hackathon or the rolling Eternal sprint; winners are interviewed",
+			"value": "250,000 USD pre-seed (per colosseum.com/accelerator)",
+			"benefits": [
+				"250,000 USD pre-seed investment on standard terms",
+				"12-week program, 1:1 mentorship, founder community",
+				"Perks: AI credits, AWS discounts, RPC offers",
+				"Private Demo Day to crypto VCs"
+			],
+			"eligibility": "Solana integration required; about 0.7% acceptance; Cohort 5 (21 teams) announced 2026-06-29",
+			"cost": "equity (standard terms)",
+			"cadence": "Eternal is rolling; batch follows each hackathon",
+			"fit": 4,
+			"reach": 5,
+			"access": 3,
+			"next": "Create a Colosseum account and submit a product via a hackathon or the rolling Eternal sprint; winners are interviewed",
+			"why": "The Eternal sprint lets us enter without waiting for April; equity terms mean the owner decides whether to take capital.",
+			"promo": [
+				"event",
+				"showcase"
+			],
+			"promo_note": "Accelerator teams pitch at a private VC Demo Day and are announced in the cohort blog post (track record on blog.colosseum.com); accepted teams only.",
+			"source": "https://colosseum.com/accelerator",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "jupiter-token-verification",
+			"company": "Jupiter",
+			"program": "Token verification (Jupiter Verify)",
+			"kind": "directory",
+			"status": "member",
+			"url": "https://jup.ag/tokens/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+			"apply": "Done; verification is a fee-gated Jupiter process",
+			"benefits": [
+				"Verified token status on Jupiter"
+			],
+			"eligibility": "Fee-gated; owner decides spend",
+			"cost": "paid",
+			"cadence": "n/a",
+			"fit": 5,
+			"reach": 5,
+			"access": 5,
+			"why": "Already live for $THREE. Evidence: data/listings.json id jupiter (live).",
+			"source": "data/listings.json id jupiter",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "jupiter-jupiter-dao-grants",
+			"company": "Jupiter",
+			"program": "Jupiter DAO grants (via Superteam Earn)",
+			"kind": "grant",
+			"status": "closed",
+			"url": "https://earn.superteam.fun/grants/jupiter-dao-grants/",
+			"apply": "Superteam Earn grant page (currently closed)",
+			"value": "up to 10,000 USD",
+			"benefits": [
+				"Up to 10,000 USD in USDC, internal vote"
+			],
+			"eligibility": "Work must serve a DAO need; average grant 6,804 USD (per Superteam Earn)",
+			"cost": "free",
+			"cadence": "closed as of 2026-11-06",
+			"fit": 3,
+			"reach": 4,
+			"access": 1,
+			"why": "Our swap route sets platformFeeBps and Ultra integrator fees; revisit if the grant reopens.",
+			"source": "https://earn.superteam.fun/grants/jupiter-dao-grants/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-foundation-awesome-solana-ai",
+			"company": "Solana Foundation",
+			"program": "awesome-solana-ai (Foundation-curated AI list)",
+			"kind": "directory",
+			"status": "submitted",
+			"url": "https://github.com/solana-foundation/awesome-solana-ai",
+			"apply": "GitHub pull request (ours is open as PR #251)",
+			"benefits": [
+				"Listing in the Foundation's own curated AI + Solana registry (AI Coding Skills, AI Agents sections)",
+				"Linked from solana.com/ai ecosystem material"
+			],
+			"eligibility": "Open-source project relevant to AI on Solana",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 5,
+			"next": "Chase the reviewer, then record the answer with --log",
+			"why": "A Foundation-owned list that sends builders to Solana-native AI tooling; our entry is already drafted and submitted. Evidence: data/listings.json id gh-solana-foundation-awesome-solana-ai (pr_open, PR #251).",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Listed entries appear in the repo README that solana.com/ai points developers to; merge the open PR (no separate ask needed).",
+			"source": "https://github.com/solana-foundation/awesome-solana-ai",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-foundation-grants-and-funding",
+			"company": "Solana Foundation",
+			"program": "Grants and Funding (milestone grants, convertible grants, RFPs)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://solana.org/grants-funding",
+			"apply": "Application form on solana.org/grants-funding (rolling); RFPs on an Airtable board",
+			"value": "Not stated per grant; page cites 500+ projects and $100M+ funded (per solana.org)",
+			"benefits": [
+				"Milestone-based grants for public goods",
+				"Convertible grants for public goods with a commercial component (convert to investment on milestones)",
+				"RFPs for specific ideas the Foundation wants funded",
+				"Hackathons with Colosseum feed an accelerator"
+			],
+			"eligibility": "Anyone can apply. Open-source spirit expected; primarily commercial projects should use a convertible grant. Review about 1 week, decision about 3 weeks (per solana.org)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 5,
+			"access": 3,
+			"next": "Application form on solana.org/grants-funding (rolling); RFPs on an Airtable board",
+			"why": "Open x402-on-Solana tooling, the Metaplex agent MCP and agent payments are public-good-shaped work that fits a milestone or convertible grant; the Foundation is also a premier x402 Foundation member.",
+			"assets": [
+				"packages/x402-server",
+				"packages/metaplex-agent-mcp",
+				"docs/solana.md"
+			],
+			"source": "https://solana.org/grants-funding",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-foundation-pay-skills-repository",
+			"company": "Solana Foundation",
+			"program": "pay-skills repository (agent payment skills)",
+			"kind": "directory",
+			"status": "submitted",
+			"url": "https://github.com/solana-foundation/pay-skills/pull/302",
+			"apply": "GitHub pull request (ours is PR #302)",
+			"benefits": [
+				"Listing of a paid-skill/x402 entry in a Foundation-run repository"
+			],
+			"eligibility": "Open-source agent payment skills",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 5,
+			"next": "Chase the reviewer, then record the answer with --log",
+			"why": "Directly on our x402-on-Solana rail; the PR is already open, so the remaining step is review. Evidence: data/listings.json id solana-foundation-pay-skills-pr-302 (pending).",
+			"source": "data/listings.json id solana-foundation-pay-skills-pr-302",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-foundation-solana-developer-platform-solana-com",
+			"company": "Solana Foundation",
+			"program": "Solana Developer Platform / solana.com/ai ecosystem listing",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://solana.com/ai",
+			"apply": "No public application route found; developer-facing material points to GitHub lists and Foundation skills",
+			"benefits": [
+				"Featured ecosystem section on solana.com/ai (Solana Developer Platform, Agent Registry, Skills, Ecosystem)"
+			],
+			"eligibility": "No published criteria",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 4,
+			"reach": 5,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "solana.com/ai features SendAI, Crossmint and others; getting three.ws shown there is a showcase win but has no known intake, so route via the grant and awesome-solana-ai first.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Ecosystem section on solana.com/ai is editorial; no documented ask, so reach it by landing the Foundation grant and list entry first (inferred, not a stated benefit).",
+			"source": "https://solana.com/ai",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-foundation-solana-ventures-and-foundation-investments",
+			"company": "Solana Foundation",
+			"program": "Solana Ventures (Solana Labs venture arm) and Foundation investments",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://solanalabs.notion.site/Solana-Ventures-Public-ca82bdef271048918303d608460b3b3e",
+			"apply": "No formal application found; Notion page and warm intros; Foundation investments start from the grants form",
+			"value": "avg checks 10K to 250K USD (per vcsheet/Tracxn, unofficial)",
+			"benefits": [
+				"Seed to Series A checks (per third-party profiles)"
+			],
+			"eligibility": "Equity round; unofficial sources disagree",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Equity fundraising route only; keep behind the grant and Colosseum since three.ws is not VC-funded today.",
+			"source": "https://www.vcsheet.com/fund/solana-ventures",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "superteam-superteam-earn",
+			"company": "Superteam",
+			"program": "Superteam Earn (bounties, agent-allowed listings, sponsor listings)",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://superteam.fun/earn/agents/",
+			"apply": "Agents register via POST /api/agents (see superteam.fun/skill.md); human claims payout. Sponsors create listings at superteam.fun/earn/sponsor",
+			"benefits": [
+				"Agent-eligible bounties (examples 500 to 5,000 USD range per gigs.sh)",
+				"Sponsor listings reach about 150K freelancers (per superteam.fun/earn/sponsor)"
+			],
+			"eligibility": "Agents need a human claimant with a talent profile",
+			"cost": "free to compete; sponsoring a bounty is a spend",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 5,
+			"next": "Agents register via POST /api/agents (see superteam.fun/skill.md); human claims payout. Sponsors create listings at superteam.fun/earn/sponsor",
+			"why": "three.ws agents can register and compete for agent-allowed bounties through the API, a live proof of the agent-with-wallet pitch; sponsoring a bounty for x402 tooling is an owner-approved spend.",
+			"promo": [
+				"social"
+			],
+			"promo_note": "Superteam chapters amplify sponsored bounties and winners (track record, not a stated benefit).",
+			"source": "https://superteam.fun/earn/agents/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "superteam-solana-foundation-instagrants",
+			"company": "Superteam",
+			"program": "Solana Foundation Instagrants (regional, via Superteam Earn)",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://superteam.fun/earn/grants/solana-foundation-usa-grants",
+			"apply": "Apply on Superteam Earn grant page for your country; decisions target about 7 days",
+			"value": "up to 10,000 USDG",
+			"benefits": [
+				"Up to 10,000 USDG per cheque",
+				"Fast proof-of-work based review"
+			],
+			"eligibility": "Country-gated: India and Germany open; Philippines and Finternet closed; USA program reported paused to new applications in Oct 2026 (per Solana Compass)",
+			"cost": "free",
+			"cadence": "rolling by chapter",
+			"fit": 4,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "A quick small grant for shipped Solana work, but the US chapter is paused and we are a US team, so access depends on reopening.",
+			"source": "https://solanacompass.com/projects/superteam",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-mobile-builder-grants",
+			"company": "Solana Mobile",
+			"program": "Builder Grants",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://solanamobile.com/grants",
+			"apply": "Application form on solanamobile.com/grants, any time",
+			"value": "Amount not stated; earlier round capped at 10,000 USD per team (per search)",
+			"benefits": [
+				"Milestone-based grants",
+				"Technical guidance",
+				"Co-marketing and launch support sometimes provided"
+			],
+			"eligibility": "Mobile-first Android UX, Solana Mobile Stack integration (MWA, Seed Vault), realistic milestones",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 5,
+			"next": "Application form on solanamobile.com/grants, any time",
+			"why": "Our live Seeker app already uses Mobile Wallet Adapter and Seed Vault, which are the exact eligibility criteria. Evidence: src/seeker.js (Seeker app uses MWA and Seed Vault).",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Page says co-marketing and launch support is sometimes provided alongside funding; mention it in the application.",
+			"assets": [
+				"src/seeker.js"
+			],
+			"source": "https://solanamobile.com/grants",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solana-mobile-dapp-store-publishing-and-hackathon",
+			"company": "Solana Mobile",
+			"program": "dApp Store publishing and hackathon featuring",
+			"kind": "marketplace",
+			"status": "eligible",
+			"url": "https://solanamobile.com/blog/clock-in-the-solana-mobile-hackathon",
+			"apply": "Publish via the dApp Store publisher flow; hackathons run with RadiantsDAO (CLOCK IN Sep 8 to Oct 8, 2026 closed)",
+			"value": "CLOCK IN prizes 135,000 USD (closed)",
+			"benefits": [
+				"No platform fees reported (per Solana Compass)",
+				"Hackathon winners get dApp Store placement, marketing support, Seeker devices"
+			],
+			"eligibility": "Android app using the Solana Mobile Stack",
+			"cost": "free",
+			"cadence": "hackathons about twice a year; no successor announced",
+			"fit": 4,
+			"reach": 3,
+			"access": 4,
+			"next": "Publish via the dApp Store publisher flow; hackathons run with RadiantsDAO (CLOCK IN Sep 8 to Oct 8, 2026 closed)",
+			"why": "Seeker v1.1.0 is the vehicle; the next hackathon would add featured placement.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Hackathon winners get featured dApp Store placement and marketing support (per Solana Mobile blog); win the next one.",
+			"assets": [
+				"src/seeker.js"
+			],
+			"source": "https://solanacompass.com/news/solana-mobile-dapp-store-surpasses-1561-apps-as-catalog-more-than-doubles-in-three-months",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "x402-foundation-x402-foundation-membership-and-dev",
+			"company": "x402 Foundation",
+			"program": "x402 Foundation membership and dev-tools docs listings",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://x402.org/members",
+			"apply": "Pull requests to docs/dev-tools/*.md in github.com/x402-foundation/x402; membership via the Linux Foundation",
+			"value": "Premier 200,000 USD",
+			"benefits": [
+				"Listing in the spec repo's third-party SDKs and extensions docs",
+				"Premier tier 200,000 USD with board seat (per coverage); General and Associate tiers exist"
+			],
+			"eligibility": "Open-source listings are free; membership fee varies by tier",
+			"cost": "free (listings) / paid (membership)",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 4,
+			"next": "Pull requests to docs/dev-tools/*.md in github.com/x402-foundation/x402; membership via the Linux Foundation",
+			"why": "We ship x402-server, x402-fetch and x402-mcp for Solana, a natural fit for the dev-tools docs.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Dev-tools doc entries are discovery listings only; no stated promotion.",
+			"assets": [
+				"packages/x402-server",
+				"packages/x402-fetch",
+				"packages/x402-mcp"
+			],
+			"source": "https://x402.org/linux-foundation-announces-operational-launch-of-x402-foundation-to-standardize-internet-native-payments-for-ai-agents-and-applications/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "metaplex-agent-registry-listing-ecosystem-showcase",
+			"company": "Metaplex",
+			"program": "Agent Registry listing / ecosystem showcase",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://www.metaplex.com/docs/agents",
+			"apply": "List your agent on metaplex.com/agents (per repo notes); developer Discord for showcase asks",
+			"benefits": [
+				"On-chain agent identity, wallet and execution delegation on MPL Core assets"
+			],
+			"eligibility": "Agents registered via mpl-agent-registry",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 3,
+			"next": "List your agent on metaplex.com/agents (per repo notes); developer Discord for showcase asks",
+			"why": "Deepest technical tie we have: our MCP mints agents into the registry; the ask is a docs showcase and a feature. Evidence: docs/partners/prospects-solana.md (Metaplex row); packages/metaplex-agent-mcp.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Ask for a docs showcase and feature on metaplex.com/agents through their developer Discord (our plan, not a documented benefit).",
+			"assets": [
+				"packages/metaplex-agent-mcp",
+				"docs/drops.md"
+			],
+			"source": "https://www.metaplex.com/docs/agents/skill",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "metaplex-dao-grants",
+			"company": "Metaplex",
+			"program": "DAO Grants (MIP)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://metaplex.foundation/grants",
+			"apply": "Apply for a Grant at mip.metaplex.com; questions to grants@metaplex.foundation (per search)",
+			"value": "Amounts not stated",
+			"benefits": [
+				"Funding from the Metaplex DAO treasury",
+				"Reviewed on a rolling basis (per search)"
+			],
+			"eligibility": "Proposal must advance the Metaplex ecosystem; proposal submission historically required holding MPLX (per search)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 3,
+			"next": "Apply for a Grant at mip.metaplex.com; questions to grants@metaplex.foundation (per search)",
+			"why": "Our Metaplex agent MCP deploys agents into their registry, a clean tooling grant case. Evidence: packages/metaplex-agent-mcp.",
+			"assets": [
+				"packages/metaplex-agent-mcp"
+			],
+			"source": "https://metaplex.foundation/grants",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "quicknode-startup-program",
+			"company": "Quicknode",
+			"program": "Startup Program",
+			"kind": "credits",
+			"status": "member",
+			"url": "https://www.quicknode.com/startup",
+			"apply": "Application at quicknode.com/startup",
+			"benefits": [
+				"Credits and discounts on third-party products",
+				"Co-promotion and marketing",
+				"Investor intros and invite-only workshops"
+			],
+			"eligibility": "No Series A+; credits only on self-service tiers",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 5,
+			"why": "Already in the program; use the co-promotion benefit. Evidence: data/listings.json id quicknode-startup (live).",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Program lists co-promotion and marketing for startups (per quicknode.com/startup); ask the program contact for a joint post.",
+			"source": "https://www.quicknode.com/startup",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "quicknode-marketplace-add-on-partner-program",
+			"company": "Quicknode",
+			"program": "Marketplace add-on partner program",
+			"kind": "marketplace",
+			"status": "eligible",
+			"url": "https://www.quicknode.com/docs/marketplace-addons",
+			"apply": "Apply for a Marketplace Partner account; implement 4 provisioning routes plus healthcheck",
+			"benefits": [
+				"Distribution to 700K+ developer accounts (per marketplace.quicknode.com)",
+				"Revenue share 70/30 in favor of the add-on developer (per the original launch post; may have changed)"
+			],
+			"eligibility": "REST, JSON-RPC or external add-on with SSO via JWT",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Apply for a Marketplace Partner account; implement 4 provisioning routes plus healthcheck",
+			"why": "Our paid x402 3D endpoints and Solana agent APIs could be sold as add-ons to their developer base.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Add-ons are listed on marketplace.quicknode.com (a directory listing, not a spotlight).",
+			"source": "https://www.quicknode.com/docs/marketplace-addons",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "alchemy-alchemy-solana-fund",
+			"company": "Alchemy",
+			"program": "Alchemy Solana Fund (credits)",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.alchemy.com/solana-20m-fund",
+			"apply": "Form on alchemy.com/solana-20m-fund; Alchemy replies within 5 business days",
+			"value": "up to 25,000 USD credits; 20M USD fund",
+			"benefits": [
+				"Up to 25,000 USD in credits per team",
+				"Trial up to 250, Grow 500 to 1,000, Enterprise up to 25,000 (per Solana Compass/search)",
+				"15% more credits for Solana Foundation community members"
+			],
+			"eligibility": "Teams building on Solana; 90-day evaluation window on credits",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 4,
+			"next": "Form on alchemy.com/solana-20m-fund; Alchemy replies within 5 business days",
+			"why": "Cheap infra credits for our Solana RPC load alongside Helius and Quicknode.",
+			"source": "https://www.alchemy.com/solana-20m-fund",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bnb-chain-bnb-chain-dappbay-listing",
+			"company": "BNB Chain",
+			"program": "BNB Chain DappBay listing",
+			"kind": "directory",
+			"status": "member",
+			"url": "https://dappbay.bnbchain.org/detail/three",
+			"apply": "Listed",
+			"benefits": [
+				"Directory listing"
+			],
+			"cost": "free",
+			"cadence": "n/a",
+			"fit": 3,
+			"reach": 3,
+			"access": 5,
+			"why": "Already listed. Evidence: data/listings.json id bnb-dappbay (live).",
+			"source": "https://dappbay.bnbchain.org/detail/three",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bnb-chain-most-valuable-builder-accelerator",
+			"company": "BNB Chain",
+			"program": "Most Valuable Builder (MVB) accelerator",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://www.bnbchain.org/en/programs/mvb",
+			"apply": "Application form linked on bnbchain.org/en/programs/mvb (rolling)",
+			"benefits": [
+				"Mentorship from BNB Chain BD and YZi Labs",
+				"Possible YZi Labs funding and Demo Day",
+				"CMC Labs promotion: Learn & Earn, airdrop campaigns, infographics, deep-dive content, live event"
+			],
+			"eligibility": "Early-stage projects on BNB Chain (DeFi, GameFi, SocialFi, middleware, consumer apps)",
+			"cost": "free",
+			"cadence": "three times a year; rolling review",
+			"fit": 3,
+			"reach": 5,
+			"access": 3,
+			"next": "Application form linked on bnbchain.org/en/programs/mvb (rolling)",
+			"why": "We already have a BNB x402 payTo and DappBay entry, so MVB could add CoinMarketCap promotion.",
+			"promo": [
+				"co-marketing",
+				"event"
+			],
+			"promo_note": "CMC Labs provides campaigns, content and a live community event for accepted projects (per the MVB page).",
+			"source": "https://www.bnbchain.org/en/programs/mvb",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bnb-chain-bnb-hack-series-and-kickstart",
+			"company": "BNB Chain",
+			"program": "BNB Hack series and Kickstart package",
+			"kind": "event",
+			"status": "research",
+			"url": "https://www.bnbchain.org/en/blog/bnb-hack-tokenized-stocks-edition-with-binance-web3-wallet",
+			"apply": "Register for the current BNB Hack edition on bnbchain.org",
+			"value": "prize pools 20,000 to 36,000 USD",
+			"benefits": [
+				"Winners eligible for the Kickstart package (about 50K USD) and fast-tracked MVB interviews"
+			],
+			"eligibility": "Edition-specific tracks",
+			"cost": "free",
+			"cadence": "editions several times a year; none open in the search results",
+			"fit": 2,
+			"reach": 4,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "EVM secondary; check next AI-agent edition.",
+			"source": "https://www.bnbchain.org/en/blog/build-and-compete-for-36-000-in-bnb-hack-ai-trading-agents-by-bnb-chain-coinmarketcap-and-trust-wallet",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "circle-developer-grants-program",
+			"company": "Circle",
+			"program": "Developer Grants Program (Arc and Circle Developer Platform)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://www.circle.com/grant",
+			"apply": "Circle Grants portal (circle.questbook.app) linked from circle.com/grant",
+			"value": "5,000 to 100,000 USD range (per a third-party schema; Circle publishes no amounts)",
+			"benefits": [
+				"Tiered USDC funding released by milestone",
+				"Blog features, social amplification, event participation and co-marketing"
+			],
+			"eligibility": "Teams building on Arc and the Circle Developer Platform; focus on agentic economic activity, FX, payments, treasury",
+			"cost": "free",
+			"cadence": "rolling after 2026-05-14 relaunch",
+			"fit": 3,
+			"reach": 5,
+			"access": 3,
+			"next": "Circle Grants portal (circle.questbook.app) linked from circle.com/grant",
+			"why": "Agentic economic activity is a named focus and our x402 rail settles in USDC, though it must integrate Arc or Circle's platform.",
+			"promo": [
+				"co-marketing",
+				"blog",
+				"social",
+				"event"
+			],
+			"promo_note": "circle.com/grant lists blog features, social amplification, event participation and co-marketing for grantees; ask in the application.",
+			"source": "https://www.circle.com/grant",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "coinbase-base-builder-grants",
+			"company": "Coinbase",
+			"program": "Base Builder Grants (Season 2)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://docs.base.org/get-started/builders",
+			"apply": "Apply per docs.base.org; Builder Codes (ERC-8021) integration is the first eligibility step",
+			"value": "up to 5,000 USD (per Coinbase/Base coverage, Oct 2026)",
+			"benefits": [
+				"Up to 5,000 USD grants",
+				"Go-to-market and product support",
+				"Builder Stack of tools and credits"
+			],
+			"eligibility": "Agents, x402 implementations and autonomous trading are listed categories",
+			"cost": "free",
+			"cadence": "rolling seasons",
+			"fit": 3,
+			"reach": 5,
+			"access": 3,
+			"next": "Apply per docs.base.org; Builder Codes (ERC-8021) integration is the first eligibility step",
+			"why": "Secondary surface: we run x402 on Base alongside Solana, and x402 builders qualify with Builder Codes.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Base offers go-to-market support to accepted teams (per Base coverage); no specific social or blog guarantee.",
+			"source": "https://docs.base.org/get-started/builders",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "coinbase-cdp-x402-bazaar-and-agentkit-action",
+			"company": "Coinbase",
+			"program": "CDP x402 Bazaar and AgentKit action provider",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://docs.cdp.coinbase.com/x402/bazaar",
+			"apply": "Bazaar listing requires settling through the CDP facilitator; AgentKit via GitHub pull request",
+			"benefits": [
+				"Discovery for x402 services in the Bazaar",
+				"AgentKit action provider exposure"
+			],
+			"eligibility": "Settle through Coinbase's facilitator",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 5,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Base-only discovery; the Solana rail stays the priority, treat as nice-to-have. Evidence: docs/partners/prospects-solana.md (x402 payments table).",
+			"source": "docs/partners/prospects-solana.md",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "coinbase-base-ecosystem-fund",
+			"company": "Coinbase",
+			"program": "Base Ecosystem Fund",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://www.base.org/ecosystem-fund/apply",
+			"apply": "Application at base.org/ecosystem-fund/apply",
+			"benefits": [
+				"Investment with Coinbase Ventures",
+				"Partner credits (AWS, Azure, Alchemy)",
+				"Priority access to Coinbase Prime, Business and onramp APIs"
+			],
+			"eligibility": "Pre-seed and seed teams building onchain businesses including AI agents and payments",
+			"cost": "equity",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 5,
+			"access": 3,
+			"next": "Application at base.org/ecosystem-fund/apply",
+			"why": "Equity route on the secondary chain; Solana-first rule means defer until the owner wants capital.",
+			"source": "https://docs.base.org/get-started/get-funded",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "coinbase-base-batches",
+			"company": "Coinbase",
+			"program": "Base Batches",
+			"kind": "accelerator",
+			"status": "closed",
+			"url": "https://www.basebatches.xyz/",
+			"apply": "Apply at basebatches.xyz; Batch 004 applications closed Sep 9, 2026",
+			"value": "10,000 to 100,000 USD",
+			"benefits": [
+				"Top 15 get a 10K USD grant (site) with a Demo Day in San Francisco",
+				"At least 3 teams get 50K USD from the Base Ecosystem Fund (site); docs say 100K USD, conflict noted"
+			],
+			"eligibility": "Teams building on Base",
+			"cost": "equity/grant",
+			"cadence": "about two batches a year; next not announced",
+			"fit": 2,
+			"reach": 5,
+			"access": 2,
+			"why": "Secondary chain; an x402 or agent track could fit.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Demo Day in San Francisco is part of the program (per basebatches.xyz).",
+			"source": "https://www.basebatches.xyz/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "helius-startup-launchpad",
+			"company": "Helius",
+			"program": "Startup Launchpad",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.helius.dev/startup-launchpad",
+			"apply": "Startup application form on helius.dev/startup-launchpad (rolling)",
+			"value": "8 months of Business plan (per helius.dev)",
+			"benefits": [
+				"8 free months of the Business plan (4K USD value)",
+				"Partner discounts (Squads, Ottersec, Switchboard, Loop, MoonPay, Sphere, Dynamic)",
+				"Investor, customer and talent intros; private group chats; office hours"
+			],
+			"eligibility": "Working product; no Series A+; and one of: graduated accelerator (Colosseum, Alliance), VC or angel referral, or recent Solana hackathon placement. New and existing customers eligible",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Startup application form on helius.dev/startup-launchpad (rolling)",
+			"why": "Helius is already in our RPC and market-data stack; a hackathon placement would unlock it.",
+			"source": "https://www.helius.dev/startup-launchpad",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "okx-okx-ai-agent-listing",
+			"company": "OKX",
+			"program": "OKX.AI agent listing (agent #2632)",
+			"kind": "directory",
+			"status": "submitted",
+			"url": "https://web3.okx.com/",
+			"apply": "Submit the on-chain agent update, then activate (per repo)",
+			"benefits": [
+				"Listing in OKX.AI agent directory"
+			],
+			"eligibility": "Agent must pass OKX's x402 check",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 4,
+			"next": "Chase the reviewer, then record the answer with --log",
+			"why": "Listing was rejected 2026-09-03 for a payment bug fixed 2026-09-05; resubmit. Evidence: docs/partners/opportunities.md (OKX.AI agent #2632 rejected 2026-09-03, cause fixed 2026-09-05).",
+			"source": "docs/partners/opportunities.md",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "okx-x-layer-build-x-tapeout-accelerate",
+			"company": "OKX",
+			"program": "X Layer Build X / TapeOut Accelerate hackathon",
+			"kind": "event",
+			"status": "eligible",
+			"url": "https://web3.okx.com/en-us/xlayer/build-x-hackathon",
+			"apply": "Google Form linked on the event page; Telegram channel for questions",
+			"value": "100,000 USDT pool (per web3.okx.com)",
+			"benefits": [
+				"100,000 USDT pool: 20K first, 10K x5 second, 6K x5 third",
+				"Official X Layer PR support and collaboration for winners"
+			],
+			"eligibility": "Entries must use TapeOut circuits, contracts or onchain data on X Layer (per page)",
+			"cost": "free",
+			"cadence": "TapeOut Accelerate Oct 16 to Dec 7, 2026 23:59 UTC (page marks the date provisional)",
+			"deadline": "2026-12-07",
+			"fit": 2,
+			"reach": 4,
+			"access": 3,
+			"next": "Google Form linked on the event page; Telegram channel for questions",
+			"why": "Secondary EVM surface and TapeOut-specific, so low fit unless we build an X Layer agent skill.",
+			"promo": [
+				"press"
+			],
+			"promo_note": "Winners receive official X Layer PR support (per the event page); arranged separately and not cash.",
+			"source": "https://web3.okx.com/en-us/xlayer/build-x-hackathon",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "okx-x-layer-ecosystem-fund",
+			"company": "OKX",
+			"program": "X Layer Ecosystem Fund (100M USD)",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://www.ccn.com/news/crypto/okx-100m-x-layer-ecosystem-fund-outspends-coinbase/",
+			"apply": "No application details found",
+			"value": "100M USD fund (no per-grant amount)",
+			"benefits": [
+				"100M USD fund announced Aug 2025"
+			],
+			"eligibility": "Builders on X Layer",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 2,
+			"reach": 4,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "EVM secondary; keep on the radar only.",
+			"source": "https://www.ccn.com/news/crypto/okx-100m-x-layer-ecosystem-fund-outspends-coinbase/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "privy-privy-partnership-and-case-study",
+			"company": "Privy",
+			"program": "Privy (Stripe) partnership and case study",
+			"kind": "co-marketing",
+			"status": "research",
+			"url": "https://www.privy.io/",
+			"apply": "privy.io/contact; no public startup program found",
+			"benefits": [
+				"Embedded and agent wallets; AWS AgentCore payments wallet infrastructure"
+			],
+			"eligibility": "None published",
+			"cost": "free",
+			"cadence": "n/a",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Privy login runs in production and Privy ships agent wallets, so this is a joint case study rather than a program. Evidence: src/privy-login.js (Privy login in production).",
+			"assets": [
+				"src/privy-login.js"
+			],
+			"source": "https://www.privy.io/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "render-network-render-foundation-grants",
+			"company": "Render Network",
+			"program": "Render Foundation Grants",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://rendernetwork.com/grants",
+			"apply": "Short pitch form on renderfoundation.com/grants, then formal proposal if invited",
+			"benefits": [
+				"Rendering credits on the Render Network",
+				"Prioritized rendering",
+				"Feature in Render's showcase"
+			],
+			"eligibility": "Creative or GPU projects that use Render's distributed rendering",
+			"cost": "free",
+			"cadence": "rolling; no 2026 cohort found",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Short pitch form on renderfoundation.com/grants, then formal proposal if invited",
+			"why": "Distributed 3D GPU rendering matches our GLB generation and render workers.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Grantees may be featured in Render's showcase (per rendernetwork.com/grants).",
+			"assets": [
+				"docs/forge-pipeline.md"
+			],
+			"source": "https://rendernetwork.com/grants",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "dialect-blinks-registry",
+			"company": "Dialect",
+			"program": "Blinks Registry (dial.to/register)",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://dial.to/register",
+			"apply": "Apply for verification at dial.to/register; actions.json must be hosted at the domain root",
+			"benefits": [
+				"Blinks unfurl on X in Phantom/Backpack once registered",
+				"Public registry at registry.dial.to"
+			],
+			"eligibility": "Spec-compliant Actions API; actions.json at domain root",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 3,
+			"next": "Apply for verification at dial.to/register; actions.json must be hosted at the domain root",
+			"why": "We already serve a Blink at /api/actions/avatar but /actions.json returned 404 on 2026-10-09, so fix that first. Evidence: api/actions/avatar.js.",
+			"assets": [
+				"api/actions/avatar.js",
+				"docs/solana-actions.md"
+			],
+			"source": "https://medium.com/dialect-labs/introducing-the-blinks-public-registry-fa103bca2852",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "fetch-ai-asi-alliance-fetch-ai-innovation",
+			"company": "Fetch.ai / ASI Alliance",
+			"program": "Fetch.ai Innovation Lab accelerator, Deep Funding and Agentverse",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://superintelligence.io/grants/",
+			"apply": "Apply via innovationlab.fetch.ai; Deep Funding via SingularityNET; hackathon tracks on Superteam Earn",
+			"value": "up to 100,000 USD (Deep Funding)",
+			"benefits": [
+				"10M USD accelerator for AI agent startups",
+				"Deep Funding milestone grants up to 100K USD",
+				"Agents on Agentverse with Chat Protocol are discoverable in ASI:One"
+			],
+			"eligibility": "Agents registered on Agentverse",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Apply via innovationlab.fetch.ai; Deep Funding via SingularityNET; hackathon tracks on Superteam Earn",
+			"why": "An Agentverse-registered three.ws agent would reach ASI:One users; moderate fit via MCP and agent chat.",
+			"source": "https://superintelligence.io/grants/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "meteora-dynamic-bonding-curve-launch-partner-integration",
+			"company": "Meteora",
+			"program": "Dynamic Bonding Curve launch-partner integration",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://docs.meteora.ag/developer-guides/dbc",
+			"apply": "Self-serve docs and SDK; discretionary infra grants for hackathon winners using DBC",
+			"benefits": [
+				"Launch partners customize quote token, curve and fees",
+				"Partner LP share after migration to DAMM v2",
+				"Discretionary infrastructure grants for qualified hackathon winners (per Superteam Earn listing)"
+			],
+			"eligibility": "Build with the DBC SDK",
+			"cost": "free",
+			"cadence": "grants tied to hackathons",
+			"fit": 4,
+			"reach": 3,
+			"access": 3,
+			"next": "Self-serve docs and SDK; discretionary infra grants for hackathon winners using DBC",
+			"why": "We already ship a DBC launch path, so an integrator listing is a short ask. Evidence: api/_lib/native-launch/dbc.js.",
+			"assets": [
+				"api/_lib/native-launch/dbc.js"
+			],
+			"source": "https://superteam.fun/earn/listing/meteora-dbc/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "nosana-nosana-grants-program",
+			"company": "Nosana",
+			"program": "Nosana Grants Program",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://grants.nosana.com/",
+			"apply": "Apply at grants.nosana.com; questions to grants@nosana.io",
+			"value": "5,000 to 50,000 USD",
+			"benefits": [
+				"5,000 to 50,000 USD milestone-based, paid in USDC, NOS and GPU credits",
+				"Non-dilutive, grantees keep IP"
+			],
+			"eligibility": "AI apps, infrastructure or tooling running on decentralized GPUs",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Apply at grants.nosana.com; questions to grants@nosana.io",
+			"why": "Solana-native GPU network; our 3D worker pipeline could run inference there as a second GPU lane.",
+			"source": "https://grants.nosana.com/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "phantom-phantom-portal-app-listing",
+			"company": "Phantom",
+			"program": "Phantom Portal app listing (Explore, recommended apps)",
+			"kind": "directory",
+			"status": "closed",
+			"url": "https://docs.phantom.com/phantom-portal/portal",
+			"apply": "Phantom Portal at docs.phantom.com; new submissions and Connect SDK sign-ups are paused",
+			"benefits": [
+				"Listing in Explore tab, search and recommended apps",
+				"Domain verification and branding control"
+			],
+			"eligibility": "Portal account, domain verification",
+			"cost": "free",
+			"cadence": "paused",
+			"fit": 4,
+			"reach": 5,
+			"access": 1,
+			"why": "Phantom signs for our Metaplex agent MCP; listing is the one discovery surface but the door is closed.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Recommended apps are featured placements (per Phantom docs); no documented way to apply for them.",
+			"source": "https://docs.phantom.com/phantom-connect",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pump-fun-pump-fund-build-in-public",
+			"company": "pump.fun",
+			"program": "Pump Fund / Build in Public hackathon",
+			"kind": "accelerator",
+			"status": "closed",
+			"url": "https://crypto.news/pump-fun-launches-3m-fund-ecosystem-startups-2026/",
+			"apply": "Launch on pump.fun and register for the hackathon (first round registration closed Feb 18, 2026)",
+			"value": "3M USD hackathon pool (per crypto.news)",
+			"benefits": [
+				"250,000 USD per team at a 10M USD valuation (12 teams)",
+				"Mentorship from pump.fun founders"
+			],
+			"eligibility": "Must launch on pump.fun and show public momentum; investment, not a grant",
+			"cost": "equity/token",
+			"cadence": "first round closed; later rounds not announced",
+			"fit": 3,
+			"reach": 5,
+			"access": 2,
+			"why": "$THREE already lives on pump.fun; a later round could back platform-level agent tooling, but terms are investment and token-market based. Evidence: data/listings.json id pumpfun-coin (live).",
+			"source": "https://crypto.news/pump-fun-launches-3m-fund-ecosystem-startups-2026/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "robinhood-chain-arbitrum-mentorship-program-cohort-2",
+			"company": "Robinhood Chain",
+			"program": "Arbitrum Mentorship Program Cohort 2 (with Robinhood Chain)",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://mentorship.arbitrum.io/",
+			"apply": "Apply at mentorship.arbitrum.io; applications close 2026-12-06",
+			"value": "100,000 USD rewards",
+			"benefits": [
+				"12-week program from 2027-01-05 with Demo Day 2027-03-25",
+				"VC and partner connections; 100,000 USD in rewards for winners",
+				"Open House winners fast-tracked"
+			],
+			"eligibility": "Up to 15 pre-seed and seed teams building on Arbitrum One or Robinhood Chain",
+			"cost": "free",
+			"cadence": "closes 2026-12-06",
+			"deadline": "2026-12-06",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Apply at mentorship.arbitrum.io; applications close 2026-12-06",
+			"why": "We ship /markets/robinhood and a Robinhood portfolio x402 endpoint; this is crypto-only and secondary to Solana.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Cohort ends with a Demo Day to investors (per Arbitrum Foundation); no other promotion stated.",
+			"assets": [
+				"docs/robinhood-chain-markets.md",
+				"api/x402/robinhood-portfolio.js"
+			],
+			"source": "https://blog.arbitrum.foundation/arbitrum-mentorship-program-cohort-2-applications-now-open/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "robinhood-chain-ecosystem-listing-and-open-house",
+			"company": "Robinhood Chain",
+			"program": "Ecosystem listing and Open House grants",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://docs.robinhood.com/chain",
+			"apply": "Email chain-developers-group@robinhood.com (per repo notes); Open House sign-up at openhouse.arbitrum.io",
+			"value": "1.8M USD pool",
+			"benefits": [
+				"Robinhood and Arbitrum cite 1.8M USD in total grants for projects that launch on the chain"
+			],
+			"eligibility": "No standing grants portal reported",
+			"cost": "free",
+			"cadence": "Open House events through 2026",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Email chain-developers-group@robinhood.com (per repo notes); Open House sign-up at openhouse.arbitrum.io",
+			"why": "Ecosystem page has 16 partners and no AI category; we are the AI-agent market tooling case. Evidence: docs/partners/prospects-solana.md (Robinhood Chain row).",
+			"assets": [
+				"docs/robinhood-chain-markets.md"
+			],
+			"source": "https://x.com/RobinhoodCrypto/status/2117709284108579041",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "solflare-ecosystem-page-and-wallet-sdk",
+			"company": "Solflare",
+			"program": "Ecosystem page and wallet SDK",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://www.solflare.com/ecosystem/",
+			"apply": "No submit form found; contact via solflare.com/contact (per repo notes)",
+			"benefits": [
+				"Listing on solflare.com/ecosystem"
+			],
+			"eligibility": "None published",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 4,
+			"reach": 4,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Solflare signs for our Metaplex agent MCP; ecosystem page is a plausible placement, with an unclear intake.",
+			"source": "https://www.solflare.com/ecosystem/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "virtuals-protocol-agent-commerce-protocol-builders",
+			"company": "Virtuals Protocol",
+			"program": "Agent Commerce Protocol (ACP) builders",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://app.virtuals.io/build",
+			"apply": "Register agents via app.virtuals.io/build and ACP docs",
+			"value": "up to 1M USD per month pool (self-reported)",
+			"benefits": [
+				"Searchable agent registry with hiring",
+				"Virtuals Revenue Network pledges up to 1M USD per month to agents selling through ACP (per Virtuals, Feb 2026)"
+			],
+			"eligibility": "Agents selling services via ACP",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 4,
+			"next": "Register agents via app.virtuals.io/build and ACP docs",
+			"why": "Direct agent-commerce competitor on Base; low priority and a competing launchpad per our own research notes. Evidence: docs/partners/prospects-solana.md (screened out).",
+			"source": "https://members.delphidigital.io/reports/virtuals-acp-open-coordination-for-digital-labor",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "coinmarketcap-cmc-labs-web3-startup-accelerator",
+			"company": "CoinMarketCap",
+			"program": "CMC Labs Web3 Startup Accelerator",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://coinmarketcap.com/events/cmc-labs/",
+			"apply": "Via MVB form or CMC Labs page",
+			"benefits": [
+				"One-year program with Learn & Earn and airdrop campaigns on CoinMarketCap"
+			],
+			"eligibility": "Highly selective",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 5,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "We already publish on CoinMarketCap Community; the accelerator would add campaigns, though several perks are token-campaign shaped. Evidence: data/listings.json id coinmarketcap-microsoft-partnership (live).",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Campaigns and content are the program's core service (per CMC Labs page).",
+			"source": "https://coinmarketcap.com/events/cmc-labs/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "ethereum-foundation-ecosystem-support-program",
+			"company": "Ethereum Foundation",
+			"program": "Ecosystem Support Program (Wishlist and RFPs)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://esp.ethereum.foundation/applicants",
+			"apply": "Application per Wishlist or RFP item at esp.ethereum.foundation/applicants",
+			"value": "5,000 to 500,000 USD depending on unofficial source",
+			"benefits": [
+				"Grants for open-source work; ETH default payment from June 2026"
+			],
+			"eligibility": "Open-source or freely available outputs; for-profits can apply",
+			"cost": "free",
+			"cadence": "rolling since 2025-11-03 reopening",
+			"fit": 2,
+			"reach": 4,
+			"access": 3,
+			"next": "Application per Wishlist or RFP item at esp.ethereum.foundation/applicants",
+			"why": "We ship an ERC-8004 identity API; only fits if the Wishlist has an agent identity item (unconfirmed).",
+			"source": "https://esp.ethereum.foundation/applicants",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "chainlink-build-on-solana",
+			"company": "Chainlink",
+			"program": "Build on Solana (Chainlink Build)",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://chain.link/economics/build-program/build-solana",
+			"apply": "Application page on chain.link/economics (status unclear after mid-2026 Build restructure)",
+			"benefits": [
+				"Hands-on guidance, ecosystem incentives and go-to-market resources from Chainlink and the Solana Foundation"
+			],
+			"eligibility": "Teams using Chainlink products (CCIP, Data Feeds, Data Streams)",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Low fit: we do not integrate Chainlink data, and Build shifted to commercial agreements in 2026.",
+			"source": "https://www.prnewswire.com/news-releases/chainlink-launches-build-on-solana-a-startup-program-to-advance-onchain-innovation-302457958.html",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "triton-one-customer-partner-route",
+			"company": "Triton One",
+			"program": "Customer/partner route (no formal program)",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://triton.one/testimonials",
+			"apply": "Sales contact only; no public partner or startup program found",
+			"benefits": [
+				"Yellowstone gRPC streaming and RPC"
+			],
+			"eligibility": "None published",
+			"cost": "paid RPC",
+			"cadence": "n/a",
+			"fit": 3,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "We already support Triton as an RPC option; only a customer testimonial route exists. Evidence: api/_lib/solana/connection.js (Triton RPC option).",
+			"assets": [
+				"api/_lib/solana/connection.js"
+			],
+			"source": "https://triton.one/testimonials",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "arbitrum-domain-allocator-grants-and-foundation-grants",
+			"company": "Arbitrum",
+			"program": "Domain Allocator grants (ex-Questbook) and Foundation grants",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://forum.arbitrum.foundation/t/arbitrum-d-a-o-grant-program-season-3-official-thread/28753",
+			"apply": "arbitrum.questbook.app",
+			"value": "up to 50,000 USDC",
+			"benefits": [
+				"Up to 25,000 USDC with one allocator, up to 50,000 with two"
+			],
+			"eligibility": "Season 3 approved until Mar 2026; renewal not confirmed",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Secondary; only if we deepen the Robinhood Chain leg.",
+			"source": "https://forum.arbitrum.foundation/t/arbitrum-d-a-o-grant-program-season-3-official-thread/28753",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "avalanche-team1-builder-grants",
+			"company": "Avalanche",
+			"program": "Team1 Builder Grants (Retro9000 wound down)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://www.avalanche.com/build/developer-hub",
+			"apply": "Mini grants have open applications; accelerator grants by committee",
+			"value": "up to 30,000 USD",
+			"benefits": [
+				"Mini grants up to 10,000 USD; accelerator grants up to 30,000 USD"
+			],
+			"eligibility": "Builders on Avalanche",
+			"cost": "free",
+			"cadence": "Retro9000 winding down since 2026-07-16",
+			"fit": 1,
+			"reach": 3,
+			"access": 3,
+			"next": "Mini grants have open applications; accelerator grants by committee",
+			"why": "No Avalanche leg; low fit.",
+			"source": "https://theagenttimes.com/agents/article/avalanche-foundation-winds-down-retro9000-grants-redesigns-b-20ef5f96",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "olas-olas-accelerator-and-pearl-agent-app",
+			"company": "Olas",
+			"program": "Olas Accelerator and Pearl agent app store",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://olas.network/build",
+			"apply": "Apply at olas.network/build; Dev Rewards currently paused",
+			"value": "up to 100,000 USD per team",
+			"benefits": [
+				"Up to 100,000 USD plus OLAS per team from a 1M USD program",
+				"Distribution through Pearl, the agent app store"
+			],
+			"eligibility": "Agents built on the Olas Stack for Pearl",
+			"cost": "free",
+			"cadence": "unclear; no 2026 cohort found",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Agent app store with payments fits our agents but requires building on the Olas stack.",
+			"source": "https://olas.network/build",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "sui-foundation-sui-grants-and-hydropower-accelerator",
+			"company": "Sui Foundation",
+			"program": "Sui grants and Hydropower accelerator",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://grantedai.com/grants/sui-foundation-grant-program-sui-foundation-427bae80",
+			"apply": "Via Sui Foundation site (aggregator-sourced)",
+			"benefits": [
+				"50M USD new grants announced Feb 2026",
+				"Hydropower accelerator with no equity"
+			],
+			"eligibility": "Builders on Sui",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "No Sui leg; low fit.",
+			"source": "https://grantedai.com/grants/sui-foundation-grant-program-sui-foundation-427bae80",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "wormhole-xgrant-program",
+			"company": "Wormhole",
+			"program": "xGrant program",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://wormholecrypto.medium.com/wormhole-launches-the-xgrant-program-cc19aea8e04d",
+			"apply": "Via Wormhole Foundation grants page (status unverified)",
+			"value": "up to 200,000-250,000 USD depending on source",
+			"benefits": [
+				"Contributions, Incubation, Moonshot and Research grants"
+			],
+			"eligibility": "Must benefit the Wormhole network",
+			"cost": "free",
+			"cadence": "unclear (sources are 2023-2024)",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Cross-chain status exists in api/x402/cross-chain.js; low fit unless we build a Wormhole leg.",
+			"assets": [
+				"api/x402/cross-chain.js"
+			],
+			"source": "https://www.coinfabrik.com/web3-grants/wormhole-ecosystem-programs/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "akash-network-akash-developer-grants",
+			"company": "Akash Network",
+			"program": "Akash Developer Grants",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://akash.network/blog/akash-offers-up-to-100-000-in-grants-through-new-developer-grant-program/",
+			"apply": "Akash forum developer-grants category (forum.akash.network)",
+			"value": "up to 100,000 USD",
+			"benefits": [
+				"Up to 100,000 USD in AKT from the Community Pool"
+			],
+			"eligibility": "Grantees must deploy on Akash",
+			"cost": "free",
+			"cadence": "unclear (announcement is old)",
+			"fit": 2,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Alternative GPU capacity; our credits are on GCP so low priority.",
+			"source": "https://akash.network/blog/akash-offers-up-to-100-000-in-grants-through-new-developer-grant-program/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "aptos-foundation-aptos-ecosystem-grants",
+			"company": "Aptos Foundation",
+			"program": "Aptos Ecosystem Grants",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://aptosfoundation.org/grants",
+			"apply": "Via Aptos Foundation site (aggregator-sourced)",
+			"value": "5,000 to 150,000 USD",
+			"benefits": [
+				"5,000 to 50,000 USD ecosystem grants; payments grants up to 150,000 USD"
+			],
+			"eligibility": "Live product, early traction, roadmap",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "No Aptos leg; low fit.",
+			"source": "https://finance.yahoo.com/markets/crypto/articles/beincrypto-institutional-research-10-chain-233802775.html",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "elizaos-elizaos-plugin-registry",
+			"company": "ElizaOS",
+			"program": "ElizaOS plugin registry",
+			"kind": "directory",
+			"status": "closed",
+			"url": "https://github.com/elizaOS/eliza",
+			"apply": "Plugin PRs no longer accepted per repo notes",
+			"benefits": [
+				"Plugin ecosystem listing"
+			],
+			"eligibility": "Third-party plugins and registry items not accepted (per README via repo notes)",
+			"cost": "free",
+			"cadence": "closed",
+			"fit": 2,
+			"reach": 3,
+			"access": 1,
+			"why": "Publish our own plugin to npm instead of waiting for a listing. Evidence: docs/partners/prospects-solana.md (Screened out table).",
+			"source": "docs/partners/prospects-solana.md",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "polygon-polygon-community-grants",
+			"company": "Polygon",
+			"program": "Polygon Community Grants (Questbook)",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://polygon.questbook.xyz",
+			"apply": "polygon.questbook.xyz (portal URL from a third-party guide, unverified)",
+			"benefits": [
+				"Priority on AI agents plus verifiable compute (per guide)"
+			],
+			"eligibility": "Unverified",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Polygon is a General x402 Foundation member; low fit, unverified.",
+			"source": "https://www.dipprofit.com/best-blockchain-grants-to-apply/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "ar-io-ar-io-grants-program",
+			"company": "AR.IO",
+			"program": "AR.IO Grants Program",
+			"kind": "grant",
+			"status": "closed",
+			"url": "https://github.com/ar-io/ar-io-grants",
+			"apply": "Ecosystem form on ar.io (grants closed)",
+			"benefits": [
+				"Micro grants up to 1,000 USD in the first iteration"
+			],
+			"eligibility": "Products built on ArNS or gateways",
+			"cost": "free",
+			"cadence": "closed; future iteration not announced",
+			"fit": 2,
+			"reach": 2,
+			"access": 1,
+			"why": "We proxy Arweave for images; permanent storage of avatar GLBs would be the pitch if it reopens.",
+			"source": "https://github.com/ar-io/ar-io-grants?tab=readme-ov-file",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "jito-jito-improvement-proposals",
+			"company": "Jito",
+			"program": "Jito Improvement Proposals (treasury grants, NCN grants)",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://forum.jito.network/t/jip-7-node-consensus-network-ncn-grants-program/396",
+			"apply": "Submit a JIP on forum.jito.network (KYC required)",
+			"benefits": [
+				"Treasury grants via governance",
+				"NCN grants committee (JIP-7)"
+			],
+			"eligibility": "Governance proposal; NCN grants limited to restaking developers",
+			"cost": "free",
+			"cadence": "unclear (forum posts about 2 years old)",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Low fit: grants target restaking developers; we only use Jito tips.",
+			"source": "https://forum.jito.network/t/jip-7-node-consensus-network-ncn-grants-program/396",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "livepeer-livepeer-treasury-spes-and-dev-hub",
+			"company": "Livepeer",
+			"program": "Livepeer treasury SPEs and Dev Hub grants",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://docs.livepeer.org/v2/community/contribute/opportunities",
+			"apply": "Apply to the Network Engineering SPE or forum Direct Grants; not the treasury directly",
+			"benefits": [
+				"Direct and retroactive grants",
+				"Scoped engineering RFPs"
+			],
+			"eligibility": "Aligned with Livepeer's video network",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Low fit; avatar streaming overlaps with video infrastructure only loosely.",
+			"source": "https://forum.livepeer.org/t/proposal-network-engineering-spe/3240",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "near-foundation-near-ai-agent-fund-and",
+			"company": "NEAR Foundation",
+			"program": "NEAR AI Agent Fund and Agent Market",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://www.near.org/blog/ai-agent-fund-to-invest-in-innovative-agent-tokens",
+			"apply": "See near.org; no 2026 application route confirmed",
+			"value": "20M USD fund",
+			"benefits": [
+				"20M USD liquid fund for agent tokens (Feb 2025 announcement)",
+				"NEAR AI Agent Market (May 2026) where agents transact"
+			],
+			"eligibility": "Agent-focused projects",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Competitor-adjacent chain; low priority behind Solana.",
+			"source": "https://www.near.org/blog/ai-agent-fund-to-invest-in-innovative-agent-tokens",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "story-protocol-builder-grants-and-story-academy",
+			"company": "Story Protocol (DATA Foundation)",
+			"program": "Builder grants and Story Academy",
+			"kind": "grant",
+			"status": "closed",
+			"url": "https://www.slope.agency/case-studies/story-protocol",
+			"apply": "None found",
+			"eligibility": "Story rebranded to The DATA Foundation in June 2026 and pivoted to AI training data infrastructure (per crypto.news)",
+			"cost": "n/a",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 2,
+			"access": 1,
+			"why": "IP licensing for 3D assets is no longer the product direction; no program to apply to.",
+			"source": "https://crypto.news/story-protocol-swaps-ip-vision-for-ai-data-infrastructure/",
+			"checked": "2026-11-06"
+		}
+	]
+}
