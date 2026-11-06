@@ -5,19 +5,28 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive LHM_REPO=/opt/LHM \
     TORCH_CUDA_ARCH_LIST=8.9
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.10 python3-pip python3.10-dev git curl build-essential ninja-build \
+# Python 3.11 from deadsnakes: Pillow 13 (the first release with the 2026 decoder
+# and PDF fixes) requires Python >= 3.11, and Ubuntu 22.04 only ships 3.10.
+# A venv on PATH makes `python` and `pip` resolve to 3.11 for every later step.
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common gpg-agent \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        python3.11 python3.11-dev python3.11-venv git curl build-essential ninja-build \
         libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 ffmpeg \
     && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3.10 /usr/bin/python \
-    && pip install --upgrade pip setuptools wheel
+    && python3.11 -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+RUN pip install --upgrade pip setuptools wheel
 
 RUN pip install torch==2.3.0 torchvision==0.18.0 --index-url https://download.pytorch.org/whl/cu121
 
 # Pin the upstream commit at build time with --build-arg LHM_REF=<sha>.
 ARG LHM_REF=main
+# Upstream pins numpy 1.23.0 and matplotlib 3.5.3, which publish no cp311 wheels.
+# Move each to the nearest release that does (same numpy minor, so the np.bool-era
+# API upstream relies on is unchanged).
 RUN git clone https://github.com/aigc3d/LHM.git /opt/LHM && git -C /opt/LHM checkout ${LHM_REF} \
+    && sed -i -e 's/^numpy==.*/numpy==1.23.5/' -e 's/^matplotlib==.*/matplotlib==3.6.3/' /opt/LHM/requirements.txt \
     && pip install -r /opt/LHM/requirements.txt
 
 COPY requirements.txt /app/requirements.txt
