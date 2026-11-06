@@ -317,8 +317,16 @@
 		<script type="module" src="/src/game/gift-claim-play.js"></script>
 		<script src="/brand.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
-	<!-- Loaded by a classic inline script so Vite does not fold it into the game's
-	     entry chunk: a blocked or failed /i18n.js leaves English copy, never a dead world. -->
-	<script>import('/i18n.js').catch(function () {});</script>
+	<!-- Injected as its own module script so Vite does not fold it into the game's
+	     entry chunk: a blocked or failed /i18n.js leaves English copy, never a dead world.
+	     Not import(): Vite's HTML build rewrites that even in a classic inline script
+	     and fails resolving /i18n.js on disk. -->
+	<script>(function () {
+		var s = document.createElement('script');
+		s.type = 'module';
+		s.src = '/i18n.js';
+		s.onerror = function () {};
+		document.body.appendChild(s);
+	})();</script>
 </body>
 </html>
