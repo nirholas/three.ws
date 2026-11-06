@@ -325,7 +325,7 @@ describe('group photo', () => {
 		await Promise.resolve();
 		expect(photoModuleLoads.count).toBe(0);
 		step(m, SHUTTER - PHOTO_GATHER_MS + 1000);
-		await new Promise((r) => setTimeout(r, 0));
+		await vi.dynamicImportSettled();
 		expect(photoModuleLoads.count).toBe(1);
 		m.destroy();
 	});

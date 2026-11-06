@@ -444,6 +444,11 @@ export class MeetupEvent {
 		const p = this._photo;
 		if (gp.stage === PHOTO_STAGE.GATHER && !p.gathered) {
 			p.gathered = true;
+			// photo-mode.js is a lazy chunk, and it fetches the event document the
+			// card is stamped with the moment it loads. Pulling it in now, a minute
+			// ahead, means the shutter finds both ready instead of racing the
+			// network (an unstamped card, or a late one, in front of the crowd).
+			if (!this.cc._director && !this.cc.lite) import('./photo-mode.js').catch(() => {});
 			this._moment('📸', 'Group photo in 1 minute', 'Gather at the totem. Everyone’s shutter fires together');
 		}
 		if (gp.stage === PHOTO_STAGE.COUNTDOWN) {

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T02:43:06.640Z",
+	"generated_at": "2026-11-06T04:02:00.694Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,46 @@
 			"link": "/play/lite",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Large avatars and forge props load again when the edge cache misses",
+			"summary": "Models over 32 MB (several mixamo avatars and forge props are 38 to 42 MB) failed with an empty server error on a full download whenever the CDN edge did not already hold them, because Cloud Run rejects a buffered response that large. Those downloads now stream, so an avatar or prop in /play no longer depends on the cache being warm.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "The meetup group photo is stamped with the event name every time",
+			"summary": "The photo screen loaded only when the shutter fired, so on a slow connection the card could open without the event name or arrive late. It now loads during the minute before the shutter, so the group photo is ready the instant it fires.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "The official three.ws town on /play shows its name and art again",
+			"summary": "When pump.fun's coin API was unreachable, the pinned OFFICIAL card at the top of the /play lobby lost its identity and read \"Unnamed coin\" with a blank letter tile. The card now keeps three.ws and its artwork whatever the live refresh returns, and the coin lookup behind it names any Solana coin from its on-chain token metadata while pump.fun is down.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "The oracle ribbon in /play no longer stalls when its price feed is throttled",
+			"summary": "When GeckoTerminal throttled the candle refresh behind the Granite Oracle, the first visitor after the cache lapsed waited about 16 seconds. Candle reads now hand back the previous candles after 2.5 seconds and finish the refresh in the background, so the ribbon loads promptly and the next visitor sees fresh data.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{

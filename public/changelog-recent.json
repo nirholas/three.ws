@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-11-06T02:43:06.677Z",
+	"generated_at": "2026-11-06T04:02:00.724Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 4455,
+	"total": 4459,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -37,6 +37,46 @@
 			"link": "/play/lite",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Large avatars and forge props load again when the edge cache misses",
+			"summary": "Models over 32 MB (several mixamo avatars and forge props are 38 to 42 MB) failed with an empty server error on a full download whenever the CDN edge did not already hold them, because Cloud Run rejects a buffered response that large. Those downloads now stream, so an avatar or prop in /play no longer depends on the cache being warm.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "The meetup group photo is stamped with the event name every time",
+			"summary": "The photo screen loaded only when the shutter fired, so on a slow connection the card could open without the event name or arrive late. It now loads during the minute before the shutter, so the group photo is ready the instant it fires.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "The official three.ws town on /play shows its name and art again",
+			"summary": "When pump.fun's coin API was unreachable, the pinned OFFICIAL card at the top of the /play lobby lost its identity and read \"Unnamed coin\" with a blank letter tile. The card now keeps three.ws and its artwork whatever the live refresh returns, and the coin lookup behind it names any Solana coin from its on-chain token metadata while pump.fun is down.",
+			"link": "/play",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "The oracle ribbon in /play no longer stalls when its price feed is throttled",
+			"summary": "When GeckoTerminal throttled the candle refresh behind the Granite Oracle, the first visitor after the cache lapsed waited about 16 seconds. Candle reads now hand back the previous candles after 2.5 seconds and finish the refresh in the background, so the ribbon loads promptly and the next visitor sees fresh data.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1503,47 +1543,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Trader scores, reviews, model checks and tournament results now land on Solana",
-			"summary": "Five kinds of on-chain record had been failing on every attempt. The daily trader-score credential, review attestations, GLB validation attestations, tournament podiums and hire attestations each named their subject (the trader wallet or the agent) on the memo instruction without that account signing, and Solana's memo program rejects any account that did not sign. No trader score had ever been recorded on mainnet. The subject now sits on a separate read-only instruction, so each record lands and still shows up under the subject's own transaction history, which is what Trader Passport verification and the reputation crawler rely on. The same fix applies to feedback, task and dispute attestations sent through the @three-ws/sdk browser helpers, which had the same flaw.",
-			"link": "/docs/trader-passport",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Turn MCP tool groups on or off yourself at /settings/mcp-tools",
-			"summary": "When an MCP server refuses a tool because it is switched off, the link in the refusal now opens a real page. Sign in and you see every tool group with its plain description. Set a group to on to unlock all of its tools, including financial ones such as swaps, transfers and launches, or to off to hide it from every connected client. Your choice is saved to your account and applies to every client within about 15 seconds, with no need to reconnect or send a header.",
-			"link": "/settings/mcp-tools",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "Voice rooms and background jobs pick up new keys without a restart",
-			"summary": "The LiveKit voice-room token and the QStash background-job settings are now read through the same central configuration as every other credential, at request time and with stray whitespace trimmed. A key added to the running service now takes effect on the next request instead of waiting for a fresh instance, and a pasted secret with a trailing newline no longer signs voice-room tokens with the wrong bytes. The master wallet endpoint also stopped creating its own database table on the fly: that table is defined only by its reviewed migration now, so its shape can no longer drift.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-11-04",
-			"type": "update",
-			"title": "What three.ws builds with NVIDIA, and the poster we are taking to GTC 2027",
-			"summary": "A new blog post lays out everything three.ws runs on NVIDIA: thirteen L4 and Blackwell GPU deployments that generated 19,270 3D models in a month, Nemotron, Riva and Magpie through NIM, and an Audio2Face-3D digital human that talks in a browser tab with nothing installed. It explains what NVIDIA Inception membership adds, and previews our application to the GTC 2027 call for posters: one facial animation track that drives 98.1% of real user avatars that have face morphs, from text to a speaking face in a median 3.8 seconds. Inception startups can also claim $25 of three.ws credit on the NVIDIA page.",
-			"link": "/blog/three-ws-nvidia-inception-gtc-2027",
-			"tags": [
-				"docs"
 			]
 		}
 	]
