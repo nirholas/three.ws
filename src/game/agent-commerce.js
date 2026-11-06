@@ -21,7 +21,7 @@ import {
 	CanvasTexture, SRGBColorSpace, DoubleSide, Vector3,
 } from 'three';
 import { AnimationManager } from '../animation-manager.js';
-import { resolveAvatarUrl, buildAvatar, loadManifest, MANIFEST_URL, CLIP_IDLE } from './avatar-rig.js';
+import { resolveAvatarUrl, buildAvatar, loadManifest, getAllEmoteDefs, getLocomotionDefs, CLIP_IDLE } from './avatar-rig.js';
 import { createX402Jumbotron } from './x402-jumbotron.js';
 import { log } from '../shared/log.js';
 import { netErrorMessage } from './net-error.js';
@@ -217,10 +217,8 @@ export class AgentCommerce {
 
 		// Pull the full clip manifest so gestures can reach any animation (the
 		// shared emote set is only the first six). Idempotent + cached.
-		loadManifest();
-		fetch(MANIFEST_URL, { cache: 'force-cache', signal: this._abort.signal })
-			.then((r) => (r.ok ? r.json() : []))
-			.then((m) => { this._manifest = Array.isArray(m) ? m : []; })
+		loadManifest()
+			.then(() => { this._manifest = [...getLocomotionDefs(), ...getAllEmoteDefs()]; })
 			.catch(() => { this._manifest = []; });
 
 		// Gentle nudge so players discover the agents exist.
