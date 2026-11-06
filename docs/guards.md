@@ -60,7 +60,7 @@ The order inside this chain is load-bearing. The frontend build empties `dist/`,
 npm run deploy:gcp:submit
 ```
 
-The last gate before code leaves the machine, and the only one that can see the finished artifact and the database it is about to ship over at the same time. It checks that no migration is pending, that nothing the server imports at runtime would be excluded from the build context, that the decoder assets `dist/` must carry are really there, and that every handler and shared module under `api/` still imports without throwing. A failure here is still cheap: nothing has been deployed.
+The last gate before code leaves the machine, and the only one that can see the finished artifact and the database it is about to ship over at the same time. It checks that no migration is pending, that nothing the server imports at runtime would be excluded from the build context, that the decoder assets `dist/` must carry are really there, that the lockfile survives an `npm ci` dry run under the exact npm the Dockerfile pins, and that every handler and shared module under `api/` still imports without throwing. A failure here is still cheap: nothing has been deployed.
 
 ### Pre-push
 
@@ -119,7 +119,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Quoted MCP counts | `npm run check:mcp-counts` | Every tool, resource and prompt count a living doc quotes for a three.ws MCP server equals the census in `public/tools.json`; `--fix` rewrites the markers. |
 | Unified MCP endpoint registry | `npm run check:mcp-tools` | The unified `/mcp` registry builds with no name collisions, every tool has a group and tier in the policy table, no hosted tool is dropped, `public/tools.json` carries the current unified census, and `vercel.json` routes `/mcp`. |
 | Site-builder pinned releases | `npm run check:site-builder-embeds` | The WordPress, Framer and Webflow pinned-release files name the same `<agent-3d>` release as the release ledger; `--fix` regenerates them. |
-| Agent eval smoke gate | `npm run evals:gate` | The agent loop the platform serves still clears the smoke suite (`evals/suites/smoke.json`) at its `gate.minScore`; skips with exit 0 when no model key is configured. |
+| Agent eval smoke gate | `npm run evals:gate` | The agent loop the platform serves still clears the smoke suite (`evals/suites/smoke.json`) at its `gate.minScore`, scored task by task against the pinned eval model; skips with exit 0 when no model key is configured. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
 | Interactive-state ratchet | `npm run audit:states` | A selector that declares cursor:pointer cannot ship without a hover rule behind it. |
 | Motion ratchet | `npm run audit:motion-tokens` | A transition cannot spell its duration or easing as a literal past a committed baseline. |

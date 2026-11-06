@@ -240,7 +240,7 @@ keeps the sign-in clickwrap record in step with the Terms version.
 | Surface | Entry point | Context |
 |---|---|---|
 | Agent wallet: deposit address | `src/agent-wallet-hub/tabs/deposit.js` | `deposit` |
-| Agent wallet: trade | `src/agent-wallet-hub/tabs/trade.js` | `trade` |
+| Agent wallet: trade, including the Sell all run | `src/agent-wallet-hub/tabs/trade.js`, `src/agent-wallet-hub/sell-all.js` | `trade` |
 | Agent wallet: withdraw | `src/agent-wallet-hub/tabs/withdraw.js` | `withdraw` |
 | Agent wallet: give | `src/agent-wallet-hub/tabs/give.js` | `give` |
 | Agent wallet: arm sniper | `src/agent-wallet-hub/tabs/snipe.js` | `snipe` |
@@ -266,6 +266,10 @@ keeps the sign-in clickwrap record in step with the Terms version.
 | Add funds / Coinbase onramp | `src/shared/add-funds.js` | `onramp` |
 | Drop-in x402 modal (incl. merchant embeds) | `public/x402.js` | `x402-pay` |
 | Review and sign page | `public/legal/agreements.js`, loaded as a module by `public/legal/agreements.html` | `agreements-page` |
+
+The Forge pay sheet reads `GET /api/token/config` first: when a wallet the $THREE
+consumption split pays is not configured, it shows "Not switched on yet" and does
+not raise the signing dialog, since nothing could be charged.
 
 If you add a surface, add its row here and its gate call in the code, and if it
 signs with a custodial key, call `requireRealFundsAgreement` in its handler: all

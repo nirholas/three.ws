@@ -53,7 +53,7 @@ npm run db:bootstrap
 This runs all four provisioning steps (core schema + indexer + delegations + migrations) and is idempotent — safe to re-run. Do not apply `api/_lib/schema.sql` alone: the base schema does not create the migration-defined tables and leaves a half-provisioned database (see [deployment.md](deployment.md)).
 
 #### `JWT_SECRET`
-**Required.** Long random secret used for two purposes: signing session JWTs and (via HKDF) deriving the AES-256-GCM key that encrypts agent wallet private keys.
+**Required.** Long random secret that signs session JWTs. It no longer protects custodial wallet keys in production: those are sealed under the dedicated `WALLET_ENCRYPTION_KEY` below.
 
 ```
 JWT_SECRET=<base64 string>
@@ -66,6 +66,15 @@ openssl rand -base64 64
 ```
 
 **Rotation:** add a new key ID (`JWT_KID`), wait for old tokens to expire, then remove the old value. Never remove the active signing key mid-rotation.
+
+#### `WALLET_ENCRYPTION_KEY`
+**Required in production** (at least 32 characters). Master secret for the AES-256-GCM encryption of custodial wallet private keys, kept separate from `JWT_SECRET` so rotating sessions cannot brick wallets. Production fails closed: with the key missing or short, wallet encrypt and decrypt throw instead of falling back to `JWT_SECRET` (the fallback survives only outside production).
+
+```
+WALLET_ENCRYPTION_KEY=<output of: openssl rand -base64 48>
+```
+
+**Rotation:** set the retired key in `WALLET_ENCRYPTION_KEY_PREVIOUS` (comma or whitespace separated, newest first) so existing ciphertext still opens. New writes always use the current key. Drop an old key only after nothing opens with it. Never replace the key without keeping the old one: ciphertext under a lost key cannot be recovered.
 
 #### `JWT_KID`
 **Optional.** Active key identifier for future key rotation. Defaults to `k1`.
@@ -205,7 +214,7 @@ Get from [upstash.com](https://upstash.com). Without Redis, rate limiting falls 
 
 #### `UPSTASH_CACHE_REST_URL`
 #### `UPSTASH_CACHE_REST_TOKEN`
-**Optional, recommended at scale.** A *second*, dedicated Upstash store for the best-effort response caches (galaxy feed, pulse, agent/explore lists, provider health). The variables above back the fail-closed rate limiter; the caches write much larger bodies. On a single shared free store those large writes contend for connections and burn the limiter's command quota — the cause of the `redis SET failed … aborted due to timeout` warnings on `/api/galaxy/flows`.
+**Optional, recommended at scale.** A *second*, dedicated Upstash store for the best-effort response caches (galaxy feed, pulse, agent/explore lists, provider health). The variables above back the rate limiter (which falls back to a Postgres counter when Redis is unavailable); the caches write much larger bodies. On a single shared free store those large writes contend for connections and burn the limiter's command quota, which caused the `redis SET failed … aborted due to timeout` warnings on `/api/galaxy/flows`.
 
 ```
 UPSTASH_CACHE_REST_URL=https://yyy.upstash.io

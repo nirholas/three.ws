@@ -12,7 +12,7 @@
 | Class | Description |
 |---|---|
 | `.btn` | Base (secondary): glass surface, border, white text |
-| `.btn.btn--primary` | White fill, dark ink — main CTA |
+| `.btn.btn--primary` | White fill, dark ink - main CTA |
 | `.btn.btn--secondary` | Explicit secondary (same as base, for readability) |
 | `.btn.btn--ghost` | Transparent, text-only |
 | `.btn.btn--danger` | Red-tinted |
@@ -29,16 +29,16 @@ States handled automatically: `:hover`, `:active`, `:focus-visible` (visible foc
 | Class | Description |
 |---|---|
 | `.pill` | Base neutral badge |
-| `.pill.pill--onchain` | Green — deployed on-chain |
-| `.pill.pill--devnet` | Amber — testnet/devnet |
-| `.pill.pill--success` | Green — success state |
-| `.pill.pill--warn` | Amber — warning |
-| `.pill.pill--danger` | Red — error/danger |
-| `.pill.pill--new` | Neutral — "New" label |
+| `.pill.pill--onchain` | Green - deployed on-chain |
+| `.pill.pill--devnet` | Amber - testnet/devnet |
+| `.pill.pill--success` | Green - success state |
+| `.pill.pill--warn` | Amber - warning |
+| `.pill.pill--danger` | Red - error/danger |
+| `.pill.pill--new` | Neutral - "New" label |
 | `.pill.pill--md` | Medium size |
 | `.pill__dot` | Animated pulse status dot inside a pill |
 
-Linked pills: use `<a class="pill pill--onchain">` — gets hover/focus states automatically.
+Linked pills: use `<a class="pill pill--onchain">` - gets hover/focus states automatically.
 
 ---
 
@@ -57,9 +57,9 @@ Linked pills: use `<a class="pill pill--onchain">` — gets hover/focus states a
 
 ---
 
-## Remaining long tail — classes → canonical equivalent
+## Remaining long tail - classes → canonical equivalent
 
-These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides). Re-verified 2026-10-25: every class in both tables below is still in use in `pages/`, `src/`, or `public/`, so every row remains open work.
+These classes are defined across the codebase. Follow-up agents should replace them with canonical classes (keep old class as needed for scoped CSS overrides). Re-verified 2026-11-06 with `npm run audit:buttons`: the `explore-*`, `explore-chain-badge*`, `erc8004-brand-badge` and `deploy-svc-pill` rows below are already gone (zero files) and are kept only as the mapping that was applied. The families still open are `ad-btn`, `as-btn`, `br-btn`, `ar-btn`, `fm-btn`, `bento-action-btn` and `pay-btn`; the kept-on-purpose list is in the next section.
 
 ### Button class names → canonical
 
@@ -105,7 +105,7 @@ These classes are defined across the codebase. Follow-up agents should replace t
 
 ## Audit and keep-list
 
-`npm run audit:buttons` (`scripts/audit-button-families.mjs`) prints every family with file counts and exits 1 if a migrated family reappears. Kept on purpose: `anim-btn` (bespoke animation tile), `ltm-toggle-btn` (segmented toggle), `nav-pill-sm` (nav badge tones), `price-badge`, `back-btn` (JS selectors), `market-empty-cta-btn` (sizing hook). Still open: `ad-btn`, `as-btn`, `br-btn`, `ar-btn`, `fm-btn`, `bento-action-btn`, `pay-btn`.
+`npm run audit:buttons` (`scripts/audit-button-families.mjs`; add `-- --strict` to fail while any open family remains) prints every family with file counts and exits 1 if a migrated family reappears. Kept on purpose: `anim-btn` (bespoke animation tile), `ltm-toggle-btn` (segmented toggle), `nav-pill-sm` (nav badge tones), `price-badge`, `back-btn` (JS selectors), `market-empty-cta-btn` (sizing hook). Still open: `ad-btn`, `as-btn`, `br-btn`, `ar-btn`, `fm-btn`, `bento-action-btn`, `pay-btn`.
 
 ## Forge page note (done)
 
@@ -117,8 +117,4 @@ These classes are defined across the codebase. Follow-up agents should replace t
 
 ## Marketplace page note (done)
 
-The page's bare inline `.btn-primary` / `.btn-secondary` definitions are gone; what remains are two scoped overrides in its `<style>` block (`.avatar-modal-actions .btn-primary/.btn-secondary` and `.payment-modal-success .ps-actions .btn-primary/.btn-secondary`) plus the detail-panel rules in `public/marketplace.css` (`.market-avatar-detail .btn-secondary`, `.market-tool-detail .btn-secondary`). The markup still uses the old names throughout. Migration:
-
-1. Replace `btn-primary` → `btn btn--primary`, `btn-secondary` → `btn btn--secondary` in the markup.
-2. Retain the scoped sizing/colour overrides, rewritten against the canonical classes (`.avatar-modal-actions .btn { ... }`).
-3. Replace `market-empty-cta-btn.primary` → `btn btn--primary`.
+The marketplace markup (`pages/marketplace.html`, `src/marketplace.js`) now uses `btn btn--primary` / `btn btn--secondary`, and the old bare inline `.btn-primary` / `.btn-secondary` definitions are gone. The empty-state buttons ride on `.btn` and keep `market-empty-cta-btn` only as a sizing hook. The plugin modals still use their own `plugin-modal-btn` family, which is outside this migration map. Scoped sizing and colour overrides, where they remain, are written against the canonical classes (`.avatar-modal-actions .btn`).

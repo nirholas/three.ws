@@ -198,9 +198,15 @@ X402_CDP_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v2/x402/facilitat
 X402_FACILITATOR_URL_BASE=https://facilitator.payai.network
 X402_FACILITATOR_URL_SOLANA=https://facilitator.payai.network
 
-# Session secret. Generate fresh with `openssl rand -hex 32`
-SESSION_SECRET=<random hex>
+# Session JWT signing secret (required). Generate fresh with `openssl rand -base64 64`
+JWT_SECRET=<random string>
+
+# Custodial wallet key encryption (required in production, at least 32 characters).
+# Kept separate from JWT_SECRET; production refuses to fall back to it.
+WALLET_ENCRYPTION_KEY=<output of: openssl rand -base64 48>
 ```
+
+When you rotate `WALLET_ENCRYPTION_KEY`, list the retired value in `WALLET_ENCRYPTION_KEY_PREVIOUS` so existing wallet ciphertext still opens. See [configuration.md](../configuration.md).
 
 CSRF protection is on by default and derives its token from the session, so there is no separate CSRF secret to set. `CSRF_DISABLED=1` exists as a local-debugging escape hatch; never set it in a deployed environment.
 
@@ -318,7 +324,7 @@ cat .env.production | vercel env import production
 A few env vars that have to be set per-environment:
 
 - `DATABASE_URL`: point preview at a Neon branch database, never at the production one
-- `SESSION_SECRET`: use a **different secret per environment**. Don't reuse the production secret in preview.
+- `JWT_SECRET` and `WALLET_ENCRYPTION_KEY`: use a **different secret per environment**. Don't reuse the production secret in preview.
 - `X402_PAY_TO_BASE` — use **different wallets per environment** so you can identify which environment generated which receipt.
 
 Deploy a preview to validate:
@@ -411,7 +417,7 @@ if (cors(req, res, {
 
 ## Step 13 — Hardening: rate limits
 
-`api/_lib/rate-limit.js` exposes `limits.<bucket>(key)`. Buckets are named (`mcpIp`, `mcpUser`, `chatIp`, etc.) and back into Upstash Redis or a local in-memory fallback.
+`api/_lib/rate-limit.js` exposes `limits.<bucket>(key)`. Buckets are named (`mcpIp`, `mcpUser`, `chatIp`, etc.) and back into Upstash Redis. When Redis is missing or fails, the money and auth buckets fall back to a Postgres counter and the rest to in-memory state.
 
 Set Upstash:
 
@@ -435,7 +441,7 @@ Without Redis, the in-memory fallback works for a single Vercel function instanc
 A few non-negotiables for the env vars you just set:
 
 - **Never commit any of them.** `.env.development`, `.env.preview`, `.env.production` are all gitignored. Confirm with `git check-ignore .env.production`.
-- **Rotate on personnel changes.** If anyone with access leaves the project, rotate `SESSION_SECRET`, the LLM keys, and the wallet private keys.
+- **Rotate on personnel changes.** If anyone with access leaves the project, rotate `JWT_SECRET`, `WALLET_ENCRYPTION_KEY` (keeping the old value in `WALLET_ENCRYPTION_KEY_PREVIOUS`), the LLM keys, and the wallet private keys.
 - **Use separate keys per environment.** Don't share `ANTHROPIC_API_KEY` between local dev and production — it makes log attribution impossible and one buggy local script can torch the production rate-limit window.
 - **Sweep wallet balances.** `X402_PAY_TO_BASE` receives USDC. Sweep to a cold address daily or set up an automated sweep transaction.
 - **CDP keys are sensitive.** Treat them like AWS keys. Coinbase rotates them via the dashboard at any time.

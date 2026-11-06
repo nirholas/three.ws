@@ -29,7 +29,7 @@ console.log(guards.length+' guards, '+unwired.length+' unwired'); unwired.forEac
 
 Measured 2026-09-04: 73 guards, 39 unwired. Measured 2026-09-08 after this pass: 80 guards,
 35 unwired, and every one of the 35 has a row below. Re-run 2026-10-25: 107 guards, 42 unwired,
-and all 42 still have a row (the registry in `data/guards.json` has grown with the new gate
+and all 42 still have a row. Re-run 2026-11-06: 112 guards, 46 unwired, every one with a row (the registry in `data/guards.json` has grown with the new gate
 guards, for example `check:mcp-counts` and `check:site-builder-embeds`, which are wired, not unwired).
 [tests/guard-wiring.test.js](../../tests/guard-wiring.test.js) fails if a guard drops off
 `gate` or off the deploy path, and fails if a newly unwired guard has no row here.
@@ -62,14 +62,18 @@ belongs on the deploy path, in `npm test`, or in an operator's hands.
 | `audit:route-shadowing` | No `api/**` handler is unreachable behind a broader route rule | 0 | 9.3s | `gate` |
 | `check:docs-freshness` | Whether each doc's prose still matches the code it names, against the budget in `data/docs-freshness-budget.json` | 0 | 11s | `gate` |
 | `check:pay-skills` | The committed `distributions/pay-skills/` provider files against a fresh projection of the service catalog, including orphaned files | 0 | 1.2s | `gate` |
-| `audit:deploy` | Committed symlinks, unsatisfied peers, undeclared api imports, an installed `node_modules` that matches `package-lock.json`, and the Draco/KTX2 decoder assets in `dist/` | 0 | 5.2s | `deploy:gcp:submit` |
+| `audit:deploy` | Committed symlinks, unsatisfied peers, undeclared api imports, an installed `node_modules` and workspace manifests that match `package-lock.json`, an `npm ci` dry run under the Dockerfile's pinned npm, and the Draco/KTX2 decoder assets in `dist/` | 0 | 5.2s | `deploy:gcp:submit` |
 
 `audit:deploy` is the one that is not a `gate` guard despite being green, repo-only and fast.
-Four of its five checks are already covered by
+Five of its six checks are already covered by
 [tests/deploy-artifacts.test.js](../../tests/deploy-artifacts.test.js), which imports the same
-functions, so `npm test` runs them. The lockfile check, `findLockDrift()`, joined them on
+functions, so `npm test` runs them: committed symlinks, unsatisfied peers, undeclared `api/`
+imports, `findLockDrift()` and `findWorkspaceLockMismatch()`. `findLockDrift()` joined them on
 2026-09-18 after a dependency bump nobody reinstalled shipped untested and every paid x402 route
-answered 500 on import. The fifth, `findMissingDistAssets()`, returns
+answered 500 on import. `findImageNpmCiRejection()` (2026-11-06) dry-runs `npm ci` with the npm
+the Dockerfile pins (`ARG NPM_VERSION`), because a lockfile regenerated with a newer local npm was
+refused by the image's older one and killed Cloud Build at the install layer minutes into the
+build. The sixth, `findMissingDistAssets()`, returns
 `{ skipped: true }` whenever `dist/` is absent, which is always true in vitest and always true
 in `gate`. It only means anything after a build, so it is wired into `deploy:gcp:submit` ahead
 of the upload, where a missing decoder asset (the /scene Draco outage) is still cheap to fix.
