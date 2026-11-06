@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "Solana stays responsive for payments when RPC providers throttle",
+			"summary": "Three background jobs were spending most of the platform's Solana RPC calls: the wallet leak scanner kept grinding through retries while every paid provider was throttled, the treasury refill read agent wallet balances one call at a time, and the pump.fun claims tool re-read the same confirmed transactions on every poll. The scanner now pauses its low-priority wallets until a paid provider is back, balances are read 100 at a time, and each transaction's claim result is remembered, so agent payments and live features keep the RPC capacity they need.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-06",
 			"title": "Pages keep working right after a site update",
 			"summary": "Right after an update, /play could stop on \"Couldn't load the world\" and other pages could fail the same way, because our network edge kept handing out an old copy of the page that pointed at files the update had removed. Reloading fetched the same old copy, so Try again could not help. Pages now always come fresh from the site, so an update can no longer strand visitors on a dead copy.",
 			"tags": [

@@ -63,6 +63,14 @@
 			<description>On the self-hosted text-to-3D worker, a job waiting behind another could be marked as orphaned a few minutes after submit even though its runner was still alive, which sent the request to a slower fallback or failed it. A worker now trusts its own live record over a lagging storage read, so queued jobs wait and then run.</description>
 		</item>
 		<item>
+			<title>Solana stays responsive for payments when RPC providers throttle</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-06:Solana stays responsive for payments when RPC providers throttle</guid>
+			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three background jobs were spending most of the platform's Solana RPC calls: the wallet leak scanner kept grinding through retries while every paid provider was throttled, the treasury refill read agent wallet balances one call at a time, and the pump.fun claims tool re-read the same confirmed transactions on every poll. The scanner now pauses its low-priority wallets until a paid provider is back, balances are read 100 at a time, and each transaction's claim result is remembered, so agent payments and live features keep the RPC capacity they need.</description>
+		</item>
+		<item>
 			<title>The meetup group photo is stamped with the event name every time</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-11-06:The meetup group photo is stamped with the event name every time</guid>

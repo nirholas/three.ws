@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T05:39:16.247Z",
+	"generated_at": "2026-11-06T06:55:37.677Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -75,6 +75,17 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Solana stays responsive for payments when RPC providers throttle",
+			"summary": "Three background jobs were spending most of the platform's Solana RPC calls: the wallet leak scanner kept grinding through retries while every paid provider was throttled, the treasury refill read agent wallet balances one call at a time, and the pump.fun claims tool re-read the same confirmed transactions on every poll. The scanner now pauses its low-priority wallets until a paid provider is back, balances are read 100 at a time, and each transaction's claim result is remembered, so agent payments and live features keep the RPC capacity they need.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
