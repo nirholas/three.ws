@@ -37,6 +37,8 @@ const PLACEHOLDER_PNG = Buffer.from(
 // keys, slashes, dots-in-filenames only; no traversal, no control chars.
 const KEY_RE = /^[\w!*'().@-]+(?:\/[\w!*'().@-]+)*(?:\.[\w-]+)?$/;
 const MAX_KEY_LENGTH = 512;
+// Cloud Run rejects a buffered (content-length) HTTP/1 response above 32 MiB.
+const MAX_BUFFERED_BYTES = 30 * 1024 * 1024;
 
 const CONTENT_TYPES = {
 	png: 'image/png',
@@ -143,7 +145,12 @@ export default wrap(async (req, res) => {
 		res.setHeader('cache-control', cacheControlFor(key));
 		res.setHeader('accept-ranges', 'bytes');
 		if (obj.ETag) res.setHeader('etag', obj.ETag);
-		if (obj.ContentLength != null) res.setHeader('content-length', String(obj.ContentLength));
+		// Cloud Run buffers a response that declares a content-length and rejects
+		// one above 32 MiB with an empty 500 (no app log). Leave the length off a
+		// large full read so Node sends it chunked, which Cloud Run streams.
+		const declaredLength = obj.ContentLength;
+		const exceedsBufferedCap = !range && req.method !== 'HEAD' && declaredLength > MAX_BUFFERED_BYTES;
+		if (declaredLength != null && !exceedsBufferedCap) res.setHeader('content-length', String(declaredLength));
 		if (obj.ContentRange) res.setHeader('content-range', obj.ContentRange);
 
 		if (req.method === 'HEAD') {
@@ -234,7 +241,7 @@ export default wrap(async (req, res) => {
 				res.setHeader('accept-ranges', 'bytes');
 				res.setHeader('cache-control', 'public, max-age=60, s-maxage=60');
 				const len = upstream.headers.get('content-length');
-				if (len) res.setHeader('content-length', len);
+				if (len && (range || Number(len) <= MAX_BUFFERED_BYTES)) res.setHeader('content-length', len);
 				const contentRange = upstream.headers.get('content-range');
 				if (contentRange) res.setHeader('content-range', contentRange);
 				const etag = upstream.headers.get('etag');

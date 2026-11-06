@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "Large avatars and forge props load again when the edge cache misses",
+			"summary": "Models over 32 MB (several mixamo avatars and forge props are 38 to 42 MB) failed with an empty server error on a full download whenever the CDN edge did not already hold them, because Cloud Run rejects a buffered response that large. Those downloads now stream, so an avatar or prop in /play no longer depends on the cache being warm.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-11-06",
 			"title": "The oracle ribbon in /play no longer stalls when its price feed is throttled",
 			"summary": "When GeckoTerminal throttled the candle refresh behind the Granite Oracle, the first visitor after the cache lapsed waited about 16 seconds. Candle reads now hand back the previous candles after 2.5 seconds and finish the refresh in the background, so the ribbon loads promptly and the next visitor sees fresh data.",
 			"tags": [
