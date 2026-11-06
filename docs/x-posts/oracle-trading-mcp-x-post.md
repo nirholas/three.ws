@@ -59,7 +59,7 @@ zero jargon, and MCP shows up only after the reader already wants it.
 > Oracle scores every new pump.fun coin 0 to 100 in its first seconds. It is now an MCP server, so
 > Claude can read it live.
 >
-> Here is what that actually means. 🧵
+> Here is what that actually means.
 
 **2/**
 > MCP is a plug for AI assistants. Instead of copy-pasting data into a chat, you connect a tool

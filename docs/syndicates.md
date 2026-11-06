@@ -40,6 +40,10 @@ funds that a solo follow could not.
 3. **Ride together.** When a leader trades, each member gets a sized, safety
    checked intent on [/dashboard/copy](https://three.ws/dashboard/copy), exactly
    like a solo follow. Pause, resume or change caps per leader there.
+   A copy is skipped, with the reason shown on the skipped row
+   (`leader_linked_to_creator`), when the leader's wallet scores as the same
+   controller as that coin's creator, so nobody mirrors a creator's own buy of
+   their own launch.
 4. **Leave.** Leaving stops only the subscriptions the join created. A
    subscription the member had before joining keeps running exactly as it was.
    Positions already held are never touched.

@@ -271,10 +271,10 @@ Practical uses:
 Press `P` to capture a screenshot. The viewer renders one frame off-screen and downloads a timestamped PNG:
 
 ```
-3d-screenshot-1714000000000.png
+3d-screenshot-2026-11-06T12-00-00.png
 ```
 
-A brief white flash overlay confirms the capture.
+A brief white flash overlay confirms the capture. The PNG carries a small three.ws logo watermark (`/favicon.svg`) in the lower left corner; if the logo cannot be fetched the screenshot saves without it.
 
 ### Via the GUI
 

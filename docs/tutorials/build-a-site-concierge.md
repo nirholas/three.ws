@@ -51,7 +51,7 @@ data: {"type":"chunk","text":"costs $20/month."}
 data: {"type":"done","provider":"groq","model":"llama-3.3-70b-versatile"}
 ```
 
-On the server, the provider list comes from the shared free-first chain (`api/_lib/llm.js`). The handler walks the chain in order, skips lanes in cooldown, marks a lane that answers 401/402/403 with a long auth cooldown (a billing-dead account should not be re-probed on every request), and streams from the first lane that connects. If every lane fails before a byte is sent, the client gets a plain 503 with `Retry-After` and the widget shows a retry bubble.
+On the server, the provider list comes from the shared free-first chain (`api/_lib/llm.js`). The handler walks the chain in order, skips lanes in cooldown, marks a lane that answers 401/402/403 with a long auth cooldown (a billing-dead account should not be re-probed on every request), and streams from the first lane that actually produces text. The SSE head is held back until the first content chunk, so a lane that connects but streams nothing (or dies before its first token) is put in cooldown and the next lane answers instead of the visitor getting an empty reply. If every lane fails before a byte is sent, the client gets a plain 503 with `Retry-After` and the widget shows a retry bubble.
 
 The client side is ~100 lines (`src/client.js`): a `fetch`, a spec-correct SSE reassembly buffer (frames split on blank lines, tested against one-byte-at-a-time delivery), and an `onChunk` callback.
 
@@ -67,7 +67,7 @@ Lipsync is deliberately *not* audio analysis. `createLipsync` tokenizes the sent
 
 `SpeechNarrator` queues sentences, picks a voice per avatar profile (name matches first, then language, then any local voice), and always runs the visual timeline even when muted or when the platform has no TTS, so the answer never silently stalls.
 
-The trick that makes the whole thing feel fast: **the widget speaks while the answer still streams**. A small sentence-splitter (`drainSentences`) watches the chunk stream and hands each completed sentence to the narrator immediately.
+The trick that makes the whole thing feel fast: **the widget speaks while the answer still streams**. A small sentence-splitter (`drainSentences`, in `src/sentences.js`) watches the chunk stream and hands each completed sentence to the narrator immediately. A period only ends a sentence when whitespace follows it, so a URL in the answer is never cut at its dots.
 
 ## Step 4: the widget shell
 

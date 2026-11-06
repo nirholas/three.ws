@@ -8,7 +8,7 @@ This page maps those paths, names the file that owns each one, and describes the
 
 | Surface | What the crawler gets | Owner |
 |---|---|---|
-| Catalogued static pages (`/`, `/create`, `/markets`, and 800 others) | The page's own `<title>`, description, canonical, Open Graph tags and JSON-LD, rewritten per path into a shared shell | [server/seo-head.mjs](../server/seo-head.mjs) |
+| Catalogued static pages (`/`, `/create`, `/markets`, and about a thousand others) | The page's own `<title>`, description, canonical, Open Graph tags and JSON-LD, rewritten per path into a shared shell | [server/seo-head.mjs](../server/seo-head.mjs) |
 | Content pages behind a fetch (`/tutorials/<slug>`, `/walkthroughs/<slug>`) | The head above, plus the rendered markdown or walkthrough steps injected into the shell body | [server/crawler-body.mjs](../server/crawler-body.mjs) |
 | Entity pages (`/agents/<id>`, `/avatars/<id>`) | A full server-rendered page: name, description, facts, tags, breadcrumbs and JSON-LD, routed by User-Agent | [api/_lib/crawler-page.js](../api/_lib/crawler-page.js) |
 | Forge creation pages (`/m/<id>`) | The model shell with its head rewritten per creation for every User-Agent: title, canonical, a `summary_large_image` card whose image is the PNG render of the model, and `3DModel` JSON-LD | [server/creation-head.mjs](../server/creation-head.mjs) |

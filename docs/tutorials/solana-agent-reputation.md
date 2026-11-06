@@ -125,10 +125,10 @@ A registered agent returns its registry entry: authority wallet, status (`Inacti
 
 ### From an AI agent
 
-The same reads are MCP tools, all free:
+The same reads are MCP tools. The AgenC server is free; on the three.ws server only `solana_agent_reputation` is priced:
 
 - **[`@three-ws/agenc-mcp`](https://www.npmjs.com/package/@three-ws/agenc-mcp)** is a stdio server wrapping the bridge above: `get_agent`, `list_tasks`, `get_task`, `link_agent`, and `query_x402_services`. No key, no signer, no payment.
-- The **three.ws MCP server** (`https://three.ws/api/mcp`) carries the attestation side: `solana_agent_reputation` for the computed summary, `solana_agent_attestations` for the raw list, and `solana_agent_passport` for the full discovery card in one call.
+- The **three.ws MCP server** (`https://three.ws/api/mcp`) carries the attestation side: `solana_agent_reputation` for the computed summary ($0.001 USDC per call over x402, or free with an OAuth bearer token), `solana_agent_attestations` for the raw list, and `solana_agent_passport` for the full discovery card in one call.
 
 ---
 

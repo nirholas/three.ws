@@ -113,7 +113,7 @@ If you drive your agent from an MCP client (Claude Desktop, Cursor, an agent-to-
 }
 ```
 
-**`recall`** — retrieve the most relevant memories for a query. Ranks by query relevance blended with salience and recency, skipping expired entries:
+**`recall`**: retrieve the most relevant memories for a query. Ranks by query relevance blended with salience and recency, skipping expired entries. When more than five memories match, the result is a summary, a count, a handle and the top five, and the `expand` tool reads the rest.
 
 ```jsonc
 {
@@ -178,6 +178,17 @@ await fetch('/api/agent-memory', {
 ```
 
 Editing the `content` is more than a text swap: the server resets that row's stored embedding and extracted entities, so the memory **re-indexes itself** on the next read. An edited memory becomes findable by its new wording — you don't have to do anything to refresh the index.
+
+**Supersede** a fact that stopped being true instead of overwriting it. Pass `supersedes` (up to 10 memory ids, each a still-current memory of the same agent) and the new entry closes them: each one gets a `valid_to` and a `superseded_by` pointing at the new memory, so history is kept rather than lost. Optional `validFrom` sets when the new fact became true (default: when it was recorded), and `sourceRef` (up to 300 characters) records where it came from. An id that is foreign or already closed is refused with `409 not_supersedable`, and nothing is written.
+
+```js
+entry: {
+  type: 'project',
+  content: 'Marketplace ships in August; x402 is unblocked.',
+  supersedes: ['old-memory-uuid'],
+  sourceRef: 'standup 2026-11-04',
+}
+```
 
 **Read** what an agent knows:
 
@@ -294,6 +305,7 @@ The test: *would the agent need this next week, and could it not just look it up
 
 - **`401` / "sign in required"** — the write needs an authenticated owner. (Public embeds get an empty list, never an error, by design.)
 - **`403` / "not your agent"** — the `agentId` belongs to another account. You can only write memories on agents you own.
+- **`409` / "each superseded memory must belong to this agent and still be current"**: a `supersedes` id belongs to another agent or was already superseded. Fetch the current entries and pass only open ids.
 - **`409` / "memory id already in use"** — you tried to upsert with an `id` that belongs to a different agent. Drop the `id` to create a fresh memory.
 - **Type silently became `project` (or `reference`)** — an invalid `type` was sent; the server falls back to a safe default. Use exactly `user`, `feedback`, `project`, or `reference`.
 - **MCP tool refused** — anonymous x402 callers have no account. Sign in with three.ws OAuth and pass an `agent_id` you own.

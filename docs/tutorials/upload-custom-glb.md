@@ -22,7 +22,7 @@ This tutorial covers the whole pipeline. Where compatible GLBs come from, what m
 
 A GLB is just a binary glTF: a 3D scene packaged in a single file. The runtime accepts any valid glTF 2.0 GLB. To function as a *conversational agent body*, the one thing that really matters on top of the basic geometry is:
 
-**A humanoid skeleton (armature) the runtime can name-map.** Bones following a humanoid pattern, head, neck, spine, two arms, two legs. There is no rig allowlist: `src/glb-canonicalize.js` maps the common conventions (Mixamo, Avaturn, Unreal, VRM/VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L` suffixes, simple `shoulderL` rigs) onto one canonical bone set.
+**A humanoid skeleton (armature) the runtime can name-map.** Bones following a humanoid pattern, head, neck, spine, two arms, two legs. There is no rig allowlist: `src/glb-canonicalize.js` maps the common conventions (Mixamo, Avaturn, Unreal, VRM/VRoid, VRM 1.0, Daz/Genesis, MakeHuman, HumanIK/Maya, 3ds Max Biped, Source engine, Apple ARKit, Kinect, MediaPipe, Blender `.L` suffixes, simple `shoulderL` rigs) onto one canonical bone set. Finger bones are optional: a complete body without fingers still animates, though its hands stay stiff.
 
 **You do not have to ship animation clips.** Once the skeleton canonicalizes, `src/animation-retarget.js` retargets the platform's pre-baked clip library (idle, walk, and the emotes) onto your rig, legs included. A rig that genuinely can't be skeleton-driven, no skin, a non-humanoid prop, falls back to the default rig rather than freezing. And if only *some* bones name-map, `relaxUndrivenArms()` swings the un-driven arms down to a relaxed rest, so an avatar never reads as a broken bind-pose T-pose.
 

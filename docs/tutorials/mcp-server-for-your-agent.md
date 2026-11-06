@@ -486,13 +486,18 @@ The shape:
     "profile", "offline_access",
     "memory:read", "memory:write",
     "agents:read", "agents:write",
+    "feedback:read",
+    "home:read", "home:act",
     "wallet:read", "wallet:write",
-    "services:write"
+    "services:write",
+    "wallet:trade", "wallet:launch"
   ]
 }
 ```
 
-Note the scopes are per-capability, not one blanket `mcp` scope. A client asks for exactly what it needs (`avatars:read` to render, `memory:write` to store a memory), so a token that leaks cannot do more than the tool it was minted for.
+Note the scopes are per-capability, not one blanket `mcp` scope. A client asks for exactly what it needs (`avatars:read` to render, `memory:write` to store a memory), so a token that leaks cannot do more than the tool it was minted for. The scope list grows as tool groups are added, so treat the live document as the source of truth.
+
+The platform hosts several MCP servers and each one is its own protected resource. The URL above describes `/api/mcp`; every other server publishes its own document by RFC 9728 path insertion (for example `https://three.ws/.well-known/oauth-protected-resource/api/mcp-3d`), and its `401` carries a `WWW-Authenticate: Bearer resource_metadata="…", resource="…"` challenge naming that document. This matters if you host more than one server: an MCP SDK client refuses to sign in when the metadata's `resource` does not cover the URL it connected to, so give each server its own resource instead of sharing one.
 
 To wire this on your own server, add `api/wk-oauth-protected-resource.js`:
 

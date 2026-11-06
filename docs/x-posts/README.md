@@ -34,7 +34,7 @@ explicit approval). Each file states what it's for and what has already been ver
 | [`metaplex-agent-mcp-x-post.md`](metaplex-agent-mcp-x-post.md) | The MCP server that mints an agent into the Metaplex Agent Registry with its own wallet and EIP-8004 identity |
 | [`metaplex-agent-deployer-x-post.md`](metaplex-agent-deployer-x-post.md) | The browser deployer at nirholas.github.io/metaplex-agent-mcp |
 | [`3d-ar-studio-launch.md`](3d-ar-studio-launch.md) | 3D AR Studio, the AR studio extracted from three.ws and published as an open-source package |
-| [`ar-quick-look-fix-x-post.md`](ar-quick-look-fix-x-post.md) | AR Forge and AR Studio now open real Apple Quick Look / Google Scene Viewer on a phone, matching what `/avatars/:id/ar` already did. Shipped to `main` locally, **not yet deployed**: do not post until verified live on a real iPhone |
+| [`ar-quick-look-fix-x-post.md`](ar-quick-look-fix-x-post.md) | AR Forge and AR Studio now open real Apple Quick Look / Google Scene Viewer on a phone, matching what `/avatars/:id/ar` already did. On `main`, deploy status unconfirmed: do not post until verified live on a real iPhone |
 | [`threews-avatar-launch.md`](threews-avatar-launch.md) | The three.ws avatar pipeline launch copy |
 | [`oracle-trading-mcp-x-post.md`](oracle-trading-mcp-x-post.md) | The oracle trading MCP server launch |
 | [`sperax-staking-in-chat-x-post.md`](sperax-staking-in-chat-x-post.md) | SperaxOS chat-native staking, balance, and buy-SPA tool calls. The embedded `/staking` page is not working yet: do not announce until the blockers in the file clear |

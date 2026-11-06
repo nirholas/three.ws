@@ -260,6 +260,7 @@ const { data } = await r.json();
 Two guardrails worth knowing on the send path:
 
 - **`expected_address`** — pass the address you previewed, and the server requires the fresh resolution to still match it before signing. A name can repoint between preview and send (or a lookalike name can resolve to an attacker wallet); this binds the recipient you approved into the signed request. A mismatch returns `409 recipient_changed`.
+- **Signed agreements and token scope**: `mode: "send"` moves real funds, so the account must have signed the Terms, Risk Disclosure and Agent Wallet Agreement (otherwise `403 risk_ack_required`), and a bearer token needs the `wallet:write` scope. A session cookie carries every scope.
 - **Per-transaction limit** — the agent's configured per-tx USD ceiling applies. A send over the limit returns `403 per_tx_exceeded`. The amount must also be `> 0`, and off-curve targets (PDAs/program addresses) are rejected as invalid recipients.
 
 Either way, the USDC lands in the wallet your `nich.threews.sol` points at — the one the subdomain was transferred to in Step 4.
@@ -282,6 +283,7 @@ Either way, the USDC lands in the wallet your `nich.threews.sol` points at — t
 - **`409 conflict` on mint** — someone claimed or registered the label between your availability check and your click. Pick another label (which must still match your username — in practice this means the name is genuinely taken).
 - **`409 no_wallet`** — you passed no `owner_wallet` and have no agent. Create an agent (it provisions a Solana wallet) or link a Solana wallet and pass it as `owner_wallet`.
 - **`403 forbidden` on mint** — the `owner_wallet` you passed isn't linked to your account. Link it first; three.ws won't mint into an unlinked wallet.
+- **`402 three_hold_required` on mint**: a Genesis-only window is open for rare names. While `THREEWS_RARE_NAMES_PUBLIC_AT` is set to a future time, any label above Common rarity (6 characters or fewer) needs a Genesis-tier $THREE hold; 7+ character names stay free for everyone. Once the window ends the rare names open to all.
 - **`503 config_missing`** — subdomain minting isn't configured on this deployment (the platform parent key is absent). This is an environment issue, not a request error.
 - **`503 upstream_unavailable` on mint**: the pre-mint on-chain ownership check could not reach Solana RPC. Nothing was minted; retry in a moment.
 - **`401 unauthorized`** — minting and `mode=send` need a signed-in session or bearer token. The availability check and `mode=prep` preview do not.

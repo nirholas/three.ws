@@ -93,7 +93,7 @@ The rest of this tutorial uses the custom-element form, because that's the one t
 
 ## Step 3: The attribute surface
 
-Here are the attributes you'll actually reach for, by category. (`observedAttributes` in [src/element.js](https://github.com/nirholas/three.ws/blob/main/src/element.js) is the exhaustive list; it also carries niche ones like `avatar-id`, `api-base`, `name-plate`, `tracked-mint`, `clip`, `wallet`, and `sign-language`.)
+Here are the attributes you'll actually reach for, by category. (`observedAttributes` in [src/element.js](https://github.com/nirholas/three.ws/blob/main/src/element.js) is the exhaustive list; it also carries niche ones like `avatar-id`, `api-base`, `name-plate`, `tracked-mint`, `clip`, `wallet`, `sign-language`, `editor`, `poster`, `ar`, and `skill-trust`. A `renderer="webgpu"` attribute opts into WebGPU with a WebGL2 fallback; it is read at boot, not observed.)
 
 **Identity (one of these is required):**
 

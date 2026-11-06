@@ -385,7 +385,7 @@ Evidence types:
 
 | `type` | Passes when |
 |---|---|
-| `page` | The live page, rendered in a real browser and allowed to finish rendering, contains `contains` |
+| `page` | The live page, rendered in a real browser and allowed to finish rendering, contains `contains`. A page that never goes network-idle (a 3D viewer streaming assets) is read after a 15 second best-effort wait, with the status it answered |
 | `file` | A repo file contains `contains`, or matches the `matches` regular expression |
 | `module` | A repo module's `export` has `length` entries, or equals `equals` |
 | `github-issue` | `repo#number` has the given `state` and `label` |

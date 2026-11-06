@@ -17,9 +17,9 @@ gate below):**
 - Apple Quick Look needs a real USDZ file. `<model-viewer>`'s `ar`/`ar-modes` attribute does **not**
   generate one from a GLB on its own; it needs `ios-src` pointed at an actual USDZ, or Quick Look
   never activates.
-- `/avatars/:id/ar` ([src/ar-page.js](../../src/ar-page.js)) always did this right: it fetches the
-  GLB, converts it client-side with three.js's `USDZExporter`, and sets the result as `ios-src`
-  before offering Quick Look.
+- `/avatars/:id/ar` ([src/ar-page.js](../../src/ar-page.js)) always did this right. It now runs on
+  `<agent-3d ar>`, which uses the avatar's stored `usdz_url` as `ios-src` when there is one and
+  otherwise converts the GLB client-side with three.js's `USDZExporter` before offering Quick Look.
 - `/ar` (AR Forge) and the `/api/ar` endpoint it falls back to did not. Their `<model-viewer>` had no
   `ios-src`, so `canActivateAR` was false on every iPhone and the button silently fell back to the
   plain 3D viewer. A comment in the old code claimed model-viewer converted the GLB automatically.
@@ -44,8 +44,8 @@ gate below):**
 - Shared `/api/ar` links still unfurl with a real render of the model on X, Discord, and iMessage: the
   redirect to `/ar/view` carries the same `og:image`/title an outright 302 would have dropped.
 
-**Gate before any of this posts: not deployed yet.** All five commits (`2e7a7e9fc` through the docs
-cleanup) are on `main` locally, five ahead of `origin/main`. Per the deploy gate in `CLAUDE.md`,
+**Gate before any of this posts: confirm it is deployed.** All five commits (`2e7a7e9fc` through the
+docs cleanup) are on `origin/main`, but a push is not a deploy, and per the deploy gate in `CLAUDE.md`
 shipping to production needs the owner's go-ahead. Do not schedule or post any draft below until
 `https://three.ws/api/version` shows a build that includes this work and `/ar`, `/ar/studio`, and
 `/api/ar?src=...` have been hand-verified on a real iPhone.

@@ -149,7 +149,9 @@ router pick).
 **Liquidity-decay exit** (`liquidity_decay`). A bonding-curve quote only moves
 when someone trades, so a position whose re-quoted value is exactly frozen sweep
 after sweep is a coin nobody is trading. The audit found those squatting on
-concurrency slots until the 30-minute timeout. Now an underwater position whose
+concurrency slots until the LLM arms' 30-minute timeout (`max_hold_seconds: 1800`
+in `scripts/seed-sniper-experiments.mjs`; the 24h time stop in the rules table is the
+arm `scripts/trading-experiment-setup.mjs` creates). Now an underwater position whose
 value has not moved at all for `SNIPER_LIQUIDITY_DECAY_S` (default 300s) exits
 early with reason `liquidity_decay` and frees the slot. The clock never runs in
 profit (quiet winners belong to the trailing stop and the moon-bag rule), resets

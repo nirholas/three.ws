@@ -32,8 +32,8 @@ Each claim the thread makes, and where it was checked on 2026-10-08.
 | Clips are baked once onto one reference skeleton (`cz.glb`) | `scripts/build-animations.mjs` header; `src/animation-canonical-rest.js` is generated from `public/avatars/cz.glb` |
 | 52 canonical joints | `CANONICAL_BONES` in `src/glb-canonicalize.js` (52 entries); live `/rig-doctor` shows "52 canonical joints scored" |
 | 30 of a clip's 53 retargetable tracks are fingers | measured over `public/animations/clips/*.json`: 110 of 113 clips have 53 rotation-plus-hip tracks, 30 of them finger joints |
-| A clip plays only if at least half its tracks map | `MIN_COVERAGE = 0.5` in `src/animation-retarget.js` |
-| A rig needs a skinned mesh and 8 canonical bones | `_modelSupportsCanonicalClips` and `MIN_CANONICAL_BONES = 8` in `src/animation-manager.js` |
+| A clip plays only if at least half its tracks map, counted over all 53 tracks or over the 23 body tracks alone, whichever is higher | `MIN_COVERAGE = 0.5` and `clearsCoverageFloor` in `src/canonical-clip-gate.js`, used by `src/animation-retarget.js` |
+| A rig needs a skinned mesh and 8 canonical bones | `MIN_CANONICAL_BONES = 8` and the gate in `src/canonical-clip-gate.js`, read by `src/animation-manager.js` and `src/rig-report.js` |
 | The 12 elbow spellings in post 3 all resolve to `LeftForeArm` | each run through `canonicalizeBoneName` in `src/glb-canonicalize.js` |
 | Rigify and SMPL clavicle/upper-arm clash, resolved by contention then hierarchy | `resolveArmShoulderCollisions` in `src/glb-canonicalize.js`; tests in `tests/glb-canonicalize.test.js` |
 | Mixamo bakes +90 X on the armature and -90 X on the hips | comments and `canonicalizeArmatureOrientation` in `src/glb-canonicalize.js`; `src/animation-retarget.js` |
@@ -45,17 +45,17 @@ Each claim the thread makes, and where it was checked on 2026-10-08.
 | Only rotations and the hip translation cross over; hip motion is rescaled to the avatar's height | `retargetClip` in `src/animation-retarget.js`; `_retarget` in `src/animation-manager.js` |
 | A clip that would tip the hips past 45 degrees is disabled | `CATASTROPHE_TILT_DEG = 45` and `_guardAgainstFallenPose` in `src/animation-manager.js` |
 | Unmapped arms are found by direction and swung down | `src/animation-arm-relax.js` |
-| Over 470 tests in the canonicalizer suite | `npx vitest run tests/glb-canonicalize.test.js` on 2026-10-08: 477 passed. Tests were added on 10 and 11 October (Biped, ValveBiped, non-humanoid rigs, VRM), so the count is higher now; re-run it and put the current number in post 10 |
+| Over 700 tests in the canonicalizer suite | `npx vitest run tests/glb-canonicalize.test.js` on 2026-11-06: 710 passed (477 on 2026-10-08; Biped, ValveBiped, VRM, HumanIK and more were added since). Re-run it before posting |
 | A test runs without the fix and asserts the avatar falls | "the test has teeth" in `tests/animation-upright-invariant.test.js` |
 | 10 of 10 naming conventions move both arms and both legs | `node scripts/animation-dignity-sweep.mjs` on 2026-10-08: "10/10 conventions animate both arms and both legs on both lanes" |
-| 3ds Max Biped fingers and Source ValveBiped now map; only HumanIK names with the colon stripped (`Character1Hips`) still return `null` | commit `638a7f687` (10 October) and its tests in `tests/glb-canonicalize.test.js`; the HumanIK gap is the one still listed as open in `docs/first-contribution.md` |
+| 3ds Max Biped fingers, Source ValveBiped and HumanIK (with or without the colon three.js strips, `Character1Hips`) now map; Rigify's numbered spine at runtime (`DEF-spine001` and up) still returns `null` | commits `638a7f687` (10 October) and `6e3bae15b` (4 November) and their tests in `tests/glb-canonicalize.test.js`; the Rigify gap is the one listed as open in `docs/first-contribution.md` |
 | Rig Doctor reads the file in the browser and never uploads it | `src/rig-doctor-page.js` header (FileReader, blob URL); live page copy "Nothing is uploaded" |
 | Rig Doctor recognises 16 conventions | `CONVENTION_COUNT` in `src/rig-report.js` (16, Source engine added in `638a7f687`); `pages/rig-doctor.html` hero reads 16 |
 
 ## Do not claim
 
 1. **Do not post before the precondition passes.** The A-pose re-aim is merged, not deployed, as of this draft.
-2. **Do not say "any rig" or "every avatar" without "humanoid".** Non-humanoid skeletons are refused on purpose, and one humanoid convention (HumanIK names with the colon stripped by three.js) still fails. The thread says so in post 11; keep it.
+2. **Do not say "any rig" or "every avatar" without "humanoid".** Non-humanoid skeletons are refused on purpose, and one humanoid convention (Blender Rigify's numbered spine, once three.js strips the dots) still maps only partly. The thread says so in post 11; keep it.
 3. **Do not quote a convention count other than 16 (Rig Doctor fingerprints) or 10 (the motion sweep).** The canonicalizer's header lists more spellings than that, but nobody has counted them into a defensible number.
 4. **Do not say the re-aim is unit-tested for arm travel.** Its only test is a parity test (`tests/animation-retarget-rig-parity.test.js`: the Animation Studio and the viewer must produce the same limb tracks on an A-posed rig). The upright suite and the sweep predate it.
 5. **Do not say the npm package has the re-aim.** `@three-ws/retarget` 0.1.2 (published 2026-09-11) predates it. The Animation Studio gallery and GLB export (`retargetClipToRig`) got it in a follow-up commit, so the same deploy precondition applies to them.
@@ -107,13 +107,13 @@ Counts are X weighted characters, with the one URL counted as 23. Every post is 
 >
 > Left spellings are written once; the right side is derived, and a test checks no name ever crosses sides.
 
-**4/** (403)
+**4/** (500)
 
 > Fingers decide more than they look like they should. 30 of a clip's 53 tracks are finger joints, and a clip only plays when at least half its tracks find a home.
 >
-> So a rig whose body maps perfectly but whose hands don't scores about 43 percent and gets no animation at all. Not stiff fingers: nothing.
+> So a rig whose hands don't map scores about 43 percent on that count. A complete body with no fingers is saved by a second count: the 23 body tracks alone, where it scores full marks. Half a body with its hands mapped is saved by the first.
 >
-> That is why finger chains are mapped convention by convention, from index_01_l to leftIndexProximal.
+> Either way, fingers stay mapped convention by convention, from index_01_l to leftIndexProximal.
 
 **5/** (457)
 
@@ -141,12 +141,12 @@ Counts are X weighted characters, with the one URL counted as 23. Every post is 
 >
 > So only joint rotations and the hip translation retarget, and the hip track is rescaled to the avatar's own hip height, measured from its own floor. Every rig keeps its proportions.
 
-**9/** (513)
+**9/** (546)
 
 > It would rather leave an avatar alone than animate it badly:
 >
 > No skinned mesh, or fewer than 8 recognised joints: treated as a prop, shown as authored.
-> Under half of a clip's tracks mapped: that clip does not play.
+> Under half of a clip's tracks mapped (all of them, or the body alone): that clip does not play.
 > A clip that would tip the hips past 45 degrees: disabled for that avatar, and reported.
 > Body maps but arms don't: the stuck arms are found by direction, no name needed, and swung down to the sides.
 >
@@ -154,13 +154,13 @@ Counts are X weighted characters, with the one URL counted as 23. Every post is 
 
 **10/** (413)
 
-> The tests are written so they can fail. Over 470 name tests, one table of real export spellings per convention. An upright suite that also runs WITHOUT the correction and asserts the avatar falls over, so it would catch anyone removing it.
+> The tests are written so they can fail. Over 700 tests, one table of real export spellings per convention. An upright suite that also runs WITHOUT the correction and asserts the avatar falls over, so it would catch anyone removing it.
 >
 > And a motion sweep, because names passing is not limbs moving: idle and walk on 10 differently named rigs, measuring hand and foot travel. 10 of 10 move both arms and both legs.
 
-**11/** (479)
+**11/** (512)
 
-> Where it still fails, plainly. Autodesk HumanIK names lose their colon when three.js loads a model (Character1:Hips becomes Character1Hips), and that spelling maps to nothing, so such a rig lands under the half-the-tracks line, gets no clip, and shows its bind pose. It is an open contributor task.
+> Where it still fails, plainly. A Blender Rigify rig names its trunk DEF-spine, DEF-spine.001 and on up, and three.js deletes the dots when it loads the model, so everything past the first bone maps to nothing. The character animates with a rigid torso and a frozen head. It is an open contributor task.
 >
 > And no retargeter can fix skinning: a sleeve weighted to the wrong bone bends with that bone.
 >

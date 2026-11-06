@@ -131,12 +131,11 @@ Same four-file shape as [custom-skill](/tutorials/custom-skill). The interesting
   "license": "Proprietary",
   "tags": ["crm", "sales", "internal"],
   "requires": { "rig": ["any"], "runtime": ">=0.1.0" },
-  "provides": { "tools": ["lookup_customer"], "triggers": ["customer-lookup"] },
-  "trust_policy": "owned-only"
+  "provides": { "tools": ["lookup_customer"], "triggers": ["customer-lookup"] }
 }
 ```
 
-The `trust_policy: "owned-only"` is important: this skill must only run inside an agent whose owner matches the `author` field. Otherwise a third party could load your skill bundle into their own agent and try to query your CRM. The skill runtime enforces this at load time (see `api/_lib/skill-access.js` in the platform for the enforcement code).
+The `author` field is what makes the `owned-only` trust policy work, and `owned-only` is the agent runtime's default. This skill must only run inside an agent whose owner matches `author`. Otherwise a third party could load your skill bundle into their own agent and try to query your CRM. The skill registry enforces this at load time (`_enforceTrust` in `src/skills/index.js`). The policy is a setting on the agent (the `skill-trust` attribute on `<agent-3d>`), not a manifest field, so leave it at `owned-only` or `whitelist` and never set it to `any`. `api/_lib/skill-access.js` is a different gate: it decides whether a user has paid for a priced skill.
 
 `SKILL.md`:
 

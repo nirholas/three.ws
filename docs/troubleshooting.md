@@ -102,7 +102,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 **Likely causes:**
 - `brain` attribute not set on `<agent-3d>`: without it, the element uses `NullProvider` (a no-op)
-- Missing or invalid `ANTHROPIC_API_KEY`
+- No chat provider configured on the server, or every provider is throttled (`503`)
 - Rate limit reached
 
 **Fix steps:**
@@ -113,10 +113,12 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
    ```
    Without this attribute, `brain.provider` defaults to `none` and the agent uses `NullProvider`, which returns empty responses silently.
 2. Open DevTools → Network. Filter for `/api/chat` or `/api/llm`. Look at the response:
-   - `401`: the API key is missing or invalid.
+   - `401`: sign-in or the API key is missing or invalid.
    - `429`: rate limited. Wait a minute and retry.
+   - `503 chat_unavailable`: no chat provider key is configured on the server.
+   - `503 rate_limited`: every provider is throttled or unreachable right now. The response carries `Retry-After: 20`; retry after that.
    - `500`: server error. Check the server logs.
-3. Verify `ANTHROPIC_API_KEY` is set in your server environment. On the production Cloud Run service:
+3. Verify at least one provider key is set in your server environment. `/api/chat` tries the free lanes first (Groq, OpenRouter, NVIDIA, SambaNova, Mistral, Z.AI) and uses `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` as a paid backstop (see the routing list at the top of `api/chat.js`). To set the Anthropic key on the production Cloud Run service:
    ```bash
    gcloud run services update three-ws-api --region us-central1 \
      --update-env-vars ANTHROPIC_API_KEY=sk-ant-...

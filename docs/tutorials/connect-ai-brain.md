@@ -1,6 +1,6 @@
 # Connect Anthropic, OpenAI, or xAI (Grok) as the brain
 
-The agent's body is the avatar. The agent's voice is the TTS. The agent's *brain* is whatever LLM is generating its replies. By default an embedded agent runs on a **free open-weight lane** (`openai/gpt-oss-20b:free`, routed through OpenRouter on the platform's key), which works out of the box at no cost to you. The moment you want a frontier model, full control over which one runs, or your own usage observability, you bring your own API key.
+The agent's body is the avatar. The agent's voice is the TTS. The agent's *brain* is whatever LLM is generating its replies. By default an embedded agent runs on a **free open-weight lane** (`google/gemma-4-31b-it:free`, routed through OpenRouter on the platform's key), which works out of the box at no cost to you. The moment you want a frontier model, full control over which one runs, or your own usage observability, you bring your own API key.
 
 This tutorial covers the whole brain layer. Where the LLM call actually happens (and why your key never ends up in HTML), how to attach your Anthropic, OpenAI, or xAI key, choosing between the Claude 5 family, the GPT-5.x family, Grok, and the free lanes, the latency and cost tradeoffs, how streaming and system prompts are configured, tool-use support per model, and where to watch your spend. The embed snippet doesn't change when you switch models, the model lives on the agent's embed policy, not in your HTML.
 
@@ -152,7 +152,7 @@ Grok ids come from one list, `GROK_MODELS` in `api/_lib/chat-models.js`, which `
 
 ### Free lanes (no key, no bill)
 
-The embed default, `openai/gpt-oss-20b:free`, costs nothing and is tool-call capable. Signed-out callers are restricted to these free lanes on purpose, so an unauthenticated script can't drain the server's billed keys. Alongside GPT-OSS the platform carries free NVIDIA NIM models (Nemotron, DeepSeek, Kimi K2, Llama 4 Maverick, MiniMax M2), Groq's sub-second Llama lanes, SambaNova, Mistral's experiment tier, and Z.AI's GLM Flash. They are the fallback rungs the proxy walks when a paid lane errors, and they are perfectly serviceable as a primary brain for a low-stakes agent.
+The embed default, `google/gemma-4-31b-it:free`, costs nothing and is tool-call capable. Signed-out callers are restricted to these free lanes on purpose, so an unauthenticated script can't drain the server's billed keys. Alongside Gemma the platform carries free NVIDIA NIM models (Nemotron, DeepSeek, Kimi K2, Llama 4 Maverick, MiniMax M2), Groq's sub-second Llama lanes, SambaNova, Mistral's experiment tier, and Z.AI's GLM Flash. They are the fallback rungs the proxy walks when a paid lane errors, and they are perfectly serviceable as a primary brain for a low-stakes agent.
 
 ### Picking a model
 
@@ -160,7 +160,7 @@ A practical rule of thumb:
 
 | Use case | Recommended model |
 |---|---|
-| Kicking the tyres, low-stakes embed | `openai/gpt-oss-20b:free` (the default, no key, no bill) |
+| Kicking the tyres, low-stakes embed | `google/gemma-4-31b-it:free` (the default, no key, no bill) |
 | Support / FAQ agent for a SaaS | Sonnet 5 or GPT-5.6 Terra |
 | Personal-website-me agent | Sonnet 5 |
 | Onboarding co-pilot, sales bot | Sonnet 5 |
@@ -169,7 +169,7 @@ A practical rule of thumb:
 | Hardest reasoning, vision-heavy knowledge work | Fable 5 |
 | Status-check, wave-and-greet, micro-interaction | Haiku 4.5 or GPT-5.6 Luna |
 | Multi-step tool chains, code assistance | Opus 5 or GPT-5.6 Sol |
-| Current events, social sentiment | Grok 4.5 |
+| Current events, social sentiment | Grok 4.7 |
 
 Start at Sonnet 5 for almost everything. Move to Haiku if latency is the bottleneck. Move to Opus 5, Fable 5, or GPT-5.6 Sol only when you have a specific quality issue that the smaller model can't fix with prompt iteration.
 
@@ -245,8 +245,8 @@ Tool use (the model invoking a function you've defined, a `searchProducts(query)
 | GPT-5.6 Sol | Excellent, similar to Opus. Strong at parallel tool calls. |
 | GPT-5.6 Terra | Very good. Slightly more prone to mis-formatting tool arguments than Sonnet. |
 | GPT-5.6 Luna | Functional. Avoid for anything with 2+ tools or non-trivial schemas. |
-| Grok 4.5 | Reliable. A fair substitute for Terra when you also want current-events knowledge. |
-| Free lanes (GPT-OSS, NVIDIA NIM, Groq) | Tool-call capable, that is why they are the fallback rungs, but noticeably weaker at picking the right tool. Fine for one or two tools with simple schemas. |
+| Grok 4.7 | Reliable. A fair substitute for Terra when you also want current-events knowledge. |
+| Free lanes (Gemma, NVIDIA NIM, Groq) | Tool-call capable, that is why they are the fallback rungs, but noticeably weaker at picking the right tool. Fine for one or two tools with simple schemas. |
 
 If you're building a skill-heavy agent: one that needs to look up products, check inventory, search documentation, and place orders, all in one conversation, pick Sonnet 5 or GPT-5.6 Terra at minimum. Haiku and Luna are acceptable for single-purpose lookups but get confused on chains.
 
@@ -336,7 +336,7 @@ The whole `brain` block is what you tune here:
 | Field | Default | What it does |
 |---|---|---|
 | `mode` | `'we-pay'` | `we-pay` uses the platform's credential. `key-proxy` calls your endpoint for a key (Step 9) and requires `proxy_url`. `wallet-gated` and `none` close the lane. |
-| `model` | `'openai/gpt-oss-20b:free'` | The model the agent actually runs, and the ceiling a visitor is clamped to. |
+| `model` | `'google/gemma-4-31b-it:free'` | The model the agent actually runs, and the ceiling a visitor is clamped to. |
 | `monthly_quota` | `1000` | LLM calls per calendar month before the lane closes. `null` = unlimited. |
 | `rate_limit_per_min` | `10` | Per-minute request cap. |
 

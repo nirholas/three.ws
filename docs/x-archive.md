@@ -84,6 +84,12 @@ is the hand-written reading of that pull: which Articles reached people, what
 readers asked for in their own words, and what that means for the next Article.
 Unlike the engagement report it is not generated, so update it after a fresh pull.
 
+## $THREE price impact per post
+
+`npm run x:archive:price` measures what the $THREE/SOL price did after each own post: the return at +1h, +4h and +24h against the same returns at arbitrary moments. A return with no price behind it is null, never interpolated. It writes `public/data/trythreews-post-impact.json`, which the Posts view on `/oracle-coin` reads (`--stdout` prints the summary and writes nothing).
+
+GeckoTerminal's keyless tier serves only the last 180 days of 15 minute candles, so every bar the script reads is merged into `data/x-archive/analysis/<handle>-three-candles.json` and the series only grows. Posts older than every archived bar keep the returns the previous output measured, counted in the document's `carried` field. The tests for the pure parts are in [tests/x-archive.test.js](../tests/x-archive.test.js).
+
 ## Two measurement rules worth knowing
 
 **Reposts are not our posts.** A profile scrape returns the whole timeline, and

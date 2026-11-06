@@ -65,6 +65,8 @@ gcloud run services update three-ws-api --region us-central1 \
 
 `NIM_TRELLIS_URL` is deliberately separate from `MODEL_TRELLIS_URL`. The latter points at the platform's own Cloud Run TRELLIS worker, which speaks an async `/infer` plus `/tasks/{id}` API rather than the NIM's synchronous `/v1/infer`, so the two are never interchangeable.
 
+A `baseUrl` passed on a request is treated as untrusted: it is reached only through the pinned SSRF guard and never receives `NIM_TRELLIS_KEY` or `NVIDIA_API_KEY`. Only the operator-configured `NIM_TRELLIS_URL` gets the bearer token, so a NIM you point at per request must not need one.
+
 Confirm three.ws can see it:
 
 ```bash
@@ -165,7 +167,7 @@ The proxy normalizes every documented artifact shape (inline `base64`, a bare st
 | `nim_timeout` (504) | Cold `large:image` start; retry once the GPU is warm |
 | `nim_auth` (502) | The NIM rejected the bearer. Check `NIM_TRELLIS_KEY` (or `NVIDIA_API_KEY`) or your gateway auth |
 | `nim_error` (502) with a 404 body | The base URL isn't serving the NIM contract. A plain `/infer` API is not a NIM: the container must answer `POST /v1/infer` |
-| `bad_base_url` (400) | An override `baseUrl` was http, an IP literal, or a private/`.internal` host |
+| `bad_base_url` (400) | An override `baseUrl` was http, an IP literal, or a private/`.internal` host, or its DNS resolved or redirected to one |
 
 ---
 

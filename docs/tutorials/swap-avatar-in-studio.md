@@ -74,7 +74,7 @@ Content-Type: application/json
 { "avatar_id": "<the avatar you clicked>" }
 ```
 
-The call is owner-scoped, so you can only re-body agents you own.
+The call is owner-scoped on both sides: you can only re-body agents you own, and only with avatars you own. Pointing an agent at someone else's avatar is refused with a 404.
 
 ### What changes, and what does not
 

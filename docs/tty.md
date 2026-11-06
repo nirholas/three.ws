@@ -71,6 +71,10 @@ to see the bytes anyway.
 browser render never starve each other. A single stream is capped at 600 frames
 or 45 seconds. Private avatars never render: the endpoint is unauthenticated, so
 it only serves models that are already public.
+A remote `src` model is fetched through the pinned, per-hop validated SSRF
+fetcher with a 64 MiB cap: a URL that resolves to a private or internal address
+is refused with `400 blocked_url`, and a model that cannot be read answers
+`502 model_unavailable` without upstream detail.
 
 ## Running it locally
 

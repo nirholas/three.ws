@@ -146,7 +146,7 @@ node generate.js "a low-poly treasure chest, iron-banded wood"
 
 ## Step 4 — Photo → 3D from code
 
-Two requests: get a presigned upload slot, `PUT` your image to it, then pass the returned public URL into the generate call.
+Two requests: get a presigned upload slot, `PUT` your image to it, then pass the returned public URL into the generate call. Images must be PNG, JPEG or WebP, up to 8 MB each; a `size_bytes` outside that range is refused.
 
 ```js
 async function uploadImage(buffer, contentType = 'image/jpeg') {
@@ -184,6 +184,8 @@ curl -s 'https://three.ws/api/forge?catalog'
 
 It returns every backend (id, label, which paths it serves, whether it needs a bring-your-own key, ETA) and every tier with its polygon budget and price. Engines that need your own [Meshy](https://meshy.ai) or [Tripo](https://www.tripo3d.ai) key accept it per-request via the `x-forge-provider-key` header — it's used for that call and never stored.
 
+Some engines run models whose licence excludes whole regions (the EU, the UK and South Korea, and any request whose country cannot be resolved). `GET /api/forge?territory` lists the engines your request's region may not use. Pinning one of them with `backend` answers `403 region_restricted` with a `retry_backends` list; leave `backend` out and the Forge routes you to an engine that is available everywhere.
+
 ---
 
 ## Step 6 — For autonomous agents: pay per call with x402
@@ -209,6 +211,7 @@ If you've never made an x402 call, start with [Build a paid x402 endpoint](/tuto
 | `429 rate_limited` | Two causes, same code: the shared GPU lane is busy right now (`queued: false`, and it can hit your first call), or your per-IP hourly window is exhausted (about 60 free generations an hour) | Sleep for `retry_after` seconds and resubmit, as `submitJob` does in Step 3. Neither is a ban; keep batches sequential |
 | `422 image_not_usable` | Photo failed the vision pre-check | Reshoot per the `message`, or send `skip_validation: true` |
 | `402` on `tier: "high"` | High tier is hold-or-pay on platform engines | Hold $THREE (Bronze), pay per generation, use credits, or use the x402 endpoint |
+| `403 region_restricted` | You pinned a `backend` whose model licence excludes your region | Omit `backend`, or use one from `retry_backends` |
 | `status: "failed"` mid-job | Upstream generation error | Read `error`; retry once — transient provider errors happen |
 | `glb_url` 404s later | You waited a long time to download | Download promptly after `done`; re-fetch the job for a fresh URL |
 

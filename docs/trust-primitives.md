@@ -13,7 +13,9 @@ any chain**, regardless of which platform that counterparty was minted on.
 ## Cross-chain Agent Reputation
 
 **`GET /api/x402/agent-reputation?subject=<identifier>`** — $0.01 USDC per call
-(Base or Solana mainnet, via [x402](./x402.md)).
+(Solana or Base mainnet, Solana advertised first, via [x402](./x402.md)). Callers with an OAuth
+Bearer token carrying scope `read:agent-reputation`, or a fresh Sign-In-With-X proof, skip
+payment; both are published as auth methods in the OpenAPI and x402 discovery documents.
 
 Pass any counterparty identifier. The type is auto-detected and scored from whatever
 real on-chain evidence exists for it:
@@ -156,7 +158,7 @@ claims **"I am the deployer of contract X"** or **"I own wallet W / name N / age
 self-report.
 
 **`GET /api/x402/onchain-identity-verify?identity=<id>&address=<addr>&chain=<caip2>`**
-— $0.005 USDC per call (Base or Solana mainnet, via [x402](./x402.md)).
+$0.005 USDC per call (Solana or Base mainnet, Solana advertised first, via [x402](./x402.md)).
 
 It verifies a **claim** that `identity` controls `address`, for **any** identity type,
 on any chain — regardless of the platform the counterparty came from:

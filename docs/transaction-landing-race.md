@@ -24,6 +24,10 @@ A provider whose credential is missing stays in the table with the env var that 
 4. The first lane to confirm wins. Lanes still in flight are aborted and counted as outpaced. A hard on-chain revert from any lane ends the race for everyone.
 5. The result carries `landedBy` (the winning provider) and `lanes` (per-provider outcome and latency).
 
+## Retries and late landings
+
+If an attempt misses its confirm window, the engine re-signs with a fresh blockhash and a higher priority fee and races again. The earlier transaction stays valid until its blockhash expires, so it can still land while the retry is in flight. Before each retry, and before any terminal error is thrown, the engine asks the chain (`getSignatureStatuses` with history) whether any earlier attempt confirmed. If one did, that trade is returned as the result with `landedBy: 'late_confirm'` and `fallbackReason: 'landed_late'` (unless an earlier reason was already set), instead of failing the retry against the state the landing left or, on a buy, executing twice.
+
 ## Stats and the failure streak
 
 Per provider and network the table `landing_provider_stats` ([migration](../api/_lib/migrations/20261023190000_landing_provider_stats.sql)) keeps:

@@ -233,7 +233,7 @@ Every review is a transaction on Base: public, permanent, and attached to the re
 1. Send them your agent's chain and ID (or just your agent URL)
 2. They open [three.ws/reputation](https://three.ws/reputation) and look up your agent
 3. They connect their wallet
-4. They pick a score (1–5 stars, stored on-chain as a signed −100..+100 value) and optionally add a comment
+4. They pick a score (1 to 5 stars; on the canonical ERC-8004 registries each star is stored as 20 points on a 0 to 100 scale) and optionally add a comment. The registry refuses reviews from the agent's own owner or operator
 5. They confirm the transaction (~$0.05 gas)
 
 **Read your reputation programmatically:**
@@ -249,7 +249,7 @@ const { count, average } = await getReputation({
   chainId: 8453,
 });
 
-console.log(`${count} reviews, average score: ${average.toFixed(1)}`);
+console.log(`${count} reviews, average: ${average.toFixed(1)} of 5 stars`);
 ```
 
 There's no way to delete or edit a review after it's submitted — that's the point.

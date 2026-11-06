@@ -65,6 +65,7 @@ You'll see one required slot: **Add a front-facing photo**. Two ways to fill it:
 
 - **Use camera** — opens your camera in the browser with live face guides. Hold still inside the oval; the page checks framing, lighting, blur, and head angle and captures when it's a good frame.
 - **Upload photo** — pick an existing image from your device.
+- **Share a photo in**: on the three.ws mobile apps and an installed PWA, sharing a photo to three.ws from the system share sheet opens the Scanner with it already placed in the slots.
 
 If your browser or device can't open the camera (common on non-HTTPS connections and some desktop browsers), the camera option is disabled automatically — use **Upload** instead.
 
@@ -222,6 +223,7 @@ If you'd rather nothing persisted at all, use a disposable/cropped photo — the
 | Sides or back of the head look wrong | Only a frontal photo was provided | Add **Left** and **Right** angles (Step 3) and rebuild |
 | "Photos are too large" | The upload exceeded the size limit | Photos are downscaled to 1024px in-browser; retry, or use a smaller source image |
 | Asked to sign in mid-build | Saving an avatar needs an account | Sign in when prompted — you're returned to the Scanner and the build continues |
+| The build ends with a specific reason such as a plan or library limit | The API refused the job for a reason about your account, not your photo | The page shows that reason as written; fix it (free a slot or upgrade) instead of retaking the photo |
 | "Too many requests" / rate-limited | Per-visitor cooldown after repeated attempts | Wait about a minute and try again |
 | The reload during a build started a fresh scan | Rare; the pending job id wasn't found | The build resumes automatically when the job id is in your session — re-open [/create/selfie](/create/selfie) and let it poll |
 | Asked for a reconstruction API key | This deployment runs in bring-your-own-key mode | Paste a key from the supported provider in the form shown; it's stored for your session only |

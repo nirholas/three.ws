@@ -40,7 +40,7 @@ Most avatar hosts (external avatar platforms behind a CloudFront CDN, Arweave ga
 
 Two things happen automatically once the file is in:
 
-- **Bone canonicalization.** Humanoid skeletons come in many naming dialects — Mixamo (`mixamorig:LeftArm`), VRM/VRoid, Unreal, Daz/Genesis, MakeHuman, Blender. The platform renames whatever it finds to one canonical bone set so the pre-baked animation library (idle, walk, gestures) retargets onto it out of the box. A non-humanoid rig passes through untouched. The mapping lives in [src/glb-canonicalize.js](../../src/glb-canonicalize.js).
+- **Bone canonicalization.** Humanoid skeletons come in many naming dialects, Mixamo (`mixamorig:LeftArm`), VRM/VRoid, Unreal, Daz/Genesis, MakeHuman, Blender, Maya HumanIK, 3ds Max Biped, Source engine, Reallusion CC, Kinect and MediaPipe. The platform renames whatever it finds to one canonical bone set so the pre-baked animation library (idle, walk, gestures) retargets onto it out of the box. A non-humanoid rig passes through untouched. The mapping lives in [src/glb-canonicalize.js](../../src/glb-canonicalize.js).
 - **Auto-rig.** If the imported GLB has **no skeleton at all** (a static mesh export), the platform submits an auto-rig job after saving. The rigged GLB is swapped in place once the job lands — no T-pose, no second copy. This is the same guarantee every avatar created on three.ws gets: it can move. A GLB that already ships a skeleton skips this step.
 
 You don't trigger any of this. Pasting the URL is enough.

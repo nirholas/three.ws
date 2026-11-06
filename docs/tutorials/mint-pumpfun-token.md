@@ -58,13 +58,13 @@ Before the launch dialog opens, decide three things and verify them.
 
 **Symbol availability check.** Pump.fun does not enforce ticker uniqueness, but the three.ws agent registry warns when a ticker is already used by another listed agent. Hit the platform's symbol-availability endpoint from your terminal:
 
-<!-- runnable: 402 an unpaid call answers with the x402 challenge, which is the expected first response -->
+<!-- runnable: GET free keyless check, returns per-symbol exact and fuzzy collisions -->
 ```bash
-curl 'https://three.ws/api/x402/symbol-availability?symbol=ATLAS' \
+curl 'https://three.ws/api/crypto/symbol?symbols=ATLAS&chain=solana' \
   -H 'accept: application/json'
 ```
 
-The first call returns a 402 because the endpoint is paid (see [paid-x402-endpoint](/tutorials/paid-x402-endpoint) for the full flow). For a one-off check, the agent dashboard at `https://three.ws/dashboard` runs the same query for free against the cached symbol index, open your agent's settings, the Pump.fun tab includes an inline availability indicator.
+This route is free and keyless, checks up to 20 symbols per call, and reports exact and similar-looking collisions across live token registries. The older paid check at `/api/x402/symbol-availability?ticker=ATLAS` still exists but is deprecated in favor of this one (see [paid-x402-endpoint](/tutorials/paid-x402-endpoint) for how x402 payment works).
 
 **Image**: a square PNG or JPG, at least 512x512 pixels. This becomes the token's permanent icon on every Solana wallet, explorer, and aggregator. Once minted, you cannot change it. Use a stable, high-contrast asset; avoid text that gets crushed at 24px favicon sizes.
 
@@ -300,7 +300,7 @@ The response includes the curve account's raw fields plus computed helpers:
 }
 ```
 
-`graduationProgress` is a float between 0 and 1; multiply by 100 for a percentage. `complete` flips to `true` after graduation and stays there. For a holder count, hit `https://three.ws/api/pump/dashboard?agent=<agentId>`.
+`graduationProgress` is a float between 0 and 1; multiply by 100 for a percentage. `complete` flips to `true` after graduation and stays there. For price, market cap, liquidity and price history of your own agent's token, call `https://three.ws/api/pump/dashboard?agent_id=<agentId>` while signed in as the agent's owner. It answers `degraded` when one data source is down and `503 market_unavailable` when none answers. Holder counts are not part of that response.
 
 If you need raw on-chain reads, point any Solana RPC client (Helius, Triton, or the public mainnet RPC for low-volume use) at the Pump.fun program ID and decode the bonding curve account with the program's published IDL. The three.ws endpoint is just a normalized, rate-limit-friendly convenience layer over that same on-chain data, every field is derivable yourself if you don't want to depend on the platform.
 

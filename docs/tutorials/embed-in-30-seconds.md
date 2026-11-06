@@ -164,7 +164,7 @@ Open developer tools (F12 or right-click → Inspect → Console). You should se
 
 In the Network tab, filter by `three.ws`. You should see:
 
-- `agent-3d.js` (the bundle, under 1 MB gzipped)
+- `agent-3d.js` (the bundle, roughly 1 MB gzipped)
 - A request to the agents API with your agent ID
 - A request for the avatar GLB
 - A few smaller assets (animations, textures)

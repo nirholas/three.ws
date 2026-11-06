@@ -93,6 +93,11 @@ timeAgo('2026-07-29T10:00:00Z'); // "3m ago"
 timeAgo(1783670400);             // unix seconds, handled
 ```
 
+The same module holds the other coin and chain formatters (`formatUsd`,
+`formatPrice`, `formatPercent`, `formatSupply`, `formatTurnover`). `formatTurnover`
+prints a positive value under 0.001 as `<0.001x`, never `0.000x`, so a chain that
+trades a little never reads as one that does not trade at all; missing input is `n/a`.
+
 ### Browser-side fallbacks: never depend on one host
 
 Four helpers exist so no page hinges on a single third-party host. Reach for
@@ -182,6 +187,13 @@ hand and every hop is checked with `assertSafePublicUrl`, so a public host canno
 (alert delivery) is sent through undici's own fetch via `pinnedFetch` in
 `api/_lib/ssrf.js`, because the global `fetch` ignores a dispatcher from another
 undici copy.
+
+When the request is running under a trace span (every `/api` request has a root
+span), `fetchUpstream` opens one client span per call and sends its W3C
+`traceparent` header on every attempt, so the call joins the request's trace in
+Cloud Trace (see [api/_lib/tracing.js](../api/_lib/tracing.js) and the tracing
+section of [GCP production](./ops/gcp-production.md)). Crons, scripts and tests
+have no active span and run exactly as before.
 
 A non-2xx response rejects with an `UpstreamError` carrying `status`, `url` and
 a body excerpt, so `isRetryableError` and handlers can branch on it. Solana and

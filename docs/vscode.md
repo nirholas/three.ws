@@ -47,9 +47,10 @@ bones, clips) while a model is open; click it to toggle the report.
 ### Move it
 
 **Any rig plays the library.** Press **Animate** (or run `3D: Try a Library
-Animation on this Model`) and a searchable picker lists the three.ws motion
-library: 2,800 clips, the same ones the `/animations` gallery and the
-`<agent-3d>` embed play. Pick one and it plays on the open model immediately.
+Animation on this Model`) and a searchable picker lists the three.ws bulk
+motion library (CC0 clips, 219 at the time of writing, growing as more are
+staged), the same catalog the `/animations` gallery lists. Pick one and it
+plays on the open model immediately.
 Behind that, the clip (authored on the platform's canonical humanoid skeleton)
 is retargeted onto the model's own bones inside the viewer by
 [`src/animation-retarget.js`](../src/animation-retarget.js), the retargeter
@@ -190,7 +191,7 @@ launch an Extension Development Host with the extension loaded, or run
 | `3D: Generate a Model from Text` | Free text to 3D. Saves the GLB and opens it. |
 | `3D: Generate an Avatar from Text` | Same, tuned for characters. |
 | `3D: Refine this Model by Describing a Change` | New version anchored to this one; lineage kept. |
-| `3D: Try a Library Animation on this Model` | Search 2,800 clips; retarget and play in the viewer. |
+| `3D: Try a Library Animation on this Model` | Search the CC0 motion library; retarget and play in the viewer. |
 | `3D: Animate this Model from a Text Prompt` | Text to motion, retargeted onto the rig. |
 | `3D: Rig a Model for Animation` | Adds a humanoid skeleton to a static model. |
 | `3D: Optimize a Copy for the Web` | Local dedup, weld, resample, meshopt (and quantize). |

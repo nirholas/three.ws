@@ -372,7 +372,7 @@ Response:
 }
 ```
 
-The `/w/<id>`, `/widget#widget=<id>`, and legacy `/app#widget=<id>` URL forms are all accepted. Use `maxwidth` and `maxheight` query params to clamp the returned iframe dimensions.
+The `/w/<id>`, `/widget#widget=<id>`, and legacy `/app#widget=<id>` URL forms are all accepted. Use `maxwidth` and `maxheight` query params to clamp the returned iframe dimensions. `format` is `json` (the default) or `xml`; any other value is answered with `501 unsupported_format`.
 
 ---
 

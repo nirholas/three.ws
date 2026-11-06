@@ -64,8 +64,12 @@ says so, with a reason you can act on.
 
 [`self-facilitator.js`](../api/_lib/x402/self-facilitator.js) settles Solana
 payments in house: it validates the buyer-signed transfer, co-signs the fee
-payer, broadcasts over our own RPC, and waits for confirmation. The wait now
-distinguishes three answers rather than two.
+payer, broadcasts over our own RPC, and waits for confirmation. It is a thin
+platform adapter (Postgres store, fee meter, env wiring) over the
+`createFacilitator()` code published as
+[`@three-ws/x402-server/facilitator`](../packages/x402-server/README.md), where
+the confirmation logic lives. The wait now distinguishes three answers rather
+than two.
 
 | Chain says | Verdict | Response |
 | --- | --- | --- |

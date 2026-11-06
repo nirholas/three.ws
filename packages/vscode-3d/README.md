@@ -3,7 +3,7 @@
 Preview, animate, refine, optimize, and review 3D models where you already are.
 This extension makes `.glb` and `.gltf` files first-class in VS Code: double-click
 one and it renders, animates, and reports on itself in an editor tab, next to the
-code that ships it. Try any of 2,800 library animations on its rig and bake the
+code that ships it. Try any clip from the CC0 motion library on its rig and bake the
 one you like into the file. Describe a change and get a new version. Optimize a
 copy for the web without uploading it. Diff it against the committed version
 before you open the pull request. And when you embed it, the editor checks the
@@ -34,7 +34,7 @@ platform's own inspectors, and generation calls the live studio API.
 ### Move it
 
 - **Try a library animation.** `Animate` in the toolbar (or `3D: Try a Library
-  Animation`) searches the three.ws motion library, 2,800 clips baked on the
+  Animation`) searches the three.ws CC0 motion library, clips baked on the
   canonical humanoid skeleton, and plays your pick on the open model. The clip is
   retargeted onto the model's own bones in the viewer by the platform's
   retargeter, which knows Mixamo, Avaturn, VRM/VRoid, Unreal, Daz, MakeHuman,
@@ -156,7 +156,7 @@ stale after a release), the editor underlines it and the quick fix repairs it.
 | `3D: Generate a Model from Text` | Free text to 3D. Saves the GLB and opens it. |
 | `3D: Generate an Avatar from Text` | Same, tuned for characters. |
 | `3D: Refine this Model by Describing a Change` | New version anchored to this one; lineage kept. |
-| `3D: Try a Library Animation on this Model` | Search 2,800 clips; retarget and play in the viewer. |
+| `3D: Try a Library Animation on this Model` | Search the CC0 motion library; retarget and play in the viewer. |
 | `3D: Animate this Model from a Text Prompt` | Text to motion on the GPU fleet, retargeted onto the rig. |
 | `3D: Rig a Model for Animation` | Adds a humanoid skeleton to a static model. |
 | `3D: Optimize a Copy for the Web` | Local dedup, weld, resample, meshopt (and quantize). |
