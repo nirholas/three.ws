@@ -104,7 +104,7 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 732 | [Let an agent drive the screen browser autonomously with the owner lease as instant interrupt](../732-plan-screen-autonomous-browser-agent-owner-lease.md) | screen | 52 |
 | 733 | [Re-measure mobile performance on the worst pages and cut LCP, blocking time and layout shift to budget](../733-plan-web-mobile-core-vitals-remeasure-and-fix.md) | web | 52 |
 | 734 | [One command reports which workers are live versus built-only, with verify builds and tests for each undeployed worker](../734-plan-workers-fleet-status-and-ship-readiness.md) | workers | 52 |
-| 735 | [Add a hire-this-agent Solana Blink and cover all agent Blinks in actions.json discovery](../735-plan-actions-hire-agent-blink-discovery.md) | actions | 50 |
+| 735 | [Add a hire-this-agent Solana Blink and cover all agent Blinks in actions.json discovery](../../archive/735-plan-actions-hire-agent-blink-discovery.md) | actions | 50 |
 | 736 | [Texture the unseen 60 percent of the head from identity-gated synthesised views](../736-plan-avatar-unseen-head-texture-synthesis.md) | avatar | 50 |
 | 737 | [Connect HQ to three.ws agents: context bridge, DeFi query tools, compound alert rules and alert-to-action](../737-plan-hq-agent-defi-tools-and-context-bridge.md) | hq | 49 |
 | 738 | [Demo pages stop shipping T-pose avatars, QA accounts and real-person likenesses as defaults](../738-plan-site-demo-defaults-tpose-and-account-hygiene.md) | site | 48 |
@@ -118,7 +118,7 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 746 | [HQ gets data-driven protocol dashboards (Solana first), an oracle deviation monitor and a DeFi risk heatmap](../746-plan-hq-protocol-dashboards-and-risk-heatmap.md) | hq | 44 |
 | 747 | [Memory file layer gets real semantic recall instead of substring matching](../747-plan-memory-file-layer-semantic-recall.md) | memory | 44 |
 | 748 | [Run the catalog vision gate on its own cron so seeded models are judged on appearance, not just structure](../748-plan-seed-vision-gate-own-cron.md) | forge | 44 |
-| 749 | [Clear every X content queue validator error and refilm the stale approved posts, stopping before approve](../749-plan-x-content-queue-clear-validator-errors.md) | x-content | 44 |
+| 749 | [Clear every X content queue validator error and refilm the stale approved posts, stopping before approve](../../archive/749-plan-x-content-queue-clear-validator-errors.md) | x-content | 44 |
 | 750 | [x402 batch-settlement on Solana with a Postgres voucher store and a scheduled redemption worker](../750-plan-x402-batch-settlement-durable-vouchers.md) | x402 | 44 |
 | 751 | [Re-measure Forge model quality and rig coverage on the live fleet and record the ceilings that gate backend choice](../751-plan-forge-quality-bench-fleet-ceilings-remeasure.md) | forge | 42 |
 | 752 | [@three-ws/naming-mcp can be npm-published again, with a guard so no published package depends on a private one](../752-plan-mcp-naming-publish-without-private-dependency.md) | mcp | 42 |
@@ -153,7 +153,7 @@ On 2026-11-03 every tracked markdown file in this repository (2969 of them) was 
 | 776 | [ARCHITECTURE.md Known Gaps is rewritten to match the code, and the two real env-hygiene gaps are fixed](../776-plan-docs-architecture-known-gaps-truth-pass.md) | docs | 26 |
 | 777 | [Playwright covers the agent on-chain deploy and token-launch buttons with an injected wallet, devnet only](../777-plan-onchain-deploy-wallet-flow-e2e.md) | onchain | 25 |
 | 778 | [Re-verify every Robinhood Chain standalone repo builds and tests green against the current chain endpoints](../778-plan-robinhood-standalone-repos-reverify.md) | robinhood | 25 |
-| 779 | [The agent resolver verifies ENS and DNS name claims in both directions and reports a trust state](../779-plan-agent-ens-dns-claim-verification.md) | agent | 24 |
+| 779 | [The agent resolver verifies ENS and DNS name claims in both directions and reports a trust state](../../archive/779-plan-agent-ens-dns-claim-verification.md) | agent | 24 |
 | 780 | [ROADMAP.md is repaired (invalid UTF-8) and its phase statuses are re-measured and synced with the README roadmap](../780-plan-docs-roadmap-phase-status-truth-pass.md) | docs | 24 |
 | 781 | [Add a drift check for the UX Flow Atlas and trace the highest-traffic routes it never covered](../781-plan-docs-ux-flows-atlas-route-coverage.md) | docs | 24 |
 | 782 | [Knip dead-code report and a gitleaks full-history secret scan wired into local gates](../782-plan-platform-dead-code-and-secret-history-scans.md) | platform | 24 |

@@ -13,7 +13,7 @@ it, open the next. As of 2026-10-25 the live ranges are `023` to `039` (the `x-g
 `067` to `095` (`best3d-` and `partners-`), `401` to `499` (written by the evolve scout lane,
 [../docs/ops/evolve.md](../docs/ops/evolve.md), which also runs this queue unattended), `506`
 to `549` (`integrate-`), `605` to `627` (`beat-`), and `902` and up (blocked on an owner action,
-so read one before you start it). A retired order is deleted and its number left as a gap, so a
+so read one before you start it). A retired order moves to [archive/](archive/) and its number is left as a gap, so a
 link to a numbered order keeps pointing at the same work.
 
 **Why the order is what it is: [RUN-ORDER.md](RUN-ORDER.md).** It ranks the queue into tiers
@@ -29,6 +29,7 @@ run. Read the one your order names.
 | Path | What it holds |
 |---|---|
 | [finish/](finish/) | Every open work order, flat, one file each. The filename is `<campaign>-<order>.md`, so `911-okx-ai-08-forge-relisting.md` is the relisting order of the OKX.AI campaign. Sorting the directory groups each campaign together. A campaign's index (`<campaign>-00-INDEX.md`, `-00-CONTEXT.md`, `-README.md`) and its handoff log (`<campaign>-PROGRESS.md`) sit beside its orders under the same prefix. |
+| [archive/](archive/) | Finished work orders, moved out of `finish/` once every definition-of-done line was verified. Read-only record; never run one. See [archive/README.md](archive/README.md). |
 | [masters/](masters/) | The nine reusable master prompts. They take a supplied TARGET instead of fixed tasks and never retire, so they are not part of the finish queue. |
 | `<campaign>/_generated/`, `okx-ai/assets/`, `okx-ai/e2e-evidence/` | Machine-written evidence (JSON captures, screenshots, transcripts) produced by scripts. These stayed at their original paths because scripts read and write them by hardcoded path; see **Runtime consumption** below. |
 | [bnb-chain/](bnb-chain/), [robinhood-chain/](robinhood-chain/) | Two fully shipped campaigns kept as reference: their context and progress files carry adversarially-verified chain facts that other work still cites. No open orders. |
@@ -38,7 +39,7 @@ run. Read the one your order names.
 - A campaign's index or shared-facts file carries the facts every one of its orders needs. Each order names its index in its own opening lines; read it first.
 - Orders keep their original numbering (`01-`, `02-`) after the campaign prefix when run order matters.
 - `<campaign>-PROGRESS.md` is the cross-chat handoff log: the only memory between sessions. Agents append to it when they finish.
-- **A finished order is deleted**, in its own closing commit, only after its deliverables are verified shipped in the codebase. `finish/` shrinking is the progress ledger.
+- **A finished order is archived**: `git mv` it to [archive/](archive/) in its own closing commit, only after every line of its definition of done is verified, and repoint inbound links. `finish/` shrinking is the progress ledger; `archive/` is the record of what shipped. Orders retired before 2026-11-06 were deleted and live only in git history.
 
 ## The work-order standard (every open work order follows it)
 
@@ -104,7 +105,7 @@ Each one's history, including whether it shipped or was abandoned, is in its own
 `-OWNER-ACTIONS.md` and `-PROGRESS.md` are still live and cross-referenced by other rows in this
 table; they just carry no open order files of their own today.
 
-Individual orders retire the same way. Retirement policy, unchanged: delete only after the
+Individual orders retire the same way. Retirement policy, unchanged: archive only after the
 deliverables are verified shipped in the codebase, never merely because a progress log claims done.
 
 On 2026-09-01 a repo-wide sweep re-verified every open order against code and production and

@@ -312,7 +312,7 @@ EVOLVE_RESULT: <done|partial|blocked> | <one sentence on what shipped or what re
 function queuePrompt(file) {
 	return `Run the work order prompts/finish/${file}. Read it completely, then execute it to 100%: its operating clause, step 0 re-derivation, every task, and every line of its definition of done.
 
-When every line of the definition of done is verified, retire the order exactly as prompts/README.md describes: append to its campaign's PROGRESS log in prompts/finish/_context/, delete the order file, and commit that as its own closing commit.
+When every line of the definition of done is verified, retire the order exactly as prompts/README.md describes: append to its campaign's PROGRESS log in prompts/finish/_context/, git mv the order file into prompts/archive/ (repointing any inbound links), and commit that as its own closing commit.
 
 If step 0 shows the order already shipped, verify that, then retire it the same way.
 

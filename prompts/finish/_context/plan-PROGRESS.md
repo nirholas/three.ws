@@ -110,3 +110,6 @@ One dated line per finished or owner-blocked `plan-` work order, appended by the
 - 973 | DONE-PENDING-OWNER | beb1ab428 | buyback, launch-plan, e2e script, reconcile cron, runbook; devnet run waits on devnet SOL for G57Hd6u...
 
 - 974 | DONE-PENDING-OWNER | see git log human-tasks | routes, pages, MCP tools, cron, docs, 41 tests; owner: apply migrations, deploy, fund devnet wallet and run scripts/qa-human-task-devnet.mjs
+2026-11-06 | 735 | cb9c71287 | verified complete in the md audit (actions-hire tests pass, actions.json, route, sweep cron, share button, docs, changelog); archived to prompts/archive/
+2026-11-06 | 749 | 015de971b | verified complete in the md audit (x:content check exits 0, check:announce passes, no new approvals, intel-globe paused); archived to prompts/archive/
+2026-11-06 | 779 | 3eeee3faf | verified complete in the md audit (agent-name-claims tests pass, spec updated); archived to prompts/archive/

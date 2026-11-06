@@ -773,15 +773,15 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/agi.md` | no-open-work | reference doc, no open work found |
 | `docs/agora.md` | order | [711](../711-plan-agora-citizens-daemon-deploy-and-liveness.md). daemon undeployed, trust grades open |
 | `docs/agora/tasks/00-INDEX.md` | order | [707](../707-plan-agora-fleet-render-animation-budget.md), [770](../770-plan-agora-cartographer-profession-reactivation.md). Index shows task 12 open and Cartographer deferred. |
-| `docs/agora/tasks/01-verify-foundation.md` | shipped | Marked shipped in the index and present in the tree. |
+| `docs/agora/tasks/archive/01-verify-foundation.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/02-life-engine.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/03-task-supply.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/04-professions.md` | order | [770](../770-plan-agora-cartographer-profession-reactivation.md). Cartographer runner is complete but not in WORK_RUNNERS. |
-| `docs/agora/tasks/05-commons-scaffold.md` | shipped | Marked shipped in the index and present in the tree. |
+| `docs/agora/tasks/archive/05-commons-scaffold.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/06-economy-visuals.md` | shipped | Marked shipped in the index and present in the tree. |
-| `docs/agora/tasks/07-verify-and-passport.md` | shipped | Marked shipped in the index and present in the tree. |
-| `docs/agora/tasks/08-humans-first-class.md` | shipped | Marked shipped in the index and present in the tree. |
-| `docs/agora/tasks/09-arena-and-guilds.md` | shipped | Marked shipped in the index and present in the tree. |
+| `docs/agora/tasks/archive/07-verify-and-passport.md` | shipped | Marked shipped in the index and present in the tree. |
+| `docs/agora/tasks/archive/08-humans-first-class.md` | shipped | Marked shipped in the index and present in the tree. |
+| `docs/agora/tasks/archive/09-arena-and-guilds.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/10-agora-mcp.md` | shipped | Marked shipped in the index and present in the tree. |
 | `docs/agora/tasks/11-production-hardening.md` | order | [707](../707-plan-agora-fleet-render-animation-budget.md). One unchecked box: fleet performance, carved out as task 12. |
 | `docs/agora/tasks/12-fleet-render-performance.md` | order | [707](../707-plan-agora-fleet-render-animation-budget.md). Open: ~1fps with the full fleet, no recorded post-fix measurement. |
@@ -797,7 +797,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/announce-voice.md` | not-a-plan | voice contract, ready post or historical coverage audit |
 | `docs/announcement-coverage-telegram.md` | not-a-plan | voice contract, ready post or historical coverage audit |
 | `docs/announcement-coverage.md` | not-a-plan | voice contract, ready post or historical coverage audit |
-| `docs/announcement-factory.md` | order | [749](../749-plan-x-content-queue-clear-validator-errors.md). 25 validator errors and stale proofs block the queue |
+| `docs/announcement-factory.md` | order | [749](../../archive/749-plan-x-content-queue-clear-validator-errors.md). 25 validator errors and stale proofs block the queue |
 | `docs/announcements/activity-mcp.md` | excluded | published or archived content |
 | `docs/announcements/assistant.md` | excluded | published or archived content |
 | `docs/announcements/avatar-mcp.md` | excluded | published or archived content |
@@ -1337,8 +1337,8 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/prompts/36-agent-evals-and-replay.md` | order | [705](../705-plan-agent-evals-cli-replay-evaluate-tab.md). runner built, no CLI replay or UI |
 | `docs/prompts/event-markets/01-core-markets-and-picks.md` | shipped | tests/event-market*.test.js |
 | `docs/prompts/event-markets/02-market-pages-and-share-cards.md` | shipped | tests/event-market*.test.js |
-| `docs/prompts/event-markets/03-auto-resolution.md` | shipped | tests/event-market*.test.js |
-| `docs/prompts/event-markets/04-auto-open-for-every-event.md` | shipped | tests/event-market*.test.js |
+| `docs/prompts/event-markets/archive/03-auto-resolution.md` | shipped | tests/event-market*.test.js |
+| `docs/prompts/event-markets/archive/04-auto-open-for-every-event.md` | shipped | tests/event-market*.test.js |
 | `docs/prompts/event-markets/05-announcement-automation.md` | shipped | tests/event-market*.test.js |
 | `docs/prompts/event-markets/06-entrant-amplification-kit.md` | shipped | tests/event-market*.test.js |
 | `docs/prompts/event-markets/07-pick-leaderboard-and-rewards.md` | shipped | tests/event-market*.test.js |
@@ -1413,7 +1413,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `docs/research/oss-landscape-2026-10-notes/irl-home-robotics.md` | no-open-work | research notes; actionable items captured in the oss-landscape orders |
 | `docs/research/oss-landscape-2026-10-notes/worlds-engines.md` | no-open-work | research notes; actionable items captured in the oss-landscape orders |
 | `docs/research/oss-landscape-2026-10.md` | order | [760](../760-plan-agent-ag-ui-event-stream.md), [773](../773-plan-identity-web-bot-auth-signed-requests.md), [759](../759-plan-memory-temporal-facts-benchmark-scores.md), [732](../732-plan-screen-autonomous-browser-agent-owner-lease.md), [766](../766-plan-play-generative-npc-loop.md). gaps 5 8 10 12 14; others covered by existing orders |
-| `docs/research/solana-robinhood-playbook-2026-10.md` | order | [975](../975-plan-robinhood-crypto-connector-spend-capped.md), [710](../710-plan-agent-follow-button-capped-copy-trading.md), [735](../735-plan-actions-hire-agent-blink-discovery.md). items 4 7 8; others covered by 548 512 627 622 958 |
+| `docs/research/solana-robinhood-playbook-2026-10.md` | order | [975](../975-plan-robinhood-crypto-connector-spend-capped.md), [710](../710-plan-agent-follow-button-capped-copy-trading.md), [735](../../archive/735-plan-actions-hire-agent-blink-discovery.md). items 4 7 8; others covered by 548 512 627 622 958 |
 | `docs/resilience.md` | no-open-work | shipped reference |
 | `docs/restyle.md` | no-open-work | shipped reference |
 | `docs/revenue-ledger.md` | no-open-work | shipped reference; reinvest work is existing order 965 |
@@ -2507,7 +2507,7 @@ Every tracked markdown file in the repository on 2026-11-03 (2969 files), and wh
 | `specs/EMBED_HOST_PROTOCOL.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/EMBED_SPEC.md` | order | [743](../743-plan-avatar-editor-attribute-and-export-fidelity.md). editor attribute documented but not wired; rest is shipped reference |
 | `specs/ENGINE_BRIDGE.md` | no-open-work | shipped spec reference, no open markers |
-| `specs/ENS_AGENT_CLAIM.md` | order | [779](../779-plan-agent-ens-dns-claim-verification.md). resolver does not verify claims; schema lacks claims |
+| `specs/ENS_AGENT_CLAIM.md` | order | [779](../../archive/779-plan-agent-ens-dns-claim-verification.md). resolver does not verify claims; schema lacks claims |
 | `specs/GARMENT_MANIFEST.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/GLANCE_CARD.md` | no-open-work | shipped spec reference, no open markers |
 | `specs/inference-nodes.md` | shipped | status live: api/nodes/register.js and packages/node-operator |
