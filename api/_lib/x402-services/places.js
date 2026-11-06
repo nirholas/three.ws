@@ -9,25 +9,44 @@
 // places-detail returns only the real, live OSM record.
 
 const THREE_WS_UA = 'three.ws/1.0 (+https://three.ws; support@three.ws)';
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
-const TIMEOUT_MS = 25_000;
+// Public Overpass instances stall or 5xx under shared load. Try each mirror in
+// order with a per-attempt budget so one slow instance cannot fail the request
+// (2026-11-05: a single 25s abort on overpass-api.de surfaced as a 502).
+const OVERPASS_URLS = [
+	'https://overpass-api.de/api/interpreter',
+	'https://overpass.private.coffee/api/interpreter',
+	'https://overpass.kumi.systems/api/interpreter',
+];
+const TIMEOUT_MS = 12_000;
+
+function upstreamError(detail) {
+	const err = new Error(`Overpass request failed: ${detail}`);
+	err.status = 502;
+	err.code = 'upstream_error';
+	return err;
+}
 
 async function overpass(query) {
-	const res = await fetch(OVERPASS_URL, {
-		method: 'POST',
-		headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': THREE_WS_UA, accept: 'application/json' },
-		body: new URLSearchParams({ data: query }),
-		signal: AbortSignal.timeout(TIMEOUT_MS),
-	});
-	if (!res.ok) {
-		const detail = (await res.text()).slice(0, 300);
-		const err = new Error(`Overpass request failed: HTTP ${res.status} ${detail}`);
-		err.status = 502;
-		err.code = 'upstream_error';
-		throw err;
+	let last = null;
+	for (const url of OVERPASS_URLS) {
+		try {
+			const res = await fetch(url, {
+				method: 'POST',
+				headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': THREE_WS_UA, accept: 'application/json' },
+				body: new URLSearchParams({ data: query }),
+				signal: AbortSignal.timeout(TIMEOUT_MS),
+			});
+			if (!res.ok) {
+				last = upstreamError(`HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
+				continue;
+			}
+			const body = await res.json();
+			return body.elements ?? [];
+		} catch (e) {
+			last = upstreamError(e?.message || 'network error');
+		}
 	}
-	const body = await res.json();
-	return body.elements ?? [];
+	throw last;
 }
 
 function buildAddress(tags) {
