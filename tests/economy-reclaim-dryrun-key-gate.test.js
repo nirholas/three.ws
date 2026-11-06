@@ -77,7 +77,11 @@ function agentRow(id, name, address, secret, sol) {
 
 function connectionFor(list) {
 	const byAddress = new Map(list.map((r) => [r.address, r.__sol]));
-	return { getBalance: async (pk) => Math.round((byAddress.get(pk.toBase58()) ?? 0) * 1_000_000_000) };
+	const lamports = (pk) => Math.round((byAddress.get(pk.toBase58()) ?? 0) * 1_000_000_000);
+	return {
+		getBalance: async (pk) => lamports(pk),
+		getMultipleAccountsInfo: async (keys) => keys.map((k) => ({ lamports: lamports(k) })),
+	};
 }
 
 beforeEach(() => {

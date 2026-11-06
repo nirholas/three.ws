@@ -106,7 +106,7 @@ export async function classifyCustodialSecrets(rows, decrypt = decryptSecret) {
 
 /**
  * Read on-chain SOL for every wallet, 100 addresses per RPC call. An address
- * whose chunk failed gets NO map entry, which is what keeps an unread balance
+ * that is malformed, or whose chunk failed, gets NO map entry, which is what keeps an unread balance
  * from summing as a confirmed zero downstream.
  *
  * @param {import('@solana/web3.js').Connection} connection
@@ -117,15 +117,20 @@ export async function readCustodialBalances(connection, wallets) {
 	const { PublicKey } = await import('@solana/web3.js');
 	const balances = new Map();
 	const readErrors = [];
-	for (let i = 0; i < wallets.length; i += BALANCE_CHUNK) {
-		const chunk = wallets.slice(i, i + BALANCE_CHUNK);
-		let keys;
+	// A malformed address is rejected on its own, before chunking, so it can
+	// never hide the valid wallets that would have shared its RPC call.
+	const readable = [];
+	for (const w of wallets) {
 		try {
-			keys = chunk.map((w) => new PublicKey(w.address));
+			readable.push({ wallet: w, key: new PublicKey(w.address) });
 		} catch (e) {
-			for (const w of chunk) readErrors.push({ address: w.address, reason: `bad_address: ${e?.message}` });
-			continue;
+			readErrors.push({ address: w.address, reason: `bad_address: ${e?.message}` });
 		}
+	}
+	for (let i = 0; i < readable.length; i += BALANCE_CHUNK) {
+		const slice = readable.slice(i, i + BALANCE_CHUNK);
+		const chunk = slice.map((r) => r.wallet);
+		const keys = slice.map((r) => r.key);
 		try {
 			const infos = await connection.getMultipleAccountsInfo(keys);
 			infos.forEach((info, idx) => balances.set(chunk[idx].address, (info?.lamports ?? 0) / LAMPORTS_PER_SOL));

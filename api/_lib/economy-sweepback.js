@@ -689,7 +689,6 @@ export function agentCandidateFromRow(row, sol) {
  * @returns {Promise<{master:string, reclaimedSol:number, moves:Array, skipped:Array, failed:Array, readErrors:Array}>}
  */
 export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dryRun = false, maxWallets } = {}) {
-	const { PublicKey } = await import('@solana/web3.js');
 	const { sql } = await import('./db.js');
 	const master = ECONOMY_MASTER_ADDRESS;
 	const moves = [];
@@ -722,16 +721,18 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 		       OR LOWER(u.email) LIKE ${'%' + PLATFORM_AGENT_EMAIL_SUFFIX})
 	`;
 
+	// 100 wallets per RPC call. One serial getBalance per wallet made this leg
+	// the third largest Solana RPC caller (10,227 calls an hour on 2026-11-06,
+	// with both paid lanes exhausted). A wallet that could not be read is a read
+	// error, never a confirmed zero, so it cannot pass for "nothing to reclaim".
+	const { readCustodialBalances } = await import('./custodial-key-health.js');
+	const { balances, readErrors: unread } = await readCustodialBalances(connection, rows);
+	const nameOf = new Map(rows.map((r) => [r.address, r.name]));
+	for (const e of unread) readErrors.push({ name: nameOf.get(e.address), ...e });
 	const candidates = [];
 	for (const r of rows) {
-		let sol;
-		try {
-			sol = round((await connection.getBalance(new PublicKey(r.address), 'confirmed')) / LAMPORTS_PER_SOL);
-		} catch (e) {
-			readErrors.push({ name: r.name, address: r.address, reason: `rpc_error: ${e?.message}` });
-			continue;
-		}
-		candidates.push(agentCandidateFromRow(r, sol));
+		if (!balances.has(r.address)) continue;
+		candidates.push(agentCandidateFromRow(r, round(balances.get(r.address))));
 	}
 	// Biggest balances first: the run cap should spend its budget where the SOL is.
 	candidates.sort((a, b) => b.sol - a.sol);
