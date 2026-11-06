@@ -233,6 +233,10 @@
 			"access": 5,
 			"next": "Register the developer account, upload the Walk Avatar zip per extensions/walk-avatar/RELEASE.md, then Checkout Companion",
 			"why": "Both browser extensions (Walk Avatar and Checkout Companion) are built under extensions/ with a release checklist, so this is a submission, not a build. The same packages feed Edge Add-ons.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Chrome Web Store editors highlight Featured extensions; quality and policy compliance determine eligibility, no application form (track record, not a stated benefit).",
 			"assets": [
 				"extensions/walk-avatar/RELEASE.md"
 			],
@@ -286,6 +290,11 @@
 			"wave": 1,
 			"next": "Enrol as a Build partner through the Partner Network hub; it gates the Cloud Marketplace listing",
 			"why": "Required plumbing for the Marketplace and Agent Finder listing; low standalone value until we have customer outcomes.",
+			"promo": [
+				"co-marketing",
+				"badge"
+			],
+			"promo_note": "Partner Advantage members earn partner badges and, at higher tiers, access co-marketing resources and Partner Marketing Funds via the Partner Advantage portal (details from third-party summaries, tier-dependent).",
 			"source": "https://www.fours.com/resources/blog/google-cloud-partner-network-tiers/",
 			"checked": "2026-11-06"
 		},
@@ -309,6 +318,10 @@
 			"wave": 5,
 			"next": "Watch for the next window (rolling, no public dates) and apply when it opens",
 			"why": "The owner could qualify personally through Three.js/WebGL, MCP and Gemini content, but there is no self-serve route. Individual recognition for the owner, not the company.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "GDEs get speaking and community-event opportunities with Google teams; apply or get nominated via the GDE program page (not verified in detail).",
 			"source": "https://developers.google.com/community/experts",
 			"checked": "2026-11-06"
 		},
@@ -357,6 +370,10 @@
 			"wave": 5,
 			"next": "Watch for the next window (2026 window closed (May 4 to Jun 30, 2026); next window not announced) and apply when it opens",
 			"why": "Equity-free and US-based suits us, but we likely lack revenue and the 2026 track was energy only; watch for a 2027 AI First call.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Demo Day is a mandatory part of the cohort; alumni may later be tapped for speaking roles (accepted cohort members only).",
 			"source": "https://startup.google.com/programs/accelerator/north-america/",
 			"checked": "2026-11-06"
 		},
@@ -498,6 +515,11 @@
 			"reach": 3,
 			"access": 4,
 			"why": "Already a publisher; co-sell threshold is far off for us. We hold a MAICPP ID because Marketplace publishing requires one. Never claim Solutions Partner or co-sell status.",
+			"promo": [
+				"co-marketing",
+				"badge"
+			],
+			"promo_note": "Partner Center benefits include marketing benefits and partner designations/badges, unlocked by membership level and competency.",
 			"assets": [
 				"docs/microsoft.md"
 			],
@@ -548,6 +570,10 @@
 			"wave": 1,
 			"next": "Enrol in ISV Success from Partner Center; it is the next Microsoft enrolment after the publisher profile",
 			"why": "We already have a Marketplace publisher account, so this is the natural next enrolment.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Enrolled ISVs get marketing assistance and Marketplace listing optimization once they publish an app to Microsoft Marketplace.",
 			"source": "https://learn.microsoft.com/en-us/partner-center/benefits/benefits-at-a-glance",
 			"checked": "2026-11-06"
 		},
@@ -590,6 +616,10 @@
 			"wave": 5,
 			"next": "Watch for the next window (annual) and apply when it opens",
 			"why": "Our stack is not Microsoft-centric, so a nomination is a long shot. Individual recognition for the owner, not the company.",
+			"promo": [
+				"badge"
+			],
+			"promo_note": "MVPs may use the MVP logo/award recognition after being nominated and awarded (badge use from general program knowledge).",
 			"source": "https://techcommunity.microsoft.com/blog/mvp-blog/so-you-want-to-become-an-mvp-a-practical-guide-for-aspiring-tech-leaders/4457930",
 			"checked": "2026-11-06"
 		},
@@ -699,6 +729,12 @@
 			"access": 4,
 			"next": "Apply at microsoft.com/startups (page not fetched); higher tiers via investor network offer",
 			"why": "Useful as small Azure credit for Foundry model access, but large tiers need a VC; we are on GCP.",
+			"promo": [
+				"blog",
+				"event",
+				"case-study"
+			],
+			"promo_note": "Microsoft states startups may be featured in the program blog, events and founder stories, and get pre-built marketing materials; no stated application route.",
 			"source": "https://learn.microsoft.com/en-us/answers/questions/5888354/inquiry-about-progression-to-higher-azure-credit-t",
 			"checked": "2026-11-06"
 		},
@@ -762,6 +798,10 @@
 			"reach": 3,
 			"access": 1,
 			"why": "No cohort has run since 2024.",
+			"promo": [
+				"blog"
+			],
+			"promo_note": "GitHub announces accelerator cohorts on its blog (track record, not a stated benefit).",
 			"source": "https://github.blog/open-source/maintainers/github-accelerator-showcase-celebrating-our-second-cohort-and-whats-next/",
 			"checked": "2026-11-06"
 		},
@@ -834,6 +874,11 @@
 			"wave": 5,
 			"next": "Watch for the next window (rolling) and apply when it opens",
 			"why": "Possible for the owner once the open-source repos have public community content. Individual recognition for the owner, not the company.",
+			"promo": [
+				"showcase",
+				"event"
+			],
+			"promo_note": "Stars get a public profile on stars.github.com and speaking/showcase opportunities; join by nomination.",
 			"source": "https://ambassador.directory/guides/how-to-join-github-stars-program",
 			"checked": "2026-11-06"
 		},
@@ -851,6 +896,12 @@
 			"access": 4,
 			"next": "Submit the drafted application through the GitHub partner portal",
 			"why": "Application kit written; nothing submitted.",
+			"promo": [
+				"co-marketing",
+				"badge",
+				"event"
+			],
+			"promo_note": "Partners get approved GitHub partner branding, co-marketing support, and access to Partner Kickoff, Universe and Partner of the Year awards; apply at partner.github.com.",
 			"assets": [
 				"marketing/growth/submissions/programs/github-technology-partner.md"
 			],
@@ -904,6 +955,11 @@
 			"wave": 1,
 			"next": "Owner: book the stream slot at gh.io/osf-booking (issue #254 is approved)",
 			"why": "GitHub invited the request on 2026-08-21 and approved it; only the booking is left.",
+			"promo": [
+				"event",
+				"media"
+			],
+			"promo_note": "Open a guest invite issue in the githubevents/open-source-friday repo using the template; hosts feature accepted projects on the livestream.",
 			"assets": [
 				"docs/open-source-friday-plan.md"
 			],
@@ -1018,6 +1074,11 @@
 			"wave": 5,
 			"next": "Watch for the next window (2026 window closed; official page still shows 2025 cohort) and apply when it opens",
 			"why": "A strong fit for agentic 3D but the 2026 window ended; check mid-2027.",
+			"promo": [
+				"event",
+				"showcase"
+			],
+			"promo_note": "Cohort ends at AWS re:Invent with networking/visibility and AWS publicly announces and profiles each selected startup; requires selection.",
 			"source": "https://aws.amazon.com/startups/generative-ai/accelerator",
 			"checked": "2026-11-06"
 		},
@@ -1087,6 +1148,10 @@
 			"reach": 3,
 			"access": 5,
 			"why": "Member. The Foundational Technical Review and ISV Accelerate follow the Marketplace listing.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "APN partners access co-marketing and partner marketing programs via AWS Partner Central; landing page mentions incentives and events only generally.",
 			"checked": "2026-11-06"
 		},
 		{
@@ -1205,6 +1270,11 @@
 			"wave": 5,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Only after a polished native Apple-platform app exists; Entrepreneur Camp status unverified and not applicable now.",
+			"promo": [
+				"showcase",
+				"press"
+			],
+			"promo_note": "Winners are announced and featured by Apple in its newsroom and on the App Store; enter via the awards submission.",
 			"source": "https://www.apple.com/newsroom/2026/06/apple-reveals-winners-of-the-2026-apple-design-awards/",
 			"checked": "2026-11-06"
 		},
@@ -1230,6 +1300,10 @@
 			"needs_build": true,
 			"next": "Decide whether a native visionOS viewer for three.ws avatars is worth building; nothing ships to the App Store without one",
 			"why": "A native/Capacitor viewer or WebXR page on Vision Pro is the realistic route for our GLB avatars; WebXR needs no store.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Apple accepts app-feature nominations via its App Store promote/Get Featured form for editorial consideration.",
 			"source": "https://developer.apple.com/visionos/work-with-apple/",
 			"checked": "2026-11-06"
 		},
@@ -1413,6 +1487,10 @@
 			"wave": 1,
 			"next": "Submit Poster A through the GTC call for submissions before 5pm PT on 2026-11-10",
 			"why": "A technical poster (e.g. text-to-GLB pipeline with meshopt/canonicalization, MCP-driven avatar rigging on GPU workers) fits; marketing framing will be rejected.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Accepted poster submissions are presented at GTC.",
 			"assets": [
 				"docs/nvidia-gtc-2027-poster.md"
 			],
@@ -1440,6 +1518,10 @@
 			"wave": 5,
 			"next": "Ask in the existing Inception thread for a Pavilion invitation; NVIDIA confirmed 2026-09-14 that it is invite-only",
 			"why": "We are an Inception member, so watch the portal for the 2027 pavilion call; high visibility to the right developers.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Inception members can exhibit in the startup pavilion at GTC; apply through Inception.",
 			"source": "https://hub.causo.ai/events/nvidia-gtc (third-party); https://www.nvidia.com/gtc/",
 			"checked": "2026-11-06"
 		},
@@ -1501,6 +1583,10 @@
 			"wave": 1,
 			"next": "Paste the drafted answers into the guest form (docs/nvidia-visibility-map.md, AI Podcast nomination)",
 			"why": "Answers are drafted and the form was re-verified live 2026-09-04.",
+			"promo": [
+				"media"
+			],
+			"promo_note": "Submit a guest idea or self-nomination via the Submit Guest Ideas form; selection is at NVIDIA's discretion.",
 			"assets": [
 				"docs/nvidia-visibility-map.md"
 			],
@@ -1603,6 +1689,15 @@
 			"access": 5,
 			"next": "Download the restored co-brand kit, then ask the two unanswered Showcase and ACE questions in the existing Inception thread",
 			"why": "Already a member; the work now is using the perks (co-marketing badges, Capital Connect, partner offers, GTC Startup Pavilion) rather than joining. Caveat: Inception's eligibility page excludes crypto-associated companies, so describe three.ws by its 3D and digital-human product.",
+			"promo": [
+				"badge",
+				"co-marketing",
+				"social",
+				"event",
+				"showcase",
+				"blog"
+			],
+			"promo_note": "Inception offers official badges, co-branded social content, event access, the Startup Showcase and spotlight stories linking to NVIDIA blog/video; the page does not say how to get featured, so ask your Inception contact.",
 			"assets": [
 				"docs/nvidia-inception.md",
 				"docs/nvidia-visibility-map.md"
@@ -1848,6 +1943,10 @@
 			"wave": 1,
 			"next": "Submit three.ws through the showcase web form on developers.openai.com",
 			"why": "A built ChatGPT app or Codex-built project could be showcased, but there is no public submission form found.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "The Developers Showcase is a featured gallery of projects built on OpenAI; submission route not verified.",
 			"source": "https://developers.openai.com/",
 			"checked": "2026-11-06"
 		},
@@ -1895,6 +1994,10 @@
 			"access": 5,
 			"next": "Accept the two benefit invitations, then create OPENAI_PARTNER_API_KEY in the partner organization",
 			"why": "Consulting/implementation-oriented; we already hold Select. Moving to Advanced needs proven deployments and co-sell, which is a stretch for a small ISV. No Premier tier exists (that is Anthropic's naming).",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Third-party reports say the $150M investment includes co-marketing funds and co-branded case studies, but OpenAI's official page was unreachable (unverified).",
 			"assets": [
 				"docs/partners/openai-partner-benefits-2026.md"
 			],
@@ -1973,6 +2076,10 @@
 			"wave": 5,
 			"next": "Watch for the next window (rolling; launched March 2026) and apply when it opens",
 			"why": "Owner could host 3D-agent/MCP meetups and gain credits and amplification. Student Builder Clubs are a separate campus track (not applicable). Individual program for the owner.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Anthropic promotes ambassadors' events through its own channels; apply on the ambassador page.",
 			"source": "https://x.com/claudeai/status/2029999626926076179",
 			"checked": "2026-11-06"
 		},
@@ -2022,6 +2129,11 @@
 			"access": 2,
 			"next": "Apply: See Anthropic announcement; tiers Select, Preferred, Global Premier (per search summary)",
 			"why": "Aimed at consultancies and SIs; low fit for a product company, though ISV co-marketing may be possible. Enrollment form not verified.",
+			"promo": [
+				"co-marketing",
+				"showcase"
+			],
+			"promo_note": "Funding covers co-marketing for joint campaigns and events, co-marketing docs in the Partner Portal, and listing in the Services Partner Directory for qualified partners.",
 			"source": "https://anthropic.com/news/claude-partner-network",
 			"checked": "2026-11-06"
 		},
@@ -2121,6 +2233,11 @@
 			"wave": 1,
 			"next": "Owner self-nominates for the Class of 2027 in the IBM Community Champions group and records qualifying activities before 2026-12-04",
 			"why": "Individual recognition for the owner after IBM-focused content; low effort once there are published watsonx posts. Individual recognition for the owner. Class of 2027 nominations are open; the 2026-12-04 close date comes from a community post of 2026-10-25, so confirm it in the official announcement.",
+			"promo": [
+				"badge",
+				"showcase"
+			],
+			"promo_note": "Champions get Credly digital badges, highlighted profiles and spotlight interviews; nominated and renewed annually.",
 			"assets": [
 				"docs/ibm-visibility-map.md"
 			],
@@ -2189,6 +2306,11 @@
 			"access": 4,
 			"next": "Request the My Digital Marketing benefit and complete the Partner Plus Directory listing",
 			"why": "Already joined; next step is a validated watsonx integration to reach Build Silver and unlock credits and co-marketing.",
+			"promo": [
+				"co-marketing",
+				"case-study"
+			],
+			"promo_note": "ISV partners get marketing resources and tools and can be featured in partner case studies and webinars; ask via Partner Plus.",
 			"assets": [
 				"docs/partners/ibm-partner-plus.md",
 				"docs/ibm-visibility-map.md"
@@ -2224,6 +2346,10 @@
 			"wave": 5,
 			"next": "Watch for the TechXchange 2027 call for speakers (spring 2027) and submit a talk on agents with 3D bodies",
 			"why": "Next-cycle CFP is a good watch item; a talk on MCP + 3D agents in Orchestrate would fit.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Submit a session through the TechXchange call for speakers.",
 			"source": "https://community.ibm.com/community/user/blogs/christopher-vollmar/2026/04/14/ibm-techxchange-2026-call-for-speakers",
 			"checked": "2026-11-06"
 		},
@@ -2276,6 +2402,10 @@
 			"access": 4,
 			"next": "Apply: https://marketplace.oracle.com/partnerHome; sign Oracle Cloud Marketplace Agreement",
 			"why": "Metered billing plus our per-call model is a reasonable fit, and Level 0 is a no-cost extra distribution point.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Join OPN at Level 1 or above and list on Oracle Marketplace to get foundational marketing resources and promotion of the offering to Oracle sellers.",
 			"source": "https://www.nasdaq.com/press-release/oracle-expands-marketplace-unlock-new-partner-growth-opportunities-2026-10-23",
 			"checked": "2026-11-06"
 		},
@@ -2340,6 +2470,11 @@
 			"reach": 3,
 			"access": 4,
 			"why": "Listing is live.",
+			"promo": [
+				"showcase",
+				"co-marketing"
+			],
+			"promo_note": "Join the Marketplace Co-sell Program to get logo placement on the International Marketplace home page, promoted articles or whitepapers, and co-hosted webinars.",
 			"checked": "2026-11-06"
 		},
 		{
@@ -2365,6 +2500,11 @@
 			"access": 3,
 			"next": "Apply: via Alibaba Cloud partner network (we already hold a Marketplace listing)",
 			"why": "Natural upgrade from our current Marketplace listing.",
+			"promo": [
+				"co-marketing",
+				"event"
+			],
+			"promo_note": "Apply to the AI Alliance GTM Accelerator; the Co-Market track offers joint campaigns, co-branded content and featured listings at flagship events, with more funding at higher tiers.",
 			"source": "https://technode.global/2026/01/23/alibaba-cloud-accelerates-global-ai-partner-ecosystem-with-new-incentives-investments/",
 			"checked": "2026-11-06"
 		},
@@ -2410,6 +2550,10 @@
 			"access": 2,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Startup credits reported by third parties at up to USD 5,000, not verified on an official page.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Reach Gold or Platinum partner tier to get co-branding and co-marketing opportunities plus the Marketing Amplifier Program (MDF), per Tencent's benefits table.",
 			"source": "https://www.tencentcloud.com/partners/details/3056",
 			"checked": "2026-11-06"
 		},
@@ -2477,6 +2621,11 @@
 			"access": 3,
 			"next": "Apply: Via Effect House Rewards Center",
 			"why": "AR effects only; weak fit with agent platform.",
+			"promo": [
+				"showcase",
+				"social"
+			],
+			"promo_note": "Publish effects that rank in Effect House Top Creators or the in-app Trending tab; the official Effect House account also runs a recurring creator spotlight series (track record, not a stated benefit).",
 			"source": "https://www.tiktok.com/creator-academy/en/article/effect-creator-rewards",
 			"checked": "2026-11-06"
 		},
@@ -2571,6 +2720,12 @@
 			"access": 4,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Weak technical match (we run on NVIDIA/Vertex) but cheap to apply and OpenVINO/NPU on-device avatar inference is a niche angle.",
+			"promo": [
+				"co-marketing",
+				"case-study",
+				"media"
+			],
+			"promo_note": "Join Intel Liftoff; Intel describes co-marketing and a documented track record of co-branded toolkits, case studies, interviews and podcasts (agency account, not an official promise).",
 			"source": "https://www.intel.com/content/www/us/en/developer/articles/community/future-of-ai-startups-crafting-agentic-solutions.html",
 			"checked": "2026-11-06"
 		},
@@ -2595,6 +2750,13 @@
 			"access": 3,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Hardware-centric co-sell program; low relevance until we have Intel-targeted deployments.",
+			"promo": [
+				"co-marketing",
+				"social",
+				"case-study",
+				"showcase"
+			],
+			"promo_note": "Join the Intel Partner Alliance; the AI benefits list MDF, Partner Marketing Studio, a solution directory listing, and Intel-led social promotion and case studies (brand use for co-marketing is Prestige tier only).",
 			"source": "https://cdrdv2-public.intel.com/862036/Refresh%20Partner%20FAQ%20Aug%202025.pdf",
 			"checked": "2026-11-06"
 		},
@@ -2688,6 +2850,10 @@
 			"reach": 2,
 			"access": 1,
 			"why": "APAC-only (Japan, Singapore, South Korea) and the 2026 cohort is already shortlisted.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Get selected into the cohort; the program ends with a Demo Day presenting startups to industry leaders, integrators and investors.",
 			"source": "https://www.prnewswire.com/apac/news-releases/qualcomm-ai-program-for-innovators-2026--apac-officially-kicks-off---empowering-startups-across-japan-singapore-and-south-korea-to-lead-the-ai-innovation-302676025.html",
 			"checked": "2026-11-06"
 		},
@@ -2713,6 +2879,12 @@
 			"access": 3,
 			"next": "Apply: Sign up as partner (partnersignup.salesforce.com per a third-party guide), then Partner Console Listing Builder",
 			"why": "Possible via an MCP-backed agent action that generates/embeds 3D; real engineering lift on Salesforce side and security review. Details mostly from third-party blogs.",
+			"promo": [
+				"co-marketing",
+				"showcase",
+				"event"
+			],
+			"promo_note": "Progress through the AgentExchange ISV Track tiers; MDF, the ISV Marketing Resource Hub, featured AppExchange listings and Dreamforce visibility unlock at higher tiers.",
 			"source": "https://www.techforceservices.com/blog/salesforce-marketplace-appexchange-to-agentexchange/",
 			"checked": "2026-11-06"
 		},
@@ -2804,6 +2976,12 @@
 			"access": 4,
 			"next": "Apply: Submit via Slack app dashboard per submission guidelines",
 			"why": "A Slack app that renders or generates 3D previews from chat is feasible; not core to our product.",
+			"promo": [
+				"showcase",
+				"badge",
+				"co-marketing"
+			],
+			"promo_note": "List on the Slack Marketplace and join the Slack Partner Program; Marketplace Partners get a badge, a curated Featured apps section exists, and Agent Partners get co-marketing.",
 			"source": "https://docs.slack.dev/slack-marketplace/slack-marketplace-app-guidelines-and-requirements/",
 			"checked": "2026-11-06"
 		},
@@ -2826,6 +3004,10 @@
 			"access": 4,
 			"next": "Apply: Build with Adobe Express CLI, package and submit",
 			"why": "An add-on that generates/places 3D renders or GLB previews in Express is plausible; large creative audience.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Publish an add-on to the marketplace to be eligible for the in-app Featured section and use-case categories (no formal application for featuring).",
 			"source": "https://developer.adobe.com/express/add-ons/",
 			"checked": "2026-11-06"
 		},
@@ -2850,6 +3032,11 @@
 			"access": 4,
 			"next": "Apply: Application via Adobe developer site (see blog)",
 			"why": "Funds building an Express add-on, which fits a 3D asset-to-design add-on. Confirm current status on the Adobe page.",
+			"promo": [
+				"co-marketing",
+				"blog"
+			],
+			"promo_note": "Apply to the Fund for Design; Adobe says the fund includes partnership and marketing opportunities, and its developer blog has featured funded add-ons and developer spotlights.",
 			"source": "https://x.com/adobedevs/status/2024621313403256836",
 			"checked": "2026-11-06"
 		},
@@ -2916,6 +3103,13 @@
 			"access": 2,
 			"next": "Apply: Join PartnerEdge Build, pass Application Readiness Check",
 			"why": "Paid route into enterprise SAP customers; low fit for 3D agents unless a BTP integration is built.",
+			"promo": [
+				"co-marketing",
+				"case-study",
+				"badge",
+				"showcase"
+			],
+			"promo_note": "Become an operational PartnerEdge Build partner with a go-to-market-ready SAP Store solution; SAP offers marketing services, Partner Finder listing, logo use, selected co-branded success stories and Spotlight solutions.",
 			"source": "https://partner-program-directory.partnerfleet.io/partners/sap-build-partners-program",
 			"checked": "2026-11-06"
 		},
@@ -3035,6 +3229,12 @@
 			"access": 2,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Only fits if we port part of the stack (MCP server or edge API) to Workers; VC intros are low value for a bootstrapped project.",
+			"promo": [
+				"blog",
+				"event",
+				"media"
+			],
+			"promo_note": "Be accepted into a Launchpad cohort; Cloudflare publishes cohort startup spotlight blog posts and hosts Demo Day broadcasts on Cloudflare TV.",
 			"source": "https://blog.cloudflare.com/expanding-startups-for-nonprofits/",
 			"checked": "2026-11-06"
 		},
@@ -3082,6 +3282,11 @@
 			"access": 4,
 			"next": "Create the Partner app, set the SHOPIFY_* vars on three-ws-api, then submit Photo to 3D product media for App Store review",
 			"why": "Strongest commercial channel: GLB-native 3D product viewers and text-to-3D for merchants map directly to our stack.",
+			"promo": [
+				"showcase",
+				"badge"
+			],
+			"promo_note": "Earn Built for Shopify status to get the badge, priority App Store visibility and eligibility for the In the Spotlight section and featured story pages.",
 			"assets": [
 				"docs/shopify-app.md",
 				"marketing/growth/submissions/programs/shopify-partner-app-store.md"
@@ -3155,6 +3360,13 @@
 			"access": 4,
 			"next": "Apply: Upload app via Stripe CLI, submit for review, then publish from Dashboard",
 			"why": "Plausible as a 3D product-viewer or agent-payment dashboard app for Stripe merchants; needs a merchant-facing use case.",
+			"promo": [
+				"co-marketing",
+				"showcase",
+				"badge",
+				"event"
+			],
+			"promo_note": "Publish an app on the Stripe App Marketplace to join the Apps partner track: MDF for co-marketing, featured placement, partner badges, and speaking or sponsorship at Stripe events.",
 			"source": "https://docs.stripe.com/stripe-apps/publish-app",
 			"checked": "2026-11-06"
 		},
@@ -3295,6 +3507,11 @@
 			"access": 4,
 			"next": "Apply: Join via aps.autodesk.com/adn",
 			"why": "Free for startups; useful if we build a real APS integration.",
+			"promo": [
+				"badge",
+				"event"
+			],
+			"promo_note": "Join ADN at any tier for the Developer logo and ADN YouTube partner channel, plus event participation such as DevCon and Autodesk University.",
 			"source": "https://aps.autodesk.com/developer/overview/autodesk-developer-network-membership",
 			"checked": "2026-11-06"
 		},
@@ -3407,6 +3624,10 @@
 			"access": 4,
 			"next": "Apply: Create publisher profile in Publisher portal, submit package for vetting",
 			"why": "A Unity SDK or importer for three.ws agents and GLB avatars would reach game developers.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Publish on the Asset Store; Unity runs a weekly Publisher of the Week promotion and seasonal sales (track record from third-party roundups, no documented application).",
 			"source": "https://docs.unity.com/en-us/asset-store",
 			"checked": "2026-11-06"
 		},
@@ -3431,6 +3652,12 @@
 			"access": 3,
 			"next": "Apply: Via Unity partner page, earned through Asset Store",
 			"why": "Only worthwhile after a Unity SDK exists.",
+			"promo": [
+				"badge",
+				"showcase",
+				"co-marketing"
+			],
+			"promo_note": "Pass Unity's Verified Solutions review to get the badge, prioritized Asset Store collections and inclusion in Asset Store marketing campaigns.",
 			"source": "https://unity.com/partners/verified-solutions",
 			"checked": "2026-11-06"
 		},
@@ -3455,6 +3682,12 @@
 			"wave": 5,
 			"next": "Watch for the next window (listing showed closed after a 2026-09-04 deadline; reopening date unknown) and apply when it opens",
 			"why": "Open-source 3D tooling qualifies in principle, but our core is Three.js rather than Unreal; an Unreal plugin would strengthen a bid.",
+			"promo": [
+				"blog",
+				"case-study",
+				"event"
+			],
+			"promo_note": "Receive a MegaGrant; Epic lists recipients in annual recap posts on the Unreal Engine blog, writes spotlight stories, and has featured recipients at its GDC booth (track record, not a stated guarantee).",
 			"source": "https://grantedai.com/grants/epic-megagrants-epic-games-4632026a",
 			"checked": "2026-11-06"
 		},
@@ -3477,6 +3710,10 @@
 			"access": 4,
 			"next": "Apply: Seller account on Fab",
 			"why": "Sell generated 3D assets or an Unreal plugin; low direct fit.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Sell on Fab; Epic runs a featured sellers carousel and sponsored free-asset giveaways on a rotating schedule.",
 			"source": "https://www.unrealengine.com/blog/fab-epics-new-unified-content-marketplace-launches-today",
 			"checked": "2026-11-06"
 		},
@@ -3500,6 +3737,11 @@
 			"access": 2,
 			"next": "Apply: Jumpstart pitches rolling; Incubator for experienced small teams; Creator Fund rolling",
 			"why": "Needs a Roblox game; marginal for a web 3D agent platform. Original Accelerator ended 2022.",
+			"promo": [
+				"showcase",
+				"co-marketing"
+			],
+			"promo_note": "Get accepted into Incubator (guaranteed homepage placement) or Jumpstart (promotion and marketing support); Roblox also runs co-marketing for creator user acquisition.",
 			"source": "https://about.roblox.com/newsroom/2026/03/roblox-announces-incubator-jumpstart-creator-programs",
 			"checked": "2026-11-06"
 		},
@@ -3545,6 +3787,11 @@
 			"access": 4,
 			"next": "Apply: Opt-in toggle appears when submitting a Lens in eligible countries; Lens+ payouts need application",
 			"why": "We could publish GLB-based 3D Lenses, but income is per-Lens performance, not partnership.",
+			"promo": [
+				"social",
+				"event"
+			],
+			"promo_note": "Publish top-performing Lenses; Snap's @lensstudiodev account spotlights developers and Lens Fest celebrates them (track record, not a stated benefit).",
 			"source": "https://ar.snap.com/lens-creator-rewards",
 			"checked": "2026-11-06"
 		},
@@ -3569,6 +3816,10 @@
 			"access": 3,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "3D agents in AR glasses is a natural showcase; program terms may have changed with the SPECS launch.",
+			"promo": [
+				"blog"
+			],
+			"promo_note": "Join the Spectacles developer program; Snap has published posts spotlighting the first Lenses built by the community (track record, not a stated benefit).",
 			"source": "https://ar.snap.com/spectacles",
 			"checked": "2026-11-06"
 		},
@@ -3708,6 +3959,11 @@
 			"access": 2,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Showcase only; no formal route.",
+			"promo": [
+				"blog",
+				"media"
+			],
+			"promo_note": "Build on Cisco APIs; Cisco DevNet's Month of Partner Innovation featured named partners in a blog post and videos, but the page gives no application route.",
 			"source": "https://blogs.cisco.com/developer/january-2026-month-of-partner-innovation",
 			"checked": "2026-11-06"
 		},
@@ -3776,6 +4032,10 @@
 			"access": 4,
 			"next": "Apply: Submit from the Webex Developer portal",
 			"why": "A Webex embedded app or agentic app showing a 3D agent in meetings is feasible; audience modest.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "List on Webex App Hub; Cisco has showcased integration partners at Cisco Live (track record, not a stated benefit).",
 			"source": "https://developer.webex.com/create/docs/app-hub-submission-process",
 			"checked": "2026-11-06"
 		},
@@ -3799,6 +4059,13 @@
 			"access": 3,
 			"next": "Apply: Build in Zoom App Dashboard, TDD, submit for review",
 			"why": "A Zoom App with a 3D avatar or MCP tool use is feasible; Zoomtopia 2026 expanded MCP support and platform studio.",
+			"promo": [
+				"co-marketing",
+				"blog",
+				"social",
+				"showcase"
+			],
+			"promo_note": "Publish a Marketplace app; Zoom offers co-marketing to well-aligned apps, an App of the Month feature on its blog and social accounts, and featured collections.",
 			"source": "https://developers.zoom.us/docs/distribute/app-submission/enabling-publishing-for-private-and-beta-apps/",
 			"checked": "2026-11-06"
 		},
@@ -3888,6 +4155,11 @@
 			"access": 3,
 			"next": "Apply: Automatic tiering from enrollment",
 			"why": "Needs revenue; irrelevant until sales exist.",
+			"promo": [
+				"co-marketing",
+				"badge"
+			],
+			"promo_note": "Join the Marketplace Partner Program; all levels get a tier badge, and co-marketing for guest blogging and launch campaigns is prioritized by tier.",
 			"source": "https://www.atlassian.com/blog/development/july-2025-updates-to-marketplace-partner-program-membership-levels",
 			"checked": "2026-11-06"
 		},
@@ -3957,6 +4229,11 @@
 			"access": 3,
 			"next": "Apply: Enroll as Build Partner; publish via Store Publisher Portal",
 			"why": "Enterprise IT audience; agent listing possible but heavy.",
+			"promo": [
+				"co-marketing",
+				"showcase"
+			],
+			"promo_note": "Join the Build Partner Program; tiers unlock co-marketing programs and Store placement designations such as best seller.",
 			"source": "https://www.crn.com.au/news/2026/software/servicenow-unveils-new-build-partner-program-to-make-room-for-ai-agents",
 			"checked": "2026-11-06"
 		},
@@ -4002,6 +4279,11 @@
 			"access": 2,
 			"next": "Apply on page",
 			"why": "Needs a Snowflake-native product; poor fit.",
+			"promo": [
+				"co-marketing",
+				"event"
+			],
+			"promo_note": "Join the Startup Accelerator; Snowflake lists guaranteed co-marketing opportunities and VC Demo Days.",
 			"source": "https://snowflake.com/en/product/features/native-apps/native-app-accelerator",
 			"checked": "2026-11-06"
 		},
@@ -4046,6 +4328,12 @@
 			"access": 3,
 			"next": "Apply now on Technology Partner page",
 			"why": "Needs a real Databricks integration; low relevance.",
+			"promo": [
+				"co-marketing",
+				"case-study",
+				"event"
+			],
+			"promo_note": "Apply to the Technology Partner program; Databricks lists joint marketing campaigns, partner success stories and flagship event presence, with MDF scaling by tier.",
 			"source": "https://www.databricks.com/partners/partner-program",
 			"checked": "2026-11-06"
 		},
@@ -4092,6 +4380,11 @@
 			"access": 2,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Enterprise on-prem angle for self-hosted agents; premature for a small team but the only Dell route that suits software.",
+			"promo": [
+				"badge",
+				"showcase"
+			],
+			"promo_note": "Pass Dell's validation to earn the AI Ecosystem Certified badge and appearance in Dell's AI ecosystem catalogs.",
 			"source": "https://www.dell.com/en-us/dt/corporate/newsroom/announcements/detailpage.press-releases~usa~2026~05~dell-technologies-closes-the-gap-between-ai-ambition-and-ai-outcomes.htm",
 			"checked": "2026-11-06"
 		},
@@ -4139,6 +4432,10 @@
 			"access": 1,
 			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
 			"why": "Low fit and US-startup access is doubtful; AppGallery Connect had no official credit page found.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Join Spark; a reseller page lists co-marketing and co-selling alongside credits (third-party source, verify with Huawei).",
 			"source": "https://www.huaweicloud.com/intl/en-us/news/20200903090816755.html",
 			"checked": "2026-11-06"
 		},

@@ -1,21 +1,26 @@
 #!/usr/bin/env node
 /**
- * Big-tech partner programs tracker: every partner program, startup program, marketplace,
- * directory, grant, and recognition route at the largest technology companies, with our status,
- * the plan to get in, every submission we made, and every benefit we hold.
+ * Partner programs tracker: every partner program, startup program, marketplace, directory,
+ * grant, and recognition route we could join, split into sectors (big tech, AI companies, the
+ * companies that hold motion, crypto ecosystems), with our status, the plan to get in, the
+ * promotion each program offers (co-marketing, social, blog, case study, ...), every submission
+ * we made, and every benefit we hold.
  *
- *   node scripts/partner-programs.mjs                     validate data/partner-programs.json (default)
- *   node scripts/partner-programs.mjs --build             regenerate docs/partners/big-tech-programs.md
- *   node scripts/partner-programs.mjs --check             fail if the generated doc is stale
- *   node scripts/partner-programs.mjs --due [--days 30] [--strict]   deadlines, expiring benefits, and submissions to chase
+ *   node scripts/partner-programs.mjs                     validate every sector data file (default)
+ *   node scripts/partner-programs.mjs --build             regenerate every sector doc and the promotion index
+ *   node scripts/partner-programs.mjs --check             fail if any generated doc is stale
+ *   node scripts/partner-programs.mjs --due [--days 30] [--strict] [--sector ai]   deadlines, expiring benefits, and submissions to chase
  *                                     (--strict exits 1 when anything is due, for cron use)
- *   node scripts/partner-programs.mjs --next [--limit 15] the ranked next actions across every program
+ *   node scripts/partner-programs.mjs --next [--limit 15] [--sector ai]   the ranked next actions
+ *   node scripts/partner-programs.mjs --promo [blog] [--sector ai] [--limit 25]   programs that will promote us, best first
  *   node scripts/partner-programs.mjs --log <id> --action "Submitted the form" [--status submitted] [--ref <url>] [--date YYYY-MM-DD]
  *   node scripts/partner-programs.mjs --benefit <id> --name "API credits" [--value "USD 1,000"] [--state received]
  *                                     [--received YYYY-MM-DD] [--expires YYYY-MM-DD] [--note "..."]
  *
- * --log and --benefit write the data file and rebuild the doc in one step, so recording a
- * submission or a benefit is a single command. Source of truth: data/partner-programs.json.
+ * --log and --benefit find the program in whichever sector holds it, write that data file, and
+ * rebuild the docs in one step, so recording a submission or a benefit is a single command.
+ * Program ids are unique across sectors. A sector whose data file is absent is skipped.
+ * Sources of truth: the data files listed in SECTORS below.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -24,6 +29,61 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const DATA = join(ROOT, 'data/partner-programs.json');
 export const DOC = join(ROOT, 'docs/partners/big-tech-programs.md');
+export const PROMO_DOC = join(ROOT, 'docs/partners/promotion-programs.md');
+
+/** One data file and one generated doc per sector. DATA and DOC above are the big-tech pair. */
+export const SECTORS = {
+	'big-tech': {
+		data: DATA,
+		doc: DOC,
+		label: 'Big tech',
+		title: 'Big-tech partner programs',
+		scope: 'the largest technology companies',
+		intro:
+			'Nearly every partnership three.ws has today started with one question: *does this company have a partner program?* This page asks that question of the largest technology companies, all at once, and keeps the answers. It lists every partner program, startup program, marketplace, directory, grant, and recognition route a company like ours can join, ranks them, says exactly what to do next, and records every submission we make and every benefit we hold.',
+	},
+	ai: {
+		data: join(ROOT, 'data/partner-programs-ai.json'),
+		doc: join(ROOT, 'docs/partners/ai-programs.md'),
+		label: 'AI',
+		title: 'AI company partner programs',
+		scope: 'AI companies outside big tech',
+		intro:
+			'The same question, *does this company have a partner program?*, asked of the AI companies that are not big tech: model labs, inference and GPU clouds, AI developer tools, generative media (3D, image, video, voice, avatars), and agent platforms and frameworks. OpenAI, Anthropic, Google, Microsoft, Meta, NVIDIA, Amazon, IBM, and xAI live on the [big-tech page](./big-tech-programs.md).',
+	},
+	motion: {
+		data: join(ROOT, 'data/partner-programs-motion.json'),
+		doc: join(ROOT, 'docs/partners/motion-programs.md'),
+		label: 'Motion',
+		title: 'Motion partner programs',
+		scope: 'the companies that hold motion',
+		intro:
+			'The companies that hold motion: capture hardware, markerless AI capture, animation libraries and motion marketplaces, rigging and retargeting tools, and avatar SDKs. Motion is what turns a rigged three.ws avatar into a living agent, so these are the partners closest to the product. Adobe, Autodesk, Unity, Epic Games, and Meta programs live on the [big-tech page](./big-tech-programs.md).',
+	},
+	crypto: {
+		data: join(ROOT, 'data/partner-programs-crypto.json'),
+		doc: join(ROOT, 'docs/partners/crypto-programs.md'),
+		label: 'Crypto',
+		title: 'Crypto ecosystem partner programs',
+		scope: 'crypto ecosystems',
+		intro:
+			'Ecosystem grants, accelerators, hackathons, wallet and app directories, infrastructure startup programs, and co-marketing routes across crypto, Solana first. Solana is the home chain and leads every wave; EVM chains are secondary surfaces. $THREE is the only coin three.ws promotes: joining an ecosystem program is working with that ecosystem, never promoting its token.',
+	},
+};
+
+/** The promotion a program offers its partners, members, or listees. */
+export const PROMO_TYPES = {
+	'co-marketing': 'Co-marketing',
+	social: 'Social posts',
+	blog: 'Blog post',
+	'case-study': 'Case study',
+	newsletter: 'Newsletter',
+	showcase: 'Featured placement',
+	event: 'Event or speaking slot',
+	media: 'Podcast or video',
+	press: 'Press release',
+	badge: 'Partner badge',
+};
 
 export const STATUSES = {
 	member: 'Member / live',
@@ -126,6 +186,14 @@ export function validate(db) {
 			if (!BENEFIT_STATES[b.state]) errs.push(`${at}: unknown benefit state "${b.state}"`);
 			for (const k of ['received', 'expires']) if (b[k] && !DATE.test(b[k])) errs.push(`${at}: benefit ${k} must be YYYY-MM-DD`);
 		}
+		if (p.promo !== undefined) {
+			if (!Array.isArray(p.promo)) errs.push(`${at}: promo must be an array`);
+			else {
+				for (const t of p.promo) if (!PROMO_TYPES[t]) errs.push(`${at}: unknown promo type "${t}"`);
+				if (new Set(p.promo).size !== p.promo.length) errs.push(`${at}: duplicate promo type`);
+				if (p.promo.length && !p.promo_note) errs.push(`${at}: promo needs a promo_note saying how to get it`);
+			}
+		}
 		const text = JSON.stringify(p);
 		if (DASH.test(text)) errs.push(`${at}: contains an em-dash or en-dash`);
 	}
@@ -142,6 +210,15 @@ const lastLog = (p) => (p.log || []).reduce((m, e) => (e.date > m ? e.date : m),
 
 function byRank(a, b) {
 	return score(b) - score(a) || a.company.localeCompare(b.company) || a.program.localeCompare(b.program);
+}
+
+/** Promotion value of one ask: the program score plus two points per kind of promotion it offers. */
+export function promoValue(p) {
+	return score(p) + 2 * (p.promo || []).length;
+}
+
+function byPromo(a, b) {
+	return promoValue(b) - promoValue(a) || byRank(a, b);
 }
 
 /** Deadlines inside the window, benefits expiring inside it, and submissions with no movement. */
@@ -170,23 +247,39 @@ export function due(db, today, days = 30) {
 	return out;
 }
 
-export function render(db) {
+const rel = (abs) => abs.slice(ROOT.length + 1);
+const docName = (abs) => abs.slice(abs.lastIndexOf('/') + 1);
+const promoTags = (p) => (p.promo || []).map((t) => PROMO_TYPES[t]).join(', ');
+
+/** The other sector pages and the promotion index, as one line of links. */
+function siblings(sector) {
+	const links = Object.entries(SECTORS)
+		.filter(([k, m]) => k !== sector && existsSync(m.data))
+		.map(([, m]) => `[${m.title.toLowerCase()}](./${docName(m.doc)})`);
+	return `Sibling pages: ${links.join(', ')}, and [who promotes partners](./${docName(PROMO_DOC)}) across every sector.`;
+}
+
+export function render(db, sector = 'big-tech') {
+	const meta = SECTORS[sector];
+	if (!meta) throw new Error(`unknown sector "${sector}"; one of ${Object.keys(SECTORS).join(', ')}`);
+	const dataRel = rel(meta.data);
 	const P = db.programs;
 	const active = P.filter((p) => !INACTIVE.has(p.status));
 	const count = (s) => P.filter((p) => p.status === s).length;
 	const companiesWithMember = new Set(P.filter((p) => p.status === 'member').map((p) => p.company));
+	const promoting = active.filter((p) => (p.promo || []).length);
 	const out = [];
-	out.push('# Big-tech partner programs');
+	out.push(`# ${meta.title}`);
 	out.push('');
-	out.push('<!-- Generated by scripts/partner-programs.mjs from data/partner-programs.json. Do not edit by hand. -->');
+	out.push(`<!-- Generated by scripts/partner-programs.mjs from ${dataRel}. Do not edit by hand. -->`);
 	out.push('');
-	out.push(
-		'Nearly every partnership three.ws has today started with one question: *does this company have a partner program?* This page asks that question of the largest technology companies, all at once, and keeps the answers. It lists every partner program, startup program, marketplace, directory, grant, and recognition route a company like ours can join, ranks them, says exactly what to do next, and records every submission we make and every benefit we hold.',
-	);
+	out.push(meta.intro);
 	out.push('');
 	out.push(
-		'It is the wide net. The narrower docs stay authoritative for what they cover: [partners.md](../partners.md) is what each live partnership **is** and how to describe it, [opportunities.md](./opportunities.md) is the stuck-item pipeline, [prospects.md](./prospects.md) scores the 3D and avatar ecosystem (not big tech), and the [listings registry](../listings-registry.md) tracks directories and awesome-lists.',
+		'It is the wide net. The narrower docs stay authoritative for what they cover: [partners.md](../partners.md) is what each live partnership **is** and how to describe it, [opportunities.md](./opportunities.md) is the stuck-item pipeline, [prospects.md](./prospects.md) scores the 3D and avatar ecosystem, and the [listings registry](../listings-registry.md) tracks directories and awesome-lists.',
 	);
+	out.push('');
+	out.push(siblings(sector));
 	out.push('');
 	out.push(
 		`**${P.length} programs across ${db.companies.length} companies.** ` +
@@ -194,21 +287,22 @@ export function render(db) {
 				.filter((s) => count(s))
 				.map((s) => `${count(s)} ${STATUSES[s].toLowerCase()}`)
 				.join(', ') +
-			`. We hold at least one membership at ${companiesWithMember.size} of the ${db.companies.length} companies. Last full research sweep: ${db.updated}.`,
+			`. We hold at least one membership at ${companiesWithMember.size} of the ${db.companies.length} companies, and ${promoting.length} of the open programs offer some form of promotion. Last full research sweep: ${db.updated}.`,
 	);
 	out.push('');
 	out.push('## Using this page');
 	out.push('');
 	out.push('```sh');
-	out.push('npm run programs:next                     # the ranked next actions, top 15');
-	out.push('npm run programs:due                      # deadlines and expiring benefits in the next 30 days, submissions to chase');
+	out.push(`npm run programs:next -- --sector ${sector}   # the ranked next actions, top 15`);
+	out.push(`npm run programs:due -- --sector ${sector}    # deadlines and expiring benefits in the next 30 days, submissions to chase`);
+	out.push(`npm run programs:promo -- blog --sector ${sector}   # programs that will promote us, by type`);
 	out.push('npm run programs -- --log <id> --action "Submitted the application" --status submitted --ref <url>');
 	out.push('npm run programs -- --benefit <id> --name "Cloud credits" --value "USD 25,000" --state received --received 2026-11-06 --expires 2027-11-06');
-	out.push('npm run programs:build                    # regenerate this page after editing data/partner-programs.json by hand');
+	out.push(`npm run programs:build                    # regenerate this page after editing ${dataRel} by hand`);
 	out.push('```');
 	out.push('');
 	out.push(
-		'`--log` and `--benefit` update [data/partner-programs.json](../../data/partner-programs.json) and rebuild this page in one step. Log every submission the day it happens, with the confirmation link or email subject as `--ref`; log every benefit the day it lands, with its expiry. That is the whole tracking discipline.',
+		`\`--log\` and \`--benefit\` update [${dataRel}](../../${dataRel}) and rebuild this page in one step. Log every submission the day it happens, with the confirmation link or email subject as \`--ref\`; log every benefit the day it lands, with its expiry. That is the whole tracking discipline.`,
 	);
 	out.push('');
 	out.push(
@@ -256,6 +350,20 @@ export function render(db) {
 		for (const p of waiting) out.push(`| ${link(p)} | ${esc(p.company)} | ${lastLog(p) || p.checked} | ${esc(p.next || 'Chase the reviewer')} |`);
 		out.push('');
 	}
+
+	out.push('## Who promotes partners');
+	out.push('');
+	if (promoting.length) {
+		out.push(
+			`The open programs on this page that will put three.ws in front of their audience: co-marketing, social posts, blog posts, case studies, newsletters, featured placement, events, podcasts, press, or a partner badge. Ranked by promotion value: the program score plus two points for each kind of promotion one ask earns. Ask for the promotion in the same message as the application; it is far easier to get on the way in than after. The cross-sector view is [promotion-programs.md](./${docName(PROMO_DOC)}).`,
+		);
+		out.push('');
+		out.push('| Program | Company | Promotion offered | How to get it | Status |', '|---|---|---|---|---|');
+		for (const p of [...promoting].sort(byPromo)) out.push(`| ${link(p)} | ${esc(p.company)} | ${promoTags(p)} | ${esc(p.promo_note)} | ${STATUSES[p.status]} |`);
+	} else {
+		out.push('No program on this page records a promotion benefit yet.');
+	}
+	out.push('');
 
 	out.push('## Benefits ledger');
 	out.push('');
@@ -314,15 +422,15 @@ export function render(db) {
 		out.push('');
 		if (c.angle) out.push(`**How we partner with ${c.name}:** ${c.angle}`, '');
 		if (rows.length) {
-			out.push('| Program | Type | What it gives | Who qualifies | Status | Next action | F·R·A |', '|---|---|---|---|---|---|---|');
+			out.push('| Program | Type | What it gives | Promotion | Who qualifies | Status | Next action | F·R·A |', '|---|---|---|---|---|---|---|---|');
 			for (const p of rows) {
 				const gives = [p.value, ...(p.benefits || [])].filter(Boolean).join('; ');
 				const assets = (p.assets || []).map((a) => `[kit](../../${a})`).join(' ');
-				const applyShown = p.apply && !String(p.next || '').includes(p.apply);
+				const applyShown = p.apply && !String(p.next || '').toLowerCase().includes(p.apply.toLowerCase());
 				const apply = applyShown ? ` Apply: ${/^https?:\/\//.test(p.apply) ? `[form](${p.apply})` : esc(p.apply)}.` : '';
 				const cadence = p.cadence ? ` Cadence: ${esc(p.cadence)}.` : '';
 				out.push(
-					`| ${link(p)} | ${KINDS[p.kind]} | ${esc(gives)} | ${esc(p.eligibility || '')}${p.cost ? ` Cost: ${esc(p.cost)}.` : ''} | ${STATUSES[p.status]} | ${[esc(p.next || ''), apply.trim(), cadence.trim(), assets].filter(Boolean).join(' ')} | ${fra(p)} |`,
+					`| ${link(p)} | ${KINDS[p.kind]} | ${esc(gives)} | ${promoTags(p)} | ${esc(p.eligibility || '')}${p.cost ? ` Cost: ${esc(p.cost)}.` : ''} | ${STATUSES[p.status]} | ${[esc(p.next || ''), apply.trim(), cadence.trim(), assets].filter(Boolean).join(' ')} | ${fra(p)} |`,
 				);
 			}
 			out.push('');
@@ -331,6 +439,9 @@ export function render(db) {
 				for (const p of notes) out.push(`- **${esc(p.program)}.** ${esc(p.why)}`);
 				out.push('');
 			}
+		}
+		if (!rows.length && !dead.length) {
+			out.push(`No partner, startup, listing, or grant program found in the ${db.updated} sweep. Re-check on the next quarterly sweep.`, '');
 		}
 		if (dead.length) {
 			out.push('Closed doors (do not re-research):');
@@ -349,6 +460,104 @@ export function render(db) {
 	out.push('- **A new membership** also needs a card on `/partners` and `/partners/benefits` and a row in [partners.md](../partners.md) (see [partner-benefits.md](../partner-benefits.md#editing-rules)).');
 	out.push('');
 	return out.join('\n');
+}
+
+/** Every sector whose data file exists, in SECTORS order. */
+export function loadAll() {
+	return Object.entries(SECTORS)
+		.filter(([, m]) => existsSync(m.data))
+		.map(([sector, m]) => ({ sector, db: load(m.data) }));
+}
+
+/** Per-sector validation plus ids unique across sectors, so --log <id> is never ambiguous. */
+export function validateAll(all) {
+	const errs = [];
+	const seen = new Map();
+	for (const { sector, db } of all) {
+		for (const e of validate(db)) errs.push(`${sector}: ${e}`);
+		for (const p of db.programs || []) {
+			if (seen.has(p.id) && seen.get(p.id) !== sector) errs.push(`${sector}: program ${p.id}: id also used in ${seen.get(p.id)}`);
+			seen.set(p.id, sector);
+		}
+	}
+	return errs;
+}
+
+/** The cross-sector index of every open program that promotes its partners. */
+export function renderPromo(all) {
+	const rows = [];
+	for (const { sector, db } of all) {
+		for (const p of db.programs) if (!INACTIVE.has(p.status) && (p.promo || []).length) rows.push({ sector, p });
+	}
+	const label = (sector) => SECTORS[sector].label;
+	const page = (sector) => `./${docName(SECTORS[sector].doc)}`;
+	const out = [];
+	out.push('# Who promotes partners');
+	out.push('');
+	out.push(`<!-- Generated by scripts/partner-programs.mjs from ${all.map(({ sector }) => rel(SECTORS[sector].data)).join(', ')}. Do not edit by hand. -->`);
+	out.push('');
+	out.push(
+		'Most partner programs list you. Some also **promote** you: a co-marketing campaign, a post on their social accounts, a feature on their blog, a case study, a newsletter slot, a featured placement, a speaking slot, a podcast, a joint press release, or a partner badge. This page pulls those programs out of every sector tracker so an application can be chosen for the audience it buys, not just the listing.',
+	);
+	out.push('');
+	out.push(
+		`**${rows.length} open programs offer promotion** across ${all.map(({ sector }) => `[${label(sector)}](${page(sector)})`).join(', ')}. A tag is set only where the program states the benefit or has a documented record of doing it for partners; the note says which, and how to ask.`,
+	);
+	out.push('');
+	out.push('```sh');
+	out.push('npm run programs:promo                    # the best single asks, across sectors');
+	out.push('npm run programs:promo -- blog            # every program that will publish a blog post about us');
+	out.push('npm run programs -- --benefit <id> --name "Blog post" --state received --note "<url>"   # record a promotion we won');
+	out.push('```');
+	out.push('');
+	out.push('## At a glance');
+	out.push('');
+	out.push(`| Promotion | ${all.map(({ sector }) => label(sector)).join(' | ')} | Total |`, `|---|${all.map(() => '---|').join('')}---|`);
+	for (const [t, name] of Object.entries(PROMO_TYPES)) {
+		const per = all.map(({ sector }) => rows.filter((r) => r.sector === sector && r.p.promo.includes(t)).length);
+		const total = per.reduce((a, b) => a + b, 0);
+		out.push(`| [${name}](#${anchor(name)}) | ${per.join(' | ')} | **${total}** |`);
+	}
+	out.push('');
+	out.push('## Best single asks');
+	out.push('');
+	out.push('Ranked by promotion value: the program score (fit, reach, access) plus two points for each kind of promotion the program offers. For a program we already belong to, the ask is the promotion itself; for the rest it rides on the application. Work these first when the goal is reach.');
+	out.push('');
+	out.push('| # | Program | Company | Sector | Promotion | Value | Cost | Next action |', '|---|---|---|---|---|---|---|---|');
+	[...rows]
+		.sort((x, y) => byPromo(x.p, y.p))
+		.slice(0, 30)
+		.forEach(({ sector, p }, i) => out.push(`| ${i + 1} | ${link(p)} | ${esc(p.company)} | ${label(sector)} | ${promoTags(p)} | ${promoValue(p)} | ${esc(p.cost || '')} | ${esc(p.next || STATUSES[p.status])} |`));
+	out.push('');
+	out.push('## By kind of promotion');
+	out.push('');
+	for (const [t, name] of Object.entries(PROMO_TYPES)) {
+		const of = rows.filter((r) => r.p.promo.includes(t)).sort((x, y) => byRank(x.p, y.p));
+		out.push(`### ${name}`);
+		out.push('');
+		if (!of.length) {
+			out.push('No tracked program offers this yet.', '');
+			continue;
+		}
+		out.push('| Program | Company | Sector | How to get it | Status | Score |', '|---|---|---|---|---|---|');
+		for (const { sector, p } of of) out.push(`| ${link(p)} | ${esc(p.company)} | ${label(sector)} | ${esc(p.promo_note)} | ${STATUSES[p.status]} | ${score(p)} |`);
+		out.push('');
+	}
+	out.push('## Keeping it true');
+	out.push('');
+	out.push('- **Tag only what is stated or documented.** A company having a social account is not a promotion benefit. Mark a track-record-only tag as such in `promo_note`.');
+	out.push('- **Ask on the way in.** Put the promotion ask in the application or acceptance reply; most programs grant it at onboarding and rarely later.');
+	out.push('- **Record what we win.** A published post, case study, or spotlight is a benefit: record it with `--benefit` and the live URL in `--note`, then add it to [press-kit.md](../press-kit.md) coverage where it belongs.');
+	out.push('- **$THREE is the only coin we promote.** A crypto ecosystem promoting three.ws is welcome; three.ws promoting another token in return is not part of any deal without owner approval.');
+	out.push('');
+	return out.join('\n');
+}
+
+/** Every generated file and its content, for --build and --check. */
+export function outputs(all) {
+	const files = all.map(({ sector, db }) => [SECTORS[sector].doc, render(db, sector) + '\n']);
+	files.push([PROMO_DOC, renderPromo(all) + '\n']);
+	return files;
 }
 
 function arg(args, name, fallback) {
@@ -396,29 +605,44 @@ function fail(errs) {
 async function main() {
 	const args = process.argv.slice(2);
 	const today = new Date().toISOString().slice(0, 10);
-	const db = load();
-	const errs = validate(db);
+	const all = loadAll();
+	const errs = validateAll(all);
 	if (errs.length) fail(errs);
+	const onlySector = arg(args, '--sector');
+	if (onlySector && !SECTORS[onlySector]) fail([`unknown sector "${onlySector}"; one of ${Object.keys(SECTORS).join(', ')}`]);
+	const scoped = all.filter(({ sector }) => !onlySector || sector === onlySector);
+	const programs = scoped.flatMap(({ sector, db }) => db.programs.map((p) => ({ sector, p })));
+	const total = all.reduce((n, { db }) => n + db.programs.length, 0);
 
-	const write = () => {
-		const after = validate(db);
+	const holder = (id) => {
+		const hit = all.find(({ db }) => db.programs.some((p) => p.id === id));
+		if (!hit) throw new Error(`no program with id "${id}" in any sector (see data/partner-programs*.json)`);
+		return hit;
+	};
+	const buildAll = () => {
+		for (const [path, content] of outputs(all)) writeFileSync(path, content);
+	};
+	const write = ({ sector, db }) => {
+		const after = validateAll(all);
 		if (after.length) fail(after);
-		save(db);
-		writeFileSync(DOC, render(db) + '\n');
+		save(db, SECTORS[sector].data);
+		buildAll();
 	};
 
 	try {
 		if (args.includes('--log')) {
-			const p = logSubmission(db, arg(args, '--log'), {
+			const h = holder(arg(args, '--log'));
+			const p = logSubmission(h.db, arg(args, '--log'), {
 				action: arg(args, '--action'),
 				status: arg(args, '--status'),
 				ref: arg(args, '--ref'),
 				date: arg(args, '--date', today),
 			});
-			write();
-			console.log(`logged on ${p.id}: status ${p.status}, ${p.log.length} log entr${p.log.length === 1 ? 'y' : 'ies'}`);
+			write(h);
+			console.log(`logged on ${p.id} (${h.sector}): status ${p.status}, ${p.log.length} log entr${p.log.length === 1 ? 'y' : 'ies'}`);
 		} else if (args.includes('--benefit')) {
-			const p = recordBenefit(db, arg(args, '--benefit'), {
+			const h = holder(arg(args, '--benefit'));
+			const p = recordBenefit(h.db, arg(args, '--benefit'), {
 				name: arg(args, '--name'),
 				value: arg(args, '--value'),
 				state: arg(args, '--state', 'received'),
@@ -426,33 +650,55 @@ async function main() {
 				expires: arg(args, '--expires'),
 				note: arg(args, '--note'),
 			});
-			write();
-			console.log(`benefit recorded on ${p.id}: ${p.received.length} on file`);
+			write(h);
+			console.log(`benefit recorded on ${p.id} (${h.sector}): ${p.received.length} on file`);
 		} else if (args.includes('--build')) {
-			writeFileSync(DOC, render(db) + '\n');
-			console.log(`wrote docs/partners/big-tech-programs.md (${db.programs.length} programs)`);
+			buildAll();
+			for (const { sector, db } of all) console.log(`wrote ${rel(SECTORS[sector].doc)} (${db.programs.length} programs)`);
+			console.log(`wrote ${rel(PROMO_DOC)}`);
 		} else if (args.includes('--check')) {
-			const cur = existsSync(DOC) ? readFileSync(DOC, 'utf8') : '';
-			if (cur !== render(db) + '\n') fail(['docs/partners/big-tech-programs.md is stale: run npm run programs:build']);
-			console.log(`partner programs ok (${db.programs.length} programs)`);
+			const stale = outputs(all)
+				.filter(([path, content]) => (existsSync(path) ? readFileSync(path, 'utf8') : '') !== content)
+				.map(([path]) => `${rel(path)} is stale: run npm run programs:build`);
+			if (stale.length) fail(stale);
+			console.log(`partner programs ok (${total} programs across ${all.length} sectors)`);
 		} else if (args.includes('--due')) {
 			const days = Number(arg(args, '--days', 30));
-			const r = due(db, today, days);
-			const lines = [];
-			for (const { p, days: n } of r.deadlines) lines.push(`DEADLINE  ${p.deadline} (${n}d)  ${p.company}: ${p.program}  -> ${p.next}`);
-			for (const { p, b, days: n } of r.expiring) lines.push(`EXPIRES   ${b.expires} (${n}d)  ${p.company}: ${b.benefit} [${BENEFIT_STATES[b.state]}]`);
-			for (const { p, days: n, since } of r.chase) lines.push(`CHASE     ${n}d since ${since}  ${p.company}: ${p.program}`);
+			const r = { deadlines: [], expiring: [], chase: [] };
+			for (const { sector, db } of scoped) {
+				const one = due(db, today, days);
+				for (const k of Object.keys(r)) r[k].push(...one[k].map((x) => ({ ...x, sector })));
+			}
+			r.deadlines.sort((a, b) => a.days - b.days);
+			r.expiring.sort((a, b) => a.days - b.days);
+			r.chase.sort((a, b) => b.days - a.days);
+			const lines = [
+				...r.deadlines.map(({ p, days: n, sector }) => `DEADLINE  ${p.deadline} (${n}d)  [${sector}] ${p.company}: ${p.program}  -> ${p.next}`),
+				...r.expiring.map(({ p, b, days: n, sector }) => `EXPIRES   ${b.expires} (${n}d)  [${sector}] ${p.company}: ${b.benefit} [${BENEFIT_STATES[b.state]}]`),
+				...r.chase.map(({ p, days: n, since, sector }) => `CHASE     ${n}d since ${since}  [${sector}] ${p.company}: ${p.program}`),
+			];
 			console.log(lines.length ? lines.join('\n') : `nothing due in the next ${days} days`);
 			if (args.includes('--strict') && lines.length) process.exitCode = 1;
 		} else if (args.includes('--next')) {
 			const limit = Number(arg(args, '--limit', 15));
-			const rows = db.programs
-				.filter((p) => waveOf(p) !== null)
-				.sort((a, b) => waveOf(a) - waveOf(b) || byRank(a, b))
+			const rows = programs
+				.filter(({ p }) => waveOf(p) !== null)
+				.sort((a, b) => waveOf(a.p) - waveOf(b.p) || byRank(a.p, b.p))
 				.slice(0, limit);
-			for (const p of rows) console.log(`W${waveOf(p)}  ${String(score(p)).padStart(2)}  ${p.company}: ${p.program}\n          -> ${p.next}`);
+			for (const { sector, p } of rows) console.log(`W${waveOf(p)}  ${String(score(p)).padStart(2)}  [${sector}] ${p.company}: ${p.program}\n          -> ${p.next}`);
+		} else if (args.includes('--promo')) {
+			const type = arg(args, '--promo');
+			const want = type && !type.startsWith('--') ? type : null;
+			if (want && !PROMO_TYPES[want]) fail([`unknown promo type "${want}"; one of ${Object.keys(PROMO_TYPES).join(', ')}`]);
+			const limit = Number(arg(args, '--limit', 25));
+			const rows = programs
+				.filter(({ p }) => !INACTIVE.has(p.status) && (p.promo || []).length && (!want || p.promo.includes(want)))
+				.sort((a, b) => (want ? byRank(a.p, b.p) : byPromo(a.p, b.p)))
+				.slice(0, limit);
+			for (const { sector, p } of rows) console.log(`${String(want ? score(p) : promoValue(p)).padStart(2)}  [${sector}] ${p.company}: ${p.program}  {${p.promo.join(', ')}}\n          -> ${p.promo_note}`);
+			if (!rows.length) console.log('no open program offers that promotion');
 		} else {
-			console.log(`partner-programs.json valid (${db.programs.length} programs, ${db.companies.length} companies)`);
+			console.log(`partner programs valid (${total} programs across ${all.length} sectors: ${all.map(({ sector, db }) => `${sector} ${db.programs.length}`).join(', ')})`);
 		}
 	} catch (err) {
 		fail([err.message]);

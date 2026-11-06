@@ -313,6 +313,7 @@
 		"programs:check": "node scripts/partner-programs.mjs --check",
 		"programs:next": "node scripts/partner-programs.mjs --next",
 		"programs:due": "node scripts/partner-programs.mjs --due",
+		"programs:promo": "node scripts/partner-programs.mjs --promo",
 		"docs:launch-lanes": "node --env-file=.env.local scripts/gen-launch-lanes-doc.mjs",
 		"audit:deps": "node scripts/check-deps.mjs",
 		"audit:upstreams": "node scripts/audit-upstreams.mjs",

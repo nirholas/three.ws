@@ -1,0 +1,1107 @@
+{
+	"$comment": "Source of truth for the motion sector of the partner programs tracker (scripts/partner-programs.mjs). Record a submission with npm run programs -- --log <id> --action \"...\", a benefit with npm run programs -- --benefit <id> --name \"...\". Never set status member without proof. Never store organization, workspace, or account IDs here.",
+	"updated": "2026-11-06",
+	"companies": [
+		{
+			"name": "Pixiv",
+			"angle": "Get the VRoid Hub app approved and keep contributing to three-vrm, which we already depend on."
+		},
+		{
+			"name": "Blender",
+			"angle": "Submit the packaged three.ws Forge extension to Blender Extensions (free); the Development Fund is a paid, optional follow-up."
+		},
+		{
+			"name": "Mesh2Motion",
+			"angle": "Contribute upstream and cross-link; our CC0 library already pins its packs."
+		},
+		{
+			"name": "Quaternius",
+			"angle": "Sponsor via Patreon and credit publicly; clips already feed our CC0 library."
+		},
+		{
+			"name": "Sketchfab",
+			"angle": "Keep the showcase cron, re-establish contact with KitBash, aim for Staff Picks."
+		},
+		{
+			"name": "Avaturn",
+			"angle": "Already integrated via src/avatar-creator.js and src/avaturn-client.js: request a case study, works-with badge and a joint migration page."
+		},
+		{
+			"name": "Uthana",
+			"angle": "Strongest commercial motion partner: license labeled clips to replace Mixamo and use the API as a paid lane; propose a joint open-source web player story."
+		},
+		{
+			"name": "DeepMotion",
+			"angle": "Request Animate 3D API access as a failover rung behind our text2motion and video2motion workers; ask for SayMotion verification and a technology-partner listing alongside Avaturn."
+		},
+		{
+			"name": "Move AI",
+			"angle": "Offer Move API as a paid markerless lane beside workers/model-video2motion; mind the EULA video licence."
+		},
+		{
+			"name": "Rokoko",
+			"angle": "Pitch a Studio Live receiver and BVH import so a Rokoko suit drives a three.ws agent, using the retargeter in src/glb-canonicalize.js; apply for sponsored creator reach with a demo."
+		},
+		{
+			"name": "VRM Consortium",
+			"angle": "Join as a supporting member for credibility; ask for fee details."
+		},
+		{
+			"name": "Bones Studio",
+			"angle": "Apply for the startup BONES-SEED licence for evaluation and retarget testing; respect the generative-model ban."
+		},
+		{
+			"name": "CGTrader",
+			"angle": "Secondary storefront for CC0 and labeled generated packs once its AI-content rules are confirmed."
+		},
+		{
+			"name": "Plask",
+			"angle": "Self-serve key now: add Plask as a lane and map its SMPL24 poses through our SMPL handling."
+		},
+		{
+			"name": "Reallusion",
+			"angle": "Highlight the shipped CC_Base_ bone map, ask for a works-with listing, and ask about web-playback licensing for ActorCore; sell captured packs only if we build a library."
+		},
+		{
+			"name": "Sony",
+			"angle": "Build a mocopi BVH-over-UDP receiver bridge and email mocopi-support@sony.com for a commercial-use blessing and developer-event slot."
+		},
+		{
+			"name": "Genies",
+			"angle": "Competitor reference; Unity-only SDK, low priority."
+		},
+		{
+			"name": "Kinetix",
+			"angle": "Low priority: contact about web emote delivery; verify the grant claim first."
+		},
+		{
+			"name": "Meta",
+			"angle": "Low fit; Unity and Unreal only."
+		},
+		{
+			"name": "Cascadeur",
+			"angle": "Ingest its FBX/GLB output; ask sales@cascadeur.com about affiliate."
+		},
+		{
+			"name": "Mocap Online",
+			"angle": "Possible clean-licence commissioning via IP-Share; not a promotion channel."
+		},
+		{
+			"name": "Truebones",
+			"angle": "Ask for explicit redistribution terms before using non-human rigs publicly."
+		},
+		{
+			"name": "Xsens",
+			"angle": "Skip hardware programs; only note the free Notary data and the 10 December contest."
+		},
+		{
+			"name": "Noitom",
+			"angle": "No program; stream Axis Studio BVH into the avatar runtime as a demo."
+		},
+		{
+			"name": "OptiTrack",
+			"angle": "No program; consider an open-source NatNet bridge."
+		},
+		{
+			"name": "Shutterstock",
+			"angle": "TurboSquid bans AI-generated content; skip for Forge output."
+		},
+		{
+			"name": "Vicon",
+			"angle": "Register interest only if a Vicon import is added."
+		},
+		{
+			"name": "Adobe",
+			"angle": "Mixamo has no partner route; keep Mixamo clips out of the public library and ask Adobe for written permission only if needed."
+		},
+		{
+			"name": "Meshcapade",
+			"angle": "Closed; verify SMPL licensing with Max Planck Innovation before relying on SMPL weights."
+		},
+		{
+			"name": "Radical",
+			"angle": "Closed; target its stranded users with /video-to-motion."
+		},
+		{
+			"name": "Ready Player Me",
+			"angle": "Retired; capture its refugees with the existing import page."
+		}
+	],
+	"programs": [
+		{
+			"id": "pixiv-three-vrm",
+			"company": "Pixiv",
+			"program": "three-vrm open-source contributions",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://github.com/pixiv/three-vrm",
+			"apply": "GitHub issues and pull requests",
+			"benefits": [
+				"Upstream our retargeter fixes",
+				"Possible listing in three-vrm examples and community pages"
+			],
+			"eligibility": "Open source, MIT",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 5,
+			"next": "Upstream a real fix or example from our pose-solve work to pixiv/three-vrm, then ask to be listed among projects that use it",
+			"why": "Core dependency already (pose-solve, avatar export); contributions are the cheapest credibility win in the VRM world. Evidence: src/runtime/pose-solve.js. Using the library is not a partnership; a merged contribution is the route.",
+			"assets": [
+				"src/runtime/pose-solve.js",
+				"src/avatar-export.js"
+			],
+			"source": "https://github.com/pixiv/three-vrm",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pixiv-vroid-hub-api-approved-application",
+			"company": "Pixiv",
+			"program": "VRoid Hub API approved application",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://developer.vroid.com/en/api/",
+			"apply": "Register at hub.vroid.com/developer/registration, create an app at hub.vroid.com/oauth/applications, then contact VRoid via the inquiry form on vroid.pixiv.help to get approved",
+			"benefits": [
+				"Immediate API/SDK access after developer registration",
+				"Approved apps can publish on VRoid Hub; unapproved apps see a limited model set and a warning",
+				"Approved apps are listed on hub.vroid.com/apps (per docs/partners/prospects.md, not re-verified)"
+			],
+			"eligibility": "Developer registration on VRoid Hub; approval review",
+			"cost": "free",
+			"cadence": "rolling (reply about a week per developer.vroid.com, per prospects.md)",
+			"fit": 5,
+			"reach": 4,
+			"access": 4,
+			"next": "Apply through the program page",
+			"why": "VRM and J_Bip bone maps already ship in the canonicalizer, so an approved VRoid import app is a small step.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Approved applications appear in the VRoid Hub apps list; apply through the approval inquiry form (listing detail from prospects.md).",
+			"assets": [
+				"src/glb-canonicalize.js",
+				"src/runtime/pose-solve.js",
+				"docs/avatar-engines.md"
+			],
+			"source": "https://developer.vroid.com/en/api/quick-start.html",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "blender-blender-extensions-platform",
+			"company": "Blender",
+			"program": "Blender Extensions platform (three.ws Forge add-on)",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://extensions.blender.org/about/",
+			"apply": "Upload a zip with blender_manifest.toml with a Blender ID, then wait for community review (steps in integrations/blender/SUBMITTING.md)",
+			"benefits": [
+				"Appears in Blender 4.2+ Get Extensions for every user",
+				"GPL-compatible add-ons only"
+			],
+			"eligibility": "GPL-compliant extension, public review",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 4,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Our extension is packaged (id three_ws, GPL-3.0-or-later) but the listing URL in integrations/blender/README.md returns 404 on 2026-11-06, so it is not live; submit it.",
+			"assets": [
+				"integrations/blender/SUBMITTING.md",
+				"integrations/blender/README.md",
+				"integrations/blender/three_ws"
+			],
+			"source": "https://extensions.blender.org/about/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "blender-blender-development-fund-corporate-membership",
+			"company": "Blender",
+			"program": "Blender Development Fund corporate membership",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://fund.blender.org/corporate-memberships/",
+			"apply": "Bronze, Silver, Gold via checkout at fund.blender.org; Platinum, Titanium, Patron via francesco@blender.org",
+			"value": "EUR 6,000 to 240,000 per year",
+			"benefits": [
+				"Bronze EUR 6k and Silver EUR 12k: logo and URL",
+				"Gold EUR 30k: plus social media mention, credit in reports and at events",
+				"Platinum EUR 60k: plus a developer liaison",
+				"Titanium EUR 120k: plus blender.org front page mention and board contact",
+				"Patron EUR 240k: plus press release, tech blog post, dedicated product manager"
+			],
+			"eligibility": "Companies; fees are donations and do not imply alignment (per Blender policy)",
+			"cost": "EUR 6k to 240k per year",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 5,
+			"access": 5,
+			"next": "Bronze, Silver, Gold via checkout at fund.blender.org; Platinum, Titanium, Patron via francesco@blender.org",
+			"why": "Out of budget for a small startup beyond symbolic tiers; our integrations/blender add-on gives a free route to the same community.",
+			"promo": [
+				"social",
+				"showcase",
+				"press",
+				"blog"
+			],
+			"promo_note": "Tier dependent: logo/URL from Bronze, social mention and event credit from Gold, press release and tech blog post only at Patron.",
+			"source": "https://fund.blender.org/corporate-memberships/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "mesh2motion-mesh2motion-open-source-animation-app-and",
+			"company": "Mesh2Motion",
+			"program": "Mesh2Motion open-source animation app and CC0 library",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://github.com/Mesh2Motion",
+			"apply": "GitHub issues and PRs; mesh2motion.org (no sponsorship page found)",
+			"benefits": [
+				"MIT code, CC0 art and animations",
+				"Accepts contributions to mesh2motion-assets"
+			],
+			"eligibility": "Open source",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 5,
+			"next": "GitHub issues and PRs; mesh2motion.org (no sponsorship page found)",
+			"why": "Open alternative to Mixamo that we already source clips from (pinned by commit in cc0-animation-library); contribute upstream and cross-link.",
+			"assets": [
+				"scripts/cc0-animation-library.mjs",
+				"scripts/cc0-library.config.json"
+			],
+			"source": "https://github.com/Mesh2Motion",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "quaternius-quaternius-patreon-and-universal-animation-library",
+			"company": "Quaternius",
+			"program": "Quaternius Patreon and Universal Animation Library",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://quaternius.com/packs/universalanimationlibrary.html",
+			"apply": "Patreon at patreon.com/quaternius; email the contact address on their site (printed on the site)",
+			"benefits": [
+				"CC0 Universal Animation Library, 120+ clips on a universal humanoid rig",
+				"Patrons get monthly credits toward source keys"
+			],
+			"eligibility": "Patreon pledge; CC0 assets need no permission",
+			"cost": "pledge",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 5,
+			"next": "Patreon at patreon.com/quaternius; email the contact address on their site (printed on the site)",
+			"why": "Quaternius is named in our canonicalizer and its clips feed the CC0 library; a sponsorship plus public credit is a cheap goodwill step.",
+			"assets": [
+				"src/glb-canonicalize.js",
+				"scripts/cc0-animation-library.mjs"
+			],
+			"source": "https://quaternius.com/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "sketchfab-sketchfab-data-download-and-viewer-apis",
+			"company": "Sketchfab",
+			"program": "Sketchfab Data, Download and Viewer APIs, Staff Picks (now owned by KitBash)",
+			"kind": "directory",
+			"status": "member",
+			"url": "https://www.epicgames.com/site/news/kitbash-acquires-artstation-and-sketchfab",
+			"apply": "OAuth app and API token through the Sketchfab developer docs; Staff Picks is editorial",
+			"benefits": [
+				"Data API v3 uploads and collections, Viewer API, Download API (glTF, GLB, USDZ), oEmbed",
+				"Large 3D audience for showcase uploads"
+			],
+			"eligibility": "Sketchfab account; Created With AI tag required for generated models (per prospects.md citing Sketchfab policy)",
+			"cost": "free API",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 4,
+			"next": "Pitch the best showcase uploads for Staff Picks and ask the KitBash team whether a partner or API showcase route exists after the acquisition",
+			"why": "KitBash acquired Sketchfab and ArtStation from Epic (announced 2026-08-10) with no immediate changes; Epic still runs Fab. Our showcase cron already uploads; refresh contact with the new owner and aim for Staff Picks. Evidence: api/cron/sketchfab-showcase.js.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Staff Picks are curated by Sketchfab staff; the only route is quality uploads plus the right tags (track record, no published submission form).",
+			"assets": [
+				"api/cron/sketchfab-showcase.js"
+			],
+			"source": "https://www.epicgames.com/site/news/kitbash-acquires-artstation-and-sketchfab",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "avaturn-avaturn-developer-plan-sdk-and-partners",
+			"company": "Avaturn",
+			"program": "Avaturn Developer plan, SDK and Partners/Agencies programs",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://avaturn.me/pricing/",
+			"apply": "Developer portal purchase for Pro; 'Reach out to us' on Enterprise; Agencies page; hello@in3d.io per docs/partners/prospects.md",
+			"value": "USD 800 per month Pro (per avaturn.me/pricing)",
+			"benefits": [
+				"Pro USD 800 per month: API and SDK, own branding and user management, up to 1,000 avatars then USD 0.15 each",
+				"Enterprise: full-body scans, dedicated servers, custom terms, Slack support",
+				"Free Unity SDK on the Asset Store (mentions Partners and Beta programs)"
+			],
+			"eligibility": "Paid plan; no startup discount on the pricing page",
+			"cost": "USD 800 per month, enterprise custom",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 4,
+			"wave": 1,
+			"next": "Email Avaturn: the integration is live (src/avaturn-client.js); ask for a co-published case study, a works-with badge and a listing on their partners page",
+			"why": "Already integrated (AvatarCreator + session endpoint); ask for a co-published case study and a 'works with' badge, plus a joint landing page for avatar users stranded by Ready Player Me. Evidence: src/avaturn-client.js.",
+			"assets": [
+				"src/avatar-creator.js",
+				"src/avaturn-client.js",
+				"docs/avatar-creation.md"
+			],
+			"source": "https://avaturn.me/pricing/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "uthana-uthana-api",
+			"company": "Uthana",
+			"program": "Uthana API (text to motion, video to motion, retarget, auto-rig)",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://uthana.com/docs/api",
+			"apply": "Self-serve account; GraphQL API shares credits with the web app. Support support@uthana.com, Discord",
+			"benefits": [
+				"Pay-as-you-go credits, no subscription or minimum",
+				"Video-to-motion USD 0.05 per second of input video (per Uthana)",
+				"Public Blender and Maya plugins"
+			],
+			"eligibility": "Account only",
+			"cost": "pay as you go",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 5,
+			"next": "Self-serve account; GraphQL API shares credits with the web app. Support support@uthana.com, Discord",
+			"why": "Drop-in commercial motion lane behind our open-source one; self-serve so no application wait.",
+			"source": "https://uthana.com/faq",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "uthana-uthana-motion-data-licensing-and-enterprise",
+			"company": "Uthana",
+			"program": "Uthana motion data licensing and enterprise partnerships",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://uthana.com/data",
+			"apply": "Email sales@uthana.com (request a data sample, catalog and delivery spec)",
+			"benefits": [
+				"Studio Motion Dataset: 250+ hours marker-based, performer-consented, FBX/GLB/BVH",
+				"1,000+ hours of human motion across collections",
+				"Custom data programs and enterprise integrations scoped per customer"
+			],
+			"eligibility": "Commercial training and evaluation rights by agreement; priced to scope",
+			"cost": "negotiated",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 3,
+			"next": "Email sales@uthana.com (request a data sample, catalog and delivery spec)",
+			"why": "Licensed, labeled motion is the clean answer to our Mixamo licensing gap and could train or evaluate our text2motion lane; also a possible co-marketing partner for an open-source web player.",
+			"assets": [
+				"workers/model-text2motion/README.md",
+				"docs/animations.md"
+			],
+			"source": "https://uthana.com/faq",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "deepmotion-deepmotion-animate-3d-api-and-saymotion",
+			"company": "DeepMotion",
+			"program": "DeepMotion Animate 3D API and SayMotion API partner access",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://www.deepmotion.com/animate-3d-api",
+			"apply": "Create an Animate 3D account, then submit the 'Animate 3D API Access Request Form'; high-volume plans via deepmotion.com/contact; SayMotion API is limited to verified partners",
+			"benefits": [
+				"REST API for video-to-animation with FBX/BVH output and retargeting (per the API page)",
+				"SayMotion text-to-motion API for verified partners",
+				"Free API trials for select partners (per SayMotion V2.3 announcement, 2024, may have changed)"
+			],
+			"eligibility": "Account plus access request form; SayMotion API by verification",
+			"cost": "paid plans, contact for volume",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 4,
+			"next": "Apply through the program page",
+			"why": "Text-to-motion and video-to-motion are exactly our Forge motion lanes; DeepMotion would be a paid failover rung behind workers/model-text2motion and model-video2motion. It already lists Avaturn and Ready Player Me as technology partners.",
+			"assets": [
+				"api/forge-motion.js",
+				"workers/model-text2motion/README.md",
+				"workers/model-video2motion/README.md"
+			],
+			"source": "https://www.deepmotion.com/animate-3d-api",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "move-ai-move-ai-developer-partner-programme",
+			"company": "Move AI",
+			"program": "Move AI Developer Partner Programme (Move API)",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://developers.move.ai/docs/pricing/",
+			"apply": "Sign-up page partners.moveaitech.com (could not be fetched from this environment, reported by search results) or Contact Sales on developers.move.ai",
+			"value": "Beta partner fee USD 190 per month with 4,000 credits (per search result of partners.moveaitech.com); pay-as-you-go also listed",
+			"benefits": [
+				"Move API access with technical support and early access to new models (per search result of the sign-up page)",
+				"Pay-as-you-go from USD 0.012 per second (single camera s1) per developer docs"
+			],
+			"eligibility": "Limited availability, first come first served, beta API for testing; EULA grants Move AI a broad licence to input video to improve its products",
+			"cost": "fee or pay-as-you-go",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 4,
+			"next": "Sign-up page partners.moveaitech.com (could not be fetched from this environment, reported by search results) or Contact Sales on developers.move.ai",
+			"why": "A commercial markerless lane next to our own workers/model-video2motion, with video-in, FBX/BVH-out; read the EULA video-data licence before routing user footage.",
+			"assets": [
+				"workers/model-video2motion/README.md",
+				"docs/video-to-motion.md"
+			],
+			"source": "https://developers.move.ai/docs/pricing/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "rokoko-rokoko-studio-live-plugins-command-api",
+			"company": "Rokoko",
+			"program": "Rokoko Studio Live plugins, Command API and Device SDK (integrations)",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://github.com/Rokoko",
+			"apply": "No application. Public GitHub repos and sdk.rokoko.com; the only route to be listed is the general contact form at rokoko.com/get-in-touch",
+			"benefits": [
+				"Studio Live plugins for Unreal, Unity, Blender, Maya and Cinema 4D (open on GitHub)",
+				"Studio Command API examples and a Device SDK for Smartgloves II",
+				"Exports FBX, BVH, CSV"
+			],
+			"eligibility": "Open repos; no partner gate. The site shows no submission process for a third-party integration listing",
+			"cost": "free (hardware and Studio licences are separate)",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "A three.ws receiver for Rokoko Studio Live streams (or BVH import into the retargeter in src/glb-canonicalize.js) would let a Rokoko suit drive a web agent; ask Rokoko to list it on their integrations page.",
+			"assets": [
+				"src/glb-canonicalize.js",
+				"docs/mocap-studio.md"
+			],
+			"source": "https://www.rokoko.com/integrations",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "rokoko-rokoko-sponsored-creator-program",
+			"company": "Rokoko",
+			"program": "Rokoko Sponsored Creator Program",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://www.rokoko.com/community/get-sponsored",
+			"apply": "Application form behind the 'Apply for a sponsorship' button on the page",
+			"benefits": [
+				"Partial tier: discounts on Rokoko tools and extended reach through Rokoko channels",
+				"Complete tier: fully sponsored tools plus invitations to livestreams and judging panels"
+			],
+			"eligibility": "Partial: upcoming 3D artists with high-quality renders. Complete: established creators with a large multi-platform following. Creators must make content with Rokoko tools and use #madewithrokoko",
+			"cost": "free to apply",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Application form behind the 'Apply for a sponsorship' button on the page",
+			"why": "Fits only as a creator route: a three.ws motion-to-avatar demo built on Rokoko Vision or Studio clips would qualify, but it is aimed at individual artists, not platforms.",
+			"promo": [
+				"social",
+				"showcase",
+				"event"
+			],
+			"promo_note": "Apply via the form; Rokoko extends reach through its channels (partial tier) and invites complete-tier creators to livestreams and judging panels. The page gives no guaranteed post commitment.",
+			"source": "https://www.rokoko.com/community/get-sponsored",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "vrm-consortium-vrm-consortium-supporting-membership",
+			"company": "VRM Consortium",
+			"program": "VRM Consortium supporting membership",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://vrm-consortium.org/en/",
+			"apply": "Email membership inquiries to vrmc-pr@vrm-consortium.org",
+			"benefits": [
+				"Supporting member: priority information on VRM spec and guidelines",
+				"Event participation and member pricing",
+				"Listed on the members page"
+			],
+			"eligibility": "Companies; the consortium says it is looking for members; fees not published",
+			"cost": "annual fee, unpublished",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 4,
+			"next": "Email membership inquiries to vrmc-pr@vrm-consortium.org",
+			"why": "VRM is the open humanoid avatar standard our retargeter targets; membership adds credibility with the Japanese VTuber and avatar ecosystem.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Members are listed on the consortium site; ask the secretariat about event slots.",
+			"assets": [
+				"src/glb-canonicalize.js"
+			],
+			"source": "https://vrm-consortium.org/en/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "bones-studio-bones-seed-motion-dataset-licence",
+			"company": "Bones Studio",
+			"program": "BONES-SEED motion dataset licence (qualifying startups)",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://bones.studio/info/seed-license",
+			"apply": "Email licensing@bones.studio; pricing at bones.studio/licensing",
+			"benefits": [
+				"142,000 motion sequences with semantic labels and text descriptions (SOMA skeleton, BVH/NPZ, plus Unitree G1 CSV)",
+				"Startups under USD 1M annual revenue may use it for internal R&D and commercialization"
+			],
+			"eligibility": "Commercial entities under USD 1M revenue, or academic. Forbids public mirrors and building competing datasets or generative motion models; attribution 'Motion Data by Bones Studio' required",
+			"cost": "free for qualifying startups, paid commercial licence otherwise",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Email licensing@bones.studio; pricing at bones.studio/licensing",
+			"why": "The generative-model ban blocks training our text2motion lane on it, but it works for evaluation, retarget testing and clip selection; read the full agreement before ingesting.",
+			"assets": [
+				"workers/model-text2motion/README.md"
+			],
+			"source": "https://bones.studio/info/seed-license",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cgtrader-cgtrader-seller-program-affiliate-and-api",
+			"company": "CGTrader",
+			"program": "CGTrader seller program, affiliate and API",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://api.cgtrader.com/",
+			"apply": "Seller sign-up on cgtrader.com; API at api.cgtrader.com; affiliate listed by directories (terms not verified)",
+			"benefits": [
+				"Sellers earn royalties (CGTrader claims up to 80 percent; sources conflict)",
+				"Free API and enterprise services pages"
+			],
+			"eligibility": "Seller account; AI-generated content rules not verified on the pages I reached",
+			"cost": "free, commission",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "A secondary storefront for CC0 and labeled generated packs, and 20 percent affiliate referral per one directory (unverified).",
+			"source": "https://api.cgtrader.com/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "plask-plask-motion-capture-api",
+			"company": "Plask",
+			"program": "Plask Motion Capture API (REST and realtime)",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://plask.ai/en-US/docs/8",
+			"apply": "Self-serve API key on the Plask Developer page; scopes jobs:read, jobs:write, live:write, usage:read",
+			"benefits": [
+				"Video upload to job to download, with SSE progress",
+				"Realtime WebSocket pose streaming (plask.pose.v1, SMPL24 skeleton)",
+				"Credit-based usage; Unreal Live Link and Blender helpers"
+			],
+			"eligibility": "Plask account and credits; docs were updated 2026-10-11 and the older @plask-ai/client SDK is not drop-in compatible",
+			"cost": "credits",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 2,
+			"access": 5,
+			"next": "Self-serve API key on the Plask Developer page; scopes jobs:read, jobs:write, live:write, usage:read",
+			"why": "Contradicts the dormant note in docs/partners/prospects.md: the API is live. SMPL24 pose output maps straight onto the SMPL rig names our canonicalizer already handles.",
+			"assets": [
+				"src/glb-canonicalize.js"
+			],
+			"source": "https://plask.ai/en-US/docs/8",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "reallusion-reallusion-affiliate-program",
+			"company": "Reallusion",
+			"program": "Reallusion Affiliate Program (Awin)",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://ui.awin.com/merchant-profile/86469",
+			"apply": "Free sign-up through the Awin network; questions to affiliate@reallusion.com",
+			"value": "15 percent per sale",
+			"benefits": [
+				"15 percent commission per sale",
+				"30-day cookie",
+				"Covers Character Creator, iClone, Cartoon Animator and content packs"
+			],
+			"eligibility": "Awin publisher account",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 5,
+			"next": "Free sign-up through the Awin network; questions to affiliate@reallusion.com",
+			"why": "Low strategic fit; only useful if we publish a guide on moving Character Creator rigs (the CC_Base_ bone map already ships) into three.ws and want to monetise referrals.",
+			"assets": [
+				"src/glb-canonicalize.js"
+			],
+			"source": "https://ui.awin.com/merchant-profile/86469",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "reallusion-actorcore-partner-program",
+			"company": "Reallusion",
+			"program": "ActorCore Partner Program (motion capture, 3D scan partners)",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://actorcore.reallusion.com/partner",
+			"apply": "'Join Now' form on the partner page (options: Motion Capture Partner, 3D Scan Partner, Other); older announcement says marketing@reallusion.com",
+			"benefits": [
+				"Sell motion packs and characters on ActorCore, Reallusion's motion marketplace",
+				"Reallusion is recruiting studios that produce motion capture and scans"
+			],
+			"eligibility": "Studios able to produce AAA-quality motion or scans; Content Developer Agreement bars selling the same content through other channels (per the agreement)",
+			"cost": "revenue share (50 percent of net sales stated for the Content Store in the agreement, which looks dated)",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Only relevant if we produce our own capture library (video2motion plus text2motion output) and want a paid channel; the other direction, licensing ActorCore motions for web playback, would be a separate ask to the same team.",
+			"assets": [
+				"src/glb-canonicalize.js"
+			],
+			"source": "https://actorcore.reallusion.com/partner",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "sony-sony-mocopi-developer-site-and-commercial",
+			"company": "Sony",
+			"program": "Sony mocopi Developer Site (XYN) and commercial licence",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://xyn.sony.net/en/developer/",
+			"apply": "Download SDKs from the XYN developer site; commercial licence via mocopi-support@sony.com (per the SDK EULA)",
+			"benefits": [
+				"Receiver plugins for Unity, MotionBuilder, Unreal, Maya, Blender; Unity receiver open-sourced Dec 2025",
+				"Mobile SDK for Android and iOS (labelled for corporate customers)",
+				"BVH Sender and Motion Serializer"
+			],
+			"eligibility": "Developer registration; commercial use needs a licence agreement",
+			"cost": "free SDK, licence by contract",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 3,
+			"next": "Download SDKs from the XYN developer site; commercial licence via mocopi-support@sony.com (per the SDK EULA)",
+			"why": "mocopi streams BVH over UDP; a browser receiver bridge would let a mocopi wearable animate any three.ws avatar. Sony has historically held developer events (mocopi Winter Camp).",
+			"assets": [
+				"src/glb-canonicalize.js"
+			],
+			"source": "https://www.sony.net/Products/mocopi-dev/en/downloads/DownloadSDK.html?dl=MobileSDK",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "genies-genies-avatar-sdk-and-developer-program",
+			"company": "Genies",
+			"program": "Genies Avatar SDK and developer program",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://assetstore.unity.com/packages/tools/game-toolkits/genies-avatar-sdk-336166",
+			"apply": "Unity Asset Store package; early access applications for the Unity Editor integration; roadmap via genies.com/blog",
+			"benefits": [
+				"Avatar SDK v3.8.6 (2026-06-13) with persistent cross-game identity",
+				"Planned Art Forge (generation) and Intelligence SDKs",
+				"IP partners include NBA Players Association, Webtoon, Sanrio"
+			],
+			"eligibility": "Unity 2022.3.62+ developers",
+			"cost": "free SDK",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Unity Asset Store package; early access applications for the Unity Editor integration; roadmap via genies.com/blog",
+			"why": "Unity-only today, so integration with a web runtime is awkward; useful as a competitor reference and as a landing page for stranded avatar developers.",
+			"source": "https://assetstore.unity.com/packages/tools/game-toolkits/genies-avatar-sdk-336166",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "kinetix-kinetix-emote-sdk-and-studio-integration",
+			"company": "Kinetix",
+			"program": "Kinetix emote SDK and studio integration grants",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.kinetix.tech",
+			"apply": "Contact Us page on kinetix.tech; no public application form found",
+			"benefits": [
+				"Video-to-animation and emote SDK/API used by Unity Muse, OVERDARE and Mixamo (per kinetix.tech)",
+				"A grant of up to USD 75,000 for game-studio integrations is reported by a third-party review, not on Kinetix's own pages"
+			],
+			"eligibility": "Aimed at games with 3D avatar systems; integration grant claim unverified",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 3,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Kinetix animation models now sit inside Mixamo and Unity Muse; a web-avatar emote integration is plausible but the program is game-studio oriented and not self-serve.",
+			"source": "https://www.kinetix.tech",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "meta-meta-movement-sdk",
+			"company": "Meta",
+			"program": "Meta Movement SDK (body, face and eye tracking)",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://developers.meta.com/horizon/documentation/unity/move-overview/",
+			"apply": "Open to Quest developers via Unity or Unreal packages; no partner application",
+			"benefits": [
+				"Body, face and eye tracking retargeting samples (Unity sample updated 2026-05-11)",
+				"Unreal docs updated 2026-04-15"
+			],
+			"eligibility": "Quest 2/3/3S/Pro hardware",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 4,
+			"next": "Open to Quest developers via Unity or Unreal packages; no partner application",
+			"why": "Unity and Unreal only; only experimental WebXR body tracking exists, so fit is low unless we ship a Quest build.",
+			"source": "https://developers.meta.com/horizon/documentation/unity/move-overview/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cascadeur-cascadeur-affiliate-and-education-licensing",
+			"company": "Cascadeur",
+			"program": "Cascadeur affiliate and education licensing",
+			"kind": "co-marketing",
+			"status": "research",
+			"url": "https://cascadeur.com/help/faq",
+			"apply": "Email sales@cascadeur.com for education and bulk; affiliate terms not published in the results I could reach",
+			"benefits": [
+				"Affiliate program mentioned in the FAQ",
+				"Educational edition for teachers and institutions"
+			],
+			"eligibility": "Sales approval",
+			"cost": "unclear",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Physics-based keyframe tool; it exports FBX/GLB clips we can ingest, but Nekki has no public partner or startup program.",
+			"source": "https://cascadeur.com/help/faq",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "mocap-online-mocap-online-ip-share-and",
+			"company": "Mocap Online",
+			"program": "Mocap Online IP-Share and custom animation services",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://mocaponline.com/pages/custom-animation-services",
+			"apply": "Contact Motus Digital; sells on its own site, Fab and the Unity Asset Store",
+			"benefits": [
+				"IP-Share: up to 50 percent discount on custom capture if Mocap Online also distributes the animations (non-exclusive licence back)"
+			],
+			"eligibility": "Animations may not be resold as standalone files; no open contributor program found",
+			"cost": "custom pricing",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 2,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "A way to commission clean-licence motion for our library, not a promotion channel.",
+			"source": "https://mocaponline.com/pages/custom-animation-services",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "truebones-truebones-motion-libraries-licensing",
+			"company": "Truebones",
+			"program": "Truebones motion libraries licensing",
+			"kind": "marketplace",
+			"status": "research",
+			"url": "https://truebones.gumroad.com/",
+			"apply": "Email the contact address on their site (listed on Gumroad); sold direct on Gumroad",
+			"benefits": [
+				"BVH/FBX libraries (Motherlode, Pro-Bones, Zoo of 75+ animals)",
+				"Non-standard licence tiers; Zoo data not freely redistributable"
+			],
+			"eligibility": "Direct purchase; written terms needed to redistribute",
+			"cost": "one-off purchase",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 2,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Non-human rigs are a gap in our humanoid-only retargeter; any use in a public library needs explicit redistribution terms first.",
+			"source": "https://truebones.gumroad.com/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "xsens-xsens-indie-program",
+			"company": "Xsens",
+			"program": "Xsens Indie Program",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://www.xsens.com/entertainment/motion-capture-for-indies",
+			"apply": "Buttons 'Apply for the Xsens Indie Program' / 'Request bundle pricing' on the page",
+			"value": "36 to 66 percent off first-year bundle",
+			"benefits": [
+				"Xsens Link, Awinda or Awinda Starter plus 12-month Animate Pro at 36 to 66 percent off list",
+				"Animate Pro renewals 50 percent off while eligible",
+				"Free Terry Notary performance-capture data for participants",
+				"Animation contest with Xsens Link prize, entries due 10 December (2026 per the contest URL)"
+			],
+			"eligibility": "Revenue or funding under USD 100,000 / EUR 100,000 last fiscal year, no AAA or enterprise work, must share behind-the-scenes content within 24 months",
+			"cost": "discounted purchase",
+			"cadence": "rolling; animation contest deadline 10 December 2026",
+			"deadline": "2026-12-10",
+			"fit": 1,
+			"reach": 3,
+			"access": 3,
+			"next": "Buttons 'Apply for the Xsens Indie Program' / 'Request bundle pricing' on the page",
+			"why": "Hardware purchase is poor value for a software platform; the free Notary data and the contest are the only direct hooks.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Participants must share a behind-the-scenes story; contest entries are shown by Xsens (stated as prizes, featuring not explicitly promised).",
+			"source": "https://www.xsens.com/entertainment/motion-capture-for-indies",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "xsens-xsens-channel-partner-network",
+			"company": "Xsens",
+			"program": "Xsens Channel Partner Network",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://www.xsens.com/channel-partners",
+			"apply": "Form at https://www.xsens.com/channel-partners/become-a-channel-partner",
+			"benefits": [
+				"Onboarding and training",
+				"Joint marketing programs",
+				"Partner resource library",
+				"Ongoing support"
+			],
+			"eligibility": "Aimed at distributors and value-added resellers; Xsens (Movella rebranded back to Xsens in 2026 per Wikipedia)",
+			"cost": "unclear",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 3,
+			"next": "Form at https://www.xsens.com/channel-partners/become-a-channel-partner",
+			"why": "Reseller track; relevant only if we ever bundle Xsens capture with a web-agent product.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Joint marketing programs are listed as a partner benefit; ask during onboarding.",
+			"source": "https://www.xsens.com/channel-partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "noitom-noitom-perception-neuron-mocapapi-sdk-and",
+			"company": "Noitom",
+			"program": "Noitom Perception Neuron MocapApi SDK and ecosystem",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.noitom.com",
+			"apply": "No public program; contact form at noitom.com/contact.html; MocapApi SDK on GitHub; Partners section on the About Us page",
+			"benefits": [
+				"MocapApi SDK (successor to NeuronDataReader) and Axis Studio streaming",
+				"Integrations for Unreal, Unity, Blender, Cinema4D, MotionBuilder; Reallusion is a listed partner"
+			],
+			"eligibility": "Open SDK; no stated application",
+			"cost": "free SDK",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Same pattern as Rokoko: stream Axis Studio BVH into a web avatar. Low reach without a vendor relationship.",
+			"source": "https://www.noitom.com",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "optitrack-optitrack-natnet-sdk-motive-plugins-and",
+			"company": "OptiTrack",
+			"program": "OptiTrack NatNet SDK, Motive plugins and OEM",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.optitrack.com/software",
+			"apply": "No program page found. NatNet SDK is a public download; OEM and custom engineering via OptiTrack sales",
+			"benefits": [
+				"NatNet SDK for real-time streaming (C/C++/C#/Python, UDP/multicast)",
+				"Custom plugins, OEM and engineering services"
+			],
+			"eligibility": "Open SDK for licensed OptiTrack users",
+			"cost": "free SDK, hardware separate",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "No partner route; a NatNet-to-WebSocket bridge for streaming marker data to an agent avatar is a possible open-source showcase.",
+			"source": "https://www.optitrack.com/software",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "shutterstock-turbosquid-publisher-program",
+			"company": "Shutterstock",
+			"program": "TurboSquid publisher program",
+			"kind": "marketplace",
+			"status": "closed",
+			"url": "https://resources.turbosquid.com/general-info/terms-agreements/",
+			"apply": "Publisher application on turbosquid.com",
+			"benefits": [
+				"Retired for our purposes: TurboSquid does not accept AI-generated content for sale"
+			],
+			"eligibility": "Artists must prove IP ownership of everything submitted",
+			"cost": "commission",
+			"cadence": "closed to generated content",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"why": "Not usable for Forge output; only hand-authored assets could be sold there.",
+			"source": "https://resources.turbosquid.com/category/general-info-2/terms-agreements/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "vicon-vicon-markerless-pioneer-program",
+			"company": "Vicon",
+			"program": "Vicon Markerless Pioneer Program",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://www.vicon.com/pioneer/",
+			"apply": "Contact form or email on the page to register interest in future cohorts",
+			"benefits": [
+				"Direct knowledge exchange with Vicon senior management, product and development",
+				"Chance to shape the markerless roadmap"
+			],
+			"eligibility": "Active mocap users able to communicate regularly with Vicon",
+			"cost": "free",
+			"cadence": "VFX and VR cohort closed; Life Sciences and Engineering cohorts to reopen, no date",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"wave": 5,
+			"next": "Watch for the next window (VFX and VR cohort closed; Life Sciences and Engineering cohorts to reopen, no date) and apply when it opens",
+			"why": "Hardware vendor program for professional mocap users; we are not a capture studio. Register interest only if we add a Vicon-to-glTF import.",
+			"source": "https://www.vicon.com/pioneer/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "adobe-mixamo",
+			"company": "Adobe",
+			"program": "Mixamo (auto-rigger and animation library)",
+			"kind": "developer-program",
+			"status": "closed",
+			"url": "https://community.adobe.com/mixamo-694",
+			"apply": "No partner channel; Adobe community forum only. Free with an Adobe ID",
+			"benefits": [
+				"Free royalty-free use of characters and animations in projects (per Adobe FAQ, a 'limited duration technology preview')"
+			],
+			"eligibility": "Adobe ID; redistribution of animations as standalone assets prohibited; machine-learning dataset use never clarified by Adobe",
+			"cost": "free",
+			"cadence": "none",
+			"fit": 1,
+			"reach": 2,
+			"access": 1,
+			"why": "Not a partner route. Our public clip library no longer serves Mixamo-sourced clips (api/animations/library.js filters them), so the action is written permission or continued replacement with CC0 packs. Evidence: api/animations/library.js.",
+			"assets": [
+				"docs/animation-seeding.md",
+				"scripts/mirror-animation-library.mjs"
+			],
+			"source": "https://community.adobe.com/mixamo-694",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "meshcapade-meshcapade-mocapade-platform",
+			"company": "Meshcapade",
+			"program": "Meshcapade / MoCapade platform",
+			"kind": "developer-program",
+			"status": "closed",
+			"url": "https://meshcapade.com/",
+			"apply": "None; online platforms were shut down after Epic acquired the company (announced 2026-02-18)",
+			"benefits": [
+				"Retired: site says online platforms shut down as of April 18; technology expected inside MetaHuman and Unreal Engine"
+			],
+			"eligibility": "n/a",
+			"cost": "n/a",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 1,
+			"access": 1,
+			"why": "No program. SMPL commercial licensing sits with Max Planck Innovation per secondary sources (conflicting); confirm with them before relying on SMPL weights.",
+			"source": "https://meshcapade.com/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "radical-radical-core-live-and-canvas",
+			"company": "Radical",
+			"program": "RADiCAL Core, Live and Canvas",
+			"kind": "developer-program",
+			"status": "closed",
+			"url": "https://www.cgchannel.com/2026/04/autodesk-acquires-core-tech-of-ai-motion-capture-firm-radical/",
+			"apply": "None",
+			"benefits": [
+				"Retired: Autodesk bought the core technology (April 2026) and the web portal closed 6 July 2026"
+			],
+			"eligibility": "n/a",
+			"cost": "n/a",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 1,
+			"access": 1,
+			"why": "Do not pursue; its stranded users are the opportunity for /video-to-motion. Autodesk plans to fold the technology into Maya and Flow Studio.",
+			"assets": [
+				"docs/video-to-motion.md",
+				"workers/model-video2motion/README.md"
+			],
+			"source": "https://www.cgchannel.com/2026/04/autodesk-acquires-core-tech-of-ai-motion-capture-firm-radical/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "ready-player-me-ready-player-me-developer",
+			"company": "Ready Player Me",
+			"program": "Ready Player Me developer platform",
+			"kind": "developer-program",
+			"status": "closed",
+			"url": "https://variety.com/2025/digital/news/netflix-acquires-ready-player-me-games-avatar-creation-1236612915/",
+			"apply": "None",
+			"benefits": [
+				"Retired: Netflix announced the acquisition 2025-12-19; creator, PlayerZero and developer APIs went offline 2026-01-31"
+			],
+			"eligibility": "n/a",
+			"cost": "n/a",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 1,
+			"access": 1,
+			"why": "No company to partner with; the migration audience is the opportunity (the /import/rpm page and Wolf3D skeleton support already exist).",
+			"assets": [
+				"docs/avatar-engines.md"
+			],
+			"source": "https://variety.com/2025/digital/news/netflix-acquires-ready-player-me-games-avatar-creation-1236612915/",
+			"checked": "2026-11-06"
+		}
+	]
+}

@@ -5,14 +5,21 @@
  * benefit we hold, so the rules that keep it honest are tested here: the
  * validator rejects malformed entries, the plan waves are derived the same way
  * every time, --log and --benefit mutate the data the way the doc reports it,
- * and the committed data file plus generated doc are in sync.
+ * promotion tags are checked and indexed across sectors, and every committed
+ * sector data file plus its generated doc are in sync.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import {
 	DATA,
 	DOC,
+	PROMO_DOC,
+	SECTORS,
 	load,
+	loadAll,
+	validateAll,
+	renderPromo,
+	outputs,
 	validate,
 	waveOf,
 	score,
@@ -82,6 +89,15 @@ describe('validate', () => {
 	it('rejects em-dashes and en-dashes anywhere in an entry', () => {
 		expect(validate(dbOf(base({ why: 'fast \u2014 cheap' }))).join('\n')).toMatch(/em-dash or en-dash/);
 		expect(validate(dbOf(base({ why: 'pages 1\u20133' }))).join('\n')).toMatch(/em-dash or en-dash/);
+	});
+
+	it('checks promotion tags and requires a note on how to get them', () => {
+		expect(validate(dbOf(base({ promo: ['blog', 'social'], promo_note: 'Ask the DevRel team after launch' })))).toEqual([]);
+		const text = validate(dbOf(base({ promo: ['blog', 'blog', 'billboard'] }))).join('\n');
+		expect(text).toMatch(/unknown promo type "billboard"/);
+		expect(text).toMatch(/duplicate promo type/);
+		expect(text).toMatch(/promo needs a promo_note/);
+		expect(validate(dbOf(base({ promo: 'blog' }))).join('\n')).toMatch(/promo must be an array/);
 	});
 
 	it('checks log entries and benefits', () => {
@@ -215,11 +231,53 @@ describe('render', () => {
 	});
 });
 
+describe('sectors and the promotion index', () => {
+	const promoted = (id, promo, over = {}) => base({ id, promo, promo_note: `How to get ${id}`, ...over });
+
+	it('rejects a program id used in two sectors', () => {
+		const all = [
+			{ sector: 'big-tech', db: dbOf(base()) },
+			{ sector: 'ai', db: dbOf(base()) },
+		];
+		expect(validateAll(all).join('\n')).toMatch(/acme-startups: id also used in big-tech/);
+		expect(validateAll([{ sector: 'ai', db: dbOf(base({ fit: 9 })) }]).join('\n')).toMatch(/^ai: program acme-startups: fit/);
+	});
+
+	it('renders each sector with its own title, data path and sibling links', () => {
+		const md = render(dbOf(promoted('m', ['blog'])), 'motion');
+		expect(md).toContain(`# ${SECTORS.motion.title}`);
+		expect(md).toContain('data/partner-programs-motion.json');
+		expect(md).toContain('./big-tech-programs.md');
+		expect(md).toContain('./promotion-programs.md');
+		expect(md).toMatch(/## Who promotes partners[\s\S]*How to get m/);
+		expect(() => render(dbOf(base()), 'nope')).toThrow(/unknown sector/);
+	});
+
+	it('indexes promotion across sectors, most kinds first, and leaves out inactive programs', () => {
+		const all = [
+			{ sector: 'big-tech', db: dbOf(promoted('one', ['blog']), promoted('dead', ['blog', 'social'], { status: 'closed', why: 'Retired' })) },
+			{ sector: 'ai', db: dbOf(promoted('many', ['blog', 'social', 'case-study'], { program: 'Many Promo' })) },
+		];
+		const md = renderPromo(all);
+		expect(md).toContain('**2 open programs offer promotion**');
+		expect(md).toMatch(/\| \[Blog post\]\(#blog-post\) \| 1 \| 1 \| \*\*2\*\* \|/);
+		const best = md.slice(md.indexOf('## Best single asks'), md.indexOf('## By kind of promotion'));
+		expect(best.indexOf('Many Promo')).toBeLessThan(best.indexOf('Acme for Startups'));
+		expect(md).not.toContain('How to get dead');
+		expect(md).not.toMatch(/[\u2013\u2014]/);
+	});
+});
+
 describe('committed tracker', () => {
-	it('data/partner-programs.json validates and the generated doc is current', () => {
-		const db = load(DATA);
-		expect(validate(db)).toEqual([]);
-		expect(db.programs.length).toBeGreaterThan(100);
-		expect(readFileSync(DOC, 'utf8')).toBe(render(db) + '\n');
+	it('every sector data file validates and every generated doc is current', () => {
+		const all = loadAll();
+		expect(all.map((s) => s.sector)).toContain('big-tech');
+		expect(validateAll(all)).toEqual([]);
+		expect(load(DATA).programs.length).toBeGreaterThan(100);
+		for (const [path, content] of outputs(all)) {
+			expect(existsSync(path), path).toBe(true);
+			expect(readFileSync(path, 'utf8'), path).toBe(content);
+		}
+		expect(outputs(all).map(([p]) => p)).toEqual(expect.arrayContaining([DOC, PROMO_DOC]));
 	});
 });

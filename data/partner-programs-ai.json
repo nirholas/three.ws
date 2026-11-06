@@ -1,0 +1,3044 @@
+{
+	"$comment": "Source of truth for the ai sector of the partner programs tracker (scripts/partner-programs.mjs). Record a submission with npm run programs -- --log <id> --action \"...\", a benefit with npm run programs -- --benefit <id> --name \"...\". Never set status member without proof. Never store organization, workspace, or account IDs here.",
+	"updated": "2026-11-06",
+	"companies": [
+		{
+			"name": "Hugging Face",
+			"angle": "Already live with an org, Space and articles. Push the Avatar Viewer Space for Spaces of the Week and expose avatar tools as an MCP-enabled Space; ask about a 3D task for Inference Providers."
+		},
+		{
+			"name": "Cline",
+			"angle": "Open one issue on cline/mcp-marketplace; fastest review of any directory."
+		},
+		{
+			"name": "Cursor (Anysphere)",
+			"angle": "Submit one open-source plugin bundling our MCP server, skills and CLI cursor client to both the Cursor Marketplace and Cursor Directory."
+		},
+		{
+			"name": "Dify",
+			"angle": "Submit a .difypkg 3D plugin PR and apply as a Marketplace Partner."
+		},
+		{
+			"name": "OpenRouter",
+			"angle": "Highest-fit item: our LLM chain already sends attribution headers, so verify the app page and open a PR to awesome-openrouter."
+		},
+		{
+			"name": "ElevenLabs",
+			"angle": "Apply to Startup Grants: avatars already speak through the ElevenLabs TTS lane."
+		},
+		{
+			"name": "Glama",
+			"angle": "Claim the existing connector and add test credentials."
+		},
+		{
+			"name": "LangChain",
+			"angle": "Open the integration listing issue for our langchain package."
+		},
+		{
+			"name": "LiveKit",
+			"angle": "Apply to LiveKit Startups alongside the avatar plugin PR; it also unlocks Inworld and Deepgram credits."
+		},
+		{
+			"name": "E2B",
+			"angle": "Submit the drafted awesome-ai-agents entry; apply for credits only if we add sandboxed execution."
+		},
+		{
+			"name": "Pipecat (Daily)",
+			"angle": "Open the community-integration docs PR for pipecat-threews so the avatar appears in Pipecat's integrations list."
+		},
+		{
+			"name": "PulseMCP",
+			"angle": "Already live; nothing to do."
+		},
+		{
+			"name": "Smithery",
+			"angle": "Publish the remote server via smithery.ai/new using the direct URL."
+		},
+		{
+			"name": "Tripo (VAST)",
+			"angle": "Pursue the partner-key pilot in docs/partners/tripo.md as the main move; use the affiliate and Game Hub credits for low-cost testing of v3 rigging."
+		},
+		{
+			"name": "Zapier",
+			"angle": "Ship a public Forge integration to enter the partner program, then request the Silver featured slot and newsletter spotlight."
+		},
+		{
+			"name": "Composio",
+			"angle": "Submit the drafted toolkit partnership form and the startup program application together."
+		},
+		{
+			"name": "LobeHub",
+			"angle": "Already live via GitHub indexing."
+		},
+		{
+			"name": "Mastra",
+			"angle": "Contribute a 3D avatar agent template to Mastra's gallery aiming for the Partner tag."
+		},
+		{
+			"name": "mcp.so",
+			"angle": "Free listing submission."
+		},
+		{
+			"name": "n8n",
+			"angle": "Build a verified node, which needs an owner exception for the GitHub Actions provenance rule, then apply as a Verified Creator for templates."
+		},
+		{
+			"name": "Poe (Quora)",
+			"angle": "Optional server bot that returns 3D models, monetized per message."
+		},
+		{
+			"name": "Together AI",
+			"angle": "Apply to the Startup Accelerator Build tier and use the promised joint go-to-market for a launch post about generation on open models."
+		},
+		{
+			"name": "Vercel (AI SDK)",
+			"angle": "List our AI SDK package on the community providers page; directory only, we never deploy on Vercel."
+		},
+		{
+			"name": "Cartesia",
+			"angle": "Apply for the Startups Grant to add low-latency Sonic voices to avatars, noting logo-sharing and owner approval for a new paid API."
+		},
+		{
+			"name": "Cerebras",
+			"angle": "Already a free-tier LLM rung; ask via Build With Us for the Startup Deal and co-marketing."
+		},
+		{
+			"name": "Deepgram",
+			"angle": "Apply once the ASR go or no-go lands, to power speech-in for voice avatars."
+		},
+		{
+			"name": "Make",
+			"angle": "Build a Make app for Forge actions, then apply to the Technology Partner Program."
+		},
+		{
+			"name": "Meshy",
+			"angle": "Ask for platform pricing so Meshy becomes a house lane beside the existing BYOK lane (api/_providers/meshy.js), starting with the partner form; the Contributor program is individual-only."
+		},
+		{
+			"name": "Mistral AI",
+			"angle": "Apply to the rolling Ambassadors program for credits for the Mistral rung in our LLM chain; publish an MCP plus avatar tutorial as the contribution."
+		},
+		{
+			"name": "Perplexity",
+			"angle": "Request an official connector for our OAuth 2.1 remote MCP by email and forum thread; startup program is VC-gated and appears folded."
+		},
+		{
+			"name": "RunPod",
+			"angle": "Apply to the Starter tier and publish a Runpod template for our open-source GPU worker."
+		},
+		{
+			"name": "Runway",
+			"angle": "Apply to Builders for API credits and early access to Runway Characters to test avatar interop with our MCP server."
+		},
+		{
+			"name": "CrewAI",
+			"angle": "Post a how-to for using the remote MCP server through mcps=[...] in the community forum; no program exists."
+		},
+		{
+			"name": "fal.ai",
+			"angle": "Best 3D hosting partner (Tripo, Hunyuan3D, TRELLIS.2 behind one key) but the startup program is Europe and Asia only; pursue through a partner referral or direct outreach."
+		},
+		{
+			"name": "Fireworks AI",
+			"angle": "Ask the Fireworks team about the startup program and joint marketing; page text did not confirm it."
+		},
+		{
+			"name": "Lambda",
+			"angle": "Redeem the Inception perk for Lambda credits."
+		},
+		{
+			"name": "Luma AI",
+			"angle": "Optional creator-side visibility: a founder joins the Creative Partner Program with turntable video of three.ws avatars; no 3D lane to integrate."
+		},
+		{
+			"name": "MiniMax",
+			"angle": "Join the Developer Ambassador Program for coding-plan credits and early audio/video models that could drive avatar animation."
+		},
+		{
+			"name": "Pinecone",
+			"angle": "Apply if agent memory needs a hosted vector database."
+		},
+		{
+			"name": "Smithery (Arcade)",
+			"angle": "Check whether the registry still accepts a static server card after the proxy shutdown, then publish it."
+		},
+		{
+			"name": "Spline",
+			"angle": "Position three.ws GLB export as a Spline handoff and join the affiliate program only if a content push happens."
+		},
+		{
+			"name": "StackBlitz (Bolt)",
+			"angle": "No partner route; only the events program if we host a hackathon."
+		},
+		{
+			"name": "Supabase",
+			"angle": "Integration Partner listing for a Supabase-backed agent memory template; startup program is discontinued."
+		},
+		{
+			"name": "Z.ai (Zhipu)",
+			"angle": "Apply to the Startup Program and propose a 3D embodied agent track at a GLM hackathon; GLM supports MCP and tool calling."
+		},
+		{
+			"name": "Convai",
+			"angle": "Pitch three.ws rigged avatars as the ThreeJS body for Convai brains, since Convai already supports ThreeJS characters."
+		},
+		{
+			"name": "Hyper3D (Deemos)",
+			"angle": "Ask Deemos for early access and credits for the existing Rodin lane; their archived MCP repo leaves room for the three.ws MCP server."
+		},
+		{
+			"name": "Inworld AI",
+			"angle": "Take Inworld credits through the LiveKit application instead of a separate program."
+		},
+		{
+			"name": "Kling AI (Kuaishou)",
+			"angle": "Low priority; creator program only, nothing in the 3D pipeline."
+		},
+		{
+			"name": "Manus",
+			"angle": "The startup program is VC-referral only; the Fellow program is the only open route."
+		},
+		{
+			"name": "Modal",
+			"angle": "Apply for startup credits to cover burst GPU generation."
+		},
+		{
+			"name": "Replit",
+			"angle": "Lowest priority; an Add to Replit badge and tutorial is enough."
+		},
+		{
+			"name": "Stability AI",
+			"angle": "Email partners@stability.ai to confirm the Community License covers Forge use past USD 1M and ask for a listing; we already run SF3D-class models."
+		},
+		{
+			"name": "Weights & Biases (CoreWeave)",
+			"angle": "Redeem through Google Cloud perks only if we start tracking model training."
+		},
+		{
+			"name": "Cognition (Devin, Windsurf)",
+			"angle": "Devin can use our MCP as a custom server; request marketplace listing by email."
+		},
+		{
+			"name": "CoreWeave",
+			"angle": "Only if we outgrow GCP GPUs; apply to Ventures for compute."
+		},
+		{
+			"name": "Genspark",
+			"angle": "Referral only; no action."
+		},
+		{
+			"name": "Groq",
+			"angle": "Already in our LLM chain; no live application route, so only pursue credits if Groq reopens or offers hackathon codes."
+		},
+		{
+			"name": "Synthesia",
+			"angle": "Competitor segment; skip unless an integration request arrives."
+		},
+		{
+			"name": "Baseten",
+			"angle": "Venture-backed gate blocks us; revisit if we raise."
+		},
+		{
+			"name": "Character.AI",
+			"angle": "No route; skip."
+		},
+		{
+			"name": "Cohere",
+			"angle": "Low priority: startup program is gone; only Catalyst Grants for a public-benefit avatar project."
+		},
+		{
+			"name": "HeyGen",
+			"angle": "Competitor in talking avatars; skip the affiliate program."
+		},
+		{
+			"name": "Hume AI",
+			"angle": "Low priority; the startup grant looks retired."
+		},
+		{
+			"name": "Kaedim",
+			"angle": "Route an artist-finished premium 3D tier to Kaedim via its Enterprise contact, as scored in prospects.md."
+		},
+		{
+			"name": "Browserbase",
+			"angle": "Low priority; take its Founder Pack redemption if the ElevenLabs grant lands."
+		},
+		{
+			"name": "Common Sense Machines (Google)",
+			"angle": "Do not depend on it; Google acquired the team in January 2026 and the API future is unannounced."
+		},
+		{
+			"name": "D-ID",
+			"angle": "Competitor with invite-only affiliate terms; no action."
+		},
+		{
+			"name": "Hedra",
+			"angle": "Peripheral video API; no action."
+		},
+		{
+			"name": "LlamaIndex",
+			"angle": "No integration program and the startup offer is about document parsing; skip."
+		},
+		{
+			"name": "Pika",
+			"angle": "No open route; invite-only creator program. Revisit only if video output lands in the Forge."
+		},
+		{
+			"name": "Tavus",
+			"angle": "Reach via the shared Pipecat integration rather than a program."
+		},
+		{
+			"name": "Vapi",
+			"angle": "Applications are on hold; revisit when they reopen."
+		},
+		{
+			"name": "Replicate",
+			"angle": "No public program (now part of Cloudflare); keep the existing provider lane in api/_providers/replicate.js and reach it through Cloudflare for Startups."
+		},
+		{
+			"name": "AI21 Labs",
+			"angle": "No startup or partner program; AI21 halted Jamba development in May 2026 and pivoted to Maestro. Skip."
+		},
+		{
+			"name": "DeepSeek",
+			"angle": "No partner, startup or ecosystem program found. Use its open models through OpenRouter, HF or Together and attribute there."
+		},
+		{
+			"name": "Lovable",
+			"angle": "No partner or startup program found; Lovable users add our remote MCP as a custom connector, so publish a how-to."
+		},
+		{
+			"name": "Moonshot AI (Kimi)",
+			"angle": "No developer or partner program found beyond Kimi Code Beta; use Kimi via OpenRouter and HF, and watch platform.moonshot.ai."
+		}
+	],
+	"programs": [
+		{
+			"id": "hugging-face-hugging-face-org-spaces-and",
+			"company": "Hugging Face",
+			"program": "Hugging Face org, Spaces and community blog",
+			"kind": "developer-program",
+			"status": "member",
+			"url": "https://huggingface.co/three-ws",
+			"apply": "Already live (org, Avatar Viewer Space, avatars model repo, two articles)",
+			"benefits": [
+				"Org page on the Hub with a Space, a model repo and community articles",
+				"Spaces can be exposed as MCP tools through the HF MCP server (Gradio MCP apps)"
+			],
+			"eligibility": "Free HF account; ZeroGPU/PRO quotas are separate",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 5,
+			"access": 5,
+			"why": "Our home on the Hub and the base for every other HF route below. Evidence: docs/listings.md (Hugging Face row, status Live); data/listings.json id huggingface.",
+			"assets": [
+				"docs/huggingface.md",
+				"docs/listings.md",
+				"api/_providers/huggingface.js"
+			],
+			"source": "https://huggingface.co/docs/hub/en/hf-mcp-server",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hugging-face-hugging-face-mcp-server",
+			"company": "Hugging Face",
+			"program": "Hugging Face MCP Server (MCP-compatible Spaces as tools)",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://huggingface.co/docs/hub/en/hf-mcp-server",
+			"apply": "Tag a Gradio Space with MCP support; users add it in HF MCP settings or via Dynamic Spaces",
+			"benefits": [
+				"Space tools callable from any MCP client via hf.co/mcp",
+				"Discoverable with space_search mcp=true"
+			],
+			"eligibility": "Gradio app on a Space with MCP enabled",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 4,
+			"next": "Tag a Gradio Space with MCP support; users add it in HF MCP settings or via Dynamic Spaces",
+			"why": "Exposing our avatar/GLB tools as an MCP-enabled Space puts the MCP server in front of HF agent users with no review gate.",
+			"assets": [
+				"docs/huggingface.md"
+			],
+			"source": "https://huggingface.co/docs/hub/en/hf-mcp-server",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hugging-face-featured-spaces-and-spaces-of",
+			"company": "Hugging Face",
+			"program": "Featured Spaces and Spaces of the Week",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://huggingface.co/docs/hub/en/spaces-featured",
+			"apply": "No application form: author-owned Spaces get a star; Spaces of the Week is curated by HF staff",
+			"benefits": [
+				"Star icon on author-owned official demo Spaces",
+				"Spaces of the Week weekly curated selection on huggingface.co/spaces"
+			],
+			"eligibility": "A public Space that is an official demo of your own model/dataset/paper (star), or one HF staff pick",
+			"cost": "free",
+			"cadence": "Spaces of the Week is weekly (latest listing 2 Nov 2026 per search)",
+			"fit": 4,
+			"reach": 5,
+			"access": 2,
+			"next": "No application form: author-owned Spaces get a star; Spaces of the Week is curated by HF staff",
+			"why": "Our Avatar Viewer Space is a strong visual candidate for a weekly pick; earn it with a polished demo, a model repo link and a community article.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "The docs describe Spaces of the Week as a staff-curated featured slot; there is no form, so ping the HF team on the Space discussion or Discord with the demo.",
+			"assets": [
+				"docs/huggingface.md"
+			],
+			"source": "https://huggingface.co/docs/hub/en/spaces-featured",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hugging-face-gradio-hugging-face-community-hackathons",
+			"company": "Hugging Face",
+			"program": "Gradio / Hugging Face community hackathons (Agents and MCP)",
+			"kind": "event",
+			"status": "research",
+			"url": "https://huggingface.co/MCP-1st-Birthday",
+			"apply": "Register as a participant or sponsor via the event org page; no 2026 edition found",
+			"benefits": [
+				"Prior editions: 4,100+ registrations (June 2025) and 6,200 participants (Nov 2025)",
+				"Sponsors supplied credits and cash prizes (Modal, Mistral, LlamaIndex, Nebius, others)"
+			],
+			"eligibility": "Open to all participants; sponsoring needs HF/Gradio contact",
+			"cost": "free to enter",
+			"cadence": "No 2026 edition found; 2025 ran June and November",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Recurring MCP-themed hackathons suit our MCP server and avatar tools both as entrant and as sponsor of a 3D track.",
+			"promo": [
+				"event",
+				"showcase"
+			],
+			"promo_note": "Winners are listed on gradio.app/hackathon-winners and sponsor tracks get named on the event org page.",
+			"source": "https://huggingface.co/Agents-MCP-Hackathon",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hugging-face-inference-providers-partner-registration",
+			"company": "Hugging Face",
+			"program": "Inference Providers partner registration",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://huggingface.co/docs/inference-providers/register-as-a-provider",
+			"apply": "Contact HF to register the provider, then PR the JS and Python clients and create model mappings via the partners API",
+			"benefits": [
+				"Listed as an Inference Provider on the Hub and in huggingface.js / huggingface_hub",
+				"Model pages show the provider for mapped models",
+				"HF has said revenue-share deals may follow (per HF docs thread, not a stated benefit)"
+			],
+			"eligibility": "Provider must expose an API HF can test (OpenAI-compatible for chat; image/video/speech tasks also listed); register Hub org",
+			"cost": "free (provider bears inference cost)",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 5,
+			"access": 2,
+			"next": "Contact HF to register the provider, then PR the JS and Python clients and create model mappings via the partners API",
+			"why": "Only fits if we run a hosted text/image-to-3D inference API on the Hub; the task list today has no 3D task, so fit is low until HF adds one.",
+			"source": "https://huggingface.co/docs/inference-providers/register-as-a-provider",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cline-cline-mcp-marketplace",
+			"company": "Cline",
+			"program": "Cline MCP Marketplace",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://github.com/cline/mcp-marketplace",
+			"apply": "GitHub issue on cline/mcp-marketplace with repo URL, logo and reason; reviewed within a couple of days",
+			"benefits": [
+				"One-click install for Cline users in the editor"
+			],
+			"eligibility": "README or llms-install.md that lets the agent install it; stable server",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 5,
+			"next": "GitHub issue on cline/mcp-marketplace with repo URL, logo and reason; reviewed within a couple of days",
+			"why": "Fast review and an active queue (issues numbered above 3100 in Oct 2026); we have the README.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Marketplace placement is the only stated exposure.",
+			"source": "https://github.com/cline/mcp-marketplace",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cursor-cursor-directory",
+			"company": "Cursor (Anysphere)",
+			"program": "Cursor Directory (community plugins)",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://cursor.directory/plugins/new",
+			"apply": "Add a GitHub link; auto-detects rules, MCP servers, agents and skills",
+			"benefits": [
+				"Listed in the community directory that Cursor docs point to",
+				"Open Plugins standard"
+			],
+			"eligibility": "Public GitHub repo",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 5,
+			"next": "Add a GitHub link; auto-detects rules, MCP servers, agents and skills",
+			"why": "Instant, no-review route for the same plugin bundle while the official marketplace review is pending.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Directory listing is the placement; no stated social feature.",
+			"source": "https://cursor.com/docs/plugins",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cursor-cursor-marketplace-plugins",
+			"company": "Cursor (Anysphere)",
+			"program": "Cursor Marketplace plugins",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://cursor.com/marketplace/publish",
+			"apply": "Submit a public Git repo at cursor.com/marketplace/publish with .cursor-plugin/plugin.json; manual review",
+			"benefits": [
+				"Install from the in-editor marketplace",
+				"Bundles MCP server, rules, skills and agents"
+			],
+			"eligibility": "Open source, public repo, lowercase kebab-case name; every plugin is manually reviewed; review times of 42 days or more reported (reviewtimes.fyi)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 5,
+			"access": 3,
+			"next": "Submit a public Git repo at cursor.com/marketplace/publish with .cursor-plugin/plugin.json; manual review",
+			"why": "We ship an MCP server, skills and a CLI cursor client; one open-source plugin bundle puts all of it in the editor catalog.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Marketplace placement is the exposure; curated marketplace favors company integrations such as hosted MCP servers (per reviewtimes.fyi).",
+			"assets": [
+				"docs/partners/prospects.md"
+			],
+			"source": "https://cursor.com/docs/plugins",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "dify-dify-partner-program-and-plugin-marketplace",
+			"company": "Dify",
+			"program": "Dify Partner Program (Marketplace Partner) and plugin marketplace",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://dify.ai/partners",
+			"apply": "Pull request with a .difypkg to langgenius/dify-plugins; or the Marketplace Partner form (business@dify.ai); replies in about five business days",
+			"benefits": [
+				"Listing in the official partner section and Marketplace",
+				"Co-marketing materials, product training and technical enablement",
+				"Marketplace plugins are free-only at the moment per a review site"
+			],
+			"eligibility": "Own the IP or hold licences; privacy policy and README with contact required for plugin PR; free to join",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 5,
+			"access": 5,
+			"next": "Pull request with a .difypkg to langgenius/dify-plugins; or the Marketplace Partner form (business@dify.ai); replies in about five business days",
+			"why": "A 3D plugin for a 158K-star app platform; prospects.md scored it 14.",
+			"promo": [
+				"co-marketing",
+				"showcase"
+			],
+			"promo_note": "Page states co-marketing materials and a partner-section listing; ask in the application for a launch post.",
+			"assets": [
+				"docs/partners/prospects.md",
+				"mcp-server"
+			],
+			"source": "https://dify.ai/partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "openrouter-openrouter-app-attribution-rankings-and-apps",
+			"company": "OpenRouter",
+			"program": "OpenRouter App Attribution, Rankings and Apps directory",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://openrouter.ai/docs/app-attribution",
+			"apply": "Send HTTP-Referer and X-OpenRouter-Title headers on requests; no form",
+			"benefits": [
+				"Public app page and daily, weekly and monthly rankings",
+				"Listed in the Apps tab of model pages",
+				"Category tags and the openrouter.ai/apps marketplace"
+			],
+			"eligibility": "Any app sending the attribution headers (opt-out header exists)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 5,
+			"wave": 1,
+			"next": "Attribution headers already ship (api/_lib/openrouter-attribution.js); confirm the three.ws app page is live on openrouter.ai, then cite it in the awesome-openrouter PR",
+			"why": "Our LLM chain already sends attribution headers; verifying the app page and category and adding to awesome-openrouter is near-zero cost.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Rankings and the Apps tab are the placement; the docs describe no featured-app program, so the PR to the awesome-openrouter list is the only active ask.",
+			"assets": [
+				"api/_lib/openrouter-attribution.js"
+			],
+			"source": "https://openrouter.ai/docs/app-attribution",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "openrouter-awesome-openrouter-apps-list",
+			"company": "OpenRouter",
+			"program": "awesome-openrouter apps list",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://github.com/OpenRouterTeam/awesome-openrouter",
+			"apply": "Pull request to the OpenRouterTeam repository",
+			"benefits": [
+				"Curated list of apps that work with OpenRouter"
+			],
+			"eligibility": "Public app using OpenRouter",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 5,
+			"next": "Pull request to the OpenRouterTeam repository",
+			"why": "One PR to a curated list run by the vendor.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Listing in the vendor-run curated list is the promotion; no stated social post.",
+			"source": "https://github.com/OpenRouterTeam/awesome-openrouter",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "elevenlabs-elevenlabs-startup-grants",
+			"company": "ElevenLabs",
+			"program": "ElevenLabs Startup Grants",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://elevenlabs.io/startup-grants",
+			"apply": "Application at elevenlabs.io/grants-application; decision typically within a week",
+			"value": "33M characters over 12 months (over 5,500 value, per ElevenLabs)",
+			"benefits": [
+				"12 months free on the full platform",
+				"33M characters (680+ hours of Agents usage, over 5,500 value)",
+				"Founder events and community",
+				"Featured startup showcase"
+			],
+			"eligibility": "Fewer than 25 employees, long-term product, valid business email; agencies and enterprise customers excluded",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 4,
+			"next": "Application at elevenlabs.io/grants-application; decision typically within a week",
+			"why": "Our avatars speak through the TTS lane in api/tts/eleven.js; the grant removes that cost and adds a startup showcase.",
+			"promo": [
+				"showcase",
+				"event"
+			],
+			"promo_note": "The page features grant startups and a showcase video; ask to be featured once a case study exists.",
+			"assets": [
+				"docs/partners/prospects.md"
+			],
+			"source": "https://elevenlabs.io/startup-grants",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "elevenlabs-elevenlabs-partner-affiliate-program",
+			"company": "ElevenLabs",
+			"program": "ElevenLabs Partner / Affiliate Program",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://elevenlabs.io/partner-application",
+			"apply": "Partner application at elevenlabs.io/partner-application per docs/partners/prospects.md; affiliate via PartnerStack (third-party)",
+			"benefits": [
+				"Affiliate up to 22% recurring for 12 months (third-party blog, not ElevenLabs)",
+				"Technology/agency partner track (third-party directory)"
+			],
+			"eligibility": "Choose the relevant track on the form; not verified on the official page this session",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 5,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Second ElevenLabs door after the grant, for a Commercial Partner listing that sells agent voices; confirm terms on the form.",
+			"source": "https://elevenlabs.io/startup-grants",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "glama-glama-connector",
+			"company": "Glama",
+			"program": "Glama connector (claim and verify)",
+			"kind": "directory",
+			"status": "member",
+			"url": "https://glama.ai/mcp/connectors/io.github.nirholas/three.ws",
+			"apply": "Claim the connector and supply OAuth test credentials via /.well-known/glama.json",
+			"benefits": [
+				"Verified listing with a passing health check"
+			],
+			"eligibility": "Owner claim",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 5,
+			"next": "Claim the connector and supply test credentials via /.well-known/glama.json so the failing health check turns green",
+			"why": "Already ingested but unclaimed with a failing health check; the claim is the remaining step. Evidence: data/listings.json id glama (live, unclaimed).",
+			"assets": [
+				"data/listings.json"
+			],
+			"source": "https://glama.ai/mcp/connectors/io.github.nirholas/three.ws",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "langchain-langchain-integration-listing",
+			"company": "LangChain",
+			"program": "LangChain integration listing",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://docs.langchain.com/oss/python/contributing/publish-langchain",
+			"apply": "Publish an independent package (langchain-yourprovider) then file an Integration listing issue; no manual PRs",
+			"benefits": [
+				"Row on the LangChain integrations page",
+				"Hosted guide page if 50K+ monthly downloads or maintainer-featured"
+			],
+			"eligibility": "Independent PyPI/npm package with docs URL",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 4,
+			"next": "Publish an independent package (langchain-yourprovider) then file an Integration listing issue; no manual PRs",
+			"why": "We have a langchain package; the listing issue is a form-level ask.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Integrations page placement; featured status is at maintainers' discretion.",
+			"assets": [
+				"packages/langchain"
+			],
+			"source": "https://docs.langchain.com/oss/python/contributing/publish-langchain",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "langchain-langsmith-for-startups",
+			"company": "LangChain",
+			"program": "LangSmith for Startups",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.langchain.com/startups",
+			"apply": "Account on startup domain plus application form (Build or Scale tier)",
+			"value": "$10K credits (Scale tier)",
+			"benefits": [
+				"Scale: $10K LangSmith credits for 1 year (2 years for YC), events, office hours, private Slack",
+				"Scale: featured startup spotlight on LangChain website, newsletter and LinkedIn (audience of over 1M per LangChain)",
+				"Build: discounted seats"
+			],
+			"eligibility": "Scale needs a premier LangChain VC partner and Series A or earlier; Build needs under $10M raised and at least $25K seed",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"next": "Account on startup domain plus application form (Build or Scale tier)",
+			"why": "We are not VC-backed so Scale is out of reach; Build is possible but LangSmith is not in our stack.",
+			"promo": [
+				"showcase",
+				"newsletter",
+				"social"
+			],
+			"promo_note": "Spotlight on website, newsletter and LinkedIn is a stated Scale-tier benefit; requires a premier VC partner backing.",
+			"source": "https://www.langchain.com/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "langchain-langchain-partner-network",
+			"company": "LangChain",
+			"program": "LangChain Partner Network",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://www.langchain.com/langchain-partner-network-form",
+			"apply": "Partner Network form",
+			"benefits": [
+				"Cloud, SI and technology ISV tracks"
+			],
+			"eligibility": "Currently prioritizing AWS, Azure and GCP",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Not a realistic door for a small startup today.",
+			"source": "https://www.langchain.com/langchain-partner-network-form",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "livekit-livekit-startup-program",
+			"company": "LiveKit",
+			"program": "LiveKit Startup Program",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://livekit.com/startups",
+			"apply": "Online application at livekit.com/startups; approved teams get a promo code",
+			"value": "up to $23K (per LiveKit)",
+			"benefits": [
+				"Scale plan free for a year ($500/month fee waived)",
+				"$10,000 additional LiveKit Cloud credits",
+				"$1K inference credits with each partner (AssemblyAI, Deepgram, Fish Audio, Gemma, Gradium, Inworld, Rime; about $7,000)"
+			],
+			"eligibility": "Voice, video or physical AI core to the product; under 50 employees; under $5M raised and pre-Series A; incorporated; in production or launching within 6 months",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 4,
+			"access": 4,
+			"next": "Online application at livekit.com/startups; approved teams get a promo code",
+			"why": "We built and tested a livekit-plugins-threews avatar plugin, so the program fits and unlocks Inworld and Deepgram credits in one application.",
+			"assets": [
+				"marketing/growth/submissions/programs/livekit-startups.md",
+				"marketing/growth/submissions/livekit-avatar-plugin.md"
+			],
+			"source": "https://livekit.com/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "e2b-e2b-awesome-ai-agents-list",
+			"company": "E2B",
+			"program": "E2B awesome-ai-agents list",
+			"kind": "directory",
+			"status": "submitted",
+			"url": "https://github.com/e2b-dev/awesome-ai-agents",
+			"apply": "Google Form submission drafted in the repo",
+			"benefits": [
+				"Listing in a 30K-star agents list (per repo submission doc)"
+			],
+			"eligibility": "Open submission",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 5,
+			"next": "Chase the maintainer on PR #1714 or fix review feedback",
+			"why": "Already drafted and ready; costs nothing.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Visibility is the list itself.",
+			"assets": [
+				"marketing/growth/submissions/e2b-awesome-ai-agents.md"
+			],
+			"log": [
+				{
+					"date": "2026-11-06",
+					"action": "Recorded the open listing PR from data/listings.json",
+					"ref": "https://github.com/e2b-dev/awesome-ai-agents/pull/1714"
+				}
+			],
+			"source": "https://github.com/e2b-dev/awesome-ai-agents",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "e2b-e2b-for-startups",
+			"company": "E2B",
+			"program": "E2B for Startups",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://e2b.dev/startups",
+			"apply": "Apply at e2b.dev/startups/apply; YC, a16z Speedrun and Antler apply through their own portals",
+			"value": "$20,000 credits (per E2B)",
+			"benefits": [
+				"One-time $20,000 E2B credits and Pro tier"
+			],
+			"eligibility": "Raised under $5M, founded under three years ago, first-time E2B user; capacity limited; rejected teams reapply after 3 months",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"next": "Apply at e2b.dev/startups/apply; YC, a16z Speedrun and Antler apply through their own portals",
+			"why": "E2B sandboxes run agent-generated code; we have a pending listing in E2B's awesome-ai-agents list, and credits would only matter if the platform adds sandboxed code execution.",
+			"assets": [
+				"marketing/growth/submissions/e2b-awesome-ai-agents.md"
+			],
+			"source": "https://e2b.dev/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pipecat-pipecat-community-integrations",
+			"company": "Pipecat (Daily)",
+			"program": "Pipecat community integrations",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://docs.pipecat.ai",
+			"apply": "Open the community-integration docs PR (drafted in the repo)",
+			"benefits": [
+				"Listing in Pipecat's community integrations docs for the 3D avatar service"
+			],
+			"eligibility": "Open source; pull request review",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 5,
+			"reach": 3,
+			"access": 4,
+			"next": "Open the community-integration docs PR (drafted in the repo)",
+			"why": "Built pipecat-threews with tests and a local E2E demo; the PR is ready for the owner, status unverified on the live site this session.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Listing in the docs is the visibility; no stated promotion.",
+			"assets": [
+				"marketing/growth/submissions/pipecat-integration.md"
+			],
+			"source": "https://docs.pipecat.ai",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pulsemcp-pulsemcp-listing",
+			"company": "PulseMCP",
+			"program": "PulseMCP listing",
+			"kind": "directory",
+			"status": "member",
+			"url": "https://www.pulsemcp.com/servers/nirholas-three-ws",
+			"apply": "Ingested from the official registry; submissions paused since 3 Sep 2026",
+			"benefits": [
+				"Directory listing"
+			],
+			"eligibility": "Official MCP Registry entry",
+			"cost": "free",
+			"cadence": "paused for new submissions",
+			"fit": 4,
+			"reach": 3,
+			"access": 5,
+			"why": "Already live; no action required. Evidence: data/listings.json id pulsemcp (live).",
+			"assets": [
+				"data/listings.json"
+			],
+			"source": "https://www.pulsemcp.com/servers/nirholas-three-ws",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "smithery-smithery-registry",
+			"company": "Smithery",
+			"program": "Smithery registry",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://smithery.ai/new",
+			"apply": "Enter public HTTPS URL at smithery.ai/new and finish verification",
+			"benefits": [
+				"Hosted listing for the remote server"
+			],
+			"eligibility": "Public HTTPS MCP endpoint",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 5,
+			"next": "Enter public HTTPS URL at smithery.ai/new and finish verification",
+			"why": "Not listed yet; one source says Smithery's MCP proxy shuts down on 31 Oct 2026, so list the direct URL. Evidence: data/listings.json id smithery (not_listed as of 2026-09-16).",
+			"assets": [
+				"data/listings.json"
+			],
+			"source": "https://linklyhq.com/blog/mcp-server-directories",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "tripo-tripo-affiliate-program",
+			"company": "Tripo (VAST)",
+			"program": "Tripo Affiliate Program",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://www.tripo3d.ai/blog/tripo-affiliate-program",
+			"apply": "Apply Now button goes to a PromoteKit sign-up (tripo.promotekit.com); approval then personalised link",
+			"value": "30% for 12 months",
+			"benefits": [
+				"30% commission on each referred subscriber for the first 12 months (per Tripo's X announcement and program page)",
+				"Dashboard and personal affiliate link"
+			],
+			"eligibility": "Creators, educators, bloggers; third-party sites conflict on cookie length and payout terms (confirm on the call)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 5,
+			"next": "Apply Now button goes to a PromoteKit sign-up (tripo.promotekit.com); approval then personalised link",
+			"why": "Referral income only; the main Tripo move is the partner-key pilot already scored in docs/partners/tripo.md, this is the low-effort add-on.",
+			"assets": [
+				"docs/partners/tripo.md",
+				"api/_providers/tripo.js"
+			],
+			"source": "https://x.com/tripoai/status/1966154771397505524",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "tripo-tripo-game-hub-developer-api-credits",
+			"company": "Tripo (VAST)",
+			"program": "Tripo Game Hub Developer API Credits Program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://www.tripo3d.ai/blog/tripo-game-hub-developer-api-credits-program-english",
+			"apply": "See the blog post (page returned 403 to our fetch tool on 2026-11-06; terms from search snippet)",
+			"value": "5,000 credits (about USD 50) per developer (search-reported)",
+			"benefits": [
+				"One-time grant of 5,000 API credits (about USD 50) per developer for development and testing, per search-reported summary",
+				"Programme text says credits can be earned up to 5,000,000"
+			],
+			"eligibility": "Developers building on the Tripo API; exact terms unverified because the page blocked our fetch",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 2,
+			"access": 4,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Cheap way to test Tripo v3 rigging/retarget endpoints before the partner-key conversation; does not replace the partner-priced key proposal.",
+			"assets": [
+				"docs/partners/tripo.md"
+			],
+			"source": "https://www.tripo3d.ai/blog/tripo-game-hub-developer-api-credits-program-english",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "zapier-zapier-integration-partner-program",
+			"company": "Zapier",
+			"program": "Zapier Integration Partner Program (Bronze to Platinum)",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://zapier.com/developer-platform/partner-program",
+			"apply": "Automatic enrollment after launching a public integration on the Zapier Developer Platform; free",
+			"benefits": [
+				"Bronze: partner support and sandbox",
+				"Silver and up: featured integration slot (1 week per 365 days), App Directory 'Learn More' button, 'Best of' blog card, weekly newsletter spotlight (about 20,000 users), possible LinkedIn amplification",
+				"Platinum: priority co-marketing invitations, 1:1 advocacy"
+			],
+			"eligibility": "Launch a public integration; tier depends on bug reports, requests, health and usage; keep payments out (prohibited category per prospects.md)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 5,
+			"access": 4,
+			"next": "Automatic enrollment after launching a public integration on the Zapier Developer Platform; free",
+			"why": "Free Forge triggers and actions as a Zapier integration; review in about a week then a 90-day beta (prospects.md).",
+			"promo": [
+				"showcase",
+				"blog",
+				"newsletter",
+				"social",
+				"co-marketing"
+			],
+			"promo_note": "Per Zapier's benefits guide: Silver and above request the featured slot, Best-of blog card and newsletter spotlight by email; co-marketing invitations start at Platinum.",
+			"assets": [
+				"api/companion/ingest.js",
+				"docs/partners/prospects.md"
+			],
+			"source": "https://docs.zapier.com/platform/publish/benefits-guide",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "composio-composio-startups-program",
+			"company": "Composio",
+			"program": "Composio Startups Program",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://composio.dev/startups",
+			"apply": "Application form on the page; typically replies within a week",
+			"value": "6 months free Pro plan (per Composio)",
+			"benefits": [
+				"Pro plan free for six months with 1,500+ tool integrations and unlimited seats",
+				"Monthly usage credit (amount not stated)"
+			],
+			"eligibility": "Eligibility FAQ not answered on the page; form asks funding stage from bootstrapped to over $5M",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 4,
+			"next": "Application form on the page; typically replies within a week",
+			"why": "Composio is our toolkit-partnership target; the startup plan is the same door for an agent building on three.ws MCP.",
+			"assets": [
+				"marketing/growth/submissions/programs/composio-toolkit.md",
+				"mcp-server"
+			],
+			"source": "https://composio.dev/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "lobehub-lobehub-mcp-marketplace",
+			"company": "LobeHub",
+			"program": "LobeHub MCP marketplace",
+			"kind": "directory",
+			"status": "member",
+			"url": "https://lobehub.com/mcp/nirholas-three-ws-portal",
+			"apply": "Indexed from GitHub",
+			"benefits": [
+				"Directory listing"
+			],
+			"eligibility": "GitHub packages",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 5,
+			"why": "Already live via GitHub indexing. Evidence: data/listings.json id lobehub-mcp (live).",
+			"assets": [
+				"data/listings.json"
+			],
+			"source": "https://lobehub.com/mcp/nirholas-three-ws-portal",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "mastra-mastra-templates-gallery-and-partner-tag",
+			"company": "Mastra",
+			"program": "Mastra Templates gallery and Partner tag",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://mastra.ai/en/docs/community/contributing-templates",
+			"apply": "Submit a template per CONTRIBUTING.md in the Mastra monorepo; gallery has a separate Partner section",
+			"benefits": [
+				"Template listed in the Mastra gallery; Mastra says the team and community provide promotion and maintenance help (per their docs)",
+				"Hackathons sponsored by partners such as Smithery and Recall"
+			],
+			"eligibility": "Partner tag criteria are not documented",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Submit a template per CONTRIBUTING.md in the Mastra monorepo; gallery has a separate Partner section",
+			"why": "A 3D avatar agent template is a natural gallery entry; 28K-star framework with 645K weekly MCP downloads per prospects.md.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Gallery placement is the promotion; partner tag is by Mastra's choice, criteria unstated.",
+			"assets": [
+				"docs/partners/prospects.md",
+				"packages/ai-sdk"
+			],
+			"source": "https://mastra.ai/en/docs/community/contributing-templates",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "mcp-so-mcp-so-directory",
+			"company": "mcp.so",
+			"program": "mcp.so directory",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://mcp.so/",
+			"apply": "Submit repo URL and name; paid featured tier",
+			"benefits": [
+				"Directory listing; paid featured and verified option (39 per Linkly)"
+			],
+			"eligibility": "GitHub repo",
+			"cost": "free or 39 for featured",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 5,
+			"next": "Submit repo URL and name; paid featured tier",
+			"why": "Large generic directory; free listing is enough. Evidence: data/listings.json id mcp-so (not_listed).",
+			"assets": [
+				"data/listings.json"
+			],
+			"source": "https://linklyhq.com/blog/mcp-server-directories",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "n8n-n8n-verified-community-node",
+			"company": "n8n",
+			"program": "n8n Verified Community Node (partner program)",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://n8n.global/partners/",
+			"apply": "Build with the n8n-node CLI and submit through the Creator Portal; from 2026-05-01 nodes must be published from GitHub Actions with provenance (third-party/docs), which conflicts with our no-Actions rule",
+			"benefits": [
+				"Installable in the editor on Cloud and self-hosted, in-app search, dedicated integration library page, verified shield",
+				"Verified nodes are 'always on our radar for campaigns and content' (n8n page)"
+			],
+			"eligibility": "One third-party service per package, no runtime dependencies",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 5,
+			"access": 2,
+			"next": "Apply through the program page",
+			"why": "Needs an owner exception for the provenance publish rule; the same page lists a 30% affiliate and a Verified Creator track for templates (Creators Directory, badge, private Discord).",
+			"promo": [
+				"showcase",
+				"badge"
+			],
+			"promo_note": "Verified nodes are considered for campaigns and content per the page, no commitment; creators get a badge and directory listing.",
+			"assets": [
+				"api/companion/ingest.js",
+				"docs/partners/prospects.md"
+			],
+			"source": "https://n8n.global/partners/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "poe-poe-creator-monetization",
+			"company": "Poe (Quora)",
+			"program": "Poe Creator Monetization",
+			"kind": "developer-program",
+			"status": "eligible",
+			"url": "https://help.poe.com/hc/en-us/articles/21921312368020-Poe-Creator-Monetization-FAQs",
+			"apply": "Agree to creator terms in Poe and connect a payment processor",
+			"benefits": [
+				"Price per message paid in dollars",
+				"Up to 20 per new subscriber bounty",
+				"Payout at 10 or more earned"
+			],
+			"eligibility": "Eligible region; taxpayer info within 90 days",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 4,
+			"next": "Agree to creator terms in Poe and connect a payment processor",
+			"why": "A Poe server bot that returns 3D models would reach Poe's multi-model audience and earn per message; real work to build a bot.",
+			"source": "https://help.poe.com/hc/en-us/articles/21921312368020-Poe-Creator-Monetization-FAQs",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "together-ai-together-ai-startup-accelerator",
+			"company": "Together AI",
+			"program": "Together AI Startup Accelerator",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.together.ai/startup-accelerator",
+			"apply": "Application form on the accelerator page; selection-based",
+			"value": "up to 50K credits (Grow tier, per Together page)",
+			"benefits": [
+				"Build tier up to 15K, Scale up to 30K, Grow up to 50K in platform credits, by funds raised",
+				"3, 6 or 10 hours of forward-deployed engineering",
+				"Joint go-to-market amplification and co-sell toward 800K+ developers",
+				"Exclusive events, researcher community and VC introductions"
+			],
+			"eligibility": "Pre-seed to growth-stage AI startups; tiered by total raised; credits exclude Reserved GPU Clusters",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Application form on the accelerator page; selection-based",
+			"why": "Together hosts open models and the FLUX/3D-adjacent image lanes; the Build tier suits a bootstrapped team and the page promises joint go-to-market.",
+			"promo": [
+				"co-marketing",
+				"event"
+			],
+			"promo_note": "The page promises joint go-to-market amplification and exclusive events; ask for the marketing track in the intro call after acceptance.",
+			"source": "https://www.together.ai/startup-accelerator",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "vercel-ai-sdk-community-providers-and-tools",
+			"company": "Vercel (AI SDK)",
+			"program": "AI SDK community providers and tools listing",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://ai-sdk.dev/providers/community-providers",
+			"apply": "Provider must follow the AI SDK Language Model Specification; listing path through the ai-sdk.dev docs repo (not verified)",
+			"benefits": [
+				"Listed on the AI SDK community providers page"
+			],
+			"eligibility": "Community-built provider package",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "We already ship an AI SDK package; a listing is directory-only exposure and implies no Vercel hosting.",
+			"assets": [
+				"packages/ai-sdk"
+			],
+			"source": "https://ai-sdk.dev/providers/community-providers",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cartesia-cartesia-startups-grant",
+			"company": "Cartesia",
+			"program": "Cartesia Startups Grant",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.cartesia.ai/startups",
+			"apply": "Application at cartesia.ai/startups; rolling, reply aims within a week; accepted teams receive a coupon code",
+			"value": "12 months Scale plan (299 USD/month after, per Cartesia)",
+			"benefits": [
+				"12 months on the Scale plan",
+				"8 million shared Sonic and Ink credits per month, rolling over up to 2x",
+				"$299 per month in Managed Agents credits"
+			],
+			"eligibility": "Any stage; students and one-off projects case by case; must share logo for Cartesia marketing and post about the grant if asked",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Application at cartesia.ai/startups; rolling, reply aims within a week; accepted teams receive a coupon code",
+			"why": "Sonic TTS is low latency and works for avatar lip-sync; adds a second voice provider, but it onboards a new paid API so is owner-gated per prospects.md.",
+			"promo": [
+				"social",
+				"badge"
+			],
+			"promo_note": "Stated: Cartesia may use your name and logo in marketing and may ask you to post about the grant, so promotion is conditional on you agreeing, not a promise of promotion.",
+			"assets": [
+				"docs/partners/prospects.md"
+			],
+			"source": "https://www.cartesia.ai/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cerebras-cerebras-startup-deal",
+			"company": "Cerebras",
+			"program": "Cerebras Startup Deal (Supernova)",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.cerebras.ai/startups",
+			"apply": "Build With Us contact form (cerebras.ai/build-with-us) or info@cerebras.ai; rolling",
+			"value": "up to 22.5K inference credits (per cloudcredits.io)",
+			"benefits": [
+				"Up to 22.5K of inference on Cerebras Cloud (per aggregators)",
+				"Priority support, new models and co-marketing (per aggregators)"
+			],
+			"eligibility": "AI-focused early-stage companies; no public funding minimum",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 3,
+			"access": 3,
+			"next": "Build With Us contact form (cerebras.ai/build-with-us) or info@cerebras.ai; rolling",
+			"why": "Cerebras is a live free-tier rung in our LLM chain and the deal includes co-marketing; the repo already lists it as a pipeline ask.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Aggregators cite co-marketing opportunities in the deal; the official page content could not be fetched, so ask for it explicitly in the Build With Us form.",
+			"assets": [
+				"docs/partners/opportunities.md",
+				"api/_lib/llm.js"
+			],
+			"source": "https://cloudcredits.io/providers/cerebras/programs/startup-deal",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "deepgram-deepgram-startup-program",
+			"company": "Deepgram",
+			"program": "Deepgram Startup Program",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://deepgram.com/startup-program",
+			"apply": "Apply at deepgram.com/startup-program; reply typically within one week; credits deposited in 24-48 hours",
+			"value": "up to $100,000 (per Deepgram), starting at $1,000 for direct applicants",
+			"benefits": [
+				"Up to $100,000 in credits over 12 months; direct applicants start at $1,000",
+				"Invite-only events and startup community",
+				"Usable on STT, TTS and Voice Agent APIs"
+			],
+			"eligibility": "Early-stage, in production or launching within 6 months; no agencies; over $10M raised case by case",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Apply at deepgram.com/startup-program; reply typically within one week; credits deposited in 24-48 hours",
+			"why": "Speech-in for voice avatars (STT) alongside LiveKit; a draft application sits in the repo gated on an ASR go or no-go.",
+			"assets": [
+				"marketing/growth/submissions/programs/deepgram-startup-program.md"
+			],
+			"source": "https://deepgram.com/startup-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "make-make-technology-partner-program",
+			"company": "Make",
+			"program": "Make Technology Partner Program",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://www.make.com/en/technology-partners",
+			"apply": "Build and verify a public Make app, then submit the partner application form; agreement within days",
+			"benefits": [
+				"Sandbox account and coupon codes for customers",
+				"Referral fees counting toward tier",
+				"Co-marketing and lead sharing arranged with a Partner Manager",
+				"Partner enablement"
+			],
+			"eligibility": "Verified app on Make; partnership and technical contact recommended; no cost",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Build and verify a public Make app, then submit the partner application form; agreement within days",
+			"why": "Make is the app-connector twin of Zapier; prospects.md notes Make's partner status comes only after an app is built (LlamaIndex/Make listed as constrained).",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "The page says co-marketing and lead-sharing opportunities are arranged through your Partner Manager.",
+			"source": "https://www.make.com/en/technology-partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "meshy-meshy-partner-program",
+			"company": "Meshy",
+			"program": "Meshy Partner Program (Reseller / Sales agent)",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://www.meshy.ai/partners",
+			"apply": "Online form on the page; Meshy replies within 2 business days to book a 30-minute intro call",
+			"benefits": [
+				"Partner pricing on Meshy Enterprise licences (reseller) or commission on first contract (sales agent)",
+				"Named Meshy contact and enablement kit (deck, one-pager, demo script, pricing guide)",
+				"Co-marketing: joint webinars, co-written case studies, launch support"
+			],
+			"eligibility": "Enterprise deals only (SSO, API console, custom terms, SLA); self-serve excluded; partners accepted from Europe first; no membership fee",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Online form on the page; Meshy replies within 2 business days to book a 30-minute intro call",
+			"why": "Meshy is already a bring-your-own-key lane in the Forge; the form says API/embedding interest can be raised on the intro call, so use it to ask for house-lane API pricing, though the program is built for resellers.",
+			"promo": [
+				"co-marketing",
+				"case-study",
+				"event"
+			],
+			"promo_note": "Stated on the page: joint webinars, co-written case studies and launch support, arranged with the named contact after the intro call.",
+			"assets": [
+				"api/_providers/meshy.js",
+				"docs/partners/prospects.md",
+				"marketing/growth/submissions/programs/meshy-partner.md"
+			],
+			"source": "https://www.meshy.ai/partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "meshy-meshy-affiliate-program",
+			"company": "Meshy",
+			"program": "Meshy Affiliate Program",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://affiliates.meshy.ai/",
+			"apply": "Sign up at the affiliate portal (PromoteKit)",
+			"value": "20% commission (per Meshy portal)",
+			"benefits": [
+				"20% commission per the portal; one directory lists 20% recurring for 12 months with a $20 minimum payout (third-party)"
+			],
+			"eligibility": "Open sign-up; terms vary on third-party networks (AWIN, impact.com)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 2,
+			"access": 5,
+			"next": "Sign up at the affiliate portal (PromoteKit)",
+			"why": "Pure referral revenue; useful only if three.ws recommends Meshy in docs for users who bring a key.",
+			"source": "https://www.meshy.ai/partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "meshy-meshy-contributor-program",
+			"company": "Meshy",
+			"program": "Meshy Contributor Program",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://www.meshy.ai/creators",
+			"apply": "Apply through the Meshy Discord Contributor Program channel (Meshy's community bot DMs for project links); reviews usually 2-3 days",
+			"benefits": [
+				"Free month of Meshy Pro or 1,000 credits if already paid",
+				"Monthly merch pack for best contribution",
+				"Private Discord channel with creators and the Meshy team",
+				"Priority for cross-promotion on official Meshy socials for standout projects"
+			],
+			"eligibility": "Independent creators only (not a team or company); original projects; limited spots",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Apply through the Meshy Discord Contributor Program channel (Meshy's community bot DMs for project links); reviews usually 2-3 days",
+			"why": "Individual-creator program; the founder could apply personally with an original three.ws-made model, but company use is excluded, so value is small.",
+			"promo": [
+				"social",
+				"showcase"
+			],
+			"promo_note": "Priority cross-promotion on Meshy socials is stated for standout projects, not guaranteed for every member; submit contributions through the Discord bot.",
+			"source": "https://www.meshy.ai/creators",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "meshy-meshy-maker-program",
+			"company": "Meshy",
+			"program": "Meshy Maker Program (3D-printing creators)",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://maker.meshy.ai/",
+			"apply": "Apply Now button on the page; invite-only, membership not guaranteed",
+			"value": "3 months Studio membership",
+			"benefits": [
+				"3 months of Studio membership (listed as $180 value)",
+				"20% affiliate revenue share",
+				"Meshy social media feature (400K+ follower audience) and Community Spotlight",
+				"Early access to new features"
+			],
+			"eligibility": "Targets 3D-printing creators; must publish at least one themed Collection of 10+ original models per month; invite-only",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"wave": 5,
+			"next": "Invite-only, no public application. Revisit when an introduction or invitation appears",
+			"why": "3D printing is a side surface for three.ws (STL/print export), so fit is partial; only worth it if a print-focused creator persona is opened.",
+			"promo": [
+				"social",
+				"showcase"
+			],
+			"promo_note": "Members are featured on Meshy's social channels and Community Spotlight per the page; condition is the monthly Collection requirement.",
+			"source": "https://maker.meshy.ai/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "mistral-ai-mistral-ai-ambassadors",
+			"company": "Mistral AI",
+			"program": "Mistral AI Ambassadors",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://docs.mistral.ai/resources/ambassadors",
+			"apply": "Application form linked from the docs Ambassadors page; rolling review, possible interview",
+			"benefits": [
+				"Free API credits on Studio",
+				"Early access to features with input to product teams",
+				"Public recognition on the Mistral website and Discord",
+				"Early invites to events plus dedicated Discord and Slack channels"
+			],
+			"eligibility": "AI/ML experience, active community involvement, regular time; six-month minimum commitment",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Application form linked from the docs Ambassadors page; rolling review, possible interview",
+			"why": "A founder-level ambassador slot gets credits for the Mistral rung in our LLM chain and public recognition; tutorials on MCP plus 3D avatars would be the content.",
+			"promo": [
+				"showcase"
+			],
+			"promo_note": "Docs state ambassadors get public recognition on the Mistral website and Discord; no stated social or blog slot.",
+			"source": "https://docs.mistral.ai/resources/ambassadors",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "mistral-ai-mistralship-startup-program",
+			"company": "Mistral AI",
+			"program": "Mistralship startup program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://mistral.ai/",
+			"apply": "No public form found; third-party sources say partner-mediated or contact required",
+			"benefits": [
+				"Reported 6-month program with up to 30K in La Plateforme credits and early model access (per aggregators, not confirmed on mistral.ai)"
+			],
+			"eligibility": "Reported: under 7 years old, pre-Series B (aggregator)",
+			"cost": "free",
+			"cadence": "Unclear",
+			"fit": 2,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Aggregators disagree and the official application page reportedly returns 404 (Fin AI, Aug 2026), so treat as unconfirmed.",
+			"source": "https://fin.ai/learn/ai-credits-for-startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "perplexity-perplexity-connector-directory",
+			"company": "Perplexity",
+			"program": "Perplexity connector directory (MCP)",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://community.perplexity.ai/t/how-do-we-submit-our-mcp-server-so-it-shows-up-in-the-connectors-database-officially-not-as-a-custom-connector/6043",
+			"apply": "No public form; a Sept 2026 forum thread asks the same question; prior repo research says request by email to api@perplexity.ai",
+			"benefits": [
+				"Official connector listing instead of a user-added custom connector"
+			],
+			"eligibility": "Remote MCP server with OAuth 2.1 and dynamic client registration (RFC 7591)",
+			"cost": "free",
+			"cadence": "Unclear",
+			"fit": 4,
+			"reach": 4,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Our remote MCP already does OAuth 2.1 with DCR, so we meet the technical bar; the door is an email and a forum post.",
+			"assets": [
+				"docs/partners/prospects.md"
+			],
+			"source": "https://community.perplexity.ai/t/how-do-we-submit-our-mcp-server-so-it-shows-up-in-the-connectors-database-officially-not-as-a-custom-connector/6043",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "perplexity-perplexity-for-startups",
+			"company": "Perplexity",
+			"program": "Perplexity for Startups",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://www.perplexity.ai/startups",
+			"apply": "Via an approved Perplexity Startup Partner (VC or accelerator); /startups now shows consumer and enterprise plans only",
+			"value": "5K API credits (per aggregators)",
+			"benefits": [
+				"6 months of Enterprise Pro for 50 seats plus 5K in API credits (per Perplexity page cache and aggregators)"
+			],
+			"eligibility": "Under 5 years old, under 20M raised, backed by an approved partner",
+			"cost": "free",
+			"cadence": "Unclear; live page no longer shows the offer",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "VC-gated and our product is not a research workload; the live page dropped the program, so likely folded.",
+			"source": "https://www.perplexity.ai/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "runpod-runpod-startup-program",
+			"company": "RunPod",
+			"program": "Runpod Startup Program",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.runpod.io/startup-program",
+			"apply": "Online application form; no Runpod account needed",
+			"value": "1K Starter tier",
+			"benefits": [
+				"Starter 1K credits (raised under 1M)",
+				"Venture 5K credits (verified VC-backed, under 5M)",
+				"Growth Track bonus credits for committed spend (10K bonus for 25K, 25K bonus for 50K)",
+				"Dedicated account team on Growth Track"
+			],
+			"eligibility": "Real company with AI/ML GPU workloads; one offer per company; credits expire after 1 year",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 4,
+			"next": "Online application form; no Runpod account needed",
+			"why": "The Starter tier is open to a bootstrapped team and would fund burst GPU for model generation.",
+			"source": "https://www.runpod.io/startup-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "runpod-runpod-referral-affiliate-and-creator-program",
+			"company": "RunPod",
+			"program": "Runpod Referral, Affiliate and Creator Program",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://www.runpod.io/referral-and-affiliate-program",
+			"apply": "Self-serve referral link; affiliate tier unlocks after paying referrals",
+			"benefits": [
+				"Both sides get 5 to 500 credits after the referee spends 10",
+				"3% commission on Pod spend and 5% on Serverless for 6 months",
+				"Affiliate: 10% commissions (third-party report) and priority beta access"
+			],
+			"eligibility": "Open to everyone; affiliate needs 25 paying referrals (third-party report)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"next": "Self-serve referral link; affiliate tier unlocks after paying referrals",
+			"why": "Useful if we publish a Runpod template or tutorial for self-hosting our open-source GPU workers.",
+			"source": "https://www.runpod.io/referral-and-affiliate-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "runway-runway-builders-program",
+			"company": "Runway",
+			"program": "Runway Builders Program",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://runway.com/product/builders",
+			"apply": "Apply Now form on the page; questions to runway-builders@runwayml.com",
+			"value": "up to 500k API credits (per Runway)",
+			"benefits": [
+				"Up to 500k complimentary API credits",
+				"Tier 5 (highest) API rate limits",
+				"Early access to Runway Characters real-time avatar API",
+				"Private Builders community with Slack, training sessions and direct support"
+			],
+			"eligibility": "Seed to Series C startups per the headline; application form also lists pre-seed and bootstrapped",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 3,
+			"next": "Apply Now form on the page; questions to runway-builders@runwayml.com",
+			"why": "Runway Characters is a real-time avatar API that overlaps three.ws's agent-with-a-body pitch, so this is both a credit source and a view into a competitor-adjacent product; apply to test avatar lipsync interop.",
+			"source": "https://runway.com/product/builders",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "runway-runway-creative-partners-program",
+			"company": "Runway",
+			"program": "Runway Creative Partners Program",
+			"kind": "recognition",
+			"status": "research",
+			"url": "https://venturebeat.com/ai/runway-announces-creative-partners-program-giving-select-users-unlimited-plans-new-features",
+			"apply": "Portfolio application; every creator manually reviewed (per third-party listing gemlist.io)",
+			"benefits": [
+				"Complimentary Max plan, collaboration opportunities and program events (2026 third-party listing)"
+			],
+			"eligibility": "Artists and creators with a portfolio; no cash payout",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Creator track, low fit for a platform; skip unless a founder wants to show three.ws avatar films.",
+			"source": "https://venturebeat.com/ai/runway-announces-creative-partners-program-giving-select-users-unlimited-plans-new-features",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "runway-runway-hundred-film-fund",
+			"company": "Runway",
+			"program": "Runway Hundred Film Fund",
+			"kind": "grant",
+			"status": "research",
+			"url": "https://runway.com/news/hundred-film-fund",
+			"apply": "runway.com/TheHundredFilmFund (announced Sept 2024; current status not confirmed, Runway page returned HTTP 500 on 2026-11-06)",
+			"value": "$5K to $1M+ (2024 reporting)",
+			"benefits": [
+				"Grants from $5K to $1M+, plus $2M in credits; creators keep IP but let Runway showcase the work (per Variety/PetaPixel 2024)"
+			],
+			"eligibility": "Film projects underway that already use Runway",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Film-only fund; not a fit for a 3D agent platform.",
+			"source": "https://runway.com/news/hundred-film-fund",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "crewai-crewai-ecosystem",
+			"company": "CrewAI",
+			"program": "CrewAI ecosystem (no public partner program)",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://community.crewai.com",
+			"apply": "No documented catalog or program; community forum only; consulting alliances such as Konecta exist",
+			"benefits": [
+				"MCP use via mcps=[...] works with our remote server today (per prospects.md)"
+			],
+			"eligibility": "No public route",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Post a how-to in the community forum; there is no program to apply to.",
+			"assets": [
+				"mcp-server",
+				"docs/partners/prospects.md"
+			],
+			"source": "https://siliconangle.com/2024/10/22/agentic-ai-startup-crewai-closes-18m-funding-round/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "fal-ai-fal-startup-program",
+			"company": "fal.ai",
+			"program": "fal Startup Program",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://fal.ai/startup-program",
+			"apply": "Form on fal.ai/startup-program (create a fal account first), intro call, optional partner referral code",
+			"value": "1K to 5K credits",
+			"benefits": [
+				"Startup tier 1K, Scale 2.5K (unlocks at 1K/month usage), Growth 5K (unlocks at 2.5K/month)",
+				"Partner perks bundled (Adapty, LEUS, lim.run named)",
+				"Accelerator deals with YC, a16z and Entrepreneurs First run 10K to 50K (per aggregators)"
+			],
+			"eligibility": "Teams based in Europe and Asia only, with traction or institutional backing; one application per company per 3 months",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 4,
+			"reach": 4,
+			"access": 1,
+			"next": "Form on fal.ai/startup-program (create a fal account first), intro call, optional partner referral code",
+			"why": "fal sells Tripo, Hunyuan3D, TRELLIS.2 and others behind one key, which would turn our bring-your-own-key lanes into house lanes, but we are US-based so we are ineligible today.",
+			"assets": [
+				"docs/partners/prospects.md"
+			],
+			"source": "https://fal.ai/startup-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "fireworks-ai-fireworks-for-startups",
+			"company": "Fireworks AI",
+			"program": "Fireworks for Startups",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://fireworks.ai/startups",
+			"apply": "Page directs to sign-up or Talk to our team; no separate form seen on the fetched page",
+			"value": "Amount unpublished; third-party estimates 1K to 10K",
+			"benefits": [
+				"Build credits and higher rate limits",
+				"Direct access to applied AI experts",
+				"Joint marketing (per search result of the startups page)"
+			],
+			"eligibility": "Unclear; some sources say funding threshold, others none",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 4,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Fast open-model inference partner; the live fetch showed no program text, so confirm with their team before investing time.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Search snippet of the official startups page lists joint marketing; the fetched page did not show it, so confirm via Talk to our team.",
+			"source": "https://fireworks.ai/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "lambda-lambda-startup-credits",
+			"company": "Lambda",
+			"program": "Lambda startup credits (via NVIDIA Inception and YC)",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://lambda.ai/",
+			"apply": "Redeemed through NVIDIA Inception or a YC batch perk, not a direct form",
+			"value": "1K to 7.5K",
+			"benefits": [
+				"1K Lambda Cloud credits for Inception members (per recent aggregator)",
+				"Up to 7.5K in older listings",
+				"20K for YC batch companies"
+			],
+			"eligibility": "Inception membership (we hold it) with an eligible-country card; one grant per company",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 2,
+			"access": 4,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "We already hold NVIDIA Inception, so the Lambda perk is a redemption step rather than an application.",
+			"source": "https://thegrantindex.com/guides/free-gpu-credits-for-startups/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "luma-ai-luma-api-integration-partners",
+			"company": "Luma AI",
+			"program": "Luma API (Dream Machine API) integration partners",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://lumalabs.ai/api",
+			"apply": "Self-serve API keys; partner list shows platforms such as Envato, Krea, Fal (per search results)",
+			"benefits": [
+				"Credit-based API; $10 in free credits on Creator plan (per search result)"
+			],
+			"eligibility": "Open to developers; named production partners listed by Luma",
+			"cost": "requires paid tier or credits",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Only relevant if the Forge adds video previews or turntable video; no stated partner perks beyond API access.",
+			"source": "https://lumalabs.ai/creative-partner-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "luma-ai-luma-creative-partner-program",
+			"company": "Luma AI",
+			"program": "Luma Creative Partner Program (CPP)",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://lumalabs.ai/creative-partner-program",
+			"apply": "Online application form on the page; asks whether you want API usage; next cohort under review",
+			"benefits": [
+				"Monthly credit grants",
+				"Biweekly meetings with Luma staff",
+				"Early access to features",
+				"Awards, travel and speaking opportunities, swag"
+			],
+			"eligibility": "5,000+ engaged followers or comparable audience; share 2-3 pieces of Luma content per month and credit Luma",
+			"cost": "free",
+			"cadence": "rolling (cohort-based)",
+			"fit": 2,
+			"reach": 4,
+			"access": 3,
+			"next": "Online application form on the page; asks whether you want API usage; next cohort under review",
+			"why": "Luma is video/world-model, not 3D mesh; a founder could join as a creator showing Luma video of three.ws avatars, and use the API-interest box to open a dev conversation.",
+			"promo": [
+				"social",
+				"event",
+				"showcase"
+			],
+			"promo_note": "Page states Luma offers amplification on its channels and speaking opportunities; condition is monthly posting crediting Luma.",
+			"source": "https://lumalabs.ai/creative-partner-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "minimax-minimax-developer-ambassador-program",
+			"company": "MiniMax",
+			"program": "MiniMax Developer Ambassador Program",
+			"kind": "recognition",
+			"status": "research",
+			"url": "https://x.com/MiniMax_AI/status/1990824997909418029",
+			"apply": "Application via the link in the MiniMax announcement post (Nov 2025)",
+			"benefits": [
+				"Free MiniMax-M2 Max Coding Plan or MiniMax Agent Pro Plan",
+				"Early access to upcoming LLM, video and audio models",
+				"Potential cash rewards and a path to full-time roles (per announcement)"
+			],
+			"eligibility": "ML/LLM developers",
+			"cost": "free",
+			"cadence": "Announced Nov 2025; current intake unverified",
+			"fit": 3,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Low-effort route to MiniMax credits plus early video/audio models that could animate our avatars.",
+			"source": "https://x.com/MiniMax_AI/status/1990824997909418029",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "minimax-minimax-design-creator-program",
+			"company": "MiniMax",
+			"program": "MiniMax Design Creator Program (Design Directors)",
+			"kind": "co-marketing",
+			"status": "research",
+			"url": "https://design.minimax.io/",
+			"apply": "Apply on design.minimax.io",
+			"benefits": [
+				"Early access to new agents",
+				"Revenue share on Skills",
+				"Co-marketing (per search summary)"
+			],
+			"eligibility": "Creators and studios",
+			"cost": "free",
+			"cadence": "Unclear",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Skill revenue share and co-marketing mirror our own skill marketplace; fit depends on shipping a MiniMax Design skill.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Search summary lists co-marketing for featured creators; confirm terms on the page before relying on it.",
+			"source": "https://design.minimax.io/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pinecone-pinecone-for-startups",
+			"company": "Pinecone",
+			"program": "Pinecone for Startups",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.pinecone.io/startup-program/",
+			"apply": "Join the Program button or Become a partner form; startups@pinecone.io",
+			"value": "about 5K (per aggregators)",
+			"benefits": [
+				"Free Standard tier with Pro Support, RBAC, backups, import, Prometheus metrics",
+				"Dedicated Slack channel",
+				"Usage credits and discounts (about 5K per aggregators)"
+			],
+			"eligibility": "Under 100 employees and Series A or earlier",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"next": "Join the Program button or Become a partner form; startups@pinecone.io",
+			"why": "Only relevant if agent memory moves to a hosted vector database; open and easy if so.",
+			"source": "https://www.pinecone.io/startup-program/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "smithery-smithery-mcp-registry",
+			"company": "Smithery (Arcade)",
+			"program": "Smithery MCP registry",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://smithery.ai",
+			"apply": "CLI or web publish; no steps on the home page. Smithery is now part of Arcade and its MCP Proxy and managed identity shut down on October 31 (notice on site)",
+			"benefits": [
+				"Registry listing and server card at /.well-known/mcp/server-card.json (per third-party guides)"
+			],
+			"eligibility": "Unverified post-shutdown; hosted URL publishing may be gone",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 3,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Our repo shows us not listed on Smithery; with the proxy shut down, publish only a static server card if the registry still accepts it.",
+			"assets": [
+				"docs/listings.md"
+			],
+			"source": "https://smithery.ai",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "spline-spline-affiliate-program",
+			"company": "Spline",
+			"program": "Spline Affiliate Program",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://spline.design/affiliate",
+			"apply": "Application at partners.dub.co/spline/apply; questions to affiliates@spline.design",
+			"value": "Reward amount not stated on the page",
+			"benefits": [
+				"Rewards paid 30 days after a referred team upgrades to Pro Annual; unique sign-up link"
+			],
+			"eligibility": "Not stated; approval unclear",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"next": "Application at partners.dub.co/spline/apply; questions to affiliates@spline.design",
+			"why": "Spline is a web 3D design tool with an MCP server; relevant as an interop story (GLB handoff), not for revenue.",
+			"source": "https://spline.design/affiliate",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "stackblitz-build-with-bolt-events-program",
+			"company": "StackBlitz (Bolt)",
+			"program": "Build with Bolt events program",
+			"kind": "event",
+			"status": "eligible",
+			"url": "https://bolt.new/build-with-bolt",
+			"apply": "Application form on bolt.new/build-with-bolt; target review within a week",
+			"benefits": [
+				"Partner support for hackathons, demo days and workshops",
+				"Swag"
+			],
+			"eligibility": "Organizers hosting hackathons, demo days or workshops",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 4,
+			"next": "Application form on bolt.new/build-with-bolt; target review within a week",
+			"why": "Only useful if we host a 3D agent hackathon; Bolt has no partner or listing route otherwise (framework partners may email hello@stackblitz.com).",
+			"source": "https://bolt.new/build-with-bolt",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "supabase-supabase-partner-program",
+			"company": "Supabase",
+			"program": "Supabase Partner Program (Integration Partners)",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://supabase.com/partners",
+			"apply": "Form on supabase.com/partners (Integration Partner track); submission process not described",
+			"benefits": [
+				"Integration Partners list for tools, extensions and connectors that work with Supabase"
+			],
+			"eligibility": "Built a tool, extension, connector or service that works with Supabase",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "A Supabase-backed agent memory or avatar store template would qualify as an integration.",
+			"source": "https://supabase.com/partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "supabase-supabase-startup-program",
+			"company": "Supabase",
+			"program": "Supabase Startup Program",
+			"kind": "credits",
+			"status": "closed",
+			"url": "https://supabase.com/startups",
+			"apply": "Redirects to a product overview with no application",
+			"benefits": [
+				"Older listings: Team plan free for 6 months or 3K credits"
+			],
+			"eligibility": "n/a",
+			"cost": "n/a",
+			"cadence": "Appears discontinued",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"why": "As of 30 Oct 2026 the page has no terms and a GitHub reviewer rejected a listing for that reason; credits now flow via Stripe, AWS, Mercury and VC partners.",
+			"source": "https://guptadeepak.com/startup-offers/programs/supabase-startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "z-ai-z-ai-startup-program",
+			"company": "Z.ai (Zhipu)",
+			"program": "Z.ai Startup Program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://z.ai/",
+			"apply": "Application on z.ai (exact form URL not verified)",
+			"benefits": [
+				"Early-stage teams building agents, copilots, vertical and multimodal AI products",
+				"Example perk: free GLM access inside AdaL CLI for a month (March 2026)"
+			],
+			"eligibility": "Early-stage teams building real AI products (per search summary)",
+			"cost": "free",
+			"cadence": "Unclear",
+			"fit": 3,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "GLM is a cheap strong tool-calling model that supports MCP; a credits grant would let us add a GLM rung to the LLM chain.",
+			"source": "https://pandaily.com/zhipu-ai-launches-glm-4-5-an-open-source-355-b-ai-model-aimed-at-ai-agents",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "z-ai-z-ai-as-a-hugging",
+			"company": "Z.ai (Zhipu)",
+			"program": "Z.ai as a Hugging Face Inference Provider",
+			"kind": "directory",
+			"status": "eligible",
+			"url": "https://huggingface.co/docs/inference-providers/providers/zai-org",
+			"apply": "Not applicable to us; listed to record that GLM is reachable through HF Inference Providers",
+			"benefits": [
+				"GLM chat models via the HF router"
+			],
+			"eligibility": "n/a",
+			"cost": "pay-as-you-go",
+			"cadence": "n/a",
+			"fit": 2,
+			"reach": 2,
+			"access": 5,
+			"next": "Not applicable to us; listed to record that GLM is reachable through HF Inference Providers",
+			"why": "Informational: lets us use GLM with one HF token without a separate Z.ai contract.",
+			"source": "https://huggingface.co/docs/inference-providers/index",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "z-ai-z-ai-ambassador-program-and",
+			"company": "Z.ai (Zhipu)",
+			"program": "Z.ai Ambassador program and global hack tour",
+			"kind": "recognition",
+			"status": "research",
+			"url": "https://nosian.substack.com/p/nosian-talks-to-a-zai-ambassador",
+			"apply": "Invitation or contact the Z.ai team (no public form verified)",
+			"benefits": [
+				"Early access to unreleased models",
+				"Funds and credits to run events",
+				"Hackathons such as the London event (April 2026, GLM-5.1)"
+			],
+			"eligibility": "Ambassadors reportedly must bring 50 to 100 participants to events (per interview)",
+			"cost": "free",
+			"cadence": "Unclear",
+			"fit": 3,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Hosting a Z.ai hackathon track around embodied 3D agents is a concrete ask.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Ambassadors organize and judge Z.ai-funded events (per interview, not an official page).",
+			"source": "https://nosian.substack.com/p/nosian-talks-to-a-zai-ambassador",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "convai-convai-partner-plan",
+			"company": "Convai",
+			"program": "Convai Partner plan (revenue share)",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://convai.com",
+			"apply": "No partner program page (convai.com/partners returned 404); the pricing page lists a Partner plan with revenue share (per search result)",
+			"benefits": [
+				"Revenue-share Partner plan; free dev tier; supports Unreal, Unity, Omniverse, ThreeJS, PlayCanvas"
+			],
+			"eligibility": "Not stated",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 3,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Convai already supports ThreeJS characters, so a three.ws avatar as the body for a Convai brain is a direct integration pitch.",
+			"source": "https://convai.com",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hyper3d-hyper3d-rodin-api-and-developer-ecosystem",
+			"company": "Hyper3D (Deemos)",
+			"program": "Hyper3D Rodin API and developer ecosystem",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://developer.hyper3d.ai",
+			"apply": "Developer docs at developer.hyper3d.ai; contact via hyper3d.ai or the Discord (no partner program, per docs/partners/prospects.md)",
+			"benefits": [
+				"Rodin Gen-2 API (text/image to 3D, texturing); open-source integrations (ComfyUI, Godot, Unreal) and rodin3d-skills repo on Deemos GitHub",
+				"Rodin also sold as a partner model on fal.ai"
+			],
+			"eligibility": "API on paid plans (a review says API and avatar licensing sit on the $120 plan, third-party); rodin-api-mcp repo archived 2026-10-28 per a guide",
+			"cost": "requires paid tier",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "We already run a Rodin BYOK lane; ask Deemos for early access and credits, and their archived MCP repo leaves room for three.ws MCP to be the 3D MCP of choice.",
+			"assets": [
+				"api/_providers/rodin.js",
+				"docs/partners/prospects.md"
+			],
+			"source": "https://beforesandafters.com/2026/01/27/everything-you-need-to-know-about-hyper3d-ai-and-its-rodin-3d-generative-ai-model/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "inworld-ai-inworld-via-livekit-startup-program",
+			"company": "Inworld AI",
+			"program": "Inworld via LiveKit Startup Program and Consumer AI Accelerator",
+			"kind": "accelerator",
+			"status": "research",
+			"url": "https://livekit.com/startups",
+			"apply": "Inworld credits arrive through the LiveKit Startup Program ($1K inference credits); no first-party Inworld startup program found",
+			"value": "$1K inference credits (via LiveKit)",
+			"benefits": [
+				"$1K inference credits through LiveKit",
+				"Consumer AI Accelerator co-run with TRMNL4 (15-30 startups, free, no equity, per search result)"
+			],
+			"eligibility": "See LiveKit eligibility",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Inworld has pivoted to realtime voice; take its credits through the LiveKit application rather than a separate program.",
+			"source": "https://livekit.com/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "kling-ai-kling-open-platform",
+			"company": "Kling AI (Kuaishou)",
+			"program": "Kling Open Platform (developer API)",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://github.com/api-evangelist/kling-ai",
+			"apply": "Register on the Kling developer platform (kling.ai); prepaid resource packages",
+			"benefits": [
+				"Text/image-to-video, lip-sync and virtual try-on APIs; priced in prepaid units"
+			],
+			"eligibility": "Open to developers and businesses; no startup tier found",
+			"cost": "requires paid tier",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 4,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "No partner program found; a video API is peripheral to the Forge.",
+			"source": "https://github.com/api-evangelist/kling-ai",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "kling-ai-kling-elite-creators-program",
+			"company": "Kling AI (Kuaishou)",
+			"program": "Kling Elite Creators Program",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://kling.ai/app/creator-apply",
+			"apply": "Application page kling.ai/app/creator-apply (page body did not render for our fetch tool); reviews take about one month",
+			"benefits": [
+				"Kling Pro plans and perks, early access, Elite Creator badge, credits for publishing on Explore, cash rewards for trending posts (per Kling X posts)"
+			],
+			"eligibility": "Kling power users; no large following required; separate from the Creative Partners Program",
+			"cost": "free",
+			"cadence": "rolling (Kling X said still recruiting in 2026)",
+			"fit": 1,
+			"reach": 3,
+			"access": 3,
+			"next": "Application page kling.ai/app/creator-apply (page body did not render for our fetch tool); reviews take about one month",
+			"why": "Creator program for video; low fit.",
+			"promo": [
+				"social",
+				"showcase"
+			],
+			"promo_note": "Kling posts say it gives priority promotion to elite creators (track record, not a stated benefit for companies).",
+			"source": "https://x.com/Kling_ai/status/2013812119935033855",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "manus-manus-fellow-program",
+			"company": "Manus",
+			"program": "Manus Fellow Program",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://manus.im/fellows",
+			"apply": "Apply now button on the page; no deadline listed",
+			"benefits": [
+				"Event stipends and swag, free Manus credits during the term",
+				"Direct line to the Manus team, shoutouts on community channels, early access",
+				"Possible guest speaker or event host roles"
+			],
+			"eligibility": "Community builders, KOLs, power users; about one event per month hosted or co-hosted",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Apply now button on the page; no deadline listed",
+			"why": "A founder could join as a community builder to host 3D-agent events; fit is personal rather than corporate.",
+			"promo": [
+				"social",
+				"event"
+			],
+			"promo_note": "Page says fellows may get shoutouts across Manus community channels and speaker or host roles.",
+			"source": "https://manus.im/fellows",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "manus-manus-for-startups",
+			"company": "Manus",
+			"program": "Manus for Startups",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://manus.im/startups",
+			"apply": "Open applications paused; via VC referral link only; existing users can email startups@manus.ai",
+			"value": "$4,800 value (per Manus)",
+			"benefits": [
+				"Six months of Manus Team for up to 20 seats (valued at $4,800)"
+			],
+			"eligibility": "Under 5 years old and $500K to $50M raised; VC partner preferred",
+			"cost": "free",
+			"cadence": "paused",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"wave": 5,
+			"next": "Invite-only, no public application. Revisit when an introduction or invitation appears",
+			"why": "Agent product, not an integration partner; we are not VC-backed, so no referral path.",
+			"source": "https://manus.im/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "modal-modal-startup-and-academic-credits",
+			"company": "Modal",
+			"program": "Modal Startup and Academic credits",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://modal.com/startups",
+			"apply": "Application on modal.com/startups; academic form separate",
+			"value": "up to 25K (most sources); unpublished by Modal per Fin AI",
+			"benefits": [
+				"Serverless GPU credits (amounts vary by source: 5K to 25K, or up to 50K)",
+				"Starter plan includes 30 per month of free compute"
+			],
+			"eligibility": "Reported: seed to Series A with a Modal VC partner or over 1M raised (conflicting)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 3,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "GPU workers already run on GCP credits; Modal is a secondary burst lane and a frequent hackathon sponsor.",
+			"assets": [
+				"docs/partners/prospects.md"
+			],
+			"source": "https://modal.com/resources/best-gpu-cloud-credit-programs-startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "replit-replit-community-ambassadors",
+			"company": "Replit",
+			"program": "Replit Community Ambassadors",
+			"kind": "recognition",
+			"status": "research",
+			"url": "https://community-hub.replit.app/ambassadors/",
+			"apply": "Application on the ambassadors page; was invite-only, broader intake said to start early 2026",
+			"benefits": [
+				"AMAs with the Replit team",
+				"Replit credits"
+			],
+			"eligibility": "Creators who host events and help builders",
+			"cost": "free",
+			"cadence": "Unclear",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "An 'Add to Replit' badge and tutorial route is feasible; ambassador status is low priority.",
+			"promo": [
+				"event"
+			],
+			"promo_note": "Ambassadors host events with the Replit team; no stated social feature.",
+			"source": "https://community-hub.replit.app/ambassadors/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "replit-replit-solutions-partner-program",
+			"company": "Replit",
+			"program": "Replit Solutions Partner Program",
+			"kind": "partner-network",
+			"status": "eligible",
+			"url": "https://replit.com/partners/solutions-partners",
+			"apply": "Apply at replit.com/partners/solutions-partners",
+			"benefits": [
+				"Certification on Replit enterprise features",
+				"Enterprise services network (Accenture, Slalom, Hexaware founding partners)"
+			],
+			"eligibility": "Services and consulting firms",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Apply at replit.com/partners/solutions-partners",
+			"why": "Services-firm track; irrelevant to a product company unless we sell implementation.",
+			"source": "https://replit.com/blog/introducing-replit-solutions-partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "replit-replit-for-startups",
+			"company": "Replit",
+			"program": "Replit for Startups",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://replit.com/startups",
+			"apply": "Funds and accelerators apply to become partners; founders go through their fund",
+			"value": "up to 25K credits",
+			"benefits": [
+				"Up to 25K in credits for Select Partner portfolio companies",
+				"Free Replit Pro for the broader Partner Network"
+			],
+			"eligibility": "Venture-backed founders via a partner fund or accelerator",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Funds and accelerators apply to become partners; founders go through their fund",
+			"why": "Credits help only if we build on Replit; low fit for our stack and no direct door.",
+			"source": "https://replit.com/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "stability-ai-stability-ai-strategic-partnerships",
+			"company": "Stability AI",
+			"program": "Stability AI Strategic Partnerships (partners@stability.ai)",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://stability.ai/partners",
+			"apply": "Email partners@stability.ai or the Strategic Partnerships page; no application steps published",
+			"benefits": [
+				"Cloud and technology partner placement (Amazon Bedrock, Azure AI Foundry, NVIDIA catalog) is listed on the page",
+				"Enterprise license for revenue above USD 1M under the Community License (per Hugging Face model card)"
+			],
+			"eligibility": "No public criteria; the Community License is free up to USD 1M annual revenue, above that an Enterprise License is required",
+			"cost": "unclear",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 4,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "We run SF3D/SPAR3D-class models; an email to confirm Community License coverage for the Forge and ask about a partner listing costs nothing, but there is no stated program.",
+			"assets": [
+				"api/_providers/stability.js",
+				"docs/partners/prospects.md"
+			],
+			"source": "https://stability.ai/partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "weights-and-biases-wandb-for-startups",
+			"company": "Weights & Biases (CoreWeave)",
+			"program": "W&B for Startups (via Microsoft and Google perks)",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://wandb.ai/site/pricing",
+			"apply": "Redeemed through Microsoft for Startups or Google Cloud Startup Perks, not directly",
+			"value": "up to 3K (per aggregator)",
+			"benefits": [
+				"Up to 3K credits or 50% off Pro for a year (per aggregator)"
+			],
+			"eligibility": "Must be in the Microsoft or Google startup programs first",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 3,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "We are in Google Cloud for Web3 Startups, so the perk may be redeemable, but we do not train models at W&B scale.",
+			"source": "https://guptadeepak.com/startup-offers/programs/wandb-startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cognition-devin-mcp-marketplace",
+			"company": "Cognition (Devin, Windsurf)",
+			"program": "Devin MCP Marketplace",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://cognition.com/blog/mcp-marketplace",
+			"apply": "No public submission process found; contact via docs.devin.ai",
+			"benefits": [
+				"Marketplace in Devin settings; MCP servers also carry over to Devin Desktop"
+			],
+			"eligibility": "Remote MCP server",
+			"cost": "free",
+			"cadence": "Unclear",
+			"fit": 3,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Our remote MCP works with Devin as a custom server today; official listing needs an outreach email.",
+			"source": "https://cognition.com/blog/mcp-marketplace",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cognition-cognition-startup-program",
+			"company": "Cognition (Devin, Windsurf)",
+			"program": "Cognition startup program",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://cognition.com/blog",
+			"apply": "Create a Devin account, subscribe to Team, submit startup details for VC verification",
+			"value": "up to 65K credits (per AlphaSignal)",
+			"benefits": [
+				"Up to 65K in credits and matching grants (per AlphaSignal, July 2026)"
+			],
+			"eligibility": "Early-stage, VC-backed teams",
+			"cost": "requires paid tier (Team plan)",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Create a Devin account, subscribe to Team, submit startup details for VC verification",
+			"why": "VC-backed gate and Team plan make it a poor fit; Windsurf is now Devin Desktop (rebrand 2 June 2026).",
+			"source": "https://alphasignal.ai/news/cognition-offers-startups-65k-to-build-their-entire-codebase-with-devin",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "coreweave-coreweave-ventures-and-startup-accelerator",
+			"company": "CoreWeave",
+			"program": "CoreWeave Ventures and Startup Accelerator",
+			"kind": "accelerator",
+			"status": "eligible",
+			"url": "https://www.coreweave.com/ventures",
+			"apply": "Apply to CoreWeave Ventures form; ventures@coreweave.com",
+			"benefits": [
+				"Capital, compute-for-equity or technical partnership",
+				"Production-grade cluster testing and technical integrations",
+				"Go-to-market insights from enterprise relationships"
+			],
+			"eligibility": "No formal criteria published; focus areas include AI stack, media and entertainment, applied AI",
+			"cost": "free to apply",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 2,
+			"next": "Apply to CoreWeave Ventures form; ventures@coreweave.com",
+			"why": "Enterprise-scale GPU provider and owner of Weights and Biases; useful only if we need dedicated clusters.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Page lists go-to-market acceleration; confirm what it includes before counting on promotion.",
+			"source": "https://www.coreweave.com/ventures",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "genspark-genspark-affiliate-program",
+			"company": "Genspark",
+			"program": "Genspark Affiliate Program",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://x.com/genspark_ai/status/1962619722413023278",
+			"apply": "genspark.ai/affiliate (migrating to Impact); existing affiliates re-register",
+			"value": "20% commission",
+			"benefits": [
+				"20% commission per referral (Genspark X post)"
+			],
+			"eligibility": "Open sign-up; PromoteKit and Impact networks",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 4,
+			"next": "Genspark.ai/affiliate (migrating to Impact); existing affiliates re-register",
+			"why": "No developer or partner route found; referral money only.",
+			"source": "https://x.com/genspark_ai/status/1962619722413023278",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "groq-groq-for-startups-groq-partner-program",
+			"company": "Groq",
+			"program": "Groq for Startups / Groq Partner Program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://groq.com/groq-partner-program",
+			"apply": "Historically groq.com/apply-to-groq-for-startups; the partner page now has no application route",
+			"benefits": [
+				"Reported up to 10K in GroqCloud credits for 90 days (older listings)"
+			],
+			"eligibility": "At Groq's sole discretion",
+			"cost": "free",
+			"cadence": "Unclear, sources conflict",
+			"fit": 3,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Groq is already three rungs of our LLM chain, but the program pages redirect or lack an application, and promotional credits are now occasional.",
+			"assets": [
+				"docs/partners/prospects.md",
+				"api/_lib/llm.js"
+			],
+			"source": "https://groq.com/groq-partner-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "synthesia-synthesia-affiliate-and-creator-program",
+			"company": "Synthesia",
+			"program": "Synthesia Affiliate and Creator Program",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://www.synthesia.io/partners/affiliates",
+			"apply": "Form on the affiliate page",
+			"value": "up to $267 per referral (per Synthesia)",
+			"benefits": [
+				"Up to $267 per customer referral; 25% of net payments (per Synthesia FAQ)",
+				"Creator Program for review/showcase videos"
+			],
+			"eligibility": "Cannot refer yourself",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 3,
+			"next": "Form on the affiliate page",
+			"why": "Referral money only, from a competitor segment; low fit.",
+			"source": "https://www.synthesia.io/partners/affiliates",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "synthesia-synthesia-technology-partner-program",
+			"company": "Synthesia",
+			"program": "Synthesia Technology Partner program",
+			"kind": "directory",
+			"status": "research",
+			"url": "https://www.synthesia.io/partners/technology-partners",
+			"apply": "No application steps on the page; see API docs or contact Synthesia",
+			"benefits": [
+				"Access to a user base of about 2 million (vendor claim); listing among integrations (Notion, HubSpot, Articulate and others)"
+			],
+			"eligibility": "Not stated",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 3,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Enterprise training-video avatars; competitor-adjacent, so only an integration story at best.",
+			"source": "https://www.synthesia.io/partners/technology-partners",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "baseten-baseten-startup-program",
+			"company": "Baseten",
+			"program": "Baseten Startup Program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://www.baseten.co/startup-program",
+			"apply": "Application on baseten.co/startup-program",
+			"value": "up to 25K plus 2.5K (per aggregator)",
+			"benefits": [
+				"Up to 25K for Dedicated Inference or Training plus up to 2.5K Model API credits",
+				"Technical assistance, networking and go-to-market support"
+			],
+			"eligibility": "AI-first, venture-backed, seed to Series A, founded under 5 years ago; credits expire after 6 months",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Venture-backed gate excludes us; Baseten is also an HF Inference Provider.",
+			"promo": [
+				"co-marketing"
+			],
+			"promo_note": "Go-to-market support is listed as a benefit by an aggregator; page itself could not be fetched.",
+			"source": "https://modal.com/resources/best-gpu-cloud-credit-programs-startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "character-ai-character-ai-partnerships",
+			"company": "Character.AI",
+			"program": "Character.AI partnerships",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://futurism.com/character-ai-seeking-partnerships-despite-lawsuits",
+			"apply": "None public; Character.AI has a partnerships lead per Futurism but no program page",
+			"eligibility": "No public route",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 4,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "No route and brand-safety concerns around minors; skip.",
+			"source": "https://futurism.com/character-ai-seeking-partnerships-despite-lawsuits",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cohere-cohere-labs-catalyst-grants",
+			"company": "Cohere",
+			"program": "Cohere Labs Catalyst Grants",
+			"kind": "grant",
+			"status": "eligible",
+			"url": "https://cohere.com/research/grants",
+			"apply": "Application on cohere.com/research/grants, rolling",
+			"benefits": [
+				"Free access to Cohere models including the Aya multilingual family"
+			],
+			"eligibility": "Academic partners, civic institutions and impact-focused organizations; focus on education, healthcare, climate (per grantedai.com)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 3,
+			"next": "Application on cohere.com/research/grants, rolling",
+			"why": "Aimed at research and public-benefit work; weak fit unless we frame an education or accessibility avatar project.",
+			"source": "https://grantedai.com/grants/cohere-labs-catalyst-grant-program-public-benefit-ai-multilingual-research-cohere-e4f7a9b2",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "cohere-cohere-for-startups-cohere-for-good",
+			"company": "Cohere",
+			"program": "Cohere for Startups / Cohere for Good",
+			"kind": "credits",
+			"status": "closed",
+			"url": "https://cohere.com/",
+			"apply": "Pages redirect to the homepage",
+			"benefits": [
+				"Formerly a 25% discount on proprietary models for up to 12 months (older listings)"
+			],
+			"eligibility": "n/a",
+			"cost": "n/a",
+			"cadence": "Closed",
+			"fit": 1,
+			"reach": 2,
+			"access": 1,
+			"why": "Startup pages redirect to the homepage and Cohere has published no replacement; do not re-research.",
+			"source": "https://guptadeepak.com/startup-offers/programs/cohere-startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "heygen-heygen-affiliate-creator-program",
+			"company": "HeyGen",
+			"program": "HeyGen Affiliate Creator Program",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://www.heygen.com/geniverse/affiliate-program",
+			"apply": "Short application form on the page; approved creators get an affiliate link",
+			"value": "20-30% for 6 months (per HeyGen)",
+			"benefits": [
+				"20% / 25% / 30% recurring commission by conversion tier, each for 6 months",
+				"Early access to new releases, creator brief and brand assets, direct line to the community team"
+			],
+			"eligibility": "5K+ followers on one platform; original video content only (no blog/SEO promotion)",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 2,
+			"next": "Short application form on the page; approved creators get an affiliate link",
+			"why": "Direct competitor in talking avatars; low fit, and a video-creator audience we do not target.",
+			"source": "https://www.heygen.com/geniverse/affiliate-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hume-ai-hume-evi-startup-grant-program",
+			"company": "Hume AI",
+			"program": "Hume EVI Startup Grant Program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://www.hume.ai/grant-program",
+			"apply": "Page now shows an academic API-credit grant via contact form; the 2024 startup grant is not visible on the page",
+			"benefits": [
+				"Free API credits for academics (current page)",
+				"2024 startup grant: 3 months unlimited EVI, tech support, co-marketing (X announcement, Sept 2024)"
+			],
+			"eligibility": "Current page does not define criteria or open status",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 2,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Empathic voice could drive avatar mood/gesture, but the startup grant looks retired.",
+			"source": "https://www.hume.ai/grant-program",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "kaedim-kaedim-enterprise-api-custom-integrations",
+			"company": "Kaedim",
+			"program": "Kaedim Enterprise API / custom integrations",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://docs.kaedim3d.com/enterprise-features/custom-integrations/apis/web-api",
+			"apply": "Contact Kaedim for an Enterprise quote (self-serve plans temporarily closed per search results); also kaedim3d.com/contactUs per docs/partners/prospects.md",
+			"benefits": [
+				"REST + webhook API, artist-finished 3D, plugins for Blender, Unity, Unreal, Omniverse"
+			],
+			"eligibility": "Enterprise plan; one review puts it at $1,000+/month (third-party)",
+			"cost": "requires paid tier",
+			"cadence": "rolling",
+			"fit": 2,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "An artist-finished premium tier could be routed to Kaedim as in prospects.md; no partner program exists, so this is a sales conversation.",
+			"assets": [
+				"docs/partners/prospects.md"
+			],
+			"source": "https://docs.kaedim3d.com/enterprise-features/custom-integrations/apis/web-api",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "browserbase-browserbase-startup-program",
+			"company": "Browserbase",
+			"program": "Browserbase startup program",
+			"kind": "credits",
+			"status": "research",
+			"url": "https://www.browserbase.com/pricing",
+			"apply": "No official application page found; third-party perks directory lists a startup program and an ElevenLabs Founder Pack redemption page (browserbase.com/11labs-founder-pack)",
+			"benefits": [
+				"Credit amounts not published; Startup is also a $99/month paid plan"
+			],
+			"eligibility": "AI startups building browser automation (third-party)",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Browser automation does not match our product, but an ElevenLabs grant opens the Founder Pack redemption.",
+			"source": "https://startup-perks.com/perks/browserbase-startup/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "common-sense-machines-csm-cube-api",
+			"company": "Common Sense Machines (Google)",
+			"program": "CSM Cube API",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://github.com/api-evangelist/csm",
+			"apply": "API keys with a Cube plan; docs.csm.ai",
+			"benefits": [
+				"Image-to-3D API tied to mid-tier and enterprise plans"
+			],
+			"eligibility": "Paid plans; Google acquired the team into DeepMind in January 2026, future of the standalone API unannounced",
+			"cost": "requires paid tier",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "No partner program found and the product's future is uncertain after the Google acquisition; do not build a dependency.",
+			"source": "https://aihola.com/article/google-acquires-common-sense-machines",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "d-id-d-id-affiliate-program-and",
+			"company": "D-ID",
+			"program": "D-ID Affiliate Program (invite) and Microsoft Azure partnership",
+			"kind": "co-marketing",
+			"status": "eligible",
+			"url": "https://www.d-id.com/affiliate-terms/",
+			"apply": "Selected users are invited at D-ID's sole discretion; no public partner or startup page found (d-id.com/partners returned 404)",
+			"benefits": [
+				"Affiliate links and promo codes; terms last updated June 2023"
+			],
+			"eligibility": "Invite at D-ID's discretion",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"wave": 5,
+			"next": "Invite-only, no public application. Revisit when an introduction or invitation appears",
+			"why": "Talking-avatar competitor; no open route.",
+			"source": "https://www.d-id.com/affiliate-terms/",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "hedra-hedra-api-and-enterprise-partnerships",
+			"company": "Hedra",
+			"program": "Hedra API and enterprise partnerships",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://www.hedra.com/models/video/hedra/character-3",
+			"apply": "API at hedra.com/develop; sales for partnerships; API terms limit use to personal or internal business per a user quote on X",
+			"benefits": [
+				"Character-3 talking-avatar video API, prepaid wallet billing (third-party reviews conflict)"
+			],
+			"eligibility": "No partner or creator program found",
+			"cost": "requires paid tier",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Talking-head video; peripheral to a real-time 3D avatar.",
+			"source": "https://www.hedra.com/models/video/hedra/character-3",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "llamaindex-llamaparse-startup-offer",
+			"company": "LlamaIndex",
+			"program": "LlamaParse Startup Offer",
+			"kind": "credits",
+			"status": "eligible",
+			"url": "https://www.llamaindex.ai/startups",
+			"apply": "Apply now on the page",
+			"value": "$2K credits (per LlamaIndex)",
+			"benefits": [
+				"$2K credit for one year",
+				"Priority Slack with dedicated AI engineer, call with co-founder Jerry Liu",
+				"Dedicated post on LlamaIndex social channels and newsletter"
+			],
+			"eligibility": "First-time LlamaParse customers, under $50M raised, at least $250K raised to date",
+			"cost": "free",
+			"cadence": "rolling",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Apply now on the page",
+			"why": "Document parsing is off our core; the raise floor of $250K likely fails us. LlamaIndex has no integration partner program (monorepo closed to new integrations per prospects.md).",
+			"promo": [
+				"social",
+				"newsletter"
+			],
+			"promo_note": "Page states a community spotlight post on social channels and newsletter for accepted startups.",
+			"source": "https://www.llamaindex.ai/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pika-pika-api-program",
+			"company": "Pika",
+			"program": "Pika API Program",
+			"kind": "developer-program",
+			"status": "research",
+			"url": "https://pika.art/experiments",
+			"apply": "Pika posted an API program application in Dec 2024; the dev page now redirects (pika.me/dev to experiment.pika.art); partnerships@pika.art per an older page",
+			"benefits": [
+				"API access with rate limits (20 generations per minute on an older page)"
+			],
+			"eligibility": "Unclear; page redirected on 2026-11-06",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 2,
+			"access": 2,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Video only; check only if the Forge adds video output.",
+			"source": "https://x.com/pika_labs/status/1867641191174733914",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "pika-pika-creative-partner-program",
+			"company": "Pika",
+			"program": "Pika Creative Partner Program (CPP)",
+			"kind": "recognition",
+			"status": "eligible",
+			"url": "https://x.com/pika_labs/status/1902752666901737858",
+			"apply": "Invite only; Pika says grab their attention with original content",
+			"benefits": [
+				"Early access to new features and AI video tools"
+			],
+			"eligibility": "Top creators in social content and AI space; invite only",
+			"cost": "free",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"wave": 5,
+			"next": "Invite-only, no public application. Revisit when an introduction or invitation appears",
+			"why": "Video creator program; no route for a platform without an invite.",
+			"source": "https://x.com/pika_labs/status/1902752666901737858",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "tavus-tavus-partner-startup-program",
+			"company": "Tavus",
+			"program": "Tavus partner / startup program",
+			"kind": "partner-network",
+			"status": "research",
+			"url": "https://www.tavus.io/pricing",
+			"apply": "None found; tavus.io/partners returned 404; talk to Tavus sales (Enterprise)",
+			"benefits": [
+				"20 free conversational minutes on the free tier (pricing page)"
+			],
+			"eligibility": "No program found; Tavus has a Cartesia and Daily/Pipecat integration",
+			"cost": "unclear",
+			"cadence": "unclear",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"next": "Read the live program page, confirm eligibility and terms, then set eligible or skip",
+			"why": "Conversational video avatars overlap our agent-with-body pitch; the practical route is the Pipecat integration both support.",
+			"source": "https://www.tavus.io/pricing",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "vapi-vapi-for-startups",
+			"company": "Vapi",
+			"program": "Vapi for Startups",
+			"kind": "credits",
+			"status": "closed",
+			"url": "https://vapi.ai/startups",
+			"apply": "Page shows APPLICATIONS ON HOLD on 2026-11-06",
+			"value": "90,000 free minutes",
+			"benefits": [
+				"7,500 minutes per month for 12 months (about 90,000)",
+				"Private Slack with forward-deployed engineers",
+				"Early feature access"
+			],
+			"eligibility": "Voice AI product, pre-seed to Series A, $250K+ raised, launching to customers within 6 months",
+			"cost": "free",
+			"cadence": "closed until reopened",
+			"fit": 1,
+			"reach": 3,
+			"access": 1,
+			"why": "Voice-agent infrastructure with weak overlap; applications are paused.",
+			"source": "https://vapi.ai/startups",
+			"checked": "2026-11-06"
+		},
+		{
+			"id": "replicate-replicate-startup-credits",
+			"company": "Replicate",
+			"program": "Replicate startup credits",
+			"kind": "credits",
+			"status": "closed",
+			"url": "https://guptadeepak.com/startup-offers/programs/replicate-startups",
+			"apply": "None: sources say replicate.com/startups returns 404 and no credits program is published; older directories still list up to $10,000",
+			"eligibility": "No program",
+			"cost": "unclear",
+			"cadence": "closed",
+			"fit": 1,
+			"reach": 2,
+			"access": 1,
+			"why": "We use Replicate as a hosted failover rung; no credit route to pursue.",
+			"assets": [
+				"api/_providers/replicate.js"
+			],
+			"source": "https://guptadeepak.com/startup-offers/programs/replicate-startups",
+			"checked": "2026-11-06"
+		}
+	]
+}
