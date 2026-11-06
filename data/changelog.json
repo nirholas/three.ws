@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-11-06",
+			"title": "Pages keep working right after a site update",
+			"summary": "Right after an update, /play could stop on \"Couldn't load the world\" and other pages could fail the same way, because our network edge kept handing out an old copy of the page that pointed at files the update had removed. Reloading fetched the same old copy, so Try again could not help. Pages now always come fresh from the site, so an update can no longer strand visitors on a dead copy.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-11-06",
 			"title": "Agent payments on Solana stop stalling on a starved RPC",
 			"summary": "The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.",
 			"tags": ["fix"],

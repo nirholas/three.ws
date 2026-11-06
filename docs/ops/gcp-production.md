@@ -846,6 +846,41 @@ across all callers, and bounds every vision-model load with
 15 seconds instead of hanging the flow. `npm run verify:selfie -- --stall-vision`
 reproduces the hostile case end to end.
 
+### HTML stays off the edge: a skipped purge blanked 254 pages (2026-11-06)
+
+Revision `three-ws-api-00526` went live at 00:51 UTC and no CDN invalidation
+followed it: the build succeeded on Cloud Build, but the purge that should come
+after it never ran. Four and a half hours later `/play` showed
+"Couldn't load the world", and a sweep found 254 of 1,037 pages in
+`data/pages.json` referencing hashed chunks that returned 404.
+
+**Why a missed purge was fatal.** Static HTML left the server with Express's
+default `public, max-age=0`. Cloud CDN stores that, and `three-ws-backend` has
+`serveWhileStale: 86400`, so the edge kept answering with the expired copy
+without asking the origin (measured: `age: 19498` on a `max-age=0` response). The
+old image's chunks were gone, so every affected page failed to boot, and a reload
+fetched the same stale document.
+
+**The rule now.** Every HTML response carries `private, no-cache`
+(`HTML_CACHE_CONTROL` in `server/index.mjs`), static files and rewritten shells
+alike, the 404 page included. Cloud CDN does not store `private` responses and
+browsers revalidate by ETag. Do not put a `public` or `s-maxage` policy on HTML:
+it names hashed chunks, and a short TTL only delays the same stale window. Guarded
+by `tests/server-html-edge-cache.test.js`.
+
+**Still purge on every deploy.** Non-HTML files outside `/assets/` still go stale
+at the edge. If a deploy's local session dies, finish the chain by hand:
+
+```bash
+npm run deploy:gcp:purge-cdn
+npm run smoke:prod
+```
+
+**How to spot this class of failure:** compare a page with a cache-busted fetch.
+If `curl -sI https://three.ws/play` shows a large `age` and an older
+`last-modified` than `curl -sI "https://three.ws/play?x=$(date +%s)"`, the edge is
+serving a copy from before the deploy.
+
 ### A rejected object-storage credential silently eats finished avatars (2026-09-11)
 
 The R2 credential stopped verifying at **03:15 UTC on 2026-09-11**, the second

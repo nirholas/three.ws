@@ -23,6 +23,14 @@
 			<description>The same live /play world, people, chat, dance-off and signature wall as the 3D plaza, drawn as a live map that runs on any phone or laptop, no graphics card needed.</description>
 		</item>
 		<item>
+			<title>Agent payments on Solana stop stalling on a starved RPC</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-11-06:Agent payments on Solana stop stalling on a starved RPC</guid>
+			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The background leak scanner was spending a quarter of the platform's daily Solana RPC calls rechecking wallets that never move money, which used up the paid RPC lanes and left agent-to-agent x402 payments waiting on slow public ones. Idle wallets are now checked in a steady rotation while every wallet that actually paid is still checked within ten minutes, so payments at the Agent Exchange settle on the fast lanes again.</description>
+		</item>
+		<item>
 			<title>Join any /play world from any phone or laptop with Play lite</title>
 			<link>https://three.ws/play/lite</link>
 			<guid isPermaLink="false">2026-11-06:Join any /play world from any phone or laptop with Play lite</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Models over 32 MB (several mixamo avatars and forge props are 38 to 42 MB) failed with an empty server error on a full download whenever the CDN edge did not already hold them, because Cloud Run rejects a buffered response that large. Those downloads now stream, so an avatar or prop in /play no longer depends on the cache being warm.</description>
+		</item>
+		<item>
+			<title>Pages keep working right after a site update</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-11-06:Pages keep working right after a site update</guid>
+			<pubDate>Fri, 06 Nov 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Right after an update, /play could stop on &quot;Couldn't load the world&quot; and other pages could fail the same way, because our network edge kept handing out an old copy of the page that pointed at files the update had removed. Reloading fetched the same old copy, so Try again could not help. Pages now always come fresh from the site, so an update can no longer strand visitors on a dead copy.</description>
 		</item>
 		<item>
 			<title>Queued 3D and avatar jobs are no longer failed while they wait their turn</title>

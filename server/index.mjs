@@ -64,7 +64,10 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const API_ROOT = path.join(ROOT, 'api');
-const DIST_ROOT = path.join(ROOT, 'dist');
+// THREE_WS_DIST_ROOT exists for tests that need known pages; production never sets it.
+const DIST_ROOT = process.env.THREE_WS_DIST_ROOT
+	? path.resolve(process.env.THREE_WS_DIST_ROOT)
+	: path.join(ROOT, 'dist');
 // Per-creation head for /m/:id, reading the creation straight from the
 // database with the same visibility rules as GET /api/forge-creation.
 const renderCreationHead = createCreationHeadRenderer({
@@ -321,10 +324,24 @@ function cspForStaticHtml(file) {
 	return html;
 }
 
+// Every HTML response carries this, static or rewritten. HTML names hashed
+// chunks, so it must never outlive the deploy that built it. send() would
+// otherwise stamp `public, max-age=0`, which Cloud CDN stores, and the backend's
+// serve-while-stale window then answers with that expired copy for up to a day;
+// a short s-maxage only delays the same thing. On 2026-11-06 one deploy that
+// skipped its purge left 254 pages pointing at deleted chunks, and reloading
+// could not help. `private` keeps HTML off the edge, so a missed purge can no
+// longer do that, and `no-cache` has browsers revalidate by ETag for a cheap 304.
+// The 404 page goes through serveFile too, which stops the edge keeping a miss.
+const HTML_CACHE_CONTROL = 'private, no-cache';
+
 function serveFile(req, res, file, headers, status) {
 	if (file.endsWith('.html')) {
 		const html = cspForStaticHtml(file);
 		if (html !== null) hardenHeaderBag(headers, html);
+		if (!Object.keys(headers).some((key) => key.toLowerCase() === 'cache-control')) {
+			headers['cache-control'] = HTML_CACHE_CONTROL;
+		}
 	}
 	res.set(headers);
 	if (status) res.status(status);
@@ -615,9 +632,7 @@ app.use(async (req, res) => {
 						res.set(hardenHeaderBag(collected, html));
 						if (fileStatus) res.status(fileStatus);
 						res.set('content-type', 'text/html; charset=utf-8');
-						// Same freshness the static shell gets from the CDN, but the
-						// injected block is only as fresh as its own cache TTL.
-						res.set('cache-control', 'public, max-age=60, s-maxage=300');
+						res.set('cache-control', HTML_CACHE_CONTROL);
 						res.send(html);
 						return;
 					}
@@ -635,7 +650,7 @@ app.use(async (req, res) => {
 					res.set(hardenHeaderBag(collected, html));
 					if (fileStatus) res.status(fileStatus);
 					res.set('content-type', 'text/html; charset=utf-8');
-					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.set('cache-control', HTML_CACHE_CONTROL);
 					res.send(html);
 					return;
 				}
@@ -650,7 +665,7 @@ app.use(async (req, res) => {
 					res.set(hardenHeaderBag(collected, html));
 					if (fileStatus) res.status(fileStatus);
 					res.set('content-type', 'text/html; charset=utf-8');
-					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.set('cache-control', HTML_CACHE_CONTROL);
 					res.send(html);
 					return;
 				}
@@ -672,7 +687,7 @@ app.use(async (req, res) => {
 					res.set(hardenHeaderBag(collected, html));
 					if (fileStatus) res.status(fileStatus);
 					res.set('content-type', 'text/html; charset=utf-8');
-					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.set('cache-control', HTML_CACHE_CONTROL);
 					res.send(html);
 					return;
 				}
@@ -686,7 +701,7 @@ app.use(async (req, res) => {
 					res.set(hardenHeaderBag(collected, html));
 					if (fileStatus) res.status(fileStatus);
 					res.set('content-type', 'text/html; charset=utf-8');
-					res.set('cache-control', 'public, max-age=60, s-maxage=300');
+					res.set('cache-control', HTML_CACHE_CONTROL);
 					res.send(html);
 					return;
 				}
