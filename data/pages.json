@@ -3834,6 +3834,14 @@
 					"added": "2026-08-08"
 				},
 				{
+					"path": "/docs/play-lite",
+					"title": "Docs · Play lite: the /play world on any device",
+					"description": "How /play/lite joins the same live room as the 3D plaza without WebGL: what a lite player can do, when /play hands off automatically, the slow-device offer, and how to verify it locally.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-11-06"
+				},
+				{
 					"path": "/docs/play-plaza-stage",
 					"title": "Docs · The Plaza Stage in /play",
 					"description": "How the hosted Living Stage in every coin world works: proximity join and leave, spatial host voice with captions, ring seats, questions from the chat bar, and $THREE tips behind an explicit confirm step.",

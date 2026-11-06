@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T00:18:58.920Z",
+	"generated_at": "2026-11-06T00:34:32.591Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -5535,6 +5535,18 @@
 					"title": "Docs · Event souvenirs: the wearable you keep",
 					"description": "The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.",
 					"added": "2026-08-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false,
+					"priority": 0.5,
+					"job": null
+				},
+				{
+					"path": "/docs/play-lite",
+					"title": "Docs · Play lite: the /play world on any device",
+					"description": "How /play/lite joins the same live room as the 3D plaza without WebGL: what a lite player can do, when /play hands off automatically, the slow-device offer, and how to verify it locally.",
+					"added": "2026-11-06",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

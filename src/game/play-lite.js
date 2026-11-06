@@ -192,6 +192,9 @@ function onAdd(p, id) {
 			setStatus(app.status);
 			announce(`You joined ${worldTitle}.`);
 		}
+		// connect() can resolve before this add arrives, so the caption it set
+		// would still read "Joining" for a player who never moves.
+		updateWhere();
 	}
 	updateCount();
 	renderRoster();

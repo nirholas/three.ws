@@ -6,7 +6,9 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-11-06
 
+- **Docs · Play lite: the /play world on any device** (`/docs/play-lite`): How /play/lite joins the same live room as the 3D plaza without WebGL: what a lite player can do, when /play hands off automatically, the slow-device offer, and how to verify it locally.
 - **Play lite: join the live world from any device** (`/play/lite`): The same live /play world, people, chat, dance-off and signature wall as the 3D plaza, drawn as a live map that runs on any phone or laptop, no graphics card needed.
+- **Join any /play world from any phone or laptop with Play lite**: Devices that can't run the 3D world (no graphics acceleration, an old phone, a locked-down work laptop) now land in Play lite: the same live room drawn as a top-down map. You walk by tapping, chat, react, emote, enter and vote in the dance-off, sign the wall and follow the meetup agenda, and everyone in 3D sees you arrive as an avatar. /play switches over automatically before the 3D engine downloads, a slow device is offered the switch, and Open in 3D takes you back. (`/play/lite`) `[feature]`
 
 ## 2026-11-05
 

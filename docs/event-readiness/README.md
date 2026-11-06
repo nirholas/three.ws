@@ -49,6 +49,10 @@ Rules that apply to every prompt in this pack:
 - Commit finished work promptly with explicit paths (concurrent agents share this worktree; never `git add -A`).
 - Deploys stay owner-gated. Prepare everything so shipping is one command (`npm run deploy:gcp:full`), then say so in the report.
 
+## Every device gets in: `/play/lite`
+
+A phone or laptop that can't run the 3D world (no WebGL, a crawling GPU) is handed to [/play/lite](../play-lite.md), a 2D client that joins the same live room: walk, chat, react, emote, dance-off votes, the signature wall and the meetup agenda all work there, and 3D players see lite players as avatars. `/play` redirects automatically before three.js loads, the boot-error card leads with it, and a device stuck at the lowest render tier gets a one-tap offer. `?lite=1` forces it, `?full=1` and `?director=1` never redirect.
+
 ## Repeatable client audit: `npm run audit:event-client`
 
 One command re-runs the measurable parts of audits 01, 02, 03, 06 and 09 against the canonical $THREE world link and exits non-zero on a regression. Run it before every event and after any change to `src/game/`.

@@ -2806,6 +2806,12 @@ URL: https://three.ws/docs/event-souvenirs
 
 The free commemorative wearable granted once to every player who is in the $THREE world while a live event is running: what it is, how the server decides who earns it, why it can never be bought, and how to equip it afterwards.
 
+### Docs · Play lite: the /play world on any device
+
+URL: https://three.ws/docs/play-lite
+
+How /play/lite joins the same live room as the 3D plaza without WebGL: what a lite player can do, when /play hands off automatically, the slow-device offer, and how to verify it locally.
+
 ### Docs · The Plaza Stage in /play
 
 URL: https://three.ws/docs/play-plaza-stage

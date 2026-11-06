@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-11-06T00:18:58.953Z",
+	"generated_at": "2026-11-06T00:34:32.621Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,11 +9,31 @@
 		{
 			"date": "2026-11-06",
 			"type": "launch",
+			"title": "Docs · Play lite: the /play world on any device",
+			"summary": "How /play/lite joins the same live room as the 3D plaza without WebGL: what a lite player can do, when /play hands off automatically, the slow-device offer, and how to verify it locally.",
+			"link": "/docs/play-lite",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "launch",
 			"title": "Play lite: join the live world from any device",
 			"summary": "The same live /play world, people, chat, dance-off and signature wall as the 3D plaza, drawn as a live map that runs on any phone or laptop, no graphics card needed.",
 			"link": "/play/lite",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-11-06",
+			"type": "update",
+			"title": "Join any /play world from any phone or laptop with Play lite",
+			"summary": "Devices that can't run the 3D world (no graphics acceleration, an old phone, a locked-down work laptop) now land in Play lite: the same live room drawn as a top-down map. You walk by tapping, chat, react, emote, enter and vote in the dance-off, sign the wall and follow the meetup agenda, and everyone in 3D sees you arrive as an avatar. /play switches over automatically before the 3D engine downloads, a slow device is offered the switch, and Open in 3D takes you back.",
+			"link": "/play/lite",
+			"tags": [
+				"feature"
 			]
 		},
 		{

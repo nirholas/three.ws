@@ -161,6 +161,8 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 @media (min-width: 900px) {
 	.pl-main { grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); align-items: start; }
 	.pl-side { position: sticky; top: var(--pl-gap); height: calc(100dvh - 2 * var(--pl-gap) - 80px); min-height: 480px; }
+	/* The meetup agenda chip is fixed at the top: keep the stuck panel's tabs below it. */
+	body.cc-meetup-ui .pl-side { top: 64px; height: calc(100dvh - 64px - var(--pl-gap) - 80px); }
 }
 
 /* ── Map ────────────────────────────────────────────────────────────────── */
@@ -198,8 +200,7 @@ body.cc-meetup-ui .pl-app { padding-top: calc(56px + env(safe-area-inset-top, 0p
 /* ── Quick actions ──────────────────────────────────────────────────────── */
 
 .pl-quick { display: flex; flex-direction: column; gap: 8px; }
-.pl-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-.pl-row::-webkit-scrollbar { display: none; }
+.pl-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .pl-chip {
 	flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px;
 	min-height: var(--pl-touch); padding: 0 14px;
