@@ -151,6 +151,15 @@ export function safeTarget(x, z) {
 	for (const d of LITE_DANGER) pt = pushOutOf(pt, d, 1.5);
 	const d = Math.hypot(pt.x, pt.z);
 	if (d > WALK_RADIUS) pt = { x: (pt.x / d) * WALK_RADIUS, z: (pt.z / d) * WALK_RADIUS };
+	// A zone that crosses the walk edge (the Eastern Marches does) can have its
+	// push-out clamped straight back inside it. Then walk the point in toward
+	// the plaza centre until it is clear: the centre itself always is.
+	const blocked = (q) => LITE_WATER.some((w) => Math.hypot(q.x - w.x, q.z - w.z) < w.r + 0.8)
+		|| LITE_DANGER.some((z) => Math.hypot(q.x - z.x, q.z - z.z) < z.r + 1.5);
+	const len = Math.hypot(pt.x, pt.z);
+	for (let r = len; r > 0 && blocked(pt); r = Math.max(0, r - 0.5)) {
+		pt = { x: (pt.x / len) * r, z: (pt.z / len) * r };
+	}
 	return pt;
 }
 
@@ -173,10 +182,17 @@ export function stepToward(pos, target, dt, speed = WALK_SPEED) {
 	return { x: pos.x + (dx / d) * step, z: pos.z + (dz / d) * step, yaw, arrived: false };
 }
 
-/** The place the point is standing at, if any (used for "You're at the dance floor"). */
+/** How far past a place's edge still counts as being at it. approachPoint stands r + 1.6 out. */
+const AT_PLACE_M = 2.5;
+
+/** The place the point is standing at, if any (used for "You're at the dance floor"). Nearest edge wins. */
 export function placeAt(x, z) {
-	for (const p of LITE_PLACES) if (Math.hypot(x - p.x, z - p.z) <= Math.max(p.r, 2) + 1.5) return p;
-	return null;
+	let best = null, bestGap = AT_PLACE_M;
+	for (const p of LITE_PLACES) {
+		const gap = Math.hypot(x - p.x, z - p.z) - p.r;
+		if (gap <= bestGap) { best = p; bestGap = gap; }
+	}
+	return best;
 }
 
 /** A standing spot for a place: just in front of it, toward spawn, so avatars don't stand inside props. */
